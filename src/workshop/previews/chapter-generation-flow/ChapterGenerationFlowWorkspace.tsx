@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import ReferenceChapterGenerationInspector from '../../../components/chapter-generation/reference/ChapterGenerationInspector';
-import DevelopmentChapterGenerationInspector from '../../../components/chapter-generation/development/ChapterGenerationInspector';
+import DevelopmentChapterGenerationWorkspace from '../../../components/chapter-generation/development/ChapterGenerationWorkspace';
 import { assembleChapterGeneration, type ScenarioId } from '../../../components/chapter-generation/shared/assembleGeneration';
 import {
   assembleChapterGenerationDev,
@@ -31,7 +31,7 @@ export function ChapterGenerationFlowWorkspace() {
     () => assembleChapterGeneration(scenarioId),
     [scenarioId],
   );
-  const { stages: developmentStages, finalOutput: developmentOutput } = useMemo(
+  const developmentRun = useMemo(
     () => assembleChapterGenerationDev(scenarioId, rhythmScenarioId, proseOverride),
     [scenarioId, rhythmScenarioId, proseOverride],
   );
@@ -120,10 +120,9 @@ export function ChapterGenerationFlowWorkspace() {
         />
       )}
       renderDevelopment={() => (
-        <DevelopmentChapterGenerationInspector
+        <DevelopmentChapterGenerationWorkspace
           key={`development-${scenarioId}-${rhythmScenarioId}-${proseOverride}`}
-          stages={developmentStages}
-          finalOutput={developmentOutput}
+          run={developmentRun}
         />
       )}
     />

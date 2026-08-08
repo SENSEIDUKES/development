@@ -72,9 +72,30 @@ function buildMockManifestedChapterDev(input: {
         },
         {
           id: "c1-dev-p2",
+          type: "dialogue",
+          text: "\"You've swept that corner enough for three lifetimes,\" Elder Nan said from the doorway, not unkindly. \"Finish before the incense burns out.\"",
+          metadata: { mode: "dialogue", speakerName: "Elder Nan", speakerRole: "authority", emotion: "stern", intensity: 0.4 },
+        },
+        {
+          id: "c1-dev-p3",
           type: "paragraph",
           text: "It was the altar's shadow that gave it away — a seam in the stone too straight to be an accident. Wen Shu's fingers found the manual before his mind caught up to what he was doing.",
           metadata: { mode: "narration", emotion: "startled", intensity: 0.55, tension: 0.5, mysticism: 0.6 },
+        },
+        {
+          id: "c1-dev-p4",
+          type: "paragraph",
+          text: "A holographic seal flickered faintly across the cover the moment his qi brushed it, dim and cracked with age.",
+          metadata: { mode: "narration", intensity: 0.5 },
+          system: {
+            kind: "status",
+            promptType: "codex_update",
+            title: "Forbidden Item Discovered",
+            rows: [
+              { label: "Item", value: "Sealed Manual" },
+              { label: "Brand", value: "Pre-sect era, unrecognized" },
+            ],
+          },
         },
       ]
     : [
@@ -90,6 +111,35 @@ function buildMockManifestedChapterDev(input: {
           text: "\"Whatever that is,\" Mei Lian said, voice level despite the shake in her hand, \"it's older than the seal. Older than the sect.\"",
           metadata: { mode: "dialogue", speakerName: "Mei Lian", speakerRole: "ally", emotion: "controlled fear", intensity: 0.6, tension: 0.7 },
         },
+        {
+          id: "c6-dev-p3",
+          type: "paragraph",
+          text: "Wen Shu called on the Ashfall Draw without thinking, and qi tore through his newly-formed meridians like a second breakthrough trying to happen too fast.",
+          metadata: {
+            mode: "narration",
+            intensity: 0.85,
+            tension: 0.8,
+            danger: 0.6,
+            mysticism: 0.7,
+            music: { mood: "restrained escalation", region: "chinese", intensity: 0.6 },
+          },
+        },
+        {
+          id: "c6-dev-p4",
+          type: "paragraph",
+          text: "The Ashfall Draw settled into his meridians instead of scarring them — mastery, not just access, the manual's old pages finally making sense.",
+          metadata: { mode: "narration", intensity: 0.5 },
+          system: {
+            kind: "skill_acquired",
+            promptType: "progression",
+            title: "Technique Refined",
+            rarity: "Rare",
+            rows: [
+              { label: "Technique", value: "Ashfall Draw" },
+              { label: "Mastery", value: "Initial -> Practiced" },
+            ],
+          },
+        },
       ];
   const generatedContent = blocks.map(block => block.text).join("\n\n");
   const now = WORKSHOP_RESULT_TIMESTAMP_MS;
@@ -103,7 +153,9 @@ function buildMockManifestedChapterDev(input: {
     summary: scenario.id === "opening"
       ? "Wen Shu discovers a forbidden cultivation manual hidden inside a sealed tomb altar during punishment duty."
       : `Wen Shu and Mei Lian face the shrine's aftermath, directed by a ${sceneTypeUsed} anchor, as Elder Nan's patrol closes in.`,
-    statsChangeMessage: "None",
+    statsChangeMessage: scenario.id === "opening"
+      ? "None"
+      : "[Technique Refined: Ashfall Draw — Initial to Practiced.]",
     cuePayload: scenario.id === "opening"
       ? { sceneType: "exploration", environment: ["tomb", "dust"], intensity: 0.3, tension: 0.25, emotion: "wary" }
       : { sceneType: "confrontation", environment: ["shrine", "darkness"], intensity: 0.7, tension: 0.8, danger: 0.55, emotion: "dread" },
@@ -148,10 +200,13 @@ function buildMockProcessingHandoffDev(
           location: "The collapsed shrine beneath Azure Bell Peak",
           timeMarker: "moments later, same night",
           charactersPresent: ["Wen Shu", "Mei Lian"],
-          mcCondition: "meridians raw but intact",
+          mcCondition: "meridians raw but intact, Ashfall Draw newly refined to Practiced",
           openTension: "Elder Nan's patrol bell just rang directly above the shrine.",
         },
-        completedEvents: [`Something ancient stirred behind the shrine's cracked inner seal (${sceneTypeUsed} beat).`],
+        completedEvents: [
+          `Something ancient stirred behind the shrine's cracked inner seal (${sceneTypeUsed} beat).`,
+          "Wen Shu refined the Ashfall Draw from Initial to Practiced mastery under pressure.",
+        ],
         nextImmediateAction: "Wen Shu and Mei Lian must hide or explain themselves before Elder Nan's patrol reaches the shrine entrance.",
         fingerprints: [{
           actionType: "other",

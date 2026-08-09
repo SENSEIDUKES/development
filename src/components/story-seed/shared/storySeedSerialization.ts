@@ -50,7 +50,11 @@ const portableSeed = (seed: StorySeedInput): Record<string, unknown> => {
  * could save an edited Blueprint title separately, so the reviewed artifact
  * wins once at the portable boundary and the imported seed is reconciled to it.
  */
-const reconcileArtifact = (seed: StorySeedInput, blueprintValue?: unknown): StorySeedArtifact => {
+const reconcileArtifact = (
+  seed: StorySeedInput,
+  blueprintValue?: unknown,
+  normalizeBlueprint = true,
+): StorySeedArtifact => {
   const normalizedSeed = normalizeStorySeedInput(seed);
   if (!isRecord(blueprintValue)) return { seed: normalizedSeed };
   const blueprintTitle = typeof blueprintValue.title === 'string'
@@ -73,7 +77,9 @@ const reconcileArtifact = (seed: StorySeedInput, blueprintValue?: unknown): Stor
       });
   return {
     seed: reconciledSeed,
-    blueprint: normalizeWorldBlueprint(blueprintValue, reconciledSeed),
+    blueprint: normalizeBlueprint
+      ? normalizeWorldBlueprint(blueprintValue, reconciledSeed)
+      : blueprintValue as unknown as WorldBlueprint,
   };
 };
 
@@ -120,15 +126,18 @@ const isCanonicalShape = (value: Record<string, unknown>): boolean =>
   && isRecord((value.story as Record<string, unknown>).required)
   && isRecord(value.world);
 
-const extractStorySeedArtifact = (value: unknown): StorySeedArtifact => {
+const extractStorySeedArtifact = (
+  value: unknown,
+  normalizeBlueprint: boolean,
+): StorySeedArtifact => {
   if (!isRecord(value)) throw new Error('Each seed must be a JSON object.');
   if (isGeneratedStoryPackage(value)) {
     throw new Error('This is a generated story package, not a portable story seed.');
   }
   if (isRecord(value.seed)) {
-    const nested = extractStorySeedArtifact(value.seed);
+    const nested = extractStorySeedArtifact(value.seed, normalizeBlueprint);
     return isRecord(value.blueprint)
-      ? reconcileArtifact(nested.seed, value.blueprint)
+      ? reconcileArtifact(nested.seed, value.blueprint, normalizeBlueprint)
       : nested;
   }
   const seed = isCanonicalShape(value)
@@ -137,10 +146,18 @@ const extractStorySeedArtifact = (value: unknown): StorySeedArtifact => {
       ? importLegacyStorySeed(value)
       : null;
   if (!seed) throw new Error('No reusable Story Seed data was found in this JSON file.');
-  return reconcileArtifact(seed, value.blueprint);
+  return reconcileArtifact(seed, value.blueprint, normalizeBlueprint);
 };
 
-export const parseStorySeedJson = (input: string): StorySeedArtifact[] => {
+export interface ParseStorySeedJsonOptions {
+  /** Preserve raw Blueprint fields so a stricter downstream boundary can reject partial artifacts. */
+  normalizeBlueprint?: boolean;
+}
+
+export const parseStorySeedJson = (
+  input: string,
+  options: ParseStorySeedJsonOptions = {},
+): StorySeedArtifact[] => {
   let parsed: unknown;
   try {
     parsed = JSON.parse(input);
@@ -157,7 +174,10 @@ export const parseStorySeedJson = (input: string): StorySeedArtifact[] => {
         })
       : [parsed];
   if (candidates.length === 0) throw new Error('The seed file is empty.');
-  return candidates.map(extractStorySeedArtifact);
+  return candidates.map(candidate => extractStorySeedArtifact(
+    candidate,
+    options.normalizeBlueprint !== false,
+  ));
 };
 
 const safeFilenamePart = (title: string): string =>

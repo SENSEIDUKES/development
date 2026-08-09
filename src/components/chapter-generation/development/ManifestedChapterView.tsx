@@ -126,24 +126,39 @@ export interface ManifestedChapterViewProps {
   title?: string;
   /** True when Stage 4 requested a repair and this view shows the repaired text. */
   repaired?: boolean;
+  /** Present only for a server-generated chapter; omitted by deterministic diagnostics. */
+  generationSource?: { provider: string; model: string };
 }
 
 /**
  * Renders the manifested chapter as it is meant to be read: prose, dialogue,
  * system panels, world cards, and visible effect markers — never raw JSON.
  */
-export function ManifestedChapterView({ chapter, title, repaired = false }: ManifestedChapterViewProps) {
+export function ManifestedChapterView({
+  chapter,
+  title,
+  repaired = false,
+  generationSource,
+}: ManifestedChapterViewProps) {
   const paragraphs = chapter.blocks?.length
     ? null
     : chapter.generatedContent.split(/\n{2,}/).filter(paragraph => paragraph.trim());
 
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      <div className="flex items-start gap-2 rounded-md border border-amber-500/25 bg-amber-500/5 px-3 py-2">
-        <FlaskConical size={12} className="mt-0.5 shrink-0 text-amber-200/70" />
-        <p className="text-[11px] leading-relaxed text-amber-100/80">
-          Mock output — written by the deterministic Workshop adapter, not a live model.
-          Live generation is connected in Pass 4.{repaired ? " A repair pass was applied to this chapter." : ""}
+      <div className={`flex items-start gap-2 rounded-md border px-3 py-2 ${generationSource
+        ? "border-emerald-500/25 bg-emerald-500/5"
+        : "border-amber-500/25 bg-amber-500/5"}`}>
+        <FlaskConical size={12} className={`mt-0.5 shrink-0 ${generationSource
+          ? "text-emerald-200/70"
+          : "text-amber-200/70"}`} />
+        <p className={`text-[11px] leading-relaxed ${generationSource
+          ? "text-emerald-100/80"
+          : "text-amber-100/80"}`}>
+          {generationSource
+            ? `Live output — generated server-side through ${generationSource.provider} using ${generationSource.model}.`
+            : "Mock output — written by the deterministic Workshop diagnostics adapter, not a live model."}
+          {repaired ? " A repair pass was applied after a serious finding." : ""}
         </p>
       </div>
 

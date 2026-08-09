@@ -21,6 +21,7 @@ import {
 import {
   createStorySeed,
   importStorySeeds,
+  LOCAL_WORKSHOP_STORY_SEED_OWNER_ID,
   updateStorySeed,
   type StorySeedArtifact,
   type StorySeedRecord,
@@ -72,12 +73,7 @@ interface CreationModalProps {
   error: string | null;
 }
 
-/**
- * Stable local namespace for Workshop draft saves when no account is signed
- * in (the Workshop repository is local-storage backed). On transfer to
- * Light-Novels, gate draft saving on real auth exactly like persistSeed.
- */
-const LOCAL_CREATOR_ID = 'local-workshop-creator';
+/** Existing one-story generation default; Chapter Generation Pass 1 does not use it. */
 const INITIAL_CHAPTER_COUNT = 10;
 
 const useLatestCallback = <Args extends unknown[], Result>(
@@ -130,7 +126,8 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
   const storeIsGenerating = useAppStore(selectIsGenerating);
   const activeAgentId = useAppStore(state => state.activeAgentId);
   const currentUser = useAppStore(state => state.currentUser);
-  const seedOwnerId = currentUser?.uid || (LOCAL_ONLY_MODE ? LOCAL_CREATOR_ID : null);
+  const seedOwnerId = currentUser?.uid
+    || (LOCAL_ONLY_MODE ? LOCAL_WORKSHOP_STORY_SEED_OWNER_ID : null);
   const equippedRelicTitle = useAppStore(state => {
     const storyMaker = state.routingConfig.storyMaker;
     return typeof storyMaker?.equippedRelicTitle === 'string'
@@ -461,7 +458,7 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
     const sourceSeedId = savedSeed?.id || record?.id || `local-seed-${generateUUID()}`;
     const administrative = createStoryAdministrativeMetadata({
       storyId: `story-${generateUUID()}`,
-      creatorId: currentUser?.uid || LOCAL_CREATOR_ID,
+      creatorId: currentUser?.uid || LOCAL_WORKSHOP_STORY_SEED_OWNER_ID,
       sourceSeedId,
       originalLanguage: 'en',
     });

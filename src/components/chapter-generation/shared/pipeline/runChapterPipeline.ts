@@ -32,13 +32,84 @@ const stage = (
 };
 
 /** Returns whether processing found an issue severe enough to permit repair. */
-const hasSeriousFinding = (findings: ChapterProcessingFinding[]) =>
+export const hasSeriousFinding = (findings: ChapterProcessingFinding[]) =>
   findings.some(finding => finding.severity === "serious");
 
 export interface RunChapterPipelineInput {
   chapterPacket: ChapterPacket;
   model: ChapterGenerationModelCalls;
   planningSignals?: ChapterPlanningSignals;
+}
+
+export interface BuildChapterPipelineRunInput {
+  chapterPacket: ChapterPacket;
+  chapterPlan: ChapterPipelineRun["chapterPlan"];
+  manifestedChapter: ChapterContent;
+  processingResult: ChapterPipelineRun["processingResult"];
+  modelCalls: ChapterModelCallKind[];
+  repairedChapter?: ChapterContent;
+}
+
+/** Builds the shared immutable result after either sync or async calls finish. */
+export function buildChapterPipelineRun(
+  input: BuildChapterPipelineRunInput,
+): ChapterPipelineRun {
+  const {
+    chapterPacket,
+    chapterPlan,
+    manifestedChapter,
+    processingResult,
+    modelCalls,
+    repairedChapter,
+  } = input;
+  const chapterForOutput = repairedChapter ?? manifestedChapter;
+  const finalOutput: ChapterContent = {
+    ...chapterForOutput,
+    contextManifest: chapterPacket.contextManifest,
+    contract: chapterPacket.chapterMission.contract,
+    handoff: processingResult.nextChapterHandoff,
+  };
+
+  const stages = [
+    stage(
+      "assemble-chapter-packet",
+      "Assemble Chapter Packet",
+      "Pure code assembly of permanent story rules, current state, mission, anchors, relevant context, and model-visible arc/chapter position. No model call.",
+      chapterPacket,
+    ),
+    stage(
+      "plan-chapter",
+      "Plan Chapter",
+      "One structured planning call chooses chapter-specific rhythm, path, Fate Survival application, effects, progression, pacing, ending, and handoff target.",
+      chapterPlan,
+    ),
+    stage(
+      "manifest-chapter",
+      "Manifest Chapter",
+      "One writing call receives the complete Chapter Packet, Chapter Plan, and consolidated permanent writing/formatting instructions.",
+      manifestedChapter,
+    ),
+    stage(
+      "process-result",
+      "Process Result",
+      "One structured processing call proposes anchors, state and thread changes, mission/continuity findings, and the next handoff without committing story state. Repaired content is processed once more so its proposal stays aligned.",
+      {
+        ...processingResult,
+        repairApplied: Boolean(repairedChapter),
+      },
+    ),
+  ];
+
+  return {
+    stages,
+    finalOutput,
+    chapterPacket,
+    chapterPlan,
+    manifestedChapter,
+    processingResult,
+    modelCalls,
+    repairApplied: Boolean(repairedChapter),
+  };
 }
 
 /**
@@ -90,7 +161,6 @@ export function runChapterPipeline(input: RunChapterPipelineInput): ChapterPipel
     : undefined;
   if (repairedChapter) modelCalls.push("repair");
 
-  const chapterForOutput: ChapterContent = repairedChapter ?? manifestedChapter;
   const processingResult = repairedChapter
     ? model.processResult({
         chapterPacket,
@@ -100,51 +170,12 @@ export function runChapterPipeline(input: RunChapterPipelineInput): ChapterPipel
     : initialProcessingResult;
   if (repairedChapter) modelCalls.push("process");
 
-  const finalOutput: ChapterContent = {
-    ...chapterForOutput,
-    contextManifest: chapterPacket.contextManifest,
-    contract: chapterPacket.chapterMission.contract,
-    handoff: processingResult.nextChapterHandoff,
-  };
-
-  const stages = [
-    stage(
-      "assemble-chapter-packet",
-      "Assemble Chapter Packet",
-      "Pure code assembly of permanent story rules, current state, mission, anchors, relevant context, and model-visible arc/chapter position. No model call.",
-      chapterPacket,
-    ),
-    stage(
-      "plan-chapter",
-      "Plan Chapter",
-      "One structured planning call chooses chapter-specific rhythm, path, Fate Survival application, effects, progression, pacing, ending, and handoff target.",
-      chapterPlan,
-    ),
-    stage(
-      "manifest-chapter",
-      "Manifest Chapter",
-      "One writing call receives the complete Chapter Packet, Chapter Plan, and consolidated permanent writing/formatting instructions.",
-      manifestedChapter,
-    ),
-    stage(
-      "process-result",
-      "Process Result",
-      "One structured processing call proposes anchors, state and thread changes, mission/continuity findings, and the next handoff without committing story state. Repaired content is processed once more so its proposal stays aligned.",
-      {
-        ...processingResult,
-        repairApplied: Boolean(repairedChapter),
-      },
-    ),
-  ];
-
-  return {
-    stages,
-    finalOutput,
+  return buildChapterPipelineRun({
     chapterPacket,
     chapterPlan,
     manifestedChapter,
     processingResult,
     modelCalls,
-    repairApplied: Boolean(repairedChapter),
-  };
+    repairedChapter,
+  });
 }

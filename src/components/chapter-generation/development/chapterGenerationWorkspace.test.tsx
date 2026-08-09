@@ -9,6 +9,8 @@ import {
   type CulturalProseOverride,
 } from "../shared/assembleGenerationDev";
 import type { ChapterPipelineRun } from "../shared/pipeline/types";
+import type { ManifestChapterResponse } from "../shared/liveChapterGeneration";
+import { ChapterUsageSummary } from "./ChapterGenerationTestFlow";
 import { ChapterGenerationWorkspace } from "./ChapterGenerationWorkspace";
 import { effectMarkers } from "./ManifestedChapterView";
 import { CopyButton } from "./workspaceUi";
@@ -285,10 +287,22 @@ describe("Chapter Generation Development workspace structure", () => {
     expect(html).not.toContain("Step 4 of 4");
   });
 
-  it("labels the manifested chapter as mock output until Pass 4", () => {
+  it("labels deterministic diagnostics as mock output", () => {
     const html = staticHtml();
     expect(html).toContain("Mock output");
-    expect(html).toContain("Pass 4");
+    expect(html).toContain("deterministic Workshop diagnostics adapter");
+  });
+
+  it("labels server-generated chapters as live output", () => {
+    const html = renderToStaticMarkup(
+      <ChapterGenerationWorkspace
+        run={buildRun()}
+        generationSource={{ provider: "gemini", model: "google/gemini-test" }}
+      />,
+    );
+    expect(html).toContain("Live output");
+    expect(html).toContain("google/gemini-test");
+    expect(html).not.toContain("Mock output");
   });
 
   it("derives visible effect markers from block metadata", () => {
@@ -307,5 +321,60 @@ describe("Chapter Generation Development workspace structure", () => {
     ]);
     expect(effectMarkers(undefined)).toEqual([]);
     expect(effectMarkers({})).toEqual([]);
+  });
+});
+
+describe("Chapter Generation token usage", () => {
+  it("shows each call plus separate input, output, total, and chapter totals", () => {
+    const run = buildRun();
+    const result: ManifestChapterResponse = {
+      provider: "gemini",
+      model: "google/gemini-test",
+      run,
+      mapping: { mapped: [], unresolved: [], chapterMissionSource: "test" },
+      usage: {
+        calls: [
+          {
+            kind: "plan",
+            stage: "Plan Chapter",
+            provider: "gemini",
+            model: "google/gemini-test",
+            inputTokens: 100,
+            outputTokens: 20,
+            totalTokens: 120,
+            generationTimeMs: 250,
+            tokenSource: "provider",
+          },
+          {
+            kind: "manifest",
+            stage: "Manifest Chapter",
+            provider: "gemini",
+            model: "google/gemini-test",
+            inputTokens: 200,
+            outputTokens: 80,
+            totalTokens: 280,
+            generationTimeMs: 1_500,
+            tokenSource: "estimated",
+          },
+        ],
+        totals: {
+          inputTokens: 300,
+          outputTokens: 100,
+          totalTokens: 400,
+          generationTimeMs: 1_750,
+          hasEstimatedUsage: true,
+        },
+      },
+    };
+    const html = renderToStaticMarkup(<ChapterUsageSummary result={result} />);
+
+    expect(html).toContain("Plan Chapter");
+    expect(html).toContain("Manifest Chapter");
+    expect(html).toContain("Provider reported");
+    expect(html).toContain("Estimated usage");
+    expect(html).toContain("Chapter input");
+    expect(html).toContain("Chapter output");
+    expect(html).toContain("Chapter total");
+    expect(html).toContain("400");
   });
 });

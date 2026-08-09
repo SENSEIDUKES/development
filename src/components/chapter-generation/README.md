@@ -6,19 +6,29 @@
 - **Replica created:** 2026-07-31
 - **Last Workshop update:** 2026-08-08
 - **Last source comparison:** 2026-07-31
-- **Replica status:** Pass 2 four-stage pipeline implemented; provider calls remain deterministic Workshop adapters
+- **Replica status:** Pass 3 Development workspace rebuilt around the four-stage pipeline; provider calls remain deterministic Workshop adapters
 
 ## Purpose
 
 This Workshop entry exposes the Chapter Generation 1.0 backend flow against safe
 local fixtures. It uses the ported context assembly, budgeting, prompt, contract,
 and formatting logic while replacing live provider and persistence boundaries with
-deterministic adapters. The inspector UI is intentionally unchanged.
+deterministic adapters.
 
-Reference and Development now run the same shared pipeline foundation. Development
+Reference keeps the raw JSON inspector as the technical comparison. Development is
+now a readable Chapter Generation workspace: Permanent Story Rules collapse to one
+compact line (closed by default, one-line digest visible), and the Current Chapter
+Run is a four-stage stepper — packet, plan, manifested chapter, results — that
+shows one stage at a time behind sticky navigation, with the manifested chapter
+taking the main reading space. All raw packets, prompts, tokens, and JSON stay in
+one collapsed Technical Details section. Development consumes the structured
+`ChapterPipelineRun` directly — it never re-parses the serialized stage JSON.
+
+Reference and Development run the same shared pipeline foundation. Development
 still owns its Cultural Prose override and rhythm/Fate-pressure preview controls,
 but those controls feed packet assembly or planning rather than creating additional
-generation steps.
+generation steps, and their effects are visible immediately in the readable
+workspace.
 
 ## Four actual stages
 
@@ -135,9 +145,12 @@ shared/
     workshopModelCalls.ts      deterministic preview planning/processing adapters
   lib/                         ported context, prompt, handoff, and formatting helpers
 reference/
-  ChapterGenerationInspector.tsx
+  ChapterGenerationInspector.tsx   unchanged raw-JSON inspector (technical comparison)
 development/
-  ChapterGenerationInspector.tsx
+  ChapterGenerationWorkspace.tsx   readable Pass 3 workspace (permanent rules + four steps)
+  ManifestedChapterView.tsx        prose/dialogue/system-panel/effect-marker rendering
+  workspaceUi.tsx                  shared cards, disclosures, chips, copy controls
+  chapterGenerationWorkspace.test.tsx
 ```
 
 ## Preserved and intentionally changed behavior
@@ -156,7 +169,9 @@ architecture.
 - No live model, database, persistence, R2, credit, queue, or notification call runs.
 - No real `LivingStoryState` update or chapter advancement is committed.
 - No unresolved Story Seed world-rule, glossary, style, or Fate vocabulary mapping is inferred.
-- No UI redesign or real chapter-testing section is included in this pass.
+- The Pass 3 Development workspace is presentation only: no approval, retries,
+  sequential generation, rewards, or Story Library writes were added, and the
+  pipeline architecture and call boundaries are unchanged.
 - Compatibility fields on final `ChapterContent` are attached only at the external
   inspector boundary from Stage 1 contracts and Stage 4 processing output.
 
@@ -171,6 +186,11 @@ architecture.
 Focused pipeline tests cover the four stage keys, Stage 1 purity, normal and repair
 call counts, permanent-rule behavior, planning ownership of Fate/effects, processing
 ownership of anchors/proposed state, retry immutability, and model-visible position.
+Focused UI tests cover the Development workspace: stepper navigation shows exactly
+one stage and reaches all four, sticky/desktop/mobile navigation structure,
+Permanent Story Rules open/close, the manifested chapter's reading space, truthful
+clipboard success/failure states, control reactivity without losing the selected
+stage, and raw JSON staying inside collapsed Technical Details.
 
 ## Workshop history
 
@@ -178,6 +198,8 @@ ownership of anchors/proposed state, retry immutability, and model-visible posit
 - **2026-08-08:** Pass 1 introduced Story Constitution, Living Story State, Chapter Mission, and Generation Rules with a complete 65-ID trace and nine explicit unresolved flags.
 - **2026-08-08:** Pass 1 centralized shared packet-backed context assembly across both generation adapters.
 - **2026-08-08:** Pass 2 replaced both ten-step orchestrators with one real four-stage pipeline and three normal call boundaries plus conditional repair/reprocessing.
+- **2026-08-08:** Pass 3 rebuilt the Development pane as a readable Chapter Generation workspace (Permanent Story Rules, four run steps, collapsed Technical Details) consuming the structured `ChapterPipelineRun` directly; the Reference inspector is unchanged.
+- **2026-08-08:** Pass 3 usability: the run became a sticky four-stage stepper showing one stage at a time (Manifested Chapter by default, with the main reading space), Permanent Story Rules collapsed to a compact digest closed by default, and copy controls now report clipboard success/failure truthfully.
 
 ## Transfer notes
 
@@ -208,4 +230,5 @@ Do not copy
 `src/components/chapter-generation/shared/assembleGeneration.ts`,
 `src/components/chapter-generation/shared/assembleGenerationDev.ts`,
 `src/components/chapter-generation/shared/stageTypes.ts`, fixtures, inspectors,
-preview controls, or `GenerationStage` serialization; those are Workshop-only.
+Development workspace views, preview controls, or `GenerationStage` serialization;
+those are Workshop-only.

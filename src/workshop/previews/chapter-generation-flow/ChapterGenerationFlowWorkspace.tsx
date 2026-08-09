@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import ReferenceChapterGenerationInspector from '../../../components/chapter-generation/reference/ChapterGenerationInspector';
-import DevelopmentChapterGenerationInspector from '../../../components/chapter-generation/development/ChapterGenerationInspector';
+import DevelopmentChapterGenerationWorkspace from '../../../components/chapter-generation/development/ChapterGenerationWorkspace';
 import { assembleChapterGeneration, type ScenarioId } from '../../../components/chapter-generation/shared/assembleGeneration';
 import {
   assembleChapterGenerationDev,
@@ -31,7 +31,7 @@ export function ChapterGenerationFlowWorkspace() {
     () => assembleChapterGeneration(scenarioId),
     [scenarioId],
   );
-  const { stages: developmentStages, finalOutput: developmentOutput } = useMemo(
+  const developmentRun = useMemo(
     () => assembleChapterGenerationDev(scenarioId, rhythmScenarioId, proseOverride),
     [scenarioId, rhythmScenarioId, proseOverride],
   );
@@ -120,11 +120,9 @@ export function ChapterGenerationFlowWorkspace() {
         />
       )}
       renderDevelopment={() => (
-        <DevelopmentChapterGenerationInspector
-          key={`development-${scenarioId}-${rhythmScenarioId}-${proseOverride}`}
-          stages={developmentStages}
-          finalOutput={developmentOutput}
-        />
+        // No remount key: the workspace keeps its selected stage while the
+        // scenario, rhythm, and Cultural Prose controls update the run data.
+        <DevelopmentChapterGenerationWorkspace run={developmentRun} />
       )}
     />
   );

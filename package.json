@@ -25,6 +25,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "jsdom": "^30.0.1",
     "tailwindcss": "^4.3.3",
     "vitest": "^4.1.10"
   }

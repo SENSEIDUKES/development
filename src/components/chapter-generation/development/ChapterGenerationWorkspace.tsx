@@ -2,6 +2,7 @@ import {
   Accessibility,
   Anchor,
   BookOpen,
+  ChevronRight,
   Compass,
   Feather,
   FileJson,
@@ -12,20 +13,22 @@ import {
   ScrollText,
   Shield,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { getChapterWritingStyleInstruction } from "../shared/lib/chapterWritingStyle";
 import type { SceneAnchors, SceneType } from "../shared/lib/sceneRhythm";
-import type { ChapterPipelineRun, ChapterPacket } from "../shared/pipeline/types";
+import type {
+  ChapterPipelineRun,
+  ChapterPipelineStageKey,
+  ChapterPacket,
+} from "../shared/pipeline/types";
 import type { ChapterHandoff, ChapterEndState } from "../shared/types";
 import ManifestedChapterView from "./ManifestedChapterView";
 import {
   Chip,
   Collapsible,
-  CopyButton,
   EmptyNote,
   Field,
   WorkspaceCard,
-  WorkspaceRegion,
   type ChipTone,
 } from "./workspaceUi";
 
@@ -50,6 +53,18 @@ const EFFECT_KIND_LABELS: Record<string, string> = {
   "narrative-cue": "Narrative Cue",
 };
 
+const RUN_STAGES: Array<{
+  key: ChapterPipelineStageKey;
+  step: number;
+  label: string;
+  icon: ReactNode;
+}> = [
+  { key: "assemble-chapter-packet", step: 1, label: "Chapter Packet", icon: <Layers size={13} /> },
+  { key: "plan-chapter", step: 2, label: "Chapter Plan", icon: <Compass size={13} /> },
+  { key: "manifest-chapter", step: 3, label: "Manifested Chapter", icon: <PenLine size={13} /> },
+  { key: "process-result", step: 4, label: "Chapter Results", icon: <ListChecks size={13} /> },
+];
+
 const formatKey = (key: string) =>
   key.replace(/[-_]+/g, " ").replace(/\b\w/g, letter => letter.toUpperCase());
 
@@ -59,127 +74,162 @@ const charCount = (text: string) => `${text.length.toLocaleString()} chars`;
 /* Permanent Story Rules                                                       */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Compact, collapsible region — closed by default so the current run owns the
+ * workspace, but one click inspects the fixed story inputs. The summary line
+ * keeps a one-line digest visible even while closed.
+ */
 function PermanentStoryRules({ packet }: { packet: ChapterPacket }) {
+  const [open, setOpen] = useState(false);
   const { storyConstitution: constitution, generationRules, culturalProse } = packet;
   const accessibilityInstruction = getChapterWritingStyleInstruction(constitution.accessibilityStyle);
   const proseSourceLabel = culturalProse.source === "story-setting"
     ? "Story setting"
     : culturalProse.source === "workshop-override" ? "Workshop override" : "Fallback";
+  const digest = [
+    constitution.genre,
+    culturalProse.label ?? "No Cultural Prose",
+    constitution.accessibilityStyle,
+    constitution.fateSurvival
+      ? `Fate Survival ${constitution.fateSurvival.enabled ? "on" : "off"}`
+      : "Fate Survival not configured",
+    `${constitution.worldRules.length} world rules`,
+  ].join(" · ");
 
   return (
-    <WorkspaceRegion
-      title="Permanent Story Rules"
-      description="Fixed story inputs assembled into every Chapter Packet. They stay mostly constant across the novel — large instruction texts stay collapsed."
+    <details
+      open={open}
+      className="group min-w-0 rounded-lg border border-white/10 bg-black/30"
     >
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <WorkspaceCard icon={<BookOpen size={13} />} title="Story Seed & Blueprint">
-          <Field label="Premise">{constitution.corePremise}</Field>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Chip tone="cyan">{constitution.genre}</Chip>
-            {constitution.storyTags.map(tag => <Chip key={tag}>{tag}</Chip>)}
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field label="Main Character">{constitution.mainCharacterName}</Field>
-            <Field label="Story Style">
-              {constitution.storyStyle ? formatKey(constitution.storyStyle) : "Not set on this story"}
-            </Field>
-          </div>
-          <Field label="Destined Ending">{constitution.destinedEnding}</Field>
-          {constitution.glossaryEntries.length > 0 && (
-            <Field label={`Glossary (${constitution.glossaryEntries.length} terms)`}>
-              <span className="flex flex-wrap gap-1">
-                {constitution.glossaryEntries.map(entry => (
-                  <Chip key={entry.term} tone="violet">{entry.canonicalTerm || entry.term}</Chip>
-                ))}
-              </span>
-            </Field>
-          )}
-          <Collapsible title="Style Bible" meta={charCount(constitution.styleBible)} copyText={constitution.styleBible}>
-            <p className="whitespace-pre-wrap break-words text-[11px] leading-relaxed text-white/60">{constitution.styleBible}</p>
-          </Collapsible>
-          <Collapsible title="Trope Rules" meta={charCount(constitution.tropeRules)} copyText={constitution.tropeRules}>
-            <p className="whitespace-pre-wrap break-words text-[11px] leading-relaxed text-white/60">{constitution.tropeRules}</p>
-          </Collapsible>
-        </WorkspaceCard>
-
-        <div className="flex min-w-0 flex-col gap-4">
-          <WorkspaceCard icon={<Feather size={13} />} title="Story Style & Cultural Prose">
+      <summary
+        className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 [&::-webkit-details-marker]:hidden"
+        onClick={event => {
+          event.preventDefault();
+          setOpen(current => !current);
+        }}
+      >
+        <BookOpen size={13} className="shrink-0 text-white/40" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-xs font-semibold uppercase tracking-widest text-white/80">
+            Permanent Story Rules
+          </span>
+          <span className="mt-0.5 block truncate text-[10px] normal-case tracking-normal text-white/35">
+            {open ? "Fixed story inputs reused for every chapter." : digest}
+          </span>
+        </span>
+        <ChevronRight size={13} className="shrink-0 text-white/40 transition-transform group-open:rotate-90" />
+      </summary>
+      <div className="border-t border-white/10 px-3 py-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <WorkspaceCard icon={<BookOpen size={13} />} title="Story Seed & Blueprint">
+            <Field label="Premise">{constitution.corePremise}</Field>
             <div className="flex flex-wrap items-center gap-1.5">
-              <Chip tone="cyan">{culturalProse.label ?? "No Cultural Prose style"}</Chip>
-              <Chip tone={culturalProse.source === "fallback" ? "neutral" : "emerald"}>{proseSourceLabel}</Chip>
+              <Chip tone="cyan">{constitution.genre}</Chip>
+              {constitution.storyTags.map(tag => <Chip key={tag}>{tag}</Chip>)}
             </div>
-            {culturalProse.instruction
-              ? (
-                <Collapsible title="Cultural Prose instruction" meta={charCount(culturalProse.instruction)} copyText={culturalProse.instruction}>
-                  <p className="whitespace-pre-wrap break-words text-[11px] leading-relaxed text-white/60">{culturalProse.instruction}</p>
-                </Collapsible>
-              )
-              : <EmptyNote>No Cultural Prose instruction — the fallback narration style applies.</EmptyNote>}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="Main Character">{constitution.mainCharacterName}</Field>
+              <Field label="Story Style">
+                {constitution.storyStyle ? formatKey(constitution.storyStyle) : "Not set on this story"}
+              </Field>
+            </div>
+            <Field label="Destined Ending">{constitution.destinedEnding}</Field>
+            {constitution.glossaryEntries.length > 0 && (
+              <Field label={`Glossary (${constitution.glossaryEntries.length} terms)`}>
+                <span className="flex flex-wrap gap-1">
+                  {constitution.glossaryEntries.map(entry => (
+                    <Chip key={entry.term} tone="violet">{entry.canonicalTerm || entry.term}</Chip>
+                  ))}
+                </span>
+              </Field>
+            )}
+            <Collapsible title="Style Bible" meta={charCount(constitution.styleBible)} copyText={constitution.styleBible}>
+              <p className="whitespace-pre-wrap break-words text-[11px] leading-relaxed text-white/60">{constitution.styleBible}</p>
+            </Collapsible>
+            <Collapsible title="Trope Rules" meta={charCount(constitution.tropeRules)} copyText={constitution.tropeRules}>
+              <p className="whitespace-pre-wrap break-words text-[11px] leading-relaxed text-white/60">{constitution.tropeRules}</p>
+            </Collapsible>
           </WorkspaceCard>
 
-          <WorkspaceCard icon={<Accessibility size={13} />} title="Accessibility">
-            <Field label="Chapter Writing Style">{constitution.accessibilityStyle}</Field>
-            <p className="text-[11px] leading-relaxed text-white/50">
-              {accessibilityInstruction || "No prose adjustment — the story's default narrative voice is used."}
-            </p>
-          </WorkspaceCard>
+          <div className="flex min-w-0 flex-col gap-4">
+            <WorkspaceCard icon={<Feather size={13} />} title="Story Style & Cultural Prose">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Chip tone="cyan">{culturalProse.label ?? "No Cultural Prose style"}</Chip>
+                <Chip tone={culturalProse.source === "fallback" ? "neutral" : "emerald"}>{proseSourceLabel}</Chip>
+              </div>
+              {culturalProse.instruction
+                ? (
+                  <Collapsible title="Cultural Prose instruction" meta={charCount(culturalProse.instruction)} copyText={culturalProse.instruction}>
+                    <p className="whitespace-pre-wrap break-words text-[11px] leading-relaxed text-white/60">{culturalProse.instruction}</p>
+                  </Collapsible>
+                )
+                : <EmptyNote>No Cultural Prose instruction — the fallback narration style applies.</EmptyNote>}
+            </WorkspaceCard>
 
-          <WorkspaceCard icon={<Shield size={13} />} title="Fate Survival">
-            {constitution.fateSurvival ? (
-              <>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <Chip tone={constitution.fateSurvival.enabled ? "rose" : "neutral"}>
-                    {constitution.fateSurvival.enabled ? "Enabled" : "Disabled"}
-                  </Chip>
-                  <Chip>Visibility: {constitution.fateSurvival.visibility}</Chip>
-                  <Chip>Pressure: {constitution.fateSurvival.pressure}</Chip>
-                </div>
-                <p className="text-[11px] leading-relaxed text-white/50">
-                  Configured on the story. Whether it fires is a per-chapter decision — see Step 2 below.
-                </p>
-              </>
+            <WorkspaceCard icon={<Accessibility size={13} />} title="Accessibility">
+              <Field label="Chapter Writing Style">{constitution.accessibilityStyle}</Field>
+              <p className="text-[11px] leading-relaxed text-white/50">
+                {accessibilityInstruction || "No prose adjustment — the story's default narrative voice is used."}
+              </p>
+            </WorkspaceCard>
+
+            <WorkspaceCard icon={<Shield size={13} />} title="Fate Survival">
+              {constitution.fateSurvival ? (
+                <>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Chip tone={constitution.fateSurvival.enabled ? "rose" : "neutral"}>
+                      {constitution.fateSurvival.enabled ? "Enabled" : "Disabled"}
+                    </Chip>
+                    <Chip>Visibility: {constitution.fateSurvival.visibility}</Chip>
+                    <Chip>Pressure: {constitution.fateSurvival.pressure}</Chip>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-white/50">
+                    Configured on the story. Whether it fires is a per-chapter decision — see Step 2 below.
+                  </p>
+                </>
+              ) : (
+                <EmptyNote>
+                  Not configured for this story, so no fate event is manufactured. The preview's Fate
+                  Pressure control is only a planning signal and appears in Step 2.
+                </EmptyNote>
+              )}
+            </WorkspaceCard>
+          </div>
+
+          <WorkspaceCard icon={<Globe size={13} />} title="World & Narration Rules">
+            <Field label="Power System">{constitution.powerSystem}</Field>
+            {constitution.worldRules.length > 0 ? (
+              <ul className="flex flex-col gap-1.5">
+                {constitution.worldRules.map(rule => (
+                  <li key={rule} className="flex items-start gap-2 text-xs leading-relaxed text-white/70">
+                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-white/30" />
+                    <span className="min-w-0 break-words">{rule}</span>
+                  </li>
+                ))}
+              </ul>
             ) : (
-              <EmptyNote>
-                Not configured for this story, so no fate event is manufactured. The preview's Fate
-                Pressure control is only a planning signal and appears in Step 2.
-              </EmptyNote>
+              <EmptyNote>No permanent world rules recorded for this story.</EmptyNote>
             )}
           </WorkspaceCard>
+
+          <WorkspaceCard icon={<ScrollText size={13} />} title="Permanent Generation & Effect Rules">
+            <p className="text-[11px] leading-relaxed text-white/50">
+              The standing instructions every chapter is written under. They ship inside the packet and
+              go straight to the writing call — they are not separate generation steps.
+            </p>
+            <Collapsible title="System instruction" meta={charCount(generationRules.systemInstruction)} copyText={generationRules.systemInstruction}>
+              <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-white/60 [overflow-wrap:anywhere]">{generationRules.systemInstruction}</pre>
+            </Collapsible>
+            <Collapsible title="Permanent writing instructions" meta={charCount(generationRules.permanentWritingInstructions)} copyText={generationRules.permanentWritingInstructions}>
+              <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-white/60 [overflow-wrap:anywhere]">{generationRules.permanentWritingInstructions}</pre>
+            </Collapsible>
+            <Collapsible title="Chapter-effect rules" meta={charCount(generationRules.effectRules)} copyText={generationRules.effectRules}>
+              <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-white/60 [overflow-wrap:anywhere]">{generationRules.effectRules}</pre>
+            </Collapsible>
+          </WorkspaceCard>
         </div>
-
-        <WorkspaceCard icon={<Globe size={13} />} title="World & Narration Rules">
-          <Field label="Power System">{constitution.powerSystem}</Field>
-          {constitution.worldRules.length > 0 ? (
-            <ul className="flex flex-col gap-1.5">
-              {constitution.worldRules.map(rule => (
-                <li key={rule} className="flex items-start gap-2 text-xs leading-relaxed text-white/70">
-                  <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-white/30" />
-                  <span className="min-w-0 break-words">{rule}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EmptyNote>No permanent world rules recorded for this story.</EmptyNote>
-          )}
-        </WorkspaceCard>
-
-        <WorkspaceCard icon={<ScrollText size={13} />} title="Permanent Generation & Effect Rules">
-          <p className="text-[11px] leading-relaxed text-white/50">
-            The standing instructions every chapter is written under. They ship inside the packet and
-            go straight to the writing call — they are not separate generation steps.
-          </p>
-          <Collapsible title="System instruction" meta={charCount(generationRules.systemInstruction)} copyText={generationRules.systemInstruction}>
-            <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-white/60 [overflow-wrap:anywhere]">{generationRules.systemInstruction}</pre>
-          </Collapsible>
-          <Collapsible title="Permanent writing instructions" meta={charCount(generationRules.permanentWritingInstructions)} copyText={generationRules.permanentWritingInstructions}>
-            <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-white/60 [overflow-wrap:anywhere]">{generationRules.permanentWritingInstructions}</pre>
-          </Collapsible>
-          <Collapsible title="Chapter-effect rules" meta={charCount(generationRules.effectRules)} copyText={generationRules.effectRules}>
-            <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-white/60 [overflow-wrap:anywhere]">{generationRules.effectRules}</pre>
-          </Collapsible>
-        </WorkspaceCard>
       </div>
-    </WorkspaceRegion>
+    </details>
   );
 }
 
@@ -239,11 +289,12 @@ function HandoffSummary({ handoff }: { handoff: ChapterHandoff }) {
   );
 }
 
-function StepShell({ step, title, icon, aside, children }: {
+function StepShell({ step, title, icon, aside, contentClassName, children }: {
   step: number;
   title: string;
   icon: ReactNode;
   aside?: ReactNode;
+  contentClassName?: string;
   children: ReactNode;
 }) {
   return (
@@ -252,6 +303,7 @@ function StepShell({ step, title, icon, aside, children }: {
       kicker={`Step ${step} of 4`}
       title={title}
       headerAside={aside}
+      contentClassName={contentClassName}
     >
       {children}
     </WorkspaceCard>
@@ -620,36 +672,99 @@ function TechnicalDetails({ run }: { run: ChapterPipelineRun }) {
 /* -------------------------------------------------------------------------- */
 
 /**
- * The Development Chapter Generation workspace: permanent story rules on top,
- * the current four-stage run below it, and all raw JSON tucked into one
- * collapsed Technical Details section. The Reference inspector stays the
- * technical comparison.
+ * The Development Chapter Generation workspace: Permanent Story Rules collapse
+ * to one compact line, the Current Chapter Run is a four-stage stepper that
+ * shows one stage at a time, and all raw JSON stays inside one collapsed
+ * Technical Details section. The Reference inspector stays the technical
+ * comparison.
  */
 export function ChapterGenerationWorkspace({ run }: ChapterGenerationWorkspaceProps) {
+  const [activeStage, setActiveStage] = useState<ChapterPipelineStageKey>("manifest-chapter");
+  const navigationRef = useRef<HTMLDivElement>(null);
   const chapterForReading = run.repairApplied ? run.finalOutput : run.manifestedChapter;
+  const activeStageMeta = RUN_STAGES.find(stage => stage.key === activeStage) ?? RUN_STAGES[0];
+
+  const selectStage = (key: ChapterPipelineStageKey) => {
+    setActiveStage(key);
+    const navigation = navigationRef.current;
+    if (navigation && typeof navigation.scrollIntoView === "function") {
+      navigation.scrollIntoView({ block: "start" });
+    }
+  };
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 overflow-x-hidden px-3 py-6 sm:px-4">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 overflow-x-hidden px-3 py-6 sm:px-4">
       <PermanentStoryRules packet={run.chapterPacket} />
 
-      <WorkspaceRegion
-        title="Current Chapter Run"
-        description="Everything on this run changes chapter to chapter: one packet assembled in code, one plan, one manifested chapter, one processing result."
-        headerAside={<Chip tone="cyan">{run.chapterPacket.arcChapterPosition.display}</Chip>}
-      >
-        <div className="flex flex-col gap-4">
-          <ChapterPacketStep packet={run.chapterPacket} />
-          <ChapterPlanStep run={run} />
-          <StepShell step={3} title="Manifested Chapter" icon={<PenLine size={13} />}>
-            <ManifestedChapterView
-              chapter={chapterForReading}
-              title={run.chapterPacket.chapterMission.title}
-              repaired={run.repairApplied}
-            />
-          </StepShell>
-          <ChapterResultsStep run={run} />
+      <div className="flex min-w-0 flex-col gap-3">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold uppercase tracking-widest text-white/90">Current Chapter Run</h2>
+            <p className="mt-0.5 max-w-2xl text-[11px] leading-relaxed text-white/40">
+              One packet assembled in code, one plan, one manifested chapter, one processing result.
+            </p>
+          </div>
+          <Chip tone="cyan">{run.chapterPacket.arcChapterPosition.display}</Chip>
         </div>
-      </WorkspaceRegion>
+
+        {/* Sticky stepper — stays reachable without scrolling through the run. */}
+        <div
+          ref={navigationRef}
+          className="sticky top-0 z-30 -mx-3 bg-[#04060d]/95 px-3 py-2 backdrop-blur sm:-mx-4 sm:px-4"
+        >
+          <div
+            role="tablist"
+            aria-label="Chapter run stages"
+            className="grid grid-cols-2 gap-1.5 sm:grid-cols-4"
+          >
+            {RUN_STAGES.map(stage => {
+              const selected = stage.key === activeStage;
+              return (
+                <button
+                  key={stage.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  onClick={() => selectStage(stage.key)}
+                  className={`flex min-w-0 items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-xs transition-colors ${
+                    selected
+                      ? "border-cyan-500/50 bg-cyan-500/15 text-cyan-100"
+                      : "border-white/10 bg-white/5 text-white/55 hover:bg-white/10 hover:text-white/80"
+                  }`}
+                >
+                  <span className={`shrink-0 font-mono text-[10px] ${selected ? "text-cyan-200/70" : "text-white/30"}`}>
+                    {stage.step}
+                  </span>
+                  <span className="shrink-0">{stage.icon}</span>
+                  <span className="min-w-0 truncate font-medium">{stage.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div role="tabpanel" aria-label={activeStageMeta.label} className="min-w-0">
+          {activeStage === "assemble-chapter-packet" && (
+            <ChapterPacketStep packet={run.chapterPacket} />
+          )}
+          {activeStage === "plan-chapter" && <ChapterPlanStep run={run} />}
+          {activeStage === "manifest-chapter" && (
+            <StepShell
+              step={3}
+              title="Manifested Chapter"
+              icon={<PenLine size={13} />}
+              contentClassName="gap-4 px-3 py-4 sm:px-6 sm:py-6"
+            >
+              <ManifestedChapterView
+                chapter={chapterForReading}
+                title={run.chapterPacket.chapterMission.title}
+                repaired={run.repairApplied}
+              />
+            </StepShell>
+          )}
+          {activeStage === "process-result" && <ChapterResultsStep run={run} />}
+        </div>
+      </div>
 
       <TechnicalDetails run={run} />
     </div>

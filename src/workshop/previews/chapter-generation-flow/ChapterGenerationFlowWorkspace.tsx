@@ -120,10 +120,9 @@ export function ChapterGenerationFlowWorkspace() {
         />
       )}
       renderDevelopment={() => (
-        <DevelopmentChapterGenerationWorkspace
-          key={`development-${scenarioId}-${rhythmScenarioId}-${proseOverride}`}
-          run={developmentRun}
-        />
+        // No remount key: the workspace keeps its selected stage while the
+        // scenario, rhythm, and Cultural Prose controls update the run data.
+        <DevelopmentChapterGenerationWorkspace run={developmentRun} />
       )}
     />
   );

@@ -16,11 +16,13 @@ and formatting logic while replacing live provider and persistence boundaries wi
 deterministic adapters.
 
 Reference keeps the raw JSON inspector as the technical comparison. Development is
-now a readable Chapter Generation workspace: Permanent Story Rules on top, the
-Current Chapter Run as four steps (packet, plan, manifested chapter, results), and
-all raw packets, prompts, tokens, and JSON in one collapsed Technical Details
-section. Development consumes the structured `ChapterPipelineRun` directly — it
-never re-parses the serialized stage JSON.
+now a readable Chapter Generation workspace: Permanent Story Rules collapse to one
+compact line (closed by default, one-line digest visible), and the Current Chapter
+Run is a four-stage stepper — packet, plan, manifested chapter, results — that
+shows one stage at a time behind sticky navigation, with the manifested chapter
+taking the main reading space. All raw packets, prompts, tokens, and JSON stay in
+one collapsed Technical Details section. Development consumes the structured
+`ChapterPipelineRun` directly — it never re-parses the serialized stage JSON.
 
 Reference and Development run the same shared pipeline foundation. Development
 still owns its Cultural Prose override and rhythm/Fate-pressure preview controls,
@@ -184,9 +186,11 @@ architecture.
 Focused pipeline tests cover the four stage keys, Stage 1 purity, normal and repair
 call counts, permanent-rule behavior, planning ownership of Fate/effects, processing
 ownership of anchors/proposed state, retry immutability, and model-visible position.
-Focused UI tests cover the Development workspace: permanent-rules separation, the
-four readable steps, prose/panel/effect-marker rendering, mock-output labeling,
-collapsed Technical Details, and control reactivity.
+Focused UI tests cover the Development workspace: stepper navigation shows exactly
+one stage and reaches all four, sticky/desktop/mobile navigation structure,
+Permanent Story Rules open/close, the manifested chapter's reading space, truthful
+clipboard success/failure states, control reactivity without losing the selected
+stage, and raw JSON staying inside collapsed Technical Details.
 
 ## Workshop history
 
@@ -195,6 +199,7 @@ collapsed Technical Details, and control reactivity.
 - **2026-08-08:** Pass 1 centralized shared packet-backed context assembly across both generation adapters.
 - **2026-08-08:** Pass 2 replaced both ten-step orchestrators with one real four-stage pipeline and three normal call boundaries plus conditional repair/reprocessing.
 - **2026-08-08:** Pass 3 rebuilt the Development pane as a readable Chapter Generation workspace (Permanent Story Rules, four run steps, collapsed Technical Details) consuming the structured `ChapterPipelineRun` directly; the Reference inspector is unchanged.
+- **2026-08-08:** Pass 3 usability: the run became a sticky four-stage stepper showing one stage at a time (Manifested Chapter by default, with the main reading space), Permanent Story Rules collapsed to a compact digest closed by default, and copy controls now report clipboard success/failure truthfully.
 
 ## Transfer notes
 

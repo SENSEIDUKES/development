@@ -1,21 +1,47 @@
-import { ChevronRight, Copy } from "lucide-react";
+import { Check, ChevronRight, Copy, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
-/** Small clipboard control shared by every debugging surface in the workspace. */
+export type CopyState = "idle" | "copied" | "failed";
+
+/**
+ * Reports the clipboard result truthfully: "Copied" only after a confirmed
+ * successful write, "Copy failed" when clipboard access is unavailable or
+ * rejects (for example, denied permission or an insecure context).
+ */
 export function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
+  const [state, setState] = useState<CopyState>("idle");
+
+  const handleCopy = async () => {
+    const clipboard = typeof navigator !== "undefined" ? navigator.clipboard : undefined;
+    let nextState: CopyState = "failed";
+    if (clipboard?.writeText) {
+      try {
+        await clipboard.writeText(text);
+        nextState = "copied";
+      } catch {
+        nextState = "failed";
+      }
+    }
+    setState(nextState);
+    setTimeout(() => setState("idle"), 1200);
+  };
+
   return (
     <button
       type="button"
       onClick={() => {
-        void navigator.clipboard?.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1200);
+        void handleCopy();
       }}
-      className="flex shrink-0 items-center gap-1 rounded border border-white/10 px-2 py-1 text-[10px] uppercase tracking-widest text-white/50 transition-colors hover:border-white/30 hover:text-white/80"
+      className={`flex shrink-0 items-center gap-1 rounded border px-2 py-1 text-[10px] uppercase tracking-widest transition-colors ${
+        state === "copied"
+          ? "border-emerald-500/40 text-emerald-200/90"
+          : state === "failed"
+            ? "border-rose-500/40 text-rose-200/90"
+            : "border-white/10 text-white/50 hover:border-white/30 hover:text-white/80"
+      }`}
     >
-      <Copy size={11} />
-      {copied ? "Copied" : "Copy"}
+      {state === "copied" ? <Check size={11} /> : state === "failed" ? <X size={11} /> : <Copy size={11} />}
+      {state === "copied" ? "Copied" : state === "failed" ? "Copy failed" : "Copy"}
     </button>
   );
 }
@@ -91,12 +117,15 @@ export function WorkspaceCard({
   kicker,
   title,
   headerAside,
+  contentClassName = "gap-3 px-3 py-3",
   children,
 }: {
   icon?: ReactNode;
   kicker?: string;
   title: ReactNode;
   headerAside?: ReactNode;
+  /** Body layout override — used to give the manifested chapter its reading space. */
+  contentClassName?: string;
   children: ReactNode;
 }) {
   return (
@@ -111,33 +140,7 @@ export function WorkspaceCard({
         </div>
         {headerAside}
       </header>
-      <div className="flex flex-col gap-3 px-3 py-3">{children}</div>
+      <div className={`flex min-w-0 flex-col ${contentClassName}`}>{children}</div>
     </section>
-  );
-}
-
-/** Top-level workspace region heading (Permanent Story Rules / Current Chapter Run). */
-export function WorkspaceRegion({
-  title,
-  description,
-  headerAside,
-  children,
-}: {
-  title: string;
-  description: string;
-  headerAside?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <div className="flex min-w-0 flex-col gap-3">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="min-w-0">
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-white/90">{title}</h2>
-          <p className="mt-0.5 max-w-2xl text-[11px] leading-relaxed text-white/40">{description}</p>
-        </div>
-        {headerAside}
-      </div>
-      {children}
-    </div>
   );
 }

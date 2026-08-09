@@ -152,7 +152,10 @@ server/chapter-generation/
   modelCalls.ts                Plan, Manifest, Process, and conditional Repair adapters
   execute.ts                   adapter, code-only packet assembly, and async pipeline
   http.ts                      safe GET/POST HTTP boundary
-api/chapter-generation.ts      deployed serverless entry point
+  vercelHandler.ts             typed Vercel request/response adapter
+api/chapter-generation.js      deployed shim for the generated server bundle
+scripts/buildChapterGenerationApi.mjs
+                               bundles the server graph without changing shared ESM imports
 ```
 
 ## Preserved and intentionally changed behavior

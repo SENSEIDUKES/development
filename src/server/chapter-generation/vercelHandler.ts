@@ -1,4 +1,4 @@
-import { handleChapterGenerationHttp } from "../src/server/chapter-generation/http";
+import { handleChapterGenerationHttp } from "./http";
 
 export const maxDuration = 300;
 

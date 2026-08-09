@@ -1,6 +1,7 @@
 .vercel
 node_modules
 dist
+generated/chapter-generation-api
 *.tsbuildinfo
 vite-preview.log
 .firebase

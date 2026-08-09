@@ -17,7 +17,6 @@ import { useChapterTranslation } from "../shared/stubs";
 import { useAppStore } from "../shared/stubs";
 import { selectIsGenerating } from "../shared/stubs";
 import { LOCAL_ONLY_MODE } from "../shared/stubs";
-import { AlterFatePanel } from "./AlterFatePanel";
 import { ReaderSettings } from "./ReaderSettings";
 import { CosmicBookmarksPanel } from "./CosmicBookmarksPanel";
 import { useReaderPlayback, extractSFXCues } from "../shared/readerPlayback";
@@ -46,7 +45,7 @@ interface ReaderChamberProps {
   onToggleRead: (chapterNumber: number) => void;
   arcTitle: string;
   onBack?: () => void;
-  onSwitchTab?: (tab: "reader" | "codex" | "memory") => void;
+  onSwitchTab?: (tab: "reader" | "codex" | "memory" | "alter-fate") => void;
   activeStory: StoryWorld;
   updateStoryFields: UpdateStoryFields;
   handleAlterFate?: (
@@ -102,7 +101,6 @@ export default function ReaderChamber({
   // WORKSHOP: dropped unused production selectors (stories, activeStoryId,
   // saveStories, routingConfig) — nothing in the chamber reads them.
 
-  const [isAlterFateOpen, setIsAlterFateOpen] = useState(false);
   const [showFateCodex, setShowFateCodex] = useState(false);
   const [isCheckingConsistency, setIsCheckingConsistency] = useState(false);
   const [consistencyWarnings, setConsistencyWarnings] = useState<string[] | null>(null);
@@ -929,8 +927,7 @@ export default function ReaderChamber({
         />
       )}
 
-      {/* HEADER: Navigation & controls only (Back, title, Audio, Settings,
-          Quick Action) */}
+      {/* HEADER: Navigation & controls only (Back, title, Audio, Settings) */}
       {!isReaderFullscreen && (
         <ReaderHeader
           arcTitle={arcTitle}
@@ -939,8 +936,6 @@ export default function ReaderChamber({
           onOpenAudioControls={handleOpenAudioControls}
           showReaderSettings={showReaderSettings}
           setShowReaderSettings={setShowReaderSettings}
-          onAlterFate={handleAlterFate ? () => setIsAlterFateOpen(true) : undefined}
-          alterFateLockMessage={alterFateLockMessage}
           getHeaderThemeClasses={getHeaderThemeClasses}
           isVisible={isHeaderVisible}
         />
@@ -1076,6 +1071,15 @@ export default function ReaderChamber({
           count: activeBookmarks.length,
           onToggle: () => setShowBookmarksPanel(!showBookmarksPanel),
         }}
+        alterFate={
+          handleAlterFate
+            ? {
+                enabled: !alterFateLockMessage,
+                lockMessage: alterFateLockMessage,
+                onOpen: () => onSwitchTab && onSwitchTab("alter-fate"),
+              }
+            : undefined
+        }
       />
 
       {/* THE CHRONICLE ANCHORS (BOOKMARKS DRAW PANEL) */}
@@ -1087,18 +1091,6 @@ export default function ReaderChamber({
         handleRemoveBookmark={handleRemoveBookmark}
         handleJumpToBookmark={handleJumpToBookmark}
       />
-
-      {handleAlterFate && (
-        <AlterFatePanel
-          isOpen={isAlterFateOpen}
-          onClose={() => setIsAlterFateOpen(false)}
-          chapterNumber={selectedChapterNum}
-          onConfirmFork={(direction, prompt) => {
-            setIsAlterFateOpen(false);
-            handleAlterFate(selectedChapterNum, direction, prompt);
-          }}
-        />
-      )}
 
       {/* Small Resume Affordance — shown when narration is playing but the
           user took manual control, so automated movement has yielded. */}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ArrowRight, ListMusic, MessageSquare } from 'lucide-react';
+import { ArrowLeft, ArrowRight, GitBranch, ListMusic, MessageSquare } from 'lucide-react';
 import { ReaderControlsProps } from './types';
 import { PlaybackControls } from './PlaybackControls';
 
@@ -8,15 +8,17 @@ const ACTION_BUTTON_CLASSES =
 
 /**
  * The bottom action bar carries reading actions only — Previous Chapter,
- * Comments, Play/Pause (primary center action), Codex, Next Chapter — in one
- * unified row on every breakpoint. Settings and audio configuration live in
- * the header; Alter Fate lives in the header Quick Action menu.
+ * Comments, Play/Pause (primary center action), Codex, Alter Fate, Next
+ * Chapter — in one unified row on every breakpoint. Settings and audio
+ * configuration live in the header. Alter Fate is its own reader tab
+ * (switched via `onSwitchTab`), not a modal.
  */
 export function ReaderControls({
   selectedChapter,
   navigation,
   playback,
   comments,
+  alterFate,
 }: ReaderControlsProps) {
   const { selectedChapterNum, maxChapterNum, navigatePrev, navigateNext, onSwitchTab } = navigation;
 
@@ -73,6 +75,20 @@ export function ReaderControls({
         >
           <ListMusic size={16} />
         </button>
+
+        {/* Alter Fate — opens the dedicated Alter Fate reader tab */}
+        {alterFate && (
+          <button
+            type="button"
+            onClick={alterFate.onOpen}
+            disabled={!alterFate.enabled}
+            aria-label="Alter Fate"
+            title={alterFate.lockMessage || "Alter Fate"}
+            className={`${ACTION_BUTTON_CLASSES} enabled:hover:text-portal`}
+          >
+            <GitBranch size={16} />
+          </button>
+        )}
 
         {/* Next Chapter */}
         <button

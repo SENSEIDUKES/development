@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ReferenceReaderChamber from '../../../components/reader-chamber/reference/ReaderChamber';
 import DevelopmentReaderChamber from '../../../components/reader-chamber/development/ReaderChamber';
+import { AlterFatePage } from '../../../components/reader-chamber/development/AlterFatePage';
 import type {
   ReaderPreferences,
   UpdateStoryFields,
@@ -31,11 +32,11 @@ import {
 } from './previewStates';
 import '../../../components/reader-chamber/shared/reader-chamber.css';
 
-type ReaderTab = 'reader' | 'codex' | 'memory';
+type ReaderTab = 'reader' | 'codex' | 'memory' | 'alter-fate';
 
 /** Workshop-only placeholder shown when the in-chamber tab bar switches away
  *  from the reader. The Codex menu system is a separate future Workshop job. */
-function CodexTabPlaceholder({ tab, onBack }: { tab: ReaderTab; onBack: () => void }) {
+function CodexTabPlaceholder({ tab, onBack }: { tab: 'codex' | 'memory'; onBack: () => void }) {
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-6 py-16">
       <div className="max-w-md rounded-xl border border-dashed border-cyan-500/40 bg-cyan-950/10 p-8 text-center">
@@ -62,16 +63,33 @@ function CodexTabPlaceholder({ tab, onBack }: { tab: ReaderTab; onBack: () => vo
   );
 }
 
-function PreviewCanvas({ children }: { children: React.ReactElement }) {
+function PreviewCanvas({
+  children,
+  selectedChapterNum,
+  onConfirmFork,
+}: {
+  children: React.ReactElement;
+  selectedChapterNum: number;
+  onConfirmFork: (chapterNumber: number, direction: string, customPrompt: string) => void;
+}) {
   const [activeTab, setActiveTab] = useState<ReaderTab>('reader');
   const chamber = React.cloneElement(children, {
     onSwitchTab: (tab: ReaderTab) => setActiveTab(tab),
   } as Partial<unknown>);
   return (
     <div className="relative">
-      {activeTab === 'reader' ? (
-        chamber
-      ) : (
+      {activeTab === 'reader' && chamber}
+      {activeTab === 'alter-fate' && (
+        <AlterFatePage
+          onBack={() => setActiveTab('reader')}
+          chapterNumber={selectedChapterNum}
+          onConfirmFork={(direction, customPrompt) => {
+            setActiveTab('reader');
+            onConfirmFork(selectedChapterNum, direction, customPrompt);
+          }}
+        />
+      )}
+      {(activeTab === 'codex' || activeTab === 'memory') && (
         <CodexTabPlaceholder tab={activeTab} onBack={() => setActiveTab('reader')} />
       )}
     </div>
@@ -130,11 +148,9 @@ export function ReaderChamberWorkspace() {
         // The Comments button reuses the Chronicle Anchors drawer for now.
         clickInChamber((b) => b.getAttribute('aria-label') === 'Comments');
       } else if (scenario.uiAction === 'alter-fate') {
-        // Alter Fate lives in the header Quick Action menu — open it first
-        // (discrete click updates flush synchronously, so the menu item is
-        // clickable immediately after).
-        clickInChamber((b) => b.getAttribute('aria-label') === 'Quick Actions');
-        clickInChamber((b) => (b.getAttribute('aria-label') || '').includes('Alter Fate'));
+        // Alter Fate is its own reader tab now — the bottom-bar button
+        // switches straight to it.
+        clickInChamber((b) => b.getAttribute('aria-label') === 'Alter Fate');
       } else if (scenario.uiAction === 'seal') {
         clickInChamber((b) => /Seal Chapter|^Publish$/.test(b.textContent?.trim() ?? ''));
       }
@@ -364,12 +380,20 @@ export function ReaderChamberWorkspace() {
       controls={controls}
       allowCompare
       renderReference={() => (
-        <PreviewCanvas key={`reference-${activeState}`}>
+        <PreviewCanvas
+          key={`reference-${activeState}`}
+          selectedChapterNum={selectedChapterNum}
+          onConfirmFork={chamberProps.handleAlterFate}
+        >
           <ReferenceReaderChamber {...chamberProps} />
         </PreviewCanvas>
       )}
       renderDevelopment={() => (
-        <PreviewCanvas key={`development-${activeState}`}>
+        <PreviewCanvas
+          key={`development-${activeState}`}
+          selectedChapterNum={selectedChapterNum}
+          onConfirmFork={chamberProps.handleAlterFate}
+        >
           <DevelopmentReaderChamber {...chamberProps} />
         </PreviewCanvas>
       )}

@@ -4,7 +4,7 @@
 - **Source location:** `src/components/ReaderChamber.tsx` (verified on `main` @ `16e9b6d`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-07-31
+- **Last Workshop update:** 2026-07-31 (Alter Fate moved to its own reader tab)
 - **Last source comparison:** 2026-07-31
 - **Replica status:** faithful replica
 
@@ -27,6 +27,23 @@
   columns from `sm`/`lg` up, long labels wrap instead of overflowing, every control keeps a
   ~44px minimum touch target, and the panel clips horizontal overflow (verified at 390px and
   1280px: zero horizontal page overflow in all four categories).
+
+- **2026-07-31:** Removed the header's last action button (the Quick Action /
+  History-icon slot) so the header is exactly Back, title, Audio, Settings —
+  matching the target design. **Alter Fate (Branch)** moved out of that menu
+  entirely and became its own reader tab, switched via the existing
+  `onSwitchTab` mechanism (the same one `codex`/`memory` already use) instead
+  of a centered modal. The bottom action bar gained a new **Alter Fate**
+  button (branch icon, between Codex and Next Chapter) that calls
+  `onSwitchTab("alter-fate")`; it's disabled with the lock-message tooltip
+  when `getFateLockMessage` returns one, same as before. `AlterFatePanel.tsx`
+  (the old modal) was deleted from `development/` and replaced by
+  `development/AlterFatePage.tsx` — the same fork-template form, laid out as
+  a full page (sticky header with Back button + GitBranch title, no
+  backdrop/overlay chrome) instead of a centered dialog. The Workshop
+  `ReaderChamberWorkspace.tsx` renders `AlterFatePage` when its local
+  `activeTab === 'alter-fate'`, alongside the existing Codex/Memory
+  placeholder swap.
 
 ## Folder layout
 
@@ -54,7 +71,8 @@ reference/                    — untouched replica of production, locked
 development/                  — active Workshop version; started as an exact copy of reference/
   (same files, except: ReaderSettings.tsx replaces ReaderPreferencesPanel.tsx;
    ReaderControls/ no longer contains ImmersionSettings.tsx or
-   ChapterNavigation.tsx; AudioWidget.tsx was removed — see history)
+   ChapterNavigation.tsx; AudioWidget.tsx was removed; AlterFatePage.tsx
+   replaces AlterFatePanel.tsx — see history)
 shared/                       — code genuinely identical between the two forks
   types.ts                    — ReaderChapter + composing types, StoryBlock/metadata/SystemEvent/
                                 WorldCardEvent/FateResultData, StoryCuePayload, ContextManifest,
@@ -275,7 +293,10 @@ the import rewrites (`../shared/X` → `../lib/X` / `../hooks/X` / `../store/X`,
   bar is now inline in `ReaderControls/index.tsx`)
 - `development/CosmicBookmarksPanel.tsx` → `src/components/CosmicBookmarksPanel.tsx`
 - `development/VirtualizedList.tsx` → `src/components/VirtualizedList.tsx`
-- `development/AlterFatePanel.tsx` → `src/components/AlterFatePanel.tsx`
+- `development/AlterFatePage.tsx` → `src/components/AlterFatePage.tsx` (new file;
+  on transfer, delete `src/components/AlterFatePanel.tsx` and wire Alter Fate's
+  new entry point — the reader's `onSwitchTab("alter-fate")` handler — the same
+  way `codex`/`memory` tabs are already wired in production)
 - `development/ParticleSystem.tsx` → `src/components/ParticleSystem.tsx`
 - `development/SystemBlock.tsx` → `src/components/SystemBlock.tsx`
 - `development/FateResultCard.tsx` → `src/components/FateResultCard.tsx`

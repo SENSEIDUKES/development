@@ -5,7 +5,7 @@ export interface ChapterNavigationState {
   maxChapterNum: number;
   navigatePrev: () => void;
   navigateNext: () => void;
-  onSwitchTab?: (tab: "reader" | "codex" | "memory") => void;
+  onSwitchTab?: (tab: "reader" | "codex" | "memory" | "alter-fate") => void;
 }
 
 export interface PlaybackState {
@@ -44,9 +44,21 @@ export interface CommentsControl {
   onToggle: () => void;
 }
 
+/**
+ * Alter Fate lives on its own reader tab now, switched via `onSwitchTab`
+ * (see `ChapterNavigationState`) — this just controls the bottom-bar entry
+ * button's enabled/disabled state and tooltip.
+ */
+export interface AlterFateControl {
+  enabled: boolean;
+  lockMessage?: string | null;
+  onOpen: () => void;
+}
+
 export interface ReaderControlsProps {
   selectedChapter: ReaderChapter;
   navigation: ChapterNavigationState;
   playback: PlaybackState;
   comments: CommentsControl;
+  alterFate?: AlterFateControl;
 }

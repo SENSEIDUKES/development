@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ArrowLeft, History, Lock, SlidersHorizontal as Sliders, Volume2, Zap } from 'lucide-react';
+import React from 'react';
+import { ArrowLeft, Lock, SlidersHorizontal as Sliders, Volume2 } from 'lucide-react';
 import { ReaderChapter } from '../shared/types';
 
 interface ReaderHeaderProps {
@@ -9,8 +9,6 @@ interface ReaderHeaderProps {
   onOpenAudioControls: () => void;
   showReaderSettings: boolean;
   setShowReaderSettings: (show: boolean) => void;
-  onAlterFate?: () => void;
-  alterFateLockMessage?: string | null;
   getHeaderThemeClasses: () => string;
   /** Scroll-direction visibility from the chamber. Defaults to pinned visible. */
   isVisible?: boolean;
@@ -20,81 +18,9 @@ const HEADER_BUTTON_CLASSES =
   "p-2 rounded-full border flex items-center justify-center transition-all";
 
 /**
- * Header Quick Action slot — placeholder for the future "last used tool"
- * shortcut. For now it opens a small menu so more actions can be pinned here
- * later; Alter Fate (Branch) is the first entry.
- */
-function QuickActionMenu({
-  onAlterFate,
-  alterFateLockMessage,
-}: {
-  onAlterFate?: () => void;
-  alterFateLockMessage?: string | null;
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen((isOpen) => !isOpen)}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        title="Quick Action"
-        aria-label="Quick Actions"
-        className={`${HEADER_BUTTON_CLASSES} ${
-          open
-            ? "border-portal bg-portal/10 text-portal"
-            : "border-neutral-800 text-neutral-400 hover:text-signal hover:bg-neutral-900"
-        }`}
-      >
-        <History size={14} />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div
-            role="menu"
-            className="absolute right-0 top-full mt-2 z-40 w-56 rounded-lg border border-neutral-800 bg-[#0b0b0b]/95 backdrop-blur-md p-2 shadow-[0_10px_30px_rgba(0,0,0,0.6)]"
-          >
-            <p className="px-2 pb-1.5 text-[9px] font-mono uppercase tracking-[0.18em] text-neutral-600">
-              Quick Actions
-            </p>
-            {onAlterFate && (
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  setOpen(false);
-                  onAlterFate();
-                }}
-                disabled={Boolean(alterFateLockMessage)}
-                title={alterFateLockMessage || 'Alter Fate (Branch)'}
-                aria-label={alterFateLockMessage || 'Alter Fate (Branch)'}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-[11px] font-sc uppercase tracking-wider text-portal transition-colors hover:bg-portal/10 disabled:opacity-45 disabled:cursor-not-allowed"
-              >
-                <Zap size={13} />
-                Alter Fate (Branch)
-              </button>
-            )}
-            {alterFateLockMessage && (
-              <p className="px-2 pt-1 text-[9px] leading-tight text-neutral-500">
-                {alterFateLockMessage}
-              </p>
-            )}
-            <p className="px-2 pt-1.5 text-[9px] leading-tight text-neutral-600">
-              Your last used tools will pin here.
-            </p>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-/**
  * The top header is navigation and controls only: Back, story/chapter title,
- * Audio, Settings, and the Quick Action slot. Reading actions (chapter
- * navigation, comments, play/pause, codex) live in the bottom action bar.
+ * Audio, and Settings. Reading actions (chapter navigation, comments,
+ * play/pause, codex, Alter Fate) live in the bottom action bar.
  */
 export function ReaderHeader({
   arcTitle,
@@ -103,8 +29,6 @@ export function ReaderHeader({
   onOpenAudioControls,
   showReaderSettings,
   setShowReaderSettings,
-  onAlterFate,
-  alterFateLockMessage,
   getHeaderThemeClasses,
   isVisible = true
 }: ReaderHeaderProps) {
@@ -172,11 +96,6 @@ export function ReaderHeader({
         >
           <Sliders size={14} />
         </button>
-
-        <QuickActionMenu
-          onAlterFate={onAlterFate}
-          alterFateLockMessage={alterFateLockMessage}
-        />
       </div>
     </div>
   );

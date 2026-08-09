@@ -19,7 +19,7 @@
     "motion": "^12.43.0",
     "react": "latest",
     "react-dom": "latest",
-    "typescript": "latest",
+    "typescript": "5.9.3",
     "vite": "latest"
   },
   "devDependencies": {

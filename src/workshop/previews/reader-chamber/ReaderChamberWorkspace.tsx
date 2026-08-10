@@ -31,39 +31,13 @@ import {
 } from './previewStates';
 import '../../../components/reader-chamber/shared/reader-chamber.css';
 
-type ReaderTab = 'reader' | 'codex' | 'memory';
+import { ReaderCodexView } from '../../../components/reader-chamber/development/ReaderCodexView';
 
-/** Workshop-only placeholder shown when the in-chamber tab bar switches away
- *  from the reader. The Codex menu system is a separate future Workshop job. */
-function CodexTabPlaceholder({ tab, onBack }: { tab: ReaderTab; onBack: () => void }) {
-  return (
-    <div className="flex min-h-[60vh] items-center justify-center px-6 py-16">
-      <div className="max-w-md rounded-xl border border-dashed border-cyan-500/40 bg-cyan-950/10 p-8 text-center">
-        <p className="mb-3 text-[10px] font-mono uppercase tracking-[0.25em] text-cyan-200/60">
-          Workshop placeholder — not production UI
-        </p>
-        <h3 className="font-display text-lg text-signal">
-          Codex menu system — separate Workshop job
-        </h3>
-        <p className="mt-2 text-sm text-neutral-400">
-          The “{tab}” tab is intentionally excluded from the Reader Chamber replica
-          (no CodexHovercard, no codex highlighting, no codex sheets). The tab bar
-          itself is faithful and functional.
-        </p>
-        <button
-          type="button"
-          onClick={onBack}
-          className="mt-5 rounded-full border border-portal/50 px-5 py-2 text-xs font-sc uppercase tracking-widest text-portal transition-colors hover:bg-portal hover:text-void"
-        >
-          Back to Reader
-        </button>
-      </div>
-    </div>
-  );
-}
+type ReaderTab = 'reader' | 'codex' | 'memory';
 
 function PreviewCanvas({ children }: { children: React.ReactElement }) {
   const [activeTab, setActiveTab] = useState<ReaderTab>('reader');
+  const activeStory = useAppStore((s) => s.stories[0]);
   const chamber = React.cloneElement(children, {
     onSwitchTab: (tab: ReaderTab) => setActiveTab(tab),
   } as Partial<unknown>);
@@ -72,7 +46,12 @@ function PreviewCanvas({ children }: { children: React.ReactElement }) {
       {activeTab === 'reader' ? (
         chamber
       ) : (
-        <CodexTabPlaceholder tab={activeTab} onBack={() => setActiveTab('reader')} />
+        <ReaderCodexView
+          memory={activeStory?.memory as any}
+          mcName={activeStory?.mcName}
+          currentPowerStage={activeStory?.memory?.currentPowerStage}
+          onBackToReader={() => setActiveTab('reader')}
+        />
       )}
     </div>
   );

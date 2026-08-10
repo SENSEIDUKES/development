@@ -1,34 +1,27 @@
 # Chapter Generation
 
 - **Source repository:** `SENSEIDUKES/Light-Novels`
-- **Source location:** `src/server/routes/storyRouter.ts` and its chapter-context, prompt, handoff, formatting, and glossary dependencies
+- **Source location:** `src/aiRouter.ts`, `src/server/routes/storyRouter.ts`, and the Story Seed, prompt, handoff, formatting, and context dependencies
 - **Workshop preview:** `?preview=chapter-generation-flow`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-08
-- **Last source comparison:** 2026-07-31
-- **Replica status:** Pass 3 Development workspace rebuilt around the four-stage pipeline; provider calls remain deterministic Workshop adapters
+- **Last Workshop update:** 2026-08-09
+- **Last source comparison:** 2026-08-09
+- **Replica status:** Chapter Generation 1.0 Pass 1 manifests one real chapter from a finalized Story Seed and World Blueprint through server-side Gemini calls
 
 ## Purpose
 
-This Workshop entry exposes the Chapter Generation 1.0 backend flow against safe
-local fixtures. It uses the ported context assembly, budgeting, prompt, contract,
-and formatting logic while replacing live provider and persistence boundaries with
-deterministic adapters.
+This Workshop entry proves one real Chapter Generation 1.0 run without creating a
+second Story Seed contract. Development accepts a saved or uploaded portable Story
+Seed v3 artifact with its sibling `WorldBlueprint`, adapts those canonical objects
+into the existing four packet contracts, and calls Gemini through a same-origin,
+server-only provider boundary. No fixture value is used to fill a missing mapping.
 
-Reference keeps the raw JSON inspector as the technical comparison. Development is
-now a readable Chapter Generation workspace: Permanent Story Rules collapse to one
-compact line (closed by default, one-line digest visible), and the Current Chapter
-Run is a four-stage stepper — packet, plan, manifested chapter, results — that
-shows one stage at a time behind sticky navigation, with the manifested chapter
-taking the main reading space. All raw packets, prompts, tokens, and JSON stay in
-one collapsed Technical Details section. Development consumes the structured
-`ChapterPipelineRun` directly — it never re-parses the serialized stage JSON.
-
-Reference and Development run the same shared pipeline foundation. Development
-still owns its Cultural Prose override and rhythm/Fate-pressure preview controls,
-but those controls feed packet assembly or planning rather than creating additional
-generation steps, and their effects are visible immediately in the readable
-workspace.
+The primary Development experience is a small test harness: select or upload the
+artifact, enter the separately configured Development access token, choose a
+server-configured model, optionally add a temporary instruction,
+manifest one chapter, read it, and inspect per-call and total token usage. The
+existing four-stage workspace remains available in a collapsed Diagnostics section.
+Reference remains the locked deterministic inspector.
 
 ## Four actual stages
 
@@ -37,13 +30,13 @@ workspace.
 `assembleChapterPacket()` is pure code assembly and makes no model call. It builds
 one model-visible packet containing:
 
-- Story Constitution, excluding the unresolved legacy Fate-pressure vocabulary bridge
-- Living Story State
-- Chapter Mission and contract
+- Story Constitution, retaining the exact normalized Story Seed and World Blueprint
+- starting Living Story State built only from canonical Story Seed/Blueprint data
+- Chapter 1 Mission and contract, sourced first from `WorldBlueprint.firstArcPromise`
 - Generation Rules and consolidated permanent writing/formatting instructions
 - existing anchors and budgeted relevant context
 - Cultural Prose, accessibility, glossary, world, narration, and effect rules
-- the explicit arc/chapter position, for example `Arc 1 — Chapter 6/100`
+- the explicit starting arc/chapter position, `Arc 1 — Chapter 1/100`
 
 Permanent Story Seed choices and story rules belong here automatically. They are
 not independent generation stages or calls.
@@ -60,9 +53,8 @@ chapter-specific direction together:
 - scene progression and pacing
 - intended ending and next-chapter handoff target
 
-The result is one `ChapterPlan`. The canonical Fate Survival configuration stays
-in the packet; Development's preview pressure tier is an explicit planning signal.
-No unapproved Story Seed pressure mapping is inferred.
+The result is one `ChapterPlan`. The canonical Fate Survival configuration reaches
+planning directly. No unapproved legacy `FatePressureTier` mapping is inferred.
 
 ### 3. Manifest Chapter
 
@@ -100,11 +92,10 @@ Conditional path:
 1. `repairChapter`, only after a serious processing finding
 2. `processResult` again for the repaired chapter, so anchors and proposed state match the repaired text
 
-Stage 1 and all permanent story rules make no model call. The Workshop adapters
-implement these call contracts synchronously and locally so previewing never
-consumes credits, performs network requests, or writes story data. Production
-adapters should preserve the same inputs and outputs behind their asynchronous
-provider boundary rather than importing the synchronous Workshop runner unchanged.
+Stage 1 and all permanent story rules make no model call. Development uses the
+asynchronous pipeline and server-side Gemini provider for the three normal calls.
+Reference continues to use deterministic local adapters. Neither path saves a
+chapter or commits the proposed Living Story State.
 
 ## What the former steps became
 
@@ -135,22 +126,37 @@ inspector.
 shared/
   assembleGeneration.ts       Reference adapter
   assembleGenerationDev.ts    Development adapter and preview-only controls
-  packets/                     Pass 1 contracts, trace, flags, and context assembly
+  liveChapterGeneration.ts    shared HTTP request/response contracts
+  packets/
+    storySeedChapterAdapter.ts canonical Story Seed/Blueprint bridge
   pipeline/
     assembleChapterPacket.ts   pure Stage 1 assembly
     chapterEffectRules.ts      permanent seven-category effect rules
     index.ts                   portable pipeline exports
     runChapterPipeline.ts      shared four-stage orchestration
+    runChapterPipelineAsync.ts live asynchronous orchestration
     types.ts                   packet, plan, processing, and Workshop call contracts
+    usage.ts                   per-call token/time records and aggregation
     workshopModelCalls.ts      deterministic preview planning/processing adapters
   lib/                         ported context, prompt, handoff, and formatting helpers
 reference/
   ChapterGenerationInspector.tsx   unchanged raw-JSON inspector (technical comparison)
 development/
-  ChapterGenerationWorkspace.tsx   readable Pass 3 workspace (permanent rules + four steps)
+  ChapterGenerationTestFlow.tsx    primary select/upload/model/manifest/read flow
+  ChapterGenerationWorkspace.tsx   four-stage Diagnostics workspace
   ManifestedChapterView.tsx        prose/dialogue/system-panel/effect-marker rendering
   workspaceUi.tsx                  shared cards, disclosures, chips, copy controls
   chapterGenerationWorkspace.test.tsx
+server/chapter-generation/
+  config.ts                    environment-only model allow-list
+  provider.ts                  server-only Gemini provider and usage capture
+  modelCalls.ts                Plan, Manifest, Process, and conditional Repair adapters
+  execute.ts                   adapter, code-only packet assembly, and async pipeline
+  http.ts                      safe GET/POST HTTP boundary
+  vercelHandler.ts             typed Vercel request/response adapter
+api/chapter-generation.js      deployed shim for the generated server bundle
+scripts/buildChapterGenerationApi.mjs
+                               bundles the server graph without changing shared ESM imports
 ```
 
 ## Preserved and intentionally changed behavior
@@ -166,14 +172,19 @@ architecture.
 
 ## Workshop boundaries
 
-- No live model, database, persistence, R2, credit, queue, or notification call runs.
+- Development makes live Gemini calls only through the server. The Gemini credential
+  never enters browser code; a separate `CHAPTER_GENERATION_ACCESS_TOKEN` authorizes
+  each POST and is held only in page memory after the tester enters it.
+- Calls that complete before a later structured-output failure still return their
+  provider-reported or estimated token/time records for diagnosis.
+- No database, persistence, R2, credit, queue, notification, Story Library, Reader,
+  reward, publishing, or production-data write was added.
 - No real `LivingStoryState` update or chapter advancement is committed.
-- No unresolved Story Seed world-rule, glossary, style, or Fate vocabulary mapping is inferred.
-- The Pass 3 Development workspace is presentation only: no approval, retries,
-  sequential generation, rewards, or Story Library writes were added, and the
-  pipeline architecture and call boundaries are unchanged.
-- Compatibility fields on final `ChapterContent` are attached only at the external
-  inspector boundary from Stage 1 contracts and Stage 4 processing output.
+- One chapter is the complete scope. There is no sequential handoff or multi-chapter run.
+- No unresolved Story Seed world-rule, glossary, Cultural Prose style, accessibility,
+  chapter-title, chapters-per-arc, or legacy Fate vocabulary mapping is inferred.
+- Blueprint `status` is optional and free-form, so Pass 1 defines test eligibility
+  by strict completeness of the current Blueprint fields rather than a guessed status label.
 
 ## Validation
 
@@ -183,14 +194,10 @@ architecture.
 - `npm run build`
 - `npm run validate:chapter-effects`
 
-Focused pipeline tests cover the four stage keys, Stage 1 purity, normal and repair
-call counts, permanent-rule behavior, planning ownership of Fate/effects, processing
-ownership of anchors/proposed state, retry immutability, and model-visible position.
-Focused UI tests cover the Development workspace: stepper navigation shows exactly
-one stage and reaches all four, sticky/desktop/mobile navigation structure,
-Permanent Story Rules open/close, the manifested chapter's reading space, truthful
-clipboard success/failure states, control reactivity without losing the selected
-stage, and raw JSON staying inside collapsed Technical Details.
+Focused tests cover the canonical adapter and its no-fixture-fallback rule, model
+allow-list selection, exact three-call and five-call boundaries, code-only packet
+assembly, token aggregation and estimated-usage labels, provider/API failure
+handling, immutable input state, and the readable live-output/Diagnostics UI.
 
 ## Workshop history
 
@@ -200,6 +207,8 @@ stage, and raw JSON staying inside collapsed Technical Details.
 - **2026-08-08:** Pass 2 replaced both ten-step orchestrators with one real four-stage pipeline and three normal call boundaries plus conditional repair/reprocessing.
 - **2026-08-08:** Pass 3 rebuilt the Development pane as a readable Chapter Generation workspace (Permanent Story Rules, four run steps, collapsed Technical Details) consuming the structured `ChapterPipelineRun` directly; the Reference inspector is unchanged.
 - **2026-08-08:** Pass 3 usability: the run became a sticky four-stage stepper showing one stage at a time (Manifested Chapter by default, with the main reading space), Permanent Story Rules collapsed to a compact digest closed by default, and copy controls now report clipboard success/failure truthfully.
+- **2026-08-09:** Chapter Generation 1.0 Pass 1 connected finalized Story Seed v3 and World Blueprint artifacts to the existing packet contracts, added server-side Gemini Plan/Manifest/Process calls with conditional repair, exposed per-stage token/time usage, and made the one-chapter test harness the primary Development experience while retaining the four-stage workspace as Diagnostics.
+- **2026-08-09:** Protected the live Development model boundary with a separate server-configured bearer token, preserved omitted Blueprint threads during Process Result, and retained completed-call usage when a later stage fails.
 
 ## Transfer notes
 
@@ -213,17 +222,21 @@ service:
 - `src/components/chapter-generation/shared/packets/index.ts`
 - `src/components/chapter-generation/shared/packets/livingStoryState.ts`
 - `src/components/chapter-generation/shared/packets/storyConstitution.ts`
+- `src/components/chapter-generation/shared/packets/storySeedChapterAdapter.ts`
 - `src/components/chapter-generation/shared/packets/types.ts`
 - `src/components/chapter-generation/shared/pipeline/assembleChapterPacket.ts`
 - `src/components/chapter-generation/shared/pipeline/chapterEffectRules.ts`
 - `src/components/chapter-generation/shared/pipeline/index.ts`
 - `src/components/chapter-generation/shared/pipeline/runChapterPipeline.ts`
+- `src/components/chapter-generation/shared/pipeline/runChapterPipelineAsync.ts`
+- `src/components/chapter-generation/shared/pipeline/usage.ts`
 - `src/components/chapter-generation/shared/pipeline/types.ts`
 
 Reuse the source application's existing context, prompt, handoff, Story Seed, and
 chapter types for the imported `shared/lib/*` and `shared/types.ts` dependencies.
-Implement the three model calls and optional repair through the production service's
-async provider client while retaining these structured inputs and outputs.
+Reuse the source application's authenticated provider router when transferring the
+three model calls and optional repair; keep this Workshop's API handler and UI out
+of production until the production generation service explicitly adopts the flow.
 
 Do not copy
 `src/components/chapter-generation/shared/pipeline/workshopModelCalls.ts`,

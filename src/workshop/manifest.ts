@@ -64,13 +64,13 @@ export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'chapter-generation-flow',
     title: 'Chapter Generation',
-    description: 'Readable Chapter Generation workspace around the real four-stage pipeline: permanent story rules separated from the current run — packet, plan, manifested chapter as prose, and results. Reference keeps the raw inspector as the technical comparison.',
+    description: 'Development-only one-chapter manifestation harness using finalized Story Seed and World Blueprint artifacts, server-side Gemini calls, per-stage token usage, and the existing four-stage workspace as Diagnostics.',
     category: 'other',
     version: 'v2.1',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
-      path: 'src/server/routes/storyRouter.ts',
-      lastCompared: '2026-07-31',
+      path: 'src/aiRouter.ts; src/server/routes/storyRouter.ts',
+      lastCompared: '2026-08-09',
     },
   },
   {

@@ -97,7 +97,8 @@ export interface ChapterPlan {
   arcChapterPosition: string;
   rhythmResponse: {
     recentSceneTypes: SceneType[];
-    selectedPressureTier: FatePressureTier;
+    /** Present only when an adapter has an approved legacy pressure-tier source. */
+    selectedPressureTier?: FatePressureTier;
     direction: string;
   };
   selectedScenePath?: ScenePathSelection;
@@ -176,6 +177,14 @@ export interface ChapterGenerationModelCalls {
   manifestChapter(input: ManifestChapterInput): ChapterContent;
   processResult(input: ProcessChapterInput): ChapterProcessingResult;
   repairChapter?(input: RepairChapterInput): ChapterContent;
+}
+
+/** Server/provider boundary for the same calls when model work is asynchronous. */
+export interface AsyncChapterGenerationModelCalls {
+  planChapter(input: PlanChapterInput): Promise<ChapterPlan>;
+  manifestChapter(input: ManifestChapterInput): Promise<ChapterContent>;
+  processResult(input: ProcessChapterInput): Promise<ChapterProcessingResult>;
+  repairChapter?(input: RepairChapterInput): Promise<ChapterContent>;
 }
 
 export interface ChapterPipelineRun {

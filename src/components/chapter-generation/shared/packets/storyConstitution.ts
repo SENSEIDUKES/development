@@ -40,6 +40,10 @@ export type StoryConstitutionSource =
 
 export interface StoryConstitution {
   source: StoryConstitutionSource;
+  /** Exact canonical input retained for real runs; Workshop fixtures never set it. */
+  storySeed?: StorySeedInput;
+  /** Exact reviewed sibling artifact retained for real runs; never folded into Story Seed. */
+  worldBlueprint?: WorldBlueprint;
   mainCharacterName: string;
   genre: string;
   storyTags: string[];
@@ -109,6 +113,8 @@ export function storyConstitutionFromSeed(
       schemaVersion: STORY_SEED_SCHEMA_VERSION,
       blueprintVersion: blueprint?.blueprintVersion ?? WORLD_BLUEPRINT_VERSION,
     },
+    storySeed: seed,
+    ...(blueprint ? { worldBlueprint: blueprint } : {}),
     mainCharacterName: blueprint?.mainCharacter?.name || foundations.mainCharacter?.name || "",
     genre: seed.story.required.genre,
     storyTags: [...seed.story.required.storyTags],

@@ -5,14 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/buildChapterGenerationApi.mjs",
     "preview": "vite preview",
     "validate:chapter-effects": "vitest run scripts/validateChapterEffectRules.test.ts",
-    "test:chapter-generation": "vitest run src/components/chapter-generation",
+    "test:chapter-generation": "vitest run src/components/chapter-generation src/server/chapter-generation",
     "test:relics": "vitest run src/server/relics/relicFoundation.test.ts",
     "test:story-seed": "vitest run src/components/story-seed/shared/storySeedSchema.test.ts src/components/story-seed/development/storySeedHelp.test.ts"
   },
   "dependencies": {
+    "@google/genai": "^2.16.0",
     "@vitejs/plugin-react": "latest",
     "lucide-react": "^1.27.0",
     "motion": "^12.43.0",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^22.20.1",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "jsdom": "^30.0.1",

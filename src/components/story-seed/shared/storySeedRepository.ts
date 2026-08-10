@@ -19,6 +19,9 @@ import {
   workshopStorySeedStorage,
 } from './workshopStorySeedStorage';
 
+/** Account key used by the Development-only local Story Seed workspace. */
+export const LOCAL_WORKSHOP_STORY_SEED_OWNER_ID = 'local-workshop-creator';
+
 /**
  * A saved seed plus the minimum needed to list and reopen it. The generated
  * Blueprint is an optional sibling artifact, never part of Creator / Story /
@@ -54,6 +57,10 @@ let repository: StorySeedRepository = workshopStorySeedStorage;
 export const setStorySeedRepository = (next: StorySeedRepository): void => {
   repository = next;
 };
+
+/** Read Development-only local artifacts without mutating the configured repository. */
+export const listWorkshopStorySeeds = (userId: string): Promise<StorySeedRecord[]> =>
+  workshopStorySeedStorage.list(userId);
 
 export const createStorySeed = (
   userId: string,

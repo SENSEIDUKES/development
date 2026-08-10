@@ -35,6 +35,7 @@ import {
 export interface ChapterGenerationWorkspaceProps {
   /** The complete structured four-stage run — consumed directly, never re-parsed from JSON. */
   run: ChapterPipelineRun;
+  generationSource?: { provider: string; model: string };
 }
 
 const SCENE_TYPE_LABELS: Record<SceneType, string> = {
@@ -425,7 +426,9 @@ function ChapterPlanStep({ run }: { run: ChapterPipelineRun }) {
               : <span className="text-white/40">No recent scenes</span>}
           </span>
         </Field>
-        <Field label="Selected Pressure Tier">{plan.rhythmResponse.selectedPressureTier}</Field>
+        <Field label="Selected Pressure Tier">
+          {plan.rhythmResponse.selectedPressureTier ?? "Not mapped from canonical Fate Survival"}
+        </Field>
       </div>
       <p className="text-xs leading-relaxed text-white/60">{plan.rhythmResponse.direction}</p>
 
@@ -678,7 +681,10 @@ function TechnicalDetails({ run }: { run: ChapterPipelineRun }) {
  * Technical Details section. The Reference inspector stays the technical
  * comparison.
  */
-export function ChapterGenerationWorkspace({ run }: ChapterGenerationWorkspaceProps) {
+export function ChapterGenerationWorkspace({
+  run,
+  generationSource,
+}: ChapterGenerationWorkspaceProps) {
   const [activeStage, setActiveStage] = useState<ChapterPipelineStageKey>("manifest-chapter");
   const navigationRef = useRef<HTMLDivElement>(null);
   const chapterForReading = run.repairApplied ? run.finalOutput : run.manifestedChapter;
@@ -759,6 +765,7 @@ export function ChapterGenerationWorkspace({ run }: ChapterGenerationWorkspacePr
                 chapter={chapterForReading}
                 title={run.chapterPacket.chapterMission.title}
                 repaired={run.repairApplied}
+                generationSource={generationSource}
               />
             </StepShell>
           )}

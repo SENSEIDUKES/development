@@ -16,11 +16,14 @@ Seed v3 artifact with its sibling `WorldBlueprint`, adapts those canonical objec
 into the existing four packet contracts, and calls Gemini through a same-origin,
 server-only provider boundary. No fixture value is used to fill a missing mapping.
 
-Pass 2 reuses the production `runSequentialChapterBatch` ordering and checkpoint
-invariants without importing its old Story contract, persistence, authentication,
-or backend dependencies. Five-chapter runs remain disposable client-held test state.
-Each chapter crosses the existing server boundary in its own request, and only the
-final processed result can create the next chapter's continuation.
+Pass 2's Development implementation is
+`src/components/chapter-generation/shared/batch/chapterBatch.ts`. Its exported
+`runFiveChapterBatch` preserves strict chapter ordering, clean pre-chapter checkpoints,
+and retry-without-advancement invariants while leaving the verified production
+`runSequentialChapterBatch` implementation untouched. Five-chapter runs remain
+disposable client-held test state. Each chapter crosses the existing server boundary
+in its own request, and only the final processed result can create the next chapter's
+artifact-bound, server-signed continuation.
 
 The primary Development experience is a small test harness: select or upload the
 artifact, enter the separately configured Development access token, choose a
@@ -248,6 +251,7 @@ per-chapter coverage.
 - **2026-08-09:** Chapter Generation 1.0 Pass 1 connected finalized Story Seed v3 and World Blueprint artifacts to the existing packet contracts, added server-side Gemini Plan/Manifest/Process calls with conditional repair, exposed per-stage token/time usage, and made the one-chapter test harness the primary Development experience while retaining the four-stage workspace as Diagnostics.
 - **2026-08-09:** Protected the live Development model boundary with a separate server-configured bearer token, preserved omitted Blueprint threads during Process Result, and retained completed-call usage when a later stage fails.
 - **2026-08-09:** Chapter Generation 1.0 Pass 2 added a disposable five-chapter sequence using five separate chapter-sized requests, authoritative processed-state handoffs, explicit change/Codex carry-forward, truthful live stage progress, pause/retry checkpoints, and per-chapter plus complete-batch token totals.
+- **2026-08-09:** Bound disposable continuations to their exact Story Seed and Blueprint with a server-only signature, added cancellation and request timeouts for batch calls, and tightened accessibility, carry-forward ordering, and checkpoint coverage during PR review.
 
 ## Transfer notes
 

@@ -5,6 +5,7 @@ import type {
 import {
   applyChapterContinuation,
   buildNextChapterContinuation,
+  type ChapterGenerationContinuation,
 } from "../../components/chapter-generation/shared/batch/chapterBatch";
 import { adaptFinalizedStorySeedToChapterContracts } from "../../components/chapter-generation/shared/packets/storySeedChapterAdapter";
 import { assembleChapterPacket } from "../../components/chapter-generation/shared/pipeline/assembleChapterPacket";
@@ -15,6 +16,7 @@ import type { ChapterUsageStage } from "../../components/chapter-generation/shar
 import type { ResolvedChapterGenerationConfig } from "./config";
 import { resolveConfiguredChapterModel } from "./config";
 import { createLiveChapterModelCalls } from "./modelCalls";
+import { sealChapterContinuation } from "./continuationSecurity";
 import {
   GeminiChapterTextProvider,
   type ChapterTextModelProvider,
@@ -28,6 +30,7 @@ export type ChapterProviderFactory = (input: {
 export interface ExecuteChapterGenerationOptions {
   providerFactory?: ChapterProviderFactory;
   onStageChange?: (stage: ChapterUsageStage) => void;
+  verifiedContinuation?: ChapterGenerationContinuation;
 }
 
 export class ChapterGenerationExecutionError extends Error {
@@ -62,8 +65,11 @@ export async function executeChapterGeneration(
     blueprint: request.artifact.blueprint,
     temporaryInstruction: request.temporaryInstruction,
   });
-  const contracts = request.continuation
-    ? applyChapterContinuation(adapted.contracts, request.continuation)
+  if (request.continuation && !options.verifiedContinuation) {
+    throw new Error("Chapter continuation was not verified by the Development server.");
+  }
+  const contracts = options.verifiedContinuation
+    ? applyChapterContinuation(adapted.contracts, options.verifiedContinuation)
     : adapted.contracts;
   const chapterPacket = assembleChapterPacket(contracts);
   const provider = options.providerFactory
@@ -88,10 +94,14 @@ export async function executeChapterGeneration(
     );
   }
 
-  const nextContinuation = buildNextChapterContinuation({
-    run,
-    firstArcPromise: adapted.blueprint.firstArcPromise,
-    temporaryInstruction: request.temporaryInstruction,
+  const nextContinuation = sealChapterContinuation({
+    continuation: buildNextChapterContinuation({
+      run,
+      firstArcPromise: adapted.blueprint.firstArcPromise,
+      temporaryInstruction: request.temporaryInstruction,
+    }),
+    artifact: request.artifact,
+    secret: config.apiKey,
   });
 
   return {

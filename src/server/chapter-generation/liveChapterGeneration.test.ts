@@ -460,6 +460,43 @@ describe("live Chapter Generation model boundaries", () => {
     expect(run.processingResult.worldStateChanges).toEqual([]);
     expect(run.processingResult.threads.completed).toEqual([]);
   });
+
+  it("preserves ability acquisition order while merging structured updates", async () => {
+    const base = new RecordingProvider();
+    const provider: ChapterTextModelProvider = {
+      provider: base.provider,
+      model: base.model,
+      async generate(request) {
+        const result = await base.generate(request);
+        if (request.kind !== "process") return result;
+        const response = JSON.parse(result.text);
+        response.characterStateUpdates.abilities = [
+          { name: "oath seam", rank: "refined" },
+          "Fourth ability",
+        ];
+        return { ...result, text: JSON.stringify(response) };
+      },
+    };
+    const calls = createLiveChapterModelCalls(provider, {
+      temperature: 1,
+      maxOutputTokens: 16_384,
+    });
+    const packet = buildPacket();
+    packet.livingStoryState.characterState.abilities = [
+      "First ability",
+      { name: "OATH SEAM", rank: "initial" },
+      "Third ability",
+    ];
+
+    const run = await runChapterPipelineAsync({ chapterPacket: packet, model: calls.model });
+
+    expect(run.processingResult.proposedLivingStoryState.characterState.abilities).toEqual([
+      "First ability",
+      { name: "oath seam", rank: "refined" },
+      "Third ability",
+      "Fourth ability",
+    ]);
+  });
 });
 
 describe("server model selection and failure handling", () => {
@@ -680,5 +717,57 @@ describe("server model selection and failure handling", () => {
     expect(providers).toHaveLength(2);
     expect(providers.flatMap(provider => provider.requests).map(request => request.kind))
       .toEqual(["plan", "manifest", "process", "plan", "manifest", "process"]);
+  });
+
+  it("rejects forged continuations and continuations paired with different artifacts", async () => {
+    const providers: ChapterAwareProvider[] = [];
+    const providerFactory = () => {
+      const provider = new ChapterAwareProvider(providers.length + 1);
+      providers.push(provider);
+      return provider;
+    };
+    const first = await handleChapterGenerationHttp({
+      method: "POST",
+      headers: { Authorization: "Bearer development-access-token" },
+      body: {
+        artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
+        model: "google/gemini-test",
+      },
+    }, { environment, providerFactory });
+    expect(first.status).toBe(200);
+    const continuation = (first.body as ManifestChapterResponse).nextContinuation;
+    const forged = structuredClone(continuation);
+    forged.livingStoryState.characterState.currentPowerStage = "Forged stage";
+
+    const forgedResponse = await handleChapterGenerationHttp({
+      method: "POST",
+      headers: { Authorization: "Bearer development-access-token" },
+      body: {
+        artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
+        model: "google/gemini-test",
+        continuation: forged,
+      },
+    }, { environment, providerFactory });
+    const differentBlueprint = canonicalBlueprint();
+    differentBlueprint.title = "Different Story";
+    const mismatchedResponse = await handleChapterGenerationHttp({
+      method: "POST",
+      headers: { Authorization: "Bearer development-access-token" },
+      body: {
+        artifact: { seed: canonicalSeed(), blueprint: differentBlueprint },
+        model: "google/gemini-test",
+        continuation,
+      },
+    }, { environment, providerFactory });
+
+    expect(forgedResponse).toMatchObject({
+      status: 400,
+      body: { error: "Chapter continuation signature is invalid." },
+    });
+    expect(mismatchedResponse).toMatchObject({
+      status: 400,
+      body: { error: "Chapter continuation does not belong to the selected Story Seed and Blueprint." },
+    });
+    expect(providers).toHaveLength(1);
   });
 });

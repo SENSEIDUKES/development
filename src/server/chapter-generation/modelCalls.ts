@@ -603,7 +603,7 @@ const recordIdentity = (value: JsonRecord): string | undefined => {
   for (const field of ["id", "name", "title", "label", "slug"] as const) {
     const candidate = value[field];
     if (typeof candidate === "string" && candidate.trim()) {
-      return `${field}:${candidate.trim().toLocaleLowerCase()}`;
+      return `${field}:${candidate.trim().toLowerCase()}`;
     }
   }
   return undefined;
@@ -627,15 +627,30 @@ const mergeCarriedRecords = (
 };
 
 const mergeCarriedValues = (current: unknown[], updates: unknown[]): unknown[] => {
-  const recordCurrent = current.filter(isRecord);
-  const recordUpdates = updates.filter(isRecord);
-  const mergedRecords = mergeCarriedRecords(recordCurrent, recordUpdates);
-  const unkeyed = [...current, ...updates]
-    .filter(value => !isRecord(value))
-    .filter((value, index, values) =>
-      values.findIndex(candidate => JSON.stringify(candidate) === JSON.stringify(value)) === index)
-    .map(value => structuredClone(value));
-  return [...mergedRecords, ...unkeyed];
+  const merged: unknown[] = [];
+  const unkeyed = new Set<string>();
+  for (const value of [...current, ...updates]) {
+    if (isRecord(value)) {
+      const copied = structuredClone(value);
+      const identity = recordIdentity(copied);
+      const index = identity
+        ? merged.findIndex(entry => isRecord(entry) && recordIdentity(entry) === identity)
+        : -1;
+      if (index >= 0) {
+        merged[index] = { ...(merged[index] as JsonRecord), ...copied };
+        continue;
+      }
+      const serialized = JSON.stringify(copied);
+      if (merged.some(entry => isRecord(entry) && JSON.stringify(entry) === serialized)) continue;
+      merged.push(copied);
+      continue;
+    }
+    const serialized = JSON.stringify(value);
+    if (unkeyed.has(serialized)) continue;
+    unkeyed.add(serialized);
+    merged.push(structuredClone(value));
+  }
+  return merged;
 };
 
 const threadKey = (description: string): string => description.trim().toLocaleLowerCase();

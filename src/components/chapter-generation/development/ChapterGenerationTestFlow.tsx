@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import {
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -57,6 +58,7 @@ import ManifestedChapterView from "./ManifestedChapterView";
 import { Chip } from "./workspaceUi";
 
 const ENDPOINT = "/api/chapter-generation";
+const CHAPTER_REQUEST_TIMEOUT_MS = 300_000;
 
 interface ArtifactChoice {
   id: string;
@@ -135,14 +137,15 @@ export function ChapterUsageSummary({
   failed?: boolean;
   scope?: "Chapter" | "Batch";
 }) {
+  const titleId = useId();
   const summary = usage ?? result?.usage;
   if (!summary) return null;
   const { totals } = summary;
   return (
-    <section aria-labelledby="chapter-usage-title" className="overflow-hidden rounded-xl border border-white/10 bg-black/25">
+    <section aria-labelledby={titleId} className="overflow-hidden rounded-xl border border-white/10 bg-black/25">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-3 sm:px-4">
         <div>
-          <h3 id="chapter-usage-title" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-white/80">
+          <h3 id={titleId} className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-white/80">
             <Sigma size={13} className="text-cyan-200/70" />
             {failed ? "Model Usage Before Failure" : `${scope} Model Usage`}
           </h3>
@@ -224,46 +227,62 @@ const manifestThroughServer = async (
   request: ManifestChapterRequest,
   accessToken: string,
   onStage: (stage: ChapterUsageStage) => void = () => undefined,
+  signal?: AbortSignal,
 ): Promise<ManifestChapterResponse> => {
-  const response = await fetch(ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/x-ndjson",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify(request),
-  });
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/x-ndjson") || !response.body) {
-    if (!response.ok) throw errorResponseToBatchFailure(await readErrorResponse(response));
-    return response.json() as Promise<ManifestChapterResponse>;
-  }
+  const controller = new AbortController();
+  const abortFromCaller = () => controller.abort(signal?.reason);
+  if (signal?.aborted) abortFromCaller();
+  else signal?.addEventListener("abort", abortFromCaller, { once: true });
+  const timeout = window.setTimeout(() => {
+    controller.abort(new DOMException("Chapter generation request timed out.", "TimeoutError"));
+  }, CHAPTER_REQUEST_TIMEOUT_MS);
+  let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+  try {
+    const response = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/x-ndjson",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(request),
+      signal: controller.signal,
+    });
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!contentType.includes("application/x-ndjson") || !response.body) {
+      if (!response.ok) throw errorResponseToBatchFailure(await readErrorResponse(response));
+      return response.json() as Promise<ManifestChapterResponse>;
+    }
 
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffered = "";
-  let finalEvent: Extract<ChapterGenerationStreamEvent, { type: "result" }> | undefined;
-  const consumeLine = (line: string) => {
-    if (!line.trim()) return;
-    const event = JSON.parse(line) as ChapterGenerationStreamEvent;
-    if (event.type === "stage") onStage(event.stage);
-    else finalEvent = event;
-  };
-  while (true) {
-    const { done, value } = await reader.read();
-    buffered += decoder.decode(value, { stream: !done });
-    const lines = buffered.split("\n");
-    buffered = lines.pop() ?? "";
-    for (const line of lines) consumeLine(line);
-    if (done) break;
+    reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffered = "";
+    let finalEvent: Extract<ChapterGenerationStreamEvent, { type: "result" }> | undefined;
+    const consumeLine = (line: string) => {
+      if (!line.trim()) return;
+      const event = JSON.parse(line) as ChapterGenerationStreamEvent;
+      if (event.type === "stage") onStage(event.stage);
+      else finalEvent = event;
+    };
+    while (true) {
+      const { done, value } = await reader.read();
+      buffered += decoder.decode(value, { stream: !done });
+      const lines = buffered.split("\n");
+      buffered = lines.pop() ?? "";
+      for (const line of lines) consumeLine(line);
+      if (done) break;
+    }
+    consumeLine(buffered);
+    if (!finalEvent) throw new Error("Chapter generation stream ended without a final result.");
+    if (finalEvent.status < 200 || finalEvent.status >= 300 || "error" in finalEvent.body) {
+      throw errorResponseToBatchFailure(finalEvent.body as ChapterGenerationErrorResponse);
+    }
+    return finalEvent.body;
+  } finally {
+    window.clearTimeout(timeout);
+    signal?.removeEventListener("abort", abortFromCaller);
+    await reader?.cancel().catch(() => undefined);
   }
-  consumeLine(buffered);
-  if (!finalEvent) throw new Error("Chapter generation stream ended without a final result.");
-  if (finalEvent.status < 200 || finalEvent.status >= 300 || "error" in finalEvent.body) {
-    throw errorResponseToBatchFailure(finalEvent.body as ChapterGenerationErrorResponse);
-  }
-  return finalEvent.body;
 };
 
 const statusLabel = (chapter: BatchChapterRun) => ({
@@ -368,6 +387,7 @@ export function BatchProgress({
 export function ChapterGenerationTestFlow() {
   const uploadSequence = useRef(0);
   const manifestInFlight = useRef(false);
+  const activeManifestController = useRef<AbortController | null>(null);
   const [choices, setChoices] = useState<ArtifactChoice[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [serverInfo, setServerInfo] = useState<ChapterGenerationServerInfo | null>(null);
@@ -383,6 +403,8 @@ export function ChapterGenerationTestFlow() {
   const [singleStage, setSingleStage] = useState<ChapterUsageStage | null>(null);
   const [batch, setBatch] = useState<FiveChapterBatchState | null>(null);
   const [selectedBatchChapterNumber, setSelectedBatchChapterNumber] = useState(1);
+
+  const abortActiveManifest = () => activeManifestController.current?.abort();
 
   const selectedChoice = choices.find(choice => choice.id === selectedId);
   const preflight = useMemo(() => {
@@ -455,7 +477,10 @@ export function ChapterGenerationTestFlow() {
     };
   }, []);
 
+  useEffect(() => () => activeManifestController.current?.abort(), []);
+
   const selectChoice = (nextId: string) => {
+    abortActiveManifest();
     setSelectedId(nextId);
     setResult(null);
     setBatch(null);
@@ -496,6 +521,8 @@ export function ChapterGenerationTestFlow() {
       || !preflight.artifact
     ) return;
     manifestInFlight.current = true;
+    const controller = new AbortController();
+    activeManifestController.current = controller;
     setGenerating(true);
     setGenerationError(null);
     setResult(null);
@@ -503,16 +530,22 @@ export function ChapterGenerationTestFlow() {
     setFailedUsage(null);
     setSingleStage(null);
     try {
-      const response = await manifestThroughServer({
+      const response = await manifestThroughServer(
+        {
           artifact: preflight.artifact,
           model,
           ...(temporaryInstruction.trim() ? { temporaryInstruction: temporaryInstruction.trim() } : {}),
-        }, accessToken.trim(), setSingleStage);
+        },
+        accessToken.trim(),
+        setSingleStage,
+        controller.signal,
+      );
       setResult(response);
     } catch (error) {
       setFailedUsage((error as ChapterBatchManifestFailure).usage ?? null);
       setGenerationError(error instanceof Error ? error.message : "Chapter manifestation failed.");
     } finally {
+      if (activeManifestController.current === controller) activeManifestController.current = null;
       manifestInFlight.current = false;
       setGenerating(false);
       setSingleStage(null);
@@ -529,6 +562,8 @@ export function ChapterGenerationTestFlow() {
       || !preflight.artifact
     ) return;
     manifestInFlight.current = true;
+    const controller = new AbortController();
+    activeManifestController.current = controller;
     setGenerating(true);
     setGenerationError(null);
     setResult(null);
@@ -543,8 +578,8 @@ export function ChapterGenerationTestFlow() {
             ? { temporaryInstruction: temporaryInstruction.trim() }
             : {}),
         },
-        manifestChapter: (request, onStage) =>
-          manifestThroughServer(request, accessToken.trim(), onStage),
+        manifestChapter: (request, onStage, signal) =>
+          manifestThroughServer(request, accessToken.trim(), onStage, signal),
         onUpdate: update => {
           setBatch(update);
           const readableActive = update.chapters.find(chapter =>
@@ -552,6 +587,7 @@ export function ChapterGenerationTestFlow() {
             && Boolean(chapter.result ?? chapter.attempts.at(-1)?.result));
           if (readableActive) setSelectedBatchChapterNumber(readableActive.chapterNumber);
         },
+        signal: controller.signal,
       });
       setBatch(completed);
       const lastReadable = [...completed.chapters].reverse()
@@ -560,6 +596,7 @@ export function ChapterGenerationTestFlow() {
     } catch (error) {
       setGenerationError(error instanceof Error ? error.message : "The five-chapter batch failed unexpectedly.");
     } finally {
+      if (activeManifestController.current === controller) activeManifestController.current = null;
       manifestInFlight.current = false;
       setGenerating(false);
     }
@@ -633,6 +670,7 @@ export function ChapterGenerationTestFlow() {
               <select
                 value={model}
                 onChange={event => {
+                  abortActiveManifest();
                   setModel(event.target.value);
                   setResult(null);
                   setBatch(null);
@@ -654,6 +692,7 @@ export function ChapterGenerationTestFlow() {
               type="password"
               value={accessToken}
               onChange={event => {
+                abortActiveManifest();
                 setAccessToken(event.target.value);
                 setResult(null);
                 setFailedUsage(null);
@@ -688,6 +727,7 @@ export function ChapterGenerationTestFlow() {
             <textarea
               value={temporaryInstruction}
               onChange={event => {
+                abortActiveManifest();
                 setTemporaryInstruction(event.target.value);
                 setResult(null);
                 setBatch(null);

@@ -21,6 +21,18 @@ export interface ChapterGenerationContinuation {
   version: 1;
   livingStoryState: LivingStoryState;
   chapterMission: ChapterMission;
+  /** Server-only proof that binds this disposable state to its source artifacts. */
+  proof?: ChapterGenerationContinuationProof;
+}
+
+export interface ChapterGenerationContinuationProof {
+  version: 1;
+  artifactDigest: string;
+  signature: string;
+}
+
+export interface AuthenticatedChapterGenerationContinuation extends ChapterGenerationContinuation {
+  proof: ChapterGenerationContinuationProof;
 }
 
 export type BatchChapterStatus =
@@ -43,7 +55,7 @@ export interface BatchChapterAttempt {
 export interface BatchChapterRun {
   chapterNumber: number;
   status: BatchChapterStatus;
-  checkpoint?: ChapterGenerationContinuation;
+  checkpoint?: AuthenticatedChapterGenerationContinuation;
   attempts: BatchChapterAttempt[];
   result?: ManifestChapterResponse;
   error?: string;
@@ -63,6 +75,7 @@ export interface ChapterBatchManifestFailure extends Error {
 export type ManifestBatchChapter = (
   request: ManifestChapterRequest,
   onStage: (stage: ChapterUsageStage) => void,
+  signal?: AbortSignal,
 ) => Promise<ManifestChapterResponse>;
 
 export interface RunFiveChapterBatchInput {
@@ -70,6 +83,7 @@ export interface RunFiveChapterBatchInput {
   request: Omit<ManifestChapterRequest, "continuation">;
   manifestChapter: ManifestBatchChapter;
   onUpdate?: (state: FiveChapterBatchState) => void;
+  signal?: AbortSignal;
 }
 
 const emptyUsage = (): ChapterTokenUsageSummary => aggregateChapterTokenUsage([]);
@@ -249,6 +263,7 @@ export const runFiveChapterBatch = async ({
   request,
   manifestChapter,
   onUpdate,
+  signal,
 }: RunFiveChapterBatchInput): Promise<FiveChapterBatchState> => {
   let state = publish({ ...initialState, status: "running" }, onUpdate);
   let continuation = state.chapters
@@ -262,6 +277,18 @@ export const runFiveChapterBatch = async ({
     }
     const chapterNumber = chapter.chapterNumber;
     const checkpoint = continuation ? clone(continuation) : undefined;
+    if (signal?.aborted) {
+      return publish(updateChapter({
+        ...state,
+        status: "paused",
+        activeChapterNumber: chapterNumber,
+      }, chapterNumber, current => ({
+        ...current,
+        status: "paused",
+        checkpoint,
+        error: "The five-chapter run was cancelled at its clean pre-chapter checkpoint.",
+      })), onUpdate);
+    }
     state = publish(updateChapter({ ...state, activeChapterNumber: chapterNumber }, chapterNumber, current => ({
       ...current,
       status: "planning",
@@ -270,15 +297,19 @@ export const runFiveChapterBatch = async ({
     })), onUpdate);
 
     try {
-      const result = await manifestChapter({
-        ...request,
-        ...(checkpoint ? { continuation: checkpoint } : {}),
-      }, stage => {
-        state = publish(updateChapter(state, chapterNumber, current => ({
-          ...current,
-          status: statusForStage(stage),
-        })), onUpdate);
-      });
+      const result = await manifestChapter(
+        {
+          ...request,
+          ...(checkpoint ? { continuation: checkpoint } : {}),
+        },
+        stage => {
+          state = publish(updateChapter(state, chapterNumber, current => ({
+            ...current,
+            status: statusForStage(stage),
+          })), onUpdate);
+        },
+        signal,
+      );
       if (result.run.chapterPacket.chapterMission.number !== chapterNumber) {
         throw errorResponseToBatchFailure({
           error: `Chapter ${chapterNumber} returned a mismatched chapter result.`,
@@ -320,6 +351,18 @@ export const runFiveChapterBatch = async ({
       })), onUpdate);
       continuation = clone(result.nextContinuation);
     } catch (error) {
+      if (signal?.aborted) {
+        return publish(updateChapter({
+          ...state,
+          status: "paused",
+          activeChapterNumber: chapterNumber,
+        }, chapterNumber, current => ({
+          ...current,
+          status: "paused",
+          checkpoint,
+          error: "The five-chapter run was cancelled at its clean pre-chapter checkpoint.",
+        })), onUpdate);
+      }
       const failure = error as ChapterBatchManifestFailure;
       const usage = failure.usage ?? emptyUsage();
       const message = failure.message || "Chapter generation failed.";

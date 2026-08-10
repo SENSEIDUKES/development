@@ -3,7 +3,7 @@ import type { StorySeedChapterMappingReport } from "./packets/storySeedChapterAd
 import type { ChapterPipelineRun } from "./pipeline/types";
 import type { ChapterTokenUsageSummary } from "./pipeline/usage";
 import type { ChapterUsageStage } from "./pipeline/usage";
-import type { ChapterGenerationContinuation } from "./batch/chapterBatch";
+import type { AuthenticatedChapterGenerationContinuation } from "./batch/chapterBatch";
 
 export interface ChapterGenerationModelOption {
   id: string;
@@ -22,7 +22,7 @@ export interface ManifestChapterRequest {
   model: string;
   temporaryInstruction?: string;
   /** Server-produced disposable state for Chapter 2+ of a sequential batch. */
-  continuation?: ChapterGenerationContinuation;
+  continuation?: AuthenticatedChapterGenerationContinuation;
 }
 
 export interface ManifestChapterResponse {
@@ -31,7 +31,7 @@ export interface ManifestChapterResponse {
   run: ChapterPipelineRun;
   usage: ChapterTokenUsageSummary;
   mapping: StorySeedChapterMappingReport;
-  nextContinuation: ChapterGenerationContinuation;
+  nextContinuation: AuthenticatedChapterGenerationContinuation;
 }
 
 export interface ChapterGenerationErrorResponse {

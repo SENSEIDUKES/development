@@ -15,6 +15,7 @@ import {
   executeChapterGeneration,
   type ChapterProviderFactory,
 } from "./execute";
+import { verifyChapterContinuation } from "./continuationSecurity";
 
 export interface ChapterGenerationHttpRequest {
   method?: string;
@@ -159,9 +160,20 @@ export async function handleChapterGenerationHttp(
     if (!hasValidAccessToken(request, config.accessToken)) {
       return errorResponse(401, "A valid Development chapter-generation access token is required.");
     }
+    if (!config.apiKey) {
+      throw new Error("GEMINI_API_KEY is not configured on the Development server.");
+    }
+    const verifiedContinuation = parsedRequest.continuation
+      ? verifyChapterContinuation({
+          continuation: parsedRequest.continuation,
+          artifact: parsedRequest.artifact,
+          secret: config.apiKey,
+        })
+      : undefined;
     const result = await executeChapterGeneration(parsedRequest, config, {
       providerFactory: dependencies.providerFactory,
       onStageChange: dependencies.onStageChange,
+      verifiedContinuation,
     });
     return {
       status: 200,

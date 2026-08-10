@@ -11,7 +11,9 @@ import {
   buildNextChapterContinuation,
   createFiveChapterBatchState,
   errorResponseToBatchFailure,
+  assertChapterContinuation,
   runFiveChapterBatch,
+  type AuthenticatedChapterGenerationContinuation,
   type ChapterGenerationContinuation,
 } from "./chapterBatch";
 import type {
@@ -64,6 +66,13 @@ const blueprint = (): WorldBlueprint => ({
 });
 
 const artifact = () => ({ seed: seed(), blueprint: blueprint() });
+
+const authenticated = (
+  continuation: ChapterGenerationContinuation,
+): AuthenticatedChapterGenerationContinuation => ({
+  ...continuation,
+  proof: { version: 1, artifactDigest: "test-artifact", signature: "test-signature" },
+});
 
 const usageFor = (chapterNumber: number, callCount = 3) => aggregateChapterTokenUsage(
   Array.from({ length: callCount }, (_, index): ChapterModelCallUsage => {
@@ -243,11 +252,11 @@ const resultFor = (
     run,
     usage: usageFor(chapterNumber, options.repair ? 5 : 3),
     mapping: { mapped: [], unresolved: [], chapterMissionSource: "batch-test" },
-    nextContinuation: buildNextChapterContinuation({
+    nextContinuation: authenticated(buildNextChapterContinuation({
       run,
       firstArcPromise: blueprint().firstArcPromise,
       temporaryInstruction: request.temporaryInstruction,
-    }),
+    })),
   };
 };
 
@@ -371,6 +380,83 @@ describe("five-chapter Development batch", () => {
     expect(state.chapters[1].status).toBe("queued");
     expect(state.chapters[0].attempts[0].usage.calls).toHaveLength(3);
     expect(state.chapters[0].error).toContain("continuation");
+  });
+
+  it.each([
+    {
+      name: "unsupported version",
+      mutate: (value: ChapterGenerationContinuation) => {
+        (value as { version: number }).version = 2;
+      },
+      message: /version is unsupported/,
+    },
+    {
+      name: "mission below Chapter 2",
+      mutate: (value: ChapterGenerationContinuation) => {
+        value.chapterMission.number = 1;
+      },
+      message: /valid next Chapter Mission/,
+    },
+    {
+      name: "mismatched position",
+      mutate: (value: ChapterGenerationContinuation) => {
+        value.livingStoryState.position.chapterInArc += 1;
+      },
+      message: /position does not match/,
+    },
+    {
+      name: "non-immediate handoff",
+      mutate: (value: ChapterGenerationContinuation) => {
+        if (value.livingStoryState.previousHandoff) {
+          value.livingStoryState.previousHandoff.chapterNumber -= 1;
+        }
+      },
+      message: /immediately previous handoff/,
+    },
+    {
+      name: "mismatched contract chapter",
+      mutate: (value: ChapterGenerationContinuation) => {
+        if (value.chapterMission.contract) value.chapterMission.contract.chapterNumber += 1;
+      },
+      message: /contract does not match/,
+    },
+  ])("rejects a continuation with $name", ({ mutate, message }) => {
+    const continuation = structuredClone(resultFor({
+      artifact: artifact(),
+      model: "google/gemini-test",
+    }).nextContinuation);
+    mutate(continuation);
+
+    expect(() => assertChapterContinuation(continuation)).toThrow(message);
+  });
+
+  it("forwards cancellation and stops at the next clean checkpoint", async () => {
+    const controller = new AbortController();
+    const receivedSignals: Array<AbortSignal | undefined> = [];
+    let calls = 0;
+
+    const state = await runFiveChapterBatch({
+      state: createFiveChapterBatchState(),
+      request: { artifact: artifact(), model: "google/gemini-test" },
+      signal: controller.signal,
+      manifestChapter: async (request, _onStage, signal) => {
+        calls += 1;
+        receivedSignals.push(signal);
+        const result = resultFor(request);
+        controller.abort();
+        return result;
+      },
+    });
+
+    expect(calls).toBe(1);
+    expect(receivedSignals).toEqual([controller.signal]);
+    expect(state.status).toBe("paused");
+    expect(state.chapters[0].status).toBe("completed");
+    expect(state.chapters[1]).toMatchObject({
+      status: "paused",
+      checkpoint: state.chapters[0].result?.nextContinuation,
+    });
+    expect(state.chapters[2].status).toBe("queued");
   });
 
   it("retries a failed chapter from its clean checkpoint without advancing or duplicating state", async () => {

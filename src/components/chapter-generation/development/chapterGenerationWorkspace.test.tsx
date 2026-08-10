@@ -10,7 +10,11 @@ import {
 } from "../shared/assembleGenerationDev";
 import type { ChapterPipelineRun } from "../shared/pipeline/types";
 import type { ManifestChapterResponse } from "../shared/liveChapterGeneration";
-import { buildNextChapterContinuation } from "../shared/batch/chapterBatch";
+import {
+  buildNextChapterContinuation,
+  type AuthenticatedChapterGenerationContinuation,
+  type ChapterGenerationContinuation,
+} from "../shared/batch/chapterBatch";
 import { BatchProgress, ChapterUsageSummary } from "./ChapterGenerationTestFlow";
 import { createFiveChapterBatchState } from "../shared/batch/chapterBatch";
 import { ChapterGenerationWorkspace } from "./ChapterGenerationWorkspace";
@@ -18,6 +22,13 @@ import { effectMarkers } from "./ManifestedChapterView";
 import { CopyButton } from "./workspaceUi";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+const authenticated = (
+  continuation: ChapterGenerationContinuation,
+): AuthenticatedChapterGenerationContinuation => ({
+  ...continuation,
+  proof: { version: 1, artifactDigest: "test-artifact", signature: "test-signature" },
+});
 
 const buildRun = (
   scenarioId: ScenarioId = "established",
@@ -367,10 +378,10 @@ describe("Chapter Generation token usage", () => {
           hasEstimatedUsage: true,
         },
       },
-      nextContinuation: buildNextChapterContinuation({
+      nextContinuation: authenticated(buildNextChapterContinuation({
         run,
         firstArcPromise: "Reach the first arc turn.",
-      }),
+      })),
     };
     const html = renderToStaticMarkup(<ChapterUsageSummary result={result} />);
 
@@ -394,6 +405,14 @@ describe("Chapter Generation token usage", () => {
     expect(batchHtml).toContain("Batch input");
     expect(batchHtml).toContain("Batch output");
     expect(batchHtml).toContain("Batch total");
+
+    const combinedHtml = renderToStaticMarkup(<>
+      <ChapterUsageSummary usage={result.usage} failed />
+      <ChapterUsageSummary usage={result.usage} scope="Batch" />
+      <ChapterUsageSummary result={result} />
+    </>);
+    const headingIds = [...combinedHtml.matchAll(/<h3 id="([^"]+)"/g)].map(match => match[1]);
+    expect(new Set(headingIds).size).toBe(3);
   });
 });
 
@@ -423,5 +442,18 @@ describe("five-chapter progress", () => {
     expect(html).toContain("Chapter 5");
     expect(html).toContain("Retry Chapter");
     expect(html).toContain("Temporary provider failure.");
+
+    const running = structuredClone(batch);
+    running.status = "running";
+    const runningHtml = renderToStaticMarkup(
+      <BatchProgress
+        batch={running}
+        selectedChapterNumber={1}
+        onSelectChapter={() => undefined}
+        onRetry={() => undefined}
+        retrying={false}
+      />,
+    );
+    expect(runningHtml).not.toContain("Retry Chapter");
   });
 });

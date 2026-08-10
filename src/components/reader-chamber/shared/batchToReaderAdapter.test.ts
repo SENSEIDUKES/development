@@ -58,6 +58,19 @@ describe("batchToReaderAdapter", () => {
     expect(extractBatchStoryState(batch).latestCharacterState?.currentPowerStage).toBe("Stage 5");
   });
 
+  it("retains the latest earlier snapshot when a later completed run has no proposed state", () => {
+    const batch = createCompletedFiveChapterTestBatch();
+    const processing = batch.chapters[1].result!.run.processingResult as {
+      proposedLivingStoryState?: unknown;
+    };
+    delete processing.proposedLivingStoryState;
+
+    const snapshots = createReaderCodexSnapshots(batch);
+    expect(snapshots).toHaveLength(5);
+    expect(snapshots[1].memory).toEqual(snapshots[0].memory);
+    expect(snapshots[4].memory.currentPowerStage).toBe("Stage 5");
+  });
+
   it("keeps selected-chapter and complete batch totals accurate, including repair and retry usage", () => {
     const batch = createCompletedFiveChapterTestBatch();
     const resolution = createCompletedBatchReaderSession(batch);

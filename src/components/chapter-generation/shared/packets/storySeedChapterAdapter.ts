@@ -237,6 +237,7 @@ const buildStartingLivingStoryState = (
       ),
       recentSceneTypes: [] as SceneType[],
     },
+    carriedChanges: [],
   };
 };
 

@@ -5,7 +5,11 @@ import type {
   ContextManifest,
 } from "../types";
 import type { ChapterMission } from "../packets/chapterMission";
-import type { LivingStoryState } from "../packets/livingStoryState";
+import type {
+  LivingStoryCharacterStateUpdate,
+  LivingStoryCodexUpdates,
+  LivingStoryState,
+} from "../packets/livingStoryState";
 import type { StoryConstitution } from "../packets/storyConstitution";
 import type {
   FatePressureTier,
@@ -130,6 +134,8 @@ export interface ChapterProcessingResult {
   newAnchors?: SceneAnchors;
   characterChanges: string[];
   worldStateChanges: string[];
+  characterStateUpdates: LivingStoryCharacterStateUpdate;
+  codexUpdates: LivingStoryCodexUpdates;
   threads: {
     completed: string[];
     changed: string[];

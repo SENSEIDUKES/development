@@ -10,7 +10,9 @@ import {
 } from "../shared/assembleGenerationDev";
 import type { ChapterPipelineRun } from "../shared/pipeline/types";
 import type { ManifestChapterResponse } from "../shared/liveChapterGeneration";
-import { ChapterUsageSummary } from "./ChapterGenerationTestFlow";
+import { buildNextChapterContinuation } from "../shared/batch/chapterBatch";
+import { BatchProgress, ChapterUsageSummary } from "./ChapterGenerationTestFlow";
+import { createFiveChapterBatchState } from "../shared/batch/chapterBatch";
 import { ChapterGenerationWorkspace } from "./ChapterGenerationWorkspace";
 import { effectMarkers } from "./ManifestedChapterView";
 import { CopyButton } from "./workspaceUi";
@@ -365,6 +367,10 @@ describe("Chapter Generation token usage", () => {
           hasEstimatedUsage: true,
         },
       },
+      nextContinuation: buildNextChapterContinuation({
+        run,
+        firstArcPromise: "Reach the first arc turn.",
+      }),
     };
     const html = renderToStaticMarkup(<ChapterUsageSummary result={result} />);
 
@@ -381,5 +387,41 @@ describe("Chapter Generation token usage", () => {
       <ChapterUsageSummary usage={result.usage} failed />,
     );
     expect(failedHtml).toContain("Model Usage Before Failure");
+    const batchHtml = renderToStaticMarkup(
+      <ChapterUsageSummary usage={result.usage} scope="Batch" />,
+    );
+    expect(batchHtml).toContain("Batch Model Usage");
+    expect(batchHtml).toContain("Batch input");
+    expect(batchHtml).toContain("Batch output");
+    expect(batchHtml).toContain("Batch total");
+  });
+});
+
+describe("five-chapter progress", () => {
+  it("shows every chapter state and exposes retry only for a paused batch", () => {
+    const batch = createFiveChapterBatchState();
+    batch.status = "paused";
+    batch.activeChapterNumber = 2;
+    batch.chapters[0].status = "completed";
+    batch.chapters[1].status = "failed";
+    batch.chapters[1].error = "Temporary provider failure.";
+    const html = renderToStaticMarkup(
+      <BatchProgress
+        batch={batch}
+        selectedChapterNumber={1}
+        onSelectChapter={() => undefined}
+        onRetry={() => undefined}
+        retrying={false}
+      />,
+    );
+
+    expect(html).toContain("Manifest 5 Chapters");
+    expect(html).toContain("Chapter 1");
+    expect(html).toContain("Completed");
+    expect(html).toContain("Chapter 2");
+    expect(html).toContain("Failed");
+    expect(html).toContain("Chapter 5");
+    expect(html).toContain("Retry Chapter");
+    expect(html).toContain("Temporary provider failure.");
   });
 });

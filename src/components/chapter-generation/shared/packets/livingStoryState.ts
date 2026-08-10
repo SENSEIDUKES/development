@@ -29,6 +29,33 @@ export interface LivingStoryCodex {
   artifacts: Record<string, unknown>[];
 }
 
+export interface LivingStoryCharacterStateUpdate {
+  currentPowerStage?: string;
+  abilities: unknown[];
+}
+
+export interface LivingStoryCodexUpdates {
+  characters: Record<string, unknown>[];
+  factions: Record<string, unknown>[];
+  locations: Record<string, unknown>[];
+  artifacts: Record<string, unknown>[];
+}
+
+/**
+ * Explicit carry-forward ledger for processed changes that do not yet have a
+ * more specific canonical field. Nothing discovered by Process Result is
+ * discarded merely because Pass 2 has no permanent Codex/persistence layer.
+ */
+export interface LivingStoryChangeLogEntry {
+  chapterNumber: number;
+  characterChanges: string[];
+  worldStateChanges: string[];
+  threadChanges: string[];
+  completedThreads: string[];
+  characterStateUpdates: LivingStoryCharacterStateUpdate;
+  codexUpdates: LivingStoryCodexUpdates;
+}
+
 export interface LivingStorySceneState {
   worldBuildingSeed: string;
   recentSceneTypes: SceneType[];
@@ -44,6 +71,7 @@ export interface LivingStoryState {
   threads: LivingStoryThreads;
   codex: LivingStoryCodex;
   scene: LivingStorySceneState;
+  carriedChanges: LivingStoryChangeLogEntry[];
 }
 
 /** Formats the internal arc-local position used by packet assembly. */
@@ -106,5 +134,6 @@ export function livingStoryStateFromScenario(
           })
         : undefined,
     },
+    carriedChanges: [],
   };
 }

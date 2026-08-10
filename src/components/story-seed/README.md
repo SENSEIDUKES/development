@@ -157,6 +157,11 @@ When this finalized feature is approved for production transfer:
    `src/components/library/`.
 3. Transfer only the shared domain modules needed by the production owner,
    including the Blueprint client/finalizer when production adopts this pass.
+   Transfer `src/server/story-seed-blueprint/config.ts`, `prompt.ts`,
+   `generate.ts`, `http.ts`, and `vercelHandler.ts`; the temporary shared bearer
+   helper at `src/server/shared/bearerToken.ts`; the Vercel entry
+   `api/generate-blueprint.js`; and `scripts/buildStorySeedBlueprintApi.mjs`.
+   Those files provide and bundle the endpoint required for manifestation.
 4. Replace `shared/stubs.ts` and `workshopStorySeedStorage.ts` with the real
    app store, auth, and repository integrations. Replace the Development bearer
    token with production authentication while keeping Gemini server-side.

@@ -715,16 +715,16 @@ const mergeAuthoritativeEntries = <T extends { name: string }>(
   describe: (entry: T) => string,
 ): string[] => {
   const validAuthored = authored.filter(entry => Boolean(text(entry.name)));
-  const authoredNames = validAuthored.map(entry => entry.name.trim().toLocaleLowerCase());
+  const normalizeEntry = (entry: string) => entry
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+  const authoredNames = validAuthored.map(entry => normalizeEntry(entry.name));
   return [
     ...validAuthored.map(describe),
     ...generated.filter(entry => {
-      const candidate = entry.toLocaleLowerCase();
-      return !authoredNames.some(name =>
-        candidate === name
-        || candidate.startsWith(`${name} `)
-        || candidate.startsWith(`${name}—`)
-        || candidate.startsWith(`${name}-`));
+      const candidate = ` ${normalizeEntry(entry)} `;
+      return !authoredNames.some(name => candidate.includes(` ${name} `));
     }),
   ];
 };

@@ -4,6 +4,7 @@ import { createStorySeedExport, parseStorySeedJson } from "../../components/stor
 import type { WorldBlueprint } from "../../components/story-seed/shared/types";
 import { adaptFinalizedStorySeedToChapterContracts } from "../../components/chapter-generation/shared/packets/storySeedChapterAdapter";
 import { handleStorySeedBlueprintHttp } from "./http";
+import { resolveStorySeedBlueprintConfig } from "./config";
 import type {
   WorldBlueprintModelProvider,
   WorldBlueprintModelRequest,
@@ -112,11 +113,11 @@ const generatedBlueprint = (): Record<string, unknown> => ({
   },
   mcProfile: "A survivor of repeated imperial collapses.",
   majorFactions: [
-    "Vermilion Tribunal — a completely contradictory generated description",
+    "The Vermilion Tribunal (Nine Seats) — a completely contradictory generated description",
     "Regent's Bronze Guard — the palace's private army",
   ],
   initialCharacters: [
-    "Minister Sui — a contradictory generated description",
+    "The witness Minister Sui (Rain Witness) — a contradictory generated description",
     "Regent Zhao — the architect of the hearing",
   ],
   majorMysteries: ["Who taught the dead heaven to remember broken oaths?"],
@@ -187,9 +188,13 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(blueprint.powerSystemOutline).toContain("Known ranks: Oath Spark → Seal Heart → Crown Soul");
     expect(blueprint.initialCharacters[0]).toContain("Minister Sui");
     expect(blueprint.initialCharacters[0]).toContain("age: 52");
+    expect(blueprint.initialCharacters.filter(entry => entry.toLocaleLowerCase().includes("minister sui")))
+      .toHaveLength(1);
     expect(blueprint.initialCharacters).toContain("Regent Zhao — the architect of the hearing");
     expect(blueprint.majorFactions[0]).toContain("Vermilion Tribunal");
     expect(blueprint.majorFactions[0]).toContain("Nine seats bound by visible blood oaths.");
+    expect(blueprint.majorFactions.filter(entry => entry.toLocaleLowerCase().includes("vermilion tribunal")))
+      .toHaveLength(1);
     expect(blueprint.majorFactions).toContain("Regent's Bronze Guard — the palace's private army");
     expect(blueprint.firstArcPromise).toBe(seed.story.optional.plotAndTropeSettings.firstMajorConflict);
     expect(blueprint.destinedEnding).toBe(seed.world.optional.worldFoundations.destinedEnding);
@@ -246,6 +251,42 @@ describe("protected Story Seed World Blueprint generation", () => {
       error: "Gemini could not produce a complete World Blueprint. No Story Seed data was changed; please retry.",
     });
     expect(onError).toHaveBeenCalledOnce();
+    expect(onError.mock.calls[0][0]).toEqual(new Error(
+      "Gemini returned an incomplete World Blueprint: tropeRules, styleBible, majorMysteries, "
+      + "unresolvedPlotThreads, mainCharacter.age, mainCharacter.appearance.",
+    ));
+  });
+
+  it("rejects an invalid configured model before calling the provider", async () => {
+    const onError = vi.fn();
+    const providerFactory = vi.fn(() => new RecordingProvider());
+    const response = await handleStorySeedBlueprintHttp({
+      method: "POST",
+      headers: { Authorization: "Bearer development-access-token" },
+      body: { storySeed: canonicalSeed() },
+    }, {
+      environment: { ...environment, STORY_SEED_BLUEPRINT_MODEL: "gpt-4o" },
+      providerFactory,
+      onError,
+    });
+
+    expect(response.status).toBe(503);
+    expect(response.body).toEqual({ error: "World Blueprint model configuration is invalid." });
+    expect(onError).toHaveBeenCalledOnce();
+    expect(onError.mock.calls[0][0]).toEqual(new Error(
+      "STORY_SEED_BLUEPRINT_MODEL does not contain a valid Gemini text model.",
+    ));
+    expect(providerFactory).not.toHaveBeenCalled();
+  });
+
+  it("defaults blank numeric settings, preserves zero, and caps output tokens", () => {
+    expect(resolveStorySeedBlueprintConfig({
+      STORY_SEED_BLUEPRINT_TEMPERATURE: "   ",
+      STORY_SEED_BLUEPRINT_MAX_OUTPUT_TOKENS: "99999999",
+    })).toMatchObject({ temperature: 1, maxOutputTokens: 32_768 });
+    expect(resolveStorySeedBlueprintConfig({
+      STORY_SEED_BLUEPRINT_TEMPERATURE: "0",
+    }).temperature).toBe(0);
   });
 
   it("exports a paired artifact that loads through Chapter Generation with no fixture fallback", async () => {

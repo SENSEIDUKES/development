@@ -64,7 +64,7 @@ export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'chapter-generation-flow',
     title: 'Chapter Generation',
-    description: 'Development-only one- or five-chapter manifestation harness using finalized Story Seed and World Blueprint artifacts, sequential server-side Gemini calls, disposable processed-state handoffs, retry checkpoints, token usage, and per-chapter Diagnostics.',
+    description: 'Development-only one- or five-chapter manifestation harness with sequential server-side Gemini calls, disposable processed-state handoffs, retry checkpoints, token usage, per-chapter Diagnostics, and a completed-batch Reader Chamber handoff.',
     category: 'other',
     version: 'v2.1',
     source: {
@@ -124,7 +124,7 @@ export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'reader-chamber',
     title: 'Reader Chamber',
-    description: 'The full reading UI — header, viewport with system blocks and world cards, playback controls, preferences, bookmarks, and Alter Fate — running on a local mock story.',
+    description: 'The full reading UI with generated five-chapter session support, chapter-scoped Reader Codex memory, generation usage/export/Diagnostics, and an explicitly labeled local mock fallback.',
     category: 'reader-ui',
     version: 'v1.2',
     source: {

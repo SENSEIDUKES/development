@@ -20,6 +20,17 @@ export interface ReaderCodexViewProps {
 
 type CodexTab = 'characters' | 'factions' | 'locations' | 'artifacts' | 'threads';
 
+const characterStatusClass = (status: Character['status']) => ({
+  alive: 'bg-emerald-950 text-emerald-300 border border-emerald-500/30',
+  deceased: 'bg-rose-950 text-rose-300 border border-rose-500/30',
+  unknown: 'bg-slate-900 text-slate-300 border border-slate-500/30',
+  ascended: 'bg-amber-950 text-amber-300 border border-amber-500/30',
+})[status ?? 'unknown'] ?? 'bg-violet-950 text-violet-300 border border-violet-500/30';
+
+export const originChapterForThread = (thread: string | PlotThread) => (
+  typeof thread === 'object' ? thread.originChapter : undefined
+);
+
 export function ReaderCodexView({
   memory,
   mcName = 'Protagonist',
@@ -112,11 +123,7 @@ export function ReaderCodexView({
                     </div>
                     {char.status && (
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider ${
-                          char.status === 'alive'
-                            ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/30'
-                            : 'bg-rose-950 text-rose-300 border border-rose-500/30'
-                        }`}
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider ${characterStatusClass(char.status)}`}
                       >
                         {char.status}
                       </span>
@@ -229,7 +236,7 @@ export function ReaderCodexView({
             ) : (
               unresolvedThreads.map((thread, idx) => {
                 const desc = typeof thread === 'string' ? thread : thread.description;
-                const ch = typeof thread === 'object' && thread.originChapter ? thread.originChapter : null;
+                const ch = originChapterForThread(thread);
                 return (
                   <div
                     key={idx}
@@ -238,7 +245,7 @@ export function ReaderCodexView({
                     <Compass className="h-4 w-4 text-rose-400 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-xs text-neutral-200">{desc}</p>
-                      {ch && <p className="mt-0.5 text-[10px] font-mono text-neutral-500">Origin Chapter {ch}</p>}
+                      {ch !== undefined && <p className="mt-0.5 text-[10px] font-mono text-neutral-500">Origin Chapter {ch}</p>}
                     </div>
                   </div>
                 );

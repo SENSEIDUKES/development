@@ -310,6 +310,36 @@ export interface ChapterProse {
  */
 export interface ChapterDiagnostics {
   contextManifest?: ContextManifest;
+  /** Disposable generation observability carried into a generated Reader session. */
+  generationUsage?: ReaderChapterGenerationUsage;
+  /** Original generated arc position, retained without changing Reader navigation. */
+  generationPosition?: {
+    arcNumber: number;
+    chapterInArc: number;
+    chaptersInArc: number;
+    display: string;
+  };
+  repairApplied?: boolean;
+}
+
+export interface ReaderTokenUsageTotals {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  generationTimeMs: number;
+  hasEstimatedUsage: boolean;
+}
+
+export interface ReaderUsageBreakdown {
+  callCount: number;
+  totals: ReaderTokenUsageTotals;
+}
+
+export interface ReaderChapterGenerationUsage {
+  totals: ReaderTokenUsageTotals;
+  attemptCount: number;
+  repair?: ReaderUsageBreakdown;
+  retry?: ReaderUsageBreakdown & { attemptCount: number };
 }
 
 /**

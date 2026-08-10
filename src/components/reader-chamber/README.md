@@ -10,6 +10,7 @@
 
 ## Workshop history
 
+- **2026-08-10:** Completed the Pass 3 connection from Chapter Generation: a completed five-chapter batch now opens as a disposable real Reader Chamber session with repaired final prose, Chapters 1–5 navigation, structured blocks/system panels, chapter-scoped cumulative Reader Codex snapshots, chapter and batch token totals (including repair/retry usage), five-chapter text export, and selected-chapter reuse of the existing four-stage Diagnostics. The standalone four-chapter story is now explicitly labeled as the no-batch mock fallback.
 - **2026-08-10:** Integrated Pass 3 data bridge (`batchToReaderAdapter.ts`) connecting five-chapter generation batches to the Reader Chamber without altering Pass 2 chapter generation code. Added `ReaderCodexView` to display living Codex memory (characters, factions, locations, artifacts, unresolved plot threads) when switching to the Codex tab in the Reader Chamber.
 - **2026-07-31:** Created faithful Workshop replica and local state simulator (11 preview states, mock StoryWorld with 4 chapters, zustand-free external mock store).
 - **2026-07-31:** Consolidated all reader settings into a single **Reader Settings** panel (`development/ReaderSettings.tsx`) with three labeled sections — Reader (the former `ReaderPreferencesPanel` controls: font, size, theme, particles, chapter divider, highlights, typography, player style, System Color Legend), Audio (the `AudioMenu` mix, voice selects, playback speed, Export Chronicle), and Immersion (Immersion Engine master, Autonomous Reading, Holographic Visions). Both entry points (header button, now aria-labeled "Reader Settings", and the bottom-bar gear) open this one panel; the old bottom-bar `ImmersionSettings` popover and the standalone `ReaderPreferencesPanel` were removed. No control behavior changed — only organization and presentation.
@@ -61,6 +62,7 @@ shared/                       — code genuinely identical between the two forks
                                 WorldCardEvent/FateResultData, StoryCuePayload, ContextManifest,
                                 ReaderPreferences, StoryWorld subset, StoryArc, Bookmark,
                                 UpdateStoryFields (no CodexTerm — codex job excluded)
+  batchToReaderAdapter.ts     — immutable disposable Pass 2 batch to Reader/Codex session boundary
   reader-chamber.css          — reader-specific classes/vars/keyframes extracted from source
                                 src/index.css (imported by the preview Workspace)
   stubs.ts                    — mock external store (useAppStore + selectIsGenerating, no

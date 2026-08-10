@@ -4,6 +4,7 @@ import type {
   ReaderPreferences,
   StoryWorld,
 } from '../../../components/reader-chamber/shared/types';
+export const MOCK_READER_FALLBACK_LABEL = 'Mock fallback · No generated batch supplied · Four-chapter preview story only';
 
 export const MOCK_STORY_ID = 'workshop-story-emberfall';
 
@@ -403,3 +404,12 @@ export function createMockStory(): StoryWorld {
 
 export const ARC_TITLE = 'Arc I — The Fallen Star';
 export const CURRENT_POWER_STAGE = 'Qi Condensation — Layer 9';
+
+/** Explicit no-generated-batch fallback used only by the standalone preview. */
+export function createMockReaderFallback() {
+  return {
+    kind: 'mock-fallback' as const,
+    label: MOCK_READER_FALLBACK_LABEL,
+    story: createMockStory(),
+  };
+}

@@ -16,8 +16,9 @@ import { workshopEntries } from '../../manifest';
 import {
   ARC_TITLE,
   CURRENT_POWER_STAGE,
-  createMockStory,
+  createMockReaderFallback,
   mockReaderPreferences,
+  MOCK_READER_FALLBACK_LABEL,
   MOCK_STORY_ID,
 } from './previewData';
 import {
@@ -79,7 +80,7 @@ export function ReaderChamberWorkspace() {
 
   // Boot the mock store with a fresh story.
   useEffect(() => {
-    resetMockState({ stories: [createMockStory()], activeStoryId: MOCK_STORY_ID });
+    resetMockState({ stories: [createMockReaderFallback().story], activeStoryId: MOCK_STORY_ID });
   }, []);
 
   const applyScenario = useCallback((stateId: PreviewState) => {
@@ -88,7 +89,7 @@ export function ReaderChamberWorkspace() {
     setSelectedChapterNum(scenario.chapter);
     setIsGenerating(Boolean(scenario.isGenerating));
     resetMockState({
-      stories: [createMockStory()],
+      stories: [createMockReaderFallback().story],
       activeStoryId: MOCK_STORY_ID,
       isTranslating: Boolean(scenario.isTranslating),
       isReaderFullscreen: Boolean(scenario.isReaderFullscreen),
@@ -245,6 +246,9 @@ export function ReaderChamberWorkspace() {
 
   const controls = (
     <div className="w-full min-w-0 max-w-6xl space-y-4 overflow-hidden rounded-xl border border-white/10 bg-white/5 p-3 backdrop-blur-md sm:p-4">
+      <p className="rounded-lg border border-amber-400/20 bg-amber-500/[0.08] px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-amber-100/70">
+        {MOCK_READER_FALLBACK_LABEL}
+      </p>
       <div>
         <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-white/70">
           Preview States

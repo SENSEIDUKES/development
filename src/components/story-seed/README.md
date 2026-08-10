@@ -4,13 +4,13 @@
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **Replica created:** 2026-08-01
-- **Last Workshop update:** 2026-08-08
-- **Last source comparison:** 2026-08-06
+- **Last Workshop update:** 2026-08-10
+- **Last source comparison:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and ready for production transfer
 
-The source path still exists in the adjacent local Light-Novels checkout. It
-was not compared again during the 2026-08-07 refactor, so `lastCompared`
-remains 2026-08-06.
+The source path, `/api/generate-blueprint` route, Blueprint prompt, response
+cleaner, and canonical production Blueprint fields were verified against
+`SENSEIDUKES/Light-Novels` `origin/main` on 2026-08-10.
 
 ## Finalized product contract
 
@@ -85,14 +85,21 @@ navigation, header, or field variants.
 
 ## Workshop and production boundaries
 
-The Workshop provides local simulations for authentication, story records,
-generation callbacks, and seed persistence. It does not provide or modify a
-database, production authentication, chapter generation, or production
-media/persistence infrastructure.
+The Workshop still simulates application authentication, story records, seed
+persistence, and story-start callbacks. World Blueprint manifestation is now a
+real protected same-origin Gemini call. It does not provide or modify a
+database, production authentication, chapter persistence, or production media
+infrastructure.
 
 - `shared/stubs.ts` supplies the local app-store boundary.
 - `shared/workshopStorySeedStorage.ts` is the only localStorage adapter.
 - `storySeedRepository.ts` is the swappable persistence port.
+- `shared/blueprintGenerationClient.ts` calls `/api/generate-blueprint` with a
+  page-memory-only Development access token; the Gemini key never enters the
+  browser bundle.
+- `src/server/story-seed-blueprint/` owns the protected endpoint, the
+  Light-Novels-informed prompt, Gemini structured output, creator-authority
+  merge, completeness validation, and final Chapter Generation adapter check.
 - Preview fixtures are under `src/workshop/previews/story-seed/`.
 - The Workshop loads preview routes and the locked Story Seed reference on
   demand. Those `App`, `DeferredWorkspace`, and `FeatureWorkspace` boundaries
@@ -102,8 +109,9 @@ media/persistence infrastructure.
 - The auth backdrop uses the local optimized poster under
   `public/story-seed/`; its video is deferred and is skipped for reduced
   motion, data saver, and slow connections.
-- Mock generation returns a deterministic Blueprint and never starts chapter
-  generation.
+- The locked Reference pane and named preview scenarios remain deterministic.
+  Manual manifestation in Development calls Gemini; starting a story remains
+  a no-op because Chapter Generation owns that separate test flow.
 
 The persistence key `seihouse-workshop-story-seeds-v3` is retained so existing
 Workshop drafts are not orphaned by this refactor.
@@ -147,11 +155,13 @@ When this finalized feature is approved for production transfer:
    gate.
 2. Reuse the supporting Library primitives already owned by
    `src/components/library/`.
-3. Transfer only the shared domain modules needed by the production owner.
+3. Transfer only the shared domain modules needed by the production owner,
+   including the Blueprint client/finalizer when production adopts this pass.
 4. Replace `shared/stubs.ts` and `workshopStorySeedStorage.ts` with the real
-   app store, auth, repository, and generation integrations.
-5. Keep Workshop navigation, preview controls, route-loading boundaries,
-   fixtures, and scenario adapters behind.
+   app store, auth, and repository integrations. Replace the Development bearer
+   token with production authentication while keeping Gemini server-side.
+5. Keep Workshop navigation, access-token controls, preview controls,
+   route-loading boundaries, fixtures, and scenario adapters behind.
 6. After production integration, refresh `reference/`, update
    `source.lastCompared`, and begin the next Workshop cycle from the newly
    synchronized source.
@@ -173,7 +183,9 @@ the Workshop are not part of this feature.
 Browser verification covers phone and desktop layouts plus Origin, ARC,
 World, Settings persistence, Help audio, navigation, auth, Story Bank actions,
 Blueprint editing, generation loading/error, and Story Bank loading, empty,
-error, and populated states.
+error, and populated states. Live Gemini verification additionally requires
+server-side `GEMINI_API_KEY` plus a configured Story Seed or Chapter Generation
+Development access token.
 
 Measured against the merged refactor baseline on the same production build
 harness:
@@ -194,6 +206,12 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-08-10:** Replaced the Development preview's mock World Blueprint
+  callback with protected server-side Gemini generation based on the complete
+  canonical Story Seed. Reused the proven Light-Novels Blueprint completion
+  behavior, added a creator-authority merge and strict completeness checks,
+  retained the editable review and paired export, and proved the exported file
+  passes Chapter Generation's strict intake without fixture fallback.
 - **2026-08-08:** Expanded Help into the shared 20-topic Library guidance
   system while keeping Story Seed topics prioritized in its creation flow.
   Applied the finalized main-tip and Library Lines audio contracts, preserved

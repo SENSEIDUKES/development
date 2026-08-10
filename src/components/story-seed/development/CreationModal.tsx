@@ -103,9 +103,13 @@ const StorySeedHelpMenu = lazy(() => loadStorySeedSecondary().then(module => ({
   default: module.StorySeedHelpMenu,
 })));
 
-const mapCreationFailure = (failure: 'blueprint' | 'story'): string => failure === 'blueprint'
-  ? 'The World Blueprint could not be generated. Please try again.'
-  : 'The story could not be started. Please try again.';
+const mapCreationFailure = (failure: 'blueprint' | 'story', error?: unknown): string => {
+  const message = error instanceof Error ? error.message.trim() : '';
+  if (failure === 'blueprint' && message) return message;
+  return failure === 'blueprint'
+    ? 'The World Blueprint could not be generated. Please try again.'
+    : 'The story could not be started. Please try again.';
+};
 
 interface StorySeedWorkspaceProps {
   seed: StorySeedInput;
@@ -402,7 +406,7 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
       }
     } catch (generationError) {
       console.error('Failed to generate World Blueprint:', generationError);
-      setSeedError(mapCreationFailure('blueprint'));
+      setSeedError(mapCreationFailure('blueprint', generationError));
     }
   };
 

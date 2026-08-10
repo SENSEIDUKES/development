@@ -1,5 +1,7 @@
-import { lazy, useCallback, useEffect, useState } from 'react';
+import { lazy, useCallback, useEffect, useRef, useState } from 'react';
 import DevelopmentCreationModal from '../../../components/story-seed/development/CreationModal';
+import { requestWorldBlueprint } from '../../../components/story-seed/shared/blueprintGenerationClient';
+import type { BlueprintGenerationPayload } from '../../../components/story-seed/shared/storySeedSchema';
 import {
   resetMockSeeds,
   resetMockState,
@@ -306,6 +308,9 @@ export function StorySeedWorkspace() {
   const [activeState, setActiveState] = useState<PreviewState>('empty-intake');
   const [activeCategory, setActiveCategory] = useState<PreviewCategory>('intake');
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>('development');
+  const [blueprintAccessToken, setBlueprintAccessToken] = useState('');
+  const [blueprintGenerating, setBlueprintGenerating] = useState(false);
+  const activeBlueprintRequestRef = useRef<AbortController | null>(null);
   const currentUser = useAppStore(state => state.currentUser);
 
   const applyScenario = useCallback((
@@ -313,6 +318,9 @@ export function StorySeedWorkspace() {
     options: { preserveLocalSeeds?: boolean } = {},
   ) => {
     const scenario = scenarios.find(s => s.id === stateId)!;
+    activeBlueprintRequestRef.current?.abort();
+    activeBlueprintRequestRef.current = null;
+    setBlueprintGenerating(false);
     setActiveState(stateId);
     setMockLocalOnlyMode(scenario.localOnlyMode ?? true);
     resetMockState({
@@ -332,6 +340,8 @@ export function StorySeedWorkspace() {
       }
     }
   }, []);
+
+  useEffect(() => () => activeBlueprintRequestRef.current?.abort(), []);
 
   useEffect(() => {
     // Deep-link support: `?preview=story-seed&state=<scenario-id>` opens the
@@ -400,17 +410,34 @@ export function StorySeedWorkspace() {
 
   const activeScenario = scenarios.find(s => s.id === activeState);
 
-  const chamberProps = {
+  const referenceChamberProps = {
     isGenerating: Boolean(activeScenario?.isGenerating),
     error: activeScenario?.error ?? null,
     onGenerateBlueprint: async (payload: unknown) => {
-      console.log('[Preview] onGenerateBlueprint called with Story Seed', payload);
       await wait(300);
       return createMockBlueprint();
     },
-    onStartStory: async (payload: unknown) => {
-      console.log('[Preview] onStartStory called', payload);
+    onStartStory: async () => undefined,
+  };
+
+  const developmentChamberProps = {
+    isGenerating: Boolean(activeScenario?.isGenerating) || blueprintGenerating,
+    error: activeScenario?.error ?? null,
+    onGenerateBlueprint: async (payload: BlueprintGenerationPayload) => {
+      activeBlueprintRequestRef.current?.abort();
+      const controller = new AbortController();
+      activeBlueprintRequestRef.current = controller;
+      setBlueprintGenerating(true);
+      try {
+        return await requestWorldBlueprint(payload, blueprintAccessToken, controller.signal);
+      } finally {
+        if (activeBlueprintRequestRef.current === controller) {
+          activeBlueprintRequestRef.current = null;
+          setBlueprintGenerating(false);
+        }
+      }
     },
+    onStartStory: async () => undefined,
   };
 
   const buttonBase =
@@ -439,6 +466,24 @@ export function StorySeedWorkspace() {
 
   const controls = (
     <div className="w-full min-w-0 max-w-6xl space-y-4 overflow-hidden rounded-xl border border-white/10 bg-white/5 p-3 backdrop-blur-md sm:p-4">
+      <form onSubmit={event => event.preventDefault()} className="sm:max-w-xl">
+        <label className="flex flex-col gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/55">
+          Development access token
+          <input
+            type="password"
+            value={blueprintAccessToken}
+            onChange={event => setBlueprintAccessToken(event.target.value)}
+            autoComplete="off"
+            disabled={blueprintGenerating}
+            placeholder="Enter the server-configured testing token"
+            className="min-h-11 w-full rounded-lg border border-white/10 bg-black/25 px-3 text-sm font-normal normal-case tracking-normal text-white/85 outline-none placeholder:text-white/25 focus:border-cyan-500/60 disabled:opacity-50"
+          />
+          <span className="text-[9px] font-normal normal-case tracking-normal text-white/30">
+            Held in memory for this page only. The Gemini key remains server-side.
+          </span>
+        </label>
+      </form>
+
       <div>
         <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-white/70">
           Preview States
@@ -491,13 +536,13 @@ export function StorySeedWorkspace() {
           className="min-h-screen bg-void"
         >
           <div key={`reference-${activeState}`} data-story-seed-pane="reference" className="min-h-screen bg-void py-10 px-4">
-            <ReferenceCreationModal {...chamberProps} />
+            <ReferenceCreationModal {...referenceChamberProps} />
           </div>
         </DeferredWorkspace>
       )}
       renderDevelopment={() => (
         <div key={`development-${activeState}`} data-story-seed-pane="development" className="min-h-screen bg-void py-10 px-4">
-          <DevelopmentCreationModal {...chamberProps} />
+          <DevelopmentCreationModal {...developmentChamberProps} />
         </div>
       )}
     />

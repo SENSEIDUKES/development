@@ -7,7 +7,6 @@ export type ChapterGenerationEnvironment = Record<string, string | undefined>;
 
 const DEFAULT_MODELS = [
   "google/gemini-3.1-flash-lite",
-  "google/gemini-2.5-flash-lite",
 ] as const;
 
 const MODEL_ID_PATTERN = /^(?:google\/)?gemini-[a-z0-9][a-z0-9._-]*$/i;
@@ -35,11 +34,13 @@ const modelLabel = (model: string): string => model
 
 export interface ResolvedChapterGenerationConfig {
   apiKey?: string;
+  accessToken?: string;
   provider: "gemini";
   models: ChapterGenerationModelOption[];
   defaultModel: string;
   temperature: number;
   maxOutputTokens: number;
+  stageTimeoutMs: number;
 }
 
 const finiteNumber = (value: string | undefined, fallback: number): number => {
@@ -57,9 +58,11 @@ export function resolveChapterGenerationConfig(
     : modelIds[0];
   const rawKey = environment.GEMINI_API_KEY?.trim();
   const apiKey = rawKey && rawKey !== "MY_GEMINI_API_KEY" ? rawKey : undefined;
+  const accessToken = environment.CHAPTER_GENERATION_ACCESS_TOKEN?.trim() || undefined;
 
   return {
     apiKey,
+    accessToken,
     provider: "gemini",
     models: modelIds.map(id => ({ id, label: modelLabel(id) })),
     defaultModel,
@@ -71,6 +74,10 @@ export function resolveChapterGenerationConfig(
       environment.CHAPTER_GENERATION_MAX_OUTPUT_TOKENS ?? environment.AI_MAX_TOKENS,
       16_384,
     ))),
+    stageTimeoutMs: Math.min(120_000, Math.max(10_000, Math.floor(finiteNumber(
+      environment.CHAPTER_GENERATION_STAGE_TIMEOUT_MS,
+      90_000,
+    )))),
   };
 }
 
@@ -80,7 +87,7 @@ export function chapterGenerationServerInfo(
   const config = resolveChapterGenerationConfig(environment);
   return {
     provider: config.provider,
-    configured: Boolean(config.apiKey),
+    configured: Boolean(config.apiKey && config.accessToken),
     models: config.models,
     defaultModel: config.defaultModel,
   };

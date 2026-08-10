@@ -15,6 +15,7 @@ export interface ChapterTextGenerationRequest {
   responseFormat: "json" | "text";
   temperature: number;
   maxOutputTokens: number;
+  abortSignal?: AbortSignal;
 }
 
 export interface ChapterTextGenerationResult {
@@ -56,6 +57,7 @@ export class GeminiChapterTextProvider implements ChapterTextModelProvider {
           systemInstruction: request.systemInstruction,
           temperature: request.temperature,
           maxOutputTokens: request.maxOutputTokens,
+          abortSignal: request.abortSignal,
           ...(request.responseFormat === "json"
             ? { responseMimeType: "application/json" }
             : {}),

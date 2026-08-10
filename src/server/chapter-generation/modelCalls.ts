@@ -24,6 +24,9 @@ import type { ChapterModelCallUsage } from "../../components/chapter-generation/
 import {
   type ChapterHandoff,
   type StoryBlock,
+  type StoryBlockMetadata,
+  type SystemEvent,
+  type WorldCardEvent,
   type ChapterContent,
 } from "../../components/chapter-generation/shared/types";
 import type { ChapterTextModelProvider } from "./provider";
@@ -57,6 +60,19 @@ const requiredString = (value: unknown, label: string): string => {
 
 const optionalString = (value: unknown): string | undefined =>
   typeof value === "string" && value.trim() ? value.trim() : undefined;
+
+const optionalValidatedString = (value: unknown, label: string): string | undefined => {
+  if (value === undefined || value === null || value === "") return undefined;
+  return requiredString(value, label);
+};
+
+const optionalFiniteNumber = (value: unknown, label: string): number | undefined => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(`${label} must be a finite number.`);
+  }
+  return value;
+};
 
 const requiredBoolean = (value: unknown, label: string): boolean => {
   if (typeof value !== "boolean") throw new Error(`${label} must be a boolean.`);
@@ -245,7 +261,9 @@ const extractBalancedObjects = (text: string): JsonRecord[] => {
     if (next < 0) break;
     const start = cursor + next;
     const balanced = extractFirstBalancedValue(text.slice(start));
-    if (!balanced) break;
+    if (!balanced) {
+      throw new Error("Manifest Chapter returned a malformed or unbalanced block.");
+    }
     try {
       const parsed = JSON.parse(balanced);
       if (Array.isArray(parsed)) {
@@ -256,24 +274,163 @@ const extractBalancedObjects = (text: string): JsonRecord[] => {
         values.push(parsed);
       }
     } catch {
-      // Advance past the opening brace and continue looking for valid blocks.
+      throw new Error("Manifest Chapter returned a malformed JSON block.");
     }
     cursor = start + Math.max(1, balanced.length);
   }
   return values;
 };
 
+const BLOCK_ATMOSPHERE_CATEGORIES = ["wind", "crowd", "waves", "rain", "combat", "noise"] as const;
+const SYSTEM_EVENT_KINDS = ["status", "skill_acquired", "level_up", "quest", "appraisal", "fate_result"] as const;
+const WORLD_CARD_ENTITY_TYPES = ["character", "creature", "artifact", "location", "faction", "system", "fate_event"] as const;
+
+const optionalMetadataStringArray = (value: unknown, label: string): string[] | undefined => {
+  if (value === undefined || value === null) return undefined;
+  return stringArray(value, label);
+};
+
+const parseBlockMetadata = (value: unknown, label: string): StoryBlockMetadata | undefined => {
+  if (value === undefined || value === null) return undefined;
+  const metadata = requiredRecord(value, label);
+  const atmosphereCategory = optionalValidatedString(metadata.atmosphereCategory, `${label}.atmosphereCategory`);
+  if (atmosphereCategory && !BLOCK_ATMOSPHERE_CATEGORIES.includes(
+    atmosphereCategory as (typeof BLOCK_ATMOSPHERE_CATEGORIES)[number],
+  )) {
+    throw new Error(`${label}.atmosphereCategory is unsupported.`);
+  }
+  const entities = metadata.entities === undefined
+    ? undefined
+    : Array.isArray(metadata.entities)
+      ? metadata.entities.map((item, index) => {
+          const entity = requiredRecord(item, `${label}.entities[${index}]`);
+          const type = requiredString(entity.type, `${label}.entities[${index}].type`);
+          const mention = requiredString(entity.mention, `${label}.entities[${index}].mention`);
+          if (!["character", "artifact", "location", "beast", "faction"].includes(type)) {
+            throw new Error(`${label}.entities[${index}].type is unsupported.`);
+          }
+          if (mention !== "reveal" && mention !== "reference") {
+            throw new Error(`${label}.entities[${index}].mention is unsupported.`);
+          }
+          return {
+            name: requiredString(entity.name, `${label}.entities[${index}].name`),
+            type: type as "character" | "artifact" | "location" | "beast" | "faction",
+            mention: mention as "reveal" | "reference",
+          };
+        })
+      : (() => { throw new Error(`${label}.entities must be an array.`); })();
+  const music = metadata.music === undefined
+    ? undefined
+    : (() => {
+        const item = requiredRecord(metadata.music, `${label}.music`);
+        const region = optionalValidatedString(item.region, `${label}.music.region`);
+        if (region && !["chinese", "japanese", "western"].includes(region)) {
+          throw new Error(`${label}.music.region is unsupported.`);
+        }
+        return {
+          mood: requiredString(item.mood, `${label}.music.mood`),
+          ...(region ? { region: region as "chinese" | "japanese" | "western" } : {}),
+          ...(optionalFiniteNumber(item.intensity, `${label}.music.intensity`) !== undefined
+            ? { intensity: optionalFiniteNumber(item.intensity, `${label}.music.intensity`) }
+            : {}),
+          ...(optionalValidatedString(item.customUrl, `${label}.music.customUrl`)
+            ? { customUrl: optionalValidatedString(item.customUrl, `${label}.music.customUrl`) }
+            : {}),
+          ...(optionalValidatedString(item.trackId, `${label}.music.trackId`)
+            ? { trackId: optionalValidatedString(item.trackId, `${label}.music.trackId`) }
+            : {}),
+        };
+      })();
+  const theme = metadata.theme === undefined
+    ? undefined
+    : typeof metadata.theme === "string"
+      ? requiredString(metadata.theme, `${label}.theme`)
+      : stringArray(metadata.theme, `${label}.theme`);
+
+  return {
+    ...(optionalValidatedString(metadata.sceneType, `${label}.sceneType`) ? { sceneType: optionalValidatedString(metadata.sceneType, `${label}.sceneType`) } : {}),
+    ...(optionalMetadataStringArray(metadata.environment, `${label}.environment`) ? { environment: optionalMetadataStringArray(metadata.environment, `${label}.environment`) } : {}),
+    ...(atmosphereCategory ? { atmosphereCategory: atmosphereCategory as StoryBlockMetadata["atmosphereCategory"] } : {}),
+    ...(optionalMetadataStringArray(metadata.atmosphereTags, `${label}.atmosphereTags`) ? { atmosphereTags: optionalMetadataStringArray(metadata.atmosphereTags, `${label}.atmosphereTags`) } : {}),
+    ...(theme ? { theme } : {}),
+    ...(optionalValidatedString(metadata.motion, `${label}.motion`) ? { motion: optionalValidatedString(metadata.motion, `${label}.motion`) } : {}),
+    ...(optionalValidatedString(metadata.emotion, `${label}.emotion`) ? { emotion: optionalValidatedString(metadata.emotion, `${label}.emotion`) } : {}),
+    ...(optionalFiniteNumber(metadata.intensity, `${label}.intensity`) !== undefined ? { intensity: optionalFiniteNumber(metadata.intensity, `${label}.intensity`) } : {}),
+    ...(optionalFiniteNumber(metadata.tension, `${label}.tension`) !== undefined ? { tension: optionalFiniteNumber(metadata.tension, `${label}.tension`) } : {}),
+    ...(optionalFiniteNumber(metadata.danger, `${label}.danger`) !== undefined ? { danger: optionalFiniteNumber(metadata.danger, `${label}.danger`) } : {}),
+    ...(optionalFiniteNumber(metadata.mysticism, `${label}.mysticism`) !== undefined ? { mysticism: optionalFiniteNumber(metadata.mysticism, `${label}.mysticism`) } : {}),
+    ...(optionalValidatedString(metadata.audioSignature, `${label}.audioSignature`) ? { audioSignature: optionalValidatedString(metadata.audioSignature, `${label}.audioSignature`) } : {}),
+    ...(optionalValidatedString(metadata.speakerName, `${label}.speakerName`) ? { speakerName: optionalValidatedString(metadata.speakerName, `${label}.speakerName`) } : {}),
+    ...(optionalValidatedString(metadata.mode, `${label}.mode`) ? { mode: optionalValidatedString(metadata.mode, `${label}.mode`) } : {}),
+    ...(optionalValidatedString(metadata.speakerRole, `${label}.speakerRole`) ? { speakerRole: optionalValidatedString(metadata.speakerRole, `${label}.speakerRole`) } : {}),
+    ...(entities ? { entities } : {}),
+    ...(music ? { music } : {}),
+  };
+};
+
+const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefined => {
+  if (value === undefined || value === null) return undefined;
+  const event = requiredRecord(value, label);
+  const kind = requiredString(event.kind, `${label}.kind`);
+  if (!SYSTEM_EVENT_KINDS.includes(kind as (typeof SYSTEM_EVENT_KINDS)[number])) {
+    throw new Error(`${label}.kind is unsupported.`);
+  }
+  const rows = event.rows === undefined
+    ? undefined
+    : Array.isArray(event.rows)
+      ? event.rows.map((item, index) => {
+          const row = requiredRecord(item, `${label}.rows[${index}]`);
+          return {
+            label: requiredString(row.label, `${label}.rows[${index}].label`),
+            value: requiredString(row.value, `${label}.rows[${index}].value`),
+          };
+        })
+      : (() => { throw new Error(`${label}.rows must be an array.`); })();
+  return {
+    kind: kind as SystemEvent["kind"],
+    title: requiredString(event.title, `${label}.title`),
+    ...(optionalValidatedString(event.promptType, `${label}.promptType`)
+      ? { promptType: optionalValidatedString(event.promptType, `${label}.promptType`) as SystemEvent["promptType"] }
+      : {}),
+    ...(rows ? { rows } : {}),
+    ...(optionalValidatedString(event.rarity, `${label}.rarity`) ? { rarity: optionalValidatedString(event.rarity, `${label}.rarity`) } : {}),
+  };
+};
+
+const parseWorldCardEvent = (value: unknown, label: string): WorldCardEvent | undefined => {
+  if (value === undefined || value === null) return undefined;
+  const event = requiredRecord(value, label);
+  const entityType = requiredString(event.entityType, `${label}.entityType`);
+  if (!WORLD_CARD_ENTITY_TYPES.includes(entityType as (typeof WORLD_CARD_ENTITY_TYPES)[number])) {
+    throw new Error(`${label}.entityType is unsupported.`);
+  }
+  return {
+    ...(optionalValidatedString(event.id, `${label}.id`) ? { id: optionalValidatedString(event.id, `${label}.id`) } : {}),
+    entityType: entityType as WorldCardEvent["entityType"],
+    entityName: requiredString(event.entityName, `${label}.entityName`),
+    displayTitle: requiredString(event.displayTitle, `${label}.displayTitle`),
+    ...(optionalValidatedString(event.imageUrl, `${label}.imageUrl`) ? { imageUrl: optionalValidatedString(event.imageUrl, `${label}.imageUrl`) } : {}),
+    ...(optionalValidatedString(event.quote, `${label}.quote`) ? { quote: optionalValidatedString(event.quote, `${label}.quote`) } : {}),
+    ...(optionalValidatedString(event.audioText, `${label}.audioText`) ? { audioText: optionalValidatedString(event.audioText, `${label}.audioText`) } : {}),
+    ...(optionalValidatedString(event.voicePreset, `${label}.voicePreset`) ? { voicePreset: optionalValidatedString(event.voicePreset, `${label}.voicePreset`) } : {}),
+    ...(optionalValidatedString(event.codexEntryId, `${label}.codexEntryId`) ? { codexEntryId: optionalValidatedString(event.codexEntryId, `${label}.codexEntryId`) } : {}),
+    ...(optionalValidatedString(event.rarity, `${label}.rarity`) ? { rarity: optionalValidatedString(event.rarity, `${label}.rarity`) } : {}),
+  };
+};
+
 const sanitizeStoryBlock = (value: JsonRecord, index: number): StoryBlock => {
   const id = requiredString(value.id, `Manifest Chapter block ${index + 1} id`);
   const returnedType = requiredString(value.type, `Manifest Chapter block ${index + 1} type`);
-  const metadata = isRecord(value.metadata) ? value.metadata : undefined;
+  const metadata = parseBlockMetadata(value.metadata, `Manifest Chapter block '${id}' metadata`);
+  const system = parseSystemEvent(value.system, `Manifest Chapter block '${id}' system`);
+  const worldCard = parseWorldCardEvent(value.worldCard, `Manifest Chapter block '${id}' worldCard`);
   const type = returnedType === "paragraph" || returnedType === "dialogue"
     ? returnedType
     : returnedType === "narration"
       ? "paragraph"
-      : returnedType === "system" && isRecord(value.system)
+      : returnedType === "system" && system
         ? "paragraph"
-        : (returnedType === "world-card" || returnedType === "world_card") && isRecord(value.worldCard)
+        : (returnedType === "world-card" || returnedType === "world_card") && worldCard
           ? "paragraph"
           : metadata?.mode === "dialogue"
             ? "dialogue"
@@ -285,9 +442,9 @@ const sanitizeStoryBlock = (value: JsonRecord, index: number): StoryBlock => {
     id,
     type,
     text: requiredString(value.text, `Manifest Chapter block '${id}' text`),
-    ...(metadata ? { metadata: metadata as StoryBlock["metadata"] } : {}),
-    ...(isRecord(value.system) ? { system: value.system as unknown as StoryBlock["system"] } : {}),
-    ...(isRecord(value.worldCard) ? { worldCard: value.worldCard as unknown as StoryBlock["worldCard"] } : {}),
+    ...(metadata ? { metadata } : {}),
+    ...(system ? { system } : {}),
+    ...(worldCard ? { worldCard } : {}),
   };
 };
 
@@ -404,6 +561,23 @@ const buildProposedState = (
   };
 };
 
+const threadKey = (description: string): string => description.trim().toLocaleLowerCase();
+
+const mergeUnresolvedThreads = (
+  current: Array<{ description: string; originChapter: number }>,
+  reported: Array<{ description: string; originChapter: number }>,
+  completed: string[],
+): Array<{ description: string; originChapter: number }> => {
+  const completedKeys = new Set(completed.map(threadKey));
+  const merged = new Map<string, { description: string; originChapter: number }>();
+  for (const thread of [...current, ...reported]) {
+    const key = threadKey(thread.description);
+    if (!key || completedKeys.has(key) || merged.has(key)) continue;
+    merged.set(key, { ...thread });
+  }
+  return [...merged.values()];
+};
+
 export function parseProcessingResult(
   text: string,
   input: ProcessChapterInput,
@@ -411,7 +585,7 @@ export function parseProcessingResult(
   const value = parseStructuredModelJson(text, "Process Result");
   const threads = requiredRecord(value.threads, "Process Result threads");
   const unresolvedValue = Array.isArray(threads.unresolved) ? threads.unresolved : [];
-  const unresolved = unresolvedValue.map((item, index) => {
+  const reportedUnresolved = unresolvedValue.map((item, index) => {
     const thread = requiredRecord(item, `Process Result threads.unresolved[${index}]`);
     const originChapter = Number(thread.originChapter);
     if (!Number.isInteger(originChapter) || originChapter < 1) {
@@ -442,6 +616,11 @@ export function parseProcessingResult(
     worldBuildingSeed: input.chapterPacket.livingStoryState.scene.worldBuildingSeed,
   });
   const completed = stringArray(threads.completed, "Process Result threads.completed");
+  const unresolved = mergeUnresolvedThreads(
+    input.chapterPacket.livingStoryState.threads.unresolved,
+    reportedUnresolved,
+    completed,
+  );
 
   return {
     version: 1,
@@ -513,15 +692,30 @@ export interface LiveChapterModelCalls {
 
 export function createLiveChapterModelCalls(
   provider: ChapterTextModelProvider,
-  options: { temperature: number; maxOutputTokens: number },
+  options: { temperature: number; maxOutputTokens: number; timeoutMs?: number },
 ): LiveChapterModelCalls {
   const usage: ChapterModelCallUsage[] = [];
   let processCallCount = 0;
 
   const generate = async (request: Parameters<ChapterTextModelProvider["generate"]>[0]) => {
-    const result = await provider.generate(request);
-    usage.push(result.usage);
-    return result.text;
+    const controller = new AbortController();
+    const timeoutMs = options.timeoutMs ?? 90_000;
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const result = await provider.generate({
+        ...request,
+        abortSignal: controller.signal,
+      });
+      usage.push(result.usage);
+      return result.text;
+    } catch (error) {
+      if (controller.signal.aborted) {
+        throw new Error(`${request.stage} exceeded the ${Math.round(timeoutMs / 1_000)} second Development deadline.`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
   };
 
   return {

@@ -6,6 +6,7 @@ import { adaptFinalizedStorySeedToChapterContracts } from "../../components/chap
 import { assembleChapterPacket } from "../../components/chapter-generation/shared/pipeline/assembleChapterPacket";
 import { runChapterPipelineAsync } from "../../components/chapter-generation/shared/pipeline/runChapterPipelineAsync";
 import { aggregateChapterTokenUsage } from "../../components/chapter-generation/shared/pipeline/usage";
+import type { ChapterTokenUsageSummary } from "../../components/chapter-generation/shared/pipeline/usage";
 import type { ResolvedChapterGenerationConfig } from "./config";
 import { resolveConfiguredChapterModel } from "./config";
 import { createLiveChapterModelCalls } from "./modelCalls";
@@ -21,6 +22,18 @@ export type ChapterProviderFactory = (input: {
 
 export interface ExecuteChapterGenerationOptions {
   providerFactory?: ChapterProviderFactory;
+}
+
+export class ChapterGenerationExecutionError extends Error {
+  readonly cause: unknown;
+  readonly usage: ChapterTokenUsageSummary;
+
+  constructor(cause: unknown, usage: ChapterTokenUsageSummary) {
+    super(cause instanceof Error ? cause.message : "Unknown chapter-generation failure");
+    this.name = "ChapterGenerationExecutionError";
+    this.cause = cause;
+    this.usage = usage;
+  }
 }
 
 export async function executeChapterGeneration(
@@ -50,11 +63,20 @@ export async function executeChapterGeneration(
   const liveCalls = createLiveChapterModelCalls(provider, {
     temperature: config.temperature,
     maxOutputTokens: config.maxOutputTokens,
+    timeoutMs: config.stageTimeoutMs,
   });
-  const run = await runChapterPipelineAsync({
-    chapterPacket,
-    model: liveCalls.model,
-  });
+  let run: ManifestChapterResponse["run"];
+  try {
+    run = await runChapterPipelineAsync({
+      chapterPacket,
+      model: liveCalls.model,
+    });
+  } catch (error) {
+    throw new ChapterGenerationExecutionError(
+      error,
+      aggregateChapterTokenUsage(liveCalls.usage),
+    );
+  }
 
   return {
     provider: "gemini",

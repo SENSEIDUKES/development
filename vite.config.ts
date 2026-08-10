@@ -51,7 +51,7 @@ const chapterGenerationApi = (
           ? await readJsonBody(request)
           : undefined;
         const result = await handleChapterGenerationHttp(
-          { method: request.method, body },
+          { method: request.method, body, headers: request.headers },
           {
             environment,
             onError: error => console.error('[chapter-generation]', error),

@@ -61,7 +61,7 @@ export interface StorySeedChapterMappingReport {
 
 export interface StorySeedChapterAdapterInput {
   seed: StorySeedInput;
-  blueprint: WorldBlueprint;
+  blueprint: unknown;
   temporaryInstruction?: string;
 }
 

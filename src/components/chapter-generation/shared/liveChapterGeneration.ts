@@ -31,4 +31,6 @@ export interface ManifestChapterResponse {
 
 export interface ChapterGenerationErrorResponse {
   error: string;
+  /** Calls that completed before a later provider or structured-output failure. */
+  usage?: ChapterTokenUsageSummary;
 }

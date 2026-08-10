@@ -50,11 +50,26 @@ const portableSeed = (seed: StorySeedInput): Record<string, unknown> => {
  * could save an edited Blueprint title separately, so the reviewed artifact
  * wins once at the portable boundary and the imported seed is reconciled to it.
  */
-const reconcileArtifact = (
+export interface RawStorySeedArtifact {
+  seed: StorySeedInput;
+  blueprint?: unknown;
+}
+
+function reconcileArtifact(
+  seed: StorySeedInput,
+  blueprintValue: unknown,
+  normalizeBlueprint: false,
+): RawStorySeedArtifact;
+function reconcileArtifact(
+  seed: StorySeedInput,
+  blueprintValue?: unknown,
+  normalizeBlueprint?: true,
+): StorySeedArtifact;
+function reconcileArtifact(
   seed: StorySeedInput,
   blueprintValue?: unknown,
   normalizeBlueprint = true,
-): StorySeedArtifact => {
+): RawStorySeedArtifact {
   const normalizedSeed = normalizeStorySeedInput(seed);
   if (!isRecord(blueprintValue)) return { seed: normalizedSeed };
   const blueprintTitle = typeof blueprintValue.title === 'string'
@@ -79,9 +94,9 @@ const reconcileArtifact = (
     seed: reconciledSeed,
     blueprint: normalizeBlueprint
       ? normalizeWorldBlueprint(blueprintValue, reconciledSeed)
-      : blueprintValue as unknown as WorldBlueprint,
+      : blueprintValue,
   };
-};
+}
 
 const createReconciledStorySeedExport = (artifact: StorySeedArtifact) => ({
     format: STORY_SEED_FORMAT,
@@ -126,18 +141,30 @@ const isCanonicalShape = (value: Record<string, unknown>): boolean =>
   && isRecord((value.story as Record<string, unknown>).required)
   && isRecord(value.world);
 
-const extractStorySeedArtifact = (
+function extractStorySeedArtifact(
+  value: unknown,
+  normalizeBlueprint: false,
+): RawStorySeedArtifact;
+function extractStorySeedArtifact(
+  value: unknown,
+  normalizeBlueprint: true,
+): StorySeedArtifact;
+function extractStorySeedArtifact(
   value: unknown,
   normalizeBlueprint: boolean,
-): StorySeedArtifact => {
+): RawStorySeedArtifact {
   if (!isRecord(value)) throw new Error('Each seed must be a JSON object.');
   if (isGeneratedStoryPackage(value)) {
     throw new Error('This is a generated story package, not a portable story seed.');
   }
   if (isRecord(value.seed)) {
-    const nested = extractStorySeedArtifact(value.seed, normalizeBlueprint);
+    const nested = normalizeBlueprint
+      ? extractStorySeedArtifact(value.seed, true)
+      : extractStorySeedArtifact(value.seed, false);
     return isRecord(value.blueprint)
-      ? reconcileArtifact(nested.seed, value.blueprint, normalizeBlueprint)
+      ? normalizeBlueprint
+        ? reconcileArtifact(nested.seed, value.blueprint, true)
+        : reconcileArtifact(nested.seed, value.blueprint, false)
       : nested;
   }
   const seed = isCanonicalShape(value)
@@ -146,18 +173,28 @@ const extractStorySeedArtifact = (
       ? importLegacyStorySeed(value)
       : null;
   if (!seed) throw new Error('No reusable Story Seed data was found in this JSON file.');
-  return reconcileArtifact(seed, value.blueprint, normalizeBlueprint);
-};
+  return normalizeBlueprint
+    ? reconcileArtifact(seed, value.blueprint, true)
+    : reconcileArtifact(seed, value.blueprint, false);
+}
 
 export interface ParseStorySeedJsonOptions {
   /** Preserve raw Blueprint fields so a stricter downstream boundary can reject partial artifacts. */
   normalizeBlueprint?: boolean;
 }
 
-export const parseStorySeedJson = (
+export function parseStorySeedJson(
+  input: string,
+  options: { normalizeBlueprint: false },
+): RawStorySeedArtifact[];
+export function parseStorySeedJson(
+  input: string,
+  options?: ParseStorySeedJsonOptions,
+): StorySeedArtifact[];
+export function parseStorySeedJson(
   input: string,
   options: ParseStorySeedJsonOptions = {},
-): StorySeedArtifact[] => {
+): RawStorySeedArtifact[] {
   let parsed: unknown;
   try {
     parsed = JSON.parse(input);
@@ -174,11 +211,10 @@ export const parseStorySeedJson = (
         })
       : [parsed];
   if (candidates.length === 0) throw new Error('The seed file is empty.');
-  return candidates.map(candidate => extractStorySeedArtifact(
-    candidate,
-    options.normalizeBlueprint !== false,
-  ));
-};
+  return options.normalizeBlueprint === false
+    ? candidates.map(candidate => extractStorySeedArtifact(candidate, false))
+    : candidates.map(candidate => extractStorySeedArtifact(candidate, true));
+}
 
 const safeFilenamePart = (title: string): string =>
   title.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 80) || 'untitled';

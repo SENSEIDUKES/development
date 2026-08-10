@@ -1,13 +1,16 @@
+import { timingSafeEqual } from "node:crypto";
 import type {
   ChapterGenerationErrorResponse,
   ManifestChapterRequest,
 } from "../../components/chapter-generation/shared/liveChapterGeneration";
+import type { ChapterTokenUsageSummary } from "../../components/chapter-generation/shared/pipeline/usage";
 import {
   chapterGenerationServerInfo,
   resolveChapterGenerationConfig,
   type ChapterGenerationEnvironment,
 } from "./config";
 import {
+  ChapterGenerationExecutionError,
   executeChapterGeneration,
   type ChapterProviderFactory,
 } from "./execute";
@@ -15,6 +18,7 @@ import {
 export interface ChapterGenerationHttpRequest {
   method?: string;
   body?: unknown;
+  headers?: Record<string, string | string[] | undefined>;
 }
 
 export interface ChapterGenerationHttpResponse {
@@ -32,10 +36,39 @@ export interface ChapterGenerationHttpDependencies {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
-const errorResponse = (status: number, error: string): ChapterGenerationHttpResponse => ({
+const errorResponse = (
+  status: number,
+  error: string,
+  usage?: ChapterTokenUsageSummary,
+): ChapterGenerationHttpResponse => ({
   status,
-  body: { error } satisfies ChapterGenerationErrorResponse,
+  body: {
+    error,
+    ...(usage && usage.calls.length > 0 ? { usage } : {}),
+  } satisfies ChapterGenerationErrorResponse,
 });
+
+const requestHeader = (
+  request: ChapterGenerationHttpRequest,
+  name: string,
+): string | undefined => {
+  const entry = Object.entries(request.headers ?? {})
+    .find(([headerName]) => headerName.toLowerCase() === name.toLowerCase());
+  const value = entry?.[1];
+  return Array.isArray(value) ? value[0] : value;
+};
+
+const hasValidAccessToken = (
+  request: ChapterGenerationHttpRequest,
+  expectedToken: string,
+): boolean => {
+  const authorization = requestHeader(request, "authorization")?.trim() ?? "";
+  const match = /^Bearer\s+(.+)$/i.exec(authorization);
+  if (!match) return false;
+  const actual = Buffer.from(match[1]);
+  const expected = Buffer.from(expectedToken);
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
+};
 
 const parseRequest = (body: unknown): ManifestChapterRequest => {
   const parsed = typeof body === "string" ? JSON.parse(body) : body;
@@ -59,6 +92,7 @@ const parseRequest = (body: unknown): ManifestChapterRequest => {
 
 const isConfigurationError = (message: string) =>
   message.includes("GEMINI_API_KEY is not configured")
+  || message.includes("CHAPTER_GENERATION_ACCESS_TOKEN is not configured")
   || message.includes("CHAPTER_GENERATION_MODELS");
 
 const isRequestError = (message: string) => [
@@ -110,6 +144,12 @@ export async function handleChapterGenerationHttp(
 
   try {
     const config = resolveChapterGenerationConfig(dependencies.environment);
+    if (!config.accessToken) {
+      throw new Error("CHAPTER_GENERATION_ACCESS_TOKEN is not configured on the Development server.");
+    }
+    if (!hasValidAccessToken(request, config.accessToken)) {
+      return errorResponse(401, "A valid Development chapter-generation access token is required.");
+    }
     const result = await executeChapterGeneration(parsedRequest, config, {
       providerFactory: dependencies.providerFactory,
     });
@@ -123,9 +163,13 @@ export async function handleChapterGenerationHttp(
     const message = error instanceof Error ? error.message : "Unknown generation failure";
     if (isConfigurationError(message)) return errorResponse(503, message);
     if (isRequestError(message)) return errorResponse(400, message);
+    const usage = error instanceof ChapterGenerationExecutionError
+      ? error.usage
+      : undefined;
     return errorResponse(
       502,
       "The model could not complete the chapter pipeline. No chapter or story data was saved; review the server log and retry.",
+      usage,
     );
   }
 }

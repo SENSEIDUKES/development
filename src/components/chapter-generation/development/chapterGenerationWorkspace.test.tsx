@@ -376,5 +376,10 @@ describe("Chapter Generation token usage", () => {
     expect(html).toContain("Chapter output");
     expect(html).toContain("Chapter total");
     expect(html).toContain("400");
+
+    const failedHtml = renderToStaticMarkup(
+      <ChapterUsageSummary usage={result.usage} failed />,
+    );
+    expect(failedHtml).toContain("Model Usage Before Failure");
   });
 });

@@ -17,7 +17,8 @@ into the existing four packet contracts, and calls Gemini through a same-origin,
 server-only provider boundary. No fixture value is used to fill a missing mapping.
 
 The primary Development experience is a small test harness: select or upload the
-artifact, choose a server-configured model, optionally add a temporary instruction,
+artifact, enter the separately configured Development access token, choose a
+server-configured model, optionally add a temporary instruction,
 manifest one chapter, read it, and inspect per-call and total token usage. The
 existing four-stage workspace remains available in a collapsed Diagnostics section.
 Reference remains the locked deterministic inspector.
@@ -171,8 +172,11 @@ architecture.
 
 ## Workshop boundaries
 
-- Development makes live Gemini calls only through the server; credentials and the
-  configured model allow-list never enter browser code.
+- Development makes live Gemini calls only through the server. The Gemini credential
+  never enters browser code; a separate `CHAPTER_GENERATION_ACCESS_TOKEN` authorizes
+  each POST and is held only in page memory after the tester enters it.
+- Calls that complete before a later structured-output failure still return their
+  provider-reported or estimated token/time records for diagnosis.
 - No database, persistence, R2, credit, queue, notification, Story Library, Reader,
   reward, publishing, or production-data write was added.
 - No real `LivingStoryState` update or chapter advancement is committed.
@@ -204,6 +208,7 @@ handling, immutable input state, and the readable live-output/Diagnostics UI.
 - **2026-08-08:** Pass 3 rebuilt the Development pane as a readable Chapter Generation workspace (Permanent Story Rules, four run steps, collapsed Technical Details) consuming the structured `ChapterPipelineRun` directly; the Reference inspector is unchanged.
 - **2026-08-08:** Pass 3 usability: the run became a sticky four-stage stepper showing one stage at a time (Manifested Chapter by default, with the main reading space), Permanent Story Rules collapsed to a compact digest closed by default, and copy controls now report clipboard success/failure truthfully.
 - **2026-08-09:** Chapter Generation 1.0 Pass 1 connected finalized Story Seed v3 and World Blueprint artifacts to the existing packet contracts, added server-side Gemini Plan/Manifest/Process calls with conditional repair, exposed per-stage token/time usage, and made the one-chapter test harness the primary Development experience while retaining the four-stage workspace as Diagnostics.
+- **2026-08-09:** Protected the live Development model boundary with a separate server-configured bearer token, preserved omitted Blueprint threads during Process Result, and retained completed-call usage when a later stage fails.
 
 ## Transfer notes
 

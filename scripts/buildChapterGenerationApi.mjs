@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { build } from "vite";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const debugBundle = process.env.CHAPTER_API_DEBUG_BUNDLE === "1";
 
 await build({
   root: repositoryRoot,
@@ -17,8 +18,8 @@ await build({
     ),
     outDir: path.join(repositoryRoot, "generated/chapter-generation-api"),
     emptyOutDir: true,
-    minify: false,
-    sourcemap: true,
+    minify: !debugBundle,
+    sourcemap: debugBundle,
     rollupOptions: {
       output: {
         format: "es",

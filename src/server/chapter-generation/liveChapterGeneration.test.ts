@@ -62,7 +62,7 @@ const canonicalBlueprint = (): WorldBlueprint => ({
   tropeRules: "Deduction must come from observed evidence.",
   styleBible: "Quiet pressure and precise ritual detail.",
   estimatedArcs: 4,
-  unresolvedPlotThreads: [],
+  unresolvedPlotThreads: ["Who taught the rain to remember Rin?"],
 });
 
 const buildPacket = () => assembleChapterPacket(
@@ -247,6 +247,12 @@ describe("live Chapter Generation model boundaries", () => {
     expect(provider.requests.map(request => request.kind)).toEqual(["plan", "manifest", "process"]);
     expect(run.modelCalls).toEqual(["plan", "manifest", "process"]);
     expect(run.repairApplied).toBe(false);
+    expect(run.processingResult.threads.unresolved).toEqual([{
+      description: "Who taught the rain to remember Rin?",
+      originChapter: 1,
+    }]);
+    expect(run.processingResult.proposedLivingStoryState.threads.unresolved)
+      .toEqual(run.processingResult.threads.unresolved);
     expect(run.manifestedChapter.blocks?.[2].type).toBe("paragraph");
     expect(packet.livingStoryState).toEqual(originalState);
     expect(provider.requests[0].userPrompt).toContain("COMPLETE CHAPTER PACKET");
@@ -303,6 +309,54 @@ describe("live Chapter Generation model boundaries", () => {
     expect(calls.usage).toHaveLength(1);
   });
 
+  it("rejects a manifested chapter when one NDJSON block is malformed", async () => {
+    const base = new RecordingProvider();
+    const provider: ChapterTextModelProvider = {
+      provider: base.provider,
+      model: base.model,
+      async generate(request) {
+        const result = await base.generate(request);
+        return request.kind === "manifest"
+          ? {
+              ...result,
+              text: `${JSON.stringify({ id: "valid", type: "paragraph", text: "Opening." })}\n{"id":"broken"\n${JSON.stringify({ id: "later", type: "paragraph", text: "Later." })}`,
+            }
+          : result;
+      },
+    };
+    const calls = createLiveChapterModelCalls(provider, {
+      temperature: 1,
+      maxOutputTokens: 16_384,
+    });
+
+    await expect(runChapterPipelineAsync({ chapterPacket: buildPacket(), model: calls.model }))
+      .rejects.toThrow(/malformed or unbalanced block/);
+    expect(calls.usage).toHaveLength(2);
+  });
+
+  it("does not repair when the model recommends repair without a serious finding", async () => {
+    const base = new RecordingProvider();
+    const provider: ChapterTextModelProvider = {
+      provider: base.provider,
+      model: base.model,
+      async generate(request) {
+        const result = await base.generate(request);
+        if (request.kind !== "process") return result;
+        const response = JSON.parse(result.text);
+        response.repairRecommended = true;
+        return { ...result, text: JSON.stringify(response) };
+      },
+    };
+    const calls = createLiveChapterModelCalls(provider, {
+      temperature: 1,
+      maxOutputTokens: 16_384,
+    });
+    const run = await runChapterPipelineAsync({ chapterPacket: buildPacket(), model: calls.model });
+
+    expect(run.modelCalls).toEqual(["plan", "manifest", "process"]);
+    expect(run.repairApplied).toBe(false);
+  });
+
   it("normalizes described change objects and drops blank entries", async () => {
     const provider = new RecordingProvider(false, true);
     const calls = createLiveChapterModelCalls(provider, {
@@ -321,6 +375,7 @@ describe("live Chapter Generation model boundaries", () => {
 describe("server model selection and failure handling", () => {
   const environment = {
     GEMINI_API_KEY: "server-only-test-key",
+    CHAPTER_GENERATION_ACCESS_TOKEN: "development-access-token",
     CHAPTER_GENERATION_MODELS: "google/gemini-test,google/gemini-second",
     CHAPTER_GENERATION_DEFAULT_MODEL: "google/gemini-second",
   };
@@ -334,6 +389,7 @@ describe("server model selection and failure handling", () => {
       defaultModel: "google/gemini-second",
     });
     expect(JSON.stringify(serverInfo)).not.toContain(environment.GEMINI_API_KEY);
+    expect(JSON.stringify(serverInfo)).not.toContain(environment.CHAPTER_GENERATION_ACCESS_TOKEN);
     expect(config.models.map(option => option.id)).toEqual([
       "google/gemini-test",
       "google/gemini-second",
@@ -342,11 +398,27 @@ describe("server model selection and failure handling", () => {
       .toBe("google/gemini-test");
     expect(() => resolveConfiguredChapterModel("arbitrary/model", config))
       .toThrow(/not configured/);
+    expect(chapterGenerationServerInfo({ ...environment, CHAPTER_GENERATION_ACCESS_TOKEN: "" }).configured)
+      .toBe(false);
+  });
+
+  it("serves model info, rejects unsupported methods, and identifies an empty body", async () => {
+    const info = await handleChapterGenerationHttp({ method: "GET" }, { environment });
+    const unsupported = await handleChapterGenerationHttp({ method: "DELETE" }, { environment });
+    const empty = await handleChapterGenerationHttp({ method: "POST", body: "" }, { environment });
+
+    expect(info).toMatchObject({ status: 200, body: { configured: true } });
+    expect(unsupported).toMatchObject({ status: 405, headers: { Allow: "GET, POST" } });
+    expect(empty).toMatchObject({
+      status: 400,
+      body: { error: "The chapter-generation request body is empty." },
+    });
   });
 
   it("returns a safe API error when the provider fails", async () => {
     const response = await handleChapterGenerationHttp({
       method: "POST",
+      headers: { Authorization: "Bearer development-access-token" },
       body: {
         artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
         model: "google/gemini-test",
@@ -373,6 +445,7 @@ describe("server model selection and failure handling", () => {
     const generate = vi.fn();
     const response = await handleChapterGenerationHttp({
       method: "POST",
+      headers: { Authorization: "Bearer development-access-token" },
       body: {
         artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
         model: "google/gemini-arbitrary",
@@ -390,6 +463,7 @@ describe("server model selection and failure handling", () => {
     const generate = vi.fn();
     const response = await handleChapterGenerationHttp({
       method: "POST",
+      headers: { Authorization: "Bearer development-access-token" },
       body: {
         artifact: { seed: canonicalSeed() },
         model: "google/gemini-test",
@@ -402,5 +476,69 @@ describe("server model selection and failure handling", () => {
     expect(response.status).toBe(400);
     expect(JSON.stringify(response.body)).toContain("No Workshop fixture data was substituted");
     expect(generate).not.toHaveBeenCalled();
+  });
+
+  it("rejects a missing or invalid Development access token before any provider call", async () => {
+    const generate = vi.fn();
+    const request = {
+      method: "POST",
+      body: {
+        artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
+        model: "google/gemini-test",
+      },
+    };
+    const dependencies = {
+      environment,
+      providerFactory: () => ({ provider: "gemini", model: "google/gemini-test", generate }),
+    };
+
+    const missing = await handleChapterGenerationHttp(request, dependencies);
+    const invalid = await handleChapterGenerationHttp({
+      ...request,
+      headers: { Authorization: "Bearer wrong-token" },
+    }, dependencies);
+
+    expect(missing.status).toBe(401);
+    expect(invalid.status).toBe(401);
+    expect(generate).not.toHaveBeenCalled();
+  });
+
+  it("returns completed model-call usage when a later structured parse fails", async () => {
+    const response = await handleChapterGenerationHttp({
+      method: "POST",
+      headers: { Authorization: "Bearer development-access-token" },
+      body: {
+        artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
+        model: "google/gemini-test",
+      },
+    }, {
+      environment,
+      providerFactory: () => ({
+        provider: "gemini",
+        model: "google/gemini-test",
+        generate: async request => ({
+          text: "{}",
+          usage: {
+            kind: request.kind,
+            stage: request.stage,
+            provider: "gemini",
+            model: "google/gemini-test",
+            inputTokens: 120,
+            outputTokens: 4,
+            totalTokens: 124,
+            generationTimeMs: 50,
+            tokenSource: "provider",
+          },
+        }),
+      }),
+    });
+
+    expect(response.status).toBe(502);
+    expect(response.body).toMatchObject({
+      usage: {
+        calls: [{ stage: "Plan Chapter", inputTokens: 120, outputTokens: 4 }],
+        totals: { inputTokens: 120, outputTokens: 4, totalTokens: 124 },
+      },
+    });
   });
 });

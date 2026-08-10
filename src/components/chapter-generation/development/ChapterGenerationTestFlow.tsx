@@ -27,6 +27,7 @@ import type {
 import { adaptFinalizedStorySeedToChapterContracts } from "../shared/packets/storySeedChapterAdapter";
 import type { StorySeedChapterMappingReport } from "../shared/packets/storySeedChapterAdapter";
 import type { ChapterModelCallUsage } from "../shared/pipeline/usage";
+import type { ChapterTokenUsageSummary } from "../shared/pipeline/usage";
 import {
   listWorkshopStorySeeds,
   LOCAL_WORKSHOP_STORY_SEED_OWNER_ID,
@@ -34,6 +35,7 @@ import {
   type StorySeedRecord,
 } from "../../story-seed/shared/storySeedRepository";
 import { parseStorySeedJson } from "../../story-seed/shared/storySeedSerialization";
+import type { RawStorySeedArtifact } from "../../story-seed/shared/storySeedSerialization";
 import ChapterGenerationWorkspace from "./ChapterGenerationWorkspace";
 import ManifestedChapterView from "./ManifestedChapterView";
 import { Chip } from "./workspaceUi";
@@ -44,11 +46,19 @@ interface ArtifactChoice {
   id: string;
   label: string;
   source: "saved" | "upload";
-  artifact: StorySeedArtifact;
+  artifact: RawStorySeedArtifact;
 }
 
-const titleForArtifact = (artifact: StorySeedArtifact): string =>
-  artifact.blueprint?.title
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === "object" && !Array.isArray(value);
+
+const blueprintString = (artifact: RawStorySeedArtifact, field: string): string | undefined =>
+  isRecord(artifact.blueprint) && typeof artifact.blueprint[field] === "string"
+    ? artifact.blueprint[field].trim() || undefined
+    : undefined;
+
+const titleForArtifact = (artifact: RawStorySeedArtifact): string =>
+  blueprintString(artifact, "title")
   || artifact.seed.world.optional.worldIdentity.title
   || artifact.seed.story.required.premise.slice(0, 70)
   || "Untitled Story Seed";
@@ -98,26 +108,37 @@ function UsageRow({ call }: { call: ChapterModelCallUsage }) {
   );
 }
 
-export function ChapterUsageSummary({ result }: { result: ManifestChapterResponse }) {
-  const { totals } = result.usage;
+export function ChapterUsageSummary({
+  result,
+  usage,
+  failed = false,
+}: {
+  result?: ManifestChapterResponse;
+  usage?: ChapterTokenUsageSummary;
+  failed?: boolean;
+}) {
+  const summary = usage ?? result?.usage;
+  if (!summary) return null;
+  const { totals } = summary;
   return (
     <section aria-labelledby="chapter-usage-title" className="overflow-hidden rounded-xl border border-white/10 bg-black/25">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-3 sm:px-4">
         <div>
           <h3 id="chapter-usage-title" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-white/80">
-            <Sigma size={13} className="text-cyan-200/70" /> Model Usage
+            <Sigma size={13} className="text-cyan-200/70" />
+            {failed ? "Model Usage Before Failure" : "Model Usage"}
           </h3>
           <p className="mt-1 text-[10px] leading-relaxed text-white/35">
             Packet assembly is code-only and is not listed as a model call.
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          <Chip tone="cyan">{result.usage.calls.length} model calls</Chip>
+          <Chip tone="cyan">{summary.calls.length} model calls</Chip>
           {totals.hasEstimatedUsage && <Chip tone="amber">Includes estimates</Chip>}
         </div>
       </div>
       <ol>
-        {result.usage.calls.map((call, index) => (
+        {summary.calls.map((call, index) => (
           <UsageRow key={`${call.kind}-${index}`} call={call} />
         ))}
       </ol>
@@ -166,33 +187,43 @@ function MappingLimits({ mapping }: { mapping: StorySeedChapterMappingReport }) 
   );
 }
 
-const errorMessage = async (response: Response): Promise<string> => {
+const readErrorResponse = async (response: Response): Promise<ChapterGenerationErrorResponse> => {
   try {
     const body = await response.json() as ChapterGenerationErrorResponse;
-    return body.error || `Chapter generation failed (${response.status}).`;
+    return {
+      error: body.error || `Chapter generation failed (${response.status}).`,
+      ...(body.usage ? { usage: body.usage } : {}),
+    };
   } catch {
-    return `Chapter generation failed (${response.status}).`;
+    return { error: `Chapter generation failed (${response.status}).` };
   }
 };
 
+const errorMessage = async (response: Response): Promise<string> =>
+  (await readErrorResponse(response)).error;
+
 export function ChapterGenerationTestFlow() {
   const uploadSequence = useRef(0);
+  const manifestInFlight = useRef(false);
   const [choices, setChoices] = useState<ArtifactChoice[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [serverInfo, setServerInfo] = useState<ChapterGenerationServerInfo | null>(null);
   const [model, setModel] = useState("");
+  const [accessToken, setAccessToken] = useState("");
   const [temporaryInstruction, setTemporaryInstruction] = useState("");
   const [loadingSources, setLoadingSources] = useState(true);
   const [sourceError, setSourceError] = useState<string | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<ManifestChapterResponse | null>(null);
+  const [failedUsage, setFailedUsage] = useState<ChapterTokenUsageSummary | null>(null);
 
   const selectedChoice = choices.find(choice => choice.id === selectedId);
   const preflight = useMemo(() => {
     if (!selectedChoice?.artifact.blueprint) {
       return {
         mapping: null,
+        artifact: null,
         error: selectedChoice
           ? "This Story Seed has no finalized World Blueprint. Choose another artifact or upload the paired export."
           : null,
@@ -204,10 +235,15 @@ export function ChapterGenerationTestFlow() {
         blueprint: selectedChoice.artifact.blueprint,
         temporaryInstruction,
       });
-      return { mapping: adapted.mapping, error: null };
+      return {
+        mapping: adapted.mapping,
+        artifact: { seed: adapted.seed, blueprint: adapted.blueprint } satisfies StorySeedArtifact,
+        error: null,
+      };
     } catch (error) {
       return {
         mapping: null,
+        artifact: null,
         error: error instanceof Error ? error.message : "The selected Story Seed is not generation-ready.",
       };
     }
@@ -256,6 +292,7 @@ export function ChapterGenerationTestFlow() {
   const selectChoice = (nextId: string) => {
     setSelectedId(nextId);
     setResult(null);
+    setFailedUsage(null);
     setGenerationError(null);
   };
 
@@ -283,25 +320,43 @@ export function ChapterGenerationTestFlow() {
 
   const manifestChapter = async (event: FormEvent) => {
     event.preventDefault();
-    if (!selectedChoice || !model || preflight.error || !selectedChoice.artifact.blueprint) return;
+    if (
+      manifestInFlight.current
+      || !selectedChoice
+      || !model
+      || !accessToken.trim()
+      || preflight.error
+      || !preflight.artifact
+    ) return;
+    manifestInFlight.current = true;
     setGenerating(true);
     setGenerationError(null);
     setResult(null);
+    setFailedUsage(null);
     try {
       const response = await fetch(ENDPOINT, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${accessToken.trim()}`,
+        },
         body: JSON.stringify({
-          artifact: selectedChoice.artifact,
+          artifact: preflight.artifact,
           model,
           ...(temporaryInstruction.trim() ? { temporaryInstruction: temporaryInstruction.trim() } : {}),
         }),
       });
-      if (!response.ok) throw new Error(await errorMessage(response));
+      if (!response.ok) {
+        const failure = await readErrorResponse(response);
+        setFailedUsage(failure.usage ?? null);
+        throw new Error(failure.error);
+      }
       setResult(await response.json() as ManifestChapterResponse);
     } catch (error) {
       setGenerationError(error instanceof Error ? error.message : "Chapter manifestation failed.");
     } finally {
+      manifestInFlight.current = false;
       setGenerating(false);
     }
   };
@@ -328,7 +383,7 @@ export function ChapterGenerationTestFlow() {
               ? "Checking server model"
               : serverInfo.configured
                 ? "Server model ready"
-                : "Server key not configured"}
+                : "Server generation not configured"}
           </Chip>
         </div>
 
@@ -339,7 +394,7 @@ export function ChapterGenerationTestFlow() {
               <select
                 value={selectedId}
                 onChange={event => selectChoice(event.target.value)}
-                disabled={loadingSources || choices.length === 0}
+                disabled={generating || loadingSources || choices.length === 0}
                 className="min-h-11 w-full rounded-lg border border-white/10 bg-[#080b14] px-3 text-sm normal-case tracking-normal text-white/85 outline-none focus:border-cyan-500/60 disabled:opacity-50"
               >
                 {choices.length === 0 && <option value="">No saved finalized artifacts</option>}
@@ -358,8 +413,9 @@ export function ChapterGenerationTestFlow() {
                 onChange={event => {
                   setModel(event.target.value);
                   setResult(null);
+                  setFailedUsage(null);
                 }}
-                disabled={!serverInfo || serverInfo.models.length === 0}
+                disabled={generating || !serverInfo || serverInfo.models.length === 0}
                 className="min-h-11 w-full rounded-lg border border-white/10 bg-[#080b14] px-3 text-sm normal-case tracking-normal text-white/85 outline-none focus:border-cyan-500/60 disabled:opacity-50"
               >
                 {(serverInfo?.models ?? []).map(option => (
@@ -369,15 +425,36 @@ export function ChapterGenerationTestFlow() {
             </label>
           </div>
 
+          <label className="flex flex-col gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/55">
+            Development access token
+            <input
+              type="password"
+              value={accessToken}
+              onChange={event => {
+                setAccessToken(event.target.value);
+                setResult(null);
+                setFailedUsage(null);
+                setGenerationError(null);
+              }}
+              autoComplete="off"
+              disabled={generating}
+              placeholder="Enter the server-configured testing token"
+              className="min-h-11 w-full rounded-lg border border-white/10 bg-[#080b14] px-3 text-sm font-normal normal-case tracking-normal text-white/85 outline-none placeholder:text-white/25 focus:border-cyan-500/60"
+            />
+            <span className="text-[9px] font-normal normal-case tracking-normal text-white/30">
+              Held in memory for this page only. This is separate from the server-side Gemini key.
+            </span>
+          </label>
+
           <div className="flex flex-wrap items-center gap-2">
             <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-xs text-white/70 hover:bg-white/10">
               <FileUp size={13} /> Upload Story Seed JSON
-              <input type="file" accept="application/json,.json" onChange={uploadArtifact} className="sr-only" />
+              <input type="file" accept="application/json,.json" onChange={uploadArtifact} disabled={generating} className="sr-only" />
             </label>
             {selectedChoice && (
               <div className="flex flex-wrap gap-1.5">
                 <Chip tone="cyan">{titleForArtifact(selectedChoice.artifact)}</Chip>
-                <Chip>{selectedChoice.artifact.blueprint?.blueprintVersion ?? "Blueprint missing"}</Chip>
+                <Chip>{blueprintString(selectedChoice.artifact, "blueprintVersion") ?? "Blueprint missing"}</Chip>
                 <Chip>Story Seed v3</Chip>
               </div>
             )}
@@ -390,9 +467,11 @@ export function ChapterGenerationTestFlow() {
               onChange={event => {
                 setTemporaryInstruction(event.target.value);
                 setResult(null);
+                setFailedUsage(null);
                 setGenerationError(null);
               }}
               maxLength={2_000}
+              disabled={generating}
               rows={3}
               placeholder="Example: Let the opening breathe before the first irreversible choice."
               className="w-full resize-y rounded-lg border border-white/10 bg-[#080b14] px-3 py-2.5 text-sm font-normal normal-case leading-relaxed tracking-normal text-white/85 outline-none placeholder:text-white/25 focus:border-cyan-500/60"
@@ -422,8 +501,9 @@ export function ChapterGenerationTestFlow() {
               disabled={
                 generating
                 || !selectedChoice
-                || !selectedChoice.artifact.blueprint
+                || !preflight.artifact
                 || !model
+                || !accessToken.trim()
                 || Boolean(preflight.error)
                 || !serverInfo?.configured
               }
@@ -438,6 +518,7 @@ export function ChapterGenerationTestFlow() {
             </p>
           </div>
           {generationError && <p role="alert" className="text-xs leading-relaxed text-rose-200/80">{generationError}</p>}
+          {failedUsage && <ChapterUsageSummary usage={failedUsage} failed />}
         </form>
       </section>
 

@@ -118,7 +118,7 @@ export const workshopEntries: WorkshopEntry[] = [
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/CreationModal.tsx',
-      lastCompared: '2026-08-06',
+      lastCompared: '2026-08-10',
     },
   },
   {

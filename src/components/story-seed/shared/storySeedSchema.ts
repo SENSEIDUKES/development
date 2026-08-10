@@ -668,6 +668,137 @@ export const normalizeWorldBlueprint = (
   };
 };
 
+const withAuthoritativeDetails = (
+  generated: string,
+  details: Array<[label: string, value: string | undefined]>,
+): string => {
+  const explicit = details
+    .map(([label, value]) => [label, text(value)] as const)
+    .filter((entry): entry is readonly [string, string] => Boolean(entry[1]));
+  const missing = explicit.filter(([, value]) =>
+    !generated.toLocaleLowerCase().includes(value.toLocaleLowerCase()));
+  if (missing.length === 0) return generated;
+  const authoritative = missing.map(([label, value]) => `${label}: ${value}`).join('\n');
+  return [authoritative, generated].filter(Boolean).join('\n\n');
+};
+
+const characterBlueprintEntry = (character: StorySeedCharacter): string => {
+  const details = [
+    character.aliases?.length ? `aliases: ${character.aliases.join(', ')}` : '',
+    character.age ? `age: ${character.age}` : '',
+    character.skinTone ? `skin tone: ${character.skinTone}` : '',
+    character.eyeColor ? `eyes: ${character.eyeColor}` : '',
+    character.role ? `role: ${character.role}` : '',
+    character.connectionToMC ? `connection to main character: ${character.connectionToMC}` : '',
+    character.powerType ? `power: ${character.powerType}` : '',
+    character.rankLevel ? `rank: ${character.rankLevel}` : '',
+    character.bio ? `profile: ${character.bio}` : '',
+  ].filter(Boolean);
+  return details.length > 0 ? `${character.name} — ${details.join('; ')}` : character.name;
+};
+
+const factionBlueprintEntry = (faction: StorySeedFaction): string => {
+  const details = [
+    faction.aliases?.length ? `aliases: ${faction.aliases.join(', ')}` : '',
+    faction.role ? `role: ${faction.role}` : '',
+    faction.powerLevel ? `power level: ${faction.powerLevel}` : '',
+    faction.alignment ? `alignment: ${faction.alignment}` : '',
+    faction.connectionToMC ? `connection to main character: ${faction.connectionToMC}` : '',
+    faction.description ? `profile: ${faction.description}` : '',
+  ].filter(Boolean);
+  return details.length > 0 ? `${faction.name} — ${details.join('; ')}` : faction.name;
+};
+
+const mergeAuthoritativeEntries = <T extends { name: string }>(
+  generated: string[],
+  authored: T[],
+  describe: (entry: T) => string,
+): string[] => {
+  const validAuthored = authored.filter(entry => Boolean(text(entry.name)));
+  const normalizeEntry = (entry: string) => entry
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+  const authoredNames = validAuthored.map(entry => normalizeEntry(entry.name));
+  return [
+    ...validAuthored.map(describe),
+    ...generated.filter(entry => {
+      const candidate = ` ${normalizeEntry(entry)} `;
+      return !authoredNames.some(name => candidate.includes(` ${name} `));
+    }),
+  ];
+};
+
+/**
+ * Finalizes provider output without giving the provider authority over any
+ * creator-authored Story Seed value. Empty Blueprint fields come from the
+ * model; explicit seed values remain exact or are retained as labeled canon.
+ */
+export const finalizeGeneratedWorldBlueprint = (
+  value: unknown,
+  seed: StorySeedInput,
+): WorldBlueprint => {
+  const storySeed = normalizeStorySeedInput(seed);
+  const generated = normalizeWorldBlueprint(value, storySeed, {
+    preserveSourceMetadata: false,
+  });
+  const { worldIdentity, worldFoundations } = storySeed.world.optional;
+  const mainCharacter = worldFoundations.mainCharacter || {};
+  const generatedMainCharacter = generated.mainCharacter as WorldBlueprintMainCharacter;
+  const backgroundProfile = withAuthoritativeDetails(
+    generatedMainCharacter.backgroundProfile,
+    [
+      ['Starting identity', mainCharacter.startingIdentity],
+      ['Main flaw', mainCharacter.mainFlaw],
+      ['Secret advantage', mainCharacter.secretAdvantage],
+      ['Starting weakness', mainCharacter.startingWeakness],
+      ['Moral alignment', mainCharacter.moralAlignment],
+      ['Creator profile', mainCharacter.bio],
+    ],
+  );
+  const powerSystemOutline = withAuthoritativeDetails(
+    generated.powerSystemOutline,
+    [
+      ['Starting power concept', worldFoundations.abilities?.startingPowerConcept],
+      ['Unique path', worldFoundations.abilities?.uniquePath],
+      ['Power flavor', worldFoundations.powerSystem?.flavor],
+      ['Known ranks', worldFoundations.powerSystem?.knownRanks],
+    ],
+  );
+
+  return {
+    ...generated,
+    blueprintVersion: WORLD_BLUEPRINT_VERSION,
+    originSnapshot: createBlueprintOriginSnapshot(storySeed),
+    title: text(worldIdentity.title) || generated.title,
+    logline: text(storySeed.story.optional.additionalStoryDirection) || generated.logline,
+    worldOverview: text(worldIdentity.worldType) || generated.worldOverview,
+    startingLocation: text(worldIdentity.startingLocation) || generated.startingLocation,
+    societyStructure: text(worldIdentity.societyStructure) || generated.societyStructure,
+    powerSystemOutline,
+    mainCharacter: {
+      ...generatedMainCharacter,
+      name: text(mainCharacter.name) || generatedMainCharacter.name,
+      personality: text(mainCharacter.personality) || generatedMainCharacter.personality,
+      backgroundProfile,
+    },
+    mcProfile: backgroundProfile,
+    majorFactions: mergeAuthoritativeEntries(
+      generated.majorFactions,
+      worldFoundations.factions || [],
+      factionBlueprintEntry,
+    ),
+    initialCharacters: mergeAuthoritativeEntries(
+      generated.initialCharacters,
+      worldFoundations.additionalCharacters || [],
+      characterBlueprintEntry,
+    ),
+    firstArcPromise: text(storySeed.story.optional.plotAndTropeSettings.firstMajorConflict)
+      || generated.firstArcPromise,
+    destinedEnding: text(worldFoundations.destinedEnding) || generated.destinedEnding,
+  };
+};
+
 export const buildBlueprintGenerationPayload = (seed: StorySeedInput): BlueprintGenerationPayload => {
   const storySeed = applyInferredStoryTags(normalizeStorySeedInput(seed));
   assertValidStorySeedInput(storySeed);

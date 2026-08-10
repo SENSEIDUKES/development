@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { handleChapterGenerationHttp } from './src/server/chapter-generation/http';
 import type { ChapterGenerationStreamEvent } from './src/components/chapter-generation/shared/liveChapterGeneration';
+import { handleStorySeedBlueprintHttp } from './src/server/story-seed-blueprint/http';
 
 const MAX_CHAPTER_REQUEST_BYTES = 2 * 1024 * 1024;
 
@@ -36,7 +37,7 @@ const writeJson = (
 const acceptsChapterStream = (request: IncomingMessage) =>
   request.headers.accept?.includes('application/x-ndjson') ?? false;
 
-const chapterGenerationApi = (
+const generationApis = (
   environment: Record<string, string | undefined>,
 ): Plugin => {
   const configure = (server: { middlewares: { use: (handler: (
@@ -46,7 +47,7 @@ const chapterGenerationApi = (
   ) => void) => void } }) => {
     server.middlewares.use(async (request, response, next) => {
       const pathname = new URL(request.url ?? '/', 'http://development.local').pathname;
-      if (pathname !== '/api/chapter-generation') {
+      if (pathname !== '/api/chapter-generation' && pathname !== '/api/generate-blueprint') {
         next();
         return;
       }
@@ -54,6 +55,17 @@ const chapterGenerationApi = (
         const body = request.method?.toUpperCase() === 'POST'
           ? await readJsonBody(request)
           : undefined;
+        if (pathname === '/api/generate-blueprint') {
+          const result = await handleStorySeedBlueprintHttp(
+            { method: request.method, body, headers: request.headers },
+            {
+              environment,
+              onError: error => console.error('[story-seed-blueprint]', error),
+            },
+          );
+          writeJson(response, result.status, result.body, result.headers);
+          return;
+        }
         const streaming = request.method?.toUpperCase() === 'POST' && acceptsChapterStream(request);
         let streamStarted = false;
         const writeEvent = (event: ChapterGenerationStreamEvent) => {
@@ -97,7 +109,7 @@ const chapterGenerationApi = (
   };
 
   return {
-    name: 'development-chapter-generation-api',
+    name: 'development-generation-apis',
     configureServer: configure,
     configurePreviewServer: configure,
   };
@@ -110,7 +122,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       tailwindcss(),
-      chapterGenerationApi(serverEnvironment),
+      generationApis(serverEnvironment),
     ],
   };
 });

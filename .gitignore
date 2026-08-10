@@ -2,6 +2,7 @@
 node_modules
 dist
 generated/chapter-generation-api
+generated/story-seed-blueprint-api
 *.tsbuildinfo
 vite-preview.log
 .firebase

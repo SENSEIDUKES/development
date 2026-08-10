@@ -4,6 +4,7 @@ import type {
   ReaderPreferences,
   StoryWorld,
 } from '../../../components/reader-chamber/shared/types';
+export const MOCK_READER_FALLBACK_LABEL = 'Mock fallback · No generated batch supplied · Four-chapter preview story only';
 
 export const MOCK_STORY_ID = 'workshop-story-emberfall';
 
@@ -305,7 +306,86 @@ export function createMockStory(): StoryWorld {
       'A debt-marked cultivator climbs the Ninth Meridian to out-pay a fate the Heavenly System has already written.',
     createdAt: '2026-07-20T10:00:00.000Z',
     updatedAt: '2026-07-30T18:12:44.000Z',
-    memory: { currentPowerStage: 'Qi Condensation — Layer 9' },
+    memory: {
+      currentPowerStage: 'Qi Condensation — Layer 9',
+      powerSystem: 'Body Tempering -> Qi Condensation -> Core Formation -> Nascent Soul',
+      characters: [
+        {
+          id: 'c1',
+          name: 'Li Wei',
+          role: 'Protagonist (Disgraced Disciple)',
+          status: 'alive',
+          powerLevel: 'Qi Condensation — Layer 9',
+          relationshipToMC: 'Self',
+          description: 'A debt-marked cultivator carrying the Oath of Embers and marked by the Ninth Meridian.',
+        },
+        {
+          id: 'c2',
+          name: 'Mei Lin',
+          role: 'Ashen Sword Saint',
+          status: 'alive',
+          powerLevel: 'Core Formation — Peak',
+          relationshipToMC: 'Unwilling Ally & Guardian',
+          description: 'Master of the Ashen Sword Technique. Guarded the collapsed gate when Li Wei broke through.',
+        },
+        {
+          id: 'c3',
+          name: 'Elder Kang',
+          role: 'Former Sect Elder',
+          status: 'deceased',
+          powerLevel: 'Nascent Soul (Deceased)',
+          relationshipToMC: 'Deceased Mentor',
+          description: 'Recorded as deceased in Chapter 0, though spectral echoes remain.',
+        },
+      ],
+      factions: [
+        {
+          id: 'f1',
+          name: 'Ninth Meridian Sect',
+          alignment: 'Neutral / Mysterious',
+          description: 'An ancient sect overseeing the collapsed gates and ember oaths.',
+        },
+        {
+          id: 'f2',
+          name: 'Ashen Sword Pavilion',
+          alignment: 'Righteous',
+          description: 'High-tier sword cultivators allied with Mei Lin.',
+        },
+      ],
+      locations: [
+        {
+          id: 'l1',
+          name: 'Collapsed Gate of the Ninth Meridian',
+          safetyLevel: 'Dangerous',
+          description: 'Site of Li Wei’s breakthrough where rust-red rain falls.',
+        },
+        {
+          id: 'l2',
+          name: 'Stair of a Thousand Debts',
+          safetyLevel: 'Lethal',
+          description: 'The steep ascent required to reach the inner sanctuaries.',
+        },
+      ],
+      artifacts: [
+        {
+          id: 'a1',
+          name: 'The Azure Ring',
+          tier: 'Heavenly',
+          condition: 'intact',
+          description: 'Ancient artifact discovered in Elder Kang’s sealed tomb.',
+        },
+      ],
+      unresolvedPlotThreads: [
+        {
+          description: 'What the Ninth Meridian has been collecting from every cultivator swearing the Ember Oath.',
+          originChapter: 1,
+        },
+        {
+          description: 'Why spectral echoes of Elder Kang still appear after his recorded death.',
+          originChapter: 2,
+        },
+      ],
+    },
     arcs: [
       {
         title: 'Arc I — The Fallen Star',
@@ -324,3 +404,12 @@ export function createMockStory(): StoryWorld {
 
 export const ARC_TITLE = 'Arc I — The Fallen Star';
 export const CURRENT_POWER_STAGE = 'Qi Condensation — Layer 9';
+
+/** Explicit no-generated-batch fallback used only by the standalone preview. */
+export function createMockReaderFallback() {
+  return {
+    kind: 'mock-fallback' as const,
+    label: MOCK_READER_FALLBACK_LABEL,
+    story: createMockStory(),
+  };
+}

@@ -17,6 +17,7 @@ import {
 } from "../shared/batch/chapterBatch";
 import { BatchProgress, ChapterUsageSummary } from "./ChapterGenerationTestFlow";
 import { createFiveChapterBatchState } from "../shared/batch/chapterBatch";
+import { createCompletedFiveChapterTestBatch } from "../shared/batch/chapterBatchTestFixture";
 import { ChapterGenerationWorkspace } from "./ChapterGenerationWorkspace";
 import { effectMarkers } from "./ManifestedChapterView";
 import { CopyButton } from "./workspaceUi";
@@ -455,5 +456,33 @@ describe("five-chapter progress", () => {
       />,
     );
     expect(runningHtml).not.toContain("Retry Chapter");
+  });
+
+  it("offers Reader Chamber only after all five chapters complete", () => {
+    const completed = createCompletedFiveChapterTestBatch();
+    const completedHtml = renderToStaticMarkup(
+      <BatchProgress
+        batch={completed}
+        selectedChapterNumber={1}
+        onSelectChapter={() => undefined}
+        onRetry={() => undefined}
+        retrying={false}
+        onReadInReaderChamber={() => undefined}
+      />,
+    );
+    expect(completedHtml).toContain("Read in Reader Chamber");
+
+    const paused = structuredClone(completed);
+    paused.status = "paused";
+    const pausedHtml = renderToStaticMarkup(
+      <BatchProgress
+        batch={paused}
+        selectedChapterNumber={1}
+        onSelectChapter={() => undefined}
+        onRetry={() => undefined}
+        retrying={false}
+      />,
+    );
+    expect(pausedHtml).not.toContain("Read in Reader Chamber");
   });
 });

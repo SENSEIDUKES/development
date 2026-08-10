@@ -54,6 +54,7 @@ import {
 import { parseStorySeedJson } from "../../story-seed/shared/storySeedSerialization";
 import type { RawStorySeedArtifact } from "../../story-seed/shared/storySeedSerialization";
 import ChapterGenerationWorkspace from "./ChapterGenerationWorkspace";
+import FiveChapterReaderSession from "./FiveChapterReaderSession";
 import ManifestedChapterView from "./ManifestedChapterView";
 import { Chip } from "./workspaceUi";
 
@@ -302,12 +303,14 @@ export function BatchProgress({
   onSelectChapter,
   onRetry,
   retrying,
+  onReadInReaderChamber,
 }: {
   batch: FiveChapterBatchState;
   selectedChapterNumber: number;
   onSelectChapter: (chapterNumber: number) => void;
   onRetry: () => void;
   retrying: boolean;
+  onReadInReaderChamber?: () => void;
 }) {
   return (
     <section aria-labelledby="batch-progress-title" className="overflow-hidden rounded-xl border border-violet-400/20 bg-violet-500/[0.05]">
@@ -333,6 +336,15 @@ export function BatchProgress({
             >
               {retrying ? <LoaderCircle size={13} className="animate-spin" /> : <RotateCcw size={13} />}
               Retry Chapter
+            </button>
+          )}
+          {batch.status === "completed" && onReadInReaderChamber && (
+            <button
+              type="button"
+              onClick={onReadInReaderChamber}
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-cyan-400/35 bg-cyan-500/15 px-3 text-xs font-semibold text-cyan-50 hover:bg-cyan-500/25"
+            >
+              <BookOpen size={14} /> Read in Reader Chamber
             </button>
           )}
         </div>
@@ -403,6 +415,7 @@ export function ChapterGenerationTestFlow() {
   const [singleStage, setSingleStage] = useState<ChapterUsageStage | null>(null);
   const [batch, setBatch] = useState<FiveChapterBatchState | null>(null);
   const [selectedBatchChapterNumber, setSelectedBatchChapterNumber] = useState(1);
+  const [readerBatch, setReaderBatch] = useState<FiveChapterBatchState | null>(null);
 
   const abortActiveManifest = () => activeManifestController.current?.abort();
 
@@ -484,6 +497,7 @@ export function ChapterGenerationTestFlow() {
     setSelectedId(nextId);
     setResult(null);
     setBatch(null);
+    setReaderBatch(null);
     setFailedUsage(null);
     setGenerationError(null);
   };
@@ -623,6 +637,10 @@ export function ChapterGenerationTestFlow() {
       )
     : undefined;
   const chapterForReading = displayedResult?.run.finalOutput ?? null;
+
+  if (readerBatch) {
+    return <FiveChapterReaderSession batch={readerBatch} onClose={() => setReaderBatch(null)} />;
+  }
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-5 overflow-x-hidden px-3 py-6 sm:px-5">
@@ -817,6 +835,7 @@ export function ChapterGenerationTestFlow() {
             onSelectChapter={setSelectedBatchChapterNumber}
             onRetry={retryBatchChapter}
             retrying={generating}
+            onReadInReaderChamber={batch.status === "completed" ? () => setReaderBatch(batch) : undefined}
           />
           {batch.usage.calls.length > 0 && <ChapterUsageSummary usage={batch.usage} scope="Batch" />}
         </>

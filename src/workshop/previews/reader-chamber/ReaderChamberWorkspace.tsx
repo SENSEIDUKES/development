@@ -16,8 +16,9 @@ import { workshopEntries } from '../../manifest';
 import {
   ARC_TITLE,
   CURRENT_POWER_STAGE,
-  createMockStory,
+  createMockReaderFallback,
   mockReaderPreferences,
+  MOCK_READER_FALLBACK_LABEL,
   MOCK_STORY_ID,
 } from './previewData';
 import {
@@ -31,39 +32,13 @@ import {
 } from './previewStates';
 import '../../../components/reader-chamber/shared/reader-chamber.css';
 
-type ReaderTab = 'reader' | 'codex' | 'memory';
+import { ReaderCodexView } from '../../../components/reader-chamber/development/ReaderCodexView';
 
-/** Workshop-only placeholder shown when the in-chamber tab bar switches away
- *  from the reader. The Codex menu system is a separate future Workshop job. */
-function CodexTabPlaceholder({ tab, onBack }: { tab: ReaderTab; onBack: () => void }) {
-  return (
-    <div className="flex min-h-[60vh] items-center justify-center px-6 py-16">
-      <div className="max-w-md rounded-xl border border-dashed border-cyan-500/40 bg-cyan-950/10 p-8 text-center">
-        <p className="mb-3 text-[10px] font-mono uppercase tracking-[0.25em] text-cyan-200/60">
-          Workshop placeholder — not production UI
-        </p>
-        <h3 className="font-display text-lg text-signal">
-          Codex menu system — separate Workshop job
-        </h3>
-        <p className="mt-2 text-sm text-neutral-400">
-          The “{tab}” tab is intentionally excluded from the Reader Chamber replica
-          (no CodexHovercard, no codex highlighting, no codex sheets). The tab bar
-          itself is faithful and functional.
-        </p>
-        <button
-          type="button"
-          onClick={onBack}
-          className="mt-5 rounded-full border border-portal/50 px-5 py-2 text-xs font-sc uppercase tracking-widest text-portal transition-colors hover:bg-portal hover:text-void"
-        >
-          Back to Reader
-        </button>
-      </div>
-    </div>
-  );
-}
+type ReaderTab = 'reader' | 'codex' | 'memory';
 
 function PreviewCanvas({ children }: { children: React.ReactElement }) {
   const [activeTab, setActiveTab] = useState<ReaderTab>('reader');
+  const activeStory = useAppStore((s) => s.stories[0]);
   const chamber = React.cloneElement(children, {
     onSwitchTab: (tab: ReaderTab) => setActiveTab(tab),
   } as Partial<unknown>);
@@ -72,7 +47,12 @@ function PreviewCanvas({ children }: { children: React.ReactElement }) {
       {activeTab === 'reader' ? (
         chamber
       ) : (
-        <CodexTabPlaceholder tab={activeTab} onBack={() => setActiveTab('reader')} />
+        <ReaderCodexView
+          memory={activeStory?.memory as any}
+          mcName={activeStory?.mcName}
+          currentPowerStage={activeStory?.memory?.currentPowerStage}
+          onBackToReader={() => setActiveTab('reader')}
+        />
       )}
     </div>
   );
@@ -100,7 +80,7 @@ export function ReaderChamberWorkspace() {
 
   // Boot the mock store with a fresh story.
   useEffect(() => {
-    resetMockState({ stories: [createMockStory()], activeStoryId: MOCK_STORY_ID });
+    resetMockState({ stories: [createMockReaderFallback().story], activeStoryId: MOCK_STORY_ID });
   }, []);
 
   const applyScenario = useCallback((stateId: PreviewState) => {
@@ -109,7 +89,7 @@ export function ReaderChamberWorkspace() {
     setSelectedChapterNum(scenario.chapter);
     setIsGenerating(Boolean(scenario.isGenerating));
     resetMockState({
-      stories: [createMockStory()],
+      stories: [createMockReaderFallback().story],
       activeStoryId: MOCK_STORY_ID,
       isTranslating: Boolean(scenario.isTranslating),
       isReaderFullscreen: Boolean(scenario.isReaderFullscreen),
@@ -266,6 +246,9 @@ export function ReaderChamberWorkspace() {
 
   const controls = (
     <div className="w-full min-w-0 max-w-6xl space-y-4 overflow-hidden rounded-xl border border-white/10 bg-white/5 p-3 backdrop-blur-md sm:p-4">
+      <p className="rounded-lg border border-amber-400/20 bg-amber-500/[0.08] px-3 py-2 text-[10px] font-semibold uppercase tracking-widest text-amber-100/70">
+        {MOCK_READER_FALLBACK_LABEL}
+      </p>
       <div>
         <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-white/70">
           Preview States

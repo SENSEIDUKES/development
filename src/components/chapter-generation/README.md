@@ -4,9 +4,9 @@
 - **Source location:** `src/hooks/chapterPipeline/chapterBatch.ts`, `src/aiRouter.ts`, `src/server/routes/storyRouter.ts`, and the Story Seed, prompt, handoff, formatting, and context dependencies
 - **Workshop preview:** `?preview=chapter-generation-flow`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-09
+- **Last Workshop update:** 2026-08-10
 - **Last source comparison:** 2026-08-09
-- **Replica status:** Chapter Generation 1.0 Pass 2 manifests one real chapter or five isolated, sequentially connected chapters through server-side Gemini calls
+- **Replica status:** Chapter Generation 1.0 Pass 3 opens a completed disposable Pass 2 batch directly in the Reader Chamber
 
 ## Purpose
 
@@ -32,6 +32,14 @@ manifest one chapter or five connected chapters, read any completed result, and
 inspect per-call, per-chapter, and batch token usage. The
 existing four-stage workspace remains available in a collapsed Diagnostics section.
 Reference remains the locked deterministic inspector.
+
+After all five chapters complete, `Read in Reader Chamber` adapts the accepted
+batch outputs into one disposable Reader session. The session uses repaired final
+prose where applicable, preserves structured blocks and chapter metadata, carries
+chapter/batch/repair/retry token totals, scopes Reader Codex memory to the selected
+chapter's processed snapshot, exports all five chapters as one text file, and opens
+the existing four-stage Diagnostics for the selected chapter. Incomplete or paused
+batches cannot open the Reader, and the Pass 2 sequencer remains unchanged.
 
 ## Four actual stages
 
@@ -252,6 +260,7 @@ per-chapter coverage.
 - **2026-08-09:** Protected the live Development model boundary with a separate server-configured bearer token, preserved omitted Blueprint threads during Process Result, and retained completed-call usage when a later stage fails.
 - **2026-08-09:** Chapter Generation 1.0 Pass 2 added a disposable five-chapter sequence using five separate chapter-sized requests, authoritative processed-state handoffs, explicit change/Codex carry-forward, truthful live stage progress, pause/retry checkpoints, and per-chapter plus complete-batch token totals.
 - **2026-08-09:** Bound disposable continuations to their exact Story Seed and Blueprint with a server-only signature, added cancellation and request timeouts for batch calls, and tightened accessibility, carry-forward ordering, and checkpoint coverage during PR review.
+- **2026-08-10:** Pass 3 connected completed five-chapter batches to the existing Reader Chamber through the batch adapter, added chapter-scoped cumulative Reader Codex snapshots, chapter/batch/repair/retry token visibility, five-chapter export, and selected-chapter access to the existing four-stage Diagnostics without adding persistence.
 
 ## Transfer notes
 

@@ -310,6 +310,36 @@ export interface ChapterProse {
  */
 export interface ChapterDiagnostics {
   contextManifest?: ContextManifest;
+  /** Disposable generation observability carried into a generated Reader session. */
+  generationUsage?: ReaderChapterGenerationUsage;
+  /** Original generated arc position, retained without changing Reader navigation. */
+  generationPosition?: {
+    arcNumber: number;
+    chapterInArc: number;
+    chaptersInArc: number;
+    display: string;
+  };
+  repairApplied?: boolean;
+}
+
+export interface ReaderTokenUsageTotals {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  generationTimeMs: number;
+  hasEstimatedUsage: boolean;
+}
+
+export interface ReaderUsageBreakdown {
+  callCount: number;
+  totals: ReaderTokenUsageTotals;
+}
+
+export interface ReaderChapterGenerationUsage {
+  totals: ReaderTokenUsageTotals;
+  attemptCount: number;
+  repair?: ReaderUsageBreakdown;
+  retry?: ReaderUsageBreakdown & { attemptCount: number };
 }
 
 /**
@@ -379,9 +409,55 @@ export interface Bookmark {
   createdAt: string;
 }
 
-/** Subset of production StoryMemory consumed by the reading surface. */
+export interface Character {
+  id?: string;
+  name: string;
+  role?: string;
+  status?: "alive" | "deceased" | "unknown" | "ascended" | string;
+  powerLevel?: string;
+  relationshipToMC?: string;
+  description?: string;
+}
+
+export interface Faction {
+  id?: string;
+  name: string;
+  alignment?: string;
+  description?: string;
+}
+
+export interface Location {
+  id?: string;
+  name: string;
+  safetyLevel?: string;
+  description?: string;
+}
+
+export interface Artifact {
+  id?: string;
+  name: string;
+  tier?: string;
+  condition?: string;
+  description?: string;
+}
+
+export interface PlotThread {
+  id?: string;
+  description: string;
+  originChapter?: number;
+}
+
+/** StoryMemory shape consumed by the reading surface and living Codex. */
 export interface StoryMemory {
   currentPowerStage?: string;
+  powerSystem?: string;
+  characters?: Character[];
+  factions?: Faction[];
+  locations?: Location[];
+  artifacts?: Artifact[];
+  unresolvedPlotThreads?: Array<string | PlotThread>;
+  resolvedPlotThreads?: Array<string | PlotThread>;
+  worldRules?: string[];
 }
 
 /** Subset of production IntakeData consumed by the dialect resolver. */

@@ -152,6 +152,18 @@ export function buildWorkshopProcessingResult(
     handoff: nextChapterHandoff,
     worldBuildingSeed: currentState.scene.worldBuildingSeed,
   });
+  const characterChanges = manifestedChapter.statsChangeMessage
+    && manifestedChapter.statsChangeMessage !== "None"
+    ? [manifestedChapter.statsChangeMessage]
+    : [];
+  const worldStateChanges = [...nextChapterHandoff.completedEvents];
+  const characterStateUpdates = { abilities: [] as unknown[] };
+  const codexUpdates = {
+    characters: [],
+    factions: [],
+    locations: [],
+    artifacts: [],
+  };
   const proposedLivingStoryState = {
     ...currentState,
     position: createArcChapterPosition(
@@ -190,16 +202,27 @@ export function buildWorkshopProcessingResult(
       recentSceneTypes: appendSceneType(currentState.scene.recentSceneTypes, sceneType),
       carriedAnchors: newAnchors,
     },
+    carriedChanges: [
+      ...(currentState.carriedChanges ?? []),
+      {
+        chapterNumber: chapterPacket.chapterMission.number,
+        characterChanges,
+        worldStateChanges,
+        threadChanges: [],
+        completedThreads: [],
+        characterStateUpdates,
+        codexUpdates,
+      },
+    ],
   };
 
   return {
     version: 1,
     newAnchors,
-    characterChanges: manifestedChapter.statsChangeMessage
-      && manifestedChapter.statsChangeMessage !== "None"
-      ? [manifestedChapter.statsChangeMessage]
-      : [],
-    worldStateChanges: [...nextChapterHandoff.completedEvents],
+    characterChanges,
+    worldStateChanges,
+    characterStateUpdates,
+    codexUpdates,
     threads: {
       completed: [],
       changed: [],

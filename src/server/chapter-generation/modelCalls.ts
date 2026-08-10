@@ -7,7 +7,11 @@ import {
   type SceneType,
 } from "../../components/chapter-generation/shared/lib/sceneRhythm";
 import { sanitizeChapterHandoff } from "../../components/chapter-generation/shared/lib/chapterHandoff";
-import { createArcChapterPosition } from "../../components/chapter-generation/shared/packets/livingStoryState";
+import {
+  createArcChapterPosition,
+  type LivingStoryCharacterStateUpdate,
+  type LivingStoryCodexUpdates,
+} from "../../components/chapter-generation/shared/packets/livingStoryState";
 import type {
   AsyncChapterGenerationModelCalls,
   ChapterEffectKind,
@@ -96,6 +100,18 @@ const stringArray = (value: unknown, label: string): string[] => {
     if (item === null || item === undefined) return [];
     throw new Error(`${label}[${index}] must be a string or described change object.`);
   });
+};
+
+const unknownArray = (value: unknown, label: string): unknown[] => {
+  if (!Array.isArray(value)) throw new Error(`${label} must be an array.`);
+  return structuredClone(value);
+};
+
+const recordArray = (value: unknown, label: string): JsonRecord[] => {
+  if (!Array.isArray(value)) throw new Error(`${label} must be an array.`);
+  return value.map((item, index) => ({
+    ...requiredRecord(item, `${label}[${index}]`),
+  }));
 };
 
 const cleanModelEnvelope = (text: string): string => text
@@ -515,6 +531,11 @@ const buildProposedState = (
   newAnchors: SceneAnchors,
   unresolved: Array<{ description: string; originChapter: number }>,
   completedThreads: string[],
+  changedThreads: string[],
+  characterChanges: string[],
+  worldStateChanges: string[],
+  characterStateUpdates: LivingStoryCharacterStateUpdate,
+  codexUpdates: LivingStoryCodexUpdates,
 ) => {
   const current = input.chapterPacket.livingStoryState;
   return {
@@ -538,17 +559,22 @@ const buildProposedState = (
     ],
     characterState: {
       ...current.characterState,
-      abilities: [...current.characterState.abilities],
+      currentPowerStage: characterStateUpdates.currentPowerStage
+        ?? current.characterState.currentPowerStage,
+      abilities: mergeCarriedValues(
+        current.characterState.abilities,
+        characterStateUpdates.abilities,
+      ),
     },
     threads: {
       unresolved,
       resolved: Array.from(new Set([...current.threads.resolved, ...completedThreads])),
     },
     codex: {
-      characters: current.codex.characters.map(entry => ({ ...entry })),
-      factions: current.codex.factions.map(entry => ({ ...entry })),
-      locations: current.codex.locations.map(entry => ({ ...entry })),
-      artifacts: current.codex.artifacts.map(entry => ({ ...entry })),
+      characters: mergeCarriedRecords(current.codex.characters, codexUpdates.characters),
+      factions: mergeCarriedRecords(current.codex.factions, codexUpdates.factions),
+      locations: mergeCarriedRecords(current.codex.locations, codexUpdates.locations),
+      artifacts: mergeCarriedRecords(current.codex.artifacts, codexUpdates.artifacts),
     },
     scene: {
       ...current.scene,
@@ -558,7 +584,73 @@ const buildProposedState = (
       ),
       carriedAnchors: newAnchors,
     },
+    carriedChanges: [
+      ...(current.carriedChanges ?? []).map(entry => structuredClone(entry)),
+      {
+        chapterNumber: input.chapterPacket.chapterMission.number,
+        characterChanges: [...characterChanges],
+        worldStateChanges: [...worldStateChanges],
+        threadChanges: [...changedThreads],
+        completedThreads: [...completedThreads],
+        characterStateUpdates: structuredClone(characterStateUpdates),
+        codexUpdates: structuredClone(codexUpdates),
+      },
+    ],
   };
+};
+
+const recordIdentity = (value: JsonRecord): string | undefined => {
+  for (const field of ["id", "name", "title", "label", "slug"] as const) {
+    const candidate = value[field];
+    if (typeof candidate === "string" && candidate.trim()) {
+      return `${field}:${candidate.trim().toLowerCase()}`;
+    }
+  }
+  return undefined;
+};
+
+const mergeCarriedRecords = (
+  current: JsonRecord[],
+  updates: JsonRecord[],
+): JsonRecord[] => {
+  const merged = current.map(entry => structuredClone(entry));
+  for (const update of updates) {
+    const copied = structuredClone(update);
+    const identity = recordIdentity(copied);
+    const index = identity
+      ? merged.findIndex(entry => recordIdentity(entry) === identity)
+      : -1;
+    if (index >= 0) merged[index] = { ...merged[index], ...copied };
+    else if (!merged.some(entry => JSON.stringify(entry) === JSON.stringify(copied))) merged.push(copied);
+  }
+  return merged;
+};
+
+const mergeCarriedValues = (current: unknown[], updates: unknown[]): unknown[] => {
+  const merged: unknown[] = [];
+  const unkeyed = new Set<string>();
+  for (const value of [...current, ...updates]) {
+    if (isRecord(value)) {
+      const copied = structuredClone(value);
+      const identity = recordIdentity(copied);
+      const index = identity
+        ? merged.findIndex(entry => isRecord(entry) && recordIdentity(entry) === identity)
+        : -1;
+      if (index >= 0) {
+        merged[index] = { ...(merged[index] as JsonRecord), ...copied };
+        continue;
+      }
+      const serialized = JSON.stringify(copied);
+      if (merged.some(entry => isRecord(entry) && JSON.stringify(entry) === serialized)) continue;
+      merged.push(copied);
+      continue;
+    }
+    const serialized = JSON.stringify(value);
+    if (unkeyed.has(serialized)) continue;
+    unkeyed.add(serialized);
+    merged.push(structuredClone(value));
+  }
+  return merged;
 };
 
 const threadKey = (description: string): string => description.trim().toLocaleLowerCase();
@@ -616,20 +708,44 @@ export function parseProcessingResult(
     worldBuildingSeed: input.chapterPacket.livingStoryState.scene.worldBuildingSeed,
   });
   const completed = stringArray(threads.completed, "Process Result threads.completed");
+  const changed = stringArray(threads.changed, "Process Result threads.changed");
   const unresolved = mergeUnresolvedThreads(
     input.chapterPacket.livingStoryState.threads.unresolved,
     reportedUnresolved,
     completed,
   );
+  const characterChanges = stringArray(value.characterChanges, "Process Result characterChanges");
+  const worldStateChanges = stringArray(value.worldStateChanges, "Process Result worldStateChanges");
+  const characterStateValue = requiredRecord(
+    value.characterStateUpdates,
+    "Process Result characterStateUpdates",
+  );
+  const currentPowerStage = optionalString(characterStateValue.currentPowerStage);
+  const characterStateUpdates: LivingStoryCharacterStateUpdate = {
+    ...(currentPowerStage ? { currentPowerStage } : {}),
+    abilities: unknownArray(
+      characterStateValue.abilities,
+      "Process Result characterStateUpdates.abilities",
+    ),
+  };
+  const codexValue = requiredRecord(value.codexUpdates, "Process Result codexUpdates");
+  const codexUpdates: LivingStoryCodexUpdates = {
+    characters: recordArray(codexValue.characters, "Process Result codexUpdates.characters"),
+    factions: recordArray(codexValue.factions, "Process Result codexUpdates.factions"),
+    locations: recordArray(codexValue.locations, "Process Result codexUpdates.locations"),
+    artifacts: recordArray(codexValue.artifacts, "Process Result codexUpdates.artifacts"),
+  };
 
   return {
     version: 1,
     newAnchors,
-    characterChanges: stringArray(value.characterChanges, "Process Result characterChanges"),
-    worldStateChanges: stringArray(value.worldStateChanges, "Process Result worldStateChanges"),
+    characterChanges,
+    worldStateChanges,
+    characterStateUpdates,
+    codexUpdates,
     threads: {
       completed,
-      changed: stringArray(threads.changed, "Process Result threads.changed"),
+      changed,
       unresolved,
     },
     missionCompletion: {
@@ -657,6 +773,11 @@ export function parseProcessingResult(
       newAnchors,
       unresolved,
       completed,
+      changed,
+      characterChanges,
+      worldStateChanges,
+      characterStateUpdates,
+      codexUpdates,
     ),
     repairRecommended: requiredBoolean(
       value.repairRecommended,
@@ -676,12 +797,13 @@ Required shape:
 
 const PROCESS_SYSTEM = `You are the Process Result boundary for Chapter Generation 1.0.
 Inspect the manifested chapter against the exact Chapter Packet and Chapter Plan. Return one strict JSON object and no prose.
-Report new anchors, character/world changes, thread changes, mission evidence, continuity and repetition findings, a complete next-chapter handoff, and whether repair is genuinely required.
+Report new anchors, character/world changes, explicit character-state and Codex-like updates, thread changes, mission evidence, continuity and repetition findings, a complete next-chapter handoff, and whether repair is genuinely required.
 characterChanges, worldStateChanges, threads.completed, and threads.changed must each be arrays of plain strings; use [] when there are no entries.
+characterStateUpdates.abilities and every codexUpdates collection must be arrays; use [] when there are no structured updates. Return currentPowerStage only when it genuinely changed. Preserve every discovered character, faction, location, artifact, or ability update in the matching structured collection as a JSON record.
 Use severity "serious" only for a defect that requires rewriting the manifested chapter. Set repairRecommended true only when at least one serious finding exists; do not force repair on a healthy run.
 The server clones and advances Living Story State from this structured result; do not return a proposedLivingStoryState object.
 Required shape:
-{"version":1,"newAnchors":{"worldBuilding":"...","conflict":"...","progression":"..."},"characterChanges":[],"worldStateChanges":[],"threads":{"completed":[],"changed":[],"unresolved":[{"description":"...","originChapter":1}]},"missionCompletion":{"completed":true,"evidence":"..."},"continuityFindings":[],"repetitionFindings":[],"nextChapterHandoff":{"version":1,"chapterNumber":1,"endState":{"location":"...","timeMarker":"...","charactersPresent":[],"mcCondition":"...","openTension":"..."},"completedEvents":[],"nextImmediateAction":"...","fingerprints":[{"actionType":"other","participants":[],"location":"...","outcome":"...","chapterNumber":1}]},"repairRecommended":false}`;
+{"version":1,"newAnchors":{"worldBuilding":"...","conflict":"...","progression":"..."},"characterChanges":[],"worldStateChanges":[],"characterStateUpdates":{"abilities":[]},"codexUpdates":{"characters":[],"factions":[],"locations":[],"artifacts":[]},"threads":{"completed":[],"changed":[],"unresolved":[{"description":"...","originChapter":1}]},"missionCompletion":{"completed":true,"evidence":"..."},"continuityFindings":[],"repetitionFindings":[],"nextChapterHandoff":{"version":1,"chapterNumber":1,"endState":{"location":"...","timeMarker":"...","charactersPresent":[],"mcCondition":"...","openTension":"..."},"completedEvents":[],"nextImmediateAction":"...","fingerprints":[{"actionType":"other","participants":[],"location":"...","outcome":"...","chapterNumber":1}]},"repairRecommended":false}`;
 
 const packetJson = (value: unknown) => JSON.stringify(value, null, 2);
 

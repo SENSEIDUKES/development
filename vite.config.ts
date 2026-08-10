@@ -3,6 +3,7 @@ import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { handleChapterGenerationHttp } from './src/server/chapter-generation/http';
+import type { ChapterGenerationStreamEvent } from './src/components/chapter-generation/shared/liveChapterGeneration';
 
 const MAX_CHAPTER_REQUEST_BYTES = 2 * 1024 * 1024;
 
@@ -32,6 +33,9 @@ const writeJson = (
   response.end(JSON.stringify(body));
 };
 
+const acceptsChapterStream = (request: IncomingMessage) =>
+  request.headers.accept?.includes('application/x-ndjson') ?? false;
+
 const chapterGenerationApi = (
   environment: Record<string, string | undefined>,
 ): Plugin => {
@@ -50,14 +54,41 @@ const chapterGenerationApi = (
         const body = request.method?.toUpperCase() === 'POST'
           ? await readJsonBody(request)
           : undefined;
+        const streaming = request.method?.toUpperCase() === 'POST' && acceptsChapterStream(request);
+        let streamStarted = false;
+        const writeEvent = (event: ChapterGenerationStreamEvent) => {
+          if (!streamStarted) {
+            response.statusCode = 200;
+            response.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
+            response.setHeader('Cache-Control', 'no-store');
+            streamStarted = true;
+          }
+          response.write(`${JSON.stringify(event)}\n`);
+        };
         const result = await handleChapterGenerationHttp(
           { method: request.method, body, headers: request.headers },
           {
             environment,
             onError: error => console.error('[chapter-generation]', error),
+            ...(streaming ? { onStageChange: stage => writeEvent({ type: 'stage', stage }) } : {}),
           },
         );
-        writeJson(response, result.status, result.body, result.headers);
+        if (streaming) {
+          if (!streamStarted) {
+            response.statusCode = result.status;
+            response.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
+            response.setHeader('Cache-Control', 'no-store');
+            streamStarted = true;
+          }
+          writeEvent({
+            type: 'result',
+            status: result.status,
+            body: result.body as Extract<ChapterGenerationStreamEvent, { type: 'result' }>['body'],
+          });
+          response.end();
+        } else {
+          writeJson(response, result.status, result.body, result.headers);
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Invalid request.';
         writeJson(response, message.includes('2 MB') ? 413 : 400, { error: message });

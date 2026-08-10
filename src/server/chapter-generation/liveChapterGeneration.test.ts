@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { StorySeedInput } from "../../components/story-seed/shared/storySeedSchema";
 import type { WorldBlueprint } from "../../components/story-seed/shared/types";
+import type { ManifestChapterResponse } from "../../components/chapter-generation/shared/liveChapterGeneration";
 import { adaptFinalizedStorySeedToChapterContracts } from "../../components/chapter-generation/shared/packets/storySeedChapterAdapter";
 import { assembleChapterPacket } from "../../components/chapter-generation/shared/pipeline/assembleChapterPacket";
 import { runChapterPipelineAsync } from "../../components/chapter-generation/shared/pipeline/runChapterPipelineAsync";
@@ -135,6 +136,16 @@ const processingResponse = (serious = false, blankChangeEntries = false) => JSON
     ? [{ description: "Rin remains unchanged." }, ""]
     : ["Rin publicly demonstrates oath-reading."],
   worldStateChanges: blankChangeEntries ? ["   "] : ["The first false oath is exposed."],
+  characterStateUpdates: {
+    currentPowerStage: "Oath Reader — First Witness",
+    abilities: [{ name: "Oath Seam Reading", source: "Chapter 1" }],
+  },
+  codexUpdates: {
+    characters: [{ name: "Rin", publicStanding: "Exposed oath-reader" }],
+    factions: [],
+    locations: [{ name: "The Rain Court", state: "First false oath exposed" }],
+    artifacts: [],
+  },
   threads: { completed: blankChangeEntries ? [""] : [], changed: [], unresolved: [] },
   missionCompletion: {
     completed: true,
@@ -207,6 +218,51 @@ class RecordingProvider implements ChapterTextModelProvider {
   }
 }
 
+class ChapterAwareProvider implements ChapterTextModelProvider {
+  readonly provider = "gemini";
+  readonly model = "google/gemini-test";
+  readonly requests: ChapterTextGenerationRequest[] = [];
+
+  constructor(private readonly chapterNumber: number) {}
+
+  async generate(request: ChapterTextGenerationRequest): Promise<ChapterTextGenerationResult> {
+    this.requests.push(request);
+    let text: string;
+    if (request.kind === "plan") {
+      const plan = JSON.parse(planResponse);
+      plan.chapterNumber = this.chapterNumber;
+      plan.arcChapterPosition = `Arc 1 — Chapter ${this.chapterNumber}/100`;
+      plan.rhythmResponse.recentSceneTypes = this.chapterNumber === 1 ? [] : ["worldBuilding"];
+      text = JSON.stringify(plan);
+    } else if (request.kind === "manifest" || request.kind === "repair") {
+      text = manifestedResponse;
+    } else {
+      const processed = JSON.parse(processingResponse());
+      processed.characterChanges = [`Rin advances in Chapter ${this.chapterNumber}.`];
+      processed.characterStateUpdates.currentPowerStage = `Witness ${this.chapterNumber}`;
+      processed.characterStateUpdates.abilities = [{ name: `Oath Sight ${this.chapterNumber}` }];
+      processed.codexUpdates.locations = [{ name: `Rain Court Chamber ${this.chapterNumber}` }];
+      processed.nextChapterHandoff.chapterNumber = this.chapterNumber;
+      processed.nextChapterHandoff.fingerprints[0].chapterNumber = this.chapterNumber;
+      text = JSON.stringify(processed);
+    }
+    return {
+      text,
+      usage: {
+        kind: request.kind,
+        stage: request.stage,
+        provider: this.provider,
+        model: this.model,
+        inputTokens: 100,
+        outputTokens: 20,
+        totalTokens: 120,
+        generationTimeMs: 50,
+        tokenSource: "provider",
+      },
+    };
+  }
+}
+
 describe("live Chapter Generation model boundaries", () => {
   it("keeps canonical Fate Survival settings authoritative over model output", () => {
     const conflicting = JSON.parse(planResponse);
@@ -241,7 +297,12 @@ describe("live Chapter Generation model boundaries", () => {
     });
     const packet = buildPacket();
     const originalState = structuredClone(packet.livingStoryState);
-    const run = await runChapterPipelineAsync({ chapterPacket: packet, model: calls.model });
+    const stages: string[] = [];
+    const run = await runChapterPipelineAsync({
+      chapterPacket: packet,
+      model: calls.model,
+      onStageChange: stage => stages.push(stage),
+    });
     const usage = aggregateChapterTokenUsage(calls.usage);
 
     expect(provider.requests.map(request => request.kind)).toEqual(["plan", "manifest", "process"]);
@@ -253,6 +314,22 @@ describe("live Chapter Generation model boundaries", () => {
     }]);
     expect(run.processingResult.proposedLivingStoryState.threads.unresolved)
       .toEqual(run.processingResult.threads.unresolved);
+    expect(run.processingResult.proposedLivingStoryState.characterState).toMatchObject({
+      currentPowerStage: "Oath Reader — First Witness",
+      abilities: expect.arrayContaining([expect.objectContaining({ name: "Oath Seam Reading" })]),
+    });
+    expect(run.processingResult.proposedLivingStoryState.codex.locations)
+      .toContainEqual(expect.objectContaining({
+        name: "The Rain Court",
+        state: "First false oath exposed",
+      }));
+    expect(run.processingResult.proposedLivingStoryState.carriedChanges).toEqual([
+      expect.objectContaining({
+        chapterNumber: 1,
+        characterChanges: ["Rin publicly demonstrates oath-reading."],
+        worldStateChanges: ["The first false oath is exposed."],
+      }),
+    ]);
     expect(run.manifestedChapter.blocks?.[2].type).toBe("paragraph");
     expect(packet.livingStoryState).toEqual(originalState);
     expect(provider.requests[0].userPrompt).toContain("COMPLETE CHAPTER PACKET");
@@ -263,6 +340,7 @@ describe("live Chapter Generation model boundaries", () => {
       "Manifest Chapter",
       "Process Result",
     ]);
+    expect(stages).toEqual(["Plan Chapter", "Manifest Chapter", "Process Result"]);
     expect(usage.totals).toEqual({
       inputTokens: 600,
       outputTokens: 60,
@@ -278,7 +356,12 @@ describe("live Chapter Generation model boundaries", () => {
       temperature: 1,
       maxOutputTokens: 16_384,
     });
-    const run = await runChapterPipelineAsync({ chapterPacket: buildPacket(), model: calls.model });
+    const stages: string[] = [];
+    const run = await runChapterPipelineAsync({
+      chapterPacket: buildPacket(),
+      model: calls.model,
+      onStageChange: stage => stages.push(stage),
+    });
 
     expect(provider.requests.map(request => request.kind)).toEqual([
       "plan",
@@ -290,6 +373,13 @@ describe("live Chapter Generation model boundaries", () => {
     expect(run.modelCalls).toEqual(["plan", "manifest", "process", "repair", "process"]);
     expect(run.repairApplied).toBe(true);
     expect(calls.usage[4].stage).toBe("Process Result (repaired chapter)");
+    expect(stages).toEqual([
+      "Plan Chapter",
+      "Manifest Chapter",
+      "Process Result",
+      "Repair Chapter",
+      "Process Result (repaired chapter)",
+    ]);
   });
 
   it("stops cleanly when a real model boundary fails", async () => {
@@ -369,6 +459,43 @@ describe("live Chapter Generation model boundaries", () => {
     expect(run.processingResult.characterChanges).toEqual(["Rin remains unchanged."]);
     expect(run.processingResult.worldStateChanges).toEqual([]);
     expect(run.processingResult.threads.completed).toEqual([]);
+  });
+
+  it("preserves ability acquisition order while merging structured updates", async () => {
+    const base = new RecordingProvider();
+    const provider: ChapterTextModelProvider = {
+      provider: base.provider,
+      model: base.model,
+      async generate(request) {
+        const result = await base.generate(request);
+        if (request.kind !== "process") return result;
+        const response = JSON.parse(result.text);
+        response.characterStateUpdates.abilities = [
+          { name: "oath seam", rank: "refined" },
+          "Fourth ability",
+        ];
+        return { ...result, text: JSON.stringify(response) };
+      },
+    };
+    const calls = createLiveChapterModelCalls(provider, {
+      temperature: 1,
+      maxOutputTokens: 16_384,
+    });
+    const packet = buildPacket();
+    packet.livingStoryState.characterState.abilities = [
+      "First ability",
+      { name: "OATH SEAM", rank: "initial" },
+      "Third ability",
+    ];
+
+    const run = await runChapterPipelineAsync({ chapterPacket: packet, model: calls.model });
+
+    expect(run.processingResult.proposedLivingStoryState.characterState.abilities).toEqual([
+      "First ability",
+      { name: "oath seam", rank: "refined" },
+      "Third ability",
+      "Fourth ability",
+    ]);
   });
 });
 
@@ -540,5 +667,107 @@ describe("server model selection and failure handling", () => {
         totals: { inputTokens: 120, outputTokens: 4, totalTokens: 124 },
       },
     });
+  });
+
+  it("accepts only the server-produced continuation and sends Chapter N state into Chapter N+1", async () => {
+    const providers: ChapterAwareProvider[] = [];
+    const providerFactory = () => {
+      const provider = new ChapterAwareProvider(providers.length + 1);
+      providers.push(provider);
+      return provider;
+    };
+    const first = await handleChapterGenerationHttp({
+      method: "POST",
+      headers: { Authorization: "Bearer development-access-token" },
+      body: {
+        artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
+        model: "google/gemini-test",
+        temporaryInstruction: "Keep the instruction across the batch.",
+      },
+    }, { environment, providerFactory });
+    expect(first.status).toBe(200);
+    const firstResult = first.body as ManifestChapterResponse;
+
+    const second = await handleChapterGenerationHttp({
+      method: "POST",
+      headers: { Authorization: "Bearer development-access-token" },
+      body: {
+        artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
+        model: "google/gemini-test",
+        temporaryInstruction: "Keep the instruction across the batch.",
+        continuation: firstResult.nextContinuation,
+      },
+    }, { environment, providerFactory });
+
+    expect(second.status).toBe(200);
+    const secondResult = second.body as ManifestChapterResponse;
+    expect(secondResult.run.chapterPacket.chapterMission).toMatchObject({
+      number: 2,
+      pacingDirective: "Keep the instruction across the batch.",
+    });
+    expect(secondResult.run.chapterPacket.chapterMission.premise)
+      .toContain(firstResult.run.processingResult.nextChapterHandoff.nextImmediateAction);
+    expect(secondResult.run.chapterPacket.livingStoryState).toEqual(
+      firstResult.run.processingResult.proposedLivingStoryState,
+    );
+    expect(secondResult.run.chapterPacket.livingStoryState.characterState.abilities)
+      .toContainEqual(expect.objectContaining({ name: "Oath Sight 1" }));
+    expect(secondResult.run.chapterPacket.livingStoryState.codex.locations)
+      .toContainEqual(expect.objectContaining({ name: "Rain Court Chamber 1" }));
+    expect(providers).toHaveLength(2);
+    expect(providers.flatMap(provider => provider.requests).map(request => request.kind))
+      .toEqual(["plan", "manifest", "process", "plan", "manifest", "process"]);
+  });
+
+  it("rejects forged continuations and continuations paired with different artifacts", async () => {
+    const providers: ChapterAwareProvider[] = [];
+    const providerFactory = () => {
+      const provider = new ChapterAwareProvider(providers.length + 1);
+      providers.push(provider);
+      return provider;
+    };
+    const first = await handleChapterGenerationHttp({
+      method: "POST",
+      headers: { Authorization: "Bearer development-access-token" },
+      body: {
+        artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
+        model: "google/gemini-test",
+      },
+    }, { environment, providerFactory });
+    expect(first.status).toBe(200);
+    const continuation = (first.body as ManifestChapterResponse).nextContinuation;
+    const forged = structuredClone(continuation);
+    forged.livingStoryState.characterState.currentPowerStage = "Forged stage";
+
+    const forgedResponse = await handleChapterGenerationHttp({
+      method: "POST",
+      headers: { Authorization: "Bearer development-access-token" },
+      body: {
+        artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
+        model: "google/gemini-test",
+        continuation: forged,
+      },
+    }, { environment, providerFactory });
+    const differentBlueprint = canonicalBlueprint();
+    differentBlueprint.title = "Different Story";
+    const mismatchedResponse = await handleChapterGenerationHttp({
+      method: "POST",
+      headers: { Authorization: "Bearer development-access-token" },
+      body: {
+        artifact: { seed: canonicalSeed(), blueprint: differentBlueprint },
+        model: "google/gemini-test",
+        continuation,
+      },
+    }, { environment, providerFactory });
+
+    expect(forgedResponse).toMatchObject({
+      status: 400,
+      body: { error: "Chapter continuation signature is invalid." },
+    });
+    expect(mismatchedResponse).toMatchObject({
+      status: 400,
+      body: { error: "Chapter continuation does not belong to the selected Story Seed and Blueprint." },
+    });
+    expect(providers).toHaveLength(1);
   });
 });

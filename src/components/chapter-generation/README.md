@@ -1,25 +1,35 @@
 # Chapter Generation
 
 - **Source repository:** `SENSEIDUKES/Light-Novels`
-- **Source location:** `src/aiRouter.ts`, `src/server/routes/storyRouter.ts`, and the Story Seed, prompt, handoff, formatting, and context dependencies
+- **Source location:** `src/hooks/chapterPipeline/chapterBatch.ts`, `src/aiRouter.ts`, `src/server/routes/storyRouter.ts`, and the Story Seed, prompt, handoff, formatting, and context dependencies
 - **Workshop preview:** `?preview=chapter-generation-flow`
 - **Replica created:** 2026-07-31
 - **Last Workshop update:** 2026-08-09
 - **Last source comparison:** 2026-08-09
-- **Replica status:** Chapter Generation 1.0 Pass 1 manifests one real chapter from a finalized Story Seed and World Blueprint through server-side Gemini calls
+- **Replica status:** Chapter Generation 1.0 Pass 2 manifests one real chapter or five isolated, sequentially connected chapters through server-side Gemini calls
 
 ## Purpose
 
-This Workshop entry proves one real Chapter Generation 1.0 run without creating a
+This Workshop entry proves real Chapter Generation 1.0 runs without creating a
 second Story Seed contract. Development accepts a saved or uploaded portable Story
 Seed v3 artifact with its sibling `WorldBlueprint`, adapts those canonical objects
 into the existing four packet contracts, and calls Gemini through a same-origin,
 server-only provider boundary. No fixture value is used to fill a missing mapping.
 
+Pass 2's Development implementation is
+`src/components/chapter-generation/shared/batch/chapterBatch.ts`. Its exported
+`runFiveChapterBatch` preserves strict chapter ordering, clean pre-chapter checkpoints,
+and retry-without-advancement invariants while leaving the verified production
+`runSequentialChapterBatch` implementation untouched. Five-chapter runs remain
+disposable client-held test state. Each chapter crosses the existing server boundary
+in its own request, and only the final processed result can create the next chapter's
+artifact-bound, server-signed continuation.
+
 The primary Development experience is a small test harness: select or upload the
 artifact, enter the separately configured Development access token, choose a
 server-configured model, optionally add a temporary instruction,
-manifest one chapter, read it, and inspect per-call and total token usage. The
+manifest one chapter or five connected chapters, read any completed result, and
+inspect per-call, per-chapter, and batch token usage. The
 existing four-stage workspace remains available in a collapsed Diagnostics section.
 Reference remains the locked deterministic inspector.
 
@@ -69,15 +79,37 @@ One structured processing call inspects the manifested chapter and returns:
 
 - new anchors
 - character and world-state changes
+- current power/ability changes and structured character, faction, location, and artifact updates
 - completed, changed, and unresolved threads
 - mission completion evidence
 - continuity and repetition findings
 - the next-chapter handoff
 - a proposed next `LivingStoryState`
 
-The proposed state is a cloned candidate for later approval. The input state and
-chapter position remain unchanged across normal runs and retries. A separate repair
+The proposed state is a cloned candidate for the next disposable batch checkpoint.
+It carries structured updates plus an explicit change ledger for anything not yet
+owned by a permanent Codex schema. The input state and chapter position remain
+unchanged across normal runs and retries. A separate repair
 call is allowed only when processing reports a serious finding and recommends repair.
+
+## Sequential five-chapter flow
+
+`Manifest 5 Chapters` coordinates exactly five chapter-sized requests. Chapters never
+run concurrently. After each accepted result, the server builds the next Chapter
+Mission from the processed handoff, immediate next action, active tension, unresolved
+threads, and `WorldBlueprint.firstArcPromise`. The batch instruction is copied into
+each mission, while the proposed Living Story State carries chapter context, position,
+anchors, fingerprints, rhythm, threads, character state, abilities, Codex-like records,
+and the explicit change ledger.
+
+If repair occurs, the repaired chapter is processed again before its state is eligible
+for continuation. If the final processing result still has a serious continuity or
+repetition finding, or if the request fails, the batch pauses. `Retry Chapter` uses the
+unchanged pre-chapter continuation and does not advance or duplicate completed state.
+
+Normal five-chapter completion is 15 model calls. Each repaired chapter adds two calls
+(Repair and reprocessing). A retry adds only the calls actually performed during that
+attempt; all available usage remains in the batch total.
 
 ## Model-call boundaries
 
@@ -127,6 +159,8 @@ shared/
   assembleGeneration.ts       Reference adapter
   assembleGenerationDev.ts    Development adapter and preview-only controls
   liveChapterGeneration.ts    shared HTTP request/response contracts
+  batch/
+    chapterBatch.ts           disposable sequencing, continuation, checkpoint, retry, and totals
   packets/
     storySeedChapterAdapter.ts canonical Story Seed/Blueprint bridge
   pipeline/
@@ -152,8 +186,8 @@ server/chapter-generation/
   provider.ts                  server-only Gemini provider and usage capture
   modelCalls.ts                Plan, Manifest, Process, and conditional Repair adapters
   execute.ts                   adapter, code-only packet assembly, and async pipeline
-  http.ts                      safe GET/POST HTTP boundary
-  vercelHandler.ts             typed Vercel request/response adapter
+  http.ts                      safe GET/POST chapter-sized HTTP boundary
+  vercelHandler.ts             typed Vercel adapter with NDJSON stage progress
 api/chapter-generation.js      deployed shim for the generated server bundle
 scripts/buildChapterGenerationApi.mjs
                                bundles the server graph without changing shared ESM imports
@@ -167,7 +201,7 @@ normalized text behavior is preserved when the same inputs reach them.
 
 The old ten-stage normalized behavior hashes are intentionally not a compatibility
 target: the stage topology, structured plan, processing result, and call boundaries
-changed by design in Pass 2. No prompt content was rewritten to simulate the new
+changed by design in the earlier four-stage reconstruction. No prompt content was rewritten to simulate the new
 architecture.
 
 ## Workshop boundaries
@@ -177,10 +211,12 @@ architecture.
   each POST and is held only in page memory after the tester enters it.
 - Calls that complete before a later structured-output failure still return their
   provider-reported or estimated token/time records for diagnosis.
+- Five-chapter state, checkpoints, chapters, attempts, and token totals exist only in
+  page memory and are discarded on refresh or input replacement.
 - No database, persistence, R2, credit, queue, notification, Story Library, Reader,
   reward, publishing, or production-data write was added.
 - No real `LivingStoryState` update or chapter advancement is committed.
-- One chapter is the complete scope. There is no sequential handoff or multi-chapter run.
+- Pass 2 stops after five sequential chapters; it adds no general queue or production batch service.
 - No unresolved Story Seed world-rule, glossary, Cultural Prose style, accessibility,
   chapter-title, chapters-per-arc, or legacy Fate vocabulary mapping is inferred.
 - Blueprint `status` is optional and free-form, so Pass 1 defines test eligibility
@@ -190,14 +226,19 @@ architecture.
 
 - `npm run test:chapter-generation`
 - `npm run test:story-seed`
-- `npx tsc --noEmit --pretty false`
+- `npx tsc -b --pretty false`
 - `npm run build`
 - `npm run validate:chapter-effects`
+- `npx vercel@58.1.0 build --scope seihouse`
 
 Focused tests cover the canonical adapter and its no-fixture-fallback rule, model
 allow-list selection, exact three-call and five-call boundaries, code-only packet
 assembly, token aggregation and estimated-usage labels, provider/API failure
 handling, immutable input state, and the readable live-output/Diagnostics UI.
+Pass 2 adds strict non-concurrency, processed-state handoff, mission/counter advance,
+structured character/world carry-forward, repaired-result continuation, serious/failure
+pause behavior, clean-checkpoint retry, complete attempt usage totals, and one-request-
+per-chapter coverage.
 
 ## Workshop history
 
@@ -209,6 +250,8 @@ handling, immutable input state, and the readable live-output/Diagnostics UI.
 - **2026-08-08:** Pass 3 usability: the run became a sticky four-stage stepper showing one stage at a time (Manifested Chapter by default, with the main reading space), Permanent Story Rules collapsed to a compact digest closed by default, and copy controls now report clipboard success/failure truthfully.
 - **2026-08-09:** Chapter Generation 1.0 Pass 1 connected finalized Story Seed v3 and World Blueprint artifacts to the existing packet contracts, added server-side Gemini Plan/Manifest/Process calls with conditional repair, exposed per-stage token/time usage, and made the one-chapter test harness the primary Development experience while retaining the four-stage workspace as Diagnostics.
 - **2026-08-09:** Protected the live Development model boundary with a separate server-configured bearer token, preserved omitted Blueprint threads during Process Result, and retained completed-call usage when a later stage fails.
+- **2026-08-09:** Chapter Generation 1.0 Pass 2 added a disposable five-chapter sequence using five separate chapter-sized requests, authoritative processed-state handoffs, explicit change/Codex carry-forward, truthful live stage progress, pause/retry checkpoints, and per-chapter plus complete-batch token totals.
+- **2026-08-09:** Bound disposable continuations to their exact Story Seed and Blueprint with a server-only signature, added cancellation and request timeouts for batch calls, and tightened accessibility, carry-forward ordering, and checkpoint coverage during PR review.
 
 ## Transfer notes
 
@@ -224,6 +267,7 @@ service:
 - `src/components/chapter-generation/shared/packets/storyConstitution.ts`
 - `src/components/chapter-generation/shared/packets/storySeedChapterAdapter.ts`
 - `src/components/chapter-generation/shared/packets/types.ts`
+- `src/components/chapter-generation/shared/batch/chapterBatch.ts`
 - `src/components/chapter-generation/shared/pipeline/assembleChapterPacket.ts`
 - `src/components/chapter-generation/shared/pipeline/chapterEffectRules.ts`
 - `src/components/chapter-generation/shared/pipeline/index.ts`

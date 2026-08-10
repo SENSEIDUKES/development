@@ -1,4 +1,5 @@
 import { handleChapterGenerationHttp } from "./http";
+import type { ChapterGenerationStreamEvent } from "../../components/chapter-generation/shared/liveChapterGeneration";
 
 export const maxDuration = 300;
 
@@ -12,19 +13,55 @@ interface ResponseLike {
   setHeader(name: string, value: string): void;
   status(code: number): ResponseLike;
   json(value: unknown): void;
+  write(value: string): void;
+  end(): void;
 }
+
+const acceptsStream = (request: RequestLike): boolean => {
+  const accept = Object.entries(request.headers ?? {})
+    .find(([name]) => name.toLowerCase() === "accept")?.[1];
+  const value = Array.isArray(accept) ? accept[0] : accept;
+  return value?.includes("application/x-ndjson") ?? false;
+};
 
 export default async function chapterGenerationHandler(
   request: RequestLike,
   response: ResponseLike,
 ) {
+  const streaming = acceptsStream(request) && request.method?.toUpperCase() === "POST";
+  let streamStarted = false;
+  const writeEvent = (event: ChapterGenerationStreamEvent) => {
+    if (!streamStarted) {
+      response.status(200);
+      response.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+      response.setHeader("Cache-Control", "no-store");
+      streamStarted = true;
+    }
+    response.write(`${JSON.stringify(event)}\n`);
+  };
   const result = await handleChapterGenerationHttp(
     { method: request.method, body: request.body, headers: request.headers },
     {
       environment: process.env,
       onError: error => console.error("[chapter-generation]", error),
+      ...(streaming ? { onStageChange: stage => writeEvent({ type: "stage", stage }) } : {}),
     },
   );
+  if (streaming) {
+    if (!streamStarted) {
+      response.status(result.status);
+      response.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+      response.setHeader("Cache-Control", "no-store");
+      streamStarted = true;
+    }
+    writeEvent({
+      type: "result",
+      status: result.status,
+      body: result.body as Extract<ChapterGenerationStreamEvent, { type: "result" }>["body"],
+    });
+    response.end();
+    return;
+  }
   for (const [name, value] of Object.entries(result.headers ?? {})) {
     response.setHeader(name, value);
   }

@@ -2,14 +2,21 @@ import type {
   ManifestChapterRequest,
   ManifestChapterResponse,
 } from "../../components/chapter-generation/shared/liveChapterGeneration";
+import {
+  applyChapterContinuation,
+  buildNextChapterContinuation,
+  type ChapterGenerationContinuation,
+} from "../../components/chapter-generation/shared/batch/chapterBatch";
 import { adaptFinalizedStorySeedToChapterContracts } from "../../components/chapter-generation/shared/packets/storySeedChapterAdapter";
 import { assembleChapterPacket } from "../../components/chapter-generation/shared/pipeline/assembleChapterPacket";
 import { runChapterPipelineAsync } from "../../components/chapter-generation/shared/pipeline/runChapterPipelineAsync";
 import { aggregateChapterTokenUsage } from "../../components/chapter-generation/shared/pipeline/usage";
 import type { ChapterTokenUsageSummary } from "../../components/chapter-generation/shared/pipeline/usage";
+import type { ChapterUsageStage } from "../../components/chapter-generation/shared/pipeline/usage";
 import type { ResolvedChapterGenerationConfig } from "./config";
 import { resolveConfiguredChapterModel } from "./config";
 import { createLiveChapterModelCalls } from "./modelCalls";
+import { sealChapterContinuation } from "./continuationSecurity";
 import {
   GeminiChapterTextProvider,
   type ChapterTextModelProvider,
@@ -22,6 +29,8 @@ export type ChapterProviderFactory = (input: {
 
 export interface ExecuteChapterGenerationOptions {
   providerFactory?: ChapterProviderFactory;
+  onStageChange?: (stage: ChapterUsageStage) => void;
+  verifiedContinuation?: ChapterGenerationContinuation;
 }
 
 export class ChapterGenerationExecutionError extends Error {
@@ -56,7 +65,13 @@ export async function executeChapterGeneration(
     blueprint: request.artifact.blueprint,
     temporaryInstruction: request.temporaryInstruction,
   });
-  const chapterPacket = assembleChapterPacket(adapted.contracts);
+  if (request.continuation && !options.verifiedContinuation) {
+    throw new Error("Chapter continuation was not verified by the Development server.");
+  }
+  const contracts = options.verifiedContinuation
+    ? applyChapterContinuation(adapted.contracts, options.verifiedContinuation)
+    : adapted.contracts;
+  const chapterPacket = assembleChapterPacket(contracts);
   const provider = options.providerFactory
     ? options.providerFactory({ apiKey: config.apiKey, model })
     : new GeminiChapterTextProvider(config.apiKey, model);
@@ -70,6 +85,7 @@ export async function executeChapterGeneration(
     run = await runChapterPipelineAsync({
       chapterPacket,
       model: liveCalls.model,
+      onStageChange: options.onStageChange,
     });
   } catch (error) {
     throw new ChapterGenerationExecutionError(
@@ -78,11 +94,22 @@ export async function executeChapterGeneration(
     );
   }
 
+  const nextContinuation = sealChapterContinuation({
+    continuation: buildNextChapterContinuation({
+      run,
+      firstArcPromise: adapted.blueprint.firstArcPromise,
+      temporaryInstruction: request.temporaryInstruction,
+    }),
+    artifact: request.artifact,
+    secret: config.apiKey,
+  });
+
   return {
     provider: "gemini",
     model,
     run,
     usage: aggregateChapterTokenUsage(liveCalls.usage),
     mapping: adapted.mapping,
+    nextContinuation,
   };
 }

@@ -4,6 +4,7 @@ import type {
   ManifestChapterRequest,
 } from "../../components/chapter-generation/shared/liveChapterGeneration";
 import type { ChapterTokenUsageSummary } from "../../components/chapter-generation/shared/pipeline/usage";
+import type { ChapterUsageStage } from "../../components/chapter-generation/shared/pipeline/usage";
 import {
   chapterGenerationServerInfo,
   resolveChapterGenerationConfig,
@@ -14,6 +15,7 @@ import {
   executeChapterGeneration,
   type ChapterProviderFactory,
 } from "./execute";
+import { verifyChapterContinuation } from "./continuationSecurity";
 
 export interface ChapterGenerationHttpRequest {
   method?: string;
@@ -30,6 +32,7 @@ export interface ChapterGenerationHttpResponse {
 export interface ChapterGenerationHttpDependencies {
   environment: ChapterGenerationEnvironment;
   providerFactory?: ChapterProviderFactory;
+  onStageChange?: (stage: ChapterUsageStage) => void;
   onError?: (error: unknown) => void;
 }
 
@@ -76,6 +79,9 @@ const parseRequest = (body: unknown): ManifestChapterRequest => {
   if (!isRecord(parsed.artifact) || !isRecord(parsed.artifact.seed)) {
     throw new Error("Select or upload a valid Story Seed artifact.");
   }
+  if (parsed.continuation !== undefined && !isRecord(parsed.continuation)) {
+    throw new Error("Chapter continuation must be a JSON object.");
+  }
   return {
     artifact: {
       seed: parsed.artifact.seed as unknown as ManifestChapterRequest["artifact"]["seed"],
@@ -86,6 +92,9 @@ const parseRequest = (body: unknown): ManifestChapterRequest => {
     model: typeof parsed.model === "string" ? parsed.model : "",
     ...(typeof parsed.temporaryInstruction === "string"
       ? { temporaryInstruction: parsed.temporaryInstruction }
+      : {}),
+    ...(isRecord(parsed.continuation)
+      ? { continuation: parsed.continuation as unknown as NonNullable<ManifestChapterRequest["continuation"]> }
       : {}),
   };
 };
@@ -106,6 +115,7 @@ const isRequestError = (message: string) => [
   "Genre is required",
   "Premise is required",
   "Story Tags are required",
+  "Chapter continuation",
 ].some(fragment => message.includes(fragment));
 
 export async function handleChapterGenerationHttp(
@@ -150,8 +160,20 @@ export async function handleChapterGenerationHttp(
     if (!hasValidAccessToken(request, config.accessToken)) {
       return errorResponse(401, "A valid Development chapter-generation access token is required.");
     }
+    if (!config.apiKey) {
+      throw new Error("GEMINI_API_KEY is not configured on the Development server.");
+    }
+    const verifiedContinuation = parsedRequest.continuation
+      ? verifyChapterContinuation({
+          continuation: parsedRequest.continuation,
+          artifact: parsedRequest.artifact,
+          secret: config.apiKey,
+        })
+      : undefined;
     const result = await executeChapterGeneration(parsedRequest, config, {
       providerFactory: dependencies.providerFactory,
+      onStageChange: dependencies.onStageChange,
+      verifiedContinuation,
     });
     return {
       status: 200,

@@ -3,6 +3,7 @@ import type { StorySeedInput } from "../../components/story-seed/shared/storySee
 import type { WorldBlueprint } from "../../components/story-seed/shared/types";
 import type { ManifestChapterResponse } from "../../components/chapter-generation/shared/liveChapterGeneration";
 import { adaptFinalizedStorySeedToChapterContracts } from "../../components/chapter-generation/shared/packets/storySeedChapterAdapter";
+import { createArcChapterPosition } from "../../components/chapter-generation/shared/packets/livingStoryState";
 import { assembleChapterPacket } from "../../components/chapter-generation/shared/pipeline/assembleChapterPacket";
 import { runChapterPipelineAsync } from "../../components/chapter-generation/shared/pipeline/runChapterPipelineAsync";
 import { aggregateChapterTokenUsage } from "../../components/chapter-generation/shared/pipeline/usage";
@@ -12,7 +13,11 @@ import {
   resolveConfiguredChapterModel,
 } from "./config";
 import { handleChapterGenerationHttp } from "./http";
-import { createLiveChapterModelCalls, parseChapterPlan } from "./modelCalls";
+import {
+  ChapterPlanValidationError,
+  createLiveChapterModelCalls,
+  parseChapterPlan,
+} from "./modelCalls";
 import type {
   ChapterTextGenerationRequest,
   ChapterTextGenerationResult,
@@ -264,6 +269,41 @@ class ChapterAwareProvider implements ChapterTextModelProvider {
 }
 
 describe("live Chapter Generation model boundaries", () => {
+  it("uses the requested chapter in the Plan schema and reports every invalid Plan field", async () => {
+    const packet = buildPacket();
+    const position = createArcChapterPosition(3);
+    packet.chapterMission.number = 3;
+    packet.arcChapterPosition = position;
+    packet.livingStoryState.position = position;
+    if (packet.chapterMission.contract) packet.chapterMission.contract.chapterNumber = 3;
+    const provider = new ChapterAwareProvider(3);
+    const calls = createLiveChapterModelCalls(provider, {
+      temperature: 1,
+      maxOutputTokens: 16_384,
+    });
+
+    await calls.model.planChapter({ chapterPacket: packet, planningSignals: {} });
+
+    expect(provider.requests[0].systemInstruction).toContain('"chapterNumber":3');
+    expect(provider.requests[0].systemInstruction).toContain('"arcChapterPosition":"Arc 1 — Chapter 3/100"');
+    expect(provider.requests[0].systemInstruction).not.toContain('"chapterNumber":1');
+
+    const invalid = JSON.parse(planResponse);
+    invalid.chapterNumber = 1;
+    delete invalid.intendedEnding;
+    try {
+      parseChapterPlan(JSON.stringify(invalid), { chapterPacket: packet, planningSignals: {} });
+      throw new Error("Expected Chapter Plan validation to fail.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ChapterPlanValidationError);
+      const validation = error as ChapterPlanValidationError;
+      expect(validation.issues).toEqual(expect.arrayContaining([
+        expect.objectContaining({ field: "chapterNumber", expected: "3", received: "1" }),
+        expect.objectContaining({ field: "intendedEnding", reason: "is missing" }),
+      ]));
+    }
+  });
+
   it("keeps canonical Fate Survival settings authoritative over model output", () => {
     const conflicting = JSON.parse(planResponse);
     conflicting.rhythmResponse.selectedPressureTier = "Dao Master";
@@ -347,6 +387,17 @@ describe("live Chapter Generation model boundaries", () => {
       totalTokens: 660,
       generationTimeMs: 150,
       hasEstimatedUsage: true,
+    });
+    expect(usage.calls[0].estimatedInputBreakdown).toMatchObject({
+      source: "estimated",
+      storySeedConstitution: expect.any(Number),
+      blueprint: expect.any(Number),
+      livingStoryState: expect.any(Number),
+      chapterMission: expect.any(Number),
+      generationRules: expect.any(Number),
+      userInstruction: 0,
+      systemPrompts: expect.any(Number),
+      total: expect.any(Number),
     });
   });
 
@@ -563,9 +614,16 @@ describe("server model selection and failure handling", () => {
 
     expect(response.status).toBe(502);
     expect(response.body).toEqual({
-      error: "The model could not complete the chapter pipeline. No chapter or story data was saved; review the server log and retry.",
+      error: "Chapter 1 failed during Plan Chapter: The provider call failed during Plan Chapter. Review the server log for the protected provider detail.",
+      failure: {
+        chapterNumber: 1,
+        stage: "Plan Chapter",
+        category: "provider",
+        reason: "The provider call failed during Plan Chapter. Review the server log for the protected provider detail.",
+      },
     });
     expect(JSON.stringify(response.body)).not.toContain("provider secret diagnostic");
+    expect(JSON.stringify(response.body)).not.toContain("stack");
   });
 
   it("rejects a browser model outside the server allow-list as a request error", async () => {
@@ -662,6 +720,17 @@ describe("server model selection and failure handling", () => {
 
     expect(response.status).toBe(502);
     expect(response.body).toMatchObject({
+      error: expect.stringContaining("Chapter 1 failed during Plan Chapter"),
+      failure: {
+        chapterNumber: 1,
+        stage: "Plan Chapter",
+        category: "validation",
+        reason: expect.stringContaining("Plan Chapter validation failed"),
+        validationIssues: expect.arrayContaining([
+          expect.objectContaining({ field: "chapterNumber", received: "missing" }),
+          expect.objectContaining({ field: "sceneProgression", received: "missing" }),
+        ]),
+      },
       usage: {
         calls: [{ stage: "Plan Chapter", inputTokens: 120, outputTokens: 4 }],
         totals: { inputTokens: 120, outputTokens: 4, totalTokens: 124 },

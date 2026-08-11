@@ -1,6 +1,8 @@
 import type {
   ManifestChapterRequest,
   ManifestChapterResponse,
+  ChapterGenerationFailureCategory,
+  SafeChapterGenerationFailure,
 } from "../../components/chapter-generation/shared/liveChapterGeneration";
 import {
   applyChapterContinuation,
@@ -15,7 +17,10 @@ import type { ChapterTokenUsageSummary } from "../../components/chapter-generati
 import type { ChapterUsageStage } from "../../components/chapter-generation/shared/pipeline/usage";
 import type { ResolvedChapterGenerationConfig } from "./config";
 import { resolveConfiguredChapterModel } from "./config";
-import { createLiveChapterModelCalls } from "./modelCalls";
+import {
+  ChapterPlanValidationError,
+  createLiveChapterModelCalls,
+} from "./modelCalls";
 import { sealChapterContinuation } from "./continuationSecurity";
 import {
   GeminiChapterTextProvider,
@@ -36,14 +41,70 @@ export interface ExecuteChapterGenerationOptions {
 export class ChapterGenerationExecutionError extends Error {
   readonly cause: unknown;
   readonly usage: ChapterTokenUsageSummary;
+  readonly failure: SafeChapterGenerationFailure;
 
-  constructor(cause: unknown, usage: ChapterTokenUsageSummary) {
-    super(cause instanceof Error ? cause.message : "Unknown chapter-generation failure");
+  constructor(
+    cause: unknown,
+    usage: ChapterTokenUsageSummary,
+    failure: SafeChapterGenerationFailure,
+  ) {
+    super(`Chapter ${failure.chapterNumber} failed during ${failure.stage}: ${failure.reason}`);
     this.name = "ChapterGenerationExecutionError";
     this.cause = cause;
     this.usage = usage;
+    this.failure = failure;
   }
 }
+
+const safeFailureDetails = (
+  error: unknown,
+  stage: ChapterUsageStage,
+): { category: ChapterGenerationFailureCategory; reason: string } => {
+  if (error instanceof ChapterPlanValidationError) {
+    return { category: "validation", reason: error.message };
+  }
+  const message = error instanceof Error ? error.message : "";
+  if (message.includes("exceeded the") && message.includes("Development deadline")) {
+    return { category: "timeout", reason: message };
+  }
+  if (/empty response/i.test(message)) {
+    return {
+      category: "provider-response",
+      reason: `The provider returned an empty response during ${stage}.`,
+    };
+  }
+  if (/invalid structured JSON|malformed|unbalanced|unsupported|must be|cannot be empty|wrong arc\/chapter/i.test(message)) {
+    return { category: "validation", reason: message };
+  }
+  if (/\b429\b|rate.?limit|quota|resource.?exhausted/i.test(message)) {
+    return {
+      category: "rate-limit",
+      reason: "The provider rejected the request because its rate limit or quota was reached.",
+    };
+  }
+  if (/\b401\b|\b403\b|permission|unauthori[sz]ed|api.?key/i.test(message)) {
+    return {
+      category: "authentication",
+      reason: "The provider rejected the request because server-side credentials or permissions were invalid.",
+    };
+  }
+  if (/safety|blocked|prohibited content/i.test(message)) {
+    return {
+      category: "safety",
+      reason: "The provider blocked the response under its safety controls.",
+    };
+  }
+  if (/\b5\d\d\b|unavailable|overloaded|internal error/i.test(message)) {
+    return {
+      category: "provider-unavailable",
+      reason: "The provider was unavailable or returned an internal service error.",
+    };
+  }
+  return {
+    category: "provider",
+    reason: `The provider call failed during ${stage}. Review the server log for the protected provider detail.`,
+  };
+};
 
 export async function executeChapterGeneration(
   request: ManifestChapterRequest,
@@ -80,17 +141,32 @@ export async function executeChapterGeneration(
     maxOutputTokens: config.maxOutputTokens,
     timeoutMs: config.stageTimeoutMs,
   });
+  let activeStage: ChapterUsageStage = "Plan Chapter";
   let run: ManifestChapterResponse["run"];
   try {
     run = await runChapterPipelineAsync({
       chapterPacket,
       model: liveCalls.model,
-      onStageChange: options.onStageChange,
+      onStageChange: stage => {
+        activeStage = stage;
+        options.onStageChange?.(stage);
+      },
     });
   } catch (error) {
+    const validationIssues = error instanceof ChapterPlanValidationError
+      ? error.issues
+      : undefined;
+    const safeFailure = safeFailureDetails(error, activeStage);
     throw new ChapterGenerationExecutionError(
       error,
       aggregateChapterTokenUsage(liveCalls.usage),
+      {
+        chapterNumber: chapterPacket.chapterMission.number,
+        stage: activeStage,
+        category: safeFailure.category,
+        reason: safeFailure.reason,
+        ...(validationIssues?.length ? { validationIssues } : {}),
+      },
     );
   }
 

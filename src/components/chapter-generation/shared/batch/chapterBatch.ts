@@ -2,6 +2,7 @@ import type {
   ChapterGenerationErrorResponse,
   ManifestChapterRequest,
   ManifestChapterResponse,
+  SafeChapterGenerationFailure,
 } from "../liveChapterGeneration";
 import { buildChapterContract } from "../lib/chapterHandoff";
 import type { ChapterMission } from "../packets/chapterMission";
@@ -49,6 +50,7 @@ export interface BatchChapterAttempt {
   usage: ChapterTokenUsageSummary;
   result?: ManifestChapterResponse;
   error?: string;
+  failure?: SafeChapterGenerationFailure;
   seriousIssueRemaining: boolean;
 }
 
@@ -59,6 +61,7 @@ export interface BatchChapterRun {
   attempts: BatchChapterAttempt[];
   result?: ManifestChapterResponse;
   error?: string;
+  failure?: SafeChapterGenerationFailure;
 }
 
 export interface FiveChapterBatchState {
@@ -70,6 +73,7 @@ export interface FiveChapterBatchState {
 
 export interface ChapterBatchManifestFailure extends Error {
   usage?: ChapterTokenUsageSummary;
+  failure?: SafeChapterGenerationFailure;
 }
 
 export type ManifestBatchChapter = (
@@ -294,6 +298,7 @@ export const runFiveChapterBatch = async ({
       status: "planning",
       checkpoint,
       error: undefined,
+      failure: undefined,
     })), onUpdate);
 
     try {
@@ -348,6 +353,7 @@ export const runFiveChapterBatch = async ({
         attempts: [...current.attempts, attempt],
         result,
         error: undefined,
+        failure: undefined,
       })), onUpdate);
       continuation = clone(result.nextContinuation);
     } catch (error) {
@@ -372,9 +378,11 @@ export const runFiveChapterBatch = async ({
         attempts: [...current.attempts, {
           usage,
           error: message,
+          ...(failure.failure ? { failure: failure.failure } : {}),
           seriousIssueRemaining: false,
         }],
         error: message,
+        ...(failure.failure ? { failure: failure.failure } : {}),
       })), onUpdate);
       return state;
     }
@@ -388,5 +396,6 @@ export const errorResponseToBatchFailure = (
 ): ChapterBatchManifestFailure => {
   const failure = new Error(error.error) as ChapterBatchManifestFailure;
   failure.usage = error.usage;
+  failure.failure = error.failure;
   return failure;
 };

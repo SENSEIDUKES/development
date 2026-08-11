@@ -358,6 +358,17 @@ describe("Chapter Generation token usage", () => {
             totalTokens: 120,
             generationTimeMs: 250,
             tokenSource: "provider",
+            estimatedInputBreakdown: {
+              source: "estimated",
+              storySeedConstitution: 40,
+              blueprint: 30,
+              livingStoryState: 20,
+              chapterMission: 10,
+              generationRules: 50,
+              userInstruction: 5,
+              systemPrompts: 25,
+              total: 180,
+            },
           },
           {
             kind: "manifest",
@@ -394,6 +405,9 @@ describe("Chapter Generation token usage", () => {
     expect(html).toContain("Chapter output");
     expect(html).toContain("Chapter total");
     expect(html).toContain("400");
+    expect(html).toContain("Estimated input-token breakdown");
+    expect(html).toContain("Story Seed / Constitution");
+    expect(html).toContain("not provider-reported");
 
     const failedHtml = renderToStaticMarkup(
       <ChapterUsageSummary usage={result.usage} failed />,
@@ -421,10 +435,11 @@ describe("five-chapter progress", () => {
   it("shows every chapter state and exposes retry only for a paused batch", () => {
     const batch = createFiveChapterBatchState();
     batch.status = "paused";
-    batch.activeChapterNumber = 2;
+    batch.activeChapterNumber = 3;
     batch.chapters[0].status = "completed";
-    batch.chapters[1].status = "failed";
-    batch.chapters[1].error = "Temporary provider failure.";
+    batch.chapters[1].status = "completed";
+    batch.chapters[2].status = "failed";
+    batch.chapters[2].error = "Chapter 3 failed during Plan Chapter: chapterNumber expected 3 but received 1.";
     const html = renderToStaticMarkup(
       <BatchProgress
         batch={batch}
@@ -439,10 +454,13 @@ describe("five-chapter progress", () => {
     expect(html).toContain("Chapter 1");
     expect(html).toContain("Completed");
     expect(html).toContain("Chapter 2");
+    expect(html).toContain("Chapter 3");
     expect(html).toContain("Failed");
     expect(html).toContain("Chapter 5");
     expect(html).toContain("Retry Chapter");
-    expect(html).toContain("Temporary provider failure.");
+    expect(html).toContain("Chapters 1 and 2 completed and are still available in this temporary session.");
+    expect(html).toContain("The batch paused at Chapter 3.");
+    expect(html).toContain("chapterNumber expected 3 but received 1.");
 
     const running = structuredClone(batch);
     running.status = "running";

@@ -7,6 +7,8 @@ import {
   type SceneType,
 } from "../../components/chapter-generation/shared/lib/sceneRhythm";
 import { sanitizeChapterHandoff } from "../../components/chapter-generation/shared/lib/chapterHandoff";
+import { estimateTokens } from "../../components/chapter-generation/shared/lib/helpers";
+import type { ChapterGenerationValidationIssue } from "../../components/chapter-generation/shared/liveChapterGeneration";
 import {
   createArcChapterPosition,
   type LivingStoryCharacterStateUpdate,
@@ -24,7 +26,10 @@ import type {
   ProcessChapterInput,
   RepairChapterInput,
 } from "../../components/chapter-generation/shared/pipeline/types";
-import type { ChapterModelCallUsage } from "../../components/chapter-generation/shared/pipeline/usage";
+import type {
+  ChapterModelCallUsage,
+  EstimatedStageInputTokenBreakdown,
+} from "../../components/chapter-generation/shared/pipeline/usage";
 import {
   type ChapterHandoff,
   type StoryBlock,
@@ -45,10 +50,150 @@ const EFFECT_KINDS: ChapterEffectKind[] = [
   "narrative-cue",
 ];
 
+export class ChapterPlanValidationError extends Error {
+  readonly issues: ChapterGenerationValidationIssue[];
+
+  constructor(issues: ChapterGenerationValidationIssue[]) {
+    const details = issues.map(issue => {
+      const expectation = issue.expected ? ` Expected ${issue.expected}.` : "";
+      const received = issue.received ? ` Received ${issue.received}.` : "";
+      return `${issue.field}: ${issue.reason}.${expectation}${received}`;
+    }).join(" ");
+    super(`Plan Chapter validation failed: ${details}`);
+    this.name = "ChapterPlanValidationError";
+    this.issues = issues.map(issue => ({ ...issue }));
+  }
+}
+
 type JsonRecord = Record<string, unknown>;
 
 const isRecord = (value: unknown): value is JsonRecord =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
+
+const receivedValue = (value: unknown): string => {
+  if (value === undefined) return "missing";
+  const rendered = JSON.stringify(value);
+  return rendered && rendered.length <= 160
+    ? rendered
+    : `${Array.isArray(value) ? "array" : typeof value}`;
+};
+
+const collectChapterPlanValidationIssues = (
+  value: JsonRecord,
+  input: PlanChapterInput,
+): ChapterGenerationValidationIssue[] => {
+  const issues: ChapterGenerationValidationIssue[] = [];
+  const add = (
+    field: string,
+    reason: string,
+    expected?: string,
+    received?: unknown,
+  ) => issues.push({
+    field,
+    reason: received === undefined ? "is missing" : reason,
+    ...(expected ? { expected } : {}),
+    received: receivedValue(received),
+  });
+  const requiredText = (record: JsonRecord | undefined, field: string, path: string) => {
+    const fieldValue = record?.[field];
+    if (typeof fieldValue !== "string" || !fieldValue.trim()) {
+      add(path, fieldValue === undefined ? "is missing" : "must be a non-empty string", "a non-empty string", fieldValue);
+    }
+  };
+  const requiredBooleanField = (record: JsonRecord | undefined, field: string, path: string) => {
+    const fieldValue = record?.[field];
+    if (typeof fieldValue !== "boolean") {
+      add(path, fieldValue === undefined ? "is missing" : "must be a boolean", "true or false", fieldValue);
+    }
+  };
+
+  const expectedChapter = input.chapterPacket.chapterMission.number;
+  if (value.version !== 1) add("version", "must identify the Chapter Plan schema", "1", value.version);
+  if (value.chapterNumber !== expectedChapter) {
+    add("chapterNumber", "does not match the requested chapter", String(expectedChapter), value.chapterNumber);
+  }
+  const expectedPosition = input.chapterPacket.arcChapterPosition.display;
+  if (value.arcChapterPosition !== expectedPosition) {
+    add("arcChapterPosition", "does not match the requested arc position", JSON.stringify(expectedPosition), value.arcChapterPosition);
+  }
+
+  const rhythm = isRecord(value.rhythmResponse) ? value.rhythmResponse : undefined;
+  if (!rhythm) add("rhythmResponse", "must be a JSON object", "an object", value.rhythmResponse);
+  else {
+    requiredText(rhythm, "direction", "rhythmResponse.direction");
+    if (rhythm.recentSceneTypes !== undefined && !Array.isArray(rhythm.recentSceneTypes)) {
+      add("rhythmResponse.recentSceneTypes", "must be an array", "an array", rhythm.recentSceneTypes);
+    }
+  }
+
+  if (typeof value.resolvedSceneType !== "string" || !SCENE_TYPES.includes(value.resolvedSceneType as SceneType)) {
+    add("resolvedSceneType", "must be a supported scene type", SCENE_TYPES.join(" | "), value.resolvedSceneType);
+  }
+
+  if (isRecord(value.selectedScenePath)) {
+    const scenePath = value.selectedScenePath;
+    if (!isRecord(scenePath.weights)) {
+      add("selectedScenePath.weights", "must be a JSON object", "an object", scenePath.weights);
+    }
+    if (typeof scenePath.type !== "string" || !SCENE_TYPES.includes(scenePath.type as SceneType)) {
+      add("selectedScenePath.type", "must be a supported scene type", SCENE_TYPES.join(" | "), scenePath.type);
+    }
+    requiredText(scenePath, "anchor", "selectedScenePath.anchor");
+    requiredText(scenePath, "reason", "selectedScenePath.reason");
+    if (scenePath.blocked !== undefined && !Array.isArray(scenePath.blocked)) {
+      add("selectedScenePath.blocked", "must be an array", "an array", scenePath.blocked);
+    }
+  }
+
+  const fate = isRecord(value.fateSurvival) ? value.fateSurvival : undefined;
+  if (!fate) add("fateSurvival", "must be a JSON object", "an object", value.fateSurvival);
+  else {
+    requiredBooleanField(fate, "configured", "fateSurvival.configured");
+    requiredBooleanField(fate, "applies", "fateSurvival.applies");
+    requiredText(fate, "approach", "fateSurvival.approach");
+  }
+
+  if (!Array.isArray(value.effects)) {
+    add("effects", "must be an array", "an array", value.effects);
+  } else {
+    value.effects.forEach((item, index) => {
+      const effect = isRecord(item) ? item : undefined;
+      if (!effect) {
+        add(`effects[${index}]`, "must be a JSON object", "an object", item);
+        return;
+      }
+      if (typeof effect.kind !== "string" || !EFFECT_KINDS.includes(effect.kind as ChapterEffectKind)) {
+        add(`effects[${index}].kind`, "must be a supported effect kind", EFFECT_KINDS.join(" | "), effect.kind);
+      }
+      requiredText(effect, "intent", `effects[${index}].intent`);
+      requiredBooleanField(effect, "required", `effects[${index}].required`);
+    });
+  }
+
+  if (!Array.isArray(value.sceneProgression) || value.sceneProgression.length === 0) {
+    add("sceneProgression", "must contain at least one scene", "a non-empty array", value.sceneProgression);
+  } else {
+    value.sceneProgression.forEach((item, index) => {
+      const scene = isRecord(item) ? item : undefined;
+      if (!scene) {
+        add(`sceneProgression[${index}]`, "must be a JSON object", "an object", item);
+        return;
+      }
+      requiredText(scene, "purpose", `sceneProgression[${index}].purpose`);
+      requiredText(scene, "pacing", `sceneProgression[${index}].pacing`);
+    });
+  }
+
+  const pacing = isRecord(value.pacing) ? value.pacing : undefined;
+  if (!pacing) add("pacing", "must be a JSON object", "an object", value.pacing);
+  else {
+    requiredText(pacing, "directive", "pacing.directive");
+    requiredText(pacing, "shape", "pacing.shape");
+  }
+  requiredText(value, "intendedEnding", "intendedEnding");
+  requiredText(value, "nextChapterHandoffTarget", "nextChapterHandoffTarget");
+  return issues;
+};
 
 const requiredRecord = (value: unknown, label: string): JsonRecord => {
   if (!isRecord(value)) throw new Error(`${label} must be a JSON object.`);
@@ -206,9 +351,8 @@ const parseEffects = (value: unknown): ChapterEffectSelection[] => {
 
 export function parseChapterPlan(text: string, input: PlanChapterInput): ChapterPlan {
   const value = parseStructuredModelJson(text, "Plan Chapter");
-  if (value.chapterNumber !== input.chapterPacket.chapterMission.number) {
-    throw new Error("Plan Chapter returned the wrong chapter number.");
-  }
+  const validationIssues = collectChapterPlanValidationIssues(value, input);
+  if (validationIssues.length > 0) throw new ChapterPlanValidationError(validationIssues);
   const rhythm = requiredRecord(value.rhythmResponse, "ChapterPlan.rhythmResponse");
   const selectedPressureTier = input.planningSignals.fatePressureTier;
   const fate = requiredRecord(value.fateSurvival, "ChapterPlan.fateSurvival");
@@ -222,9 +366,6 @@ export function parseChapterPlan(text: string, input: PlanChapterInput): Chapter
   if (progression.length === 0) throw new Error("ChapterPlan.sceneProgression cannot be empty.");
   const pacing = requiredRecord(value.pacing, "ChapterPlan.pacing");
   const returnedPosition = requiredString(value.arcChapterPosition, "ChapterPlan.arcChapterPosition");
-  if (returnedPosition !== input.chapterPacket.arcChapterPosition.display) {
-    throw new Error("Plan Chapter returned the wrong arc/chapter position.");
-  }
 
   return {
     version: 1,
@@ -786,14 +927,15 @@ export function parseProcessingResult(
   };
 }
 
-const PLAN_SYSTEM = `You are the Plan Chapter boundary for Chapter Generation 1.0.
+const planSystemInstruction = (input: PlanChapterInput) => `You are the Plan Chapter boundary for Chapter Generation 1.0.
 Return one strict JSON object and no prose. Use the complete Chapter Packet exactly as supplied.
 Decide chapter-specific rhythm, scene type, Fate Survival application, effects, progression, pacing, ending, and next handoff target together.
 Copy Fate Survival visibility and pressure from the Story Constitution. If Fate Survival is disabled, applies must be false.
 Do not invent a legacy FatePressureTier when planningSignals does not provide one; omit selectedPressureTier in that case.
 For Chapter 1 without carried anchors, omit selectedScenePath and choose resolvedSceneType from worldBuilding, conflict, or progression.
-Required shape:
-{"version":1,"chapterNumber":1,"arcChapterPosition":"Arc 1 — Chapter 1/100","rhythmResponse":{"recentSceneTypes":[],"direction":"..."},"resolvedSceneType":"worldBuilding","fateSurvival":{"configured":true,"applies":false,"visibility":"partial","pressure":"immortal","approach":"..."},"effects":[{"kind":"narration-metadata","intent":"...","required":true}],"sceneProgression":[{"order":1,"purpose":"...","pacing":"..."}],"pacing":{"directive":"...","shape":"..."},"intendedEnding":"...","nextChapterHandoffTarget":"..."}`;
+The response chapterNumber must be ${input.chapterPacket.chapterMission.number} and arcChapterPosition must be ${JSON.stringify(input.chapterPacket.arcChapterPosition.display)}. Copy both exact values; do not use a prior chapter number from the story history.
+Required shape for this request:
+{"version":1,"chapterNumber":${input.chapterPacket.chapterMission.number},"arcChapterPosition":${JSON.stringify(input.chapterPacket.arcChapterPosition.display)},"rhythmResponse":{"recentSceneTypes":[],"direction":"..."},"resolvedSceneType":"worldBuilding","fateSurvival":{"configured":true,"applies":false,"visibility":"partial","pressure":"immortal","approach":"..."},"effects":[{"kind":"narration-metadata","intent":"...","required":true}],"sceneProgression":[{"order":1,"purpose":"...","pacing":"..."}],"pacing":{"directive":"...","shape":"..."},"intendedEnding":"...","nextChapterHandoffTarget":"..."}`;
 
 const PROCESS_SYSTEM = `You are the Process Result boundary for Chapter Generation 1.0.
 Inspect the manifested chapter against the exact Chapter Packet and Chapter Plan. Return one strict JSON object and no prose.
@@ -806,6 +948,28 @@ Required shape:
 {"version":1,"newAnchors":{"worldBuilding":"...","conflict":"...","progression":"..."},"characterChanges":[],"worldStateChanges":[],"characterStateUpdates":{"abilities":[]},"codexUpdates":{"characters":[],"factions":[],"locations":[],"artifacts":[]},"threads":{"completed":[],"changed":[],"unresolved":[{"description":"...","originChapter":1}]},"missionCompletion":{"completed":true,"evidence":"..."},"continuityFindings":[],"repetitionFindings":[],"nextChapterHandoff":{"version":1,"chapterNumber":1,"endState":{"location":"...","timeMarker":"...","charactersPresent":[],"mcCondition":"...","openTension":"..."},"completedEvents":[],"nextImmediateAction":"...","fingerprints":[{"actionType":"other","participants":[],"location":"...","outcome":"...","chapterNumber":1}]},"repairRecommended":false}`;
 
 const packetJson = (value: unknown) => JSON.stringify(value, null, 2);
+
+const estimateStageInputBreakdown = (
+  input: PlanChapterInput | ManifestChapterInput | ProcessChapterInput | RepairChapterInput,
+  systemPrompts: string,
+): EstimatedStageInputTokenBreakdown => {
+  const { worldBlueprint, ...seedAndConstitution } = input.chapterPacket.storyConstitution;
+  const { pacingDirective, ...chapterMission } = input.chapterPacket.chapterMission;
+  const estimates = {
+    storySeedConstitution: estimateTokens(packetJson(seedAndConstitution)),
+    blueprint: estimateTokens(packetJson(worldBlueprint ?? {})),
+    livingStoryState: estimateTokens(packetJson(input.chapterPacket.livingStoryState)),
+    chapterMission: estimateTokens(packetJson(chapterMission)),
+    generationRules: estimateTokens(packetJson(input.chapterPacket.generationRules)),
+    userInstruction: pacingDirective.trim() ? estimateTokens(pacingDirective) : 0,
+    systemPrompts: estimateTokens(systemPrompts),
+  };
+  return {
+    source: "estimated",
+    ...estimates,
+    total: Object.values(estimates).reduce((total, value) => total + value, 0),
+  };
+};
 
 export interface LiveChapterModelCalls {
   model: AsyncChapterGenerationModelCalls;
@@ -828,7 +992,12 @@ export function createLiveChapterModelCalls(
         ...request,
         abortSignal: controller.signal,
       });
-      usage.push(result.usage);
+      usage.push({
+        ...result.usage,
+        ...(request.estimatedInputBreakdown
+          ? { estimatedInputBreakdown: request.estimatedInputBreakdown }
+          : {}),
+      });
       return result.text;
     } catch (error) {
       if (controller.signal.aborted) {
@@ -844,56 +1013,64 @@ export function createLiveChapterModelCalls(
     usage,
     model: {
       async planChapter(input) {
+        const systemInstruction = planSystemInstruction(input);
         const response = await generate({
           kind: "plan",
           stage: "Plan Chapter",
-          systemInstruction: PLAN_SYSTEM,
+          systemInstruction,
           userPrompt: `PLANNING SIGNALS\n${packetJson(input.planningSignals)}\n\nCOMPLETE CHAPTER PACKET\n${packetJson(input.chapterPacket)}`,
           responseFormat: "json",
           temperature: Math.min(options.temperature, 0.5),
           maxOutputTokens: Math.min(options.maxOutputTokens, 4_096),
+          estimatedInputBreakdown: estimateStageInputBreakdown(input, systemInstruction),
         });
         return parseChapterPlan(response, input);
       },
 
       async manifestChapter(input) {
+        const systemInstruction = `${input.consolidatedPermanentInstructions}\n\n=== LIVE MANIFEST BOUNDARY ===\nWrite one complete chapter from the exact packet and plan below. Return only ---CHAPTER_BLOCKS--- followed by NDJSON blocks. Every block type must be exactly \"paragraph\" or \"dialogue\"; a system or world-card event remains a paragraph block with its structured sibling object. Do not return a summary, state update, plan, or analysis.`;
         const response = await generate({
           kind: "manifest",
           stage: "Manifest Chapter",
-          systemInstruction: `${input.consolidatedPermanentInstructions}\n\n=== LIVE MANIFEST BOUNDARY ===\nWrite one complete chapter from the exact packet and plan below. Return only ---CHAPTER_BLOCKS--- followed by NDJSON blocks. Every block type must be exactly \"paragraph\" or \"dialogue\"; a system or world-card event remains a paragraph block with its structured sibling object. Do not return a summary, state update, plan, or analysis.`,
+          systemInstruction,
           userPrompt: `COMPLETE CHAPTER PACKET\n${packetJson(input.chapterPacket)}\n\nCHAPTER PLAN\n${packetJson(input.chapterPlan)}`,
           responseFormat: "text",
           temperature: options.temperature,
           maxOutputTokens: options.maxOutputTokens,
+          estimatedInputBreakdown: estimateStageInputBreakdown(input, systemInstruction),
         });
         return parseManifestedChapter(response, input);
       },
 
       async processResult(input) {
         processCallCount += 1;
+        const stage = processCallCount === 1
+          ? "Process Result" as const
+          : "Process Result (repaired chapter)" as const;
         const response = await generate({
           kind: "process",
-          stage: processCallCount === 1
-            ? "Process Result"
-            : "Process Result (repaired chapter)",
+          stage,
           systemInstruction: PROCESS_SYSTEM,
           userPrompt: `COMPLETE CHAPTER PACKET\n${packetJson(input.chapterPacket)}\n\nCHAPTER PLAN\n${packetJson(input.chapterPlan)}\n\nMANIFESTED CHAPTER\n${packetJson(input.manifestedChapter)}`,
           responseFormat: "json",
           temperature: Math.min(options.temperature, 0.35),
           maxOutputTokens: Math.min(options.maxOutputTokens, 6_144),
+          estimatedInputBreakdown: estimateStageInputBreakdown(input, PROCESS_SYSTEM),
         });
         return parseProcessingResult(response, input);
       },
 
       async repairChapter(input) {
+        const systemInstruction = `${input.chapterPacket.generationRules.permanentWritingInstructions}\n\n=== SERIOUS-ISSUE REPAIR ===\nRewrite the complete chapter only to correct the serious processing findings. Preserve sound prose and all canon that is not implicated. Return only ---CHAPTER_BLOCKS--- followed by the full repaired NDJSON chapter. Every block type must be exactly \"paragraph\" or \"dialogue\"; a system or world-card event remains a paragraph block with its structured sibling object.`;
         const response = await generate({
           kind: "repair",
           stage: "Repair Chapter",
-          systemInstruction: `${input.chapterPacket.generationRules.permanentWritingInstructions}\n\n=== SERIOUS-ISSUE REPAIR ===\nRewrite the complete chapter only to correct the serious processing findings. Preserve sound prose and all canon that is not implicated. Return only ---CHAPTER_BLOCKS--- followed by the full repaired NDJSON chapter. Every block type must be exactly \"paragraph\" or \"dialogue\"; a system or world-card event remains a paragraph block with its structured sibling object.`,
+          systemInstruction,
           userPrompt: `COMPLETE CHAPTER PACKET\n${packetJson(input.chapterPacket)}\n\nCHAPTER PLAN\n${packetJson(input.chapterPlan)}\n\nSERIOUS PROCESSING RESULT\n${packetJson(input.processingResult)}\n\nORIGINAL MANIFESTED CHAPTER\n${packetJson(input.manifestedChapter)}`,
           responseFormat: "text",
           temperature: Math.min(options.temperature, 0.6),
           maxOutputTokens: options.maxOutputTokens,
+          estimatedInputBreakdown: estimateStageInputBreakdown(input, systemInstruction),
         });
         return parseManifestedChapter(response, input);
       },

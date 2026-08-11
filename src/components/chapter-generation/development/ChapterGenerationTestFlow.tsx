@@ -6,6 +6,8 @@ import {
   ChevronRight,
   Circle,
   Clock3,
+  Download,
+  FileJson,
   FileUp,
   FlaskConical,
   LoaderCircle,
@@ -31,6 +33,7 @@ import type {
   ChapterGenerationStreamEvent,
   ManifestChapterRequest,
   ManifestChapterResponse,
+  SafeChapterGenerationFailure,
 } from "../shared/liveChapterGeneration";
 import {
   createFiveChapterBatchState,
@@ -45,6 +48,15 @@ import type { StorySeedChapterMappingReport } from "../shared/packets/storySeedC
 import { aggregateChapterTokenUsage } from "../shared/pipeline/usage";
 import type { ChapterModelCallUsage, ChapterUsageStage } from "../shared/pipeline/usage";
 import type { ChapterTokenUsageSummary } from "../shared/pipeline/usage";
+import {
+  buildBatchReviewMarkdown,
+  buildChapterReviewMarkdown,
+  buildRunDataExport,
+  downloadReviewFile,
+  reviewExportFilename,
+  stoppedChapterNumber,
+  usageForChapterRun,
+} from "../shared/reviewExports";
 import {
   listWorkshopStorySeeds,
   LOCAL_WORKSHOP_STORY_SEED_OWNER_ID,
@@ -96,6 +108,7 @@ const formatDuration = (milliseconds: number) => milliseconds >= 1_000
   : `${milliseconds}ms`;
 
 function UsageRow({ call }: { call: ChapterModelCallUsage }) {
+  const breakdown = call.estimatedInputBreakdown;
   return (
     <li className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-2 border-b border-white/5 px-3 py-3 last:border-b-0 sm:grid-cols-[minmax(9rem,1fr)_minmax(9rem,1fr)_repeat(4,minmax(5rem,auto))] sm:items-center">
       <div className="min-w-0">
@@ -123,6 +136,32 @@ function UsageRow({ call }: { call: ChapterModelCallUsage }) {
         <div className="text-[9px] uppercase tracking-wider text-white/35">Time</div>
         <div className="font-mono text-xs text-white/75">{formatDuration(call.generationTimeMs)}</div>
       </div>
+      {breakdown && (
+        <details className="col-span-full rounded-lg border border-white/8 bg-black/20 px-3 py-2">
+          <summary className="cursor-pointer text-[9px] font-semibold uppercase tracking-wider text-cyan-100/60">
+            Estimated input-token breakdown · {formatTokens(breakdown.total)} tracked
+          </summary>
+          <p className="mt-1 text-[9px] leading-relaxed text-white/35">
+            Estimated component sizes, not provider-reported. Stage artifacts and JSON framing can make this subtotal differ from provider input.
+          </p>
+          <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[9px] sm:grid-cols-4">
+            {[
+              ["Story Seed / Constitution", breakdown.storySeedConstitution],
+              ["Blueprint", breakdown.blueprint],
+              ["Living Story State", breakdown.livingStoryState],
+              ["Chapter Mission", breakdown.chapterMission],
+              ["Generation Rules", breakdown.generationRules],
+              ["User instruction", breakdown.userInstruction],
+              ["System prompts", breakdown.systemPrompts],
+            ].map(([label, value]) => (
+              <div key={String(label)} className="min-w-0">
+                <dt className="truncate text-white/35">{label}</dt>
+                <dd className="font-mono text-white/65">~{formatTokens(Number(value))}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      )}
     </li>
   );
 }
@@ -214,6 +253,7 @@ const readErrorResponse = async (response: Response): Promise<ChapterGenerationE
     const body = await response.json() as ChapterGenerationErrorResponse;
     return {
       error: body.error || `Chapter generation failed (${response.status}).`,
+      ...(body.failure ? { failure: body.failure } : {}),
       ...(body.usage ? { usage: body.usage } : {}),
     };
   } catch {
@@ -296,6 +336,24 @@ const statusLabel = (chapter: BatchChapterRun) => ({
   paused: "Paused",
   failed: "Failed",
 })[chapter.status];
+
+export const pausedBatchMessage = (batch: FiveChapterBatchState): string => {
+  const stoppedAt = stoppedChapterNumber(batch);
+  const completed = batch.chapters
+    .filter(chapter => chapter.status === "completed")
+    .map(chapter => chapter.chapterNumber);
+  const completedLabel = completed.length === 1
+    ? `Chapter ${completed[0]} completed and is still available`
+    : completed.length > 1
+      ? `Chapters ${completed.join(" and ")} completed and are still available`
+      : "No chapters completed";
+  const failure = batch.chapters.find(chapter => chapter.chapterNumber === stoppedAt)?.error;
+  return [
+    `${completedLabel} in this temporary session.`,
+    stoppedAt ? `The batch paused at Chapter ${stoppedAt}.` : "The batch is paused.",
+    failure,
+  ].filter(Boolean).join(" ");
+};
 
 export function BatchProgress({
   batch,
@@ -388,10 +446,80 @@ export function BatchProgress({
       </div>
       {batch.status === "paused" && (
         <p role="alert" className="border-t border-amber-400/15 px-3 py-2 text-[10px] leading-relaxed text-amber-100/70 sm:px-4">
-          {batch.chapters.find(chapter => chapter.chapterNumber === batch.activeChapterNumber)?.error
-            ?? "The batch is paused at its clean pre-chapter checkpoint."}
+          {pausedBatchMessage(batch)}
         </p>
       )}
+    </section>
+  );
+}
+
+function ReviewExportActions({
+  title,
+  artifact,
+  batch,
+  selectedChapter,
+  response,
+  failure,
+  failureUsage,
+}: {
+  title: string;
+  artifact: StorySeedArtifact;
+  batch?: FiveChapterBatchState | null;
+  selectedChapter?: BatchChapterRun;
+  response?: ManifestChapterResponse | null;
+  failure?: SafeChapterGenerationFailure | null;
+  failureUsage?: ChapterTokenUsageSummary | null;
+}) {
+  const chapterUsage = selectedChapter ? usageForChapterRun(selectedChapter) : response?.usage;
+  const chapterStatus = selectedChapter?.status ?? (response ? "completed" : undefined);
+  const exportChapter = () => {
+    if (!response || !chapterUsage || !chapterStatus) return;
+    downloadReviewFile(
+      reviewExportFilename(title, `chapter-${response.run.chapterPacket.chapterMission.number}-review`, "md"),
+      buildChapterReviewMarkdown({
+        response,
+        status: chapterStatus,
+        usage: chapterUsage,
+        attemptCount: selectedChapter?.attempts.length ?? 1,
+      }),
+      "text/markdown",
+    );
+  };
+  const exportBatch = () => {
+    if (!batch) return;
+    downloadReviewFile(
+      reviewExportFilename(title, "batch-review", "md"),
+      buildBatchReviewMarkdown(batch),
+      "text/markdown",
+    );
+  };
+  const exportRunData = () => downloadReviewFile(
+    reviewExportFilename(title, "run-data", "json"),
+    buildRunDataExport({
+      artifact,
+      batch,
+      singleResult: batch ? undefined : response,
+      singleFailure: batch ? undefined : failure,
+      singleFailureUsage: batch ? undefined : failureUsage,
+    }),
+    "application/json",
+  );
+  const buttonClass = "inline-flex min-h-10 items-center gap-2 rounded-lg border border-white/12 bg-white/5 px-3 text-xs font-semibold text-white/75 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40";
+
+  return (
+    <section aria-label="Review exports" className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3 py-3">
+      <span className="mr-1 text-[9px] font-semibold uppercase tracking-widest text-white/35">Review exports</span>
+      <button type="button" onClick={exportChapter} disabled={!response} className={buttonClass}>
+        <Download size={13} /> Export Chapter (.md)
+      </button>
+      {batch && (
+        <button type="button" onClick={exportBatch} className={buttonClass}>
+          <Download size={13} /> Export Batch (.md)
+        </button>
+      )}
+      <button type="button" onClick={exportRunData} className={buttonClass}>
+        <FileJson size={13} /> Export Run Data (.json)
+      </button>
     </section>
   );
 }
@@ -412,6 +540,7 @@ export function ChapterGenerationTestFlow() {
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<ManifestChapterResponse | null>(null);
   const [failedUsage, setFailedUsage] = useState<ChapterTokenUsageSummary | null>(null);
+  const [generationFailure, setGenerationFailure] = useState<SafeChapterGenerationFailure | null>(null);
   const [singleStage, setSingleStage] = useState<ChapterUsageStage | null>(null);
   const [batch, setBatch] = useState<FiveChapterBatchState | null>(null);
   const [selectedBatchChapterNumber, setSelectedBatchChapterNumber] = useState(1);
@@ -499,6 +628,7 @@ export function ChapterGenerationTestFlow() {
     setBatch(null);
     setReaderBatch(null);
     setFailedUsage(null);
+    setGenerationFailure(null);
     setGenerationError(null);
   };
 
@@ -542,6 +672,7 @@ export function ChapterGenerationTestFlow() {
     setResult(null);
     setBatch(null);
     setFailedUsage(null);
+    setGenerationFailure(null);
     setSingleStage(null);
     try {
       const response = await manifestThroughServer(
@@ -556,7 +687,9 @@ export function ChapterGenerationTestFlow() {
       );
       setResult(response);
     } catch (error) {
-      setFailedUsage((error as ChapterBatchManifestFailure).usage ?? null);
+      const failure = error as ChapterBatchManifestFailure;
+      setFailedUsage(failure.usage ?? null);
+      setGenerationFailure(failure.failure ?? null);
       setGenerationError(error instanceof Error ? error.message : "Chapter manifestation failed.");
     } finally {
       if (activeManifestController.current === controller) activeManifestController.current = null;
@@ -582,6 +715,7 @@ export function ChapterGenerationTestFlow() {
     setGenerationError(null);
     setResult(null);
     setFailedUsage(null);
+    setGenerationFailure(null);
     try {
       const completed = await runFiveChapterBatch({
         state: initialState,
@@ -693,6 +827,7 @@ export function ChapterGenerationTestFlow() {
                   setResult(null);
                   setBatch(null);
                   setFailedUsage(null);
+                  setGenerationFailure(null);
                 }}
                 disabled={generating || !serverInfo || serverInfo.models.length === 0}
                 className="min-h-11 w-full rounded-lg border border-white/10 bg-[#080b14] px-3 text-sm normal-case tracking-normal text-white/85 outline-none focus:border-cyan-500/60 disabled:opacity-50"
@@ -714,6 +849,7 @@ export function ChapterGenerationTestFlow() {
                 setAccessToken(event.target.value);
                 setResult(null);
                 setFailedUsage(null);
+                setGenerationFailure(null);
                 setGenerationError(null);
               }}
               autoComplete="off"
@@ -750,6 +886,7 @@ export function ChapterGenerationTestFlow() {
                 setResult(null);
                 setBatch(null);
                 setFailedUsage(null);
+                setGenerationFailure(null);
                 setGenerationError(null);
               }}
               maxLength={2_000}
@@ -839,6 +976,18 @@ export function ChapterGenerationTestFlow() {
           />
           {batch.usage.calls.length > 0 && <ChapterUsageSummary usage={batch.usage} scope="Batch" />}
         </>
+      )}
+
+      {preflight.artifact && (batch || displayedResult || generationFailure) && (
+        <ReviewExportActions
+          title={titleForArtifact(preflight.artifact)}
+          artifact={preflight.artifact}
+          batch={batch}
+          selectedChapter={selectedBatchChapter}
+          response={displayedResult}
+          failure={generationFailure}
+          failureUsage={failedUsage}
+        />
       )}
 
       {displayedResult && chapterForReading && (

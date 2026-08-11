@@ -618,6 +618,7 @@ describe("server model selection and failure handling", () => {
       failure: {
         chapterNumber: 1,
         stage: "Plan Chapter",
+        category: "provider",
         reason: "The provider call failed during Plan Chapter. Review the server log for the protected provider detail.",
       },
     });
@@ -723,6 +724,7 @@ describe("server model selection and failure handling", () => {
       failure: {
         chapterNumber: 1,
         stage: "Plan Chapter",
+        category: "validation",
         reason: expect.stringContaining("Plan Chapter validation failed"),
         validationIssues: expect.arrayContaining([
           expect.objectContaining({ field: "chapterNumber", received: "missing" }),

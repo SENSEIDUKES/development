@@ -97,6 +97,7 @@ describe("Chapter Generation review exports", () => {
         failure: {
           chapterNumber: 3,
           stage: "Plan Chapter",
+          category: "validation",
           reason: "Plan validation failed.",
           validationIssues: [{
             field: "chapterNumber",
@@ -114,6 +115,11 @@ describe("Chapter Generation review exports", () => {
     batch.usage = aggregateChapterTokenUsage(
       batch.chapters.flatMap(chapter => chapter.attempts.flatMap(attempt => attempt.usage.calls)),
     );
+    Object.assign(batch.chapters[2].attempts[0].failure!, {
+      cause: "raw provider secret diagnostic",
+      stack: "provider stack trace",
+      accessToken: "development-access-token",
+    });
 
     const markdown = buildBatchReviewMarkdown(batch);
     expect(markdown).toContain("Completed chapters: 2 / 5");
@@ -141,9 +147,24 @@ describe("Chapter Generation review exports", () => {
       expected: "3",
       received: "1",
     });
+    expect(runData.run.chapters[2].failureSummary).toEqual({
+      stage: "Plan Chapter",
+      category: "validation",
+      invalidField: "chapterNumber",
+      expectedValue: "3",
+      receivedValue: "1",
+      safeReason: "chapterNumber: does not match the requested chapter.",
+    });
+    expect(runData.run.chapters[2].attempts[0].failureSummary).toEqual(
+      runData.run.chapters[2].failureSummary,
+    );
     expect(runDataText).not.toContain("test-signature");
     expect(runDataText).not.toContain('"proof"');
     expect(runDataText).not.toContain("accessToken");
+    expect(runDataText).not.toContain("raw provider secret diagnostic");
+    expect(runDataText).not.toContain("provider stack trace");
+    expect(runDataText).not.toContain("development-access-token");
+    expect(runDataText).not.toContain('"cause"');
     expect(runDataText).not.toContain('"stack"');
   });
 });

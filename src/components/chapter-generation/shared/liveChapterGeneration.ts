@@ -41,9 +41,20 @@ export interface ChapterGenerationValidationIssue {
   received?: string;
 }
 
+export type ChapterGenerationFailureCategory =
+  | "validation"
+  | "timeout"
+  | "provider-response"
+  | "rate-limit"
+  | "authentication"
+  | "safety"
+  | "provider-unavailable"
+  | "provider";
+
 export interface SafeChapterGenerationFailure {
   chapterNumber: number;
   stage: ChapterUsageStage;
+  category: ChapterGenerationFailureCategory;
   reason: string;
   validationIssues?: ChapterGenerationValidationIssue[];
 }

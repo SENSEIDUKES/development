@@ -30,6 +30,7 @@ const logChapterGenerationError = (error: unknown) => {
     console.error("[chapter-generation] pipeline failure", {
       chapterNumber: error.failure.chapterNumber,
       stage: error.failure.stage,
+      category: error.failure.category,
       safeReason: error.failure.reason,
       validationIssues: error.failure.validationIssues ?? [],
       completedUsage: error.usage,

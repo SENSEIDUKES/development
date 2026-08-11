@@ -1,6 +1,7 @@
 import type {
   ManifestChapterRequest,
   ManifestChapterResponse,
+  ChapterGenerationFailureCategory,
   SafeChapterGenerationFailure,
 } from "../../components/chapter-generation/shared/liveChapterGeneration";
 import {
@@ -55,27 +56,54 @@ export class ChapterGenerationExecutionError extends Error {
   }
 }
 
-const safeFailureReason = (error: unknown, stage: ChapterUsageStage): string => {
-  if (error instanceof ChapterPlanValidationError) return error.message;
+const safeFailureDetails = (
+  error: unknown,
+  stage: ChapterUsageStage,
+): { category: ChapterGenerationFailureCategory; reason: string } => {
+  if (error instanceof ChapterPlanValidationError) {
+    return { category: "validation", reason: error.message };
+  }
   const message = error instanceof Error ? error.message : "";
-  if (message.includes("exceeded the") && message.includes("Development deadline")) return message;
-  if (/empty response/i.test(message)) return `The provider returned an empty response during ${stage}.`;
+  if (message.includes("exceeded the") && message.includes("Development deadline")) {
+    return { category: "timeout", reason: message };
+  }
+  if (/empty response/i.test(message)) {
+    return {
+      category: "provider-response",
+      reason: `The provider returned an empty response during ${stage}.`,
+    };
+  }
   if (/invalid structured JSON|malformed|unbalanced|unsupported|must be|cannot be empty|wrong arc\/chapter/i.test(message)) {
-    return message;
+    return { category: "validation", reason: message };
   }
   if (/\b429\b|rate.?limit|quota|resource.?exhausted/i.test(message)) {
-    return "The provider rejected the request because its rate limit or quota was reached.";
+    return {
+      category: "rate-limit",
+      reason: "The provider rejected the request because its rate limit or quota was reached.",
+    };
   }
   if (/\b401\b|\b403\b|permission|unauthori[sz]ed|api.?key/i.test(message)) {
-    return "The provider rejected the request because server-side credentials or permissions were invalid.";
+    return {
+      category: "authentication",
+      reason: "The provider rejected the request because server-side credentials or permissions were invalid.",
+    };
   }
   if (/safety|blocked|prohibited content/i.test(message)) {
-    return "The provider blocked the response under its safety controls.";
+    return {
+      category: "safety",
+      reason: "The provider blocked the response under its safety controls.",
+    };
   }
   if (/\b5\d\d\b|unavailable|overloaded|internal error/i.test(message)) {
-    return "The provider was unavailable or returned an internal service error.";
+    return {
+      category: "provider-unavailable",
+      reason: "The provider was unavailable or returned an internal service error.",
+    };
   }
-  return `The provider call failed during ${stage}. Review the server log for the protected provider detail.`;
+  return {
+    category: "provider",
+    reason: `The provider call failed during ${stage}. Review the server log for the protected provider detail.`,
+  };
 };
 
 export async function executeChapterGeneration(
@@ -128,13 +156,15 @@ export async function executeChapterGeneration(
     const validationIssues = error instanceof ChapterPlanValidationError
       ? error.issues
       : undefined;
+    const safeFailure = safeFailureDetails(error, activeStage);
     throw new ChapterGenerationExecutionError(
       error,
       aggregateChapterTokenUsage(liveCalls.usage),
       {
         chapterNumber: chapterPacket.chapterMission.number,
         stage: activeStage,
-        reason: safeFailureReason(error, activeStage),
+        category: safeFailure.category,
+        reason: safeFailure.reason,
         ...(validationIssues?.length ? { validationIssues } : {}),
       },
     );

@@ -4,6 +4,7 @@ import type {
   FiveChapterBatchState,
 } from "./batch/chapterBatch";
 import type {
+  ChapterGenerationFailureCategory,
   ManifestChapterRequest,
   ManifestChapterResponse,
   SafeChapterGenerationFailure,
@@ -191,24 +192,76 @@ export function buildBatchReviewMarkdown(batch: FiveChapterBatchState): string {
   ].join("\n");
 }
 
+interface SanitizedFailureSummary {
+  stage: SafeChapterGenerationFailure["stage"];
+  category: ChapterGenerationFailureCategory;
+  invalidField?: string;
+  expectedValue?: string;
+  receivedValue?: string;
+  safeReason: string;
+}
+
 const safeFailureForExport = (
   failure?: SafeChapterGenerationFailure,
-): SafeChapterGenerationFailure | undefined => failure ? structuredClone(failure) : undefined;
+): SafeChapterGenerationFailure | undefined => failure
+  ? {
+      chapterNumber: failure.chapterNumber,
+      stage: failure.stage,
+      category: failure.category,
+      reason: failure.reason,
+      ...(failure.validationIssues?.length
+        ? {
+            validationIssues: failure.validationIssues.map(issue => ({
+              field: issue.field,
+              reason: issue.reason,
+              ...(issue.expected === undefined ? {} : { expected: issue.expected }),
+              ...(issue.received === undefined ? {} : { received: issue.received }),
+            })),
+          }
+        : {}),
+    }
+  : undefined;
+
+const sanitizedFailureSummary = (
+  failure?: SafeChapterGenerationFailure,
+): SanitizedFailureSummary | undefined => {
+  if (!failure) return undefined;
+  const invalidField = failure.validationIssues?.[0];
+  const reason = invalidField
+    ? `${invalidField.field}: ${invalidField.reason}.`
+    : failure.reason;
+  const safeReason = reason.length > 240 ? `${reason.slice(0, 237)}...` : reason;
+  return {
+    stage: failure.stage,
+    category: failure.category,
+    ...(invalidField
+      ? {
+          invalidField: invalidField.field,
+          ...(invalidField.expected === undefined ? {} : { expectedValue: invalidField.expected }),
+          ...(invalidField.received === undefined ? {} : { receivedValue: invalidField.received }),
+        }
+      : {}),
+    safeReason,
+  };
+};
 
 const chapterRunData = (run: BatchChapterRun) => {
   const response = resultForRun(run);
   const usage = aggregateChapterTokenUsage(run.attempts.flatMap(attempt => attempt.usage.calls));
+  const failure = run.failure ?? run.attempts.at(-1)?.failure;
   return {
     chapterNumber: run.chapterNumber,
     status: run.status,
     attemptCount: run.attempts.length,
-    failure: safeFailureForExport(run.failure ?? run.attempts.at(-1)?.failure),
+    failureSummary: sanitizedFailureSummary(failure),
+    failure: safeFailureForExport(failure),
     usage,
     timing: { generationTimeMs: usage.totals.generationTimeMs },
     attempts: run.attempts.map((attempt, index) => ({
       attempt: index + 1,
       usage: attempt.usage,
       seriousIssueRemaining: attempt.seriousIssueRemaining,
+      failureSummary: sanitizedFailureSummary(attempt.failure),
       failure: safeFailureForExport(attempt.failure),
     })),
     ...(response
@@ -294,6 +347,7 @@ export function buildRunDataExport(input: RunDataExportInput): string {
       : {
           kind: "single-chapter",
           status: singleChapter ? "completed" : "failed",
+          failureSummary: sanitizedFailureSummary(input.singleFailure ?? undefined),
           failure: safeFailureForExport(input.singleFailure ?? undefined),
           tokens: input.singleFailureUsage ?? input.singleResult?.usage,
           chapter: singleChapter,

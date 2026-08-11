@@ -7,6 +7,18 @@ export type ChapterUsageStage =
   | "Repair Chapter"
   | "Process Result (repaired chapter)";
 
+export interface EstimatedStageInputTokenBreakdown {
+  source: "estimated";
+  storySeedConstitution: number;
+  blueprint: number;
+  livingStoryState: number;
+  chapterMission: number;
+  generationRules: number;
+  userInstruction: number;
+  systemPrompts: number;
+  total: number;
+}
+
 export interface ChapterModelCallUsage {
   kind: ChapterModelCallKind;
   stage: ChapterUsageStage;
@@ -17,6 +29,8 @@ export interface ChapterModelCallUsage {
   totalTokens: number;
   generationTimeMs: number;
   tokenSource: "provider" | "estimated";
+  /** Component-size estimate for growth diagnostics; never provider-reported. */
+  estimatedInputBreakdown?: EstimatedStageInputTokenBreakdown;
 }
 
 export interface ChapterTokenUsageTotals {

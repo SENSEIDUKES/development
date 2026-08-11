@@ -34,8 +34,24 @@ export interface ManifestChapterResponse {
   nextContinuation: AuthenticatedChapterGenerationContinuation;
 }
 
+export interface ChapterGenerationValidationIssue {
+  field: string;
+  reason: string;
+  expected?: string;
+  received?: string;
+}
+
+export interface SafeChapterGenerationFailure {
+  chapterNumber: number;
+  stage: ChapterUsageStage;
+  reason: string;
+  validationIssues?: ChapterGenerationValidationIssue[];
+}
+
 export interface ChapterGenerationErrorResponse {
   error: string;
+  /** Safe, structured failure context. Server causes and stack traces stay server-only. */
+  failure?: SafeChapterGenerationFailure;
   /** Calls that completed before a later provider or structured-output failure. */
   usage?: ChapterTokenUsageSummary;
 }

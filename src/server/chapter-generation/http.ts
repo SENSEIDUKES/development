@@ -1,6 +1,7 @@
 import type {
   ChapterGenerationErrorResponse,
   ManifestChapterRequest,
+  SafeChapterGenerationFailure,
 } from "../../components/chapter-generation/shared/liveChapterGeneration";
 import type { ChapterTokenUsageSummary } from "../../components/chapter-generation/shared/pipeline/usage";
 import type { ChapterUsageStage } from "../../components/chapter-generation/shared/pipeline/usage";
@@ -43,10 +44,12 @@ const errorResponse = (
   status: number,
   error: string,
   usage?: ChapterTokenUsageSummary,
+  failure?: SafeChapterGenerationFailure,
 ): ChapterGenerationHttpResponse => ({
   status,
   body: {
     error,
+    ...(failure ? { failure } : {}),
     ...(usage && usage.calls.length > 0 ? { usage } : {}),
   } satisfies ChapterGenerationErrorResponse,
 });
@@ -163,13 +166,12 @@ export async function handleChapterGenerationHttp(
     const message = error instanceof Error ? error.message : "Unknown generation failure";
     if (isConfigurationError(message)) return errorResponse(503, message);
     if (isRequestError(message)) return errorResponse(400, message);
-    const usage = error instanceof ChapterGenerationExecutionError
-      ? error.usage
-      : undefined;
+    if (error instanceof ChapterGenerationExecutionError) {
+      return errorResponse(502, error.message, error.usage, error.failure);
+    }
     return errorResponse(
       502,
       "The model could not complete the chapter pipeline. No chapter or story data was saved; review the server log and retry.",
-      usage,
     );
   }
 }

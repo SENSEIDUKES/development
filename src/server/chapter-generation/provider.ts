@@ -4,6 +4,7 @@ import type { ChapterModelCallKind } from "../../components/chapter-generation/s
 import type {
   ChapterModelCallUsage,
   ChapterUsageStage,
+  EstimatedStageInputTokenBreakdown,
 } from "../../components/chapter-generation/shared/pipeline/usage";
 import { geminiApiModelId } from "./config";
 
@@ -15,6 +16,7 @@ export interface ChapterTextGenerationRequest {
   responseFormat: "json" | "text";
   temperature: number;
   maxOutputTokens: number;
+  estimatedInputBreakdown?: EstimatedStageInputTokenBreakdown;
   abortSignal?: AbortSignal;
 }
 

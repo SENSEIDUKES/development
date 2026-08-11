@@ -1,5 +1,6 @@
 import { handleChapterGenerationHttp } from "./http";
 import type { ChapterGenerationStreamEvent } from "../../components/chapter-generation/shared/liveChapterGeneration";
+import { ChapterGenerationExecutionError } from "./execute";
 
 export const maxDuration = 300;
 
@@ -24,6 +25,22 @@ const acceptsStream = (request: RequestLike): boolean => {
   return value?.includes("application/x-ndjson") ?? false;
 };
 
+const logChapterGenerationError = (error: unknown) => {
+  if (error instanceof ChapterGenerationExecutionError) {
+    console.error("[chapter-generation] pipeline failure", {
+      chapterNumber: error.failure.chapterNumber,
+      stage: error.failure.stage,
+      safeReason: error.failure.reason,
+      validationIssues: error.failure.validationIssues ?? [],
+      completedUsage: error.usage,
+      cause: error.cause instanceof Error ? error.cause.message : error.cause,
+      stack: error.cause instanceof Error ? error.cause.stack : error.stack,
+    });
+    return;
+  }
+  console.error("[chapter-generation] request failure", error);
+};
+
 export default async function chapterGenerationHandler(
   request: RequestLike,
   response: ResponseLike,
@@ -43,7 +60,7 @@ export default async function chapterGenerationHandler(
     { method: request.method, body: request.body, headers: request.headers },
     {
       environment: process.env,
-      onError: error => console.error("[chapter-generation]", error),
+      onError: logChapterGenerationError,
       ...(streaming ? { onStageChange: stage => writeEvent({ type: "stage", stage }) } : {}),
     },
   );

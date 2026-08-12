@@ -4,7 +4,7 @@
 - **Source location:** `src/hooks/chapterPipeline/chapterBatch.ts`, `src/aiRouter.ts`, `src/server/routes/storyRouter.ts`, and the Story Seed, prompt, handoff, formatting, and context dependencies
 - **Workshop preview:** `?preview=chapter-generation-flow`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-10
+- **Last Workshop update:** 2026-08-12
 - **Last source comparison:** 2026-08-09
 - **Replica status:** Chapter Generation 1.0 Pass 3 supports safe failure review, disposable exports, and completed-batch Reader handoff
 
@@ -46,6 +46,14 @@ chapter/batch/repair/retry token totals, scopes Reader Codex memory to the selec
 chapter's processed snapshot, exports all five chapters as one text file, and opens
 the existing four-stage Diagnostics for the selected chapter. Incomplete or paused
 batches cannot open the Reader, and the Pass 2 sequencer remains unchanged.
+
+The Reader compatibility adapter now carries the permanent power-system definition
+and evolving abilities alongside characters, factions, locations, artifacts, and
+active/resolved mysteries. Story Seed field names are translated only at the Reader
+boundary, while Process updates use canonical names and explicit aliases to update
+existing Living Story State entities. The Codex receives a chapter-scoped arc view,
+so its timeline cannot reveal later completed chapters even though Reader navigation
+still retains the complete batch.
 
 ## Four actual stages
 
@@ -268,6 +276,7 @@ per-chapter coverage.
 - **2026-08-09:** Bound disposable continuations to their exact Story Seed and Blueprint with a server-only signature, added cancellation and request timeouts for batch calls, and tightened accessibility, carry-forward ordering, and checkpoint coverage during PR review.
 - **2026-08-10:** Pass 3 connected completed five-chapter batches to the existing Reader Chamber through the batch adapter, added chapter-scoped cumulative Reader Codex snapshots, chapter/batch/repair/retry token visibility, five-chapter export, and selected-chapter access to the existing four-stage Diagnostics without adding persistence.
 - **2026-08-10:** Corrected the live Plan prompt's fixed Chapter 1 schema example so Chapters 2–5 receive their exact chapter number and arc position, added chapter/stage/field-level safe failures with detailed server-only causes, clarified paused-batch retention, added Markdown/JSON review exports, and exposed the seven-part estimated input-token breakdown for every provider stage.
+- **2026-08-12:** Aligned Story Seed, World Blueprint, Process Result, and Living Story State with the imported Reader Codex through the existing adapter; preserved aliases and stable entity identity, carried power/ability/mystery state, and prevented later chapter timeline data from entering earlier Codex snapshots without changing prompts, sequencing, retries, checkpoints, diagnostics, or exports.
 
 ## Transfer notes
 

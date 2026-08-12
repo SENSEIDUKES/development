@@ -52,10 +52,14 @@ describe("FiveChapterReaderSession", () => {
     expect(container.textContent).toContain("Five-chapter batch tokens");
 
     await act(async () => button("Open Codex")!.click());
-    expect(container.querySelector('[role="dialog"][aria-label="Codex"]')).toBeTruthy();
+    const chapterOneCodex = container.querySelector('[role="dialog"][aria-label="Codex"]');
+    expect(chapterOneCodex).toBeTruthy();
     expect(container.querySelector("#reader-chamber-root")).toBeTruthy();
-    expect(container.textContent).toContain("Known by Chapter 1");
-    expect(container.textContent).not.toContain("Known by Chapter 5");
+    expect(chapterOneCodex!.textContent).toContain("Known by Chapter 1");
+    expect(chapterOneCodex!.textContent).toContain("Generated Title 1");
+    expect(chapterOneCodex!.textContent).not.toContain("Known by Chapter 5");
+    expect(chapterOneCodex!.textContent).not.toContain("Generated Title 2");
+    expect(chapterOneCodex!.textContent).not.toContain("Generated Title 5");
     await act(async () => button("Close Codex Sheet")!.click());
     expect(container.querySelector('[role="dialog"][aria-label="Codex"]')).toBeFalsy();
 
@@ -65,6 +69,11 @@ describe("FiveChapterReaderSession", () => {
       expect(container.textContent).toContain(`Chapter ${chapterNumber} tokens`);
     }
     expect(button("Next Chapter")?.disabled).toBe(true);
+
+    await act(async () => button("Open Codex")!.click());
+    const chapterFiveCodex = container.querySelector('[role="dialog"][aria-label="Codex"]');
+    expect(chapterFiveCodex!.textContent).toContain("Known by Chapter 5");
+    expect(chapterFiveCodex!.textContent).toContain("Generated Title 5");
   });
 
   it("opens the unchanged four-stage Diagnostics for the currently selected chapter", async () => {

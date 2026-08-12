@@ -327,6 +327,8 @@ export interface ChapterDiagnostics {
     display: string;
   };
   repairApplied?: boolean;
+  /** Exact processed power state after this chapter, when DEV produced one. */
+  codexPowerStage?: string;
 }
 
 export interface ReaderTokenUsageTotals {

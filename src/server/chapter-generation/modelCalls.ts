@@ -14,6 +14,11 @@ import {
   type LivingStoryCharacterStateUpdate,
   type LivingStoryCodexUpdates,
 } from "../../components/chapter-generation/shared/packets/livingStoryState";
+import {
+  canonicalLivingStoryEntityKey,
+  mergeLivingStoryRecords,
+  mergeLivingStoryValues,
+} from "../../components/chapter-generation/shared/packets/livingStoryEntityIdentity";
 import type {
   AsyncChapterGenerationModelCalls,
   ChapterEffectKind,
@@ -702,20 +707,23 @@ const buildProposedState = (
       ...current.characterState,
       currentPowerStage: characterStateUpdates.currentPowerStage
         ?? current.characterState.currentPowerStage,
-      abilities: mergeCarriedValues(
+      abilities: mergeLivingStoryValues(
         current.characterState.abilities,
         characterStateUpdates.abilities,
       ),
     },
     threads: {
       unresolved,
-      resolved: Array.from(new Set([...current.threads.resolved, ...completedThreads])),
+      resolved: mergeLivingStoryValues(
+        current.threads.resolved,
+        completedThreads,
+      ) as string[],
     },
     codex: {
-      characters: mergeCarriedRecords(current.codex.characters, codexUpdates.characters),
-      factions: mergeCarriedRecords(current.codex.factions, codexUpdates.factions),
-      locations: mergeCarriedRecords(current.codex.locations, codexUpdates.locations),
-      artifacts: mergeCarriedRecords(current.codex.artifacts, codexUpdates.artifacts),
+      characters: mergeLivingStoryRecords(current.codex.characters, codexUpdates.characters),
+      factions: mergeLivingStoryRecords(current.codex.factions, codexUpdates.factions),
+      locations: mergeLivingStoryRecords(current.codex.locations, codexUpdates.locations),
+      artifacts: mergeLivingStoryRecords(current.codex.artifacts, codexUpdates.artifacts),
     },
     scene: {
       ...current.scene,
@@ -740,61 +748,7 @@ const buildProposedState = (
   };
 };
 
-const recordIdentity = (value: JsonRecord): string | undefined => {
-  for (const field of ["id", "name", "title", "label", "slug"] as const) {
-    const candidate = value[field];
-    if (typeof candidate === "string" && candidate.trim()) {
-      return `${field}:${candidate.trim().toLowerCase()}`;
-    }
-  }
-  return undefined;
-};
-
-const mergeCarriedRecords = (
-  current: JsonRecord[],
-  updates: JsonRecord[],
-): JsonRecord[] => {
-  const merged = current.map(entry => structuredClone(entry));
-  for (const update of updates) {
-    const copied = structuredClone(update);
-    const identity = recordIdentity(copied);
-    const index = identity
-      ? merged.findIndex(entry => recordIdentity(entry) === identity)
-      : -1;
-    if (index >= 0) merged[index] = { ...merged[index], ...copied };
-    else if (!merged.some(entry => JSON.stringify(entry) === JSON.stringify(copied))) merged.push(copied);
-  }
-  return merged;
-};
-
-const mergeCarriedValues = (current: unknown[], updates: unknown[]): unknown[] => {
-  const merged: unknown[] = [];
-  const unkeyed = new Set<string>();
-  for (const value of [...current, ...updates]) {
-    if (isRecord(value)) {
-      const copied = structuredClone(value);
-      const identity = recordIdentity(copied);
-      const index = identity
-        ? merged.findIndex(entry => isRecord(entry) && recordIdentity(entry) === identity)
-        : -1;
-      if (index >= 0) {
-        merged[index] = { ...(merged[index] as JsonRecord), ...copied };
-        continue;
-      }
-      const serialized = JSON.stringify(copied);
-      if (merged.some(entry => isRecord(entry) && JSON.stringify(entry) === serialized)) continue;
-      merged.push(copied);
-      continue;
-    }
-    const serialized = JSON.stringify(value);
-    if (unkeyed.has(serialized)) continue;
-    unkeyed.add(serialized);
-    merged.push(structuredClone(value));
-  }
-  return merged;
-};
-
-const threadKey = (description: string): string => description.trim().toLocaleLowerCase();
+const threadKey = (description: string): string => canonicalLivingStoryEntityKey(description);
 
 const mergeUnresolvedThreads = (
   current: Array<{ description: string; originChapter: number }>,

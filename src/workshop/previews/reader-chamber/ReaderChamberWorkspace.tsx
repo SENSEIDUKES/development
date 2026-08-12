@@ -1,8 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ReferenceReaderChamber from '../../../components/reader-chamber/reference/ReaderChamber';
 import DevelopmentReaderChamber from '../../../components/reader-chamber/development/ReaderChamber';
+import { CodexSheetOverlay as ReferenceCodexSheetOverlay } from '../../../components/reader-codex/reference/CodexSheetOverlay';
+import { CodexSheetOverlay as DevelopmentCodexSheetOverlay } from '../../../components/reader-codex/development/CodexSheetOverlay';
 import type {
   ReaderPreferences,
+  StoryMemory,
   UpdateStoryFields,
 } from '../../../components/reader-chamber/shared/types';
 import {
@@ -32,28 +35,50 @@ import {
 } from './previewStates';
 import '../../../components/reader-chamber/shared/reader-chamber.css';
 
-import { ReaderCodexView } from '../../../components/reader-chamber/development/ReaderCodexView';
-
 type ReaderTab = 'reader' | 'codex' | 'memory';
 
-function PreviewCanvas({ children }: { children: React.ReactElement }) {
-  const [activeTab, setActiveTab] = useState<ReaderTab>('reader');
+type CodexOverlayComponent = typeof ReferenceCodexSheetOverlay;
+
+function PreviewCanvas({
+  children,
+  CodexOverlay,
+  onJumpToChapter,
+}: {
+  children: React.ReactElement;
+  CodexOverlay: CodexOverlayComponent;
+  onJumpToChapter: (chapterNumber: number) => void;
+}) {
+  const [isCodexOpen, setIsCodexOpen] = useState(false);
   const activeStory = useAppStore((s) => s.stories[0]);
   const chamber = React.cloneElement(children, {
-    onSwitchTab: (tab: ReaderTab) => setActiveTab(tab),
+    onSwitchTab: (tab: ReaderTab) => {
+      if (tab === 'codex') setIsCodexOpen(true);
+    },
   } as Partial<unknown>);
+
+  if (!activeStory) return chamber;
+
+  const updateStoryFields: UpdateStoryFields = (storyId, updates, options) =>
+    useAppStore.getState().updateStory(storyId, updates, options);
+
+  const updateMemory = (memory: StoryMemory) => {
+    void updateStoryFields(activeStory.id, { memory });
+  };
+
   return (
     <div className="relative">
-      {activeTab === 'reader' ? (
-        chamber
-      ) : (
-        <ReaderCodexView
-          memory={activeStory?.memory as any}
-          mcName={activeStory?.mcName}
-          currentPowerStage={activeStory?.memory?.currentPowerStage}
-          onBackToReader={() => setActiveTab('reader')}
-        />
-      )}
+      {chamber}
+      <CodexOverlay
+        isOpen={isCodexOpen}
+        onClose={() => setIsCodexOpen(false)}
+        activeStory={activeStory}
+        onUpdateMemory={updateMemory}
+        updateStoryFields={updateStoryFields}
+        onJumpToChapter={chapterNumber => {
+          onJumpToChapter(chapterNumber);
+          setIsCodexOpen(false);
+        }}
+      />
     </div>
   );
 }
@@ -347,12 +372,20 @@ export function ReaderChamberWorkspace() {
       controls={controls}
       allowCompare
       renderReference={() => (
-        <PreviewCanvas key={`reference-${activeState}`}>
+        <PreviewCanvas
+          key={`reference-${activeState}`}
+          CodexOverlay={ReferenceCodexSheetOverlay}
+          onJumpToChapter={setSelectedChapterNum}
+        >
           <ReferenceReaderChamber {...chamberProps} />
         </PreviewCanvas>
       )}
       renderDevelopment={() => (
-        <PreviewCanvas key={`development-${activeState}`}>
+        <PreviewCanvas
+          key={`development-${activeState}`}
+          CodexOverlay={DevelopmentCodexSheetOverlay}
+          onJumpToChapter={setSelectedChapterNum}
+        >
           <DevelopmentReaderChamber {...chamberProps} />
         </PreviewCanvas>
       )}

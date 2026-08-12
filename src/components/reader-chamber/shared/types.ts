@@ -3,9 +3,9 @@
  *
  * Focused subset of `src/types.ts` from SENSEIDUKES/Light-Novels, lifted
  * verbatim wherever the copied presentation components reference the shapes.
- * Pipeline/persistence-only fields that nothing in the reading surface
- * consumes were intentionally left out. `CodexTerm` is deliberately absent —
- * the codex menu system is a separate future Workshop job (see README).
+ * Pipeline/persistence-only fields that nothing in the reading or Codex
+ * surfaces consumes were intentionally left out. The Codex entities below
+ * preserve the production Reader/Codex contracts used by this replica.
  */
 
 export interface FateResultData {
@@ -21,6 +21,11 @@ export interface FateResultData {
 export interface BeastSonicProfile {
   threatTier: string;
   size?: string;
+  bodyType?: string;
+  element?: string;
+  movement?: string;
+  intelligence?: string;
+  signatureSound?: string;
 }
 
 /**
@@ -291,6 +296,8 @@ export interface ChapterScaffold {
 export interface ChapterMedia {
   assetManifest?: Record<string, string>;
   heroImageAssetId?: string;
+  /** Every generated chapter hero belongs to this chapter, never story history. */
+  imageHistory?: GeneratedImage[];
 }
 
 /**
@@ -398,6 +405,7 @@ export interface ReaderPreferences {
   playerStyle?: "vinyl" | "minimal" | "ethereal";
   particleIntensity?: "off" | "low" | "default" | "high";
   dividerStyle?: "default" | "celestial" | "sword_qi" | "lotus_path";
+  vignetteStyle?: "off" | "radial" | "cosmic" | "scroll";
 }
 
 export interface Bookmark {
@@ -409,41 +417,167 @@ export interface Bookmark {
   createdAt: string;
 }
 
-export interface Character {
-  id?: string;
+export interface GeneratedImage {
+  id: string;
+  /** Canonical persisted asset identity. `imageUrl` is only a delivery URL. */
+  assetId?: string;
+  assetVersion?: number;
+  checksumSha256?: string;
+  deliveryUrlExpiresAt?: string;
+  entityId: string;
+  entityType:
+    | "cover"
+    | "character"
+    | "beast"
+    | "location"
+    | "artifact"
+    | "faction"
+    | "chapterHero";
+  imageUrl: string;
+  chapterNumber?: number;
+  arcTitle?: string;
+  label?: string;
+  promptUsed: string;
+  createdAt: string;
+  isCurrent: boolean;
+}
+
+export type RelevanceState =
+  | "active"
+  | "warm"
+  | "dormant"
+  | "archived"
+  | "reactivated";
+
+export interface MemoryProvenance {
+  sourceChapterNumber?: number;
+  sourceBlockId?: string;
+  createdBy?: string;
+  confidence?: number;
+  lastMentionedChapter?: number;
+  supersedesMemoryId?: string;
+  isUserPinned?: boolean;
+}
+
+export interface BaseCodexEntry {
+  persistenceId?: string;
+  imageAssetId?: string;
+  aliases?: string[];
+  contextPriority?: number;
+  authorContextNote?: string;
+  relevanceState?: RelevanceState;
+  firstAppeared?: number;
+  lastMajorInvolvement?: number;
+  unresolvedThreads?: string[];
+  currentRelevance?: string;
+  toneMemory?: string;
+  provenance?: MemoryProvenance;
+  manifestationImportance?: import('./manifestationEligibility').ManifestationImportance;
+  pendingEvolution?: boolean;
+  arcAccumulation?: string;
+}
+
+export interface AbilityProgressionEvent {
+  chapter: number;
+  fromMastery?: string;
+  toMastery?: string;
+  note?: string;
+}
+
+export interface Ability extends BaseCodexEntry {
+  id: string;
   name: string;
-  role?: string;
-  status?: "alive" | "deceased" | "unknown" | "ascended" | string;
+  description: string;
+  source?: string;
+  acquiredChapter?: number;
+  acquisitionMethod?: string;
+  cost?: string;
+  limits?: string;
+  masteryLevel?: string;
+  lastUsedChapter?: number;
+  canonStatus?: 'confirmed' | 'rumored' | 'forbidden' | 'lost';
+  progression?: AbilityProgressionEvent[];
+}
+
+export interface Character extends BaseCodexEntry {
+  id: string;
+  name: string;
+  role: string;
+  status: "alive" | "deceased" | "unknown" | "ascended";
   powerLevel?: string;
-  relationshipToMC?: string;
-  description?: string;
+  relationshipToMC: string;
+  description: string;
+  abilities?: Array<string | Ability>;
+  faction?: string;
+  imageUrl?: string;
+  imageHistory?: GeneratedImage[];
+  isBeast?: boolean;
+  beastProfile?: BeastSonicProfile;
+  lastImageChapter?: number;
+  evolutionReady?: boolean;
+  evolutionReason?: string;
+  availableVisualUpdate?: boolean;
+  voicePresetId?: string;
+  signatureQuote?: string;
+  voiceClipUrl?: string;
+  voiceAssetId?: string;
 }
 
-export interface Faction {
-  id?: string;
+export interface Faction extends BaseCodexEntry {
+  id: string;
   name: string;
-  alignment?: string;
-  description?: string;
+  alignment: "Righteous" | "Demonic" | "Neutral" | "Mysterious" | string;
+  description: string;
+  headquarters?: string;
+  status?: "Active" | "Destroyed" | "Fractured" | string;
+  imageUrl?: string;
+  imageHistory?: GeneratedImage[];
 }
 
-export interface Location {
-  id?: string;
+export interface Location extends BaseCodexEntry {
+  id: string;
   name: string;
+  description: string;
+  realm?: string;
   safetyLevel?: string;
-  description?: string;
+  imageUrl?: string;
+  imageHistory?: GeneratedImage[];
+  lastImageChapter?: number;
+  evolutionReady?: boolean;
+  evolutionReason?: string;
+  availableVisualUpdate?: boolean;
 }
 
-export interface Artifact {
-  id?: string;
+export type ArtifactCondition =
+  | "intact"
+  | "damaged"
+  | "destroyed"
+  | "consumed"
+  | "lost"
+  | string;
+
+export interface Artifact extends BaseCodexEntry {
+  id: string;
   name: string;
+  description: string;
   tier?: string;
-  condition?: string;
-  description?: string;
+  currentOwner?: string;
+  condition?: ArtifactCondition;
+  holderLocation?: string;
+  lastStateChapter?: number;
+  imageUrl?: string;
+  imageHistory?: GeneratedImage[];
+  lastImageChapter?: number;
+  evolutionReady?: boolean;
+  evolutionReason?: string;
+  availableVisualUpdate?: boolean;
 }
 
 export interface PlotThread {
   id?: string;
   description: string;
+  status?: "active" | "resolved";
+  provenance?: MemoryProvenance;
   originChapter?: number;
 }
 
@@ -458,6 +592,64 @@ export interface StoryMemory {
   unresolvedPlotThreads?: Array<string | PlotThread>;
   resolvedPlotThreads?: Array<string | PlotThread>;
   worldRules?: string[];
+  memoryWarnings?: string[];
+  abilities?: Array<string | Ability>;
+}
+
+export interface CharacterRelationship {
+  id: string;
+  sourceCharId: string;
+  sourceCharName: string;
+  targetCharId: string;
+  targetCharName: string;
+  affinity: number;
+  threat?: number;
+  description: string;
+  updatedAt: string;
+}
+
+export interface KarmaFateNode {
+  id: string;
+  sourceId: string;
+  sourceName: string;
+  targetId: string;
+  targetName: string;
+  description: string;
+  severity: "Minor" | "Major" | "Cosmic";
+  type: "Debt" | "Boon" | "Enmity" | "Destiny";
+  status: "active" | "resolved";
+  createdAt: string;
+}
+
+export interface RouteConfig {
+  provider: "gemini" | "openrouter" | "ollama";
+  model: string;
+  temperature?: number;
+  maxOutputTokens?: number;
+}
+
+export interface MultiModelRouting {
+  storyMaker: RouteConfig;
+  imageGenerator: RouteConfig;
+}
+
+export interface MediaAssetDescriptor {
+  id: string;
+  assetType: string;
+  purpose: string;
+  visibility: "PRIVATE" | "PUBLIC";
+  status: string;
+  mimeType: string;
+  byteSize: string;
+  checksumSha256: string;
+  width?: number | null;
+  height?: number | null;
+  durationMs?: string | null;
+  version: number;
+  deliveryUrl: string;
+  deliveryUrlExpiresAt?: string | null;
+  createdAt: string;
+  readyAt?: string | null;
 }
 
 /** Subset of production IntakeData consumed by the dialect resolver. */
@@ -486,10 +678,28 @@ export interface StoryWorld {
   currentChapterNumber: number;
   intake?: IntakeData;
   hardcoreFateMode?: boolean;
+  imageUrl?: string;
+  coverAssetId?: string;
+  imageHistory?: GeneratedImage[];
+  lastImageChapter?: number;
+  evolutionReady?: boolean;
+  evolutionReason?: string;
+  availableVisualUpdate?: boolean;
+  motionCoverActive?: boolean;
   readerPreferences?: ReaderPreferences;
   bookmarks?: Bookmark[];
   assignedRevealBackdrops?: Record<string, string>;
+  relationships?: CharacterRelationship[];
+  karmaNodes?: KarmaFateNode[];
+  mediaDescriptors?: Record<string, MediaAssetDescriptor>;
   lastReadChapter?: number;
+  lastReadScrollPosition?: number;
+  readingAnchor?: import('./cinematicScroll/anchors').ReadingAnchor;
+  readingStats?: {
+    totalReadingTimeMs?: number;
+    arcReadingTimeMs?: Record<number, number>;
+  };
+  lastReadAt?: string;
   chapterGenerationBatch?: ChapterGenerationBatch;
 }
 
@@ -502,11 +712,25 @@ export interface StoryUpdateOptions {
 }
 
 /**
- * The story fields Reader and Living Codex surfaces may patch directly.
- * Widened to `Partial<StoryWorld>` in the Workshop subset because the full
- * production Pick lists fields this trimmed StoryWorld does not carry.
+ * The only story fields Reader and Reader Codex surfaces may patch directly.
+ * Identity, arcs/chapter collections, and story-level media ownership are
+ * deliberately excluded so a stale whole-story object cannot overwrite them.
  */
-export type ReaderCodexStoryPatch = Partial<StoryWorld>;
+export type ReaderCodexStoryPatch = Partial<Pick<StoryWorld,
+  | 'assignedRevealBackdrops'
+  | 'bookmarks'
+  | 'karmaNodes'
+  | 'lastReadAt'
+  | 'lastReadChapter'
+  | 'lastReadScrollPosition'
+  | 'mediaDescriptors'
+  | 'memory'
+  | 'motionCoverActive'
+  | 'readerPreferences'
+  | 'readingAnchor'
+  | 'readingStats'
+  | 'relationships'
+>>;
 
 export type ReaderCodexStoryPatchUpdater =
   | ReaderCodexStoryPatch

@@ -1,13 +1,14 @@
 import { ArrowLeft, Download, FlaskConical, Sigma } from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import ReaderChamber from "../../reader-chamber/development/ReaderChamber";
-import { ReaderCodexView } from "../../reader-chamber/development/ReaderCodexView";
+import { CodexSheetOverlay } from "../../reader-codex/development/CodexSheetOverlay";
 import {
   buildFiveChapterReaderExport,
   createCompletedBatchReaderSession,
 } from "../../reader-chamber/shared/batchToReaderAdapter";
 import type {
   ReaderTokenUsageTotals,
+  StoryMemory,
   StoryWorld,
   UpdateStoryFields,
 } from "../../reader-chamber/shared/types";
@@ -15,7 +16,7 @@ import type { FiveChapterBatchState } from "../shared/batch/chapterBatch";
 import ChapterGenerationWorkspace from "./ChapterGenerationWorkspace";
 import "../../reader-chamber/shared/reader-chamber.css";
 
-type SessionView = "reader" | "codex" | "diagnostics";
+type SessionView = "reader" | "diagnostics";
 
 const formatTokens = (value: number) => value.toLocaleString();
 
@@ -57,7 +58,10 @@ export function FiveChapterReaderSession({ batch, onClose }: FiveChapterReaderSe
   const resolution = useMemo(() => createCompletedBatchReaderSession(batch), [batch]);
   const [selectedChapterNum, setSelectedChapterNum] = useState(1);
   const [view, setView] = useState<SessionView>("reader");
+  const [isCodexOpen, setIsCodexOpen] = useState(false);
   const [storyPatch, setStoryPatch] = useState<Partial<StoryWorld>>({});
+  const [memoryPatches, setMemoryPatches] = useState<Record<number, StoryMemory>>({});
+  const currentStoryRef = useRef<StoryWorld | null>(null);
 
   if (!resolution.ok) {
     return (
@@ -77,33 +81,44 @@ export function FiveChapterReaderSession({ batch, onClose }: FiveChapterReaderSe
   const snapshot = session.codexSnapshots
     .filter(candidate => candidate.chapterNumber <= selectedChapter.number)
     .at(-1)!;
+  const activeMemory = memoryPatches[selectedChapter.number] ?? snapshot.memory;
   const baseStory: StoryWorld = {
     ...session.story,
     ...storyPatch,
-    memory: snapshot.memory,
+    memory: activeMemory,
     arcs: storyPatch.arcs ?? session.story.arcs,
     currentChapterNumber: selectedChapter.number,
   };
+  currentStoryRef.current = baseStory;
   const chapterUsage = selectedChapter.generationUsage!;
 
   const updateStoryFields: UpdateStoryFields = async (storyId, updates) => {
     if (storyId !== session.story.id) return;
-    setStoryPatch(currentPatch => {
-      const currentStory = { ...session.story, ...currentPatch };
-      const patch = typeof updates === "function" ? updates(currentStory) : updates;
-      return { ...currentPatch, ...patch };
-    });
+    const currentStory = currentStoryRef.current ?? baseStory;
+    const patch = typeof updates === "function" ? updates(currentStory) : updates;
+    if (patch.memory) {
+      setMemoryPatches(current => ({
+        ...current,
+        [selectedChapter.number]: patch.memory!,
+      }));
+    }
+    const { memory: _memory, ...storyFields } = patch;
+    setStoryPatch(currentPatch => ({ ...currentPatch, ...storyFields }));
   };
 
   const toggleRead = (chapterNumber: number) => {
-    void updateStoryFields(session.story.id, current => ({
-      arcs: current.arcs.map(arc => ({
-        ...arc,
-        chapters: arc.chapters.map(chapter => chapter.number === chapterNumber
-          ? { ...chapter, status: chapter.status === "read" ? "unread" : "read" }
-          : chapter),
-      })),
-    }));
+    setStoryPatch(currentPatch => {
+      const currentArcs = currentPatch.arcs ?? session.story.arcs;
+      return {
+        ...currentPatch,
+        arcs: currentArcs.map(arc => ({
+          ...arc,
+          chapters: arc.chapters.map(chapter => chapter.number === chapterNumber
+            ? { ...chapter, status: chapter.status === "read" ? "unread" : "read" }
+            : chapter),
+        })),
+      };
+    });
   };
 
   const downloadSession = () => {
@@ -151,30 +166,38 @@ export function FiveChapterReaderSession({ batch, onClose }: FiveChapterReaderSe
       </section>
 
       {view === "reader" && (
-        <ReaderChamber
-          chapters={baseStory.arcs[0].chapters}
-          currentPowerStage={snapshot.memory.currentPowerStage ?? "Not yet established"}
-          onGenerateChapter={async () => undefined}
-          onGenerateNextFiveChapters={async () => undefined}
-          isGenerating={false}
-          selectedChapterNum={selectedChapterNum}
-          setSelectedChapterNum={setSelectedChapterNum}
-          onToggleRead={toggleRead}
-          arcTitle={session.arcTitle}
-          onBack={onClose}
-          onSwitchTab={tab => setView(tab === "reader" ? "reader" : "codex")}
-          activeStory={baseStory}
-          updateStoryFields={updateStoryFields}
-        />
-      )}
-
-      {view === "codex" && (
-        <ReaderCodexView
-          memory={snapshot.memory}
-          mcName={baseStory.mcName}
-          currentPowerStage={snapshot.memory.currentPowerStage}
-          onBackToReader={() => setView("reader")}
-        />
+        <>
+          <ReaderChamber
+            chapters={baseStory.arcs[0].chapters}
+            currentPowerStage={activeMemory.currentPowerStage ?? "Not yet established"}
+            onGenerateChapter={async () => undefined}
+            onGenerateNextFiveChapters={async () => undefined}
+            isGenerating={false}
+            selectedChapterNum={selectedChapterNum}
+            setSelectedChapterNum={setSelectedChapterNum}
+            onToggleRead={toggleRead}
+            arcTitle={session.arcTitle}
+            onBack={onClose}
+            onSwitchTab={tab => {
+              if (tab === "codex") setIsCodexOpen(true);
+            }}
+            activeStory={baseStory}
+            updateStoryFields={updateStoryFields}
+          />
+          <CodexSheetOverlay
+            isOpen={isCodexOpen}
+            onClose={() => setIsCodexOpen(false)}
+            activeStory={baseStory}
+            onUpdateMemory={memory => {
+              void updateStoryFields(baseStory.id, { memory });
+            }}
+            updateStoryFields={updateStoryFields}
+            onJumpToChapter={chapterNumber => {
+              setSelectedChapterNum(chapterNumber);
+              setIsCodexOpen(false);
+            }}
+          />
+        </>
       )}
 
       {view === "diagnostics" && selectedRun && (

@@ -10,22 +10,21 @@
  *   visibly respond in the preview. The store intentionally mimics the
  *   zustand call signatures (`useAppStore(selector)` + `.getState()`).
  * - `LOCAL_ONLY_MODE` — always true (no Firebase in the Workshop).
- * - `useChapterTranslation`, `useReaderVisuals`, `useCinematicScroll`,
- *   `useReadingPosition` — inert hooks matching the exact destructured
- *   shapes the copied components use.
+ * - `useChapterTranslation`, `useCinematicScroll`, `useReadingPosition` —
+ *   inert hooks matching the exact destructured shapes the copied components
+ *   use. `useReaderVisuals` still returns local Codex terms from story memory.
  * - `useAudioMix`, `vibrate`, card-sound helpers — inert audio engine:
  *   settings are real state (so the toggles move), but no sound ever plays.
- * - `createCodexHighlighter` — the codex menu system is excluded from this
- *   replica; the stub always resolves to nothing, so prose renders plain.
  */
 
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
 import type {
   ReaderChapter,
   ReaderCodexStoryPatchUpdater,
   StoryWorld,
   UpdateStoryFields,
 } from './types';
+import { collectCodexTerms } from '../../reader-codex/shared/codexHighlighting';
 
 export const LOCAL_ONLY_MODE = true;
 
@@ -218,17 +217,22 @@ export function useChapterTranslation() {
   };
 }
 
-// ─── Reader visuals stub (codex terms intentionally empty) ──────────────────
+// ─── Reader visuals compatibility (local Codex terms, no media generation) ─
 
-export function useReaderVisuals(_args: {
+export function useReaderVisuals(args: {
   selectedChapter: ReaderChapter;
   activeStory: StoryWorld;
   readerMode: string;
 }) {
+  const codexTerms = useMemo(
+    () => collectCodexTerms(args.activeStory.memory),
+    [args.activeStory.memory],
+  );
+
   return {
     handleManifestReveal: (_entry: unknown, _type: string) => {},
     generatingRevealId: null as string | null,
-    codexTerms: [] as unknown[],
+    codexTerms,
     manifestChapterHero: async (
       _chapterNumber: number,
       _promptText: string,
@@ -269,15 +273,6 @@ export function useAudioMix() {
 }
 
 export const vibrate = (_pattern?: string) => {};
-
-/** Codex-free highlighter: never matches anything, so prose renders plain.
- *  `resolve` is intentionally `any`-typed so the copied reveal-card code
- *  compiles unchanged — it simply never reaches a match at runtime. */
-export const createCodexHighlighter = (_terms: unknown[]) => ({
-  regex: null as RegExp | null,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  resolve: (_name: string): any => undefined,
-});
 
 // World Card curated-sound catalog: nothing resolves, playback never starts.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

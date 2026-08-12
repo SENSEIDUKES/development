@@ -69,44 +69,48 @@ export function useCodexAnalytics(
 
     flatChapters.forEach((fc, idx) => {
       const ch = fc.chapter;
-      let stageName = memory.currentPowerStage || 'Qi Condensation';
+      let stageName = ch.codexPowerStage || memory.currentPowerStage || 'Qi Condensation';
 
-      const finalScoreRef = getPowerRankScore(memory.currentPowerStage).score;
+      const finalScoreRef = getPowerRankScore(stageName).score;
       const initialScoreRef = 15;
 
       const text = `${ch.statsChangeMessage || ''} ${ch.summary || ''} ${ch.title || ''}`.toLowerCase();
-      let estScore = initialScoreRef;
-      let breakthrough = false;
+      let estScore = ch.codexPowerStage ? finalScoreRef : initialScoreRef;
+      let breakthrough = Boolean(
+        ch.codexPowerStage
+        && idx > 0
+        && flatChapters[idx - 1].chapter.codexPowerStage !== ch.codexPowerStage,
+      );
 
-      if (text.includes('nascent soul') || text.includes('nascent')) {
+      if (!ch.codexPowerStage && (text.includes('nascent soul') || text.includes('nascent'))) {
         estScore = 85;
         stageName = 'Nascent Soul';
         breakthrough = true;
-      } else if (text.includes('core formation') || text.includes('grandmaster')) {
+      } else if (!ch.codexPowerStage && (text.includes('core formation') || text.includes('grandmaster'))) {
         estScore = 70;
         stageName = 'Core Formation';
         breakthrough = true;
-      } else if (text.includes('foundation') || text.includes('establishment')) {
+      } else if (!ch.codexPowerStage && (text.includes('foundation') || text.includes('establishment'))) {
         estScore = 55;
         stageName = 'Foundation Establishment';
         breakthrough = true;
-      } else if (text.includes('tier 7') || text.includes('tier 8') || text.includes('tier 9') || text.includes('tier 10')) {
+      } else if (!ch.codexPowerStage && (text.includes('tier 7') || text.includes('tier 8') || text.includes('tier 9') || text.includes('tier 10'))) {
         estScore = 45;
         stageName = 'Qi Refining Late Stage';
         breakthrough = true;
-      } else if (text.includes('tier 4') || text.includes('tier 5') || text.includes('tier 6')) {
+      } else if (!ch.codexPowerStage && (text.includes('tier 4') || text.includes('tier 5') || text.includes('tier 6'))) {
         estScore = 32;
         stageName = 'Qi Refining Mid Stage';
         breakthrough = true;
-      } else if (text.includes('tier 1') || text.includes('tier 2') || text.includes('tier 3')) {
+      } else if (!ch.codexPowerStage && (text.includes('tier 1') || text.includes('tier 2') || text.includes('tier 3'))) {
         estScore = 20;
         stageName = 'Qi Refining Early Stage';
-      } else {
+      } else if (!ch.codexPowerStage) {
         const ratio = flatChapters.length > 1 ? idx / (flatChapters.length - 1) : 1;
         estScore = Math.round(initialScoreRef + (finalScoreRef - initialScoreRef) * ratio);
       }
 
-      if (ch.cuePayload?.powerShift) {
+      if (!ch.codexPowerStage && ch.cuePayload?.powerShift) {
         estScore += ch.cuePayload.powerShift;
         breakthrough = true;
       }

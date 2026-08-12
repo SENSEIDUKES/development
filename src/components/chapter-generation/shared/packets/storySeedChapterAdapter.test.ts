@@ -48,12 +48,23 @@ const seed = (): StorySeedInput => ({
         additionalCharacters: [{
           id: "seed-character-1",
           name: "Minister Sui",
+          aliases: ["The Quiet Minister"],
+          skinTone: "warm bronze",
+          eyeColor: "silver",
+          powerType: "Oath seals",
+          rankLevel: "Seal Heart",
           role: "Reluctant witness",
+          connectionToMC: "Uneasy ally",
+          bio: "A tribunal minister who remembers one impossible verdict.",
         }],
         factions: [{
           id: "seed-faction-1",
           name: "Vermilion Tribunal",
           role: "Succession court",
+          powerLevel: "Crown Soul authority",
+          alignment: "Neutral",
+          connectionToMC: "Controls Jin Rui's succession hearing",
+          description: "The oath-bound court that verifies imperial succession.",
         }],
         abilities: {
           startingPowerConcept: "Oath-sight",
@@ -83,7 +94,7 @@ const blueprint = (): WorldBlueprint => ({
   },
   mcProfile: "The banished seventh heir remembers six failed timelines.",
   majorFactions: ["Vermilion Tribunal", "Regent's Bronze Guard"],
-  initialCharacters: ["Minister Sui", "Regent Zhao"],
+  initialCharacters: ["minister-sui", "Regent Zhao"],
   majorMysteries: ["Who taught the dead heaven to remember broken oaths?"],
   firstArcPromise: "Jin Rui must survive the succession hearing and identify who changes the seventh timeline.",
   tropeRules: "Foreknowledge creates choices, not automatic victories.",
@@ -120,8 +131,19 @@ describe("finalized Story Seed to Chapter Generation adapter", () => {
       .toEqual(["Jin Rui", "Minister Sui", "Regent Zhao"]);
     expect(packet.livingStoryState.codex.factions.map(faction => faction.name))
       .toEqual(["Vermilion Tribunal", "Regent's Bronze Guard"]);
-    expect(packet.livingStoryState.threads.unresolved[0].description)
-      .toContain("another timeline");
+    expect(packet.livingStoryState.codex.characters[1]).toMatchObject({
+      id: "seed-character-1",
+      aliases: ["The Quiet Minister"],
+      rankLevel: "Seal Heart",
+      connectionToMC: "Uneasy ally",
+    });
+    expect(packet.livingStoryState.threads.unresolved.map(thread => thread.description))
+      .toEqual([
+        "Who taught the dead heaven to remember broken oaths?",
+        "The regent recognizes a gesture Jin Rui only made in another timeline.",
+      ]);
+    expect(packet.livingStoryState.threads.unresolved.map(thread => thread.originChapter))
+      .toEqual([0, 0]);
     expect(packet.chapterMission.premise).toBe(blueprint().firstArcPromise);
     expect(packet.chapterMission.pacingDirective)
       .toBe("Keep the hearing quiet until the first oath breaks.");

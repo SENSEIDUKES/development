@@ -21,6 +21,10 @@ import {
   createArcChapterPosition,
   type LivingStoryState,
 } from "./livingStoryState";
+import {
+  canonicalLivingStoryEntityKey,
+  mergeLivingStoryRecords,
+} from "./livingStoryEntityIdentity";
 import { storyConstitutionFromSeed } from "./storyConstitution";
 
 const TEMPORARY_INSTRUCTION_LIMIT = 2_000;
@@ -78,8 +82,15 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const nonEmpty = (...values: Array<string | undefined>): string =>
   values.map(value => value?.trim()).find(Boolean) ?? "";
 
-const uniqueStrings = (values: string[]): string[] =>
-  Array.from(new Set(values.map(value => value.trim()).filter(Boolean)));
+const uniqueStrings = (values: string[]): string[] => {
+  const unique = new Map<string, string>();
+  for (const value of values) {
+    const trimmed = value.trim();
+    const key = canonicalLivingStoryEntityKey(trimmed);
+    if (key && !unique.has(key)) unique.set(key, trimmed);
+  }
+  return [...unique.values()];
+};
 
 function assertFinalizedBlueprint(value: unknown): asserts value is WorldBlueprint {
   if (!isRecord(value)) {
@@ -129,21 +140,10 @@ const mergeNamedRecords = (
   primary: Record<string, unknown>[],
   additionalNames: string[],
   source: string,
-): Record<string, unknown>[] => {
-  const seen = new Set(
-    primary
-      .map(record => typeof record.name === "string" ? record.name.trim().toLowerCase() : "")
-      .filter(Boolean),
-  );
-  const merged = [...primary];
-  for (const name of uniqueStrings(additionalNames)) {
-    const key = name.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    merged.push({ name, source });
-  }
-  return merged;
-};
+): Record<string, unknown>[] => mergeLivingStoryRecords(
+  primary,
+  uniqueStrings(additionalNames).map(name => ({ name, source })),
+);
 
 const buildStartingLivingStoryState = (
   seed: StorySeedInput,
@@ -216,9 +216,12 @@ const buildStartingLivingStoryState = (
       abilities,
     },
     threads: {
-      unresolved: uniqueStrings(blueprint.unresolvedPlotThreads).map(description => ({
+      unresolved: uniqueStrings([
+        ...blueprint.majorMysteries,
+      ...blueprint.unresolvedPlotThreads,
+      ]).map(description => ({
         description,
-        originChapter: 1,
+        originChapter: 0,
       })),
       resolved: [],
     },
@@ -316,7 +319,7 @@ const buildMappingReport = (chapterMissionSource: string): StorySeedChapterMappi
     },
     {
       id: "starting-state",
-      source: "World foundations + Blueprint characters, factions, location, and unresolved threads",
+      source: "World foundations + Blueprint characters, factions, location, major mysteries, and unresolved threads",
       target: "Starting Living Story State",
       message: "Chapter 1 begins with no previous chapters, handoff, fingerprints, or carried anchors.",
     },

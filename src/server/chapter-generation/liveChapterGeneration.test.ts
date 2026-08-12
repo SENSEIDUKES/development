@@ -348,10 +348,16 @@ describe("live Chapter Generation model boundaries", () => {
     expect(provider.requests.map(request => request.kind)).toEqual(["plan", "manifest", "process"]);
     expect(run.modelCalls).toEqual(["plan", "manifest", "process"]);
     expect(run.repairApplied).toBe(false);
-    expect(run.processingResult.threads.unresolved).toEqual([{
-      description: "Who taught the rain to remember Rin?",
-      originChapter: 1,
-    }]);
+    expect(run.processingResult.threads.unresolved).toEqual([
+      {
+        description: "Why does the rain remember Rin?",
+        originChapter: 0,
+      },
+      {
+        description: "Who taught the rain to remember Rin?",
+        originChapter: 0,
+      },
+    ]);
     expect(run.processingResult.proposedLivingStoryState.threads.unresolved)
       .toEqual(run.processingResult.threads.unresolved);
     expect(run.processingResult.proposedLivingStoryState.characterState).toMatchObject({
@@ -547,6 +553,62 @@ describe("live Chapter Generation model boundaries", () => {
       "Third ability",
       "Fourth ability",
     ]);
+  });
+
+  it("updates existing Codex entities through aliases and harmless name variants", async () => {
+    const base = new RecordingProvider();
+    const provider: ChapterTextModelProvider = {
+      provider: base.provider,
+      model: base.model,
+      async generate(request) {
+        const result = await base.generate(request);
+        if (request.kind !== "process") return result;
+        const response = JSON.parse(result.text);
+        response.codexUpdates.characters = [{
+          name: "minister-sui",
+          relationshipToMC: "Trusted after the hearing",
+        }];
+        response.codexUpdates.factions = [{
+          name: "ninth-house",
+          status: "Fractured",
+        }];
+        return { ...result, text: JSON.stringify(response) };
+      },
+    };
+    const calls = createLiveChapterModelCalls(provider, {
+      temperature: 1,
+      maxOutputTokens: 16_384,
+    });
+    const packet = buildPacket();
+    packet.livingStoryState.codex.characters = [{
+      id: "seed-minister-sui",
+      name: "Minister Sui",
+      aliases: ["Minister-Sui"],
+      bio: "The court's quiet witness.",
+    }];
+    packet.livingStoryState.codex.factions = [{
+      id: "seed-ninth-house",
+      name: "The Ninth House",
+      aliases: ["Ninth House"],
+      description: "An oath house marked for erasure.",
+    }];
+
+    const run = await runChapterPipelineAsync({ chapterPacket: packet, model: calls.model });
+
+    expect(run.processingResult.proposedLivingStoryState.codex.characters).toEqual([{
+      id: "seed-minister-sui",
+      name: "Minister Sui",
+      aliases: ["Minister-Sui"],
+      bio: "The court's quiet witness.",
+      relationshipToMC: "Trusted after the hearing",
+    }]);
+    expect(run.processingResult.proposedLivingStoryState.codex.factions).toEqual([{
+      id: "seed-ninth-house",
+      name: "The Ninth House",
+      aliases: ["Ninth House"],
+      description: "An oath house marked for erasure.",
+      status: "Fractured",
+    }]);
   });
 });
 

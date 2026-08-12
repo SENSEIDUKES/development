@@ -4,13 +4,14 @@
 - **Source location:** `src/components/ReaderCodex.tsx` and `src/components/CodexSheetOverlay.tsx` (verified against `origin/main` @ `7d44ecc`)
 - **Workshop preview:** `?preview=reader-codex`
 - **Replica created:** 2026-08-11
-- **Last Workshop update:** 2026-08-11
+- **Last Workshop update:** 2026-08-12
 - **Last source comparison:** 2026-08-11
 - **Replica status:** faithful replica
 
 ## Workshop history
 
 - **2026-08-11:** Migrated the complete production Reader Codex, its responsive sheet, all six primary pages and nested sections, Reader prose highlighting/hovercards, local editing controls, and Reader Chamber navigation into DEV. Production-only auth, AI, media, and persistence seams were replaced with explicit local compatibility behavior.
+- **2026-08-12:** Aligned generated Reader sessions with DEV Story Seed, World Blueprint, Process Result, and Living Story State contracts. The adapter now translates Seed character/profile aliases, power ranks, relationships, abilities, permanent power-system data, factions, locations, artifacts, mysteries, and resolved threads; Process updates merge into existing named entities; and each Codex timeline is limited to the selected chapter.
 
 ## What was migrated
 
@@ -81,12 +82,27 @@ AI-route ownership. The smallest local substitutes are used instead:
 - all Codex writes pass through the narrow `UpdateStoryFields` allowlist.
 
 These are Workshop-only compatibility adjustments, not a replacement Codex
-data architecture. Sparse generated-session snapshots receive stable view-time
-IDs/defaults so source controls can address them; the first local edit writes
-that compatible shape into only the disposable selected-chapter snapshot.
-Moving chapters deliberately shows that chapter's cumulative generated
-snapshot rather than carrying edits across snapshots. The chapter-scoped batch
-adapter is unchanged.
+data architecture. The existing batch adapter translates the current Living
+Story State plus permanent Story Constitution fields into the imported Reader
+shape. It maps DEV `connectionToMC`, `rankLevel`, and `bio` fields to the
+Codex's `relationshipToMC`, `powerLevel`, and `description` fields; carries the
+main ability ledger and permanent power-system definition; and assigns stable
+local IDs where DEV has only a canonical name. Explicit aliases plus harmless
+casing, spacing, and punctuation variants update existing entities instead of
+creating duplicate cards.
+
+Moving chapters deliberately shows that chapter's cumulative generated memory
+and only the completed chapter timeline through that point. The full
+five-chapter collection stays available to Reader navigation, while later
+chapter titles, summaries, entities, progression, artifacts, and mysteries stay
+out of earlier Codex snapshots. Paused batches retain snapshots for every
+completed chapter through the existing in-memory batch/checkpoint state.
+
+DEV still has no reliable generated source for numeric custom relationship
+bonds, Karma fate nodes, portrait media, reward/inventory ledgers, or canonical
+story glossary entries. Those fields remain empty; the adapter does not create
+placeholder records. Existing local Codex authoring and Workshop-only media,
+voice, and glossary controls remain presentation compatibility behavior.
 
 ## Production dependencies intentionally excluded
 

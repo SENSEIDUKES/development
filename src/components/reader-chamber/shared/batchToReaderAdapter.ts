@@ -16,7 +16,13 @@ import type {
   LivingStoryState,
   LivingStoryThreads,
 } from "../../chapter-generation/shared/packets/livingStoryState";
+import type { StoryConstitution } from "../../chapter-generation/shared/packets/storyConstitution";
+import {
+  canonicalLivingStoryEntityKey,
+  mergeLivingStoryRecords,
+} from "../../chapter-generation/shared/packets/livingStoryEntityIdentity";
 import type {
+  Ability,
   ContextManifest,
   Artifact,
   Character,
@@ -32,6 +38,156 @@ import type {
 } from "./types";
 
 const clone = <T,>(value: T): T => structuredClone(value);
+
+type LivingRecord = Record<string, unknown>;
+
+const textField = (record: LivingRecord, ...fields: string[]): string => {
+  for (const field of fields) {
+    const value = record[field];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+};
+
+const stringList = (value: unknown): string[] => Array.isArray(value)
+  ? value.filter((entry): entry is string => typeof entry === "string" && Boolean(entry.trim()))
+  : [];
+
+const aliasesFromRecord = (record: LivingRecord): string[] => {
+  const aliases = new Map<string, string>();
+  for (const value of [
+    ...stringList(record.aliases),
+    ...stringList(record.alternateNames),
+  ]) {
+    const trimmed = value.trim();
+    const key = canonicalLivingStoryEntityKey(trimmed);
+    if (key && !aliases.has(key)) aliases.set(key, trimmed);
+  }
+  return [...aliases.values()];
+};
+
+const stableReaderId = (kind: string, record: LivingRecord, name: string): string => {
+  const existing = textField(record, "id", "persistenceId");
+  if (existing) return existing;
+  const slug = name.normalize("NFKC").toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-|-$/g, "");
+  return `dev-${kind}-${slug || "unnamed"}`;
+};
+
+const normalizeAbility = (value: unknown): string | Ability | undefined => {
+  if (typeof value === "string") return value.trim() || undefined;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const record = value as LivingRecord;
+  const name = textField(record, "name", "title", "label");
+  if (!name) return undefined;
+  return {
+    ...clone(record),
+    id: stableReaderId("ability", record, name),
+    name,
+    description: textField(record, "description", "details", "effect"),
+  } as Ability;
+};
+
+const normalizeAbilities = (values: unknown[]): Array<string | Ability> => values
+  .map(normalizeAbility)
+  .filter((value): value is string | Ability => value !== undefined);
+
+const characterFromRecord = (record: LivingRecord): Character | undefined => {
+  const name = textField(record, "name", "title", "label");
+  if (!name) return undefined;
+  const rawStatus = textField(record, "status").toLocaleLowerCase();
+  const status = rawStatus === "alive" || rawStatus === "deceased"
+    || rawStatus === "unknown" || rawStatus === "ascended"
+    ? rawStatus
+    : rawStatus === "dead" ? "deceased" : "unknown";
+  const descriptionParts = [
+    textField(record, "description", "bio", "backgroundProfile", "startingIdentity"),
+    textField(record, "age") ? `Age: ${textField(record, "age")}` : "",
+    textField(record, "personality") ? `Personality: ${textField(record, "personality")}` : "",
+    textField(record, "appearance") ? `Appearance: ${textField(record, "appearance")}` : "",
+    textField(record, "skinTone") ? `Skin tone: ${textField(record, "skinTone")}` : "",
+    textField(record, "eyeColor") ? `Eye color: ${textField(record, "eyeColor")}` : "",
+    textField(record, "powerType") ? `Power: ${textField(record, "powerType")}` : "",
+    textField(record, "mainFlaw") ? `Flaw: ${textField(record, "mainFlaw")}` : "",
+    textField(record, "secretAdvantage") ? `Secret advantage: ${textField(record, "secretAdvantage")}` : "",
+    textField(record, "startingWeakness") ? `Starting weakness: ${textField(record, "startingWeakness")}` : "",
+    textField(record, "moralAlignment") ? `Moral alignment: ${textField(record, "moralAlignment")}` : "",
+  ].filter((value, index, values) => value && values.indexOf(value) === index);
+  const rawAbilities = Array.isArray(record.abilities) ? record.abilities : [];
+  const aliases = aliasesFromRecord(record);
+  return {
+    ...clone(record),
+    id: stableReaderId("character", record, name),
+    name,
+    role: textField(record, "role") || "Unknown",
+    status,
+    relationshipToMC: textField(record, "relationshipToMC", "connectionToMC"),
+    description: descriptionParts.join(" · "),
+    ...(textField(record, "powerLevel", "rankLevel")
+      ? { powerLevel: textField(record, "powerLevel", "rankLevel") }
+      : {}),
+    ...(aliases.length > 0 ? { aliases } : {}),
+    ...(rawAbilities.length > 0 ? { abilities: normalizeAbilities(rawAbilities) } : {}),
+  } as Character;
+};
+
+const factionFromRecord = (record: LivingRecord): Faction | undefined => {
+  const name = textField(record, "name", "title", "label");
+  if (!name) return undefined;
+  const description = [
+    textField(record, "description", "role"),
+    textField(record, "powerLevel") ? `Power: ${textField(record, "powerLevel")}` : "",
+    textField(record, "connectionToMC", "relationshipToMC")
+      ? `Connection to MC: ${textField(record, "connectionToMC", "relationshipToMC")}`
+      : "",
+  ].filter(Boolean).join(" · ");
+  const aliases = aliasesFromRecord(record);
+  return {
+    ...clone(record),
+    id: stableReaderId("faction", record, name),
+    name,
+    alignment: textField(record, "alignment"),
+    description,
+    ...(aliases.length > 0 ? { aliases } : {}),
+    ...(textField(record, "status") ? { status: textField(record, "status") } : {}),
+  } as Faction;
+};
+
+const locationFromRecord = (record: LivingRecord): Location | undefined => {
+  const name = textField(record, "name", "title", "label");
+  if (!name) return undefined;
+  const description = [
+    textField(record, "description", "worldOverview"),
+    textField(record, "societyStructure")
+      ? `Society: ${textField(record, "societyStructure")}`
+      : "",
+  ].filter(Boolean).join(" · ");
+  const aliases = aliasesFromRecord(record);
+  return {
+    ...clone(record),
+    id: stableReaderId("location", record, name),
+    name,
+    description,
+    ...(aliases.length > 0 ? { aliases } : {}),
+    ...(textField(record, "realm", "worldType")
+      ? { realm: textField(record, "realm", "worldType") }
+      : {}),
+  } as Location;
+};
+
+const artifactFromRecord = (record: LivingRecord): Artifact | undefined => {
+  const name = textField(record, "name", "title", "label");
+  if (!name) return undefined;
+  const aliases = aliasesFromRecord(record);
+  return {
+    ...clone(record),
+    id: stableReaderId("artifact", record, name),
+    name,
+    description: textField(record, "description", "details", "effect"),
+    ...(aliases.length > 0 ? { aliases } : {}),
+  } as Artifact;
+};
 
 export interface ReaderCodexSnapshot {
   chapterNumber: number;
@@ -103,10 +259,14 @@ export function convertSingleChapterRunToReader(run: BatchChapterRun): ReaderCha
     throw new Error(`Chapter ${run.chapterNumber} is not a completed Reader source.`);
   }
 
-  const { finalOutput, chapterPacket, repairApplied } = run.result.run;
+  const { finalOutput, chapterPacket, processingResult, repairApplied } = run.result.run;
   const mission = chapterPacket.chapterMission;
   const blocks = finalOutput.blocks ? clone(finalOutput.blocks) as StoryBlock[] : undefined;
   const generatedContent = finalOutput.generatedContent;
+  const processedSummary = finalOutput.summary
+    || processingResult.nextChapterHandoff.completedEvents.join(" ")
+    || processingResult.missionCompletion.evidence;
+  const processedPowerState = processingResult.characterStateUpdates.currentPowerStage;
 
   return {
     number: finalOutput.chapterNumber,
@@ -116,8 +276,10 @@ export function convertSingleChapterRunToReader(run: BatchChapterRun): ReaderCha
     hasContent: Boolean(generatedContent.trim() || blocks?.length),
     generatedContent,
     ...(blocks ? { blocks } : {}),
-    ...(finalOutput.summary ? { summary: finalOutput.summary } : {}),
-    ...(finalOutput.statsChangeMessage ? { statsChangeMessage: finalOutput.statsChangeMessage } : {}),
+    ...(processedSummary ? { summary: processedSummary } : {}),
+    ...(finalOutput.statsChangeMessage
+      ? { statsChangeMessage: finalOutput.statsChangeMessage }
+      : processedPowerState ? { statsChangeMessage: `Power state: ${processedPowerState}` } : {}),
     ...(finalOutput.cuePayload
       ? { cuePayload: clone(finalOutput.cuePayload) as StoryCuePayload }
       : {}),
@@ -126,6 +288,12 @@ export function convertSingleChapterRunToReader(run: BatchChapterRun): ReaderCha
     generationPosition: clone(chapterPacket.arcChapterPosition),
     generationUsage: usageForRun(run),
     repairApplied,
+    ...(processingResult.proposedLivingStoryState.characterState.currentPowerStage.trim()
+      ? {
+          codexPowerStage:
+            processingResult.proposedLivingStoryState.characterState.currentPowerStage,
+        }
+      : {}),
   };
 }
 
@@ -136,20 +304,27 @@ export function convertBatchToReaderChapters(batchState: FiveChapterBatchState):
     .map(convertSingleChapterRunToReader);
 }
 
-const namedRecords = <T extends { name: string }>(records: Record<string, unknown>[]): T[] => (
-  records
-    .filter(record => typeof record.name === "string" && record.name.trim().length > 0)
-    .map(record => clone(record) as unknown as T)
-);
+const mapRecords = <T,>(
+  records: LivingRecord[],
+  mapper: (record: LivingRecord) => T | undefined,
+): T[] => mergeLivingStoryRecords(records, [])
+  .map(mapper)
+  .filter((value): value is T => value !== undefined);
 
-const memoryFromLivingState = (state: LivingStoryState): StoryMemory => ({
+const memoryFromLivingState = (
+  state: LivingStoryState,
+  constitution: StoryConstitution,
+): StoryMemory => ({
   currentPowerStage: state.characterState.currentPowerStage,
-  characters: namedRecords<Character>(state.codex.characters),
-  factions: namedRecords<Faction>(state.codex.factions),
-  locations: namedRecords<Location>(state.codex.locations),
-  artifacts: namedRecords<Artifact>(state.codex.artifacts),
+  ...(constitution.powerSystem.trim() ? { powerSystem: constitution.powerSystem } : {}),
+  characters: mapRecords(state.codex.characters, characterFromRecord),
+  factions: mapRecords(state.codex.factions, factionFromRecord),
+  locations: mapRecords(state.codex.locations, locationFromRecord),
+  artifacts: mapRecords(state.codex.artifacts, artifactFromRecord),
   unresolvedPlotThreads: clone(state.threads.unresolved),
   resolvedPlotThreads: clone(state.threads.resolved),
+  worldRules: clone(constitution.worldRules),
+  abilities: normalizeAbilities(state.characterState.abilities),
 });
 
 /**
@@ -170,12 +345,36 @@ export function createReaderCodexSnapshots(
     if (!latestState) continue;
     snapshots.push({
       chapterNumber: chapter.chapterNumber,
-      memory: memoryFromLivingState(latestState),
+      memory: memoryFromLivingState(
+        latestState,
+        chapter.result.run.chapterPacket.storyConstitution,
+      ),
       livingStoryState: clone(latestState),
     });
   }
 
   return snapshots;
+}
+
+/** Story view supplied to the Codex; future Reader chapters stay out of its timeline. */
+export function createChapterScopedCodexStory(
+  story: StoryWorld,
+  memory: StoryMemory,
+  chapterNumber: number,
+): StoryWorld {
+  return {
+    ...clone(story),
+    memory: clone(memory),
+    arcs: story.arcs
+      .map(arc => ({
+        ...clone(arc),
+        chapters: arc.chapters
+          .filter(chapter => chapter.number <= chapterNumber)
+          .map(chapter => clone(chapter)),
+      }))
+      .filter(arc => arc.chapters.length > 0),
+    currentChapterNumber: chapterNumber,
+  };
 }
 
 export function extractBatchStoryState(

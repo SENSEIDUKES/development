@@ -4,6 +4,7 @@ import ReaderChamber from "../../reader-chamber/development/ReaderChamber";
 import { CodexSheetOverlay } from "../../reader-codex/development/CodexSheetOverlay";
 import {
   buildFiveChapterReaderExport,
+  createChapterScopedCodexStory,
   createCompletedBatchReaderSession,
 } from "../../reader-chamber/shared/batchToReaderAdapter";
 import type {
@@ -82,19 +83,24 @@ export function FiveChapterReaderSession({ batch, onClose }: FiveChapterReaderSe
     .filter(candidate => candidate.chapterNumber <= selectedChapter.number)
     .at(-1)!;
   const activeMemory = memoryPatches[selectedChapter.number] ?? snapshot.memory;
-  const baseStory: StoryWorld = {
+  const readerStory: StoryWorld = {
     ...session.story,
     ...storyPatch,
     memory: activeMemory,
     arcs: storyPatch.arcs ?? session.story.arcs,
     currentChapterNumber: selectedChapter.number,
   };
-  currentStoryRef.current = baseStory;
+  const codexStory = createChapterScopedCodexStory(
+    readerStory,
+    activeMemory,
+    selectedChapter.number,
+  );
+  currentStoryRef.current = readerStory;
   const chapterUsage = selectedChapter.generationUsage!;
 
   const updateStoryFields: UpdateStoryFields = async (storyId, updates) => {
     if (storyId !== session.story.id) return;
-    const currentStory = currentStoryRef.current ?? baseStory;
+    const currentStory = currentStoryRef.current ?? readerStory;
     const patch = typeof updates === "function" ? updates(currentStory) : updates;
     if (patch.memory) {
       setMemoryPatches(current => ({
@@ -168,7 +174,7 @@ export function FiveChapterReaderSession({ batch, onClose }: FiveChapterReaderSe
       {view === "reader" && (
         <>
           <ReaderChamber
-            chapters={baseStory.arcs[0].chapters}
+            chapters={readerStory.arcs[0].chapters}
             currentPowerStage={activeMemory.currentPowerStage ?? "Not yet established"}
             onGenerateChapter={async () => undefined}
             onGenerateNextFiveChapters={async () => undefined}
@@ -181,15 +187,15 @@ export function FiveChapterReaderSession({ batch, onClose }: FiveChapterReaderSe
             onSwitchTab={tab => {
               if (tab === "codex") setIsCodexOpen(true);
             }}
-            activeStory={baseStory}
+            activeStory={readerStory}
             updateStoryFields={updateStoryFields}
           />
           <CodexSheetOverlay
             isOpen={isCodexOpen}
             onClose={() => setIsCodexOpen(false)}
-            activeStory={baseStory}
+            activeStory={codexStory}
             onUpdateMemory={memory => {
-              void updateStoryFields(baseStory.id, { memory });
+              void updateStoryFields(readerStory.id, { memory });
             }}
             updateStoryFields={updateStoryFields}
             onJumpToChapter={chapterNumber => {

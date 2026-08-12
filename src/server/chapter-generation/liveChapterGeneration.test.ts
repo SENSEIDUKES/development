@@ -268,6 +268,71 @@ class ChapterAwareProvider implements ChapterTextModelProvider {
   }
 }
 
+class ThreadProvenanceProvider implements ChapterTextModelProvider {
+  readonly provider = "gemini";
+  readonly model = "google/gemini-test";
+  readonly requests: ChapterTextGenerationRequest[] = [];
+
+  constructor(private readonly chapterNumber: number) {}
+
+  async generate(request: ChapterTextGenerationRequest): Promise<ChapterTextGenerationResult> {
+    this.requests.push(request);
+    let text: string;
+    if (request.kind === "plan") {
+      const plan = JSON.parse(planResponse);
+      plan.chapterNumber = this.chapterNumber;
+      plan.arcChapterPosition = `Arc 1 — Chapter ${this.chapterNumber}/100`;
+      plan.rhythmResponse.recentSceneTypes = this.chapterNumber === 1 ? [] : ["worldBuilding"];
+      text = JSON.stringify(plan);
+    } else if (request.kind === "manifest" || request.kind === "repair") {
+      text = manifestedResponse;
+    } else {
+      const processed = JSON.parse(processingResponse());
+      processed.nextChapterHandoff.chapterNumber = this.chapterNumber;
+      processed.nextChapterHandoff.fingerprints[0].chapterNumber = this.chapterNumber;
+      processed.threads = this.chapterNumber === 1
+        ? {
+            completed: [],
+            changed: [],
+            unresolved: [
+              // The existing Seed thread has a non-numeric model origin.
+              { description: "WHY does the rain remember Rin?!", originChapter: "before the story" },
+              { description: "Who taught the rain to remember Rin", originChapter: 99 },
+              // This is genuinely introduced by Chapter 1 despite its guessed origin.
+              { description: "What sleeps beneath the witness bell?", originChapter: 0 },
+            ],
+          }
+        : {
+            // Completing a Seed thread must remove its canonical normalized match.
+            completed: ["why—does the rain remember Rin??"],
+            changed: [],
+            unresolved: [
+              // Existing Chapter 0 and Chapter 1 threads retain their origins.
+              { description: "WHO taught the rain to remember Rin!!!", originChapter: 2 },
+              { description: "What sleeps beneath the Witness Bell", originChapter: -5 },
+              // This is genuinely introduced by Chapter 2 despite its guessed origin.
+              { description: "Which hand holds the Ninth Seal?", originChapter: null },
+            ],
+          };
+      text = JSON.stringify(processed);
+    }
+    return {
+      text,
+      usage: {
+        kind: request.kind,
+        stage: request.stage,
+        provider: this.provider,
+        model: this.model,
+        inputTokens: 100,
+        outputTokens: 20,
+        totalTokens: 120,
+        generationTimeMs: 50,
+        tokenSource: "provider",
+      },
+    };
+  }
+}
+
 describe("live Chapter Generation model boundaries", () => {
   it("uses the requested chapter in the Plan schema and reports every invalid Plan field", async () => {
     const packet = buildPacket();
@@ -610,6 +675,28 @@ describe("live Chapter Generation model boundaries", () => {
       status: "Fractured",
     }]);
   });
+
+  it("keeps Process thread provenance code-owned and still rejects unusable descriptions", async () => {
+    const base = new RecordingProvider();
+    const provider: ChapterTextModelProvider = {
+      provider: base.provider,
+      model: base.model,
+      async generate(request) {
+        const result = await base.generate(request);
+        if (request.kind !== "process") return result;
+        const response = JSON.parse(result.text);
+        response.threads.unresolved = [{ description: "   ", originChapter: "not-a-number" }];
+        return { ...result, text: JSON.stringify(response) };
+      },
+    };
+    const calls = createLiveChapterModelCalls(provider, {
+      temperature: 1,
+      maxOutputTokens: 16_384,
+    });
+
+    await expect(runChapterPipelineAsync({ chapterPacket: buildPacket(), model: calls.model }))
+      .rejects.toThrow("Process Result threads.unresolved[0].description must be a non-empty string.");
+  });
 });
 
 describe("server model selection and failure handling", () => {
@@ -847,6 +934,57 @@ describe("server model selection and failure handling", () => {
       .toContainEqual(expect.objectContaining({ name: "Rain Court Chamber 1" }));
     expect(providers).toHaveLength(2);
     expect(providers.flatMap(provider => provider.requests).map(request => request.kind))
+      .toEqual(["plan", "manifest", "process", "plan", "manifest", "process"]);
+  });
+
+  it("assigns and preserves canonical thread origins across Process Result and continuation", async () => {
+    const providers: ThreadProvenanceProvider[] = [];
+    const providerFactory = () => {
+      const provider = new ThreadProvenanceProvider(providers.length + 1);
+      providers.push(provider);
+      return provider;
+    };
+    const request = {
+      method: "POST" as const,
+      headers: { Authorization: "Bearer development-access-token" },
+      body: {
+        artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
+        model: "google/gemini-test",
+      },
+    };
+
+    const first = await handleChapterGenerationHttp(request, { environment, providerFactory });
+    expect(first.status).toBe(200);
+    const firstResult = first.body as ManifestChapterResponse;
+    expect(firstResult.run.modelCalls).toEqual(["plan", "manifest", "process"]);
+    expect(firstResult.run.processingResult.threads.unresolved).toEqual([
+      { description: "Why does the rain remember Rin?", originChapter: 0 },
+      { description: "Who taught the rain to remember Rin?", originChapter: 0 },
+      { description: "What sleeps beneath the witness bell?", originChapter: 1 },
+    ]);
+
+    const second = await handleChapterGenerationHttp({
+      ...request,
+      body: { ...request.body, continuation: firstResult.nextContinuation },
+    }, { environment, providerFactory });
+    expect(second.status).toBe(200);
+    const secondResult = second.body as ManifestChapterResponse;
+
+    // The signed continuation carries Chapter 0 and Chapter 1 provenance intact.
+    expect(secondResult.run.chapterPacket.livingStoryState.threads.unresolved).toEqual(
+      firstResult.run.processingResult.proposedLivingStoryState.threads.unresolved,
+    );
+    expect(secondResult.run.processingResult.threads.unresolved).toEqual([
+      { description: "Who taught the rain to remember Rin?", originChapter: 0 },
+      { description: "What sleeps beneath the witness bell?", originChapter: 1 },
+      { description: "Which hand holds the Ninth Seal?", originChapter: 2 },
+    ]);
+    expect(secondResult.run.processingResult.proposedLivingStoryState.threads.resolved)
+      .toEqual(["why—does the rain remember Rin??"]);
+    expect(new Set(
+      secondResult.run.processingResult.threads.unresolved.map(thread => thread.description.toLowerCase()),
+    ).size).toBe(3);
+    expect(providers.flatMap(provider => provider.requests).map(requestItem => requestItem.kind))
       .toEqual(["plan", "manifest", "process", "plan", "manifest", "process"]);
   });
 

@@ -6,9 +6,6 @@ import { extractSFXCues } from '../shared/readerPlayback';
 import { collectBlockAutoCues } from '../shared/autoCuePolicy';
 import { SystemBlock } from './SystemBlock';
 import { SYSTEM_COLORS_LEGEND } from '../shared/systemColors';
-// WORKSHOP: CodexHovercard/codexHighlighting removed — the codex menu system
-// is a separate future Workshop job. The stub highlighter never resolves, so
-// metadata reveal cards stay dormant and prose renders as plain text.
 import { WorldEntityCard } from './WorldEntityCard';
 import { useAppStore } from '../shared/stubs';
 import { ReaderFateAlerts } from './ReaderFateAlerts';
@@ -18,7 +15,7 @@ import { anchorAttributes } from '../shared/cinematicScroll/anchors';
 import { ContextInspector } from './ContextInspector';
 import { getReaderTypography, getReadingDirection } from '../shared/readerTypography';
 import { isManifestationEligible } from '../shared/manifestationEligibility';
-import { createCodexHighlighter } from '../shared/stubs';
+import { createCodexHighlighter } from '../../reader-codex/shared/codexHighlighting';
 
 const FALLBACK_BACKDROPS = [
   "https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/images/LIBRARY%20BACKDROPS/LIBRARY_THUNDER.PNG",

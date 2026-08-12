@@ -20,6 +20,10 @@ const ClosedDoorCultivationWorkspace = lazy(() =>
   import('./workshop/previews/closed-door-cultivation/ClosedDoorCultivationWorkspace')
     .then(module => ({ default: module.ClosedDoorCultivationWorkspace })),
 );
+const ReaderCodexWorkspace = lazy(() =>
+  import('./workshop/previews/reader-codex/ReaderCodexWorkspace')
+    .then(module => ({ default: module.ReaderCodexWorkspace })),
+);
 const ReaderChamberWorkspace = lazy(() =>
   import('./workshop/previews/reader-chamber/ReaderChamberWorkspace')
     .then(module => ({ default: module.ReaderChamberWorkspace })),
@@ -44,6 +48,7 @@ const previewRegistry: Record<string, ComponentType> = {
   'chapter-generation-flow': ChapterGenerationFlowWorkspace,
   'chapter-generation-manifestation': ChapterManifestationWorkspace,
   'idle-cultivation': ClosedDoorCultivationWorkspace,
+  'reader-codex': ReaderCodexWorkspace,
   'reader-chamber': ReaderChamberWorkspace,
   'relics-gallery': RelicsWorkspace,
   'story-seed': StorySeedWorkspace,

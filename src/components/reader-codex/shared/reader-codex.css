@@ -1,0 +1,98 @@
+/* Production Reader Codex shell and panel utilities, intentionally scoped to
+   Codex-specific class names so DEV's newer shared theme remains authoritative. */
+.codex-premium-shell {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgb(4 172 255 / 10%), transparent 60%),
+    radial-gradient(ellipse 60% 45% at 85% 110%, rgb(4 172 255 / 5%), transparent 65%),
+    linear-gradient(180deg, #05080f 0%, #010204 45%, #000 100%);
+  border: 1px solid rgb(4 172 255 / 16%);
+  box-shadow:
+    0 0 40px rgb(4 172 255 / 6%),
+    0 24px 60px rgb(0 0 0 / 90%),
+    inset 0 1px 0 rgb(4 172 255 / 10%);
+}
+
+.codex-panel {
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 0%, rgb(255 255 255 / 2.5%), transparent 70%),
+    linear-gradient(180deg, rgb(10 14 22 / 90%), rgb(2 3 6 / 95%));
+  border: 1px solid rgb(255 255 255 / 7%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%), 0 8px 24px rgb(0 0 0 / 55%);
+}
+
+.codex-panel-blue {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgb(4 172 255 / 10%), transparent 70%),
+    linear-gradient(180deg, rgb(4 20 38 / 85%), rgb(1 4 10 / 95%));
+  border: 1px solid rgb(4 172 255 / 35%);
+  box-shadow:
+    0 0 24px rgb(4 172 255 / 12%),
+    inset 0 1px 0 rgb(4 172 255 / 20%),
+    inset 0 0 40px rgb(4 172 255 / 4%);
+}
+
+.codex-panel-gold {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgb(212 175 55 / 9%), transparent 70%),
+    linear-gradient(180deg, rgb(28 20 4 / 80%), rgb(6 4 1 / 95%));
+  border: 1px solid rgb(212 175 55 / 30%);
+  box-shadow:
+    0 0 20px rgb(212 175 55 / 8%),
+    inset 0 1px 0 rgb(212 175 55 / 18%),
+    inset 0 0 36px rgb(212 175 55 / 3%);
+}
+
+.codex-glow-blue {
+  text-shadow: 0 0 10px rgb(4 172 255 / 55%), 0 0 24px rgb(4 172 255 / 25%);
+}
+
+.codex-glow-gold {
+  text-shadow: 0 0 10px rgb(251 191 36 / 50%), 0 0 24px rgb(251 191 36 / 20%);
+}
+
+.codex-grid-bg {
+  background-image:
+    radial-gradient(circle at 18% 28%, rgb(4 172 255 / 50%) 1px, transparent 1.5px),
+    radial-gradient(circle at 76% 16%, rgb(250 250 250 / 35%) 1px, transparent 1.5px),
+    radial-gradient(circle at 62% 78%, rgb(212 175 55 / 40%) 1px, transparent 1.5px),
+    radial-gradient(circle at 34% 88%, rgb(250 250 250 / 25%) 1px, transparent 1.5px),
+    radial-gradient(circle at 88% 62%, rgb(4 172 255 / 30%) 1px, transparent 1.5px),
+    linear-gradient(rgb(4 172 255 / 3.5%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(4 172 255 / 3.5%) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+}
+
+.codex-progress-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.codex-progress-shimmer::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 35%), transparent);
+  transform: translateX(-100%);
+  animation: reader-codex-shimmer 2.6s infinite;
+}
+
+.codex-premium-shell .no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.codex-premium-shell .no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes reader-codex-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .codex-progress-shimmer::after {
+    animation: none;
+  }
+}

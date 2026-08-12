@@ -1,15 +1,16 @@
 # Reader Chamber
 
 - **Source repository:** SENSEIDUKES/Light-Novels
-- **Source location:** `src/components/ReaderChamber.tsx` (verified on `main` @ `16e9b6d`)
+- **Source location:** `src/components/ReaderChamber.tsx` (verified on `origin/main` @ `7d44ecc`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-10
-- **Last source comparison:** 2026-08-10
+- **Last Workshop update:** 2026-08-11
+- **Last source comparison:** 2026-08-11
 - **Replica status:** faithful replica
 
 ## Workshop history
 
+- **2026-08-11:** Migrated the complete production Reader Codex as its own Workshop feature and restored the Reader Chamber integration: the existing Codex control now opens the production-style sheet over the still-mounted Reader, all six Codex pages are present, and prose highlighting/reveal-card resolution again use the story's Codex terms. The generated five-chapter session keeps its disposable, chapter-scoped snapshot boundary; generation and `batchToReaderAdapter.ts` were not changed.
 - **2026-08-10:** Completed the Pass 3 connection from Chapter Generation: a completed five-chapter batch now opens as a disposable real Reader Chamber session with repaired final prose, Chapters 1–5 navigation, structured blocks/system panels, chapter-scoped cumulative Reader Codex snapshots, chapter and batch token totals (including repair/retry usage), five-chapter text export, and selected-chapter reuse of the existing four-stage Diagnostics. The standalone four-chapter story is now explicitly labeled as the no-batch mock fallback.
 - **2026-08-10:** Integrated Pass 3 data bridge (`batchToReaderAdapter.ts`) connecting five-chapter generation batches to the Reader Chamber without altering Pass 2 chapter generation code. Added `ReaderCodexView` to display living Codex memory (characters, factions, locations, artifacts, unresolved plot threads) when switching to the Codex tab in the Reader Chamber.
 - **2026-07-31:** Created faithful Workshop replica and local state simulator (11 preview states, mock StoryWorld with 4 chapters, zustand-free external mock store).
@@ -60,8 +61,8 @@ development/                  — active Workshop version; started as an exact c
 shared/                       — code genuinely identical between the two forks
   types.ts                    — ReaderChapter + composing types, StoryBlock/metadata/SystemEvent/
                                 WorldCardEvent/FateResultData, StoryCuePayload, ContextManifest,
-                                ReaderPreferences, StoryWorld subset, StoryArc, Bookmark,
-                                UpdateStoryFields (no CodexTerm — codex job excluded)
+                                ReaderPreferences, StoryWorld + Codex entities, StoryArc, Bookmark,
+                                and production-narrow Reader/Codex story patch contracts
   batchToReaderAdapter.ts     — immutable disposable Pass 2 batch to Reader/Codex session boundary
   reader-chamber.css          — reader-specific classes/vars/keyframes extracted from source
                                 src/index.css (imported by the preview Workspace)
@@ -94,9 +95,8 @@ reader-specific styling from `src/index.css` (`.light-novel-reader`,
 holographic-panel + keyframes, `.reading-focus-active/dimmed`, menacing/screen-shake
 animations, `:root` reader CSS vars + entity-highlight palette vars incl. `data-palette`,
 `.highlight-*` classes, custom scrollbar). The 5 hard-coded public R2 backdrop URLs in
-`ReaderViewport.tsx` (`FALLBACK_BACKDROPS`) were kept for visual fidelity — they are
-public static images, and with the codex system excluded they never actually render
-(they only back codex-term reveal cards).
+`ReaderViewport.tsx` (`FALLBACK_BACKDROPS`) were kept for visual fidelity and back
+Codex-term reveal cards when the mock chapter marks an entity as a reveal.
 
 Styling caveat: `@theme` tokens were NOT duplicated — the Workshop `src/styles.css`
 already carries the same font and color tokens.
@@ -121,20 +121,18 @@ already carries the same font and color tokens.
   Plus two bookmarks and default `readerPreferences`.
 - **Hook stubs** matching the exact destructured shapes: `useReaderPlayback`
   (play/pause flips real store state; `activeChunks` empty), `useReaderVisuals`
-  (`codexTerms: []`, `isMomentousChapter: false`), `useCinematicScroll`
+  (collects Codex terms from the local story memory; `isMomentousChapter: false`), `useCinematicScroll`
   (idle/following/yielded), `useReadingPosition` (no-op), `useChapterTranslation`
   (`translateChapter: async () => null`), `useAudioMix` (settings are real state,
   no sound), `vibrate` (no-op), `LOCAL_ONLY_MODE = true`.
-- **`onSwitchTab`** — the reader/codex/memory tab bar is faithful and functional;
-  codex/memory switch to a clearly-marked Workshop-only placeholder ("Codex menu
-  system — separate Workshop job") rendered by the Workspace, never by the
-  reusable components.
+- **`onSwitchTab`** — the Reader Chamber's existing Codex control opens the migrated
+  production-style `CodexSheetOverlay` over the still-mounted Reader. The direct
+  `?preview=reader-codex` workspace also exposes Reference, Development, and Compare.
 - **Preview-state UI actions** — `preferences-open`, `bookmarks-open`,
   `alter-fate-open`, and `continuity-warning` click the real in-chamber buttons
   (by accessible label) after remount, exercising the production interaction path.
 - **Reveal backdrop assignment** — `updateStory` runs against the mock store, so
-  `assignedRevealBackdrops` writes are local and harmless (and currently never
-  fire, since codex-term resolution is stubbed to nothing).
+  `assignedRevealBackdrops` writes are local and harmless.
 
 ## Available preview states
 
@@ -194,21 +192,12 @@ line so the current state is never ambiguous.
   browser's own `speechSynthesis` (no production dependency)
 - `useImageManifest` / media pipeline (`ManifestationImage` never receives
   `isMomentousChapter: true` from the stub)
-- `react-focus-lock` — not installed in the Workshop; `AlterFatePanel` renders its
-  modal inside a plain `<div>` instead (no focus trap)
-- `hooks/useChapterTranslation`, `hooks/useReaderVisuals`, `hooks/useCinematicScroll`,
+- `hooks/useChapterTranslation`, `hooks/useCinematicScroll`, and
   `hooks/useReadingPosition` — inert stubs
-- **Codex menu system (explicit user decision)** — `CodexHovercard`,
-  `lib/codexHighlighting.ts`, and everything under `src/components/codex/` were NOT
-  copied. Codex wiring was removed from the chamber: prose renders as plain text and
-  `codexTerms` is always `[]` (metadata-entity reveal cards stay dormant; World Card
-  blocks render normally). Exact source files for the future codex Workshop job:
-  - `src/components/CodexHovercard.tsx`
-  - `src/lib/codexHighlighting.ts`
-  - `src/components/codex/ReaderCodexCollage.tsx`
-  - codex-term collection in `src/hooks/useReaderVisuals.ts`
-  (The `.highlight-*` CSS classes are already in `shared/reader-chamber.css`, so the
-  future job lands without CSS work.)
+- Production Codex authentication, quota, persistence, image/audio generation,
+  private-media renewal, and Gemini glossary services — represented by local,
+  deterministic compatibility adapters. See `../reader-codex/README.md` for the
+  exact boundary and transfer map.
 
 ## Dead code dropped while copying
 
@@ -230,9 +219,11 @@ All substitutions are import-level aliases only — JSX is byte-identical to pro
 
 ## Known visual differences from the source
 
-- **Codex hovercard/highlighting absent** — codex terms render as plain text; no
-  hovercards, no entity colors in prose, metadata-entity reveal cards never appear.
-- **No focus trap** in the Alter Fate modal (plain div instead of FocusLock).
+- **Codex service actions are local** — the migrated UI, navigation, edit controls,
+  caches, dialogs, and responsive layouts are present, but live AI/media generation,
+  authentication, quota charging, and remote persistence do not run in the Workshop.
+- **Alter Fate focus behavior is unchanged from the existing Workshop replica**;
+  the migrated Codex context dialog uses `react-focus-lock` like production.
 - **Audio inert** — the mixer's toggles and volumes are real state, but no music,
   atmosphere, cues, or narration ever play; World Card SFX shows "Echo Unavailable";
   `tts_line` World Cards speak via the browser's own speechSynthesis.
@@ -258,13 +249,14 @@ All substitutions are import-level aliases only — JSX is byte-identical to pro
   both sides). The bottom control bar is viewport-`fixed`, so the two bars overlap
   exactly in Compare mode.
 - **R2 backdrop URLs** — the 5 hard-coded public `FALLBACK_BACKDROPS` URLs were
-  kept; they are display-only and currently unused (codex reveal cards dormant).
+  kept and now back metadata-driven Codex reveal cards that have no entity image.
 
 ## Exact files needed for transfer (verified)
 
 When a development/ change is approved, transfer these to Light-Novels, reversing
 the import rewrites (`../shared/X` → `../lib/X` / `../hooks/X` / `../store/X`,
-`./X` unchanged) and restoring the codex wiring if the codex system is still absent:
+`./X` unchanged) and mapping the Reader Codex shared imports back to production's
+existing `CodexHovercard` and `lib/codexHighlighting` owners:
 
 - `development/ReaderChamber.tsx` → `src/components/ReaderChamber.tsx`
 - `development/ReaderViewport.tsx` → `src/components/ReaderViewport.tsx`
@@ -320,8 +312,8 @@ Workshop-only — never transfer: `shared/stubs.ts`, `shared/types.ts` (producti
   Workshop's stricter tsconfig; both are behavior-identical.
 - The Alter Fate panel's production button label "Sundert The Timeline" is a
   production typo preserved verbatim — fix it deliberately in production, not here.
-- `ReaderCodexStoryPatch` in `shared/types.ts` is widened to `Partial<StoryWorld>`;
-  production's narrow Pick is the authoritative contract — do not transfer the type.
+- `ReaderCodexStoryPatch` in `shared/types.ts` now mirrors production's intentional
+  allowlist, preventing the Reader/Codex callback from overwriting unrelated story fields.
 - lucide icons: on transfer, either keep the aliased imports (they exist in current
   lucide-react) or restore the legacy names if production's version still has them.
 

@@ -1,5 +1,6 @@
 import type {
   Bookmark,
+  GeneratedImage,
   ReaderChapter,
   ReaderPreferences,
   StoryWorld,
@@ -7,6 +8,26 @@ import type {
 export const MOCK_READER_FALLBACK_LABEL = 'Mock fallback · No generated batch supplied · Four-chapter preview story only';
 
 export const MOCK_STORY_ID = 'workshop-story-emberfall';
+const CODEX_PREVIEW_IMAGE = '/story-seed/library-auth-backdrop.jpg';
+
+const createCodexPreviewImage = (
+  id: string,
+  entityId: string,
+  entityType: GeneratedImage['entityType'],
+  label: string,
+  chapterNumber?: number,
+): GeneratedImage => ({
+  id,
+  assetId: `workshop-${id}`,
+  entityId,
+  entityType,
+  imageUrl: CODEX_PREVIEW_IMAGE,
+  chapterNumber,
+  label,
+  promptUsed: `Workshop-local visual memory for ${label}.`,
+  createdAt: `2026-07-${String(20 + (chapterNumber ?? 0)).padStart(2, '0')}T12:00:00.000Z`,
+  isCurrent: true,
+});
 
 export const mockReaderPreferences: ReaderPreferences = {
   fontSize: 'lg',
@@ -296,7 +317,20 @@ export function createMockBookmarks(): Bookmark[] {
 }
 
 export function createMockStory(): StoryWorld {
-  const chapters = createMockChapters();
+  const chapters = createMockChapters().map(chapter => (
+    chapter.number <= 3
+      ? {
+          ...chapter,
+          imageHistory: [createCodexPreviewImage(
+            `chapter-${chapter.number}-memory`,
+            `chapter-${chapter.number}`,
+            'chapterHero',
+            chapter.title,
+            chapter.number,
+          )],
+        }
+      : chapter
+  ));
   return {
     id: MOCK_STORY_ID,
     title: 'Ashes of the Ninth Meridian',
@@ -309,6 +343,13 @@ export function createMockStory(): StoryWorld {
     memory: {
       currentPowerStage: 'Qi Condensation — Layer 9',
       powerSystem: 'Body Tempering -> Qi Condensation -> Core Formation -> Nascent Soul',
+      worldRules: [
+        'Every act of fate defiance consumes an ember from the Oath.',
+        'The Ninth Meridian may collect debts but cannot erase a witnessed promise.',
+      ],
+      memoryWarnings: [
+        'Elder Kang is recorded as deceased but continues to manifest as a spectral mentor.',
+      ],
       characters: [
         {
           id: 'c1',
@@ -318,6 +359,22 @@ export function createMockStory(): StoryWorld {
           powerLevel: 'Qi Condensation — Layer 9',
           relationshipToMC: 'Self',
           description: 'A debt-marked cultivator carrying the Oath of Embers and marked by the Ninth Meridian.',
+          aliases: ['Ember-Bearer'],
+          faction: 'Ninth Meridian Sect',
+          firstAppeared: 1,
+          signatureQuote: 'I will pay standing.',
+          imageUrl: CODEX_PREVIEW_IMAGE,
+          imageHistory: [createCodexPreviewImage('li-wei-portrait', 'c1', 'character', 'Li Wei', 1)],
+          abilities: [
+            {
+              id: 'ability-ember-step',
+              name: 'Ember Step',
+              description: 'Converts a sliver of oath-fire into one impossible stride.',
+              acquiredChapter: 1,
+              masteryLevel: 'Initiate',
+              canonStatus: 'confirmed',
+            },
+          ],
         },
         {
           id: 'c2',
@@ -327,6 +384,13 @@ export function createMockStory(): StoryWorld {
           powerLevel: 'Core Formation — Peak',
           relationshipToMC: 'Unwilling Ally & Guardian',
           description: 'Master of the Ashen Sword Technique. Guarded the collapsed gate when Li Wei broke through.',
+          faction: 'Ashen Sword Pavilion',
+          firstAppeared: 1,
+          signatureQuote: 'A promise is only a blade held by its edge.',
+          imageUrl: CODEX_PREVIEW_IMAGE,
+          imageHistory: [createCodexPreviewImage('mei-lin-portrait', 'c2', 'character', 'Mei Lin', 1)],
+          evolutionReady: true,
+          evolutionReason: 'Witnessed the Meridian breakthrough',
         },
         {
           id: 'c3',
@@ -336,6 +400,23 @@ export function createMockStory(): StoryWorld {
           powerLevel: 'Nascent Soul (Deceased)',
           relationshipToMC: 'Deceased Mentor',
           description: 'Recorded as deceased in Chapter 0, though spectral echoes remain.',
+          firstAppeared: 0,
+          relevanceState: 'dormant',
+          provenance: { isUserPinned: true, sourceChapterNumber: 0 },
+          signatureQuote: 'The dead keep better ledgers than Heaven.',
+        },
+        {
+          id: 'c4',
+          name: 'Vermilion Debt Fox',
+          role: 'Dormant Spirit Beast',
+          status: 'unknown',
+          powerLevel: 'Earth Spirit — Veiled',
+          relationshipToMC: 'Unknown',
+          description: 'A fox-shaped debt omen last seen beneath the collapsed gate.',
+          isBeast: true,
+          firstAppeared: 1,
+          relevanceState: 'dormant',
+          provenance: { isUserPinned: false, sourceChapterNumber: 1 },
         },
       ],
       factions: [
@@ -344,12 +425,18 @@ export function createMockStory(): StoryWorld {
           name: 'Ninth Meridian Sect',
           alignment: 'Neutral / Mysterious',
           description: 'An ancient sect overseeing the collapsed gates and ember oaths.',
+          headquarters: 'Ninth Meridian Inner Stair',
+          status: 'Fractured',
+          imageUrl: CODEX_PREVIEW_IMAGE,
+          imageHistory: [createCodexPreviewImage('ninth-meridian-sect', 'f1', 'faction', 'Ninth Meridian Sect', 1)],
         },
         {
           id: 'f2',
           name: 'Ashen Sword Pavilion',
           alignment: 'Righteous',
           description: 'High-tier sword cultivators allied with Mei Lin.',
+          headquarters: 'Ashen Sword Pavilion',
+          status: 'Active',
         },
       ],
       locations: [
@@ -358,12 +445,18 @@ export function createMockStory(): StoryWorld {
           name: 'Collapsed Gate of the Ninth Meridian',
           safetyLevel: 'Dangerous',
           description: 'Site of Li Wei’s breakthrough where rust-red rain falls.',
+          realm: 'Mortal Realm',
+          firstAppeared: 1,
+          imageUrl: CODEX_PREVIEW_IMAGE,
+          imageHistory: [createCodexPreviewImage('collapsed-gate', 'l1', 'location', 'Collapsed Gate', 1)],
         },
         {
           id: 'l2',
           name: 'Stair of a Thousand Debts',
           safetyLevel: 'Lethal',
           description: 'The steep ascent required to reach the inner sanctuaries.',
+          realm: 'Ninth Meridian Domain',
+          firstAppeared: 3,
         },
       ],
       artifacts: [
@@ -373,16 +466,44 @@ export function createMockStory(): StoryWorld {
           tier: 'Heavenly',
           condition: 'intact',
           description: 'Ancient artifact discovered in Elder Kang’s sealed tomb.',
+          currentOwner: 'Li Wei',
+          firstAppeared: 2,
+          imageUrl: CODEX_PREVIEW_IMAGE,
+          imageHistory: [createCodexPreviewImage('azure-ring', 'a1', 'artifact', 'The Azure Ring', 2)],
+        },
+      ],
+      abilities: [
+        {
+          id: 'ability-oath-embers',
+          name: 'Oath of Embers',
+          description: 'Burns lifespan to resist a recorded fate.',
+          source: 'Ninth Meridian',
+          acquiredChapter: 1,
+          masteryLevel: 'Bound',
+          canonStatus: 'confirmed',
+          progression: [{ chapter: 3, fromMastery: 'Kindled', toMastery: 'Bound', note: 'Spent one ember against a death flag.' }],
         },
       ],
       unresolvedPlotThreads: [
         {
+          id: 'thread-meridian-ledger',
           description: 'What the Ninth Meridian has been collecting from every cultivator swearing the Ember Oath.',
+          status: 'active',
           originChapter: 1,
         },
         {
+          id: 'thread-kang-echo',
           description: 'Why spectral echoes of Elder Kang still appear after his recorded death.',
+          status: 'active',
           originChapter: 2,
+        },
+      ],
+      resolvedPlotThreads: [
+        {
+          id: 'thread-broken-sword',
+          description: 'Who shattered the Ashen Sword before Li Wei inherited it.',
+          status: 'resolved',
+          originChapter: 0,
         },
       ],
     },
@@ -396,7 +517,46 @@ export function createMockStory(): StoryWorld {
     currentChapterNumber: 4,
     intake: { genrePath: 'xianxia cultivation fate-survival' },
     hardcoreFateMode: false,
-    readerPreferences: { ...mockReaderPreferences },
+    imageUrl: CODEX_PREVIEW_IMAGE,
+    imageHistory: [createCodexPreviewImage('story-cover', MOCK_STORY_ID, 'cover', 'Ashes of the Ninth Meridian')],
+    relationships: [
+      {
+        id: 'relationship-li-mei',
+        sourceCharId: 'c1',
+        sourceCharName: 'Li Wei',
+        targetCharId: 'c2',
+        targetCharName: 'Mei Lin',
+        affinity: 42,
+        threat: 12,
+        description: 'A reluctant alliance tempered by the Oath of Embers.',
+        updatedAt: '2026-07-29T12:00:00.000Z',
+      },
+      {
+        id: 'relationship-li-kang',
+        sourceCharId: 'c1',
+        sourceCharName: 'Li Wei',
+        targetCharId: 'c3',
+        targetCharName: 'Elder Kang',
+        affinity: 70,
+        description: 'A mentorship persisting beyond Elder Kang’s recorded death.',
+        updatedAt: '2026-07-29T12:00:00.000Z',
+      },
+    ],
+    karmaNodes: [
+      {
+        id: 'karma-ember-debt',
+        sourceId: 'c1',
+        sourceName: 'Li Wei',
+        targetId: 'f1',
+        targetName: 'Ninth Meridian Sect',
+        description: 'The Oath binds every act of defiance to the Meridian ledger.',
+        severity: 'Cosmic',
+        type: 'Debt',
+        status: 'active',
+        createdAt: '2026-07-20T12:00:00.000Z',
+      },
+    ],
+    readerPreferences: { ...mockReaderPreferences, highlightStyle: 'full' },
     bookmarks: createMockBookmarks(),
     assignedRevealBackdrops: {},
   };

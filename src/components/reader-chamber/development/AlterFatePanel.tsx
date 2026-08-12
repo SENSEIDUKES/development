@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-// WORKSHOP: react-focus-lock is not installed in the Workshop — the modal
-// renders inside a plain div instead (no focus trap; see README).
+// WORKSHOP: This pre-existing Reader Chamber adaptation renders inside a plain
+// div instead of changing the approved Alter Fate behavior during Codex import.
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, GitBranch, ShieldAlert, ChevronDown, X } from 'lucide-react';
 import { useDialect } from '../shared/dialect';

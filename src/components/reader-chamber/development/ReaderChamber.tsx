@@ -32,8 +32,11 @@ import { useReadingPosition } from "../shared/stubs";
 import { getFateLockMessage } from '../shared/alterFateLock';
 import { DEFAULT_READER_TYPOGRAPHY } from '../shared/readerTypography';
 import { SYSTEM_LEGEND_DISMISSED_STORAGE_KEY } from '../shared/readerLegend';
-// WORKSHOP: Codex menu system (CodexHovercard + lib/codexHighlighting) is a
-// separate future Workshop job — prose renders as plain text here.
+import { CodexHovercard } from '../../reader-codex/shared/CodexHovercard';
+import {
+  createCodexHighlighter,
+  splitByCodexTerms,
+} from '../../reader-codex/shared/codexHighlighting';
 
 interface ReaderChamberProps {
   chapters: ReaderChapter[];
@@ -125,9 +128,15 @@ export default function ReaderChamber({
     activeStory,
     readerMode });
 
-  // WORKSHOP: codex highlighting removed (codex menu system is a separate
-  // Workshop job); `codexTerms` stays `[]` from the stub, so
-  // `renderHighlightedText` below renders plain text plus the TTS sync span.
+  const codexHighlighter = useMemo(
+    () => createCodexHighlighter(
+      (codexTerms ?? []).filter(term => (
+        typeof term?.term === 'string' && term.term.trim() !== ''
+      )),
+    ),
+    [codexTerms],
+  );
+  const highlightRegex = codexHighlighter.regex;
 
 
   // --- Translation States ---
@@ -595,9 +604,6 @@ export default function ReaderChamber({
   >(null);
 
   const renderHighlightedText = React.useCallback((text: string, paragraphIndex: number) => {
-    // WORKSHOP: codex-term highlighting removed (separate Workshop job). Only
-    // the TTS narration sync highlight remains; with the inert playback stub
-    // `activeChunks` is empty, so prose renders as plain text.
     const isPlaying = isPlayingText || isPausedText;
     let ttsHighlight = "";
 
@@ -608,23 +614,65 @@ export default function ReaderChamber({
       }
     }
 
-    if (!ttsHighlight || !text.includes(ttsHighlight)) return <>{text}</>;
-    const parts = text.split(ttsHighlight);
+    if (!highlightRegex || codexTerms.length === 0) {
+      if (!ttsHighlight || !text.includes(ttsHighlight)) return <>{text}</>;
+      const parts = text.split(ttsHighlight);
+      return (
+        <>
+          {parts.map((part, i) => (
+            <React.Fragment key={i}>
+              {part}
+              {i < parts.length - 1 && (
+                <span className="bg-portal/20 text-portal font-medium rounded-sm px-1 py-0.5 transition-all duration-300 shadow-[0_0_8px_rgba(4,172,255,0.15)]">
+                  {ttsHighlight}
+                </span>
+              )}
+            </React.Fragment>
+          ))}
+        </>
+      );
+    }
+
+    if (ttsHighlight && text.includes(ttsHighlight)) {
+      const parts = text.split(ttsHighlight);
+      return (
+        <>
+          {parts.map((part, i) => (
+            <React.Fragment key={i}>
+              {part}
+              {i < parts.length - 1 && (
+                <span className="bg-portal/20 text-portal font-medium rounded-sm px-1 py-0.5 transition-all duration-300 shadow-[0_0_8px_rgba(4,172,255,0.15)]">
+                  {ttsHighlight}
+                </span>
+              )}
+            </React.Fragment>
+          ))}
+        </>
+      );
+    }
+
+    const segments = splitByCodexTerms(text, codexHighlighter);
+    if (segments.length === 1) return <>{text}</>;
+
     return (
       <>
-        {parts.map((part, i) => (
-          <React.Fragment key={i}>
-            {part}
-            {i < parts.length - 1 && (
-              <span className="bg-portal/20 text-portal font-medium rounded-sm px-1 py-0.5 transition-all duration-300 shadow-[0_0_8px_rgba(4,172,255,0.15)]">
-                {ttsHighlight}
-              </span>
-            )}
-          </React.Fragment>
+        {segments.map((segment, index) => (
+          segment.match ? (
+            <CodexHovercard
+              key={index}
+              term={segment.text}
+              type={segment.match.type}
+              entry={segment.match.entry}
+            >
+              {segment.text}
+            </CodexHovercard>
+          ) : (
+            <React.Fragment key={index}>{segment.text}</React.Fragment>
+          )
         ))}
       </>
     );
-  }, [activeChunks, currentChunkIndex, isPausedText, isPlayingText]);
+  }, [activeChunks, codexHighlighter, codexTerms.length, currentChunkIndex, highlightRegex, isPausedText, isPlayingText]);
 
 
   // --- Swipe Navigation States ---

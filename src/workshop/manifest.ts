@@ -122,6 +122,18 @@ export const workshopEntries: WorkshopEntry[] = [
     },
   },
   {
+    id: 'reader-codex',
+    title: 'Reader Codex',
+    description: 'The complete Living Codex sheet and its Portraits, Karma, Power Rankings, Artifacts, Fate, and Lore sections, wired to local Reader story state.',
+    category: 'codex-ui',
+    version: 'v1.0',
+    source: {
+      repository: 'SENSEIDUKES/Light-Novels',
+      path: 'src/components/ReaderCodex.tsx; src/components/CodexSheetOverlay.tsx',
+      lastCompared: '2026-08-11',
+    },
+  },
+  {
     id: 'reader-chamber',
     title: 'Reader Chamber',
     description: 'The full reading UI with generated five-chapter session support, chapter-scoped Reader Codex memory, generation usage/export/Diagnostics, and an explicitly labeled local mock fallback.',
@@ -130,7 +142,7 @@ export const workshopEntries: WorkshopEntry[] = [
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/ReaderChamber.tsx',
-      lastCompared: '2026-07-31',
+      lastCompared: '2026-08-11',
     },
   },
 ];

@@ -752,16 +752,29 @@ const threadKey = (description: string): string => canonicalLivingStoryEntityKey
 
 const mergeUnresolvedThreads = (
   current: Array<{ description: string; originChapter: number }>,
-  reported: Array<{ description: string; originChapter: number }>,
+  reported: string[],
   completed: string[],
+  chapterNumber: number,
 ): Array<{ description: string; originChapter: number }> => {
   const completedKeys = new Set(completed.map(threadKey));
   const merged = new Map<string, { description: string; originChapter: number }>();
-  for (const thread of [...current, ...reported]) {
+
+  // Process Result can report a known thread in a different surface form, but
+  // only the carried Living Story State owns its original provenance.
+  for (const thread of current) {
     const key = threadKey(thread.description);
     if (!key || completedKeys.has(key) || merged.has(key)) continue;
     merged.set(key, { ...thread });
   }
+
+  // A description that is not already carried is first introduced by the
+  // chapter that just completed. Gemini never supplies canonical provenance.
+  for (const description of reported) {
+    const key = threadKey(description);
+    if (!key || completedKeys.has(key) || merged.has(key)) continue;
+    merged.set(key, { description, originChapter: chapterNumber });
+  }
+
   return [...merged.values()];
 };
 
@@ -774,17 +787,13 @@ export function parseProcessingResult(
   const unresolvedValue = Array.isArray(threads.unresolved) ? threads.unresolved : [];
   const reportedUnresolved = unresolvedValue.map((item, index) => {
     const thread = requiredRecord(item, `Process Result threads.unresolved[${index}]`);
-    const originChapter = Number(thread.originChapter);
-    if (!Number.isInteger(originChapter) || originChapter < 1) {
-      throw new Error(`Process Result threads.unresolved[${index}].originChapter must be positive.`);
-    }
-    return {
-      description: requiredString(
-        thread.description,
-        `Process Result threads.unresolved[${index}].description`,
-      ),
-      originChapter,
-    };
+    // Validate the model's only authoritative contribution: the thread text.
+    // originChapter is intentionally ignored; canonical ownership lives in the
+    // carried Living Story State and this completed chapter's number.
+    return requiredString(
+      thread.description,
+      `Process Result threads.unresolved[${index}].description`,
+    );
   });
   const missionCompletion = requiredRecord(
     value.missionCompletion,
@@ -808,6 +817,7 @@ export function parseProcessingResult(
     input.chapterPacket.livingStoryState.threads.unresolved,
     reportedUnresolved,
     completed,
+    input.chapterPacket.chapterMission.number,
   );
   const characterChanges = stringArray(value.characterChanges, "Process Result characterChanges");
   const worldStateChanges = stringArray(value.worldStateChanges, "Process Result worldStateChanges");

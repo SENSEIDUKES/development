@@ -295,23 +295,16 @@ class ThreadProvenanceProvider implements ChapterTextModelProvider {
             completed: [],
             changed: [],
             unresolved: [
-              // The existing Seed thread has a non-numeric model origin.
-              { description: "WHY does the rain remember Rin?!", originChapter: "before the story" },
-              { description: "Who taught the rain to remember Rin", originChapter: 99 },
-              // This is genuinely introduced by Chapter 1 despite its guessed origin.
-              { description: "What sleeps beneath the witness bell?", originChapter: 0 },
+              { description: "Who taught the rain to remember Rin?", originChapter: 1 },
+              { description: "What sleeps beneath the witness bell?", originChapter: 1 },
             ],
           }
         : {
-            // Completing a Seed thread must remove its canonical normalized match.
-            completed: ["why—does the rain remember Rin??"],
+            completed: ["Who taught the rain to remember Rin?"],
             changed: [],
             unresolved: [
-              // Existing Chapter 0 and Chapter 1 threads retain their origins.
-              { description: "WHO taught the rain to remember Rin!!!", originChapter: 2 },
-              { description: "What sleeps beneath the Witness Bell", originChapter: -5 },
-              // This is genuinely introduced by Chapter 2 despite its guessed origin.
-              { description: "Which hand holds the Ninth Seal?", originChapter: null },
+              { description: "What sleeps beneath the witness bell?", originChapter: 1 },
+              { description: "Which hand holds the Ninth Seal?", originChapter: 2 },
             ],
           };
       text = JSON.stringify(processed);
@@ -334,7 +327,7 @@ class ThreadProvenanceProvider implements ChapterTextModelProvider {
 }
 
 describe("live Chapter Generation model boundaries", () => {
-  it("supplies Plan chapter position in code and validates only creative fields", async () => {
+  it("requires the dynamically requested Plan identity and preserves returned rhythm history", async () => {
     const packet = buildPacket();
     const position = createArcChapterPosition(3);
     packet.chapterMission.number = 3;
@@ -349,37 +342,41 @@ describe("live Chapter Generation model boundaries", () => {
 
     await calls.model.planChapter({ chapterPacket: packet, planningSignals: {} });
 
-    expect(provider.requests[0].systemInstruction).toContain("Plan Chapter 3 at Arc 1 — Chapter 3/100");
-    expect(provider.requests[0].systemInstruction).toContain("Do not return version, chapterNumber, arcChapterPosition");
+    expect(provider.requests[0].systemInstruction).toContain("response chapterNumber must be 3");
+    expect(provider.requests[0].systemInstruction).toContain('arcChapterPosition must be "Arc 1 — Chapter 3/100"');
+    expect(provider.requests[0].systemInstruction).toContain('"chapterNumber":3');
 
-    const invalid = JSON.parse(planResponse);
-    invalid.chapterNumber = 1;
-    invalid.arcChapterPosition = "Arc 99 — Chapter 99/99";
-    invalid.rhythmResponse.recentSceneTypes = "conflict";
-    packet.livingStoryState.scene.recentSceneTypes = ["progression"];
-    const normalized = parseChapterPlan(JSON.stringify(invalid), {
+    const returned = JSON.parse(planResponse);
+    returned.chapterNumber = 3;
+    returned.arcChapterPosition = "Arc 1 — Chapter 3/100";
+    returned.rhythmResponse.recentSceneTypes = ["conflict"];
+    const parsed = parseChapterPlan(JSON.stringify(returned), {
       chapterPacket: packet,
       planningSignals: {},
     });
-    expect(normalized).toMatchObject({
+    expect(parsed).toMatchObject({
       chapterNumber: 3,
       arcChapterPosition: "Arc 1 — Chapter 3/100",
-      rhythmResponse: { recentSceneTypes: ["progression"] },
+      rhythmResponse: { recentSceneTypes: ["conflict"] },
     });
 
-    delete invalid.intendedEnding;
+    const wrongChapter = { ...returned, chapterNumber: 1 };
     try {
-      parseChapterPlan(JSON.stringify(invalid), { chapterPacket: packet, planningSignals: {} });
+      parseChapterPlan(JSON.stringify(wrongChapter), { chapterPacket: packet, planningSignals: {} });
       throw new Error("Expected Chapter Plan validation to fail.");
     } catch (error) {
       expect(error).toBeInstanceOf(ChapterPlanValidationError);
       const validation = error as ChapterPlanValidationError;
-      expect(validation.issues).toEqual(expect.arrayContaining([
-        expect.objectContaining({ field: "intendedEnding", reason: "is missing" }),
-      ]));
-      expect(validation.issues.map(issue => issue.field)).not.toContain("chapterNumber");
-      expect(validation.issues.map(issue => issue.field)).not.toContain("arcChapterPosition");
+      expect(validation.issues).toEqual([
+        expect.objectContaining({ field: "chapterNumber", expected: "3", received: "1" }),
+      ]);
     }
+
+    const wrongPosition = { ...returned, arcChapterPosition: "Arc 99 — Chapter 99/99" };
+    expect(() => parseChapterPlan(JSON.stringify(wrongPosition), {
+      chapterPacket: packet,
+      planningSignals: {},
+    })).toThrow(ChapterPlanValidationError);
   });
 
   it("keeps canonical Fate Survival settings authoritative over model output", () => {
@@ -428,12 +425,8 @@ describe("live Chapter Generation model boundaries", () => {
     expect(run.repairApplied).toBe(false);
     expect(run.processingResult.threads.unresolved).toEqual([
       {
-        description: "Why does the rain remember Rin?",
-        originChapter: 0,
-      },
-      {
         description: "Who taught the rain to remember Rin?",
-        originChapter: 0,
+        originChapter: 1,
       },
     ]);
     expect(run.processingResult.proposedLivingStoryState.threads.unresolved)
@@ -455,14 +448,13 @@ describe("live Chapter Generation model boundaries", () => {
       }),
     ]);
     expect(run.manifestedChapter.blocks?.[2].type).toBe("paragraph");
-    expect(run.manifestedChapter.wordCount).toBe(
-      run.manifestedChapter.generatedContent.trim().split(/\s+/).length,
-    );
-    expect(run.manifestedChapter.manifestStatus).toBe("needs-review");
+    expect(run.manifestedChapter.wordCount).toBeUndefined();
+    expect(run.manifestedChapter.manifestStatus).toBeUndefined();
     expect(run.manifestedChapter.generatedContent).toContain("Rain moved across the court roof");
     expect(packet.livingStoryState).toEqual(originalState);
     expect(provider.requests[0].userPrompt).toContain("COMPLETE CHAPTER PACKET");
     expect(provider.requests[1].userPrompt).toContain("CHAPTER PLAN");
+    expect(provider.requests[1].systemInstruction).toContain("unique non-empty string \"id\"");
     expect(provider.requests[2].userPrompt).toContain("MANIFESTED CHAPTER");
     expect(usage.calls.map(call => call.stage)).toEqual([
       "Plan Chapter",
@@ -539,7 +531,7 @@ describe("live Chapter Generation model boundaries", () => {
     expect(calls.usage).toHaveLength(1);
   });
 
-  it("preserves surrounding prose when one NDJSON block is malformed", async () => {
+  it("rejects a malformed NDJSON block instead of redefining the Manifest result", async () => {
     const base = new RecordingProvider();
     const provider: ChapterTextModelProvider = {
       provider: base.provider,
@@ -559,12 +551,9 @@ describe("live Chapter Generation model boundaries", () => {
       maxOutputTokens: 16_384,
     });
 
-    const run = await runChapterPipelineAsync({ chapterPacket: buildPacket(), model: calls.model });
-    expect(run.manifestedChapter.blocks?.map(block => block.text)).toEqual(["Opening.", "Later."]);
-    expect(run.manifestedChapter.manifestDiagnostics?.warnings).toContainEqual(
-      expect.objectContaining({ code: "block-skipped" }),
-    );
-    expect(calls.usage).toHaveLength(3);
+    await expect(runChapterPipelineAsync({ chapterPacket: buildPacket(), model: calls.model }))
+      .rejects.toThrow("Manifest Chapter returned a malformed or unbalanced block.");
+    expect(calls.usage).toHaveLength(2);
   });
 
   it("does not repair when the model recommends repair without a serious finding", async () => {
@@ -604,7 +593,7 @@ describe("live Chapter Generation model boundaries", () => {
     expect(run.processingResult.threads.completed).toEqual([]);
   });
 
-  it("preserves ability acquisition order while merging structured updates", async () => {
+  it("uses the original simple identity merge for carried abilities", async () => {
     const base = new RecordingProvider();
     const provider: ChapterTextModelProvider = {
       provider: base.provider,
@@ -639,26 +628,17 @@ describe("live Chapter Generation model boundaries", () => {
 
     expect(run.processingResult.proposedLivingStoryState.characterState.abilities).toEqual([
       "First ability",
-      {
-        id: "dev-ability-oath-seam",
-        name: "OATH SEAM",
-        rank: "refined",
-        lastMajorInvolvement: 1,
-      },
+      { name: "oath seam", rank: "refined" },
       "Third ability",
       { id: "echo-art-past", name: "Echo Art", era: "past" },
       { id: "echo-art-present", name: "Echo Art", era: "present" },
       "Fourth ability",
-      expect.objectContaining({
-        id: "dev-ability-fifth-ability",
-        name: "Fifth ability",
-        rank: "new",
-      }),
+      { name: "Fifth ability", rank: "new" },
       "Sixth ability",
     ]);
   });
 
-  it("updates existing Codex entities through aliases and harmless name variants", async () => {
+  it("keeps Process Codex updates on the original simple record-identity merge", async () => {
     const base = new RecordingProvider();
     const provider: ChapterTextModelProvider = {
       provider: base.provider,
@@ -698,25 +678,30 @@ describe("live Chapter Generation model boundaries", () => {
 
     const run = await runChapterPipelineAsync({ chapterPacket: packet, model: calls.model });
 
-    expect(run.processingResult.proposedLivingStoryState.codex.characters).toEqual([{
-      id: "seed-minister-sui",
-      name: "Minister Sui",
-      aliases: ["Minister-Sui"],
-      bio: "The court's quiet witness.",
-      relationshipToMC: "Trusted after the hearing",
-      lastMajorInvolvement: 1,
-    }]);
-    expect(run.processingResult.proposedLivingStoryState.codex.factions).toEqual([{
-      id: "seed-ninth-house",
-      name: "The Ninth House",
-      aliases: ["Ninth House"],
-      description: "An oath house marked for erasure.",
-      status: "Fractured",
-      lastMajorInvolvement: 1,
-    }]);
+    expect(run.processingResult.proposedLivingStoryState.codex.characters).toEqual([
+      {
+        id: "seed-minister-sui",
+        name: "Minister Sui",
+        aliases: ["Minister-Sui"],
+        bio: "The court's quiet witness.",
+      },
+      {
+        name: "minister-sui",
+        relationshipToMC: "Trusted after the hearing",
+      },
+    ]);
+    expect(run.processingResult.proposedLivingStoryState.codex.factions).toEqual([
+      {
+        id: "seed-ninth-house",
+        name: "The Ninth House",
+        aliases: ["Ninth House"],
+        description: "An oath house marked for erasure.",
+      },
+      { name: "ninth-house", status: "Fractured" },
+    ]);
   });
 
-  it("keeps Process thread provenance code-owned and still rejects unusable descriptions", async () => {
+  it("requires the original positive model-provided Process thread provenance", async () => {
     const base = new RecordingProvider();
     const provider: ChapterTextModelProvider = {
       provider: base.provider,
@@ -735,7 +720,7 @@ describe("live Chapter Generation model boundaries", () => {
     });
 
     await expect(runChapterPipelineAsync({ chapterPacket: buildPacket(), model: calls.model }))
-      .rejects.toThrow("Process Result threads.unresolved[0].description must be a non-empty string.");
+      .rejects.toThrow("Process Result threads.unresolved[0].originChapter must be positive.");
   });
 });
 
@@ -915,10 +900,12 @@ describe("server model selection and failure handling", () => {
         stage: "Plan Chapter",
         category: "validation",
         reason: expect.stringContaining("Plan Chapter validation failed"),
-        validationIssues: expect.arrayContaining([
-          expect.objectContaining({ field: "rhythmResponse", received: "missing" }),
-          expect.objectContaining({ field: "sceneProgression", received: "missing" }),
-        ]),
+        validationIssues: [{
+          field: "chapterNumber",
+          reason: "does not match the requested chapter",
+          expected: "1",
+          received: "missing",
+        }],
       },
       usage: {
         calls: [{ stage: "Plan Chapter", inputTokens: 120, outputTokens: 4 }],
@@ -970,14 +957,13 @@ describe("server model selection and failure handling", () => {
     );
     expect(firstResult.run.processingResult.proposedLivingStoryState.codex.characters)
       .toEqual(expect.arrayContaining([
-        expect.objectContaining({ id: "dev-character-rin", name: "Rin" }),
-        expect.objectContaining({ id: "dev-character-magistrate-yun", name: "Magistrate Yun" }),
+        expect.objectContaining({ name: "Rin" }),
+        expect.objectContaining({ name: "Magistrate Yun" }),
       ]));
     expect(secondResult.run.chapterPacket.livingStoryState.codex.characters)
       .toEqual(firstResult.run.processingResult.proposedLivingStoryState.codex.characters);
     expect(secondResult.run.chapterPacket.livingStoryState.characterState.abilities)
       .toContainEqual(expect.objectContaining({
-        id: "dev-ability-oath-sight-1",
         name: "Oath Sight 1",
       }));
     expect(secondResult.run.chapterPacket.livingStoryState.codex.locations)
@@ -987,7 +973,7 @@ describe("server model selection and failure handling", () => {
       .toEqual(["plan", "manifest", "process", "plan", "manifest", "process"]);
   });
 
-  it("assigns and preserves canonical thread origins across Process Result and continuation", async () => {
+  it("carries model-provided thread origins across Process Result and continuation", async () => {
     const providers: ThreadProvenanceProvider[] = [];
     const providerFactory = () => {
       const provider = new ThreadProvenanceProvider(providers.length + 1);
@@ -1008,8 +994,7 @@ describe("server model selection and failure handling", () => {
     const firstResult = first.body as ManifestChapterResponse;
     expect(firstResult.run.modelCalls).toEqual(["plan", "manifest", "process"]);
     expect(firstResult.run.processingResult.threads.unresolved).toEqual([
-      { description: "Why does the rain remember Rin?", originChapter: 0 },
-      { description: "Who taught the rain to remember Rin?", originChapter: 0 },
+      { description: "Who taught the rain to remember Rin?", originChapter: 1 },
       { description: "What sleeps beneath the witness bell?", originChapter: 1 },
     ]);
 
@@ -1020,20 +1005,19 @@ describe("server model selection and failure handling", () => {
     expect(second.status).toBe(200);
     const secondResult = second.body as ManifestChapterResponse;
 
-    // The signed continuation carries Chapter 0 and Chapter 1 provenance intact.
+    // The signed continuation carries the accepted Chapter 1 provenance intact.
     expect(secondResult.run.chapterPacket.livingStoryState.threads.unresolved).toEqual(
       firstResult.run.processingResult.proposedLivingStoryState.threads.unresolved,
     );
     expect(secondResult.run.processingResult.threads.unresolved).toEqual([
-      { description: "Who taught the rain to remember Rin?", originChapter: 0 },
       { description: "What sleeps beneath the witness bell?", originChapter: 1 },
       { description: "Which hand holds the Ninth Seal?", originChapter: 2 },
     ]);
     expect(secondResult.run.processingResult.proposedLivingStoryState.threads.resolved)
-      .toEqual(["why—does the rain remember Rin??"]);
+      .toEqual(["Who taught the rain to remember Rin?"]);
     expect(new Set(
       secondResult.run.processingResult.threads.unresolved.map(thread => thread.description.toLowerCase()),
-    ).size).toBe(3);
+    ).size).toBe(2);
     expect(providers.flatMap(provider => provider.requests).map(requestItem => requestItem.kind))
       .toEqual(["plan", "manifest", "process", "plan", "manifest", "process"]);
   });

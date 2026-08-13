@@ -6,11 +6,37 @@ import {
   convertBatchToReaderChapters,
   createChapterScopedCodexStory,
   createCompletedBatchReaderSession,
+  createCompletedSingleChapterReaderSession,
   createReaderCodexSnapshots,
   extractBatchStoryState,
 } from "./batchToReaderAdapter";
 
 describe("batchToReaderAdapter", () => {
+  it("adapts one accepted final output and processed Living Story State without manufacturing a batch", () => {
+    const response = structuredClone(createCompletedFiveChapterTestBatch().chapters[0].result!);
+    delete (response.run.processingResult as { identityWarnings?: unknown }).identityWarnings;
+    const sourceBefore = structuredClone(response);
+
+    const session = createCompletedSingleChapterReaderSession(response);
+
+    expect(session.chapters).toHaveLength(1);
+    expect(session.chapters[0]).toMatchObject({
+      number: 1,
+      title: "Generated Title 1",
+      generatedContent: "Final prose 1.",
+      hasContent: true,
+    });
+    expect(session.story.arcs).toHaveLength(1);
+    expect(session.story.arcs[0].chapters).toHaveLength(1);
+    expect(session.codexSnapshots).toHaveLength(1);
+    expect(session.codexSnapshots[0].livingStoryState)
+      .toEqual(response.run.processingResult.proposedLivingStoryState);
+    expect(session.codexSnapshots[0].memory.characters?.map(character => character.name))
+      .toEqual(["Known by Chapter 1"]);
+    expect(session.chapterUsage).toEqual(response.usage);
+    expect(response).toEqual(sourceBefore);
+  });
+
   it("adapts a completed real Pass 2-shaped batch into five Reader chapters without mutating it", () => {
     const batch = createCompletedFiveChapterTestBatch();
     const sourceBefore = structuredClone(batch);

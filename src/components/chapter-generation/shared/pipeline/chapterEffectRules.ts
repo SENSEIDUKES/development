@@ -52,20 +52,20 @@ export function buildChapterEffectRules(
       "WORLD CARD AUDIO AND VISUAL CUES",
       extractInstructionBlock(systemInstruction, {
         start: "You can include a \"worldCard\" object on the block",
-        end: "For a Celestial Library system moment",
+        end: "For any Celestial Library system moment",
       }),
     ),
     section(
       "SYSTEM PANEL VISUAL CUES",
       extractInstructionBlock(systemInstruction, {
-        start: "For a Celestial Library system moment",
-        end: "When useful, list notable Codex entities referenced",
+        start: "For any Celestial Library system moment",
+        end: "For each block, list all notable codex entities referenced",
       }),
     ),
     section(
       "SCENE MUSIC DIRECTION",
       extractInstructionBlock(systemInstruction, {
-        start: "You may additionally emit a per-scene 'music' object",
+        start: "Additionally, emit a per-scene 'music' object",
         end: "ATMOSPHERIC AUDIO METADATA:",
       }),
     ),

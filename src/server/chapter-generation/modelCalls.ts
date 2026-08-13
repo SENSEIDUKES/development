@@ -12,16 +12,8 @@ import type { ChapterGenerationValidationIssue } from "../../components/chapter-
 import {
   createArcChapterPosition,
   type LivingStoryCharacterStateUpdate,
-  type LivingStoryCodex,
   type LivingStoryCodexUpdates,
 } from "../../components/chapter-generation/shared/packets/livingStoryState";
-import {
-  canonicalLivingStoryEntityKey,
-  ensureStableLivingStoryEntityIds,
-  mergeLivingStoryValues,
-  reconcileLivingStoryRecords,
-  type LivingStoryIdentityWarning,
-} from "../../components/chapter-generation/shared/packets/livingStoryEntityIdentity";
 import type {
   AsyncChapterGenerationModelCalls,
   ChapterEffectKind,
@@ -40,10 +32,13 @@ import type {
 } from "../../components/chapter-generation/shared/pipeline/usage";
 import type {
   ChapterHandoff,
+  StoryBlock,
+  StoryBlockMetadata,
+  SystemEvent,
+  WorldCardEvent,
   ChapterContent,
 } from "../../components/chapter-generation/shared/types";
 import type { ChapterTextModelProvider } from "./provider";
-import { normalizeManifestResponse } from "./manifestNormalizer";
 
 const EFFECT_KINDS: ChapterEffectKind[] = [
   "narration-metadata",
@@ -102,106 +97,6 @@ const receivedValue = (value: unknown): string => {
     : `${Array.isArray(value) ? "array" : typeof value}`;
 };
 
-const collectChapterPlanValidationIssues = (
-  value: JsonRecord,
-): ChapterGenerationValidationIssue[] => {
-  const issues: ChapterGenerationValidationIssue[] = [];
-  const add = (
-    field: string,
-    reason: string,
-    expected?: string,
-    received?: unknown,
-  ) => issues.push({
-    field,
-    reason: received === undefined ? "is missing" : reason,
-    ...(expected ? { expected } : {}),
-    received: receivedValue(received),
-  });
-  const requiredText = (record: JsonRecord | undefined, field: string, path: string) => {
-    const fieldValue = record?.[field];
-    if (typeof fieldValue !== "string" || !fieldValue.trim()) {
-      add(path, fieldValue === undefined ? "is missing" : "must be a non-empty string", "a non-empty string", fieldValue);
-    }
-  };
-  const requiredBooleanField = (record: JsonRecord | undefined, field: string, path: string) => {
-    const fieldValue = record?.[field];
-    if (typeof fieldValue !== "boolean") {
-      add(path, fieldValue === undefined ? "is missing" : "must be a boolean", "true or false", fieldValue);
-    }
-  };
-
-  const rhythm = isRecord(value.rhythmResponse) ? value.rhythmResponse : undefined;
-  if (!rhythm) add("rhythmResponse", "must be a JSON object", "an object", value.rhythmResponse);
-  else requiredText(rhythm, "direction", "rhythmResponse.direction");
-
-  if (typeof value.resolvedSceneType !== "string" || !SCENE_TYPES.includes(value.resolvedSceneType as SceneType)) {
-    add("resolvedSceneType", "must be a supported scene type", SCENE_TYPES.join(" | "), value.resolvedSceneType);
-  }
-
-  if (isRecord(value.selectedScenePath)) {
-    const scenePath = value.selectedScenePath;
-    if (!isRecord(scenePath.weights)) {
-      add("selectedScenePath.weights", "must be a JSON object", "an object", scenePath.weights);
-    }
-    if (typeof scenePath.type !== "string" || !SCENE_TYPES.includes(scenePath.type as SceneType)) {
-      add("selectedScenePath.type", "must be a supported scene type", SCENE_TYPES.join(" | "), scenePath.type);
-    }
-    requiredText(scenePath, "anchor", "selectedScenePath.anchor");
-    requiredText(scenePath, "reason", "selectedScenePath.reason");
-    if (scenePath.blocked !== undefined && !Array.isArray(scenePath.blocked)) {
-      add("selectedScenePath.blocked", "must be an array", "an array", scenePath.blocked);
-    }
-  }
-
-  const fate = isRecord(value.fateSurvival) ? value.fateSurvival : undefined;
-  if (!fate) add("fateSurvival", "must be a JSON object", "an object", value.fateSurvival);
-  else {
-    requiredBooleanField(fate, "applies", "fateSurvival.applies");
-    requiredText(fate, "approach", "fateSurvival.approach");
-  }
-
-  if (!Array.isArray(value.effects)) {
-    add("effects", "must be an array", "an array", value.effects);
-  } else {
-    value.effects.forEach((item, index) => {
-      const effect = isRecord(item) ? item : undefined;
-      if (!effect) {
-        add(`effects[${index}]`, "must be a JSON object", "an object", item);
-        return;
-      }
-      if (typeof effect.kind !== "string" || !EFFECT_KINDS.includes(effect.kind as ChapterEffectKind)) {
-        add(`effects[${index}].kind`, "must be a supported effect kind", EFFECT_KINDS.join(" | "), effect.kind);
-      }
-      requiredText(effect, "intent", `effects[${index}].intent`);
-      requiredBooleanField(effect, "required", `effects[${index}].required`);
-    });
-  }
-
-  if (!Array.isArray(value.sceneProgression) || value.sceneProgression.length === 0) {
-    add("sceneProgression", "must contain at least one scene", "a non-empty array", value.sceneProgression);
-  } else {
-    value.sceneProgression.forEach((item, index) => {
-      const scene = isRecord(item) ? item : undefined;
-      if (!scene) {
-        add(`sceneProgression[${index}]`, "must be a JSON object", "an object", item);
-        return;
-      }
-      requiredText(scene, "purpose", `sceneProgression[${index}].purpose`);
-      requiredText(scene, "pacing", `sceneProgression[${index}].pacing`);
-    });
-  }
-
-  const pacing = isRecord(value.pacing) ? value.pacing : undefined;
-  if (!pacing) add("pacing", "must be a JSON object", "an object", value.pacing);
-  else {
-    requiredText(pacing, "directive", "pacing.directive");
-    requiredText(pacing, "shape", "pacing.shape");
-  }
-  requiredText(value, "intendedEnding", "intendedEnding");
-  requiredText(value, "nextChapterHandoffTarget", "nextChapterHandoffTarget");
-  return issues;
-};
-
 const requiredRecord = (value: unknown, label: string): JsonRecord => {
   if (!isRecord(value)) throw new Error(`${label} must be a JSON object.`);
   return value;
@@ -216,6 +111,19 @@ const requiredString = (value: unknown, label: string): string => {
 
 const optionalString = (value: unknown): string | undefined =>
   typeof value === "string" && value.trim() ? value.trim() : undefined;
+
+const optionalValidatedString = (value: unknown, label: string): string | undefined => {
+  if (value === undefined || value === null || value === "") return undefined;
+  return requiredString(value, label);
+};
+
+const optionalFiniteNumber = (value: unknown, label: string): number | undefined => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(`${label} must be a finite number.`);
+  }
+  return value;
+};
 
 const requiredBoolean = (value: unknown, label: string): boolean => {
   if (typeof value !== "boolean") throw new Error(`${label} must be a boolean.`);
@@ -345,11 +253,19 @@ const parseEffects = (value: unknown): ChapterEffectSelection[] => {
 
 export function parseChapterPlan(text: string, input: PlanChapterInput): ChapterPlan {
   const value = parseStructuredModelJson(text, "Plan Chapter");
-  const validationIssues = collectChapterPlanValidationIssues(value);
-  if (validationIssues.length > 0) throw new ChapterPlanValidationError(validationIssues);
+  const expectedChapter = input.chapterPacket.chapterMission.number;
+  if (value.chapterNumber !== expectedChapter) {
+    throw new ChapterPlanValidationError([{
+      field: "chapterNumber",
+      reason: "does not match the requested chapter",
+      expected: String(expectedChapter),
+      received: receivedValue(value.chapterNumber),
+    }]);
+  }
   const rhythm = requiredRecord(value.rhythmResponse, "ChapterPlan.rhythmResponse");
   const selectedPressureTier = input.planningSignals.fatePressureTier;
   const fate = requiredRecord(value.fateSurvival, "ChapterPlan.fateSurvival");
+  requiredBoolean(fate.configured, "ChapterPlan.fateSurvival.configured");
   const canonicalFate = input.chapterPacket.storyConstitution.fateSurvival;
   const requestedFateApplication = requiredBoolean(
     fate.applies,
@@ -358,12 +274,24 @@ export function parseChapterPlan(text: string, input: PlanChapterInput): Chapter
   const progression = Array.isArray(value.sceneProgression) ? value.sceneProgression : [];
   if (progression.length === 0) throw new Error("ChapterPlan.sceneProgression cannot be empty.");
   const pacing = requiredRecord(value.pacing, "ChapterPlan.pacing");
+  const returnedPosition = requiredString(value.arcChapterPosition, "ChapterPlan.arcChapterPosition");
+  if (returnedPosition !== input.chapterPacket.arcChapterPosition.display) {
+    throw new ChapterPlanValidationError([{
+      field: "arcChapterPosition",
+      reason: "does not match the requested arc position",
+      expected: JSON.stringify(input.chapterPacket.arcChapterPosition.display),
+      received: receivedValue(value.arcChapterPosition),
+    }]);
+  }
+
   return {
     version: 1,
-    chapterNumber: input.chapterPacket.chapterMission.number,
-    arcChapterPosition: input.chapterPacket.arcChapterPosition.display,
+    chapterNumber: expectedChapter,
+    arcChapterPosition: returnedPosition,
     rhythmResponse: {
-      recentSceneTypes: [...input.chapterPacket.livingStoryState.scene.recentSceneTypes],
+      recentSceneTypes: Array.isArray(rhythm.recentSceneTypes)
+        ? rhythm.recentSceneTypes.map((item, index) => sceneType(item, `ChapterPlan.rhythmResponse.recentSceneTypes[${index}]`))
+        : [],
       ...(selectedPressureTier ? { selectedPressureTier } : {}),
       direction: requiredString(rhythm.direction, "ChapterPlan.rhythmResponse.direction"),
     },
@@ -399,24 +327,231 @@ export function parseChapterPlan(text: string, input: PlanChapterInput): Chapter
   };
 }
 
+const extractBalancedObjects = (text: string): JsonRecord[] => {
+  const values: JsonRecord[] = [];
+  let cursor = 0;
+  while (cursor < text.length) {
+    const next = text.slice(cursor).search(/[\[{]/);
+    if (next < 0) break;
+    const start = cursor + next;
+    const balanced = extractFirstBalancedValue(text.slice(start));
+    if (!balanced) {
+      throw new Error("Manifest Chapter returned a malformed or unbalanced block.");
+    }
+    try {
+      const parsed = JSON.parse(balanced);
+      if (Array.isArray(parsed)) {
+        values.push(...parsed.filter(isRecord));
+      } else if (isRecord(parsed) && Array.isArray(parsed.blocks)) {
+        values.push(...parsed.blocks.filter(isRecord));
+      } else if (isRecord(parsed)) {
+        values.push(parsed);
+      }
+    } catch {
+      throw new Error("Manifest Chapter returned a malformed JSON block.");
+    }
+    cursor = start + Math.max(1, balanced.length);
+  }
+  return values;
+};
+
+const BLOCK_ATMOSPHERE_CATEGORIES = ["wind", "crowd", "waves", "rain", "combat", "noise"] as const;
+const SYSTEM_EVENT_KINDS = ["status", "skill_acquired", "level_up", "quest", "appraisal", "fate_result"] as const;
+const WORLD_CARD_ENTITY_TYPES = ["character", "creature", "artifact", "location", "faction", "system", "fate_event"] as const;
+
+const optionalMetadataStringArray = (value: unknown, label: string): string[] | undefined => {
+  if (value === undefined || value === null) return undefined;
+  return stringArray(value, label);
+};
+
+const parseBlockMetadata = (value: unknown, label: string): StoryBlockMetadata | undefined => {
+  if (value === undefined || value === null) return undefined;
+  const metadata = requiredRecord(value, label);
+  const atmosphereCategory = optionalValidatedString(metadata.atmosphereCategory, `${label}.atmosphereCategory`);
+  if (atmosphereCategory && !BLOCK_ATMOSPHERE_CATEGORIES.includes(
+    atmosphereCategory as (typeof BLOCK_ATMOSPHERE_CATEGORIES)[number],
+  )) {
+    throw new Error(`${label}.atmosphereCategory is unsupported.`);
+  }
+  const entities = metadata.entities === undefined
+    ? undefined
+    : Array.isArray(metadata.entities)
+      ? metadata.entities.map((item, index) => {
+          const entity = requiredRecord(item, `${label}.entities[${index}]`);
+          const type = requiredString(entity.type, `${label}.entities[${index}].type`);
+          const mention = requiredString(entity.mention, `${label}.entities[${index}].mention`);
+          if (!["character", "artifact", "location", "beast", "faction"].includes(type)) {
+            throw new Error(`${label}.entities[${index}].type is unsupported.`);
+          }
+          if (mention !== "reveal" && mention !== "reference") {
+            throw new Error(`${label}.entities[${index}].mention is unsupported.`);
+          }
+          return {
+            name: requiredString(entity.name, `${label}.entities[${index}].name`),
+            type: type as "character" | "artifact" | "location" | "beast" | "faction",
+            mention: mention as "reveal" | "reference",
+          };
+        })
+      : (() => { throw new Error(`${label}.entities must be an array.`); })();
+  const music = metadata.music === undefined
+    ? undefined
+    : (() => {
+        const item = requiredRecord(metadata.music, `${label}.music`);
+        const region = optionalValidatedString(item.region, `${label}.music.region`);
+        if (region && !["chinese", "japanese", "western"].includes(region)) {
+          throw new Error(`${label}.music.region is unsupported.`);
+        }
+        return {
+          mood: requiredString(item.mood, `${label}.music.mood`),
+          ...(region ? { region: region as "chinese" | "japanese" | "western" } : {}),
+          ...(optionalFiniteNumber(item.intensity, `${label}.music.intensity`) !== undefined
+            ? { intensity: optionalFiniteNumber(item.intensity, `${label}.music.intensity`) }
+            : {}),
+          ...(optionalValidatedString(item.customUrl, `${label}.music.customUrl`)
+            ? { customUrl: optionalValidatedString(item.customUrl, `${label}.music.customUrl`) }
+            : {}),
+          ...(optionalValidatedString(item.trackId, `${label}.music.trackId`)
+            ? { trackId: optionalValidatedString(item.trackId, `${label}.music.trackId`) }
+            : {}),
+        };
+      })();
+  const theme = metadata.theme === undefined
+    ? undefined
+    : typeof metadata.theme === "string"
+      ? requiredString(metadata.theme, `${label}.theme`)
+      : stringArray(metadata.theme, `${label}.theme`);
+
+  return {
+    ...(optionalValidatedString(metadata.sceneType, `${label}.sceneType`) ? { sceneType: optionalValidatedString(metadata.sceneType, `${label}.sceneType`) } : {}),
+    ...(optionalMetadataStringArray(metadata.environment, `${label}.environment`) ? { environment: optionalMetadataStringArray(metadata.environment, `${label}.environment`) } : {}),
+    ...(atmosphereCategory ? { atmosphereCategory: atmosphereCategory as StoryBlockMetadata["atmosphereCategory"] } : {}),
+    ...(optionalMetadataStringArray(metadata.atmosphereTags, `${label}.atmosphereTags`) ? { atmosphereTags: optionalMetadataStringArray(metadata.atmosphereTags, `${label}.atmosphereTags`) } : {}),
+    ...(theme ? { theme } : {}),
+    ...(optionalValidatedString(metadata.motion, `${label}.motion`) ? { motion: optionalValidatedString(metadata.motion, `${label}.motion`) } : {}),
+    ...(optionalValidatedString(metadata.emotion, `${label}.emotion`) ? { emotion: optionalValidatedString(metadata.emotion, `${label}.emotion`) } : {}),
+    ...(optionalFiniteNumber(metadata.intensity, `${label}.intensity`) !== undefined ? { intensity: optionalFiniteNumber(metadata.intensity, `${label}.intensity`) } : {}),
+    ...(optionalFiniteNumber(metadata.tension, `${label}.tension`) !== undefined ? { tension: optionalFiniteNumber(metadata.tension, `${label}.tension`) } : {}),
+    ...(optionalFiniteNumber(metadata.danger, `${label}.danger`) !== undefined ? { danger: optionalFiniteNumber(metadata.danger, `${label}.danger`) } : {}),
+    ...(optionalFiniteNumber(metadata.mysticism, `${label}.mysticism`) !== undefined ? { mysticism: optionalFiniteNumber(metadata.mysticism, `${label}.mysticism`) } : {}),
+    ...(optionalValidatedString(metadata.audioSignature, `${label}.audioSignature`) ? { audioSignature: optionalValidatedString(metadata.audioSignature, `${label}.audioSignature`) } : {}),
+    ...(optionalValidatedString(metadata.speakerName, `${label}.speakerName`) ? { speakerName: optionalValidatedString(metadata.speakerName, `${label}.speakerName`) } : {}),
+    ...(optionalValidatedString(metadata.mode, `${label}.mode`) ? { mode: optionalValidatedString(metadata.mode, `${label}.mode`) } : {}),
+    ...(optionalValidatedString(metadata.speakerRole, `${label}.speakerRole`) ? { speakerRole: optionalValidatedString(metadata.speakerRole, `${label}.speakerRole`) } : {}),
+    ...(entities ? { entities } : {}),
+    ...(music ? { music } : {}),
+  };
+};
+
+const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefined => {
+  if (value === undefined || value === null) return undefined;
+  const event = requiredRecord(value, label);
+  const kind = requiredString(event.kind, `${label}.kind`);
+  if (!SYSTEM_EVENT_KINDS.includes(kind as (typeof SYSTEM_EVENT_KINDS)[number])) {
+    throw new Error(`${label}.kind is unsupported.`);
+  }
+  const rows = event.rows === undefined
+    ? undefined
+    : Array.isArray(event.rows)
+      ? event.rows.map((item, index) => {
+          const row = requiredRecord(item, `${label}.rows[${index}]`);
+          return {
+            label: requiredString(row.label, `${label}.rows[${index}].label`),
+            value: requiredString(row.value, `${label}.rows[${index}].value`),
+          };
+        })
+      : (() => { throw new Error(`${label}.rows must be an array.`); })();
+  return {
+    kind: kind as SystemEvent["kind"],
+    title: requiredString(event.title, `${label}.title`),
+    ...(optionalValidatedString(event.promptType, `${label}.promptType`)
+      ? { promptType: optionalValidatedString(event.promptType, `${label}.promptType`) as SystemEvent["promptType"] }
+      : {}),
+    ...(rows ? { rows } : {}),
+    ...(optionalValidatedString(event.rarity, `${label}.rarity`) ? { rarity: optionalValidatedString(event.rarity, `${label}.rarity`) } : {}),
+  };
+};
+
+const parseWorldCardEvent = (value: unknown, label: string): WorldCardEvent | undefined => {
+  if (value === undefined || value === null) return undefined;
+  const event = requiredRecord(value, label);
+  const entityType = requiredString(event.entityType, `${label}.entityType`);
+  if (!WORLD_CARD_ENTITY_TYPES.includes(entityType as (typeof WORLD_CARD_ENTITY_TYPES)[number])) {
+    throw new Error(`${label}.entityType is unsupported.`);
+  }
+  return {
+    ...(optionalValidatedString(event.id, `${label}.id`) ? { id: optionalValidatedString(event.id, `${label}.id`) } : {}),
+    entityType: entityType as WorldCardEvent["entityType"],
+    entityName: requiredString(event.entityName, `${label}.entityName`),
+    displayTitle: requiredString(event.displayTitle, `${label}.displayTitle`),
+    ...(optionalValidatedString(event.imageUrl, `${label}.imageUrl`) ? { imageUrl: optionalValidatedString(event.imageUrl, `${label}.imageUrl`) } : {}),
+    ...(optionalValidatedString(event.quote, `${label}.quote`) ? { quote: optionalValidatedString(event.quote, `${label}.quote`) } : {}),
+    ...(optionalValidatedString(event.audioText, `${label}.audioText`) ? { audioText: optionalValidatedString(event.audioText, `${label}.audioText`) } : {}),
+    ...(optionalValidatedString(event.voicePreset, `${label}.voicePreset`) ? { voicePreset: optionalValidatedString(event.voicePreset, `${label}.voicePreset`) } : {}),
+    ...(optionalValidatedString(event.codexEntryId, `${label}.codexEntryId`) ? { codexEntryId: optionalValidatedString(event.codexEntryId, `${label}.codexEntryId`) } : {}),
+    ...(optionalValidatedString(event.rarity, `${label}.rarity`) ? { rarity: optionalValidatedString(event.rarity, `${label}.rarity`) } : {}),
+  };
+};
+
+const sanitizeStoryBlock = (value: JsonRecord, index: number): StoryBlock => {
+  const id = requiredString(value.id, `Manifest Chapter block ${index + 1} id`);
+  const returnedType = requiredString(value.type, `Manifest Chapter block ${index + 1} type`);
+  const metadata = parseBlockMetadata(value.metadata, `Manifest Chapter block '${id}' metadata`);
+  const system = parseSystemEvent(value.system, `Manifest Chapter block '${id}' system`);
+  const worldCard = parseWorldCardEvent(value.worldCard, `Manifest Chapter block '${id}' worldCard`);
+  const type = returnedType === "paragraph" || returnedType === "dialogue"
+    ? returnedType
+    : returnedType === "narration"
+      ? "paragraph"
+      : returnedType === "system" && system
+        ? "paragraph"
+        : (returnedType === "world-card" || returnedType === "world_card") && worldCard
+          ? "paragraph"
+          : metadata?.mode === "dialogue"
+            ? "dialogue"
+            : undefined;
+  if (!type) {
+    throw new Error(`Manifest Chapter block '${id}' has unsupported type '${returnedType}'.`);
+  }
+  return {
+    id,
+    type,
+    text: requiredString(value.text, `Manifest Chapter block '${id}' text`),
+    ...(metadata ? { metadata } : {}),
+    ...(system ? { system } : {}),
+    ...(worldCard ? { worldCard } : {}),
+  };
+};
+
 export function parseManifestedChapter(
   text: string,
   input: ManifestChapterInput | RepairChapterInput,
 ): ChapterContent {
-  const chapterNumber = input.chapterPacket.chapterMission.number;
-  const normalized = normalizeManifestResponse(text, chapterNumber);
+  const cleaned = cleanModelEnvelope(text)
+    .replace(/^\s*---CHAPTER_BLOCKS---\s*/i, "")
+    .trim();
+  const rawBlocks = extractBalancedObjects(cleaned);
+  if (rawBlocks.length === 0) {
+    throw new Error("Manifest Chapter returned no readable NDJSON blocks.");
+  }
+  if (rawBlocks.length > 500) {
+    throw new Error("Manifest Chapter returned too many blocks.");
+  }
+  const blocks = rawBlocks.map(sanitizeStoryBlock);
+  const ids = new Set<string>();
+  for (const block of blocks) {
+    if (ids.has(block.id)) throw new Error(`Manifest Chapter returned duplicate block id '${block.id}'.`);
+    ids.add(block.id);
+  }
+  const generatedContent = blocks.map(block => block.text).join("\n\n");
   const title = input.chapterPacket.storyConstitution.worldBlueprint?.title
     || input.chapterPacket.chapterMission.title;
   const storyId = `development-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "story"}`;
 
   return {
     storyId,
-    chapterNumber,
-    generatedContent: normalized.generatedContent,
-    wordCount: normalized.diagnostics.wordCount,
-    manifestStatus: normalized.diagnostics.status,
-    manifestDiagnostics: normalized.diagnostics,
-    blocks: normalized.blocks,
+    chapterNumber: input.chapterPacket.chapterMission.number,
+    generatedContent,
+    blocks,
   };
 }
 
@@ -459,8 +594,6 @@ const buildProposedState = (
   worldStateChanges: string[],
   characterStateUpdates: LivingStoryCharacterStateUpdate,
   codexUpdates: LivingStoryCodexUpdates,
-  nextAbilities: unknown[],
-  nextCodex: LivingStoryCodex,
 ) => {
   const current = input.chapterPacket.livingStoryState;
   return {
@@ -486,16 +619,21 @@ const buildProposedState = (
       ...current.characterState,
       currentPowerStage: characterStateUpdates.currentPowerStage
         ?? current.characterState.currentPowerStage,
-      abilities: nextAbilities,
+      abilities: mergeCarriedValues(
+        current.characterState.abilities,
+        characterStateUpdates.abilities,
+      ),
     },
     threads: {
       unresolved,
-      resolved: mergeLivingStoryValues(
-        current.threads.resolved,
-        completedThreads,
-      ) as string[],
+      resolved: Array.from(new Set([...current.threads.resolved, ...completedThreads])),
     },
-    codex: nextCodex,
+    codex: {
+      characters: mergeCarriedRecords(current.codex.characters, codexUpdates.characters),
+      factions: mergeCarriedRecords(current.codex.factions, codexUpdates.factions),
+      locations: mergeCarriedRecords(current.codex.locations, codexUpdates.locations),
+      artifacts: mergeCarriedRecords(current.codex.artifacts, codexUpdates.artifacts),
+    },
     scene: {
       ...current.scene,
       recentSceneTypes: appendSceneType(
@@ -519,88 +657,75 @@ const buildProposedState = (
   };
 };
 
-const threadKey = (description: string): string => canonicalLivingStoryEntityKey(description);
+const recordIdentity = (value: JsonRecord): string | undefined => {
+  for (const field of ["id", "name", "title", "label", "slug"] as const) {
+    const candidate = value[field];
+    if (typeof candidate === "string" && candidate.trim()) {
+      return `${field}:${candidate.trim().toLowerCase()}`;
+    }
+  }
+  return undefined;
+};
+
+const mergeCarriedRecords = (
+  current: JsonRecord[],
+  updates: JsonRecord[],
+): JsonRecord[] => {
+  const merged = current.map(entry => structuredClone(entry));
+  for (const update of updates) {
+    const copied = structuredClone(update);
+    const identity = recordIdentity(copied);
+    const index = identity
+      ? merged.findIndex(entry => recordIdentity(entry) === identity)
+      : -1;
+    if (index >= 0) merged[index] = { ...merged[index], ...copied };
+    else if (!merged.some(entry => JSON.stringify(entry) === JSON.stringify(copied))) merged.push(copied);
+  }
+  return merged;
+};
+
+const mergeCarriedValues = (current: unknown[], updates: unknown[]): unknown[] => {
+  const merged: unknown[] = [];
+  const unkeyed = new Set<string>();
+  for (const value of [...current, ...updates]) {
+    if (isRecord(value)) {
+      const copied = structuredClone(value);
+      const identity = recordIdentity(copied);
+      const index = identity
+        ? merged.findIndex(entry => isRecord(entry) && recordIdentity(entry) === identity)
+        : -1;
+      if (index >= 0) {
+        merged[index] = { ...(merged[index] as JsonRecord), ...copied };
+        continue;
+      }
+      const serialized = JSON.stringify(copied);
+      if (merged.some(entry => isRecord(entry) && JSON.stringify(entry) === serialized)) continue;
+      merged.push(copied);
+      continue;
+    }
+    const serialized = JSON.stringify(value);
+    if (unkeyed.has(serialized)) continue;
+    unkeyed.add(serialized);
+    merged.push(structuredClone(value));
+  }
+  return merged;
+};
+
+const threadKey = (description: string): string => description.trim().toLocaleLowerCase();
 
 const mergeUnresolvedThreads = (
   current: Array<{ description: string; originChapter: number }>,
-  reported: string[],
+  reported: Array<{ description: string; originChapter: number }>,
   completed: string[],
-  chapterNumber: number,
 ): Array<{ description: string; originChapter: number }> => {
   const completedKeys = new Set(completed.map(threadKey));
   const merged = new Map<string, { description: string; originChapter: number }>();
-
-  // Process Result can report a known thread in a different surface form, but
-  // only the carried Living Story State owns its original provenance.
-  for (const thread of current) {
+  for (const thread of [...current, ...reported]) {
     const key = threadKey(thread.description);
     if (!key || completedKeys.has(key) || merged.has(key)) continue;
     merged.set(key, { ...thread });
   }
-
-  // A description that is not already carried is first introduced by the
-  // chapter that just completed. Gemini never supplies canonical provenance.
-  for (const description of reported) {
-    const key = threadKey(description);
-    if (!key || completedKeys.has(key) || merged.has(key)) continue;
-    merged.set(key, { description, originChapter: chapterNumber });
-  }
-
   return [...merged.values()];
-};
-
-const reconcileAbilityValues = (
-  current: unknown[],
-  updates: unknown[],
-  chapterNumber: number,
-): {
-  values: unknown[];
-  appliedUpdates: unknown[];
-  warnings: LivingStoryIdentityWarning[];
-} => {
-  const currentRecords = current.filter(isRecord);
-  const stableCurrentRecords = ensureStableLivingStoryEntityIds("ability", currentRecords);
-  let recordIndex = 0;
-  let values = current.map(value => (
-    isRecord(value) ? stableCurrentRecords[recordIndex++] : structuredClone(value)
-  ));
-  const appliedUpdates: unknown[] = [];
-  const warnings: LivingStoryIdentityWarning[] = [];
-
-  for (const update of updates) {
-    if (!isRecord(update)) {
-      const nonRecords = values.filter(value => !isRecord(value));
-      const merged = mergeLivingStoryValues(nonRecords, [update]);
-      if (merged.length > nonRecords.length) {
-        const copied = structuredClone(update);
-        appliedUpdates.push(copied);
-        values = [...values, copied];
-      }
-      continue;
-    }
-    const beforeRecords = values.filter(isRecord);
-    const reconciliation = reconcileLivingStoryRecords({
-      entityKind: "ability",
-      current: beforeRecords,
-      updates: [update],
-      chapterNumber,
-    });
-    warnings.push(...reconciliation.warnings);
-    appliedUpdates.push(...reconciliation.appliedUpdates);
-    let replacementIndex = 0;
-    values = values.map(value => (
-      isRecord(value)
-        ? reconciliation.records[replacementIndex++]
-        : value
-    ));
-    values.push(...reconciliation.records.slice(beforeRecords.length));
-  }
-
-  return {
-    values,
-    appliedUpdates,
-    warnings,
-  };
 };
 
 export function parseProcessingResult(
@@ -611,20 +736,18 @@ export function parseProcessingResult(
   const threads = requiredRecord(value.threads, "Process Result threads");
   const unresolvedValue = Array.isArray(threads.unresolved) ? threads.unresolved : [];
   const reportedUnresolved = unresolvedValue.map((item, index) => {
-    if (typeof item === "string") {
-      return requiredString(
-        item,
-        `Process Result threads.unresolved[${index}]`,
-      );
-    }
     const thread = requiredRecord(item, `Process Result threads.unresolved[${index}]`);
-    // Validate the model's only authoritative contribution: the thread text.
-    // originChapter is intentionally ignored; canonical ownership lives in the
-    // carried Living Story State and this completed chapter's number.
-    return requiredString(
-      thread.description,
-      `Process Result threads.unresolved[${index}].description`,
-    );
+    const originChapter = Number(thread.originChapter);
+    if (!Number.isInteger(originChapter) || originChapter < 1) {
+      throw new Error(`Process Result threads.unresolved[${index}].originChapter must be positive.`);
+    }
+    return {
+      description: requiredString(
+        thread.description,
+        `Process Result threads.unresolved[${index}].description`,
+      ),
+      originChapter,
+    };
   });
   const missionCompletion = requiredRecord(
     value.missionCompletion,
@@ -648,7 +771,6 @@ export function parseProcessingResult(
     input.chapterPacket.livingStoryState.threads.unresolved,
     reportedUnresolved,
     completed,
-    input.chapterPacket.chapterMission.number,
   );
   const characterChanges = stringArray(value.characterChanges, "Process Result characterChanges");
   const worldStateChanges = stringArray(value.worldStateChanges, "Process Result worldStateChanges");
@@ -657,71 +779,20 @@ export function parseProcessingResult(
     "Process Result characterStateUpdates",
   );
   const currentPowerStage = optionalString(characterStateValue.currentPowerStage);
-  const rawAbilities = unknownArray(
-    characterStateValue.abilities,
-    "Process Result characterStateUpdates.abilities",
-  );
-  const reconciledAbilities = reconcileAbilityValues(
-    input.chapterPacket.livingStoryState.characterState.abilities,
-    rawAbilities,
-    input.chapterPacket.chapterMission.number,
-  );
   const characterStateUpdates: LivingStoryCharacterStateUpdate = {
     ...(currentPowerStage ? { currentPowerStage } : {}),
-    abilities: reconciledAbilities.appliedUpdates,
+    abilities: unknownArray(
+      characterStateValue.abilities,
+      "Process Result characterStateUpdates.abilities",
+    ),
   };
   const codexValue = requiredRecord(value.codexUpdates, "Process Result codexUpdates");
-  const rawCodexUpdates: LivingStoryCodexUpdates = {
+  const codexUpdates: LivingStoryCodexUpdates = {
     characters: recordArray(codexValue.characters, "Process Result codexUpdates.characters"),
     factions: recordArray(codexValue.factions, "Process Result codexUpdates.factions"),
     locations: recordArray(codexValue.locations, "Process Result codexUpdates.locations"),
     artifacts: recordArray(codexValue.artifacts, "Process Result codexUpdates.artifacts"),
   };
-  const currentCodex = input.chapterPacket.livingStoryState.codex;
-  const chapterNumber = input.chapterPacket.chapterMission.number;
-  const reconciledCharacters = reconcileLivingStoryRecords({
-    entityKind: "character",
-    current: currentCodex.characters,
-    updates: rawCodexUpdates.characters,
-    chapterNumber,
-  });
-  const reconciledFactions = reconcileLivingStoryRecords({
-    entityKind: "faction",
-    current: currentCodex.factions,
-    updates: rawCodexUpdates.factions,
-    chapterNumber,
-  });
-  const reconciledLocations = reconcileLivingStoryRecords({
-    entityKind: "location",
-    current: currentCodex.locations,
-    updates: rawCodexUpdates.locations,
-    chapterNumber,
-  });
-  const reconciledArtifacts = reconcileLivingStoryRecords({
-    entityKind: "artifact",
-    current: currentCodex.artifacts,
-    updates: rawCodexUpdates.artifacts,
-    chapterNumber,
-  });
-  const codexUpdates: LivingStoryCodexUpdates = {
-    characters: reconciledCharacters.appliedUpdates,
-    factions: reconciledFactions.appliedUpdates,
-    locations: reconciledLocations.appliedUpdates,
-    artifacts: reconciledArtifacts.appliedUpdates,
-  };
-  const nextCodex: LivingStoryCodex = {
-    characters: reconciledCharacters.records,
-    factions: reconciledFactions.records,
-    locations: reconciledLocations.records,
-    artifacts: reconciledArtifacts.records,
-  };
-  const identityWarnings = [
-    ...reconciledAbilities.warnings,
-    ...reconciledCharacters.warnings,
-    ...reconciledFactions.warnings,
-    ...reconciledLocations.warnings,
-    ...reconciledArtifacts.warnings,
-  ];
 
   return {
     version: 1,
@@ -753,7 +824,7 @@ export function parseProcessingResult(
       value.repetitionFindings,
       "Process Result repetitionFindings",
     ),
-    identityWarnings,
+    identityWarnings: [],
     nextChapterHandoff,
     proposedLivingStoryState: buildProposedState(
       input,
@@ -766,8 +837,6 @@ export function parseProcessingResult(
       worldStateChanges,
       characterStateUpdates,
       codexUpdates,
-      reconciledAbilities.values,
-      nextCodex,
     ),
     repairRecommended: requiredBoolean(
       value.repairRecommended,
@@ -778,14 +847,13 @@ export function parseProcessingResult(
 
 const planSystemInstruction = (input: PlanChapterInput) => `You are the Plan Chapter boundary for Chapter Generation 1.0.
 Return one strict JSON object and no prose. Use the complete Chapter Packet exactly as supplied.
-Plan Chapter ${input.chapterPacket.chapterMission.number} at ${input.chapterPacket.arcChapterPosition.display}; these values are authoritative request context, not response fields.
 Decide chapter-specific rhythm, scene type, Fate Survival application, effects, progression, pacing, ending, and next handoff target together.
-If Fate Survival is disabled, applies must be false. The server attaches its configured status, visibility, and pressure.
+Copy Fate Survival visibility and pressure from the Story Constitution. If Fate Survival is disabled, applies must be false.
 Do not invent a legacy FatePressureTier when planningSignals does not provide one; omit selectedPressureTier in that case.
 For Chapter 1 without carried anchors, omit selectedScenePath and choose resolvedSceneType from worldBuilding, conflict, or progression.
-Do not return version, chapterNumber, arcChapterPosition, recentSceneTypes, run IDs, attempt IDs, timestamps, counts, or other technical fields. The server owns them from the request and Living Story State.
+The response chapterNumber must be ${input.chapterPacket.chapterMission.number} and arcChapterPosition must be ${JSON.stringify(input.chapterPacket.arcChapterPosition.display)}. Copy both exact values; do not use a prior chapter number from the story history.
 Required shape for this request:
-{"rhythmResponse":{"direction":"..."},"resolvedSceneType":"worldBuilding","fateSurvival":{"applies":false,"approach":"..."},"effects":[{"kind":"narration-metadata","intent":"...","required":true}],"sceneProgression":[{"purpose":"...","pacing":"..."}],"pacing":{"directive":"...","shape":"..."},"intendedEnding":"...","nextChapterHandoffTarget":"..."}`;
+{"version":1,"chapterNumber":${input.chapterPacket.chapterMission.number},"arcChapterPosition":${JSON.stringify(input.chapterPacket.arcChapterPosition.display)},"rhythmResponse":{"recentSceneTypes":[],"direction":"..."},"resolvedSceneType":"worldBuilding","fateSurvival":{"configured":true,"applies":false,"visibility":"partial","pressure":"immortal","approach":"..."},"effects":[{"kind":"narration-metadata","intent":"...","required":true}],"sceneProgression":[{"order":1,"purpose":"...","pacing":"..."}],"pacing":{"directive":"...","shape":"..."},"intendedEnding":"...","nextChapterHandoffTarget":"..."}`;
 
 const PROCESS_SYSTEM = `You are the Process Result boundary for Chapter Generation 1.0.
 Inspect the manifested chapter against the exact Chapter Packet and Chapter Plan. Return one strict JSON object and no prose.
@@ -793,9 +861,9 @@ Report new anchors, character/world changes, explicit character-state and Codex-
 characterChanges, worldStateChanges, threads.completed, and threads.changed must each be arrays of plain strings; use [] when there are no entries.
 characterStateUpdates.abilities and every codexUpdates collection must be arrays; use [] when there are no structured updates. Return currentPowerStage only when it genuinely changed. Preserve every discovered character, faction, location, artifact, or ability update in the matching structured collection as a JSON record.
 Use severity "serious" only for a defect that requires rewriting the manifested chapter. Set repairRecommended true only when at least one serious finding exists; do not force repair on a healthy run.
-Return only content-level proposals. Do not return IDs, chapter provenance, thread origins, timestamps, counts, proposedLivingStoryState, or other technical fields. The server clones and advances Living Story State, assigns stable identity, and attaches the current chapter to new facts.
+The server clones and advances Living Story State from this structured result; do not return a proposedLivingStoryState object.
 Required shape:
-{"newAnchors":{"worldBuilding":"...","conflict":"...","progression":"..."},"characterChanges":[],"worldStateChanges":[],"characterStateUpdates":{"abilities":[]},"codexUpdates":{"characters":[],"factions":[],"locations":[],"artifacts":[]},"threads":{"completed":[],"changed":[],"unresolved":["..."]},"missionCompletion":{"completed":true,"evidence":"..."},"continuityFindings":[],"repetitionFindings":[],"nextChapterHandoff":{"endState":{"location":"...","timeMarker":"...","charactersPresent":[],"mcCondition":"...","openTension":"..."},"completedEvents":[],"nextImmediateAction":"...","fingerprints":[{"actionType":"other","participants":[],"location":"...","outcome":"..."}]},"repairRecommended":false}`;
+{"version":1,"newAnchors":{"worldBuilding":"...","conflict":"...","progression":"..."},"characterChanges":[],"worldStateChanges":[],"characterStateUpdates":{"abilities":[]},"codexUpdates":{"characters":[],"factions":[],"locations":[],"artifacts":[]},"threads":{"completed":[],"changed":[],"unresolved":[{"description":"...","originChapter":1}]},"missionCompletion":{"completed":true,"evidence":"..."},"continuityFindings":[],"repetitionFindings":[],"nextChapterHandoff":{"version":1,"chapterNumber":1,"endState":{"location":"...","timeMarker":"...","charactersPresent":[],"mcCondition":"...","openTension":"..."},"completedEvents":[],"nextImmediateAction":"...","fingerprints":[{"actionType":"other","participants":[],"location":"...","outcome":"...","chapterNumber":1}]},"repairRecommended":false}`;
 
 const packetJson = (value: unknown) => JSON.stringify(value, null, 2);
 
@@ -878,7 +946,7 @@ export function createLiveChapterModelCalls(
       },
 
       async manifestChapter(input) {
-        const systemInstruction = `${input.consolidatedPermanentInstructions}\n\n=== LIVE MANIFEST BOUNDARY ===\nWrite one complete chapter from the exact packet and plan below. Return only ---CHAPTER_BLOCKS--- followed by NDJSON blocks. Every block must contain non-empty prose text. A block may optionally use type \"paragraph\" or \"dialogue\" and may optionally include structured presentation enrichment such as metadata, system, or worldCard. Do not return IDs, chapter numbers, word counts, run identity, state updates, summaries, plans, or analysis; the server owns technical fields and will normalize harmless formatting differences.`;
+        const systemInstruction = `${input.consolidatedPermanentInstructions}\n\n=== LIVE MANIFEST BOUNDARY ===\nWrite one complete chapter from the exact packet and plan below. Return only ---CHAPTER_BLOCKS--- followed by NDJSON blocks. Every block must contain a unique non-empty string \"id\", a \"type\" exactly equal to \"paragraph\" or \"dialogue\", and non-empty prose \"text\". A system or world-card event remains a paragraph block with its structured sibling object. This live boundary requires model-supplied block IDs even if an earlier general instruction says otherwise. Do not return a summary, state update, plan, word count, run identity, or analysis.`;
         const response = await generate({
           kind: "manifest",
           stage: "Manifest Chapter",
@@ -911,7 +979,7 @@ export function createLiveChapterModelCalls(
       },
 
       async repairChapter(input) {
-        const systemInstruction = `${input.chapterPacket.generationRules.permanentWritingInstructions}\n\n=== SERIOUS-ISSUE REPAIR ===\nRewrite the complete chapter only to correct the serious processing findings. Preserve sound prose and all canon that is not implicated. Return only ---CHAPTER_BLOCKS--- followed by the full repaired NDJSON chapter. Every block must contain non-empty prose text. Type and presentation enrichment remain optional, and code supplies block IDs and other technical fields.`;
+        const systemInstruction = `${input.chapterPacket.generationRules.permanentWritingInstructions}\n\n=== SERIOUS-ISSUE REPAIR ===\nRewrite the complete chapter only to correct the serious processing findings. Preserve sound prose and all canon that is not implicated. Return only ---CHAPTER_BLOCKS--- followed by the full repaired NDJSON chapter. Every block must contain a unique non-empty string \"id\", a \"type\" exactly equal to \"paragraph\" or \"dialogue\", and non-empty prose \"text\". A system or world-card event remains a paragraph block with its structured sibling object. This repair boundary requires model-supplied block IDs even if an earlier general instruction says otherwise.`;
         const response = await generate({
           kind: "repair",
           stage: "Repair Chapter",

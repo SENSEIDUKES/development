@@ -4,12 +4,13 @@
 - **Source location:** `src/components/ReaderChamber.tsx` (verified on `origin/main` @ `7d44ecc`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-11
+- **Last Workshop update:** 2026-08-13
 - **Last source comparison:** 2026-08-11
 - **Replica status:** faithful replica
 
 ## Workshop history
 
+- **2026-08-13:** Added an isolated, disposable one-chapter entry at the existing Reader/Codex adapter boundary. A successfully processed direct Chapter Generation result now opens the unchanged Reader Chamber and complete Reader Codex with one prose chapter and one processed-state snapshot. The existing five-chapter adapter, exact-five completion guard, navigation, highlighting, layouts, and Codex internals remain unchanged. Verified with a real Gemini-generated Timeless chapter in a protected Preview.
 - **2026-08-11:** Migrated the complete production Reader Codex as its own Workshop feature and restored the Reader Chamber integration: the existing Codex control now opens the production-style sheet over the still-mounted Reader, all six Codex pages are present, and prose highlighting/reveal-card resolution again use the story's Codex terms. The generated five-chapter session keeps its disposable, chapter-scoped snapshot boundary; generation and `batchToReaderAdapter.ts` were not changed.
 - **2026-08-10:** Completed the Pass 3 connection from Chapter Generation: a completed five-chapter batch now opens as a disposable real Reader Chamber session with repaired final prose, Chapters 1–5 navigation, structured blocks/system panels, chapter-scoped cumulative Reader Codex snapshots, chapter and batch token totals (including repair/retry usage), five-chapter text export, and selected-chapter reuse of the existing four-stage Diagnostics. The standalone four-chapter story is now explicitly labeled as the no-batch mock fallback.
 - **2026-08-10:** Integrated Pass 3 data bridge (`batchToReaderAdapter.ts`) connecting five-chapter generation batches to the Reader Chamber without altering Pass 2 chapter generation code. Added `ReaderCodexView` to display living Codex memory (characters, factions, locations, artifacts, unresolved plot threads) when switching to the Codex tab in the Reader Chamber.
@@ -63,7 +64,7 @@ shared/                       — code genuinely identical between the two forks
                                 WorldCardEvent/FateResultData, StoryCuePayload, ContextManifest,
                                 ReaderPreferences, StoryWorld + Codex entities, StoryArc, Bookmark,
                                 and production-narrow Reader/Codex story patch contracts
-  batchToReaderAdapter.ts     — immutable disposable Pass 2 batch to Reader/Codex session boundary
+  batchToReaderAdapter.ts     — immutable disposable accepted single-chapter and exact-five batch Reader/Codex session boundary
   reader-chamber.css          — reader-specific classes/vars/keyframes extracted from source
                                 src/index.css (imported by the preview Workspace)
   stubs.ts                    — mock external store (useAppStore + selectIsGenerating, no

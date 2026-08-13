@@ -356,8 +356,21 @@ const extractBalancedObjects = (text: string): JsonRecord[] => {
 };
 
 const BLOCK_ATMOSPHERE_CATEGORIES = ["wind", "crowd", "waves", "rain", "combat", "noise"] as const;
+const BEAST_EVENT_TYPES = ["reveal", "power-up", "technique", "injury", "turning-point", "death", "breakthrough"] as const;
+const BEAST_SIZES = ["tiny", "small", "medium", "large", "giant", "colossal"] as const;
 const SYSTEM_EVENT_KINDS = ["status", "skill_acquired", "level_up", "quest", "appraisal", "fate_result"] as const;
+const SYSTEM_PROMPT_TYPES = [
+  "neutral", "codex_update", "friendly_scan", "enemy_scan", "warning", "critical_danger",
+  "progression", "breakthrough", "reward", "romance", "karmic_bond", "mystery", "fate_event",
+  "corruption", "death_event", "quest_update", "choice_consequence", "system_error",
+] as const;
+const FATE_RESULT_OUTCOMES = ["FATE AVERTED", "FATE SCARRED", "DOOM MANIFESTED"] as const;
 const WORLD_CARD_ENTITY_TYPES = ["character", "creature", "artifact", "location", "faction", "system", "fate_event"] as const;
+const WORLD_CARD_AUDIO_TYPES = [
+  "tts_line", "roar", "call", "hiss", "howl", "screech", "wingbeat", "unsheathe",
+  "metallic_ring", "reload", "activation_hum", "resonance", "awakening", "pulse",
+  "magical_activation", "signature", "chant", "chime",
+] as const;
 
 const optionalMetadataStringArray = (value: unknown, label: string): string[] | undefined => {
   if (value === undefined || value === null) return undefined;
@@ -420,6 +433,32 @@ const parseBlockMetadata = (value: unknown, label: string): StoryBlockMetadata |
     : typeof metadata.theme === "string"
       ? requiredString(metadata.theme, `${label}.theme`)
       : stringArray(metadata.theme, `${label}.theme`);
+  const beastEvent = metadata.beastEvent === undefined
+    ? undefined
+    : (() => {
+        const event = requiredRecord(metadata.beastEvent, `${label}.beastEvent`);
+        const type = requiredString(event.type, `${label}.beastEvent.type`);
+        if (!BEAST_EVENT_TYPES.includes(type as (typeof BEAST_EVENT_TYPES)[number])) {
+          throw new Error(`${label}.beastEvent.type is unsupported.`);
+        }
+        const profile = requiredRecord(event.profile, `${label}.beastEvent.profile`);
+        const size = optionalValidatedString(profile.size, `${label}.beastEvent.profile.size`);
+        if (size && !BEAST_SIZES.includes(size as (typeof BEAST_SIZES)[number])) {
+          throw new Error(`${label}.beastEvent.profile.size is unsupported.`);
+        }
+        return {
+          type: type as NonNullable<StoryBlockMetadata["beastEvent"]>["type"],
+          profile: {
+            ...(size ? { size: size as (typeof BEAST_SIZES)[number] } : {}),
+            ...(optionalValidatedString(profile.bodyType, `${label}.beastEvent.profile.bodyType`) ? { bodyType: optionalValidatedString(profile.bodyType, `${label}.beastEvent.profile.bodyType`) } : {}),
+            ...(optionalValidatedString(profile.element, `${label}.beastEvent.profile.element`) ? { element: optionalValidatedString(profile.element, `${label}.beastEvent.profile.element`) } : {}),
+            ...(optionalValidatedString(profile.movement, `${label}.beastEvent.profile.movement`) ? { movement: optionalValidatedString(profile.movement, `${label}.beastEvent.profile.movement`) } : {}),
+            ...(optionalValidatedString(profile.intelligence, `${label}.beastEvent.profile.intelligence`) ? { intelligence: optionalValidatedString(profile.intelligence, `${label}.beastEvent.profile.intelligence`) } : {}),
+            ...(optionalValidatedString(profile.threatTier, `${label}.beastEvent.profile.threatTier`) ? { threatTier: optionalValidatedString(profile.threatTier, `${label}.beastEvent.profile.threatTier`) } : {}),
+            ...(optionalValidatedString(profile.signatureSound, `${label}.beastEvent.profile.signatureSound`) ? { signatureSound: optionalValidatedString(profile.signatureSound, `${label}.beastEvent.profile.signatureSound`) } : {}),
+          },
+        };
+      })();
 
   return {
     ...(optionalValidatedString(metadata.sceneType, `${label}.sceneType`) ? { sceneType: optionalValidatedString(metadata.sceneType, `${label}.sceneType`) } : {}),
@@ -439,6 +478,7 @@ const parseBlockMetadata = (value: unknown, label: string): StoryBlockMetadata |
     ...(optionalValidatedString(metadata.speakerRole, `${label}.speakerRole`) ? { speakerRole: optionalValidatedString(metadata.speakerRole, `${label}.speakerRole`) } : {}),
     ...(entities ? { entities } : {}),
     ...(music ? { music } : {}),
+    ...(beastEvent ? { beastEvent } : {}),
   };
 };
 
@@ -460,14 +500,33 @@ const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefine
           };
         })
       : (() => { throw new Error(`${label}.rows must be an array.`); })();
+  const promptType = optionalValidatedString(event.promptType, `${label}.promptType`);
+  const fateResult = event.fateResult === undefined
+    ? undefined
+    : (() => {
+        const result = requiredRecord(event.fateResult, `${label}.fateResult`);
+        const outcome = requiredString(result.outcome, `${label}.fateResult.outcome`);
+        if (!FATE_RESULT_OUTCOMES.includes(outcome as (typeof FATE_RESULT_OUTCOMES)[number])) {
+          throw new Error(`${label}.fateResult.outcome is unsupported.`);
+        }
+        return {
+          outcome: outcome as (typeof FATE_RESULT_OUTCOMES)[number],
+          timelineScar: requiredString(result.timelineScar, `${label}.fateResult.timelineScar`),
+          permanentCosts: stringArray(result.permanentCosts, `${label}.fateResult.permanentCosts`),
+          ...(optionalValidatedString(result.newStoryState, `${label}.fateResult.newStoryState`) ? { newStoryState: optionalValidatedString(result.newStoryState, `${label}.fateResult.newStoryState`) } : {}),
+          ...(result.newActiveStats === undefined ? {} : { newActiveStats: stringArray(result.newActiveStats, `${label}.fateResult.newActiveStats`) }),
+          ...(optionalValidatedString(result.genreShift, `${label}.fateResult.genreShift`) ? { genreShift: optionalValidatedString(result.genreShift, `${label}.fateResult.genreShift`) } : {}),
+        };
+      })();
   return {
     kind: kind as SystemEvent["kind"],
     title: requiredString(event.title, `${label}.title`),
-    ...(optionalValidatedString(event.promptType, `${label}.promptType`)
-      ? { promptType: optionalValidatedString(event.promptType, `${label}.promptType`) as SystemEvent["promptType"] }
+    ...(promptType && SYSTEM_PROMPT_TYPES.includes(promptType as (typeof SYSTEM_PROMPT_TYPES)[number])
+      ? { promptType: promptType as SystemEvent["promptType"] }
       : {}),
     ...(rows ? { rows } : {}),
     ...(optionalValidatedString(event.rarity, `${label}.rarity`) ? { rarity: optionalValidatedString(event.rarity, `${label}.rarity`) } : {}),
+    ...(fateResult ? { fateResult } : {}),
   };
 };
 
@@ -478,6 +537,33 @@ const parseWorldCardEvent = (value: unknown, label: string): WorldCardEvent | un
   if (!WORLD_CARD_ENTITY_TYPES.includes(entityType as (typeof WORLD_CARD_ENTITY_TYPES)[number])) {
     throw new Error(`${label}.entityType is unsupported.`);
   }
+  const audioType = optionalValidatedString(event.audioType, `${label}.audioType`);
+  if (audioType && !WORLD_CARD_AUDIO_TYPES.includes(audioType as (typeof WORLD_CARD_AUDIO_TYPES)[number])) {
+    throw new Error(`${label}.audioType is unsupported.`);
+  }
+  const sound = event.sound === undefined
+    ? undefined
+    : (() => {
+        const hints = requiredRecord(event.sound, `${label}.sound`);
+        const size = optionalValidatedString(hints.size, `${label}.sound.size`);
+        if (size && !BEAST_SIZES.includes(size as (typeof BEAST_SIZES)[number])) {
+          throw new Error(`${label}.sound.size is unsupported.`);
+        }
+        const assetFamily = optionalValidatedString(hints.assetFamily, `${label}.sound.assetFamily`);
+        if (assetFamily && assetFamily !== "weapon" && assetFamily !== "relic") {
+          throw new Error(`${label}.sound.assetFamily is unsupported.`);
+        }
+        return {
+          ...(optionalValidatedString(hints.assetId, `${label}.sound.assetId`) ? { assetId: optionalValidatedString(hints.assetId, `${label}.sound.assetId`) } : {}),
+          ...(optionalValidatedString(hints.element, `${label}.sound.element`) ? { element: optionalValidatedString(hints.element, `${label}.sound.element`) } : {}),
+          ...(size ? { size: size as (typeof BEAST_SIZES)[number] } : {}),
+          ...(optionalValidatedString(hints.threatTier, `${label}.sound.threatTier`) ? { threatTier: optionalValidatedString(hints.threatTier, `${label}.sound.threatTier`) } : {}),
+          ...(assetFamily ? { assetFamily: assetFamily as "weapon" | "relic" } : {}),
+          ...(optionalValidatedString(hints.weaponType, `${label}.sound.weaponType`) ? { weaponType: optionalValidatedString(hints.weaponType, `${label}.sound.weaponType`) } : {}),
+          ...(optionalValidatedString(hints.artifactCategory, `${label}.sound.artifactCategory`) ? { artifactCategory: optionalValidatedString(hints.artifactCategory, `${label}.sound.artifactCategory`) } : {}),
+          ...(hints.tags === undefined ? {} : { tags: stringArray(hints.tags, `${label}.sound.tags`) }),
+        };
+      })();
   return {
     ...(optionalValidatedString(event.id, `${label}.id`) ? { id: optionalValidatedString(event.id, `${label}.id`) } : {}),
     entityType: entityType as WorldCardEvent["entityType"],
@@ -486,6 +572,8 @@ const parseWorldCardEvent = (value: unknown, label: string): WorldCardEvent | un
     ...(optionalValidatedString(event.imageUrl, `${label}.imageUrl`) ? { imageUrl: optionalValidatedString(event.imageUrl, `${label}.imageUrl`) } : {}),
     ...(optionalValidatedString(event.quote, `${label}.quote`) ? { quote: optionalValidatedString(event.quote, `${label}.quote`) } : {}),
     ...(optionalValidatedString(event.audioText, `${label}.audioText`) ? { audioText: optionalValidatedString(event.audioText, `${label}.audioText`) } : {}),
+    ...(audioType ? { audioType: audioType as WorldCardEvent["audioType"] } : {}),
+    ...(sound ? { sound } : {}),
     ...(optionalValidatedString(event.voicePreset, `${label}.voicePreset`) ? { voicePreset: optionalValidatedString(event.voicePreset, `${label}.voicePreset`) } : {}),
     ...(optionalValidatedString(event.codexEntryId, `${label}.codexEntryId`) ? { codexEntryId: optionalValidatedString(event.codexEntryId, `${label}.codexEntryId`) } : {}),
     ...(optionalValidatedString(event.rarity, `${label}.rarity`) ? { rarity: optionalValidatedString(event.rarity, `${label}.rarity`) } : {}),

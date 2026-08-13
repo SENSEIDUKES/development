@@ -114,7 +114,21 @@ const manifestedResponse = [
     id: "c1-p1",
     type: "paragraph",
     text: "Rain moved across the court roof while Rin waited beneath the witness bell.",
-    metadata: { mode: "narration", atmosphereCategory: "rain" },
+    metadata: {
+      mode: "narration",
+      atmosphereCategory: "rain",
+      beastEvent: {
+        type: "reveal",
+        profile: { size: "large", bodyType: "dragon", signatureSound: "thunder-purr" },
+      },
+    },
+    worldCard: {
+      entityType: "artifact",
+      entityName: "Witness Bell",
+      displayTitle: "The Witness Bell",
+      audioType: "signature",
+      sound: { assetId: "bell-oath-01", assetFamily: "relic", tags: ["bell", "oath"] },
+    },
   }),
   JSON.stringify({
     id: "c1-p2",
@@ -126,7 +140,17 @@ const manifestedResponse = [
     id: "c1-p3",
     type: "system",
     text: "The Celestial Library marked the broken oath.",
-    system: { kind: "appraisal", promptType: "mystery", title: "Oath Seam Identified" },
+    system: {
+      kind: "fate_result",
+      promptType: "fate_event",
+      title: "Oath Seam Identified",
+      fateResult: {
+        outcome: "FATE SCARRED",
+        timelineScar: "The court remembers Rin's defiance.",
+        permanentCosts: ["The magistrate marks Rin as a threat."],
+        newStoryState: "Rin is detained beneath the Rain Court.",
+      },
+    },
   }),
 ].join("\n");
 
@@ -448,6 +472,19 @@ describe("live Chapter Generation model boundaries", () => {
       }),
     ]);
     expect(run.manifestedChapter.blocks?.[2].type).toBe("paragraph");
+    expect(run.manifestedChapter.blocks?.[0].metadata?.beastEvent).toEqual({
+      type: "reveal",
+      profile: { size: "large", bodyType: "dragon", signatureSound: "thunder-purr" },
+    });
+    expect(run.manifestedChapter.blocks?.[0].worldCard).toMatchObject({
+      audioType: "signature",
+      sound: { assetId: "bell-oath-01", assetFamily: "relic", tags: ["bell", "oath"] },
+    });
+    expect(run.manifestedChapter.blocks?.[2].system?.fateResult).toMatchObject({
+      outcome: "FATE SCARRED",
+      timelineScar: "The court remembers Rin's defiance.",
+      permanentCosts: ["The magistrate marks Rin as a threat."],
+    });
     expect(run.manifestedChapter.wordCount).toBeUndefined();
     expect(run.manifestedChapter.manifestStatus).toBeUndefined();
     expect(run.manifestedChapter.generatedContent).toContain("Rain moved across the court roof");
@@ -512,6 +549,29 @@ describe("live Chapter Generation model boundaries", () => {
       "Repair Chapter",
       "Process Result (repaired chapter)",
     ]);
+  });
+
+  it("drops unsupported optional system styling without rejecting readable prose", async () => {
+    const base = new RecordingProvider();
+    const provider: ChapterTextModelProvider = {
+      provider: base.provider,
+      model: base.model,
+      async generate(request) {
+        const result = await base.generate(request);
+        return request.kind === "manifest"
+          ? { ...result, text: result.text.replace('"promptType":"fate_event"', '"promptType":"unsupported_panel"') }
+          : result;
+      },
+    };
+    const calls = createLiveChapterModelCalls(provider, {
+      temperature: 1,
+      maxOutputTokens: 16_384,
+    });
+
+    const run = await runChapterPipelineAsync({ chapterPacket: buildPacket(), model: calls.model });
+
+    expect(run.manifestedChapter.generatedContent).toContain("The Celestial Library marked the broken oath.");
+    expect(run.manifestedChapter.blocks?.[2].system?.promptType).toBeUndefined();
   });
 
   it("stops cleanly when a real model boundary fails", async () => {

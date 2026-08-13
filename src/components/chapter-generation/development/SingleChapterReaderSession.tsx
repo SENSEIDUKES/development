@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import ReaderChamber from "../../reader-chamber/development/ReaderChamber";
 import { CodexSheetOverlay } from "../../reader-codex/development/CodexSheetOverlay";
 import {
@@ -35,7 +35,6 @@ export function SingleChapterReaderSession({
   const [isCodexOpen, setIsCodexOpen] = useState(false);
   const [storyPatch, setStoryPatch] = useState<Partial<StoryWorld>>({});
   const [memoryPatch, setMemoryPatch] = useState<StoryMemory | null>(null);
-  const currentStoryRef = useRef<StoryWorld | null>(null);
 
   const activeMemory = memoryPatch ?? session.codexSnapshots[0].memory;
   const readerStory: StoryWorld = {
@@ -50,12 +49,10 @@ export function SingleChapterReaderSession({
     activeMemory,
     selectedChapterNum,
   );
-  currentStoryRef.current = readerStory;
 
   const updateStoryFields: UpdateStoryFields = async (storyId, updates) => {
     if (storyId !== session.story.id) return;
-    const currentStory = currentStoryRef.current ?? readerStory;
-    const patch = typeof updates === "function" ? updates(currentStory) : updates;
+    const patch = typeof updates === "function" ? updates(readerStory) : updates;
     if (patch.memory) setMemoryPatch(patch.memory);
     const { memory: _memory, ...storyFields } = patch;
     setStoryPatch(current => ({ ...current, ...storyFields }));

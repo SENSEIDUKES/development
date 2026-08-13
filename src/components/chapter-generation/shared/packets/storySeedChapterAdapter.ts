@@ -23,7 +23,11 @@ import {
 } from "./livingStoryState";
 import {
   canonicalLivingStoryEntityKey,
-  mergeLivingStoryRecords,
+  ensureStableLivingStoryEntityIds,
+  livingStoryRecordFromDescriptiveLabel,
+  reconcileLivingStoryRecords,
+  splitDescriptiveLivingStoryEntityLabel,
+  type LivingStoryIdentityWarning,
 } from "./livingStoryEntityIdentity";
 import { storyConstitutionFromSeed } from "./storyConstitution";
 
@@ -137,39 +141,60 @@ const factionRecord = (faction: StorySeedFaction): Record<string, unknown> => ({
 });
 
 const mergeNamedRecords = (
+  entityKind: string,
   primary: Record<string, unknown>[],
   additionalNames: string[],
   source: string,
-): Record<string, unknown>[] => mergeLivingStoryRecords(
-  primary,
-  uniqueStrings(additionalNames).map(name => ({ name, source })),
-);
+): { records: Record<string, unknown>[]; warnings: LivingStoryIdentityWarning[] } =>
+  reconcileLivingStoryRecords({
+    entityKind,
+    current: primary,
+    updates: uniqueStrings(additionalNames)
+      .map(name => livingStoryRecordFromDescriptiveLabel(name, source)),
+    chapterNumber: 0,
+    createdBy: "story-seed-blueprint",
+  });
 
 const buildStartingLivingStoryState = (
   seed: StorySeedInput,
   blueprint: WorldBlueprint,
-): LivingStoryState => {
+  sourceBlueprint: WorldBlueprint,
+): { state: LivingStoryState; identityWarnings: LivingStoryIdentityWarning[] } => {
   const foundations = seed.world.optional.worldFoundations;
   const identity = seed.world.optional.worldIdentity;
   const mainCharacter = foundations.mainCharacter;
-  const mainCharacterName = nonEmpty(blueprint.mainCharacter?.name, mainCharacter?.name);
+  const blueprintMainCharacter = sourceBlueprint.mainCharacter?.name
+    ? splitDescriptiveLivingStoryEntityLabel(sourceBlueprint.mainCharacter.name)
+    : undefined;
+  const mainCharacterName = nonEmpty(mainCharacter?.name, blueprintMainCharacter?.name);
+  const mainCharacterDescriptionMatches = Boolean(
+    blueprintMainCharacter?.name
+    && canonicalLivingStoryEntityKey(blueprintMainCharacter.name)
+      === canonicalLivingStoryEntityKey(mainCharacterName),
+  );
   const currentPowerStage = foundations.abilities?.startingPowerConcept?.trim() ?? "";
   const startingAbilityName = nonEmpty(
     foundations.abilities?.uniquePath,
     foundations.abilities?.startingPowerConcept,
   );
   const abilities = foundations.abilities && startingAbilityName
-    ? [{
+    ? ensureStableLivingStoryEntityIds("ability", [{
         name: startingAbilityName,
         description: foundations.abilities.startingPowerConcept,
         source: "StorySeedInput.world.optional.worldFoundations.abilities",
         authorContextNote: foundations.abilities.uniquePath,
-      }]
+      }])
     : [];
 
   const mainCharacterRecord = mainCharacterName
     ? [{
         name: mainCharacterName,
+        ...(mainCharacterDescriptionMatches && blueprintMainCharacter?.originalLabel
+          ? { aliases: [blueprintMainCharacter.originalLabel] }
+          : {}),
+        ...(mainCharacterDescriptionMatches && blueprintMainCharacter?.descriptiveInformation
+          ? { blueprintDescription: blueprintMainCharacter.descriptiveInformation }
+          : {}),
         role: "main_character",
         startingIdentity: mainCharacter?.startingIdentity,
         personality: blueprint.mainCharacter?.personality || mainCharacter?.personality,
@@ -184,63 +209,91 @@ const buildStartingLivingStoryState = (
       }]
     : [];
   const characters = mergeNamedRecords(
+    "character",
     [
       ...mainCharacterRecord,
       ...(foundations.additionalCharacters ?? []).map(characterRecord),
     ],
-    blueprint.initialCharacters,
+    [...blueprint.initialCharacters, ...sourceBlueprint.initialCharacters],
     "WorldBlueprint.initialCharacters",
   );
   const factions = mergeNamedRecords(
+    "faction",
     (foundations.factions ?? []).map(factionRecord),
-    blueprint.majorFactions,
+    [...blueprint.majorFactions, ...sourceBlueprint.majorFactions],
     "WorldBlueprint.majorFactions",
   );
-  const startingLocation = nonEmpty(blueprint.startingLocation, identity.startingLocation);
-  const locations = startingLocation
-    ? [{
-        name: startingLocation,
+  const authoredLocation = identity.startingLocation?.trim();
+  const blueprintLocations = uniqueStrings([
+    blueprint.startingLocation,
+    sourceBlueprint.startingLocation,
+  ]);
+  const locationUpdates = blueprintLocations.map(blueprintLocation => ({
+        ...livingStoryRecordFromDescriptiveLabel(
+          blueprintLocation,
+          "World Blueprint startingLocation",
+          { location: true },
+        ),
         description: blueprint.worldOverview,
         societyStructure: nonEmpty(blueprint.societyStructure, identity.societyStructure),
         worldType: identity.worldType,
-        source: "Story Seed world identity + World Blueprint",
-      }]
-    : [];
+      }));
+  const locations = reconcileLivingStoryRecords({
+    entityKind: "location",
+    current: authoredLocation
+      ? [{
+          name: authoredLocation,
+          societyStructure: identity.societyStructure,
+          worldType: identity.worldType,
+          source: "StorySeedInput.world.optional.worldIdentity.startingLocation",
+        }]
+      : [],
+    updates: locationUpdates,
+    chapterNumber: 0,
+    createdBy: "story-seed-blueprint",
+  });
 
   return {
-    position: createArcChapterPosition(1),
-    contextBlocks: [],
-    recentFingerprints: [],
-    characterState: {
-      currentPowerStage,
-      abilities,
+    state: {
+      position: createArcChapterPosition(1),
+      contextBlocks: [],
+      recentFingerprints: [],
+      characterState: {
+        currentPowerStage,
+        abilities,
+      },
+      threads: {
+        unresolved: uniqueStrings([
+          ...blueprint.majorMysteries,
+          ...blueprint.unresolvedPlotThreads,
+        ]).map(description => ({
+          description,
+          originChapter: 0,
+        })),
+        resolved: [],
+      },
+      codex: {
+        characters: characters.records,
+        factions: factions.records,
+        locations: locations.records,
+        artifacts: [],
+      },
+      scene: {
+        worldBuildingSeed: nonEmpty(
+          blueprint.majorMysteries[0],
+          blueprint.unresolvedPlotThreads[0],
+          blueprint.worldOverview,
+          blueprint.firstArcPromise,
+        ),
+        recentSceneTypes: [] as SceneType[],
+      },
+      carriedChanges: [],
     },
-    threads: {
-      unresolved: uniqueStrings([
-        ...blueprint.majorMysteries,
-      ...blueprint.unresolvedPlotThreads,
-      ]).map(description => ({
-        description,
-        originChapter: 0,
-      })),
-      resolved: [],
-    },
-    codex: {
-      characters,
-      factions,
-      locations,
-      artifacts: [],
-    },
-    scene: {
-      worldBuildingSeed: nonEmpty(
-        blueprint.majorMysteries[0],
-        blueprint.unresolvedPlotThreads[0],
-        blueprint.worldOverview,
-        blueprint.firstArcPromise,
-      ),
-      recentSceneTypes: [] as SceneType[],
-    },
-    carriedChanges: [],
+    identityWarnings: [
+      ...characters.warnings,
+      ...factions.warnings,
+      ...locations.warnings,
+    ],
   };
 };
 
@@ -260,12 +313,16 @@ const buildChapterMissionFromSeed = (
   const premise = selected?.[1]?.trim() ?? seed.story.required.premise;
   const source = selected?.[0] ?? "StorySeedInput.story.required.premise";
   const mainCharacterName = nonEmpty(
-    blueprint.mainCharacter?.name,
     seed.world.optional.worldFoundations.mainCharacter?.name,
+    blueprint.mainCharacter?.name
+      ? splitDescriptiveLivingStoryEntityLabel(blueprint.mainCharacter.name).name
+      : undefined,
   );
   const startingLocation = nonEmpty(
-    blueprint.startingLocation,
     seed.world.optional.worldIdentity.startingLocation,
+    blueprint.startingLocation
+      ? splitDescriptiveLivingStoryEntityLabel(blueprint.startingLocation).name
+      : undefined,
   );
   const mcCondition = [
     seed.world.optional.worldFoundations.mainCharacter?.startingIdentity,
@@ -308,7 +365,10 @@ const buildChapterMissionFromSeed = (
   };
 };
 
-const buildMappingReport = (chapterMissionSource: string): StorySeedChapterMappingReport => ({
+const buildMappingReport = (
+  chapterMissionSource: string,
+  identityWarnings: LivingStoryIdentityWarning[],
+): StorySeedChapterMappingReport => ({
   chapterMissionSource,
   mapped: [
     {
@@ -324,6 +384,12 @@ const buildMappingReport = (chapterMissionSource: string): StorySeedChapterMappi
       message: "Chapter 1 begins with no previous chapters, handoff, fingerprints, or carried anchors.",
     },
     {
+      id: "code-owned-entity-identity",
+      source: "Story Seed records + descriptive World Blueprint labels",
+      target: "Living Story State Codex identity",
+      message: "Code separates canonical names from descriptive Blueprint text, preserves aliases, and assigns stable IDs before generation state begins.",
+    },
+    {
       id: "chapter-mission",
       source: chapterMissionSource,
       target: "Chapter Mission objective",
@@ -337,6 +403,12 @@ const buildMappingReport = (chapterMissionSource: string): StorySeedChapterMappi
     },
   ],
   unresolved: [
+    ...identityWarnings.map((warning, index) => ({
+      id: `entity-identity-ambiguity-${index + 1}`,
+      source: "Story Seed + World Blueprint entity labels",
+      target: `Starting Living Story State ${warning.entityKind} identity`,
+      message: warning.message,
+    })),
     {
       id: "blueprint-finalization-status",
       source: "WorldBlueprint.status",
@@ -400,7 +472,11 @@ export function adaptFinalizedStorySeedToChapterContracts(
   assertValidStorySeedInput(seed);
   const blueprint = normalizeWorldBlueprint(input.blueprint, seed);
   const temporaryInstruction = normalizeTemporaryInstruction(input.temporaryInstruction);
-  const livingStoryState = buildStartingLivingStoryState(seed, blueprint);
+  const { state: livingStoryState, identityWarnings } = buildStartingLivingStoryState(
+    seed,
+    blueprint,
+    input.blueprint,
+  );
   const { mission: chapterMission, source: chapterMissionSource } =
     buildChapterMissionFromSeed(seed, blueprint, temporaryInstruction);
 
@@ -415,6 +491,6 @@ export function adaptFinalizedStorySeedToChapterContracts(
       trace: CHAPTER_GENERATION_PACKAGE_TRACE,
       flags: CHAPTER_GENERATION_PACKAGE_FLAGS,
     },
-    mapping: buildMappingReport(chapterMissionSource),
+    mapping: buildMappingReport(chapterMissionSource, identityWarnings),
   };
 }

@@ -18,6 +18,7 @@ import type { ChapterUsageStage } from "../../components/chapter-generation/shar
 import type { ResolvedChapterGenerationConfig } from "./config";
 import { resolveConfiguredChapterModel } from "./config";
 import {
+  ChapterModelResponseValidationError,
   ChapterPlanValidationError,
   createLiveChapterModelCalls,
 } from "./modelCalls";
@@ -73,7 +74,10 @@ const safeFailureDetails = (
       reason: `The provider returned an empty response during ${stage}.`,
     };
   }
-  if (/invalid structured JSON|malformed|unbalanced|unsupported|must be|cannot be empty|wrong arc\/chapter/i.test(message)) {
+  if (/no content|no recoverable prose|provider refusal/i.test(message)) {
+    return { category: "provider-response", reason: message };
+  }
+  if (error instanceof ChapterModelResponseValidationError) {
     return { category: "validation", reason: message };
   }
   if (/\b429\b|rate.?limit|quota|resource.?exhausted/i.test(message)) {

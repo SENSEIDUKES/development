@@ -239,6 +239,7 @@ export function buildWorkshopProcessingResult(
       message: "The chapter continues from the packet's opening state and supplies a forward handoff.",
     }],
     repetitionFindings: [],
+    identityWarnings: [],
     nextChapterHandoff,
     proposedLivingStoryState,
     repairRecommended: false,

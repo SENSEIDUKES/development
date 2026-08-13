@@ -334,7 +334,7 @@ class ThreadProvenanceProvider implements ChapterTextModelProvider {
 }
 
 describe("live Chapter Generation model boundaries", () => {
-  it("uses the requested chapter in the Plan schema and reports every invalid Plan field", async () => {
+  it("supplies Plan chapter position in code and validates only creative fields", async () => {
     const packet = buildPacket();
     const position = createArcChapterPosition(3);
     packet.chapterMission.number = 3;
@@ -349,12 +349,24 @@ describe("live Chapter Generation model boundaries", () => {
 
     await calls.model.planChapter({ chapterPacket: packet, planningSignals: {} });
 
-    expect(provider.requests[0].systemInstruction).toContain('"chapterNumber":3');
-    expect(provider.requests[0].systemInstruction).toContain('"arcChapterPosition":"Arc 1 — Chapter 3/100"');
-    expect(provider.requests[0].systemInstruction).not.toContain('"chapterNumber":1');
+    expect(provider.requests[0].systemInstruction).toContain("Plan Chapter 3 at Arc 1 — Chapter 3/100");
+    expect(provider.requests[0].systemInstruction).toContain("Do not return version, chapterNumber, arcChapterPosition");
 
     const invalid = JSON.parse(planResponse);
     invalid.chapterNumber = 1;
+    invalid.arcChapterPosition = "Arc 99 — Chapter 99/99";
+    invalid.rhythmResponse.recentSceneTypes = "conflict";
+    packet.livingStoryState.scene.recentSceneTypes = ["progression"];
+    const normalized = parseChapterPlan(JSON.stringify(invalid), {
+      chapterPacket: packet,
+      planningSignals: {},
+    });
+    expect(normalized).toMatchObject({
+      chapterNumber: 3,
+      arcChapterPosition: "Arc 1 — Chapter 3/100",
+      rhythmResponse: { recentSceneTypes: ["progression"] },
+    });
+
     delete invalid.intendedEnding;
     try {
       parseChapterPlan(JSON.stringify(invalid), { chapterPacket: packet, planningSignals: {} });
@@ -363,9 +375,10 @@ describe("live Chapter Generation model boundaries", () => {
       expect(error).toBeInstanceOf(ChapterPlanValidationError);
       const validation = error as ChapterPlanValidationError;
       expect(validation.issues).toEqual(expect.arrayContaining([
-        expect.objectContaining({ field: "chapterNumber", expected: "3", received: "1" }),
         expect.objectContaining({ field: "intendedEnding", reason: "is missing" }),
       ]));
+      expect(validation.issues.map(issue => issue.field)).not.toContain("chapterNumber");
+      expect(validation.issues.map(issue => issue.field)).not.toContain("arcChapterPosition");
     }
   });
 
@@ -442,6 +455,11 @@ describe("live Chapter Generation model boundaries", () => {
       }),
     ]);
     expect(run.manifestedChapter.blocks?.[2].type).toBe("paragraph");
+    expect(run.manifestedChapter.wordCount).toBe(
+      run.manifestedChapter.generatedContent.trim().split(/\s+/).length,
+    );
+    expect(run.manifestedChapter.manifestStatus).toBe("needs-review");
+    expect(run.manifestedChapter.generatedContent).toContain("Rain moved across the court roof");
     expect(packet.livingStoryState).toEqual(originalState);
     expect(provider.requests[0].userPrompt).toContain("COMPLETE CHAPTER PACKET");
     expect(provider.requests[1].userPrompt).toContain("CHAPTER PLAN");
@@ -521,7 +539,7 @@ describe("live Chapter Generation model boundaries", () => {
     expect(calls.usage).toHaveLength(1);
   });
 
-  it("rejects a manifested chapter when one NDJSON block is malformed", async () => {
+  it("preserves surrounding prose when one NDJSON block is malformed", async () => {
     const base = new RecordingProvider();
     const provider: ChapterTextModelProvider = {
       provider: base.provider,
@@ -541,9 +559,12 @@ describe("live Chapter Generation model boundaries", () => {
       maxOutputTokens: 16_384,
     });
 
-    await expect(runChapterPipelineAsync({ chapterPacket: buildPacket(), model: calls.model }))
-      .rejects.toThrow(/malformed or unbalanced block/);
-    expect(calls.usage).toHaveLength(2);
+    const run = await runChapterPipelineAsync({ chapterPacket: buildPacket(), model: calls.model });
+    expect(run.manifestedChapter.blocks?.map(block => block.text)).toEqual(["Opening.", "Later."]);
+    expect(run.manifestedChapter.manifestDiagnostics?.warnings).toContainEqual(
+      expect.objectContaining({ code: "block-skipped" }),
+    );
+    expect(calls.usage).toHaveLength(3);
   });
 
   it("does not repair when the model recommends repair without a serious finding", async () => {
@@ -595,6 +616,8 @@ describe("live Chapter Generation model boundaries", () => {
         response.characterStateUpdates.abilities = [
           { name: "oath seam", rank: "refined" },
           "Fourth ability",
+          { name: "Fifth ability", rank: "new" },
+          "Sixth ability",
         ];
         return { ...result, text: JSON.stringify(response) };
       },
@@ -608,15 +631,30 @@ describe("live Chapter Generation model boundaries", () => {
       "First ability",
       { name: "OATH SEAM", rank: "initial" },
       "Third ability",
+      { id: "echo-art-past", name: "Echo Art", era: "past" },
+      { id: "echo-art-present", name: "Echo Art", era: "present" },
     ];
 
     const run = await runChapterPipelineAsync({ chapterPacket: packet, model: calls.model });
 
     expect(run.processingResult.proposedLivingStoryState.characterState.abilities).toEqual([
       "First ability",
-      { name: "oath seam", rank: "refined" },
+      {
+        id: "dev-ability-oath-seam",
+        name: "OATH SEAM",
+        rank: "refined",
+        lastMajorInvolvement: 1,
+      },
       "Third ability",
+      { id: "echo-art-past", name: "Echo Art", era: "past" },
+      { id: "echo-art-present", name: "Echo Art", era: "present" },
       "Fourth ability",
+      expect.objectContaining({
+        id: "dev-ability-fifth-ability",
+        name: "Fifth ability",
+        rank: "new",
+      }),
+      "Sixth ability",
     ]);
   });
 
@@ -666,6 +704,7 @@ describe("live Chapter Generation model boundaries", () => {
       aliases: ["Minister-Sui"],
       bio: "The court's quiet witness.",
       relationshipToMC: "Trusted after the hearing",
+      lastMajorInvolvement: 1,
     }]);
     expect(run.processingResult.proposedLivingStoryState.codex.factions).toEqual([{
       id: "seed-ninth-house",
@@ -673,6 +712,7 @@ describe("live Chapter Generation model boundaries", () => {
       aliases: ["Ninth House"],
       description: "An oath house marked for erasure.",
       status: "Fractured",
+      lastMajorInvolvement: 1,
     }]);
   });
 
@@ -756,7 +796,7 @@ describe("server model selection and failure handling", () => {
         provider: "gemini",
         model: "google/gemini-test",
         generate: async () => {
-          throw new Error("provider secret diagnostic");
+          throw new Error("provider secret diagnostic must be unsupported");
         },
       }),
     });
@@ -876,7 +916,7 @@ describe("server model selection and failure handling", () => {
         category: "validation",
         reason: expect.stringContaining("Plan Chapter validation failed"),
         validationIssues: expect.arrayContaining([
-          expect.objectContaining({ field: "chapterNumber", received: "missing" }),
+          expect.objectContaining({ field: "rhythmResponse", received: "missing" }),
           expect.objectContaining({ field: "sceneProgression", received: "missing" }),
         ]),
       },
@@ -928,8 +968,18 @@ describe("server model selection and failure handling", () => {
     expect(secondResult.run.chapterPacket.livingStoryState).toEqual(
       firstResult.run.processingResult.proposedLivingStoryState,
     );
+    expect(firstResult.run.processingResult.proposedLivingStoryState.codex.characters)
+      .toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: "dev-character-rin", name: "Rin" }),
+        expect.objectContaining({ id: "dev-character-magistrate-yun", name: "Magistrate Yun" }),
+      ]));
+    expect(secondResult.run.chapterPacket.livingStoryState.codex.characters)
+      .toEqual(firstResult.run.processingResult.proposedLivingStoryState.codex.characters);
     expect(secondResult.run.chapterPacket.livingStoryState.characterState.abilities)
-      .toContainEqual(expect.objectContaining({ name: "Oath Sight 1" }));
+      .toContainEqual(expect.objectContaining({
+        id: "dev-ability-oath-sight-1",
+        name: "Oath Sight 1",
+      }));
     expect(secondResult.run.chapterPacket.livingStoryState.codex.locations)
       .toContainEqual(expect.objectContaining({ name: "Rain Court Chamber 1" }));
     expect(providers).toHaveLength(2);

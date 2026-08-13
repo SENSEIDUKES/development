@@ -202,4 +202,58 @@ describe("finalized Story Seed to Chapter Generation adapter", () => {
     expect(serialized).not.toContain("workshop-fixture");
     expect(serialized).not.toContain("Wen Shu");
   });
+
+  it("normalizes descriptive Blueprint identities before they enter story state", () => {
+    const identitySeed = seed();
+    identitySeed.world.optional.worldIdentity.startingLocation = "The Lower Periphery";
+    identitySeed.world.optional.worldFoundations.mainCharacter = {
+      name: "Yan Shi",
+      startingIdentity: "Outer disciple",
+    };
+    identitySeed.world.optional.worldFoundations.additionalCharacters = [{
+      id: "seed-feng",
+      name: "Sect Master Feng",
+      role: "Outer sect master",
+    }];
+    const identityBlueprint = blueprint();
+    identityBlueprint.mainCharacter = {
+      ...identityBlueprint.mainCharacter!,
+      name: "Yan Shi (Protagonist)",
+    };
+    identityBlueprint.initialCharacters = [
+      "Yan Shi (Protagonist)",
+      "Sect Master Feng (The antagonist of the outer sect)",
+    ];
+    identityBlueprint.startingLocation =
+      "The Lower Periphery, a sprawling district beneath the outer sect";
+
+    const state = adaptFinalizedStorySeedToChapterContracts({
+      seed: identitySeed,
+      blueprint: identityBlueprint,
+    }).contracts.livingStoryState;
+
+    expect(state.codex.characters.map(character => character.name)).toEqual([
+      "Yan Shi",
+      "Sect Master Feng",
+    ]);
+    expect(state.codex.characters[0]).toMatchObject({
+      id: "dev-character-yan-shi",
+      name: "Yan Shi",
+      aliases: ["Yan Shi (Protagonist)"],
+      blueprintDescription: "Protagonist",
+    });
+    expect(state.codex.characters[1]).toMatchObject({
+      id: "seed-feng",
+      name: "Sect Master Feng",
+      aliases: ["Sect Master Feng (The antagonist of the outer sect)"],
+      blueprintDescription: "The antagonist of the outer sect",
+    });
+    expect(state.codex.locations).toHaveLength(1);
+    expect(state.codex.locations[0]).toMatchObject({
+      id: "dev-location-the-lower-periphery",
+      name: "The Lower Periphery",
+      aliases: ["The Lower Periphery, a sprawling district beneath the outer sect"],
+      blueprintDescription: "a sprawling district beneath the outer sect",
+    });
+  });
 });

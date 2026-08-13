@@ -3,7 +3,7 @@
  *
  * This package owns references and small shared wrappers only. It deliberately
  * does not retype prompt text: fixed prompts and block bodies remain in their
- * existing ported modules so their exact output stays unchanged.
+ * existing modules, including DEV's code-owned technical-field boundary.
  */
 import { CHAPTER_PROMPTS } from "../lib/chapterPrompts";
 import { buildChapterContract } from "../lib/chapterHandoff";

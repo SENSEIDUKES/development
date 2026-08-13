@@ -155,6 +155,32 @@ export interface StoryBlock {
   worldCard?: WorldCardEvent;
 }
 
+export type ChapterManifestStatus = "healthy" | "needs-review";
+
+export type ChapterManifestWarningCode =
+  | "block-id-generated"
+  | "block-type-normalized"
+  | "optional-field-removed"
+  | "block-skipped"
+  | "plain-prose-recovered"
+  | "under-minimum-word-count";
+
+/** Safe, exportable evidence of a non-fatal Manifest recovery. */
+export interface ChapterManifestWarning {
+  code: ChapterManifestWarningCode;
+  message: string;
+  blockIndex?: number;
+  blockId?: string;
+  field?: string;
+}
+
+export interface ChapterManifestDiagnostics {
+  status: ChapterManifestStatus;
+  wordCount: number;
+  minimumWordCount: number;
+  warnings: ChapterManifestWarning[];
+}
+
 export interface StoryCuePayload {
   sceneType?: string;
   environment?: string[];
@@ -270,6 +296,11 @@ export interface ChapterContent {
   userId?: string;
   chapterNumber: number;
   generatedContent: string;
+  /** Calculated from normalized prose by code; never accepted from a model response. */
+  wordCount?: number;
+  /** Under-length prose remains readable while this status makes review needs explicit. */
+  manifestStatus?: ChapterManifestStatus;
+  manifestDiagnostics?: ChapterManifestDiagnostics;
   blocks?: StoryBlock[];
   archivedBlocks?: StoryBlock[];
   summary?: string;

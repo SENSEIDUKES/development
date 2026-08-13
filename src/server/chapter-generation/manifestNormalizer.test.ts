@@ -93,6 +93,7 @@ describe("Manifest prose recovery", () => {
   });
 
   it("removes malformed optional enrichment without dropping its prose", () => {
+    const unsafeField = `<script>${"x".repeat(140)}</script>`;
     const result = normalizeManifestResponse(ndjson({
       id: "optional-errors",
       type: "paragraph",
@@ -107,6 +108,7 @@ describe("Manifest prose recovery", () => {
       system: { kind: "unknown", title: "Broken" },
       worldCard: { entityType: "place", entityName: "Court" },
       audio: { clip: "model-owned" },
+      [unsafeField]: true,
     }), 2);
 
     expect(result.blocks).toEqual([{
@@ -124,6 +126,9 @@ describe("Manifest prose recovery", () => {
       "worldCard",
       "audio",
     ]));
+    const sanitized = result.diagnostics.warnings.find(item => item.message.includes("block field"));
+    expect(sanitized?.field?.length).toBeLessThanOrEqual(96);
+    expect(sanitized?.message).not.toContain("<script>");
   });
 
   it("assigns stable IDs for missing, invalid, and duplicate IDs", () => {
@@ -167,6 +172,8 @@ describe("Manifest prose recovery", () => {
     expect(result.diagnostics.warnings).toContainEqual(expect.objectContaining({
       code: "block-skipped",
     }));
+    expect(result.diagnostics.warnings.find(item => item.code === "block-skipped"))
+      .not.toHaveProperty("blockIndex");
   });
 
   it("recovers multiple pretty-printed JSON blocks", () => {
@@ -200,6 +207,10 @@ describe("Manifest prose recovery", () => {
       "I cannot write this chapter because the request is disallowed.",
       1,
     )).toThrow("provider refusal");
+    expect(() => normalizeManifestResponse("```json\n```", 1)).toThrow("no content");
+    expect(() => normalizeManifestResponse(ndjson(
+      ...Array.from({ length: 501 }, (_, index) => ({ text: `Block ${index}.` })),
+    ), 1)).toThrow("too many blocks");
   });
 
   it("calculates the exact word count and preserves under-minimum prose for review", () => {

@@ -631,6 +631,8 @@ describe("live Chapter Generation model boundaries", () => {
       "First ability",
       { name: "OATH SEAM", rank: "initial" },
       "Third ability",
+      { id: "echo-art-past", name: "Echo Art", era: "past" },
+      { id: "echo-art-present", name: "Echo Art", era: "present" },
     ];
 
     const run = await runChapterPipelineAsync({ chapterPacket: packet, model: calls.model });
@@ -644,6 +646,8 @@ describe("live Chapter Generation model boundaries", () => {
         lastMajorInvolvement: 1,
       },
       "Third ability",
+      { id: "echo-art-past", name: "Echo Art", era: "past" },
+      { id: "echo-art-present", name: "Echo Art", era: "present" },
       "Fourth ability",
       expect.objectContaining({
         id: "dev-ability-fifth-ability",
@@ -792,7 +796,7 @@ describe("server model selection and failure handling", () => {
         provider: "gemini",
         model: "google/gemini-test",
         generate: async () => {
-          throw new Error("provider secret diagnostic");
+          throw new Error("provider secret diagnostic must be unsupported");
         },
       }),
     });

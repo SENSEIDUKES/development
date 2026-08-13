@@ -180,6 +180,10 @@ const warning = (
   ...(field ? { field } : {}),
 });
 
+const safeFieldLabel = (field: string): string => field
+  .replace(/[^A-Za-z0-9_.[\]-]/g, "")
+  .slice(0, 96) || "unnamed";
+
 const optionalStringField = (
   record: JsonRecord,
   field: string,
@@ -283,7 +287,8 @@ const parseMusic = (
   const trackId = optionalStringField(value, "trackId", context, "metadata.music.trackId");
   for (const field of Object.keys(value)) {
     if (!["mood", "region", "intensity", "customUrl", "trackId"].includes(field)) {
-      warning(context, "optional-field-removed", `Removed unsupported optional metadata.music.${field}.`, `metadata.music.${field}`);
+      const path = safeFieldLabel(`metadata.music.${field}`);
+      warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
     }
   }
   return {
@@ -374,7 +379,8 @@ const parseBlockMetadata = (
   ]);
   for (const field of Object.keys(value)) {
     if (!knownFields.has(field)) {
-      warning(context, "optional-field-removed", `Removed unsupported optional metadata.${field}.`, `metadata.${field}`);
+      const path = safeFieldLabel(`metadata.${field}`);
+      warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
     }
   }
   return Object.keys(metadata).length > 0 ? metadata : undefined;
@@ -455,7 +461,8 @@ const parseSystemEvent = (
   const fateResult = parseFateResult(value.fateResult, context);
   for (const field of Object.keys(value)) {
     if (!["kind", "title", "promptType", "rows", "rarity", "fateResult"].includes(field)) {
-      warning(context, "optional-field-removed", `Removed unsupported optional system.${field}.`, `system.${field}`);
+      const path = safeFieldLabel(`system.${field}`);
+      warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
     }
   }
   return {
@@ -500,7 +507,8 @@ const parseSoundHints = (
   if (tags) sound.tags = tags;
   for (const field of Object.keys(value)) {
     if (!["assetId", "element", "size", "threatTier", "assetFamily", "weaponType", "artifactCategory", "tags"].includes(field)) {
-      warning(context, "optional-field-removed", `Removed unsupported optional worldCard.sound.${field}.`, `worldCard.sound.${field}`);
+      const path = safeFieldLabel(`worldCard.sound.${field}`);
+      warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
     }
   }
   return Object.keys(sound).length > 0 ? sound : undefined;
@@ -545,7 +553,8 @@ const parseWorldCardEvent = (
   const sound = parseSoundHints(value.sound, context);
   for (const field of Object.keys(value)) {
     if (!["id", "entityType", "entityName", "displayTitle", "imageUrl", "quote", "audioText", "audioType", "sound", "voicePreset", "codexEntryId", "rarity"].includes(field)) {
-      warning(context, "optional-field-removed", `Removed unsupported optional worldCard.${field}.`, `worldCard.${field}`);
+      const path = safeFieldLabel(`worldCard.${field}`);
+      warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
     }
   }
   return {
@@ -626,7 +635,8 @@ const normalizeBlock = (
   const knownFields = new Set(["id", "type", "text", "metadata", "system", "worldCard"]);
   for (const field of Object.keys(record)) {
     if (!knownFields.has(field)) {
-      warning(context, "optional-field-removed", `Removed unsupported optional block field '${field}'.`, field);
+      const label = safeFieldLabel(field);
+      warning(context, "optional-field-removed", `Removed unsupported optional block field '${label}'.`, label);
     }
   }
   return {
@@ -665,10 +675,9 @@ export function normalizeManifestResponse(
   if (extracted.records.length > 500) throw new Error("Manifest Chapter returned too many blocks.");
   const warnings: ChapterManifestWarning[] = Array.from(
     { length: extracted.skippedBlocks },
-    (_, index) => ({
+    () => ({
       code: "block-skipped" as const,
       message: "Skipped an unreadable Manifest block while preserving surrounding prose.",
-      blockIndex: index,
     }),
   );
   if (extracted.plainProse) {

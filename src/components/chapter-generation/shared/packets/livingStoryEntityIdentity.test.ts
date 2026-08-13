@@ -178,4 +178,33 @@ describe("Living Story entity identity", () => {
       chapterNumber: 4,
     })).toThrow("contradicts deterministic current identity");
   });
+
+  it("rejects nameless updates with the safe validation message", () => {
+    expect(() => reconcileLivingStoryRecords({
+      entityKind: "character",
+      current: [],
+      updates: [{ status: "Unknown" }],
+      chapterNumber: 2,
+    })).toThrow("Process Result returned an entity update without a usable name.");
+  });
+
+  it("attaches code-owned chapter provenance to a newly created entity", () => {
+    const result = reconcileLivingStoryRecords({
+      entityKind: "location",
+      current: [],
+      updates: [{ name: "Crane Gate", state: "Opened" }],
+      chapterNumber: 7,
+    });
+
+    expect(result.records).toEqual([expect.objectContaining({
+      id: "dev-location-crane-gate",
+      name: "Crane Gate",
+      firstAppeared: 7,
+      lastMajorInvolvement: 7,
+      provenance: {
+        sourceChapterNumber: 7,
+        createdBy: "process-result",
+      },
+    })]);
+  });
 });

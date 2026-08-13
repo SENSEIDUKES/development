@@ -299,8 +299,10 @@ const nameMatches = (left: LivingStoryRecord, right: LivingStoryRecord): boolean
   const leftName = recordName(left);
   const rightName = recordName(right);
   if (!leftName || !rightName) return false;
-  const escaped = leftName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`^${escaped}\\s*(?:\\(|[—–,:])\\s*\\S`, "iu").test(rightName);
+  if (!rightName.toLocaleLowerCase().startsWith(leftName.toLocaleLowerCase())) return false;
+  const remainder = rightName.slice(leftName.length).trimStart();
+  if (!remainder || !["(", "—", "–", ",", ":"].includes(remainder[0])) return false;
+  return remainder.slice(1).trimStart().length > 0;
 };
 
 const recordIndexesMatchingIds = (

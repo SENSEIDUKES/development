@@ -299,6 +299,7 @@ service:
 - `src/components/chapter-generation/shared/packets/chapterMission.ts`
 - `src/components/chapter-generation/shared/packets/generationRules.ts`
 - `src/components/chapter-generation/shared/packets/index.ts`
+- `src/components/chapter-generation/shared/packets/livingStoryEntityIdentity.ts`
 - `src/components/chapter-generation/shared/packets/livingStoryState.ts`
 - `src/components/chapter-generation/shared/packets/storyConstitution.ts`
 - `src/components/chapter-generation/shared/packets/storySeedChapterAdapter.ts`

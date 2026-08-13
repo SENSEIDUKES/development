@@ -70,6 +70,25 @@ export class ChapterPlanValidationError extends Error {
   }
 }
 
+export class ChapterModelResponseValidationError extends Error {
+  readonly cause: unknown;
+
+  constructor(cause: unknown) {
+    super(cause instanceof Error ? cause.message : "The model response failed validation.");
+    this.name = "ChapterModelResponseValidationError";
+    this.cause = cause;
+  }
+}
+
+const asModelResponseValidation = <T>(parse: () => T): T => {
+  try {
+    return parse();
+  } catch (error) {
+    if (error instanceof ChapterPlanValidationError) throw error;
+    throw new ChapterModelResponseValidationError(error);
+  }
+};
+
 type JsonRecord = Record<string, unknown>;
 
 const isRecord = (value: unknown): value is JsonRecord =>
@@ -550,9 +569,13 @@ const reconcileAbilityValues = (
 
   for (const update of updates) {
     if (!isRecord(update)) {
-      const merged = mergeLivingStoryValues(values, [update]);
-      if (merged.length > values.length) appliedUpdates.push(structuredClone(update));
-      values = merged;
+      const nonRecords = values.filter(value => !isRecord(value));
+      const merged = mergeLivingStoryValues(nonRecords, [update]);
+      if (merged.length > nonRecords.length) {
+        const copied = structuredClone(update);
+        appliedUpdates.push(copied);
+        values = [...values, copied];
+      }
       continue;
     }
     const beforeRecords = values.filter(isRecord);
@@ -851,7 +874,7 @@ export function createLiveChapterModelCalls(
           maxOutputTokens: Math.min(options.maxOutputTokens, 4_096),
           estimatedInputBreakdown: estimateStageInputBreakdown(input, systemInstruction),
         });
-        return parseChapterPlan(response, input);
+        return asModelResponseValidation(() => parseChapterPlan(response, input));
       },
 
       async manifestChapter(input) {
@@ -866,7 +889,7 @@ export function createLiveChapterModelCalls(
           maxOutputTokens: options.maxOutputTokens,
           estimatedInputBreakdown: estimateStageInputBreakdown(input, systemInstruction),
         });
-        return parseManifestedChapter(response, input);
+        return asModelResponseValidation(() => parseManifestedChapter(response, input));
       },
 
       async processResult(input) {
@@ -884,7 +907,7 @@ export function createLiveChapterModelCalls(
           maxOutputTokens: Math.min(options.maxOutputTokens, 6_144),
           estimatedInputBreakdown: estimateStageInputBreakdown(input, PROCESS_SYSTEM),
         });
-        return parseProcessingResult(response, input);
+        return asModelResponseValidation(() => parseProcessingResult(response, input));
       },
 
       async repairChapter(input) {
@@ -899,7 +922,7 @@ export function createLiveChapterModelCalls(
           maxOutputTokens: options.maxOutputTokens,
           estimatedInputBreakdown: estimateStageInputBreakdown(input, systemInstruction),
         });
-        return parseManifestedChapter(response, input);
+        return asModelResponseValidation(() => parseManifestedChapter(response, input));
       },
     },
   };

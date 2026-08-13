@@ -94,7 +94,7 @@ const blueprint = (): WorldBlueprint => ({
   },
   mcProfile: "The banished seventh heir remembers six failed timelines.",
   majorFactions: ["Vermilion Tribunal", "Regent's Bronze Guard"],
-  initialCharacters: ["minister-sui", "Regent Zhao"],
+  initialCharacters: ["Minister Sui", "Regent Zhao"],
   majorMysteries: ["Who taught the dead heaven to remember broken oaths?"],
   firstArcPromise: "Jin Rui must survive the succession hearing and identify who changes the seventh timeline.",
   tropeRules: "Foreknowledge creates choices, not automatic victories.",
@@ -139,11 +139,10 @@ describe("finalized Story Seed to Chapter Generation adapter", () => {
     });
     expect(packet.livingStoryState.threads.unresolved.map(thread => thread.description))
       .toEqual([
-        "Who taught the dead heaven to remember broken oaths?",
         "The regent recognizes a gesture Jin Rui only made in another timeline.",
       ]);
     expect(packet.livingStoryState.threads.unresolved.map(thread => thread.originChapter))
-      .toEqual([0, 0]);
+      .toEqual([1]);
     expect(packet.chapterMission.premise).toBe(blueprint().firstArcPromise);
     expect(packet.chapterMission.pacingDirective)
       .toBe("Keep the hearing quiet until the first oath breaks.");
@@ -151,6 +150,12 @@ describe("finalized Story Seed to Chapter Generation adapter", () => {
       .toBe("The rain court beneath Vermilion Palace");
     expect(packet.generationRules.permanentWritingInstructions)
       .toContain("PERMANENT SYSTEM AND FORMAT RULES");
+    expect(packet.generationRules.permanentWritingInstructions)
+      .toContain('containing an "id" (unique string), "type"');
+    expect(packet.generationRules.permanentWritingInstructions)
+      .not.toContain("code supplies them");
+    expect(packet.generationRules.effectRules)
+      .toContain("For any Celestial Library system moment");
     expect(adapted.mapping.chapterMissionSource).toBe("WorldBlueprint.firstArcPromise");
   });
 
@@ -203,7 +208,7 @@ describe("finalized Story Seed to Chapter Generation adapter", () => {
     expect(serialized).not.toContain("Wen Shu");
   });
 
-  it("normalizes descriptive Blueprint identities before they enter story state", () => {
+  it("keeps Blueprint labels generator-facing without identity reconciliation", () => {
     const identitySeed = seed();
     identitySeed.world.optional.worldIdentity.startingLocation = "The Lower Periphery";
     identitySeed.world.optional.worldFoundations.mainCharacter = {
@@ -235,25 +240,32 @@ describe("finalized Story Seed to Chapter Generation adapter", () => {
     expect(state.codex.characters.map(character => character.name)).toEqual([
       "Yan Shi",
       "Sect Master Feng",
+      "Yan Shi (Protagonist)",
+      "Sect Master Feng (The antagonist of the outer sect)",
     ]);
-    expect(state.codex.characters[0]).toMatchObject({
-      id: "dev-character-yan-shi",
-      name: "Yan Shi",
-      aliases: ["Yan Shi (Protagonist)"],
-      blueprintDescription: "Protagonist",
-    });
+    expect(state.codex.characters[0]).toMatchObject({ name: "Yan Shi" });
+    expect(state.codex.characters[0]).not.toHaveProperty("id");
+    expect(state.codex.characters[0]).not.toHaveProperty("blueprintDescription");
     expect(state.codex.characters[1]).toMatchObject({
       id: "seed-feng",
       name: "Sect Master Feng",
-      aliases: ["Sect Master Feng (The antagonist of the outer sect)"],
-      blueprintDescription: "The antagonist of the outer sect",
+    });
+    expect(state.codex.characters[2]).toEqual({
+      name: "Yan Shi (Protagonist)",
+      source: "WorldBlueprint.initialCharacters",
+    });
+    expect(state.codex.characters[3]).toEqual({
+      name: "Sect Master Feng (The antagonist of the outer sect)",
+      source: "WorldBlueprint.initialCharacters",
     });
     expect(state.codex.locations).toHaveLength(1);
     expect(state.codex.locations[0]).toMatchObject({
-      id: "dev-location-the-lower-periphery",
       name: "The Lower Periphery",
-      aliases: ["The Lower Periphery, a sprawling district beneath the outer sect"],
-      blueprintDescription: "a sprawling district beneath the outer sect",
     });
+    expect(state.codex.locations[0]).not.toHaveProperty("id");
+    expect(state.codex.locations[0]).not.toHaveProperty("aliases");
+    expect(state.characterState.abilities[0]).not.toHaveProperty("id");
+    expect(JSON.stringify(state)).not.toContain("dev-character-");
+    expect(JSON.stringify(state)).not.toContain("dev-location-");
   });
 });

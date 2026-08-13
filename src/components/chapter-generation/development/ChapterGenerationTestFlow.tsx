@@ -68,6 +68,7 @@ import type { RawStorySeedArtifact } from "../../story-seed/shared/storySeedSeri
 import ChapterGenerationWorkspace from "./ChapterGenerationWorkspace";
 import FiveChapterReaderSession from "./FiveChapterReaderSession";
 import ManifestedChapterView from "./ManifestedChapterView";
+import SingleChapterReaderSession from "./SingleChapterReaderSession";
 import { Chip } from "./workspaceUi";
 
 const ENDPOINT = "/api/chapter-generation";
@@ -545,6 +546,7 @@ export function ChapterGenerationTestFlow() {
   const [batch, setBatch] = useState<FiveChapterBatchState | null>(null);
   const [selectedBatchChapterNumber, setSelectedBatchChapterNumber] = useState(1);
   const [readerBatch, setReaderBatch] = useState<FiveChapterBatchState | null>(null);
+  const [readerResult, setReaderResult] = useState<ManifestChapterResponse | null>(null);
 
   const abortActiveManifest = () => activeManifestController.current?.abort();
 
@@ -627,6 +629,7 @@ export function ChapterGenerationTestFlow() {
     setResult(null);
     setBatch(null);
     setReaderBatch(null);
+    setReaderResult(null);
     setFailedUsage(null);
     setGenerationFailure(null);
     setGenerationError(null);
@@ -671,6 +674,7 @@ export function ChapterGenerationTestFlow() {
     setGenerationError(null);
     setResult(null);
     setBatch(null);
+    setReaderResult(null);
     setFailedUsage(null);
     setGenerationFailure(null);
     setSingleStage(null);
@@ -771,6 +775,15 @@ export function ChapterGenerationTestFlow() {
       )
     : undefined;
   const chapterForReading = displayedResult?.run.finalOutput ?? null;
+
+  if (readerResult) {
+    return (
+      <SingleChapterReaderSession
+        result={readerResult}
+        onClose={() => setReaderResult(null)}
+      />
+    );
+  }
 
   if (readerBatch) {
     return <FiveChapterReaderSession batch={readerBatch} onClose={() => setReaderBatch(null)} />;
@@ -1006,9 +1019,20 @@ export function ChapterGenerationTestFlow() {
                   Complete four-stage run · {displayedResult.run.repairApplied ? "serious-issue repair applied" : "normal path completed"}
                 </p>
               </div>
-              <Chip tone="emerald">
-                {formatTokens((selectedChapterUsage ?? displayedResult.usage).totals.totalTokens)} total tokens
-              </Chip>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {!batch && result && (
+                  <button
+                    type="button"
+                    onClick={() => setReaderResult(result)}
+                    className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-cyan-400/35 bg-cyan-500/15 px-3 text-xs font-semibold text-cyan-50 hover:bg-cyan-500/25"
+                  >
+                    <BookOpen size={14} /> Read in Reader Chamber
+                  </button>
+                )}
+                <Chip tone="emerald">
+                  {formatTokens((selectedChapterUsage ?? displayedResult.usage).totals.totalTokens)} total tokens
+                </Chip>
+              </div>
             </div>
             <ManifestedChapterView
               chapter={chapterForReading}

@@ -8,6 +8,7 @@ import type {
   BatchChapterRun,
   FiveChapterBatchState,
 } from "../../chapter-generation/shared/batch/chapterBatch";
+import type { ManifestChapterResponse } from "../../chapter-generation/shared/liveChapterGeneration";
 import type { ChapterTokenUsageSummary } from "../../chapter-generation/shared/pipeline/usage";
 import { aggregateChapterTokenUsage } from "../../chapter-generation/shared/pipeline/usage";
 import type {
@@ -195,12 +196,19 @@ export interface ReaderCodexSnapshot {
   livingStoryState: LivingStoryState;
 }
 
-export interface CompletedBatchReaderSession {
+export interface CompletedReaderSession {
   story: StoryWorld;
   chapters: ReaderChapter[];
   arcTitle: string;
   codexSnapshots: ReaderCodexSnapshot[];
+}
+
+export interface CompletedBatchReaderSession extends CompletedReaderSession {
   batchUsage: ChapterTokenUsageSummary;
+}
+
+export interface CompletedSingleChapterReaderSession extends CompletedReaderSession {
+  chapterUsage: ChapterTokenUsageSummary;
 }
 
 export type BatchReaderSessionResolution =
@@ -403,6 +411,72 @@ const generatedStoryTitle = (run: BatchChapterRun): string => {
   const identityTitle = constitution.storySeed?.world.optional.worldIdentity.title?.trim();
   return blueprintTitle || identityTitle || "Generated Five-Chapter Story";
 };
+
+/**
+ * Adapts one accepted live response into the same Reader/Codex story boundary
+ * without manufacturing a five-chapter batch or weakening its completion guard.
+ */
+export function createCompletedSingleChapterReaderSession(
+  response: ManifestChapterResponse,
+): CompletedSingleChapterReaderSession {
+  const chapterNumber = response.run.finalOutput.chapterNumber;
+  const run: BatchChapterRun = {
+    chapterNumber,
+    status: "completed",
+    attempts: [{
+      usage: response.usage,
+      result: response,
+      seriousIssueRemaining: false,
+    }],
+    result: response,
+  };
+  const chapter = convertSingleChapterRunToReader(run);
+  const constitution = response.run.chapterPacket.storyConstitution;
+  const position = response.run.chapterPacket.arcChapterPosition;
+  const livingStoryState = response.run.processingResult.proposedLivingStoryState;
+  const memory = memoryFromLivingState(livingStoryState, constitution);
+  const snapshot: ReaderCodexSnapshot = {
+    chapterNumber: chapter.number,
+    memory,
+    livingStoryState: clone(livingStoryState),
+  };
+  const blueprintTitle = constitution.worldBlueprint?.title?.trim();
+  const identityTitle = constitution.storySeed?.world.optional.worldIdentity.title?.trim();
+  const generatedAt = response.run.chapterPacket.contextManifest.generatedAt;
+  const story: StoryWorld = {
+    id: response.run.finalOutput.storyId || "disposable-one-chapter-run",
+    title: blueprintTitle || identityTitle || "Generated Story",
+    genre: constitution.genre,
+    mcName: constitution.mainCharacterName,
+    customPremise: constitution.corePremise,
+    createdAt: generatedAt,
+    updatedAt: generatedAt,
+    memory: clone(memory),
+    arcs: [{
+      title: `Arc ${position.arcNumber} — Generated Chapter`,
+      chapters: [chapter],
+      isCompleted: false,
+    }],
+    currentChapterNumber: chapter.number,
+    readerPreferences: {
+      fontSize: "lg",
+      fontFamily: "serif",
+      lineHeight: "relaxed",
+      paragraphSpacing: "normal",
+      themeOverride: "void",
+    },
+    bookmarks: [],
+    assignedRevealBackdrops: {},
+  };
+
+  return {
+    story,
+    chapters: [chapter],
+    arcTitle: story.arcs[0].title,
+    codexSnapshots: [snapshot],
+    chapterUsage: clone(response.usage),
+  };
+}
 
 /** Truthful all-or-nothing entry point for opening the generated Reader session. */
 export function createCompletedBatchReaderSession(

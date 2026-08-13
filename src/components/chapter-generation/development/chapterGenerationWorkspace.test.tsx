@@ -319,6 +319,31 @@ describe("Chapter Generation Development workspace structure", () => {
     expect(html).not.toContain("Mock output");
   });
 
+  it("keeps under-minimum prose visible with an explicit review status", () => {
+    const run = buildRun();
+    Object.assign(run.manifestedChapter, {
+      wordCount: 412,
+      manifestStatus: "needs-review",
+      manifestDiagnostics: {
+        status: "needs-review",
+        wordCount: 412,
+        minimumWordCount: 2_000,
+        warnings: [{
+          code: "under-minimum-word-count",
+          message: "Preserved the chapter for repair or review.",
+          field: "wordCount",
+        }],
+      },
+    });
+    mount(run);
+    const visibleText = text();
+
+    expect(visibleText).toContain("Needs review");
+    expect(visibleText).toContain("412 words");
+    expect(visibleText).toContain("Preserved the chapter for repair or review.");
+    expect(visibleText).toContain(run.manifestedChapter.blocks![0].text);
+  });
+
   it("derives visible effect markers from block metadata", () => {
     expect(effectMarkers({
       sceneType: "confrontation",

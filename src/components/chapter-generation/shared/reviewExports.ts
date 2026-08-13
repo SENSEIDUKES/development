@@ -105,7 +105,17 @@ export function buildChapterReviewMarkdown(input: ChapterReviewExportInput): str
     `- Model: ${response.model}`,
     `- Attempts represented: ${input.attemptCount ?? 1}`,
     `- Repair applied: ${response.run.repairApplied ? "yes" : "no"}`,
+    `- Prose status: ${response.run.finalOutput.manifestStatus ?? "not evaluated"}`,
+    `- Code-calculated word count: ${response.run.finalOutput.wordCount?.toLocaleString() ?? "not available"}`,
     "",
+    ...(response.run.finalOutput.manifestDiagnostics?.warnings.length
+      ? [
+          "## Manifest recovery warnings",
+          "",
+          ...response.run.finalOutput.manifestDiagnostics.warnings.map(item => `- ${item.message}`),
+          "",
+        ]
+      : []),
     "## Final prose",
     "",
     finalProse(response),
@@ -255,6 +265,7 @@ const chapterRunData = (run: BatchChapterRun) => {
     attemptCount: run.attempts.length,
     failureSummary: sanitizedFailureSummary(failure),
     failure: safeFailureForExport(failure),
+    contentStatus: response?.run.finalOutput.manifestStatus,
     usage,
     timing: { generationTimeMs: usage.totals.generationTimeMs },
     attempts: run.attempts.map((attempt, index) => ({
@@ -283,6 +294,7 @@ const chapterRunData = (run: BatchChapterRun) => {
             stages: response.run.stages,
             modelCalls: response.run.modelCalls,
             repairApplied: response.run.repairApplied,
+            manifest: response.run.finalOutput.manifestDiagnostics,
           },
         }
       : {}),
@@ -302,7 +314,9 @@ export function buildRunDataExport(input: RunDataExportInput): string {
   const singleChapter = input.singleResult
     ? {
         chapterNumber: input.singleResult.run.chapterPacket.chapterMission.number,
-        status: "completed",
+        status: input.singleResult.run.finalOutput.manifestStatus === "needs-review"
+          ? "needs-review"
+          : "completed",
         usage: input.singleResult.usage,
         timing: { generationTimeMs: input.singleResult.usage.totals.generationTimeMs },
         packet: input.singleResult.run.chapterPacket,
@@ -322,6 +336,7 @@ export function buildRunDataExport(input: RunDataExportInput): string {
           stages: input.singleResult.run.stages,
           modelCalls: input.singleResult.run.modelCalls,
           repairApplied: input.singleResult.run.repairApplied,
+          manifest: input.singleResult.run.finalOutput.manifestDiagnostics,
         },
       }
     : undefined;
@@ -346,7 +361,7 @@ export function buildRunDataExport(input: RunDataExportInput): string {
         }
       : {
           kind: "single-chapter",
-          status: singleChapter ? "completed" : "failed",
+          status: singleChapter?.status ?? "failed",
           failureSummary: sanitizedFailureSummary(input.singleFailure ?? undefined),
           failure: safeFailureForExport(input.singleFailure ?? undefined),
           tokens: input.singleFailureUsage ?? input.singleResult?.usage,

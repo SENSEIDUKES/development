@@ -237,6 +237,7 @@ const resultFor = (
         ? [{ severity: "serious", code: "continuity", message: "Continuity still breaks." }]
         : [],
       repetitionFindings: [],
+      identityWarnings: [],
       nextChapterHandoff: handoff,
       proposedLivingStoryState: nextState,
       repairRecommended: options.serious ?? false,

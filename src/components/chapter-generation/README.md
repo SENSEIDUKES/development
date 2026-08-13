@@ -6,7 +6,7 @@
 - **Replica created:** 2026-07-31
 - **Last Workshop update:** 2026-08-12
 - **Last source comparison:** 2026-08-09
-- **Replica status:** Chapter Generation 1.0 Pass 3 supports safe failure review, disposable exports, and completed-batch Reader handoff
+- **Replica status:** Chapter Generation 1.0 keeps creative model output separate from code-owned technical truth, recovers readable prose from harmless Manifest formatting mistakes, and preserves the existing disposable Reader/Codex batch handoff
 
 ## Purpose
 
@@ -85,19 +85,25 @@ chapter-specific direction together:
 - scene progression and pacing
 - intended ending and next-chapter handoff target
 
-The result is one `ChapterPlan`. The canonical Fate Survival configuration reaches
-planning directly. No unapproved legacy `FatePressureTier` mapping is inferred.
+The result is one `ChapterPlan`. Gemini supplies only the creative decisions; code
+attaches the chapter number, arc position, recent rhythm history, and canonical Fate
+configuration from the packet. No unapproved legacy `FatePressureTier` mapping is
+inferred.
 
 ### 3. Manifest Chapter
 
 One writing call receives the complete Chapter Packet, the `ChapterPlan`, and the
-consolidated permanent writing and formatting instructions. It returns only the
-manifested `ChapterContent`. It does not generate anchors, mutate story state, or
-advance the chapter counter.
+consolidated permanent writing and formatting instructions. Its essential result is
+non-empty prose text; prose type and structured System, World Card, audio, atmosphere,
+music, entity, and other presentation metadata are optional enrichment. Code assigns
+stable block IDs, normalizes harmless type differences, removes only malformed optional
+fields, calculates the exact word count, and records every recovery warning. Prose below
+the 2,000-word minimum remains readable and exportable with a `needs-review` status. Manifest does
+not generate anchors, mutate story state, or advance the chapter counter.
 
 ### 4. Process Result
 
-One structured processing call inspects the manifested chapter and returns:
+One structured processing call inspects the manifested chapter and proposes:
 
 - new anchors
 - character and world-state changes
@@ -106,12 +112,14 @@ One structured processing call inspects the manifested chapter and returns:
 - mission completion evidence
 - continuity and repetition findings
 - the next-chapter handoff
-- a proposed next `LivingStoryState`
+- continuity-supported content changes for the next `LivingStoryState`
 
-The proposed state is a cloned candidate for the next disposable batch checkpoint.
-It carries structured updates plus an explicit change ledger for anything not yet
-owned by a permanent Codex schema. The input state and chapter position remain
-unchanged across normal runs and retries. A separate repair
+Code validates those content proposals, preserves existing thread origins, assigns the
+current chapter to new threads, reconciles stable character/location/faction/artifact/
+ability identity, and constructs the cloned next-state candidate for the next disposable
+batch checkpoint. The candidate carries structured updates plus an explicit change
+ledger for anything not yet owned by a permanent Codex schema. The input state and
+chapter position remain unchanged across normal runs and retries. A separate repair
 call is allowed only when processing reports a serious finding and recommends repair.
 
 ## Sequential five-chapter flow
@@ -235,6 +243,8 @@ architecture.
   provider-reported or estimated token/time records for diagnosis.
 - Five-chapter state, checkpoints, chapters, attempts, and token totals exist only in
   page memory and are discarded on refresh or input replacement.
+- Recovered Manifest warnings, code-calculated word counts, and under-minimum review
+  status remain visible in Diagnostics and the safe Markdown/Run Data exports.
 - No database, persistence, R2, credit, queue, notification, Story Library, Reader,
   reward, publishing, or production-data write was added.
 - No real `LivingStoryState` update or chapter advancement is committed.
@@ -277,6 +287,7 @@ per-chapter coverage.
 - **2026-08-10:** Pass 3 connected completed five-chapter batches to the existing Reader Chamber through the batch adapter, added chapter-scoped cumulative Reader Codex snapshots, chapter/batch/repair/retry token visibility, five-chapter export, and selected-chapter access to the existing four-stage Diagnostics without adding persistence.
 - **2026-08-10:** Corrected the live Plan prompt's fixed Chapter 1 schema example so Chapters 2–5 receive their exact chapter number and arc position, added chapter/stage/field-level safe failures with detailed server-only causes, clarified paused-batch retention, added Markdown/JSON review exports, and exposed the seven-part estimated input-token breakdown for every provider stage.
 - **2026-08-12:** Aligned Story Seed, World Blueprint, Process Result, and Living Story State with the imported Reader Codex through the existing adapter; preserved aliases and stable entity identity, carried power/ability/mystery state, and prevented later chapter timeline data from entering earlier Codex snapshots without changing prompts, sequencing, retries, checkpoints, diagnostics, or exports.
+- **2026-08-12:** Stabilized Plan → Manifest → Process without adding a model call: code now owns chapter/arc facts, block and entity IDs, thread provenance, word counts, state construction, and technical status; Manifest preserves readable prose while warning on recovered formatting or removed optional enrichment; Blueprint descriptions normalize into canonical entity identity; under-length candidates remain reviewable and exportable; sequencing, repair, checkpoints, Reader, Codex, diagnostics, and safe exports remain intact.
 
 ## Transfer notes
 
@@ -299,6 +310,7 @@ service:
 - `src/components/chapter-generation/shared/pipeline/runChapterPipeline.ts`
 - `src/components/chapter-generation/shared/pipeline/runChapterPipelineAsync.ts`
 - `src/components/chapter-generation/shared/pipeline/usage.ts`
+- `src/server/chapter-generation/manifestNormalizer.ts`
 - `src/components/chapter-generation/shared/pipeline/types.ts`
 
 Reuse the source application's existing context, prompt, handoff, Story Seed, and

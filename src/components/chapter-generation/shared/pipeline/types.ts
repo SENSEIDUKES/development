@@ -10,6 +10,7 @@ import type {
   LivingStoryCodexUpdates,
   LivingStoryState,
 } from "../packets/livingStoryState";
+import type { LivingStoryIdentityWarning } from "../packets/livingStoryEntityIdentity";
 import type { StoryConstitution } from "../packets/storyConstitution";
 import type {
   FatePressureTier,
@@ -147,6 +148,8 @@ export interface ChapterProcessingResult {
   };
   continuityFindings: ChapterProcessingFinding[];
   repetitionFindings: ChapterProcessingFinding[];
+  /** Code-generated diagnostics for conservative identity reconciliation. */
+  identityWarnings: LivingStoryIdentityWarning[];
   nextChapterHandoff: ChapterHandoff;
   proposedLivingStoryState: LivingStoryState;
   repairRecommended: boolean;

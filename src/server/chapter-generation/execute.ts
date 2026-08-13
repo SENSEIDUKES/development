@@ -73,7 +73,10 @@ const safeFailureDetails = (
       reason: `The provider returned an empty response during ${stage}.`,
     };
   }
-  if (/invalid structured JSON|malformed|unbalanced|unsupported|must be|cannot be empty|wrong arc\/chapter/i.test(message)) {
+  if (/no content|no recoverable prose|provider refusal/i.test(message)) {
+    return { category: "provider-response", reason: message };
+  }
+  if (/invalid structured JSON|malformed|unbalanced|unreadable|unsupported|must be|cannot be empty|wrong arc\/chapter|without a usable name|missing a usable canonical name|matched multiple canonical IDs|contradicts deterministic current identity/i.test(message)) {
     return { category: "validation", reason: message };
   }
   if (/\b429\b|rate.?limit|quota|resource.?exhausted/i.test(message)) {

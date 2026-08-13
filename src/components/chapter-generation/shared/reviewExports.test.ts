@@ -100,10 +100,10 @@ describe("Chapter Generation review exports", () => {
           category: "validation",
           reason: "Plan validation failed.",
           validationIssues: [{
-            field: "chapterNumber",
-            reason: "does not match the requested chapter",
-            expected: "3",
-            received: "1",
+            field: "intendedEnding",
+            reason: "is missing",
+            expected: "a non-empty string",
+            received: "missing",
           }],
         },
         seriousIssueRemaining: false,
@@ -143,17 +143,17 @@ describe("Chapter Generation review exports", () => {
     expect(runData.run.chapters[0].processedResult).toBeTruthy();
     expect(runData.run.chapters[0].chapterStateSnapshots.after).toBeTruthy();
     expect(runData.run.chapters[2].failure.validationIssues[0]).toMatchObject({
-      field: "chapterNumber",
-      expected: "3",
-      received: "1",
+      field: "intendedEnding",
+      expected: "a non-empty string",
+      received: "missing",
     });
     expect(runData.run.chapters[2].failureSummary).toEqual({
       stage: "Plan Chapter",
       category: "validation",
-      invalidField: "chapterNumber",
-      expectedValue: "3",
-      receivedValue: "1",
-      safeReason: "chapterNumber: does not match the requested chapter.",
+      invalidField: "intendedEnding",
+      expectedValue: "a non-empty string",
+      receivedValue: "missing",
+      safeReason: "intendedEnding: is missing.",
     });
     expect(runData.run.chapters[2].attempts[0].failureSummary).toEqual(
       runData.run.chapters[2].failureSummary,
@@ -165,6 +165,51 @@ describe("Chapter Generation review exports", () => {
     expect(runDataText).not.toContain("provider stack trace");
     expect(runDataText).not.toContain("development-access-token");
     expect(runDataText).not.toContain('"cause"');
+    expect(runDataText).not.toContain('"stack"');
+  });
+
+  it("exports recovered prose warnings and under-length review status without secrets", () => {
+    const response = createCompletedFiveChapterTestBatch().chapters[0].result!;
+    const diagnostics = {
+      status: "needs-review" as const,
+      wordCount: 412,
+      minimumWordCount: 2_000,
+      warnings: [
+        {
+          code: "block-type-normalized" as const,
+          message: "Normalized prose block type 'system' to 'paragraph'.",
+          blockIndex: 4,
+          blockId: "c2-p5",
+          field: "type",
+        },
+        {
+          code: "under-minimum-word-count" as const,
+          message: "Preserved the chapter for repair or review.",
+          field: "wordCount",
+        },
+      ],
+    };
+    Object.assign(response.run.finalOutput, {
+      manifestStatus: "needs-review",
+      wordCount: 412,
+      manifestDiagnostics: diagnostics,
+    });
+
+    const markdown = buildChapterReviewMarkdown({ response, status: "completed" });
+    expect(markdown).toContain("Prose status: needs-review");
+    expect(markdown).toContain("Code-calculated word count: 412");
+    expect(markdown).toContain("Manifest recovery warnings");
+    expect(markdown).toContain("Normalized prose block type 'system' to 'paragraph'.");
+
+    const runDataText = buildRunDataExport({
+      artifact: artifact(),
+      singleResult: response,
+    });
+    const runData = JSON.parse(runDataText);
+    expect(runData.run.status).toBe("needs-review");
+    expect(runData.run.chapter.diagnostics.manifest).toEqual(diagnostics);
+    expect(runDataText).not.toContain("accessToken");
+    expect(runDataText).not.toContain('"proof"');
     expect(runDataText).not.toContain('"stack"');
   });
 });

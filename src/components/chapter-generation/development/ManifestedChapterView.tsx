@@ -162,6 +162,28 @@ export function ManifestedChapterView({
         </p>
       </div>
 
+      {chapter.manifestDiagnostics && (
+        <div className={`rounded-md border px-3 py-2 ${chapter.manifestDiagnostics.status === "needs-review"
+          ? "border-amber-500/30 bg-amber-500/8"
+          : "border-white/10 bg-white/[0.03]"}`}>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Chip tone={chapter.manifestDiagnostics.status === "needs-review" ? "amber" : "emerald"}>
+              {chapter.manifestDiagnostics.status === "needs-review" ? "Needs review" : "Healthy prose"}
+            </Chip>
+            <span className="text-[10px] text-white/50">
+              {chapter.manifestDiagnostics.wordCount.toLocaleString()} words
+            </span>
+          </div>
+          {chapter.manifestDiagnostics.warnings.length > 0 && (
+            <ul className="mt-1.5 space-y-1 text-[10px] leading-relaxed text-amber-100/70">
+              {chapter.manifestDiagnostics.warnings.map((item, index) => (
+                <li key={`${item.code}-${item.blockIndex ?? "chapter"}-${index}`}>• {item.message}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       <div className="min-w-0">
         <div className="text-[10px] uppercase tracking-widest text-white/40">
           Chapter {chapter.chapterNumber}{title ? ` — ${title}` : ""}

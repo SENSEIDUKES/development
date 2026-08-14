@@ -123,11 +123,14 @@ const manifestedResponse = [
       },
     },
     worldCard: {
-      entityType: "artifact",
-      entityName: "Witness Bell",
-      displayTitle: "The Witness Bell",
-      audioType: "signature",
-      sound: { assetId: "bell-oath-01", assetFamily: "relic", tags: ["bell", "oath"] },
+      id: "model-owned-world-card",
+      entityType: "creature",
+      entityName: "Witness Drake",
+      displayTitle: "The Witness Drake",
+      imageUrl: "https://model.invalid/witness-drake.png",
+      codexEntryId: "model-owned-codex-id",
+      audioType: "hiss",
+      sound: { assetId: "model-owned-sound-id", element: "lightning", tags: ["drake", "oath"] },
     },
   }),
   JSON.stringify({
@@ -478,9 +481,13 @@ describe("live Chapter Generation model boundaries", () => {
       profile: { size: "large", bodyType: "dragon", signatureSound: "thunder-purr" },
     });
     expect(run.manifestedChapter.blocks?.[0].worldCard).toMatchObject({
-      audioType: "signature",
-      sound: { assetId: "bell-oath-01", assetFamily: "relic", tags: ["bell", "oath"] },
+      audioType: "hiss",
+      sound: { element: "lightning", tags: ["drake", "oath"] },
     });
+    expect(run.manifestedChapter.blocks?.[0].worldCard).not.toHaveProperty("id");
+    expect(run.manifestedChapter.blocks?.[0].worldCard).not.toHaveProperty("imageUrl");
+    expect(run.manifestedChapter.blocks?.[0].worldCard).not.toHaveProperty("codexEntryId");
+    expect(run.manifestedChapter.blocks?.[0].worldCard?.sound).not.toHaveProperty("assetId");
     expect(run.manifestedChapter.blocks?.[2].system?.fateResult).toMatchObject({
       outcome: "FATE SCARRED",
       timelineScar: "The court remembers Rin's defiance.",

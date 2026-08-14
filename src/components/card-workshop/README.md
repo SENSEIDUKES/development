@@ -1,7 +1,7 @@
 # Card Workshop
 
 - **Source repository:** `SENSEIDUKES/Light-Novels`
-- **Source locations:** `src/components/WorldEntityCard.tsx`, `src/components/SystemBlock.tsx`, `src/components/FateResultCard.tsx`, `src/components/ReaderViewport.tsx`, `src/components/ManifestationImage.tsx`
+- **Verified source locations:** `src/components/ReaderViewport.tsx`, `src/components/WorldEntityCard.tsx`, `src/components/SystemBlock.tsx`, `src/components/FateResultCard.tsx`
 - **Workshop preview:** `?preview=card-workshop`
 - **Replica created:** 2026-08-14
 - **Last Workshop update:** 2026-08-14
@@ -10,53 +10,57 @@
 
 ## Purpose
 
-The development-only Card Workshop makes current Reader card and system-panel presentations immediately inspectable without generating a chapter. It uses the real Reader components and their real payload types rather than visual copies.
+The development-only Card Workshop makes the active Reader presentations inspectable without generating a chapter. It uses the real Reader components and payload types rather than visual copies.
+
+The current structure is deliberately limited to:
+
+- `CodexCard` for visually presented Human Portraits, Non-Human Portraits, Artifacts, and Locations resolved from application-owned Codex entries;
+- `WorldCard` for highlighted Bestiary species, highlighted Factions, and encounter-only beasts that do not belong on a visual Codex Card;
+- `SystemBlock` and its existing nested `FateResultCard` presentation as independent System Panels.
+
+Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studio is outside this feature and is unchanged.
 
 ## Workshop history
 
-- **2026-08-14:** Created the Card Workshop, extracted the production-inline Codex Reveal presentation for shared Reader/Workshop rendering, and added deterministic local state simulation.
-- **2026-08-14:** Rebased Part Two onto merged Part One, restored a locked Reference pane, isolated sound simulation, and completed missing image, Codex, reveal, audio, and responsive states.
+- **2026-08-14:** Created the Card Workshop, extracted the production-inline Codex presentation for shared Reader/Workshop rendering, and added deterministic local state simulation.
+- **2026-08-14:** Rebased Part Two onto merged Part One, restored a locked Reference pane, isolated sound simulation, and completed missing-image, Codex, reveal, audio, and responsive states.
 - **2026-08-14:** Replaced the all-at-once Overview with one accessible tab per card preset so only the selected card renders.
-- **2026-08-14:** Routed the development audio adapter through the real shared `@seihouse/audio-player` session via `useDevAudioPlayback`; the deterministic local mock is retained as a test-only fallback so the existing component test keeps asserting the same loading/playing/muted/unavailable states.
-
-## Presentations
-
-- `WorldEntityCard`: human, important non-human individual, artifact/relic, location, faction, and the existing `system` and `fate_event` routes labeled as under review.
-- `SystemBlock`: status, skill acquisition, breakthrough, quest, and appraisal.
-- `FateResultCard`: rendered only through its real nested `SystemBlock` path.
-- Inline Codex Reveal: Bestiary species and Non-Human Portrait examples. These are examples of one reveal path, not extra card families.
-- `ManifestationImage`: isolated and labeled as a chapter-level visual memory.
+- **2026-08-14:** Routed Development World Card audio through the shared `@seihouse/audio-player` session.
+- **2026-08-14:** Completed the first Part Three cleanup: renamed the active card components, restricted Codex Cards to the four visual Codex categories, moved Bestiary/Faction highlights to World Cards, removed System/Fate World Card fixtures, and removed Chapter Visual Memories.
 
 ## Development states
 
 Inspection mode supports:
 
-- every entity/event preset;
-- existing image, Manifest/Awaken action, and missing-image states;
+- Human and Non-Human Portrait Codex Cards;
+- Artifact and Location Codex Cards;
+- existing Codex artwork, eligible Manifest/Awaken state, and missing-without-action state;
 - Codex entry present or missing;
 - first reveal or existing-entity reference;
-- Human or Non-Human Portrait;
-- important creature individual or Bestiary species;
-- sound available, unavailable, loading after tap, playing after tap, and muted;
-- every current `SystemBlock` kind and all Fate outcomes;
+- highlighted Bestiary species, highlighted Factions, and random encounter beasts as World Cards;
+- sound available, unavailable, loading after tap, playing after tap, and muted for World Cards;
+- every current `SystemBlock` kind and all existing Fate outcomes;
 - mobile (375px), tablet (768px), and desktop widths.
 
-Card Type Tabs mode exposes every preset in a horizontally scrollable tab list and mounts exactly one card presentation at a time. Arrow keys plus Home and End move between tabs.
+Card Type Tabs mode exposes every preset in a horizontally scrollable tab list and mounts exactly one presentation at a time. Arrow keys plus Home and End move between tabs.
 
 ## Mock and production boundaries
 
 - Fixtures are static local objects and `/public/card-workshop` SVG assets.
 - The Card Workshop makes no model, generation, API, database, story-write, persistence, or production-media calls.
-- The Development audio adapter (`createCardWorkshopAudioAdapter`) routes card-sound taps through the real shared `@seihouse/audio-player` session via `useDevAudioPlayback`. The workshop has no curated SFX catalog, so every card sound resolves to the same published Library Help narration that backs the audio-player smoke workspace — the visual demo does not care which audio actually plays, only that the real player is exercised. A deterministic local mock stays available as a `player: null` test fallback.
-- Reference mode uses locked production component replicas and has no Development controls.
-- No generation prompt, card-routing rule, Bestiary/Portrait normalization, Reader Codex architecture, or production integration is changed here.
+- The Development sound adapter routes World Card taps through the shared audio session. The local fixture resolves to one published Library Help sample because this preview tests the existing audio lifecycle, not catalog selection.
+- Reference mode uses locked production presentation replicas and has no Development controls.
+- Bestiary and Faction records remain informational and expose no Codex image-generation action.
+- System Panels retain their existing information, size, layout, colors, Fate presentation, and routing.
 
 ## Transfer notes
 
-For the Codex Reveal extraction only:
+The active Development exports are:
 
-1. Copy `src/components/reader-chamber/development/CodexRevealCard.tsx` to a new `Light-Novels/src/components/CodexRevealCard.tsx`.
-2. Update `Light-Novels/src/components/ReaderViewport.tsx` to import and render it in place of the current inline JSX.
-3. Do not copy `src/components/card-workshop`, `src/workshop/previews/card-workshop`, its local fixtures, or its sound adapter into production.
+- `src/components/reader-chamber/development/CodexCard.tsx`
+- `src/components/reader-chamber/development/WorldCard.tsx`
+- the existing routing point in `src/components/reader-chamber/development/ReaderViewport.tsx`
 
-The new production destination does not exist yet; `ReaderViewport.tsx` remains the verified source location for the inline presentation.
+The verified `Light-Novels` `origin/main` source still uses `src/components/WorldEntityCard.tsx` and keeps the Codex presentation inline in `ReaderViewport.tsx` as of commit `4f07f7a`. Those upstream paths are recorded only as the inspected source baseline; the active Development names are `WorldCard` and `CodexCard`.
+
+Do not transfer Workshop controls, fixtures, or its local sound adapter into production.

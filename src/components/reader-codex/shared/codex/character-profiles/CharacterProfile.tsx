@@ -9,7 +9,7 @@ interface CharacterProfileProps {
   canGenerate: boolean;
   isGenerating: boolean;
   isFreeUserOnHubStory: boolean;
-  handleAwakenCardImage: (id: string, type: "character" | "creature" | "beast", obj: any) => void;
+  handleAwakenCardImage: (id: string, type: "character", obj: any) => void;
   setSelectedNodeChar: (c: Character) => void;
 }
 
@@ -25,9 +25,7 @@ export const CharacterProfile: React.FC<CharacterProfileProps> = ({
 }) => {
   const hasImage = Boolean(char.imageAssetId || char.imageUrl);
   const isNonHumanPortrait = char.portraitKind === 'non-human' || char.isBeast === true;
-  const portraitImageType = char.portraitKind === 'non-human'
-    ? 'creature'
-    : char.isBeast ? 'beast' : 'character';
+  const portraitImageType = 'character' as const;
 
   return (
     <div key={char.id} className="bg-neutral-950 border border-neutral-900 hover:border-neutral-800 rounded-lg p-3 flex flex-col justify-between group transition-all duration-300">

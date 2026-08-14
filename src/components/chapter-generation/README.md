@@ -4,7 +4,7 @@
 - **Source location:** `src/hooks/chapterPipeline/chapterBatch.ts`, `src/aiRouter.ts`, `src/server/routes/storyRouter.ts`, and the Story Seed, prompt, handoff, formatting, and context dependencies
 - **Workshop preview:** `?preview=chapter-generation-flow`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-13
+- **Last Workshop update:** 2026-08-14
 - **Last source comparison:** 2026-08-09
 - **Replica status:** Chapter Generation 1.0 recovery restores the proven one-chapter Plan → Manifest → Process boundary and opens its accepted result in the current Reader Chamber and Reader Codex
 
@@ -98,6 +98,14 @@ ID, paragraph/dialogue type, prose text, and any supported optional presentation
 metadata. The parser joins readable blocks into the chapter without introducing a
 normalizer, generated IDs, technical status, or a word-count acceptance rule. Manifest
 does not generate anchors, mutate story state, or advance the chapter counter.
+
+Card output keeps the existing block structure. Human Portraits, Non-Human
+Portraits, Artifacts, and Locations use `metadata.entities` reveal moments so
+the Reader can resolve application-owned Codex identity and stored media.
+`worldCard` accepts only highlighted creature or Faction moments that do not
+belong on a visual Codex Card. System and Fate content continues through the
+structured `system` object and System Panels. The model is never asked for a
+Codex ID, media ID, storage key, or image URL.
 
 ### 4. Process Result
 
@@ -318,6 +326,7 @@ per-chapter coverage.
 - **2026-08-12:** Stabilized Plan → Manifest → Process without adding a model call: code now owns chapter/arc facts, block and entity IDs, thread provenance, word counts, state construction, and technical status; Manifest preserves readable prose while warning on recovered formatting or removed optional enrichment; Blueprint descriptions normalize into canonical entity identity; under-length candidates remain reviewable and exportable; sequencing, repair, checkpoints, Reader, Codex, diagnostics, and safe exports remain intact.
 - **2026-08-13:** Recovery branch restored the proven `9f90f95` Plan, Manifest, and Process contracts; removed live-path Manifest normalization and generation-time identity reconciliation; restored positive Blueprint thread origins; and added an isolated one-chapter adapter/session that opens the accepted result in the current Reader Chamber and complete Reader Codex without changing five-chapter sequencing.
 - **2026-08-13:** Verified the recovery with the real Timeless Story Seed/Blueprint export on Gemini 3.1 Flash Lite: one manual rerun after a logged provider-demand 503 completed Plan → Manifest → Process, rendered 1,083 words, advanced a valid proposed state, and opened the same live result in the current Reader and Reader Codex.
+- **2026-08-14:** Applied the first Part Three card contract cleanup without changing Plan → Manifest → Process: visual Codex categories use metadata reveals, World Cards accept only highlighted creatures/Factions, System/Fate stay on System Panels, and model-owned card IDs or image URLs are discarded.
 
 ## Transfer notes
 

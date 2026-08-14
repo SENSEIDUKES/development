@@ -2,6 +2,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { DevAudioPlaybackProvider } from "../../../audio/DevAudioPlayback";
 import { createCompletedFiveChapterTestBatch } from "../shared/batch/chapterBatchTestFixture";
 import { SingleChapterReaderSession } from "./SingleChapterReaderSession";
 
@@ -40,7 +41,9 @@ describe("SingleChapterReaderSession", () => {
     const result = createCompletedFiveChapterTestBatch().chapters[0].result!;
     act(() => {
       root.render(
-        <SingleChapterReaderSession result={result} onClose={() => undefined} />,
+        <DevAudioPlaybackProvider>
+          <SingleChapterReaderSession result={result} onClose={() => undefined} />
+        </DevAudioPlaybackProvider>,
       );
     });
 

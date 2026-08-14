@@ -1,13 +1,11 @@
 import type { WorldCardEvent, SystemEvent } from '../../reader-chamber/shared/types';
-import type { CodexRevealTerm } from '../../reader-chamber/development/CodexRevealCard';
+import type { CodexCardTerm } from '../../reader-chamber/development/CodexCard';
 
 export type CardPresentationKind =
-  | 'world-entity'
-  | 'codex-reveal'
+  | 'world-card'
+  | 'codex-card'
   | 'system-block'
-  | 'fate-result'
-  | 'manifestation-image'
-  | 'under-review-route';
+  | 'fate-result';
 
 export interface CardCapabilities {
   hasImage: boolean;
@@ -46,13 +44,7 @@ export interface CardPreset {
   worldCard?: WorldCardEvent;
   systemEvent?: SystemEvent;
   systemContent?: string;
-  codexReveal?: CodexRevealTerm;
-  manifestationImage?: {
-    url?: string;
-    caption?: string;
-    chapterNumber?: number;
-    quote?: string;
-  };
+  codexReveal?: CodexCardTerm;
 }
 
 export interface CardWorkshopOverrides {

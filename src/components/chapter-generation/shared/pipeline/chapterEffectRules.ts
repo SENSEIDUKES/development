@@ -59,7 +59,7 @@ export function buildChapterEffectRules(
       "SYSTEM PANEL VISUAL CUES",
       extractInstructionBlock(systemInstruction, {
         start: "For any Celestial Library system moment",
-        end: "For each block, list all notable codex entities referenced",
+        end: "For each block, list all notable Codex entities referenced",
       }),
     ),
     section(

@@ -11,15 +11,12 @@ import {
   Info,
   CheckCircle2,
   XCircle,
-  AlertTriangle,
-  Flame,
   Zap,
 } from 'lucide-react';
-import { WorldEntityCard } from '../../reader-chamber/development/WorldEntityCard';
+import { WorldCard } from '../../reader-chamber/development/WorldCard';
 import { SystemBlock } from '../../reader-chamber/development/SystemBlock';
-import { CodexRevealCard } from '../../reader-chamber/development/CodexRevealCard';
-import { ManifestationImage } from '../../reader-chamber/development/ManifestationImage';
-import type { Chapter, SystemEvent } from '../../reader-chamber/shared/types';
+import { CodexCard } from '../../reader-chamber/development/CodexCard';
+import type { SystemEvent } from '../../reader-chamber/shared/types';
 import type {
   AudioPreviewState,
   CardPreset,
@@ -27,7 +24,7 @@ import type {
   ImagePreviewState,
 } from '../shared/types';
 import { createCardWorkshopAudioAdapter } from '../shared/cardWorkshopAudioAdapter';
-import type { WorldEntityCardAudioAsset } from '../../reader-chamber/development/WorldEntityCard';
+import type { WorldCardAudioAsset } from '../../reader-chamber/development/WorldCard';
 import { useDevAudioPlayback } from '../../../audio/DevAudioPlayback';
 import { CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
 import {
@@ -45,7 +42,7 @@ import {
 // is that the real shared `@seihouse/audio-player` session is exercised.
 const WORKSHOP_CARD_AUDIO_SAMPLE = 'https://lines.seihouse.org/LIBRARY/Lines/SYSTEM/SYSTEM/HELP%20LINES/STORY%20SEED%20ENG.mp3';
 
-const resolveCardAudioSource = (_asset: WorldEntityCardAudioAsset): string => WORKSHOP_CARD_AUDIO_SAMPLE;
+const resolveCardAudioSource = (_asset: WorldCardAudioAsset): string => WORKSHOP_CARD_AUDIO_SAMPLE;
 
 const LOCAL_REVEAL_BACKDROP = '/card-workshop/reveal-backdrop.svg';
 const LOCAL_HUMAN_PORTRAIT = '/card-workshop/human-portrait.svg';
@@ -167,8 +164,8 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
       ? manifestedIds.has(preset.codexReveal.entry.id)
       : false;
 
-    // 1. World Entity Card
-    if (preset.kind === 'world-entity' || preset.kind === 'under-review-route') {
+    // 1. World Card
+    if (preset.kind === 'world-card') {
       if (!preset.worldCard) return null;
       const cardPayload = {
         ...preset.worldCard,
@@ -179,7 +176,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
       };
       return (
         <div className="w-full flex justify-center py-2">
-          <WorldEntityCard
+          <WorldCard
             key={`${preset.id}-${overrides.audioState}-${overrides.isAudioMuted}`}
             card={cardPayload}
             audioAdapter={audioAdapter}
@@ -188,31 +185,32 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
       );
     }
 
-    // 2. Codex Reveal Card
-    if (preset.kind === 'codex-reveal' || (isInspection && preset.codexReveal)) {
+    // 2. Codex Card
+    if (preset.kind === 'codex-card' || (isInspection && preset.codexReveal)) {
       if (!preset.codexReveal) return null;
       if (overrides.codexEntryState === 'missing') {
-        return <MissingPreview>No Codex entry resolved, so the Reader emits no Codex Reveal Card.</MissingPreview>;
+        return <MissingPreview>No Codex entry resolved, so the Reader emits no Codex Card.</MissingPreview>;
       }
       if (overrides.entityMention === 'reference') {
         return <MissingPreview>Existing entity reference: inline highlighting remains, with no first-reveal card.</MissingPreview>;
       }
+      const isPortraitCard = preset.id === 'preset-human-character'
+        || preset.id === 'preset-nonhuman-individual';
       const localManifestedImage = overrides.portraitKind === 'human'
         ? LOCAL_HUMAN_PORTRAIT
         : LOCAL_CREATURE_PORTRAIT;
+      const existingImage = isPortraitCard
+        ? localManifestedImage
+        : preset.codexReveal.entry.imageUrl;
       const term = {
         ...preset.codexReveal,
         entry: {
           ...preset.codexReveal.entry,
-          ...(preset.id === 'preset-creature-species'
-            ? {}
-            : { portraitKind: overrides.portraitKind }),
+          ...(isPortraitCard ? { portraitKind: overrides.portraitKind } : {}),
           imageUrl: isManifestedLocally
-            ? localManifestedImage
+            ? existingImage
             : overrides.imageState === 'existing'
-              ? (preset.id === 'preset-creature-species'
-                  ? preset.codexReveal.entry.imageUrl
-                  : localManifestedImage)
+              ? existingImage
               : undefined,
           imageAssetId: overrides.imageState === 'missing'
             ? 'card-workshop-missing-image'
@@ -221,7 +219,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
       };
       return (
         <div className="w-full flex justify-center py-2">
-          <CodexRevealCard
+          <CodexCard
             revealTerm={term}
             activeStory={{ assignedRevealBackdrops: { [term.entry.id]: LOCAL_REVEAL_BACKDROP } }}
             isSenMode={overrides.isSenMode}
@@ -257,32 +255,6 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
             content={preset.systemContent || '[ SYSTEM NOTIFICATION ]'}
             system={activeSystemEvent}
           />
-        </div>
-      );
-    }
-
-    // 4. Manifestation Image
-    if (preset.kind === 'manifestation-image') {
-      if (!preset.manifestationImage) return null;
-      const heroImage = overrides.imageState === 'existing'
-        ? preset.manifestationImage.url
-        : undefined;
-      if (!heroImage) {
-        return <MissingPreview>No chapter manifestation image is available for this state.</MissingPreview>;
-      }
-      const chapter = {
-        number: preset.manifestationImage.chapterNumber || 1,
-        title: preset.title,
-        premise: preset.description,
-        status: 'read',
-        summary: preset.manifestationImage.quote || preset.manifestationImage.caption || preset.description,
-        generatedContent: '',
-        assetManifest: { heroImage },
-      } satisfies Chapter;
-
-      return (
-        <div className="w-full flex justify-center py-2">
-          <ManifestationImage selectedChapter={chapter} />
         </div>
       );
     }
@@ -519,7 +491,6 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
               >
                 {CARD_PRESETS.map((preset, index) => {
                   const isSelected = preset.id === selectedPresetId;
-                  const isUnderReview = preset.kind === 'under-review-route';
                   return (
                     <button
                       key={preset.id}
@@ -534,23 +505,19 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                       onKeyDown={(event) => handleCardTabKeyDown(event, index)}
                       className={`whitespace-nowrap rounded-lg border px-3 py-2 text-[11px] font-mono transition-colors ${
                         isSelected
-                          ? isUnderReview
-                            ? 'border-amber-400/50 bg-amber-500/15 text-amber-200'
-                            : 'border-portal/50 bg-portal/15 text-portal'
-                          : isUnderReview
-                            ? 'border-amber-500/15 text-amber-400/70 hover:border-amber-400/40 hover:text-amber-200'
-                            : 'border-transparent text-neutral-400 hover:border-neutral-700 hover:text-signal'
+                          ? 'border-portal/50 bg-portal/15 text-portal'
+                          : 'border-transparent text-neutral-400 hover:border-neutral-700 hover:text-signal'
                       }`}
                     >
-                      {preset.title.replace('Routing Under Review: ', '')}
+                      {preset.title}
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* 1. World Entity Cards */}
-            {selectedPreset.kind === 'world-entity' && (
+            {/* 1. World Cards */}
+            {selectedPreset.kind === 'world-card' && (
             <section
               id={`card-panel-${selectedPreset.id}`}
               role="tabpanel"
@@ -561,7 +528,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 <div className="flex items-center gap-2">
                   <Sparkles size={16} className="text-portal" />
                   <h2 className="text-sm font-sc font-bold uppercase tracking-widest text-signal">
-                    World Entity Cards
+                    World Cards
                   </h2>
                 </div>
                 <span className="text-xs text-neutral-500 font-mono">
@@ -605,8 +572,8 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
             </section>
             )}
 
-            {/* 2. Codex Reveal Moments */}
-            {selectedPreset.kind === 'codex-reveal' && (
+            {/* 2. Codex Cards */}
+            {selectedPreset.kind === 'codex-card' && (
             <section
               id={`card-panel-${selectedPreset.id}`}
               role="tabpanel"
@@ -617,11 +584,11 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 <div className="flex items-center gap-2">
                   <BookOpen size={16} className="text-portal" />
                   <h2 className="text-sm font-sc font-bold uppercase tracking-widest text-signal">
-                    Codex Reveal Moments
+                    Codex Cards
                   </h2>
                 </div>
                 <span className="text-xs text-neutral-500 font-mono">
-                  Bestiary species reveals & Non-Human Portrait awakens
+                  Human Portraits, Non-Human Portraits, Artifacts & Locations
                 </span>
               </div>
 
@@ -717,117 +684,6 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
             </section>
             )}
 
-            {/* 4. Chapter Manifestation Visuals */}
-            {selectedPreset.kind === 'manifestation-image' && (
-            <section
-              id={`card-panel-${selectedPreset.id}`}
-              role="tabpanel"
-              aria-labelledby={`card-tab-${selectedPreset.id}`}
-              className="space-y-6"
-            >
-              <div className="border-b border-neutral-800 pb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Flame size={16} className="text-portal" />
-                  <h2 className="text-sm font-sc font-bold uppercase tracking-widest text-signal">
-                    Chapter-Level Visual Memories
-                  </h2>
-                </div>
-                <span className="text-xs text-neutral-500 font-mono">
-                  Presented separately from entity cards
-                </span>
-              </div>
-
-              <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 items-start">
-                {CARD_PRESETS.filter((p) => p.id === selectedPreset.id).map((preset) => (
-                  <div
-                    key={preset.id}
-                    className="flex flex-col space-y-3 p-4 rounded-2xl bg-neutral-950/40 border border-neutral-900"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-display font-semibold text-sm text-signal">
-                          {preset.title}
-                        </h3>
-                        <p className="text-[11px] text-neutral-400 font-sans">{preset.subtitle}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedPresetId(preset.id);
-                          setActiveTab('inspection');
-                        }}
-                        className="text-[10px] font-mono text-portal hover:underline"
-                      >
-                        Inspect Deeply →
-                      </button>
-                    </div>
-
-                    <div className={`mx-auto w-full ${viewportWidthClass} transition-all duration-300`}>
-                      {renderCardInstance(preset)}
-                    </div>
-
-                    {renderExplanationBadge(preset.explanation)}
-                  </div>
-                ))}
-              </div>
-            </section>
-            )}
-
-            {/* 5. Current Routing Under Review */}
-            {selectedPreset.kind === 'under-review-route' && (
-            <section
-              id={`card-panel-${selectedPreset.id}`}
-              role="tabpanel"
-              aria-labelledby={`card-tab-${selectedPreset.id}`}
-              className="space-y-6"
-            >
-              <div className="border-b border-amber-500/30 pb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle size={16} className="text-amber-400" />
-                  <h2 className="text-sm font-sc font-bold uppercase tracking-widest text-amber-300">
-                    Current Routing Under Review
-                  </h2>
-                </div>
-                <span className="text-xs text-amber-400/80 font-mono">
-                  System & Fate events routed through World Card paths
-                </span>
-              </div>
-
-              <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 items-start">
-                {CARD_PRESETS.filter((p) => p.id === selectedPreset.id).map((preset) => (
-                  <div
-                    key={preset.id}
-                    className="flex flex-col space-y-3 p-4 rounded-2xl bg-amber-950/10 border border-amber-500/20"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-display font-semibold text-sm text-amber-200">
-                          {preset.title}
-                        </h3>
-                        <p className="text-[11px] text-amber-400/70 font-sans">{preset.subtitle}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedPresetId(preset.id);
-                          setActiveTab('inspection');
-                        }}
-                        className="text-[10px] font-mono text-amber-300 hover:underline"
-                      >
-                        Inspect Deeply →
-                      </button>
-                    </div>
-
-                    <div className={`mx-auto w-full ${viewportWidthClass} transition-all duration-300`}>
-                      {renderCardInstance(preset)}
-                    </div>
-
-                    {renderExplanationBadge(preset.explanation)}
-                  </div>
-                ))}
-              </div>
-            </section>
-            )}
           </div>
         )}
 
@@ -914,7 +770,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 )}
 
                 {/* Reveal specific controls */}
-                {selectedPreset.kind === 'codex-reveal' && selectedPreset.codexReveal && (
+                {selectedPreset.kind === 'codex-card' && selectedPreset.codexReveal && (
                   <div className="space-y-3">
                     <div>
                       <label className="text-[10px] font-mono text-neutral-500 uppercase block mb-1">
@@ -952,7 +808,8 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                       </select>
                     </div>
 
-                    {selectedPreset.id !== 'preset-creature-species' && (
+                    {(selectedPreset.id === 'preset-human-character'
+                      || selectedPreset.id === 'preset-nonhuman-individual') && (
                       <div>
                         <label className="text-[10px] font-mono text-neutral-500 uppercase block mb-1">
                           Portrait Kind
@@ -968,27 +825,6 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                         >
                           <option value="human">Human Portrait</option>
                           <option value="non-human">Non-Human Portrait</option>
-                        </select>
-                      </div>
-                    )}
-
-                    {(selectedPreset.id === 'preset-nonhuman-portrait-reveal' || selectedPreset.id === 'preset-creature-species') && (
-                      <div>
-                        <label className="text-[10px] font-mono text-neutral-500 uppercase block mb-1">
-                          Creature Scope
-                        </label>
-                        <select
-                          aria-label="Creature scope"
-                          value={selectedPreset.id === 'preset-creature-species' ? 'species' : 'individual'}
-                          onChange={(event) => setSelectedPresetId(
-                            event.target.value === 'species'
-                              ? 'preset-creature-species'
-                              : 'preset-nonhuman-portrait-reveal',
-                          )}
-                          className="w-full bg-[#020914] border border-neutral-800 rounded px-2.5 py-1.5 text-[11px] font-mono text-signal"
-                        >
-                          <option value="individual">Important individual</option>
-                          <option value="species">Bestiary species</option>
                         </select>
                       </div>
                     )}

@@ -11,8 +11,10 @@ import type {
   UpdateStoryFields,
 } from '../types';
 
-export type CodexImageEntityType = 'character' | 'creature' | 'location' | 'artifact' | 'beast';
-export type CodexImageHistoryEntityType = CodexImageEntityType | 'faction';
+/** New Codex artwork is owned only by the four visual categories. */
+export type CodexImageEntityType = 'character' | 'location' | 'artifact';
+/** Legacy values remain readable so existing media history is not migrated away. */
+export type CodexImageHistoryEntityType = CodexImageEntityType | 'creature' | 'beast' | 'faction';
 
 export interface CodexImagePreview {
   urls: string[];

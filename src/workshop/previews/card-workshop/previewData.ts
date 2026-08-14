@@ -1,211 +1,82 @@
 import type { CardPreset } from '../../../components/card-workshop/shared/types';
 
+const durableVisualImportance = {
+  namedStatus: true,
+  narrativeWeight: 'major' as const,
+  recurrence: true,
+  plotRelevance: true,
+};
+
 export const CARD_PRESETS: CardPreset[] = [
-  // 1. Human Character
   {
     id: 'preset-human-character',
-    title: 'Human Character',
+    title: 'Human Portrait',
     subtitle: 'Rin the First Witness',
-    kind: 'world-entity',
-    description: 'A major human protagonist or NPC presented as a full World Card event.',
+    kind: 'codex-card',
+    description: 'A human Portrait resolved from first-reveal metadata through the visual Codex path.',
     explanation: {
-      componentName: 'WorldEntityCard',
-      sourceFile: 'src/components/reader-chamber/development/WorldEntityCard.tsx',
-      currentTrigger: '[SFX: Witness Bell] tag or chapter metadata block.worldCard with entityType: "character"',
-      entityOrEventType: 'character (human)',
+      componentName: 'CodexCard',
+      sourceFile: 'src/components/reader-chamber/development/CodexCard.tsx',
+      currentTrigger: 'metadata.entities character reveal resolves to an application-owned Human Portrait',
+      entityOrEventType: 'character (human individual)',
       codexDestination: 'ReaderCodex > Portraits (Human Section)',
-      capabilities: {
-        hasImage: true,
-        hasManifestAction: false,
-        hasAudio: true,
-        hasCodexLink: true,
-        hasQuoteOrProse: true,
-      },
-      architecturalNotes: 'Renders full entity artwork, title, subtitle/role, quotation, and audio trigger button.',
-    },
-    worldCard: {
-      entityType: 'character',
-      entityName: 'Rin',
-      displayTitle: 'First Witness of the Broken Oath',
-      quote: 'Your oath has a seam, Magistrate. And seams unravel when the rain falls.',
-      imageUrl: '/card-workshop/human-portrait.svg',
-      sound: {
-        assetId: 'witness_bell',
-      },
+      capabilities: { hasImage: true, hasManifestAction: true, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
+      architecturalNotes: 'The Reader uses stored Codex media and never accepts a model-generated Codex ID or image URL.',
     },
     codexReveal: {
-      type: 'Character',
+      type: 'Human Portrait',
       entry: {
         id: 'codex-char-rin',
         name: 'Rin',
         description: 'A disgraced oath-reader who can see where sacred vows fray in the atmospheric rain.',
         portraitKind: 'human',
         imageUrl: '/card-workshop/human-portrait.svg',
+        manifestationImportance: durableVisualImportance,
       },
     },
   },
-
-  // 2. Important Non-Human Individual
   {
     id: 'preset-nonhuman-individual',
-    title: 'Non-Human Individual',
+    title: 'Non-Human Portrait',
     subtitle: 'Lei the Thunder Drake Companion',
-    kind: 'world-entity',
-    description: 'A persistent named non-human companion with an awakenable portrait linked to a species.',
+    kind: 'codex-card',
+    description: 'A persistent named non-human individual resolved as a Portrait, not a species image.',
     explanation: {
-      componentName: 'WorldEntityCard / CodexRevealCard',
-      sourceFile: 'src/components/reader-chamber/development/WorldEntityCard.tsx / CodexRevealCard.tsx',
-      currentTrigger: 'Character reveal with portraitKind: "non-human" and speciesName: "Thunder Dragons"',
-      entityOrEventType: 'character (non-human individual)',
-      codexDestination: 'ReaderCodex > Portraits (Non-Human Section) + links to Bestiary',
-      capabilities: {
-        hasImage: true,
-        hasManifestAction: true,
-        hasAudio: true,
-        hasCodexLink: true,
-        hasQuoteOrProse: true,
-      },
-      architecturalNotes: 'Supports the Awaken Portrait / Manifest button if an image has not yet been generated.',
-    },
-    worldCard: {
-      entityType: 'creature',
-      entityName: 'Lei',
-      displayTitle: 'Young Storm Sovereign',
-      quote: 'The sky does not ask the mountain for permission to strike.',
-      imageUrl: '/card-workshop/creature-portrait.svg',
-      sound: {
-        assetId: 'thunder_growl',
-      },
+      componentName: 'CodexCard',
+      sourceFile: 'src/components/reader-chamber/development/CodexCard.tsx',
+      currentTrigger: 'metadata.entities character reveal resolves to a Portrait with portraitKind: "non-human"',
+      entityOrEventType: 'character (important non-human individual)',
+      codexDestination: 'ReaderCodex > Portraits (Non-Human Section) + Bestiary link',
+      capabilities: { hasImage: true, hasManifestAction: true, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
+      architecturalNotes: 'Named, bonded, intelligent, or recurring individuals are character-owned Portraits. Their species remains informational.',
     },
     codexReveal: {
-      type: 'Companion',
+      type: 'Non-Human Portrait',
       entry: {
         id: 'codex-char-lei',
         name: 'Lei',
         description: 'A young thunder dragon whose scales hold living arcs of celestial lightning.',
         portraitKind: 'non-human',
         speciesName: 'Thunder Dragons',
-        manifestationImportance: {
-          namedStatus: true,
-          narrativeWeight: 'major',
-          recurrence: true,
-          plotRelevance: true,
-        },
-      },
-    },
-  },
-
-  // 3. Non-Human Portrait reveal (same Codex Reveal family as Bestiary)
-  {
-    id: 'preset-nonhuman-portrait-reveal',
-    title: 'Non-Human Portrait Reveal',
-    subtitle: 'Lei the Thunder Drake Companion',
-    kind: 'codex-reveal',
-    description: 'The inline Reader Codex Reveal path for an important named non-human individual.',
-    explanation: {
-      componentName: 'CodexRevealCard',
-      sourceFile: 'src/components/reader-chamber/development/CodexRevealCard.tsx',
-      currentTrigger: 'First-reveal metadata resolves a persistent named non-human Portrait entry',
-      entityOrEventType: 'character (non-human individual)',
-      codexDestination: 'ReaderCodex > Portraits (Non-Human Section)',
-      capabilities: {
-        hasImage: true,
-        hasManifestAction: true,
-        hasAudio: false,
-        hasCodexLink: true,
-        hasQuoteOrProse: true,
-      },
-      architecturalNotes: 'Uses the same extracted inline reveal component as ReaderViewport; it is not a new card family.',
-    },
-    codexReveal: {
-      type: 'Companion',
-      entry: {
-        id: 'codex-char-lei-reveal',
-        name: 'Lei',
-        description: 'A young thunder dragon whose scales hold living arcs of celestial lightning.',
-        portraitKind: 'non-human',
-        speciesName: 'Thunder Dragons',
         imageUrl: '/card-workshop/creature-portrait.svg',
-        manifestationImportance: {
-          namedStatus: true,
-          narrativeWeight: 'major',
-          recurrence: true,
-          plotRelevance: true,
-        },
+        manifestationImportance: durableVisualImportance,
       },
     },
   },
-
-  // 4. Generic Creature Species (Bestiary Species Reveal)
-  {
-    id: 'preset-creature-species',
-    title: 'Generic Creature Species',
-    subtitle: 'Shadow Void Stalker',
-    kind: 'codex-reveal',
-    description: 'A wild beast or monster species record routed strictly to the Bestiary.',
-    explanation: {
-      componentName: 'CodexRevealCard',
-      sourceFile: 'src/components/reader-chamber/development/CodexRevealCard.tsx',
-      currentTrigger: 'Bestiary species introduction (creature without named individual status)',
-      entityOrEventType: 'creature (species)',
-      codexDestination: 'ReaderCodex > Bestiary',
-      capabilities: {
-        hasImage: false,
-        hasManifestAction: false,
-        hasAudio: false,
-        hasCodexLink: true,
-        hasQuoteOrProse: true,
-      },
-      architecturalNotes: 'Species entries show classification and threat notes without personal character portrait actions.',
-    },
-    worldCard: {
-      entityType: 'creature',
-      entityName: 'Shadow Void Stalker',
-      displayTitle: 'Apex Abyss Beast',
-      quote: 'It walks between breaths, leaving frost where blood once flowed.',
-    },
-    codexReveal: {
-      type: 'Bestiary Species',
-      entry: {
-        id: 'codex-species-void-stalker',
-        name: 'Shadow Void Stalker',
-        description: 'Predatory hunters that phase through dim light and feast on unrefined spiritual energy.',
-        manifestationImportance: {
-          namedStatus: false,
-          narrativeWeight: 'minor',
-        },
-      },
-    },
-  },
-
-  // 4. Artifact or Relic
   {
     id: 'preset-artifact-relic',
-    title: 'Artifact or Relic',
+    title: 'Artifact',
     subtitle: 'Nine Cauldrons Oath Seal',
-    kind: 'world-entity',
-    description: 'A divine weapon, ancient relic, or key story talisman.',
+    kind: 'codex-card',
+    description: 'A visually presented Artifact resolved through the Codex reveal path.',
     explanation: {
-      componentName: 'WorldEntityCard / CodexRevealCard',
-      sourceFile: 'src/components/reader-chamber/development/WorldEntityCard.tsx',
-      currentTrigger: 'Artifact revelation or relic discovery',
+      componentName: 'CodexCard',
+      sourceFile: 'src/components/reader-chamber/development/CodexCard.tsx',
+      currentTrigger: 'metadata.entities artifact reveal resolves to the stored Artifact entry',
       entityOrEventType: 'artifact',
       codexDestination: 'ReaderCodex > Artifacts',
-      capabilities: {
-        hasImage: true,
-        hasManifestAction: false,
-        hasAudio: true,
-        hasCodexLink: true,
-        hasQuoteOrProse: true,
-      },
-      architecturalNotes: 'Displays artifact tier, grade, binding requirements, and origin lore.',
-    },
-    worldCard: {
-      entityType: 'artifact',
-      entityName: 'Nine Cauldrons Oath Seal',
-      displayTitle: 'Heaven-Grade Sovereign Talisman',
-      quote: 'When stamped in jade, even the gods must honor the recorded covenant.',
-      imageUrl: '/card-workshop/artifact-seal.svg',
+      capabilities: { hasImage: true, hasManifestAction: true, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
+      architecturalNotes: 'Existing artwork displays from the Codex; an eligible missing image retains the existing Manifest action.',
     },
     codexReveal: {
       type: 'Artifact',
@@ -214,38 +85,24 @@ export const CARD_PRESETS: CardPreset[] = [
         name: 'Nine Cauldrons Oath Seal',
         description: 'Forged during the Second Era to enforce non-aggression treaties between mortal dynasties.',
         imageUrl: '/card-workshop/artifact-seal.svg',
+        manifestationImportance: durableVisualImportance,
       },
     },
   },
-
-  // 5. Location
   {
     id: 'preset-location',
     title: 'Location',
     subtitle: 'Rain Court Grand Pavilion',
-    kind: 'world-entity',
-    description: 'A sovereign palace, forbidden sect domain, or mysterious realm landmark.',
+    kind: 'codex-card',
+    description: 'A visually presented Location resolved through the Codex reveal path.',
     explanation: {
-      componentName: 'WorldEntityCard / CodexRevealCard',
-      sourceFile: 'src/components/reader-chamber/development/WorldEntityCard.tsx',
-      currentTrigger: 'New location discovery or major scene transition',
+      componentName: 'CodexCard',
+      sourceFile: 'src/components/reader-chamber/development/CodexCard.tsx',
+      currentTrigger: 'metadata.entities location reveal resolves to the stored Location entry',
       entityOrEventType: 'location',
-      codexDestination: 'ReaderCodex > Locations & Sects',
-      capabilities: {
-        hasImage: true,
-        hasManifestAction: false,
-        hasAudio: true,
-        hasCodexLink: true,
-        hasQuoteOrProse: true,
-      },
-      architecturalNotes: 'Shows societal structure, sovereign ruler, and geographical atmospheric effects.',
-    },
-    worldCard: {
-      entityType: 'location',
-      entityName: 'Rain Court Grand Pavilion',
-      displayTitle: 'Seat of Judicial Inscriptions',
-      quote: 'Built over three thousand oath springs, every stone echoes with remembered truth.',
-      imageUrl: '/card-workshop/rain-court.svg',
+      codexDestination: 'ReaderCodex > Locations',
+      capabilities: { hasImage: true, hasManifestAction: true, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
+      architecturalNotes: 'The card displays application-owned Codex artwork or the existing Manifest state.',
     },
     codexReveal: {
       type: 'Location',
@@ -254,41 +111,82 @@ export const CARD_PRESETS: CardPreset[] = [
         name: 'Rain Court Grand Pavilion',
         description: 'The ancient administrative center where false vows trigger celestial thunder.',
         imageUrl: '/card-workshop/rain-court.svg',
+        manifestationImportance: durableVisualImportance,
       },
     },
   },
-
-  // 6. Faction
+  {
+    id: 'preset-creature-species',
+    title: 'Highlighted Bestiary Species',
+    subtitle: 'Shadow Void Stalker',
+    kind: 'world-card',
+    description: 'A species remains an informational Bestiary record and uses a World Card only for a chapter highlight.',
+    explanation: {
+      componentName: 'WorldCard',
+      sourceFile: 'src/components/reader-chamber/development/WorldCard.tsx',
+      currentTrigger: 'worldCard with entityType: "creature" for a highlighted species moment',
+      entityOrEventType: 'creature (species)',
+      codexDestination: 'ReaderCodex > Bestiary (informational record)',
+      capabilities: { hasImage: false, hasManifestAction: false, hasAudio: true, hasCodexLink: true, hasQuoteOrProse: true },
+      architecturalNotes: 'The species does not receive generated Codex artwork, a Manifest action, or a Codex Card.',
+    },
+    worldCard: {
+      entityType: 'creature',
+      entityName: 'Shadow Void Stalker',
+      displayTitle: 'Apex Abyss Beast',
+      quote: 'It walks between breaths, leaving frost where blood once flowed.',
+      audioType: 'hiss',
+      sound: { assetId: 'card-workshop-sample', tags: ['void', 'stalker'] },
+    },
+  },
   {
     id: 'preset-faction',
-    title: 'Faction',
+    title: 'Highlighted Faction',
     subtitle: 'The Ninth House of Oaths',
-    kind: 'world-entity',
-    description: 'An ancient sect, martial alliance, or clandestine syndicate.',
+    kind: 'world-card',
+    description: 'A Faction remains an informational Codex record and uses a World Card only when highlighted.',
     explanation: {
-      componentName: 'WorldEntityCard',
-      sourceFile: 'src/components/reader-chamber/development/WorldEntityCard.tsx',
-      currentTrigger: 'Faction alignment introduction',
+      componentName: 'WorldCard',
+      sourceFile: 'src/components/reader-chamber/development/WorldCard.tsx',
+      currentTrigger: 'worldCard with entityType: "faction" for a highlighted faction moment',
       entityOrEventType: 'faction',
-      codexDestination: 'ReaderCodex > Locations & Sects',
-      capabilities: {
-        hasImage: false,
-        hasManifestAction: false,
-        hasAudio: false,
-        hasCodexLink: true,
-        hasQuoteOrProse: true,
-      },
-      architecturalNotes: 'Surfaces faction creed, hierarchy, and political standing with the MC.',
+      codexDestination: 'ReaderCodex > Factions (informational record)',
+      capabilities: { hasImage: false, hasManifestAction: false, hasAudio: true, hasCodexLink: true, hasQuoteOrProse: true },
+      architecturalNotes: 'Factions do not receive generated Codex artwork, Manifest actions, or Codex Cards.',
     },
     worldCard: {
       entityType: 'faction',
       entityName: 'The Ninth House of Oaths',
       displayTitle: 'Judicial Enforcement Syndicate',
       quote: 'A word spoken is an anchor cast into the river of fate.',
+      audioType: 'chant',
+      sound: { assetId: 'card-workshop-sample', tags: ['oath', 'procession'] },
     },
   },
-
-  // 7. System Status Panel
+  {
+    id: 'preset-random-beast',
+    title: 'Random Encounter Beast',
+    subtitle: 'Ash-Maw Prowler',
+    kind: 'world-card',
+    description: 'A disposable encounter-only beast may receive a World Card when the moment earns a highlight.',
+    explanation: {
+      componentName: 'WorldCard',
+      sourceFile: 'src/components/reader-chamber/development/WorldCard.tsx',
+      currentTrigger: 'worldCard with entityType: "creature" without a persistent individual Portrait',
+      entityOrEventType: 'creature (encounter-only individual)',
+      codexDestination: 'Bestiary species update only when applicable',
+      capabilities: { hasImage: false, hasManifestAction: false, hasAudio: true, hasCodexLink: false, hasQuoteOrProse: true },
+      architecturalNotes: 'The encounter does not manufacture a persistent Portrait or model-owned visual identity.',
+    },
+    worldCard: {
+      entityType: 'creature',
+      entityName: 'Ash-Maw Prowler',
+      displayTitle: 'The Beast Beneath the Cinders',
+      quote: 'Its jaws opened like a furnace door.',
+      audioType: 'roar',
+      sound: { assetId: 'card-workshop-sample', element: 'fire', tags: ['encounter', 'cinders'] },
+    },
+  },
   {
     id: 'preset-system-status',
     title: 'System Status',
@@ -298,17 +196,11 @@ export const CARD_PRESETS: CardPreset[] = [
     explanation: {
       componentName: 'SystemBlock',
       sourceFile: 'src/components/reader-chamber/development/SystemBlock.tsx',
-      currentTrigger: 'Prose lines formatted with brackets or system packet status updates',
+      currentTrigger: 'Structured block.system status update',
       entityOrEventType: 'system (status)',
       codexDestination: 'ReaderCodex > Power Rankings',
-      capabilities: {
-        hasImage: false,
-        hasManifestAction: false,
-        hasAudio: false,
-        hasCodexLink: true,
-        hasQuoteOrProse: true,
-      },
-      architecturalNotes: 'Renders glowing cyan borders with monospace tabular stat progression rows.',
+      capabilities: { hasImage: false, hasManifestAction: false, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
+      architecturalNotes: 'System content remains a separate chapter-generation mechanic and presentation.',
     },
     systemContent: '[ SYSTEM NOTIFICATION: Meridian Resonance 84% — Minor Bottleneck Cleared ]',
     systemEvent: {
@@ -323,8 +215,6 @@ export const CARD_PRESETS: CardPreset[] = [
       ],
     },
   },
-
-  // 8. Skill Acquisition
   {
     id: 'preset-skill-acquired',
     title: 'Skill Acquisition',
@@ -334,17 +224,10 @@ export const CARD_PRESETS: CardPreset[] = [
     explanation: {
       componentName: 'SystemBlock',
       sourceFile: 'src/components/reader-chamber/development/SystemBlock.tsx',
-      currentTrigger: 'Skill master or inheritance unlock event',
+      currentTrigger: 'Structured block.system skill acquisition event',
       entityOrEventType: 'system (skill_acquired)',
       codexDestination: 'ReaderCodex > Power Rankings (Ability Ledger)',
-      capabilities: {
-        hasImage: false,
-        hasManifestAction: false,
-        hasAudio: false,
-        hasCodexLink: true,
-        hasQuoteOrProse: true,
-      },
-      architecturalNotes: 'Highlights skill grade, consumption cost, and active battle description.',
+      capabilities: { hasImage: false, hasManifestAction: false, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
     },
     systemContent: '[ SKILL ACQUIRED: Seam Stride (Earth Grade — Initial Mastery) ]',
     systemEvent: {
@@ -359,8 +242,6 @@ export const CARD_PRESETS: CardPreset[] = [
       ],
     },
   },
-
-  // 9. Level-Up / Breakthrough
   {
     id: 'preset-level-up',
     title: 'Level-Up / Breakthrough',
@@ -370,17 +251,10 @@ export const CARD_PRESETS: CardPreset[] = [
     explanation: {
       componentName: 'SystemBlock',
       sourceFile: 'src/components/reader-chamber/development/SystemBlock.tsx',
-      currentTrigger: 'Realm ascension or breakthrough threshold reached',
+      currentTrigger: 'Structured block.system level-up event',
       entityOrEventType: 'system (level_up)',
       codexDestination: 'ReaderCodex > Power Rankings',
-      capabilities: {
-        hasImage: false,
-        hasManifestAction: false,
-        hasAudio: false,
-        hasCodexLink: true,
-        hasQuoteOrProse: true,
-      },
-      architecturalNotes: 'Features golden glow highlights and triumphant milestone presentation.',
+      capabilities: { hasImage: false, hasManifestAction: false, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
     },
     systemContent: '[ BREAKTHROUGH: Core Formation Stage 1 Reached — Longevity +150 Years ]',
     systemEvent: {
@@ -395,8 +269,6 @@ export const CARD_PRESETS: CardPreset[] = [
       ],
     },
   },
-
-  // 10. Quest & Appraisal
   {
     id: 'preset-quest-appraisal',
     title: 'Quest & Appraisal',
@@ -406,17 +278,10 @@ export const CARD_PRESETS: CardPreset[] = [
     explanation: {
       componentName: 'SystemBlock',
       sourceFile: 'src/components/reader-chamber/development/SystemBlock.tsx',
-      currentTrigger: 'Quest announcement or item appraisal prompt',
+      currentTrigger: 'Structured block.system quest or appraisal event',
       entityOrEventType: 'system (quest / appraisal)',
       codexDestination: 'ReaderCodex > Karma Ledger & Threads',
-      capabilities: {
-        hasImage: false,
-        hasManifestAction: false,
-        hasAudio: false,
-        hasCodexLink: true,
-        hasQuoteOrProse: true,
-      },
-      architecturalNotes: 'Presents structured objectives, failure penalties, and success boons.',
+      capabilities: { hasImage: false, hasManifestAction: false, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
     },
     systemContent: '[ QUEST ISSUED: Uncover the Magistrate\'s Forged Decree Before Dusk ]',
     systemEvent: {
@@ -430,8 +295,6 @@ export const CARD_PRESETS: CardPreset[] = [
       ],
     },
   },
-
-  // 11. Fate Result Card (Rendered through real SystemBlock path)
   {
     id: 'preset-fate-result',
     title: 'Fate Result Card',
@@ -441,17 +304,11 @@ export const CARD_PRESETS: CardPreset[] = [
     explanation: {
       componentName: 'FateResultCard (inside SystemBlock)',
       sourceFile: 'src/components/reader-chamber/development/FateResultCard.tsx',
-      currentTrigger: 'Fate Survival decision resolution with system.fateResult data',
+      currentTrigger: 'Structured block.system fate_result event',
       entityOrEventType: 'fate_result',
       codexDestination: 'ReaderCodex > Fate & Destiny Sovereign',
-      capabilities: {
-        hasImage: false,
-        hasManifestAction: false,
-        hasAudio: false,
-        hasCodexLink: true,
-        hasQuoteOrProse: true,
-      },
-      architecturalNotes: 'Delegated seamlessly from SystemBlock whenever system.fateResult is present.',
+      capabilities: { hasImage: false, hasManifestAction: false, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
+      architecturalNotes: 'Fate remains routed only through the existing SystemBlock presentation.',
     },
     systemContent: '[ FATE SCARRED: Rin shattered the Magistrate\'s Blood Oath at great personal cost ]',
     systemEvent: {
@@ -466,102 +323,8 @@ export const CARD_PRESETS: CardPreset[] = [
           'Rain sight limited to right eye',
         ],
         newStoryState: 'First false oath exposed before the Rain Court',
-        newActiveStats: [
-          'Willpower +25',
-          'Left Arm Flow: 0%',
-          'Karmic Weight: Heavy',
-        ],
+        newActiveStats: ['Willpower +25', 'Left Arm Flow: 0%', 'Karmic Weight: Heavy'],
       },
-    },
-  },
-
-  // 12. End-of-Chapter Manifestation Image (Chapter Visual)
-  {
-    id: 'preset-manifestation-image',
-    title: 'Manifestation Image',
-    subtitle: 'Chapter 1 Crux Visual Memory',
-    kind: 'manifestation-image',
-    description: 'Chapter-level heroic artwork summarizing the emotional climax of the episode.',
-    explanation: {
-      componentName: 'ManifestationImage',
-      sourceFile: 'src/components/reader-chamber/development/ManifestationImage.tsx',
-      currentTrigger: 'selectedChapter.assetManifest.heroImage at chapter conclusion',
-      entityOrEventType: 'chapter_crux_image (not an entity card)',
-      codexDestination: 'ReaderCodex > Visual Timeline Recaps',
-      capabilities: {
-        hasImage: true,
-        hasManifestAction: false,
-        hasAudio: false,
-        hasCodexLink: false,
-        hasQuoteOrProse: true,
-      },
-      architecturalNotes: 'Distinct from entity cards; represents chapter-wide visual memory and narrative payoff.',
-    },
-    manifestationImage: {
-      url: '/card-workshop/chapter-memory.svg',
-      caption: 'The Rain Court Stands in Silence as the Broken Oath Is Revealed',
-      chapterNumber: 1,
-      quote: '"Your oath has a seam, Magistrate."',
-    },
-  },
-
-  // 13. Routing Under Review: World Card used for System Event
-  {
-    id: 'preset-review-system-worldcard',
-    title: 'Routing Under Review: System as World Card',
-    subtitle: 'System Notification routed through WorldCardEvent',
-    kind: 'under-review-route',
-    description: 'Example of current system prompt output routed as a WorldCardEvent rather than a SystemBlock.',
-    explanation: {
-      componentName: 'WorldEntityCard (System Routing)',
-      sourceFile: 'src/components/reader-chamber/development/WorldEntityCard.tsx',
-      currentTrigger: 'WorldCardEvent with entityType: "system"',
-      entityOrEventType: 'system (routed as world card)',
-      codexDestination: 'None / Ephemeral card display',
-      capabilities: {
-        hasImage: false,
-        hasManifestAction: false,
-        hasAudio: false,
-        hasCodexLink: false,
-        hasQuoteOrProse: true,
-      },
-      architecturalNotes: '⚠️ CURRENT ROUTING UNDER REVIEW: Overlaps with SystemBlock. Kept visible for audit without modifying prompts.',
-    },
-    worldCard: {
-      entityType: 'system',
-      entityName: 'System Alert',
-      displayTitle: 'Celestial Law Boundary Triggered',
-      quote: 'Direct spiritual interference detected in mortal jurisdiction.',
-    },
-  },
-
-  // 14. Routing Under Review: World Card used for Fate Event
-  {
-    id: 'preset-review-fate-worldcard',
-    title: 'Routing Under Review: Fate as World Card',
-    subtitle: 'Fate Event routed through WorldCardEvent',
-    kind: 'under-review-route',
-    description: 'Example of fate divergence output formatted as a simple World Card instead of a FateResultCard.',
-    explanation: {
-      componentName: 'WorldEntityCard (Fate Event Routing)',
-      sourceFile: 'src/components/reader-chamber/development/WorldEntityCard.tsx',
-      currentTrigger: 'WorldCardEvent with entityType: "fate_event"',
-      entityOrEventType: 'fate_event (routed as world card)',
-      codexDestination: 'None / Ephemeral card display',
-      capabilities: {
-        hasImage: false,
-        hasManifestAction: false,
-        hasAudio: false,
-        hasCodexLink: false,
-        hasQuoteOrProse: true,
-      },
-      architecturalNotes: '⚠️ CURRENT ROUTING UNDER REVIEW: Overlaps with FateResultCard / SystemBlock. Preserved for inspection.',
-    },
-    worldCard: {
-      entityType: 'fate_event',
-      entityName: 'Fate Divergence',
-      displayTitle: 'The Unwoven River',
-      quote: 'A thread of causality has snapped. The river will carve a new channel.',
     },
   },
 ];

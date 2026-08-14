@@ -30,11 +30,9 @@ const SYSTEM_PROMPT_TYPES = [
   "progression", "breakthrough", "reward", "romance", "karmic_bond", "mystery", "fate_event",
   "corruption", "death_event", "quest_update", "choice_consequence", "system_error",
 ] as const;
-const WORLD_CARD_ENTITY_TYPES = ["character", "creature", "artifact", "location", "faction", "system", "fate_event"] as const;
-const WORLD_CARD_SOUND_ROLES: WorldCardSoundRole[] = [
-  "roar", "call", "hiss", "howl", "screech", "wingbeat", "unsheathe", "metallic_ring",
-  "reload", "activation_hum", "resonance", "awakening", "pulse", "magical_activation",
-  "signature", "chant", "chime",
+const WORLD_CARD_ENTITY_TYPES = ["creature", "faction"] as const;
+const CREATURE_WORLD_CARD_SOUND_ROLES: WorldCardSoundRole[] = [
+  "roar", "call", "hiss", "howl", "screech", "wingbeat",
 ];
 const FATE_OUTCOMES: FateResultData["outcome"][] = ["FATE AVERTED", "FATE SCARRED", "DOOM MANIFESTED"];
 
@@ -478,6 +476,7 @@ const parseSystemEvent = (
 const parseSoundHints = (
   value: unknown,
   context: BlockWarningContext,
+  entityType: (typeof WORLD_CARD_ENTITY_TYPES)[number],
 ): WorldCardSoundHints | undefined => {
   if (value === undefined || value === null) return undefined;
   if (!isRecord(value)) {
@@ -488,25 +487,25 @@ const parseSoundHints = (
   if (value.assetId !== undefined) {
     warning(context, "optional-field-removed", "Removed model-supplied worldCard.sound.assetId; media identity is code-owned.", "worldCard.sound.assetId");
   }
-  for (const field of ["element", "threatTier", "weaponType", "artifactCategory"] as const) {
-    const parsed = optionalStringField(value, field, context, `worldCard.sound.${field}`);
-    if (parsed) sound[field] = parsed;
-  }
-  const size = optionalStringField(value, "size", context, "worldCard.sound.size");
-  if (size && BEAST_SIZES.includes(size as (typeof BEAST_SIZES)[number])) {
-    sound.size = size as WorldCardSoundHints["size"];
-  } else if (size) {
-    warning(context, "optional-field-removed", "Removed unsupported optional worldCard.sound.size.", "worldCard.sound.size");
-  }
-  const assetFamily = optionalStringField(value, "assetFamily", context, "worldCard.sound.assetFamily");
-  if (assetFamily === "weapon" || assetFamily === "relic") sound.assetFamily = assetFamily;
-  else if (assetFamily) {
-    warning(context, "optional-field-removed", "Removed unsupported optional worldCard.sound.assetFamily.", "worldCard.sound.assetFamily");
+  const allowedFields = entityType === "creature"
+    ? new Set(["element", "size", "threatTier", "tags"])
+    : new Set(["tags"]);
+  if (entityType === "creature") {
+    for (const field of ["element", "threatTier"] as const) {
+      const parsed = optionalStringField(value, field, context, `worldCard.sound.${field}`);
+      if (parsed) sound[field] = parsed;
+    }
+    const size = optionalStringField(value, "size", context, "worldCard.sound.size");
+    if (size && BEAST_SIZES.includes(size as (typeof BEAST_SIZES)[number])) {
+      sound.size = size as WorldCardSoundHints["size"];
+    } else if (size) {
+      warning(context, "optional-field-removed", "Removed unsupported optional worldCard.sound.size.", "worldCard.sound.size");
+    }
   }
   const tags = optionalStringArrayField(value, "tags", context, "worldCard.sound.tags");
   if (tags) sound.tags = tags;
   for (const field of Object.keys(value)) {
-    if (!["assetId", "element", "size", "threatTier", "assetFamily", "weaponType", "artifactCategory", "tags"].includes(field)) {
+    if (field !== "assetId" && !allowedFields.has(field)) {
       const path = safeFieldLabel(`worldCard.sound.${field}`);
       warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
     }
@@ -535,22 +534,29 @@ const parseWorldCardEvent = (
   const entityName = (rawEntityType === "location"
     ? splitDescriptiveLivingStoryLocationLabel(rawEntityName)
     : splitDescriptiveLivingStoryEntityLabel(rawEntityName)).name;
-  const idKind = rawEntityType === "creature" ? "creature" : rawEntityType === "fate_event" ? "fate-event" : rawEntityType;
-  const id = stableLivingStoryEntityId(idKind, entityName);
+  const id = stableLivingStoryEntityId(rawEntityType, entityName);
   if (value.id !== undefined) {
     warning(context, "optional-field-removed", "Ignored model-supplied worldCard.id; code assigned the stable entity ID.", "worldCard.id");
   }
   if (value.codexEntryId !== undefined) {
     warning(context, "optional-field-removed", "Ignored model-supplied worldCard.codexEntryId; canonical identity is code-owned.", "worldCard.codexEntryId");
   }
+  if (value.imageUrl !== undefined) {
+    warning(context, "optional-field-removed", "Ignored model-supplied worldCard.imageUrl; stored media is application-owned.", "worldCard.imageUrl");
+  }
   const audioType = optionalStringField(value, "audioType", context, "worldCard.audioType");
-  const validAudioType = audioType && (audioType === "tts_line" || WORLD_CARD_SOUND_ROLES.includes(audioType as WorldCardSoundRole))
-    ? audioType as WorldCardEvent["audioType"]
-    : undefined;
+  const validAudioType = audioType && (
+    (rawEntityType === "creature" && CREATURE_WORLD_CARD_SOUND_ROLES.includes(audioType as WorldCardSoundRole))
+    || (rawEntityType === "faction" && audioType === "chant")
+  ) ? audioType as WorldCardEvent["audioType"] : undefined;
   if (audioType && !validAudioType) {
     warning(context, "optional-field-removed", "Removed unsupported optional worldCard.audioType.", "worldCard.audioType");
   }
-  const sound = parseSoundHints(value.sound, context);
+  const sound = parseSoundHints(
+    value.sound,
+    context,
+    rawEntityType as (typeof WORLD_CARD_ENTITY_TYPES)[number],
+  );
   for (const field of Object.keys(value)) {
     if (!["id", "entityType", "entityName", "displayTitle", "imageUrl", "quote", "audioText", "audioType", "sound", "voicePreset", "codexEntryId", "rarity"].includes(field)) {
       const path = safeFieldLabel(`worldCard.${field}`);
@@ -562,7 +568,6 @@ const parseWorldCardEvent = (
     entityType: rawEntityType as WorldCardEvent["entityType"],
     entityName,
     displayTitle,
-    ...(optionalStringField(value, "imageUrl", context, "worldCard.imageUrl") ? { imageUrl: optionalStringField(value, "imageUrl", context, "worldCard.imageUrl") } : {}),
     ...(optionalStringField(value, "quote", context, "worldCard.quote") ? { quote: optionalStringField(value, "quote", context, "worldCard.quote") } : {}),
     ...(optionalStringField(value, "audioText", context, "worldCard.audioText") ? { audioText: optionalStringField(value, "audioText", context, "worldCard.audioText") } : {}),
     ...(validAudioType ? { audioType: validAudioType } : {}),

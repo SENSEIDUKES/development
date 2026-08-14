@@ -1,9 +1,9 @@
 import type { WorldCardEvent } from '../../reader-chamber/shared/types';
 import type {
-  WorldEntityCardAudioAdapter,
-  WorldEntityCardAudioAsset,
-  WorldEntityCardPlayback,
-} from '../../reader-chamber/development/WorldEntityCard';
+  WorldCardAudioAdapter,
+  WorldCardAudioAsset,
+  WorldCardPlayback,
+} from '../../reader-chamber/development/WorldCard';
 import type { AudioPreviewState } from './types';
 
 /**
@@ -30,7 +30,7 @@ export interface CardWorkshopAudioAdapterOptions {
    * Help narration that backs the audio-player smoke workspace is reused
    * here. Returning `null` keeps the card on the local-only mock path.
    */
-  resolveSource: (asset: WorldEntityCardAudioAsset) => string | null;
+  resolveSource: (asset: WorldCardAudioAsset) => string | null;
   /**
    * The real DEV audio player when the adapter is used inside the
    * workshop. Pass `null` (the default) to keep the deterministic local
@@ -39,7 +39,7 @@ export interface CardWorkshopAudioAdapterOptions {
   player?: DevAudioPlayerBridge | null;
 }
 
-export interface CardWorkshopAudioAdapter extends WorldEntityCardAudioAdapter {
+export interface CardWorkshopAudioAdapter extends WorldCardAudioAdapter {
   dispose: () => void;
 }
 
@@ -81,7 +81,7 @@ export function createCardWorkshopAudioAdapter({
     timers.delete(assetId);
   };
 
-  const resolve = (card: WorldCardEvent): WorldEntityCardAudioAsset | null => {
+  const resolve = (card: WorldCardEvent): WorldCardAudioAsset | null => {
     if (state === 'unavailable' || !card.sound?.assetId) return null;
     return {
       id: `card-workshop-${card.sound.assetId}`,
@@ -89,15 +89,15 @@ export function createCardWorkshopAudioAdapter({
     };
   };
 
-  const play = async (asset: WorldEntityCardAudioAsset): Promise<WorldEntityCardPlayback> => {
+  const play = async (asset: WorldCardAudioAsset): Promise<WorldCardPlayback> => {
     if (state === 'loading') {
-      return new Promise<WorldEntityCardPlayback>(() => undefined);
+      return new Promise<WorldCardPlayback>(() => undefined);
     }
 
     const source = player ? resolveSource(asset) : null;
     const usesSharedPlayer = Boolean(player && source);
     let onended: (() => void) | undefined;
-    const playback: WorldEntityCardPlayback = {};
+    const playback: WorldCardPlayback = {};
     Object.defineProperty(playback, 'onended', {
       configurable: true,
       get: () => onended,

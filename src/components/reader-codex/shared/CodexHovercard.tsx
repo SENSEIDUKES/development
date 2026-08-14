@@ -19,6 +19,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
   const [localImageUrl, setLocalImageUrl] = useState<string>();
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const imageUrl = persistedImageUrl || localImageUrl;
+  const canManifestImage = type !== 'faction';
 
   const handleManifest = async (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -200,7 +201,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
                 />
               </div>
             ) : (
-              !imageAssetId && (
+              canManifestImage && !imageAssetId && (
                 <button
                    tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={handleManifest}
                   disabled={isGeneratingImage}

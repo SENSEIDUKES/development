@@ -2,6 +2,7 @@
 import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DevAudioPlaybackProvider } from '../../../audio/DevAudioPlayback';
 import { createReaderCodexPreviewStory } from '../../../workshop/previews/reader-codex/previewData';
 import { resetMockState } from '../../reader-chamber/shared/stubs';
 import ReaderCodex from './ReaderCodex';
@@ -74,16 +75,18 @@ function CodexHarness({ onMemoryUpdate, onStoryPatch, initialMemory }: CodexHarn
   };
 
   return (
-    <ReaderCodex
-      memory={story.memory ?? {}}
-      arcs={story.arcs}
-      onUpdateMemory={onUpdateMemory}
-      mcName={story.mcName}
-      onJumpToChapter={() => undefined}
-      onSwitchTab={() => undefined}
-      activeStory={story}
-      updateStoryFields={updateStoryFields}
-    />
+    <DevAudioPlaybackProvider>
+      <ReaderCodex
+        memory={story.memory ?? {}}
+        arcs={story.arcs}
+        onUpdateMemory={onUpdateMemory}
+        mcName={story.mcName}
+        onJumpToChapter={() => undefined}
+        onSwitchTab={() => undefined}
+        activeStory={story}
+        updateStoryFields={updateStoryFields}
+      />
+    </DevAudioPlaybackProvider>
   );
 }
 
@@ -103,17 +106,19 @@ function OverlayHarness({ onClose, onJumpToChapter }: OverlayHarnessProps) {
   };
 
   return (
-    <CodexSheetOverlay
-      isOpen={isOpen}
-      onClose={() => {
-        onClose();
-        setIsOpen(false);
-      }}
-      activeStory={story}
-      onUpdateMemory={(memory) => setStory((current) => ({ ...current, memory }))}
-      updateStoryFields={updateStoryFields}
-      onJumpToChapter={onJumpToChapter}
-    />
+    <DevAudioPlaybackProvider>
+      <CodexSheetOverlay
+        isOpen={isOpen}
+        onClose={() => {
+          onClose();
+          setIsOpen(false);
+        }}
+        activeStory={story}
+        onUpdateMemory={(memory) => setStory((current) => ({ ...current, memory }))}
+        updateStoryFields={updateStoryFields}
+        onJumpToChapter={onJumpToChapter}
+      />
+    </DevAudioPlaybackProvider>
   );
 }
 
@@ -238,6 +243,29 @@ describe('ReaderCodex', () => {
     expect(container.textContent).toContain('Storm flight');
     expect(container.textContent).toContain('A rolling sky-crack');
     expect(container.textContent).toContain('Lei');
+    const bestiaryPanel = container.querySelector('#codex-bestiary')!;
+    expect(bestiaryPanel.querySelector('button[aria-label*="Manifest"]')).toBeFalsy();
+    expect(bestiaryPanel.textContent).not.toMatch(/Awaken (Portrait|Evolution)/);
+  });
+
+  it('keeps Factions informational with no image-generation or Manifest action', () => {
+    const initialMemory: StoryMemory = {
+      factions: [{
+        id: 'reader-codex-ninth-house',
+        name: 'The Ninth House of Oaths',
+        alignment: 'Neutral',
+        description: 'An oath-bound judicial faction.',
+        status: 'Active',
+        imageUrl: '/legacy-faction-art.png',
+      }],
+    };
+
+    act(() => root.render(<CodexHarness initialMemory={initialMemory} />));
+
+    const factionPanel = container.querySelector('#codex-sects-and-factions')!;
+    expect(factionPanel.textContent).toContain('The Ninth House of Oaths');
+    expect(factionPanel.querySelector('button[aria-label*="Manifest"]')).toBeFalsy();
+    expect(factionPanel.textContent).not.toMatch(/Awaken (Portrait|Evolution)/);
   });
 
   it('keeps Deep Memory and author-controlled memory updates functional', async () => {
@@ -335,6 +363,9 @@ describe('CodexSheetOverlay', () => {
 
     expect(onJumpToChapter).toHaveBeenCalledWith(1);
     expect(onClose).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await new Promise(resolve => window.setTimeout(resolve, 500));
+    });
     expect(container.querySelector('[role="dialog"][aria-label="Codex"]')).toBeFalsy();
   });
 });

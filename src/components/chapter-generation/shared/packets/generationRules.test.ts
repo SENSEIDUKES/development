@@ -45,4 +45,16 @@ describe("Generation Rules packet", () => {
     expect(formatThreadForRouter({ description: "Open the manual.", originChapter: 6 }, 6))
       .toBe("Open the manual.");
   });
+
+  it("keeps Codex Cards, World Cards, and System Panels on distinct generation paths", () => {
+    const prompt = buildGenerationRules().prompts.system;
+
+    expect(prompt).toContain('"entityType" (only "creature" or "faction")');
+    expect(prompt).toContain('Human Portraits, Non-Human Portraits, Artifacts, and Locations use this existing reveal path');
+    expect(prompt).toContain('Creature species remain informational Bestiary records and never receive generated species portraits or Codex Cards');
+    expect(prompt).toContain('Factions remain informational Codex records');
+    expect(prompt).toContain('System and Fate moments use the structured "system" object and System Panels only');
+    expect(prompt).toContain('Never output "id", "codexEntryId", "imageUrl"');
+    expect(prompt).not.toContain('"character"|"creature"|"artifact"|"location"|"faction"|"system"|"fate_event"');
+  });
 });

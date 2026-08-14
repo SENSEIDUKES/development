@@ -1,16 +1,27 @@
 // @vitest-environment jsdom
-import { act } from 'react';
+import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CardWorkshopView } from './CardWorkshopView';
 import { CardWorkshopWorkspace } from '../../../workshop/previews/card-workshop/CardWorkshopWorkspace';
 import { CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
 import { resetMockState } from '../../reader-chamber/shared/stubs';
+import type { WorldCardEvent } from '../../reader-chamber/shared/types';
+import { DevAudioPlaybackProvider } from '../../../audio/DevAudioPlayback';
+import {
+  CARD_WORKSHOP_FALLBACK_PLAYBACK_MS,
+  createCardWorkshopAudioAdapter,
+  type DevAudioPlayerBridge,
+} from '../shared/cardWorkshopAudioAdapter';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 let container: HTMLDivElement;
 let root: Root;
+
+const renderWithDevAudio = (node: ReactNode) => (
+  <DevAudioPlaybackProvider>{node}</DevAudioPlaybackProvider>
+);
 
 const buttons = () => [...container.querySelectorAll<HTMLButtonElement>('button')];
 
@@ -30,6 +41,23 @@ const clickButton = async (label: string) => {
   });
 };
 
+const audioCard = {
+  entityType: 'system',
+  entityName: 'Test Echo',
+  displayTitle: 'Test Echo',
+  audioType: 'resonance',
+  sound: { assetId: 'test-echo' },
+} satisfies WorldCardEvent;
+
+const createPlayer = (): DevAudioPlayerBridge => ({
+  currentTrackId: null,
+  isPlaying: false,
+  play: vi.fn(),
+  stop: vi.fn(),
+  subscribeToTrackChange: vi.fn(),
+  subscribeToQueueEnd: vi.fn(),
+});
+
 const selectByLabel = async (label: string, value: string) => {
   const target = container.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`);
   expect(target, `Expected select "${label}" to render`).toBeTruthy();
@@ -45,9 +73,32 @@ class MockIntersectionObserver {
   disconnect = vi.fn();
 }
 
+// The DEV shared audio player is wrapped around every render now that the
+// Card Workshop adapter routes through `useDevAudioPlayback`. JSDOM exposes
+// `HTMLMediaElement.play` / `pause` / `load` as no-op stubs that return
+// `undefined`, so the package would otherwise see an undefined promise and
+// crash on `.then(...)`. Force the methods to return a resolved promise
+// (or undefined for the synchronous stoppers) so the package's lifecycle
+// hooks can run.
+const installMediaElementStubs = () => {
+  Object.defineProperty(HTMLMediaElement.prototype, 'play', {
+    configurable: true,
+    value: () => Promise.resolve(),
+  });
+  Object.defineProperty(HTMLMediaElement.prototype, 'pause', {
+    configurable: true,
+    value: () => undefined,
+  });
+  Object.defineProperty(HTMLMediaElement.prototype, 'load', {
+    configurable: true,
+    value: () => undefined,
+  });
+};
+
 beforeEach(() => {
   resetMockState();
   globalThis.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+  installMediaElementStubs();
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
@@ -63,7 +114,7 @@ afterEach(() => {
 
 describe('CardWorkshopWorkspace', () => {
   it('opens through the shared Workshop shell with independent Reference and Development panes', async () => {
-    act(() => root.render(<CardWorkshopWorkspace />));
+    act(() => root.render(renderWithDevAudio(<CardWorkshopWorkspace />)));
 
     expect(container.textContent).toContain('Card Workshop');
     expect(container.textContent).toContain('Reader Card Workshop');
@@ -82,7 +133,7 @@ describe('CardWorkshopWorkspace', () => {
 
 describe('CardWorkshopView', () => {
   it('gives every card type its own tab and mounts only the selected presentation', async () => {
-    act(() => root.render(<CardWorkshopView initialMode="overview" />));
+    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="overview" />)));
 
     const tablist = container.querySelector('[role="tablist"][aria-label="Card types"]');
     const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
@@ -130,7 +181,7 @@ describe('CardWorkshopView', () => {
   });
 
   it('switches presets and preserves the Bestiary species versus Non-Human Portrait distinction', async () => {
-    act(() => root.render(<CardWorkshopView initialMode="inspection" />));
+    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="inspection" />)));
 
     await selectByLabel('Card preset', 'preset-nonhuman-portrait-reveal');
     expect(container.textContent).toContain('ReaderCodex > Portraits (Non-Human Section)');
@@ -150,10 +201,12 @@ describe('CardWorkshopView', () => {
   it('covers existing image, Manifest/Awaken, and missing-image states', async () => {
     vi.useFakeTimers();
     act(() => root.render(
-      <CardWorkshopView
-        initialMode="inspection"
-        initialPresetId="preset-nonhuman-portrait-reveal"
-      />,
+      renderWithDevAudio(
+        <CardWorkshopView
+          initialMode="inspection"
+          initialPresetId="preset-nonhuman-portrait-reveal"
+        />,
+      ),
     ));
 
     expect(container.querySelector('img[alt="Lei"]')).toBeTruthy();
@@ -177,10 +230,12 @@ describe('CardWorkshopView', () => {
 
   it('covers Codex present/missing and first-reveal/existing-reference behavior', async () => {
     act(() => root.render(
-      <CardWorkshopView
-        initialMode="inspection"
-        initialPresetId="preset-nonhuman-portrait-reveal"
-      />,
+      renderWithDevAudio(
+        <CardWorkshopView
+          initialMode="inspection"
+          initialPresetId="preset-nonhuman-portrait-reveal"
+        />,
+      ),
     ));
 
     await selectByLabel('Codex entry state', 'missing');
@@ -203,7 +258,9 @@ describe('CardWorkshopView', () => {
   it('simulates audio available, unavailable, loading, playing, and muted without media playback', async () => {
     vi.useFakeTimers();
     act(() => root.render(
-      <CardWorkshopView initialMode="inspection" initialPresetId="preset-human-character" />,
+      renderWithDevAudio(
+        <CardWorkshopView initialMode="inspection" initialPresetId="preset-human-character" />,
+      ),
     ));
 
     expect(container.textContent).toContain('Tap to Listen');
@@ -226,7 +283,9 @@ describe('CardWorkshopView', () => {
 
   it('changes SystemBlock kinds and renders FateResultCard only through SystemBlock', async () => {
     act(() => root.render(
-      <CardWorkshopView initialMode="inspection" initialPresetId="preset-system-status" />,
+      renderWithDevAudio(
+        <CardWorkshopView initialMode="inspection" initialPresetId="preset-system-status" />,
+      ),
     ));
 
     await selectByLabel('System panel kind', 'skill_acquired');
@@ -239,7 +298,7 @@ describe('CardWorkshopView', () => {
   });
 
   it('switches mobile, tablet, and desktop preview widths', async () => {
-    act(() => root.render(<CardWorkshopView initialMode="inspection" />));
+    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="inspection" />)));
 
     await clickButton('Mobile Viewport');
     expect(container.querySelector('[class~="max-w-[375px]"]')).toBeTruthy();
@@ -253,12 +312,99 @@ describe('CardWorkshopView', () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Unexpected request'));
     const storageSpy = vi.spyOn(Storage.prototype, 'setItem');
 
-    act(() => root.render(<CardWorkshopView initialMode="overview" />));
+    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="overview" />)));
     await clickButton('Inspection Mode');
     await selectByLabel('Card preset', 'preset-manifestation-image');
 
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(storageSpy).not.toHaveBeenCalled();
     expect(container.querySelector('img[src^="http"]')).toBeFalsy();
+  });
+
+  it('dispatches the real @seihouse/audio-player session when the human character is tapped', async () => {
+    vi.useFakeTimers();
+
+    // Spy on the underlying HTMLMediaElement play() to observe that the
+    // shared audio session was actually asked to start the resolved track.
+    const playSpy = vi
+      .spyOn(HTMLMediaElement.prototype, 'play')
+      .mockResolvedValue(undefined);
+
+    act(() => root.render(
+      renderWithDevAudio(
+        <CardWorkshopView initialMode="inspection" initialPresetId="preset-human-character" />,
+      ),
+    ));
+
+    await clickButton('Tap to Listen');
+
+    await act(async () => {
+      vi.advanceTimersByTime(50);
+    });
+
+    expect(playSpy).toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+});
+
+describe('createCardWorkshopAudioAdapter', () => {
+  it('uses the shared player lifecycle, ignores replacement-track completion, and stops active Workshop audio during cleanup', async () => {
+    vi.useFakeTimers();
+    const player = createPlayer();
+    const adapter = createCardWorkshopAudioAdapter({
+      state: 'available',
+      muted: false,
+      resolveSource: () => 'https://example.com/test-echo.mp3',
+      player,
+    });
+    const asset = adapter.resolve(audioCard)!;
+    const playback = await adapter.play(asset);
+    const ended = vi.fn();
+    playback.onended = ended;
+
+    expect(player.play).toHaveBeenCalledWith(expect.objectContaining({ id: asset.id }));
+    const queueEnded = vi.mocked(player.subscribeToQueueEnd).mock.calls[0][0];
+    queueEnded();
+    expect(ended).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(CARD_WORKSHOP_FALLBACK_PLAYBACK_MS);
+    });
+    expect(ended).toHaveBeenCalledTimes(1);
+
+    const replacementPlayback = await adapter.play(asset);
+    replacementPlayback.onended = ended;
+    const trackChanged = vi.mocked(player.subscribeToTrackChange).mock.calls[1][0];
+    const replacementQueueEnded = vi.mocked(player.subscribeToQueueEnd).mock.calls[1][0];
+    trackChanged('story-seed-help');
+    replacementQueueEnded();
+    expect(ended).toHaveBeenCalledTimes(1);
+
+    await adapter.play(asset);
+    adapter.dispose();
+    expect(player.stop).toHaveBeenCalledWith(asset.id);
+  });
+
+  it('retains the deterministic timer ending when no shared player is supplied', async () => {
+    vi.useFakeTimers();
+    const adapter = createCardWorkshopAudioAdapter({
+      state: 'available',
+      muted: false,
+      resolveSource: () => null,
+      player: null,
+    });
+    const playback = await adapter.play(adapter.resolve(audioCard)!);
+    const ended = vi.fn();
+    playback.onended = ended;
+
+    await act(async () => {
+      vi.advanceTimersByTime(899);
+    });
+    expect(ended).not.toHaveBeenCalled();
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(ended).toHaveBeenCalledTimes(1);
   });
 });

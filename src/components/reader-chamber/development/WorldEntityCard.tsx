@@ -118,6 +118,14 @@ export const WorldEntityCard: React.FC<WorldEntityCardProps> = React.memo(({ car
   };
 
   const handlePlayTts = async () => {
+    // DEV's tts_line path is the one remaining speechSynthesis surface in
+    // the Reader Chamber. `@seihouse/audio-player` only consumes playable
+    // sources (URL, blob URL, or a value produced by a `sourceResolver`),
+    // and the browser's speechSynthesis does not expose its output as a
+    // URL/blob at this layer — there is no playable artifact to hand the
+    // package. Until the package ships a first-class TTS surface this is
+    // a documented, tightly scoped exception rather than a parallel
+    // playback engine. Do not add a WebAudio + recorder fallback.
     if (isPlaying) {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel();

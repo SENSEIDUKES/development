@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@google/genai": "^2.16.0",
+    "@seihouse/audio-player": "github:SENSEIDUKES/AUDIO-PLAYER#b1e05870f4c3e9cad2ddb74119371c5c7cba6471",
     "@vitejs/plugin-react": "latest",
     "lucide-react": "^1.27.0",
     "motion": "^12.43.0",

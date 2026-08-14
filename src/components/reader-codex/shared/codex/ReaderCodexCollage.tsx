@@ -34,41 +34,6 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
   day: 'numeric'
 });
 
-// Gentle synthetic chime using AudioContext for premium sensory experience
-let sharedAudioContext: AudioContext | null = null;
-function playAuraChime() {
-  try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContextClass) return;
-    if (!sharedAudioContext) {
-      sharedAudioContext = new AudioContextClass();
-    }
-    const ctx = sharedAudioContext;
-    if (ctx.state === 'suspended') {
-      ctx.resume();
-    }
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'sine';
-    // Pentatonic scale frequency (glowing mystical chime)
-    osc.frequency.setValueAtTime(659.25, ctx.currentTime); // E5
-    osc.frequency.exponentialRampToValueAtTime(987.77, ctx.currentTime + 0.15); // B5
-
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start();
-    osc.stop(ctx.currentTime + 1.2);
-  } catch (e) {
-    console.warn("Aetherial audio synthesizer blocked or unsupported:", e);
-  }
-}
-
-
 interface CollageItemProps {
   mem: VisualMemory;
   isDownloading: boolean;
@@ -496,7 +461,6 @@ export function ReaderCodexCollage({
   }, [displayMemories, filter]);
 
   const handleOpenLightbox = useCallback((memoryItem: VisualMemory) => {
-    playAuraChime();
     setSelectedMemory(memoryItem);
   }, []);
 

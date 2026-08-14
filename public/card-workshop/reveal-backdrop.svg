@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-labelledby="title desc">
+  <title id="title">Local Codex reveal backdrop</title>
+  <desc id="desc">A cyan portal over a dark mountain field.</desc>
+  <rect width="800" height="600" fill="#01070e"/>
+  <circle cx="400" cy="275" r="190" fill="none" stroke="#04acff" stroke-width="12" opacity=".3"/>
+  <circle cx="400" cy="275" r="142" fill="none" stroke="#d4af37" stroke-width="3" opacity=".45"/>
+  <path d="M0 510l155-130 95 70 160-210 140 170 104-80 146 180v90H0z" fill="#071827"/>
+</svg>

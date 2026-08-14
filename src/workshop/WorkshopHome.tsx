@@ -78,7 +78,24 @@ function RelicsGalleryVisual() {
   );
 }
 
+function CardWorkshopVisual() {
+  return (
+    <svg viewBox="0 0 400 240" role="img" aria-label="Card workshop preview" preserveAspectRatio="xMidYMid slice">
+      <rect x="70" y="40" width="120" height="160" rx="8" fill="#030c17" stroke="#04acff" strokeWidth="1.2" strokeOpacity="0.4" />
+      <rect x="210" y="40" width="120" height="160" rx="8" fill="#070a14" stroke="#eab308" strokeWidth="1.2" strokeOpacity="0.4" />
+      <circle cx="130" cy="90" r="24" fill="#04acff" fillOpacity="0.15" stroke="#04acff" strokeWidth="1" strokeOpacity="0.3" />
+      <rect x="90" y="130" width="80" height="8" rx="4" fill="#04acff" fillOpacity="0.4" />
+      <rect x="90" y="146" width="60" height="6" rx="3" fill="#04acff" fillOpacity="0.2" />
+      <rect x="225" y="60" width="90" height="10" rx="2" fill="#eab308" fillOpacity="0.3" />
+      <line x1="225" y1="90" x2="315" y2="90" stroke="#eab308" strokeWidth="1" strokeOpacity="0.3" />
+      <line x1="225" y1="110" x2="315" y2="110" stroke="#eab308" strokeWidth="1" strokeOpacity="0.2" />
+      <line x1="225" y1="130" x2="295" y2="130" stroke="#eab308" strokeWidth="1" strokeOpacity="0.2" />
+    </svg>
+  );
+}
+
 function CardVisual({ id }: { id: string }) {
+  if (id === 'card-workshop') return <CardWorkshopVisual />;
   if (id === 'celestial-backdrop') return <CelestialVisual />;
   if (id === 'chapter-generation-manifestation') return <ManifestationVisual />;
   if (id === 'idle-cultivation') return <IdleCultivationVisual />;

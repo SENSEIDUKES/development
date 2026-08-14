@@ -28,6 +28,10 @@ const ReaderChamberWorkspace = lazy(() =>
   import('./workshop/previews/reader-chamber/ReaderChamberWorkspace')
     .then(module => ({ default: module.ReaderChamberWorkspace })),
 );
+const CardWorkshopWorkspace = lazy(() =>
+  import('./workshop/previews/card-workshop/CardWorkshopWorkspace')
+    .then(module => ({ default: module.CardWorkshopWorkspace })),
+);
 const RelicsWorkspace = lazy(() =>
   import('./workshop/previews/relics/RelicsWorkspace')
     .then(module => ({ default: module.RelicsWorkspace })),
@@ -44,6 +48,7 @@ const StorySeedWorkspace = lazy(() =>
  * inside its own workspace component (see FeatureWorkspace).
  */
 const previewRegistry: Record<string, ComponentType> = {
+  'card-workshop': CardWorkshopWorkspace,
   'celestial-backdrop': CelestialBackdropWorkspace,
   'chapter-generation-flow': ChapterGenerationFlowWorkspace,
   'chapter-generation-manifestation': ChapterManifestationWorkspace,

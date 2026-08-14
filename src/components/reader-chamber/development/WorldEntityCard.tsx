@@ -8,9 +8,29 @@ import { effectiveChannelVolume, isChannelAudible } from '../shared/stubs';
 
 interface WorldEntityCardProps {
   card: WorldCardEvent;
+  /** Workshop-only dependency seam. Reader callers omit this and keep the normal audio lifecycle. */
+  audioAdapter?: WorldEntityCardAudioAdapter;
 }
 
-export const WorldEntityCard: React.FC<WorldEntityCardProps> = React.memo(({ card }) => {
+export interface WorldEntityCardAudioAsset {
+  id: string;
+  title?: string;
+}
+
+export interface WorldEntityCardPlayback {
+  onended?: () => void;
+  onerror?: () => void;
+}
+
+export interface WorldEntityCardAudioAdapter {
+  resolve: (card: WorldCardEvent) => WorldEntityCardAudioAsset | null;
+  play: (asset: WorldEntityCardAudioAsset, options?: { volume?: number }) => Promise<WorldEntityCardPlayback>;
+  stop: (assetId?: string) => void;
+  effectiveVolume: () => number;
+  isAudible: () => boolean;
+}
+
+export const WorldEntityCard: React.FC<WorldEntityCardProps> = React.memo(({ card, audioAdapter }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [playbackFailed, setPlaybackFailed] = useState(false);
@@ -21,8 +41,10 @@ export const WorldEntityCard: React.FC<WorldEntityCardProps> = React.memo(({ car
   // a clear unavailable state. Nothing is generated or fetched as a
   // replacement, and chapter logic never picks the filename.
   const soundAsset = useMemo(
-    () => (isSfxCard ? resolveCardSound(card) : null),
-    [card, isSfxCard],
+    () => (isSfxCard
+      ? (audioAdapter ? audioAdapter.resolve(card) : resolveCardSound(card))
+      : null),
+    [audioAdapter, card, isSfxCard],
   );
   const soundUnavailable = isSfxCard && (!soundAsset || playbackFailed);
 
@@ -41,12 +63,12 @@ export const WorldEntityCard: React.FC<WorldEntityCardProps> = React.memo(({ car
       const { isPlaying: playing, isSfxCard: sfx, soundAsset: asset } = playbackStateRef.current;
       if (!playing) return;
       if (sfx && asset) {
-        stopCardSound(asset.id);
+        (audioAdapter?.stop ?? stopCardSound)(asset.id);
       } else if (!sfx && typeof window !== 'undefined' && 'speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
     };
-  }, []);
+  }, [audioAdapter]);
 
   const addToast = (message: string, type?: string) => {
     const event = new CustomEvent('seihouse-toast', { detail: { message, type } });
@@ -61,14 +83,14 @@ export const WorldEntityCard: React.FC<WorldEntityCardProps> = React.memo(({ car
     if (!soundAsset) return;
 
     if (isPlaying) {
-      stopCardSound(soundAsset.id);
+      (audioAdapter?.stop ?? stopCardSound)(soundAsset.id);
       setIsPlaying(false);
       return;
     }
 
     // Entity sounds are Audio Cues: both the master switch and the Audio
     // Cues switch (and their volumes) apply.
-    if (!isChannelAudible('cues')) {
+    if (!(audioAdapter?.isAudible() ?? isChannelAudible('cues'))) {
       addToast('Audio is muted — unmute in immersion settings to hear this echo.', 'info');
       return;
     }
@@ -76,7 +98,9 @@ export const WorldEntityCard: React.FC<WorldEntityCardProps> = React.memo(({ car
     setIsLoading(true);
     try {
       // Repeated taps replay the same cached element for this asset id.
-      const element = await playCardSound(soundAsset, { volume: effectiveChannelVolume('cues') });
+      const element = await (audioAdapter?.play ?? playCardSound)(soundAsset, {
+        volume: audioAdapter?.effectiveVolume() ?? effectiveChannelVolume('cues'),
+      });
       setIsLoading(false);
       setIsPlaying(true);
       element.onended = () => setIsPlaying(false);

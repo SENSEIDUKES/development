@@ -17,6 +17,7 @@ The development-only Card Workshop makes current Reader card and system-panel pr
 - **2026-08-14:** Created the Card Workshop, extracted the production-inline Codex Reveal presentation for shared Reader/Workshop rendering, and added deterministic local state simulation.
 - **2026-08-14:** Rebased Part Two onto merged Part One, restored a locked Reference pane, isolated sound simulation, and completed missing image, Codex, reveal, audio, and responsive states.
 - **2026-08-14:** Replaced the all-at-once Overview with one accessible tab per card preset so only the selected card renders.
+- **2026-08-14:** Routed the development audio adapter through the real shared `@seihouse/audio-player` session via `useDevAudioPlayback`; the deterministic local mock is retained as a test-only fallback so the existing component test keeps asserting the same loading/playing/muted/unavailable states.
 
 ## Presentations
 
@@ -46,7 +47,7 @@ Card Type Tabs mode exposes every preset in a horizontally scrollable tab list a
 
 - Fixtures are static local objects and `/public/card-workshop` SVG assets.
 - The Card Workshop makes no model, generation, API, database, story-write, persistence, or production-media calls.
-- Card sound state is supplied through an optional Development-component adapter. Normal Reader callers omit it and retain the existing resolver/player lifecycle.
+- The Development audio adapter (`createCardWorkshopAudioAdapter`) routes card-sound taps through the real shared `@seihouse/audio-player` session via `useDevAudioPlayback`. The workshop has no curated SFX catalog, so every card sound resolves to the same published Library Help narration that backs the audio-player smoke workspace — the visual demo does not care which audio actually plays, only that the real player is exercised. A deterministic local mock stays available as a `player: null` test fallback.
 - Reference mode uses locked production component replicas and has no Development controls.
 - No generation prompt, card-routing rule, Bestiary/Portrait normalization, Reader Codex architecture, or production integration is changed here.
 

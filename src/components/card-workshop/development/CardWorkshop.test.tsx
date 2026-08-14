@@ -1,16 +1,21 @@
 // @vitest-environment jsdom
-import { act } from 'react';
+import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CardWorkshopView } from './CardWorkshopView';
 import { CardWorkshopWorkspace } from '../../../workshop/previews/card-workshop/CardWorkshopWorkspace';
 import { CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
 import { resetMockState } from '../../reader-chamber/shared/stubs';
+import { DevAudioPlaybackProvider } from '../../../audio/DevAudioPlayback';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 let container: HTMLDivElement;
 let root: Root;
+
+const renderWithDevAudio = (node: ReactNode) => (
+  <DevAudioPlaybackProvider>{node}</DevAudioPlaybackProvider>
+);
 
 const buttons = () => [...container.querySelectorAll<HTMLButtonElement>('button')];
 
@@ -45,9 +50,32 @@ class MockIntersectionObserver {
   disconnect = vi.fn();
 }
 
+// The DEV shared audio player is wrapped around every render now that the
+// Card Workshop adapter routes through `useDevAudioPlayback`. JSDOM exposes
+// `HTMLMediaElement.play` / `pause` / `load` as no-op stubs that return
+// `undefined`, so the package would otherwise see an undefined promise and
+// crash on `.then(...)`. Force the methods to return a resolved promise
+// (or undefined for the synchronous stoppers) so the package's lifecycle
+// hooks can run.
+const installMediaElementStubs = () => {
+  Object.defineProperty(HTMLMediaElement.prototype, 'play', {
+    configurable: true,
+    value: () => Promise.resolve(),
+  });
+  Object.defineProperty(HTMLMediaElement.prototype, 'pause', {
+    configurable: true,
+    value: () => undefined,
+  });
+  Object.defineProperty(HTMLMediaElement.prototype, 'load', {
+    configurable: true,
+    value: () => undefined,
+  });
+};
+
 beforeEach(() => {
   resetMockState();
   globalThis.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+  installMediaElementStubs();
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
@@ -63,7 +91,7 @@ afterEach(() => {
 
 describe('CardWorkshopWorkspace', () => {
   it('opens through the shared Workshop shell with independent Reference and Development panes', async () => {
-    act(() => root.render(<CardWorkshopWorkspace />));
+    act(() => root.render(renderWithDevAudio(<CardWorkshopWorkspace />)));
 
     expect(container.textContent).toContain('Card Workshop');
     expect(container.textContent).toContain('Reader Card Workshop');
@@ -82,7 +110,7 @@ describe('CardWorkshopWorkspace', () => {
 
 describe('CardWorkshopView', () => {
   it('gives every card type its own tab and mounts only the selected presentation', async () => {
-    act(() => root.render(<CardWorkshopView initialMode="overview" />));
+    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="overview" />)));
 
     const tablist = container.querySelector('[role="tablist"][aria-label="Card types"]');
     const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
@@ -130,7 +158,7 @@ describe('CardWorkshopView', () => {
   });
 
   it('switches presets and preserves the Bestiary species versus Non-Human Portrait distinction', async () => {
-    act(() => root.render(<CardWorkshopView initialMode="inspection" />));
+    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="inspection" />)));
 
     await selectByLabel('Card preset', 'preset-nonhuman-portrait-reveal');
     expect(container.textContent).toContain('ReaderCodex > Portraits (Non-Human Section)');
@@ -150,10 +178,12 @@ describe('CardWorkshopView', () => {
   it('covers existing image, Manifest/Awaken, and missing-image states', async () => {
     vi.useFakeTimers();
     act(() => root.render(
-      <CardWorkshopView
-        initialMode="inspection"
-        initialPresetId="preset-nonhuman-portrait-reveal"
-      />,
+      renderWithDevAudio(
+        <CardWorkshopView
+          initialMode="inspection"
+          initialPresetId="preset-nonhuman-portrait-reveal"
+        />,
+      ),
     ));
 
     expect(container.querySelector('img[alt="Lei"]')).toBeTruthy();
@@ -177,10 +207,12 @@ describe('CardWorkshopView', () => {
 
   it('covers Codex present/missing and first-reveal/existing-reference behavior', async () => {
     act(() => root.render(
-      <CardWorkshopView
-        initialMode="inspection"
-        initialPresetId="preset-nonhuman-portrait-reveal"
-      />,
+      renderWithDevAudio(
+        <CardWorkshopView
+          initialMode="inspection"
+          initialPresetId="preset-nonhuman-portrait-reveal"
+        />,
+      ),
     ));
 
     await selectByLabel('Codex entry state', 'missing');
@@ -203,7 +235,9 @@ describe('CardWorkshopView', () => {
   it('simulates audio available, unavailable, loading, playing, and muted without media playback', async () => {
     vi.useFakeTimers();
     act(() => root.render(
-      <CardWorkshopView initialMode="inspection" initialPresetId="preset-human-character" />,
+      renderWithDevAudio(
+        <CardWorkshopView initialMode="inspection" initialPresetId="preset-human-character" />,
+      ),
     ));
 
     expect(container.textContent).toContain('Tap to Listen');
@@ -226,7 +260,9 @@ describe('CardWorkshopView', () => {
 
   it('changes SystemBlock kinds and renders FateResultCard only through SystemBlock', async () => {
     act(() => root.render(
-      <CardWorkshopView initialMode="inspection" initialPresetId="preset-system-status" />,
+      renderWithDevAudio(
+        <CardWorkshopView initialMode="inspection" initialPresetId="preset-system-status" />,
+      ),
     ));
 
     await selectByLabel('System panel kind', 'skill_acquired');
@@ -239,7 +275,7 @@ describe('CardWorkshopView', () => {
   });
 
   it('switches mobile, tablet, and desktop preview widths', async () => {
-    act(() => root.render(<CardWorkshopView initialMode="inspection" />));
+    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="inspection" />)));
 
     await clickButton('Mobile Viewport');
     expect(container.querySelector('[class~="max-w-[375px]"]')).toBeTruthy();
@@ -253,12 +289,37 @@ describe('CardWorkshopView', () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Unexpected request'));
     const storageSpy = vi.spyOn(Storage.prototype, 'setItem');
 
-    act(() => root.render(<CardWorkshopView initialMode="overview" />));
+    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="overview" />)));
     await clickButton('Inspection Mode');
     await selectByLabel('Card preset', 'preset-manifestation-image');
 
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(storageSpy).not.toHaveBeenCalled();
     expect(container.querySelector('img[src^="http"]')).toBeFalsy();
+  });
+
+  it('dispatches the real @seihouse/audio-player session when the human character is tapped', async () => {
+    vi.useFakeTimers();
+
+    // Spy on the underlying HTMLMediaElement play() to observe that the
+    // shared audio session was actually asked to start the resolved track.
+    const playSpy = vi
+      .spyOn(HTMLMediaElement.prototype, 'play')
+      .mockResolvedValue(undefined);
+
+    act(() => root.render(
+      renderWithDevAudio(
+        <CardWorkshopView initialMode="inspection" initialPresetId="preset-human-character" />,
+      ),
+    ));
+
+    await clickButton('Tap to Listen');
+
+    await act(async () => {
+      vi.advanceTimersByTime(50);
+    });
+
+    expect(playSpy).toHaveBeenCalled();
+    vi.useRealTimers();
   });
 });

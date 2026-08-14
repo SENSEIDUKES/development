@@ -6,21 +6,72 @@ import type {
 } from '../../reader-chamber/development/WorldEntityCard';
 import type { AudioPreviewState } from './types';
 
-const LOCAL_PLAYBACK_MS = 900;
+/**
+ * Minimal surface the adapter needs from the real DEV audio player
+ * (`@seihouse/audio-player` via `useDevAudioPlayback`). Tests inject a
+ * vi.fn() stand-in so the workshop exercises the production call sites
+ * without depending on a live audio element.
+ */
+export interface DevAudioPlayerBridge {
+  readonly currentTrackId: string | null;
+  readonly isPlaying: boolean;
+  play: (request: { id: string; source: string; title?: string }) => void;
+  stop: (trackId?: string) => void;
+}
+
+export interface CardWorkshopAudioAdapterOptions {
+  state: AudioPreviewState;
+  muted: boolean;
+  /**
+   * Map a card to the playable source URL the real player should use. The
+   * workshop has no curated SFX catalog, so the same published Library
+   * Help narration that backs the audio-player smoke workspace is reused
+   * here. Returning `null` keeps the card on the local-only mock path.
+   */
+  resolveSource: (asset: WorldEntityCardAudioAsset) => string | null;
+  /**
+   * The real DEV audio player when the adapter is used inside the
+   * workshop. Pass `null` (the default) to keep the deterministic local
+   * timer-based mock used by the existing component test.
+   */
+  player?: DevAudioPlayerBridge | null;
+}
 
 export interface CardWorkshopAudioAdapter extends WorldEntityCardAudioAdapter {
   dispose: () => void;
 }
 
+const LOCAL_PLAYBACK_MS = 900;
+
 /**
- * Deterministic Card Workshop audio. It resolves semantic fixture hints and
- * simulates lifecycle state without creating an Audio element or requesting media.
+ * Card Workshop audio adapter.
+ *
+ * - With a `player`, playback is dispatched to DEV's shared
+ *   `@seihouse/audio-player` session (the same one used by the audio-player
+ *   smoke workspace and `useCodexVoiceCards`). Lifecycle callbacks
+ *   (`onended`/`onerror`) are still simulated locally with timers because
+ *   the audio-player session does not surface per-track end events through
+ *   `useDevAudioPlayback`; the workshop exists to inspect visual states,
+ *   not to time real audio playback to the millisecond.
+ * - Without a `player`, the adapter stays a fully local, deterministic
+ *   mock so the workshop's component test keeps asserting the same
+ *   loading / playing / muted / unavailable states without touching
+ *   media playback.
  */
-export function createCardWorkshopAudioAdapter(
-  state: AudioPreviewState,
-  muted: boolean,
-): CardWorkshopAudioAdapter {
+export function createCardWorkshopAudioAdapter({
+  state,
+  muted,
+  resolveSource,
+  player = null,
+}: CardWorkshopAudioAdapterOptions): CardWorkshopAudioAdapter {
   const timers = new Map<string, ReturnType<typeof setTimeout>>();
+
+  const clearTimer = (assetId: string) => {
+    const existing = timers.get(assetId);
+    if (!existing) return;
+    clearTimeout(existing);
+    timers.delete(assetId);
+  };
 
   const resolve = (card: WorldCardEvent): WorldEntityCardAudioAsset | null => {
     if (state === 'unavailable' || !card.sound?.assetId) return null;
@@ -35,6 +86,17 @@ export function createCardWorkshopAudioAdapter(
       return new Promise<WorldEntityCardPlayback>(() => undefined);
     }
 
+    if (player) {
+      const source = resolveSource(asset);
+      if (source) {
+        player.play({
+          id: asset.id,
+          source,
+          title: asset.title ?? 'Card Workshop preview',
+        });
+      }
+    }
+
     let onended: (() => void) | undefined;
     const playback: WorldEntityCardPlayback = {};
     Object.defineProperty(playback, 'onended', {
@@ -43,8 +105,7 @@ export function createCardWorkshopAudioAdapter(
       set: (callback: (() => void) | undefined) => {
         onended = callback;
         if (state !== 'available' || !callback) return;
-        const existingTimer = timers.get(asset.id);
-        if (existingTimer) clearTimeout(existingTimer);
+        clearTimer(asset.id);
         const timer = setTimeout(() => {
           timers.delete(asset.id);
           callback();
@@ -57,10 +118,8 @@ export function createCardWorkshopAudioAdapter(
 
   const stop = (assetId?: string) => {
     if (!assetId) return;
-    const timer = timers.get(assetId);
-    if (!timer) return;
-    clearTimeout(timer);
-    timers.delete(assetId);
+    clearTimer(assetId);
+    if (player) player.stop(assetId);
   };
 
   const dispose = () => {

@@ -27,6 +27,8 @@ import type {
   ImagePreviewState,
 } from '../shared/types';
 import { createCardWorkshopAudioAdapter } from '../shared/cardWorkshopAudioAdapter';
+import type { WorldEntityCardAudioAsset } from '../../reader-chamber/development/WorldEntityCard';
+import { useDevAudioPlayback } from '../../../audio/DevAudioPlayback';
 import { CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
 import {
   SYSTEM_KIND_OPTIONS,
@@ -35,6 +37,15 @@ import {
   AUDIO_STATE_OPTIONS,
   INITIAL_CARD_WORKSHOP_OVERRIDES,
 } from '../../../workshop/previews/card-workshop/previewStates';
+
+// Reuse the same published Library Help narration that backs the
+// audio-player smoke workspace. The workshop has no curated SFX catalog,
+// so the adapter routes every tap through this single shared sample. The
+// actual audio content is irrelevant to the visual demo — what matters
+// is that the real shared `@seihouse/audio-player` session is exercised.
+const WORKSHOP_CARD_AUDIO_SAMPLE = 'https://lines.seihouse.org/LIBRARY/Lines/SYSTEM/SYSTEM/HELP%20LINES/STORY%20SEED%20ENG.mp3';
+
+const resolveCardAudioSource = (_asset: WorldEntityCardAudioAsset): string => WORKSHOP_CARD_AUDIO_SAMPLE;
 
 const LOCAL_REVEAL_BACKDROP = '/card-workshop/reveal-backdrop.svg';
 const LOCAL_HUMAN_PORTRAIT = '/card-workshop/human-portrait.svg';
@@ -83,9 +94,15 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
     }));
   }, [selectedPreset]);
 
+  const player = useDevAudioPlayback();
   const audioAdapter = useMemo(
-    () => createCardWorkshopAudioAdapter(overrides.audioState, overrides.isAudioMuted),
-    [overrides.audioState, overrides.isAudioMuted],
+    () => createCardWorkshopAudioAdapter({
+      state: overrides.audioState,
+      muted: overrides.isAudioMuted,
+      resolveSource: resolveCardAudioSource,
+      player,
+    }),
+    [overrides.audioState, overrides.isAudioMuted, player],
   );
 
   useEffect(() => () => {

@@ -12,6 +12,19 @@ const WORKSHOP_VOICE_PREFIX = 'workshop-voice:';
 /**
  * Local voice-card simulator. Existing playable URLs use DEV's shared
  * SEIHouse player; generated Workshop cards retain browser speech synthesis.
+ *
+ * Why `workshop-voice:` URLs still use `speechSynthesis`:
+ * - `@seihouse/audio-player` only consumes playable sources (URL, blob URL,
+ *   or a value produced by a `sourceResolver`). It has no TTS capability.
+ * - `speechSynthesis.speak(new SpeechSynthesisUtterance(text))` produces
+ *   audio inside the browser but does not expose the result as a URL or
+ *   blob, so the player has nothing to load — there is no playable
+ *   artifact we can hand the package at this layer.
+ * - Adding a second TTS engine (e.g. WebAudio + recorder) would
+ *   introduce a parallel playback path that the workshop exists to
+ *   avoid. Until the package ships a first-class TTS surface, the
+ *   locally generated Workshop voice card remains the one documented,
+ *   tightly scoped speechSynthesis exception in the DEV app.
  */
 export function useCodexVoiceCards({ memory, onUpdateMemory }: UseCodexVoiceCardsOptions) {
   const [generatingVoiceId, setGeneratingVoiceId] = useState<string | null>(null);

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ChevronRight, CircleHelp, Pause, Play, Search, X } from 'lucide-react';
 import { LibraryButton, LibraryPanel, cn } from '../../library';
+import { useDevAudioPlayback } from '../../../audio/DevAudioPlayback';
 import {
   DEFAULT_HELP_LANGUAGE,
   STORY_SEED_HELP_ITEMS,
@@ -28,14 +29,8 @@ interface LibraryHelpMenuProps {
   topics?: readonly StorySeedHelpItem[];
 }
 
-interface HelpAudioSession {
-  audio: HTMLAudioElement;
-  audioUrl: string;
-  itemId: string;
-  detachListeners: () => void;
-}
-
 const PLAYABLE_AUDIO_PROTOCOLS = new Set(['http:', 'https:', 'blob:']);
+const HELP_TRACK_PREFIX = 'story-seed-help:';
 
 /** Return a trimmed, browser-playable source or `null` for text-only topics. */
 const getPlayableAudioUrl = (audioUrl?: string): string | null => {
@@ -53,29 +48,6 @@ const getPlayableAudioUrl = (audioUrl?: string): string | null => {
       : null;
   } catch {
     return null;
-  }
-};
-
-const resetAudioElement = (audio: HTMLAudioElement) => {
-  try {
-    audio.pause();
-  } catch {
-    // A partially initialized media element may reject browser controls.
-  }
-
-  try {
-    audio.currentTime = 0;
-  } catch {
-    // Some failed or not-yet-loaded media cannot seek; it is still detached.
-  }
-
-  // Detaching the source and resetting the media pipeline releases buffered
-  // data and aborts an obsolete request when a reader changes topics quickly.
-  try {
-    audio.removeAttribute('src');
-    audio.load();
-  } catch {
-    // The element is already unreachable even if a browser rejects reset.
   }
 };
 
@@ -99,31 +71,21 @@ export const LibraryHelpMenu = ({
 }: LibraryHelpMenuProps) => {
   const reduceMotion = useReducedMotion();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [playingId, setPlayingId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const activeIdRef = useRef<string | null>(null);
-  const audioRef = useRef<HelpAudioSession | null>(null);
+  const playback = useDevAudioPlayback();
+  const playbackRef = useRef(playback);
+  playbackRef.current = playback;
+  const playingId = playback.isPlaying && playback.currentTrackId?.startsWith(HELP_TRACK_PREFIX)
+    ? playback.currentTrackId.slice(HELP_TRACK_PREFIX.length)
+    : null;
 
   const stopAudio = useCallback(() => {
-    const session = audioRef.current;
-    audioRef.current = null;
-
-    if (session) {
-      session.detachListeners();
-      resetAudioElement(session.audio);
+    const activeTrackId = playback.currentTrackId;
+    if (activeTrackId?.startsWith(HELP_TRACK_PREFIX)) {
+      playback.stop(activeTrackId);
     }
-
-    setPlayingId(null);
-  }, []);
-
-  const releaseAudio = useCallback((session: HelpAudioSession) => {
-    if (audioRef.current !== session) return;
-
-    audioRef.current = null;
-    session.detachListeners();
-    resetAudioElement(session.audio);
-    setPlayingId(null);
-  }, []);
+  }, [playback]);
 
   /** Reveal a topic's card (`null` collapses). Playback belongs to the
       visible card, so switching topics stops the previous line. */
@@ -151,43 +113,18 @@ export const LibraryHelpMenu = ({
 
     // The ref is authoritative during rapid taps; React state may not have
     // committed yet, but an existing session can still be stopped safely.
-    if (audioRef.current?.itemId === item.id) {
+    if (playingId === item.id) {
       stopAudio();
       return;
     }
 
     stopAudio();
-
-    let audio: HTMLAudioElement;
-    try {
-      audio = new Audio(audioUrl);
-    } catch {
-      setPlayingId(null);
-      return;
-    }
-
-    let session: HelpAudioSession;
-    const release = () => releaseAudio(session);
-    const events: Array<keyof HTMLMediaElementEventMap> = ['ended', 'error', 'pause', 'abort'];
-    session = {
-      audio,
-      audioUrl,
-      itemId: item.id,
-      detachListeners: () => {
-        events.forEach(eventName => audio.removeEventListener(eventName, release));
-      },
-    };
-
-    events.forEach(eventName => audio.addEventListener(eventName, release));
-    audioRef.current = session;
-    setPlayingId(item.id);
-
-    try {
-      void Promise.resolve(audio.play()).catch(release);
-    } catch {
-      release();
-    }
-  }, [releaseAudio, stopAudio]);
+    playback.play({
+      id: `${HELP_TRACK_PREFIX}${item.id}`,
+      source: audioUrl,
+      title: `${item.label} Library Help`,
+    });
+  }, [playback, playingId, stopAudio]);
 
   const clearActiveItem = useCallback(() => {
     // Modal closure and visibility changes are hard audio boundaries. Stop
@@ -210,11 +147,10 @@ export const LibraryHelpMenu = ({
 
   // Never leave a line playing after the menu unmounts.
   useEffect(() => () => {
-    const session = audioRef.current;
-    audioRef.current = null;
-    if (!session) return;
-    session.detachListeners();
-    resetAudioElement(session.audio);
+    const activeTrackId = playbackRef.current.currentTrackId;
+    if (activeTrackId?.startsWith(HELP_TRACK_PREFIX)) {
+      playbackRef.current.stop(activeTrackId);
+    }
   }, []);
 
   // Same shell behavior as the other Story Seed sheets: Escape closes and
@@ -257,11 +193,13 @@ export const LibraryHelpMenu = ({
   // A language/topic data refresh may keep the same id while changing its
   // audio source. Never let the stale source continue under the new copy.
   useEffect(() => {
-    const session = audioRef.current;
-    if (session?.itemId === activeId && session.audioUrl !== activeAudioUrl) {
+    if (
+      playback.currentTrackId === `${HELP_TRACK_PREFIX}${activeId}`
+      && playback.currentSource !== activeAudioUrl
+    ) {
       stopAudio();
     }
-  }, [activeAudioUrl, activeId, stopAudio]);
+  }, [activeAudioUrl, activeId, playback.currentSource, playback.currentTrackId, stopAudio]);
 
   const renderCard = useCallback((item: StorySeedHelpItem) => {
     const translation = getHelpTranslation(item, language);

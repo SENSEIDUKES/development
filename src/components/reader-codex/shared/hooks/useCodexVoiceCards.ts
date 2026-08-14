@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useDevAudioPlayback } from '../../../../audio/DevAudioPlayback';
 import type { Character, StoryMemory } from '../types';
 
 interface UseCodexVoiceCardsOptions {
@@ -8,28 +9,28 @@ interface UseCodexVoiceCardsOptions {
 
 const WORKSHOP_VOICE_PREFIX = 'workshop-voice:';
 
-const clearAudioHandlers = (audio: HTMLAudioElement) => {
-  audio.onplay = null;
-  audio.onended = null;
-  audio.onpause = null;
-};
-
 /**
- * Local voice-card simulator. Existing playable URLs still use Audio; newly
- * generated Workshop cards retain the source controls and use browser speech
- * synthesis without calling the production audio API or media store.
+ * Local voice-card simulator. Existing playable URLs use DEV's shared
+ * SEIHouse player; generated Workshop cards retain browser speech synthesis.
  */
 export function useCodexVoiceCards({ memory, onUpdateMemory }: UseCodexVoiceCardsOptions) {
   const [generatingVoiceId, setGeneratingVoiceId] = useState<string | null>(null);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const {
+    currentTrackId,
+    isPlaying,
+    play,
+    stop,
+  } = useDevAudioPlayback();
+  const activeTrackIdRef = useRef<string | null>(null);
+  const activeCharacterIdRef = useRef<string | null>(null);
 
   const stopCurrentVoice = () => {
-    if (audioRef.current) {
-      clearAudioHandlers(audioRef.current);
-      audioRef.current.pause();
-      audioRef.current = null;
+    if (activeTrackIdRef.current) {
+      stop(activeTrackIdRef.current);
+      activeTrackIdRef.current = null;
     }
+    activeCharacterIdRef.current = null;
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
@@ -37,14 +38,23 @@ export function useCodexVoiceCards({ memory, onUpdateMemory }: UseCodexVoiceCard
   };
 
   useEffect(() => () => {
-    if (audioRef.current) {
-      clearAudioHandlers(audioRef.current);
-      audioRef.current.pause();
-    }
+    if (activeTrackIdRef.current) stop(activeTrackIdRef.current);
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
-  }, []);
+  }, [stop]);
+
+  useEffect(() => {
+    const activeTrackId = activeTrackIdRef.current;
+    const activeCharacterId = activeCharacterIdRef.current;
+    if (!activeTrackId || !activeCharacterId) return;
+
+    if (currentTrackId !== activeTrackId || !isPlaying) {
+      setPlayingVoiceId(null);
+      return;
+    }
+    setPlayingVoiceId(activeCharacterId);
+  }, [currentTrackId, isPlaying]);
 
   const handlePlayVoice = (url: string, charId: string) => {
     stopCurrentVoice();
@@ -62,12 +72,14 @@ export function useCodexVoiceCards({ memory, onUpdateMemory }: UseCodexVoiceCard
       return;
     }
 
-    const audio = new Audio(url);
-    audioRef.current = audio;
-    audio.onplay = () => setPlayingVoiceId(charId);
-    audio.onended = () => setPlayingVoiceId(null);
-    audio.onpause = () => setPlayingVoiceId(null);
-    void audio.play().catch(() => setPlayingVoiceId(null));
+    const trackId = `codex-voice:${charId}`;
+    activeTrackIdRef.current = trackId;
+    activeCharacterIdRef.current = charId;
+    play({
+      id: trackId,
+      source: url,
+      title: 'Reader Codex voice',
+    });
   };
 
   const handleStopVoice = () => stopCurrentVoice();

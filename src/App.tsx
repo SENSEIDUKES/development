@@ -40,6 +40,10 @@ const StorySeedWorkspace = lazy(() =>
   import('./workshop/previews/story-seed/StorySeedWorkspace')
     .then(module => ({ default: module.StorySeedWorkspace })),
 );
+const AudioPlayerSmokeWorkspace = lazy(() =>
+  import('./workshop/previews/audio-player-smoke/AudioPlayerSmokeWorkspace')
+    .then(module => ({ default: module.AudioPlayerSmokeWorkspace })),
+);
 
 /**
  * One entry per manifest id. Adding a feature means adding one line here —
@@ -48,6 +52,7 @@ const StorySeedWorkspace = lazy(() =>
  * inside its own workspace component (see FeatureWorkspace).
  */
 const previewRegistry: Record<string, ComponentType> = {
+  'audio-player-smoke': AudioPlayerSmokeWorkspace,
   'card-workshop': CardWorkshopWorkspace,
   'celestial-backdrop': CelestialBackdropWorkspace,
   'chapter-generation-flow': ChapterGenerationFlowWorkspace,

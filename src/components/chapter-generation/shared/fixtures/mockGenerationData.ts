@@ -40,6 +40,8 @@ export interface MockChapterGenerationScenario {
     resolvedPlotThreads: string[];
     destinedEnding: string;
     characters: Record<string, unknown>[];
+    /** Species-level records; persistent non-human individuals stay in characters. */
+    bestiary?: Record<string, unknown>[];
     factions: Record<string, unknown>[];
     locations: Record<string, unknown>[];
     artifacts: Record<string, unknown>[];
@@ -251,6 +253,13 @@ export const ESTABLISHED_SCENARIO: MockChapterGenerationScenario = {
         lastMajorInvolvement: 3,
       },
     ],
+    bestiary: [{
+      name: "Ashfall Seal Wyrms",
+      description: "Pale wyrms bound beneath the Ashfall shrine's oldest inner seal.",
+      classification: "Sealed spirit beast",
+      traits: ["Seal-sense", "Ash breath"],
+      threatLevel: "High",
+    }],
     factions: [
       {
         name: "Azure Bell Sect",

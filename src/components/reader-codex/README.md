@@ -4,14 +4,15 @@
 - **Source location:** `src/components/ReaderCodex.tsx` and `src/components/CodexSheetOverlay.tsx` (verified against `origin/main` @ `7d44ecc`)
 - **Workshop preview:** `?preview=reader-codex`
 - **Replica created:** 2026-08-11
-- **Last Workshop update:** 2026-08-12
-- **Last source comparison:** 2026-08-11
-- **Replica status:** faithful replica
+- **Last Workshop update:** 2026-08-13
+- **Last source comparison:** 2026-08-13
+- **Replica status:** under refinement
 
 ## Workshop history
 
 - **2026-08-11:** Migrated the complete production Reader Codex, its responsive sheet, all six primary pages and nested sections, Reader prose highlighting/hovercards, local editing controls, and Reader Chamber navigation into DEV. Production-only auth, AI, media, and persistence seams were replaced with explicit local compatibility behavior.
 - **2026-08-12:** Aligned generated Reader sessions with DEV Story Seed, World Blueprint, Process Result, and Living Story State contracts. The adapter now translates Seed character/profile aliases, power ranks, relationships, abilities, permanent power-system data, factions, locations, artifacts, mysteries, and resolved threads; Process updates merge into existing named entities; and each Codex timeline is limited to the selected chapter.
+- **2026-08-13:** Added Part One's Development-only creature boundary: Process Result normalizes species into a lean Bestiary and persistent named non-human individuals into Portraits, with application-owned stable IDs, encounter history, and reciprocal species links. Development now separates Human and Non-Human Portraits and adds a Bestiary tab; the frozen Reference and World Card/Card Workshop behavior remain unchanged.
 
 ## What was migrated
 
@@ -46,6 +47,7 @@ reference/
 development/
   ReaderCodex.tsx
   CodexSheetOverlay.tsx
+  ReaderCodexBestiary.tsx
 shared/
   codex/                    — production section/component tree
   hooks/                    — pure hooks and local production-service adapters
@@ -60,7 +62,8 @@ shared/
 ```
 
 The standalone Workshop state selector opens each real primary tab:
-`Portraits`, `Karma`, `Power Rankings`, `Artifacts`, `Fate`, and `Lore`.
+`Portraits`, `Bestiary`, `Karma`, `Power Rankings`, `Artifacts`, `Fate`, and
+`Lore`.
 Reader Chamber and generated five-chapter sessions open the Codex through the
 existing `Open Codex` control as the production-style responsive overlay.
 
@@ -90,6 +93,20 @@ main ability ledger and permanent power-system definition; and assigns stable
 local IDs where DEV has only a canonical name. Explicit aliases plus harmless
 casing, spacing, and punctuation variants update existing entities instead of
 creating duplicate cards.
+
+Creature data follows the same active Process → Living Story State → Reader
+adapter path. A Bestiary entry is only a species-level answer to “what is this
+species?” and stores its stable ID, description, classification, traits,
+threat, compatible image data, signature sound, encounter chapters, and linked
+notable individual IDs. A persistent named non-human remains a Portrait answer
+to “who is this individual?” and can link to a species without requiring one.
+Legacy `isBeast`/`beastProfile` input is translated at the active Reader and
+Process boundaries; active generated data uses `creature` and never accepts
+model-owned IDs, asset keys, URLs, encounter history, or reverse links.
+
+This pass deliberately does not change Manifest World Card instructions or
+presentation, WorldEntityCard, Card Workshop, sound resolvers, SystemBlock, or
+FateResultCard. Those remain deferred follow-up scope.
 
 Moving chapters deliberately shows that chapter's cumulative generated memory
 and only the completed chapter timeline through that point. The full

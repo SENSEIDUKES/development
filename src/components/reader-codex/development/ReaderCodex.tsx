@@ -4,10 +4,10 @@ import {
   Users, Network, Zap, Sword,
   MapPin, ShieldAlert,
   Compass,
-  BookMarked, Activity, History
+  BookMarked, BookOpen, Activity, History
 } from 'lucide-react';
 import { generateId, vibrate } from '../shared/codexCompatibility';
-import { StoryMemory, Character, StoryArc, StoryWorld, MultiModelRouting, UpdateStoryFields } from '../shared/types';
+import { StoryMemory, Character, CreatureSpecies, StoryArc, StoryWorld, MultiModelRouting, UpdateStoryFields } from '../shared/types';
 import {
   CodexProvider,
   type CodexContextEditorTarget,
@@ -24,6 +24,7 @@ import { ReaderCodexArtifacts } from '../shared/codex/ReaderCodexArtifacts';
 import { ReaderCodexFactions } from '../shared/codex/ReaderCodexFactions';
 import { ReaderCodexDashboards } from '../shared/codex/ReaderCodexDashboards';
 import { ReaderCodexFate } from '../shared/codex/ReaderCodexFate';
+import { ReaderCodexBestiary } from './ReaderCodexBestiary';
 import { DestinyChoicePanel } from '../shared/DestinyChoicePanel';
 import { motion, AnimatePresence } from 'motion/react';
 import { useCodexAnalytics } from '../shared/hooks/useCodexAnalytics';
@@ -73,6 +74,7 @@ type NormalizedStoryMemory = StoryMemory & {
   factions: NonNullable<StoryMemory['factions']>;
   locations: NonNullable<StoryMemory['locations']>;
   artifacts: NonNullable<StoryMemory['artifacts']>;
+  bestiary: NonNullable<StoryMemory['bestiary']>;
   abilities: NonNullable<StoryMemory['abilities']>;
 };
 
@@ -113,20 +115,74 @@ const normalizeAbilities = (
   }, []);
 };
 
+const normalizePortrait = (character: Character, index: number): Character => {
+  const { isBeast: legacyIsBeast, beastProfile: legacyCreatureProfile, ...canonicalCharacter } = character;
+  const rawRole = typeof character.role === 'string' ? character.role.trim() : '';
+  const legacyRoleIsBeast = rawRole.toLocaleLowerCase() === 'beast';
+  const portraitKind = character.portraitKind === 'non-human'
+    || legacyIsBeast === true
+    || legacyRoleIsBeast
+    || Boolean(character.speciesId)
+    ? 'non-human'
+    : 'human';
+
+  return {
+    ...canonicalCharacter,
+    id: ensureSparseEntityId(character.id, 'reader-codex-character', index),
+    role: legacyRoleIsBeast
+      ? 'Companion'
+      : rawRole || 'Unknown',
+    status: typeof character.status === 'string'
+      ? character.status
+      : 'unknown',
+    portraitKind,
+    abilities: normalizeAbilities(character.abilities, `reader-codex-character-${index + 1}`),
+    ...(character.creatureProfile || legacyCreatureProfile
+      ? { creatureProfile: character.creatureProfile ?? legacyCreatureProfile }
+      : {}),
+  };
+};
+
+const normalizeBestiary = (entries: CreatureSpecies[] | undefined): CreatureSpecies[] => normalizeEntityIds(
+  entries,
+  'reader-codex-creature',
+).map((species, index) => {
+  const firstEncounteredChapter = Number.isInteger(species.firstEncounteredChapter)
+    && species.firstEncounteredChapter > 0
+    ? species.firstEncounteredChapter
+    : 1;
+  const appearanceChapters = Array.isArray(species.appearanceChapters)
+    ? [...new Set(species.appearanceChapters.filter(chapter => Number.isInteger(chapter) && chapter > 0))]
+      .sort((left, right) => left - right)
+    : [];
+
+  return {
+    ...species,
+    id: ensureSparseEntityId(species.id, 'reader-codex-creature', index),
+    description: typeof species.description === 'string' ? species.description : '',
+    classification: typeof species.classification === 'string' && species.classification.trim()
+      ? species.classification
+      : 'Unknown',
+    traits: Array.isArray(species.traits)
+      ? species.traits.filter((trait): trait is string => typeof trait === 'string' && Boolean(trait.trim()))
+      : [],
+    threatLevel: typeof species.threatLevel === 'string' && species.threatLevel.trim()
+      ? species.threatLevel
+      : 'Unknown',
+    firstEncounteredChapter,
+    appearanceChapters: [...new Set([...appearanceChapters, firstEncounteredChapter])]
+      .sort((left, right) => left - right),
+    notableIndividualIds: Array.isArray(species.notableIndividualIds)
+      ? species.notableIndividualIds.filter((id): id is string => typeof id === 'string' && Boolean(id.trim()))
+      : [],
+  };
+});
+
 const normalizeSparseMemory = (rawMemory: StoryMemory): NormalizedStoryMemory => {
   const characters = normalizeEntityIds(
     Array.isArray(rawMemory.characters) ? rawMemory.characters : [],
     'reader-codex-character',
-  ).map((character, index) => ({
-    ...character,
-    role: typeof character.role === 'string' && character.role.trim()
-      ? character.role
-      : 'Unknown',
-    status: typeof character.status === 'string'
-      ? character.status
-      : 'unknown',
-    abilities: normalizeAbilities(character.abilities, `reader-codex-character-${index + 1}`),
-  }));
+  ).map(normalizePortrait);
 
   const factions = normalizeEntityIds(
     Array.isArray(rawMemory.factions) ? rawMemory.factions : [],
@@ -156,6 +212,7 @@ const normalizeSparseMemory = (rawMemory: StoryMemory): NormalizedStoryMemory =>
       Array.isArray(rawMemory.artifacts) ? rawMemory.artifacts : [],
       'reader-codex-artifact',
     ),
+    bestiary: normalizeBestiary(rawMemory.bestiary),
     abilities: normalizeAbilities(rawMemory.abilities, 'reader-codex-main-character'),
   };
 };
@@ -174,7 +231,7 @@ export default function ReaderCodex({
 }: ReaderCodexProps) {
   const memory = useMemo(() => normalizeSparseMemory(rawMemory), [rawMemory]);
 
-  const [activePage, setActivePage] = useState<'portraits' | 'karma' | 'power' | 'artifacts' | 'fate' | 'lore'>('portraits');
+  const [activePage, setActivePage] = useState<'portraits' | 'bestiary' | 'karma' | 'power' | 'artifacts' | 'fate' | 'lore'>('portraits');
 
   // Selection state for node inspection in Relationship Map & other grids
   const [selectedNodeChar, setSelectedNodeChar] = useState<Character | null>(null);
@@ -281,6 +338,7 @@ export default function ReaderCodex({
     dormantLocs, locationsToRender,
     dormantFactions, factionsToRender,
     dormantArtifacts, artifactsToRender,
+    dormantBestiary, bestiaryToRender,
     hasDormantState,
   } = useMemo(() => {
     // Memory Temperature Filtering. A user pin is the existing force-include
@@ -308,13 +366,18 @@ export default function ReaderCodex({
     const dormantArtifacts = allArtifacts.filter(a => a.relevanceState === 'dormant' || a.relevanceState === 'archived');
     const artifactsToRender = showDeepMemory ? allArtifacts : allArtifacts.filter(isVisibleInCurrentMemory);
 
-    const hasDormantState = dormantChars.length > 0 || dormantLocs.length > 0 || dormantFactions.length > 0 || dormantArtifacts.length > 0;
+    const allBestiary = memory.bestiary || [];
+    const dormantBestiary = allBestiary.filter(entry => entry.relevanceState === 'dormant' || entry.relevanceState === 'archived');
+    const bestiaryToRender = showDeepMemory ? allBestiary : allBestiary.filter(isVisibleInCurrentMemory);
+
+    const hasDormantState = dormantChars.length > 0 || dormantLocs.length > 0 || dormantFactions.length > 0 || dormantArtifacts.length > 0 || dormantBestiary.length > 0;
 
     return {
       dormantChars, charsToRender,
       dormantLocs, locationsToRender,
       dormantFactions, factionsToRender,
       dormantArtifacts, artifactsToRender,
+      dormantBestiary, bestiaryToRender,
       hasDormantState,
     };
   }, [memory, showDeepMemory]);
@@ -400,6 +463,14 @@ export default function ReaderCodex({
             <span>Portraits</span>
           </button>
 
+          <button
+             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => { vibrate('softTap'); setActivePage('bestiary'); }}
+            className={codexTabClass(activePage === 'bestiary', 'green')}
+          >
+            <BookOpen size={14} className={activePage === 'bestiary' ? 'text-green-400' : ''} />
+            <span>Bestiary</span>
+          </button>
+
           {/* Karma Link */}
           <button
              tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => {
@@ -478,7 +549,7 @@ export default function ReaderCodex({
                <span className={`px-1.5 py-0.5 rounded text-[8.5px] font-bold ${
                  showDeepMemory ? 'bg-portal text-void' : 'bg-neutral-900 text-neutral-400'
                }`}>
-                 {(dormantChars.length + dormantLocs.length + dormantFactions.length + dormantArtifacts.length)} Dormant
+                  {(dormantChars.length + dormantLocs.length + dormantFactions.length + dormantArtifacts.length + dormantBestiary.length)} Dormant
                </span>
              )}
            </button>
@@ -571,7 +642,7 @@ export default function ReaderCodex({
           </div>
         )}
 
-        {/* PAGE 1: PORTRAITS (Characters & Beasts, Locations, Timeline Recaps, Factions) */}
+        {/* PAGE 1: PORTRAITS (Human and non-human individuals, locations, timeline recaps, factions) */}
         {activePage === 'portraits' && (
           <div className="space-y-8 pb-8">
             {/* Chronicle Photo Memory Collage Album */}
@@ -586,6 +657,7 @@ export default function ReaderCodex({
               <ReaderCodexCharacters
                 charsToRender={charsToRender}
                 locationsToRender={locationsToRender}
+                separatePortraitKinds
                 setDeletePrompt={setDeletePrompt}
                 selectedNodeChar={selectedNodeChar}
                 setSelectedNodeChar={setSelectedNodeChar}
@@ -607,6 +679,15 @@ export default function ReaderCodex({
                 onJumpToChapter={onJumpToChapter}
               />
             </div>
+          </div>
+        )}
+
+        {activePage === 'bestiary' && (
+          <div className="pb-8">
+            <ReaderCodexBestiary
+              bestiary={bestiaryToRender}
+              characters={charsToRender}
+            />
           </div>
         )}
 
@@ -666,7 +747,7 @@ export default function ReaderCodex({
 
         {/* PAGE 5: FATE (User world molding controls) */}
         {activePage === 'fate' && (
-          <ReaderCodexFate />
+            <ReaderCodexFate canonicalCreatureTerminology />
         )}
 
         {/* PAGE 6: LORE (Glossary) */}

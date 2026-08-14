@@ -4,7 +4,7 @@ import { useHistoricalMediaUrls } from '../hooks/useHistoricalMediaUrls';
 
 interface ReaderCodexImageGalleryProps {
   entityId: string;
-  type: 'character' | 'location' | 'artifact' | 'beast' | 'faction';
+  type: 'character' | 'creature' | 'location' | 'artifact' | 'beast' | 'faction';
   imageHistory: Array<{
     id: string;
     assetId?: string;

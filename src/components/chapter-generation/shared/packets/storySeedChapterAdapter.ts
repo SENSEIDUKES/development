@@ -224,6 +224,7 @@ const buildStartingLivingStoryState = (
     },
     codex: {
       characters,
+      bestiary: [],
       factions,
       locations,
       artifacts: [],

@@ -100,6 +100,10 @@ export interface BaseCodexEntry {
   arcAccumulation?: string;
 }
 
+export const STORY_ENTITY_TYPES = ["character", "artifact", "location", "creature", "faction"] as const;
+
+export type StoryEntityType = typeof STORY_ENTITY_TYPES[number];
+
 export interface StoryBlockMetadata {
   sceneType?: string;
   environment?: string[];
@@ -118,7 +122,7 @@ export interface StoryBlockMetadata {
   speakerRole?: string;
   entities?: {
     name: string;
-    type: "character" | "artifact" | "location" | "beast" | "faction";
+    type: StoryEntityType;
     mention: "reveal" | "reference";
   }[];
   music?: {

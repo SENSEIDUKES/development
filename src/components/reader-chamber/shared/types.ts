@@ -8,6 +8,8 @@
  * preserve the production Reader/Codex contracts used by this replica.
  */
 
+import type { StoryEntityType } from "../../chapter-generation/shared/types";
+
 export interface FateResultData {
   outcome: "FATE AVERTED" | "FATE SCARRED" | "DOOM MANIFESTED";
   timelineScar: string;
@@ -27,6 +29,9 @@ export interface BeastSonicProfile {
   intelligence?: string;
   signatureSound?: string;
 }
+
+/** Canonical sonic metadata for creature species and non-human portraits. */
+export interface CreatureSonicProfile extends BeastSonicProfile {}
 
 /**
  * Intentional sound roles a World Card can carry. Character quotes stay on
@@ -104,7 +109,7 @@ export interface StoryBlockMetadata {
   speakerRole?: string;
   entities?: {
     name: string;
-    type: "character" | "artifact" | "location" | "beast" | "faction";
+    type: StoryEntityType;
     mention: "reveal" | "reference";
   }[];
   music?: {
@@ -430,6 +435,8 @@ export interface GeneratedImage {
   entityType:
     | "cover"
     | "character"
+    | "creature"
+    /** Legacy media history value retained for source-replica compatibility. */
     | "beast"
     | "location"
     | "artifact"
@@ -513,7 +520,14 @@ export interface Character extends BaseCodexEntry {
   faction?: string;
   imageUrl?: string;
   imageHistory?: GeneratedImage[];
+  /** Human and important non-human individuals share one Portrait system. */
+  portraitKind?: "human" | "non-human";
+  /** Application-owned link to a Bestiary species record, when one exists. */
+  speciesId?: string;
+  creatureProfile?: CreatureSonicProfile;
+  /** @deprecated Normalize legacy source data to portraitKind at the Reader boundary. */
   isBeast?: boolean;
+  /** @deprecated Normalize legacy source data to creatureProfile at the Reader boundary. */
   beastProfile?: BeastSonicProfile;
   lastImageChapter?: number;
   evolutionReady?: boolean;
@@ -523,6 +537,22 @@ export interface Character extends BaseCodexEntry {
   signatureQuote?: string;
   voiceClipUrl?: string;
   voiceAssetId?: string;
+}
+
+/** A species-level Bestiary record, intentionally separate from named individuals. */
+export interface CreatureSpecies extends BaseCodexEntry {
+  id: string;
+  name: string;
+  description: string;
+  classification: string;
+  traits: string[];
+  threatLevel: string;
+  signatureSound?: string;
+  firstEncounteredChapter: number;
+  appearanceChapters: number[];
+  notableIndividualIds: string[];
+  imageUrl?: string;
+  imageHistory?: GeneratedImage[];
 }
 
 export interface Faction extends BaseCodexEntry {
@@ -588,6 +618,7 @@ export interface StoryMemory {
   currentPowerStage?: string;
   powerSystem?: string;
   characters?: Character[];
+  bestiary?: CreatureSpecies[];
   factions?: Faction[];
   locations?: Location[];
   artifacts?: Artifact[];

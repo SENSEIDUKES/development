@@ -160,6 +160,7 @@ export function buildWorkshopProcessingResult(
   const characterStateUpdates = { abilities: [] as unknown[] };
   const codexUpdates = {
     characters: [],
+    bestiary: [],
     factions: [],
     locations: [],
     artifacts: [],
@@ -193,6 +194,7 @@ export function buildWorkshopProcessingResult(
     },
     codex: {
       characters: currentState.codex.characters.map(entry => ({ ...entry })),
+      bestiary: (currentState.codex.bestiary ?? []).map(entry => ({ ...entry })),
       factions: currentState.codex.factions.map(entry => ({ ...entry })),
       locations: currentState.codex.locations.map(entry => ({ ...entry })),
       artifacts: currentState.codex.artifacts.map(entry => ({ ...entry })),

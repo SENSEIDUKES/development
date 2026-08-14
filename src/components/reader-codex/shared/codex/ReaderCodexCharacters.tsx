@@ -18,6 +18,8 @@ interface ReaderCodexCharactersProps {
   setDeletePrompt: (prompt: any) => void;
   selectedNodeChar: Character | null;
   setSelectedNodeChar: (c: Character | null) => void;
+  /** Development uses the canonical Portrait classification without changing the locked Reference layout. */
+  separatePortraitKinds?: boolean;
 }
 
 export function ReaderCodexCharacters({
@@ -25,7 +27,8 @@ export function ReaderCodexCharacters({
   locationsToRender,
   setDeletePrompt,
   selectedNodeChar,
-  setSelectedNodeChar
+  setSelectedNodeChar,
+  separatePortraitKinds = false,
 }: ReaderCodexCharactersProps) {
   const {
     memory,
@@ -71,6 +74,93 @@ export function ReaderCodexCharacters({
     removeAbility,
   } = useCodexCharacterEditing({ memory, onUpdateMemory });
 
+  const isNonHumanPortrait = (character: Character) => (
+    character.portraitKind === 'non-human' || character.isBeast === true
+  );
+
+  const portraitGroups = [
+    {
+      id: 'human',
+      heading: 'Human Portraits',
+      characters: charsToRender.filter(char => !isNonHumanPortrait(char)),
+    },
+    {
+      id: 'non-human',
+      heading: 'Non-Human Portraits',
+      characters: charsToRender.filter(isNonHumanPortrait),
+    },
+  ];
+
+  const renderCharacterCard = (char: Character) => {
+    const isGenerating = generatingId === char.id;
+    const hasImage = Boolean(char.imageAssetId || char.imageUrl);
+    const currentChapter = activeStory.currentChapterNumber || 1;
+    const hasAppeared = char.firstAppeared === undefined || char.firstAppeared <= currentChapter;
+    const activePreview = previews[char.id];
+    const cScore = getPowerRankScore(char.id);
+    const canGenerate = hasAppeared && (!hasImage || Boolean(char.evolutionReady));
+
+    if (editingCharId === char.id) {
+      return (
+        <CharacterEditCard
+          key={char.id}
+          char={char}
+          editingCharData={editingCharData}
+          setEditingCharData={setEditingCharData}
+          setEditingCharId={setEditingCharId}
+          handleSaveCharEdit={handleSaveCharEdit}
+          addAbility={addAbility}
+          removeAbility={removeAbility}
+          updateAbility={updateAbility}
+          aliasCollisions={aliasCollisions}
+        />
+      );
+    }
+
+    return (
+      <CharacterCard
+        key={char.id}
+        char={char}
+        activePreview={activePreview}
+        activeStory={activeStory}
+        cScore={cScore}
+        hasAppeared={hasAppeared}
+        playingVoiceId={playingVoiceId}
+        generatingVoiceId={generatingVoiceId}
+        isGenerating={isGenerating}
+        canGenerate={canGenerate}
+        isFreeUserOnHubStory={isFreeUserOnHubStory}
+        handlePlayVoice={handlePlayVoice}
+        handleStopVoice={handleStopVoice}
+        handleGenerateVoiceCard={handleGenerateVoiceCard}
+        beginCharEdit={beginCharEdit}
+        handleAwakenCardImage={handleAwakenCardImage}
+      />
+    );
+  };
+
+  const renderCharacterProfile = (char: Character) => {
+    const isGenerating = generatingId === char.id;
+    const currentChapter = activeStory.currentChapterNumber || 1;
+    const hasAppeared = char.firstAppeared === undefined || char.firstAppeared <= currentChapter;
+    const hasImage = Boolean(char.imageAssetId || char.imageUrl);
+    const canGenerate = hasAppeared && (!hasImage || Boolean(char.evolutionReady));
+
+    return (
+      <CharacterProfile
+        key={char.id}
+        char={char}
+        activeStory={activeStory}
+        hasAppeared={hasAppeared}
+        canGenerate={canGenerate}
+        isGenerating={isGenerating}
+        isFreeUserOnHubStory={isFreeUserOnHubStory}
+        handleAwakenCardImage={handleAwakenCardImage}
+        setSelectedNodeChar={setSelectedNodeChar}
+      />
+    );
+  };
+
   return (
     <>
       <div className="space-y-6 animate-fadeIn" id="codex-characters-and-locations">
@@ -101,58 +191,27 @@ export function ReaderCodexCharacters({
 
         {charViewStyle === 'cards' ? (
           <div className="space-y-6">
-            <div>
-              <h4 className="text-[11px] text-human tracking-widest font-sc font-bold uppercase mb-3">Divine Character Cards</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {charsToRender.map((char) => {
-                  const isGenerating = generatingId === char.id;
-                  const hasImage = Boolean(char.imageAssetId || char.imageUrl);
-                  const currentChapter = activeStory.currentChapterNumber || 1;
-                  const hasAppeared = char.firstAppeared === undefined || char.firstAppeared <= currentChapter;
-                  const activePreview = previews[char.id];
-                  const cScore = getPowerRankScore(char.id);
-                  const canGenerate = hasAppeared && (!hasImage || Boolean(char.evolutionReady));
-
-                  if (editingCharId === char.id) {
-                    return (
-                      <CharacterEditCard
-                        key={char.id}
-                        char={char}
-                        editingCharData={editingCharData}
-                        setEditingCharData={setEditingCharData}
-                        setEditingCharId={setEditingCharId}
-                        handleSaveCharEdit={handleSaveCharEdit}
-                        addAbility={addAbility}
-                        removeAbility={removeAbility}
-                        updateAbility={updateAbility}
-                        aliasCollisions={aliasCollisions}
-                      />
-                    );
-                  }
-
-                  return (
-                    <CharacterCard
-                      key={char.id}
-                      char={char}
-                      activePreview={activePreview}
-                      activeStory={activeStory}
-                      cScore={cScore}
-                      hasAppeared={hasAppeared}
-                      playingVoiceId={playingVoiceId}
-                      generatingVoiceId={generatingVoiceId}
-                      isGenerating={isGenerating}
-                      canGenerate={canGenerate}
-                      isFreeUserOnHubStory={isFreeUserOnHubStory}
-                      handlePlayVoice={handlePlayVoice}
-                      handleStopVoice={handleStopVoice}
-                      handleGenerateVoiceCard={handleGenerateVoiceCard}
-                      beginCharEdit={beginCharEdit}
-                      handleAwakenCardImage={handleAwakenCardImage}
-                    />
-                  );
-                })}
+            {separatePortraitKinds ? portraitGroups.map(group => (
+              <div key={group.id}>
+                <h4 className="text-[11px] text-human tracking-widest font-sc font-bold uppercase mb-3">{group.heading}</h4>
+                {group.characters.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {group.characters.map(renderCharacterCard)}
+                  </div>
+                ) : (
+                  <p className="rounded border border-dashed border-neutral-900 bg-neutral-950/20 px-3 py-4 text-[10px] text-neutral-600">
+                    No {group.heading.toLocaleLowerCase()} have been recorded.
+                  </p>
+                )}
               </div>
-            </div>
+            )) : (
+              <div>
+                <h4 className="text-[11px] text-human tracking-widest font-sc font-bold uppercase mb-3">Divine Character Cards</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {charsToRender.map(renderCharacterCard)}
+                </div>
+              </div>
+            )}
 
             <div>
               <div className="flex items-center justify-between mb-3 border-t border-neutral-900 pt-5">
@@ -252,31 +311,24 @@ export function ReaderCodexCharacters({
           </div>
         ) : (
           <div className="space-y-8">
-            {charsToRender.length > 0 && (
+            {separatePortraitKinds ? portraitGroups.map(group => (
+              <div key={group.id}>
+                <h4 className="text-[11px] text-human tracking-widest font-sc font-bold uppercase mb-3">{group.heading}</h4>
+                {group.characters.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {group.characters.map(renderCharacterProfile)}
+                  </div>
+                ) : (
+                  <p className="rounded border border-dashed border-neutral-900 bg-neutral-950/20 px-3 py-4 text-[10px] text-neutral-600">
+                    No {group.heading.toLocaleLowerCase()} have been recorded.
+                  </p>
+                )}
+              </div>
+            )) : charsToRender.length > 0 && (
               <div>
                 <h4 className="text-[11px] text-human tracking-widest font-sc font-bold uppercase mb-3">Entity Profiles</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {charsToRender.map((char) => {
-                    const isGenerating = generatingId === char.id;
-                    const currentChapter = activeStory.currentChapterNumber || 1;
-                    const hasAppeared = char.firstAppeared === undefined || char.firstAppeared <= currentChapter;
-                    const hasImage = Boolean(char.imageAssetId || char.imageUrl);
-                    const canGenerate = hasAppeared && (!hasImage || Boolean(char.evolutionReady));
-
-                    return (
-                      <CharacterProfile
-                        key={char.id}
-                        char={char}
-                        activeStory={activeStory}
-                        hasAppeared={hasAppeared}
-                        canGenerate={canGenerate}
-                        isGenerating={isGenerating}
-                        isFreeUserOnHubStory={isFreeUserOnHubStory}
-                        handleAwakenCardImage={handleAwakenCardImage}
-                        setSelectedNodeChar={setSelectedNodeChar}
-                      />
-                    );
-                  })}
+                  {charsToRender.map(renderCharacterProfile)}
                 </div>
               </div>
             )}

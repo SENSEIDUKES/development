@@ -8,6 +8,8 @@
  * preserve the production Reader/Codex contracts used by this replica.
  */
 
+import type { StoryEntityType } from "../../chapter-generation/shared/types";
+
 export interface FateResultData {
   outcome: "FATE AVERTED" | "FATE SCARRED" | "DOOM MANIFESTED";
   timelineScar: string;
@@ -107,7 +109,7 @@ export interface StoryBlockMetadata {
   speakerRole?: string;
   entities?: {
     name: string;
-    type: "character" | "artifact" | "location" | "creature" | "faction";
+    type: StoryEntityType;
     mention: "reveal" | "reference";
   }[];
   music?: {

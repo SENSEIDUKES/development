@@ -168,7 +168,7 @@ const resultFor = (
     },
     codex: {
       characters: [...current.codex.characters, ...codexUpdates.characters],
-      bestiary: [...current.codex.bestiary, ...codexUpdates.bestiary],
+      bestiary: [...(current.codex.bestiary ?? []), ...(codexUpdates.bestiary ?? [])],
       factions: [...current.codex.factions, ...codexUpdates.factions],
       locations: [...current.codex.locations, ...codexUpdates.locations],
       artifacts: [...current.codex.artifacts, ...codexUpdates.artifacts],

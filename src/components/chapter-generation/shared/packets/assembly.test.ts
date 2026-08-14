@@ -25,6 +25,7 @@ const EXPECTED_TRACE_IDS = [
   "active-threads-data",
   "resolved-threads",
   "codex-characters",
+  "codex-bestiary",
   "codex-factions",
   "codex-locations",
   "codex-artifacts",
@@ -123,7 +124,7 @@ describe("Chapter Generation packet assembly", () => {
     ];
     const ids = packet.trace.map(entry => entry.id);
 
-    expect(packet.trace).toHaveLength(65);
+    expect(packet.trace).toHaveLength(66);
     expect(new Set(ids).size).toBe(ids.length);
     packet.trace.forEach(entry => {
       expect(validOwners).toContain(entry.packageId);

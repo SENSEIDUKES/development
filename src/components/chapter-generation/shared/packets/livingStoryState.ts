@@ -25,7 +25,7 @@ export interface LivingStoryThreads {
 export interface LivingStoryCodex {
   characters: Record<string, unknown>[];
   /** Species records; named non-human individuals remain in `characters`. */
-  bestiary: Record<string, unknown>[];
+  bestiary?: Record<string, unknown>[];
   factions: Record<string, unknown>[];
   locations: Record<string, unknown>[];
   artifacts: Record<string, unknown>[];
@@ -38,7 +38,7 @@ export interface LivingStoryCharacterStateUpdate {
 
 export interface LivingStoryCodexUpdates {
   characters: Record<string, unknown>[];
-  bestiary: Record<string, unknown>[];
+  bestiary?: Record<string, unknown>[];
   factions: Record<string, unknown>[];
   locations: Record<string, unknown>[];
   artifacts: Record<string, unknown>[];

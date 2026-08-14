@@ -167,4 +167,48 @@ describe("creature Codex normalization", () => {
     expect(result.characters[0]).not.toHaveProperty("isBeast");
     expect(result.characters[0]).not.toHaveProperty("beastProfile");
   });
+
+  it("preserves ambiguous species updates separately and reports their identity warning", () => {
+    const result = normalize({
+      currentBestiary: [{
+        id: "creature-ash-wolf-past",
+        name: "Ash Wolf",
+        era: "past",
+      }, {
+        id: "creature-ash-wolf-present",
+        name: "Ash Wolf",
+        era: "present",
+      }],
+      bestiaryUpdates: [{
+        name: "Ash Wolf",
+        classification: "Cinder predator",
+      }],
+    });
+
+    expect(result.bestiary.map(record => record.id)).toEqual([
+      "creature-ash-wolf-past",
+      "creature-ash-wolf-present",
+      "dev-creature-ash-wolf",
+    ]);
+    expect(result.identityWarnings).toEqual([expect.objectContaining({
+      code: "ambiguous-entity-match",
+      entityKind: "creature",
+      canonicalName: "Ash Wolf",
+    })]);
+  });
+
+  it("does not invent a current-chapter appearance for a legacy species with no encounter history", () => {
+    const result = normalize({
+      currentBestiary: [{
+        id: "creature-forgotten-herons",
+        name: "Forgotten Herons",
+      }],
+    });
+
+    expect(result.bestiary).toEqual([expect.objectContaining({
+      id: "creature-forgotten-herons",
+      firstEncounteredChapter: 3,
+      appearanceChapters: [],
+    })]);
+  });
 });

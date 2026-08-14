@@ -118,7 +118,7 @@ const normalizePortraitRecord = (
   const rawPortraitKind = stringField(original, "portraitKind");
   const speciesName = stringField(original, "speciesName", "species");
   const existingSpeciesId = source === "current" ? stringField(original, "speciesId") : undefined;
-  const legacyRoleIsBeast = stringField(original, "role")?.toLocaleLowerCase() === "beast";
+  const legacyRoleIsBeast = stringField(original, "role")?.toLowerCase() === "beast";
 
   delete original.isBeast;
   delete original.beastProfile;
@@ -190,12 +190,11 @@ const normalizeCanonicalBestiaryRecord = (
   const firstEncountered = positiveChapter(normalized.firstEncounteredChapter);
   const firstAppeared = positiveChapter(normalized.firstAppeared);
   const appearances = chapterList(normalized.appearanceChapters);
-  const firstEncounteredChapter = Number.isInteger(firstEncountered) && firstEncountered! > 0
-    ? firstEncountered!
-    : firstAppeared ?? appearances[0] ?? chapterNumber;
+  const knownFirstEncounter = firstEncountered ?? firstAppeared ?? appearances[0];
+  const firstEncounteredChapter = knownFirstEncounter ?? chapterNumber;
   const appearanceChapters = chapterList([
     ...appearances,
-    firstEncounteredChapter,
+    ...(knownFirstEncounter ? [knownFirstEncounter] : []),
     ...(encounteredThisChapter ? [chapterNumber] : []),
   ]);
 

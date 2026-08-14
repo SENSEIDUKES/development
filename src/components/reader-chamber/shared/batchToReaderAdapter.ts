@@ -102,7 +102,7 @@ const characterFromRecord = (record: LivingRecord): Character | undefined => {
   const rawPortraitKind = textField(record, "portraitKind");
   const speciesId = textField(record, "speciesId");
   const rawRole = textField(record, "role");
-  const legacyRoleIsBeast = rawRole.toLocaleLowerCase() === "beast";
+  const legacyRoleIsBeast = rawRole.toLowerCase() === "beast";
   const portraitKind = rawPortraitKind === "non-human" || legacyIsBeast === true || legacyRoleIsBeast || Boolean(speciesId)
     ? "non-human"
     : "human";
@@ -141,8 +141,10 @@ const characterFromRecord = (record: LivingRecord): Character | undefined => {
     ...(rawAbilities.length > 0 ? { abilities: normalizeAbilities(rawAbilities) } : {}),
     portraitKind,
     ...(speciesId ? { speciesId } : {}),
-    ...(legacyCreatureProfile && typeof legacyCreatureProfile === "object"
-      ? { creatureProfile: legacyCreatureProfile }
+    ...(rawCharacter.creatureProfile && typeof rawCharacter.creatureProfile === "object"
+      ? { creatureProfile: rawCharacter.creatureProfile }
+      : legacyCreatureProfile && typeof legacyCreatureProfile === "object"
+        ? { creatureProfile: legacyCreatureProfile }
       : {}),
   } as Character;
 };
@@ -159,10 +161,11 @@ const chapterNumbers = (value: unknown): number[] => Array.isArray(value)
 const creatureSpeciesFromRecord = (record: LivingRecord): CreatureSpecies | undefined => {
   const name = textField(record, "name", "title", "label");
   if (!name) return undefined;
+  const appearanceChapters = chapterNumbers(record.appearanceChapters);
   const firstEncounteredChapter = positiveChapter(record.firstEncounteredChapter)
     ?? positiveChapter(record.firstAppeared)
+    ?? appearanceChapters[0]
     ?? 1;
-  const appearanceChapters = chapterNumbers(record.appearanceChapters);
   return {
     ...clone(record),
     id: stableReaderId("creature", record, name),

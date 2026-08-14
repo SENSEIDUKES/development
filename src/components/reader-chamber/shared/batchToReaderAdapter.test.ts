@@ -118,6 +118,8 @@ describe("batchToReaderAdapter", () => {
         description: "A young thunder dragon who guides Rin through the sealed storm gate.",
         portraitKind: "non-human",
         speciesId: "dev-creature-thunder-dragons",
+        creatureProfile: { signatureSound: "A patient crackle of stormfire" },
+        beastProfile: { signatureSound: "Legacy growl" },
       }],
       factions: [{
         id: "seed-faction-1",
@@ -194,10 +196,20 @@ describe("batchToReaderAdapter", () => {
       "Court Whisper",
     ]);
     expect(snapshots[0].memory.characters?.find(character => character.id === "dev-character-lei"))
-      .toMatchObject({ portraitKind: "non-human", speciesId: "dev-creature-thunder-dragons" });
+      .toMatchObject({
+        portraitKind: "non-human",
+        speciesId: "dev-creature-thunder-dragons",
+        creatureProfile: { signatureSound: "A patient crackle of stormfire" },
+      });
     expect(snapshots[0].memory.bestiary).toEqual([expect.objectContaining({
       id: "dev-creature-thunder-dragons",
       name: "Thunder Dragons",
+      classification: "Celestial dragon",
+      traits: ["Storm flight", "Lightning breath"],
+      threatLevel: "High",
+      signatureSound: "A rolling sky-crack",
+      firstEncounteredChapter: 1,
+      appearanceChapters: [1],
       notableIndividualIds: ["dev-character-lei"],
     })]);
     expect(snapshots[0].memory.abilities).toEqual([
@@ -230,6 +242,22 @@ describe("batchToReaderAdapter", () => {
     expect((snapshots[0].memory as Record<string, unknown>).rewards).toBeUndefined();
     expect((snapshots[0].memory as Record<string, unknown>).inventory).toBeUndefined();
     expect((snapshots[0].memory as Record<string, unknown>).glossaryEntries).toBeUndefined();
+  });
+
+  it("uses the earliest species appearance as its encounter chapter when no explicit value exists", () => {
+    const batch = createCompletedFiveChapterTestBatch();
+    batch.chapters[0].result!.run.processingResult.proposedLivingStoryState.codex.bestiary = [{
+      id: "dev-creature-late-echo",
+      name: "Late Echo Serpents",
+      appearanceChapters: [5],
+      notableIndividualIds: [],
+    }];
+
+    expect(createReaderCodexSnapshots(batch)[0].memory.bestiary).toEqual([expect.objectContaining({
+      id: "dev-creature-late-echo",
+      firstEncounteredChapter: 5,
+      appearanceChapters: [5],
+    })]);
   });
 
   it("scopes the Codex story timeline to the selected chapter without removing Reader chapters", () => {
@@ -304,7 +332,6 @@ describe("batchToReaderAdapter", () => {
       factions: [],
       locations: [],
       artifacts: [],
-      bestiary: [],
     };
 
     const memory = createReaderCodexSnapshots(batch)[0].memory;

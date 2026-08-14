@@ -74,16 +74,20 @@ export function ReaderCodexCharacters({
     removeAbility,
   } = useCodexCharacterEditing({ memory, onUpdateMemory });
 
+  const isNonHumanPortrait = (character: Character) => (
+    character.portraitKind === 'non-human' || character.isBeast === true
+  );
+
   const portraitGroups = [
     {
       id: 'human',
       heading: 'Human Portraits',
-      characters: charsToRender.filter(char => char.portraitKind !== 'non-human'),
+      characters: charsToRender.filter(char => !isNonHumanPortrait(char)),
     },
     {
       id: 'non-human',
       heading: 'Non-Human Portraits',
-      characters: charsToRender.filter(char => char.portraitKind === 'non-human'),
+      characters: charsToRender.filter(isNonHumanPortrait),
     },
   ];
 

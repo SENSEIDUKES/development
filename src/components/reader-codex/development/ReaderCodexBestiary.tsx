@@ -64,6 +64,7 @@ export function ReaderCodexBestiary({
             const notableIndividuals = species.notableIndividualIds
               .map(id => charactersById.get(id))
               .filter((character): character is Character => Boolean(character));
+            const hasLinkedIndividuals = species.notableIndividualIds.length > 0;
 
             return (
               <article
@@ -152,7 +153,11 @@ export function ReaderCodexBestiary({
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[10px] text-neutral-600">No named individual requires a Portrait.</p>
+                      <p className="text-[10px] text-neutral-600">
+                        {hasLinkedIndividuals
+                          ? 'Linked Portraits are hidden until Deep Memory is enabled.'
+                          : 'No named individual requires a Portrait.'}
+                      </p>
                     )}
                   </div>
                 </div>

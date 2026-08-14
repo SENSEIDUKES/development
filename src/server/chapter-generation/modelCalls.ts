@@ -31,13 +31,15 @@ import type {
   ChapterModelCallUsage,
   EstimatedStageInputTokenBreakdown,
 } from "../../components/chapter-generation/shared/pipeline/usage";
-import type {
-  ChapterHandoff,
-  StoryBlock,
-  StoryBlockMetadata,
-  SystemEvent,
-  WorldCardEvent,
-  ChapterContent,
+import {
+  STORY_ENTITY_TYPES,
+  type ChapterHandoff,
+  type StoryBlock,
+  type StoryBlockMetadata,
+  type StoryEntityType,
+  type SystemEvent,
+  type WorldCardEvent,
+  type ChapterContent,
 } from "../../components/chapter-generation/shared/types";
 import type { ChapterTextModelProvider } from "./provider";
 
@@ -398,7 +400,7 @@ const parseBlockMetadata = (value: unknown, label: string): StoryBlockMetadata |
           // boundary onward.
           const type = receivedType === "beast" ? "creature" : receivedType;
           const mention = requiredString(entity.mention, `${label}.entities[${index}].mention`);
-          if (!["character", "artifact", "location", "creature", "faction"].includes(type)) {
+          if (!STORY_ENTITY_TYPES.includes(type as StoryEntityType)) {
             throw new Error(`${label}.entities[${index}].type is unsupported.`);
           }
           if (mention !== "reveal" && mention !== "reference") {
@@ -406,7 +408,7 @@ const parseBlockMetadata = (value: unknown, label: string): StoryBlockMetadata |
           }
           return {
             name: requiredString(entity.name, `${label}.entities[${index}].name`),
-            type: type as "character" | "artifact" | "location" | "creature" | "faction",
+            type: type as StoryEntityType,
             mention: mention as "reveal" | "reference",
           };
         })
@@ -726,8 +728,8 @@ const buildProposedState = (
       resolved: Array.from(new Set([...current.threads.resolved, ...completedThreads])),
     },
     codex: {
-      characters: normalizedCreatureCodex.characters,
-      bestiary: normalizedCreatureCodex.bestiary,
+      characters: normalizedCreatureCodex.characters.map(entry => structuredClone(entry)),
+      bestiary: normalizedCreatureCodex.bestiary.map(entry => structuredClone(entry)),
       factions: mergeCarriedRecords(current.codex.factions, codexUpdates.factions),
       locations: mergeCarriedRecords(current.codex.locations, codexUpdates.locations),
       artifacts: mergeCarriedRecords(current.codex.artifacts, codexUpdates.artifacts),

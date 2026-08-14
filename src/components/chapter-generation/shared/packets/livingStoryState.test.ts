@@ -40,7 +40,13 @@ describe("Living Story State packet", () => {
     });
     expect(state.codex).toEqual({
       characters: ESTABLISHED_SCENARIO.memory.characters,
-      bestiary: ESTABLISHED_SCENARIO.memory.bestiary ?? [],
+      bestiary: [{
+        name: "Ashfall Seal Wyrms",
+        description: "Pale wyrms bound beneath the Ashfall shrine's oldest inner seal.",
+        classification: "Sealed spirit beast",
+        traits: ["Seal-sense", "Ash breath"],
+        threatLevel: "High",
+      }],
       factions: ESTABLISHED_SCENARIO.memory.factions,
       locations: ESTABLISHED_SCENARIO.memory.locations,
       artifacts: ESTABLISHED_SCENARIO.memory.artifacts,

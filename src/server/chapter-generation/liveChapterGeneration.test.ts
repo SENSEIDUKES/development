@@ -795,7 +795,7 @@ describe("live Chapter Generation model boundaries", () => {
     });
 
     const run = await runChapterPipelineAsync({ chapterPacket: buildPacket(), model: calls.model });
-    const species = run.processingResult.proposedLivingStoryState.codex.bestiary
+    const species = (run.processingResult.proposedLivingStoryState.codex.bestiary ?? [])
       .find(record => record.name === "Thunder Dragons")!;
     const individual = run.processingResult.proposedLivingStoryState.codex.characters
       .find(record => record.name === "Lei")!;
@@ -811,6 +811,8 @@ describe("live Chapter Generation model boundaries", () => {
       speciesId: species.id,
     });
     expect(species.notableIndividualIds).toEqual([individual.id]);
+    expect(individual).not.toBe(run.processingResult.codexUpdates.characters[0]);
+    expect(species).not.toBe((run.processingResult.codexUpdates.bestiary ?? [])[0]);
     expect(JSON.stringify(run.processingResult.proposedLivingStoryState)).not.toContain("model-character-id");
     expect(JSON.stringify(run.processingResult.proposedLivingStoryState)).not.toContain("model-species-id");
     expect(JSON.stringify(run.processingResult.proposedLivingStoryState)).not.toContain("model-storage-key");

@@ -267,6 +267,43 @@ describe('ReaderCodex', () => {
     );
     expect(ruleControl!.value).toBe('');
   });
+
+  it('keeps dormant linked Portraits out of the Bestiary until Deep Memory is enabled', async () => {
+    const initialMemory: StoryMemory = {
+      characters: [{
+        id: 'reader-codex-hidden-lei',
+        name: 'Lei',
+        role: 'Dormant storm guide',
+        status: 'alive',
+        relationshipToMC: 'Unknown',
+        description: 'A dragon who has not returned to the current memory.',
+        isBeast: true,
+        relevanceState: 'dormant',
+        speciesId: 'reader-codex-hidden-thunder-dragons',
+      }],
+      bestiary: [{
+        id: 'reader-codex-hidden-thunder-dragons',
+        name: 'Thunder Dragons',
+        description: 'Storm-born drakes that carry living lightning beneath their scales.',
+        classification: 'Celestial dragon',
+        traits: [],
+        threatLevel: 'High',
+        firstEncounteredChapter: 2,
+        appearanceChapters: [2],
+        notableIndividualIds: ['reader-codex-hidden-lei'],
+      }],
+    };
+
+    act(() => root.render(<CodexHarness initialMemory={initialMemory} />));
+    await click('Bestiary');
+
+    expect(container.textContent).toContain('Thunder Dragons');
+    expect(container.textContent).not.toContain('Lei');
+    expect(container.textContent).toContain('Linked Portraits are hidden until Deep Memory is enabled.');
+
+    await click('Deep Memory');
+    expect(container.textContent).toContain('Lei');
+  });
 });
 
 describe('CodexSheetOverlay', () => {

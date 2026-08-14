@@ -686,7 +686,7 @@ export default function ReaderCodex({
           <div className="pb-8">
             <ReaderCodexBestiary
               bestiary={bestiaryToRender}
-              characters={memory.characters}
+              characters={charsToRender}
             />
           </div>
         )}

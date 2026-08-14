@@ -253,6 +253,13 @@ export const ESTABLISHED_SCENARIO: MockChapterGenerationScenario = {
         lastMajorInvolvement: 3,
       },
     ],
+    bestiary: [{
+      name: "Ashfall Seal Wyrms",
+      description: "Pale wyrms bound beneath the Ashfall shrine's oldest inner seal.",
+      classification: "Sealed spirit beast",
+      traits: ["Seal-sense", "Ash breath"],
+      threatLevel: "High",
+    }],
     factions: [
       {
         name: "Azure Bell Sect",

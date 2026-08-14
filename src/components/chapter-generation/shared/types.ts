@@ -56,10 +56,7 @@ export interface WorldCardSoundHints {
 
 export interface WorldCardEvent {
   id?: string;
-  /**
-   * Active generation emits only creature and faction. The remaining values
-   * stay readable for historical chapter compatibility at the Reader edge.
-   */
+  /** System and Fate remain System Panels, not World Card payloads. */
   entityType: "character" | "creature" | "artifact" | "location" | "faction" | "system" | "fate_event";
   entityName: string;
   displayTitle: string;

@@ -71,7 +71,7 @@ export interface WorldCardSoundHints {
 
 export interface WorldCardEvent {
   id?: string;
-  /** Active generation uses creature/faction; other values are legacy-reader compatibility. */
+  /** Active generation accepts visual-entity audio payloads; System and Fate remain legacy-reader compatibility. */
   entityType:
     | "character"
     | "creature"

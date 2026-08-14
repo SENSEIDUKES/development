@@ -311,7 +311,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
               : 'bg-neutral-900 text-neutral-500'
           }`}
         >
-          {explanation.capabilities.hasAudio ? <CheckCircle2 size={10} /> : <XCircle size={10} />} Audio SFX
+          {explanation.capabilities.hasAudio ? <CheckCircle2 size={10} /> : <XCircle size={10} />} Audio contract
         </span>
         <span
           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] ${

@@ -368,8 +368,22 @@ const SYSTEM_PROMPT_TYPES = [
   "corruption", "death_event", "quest_update", "choice_consequence", "system_error",
 ] as const;
 const FATE_RESULT_OUTCOMES = ["FATE AVERTED", "FATE SCARRED", "DOOM MANIFESTED"] as const;
-const WORLD_CARD_ENTITY_TYPES = ["creature", "faction"] as const;
+const WORLD_CARD_ENTITY_TYPES = ["character", "creature", "artifact", "location", "faction"] as const;
 const CREATURE_WORLD_CARD_AUDIO_TYPES = ["roar", "call", "hiss", "howl", "screech", "wingbeat"] as const;
+const ARTIFACT_WORLD_CARD_AUDIO_TYPES = [
+  "unsheathe", "metallic_ring", "reload", "activation_hum", "resonance", "awakening", "pulse", "magical_activation",
+] as const;
+
+const isSupportedWorldCardAudioType = (entityType: string, audioType: string): boolean =>
+  (entityType === "character" && audioType === "tts_line")
+  || (entityType === "creature" && CREATURE_WORLD_CARD_AUDIO_TYPES.includes(
+    audioType as (typeof CREATURE_WORLD_CARD_AUDIO_TYPES)[number],
+  ))
+  || (entityType === "artifact" && ARTIFACT_WORLD_CARD_AUDIO_TYPES.includes(
+    audioType as (typeof ARTIFACT_WORLD_CARD_AUDIO_TYPES)[number],
+  ))
+  || (entityType === "location" && audioType === "signature")
+  || (entityType === "faction" && audioType === "chant");
 
 const optionalMetadataStringArray = (value: unknown, label: string): string[] | undefined => {
   if (value === undefined || value === null) return undefined;
@@ -541,11 +555,7 @@ const parseWorldCardEvent = (value: unknown, label: string): WorldCardEvent | un
     throw new Error(`${label}.entityType is unsupported.`);
   }
   const audioType = optionalValidatedString(event.audioType, `${label}.audioType`);
-  const validAudioType = !audioType
-    || (entityType === "creature" && CREATURE_WORLD_CARD_AUDIO_TYPES.includes(
-      audioType as (typeof CREATURE_WORLD_CARD_AUDIO_TYPES)[number],
-    ))
-    || (entityType === "faction" && audioType === "chant");
+  const validAudioType = !audioType || isSupportedWorldCardAudioType(entityType, audioType);
   if (!validAudioType) {
     throw new Error(`${label}.audioType is unsupported.`);
   }
@@ -556,9 +566,6 @@ const parseWorldCardEvent = (value: unknown, label: string): WorldCardEvent | un
         const tags = hints.tags === undefined
           ? undefined
           : stringArray(hints.tags, `${label}.sound.tags`);
-        if (entityType === "faction") {
-          return tags ? { tags } : undefined;
-        }
         const size = optionalValidatedString(hints.size, `${label}.sound.size`);
         if (size && !BEAST_SIZES.includes(size as (typeof BEAST_SIZES)[number])) {
           throw new Error(`${label}.sound.size is unsupported.`);

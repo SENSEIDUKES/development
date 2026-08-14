@@ -20,8 +20,8 @@ export const CARD_PRESETS: CardPreset[] = [
       currentTrigger: 'metadata.entities character reveal resolves to an application-owned Human Portrait',
       entityOrEventType: 'character (human individual)',
       codexDestination: 'ReaderCodex > Portraits (Human Section)',
-      capabilities: { hasImage: true, hasManifestAction: true, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
-      architecturalNotes: 'The Reader uses stored Codex media and never accepts a model-generated Codex ID or image URL.',
+      capabilities: { hasImage: true, hasManifestAction: true, hasAudio: true, hasCodexLink: true, hasQuoteOrProse: true },
+      architecturalNotes: 'The Reader uses stored Codex media and never accepts a model-generated Codex ID or image URL. Audio direction remains in the existing chapter payload; this Codex Card preview does not decide its future audio interaction.',
     },
     codexReveal: {
       type: 'Human Portrait',
@@ -47,8 +47,8 @@ export const CARD_PRESETS: CardPreset[] = [
       currentTrigger: 'metadata.entities character reveal resolves to a Portrait with portraitKind: "non-human"',
       entityOrEventType: 'character (important non-human individual)',
       codexDestination: 'ReaderCodex > Portraits (Non-Human Section) + Bestiary link',
-      capabilities: { hasImage: true, hasManifestAction: true, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
-      architecturalNotes: 'Named, bonded, intelligent, or recurring individuals are character-owned Portraits. Their species remains informational.',
+      capabilities: { hasImage: true, hasManifestAction: true, hasAudio: true, hasCodexLink: true, hasQuoteOrProse: true },
+      architecturalNotes: 'Named, bonded, intelligent, or recurring individuals are character-owned Portraits. Their species remains informational. Audio direction remains in the existing chapter payload; this preview does not decide its future Codex Card interaction.',
     },
     codexReveal: {
       type: 'Non-Human Portrait',
@@ -75,8 +75,8 @@ export const CARD_PRESETS: CardPreset[] = [
       currentTrigger: 'metadata.entities artifact reveal resolves to the stored Artifact entry',
       entityOrEventType: 'artifact',
       codexDestination: 'ReaderCodex > Artifacts',
-      capabilities: { hasImage: true, hasManifestAction: true, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
-      architecturalNotes: 'Existing artwork displays from the Codex; an eligible missing image retains the existing Manifest action.',
+      capabilities: { hasImage: true, hasManifestAction: true, hasAudio: true, hasCodexLink: true, hasQuoteOrProse: true },
+      architecturalNotes: 'Existing artwork displays from the Codex; an eligible missing image retains the existing Manifest action. Activation audio direction remains in the existing chapter payload; this preview does not decide its future Codex Card interaction.',
     },
     codexReveal: {
       type: 'Artifact',
@@ -101,8 +101,8 @@ export const CARD_PRESETS: CardPreset[] = [
       currentTrigger: 'metadata.entities location reveal resolves to the stored Location entry',
       entityOrEventType: 'location',
       codexDestination: 'ReaderCodex > Locations',
-      capabilities: { hasImage: true, hasManifestAction: true, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
-      architecturalNotes: 'The card displays application-owned Codex artwork or the existing Manifest state.',
+      capabilities: { hasImage: true, hasManifestAction: true, hasAudio: true, hasCodexLink: true, hasQuoteOrProse: true },
+      architecturalNotes: 'The card displays application-owned Codex artwork or the existing Manifest state. Signature audio direction remains in the existing chapter payload; this preview does not decide its future Codex Card interaction.',
     },
     codexReveal: {
       type: 'Location',

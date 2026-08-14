@@ -26,7 +26,7 @@ Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studi
 - **2026-08-14:** Rebased Part Two onto merged Part One, restored a locked Reference pane, isolated sound simulation, and completed missing-image, Codex, reveal, audio, and responsive states.
 - **2026-08-14:** Replaced the all-at-once Overview with one accessible tab per card preset so only the selected card renders.
 - **2026-08-14:** Routed Development World Card audio through the shared `@seihouse/audio-player` session.
-- **2026-08-14:** Completed the first Part Three cleanup: renamed the active card components, restricted Codex Cards to the four visual Codex categories, moved Bestiary/Faction highlights to World Cards, removed System/Fate World Card fixtures, and removed Chapter Visual Memories.
+- **2026-08-14:** Completed the first Part Three cleanup: renamed the active card components, restricted Codex Cards to the four visual Codex categories, moved Bestiary/Faction highlights to World Cards, removed System/Fate World Card fixtures, and removed Chapter Visual Memories. Existing Portrait, Artifact, and Location audio direction remains in the chapter payload; this Workshop does not decide future Codex Card audio interaction.
 
 ## Development states
 

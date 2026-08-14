@@ -30,9 +30,12 @@ const SYSTEM_PROMPT_TYPES = [
   "progression", "breakthrough", "reward", "romance", "karmic_bond", "mystery", "fate_event",
   "corruption", "death_event", "quest_update", "choice_consequence", "system_error",
 ] as const;
-const WORLD_CARD_ENTITY_TYPES = ["creature", "faction"] as const;
+const WORLD_CARD_ENTITY_TYPES = ["character", "creature", "artifact", "location", "faction"] as const;
 const CREATURE_WORLD_CARD_SOUND_ROLES: WorldCardSoundRole[] = [
   "roar", "call", "hiss", "howl", "screech", "wingbeat",
+];
+const ARTIFACT_WORLD_CARD_SOUND_ROLES: WorldCardSoundRole[] = [
+  "unsheathe", "metallic_ring", "reload", "activation_hum", "resonance", "awakening", "pulse", "magical_activation",
 ];
 const FATE_OUTCOMES: FateResultData["outcome"][] = ["FATE AVERTED", "FATE SCARRED", "DOOM MANIFESTED"];
 
@@ -476,7 +479,6 @@ const parseSystemEvent = (
 const parseSoundHints = (
   value: unknown,
   context: BlockWarningContext,
-  entityType: (typeof WORLD_CARD_ENTITY_TYPES)[number],
 ): WorldCardSoundHints | undefined => {
   if (value === undefined || value === null) return undefined;
   if (!isRecord(value)) {
@@ -487,25 +489,25 @@ const parseSoundHints = (
   if (value.assetId !== undefined) {
     warning(context, "optional-field-removed", "Removed model-supplied worldCard.sound.assetId; media identity is code-owned.", "worldCard.sound.assetId");
   }
-  const allowedFields = entityType === "creature"
-    ? new Set(["element", "size", "threatTier", "tags"])
-    : new Set(["tags"]);
-  if (entityType === "creature") {
-    for (const field of ["element", "threatTier"] as const) {
-      const parsed = optionalStringField(value, field, context, `worldCard.sound.${field}`);
-      if (parsed) sound[field] = parsed;
-    }
-    const size = optionalStringField(value, "size", context, "worldCard.sound.size");
-    if (size && BEAST_SIZES.includes(size as (typeof BEAST_SIZES)[number])) {
-      sound.size = size as WorldCardSoundHints["size"];
-    } else if (size) {
-      warning(context, "optional-field-removed", "Removed unsupported optional worldCard.sound.size.", "worldCard.sound.size");
-    }
+  for (const field of ["element", "threatTier", "weaponType", "artifactCategory"] as const) {
+    const parsed = optionalStringField(value, field, context, `worldCard.sound.${field}`);
+    if (parsed) sound[field] = parsed;
+  }
+  const size = optionalStringField(value, "size", context, "worldCard.sound.size");
+  if (size && BEAST_SIZES.includes(size as (typeof BEAST_SIZES)[number])) {
+    sound.size = size as WorldCardSoundHints["size"];
+  } else if (size) {
+    warning(context, "optional-field-removed", "Removed unsupported optional worldCard.sound.size.", "worldCard.sound.size");
+  }
+  const assetFamily = optionalStringField(value, "assetFamily", context, "worldCard.sound.assetFamily");
+  if (assetFamily === "weapon" || assetFamily === "relic") sound.assetFamily = assetFamily;
+  else if (assetFamily) {
+    warning(context, "optional-field-removed", "Removed unsupported optional worldCard.sound.assetFamily.", "worldCard.sound.assetFamily");
   }
   const tags = optionalStringArrayField(value, "tags", context, "worldCard.sound.tags");
   if (tags) sound.tags = tags;
   for (const field of Object.keys(value)) {
-    if (field !== "assetId" && !allowedFields.has(field)) {
+    if (!["assetId", "element", "size", "threatTier", "assetFamily", "weaponType", "artifactCategory", "tags"].includes(field)) {
       const path = safeFieldLabel(`worldCard.sound.${field}`);
       warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
     }
@@ -546,7 +548,10 @@ const parseWorldCardEvent = (
   }
   const audioType = optionalStringField(value, "audioType", context, "worldCard.audioType");
   const validAudioType = audioType && (
-    (rawEntityType === "creature" && CREATURE_WORLD_CARD_SOUND_ROLES.includes(audioType as WorldCardSoundRole))
+    (rawEntityType === "character" && audioType === "tts_line")
+    || (rawEntityType === "creature" && CREATURE_WORLD_CARD_SOUND_ROLES.includes(audioType as WorldCardSoundRole))
+    || (rawEntityType === "artifact" && ARTIFACT_WORLD_CARD_SOUND_ROLES.includes(audioType as WorldCardSoundRole))
+    || (rawEntityType === "location" && audioType === "signature")
     || (rawEntityType === "faction" && audioType === "chant")
   ) ? audioType as WorldCardEvent["audioType"] : undefined;
   if (audioType && !validAudioType) {
@@ -555,7 +560,6 @@ const parseWorldCardEvent = (
   const sound = parseSoundHints(
     value.sound,
     context,
-    rawEntityType as (typeof WORLD_CARD_ENTITY_TYPES)[number],
   );
   for (const field of Object.keys(value)) {
     if (!["id", "entityType", "entityName", "displayTitle", "imageUrl", "quote", "audioText", "audioType", "sound", "voicePreset", "codexEntryId", "rarity"].includes(field)) {

@@ -126,10 +126,12 @@ describe('CardWorkshopView', () => {
     const species = CARD_PRESETS.find(preset => preset.id === 'preset-creature-species')!;
     const individual = CARD_PRESETS.find(preset => preset.id === 'preset-nonhuman-portrait-reveal')!;
     expect(species.explanation.capabilities.hasManifestAction).toBe(false);
+    expect(species.explanation.capabilities.hasAudio).toBe(false);
     expect(individual.explanation.capabilities.hasManifestAction).toBe(true);
   });
 
   it('covers existing image, Manifest/Awaken, and missing-image states', async () => {
+    vi.useFakeTimers();
     act(() => root.render(
       <CardWorkshopView
         initialMode="inspection"
@@ -141,6 +143,14 @@ describe('CardWorkshopView', () => {
 
     await selectByLabel('Image state', 'manifest');
     expect(getButton('Manifest portrait for Lei')).toBeTruthy();
+    await clickButton('Manifest portrait for Lei');
+    expect(container.textContent).toContain('Summoning...');
+    await clickButton('Reset Local Awaken State');
+    await act(async () => {
+      vi.advanceTimersByTime(1200);
+    });
+    expect(getButton('Manifest portrait for Lei')).toBeTruthy();
+    expect(container.querySelector('img[alt="Lei"]')).toBeFalsy();
 
     await selectByLabel('Image state', 'missing');
     expect(getButton('Manifest portrait for Lei')).toBeFalsy();

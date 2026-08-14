@@ -894,6 +894,10 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                     <button
                       type="button"
                       onClick={() => {
+                        if (manifestTimerRef.current) {
+                          clearTimeout(manifestTimerRef.current);
+                          manifestTimerRef.current = null;
+                        }
                         setManifestedIds(new Set());
                         setSummoningId(null);
                       }}

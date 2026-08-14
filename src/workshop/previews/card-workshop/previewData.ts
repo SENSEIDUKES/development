@@ -152,7 +152,7 @@ export const CARD_PRESETS: CardPreset[] = [
       capabilities: {
         hasImage: false,
         hasManifestAction: false,
-        hasAudio: true,
+        hasAudio: false,
         hasCodexLink: true,
         hasQuoteOrProse: true,
       },

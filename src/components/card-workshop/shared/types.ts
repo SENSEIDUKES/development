@@ -5,7 +5,8 @@ export type CardPresentationKind =
   | 'world-card'
   | 'codex-card'
   | 'system-block'
-  | 'fate-result';
+  | 'fate-result'
+  | 'manifestation-image';
 
 export interface CardCapabilities {
   hasImage: boolean;
@@ -39,12 +40,20 @@ export interface CardPreset {
   kind: CardPresentationKind;
   description: string;
   explanation: DeveloperExplanation;
+  /** Retained solely for the locked production Reference pane. */
+  referenceOnly?: boolean;
 
   // Payload variants depending on presentation kind
   worldCard?: WorldCardEvent;
   systemEvent?: SystemEvent;
   systemContent?: string;
   codexReveal?: CodexCardTerm;
+  manifestationImage?: {
+    url?: string;
+    caption?: string;
+    chapterNumber?: number;
+    quote?: string;
+  };
 }
 
 export interface CardWorkshopOverrides {

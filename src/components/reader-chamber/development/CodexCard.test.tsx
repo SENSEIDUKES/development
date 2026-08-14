@@ -76,6 +76,7 @@ describe('Reader card routing', () => {
     block: StoryBlock,
     codexTerms: any[] = [],
     chapterPatch: Partial<ReaderChapter> = {},
+    immersion: { imagePopups: boolean } = { imagePopups: true },
   ) => {
     const chapter: ReaderChapter = {
       ...baseChapter,
@@ -102,7 +103,7 @@ describe('Reader card routing', () => {
           generatingRevealId={null}
           handleManifestReveal={vi.fn()}
           readerMode="sen"
-          immersion={{ imagePopups: true }}
+          immersion={immersion}
           isPlayingText={false}
           isPausedText={false}
           currentNarratedBlockIndex={null}
@@ -204,6 +205,19 @@ describe('Reader card routing', () => {
     };
     renderReader(random);
     expect(container.textContent).toContain('The Beast Beneath the Cinders');
+  });
+
+  it('does not mount a WorldCard when SEN image popups are disabled', () => {
+    const block = revealBlock('Ash-Maw Prowler', 'creature');
+    block.worldCard = {
+      entityType: 'creature',
+      entityName: 'Ash-Maw Prowler',
+      displayTitle: 'The Beast Beneath the Cinders',
+    };
+
+    renderReader(block, [], {}, { imagePopups: false });
+
+    expect(container.textContent).not.toContain('The Beast Beneath the Cinders');
   });
 
   it('keeps Factions informational unless a highlight explicitly uses a WorldCard', () => {

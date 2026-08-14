@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CardWorkshopView } from './CardWorkshopView';
 import { CardWorkshopWorkspace } from '../../../workshop/previews/card-workshop/CardWorkshopWorkspace';
-import { CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
+import { ACTIVE_CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
 import { resetMockState } from '../../reader-chamber/shared/stubs';
 import type { WorldCardEvent } from '../../reader-chamber/shared/types';
 import { DevAudioPlaybackProvider } from '../../../audio/DevAudioPlayback';
@@ -138,10 +138,10 @@ describe('CardWorkshopView', () => {
     const tablist = container.querySelector('[role="tablist"][aria-label="Card types"]');
     const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
     expect(tablist).toBeTruthy();
-    expect(tabs).toHaveLength(CARD_PRESETS.length);
+    expect(tabs).toHaveLength(ACTIVE_CARD_PRESETS.length);
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
 
-    for (const preset of CARD_PRESETS) {
+    for (const preset of ACTIVE_CARD_PRESETS) {
       expect(tabs.some(tab => tab.textContent?.includes(
         preset.title,
       ))).toBe(true);
@@ -182,8 +182,8 @@ describe('CardWorkshopView', () => {
     expect(container.textContent).toContain('ReaderCodex > Bestiary');
     expect(container.textContent).toContain('Highlighted Bestiary Species');
 
-    const species = CARD_PRESETS.find(preset => preset.id === 'preset-creature-species')!;
-    const individual = CARD_PRESETS.find(preset => preset.id === 'preset-nonhuman-individual')!;
+    const species = ACTIVE_CARD_PRESETS.find(preset => preset.id === 'preset-creature-species')!;
+    const individual = ACTIVE_CARD_PRESETS.find(preset => preset.id === 'preset-nonhuman-individual')!;
     expect(species.explanation.capabilities.hasManifestAction).toBe(false);
     expect(species.kind).toBe('world-card');
     expect(individual.explanation.capabilities.hasManifestAction).toBe(true);

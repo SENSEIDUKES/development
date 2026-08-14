@@ -327,4 +327,30 @@ export const CARD_PRESETS: CardPreset[] = [
       },
     },
   },
+  {
+    id: 'preset-manifestation-image',
+    title: 'Manifestation Image',
+    subtitle: 'Chapter 1 Crux Visual Memory',
+    kind: 'manifestation-image',
+    referenceOnly: true,
+    description: 'Legacy chapter-level artwork retained only for the locked production Reference pane.',
+    explanation: {
+      componentName: 'ManifestationImage',
+      sourceFile: 'src/components/reader-chamber/reference/ManifestationImage.tsx',
+      currentTrigger: 'Legacy Reference snapshot only',
+      entityOrEventType: 'chapter_crux_image (not an active entity card)',
+      codexDestination: 'Legacy Reference snapshot only',
+      capabilities: { hasImage: true, hasManifestAction: false, hasAudio: false, hasCodexLink: false, hasQuoteOrProse: true },
+      architecturalNotes: 'Chapter Visual Memories are removed from the active Reader and Development Workshop.',
+    },
+    manifestationImage: {
+      url: '/card-workshop/chapter-memory.svg',
+      caption: 'The Rain Court Stands in Silence as the Broken Oath Is Revealed',
+      chapterNumber: 1,
+      quote: '"Your oath has a seam, Magistrate."',
+    },
+  },
 ];
+
+/** Active Workshop presets exclude legacy production-reference snapshots. */
+export const ACTIVE_CARD_PRESETS = CARD_PRESETS.filter(preset => !preset.referenceOnly);

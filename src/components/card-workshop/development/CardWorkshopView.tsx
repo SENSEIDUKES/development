@@ -26,7 +26,7 @@ import type {
 import { createCardWorkshopAudioAdapter } from '../shared/cardWorkshopAudioAdapter';
 import type { WorldCardAudioAsset } from '../../reader-chamber/development/WorldCard';
 import { useDevAudioPlayback } from '../../../audio/DevAudioPlayback';
-import { CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
+import { ACTIVE_CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
 import {
   SYSTEM_KIND_OPTIONS,
   FATE_OUTCOME_OPTIONS,
@@ -79,7 +79,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
   const cardTabListRef = useRef<HTMLDivElement | null>(null);
 
   const selectedPreset = useMemo(
-    () => CARD_PRESETS.find((p) => p.id === selectedPresetId) || CARD_PRESETS[0],
+    () => ACTIVE_CARD_PRESETS.find((p) => p.id === selectedPresetId) || ACTIVE_CARD_PRESETS[0],
     [selectedPresetId],
   );
 
@@ -138,14 +138,14 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
     currentIndex: number,
   ) => {
     let nextIndex: number | undefined;
-    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % CARD_PRESETS.length;
-    if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + CARD_PRESETS.length) % CARD_PRESETS.length;
+    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % ACTIVE_CARD_PRESETS.length;
+    if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + ACTIVE_CARD_PRESETS.length) % ACTIVE_CARD_PRESETS.length;
     if (event.key === 'Home') nextIndex = 0;
-    if (event.key === 'End') nextIndex = CARD_PRESETS.length - 1;
+    if (event.key === 'End') nextIndex = ACTIVE_CARD_PRESETS.length - 1;
     if (nextIndex === undefined) return;
 
     event.preventDefault();
-    setSelectedPresetId(CARD_PRESETS[nextIndex].id);
+    setSelectedPresetId(ACTIVE_CARD_PRESETS[nextIndex].id);
     event.currentTarget.parentElement
       ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
       [nextIndex]?.focus();
@@ -489,7 +489,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 ref={cardTabListRef}
                 className="flex min-w-max gap-2 rounded-xl border border-neutral-800 bg-neutral-950/70 p-2 lg:min-w-0 lg:flex-wrap"
               >
-                {CARD_PRESETS.map((preset, index) => {
+                {ACTIVE_CARD_PRESETS.map((preset, index) => {
                   const isSelected = preset.id === selectedPresetId;
                   return (
                     <button
@@ -537,7 +537,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
               </div>
 
               <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 items-start">
-                {CARD_PRESETS.filter((p) => p.id === selectedPreset.id).map((preset) => (
+                {ACTIVE_CARD_PRESETS.filter((p) => p.id === selectedPreset.id).map((preset) => (
                   <div
                     key={preset.id}
                     className="flex flex-col space-y-3 p-4 rounded-2xl bg-neutral-950/40 border border-neutral-900"
@@ -593,7 +593,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
               </div>
 
               <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 items-start">
-                {CARD_PRESETS.filter((p) => p.id === selectedPreset.id).map((preset) => (
+                {ACTIVE_CARD_PRESETS.filter((p) => p.id === selectedPreset.id).map((preset) => (
                   <div
                     key={preset.id}
                     className="flex flex-col space-y-3 p-4 rounded-2xl bg-neutral-950/40 border border-neutral-900"
@@ -649,7 +649,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
               </div>
 
               <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 items-start">
-                {CARD_PRESETS.filter((p) => p.id === selectedPreset.id).map((preset) => (
+                {ACTIVE_CARD_PRESETS.filter((p) => p.id === selectedPreset.id).map((preset) => (
                   <div
                     key={preset.id}
                     className="flex flex-col space-y-3 p-4 rounded-2xl bg-neutral-950/40 border border-neutral-900"
@@ -702,7 +702,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                   onChange={(e) => setSelectedPresetId(e.target.value)}
                   className="w-full bg-[#020914] border border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-signal focus:border-portal focus:outline-none"
                 >
-                  {CARD_PRESETS.map((p) => (
+                  {ACTIVE_CARD_PRESETS.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.title} — {p.subtitle}
                     </option>

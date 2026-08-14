@@ -600,8 +600,13 @@ export function ReaderViewport({
                         const isRevealed = !isSenMode || !immersion.imagePopups || (!isPlayerPlaying) || index <= (currentParaIdx || 0);
 
                         let revealCard = null;
-                        if (block.worldCard && !duplicateVisualSignal && !systemWorldCard) {
-                          revealCard = (isRevealed || !isSenMode || immersion.imagePopups) ? (
+                        if (
+                          block.worldCard
+                          && !duplicateVisualSignal
+                          && !systemWorldCard
+                          && (!isSenMode || immersion.imagePopups)
+                        ) {
+                          revealCard = isRevealed ? (
                             <WorldCard card={block.worldCard} />
                           ) : null;
                         } else if (visualCodexTerm && (!isSenMode || immersion.imagePopups)) {

@@ -18,7 +18,7 @@ interface ReferenceRevealTerm {
   };
 }
 
-interface CodexCardReferenceProps {
+interface CodexRevealCardReferenceProps {
   revealTerm: ReferenceRevealTerm;
   backdropUrl: string;
   isSenMode?: boolean;
@@ -28,14 +28,14 @@ interface CodexCardReferenceProps {
 }
 
 /** Locked snapshot of the production-inline Reader reveal presentation inspected on 2026-08-14. */
-export function CodexCardReference({
+export function CodexRevealCardReference({
   revealTerm,
   backdropUrl,
   isSenMode = false,
   isRevealed = true,
   generatingRevealId = null,
   onManifestReveal,
-}: CodexCardReferenceProps) {
+}: CodexRevealCardReferenceProps) {
   const { entry } = revealTerm;
 
   return (

@@ -1,16 +1,30 @@
 import React from 'react';
-import { WorldEntityCard as WorldCard } from '../../reader-chamber/reference/WorldEntityCard';
+import { WorldEntityCard } from '../../reader-chamber/reference/WorldEntityCard';
 import { SystemBlock } from '../../reader-chamber/reference/SystemBlock';
+import { ManifestationImage } from '../../reader-chamber/reference/ManifestationImage';
+import type { Chapter } from '../../reader-chamber/shared/types';
 import { CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
-import { CodexCardReference } from './CodexCardReference';
+import { CodexRevealCardReference } from './CodexRevealCardReference';
 
 const preset = (id: string) => CARD_PRESETS.find(candidate => candidate.id === id)!;
 
 const human = preset('preset-human-character');
-const nonHuman = preset('preset-nonhuman-individual');
 const species = preset('preset-creature-species');
 const system = preset('preset-system-status');
 const fate = preset('preset-fate-result');
+const manifestation = preset('preset-manifestation-image');
+
+const manifestationChapter = {
+  number: manifestation.manifestationImage?.chapterNumber ?? 1,
+  title: manifestation.title,
+  premise: manifestation.description,
+  status: 'read',
+  summary: manifestation.manifestationImage?.quote ?? manifestation.description,
+  generatedContent: '',
+  assetManifest: manifestation.manifestationImage?.url
+    ? { heroImage: manifestation.manifestationImage.url }
+    : undefined,
+} satisfies Chapter;
 
 function ReferencePanel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -35,21 +49,13 @@ export function CardWorkshopReferenceView() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <ReferencePanel title="WorldCard">
-            {species.worldCard && <WorldCard card={species.worldCard} />}
+          <ReferencePanel title="WorldEntityCard">
+            {human.worldCard && <WorldEntityCard card={human.worldCard} />}
           </ReferencePanel>
-          <ReferencePanel title="CodexCard · Human Portrait">
-            {human.codexReveal && (
-              <CodexCardReference
-                revealTerm={human.codexReveal}
-                backdropUrl="/card-workshop/reveal-backdrop.svg"
-              />
-            )}
-          </ReferencePanel>
-          <ReferencePanel title="CodexCard · Non-Human Portrait">
-            {nonHuman.codexReveal && (
-              <CodexCardReference
-                revealTerm={nonHuman.codexReveal}
+          <ReferencePanel title="Inline Codex Reveal">
+            {species.codexReveal && (
+              <CodexRevealCardReference
+                revealTerm={species.codexReveal}
                 backdropUrl="/card-workshop/reveal-backdrop.svg"
               />
             )}
@@ -62,6 +68,9 @@ export function CardWorkshopReferenceView() {
           </ReferencePanel>
         </div>
 
+        <ReferencePanel title="Chapter-level ManifestationImage">
+          <ManifestationImage selectedChapter={manifestationChapter} />
+        </ReferencePanel>
       </div>
     </div>
   );

@@ -7,14 +7,12 @@ import {
   VolumeX,
   Sparkles,
   Layers,
-  Search,
   BookOpen,
   Info,
   CheckCircle2,
   XCircle,
   AlertTriangle,
   Flame,
-  Shield,
   Zap,
 } from 'lucide-react';
 import { WorldEntityCard } from '../../reader-chamber/development/WorldEntityCard';
@@ -70,6 +68,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
   const [manifestedIds, setManifestedIds] = useState<Set<string>>(new Set());
   const [summoningId, setSummoningId] = useState<string | null>(null);
   const manifestTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cardTabListRef = useRef<HTMLDivElement | null>(null);
 
   const selectedPreset = useMemo(
     () => CARD_PRESETS.find((p) => p.id === selectedPresetId) || CARD_PRESETS[0],
@@ -97,6 +96,13 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
     if (manifestTimerRef.current) clearTimeout(manifestTimerRef.current);
   }, []);
 
+  useEffect(() => {
+    if (activeTab !== 'overview') return;
+    const activePresetTab = [...(cardTabListRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])]
+      .find(tab => tab.dataset.presetId === selectedPresetId);
+    activePresetTab?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [activeTab, selectedPresetId]);
+
   // Handle local portrait awaken simulation
   const handleManifestReveal = (entry: { id?: string }) => {
     const id = entry?.id || 'simulated-entry';
@@ -111,6 +117,24 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
 
   const toggleMute = () => {
     setOverrides((prev) => ({ ...prev, isAudioMuted: !prev.isAudioMuted }));
+  };
+
+  const handleCardTabKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    currentIndex: number,
+  ) => {
+    let nextIndex: number | undefined;
+    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % CARD_PRESETS.length;
+    if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + CARD_PRESETS.length) % CARD_PRESETS.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = CARD_PRESETS.length - 1;
+    if (nextIndex === undefined) return;
+
+    event.preventDefault();
+    setSelectedPresetId(CARD_PRESETS[nextIndex].id);
+    event.currentTarget.parentElement
+      ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+      [nextIndex]?.focus();
   };
 
   // Viewport container width style
@@ -353,7 +377,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                   : 'text-neutral-400 hover:text-neutral-200'
               }`}
             >
-              Overview Mode
+              Card Type Tabs
             </button>
             <button
               type="button"
@@ -467,8 +491,55 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
         {/* OVERVIEW MODE */}
         {activeTab === 'overview' && (
           <div className="space-y-12">
+            <div
+              role="tablist"
+              aria-label="Card types"
+              className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0"
+            >
+              <div
+                ref={cardTabListRef}
+                className="flex min-w-max gap-2 rounded-xl border border-neutral-800 bg-neutral-950/70 p-2 lg:min-w-0 lg:flex-wrap"
+              >
+                {CARD_PRESETS.map((preset, index) => {
+                  const isSelected = preset.id === selectedPresetId;
+                  const isUnderReview = preset.kind === 'under-review-route';
+                  return (
+                    <button
+                      key={preset.id}
+                      id={`card-tab-${preset.id}`}
+                      data-preset-id={preset.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={isSelected}
+                      aria-controls={`card-panel-${preset.id}`}
+                      tabIndex={isSelected ? 0 : -1}
+                      onClick={() => setSelectedPresetId(preset.id)}
+                      onKeyDown={(event) => handleCardTabKeyDown(event, index)}
+                      className={`whitespace-nowrap rounded-lg border px-3 py-2 text-[11px] font-mono transition-colors ${
+                        isSelected
+                          ? isUnderReview
+                            ? 'border-amber-400/50 bg-amber-500/15 text-amber-200'
+                            : 'border-portal/50 bg-portal/15 text-portal'
+                          : isUnderReview
+                            ? 'border-amber-500/15 text-amber-400/70 hover:border-amber-400/40 hover:text-amber-200'
+                            : 'border-transparent text-neutral-400 hover:border-neutral-700 hover:text-signal'
+                      }`}
+                    >
+                      {preset.title.replace('Routing Under Review: ', '')}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* 1. World Entity Cards */}
-            <section className="space-y-6">
+            {selectedPreset.kind === 'world-entity' && (
+            <section
+              id={`card-panel-${selectedPreset.id}`}
+              role="tabpanel"
+              aria-labelledby={`card-tab-${selectedPreset.id}`}
+              className="space-y-6"
+            >
               <div className="border-b border-neutral-800 pb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Sparkles size={16} className="text-portal" />
@@ -481,8 +552,8 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                {CARD_PRESETS.filter((p) => p.kind === 'world-entity').map((preset) => (
+              <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 items-start">
+                {CARD_PRESETS.filter((p) => p.id === selectedPreset.id).map((preset) => (
                   <div
                     key={preset.id}
                     className="flex flex-col space-y-3 p-4 rounded-2xl bg-neutral-950/40 border border-neutral-900"
@@ -515,9 +586,16 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 ))}
               </div>
             </section>
+            )}
 
             {/* 2. Codex Reveal Moments */}
-            <section className="space-y-6">
+            {selectedPreset.kind === 'codex-reveal' && (
+            <section
+              id={`card-panel-${selectedPreset.id}`}
+              role="tabpanel"
+              aria-labelledby={`card-tab-${selectedPreset.id}`}
+              className="space-y-6"
+            >
               <div className="border-b border-neutral-800 pb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <BookOpen size={16} className="text-portal" />
@@ -530,8 +608,8 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                {CARD_PRESETS.filter((p) => p.kind === 'codex-reveal').map((preset) => (
+              <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 items-start">
+                {CARD_PRESETS.filter((p) => p.id === selectedPreset.id).map((preset) => (
                   <div
                     key={preset.id}
                     className="flex flex-col space-y-3 p-4 rounded-2xl bg-neutral-950/40 border border-neutral-900"
@@ -564,9 +642,16 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 ))}
               </div>
             </section>
+            )}
 
             {/* 3. System Blocks & Fate Results */}
-            <section className="space-y-6">
+            {(selectedPreset.kind === 'system-block' || selectedPreset.kind === 'fate-result') && (
+            <section
+              id={`card-panel-${selectedPreset.id}`}
+              role="tabpanel"
+              aria-labelledby={`card-tab-${selectedPreset.id}`}
+              className="space-y-6"
+            >
               <div className="border-b border-neutral-800 pb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Zap size={16} className="text-portal" />
@@ -579,10 +664,8 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                {CARD_PRESETS.filter(
-                  (p) => p.kind === 'system-block' || p.kind === 'fate-result',
-                ).map((preset) => (
+              <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 items-start">
+                {CARD_PRESETS.filter((p) => p.id === selectedPreset.id).map((preset) => (
                   <div
                     key={preset.id}
                     className="flex flex-col space-y-3 p-4 rounded-2xl bg-neutral-950/40 border border-neutral-900"
@@ -615,9 +698,16 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 ))}
               </div>
             </section>
+            )}
 
             {/* 4. Chapter Manifestation Visuals */}
-            <section className="space-y-6">
+            {selectedPreset.kind === 'manifestation-image' && (
+            <section
+              id={`card-panel-${selectedPreset.id}`}
+              role="tabpanel"
+              aria-labelledby={`card-tab-${selectedPreset.id}`}
+              className="space-y-6"
+            >
               <div className="border-b border-neutral-800 pb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Flame size={16} className="text-portal" />
@@ -630,8 +720,8 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                {CARD_PRESETS.filter((p) => p.kind === 'manifestation-image').map((preset) => (
+              <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 items-start">
+                {CARD_PRESETS.filter((p) => p.id === selectedPreset.id).map((preset) => (
                   <div
                     key={preset.id}
                     className="flex flex-col space-y-3 p-4 rounded-2xl bg-neutral-950/40 border border-neutral-900"
@@ -664,9 +754,16 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 ))}
               </div>
             </section>
+            )}
 
             {/* 5. Current Routing Under Review */}
-            <section className="space-y-6">
+            {selectedPreset.kind === 'under-review-route' && (
+            <section
+              id={`card-panel-${selectedPreset.id}`}
+              role="tabpanel"
+              aria-labelledby={`card-tab-${selectedPreset.id}`}
+              className="space-y-6"
+            >
               <div className="border-b border-amber-500/30 pb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <AlertTriangle size={16} className="text-amber-400" />
@@ -679,8 +776,8 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                {CARD_PRESETS.filter((p) => p.kind === 'under-review-route').map((preset) => (
+              <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 items-start">
+                {CARD_PRESETS.filter((p) => p.id === selectedPreset.id).map((preset) => (
                   <div
                     key={preset.id}
                     className="flex flex-col space-y-3 p-4 rounded-2xl bg-amber-950/10 border border-amber-500/20"
@@ -713,6 +810,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 ))}
               </div>
             </section>
+            )}
           </div>
         )}
 

@@ -81,35 +81,52 @@ describe('CardWorkshopWorkspace', () => {
 });
 
 describe('CardWorkshopView', () => {
-  it('renders every required real presentation and labels the routes under review', () => {
+  it('gives every card type its own tab and mounts only the selected presentation', async () => {
     act(() => root.render(<CardWorkshopView initialMode="overview" />));
 
-    expect(container.textContent).toContain('World Entity Cards');
-    expect(container.textContent).toContain('Codex Reveal Moments');
-    expect(container.textContent).toContain('System Panels & Fate Outcomes');
-    expect(container.textContent).toContain('Chapter-Level Visual Memories');
-    expect(container.textContent).toContain('Current Routing Under Review');
+    const tablist = container.querySelector('[role="tablist"][aria-label="Card types"]');
+    const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    expect(tablist).toBeTruthy();
+    expect(tabs).toHaveLength(CARD_PRESETS.length);
+    expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
 
-    for (const label of [
-      'Human Character',
-      'Non-Human Individual',
-      'Generic Creature Species',
-      'Artifact or Relic',
-      'Location',
-      'Faction',
-      'System Status',
-      'Skill Acquisition',
-      'Level-Up / Breakthrough',
-      'Quest & Appraisal',
-      'Fate Result Card',
-      'Manifestation Image',
-    ]) {
-      expect(container.textContent).toContain(label);
+    for (const preset of CARD_PRESETS) {
+      expect(tabs.some(tab => tab.textContent?.includes(
+        preset.title.replace('Routing Under Review: ', ''),
+      ))).toBe(true);
     }
 
-    expect(container.querySelector('img[alt="Chapter Crux Manifestation"]')).toBeTruthy();
+    expect(container.textContent).toContain('World Entity Cards');
+    expect(container.textContent).toContain('First Witness of the Broken Oath');
+    expect(container.textContent).not.toContain('Reveal · Companion');
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+
+    await act(async () => {
+      tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    });
+    expect(tabs[1].getAttribute('aria-selected')).toBe('true');
+    expect(container.textContent).toContain('Young Storm Sovereign');
+    expect(document.activeElement).toBe(tabs[1]);
+
+    await clickButton('Non-Human Portrait Reveal');
+    expect(container.textContent).toContain('Codex Reveal Moments');
+    expect(container.textContent).toContain('Reveal · Companion');
+    expect(container.textContent).not.toContain('First Witness of the Broken Oath');
+    expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
+
+    await clickButton('Fate Result Card');
+    expect(container.textContent).toContain('System Panels & Fate Outcomes');
     expect(container.textContent).toContain('FATE RESULT: FATE SCARRED');
+    expect(container.textContent).not.toContain('Reveal · Companion');
+
+    await clickButton('Manifestation Image');
+    expect(container.textContent).toContain('Chapter-Level Visual Memories');
+    expect(container.querySelector('img[alt="Chapter Crux Manifestation"]')).toBeTruthy();
+    expect(container.textContent).not.toContain('FATE RESULT: FATE SCARRED');
+
+    await clickButton('System as World Card');
     expect(container.textContent).toContain('CURRENT ROUTING UNDER REVIEW');
+    expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
   });
 
   it('switches presets and preserves the Bestiary species versus Non-Human Portrait distinction', async () => {

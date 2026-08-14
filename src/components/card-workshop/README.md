@@ -16,6 +16,7 @@ The development-only Card Workshop makes current Reader card and system-panel pr
 
 - **2026-08-14:** Created the Card Workshop, extracted the production-inline Codex Reveal presentation for shared Reader/Workshop rendering, and added deterministic local state simulation.
 - **2026-08-14:** Rebased Part Two onto merged Part One, restored a locked Reference pane, isolated sound simulation, and completed missing image, Codex, reveal, audio, and responsive states.
+- **2026-08-14:** Replaced the all-at-once Overview with one accessible tab per card preset so only the selected card renders.
 
 ## Presentations
 
@@ -38,6 +39,8 @@ Inspection mode supports:
 - sound available, unavailable, loading after tap, playing after tap, and muted;
 - every current `SystemBlock` kind and all Fate outcomes;
 - mobile (375px), tablet (768px), and desktop widths.
+
+Card Type Tabs mode exposes every preset in a horizontally scrollable tab list and mounts exactly one card presentation at a time. Arrow keys plus Home and End move between tabs.
 
 ## Mock and production boundaries
 

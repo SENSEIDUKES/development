@@ -17,6 +17,7 @@ export interface DevAudioPlayerBridge {
   readonly isPlaying: boolean;
   play: (request: { id: string; source: string; title?: string }) => void;
   stop: (trackId?: string) => void;
+  subscribeToQueueEnd: (handler: () => void) => () => void;
 }
 
 export interface CardWorkshopAudioAdapterOptions {
@@ -41,18 +42,14 @@ export interface CardWorkshopAudioAdapter extends WorldEntityCardAudioAdapter {
   dispose: () => void;
 }
 
-const LOCAL_PLAYBACK_MS = 900;
+export const CARD_WORKSHOP_FALLBACK_PLAYBACK_MS = 900;
 
 /**
  * Card Workshop audio adapter.
  *
- * - With a `player`, playback is dispatched to DEV's shared
- *   `@seihouse/audio-player` session (the same one used by the audio-player
- *   smoke workspace and `useCodexVoiceCards`). Lifecycle callbacks
- *   (`onended`/`onerror`) are still simulated locally with timers because
- *   the audio-player session does not surface per-track end events through
- *   `useDevAudioPlayback`; the workshop exists to inspect visual states,
- *   not to time real audio playback to the millisecond.
+ * - With a `player`, playback and its ending lifecycle are delegated to DEV's
+ *   shared `@seihouse/audio-player` session (the same one used by the
+ *   audio-player smoke workspace and `useCodexVoiceCards`).
  * - Without a `player`, the adapter stays a fully local, deterministic
  *   mock so the workshop's component test keeps asserting the same
  *   loading / playing / muted / unavailable states without touching
@@ -65,6 +62,8 @@ export function createCardWorkshopAudioAdapter({
   player = null,
 }: CardWorkshopAudioAdapterOptions): CardWorkshopAudioAdapter {
   const timers = new Map<string, ReturnType<typeof setTimeout>>();
+  let activePlayerTrackId: string | null = null;
+  let stopObservingPlayer: (() => void) | null = null;
 
   const clearTimer = (assetId: string) => {
     const existing = timers.get(assetId);
@@ -86,17 +85,8 @@ export function createCardWorkshopAudioAdapter({
       return new Promise<WorldEntityCardPlayback>(() => undefined);
     }
 
-    if (player) {
-      const source = resolveSource(asset);
-      if (source) {
-        player.play({
-          id: asset.id,
-          source,
-          title: asset.title ?? 'Card Workshop preview',
-        });
-      }
-    }
-
+    const source = player ? resolveSource(asset) : null;
+    const usesSharedPlayer = Boolean(player && source);
     let onended: (() => void) | undefined;
     const playback: WorldEntityCardPlayback = {};
     Object.defineProperty(playback, 'onended', {
@@ -104,27 +94,56 @@ export function createCardWorkshopAudioAdapter({
       get: () => onended,
       set: (callback: (() => void) | undefined) => {
         onended = callback;
-        if (state !== 'available' || !callback) return;
+        if (usesSharedPlayer || state !== 'available' || !callback) return;
         clearTimer(asset.id);
         const timer = setTimeout(() => {
           timers.delete(asset.id);
           callback();
-        }, LOCAL_PLAYBACK_MS);
+        }, CARD_WORKSHOP_FALLBACK_PLAYBACK_MS);
         timers.set(asset.id, timer);
       },
     });
+
+    if (player && source) {
+      stopObservingPlayer?.();
+      activePlayerTrackId = asset.id;
+      stopObservingPlayer = player.subscribeToQueueEnd(() => {
+        if (activePlayerTrackId !== asset.id) return;
+        activePlayerTrackId = null;
+        stopObservingPlayer?.();
+        stopObservingPlayer = null;
+        playback.onended?.();
+      });
+      player.play({
+        id: asset.id,
+        source,
+        title: asset.title ?? 'Card Workshop preview',
+      });
+    }
+
     return playback;
   };
 
   const stop = (assetId?: string) => {
     if (!assetId) return;
     clearTimer(assetId);
-    if (player) player.stop(assetId);
+    if (player && activePlayerTrackId === assetId) {
+      player.stop(assetId);
+      activePlayerTrackId = null;
+      stopObservingPlayer?.();
+      stopObservingPlayer = null;
+    }
   };
 
   const dispose = () => {
     timers.forEach(timer => clearTimeout(timer));
     timers.clear();
+    if (player && activePlayerTrackId) {
+      player.stop(activePlayerTrackId);
+      activePlayerTrackId = null;
+    }
+    stopObservingPlayer?.();
+    stopObservingPlayer = null;
   };
 
   return {

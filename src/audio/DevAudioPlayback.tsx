@@ -30,6 +30,7 @@ export interface DevAudioPlayback {
   play: (request?: DevAudioRequest) => void;
   setVolume: (volume: number) => void;
   stop: (trackId?: string) => void;
+  subscribeToQueueEnd: (handler: () => void) => () => void;
   toggleMute: () => void;
 }
 
@@ -63,6 +64,10 @@ function DevAudioPlaybackBridge({ children }: PropsWithChildren) {
     session.seek(0);
   }, [session]);
 
+  const subscribeToQueueEnd = useCallback((handler: () => void) => (
+    session.subscribe('queue-end', handler)
+  ), [session]);
+
   const value = useMemo<DevAudioPlayback>(() => ({
     currentSource: session.currentTrack?.audioFile ?? null,
     currentTrackId: session.currentTrack?.id ?? null,
@@ -74,8 +79,9 @@ function DevAudioPlaybackBridge({ children }: PropsWithChildren) {
     play,
     setVolume: session.setVolume,
     stop,
+    subscribeToQueueEnd,
     toggleMute: session.toggleMute,
-  }), [load, play, session, stop]);
+  }), [load, play, session, stop, subscribeToQueueEnd]);
 
   return (
     <DevAudioPlaybackContext.Provider value={value}>

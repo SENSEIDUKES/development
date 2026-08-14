@@ -6,7 +6,13 @@ import { CardWorkshopView } from './CardWorkshopView';
 import { CardWorkshopWorkspace } from '../../../workshop/previews/card-workshop/CardWorkshopWorkspace';
 import { CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
 import { resetMockState } from '../../reader-chamber/shared/stubs';
+import type { WorldCardEvent } from '../../reader-chamber/shared/types';
 import { DevAudioPlaybackProvider } from '../../../audio/DevAudioPlayback';
+import {
+  CARD_WORKSHOP_FALLBACK_PLAYBACK_MS,
+  createCardWorkshopAudioAdapter,
+  type DevAudioPlayerBridge,
+} from '../shared/cardWorkshopAudioAdapter';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -34,6 +40,22 @@ const clickButton = async (label: string) => {
     target!.click();
   });
 };
+
+const audioCard = {
+  entityType: 'system',
+  entityName: 'Test Echo',
+  displayTitle: 'Test Echo',
+  audioType: 'resonance',
+  sound: { assetId: 'test-echo' },
+} satisfies WorldCardEvent;
+
+const createPlayer = (): DevAudioPlayerBridge => ({
+  currentTrackId: null,
+  isPlaying: false,
+  play: vi.fn(),
+  stop: vi.fn(),
+  subscribeToQueueEnd: vi.fn(),
+});
 
 const selectByLabel = async (label: string, value: string) => {
   const target = container.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`);
@@ -321,5 +343,59 @@ describe('CardWorkshopView', () => {
 
     expect(playSpy).toHaveBeenCalled();
     vi.useRealTimers();
+  });
+});
+
+describe('createCardWorkshopAudioAdapter', () => {
+  it('uses the shared player ending lifecycle and stops its active Workshop track during cleanup', async () => {
+    vi.useFakeTimers();
+    const player = createPlayer();
+    const adapter = createCardWorkshopAudioAdapter({
+      state: 'available',
+      muted: false,
+      resolveSource: () => 'https://example.com/test-echo.mp3',
+      player,
+    });
+    const asset = adapter.resolve(audioCard)!;
+    const playback = await adapter.play(asset);
+    const ended = vi.fn();
+    playback.onended = ended;
+
+    expect(player.play).toHaveBeenCalledWith(expect.objectContaining({ id: asset.id }));
+    const queueEnded = vi.mocked(player.subscribeToQueueEnd).mock.calls[0][0];
+    queueEnded();
+    expect(ended).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(CARD_WORKSHOP_FALLBACK_PLAYBACK_MS);
+    });
+    expect(ended).toHaveBeenCalledTimes(1);
+
+    await adapter.play(asset);
+    adapter.dispose();
+    expect(player.stop).toHaveBeenCalledWith(asset.id);
+  });
+
+  it('retains the deterministic timer ending when no shared player is supplied', async () => {
+    vi.useFakeTimers();
+    const adapter = createCardWorkshopAudioAdapter({
+      state: 'available',
+      muted: false,
+      resolveSource: () => null,
+      player: null,
+    });
+    const playback = await adapter.play(adapter.resolve(audioCard)!);
+    const ended = vi.fn();
+    playback.onended = ended;
+
+    await act(async () => {
+      vi.advanceTimersByTime(899);
+    });
+    expect(ended).not.toHaveBeenCalled();
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(ended).toHaveBeenCalledTimes(1);
   });
 });

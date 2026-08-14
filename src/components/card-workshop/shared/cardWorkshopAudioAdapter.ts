@@ -17,6 +17,7 @@ export interface DevAudioPlayerBridge {
   readonly isPlaying: boolean;
   play: (request: { id: string; source: string; title?: string }) => void;
   stop: (trackId?: string) => void;
+  subscribeToTrackChange: (handler: (trackId: string | null) => void) => () => void;
   subscribeToQueueEnd: (handler: () => void) => () => void;
 }
 
@@ -63,7 +64,15 @@ export function createCardWorkshopAudioAdapter({
 }: CardWorkshopAudioAdapterOptions): CardWorkshopAudioAdapter {
   const timers = new Map<string, ReturnType<typeof setTimeout>>();
   let activePlayerTrackId: string | null = null;
+  let stopObservingTrackChange: (() => void) | null = null;
   let stopObservingPlayer: (() => void) | null = null;
+
+  const stopObservingPlayerLifecycle = () => {
+    stopObservingTrackChange?.();
+    stopObservingTrackChange = null;
+    stopObservingPlayer?.();
+    stopObservingPlayer = null;
+  };
 
   const clearTimer = (assetId: string) => {
     const existing = timers.get(assetId);
@@ -105,13 +114,17 @@ export function createCardWorkshopAudioAdapter({
     });
 
     if (player && source) {
-      stopObservingPlayer?.();
+      stopObservingPlayerLifecycle();
       activePlayerTrackId = asset.id;
+      stopObservingTrackChange = player.subscribeToTrackChange((trackId) => {
+        if (activePlayerTrackId !== asset.id || trackId === asset.id) return;
+        activePlayerTrackId = null;
+        stopObservingPlayerLifecycle();
+      });
       stopObservingPlayer = player.subscribeToQueueEnd(() => {
         if (activePlayerTrackId !== asset.id) return;
         activePlayerTrackId = null;
-        stopObservingPlayer?.();
-        stopObservingPlayer = null;
+        stopObservingPlayerLifecycle();
         playback.onended?.();
       });
       player.play({
@@ -130,8 +143,7 @@ export function createCardWorkshopAudioAdapter({
     if (player && activePlayerTrackId === assetId) {
       player.stop(assetId);
       activePlayerTrackId = null;
-      stopObservingPlayer?.();
-      stopObservingPlayer = null;
+      stopObservingPlayerLifecycle();
     }
   };
 
@@ -142,8 +154,7 @@ export function createCardWorkshopAudioAdapter({
       player.stop(activePlayerTrackId);
       activePlayerTrackId = null;
     }
-    stopObservingPlayer?.();
-    stopObservingPlayer = null;
+    stopObservingPlayerLifecycle();
   };
 
   return {

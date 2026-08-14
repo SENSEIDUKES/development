@@ -54,6 +54,7 @@ const createPlayer = (): DevAudioPlayerBridge => ({
   isPlaying: false,
   play: vi.fn(),
   stop: vi.fn(),
+  subscribeToTrackChange: vi.fn(),
   subscribeToQueueEnd: vi.fn(),
 });
 
@@ -347,7 +348,7 @@ describe('CardWorkshopView', () => {
 });
 
 describe('createCardWorkshopAudioAdapter', () => {
-  it('uses the shared player ending lifecycle and stops its active Workshop track during cleanup', async () => {
+  it('uses the shared player lifecycle, ignores replacement-track completion, and stops active Workshop audio during cleanup', async () => {
     vi.useFakeTimers();
     const player = createPlayer();
     const adapter = createCardWorkshopAudioAdapter({
@@ -369,6 +370,14 @@ describe('createCardWorkshopAudioAdapter', () => {
     await act(async () => {
       vi.advanceTimersByTime(CARD_WORKSHOP_FALLBACK_PLAYBACK_MS);
     });
+    expect(ended).toHaveBeenCalledTimes(1);
+
+    const replacementPlayback = await adapter.play(asset);
+    replacementPlayback.onended = ended;
+    const trackChanged = vi.mocked(player.subscribeToTrackChange).mock.calls[1][0];
+    const replacementQueueEnded = vi.mocked(player.subscribeToQueueEnd).mock.calls[1][0];
+    trackChanged('story-seed-help');
+    replacementQueueEnded();
     expect(ended).toHaveBeenCalledTimes(1);
 
     await adapter.play(asset);

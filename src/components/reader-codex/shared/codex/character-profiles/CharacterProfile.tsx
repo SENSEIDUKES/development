@@ -9,7 +9,7 @@ interface CharacterProfileProps {
   canGenerate: boolean;
   isGenerating: boolean;
   isFreeUserOnHubStory: boolean;
-  handleAwakenCardImage: (id: string, type: "character" | "beast", obj: any) => void;
+  handleAwakenCardImage: (id: string, type: "character" | "creature" | "beast", obj: any) => void;
   setSelectedNodeChar: (c: Character) => void;
 }
 
@@ -24,13 +24,17 @@ export const CharacterProfile: React.FC<CharacterProfileProps> = ({
   setSelectedNodeChar
 }) => {
   const hasImage = Boolean(char.imageAssetId || char.imageUrl);
+  const isNonHumanPortrait = char.portraitKind === 'non-human' || char.isBeast === true;
+  const portraitImageType = char.portraitKind === 'non-human'
+    ? 'creature'
+    : char.isBeast ? 'beast' : 'character';
 
   return (
     <div key={char.id} className="bg-neutral-950 border border-neutral-900 hover:border-neutral-800 rounded-lg p-3 flex flex-col justify-between group transition-all duration-300">
       <div>
         <div className="flex items-center justify-between mb-2">
           <h5 className="font-sc font-medium text-signal text-sm flex items-center gap-1.5">
-            <Users size={12} className={char.isBeast ? "text-amber-500" : "text-portal"} /> {char.name}
+            <Users size={12} className={isNonHumanPortrait ? "text-amber-500" : "text-portal"} /> {char.name}
           </h5>
           <span className="text-[9px] text-neutral-500 font-mono">Ch. {char.firstAppeared || 1}</span>
         </div>
@@ -52,7 +56,7 @@ export const CharacterProfile: React.FC<CharacterProfileProps> = ({
             <Eye size={12} />
           </button>
           <button
-            tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => canGenerate && handleAwakenCardImage(char.id, char.isBeast ? 'beast' : 'character', char)}
+             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => canGenerate && handleAwakenCardImage(char.id, portraitImageType, char)}
             className={`p-1 rounded flex items-center justify-center transition-all ${
               !hasAppeared
                 ? 'text-neutral-700 bg-black/50 cursor-not-allowed'

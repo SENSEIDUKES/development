@@ -27,6 +27,7 @@ import type {
   ContextManifest,
   Artifact,
   Character,
+  CreatureSpecies,
   Faction,
   Location,
   ReaderChapter,
@@ -97,6 +98,14 @@ const normalizeAbilities = (values: unknown[]): Array<string | Ability> => value
 const characterFromRecord = (record: LivingRecord): Character | undefined => {
   const name = textField(record, "name", "title", "label");
   if (!name) return undefined;
+  const { isBeast: legacyIsBeast, beastProfile: legacyCreatureProfile, ...rawCharacter } = clone(record);
+  const rawPortraitKind = textField(record, "portraitKind");
+  const speciesId = textField(record, "speciesId");
+  const rawRole = textField(record, "role");
+  const legacyRoleIsBeast = rawRole.toLocaleLowerCase() === "beast";
+  const portraitKind = rawPortraitKind === "non-human" || legacyIsBeast === true || legacyRoleIsBeast || Boolean(speciesId)
+    ? "non-human"
+    : "human";
   const rawStatus = textField(record, "status").toLocaleLowerCase();
   const status = rawStatus === "alive" || rawStatus === "deceased"
     || rawStatus === "unknown" || rawStatus === "ascended"
@@ -118,10 +127,10 @@ const characterFromRecord = (record: LivingRecord): Character | undefined => {
   const rawAbilities = Array.isArray(record.abilities) ? record.abilities : [];
   const aliases = aliasesFromRecord(record);
   return {
-    ...clone(record),
+    ...rawCharacter,
     id: stableReaderId("character", record, name),
     name,
-    role: textField(record, "role") || "Unknown",
+    role: legacyRoleIsBeast ? "Companion" : rawRole || "Unknown",
     status,
     relationshipToMC: textField(record, "relationshipToMC", "connectionToMC"),
     description: descriptionParts.join(" · "),
@@ -130,7 +139,44 @@ const characterFromRecord = (record: LivingRecord): Character | undefined => {
       : {}),
     ...(aliases.length > 0 ? { aliases } : {}),
     ...(rawAbilities.length > 0 ? { abilities: normalizeAbilities(rawAbilities) } : {}),
+    portraitKind,
+    ...(speciesId ? { speciesId } : {}),
+    ...(legacyCreatureProfile && typeof legacyCreatureProfile === "object"
+      ? { creatureProfile: legacyCreatureProfile }
+      : {}),
   } as Character;
+};
+
+const positiveChapter = (value: unknown): number | undefined => (
+  typeof value === "number" && Number.isInteger(value) && value > 0 ? value : undefined
+);
+
+const chapterNumbers = (value: unknown): number[] => Array.isArray(value)
+  ? [...new Set(value.filter((chapter): chapter is number => positiveChapter(chapter) !== undefined))]
+    .sort((left, right) => left - right)
+  : [];
+
+const creatureSpeciesFromRecord = (record: LivingRecord): CreatureSpecies | undefined => {
+  const name = textField(record, "name", "title", "label");
+  if (!name) return undefined;
+  const firstEncounteredChapter = positiveChapter(record.firstEncounteredChapter)
+    ?? positiveChapter(record.firstAppeared)
+    ?? 1;
+  const appearanceChapters = chapterNumbers(record.appearanceChapters);
+  return {
+    ...clone(record),
+    id: stableReaderId("creature", record, name),
+    name,
+    description: textField(record, "description", "details", "summary"),
+    classification: textField(record, "classification", "kind", "type") || "Unknown",
+    traits: stringList(record.traits ?? record.knownTraits ?? record.abilities),
+    threatLevel: textField(record, "threatLevel", "threatTier") || "Unknown",
+    ...(textField(record, "signatureSound") ? { signatureSound: textField(record, "signatureSound") } : {}),
+    firstEncounteredChapter,
+    appearanceChapters: [...new Set([...appearanceChapters, firstEncounteredChapter])]
+      .sort((left, right) => left - right),
+    notableIndividualIds: stringList(record.notableIndividualIds),
+  } as CreatureSpecies;
 };
 
 const factionFromRecord = (record: LivingRecord): Faction | undefined => {
@@ -326,6 +372,7 @@ const memoryFromLivingState = (
   currentPowerStage: state.characterState.currentPowerStage,
   ...(constitution.powerSystem.trim() ? { powerSystem: constitution.powerSystem } : {}),
   characters: mapRecords(state.codex.characters, characterFromRecord),
+  bestiary: mapRecords(state.codex.bestiary ?? [], creatureSpeciesFromRecord),
   factions: mapRecords(state.codex.factions, factionFromRecord),
   locations: mapRecords(state.codex.locations, locationFromRecord),
   artifacts: mapRecords(state.codex.artifacts, artifactFromRecord),

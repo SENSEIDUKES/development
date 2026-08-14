@@ -147,6 +147,7 @@ const resultFor = (
   };
   const codexUpdates = {
     characters: [{ name: "Rin", lastChangedChapter: chapterNumber }],
+    bestiary: [],
     factions: [{ name: `Court faction ${chapterNumber}` }],
     locations: [{ name: `Court chamber ${chapterNumber}` }],
     artifacts: [{ name: `Oath shard ${chapterNumber}` }],
@@ -167,6 +168,7 @@ const resultFor = (
     },
     codex: {
       characters: [...current.codex.characters, ...codexUpdates.characters],
+      bestiary: [...current.codex.bestiary, ...codexUpdates.bestiary],
       factions: [...current.codex.factions, ...codexUpdates.factions],
       locations: [...current.codex.locations, ...codexUpdates.locations],
       artifacts: [...current.codex.artifacts, ...codexUpdates.artifacts],

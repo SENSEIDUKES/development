@@ -3,7 +3,12 @@ import { Compass, Sparkles, MapPin, Shield, Users } from 'lucide-react';
 import { Character, Location, Faction } from '../types';
 import { useCodex } from './CodexContext';
 
-export function ReaderCodexFate() {
+export function ReaderCodexFate({
+  canonicalCreatureTerminology = false,
+}: {
+  /** Keeps the frozen Reference's legacy wording while Development emits canonical creature data. */
+  canonicalCreatureTerminology?: boolean;
+}) {
   const { memory, activeStory, onUpdateMemory } = useCodex();
 
   const [newChar, setNewChar] = useState<Partial<Character>>({ name: '', description: '', role: 'ally' });
@@ -15,13 +20,17 @@ export function ReaderCodexFate() {
     if (e) e.preventDefault();
     if (!newChar.name) return;
 
+    const isNonHumanCompanion = canonicalCreatureTerminology
+      ? newChar.role === 'non-human-companion'
+      : newChar.role === 'beast';
     const newCharacter: Character = {
       id: crypto.randomUUID(),
       name: newChar.name,
       description: newChar.description || '',
-      role: newChar.role || 'ally',
+      role: isNonHumanCompanion ? 'Companion' : newChar.role || 'ally',
       relationshipToMC: 'neutral',
-      status: 'alive'
+      status: 'alive',
+      portraitKind: isNonHumanCompanion ? 'non-human' : 'human',
     };
 
     const updatedChars = [...(memory.characters || []), newCharacter];
@@ -129,7 +138,9 @@ export function ReaderCodexFate() {
                 <option value="enemy">Sworn Enemy / Rival</option>
                 <option value="mentor">Hidden Grandmaster</option>
                 <option value="neutral">Neutral / Merchant</option>
-                <option value="beast">Spiritual Beast / Pet</option>
+                <option value={canonicalCreatureTerminology ? 'non-human-companion' : 'beast'}>
+                  {canonicalCreatureTerminology ? 'Non-Human Companion / Pet' : 'Spiritual Beast / Pet'}
+                </option>
               </select>
             </div>
             <div>

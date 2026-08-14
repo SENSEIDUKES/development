@@ -118,7 +118,7 @@ export interface StoryBlockMetadata {
   speakerRole?: string;
   entities?: {
     name: string;
-    type: "character" | "artifact" | "location" | "beast" | "faction";
+    type: "character" | "artifact" | "location" | "creature" | "faction";
     mention: "reveal" | "reference";
   }[];
   music?: {

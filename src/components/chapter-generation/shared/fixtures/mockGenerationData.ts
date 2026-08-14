@@ -40,6 +40,8 @@ export interface MockChapterGenerationScenario {
     resolvedPlotThreads: string[];
     destinedEnding: string;
     characters: Record<string, unknown>[];
+    /** Species-level records; persistent non-human individuals stay in characters. */
+    bestiary?: Record<string, unknown>[];
     factions: Record<string, unknown>[];
     locations: Record<string, unknown>[];
     artifacts: Record<string, unknown>[];

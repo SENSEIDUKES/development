@@ -19,11 +19,11 @@ interface CodexContextType {
   updateStoryFields: UpdateStoryFields;
   pushNotification: (msg: string) => void;
   getPowerRankScore: (powerStr: string | undefined) => { score: number; title: string };
-  handleAwakenCardImage: (id: string, type: 'character' | 'location' | 'artifact' | 'beast', entity: any) => Promise<void>;
+  handleAwakenCardImage: (id: string, type: 'character' | 'creature' | 'location' | 'artifact' | 'beast', entity: any) => Promise<void>;
   /** `historyId` is the durable `GeneratedImage.id`, never a rendered URL. */
   handleRevertImage: (
     id: string,
-    type: 'character' | 'location' | 'artifact' | 'beast' | 'faction',
+    type: 'character' | 'creature' | 'location' | 'artifact' | 'beast' | 'faction',
     historyId: string,
   ) => void;
   previews: Record<string, any>;

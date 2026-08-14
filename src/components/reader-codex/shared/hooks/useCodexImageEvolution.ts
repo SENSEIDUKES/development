@@ -11,7 +11,7 @@ import type {
   UpdateStoryFields,
 } from '../types';
 
-export type CodexImageEntityType = 'character' | 'location' | 'artifact' | 'beast';
+export type CodexImageEntityType = 'character' | 'creature' | 'location' | 'artifact' | 'beast';
 export type CodexImageHistoryEntityType = CodexImageEntityType | 'faction';
 
 export interface CodexImagePreview {

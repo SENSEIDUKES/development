@@ -51,10 +51,14 @@ const setControlValue = async (
 interface CodexHarnessProps {
   onMemoryUpdate?: (memory: StoryMemory) => void;
   onStoryPatch?: (patch: ReaderCodexStoryPatch) => void;
+  initialMemory?: StoryMemory;
 }
 
-function CodexHarness({ onMemoryUpdate, onStoryPatch }: CodexHarnessProps) {
-  const [story, setStory] = useState<StoryWorld>(() => createReaderCodexPreviewStory());
+function CodexHarness({ onMemoryUpdate, onStoryPatch, initialMemory }: CodexHarnessProps) {
+  const [story, setStory] = useState<StoryWorld>(() => {
+    const preview = createReaderCodexPreviewStory();
+    return initialMemory ? { ...preview, memory: initialMemory } : preview;
+  });
 
   const onUpdateMemory = (memory: StoryMemory) => {
     onMemoryUpdate?.(memory);
@@ -137,7 +141,7 @@ afterEach(() => {
 });
 
 describe('ReaderCodex', () => {
-  it('renders every production Codex section behind all six primary tabs', async () => {
+  it('keeps the established Codex sections available alongside the Development Bestiary tab', async () => {
     act(() => root.render(<CodexHarness />));
 
     expect(container.querySelector('#codex-collage-panel')).toBeTruthy();
@@ -146,6 +150,12 @@ describe('ReaderCodex', () => {
     expect(container.querySelector('#codex-timeline')).toBeTruthy();
     expect(container.textContent).toContain('Aetherial Chronicle Collage');
     expect(container.textContent).toContain('Visual Story Recaps');
+
+    await click('Bestiary');
+    expect(container.querySelector('#codex-bestiary')).toBeTruthy();
+    expect(container.textContent).toContain('No species have been encountered yet.');
+
+    await click('Portraits');
 
     await click('Karma');
     expect(container.querySelector('#codex-relationships')).toBeTruthy();
@@ -177,6 +187,57 @@ describe('ReaderCodex', () => {
     expect(container.querySelector('#codex-glossary-lookup')).toBeTruthy();
     expect(container.textContent).toContain('Qi (\u6c14)');
     expect(container.textContent).toContain('Channel Story Lore');
+  });
+
+  it('keeps human and non-human Portraits separate while rendering linked Bestiary species data', async () => {
+    const initialMemory: StoryMemory = {
+      characters: [{
+        id: 'reader-codex-rin',
+        name: 'Rin',
+        role: 'Oath-reader',
+        status: 'alive',
+        relationshipToMC: 'Self',
+        description: 'A human witness who reads the scars left by broken oaths.',
+        portraitKind: 'human',
+      }, {
+        id: 'reader-codex-lei',
+        name: 'Lei',
+        role: 'Recurring sky guide',
+        status: 'alive',
+        relationshipToMC: 'Trusted companion',
+        description: 'A young thunder dragon with a persistent role in the journey.',
+        portraitKind: 'non-human',
+        speciesId: 'reader-codex-thunder-dragons',
+      }],
+      bestiary: [{
+        id: 'reader-codex-thunder-dragons',
+        name: 'Thunder Dragons',
+        description: 'Storm-born drakes that carry living lightning beneath their scales.',
+        classification: 'Celestial dragon',
+        traits: ['Storm flight', 'Lightning breath'],
+        threatLevel: 'High',
+        signatureSound: 'A rolling sky-crack',
+        firstEncounteredChapter: 2,
+        appearanceChapters: [2, 4],
+        notableIndividualIds: ['reader-codex-lei'],
+      }],
+    };
+
+    act(() => root.render(<CodexHarness initialMemory={initialMemory} />));
+
+    expect(container.textContent).toContain('Human Portraits');
+    expect(container.textContent).toContain('Non-Human Portraits');
+    expect(container.textContent).toContain('Rin');
+    expect(container.textContent).toContain('Lei');
+
+    await click('Bestiary');
+
+    expect(container.querySelector('#codex-bestiary')).toBeTruthy();
+    expect(container.textContent).toContain('Thunder Dragons');
+    expect(container.textContent).toContain('Celestial dragon');
+    expect(container.textContent).toContain('Storm flight');
+    expect(container.textContent).toContain('A rolling sky-crack');
+    expect(container.textContent).toContain('Lei');
   });
 
   it('keeps Deep Memory and author-controlled memory updates functional', async () => {
@@ -220,6 +281,9 @@ describe('CodexSheetOverlay', () => {
     await click('Close Codex Sheet');
 
     expect(onClose).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await new Promise(resolve => window.setTimeout(resolve, 500));
+    });
     expect(container.querySelector('[role="dialog"][aria-label="Codex"]')).toBeFalsy();
   });
 

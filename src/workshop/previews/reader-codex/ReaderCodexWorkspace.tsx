@@ -27,9 +27,11 @@ function applyStoryPatch(
 function ReaderCodexPreviewPane({
   Component,
   activePage,
+  supportsBestiary,
 }: {
   Component: ReaderCodexComponent;
   activePage: ReaderCodexPage;
+  supportsBestiary: boolean;
 }) {
   const [story, setStory] = useState<StoryWorld>(() => createReaderCodexPreviewStory());
   const rootRef = useRef<HTMLDivElement>(null);
@@ -43,7 +45,9 @@ function ReaderCodexPreviewPane({
   }, []);
 
   useEffect(() => {
-    const requested = readerCodexPages.find(page => page.id === activePage);
+    const requested = readerCodexPages.find(page => page.id === (
+      activePage === 'bestiary' && !supportsBestiary ? 'portraits' : activePage
+    ));
     if (!requested) return;
     const timer = window.setTimeout(() => {
       const button = [...(rootRef.current?.querySelectorAll<HTMLButtonElement>('button') ?? [])]
@@ -51,7 +55,7 @@ function ReaderCodexPreviewPane({
       button?.click();
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [activePage]);
+  }, [activePage, supportsBestiary]);
 
   const memory = story.memory ?? {
     characters: [],
@@ -86,7 +90,7 @@ export function ReaderCodexWorkspace() {
       <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
         Reader Codex sections · local story state · no production services
       </p>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6" role="tablist" aria-label="Reader Codex preview sections">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-7" role="tablist" aria-label="Reader Codex preview sections">
         {readerCodexPages.map(page => (
           <button
             key={page.id}
@@ -113,10 +117,10 @@ export function ReaderCodexWorkspace() {
       controls={controls}
       allowCompare
       renderReference={() => (
-        <ReaderCodexPreviewPane Component={ReferenceReaderCodex} activePage={activePage} />
+          <ReaderCodexPreviewPane Component={ReferenceReaderCodex} activePage={activePage} supportsBestiary={false} />
       )}
       renderDevelopment={() => (
-        <ReaderCodexPreviewPane Component={DevelopmentReaderCodex} activePage={activePage} />
+          <ReaderCodexPreviewPane Component={DevelopmentReaderCodex} activePage={activePage} supportsBestiary />
       )}
     />
   );

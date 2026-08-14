@@ -22,7 +22,7 @@ export interface VisualMemory {
   title: string;
   subtitle: string;
   description: string;
-  type: 'scene' | 'character' | 'beast' | 'location' | 'artifact' | 'faction' | 'cover';
+  type: 'scene' | 'character' | 'creature' | 'beast' | 'location' | 'artifact' | 'faction' | 'cover';
   chapterNumber?: number;
   promptUsed?: string;
   dateStr?: string;
@@ -314,8 +314,10 @@ export function ReaderCodexCollage({
       {
         entries: characters ?? [],
         resolve: (c) => ({
-          type: c.isBeast ? 'beast' : 'character',
-          subtitle: c.isBeast ? 'Sacred Beast' : 'Immortal cultivator'
+          type: c.portraitKind === 'non-human' ? 'creature' : c.isBeast ? 'beast' : 'character',
+          subtitle: c.portraitKind === 'non-human'
+            ? 'Non-Human Portrait'
+            : c.isBeast ? 'Sacred Beast' : 'Immortal cultivator'
         })
       },
       {

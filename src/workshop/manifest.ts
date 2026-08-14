@@ -124,13 +124,13 @@ export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'reader-codex',
     title: 'Reader Codex',
-    description: 'The complete Living Codex sheet and its Portraits, Karma, Power Rankings, Artifacts, Fate, and Lore sections, wired to local Reader story state.',
+    description: 'The complete Living Codex sheet with separate Human/Non-Human Portraits, a species Bestiary, Karma, Power Rankings, Artifacts, Fate, and Lore, wired to local Reader story state.',
     category: 'codex-ui',
     version: 'v1.0',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/ReaderCodex.tsx; src/components/CodexSheetOverlay.tsx',
-      lastCompared: '2026-08-11',
+      lastCompared: '2026-08-13',
     },
   },
   {

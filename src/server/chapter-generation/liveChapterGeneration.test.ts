@@ -171,6 +171,7 @@ const processingResponse = (serious = false, blankChangeEntries = false) => JSON
   },
   codexUpdates: {
     characters: [{ name: "Rin", publicStanding: "Exposed oath-reader" }],
+    bestiary: [],
     factions: [],
     locations: [{ name: "The Rain Court", state: "First false oath exposed" }],
     artifacts: [],
@@ -698,7 +699,7 @@ describe("live Chapter Generation model boundaries", () => {
     ]);
   });
 
-  it("keeps Process Codex updates on the original simple record-identity merge", async () => {
+  it("reconciles Process Portrait updates by stable identity while retaining the existing simple merge for other Codex collections", async () => {
     const base = new RecordingProvider();
     const provider: ChapterTextModelProvider = {
       provider: base.provider,
@@ -739,16 +740,14 @@ describe("live Chapter Generation model boundaries", () => {
     const run = await runChapterPipelineAsync({ chapterPacket: packet, model: calls.model });
 
     expect(run.processingResult.proposedLivingStoryState.codex.characters).toEqual([
-      {
+      expect.objectContaining({
         id: "seed-minister-sui",
         name: "Minister Sui",
         aliases: ["Minister-Sui"],
         bio: "The court's quiet witness.",
-      },
-      {
-        name: "minister-sui",
         relationshipToMC: "Trusted after the hearing",
-      },
+        portraitKind: "human",
+      }),
     ]);
     expect(run.processingResult.proposedLivingStoryState.codex.factions).toEqual([
       {
@@ -759,6 +758,65 @@ describe("live Chapter Generation model boundaries", () => {
       },
       { name: "ninth-house", status: "Fractured" },
     ]);
+  });
+
+  it("carries a Process species and its named individual into linked canonical Living Story State", async () => {
+    const base = new RecordingProvider();
+    const provider: ChapterTextModelProvider = {
+      provider: base.provider,
+      model: base.model,
+      async generate(request) {
+        const result = await base.generate(request);
+        if (request.kind !== "process") return result;
+        const response = JSON.parse(result.text);
+        response.codexUpdates.characters = [{
+          id: "model-character-id",
+          name: "Lei",
+          portraitKind: "non-human",
+          speciesName: "Thunder Dragons",
+          imageUrl: "https://model.invalid/lei.png",
+        }];
+        response.codexUpdates.bestiary = [{
+          id: "model-species-id",
+          name: "Thunder Dragons",
+          description: "Storm-born drakes that carry living lightning beneath their scales.",
+          classification: "Celestial dragon",
+          traits: ["Storm flight"],
+          threatLevel: "High",
+          signatureSound: "A rolling sky-crack",
+          storageKey: "model-storage-key",
+        }];
+        return { ...result, text: JSON.stringify(response) };
+      },
+    };
+    const calls = createLiveChapterModelCalls(provider, {
+      temperature: 1,
+      maxOutputTokens: 16_384,
+    });
+
+    const run = await runChapterPipelineAsync({ chapterPacket: buildPacket(), model: calls.model });
+    const species = run.processingResult.proposedLivingStoryState.codex.bestiary
+      .find(record => record.name === "Thunder Dragons")!;
+    const individual = run.processingResult.proposedLivingStoryState.codex.characters
+      .find(record => record.name === "Lei")!;
+
+    expect(species).toMatchObject({
+      id: "dev-creature-thunder-dragons",
+      firstEncounteredChapter: 1,
+      appearanceChapters: [1],
+    });
+    expect(individual).toMatchObject({
+      id: "dev-character-lei",
+      portraitKind: "non-human",
+      speciesId: species.id,
+    });
+    expect(species.notableIndividualIds).toEqual([individual.id]);
+    expect(JSON.stringify(run.processingResult.proposedLivingStoryState)).not.toContain("model-character-id");
+    expect(JSON.stringify(run.processingResult.proposedLivingStoryState)).not.toContain("model-species-id");
+    expect(JSON.stringify(run.processingResult.proposedLivingStoryState)).not.toContain("model-storage-key");
+    expect(JSON.stringify(run.processingResult.proposedLivingStoryState)).not.toContain("model.invalid");
+    expect(base.requests.find(request => request.kind === "process")?.systemInstruction)
+      .toContain('codexUpdates.bestiary');
   });
 
   it("requires the original positive model-provided Process thread provenance", async () => {

@@ -40,6 +40,7 @@ describe("Living Story State packet", () => {
     });
     expect(state.codex).toEqual({
       characters: ESTABLISHED_SCENARIO.memory.characters,
+      bestiary: ESTABLISHED_SCENARIO.memory.bestiary ?? [],
       factions: ESTABLISHED_SCENARIO.memory.factions,
       locations: ESTABLISHED_SCENARIO.memory.locations,
       artifacts: ESTABLISHED_SCENARIO.memory.artifacts,

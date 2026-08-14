@@ -14,6 +14,7 @@ import {
   type LivingStoryCharacterStateUpdate,
   type LivingStoryCodexUpdates,
 } from "../../components/chapter-generation/shared/packets/livingStoryState";
+import { normalizeCreatureCodexRecords } from "../../components/chapter-generation/shared/packets/creatureCodex";
 import type {
   AsyncChapterGenerationModelCalls,
   ChapterEffectKind,
@@ -391,9 +392,13 @@ const parseBlockMetadata = (value: unknown, label: string): StoryBlockMetadata |
     : Array.isArray(metadata.entities)
       ? metadata.entities.map((item, index) => {
           const entity = requiredRecord(item, `${label}.entities[${index}]`);
-          const type = requiredString(entity.type, `${label}.entities[${index}].type`);
+          const receivedType = requiredString(entity.type, `${label}.entities[${index}].type`);
+          // Manifest prompt compatibility still accepts "beast" here; the
+          // generated chapter state and Reader path use "creature" from this
+          // boundary onward.
+          const type = receivedType === "beast" ? "creature" : receivedType;
           const mention = requiredString(entity.mention, `${label}.entities[${index}].mention`);
-          if (!["character", "artifact", "location", "beast", "faction"].includes(type)) {
+          if (!["character", "artifact", "location", "creature", "faction"].includes(type)) {
             throw new Error(`${label}.entities[${index}].type is unsupported.`);
           }
           if (mention !== "reveal" && mention !== "reference") {
@@ -401,7 +406,7 @@ const parseBlockMetadata = (value: unknown, label: string): StoryBlockMetadata |
           }
           return {
             name: requiredString(entity.name, `${label}.entities[${index}].name`),
-            type: type as "character" | "artifact" | "location" | "beast" | "faction",
+            type: type as "character" | "artifact" | "location" | "creature" | "faction",
             mention: mention as "reveal" | "reference",
           };
         })
@@ -682,6 +687,10 @@ const buildProposedState = (
   worldStateChanges: string[],
   characterStateUpdates: LivingStoryCharacterStateUpdate,
   codexUpdates: LivingStoryCodexUpdates,
+  normalizedCreatureCodex: Pick<
+    ReturnType<typeof normalizeCreatureCodexRecords>,
+    "characters" | "bestiary"
+  >,
 ) => {
   const current = input.chapterPacket.livingStoryState;
   return {
@@ -717,7 +726,8 @@ const buildProposedState = (
       resolved: Array.from(new Set([...current.threads.resolved, ...completedThreads])),
     },
     codex: {
-      characters: mergeCarriedRecords(current.codex.characters, codexUpdates.characters),
+      characters: normalizedCreatureCodex.characters,
+      bestiary: normalizedCreatureCodex.bestiary,
       factions: mergeCarriedRecords(current.codex.factions, codexUpdates.factions),
       locations: mergeCarriedRecords(current.codex.locations, codexUpdates.locations),
       artifacts: mergeCarriedRecords(current.codex.artifacts, codexUpdates.artifacts),
@@ -875,8 +885,16 @@ export function parseProcessingResult(
     ),
   };
   const codexValue = requiredRecord(value.codexUpdates, "Process Result codexUpdates");
+  const normalizedCreatureCodex = normalizeCreatureCodexRecords({
+    currentCharacters: input.chapterPacket.livingStoryState.codex.characters,
+    currentBestiary: input.chapterPacket.livingStoryState.codex.bestiary ?? [],
+    characterUpdates: recordArray(codexValue.characters, "Process Result codexUpdates.characters"),
+    bestiaryUpdates: recordArray(codexValue.bestiary, "Process Result codexUpdates.bestiary"),
+    chapterNumber: input.chapterPacket.chapterMission.number,
+  });
   const codexUpdates: LivingStoryCodexUpdates = {
-    characters: recordArray(codexValue.characters, "Process Result codexUpdates.characters"),
+    characters: normalizedCreatureCodex.characterUpdates,
+    bestiary: normalizedCreatureCodex.bestiaryUpdates,
     factions: recordArray(codexValue.factions, "Process Result codexUpdates.factions"),
     locations: recordArray(codexValue.locations, "Process Result codexUpdates.locations"),
     artifacts: recordArray(codexValue.artifacts, "Process Result codexUpdates.artifacts"),
@@ -912,7 +930,7 @@ export function parseProcessingResult(
       value.repetitionFindings,
       "Process Result repetitionFindings",
     ),
-    identityWarnings: [],
+    identityWarnings: normalizedCreatureCodex.identityWarnings,
     nextChapterHandoff,
     proposedLivingStoryState: buildProposedState(
       input,
@@ -925,6 +943,7 @@ export function parseProcessingResult(
       worldStateChanges,
       characterStateUpdates,
       codexUpdates,
+      normalizedCreatureCodex,
     ),
     repairRecommended: requiredBoolean(
       value.repairRecommended,
@@ -948,10 +967,13 @@ Inspect the manifested chapter against the exact Chapter Packet and Chapter Plan
 Report new anchors, character/world changes, explicit character-state and Codex-like updates, thread changes, mission evidence, continuity and repetition findings, a complete next-chapter handoff, and whether repair is genuinely required.
 characterChanges, worldStateChanges, threads.completed, and threads.changed must each be arrays of plain strings; use [] when there are no entries.
 characterStateUpdates.abilities and every codexUpdates collection must be arrays; use [] when there are no structured updates. Return currentPowerStage only when it genuinely changed. Preserve every discovered character, faction, location, artifact, or ability update in the matching structured collection as a JSON record.
+Use "creature" as the canonical term. The codexUpdates.bestiary collection holds whole-species records only: name, short description, classification, traits, threatLevel, and signatureSound when known. A species encounter updates its Bestiary entry even when no individual matters enough for a Portrait. Never put a generic, disposable, or one-scene creature in codexUpdates.characters.
+codexUpdates.characters holds persistent individuals. Set portraitKind to "non-human" only for an important named creature, bonded pet, companion, recurring monster, intelligent creature with lasting identity, or other non-human individual; intelligence alone is not enough. A non-human individual may include speciesName when it belongs to a real species. If both are new, include the species in bestiary and the individual in characters. A unique individual without a real species has no speciesName. Human characters use portraitKind "human".
+Never return image URLs, storage keys, asset IDs, sound URLs, internal Codex IDs, speciesId, notableIndividualIds, encounter chapters, first-encounter values, or provenance. The application assigns IDs, resolves media, encounter history, and links itself.
 Use severity "serious" only for a defect that requires rewriting the manifested chapter. Set repairRecommended true only when at least one serious finding exists; do not force repair on a healthy run.
 The server clones and advances Living Story State from this structured result; do not return a proposedLivingStoryState object.
 Required shape:
-{"version":1,"newAnchors":{"worldBuilding":"...","conflict":"...","progression":"..."},"characterChanges":[],"worldStateChanges":[],"characterStateUpdates":{"abilities":[]},"codexUpdates":{"characters":[],"factions":[],"locations":[],"artifacts":[]},"threads":{"completed":[],"changed":[],"unresolved":[{"description":"...","originChapter":1}]},"missionCompletion":{"completed":true,"evidence":"..."},"continuityFindings":[],"repetitionFindings":[],"nextChapterHandoff":{"version":1,"chapterNumber":1,"endState":{"location":"...","timeMarker":"...","charactersPresent":[],"mcCondition":"...","openTension":"..."},"completedEvents":[],"nextImmediateAction":"...","fingerprints":[{"actionType":"other","participants":[],"location":"...","outcome":"...","chapterNumber":1}]},"repairRecommended":false}`;
+{"version":1,"newAnchors":{"worldBuilding":"...","conflict":"...","progression":"..."},"characterChanges":[],"worldStateChanges":[],"characterStateUpdates":{"abilities":[]},"codexUpdates":{"characters":[{"name":"...","portraitKind":"human"}],"bestiary":[{"name":"...","description":"...","classification":"...","traits":[],"threatLevel":"...","signatureSound":"..."}],"factions":[],"locations":[],"artifacts":[]},"threads":{"completed":[],"changed":[],"unresolved":[{"description":"...","originChapter":1}]},"missionCompletion":{"completed":true,"evidence":"..."},"continuityFindings":[],"repetitionFindings":[],"nextChapterHandoff":{"version":1,"chapterNumber":1,"endState":{"location":"...","timeMarker":"...","charactersPresent":[],"mcCondition":"...","openTension":"..."},"completedEvents":[],"nextImmediateAction":"...","fingerprints":[{"actionType":"other","participants":[],"location":"...","outcome":"...","chapterNumber":1}]},"repairRecommended":false}`;
 
 const packetJson = (value: unknown) => JSON.stringify(value, null, 2);
 

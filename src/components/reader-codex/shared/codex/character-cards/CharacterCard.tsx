@@ -21,7 +21,7 @@ interface CharacterCardProps {
   handleStopVoice: () => void;
   handleGenerateVoiceCard: (char: Character) => void;
   beginCharEdit: (char: Character) => void;
-  handleAwakenCardImage: (id: string, type: "character" | "beast", obj: any) => void;
+  handleAwakenCardImage: (id: string, type: "character" | "creature" | "beast", obj: any) => void;
 }
 
 export const CharacterCard: React.FC<CharacterCardProps> = ({
@@ -42,6 +42,9 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
   handleAwakenCardImage
 }) => {
   const displayedImage = activePreview ? activePreview.urls[activePreview.selectedIndex] : char.imageUrl;
+  const portraitImageType = char.portraitKind === 'non-human'
+    ? 'creature'
+    : char.isBeast ? 'beast' : 'character';
   const hasImage = Boolean(char.imageAssetId || char.imageUrl);
   const visualAriaLabel = isGenerating
     ? `VERSA is working on visual for ${char.name}`
@@ -66,7 +69,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
       <div className="h-44 w-full bg-void relative flex items-center justify-center overflow-hidden border-b border-neutral-900 group">
         <ReaderCodexImageGallery
           entityId={char.id}
-          type={char.isBeast ? 'beast' : 'character'}
+          type={portraitImageType}
           imageHistory={resolveEntityImageHistory(char)}
         />
         {displayedImage ? (
@@ -195,7 +198,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
             </div>
           )}
           <button
-             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => handleAwakenCardImage(char.id, char.isBeast ? 'beast' : 'character', char)}
+             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => handleAwakenCardImage(char.id, portraitImageType, char)}
             disabled={isGenerating || !canGenerate}
             aria-label={visualAriaLabel}
             className={`w-full py-1.5 rounded text-[9px] uppercase font-mono tracking-widest flex items-center justify-center space-x-1 border font-bold transition-all ${

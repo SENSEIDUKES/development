@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Rain Court local location fixture</title>
+  <desc id="desc">A pavilion silhouette under cyan rain and a gold moon.</desc>
+  <rect width="960" height="540" fill="#03101a"/>
+  <circle cx="720" cy="124" r="74" fill="#d4af37" opacity=".62"/>
+  <g stroke="#7dd3fc" stroke-opacity=".32"> <path d="M100 0L10 540M230 0l-60 540M380 0l-25 540M560 0l20 540M720 0l65 540M880 0l90 540"/> </g>
+  <path d="M190 310h580l-92-82H282zM270 310h420v150H270z" fill="#061925" stroke="#38bdf8" stroke-width="5"/>
+  <path d="M340 310v150M430 310v150M530 310v150M620 310v150" stroke="#d4af37" stroke-width="7" opacity=".65"/>
+  <text x="480" y="510" text-anchor="middle" fill="#e0f2fe" font-family="serif" font-size="28">RAIN COURT GRAND PAVILION</text>
+</svg>

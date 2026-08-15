@@ -34,8 +34,8 @@ Reusable visual names use the `library-*` namespace:
 
 ### Shared-component history
 
-- **2026-08-15:** Ported `SEICard` from the SEIHouse UI repo (source commit
-  `ec10d2b711d0316af2056988fc028d07c38d458b` on UI `main`) and added
+- **2026-08-15:** Ported the finalized `SEICard` from the SEIHouse UI repo
+  (source commit `53fb8934e7b126807194654c9af10a504b4db6e8` on UI `main`) and added
   `LibraryCard`, the official Celestial Library card primitive: the full
   region set (media / content / header / title / description / body /
   metadata / actions / footer), the static vs. interactive-link vs.
@@ -184,7 +184,7 @@ item, never a panel replacement.
 - **Source location:** `packages/seihouse-ui/src/primitives/sei-card.tsx`
   (exports `SEICard` + the region components) with `seiCardVariants` in
   `packages/seihouse-ui/src/styles/variants.ts`, at source commit
-  `ec10d2b711d0316af2056988fc028d07c38d458b` on UI `main`
+  `53fb8934e7b126807194654c9af10a504b4db6e8` on UI `main`
   (inspected 2026-08-15)
 - **Workshop consumer:** none yet — shared Library integration only; the
   Codex / World / Relic card rebuilds adopt it in a later pass
@@ -245,6 +245,39 @@ item, never a panel replacement.
 - The focus ring is the canonical Library portal ring shared with
   `LibraryButton` and the navigation skins.
 
+### Mock boundaries
+
+- None. `LibraryCard` is a stateless shared primitive with no Workshop state
+  simulator, fixture data, authentication, persistence, API calls, routing,
+  or production environment dependency. Consumers own all content and actions.
+
+### Transfer instructions
+
+- Do not copy `LibraryCard` back into the UI repo as a replacement for
+  `SEICard`; UI `main` remains the source contract. Transfer this
+  Library-skinned port into `SENSEIDUKES/Light-Novels` only alongside an
+  approved Library feature that adopts it.
+- Place the component in the production application's canonical shared
+  Library component folder, preserve its public props and `data-slot` hooks,
+  and add the named exports to that folder's barrel.
+- Reuse the destination's canonical `cn` utility and Library panel spectral
+  edge. If those shared dependencies have not yet transferred, move the
+  verified Workshop implementations with the card instead of duplicating
+  their class-merging or spectral-edge logic.
+- Carry the focused contract tests with the component and run the destination
+  typecheck plus test suite. Do not transfer Workshop navigation, previews, or
+  mock controls; this shared primitive has none.
+
+### Files required for production transfer
+
+- `src/components/library/LibraryCard.tsx`
+- `src/components/library/LibraryCard.test.tsx`
+- The `LibraryCard` value and type export blocks from
+  `src/components/library/index.ts`
+- Shared dependencies, when not already present in the destination:
+  `src/components/library/cn.ts` and the `SPECTRAL_EDGE` export from
+  `src/components/library/LibraryPanel.tsx`
+
 ### Usage
 
 ```tsx
@@ -290,6 +323,12 @@ import {
 
 ### Workshop history
 
+- **2026-08-15:** Synchronized with finalized UI `SEICard` source commit
+  `53fb8934e7b126807194654c9af10a504b4db6e8`: reduced the small-screen glass
+  blur, cached populated header-slot checks, and skipped checks for omitted
+  slots without changing the rendered contract. Added the disabled-link role,
+  prevented-key regression coverage, TypeScript enforcement in
+  `test:library`, and the complete production transfer record.
 - **2026-08-15:** Ported `SEICard` from the UI repo at source commit
   `ec10d2b711d0316af2056988fc028d07c38d458b`, re-skinned it as the Celestial
   Library glass card, and added focused contract tests

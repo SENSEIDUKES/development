@@ -83,7 +83,7 @@ describe('LibraryCard interactive contracts', () => {
     expect(card!.className).toContain('hover:-translate-y-1');
   });
 
-  it('activates button cards with Enter and Space, and ignores other keys', async () => {
+  it('activates button cards with Enter and Space, and ignores other or prevented keys', async () => {
     const onClick = vi.fn();
     renderCard(<LibraryCard interactive title="Action card" onClick={onClick} />);
 
@@ -100,6 +100,17 @@ describe('LibraryCard interactive contracts', () => {
 
     await act(async () => {
       card.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    });
+    expect(onClick).toHaveBeenCalledTimes(2);
+
+    const preventedKeydown = new KeyboardEvent('keydown', {
+      key: 'Enter',
+      bubbles: true,
+      cancelable: true,
+    });
+    preventedKeydown.preventDefault();
+    await act(async () => {
+      card.dispatchEvent(preventedKeydown);
     });
     expect(onClick).toHaveBeenCalledTimes(2);
   });
@@ -119,14 +130,29 @@ describe('LibraryCard interactive contracts', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('removes disabled link destinations', () => {
-    renderCard(<LibraryCard interactive disabled href="/library" title="Unavailable library" />);
+  it('preserves disabled link semantics while blocking its destination and callback', async () => {
+    const onClick = vi.fn();
+    renderCard(
+      <LibraryCard
+        interactive
+        disabled
+        href="/library"
+        title="Unavailable library"
+        onClick={onClick}
+      />,
+    );
 
     const link = container.querySelector('a');
     expect(link).toBeTruthy();
     expect(link!.getAttribute('href')).toBeNull();
+    expect(link!.getAttribute('role')).toBe('link');
     expect(link!.getAttribute('aria-disabled')).toBe('true');
     expect(link!.getAttribute('tabindex')).toBe('-1');
+
+    await act(async () => {
+      link!.click();
+    });
+    expect(onClick).not.toHaveBeenCalled();
   });
 
   it('removes disabled action cards from keyboard navigation and clicks', async () => {
@@ -251,7 +277,7 @@ describe('LibraryCard transferred foundations', () => {
     // The LibraryPanel glass recipe: opaque base behind a supports() guard,
     // lighter blur on small screens, fuller blur from sm up, spectral edge.
     expect(card.className).toContain('supports-[backdrop-filter]:bg-[rgba(8,12,20,0.60)]');
-    expect(card.className).toContain('backdrop-blur-md');
+    expect(card.className).toContain('backdrop-blur-sm');
     expect(card.className).toContain('sm:backdrop-blur-xl');
     expect(card.className).toContain('before:mix-blend-screen');
 

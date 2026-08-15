@@ -18,7 +18,7 @@ import { SPECTRAL_EDGE } from './LibraryPanel';
  * Ported from the SEIHouse UI repo's `SEICard`
  * (`UI/packages/seihouse-ui/src/primitives/sei-card.tsx` +
  * `seiCardVariants` in `UI/packages/seihouse-ui/src/styles/variants.ts`),
- * source commit `ec10d2b711d0316af2056988fc028d07c38d458b` on UI `main`
+ * source commit `53fb8934e7b126807194654c9af10a504b4db6e8` on UI `main`
  * (inspected 2026-08-15). The original composes `tailwind-variants` and the
  * SEIHouse `--sh-*` theme variables, which this repository does not carry;
  * this port keeps the same component shape — the static / interactive-link /
@@ -191,7 +191,7 @@ const VARIANTS: Record<LibraryCardVariant, string> = {
     'rounded-[1.35rem] border border-[rgba(190,216,255,0.26)]',
     '[background-image:radial-gradient(130%_100%_at_50%_0%,rgba(130,180,255,0.09),transparent_52%),linear-gradient(168deg,rgba(205,225,255,0.09),rgba(255,255,255,0.02)_40%,rgba(3,6,12,0.14))]',
     'bg-[rgba(8,12,20,0.95)] supports-[backdrop-filter]:bg-[rgba(8,12,20,0.60)]',
-    'backdrop-blur-md backdrop-saturate-150 sm:backdrop-blur-xl',
+    'backdrop-blur-sm backdrop-saturate-150 sm:backdrop-blur-xl',
     'shadow-[inset_0_1px_0_rgba(255,255,255,0.16),inset_0_-1px_0_rgba(150,195,255,0.07),inset_0_0_0_1px_rgba(255,255,255,0.045),0_2px_10px_rgba(0,0,0,0.5),0_28px_80px_rgba(0,0,0,0.55),0_0_52px_rgba(4,172,255,0.12),0_0_110px_rgba(212,175,55,0.06)]',
     SPECTRAL_EDGE,
   ].join(' '),
@@ -402,8 +402,16 @@ export function LibraryCardHeader({
   className,
   ...props
 }: LibraryCardHeaderProps) {
-  const hasTopline = hasRenderableContent(eyebrow) || hasRenderableContent(metadata);
-  const hasTitleRow = hasRenderableContent(title) || hasRenderableContent(actions);
+  // Walk each populated slot once per render. The nullish guards keep omitted
+  // slots from reaching Children.toArray, matching the finalized SEICard.
+  const hasEyebrow = eyebrow != null && hasRenderableContent(eyebrow);
+  const hasMetadata = metadata != null && hasRenderableContent(metadata);
+  const hasTitle = title != null && hasRenderableContent(title);
+  const hasActions = actions != null && hasRenderableContent(actions);
+  const hasIcon = icon != null && hasRenderableContent(icon);
+  const hasDescription = description != null && hasRenderableContent(description);
+  const hasTopline = hasEyebrow || hasMetadata;
+  const hasTitleRow = hasTitle || hasActions;
 
   return (
     <div
@@ -411,7 +419,7 @@ export function LibraryCardHeader({
       className={cn('flex min-w-0 items-start gap-3', className)}
       {...props}
     >
-      {hasRenderableContent(icon) ? (
+      {hasIcon ? (
         <div
           data-slot="card-icon"
           className={cn(
@@ -428,12 +436,12 @@ export function LibraryCardHeader({
       <div className="min-w-0 flex-1 space-y-4">
         {hasTopline ? (
           <div className="flex flex-wrap items-center justify-between gap-2">
-            {hasRenderableContent(eyebrow) ? (
+            {hasEyebrow ? (
               <div className="wrap-anywhere text-xs font-bold uppercase tracking-[0.16em] text-neutral-450">
                 {eyebrow}
               </div>
             ) : null}
-            {hasRenderableContent(metadata) ? (
+            {hasMetadata ? (
               <LibraryCardMetadata className="text-sm">{metadata}</LibraryCardMetadata>
             ) : null}
           </div>
@@ -441,16 +449,16 @@ export function LibraryCardHeader({
 
         {hasTitleRow ? (
           <div className="flex min-w-0 items-start justify-between gap-4">
-            {hasRenderableContent(title) ? (
+            {hasTitle ? (
               <LibraryCardTitle as={titleAs}>{title}</LibraryCardTitle>
             ) : null}
-            {hasRenderableContent(actions) ? (
+            {hasActions ? (
               <LibraryCardActions className="shrink-0">{actions}</LibraryCardActions>
             ) : null}
           </div>
         ) : null}
 
-        {hasRenderableContent(description) ? (
+        {hasDescription ? (
           <LibraryCardDescription>{description}</LibraryCardDescription>
         ) : null}
       </div>
@@ -673,6 +681,7 @@ function InteractiveLinkCard({
       style={getCardStyle(style, accentColor)}
       href={disabled ? undefined : href}
       onClick={handleLinkClick}
+      role={disabled ? 'link' : linkProps.role}
       aria-disabled={disabled || undefined}
       tabIndex={disabled ? -1 : linkProps.tabIndex}
       className={getCardClassName({ className, variant, padding, elevateOnHover }, true)}

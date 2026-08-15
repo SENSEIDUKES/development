@@ -2,7 +2,10 @@
 import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DevAudioPlaybackProvider } from '../../../audio/DevAudioPlayback';
+import {
+  installAudioMediaStubs,
+  renderWithDevAudio,
+} from '../../../test-utils/renderWithDevAudio';
 import { createReaderCodexPreviewStory } from '../../../workshop/previews/reader-codex/previewData';
 import { resetMockState } from '../../reader-chamber/shared/stubs';
 import ReaderCodex from './ReaderCodex';
@@ -74,19 +77,17 @@ function CodexHarness({ onMemoryUpdate, onStoryPatch, initialMemory }: CodexHarn
     });
   };
 
-  return (
-    <DevAudioPlaybackProvider>
-      <ReaderCodex
-        memory={story.memory ?? {}}
-        arcs={story.arcs}
-        onUpdateMemory={onUpdateMemory}
-        mcName={story.mcName}
-        onJumpToChapter={() => undefined}
-        onSwitchTab={() => undefined}
-        activeStory={story}
-        updateStoryFields={updateStoryFields}
-      />
-    </DevAudioPlaybackProvider>
+  return renderWithDevAudio(
+    <ReaderCodex
+      memory={story.memory ?? {}}
+      arcs={story.arcs}
+      onUpdateMemory={onUpdateMemory}
+      mcName={story.mcName}
+      onJumpToChapter={() => undefined}
+      onSwitchTab={() => undefined}
+      activeStory={story}
+      updateStoryFields={updateStoryFields}
+    />,
   );
 }
 
@@ -105,25 +106,27 @@ function OverlayHarness({ onClose, onJumpToChapter }: OverlayHarnessProps) {
     }));
   };
 
-  return (
-    <DevAudioPlaybackProvider>
-      <CodexSheetOverlay
-        isOpen={isOpen}
-        onClose={() => {
-          onClose();
-          setIsOpen(false);
-        }}
-        activeStory={story}
-        onUpdateMemory={(memory) => setStory((current) => ({ ...current, memory }))}
-        updateStoryFields={updateStoryFields}
-        onJumpToChapter={onJumpToChapter}
-      />
-    </DevAudioPlaybackProvider>
+  return renderWithDevAudio(
+    <CodexSheetOverlay
+      isOpen={isOpen}
+      onClose={() => {
+        onClose();
+        setIsOpen(false);
+      }}
+      activeStory={story}
+      onUpdateMemory={(memory) => setStory((current) => ({ ...current, memory }))}
+      updateStoryFields={updateStoryFields}
+      onJumpToChapter={onJumpToChapter}
+    />,
   );
 }
 
 beforeEach(() => {
   resetMockState();
+  // The Codex overlay renders Reader Codex voice cards through the shared
+  // audio session; install the JSDOM media stubs so the package's lifecycle
+  // hooks can run without "Not implemented" noise.
+  installAudioMediaStubs();
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);

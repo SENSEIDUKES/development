@@ -2,7 +2,10 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DevAudioPlaybackProvider } from "../../../audio/DevAudioPlayback";
+import {
+  installAudioMediaStubs,
+  renderWithDevAudio,
+} from "../../../test-utils/renderWithDevAudio";
 import { createCompletedFiveChapterTestBatch } from "../shared/batch/chapterBatchTestFixture";
 import { SingleChapterReaderSession } from "./SingleChapterReaderSession";
 
@@ -17,6 +20,9 @@ const button = (label: string) => (
 );
 
 beforeEach(() => {
+  // Silence JSDOM's "Not implemented" warnings for HTMLMediaElement methods
+  // that the shared audio session invokes during its lifecycle.
+  installAudioMediaStubs();
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -41,9 +47,9 @@ describe("SingleChapterReaderSession", () => {
     const result = createCompletedFiveChapterTestBatch().chapters[0].result!;
     act(() => {
       root.render(
-        <DevAudioPlaybackProvider>
-          <SingleChapterReaderSession result={result} onClose={() => undefined} />
-        </DevAudioPlaybackProvider>,
+        renderWithDevAudio(
+          <SingleChapterReaderSession result={result} onClose={() => undefined} />,
+        ),
       );
     });
 

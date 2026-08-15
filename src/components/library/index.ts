@@ -8,6 +8,10 @@
  * is the official mobile bottom navigation bar. `ManifestButton` is the
  * universal creation action — every primary "Manifest …" generation button
  * across Library surfaces uses it, with the spectral rainbow glow.
+ * `LibraryCard` is the official Library card — the composable item primitive
+ * (media / content / header / title / description / body / metadata /
+ * actions / footer) that future Library cards build on; it complements
+ * `LibraryPanel`, which stays the section container.
  * `SEIButton` and
  * `SEIBottomNavigation` are exported only for building new Library-skinned
  * controls on top of the shared base behavior; pages should not use them
@@ -22,6 +26,32 @@ export type {
   LibraryPanelProps,
   LibraryPanelVariant,
 } from './LibraryPanel';
+export {
+  LibraryCard,
+  LibraryCardActions,
+  LibraryCardBody,
+  LibraryCardContent,
+  LibraryCardDescription,
+  LibraryCardFooter,
+  LibraryCardHeader,
+  LibraryCardMedia,
+  LibraryCardMetadata,
+  LibraryCardTitle,
+} from './LibraryCard';
+export type {
+  LibraryCardActionsProps,
+  LibraryCardBodyProps,
+  LibraryCardContentProps,
+  LibraryCardDescriptionProps,
+  LibraryCardFooterProps,
+  LibraryCardHeaderProps,
+  LibraryCardMediaProps,
+  LibraryCardMetadataProps,
+  LibraryCardPadding,
+  LibraryCardProps,
+  LibraryCardTitleProps,
+  LibraryCardVariant,
+} from './LibraryCard';
 export { LibraryButton } from './LibraryButton';
 export type {
   LibraryButtonProps,

@@ -9,7 +9,8 @@ Relics, Reader surfaces) and transfer to production alongside them.
 `src/components/library/` is the single Workshop owner for the reusable
 Celestial Library UI system:
 
-- `LibraryButton`, `LibraryPanel`, and `LibraryNavigationDrawer`
+- `LibraryButton`, `LibraryPanel`, `LibraryCard`, and
+  `LibraryNavigationDrawer`
 - `ManifestButton` — the universal spectral creation action ("Manifest …")
   for primary generation buttons
 - `LibraryBottomNavigation` — the mobile bottom navigation bar
@@ -33,6 +34,14 @@ Reusable visual names use the `library-*` namespace:
 
 ### Shared-component history
 
+- **2026-08-15:** Ported the finalized `SEICard` from the SEIHouse UI repo
+  (source commit `53fb8934e7b126807194654c9af10a504b4db6e8` on UI `main`) and added
+  `LibraryCard`, the official Celestial Library card primitive: the full
+  region set (media / content / header / title / description / body /
+  metadata / actions / footer), the static vs. interactive-link vs.
+  interactive-button contract, entity-category / Relic-rarity accent
+  identity colors, and focused contract tests. No feature consumer yet —
+  the Codex / World / Relic card rebuilds adopt it in a later pass.
 - **2026-08-06:** Added `ManifestButton` — the Library's universal creation
   action. "Manifest" is the Library's creation language: every primary
   generation button uses it with a label naming what it creates (Manifest
@@ -163,6 +172,167 @@ import { LibraryPanel } from '../library';
 - **2026-08-04:** Ported `SEIPanel` from the UI repo, re-skinned it as the
   Celestial Library glass, and adopted it as the Story Seed
   creation-workspace shell (main glass container + action-bar footer strip).
+
+## LibraryCard
+
+Glass card primitive — the official Celestial Library card: the composable
+item surface future Library cards (Codex entries, world entities, relics,
+reveals) build on. `LibraryPanel` stays the section container; a card is an
+item, never a panel replacement.
+
+- **Source repository:** SENSEIDUKES UI repo (`UI`)
+- **Source location:** `packages/seihouse-ui/src/primitives/sei-card.tsx`
+  (exports `SEICard` + the region components) with `seiCardVariants` in
+  `packages/seihouse-ui/src/styles/variants.ts`, at source commit
+  `53fb8934e7b126807194654c9af10a504b4db6e8` on UI `main`
+  (inspected 2026-08-15)
+- **Workshop consumer:** none yet — shared Library integration only; the
+  Codex / World / Relic card rebuilds adopt it in a later pass
+- **Replica created:** 2026-08-15
+- **Last Workshop update:** 2026-08-15
+- **Last source comparison:** 2026-08-15
+- **Replica status:** faithful port (re-skinned as the Celestial Library glass)
+
+### What was ported
+
+- The full component shape: the discriminated props union (static card vs.
+  `interactive` + `href` link card vs. `interactive` + `onClick` button
+  card), the polymorphic `as` props (root article / div / section, media
+  div / figure, title h2–h6, description p / div / blockquote), and the
+  `cn` composition.
+- All composable regions with their `data-slot` hooks: media, content,
+  header (+ icon well, eyebrow, title row), title, description, body,
+  metadata, actions, footer — plus the convenience content props (`eyebrow`,
+  `icon`, `title`, `titleAs`, `description`, `metadata`, `media`, `actions`,
+  `footer`, `contentClassName`) that assemble them.
+- The accessibility contracts: keyboard-operable button cards (Enter and
+  Space both activate; a `defaultPrevented` keydown is respected), native
+  link semantics for href cards, disabled cards dropping their href and
+  leaving the tab order (`tabIndex={-1}`, `aria-disabled`, pointer-events
+  off), and the always-visible focus ring on interactive cards.
+- The layout foundations: `flex-col` equal-height cards with `mt-auto`
+  footer anchoring, `min-w-0` + `wrap-anywhere` long-content containment,
+  the negative-margin media inset per padding size, and the fragment-aware
+  `hasRenderableContent` check so empty regions never render.
+- `accentColor` identity for entity-category or Relic-rarity colors: the
+  `data-accent` hook, the top accent hairline, and the accent-driven icon
+  well / hover border / hover glow via custom properties.
+- `elevateOnHover` for visual-only lift; interactive cards always elevate.
+- Reduced-motion handling (`motion-reduce` on the lift, press, and
+  transitions) and the adaptive mobile glass (lighter backdrop blur on
+  small screens, fuller from `sm` up, behind a `supports-[backdrop-filter]`
+  guard).
+
+### What was adapted (stack differences from the source)
+
+- No `tailwind-variants` dependency — plain Record class maps, same pattern
+  as `LibraryPanel`.
+- SEIHouse `--sh-*` theme variables → Library theme tokens and the shared
+  `--library-card-accent*` custom properties.
+- The glass is the `LibraryPanel` `default` recipe at card scale, including
+  the exported masked 1px `SPECTRAL_EDGE` ring — the accent hairline moved
+  to `after:` because `before:` carries the spectral edge.
+- Variants trimmed to `default` / `callout` (the panel's gold-tinted inset
+  glass, reused for guidance / notice cards); SEICard's tone lanes (`soft`,
+  `outline`, `ghost`, `solid`, `dark`, `light`, `glass-test`, `media-test`)
+  were intentionally not carried over.
+- Padding follows the LibraryPanel responsive rhythm (`md` = `p-5 sm:p-6`,
+  `lg` = `p-6 sm:p-8`) instead of SEICard's fixed `p-4` / `p-5` / `p-6`;
+  the content padding and media inset maps track it.
+- Muted text maps to `neutral-400` and subtle text to `neutral-450` so body
+  and metadata copy hold >= 4.5:1 contrast on the dark glass (the
+  `neutral-500` field-helper tone is too quiet here).
+- The focus ring is the canonical Library portal ring shared with
+  `LibraryButton` and the navigation skins.
+
+### Mock boundaries
+
+- None. `LibraryCard` is a stateless shared primitive with no Workshop state
+  simulator, fixture data, authentication, persistence, API calls, routing,
+  or production environment dependency. Consumers own all content and actions.
+
+### Transfer instructions
+
+- Do not copy `LibraryCard` back into the UI repo as a replacement for
+  `SEICard`; UI `main` remains the source contract. Transfer this
+  Library-skinned port into `SENSEIDUKES/Light-Novels` only alongside an
+  approved Library feature that adopts it.
+- Place the component in the production application's canonical shared
+  Library component folder, preserve its public props and `data-slot` hooks,
+  and add the named exports to that folder's barrel.
+- Reuse the destination's canonical `cn` utility and Library panel spectral
+  edge. If those shared dependencies have not yet transferred, move the
+  verified Workshop implementations with the card instead of duplicating
+  their class-merging or spectral-edge logic.
+- Carry the focused contract tests with the component and run the destination
+  typecheck plus test suite. Do not transfer Workshop navigation, previews, or
+  mock controls; this shared primitive has none.
+
+### Files required for production transfer
+
+- `src/components/library/LibraryCard.tsx`
+- `src/components/library/LibraryCard.test.tsx`
+- The `LibraryCard` value and type export blocks from
+  `src/components/library/index.ts`
+- Shared dependencies, when not already present in the destination:
+  `src/components/library/cn.ts` and the `SPECTRAL_EDGE` export from
+  `src/components/library/LibraryPanel.tsx`
+
+### Usage
+
+```tsx
+import {
+  LibraryCard,
+  LibraryCardActions,
+  LibraryCardBody,
+  LibraryCardContent,
+  LibraryCardDescription,
+  LibraryCardFooter,
+  LibraryCardHeader,
+  LibraryCardMedia,
+  LibraryCardMetadata,
+} from '../library';
+
+// Convenience composition:
+<LibraryCard
+  accentColor="#F59E0B"
+  eyebrow="Legendary relic"
+  title="Compass of Returning Stars"
+  description="A relic that remembers every road home."
+  metadata="+120 Qi"
+  footer="First claim reward"
+/>
+
+// Actionable card (link semantics; use onClick for a button role):
+<LibraryCard interactive href="/library/relics/compass" title="Open relic" />
+
+// Product-specific composition with explicit regions:
+<LibraryCard padding="none" accentColor="var(--color-entity-mc)">
+  <LibraryCardMedia as="figure">…</LibraryCardMedia>
+  <LibraryCardContent padding="md">
+    <LibraryCardHeader eyebrow="Reveal · Companion" title="Lei" titleAs="h2" />
+    <LibraryCardBody>
+      <LibraryCardDescription as="blockquote">…</LibraryCardDescription>
+    </LibraryCardBody>
+    <LibraryCardMetadata>…</LibraryCardMetadata>
+    <LibraryCardActions>…</LibraryCardActions>
+    <LibraryCardFooter>…</LibraryCardFooter>
+  </LibraryCardContent>
+</LibraryCard>
+```
+
+### Workshop history
+
+- **2026-08-15:** Synchronized with finalized UI `SEICard` source commit
+  `53fb8934e7b126807194654c9af10a504b4db6e8`: reduced the small-screen glass
+  blur, cached populated header-slot checks, and skipped checks for omitted
+  slots without changing the rendered contract. Added the disabled-link role,
+  prevented-key regression coverage, TypeScript enforcement in
+  `test:library`, and the complete production transfer record.
+- **2026-08-15:** Ported `SEICard` from the UI repo at source commit
+  `ec10d2b711d0316af2056988fc028d07c38d458b`, re-skinned it as the Celestial
+  Library glass card, and added focused contract tests
+  (`LibraryCard.test.tsx`). No feature adoption yet.
 
 ## LibraryNavigationDrawer
 

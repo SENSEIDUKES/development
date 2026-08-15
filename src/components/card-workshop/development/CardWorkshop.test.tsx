@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, type ReactNode } from 'react';
+import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CardWorkshopView } from './CardWorkshopView';
@@ -7,7 +7,7 @@ import { CardWorkshopWorkspace } from '../../../workshop/previews/card-workshop/
 import { ACTIVE_CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
 import { resetMockState } from '../../reader-chamber/shared/stubs';
 import type { WorldCardEvent } from '../../reader-chamber/shared/types';
-import { DevAudioPlaybackProvider } from '../../../audio/DevAudioPlayback';
+import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
 import {
   CARD_WORKSHOP_FALLBACK_PLAYBACK_MS,
   createCardWorkshopAudioAdapter,
@@ -18,10 +18,6 @@ import {
 
 let container: HTMLDivElement;
 let root: Root;
-
-const renderWithDevAudio = (node: ReactNode) => (
-  <DevAudioPlaybackProvider>{node}</DevAudioPlaybackProvider>
-);
 
 const buttons = () => [...container.querySelectorAll<HTMLButtonElement>('button')];
 
@@ -79,26 +75,11 @@ class MockIntersectionObserver {
 // `undefined`, so the package would otherwise see an undefined promise and
 // crash on `.then(...)`. Force the methods to return a resolved promise
 // (or undefined for the synchronous stoppers) so the package's lifecycle
-// hooks can run.
-const installMediaElementStubs = () => {
-  Object.defineProperty(HTMLMediaElement.prototype, 'play', {
-    configurable: true,
-    value: () => Promise.resolve(),
-  });
-  Object.defineProperty(HTMLMediaElement.prototype, 'pause', {
-    configurable: true,
-    value: () => undefined,
-  });
-  Object.defineProperty(HTMLMediaElement.prototype, 'load', {
-    configurable: true,
-    value: () => undefined,
-  });
-};
-
+// hooks can run — see `installAudioMediaStubs` in `test-utils`.
 beforeEach(() => {
   resetMockState();
   globalThis.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
-  installMediaElementStubs();
+  installAudioMediaStubs();
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);

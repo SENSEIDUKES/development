@@ -2,7 +2,10 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DevAudioPlaybackProvider } from "../../../audio/DevAudioPlayback";
+import {
+  installAudioMediaStubs,
+  renderWithDevAudio,
+} from "../../../test-utils/renderWithDevAudio";
 import { createCompletedFiveChapterTestBatch } from "../shared/batch/chapterBatchTestFixture";
 import { FiveChapterReaderSession } from "./FiveChapterReaderSession";
 import {
@@ -21,6 +24,11 @@ const button = (label: string) => (
 );
 
 beforeEach(() => {
+  // The shared audio session mounts an HTMLMediaElement and may pause or
+  // reload it during cleanup of a previous run; JSDOM's defaults print
+  // "Not implemented" warnings for those methods, so install deterministic
+  // stubs alongside the other jsdom shims.
+  installAudioMediaStubs();
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
@@ -45,9 +53,9 @@ describe("FiveChapterReaderSession", () => {
     const batch = createCompletedFiveChapterTestBatch();
     act(() => {
       root.render(
-        <DevAudioPlaybackProvider>
-          <FiveChapterReaderSession batch={batch} onClose={() => undefined} />
-        </DevAudioPlaybackProvider>,
+        renderWithDevAudio(
+          <FiveChapterReaderSession batch={batch} onClose={() => undefined} />,
+        ),
       );
     });
 
@@ -85,9 +93,9 @@ describe("FiveChapterReaderSession", () => {
     const batch = createCompletedFiveChapterTestBatch();
     act(() => {
       root.render(
-        <DevAudioPlaybackProvider>
-          <FiveChapterReaderSession batch={batch} onClose={() => undefined} />
-        </DevAudioPlaybackProvider>,
+        renderWithDevAudio(
+          <FiveChapterReaderSession batch={batch} onClose={() => undefined} />,
+        ),
       );
     });
     await act(async () => button("Next Chapter")!.click());
@@ -104,9 +112,9 @@ describe("FiveChapterReaderSession", () => {
     const batch = createCompletedFiveChapterTestBatch();
     act(() => {
       root.render(
-        <DevAudioPlaybackProvider>
-          <FiveChapterReaderSession batch={batch} onClose={() => undefined} />
-        </DevAudioPlaybackProvider>,
+        renderWithDevAudio(
+          <FiveChapterReaderSession batch={batch} onClose={() => undefined} />,
+        ),
       );
     });
 
@@ -131,9 +139,9 @@ describe("FiveChapterReaderSession", () => {
     const batch = createCompletedFiveChapterTestBatch();
     act(() => {
       root.render(
-        <DevAudioPlaybackProvider>
-          <FiveChapterReaderSession batch={batch} onClose={() => undefined} />
-        </DevAudioPlaybackProvider>,
+        renderWithDevAudio(
+          <FiveChapterReaderSession batch={batch} onClose={() => undefined} />,
+        ),
       );
     });
     expect(container.textContent).not.toContain(MOCK_READER_FALLBACK_LABEL);

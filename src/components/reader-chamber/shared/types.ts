@@ -71,6 +71,7 @@ export interface WorldCardSoundHints {
 
 export interface WorldCardEvent {
   id?: string;
+  /** Active generation accepts visual-entity audio payloads; System and Fate remain legacy-reader compatibility. */
   entityType:
     | "character"
     | "creature"
@@ -551,6 +552,7 @@ export interface CreatureSpecies extends BaseCodexEntry {
   firstEncounteredChapter: number;
   appearanceChapters: number[];
   notableIndividualIds: string[];
+  /** Legacy read-only media remains loadable; species no longer generate Codex artwork. */
   imageUrl?: string;
   imageHistory?: GeneratedImage[];
 }
@@ -562,6 +564,7 @@ export interface Faction extends BaseCodexEntry {
   description: string;
   headquarters?: string;
   status?: "Active" | "Destroyed" | "Fractured" | string;
+  /** Legacy read-only media remains loadable; Factions no longer generate Codex artwork. */
   imageUrl?: string;
   imageHistory?: GeneratedImage[];
 }

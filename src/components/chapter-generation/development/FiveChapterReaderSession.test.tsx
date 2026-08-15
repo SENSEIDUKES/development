@@ -2,6 +2,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { DevAudioPlaybackProvider } from "../../../audio/DevAudioPlayback";
 import { createCompletedFiveChapterTestBatch } from "../shared/batch/chapterBatchTestFixture";
 import { FiveChapterReaderSession } from "./FiveChapterReaderSession";
 import {
@@ -43,7 +44,11 @@ describe("FiveChapterReaderSession", () => {
   it("opens the actual Reader Chamber, navigates all five chapters, and scopes Codex memory", async () => {
     const batch = createCompletedFiveChapterTestBatch();
     act(() => {
-      root.render(<FiveChapterReaderSession batch={batch} onClose={() => undefined} />);
+      root.render(
+        <DevAudioPlaybackProvider>
+          <FiveChapterReaderSession batch={batch} onClose={() => undefined} />
+        </DevAudioPlaybackProvider>,
+      );
     });
 
     expect(container.querySelector("#reader-chamber-root")).toBeTruthy();
@@ -79,7 +84,11 @@ describe("FiveChapterReaderSession", () => {
   it("opens the unchanged four-stage Diagnostics for the currently selected chapter", async () => {
     const batch = createCompletedFiveChapterTestBatch();
     act(() => {
-      root.render(<FiveChapterReaderSession batch={batch} onClose={() => undefined} />);
+      root.render(
+        <DevAudioPlaybackProvider>
+          <FiveChapterReaderSession batch={batch} onClose={() => undefined} />
+        </DevAudioPlaybackProvider>,
+      );
     });
     await act(async () => button("Next Chapter")!.click());
     await act(async () => button("Chapter 2 Diagnostics")!.click());
@@ -94,7 +103,11 @@ describe("FiveChapterReaderSession", () => {
   it("persists local image choices for sparse generated-session Codex entries", async () => {
     const batch = createCompletedFiveChapterTestBatch();
     act(() => {
-      root.render(<FiveChapterReaderSession batch={batch} onClose={() => undefined} />);
+      root.render(
+        <DevAudioPlaybackProvider>
+          <FiveChapterReaderSession batch={batch} onClose={() => undefined} />
+        </DevAudioPlaybackProvider>,
+      );
     });
 
     await act(async () => button("Open Codex")!.click());
@@ -117,7 +130,11 @@ describe("FiveChapterReaderSession", () => {
   it("keeps mock content explicitly labeled and only on the no-batch preview", async () => {
     const batch = createCompletedFiveChapterTestBatch();
     act(() => {
-      root.render(<FiveChapterReaderSession batch={batch} onClose={() => undefined} />);
+      root.render(
+        <DevAudioPlaybackProvider>
+          <FiveChapterReaderSession batch={batch} onClose={() => undefined} />
+        </DevAudioPlaybackProvider>,
+      );
     });
     expect(container.textContent).not.toContain(MOCK_READER_FALLBACK_LABEL);
 

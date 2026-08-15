@@ -45,4 +45,21 @@ describe("Generation Rules packet", () => {
     expect(formatThreadForRouter({ description: "Open the manual.", originChapter: 6 }, 6))
       .toBe("Open the manual.");
   });
+
+  it("keeps Codex Cards, World Cards, and System Panels on distinct generation paths", () => {
+    const prompt = buildGenerationRules().prompts.system;
+
+    expect(prompt).toContain('"entityType" (only "character"|"creature"|"artifact"|"location"|"faction")');
+    expect(prompt).toContain('character "tts_line"; creature "roar"');
+    expect(prompt).toContain('artifact "unsheathe", "metallic_ring", "reload", "activation_hum"');
+    expect(prompt).toContain('location exactly "signature"; faction exactly "chant"');
+    expect(prompt).toContain('Human Portraits, Non-Human Portraits, Artifacts, and Locations use this existing reveal path');
+    expect(prompt).toContain('Creature species remain informational Bestiary records and never receive generated species portraits or Codex Cards');
+    expect(prompt).toContain('Factions remain informational Codex records');
+    expect(prompt).toContain('System and Fate moments use the structured "system" object and System Panels only');
+    expect(prompt).toContain('Never emit a worldCard on a block whose metadata.entities includes a visual Codex reveal');
+    expect(prompt).toContain('A visual Codex reveal and any World Card must always be on separate blocks');
+    expect(prompt).toContain('Never output "id", "codexEntryId", "imageUrl"');
+    expect(prompt).not.toContain('system or fate_event "chime"');
+  });
 });

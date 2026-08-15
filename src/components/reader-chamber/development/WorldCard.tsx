@@ -6,31 +6,31 @@ import { resolveCardSound } from '../shared/stubs';
 import { playCardSound, stopCardSound } from '../shared/stubs';
 import { effectiveChannelVolume, isChannelAudible } from '../shared/stubs';
 
-interface WorldEntityCardProps {
+interface WorldCardProps {
   card: WorldCardEvent;
   /** Workshop-only dependency seam. Reader callers omit this and keep the normal audio lifecycle. */
-  audioAdapter?: WorldEntityCardAudioAdapter;
+  audioAdapter?: WorldCardAudioAdapter;
 }
 
-export interface WorldEntityCardAudioAsset {
+export interface WorldCardAudioAsset {
   id: string;
   title?: string;
 }
 
-export interface WorldEntityCardPlayback {
+export interface WorldCardPlayback {
   onended?: () => void;
   onerror?: () => void;
 }
 
-export interface WorldEntityCardAudioAdapter {
-  resolve: (card: WorldCardEvent) => WorldEntityCardAudioAsset | null;
-  play: (asset: WorldEntityCardAudioAsset, options?: { volume?: number }) => Promise<WorldEntityCardPlayback>;
+export interface WorldCardAudioAdapter {
+  resolve: (card: WorldCardEvent) => WorldCardAudioAsset | null;
+  play: (asset: WorldCardAudioAsset, options?: { volume?: number }) => Promise<WorldCardPlayback>;
   stop: (assetId?: string) => void;
   effectiveVolume: () => number;
   isAudible: () => boolean;
 }
 
-export const WorldEntityCard: React.FC<WorldEntityCardProps> = React.memo(({ card, audioAdapter }) => {
+export const WorldCard: React.FC<WorldCardProps> = React.memo(({ card, audioAdapter }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [playbackFailed, setPlaybackFailed] = useState(false);

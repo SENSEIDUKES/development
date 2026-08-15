@@ -368,12 +368,22 @@ const SYSTEM_PROMPT_TYPES = [
   "corruption", "death_event", "quest_update", "choice_consequence", "system_error",
 ] as const;
 const FATE_RESULT_OUTCOMES = ["FATE AVERTED", "FATE SCARRED", "DOOM MANIFESTED"] as const;
-const WORLD_CARD_ENTITY_TYPES = ["character", "creature", "artifact", "location", "faction", "system", "fate_event"] as const;
-const WORLD_CARD_AUDIO_TYPES = [
-  "tts_line", "roar", "call", "hiss", "howl", "screech", "wingbeat", "unsheathe",
-  "metallic_ring", "reload", "activation_hum", "resonance", "awakening", "pulse",
-  "magical_activation", "signature", "chant", "chime",
+const WORLD_CARD_ENTITY_TYPES = ["character", "creature", "artifact", "location", "faction"] as const;
+const CREATURE_WORLD_CARD_AUDIO_TYPES = ["roar", "call", "hiss", "howl", "screech", "wingbeat"] as const;
+const ARTIFACT_WORLD_CARD_AUDIO_TYPES = [
+  "unsheathe", "metallic_ring", "reload", "activation_hum", "resonance", "awakening", "pulse", "magical_activation",
 ] as const;
+
+const isSupportedWorldCardAudioType = (entityType: string, audioType: string): boolean =>
+  (entityType === "character" && audioType === "tts_line")
+  || (entityType === "creature" && CREATURE_WORLD_CARD_AUDIO_TYPES.includes(
+    audioType as (typeof CREATURE_WORLD_CARD_AUDIO_TYPES)[number],
+  ))
+  || (entityType === "artifact" && ARTIFACT_WORLD_CARD_AUDIO_TYPES.includes(
+    audioType as (typeof ARTIFACT_WORLD_CARD_AUDIO_TYPES)[number],
+  ))
+  || (entityType === "location" && audioType === "signature")
+  || (entityType === "faction" && audioType === "chant");
 
 const optionalMetadataStringArray = (value: unknown, label: string): string[] | undefined => {
   if (value === undefined || value === null) return undefined;
@@ -545,13 +555,17 @@ const parseWorldCardEvent = (value: unknown, label: string): WorldCardEvent | un
     throw new Error(`${label}.entityType is unsupported.`);
   }
   const audioType = optionalValidatedString(event.audioType, `${label}.audioType`);
-  if (audioType && !WORLD_CARD_AUDIO_TYPES.includes(audioType as (typeof WORLD_CARD_AUDIO_TYPES)[number])) {
+  const validAudioType = !audioType || isSupportedWorldCardAudioType(entityType, audioType);
+  if (!validAudioType) {
     throw new Error(`${label}.audioType is unsupported.`);
   }
   const sound = event.sound === undefined
     ? undefined
     : (() => {
         const hints = requiredRecord(event.sound, `${label}.sound`);
+        const tags = hints.tags === undefined
+          ? undefined
+          : stringArray(hints.tags, `${label}.sound.tags`);
         const size = optionalValidatedString(hints.size, `${label}.sound.size`);
         if (size && !BEAST_SIZES.includes(size as (typeof BEAST_SIZES)[number])) {
           throw new Error(`${label}.sound.size is unsupported.`);
@@ -561,28 +575,24 @@ const parseWorldCardEvent = (value: unknown, label: string): WorldCardEvent | un
           throw new Error(`${label}.sound.assetFamily is unsupported.`);
         }
         return {
-          ...(optionalValidatedString(hints.assetId, `${label}.sound.assetId`) ? { assetId: optionalValidatedString(hints.assetId, `${label}.sound.assetId`) } : {}),
           ...(optionalValidatedString(hints.element, `${label}.sound.element`) ? { element: optionalValidatedString(hints.element, `${label}.sound.element`) } : {}),
           ...(size ? { size: size as (typeof BEAST_SIZES)[number] } : {}),
           ...(optionalValidatedString(hints.threatTier, `${label}.sound.threatTier`) ? { threatTier: optionalValidatedString(hints.threatTier, `${label}.sound.threatTier`) } : {}),
           ...(assetFamily ? { assetFamily: assetFamily as "weapon" | "relic" } : {}),
           ...(optionalValidatedString(hints.weaponType, `${label}.sound.weaponType`) ? { weaponType: optionalValidatedString(hints.weaponType, `${label}.sound.weaponType`) } : {}),
           ...(optionalValidatedString(hints.artifactCategory, `${label}.sound.artifactCategory`) ? { artifactCategory: optionalValidatedString(hints.artifactCategory, `${label}.sound.artifactCategory`) } : {}),
-          ...(hints.tags === undefined ? {} : { tags: stringArray(hints.tags, `${label}.sound.tags`) }),
+          ...(tags ? { tags } : {}),
         };
       })();
   return {
-    ...(optionalValidatedString(event.id, `${label}.id`) ? { id: optionalValidatedString(event.id, `${label}.id`) } : {}),
     entityType: entityType as WorldCardEvent["entityType"],
     entityName: requiredString(event.entityName, `${label}.entityName`),
     displayTitle: requiredString(event.displayTitle, `${label}.displayTitle`),
-    ...(optionalValidatedString(event.imageUrl, `${label}.imageUrl`) ? { imageUrl: optionalValidatedString(event.imageUrl, `${label}.imageUrl`) } : {}),
     ...(optionalValidatedString(event.quote, `${label}.quote`) ? { quote: optionalValidatedString(event.quote, `${label}.quote`) } : {}),
     ...(optionalValidatedString(event.audioText, `${label}.audioText`) ? { audioText: optionalValidatedString(event.audioText, `${label}.audioText`) } : {}),
     ...(audioType ? { audioType: audioType as WorldCardEvent["audioType"] } : {}),
     ...(sound ? { sound } : {}),
     ...(optionalValidatedString(event.voicePreset, `${label}.voicePreset`) ? { voicePreset: optionalValidatedString(event.voicePreset, `${label}.voicePreset`) } : {}),
-    ...(optionalValidatedString(event.codexEntryId, `${label}.codexEntryId`) ? { codexEntryId: optionalValidatedString(event.codexEntryId, `${label}.codexEntryId`) } : {}),
     ...(optionalValidatedString(event.rarity, `${label}.rarity`) ? { rarity: optionalValidatedString(event.rarity, `${label}.rarity`) } : {}),
   };
 };
@@ -970,7 +980,7 @@ Report new anchors, character/world changes, explicit character-state and Codex-
 characterChanges, worldStateChanges, threads.completed, and threads.changed must each be arrays of plain strings; use [] when there are no entries.
 characterStateUpdates.abilities and every codexUpdates collection must be arrays; use [] when there are no structured updates. Return currentPowerStage only when it genuinely changed. Preserve every discovered character, faction, location, artifact, or ability update in the matching structured collection as a JSON record.
 Use "creature" as the canonical term. The codexUpdates.bestiary collection holds whole-species records only: name, short description, classification, traits, threatLevel, and signatureSound when known. A species encounter updates its Bestiary entry even when no individual matters enough for a Portrait. Never put a generic, disposable, or one-scene creature in codexUpdates.characters.
-codexUpdates.characters holds persistent individuals. Set portraitKind to "non-human" only for an important named creature, bonded pet, companion, recurring monster, intelligent creature with lasting identity, or other non-human individual; intelligence alone is not enough. A non-human individual may include speciesName when it belongs to a real species. If both are new, include the species in bestiary and the individual in characters. A unique individual without a real species has no speciesName. Human characters use portraitKind "human".
+codexUpdates.characters holds persistent individuals. Set portraitKind to "non-human" only for an important named creature, bonded pet, companion, recurring monster, intelligent creature with lasting identity, or other non-human individual; intelligence alone is not enough. A non-human individual may include speciesName when it belongs to a real species. If both are new, include the species in bestiary and the individual in characters. A unique individual without a real species has no speciesName. Human characters use portraitKind "human". Bestiary species and Factions are informational records only; never propose generated Codex artwork or visual-manifestation state for either collection.
 Never return image URLs, storage keys, asset IDs, sound URLs, internal Codex IDs, speciesId, notableIndividualIds, encounter chapters, first-encounter values, or provenance. The application assigns IDs, resolves media, encounter history, and links itself.
 Use severity "serious" only for a defect that requires rewriting the manifested chapter. Set repairRecommended true only when at least one serious finding exists; do not force repair on a healthy run.
 The server clones and advances Living Story State from this structured result; do not return a proposedLivingStoryState object.

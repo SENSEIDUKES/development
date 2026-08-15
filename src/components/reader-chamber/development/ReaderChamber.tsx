@@ -119,10 +119,6 @@ export default function ReaderChamber({
     handleManifestReveal, 
     generatingRevealId, 
     codexTerms,
-    manifestChapterHero,
-    generatingIds,
-    isMomentousChapter,
-    triggerHeroGeneration
   } = useReaderVisuals({
     selectedChapter,
     activeStory,
@@ -1058,10 +1054,6 @@ export default function ReaderChamber({
         codexTerms={codexTerms}
         generatingRevealId={generatingRevealId}
         handleManifestReveal={handleManifestReveal}
-        manifestChapterHero={manifestChapterHero}
-        generatingIds={generatingIds}
-        isMomentousChapter={isMomentousChapter}
-        triggerHeroGeneration={triggerHeroGeneration}
         
         readerMode={readerMode}
         immersion={immersion}

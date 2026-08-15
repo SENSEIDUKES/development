@@ -20,7 +20,7 @@ export function getFallbackBackdrop(id: string): string {
   return FALLBACK_BACKDROPS[index];
 }
 
-export interface CodexRevealTerm {
+export interface CodexCardTerm {
   entry: {
     id: string;
     name: string;
@@ -33,8 +33,8 @@ export interface CodexRevealTerm {
   type: string;
 }
 
-export interface CodexRevealCardProps {
-  revealTerm: CodexRevealTerm;
+export interface CodexCardProps {
+  revealTerm: CodexCardTerm;
   activeStory?: {
     assignedRevealBackdrops?: Record<string, string>;
     [key: string]: any;
@@ -46,7 +46,7 @@ export interface CodexRevealCardProps {
   className?: string;
 }
 
-export const CodexRevealCard: React.FC<CodexRevealCardProps> = React.memo(({
+export const CodexCard: React.FC<CodexCardProps> = React.memo(({
   revealTerm,
   activeStory,
   isSenMode = false,
@@ -151,4 +151,4 @@ export const CodexRevealCard: React.FC<CodexRevealCardProps> = React.memo(({
   );
 });
 
-export default CodexRevealCard;
+export default CodexCard;

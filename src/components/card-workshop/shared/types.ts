@@ -1,13 +1,12 @@
 import type { WorldCardEvent, SystemEvent } from '../../reader-chamber/shared/types';
-import type { CodexRevealTerm } from '../../reader-chamber/development/CodexRevealCard';
+import type { CodexCardTerm } from '../../reader-chamber/development/CodexCard';
 
 export type CardPresentationKind =
-  | 'world-entity'
-  | 'codex-reveal'
+  | 'world-card'
+  | 'codex-card'
   | 'system-block'
   | 'fate-result'
-  | 'manifestation-image'
-  | 'under-review-route';
+  | 'manifestation-image';
 
 export interface CardCapabilities {
   hasImage: boolean;
@@ -41,12 +40,14 @@ export interface CardPreset {
   kind: CardPresentationKind;
   description: string;
   explanation: DeveloperExplanation;
+  /** Retained solely for the locked production Reference pane. */
+  referenceOnly?: boolean;
 
   // Payload variants depending on presentation kind
   worldCard?: WorldCardEvent;
   systemEvent?: SystemEvent;
   systemContent?: string;
-  codexReveal?: CodexRevealTerm;
+  codexReveal?: CodexCardTerm;
   manifestationImage?: {
     url?: string;
     caption?: string;

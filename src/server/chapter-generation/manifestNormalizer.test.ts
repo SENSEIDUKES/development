@@ -55,10 +55,12 @@ describe("Manifest prose recovery", () => {
         text: "The Lower Periphery opened beneath the mountain wall.",
         worldCard: {
           id: "model-owned-id",
-          entityType: "location",
-          entityName: "The Lower Periphery (the sect's sprawling outer district)",
-          displayTitle: "The Lower Periphery",
-          audioType: "ambience",
+          entityType: "creature",
+          entityName: "Shadow Void Stalker (an abyss-hunting species)",
+          displayTitle: "Shadow Void Stalker",
+          imageUrl: "https://model.invalid/species.png",
+          codexEntryId: "model-owned-codex-id",
+          audioType: "hiss",
           sound: {
             assetId: "model-owned-audio-id",
             size: "huge",
@@ -76,20 +78,97 @@ describe("Manifest prose recovery", () => {
     expect(result.blocks[1]).toMatchObject({
       type: "paragraph",
       worldCard: {
-        id: "dev-location-the-lower-periphery",
-        entityName: "The Lower Periphery",
+        id: "dev-creature-shadow-void-stalker",
+        entityName: "Shadow Void Stalker",
         sound: { tags: ["district"] },
       },
     });
     expect(result.diagnostics.warnings).toEqual(expect.arrayContaining([
       expect.objectContaining({ code: "block-type-normalized", blockId: "c2-p2" }),
       expect.objectContaining({ field: "worldCard.id" }),
-      expect.objectContaining({ field: "worldCard.audioType" }),
+      expect.objectContaining({ field: "worldCard.imageUrl" }),
+      expect.objectContaining({ field: "worldCard.codexEntryId" }),
       expect.objectContaining({ field: "worldCard.sound.assetId" }),
       expect.objectContaining({ field: "worldCard.sound.size" }),
       expect.objectContaining({ field: "worldCard.sound.assetFamily" }),
       expect.objectContaining({ field: "worldCard.sound.tags[1]" }),
     ]));
+  });
+
+  it.each(["system", "fate_event"])(
+    "removes %s from active World Card eligibility without dropping prose",
+    (entityType) => {
+      const result = normalizeManifestResponse(ndjson({
+        id: `legacy-${entityType}`,
+        type: "paragraph",
+        text: "The chapter moment remains readable.",
+        worldCard: {
+          entityType,
+          entityName: "Legacy Signal",
+          displayTitle: "Legacy World Card",
+        },
+      }), 2);
+
+      expect(result.blocks[0].text).toBe("The chapter moment remains readable.");
+      expect(result.blocks[0].worldCard).toBeUndefined();
+      expect(result.diagnostics.warnings).toContainEqual(expect.objectContaining({
+        field: "worldCard",
+      }));
+    },
+  );
+
+  it.each([
+    ['character', 'tts_line', undefined],
+    ['artifact', 'activation_hum', { assetFamily: 'relic', artifactCategory: 'seal', tags: ['ancient', 'oath'] }],
+    ['location', 'signature', { tags: ['rain', 'court'] }],
+  ] as const)('preserves the established %s World Card audio contract', (entityType, audioType, sound) => {
+    const result = normalizeManifestResponse(ndjson({
+      id: `audio-${entityType}`,
+      type: 'paragraph',
+      text: 'The chapter highlight retains its audio direction.',
+      worldCard: {
+        entityType,
+        entityName: 'Audio Signal',
+        displayTitle: 'Audio Signal',
+        audioText: 'The signal answers.',
+        audioType,
+        ...(sound ? { sound } : {}),
+      },
+    }), 2);
+
+    expect(result.blocks[0].worldCard).toMatchObject({
+      entityType,
+      audioText: 'The signal answers.',
+      audioType,
+      ...(sound ? { sound } : {}),
+    });
+  });
+
+  it('preserves semantic sound hints for Faction World Cards', () => {
+    const result = normalizeManifestResponse(ndjson({
+      id: 'faction-highlight',
+      type: 'paragraph',
+      text: 'The oathbound procession entered the court.',
+      worldCard: {
+        entityType: 'faction',
+        entityName: 'Ninth House',
+        displayTitle: 'Judicial Enforcement Syndicate',
+        audioType: 'chant',
+        sound: {
+          element: 'lightning',
+          assetFamily: 'relic',
+          weaponType: 'bell',
+          tags: ['oath', 'procession'],
+        },
+      },
+    }), 2);
+
+    expect(result.blocks[0].worldCard?.sound).toEqual({
+      element: 'lightning',
+      assetFamily: 'relic',
+      weaponType: 'bell',
+      tags: ['oath', 'procession'],
+    });
   });
 
   it("removes malformed optional enrichment without dropping its prose", () => {

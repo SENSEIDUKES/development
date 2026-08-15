@@ -4,7 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CardWorkshopView } from './CardWorkshopView';
 import { CardWorkshopWorkspace } from '../../../workshop/previews/card-workshop/CardWorkshopWorkspace';
-import { CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
+import { ACTIVE_CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
 import { resetMockState } from '../../reader-chamber/shared/stubs';
 import type { WorldCardEvent } from '../../reader-chamber/shared/types';
 import { DevAudioPlaybackProvider } from '../../../audio/DevAudioPlayback';
@@ -42,10 +42,10 @@ const clickButton = async (label: string) => {
 };
 
 const audioCard = {
-  entityType: 'system',
+  entityType: 'creature',
   entityName: 'Test Echo',
   displayTitle: 'Test Echo',
-  audioType: 'resonance',
+  audioType: 'hiss',
   sound: { assetId: 'test-echo' },
 } satisfies WorldCardEvent;
 
@@ -138,64 +138,56 @@ describe('CardWorkshopView', () => {
     const tablist = container.querySelector('[role="tablist"][aria-label="Card types"]');
     const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
     expect(tablist).toBeTruthy();
-    expect(tabs).toHaveLength(CARD_PRESETS.length);
+    expect(tabs).toHaveLength(ACTIVE_CARD_PRESETS.length);
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
 
-    for (const preset of CARD_PRESETS) {
+    for (const preset of ACTIVE_CARD_PRESETS) {
       expect(tabs.some(tab => tab.textContent?.includes(
-        preset.title.replace('Routing Under Review: ', ''),
+        preset.title,
       ))).toBe(true);
     }
 
-    expect(container.textContent).toContain('World Entity Cards');
-    expect(container.textContent).toContain('First Witness of the Broken Oath');
-    expect(container.textContent).not.toContain('Reveal · Companion');
+    expect(container.textContent).toContain('Codex Cards');
+    expect(container.textContent).toContain('Reveal · Human Portrait');
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
 
     await act(async () => {
       tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
     });
     expect(tabs[1].getAttribute('aria-selected')).toBe('true');
-    expect(container.textContent).toContain('Young Storm Sovereign');
+    expect(container.textContent).toContain('Reveal · Non-Human Portrait');
     expect(document.activeElement).toBe(tabs[1]);
 
-    await clickButton('Non-Human Portrait Reveal');
-    expect(container.textContent).toContain('Codex Reveal Moments');
-    expect(container.textContent).toContain('Reveal · Companion');
-    expect(container.textContent).not.toContain('First Witness of the Broken Oath');
+    await clickButton('Highlighted Bestiary Species');
+    expect(container.textContent).toContain('World Cards');
+    expect(container.textContent).toContain('Apex Abyss Beast');
+    expect(container.textContent).not.toContain('Reveal · Human Portrait');
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
 
     await clickButton('Fate Result Card');
     expect(container.textContent).toContain('System Panels & Fate Outcomes');
     expect(container.textContent).toContain('FATE RESULT: FATE SCARRED');
-    expect(container.textContent).not.toContain('Reveal · Companion');
-
-    await clickButton('Manifestation Image');
-    expect(container.textContent).toContain('Chapter-Level Visual Memories');
-    expect(container.querySelector('img[alt="Chapter Crux Manifestation"]')).toBeTruthy();
-    expect(container.textContent).not.toContain('FATE RESULT: FATE SCARRED');
-
-    await clickButton('System as World Card');
-    expect(container.textContent).toContain('CURRENT ROUTING UNDER REVIEW');
+    expect(container.textContent).not.toContain('Apex Abyss Beast');
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
   });
 
   it('switches presets and preserves the Bestiary species versus Non-Human Portrait distinction', async () => {
     act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="inspection" />)));
 
-    await selectByLabel('Card preset', 'preset-nonhuman-portrait-reveal');
+    await selectByLabel('Card preset', 'preset-nonhuman-individual');
     expect(container.textContent).toContain('ReaderCodex > Portraits (Non-Human Section)');
-    expect(container.textContent).toContain('Non-Human Portrait Reveal');
+    expect(container.textContent).toContain('Non-Human Portrait');
 
-    await selectByLabel('Creature scope', 'species');
+    await selectByLabel('Card preset', 'preset-creature-species');
     expect(container.textContent).toContain('ReaderCodex > Bestiary');
-    expect(container.textContent).toContain('Generic Creature Species');
+    expect(container.textContent).toContain('Highlighted Bestiary Species');
 
-    const species = CARD_PRESETS.find(preset => preset.id === 'preset-creature-species')!;
-    const individual = CARD_PRESETS.find(preset => preset.id === 'preset-nonhuman-portrait-reveal')!;
+    const species = ACTIVE_CARD_PRESETS.find(preset => preset.id === 'preset-creature-species')!;
+    const individual = ACTIVE_CARD_PRESETS.find(preset => preset.id === 'preset-nonhuman-individual')!;
     expect(species.explanation.capabilities.hasManifestAction).toBe(false);
-    expect(species.explanation.capabilities.hasAudio).toBe(false);
+    expect(species.kind).toBe('world-card');
     expect(individual.explanation.capabilities.hasManifestAction).toBe(true);
+    expect(individual.kind).toBe('codex-card');
   });
 
   it('covers existing image, Manifest/Awaken, and missing-image states', async () => {
@@ -204,7 +196,7 @@ describe('CardWorkshopView', () => {
       renderWithDevAudio(
         <CardWorkshopView
           initialMode="inspection"
-          initialPresetId="preset-nonhuman-portrait-reveal"
+          initialPresetId="preset-nonhuman-individual"
         />,
       ),
     ));
@@ -233,7 +225,7 @@ describe('CardWorkshopView', () => {
       renderWithDevAudio(
         <CardWorkshopView
           initialMode="inspection"
-          initialPresetId="preset-nonhuman-portrait-reveal"
+          initialPresetId="preset-nonhuman-individual"
         />,
       ),
     ));
@@ -246,7 +238,7 @@ describe('CardWorkshopView', () => {
     expect(container.textContent).toContain('Existing entity reference');
 
     await selectByLabel('Entity mention state', 'reveal');
-    expect(container.textContent).toContain('Reveal · Companion');
+    expect(container.textContent).toContain('Reveal · Non-Human Portrait');
 
     await selectByLabel('Portrait kind', 'human');
     expect(container.querySelector('img[alt="Lei"]')?.getAttribute('src'))
@@ -259,7 +251,7 @@ describe('CardWorkshopView', () => {
     vi.useFakeTimers();
     act(() => root.render(
       renderWithDevAudio(
-        <CardWorkshopView initialMode="inspection" initialPresetId="preset-human-character" />,
+        <CardWorkshopView initialMode="inspection" initialPresetId="preset-creature-species" />,
       ),
     ));
 
@@ -314,14 +306,14 @@ describe('CardWorkshopView', () => {
 
     act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="overview" />)));
     await clickButton('Inspection Mode');
-    await selectByLabel('Card preset', 'preset-manifestation-image');
+    await selectByLabel('Card preset', 'preset-random-beast');
 
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(storageSpy).not.toHaveBeenCalled();
     expect(container.querySelector('img[src^="http"]')).toBeFalsy();
   });
 
-  it('dispatches the real @seihouse/audio-player session when the human character is tapped', async () => {
+  it('dispatches the real @seihouse/audio-player session when a World Card is tapped', async () => {
     vi.useFakeTimers();
 
     // Spy on the underlying HTMLMediaElement play() to observe that the
@@ -332,7 +324,7 @@ describe('CardWorkshopView', () => {
 
     act(() => root.render(
       renderWithDevAudio(
-        <CardWorkshopView initialMode="inspection" initialPresetId="preset-human-character" />,
+        <CardWorkshopView initialMode="inspection" initialPresetId="preset-creature-species" />,
       ),
     ));
 

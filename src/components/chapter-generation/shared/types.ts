@@ -56,6 +56,7 @@ export interface WorldCardSoundHints {
 
 export interface WorldCardEvent {
   id?: string;
+  /** System and Fate remain System Panels, not World Card payloads. */
   entityType: "character" | "creature" | "artifact" | "location" | "faction" | "system" | "fate_event";
   entityName: string;
   displayTitle: string;

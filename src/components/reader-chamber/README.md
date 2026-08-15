@@ -4,12 +4,13 @@
 - **Source location:** `src/components/ReaderChamber.tsx` (verified on `origin/main` @ `7d44ecc`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-13
+- **Last Workshop update:** 2026-08-14
 - **Last source comparison:** 2026-08-11
 - **Replica status:** faithful replica
 
 ## Workshop history
 
+- **2026-08-14:** Completed the first Part Three card cleanup on the existing Reader route: renamed the active presentations to `CodexCard` and `WorldCard`, limited visual Codex Cards to Human Portraits, Non-Human Portraits, Artifacts, and Locations, kept Bestiary/Faction highlights on World Cards, kept System/Fate content on System Panels, suppressed duplicate visual Codex/World signals in favor of the Codex Card, and removed the end-of-chapter Chapter Visual Memory render and trigger.
 - **2026-08-13:** Added an isolated, disposable one-chapter entry at the existing Reader/Codex adapter boundary. A successfully processed direct Chapter Generation result now opens the unchanged Reader Chamber and complete Reader Codex with one prose chapter and one processed-state snapshot. The existing five-chapter adapter, exact-five completion guard, navigation, highlighting, layouts, and Codex internals remain unchanged. Verified with a real Gemini-generated Timeless chapter in a protected Preview.
 - **2026-08-11:** Migrated the complete production Reader Codex as its own Workshop feature and restored the Reader Chamber integration: the existing Codex control now opens the production-style sheet over the still-mounted Reader, all six Codex pages are present, and prose highlighting/reveal-card resolution again use the story's Codex terms. The generated five-chapter session keeps its disposable, chapter-scoped snapshot boundary; generation and `batchToReaderAdapter.ts` were not changed.
 - **2026-08-10:** Completed the Pass 3 connection from Chapter Generation: a completed five-chapter batch now opens as a disposable real Reader Chamber session with repaired final prose, Chapters 1–5 navigation, structured blocks/system panels, chapter-scoped cumulative Reader Codex snapshots, chapter and batch token totals (including repair/retry usage), five-chapter text export, and selected-chapter reuse of the existing four-stage Diagnostics. The standalone four-chapter story is now explicitly labeled as the no-batch mock fallback.
@@ -49,11 +50,11 @@ reference/                    — untouched replica of production, locked
   AudioWidget.tsx
   SystemBlock.tsx
   FateResultCard.tsx
-  WorldEntityCard.tsx
+  WorldCard.tsx
+  CodexCard.tsx
   ReaderFateAlerts.tsx
   FateSurvivalExplanation.tsx
   SystemColorLegend.tsx
-  ManifestationImage.tsx
   ContextInspector.tsx
 development/                  — active Workshop version; started as an exact copy of reference/
   (same files, except: ReaderSettings.tsx replaces ReaderPreferencesPanel.tsx;
@@ -88,8 +89,8 @@ The full Reader Chamber presentation tree from `src/components/` in Light-Novels
 `ReaderHeader.tsx` (+ `AudioWidget`), `ReaderPreferencesPanel.tsx`, the whole
 `ReaderControls/` folder, `CosmicBookmarksPanel.tsx` (+ `VirtualizedList`),
 `AlterFatePanel.tsx`, `ParticleSystem.tsx`, `SystemBlock.tsx` (+ `FateResultCard`,
-`lib/systemColors.ts`), `WorldEntityCard.tsx`, `ReaderFateAlerts.tsx` (+
-`FateSurvivalExplanation`), `SystemColorLegend.tsx`, `ManifestationImage.tsx`,
+`lib/systemColors.ts`), the World Card presentation now named `WorldCard.tsx`,
+`ReaderFateAlerts.tsx` (+ `FateSurvivalExplanation`), `SystemColorLegend.tsx`,
 `ContextInspector.tsx`, plus the pure libraries listed under `shared/` above and the
 reader-specific styling from `src/index.css` (`.light-novel-reader`,
 `.reader-prose`/`.reader-paragraph` + CJK variants, `.gold-accent`/`.jade-accent`,
@@ -120,9 +121,9 @@ already carries the same font and color tokens.
      shading + corruption system block);
   4. empty chapter with no content ("Unmanifested Segment").
   Plus two bookmarks and default `readerPreferences`.
-- **Hook stubs** matching the exact destructured shapes: `useReaderPlayback`
+- **Hook stubs** matching the active destructured shapes: `useReaderPlayback`
   (play/pause flips real store state; `activeChunks` empty), `useReaderVisuals`
-  (collects Codex terms from the local story memory; `isMomentousChapter: false`), `useCinematicScroll`
+  (collects Codex terms from local story memory), `useCinematicScroll`
   (idle/following/yielded), `useReadingPosition` (no-op), `useChapterTranslation`
   (`translateChapter: async () => null`), `useAudioMix` (settings are real state,
   no sound), `vibrate` (no-op), `LOCAL_ONLY_MODE = true`.
@@ -191,8 +192,6 @@ line so the current state is never ambiguous.
   `lib/vibration`, `lib/narrativeCues`) — settings state is real, playback inert;
   World Card SFX resolves to nothing ("Echo Unavailable"), `tts_line` cards use the
   browser's own `speechSynthesis` (no production dependency)
-- `useImageManifest` / media pipeline (`ManifestationImage` never receives
-  `isMomentousChapter: true` from the stub)
 - `hooks/useChapterTranslation`, `hooks/useCinematicScroll`, and
   `hooks/useReadingPosition` — inert stubs
 - Production Codex authentication, quota, persistence, image/audio generation,
@@ -211,7 +210,7 @@ line so the current state is never ambiguous.
 The Workshop's `lucide-react@^1.27.0` removed several legacy aliases the source uses.
 All substitutions are import-level aliases only — JSX is byte-identical to production:
 
-- `Loader2` → `LoaderCircle as Loader2` (ReaderViewport, WorldEntityCard, ManifestationImage)
+- `Loader2` → `LoaderCircle as Loader2` (ReaderViewport, WorldCard)
 - `Sliders` → `SlidersHorizontal as Sliders` (ReaderHeader, ReaderSettings)
 - `AlertTriangle` → `TriangleAlert as AlertTriangle` (SystemBlock, FateSurvivalExplanation)
 - `AlertCircle` → `CircleAlert as AlertCircle` (FateResultCard)
@@ -243,8 +242,7 @@ All substitutions are import-level aliases only — JSX is byte-identical to pro
   every chapter (production behavior for that genre) and the Alter Fate panel uses
   the `plain` dialect labels ("Story Steering" / "Command Prompt") exactly as
   production would for this genre.
-- **Momentous chapter hero image** (`ManifestationImage`) never renders — the
-  visuals stub hard-codes `isMomentousChapter: false`.
+- **Chapter Visual Memories are removed** — the Reader no longer renders a chapter-hero component or invokes an end-of-chapter image trigger. Existing chapter media data is left intact for compatibility and Manga Studio is unchanged.
 - **Shared store between Compare panes** — the mock store is a module singleton, so
   in Compare mode both panes navigate/toggle in lockstep (intended: same data on
   both sides). The bottom control bar is viewport-`fixed`, so the two bars overlap
@@ -275,11 +273,11 @@ existing `CodexHovercard` and `lib/codexHighlighting` owners:
 - `development/ParticleSystem.tsx` → `src/components/ParticleSystem.tsx`
 - `development/SystemBlock.tsx` → `src/components/SystemBlock.tsx`
 - `development/FateResultCard.tsx` → `src/components/FateResultCard.tsx`
-- `development/WorldEntityCard.tsx` → `src/components/WorldEntityCard.tsx`
+- `development/WorldCard.tsx` → `src/components/WorldCard.tsx`
+- `development/CodexCard.tsx` → `src/components/CodexCard.tsx`
 - `development/ReaderFateAlerts.tsx` → `src/components/ReaderFateAlerts.tsx`
 - `development/FateSurvivalExplanation.tsx` → `src/components/FateSurvivalExplanation.tsx`
 - `development/SystemColorLegend.tsx` → `src/components/SystemColorLegend.tsx`
-- `development/ManifestationImage.tsx` → `src/components/ManifestationImage.tsx`
 - `development/ContextInspector.tsx` → `src/components/ContextInspector.tsx`
 - Style changes from `shared/reader-chamber.css` → merge back into `src/index.css`
 

@@ -21,7 +21,7 @@ interface CharacterCardProps {
   handleStopVoice: () => void;
   handleGenerateVoiceCard: (char: Character) => void;
   beginCharEdit: (char: Character) => void;
-  handleAwakenCardImage: (id: string, type: "character" | "creature" | "beast", obj: any) => void;
+  handleAwakenCardImage: (id: string, type: "character", obj: any) => void;
 }
 
 export const CharacterCard: React.FC<CharacterCardProps> = ({
@@ -42,9 +42,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
   handleAwakenCardImage
 }) => {
   const displayedImage = activePreview ? activePreview.urls[activePreview.selectedIndex] : char.imageUrl;
-  const portraitImageType = char.portraitKind === 'non-human'
-    ? 'creature'
-    : char.isBeast ? 'beast' : 'character';
+  const portraitImageType = 'character' as const;
   const hasImage = Boolean(char.imageAssetId || char.imageUrl);
   const visualAriaLabel = isGenerating
     ? `VERSA is working on visual for ${char.name}`

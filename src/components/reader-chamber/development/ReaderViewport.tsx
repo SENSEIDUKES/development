@@ -6,16 +6,15 @@ import { extractSFXCues } from '../shared/readerPlayback';
 import { collectBlockAutoCues } from '../shared/autoCuePolicy';
 import { SystemBlock } from './SystemBlock';
 import { SYSTEM_COLORS_LEGEND } from '../shared/systemColors';
-import { WorldEntityCard } from './WorldEntityCard';
+import { WorldCard } from './WorldCard';
 import { useAppStore } from '../shared/stubs';
 import { ReaderFateAlerts } from './ReaderFateAlerts';
 import { SystemColorLegend } from './SystemColorLegend';
-import { ManifestationImage } from './ManifestationImage';
 import { anchorAttributes } from '../shared/cinematicScroll/anchors';
 import { ContextInspector } from './ContextInspector';
 import { getReaderTypography, getReadingDirection } from '../shared/readerTypography';
 import { createCodexHighlighter } from '../../reader-codex/shared/codexHighlighting';
-import { CodexRevealCard, FALLBACK_BACKDROPS } from './CodexRevealCard';
+import { CodexCard, FALLBACK_BACKDROPS } from './CodexCard';
 
 interface ReaderViewportProps {
   readerRef: React.RefObject<HTMLDivElement | null>;
@@ -76,10 +75,6 @@ interface ReaderViewportProps {
   hasSystemBlocks: boolean;
   
   chapters: ReaderChapter[];
-  manifestChapterHero?: (chapterNumber: number, promptText: string) => Promise<string>;
-  generatingIds?: Set<string>;
-  isMomentousChapter?: boolean;
-  triggerHeroGeneration?: () => void;
 }
 
 export function ReaderViewport({
@@ -99,10 +94,6 @@ export function ReaderViewport({
   codexTerms,
   generatingRevealId,
   handleManifestReveal,
-  manifestChapterHero,
-  generatingIds,
-  isMomentousChapter,
-  triggerHeroGeneration,
   readerMode,
   immersion,
   isPlayingText,
@@ -575,21 +566,33 @@ export function ReaderViewport({
                         const autoCueList = collectBlockAutoCues(sfxList, block);
                         if (!cleanText && !hasStructuredVisual) return null;
 
-                        let revealTerm: any = undefined;
-                        const revealEntity = block.metadata?.entities?.find(ent => {
-                          if (ent.mention !== 'reveal') return false;
-                          const matched = codexHighlighter.resolve(ent.name);
-                          if (matched && matched.entry) {
-                            revealTerm = matched;
-                            return true;
-                          }
-                          return false;
-                        });
-
-                        const revealImageUrl = revealTerm && 'imageUrl' in revealTerm.entry ? (revealTerm.entry as any).imageUrl : undefined;
-                        const revealImageAssetId = revealTerm && 'imageAssetId' in revealTerm.entry
-                          ? (revealTerm.entry as any).imageAssetId
+                        const visualCodexTerm = block.metadata?.entities
+                          ?.filter(entity => entity.mention === 'reveal')
+                          .map(entity => codexHighlighter.resolve(entity.name))
+                          .find(matched => Boolean(
+                            matched?.entry
+                            && (
+                              matched.type === 'character'
+                              || matched.type === 'artifact'
+                              || matched.type === 'location'
+                            )
+                          ));
+                        // Characters cover both Human and Non-Human Portraits.
+                        // Bestiary species are not Codex terms here, while
+                        // Factions remain highlightable informational records.
+                        const resolvedWorldCardTerm = block.worldCard
+                          ? codexHighlighter.resolve(block.worldCard.entityName)
                           : undefined;
+                        const duplicateVisualSignal = Boolean(
+                          visualCodexTerm
+                          && block.worldCard
+                          && (
+                            block.worldCard.codexEntryId === visualCodexTerm.entry.id
+                            || resolvedWorldCardTerm?.entry?.id === visualCodexTerm.entry.id
+                          )
+                        );
+                        const systemWorldCard = block.worldCard?.entityType === 'system'
+                          || block.worldCard?.entityType === 'fate_event';
 
                         const isSenMode = readerMode === "sen";
                         const currentParaIdx = currentNarratedBlockIndex;
@@ -597,18 +600,19 @@ export function ReaderViewport({
                         const isRevealed = !isSenMode || !immersion.imagePopups || (!isPlayerPlaying) || index <= (currentParaIdx || 0);
 
                         let revealCard = null;
-                        if (block.worldCard) {
-                          const cardWithImage = { ...block.worldCard };
-                          if (!cardWithImage.imageUrl && revealImageUrl) {
-                            cardWithImage.imageUrl = revealImageUrl;
-                          }
-                          revealCard = (isRevealed || !isSenMode || immersion.imagePopups) ? (
-                            <WorldEntityCard card={cardWithImage} />
+                        if (
+                          block.worldCard
+                          && !duplicateVisualSignal
+                          && !systemWorldCard
+                          && (!isSenMode || immersion.imagePopups)
+                        ) {
+                          revealCard = isRevealed ? (
+                            <WorldCard card={block.worldCard} />
                           ) : null;
-                        } else if (revealTerm && (!isSenMode || immersion.imagePopups)) {
+                        } else if (visualCodexTerm && (!isSenMode || immersion.imagePopups)) {
                           revealCard = (
-                            <CodexRevealCard
-                              revealTerm={revealTerm}
+                            <CodexCard
+                              revealTerm={visualCodexTerm}
                               activeStory={activeStory}
                               isSenMode={isSenMode}
                               isRevealed={isRevealed}
@@ -989,13 +993,6 @@ export function ReaderViewport({
                         })}
               </div>
               
-              {isMomentousChapter && (
-                <ManifestationImage
-                  selectedChapter={selectedChapter}
-                  generatingIds={generatingIds}
-                  triggerHeroGeneration={triggerHeroGeneration}
-                />
-              )}
             </motion.div>
           </AnimatePresence>
 

@@ -9,6 +9,7 @@ import type {
   StoryWorld,
 } from '../shared/types';
 import { resetMockState } from '../shared/stubs';
+import { CodexCard } from './CodexCard';
 import { ReaderViewport } from './ReaderViewport';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -309,5 +310,86 @@ describe('Reader card routing', () => {
     expect(container.querySelector('img[src="/chapter-memory.png"]')).toBeFalsy();
     expect(container.textContent).not.toContain('Memory of this event');
     expect(container.textContent).not.toContain('Distilling Visual Memory');
+  });
+
+  it('keeps long existing Codex reveals in the LibraryCard regions without adding a footer', () => {
+    const name = 'The Most Revered and Unbroken Oathkeeper of the Rain Court';
+    const description = 'A deliberately long Codex description that continues beyond the normal reveal length so the existing two-line Reader treatment remains the element that constrains it.';
+
+    act(() => {
+      root.render(
+        <CodexCard
+          revealTerm={{
+            type: 'Artifact',
+            entry: {
+              id: 'codex-long-artifact',
+              name,
+              description,
+              imageUrl: '/long-artifact.png',
+              manifestationImportance: visualImportance,
+            },
+          }}
+        />,
+      );
+    });
+
+    const content = container.querySelector('[data-slot="card-content"]');
+    const title = container.querySelector('[data-slot="card-title"]');
+    const descriptionRegion = container.querySelector('[data-slot="card-description"]');
+
+    expect(content?.parentElement?.className).toContain('group/reveal');
+    expect(container.querySelector('[data-slot="card-media"] img[alt="The Most Revered and Unbroken Oathkeeper of the Rain Court"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="card-body"]')).toBeTruthy();
+    expect(container.querySelector('[data-slot="card-header"]')).toBeTruthy();
+    expect(title?.textContent).toBe(name);
+    expect(title?.className).toContain('font-display');
+    expect(descriptionRegion?.textContent).toBe(description);
+    expect(descriptionRegion?.className).toContain('!line-clamp-2');
+    expect(container.querySelector('[data-slot="card-footer"]')).toBeFalsy();
+  });
+
+  it('keeps Manifest callbacks and the Summoning state through LibraryCard actions', () => {
+    const entry = {
+      id: 'codex-manifest-artifact',
+      name: 'Oath Seal',
+      description: 'An eligible Artifact without artwork.',
+      manifestationImportance: visualImportance,
+    };
+    const onManifestReveal = vi.fn();
+
+    act(() => {
+      root.render(
+        <CodexCard
+          revealTerm={{ type: 'Artifact', entry }}
+          onManifestReveal={onManifestReveal}
+        />,
+      );
+    });
+
+    const button = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Manifest portrait for Oath Seal"]',
+    );
+
+    expect(container.querySelector('[data-slot="card-actions"]')?.className).toContain('!contents');
+    expect(button).toBeTruthy();
+    act(() => {
+      button?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    });
+    expect(onManifestReveal).toHaveBeenCalledWith(entry, 'Artifact');
+
+    act(() => {
+      root.render(
+        <CodexCard
+          revealTerm={{ type: 'Artifact', entry }}
+          generatingRevealId={entry.id}
+          onManifestReveal={onManifestReveal}
+        />,
+      );
+    });
+
+    expect(container.textContent).toContain('Summoning...');
+    expect(container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Manifest portrait for Oath Seal"]',
+    )?.disabled).toBe(true);
   });
 });

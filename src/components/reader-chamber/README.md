@@ -1,15 +1,16 @@
 # Reader Chamber
 
 - **Source repository:** SENSEIDUKES/Light-Novels
-- **Source location:** `src/components/ReaderChamber.tsx` (verified on `origin/main` @ `7d44ecc`)
+- **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-14
-- **Last source comparison:** 2026-08-11
+- **Last Workshop update:** 2026-08-15
+- **Last source comparison:** 2026-08-15
 - **Replica status:** faithful replica
 
 ## Workshop history
 
+- **2026-08-15:** Rebuilt the active Development `CodexCard` on the shared `LibraryCard` region structure without changing the Reader reveal's presentation or flow. Existing media/backdrop, Manifest/Awaken action and Summoning state, entrance/hover behavior, typography, spacing, and routing remain intact; no generic LibraryCard visual treatment has been adopted.
 - **2026-08-14:** Completed the first Part Three card cleanup on the existing Reader route: renamed the active presentations to `CodexCard` and `WorldCard`, limited visual Codex Cards to Human Portraits, Non-Human Portraits, Artifacts, and Locations, kept Bestiary/Faction highlights on World Cards, kept System/Fate content on System Panels, suppressed duplicate visual Codex/World signals in favor of the Codex Card, and removed the end-of-chapter Chapter Visual Memory render and trigger.
 - **2026-08-13:** Added an isolated, disposable one-chapter entry at the existing Reader/Codex adapter boundary. A successfully processed direct Chapter Generation result now opens the unchanged Reader Chamber and complete Reader Codex with one prose chapter and one processed-state snapshot. The existing five-chapter adapter, exact-five completion guard, navigation, highlighting, layouts, and Codex internals remain unchanged. Verified with a real Gemini-generated Timeless chapter in a protected Preview.
 - **2026-08-11:** Migrated the complete production Reader Codex as its own Workshop feature and restored the Reader Chamber integration: the existing Codex control now opens the production-style sheet over the still-mounted Reader, all six Codex pages are present, and prose highlighting/reveal-card resolution again use the story's Codex terms. The generated five-chapter session keeps its disposable, chapter-scoped snapshot boundary; generation and `batchToReaderAdapter.ts` were not changed.
@@ -275,6 +276,7 @@ existing `CodexHovercard` and `lib/codexHighlighting` owners:
 - `development/FateResultCard.tsx` → `src/components/FateResultCard.tsx`
 - `development/WorldCard.tsx` → `src/components/WorldCard.tsx`
 - `development/CodexCard.tsx` → `src/components/CodexCard.tsx`
+- `src/components/library/LibraryCard.tsx` and its existing shared Library dependencies → the source application's compatible Library foundation before transferring `CodexCard`
 - `development/ReaderFateAlerts.tsx` → `src/components/ReaderFateAlerts.tsx`
 - `development/FateSurvivalExplanation.tsx` → `src/components/FateSurvivalExplanation.tsx`
 - `development/SystemColorLegend.tsx` → `src/components/SystemColorLegend.tsx`

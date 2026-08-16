@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import {
   isManifestationRevealInteractive,
   manifestationRevealAriaLabel,
@@ -16,10 +16,13 @@ import {
  *   - the state machine routing (which scene is shown for which state),
  *   - the tap-to-unseal affordance (the sealed scene becomes a button when
  *     `onUnseal` is supplied; the other states are non-interactive),
- *   - the entrance/exit transition between states,
+ *   - mounting the vessel exactly once and forwarding the current state to
+ *     it — the vessel owns the visual transformation between states as a
+ *     persistent scene graph, so sealed → unsealing → revealed reads as one
+ *     continuous motion and any state can hold indefinitely,
  *   - the accessible label announced in each state (composed from the
  *     supplied revealed content's `alt` when relevant),
- *   - reduced-motion handling for the cross-state transition (vessels own
+ *   - reduced-motion handling for the tap press feedback (vessels own
  *     their own artwork motion).
  *
  * It deliberately owns NO artwork. The vessel — passed as the `vessel` prop
@@ -80,30 +83,21 @@ export interface ManifestationRevealProps {
   'data-testid'?: string;
 }
 
-const REVEAL_STATE_TRANSITION_S = 0.45;
-
 /**
- * The cross-state transition. Vessels handle their own intra-state motion;
- * this is the AnimatePresence wrap that fades between them.
+ * The vessel is mounted exactly once. State changes only re-point the
+ * vessel at the new state — there is no scene swap or cross-fade here.
+ * The vessel's persistent scene graph performs the visual transformation
+ * itself, so sealed → unsealing → revealed reads as one continuous motion
+ * and the unsealing state can hold for as long as a caller waits on
+ * generated media.
  */
 const RevealScene: React.FC<{
   state: ManifestationRevealState;
   vessel: React.ReactNode;
-  calm: boolean;
-}> = ({ state, vessel, calm }) => (
-  <AnimatePresence mode="wait">
-    <motion.div
-      key={state}
-      data-reveal-state={state}
-      className="h-full w-full"
-      initial={{ opacity: 0, scale: 0.94 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.97 }}
-      transition={{ duration: calm ? 0 : REVEAL_STATE_TRANSITION_S, ease: [0.22, 1, 0.36, 1] }}
-    >
-      {vessel}
-    </motion.div>
-  </AnimatePresence>
+}> = ({ state, vessel }) => (
+  <div data-reveal-state={state} className="h-full w-full">
+    {vessel}
+  </div>
 );
 
 export default function ManifestationReveal({
@@ -121,7 +115,7 @@ export default function ManifestationReveal({
   const ariaLabel = manifestationRevealAriaLabel(state, content, sealedTapLabel);
 
   const scene = (
-    <RevealScene state={state} vessel={vessel} calm={calm} />
+    <RevealScene state={state} vessel={vessel} />
   );
 
   const containerClassName = [

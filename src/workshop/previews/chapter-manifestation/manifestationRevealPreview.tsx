@@ -30,11 +30,23 @@ const CONTAINMENT_OPTIONS: { id: 'compact' | 'full'; label: string; description:
   },
 ];
 
-const REVEAL_TIMING_MS: Record<ManifestationRevealState, number> = {
+const REVEAL_TIMING_MS: Record<'sealed' | 'revealed', number> = {
   sealed: 700,
-  unsealing: 1600,
   revealed: 1100,
 };
+
+/**
+ * How long the reveal holds in `unsealing` while the asset generates.
+ * "Instant" models an already-ready asset: it waits just past the opening
+ * flourish (~1.1s) so the morph still completes before the reveal.
+ */
+const GENERATION_DELAY_OPTIONS = [
+  { id: 'instant', label: 'Instant', ms: 1200 },
+  { id: '3s', label: '3s', ms: 3000 },
+  { id: '8s', label: '8s', ms: 8000 },
+] as const;
+
+type GenerationDelayId = (typeof GENERATION_DELAY_OPTIONS)[number]['id'];
 
 const MEDIA_KIND_OPTIONS: { id: MediaKind; label: string }[] = [
   { id: 'cover-art', label: 'Cover Art' },
@@ -73,9 +85,17 @@ export function ManifestationRevealPreview({
   const [mediaKind, setMediaKind] = useState<MediaKind>('image');
   const [unsealEnabled, setUnsealEnabled] = useState(true);
   const [containment, setContainment] = useState<'compact' | 'full'>(initialContainment);
+  const [generationDelayId, setGenerationDelayId] = useState<GenerationDelayId>('instant');
   const [replayKey, setReplayKey] = useState(0);
 
   const sequenceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const generationDelayMs = useMemo(
+    () =>
+      GENERATION_DELAY_OPTIONS.find((o) => o.id === generationDelayId)?.ms ??
+      GENERATION_DELAY_OPTIONS[0].ms,
+    [generationDelayId],
+  );
 
   const clearSequenceTimer = useCallback(() => {
     if (sequenceTimer.current !== null) {
@@ -116,8 +136,9 @@ export function ManifestationRevealPreview({
 
   // Tap-to-unseal: the mechanic reports the tap; the preview advances
   // the state itself (sealed → unsealing → revealed) to demonstrate
-  // caller ownership. The delay matches the Aura Veil's media preview
-  // (~1.6s) so designers can compare timing in both contexts.
+  // caller ownership. The unsealing hold matches the selected simulated
+  // generation delay, mirroring how the Aura Veil holds the state while
+  // a real asset generates.
   const handleUnseal = useCallback(() => {
     if (state !== 'sealed') return;
     // Cancel any in-flight sequence first; otherwise the sequence's
@@ -128,11 +149,12 @@ export function ManifestationRevealPreview({
     sequenceTimer.current = setTimeout(() => {
       sequenceTimer.current = null;
       setState('revealed');
-    }, REVEAL_TIMING_MS.unsealing);
-  }, [state, clearSequenceTimer]);
+    }, generationDelayMs);
+  }, [state, clearSequenceTimer, generationDelayMs]);
 
   // Replay the full sequence: sealed → unsealing → revealed, then
-  // rest. Manual state pills always win mid-sequence.
+  // rest. The unsealing step holds for the simulated generation delay.
+  // Manual state pills always win mid-sequence.
   const replaySequence = useCallback(() => {
     clearSequenceTimer();
     setReplayKey((k) => k + 1);
@@ -145,10 +167,15 @@ export function ManifestationRevealPreview({
       }
       setState(next);
       const isLast = idx === MANIFESTATION_REVEAL_STATES.length - 1;
-      sequenceTimer.current = setTimeout(() => step(idx + 1), isLast ? 1200 : REVEAL_TIMING_MS[next]);
+      const wait = isLast
+        ? 1200
+        : next === 'unsealing'
+          ? generationDelayMs
+          : REVEAL_TIMING_MS[next];
+      sequenceTimer.current = setTimeout(() => step(idx + 1), wait);
     };
     sequenceTimer.current = setTimeout(() => step(0), 0);
-  }, [clearSequenceTimer]);
+  }, [clearSequenceTimer, generationDelayMs]);
 
   // Restart everything to the sealed initial state.
   const reset = useCallback(() => {
@@ -245,6 +272,22 @@ export function ManifestationRevealPreview({
                 <RotateCcw size={12} /> Reset
               </button>
             </div>
+          </ControlGroup>
+
+          <ControlGroup
+            label="Simulated generation delay"
+            description="How long the reveal holds in unsealing while the asset generates. Applies to tap-to-unseal and Play sequence; the holding loop sustains indefinitely."
+          >
+            <PillRow>
+              {GENERATION_DELAY_OPTIONS.map((o) => (
+                <Pill
+                  key={o.id}
+                  selected={generationDelayId === o.id}
+                  onClick={() => setGenerationDelayId(o.id)}
+                  label={o.label}
+                />
+              ))}
+            </PillRow>
           </ControlGroup>
 
           <ControlGroup

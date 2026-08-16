@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion, type Transition } from 'motion/react';
 import {
   MEDIA_KIND_LABEL,
   type MediaKind,
@@ -13,12 +13,37 @@ import type {
  * CelestialScrollVessel — the current visual vessel for the Manifestation
  * Reveal mechanic.
  *
- * A celestial scroll that floats (sealed), splits into roller pairs around
- * a white-gold portal (unsealing), and hangs fully unrolled with the
- * finished asset framed between gold rods (revealed). Vessel-only
- * concerns: the artwork for each state, its own reduced-motion handling,
- * and the placeholder vista shown when the revealed state has no supplied
- * asset.
+ * ONE scroll, ONE continuous transformation. The vessel is a single
+ * persistent SVG scene graph whose recognizable elements are mounted once
+ * and morph between state-keyed configurations, so sealed → unsealing →
+ * revealed reads as one fluid motion instead of three swapped drawings:
+ *
+ *   - the parchment cylinder unrolls into the open sheet, then grows into
+ *     the revealed frame's mat — the same rect the whole way;
+ *   - the two gold rods bound around the roll part, tilt, and extend into
+ *     the revealed hanging rods, carrying their spear finials with them;
+ *   - the seal medallion dissolves in the shatter flash while its radiant
+ *     core expands into the unsealing portal; on reveal the same core
+ *     blooms over the frame and dissolves as the content coalesces behind
+ *     a progressive wipe with a light band riding its front.
+ *
+ * The unsealing state is SUSTAINABLE: a ~1s opening flourish (shatter
+ * flash, medallion dissolve, core expansion, sheet unroll, rods parting)
+ * settles into an indefinite holding loop — breathing portal core, slow
+ * counter-rotating ribbons / rays / qi wisps on non-synced periods,
+ * staggered drifting sparks, motes, and a gentle whole-scroll bob — so the
+ * caller can hold the state for as long as media generation takes without
+ * the composition going dead or visibly repeating.
+ *
+ * Motion/SVG authoring notes (learned the hard way, keep these):
+ *   - Never mix transform keyframes and opacity keyframes in one `animate`
+ *     on an SVG element — motion leaves `opacity` permanently undefined
+ *     (written as the invalid attribute "undefined" every frame). Split
+ *     them: transforms on an outer <motion.g>, opacity keyframes on the
+ *     inner shape.
+ *   - State-morph elements carry `initial={false}` so the mount render
+ *     already carries the current state's values; without it motion's
+ *     first SVG render writes `undefined` attributes.
  *
  * The vessel is media-mode-aware: it accepts a `mediaKind` so the
  * placeholder vista can echo the operation's family label (Cover Art,
@@ -54,7 +79,7 @@ export interface CelestialScrollVesselProps {
   mediaKind: MediaKind;
 }
 
-/** Shared gradient/filter/clip definitions for every scroll state. */
+/** Shared gradient/filter/clip definitions for the persistent scene. */
 const ScrollDefs: React.FC = () => (
   <defs>
     <linearGradient id="msr-parchment" x1="0" y1="0" x2="0" y2="1">
@@ -62,11 +87,6 @@ const ScrollDefs: React.FC = () => (
       <stop offset="35%" stopColor="#e9defa" />
       <stop offset="70%" stopColor="#c9b3e6" />
       <stop offset="100%" stopColor="#9d82c8" />
-    </linearGradient>
-    <linearGradient id="msr-parchment-sheet" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stopColor="#efe6fd" />
-      <stop offset="50%" stopColor="#dccaf2" />
-      <stop offset="100%" stopColor="#b59adb" />
     </linearGradient>
     <linearGradient id="msr-gold" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stopColor="#fff0c2" />
@@ -101,6 +121,12 @@ const ScrollDefs: React.FC = () => (
       <stop offset="60%" stopColor="#f490c6" />
       <stop offset="100%" stopColor="#d4549a" />
     </radialGradient>
+    {/* Soft white-gold vertical band that rides the reveal wipe front. */}
+    <linearGradient id="msr-band" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stopColor="#fff7e0" stopOpacity="0" />
+      <stop offset="50%" stopColor="#fff7e0" stopOpacity="0.9" />
+      <stop offset="100%" stopColor="#fff7e0" stopOpacity="0" />
+    </linearGradient>
     <filter id="msr-soft" x="-60%" y="-60%" width="220%" height="220%">
       <feGaussianBlur stdDeviation="3" />
     </filter>
@@ -115,7 +141,7 @@ const starFourPath = (cx: number, cy: number, r: number): string => {
   const s = r * 0.22;
   return (
     `M${cx} ${cy - r} Q${cx + s} ${cy - s} ${cx + r} ${cy} ` +
-    `Q${cx + s} ${cy + s} ${cx} ${cy + r} Q${cx - s} ${cy + s} ${cx - r} ${cy} ` +
+    `Q${cx + s} ${cy + s} ${cx} ${cy + r} Q${cx - s} ${cy + s} ${cx - s} ${cy} ` +
     `Q${cx - s} ${cy - s} ${cx} ${cy - r} Z`
   );
 };
@@ -153,244 +179,9 @@ const SealStarburst: React.FC<{ cx: number; cy: number }> = ({ cx, cy }) => (
   </g>
 );
 
-/** ── sealed ──────────────────────────────────────────────────────────── */
-
-/** [cx, cy, r, duration, delay, color] — slow gold/white motes. */
-const SEALED_MOTES: Array<[number, number, number, number, number, string]> = [
-  [140, 118, 1.8, 5.4, 0, '#ffe9b0'],
-  [258, 112, 1.5, 6.2, 1.2, '#ffffff'],
-  [178, 210, 1.6, 5.8, 0.6, '#ffd977'],
-  [238, 196, 1.4, 6.6, 2.0, '#ffe9b0'],
-];
-
-/** [cx, cy, r, duration, delay] — faint ember-red sparks. */
-const SEALED_EMBERS: Array<[number, number, number, number, number]> = [
-  [122, 188, 1.6, 4.6, 0.4],
-  [282, 178, 1.4, 5.2, 1.6],
-  [214, 96, 1.3, 5.8, 2.6],
-];
-
-const SealedScroll: React.FC<{ calm: boolean }> = ({ calm }) => (
-  <g>
-    {/* Ground shadow + warm glow pooled beneath the scroll */}
-    <ellipse cx="200" cy="206" rx="118" ry="12" fill="#000000" opacity="0.45" filter="url(#msr-soft)" />
-    <ellipse cx="200" cy="204" rx="104" ry="9" fill="url(#msr-burst)" opacity="0.5" />
-    <motion.ellipse
-      cx="200" cy="150" rx="152" ry="76" fill="url(#msr-burst)"
-      animate={calm ? { opacity: 0.3 } : { opacity: [0.22, 0.4, 0.22] }}
-      transition={calm ? { duration: 0 } : { duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
-    />
-
-    {/* Slow gold/white motes + faint ember sparks drifting around the scroll */}
-    {!calm &&
-      SEALED_MOTES.map(([cx, cy, r, dur, delay, color], i) => (
-        <motion.circle
-          key={`mote-${i}`}
-          cx={cx} cy={cy} r={r} fill={color}
-          animate={{ y: [0, -13, 0], opacity: [0.1, 0.8, 0.1] }}
-          transition={{ duration: dur, delay, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      ))}
-    {!calm &&
-      SEALED_EMBERS.map(([cx, cy, r, dur, delay], i) => (
-        <motion.circle
-          key={`ember-${i}`}
-          cx={cx} cy={cy} r={r} fill={i % 2 === 0 ? '#f87171' : '#fb923c'}
-          animate={{ y: [0, -18, 0], x: [0, i % 2 === 0 ? 5 : -5, 0], opacity: [0, 0.75, 0] }}
-          transition={{ duration: dur, delay, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      ))}
-
-    {/* Floating rolled scroll */}
-    <motion.g
-      animate={calm ? {} : { y: [0, -4, 0] }}
-      transition={{ duration: 4.6, repeat: Infinity, ease: 'easeInOut' }}
-    >
-      {/* Parchment cylinder + soft sheens */}
-      <rect x="112" y="116" width="176" height="68" rx="34" fill="url(#msr-parchment)" />
-      <rect x="124" y="123" width="152" height="14" rx="7" fill="#ffffff" opacity="0.32" />
-      <rect x="124" y="163" width="152" height="13" rx="6.5" fill="#4c1d95" opacity="0.18" />
-      <ellipse cx="200" cy="150" rx="30" ry="34" fill="#ffffff" opacity="0.12" />
-
-      {/* Ornate gold end-collars + spear finials */}
-      {[102, 284].map((x) => (
-        <g key={x}>
-          <rect x={x} y="110" width="14" height="80" rx="7" fill="url(#msr-gold)" />
-          <rect x={x + 3.5} y="115" width="3" height="70" rx="1.5" fill="#ffffff" opacity="0.35" />
-        </g>
-      ))}
-      <SpearFinial x={100} y={150} dir={-1} />
-      <SpearFinial x={300} y={150} dir={1} />
-
-      {/* The intact ornate seal — filigree starburst + medallion + radiant core */}
-      <motion.g
-        animate={calm ? {} : { scale: [1, 1.06, 1] }}
-        transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
-      >
-        <SealStarburst cx={200} cy={150} />
-        <circle cx="200" cy="150" r="21" fill="url(#msr-gold)" stroke="#7a4d0f" strokeWidth="1.2" />
-        <circle cx="200" cy="150" r="16.5" fill="none" stroke="#fff0c2" strokeWidth="0.8" opacity="0.6" />
-        <motion.circle
-          cx="200" cy="150" r="14" fill="url(#msr-core)"
-          animate={calm ? { opacity: 0.9 } : { opacity: [0.65, 1, 0.65] }}
-          transition={calm ? { duration: 0 } : { duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <path d={starFourPath(200, 150, 11)} fill="#fff7e0" />
-        <path d={starFourPath(200, 150, 5)} fill="#ffffff" />
-      </motion.g>
-    </motion.g>
-  </g>
-);
-
-/** ── unsealing ───────────────────────────────────────────────────────── */
-
-/** [dx, dy, delay, color] — sparks and embers bursting out of the core. */
-const UNSPARKS: Array<[number, number, number, string]> = [
-  [76, -56, 0, '#ffd977'],
-  [-80, -40, 0.3, '#ffe9b0'],
-  [88, 26, 0.6, '#ffd977'],
-  [-86, 48, 0.9, '#e9d5ff'],
-  [34, -80, 1.2, '#ffe9b0'],
-  [-28, 82, 1.5, '#ffd977'],
-  [98, -10, 0.45, '#ffe9b0'],
-  [-98, -18, 1.05, '#ffd977'],
-  [58, 70, 0.75, '#fb923c'],
-  [-54, -74, 1.35, '#f87171'],
-];
-
-/**
- * A short parchment roller with a gold collar, spear finial on its outer
- * end, and a torn glowing inner edge where the scroll split.
- */
-const SplitRoller: React.FC<{ cx: number; cy: number; tilt: number; flip?: boolean }> = ({
-  cx,
-  cy,
-  tilt,
-  flip,
-}) => (
-  <g transform={`rotate(${tilt} ${cx} ${cy})`}>
-    <g transform={flip ? `translate(${2 * cx} 0) scale(-1 1)` : undefined}>
-      <rect x={cx - 46} y={cy - 16} width="92" height="32" rx="16" fill="url(#msr-parchment)" />
-      <rect x={cx - 40} y={cy - 12} width="80" height="7" rx="3.5" fill="#ffffff" opacity="0.3" />
-      <rect x={cx - 52} y={cy - 20} width="12" height="40" rx="6" fill="url(#msr-gold)" />
-      <rect x={cx + 36} y={cy - 15} width="8" height="30" rx="4" fill="#ffd977" opacity="0.55" filter="url(#msr-soft)" />
-      <rect x={cx + 41} y={cy - 16} width="2.5" height="32" fill="#fff0c2" opacity="0.8" />
-      <SpearFinial x={cx - 54} y={cy} dir={-1} />
-    </g>
-  </g>
-);
-
-const UnsealingScroll: React.FC<{ calm: boolean }> = ({ calm }) => (
-  <g>
-    <ellipse cx="200" cy="212" rx="118" ry="12" fill="#000000" opacity="0.4" filter="url(#msr-soft)" />
-    <ellipse cx="200" cy="150" rx="158" ry="96" fill="url(#msr-burst)" opacity="0.35" />
-
-    {/* Parchment sheet stretched between the split roller pairs, edges glowing gold */}
-    <motion.g
-      initial={calm ? false : { scaleY: 0.35, opacity: 0 }}
-      animate={{ scaleY: 1, opacity: 1 }}
-      transition={{ duration: calm ? 0 : 1.4, delay: calm ? 0 : 0.15, ease: 'easeOut' }}
-      style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
-    >
-      <rect x="138" y="96" width="124" height="108" rx="10" fill="url(#msr-parchment-sheet)" opacity="0.9" />
-      <rect x="138" y="96" width="124" height="108" rx="10" fill="none" stroke="#ffd977" strokeWidth="2" opacity="0.7" filter="url(#msr-soft)" />
-      <rect x="141" y="99" width="118" height="102" rx="8" fill="none" stroke="#fff0c2" strokeWidth="1" opacity="0.5" />
-    </motion.g>
-
-    {/* Split roller pairs — angled apart at top and bottom, easing apart on entry */}
-    {[
-      { cx: 150, cy: 102, tilt: 12, from: 18 },
-      { cx: 250, cy: 102, tilt: -12, from: 18, flip: true },
-      { cx: 150, cy: 198, tilt: -12, from: -18 },
-      { cx: 250, cy: 198, tilt: 12, from: -18, flip: true },
-    ].map(({ cx, cy, tilt, from, flip }, i) => (
-      <motion.g
-        key={i}
-        initial={calm ? false : { y: from, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: calm ? 0 : 1.3, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <SplitRoller cx={cx} cy={cy} tilt={tilt} flip={flip} />
-      </motion.g>
-    ))}
-
-    {/* Blinding portal core — white-hot starburst with short radiating rays */}
-    <motion.circle
-      cx="200" cy="150" r="46" fill="url(#msr-core)"
-      animate={calm ? { opacity: 0.95 } : { opacity: [0.85, 1, 0.85], scale: [0.96, 1.06, 0.96] }}
-      transition={calm ? { duration: 0 } : { duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
-      style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
-    />
-    <motion.g
-      animate={calm ? {} : { rotate: 360 }}
-      transition={{ repeat: Infinity, duration: 48, ease: 'linear' }}
-      style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
-    >
-      {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
-        <line
-          key={deg}
-          x1="200" y1="128" x2="200" y2={deg % 90 === 0 ? 104 : 112}
-          stroke="#fff3d6" strokeWidth={deg % 90 === 0 ? 2.4 : 1.6}
-          strokeLinecap="round" opacity="0.85"
-          transform={`rotate(${deg} 200 150)`}
-        />
-      ))}
-    </motion.g>
-    <path d={starFourPath(200, 150, 15)} fill="#ffffff" opacity="0.95" />
-
-    {/* Golden energy ribbons sweeping around the core — slow galaxy swirl */}
-    <motion.g
-      animate={calm ? {} : { rotate: 360 }}
-      transition={{ repeat: Infinity, duration: 18, ease: 'linear' }}
-      style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
-    >
-      <path d="M138 150 A66 44 0 0 1 200 106" fill="none" stroke="url(#msr-gold)" strokeWidth="4.5" strokeLinecap="round" opacity="0.85" />
-      <path d="M262 150 A66 44 0 0 1 200 194" fill="none" stroke="url(#msr-gold)" strokeWidth="4.5" strokeLinecap="round" opacity="0.85" />
-      <path d="M200 96 A78 54 0 0 1 278 150" fill="none" stroke="#ffe9b0" strokeWidth="2.2" strokeLinecap="round" opacity="0.5" />
-      <path d="M200 204 A78 54 0 0 1 122 150" fill="none" stroke="#ffe9b0" strokeWidth="2.2" strokeLinecap="round" opacity="0.5" />
-    </motion.g>
-
-    {/* Faint violet qi wisps counter-swirling */}
-    <motion.g
-      animate={calm ? {} : { rotate: -360 }}
-      transition={{ repeat: Infinity, duration: 26, ease: 'linear' }}
-      style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
-    >
-      <path d="M128 138 A92 64 0 0 1 272 168" fill="none" stroke="#c084fc" strokeWidth="1.8" strokeLinecap="round" opacity="0.4" />
-      <path d="M272 132 A92 64 0 0 1 128 162" fill="none" stroke="#a855f7" strokeWidth="1.4" strokeLinecap="round" opacity="0.3" />
-    </motion.g>
-
-    {/* Sparks + embers bursting outward from the core */}
-    {!calm &&
-      UNSPARKS.map(([dx, dy, delay, color], i) => (
-        <motion.g
-          key={i}
-          animate={{ x: [0, dx], y: [0, dy], opacity: [0, 1, 0], scale: [1, 0.6] }}
-          transition={{ duration: 1.6, delay, repeat: Infinity, ease: 'easeOut' }}
-        >
-          <circle cx="200" cy="150" r={color === '#ffd977' ? 2.4 : 1.7} fill={color} />
-        </motion.g>
-      ))}
-
-    {/* Seal-shatter flash on entry */}
-    {!calm && (
-      <motion.circle
-        cx="200" cy="150" r="90" fill="url(#msr-core)"
-        initial={{ opacity: 0.95, scale: 0.4 }}
-        animate={{ opacity: 0, scale: 1.5 }}
-        transition={{ duration: 0.9, ease: 'easeOut' }}
-        style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
-      />
-    )}
-  </g>
-);
-
-/** ── revealed ────────────────────────────────────────────────────────── */
-
 /** Placeholder celestial vista inside the open scroll until an asset exists. */
 const VistaPlaceholder: React.FC<{ label: string; calm: boolean }> = ({ label, calm }) => (
-  <g clipPath="url(#msr-frame-clip)">
+  <g>
     <rect x="112" y="80" width="176" height="138" fill="url(#msr-vista-sky)" />
 
     {/* Stars */}
@@ -449,8 +240,8 @@ const VistaPlaceholder: React.FC<{ label: string; calm: boolean }> = ({ label, c
           key={i}
           d={starFourPath(cx, cy, 3)}
           fill="#ffd977"
-          animate={{ opacity: [0.2, 0.9, 0.2] }}
-          transition={{ duration: 2.6 + i * 0.7, delay: i * 0.8, repeat: Infinity, ease: 'easeInOut' }}
+          animate={SPARKLE_OPACITY_ANIMATE}
+          transition={SPARKLE_TRANSITIONS[i]}
         />
       ),
     )}
@@ -464,95 +255,146 @@ const VistaPlaceholder: React.FC<{ label: string; calm: boolean }> = ({ label, c
   </g>
 );
 
-/** A gold hanging rod with end caps, spear finials, and a sheen. */
-const HangingRod: React.FC<{ y: number }> = ({ y }) => (
-  <g>
-    <rect x="86" y={y} width="228" height="22" rx="11" fill="url(#msr-gold)" />
-    <rect x="94" y={y + 4} width="212" height="5" rx="2.5" fill="#ffffff" opacity="0.3" />
-    <rect x="94" y={y - 2} width="5" height="26" rx="2.5" fill="url(#msr-gold)" />
-    <rect x="301" y={y - 2} width="5" height="26" rx="2.5" fill="url(#msr-gold)" />
-    <SpearFinial x={84} y={y + 11} dir={-1} />
-    <SpearFinial x={316} y={y + 11} dir={1} />
-  </g>
-);
+/** ── state-keyed morph targets ───────────────────────────────────────── */
 
-const RevealedScroll: React.FC<{
-  label: string;
-  asset?: RevealedMediaAsset | null;
-  calm: boolean;
-}> = ({ label, asset, calm }) => (
-  <g>
-    {/* Suspension glow behind the open scroll */}
-    <motion.ellipse
-      cx="200" cy="152" rx="168" ry="124" fill="url(#msr-burst)"
-      animate={calm ? { opacity: 0.26 } : { opacity: [0.2, 0.32, 0.2] }}
-      transition={calm ? { duration: 0 } : { duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-    />
+/** The parchment: rolled cylinder → unrolled sheet → revealed frame mat. */
+const SHEET_GEOM = {
+  sealed: { x: 112, y: 116, width: 176, height: 68, rx: 34 },
+  unsealing: { x: 138, y: 96, width: 124, height: 108, rx: 10 },
+  revealed: { x: 108, y: 76, width: 184, height: 146, rx: 9 },
+} as const;
 
-    {/* Parchment viewport framed in thin gold trim */}
-    <rect x="112" y="80" width="176" height="138" rx="7" fill="#1d0e38" stroke="url(#msr-gold)" strokeWidth="2.5" />
-    {asset ? (
-      <image
-        href={asset.src}
-        x="114" y="82" width="172" height="134"
-        preserveAspectRatio="xMidYMid slice"
-        clipPath="url(#msr-frame-clip)"
-        opacity="0.96"
-      />
-    ) : (
-      <VistaPlaceholder label={label} calm={calm} />
-    )}
-    <rect x="117" y="85" width="166" height="128" rx="4" fill="none" stroke="#ffe9b0" strokeWidth="0.8" opacity="0.35" />
+/** Gold trim hugging the sheet's edge (invisible while sealed). */
+const TRIM_GEOM = {
+  sealed: { x: 112, y: 116, width: 176, height: 68, rx: 34 },
+  unsealing: { x: 138, y: 96, width: 124, height: 108, rx: 10 },
+  revealed: { x: 112, y: 80, width: 176, height: 138, rx: 7 },
+} as const;
 
-    {/* Corner braces tying the viewport to the rods */}
-    {[108, 284].map((x) => (
-      <g key={x}>
-        <rect x={x} y="76" width="8" height="12" rx="2" fill="url(#msr-gold)" />
-        <rect x={x} y="212" width="8" height="12" rx="2" fill="url(#msr-gold)" />
-      </g>
-    ))}
+/** Inner hairline inset from the trim. */
+const INNER_TRIM_GEOM = {
+  sealed: { x: 115, y: 119, width: 170, height: 62, rx: 30 },
+  unsealing: { x: 141, y: 99, width: 118, height: 102, rx: 8 },
+  revealed: { x: 117, y: 85, width: 166, height: 128, rx: 4 },
+} as const;
 
-    {/* Occasional soft golden shimmer sweeping the revealed surface */}
-    {!calm && (
-      <g clipPath="url(#msr-frame-clip)">
-        <g transform="skewX(-14)">
-          <motion.rect
-            x="40" y="70" width="42" height="160" fill="#ffffff" opacity="0.1"
-            animate={{ x: [0, 320] }}
-            transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 4.5, ease: 'easeInOut' }}
-          />
-        </g>
-      </g>
-    )}
+/** Rod center Y per state (top / bottom). */
+const ROD_Y: Record<string, Record<ManifestationRevealState, number>> = {
+  top: { sealed: 127, unsealing: 102, revealed: 69 },
+  bottom: { sealed: 173, unsealing: 198, revealed: 233 },
+};
 
-    {/* Top rod with a small gold star ornament at its center */}
-    <HangingRod y={58} />
-    <circle cx="200" cy="69" r="9" fill="url(#msr-burst)" opacity="0.8" />
-    <path d={starFourPath(200, 69, 7)} fill="#fff0c2" />
+/** Rod bar length (scaleX of the full 228-wide rod). */
+const ROD_SCALE_X = { sealed: 0.55, unsealing: 0.66, revealed: 1 } as const;
 
-    {/* Bottom rod with a gold medallion holding a violet gem */}
-    <HangingRod y={222} />
-    <circle cx="200" cy="233" r="11" fill="url(#msr-gold)" stroke="#7a4d0f" strokeWidth="1" />
-    <path d="M200 227.5 L205 233 L200 238.5 L195 233 Z" fill="url(#msr-gem)" />
+/** Finial distance from rod center per state (travels with the bar ends). */
+const FINIAL_X = { sealed: 65, unsealing: 77, revealed: 116 } as const;
 
-    {/* Hanging gold chain pendant ending in a violet crystal drop */}
-    {[0, 1, 2].map((i) => (
-      <circle key={i} cx="200" cy={248 + i * 6} r="2" fill="none" stroke="#f5c65c" strokeWidth="1.4" />
-    ))}
-    <path d="M200 264 L206.5 272 L200 285 L193.5 272 Z" fill="url(#msr-gem)" stroke="#f5c65c" strokeWidth="1" />
+/** Seal core radius: seal heart → open portal → bloom covering the frame. */
+const CORE_R = { sealed: 14, unsealing: 46, revealed: 120 } as const;
 
-    {/* Brief golden reveal flare on entry */}
-    {!calm && (
-      <motion.circle
-        cx="200" cy="150" r="110" fill="url(#msr-core)"
-        initial={{ opacity: 0.85, scale: 0.5 }}
-        animate={{ opacity: 0, scale: 1.25 }}
-        transition={{ duration: 0.55, ease: 'easeOut' }}
-        style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
-      />
-    )}
-  </g>
-);
+/** Central 4-point star scale per state. */
+const STAR_SCALE = { sealed: 0.73, unsealing: 1, revealed: 0.35 } as const;
+
+/** Ambient glow pool behind the scroll. */
+const GLOW_GEOM = {
+  sealed: { cy: 150, rx: 152, ry: 76 },
+  unsealing: { cy: 150, rx: 158, ry: 96 },
+  revealed: { cy: 152, rx: 168, ry: 124 },
+} as const;
+
+const FILL_BOX_CENTER = { transformBox: 'fill-box', transformOrigin: 'center' } as const;
+
+/** [cx, cy, r, duration, delay, color] — slow gold/white motes. */
+const MOTES: Array<[number, number, number, number, number, string]> = [
+  [140, 118, 1.8, 5.4, 0, '#ffe9b0'],
+  [258, 112, 1.5, 6.2, 1.2, '#ffffff'],
+  [178, 210, 1.6, 5.8, 0.6, '#ffd977'],
+  [238, 196, 1.4, 6.6, 2.0, '#ffe9b0'],
+];
+
+/** [cx, cy, r, duration, delay] — faint ember-red sparks (sealed only). */
+const EMBERS: Array<[number, number, number, number, number]> = [
+  [122, 188, 1.6, 4.6, 0.4],
+  [282, 178, 1.4, 5.2, 1.6],
+  [214, 96, 1.3, 5.8, 2.6],
+];
+
+/**
+ * [dx, dy, duration, delay, color] — sparks drifting slowly out of the
+ * portal. Long, non-synced periods so the holding loop never visibly
+ * repeats while the caller waits on generated media.
+ */
+const DRIFTERS: Array<[number, number, number, number, string]> = [
+  [76, -56, 3.4, 0, '#ffd977'],
+  [-80, -40, 4.2, 0.8, '#ffe9b0'],
+  [88, 26, 3.0, 1.6, '#ffd977'],
+  [-86, 48, 4.6, 0.4, '#e9d5ff'],
+  [34, -80, 3.8, 2.2, '#ffe9b0'],
+  [-28, 82, 4.4, 1.1, '#ffd977'],
+  [98, -10, 3.2, 2.8, '#fb923c'],
+  [-54, -74, 4.0, 1.9, '#f87171'],
+];
+
+/**
+ * Reference-stable loop animates/transitions. Hoisted so a state change
+ * never restarts an ambient loop: motion re-resolves animation targets
+ * when the `animate` object identity changes, which both breaks the
+ * loop's phase continuity (a visible seam at the state handoff) and emits
+ * a one-frame `undefined` attribute write while keyframes re-resolve.
+ */
+const BOB_ANIMATE = { y: [0, -3, 0] };
+const BOB_TRANSITION = { duration: 5.2, repeat: Infinity, ease: 'easeInOut' } as const;
+const BREATHE_SCALE_ANIMATE = { scale: [0.97, 1.045, 0.97] };
+const BREATHE_OPACITY_ANIMATE = { opacity: [0.82, 1, 0.82] };
+const BREATHE_TRANSITION = { duration: 3, repeat: Infinity, ease: 'easeInOut' } as const;
+const GLOW_OPACITY_ANIMATE = { opacity: [0.22, 0.36, 0.22] };
+const GLOW_OPACITY_TRANSITION = { duration: 5, repeat: Infinity, ease: 'easeInOut' } as const;
+const ROTATE_CW_ANIMATE = { rotate: 360 };
+const ROTATE_CCW_ANIMATE = { rotate: -360 };
+const RAYS_ROTATE_TRANSITION = { repeat: Infinity, duration: 48, ease: 'linear' } as const;
+const RIBBONS_ROTATE_TRANSITION = { repeat: Infinity, duration: 18, ease: 'linear' } as const;
+const WISPS_ROTATE_TRANSITION = { repeat: Infinity, duration: 26, ease: 'linear' } as const;
+const SHIMMER_ANIMATE = { x: [0, 320] };
+const SHIMMER_TRANSITION = { duration: 2.2, repeat: Infinity, repeatDelay: 4.5, ease: 'easeInOut' } as const;
+const SPARKLE_OPACITY_ANIMATE = { opacity: [0.2, 0.9, 0.2] };
+const SPARKLE_TRANSITIONS = [0, 1, 2].map((i) => ({
+  duration: 2.6 + i * 0.7,
+  delay: i * 0.8,
+  repeat: Infinity,
+  ease: 'easeInOut' as const,
+}));
+const DRIFTER_WRAP_ANIMATES = DRIFTERS.map(([dx, dy]) => ({
+  x: [0, dx],
+  y: [0, dy],
+  scale: [0.7, 1, 0.5],
+}));
+const DRIFTER_OPACITY_ANIMATE = { opacity: [0, 0.85, 0] };
+const DRIFTER_TRANSITIONS = DRIFTERS.map(([, , dur, delay]) => ({
+  duration: dur,
+  delay,
+  repeat: Infinity,
+  ease: 'easeOut' as const,
+}));
+const MOTE_WRAP_ANIMATE = { y: [0, -13, 0] };
+const MOTE_OPACITY_ANIMATE = { opacity: [0.1, 0.8, 0.1] };
+const MOTE_TRANSITIONS = MOTES.map(([, , , dur, delay]) => ({
+  duration: dur,
+  delay,
+  repeat: Infinity,
+  ease: 'easeInOut' as const,
+}));
+const EMBER_WRAP_ANIMATES = EMBERS.map((_, i) => ({
+  y: [0, -18, 0],
+  x: [0, i % 2 === 0 ? 5 : -5, 0],
+}));
+const EMBER_OPACITY_ANIMATE = { opacity: [0, 0.75, 0] };
+const EMBER_TRANSITIONS = EMBERS.map(([, , , dur, delay]) => ({
+  duration: dur,
+  delay,
+  repeat: Infinity,
+  ease: 'easeInOut' as const,
+}));
 
 export default function CelestialScrollVessel({
   state,
@@ -563,6 +405,32 @@ export default function CelestialScrollVessel({
   const reduceMotion = useReducedMotion();
   const calm = !!reduceMotion;
   const label = placeholderLabel ?? MEDIA_KIND_LABEL[mediaKind];
+  const revealed = state === 'revealed';
+
+  /** Geometry morphs ride a soft spring; rods a bouncier one (overshoot). */
+  const morph: Transition = calm ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 17 };
+  const rodSpring: Transition = calm ? { duration: 0 } : { type: 'spring', stiffness: 170, damping: 13 };
+  const fade = (delay = 0): Transition =>
+    calm ? { duration: 0 } : { duration: 0.45, delay, ease: 'easeInOut' };
+
+  /** Portal core: explodes open into unsealing, blooms out on reveal. */
+  const coreTransition: Transition = calm
+    ? { duration: 0 }
+    : {
+        r: state === 'unsealing'
+          ? { duration: 0.85, ease: 'easeOut' }
+          : { duration: 0.8, ease: [0.4, 0, 0.2, 1] },
+        opacity: revealed
+          ? { duration: 0.75, delay: 0.4, ease: 'easeIn' }
+          : { duration: 0.3 },
+      };
+
+  /** Content wipe: sweeps open on reveal, snaps shut when leaving it. */
+  const wipeTransition: Transition = calm
+    ? { duration: 0 }
+    : revealed
+      ? { duration: 0.85, delay: 0.35, ease: [0.22, 1, 0.36, 1] }
+      : { duration: 0.2 };
 
   return (
     <svg
@@ -573,9 +441,468 @@ export default function CelestialScrollVessel({
       aria-hidden="true"
     >
       <ScrollDefs />
-      {state === 'sealed' && <SealedScroll calm={calm} />}
-      {state === 'unsealing' && <UnsealingScroll calm={calm} />}
-      {state === 'revealed' && <RevealedScroll label={label} asset={asset} calm={calm} />}
+
+      {/* Progressive reveal wipe — opens left→right inside the frame clip. */}
+      <clipPath id="msr-wipe-clip">
+        <motion.rect
+          x={114}
+          y={82}
+          height={134}
+          initial={false}
+          animate={{ width: revealed ? 172 : 0 }}
+          transition={wipeTransition}
+        />
+      </clipPath>
+
+      {/* Ground shadow — fades as the scroll lifts into its hanging form. */}
+      <motion.ellipse
+        cx={200}
+        rx={118}
+        ry={12}
+        fill="#000000"
+        filter="url(#msr-soft)"
+        initial={false}
+        animate={{
+          cy: state === 'sealed' ? 206 : 214,
+          opacity: revealed ? 0 : state === 'unsealing' ? 0.4 : 0.45,
+        }}
+        transition={fade()}
+      />
+
+      {/* Ambient glow pool — persists and breathes through every state.
+          Geometry morphs on the ellipse; the opacity loop rides a wrapper
+          so state changes never restart the breathing. */}
+      <motion.g
+        animate={calm ? { opacity: 0.28 } : GLOW_OPACITY_ANIMATE}
+        transition={calm ? { duration: 0 } : GLOW_OPACITY_TRANSITION}
+      >
+        <motion.ellipse
+          cx={200}
+          fill="url(#msr-burst)"
+          initial={false}
+          animate={{
+            cy: GLOW_GEOM[state].cy,
+            rx: GLOW_GEOM[state].rx,
+            ry: GLOW_GEOM[state].ry,
+          }}
+          transition={morph}
+        />
+      </motion.g>
+
+      {/* The scroll body — one gentle bob carried through every state. */}
+      <motion.g
+        animate={calm ? {} : BOB_ANIMATE}
+        transition={calm ? { duration: 0 } : BOB_TRANSITION}
+      >
+        {/* Parchment: roll → sheet → frame mat (one morphing rect). */}
+        <motion.rect
+          fill="url(#msr-parchment)"
+          initial={false}
+          animate={{ ...SHEET_GEOM[state] }}
+          transition={morph}
+        />
+
+        {/* Rolled-cylinder sheens — dissolve as the parchment unrolls. */}
+        <motion.g
+          initial={false}
+          animate={{ opacity: state === 'sealed' ? 1 : 0 }}
+          transition={calm ? { duration: 0 } : { duration: 0.25 }}
+        >
+          <rect x="124" y="123" width="152" height="14" rx="7" fill="#ffffff" opacity="0.32" />
+          <rect x="124" y="163" width="152" height="13" rx="6.5" fill="#4c1d95" opacity="0.18" />
+          <ellipse cx="200" cy="150" rx="30" ry="34" fill="#ffffff" opacity="0.12" />
+        </motion.g>
+
+        {/* Dark viewport backing inside the parchment mat (revealed). */}
+        <motion.rect
+          x={112}
+          y={80}
+          width={176}
+          height={138}
+          rx={7}
+          fill="#1d0e38"
+          initial={false}
+          animate={{ opacity: revealed ? 0.97 : 0 }}
+          transition={fade(revealed ? 0.2 : 0)}
+        />
+
+        {/* Revealed content, coalescing behind the wipe; shimmer and the
+            light band riding the wipe front live in the same frame clip. */}
+        <g clipPath="url(#msr-frame-clip)">
+          <g clipPath="url(#msr-wipe-clip)">
+            {asset ? (
+              <image
+                href={asset.src}
+                x="114" y="82" width="172" height="134"
+                preserveAspectRatio="xMidYMid slice"
+                opacity="0.96"
+              />
+            ) : (
+              <VistaPlaceholder label={label} calm={calm} />
+            )}
+          </g>
+
+          {/* Occasional soft golden shimmer sweeping the revealed surface. */}
+          {!calm && (
+            <motion.g
+              initial={false}
+              animate={{ opacity: revealed ? 1 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <g transform="skewX(-14)">
+                <motion.rect
+                  x="40" y="70" width="42" height="160" fill="#ffffff" opacity="0.1"
+                  animate={SHIMMER_ANIMATE}
+                  transition={SHIMMER_TRANSITION}
+                />
+              </g>
+            </motion.g>
+          )}
+
+          {/* Light band riding the wipe front on reveal — transforms on the
+              wrapper, opacity keyframes on the rect (see header notes). */}
+          <g transform="skewX(-14)">
+            <motion.g
+              initial={false}
+              animate={calm || !revealed ? { x: 118 } : { x: [118, 330] }}
+              transition={calm ? { duration: 0 } : { duration: 0.8, delay: 0.35, ease: 'easeInOut' }}
+            >
+              <motion.rect
+                y={60}
+                width={34}
+                height={190}
+                fill="url(#msr-band)"
+                initial={false}
+                animate={calm || !revealed ? { opacity: 0 } : { opacity: [0, 0.85, 0] }}
+                transition={calm ? { duration: 0 } : { duration: 0.8, delay: 0.35, ease: 'easeInOut' }}
+              />
+            </motion.g>
+          </g>
+        </g>
+
+        {/* Gold trim morphing with the sheet: soft glow while unsealing,
+            crisp frame once revealed. */}
+        <motion.rect
+          fill="none"
+          stroke="#ffd977"
+          strokeWidth={2}
+          filter="url(#msr-soft)"
+          initial={false}
+          animate={{ ...TRIM_GEOM[state], opacity: state === 'unsealing' ? 0.7 : 0 }}
+          transition={{ ...morph, opacity: fade(state === 'unsealing' ? 0.35 : 0) }}
+        />
+        <motion.rect
+          fill="none"
+          stroke="url(#msr-gold)"
+          strokeWidth={2.5}
+          initial={false}
+          animate={{ ...TRIM_GEOM[state], opacity: state === 'sealed' ? 0 : state === 'unsealing' ? 0.55 : 1 }}
+          transition={{ ...morph, opacity: fade(state === 'sealed' ? 0 : 0.3) }}
+        />
+        <motion.rect
+          fill="none"
+          stroke="#fff0c2"
+          strokeWidth={0.9}
+          initial={false}
+          animate={{
+            ...INNER_TRIM_GEOM[state],
+            opacity: state === 'sealed' ? 0 : state === 'unsealing' ? 0.5 : 0.35,
+          }}
+          transition={{ ...morph, opacity: fade(state === 'sealed' ? 0 : 0.35) }}
+        />
+
+        {/* Corner braces tying the viewport to the rods (revealed). */}
+        <motion.g
+          initial={false}
+          animate={{ opacity: revealed ? 1 : 0 }}
+          transition={fade(revealed ? 0.45 : 0)}
+        >
+          {[108, 284].map((x) => (
+            <g key={x}>
+              <rect x={x} y="76" width="8" height="12" rx="2" fill="url(#msr-gold)" />
+              <rect x={x} y="212" width="8" height="12" rx="2" fill="url(#msr-gold)" />
+            </g>
+          ))}
+        </motion.g>
+
+        {/* Portal core — the seal's radiant heart, expanded. One breathing
+            loop persists across states so the handoff never cuts (scale on
+            the wrapper, opacity on the inner group — see header notes). */}
+        <motion.g
+          animate={calm ? {} : BREATHE_SCALE_ANIMATE}
+          transition={calm ? { duration: 0 } : BREATHE_TRANSITION}
+          style={FILL_BOX_CENTER}
+        >
+          <motion.g
+            animate={calm ? { opacity: 0.9 } : BREATHE_OPACITY_ANIMATE}
+            transition={calm ? { duration: 0 } : BREATHE_TRANSITION}
+          >
+            <motion.circle
+              cx={200}
+              cy={150}
+              fill="url(#msr-core)"
+              initial={false}
+              animate={{ r: CORE_R[state], opacity: revealed ? 0 : 1 }}
+              transition={coreTransition}
+            />
+            <motion.g
+              initial={false}
+              animate={{ scale: STAR_SCALE[state], opacity: revealed ? 0 : 1 }}
+              transition={fade(revealed ? 0.3 : 0)}
+              style={FILL_BOX_CENTER}
+            >
+              <path d={starFourPath(200, 150, 15)} fill="#fff7e0" />
+              <path d={starFourPath(200, 150, 6.5)} fill="#ffffff" />
+            </motion.g>
+          </motion.g>
+        </motion.g>
+
+        {/* Radiating rays around the portal — slow 48s rotation. */}
+        <motion.g
+          initial={false}
+          animate={{ opacity: state === 'unsealing' ? 1 : 0 }}
+          transition={fade(state === 'unsealing' ? 0.25 : 0)}
+        >
+          <motion.g
+            animate={calm ? {} : ROTATE_CW_ANIMATE}
+            transition={calm ? { duration: 0 } : RAYS_ROTATE_TRANSITION}
+            style={FILL_BOX_CENTER}
+          >
+            {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
+              <line
+                key={deg}
+                x1="200" y1="128" x2="200" y2={deg % 90 === 0 ? 104 : 112}
+                stroke="#fff3d6" strokeWidth={deg % 90 === 0 ? 2.4 : 1.6}
+                strokeLinecap="round" opacity="0.85"
+                transform={`rotate(${deg} 200 150)`}
+              />
+            ))}
+          </motion.g>
+        </motion.g>
+
+        {/* Golden energy ribbons sweeping around the core — 18s swirl. */}
+        <motion.g
+          initial={false}
+          animate={{ opacity: state === 'unsealing' ? 0.9 : 0 }}
+          transition={fade(state === 'unsealing' ? 0.3 : 0)}
+        >
+          <motion.g
+            animate={calm ? {} : ROTATE_CW_ANIMATE}
+            transition={calm ? { duration: 0 } : RIBBONS_ROTATE_TRANSITION}
+            style={FILL_BOX_CENTER}
+          >
+            <path d="M138 150 A66 44 0 0 1 200 106" fill="none" stroke="url(#msr-gold)" strokeWidth="4.5" strokeLinecap="round" opacity="0.85" />
+            <path d="M262 150 A66 44 0 0 1 200 194" fill="none" stroke="url(#msr-gold)" strokeWidth="4.5" strokeLinecap="round" opacity="0.85" />
+            <path d="M200 96 A78 54 0 0 1 278 150" fill="none" stroke="#ffe9b0" strokeWidth="2.2" strokeLinecap="round" opacity="0.5" />
+            <path d="M200 204 A78 54 0 0 1 122 150" fill="none" stroke="#ffe9b0" strokeWidth="2.2" strokeLinecap="round" opacity="0.5" />
+          </motion.g>
+        </motion.g>
+
+        {/* Faint violet qi wisps counter-swirling — 26s loop. */}
+        <motion.g
+          initial={false}
+          animate={{ opacity: state === 'unsealing' ? 1 : 0 }}
+          transition={fade(state === 'unsealing' ? 0.35 : 0)}
+        >
+          <motion.g
+            animate={calm ? {} : ROTATE_CCW_ANIMATE}
+            transition={calm ? { duration: 0 } : WISPS_ROTATE_TRANSITION}
+            style={FILL_BOX_CENTER}
+          >
+            <path d="M128 138 A92 64 0 0 1 272 168" fill="none" stroke="#c084fc" strokeWidth="1.8" strokeLinecap="round" opacity="0.4" />
+            <path d="M272 132 A92 64 0 0 1 128 162" fill="none" stroke="#a855f7" strokeWidth="1.4" strokeLinecap="round" opacity="0.3" />
+          </motion.g>
+        </motion.g>
+
+        {/* Sparks drifting slowly out of the portal — staggered 3.0–4.6s
+            periods keep the holding state alive without a visible repeat.
+            Transforms ride the wrapper, opacity the circle (header notes). */}
+        {!calm && (
+          <motion.g
+            initial={false}
+            animate={{ opacity: state === 'unsealing' ? 1 : 0 }}
+            transition={{ duration: 0.6, delay: state === 'unsealing' ? 0.55 : 0 }}
+          >
+            {DRIFTERS.map(([, , , , color], i) => (
+              <motion.g
+                key={i}
+                animate={DRIFTER_WRAP_ANIMATES[i]}
+                transition={DRIFTER_TRANSITIONS[i]}
+                style={FILL_BOX_CENTER}
+              >
+                <motion.circle
+                  cx={200}
+                  cy={150}
+                  r={color === '#ffd977' ? 2.2 : 1.6}
+                  fill={color}
+                  animate={DRIFTER_OPACITY_ANIMATE}
+                  transition={DRIFTER_TRANSITIONS[i]}
+                />
+              </motion.g>
+            ))}
+          </motion.g>
+        )}
+
+        {/* The two rods — bound around the roll while sealed, parting at
+            the sheet's edges while unsealing, extended into the hanging
+            rods once revealed. Springs give the settle a slight overshoot. */}
+        {(['top', 'bottom'] as const).map((pos) => (
+          <motion.g
+            key={pos}
+            initial={false}
+            animate={{
+              x: 200,
+              y: ROD_Y[pos][state],
+              rotate: state === 'unsealing' ? (pos === 'top' ? -5 : 5) : 0,
+            }}
+            transition={rodSpring}
+            style={FILL_BOX_CENTER}
+          >
+            <motion.rect
+              x={-114}
+              y={-11}
+              width={228}
+              height={22}
+              rx={11}
+              fill="url(#msr-gold)"
+              initial={false}
+              animate={{ scaleX: ROD_SCALE_X[state] }}
+              transition={rodSpring}
+              style={FILL_BOX_CENTER}
+            />
+            <motion.rect
+              x={-106}
+              y={-7}
+              width={212}
+              height={5}
+              rx={2.5}
+              fill="#ffffff"
+              opacity={0.3}
+              initial={false}
+              animate={{ scaleX: ROD_SCALE_X[state] }}
+              transition={rodSpring}
+              style={FILL_BOX_CENTER}
+            />
+            <motion.g initial={false} animate={{ x: -FINIAL_X[state] }} transition={rodSpring}>
+              <rect x={10} y={-13} width={5} height={26} rx={2.5} fill="url(#msr-gold)" />
+              <SpearFinial x={0} y={0} dir={-1} />
+            </motion.g>
+            <motion.g initial={false} animate={{ x: FINIAL_X[state] }} transition={rodSpring}>
+              <rect x={-15} y={-13} width={5} height={26} rx={2.5} fill="url(#msr-gold)" />
+              <SpearFinial x={0} y={0} dir={1} />
+            </motion.g>
+          </motion.g>
+        ))}
+
+        {/* Revealed ornaments — fade in once the rods have settled. */}
+        <motion.g
+          initial={false}
+          animate={{ opacity: revealed ? 1 : 0, scale: revealed ? 1 : 0.5 }}
+          transition={fade(revealed ? 0.5 : 0)}
+          style={FILL_BOX_CENTER}
+        >
+          <circle cx="200" cy="69" r="9" fill="url(#msr-burst)" opacity="0.8" />
+          <path d={starFourPath(200, 69, 7)} fill="#fff0c2" />
+        </motion.g>
+        <motion.g
+          initial={false}
+          animate={{ opacity: revealed ? 1 : 0, scale: revealed ? 1 : 0.5 }}
+          transition={fade(revealed ? 0.55 : 0)}
+          style={FILL_BOX_CENTER}
+        >
+          <circle cx="200" cy="233" r="11" fill="url(#msr-gold)" stroke="#7a4d0f" strokeWidth="1" />
+          <path d="M200 227.5 L205 233 L200 238.5 L195 233 Z" fill="url(#msr-gem)" />
+        </motion.g>
+        <motion.g
+          initial={false}
+          animate={{ opacity: revealed ? 1 : 0, scale: revealed ? 1 : 0.5 }}
+          transition={fade(revealed ? 0.65 : 0)}
+          style={FILL_BOX_CENTER}
+        >
+          {[0, 1, 2].map((i) => (
+            <circle key={i} cx="200" cy={248 + i * 6} r="2" fill="none" stroke="#f5c65c" strokeWidth="1.4" />
+          ))}
+          <path d="M200 264 L206.5 272 L200 285 L193.5 272 Z" fill="url(#msr-gem)" stroke="#f5c65c" strokeWidth="1" />
+        </motion.g>
+
+        {/* The intact ornate seal — filigree starburst + medallion. It
+            binds the rods while sealed and dissolves outward on unseal. */}
+        <motion.g
+          initial={false}
+          animate={{
+            opacity: state === 'sealed' ? 1 : 0,
+            scale: state === 'sealed' ? 1 : 1.35,
+          }}
+          transition={calm ? { duration: 0 } : { duration: 0.45, ease: 'easeOut' }}
+          style={FILL_BOX_CENTER}
+        >
+          <SealStarburst cx={200} cy={150} />
+          <circle cx="200" cy="150" r="21" fill="url(#msr-gold)" stroke="#7a4d0f" strokeWidth="1.2" />
+          <circle cx="200" cy="150" r="16.5" fill="none" stroke="#fff0c2" strokeWidth="0.8" opacity="0.6" />
+        </motion.g>
+
+        {/* Seal-shatter flash — one-shot on entering unsealing. */}
+        <AnimatePresence>
+          {!calm && state === 'unsealing' && (
+            <motion.circle
+              key="seal-flash"
+              cx={200}
+              cy={150}
+              r={90}
+              fill="url(#msr-core)"
+              initial={{ opacity: 0.95, scale: 0.4 }}
+              animate={{ opacity: 0, scale: 1.5 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.9, ease: 'easeOut' }}
+              style={FILL_BOX_CENTER}
+            />
+          )}
+        </AnimatePresence>
+      </motion.g>
+
+      {/* Slow gold/white motes drifting around the scroll — persistent,
+          dimmed once the revealed artwork takes focus. Transforms ride the
+          wrapper, opacity the circle (see header notes). */}
+      {!calm && (
+        <motion.g initial={false} animate={{ opacity: revealed ? 0.5 : 1 }} transition={fade()}>
+          {MOTES.map(([cx, cy, r, , , color], i) => (
+            <motion.g
+              key={`mote-${i}`}
+              animate={MOTE_WRAP_ANIMATE}
+              transition={MOTE_TRANSITIONS[i]}
+            >
+              <motion.circle
+                cx={cx} cy={cy} r={r} fill={color}
+                animate={MOTE_OPACITY_ANIMATE}
+                transition={MOTE_TRANSITIONS[i]}
+              />
+            </motion.g>
+          ))}
+        </motion.g>
+      )}
+
+      {/* Faint ember sparks — sealed-only decoration, dissolved on unseal. */}
+      {!calm && (
+        <motion.g
+          initial={false}
+          animate={{ opacity: state === 'sealed' ? 1 : 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          {EMBERS.map(([cx, cy, r], i) => (
+            <motion.g
+              key={`ember-${i}`}
+              animate={EMBER_WRAP_ANIMATES[i]}
+              transition={EMBER_TRANSITIONS[i]}
+            >
+              <motion.circle
+                cx={cx} cy={cy} r={r} fill={i % 2 === 0 ? '#f87171' : '#fb923c'}
+                animate={EMBER_OPACITY_ANIMATE}
+                transition={EMBER_TRANSITIONS[i]}
+              />
+            </motion.g>
+          ))}
+        </motion.g>
+      )}
     </svg>
   );
 }

@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build && node scripts/buildChapterGenerationApi.mjs && node scripts/buildStorySeedBlueprintApi.mjs",
     "preview": "vite preview",
     "validate:chapter-effects": "vitest run scripts/validateChapterEffectRules.test.ts",
+    "test:chapter-manifestation": "vitest run src/components/chapter-manifestation",
     "test:chapter-generation": "vitest run src/components/chapter-generation src/server/chapter-generation",
     "test:library": "tsc -b && vitest run src/components/library",
     "test:relics": "vitest run src/server/relics/relicFoundation.test.ts",

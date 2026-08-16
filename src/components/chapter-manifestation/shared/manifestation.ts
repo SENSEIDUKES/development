@@ -10,9 +10,10 @@
  *      Uses the narrative active zone: the manifestation chamber with its
  *      system-selected omen scenes.
  *   2. Media manifestation — standalone media-generation operations (outside
- *      the Reader Chamber and Codex). Uses the media active zone: an
- *      agnostic celestial scroll reveal (sealed → unsealing → revealed)
- *      rather than narrative scenes.
+ *      the Reader Chamber and Codex). Uses the media active zone: a
+ *      Manifestation Reveal (sealed → unsealing → revealed) hosted by an
+ *      agnostic mechanic and rendered through the current visual vessel
+ *      (the celestial scroll).
  *
  * Only the active manifestation zone and the operation-specific language
  * change between the modes; the shell is identical.
@@ -60,6 +61,11 @@ export const AURA_VEIL_EXCLUDED_SYSTEMS = [
 ] as const;
 
 /** The asset family a media operation is forming. */
+import {
+  MANIFESTATION_REVEAL_STATES,
+  type ManifestationRevealState,
+} from './manifestationReveal';
+
 export type MediaKind = 'cover-art' | 'image' | 'audio' | 'visual-motion';
 
 /** Short display label per media kind (operation-specific language). */
@@ -71,22 +77,38 @@ export const MEDIA_KIND_LABEL: Record<MediaKind, string> = {
 };
 
 /**
- * Media reveal progression inside the media active zone (tap-to-unseal):
- *   sealed    — the celestial scroll is closed, its ornate seal intact;
- *               when the caller enables it (the dev chain's `onUnseal` /
- *               `onMediaUnseal` props), this is the tap target — the user's
- *               tap is what unseals the scroll
- *   unsealing — the portal-opening transition: the scroll splits around a
- *               white-gold core while generation is still in flight
- *   revealed  — the reward plainly shown: the scroll hangs fully open with
- *               the finished asset framed between its rods
+ * Media reveal progression inside the media active zone. The Aura Veil's
+ * media mode adopts the agnostic Manifestation Reveal mechanic (see
+ * `manifestationReveal.ts`) — the type stays in this file so existing
+ * callers (the AILoadingVeil chain and the task card builder) keep their
+ * import paths, but the source of truth lives in the shared reveal
+ * contract.
  *
- * The scene component never advances this progression itself — the caller
- * owns every transition.
+ *   sealed    — the manifestation is closed; when the caller enables the
+ *               tap-to-unseal affordance, the sealed scene is the tap
+ *               target — the user's tap is what starts the unseal
+ *   unsealing — the portal-opening transition while generation is in flight
+ *   revealed  — the finished asset is plainly shown
+ *
+ * The reveal never advances this progression itself — the caller owns every
+ * transition. `MediaRevealState` is a named alias of the agnostic
+ * `ManifestationRevealState` for the Aura Veil's media layer.
  */
-export type MediaRevealState = 'sealed' | 'unsealing' | 'revealed';
+export type MediaRevealState = ManifestationRevealState;
 
-/** A finished media asset the scroll can reveal. */
+/**
+ * The three reveal states in display order, mirrored from the shared
+ * Manifestation Reveal contract for the media layer.
+ */
+export const MEDIA_REVEAL_STATES: readonly MediaRevealState[] = MANIFESTATION_REVEAL_STATES;
+
+/**
+ * The asset the media-mode reveal presents in its `revealed` state.
+ * Kept as a named alias of the shared `RevealedContent`; the media layer
+ * requires a non-null `src` + `alt` so callers (and the task card builder)
+ * stay typed against a media-shaped contract, while the shared reveal
+ * mechanic stays vessel-agnostic.
+ */
 export interface RevealedMediaAsset {
   src: string;
   alt: string;
@@ -98,8 +120,9 @@ export interface RevealedMediaAsset {
  *
  * - narrative: `sceneId` names an omen scene; omit it and the system
  *   selects one (seeded per operation) from the narrative zone's registry.
- * - media: `mediaKind` + `reveal` drive the scroll reveal; `asset` is the
- *   produced media once available.
+ * - media: `mediaKind` + `reveal` drive the Manifestation Reveal mechanic;
+ *   `asset` is the produced media once available (a supplied asset implies
+ *   the reveal has advanced to `revealed`).
  */
 export type ManifestationSpec =
   | {
@@ -195,14 +218,18 @@ export const MEDIA_STATUS_LINES = [
   'Sealing the vision in gold',
 ];
 
-/** Tracker detail line for a media operation, by reveal progression. */
+/**
+ * Tracker detail line for a media operation, by reveal progression. The
+ * wording stays vessel-agnostic — the mechanic is "Manifestation Reveal";
+ * the celestial scroll is one vessel.
+ */
 export function mediaTrackerDetail(reveal: MediaRevealState): string {
   switch (reveal) {
     case 'sealed':
-      return 'Celestial scroll sealed';
+      return 'Manifestation sealed';
     case 'revealed':
       return 'Manifestation Complete';
     default:
-      return 'Unsealing the celestial scroll';
+      return 'Unsealing the manifestation';
   }
 }

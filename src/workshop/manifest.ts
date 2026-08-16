@@ -76,7 +76,7 @@ export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'chapter-generation-manifestation',
     title: 'Chapter Generation Manifestation',
-    description: 'Aura Veil state simulator — one shared manifestation shell with narrative and media manifestation modes, driven by one task-card format.',
+    description: 'Aura Veil state simulator with two workshop areas — the full-shell Aura Veil (narrative and media manifestation modes, driven by one task-card format) and a focused standalone Manifestation Reveal preview for the agnostic sealed → unsealing → revealed mechanic and its current celestial scroll vessel.',
     category: 'animations',
     version: 'v1.6',
     source: {

@@ -20,8 +20,11 @@ import type {
  *
  *   - the parchment cylinder unrolls into the open sheet, then grows into
  *     the revealed frame's mat — the same rect the whole way;
- *   - the two gold rods bound around the roll part, tilt, and extend into
- *     the revealed hanging rods, carrying their spear finials with them;
+ *   - the two gold rods lie coaxial inside the roll while sealed — the
+ *     bars hidden, only the tall end-collars and spear finials showing —
+ *     then part, tilt, and extend into the revealed hanging rods: bars
+ *     emerging as they travel, collars shrinking to end-caps, finials
+ *     riding the rod ends outward;
  *   - the seal medallion dissolves in the shatter flash while its radiant
  *     core expands into the unsealing portal; on reveal the same core
  *     blooms over the frame and dissolves as the content coalesces behind
@@ -278,17 +281,42 @@ const INNER_TRIM_GEOM = {
   revealed: { x: 117, y: 85, width: 166, height: 128, rx: 4 },
 } as const;
 
-/** Rod center Y per state (top / bottom). */
+/**
+ * Rod center Y per state (top / bottom). While sealed the two rods lie
+ * coaxial at the roll's axis — the bars hidden inside the parchment, only
+ * the end-collars and finials showing — then part to the sheet's edges.
+ */
 const ROD_Y: Record<string, Record<ManifestationRevealState, number>> = {
-  top: { sealed: 127, unsealing: 102, revealed: 69 },
-  bottom: { sealed: 173, unsealing: 198, revealed: 233 },
+  top: { sealed: 150, unsealing: 102, revealed: 69 },
+  bottom: { sealed: 150, unsealing: 198, revealed: 233 },
 };
 
 /** Rod bar length (scaleX of the full 228-wide rod). */
 const ROD_SCALE_X = { sealed: 0.55, unsealing: 0.66, revealed: 1 } as const;
 
-/** Finial distance from rod center per state (travels with the bar ends). */
-const FINIAL_X = { sealed: 65, unsealing: 77, revealed: 116 } as const;
+/**
+ * Finial/collar distance from the rod center per state. Sealed sits at the
+ * roll's ends (the finials ARE the rolled scroll's end ornaments); the
+ * later states track the extending bar ends.
+ */
+const FINIAL_X = { sealed: 100, unsealing: 77, revealed: 116 } as const;
+
+/**
+ * End-collar geometry per state — left assembly, rod-local coords. The
+ * roll's tall gold end-collar morphs into the hanging rod's small end-cap.
+ */
+const COLLAR_GEOM = {
+  sealed: { x: 2, y: -40, width: 14, height: 80, rx: 7 },
+  unsealing: { x: 8, y: -22, width: 9, height: 44, rx: 5 },
+  revealed: { x: 12, y: -13, width: 5, height: 26, rx: 2.5 },
+} as const;
+
+/** Right-assembly mirror of COLLAR_GEOM (x flipped around the rod end). */
+const COLLAR_GEOM_R = {
+  sealed: { x: -16, y: -40, width: 14, height: 80, rx: 7 },
+  unsealing: { x: -17, y: -22, width: 9, height: 44, rx: 5 },
+  revealed: { x: -17, y: -13, width: 5, height: 26, rx: 2.5 },
+} as const;
 
 /** Seal core radius: seal heart → open portal → bloom covering the frame. */
 const CORE_R = { sealed: 14, unsealing: 46, revealed: 120 } as const;
@@ -430,6 +458,15 @@ export default function CelestialScrollVessel({
     ? { duration: 0 }
     : revealed
       ? { duration: 0.85, delay: 0.35, ease: [0.22, 1, 0.36, 1] }
+      : { duration: 0.2 };
+
+  /** Rod bars: concealed inside the roll while sealed; they fade in once
+      the rods have started parting, so they read as emerging from the
+      unrolling parchment, and slip back out of sight on re-seal. */
+  const barFade: Transition = calm
+    ? { duration: 0 }
+    : state === 'unsealing'
+      ? { duration: 0.3, delay: 0.2, ease: 'easeOut' }
       : { duration: 0.2 };
 
   return (
@@ -743,9 +780,12 @@ export default function CelestialScrollVessel({
           </motion.g>
         )}
 
-        {/* The two rods — bound around the roll while sealed, parting at
-            the sheet's edges while unsealing, extended into the hanging
-            rods once revealed. Springs give the settle a slight overshoot. */}
+        {/* The two rods — while sealed they lie coaxial inside the roll:
+            the bars hidden, only the tall end-collars and outward spear
+            finials showing. On unseal the rods part to the sheet's edges,
+            the bars emerging as they travel, the collars shrinking to
+            end-caps, the finials riding the rod ends outward. Springs
+            give the settle a slight overshoot. */}
         {(['top', 'bottom'] as const).map((pos) => (
           <motion.g
             key={pos}
@@ -758,6 +798,8 @@ export default function CelestialScrollVessel({
             transition={rodSpring}
             style={FILL_BOX_CENTER}
           >
+            {/* Rod bar + sheen — concealed inside the rolled parchment
+                while sealed, emerging as the rods part. */}
             <motion.rect
               x={-114}
               y={-11}
@@ -766,8 +808,8 @@ export default function CelestialScrollVessel({
               rx={11}
               fill="url(#msr-gold)"
               initial={false}
-              animate={{ scaleX: ROD_SCALE_X[state] }}
-              transition={rodSpring}
+              animate={{ scaleX: ROD_SCALE_X[state], opacity: state === 'sealed' ? 0 : 1 }}
+              transition={{ ...rodSpring, opacity: barFade }}
               style={FILL_BOX_CENTER}
             />
             <motion.rect
@@ -777,18 +819,51 @@ export default function CelestialScrollVessel({
               height={5}
               rx={2.5}
               fill="#ffffff"
-              opacity={0.3}
               initial={false}
-              animate={{ scaleX: ROD_SCALE_X[state] }}
-              transition={rodSpring}
+              animate={{ scaleX: ROD_SCALE_X[state], opacity: state === 'sealed' ? 0 : 0.3 }}
+              transition={{ ...rodSpring, opacity: barFade }}
               style={FILL_BOX_CENTER}
             />
+            {/* End assemblies — the roll's tall end-collars morph into the
+                hanging rods' small end-caps; spears ride the rod ends. */}
             <motion.g initial={false} animate={{ x: -FINIAL_X[state] }} transition={rodSpring}>
-              <rect x={10} y={-13} width={5} height={26} rx={2.5} fill="url(#msr-gold)" />
+              <motion.rect
+                fill="url(#msr-gold)"
+                initial={false}
+                animate={{ ...COLLAR_GEOM[state] }}
+                transition={rodSpring}
+              />
+              <motion.rect
+                x={5.5}
+                y={-35}
+                width={3}
+                height={70}
+                rx={1.5}
+                fill="#ffffff"
+                initial={false}
+                animate={{ opacity: state === 'sealed' ? 0.35 : 0 }}
+                transition={{ ...rodSpring, opacity: fade(0.1) }}
+              />
               <SpearFinial x={0} y={0} dir={-1} />
             </motion.g>
             <motion.g initial={false} animate={{ x: FINIAL_X[state] }} transition={rodSpring}>
-              <rect x={-15} y={-13} width={5} height={26} rx={2.5} fill="url(#msr-gold)" />
+              <motion.rect
+                fill="url(#msr-gold)"
+                initial={false}
+                animate={{ ...COLLAR_GEOM_R[state] }}
+                transition={rodSpring}
+              />
+              <motion.rect
+                x={-12.5}
+                y={-35}
+                width={3}
+                height={70}
+                rx={1.5}
+                fill="#ffffff"
+                initial={false}
+                animate={{ opacity: state === 'sealed' ? 0.35 : 0 }}
+                transition={{ ...rodSpring, opacity: fade(0.1) }}
+              />
               <SpearFinial x={0} y={0} dir={1} />
             </motion.g>
           </motion.g>

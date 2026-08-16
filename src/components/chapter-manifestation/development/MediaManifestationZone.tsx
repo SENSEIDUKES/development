@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import ManifestationChamber, { ChamberForegroundMotes } from './ManifestationChamber';
 import ManifestationReveal from './ManifestationReveal';
 import CelestialScrollVessel from './vessels/CelestialScrollVessel';
-import type { MediaManifestation } from '../shared/manifestation';
+import type { MediaManifestation, MediaRevealState } from '../shared/manifestation';
 import { MEDIA_KIND_LABEL } from '../shared/manifestation';
 import type { RevealedContent } from '../shared/manifestationReveal';
 
@@ -12,17 +12,29 @@ import type { RevealedContent } from '../shared/manifestationReveal';
  * media zone's own atmosphere: warm and agnostic, a deliberate counterpoint
  * to the narrative zone's violet battle omens. Kept subtle so the scroll
  * reveal stays the focus.
+ *
+ * The base glow answers the reveal progression: it swells while the
+ * manifestation unseals (buildup), then settles to a warm calm once
+ * revealed (payoff handed to the content).
  */
-const MediaZoneAmbient: React.FC = () => {
+const MediaZoneAmbient: React.FC<{ reveal: MediaRevealState }> = ({ reveal }) => {
   const reduceMotion = useReducedMotion();
+  const glow =
+    reveal === 'unsealing'
+      ? { opacity: 1, scale: 1.08 }
+      : reveal === 'revealed'
+        ? { opacity: 0.85, scale: 1 }
+        : { opacity: 0.9, scale: 1 };
   return (
     <>
-      <div
+      <motion.div
         className="absolute inset-[10%] rounded-full"
         style={{
           background:
             'radial-gradient(circle at 50% 55%, rgba(245,185,66,0.13) 0%, rgba(181,126,30,0.07) 45%, transparent 72%)',
         }}
+        animate={glow}
+        transition={{ duration: reduceMotion ? 0 : 1.1, ease: 'easeInOut' }}
       />
       {!reduceMotion && (
         <>
@@ -96,7 +108,7 @@ export default function MediaManifestationZone({ isVersa, spec, onUnseal }: Medi
   return (
     <ManifestationChamber
       isVersa={isVersa}
-      ambient={<MediaZoneAmbient />}
+      ambient={<MediaZoneAmbient reveal={spec.reveal} />}
       scene={
         <ManifestationReveal
           state={spec.reveal}

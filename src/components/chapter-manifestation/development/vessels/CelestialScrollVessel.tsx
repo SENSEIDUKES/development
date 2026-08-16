@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion, type Transition } from 'motion/react';
 import {
   MEDIA_KIND_LABEL,
@@ -54,6 +54,12 @@ import type {
  * mechanic itself stays vessel-agnostic — the caller adapts the
  * `ManifestationReveal` agnostic content into the vessel's media-shaped
  * `asset` prop at the call site.
+ *
+ * While a supplied asset is still loading (or if it fails to load), the
+ * placeholder vista stays mounted inside the revealed frame beneath the
+ * asset image, so the payoff never lands on a dark void. The readiness
+ * flag lives on the vessel — mounted across all states — so a once-loaded
+ * asset never re-shows the vista on later reveals.
  *
  * The vessel deliberately never advances the reveal state. It renders the
  * current state and reports the tap on the sealed state through the
@@ -435,6 +441,13 @@ export default function CelestialScrollVessel({
   const label = placeholderLabel ?? MEDIA_KIND_LABEL[mediaKind];
   const revealed = state === 'revealed';
 
+  // The most recent asset src that finished loading. Living here on the
+  // vessel (which stays mounted across state changes) means a once-loaded
+  // asset never re-shows the loading vista on later reveals — the browser
+  // cache makes the swap effectively instant.
+  const [readyAssetSrc, setReadyAssetSrc] = useState<string | null>(null);
+  const assetReady = !!asset?.src && readyAssetSrc === asset.src;
+
   /** Geometry morphs ride a soft spring; rods a bouncier one (overshoot). */
   const morph: Transition = calm ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 17 };
   const rodSpring: Transition = calm ? { duration: 0 } : { type: 'spring', stiffness: 170, damping: 13 };
@@ -568,12 +581,19 @@ export default function CelestialScrollVessel({
         <g clipPath="url(#msr-frame-clip)">
           <g clipPath="url(#msr-wipe-clip)">
             {asset ? (
-              <image
-                href={asset.src}
-                x="114" y="82" width="172" height="134"
-                preserveAspectRatio="xMidYMid slice"
-                opacity="0.96"
-              />
+              <>
+                {/* Loading/failure fallback: the vista holds the frame
+                    until the asset's pixels arrive (and stays if they
+                    never do). */}
+                {!assetReady && <VistaPlaceholder label={label} calm={calm} />}
+                <image
+                  href={asset.src}
+                  x="114" y="82" width="172" height="134"
+                  preserveAspectRatio="xMidYMid slice"
+                  opacity="0.96"
+                  onLoad={() => asset.src && setReadyAssetSrc(asset.src)}
+                />
+              </>
             ) : (
               <VistaPlaceholder label={label} calm={calm} />
             )}

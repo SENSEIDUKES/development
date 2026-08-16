@@ -231,8 +231,8 @@ export function ManifestationRevealPreview({
             </h2>
             <p className="mt-2 text-[12px] leading-relaxed text-white/55">
               Agnostic sealed → unsealing → revealed mechanic. The vessel is the
-              celestial scroll; the next visual-design pass keeps the scroll but
-              redesigns the artwork.
+              celestial scroll — artwork upgraded in the 2026-08-16 visual passes
+              (living seal, continuous unravel, sustainable portal loop, settling reveal).
             </p>
           </header>
 

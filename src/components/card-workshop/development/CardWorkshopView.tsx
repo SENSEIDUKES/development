@@ -26,6 +26,7 @@ import type {
 import { createCardWorkshopAudioAdapter } from '../shared/cardWorkshopAudioAdapter';
 import type { WorldCardAudioAsset } from '../../reader-chamber/development/WorldCard';
 import { useDevAudioPlayback } from '../../../audio/DevAudioPlayback';
+import { CardWorkshopContextualReader } from './CardWorkshopContextualReader';
 import { ACTIVE_CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
 import {
   SYSTEM_KIND_OPTIONS,
@@ -59,16 +60,30 @@ function MissingPreview({ children }: { children: React.ReactNode }) {
   );
 }
 
+function isPortraitPreset(preset: CardPreset) {
+  return preset.id === 'preset-human-character'
+    || preset.id === 'preset-nonhuman-individual';
+}
+
 export interface CardWorkshopViewProps {
   initialPresetId?: string;
-  initialMode?: 'overview' | 'inspection';
+  /** `overview` and `inspection` remain accepted for old Workshop links. */
+  initialMode?: 'tabs' | 'contextual' | 'overview' | 'inspection';
+}
+
+function normalizeInitialMode(initialMode: NonNullable<CardWorkshopViewProps['initialMode']>) {
+  return initialMode === 'contextual' || initialMode === 'inspection'
+    ? 'contextual'
+    : 'tabs';
 }
 
 export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
   initialPresetId = 'preset-human-character',
-  initialMode = 'overview',
+  initialMode = 'tabs',
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'inspection'>(initialMode);
+  const [activeTab, setActiveTab] = useState<'tabs' | 'contextual'>(
+    normalizeInitialMode(initialMode),
+  );
   const [selectedPresetId, setSelectedPresetId] = useState<string>(initialPresetId);
   const [overrides, setOverrides] = useState<CardWorkshopOverrides>(
     INITIAL_CARD_WORKSHOP_OVERRIDES,
@@ -111,7 +126,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
   }, []);
 
   useEffect(() => {
-    if (activeTab !== 'overview') return;
+    if (activeTab !== 'tabs') return;
     const activePresetTab = [...(cardTabListRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])]
       .find(tab => tab.dataset.presetId === selectedPresetId);
     activePresetTab?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
@@ -159,7 +174,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
   }[overrides.viewportMode];
 
   // Helper to render a card given its preset and current overrides
-  const renderCardInstance = (preset: CardPreset, isInspection = false) => {
+  const renderCardInstance = (preset: CardPreset) => {
     const isManifestedLocally = preset.codexReveal?.entry?.id
       ? manifestedIds.has(preset.codexReveal.entry.id)
       : false;
@@ -186,7 +201,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
     }
 
     // 2. Codex Card
-    if (preset.kind === 'codex-card' || (isInspection && preset.codexReveal)) {
+    if (preset.kind === 'codex-card') {
       if (!preset.codexReveal) return null;
       if (overrides.codexEntryState === 'missing') {
         return <MissingPreview>No Codex entry resolved, so the Reader emits no Codex Card.</MissingPreview>;
@@ -236,11 +251,11 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
       const activeSystemEvent = preset.systemEvent
         ? {
             ...preset.systemEvent,
-            kind: isInspection && overrides.selectedSystemKind
+            kind: overrides.selectedSystemKind
               ? overrides.selectedSystemKind as SystemEvent['kind']
               : preset.systemEvent.kind,
             fateResult:
-              isInspection && preset.systemEvent.fateResult && overrides.selectedFateOutcome
+              preset.systemEvent.fateResult && overrides.selectedFateOutcome
                 ? {
                     ...preset.systemEvent.fateResult,
                     outcome: overrides.selectedFateOutcome,
@@ -332,6 +347,187 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
     </div>
   );
 
+  const renderTechnicalDetails = () => (
+    <details className="w-full rounded-2xl border border-neutral-800 bg-neutral-950/70 shadow-xl">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-mono text-xs uppercase tracking-widest text-neutral-300 transition-colors hover:text-portal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portal [&::-webkit-details-marker]:hidden">
+        <span>Technical Details</span>
+        <span className="text-[10px] normal-case tracking-normal text-neutral-500">
+          Preset, routing, capabilities, and local-only overrides
+        </span>
+      </summary>
+
+      <div className="space-y-6 border-t border-neutral-800 p-5">
+        <div>
+          <label className="mb-2 block text-xs font-mono font-semibold uppercase tracking-widest text-portal">
+            Select Card Preset
+          </label>
+          <select
+            aria-label="Card preset"
+            value={selectedPresetId}
+            onChange={(event) => setSelectedPresetId(event.target.value)}
+            className="w-full rounded-lg border border-neutral-800 bg-[#020914] px-3 py-2 text-xs font-mono text-signal focus:border-portal focus:outline-none"
+          >
+            {ACTIVE_CARD_PRESETS.map((preset) => (
+              <option key={preset.id} value={preset.id}>
+                {preset.title} — {preset.subtitle}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-4 border-t border-neutral-900 pt-4">
+          <h3 className="text-[11px] font-mono uppercase tracking-wider text-neutral-400">
+            Interactive Overrides
+          </h3>
+
+          {(selectedPreset.kind === 'system-block' || selectedPreset.kind === 'fate-result') && (
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-[10px] font-mono uppercase text-neutral-500">
+                  System Panel Kind
+                </label>
+                <select
+                  aria-label="System panel kind"
+                  value={overrides.selectedSystemKind || selectedPreset.systemEvent?.kind}
+                  onChange={(event) =>
+                    setOverrides((previous) => ({
+                      ...previous,
+                      selectedSystemKind: event.target.value,
+                    }))
+                  }
+                  className="w-full rounded border border-neutral-800 bg-[#020914] px-2.5 py-1.5 text-[11px] font-mono text-signal"
+                >
+                  {SYSTEM_KIND_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedPreset.kind === 'fate-result' && (
+                <div>
+                  <label className="mb-1 block text-[10px] font-mono uppercase text-neutral-500">
+                    Fate Outcome
+                  </label>
+                  <select
+                    aria-label="Fate outcome"
+                    value={overrides.selectedFateOutcome}
+                    onChange={(event) =>
+                      setOverrides((previous) => ({
+                        ...previous,
+                        selectedFateOutcome: event.target.value as CardWorkshopOverrides['selectedFateOutcome'],
+                      }))
+                    }
+                    className="w-full rounded border border-neutral-800 bg-[#020914] px-2.5 py-1.5 text-[11px] font-mono text-signal"
+                  >
+                    {FATE_OUTCOME_OPTIONS.map((outcome) => (
+                      <option key={outcome} value={outcome}>
+                        {outcome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
+
+          {selectedPreset.kind === 'codex-card' && selectedPreset.codexReveal && (
+            <div className="space-y-3">
+              <div>
+                <label className="mb-1 block text-[10px] font-mono uppercase text-neutral-500">
+                  Codex Entry
+                </label>
+                <select
+                  aria-label="Codex entry state"
+                  value={overrides.codexEntryState}
+                  onChange={(event) => setOverrides((previous) => ({
+                    ...previous,
+                    codexEntryState: event.target.value as CardWorkshopOverrides['codexEntryState'],
+                  }))}
+                  className="w-full rounded border border-neutral-800 bg-[#020914] px-2.5 py-1.5 text-[11px] font-mono text-signal"
+                >
+                  <option value="present">Present</option>
+                  <option value="missing">Missing</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[10px] font-mono uppercase text-neutral-500">
+                  Entity Mention
+                </label>
+                <select
+                  aria-label="Entity mention state"
+                  value={overrides.entityMention}
+                  onChange={(event) => setOverrides((previous) => ({
+                    ...previous,
+                    entityMention: event.target.value as CardWorkshopOverrides['entityMention'],
+                  }))}
+                  className="w-full rounded border border-neutral-800 bg-[#020914] px-2.5 py-1.5 text-[11px] font-mono text-signal"
+                >
+                  <option value="reveal">First reveal</option>
+                  <option value="reference">Existing entity reference</option>
+                </select>
+              </div>
+
+              {isPortraitPreset(selectedPreset) && (
+                <div>
+                  <label className="mb-1 block text-[10px] font-mono uppercase text-neutral-500">
+                    Portrait Kind
+                  </label>
+                  <select
+                    aria-label="Portrait kind"
+                    value={overrides.portraitKind}
+                    onChange={(event) => setOverrides((previous) => ({
+                      ...previous,
+                      portraitKind: event.target.value as CardWorkshopOverrides['portraitKind'],
+                    }))}
+                    className="w-full rounded border border-neutral-800 bg-[#020914] px-2.5 py-1.5 text-[11px] font-mono text-signal"
+                  >
+                    <option value="human">Human Portrait</option>
+                    <option value="non-human">Non-Human Portrait</option>
+                  </select>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() =>
+                  setOverrides((previous) => ({ ...previous, isRevealVisible: !previous.isRevealVisible }))
+                }
+                className="flex w-full items-center justify-between rounded border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-xs font-mono text-neutral-300 hover:border-portal/40"
+              >
+                <span>Viewport State:</span>
+                <span className="font-semibold text-portal">
+                  {overrides.isRevealVisible ? 'In-View Triggered' : 'Hidden Initial'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (manifestTimerRef.current) {
+                    clearTimeout(manifestTimerRef.current);
+                    manifestTimerRef.current = null;
+                  }
+                  setManifestedIds(new Set());
+                  setSummoningId(null);
+                }}
+                className="w-full rounded border border-neutral-800 bg-neutral-900/60 px-3 py-1.5 text-[11px] font-mono text-neutral-400 hover:text-neutral-200"
+              >
+                Reset Local Awaken State
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="border-t border-neutral-900 pt-4">
+          {renderExplanationBadge(selectedPreset.explanation)}
+        </div>
+      </div>
+    </details>
+  );
+
   return (
     <div className="min-h-screen bg-[#01070e] text-signal flex flex-col">
       {/* Top Header & Mode Navigation */}
@@ -348,7 +544,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
               </span>
             </h1>
             <p className="text-xs text-neutral-400 font-sans">
-              Inspect and test every Reader card and system panel independently without generating chapters.
+              Compare Reader card presets, then place the same selection in a fixed local chapter without generating anything.
             </p>
           </div>
         </div>
@@ -359,9 +555,9 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
           <div className="flex bg-neutral-900/80 p-1 rounded-lg border border-neutral-800">
             <button
               type="button"
-              onClick={() => setActiveTab('overview')}
+              onClick={() => setActiveTab('tabs')}
               className={`px-3 py-1.5 rounded-md text-xs font-mono font-medium transition-all ${
-                activeTab === 'overview'
+                activeTab === 'tabs'
                   ? 'bg-portal text-void font-bold shadow'
                   : 'text-neutral-400 hover:text-neutral-200'
               }`}
@@ -370,14 +566,14 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab('inspection')}
+              onClick={() => setActiveTab('contextual')}
               className={`px-3 py-1.5 rounded-md text-xs font-mono font-medium transition-all ${
-                activeTab === 'inspection'
+                activeTab === 'contextual'
                   ? 'bg-portal text-void font-bold shadow'
                   : 'text-neutral-400 hover:text-neutral-200'
               }`}
             >
-              Inspection Mode
+              Contextual View
             </button>
           </div>
 
@@ -478,7 +674,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
       {/* Main Content Area */}
       <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full">
         {/* OVERVIEW MODE */}
-        {activeTab === 'overview' && (
+        {activeTab === 'tabs' && (
           <div className="space-y-12">
             <div
               role="tablist"
@@ -553,11 +749,11 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                         type="button"
                         onClick={() => {
                           setSelectedPresetId(preset.id);
-                          setActiveTab('inspection');
+                          setActiveTab('contextual');
                         }}
                         className="text-[10px] font-mono text-portal hover:underline"
                       >
-                        Inspect Deeply →
+                        View in Reader →
                       </button>
                     </div>
 
@@ -609,16 +805,16 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                         type="button"
                         onClick={() => {
                           setSelectedPresetId(preset.id);
-                          setActiveTab('inspection');
+                          setActiveTab('contextual');
                         }}
                         className="text-[10px] font-mono text-portal hover:underline"
                       >
-                        Inspect Deeply →
+                        View in Reader →
                       </button>
                     </div>
 
                     <div className={`mx-auto w-full ${viewportWidthClass} transition-all duration-300`}>
-                      {renderCardInstance(preset, true)}
+                      {renderCardInstance(preset)}
                     </div>
 
                     {renderExplanationBadge(preset.explanation)}
@@ -665,11 +861,11 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                         type="button"
                         onClick={() => {
                           setSelectedPresetId(preset.id);
-                          setActiveTab('inspection');
+                          setActiveTab('contextual');
                         }}
                         className="text-[10px] font-mono text-portal hover:underline"
                       >
-                        Inspect Deeply →
+                        View in Reader →
                       </button>
                     </div>
 
@@ -687,213 +883,38 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
           </div>
         )}
 
-        {/* INDIVIDUAL INSPECTION MODE */}
-        {activeTab === 'inspection' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            {/* Left Sidebar: Preset Selection & Overrides */}
-            <div className="space-y-6 lg:col-span-1 bg-neutral-950/60 p-5 rounded-2xl border border-neutral-800">
+        {activeTab === 'contextual' && (
+          <section className="mx-auto w-full max-w-5xl space-y-6">
+            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-neutral-800 pb-3">
               <div>
-                <label className="text-xs font-mono uppercase tracking-widest text-portal block mb-2 font-semibold">
-                  Select Card Preset
-                </label>
-                <select
-                  aria-label="Card preset"
-                  value={selectedPresetId}
-                  onChange={(e) => setSelectedPresetId(e.target.value)}
-                  className="w-full bg-[#020914] border border-neutral-800 rounded-lg px-3 py-2 text-xs font-mono text-signal focus:border-portal focus:outline-none"
-                >
-                  {ACTIVE_CARD_PRESETS.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.title} — {p.subtitle}
-                    </option>
-                  ))}
-                </select>
+                <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-portal">
+                  Contextual View
+                </p>
+                <h2 className="mt-1 font-display text-lg font-bold text-signal">
+                  {selectedPreset.title}
+                </h2>
+                <p className="mt-1 max-w-2xl text-xs font-sans text-neutral-400">
+                  {selectedPreset.description}
+                </p>
               </div>
-
-              {/* Dynamic Controls based on preset type */}
-              <div className="space-y-4 pt-4 border-t border-neutral-900">
-                <h4 className="text-[11px] font-mono uppercase tracking-wider text-neutral-400">
-                  Interactive Overrides
-                </h4>
-
-                {/* SystemBlock specific controls */}
-                {(selectedPreset.kind === 'system-block' || selectedPreset.kind === 'fate-result') && (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-[10px] font-mono text-neutral-500 uppercase block mb-1">
-                        System Panel Kind
-                      </label>
-                      <select
-                        aria-label="System panel kind"
-                        value={overrides.selectedSystemKind || selectedPreset.systemEvent?.kind}
-                        onChange={(e) =>
-                          setOverrides((prev) => ({
-                            ...prev,
-                            selectedSystemKind: e.target.value,
-                          }))
-                        }
-                        className="w-full bg-[#020914] border border-neutral-800 rounded px-2.5 py-1.5 text-[11px] font-mono text-signal"
-                      >
-                        {SYSTEM_KIND_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {selectedPreset.kind === 'fate-result' && (
-                      <div>
-                        <label className="text-[10px] font-mono text-neutral-500 uppercase block mb-1">
-                          Fate Outcome
-                        </label>
-                        <select
-                          aria-label="Fate outcome"
-                          value={overrides.selectedFateOutcome}
-                          onChange={(e) =>
-                            setOverrides((prev) => ({
-                              ...prev,
-                              selectedFateOutcome: e.target.value as CardWorkshopOverrides['selectedFateOutcome'],
-                            }))
-                          }
-                          className="w-full bg-[#020914] border border-neutral-800 rounded px-2.5 py-1.5 text-[11px] font-mono text-signal"
-                        >
-                          {FATE_OUTCOME_OPTIONS.map((opt) => (
-                            <option key={opt} value={opt}>
-                              {opt}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Reveal specific controls */}
-                {selectedPreset.kind === 'codex-card' && selectedPreset.codexReveal && (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-[10px] font-mono text-neutral-500 uppercase block mb-1">
-                        Codex Entry
-                      </label>
-                      <select
-                        aria-label="Codex entry state"
-                        value={overrides.codexEntryState}
-                        onChange={(event) => setOverrides(prev => ({
-                          ...prev,
-                          codexEntryState: event.target.value as CardWorkshopOverrides['codexEntryState'],
-                        }))}
-                        className="w-full bg-[#020914] border border-neutral-800 rounded px-2.5 py-1.5 text-[11px] font-mono text-signal"
-                      >
-                        <option value="present">Present</option>
-                        <option value="missing">Missing</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-[10px] font-mono text-neutral-500 uppercase block mb-1">
-                        Entity Mention
-                      </label>
-                      <select
-                        aria-label="Entity mention state"
-                        value={overrides.entityMention}
-                        onChange={(event) => setOverrides(prev => ({
-                          ...prev,
-                          entityMention: event.target.value as CardWorkshopOverrides['entityMention'],
-                        }))}
-                        className="w-full bg-[#020914] border border-neutral-800 rounded px-2.5 py-1.5 text-[11px] font-mono text-signal"
-                      >
-                        <option value="reveal">First reveal</option>
-                        <option value="reference">Existing entity reference</option>
-                      </select>
-                    </div>
-
-                    {(selectedPreset.id === 'preset-human-character'
-                      || selectedPreset.id === 'preset-nonhuman-individual') && (
-                      <div>
-                        <label className="text-[10px] font-mono text-neutral-500 uppercase block mb-1">
-                          Portrait Kind
-                        </label>
-                        <select
-                          aria-label="Portrait kind"
-                          value={overrides.portraitKind}
-                          onChange={(event) => setOverrides(prev => ({
-                            ...prev,
-                            portraitKind: event.target.value as CardWorkshopOverrides['portraitKind'],
-                          }))}
-                          className="w-full bg-[#020914] border border-neutral-800 rounded px-2.5 py-1.5 text-[11px] font-mono text-signal"
-                        >
-                          <option value="human">Human Portrait</option>
-                          <option value="non-human">Non-Human Portrait</option>
-                        </select>
-                      </div>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setOverrides((prev) => ({ ...prev, isRevealVisible: !prev.isRevealVisible }))
-                      }
-                      className="w-full py-1.5 px-3 rounded bg-neutral-900 text-xs font-mono text-neutral-300 border border-neutral-800 hover:border-portal/40 flex items-center justify-between"
-                    >
-                      <span>Viewport State:</span>
-                      <span className="text-portal font-semibold">
-                        {overrides.isRevealVisible ? 'In-View Triggered' : 'Hidden Initial'}
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (manifestTimerRef.current) {
-                          clearTimeout(manifestTimerRef.current);
-                          manifestTimerRef.current = null;
-                        }
-                        setManifestedIds(new Set());
-                        setSummoningId(null);
-                      }}
-                      className="w-full py-1.5 px-3 rounded bg-neutral-900/60 text-[11px] font-mono text-neutral-400 border border-neutral-800 hover:text-neutral-200"
-                    >
-                      Reset Local Awaken State
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Developer Metadata */}
-              <div className="pt-4 border-t border-neutral-900">
-                <h4 className="text-[11px] font-mono uppercase tracking-wider text-neutral-400 mb-3">
-                  Architecture & Routing Data
-                </h4>
-                {renderExplanationBadge(selectedPreset.explanation)}
-              </div>
+              <span className="text-[10px] font-mono uppercase text-neutral-500">
+                Device: {overrides.viewportMode}
+              </span>
             </div>
 
-            {/* Right Stage: Interactive Preview Canvas */}
-            <div className="lg:col-span-2 space-y-6 flex flex-col items-center">
-              <div className="w-full bg-neutral-950/80 border border-neutral-800/80 rounded-2xl p-6 sm:p-10 flex flex-col items-center justify-center min-h-[460px] relative overflow-hidden shadow-2xl">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(4,172,255,0.03)_0%,transparent_70%)] pointer-events-none" />
-
-                <div className="w-full flex items-center justify-between border-b border-neutral-900 pb-3 mb-6">
-                  <div>
-                    <h2 className="font-display font-bold text-lg text-signal">
-                      {selectedPreset.title}
-                    </h2>
-                    <p className="text-xs text-neutral-400 font-sans">
-                      {selectedPreset.description}
-                    </p>
-                  </div>
-                  <span className="text-[10px] font-mono text-neutral-500 uppercase">
-                    Mode: {overrides.viewportMode}
-                  </span>
-                </div>
-
-                <div className={`w-full ${viewportWidthClass} transition-all duration-300`}>
-                  {renderCardInstance(selectedPreset, true)}
-                </div>
-              </div>
+            <div className={`mx-auto w-full min-w-0 ${viewportWidthClass} transition-all duration-300`}>
+              <CardWorkshopContextualReader
+                preset={selectedPreset}
+                overrides={overrides}
+                manifestedIds={manifestedIds}
+                generatingRevealId={summoningId}
+                onManifestReveal={handleManifestReveal}
+                audioAdapter={audioAdapter}
+              />
             </div>
-          </div>
+
+            {renderTechnicalDetails()}
+          </section>
         )}
       </main>
     </div>

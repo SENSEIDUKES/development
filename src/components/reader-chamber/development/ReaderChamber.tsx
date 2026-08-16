@@ -61,6 +61,44 @@ interface ReaderChamberProps {
   handleCheckConsistency?: (chapterNumber: number) => Promise<string[]>;
 }
 
+/**
+ * Shared by the full Development Reader Chamber and Workshop contextual
+ * fixtures so card review uses the same Reader surface rather than a copied
+ * approximation of its background, spacing, and visual treatment.
+ */
+export function getReaderChamberSurfaceClass(
+  themeOverride: string | undefined,
+  dynamicShading = '',
+  isShaking = false,
+) {
+  const theme = themeOverride || "void";
+  const baseClasses = (() => {
+    if (theme === "crimson")
+      return "bg-[#0f0404] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0a0a] to-[#0a0202] text-[#e0cfcf] border-t border-[#8B0000]/30 selection:bg-[#8B0000]/40 selection:text-white";
+    if (theme === "abyss")
+      return "bg-[#05080f] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#0a1222] to-[#020408] text-[#ccd4e0] border-t border-[#04ACFF]/20 selection:bg-[#04ACFF]/40 selection:text-white";
+    if (theme === "sepia")
+      return "bg-[#1a1614] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#2a2420] to-[#14100e] text-[#d6c5b3] border-t border-[#8b5a2b]/30 selection:bg-[#8b5a2b]/40 selection:text-white";
+    if (theme === "emerald")
+      return "bg-[#050f0a] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#0a1c12] to-[#020805] text-[#b9d6c1] border-t border-[#0f5132]/40 selection:bg-[#0f5132]/40 selection:text-white";
+    return "bg-[#0a0a0a] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#141414] to-[#050505] text-[#e8e8e8] border-t border-neutral-800/60 selection:bg-neutral-700 selection:text-white";
+  })();
+
+  const themeClasses = dynamicShading
+    ? `${baseClasses} ${dynamicShading}`
+    : theme === "crimson"
+      ? `${baseClasses} shadow-[inset_0_0_120px_rgba(139,0,0,0.08)] ring-1 ring-[#8B0000]/10`
+      : theme === "abyss"
+        ? `${baseClasses} shadow-[inset_0_0_120px_rgba(4,172,255,0.06)] ring-1 ring-[#04ACFF]/10`
+        : theme === "sepia"
+          ? `${baseClasses} shadow-[inset_0_0_120px_rgba(139,90,43,0.08)] ring-1 ring-[#8b5a2b]/10`
+          : theme === "emerald"
+            ? `${baseClasses} shadow-[inset_0_0_120px_rgba(15,81,50,0.1)] ring-1 ring-[#0f5132]/20`
+            : `${baseClasses} shadow-[inset_0_0_120px_rgba(255,255,255,0.02)] ring-1 ring-white/5`;
+
+  return `flex flex-col min-h-[85dvh] rounded-t-xl transition-colors duration-500 relative overflow-clip ${themeClasses} ${isShaking ? "animate-screen-shake" : ""}`;
+}
+
 export default function ReaderChamber({
   chapters,
   currentPowerStage,
@@ -432,33 +470,6 @@ export default function ReaderChamber({
       return "shadow-[inset_0_0_180px_rgba(139,0,0,0.35)] ring-1 ring-red-900/50 animate-[pulse_3.5s_ease-in-out_infinite]";
     }
     return "";
-  };
-
-  const getThemeClasses = () => {
-    const t = currentPrefs.themeOverride || "void";
-    const baseClasses = (() => {
-      if (t === "crimson")
-        return "bg-[#0f0404] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0a0a] to-[#0a0202] text-[#e0cfcf] border-t border-[#8B0000]/30 selection:bg-[#8B0000]/40 selection:text-white";
-      if (t === "abyss")
-        return "bg-[#05080f] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#0a1222] to-[#020408] text-[#ccd4e0] border-t border-[#04ACFF]/20 selection:bg-[#04ACFF]/40 selection:text-white";
-      if (t === "sepia")
-        return "bg-[#1a1614] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#2a2420] to-[#14100e] text-[#d6c5b3] border-t border-[#8b5a2b]/30 selection:bg-[#8b5a2b]/40 selection:text-white";
-      if (t === "emerald")
-        return "bg-[#050f0a] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#0a1c12] to-[#020805] text-[#b9d6c1] border-t border-[#0f5132]/40 selection:bg-[#0f5132]/40 selection:text-white";
-      return "bg-[#0a0a0a] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#141414] to-[#050505] text-[#e8e8e8] border-t border-neutral-800/60 selection:bg-neutral-700 selection:text-white"; // default void style
-    })();
-    
-    const dynamicShading = getDynamicShadingClasses();
-    if (dynamicShading) {
-      return `${baseClasses} ${dynamicShading}`;
-    }
-    
-    // Add default static shadow if no dynamic shading
-    if (t === "crimson") return `${baseClasses} shadow-[inset_0_0_120px_rgba(139,0,0,0.08)] ring-1 ring-[#8B0000]/10`;
-    if (t === "abyss") return `${baseClasses} shadow-[inset_0_0_120px_rgba(4,172,255,0.06)] ring-1 ring-[#04ACFF]/10`;
-    if (t === "sepia") return `${baseClasses} shadow-[inset_0_0_120px_rgba(139,90,43,0.08)] ring-1 ring-[#8b5a2b]/10`;
-    if (t === "emerald") return `${baseClasses} shadow-[inset_0_0_120px_rgba(15,81,50,0.1)] ring-1 ring-[#0f5132]/20`;
-    return `${baseClasses} shadow-[inset_0_0_120px_rgba(255,255,255,0.02)] ring-1 ring-white/5`;
   };
 
   // --- Rendering UI States ---
@@ -962,7 +973,11 @@ export default function ReaderChamber({
 
   return (
     <div
-      className={`flex flex-col min-h-[85dvh] rounded-t-xl transition-colors duration-500 relative overflow-clip ${getThemeClasses()} ${isShaking ? "animate-screen-shake" : ""}`}
+      className={getReaderChamberSurfaceClass(
+        currentPrefs.themeOverride,
+        getDynamicShadingClasses(),
+        isShaking,
+      )}
       id="reader-chamber-root"
     >
       {particleCount > 0 && (

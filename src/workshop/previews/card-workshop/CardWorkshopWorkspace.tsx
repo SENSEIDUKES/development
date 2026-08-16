@@ -21,7 +21,7 @@ export const CardWorkshopWorkspace: React.FC = () => {
       renderDevelopment={() => (
         <div className="w-full h-full bg-[#01070e]">
           <CardWorkshopView
-            initialMode="overview"
+            initialMode="tabs"
           />
         </div>
       )}

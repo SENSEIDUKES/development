@@ -3,8 +3,11 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CardWorkshopView } from './CardWorkshopView';
+import { createCardWorkshopContextualFixture } from './CardWorkshopContextualReader';
+import { getReaderChamberSurfaceClass } from '../../reader-chamber/development/ReaderChamber';
 import { CardWorkshopWorkspace } from '../../../workshop/previews/card-workshop/CardWorkshopWorkspace';
 import { ACTIVE_CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
+import { INITIAL_CARD_WORKSHOP_OVERRIDES } from '../../../workshop/previews/card-workshop/previewStates';
 import { resetMockState } from '../../reader-chamber/shared/stubs';
 import type { WorldCardEvent } from '../../reader-chamber/shared/types';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
@@ -37,6 +40,24 @@ const clickButton = async (label: string) => {
   });
 };
 
+const selectByLabel = async (label: string, value: string) => {
+  const target = container.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`);
+  expect(target, `Expected select "${label}" to render`).toBeTruthy();
+  await act(async () => {
+    target!.value = value;
+    target!.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+};
+
+const openTechnicalDetails = async () => {
+  const details = container.querySelector<HTMLDetailsElement>('details');
+  expect(details, 'Expected Technical Details to render').toBeTruthy();
+  await act(async () => {
+    details!.open = true;
+  });
+  expect(details!.open).toBe(true);
+};
+
 const audioCard = {
   entityType: 'creature',
   entityName: 'Test Echo',
@@ -54,28 +75,12 @@ const createPlayer = (): DevAudioPlayerBridge => ({
   subscribeToQueueEnd: vi.fn(),
 });
 
-const selectByLabel = async (label: string, value: string) => {
-  const target = container.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`);
-  expect(target, `Expected select "${label}" to render`).toBeTruthy();
-  await act(async () => {
-    target!.value = value;
-    target!.dispatchEvent(new Event('change', { bubbles: true }));
-  });
-};
-
 class MockIntersectionObserver {
   observe = vi.fn();
   unobserve = vi.fn();
   disconnect = vi.fn();
 }
 
-// The DEV shared audio player is wrapped around every render now that the
-// Card Workshop adapter routes through `useDevAudioPlayback`. JSDOM exposes
-// `HTMLMediaElement.play` / `pause` / `load` as no-op stubs that return
-// `undefined`, so the package would otherwise see an undefined promise and
-// crash on `.then(...)`. Force the methods to return a resolved promise
-// (or undefined for the synchronous stoppers) so the package's lifecycle
-// hooks can run — see `installAudioMediaStubs` in `test-utils`.
 beforeEach(() => {
   resetMockState();
   globalThis.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
@@ -105,16 +110,18 @@ describe('CardWorkshopWorkspace', () => {
 
     await clickButton('Original Reference');
     expect(container.textContent).toContain('Locked production baseline');
-    expect(container.textContent).not.toContain('Interactive Overrides');
+    expect(container.textContent).not.toContain('Technical Details');
 
     await clickButton('Development');
     expect(container.textContent).toContain('Development Only');
+    expect(getButton('Card Type Tabs')).toBeTruthy();
+    expect(getButton('Contextual View')).toBeTruthy();
   });
 });
 
 describe('CardWorkshopView', () => {
-  it('gives every card type its own tab and mounts only the selected presentation', async () => {
-    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="overview" />)));
+  it('keeps the accessible Card Type Tabs gallery and mounts only the selected presentation', async () => {
+    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="tabs" />)));
 
     const tablist = container.querySelector('[role="tablist"][aria-label="Card types"]');
     const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
@@ -123,9 +130,7 @@ describe('CardWorkshopView', () => {
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
 
     for (const preset of ACTIVE_CARD_PRESETS) {
-      expect(tabs.some(tab => tab.textContent?.includes(
-        preset.title,
-      ))).toBe(true);
+      expect(tabs.some(tab => tab.textContent?.includes(preset.title))).toBe(true);
     }
 
     expect(container.textContent).toContain('Codex Cards');
@@ -144,46 +149,81 @@ describe('CardWorkshopView', () => {
     expect(container.textContent).toContain('Apex Abyss Beast');
     expect(container.textContent).not.toContain('Reveal · Human Portrait');
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
+  });
+
+  it('switches between Card Type Tabs and Contextual View without losing the selected preset or override state', async () => {
+    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="tabs" />)));
 
     await clickButton('Fate Result Card');
-    expect(container.textContent).toContain('System Panels & Fate Outcomes');
+    await clickButton('Contextual View');
+    expect(container.querySelector('[data-testid="card-workshop-contextual-reader"]')).toBeTruthy();
     expect(container.textContent).toContain('FATE RESULT: FATE SCARRED');
-    expect(container.textContent).not.toContain('Apex Abyss Beast');
-    expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
+
+    await openTechnicalDetails();
+    await selectByLabel('Fate outcome', 'DOOM MANIFESTED');
+    expect(container.textContent).toContain('FATE RESULT: DOOM MANIFESTED');
+
+    await clickButton('Card Type Tabs');
+    const selectedTab = container.querySelector<HTMLButtonElement>('#card-tab-preset-fate-result');
+    expect(selectedTab?.getAttribute('aria-selected')).toBe('true');
+    expect(container.textContent).toContain('FATE RESULT: DOOM MANIFESTED');
+
+    await clickButton('Contextual View');
+    expect(container.textContent).toContain('FATE RESULT: DOOM MANIFESTED');
   });
 
-  it('switches presets and preserves the Bestiary species versus Non-Human Portrait distinction', async () => {
-    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="inspection" />)));
+  it('uses the real ReaderViewport path with highlighted prose before and after the selected Codex card', () => {
+    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)));
 
-    await selectByLabel('Card preset', 'preset-nonhuman-individual');
-    expect(container.textContent).toContain('ReaderCodex > Portraits (Non-Human Section)');
-    expect(container.textContent).toContain('Non-Human Portrait');
+    const reader = container.querySelector<HTMLElement>('[data-testid="card-workshop-contextual-reader"]');
+    expect(reader).toBeTruthy();
+    const readerRoot = reader?.querySelector<HTMLElement>('#reader-chamber-root');
+    expect(readerRoot).toBeTruthy();
+    expect(readerRoot?.className).toBe(getReaderChamberSurfaceClass('void'));
+    expect(reader?.querySelector('.reader-prose')).toBeTruthy();
+    expect(reader?.textContent).toContain('Ashes of the Ninth Meridian • Chapter 1');
+    expect(reader?.textContent).toContain('Rain threaded down the bronze eaves');
+    expect(reader?.textContent).toContain('Then the thunder moved on');
+
+    const highlightedMention = [...(reader?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
+      .find(element => element.textContent === 'Aster');
+    expect(highlightedMention).toBeTruthy();
+
+    const cardTitle = [...(reader?.querySelectorAll('h4') ?? [])]
+      .find(element => element.textContent === 'Rin');
+    const beforeCard = reader?.querySelector('#para-1');
+    const afterCard = reader?.querySelector('#para-3');
+    expect(cardTitle).toBeTruthy();
+    expect(beforeCard).toBeTruthy();
+    expect(afterCard).toBeTruthy();
+    expect(beforeCard!.compareDocumentPosition(cardTitle!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(cardTitle!.compareDocumentPosition(afterCard!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('renders the selected World Card and System Panel inside the same deterministic Reader fixture', async () => {
+    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)));
+    await openTechnicalDetails();
 
     await selectByLabel('Card preset', 'preset-creature-species');
-    expect(container.textContent).toContain('ReaderCodex > Bestiary');
-    expect(container.textContent).toContain('Highlighted Bestiary Species');
+    const reader = container.querySelector<HTMLElement>('[data-testid="card-workshop-contextual-reader"]');
+    expect(reader?.textContent).toContain('Apex Abyss Beast');
+    expect(reader?.textContent).toContain('Then the thunder moved on');
 
-    const species = ACTIVE_CARD_PRESETS.find(preset => preset.id === 'preset-creature-species')!;
-    const individual = ACTIVE_CARD_PRESETS.find(preset => preset.id === 'preset-nonhuman-individual')!;
-    expect(species.explanation.capabilities.hasManifestAction).toBe(false);
-    expect(species.kind).toBe('world-card');
-    expect(individual.explanation.capabilities.hasManifestAction).toBe(true);
-    expect(individual.kind).toBe('codex-card');
+    await selectByLabel('Card preset', 'preset-system-status');
+    expect(reader?.textContent).toContain('Meridian Status & Vitality Flow');
+    expect(reader?.textContent).toContain('Then the thunder moved on');
   });
 
-  it('covers existing image, Manifest/Awaken, and missing-image states', async () => {
+  it('keeps image, Manifest/Awaken, Codex, entity-mention, portrait, audio, and mute overrides active in Contextual View', async () => {
     vi.useFakeTimers();
     act(() => root.render(
       renderWithDevAudio(
-        <CardWorkshopView
-          initialMode="inspection"
-          initialPresetId="preset-nonhuman-individual"
-        />,
+        <CardWorkshopView initialMode="contextual" initialPresetId="preset-nonhuman-individual" />,
       ),
     ));
+    await openTechnicalDetails();
 
     expect(container.querySelector('img[alt="Lei"]')).toBeTruthy();
-
     await selectByLabel('Image state', 'manifest');
     expect(getButton('Manifest portrait for Lei')).toBeTruthy();
     await clickButton('Manifest portrait for Lei');
@@ -193,130 +233,95 @@ describe('CardWorkshopView', () => {
       vi.advanceTimersByTime(1200);
     });
     expect(getButton('Manifest portrait for Lei')).toBeTruthy();
-    expect(container.querySelector('img[alt="Lei"]')).toBeFalsy();
-
-    await selectByLabel('Image state', 'missing');
-    expect(getButton('Manifest portrait for Lei')).toBeFalsy();
-    expect(container.querySelector('img[alt="Backdrop"]')?.getAttribute('src'))
-      .toBe('/card-workshop/reveal-backdrop.svg');
-  });
-
-  it('covers Codex present/missing and first-reveal/existing-reference behavior', async () => {
-    act(() => root.render(
-      renderWithDevAudio(
-        <CardWorkshopView
-          initialMode="inspection"
-          initialPresetId="preset-nonhuman-individual"
-        />,
-      ),
-    ));
 
     await selectByLabel('Codex entry state', 'missing');
-    expect(container.textContent).toContain('No Codex entry resolved');
-
+    expect(container.textContent).not.toContain('Reveal · character');
     await selectByLabel('Codex entry state', 'present');
     await selectByLabel('Entity mention state', 'reference');
-    expect(container.textContent).toContain('Existing entity reference');
-
+    expect(container.textContent).not.toContain('Reveal · character');
     await selectByLabel('Entity mention state', 'reveal');
-    expect(container.textContent).toContain('Reveal · Non-Human Portrait');
-
+    expect(container.textContent).toContain('Reveal · character');
+    await selectByLabel('Image state', 'existing');
     await selectByLabel('Portrait kind', 'human');
     expect(container.querySelector('img[alt="Lei"]')?.getAttribute('src'))
       .toBe('/card-workshop/human-portrait.svg');
-    await selectByLabel('Image state', 'manifest');
-    expect(getButton('Manifest portrait for Lei')).toBeTruthy();
-  });
 
-  it('simulates audio available, unavailable, loading, playing, and muted without media playback', async () => {
-    vi.useFakeTimers();
-    act(() => root.render(
-      renderWithDevAudio(
-        <CardWorkshopView initialMode="inspection" initialPresetId="preset-creature-species" />,
-      ),
-    ));
-
+    await selectByLabel('Card preset', 'preset-creature-species');
     expect(container.textContent).toContain('Tap to Listen');
-
     await selectByLabel('Audio state', 'unavailable');
     expect(container.textContent).toContain('Echo Unavailable');
-
     await selectByLabel('Audio state', 'loading');
     await clickButton('Tap to Listen');
     expect(container.textContent).toContain('Channeling...');
-
     await selectByLabel('Audio state', 'playing');
     await clickButton('Tap to Listen');
     expect(container.textContent).toContain('Resonating...');
-
     await clickButton('Simulate Audio Mute');
     expect(container.textContent).toContain('Mute: On');
-    vi.useRealTimers();
   });
 
-  it('changes SystemBlock kinds and renders FateResultCard only through SystemBlock', async () => {
-    act(() => root.render(
-      renderWithDevAudio(
-        <CardWorkshopView initialMode="inspection" initialPresetId="preset-system-status" />,
-      ),
-    ));
+  it('preserves the device-size controls for the contextual Reader preview', async () => {
+    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)));
 
-    await selectByLabel('System panel kind', 'skill_acquired');
-    expect(container.textContent).toContain('Meridian Status & Vitality Flow');
-
-    await selectByLabel('Card preset', 'preset-fate-result');
-    expect(container.textContent).toContain('FATE RESULT: FATE SCARRED');
-    await selectByLabel('Fate outcome', 'DOOM MANIFESTED');
-    expect(container.textContent).toContain('FATE RESULT: DOOM MANIFESTED');
-  });
-
-  it('switches mobile, tablet, and desktop preview widths', async () => {
-    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="inspection" />)));
+    const contextualStage = () => container.querySelector<HTMLElement>(
+      '[data-testid="card-workshop-contextual-reader"]',
+    )?.parentElement;
 
     await clickButton('Mobile Viewport');
-    expect(container.querySelector('[class~="max-w-[375px]"]')).toBeTruthy();
+    expect(contextualStage()?.className).toContain('max-w-[375px]');
     await clickButton('Tablet Viewport');
-    expect(container.querySelector('[class~="max-w-[768px]"]')).toBeTruthy();
+    expect(contextualStage()?.className).toContain('max-w-[768px]');
     await clickButton('Desktop Viewport');
-    expect(container.querySelector('.max-w-4xl')).toBeTruthy();
+    expect(contextualStage()?.className).toContain('max-w-4xl');
   });
 
-  it('uses local fixtures and causes no model, API, story-write, or persistence side effects', async () => {
+  it('uses only local fixture data and performs no model, API, or persistence activity', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('Unexpected request'));
     const storageSpy = vi.spyOn(Storage.prototype, 'setItem');
+    const humanPreset = ACTIVE_CARD_PRESETS.find(preset => preset.id === 'preset-human-character')!;
+    const fixture = createCardWorkshopContextualFixture(
+      humanPreset,
+      INITIAL_CARD_WORKSHOP_OVERRIDES,
+      new Set(),
+    );
 
-    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="overview" />)));
-    await clickButton('Inspection Mode');
+    expect(fixture.activeStory.assignedRevealBackdrops?.['codex-char-rin'])
+      .toBe('/card-workshop/reveal-backdrop.svg');
+    expect(fixture.chapter.blocks?.map(block => block.id)).toEqual([
+      'card-workshop-context-opening',
+      'card-workshop-context-mention',
+      'card-workshop-context-card',
+      'card-workshop-context-aftermath',
+    ]);
+
+    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)));
+    await openTechnicalDetails();
     await selectByLabel('Card preset', 'preset-random-beast');
+    await clickButton('Card Type Tabs');
+    await clickButton('Contextual View');
 
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(storageSpy).not.toHaveBeenCalled();
-    expect(container.querySelector('img[src^="http"]')).toBeFalsy();
+    expect(container.querySelector('[data-testid="card-workshop-contextual-reader"] img[src^="http"]')).toBeFalsy();
   });
 
-  it('dispatches the real @seihouse/audio-player session when a World Card is tapped', async () => {
+  it('dispatches the real @seihouse/audio-player session when a contextual World Card is tapped', async () => {
     vi.useFakeTimers();
-
-    // Spy on the underlying HTMLMediaElement play() to observe that the
-    // shared audio session was actually asked to start the resolved track.
     const playSpy = vi
       .spyOn(HTMLMediaElement.prototype, 'play')
       .mockResolvedValue(undefined);
 
     act(() => root.render(
       renderWithDevAudio(
-        <CardWorkshopView initialMode="inspection" initialPresetId="preset-creature-species" />,
+        <CardWorkshopView initialMode="contextual" initialPresetId="preset-creature-species" />,
       ),
     ));
 
     await clickButton('Tap to Listen');
-
     await act(async () => {
       vi.advanceTimersByTime(50);
     });
-
     expect(playSpy).toHaveBeenCalled();
-    vi.useRealTimers();
   });
 });
 

@@ -15,6 +15,7 @@ import { ContextInspector } from './ContextInspector';
 import { getReaderTypography, getReadingDirection } from '../shared/readerTypography';
 import { createCodexHighlighter } from '../../reader-codex/shared/codexHighlighting';
 import { CodexCard, FALLBACK_BACKDROPS } from './CodexCard';
+import type { WorldCardAudioAdapter } from './WorldCard';
 
 interface ReaderViewportProps {
   readerRef: React.RefObject<HTMLDivElement | null>;
@@ -73,8 +74,15 @@ interface ReaderViewportProps {
   showLegend: boolean;
   setShowLegend: (show: boolean) => void;
   hasSystemBlocks: boolean;
-  
+
   chapters: ReaderChapter[];
+  /**
+   * Development-only dependency seam used by the Card Workshop contextual
+   * fixture. Omitting it preserves the Reader's normal World Card lifecycle.
+   */
+  worldCardAudioAdapter?: WorldCardAudioAdapter;
+  /** Resets a Workshop-simulated card when its local audio state changes. */
+  worldCardPresentationKey?: string;
 }
 
 export function ReaderViewport({
@@ -126,6 +134,8 @@ export function ReaderViewport({
   setShowLegend,
   hasSystemBlocks,
   chapters,
+  worldCardAudioAdapter,
+  worldCardPresentationKey,
 }: ReaderViewportProps) {
   const readingLanguage = activeTranslationContent ? preferredLang : 'en';
   const typography = getReaderTypography(currentPrefs);
@@ -607,7 +617,11 @@ export function ReaderViewport({
                           && (!isSenMode || immersion.imagePopups)
                         ) {
                           revealCard = isRevealed ? (
-                            <WorldCard card={block.worldCard} />
+                            <WorldCard
+                              key={worldCardPresentationKey}
+                              card={block.worldCard}
+                              audioAdapter={worldCardAudioAdapter}
+                            />
                           ) : null;
                         } else if (visualCodexTerm && (!isSenMode || immersion.imagePopups)) {
                           revealCard = (

@@ -562,7 +562,7 @@ export default function CelestialScrollVessel({
 }: CelestialScrollVesselProps) {
   const reduceMotion = useReducedMotion();
   const calm = !!reduceMotion;
-  const label = asset?.alt ?? placeholderLabel ?? MEDIA_KIND_LABEL[mediaKind];
+  const label = placeholderLabel ?? MEDIA_KIND_LABEL[mediaKind];
 
   return (
     <svg

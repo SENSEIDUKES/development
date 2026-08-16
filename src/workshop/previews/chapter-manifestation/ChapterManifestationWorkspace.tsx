@@ -416,12 +416,14 @@ function AuraVeilSimulationControls({
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
+            type="button"
             onClick={sim.openVeil}
             className="flex items-center justify-center gap-2 px-4 py-3 bg-human/20 border border-human/40 hover:bg-human/30 text-human text-sm font-semibold tracking-wide rounded-lg transition-colors"
           >
             <Sparkles size={15} /> Open Veil
           </button>
           <button
+            type="button"
             onClick={sim.stopSimulation}
             disabled={!sim.isGenerating}
             className="flex items-center justify-center gap-2 px-4 py-3 bg-red-900/20 text-red-400 hover:bg-red-900/40 text-xs rounded disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
@@ -553,6 +555,7 @@ function WorkshopAreaSwitcher({
             <button
               key={opt.id}
               role="tab"
+              id={`area-${opt.id}`}
               type="button"
               aria-selected={selected}
               aria-controls={`area-panel-${opt.id}`}

@@ -80,7 +80,7 @@ export interface ManifestationRevealProps {
   'data-testid'?: string;
 }
 
-const REVEAL_STATE_TRANSITION_MS = 0.45;
+const REVEAL_STATE_TRANSITION_S = 0.45;
 
 /**
  * The cross-state transition. Vessels handle their own intra-state motion;
@@ -99,7 +99,7 @@ const RevealScene: React.FC<{
       initial={{ opacity: 0, scale: 0.94 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.97 }}
-      transition={{ duration: calm ? 0 : REVEAL_STATE_TRANSITION_MS, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: calm ? 0 : REVEAL_STATE_TRANSITION_S, ease: [0.22, 1, 0.36, 1] }}
     >
       {vessel}
     </motion.div>
@@ -136,6 +136,7 @@ export default function ManifestationReveal({
       <div
         className={containerClassName}
         data-reveal-container="interactive"
+        data-reveal-state={state}
         data-testid={dataTestId}
       >
         <motion.button

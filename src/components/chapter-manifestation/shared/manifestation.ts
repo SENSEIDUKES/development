@@ -61,6 +61,11 @@ export const AURA_VEIL_EXCLUDED_SYSTEMS = [
 ] as const;
 
 /** The asset family a media operation is forming. */
+import {
+  MANIFESTATION_REVEAL_STATES,
+  type ManifestationRevealState,
+} from './manifestationReveal';
+
 export type MediaKind = 'cover-art' | 'image' | 'audio' | 'visual-motion';
 
 /** Short display label per media kind (operation-specific language). */
@@ -86,20 +91,16 @@ export const MEDIA_KIND_LABEL: Record<MediaKind, string> = {
  *   revealed  — the finished asset is plainly shown
  *
  * The reveal never advances this progression itself — the caller owns every
- * transition. `MediaRevealState` is kept as a named alias of the agnostic
+ * transition. `MediaRevealState` is a named alias of the agnostic
  * `ManifestationRevealState` for the Aura Veil's media layer.
  */
-export type MediaRevealState = 'sealed' | 'unsealing' | 'revealed';
+export type MediaRevealState = ManifestationRevealState;
 
 /**
  * The three reveal states in display order, mirrored from the shared
  * Manifestation Reveal contract for the media layer.
  */
-export const MEDIA_REVEAL_STATES: readonly MediaRevealState[] = [
-  'sealed',
-  'unsealing',
-  'revealed',
-] as const;
+export const MEDIA_REVEAL_STATES: readonly MediaRevealState[] = MANIFESTATION_REVEAL_STATES;
 
 /**
  * The asset the media-mode reveal presents in its `revealed` state.

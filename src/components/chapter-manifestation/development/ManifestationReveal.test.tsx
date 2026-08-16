@@ -2,6 +2,19 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Force every test in this file through the reduced-motion path. None of
+// the assertions here depend on the cross-state AnimatePresence actually
+// animating; the cross-state transition only governs opacity/scale and
+// the button's `whileTap`. Under jsdom the default `useReducedMotion`
+// returns `null` (no media-query match), which would never exercise the
+// `calm` branch in `RevealScene`. Mocking the hook to return `true` makes
+// the reduced-motion guarantees testable.
+vi.mock('motion/react', async () => {
+  const actual = await vi.importActual<typeof import('motion/react')>('motion/react');
+  return { ...actual, useReducedMotion: () => true };
+});
+
 import ManifestationReveal from './ManifestationReveal';
 import {
   isManifestationRevealInteractive,
@@ -227,7 +240,6 @@ describe('ManifestationReveal — caller ownership', () => {
   });
 
   it('renders whatever state the caller supplies, including jumping to revealed', () => {
-    const { rerender } = { rerender: root.render.bind(root) as (ui: React.ReactNode) => void };
     renderReveal(
       <ManifestationReveal
         state="sealed"
@@ -237,7 +249,7 @@ describe('ManifestationReveal — caller ownership', () => {
     expect(findScene()!.getAttribute('data-reveal-state')).toBe('sealed');
 
     act(() => {
-      rerender(
+      root.render(
         <ManifestationReveal
           state="revealed"
           vessel={<TestVessel marker="v" state="revealed" />}
@@ -332,30 +344,34 @@ describe('ManifestationReveal — accessibility', () => {
 });
 
 describe('ManifestationReveal — reduced motion', () => {
-  it('marks the cross-state transition as instant when prefers-reduced-motion is set', () => {
-    // motion/react's useReducedMotion reads from a context. We exercise the
-    // contract by mocking the hook via a spy: when calm is true, the
-    // AnimatePresence children still mount, but the cross-state
-    // transition duration is 0.
+  it('still renders the vessel and button when reduced motion is active, and the tap still fires', () => {
+    // The vi.mock at the top of this file forces `useReducedMotion` to
+    // return `true`, so `calm` is `true` and `RevealScene` selects the
+    // `duration: 0` AnimatePresence branch.
+    const onUnseal = vi.fn();
     renderReveal(
       <ManifestationReveal
         state="sealed"
-        onUnseal={() => undefined}
+        onUnseal={onUnseal}
         vessel={<TestVessel marker="v" state="sealed" />}
       />,
     );
 
-    // Sanity: the vessel mounted and the button is reachable.
+    // The vessel mounts in reduced-motion mode (its own artwork motion
+    // is independently handled inside the vessel; the mechanic just
+    // keeps the scene in the DOM).
     expect(findVessel('v')).toBeTruthy();
+    // The button is still a real `<button type="button">` and remains
+    // reachable so users on reduced-motion systems can still tap to
+    // unseal.
     expect(findButton()).toBeTruthy();
+    expect(findButton()!.tagName).toBe('BUTTON');
+    expect(findButton()!.getAttribute('type')).toBe('button');
 
-    // The mechanic passes a calm-mode `duration: 0` to the AnimatePresence
-    // motion wrapper when reduced motion is active (see RevealScene).
-    // Under jsdom the hook resolves to null (no motion preference), so
-    // we just assert the mechanic preserves vessel rendering in both
-    // modes — a structural guarantee that the reduced-motion fallback
-    // never throws or removes the vessel.
-    expect(container.querySelector('[data-reveal-state="sealed"]')).toBeTruthy();
+    act(() => {
+      findButton()!.click();
+    });
+    expect(onUnseal).toHaveBeenCalledTimes(1);
   });
 });
 

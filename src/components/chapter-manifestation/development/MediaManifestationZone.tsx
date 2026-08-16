@@ -4,6 +4,7 @@ import ManifestationChamber, { ChamberForegroundMotes } from './ManifestationCha
 import ManifestationReveal from './ManifestationReveal';
 import CelestialScrollVessel from './vessels/CelestialScrollVessel';
 import type { MediaManifestation } from '../shared/manifestation';
+import { MEDIA_KIND_LABEL } from '../shared/manifestation';
 import type { RevealedContent } from '../shared/manifestationReveal';
 
 /**
@@ -84,15 +85,13 @@ export interface MediaManifestationZoneProps {
 export default function MediaManifestationZone({ isVersa, spec, onUnseal }: MediaManifestationZoneProps) {
   // Adapt the media-layer data into the agnostic reveal content shape.
   // The media asset is the finished reveal; a null/undefined asset means
-  // the revealed state renders its placeholder. We don't supply a
-  // placeholderLabel here — the vessel already receives `mediaKind` and
-  // resolves its own human-readable label via MEDIA_KIND_LABEL. Supplying
-  // the raw enum here would shadow that lookup and the placeholder would
-  // render the enum string (e.g. "cover-art") instead of the label
-  // ("Cover Art") the prior MediaScrollReveal produced.
+  // the revealed state renders its placeholder. When no asset is supplied
+  // we forward the resolved media-kind label as `placeholderLabel` so the
+  // reveal's accessible announcement ("Cover Art revealed") matches the
+  // human-readable label the vessel displays inside its placeholder vista.
   const content: RevealedContent = spec.asset
     ? { src: spec.asset.src, alt: spec.asset.alt }
-    : {};
+    : { placeholderLabel: MEDIA_KIND_LABEL[spec.mediaKind] };
 
   return (
     <ManifestationChamber

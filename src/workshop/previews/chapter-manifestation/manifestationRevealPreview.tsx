@@ -8,6 +8,7 @@ import {
   type RevealedContent,
 } from '../../../components/chapter-manifestation/shared/manifestationReveal';
 import type { MediaKind, RevealedMediaAsset } from '../../../components/chapter-manifestation/shared/manifestation';
+import { MEDIA_KIND_LABEL } from '../../../components/chapter-manifestation/shared/manifestation';
 
 const MOCK_REVEALED_ASSET: RevealedMediaAsset = {
   src: '/icons/sacred-tree.svg',
@@ -97,8 +98,10 @@ export function ManifestationRevealPreview({
 
   const content: RevealedContent = useMemo(() => {
     if (contentMode === 'mock') return MOCK_REVEALED_ASSET;
-    return { placeholderLabel: undefined };
-  }, [contentMode]);
+    // Forward the selected media-kind label so the reveal's aria announcement
+    // matches the label the vessel displays inside its placeholder vista.
+    return { placeholderLabel: MEDIA_KIND_LABEL[mediaKind] };
+  }, [contentMode, mediaKind]);
 
   const vessel = useMemo(
     () => (
@@ -117,12 +120,16 @@ export function ManifestationRevealPreview({
   // (~1.6s) so designers can compare timing in both contexts.
   const handleUnseal = useCallback(() => {
     if (state !== 'sealed') return;
+    // Cancel any in-flight sequence first; otherwise the sequence's
+    // pending timeout leaks past the tap and fires a competing
+    // `setState('revealed')` later.
+    clearSequenceTimer();
     setState('unsealing');
     sequenceTimer.current = setTimeout(() => {
       sequenceTimer.current = null;
       setState('revealed');
     }, REVEAL_TIMING_MS.unsealing);
-  }, [state]);
+  }, [state, clearSequenceTimer]);
 
   // Replay the full sequence: sealed → unsealing → revealed, then
   // rest. Manual state pills always win mid-sequence.
@@ -151,7 +158,8 @@ export function ManifestationRevealPreview({
   }, [clearSequenceTimer, initialState]);
 
   const onUnseal = unsealEnabled && state === 'sealed' ? handleUnseal : undefined;
-  const sizing = CONTAINMENT_OPTIONS.find((o) => o.id === containment)!.size;
+  const sizing =
+    CONTAINMENT_OPTIONS.find((o) => o.id === containment)?.size ?? CONTAINMENT_OPTIONS[0].size;
 
   return (
     <div

@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence, useReducedMotion, type Transition } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import {
   isManifestationRevealInteractive,
   manifestationRevealAriaLabel,
@@ -16,10 +16,13 @@ import {
  *   - the state machine routing (which scene is shown for which state),
  *   - the tap-to-unseal affordance (the sealed scene becomes a button when
  *     `onUnseal` is supplied; the other states are non-interactive),
- *   - the entrance/exit transition between states,
+ *   - mounting the vessel exactly once and forwarding the current state to
+ *     it — the vessel owns the visual transformation between states as a
+ *     persistent scene graph, so sealed → unsealing → revealed reads as one
+ *     continuous motion and any state can hold indefinitely,
  *   - the accessible label announced in each state (composed from the
  *     supplied revealed content's `alt` when relevant),
- *   - reduced-motion handling for the cross-state transition (vessels own
+ *   - reduced-motion handling for the tap press feedback (vessels own
  *     their own artwork motion).
  *
  * It deliberately owns NO artwork. The vessel — passed as the `vessel` prop
@@ -81,57 +84,20 @@ export interface ManifestationRevealProps {
 }
 
 /**
- * Cross-state choreography. Vessel-agnostic: it only knows the three
- * progression states, never the artwork. Leaving `sealed` gathers inward
- * (the anticipation beat on activation), entering `unsealing` blooms
- * slightly outward with the burst, and entering `revealed` rises and
- * settles so the manifested content lands in focus.
- */
-const ENTER_FROM: Record<ManifestationRevealState, { opacity: number; scale: number; y: number }> = {
-  sealed: { opacity: 0, scale: 0.96, y: 0 },
-  unsealing: { opacity: 0, scale: 1.07, y: 0 },
-  revealed: { opacity: 0, scale: 0.97, y: 8 },
-};
-
-const EXIT_TO: Record<ManifestationRevealState, { opacity: number; scale: number; y: number }> = {
-  sealed: { opacity: 0, scale: 0.9, y: 0 },
-  unsealing: { opacity: 0, scale: 1.04, y: 0 },
-  revealed: { opacity: 0, scale: 0.97, y: 0 },
-};
-
-const ENTER_TRANSITION: Transition = { duration: 0.5, ease: [0.22, 1, 0.36, 1] };
-const EXIT_TRANSITION: Transition = { duration: 0.3, ease: [0.4, 0, 1, 1] };
-const CALM_TRANSITION: Transition = { duration: 0 };
-
-/**
- * The cross-state transition. Vessels handle their own intra-state motion;
- * this is the AnimatePresence wrap that moves between them.
+ * The vessel is mounted exactly once. State changes only re-point the
+ * vessel at the new state — there is no scene swap or cross-fade here.
+ * The vessel's persistent scene graph performs the visual transformation
+ * itself, so sealed → unsealing → revealed reads as one continuous motion
+ * and the unsealing state can hold for as long as a caller waits on
+ * generated media.
  */
 const RevealScene: React.FC<{
   state: ManifestationRevealState;
   vessel: React.ReactNode;
-  calm: boolean;
-}> = ({ state, vessel, calm }) => (
-  <AnimatePresence mode="wait">
-    <motion.div
-      key={state}
-      data-reveal-state={state}
-      className="h-full w-full"
-      initial={ENTER_FROM[state]}
-      animate={{
-        opacity: 1,
-        scale: 1,
-        y: 0,
-        transition: calm ? CALM_TRANSITION : ENTER_TRANSITION,
-      }}
-      exit={{
-        ...EXIT_TO[state],
-        transition: calm ? CALM_TRANSITION : EXIT_TRANSITION,
-      }}
-    >
-      {vessel}
-    </motion.div>
-  </AnimatePresence>
+}> = ({ state, vessel }) => (
+  <div data-reveal-state={state} className="h-full w-full">
+    {vessel}
+  </div>
 );
 
 export default function ManifestationReveal({
@@ -149,7 +115,7 @@ export default function ManifestationReveal({
   const ariaLabel = manifestationRevealAriaLabel(state, content, sealedTapLabel);
 
   const scene = (
-    <RevealScene state={state} vessel={vessel} calm={calm} />
+    <RevealScene state={state} vessel={vessel} />
   );
 
   const containerClassName = [
@@ -173,14 +139,10 @@ export default function ManifestationReveal({
           aria-label={ariaLabel}
           data-reveal-action="unseal"
           data-reveal-state={state}
-          whileTap={calm ? undefined : { scale: 0.95 }}
-          className="group h-full w-full appearance-none bg-transparent border-0 p-0 cursor-pointer rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70"
+          whileTap={calm ? undefined : { scale: 0.97 }}
+          className="h-full w-full appearance-none bg-transparent border-0 p-0 cursor-pointer rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70"
         >
-          {/* Subtle invitation grow on hover/focus — signals the sealed
-              scene is tappable without the vessel knowing about it. */}
-          <div className="h-full w-full transition-transform duration-300 ease-out motion-reduce:transition-none group-hover:scale-[1.03] group-focus-visible:scale-[1.03]">
-            {scene}
-          </div>
+          {scene}
         </motion.button>
       </div>
     );

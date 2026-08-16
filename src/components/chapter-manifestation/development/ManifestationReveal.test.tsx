@@ -3,13 +3,13 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Force every test in this file through the reduced-motion path. None of
-// the assertions here depend on the cross-state AnimatePresence actually
-// animating; the cross-state transition only governs opacity/scale and
-// the button's `whileTap`. Under jsdom the default `useReducedMotion`
-// returns `null` (no media-query match), which would never exercise the
-// `calm` branch in `RevealScene`. Mocking the hook to return `true` makes
-// the reduced-motion guarantees testable.
+// Force every test in this file through the reduced-motion path. The
+// mechanic mounts the vessel once and forwards the current state to it —
+// the only motion it owns itself is the sealed button's `whileTap` press
+// feedback, which is gated on `useReducedMotion`. Under jsdom the default
+// `useReducedMotion` returns `null` (no media-query match), which would
+// never exercise the `calm` branch. Mocking the hook to return `true`
+// makes the reduced-motion guarantees testable.
 vi.mock('motion/react', async () => {
   const actual = await vi.importActual<typeof import('motion/react')>('motion/react');
   return { ...actual, useReducedMotion: () => true };
@@ -346,8 +346,9 @@ describe('ManifestationReveal — accessibility', () => {
 describe('ManifestationReveal — reduced motion', () => {
   it('still renders the vessel and button when reduced motion is active, and the tap still fires', () => {
     // The vi.mock at the top of this file forces `useReducedMotion` to
-    // return `true`, so `calm` is `true` and `RevealScene` selects the
-    // `duration: 0` AnimatePresence branch.
+    // return `true`, so `calm` is `true` and the mechanic drops the
+    // button's `whileTap` press feedback while keeping the vessel in the
+    // DOM (the vessel handles its own artwork calm internally).
     const onUnseal = vi.fn();
     renderReveal(
       <ManifestationReveal
@@ -358,8 +359,8 @@ describe('ManifestationReveal — reduced motion', () => {
     );
 
     // The vessel mounts in reduced-motion mode (its own artwork motion
-    // is independently handled inside the vessel; the mechanic just
-    // keeps the scene in the DOM).
+    // is independently handled inside the vessel; the mechanic keeps the
+    // vessel mounted in the DOM regardless of motion preference).
     expect(findVessel('v')).toBeTruthy();
     // The button is still a real `<button type="button">` and remains
     // reachable so users on reduced-motion systems can still tap to

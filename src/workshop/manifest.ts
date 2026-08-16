@@ -148,13 +148,13 @@ export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'card-workshop',
     title: 'Card Workshop',
-    description: 'Development-only laboratory for independently inspecting Codex Cards, World Cards, System Panels, and Fate results without generating a chapter.',
+    description: 'Development-only Card Type Tabs and contextual ReaderViewport preview for inspecting Codex Cards, World Cards, System Panels, and Fate results without generating a chapter.',
     category: 'reader-ui',
     version: 'v1.1',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/WorldEntityCard.tsx; src/components/SystemBlock.tsx; src/components/FateResultCard.tsx; src/components/ReaderViewport.tsx',
-      lastCompared: '2026-08-14',
+      lastCompared: '2026-08-15',
     },
   },
 ];

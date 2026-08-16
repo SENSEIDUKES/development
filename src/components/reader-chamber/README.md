@@ -10,6 +10,7 @@
 
 ## Workshop history
 
+- **2026-08-15:** Added an optional Development-only `ReaderViewport` World Card adapter seam and shared Reader Chamber surface helper for the Card Workshop's deterministic Contextual View. Normal Reader callers omit the seam and retain the existing presentation and audio lifecycle; neither the seam nor its remount key transfers to production.
 - **2026-08-15:** Rebuilt the active Development `CodexCard` on the shared `LibraryCard` region structure without changing the Reader reveal's presentation or flow. Existing media/backdrop, Manifest/Awaken action and Summoning state, entrance/hover behavior, typography, spacing, and routing remain intact; no generic LibraryCard visual treatment has been adopted.
 - **2026-08-14:** Completed the first Part Three card cleanup on the existing Reader route: renamed the active presentations to `CodexCard` and `WorldCard`, limited visual Codex Cards to Human Portraits, Non-Human Portraits, Artifacts, and Locations, kept Bestiary/Faction highlights on World Cards, kept System/Fate content on System Panels, suppressed duplicate visual Codex/World signals in favor of the Codex Card, and removed the end-of-chapter Chapter Visual Memory render and trigger.
 - **2026-08-13:** Added an isolated, disposable one-chapter entry at the existing Reader/Codex adapter boundary. A successfully processed direct Chapter Generation result now opens the unchanged Reader Chamber and complete Reader Codex with one prose chapter and one processed-state snapshot. The existing five-chapter adapter, exact-five completion guard, navigation, highlighting, layouts, and Codex internals remain unchanged. Verified with a real Gemini-generated Timeless chapter in a protected Preview.
@@ -287,6 +288,9 @@ Workshop-only — never transfer: `shared/stubs.ts`, `shared/types.ts` (producti
 `src/types.ts` is authoritative), `shared/trackLibrary.ts` (production
 `lib/audio/musicResolver.ts` is authoritative), everything under
 `src/workshop/previews/reader-chamber/`, the manifest entry, and the registry line.
+The optional `worldCardAudioAdapter` and `worldCardPresentationKey` props in the
+Development `ReaderViewport`, plus `getReaderChamberSurfaceClass`, are Card Workshop
+seams, not production API.
 
 ## Transfer notes and cautions
 

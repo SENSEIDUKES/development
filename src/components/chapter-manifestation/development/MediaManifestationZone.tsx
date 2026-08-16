@@ -1,8 +1,10 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import ManifestationChamber, { ChamberForegroundMotes } from './ManifestationChamber';
-import MediaScrollReveal from './MediaScrollReveal';
+import ManifestationReveal from './ManifestationReveal';
+import CelestialScrollVessel from './vessels/CelestialScrollVessel';
 import type { MediaManifestation } from '../shared/manifestation';
+import type { RevealedContent } from '../shared/manifestationReveal';
 
 /**
  * Golden ambient energy pooling behind the scroll (chamber Layer 0) — the
@@ -58,9 +60,9 @@ export interface MediaManifestationZoneProps {
   /** The media variant of the card's ManifestationSpec. */
   spec: MediaManifestation;
   /**
-   * Optional tap handler for the sealed scroll (tap-to-unseal). When
-   * omitted, the sealed state renders non-interactive. Reveal progression
-   * stays caller-owned — this only reports the tap.
+   * Optional tap handler for the sealed state (tap-to-unseal). When
+   * omitted, the sealed scene renders non-interactive. The reveal
+   * progression stays caller-owned — this only reports the tap.
    */
   onUnseal?: () => void;
 }
@@ -69,20 +71,45 @@ export interface MediaManifestationZoneProps {
  * Media manifestation zone — the Aura Veil's active zone for standalone
  * media-generation operations (Cover Art, Image, Audio, Visual / Motion,
  * and future standalone asset types). Same ManifestationChamber and
- * layering contract as the narrative zone; what changes is the scene: an
- * agnostic celestial scroll reveal instead of narrative omen scenes.
+ * layering contract as the narrative zone; what changes is the scene: the
+ * agnostic Manifestation Reveal mechanic hosted by the celestial scroll
+ * vessel (sealed → unsealing → revealed) instead of narrative omen scenes.
+ *
+ * The reveal contract is shared (`shared/manifestationReveal.ts`); the
+ * media-layer shape is carried on the ManifestationSpec. The zone adapts
+ * the media data into the vessel's expected props and hands the result to
+ * the agnostic mechanic, so future vessels can be swapped in here without
+ * touching the reveal logic.
  */
 export default function MediaManifestationZone({ isVersa, spec, onUnseal }: MediaManifestationZoneProps) {
+  // Adapt the media-layer data into the agnostic reveal content shape.
+  // The media asset is the finished reveal; a null/undefined asset means
+  // the revealed state renders its placeholder. We don't supply a
+  // placeholderLabel here — the vessel already receives `mediaKind` and
+  // resolves its own human-readable label via MEDIA_KIND_LABEL. Supplying
+  // the raw enum here would shadow that lookup and the placeholder would
+  // render the enum string (e.g. "cover-art") instead of the label
+  // ("Cover Art") the prior MediaScrollReveal produced.
+  const content: RevealedContent = spec.asset
+    ? { src: spec.asset.src, alt: spec.asset.alt }
+    : {};
+
   return (
     <ManifestationChamber
       isVersa={isVersa}
       ambient={<MediaZoneAmbient />}
       scene={
-        <MediaScrollReveal
-          mediaKind={spec.mediaKind}
-          reveal={spec.reveal}
-          asset={spec.asset}
+        <ManifestationReveal
+          state={spec.reveal}
+          content={content}
           onUnseal={onUnseal}
+          vessel={
+            <CelestialScrollVessel
+              state={spec.reveal}
+              asset={spec.asset ?? null}
+              mediaKind={spec.mediaKind}
+            />
+          }
         />
       }
       foreground={<ChamberForegroundMotes isVersa={isVersa} />}

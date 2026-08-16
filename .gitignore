@@ -6,3 +6,7 @@ generated/story-seed-blueprint-api
 *.tsbuildinfo
 vite-preview.log
 .firebase
+# Local Vite dev / preview logs and ad-hoc preview output
+dev.log
+dev-err.log
+seiv-0/

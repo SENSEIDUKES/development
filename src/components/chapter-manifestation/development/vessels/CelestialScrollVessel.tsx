@@ -1,52 +1,57 @@
 import React from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import {
   MEDIA_KIND_LABEL,
   type MediaKind,
-  type MediaRevealState,
   type RevealedMediaAsset,
-} from '../shared/manifestation';
+} from '../../shared/manifestation';
+import type {
+  ManifestationRevealState,
+} from '../../shared/manifestationReveal';
 
 /**
- * MediaScrollReveal — the media active zone's celestial reveal: an agnostic
- * scroll that unseals to reveal whatever standalone asset was generated
- * (cover art, image, audio, visual/motion, future kinds). No narrative
- * characters or story scenes — the scroll is the media-agnostic vessel.
+ * CelestialScrollVessel — the current visual vessel for the Manifestation
+ * Reveal mechanic.
  *
- * Reveal progression (`MediaRevealState`):
- *   sealed    — the rolled scroll floats with its ornate golden star seal
- *               intact. When the caller supplies `onUnseal`, this state is
- *               the tap target: the whole scene becomes a button ("Unseal
- *               the celestial scroll") and the seal emits a soft ping ring.
- *   unsealing — the portal opening: the scroll splits into top/bottom
- *               roller pairs, the parchment sheet stretches between them,
- *               and a white-gold core bursts with swirling golden ribbons
- *               while generation is in flight. A quick seal-shatter flash
- *               plays on entry, then the swirl settles into a gentle loop.
- *   revealed  — the reward plainly shown: the scroll hangs fully unrolled
- *               between gold rods (pendant beneath), the finished asset
- *               framed inside (a celestial vista placeholder stands in
- *               until the caller supplies `asset`). A brief golden flare
- *               plays on entry, then the state rests.
+ * A celestial scroll that floats (sealed), splits into roller pairs around
+ * a white-gold portal (unsealing), and hangs fully unrolled with the
+ * finished asset framed between gold rods (revealed). Vessel-only
+ * concerns: the artwork for each state, its own reduced-motion handling,
+ * and the placeholder vista shown when the revealed state has no supplied
+ * asset.
  *
- * The component NEVER advances its own progression — the caller owns every
- * transition; `onUnseal` is only a notification that the sealed scroll was
- * tapped. Stage-only component: it fills whatever space the
- * ManifestationChamber's scene layer gives it and owns no captions or
- * controls beyond the tap target. Reduced-motion users get static, calm
- * states (the tap still works; transitions become instant).
+ * The vessel is media-mode-aware: it accepts a `mediaKind` so the
+ * placeholder vista can echo the operation's family label (Cover Art,
+ * Image, Audio, Visual / Motion) when no finished asset is supplied. The
+ * mechanic itself stays vessel-agnostic — the caller adapts the
+ * `ManifestationReveal` agnostic content into the vessel's media-shaped
+ * `asset` prop at the call site.
+ *
+ * The vessel deliberately never advances the reveal state. It renders the
+ * current state and reports the tap on the sealed state through the
+ * mechanic's `onUnseal` callback (the vessel is wrapped, not self-tapping).
  */
 
-export interface MediaScrollRevealProps {
-  mediaKind: MediaKind;
-  reveal: MediaRevealState;
+export interface CelestialScrollVesselProps {
+  /** The current reveal state. Owned by the caller. */
+  state: ManifestationRevealState;
+  /**
+   * The asset to render in the revealed state. When supplied the vessel
+   * frames the asset inside the open scroll; otherwise it shows the
+   * placeholder vista labeled with the supplied `placeholderLabel` (or
+   * the `mediaKind` label as a fallback).
+   */
   asset?: RevealedMediaAsset | null;
   /**
-   * Called when the user taps the sealed scroll. Optional: without it the
-   * sealed state renders non-interactive (`role="img"`), and the scroll is
-   * never tappable in the other states.
+   * Optional override label for the placeholder vista (used when no asset
+   * is supplied). Defaults to the `mediaKind` label.
    */
-  onUnseal?: () => void;
+  placeholderLabel?: string;
+  /**
+   * The asset family (used to label the placeholder vista in the revealed
+   * state). Mirrors the media mode's `MediaKind` taxonomy.
+   */
+  mediaKind: MediaKind;
 }
 
 /** Shared gradient/filter/clip definitions for every scroll state. */
@@ -165,7 +170,7 @@ const SEALED_EMBERS: Array<[number, number, number, number, number]> = [
   [214, 96, 1.3, 5.8, 2.6],
 ];
 
-const SealedScroll: React.FC<{ calm: boolean; interactive: boolean }> = ({ calm, interactive }) => (
+const SealedScroll: React.FC<{ calm: boolean }> = ({ calm }) => (
   <g>
     {/* Ground shadow + warm glow pooled beneath the scroll */}
     <ellipse cx="200" cy="206" rx="118" ry="12" fill="#000000" opacity="0.45" filter="url(#msr-soft)" />
@@ -234,19 +239,6 @@ const SealedScroll: React.FC<{ calm: boolean; interactive: boolean }> = ({ calm,
         <path d={starFourPath(200, 150, 11)} fill="#fff7e0" />
         <path d={starFourPath(200, 150, 5)} fill="#ffffff" />
       </motion.g>
-
-      {/* "Tap me" affordance — a soft ping ring while the scroll is tappable */}
-      {interactive &&
-        (calm ? (
-          <circle cx="200" cy="150" r="30" fill="none" stroke="#ffd977" strokeWidth="1" opacity="0.3" />
-        ) : (
-          <motion.circle
-            cx="200" cy="150" r="24" fill="none" stroke="#ffd977" strokeWidth="1.6"
-            animate={{ scale: [1, 2], opacity: [0.55, 0] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeOut' }}
-            style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
-          />
-        ))}
     </motion.g>
   </g>
 );
@@ -397,7 +389,7 @@ const UnsealingScroll: React.FC<{ calm: boolean }> = ({ calm }) => (
 /** ── revealed ────────────────────────────────────────────────────────── */
 
 /** Placeholder celestial vista inside the open scroll until an asset exists. */
-const VistaPlaceholder: React.FC<{ mediaKind: MediaKind; calm: boolean }> = ({ mediaKind, calm }) => (
+const VistaPlaceholder: React.FC<{ label: string; calm: boolean }> = ({ label, calm }) => (
   <g clipPath="url(#msr-frame-clip)">
     <rect x="112" y="80" width="176" height="138" fill="url(#msr-vista-sky)" />
 
@@ -467,7 +459,7 @@ const VistaPlaceholder: React.FC<{ mediaKind: MediaKind; calm: boolean }> = ({ m
       x="200" y="198" textAnchor="middle" fontSize="10" letterSpacing="2"
       fill="#e9d5ff" opacity="0.7" fontFamily="serif" fontStyle="italic"
     >
-      {MEDIA_KIND_LABEL[mediaKind]}
+      {label}
     </text>
   </g>
 );
@@ -485,10 +477,10 @@ const HangingRod: React.FC<{ y: number }> = ({ y }) => (
 );
 
 const RevealedScroll: React.FC<{
-  mediaKind: MediaKind;
+  label: string;
   asset?: RevealedMediaAsset | null;
   calm: boolean;
-}> = ({ mediaKind, asset, calm }) => (
+}> = ({ label, asset, calm }) => (
   <g>
     {/* Suspension glow behind the open scroll */}
     <motion.ellipse
@@ -508,7 +500,7 @@ const RevealedScroll: React.FC<{
         opacity="0.96"
       />
     ) : (
-      <VistaPlaceholder mediaKind={mediaKind} calm={calm} />
+      <VistaPlaceholder label={label} calm={calm} />
     )}
     <rect x="117" y="85" width="166" height="128" rx="4" fill="none" stroke="#ffe9b0" strokeWidth="0.8" opacity="0.35" />
 
@@ -562,66 +554,28 @@ const RevealedScroll: React.FC<{
   </g>
 );
 
-const REVEAL_STATE_PHRASE: Record<MediaRevealState, string> = {
-  sealed: 'sealed',
-  unsealing: 'unsealing, portal opening',
-  revealed: 'revealed',
-};
-
-export default function MediaScrollReveal({ mediaKind, reveal, asset, onUnseal }: MediaScrollRevealProps) {
+export default function CelestialScrollVessel({
+  state,
+  asset,
+  placeholderLabel,
+  mediaKind,
+}: CelestialScrollVesselProps) {
   const reduceMotion = useReducedMotion();
   const calm = !!reduceMotion;
-  const interactive = reveal === 'sealed' && !!onUnseal;
-
-  const scene = (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={reveal}
-        className="h-full w-full"
-        initial={{ opacity: 0, scale: 0.94 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.97 }}
-        transition={{ duration: calm ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <svg viewBox="0 0 400 300" className="h-full w-full block" aria-hidden="true">
-          <ScrollDefs />
-          {reveal === 'sealed' && <SealedScroll calm={calm} interactive={interactive} />}
-          {reveal === 'unsealing' && <UnsealingScroll calm={calm} />}
-          {reveal === 'revealed' && <RevealedScroll mediaKind={mediaKind} asset={asset} calm={calm} />}
-        </svg>
-      </motion.div>
-    </AnimatePresence>
-  );
-
-  // The sealed scroll is the tap target when the caller enables unsealing.
-  // The component never advances its own state — it only reports the tap.
-  if (interactive) {
-    return (
-      <div className="h-full w-full flex items-center justify-center">
-        <motion.button
-          type="button"
-          onClick={onUnseal}
-          aria-label="Unseal the celestial scroll"
-          whileTap={calm ? undefined : { scale: 0.97 }}
-          className="h-full w-full appearance-none bg-transparent border-0 p-0 cursor-pointer rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70"
-        >
-          {scene}
-        </motion.button>
-      </div>
-    );
-  }
+  const label = asset?.alt ?? placeholderLabel ?? MEDIA_KIND_LABEL[mediaKind];
 
   return (
-    <div
-      className="h-full w-full flex items-center justify-center"
-      role="img"
-      aria-label={
-        reveal === 'revealed' && asset?.alt
-          ? asset.alt
-          : `${MEDIA_KIND_LABEL[mediaKind]} celestial scroll, ${REVEAL_STATE_PHRASE[reveal]}`
-      }
+    <svg
+      viewBox="0 0 400 300"
+      className="h-full w-full block"
+      data-vessel="celestial-scroll"
+      data-reveal-state={state}
+      aria-hidden="true"
     >
-      {scene}
-    </div>
+      <ScrollDefs />
+      {state === 'sealed' && <SealedScroll calm={calm} />}
+      {state === 'unsealing' && <UnsealingScroll calm={calm} />}
+      {state === 'revealed' && <RevealedScroll label={label} asset={asset} calm={calm} />}
+    </svg>
   );
 }

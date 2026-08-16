@@ -4,12 +4,22 @@
 - **Source location:** `src/components/AILoadingVeil.tsx`
 - **Workshop preview:** `?preview=chapter-generation-manifestation`
 - **Replica created:** 2026-07-29
-- **Last Workshop update:** 2026-07-31
+- **Last Workshop update:** 2026-08-15
 - **Last source comparison:** 2026-07-29
 - **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-08-15:** Structural and workshop-organization pass — promoted Manifestation Reveal into a real workshop area before its next visual redesign. The previous `development/MediaScrollReveal.tsx` conflated the agnostic reveal mechanic with the celestial scroll artwork; both responsibilities are now separated:
+  - `shared/manifestationReveal.ts` defines the agnostic `ManifestationRevealState` and `RevealedContent` types plus the shared `isManifestationRevealInteractive` and `manifestationRevealAriaLabel` helpers.
+  - `development/ManifestationReveal.tsx` is the new vessel-agnostic mechanic: state routing, tap-to-unseal button, accessibility, reduced-motion handling, responsive containment, and the AnimatePresence between states. Caller ownership of the progression is preserved — the reveal never advances on its own.
+  - `development/vessels/CelestialScrollVessel.tsx` is the current visual vessel: the celestial scroll artwork, moved out of the mechanic. It still knows about the media-mode `MediaKind` for its placeholder label, but the mechanic itself is no longer named or structured as though it must always be a scroll.
+  - `development/MediaManifestationZone.tsx` adapts the media data into the agnostic content shape and wires the celestial scroll vessel into the agnostic reveal mechanic.
+  - The old `development/MediaScrollReveal.tsx` is removed (replaced by the two new files). The Aura Veil's external API (`mediaReveal` / `mediaAsset` / `onMediaUnseal` props) is unchanged; the existing caller-owned `sealed → unsealing → revealed` progression, tap-to-unseal, supplied revealed content, reduced-motion handling, accessibility, and responsive containment are all preserved.
+  - The Aura Veil status language is vessel-agnostic: `mediaTrackerDetail` now reads "Manifestation sealed / Unsealing the manifestation / Manifestation Complete" instead of "celestial scroll / unsealing the celestial scroll / Manifestation Complete". The Aura Veil's media tracker and operation-specific language (NARRATIVE_STATUS_LINES / MEDIA_STATUS_LINES) are otherwise unchanged.
+  - Workshop layout: the page now has a top-level "Workshop area" segment switcher — **Aura Veil** (the existing full-shell simulation: Versa hero, journey scrubber, active manifestation zone, Reference / Development / Compare) and **Manifestation Reveal** (a focused standalone preview for the agnostic mechanic on its own). The Aura Veil segment's controls are reorganized into clear named groups: Operation, Manifestation Reveal (dev chain — only shown for media ops), Journey Scrubber, Simulation, Compact Indicators.
+  - The Manifestation Reveal standalone preview has dedicated focused controls: state pills (manual override), Play sequence (sealed → unsealing → revealed), Reset, Mock asset vs Placeholder content, Tap to unseal on/off, vessel kind (Cover Art / Image / Audio / Visual / Motion), and Containment (Compact vs Full size). Designers can exercise every state, content, and activation path without the rest of the veil getting in the way.
+  - **2026-08-15:** Added `development/ManifestationReveal.test.tsx` — focused tests for the new mechanic covering state rendering (every state routes through the vessel), activation (sealed + onUnseal → button; sealed without handler → non-interactive; other states never button), caller ownership (the reveal never advances on its own; the vessel only ever sees the supplied state), revealed content announcements (supplied alt, placeholder label fallback, generic label), accessibility (data-reveal-state attribute, real `<button type="button">` with focus-visible ring, aria-label composition), reduced motion (vessel still renders; transition is structural), and responsive containment (fills parent, accepts className passthrough, forwards data-testid). 22 tests, all green.
 - **2026-07-30:** Retuned the Development veil's backdrop from values picked in the Celestial Particle Backdrop workspace: `AILoadingVeil` now passes `speedScale={0.47}` (was 0.82 — much slower absorption suction) and `dispersion={0.96}` (was 0.35 — nearly all particles drift laterally, keeping the veil's edges densely populated). The backdrop workspace's speed/dispersion sliders default to these values so both previews stay in sync. The component defaults, reference veil, and other consumers are untouched.
 
 - **2026-07-30:** Refined `development/MediaScrollReveal.tsx` from skeleton to the real Media Veil scene, driven by the reference screenshots (bottom scroll halves only). **Sealed** is now reference-faithful — a floating parchment cylinder with a soft sheen, ornate gold end-collars and pointed spear finials, and an ornate golden seal (radiant 4-point star core in a medallion wrapped in a filigree starburst) — with pooled golden glow, slow motes, and faint ember sparks. **Tap-to-unseal interaction:** a new optional `onUnseal` prop makes the sealed state a button ("Unseal the celestial scroll", keyboard-operable, focus ring, press feedback, soft ping-ring affordance); the prop is threaded through the dev veil chain (`AILoadingVeil` → `LoadingSystem` → `LoadingVeilCard` → `MediaManifestationZone` → `MediaScrollReveal`) as optional `onMediaUnseal` / `onUnseal` props, so production callers are unaffected. The scene never advances its own progression — the caller owns every transition. **Unsealing** plays the portal opening: a seal-shatter flash on entry, the scroll split into top/bottom gold-capped roller pairs easing apart around a gold-edged parchment sheet, a blinding white-gold core with radiating rays, golden ribbon swirls with counter-swirling violet qi wisps, and bursting sparks/embers before settling into a gentle sustained loop. **Revealed** shows the reward plainly: a vertical hanging scroll (gold rods with finials, center star ornament, violet-gem medallion, chain pendant with a crystal drop) framing the finished asset (`xMidYMid slice`, rounded-rect clip) or a painterly placeholder vista (layered violet ridges, horizon orb with light path, pagoda silhouettes, cherry-blossom cluster, stars, gold sparkles), with an occasional shimmer sweep and a brief entry reveal flare. The Workshop sim now defaults media ops to `sealed` with tap-to-unseal (auto-advances unsealing → revealed after ~1.6s; reveal pills remain manual overrides). Reduced-motion users get calm static states throughout.
@@ -47,8 +57,10 @@ development/LoadingSystem.tsx   — active orchestrator (formerly DevLoadingSyst
 development/LoadingVeilCard.tsx — active veil presentation: the Aura Veil shell (circular-chamber composition)
 development/ManifestationChamber.tsx — circular portal + three-layer stacking contract every active zone inherits
 development/NarrativeManifestationZone.tsx — narrative mode's active zone: chamber + system-selected omen scene
-development/MediaManifestationZone.tsx     — media mode's active zone: chamber + scroll reveal + golden ambient
-development/MediaScrollReveal.tsx — agnostic celestial scroll reveal with tap-to-unseal (sealed / unsealing / revealed)
+development/MediaManifestationZone.tsx     — media mode's active zone: agnostic reveal mechanic + celestial scroll vessel + golden ambient
+development/ManifestationReveal.tsx        — agnostic sealed → unsealing → revealed mechanic (tap-to-unseal, accessibility, reduced motion, containment)
+development/ManifestationReveal.test.tsx   — focused tests for the agnostic reveal mechanic
+development/vessels/CelestialScrollVessel.tsx — the current visual vessel: celestial scroll artwork (sealed / unsealing / revealed)
 development/omen-scenes.tsx      — narrative omen scene registry + system selection (seeded per operation)
 development/SwordCultivatorClash.tsx — stage-only looping clash diorama (registered omen scene)
 development/CelestialChannel.tsx     — stage-only calm orbit diorama (registered omen scene)
@@ -60,9 +72,10 @@ development/journey-scrubber/travelers.ts            — traveler registry + swa
 development/journey-scrubber/trails.tsx              — aura trail preset registry (qi-glow, starlight-trail, scroll-trail)
 development/journey-scrubber/destinations.tsx        — destination family registry (door, sect, cave) + per-traveler defaults
 
-shared/taskCard.ts          — LoadingTaskCard format + buildAILoadingTaskCard, used by both versions
-shared/manifestation.ts     — Aura Veil manifestation modes: operation taxonomy, ManifestationSpec, per-mode language
-shared/CompactIndicator.tsx — floating corner widget, identical in both versions
+shared/taskCard.ts              — LoadingTaskCard format + buildAILoadingTaskCard, used by both versions
+shared/manifestation.ts         — Aura Veil manifestation modes: operation taxonomy, ManifestationSpec, per-mode language
+shared/manifestationReveal.ts   — agnostic Manifestation Reveal contract: state, content shape, aria-label / interactivity helpers
+shared/CompactIndicator.tsx     — floating corner widget, identical in both versions
 ```
 
 ## What this is
@@ -81,11 +94,24 @@ Two visual modes render the same card:
 The primary veil (the **Aura Veil**) is one shared manifestation shell hosting two manifestation modes, resolved per operation and carried on the task card as `manifestation` (taxonomy in `shared/manifestation.ts`):
 
 - **Narrative manifestation** — story and narrative-generation operations: World Blueprint (`blueprint`), Initial Arc (`initial-arc`), Steering (`steer`), Alter Fate (`alter-fate`), Chapter (`chapter`). Renders `NarrativeManifestationZone`: the chamber hosting a **system-selected omen scene** from the `omen-scenes` registry. Scenes are never user-selected — an explicit `sceneId` on the spec wins, otherwise the pick is seeded deterministically by the operation's tracker title so the same operation always omens the same scene (`sword-cultivator-clash` is the fallback).
-- **Media manifestation** — standalone media-generation operations outside the Reader Chamber and Codex: Cover Art (`cover`), Image (`image`), Audio (`audio`), Visual / Motion (`visual`), and future standalone asset types (add to `MEDIA_OPERATIONS` + `MediaKind`). Renders `MediaManifestationZone`: the same chamber hosting `MediaScrollReveal` — an agnostic celestial scroll reveal (`sealed` → `unsealing` → `revealed`) with a golden ambient atmosphere, plus an optional finished `asset` framed inside the open scroll.
+- **Media manifestation** — standalone media-generation operations outside the Reader Chamber and Codex: Cover Art (`cover`), Image (`image`), Audio (`audio`), Visual / Motion (`visual`), and future standalone asset types (add to `MEDIA_OPERATIONS` + `MediaKind`). Renders `MediaManifestationZone`: the same chamber hosting the **Manifestation Reveal** — a vessel-agnostic `sealed` → `unsealing` → `revealed` mechanic, currently hosted by the celestial scroll vessel (`development/vessels/CelestialScrollVessel`). The mechanic owns the state routing, tap-to-unseal, accessibility, reduced motion, and containment; the vessel owns the artwork for each state. The Aura Veil's media zone wires the media data through both, and the chamber's golden ambient atmosphere stays shared.
 
-**Shell invariants (identical across modes):** Versa presence (hero zone), aura and ambient atmosphere (emblem aura + cinematic backdrop), status and progress presentation (journey scrubber + layered status), and the shared responsive 100dvh layout. Only the active manifestation zone and the operation-specific language change: narrative operations rotate `NARRATIVE_STATUS_LINES` during a chapter, media operations rotate `MEDIA_STATUS_LINES` and track the scroll's reveal progression ("Unsealing the celestial scroll" → "Manifestation Complete").
+**Shell invariants (identical across modes):** Versa presence (hero zone), aura and ambient atmosphere (emblem aura + cinematic backdrop), status and progress presentation (journey scrubber + layered status), and the shared responsive 100dvh layout. Only the active manifestation zone and the operation-specific language change: narrative operations rotate `NARRATIVE_STATUS_LINES` during a chapter, media operations rotate `MEDIA_STATUS_LINES` and track the reveal progression ("Manifestation sealed" → "Unsealing the manifestation" → "Manifestation Complete").
 
 **Explicit exclusions:** Reader Chamber manifestation, Codex manifestation, and Narration are **never** routed through these two modes (`AURA_VEIL_EXCLUDED_SYSTEMS`). Those systems already have — or will have — their own dedicated manifestation logic.
+
+### Manifestation Reveal contract
+
+`shared/manifestationReveal.ts` defines the agnostic reveal mechanic. The Aura Veil's media mode is one caller; the celestial scroll is the current (and only) vessel.
+
+- **State** — `ManifestationRevealState` = `'sealed' | 'unsealing' | 'revealed'`. Caller-owned. The reveal never advances itself; `onUnseal` is a tap notification, not a state mutation.
+- **Content** — `RevealedContent` = `{ src?, alt?, placeholderLabel? }`. The mechanic's view of the asset; the vessel decides how to render either a finished asset or a placeholder.
+- **Activation** — `onUnseal` is optional. When supplied AND `state === 'sealed'`, the sealed scene is a real `<button type="button">` (keyboard-operable, focus-visible ring, press feedback). Without a handler (or in any other state), the scene is a non-interactive `role="img"`.
+- **Accessibility** — the mechanic composes the aria-label from the content and state (`isManifestationRevealInteractive` / `manifestationRevealAriaLabel`). `data-reveal-state` and `data-reveal-container` are exposed on every render for test/automation hooks.
+- **Reduced motion** — the cross-state `AnimatePresence` is instant (`duration: 0`) when `prefers-reduced-motion: reduce` is set. Vessels own their own artwork motion; both layers stay calm.
+- **Containment** — the reveal fills its host zone (`h-full w-full`, `flex items-center justify-center`) and accepts a `className` passthrough for size overrides.
+
+Vessels are passed as a `vessel: React.ReactNode` prop. The current vessel, `CelestialScrollVessel`, is the celestial scroll artwork, moved out of the old `MediaScrollReveal` and made media-mode-aware only through its `mediaKind` and `asset` props. New vessels can be added by creating a component that renders the artwork for each state — the mechanic stays unchanged.
 
 ### Chamber layering contract
 
@@ -114,7 +140,8 @@ Progress in the Development veil renders as `journey-scrubber/JourneyScrubber`:
 - Consolidated status wording: the scrubber is path-only (no "Chapter · Manifesting N/20 · ~Ns" block); a persistent "Chapter N | X%" line sits above Versa's rotating quote at the bottom of the chamber.
 - Versa's floating emblem inside a deepened violet aura (saturated nebula + bright core + counter-rotating wisps) and a `ParticleEffect` backdrop tinted to the active agent.
 - The whole veil is a locked 100dvh circular-chamber composition: Versa hero on top, a path-only journey scrubber (curved qi path with a swappable traveler, preset-driven lit trail, and destination gate) instead of the thin progress bar, an active manifestation zone switched by the operation's manifestation mode (narrative omen scene vs media scroll reveal, both inside `ManifestationChamber`'s enforced layering contract), and the consolidated status at the bottom — "Chapter N | X%" above Versa's rotating evolving line with mode-specific language. No card, no carousel, no scene-selection UI, no manual minimize control.
-- Aura Veil modes: narrative operations (blueprint, initial-arc, steer, alter-fate, chapter) render `NarrativeManifestationZone` with a system-selected omen scene; media operations (cover, image, audio, visual) render `MediaManifestationZone` with the celestial scroll reveal (sealed → unsealing → revealed, optional framed asset). Reader Chamber / Codex / Narration are excluded by contract.
+- Aura Veil modes: narrative operations (blueprint, initial-arc, steer, alter-fate, chapter) render `NarrativeManifestationZone` with a system-selected omen scene; media operations (cover, image, audio, visual) render `MediaManifestationZone` with the Manifestation Reveal mechanic hosted by the celestial scroll vessel (sealed → unsealing → revealed, optional framed asset). Reader Chamber / Codex / Narration are excluded by contract.
+- Workshop structure (2026-08-15): the page has a top-level "Workshop area" segment switcher with two areas — **Aura Veil** (the existing full-shell simulation, with Operation / Manifestation Reveal (dev chain) / Journey Scrubber / Simulation / Compact Indicators control groups) and **Manifestation Reveal** (a focused standalone preview for the agnostic mechanic on its own, with manual state pills, Play sequence, Mock asset / Placeholder content, Tap to unseal on/off, vessel kind, and Compact / Full size containment). The Aura Veil's external media API (`mediaReveal` / `mediaAsset` / `onMediaUnseal`) is unchanged.
 - Scout's presentation stays a compact card without the animation zone.
 
 ## What was mocked
@@ -123,10 +150,21 @@ Nothing beyond the AILoadingVeil replica boundary — the system is presentation
 
 ### Preview states
 
-- Primary veil — operation selector grouped by manifestation mode: narrative (World Blueprint, Initial Arc, Steering, Alter Fate, Chapter) and media (Cover Art, Image, Audio, Visual / Motion), switched between Reference and Development via the workspace control.
-- Media reveal — Development-only controls for the scroll's reveal progression (sealed / unsealing / revealed) and revealed content (mock asset vs placeholder vista).
-- Versa compact — background chapter task; expandable back into the veil.
-- Scout compact — retrieval task; always compact, never blocks the screen.
+The workshop has two top-level areas, switched at the top of the page:
+
+- **Aura Veil** (the existing full-shell simulation):
+  - Primary veil — operation selector grouped by manifestation mode: narrative (World Blueprint, Initial Arc, Steering, Alter Fate, Chapter) and media (Cover Art, Image, Audio, Visual / Motion), switched between Reference and Development via the workspace control.
+  - Media reveal — Development-only controls (visible only when a media operation is selected) for the reveal progression (sealed / unsealing / revealed) and revealed content (mock asset vs placeholder vista).
+  - Journey scrubber — Development-only controls for traveler, aura trail, and destination.
+  - Simulation — open the Aura Veil, open a compact indicator, or stop the running simulation.
+  - Compact indicators — Versa background and Scout retrieval compact tasks.
+- **Manifestation Reveal** (a focused standalone preview for the agnostic mechanic):
+  - State — manual pills for sealed / unsealing / revealed.
+  - Sequence — Play the full sequence, or Reset to the initial state.
+  - Revealed content — switch between a supplied mock asset and the vessel's empty placeholder.
+  - Tap to unseal — on / off, controls whether the sealed scene is interactive.
+  - Vessel kind — Cover Art / Image / Audio / Visual / Motion, used to label the placeholder.
+  - Containment — Compact (small previews) vs Full size (full zone fill).
 
 ### Production dependencies intentionally excluded
 
@@ -134,8 +172,8 @@ No stores, auth, Firebase, or generation callbacks. Operation logic stays in the
 
 ### Files needed for transfer
 
-- `shared/taskCard.ts`, `shared/manifestation.ts`, `shared/CompactIndicator.tsx`
-- `development/LoadingVeilCard.tsx`, `development/LoadingSystem.tsx`, `development/AILoadingVeil.tsx`, `development/ManifestationChamber.tsx`, `development/NarrativeManifestationZone.tsx`, `development/MediaManifestationZone.tsx`, `development/MediaScrollReveal.tsx`, `development/omen-scenes.tsx`, `development/SwordCultivatorClash.tsx`, `development/CelestialChannel.tsx`, and the full `development/journey-scrubber/` folder (scrubber, three travelers, traveler registry, trail presets, destination families — once approved, transfer as the new reference implementation)
+- `shared/taskCard.ts`, `shared/manifestation.ts`, `shared/manifestationReveal.ts`, `shared/CompactIndicator.tsx`
+- `development/LoadingVeilCard.tsx`, `development/LoadingSystem.tsx`, `development/AILoadingVeil.tsx`, `development/ManifestationChamber.tsx`, `development/NarrativeManifestationZone.tsx`, `development/MediaManifestationZone.tsx`, `development/ManifestationReveal.tsx`, `development/vessels/CelestialScrollVessel.tsx`, `development/omen-scenes.tsx`, `development/SwordCultivatorClash.tsx`, `development/CelestialChannel.tsx`, and the full `development/journey-scrubber/` folder (scrubber, three travelers, traveler registry, trail presets, destination families — once approved, transfer as the new reference implementation)
 - Agent profiles from `src/lib/agents.ts` (already present in the source app)
 
 ### Transfer notes
@@ -146,4 +184,5 @@ No stores, auth, Firebase, or generation callbacks. Operation logic stays in the
 - The veil assumes a `100dvh` viewport container and `overflow: hidden` at the root; host pages must not add their own vertical scroll inside the manifestation experience.
 - Manifestation scenes go through `ManifestationChamber`'s `scene`/`ambient`/`foreground` slots; respect the Layer 2 particle cap instead of layering inside scenes. The chamber's `data-celestial-foreground` marker only works while the shared `ParticleEffect` keeps its foreground-zone behavior — do not strip that selector when transferring.
 - The veil's active zone resolves from the task card's `manifestation` spec — keep `buildManifestationSpec` (or the caller's own equivalent) populating it. Narrative callers may name an `omenSceneId` registered in `omen-scenes.tsx` or omit it for the system-selected pick; media callers pass `mediaReveal` progression and the finished `mediaAsset` when the operation completes (a supplied asset implies `revealed`). Do not route Reader Chamber, Codex, or Narration operations into these cards — they own dedicated manifestation logic.
+- The Manifestation Reveal mechanic (`development/ManifestationReveal.tsx`) and the shared contract (`shared/manifestationReveal.ts`) are vessel-agnostic — when transferring, keep the vessel out of the mechanic. `MediaManifestationZone` is the only current consumer; it adapts the media data into the vessel's `asset` / `mediaKind` props and hands the result to the mechanic. To add a new vessel, create a component that renders the artwork for each `ManifestationRevealState` and pass it as the `vessel` prop — the mechanic stays unchanged.
 - The journey scrubber expects a normalized 0–1 `progress` prop; keep the caller-side normalization (`task.progress / 100`) when transferring. Pass `travelerId` / `trailStyle` / `destinationId` only with ids registered in `travelers.ts` / `trails.tsx` / `destinations.tsx` — unknown ids fall back to `cultivator` + `qi-glow` + `door`. A new traveler is one component honoring `TravelerRenderProps` plus one registry entry; a new trail preset is one component honoring `TrailMarkerProps` (one milestone marker, lit + unlit states, local space centered on (0,0)) plus one registry entry; a new destination family is one component honoring `DestinationRenderProps` (ground at (0,0), shared geometry) plus one registry entry. Reduced-motion fallbacks are each component's own responsibility.

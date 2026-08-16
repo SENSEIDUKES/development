@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   MEDIA_KIND_LABEL,
@@ -40,7 +40,9 @@ import type {
  *     content blooms up after the frame, and a light cascade washes down
  *     the surface once) that then settles — a barely-there hanging sway,
  *     a lazy pendant pendulum, a rarer shimmer sweep — so the manifested
- *     content becomes the focus.
+ *     content becomes the focus. While a supplied asset is still loading
+ *     (or if it fails to load), the placeholder vista stays up inside the
+ *     frame, so the payoff never lands on a dark void.
  *
  * The vessel is media-mode-aware: it accepts a `mediaKind` so the
  * placeholder vista can echo the operation's family label (Cover Art,
@@ -773,8 +775,17 @@ const HangingRod: React.FC<{ y: number }> = ({ y }) => (
 const RevealedScroll: React.FC<{
   label: string;
   asset?: RevealedMediaAsset | null;
+  /**
+   * True once the supplied asset's pixels have reported `load`. Until then
+   * (or if the fetch fails) the placeholder vista stays mounted beneath the
+   * frame, so a slow or broken asset never leaves a dark void at the payoff
+   * moment. Once ready, the vista unmounts and the frame renders exactly as
+   * before — no hidden artwork or animations linger behind the asset.
+   */
+  assetReady: boolean;
+  onAssetReady: () => void;
   calm: boolean;
-}> = ({ label, asset, calm }) => (
+}> = ({ label, asset, assetReady, onAssetReady, calm }) => (
   <g>
     {/* Brief golden reveal flare + ring echo on entry — the meaningful beat */}
     {!calm && (
@@ -825,13 +836,19 @@ const RevealedScroll: React.FC<{
           {/* Parchment viewport framed in thin gold trim */}
           <rect x="112" y="80" width="176" height="138" rx="7" fill="#1d0e38" stroke="url(#msr-gold)" strokeWidth="2.5" />
           {asset ? (
-            <image
-              href={asset.src}
-              x="114" y="82" width="172" height="134"
-              preserveAspectRatio="xMidYMid slice"
-              clipPath="url(#msr-frame-clip)"
-              opacity="0.96"
-            />
+            <>
+              {/* Loading/failure fallback: the vista holds the frame until
+                  the asset's pixels arrive (and stays if they never do). */}
+              {!assetReady && <VistaPlaceholder label={label} calm={calm} />}
+              <image
+                href={asset.src}
+                x="114" y="82" width="172" height="134"
+                preserveAspectRatio="xMidYMid slice"
+                clipPath="url(#msr-frame-clip)"
+                opacity="0.96"
+                onLoad={onAssetReady}
+              />
+            </>
           ) : (
             <VistaPlaceholder label={label} calm={calm} />
           )}
@@ -916,6 +933,13 @@ export default function CelestialScrollVessel({
   const calm = !!reduceMotion;
   const label = placeholderLabel ?? MEDIA_KIND_LABEL[mediaKind];
 
+  // The most recent asset src that finished loading. Living here on the
+  // vessel (which stays mounted across state changes, unlike the per-state
+  // scenes) means a once-loaded asset never re-shows the loading vista on
+  // later reveals — the browser cache makes the swap effectively instant.
+  const [readyAssetSrc, setReadyAssetSrc] = useState<string | null>(null);
+  const assetReady = !!asset?.src && readyAssetSrc === asset.src;
+
   return (
     <svg
       viewBox="0 0 400 300"
@@ -927,7 +951,15 @@ export default function CelestialScrollVessel({
       <ScrollDefs />
       {state === 'sealed' && <SealedScroll calm={calm} />}
       {state === 'unsealing' && <UnsealingScroll calm={calm} />}
-      {state === 'revealed' && <RevealedScroll label={label} asset={asset} calm={calm} />}
+      {state === 'revealed' && (
+        <RevealedScroll
+          label={label}
+          asset={asset}
+          calm={calm}
+          assetReady={assetReady}
+          onAssetReady={() => asset?.src && setReadyAssetSrc(asset.src)}
+        />
+      )}
     </svg>
   );
 }

@@ -1,8 +1,37 @@
-import React, { useState } from 'react';
-import { Lock, FlaskConical, Columns2 } from 'lucide-react';
+import React, { useEffect, useId, useState } from 'react';
+import {
+  Activity,
+  ChevronDown,
+  Clapperboard,
+  Columns2,
+  FlaskConical,
+  Layers3,
+  Lock,
+  SlidersHorizontal,
+  Sparkles,
+} from 'lucide-react';
+import { LibraryButton } from '../components/library/LibraryButton';
+import { LibraryPanel } from '../components/library/LibraryPanel';
 import { getWorkshopVersionLabel, type WorkshopEntry } from './manifest';
 
 export type WorkspaceView = 'reference' | 'development' | 'compare';
+export type WorkshopControlSectionId = 'pages' | 'states' | 'scenes' | 'effects' | 'advanced';
+
+export interface WorkshopControlSection {
+  id: WorkshopControlSectionId;
+  /** Optional context shown above this feature's controls. The menu label stays canonical. */
+  description?: React.ReactNode;
+  /** Feature-owned options. Product-facing navigation must never be placed here. */
+  content: React.ReactNode;
+}
+
+export interface WorkshopControlsConfig {
+  /** Optional short explanation of what the controls simulate. */
+  description?: React.ReactNode;
+  /** Which available canonical section opens first. Defaults to the first supplied section. */
+  defaultSection?: WorkshopControlSectionId;
+  sections: readonly WorkshopControlSection[];
+}
 
 export interface FeatureWorkspaceProps {
   entry: WorkshopEntry;
@@ -10,14 +39,162 @@ export interface FeatureWorkspaceProps {
   renderReference: () => React.ReactNode;
   /** Renders the active Workshop version. The only version agents are allowed to change. */
   renderDevelopment: () => React.ReactNode;
-  /** Optional viewing-mode-independent controls (scene selectors, preview state buttons) rendered above the canvas. */
-  controls?: React.ReactNode;
+  /** Preview-only options rendered by the shared Workshop Controls menu. */
+  workshopControls?: WorkshopControlsConfig;
   /** Disable the Compare viewing mode for features where it doesn't make sense. Defaults to true. */
   allowCompare?: boolean;
   /** Optional preload used by deferred reference panes before Reference or Compare is selected. */
   onReferenceIntent?: () => void;
   /** Optional notification for previews whose scripted state must follow pane remounts. */
   onViewChange?: (view: WorkspaceView) => void;
+}
+
+const WORKSHOP_CONTROL_SECTIONS = [
+  { id: 'pages', label: 'Pages', icon: Layers3 },
+  { id: 'states', label: 'States', icon: Activity },
+  { id: 'scenes', label: 'Scenes', icon: Clapperboard },
+  { id: 'effects', label: 'Effects', icon: Sparkles },
+  { id: 'advanced', label: 'Advanced', icon: SlidersHorizontal },
+] as const satisfies readonly {
+  id: WorkshopControlSectionId;
+  label: string;
+  icon: typeof Layers3;
+}[];
+
+function WorkshopControls({ config }: { config?: WorkshopControlsConfig }) {
+  const panelId = useId();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const availableSections = WORKSHOP_CONTROL_SECTIONS.flatMap(section => {
+    const supplied = config?.sections.find(candidate => candidate.id === section.id);
+    return supplied && React.Children.count(supplied.content) > 0
+      ? [{ ...section, ...supplied }]
+      : [];
+  });
+  const requestedDefault = config?.defaultSection;
+  const initialSection = availableSections.some(section => section.id === requestedDefault)
+    ? requestedDefault!
+    : availableSections[0]?.id;
+  const [activeSection, setActiveSection] = useState<WorkshopControlSectionId | undefined>(initialSection);
+
+  useEffect(() => {
+    if (!availableSections.some(section => section.id === activeSection)) {
+      setActiveSection(initialSection);
+    }
+  }, [activeSection, availableSections, initialSection]);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [mobileOpen]);
+
+  const active = availableSections.find(section => section.id === activeSection) ?? availableSections[0];
+  const contentId = `${panelId}-content`;
+
+  return (
+    <div className="relative z-[200] px-4 pt-4 sm:px-6 sm:pt-6" data-workshop-controls>
+      <LibraryPanel
+        as="section"
+        padding="none"
+        aria-label="Workshop Controls"
+        className="mx-auto w-full max-w-7xl !rounded-2xl"
+      >
+        <header className="relative z-10 flex min-h-16 items-center justify-between gap-4 px-4 py-3 sm:px-5">
+          <div className="min-w-0">
+            <p className="text-[9px] font-mono uppercase tracking-[0.22em] text-cyan-200/45">
+              Preview tooling
+            </p>
+            <h2 className="mt-0.5 text-sm font-semibold tracking-wide text-white/90">
+              Workshop Controls
+            </h2>
+            {config?.description && (
+              <div className="mt-1 text-[11px] leading-relaxed text-white/45">
+                {config.description}
+              </div>
+            )}
+          </div>
+          <LibraryButton
+            variant="ghost"
+            size="sm"
+            className="shrink-0 md:hidden"
+            aria-controls={contentId}
+            aria-expanded={mobileOpen}
+            icon={SlidersHorizontal}
+            iconRight={
+              <ChevronDown
+                size={13}
+                className={`transition-transform motion-reduce:transition-none ${mobileOpen ? 'rotate-180' : ''}`}
+              />
+            }
+            onClick={() => setMobileOpen(open => !open)}
+          >
+            {mobileOpen ? 'Close' : 'Open'}
+          </LibraryButton>
+        </header>
+
+        <div
+          id={contentId}
+          className={`${mobileOpen ? 'grid' : 'hidden'} border-t border-white/10 md:grid md:grid-cols-[11rem_minmax(0,1fr)]`}
+        >
+          {availableSections.length > 0 ? (
+            <>
+              <nav
+                aria-label="Workshop control sections"
+                className="flex min-w-0 gap-1 overflow-x-auto border-b border-white/10 bg-black/15 p-2 md:flex-col md:overflow-visible md:border-b-0 md:border-r md:p-3"
+              >
+                {availableSections.map(section => {
+                  const Icon = section.icon;
+                  const selected = active?.id === section.id;
+                  return (
+                    <button
+                      key={section.id}
+                      id={`${panelId}-${section.id}-button`}
+                      type="button"
+                      aria-controls={`${panelId}-${section.id}`}
+                      aria-pressed={selected}
+                      onClick={() => setActiveSection(section.id)}
+                      className={`workshop-touch-target flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs transition-colors md:w-full ${
+                        selected
+                          ? 'border-cyan-400/35 bg-cyan-500/15 text-cyan-100'
+                          : 'border-transparent text-white/50 hover:border-white/10 hover:bg-white/5 hover:text-white/85'
+                      }`}
+                    >
+                      <Icon aria-hidden="true" size={14} />
+                      {section.label}
+                    </button>
+                  );
+                })}
+              </nav>
+
+              {active && (
+                <div
+                  id={`${panelId}-${active.id}`}
+                  role="region"
+                  aria-labelledby={`${panelId}-${active.id}-button`}
+                  data-workshop-control-section={active.id}
+                  className="relative min-w-0 p-4 sm:p-5"
+                >
+                  {active.description && (
+                    <div className="mb-4 max-w-3xl text-[11px] leading-relaxed text-white/45">
+                      {active.description}
+                    </div>
+                  )}
+                  {active.content}
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="px-4 py-4 text-xs leading-relaxed text-white/40 md:col-span-2 md:px-5">
+              This preview has no external Workshop options. Use the component's own controls below.
+            </p>
+          )}
+        </div>
+      </LibraryPanel>
+    </div>
+  );
 }
 
 /**
@@ -31,13 +208,20 @@ export function FeatureWorkspace({
   entry,
   renderReference,
   renderDevelopment,
-  controls,
+  workshopControls,
   allowCompare = true,
   onReferenceIntent,
   onViewChange,
 }: FeatureWorkspaceProps) {
   const [view, setView] = useState<WorkspaceView>('development');
   const [mobilePane, setMobilePane] = useState<'reference' | 'development'>('development');
+
+  useEffect(() => {
+    if (!allowCompare && view === 'compare') {
+      setView('development');
+      onViewChange?.('development');
+    }
+  }, [allowCompare, onViewChange, view]);
 
   return (
     <div className="relative min-h-screen bg-[#04060d] text-slate-300 font-sans flex flex-col">
@@ -100,7 +284,7 @@ export function FeatureWorkspace({
         </div>
       </header>
 
-      {controls && <div className="relative z-[200] px-6 pt-6">{controls}</div>}
+      <WorkshopControls config={workshopControls} />
 
       {view !== 'compare' ? (
         <div className="relative flex-1">

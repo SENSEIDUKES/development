@@ -393,27 +393,6 @@ body {
 .preview-relic h1 { margin: 0; font: 500 clamp(1.8rem, 5vw, 2.5rem)/1.1 Georgia, serif; }
 .preview-relic-copy { margin: 1rem auto 0; max-width: 22rem; color: rgba(255, 247, 223, 0.7); font: 400 0.95rem/1.6 ui-sans-serif, system-ui, sans-serif; }
 
-.preview-accent-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
-  margin-top: 1.5rem;
-  color: rgba(255, 247, 223, 0.62);
-  font: 600 0.7rem/1 ui-sans-serif, system-ui, sans-serif;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.preview-accent-control input {
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--celestial-accent) 65%, white);
-  border-radius: 999px;
-  background: transparent;
-  cursor: pointer;
-}
-
 @keyframes breathe {
   0%, 100% { transform: scale(0.95); opacity: 0.07; }
   50% { transform: scale(1.05); opacity: 0.13; }

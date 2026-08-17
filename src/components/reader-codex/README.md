@@ -4,12 +4,13 @@
 - **Source location:** `src/components/ReaderCodex.tsx` and `src/components/CodexSheetOverlay.tsx` (verified against `origin/main` @ `7d44ecc`)
 - **Workshop preview:** `?preview=reader-codex`
 - **Replica created:** 2026-08-11
-- **Last Workshop update:** 2026-08-14
+- **Last Workshop update:** 2026-08-17
 - **Last source comparison:** 2026-08-13
 - **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-08-17:** Moved the Workshop-only Codex page shortcuts into `FeatureWorkspace` Workshop Controls. The shortcuts still activate the real Codex tabs in each mounted pane; Reader Codex navigation and local story-state behavior remain unchanged.
 - **2026-08-11:** Migrated the complete production Reader Codex, its responsive sheet, all six primary pages and nested sections, Reader prose highlighting/hovercards, local editing controls, and Reader Chamber navigation into DEV. Production-only auth, AI, media, and persistence seams were replaced with explicit local compatibility behavior.
 - **2026-08-12:** Aligned generated Reader sessions with DEV Story Seed, World Blueprint, Process Result, and Living Story State contracts. The adapter now translates Seed character/profile aliases, power ranks, relationships, abilities, permanent power-system data, factions, locations, artifacts, mysteries, and resolved threads; Process updates merge into existing named entities; and each Codex timeline is limited to the selected chapter.
 - **2026-08-13:** Added Part One's Development-only creature boundary: Process Result normalizes species into a lean Bestiary and persistent named non-human individuals into Portraits, with application-owned stable IDs, encounter history, and reciprocal species links. Development now separates Human and Non-Human Portraits and adds a Bestiary tab; the frozen Reference and World Card/Card Workshop behavior remain unchanged.

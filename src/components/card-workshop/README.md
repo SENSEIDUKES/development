@@ -4,7 +4,7 @@
 - **Verified source locations:** `src/components/ReaderViewport.tsx`, `src/components/WorldEntityCard.tsx`, `src/components/SystemBlock.tsx`, `src/components/FateResultCard.tsx`
 - **Workshop preview:** `?preview=card-workshop`
 - **Replica created:** 2026-08-14
-- **Last Workshop update:** 2026-08-15
+- **Last Workshop update:** 2026-08-17
 - **Last source comparison:** 2026-08-15
 - **Replica status:** under refinement
 
@@ -22,6 +22,7 @@ Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studi
 
 ## Workshop history
 
+- **2026-08-17:** Adopted the shared responsive `FeatureWorkspace` Workshop Controls shell. This preview intentionally supplies no external options because Card Type Tabs and viewport modes are real navigation inside the component under test.
 - **2026-08-15:** Replaced the standalone Inspection Mode with Contextual View. The selected Codex Card, World Card, or System Panel now enters the real ReaderViewport structured-block path between fixed prose and a highlighted entity mention; technical routing, capability, and override controls live beneath the preview in a collapsible Technical Details section.
 - **2026-08-14:** Created the Card Workshop, extracted the production-inline Codex presentation for shared Reader/Workshop rendering, and added deterministic local state simulation.
 - **2026-08-14:** Rebased Part Two onto merged Part One, restored a locked Reference pane, isolated sound simulation, and completed missing-image, Codex, reveal, audio, and responsive states.

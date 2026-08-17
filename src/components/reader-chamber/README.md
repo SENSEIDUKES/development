@@ -4,12 +4,13 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-15
+- **Last Workshop update:** 2026-08-17
 - **Last source comparison:** 2026-08-15
 - **Replica status:** faithful replica
 
 ## Workshop history
 
+- **2026-08-17:** Replaced the Reader-specific preview menu shell with `FeatureWorkspace` Workshop Controls. Reader page shortcuts, deterministic reading/menu states, chapter selection, themes, and particles now use the shared Pages / States / Effects structure while continuing to drive the real Reader controls and one shared mock story. Reader Chamber navigation and component behavior were not changed.
 - **2026-08-15:** Added an optional Development-only `ReaderViewport` World Card adapter seam and shared Reader Chamber surface helper for the Card Workshop's deterministic Contextual View. Normal Reader callers omit the seam and retain the existing presentation and audio lifecycle; neither the seam nor its remount key transfers to production.
 - **2026-08-15:** Rebuilt the active Development `CodexCard` on the shared `LibraryCard` region structure without changing the Reader reveal's presentation or flow. Existing media/backdrop, Manifest/Awaken action and Summoning state, entrance/hover behavior, typography, spacing, and routing remain intact; no generic LibraryCard visual treatment has been adopted.
 - **2026-08-14:** Completed the first Part Three card cleanup on the existing Reader route: renamed the active presentations to `CodexCard` and `WorldCard`, limited visual Codex Cards to Human Portraits, Non-Human Portraits, Artifacts, and Locations, kept Bestiary/Faction highlights on World Cards, kept System/Fate content on System Panels, suppressed duplicate visual Codex/World signals in favor of the Codex Card, and removed the end-of-chapter Chapter Visual Memory render and trigger.
@@ -81,8 +82,9 @@ shared/                       — code genuinely identical between the two forks
 ```
 
 Both forks render inside `src/workshop/previews/reader-chamber/ReaderChamberWorkspace.tsx`,
-which shares one mock story and one categorized preview-control panel (Reading / Effects /
-Menus / Pages — see "Available preview states") between them via `FeatureWorkspace`.
+which shares one mock story and one categorized preview-control panel rendered through the
+shared Workshop Controls menu — see "Available preview states" for the canonical Pages /
+States / Effects mapping.
 
 ## What was copied
 
@@ -140,25 +142,32 @@ already carries the same font and color tokens.
 
 ## Available preview states
 
-The Workshop preview-control menu is split into four categories, selected with a
-compact `Reading | Effects | Menus | Pages` row at the top of the panel. Only the
-selected category's controls render, so the menu is never one long vertical list.
-Category membership lives on each scenario in
-`src/workshop/previews/reader-chamber/previewStates.ts` (`category` field).
+The preview controls now live inside the shared Workshop Controls menu (Pages / States /
+Effects / Advanced), rendered by `FeatureWorkspace`. Each scenario in
+`src/workshop/previews/reader-chamber/previewStates.ts` carries a `category` field that
+maps it into the canonical section list. The mapping collapses the old Reader-specific
+labels into the shared menu while keeping every scenario reachable:
 
-**Reading** — normal reading states and reading setup
+- **`pages` (old)** → **Pages** section — alternate Reader Chamber states and full-screen conditions.
+- **`reading` (old)** → **States** section — normal reading states and reading setup.
+- **`menus` (old)** → **States** section — opened panels, drawers, and overlays.
+- **`effects` (old)** → **Effects** section — preview-only theme and particle controls
+  (no Reader scenario is currently assigned; the section renders when a feature supplies
+  Effects content).
+
+So in the shared menu the **States** section surfaces both the former Reading and Menus
+lists under one canonical heading, while **Pages** and **Effects** keep their old roles.
+Theme and particle controls (the old Effects list) still render under the canonical
+Effects section when supplied.
+
+**States — Reading** — normal reading states and reading setup
 
 - `reading` — rich blocks chapter 1 (system blocks, Fate Result card, World Card,
   Context Inspector, legend, Fate Survival banner)
 - `fullscreen` — header hidden; click prose to toggle back
 - Chapter selector (1–4)
 
-**Effects** — preview-only visual and immersive controls
-
-- Theme selector (void/crimson/abyss/sepia/emerald via `readerPreferences.themeOverride`)
-- Particle intensity (off/low/default/high via `readerPreferences.particleIntensity`)
-
-**Menus** — opened panels, drawers, and overlays
+**States — Menus** — opened panels, drawers, and overlays
 
 - `preferences-open` — Reader Settings panel expanded
 - `bookmarks-open` — Comments button opening the Chronicle Anchors drawer (two anchor cards)
@@ -172,6 +181,12 @@ Category membership lives on each scenario in
 - `empty-chapter` — "Unmanifested Segment" with Manifest buttons
 - `death-scene` — sealed chapter 3 with menacing red shading + death flag block
 - `continuity-warning` — Seal flow surfacing the Continuity Guard Warning modal
+
+**Effects** — preview-only visual and immersive controls (theme + particles render here
+when supplied; no Reader scenario is assigned, see the category mapping above)
+
+- Theme selector (void/crimson/abyss/sepia/emerald via `readerPreferences.themeOverride`)
+- Particle intensity (off/low/default/high via `readerPreferences.particleIntensity`)
 
 All of these are Workspace-only controls, never inside the reusable components. When the
 active state belongs to a category that is not on screen, the panel names it on a footer

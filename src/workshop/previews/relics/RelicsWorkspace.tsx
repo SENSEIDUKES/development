@@ -7,7 +7,7 @@ import { CosmicArtifact } from '../../../components/relics/shared/types';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { mockRelics } from './mockData';
-import { Library, Sparkles, RotateCcw } from 'lucide-react';
+import { Sparkles, RotateCcw } from 'lucide-react';
 
 type Scene = 'cards' | 'reveal';
 
@@ -119,33 +119,39 @@ export function RelicsWorkspace() {
   return (
     <FeatureWorkspace
       entry={entry}
-      controls={
-        <div className="max-w-md">
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 backdrop-blur-md">
-            <h2 className="text-xs font-semibold text-white/70 mb-3 uppercase tracking-widest flex items-center gap-1.5">
-              <Library size={12} /> Scene
-            </h2>
-            <div className="flex gap-2">
+      workshopControls={{
+        defaultSection: 'scenes',
+        sections: [
+          {
+            id: 'scenes',
+            description: 'Switch the Workshop canvas between the inventory gallery and the full reveal flow.',
+            content: (
+              <div className="flex flex-wrap gap-2">
               <button
+                type="button"
+                aria-pressed={scene === 'cards'}
                 onClick={() => setScene('cards')}
-                className={`px-4 py-2 rounded-lg text-sm border transition-colors ${
+                className={`workshop-touch-target rounded-lg border px-4 py-2 text-sm transition-colors ${
                   scene === 'cards' ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-100' : 'bg-white/5 border-transparent text-white/60 hover:bg-white/10'
                 }`}
               >
                 Compact Cards
               </button>
               <button
+                type="button"
+                aria-pressed={scene === 'reveal'}
                 onClick={() => setScene('reveal')}
-                className={`px-4 py-2 rounded-lg text-sm border transition-colors ${
+                className={`workshop-touch-target rounded-lg border px-4 py-2 text-sm transition-colors ${
                   scene === 'reveal' ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-100' : 'bg-white/5 border-transparent text-white/60 hover:bg-white/10'
                 }`}
               >
                 Reveal Flow
               </button>
-            </div>
-          </div>
-        </div>
-      }
+              </div>
+            ),
+          },
+        ],
+      }}
       renderReference={() => <RelicsScene scene={scene} RevealComponent={ReferenceRelicReveal} />}
       renderDevelopment={() => <RelicsScene scene={scene} RevealComponent={DevelopmentRelicReveal} />}
     />

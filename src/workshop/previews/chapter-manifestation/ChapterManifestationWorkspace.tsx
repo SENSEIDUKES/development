@@ -7,10 +7,18 @@ import {
   type MediaRevealState,
   type RevealedMediaAsset,
 } from '../../../components/chapter-manifestation/shared/manifestation';
-import { FeatureWorkspace } from '../../FeatureWorkspace';
+import {
+  FeatureWorkspace,
+  type WorkshopControlSection,
+  type WorkshopControlsConfig,
+} from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { Square, Sparkles, Minimize2, Compass, Layers, Wand2, Scroll, Box } from 'lucide-react';
-import ManifestationRevealPreview from './manifestationRevealPreview';
+import {
+  ManifestationRevealControls,
+  ManifestationRevealPreview,
+  useManifestationRevealPreview,
+} from './manifestationRevealPreview';
 
 /**
  * Every operation routable through the Aura Veil's two manifestation modes.
@@ -333,15 +341,73 @@ function AuraVeilSimulationControls({
   sim,
   cosmetics,
   media,
+  section,
 }: {
   sim: ReturnType<typeof useGenerationSimulation>;
   cosmetics: ReturnType<typeof useScrubberCosmetics>;
   media: ReturnType<typeof useMediaPreview>;
+  section: 'states' | 'effects' | 'advanced';
 }) {
   const veilPhaseIsMedia = manifestationModeForOperation(sim.veilPhase) === 'media';
 
+  if (section === 'effects') {
+    return (
+      <ControlGroup
+        icon={<Wand2 size={14} className="text-portal" />}
+        title="Journey Scrubber"
+        hint="Cosmetic slots for the scrubber's traveler, trail, and destination. Picking a traveler applies its recommended destination; the destination remains independently selectable."
+      >
+        <PillOptionGroup
+          label="Traveler"
+          options={TRAVELER_OPTIONS}
+          selected={cosmetics.travelerId}
+          onPick={cosmetics.pickTraveler}
+        />
+        <PillOptionGroup
+          label="Aura Trail"
+          options={TRAIL_OPTIONS}
+          selected={cosmetics.trailStyle}
+          onPick={cosmetics.setTrailStyle}
+        />
+        <PillOptionGroup
+          label="Destination"
+          options={DESTINATION_OPTIONS}
+          selected={cosmetics.destinationId}
+          onPick={cosmetics.setDestinationId}
+        />
+      </ControlGroup>
+    );
+  }
+
+  if (section === 'advanced') {
+    return (
+      <ControlGroup
+        icon={<Minimize2 size={14} className="text-portal" />}
+        title="Compact Indicators"
+        hint="Open a compact background or retrieval task to inspect the persistent floating indicator."
+      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={sim.openVersaCompact}
+            className="workshop-touch-target flex items-center justify-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-500 transition-colors hover:bg-amber-500/20"
+          >
+            <Minimize2 size={14} /> Versa — Background
+          </button>
+          <button
+            type="button"
+            onClick={sim.openScoutCompact}
+            className="workshop-touch-target flex items-center justify-center gap-2 rounded-lg border border-portal/30 bg-portal/10 px-4 py-3 text-sm font-medium text-portal transition-colors hover:bg-portal/20"
+          >
+            <Compass size={14} /> Scout — Retrieval
+          </button>
+        </div>
+      </ControlGroup>
+    );
+  }
+
   return (
-    <div className="max-w-2xl bg-neutral-900/50 border border-neutral-800 rounded-xl divide-y divide-white/5">
+    <div className="divide-y divide-white/5">
       <ControlGroup
         icon={<Layers size={14} className="text-human" />}
         title="Operation"
@@ -385,31 +451,6 @@ function AuraVeilSimulationControls({
       )}
 
       <ControlGroup
-        icon={<Wand2 size={14} className="text-portal" />}
-        title="Journey Scrubber"
-        hint="Cosmetic slots for the scrubber's traveler, trail, and destination. Picking a traveler also applies its recommended destination; the destination control stays independently selectable."
-      >
-        <PillOptionGroup
-          label="Traveler"
-          options={TRAVELER_OPTIONS}
-          selected={cosmetics.travelerId}
-          onPick={cosmetics.pickTraveler}
-        />
-        <PillOptionGroup
-          label="Aura Trail"
-          options={TRAIL_OPTIONS}
-          selected={cosmetics.trailStyle}
-          onPick={cosmetics.setTrailStyle}
-        />
-        <PillOptionGroup
-          label="Destination"
-          options={DESTINATION_OPTIONS}
-          selected={cosmetics.destinationId}
-          onPick={cosmetics.setDestinationId}
-        />
-      </ControlGroup>
-
-      <ControlGroup
         icon={<Sparkles size={14} className="text-amber-300" />}
         title="Simulation"
         hint="Open the Aura Veil in primary or compact mode, or stop the running simulation."
@@ -418,7 +459,7 @@ function AuraVeilSimulationControls({
           <button
             type="button"
             onClick={sim.openVeil}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-human/20 border border-human/40 hover:bg-human/30 text-human text-sm font-semibold tracking-wide rounded-lg transition-colors"
+            className="workshop-touch-target flex items-center justify-center gap-2 px-4 py-3 bg-human/20 border border-human/40 hover:bg-human/30 text-human text-sm font-semibold tracking-wide rounded-lg transition-colors"
           >
             <Sparkles size={15} /> Open Veil
           </button>
@@ -426,33 +467,13 @@ function AuraVeilSimulationControls({
             type="button"
             onClick={sim.stopSimulation}
             disabled={!sim.isGenerating}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-red-900/20 text-red-400 hover:bg-red-900/40 text-xs rounded disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="workshop-touch-target flex items-center justify-center gap-2 px-4 py-3 bg-red-900/20 text-red-400 hover:bg-red-900/40 text-xs rounded disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <Square size={13} /> Stop Simulation
           </button>
         </div>
       </ControlGroup>
 
-      <ControlGroup
-        icon={<Minimize2 size={14} className="text-portal" />}
-        title="Compact Indicators"
-        hint="Open a compact background/retrieval task to see the persistent floating indicator."
-      >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button
-            onClick={sim.openVersaCompact}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 text-sm font-medium rounded-lg transition-colors"
-          >
-            <Minimize2 size={14} /> Versa — Background
-          </button>
-          <button
-            onClick={sim.openScoutCompact}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-portal/10 border border-portal/30 hover:bg-portal/20 text-portal text-sm font-medium rounded-lg transition-colors"
-          >
-            <Compass size={14} /> Scout — Retrieval
-          </button>
-        </div>
-      </ControlGroup>
     </div>
   );
 }
@@ -535,7 +556,7 @@ const AREA_OPTIONS: { id: WorkshopArea; label: string; description: string; icon
   },
 ];
 
-function WorkshopAreaSwitcher({
+function WorkshopPageControls({
   area,
   onChange,
 }: {
@@ -543,40 +564,33 @@ function WorkshopAreaSwitcher({
   onChange: (next: WorkshopArea) => void;
 }) {
   return (
-    <nav
-      role="tablist"
-      aria-label="Workshop areas"
-      className="max-w-7xl mx-auto px-4 sm:px-6 pt-4"
-    >
-      <div className="inline-flex max-w-full flex-wrap rounded-2xl border border-white/10 bg-white/5 p-1 gap-1">
-        {AREA_OPTIONS.map((opt) => {
-          const selected = area === opt.id;
-          return (
-            <button
-              key={opt.id}
-              role="tab"
-              id={`area-${opt.id}`}
-              type="button"
-              aria-selected={selected}
-              aria-controls={`area-panel-${opt.id}`}
-              data-area={opt.id}
-              onClick={() => onChange(opt.id)}
-              className={`workshop-touch-target flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium transition-colors sm:px-4 ${
-                selected
-                  ? 'bg-amber-500/20 text-amber-100'
-                  : 'text-white/55 hover:text-white/80'
-              }`}
-            >
-              {opt.icon}
-              {opt.label}
-            </button>
-          );
-        })}
-      </div>
-      <p className="mt-2 text-[11px] text-white/45 max-w-2xl">
-        {AREA_OPTIONS.find((o) => o.id === area)?.description}
-      </p>
-    </nav>
+    <div className="grid gap-2 sm:grid-cols-2">
+      {AREA_OPTIONS.map(option => {
+        const selected = area === option.id;
+        return (
+          <button
+            key={option.id}
+            type="button"
+            aria-pressed={selected}
+            data-area={option.id}
+            onClick={() => onChange(option.id)}
+            className={`workshop-touch-target rounded-xl border px-4 py-3 text-left transition-colors ${
+              selected
+                ? 'border-amber-500/45 bg-amber-500/15 text-amber-100'
+                : 'border-white/10 bg-black/20 text-white/60 hover:bg-white/10 hover:text-white/85'
+            }`}
+          >
+            <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest">
+              {option.icon}
+              {option.label}
+            </span>
+            <span className="mt-1.5 block text-[11px] normal-case leading-relaxed tracking-normal text-white/45">
+              {option.description}
+            </span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -587,31 +601,75 @@ export function ChapterManifestationWorkspace() {
   const sim = useGenerationSimulation();
   const cosmetics = useScrubberCosmetics();
   const media = useMediaPreview();
+  const revealPreview = useManifestationRevealPreview();
   const [area, setArea] = useState<WorkshopArea>('aura-veil');
 
-  return (
-    <div className="bg-[#04060d] text-slate-300 font-sans">
-      <WorkshopAreaSwitcher area={area} onChange={setArea} />
+  const controlSections: WorkshopControlSection[] = [
+    {
+      id: 'pages',
+      description: 'Choose the full Aura Veil shell or the focused Development-only reveal mechanic.',
+      content: <WorkshopPageControls area={area} onChange={setArea} />,
+    },
+    ...(area === 'aura-veil'
+      ? [
+          {
+            id: 'states' as const,
+            description: 'Choose an operation, force media reveal progression, and run or stop the shared veil simulation.',
+            content: <AuraVeilSimulationControls sim={sim} cosmetics={cosmetics} media={media} section="states" />,
+          },
+          {
+            id: 'effects' as const,
+            description: 'Tune Development-only traveler, trail, and destination cosmetics.',
+            content: <AuraVeilSimulationControls sim={sim} cosmetics={cosmetics} media={media} section="effects" />,
+          },
+          {
+            id: 'advanced' as const,
+            description: 'Open compact background-task indicators without changing the component navigation.',
+            content: <AuraVeilSimulationControls sim={sim} cosmetics={cosmetics} media={media} section="advanced" />,
+          },
+        ]
+      : [
+          {
+            id: 'states' as const,
+            description: 'Inspect each reveal state or replay the complete sealed-to-revealed sequence.',
+            content: <ManifestationRevealControls controller={revealPreview} section="states" />,
+          },
+          {
+            id: 'effects' as const,
+            description: 'Tune delay, revealed content, vessel label, and responsive containment.',
+            content: <ManifestationRevealControls controller={revealPreview} section="effects" />,
+          },
+          {
+            id: 'advanced' as const,
+            description: 'Toggle the activation contract and inspect the current caller bindings.',
+            content: <ManifestationRevealControls controller={revealPreview} section="advanced" />,
+          },
+        ]),
+  ];
+  const workshopControls: WorkshopControlsConfig = {
+    defaultSection: 'pages',
+    description: 'All page, state, effect, and simulator options are Workshop-only.',
+    sections: controlSections,
+  };
 
-      <div
-        role="tabpanel"
-        id={`area-panel-${area}`}
-        aria-labelledby={`area-${area}`}
-        className="pt-4"
-        data-active-area={area}
-      >
-        {area === 'aura-veil' ? (
-          <FeatureWorkspace
-            entry={entry}
-            controls={<AuraVeilSimulationControls sim={sim} cosmetics={cosmetics} media={media} />}
-            renderReference={() => <VeilCanvas Veil={ReferenceAILoadingVeil} sim={sim} />}
-            renderDevelopment={() => <DevelopmentVeilCanvas sim={sim} cosmetics={cosmetics} media={media} />}
-          />
-        ) : (
-          <ManifestationRevealPreview />
-        )}
-      </div>
-    </div>
+  return (
+    <FeatureWorkspace
+      entry={entry}
+      allowCompare={area === 'aura-veil'}
+      workshopControls={workshopControls}
+      renderReference={() => area === 'aura-veil' ? (
+        <VeilCanvas Veil={ReferenceAILoadingVeil} sim={sim} />
+      ) : (
+        <div className="flex min-h-[50vh] items-center justify-center bg-neutral-950 p-6 text-center text-sm text-white/45">
+          Manifestation Reveal is a Development-only mechanic and has no locked Original Reference pane.
+        </div>
+      )}
+      renderDevelopment={() => area === 'aura-veil' ? (
+        <DevelopmentVeilCanvas sim={sim} cosmetics={cosmetics} media={media} />
+      ) : (
+        <ManifestationRevealPreview controller={revealPreview} />
+      )}
+    />
   );
 }
 

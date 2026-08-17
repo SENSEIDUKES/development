@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Shield, MapPin, Swords, User, Loader2 } from 'lucide-react';
 import { Character, Faction, Artifact, Location } from './types';
@@ -11,9 +12,29 @@ interface CodexHovercardProps {
   children: React.ReactNode;
 }
 
+const DESKTOP_HOVERCARD_QUERY = '(min-width: 1280px) and (hover: hover) and (pointer: fine)';
+const VIEWPORT_GUTTER = 16;
+const TRIGGER_GAP = 8;
+
+interface DesktopHovercardPosition {
+  left: number;
+  top: number;
+}
+
+function matchesDesktopHovercardViewport(): boolean {
+  return typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia(DESKTOP_HOVERCARD_QUERY).matches;
+}
+
 export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, children }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isPortalMounted, setIsPortalMounted] = useState(false);
   const containerRef = useRef<HTMLSpanElement>(null);
+  const triggerRef = useRef<HTMLSpanElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(matchesDesktopHovercardViewport);
+  const [desktopPosition, setDesktopPosition] = useState<DesktopHovercardPosition | null>(null);
   const persistedImageUrl = 'imageUrl' in entry ? entry.imageUrl : undefined;
   const imageAssetId = entry.imageAssetId;
   const [localImageUrl, setLocalImageUrl] = useState<string>();
@@ -144,9 +165,9 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
+      const target = event.target as Node;
+      if (containerRef.current?.contains(target) || cardRef.current?.contains(target)) return;
+      setIsOpen(false);
     };
 
     if (isOpen) {
@@ -160,33 +181,114 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+
+    const mediaQuery = window.matchMedia(DESKTOP_HOVERCARD_QUERY);
+    const syncViewportMode = () => setIsDesktopViewport(mediaQuery.matches);
+    syncViewportMode();
+    mediaQuery.addEventListener('change', syncViewportMode);
+    return () => mediaQuery.removeEventListener('change', syncViewportMode);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isPortalMounted || !isDesktopViewport) {
+      setDesktopPosition(null);
+      return;
+    }
+    if (!isOpen) return;
+
+    const updateDesktopPosition = () => {
+      const trigger = triggerRef.current?.getBoundingClientRect();
+      const card = cardRef.current;
+      if (!trigger || !card) return;
+
+      const visualViewport = window.visualViewport;
+      const viewportLeft = visualViewport?.offsetLeft ?? 0;
+      const viewportTop = visualViewport?.offsetTop ?? 0;
+      const viewportWidth = visualViewport?.width ?? window.innerWidth;
+      const viewportHeight = visualViewport?.height ?? window.innerHeight;
+      const safeLeft = viewportLeft + VIEWPORT_GUTTER;
+      const safeTop = viewportTop + VIEWPORT_GUTTER;
+      const safeRight = viewportLeft + viewportWidth - VIEWPORT_GUTTER;
+      const safeBottom = viewportTop + viewportHeight - VIEWPORT_GUTTER;
+      const cardRect = card.getBoundingClientRect();
+      const cardWidth = card.offsetWidth || cardRect.width;
+      const cardHeight = card.offsetHeight || cardRect.height;
+
+      const centeredLeft = trigger.left + (trigger.width / 2) - (cardWidth / 2);
+      const left = Math.min(Math.max(centeredLeft, safeLeft), Math.max(safeLeft, safeRight - cardWidth));
+      const belowTop = trigger.bottom + TRIGGER_GAP;
+      const aboveTop = trigger.top - TRIGGER_GAP - cardHeight;
+      const hasRoomBelow = belowTop + cardHeight <= safeBottom;
+      const hasRoomAbove = aboveTop >= safeTop;
+      const preferredTop = hasRoomBelow || !hasRoomAbove ? belowTop : aboveTop;
+      const top = Math.min(Math.max(preferredTop, safeTop), Math.max(safeTop, safeBottom - cardHeight));
+
+      setDesktopPosition((current) => (
+        current?.left === left && current.top === top ? current : { left, top }
+      ));
+    };
+
+    updateDesktopPosition();
+    const resizeObserver = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(updateDesktopPosition);
+    if (resizeObserver && cardRef.current) resizeObserver.observe(cardRef.current);
+
+    window.addEventListener('resize', updateDesktopPosition);
+    window.addEventListener('scroll', updateDesktopPosition, true);
+    window.visualViewport?.addEventListener('resize', updateDesktopPosition);
+    window.visualViewport?.addEventListener('scroll', updateDesktopPosition);
+
+    return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', updateDesktopPosition);
+      window.removeEventListener('scroll', updateDesktopPosition, true);
+      window.visualViewport?.removeEventListener('resize', updateDesktopPosition);
+      window.visualViewport?.removeEventListener('scroll', updateDesktopPosition);
+    };
+  }, [imageUrl, isDesktopViewport, isGeneratingImage, isOpen, isPortalMounted]);
+
   const handleToggle = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
-    setIsOpen(!isOpen);
+    const nextOpen = !isOpen;
+    if (nextOpen) setIsPortalMounted(true);
+    setIsOpen(nextOpen);
   };
 
-  return (
-    <span className="relative inline-block" ref={containerRef}>
-      <span
-        className={getTextStyles()}
-        onClick={handleToggle}
-        onTouchEnd={(e) => {
-          e.preventDefault();
-          handleToggle(e);
-        }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (handleToggle)(e as any); } }}
-      >
-        {children}
-      </span>
-
-      <AnimatePresence>
+  const hovercardLayer = typeof document === 'undefined' || !isPortalMounted ? null : createPortal(
+    <div
+      data-slot="codex-hovercard-layer"
+      className={`fixed z-[100] pointer-events-none ${isDesktopViewport ? '' : 'flex items-center justify-center'}`}
+      style={isDesktopViewport ? {
+        left: desktopPosition?.left ?? 0,
+        top: desktopPosition?.top ?? 0,
+        visibility: desktopPosition ? 'visible' : 'hidden',
+      } : {
+        top: 'max(1rem, env(safe-area-inset-top, 0px))',
+        right: 'max(1rem, env(safe-area-inset-right, 0px))',
+        bottom: 'max(1rem, env(safe-area-inset-bottom, 0px))',
+        left: 'max(1rem, env(safe-area-inset-left, 0px))',
+      }}
+    >
+      <AnimatePresence onExitComplete={() => {
+        if (!isOpen) setIsPortalMounted(false);
+      }}>
         {isOpen && (
           <motion.div
+            ref={cardRef}
+            data-slot="codex-hovercard"
             initial={{ opacity: 0, y: 5, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 5, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className={`absolute z-[100] top-full mt-2 left-1/2 -translate-x-1/2 w-64 p-3 bg-void border rounded-xl shadow-2xl backdrop-blur-md ${getBorderColor()}`}
-            style={{ pointerEvents: 'auto' }}
+            className={`pointer-events-auto w-64 max-w-full overflow-y-auto overscroll-contain p-3 bg-void border rounded-xl shadow-2xl backdrop-blur-md ${getBorderColor()}`}
+            style={{
+              maxHeight: isDesktopViewport
+                ? 'calc(100dvh - 2rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))'
+                : '100%',
+            }}
             onClick={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ((e) => e.stopPropagation())(e as any); } }}
           >
@@ -197,7 +299,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
                   alt={entry.name}
                   loading="lazy"
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               </div>
             ) : (
@@ -257,6 +359,24 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
           </motion.div>
         )}
       </AnimatePresence>
+    </div>,
+    document.body,
+  );
+
+  return (
+    <span className="relative inline-block" ref={containerRef}>
+      <span
+        ref={triggerRef}
+        className={getTextStyles()}
+        onClick={handleToggle}
+        onTouchEnd={(e) => {
+          e.preventDefault();
+          handleToggle(e);
+        }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (handleToggle)(e as any); } }}
+      >
+        {children}
+      </span>
+      {hovercardLayer}
     </span>
   );
 };

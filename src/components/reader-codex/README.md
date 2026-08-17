@@ -1,15 +1,16 @@
 # Reader Codex
 
 - **Source repository:** SENSEIDUKES/Light-Novels
-- **Source location:** `src/components/ReaderCodex.tsx` and `src/components/CodexSheetOverlay.tsx` (verified against `origin/main` @ `7d44ecc`)
+- **Source location:** `src/components/ReaderCodex.tsx`, `src/components/CodexSheetOverlay.tsx`, and `src/components/CodexHovercard.tsx` (verified against `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-codex`
 - **Replica created:** 2026-08-11
 - **Last Workshop update:** 2026-08-17
-- **Last source comparison:** 2026-08-13
+- **Last source comparison:** 2026-08-17
 - **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-08-17:** Kept highlighted-term Codex cards centered in the visible viewport through mobile and tablet widths, bounded them by device safe areas with internal scrolling on short screens, clamped their existing contextual placement on desktop, and changed persisted/generated card imagery from crop-to-fill to full-image containment. The card skin, content, Manifest action, and Reader highlighting flow remain unchanged.
 - **2026-08-17:** Moved the Workshop-only Codex page shortcuts into `FeatureWorkspace` Workshop Controls. The shortcuts still activate the real Codex tabs in each mounted pane; Reader Codex navigation and local story-state behavior remain unchanged.
 - **2026-08-11:** Migrated the complete production Reader Codex, its responsive sheet, all six primary pages and nested sections, Reader prose highlighting/hovercards, local editing controls, and Reader Chamber navigation into DEV. Production-only auth, AI, media, and persistence seams were replaced with explicit local compatibility behavior.
 - **2026-08-12:** Aligned generated Reader sessions with DEV Story Seed, World Blueprint, Process Result, and Living Story State contracts. The adapter now translates Seed character/profile aliases, power ranks, relationships, abilities, permanent power-system data, factions, locations, artifacts, mysteries, and resolved threads; Process updates merge into existing named entities; and each Codex timeline is limited to the selected chapter.

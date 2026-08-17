@@ -15,6 +15,7 @@ import {
   LibraryCard,
   LibraryDragonCycleIcon,
   LibraryHeaderBadge,
+  LibraryNavigationDrawer,
   LibraryNavigationDrawerPanel,
   LibraryPanel,
   LibraryTextArea,
@@ -155,6 +156,7 @@ function HeaderBadgePreview() {
 
 function NavigationDrawerPreview() {
   const [active, setActive] = useState('origin');
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const sections: LibraryNavigationDrawerSection[] = [
     {
       id: 'story',
@@ -175,9 +177,25 @@ function NavigationDrawerPreview() {
     },
   ];
   return (
-    <div className="h-[22rem] w-full max-w-[15rem] overflow-hidden rounded-2xl border border-white/10 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.8)]">
-      <LibraryNavigationDrawerPanel aria-label="Story Seed sections preview" sections={sections} />
-    </div>
+    <>
+      {/* The content half, rendered standalone the way a desktop sidebar
+          uses it. */}
+      <div className="h-[22rem] w-full max-w-[15rem] overflow-hidden rounded-2xl border border-white/10 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.8)]">
+        <LibraryNavigationDrawerPanel aria-label="Story Seed sections preview" sections={sections} />
+      </div>
+      <LibraryButton variant="secondary" size="sm" icon={List} onClick={() => setDrawerOpen(true)}>
+        Open Drawer
+      </LibraryButton>
+      {/* The full drawer with its scrim, Escape handling, and scroll lock.
+          mobileOnly={false} so the preview opens on desktop too. */}
+      <LibraryNavigationDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        mobileOnly={false}
+        aria-label="Story Seed sections drawer preview"
+        sections={sections}
+      />
+    </>
   );
 }
 
@@ -261,7 +279,7 @@ const LIBRARY_COMPONENTS: LibraryComponentEntry[] = [
   },
   {
     name: 'LibraryNavigationDrawer',
-    description: 'The navigation menu shell — a mobile drawer over a scrim, or the standalone panel shown here as a desktop sidebar.',
+    description: 'The navigation menu shell — a slide-in drawer over a scrim (open it with the button); the standalone panel shown here doubles as a desktop sidebar.',
     Preview: NavigationDrawerPreview,
   },
   {

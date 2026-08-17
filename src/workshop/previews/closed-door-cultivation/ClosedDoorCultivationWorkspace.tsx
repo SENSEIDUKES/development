@@ -4,11 +4,11 @@ import { ClosedDoorCultivationModal as DevelopmentClosedDoorCultivationModal } f
 import type { ClosedDoorCultivationModalProps } from '../../../components/closed-door-cultivation/development/ClosedDoorCultivationModal';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
-import { scenarios, PreviewState } from './previewStates';
+import { scenarios, type PreviewState } from './previewStates';
 
 /**
  * Workshop-only mock of the production library grid so both versions can be
- * judged against realistic content — the same collision scenario seen on
+ * judged against realistic content - the same collision scenario seen on
  * library.seaportal.world. Not part of either component.
  */
 const mockLibrary = [
@@ -35,16 +35,19 @@ function MockBookCard({ book }: { book: (typeof mockLibrary)[number] }) {
   );
 }
 
-function PreviewCanvas({ Modal, emblemId, daysCultivating }: { Modal: React.ComponentType<ClosedDoorCultivationModalProps>; emblemId: string; daysCultivating?: number }) {
-  const [activeState, setActiveState] = useState<PreviewState>('idle');
-  const [qiEarned, setQiEarned] = useState<number | null>(null);
-
-  const handleStateChange = (stateId: PreviewState) => {
-    setActiveState(stateId);
-    const scenario = scenarios.find((s) => s.id === stateId);
-    setQiEarned(scenario?.qiEarned ?? null);
-  };
-
+function PreviewCanvas({
+  Modal,
+  emblemId,
+  qiEarned,
+  onStateChange,
+  daysCultivating,
+}: {
+  Modal: React.ComponentType<ClosedDoorCultivationModalProps>;
+  emblemId: string;
+  qiEarned: number | null;
+  onStateChange: (state: PreviewState) => void;
+  daysCultivating?: number;
+}) {
   const handleClaim = async (qi: number) => {
     await new Promise((resolve) => setTimeout(resolve, 800));
     console.log(`[Preview] Claimed ${qi} Qi`);
@@ -52,27 +55,6 @@ function PreviewCanvas({ Modal, emblemId, daysCultivating }: { Modal: React.Comp
 
   return (
     <div className="relative min-h-[calc(100vh-11rem)]">
-      <div className="p-6 max-w-md">
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6 backdrop-blur-md">
-          <h2 className="text-sm font-semibold text-white/90 mb-4 uppercase tracking-widest opacity-80">Preview States</h2>
-          <div className="flex flex-col gap-3">
-            {scenarios.map((scenario) => (
-              <button
-                key={scenario.id}
-                onClick={() => handleStateChange(scenario.id)}
-                className={`text-left px-4 py-3 rounded-lg text-sm transition-all duration-200 border ${
-                  activeState === scenario.id
-                    ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-100'
-                    : 'bg-white/5 border-transparent text-white/60 hover:bg-white/10'
-                }`}
-              >
-                {scenario.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
       <main className="px-4 pb-64">
         <div className="grid grid-cols-2 gap-4">
           {mockLibrary.map((book) => (
@@ -88,18 +70,64 @@ function PreviewCanvas({ Modal, emblemId, daysCultivating }: { Modal: React.Comp
         Target
       </div>
 
-      <Modal qiEarned={qiEarned} onClose={() => handleStateChange('idle')} onClaim={handleClaim} targetElementId={emblemId} daysCultivating={daysCultivating} />
+      <Modal qiEarned={qiEarned} onClose={() => onStateChange('idle')} onClaim={handleClaim} targetElementId={emblemId} daysCultivating={daysCultivating} />
     </div>
   );
 }
 
 export function ClosedDoorCultivationWorkspace() {
   const entry = workshopEntries.find((e) => e.id === 'idle-cultivation')!;
+  const [activeState, setActiveState] = useState<PreviewState>('idle');
+  const qiEarned = scenarios.find(scenario => scenario.id === activeState)?.qiEarned ?? null;
+
   return (
     <FeatureWorkspace
       entry={entry}
-      renderReference={() => <PreviewCanvas Modal={ReferenceClosedDoorCultivationModal} emblemId="cdc-emblem-reference" />}
-      renderDevelopment={() => <PreviewCanvas Modal={DevelopmentClosedDoorCultivationModal} emblemId="cdc-emblem-development" daysCultivating={7} />}
+      workshopControls={{
+        defaultSection: 'states',
+        sections: [
+          {
+            id: 'states',
+            description: 'One shared simulator drives the same reward state in Reference, Development, and Compare.',
+            content: (
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                {scenarios.map(scenario => (
+                  <button
+                    key={scenario.id}
+                    type="button"
+                    aria-pressed={activeState === scenario.id}
+                    onClick={() => setActiveState(scenario.id)}
+                    className={`workshop-touch-target rounded-lg border px-4 py-3 text-left text-sm transition-colors ${
+                      activeState === scenario.id
+                        ? 'border-cyan-500/50 bg-cyan-500/20 text-cyan-100'
+                        : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
+                    }`}
+                  >
+                    {scenario.label}
+                  </button>
+                ))}
+              </div>
+            ),
+          },
+        ],
+      }}
+      renderReference={() => (
+        <PreviewCanvas
+          Modal={ReferenceClosedDoorCultivationModal}
+          emblemId="cdc-emblem-reference"
+          qiEarned={qiEarned}
+          onStateChange={setActiveState}
+        />
+      )}
+      renderDevelopment={() => (
+        <PreviewCanvas
+          Modal={DevelopmentClosedDoorCultivationModal}
+          emblemId="cdc-emblem-development"
+          qiEarned={qiEarned}
+          onStateChange={setActiveState}
+          daysCultivating={7}
+        />
+      )}
     />
   );
 }

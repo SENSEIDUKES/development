@@ -60,6 +60,14 @@ Current entries:
 
 The approved Library glyph set remains in [`public/icons`](./public/icons).
 
+## Workshop controls
+
+Every feature preview is wrapped by `FeatureWorkspace`, which owns the responsive
+**Workshop Controls** menu. Preview wrappers supply only the sections they need
+from the canonical Pages, States, Scenes, Effects, and Advanced structure. The
+menu may reuse Library surface primitives, but it is Workshop tooling: product
+navigation stays inside the Reference and Development components being tested.
+
 ## Moving work into another application
 
 Workshop components should stay portable: minimal dependencies, no auth, no database, and no production persistence. Once approved, transfer into a corresponding application may happen only as a separate, explicitly authorized integration task. Transfer the actual component, styles, and required assets; do not import the Workshop shell, mock controls, or preview-only state.

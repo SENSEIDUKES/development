@@ -4,12 +4,13 @@
 - **Source location:** `src/components/UserProfileInventoryPanel.tsx` (cards), `src/components/ModalsAndToasts.tsx` (the `unlockedArtifactAlert` reveal flow)
 - **Workshop preview:** `?preview=relics-gallery`
 - **Replica created:** 2026-07-29
-- **Last Workshop update:** 2026-07-29
+- **Last Workshop update:** 2026-08-17
 - **Last source comparison:** 2026-07-29
 - **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-08-17:** Moved the Compact Cards / Reveal Flow scene selector into the shared responsive Workshop Controls menu. Relic card, modal, reveal, claim, and replay interactions remain inside the previewed components.
 - **2026-07-29:** Created faithful Workshop replica, extracted `RelicCard`/`RelicModal` out of `UserProfileInventoryPanel.tsx`, mocked `CosmicArtifact` types and data, separated by rank.
 - **2026-07-29:** Added a Reveal button under each relic opening the full-screen Relic Reveal celebration flow, plus a Workshop-only Replay Effects tool.
 - **2026-07-30:** Forked the reveal flow into an active UI-work copy: rank-neutral sealed-card lighting, a premium closed-card face replacing the placeholder grid panel, a de-duplicated stats box, and spin sparks during the reveal.

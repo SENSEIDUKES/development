@@ -85,36 +85,37 @@ export function ReaderCodexWorkspace() {
   const entry = workshopEntries.find(item => item.id === 'reader-codex')!;
   const [activePage, setActivePage] = useState<ReaderCodexPage>('portraits');
 
-  const controls = (
-    <div className="w-full max-w-5xl rounded-xl border border-white/10 bg-white/5 p-3 backdrop-blur-md sm:p-4">
-      <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">
-        Reader Codex sections · local story state · no production services
-      </p>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-7" role="tablist" aria-label="Reader Codex preview sections">
-        {readerCodexPages.map(page => (
-          <button
-            key={page.id}
-            type="button"
-            role="tab"
-            aria-selected={activePage === page.id}
-            onClick={() => setActivePage(page.id)}
-            className={`min-h-11 rounded-lg border px-3 py-2 text-xs transition-colors ${
-              activePage === page.id
-                ? 'border-cyan-400/45 bg-cyan-500/15 text-cyan-100'
-                : 'border-white/10 bg-black/20 text-white/55 hover:bg-white/10 hover:text-white'
-            }`}
-          >
-            {page.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-
   return (
     <FeatureWorkspace
       entry={entry}
-      controls={controls}
+      workshopControls={{
+        defaultSection: 'pages',
+        description: 'Local story state only. These page shortcuts drive the real Codex tabs without replacing them.',
+        sections: [
+          {
+            id: 'pages',
+            content: (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-7" role="group" aria-label="Reader Codex preview pages">
+                {readerCodexPages.map(page => (
+                  <button
+                    key={page.id}
+                    type="button"
+                    aria-pressed={activePage === page.id}
+                    onClick={() => setActivePage(page.id)}
+                    className={`workshop-touch-target rounded-lg border px-3 py-2 text-xs transition-colors ${
+                      activePage === page.id
+                        ? 'border-cyan-400/45 bg-cyan-500/15 text-cyan-100'
+                        : 'border-white/10 bg-black/20 text-white/55 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    {page.label}
+                  </button>
+                ))}
+              </div>
+            ),
+          },
+        ],
+      }}
       allowCompare
       renderReference={() => (
           <ReaderCodexPreviewPane Component={ReferenceReaderCodex} activePage={activePage} supportsBestiary={false} />

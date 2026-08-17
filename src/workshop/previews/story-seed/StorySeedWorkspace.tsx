@@ -12,7 +12,11 @@ import {
   resetStorySeedRepository,
   setStorySeedRepository,
 } from '../../../components/story-seed/shared/storySeedRepository';
-import { FeatureWorkspace, type WorkspaceView } from '../../FeatureWorkspace';
+import {
+  FeatureWorkspace,
+  type WorkshopControlsConfig,
+  type WorkspaceView,
+} from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import {
   createMockBlueprint,
@@ -464,69 +468,84 @@ export function StorySeedWorkspace() {
     </div>
   );
 
-  const controls = (
-    <div className="w-full min-w-0 max-w-6xl space-y-4 overflow-hidden rounded-xl border border-white/10 bg-white/5 p-3 backdrop-blur-md sm:p-4">
-      <form onSubmit={event => event.preventDefault()} className="sm:max-w-xl">
-        <label className="flex flex-col gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/55">
-          Development access token
-          <input
-            type="password"
-            value={blueprintAccessToken}
-            onChange={event => setBlueprintAccessToken(event.target.value)}
-            autoComplete="off"
-            disabled={blueprintGenerating}
-            placeholder="Enter the server-configured testing token"
-            className="min-h-11 w-full rounded-lg border border-white/10 bg-black/25 px-3 text-sm font-normal normal-case tracking-normal text-white/85 outline-none placeholder:text-white/25 focus:border-cyan-500/60 disabled:opacity-50"
-          />
-          <span className="text-[9px] font-normal normal-case tracking-normal text-white/30">
-            Held in memory for this page only. The Gemini key remains server-side.
-          </span>
-        </label>
-      </form>
-
-      <div>
-        <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-white/70">
-          Preview States
-        </h2>
-        <div
-          role="tablist"
-          aria-label="Preview control categories"
-          className="grid grid-cols-4 gap-1.5 rounded-xl border border-white/10 bg-black/25 p-1.5 sm:max-w-md"
-        >
-          {PREVIEW_CATEGORIES.map(category => (
-            <button
-              key={category.id}
-              type="button"
-              role="tab"
-              aria-selected={activeCategory === category.id}
-              onClick={() => setActiveCategory(category.id)}
-              className={`min-h-[2.75rem] rounded-lg px-1.5 py-1 text-center text-xs font-medium leading-tight tracking-wide transition-all duration-150 ${
-                activeCategory === category.id
-                  ? 'border border-cyan-400/60 bg-cyan-500/25 font-semibold text-cyan-100'
-                  : 'border border-transparent text-white/55 hover:bg-white/10 hover:text-white/85'
-              }`}
-            >
-              {category.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {stateList(activeCategory)}
-
-      <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">
-        {currentUser ? `Mock account: ${currentUser.uid}` : 'Mock account: signed out'}
-        {activeScenario && activeScenario.category !== activeCategory && (
-          <> · Active state · {activeScenario.label}</>
-        )}
-      </p>
-    </div>
+  const selectPreviewPage = (category: PreviewCategory) => {
+    setActiveCategory(category);
+    const firstScenario = scenariosInCategory(category)[0];
+    if (firstScenario) applyScenario(firstScenario.id);
+  };
+  const previewStatus = (
+    <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">
+      {currentUser ? `Mock account: ${currentUser.uid}` : 'Mock account: signed out'}
+      {activeScenario && <> · Active state · {activeScenario.label}</>}
+    </p>
   );
+  const workshopControls: WorkshopControlsConfig = {
+    defaultSection: 'states',
+    description: 'Deterministic local scenarios only. The real Story Seed navigation remains inside the component below.',
+    sections: [
+      {
+        id: 'pages',
+        description: 'Jump to a representative state for each major Story Seed surface.',
+        content: (
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+            {PREVIEW_CATEGORIES.map(category => (
+              <button
+                key={category.id}
+                type="button"
+                aria-pressed={activeCategory === category.id}
+                onClick={() => selectPreviewPage(category.id)}
+                className={`workshop-touch-target rounded-lg border px-3 py-2 text-left text-xs leading-snug transition-colors ${
+                  activeCategory === category.id
+                    ? 'border-cyan-400/50 bg-cyan-500/20 text-cyan-100'
+                    : 'border-white/10 bg-black/20 text-white/55 hover:bg-white/10 hover:text-white/85'
+                }`}
+              >
+                {category.label}
+              </button>
+            ))}
+          </div>
+        ),
+      },
+      {
+        id: 'states',
+        description: `Preview states for ${PREVIEW_CATEGORIES.find(category => category.id === activeCategory)?.label ?? 'Story Seed'}.`,
+        content: (
+          <div className="space-y-4">
+            {stateList(activeCategory)}
+            {previewStatus}
+          </div>
+        ),
+      },
+      {
+        id: 'advanced',
+        description: 'Optional Development-only credentials for the protected World Blueprint endpoint.',
+        content: (
+          <form onSubmit={event => event.preventDefault()} className="sm:max-w-xl">
+            <label className="flex flex-col gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/55">
+              Development access token
+              <input
+                type="password"
+                value={blueprintAccessToken}
+                onChange={event => setBlueprintAccessToken(event.target.value)}
+                autoComplete="off"
+                disabled={blueprintGenerating}
+                placeholder="Enter the server-configured testing token"
+                className="min-h-11 w-full rounded-lg border border-white/10 bg-black/25 px-3 text-sm font-normal normal-case tracking-normal text-white/85 outline-none placeholder:text-white/25 focus:border-cyan-500/60 disabled:opacity-50"
+              />
+              <span className="text-[9px] font-normal normal-case tracking-normal text-white/30">
+                Held in memory for this page only. The Gemini key remains server-side.
+              </span>
+            </label>
+          </form>
+        ),
+      },
+    ],
+  };
 
   return (
     <FeatureWorkspace
       entry={entry}
-      controls={controls}
+      workshopControls={workshopControls}
       allowCompare
       onReferenceIntent={preloadReferenceCreationModal}
       onViewChange={setWorkspaceView}

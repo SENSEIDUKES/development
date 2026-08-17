@@ -4,12 +4,13 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-15
+- **Last Workshop update:** 2026-08-17
 - **Last source comparison:** 2026-08-15
 - **Replica status:** faithful replica
 
 ## Workshop history
 
+- **2026-08-17:** Replaced the Reader-specific preview menu shell with `FeatureWorkspace` Workshop Controls. Reader page shortcuts, deterministic reading/menu states, chapter selection, themes, and particles now use the shared Pages / States / Effects structure while continuing to drive the real Reader controls and one shared mock story. Reader Chamber navigation and component behavior were not changed.
 - **2026-08-15:** Added an optional Development-only `ReaderViewport` World Card adapter seam and shared Reader Chamber surface helper for the Card Workshop's deterministic Contextual View. Normal Reader callers omit the seam and retain the existing presentation and audio lifecycle; neither the seam nor its remount key transfers to production.
 - **2026-08-15:** Rebuilt the active Development `CodexCard` on the shared `LibraryCard` region structure without changing the Reader reveal's presentation or flow. Existing media/backdrop, Manifest/Awaken action and Summoning state, entrance/hover behavior, typography, spacing, and routing remain intact; no generic LibraryCard visual treatment has been adopted.
 - **2026-08-14:** Completed the first Part Three card cleanup on the existing Reader route: renamed the active presentations to `CodexCard` and `WorldCard`, limited visual Codex Cards to Human Portraits, Non-Human Portraits, Artifacts, and Locations, kept Bestiary/Faction highlights on World Cards, kept System/Fate content on System Panels, suppressed duplicate visual Codex/World signals in favor of the Codex Card, and removed the end-of-chapter Chapter Visual Memory render and trigger.

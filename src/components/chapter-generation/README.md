@@ -4,7 +4,7 @@
 - **Source location:** `src/hooks/chapterPipeline/chapterBatch.ts`, `src/aiRouter.ts`, `src/server/routes/storyRouter.ts`, and the Story Seed, prompt, handoff, formatting, and context dependencies
 - **Workshop preview:** `?preview=chapter-generation-flow`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-14
+- **Last Workshop update:** 2026-08-17
 - **Last source comparison:** 2026-08-09
 - **Replica status:** Chapter Generation 1.0 recovery restores the proven one-chapter Plan → Manifest → Process boundary and opens its accepted result in the current Reader Chamber and Reader Codex
 
@@ -310,6 +310,7 @@ per-chapter coverage.
 
 ## Workshop history
 
+- **2026-08-17:** Adopted the shared responsive `FeatureWorkspace` Workshop Controls shell. Chapter Generation supplies no external menu options because its workflow controls and Reader handoff are part of the Development component being tested.
 - **2026-07-31:** Created the Reference replica and Development fork from the inspected production flow.
 - **2026-08-08:** Pass 1 introduced Story Constitution, Living Story State, Chapter Mission, and Generation Rules with a complete 65-ID trace and nine explicit unresolved flags.
 - **2026-08-08:** Pass 1 centralized shared packet-backed context assembly across both generation adapters.

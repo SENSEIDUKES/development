@@ -4,12 +4,13 @@
 - **Source location:** `src/components/ClosedDoorCultivationModal.tsx`
 - **Workshop preview:** `?preview=idle-cultivation`
 - **Replica created:** 2026-07-29
-- **Last Workshop update:** 2026-07-30
+- **Last Workshop update:** 2026-08-17
 - **Last source comparison:** 2026-07-30
 - **Replica status:** synced with production
 
 ## Workshop history
 
+- **2026-08-17:** Moved the Workshop-only reward-state selector into the shared responsive Workshop Controls menu and gave Reference, Development, and Compare one authoritative simulated reward state. Closed-Door Cultivation navigation and modal behavior were not changed.
 - **2026-07-29:** Created faithful Workshop replica and local state simulator.
 - **2026-07-29:** Duplicated into a second variant to redesign the idle Qi reward's protected visual space, safe-area anchoring, swipe pass-through, collect cues, and ascending claim particles.
 - **2026-07-29:** Redrew the cultivator silhouette as a seated meditator with distinct neck, shoulders, and folded hands, and added a full-viewport dim + blur scrim behind the expanded vignette.

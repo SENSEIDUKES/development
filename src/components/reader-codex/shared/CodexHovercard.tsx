@@ -33,6 +33,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
   const containerRef = useRef<HTMLSpanElement>(null);
   const triggerRef = useRef<HTMLSpanElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const openedWithKeyboardRef = useRef(false);
   const [isDesktopViewport, setIsDesktopViewport] = useState(matchesDesktopHovercardViewport);
   const [desktopPosition, setDesktopPosition] = useState<DesktopHovercardPosition | null>(null);
   const persistedImageUrl = 'imageUrl' in entry ? entry.imageUrl : undefined;
@@ -170,16 +171,31 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
       setIsOpen(false);
     };
 
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setIsOpen(false);
+      triggerRef.current?.focus();
+    };
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('touchstart', handleClickOutside);
+      document.addEventListener('keydown', handleEscape);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
     };
   }, [isOpen]);
+
+  useLayoutEffect(() => {
+    if (!isOpen || !isPortalMounted || !openedWithKeyboardRef.current) return;
+    openedWithKeyboardRef.current = false;
+    cardRef.current?.focus();
+  }, [isOpen, isPortalMounted]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
@@ -230,29 +246,43 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
       ));
     };
 
+    let positionFrame = 0;
+    const scheduleDesktopPosition = () => {
+      if (positionFrame) return;
+      positionFrame = window.requestAnimationFrame(() => {
+        positionFrame = 0;
+        updateDesktopPosition();
+      });
+    };
+
     updateDesktopPosition();
     const resizeObserver = typeof ResizeObserver === 'undefined'
       ? null
-      : new ResizeObserver(updateDesktopPosition);
+      : new ResizeObserver(scheduleDesktopPosition);
     if (resizeObserver && cardRef.current) resizeObserver.observe(cardRef.current);
 
-    window.addEventListener('resize', updateDesktopPosition);
-    window.addEventListener('scroll', updateDesktopPosition, true);
-    window.visualViewport?.addEventListener('resize', updateDesktopPosition);
-    window.visualViewport?.addEventListener('scroll', updateDesktopPosition);
+    window.addEventListener('resize', scheduleDesktopPosition);
+    window.addEventListener('scroll', scheduleDesktopPosition, { capture: true, passive: true });
+    window.visualViewport?.addEventListener('resize', scheduleDesktopPosition);
+    window.visualViewport?.addEventListener('scroll', scheduleDesktopPosition);
 
     return () => {
+      if (positionFrame) window.cancelAnimationFrame(positionFrame);
       resizeObserver?.disconnect();
-      window.removeEventListener('resize', updateDesktopPosition);
-      window.removeEventListener('scroll', updateDesktopPosition, true);
-      window.visualViewport?.removeEventListener('resize', updateDesktopPosition);
-      window.visualViewport?.removeEventListener('scroll', updateDesktopPosition);
+      window.removeEventListener('resize', scheduleDesktopPosition);
+      window.removeEventListener('scroll', scheduleDesktopPosition, true);
+      window.visualViewport?.removeEventListener('resize', scheduleDesktopPosition);
+      window.visualViewport?.removeEventListener('scroll', scheduleDesktopPosition);
     };
   }, [imageUrl, isDesktopViewport, isGeneratingImage, isOpen, isPortalMounted]);
 
-  const handleToggle = (e: React.MouseEvent | React.TouchEvent) => {
+  const handleToggle = (
+    e: React.MouseEvent | React.TouchEvent | React.KeyboardEvent,
+    openedWithKeyboard = false,
+  ) => {
     e.stopPropagation();
     const nextOpen = !isOpen;
+    openedWithKeyboardRef.current = nextOpen && openedWithKeyboard;
     if (nextOpen) setIsPortalMounted(true);
     setIsOpen(nextOpen);
   };
@@ -260,7 +290,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
   const hovercardLayer = typeof document === 'undefined' || !isPortalMounted ? null : createPortal(
     <div
       data-slot="codex-hovercard-layer"
-      className={`fixed z-[100] pointer-events-none ${isDesktopViewport ? '' : 'flex items-center justify-center'}`}
+      className={`fixed z-[100] pointer-events-none ${isDesktopViewport ? '' : 'flex items-start justify-end'}`}
       style={isDesktopViewport ? {
         left: desktopPosition?.left ?? 0,
         top: desktopPosition?.top ?? 0,
@@ -270,6 +300,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
         right: 'max(1rem, env(safe-area-inset-right, 0px))',
         bottom: 'max(1rem, env(safe-area-inset-bottom, 0px))',
         left: 'max(1rem, env(safe-area-inset-left, 0px))',
+        paddingBlock: 'min(5.5rem, 15dvh)',
       }}
     >
       <AnimatePresence onExitComplete={() => {
@@ -283,23 +314,26 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 5, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className={`pointer-events-auto w-64 max-w-full overflow-y-auto overscroll-contain p-3 bg-void border rounded-xl shadow-2xl backdrop-blur-md ${getBorderColor()}`}
+            className={`pointer-events-auto w-56 sm:w-64 max-w-full overflow-y-auto overscroll-contain p-3 bg-void border rounded-xl shadow-2xl backdrop-blur-md ${getBorderColor()}`}
             style={{
               maxHeight: isDesktopViewport
                 ? 'calc(100dvh - 2rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))'
-                : '100%',
+                : 'min(42dvh, 100%)',
             }}
             onClick={(e) => e.stopPropagation()}
-            onTouchEnd={(e) => e.stopPropagation()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ((e) => e.stopPropagation())(e as any); } }}
+            onTouchEnd={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label={`${entry.name} Codex details`}
+            tabIndex={-1}
           >
             {imageUrl ? (
-              <div className="w-full aspect-[2/1] mb-2.5 overflow-hidden rounded-lg bg-neutral-900 border border-neutral-800 flex-shrink-0">
+              <div className="w-full mb-2.5 overflow-hidden rounded-lg bg-neutral-900 border border-neutral-800 flex-shrink-0">
                 <img
                   src={imageUrl}
                   alt={entry.name}
                   loading="lazy"
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-contain"
+                  className="block w-full h-auto object-contain"
                 />
               </div>
             ) : (
@@ -372,7 +406,17 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
         onTouchEnd={(e) => {
           e.preventDefault();
           handleToggle(e);
-        }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (handleToggle)(e as any); } }}
+        }}
+        role="button"
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleToggle(e, true);
+          }
+        }}
       >
         {children}
       </span>

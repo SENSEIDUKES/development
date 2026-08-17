@@ -4,6 +4,17 @@ Shared, reusable Library-skinned components. Not a Workshop preview feature —
 these primitives back the feature replicas (Story Seed, Story Seed Settings,
 Relics, Reader surfaces) and transfer to production alongside them.
 
+The Workshop home page's **Library Components** tab renders the ten page-level
+primitives live from this folder — `LibraryPanel`, `LibraryCard`,
+`LibraryButton`, `ManifestButton`, `LibraryTextBox`, `LibraryTextArea`,
+`LibraryHeaderBadge`, `LibraryNavigationDrawer`, `LibraryBottomNavigation`,
+and `LibraryDragonCycleIcon` — the quick visual inventory of what already
+exists. The base layers `SEIButton`, `SEIBottomNavigation`, and `cn` are
+intentionally excluded: they back the primitives above and pages never import
+them. The inventory list lives in `src/workshop/LibraryComponents.tsx`;
+update it whenever one of these ten primitives is added to or renamed in the
+barrel.
+
 ## Component ownership
 
 `src/components/library/` is the single Workshop owner for the reusable

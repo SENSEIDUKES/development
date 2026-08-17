@@ -4,6 +4,11 @@ Shared, reusable Library-skinned components. Not a Workshop preview feature —
 these primitives back the feature replicas (Story Seed, Story Seed Settings,
 Relics, Reader surfaces) and transfer to production alongside them.
 
+The Workshop home page's **Library Components** tab renders every primitive
+below live from this folder — the quick visual inventory of what already
+exists. Its list lives in `src/workshop/LibraryComponents.tsx`; update it
+whenever a primitive is added to or renamed in the barrel.
+
 ## Component ownership
 
 `src/components/library/` is the single Workshop owner for the reusable

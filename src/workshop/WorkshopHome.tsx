@@ -3,8 +3,20 @@ import {
   getWorkshopTrack,
   getWorkshopVersionLabel,
   workshopEntries,
-  type WorkshopTrack,
 } from './manifest';
+import { LibraryComponentsGrid } from './LibraryComponents';
+
+/**
+ * The home page has two tabs: Development (the workshop feature grid, driven
+ * by the manifest) and Library Components (the live inventory of the shared
+ * Celestial Library primitives, driven by LibraryComponentsGrid).
+ */
+type HomeTab = 'development' | 'library';
+
+const HOME_TABS: ReadonlyArray<{ id: HomeTab; label: string }> = [
+  { id: 'development', label: 'Development' },
+  { id: 'library', label: 'Library Components' },
+];
 
 function CelestialVisual() {
   return (
@@ -122,8 +134,11 @@ function EdgeOrbit({ side }: { side: 'left' | 'right' }) {
 }
 
 export function WorkshopHome() {
-  const [activeTrack, setActiveTrack] = useState<WorkshopTrack>('development');
-  const visibleEntries = workshopEntries.filter((entry) => getWorkshopTrack(entry.version) === activeTrack);
+  const [activeTab, setActiveTab] = useState<HomeTab>('development');
+  const isDevelopment = activeTab === 'development';
+  const visibleEntries = workshopEntries.filter(
+    (entry) => getWorkshopTrack(entry.version) === 'development',
+  );
 
   return (
     <main className="workshop-home">
@@ -134,17 +149,17 @@ export function WorkshopHome() {
         <div className="workshop-topbar">
           <span className="workshop-brand">SEIHOUSE</span>
           <nav className="workshop-nav" aria-label="Workshop tracks" role="tablist">
-            {(['development', 'production'] as const).map((track) => (
+            {HOME_TABS.map((tab) => (
               <button
-                key={track}
+                key={tab.id}
                 type="button"
                 role="tab"
-                aria-selected={activeTrack === track}
+                aria-selected={activeTab === tab.id}
                 aria-controls="workshop-component-grid"
-                className={`workshop-nav-tab ${activeTrack === track ? 'workshop-nav-tab-active' : ''}`}
-                onClick={() => setActiveTrack(track)}
+                className={`workshop-nav-tab ${activeTab === tab.id ? 'workshop-nav-tab-active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
               >
-                {track === 'development' ? 'Development' : 'Production'}
+                {tab.label}
               </button>
             ))}
           </nav>
@@ -152,33 +167,39 @@ export function WorkshopHome() {
         </div>
 
         <header className="workshop-header">
-          <h1 className="workshop-title">{activeTrack === 'development' ? 'Development' : 'Production'}</h1>
+          <h1 className="workshop-title">{isDevelopment ? 'Development' : 'Library Components'}</h1>
           <p className="workshop-kicker">Component Workshop</p>
           <p className="workshop-subtitle">
-            Explore and refine the building blocks of our interface.
+            {isDevelopment
+              ? 'Explore and refine the building blocks of our interface.'
+              : 'The reusable Celestial Library primitives, rendered live. See what already exists before building something new — and import it instead of rebuilding it.'}
           </p>
         </header>
 
-        <section id="workshop-component-grid" className="workshop-grid" aria-label={`${activeTrack === 'development' ? 'Development' : 'Production'} components`}>
-          {visibleEntries.map((entry) => (
-            <a className="workshop-card" href={`?preview=${entry.id}`} key={entry.id}>
-              <div className="workshop-card-visual">
-                <CardVisual id={entry.id} />
-              </div>
-              <div className="workshop-card-body">
-                <h2>{entry.title}</h2>
-                <p>{entry.description}</p>
-                <div className="workshop-card-meta">
-                  <span className={`workshop-status workshop-status-${getWorkshopTrack(entry.version)}`}>
-                    <span className="workshop-status-dot" aria-hidden="true" />
-                    {getWorkshopVersionLabel(entry.version)}
-                  </span>
-                  <span className="workshop-card-arrow" aria-hidden="true">→</span>
+        {isDevelopment ? (
+          <section id="workshop-component-grid" className="workshop-grid" aria-label="Development components">
+            {visibleEntries.map((entry) => (
+              <a className="workshop-card" href={`?preview=${entry.id}`} key={entry.id}>
+                <div className="workshop-card-visual">
+                  <CardVisual id={entry.id} />
                 </div>
-              </div>
-            </a>
-          ))}
-        </section>
+                <div className="workshop-card-body">
+                  <h2>{entry.title}</h2>
+                  <p>{entry.description}</p>
+                  <div className="workshop-card-meta">
+                    <span className={`workshop-status workshop-status-${getWorkshopTrack(entry.version)}`}>
+                      <span className="workshop-status-dot" aria-hidden="true" />
+                      {getWorkshopVersionLabel(entry.version)}
+                    </span>
+                    <span className="workshop-card-arrow" aria-hidden="true">→</span>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </section>
+        ) : (
+          <LibraryComponentsGrid />
+        )}
 
         <footer className="workshop-footer">
           <span>Build thoughtful interfaces.</span>

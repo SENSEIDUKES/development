@@ -244,6 +244,49 @@ body {
 }
 .workshop-card:hover .workshop-card-arrow { transform: translateX(4px); }
 
+/* Library Components tab — the same card language as the Development grid,
+   holding live previews of the real shared primitives instead of placeholder
+   visuals. The cards are not links and the previews are interactive, so the
+   hover lift is disabled to keep controls steady under the pointer. */
+.workshop-card-library:hover { transform: none; }
+.workshop-card-library h2 { overflow-wrap: anywhere; }
+
+/* The Library glass skin is drawn for the void page, so each preview sits on
+   a dark stage — a quiet portal/gold falloff over near-black, echoing the
+   page's own background treatment. */
+.library-preview-stage {
+  aspect-ratio: auto;
+  min-height: 13rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1.25rem;
+  background:
+    radial-gradient(ellipse at 50% -20%, rgba(4, 172, 255, 0.1), transparent 55%),
+    radial-gradient(ellipse at 85% 120%, rgba(212, 175, 55, 0.07), transparent 55%),
+    #07080d;
+}
+/* Live previews render real components with inline SVG icons; undo the
+   placeholder-SVG sizing that feature card visuals rely on. */
+.library-preview-stage svg { width: auto; height: auto; }
+.library-preview-stage-end { justify-content: flex-end; padding-bottom: 0.5rem; }
+
+.workshop-status-library .workshop-status-dot { background: #04acff; }
+
+.workshop-library-note {
+  margin: 1.75rem 0 0;
+  max-width: 36rem;
+  font-size: 0.75rem;
+  line-height: 1.7;
+  color: rgba(236, 231, 221, 0.4);
+}
+.workshop-library-note code {
+  font-size: 0.7rem;
+  color: rgba(236, 231, 221, 0.62);
+}
+
 .workshop-orbit {
   position: absolute;
   top: 50%;

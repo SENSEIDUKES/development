@@ -326,6 +326,7 @@ export function StorySeedWorkspace() {
     activeBlueprintRequestRef.current = null;
     setBlueprintGenerating(false);
     setActiveState(stateId);
+    setActiveCategory(scenario.category);
     setMockLocalOnlyMode(scenario.localOnlyMode ?? true);
     resetMockState({
       currentUser: scenario.signedIn
@@ -469,7 +470,6 @@ export function StorySeedWorkspace() {
   );
 
   const selectPreviewPage = (category: PreviewCategory) => {
-    setActiveCategory(category);
     const firstScenario = scenariosInCategory(category)[0];
     if (firstScenario) applyScenario(firstScenario.id);
   };

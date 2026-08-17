@@ -21,13 +21,12 @@ export type PreviewState =
 export type PreviewUiAction = 'preferences' | 'bookmarks' | 'alter-fate' | 'seal';
 
 /**
- * The four groups the Workshop preview-control menu is split into, so the panel
- * shows one short list at a time instead of every control at once:
+ * Internal scenario groups consumed by the shared Workshop Controls menu:
  *
- * - `reading`  — normal reading states and reading setup (chapter selection).
- * - `effects`  — preview-only visual controls (theme, particle intensity).
- * - `menus`    — opened panels, drawers, and overlays.
- * - `pages`    — alternate Reader Chamber states and full-screen conditions.
+ * - `pages` renders in the canonical Pages section.
+ * - `reading` and `menus` render together in the canonical States section.
+ * - `effects` labels preview-only theme and particle controls in Effects; no
+ *   Reader scenario is currently assigned to it.
  */
 export type PreviewCategory = 'reading' | 'effects' | 'menus' | 'pages';
 

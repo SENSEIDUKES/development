@@ -1,0 +1,29 @@
+/**
+ * CodexCardSeal.css — the Codex Card Manifest seal's one custom motion: the
+ * dragon portal's idle breath (a slow, small scale swell). Everything else
+ * about the seal — aura gradient/spin, dragon tint mask, glass core, state
+ * brightening — is inline Tailwind in `CodexCard.tsx`. Co-located and
+ * transferred alongside the component, like `CodexCardInscription.css`.
+ *
+ * The media query below is a backstop: the seal layers already carry
+ * `motion-reduce:animate-none`, and this guarantees every seal animation
+ * (aura spin, idle breath, Summoning spinner/pulse) rests fully under
+ * `prefers-reduced-motion`.
+ */
+
+@keyframes codex-seal-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .codex-seal,
+  .codex-seal * {
+    animation: none !important;
+  }
+}

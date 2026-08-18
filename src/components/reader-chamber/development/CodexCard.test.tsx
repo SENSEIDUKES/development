@@ -429,6 +429,8 @@ describe('Reader card routing', () => {
       'button[aria-label="Manifest portrait for Oath Seal"]',
     );
     expect(seal?.className).toContain('rounded-full');
+    // The portal boundary is the shared Library cycle glyph, kept decorative.
+    expect(seal?.querySelector('svg[aria-hidden="true"]')).toBeTruthy();
     expect(container.textContent).toContain('Awaken Portrait');
   });
 

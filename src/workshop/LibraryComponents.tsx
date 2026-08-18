@@ -216,15 +216,23 @@ function BottomNavigationPreview() {
 }
 
 function DragonCycleIconPreview() {
+  const [cycleIndex, setCycleIndex] = useState(0);
+  const examples = ['Cycle Premise', 'Reshuffle Fate', 'Reroll Destiny', 'Renew Insight'];
+
   return (
     <div className="flex flex-col items-center gap-5">
       <div className="flex items-end gap-6">
-        <LibraryDragonCycleIcon size={16} className="text-neutral-400" />
-        <LibraryDragonCycleIcon size={24} className="text-portal" />
-        <LibraryDragonCycleIcon size={40} className="text-gold-accent" />
+        <LibraryDragonCycleIcon size={16} className="text-neutral-400" title="Small dragon cycle icon" />
+        <LibraryDragonCycleIcon size={24} className="text-portal" title="Medium portal dragon cycle icon" />
+        <LibraryDragonCycleIcon size={40} className="text-gold-accent" title="Large gold dragon cycle icon" />
       </div>
-      <LibraryButton variant="secondary" size="sm" iconLeft={<LibraryDragonCycleIcon size={13} />}>
-        Cycle Premise
+      <LibraryButton
+        variant="secondary"
+        size="sm"
+        onClick={() => setCycleIndex(i => (i + 1) % examples.length)}
+        iconLeft={<LibraryDragonCycleIcon size={13} />}
+      >
+        {examples[cycleIndex]}
       </LibraryButton>
     </div>
   );

@@ -89,10 +89,10 @@ const SEAL_AURA_CLASS = [
 const SEAL_DRAGON_CLASS = [
   'pointer-events-none absolute inset-0',
   'animate-[spin_24s_linear_infinite] motion-reduce:animate-none',
-  'drop-shadow-[0_0_9px_rgba(4,172,255,0.42)_0_0_26px_rgba(124,92,255,0.36)]',
+  'drop-shadow-[0_0_9px_rgba(4,172,255,0.42)] drop-shadow-[0_0_26px_rgba(124,92,255,0.36)]',
   'transition-[filter] duration-500',
-  'group-hover/seal:drop-shadow-[0_0_13px_rgba(4,172,255,0.62)_0_0_38px_rgba(124,92,255,0.55)]',
-  'group-active/seal:drop-shadow-[0_0_15px_rgba(4,172,255,0.72)_0_0_44px_rgba(124,92,255,0.62)]',
+  'group-hover/seal:drop-shadow-[0_0_13px_rgba(4,172,255,0.62)] group-hover/seal:drop-shadow-[0_0_38px_rgba(124,92,255,0.55)]',
+  'group-active/seal:drop-shadow-[0_0_15px_rgba(4,172,255,0.72)] group-active/seal:drop-shadow-[0_0_44px_rgba(124,92,255,0.62)]',
 ].join(' ');
 
 const SEAL_DRAGON_VIOLET_CLASS = 'absolute inset-0 h-full w-full text-[#7C5CFF]';
@@ -416,7 +416,9 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
               <>
                 <img
                   src={manifestBackdrop}
-                  alt="Backdrop"
+                  alt=""
+                  aria-hidden="true"
+                  data-testid="codex-manifest-backdrop"
                   className="absolute inset-0 h-full w-full object-cover opacity-[0.25] pointer-events-none mix-blend-screen"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-void via-void/40 to-transparent pointer-events-none" />

@@ -92,7 +92,7 @@ describe('Development CodexHovercard spectral glass', () => {
     expect(document.body.textContent).toContain('Awaken Portrait');
 
     // Until a portrait exists the glass carries the entity's Manifest backdrop.
-    const backdrop = document.body.querySelector<HTMLImageElement>('img[alt="Backdrop"]');
+    const backdrop = document.body.querySelector<HTMLImageElement>('img[data-testid="codex-manifest-backdrop"]');
     expect(backdrop?.getAttribute('src')).toContain('/manifest-backdrops/');
 
     await act(async () => {
@@ -100,7 +100,7 @@ describe('Development CodexHovercard spectral glass', () => {
     });
 
     expect(document.body.querySelector('img[alt="Oath Seal"]')).toBeTruthy();
-    expect(document.body.querySelector('img[alt="Backdrop"]')).toBeFalsy();
+    expect(document.body.querySelector('img[data-testid="codex-manifest-backdrop"]')).toBeFalsy();
   });
 
   it('glows with the entity ambient accent and carries the mote field', () => {

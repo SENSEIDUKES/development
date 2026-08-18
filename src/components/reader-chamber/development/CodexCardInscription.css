@@ -1,0 +1,140 @@
+/**
+ * CodexCard "Inscribed Name" title treatment (Development only).
+ *
+ * The entity name is presented as an inscription rather than plain type:
+ * the glyphs settle into place as the card reveals, a thin frayed-thread
+ * stroke draws itself outward from the center beneath the name in the
+ * entity's ambient accent, and a faint glint periodically travels the
+ * thread like a vow under strain. Pointer-fine hover lifts the name and
+ * passes a single accent sheen across the glyphs. All motion is
+ * transform/opacity/stroke-dashoffset only, wakes with the card's reveal
+ * (the `codex-inscription--awake` modifier), and rests in its final
+ * inscribed state under prefers-reduced-motion.
+ */
+
+.codex-inscription__name {
+  display: inline-block;
+  color: var(--color-signal);
+}
+
+/* The title block (name + thread) settles ~6px upward into place, as if the
+   ink is setting. The entrance lives on the title element itself, never on
+   the name span: the hover rule swaps the span's `animation` to the sheen,
+   and if the settle animation shared that element it would restart every
+   time the cursor left the card. Fill is `backwards` only, so the completed
+   entrance never blocks later transitions. */
+.codex-inscription--awake {
+  animation: codex-inscription-settle 0.6s ease-out 0.15s backwards;
+}
+
+@keyframes codex-inscription-settle {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Frayed oath-thread underline, centered beneath the name. */
+.codex-inscription__thread {
+  display: block;
+  width: min(60%, 7.5rem);
+  height: 6px;
+  margin: 3px auto 0;
+  overflow: visible;
+}
+
+.codex-inscription__thread-base {
+  fill: none;
+  stroke: color-mix(in srgb, var(--library-card-accent) 55%, transparent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+}
+
+/* Each half draws from the center outward once, then holds. */
+.codex-inscription--awake .codex-inscription__thread-base {
+  animation: codex-inscription-draw 0.8s ease-out 0.45s forwards;
+}
+
+@keyframes codex-inscription-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* A low glint rides the thread from the center outward every few seconds. */
+.codex-inscription__thread-shimmer {
+  fill: none;
+  stroke: color-mix(in srgb, var(--library-card-accent) 80%, white);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 8 152;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.codex-inscription--awake .codex-inscription__thread-shimmer {
+  opacity: 0.3;
+  animation: codex-inscription-glint 6s linear infinite;
+}
+
+@keyframes codex-inscription-glint {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -160; }
+}
+
+/* Hover (fine pointers only): the name lifts, tracking opens a hair, and a
+   single accent sheen passes across the glyphs; the thread glint brightens. */
+@media (hover: hover) and (pointer: fine) {
+  .codex-inscription__name {
+    transition: transform 0.3s ease, letter-spacing 0.3s ease;
+  }
+
+  /* The sheen paints the glyphs through a clipped gradient with transparent
+     glyph color — without background-clip: text that would hide the name,
+     so the whole gradient treatment is gated on support. */
+  @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    .codex-inscription__name {
+      background-image: linear-gradient(
+        100deg,
+        var(--color-signal) 42%,
+        color-mix(in srgb, var(--library-card-accent) 70%, white) 50%,
+        var(--color-signal) 58%
+      );
+      background-size: 300% 100%;
+      background-position: 100% 0;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+  }
+
+  .group\/reveal:hover .codex-inscription__name {
+    transform: translateY(-2px);
+    letter-spacing: 0.05em;
+    animation: codex-inscription-sheen 0.7s ease-out;
+  }
+
+  .group\/reveal:hover .codex-inscription__thread-shimmer {
+    opacity: 0.8;
+  }
+}
+
+@keyframes codex-inscription-sheen {
+  from { background-position: 100% 0; }
+  to { background-position: 0% 0; }
+}
+
+/* Reduced motion: everything rests in its final inscribed state. */
+@media (prefers-reduced-motion: reduce) {
+  .codex-inscription--awake,
+  .codex-inscription--awake .codex-inscription__thread-base,
+  .codex-inscription--awake .codex-inscription__thread-shimmer {
+    animation: none;
+  }
+
+  .codex-inscription__thread-base {
+    stroke-dashoffset: 0;
+  }
+
+  .codex-inscription__thread-shimmer {
+    opacity: 0.25;
+  }
+}

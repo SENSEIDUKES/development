@@ -14,6 +14,7 @@ import {
 import { isManifestationEligible } from '../shared/manifestationEligibility';
 import { CodexCardAmbience } from '../../reader-codex/development/CodexCardAmbience';
 import { resolveCodexEntityAccent } from '../../reader-codex/development/codexEntityAccent';
+import './CodexCardInscription.css';
 
 export const FALLBACK_BACKDROPS = [
   "https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/images/LIBRARY%20BACKDROPS/LIBRARY_THUNDER.PNG",
@@ -126,7 +127,9 @@ const SEAL_BUTTON_CLASS = [
 /**
  * The inline Reader reveal card for a Codex entity: spectral-glass surface,
  * entity ambient accent and mote field, manifested portrait (or the circular
- * Manifest seal while none exists), and the entity's name and description.
+ * Manifest seal while none exists), the entity's name in the inscribed-name
+ * treatment (settle-in reveal, frayed oath-thread underline, hover sheen —
+ * see `CodexCardInscription.css`), and the entity's description.
  */
 export const CodexCard: React.FC<CodexCardProps> = React.memo(({
   revealTerm,
@@ -143,6 +146,10 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
   const entryId = entry?.id || 'reveal-entity';
   const assignedBackdrop = activeStory?.assignedRevealBackdrops?.[entryId] || getFallbackBackdrop(entryId);
   const accent = resolveCodexEntityAccent(revealTerm.type, entry, activeStory?.mcName);
+  // The inscription treatment sleeps until the card's own reveal fires, so
+  // the name settle and thread draw never play inside a hidden card.
+  const [titleEntered, setTitleEntered] = React.useState(false);
+  const titleAwake = isSenMode ? isRevealed : titleEntered;
 
   return (
     <motion.div
@@ -150,6 +157,7 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
       whileInView={!isSenMode ? { opacity: 1, scale: 1 } : undefined}
       animate={isSenMode ? (isRevealed ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }) : undefined}
       viewport={{ once: true, margin: "-50px" }}
+      onViewportEnter={!isSenMode ? () => setTitleEntered(true) : undefined}
       transition={{ duration: 0.5, ease: "easeOut" }}
       className="w-full"
     >
@@ -242,9 +250,20 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
             />
             <LibraryCardTitle
               as="h4"
-              className="font-display !font-medium !text-lg !leading-[normal] !text-signal !tracking-wide !wrap-normal drop-shadow-md"
+              className={`codex-inscription${titleAwake ? ' codex-inscription--awake' : ''} font-display !font-medium !text-lg !leading-[normal] !text-signal !tracking-wide !wrap-normal drop-shadow-md`}
             >
-              {entry.name}
+              <span className="codex-inscription__name">{entry.name}</span>
+              <svg
+                className="codex-inscription__thread"
+                viewBox="0 0 120 8"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path className="codex-inscription__thread-base" pathLength={60} d="M60 4.2 C 48 3, 30 5.4, 7 3.6" />
+                <path className="codex-inscription__thread-base" pathLength={60} d="M60 4.2 C 74 5.2, 94 2.8, 113 4.4" />
+                <path className="codex-inscription__thread-shimmer" pathLength={60} d="M60 4.2 C 48 3, 30 5.4, 7 3.6" />
+                <path className="codex-inscription__thread-shimmer" pathLength={60} d="M60 4.2 C 74 5.2, 94 2.8, 113 4.4" />
+              </svg>
             </LibraryCardTitle>
             {entry.description && (
               <LibraryCardDescription className="font-serif italic !text-xs !leading-[normal] !text-neutral-300 !mt-1 !max-w-[280px] !line-clamp-2 !wrap-normal drop-shadow">

@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { getReaderChamberSurfaceClass } from '../../reader-chamber/development/ReaderChamber';
 import { ReaderViewport } from '../../reader-chamber/development/ReaderViewport';
 import type { WorldCardAudioAdapter } from '../../reader-chamber/development/WorldCard';
-import { CodexHovercard } from '../../reader-codex/shared/CodexHovercard';
+import { CodexHovercard } from '../../reader-codex/development/CodexHovercard';
 import {
   createCodexHighlighter,
   splitByCodexTerms,

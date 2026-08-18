@@ -392,4 +392,56 @@ describe('Reader card routing', () => {
       'button[aria-label="Manifest portrait for Oath Seal"]',
     )?.disabled).toBe(true);
   });
+
+  it('wears the spectral glass with the entity ambient accent, mote field, and circular seal', () => {
+    act(() => {
+      root.render(
+        <CodexCard
+          revealTerm={{
+            type: 'Artifact',
+            entry: {
+              id: 'codex-glass-artifact',
+              name: 'Oath Seal',
+              description: 'An eligible Artifact without artwork.',
+              manifestationImportance: visualImportance,
+            },
+          }}
+        />,
+      );
+    });
+
+    const surface = container.querySelector<HTMLElement>('[data-accent="true"]');
+    expect(surface?.style.getPropertyValue('--library-card-accent')).toBe('#E5E7EB');
+    expect(surface?.className).toContain('group/reveal');
+    expect(surface?.querySelector('[data-slot="codex-card-ambience"]')).toBeTruthy();
+
+    const seal = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Manifest portrait for Oath Seal"]',
+    );
+    expect(seal?.className).toContain('rounded-full');
+    expect(container.textContent).toContain('Awaken Portrait');
+  });
+
+  it('tints the glass with the character relationship accent', () => {
+    act(() => {
+      root.render(
+        <CodexCard
+          revealTerm={{
+            type: 'character',
+            entry: {
+              id: 'codex-glass-ally',
+              name: 'Aster',
+              description: 'A quiet courier.',
+              relationshipToMC: 'ally',
+              manifestationImportance: visualImportance,
+            },
+          }}
+          activeStory={{ mcName: 'Rin', assignedRevealBackdrops: {} }}
+        />,
+      );
+    });
+
+    const surface = container.querySelector<HTMLElement>('[data-accent="true"]');
+    expect(surface?.style.getPropertyValue('--library-card-accent')).toBe('#4ADE80');
+  });
 });

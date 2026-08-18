@@ -32,7 +32,7 @@ import { useReadingPosition } from "../shared/stubs";
 import { getFateLockMessage } from '../shared/alterFateLock';
 import { DEFAULT_READER_TYPOGRAPHY } from '../shared/readerTypography';
 import { SYSTEM_LEGEND_DISMISSED_STORAGE_KEY } from '../shared/readerLegend';
-import { CodexHovercard } from '../../reader-codex/shared/CodexHovercard';
+import { CodexHovercard } from '../../reader-codex/development/CodexHovercard';
 import {
   createCodexHighlighter,
   splitByCodexTerms,

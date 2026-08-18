@@ -28,6 +28,18 @@
   --color-zinc-800: #27272a;
   --color-zinc-900: #18181b;
   --color-zinc-950: #09090b;
+
+  /* Codex Card ambience — the slow drift of a single spectral mote inside a
+     reveal card. Per-mote duration/delay/drift are set inline so a small
+     deterministic field reads as organic without a canvas. */
+  --animate-codex-mote: codex-mote 10s ease-in-out infinite;
+
+  @keyframes codex-mote {
+    0% { transform: translate3d(0, 5px, 0) scale(0.85); opacity: 0; }
+    25% { opacity: 0.55; }
+    70% { opacity: 0.3; }
+    100% { transform: translate3d(var(--codex-mote-drift, 2px), -14px, 0) scale(1); opacity: 0; }
+  }
 }
 
 html,

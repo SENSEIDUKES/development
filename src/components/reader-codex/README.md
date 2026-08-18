@@ -4,12 +4,13 @@
 - **Source location:** `src/components/ReaderCodex.tsx`, `src/components/CodexSheetOverlay.tsx`, and `src/components/CodexHovercard.tsx` (verified against `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-codex`
 - **Replica created:** 2026-08-11
-- **Last Workshop update:** 2026-08-17
+- **Last Workshop update:** 2026-08-18
 - **Last source comparison:** 2026-08-17
 - **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-08-18:** Forked the highlighted-term Codex card into `development/CodexHovercard.tsx` and reimagined it with the approved Library spectral-glass treatment: translucent black-blue depth with a top-light falloff, inner rim lighting, the masked 1px spectral edge, an entity ambient accent (character relationship, Artifact tier, Location specialness, Faction), and a sparse spectral mote field. The Manifest trigger is now the circular seal itself — both rotating orbit rings, the star, and the Manifest label are preserved, with the "Awaken Aetherial Portrait" caption beneath — instead of the former rectangular button. Docking, desktop contextual placement with viewport clamping, portal focus/Escape handling, trigger highlight theming, and the local one-off manifestation flow are unchanged. The accent rules live in `development/codexEntityAccent.ts` and the particle layer in `development/CodexCardAmbience.tsx`, both shared with the Development `CodexCard`. `shared/CodexHovercard.tsx` is untouched and now serves only the locked Reference Reader path.
 - **2026-08-17:** Refined highlighted-term Codex cards in the real Reader path: mobile and tablet cards now dock at the safe upper viewport edge, use a smaller width on phones, and cap their scrollable height so most novel text stays visible; desktop cards retain contextual placement with edge clamping. Persisted/generated imagery now gives the media frame its natural aspect ratio, keeping the complete artwork and rounded corners aligned without cropping. Keyboard-opened portal cards receive focus, close with Escape, and return focus to the highlighted term. The card skin, content, Manifest action, and Reader highlighting flow remain unchanged.
 - **2026-08-17:** Moved the Workshop-only Codex page shortcuts into `FeatureWorkspace` Workshop Controls. The shortcuts still activate the real Codex tabs in each mounted pane; Reader Codex navigation and local story-state behavior remain unchanged.
 - **2026-08-11:** Migrated the complete production Reader Codex, its responsive sheet, all six primary pages and nested sections, Reader prose highlighting/hovercards, local editing controls, and Reader Chamber navigation into DEV. Production-only auth, AI, media, and persistence seams were replaced with explicit local compatibility behavior.
@@ -51,10 +52,13 @@ development/
   ReaderCodex.tsx
   CodexSheetOverlay.tsx
   ReaderCodexBestiary.tsx
+  CodexHovercard.tsx        — active highlighted-term card (spectral glass fork)
+  codexEntityAccent.ts      — entity ambient accent rules shared with CodexCard
+  CodexCardAmbience.tsx     — spectral mote field + accent aura for Codex Cards
 shared/
   codex/                    — production section/component tree
   hooks/                    — pure hooks and local production-service adapters
-  CodexHovercard.tsx
+  CodexHovercard.tsx        — now serves only the locked Reference Reader path
   codexHighlighting.ts
   codexContext.ts
   codexEntryContext.ts
@@ -161,6 +165,11 @@ Development-fork refinement is approved for transfer, map:
 
 - `development/ReaderCodex.tsx` → `src/components/ReaderCodex.tsx`
 - `development/CodexSheetOverlay.tsx` → `src/components/CodexSheetOverlay.tsx`
+- `development/CodexHovercard.tsx` → `src/components/CodexHovercard.tsx`
+- `development/codexEntityAccent.ts` and `development/CodexCardAmbience.tsx` →
+  production `src/lib/` / shared component owners (consumed by both production
+  Codex Cards); the mote keyframes live in DEV `src/styles.css`
+  (`--animate-codex-mote`) and move into production `src/index.css`
 - `shared/codex/**` → `src/components/codex/**`
 - pure shared hooks/utilities back to their verified `src/hooks`, `src/lib`,
   `src/contracts`, and `src/utils` owners

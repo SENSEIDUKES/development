@@ -12,6 +12,8 @@ import {
   LibraryCardTitle,
 } from '../../library/LibraryCard';
 import { isManifestationEligible } from '../shared/manifestationEligibility';
+import { CodexCardAmbience } from '../../reader-codex/development/CodexCardAmbience';
+import { resolveCodexEntityAccent } from '../../reader-codex/development/codexEntityAccent';
 
 export const FALLBACK_BACKDROPS = [
   "https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/images/LIBRARY%20BACKDROPS/LIBRARY_THUNDER.PNG",
@@ -46,6 +48,7 @@ export interface CodexCardTerm {
 export interface CodexCardProps {
   revealTerm: CodexCardTerm;
   activeStory?: {
+    mcName?: string;
     assignedRevealBackdrops?: Record<string, string>;
     [key: string]: any;
   };
@@ -56,14 +59,15 @@ export interface CodexCardProps {
   className?: string;
 }
 
-// The shared primitive owns the card regions, while these classes deliberately
-// retain the Reader's established Codex reveal skin. The broader LibraryCard
-// glass treatment will be adopted only in a future visual pass.
+// The shared primitive owns the card regions AND the surface: the Codex reveal
+// now wears the approved LibraryCard spectral glass — translucent black-blue
+// depth, top-light falloff, inner rim lighting, the masked 1px spectral edge,
+// and the entity accent hairline — with the accent driven by the entity's own
+// identity color. Only the Reader reveal layout (centering, width, rhythm) is
+// added on top.
 const CODEX_CARD_SURFACE_CLASS = [
-  'group/reveal relative w-full max-w-sm mx-auto my-6 min-h-[300px]',
-  '!rounded-xl !border-portal/30 ![background-image:none] !bg-void/80',
-  '!backdrop-blur-md !backdrop-saturate-100 !shadow-[0_0_25px_rgba(4,172,255,0.15)]',
-  'items-center justify-center text-center before:!hidden',
+  'group/reveal w-full max-w-sm mx-auto my-6',
+  'items-center justify-center text-center',
 ].join(' ');
 
 const TRANSPARENT_REGION_CLASS = '!contents';
@@ -73,6 +77,43 @@ const REVEAL_HEADER_REGION_CLASS = [
   '[&>div]:!contents',
   '[&>div>div]:!contents',
   '[&>div>div>div]:!contents',
+].join(' ');
+
+/**
+ * The circular Manifest seal: the entity's portrait sleeps inside a glass orb
+ * ringed by two counter-rotating orbit traces (dashed out, dotted in) in the
+ * entity's ambient color. The seal is the button — keyboard-operable, with the
+ * Summoning state inside — and the awakening caption sits directly beneath it.
+ */
+const SEAL_RING_OUTER_CLASS = [
+  'pointer-events-none absolute inset-0 rounded-full border border-dashed',
+  'border-[color-mix(in_srgb,var(--library-card-accent)_32%,transparent)]',
+  'animate-[spin_12s_linear_infinite] motion-reduce:animate-none',
+  'transition-colors duration-500 group-hover/seal:border-[color-mix(in_srgb,var(--library-card-accent)_55%,transparent)]',
+].join(' ');
+
+const SEAL_RING_INNER_CLASS = [
+  'pointer-events-none absolute inset-[10px] rounded-full border border-dotted',
+  'border-[color-mix(in_srgb,var(--library-card-accent)_18%,transparent)]',
+  'animate-[spin_20s_linear_infinite_reverse] motion-reduce:animate-none',
+  'transition-colors duration-500 group-hover/seal:border-[color-mix(in_srgb,var(--library-card-accent)_38%,transparent)]',
+].join(' ');
+
+const SEAL_CORE_GLOW_CLASS = [
+  'pointer-events-none absolute inset-[18px] rounded-full animate-pulse',
+  'bg-[radial-gradient(circle_at_center,color-mix(in_srgb,var(--library-card-accent)_22%,transparent)_0%,transparent_70%)]',
+].join(' ');
+
+const SEAL_BUTTON_CLASS = [
+  'relative z-10 flex h-28 w-28 shrink-0 flex-col items-center justify-center gap-1 rounded-full',
+  'border border-[color-mix(in_srgb,var(--library-card-accent)_42%,transparent)]',
+  'bg-[rgba(1,11,20,0.72)] backdrop-blur-sm cursor-pointer transition-all duration-500',
+  'shadow-[0_0_18px_-4px_color-mix(in_srgb,var(--library-card-accent)_40%,transparent)]',
+  'hover:border-[color-mix(in_srgb,var(--library-card-accent)_85%,transparent)]',
+  'hover:shadow-[0_0_30px_-4px_color-mix(in_srgb,var(--library-card-accent)_60%,transparent)]',
+  'outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black',
+  'focus-visible:ring-[color-mix(in_srgb,var(--library-card-accent)_70%,transparent)]',
+  'disabled:cursor-wait',
 ].join(' ');
 
 export const CodexCard: React.FC<CodexCardProps> = React.memo(({
@@ -89,6 +130,7 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
   const revealImageAssetId = entry && 'imageAssetId' in entry ? entry.imageAssetId : undefined;
   const entryId = entry?.id || 'reveal-entity';
   const assignedBackdrop = activeStory?.assignedRevealBackdrops?.[entryId] || getFallbackBackdrop(entryId);
+  const accent = resolveCodexEntityAccent(revealTerm.type, entry, activeStory?.mcName);
 
   return (
     <motion.div
@@ -99,7 +141,12 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
       transition={{ duration: 0.5, ease: "easeOut" }}
       className="w-full"
     >
-      <LibraryCard as="div" padding="none" className={`${CODEX_CARD_SURFACE_CLASS} ${className}`}>
+      <LibraryCard
+        as="div"
+        padding="none"
+        accentColor={accent}
+        className={`${CODEX_CARD_SURFACE_CLASS} ${className}`}
+      >
         {!revealImageUrl && (
           <LibraryCardMedia className="!absolute inset-0 h-full w-full !overflow-hidden pointer-events-none">
             <img
@@ -111,13 +158,15 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
           </LibraryCardMedia>
         )}
 
+        <CodexCardAmbience accent={accent} />
+
         <LibraryCardContent
           padding="sm"
           className="relative z-10 w-full !items-center !justify-center !gap-0"
         >
           <LibraryCardBody className={TRANSPARENT_REGION_CLASS}>
             {revealImageUrl ? (
-              <LibraryCardMedia className="relative w-[180px] h-[180px] shrink-0 rounded-lg overflow-hidden border border-neutral-900 bg-neutral-950 mb-3 shadow-inner">
+              <LibraryCardMedia className="relative w-[180px] h-[180px] shrink-0 rounded-lg overflow-hidden border bg-neutral-950 mb-3 border-[color-mix(in_srgb,var(--library-card-accent)_30%,#171717)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6),0_0_28px_-8px_color-mix(in_srgb,var(--library-card-accent)_45%,transparent)]">
                 <img
                   src={revealImageUrl}
                   alt={entry.name}
@@ -131,49 +180,52 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
               !revealImageAssetId &&
               isManifestationEligible(entry) && (
                 <LibraryCardActions className={TRANSPARENT_REGION_CLASS}>
-                  <button
-                    type="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        e.currentTarget.click();
-                      }
-                    }}
-                    onClick={() => onManifestReveal?.(entry, revealTerm.type)}
-                    disabled={generatingRevealId === entry.id}
-                    className="relative w-[180px] h-[180px] shrink-0 mb-3 overflow-hidden rounded-lg bg-[#010b14] border border-portal/40 hover:border-portal flex flex-col items-center justify-center cursor-pointer transition-all duration-500 group/revealmanifest shadow-[0_0_15px_rgba(4,172,255,0.15)] hover:shadow-[0_0_25px_rgba(4,172,255,0.35)] backdrop-blur-sm"
-                    aria-label={`Manifest portrait for ${entry.name}`}
-                  >
-                    <div className="absolute inset-x-0 bottom-0 top-0 h-full w-full bg-[radial-gradient(circle_at_center,rgba(4,172,255,0.18)_0%,transparent_70%)] animate-pulse pointer-events-none" />
-                    <div className="absolute w-20 h-20 rounded-full border border-dashed border-portal/25 animate-[spin_12s_linear_infinite] group-hover/revealmanifest:border-portal/50" />
-                    <div className="absolute w-[88px] h-[88px] rounded-full border border-dotted border-portal/15 animate-[spin_20s_linear_infinite_reverse]" />
-
-                    {generatingRevealId === entry.id ? (
-                      <div className="flex flex-col items-center gap-1.5 z-10">
-                        <Loader2 size={18} className="text-portal animate-spin" />
-                        <span className="font-mono text-[9px] text-portal/90 uppercase tracking-widest animate-pulse font-medium">
-                          Summoning...
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-1.5 z-10 transition-transform duration-300 group-hover/revealmanifest:scale-105">
-                        <span className="text-portal text-sm group-hover/revealmanifest:animate-bounce">✦</span>
-                        <span className="font-sc text-[10px] text-signal tracking-widest font-bold uppercase">
-                          Manifest
-                        </span>
-                        <span className="font-mono text-[8px] text-neutral-500 tracking-wider">
-                          Awaken Portrait
-                        </span>
-                      </div>
-                    )}
-                  </button>
+                  <div className="mb-3 flex flex-col items-center gap-2">
+                    <div className="group/seal relative flex h-40 w-40 shrink-0 items-center justify-center">
+                      <div className={SEAL_RING_OUTER_CLASS} />
+                      <div className={SEAL_RING_INNER_CLASS} />
+                      <div className={SEAL_CORE_GLOW_CLASS} />
+                      <button
+                        type="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            e.currentTarget.click();
+                          }
+                        }}
+                        onClick={() => onManifestReveal?.(entry, revealTerm.type)}
+                        disabled={generatingRevealId === entry.id}
+                        className={SEAL_BUTTON_CLASS}
+                        aria-label={`Manifest portrait for ${entry.name}`}
+                      >
+                        {generatingRevealId === entry.id ? (
+                          <>
+                            <Loader2 size={18} className="text-[var(--library-card-accent)] animate-spin" />
+                            <span className="font-mono text-[9px] text-[var(--library-card-accent)] uppercase tracking-widest animate-pulse font-medium">
+                              Summoning...
+                            </span>
+                          </>
+                        ) : (
+                          <span className="flex flex-col items-center gap-1.5 transition-transform duration-300 group-hover/seal:scale-105">
+                            <span className="text-[var(--library-card-accent)] text-sm group-hover/seal:animate-bounce">✦</span>
+                            <span className="font-sc text-[10px] text-signal tracking-widest font-bold uppercase">
+                              Manifest
+                            </span>
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                    <span className="font-mono text-[8px] text-neutral-500 tracking-wider">
+                      Awaken Portrait
+                    </span>
+                  </div>
                 </LibraryCardActions>
               )
             )}
             <LibraryCardHeader
               eyebrow={(
-                <span className="font-mono text-[9px] text-portal uppercase tracking-widest mb-1 font-bold">
+                <span className="font-mono text-[9px] text-[var(--library-card-accent)] uppercase tracking-widest mb-1 font-bold">
                   Reveal · {revealTerm.type}
                 </span>
               )}

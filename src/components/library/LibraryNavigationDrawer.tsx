@@ -198,7 +198,7 @@ export function LibraryNavigationDrawerPanel({
                   {profile.name}
                 </span>
                 {profile.detail ? (
-                  <span className="block truncate font-sans text-[11px] text-neutral-500">
+                  <span className="block truncate font-sans text-[11px] text-neutral-400">
                     {profile.detail}
                   </span>
                 ) : null}
@@ -242,7 +242,7 @@ export function LibraryNavigationDrawerPanel({
                       {section.label}
                     </p>
                     {section.tagline ? (
-                      <p className="font-sans text-[10px] text-neutral-600">{section.tagline}</p>
+                      <p className="font-sans text-[10px] text-neutral-400">{section.tagline}</p>
                     ) : null}
                   </div>
                 </div>

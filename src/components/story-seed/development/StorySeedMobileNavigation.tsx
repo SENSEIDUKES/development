@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Bookmark, Check, CircleHelp, List, Settings, Sprout, X } from 'lucide-react';
+import { Bookmark, Check, CircleHelp, List, Settings, Sparkles, Sprout, X } from 'lucide-react';
 import type { StorySeedInput } from '../shared/storySeedSchema';
 import {
   LibraryBottomNavigation,
@@ -23,10 +23,12 @@ interface StorySeedMobileNavigationProps {
   helpOpen: boolean;
   isGenerating: boolean;
   savedFeedback: boolean;
+  canManifest: boolean;
   onSelectSection: (id: SeedSectionId) => void;
   onToggleStoryBank: () => void;
   onOpenHelp: () => void;
   onSaveDraft: () => void;
+  onManifest: () => void;
 }
 
 /** Mobile drawer, bottom navigation, and utility sheets as one shared owner. */
@@ -39,10 +41,12 @@ const StorySeedMobileNavigationComponent = ({
   helpOpen,
   isGenerating,
   savedFeedback,
+  canManifest,
   onSelectSection,
   onToggleStoryBank,
   onOpenHelp,
   onSaveDraft,
+  onManifest,
 }: StorySeedMobileNavigationProps) => {
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -162,7 +166,16 @@ const StorySeedMobileNavigationComponent = ({
       active: settingsOpen,
       onSelect: toggleSettings,
     },
-  ], [helpOpen, onOpenHelp, onToggleStoryBank, selectorOpen, settingsOpen, showStoryBank, toggleSettings]);
+    ...(canManifest ? [{
+      id: 'manifest',
+      label: 'Manifest',
+      icon: <Sparkles size={20} />,
+      onSelect: () => {
+        setSettingsOpen(false);
+        onManifest();
+      },
+    }] : []),
+  ], [canManifest, helpOpen, onManifest, onOpenHelp, onToggleStoryBank, selectorOpen, settingsOpen, showStoryBank, toggleSettings]);
 
   return (
     <>
@@ -210,7 +223,7 @@ const StorySeedMobileNavigationComponent = ({
                 className="story-seed-overlay-panel max-h-[calc(100dvh-5rem)] overscroll-contain overflow-y-auto rounded-b-none border-x-0 border-b-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] [padding-left:env(safe-area-inset-left)] [padding-right:env(safe-area-inset-right)]"
               >
                 <div className="flex items-center justify-between gap-3 px-4 pt-3">
-                  <p className="font-sc text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-500">
+                  <p className="font-sc text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">
                     Settings
                   </p>
                   <LibraryButton
@@ -254,10 +267,12 @@ export const StorySeedMobileNavigation = memo(
     && previous.helpOpen === next.helpOpen
     && previous.isGenerating === next.isGenerating
     && previous.savedFeedback === next.savedFeedback
+    && previous.canManifest === next.canManifest
     && previous.onSelectSection === next.onSelectSection
     && previous.onToggleStoryBank === next.onToggleStoryBank
     && previous.onOpenHelp === next.onOpenHelp
     && previous.onSaveDraft === next.onSaveDraft
+    && previous.onManifest === next.onManifest
     && haveSameSeedSectionState(previous.seed, next.seed)
     && haveSameStorySeedSettings(previous.seed, next.seed),
 );

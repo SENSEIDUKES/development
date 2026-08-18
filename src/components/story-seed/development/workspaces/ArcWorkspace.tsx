@@ -146,7 +146,7 @@ export const ArcWorkspace = ({ seed, updateSeed }: ArcWorkspaceProps) => {
                         className={`min-h-11 cursor-pointer rounded-lg border px-1.5 font-sc text-[10px] font-bold uppercase tracking-[0.08em] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CDB271]/70 ${
                           isSelected
                             ? 'border-[#CDB271]/55 bg-[#CDB271]/10 text-[#F3EDE0] shadow-[0_0_12px_rgba(205,178,113,0.1)]'
-                            : 'border-neutral-800 bg-neutral-950/70 text-neutral-500 hover:border-neutral-700 hover:text-neutral-300'
+                            : 'border-neutral-800 bg-neutral-950/70 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
                         }`}
                       >
                         {option.label}

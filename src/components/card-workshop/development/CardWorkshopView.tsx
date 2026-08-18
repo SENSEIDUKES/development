@@ -46,8 +46,8 @@ const WORKSHOP_CARD_AUDIO_SAMPLE = 'https://lines.seihouse.org/LIBRARY/Lines/SYS
 const resolveCardAudioSource = (_asset: WorldCardAudioAsset): string => WORKSHOP_CARD_AUDIO_SAMPLE;
 
 const LOCAL_REVEAL_BACKDROP = '/card-workshop/reveal-backdrop.svg';
-const LOCAL_HUMAN_PORTRAIT = '/card-workshop/human-portrait.svg';
-const LOCAL_CREATURE_PORTRAIT = '/card-workshop/creature-portrait.svg';
+const LOCAL_HUMAN_PORTRAIT = '/card-workshop/test-images/ye_chen_portrait.png';
+const LOCAL_CREATURE_PORTRAIT = '/card-workshop/test-images/lyra_meadowlight_portrait.png';
 
 function MissingPreview({ children }: { children: React.ReactNode }) {
   return (

@@ -235,7 +235,7 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
             <LibraryCardHeader
               eyebrow={(
                 <span className="font-mono text-[9px] text-[var(--library-card-accent)] uppercase tracking-widest mb-1 font-bold">
-                  Reveal · {revealTerm.type}
+                  {revealTerm.type}
                 </span>
               )}
               className={REVEAL_HEADER_REGION_CLASS}

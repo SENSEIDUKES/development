@@ -173,7 +173,7 @@ describe('Reader card routing', () => {
   ] as const)('routes %s reveal metadata to CodexCard', (_label, name, type, extra) => {
     renderReader(revealBlock(name, type), [codexTerm(name, type, extra)]);
 
-    expect(container.textContent).toContain(`Reveal · ${type}`);
+    expect(container.textContent).toContain(type);
     expect(container.textContent).toContain(name);
     expect(container.querySelector(`img[alt="${name}"]`)).toBeTruthy();
   });
@@ -181,14 +181,14 @@ describe('Reader card routing', () => {
   it('keeps a valid visual entry without artwork on CodexCard with Manifest available', () => {
     renderReader(revealBlock('Oath Seal', 'artifact'), [codexTerm('Oath Seal', 'artifact')]);
 
-    expect(container.textContent).toContain('Reveal · artifact');
+    expect(container.textContent).toContain('artifact');
     expect(container.querySelector('button[aria-label="Manifest portrait for Oath Seal"]')).toBeTruthy();
   });
 
   it('does not render an informational Bestiary species as a CodexCard', () => {
     renderReader(revealBlock('Shadow Void Stalker', 'creature'));
 
-    expect(container.textContent).not.toContain('Reveal · creature');
+    expect(container.querySelector('[data-slot="card-content"]')).toBeFalsy();
     expect(container.textContent).not.toContain('Manifest portrait');
   });
 
@@ -202,7 +202,7 @@ describe('Reader card routing', () => {
     };
     renderReader(species);
     expect(container.textContent).toContain('Apex Abyss Beast');
-    expect(container.textContent).not.toContain('Reveal · creature');
+    expect(container.querySelector('[data-slot="card-content"]')).toBeFalsy();
 
     const random = revealBlock('Ash-Maw Prowler', 'creature');
     random.worldCard = {
@@ -212,6 +212,7 @@ describe('Reader card routing', () => {
     };
     renderReader(random);
     expect(container.textContent).toContain('The Beast Beneath the Cinders');
+    expect(container.querySelector('[data-slot="card-content"]')).toBeFalsy();
   });
 
   it('does not mount a WorldCard when SEN image popups are disabled', () => {
@@ -230,7 +231,7 @@ describe('Reader card routing', () => {
   it('keeps Factions informational unless a highlight explicitly uses a WorldCard', () => {
     const factionTerm = codexTerm('Ninth House', 'faction', { imageUrl: '/legacy-faction.png' });
     renderReader(revealBlock('Ninth House', 'faction'), [factionTerm]);
-    expect(container.textContent).not.toContain('Reveal · faction');
+    expect(container.textContent).not.toContain('faction');
     expect(container.textContent).not.toContain('Manifest portrait');
 
     const highlighted = revealBlock('Ninth House', 'faction');
@@ -253,9 +254,9 @@ describe('Reader card routing', () => {
       codexTerm('Lei', 'character', { portraitKind: 'non-human', imageUrl: '/lei.png' }),
     ]);
 
-    expect(container.textContent).toContain('Reveal · character');
+    expect(container.textContent).toContain('character');
     expect(container.querySelector('img[alt="Lei"]')).toBeTruthy();
-    expect(container.textContent).not.toContain('Reveal · faction');
+    expect(container.textContent).not.toContain('faction');
   });
 
   it('renders System and Fate content only through System Panels', () => {
@@ -299,7 +300,7 @@ describe('Reader card routing', () => {
     };
     renderReader(block, [codexTerm('Lei', 'character', { portraitKind: 'non-human', imageUrl: '/lei.png' })]);
 
-    expect(container.textContent).toContain('Reveal · character');
+    expect(container.textContent).toContain('character');
     expect(container.textContent).not.toContain('Duplicate Storm Sovereign');
   });
 

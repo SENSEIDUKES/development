@@ -1,15 +1,16 @@
 # Reader Codex
 
 - **Source repository:** SENSEIDUKES/Light-Novels
-- **Source location:** `src/components/ReaderCodex.tsx` and `src/components/CodexSheetOverlay.tsx` (verified against `origin/main` @ `7d44ecc`)
+- **Source location:** `src/components/ReaderCodex.tsx`, `src/components/CodexSheetOverlay.tsx`, and `src/components/CodexHovercard.tsx` (verified against `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-codex`
 - **Replica created:** 2026-08-11
 - **Last Workshop update:** 2026-08-17
-- **Last source comparison:** 2026-08-13
+- **Last source comparison:** 2026-08-17
 - **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-08-17:** Refined highlighted-term Codex cards in the real Reader path: mobile and tablet cards now dock at the safe upper viewport edge, use a smaller width on phones, and cap their scrollable height so most novel text stays visible; desktop cards retain contextual placement with edge clamping. Persisted/generated imagery now gives the media frame its natural aspect ratio, keeping the complete artwork and rounded corners aligned without cropping. Keyboard-opened portal cards receive focus, close with Escape, and return focus to the highlighted term. The card skin, content, Manifest action, and Reader highlighting flow remain unchanged.
 - **2026-08-17:** Moved the Workshop-only Codex page shortcuts into `FeatureWorkspace` Workshop Controls. The shortcuts still activate the real Codex tabs in each mounted pane; Reader Codex navigation and local story-state behavior remain unchanged.
 - **2026-08-11:** Migrated the complete production Reader Codex, its responsive sheet, all six primary pages and nested sections, Reader prose highlighting/hovercards, local editing controls, and Reader Chamber navigation into DEV. Production-only auth, AI, media, and persistence seams were replaced with explicit local compatibility behavior.
 - **2026-08-12:** Aligned generated Reader sessions with DEV Story Seed, World Blueprint, Process Result, and Living Story State contracts. The adapter now translates Seed character/profile aliases, power ranks, relationships, abilities, permanent power-system data, factions, locations, artifacts, mysteries, and resolved threads; Process updates merge into existing named entities; and each Codex timeline is limited to the selected chapter.

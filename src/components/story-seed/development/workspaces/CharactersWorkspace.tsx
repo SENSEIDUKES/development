@@ -117,7 +117,7 @@ export const CharactersWorkspace = ({ seed, updateSeed }: CharactersWorkspacePro
 
       <div className="space-y-4">
         <WorkspaceSubheading>Additional Characters</WorkspaceSubheading>
-        <p className="font-sans text-xs text-neutral-500">
+        <p className="font-sans text-xs text-neutral-400">
           Pre-define characters for your world. Include core traits or relationships to the main character.
           If left blank or partially filled, the Library will guess.
         </p>
@@ -128,7 +128,7 @@ export const CharactersWorkspace = ({ seed, updateSeed }: CharactersWorkspacePro
               <button
                 type="button"
                 onClick={() => updateSeed(setAdditionalCharacters(characters.filter((_, i) => i !== index)))}
-                className="font-sc text-xs uppercase tracking-widest text-neutral-500 transition-colors hover:text-human"
+                className="font-sc text-xs uppercase tracking-widest text-neutral-400 transition-colors hover:text-human"
               >
                 Remove
               </button>
@@ -213,7 +213,7 @@ export const CharactersWorkspace = ({ seed, updateSeed }: CharactersWorkspacePro
                   }}
                   placeholder="e.g. Sister Mei; Pavilion Mistress"
                 />
-                <p className="mt-1 font-sans text-[9px] text-neutral-600">User-authored only. Separate names or titles with commas, semicolons, or new lines.</p>
+                <p className="mt-1 font-sans text-[9px] text-neutral-400">User-authored only. Separate names or titles with commas, semicolons, or new lines.</p>
               </div>
               <div className="col-span-1 sm:col-span-2 md:col-span-4">
                 <LibraryTextArea

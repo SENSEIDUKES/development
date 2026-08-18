@@ -220,7 +220,7 @@ export default function StoryAuthGate() {
       role="dialog"
       aria-modal="true"
       aria-label="Your Destiny Awaits — sign in"
-      className="absolute inset-0 z-50 overflow-hidden bg-black"
+      className="story-seed-development-surface absolute inset-0 z-50 overflow-hidden bg-black"
     >{/* TRANSFER NOTE: `absolute` → `fixed` when moved to Light-Novels. The
       Workshop scopes the takeover to the preview canvas (FeatureWorkspace's
       positioned pane) so it never collides with the Workshop controls that
@@ -354,7 +354,7 @@ export default function StoryAuthGate() {
                         value={email}
                         onChange={event => setEmail(event.target.value)}
                         placeholder="Email"
-                        className="w-full bg-white/[0.05] border-b border-white/20 focus:border-portal/60 rounded-t-md px-3 py-2.5 text-base text-signal placeholder:text-neutral-500 outline-none transition-colors"
+                        className="w-full bg-white/[0.05] border-b border-white/20 focus:border-portal/60 rounded-t-md px-3 py-2.5 text-base text-signal placeholder:text-neutral-400 outline-none transition-colors"
                       />
                     </div>
                     <div>
@@ -369,7 +369,7 @@ export default function StoryAuthGate() {
                         value={password}
                         onChange={event => setPassword(event.target.value)}
                         placeholder="Password"
-                        className="w-full bg-white/[0.05] border-b border-white/20 focus:border-portal/60 rounded-t-md px-3 py-2.5 text-base text-signal placeholder:text-neutral-500 outline-none transition-colors"
+                        className="w-full bg-white/[0.05] border-b border-white/20 focus:border-portal/60 rounded-t-md px-3 py-2.5 text-base text-signal placeholder:text-neutral-400 outline-none transition-colors"
                       />
                     </div>
                     <button

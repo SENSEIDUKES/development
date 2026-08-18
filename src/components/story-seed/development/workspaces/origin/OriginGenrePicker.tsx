@@ -98,11 +98,11 @@ export const OriginGenrePicker = ({ genre, onChange }: OriginGenrePickerProps) =
             <span className={`block truncate font-sc text-[11px] font-bold uppercase tracking-[0.12em] ${trimmedGenre ? 'text-signal' : 'text-neutral-200'}`}>
               {trimmedGenre || 'Choose Story Path'}
             </span>
-            <span className="mt-0.5 block font-sans text-[11px] text-neutral-500">
+            <span className="mt-0.5 block font-sans text-[11px] text-neutral-400">
               {trimmedGenre ? 'Your story path — tap to change' : 'Xianxia, System, Mystery, or your own'}
             </span>
           </span>
-          <ChevronRight size={15} aria-hidden="true" className="shrink-0 text-neutral-500" />
+          <ChevronRight size={15} aria-hidden="true" className="shrink-0 text-neutral-400" />
         </button>
       )}
 
@@ -152,9 +152,9 @@ export const OriginGenrePicker = ({ genre, onChange }: OriginGenrePickerProps) =
               </span>
               <span className="min-w-0 flex-1">
                 <span className={`block font-sc text-[11px] font-bold uppercase tracking-[0.12em] ${isCustomPathActive ? 'text-signal' : 'text-neutral-200'}`}>Define My Own Path</span>
-                <span className="mt-0.5 block font-sans text-[11px] text-neutral-500">Craft a genre that&rsquo;s uniquely yours.</span>
+                <span className="mt-0.5 block font-sans text-[11px] text-neutral-400">Craft a genre that&rsquo;s uniquely yours.</span>
               </span>
-              <ChevronRight size={15} aria-hidden="true" className={`shrink-0 transition-transform ${isCustomPathActive ? 'rotate-90 text-[#D4AF37]' : 'text-neutral-500'}`} />
+              <ChevronRight size={15} aria-hidden="true" className={`shrink-0 transition-transform ${isCustomPathActive ? 'rotate-90 text-[#D4AF37]' : 'text-neutral-400'}`} />
             </button>
 
             <AnimatePresence initial={false}>

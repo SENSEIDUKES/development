@@ -241,26 +241,24 @@ export const OriginPremiseAndTags = ({
             <LibraryDragonCycleIcon size={17} />
           </button>
         )}
-        className="pb-10 pr-10"
-      >
-        <AnimatePresence>
-          {ghostSuggestion && (
-            <motion.button
-              type="button"
-              initial={{ opacity: 0, scale: 0.95, y: 2 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 2 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => {
-                if (addTag(ghostSuggestion)) setDismissedGhostKey(ghostSuggestionKey);
-              }}
-              title="Add this suggestion to your Story Tags"
-              className="story-seed-touch-target absolute bottom-2.5 right-2.5 flex min-w-0 max-w-[80%] items-center gap-1.5 rounded-lg border border-portal/40 bg-[#0b0e1e]/90 px-2.5 py-1 font-mono text-[10px] tracking-wider text-portal shadow-[0_0_12px_rgba(4,172,255,0.15)] transition-all hover:border-portal hover:text-signal sm:max-w-full"
-            >
-              <Sparkles size={11} className="animate-pulse text-portal" />
-              <span className="truncate">Add tag: {ghostSuggestion}</span>
-            </motion.button>
-          )}
-        </AnimatePresence>
-      </LibraryTextArea>
+      />
+      <AnimatePresence>
+        {ghostSuggestion && (
+          <motion.button
+            type="button"
+            initial={{ opacity: 0, scale: 0.95, y: -2 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -2 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => {
+              if (addTag(ghostSuggestion)) setDismissedGhostKey(ghostSuggestionKey);
+            }}
+            title="Add this suggestion to your Story Tags"
+            className="story-seed-touch-target ml-auto mt-2 flex max-w-full items-start gap-1.5 rounded-lg border border-portal/40 bg-[#0b0e1e]/90 px-2.5 py-1 font-mono text-[10px] tracking-wider text-portal shadow-[0_0_12px_rgba(4,172,255,0.15)] transition-all hover:border-portal hover:text-signal"
+          >
+            <Sparkles size={11} className="mt-0.5 shrink-0 animate-pulse text-portal" />
+            <span className="min-w-0 break-words text-left">Add tag: {ghostSuggestion}</span>
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {genrePicker}
 
@@ -323,7 +321,7 @@ const OriginTagEditor = memo(({
       <section className="glass-panel space-y-4 p-4 sm:p-5" aria-labelledby="origin-tags-title">
         <div>
           <p id="origin-tags-title" className="flex items-center gap-2 font-sc text-[11px] font-bold uppercase tracking-widest text-signal"><Tag size={13} className="text-[#CDB271]" aria-hidden="true" />Story Tags</p>
-          <p className="mt-1 font-sans text-xs text-neutral-500">Optional — inferred from your origin if left empty.</p>
+          <p className="mt-1 font-sans text-xs text-neutral-400">Optional — inferred from your origin if left empty.</p>
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -341,7 +339,7 @@ const OriginTagEditor = memo(({
         <div>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <p className="flex items-center gap-1.5 font-sc text-[10px] font-bold uppercase tracking-widest text-neutral-300"><Wand2 size={12} className="text-[#CDB271]" aria-hidden="true" />Suggested Tags</p>
-            <span className="font-sans text-[11px] text-neutral-500">{selectedStyle ? `Tuned to ${getStoryStyleLabel(selectedStyle)} tradition` : 'Pick a Style above to tune these'}</span>
+            <span className="font-sans text-[11px] text-neutral-400">{selectedStyle ? `Tuned to ${getStoryStyleLabel(selectedStyle)} tradition` : 'Pick a Style above to tune these'}</span>
           </div>
           <div className="scrollbar-thin flex gap-1.5 overflow-x-auto pb-1" id="style-suggested-tags">
             {styleSuggestions.map(entry => (
@@ -356,17 +354,17 @@ const OriginTagEditor = memo(({
           </div>
           {isTagSearchActive ? (
             <>
-              <p className="mb-2 font-sans text-[11px] text-neutral-500">
+              <p className="mb-2 font-sans text-[11px] text-neutral-400">
                 {tagSearchResults.length} {tagSearchResults.length === 1 ? 'match' : 'matches'} across all families
               </p>
               <div className="glass-panel scrollbar-thin flex max-h-52 flex-wrap content-start gap-1.5 overflow-y-auto p-3" id="filtered-tags-list">
                 {tagSearchResults.length === 0 ? (
-                  <p className="w-full py-3 text-center font-sans text-xs italic text-neutral-600">No tags, aliases, or families match this search.</p>
+                  <p className="w-full py-3 text-center font-sans text-xs italic text-neutral-400">No tags, aliases, or families match this search.</p>
                 ) : tagSearchResults.slice(0, SEARCH_RESULT_LIMIT).map(entry => (
                   <CatalogTagChip key={entry.label} entry={entry} selected={storyTags.includes(entry.label)} onToggle={toggleTag} />
                 ))}
                 {tagSearchResults.length > SEARCH_RESULT_LIMIT && (
-                  <p className="w-full pt-1 text-center font-sans text-[11px] italic text-neutral-600">
+                  <p className="w-full pt-1 text-center font-sans text-[11px] italic text-neutral-400">
                     +{tagSearchResults.length - SEARCH_RESULT_LIMIT} more — keep typing to narrow the search.
                   </p>
                 )}
@@ -395,7 +393,7 @@ const OriginTagEditor = memo(({
                       ))}
                     </div>
                   </motion.div>
-                ) : <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 font-sans text-xs italic text-neutral-600">Choose a family to reveal its tags.</motion.p>}
+                ) : <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 font-sans text-xs italic text-neutral-400">Choose a family to reveal its tags.</motion.p>}
               </AnimatePresence>
             </>
           )}
@@ -404,8 +402,8 @@ const OriginTagEditor = memo(({
         <div className="border-t border-neutral-800/80 pt-3">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
             <p className={workspaceCompactLabelClass}>Your tags ({storyTags.length} / {TAG_LIMIT})</p>
-            <span className="font-sans text-[11px] text-neutral-500">{TAG_RECOMMENDED_COPY}</span>
-            {storyTags.length > 0 && <button type="button" onClick={() => updateSeed(updateStoryTags(() => []))} className="story-seed-compact-hit-target font-sc text-[10px] uppercase tracking-widest text-neutral-500 transition-colors hover:text-red-400">Clear all</button>}
+            <span className="font-sans text-[11px] text-neutral-400">{TAG_RECOMMENDED_COPY}</span>
+            {storyTags.length > 0 && <button type="button" onClick={() => updateSeed(updateStoryTags(() => []))} className="story-seed-compact-hit-target font-sc text-[10px] uppercase tracking-widest text-neutral-400 transition-colors hover:text-red-300">Clear all</button>}
           </div>
           {storyTags.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
@@ -415,12 +413,12 @@ const OriginTagEditor = memo(({
                   <span key={tag} className="glass-chip animate-fadeIn px-2.5 py-1 font-sans text-xs">
                     {metadata && <CategoryColorDot color={metadata.color} />}
                     <span className="font-semibold">{tag}</span>
-                    <button type="button" onClick={() => toggleTag(tag)} aria-label={`Remove tag ${tag}`} className="story-seed-compact-hit-target text-neutral-500 transition-colors hover:text-signal"><X size={12} /></button>
+                    <button type="button" onClick={() => toggleTag(tag)} aria-label={`Remove tag ${tag}`} className="story-seed-compact-hit-target text-neutral-400 transition-colors hover:text-signal"><X size={12} /></button>
                   </span>
                 );
               })}
             </div>
-          ) : <p className="font-sans text-xs italic leading-relaxed text-neutral-600">No manual tags yet. Your origin will provide them when you manifest the blueprint.</p>}
+          ) : <p className="font-sans text-xs italic leading-relaxed text-neutral-400">No manual tags yet. Your origin will provide them when you manifest the blueprint.</p>}
         </div>
       </section>
   );

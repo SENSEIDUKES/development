@@ -19,6 +19,7 @@ import {
   type StorySeedRepository,
 } from '../shared/storySeedRepository';
 import { BlueprintReview } from './BlueprintReview';
+import CreationModal from './CreationModal';
 import { StoryBank } from './StoryBank';
 import { StorySeedHeader } from './StorySeedHeader';
 import { StorySeedHelpMenu } from './StorySeedHelpMenu';
@@ -193,10 +194,15 @@ describe('Story Seed keyboard and mobile navigation', () => {
     ));
     expect(container.textContent).toContain('Add tag:');
     expect(container.textContent).not.toContain('Tab:');
+    const suggestion = Array.from(container.querySelectorAll<HTMLButtonElement>('button'))
+      .find(button => button.textContent?.includes('Add tag:'));
+    expect(suggestion).toBeTruthy();
+    expect(suggestion?.closest('.glass-field-wrap')).toBeNull();
   });
 
-  it('shows four labeled mobile destinations and omits the placeholder Profile', () => {
-    act(() => root.render(
+  it('adds Manifest to the labeled mobile navigation only when generation is ready', () => {
+    const onManifest = vi.fn();
+    const renderNavigation = (canManifest: boolean) => act(() => root.render(
       <StorySeedMobileNavigation
         seed={createEmptyStorySeedInput()}
         updateSeed={vi.fn()}
@@ -205,23 +211,56 @@ describe('Story Seed keyboard and mobile navigation', () => {
         helpOpen={false}
         isGenerating={false}
         savedFeedback={false}
+        canManifest={canManifest}
         onSelectSection={vi.fn()}
         onToggleStoryBank={vi.fn()}
         onOpenHelp={vi.fn()}
         onSaveDraft={vi.fn()}
+        onManifest={onManifest}
       />,
     ));
 
-    const nav = container.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]');
-    const buttons = Array.from(nav!.querySelectorAll<HTMLButtonElement>('button'));
+    renderNavigation(false);
+    let nav = container.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]');
+    let buttons = Array.from(nav!.querySelectorAll<HTMLButtonElement>('button'));
     expect(buttons.map(button => button.getAttribute('aria-label'))).toEqual([
       'Sections',
       'Story Bank',
       'Help',
       'Settings',
     ]);
-    expect(buttons.every(button => !button.querySelector('.sr-only'))).toBe(true);
     expect(container.textContent).not.toContain('Profile');
+
+    renderNavigation(true);
+    nav = container.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]');
+    buttons = Array.from(nav!.querySelectorAll<HTMLButtonElement>('button'));
+    expect(buttons.map(button => button.getAttribute('aria-label'))).toEqual([
+      'Sections',
+      'Story Bank',
+      'Help',
+      'Settings',
+      'Manifest',
+    ]);
+    expect(buttons.every(button => !button.querySelector('.sr-only'))).toBe(true);
+    act(() => buttons[4].click());
+    expect(onManifest).toHaveBeenCalledTimes(1);
+  });
+
+  it('announces why the primary Manifest action is disabled', () => {
+    act(() => root.render(
+      <CreationModal
+        onStartStory={vi.fn()}
+        onGenerateBlueprint={vi.fn()}
+        isGenerating={false}
+        error={null}
+      />,
+    ));
+
+    const manifest = container.querySelector<HTMLButtonElement>('button[data-variant="manifest"]');
+    expect(manifest?.disabled).toBe(true);
+    expect(manifest?.getAttribute('aria-label')).toBe(
+      'Manifest disabled — missing: Style, Genre, Premise',
+    );
   });
 
   it('keeps custom radio groups to one Tab stop and selects with navigation keys', () => {

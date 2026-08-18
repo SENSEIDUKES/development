@@ -20,7 +20,7 @@ export const OriginStyleSelector = ({ selectedStyle, onSelect }: OriginStyleSele
   <section className="glass-panel p-4" aria-labelledby="origin-style-title">
     <div className="mb-3 flex items-center justify-between gap-3">
       <p id="origin-style-title" className={workspaceCompactLabelClass}>Style <span className="text-[#D9B36C]">*</span></p>
-      <span className="flex items-center gap-1.5 font-sc text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-500">
+      <span className="flex items-center gap-1.5 font-sc text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-400">
         Novel tradition<Sparkle size={9} aria-hidden="true" className="text-[#CDB271]/70" />
       </span>
     </div>

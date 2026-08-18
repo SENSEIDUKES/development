@@ -138,7 +138,7 @@ export const LibraryTextBox = forwardRef<HTMLInputElement, LibraryTextBoxProps>(
         {helpText && (
           <p
             id={helperId}
-            className={`text-neutral-500 font-sans text-xs ${compact ? 'mb-2' : 'mb-3'} leading-relaxed`}
+            className={`text-neutral-400 font-sans text-xs ${compact ? 'mb-2' : 'mb-3'} leading-relaxed`}
           >
             {helpText}
           </p>

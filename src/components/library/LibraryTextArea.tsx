@@ -129,7 +129,7 @@ export const LibraryTextArea = forwardRef<HTMLTextAreaElement, LibraryTextAreaPr
             </label>
             <div className="flex shrink-0 items-center gap-3 ml-auto">
               {showCounter && (
-                <span className="whitespace-nowrap text-[10px] font-mono text-neutral-500">
+                <span className="whitespace-nowrap text-[10px] font-mono text-neutral-400">
                   {(value || '').length} / {maxLength}
                 </span>
               )}
@@ -141,7 +141,7 @@ export const LibraryTextArea = forwardRef<HTMLTextAreaElement, LibraryTextAreaPr
         {helpText && (
           <p
             id={helperId}
-            className={`text-neutral-500 font-sans text-xs ${compact ? 'mb-2' : 'mb-3'} leading-relaxed`}
+            className={`text-neutral-400 font-sans text-xs ${compact ? 'mb-2' : 'mb-3'} leading-relaxed`}
           >
             {helpText}
           </p>

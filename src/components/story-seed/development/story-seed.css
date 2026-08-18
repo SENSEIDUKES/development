@@ -10,6 +10,12 @@
     radial-gradient(30rem 20rem at 55% 45%, rgba(4, 172, 255, 0.035), transparent 65%);
 }
 
+.story-seed-development-surface input::placeholder,
+.story-seed-development-surface textarea::placeholder {
+  color: rgba(178, 172, 202, 0.7);
+  opacity: 1;
+}
+
 /* Celestial polish layered over the shared .glass-panel inside Story Seed
    workspaces: a warmer parchment-tinted edge, a faint inner glow, and a
    whisper of gold starlight in the upper corner. Kept subtle so the panels
@@ -40,7 +46,8 @@
 }
 
 .seed-workspace-shell .glass-field::placeholder {
-  color: rgba(178, 172, 202, 0.5);
+  color: rgba(178, 172, 202, 0.7);
+  opacity: 1;
 }
 
 /* World Blueprint dossier (Pass 2). The dossier header's Story Title input is

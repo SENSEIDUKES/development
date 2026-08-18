@@ -92,7 +92,7 @@ const StoryBankCard = ({
             Novel Manifested
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-800 bg-neutral-950/60 px-2.5 py-1 font-sc text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-500">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-800 bg-neutral-950/60 px-2.5 py-1 font-sc text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-400">
             No Novel Yet
           </span>
         )}
@@ -216,7 +216,7 @@ export const StoryBank = ({
         focus ring, quiet completed accents) onto the Import panel's glass
         field, keeping it consistent with the workspaces. */}
     <div className="seed-workspace-shell relative p-4 sm:p-8">
-      <p className="font-sc text-[11px] font-bold uppercase tracking-[0.34em] text-neutral-500">
+      <p className="font-sc text-[11px] font-bold uppercase tracking-[0.34em] text-neutral-400">
         <span className="text-[#CDB271]/90">Story Seed</span>
         <span className="mx-2.5 text-neutral-700">/</span>
         <span className="text-neutral-400">Story Bank</span>
@@ -237,7 +237,7 @@ export const StoryBank = ({
             Story Bank
           </h2>
           {!loadError && seeds.length > 0 && (
-            <span className="inline-flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/60 px-2.5 py-0.5 font-sc text-[10px] uppercase tracking-widest text-neutral-500">
+            <span className="inline-flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/60 px-2.5 py-0.5 font-sc text-[10px] uppercase tracking-widest text-neutral-400">
               {seeds.length} {seeds.length === 1 ? 'Seed' : 'Seeds'} Banked
             </span>
           )}
@@ -274,7 +274,7 @@ export const StoryBank = ({
 
       <div className="mt-6">
         {isLoading && (
-          <p className="mb-3 font-mono text-[10px] uppercase tracking-wider text-neutral-600" role="status">
+          <p className="mb-3 font-mono text-[10px] uppercase tracking-wider text-neutral-400" role="status">
             {seeds.length > 0 ? 'Refreshing saved seeds…' : 'Loading saved seeds…'}
           </p>
         )}

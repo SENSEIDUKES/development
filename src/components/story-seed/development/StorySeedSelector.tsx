@@ -87,7 +87,7 @@ export function buildStorySeedDrawerSections(
           <Icon
             size={16}
             aria-hidden="true"
-            className={active ? accentText : 'text-neutral-500 group-hover:text-neutral-400'}
+            className={active ? accentText : 'text-neutral-400 group-hover:text-neutral-300'}
           />
         ),
         active,
@@ -104,7 +104,7 @@ export function buildStorySeedDrawerSections(
       icon: <FamilyIcon size={14} aria-hidden="true" className={accentText} />,
       items,
       footer: (
-        <p className="font-serif text-[11px] leading-relaxed text-neutral-500">
+        <p className="font-serif text-[11px] leading-relaxed text-neutral-400">
           {family === 'story'
             ? 'Origin defines the story. ARC optionally shapes its journey and ending.'
             : 'Optional — the Library can generate the complete world automatically.'}

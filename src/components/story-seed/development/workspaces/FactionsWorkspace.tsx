@@ -23,7 +23,7 @@ export const FactionsWorkspace = ({ seed, updateSeed }: FactionsWorkspaceProps) 
 
   return (
     <WorkspaceShell section={section} complete={section.isFilled(seed)}>
-      <p className="font-sans text-xs text-neutral-500">
+      <p className="font-sans text-xs text-neutral-400">
         Pre-define factions or sects for your world. Include their alignment, power level, and connection
         to the main character. Left empty, the Library invents the powers that fit your Story.
       </p>
@@ -34,7 +34,7 @@ export const FactionsWorkspace = ({ seed, updateSeed }: FactionsWorkspaceProps) 
             <button
               type="button"
               onClick={() => updateSeed(setFactions(factions.filter((_, i) => i !== index)))}
-              className="font-sc text-xs uppercase tracking-widest text-neutral-500 transition-colors hover:text-human"
+              className="font-sc text-xs uppercase tracking-widest text-neutral-400 transition-colors hover:text-human"
             >
               Remove
             </button>
@@ -97,7 +97,7 @@ export const FactionsWorkspace = ({ seed, updateSeed }: FactionsWorkspaceProps) 
                 }}
                 placeholder="e.g. Azure Hall; Eastern Pavilion"
               />
-              <p className="mt-1 font-sans text-[9px] text-neutral-600">User-authored only. Separate names or titles with commas, semicolons, or new lines.</p>
+              <p className="mt-1 font-sans text-[9px] text-neutral-400">User-authored only. Separate names or titles with commas, semicolons, or new lines.</p>
             </div>
             <div className="col-span-1 sm:col-span-2 md:col-span-3">
               <LibraryTextArea

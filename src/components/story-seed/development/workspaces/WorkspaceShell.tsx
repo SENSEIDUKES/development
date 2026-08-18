@@ -38,7 +38,7 @@ export const WorkspaceShell = ({
   const Icon = section.icon;
   return (
     <section aria-labelledby={`seed-workspace-${section.id}-title`} className="seed-workspace-shell max-w-3xl">
-      <p className="font-sc text-[11px] font-bold uppercase tracking-[0.34em] text-neutral-500">
+      <p className="font-sc text-[11px] font-bold uppercase tracking-[0.34em] text-neutral-400">
         <span className={section.family === 'story' ? 'text-[#CDB271]/90' : 'text-gold-accent/80'}>
           {family.label}
         </span>
@@ -72,10 +72,10 @@ export const WorkspaceShell = ({
           )
         )}
         {!section.required && (
-          <span className="inline-flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/60 px-2.5 py-0.5 font-sc text-[10px] uppercase tracking-widest text-neutral-500">
+          <span className="inline-flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/60 px-2.5 py-0.5 font-sc text-[10px] uppercase tracking-widest text-neutral-400">
             Optional
             {optionalNote && (
-              <span className="border-l border-neutral-800 pl-2 normal-case tracking-normal text-neutral-500">
+              <span className="border-l border-neutral-800 pl-2 normal-case tracking-normal text-neutral-400">
                 {optionalNote}
               </span>
             )}

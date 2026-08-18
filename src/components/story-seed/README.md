@@ -211,6 +211,12 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-08-18:** Raised Story Seed helper and status copy to a WCAG AA
+  contrast floor, strengthened placeholder legibility, announced the missing
+  requirements on the disabled Manifest action, and moved automatic tag
+  suggestions into their own row below the premise field. Complete mobile
+  intake now also exposes Manifest as a fifth bottom-navigation action, while
+  the locked Reference replica and generation contracts remain unchanged.
 - **2026-08-18:** Followed up on accessibility and refresh-state hardening.
   Custom radio controls now follow the standard single-Tab-stop and arrow-key
   pattern, Help traps and restores keyboard focus, Blueprint copy feedback is

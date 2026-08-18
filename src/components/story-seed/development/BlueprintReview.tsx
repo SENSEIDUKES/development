@@ -173,7 +173,7 @@ export const BlueprintReview = ({
     // The dossier speaks the Seed workspace dialect of the Library glass
     // language: `seed-workspace-shell` brings the parchment-gold / soft-purple
     // field polish, the ambience layer stays gradient-only behind the panels.
-    <div className="seed-workspace-shell relative mx-auto max-w-4xl pb-20" id="creation-portal-root">
+    <div className="story-seed-development-surface seed-workspace-shell relative mx-auto max-w-4xl pb-20" id="creation-portal-root">
       <div aria-hidden="true" className="seed-workspace-ambience" />
 
       <div className="relative space-y-6">

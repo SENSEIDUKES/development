@@ -387,7 +387,7 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
   };
 
   /**
-   * All four required Story inputs must be present to generate. Story Tags
+   * All three required Story inputs must be present to generate. Story Tags
    * never block a creator, though: an empty set is inferred from Premise,
    * Genre, and Style, written back into the workspace so the creator sees it,
    * and saved with the seed.
@@ -599,6 +599,7 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
   const requestSaveDraft = useLatestCallback(handleSaveDraft);
   const requestStartStory = useLatestCallback(handleStartStoryClick);
   const requestExportCurrentSeed = useLatestCallback(handleExportCurrentSeed);
+  const requestGenerateBlueprint = useLatestCallback(handleGenerateBlueprintClick);
 
   if ((!currentUser || authDissolving) && !LOCAL_ONLY_MODE) {
     return <StoryAuthGate />;
@@ -631,12 +632,13 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
   const missing = missingRequiredSections(seed);
   const requiredComplete = REQUIRED_STORY_SECTIONS.length - missing.length;
   const canGenerate = missing.length === 0 && !isGenerating;
+  const missingRequiredLabels = missing.map(section => section.label).join(', ');
   const ActiveWorkspace = STORY_SEED_WORKSPACES[activeSection];
 
   return (
     // `pb-24` clears the sticky Manifest strip at the end of scroll; on mobile
     // the in-flow bottom navigation occupies that space instead.
-    <div className="mx-auto max-w-7xl pb-24 max-lg:pb-0" id="creation-portal-root">
+    <div className="story-seed-development-surface mx-auto max-w-7xl pb-24 max-lg:pb-0" id="creation-portal-root">
       {/* Header — wraps on narrow screens so the action buttons drop to a
           second row instead of overflowing the viewport. */}
       <StorySeedHeader
@@ -739,7 +741,7 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
                     );
                   })}
                 </div>
-                <p className="truncate font-sc text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-500">
+                <p className="truncate font-sc text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-400">
                   {missing.length > 0 ? (
                     <>
                       Missing required:{' '}
@@ -750,20 +752,21 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
                   )}
                 </p>
               </div>
-              <p className="flex-1 font-sc text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-500 sm:hidden">
+              <p className="flex-1 font-sc text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-400 sm:hidden">
                 {requiredComplete}/{REQUIRED_STORY_SECTIONS.length} required
               </p>
 
               <ManifestButton
                 size="lg"
-                onClick={handleGenerateBlueprintClick}
+                onClick={requestGenerateBlueprint}
                 disabled={!canGenerate}
                 loading={isGenerating}
                 // While VERSA drafts, its mark replaces the generic spinner.
                 loadingIndicator={activeAgentId === 'versa' ? (
                   <img src={AGENTS.VERSA.logoUrl} className="h-5 w-5 shrink-0 animate-pulse object-contain" alt="" aria-hidden="true" />
                 ) : undefined}
-                title={missing.length > 0 ? `Missing required: ${missing.map(section => section.label).join(', ')}` : 'Manifest the World Blueprint'}
+                aria-label={missing.length > 0 ? `Manifest disabled — missing: ${missingRequiredLabels}` : undefined}
+                title={missing.length > 0 ? `Missing required: ${missingRequiredLabels}` : 'Manifest the World Blueprint'}
                 className="shrink-0"
               >
                 {isGenerating ? (
@@ -782,7 +785,7 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
       )}
 
       {!showStoryBank && (
-        <p className="mt-4 text-center font-sans text-[11px] leading-relaxed text-neutral-600">
+        <p className="mt-4 text-center font-sans text-[11px] leading-relaxed text-neutral-400">
           Every empty field will be intelligently extrapolated using Chinese light-novel logic.
           A World Blueprint is generated for your review before the story begins.
         </p>
@@ -799,10 +802,12 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
         helpOpen={helpOpen}
         isGenerating={isGenerating}
         savedFeedback={savedFeedback}
+        canManifest={canGenerate && !showStoryBank}
         onSelectSection={selectMobileSection}
         onToggleStoryBank={toggleStoryBank}
         onOpenHelp={openHelp}
         onSaveDraft={requestSaveDraft}
+        onManifest={requestGenerateBlueprint}
       />
 
       {/* Story Seed Help — the `?` guidance menu shared by the mobile bottom

@@ -318,7 +318,7 @@ export const LibraryHelpMenu = ({
             >
               <div className="flex items-start justify-between gap-3 px-4 pt-4 sm:px-6 sm:pt-5">
                 <div>
-                  <p className="font-sc text-[11px] font-bold uppercase tracking-[0.34em] text-neutral-500">
+                  <p className="font-sc text-[11px] font-bold uppercase tracking-[0.34em] text-neutral-400">
                     <span className="text-[#CDB271]/90">Library</span>
                     <span className="mx-2.5 text-neutral-700">/</span>
                     <span className="text-neutral-400">Guidance</span>
@@ -349,7 +349,7 @@ export const LibraryHelpMenu = ({
                   onChange={event => setQuery(event.target.value)}
                   placeholder="Search Library guidance…"
                   aria-label="Search Library guidance"
-                  className="min-h-11 w-full rounded-xl border border-neutral-800/80 bg-[#0d1126]/65 py-2.5 pl-10 pr-3 font-sans text-base text-[#F3EDE0] outline-none placeholder:text-neutral-600 focus:border-[rgba(205,178,113,0.5)] focus:ring-2 focus:ring-portal/30 lg:text-sm"
+                  className="min-h-11 w-full rounded-xl border border-neutral-800/80 bg-[#0d1126]/65 py-2.5 pl-10 pr-3 font-sans text-base text-[#F3EDE0] outline-none placeholder:text-neutral-400 focus:border-[rgba(205,178,113,0.5)] focus:ring-2 focus:ring-portal/30 lg:text-sm"
                 />
               </div>
 
@@ -408,7 +408,7 @@ export const LibraryHelpMenu = ({
                               aria-hidden="true"
                               className={cn(
                                 'shrink-0 transition-transform motion-reduce:transition-none',
-                                active ? 'rotate-90 text-[#DDC58A]' : 'text-neutral-600',
+                                active ? 'rotate-90 text-[#DDC58A]' : 'text-neutral-400',
                               )}
                             />
                           </button>
@@ -431,7 +431,7 @@ export const LibraryHelpMenu = ({
                       );
                     })}
                     {visibleItems.length === 0 && (
-                      <li className="rounded-xl border border-dashed border-neutral-800/90 px-4 py-6 text-center font-sans text-xs text-neutral-500">
+                      <li className="rounded-xl border border-dashed border-neutral-800/90 px-4 py-6 text-center font-sans text-xs text-neutral-400">
                         No Library guidance matches your search.
                       </li>
                     )}
@@ -445,7 +445,7 @@ export const LibraryHelpMenu = ({
                     ) : (
                       <div className="flex h-full min-h-40 flex-col items-center justify-center gap-2.5 rounded-xl border border-dashed border-neutral-800/90 px-6 text-center">
                         <CircleHelp size={18} aria-hidden="true" className="text-[#CDB271]/60" />
-                        <p className="font-sans text-xs leading-relaxed text-neutral-500">
+                        <p className="font-sans text-xs leading-relaxed text-neutral-400">
                           Hover over a topic to reveal its guidance.
                         </p>
                       </div>

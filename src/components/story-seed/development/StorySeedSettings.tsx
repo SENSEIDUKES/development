@@ -88,7 +88,7 @@ const FateSurvivalSetting = ({ settings, onChange }: FateSurvivalSettingProps) =
     <div className="space-y-2">
       <div>
         <p className="font-sc text-[11px] font-bold uppercase tracking-[0.16em] text-signal">{title}</p>
-        <p className="mt-1 font-sans text-[11px] leading-relaxed text-neutral-500">{subtitle}</p>
+        <p className="mt-1 font-sans text-[11px] leading-relaxed text-neutral-400">{subtitle}</p>
       </div>
       <div className="grid gap-2" role="radiogroup" aria-label={title}>
         {options.map((option, index) => {
@@ -108,7 +108,7 @@ const FateSurvivalSetting = ({ settings, onChange }: FateSurvivalSettingProps) =
               }`}
             >
               <span className="block font-sc text-[11px] font-bold uppercase tracking-[0.12em]">{option.label}</span>
-              <span className="mt-1 block font-sans text-[11px] leading-relaxed text-neutral-500">{option.description}</span>
+              <span className="mt-1 block font-sans text-[11px] leading-relaxed text-neutral-400">{option.description}</span>
             </button>
           );
         })}
@@ -121,7 +121,7 @@ const FateSurvivalSetting = ({ settings, onChange }: FateSurvivalSettingProps) =
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <span className="min-w-0">
           <span className="block font-sc text-xs font-semibold tracking-wide text-signal">Fate Survival</span>
-          <span className="mt-1 block font-sans text-[11px] leading-relaxed text-neutral-500">
+          <span className="mt-1 block font-sans text-[11px] leading-relaxed text-neutral-400">
             Turn the story into a living timeline where the world pushes back.
           </span>
         </span>
@@ -164,7 +164,7 @@ const MatureAudienceSetting = ({ checked, onChange }: MatureAudienceSettingProps
       <span className="block font-sc text-xs font-semibold tracking-wide text-signal">
         Intended for mature audiences
       </span>
-      <span className="mt-1 block font-sans text-[11px] leading-relaxed text-neutral-500">
+      <span className="mt-1 block font-sans text-[11px] leading-relaxed text-neutral-400">
         Story metadata for mature themes. This does not request explicit content.
       </span>
     </span>

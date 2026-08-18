@@ -15,6 +15,7 @@ import {
 } from '../seedState';
 import { LibraryTextArea, LibraryTextBox } from '../../../library';
 import { WorkspaceShell } from './WorkspaceShell';
+import { handleRadioGroupKeyDown } from '../radioGroupKeyboard';
 
 interface ArcWorkspaceProps {
   seed: StorySeedInput;
@@ -138,8 +139,10 @@ export const ArcWorkspace = ({ seed, updateSeed }: ArcWorkspaceProps) => {
                         type="button"
                         role="radio"
                         aria-checked={isSelected}
+                        tabIndex={isSelected ? 0 : -1}
                         title={setting.levelCopy[option.value]}
                         onClick={() => updateSeed(patchPlotAndTropeSettings({ [setting.key]: option.value }))}
+                        onKeyDown={handleRadioGroupKeyDown}
                         className={`min-h-11 cursor-pointer rounded-lg border px-1.5 font-sc text-[10px] font-bold uppercase tracking-[0.08em] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CDB271]/70 ${
                           isSelected
                             ? 'border-[#CDB271]/55 bg-[#CDB271]/10 text-[#F3EDE0] shadow-[0_0_12px_rgba(205,178,113,0.1)]'

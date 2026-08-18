@@ -15,6 +15,7 @@ import { generateUUID } from '../shared/id';
 import {
   AGENTS,
   LOCAL_ONLY_MODE,
+  type MockAppStore,
   selectIsGenerating,
   useAppStore,
 } from '../shared/stubs';
@@ -128,21 +129,37 @@ const STORY_SEED_WORKSPACES: Record<SeedSectionId, ComponentType<StorySeedWorksp
   'power-system': PowerSystemWorkspace,
 };
 
+interface CreationModalStoreSlice {
+  activeAgentId: MockAppStore['activeAgentId'];
+  currentUser: MockAppStore['currentUser'];
+  equippedRelicTitle: string | null;
+  libraryStories: MockAppStore['stories'];
+}
+
+const selectCreationModalStore = (state: MockAppStore): CreationModalStoreSlice => {
+  const storyMaker = state.routingConfig.storyMaker;
+  return {
+    activeAgentId: state.activeAgentId,
+    currentUser: state.currentUser,
+    equippedRelicTitle: typeof storyMaker?.equippedRelicTitle === 'string'
+      ? storyMaker.equippedRelicTitle
+      : null,
+    libraryStories: state.stories,
+  };
+};
+
 export default function CreationModal({ onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error }: CreationModalProps) {
   const storeIsGenerating = useAppStore(selectIsGenerating);
-  const activeAgentId = useAppStore(state => state.activeAgentId);
-  const currentUser = useAppStore(state => state.currentUser);
+  const {
+    activeAgentId,
+    currentUser,
+    equippedRelicTitle,
+    libraryStories,
+  } = useAppStore(selectCreationModalStore);
   const seedOwnerId = currentUser?.uid
     || (LOCAL_ONLY_MODE ? LOCAL_WORKSHOP_STORY_SEED_OWNER_ID : null);
-  const equippedRelicTitle = useAppStore(state => {
-    const storyMaker = state.routingConfig.storyMaker;
-    return typeof storyMaker?.equippedRelicTitle === 'string'
-      ? storyMaker.equippedRelicTitle
-      : null;
-  });
   // Stories manifested from a banked seed drive the Story Bank's "Novel
   // Manifested" card state (stories link back to their seed by `sourceSeedId`).
-  const libraryStories = useAppStore(state => state.stories);
   const manifestedSeedIds = useMemo(() => new Set(
     libraryStories
       .map(story => story.sourceSeedId)
@@ -772,8 +789,7 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
       )}
 
       {/* Mobile section drawer — the Library navigation shell focused purely
-          on Story/World section navigation (no profile header; profile
-          access lives in the bottom navigation's Profile tab). */}
+          on Story/World section navigation, with no unfinished destination. */}
       <StorySeedMobileNavigation
         seed={seed}
         updateSeed={updateSeed}

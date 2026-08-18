@@ -31,6 +31,14 @@ interface LibraryHelpMenuProps {
 
 const PLAYABLE_AUDIO_PROTOCOLS = new Set(['http:', 'https:', 'blob:']);
 const HELP_TRACK_PREFIX = 'story-seed-help:';
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
 
 /** Return a trimmed, browser-playable source or `null` for text-only topics. */
 const getPlayableAudioUrl = (audioUrl?: string): string | null => {
@@ -73,6 +81,8 @@ export const LibraryHelpMenu = ({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const activeIdRef = useRef<string | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const helpTriggerRef = useRef<HTMLElement | null>(null);
   const playback = useDevAudioPlayback();
   const playbackRef = useRef(playback);
   playbackRef.current = playback;
@@ -138,6 +148,8 @@ export const LibraryHelpMenu = ({
     clearActiveItem();
     onClose();
   }, [clearActiveItem, onClose]);
+  const handleCloseRef = useRef(handleClose);
+  handleCloseRef.current = handleClose;
 
   // Closing the menu silences playback and resets the revealed topic.
   useEffect(() => {
@@ -153,12 +165,43 @@ export const LibraryHelpMenu = ({
     }
   }, []);
 
-  // Same shell behavior as the other Story Seed sheets: Escape closes and
-  // body scroll locks while the menu is open.
+  // Same shell behavior as the other Story Seed sheets: focus stays in the
+  // modal, Escape returns to its trigger, and the body remains scroll-locked.
   useEffect(() => {
     if (!open) return;
+    const dialog = dialogRef.current;
+    helpTriggerRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    const focusableElements = () => Array.from(
+      dialog?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? [],
+    ).filter(element => !element.hasAttribute('hidden'));
+
+    (focusableElements()[0] ?? dialog)?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') handleClose();
+      if (event.key === 'Escape') {
+        handleCloseRef.current();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const elements = focusableElements();
+      if (elements.length === 0) {
+        event.preventDefault();
+        dialog?.focus();
+        return;
+      }
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      if (!dialog?.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener('keydown', onKeyDown);
     const previous = document.body.style.overflow;
@@ -166,8 +209,9 @@ export const LibraryHelpMenu = ({
     return () => {
       document.removeEventListener('keydown', onKeyDown);
       document.body.style.overflow = previous;
+      if (helpTriggerRef.current?.isConnected) helpTriggerRef.current.focus();
     };
-  }, [handleClose, open]);
+  }, [open]);
 
   const visibleItems = useMemo(
     () => getLibraryHelpItems(topics, language, page, query),
@@ -264,6 +308,8 @@ export const LibraryHelpMenu = ({
             role="dialog"
             aria-modal="true"
             aria-label={title}
+            ref={dialogRef}
+            tabIndex={-1}
             className="relative w-full max-w-xl lg:max-w-3xl"
           >
             <LibraryPanel

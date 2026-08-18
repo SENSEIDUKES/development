@@ -257,7 +257,7 @@ export const BlueprintReview = ({
                 onClick={onStartStory}
                 loading={isGenerating}
                 loadingIndicator={activeAgentId === 'versa' ? (
-                  <img src={AGENTS.VERSA.logoUrl} className="size-5 animate-pulse object-contain" alt="VERSA" />
+                  <img src={AGENTS.VERSA.logoUrl} className="size-5 animate-pulse object-contain" alt="" aria-hidden="true" />
                 ) : undefined}
                 iconRight={!isGenerating ? <ArrowRight size={16} /> : undefined}
               >
@@ -278,10 +278,12 @@ export const BlueprintReview = ({
                 >
                   {copied ? 'Copied Blueprint' : 'Copy Blueprint'}
                 </LibraryButton>
+                <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+                  {copied ? 'Blueprint copied.' : copyError ? 'Could not copy Blueprint.' : ''}
+                </span>
                 {copyError && (
                   <p
                     id="blueprint-copy-error"
-                    role="alert"
                     className="max-w-52 text-center font-sans text-[11px] leading-snug text-red-300"
                   >
                     {copyError}

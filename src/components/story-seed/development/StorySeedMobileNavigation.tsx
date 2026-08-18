@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Bookmark, Check, CircleHelp, CircleUserRound, List, Settings, Sprout, X } from 'lucide-react';
+import { Bookmark, Check, CircleHelp, List, Settings, Sprout, X } from 'lucide-react';
 import type { StorySeedInput } from '../shared/storySeedSchema';
 import {
   LibraryBottomNavigation,
@@ -45,13 +45,13 @@ const StorySeedMobileNavigationComponent = ({
   onSaveDraft,
 }: StorySeedMobileNavigationProps) => {
   const [selectorOpen, setSelectorOpen] = useState(false);
-  const [mobileSheet, setMobileSheet] = useState<'settings' | 'profile' | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const mobileSheetRef = useRef<HTMLDivElement>(null);
   const mobileSheetTriggerRef = useRef<HTMLElement | null>(null);
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    if (!mobileSheet) return;
+    if (!settingsOpen) return;
     const sheet = mobileSheetRef.current;
     const trigger = mobileSheetTriggerRef.current;
     const focusableSelector = [
@@ -69,7 +69,7 @@ const StorySeedMobileNavigationComponent = ({
     (focusableElements()[0] ?? sheet)?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setMobileSheet(null);
+        setSettingsOpen(false);
         return;
       }
       if (event.key !== 'Tab') return;
@@ -97,19 +97,19 @@ const StorySeedMobileNavigationComponent = ({
       document.body.style.overflow = previous;
       trigger?.focus();
     };
-  }, [mobileSheet]);
+  }, [settingsOpen]);
 
-  const toggleMobileSheet = useCallback((sheet: 'settings' | 'profile') => {
+  const toggleSettings = useCallback(() => {
     setSelectorOpen(false);
-    if (mobileSheet === sheet) {
-      setMobileSheet(null);
+    if (settingsOpen) {
+      setSettingsOpen(false);
       return;
     }
     mobileSheetTriggerRef.current = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
-    setMobileSheet(sheet);
-  }, [mobileSheet]);
+    setSettingsOpen(true);
+  }, [settingsOpen]);
 
   const closeSelector = useCallback(() => setSelectorOpen(false), []);
   const selectDrawerSection = useCallback((id: SeedSectionId) => {
@@ -131,16 +131,9 @@ const StorySeedMobileNavigationComponent = ({
       icon: <List size={20} />,
       active: selectorOpen,
       onSelect: () => {
-        setMobileSheet(null);
+        setSettingsOpen(false);
         setSelectorOpen(true);
       },
-    },
-    {
-      id: 'profile',
-      label: 'Profile',
-      icon: <CircleUserRound size={20} />,
-      active: mobileSheet === 'profile',
-      onSelect: () => toggleMobileSheet('profile'),
     },
     {
       id: 'story-bank',
@@ -148,7 +141,7 @@ const StorySeedMobileNavigationComponent = ({
       icon: <Sprout size={20} />,
       active: showStoryBank,
       onSelect: () => {
-        setMobileSheet(null);
+        setSettingsOpen(false);
         onToggleStoryBank();
       },
     },
@@ -158,7 +151,7 @@ const StorySeedMobileNavigationComponent = ({
       icon: <CircleHelp size={20} />,
       active: helpOpen,
       onSelect: () => {
-        setMobileSheet(null);
+        setSettingsOpen(false);
         onOpenHelp();
       },
     },
@@ -166,10 +159,10 @@ const StorySeedMobileNavigationComponent = ({
       id: 'settings',
       label: 'Settings',
       icon: <Settings size={20} />,
-      active: mobileSheet === 'settings',
-      onSelect: () => toggleMobileSheet('settings'),
+      active: settingsOpen,
+      onSelect: toggleSettings,
     },
-  ], [helpOpen, mobileSheet, onOpenHelp, onToggleStoryBank, selectorOpen, showStoryBank, toggleMobileSheet]);
+  ], [helpOpen, onOpenHelp, onToggleStoryBank, selectorOpen, settingsOpen, showStoryBank, toggleSettings]);
 
   return (
     <>
@@ -185,19 +178,19 @@ const StorySeedMobileNavigationComponent = ({
       <LibraryBottomNavigation
         aria-label="Story Seed navigation"
         items={bottomNavItems}
-        showLabels={false}
-        className="lg:hidden"
+        showLabels
+        className="lg:hidden [&_button]:px-1 [&_button]:text-[9px] [&_button]:tracking-normal [&_button>span:last-child]:max-w-none [&_button>span:last-child]:overflow-visible"
       />
 
       <AnimatePresence>
-        {mobileSheet && (
+        {settingsOpen && (
           <div className="fixed inset-0 z-[240] lg:hidden">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: reduceMotion ? 0 : 0.2 }}
-              onClick={() => setMobileSheet(null)}
+              onClick={() => setSettingsOpen(false)}
               className="story-seed-overlay-scrim absolute inset-0 bg-black/70 backdrop-blur-sm"
             />
             <motion.div
@@ -207,7 +200,7 @@ const StorySeedMobileNavigationComponent = ({
               transition={reduceMotion ? { duration: 0 } : { duration: 0.25, ease: 'easeOut' }}
               role="dialog"
               aria-modal="true"
-              aria-label={mobileSheet === 'settings' ? 'Story Seed settings' : 'Cultivator profile (placeholder)'}
+              aria-label="Story Seed settings"
               ref={mobileSheetRef}
               tabIndex={-1}
               className="absolute inset-x-0 bottom-0"
@@ -218,50 +211,31 @@ const StorySeedMobileNavigationComponent = ({
               >
                 <div className="flex items-center justify-between gap-3 px-4 pt-3">
                   <p className="font-sc text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-500">
-                    {mobileSheet === 'settings' ? 'Settings' : 'Profile'}
+                    Settings
                   </p>
                   <LibraryButton
                     variant="ghost"
                     size="icon"
-                    onClick={() => setMobileSheet(null)}
-                    aria-label={mobileSheet === 'settings' ? 'Close settings' : 'Close profile'}
+                    onClick={() => setSettingsOpen(false)}
+                    aria-label="Close settings"
                     icon={X}
                   />
                 </div>
 
-                {mobileSheet === 'settings' ? (
-                  <div className="mt-2 space-y-3 px-4">
-                    <StorySeedSettings seed={seed} updateSeed={updateSeed} />
-                    <div className="space-y-2">
-                      <LibraryButton
-                        fullWidth
-                        onClick={onSaveDraft}
-                        disabled={isGenerating}
-                        title="Save this Story Seed draft"
-                        icon={savedFeedback ? Check : Bookmark}
-                      >
-                        {savedFeedback ? 'Saved' : 'Save Draft'}
-                      </LibraryButton>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-2 flex items-center gap-3 px-4 pb-2">
-                    <span
-                      aria-hidden="true"
-                      className="grid size-10 shrink-0 place-items-center rounded-full border border-gold-accent/40 bg-gold-accent/10 font-sc text-sm font-bold text-gold-accent"
+                <div className="mt-2 space-y-3 px-4">
+                  <StorySeedSettings seed={seed} updateSeed={updateSeed} />
+                  <div className="space-y-2">
+                    <LibraryButton
+                      fullWidth
+                      onClick={onSaveDraft}
+                      disabled={isGenerating}
+                      title="Save this Story Seed draft"
+                      icon={savedFeedback ? Check : Bookmark}
                     >
-                      S
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate font-sc text-sm font-bold uppercase tracking-widest text-signal">
-                        SENSEI
-                      </span>
-                      <span className="block font-sans text-[11px] leading-relaxed text-neutral-500">
-                        Cultivator Profile is a placeholder — it arrives with a future Library update.
-                      </span>
-                    </span>
+                      {savedFeedback ? 'Saved' : 'Save Draft'}
+                    </LibraryButton>
                   </div>
-                )}
+                </div>
               </LibraryPanel>
             </motion.div>
           </div>

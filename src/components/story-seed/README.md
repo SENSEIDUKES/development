@@ -4,7 +4,7 @@
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **Replica created:** 2026-08-01
-- **Last Workshop update:** 2026-08-17
+- **Last Workshop update:** 2026-08-18
 - **Last source comparison:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and ready for production transfer
 
@@ -211,6 +211,11 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-08-18:** Hardened the finalized Story Seed shell for keyboard and
+  mobile use. Desktop Settings now contains focus and restores it to its
+  trigger, Premise preserves native Tab navigation, and the mobile dock shows
+  four labeled, functional destinations without the unwired Profile placeholder.
+  The locked Reference replica and Story Seed data/generation contracts remain unchanged.
 - **2026-08-17:** Moved Story Seed's Workshop-only page shortcuts, deterministic scenario states, and Development access token into the shared responsive `FeatureWorkspace` Workshop Controls menu. The menu still drives the real Origin, Blueprint, Story Bank, and auth surfaces through their existing controls; product navigation and generation contracts were not changed.
 - **2026-08-10:** Replaced the Development preview's mock World Blueprint
   callback with protected server-side Gemini generation based on the complete

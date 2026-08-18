@@ -87,6 +87,8 @@ const useLatestCallback = <Args extends unknown[], Result>(
 };
 
 const loadStorySeedSecondary = () => import('./StorySeedSecondary');
+// Keep the intent handler module-scoped so StorySeedHeader's memo comparison
+// can skip unrelated intake renders (including each premise keystroke).
 const preloadStorySeedSecondary = () => {
   void loadStorySeedSecondary().catch(() => undefined);
 };

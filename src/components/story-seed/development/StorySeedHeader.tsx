@@ -10,6 +10,14 @@ import type { SeedUpdate } from './seedState';
 import { haveSameStorySeedSettings, StorySeedSettings } from './StorySeedSettings';
 
 const CELESTIAL_LIBRARY_EMBLEM_URL = '/favicon.jpg';
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
 
 interface StorySeedHeaderProps {
   seed: StorySeedInput;
@@ -41,11 +49,42 @@ const StorySeedHeaderComponent = ({
 }: StorySeedHeaderProps) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
+  const settingsDialogRef = useRef<HTMLDivElement>(null);
+  const settingsTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!settingsOpen) return;
+    const dialog = settingsDialogRef.current;
+    const trigger = settingsTriggerRef.current;
+    const focusableElements = () => Array.from(
+      dialog?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? [],
+    ).filter(element => !element.hasAttribute('hidden'));
+
+    (focusableElements()[0] ?? dialog)?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setSettingsOpen(false);
+      if (event.key === 'Escape') {
+        setSettingsOpen(false);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const elements = focusableElements();
+      if (elements.length === 0) {
+        event.preventDefault();
+        dialog?.focus();
+        return;
+      }
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      if (!dialog?.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     const onPointerDown = (event: PointerEvent) => {
       if (!settingsRef.current?.contains(event.target as Node)) setSettingsOpen(false);
@@ -55,6 +94,7 @@ const StorySeedHeaderComponent = ({
     return () => {
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('pointerdown', onPointerDown);
+      trigger?.focus();
     };
   }, [settingsOpen]);
 
@@ -85,7 +125,14 @@ const StorySeedHeaderComponent = ({
             <LibraryButton
               variant="ghost"
               size="sm"
-              onClick={() => setSettingsOpen(open => !open)}
+              onClick={event => {
+                if (settingsOpen) {
+                  setSettingsOpen(false);
+                  return;
+                }
+                settingsTriggerRef.current = event.currentTarget;
+                setSettingsOpen(true);
+              }}
               icon={Settings}
               aria-expanded={settingsOpen}
               aria-haspopup="dialog"
@@ -96,7 +143,10 @@ const StorySeedHeaderComponent = ({
               <div
                 className="absolute right-0 top-[calc(100%+0.5rem)] w-[22rem] max-w-[calc(100vw-2rem)]"
                 role="dialog"
+                aria-modal="true"
                 aria-label="Story Seed settings"
+                ref={settingsDialogRef}
+                tabIndex={-1}
               >
                 <LibraryPanel padding="sm">
                   <StorySeedSettings seed={seed} updateSeed={updateSeed} />

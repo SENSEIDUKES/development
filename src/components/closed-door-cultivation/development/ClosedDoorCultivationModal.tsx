@@ -361,6 +361,7 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
   const cloudGradId = `cdc-cloud-${useId()}`;
   const cloudClipId = `cdc-cloudclip-${useId()}`;
   const shimmerGradId = `cdc-shimmer-${useId()}`;
+  const titleId = `cdc-title-${useId()}`;
   const daysId = `cdc-days-${useId()}`;
   const quoteId = `cdc-quote-${useId()}`;
   const reduceMotion = useReducedMotion();
@@ -582,7 +583,7 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
                 transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
               />
               <CultivatorSvg className="w-8 h-7 sm:w-9 sm:h-8" style={{ filter: `drop-shadow(0 0 4px rgba(${PORTAL_RGB},0.5))` }} />
-              <span className="absolute -top-1.5 -right-1.5 px-1 rounded-full bg-portal/25 border border-portal/50 text-[8px] sm:text-[9px] font-bold text-cyan-100">
+              <span className="absolute -top-1.5 -right-1.5 px-1.5 rounded-full bg-portal/25 border border-portal/50 text-[10px] sm:text-xs font-bold text-cyan-100">
                 +{qiEarned}
               </span>
             </motion.button>
@@ -592,7 +593,7 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
               key="cdc-vignette"
               role="dialog"
               aria-modal="true"
-              aria-labelledby="idle-cultivation-title"
+              aria-labelledby={titleId}
               aria-describedby={`${daysId} ${quoteId}`}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -741,9 +742,20 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
                 </button>
 
                 <span
-                  id="idle-cultivation-title"
+                  id={titleId}
                   className="relative mt-1 text-[10px] sm:text-[11px] lg:text-xs font-sc uppercase tracking-[0.35em] text-portal/60"
+                  style={{ textShadow: '0 1px 4px rgba(2,5,12,0.95), 0 0 10px rgba(2,5,12,0.85)' }}
                 >
+                  {/* local dim aura: the main ink aura is capped in rem, so on tall
+                      viewports this label would otherwise sit on raw library cards */}
+                  <span
+                    aria-hidden="true"
+                    className="absolute -inset-x-10 -inset-y-3 -z-10 rounded-full pointer-events-none"
+                    style={{
+                      background: 'radial-gradient(ellipse, rgba(2,5,12,0.88) 0%, rgba(2,5,12,0.55) 55%, transparent 78%)',
+                      filter: 'blur(6px)',
+                    }}
+                  />
                   Closed-Door Cultivation
                 </span>
               </div>

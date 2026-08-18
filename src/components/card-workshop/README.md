@@ -22,6 +22,7 @@ Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studi
 
 ## Workshop history
 
+- **2026-08-18:** Replaced the abstract SVG placeholder artwork with the real published Library test images (`public/card-workshop/test-images/` — Ye Chen, Lyra Meadowlight, Elder Kaelen, Sergeant Anya Petrova portraits, and the Lotus Lake Pavilion location), so card work is judged against accurate Codex media. The retired `human-portrait`, `creature-portrait`, `artifact-seal`, `rain-court`, and `chapter-memory` SVGs were removed; the reveal backdrop SVG remains.
 - **2026-08-18:** Both Codex Card experiences moved to the approved Library spectral-glass treatment in Development: the inline `CodexCard` reveal and the highlighted-term `CodexHovercard` (now the `reader-codex/development` fork, imported by the Contextual Reader) wear translucent glass with an entity ambient accent, a subtle spectral mote field, and the circular Manifest seal (orbit rings, star, label, awakening caption) instead of the former rectangular Manifest button. Card content, routing, overrides, and the manifest/summoning lifecycle are unchanged.
 - **2026-08-17:** Adopted the shared responsive `FeatureWorkspace` Workshop Controls shell. This preview intentionally supplies no external options because Card Type Tabs and viewport modes are real navigation inside the component under test.
 - **2026-08-15:** Replaced the standalone Inspection Mode with Contextual View. The selected Codex Card, World Card, or System Panel now enters the real ReaderViewport structured-block path between fixed prose and a highlighted entity mention; technical routing, capability, and override controls live beneath the preview in a collapsible Technical Details section.
@@ -49,7 +50,7 @@ Card Type Tabs exposes every preset in a horizontally scrollable tab list and mo
 
 ## Mock and production boundaries
 
-- Fixtures are static local objects and `/public/card-workshop` SVG assets.
+- Fixtures are static local objects and the real Library test images under `/public/card-workshop/test-images` (plus the `reveal-backdrop.svg` backdrop).
 - The Card Workshop makes no model, generation, API, database, story-write, persistence, or production-media calls.
 - Contextual View preassigns its fixed local reveal backdrop, so ReaderViewport never enters its normal backdrop-assignment update path.
 - The Development sound adapter routes World Card taps through the shared audio session. The local fixture resolves to one published Library Help sample because this preview tests the existing audio lifecycle, not catalog selection.

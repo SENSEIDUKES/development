@@ -20,8 +20,8 @@ import type {
 import type { CardPreset, CardWorkshopOverrides } from '../shared/types';
 
 const LOCAL_REVEAL_BACKDROP = '/card-workshop/reveal-backdrop.svg';
-const LOCAL_HUMAN_PORTRAIT = '/card-workshop/human-portrait.svg';
-const LOCAL_CREATURE_PORTRAIT = '/card-workshop/creature-portrait.svg';
+const LOCAL_HUMAN_PORTRAIT = '/card-workshop/test-images/ye_chen_portrait.png';
+const LOCAL_CREATURE_PORTRAIT = '/card-workshop/test-images/lyra_meadowlight_portrait.png';
 
 const CONTEXT_CARD_BLOCK_ID = 'card-workshop-context-card';
 const CONTEXT_CHAPTER_NUMBER = 1;

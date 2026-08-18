@@ -244,7 +244,7 @@ describe('CardWorkshopView', () => {
     await selectByLabel('Image state', 'existing');
     await selectByLabel('Portrait kind', 'human');
     expect(container.querySelector('img[alt="Lei"]')?.getAttribute('src'))
-      .toBe('/card-workshop/human-portrait.svg');
+      .toBe('/card-workshop/test-images/ye_chen_portrait.png');
 
     await selectByLabel('Card preset', 'preset-creature-species');
     expect(container.textContent).toContain('Tap to Listen');

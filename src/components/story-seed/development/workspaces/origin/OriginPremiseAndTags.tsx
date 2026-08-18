@@ -185,6 +185,7 @@ export const OriginPremiseAndTags = ({
   const [dismissedGhostKey, setDismissedGhostKey] = useState<string | null>(null);
   const [tagLimitError, setTagLimitError] = useState<string | null>(null);
   const [exampleIndex, setExampleIndex] = useState(0);
+  const [cycleRotation, setCycleRotation] = useState(0);
   const premiseBank = selectedStyle
     ? CURATED_PREMISE_EXAMPLES[selectedStyle]
     : ALL_CURATED_PREMISE_EXAMPLES;
@@ -202,6 +203,11 @@ export const OriginPremiseAndTags = ({
 
   useEffect(() => setExampleIndex(0), [selectedStyle]);
   useEffect(() => setDismissedGhostKey(null), [storyTags]);
+
+  const handleCyclePremise = useCallback(() => {
+    setExampleIndex(index => (index + 1) % premiseBank.length);
+    setCycleRotation(rotation => rotation + 360);
+  }, [premiseBank.length]);
 
   const addTag = useCallback((tag: string) => {
     if (storyTags.some(existing => existing.toLowerCase() === tag.toLowerCase())) return false;
@@ -233,12 +239,16 @@ export const OriginPremiseAndTags = ({
         rightElement={premise.trim() ? undefined : (
           <button
             type="button"
-            onClick={() => setExampleIndex(index => (index + 1) % premiseBank.length)}
+            onClick={handleCyclePremise}
             aria-label="Show another example premise"
-            title="Show another example premise"
-            className="story-seed-touch-target inline-flex h-8 w-8 items-center justify-center rounded-full border border-portal/35 bg-portal/10 text-portal transition-all hover:border-portal hover:bg-portal/15 hover:shadow-[0_0_12px_rgba(4,172,255,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal/70 active:scale-90"
+            className="story-seed-touch-target inline-flex h-10 w-10 items-center justify-center rounded-full border border-portal/35 bg-portal/10 text-portal transition-all hover:border-portal hover:bg-portal/15 hover:shadow-[0_0_12px_rgba(4,172,255,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal/70 active:scale-95"
           >
-            <LibraryDragonCycleIcon size={17} />
+            <span
+              className="inline-flex items-center justify-center transition-transform duration-500 ease-out motion-reduce:transition-none motion-reduce:transform-none"
+              style={{ transform: `rotate(${cycleRotation}deg)` }}
+            >
+              <LibraryDragonCycleIcon size={18} />
+            </span>
           </button>
         )}
       />

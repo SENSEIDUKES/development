@@ -43,8 +43,14 @@ Reusable visual names use the `library-*` namespace:
 `library-title-presence`, and `library-subtitle-shimmer`. There are no legacy
 `seed-*` aliases.
 
-### Shared-component history
-
+- **2026-08-18:** Enhanced `LibraryDragonCycleIcon` with full accessibility
+  support (`title`, `titleId`, `decorative`, `role`, and `aria-*` attributes),
+  defensive `size` normalization, `React.memo` wrapping, and dedicated contract
+  tests (`LibraryDragonCycleIcon.test.tsx`). Refined the Story Seed premise
+  cycle button with a comfortable 40px visual affordance (`h-10 w-10`),
+  smooth rotational feedback on cycle with reduced-motion suppression,
+  restrained press feedback (`active:scale-95`), and cleaned up redundant
+  title tooltips.
 - **2026-08-15:** Ported the finalized `SEICard` from the SEIHouse UI repo
   (source commit `53fb8934e7b126807194654c9af10a504b4db6e8` on UI `main`) and added
   `LibraryCard`, the official Celestial Library card primitive: the full

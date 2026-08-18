@@ -89,13 +89,18 @@ describe('Development CodexHovercard spectral glass', () => {
     );
     expect(button).toBeTruthy();
     expect(button!.className).toContain('rounded-full');
-    expect(document.body.textContent).toContain('Awaken Aetherial Portrait');
+    expect(document.body.textContent).toContain('Awaken Portrait');
+
+    // Until a portrait exists the glass carries the entity's Manifest backdrop.
+    const backdrop = document.body.querySelector<HTMLImageElement>('img[alt="Backdrop"]');
+    expect(backdrop?.getAttribute('src')).toContain('/manifest-backdrops/');
 
     await act(async () => {
       button!.click();
     });
 
     expect(document.body.querySelector('img[alt="Oath Seal"]')).toBeTruthy();
+    expect(document.body.querySelector('img[alt="Backdrop"]')).toBeFalsy();
   });
 
   it('glows with the entity ambient accent and carries the mote field', () => {

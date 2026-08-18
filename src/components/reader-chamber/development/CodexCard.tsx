@@ -14,29 +14,19 @@ import { LibraryDragonCycleIcon } from '../../library/LibraryDragonCycleIcon';
 import { isManifestationEligible } from '../shared/manifestationEligibility';
 import { CodexCardAmbience } from '../../reader-codex/development/CodexCardAmbience';
 import { resolveCodexEntityAccent } from '../../reader-codex/development/codexEntityAccent';
+import { MANIFEST_BACKDROPS, getManifestBackdrop } from '../../reader-codex/development/codexManifestBackdrop';
 import './CodexCardInscription.css';
 import './CodexCardSeal.css';
 
-export const FALLBACK_BACKDROPS = [
-  "https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/images/LIBRARY%20BACKDROPS/LIBRARY_THUNDER.PNG",
-  "https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/images/LIBRARY%20BACKDROPS/LIBRARY_RAIN.PNG",
-  "https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/images/LIBRARY%20BACKDROPS/LIBRARY_MOUNTAINS.PNG",
-  "https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/images/LIBRARY%20BACKDROPS/LIBRARY_FOREST.PNG",
-  "https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/images/LIBRARY%20BACKDROPS/LIBRARY_DAYTIME.PNG",
-];
-
 /**
- * Picks a stable Library backdrop for an entity ID via a simple string hash,
- * so a card without an assigned backdrop always renders the same one.
+ * The Manifest backdrop pool and its stable per-entity picker live in
+ * `reader-codex/development/codexManifestBackdrop.ts` so the highlighted-term
+ * hovercard renders the same real "IMMORTAL LAND" art without a reverse
+ * import. The established CodexCard export names are preserved for
+ * `ReaderViewport` and the Workshop previews.
  */
-export function getFallbackBackdrop(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % FALLBACK_BACKDROPS.length;
-  return FALLBACK_BACKDROPS[index];
-}
+export const FALLBACK_BACKDROPS = MANIFEST_BACKDROPS;
+export const getFallbackBackdrop = getManifestBackdrop;
 
 export interface CodexCardTerm {
   entry: {

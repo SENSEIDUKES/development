@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { getReaderChamberSurfaceClass } from '../../reader-chamber/development/ReaderChamber';
 import { ReaderViewport } from '../../reader-chamber/development/ReaderViewport';
 import type { WorldCardAudioAdapter } from '../../reader-chamber/development/WorldCard';
-import { CodexHovercard } from '../../reader-codex/shared/CodexHovercard';
+import { CodexHovercard } from '../../reader-codex/development/CodexHovercard';
 import {
   createCodexHighlighter,
   splitByCodexTerms,
@@ -71,11 +71,13 @@ export interface CardWorkshopContextualReaderProps {
   audioAdapter: WorldCardAudioAdapter;
 }
 
+/** Whether the preset reveals a human or non-human portrait entity. */
 function isPortraitPreset(preset: CardPreset) {
   return preset.id === 'preset-human-character'
     || preset.id === 'preset-nonhuman-individual';
 }
 
+/** Maps the preset's reveal display type onto a Codex term type. */
 function getCodexTermType(preset: CardPreset): CodexTermType {
   const revealType = preset.codexReveal?.type.toLowerCase() ?? '';
   if (revealType.includes('artifact')) return 'artifact';
@@ -83,6 +85,11 @@ function getCodexTermType(preset: CardPreset): CodexTermType {
   return 'character';
 }
 
+/**
+ * Builds the Codex term the Contextual Reader highlights, applying the
+ * Workshop overrides for portrait kind and image state. Returns null when the
+ * preset has no Codex reveal or the override marks the entry missing.
+ */
 function createContextualCodexTerm(
   preset: CardPreset,
   overrides: CardWorkshopOverrides,
@@ -116,6 +123,10 @@ function createContextualCodexTerm(
   };
 }
 
+/**
+ * Builds the World Card event for the fixture, honoring the image-state and
+ * Codex-entry overrides. Undefined when the preset has no World Card.
+ */
 function createContextualWorldCard(
   preset: CardPreset,
   overrides: CardWorkshopOverrides,
@@ -130,6 +141,10 @@ function createContextualWorldCard(
   };
 }
 
+/**
+ * Builds the System event for the fixture, honoring the selected system-kind
+ * and Fate-outcome overrides. Undefined when the preset has no System event.
+ */
 function createContextualSystemEvent(
   preset: CardPreset,
   overrides: CardWorkshopOverrides,
@@ -147,6 +162,7 @@ function createContextualSystemEvent(
   };
 }
 
+/** The display name of the entity the fixture spotlights. */
 function selectedEntityName(preset: CardPreset, codexTerm: CodexTerm | null) {
   return codexTerm?.term
     ?? preset.worldCard?.entityName
@@ -244,6 +260,11 @@ export function createCardWorkshopContextualFixture(
   };
 }
 
+/**
+ * Card Workshop Contextual View: renders the selected card preset inside the
+ * real Development ReaderViewport using the fixed local fixture, so Codex
+ * Cards, World Cards, and System Panels can be inspected in their true host.
+ */
 export function CardWorkshopContextualReader({
   preset,
   overrides,

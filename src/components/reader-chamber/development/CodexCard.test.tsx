@@ -73,6 +73,10 @@ describe('Reader card routing', () => {
     vi.restoreAllMocks();
   });
 
+  /**
+   * Mounts the Development ReaderViewport around one story block with inert
+   * handlers, so a Codex reveal card can be inspected in its real host.
+   */
   const renderReader = (
     block: StoryBlock,
     codexTerms: any[] = [],
@@ -139,6 +143,7 @@ describe('Reader card routing', () => {
     });
   };
 
+  /** Builds a paragraph block that reveals the named entity in the Reader. */
   const revealBlock = (name: string, type: 'character' | 'artifact' | 'location' | 'creature' | 'faction'): StoryBlock => ({
     id: `block-${type}-${name}`,
     type: 'paragraph',
@@ -146,6 +151,7 @@ describe('Reader card routing', () => {
     metadata: { entities: [{ name, type, mention: 'reveal' }] },
   });
 
+  /** Builds a canonical Codex term fixture with a deterministic entry ID. */
   const codexTerm = (name: string, type: 'character' | 'artifact' | 'location' | 'faction', extra: Record<string, unknown> = {}) => ({
     term: name,
     type,
@@ -372,8 +378,9 @@ describe('Reader card routing', () => {
 
     expect(container.querySelector('[data-slot="card-actions"]')?.className).toContain('!contents');
     expect(button).toBeTruthy();
+    // Native button activation: a real click (what Enter/Space produce).
     act(() => {
-      button?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      button?.click();
     });
     expect(onManifestReveal).toHaveBeenCalledWith(entry, 'Artifact');
 
@@ -388,8 +395,62 @@ describe('Reader card routing', () => {
     });
 
     expect(container.textContent).toContain('Summoning...');
+    // The pending state is announced through the swapped aria-label.
+    expect(container.querySelector('button[aria-label="Manifest portrait for Oath Seal"]')).toBeFalsy();
     expect(container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Manifest portrait for Oath Seal"]',
+      'button[aria-label="Summoning portrait for Oath Seal"]',
     )?.disabled).toBe(true);
+  });
+
+  it('wears the spectral glass with the entity ambient accent, mote field, and circular seal', () => {
+    act(() => {
+      root.render(
+        <CodexCard
+          revealTerm={{
+            type: 'Artifact',
+            entry: {
+              id: 'codex-glass-artifact',
+              name: 'Oath Seal',
+              description: 'An eligible Artifact without artwork.',
+              manifestationImportance: visualImportance,
+            },
+          }}
+        />,
+      );
+    });
+
+    const surface = container.querySelector<HTMLElement>('[data-accent="true"]');
+    expect(surface?.style.getPropertyValue('--library-card-accent')).toBe('#E5E7EB');
+    expect(surface?.className).toContain('group/reveal');
+    expect(surface?.querySelector('[data-slot="codex-card-ambience"]')).toBeTruthy();
+
+    const seal = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Manifest portrait for Oath Seal"]',
+    );
+    expect(seal?.className).toContain('rounded-full');
+    expect(container.textContent).toContain('Awaken Portrait');
+  });
+
+  it('tints the glass with the character relationship accent', () => {
+    act(() => {
+      root.render(
+        <CodexCard
+          revealTerm={{
+            type: 'character',
+            entry: {
+              id: 'codex-glass-ally',
+              name: 'Aster',
+              description: 'A quiet courier.',
+              relationshipToMC: 'ally',
+              manifestationImportance: visualImportance,
+            },
+          }}
+          activeStory={{ mcName: 'Rin', assignedRevealBackdrops: {} }}
+        />,
+      );
+    });
+
+    const surface = container.querySelector<HTMLElement>('[data-accent="true"]');
+    expect(surface?.style.getPropertyValue('--library-card-accent')).toBe('#4ADE80');
   });
 });

@@ -4,12 +4,15 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-17
+- **Last Workshop update:** 2026-08-18
 - **Last source comparison:** 2026-08-17
 - **Replica status:** faithful replica
 
 ## Workshop history
 
+- **2026-08-18:** Accessibility and cleanup pass on the spectral-glass `CodexCard` seal: the Manifest button's redundant `tabIndex`/`onKeyDown` activation logic was removed (native buttons already activate on Enter/Space), and its `aria-label` now announces "Summoning portrait for {name}" while generation is pending so screen readers hear the state change. The entity classification rules the accent relies on moved into the shared `resolveCodexEntityBand` in `reader-codex/development/codexEntityAccent.ts`; card appearance and behavior are otherwise unchanged.
+- **2026-08-18:** PR review follow-up on the spectral-glass `CodexCard`: suppressed the `LibraryCard` accent hairline on this card (`after:!content-none`) so no solid accent line crosses the top edge — the entity accent still speaks through the aura, motes, seal, and eyebrow. The artwork state no longer letterboxes inside a fixed 180px square; the media frame is now full-width at the image's natural aspect (`block w-full h-auto`), matching the hovercard's media behavior. Glass recipe, seal, ambience, and behavior unchanged.
+- **2026-08-18:** Reimagined the Development `CodexCard` with the approved Library spectral-glass treatment, adopting the full `LibraryCard` glass skin the card was rebuilt for on 2026-08-15: translucent black-blue depth, top-light falloff, inner rim lighting, the masked 1px spectral edge, and an entity ambient accent (via `accentColor`) resolved from the entity's own identity rules (`reader-codex/development/codexEntityAccent.ts`). A sparse spectral mote field (`reader-codex/development/CodexCardAmbience.tsx`) sits under the content, the flat min-height and dead space are gone, and the Manifest trigger is now the circular seal itself — orbit rings, star, and Manifest label preserved, "Awaken Portrait" caption beneath — rather than a rectangular button. Reveal routing, backdrop assignment, Manifest/Summoning callbacks, entrance behavior, typography, and the LibraryCard region contract are unchanged. The highlighted-term card path now imports the new Development `CodexHovercard` fork (`reader-codex/development/CodexHovercard.tsx`); the locked Reference fork keeps the shared copy.
 - **2026-08-17:** Fixed the real highlighted-term Codex card path used by `ReaderChamber`: mobile and tablet cards now dock at the safe upper viewport edge with a smaller phone width and a scrollable height cap that leaves most novel text visible; desktop cards retain contextual word placement with viewport-edge clamping. Card media now follows the complete artwork's natural aspect ratio so the image and rounded frame corners align without cropping. Portal keyboard focus/Escape behavior was restored. No Reader routing, Codex data, card content, or visual skin changed.
 - **2026-08-17:** Replaced the Reader-specific preview menu shell with `FeatureWorkspace` Workshop Controls. Reader page shortcuts, deterministic reading/menu states, chapter selection, themes, and particles now use the shared Pages / States / Effects structure while continuing to drive the real Reader controls and one shared mock story. Reader Chamber navigation and component behavior were not changed.
 - **2026-08-15:** Added an optional Development-only `ReaderViewport` World Card adapter seam and shared Reader Chamber surface helper for the Card Workshop's deterministic Contextual View. Normal Reader callers omit the seam and retain the existing presentation and audio lifecycle; neither the seam nor its remount key transfers to production.
@@ -272,8 +275,10 @@ All substitutions are import-level aliases only — JSX is byte-identical to pro
 
 When a development/ change is approved, transfer these to Light-Novels, reversing
 the import rewrites (`../shared/X` → `../lib/X` / `../hooks/X` / `../store/X`,
-`./X` unchanged) and mapping the Reader Codex shared imports back to production's
-existing `CodexHovercard` and `lib/codexHighlighting` owners:
+`./X` unchanged) and mapping the Reader Codex imports back to production's
+existing owners — `reader-codex/development/CodexHovercard.tsx` →
+`src/components/CodexHovercard.tsx`, `codexHighlighting` → `lib/codexHighlighting`,
+and the Codex Card ambience/accent helpers per the Reader Codex README:
 
 - `development/ReaderChamber.tsx` → `src/components/ReaderChamber.tsx`
 - `development/ReaderViewport.tsx` → `src/components/ReaderViewport.tsx`

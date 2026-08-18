@@ -35,10 +35,10 @@ function matchesDesktopHovercardViewport(): boolean {
  * The card's spectral-glass skin: the approved LibraryPanel/LibraryCard glass
  * recipe at hovercard scale — translucent black-blue depth, top-light falloff,
  * inner rim lighting, the masked 1px spectral edge — tinted by the entity's
- * own ambient accent through `--codex-card-accent`. The accent hairline stays
- * with the large inline CodexCard; here the accent speaks through the border,
- * the rim glow, the seal, and the particles. The glass lives on the outer
- * shell so the scrollable content region never drags the spectral edge away.
+ * own ambient accent through `--codex-card-accent`. No accent hairline: the
+ * accent speaks through the aura, particles, border, rim glow, and seal, never
+ * as a solid line across the top edge. The glass lives on the outer shell so
+ * the scrollable content region never drags the spectral edge away.
  */
 const HOVERCARD_GLASS_CLASS = [
   'pointer-events-auto relative w-56 sm:w-64 max-w-full overflow-hidden rounded-[1.35rem] border',

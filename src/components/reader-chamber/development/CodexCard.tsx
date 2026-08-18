@@ -61,13 +61,16 @@ export interface CodexCardProps {
 
 // The shared primitive owns the card regions AND the surface: the Codex reveal
 // now wears the approved LibraryCard spectral glass — translucent black-blue
-// depth, top-light falloff, inner rim lighting, the masked 1px spectral edge,
-// and the entity accent hairline — with the accent driven by the entity's own
-// identity color. Only the Reader reveal layout (centering, width, rhythm) is
-// added on top.
+// depth, top-light falloff, inner rim lighting, and the masked 1px spectral
+// edge — with the accent driven by the entity's own identity color. The
+// LibraryCard accent hairline is suppressed (`after:!content-none`): on the
+// Codex reveal the accent speaks through the aura, motes, seal, and eyebrow,
+// never as a solid line across the top edge. Only the Reader reveal layout
+// (centering, width, rhythm) is added on top.
 const CODEX_CARD_SURFACE_CLASS = [
   'group/reveal w-full max-w-sm mx-auto my-6',
   'items-center justify-center text-center',
+  'after:!content-none',
 ].join(' ');
 
 const TRANSPARENT_REGION_CLASS = '!contents';
@@ -166,13 +169,13 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
         >
           <LibraryCardBody className={TRANSPARENT_REGION_CLASS}>
             {revealImageUrl ? (
-              <LibraryCardMedia className="relative w-[180px] h-[180px] shrink-0 rounded-lg overflow-hidden border bg-neutral-950 mb-3 border-[color-mix(in_srgb,var(--library-card-accent)_30%,#171717)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6),0_0_28px_-8px_color-mix(in_srgb,var(--library-card-accent)_45%,transparent)]">
+              <LibraryCardMedia className="relative w-full shrink-0 rounded-lg overflow-hidden border bg-neutral-950 mb-3 border-[color-mix(in_srgb,var(--library-card-accent)_30%,#171717)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6),0_0_28px_-8px_color-mix(in_srgb,var(--library-card-accent)_45%,transparent)]">
                 <img
                   src={revealImageUrl}
                   alt={entry.name}
                   loading="lazy"
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-contain transition-transform duration-500 group-hover/reveal:scale-105"
+                  className="block w-full h-auto transition-transform duration-500 group-hover/reveal:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
               </LibraryCardMedia>

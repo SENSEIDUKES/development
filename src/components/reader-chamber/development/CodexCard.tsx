@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { LoaderCircle as Loader2 } from 'lucide-react';
 import {
   LibraryCard,
   LibraryCardActions,
@@ -91,15 +90,17 @@ const REVEAL_HEADER_REGION_CLASS = [
 
 /**
  * The Manifest seal is the dragon itself: an enlarged `LibraryDragonCycleIcon`
- * forms the entire portal boundary — cyan head chasing violet tail — wrapped in
- * a slow-turning cyan→violet aura, around a dark glass core holding the Manifest
- * label and the awakening caption. The seal is the button: keyboard-operable,
- * with the Summoning state inside the core. The Library's cycle glyph is reused
- * unchanged and purely decorative — two stacked `currentColor` copies, the cyan
- * one masked so it dissolves down the body, tint the single silhouette into the
- * cyan→violet gradient. Aura spin and the dragon's idle breath both rest under
- * `prefers-reduced-motion` (motion-reduce utilities + the CodexCardSeal.css
- * backstop).
+ * forms the entire portal boundary — cyan head chasing violet tail — rotating
+ * slowly inside a soft cyan→violet aura, around a dark glass core holding the
+ * Manifest label and the awakening caption. The seal is the button:
+ * keyboard-operable, with the Manifesting state inside the core. The Library's
+ * cycle glyph is reused unchanged and purely decorative — two stacked
+ * `currentColor` copies, the cyan one masked so it dissolves down the body,
+ * tint the single silhouette into the cyan→violet gradient. The aura's conic
+ * gradient carries two diametrically opposed bright bands so the blurred glow
+ * stays centered through the whole spin. Aura spin, dragon rotation, and the
+ * Manifesting spinner all rest under `prefers-reduced-motion` (motion-reduce
+ * utilities + the CodexCardSeal.css backstop).
  */
 const SEAL_BUTTON_CLASS = [
   'codex-seal group/seal relative flex h-44 w-44 sm:h-52 sm:w-52 shrink-0 items-center justify-center rounded-full',
@@ -111,14 +112,14 @@ const SEAL_BUTTON_CLASS = [
 
 const SEAL_AURA_CLASS = [
   'pointer-events-none absolute -inset-2 rounded-full blur-lg transition-opacity duration-500',
-  'bg-[conic-gradient(from_210deg,#04ACFF,#7C5CFF_45%,#04ACFF_82%)]',
+  'bg-[conic-gradient(from_210deg,#04ACFF,#7C5CFF_25%,#04ACFF_50%,#7C5CFF_75%,#04ACFF)]',
   'opacity-35 animate-[spin_26s_linear_infinite] motion-reduce:animate-none',
   'group-hover/seal:opacity-70 group-active/seal:opacity-80 group-disabled/seal:opacity-60',
 ].join(' ');
 
 const SEAL_DRAGON_CLASS = [
   'pointer-events-none absolute inset-0',
-  'animate-[codex-seal-breathe_7s_ease-in-out_infinite] motion-reduce:animate-none',
+  'animate-[spin_24s_linear_infinite] motion-reduce:animate-none',
   'drop-shadow-[0_0_9px_rgba(4,172,255,0.42)_0_0_26px_rgba(124,92,255,0.36)]',
   'transition-[filter] duration-500',
   'group-hover/seal:drop-shadow-[0_0_13px_rgba(4,172,255,0.62)_0_0_38px_rgba(124,92,255,0.55)]',
@@ -227,7 +228,7 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
                       className={SEAL_BUTTON_CLASS}
                       aria-label={
                         generatingRevealId === entry.id
-                          ? `Summoning portrait for ${entry.name}`
+                          ? `Manifesting portrait for ${entry.name}`
                           : `Manifest portrait for ${entry.name}`
                       }
                     >
@@ -239,9 +240,9 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
                       <span className={SEAL_CORE_CLASS}>
                         {generatingRevealId === entry.id ? (
                           <>
-                            <Loader2 size={18} className="text-cyan-300 animate-spin" />
+                            <LibraryDragonCycleIcon className="h-5 w-5 text-cyan-300 animate-spin motion-reduce:animate-none drop-shadow-[0_0_6px_rgba(4,172,255,0.6)]" />
                             <span className="font-mono text-[9px] text-cyan-300 uppercase tracking-widest animate-pulse font-medium">
-                              Summoning...
+                              Manifesting...
                             </span>
                           </>
                         ) : (

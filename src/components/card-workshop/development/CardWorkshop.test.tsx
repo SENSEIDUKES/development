@@ -227,7 +227,7 @@ describe('CardWorkshopView', () => {
     await selectByLabel('Image state', 'manifest');
     expect(getButton('Manifest portrait for Lei')).toBeTruthy();
     await clickButton('Manifest portrait for Lei');
-    expect(container.textContent).toContain('Summoning...');
+    expect(container.textContent).toContain('Manifesting...');
     await clickButton('Reset Local Awaken State');
     await act(async () => {
       vi.advanceTimersByTime(1200);

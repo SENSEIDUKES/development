@@ -73,6 +73,10 @@ describe('Reader card routing', () => {
     vi.restoreAllMocks();
   });
 
+  /**
+   * Mounts the Development ReaderViewport around one story block with inert
+   * handlers, so a Codex reveal card can be inspected in its real host.
+   */
   const renderReader = (
     block: StoryBlock,
     codexTerms: any[] = [],
@@ -139,6 +143,7 @@ describe('Reader card routing', () => {
     });
   };
 
+  /** Builds a paragraph block that reveals the named entity in the Reader. */
   const revealBlock = (name: string, type: 'character' | 'artifact' | 'location' | 'creature' | 'faction'): StoryBlock => ({
     id: `block-${type}-${name}`,
     type: 'paragraph',
@@ -146,6 +151,7 @@ describe('Reader card routing', () => {
     metadata: { entities: [{ name, type, mention: 'reveal' }] },
   });
 
+  /** Builds a canonical Codex term fixture with a deterministic entry ID. */
   const codexTerm = (name: string, type: 'character' | 'artifact' | 'location' | 'faction', extra: Record<string, unknown> = {}) => ({
     term: name,
     type,
@@ -372,8 +378,9 @@ describe('Reader card routing', () => {
 
     expect(container.querySelector('[data-slot="card-actions"]')?.className).toContain('!contents');
     expect(button).toBeTruthy();
+    // Native button activation: a real click (what Enter/Space produce).
     act(() => {
-      button?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      button?.click();
     });
     expect(onManifestReveal).toHaveBeenCalledWith(entry, 'Artifact');
 
@@ -388,8 +395,10 @@ describe('Reader card routing', () => {
     });
 
     expect(container.textContent).toContain('Summoning...');
+    // The pending state is announced through the swapped aria-label.
+    expect(container.querySelector('button[aria-label="Manifest portrait for Oath Seal"]')).toBeFalsy();
     expect(container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Manifest portrait for Oath Seal"]',
+      'button[aria-label="Summoning portrait for Oath Seal"]',
     )?.disabled).toBe(true);
   });
 

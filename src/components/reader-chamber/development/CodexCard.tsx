@@ -23,6 +23,10 @@ export const FALLBACK_BACKDROPS = [
   "https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/images/LIBRARY%20BACKDROPS/LIBRARY_DAYTIME.PNG",
 ];
 
+/**
+ * Picks a stable Library backdrop for an entity ID via a simple string hash,
+ * so a card without an assigned backdrop always renders the same one.
+ */
 export function getFallbackBackdrop(id: string): string {
   let hash = 0;
   for (let i = 0; i < id.length; i++) {
@@ -119,6 +123,11 @@ const SEAL_BUTTON_CLASS = [
   'disabled:cursor-wait',
 ].join(' ');
 
+/**
+ * The inline Reader reveal card for a Codex entity: spectral-glass surface,
+ * entity ambient accent and mote field, manifested portrait (or the circular
+ * Manifest seal while none exists), and the entity's name and description.
+ */
 export const CodexCard: React.FC<CodexCardProps> = React.memo(({
   revealTerm,
   activeStory,
@@ -190,17 +199,14 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
                       <div className={SEAL_CORE_GLOW_CLASS} />
                       <button
                         type="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            e.currentTarget.click();
-                          }
-                        }}
                         onClick={() => onManifestReveal?.(entry, revealTerm.type)}
                         disabled={generatingRevealId === entry.id}
                         className={SEAL_BUTTON_CLASS}
-                        aria-label={`Manifest portrait for ${entry.name}`}
+                        aria-label={
+                          generatingRevealId === entry.id
+                            ? `Summoning portrait for ${entry.name}`
+                            : `Manifest portrait for ${entry.name}`
+                        }
                       >
                         {generatingRevealId === entry.id ? (
                           <>

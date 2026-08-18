@@ -38,6 +38,10 @@ export interface CodexCardAmbienceProps {
   accent: string;
 }
 
+/**
+ * Renders the decorative aura-and-mote layer inside a Codex Card. Memoized;
+ * the `accent` prop is the only input.
+ */
 export const CodexCardAmbience: React.FC<CodexCardAmbienceProps> = React.memo(({ accent }) => (
   <div
     data-slot="codex-card-ambience"

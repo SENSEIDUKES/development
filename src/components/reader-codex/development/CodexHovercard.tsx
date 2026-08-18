@@ -7,7 +7,8 @@ import { Character, Faction, Artifact, Location } from '../shared/types';
 import { useAppStore } from '../shared/codexCompatibility';
 import { SPECTRAL_EDGE } from '../../library/LibraryPanel';
 import { CodexCardAmbience } from './CodexCardAmbience';
-import { resolveCodexEntityAccent } from './codexEntityAccent';
+import { resolveCodexEntityAccent, resolveCodexEntityBand } from './codexEntityAccent';
+import type { CodexEntityBand } from './codexEntityAccent';
 
 interface CodexHovercardProps {
   term: string;
@@ -25,6 +26,10 @@ interface DesktopHovercardPosition {
   top: number;
 }
 
+/**
+ * Reports whether the current viewport should use desktop contextual
+ * placement (wide, hover-capable, fine pointer) instead of mobile docking.
+ */
 function matchesDesktopHovercardViewport(): boolean {
   return typeof window !== 'undefined'
     && typeof window.matchMedia === 'function'
@@ -81,6 +86,60 @@ const SEAL_BUTTON_CLASS = [
   'disabled:cursor-wait',
 ].join(' ');
 
+/**
+ * Tailwind class bundle the highlighted-term trigger wears per entity band.
+ * Keyed by the shared `resolveCodexEntityBand` classification so the prose
+ * highlight always agrees with the card ambience resolved from the same band.
+ */
+interface CodexBandTheme {
+  text: string;
+  bg: string;
+  border: string;
+  hoverBg: string;
+  icon: string;
+}
+
+const PORTAL_BAND_THEME: CodexBandTheme = {
+  text: 'text-portal',
+  bg: 'bg-portal/10',
+  border: 'border-portal/30',
+  hoverBg: 'hover:bg-portal/20',
+  icon: 'text-portal',
+};
+
+const GOLD_BAND_THEME: CodexBandTheme = {
+  text: 'text-[#d4af37]',
+  bg: 'bg-[#d4af37]/10',
+  border: 'border-[#d4af37]/30',
+  hoverBg: 'hover:bg-[#d4af37]/20',
+  icon: 'text-[#d4af37]',
+};
+
+const CODEX_BAND_THEME: Record<CodexEntityBand, CodexBandTheme> = {
+  protagonist: PORTAL_BAND_THEME,
+  fallback: PORTAL_BAND_THEME,
+  bond: { text: 'text-pink-400', bg: 'bg-pink-400/10', border: 'border-pink-400/30', hoverBg: 'hover:bg-pink-400/20', icon: 'text-pink-400' },
+  gold: GOLD_BAND_THEME,
+  ally: { text: 'text-green-400', bg: 'bg-green-400/10', border: 'border-green-400/30', hoverBg: 'hover:bg-green-400/20', icon: 'text-green-400' },
+  hostile: { text: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/30', hoverBg: 'hover:bg-red-500/20', icon: 'text-red-500' },
+  mystery: { text: 'text-neutral-400', bg: 'bg-neutral-400/10', border: 'border-neutral-400/30', hoverBg: 'hover:bg-neutral-400/20', icon: 'text-neutral-400' },
+  nonHuman: { text: 'text-violet-400', bg: 'bg-violet-400/10', border: 'border-violet-400/30', hoverBg: 'hover:bg-violet-400/20', icon: 'text-violet-400' },
+  artifactGreat: { text: 'text-orange-400', bg: 'bg-orange-400/10', border: 'border-orange-400/30', hoverBg: 'hover:bg-orange-400/20', icon: 'text-orange-400' },
+  artifactGood: { text: 'text-[#04ACFF]', bg: 'bg-[#04ACFF]/10', border: 'border-[#04ACFF]/30', hoverBg: 'hover:bg-[#04ACFF]/20', icon: 'text-[#04ACFF]' },
+  artifactModest: { text: 'text-[#2DD4BF]', bg: 'bg-[#2DD4BF]/10', border: 'border-[#2DD4BF]/30', hoverBg: 'hover:bg-[#2DD4BF]/20', icon: 'text-[#2DD4BF]' },
+  artifactPlain: { text: 'text-white', bg: 'bg-white/10', border: 'border-white/30', hoverBg: 'hover:bg-white/20', icon: 'text-white' },
+  location: { text: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/30', hoverBg: 'hover:bg-purple-400/20', icon: 'text-purple-400' },
+  faction: { text: 'text-[#b9d6c1]', bg: 'bg-[#0f5132]/20', border: 'border-[#0f5132]/30', hoverBg: 'hover:bg-[#0f5132]/40', icon: 'text-[#0f5132]' },
+};
+
+/**
+ * Highlighted-term Codex card: the trigger is the entity name inline in the
+ * Reader prose; clicking, tapping, or keyboard-activating it opens the
+ * spectral-glass hovercard in a portal — docked at the safe viewport edge on
+ * mobile, contextually placed and clamped near the term on desktop. Carries
+ * the entity ambient accent, the mote field, and the circular Manifest seal
+ * for eligible entries.
+ */
 export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, children }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isPortalMounted, setIsPortalMounted] = useState(false);
@@ -97,6 +156,11 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
   const imageUrl = persistedImageUrl || localImageUrl;
   const canManifestImage = type !== 'faction';
 
+  /**
+   * Runs the local one-off manifestation: builds a deterministic placeholder
+   * portrait SVG for the entry and keeps it component-local, matching the
+   * Workshop compatibility boundary (no production image pipeline).
+   */
   const handleManifest = async (event: React.MouseEvent) => {
     event.stopPropagation();
     if (isGeneratingImage) return;
@@ -120,84 +184,9 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
   );
 
   const accent = resolveCodexEntityAccent(type, entry, activeStory?.mcName);
+  const theme = CODEX_BAND_THEME[resolveCodexEntityBand(type, entry, activeStory?.mcName)];
 
-  const getDynamicTheme = () => {
-    const fallback = {
-      text: 'text-portal',
-      bg: 'bg-portal/10',
-      border: 'border-portal/30',
-      hoverBg: 'hover:bg-portal/20',
-      icon: 'text-portal'
-    };
-
-    if (type === 'character') {
-      const char = entry as Character;
-      const rel = (char.relationshipToMC || '').toLowerCase();
-      const role = (char.role || '').toLowerCase();
-      const isMC = activeStory?.mcName === char.name || rel.includes('self') || role.includes('main character') || rel.includes('mc');
-
-      if (isMC) {
-        return fallback; // Blue
-      } else if (rel.includes('lover') || rel.includes('wife') || rel.includes('husband') || rel.includes('fiance') || rel.includes('partner') || rel.includes('spouse') || rel.includes('concubine') || rel.includes('dao companion')) {
-        return { text: 'text-pink-400', bg: 'bg-pink-400/10', border: 'border-pink-400/30', hoverBg: 'hover:bg-pink-400/20', icon: 'text-pink-400' };
-      } else if (rel.includes('mentor') || rel.includes('master') || rel.includes('teacher') || role.includes('mentor') || role.includes('elder')) {
-        return { text: 'text-[#d4af37]', bg: 'bg-[#d4af37]/10', border: 'border-[#d4af37]/30', hoverBg: 'hover:bg-[#d4af37]/20', icon: 'text-[#d4af37]' };
-      } else if (rel.includes('friend') || rel.includes('ally') || rel.includes('brother') || rel.includes('sister') || rel.includes('companion') || rel.includes('comrade')) {
-        return { text: 'text-green-400', bg: 'bg-green-400/10', border: 'border-green-400/30', hoverBg: 'hover:bg-green-400/20', icon: 'text-green-400' };
-      } else if (rel.includes('enemy') || rel.includes('rival') || rel.includes('nemesis') || rel.includes('antagonist') || rel.includes('hostile') || rel.includes('villain')) {
-        return { text: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/30', hoverBg: 'hover:bg-red-500/20', icon: 'text-red-500' };
-      } else if (rel.includes('unknown') || rel.includes('stranger') || rel.includes('neutral') || rel.includes('mystery')) {
-        return { text: 'text-neutral-400', bg: 'bg-neutral-400/10', border: 'border-neutral-400/30', hoverBg: 'hover:bg-neutral-400/20', icon: 'text-neutral-400' };
-      }
-      return fallback;
-    }
-
-    if (type === 'location') {
-      const loc = entry as Location;
-      const desc = (loc.description || '').toLowerCase();
-      const safety = (loc.safetyLevel || '').toLowerCase();
-      const realm = (loc.realm || '').toLowerCase();
-
-      const isSpecial = desc.includes('special') || desc.includes('sacred') || desc.includes('divine') || desc.includes('secret') || desc.includes('hidden') || desc.includes('forbidden') || realm.includes('divine') || realm.includes('heaven') || safety.includes('lethal');
-
-      if (isSpecial) {
-        return { text: 'text-[#d4af37]', bg: 'bg-[#d4af37]/10', border: 'border-[#d4af37]/30', hoverBg: 'hover:bg-[#d4af37]/20', icon: 'text-[#d4af37]' };
-      }
-      return { text: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/30', hoverBg: 'hover:bg-purple-400/20', icon: 'text-purple-400' };
-    }
-
-    if (type === 'artifact') {
-      const art = entry as Artifact;
-      const tier = (art.tier || '').toLowerCase();
-      const desc = (art.description || '').toLowerCase();
-
-      if (tier.includes('legendary') || tier.includes('divine') || tier.includes('mythic') || tier.includes('primordial') || tier.includes('supreme')) {
-        return { text: 'text-[#d4af37]', bg: 'bg-[#d4af37]/10', border: 'border-[#d4af37]/30', hoverBg: 'hover:bg-[#d4af37]/20', icon: 'text-[#d4af37]' };
-      } else if (tier.includes('great') || tier.includes('epic') || tier.includes('heaven') || tier.includes('saint')) {
-        return { text: 'text-orange-400', bg: 'bg-orange-400/10', border: 'border-orange-400/30', hoverBg: 'hover:bg-orange-400/20', icon: 'text-orange-400' };
-      } else if (tier.includes('good') || tier.includes('rare') || tier.includes('earth') || tier.includes('spirit')) {
-        return { text: 'text-[#04ACFF]', bg: 'bg-[#04ACFF]/10', border: 'border-[#04ACFF]/30', hoverBg: 'hover:bg-[#04ACFF]/20', icon: 'text-[#04ACFF]' };
-      } else if (tier.includes('decent') || tier.includes('uncommon') || tier.includes('mortal') || tier.includes('profane')) {
-        return { text: 'text-[#0f5132]', bg: 'bg-[#0f5132]/20', border: 'border-[#0f5132]/40', hoverBg: 'hover:bg-[#0f5132]/40', icon: 'text-[#0f5132]' };
-      } else if (tier.includes('basic') || tier.includes('common') || tier.includes('trash') || tier === '') {
-        // Since many default to empty tier, we'll check description for keywords just in case, but default to Basic White
-        if (desc.includes('legendary') || desc.includes('divine')) {
-          return { text: 'text-[#d4af37]', bg: 'bg-[#d4af37]/10', border: 'border-[#d4af37]/30', hoverBg: 'hover:bg-[#d4af37]/20', icon: 'text-[#d4af37]' };
-        }
-        return { text: 'text-white', bg: 'bg-white/10', border: 'border-white/30', hoverBg: 'hover:bg-white/20', icon: 'text-white' };
-      }
-      return { text: 'text-white', bg: 'bg-white/10', border: 'border-white/30', hoverBg: 'hover:bg-white/20', icon: 'text-white' };
-    }
-
-    if (type === 'faction') {
-      return { text: 'text-[#b9d6c1]', bg: 'bg-[#0f5132]/20', border: 'border-[#0f5132]/30', hoverBg: 'hover:bg-[#0f5132]/40', icon: 'text-[#0f5132]' };
-    }
-
-    return fallback;
-  };
-
-  const theme = getDynamicTheme();
-
+  /** The entity-type icon shown in the card header, tinted by the band theme. */
   const getIcon = () => {
     switch (type) {
       case 'character': return <User size={14} className={theme.icon} />;
@@ -208,6 +197,10 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
     }
   };
 
+  /**
+   * The trigger text classes for the story's configured highlight style
+   * (`full`, `underline`, or `tint`), all colored by the band theme.
+   */
   const getTextStyles = () => {
     const highlightStyle = activeStory?.readerPreferences?.highlightStyle || 'full';
     if (highlightStyle === 'underline') {
@@ -219,12 +212,14 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
   };
 
   useEffect(() => {
+    /** Closes the card when the press lands outside both trigger and card. */
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node;
       if (containerRef.current?.contains(target) || cardRef.current?.contains(target)) return;
       setIsOpen(false);
     };
 
+    /** Closes the card on Escape and returns focus to the highlighted term. */
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       event.preventDefault();
@@ -255,6 +250,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
 
     const mediaQuery = window.matchMedia(DESKTOP_HOVERCARD_QUERY);
+    /** Keeps the docking mode in sync when the viewport crosses the breakpoint. */
     const syncViewportMode = () => setIsDesktopViewport(mediaQuery.matches);
     syncViewportMode();
     mediaQuery.addEventListener('change', syncViewportMode);
@@ -268,6 +264,11 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
     }
     if (!isOpen) return;
 
+    /**
+     * Computes the desktop card position: centered on the trigger, clamped to
+     * the safe viewport gutter, flipped above the trigger when there is no
+     * room below.
+     */
     const updateDesktopPosition = () => {
       const trigger = triggerRef.current?.getBoundingClientRect();
       const card = cardRef.current;
@@ -301,6 +302,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
     };
 
     let positionFrame = 0;
+    /** Coalesces position recalculations onto the next animation frame. */
     const scheduleDesktopPosition = () => {
       if (positionFrame) return;
       positionFrame = window.requestAnimationFrame(() => {
@@ -330,6 +332,10 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
     };
   }, [imageUrl, isDesktopViewport, isGeneratingImage, isOpen, isPortalMounted]);
 
+  /**
+   * Toggles the hovercard. Keyboard opens are remembered so focus can move
+   * into the portal card once it mounts.
+   */
   const handleToggle = (
     e: React.MouseEvent | React.TouchEvent | React.KeyboardEvent,
     openedWithKeyboard = false,
@@ -404,8 +410,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
                       <div className={SEAL_RING_INNER_CLASS} />
                       <div className={SEAL_CORE_GLOW_CLASS} />
                       <button
-                        tabIndex={0}
-                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }}
+                        type="button"
                         onClick={handleManifest}
                         disabled={isGeneratingImage}
                         aria-label={isGeneratingImage ? `Summoning portrait for ${entry.name}` : `Manifest portrait for ${entry.name}`}

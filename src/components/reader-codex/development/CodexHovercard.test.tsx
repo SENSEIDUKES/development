@@ -38,6 +38,7 @@ describe('Development CodexHovercard spectral glass', () => {
     vi.restoreAllMocks();
   });
 
+  /** Clicks the highlighted term to open the hovercard portal. */
   const openHovercard = () => {
     const trigger = container.querySelector<HTMLElement>('[role="button"]');
     expect(trigger).toBeTruthy();
@@ -237,6 +238,13 @@ describe('Development CodexHovercard spectral glass', () => {
       toJSON: () => ({}),
     });
     openHovercard();
+
+    // Pin the jsdom viewport so the assertions intentionally exercise the
+    // above-trigger fallback branch: 724 + 8 + 300 exceeds the 768 - 16 safe
+    // bottom, and the trigger's 1190 left edge pushes the card against the
+    // right gutter.
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 768 });
 
     const layer = document.body.querySelector<HTMLElement>('[data-slot="codex-hovercard-layer"]');
     const card = document.body.querySelector<HTMLElement>('[data-slot="codex-hovercard"]');

@@ -10,6 +10,11 @@
 
 ## Workshop history
 
+- **2026-08-18:** Performance pass (SEIHouse Gemini Verification Loop P1–P4):
+  - **P1 (Deterministic Low-Power Gate):** Replaced the per-render `isLowPowerDevice()` calls with a single module-load `LOW_POWER_DEVICE` constant. The hardware heuristic gates the scrim backdrop blur and the 30→14 / 26→12 particle trims — the two largest perf levers in the file — so it is now computed once and cannot drift across render passes.
+  - **P2 (Per-Instance Gradient Id Intent):** Documented that `CultivatorSvg`'s `useId` gradient id is deliberately per-instance (collapsed orb + expanded vignette, or Compare view) and must not be hoisted to the parent.
+  - **P3 (Cheaper Aura Tier):** The two large blur auras — the collapsed orb's ink aura (`blur(6px)`) and the vignette's ink aura (`blur(10px)`) — now skip their composited blur layer on low-power devices, falling back to the flat radial gradient (visually similar at these opacities, substantially cheaper on mid-range hardware). This extends the existing low-power scrim gate to the modal's real steady-state cost.
+  - **P4 (SMIL → framer-motion):** Converted the cloud shimmer sweep from a SMIL `<animate>` (its own DOM timer) to a `motion.rect` on the shared framer-motion RAF loop, so the file is pure framer-motion and reduced-motion handling is uniform. The `skewX(-18)` now lives in the motion transform so the CSS transform doesn't clobber it.
 - **2026-08-18:** Accessibility follow-up pass (SEIHouse Gemini Verification Loop A6–A8):
   - **A6 (Per-Instance Title Id):** Replaced the static `id="idle-cultivation-title"` with a per-instance `cdc-title-${useId()}` referenced by `aria-labelledby`, so the Reference and Development copies no longer collide when Compare renders both in one DOM tree. This re-applies the `useId` variant set aside during the PR #35 merge.
   - **A7 (Label Contrast on Tall Viewports):** The "Closed-Door Cultivation" label now carries its own dim local aura plus a dark text-shadow, so it keeps WCAG 1.4.3 contrast even where the capped-height main ink aura no longer reaches it.
@@ -50,7 +55,7 @@ The entire SVG cultivator, particle flight animation (`motion/react`), claim/col
 
 ## What changed in Development vs Reference
 
-Development adds `aria-modal="true"` to the dialog container, automatic focus movement to the claim button on entrance, focus restoration on close, focus trapping for Tab navigation within the modal, Escape-to-collapse support, focus coordination with the collapsed orb button, parametric reward amount announcements, live status announcements via `aria-live="polite"`, progression description accessibility linking, visible focus rings on the collapsed orb button, a per-instance `useId` dialog title id (Compare-safe), a local contrast aura and text-shadow behind the "Closed-Door Cultivation" label, and a larger collapsed orb badge. Reference remains the locked pre-audit replica.
+Development adds `aria-modal="true"` to the dialog container, automatic focus movement to the claim button on entrance, focus restoration on close, focus trapping for Tab navigation within the modal, Escape-to-collapse support, focus coordination with the collapsed orb button, parametric reward amount announcements, live status announcements via `aria-live="polite"`, progression description accessibility linking, visible focus rings on the collapsed orb button, a per-instance `useId` dialog title id (Compare-safe), a local contrast aura and text-shadow behind the "Closed-Door Cultivation" label, a larger collapsed orb badge, a module-load `LOW_POWER_DEVICE` constant in place of per-render hardware checks, a low-power tier that drops the two large ink-aura blur layers, and a framer-motion shimmer sweep in place of SMIL. Reference remains the locked pre-audit replica.
 
 ## What was mocked
 

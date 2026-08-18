@@ -50,10 +50,13 @@ function progressionQuote(days: number): string {
   return quote;
 }
 
-/** Heuristic for weaker hardware: trim effect density instead of dropping atmosphere. */
-function isLowPowerDevice(): boolean {
-  return typeof navigator !== 'undefined' && (navigator.hardwareConcurrency ?? 8) <= 4;
-}
+/**
+ * Heuristic for weaker hardware: trim effect density instead of dropping atmosphere.
+ * Computed once at module load — hardwareConcurrency is constant for the page's
+ * lifetime, and this value gates the two largest perf levers in the file (scrim
+ * backdrop blur and the 30→14 / 26→12 particle trim), so it must be deterministic.
+ */
+const LOW_POWER_DEVICE = typeof navigator !== 'undefined' && (navigator.hardwareConcurrency ?? 8) <= 4;
 
 interface Absorb {
   /** cloud center + size (particle spawn area) and dantian point, in viewport coords */
@@ -75,6 +78,10 @@ interface Flight {
 
 /** Silhouette of a cross-legged cultivator: deep navy robes, thin cyan rim light, no face. */
 function CultivatorSvg({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  // Deliberately per-instance: two CultivatorSvgs can be on screen at once
+  // (collapsed orb + expanded vignette, or Compare view), and each owns its own
+  // gradient def. Do not hoist this id to the parent — that would share one
+  // gradient definition across both figures.
   const robeGradId = `cdc-robe-${useId()}`;
   return (
     <svg viewBox="0 0 120 100" className={className} style={style} aria-hidden="true">
@@ -178,7 +185,7 @@ function CultivatorFigure({ claiming, calm = false }: { claiming: boolean; calm?
  */
 function CloudAbsorb({ absorb }: { absorb: Absorb }) {
   const { sx, sy, sw, sh, ex, ey } = absorb;
-  const lowPower = useReducedMotion() || isLowPowerDevice();
+  const lowPower = useReducedMotion() || LOW_POWER_DEVICE;
   // Freeze the random particle paths per claim so unrelated re-renders don't retarget the burst.
   const particles = useMemo(() => {
     return Array.from({ length: lowPower ? 14 : 30 }).map((_, i) => {
@@ -266,7 +273,7 @@ function CloudAbsorb({ absorb }: { absorb: Absorb }) {
  */
 function QiFlight({ flight }: { flight: Flight }) {
   const { sx, sy, ex, ey } = flight;
-  const lowPower = useReducedMotion() || isLowPowerDevice();
+  const lowPower = useReducedMotion() || LOW_POWER_DEVICE;
   // Freeze the random particle paths per claim so unrelated re-renders don't retarget the burst.
   const particles = useMemo(() => {
     const dx = ex - sx;
@@ -365,7 +372,7 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
   const daysId = `cdc-days-${useId()}`;
   const quoteId = `cdc-quote-${useId()}`;
   const reduceMotion = useReducedMotion();
-  const lowPower = reduceMotion || isLowPowerDevice();
+  const lowPower = reduceMotion || LOW_POWER_DEVICE;
   const days = Math.max(1, Math.floor(daysCultivating));
 
   // Rolled once per reward cycle: mostly the progression line for the user's
@@ -573,7 +580,8 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
                 className="absolute -inset-6 rounded-full pointer-events-none -z-10"
                 style={{
                   background: 'radial-gradient(circle, rgba(2,5,12,0.85) 0%, rgba(2,5,12,0.45) 55%, transparent 75%)',
-                  filter: 'blur(6px)',
+                  // Low-power tier: keep the flat radial shadow, skip the composited blur layer.
+                  ...(lowPower ? {} : { filter: 'blur(6px)' }),
                 }}
               />
               <motion.div
@@ -609,7 +617,10 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
                   style={{
                     background:
                       'radial-gradient(ellipse at 50% 55%, rgba(2,5,12,0.92) 0%, rgba(2,5,12,0.7) 42%, rgba(2,5,12,0.35) 62%, transparent 78%)',
-                    filter: 'blur(10px)',
+                    // Low-power tier: the flat gradient reads nearly the same at this
+                    // opacity; the 10px blur is the single most expensive steady-state
+                    // layer of the open modal, so weak devices skip it.
+                    ...(lowPower ? {} : { filter: 'blur(10px)' }),
                   }}
                 />
 
@@ -719,12 +730,20 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
                       d="M32 50 C16 50 10 39 19 31 C14 20 27 13 36 18 C41 8 57 6 65 14 C73 6 89 8 94 18 C103 13 116 20 111 31 C120 39 114 50 98 50 Z"
                       fill={`url(#${cloudGradId})`}
                     />
-                    {/* shimmer sweep inviting the tap */}
+                    {/* shimmer sweep inviting the tap — framer-motion so it shares the
+                        modal's RAF loop (and reduced-motion handling) instead of SMIL's
+                        separate DOM timer */}
                     {!reduceMotion && (
                       <g clipPath={`url(#${cloudClipId})`}>
-                        <rect x="-46" y="0" width="26" height="64" fill={`url(#${shimmerGradId})`} transform="skewX(-18)">
-                          <animate attributeName="x" from="-46" to="150" dur="2.6s" repeatCount="indefinite" />
-                        </rect>
+                        <motion.rect
+                          y="0"
+                          width="26"
+                          height="64"
+                          fill={`url(#${shimmerGradId})`}
+                          initial={{ x: -46, skewX: -18 }}
+                          animate={{ x: 150, skewX: -18 }}
+                          transition={{ duration: 2.6, repeat: Infinity, ease: 'linear' }}
+                        />
                       </g>
                     )}
                   </svg>

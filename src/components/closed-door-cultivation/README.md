@@ -10,6 +10,10 @@
 
 ## Workshop history
 
+- **2026-08-18:** Accessibility follow-up pass (SEIHouse Gemini Verification Loop A6–A8):
+  - **A6 (Per-Instance Title Id):** Replaced the static `id="idle-cultivation-title"` with a per-instance `cdc-title-${useId()}` referenced by `aria-labelledby`, so the Reference and Development copies no longer collide when Compare renders both in one DOM tree. This re-applies the `useId` variant set aside during the PR #35 merge.
+  - **A7 (Label Contrast on Tall Viewports):** The "Closed-Door Cultivation" label now carries its own dim local aura plus a dark text-shadow, so it keeps WCAG 1.4.3 contrast even where the capped-height main ink aura no longer reaches it.
+  - **A8 (Collapsed Badge Legibility):** The collapsed orb's `+{qiEarned}` badge grew from `text-[8px] sm:text-[9px]` to `text-[10px] sm:text-xs` with slightly wider padding.
 - **2026-08-18:** Focus management & accessibility pass (SEIHouse Gemini Verification Loop A1–A5):
   - **A1 (Focus & Modal):** Added `aria-modal="true"` to the dialog container, automatic focus placement onto the claim button on transition into the visible state, focus restoration to the previously focused element upon close, a keyboard focus trap for `Tab`/`Shift+Tab` within the dialog, Escape key handling to collapse the dialog to the orb, and focus management when collapsing/expanding.
   - **A2 (Parametric Labels):** Added parametric `aria-label` attributes on both the claim button (`Claim ${qiEarned} Qi & Awaken` / `${qiEarned} Qi, absorbing…`) and collapsed orb (`Open closed-door cultivation reward of ${qiEarned} Qi`) so screen readers announce the exact reward amount.
@@ -46,7 +50,7 @@ The entire SVG cultivator, particle flight animation (`motion/react`), claim/col
 
 ## What changed in Development vs Reference
 
-Development adds `aria-modal="true"` to the dialog container, automatic focus movement to the claim button on entrance, focus restoration on close, focus trapping for Tab navigation within the modal, Escape-to-collapse support, focus coordination with the collapsed orb button, parametric reward amount announcements, live status announcements via `aria-live="polite"`, progression description accessibility linking, and visible focus rings on the collapsed orb button. Reference remains the locked pre-audit replica.
+Development adds `aria-modal="true"` to the dialog container, automatic focus movement to the claim button on entrance, focus restoration on close, focus trapping for Tab navigation within the modal, Escape-to-collapse support, focus coordination with the collapsed orb button, parametric reward amount announcements, live status announcements via `aria-live="polite"`, progression description accessibility linking, visible focus rings on the collapsed orb button, a per-instance `useId` dialog title id (Compare-safe), a local contrast aura and text-shadow behind the "Closed-Door Cultivation" label, and a larger collapsed orb badge. Reference remains the locked pre-audit replica.
 
 ## What was mocked
 

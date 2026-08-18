@@ -38,9 +38,10 @@ describe('ClosedDoorCultivationModal Focus & Accessibility', () => {
     const dialog = container.querySelector('[role="dialog"]');
     expect(dialog).not.toBeNull();
     expect(dialog?.getAttribute('aria-modal')).toBe('true');
-    expect(dialog?.getAttribute('aria-labelledby')).toBe('idle-cultivation-title');
+    expect(dialog?.getAttribute('aria-labelledby')).toMatch(/^cdc-title-/);
 
-    const title = container.querySelector('#idle-cultivation-title');
+    const titleId = dialog?.getAttribute('aria-labelledby');
+    const title = titleId ? container.querySelector(`#${CSS.escape(titleId)}`) : null;
     expect(title).not.toBeNull();
     expect(title?.textContent?.trim()).toBe('Closed-Door Cultivation');
   });

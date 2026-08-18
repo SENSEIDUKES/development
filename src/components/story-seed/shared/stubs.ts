@@ -31,7 +31,7 @@
  *   after a short simulated delay. No network call is ever made.
  */
 
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useRef, useSyncExternalStore } from 'react';
 import { generateUUID } from './id';
 import { normalizeStorySeedPayload } from './referenceIntake';
 import type { IntakeData, StorySeed, StorySeedPayload } from './referenceIntake';
@@ -135,6 +135,22 @@ const mockActions = {
 
 export type MockAppStore = MockAppState & typeof mockActions;
 
+const haveShallowEqualValues = (previous: unknown, next: unknown): boolean => {
+  if (Object.is(previous, next)) return true;
+  if (
+    previous === null || next === null
+    || typeof previous !== 'object' || typeof next !== 'object'
+  ) return false;
+
+  const previousRecord = previous as Record<string, unknown>;
+  const nextRecord = next as Record<string, unknown>;
+  const previousKeys = Object.keys(previousRecord);
+  const nextKeys = Object.keys(nextRecord);
+  return previousKeys.length === nextKeys.length
+    && previousKeys.every(key => Object.prototype.hasOwnProperty.call(nextRecord, key)
+      && Object.is(previousRecord[key], nextRecord[key]));
+};
+
 function useAppStoreBase(): MockAppStore;
 function useAppStoreBase<T>(selector: (store: MockAppStore) => T): T;
 function useAppStoreBase<T>(selector?: (store: MockAppStore) => T): T | MockAppStore {
@@ -144,9 +160,21 @@ function useAppStoreBase<T>(selector?: (store: MockAppStore) => T): T | MockAppS
       listeners.delete(onStoreChange);
     };
   }, []);
-  const snapshot = useSyncExternalStore(subscribe, () => state);
-  const store = { ...snapshot, ...mockActions } as MockAppStore;
-  return selector ? selector(store) : store;
+  const selectorRef = useRef(selector);
+  selectorRef.current = selector;
+  const selectionRef = useRef<{ value: T | MockAppStore } | null>(null);
+  const getSnapshot = useCallback(() => {
+    const store = { ...state, ...mockActions } as MockAppStore;
+    const nextSelection = selectorRef.current
+      ? selectorRef.current(store)
+      : store;
+    if (selectionRef.current && haveShallowEqualValues(selectionRef.current.value, nextSelection)) {
+      return selectionRef.current.value;
+    }
+    selectionRef.current = { value: nextSelection };
+    return nextSelection;
+  }, []);
+  return useSyncExternalStore(subscribe, getSnapshot) as T | MockAppStore;
 }
 
 /** Zustand-shaped stand-in for `store/useAppStore` (selector + getState). */

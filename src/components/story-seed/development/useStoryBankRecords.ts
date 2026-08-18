@@ -26,18 +26,15 @@ export const useStoryBankRecords = (
   const reload = useCallback(() => setReloadVersion(version => version + 1), []);
 
   useEffect(() => {
-    setRecords([]);
-    setLoadError(null);
-    setIsLoading(false);
-  }, [ownerId]);
-
-  useEffect(() => {
     if (!ownerId || !enabled) {
+      setRecords([]);
+      setLoadError(null);
       setIsLoading(false);
       return;
     }
 
     let cancelled = false;
+    setLoadError(null);
     setIsLoading(true);
     listStorySeeds(ownerId)
       .then(nextRecords => {

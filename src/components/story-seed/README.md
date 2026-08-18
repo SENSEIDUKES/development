@@ -211,6 +211,12 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-08-18:** Followed up on accessibility and refresh-state hardening.
+  Custom radio controls now follow the standard single-Tab-stop and arrow-key
+  pattern, Help traps and restores keyboard focus, Blueprint copy feedback is
+  announced, and Story Bank keeps already-loaded records visible while a new
+  owner refreshes. The Workshop store also preserves selector equality so
+  unrelated preview state no longer redraws the Creation flow.
 - **2026-08-18:** Hardened the finalized Story Seed shell for keyboard and
   mobile use. Desktop Settings now contains focus and restores it to its
   trigger, Premise preserves native Tab navigation, and the mobile dock shows

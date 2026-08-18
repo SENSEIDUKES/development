@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import { Check, Flower2, MountainSnow, Scroll, Sparkle, type LucideIcon } from 'lucide-react';
 import { STORY_STYLE_OPTIONS, type StoryStyle } from '../../../shared/storyStyle';
 import { workspaceCompactLabelClass } from '../WorkspaceShell';
+import { handleRadioGroupKeyDown, radioGroupTabIndex } from '../../radioGroupKeyboard';
 
 const TRADITION_TABLET_ACCENT = '#A78BFA';
 const STYLE_PRESENTATION: Record<StoryStyle, { icon: LucideIcon; tint: string }> = {
@@ -24,12 +25,13 @@ export const OriginStyleSelector = ({ selectedStyle, onSelect }: OriginStyleSele
       </span>
     </div>
     <div role="radiogroup" aria-label="Novel tradition" id="story-style-options" className="grid grid-cols-3 gap-2">
-      {STORY_STYLE_OPTIONS.map(option => {
+      {STORY_STYLE_OPTIONS.map((option, index) => {
         const selected = selectedStyle === option.value;
         const { icon: Icon, tint } = STYLE_PRESENTATION[option.value];
         return (
           <button key={option.value} type="button" role="radio" aria-checked={selected} id={`story-style-${option.value}`}
-            onClick={() => onSelect(option.value)} data-selected={selected}
+            tabIndex={radioGroupTabIndex(selected, Boolean(selectedStyle), index)}
+            onClick={() => onSelect(option.value)} onKeyDown={handleRadioGroupKeyDown} data-selected={selected}
             style={{ '--choice-accent': TRADITION_TABLET_ACCENT } as CSSProperties}
             className="glass-choice flex min-h-[4.4rem] flex-col items-center justify-center gap-1.5 px-2 py-2">
             <span

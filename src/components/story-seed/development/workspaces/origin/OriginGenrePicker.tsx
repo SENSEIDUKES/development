@@ -26,6 +26,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { GENRE_PRESETS } from '../../constants';
 import { LibraryTextBox } from '../../../../library';
 import { workspaceCompactLabelClass } from '../WorkspaceShell';
+import { handleRadioGroupKeyDown, radioGroupTabIndex } from '../../radioGroupKeyboard';
 
 const GENRE_PATH_SIGILS: Record<string, LucideIcon> = {
   Xianxia: Sword,
@@ -124,11 +125,13 @@ export const OriginGenrePicker = ({ genre, onChange }: OriginGenrePickerProps) =
             </div>
 
             <div role="radiogroup" aria-label="Story paths" className="mt-4 grid grid-cols-2 gap-2 min-[360px]:grid-cols-3">
-              {GENRE_PRESETS.map(preset => {
+              {GENRE_PRESETS.map((preset, index) => {
                 const selected = trimmedGenre === preset.id;
                 const Sigil = GENRE_PATH_SIGILS[preset.id] ?? Sparkles;
                 return (
-                  <button key={preset.id} type="button" role="radio" aria-checked={selected} onClick={() => { setIsCustomPathOpen(false); onChange(preset.id); }}
+                  <button key={preset.id} type="button" role="radio" aria-checked={selected}
+                    tabIndex={radioGroupTabIndex(selected, GENRE_PRESETS.some(candidate => candidate.id === trimmedGenre), index)}
+                    onClick={() => { setIsCustomPathOpen(false); onChange(preset.id); }} onKeyDown={handleRadioGroupKeyDown}
                     data-selected={selected} style={{ '--choice-accent': GENRE_PATH_ACCENT } as CSSProperties}
                     className="glass-choice flex min-h-[5.5rem] flex-col items-center justify-center gap-2 px-1.5 py-3">
                     <span aria-hidden="true" className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all ${selected ? 'border-[rgba(167,139,250,0.55)] bg-[rgba(167,139,250,0.12)] shadow-[0_0_12px_rgba(167,139,250,0.3)]' : 'border-[rgba(150,166,220,0.2)] bg-[rgba(11,14,30,0.6)]'}`}>

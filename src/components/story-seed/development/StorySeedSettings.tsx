@@ -8,6 +8,7 @@ import {
   setIntendedForMatureAudiences,
   type SeedUpdate,
 } from './seedState';
+import { handleRadioGroupKeyDown, radioGroupTabIndex } from './radioGroupKeyboard';
 
 interface StorySeedSettingsProps {
   seed: StorySeedInput;
@@ -90,7 +91,7 @@ const FateSurvivalSetting = ({ settings, onChange }: FateSurvivalSettingProps) =
         <p className="mt-1 font-sans text-[11px] leading-relaxed text-neutral-500">{subtitle}</p>
       </div>
       <div className="grid gap-2" role="radiogroup" aria-label={title}>
-        {options.map(option => {
+        {options.map((option, index) => {
           const selected = option.value === value;
           return (
             <button
@@ -98,7 +99,9 @@ const FateSurvivalSetting = ({ settings, onChange }: FateSurvivalSettingProps) =
               type="button"
               role="radio"
               aria-checked={selected}
+              tabIndex={radioGroupTabIndex(selected, options.some(candidate => candidate.value === value), index)}
               onClick={() => onSelect(option.value)}
+              onKeyDown={handleRadioGroupKeyDown}
               className={`rounded-xl border p-3 text-left transition-colors ${selected
                 ? 'border-portal/60 bg-portal/10 text-signal shadow-[0_0_24px_rgba(34,211,238,0.08)]'
                 : 'border-neutral-800/80 bg-black/20 text-neutral-400 hover:border-neutral-700 hover:text-signal'

@@ -236,7 +236,7 @@ export const StoryBank = ({
             </span>
             Story Bank
           </h2>
-          {!isLoading && !loadError && seeds.length > 0 && (
+          {!loadError && seeds.length > 0 && (
             <span className="inline-flex items-center gap-2 rounded-full border border-neutral-800 bg-neutral-950/60 px-2.5 py-0.5 font-sc text-[10px] uppercase tracking-widest text-neutral-500">
               {seeds.length} {seeds.length === 1 ? 'Seed' : 'Seeds'} Banked
             </span>
@@ -273,12 +273,13 @@ export const StoryBank = ({
       {importPanel}
 
       <div className="mt-6">
-        {isLoading ? (
-          <p className="font-mono text-[10px] uppercase tracking-wider text-neutral-600" role="status">
-            Loading saved seeds…
+        {isLoading && (
+          <p className="mb-3 font-mono text-[10px] uppercase tracking-wider text-neutral-600" role="status">
+            {seeds.length > 0 ? 'Refreshing saved seeds…' : 'Loading saved seeds…'}
           </p>
-        ) : loadError ? (
-          <div className="rounded-xl border border-red-900/60 bg-red-950/20 px-5 py-6 text-center" role="alert">
+        )}
+        {loadError && (
+          <div className="mb-3 rounded-xl border border-red-900/60 bg-red-950/20 px-5 py-6 text-center" role="alert">
             <AlertTriangle size={20} aria-hidden="true" className="mx-auto text-red-300" />
             <p className="mt-3 font-serif text-[14px] leading-relaxed text-red-100">
               {loadError}
@@ -289,7 +290,8 @@ export const StoryBank = ({
               </LibraryButton>
             )}
           </div>
-        ) : seeds.length === 0 ? (
+        )}
+        {seeds.length === 0 && !isLoading && !loadError ? (
           <div className="rounded-xl border border-dashed border-neutral-800 bg-black/20 px-6 py-10 text-center">
             <span
               aria-hidden="true"
@@ -310,7 +312,7 @@ export const StoryBank = ({
               Import Story Seed
             </LibraryButton>
           </div>
-        ) : (
+        ) : seeds.length > 0 ? (
           <div className="grid grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-2">
             {seeds.map(record => (
               <StoryBankCard
@@ -326,7 +328,7 @@ export const StoryBank = ({
               />
             ))}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   </LibraryPanel>

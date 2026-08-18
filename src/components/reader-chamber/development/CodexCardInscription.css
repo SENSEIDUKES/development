@@ -17,9 +17,13 @@
   color: var(--color-signal);
 }
 
-/* Glyphs settle ~6px upward into place, as if the ink is setting. Fill is
-   `backwards` only so hover transforms keep working after it completes. */
-.codex-inscription--awake .codex-inscription__name {
+/* The title block (name + thread) settles ~6px upward into place, as if the
+   ink is setting. The entrance lives on the title element itself, never on
+   the name span: the hover rule swaps the span's `animation` to the sheen,
+   and if the settle animation shared that element it would restart every
+   time the cursor left the card. Fill is `backwards` only, so the completed
+   entrance never blocks later transitions. */
+.codex-inscription--awake {
   animation: codex-inscription-settle 0.6s ease-out 0.15s backwards;
 }
 
@@ -80,18 +84,26 @@
    single accent sheen passes across the glyphs; the thread glint brightens. */
 @media (hover: hover) and (pointer: fine) {
   .codex-inscription__name {
-    background-image: linear-gradient(
-      100deg,
-      var(--color-signal) 42%,
-      color-mix(in srgb, var(--library-card-accent) 70%, white) 50%,
-      var(--color-signal) 58%
-    );
-    background-size: 300% 100%;
-    background-position: 100% 0;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
     transition: transform 0.3s ease, letter-spacing 0.3s ease;
+  }
+
+  /* The sheen paints the glyphs through a clipped gradient with transparent
+     glyph color — without background-clip: text that would hide the name,
+     so the whole gradient treatment is gated on support. */
+  @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    .codex-inscription__name {
+      background-image: linear-gradient(
+        100deg,
+        var(--color-signal) 42%,
+        color-mix(in srgb, var(--library-card-accent) 70%, white) 50%,
+        var(--color-signal) 58%
+      );
+      background-size: 300% 100%;
+      background-position: 100% 0;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
   }
 
   .group\/reveal:hover .codex-inscription__name {
@@ -112,7 +124,7 @@
 
 /* Reduced motion: everything rests in its final inscribed state. */
 @media (prefers-reduced-motion: reduce) {
-  .codex-inscription--awake .codex-inscription__name,
+  .codex-inscription--awake,
   .codex-inscription--awake .codex-inscription__thread-base,
   .codex-inscription--awake .codex-inscription__thread-shimmer {
     animation: none;

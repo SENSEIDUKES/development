@@ -2,7 +2,7 @@ import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 
 const PORTAL_RGB = '4,172,255';
-const COLLAPSE_AFTER_MS = 7000;
+const COLLAPSE_AFTER_MS = 5000;
 const CLAIM_CLOSE_MS = 2500;
 
 /**
@@ -358,6 +358,7 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
   const [absorb, setAbsorb] = useState<Absorb | null>(null);
   const [flight, setFlight] = useState<Flight | null>(null);
   const [claimStatus, setClaimStatus] = useState<string | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
   const bubbleRef = useRef<HTMLDivElement | null>(null);
   const figureRef = useRef<HTMLDivElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -407,22 +408,22 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
     }
   }, [qiEarned, collapsed, isClaiming]);
 
-  // Focus trap and Escape key listener while the modal dialog is open
+  // Focus trap and Escape key listener on document while modal is open
   useEffect(() => {
-    if (qiEarned === null || collapsed || isClaiming) return;
+    if (qiEarned === null || isClaiming) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        setCollapsed(true);
+        onClose();
         return;
       }
 
-      if (e.key === 'Tab') {
+      if (e.key === 'Tab' && !collapsed) {
         const dialog = dialogRef.current;
         if (!dialog) return;
         const focusables = dialog.querySelectorAll<HTMLElement>(
-          'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          'button:not([disabled]):not([tabindex="-1"]), [tabindex]:not([tabindex="-1"])'
         );
         if (focusables.length === 0) return;
         const first = focusables[0];
@@ -442,15 +443,28 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [qiEarned, collapsed, isClaiming]);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [qiEarned, isClaiming, collapsed, onClose]);
 
   // If the reward sits unclaimed, fold the vignette away into a tiny waiting icon.
   useEffect(() => {
     if (qiEarned === null || isClaiming || collapsed) return;
     const timer = setTimeout(() => setCollapsed(true), COLLAPSE_AFTER_MS);
     return () => clearTimeout(timer);
+  }, [qiEarned, isClaiming, collapsed]);
+
+  // Collapse on the first interaction with the page behind the scrim: the scrim is
+  // pointer-events-none, so a tap anywhere outside the vignette means the user has
+  // moved on — respect it instead of holding the dim for the full timer.
+  useEffect(() => {
+    if (qiEarned === null || isClaiming || collapsed) return;
+    const handlePointerDown = (e: PointerEvent) => {
+      if (dialogRef.current?.contains(e.target as Node)) return;
+      setCollapsed(true);
+    };
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    return () => document.removeEventListener('pointerdown', handlePointerDown, true);
   }, [qiEarned, isClaiming, collapsed]);
 
   // Start each new reward cycle fresh and restore focus when the modal closes.
@@ -463,6 +477,7 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
       setCollapsed(false);
       setIsClaiming(false);
       setClaimStatus(null);
+      setClaimError(null);
       if (previousActiveElementRef.current) {
         previousActiveElementRef.current.focus();
         previousActiveElementRef.current = null;
@@ -482,6 +497,7 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
   const handleClaim = async () => {
     if (isClaiming || !qiEarned) return;
     setIsClaiming(true);
+    setClaimError(null);
     setClaimStatus(`Absorbing ${qiEarned} Qi…`);
 
     // Phase 1: particles pour from the cloud down into the cultivator's dantian (~62% down the figure).
@@ -515,6 +531,7 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
       setIsClaiming(false);
       setAbsorb(null);
       setFlight(null);
+      setClaimError("Couldn't reach the Library. Tap the cloud to try again.");
       setClaimStatus("Could not claim reward. Tap to retry.");
       return;
     }
@@ -567,6 +584,8 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
               ref={collapsedButtonRef}
               key="cdc-collapsed"
               type="button"
+              tabIndex={collapsed && !isClaiming ? 0 : -1}
+              aria-hidden={!collapsed || isClaiming}
               onClick={() => setCollapsed(false)}
               initial={{ opacity: 0, scale: 0.6 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -609,7 +628,7 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
               className="fixed inset-x-0 bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] sm:inset-x-auto sm:right-6 sm:justify-end lg:bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] z-[100] flex justify-center pointer-events-none"
             >
               {/* The cloud and the cultivator's body are one tap target — swipes everywhere else pass through to the page. */}
-              <div className="relative pointer-events-none flex flex-col items-center px-6">
+              <div tabIndex={-1} className="relative pointer-events-none flex flex-col items-center px-6 focus:outline-none">
                 {/* soft dark ink aura: gently obscures whatever is underneath, no hard box */}
                 <div
                   aria-hidden="true"
@@ -626,7 +645,8 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
 
                 {/* progression block: how long the user has walked the Library's path */}
                 <motion.div
-                  className="relative flex flex-col items-center mb-1 sm:mb-2 pointer-events-none"
+                  tabIndex={-1}
+                  className="relative flex flex-col items-center mb-1 sm:mb-2 pointer-events-none focus:outline-none"
                   animate={isClaiming ? { opacity: 0, y: -8 } : { opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}
                 >
@@ -672,7 +692,9 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
                   ref={claimButtonRef}
                   type="button"
                   onClick={handleClaim}
-                  disabled={isClaiming}
+                  disabled={isClaiming || collapsed}
+                  tabIndex={!collapsed && !isClaiming ? 0 : -1}
+                  aria-hidden={collapsed || isClaiming}
                   aria-label={isClaiming ? `${qiEarned} Qi, absorbing…` : `Claim ${qiEarned} Qi & Awaken`}
                   aria-describedby={`${daysId} ${quoteId}`}
                   className="relative flex flex-col items-center rounded-[2rem] pointer-events-auto touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-portal/60"
@@ -759,6 +781,21 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
                     <CultivatorFigure claiming={isClaiming} calm={!!reduceMotion} />
                   </div>
                 </button>
+
+                {/* visible retry affordance after a failed claim — the sr-only status above
+                    announces it to screen readers; this line is for sighted users who would
+                    otherwise just see a cloud that didn't disperse */}
+                {claimError && !isClaiming && (
+                  <motion.span
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    className="relative mt-1 font-display italic text-sm sm:text-base lg:text-lg text-cyan-200/90 text-center"
+                    style={{ textShadow: `0 0 10px rgba(${PORTAL_RGB},0.5)` }}
+                  >
+                    {claimError}
+                  </motion.span>
+                )}
 
                 <span
                   id={titleId}

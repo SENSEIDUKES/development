@@ -8,8 +8,12 @@
 - **Last source comparison:** 2026-07-30
 - **Replica status:** development focus & accessibility enhancements
 
-## Workshop history
-
+- **2026-08-18:** Keyboard / focus behavior pass (SEIHouse Gemini Verification Loop K1–K2):
+  - **K1 (Escape Dismissal):** Added a `keydown` listener on `document` while `qiEarned !== null && !isClaiming` that dismisses the vignette by calling `onClose()`. The listener is detached during claim animation (`isClaiming === true`) and on unmount so Escape cannot fire mid-animation.
+  - **K2 (Predictable Tab Order & Trap):** Added active focus trapping within the dialog container (`dialogRef.current`) on `Tab`/`Shift+Tab` when expanded, `tabIndex={-1}` on decorative vignette wrapper and progression containers, and strict `tabIndex={-1}` / `aria-hidden="true"` handling on the collapsed button and expanded claim button during exit/transition states to guarantee Tab order never leaks out into background library cards.
+- **2026-08-18:** UX pass (SEIHouse Gemini Verification Loop U2–U3):
+  - **U2 (Auto-Collapse Timing & Agency):** `COLLAPSE_AFTER_MS` drops from 7s to 5s, and a capture-phase `pointerdown` listener on `document` now collapses the vignette on the first interaction with the page behind the (pointer-events-none) scrim. Taps landing inside the dialog itself are ignored, so claiming never collapses the modal by accident.
+  - **U3 (Visible Retry Affordance):** A failed claim now renders an inline status line under the cloud — "Couldn't reach the Library. Tap the cloud to try again." — styled to match the progression quote so it doesn't visually pop. It clears on the next claim attempt and on reward-cycle reset; the sr-only `aria-live` announcement from A4 remains the screen-reader channel.
 - **2026-08-18:** Performance pass (SEIHouse Gemini Verification Loop P1–P4):
   - **P1 (Deterministic Low-Power Gate):** Replaced the per-render `isLowPowerDevice()` calls with a single module-load `LOW_POWER_DEVICE` constant. The hardware heuristic gates the scrim backdrop blur and the 30→14 / 26→12 particle trims — the two largest perf levers in the file — so it is now computed once and cannot drift across render passes.
   - **P2 (Per-Instance Gradient Id Intent):** Documented that `CultivatorSvg`'s `useId` gradient id is deliberately per-instance (collapsed orb + expanded vignette, or Compare view) and must not be hoisted to the parent.
@@ -55,7 +59,7 @@ The entire SVG cultivator, particle flight animation (`motion/react`), claim/col
 
 ## What changed in Development vs Reference
 
-Development adds `aria-modal="true"` to the dialog container, automatic focus movement to the claim button on entrance, focus restoration on close, focus trapping for Tab navigation within the modal, Escape-to-collapse support, focus coordination with the collapsed orb button, parametric reward amount announcements, live status announcements via `aria-live="polite"`, progression description accessibility linking, visible focus rings on the collapsed orb button, a per-instance `useId` dialog title id (Compare-safe), a local contrast aura and text-shadow behind the "Closed-Door Cultivation" label, a larger collapsed orb badge, a module-load `LOW_POWER_DEVICE` constant in place of per-render hardware checks, a low-power tier that drops the two large ink-aura blur layers, and a framer-motion shimmer sweep in place of SMIL. Reference remains the locked pre-audit replica.
+Development adds `aria-modal="true"` to the dialog container, automatic focus movement to the claim button on entrance, focus restoration on close, Escape-to-dismiss support (detached during claim animation), focus trapping for Tab navigation within the modal, focus coordination with the collapsed orb button, parametric reward amount announcements, live status announcements via `aria-live="polite"`, progression description accessibility linking, visible focus rings on the collapsed orb button, a per-instance `useId` dialog title id (Compare-safe), a local contrast aura and text-shadow behind the "Closed-Door Cultivation" label, a larger collapsed orb badge, a module-load `LOW_POWER_DEVICE` constant in place of per-render hardware checks, a low-power tier that drops the two large ink-aura blur layers, a framer-motion shimmer sweep in place of SMIL, a shorter 5s auto-collapse timer plus collapse-on-first-page-interaction, and a visible retry message after a failed claim. Reference remains the locked pre-audit replica.
 
 ## What was mocked
 
@@ -64,7 +68,7 @@ Nothing in the component itself: the production component is props-driven (`qiEa
 ### Available Preview States
 
 - No Qi (hidden)
-- +11 Qi / +350 Qi / +9999 Qi (auto-collapses to a floating orb after 7s)
+- +11 Qi / +350 Qi / +9999 Qi (auto-collapses to a floating orb after 5s, or on the first tap outside the vignette)
 - Claiming animation (tap the cloud)
 
 ### Production dependencies excluded

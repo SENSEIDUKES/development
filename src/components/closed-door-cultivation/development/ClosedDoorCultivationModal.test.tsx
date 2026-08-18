@@ -115,12 +115,13 @@ describe('ClosedDoorCultivationModal Focus & Accessibility', () => {
     triggerButton.remove();
   });
 
-  it('collapses the dialog when pressing Escape', async () => {
+  it('dismisses the dialog when pressing Escape (K1)', async () => {
+    const onClose = vi.fn();
     await act(async () => {
       root.render(
         <ClosedDoorCultivationModal
           qiEarned={150}
-          onClose={vi.fn()}
+          onClose={onClose}
           onClaim={vi.fn()}
           daysCultivating={7}
         />
@@ -130,20 +131,53 @@ describe('ClosedDoorCultivationModal Focus & Accessibility', () => {
     await new Promise((resolve) => requestAnimationFrame(resolve));
     expect(container.querySelector('[role="dialog"]')).not.toBeNull();
 
-    // Press Escape
+    // Press Escape on document
     act(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not dismiss when pressing Escape while claiming (K1)', async () => {
+    const onClose = vi.fn();
+    let resolveClaim: () => void = () => undefined;
+    const onClaim = vi.fn(() => new Promise<void>((res) => { resolveClaim = res; }));
+
+    await act(async () => {
+      root.render(
+        <ClosedDoorCultivationModal
+          qiEarned={150}
+          onClose={onClose}
+          onClaim={onClaim}
+          daysCultivating={7}
+        />
+      );
     });
 
     await new Promise((resolve) => requestAnimationFrame(resolve));
+    const claimButton = container.querySelector<HTMLButtonElement>('button[aria-label="Claim 150 Qi & Awaken"]');
+    expect(claimButton).not.toBeNull();
 
-    // Collapsed orb should be rendered and focused with parametric label
-    const collapsedOrb = container.querySelector<HTMLButtonElement>('button[aria-label="Open closed-door cultivation reward of 150 Qi"]');
-    expect(collapsedOrb).not.toBeNull();
-    expect(document.activeElement).toBe(collapsedOrb);
+    // Trigger claim
+    await act(async () => {
+      claimButton?.click();
+    });
+
+    // Press Escape during claim animation
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+
+    expect(onClose).not.toHaveBeenCalled();
+
+    // Clean up claim
+    await act(async () => {
+      resolveClaim();
+    });
   });
 
-  it('traps focus inside the dialog when Tab is pressed', async () => {
+  it('traps focus inside the dialog when Tab is pressed (K2)', async () => {
     await act(async () => {
       root.render(
         <ClosedDoorCultivationModal
@@ -163,7 +197,7 @@ describe('ClosedDoorCultivationModal Focus & Accessibility', () => {
     // Press Tab
     const tabEvent = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
     act(() => {
-      window.dispatchEvent(tabEvent);
+      document.dispatchEvent(tabEvent);
     });
 
     expect(tabEvent.defaultPrevented).toBe(true);
@@ -172,7 +206,7 @@ describe('ClosedDoorCultivationModal Focus & Accessibility', () => {
     // Press Shift+Tab
     const shiftTabEvent = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
     act(() => {
-      window.dispatchEvent(shiftTabEvent);
+      document.dispatchEvent(shiftTabEvent);
     });
 
     expect(shiftTabEvent.defaultPrevented).toBe(true);
@@ -180,36 +214,43 @@ describe('ClosedDoorCultivationModal Focus & Accessibility', () => {
   });
 
   it('cycles focus back to claim button when expanding from collapsed orb', async () => {
-    await act(async () => {
-      root.render(
-        <ClosedDoorCultivationModal
-          qiEarned={150}
-          onClose={vi.fn()}
-          onClaim={vi.fn()}
-          daysCultivating={7}
-        />
-      );
-    });
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      await act(async () => {
+        root.render(
+          <ClosedDoorCultivationModal
+            qiEarned={150}
+            onClose={vi.fn()}
+            onClaim={vi.fn()}
+            daysCultivating={7}
+          />
+        );
+      });
 
-    // Collapse via Escape
-    act(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    });
+      // Auto-collapse after 5s timeout
+      await act(async () => {
+        vi.advanceTimersByTime(5000);
+      });
 
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-    const collapsedOrb = container.querySelector<HTMLButtonElement>('button[aria-label="Open closed-door cultivation reward of 150 Qi"]');
-    expect(collapsedOrb).not.toBeNull();
-    expect(document.activeElement).toBe(collapsedOrb);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
 
-    // Expand
-    act(() => {
-      collapsedOrb?.click();
-    });
+      const collapsedOrb = container.querySelector<HTMLButtonElement>('button[aria-label="Open closed-door cultivation reward of 150 Qi"]');
+      expect(collapsedOrb).not.toBeNull();
+      expect(document.activeElement).toBe(collapsedOrb);
 
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-    const claimButton = container.querySelector<HTMLButtonElement>('button[aria-label="Claim 150 Qi & Awaken"]');
-    expect(claimButton).not.toBeNull();
-    expect(document.activeElement).toBe(claimButton);
+      // Expand
+      act(() => {
+        collapsedOrb?.click();
+      });
+
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
+      const claimButton = container.querySelector<HTMLButtonElement>('button[aria-label="Claim 150 Qi & Awaken"]');
+      expect(claimButton).not.toBeNull();
+      expect(document.activeElement).toBe(claimButton);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('announces the reward amount while claiming', async () => {
@@ -344,6 +385,39 @@ describe('ClosedDoorCultivationModal Focus & Accessibility', () => {
   });
 
   it('includes visible focus ring classes on the collapsed orb button (A5)', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      await act(async () => {
+        root.render(
+          <ClosedDoorCultivationModal
+            qiEarned={150}
+            onClose={vi.fn()}
+            onClaim={vi.fn()}
+            daysCultivating={7}
+          />
+        );
+      });
+
+      // Auto-collapse
+      await act(async () => {
+        vi.advanceTimersByTime(5000);
+      });
+
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
+      const collapsedOrb = container.querySelector<HTMLButtonElement>('button[aria-label="Open closed-door cultivation reward of 150 Qi"]');
+      expect(collapsedOrb).not.toBeNull();
+
+      expect(collapsedOrb?.className).toContain('focus-visible:ring-2');
+      expect(collapsedOrb?.className).toContain('focus-visible:ring-portal/60');
+      expect(collapsedOrb?.className).toContain('focus-visible:ring-offset-2');
+      expect(collapsedOrb?.className).toContain('focus-visible:ring-offset-[#05080f]');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('collapses to the orb on the first pointerdown outside the dialog (U2)', async () => {
     await act(async () => {
       root.render(
         <ClosedDoorCultivationModal
@@ -355,18 +429,99 @@ describe('ClosedDoorCultivationModal Focus & Accessibility', () => {
       );
     });
 
-    // Collapse
+    expect(container.querySelector('[role="dialog"]')).not.toBeNull();
+
+    // Tap the page behind the (pointer-events-none) scrim
     act(() => {
-      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
     });
 
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-    const collapsedOrb = container.querySelector<HTMLButtonElement>('button[aria-label="Open closed-door cultivation reward of 150 Qi"]');
-    expect(collapsedOrb).not.toBeNull();
+    // Let the AnimatePresence exit animation finish before asserting removal
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    });
 
-    expect(collapsedOrb?.className).toContain('focus-visible:ring-2');
-    expect(collapsedOrb?.className).toContain('focus-visible:ring-portal/60');
-    expect(collapsedOrb?.className).toContain('focus-visible:ring-offset-2');
-    expect(collapsedOrb?.className).toContain('focus-visible:ring-offset-[#05080f]');
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    expect(
+      container.querySelector('button[aria-label="Open closed-door cultivation reward of 150 Qi"]')
+    ).not.toBeNull();
+  });
+
+  it('does not collapse when the pointerdown lands inside the dialog (U2)', async () => {
+    await act(async () => {
+      root.render(
+        <ClosedDoorCultivationModal
+          qiEarned={150}
+          onClose={vi.fn()}
+          onClaim={vi.fn()}
+          daysCultivating={7}
+        />
+      );
+    });
+
+    const dialog = container.querySelector('[role="dialog"]');
+    expect(dialog).not.toBeNull();
+
+    act(() => {
+      dialog!.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    });
+
+    expect(container.querySelector('[role="dialog"]')).not.toBeNull();
+  });
+
+  it('shows a visible retry message after a failed claim and clears it on the next attempt (U3)', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    let rejectClaim: (e: Error) => void = () => undefined;
+    let resolveClaim: () => void = () => undefined;
+    const onClaim = vi.fn(
+      () =>
+        new Promise<void>((res, rej) => {
+          resolveClaim = res;
+          rejectClaim = rej;
+        })
+    );
+
+    await act(async () => {
+      root.render(
+        <ClosedDoorCultivationModal
+          qiEarned={150}
+          onClose={vi.fn()}
+          onClaim={onClaim}
+          daysCultivating={7}
+        />
+      );
+    });
+
+    const claimButton = container.querySelector<HTMLButtonElement>('button[aria-label="Claim 150 Qi & Awaken"]');
+    expect(claimButton).not.toBeNull();
+
+    // Fail the claim
+    await act(async () => {
+      claimButton?.click();
+    });
+    await act(async () => {
+      rejectClaim(new Error('Network error'));
+    });
+
+    const retryMessage = Array.from(container.querySelectorAll('span')).find(
+      (el) => el.textContent?.trim() === "Couldn't reach the Library. Tap the cloud to try again."
+    );
+    expect(retryMessage).toBeTruthy();
+
+    // Retry: the message clears as soon as the next attempt starts
+    const retryButton = container.querySelector<HTMLButtonElement>('button[aria-label="Claim 150 Qi & Awaken"]');
+    await act(async () => {
+      retryButton?.click();
+    });
+    const cleared = Array.from(container.querySelectorAll('span')).find(
+      (el) => el.textContent?.trim() === "Couldn't reach the Library. Tap the cloud to try again."
+    );
+    expect(cleared).toBeUndefined();
+
+    // Finish cleanly
+    await act(async () => {
+      resolveClaim();
+    });
+    errorSpy.mockRestore();
   });
 });

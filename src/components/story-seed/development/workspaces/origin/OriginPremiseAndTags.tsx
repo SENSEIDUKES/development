@@ -227,21 +227,9 @@ export const OriginPremiseAndTags = ({
           setDismissedGhostKey(null);
           onPremiseChange(value);
         }}
-        onKeyDown={event => {
-          if (event.key !== 'Tab') return;
-          if (!premise.trim()) {
-            event.preventDefault();
-            onPremiseChange(premiseExample);
-            return;
-          }
-          if (ghostSuggestion) {
-            event.preventDefault();
-            if (addTag(ghostSuggestion)) setDismissedGhostKey(ghostSuggestionKey);
-          }
-        }}
         rows={6}
         placeholder={premiseExample}
-        helpText={premise.trim() ? undefined : 'Example shown as ghost text — press Tab to use it, or the dragon for another.'}
+        helpText={premise.trim() ? undefined : 'Example shown as ghost text — use the dragon to view another.'}
         rightElement={premise.trim() ? undefined : (
           <button
             type="button"
@@ -264,11 +252,11 @@ export const OriginPremiseAndTags = ({
               onClick={() => {
                 if (addTag(ghostSuggestion)) setDismissedGhostKey(ghostSuggestionKey);
               }}
-              title="Click or press Tab to weave this tag into your Story Tags"
+              title="Add this suggestion to your Story Tags"
               className="story-seed-touch-target absolute bottom-2.5 right-2.5 flex min-w-0 max-w-[80%] items-center gap-1.5 rounded-lg border border-portal/40 bg-[#0b0e1e]/90 px-2.5 py-1 font-mono text-[10px] tracking-wider text-portal shadow-[0_0_12px_rgba(4,172,255,0.15)] transition-all hover:border-portal hover:text-signal sm:max-w-full"
             >
               <Sparkles size={11} className="animate-pulse text-portal" />
-              <span className="truncate">Tab: {ghostSuggestion}</span>
+              <span className="truncate">Add tag: {ghostSuggestion}</span>
             </motion.button>
           )}
         </AnimatePresence>

@@ -588,9 +588,9 @@ export const GENRE_PRESETS = [
  * field (the textarea placeholder) to teach the SEN premise style: short,
  * sharp, high-concept hooks with light-novel/webnovel energy — one strange
  * story engine, one escalation promise; never a full synopsis, a paragraph,
- * or a lore dump. Static list: no AI call, no storage. The example becomes
- * real text only when the user presses Tab in the empty field, so user-typed
- * text is never overwritten. (A future user-saved premise bank is a separate
+ * or a lore dump. Static list: no AI call, no storage. The example remains
+ * reference-only placeholder text, so keyboard navigation and user-typed
+ * text are never overwritten. (A future user-saved premise bank is a separate
  * feature and is not built from this list.)
  */
 export const CURATED_PREMISE_EXAMPLES: Record<StoryStyle, string[]> = {

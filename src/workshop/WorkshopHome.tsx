@@ -136,9 +136,7 @@ function EdgeOrbit({ side }: { side: 'left' | 'right' }) {
 export function WorkshopHome() {
   const [activeTab, setActiveTab] = useState<HomeTab>('development');
   const isDevelopment = activeTab === 'development';
-  const visibleEntries = workshopEntries.filter(
-    (entry) => getWorkshopTrack(entry.version) === 'development',
-  );
+  const visibleEntries = workshopEntries;
 
   return (
     <main className="workshop-home">

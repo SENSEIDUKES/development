@@ -134,20 +134,20 @@ describe('CardWorkshopView', () => {
     }
 
     expect(container.textContent).toContain('Codex Cards');
-    expect(container.textContent).toContain('Reveal · Human Portrait');
+    expect(container.querySelector('[role="tabpanel"]')?.textContent).toContain('Human Portrait');
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
 
     await act(async () => {
       tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
     });
     expect(tabs[1].getAttribute('aria-selected')).toBe('true');
-    expect(container.textContent).toContain('Reveal · Non-Human Portrait');
+    expect(container.querySelector('[role="tabpanel"]')?.textContent).toContain('Non-Human Portrait');
     expect(document.activeElement).toBe(tabs[1]);
 
     await clickButton('Highlighted Bestiary Species');
     expect(container.textContent).toContain('World Cards');
     expect(container.textContent).toContain('Apex Abyss Beast');
-    expect(container.textContent).not.toContain('Reveal · Human Portrait');
+    expect(container.querySelector('[role="tabpanel"]')?.textContent).not.toContain('Human Portrait');
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
   });
 
@@ -235,12 +235,12 @@ describe('CardWorkshopView', () => {
     expect(getButton('Manifest portrait for Lei')).toBeTruthy();
 
     await selectByLabel('Codex entry state', 'missing');
-    expect(container.textContent).not.toContain('Reveal · character');
+    expect(getButton('Manifest portrait for Lei')).toBeFalsy();
     await selectByLabel('Codex entry state', 'present');
     await selectByLabel('Entity mention state', 'reference');
-    expect(container.textContent).not.toContain('Reveal · character');
+    expect(getButton('Manifest portrait for Lei')).toBeFalsy();
     await selectByLabel('Entity mention state', 'reveal');
-    expect(container.textContent).toContain('Reveal · character');
+    expect(getButton('Manifest portrait for Lei')).toBeTruthy();
     await selectByLabel('Image state', 'existing');
     await selectByLabel('Portrait kind', 'human');
     expect(container.querySelector('img[alt="Lei"]')?.getAttribute('src'))

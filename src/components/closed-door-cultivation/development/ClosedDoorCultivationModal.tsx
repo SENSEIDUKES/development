@@ -350,12 +350,19 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
   const [collapsed, setCollapsed] = useState(false);
   const [absorb, setAbsorb] = useState<Absorb | null>(null);
   const [flight, setFlight] = useState<Flight | null>(null);
+  const [claimStatus, setClaimStatus] = useState<string | null>(null);
   const bubbleRef = useRef<HTMLDivElement | null>(null);
   const figureRef = useRef<HTMLDivElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const claimButtonRef = useRef<HTMLButtonElement | null>(null);
+  const collapsedButtonRef = useRef<HTMLButtonElement | null>(null);
+  const previousActiveElementRef = useRef<HTMLElement | null>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cloudGradId = `cdc-cloud-${useId()}`;
   const cloudClipId = `cdc-cloudclip-${useId()}`;
   const shimmerGradId = `cdc-shimmer-${useId()}`;
+  const daysId = `cdc-days-${useId()}`;
+  const quoteId = `cdc-quote-${useId()}`;
   const reduceMotion = useReducedMotion();
   const lowPower = reduceMotion || isLowPowerDevice();
   const days = Math.max(1, Math.floor(daysCultivating));
@@ -370,6 +377,67 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
     return progressionQuote(days);
   }, [qiEarned, days]);
 
+  // Focus management: store previous active element and move focus to claim button or collapsed orb
+  useEffect(() => {
+    if (qiEarned !== null && !collapsed && !isClaiming) {
+      if (!previousActiveElementRef.current && typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+        previousActiveElementRef.current = document.activeElement;
+      }
+      const timer = requestAnimationFrame(() => {
+        claimButtonRef.current?.focus();
+      });
+      return () => cancelAnimationFrame(timer);
+    }
+  }, [qiEarned, collapsed, isClaiming]);
+
+  useEffect(() => {
+    if (qiEarned !== null && collapsed && !isClaiming) {
+      const timer = requestAnimationFrame(() => {
+        collapsedButtonRef.current?.focus();
+      });
+      return () => cancelAnimationFrame(timer);
+    }
+  }, [qiEarned, collapsed, isClaiming]);
+
+  // Focus trap and Escape key listener while the modal dialog is open
+  useEffect(() => {
+    if (qiEarned === null || collapsed || isClaiming) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setCollapsed(true);
+        return;
+      }
+
+      if (e.key === 'Tab') {
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+        const focusables = dialog.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === first || !dialog.contains(document.activeElement)) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last || !dialog.contains(document.activeElement)) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [qiEarned, collapsed, isClaiming]);
+
   // If the reward sits unclaimed, fold the vignette away into a tiny waiting icon.
   useEffect(() => {
     if (qiEarned === null || isClaiming || collapsed) return;
@@ -377,7 +445,7 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
     return () => clearTimeout(timer);
   }, [qiEarned, isClaiming, collapsed]);
 
-  // Start each new reward cycle fresh.
+  // Start each new reward cycle fresh and restore focus when the modal closes.
   useEffect(() => {
     if (qiEarned === null) {
       if (closeTimeoutRef.current) {
@@ -386,18 +454,27 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
       }
       setCollapsed(false);
       setIsClaiming(false);
+      setClaimStatus(null);
+      if (previousActiveElementRef.current) {
+        previousActiveElementRef.current.focus();
+        previousActiveElementRef.current = null;
+      }
     }
   }, [qiEarned]);
 
   useEffect(() => {
     return () => {
       if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+      if (previousActiveElementRef.current) {
+        previousActiveElementRef.current.focus();
+      }
     };
   }, []);
 
   const handleClaim = async () => {
     if (isClaiming || !qiEarned) return;
     setIsClaiming(true);
+    setClaimStatus(`Absorbing ${qiEarned} Qi…`);
 
     // Phase 1: particles pour from the cloud down into the cultivator's dantian (~62% down the figure).
     const bubble = bubbleRef.current?.getBoundingClientRect();
@@ -430,8 +507,10 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
       setIsClaiming(false);
       setAbsorb(null);
       setFlight(null);
+      setClaimStatus("Could not claim reward. Tap to retry.");
       return;
     }
+    setClaimStatus(`Claimed ${qiEarned} Qi.`);
     if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
     // Close CLAIM_CLOSE_MS after the claim STARTED so the claim sequence
     // always gets its full moment regardless of network latency.
@@ -446,6 +525,9 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
 
   return (
     <>
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {claimStatus}
+      </div>
       {absorb && <CloudAbsorb absorb={absorb} />}
       {flight && <QiFlight flight={flight} />}
       <AnimatePresence>
@@ -474,14 +556,15 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
         {qiEarned !== null &&
           (collapsed && !isClaiming ? (
             <motion.button
+              ref={collapsedButtonRef}
               key="cdc-collapsed"
               type="button"
               onClick={() => setCollapsed(false)}
               initial={{ opacity: 0, scale: 0.6 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.6 }}
-              className="fixed right-4 bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] sm:right-6 lg:bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] z-[100] w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#05080f]/95 backdrop-blur-lg border border-portal/40 shadow-[0_8px_24px_rgba(0,0,0,0.65),0_0_0_1px_rgba(4,172,255,0.12)] flex items-center justify-center overflow-visible touch-manipulation"
-              aria-label="Open closed-door cultivation reward"
+              className="fixed right-4 bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] sm:right-6 lg:bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] z-[100] w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#05080f]/95 backdrop-blur-lg border border-portal/40 shadow-[0_8px_24px_rgba(0,0,0,0.65),0_0_0_1px_rgba(4,172,255,0.12)] flex items-center justify-center overflow-visible touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-portal/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05080f]"
+              aria-label={`Open closed-door cultivation reward of ${qiEarned} Qi`}
             >
               {/* soft ink aura so the orb sits on shadow instead of competing artwork */}
               <div
@@ -505,9 +588,12 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
             </motion.button>
           ) : (
             <motion.div
+              ref={dialogRef}
               key="cdc-vignette"
               role="dialog"
+              aria-modal="true"
               aria-labelledby="idle-cultivation-title"
+              aria-describedby={`${daysId} ${quoteId}`}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 12 }}
@@ -528,7 +614,6 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
 
                 {/* progression block: how long the user has walked the Library's path */}
                 <motion.div
-                  aria-hidden="true"
                   className="relative flex flex-col items-center mb-1 sm:mb-2 pointer-events-none"
                   animate={isClaiming ? { opacity: 0, y: -8 } : { opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -537,6 +622,7 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
                     Days Cultivating
                   </span>
                   <span
+                    id={daysId}
                     className="mt-1 font-display font-bold text-3xl sm:text-4xl lg:text-5xl text-cyan-50 tracking-[0.15em] whitespace-nowrap"
                     style={{ textShadow: `0 0 12px rgba(${PORTAL_RGB},0.9), 0 0 32px rgba(${PORTAL_RGB},0.45)` }}
                   >
@@ -559,6 +645,7 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
                     />
                   </span>
                   <motion.span
+                    id={quoteId}
                     className="mt-1.5 font-display italic text-sm sm:text-base lg:text-lg text-cyan-200/90"
                     style={{ textShadow: `0 0 10px rgba(${PORTAL_RGB},0.5)` }}
                     animate={reduceMotion ? { opacity: 0.9 } : { opacity: [0.72, 1, 0.72] }}
@@ -570,10 +657,12 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
 
                 {/* single hit area spanning the cloud down through the cultivator's body — tap either to claim */}
                 <button
+                  ref={claimButtonRef}
                   type="button"
                   onClick={handleClaim}
                   disabled={isClaiming}
-                  aria-label={isClaiming ? 'Absorbing Qi...' : 'Claim & Awaken'}
+                  aria-label={isClaiming ? `${qiEarned} Qi, absorbing…` : `Claim ${qiEarned} Qi & Awaken`}
+                  aria-describedby={`${daysId} ${quoteId}`}
                   className="relative flex flex-col items-center rounded-[2rem] pointer-events-auto touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-portal/60"
                 >
                 {/* thought cloud of condensed qi */}

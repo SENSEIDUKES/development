@@ -4,12 +4,18 @@
 - **Source location:** `src/components/ClosedDoorCultivationModal.tsx`
 - **Workshop preview:** `?preview=idle-cultivation`
 - **Replica created:** 2026-07-29
-- **Last Workshop update:** 2026-08-17
+- **Last Workshop update:** 2026-08-18
 - **Last source comparison:** 2026-07-30
-- **Replica status:** synced with production
+- **Replica status:** development focus & accessibility enhancements
 
 ## Workshop history
 
+- **2026-08-18:** Focus management & accessibility pass (SEIHouse Gemini Verification Loop A1–A5):
+  - **A1 (Focus & Modal):** Added `aria-modal="true"` to the dialog container, automatic focus placement onto the claim button on transition into the visible state, focus restoration to the previously focused element upon close, a keyboard focus trap for `Tab`/`Shift+Tab` within the dialog, Escape key handling to collapse the dialog to the orb, and focus management when collapsing/expanding.
+  - **A2 (Parametric Labels):** Added parametric `aria-label` attributes on both the claim button (`Claim ${qiEarned} Qi & Awaken` / `${qiEarned} Qi, absorbing…`) and collapsed orb (`Open closed-door cultivation reward of ${qiEarned} Qi`) so screen readers announce the exact reward amount.
+  - **A3 (Progression Descriptions):** Removed `aria-hidden="true"` from the progression text container and linked the day count (`daysId`) and milestone quote (`quoteId`) to both the dialog and claim button via `aria-describedby`, while keeping purely decorative ornaments `aria-hidden="true"`.
+  - **A4 (Status Announcements):** Added a polite `aria-live="polite"` status region that announces absorption in progress (`Absorbing ${qiEarned} Qi…`), successful claim (`Claimed ${qiEarned} Qi.`), and network/claim errors (`Could not claim reward. Tap to retry.`).
+  - **A5 (Collapsed Focus Ring):** Added `focus:outline-none focus-visible:ring-2 focus-visible:ring-portal/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05080f]` to the collapsed orb button for crisp keyboard visibility against background cards.
 - **2026-08-17:** Moved the Workshop-only reward-state selector into the shared responsive Workshop Controls menu and gave Reference, Development, and Compare one authoritative simulated reward state. Closed-Door Cultivation navigation and modal behavior were not changed.
 - **2026-07-29:** Created faithful Workshop replica and local state simulator.
 - **2026-07-29:** Duplicated into a second variant to redesign the idle Qi reward's protected visual space, safe-area anchoring, swipe pass-through, collect cues, and ascending claim particles.
@@ -40,7 +46,7 @@ The entire SVG cultivator, particle flight animation (`motion/react`), claim/col
 
 ## What changed in Development vs Reference
 
-Nothing — PR #35 was transferred to production and both folders now hold the same file. The next redesign cycle starts from this parity.
+Development adds `aria-modal="true"` to the dialog container, automatic focus movement to the claim button on entrance, focus restoration on close, focus trapping for Tab navigation within the modal, Escape-to-collapse support, focus coordination with the collapsed orb button, parametric reward amount announcements, live status announcements via `aria-live="polite"`, progression description accessibility linking, and visible focus rings on the collapsed orb button. Reference remains the locked pre-audit replica.
 
 ## What was mocked
 

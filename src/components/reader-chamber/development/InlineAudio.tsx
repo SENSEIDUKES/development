@@ -13,6 +13,7 @@ import {
   resolveInlineSoundAction,
   splitByInlineAudioHighlights,
   type InlineAudioHighlight,
+  type InlineAudioTextSegment,
 } from '../../../audio/inlineAudio';
 import {
   useDevAudioPlayback,
@@ -150,7 +151,7 @@ export function InlineAudioControl({ highlight, playback }: InlineAudioControlPr
         aria-label={`${status === 'playing' ? 'Replay' : 'Play'} ${actionLabel} for ${highlight.phrase}`}
         onClick={activate}
       >
-        <LibrarySoundGlyph size={14} />
+        <LibrarySoundGlyph className="inline-world-cue__glyph" />
       </button>
       <span id={statusId} className="sr-only" aria-live="polite">
         {stateMessage}
@@ -175,10 +176,63 @@ export interface InlineAudioTextProps {
   text: string;
 }
 
+interface InlineAudioRenderSegment extends InlineAudioTextSegment {
+  /** Possessive suffixes remain part of the term and sit before its cue mark. */
+  possessive?: string;
+  /** Immediately adjacent punctuation follows the cue mark inside one line box. */
+  punctuation?: string;
+}
+
+const INLINE_POSSESSIVE = /^(?:['’][sS])(?=$|[\s,.;:!?…—–"”')\]}])/u;
+const INLINE_PUNCTUATION = /^[,.;:!?…—–"”')\]}]+/u;
+const WORD_JOINER = '\u2060';
+
+/**
+ * Pull only text that visually belongs to the matched term out of the next
+ * plain segment. The final word, mark, and punctuation can then stay joined
+ * without changing the rest of the prose flow.
+ */
+function attachTrailingProse(
+  segments: readonly InlineAudioTextSegment[],
+): InlineAudioRenderSegment[] {
+  const result: InlineAudioRenderSegment[] = [];
+
+  for (let index = 0; index < segments.length; index += 1) {
+    const segment = segments[index];
+    if (!segment.highlight) {
+      result.push(segment);
+      continue;
+    }
+
+    const next = segments[index + 1];
+    if (!next || next.highlight) {
+      result.push(segment);
+      continue;
+    }
+
+    const possessive = next.text.match(INLINE_POSSESSIVE)?.[0] ?? '';
+    const afterPossessive = next.text.slice(possessive.length);
+    const punctuation = afterPossessive.match(INLINE_PUNCTUATION)?.[0] ?? '';
+    const consumedLength = possessive.length + punctuation.length;
+
+    result.push({
+      ...segment,
+      possessive: possessive || undefined,
+      punctuation: punctuation || undefined,
+    });
+    if (consumedLength < next.text.length) {
+      result.push({ text: next.text.slice(consumedLength) });
+    }
+    index += 1;
+  }
+
+  return result;
+}
+
 /** Replace only configured literal phrases; every other text run stays native prose. */
 export function InlineAudioText({ highlights, renderText, text }: InlineAudioTextProps) {
   const segments = useMemo(
-    () => splitByInlineAudioHighlights(text, highlights),
+    () => attachTrailingProse(splitByInlineAudioHighlights(text, highlights)),
     [highlights, text],
   );
 
@@ -187,10 +241,22 @@ export function InlineAudioText({ highlights, renderText, text }: InlineAudioTex
       {segments.map((segment, index) => (
         segment.highlight
           ? (
-              <React.Fragment key={`${segment.highlight.id}-${index}`}>
+              <span
+                key={`${segment.highlight.id}-${index}`}
+                className="inline-world-cue-annotation"
+                data-cue-annotation={segment.highlight.phrase}
+              >
                 {renderText(segment.text)}
+                {segment.possessive}
+                <span className="inline-world-cue-joiner" aria-hidden="true">{WORD_JOINER}</span>
                 <InlineAudio highlight={segment.highlight} />
-              </React.Fragment>
+                {segment.punctuation && (
+                  <>
+                    <span className="inline-world-cue-joiner" aria-hidden="true">{WORD_JOINER}</span>
+                    {segment.punctuation}
+                  </>
+                )}
+              </span>
             )
           : <React.Fragment key={`text-${index}`}>{renderText(segment.text)}</React.Fragment>
       ))}

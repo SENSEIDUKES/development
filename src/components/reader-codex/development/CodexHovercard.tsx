@@ -514,7 +514,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
   );
 
   return (
-    <span className="relative inline-block" ref={containerRef}>
+    <span data-slot="codex-hovercard-anchor" className="relative inline-block" ref={containerRef}>
       <span
         ref={triggerRef}
         className={getTextStyles()}

@@ -241,10 +241,24 @@ function DragonCycleIconPreview() {
 
 function SoundGlyphPreview() {
   return (
-    <div className="flex items-center gap-5 text-neutral-400">
-      <LibrarySoundGlyph size={18} decorative={false} title="Library sound cue" />
-      <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-neutral-300 shadow-[0_0_18px_rgba(112,188,255,0.12)]">
-        <LibrarySoundGlyph size={16} decorative={false} title="Active Library sound cue" />
+    <div className="flex flex-col gap-3 font-serif text-sm leading-relaxed text-neutral-200">
+      <span>
+        Quiet annotation
+        <LibrarySoundGlyph
+          size={16}
+          decorative={false}
+          title="Library sound cue"
+          className="ml-[0.08em] inline h-[0.76em] w-[0.76em] -translate-y-[0.22em] text-neutral-500"
+        />
+      </span>
+      <span>
+        Playing annotation
+        <LibrarySoundGlyph
+          size={16}
+          decorative={false}
+          title="Active Library sound cue"
+          className="ml-[0.08em] inline h-[0.76em] w-[0.76em] -translate-y-[0.22em] text-portal [filter:drop-shadow(0_0_0.32em_rgba(124,92,255,0.45))]"
+        />
       </span>
     </div>
   );
@@ -315,7 +329,7 @@ const LIBRARY_COMPONENTS: LibraryComponentEntry[] = [
   },
   {
     name: 'LibrarySoundGlyph',
-    description: 'The custom Library sound mark — an open folio with quiet resonance rings for neutral audio actions without platform emoji.',
+    description: 'The custom Library sound mark — a footnote-scale prose annotation with quiet resonance rings, never a platform emoji or full-size control.',
     Preview: SoundGlyphPreview,
   },
 ];

@@ -47,7 +47,9 @@ Reusable visual names use the `library-*` namespace:
 
 - **2026-08-19:** Added `LibrarySoundGlyph`, the custom neutral open-folio and
   resonance mark used by inline World Cue controls, and added it to the live
-  Library Components inventory.
+  Library Components inventory. Refined its Reader presentation into a
+  circle-free, footnote-scale annotation with a separate invisible pointer
+  target and a soft active glow.
 
 - **2026-08-18:** Enhanced `LibraryDragonCycleIcon` with full accessibility
   support (`title`, `titleId`, `decorative`, `role`, and `aria-*` attributes),

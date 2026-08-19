@@ -174,6 +174,20 @@ describe('CardWorkshopView', () => {
     expect(rainCourtCodexAction).toBeTruthy();
     expect(rainCourtCueAction).toBeTruthy();
     expect(rainCourtCueAction).not.toBe(rainCourtCodexAction);
+    expect(rainCourtCueAction?.closest('[data-cue-annotation="Rain Court"]')?.textContent
+      ?.replace(/\u2060/g, ''))
+      .toBe('Rain Court,');
+
+    const foxCueAction = reader?.querySelector<HTMLButtonElement>(
+      'button[aria-label="Play World Cue for Vermilion Debt Fox"]',
+    );
+    const foxCodexAction = [...(reader?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
+      .find(element => element.textContent === 'Vermilion Debt Fox');
+    expect(foxCueAction).toBeTruthy();
+    expect(foxCodexAction).toBeFalsy();
+    expect(foxCueAction?.closest('[data-cue-annotation="Vermilion Debt Fox"]')?.textContent
+      ?.replace(/\u2060/g, ''))
+      .toBe('Vermilion Debt Fox');
 
     const cardTitle = [...(reader?.querySelectorAll('h4') ?? [])]
       .find(element => element.textContent === 'Rin');

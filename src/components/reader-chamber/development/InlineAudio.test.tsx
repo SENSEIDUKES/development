@@ -103,6 +103,10 @@ const render = (node: React.ReactNode) => {
 const buttonFor = (phrase: string) => [...container.querySelectorAll<HTMLButtonElement>('button')]
   .find(button => button.dataset.cuePhrase === phrase)!;
 
+const visibleAnnotationText = (annotation: HTMLElement | null | undefined) => (
+  annotation?.textContent?.replace(/\u2060/g, '') ?? ''
+);
+
 describe('InlineAudioControl', () => {
   it('is an accessible inline native button and never plays without user activation', () => {
     const { playback } = createFakePlayback();
@@ -236,7 +240,7 @@ describe('InlineAudioControl', () => {
       <DevAudioPlaybackProvider>
         <InlineAudioText
           highlights={[weaponHighlight]}
-          text="Mei Lin drew the Ashen Sword in silence."
+          text="Mei Lin drew the Ashen Sword, in silence."
           renderText={(text) => text === weaponHighlight.phrase
             ? <button type="button" aria-label={`Open Codex entry for ${text}`}>{text}</button>
             : text}
@@ -252,10 +256,62 @@ describe('InlineAudioControl', () => {
     expect(codexButton).toBeTruthy();
     expect(cueButton).toBeTruthy();
     expect(cueButton).not.toBe(codexButton);
-    expect(container.textContent).toContain('Mei Lin drew the Ashen Sword in silence.');
+    expect(container.textContent?.replace(/\u2060/g, ''))
+      .toContain('Mei Lin drew the Ashen Sword, in silence.');
+
+    const annotation = cueButton.closest<HTMLElement>('[data-cue-annotation="Ashen Sword"]');
+    expect(visibleAnnotationText(annotation)).toBe('Ashen Sword,');
+    expect(codexButton?.parentElement).toBe(annotation);
+    expect(cueButton.parentElement).toBe(annotation);
 
     act(() => codexButton!.click());
     expect(container.querySelector('[data-testid="track-id"]')?.textContent).toBe('');
+  });
+
+  it('leaves cue-only terms as ordinary prose while binding the term, mark, and punctuation', () => {
+    render(
+      <DevAudioPlaybackProvider>
+        <InlineAudioText
+          highlights={[beastHighlight]}
+          text="A Vermilion Debt Fox, crouched beneath the lintel."
+          renderText={(text) => text}
+        />
+      </DevAudioPlaybackProvider>,
+    );
+
+    const cueButton = buttonFor(beastHighlight.phrase);
+    const annotation = cueButton.closest<HTMLElement>(
+      '[data-cue-annotation="Vermilion Debt Fox"]',
+    );
+    expect(visibleAnnotationText(annotation)).toBe('Vermilion Debt Fox,');
+    expect(annotation?.firstChild?.nodeType).toBe(Node.TEXT_NODE);
+    expect(annotation?.firstChild?.textContent).toBe('Vermilion Debt Fox');
+    expect(annotation?.querySelectorAll('button')).toHaveLength(1);
+    expect(container.textContent?.replace(/\u2060/g, ''))
+      .toBe('A Vermilion Debt Fox, crouched beneath the lintel.');
+  });
+
+  it('keeps a possessive suffix ahead of the cue mark and sentence punctuation after it', () => {
+    render(
+      <DevAudioPlaybackProvider>
+        <InlineAudioText
+          highlights={[weaponHighlight]}
+          text="The Ashen Sword’s edge rang clear."
+          renderText={(text) => text}
+        />
+      </DevAudioPlaybackProvider>,
+    );
+
+    const cueButton = buttonFor(weaponHighlight.phrase);
+    const annotation = cueButton.closest<HTMLElement>('[data-cue-annotation="Ashen Sword"]');
+    expect(visibleAnnotationText(annotation)).toBe('Ashen Sword’s');
+    const cueIndex = [...(annotation?.childNodes ?? [])].indexOf(cueButton);
+    const proseBeforeCue = [...(annotation?.childNodes ?? [])]
+      .slice(0, cueIndex)
+      .map(node => node.textContent)
+      .join('')
+      .replace(/\u2060/g, '');
+    expect(proseBeforeCue).toBe('Ashen Sword’s');
   });
 });
 

@@ -51,14 +51,24 @@ const CONTEXT_CUE_LOCATION: CodexTerm = {
   },
 };
 
-const CONTEXT_INLINE_WORLD_CUES = [{
-  id: 'card-workshop-rain-court-cue',
-  phrase: 'Rain Court',
-  action: {
-    type: 'sound',
-    cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Sect_Gong_1.mp3',
+const CONTEXT_INLINE_WORLD_CUES = [
+  {
+    id: 'card-workshop-rain-court-cue',
+    phrase: 'Rain Court',
+    action: {
+      type: 'sound',
+      cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Sect_Gong_1.mp3',
+    },
   },
-}] as const satisfies readonly InlineAudioHighlight[];
+  {
+    id: 'card-workshop-vermilion-debt-fox-cue',
+    phrase: 'Vermilion Debt Fox',
+    action: {
+      type: 'sound',
+      cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3',
+    },
+  },
+] as const satisfies readonly InlineAudioHighlight[];
 
 const CONTEXT_READER_PREFERENCES: ReaderPreferences = {
   fontSize: 'lg',
@@ -206,7 +216,7 @@ export function createCardWorkshopContextualFixture(
     {
       id: 'card-workshop-context-opening',
       type: 'prose',
-      text: 'Rain threaded down the bronze eaves of the Rain Court in silver cords, each drop sounding like a small bell against the empty tribunal.',
+      text: 'Rain threaded down the bronze eaves of the Rain Court, while a Vermilion Debt Fox barked once beneath the empty tribunal.',
     },
     {
       id: 'card-workshop-context-mention',
@@ -263,7 +273,8 @@ export function createCardWorkshopContextualFixture(
  * Card Workshop Contextual View: renders the selected card preset inside the
  * real Development ReaderViewport using the fixed local fixture, so Codex
  * Cards and System Panels can be inspected in their true host, with a separate
- * inline World Cue demonstrating independent Codex and sound actions.
+ * inline World Cues demonstrating both independent Codex/sound actions and a
+ * sound-only annotation that leaves its phrase as ordinary prose.
  */
 export function CardWorkshopContextualReader({
   preset,

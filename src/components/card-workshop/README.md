@@ -16,13 +16,13 @@ The current presentation set is deliberately limited to:
 
 - `CodexCard` for Human Portraits, Non-Human Portraits, Artifacts, and Locations resolved from application-owned Codex entries;
 - `SystemBlock` and its nested `FateResultCard` presentation as independent System Panels;
-- an inline World Cue example that keeps the prose native and places the shared Library sound glyph beside a Codex-linked location name.
+- inline World Cue examples showing both a Codex-linked term with an independent sound mark and a sound-only term whose prose remains visually native.
 
 Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studio is outside this feature and is unchanged.
 
 ## Workshop history
 
-- **2026-08-19:** Removed the retired standalone world presentation and every Card Workshop preset, adapter, override, and Reference rendering branch that existed only for it. Contextual View now demonstrates the replacement inline World Cue beside `Rain Court`: the name opens its Codex entry and the separate Library sound glyph starts playback.
+- **2026-08-19:** Removed the retired standalone world presentation and every Card Workshop preset, adapter, override, and Reference rendering branch that existed only for it. Contextual View now demonstrates the replacement circle-free, footnote-scale annotations: `Rain Court` opens its Codex entry while its separate mark starts playback, and `Vermilion Debt Fox` remains ordinary prose with only the small sound mark identifying its cue. Each final word, mark, and punctuation stays together while longer names can wrap normally.
 - **2026-08-18:** Development fixtures adopted the real Manifest backdrop pool and published Library test images for Codex media.
 - **2026-08-18:** Refined the shared Codex Manifest seal, awakening state, spectral glass, and entity accent treatment without changing its content or routing.
 - **2026-08-17:** Adopted the shared responsive `FeatureWorkspace` Workshop Controls shell.
@@ -39,6 +39,7 @@ Contextual View supports:
 - Codex entry present or missing;
 - first reveal or existing-entity reference;
 - a Codex-linked phrase with an independently operable inline World Cue;
+- a sound-only phrase that remains ordinary Reader prose;
 - every current `SystemBlock` kind and all existing Fate outcomes;
 - mobile, tablet, and desktop widths.
 

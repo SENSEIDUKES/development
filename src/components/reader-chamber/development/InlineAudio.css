@@ -1,44 +1,75 @@
+.inline-world-cue-annotation {
+  color: inherit;
+  font: inherit;
+}
+
+/*
+ * Codex triggers are normally atomic inline blocks. Inside a cue annotation
+ * they become wrapping inline text so a long entity name can break normally;
+ * the word-joiner still binds its final word to the independent sound action.
+ */
+.inline-world-cue-annotation > [data-slot='codex-hovercard-anchor'] {
+  display: inline;
+}
+
+.inline-world-cue-joiner {
+  user-select: none;
+}
+
 .inline-world-cue {
   position: relative;
   display: inline-flex;
-  inline-size: 1.55em;
-  block-size: 1.55em;
-  margin: 0 0.04em 0 0.24em;
+  inline-size: 0.78em;
+  block-size: 0.78em;
+  margin: 0 0.02em 0 0.08em;
   padding: 0;
   align-items: center;
   justify-content: center;
-  border: 1px solid color-mix(in srgb, var(--color-neutral-500) 34%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-neutral-500) 8%, transparent);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--color-neutral-500);
-  line-height: 1;
-  vertical-align: -0.28em;
+  font: inherit;
+  line-height: 0;
+  vertical-align: 0.24em;
   cursor: pointer;
-  opacity: 0.78;
+  opacity: 0.68;
   transition:
-    border-color 160ms ease,
-    background-color 160ms ease,
     color 160ms ease,
-    box-shadow 160ms ease,
     opacity 160ms ease,
     transform 160ms ease;
 }
 
+.inline-world-cue::before {
+  content: '';
+  position: absolute;
+  inset-block: -0.56em;
+  inset-inline: -0.16em -0.7em;
+}
+
+.inline-world-cue__glyph {
+  inline-size: 0.76em;
+  block-size: 0.76em;
+  overflow: visible;
+  transition:
+    filter 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
 .inline-world-cue:hover {
-  border-color: color-mix(in srgb, var(--color-neutral-300) 48%, transparent);
-  background-color: color-mix(in srgb, var(--color-neutral-400) 13%, transparent);
   color: var(--color-neutral-300);
-  opacity: 1;
+  opacity: 0.94;
 }
 
 .inline-world-cue:active {
-  transform: scale(0.94);
+  transform: scale(0.9);
 }
 
 .inline-world-cue:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--color-portal) 74%, white);
-  outline-offset: 0.14em;
-  border-color: color-mix(in srgb, var(--color-portal) 56%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--color-portal) 72%, white);
+  outline-offset: 0.2em;
+  border-radius: 0.18em;
   color: var(--color-neutral-200);
   opacity: 1;
 }
@@ -46,45 +77,56 @@
 .inline-world-cue[data-state='loading'] {
   color: var(--color-neutral-300);
   opacity: 1;
+}
+
+.inline-world-cue[data-state='loading'] .inline-world-cue__glyph {
   animation: inline-world-cue-breathe 900ms ease-in-out infinite alternate;
 }
 
 .inline-world-cue[data-state='playing'] {
-  border-color: color-mix(in srgb, var(--color-portal) 54%, transparent);
-  background-color: color-mix(in srgb, var(--color-portal) 11%, transparent);
   color: color-mix(in srgb, var(--color-portal) 72%, white);
   opacity: 1;
+}
+
+.inline-world-cue[data-state='playing'] .inline-world-cue__glyph {
   animation: inline-world-cue-playing 1.35s ease-in-out infinite;
 }
 
 .inline-world-cue[data-state='error'] {
-  border-color: color-mix(in srgb, var(--color-entity-enemy) 42%, transparent);
-  color: var(--color-entity-enemy);
-  opacity: 0.9;
-  box-shadow: none;
+  color: color-mix(in srgb, var(--color-entity-enemy) 48%, var(--color-neutral-400));
+  opacity: 0.82;
 }
 
 @keyframes inline-world-cue-breathe {
   from {
-    box-shadow: 0 0 0.18em color-mix(in srgb, var(--color-neutral-300) 8%, transparent);
+    opacity: 0.5;
   }
 
   to {
-    box-shadow: 0 0 0.72em color-mix(in srgb, var(--color-neutral-300) 20%, transparent);
+    opacity: 1;
   }
 }
 
 @keyframes inline-world-cue-playing {
   0%, 100% {
-    box-shadow:
-      0 0 0.25em color-mix(in srgb, var(--color-portal) 16%, transparent),
-      0 0 0.7em color-mix(in srgb, #7c5cff 9%, transparent);
+    filter:
+      drop-shadow(0 0 0.12em color-mix(in srgb, var(--color-portal) 24%, transparent))
+      drop-shadow(0 0 0.3em color-mix(in srgb, #7c5cff 12%, transparent));
+    transform: scale(0.98);
   }
 
   50% {
-    box-shadow:
-      0 0 0.48em color-mix(in srgb, var(--color-portal) 29%, transparent),
-      0 0 1em color-mix(in srgb, #7c5cff 18%, transparent);
+    filter:
+      drop-shadow(0 0 0.25em color-mix(in srgb, var(--color-portal) 52%, transparent))
+      drop-shadow(0 0 0.58em color-mix(in srgb, #7c5cff 30%, transparent));
+    transform: scale(1.06);
+  }
+}
+
+@media (pointer: coarse) {
+  .inline-world-cue::before {
+    inset-block: -0.72em;
+    inset-inline: -0.18em -0.9em;
   }
 }
 
@@ -93,8 +135,10 @@
     transition: none;
   }
 
-  .inline-world-cue[data-state='loading'],
-  .inline-world-cue[data-state='playing'] {
+  .inline-world-cue__glyph,
+  .inline-world-cue[data-state='loading'] .inline-world-cue__glyph,
+  .inline-world-cue[data-state='playing'] .inline-world-cue__glyph {
     animation: none;
+    transition: none;
   }
 }

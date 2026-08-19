@@ -14,6 +14,8 @@ const CODEX_PREVIEW_IMAGE = '/story-seed/library-auth-backdrop.jpg';
 /**
  * Inline World Cues stay outside StoryBlock: these controlled annotations
  * resolve real catalog URLs and are passed only to the Development Reader.
+ * Vermilion Debt Fox is intentionally absent from StoryMemory so it proves a
+ * cue-only phrase stays plain; The Azure Ring remains a dual Codex/cue entity.
  */
 export const INLINE_AUDIO_HIGHLIGHTS = [
   {
@@ -457,12 +459,12 @@ export function createMockStory(): StoryWorld {
         },
         {
           id: 'c4',
-          name: 'Vermilion Debt Fox',
+          name: 'Moon-Tally Fox',
           role: 'Dormant Spirit Beast',
           status: 'unknown',
           powerLevel: 'Earth Spirit — Veiled',
           relationshipToMC: 'Unknown',
-          description: 'A fox-shaped debt omen last seen beneath the collapsed gate.',
+          description: 'A fox-shaped debt omen remembered only in the Codex deep archive.',
           isBeast: true,
           firstAppeared: 1,
           relevanceState: 'dormant',

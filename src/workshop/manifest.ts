@@ -136,13 +136,13 @@ export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'reader-chamber',
     title: 'Reader Chamber',
-    description: 'The full reading UI with generated five-chapter session support, chapter-scoped Reader Codex memory, generation usage/export/Diagnostics, and an explicitly labeled local mock fallback.',
+    description: 'The full reading UI with generated five-chapter session support, chapter-scoped Reader Codex memory, and Development-only inline Library Cue highlights inside controlled prose.',
     category: 'reader-ui',
     version: 'v1.2',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
-      path: 'src/components/ReaderChamber.tsx',
-      lastCompared: '2026-08-11',
+      path: 'src/components/ReaderChamber.tsx; src/components/ReaderViewport.tsx',
+      lastCompared: '2026-08-19',
     },
   },
   {

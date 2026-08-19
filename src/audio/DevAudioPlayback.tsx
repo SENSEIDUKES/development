@@ -19,17 +19,31 @@ export interface DevAudioRequest {
   artist?: string;
 }
 
+export type DevAudioPlaybackEvent =
+  | { type: 'track-change'; trackId: string | null }
+  | { type: 'play'; trackId: string }
+  | { type: 'pause'; trackId: string | null }
+  | { type: 'queue-end' }
+  | { type: 'error'; trackId: string | null; error: string };
+
 export interface DevAudioPlayback {
+  autoplayBlocked: boolean;
   currentSource: string | null;
   currentTrackId: string | null;
+  errorMessage: string;
+  hasError: boolean;
+  isBuffering: boolean;
   isMuted: boolean;
   isPlaying: boolean;
   volume: number;
   load: (request: DevAudioRequest) => void;
   pause: () => void;
   play: (request?: DevAudioRequest) => void;
+  /** Replace the shared queue and play one user-requested source immediately. */
+  replace: (request: DevAudioRequest) => void;
   setVolume: (volume: number) => void;
   stop: (trackId?: string) => void;
+  subscribe: (handler: (event: DevAudioPlaybackEvent) => void) => () => void;
   subscribeToTrackChange: (handler: (trackId: string | null) => void) => () => void;
   subscribeToQueueEnd: (handler: () => void) => () => void;
   toggleMute: () => void;
@@ -59,6 +73,10 @@ function DevAudioPlaybackBridge({ children }: PropsWithChildren) {
     void session.play();
   }, [session]);
 
+  const replace = useCallback((request: DevAudioRequest) => {
+    session.setQueue([toTrack(request)], 0, true);
+  }, [session]);
+
   const stop = useCallback((trackId?: string) => {
     if (trackId && session.currentTrack?.id !== trackId) return;
     session.pause();
@@ -73,21 +91,48 @@ function DevAudioPlaybackBridge({ children }: PropsWithChildren) {
     session.subscribe('track-change', ({ track }) => handler(track?.id ?? null))
   ), [session]);
 
+  const subscribe = useCallback((handler: (event: DevAudioPlaybackEvent) => void) => {
+    const unsubscribers = [
+      session.subscribe('track-change', ({ track }) => {
+        handler({ type: 'track-change', trackId: track?.id ?? null });
+      }),
+      session.subscribe('play', ({ track }) => {
+        if (track.id) handler({ type: 'play', trackId: track.id });
+      }),
+      session.subscribe('pause', ({ track }) => {
+        handler({ type: 'pause', trackId: track?.id ?? null });
+      }),
+      session.subscribe('queue-end', () => {
+        handler({ type: 'queue-end' });
+      }),
+      session.subscribe('error', ({ track, error }) => {
+        handler({ type: 'error', trackId: track?.id ?? null, error });
+      }),
+    ];
+    return () => unsubscribers.forEach(unsubscribe => unsubscribe());
+  }, [session]);
+
   const value = useMemo<DevAudioPlayback>(() => ({
+    autoplayBlocked: session.autoplayBlocked,
     currentSource: session.currentTrack?.audioFile ?? null,
     currentTrackId: session.currentTrack?.id ?? null,
+    errorMessage: session.errorMessage,
+    hasError: session.hasError,
+    isBuffering: session.isBuffering,
     isMuted: session.isMuted,
     isPlaying: session.isPlaying,
     volume: session.volume,
     load,
     pause: session.pause,
     play,
+    replace,
     setVolume: session.setVolume,
     stop,
+    subscribe,
     subscribeToTrackChange,
     subscribeToQueueEnd,
     toggleMute: session.toggleMute,
-  }), [load, play, session, stop, subscribeToQueueEnd, subscribeToTrackChange]);
+  }), [load, play, replace, session, stop, subscribe, subscribeToQueueEnd, subscribeToTrackChange]);
 
   return (
     <DevAudioPlaybackContext.Provider value={value}>

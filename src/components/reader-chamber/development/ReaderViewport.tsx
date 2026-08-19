@@ -16,6 +16,8 @@ import { getReaderTypography, getReadingDirection } from '../shared/readerTypogr
 import { createCodexHighlighter } from '../../reader-codex/shared/codexHighlighting';
 import { CodexCard, FALLBACK_BACKDROPS } from './CodexCard';
 import type { WorldCardAudioAdapter } from './WorldCard';
+import { InlineAudioText } from './InlineAudio';
+import type { InlineAudioHighlight } from '../../../audio/inlineAudio';
 
 interface ReaderViewportProps {
   readerRef: React.RefObject<HTMLDivElement | null>;
@@ -83,6 +85,11 @@ interface ReaderViewportProps {
   worldCardAudioAdapter?: WorldCardAudioAdapter;
   /** Resets a Workshop-simulated card when its local audio state changes. */
   worldCardPresentationKey?: string;
+  /**
+   * Development-only prose annotations. They are separate from StoryBlock so
+   * this phase cannot change generated or persisted chapter payloads.
+   */
+  inlineAudioHighlights?: readonly InlineAudioHighlight[];
 }
 
 export function ReaderViewport({
@@ -136,9 +143,21 @@ export function ReaderViewport({
   chapters,
   worldCardAudioAdapter,
   worldCardPresentationKey,
+  inlineAudioHighlights = [],
 }: ReaderViewportProps) {
   const readingLanguage = activeTranslationContent ? preferredLang : 'en';
   const typography = getReaderTypography(currentPrefs);
+  const renderProseText = (text: string, paragraphIndex: number) => (
+    inlineAudioHighlights.length > 0
+      ? (
+          <InlineAudioText
+            highlights={inlineAudioHighlights}
+            renderText={segment => renderHighlightedText(segment, paragraphIndex)}
+            text={text}
+          />
+        )
+      : renderHighlightedText(text, paragraphIndex)
+  );
 
   const getThemeAccentColor = (theme: string) => {
     switch (theme) {
@@ -556,7 +575,7 @@ export function ReaderViewport({
                                 <div
                                   className={`reader-paragraph ${getFocusClass(index)}`}
                                 >
-                                  {renderHighlightedText(cleanText, index)}
+                                  {renderProseText(cleanText, index)}
                                 </div>
                               </div>
                             </div>
@@ -715,7 +734,7 @@ export function ReaderViewport({
                               />
                             ))}
                             <div className={`reader-paragraph relative ${getFocusClass(index)}`}>
-                              {renderHighlightedText(cleanText, index)}
+                              {renderProseText(cleanText, index)}
                               <button
                                  tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => {
                                   if (existingBookmark) {
@@ -894,7 +913,7 @@ export function ReaderViewport({
                                   <div
                                     className="reader-paragraph"
                                   >
-                                    {renderHighlightedText(cleanText, index)}
+                                    {renderProseText(cleanText, index)}
                                   </div>
                                 </div>
                               </div>

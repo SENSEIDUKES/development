@@ -51,7 +51,7 @@ it with `VITE_`.
 `LIBRARY_CUE_CATEGORIES` is the closed enum applied to the catalog.
 Each category belongs to exactly one subsystem:
 
-| Category      | Owner                                                       | Phase 1 consumption |
+| Category      | Owner                                                       | Current consumption |
 | ------------- | ----------------------------------------------------------- | ------------------- |
 | `beasts`      | Inline-audio highlights                                     | Phase 2 Workshop    |
 | `weapons`     | Inline-audio highlights                                     | Phase 2 Workshop    |

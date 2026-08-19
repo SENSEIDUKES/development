@@ -40,7 +40,10 @@ export function InlineAudioControl({ highlight, playback }: InlineAudioControlPr
   const [status, setStatus] = useState<InlineAudioStatus>('idle');
   const [localError, setLocalError] = useState<string | null>(null);
   const playbackRef = useRef(playback);
-  playbackRef.current = playback;
+
+  useEffect(() => {
+    playbackRef.current = playback;
+  }, [playback]);
 
   const resolution = useMemo(() => (
     highlight.action.type === 'sound'
@@ -152,7 +155,6 @@ export function InlineAudioControl({ highlight, playback }: InlineAudioControlPr
         aria-busy={status === 'loading' || undefined}
         aria-describedby={status === 'idle' ? undefined : statusId}
         aria-label={`${status === 'playing' ? 'Restart' : 'Play'} ${actionLabel} for ${highlight.phrase}`}
-        aria-pressed={status === 'playing'}
         onClick={activate}
         style={style}
       >

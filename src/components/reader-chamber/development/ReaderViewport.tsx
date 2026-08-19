@@ -913,7 +913,7 @@ export function ReaderViewport({
                                   <div
                                     className="reader-paragraph"
                                   >
-                                    {renderHighlightedText(cleanText, index)}
+                                    {renderProseText(cleanText, index)}
                                   </div>
                                 </div>
                               </div>

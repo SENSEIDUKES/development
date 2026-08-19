@@ -114,7 +114,7 @@ describe('InlineAudioControl', () => {
     expect(button.type).toBe('button');
     expect(button.tabIndex).toBe(0);
     expect(button.getAttribute('aria-label')).toBe('Play sound for Vermilion Debt Fox');
-    expect(button.getAttribute('aria-pressed')).toBe('false');
+    expect(button.hasAttribute('aria-pressed')).toBe(false);
     expect(button.dataset.state).toBe('idle');
     expect(button.style.getPropertyValue('--inline-audio-accent')).toBe('var(--color-entity-enemy)');
     act(() => {
@@ -139,7 +139,7 @@ describe('InlineAudioControl', () => {
     const trackId = fake.playback.currentTrackId!;
     act(() => fake.emit({ type: 'play', trackId }));
     expect(button.dataset.state).toBe('playing');
-    expect(button.getAttribute('aria-pressed')).toBe('true');
+    expect(button.hasAttribute('aria-pressed')).toBe(false);
 
     act(() => fake.emit({ type: 'error', trackId, error: 'Cue network failure' }));
     expect(button.dataset.state).toBe('error');
@@ -180,6 +180,21 @@ describe('InlineAudioControl', () => {
     mounted = false;
     expect(fake.unsubscribe).toHaveBeenCalledTimes(1);
     expect(fake.playback.stop).toHaveBeenCalledWith(trackId);
+  });
+
+  it('uses the latest committed playback adapter for cleanup', () => {
+    const first = createFakePlayback();
+    const second = createFakePlayback();
+    render(<InlineAudioControl highlight={beastHighlight} playback={first.playback} />);
+    act(() => buttonFor(beastHighlight.phrase).click());
+    const trackId = first.playback.currentTrackId;
+
+    render(<InlineAudioControl highlight={beastHighlight} playback={second.playback} />);
+    act(() => root.unmount());
+    mounted = false;
+
+    expect(first.playback.stop).not.toHaveBeenCalled();
+    expect(second.playback.stop).toHaveBeenCalledWith(trackId);
   });
 
   it('reports catalog and future voice failures without using browser speech synthesis', () => {

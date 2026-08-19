@@ -20,6 +20,7 @@ import {
   ARC_TITLE,
   CURRENT_POWER_STAGE,
   createMockReaderFallback,
+  INLINE_AUDIO_HIGHLIGHTS,
   mockReaderPreferences,
   MOCK_READER_FALLBACK_LABEL,
   MOCK_STORY_ID,
@@ -385,7 +386,10 @@ export function ReaderChamberWorkspace() {
           CodexOverlay={DevelopmentCodexSheetOverlay}
           onJumpToChapter={setSelectedChapterNum}
         >
-          <DevelopmentReaderChamber {...chamberProps} />
+          <DevelopmentReaderChamber
+            {...chamberProps}
+            inlineAudioHighlights={INLINE_AUDIO_HIGHLIGHTS}
+          />
         </PreviewCanvas>
       )}
     />

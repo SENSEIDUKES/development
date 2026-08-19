@@ -4,12 +4,13 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-18
-- **Last source comparison:** 2026-08-18
-- **Replica status:** faithful replica
+- **Last Workshop update:** 2026-08-19
+- **Last source comparison:** 2026-08-19
+- **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-08-19:** Added Phase 2 of the World Card audio replacement to the Development Reader only: a native inline prose button with entity-token or neutral Library highlighting, catalog-gated `sound` actions, provider-neutral future `voice` actions, and user-only loading/playing/error behavior through the existing `@seihouse/audio-player` session. Five real beast, weapon, artifact, location, and faction Cues now sit in controlled Chapter 1 prose. The legacy World Card, Reference fork, chapter shape, generation, prompts, persistence, and production payloads are unchanged. Source Reader/World Card paths were rechecked on Light-Novels `origin/main` at `66643f6`.
 - **2026-08-18:** Review follow-up: the Development `CodexCard` dragon seal now applies its cyan and violet glows as valid chained filter functions in base, hover, and press states. Interaction, layout, and reduced-motion behavior are unchanged.
 - **2026-08-18:** Manifest backdrops are real art again in Development: the `CodexCard` fallback backdrop pool moved from the five hot-linked public R2 `LIBRARY BACKDROPS` URLs to the published "IMMORTAL LAND" revelation landscapes, downloaded into `public/manifest-backdrops/` and owned by the new shared `reader-codex/development/codexManifestBackdrop.ts`. `CodexCard` re-exports the pool under the established `FALLBACK_BACKDROPS` / `getFallbackBackdrop` names, so `ReaderViewport` assignment, the Card Workshop fixtures, and the reveal rendering are untouched. The locked Reference `ReaderViewport` keeps the production R2 list.
 - **2026-08-18:** Reimagined the Development `CodexCard` Manifest seal as the dragon itself: the circular glass orb, dashed/dotted orbit rings, and accent core glow were replaced by an enlarged `LibraryDragonCycleIcon` — the shared Library cycle glyph, reused unchanged — that forms the entire portal boundary. Two stacked `currentColor` copies with a vertical mask tint the silhouette cyan→violet, wrapped in a slow-turning blurred conic aura in the Library portal spectrum (`#04ACFF → #7C5CFF`), around a dark glass core that now holds both the Manifest label and the "Awaken Portrait" caption (previously a separate line beneath the seal). The seal remains one real keyboard-operable `<button>` with the same `onManifestReveal` callback, a Manifest/Manifesting aria-label swap, and a disabled Manifesting state (also `aria-busy` with a lit aura); hover and press brighten the aura and the dragon's glow. The aura spin and the dragon's motion rest fully under `prefers-reduced-motion`. The preview mock gains one artwork-less eligible reveal (the "Stair of a Thousand Debts" location, chapter 1) so the unmanifested seal renders in the Reading state and in Compare. Portrait media, eyebrow, inscribed name, description, glass surface, ambience, accent resolution, reveal routing, and card layout are unchanged. **Same-day refinement:** the aura's conic gradient now carries two diametrically opposed bright bands so the blurred glow reads centered through the whole spin (the single bright band pooled to one side); the dragon now rotates slowly (24s/rev) instead of the barely-visible scale breath, so the `codex-seal-breathe` keyframes are gone and `CodexCardSeal.css` is the reduced-motion backstop only; and the pending state is renamed "Manifesting..." with a small spinning `LibraryDragonCycleIcon` in place of the generic lucide spinner.
@@ -70,7 +71,8 @@ reference/                    — untouched replica of production, locked
 development/                  — active Workshop version; started as an exact copy of reference/
   (same files, except: ReaderSettings.tsx replaces ReaderPreferencesPanel.tsx;
    ReaderControls/ no longer contains ImmersionSettings.tsx or
-   ChapterNavigation.tsx; AudioWidget.tsx was removed — see history)
+   ChapterNavigation.tsx; AudioWidget.tsx was removed; InlineAudio.tsx and
+   InlineAudio.css add the Phase 2 prose primitive — see history)
 shared/                       — code genuinely identical between the two forks
   types.ts                    — ReaderChapter + composing types, StoryBlock/metadata/SystemEvent/
                                 WorldCardEvent/FateResultData, StoryCuePayload, ContextManifest,
@@ -204,6 +206,8 @@ line so the current state is never ambiguous.
 
 - `FeatureWorkspace` + one `manifest.ts` entry (`reader-chamber`, category `reader-ui`)
 - Existing `@theme` tokens in `src/styles.css` (fonts, portal/void/signal/human/gold-accent)
+- Existing client-safe `src/audio/libraryCues.ts` / `inlineAudio.ts` contract and
+  the one `DevAudioPlaybackProvider` backed by `@seihouse/audio-player`
 - `lucide-react`, `motion/react` (already installed)
 
 ## Production dependencies intentionally excluded
@@ -212,11 +216,12 @@ line so the current state is never ambiguous.
 - Firebase (`lib/firebase`, `LOCAL_ONLY_MODE`) → constant `true`
 - storyStorage / IndexedDB persistence
 - Generation pipeline (`onGenerateChapter`/`onGenerateNextFiveChapters` log only)
-- TTS / audio engines (`useReaderPlayback` internals, `hooks/audio/useAudioMix`
+- Scene, narration, and legacy World Card audio engines (`useReaderPlayback` internals, `hooks/audio/useAudioMix`
   playback, `lib/audio/cardSoundCatalog`/`cardSoundPlayer`/`audioMixSettings`,
-  `lib/vibration`, `lib/narrativeCues`) — settings state is real, playback inert;
-  World Card SFX resolves to nothing ("Echo Unavailable"), `tts_line` cards use the
-  browser's own `speechSynthesis` (no production dependency)
+  `lib/vibration`, `lib/narrativeCues`) — settings state is real; the new inline
+  Cues are the narrow exception and play through the existing DEV audio owner.
+  World Card SFX still resolves to nothing ("Echo Unavailable"), and its legacy
+  `tts_line` path still uses the browser's own `speechSynthesis`.
 - `hooks/useChapterTranslation`, `hooks/useCinematicScroll`, and
   `hooks/useReadingPosition` — inert stubs
 - Production Codex authentication, quota, persistence, image/audio generation,
@@ -249,9 +254,10 @@ All substitutions are import-level aliases only — JSX is byte-identical to pro
   authentication, quota charging, and remote persistence do not run in the Workshop.
 - **Alter Fate focus behavior is unchanged from the existing Workshop replica**;
   the migrated Codex context dialog uses `react-focus-lock` like production.
-- **Audio inert** — the mixer's toggles and volumes are real state, but no music,
-  atmosphere, cues, or narration ever play; World Card SFX shows "Echo Unavailable";
-  `tts_line` World Cards speak via the browser's own speechSynthesis.
+- **Audio is intentionally partial** — the mixer's music, atmosphere, narration,
+  and legacy World Card SFX remain inert; `tts_line` World Cards retain their
+  browser speech-synthesis compatibility path. Only the five controlled Phase 2
+  inline Library Cues play, through the single shared DEV audio session.
 - **No TTS sync highlighting** — `activeChunks` is always empty, so the
   portal-colored narration span and `reading-focus-*` classes never activate;
   the play/pause vinyl still flips and spins.
@@ -289,6 +295,9 @@ and the Codex Card ambience/accent helpers per the Reader Codex README:
 
 - `development/ReaderChamber.tsx` → `src/components/ReaderChamber.tsx`
 - `development/ReaderViewport.tsx` → `src/components/ReaderViewport.tsx`
+- `development/InlineAudio.tsx` + `InlineAudio.css` → new production Reader
+  primitive/style files, adapted to production's owning `@seihouse/audio-player`
+  session rather than copying the Workshop `DevAudioPlaybackProvider`
 - `development/ReaderHeader.tsx` → `src/components/ReaderHeader.tsx`
 - `development/ReaderSettings.tsx` → `src/components/ReaderSettings.tsx` (new file;
   on transfer, delete `src/components/ReaderPreferencesPanel.tsx` and
@@ -316,6 +325,8 @@ and the Codex Card ambience/accent helpers per the Reader Codex README:
 - `development/SystemColorLegend.tsx` → `src/components/SystemColorLegend.tsx`
 - `development/ContextInspector.tsx` → `src/components/ContextInspector.tsx`
 - Style changes from `shared/reader-chamber.css` → merge back into `src/index.css`
+- `src/audio/inlineAudio.ts` → the provider-neutral action and catalog-resolution
+  contract, alongside the production copy of the approved Library Cue catalog
 
 Workshop-only — never transfer: `shared/stubs.ts`, `shared/types.ts` (production
 `src/types.ts` is authoritative), `shared/trackLibrary.ts` (production
@@ -324,6 +335,8 @@ Workshop-only — never transfer: `shared/stubs.ts`, `shared/types.ts` (producti
 The optional `worldCardAudioAdapter` and `worldCardPresentationKey` props in the
 Development `ReaderViewport`, plus `getReaderChamberSurfaceClass`, are Card Workshop
 seams, not production API.
+The `inlineAudioHighlights` prop and all five `previewData.ts` examples are also
+Workshop-only annotations in Phase 2; do not transfer them as a new chapter field.
 
 ## Transfer notes and cautions
 

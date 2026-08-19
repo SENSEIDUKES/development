@@ -1,0 +1,95 @@
+.inline-audio-highlight {
+  --inline-audio-accent: var(--color-neutral-400);
+  position: relative;
+  display: inline;
+  margin: 0 -0.02em;
+  padding: 0 0.08em;
+  border: 0;
+  border-radius: 0.18em;
+  background:
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--inline-audio-accent) 17%, transparent) 0 32%,
+      transparent 32%
+    );
+  color: var(--inline-audio-accent);
+  font: inherit;
+  font-weight: 500;
+  line-height: inherit;
+  text-align: inherit;
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in srgb, var(--inline-audio-accent) 52%, transparent);
+  text-decoration-thickness: 0.07em;
+  text-underline-offset: 0.2em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease,
+    text-shadow 160ms ease;
+}
+
+.inline-audio-highlight:hover {
+  background-color: color-mix(in srgb, var(--inline-audio-accent) 10%, transparent);
+  text-shadow: 0 0 0.7em color-mix(in srgb, var(--inline-audio-accent) 42%, transparent);
+}
+
+.inline-audio-highlight:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--inline-audio-accent) 82%, white);
+  outline-offset: 0.15em;
+  background-color: color-mix(in srgb, var(--inline-audio-accent) 13%, transparent);
+}
+
+.inline-audio-highlight[data-state='loading'] {
+  animation: inline-audio-breathe 900ms ease-in-out infinite alternate;
+}
+
+.inline-audio-highlight[data-state='playing'] {
+  background-color: color-mix(in srgb, var(--inline-audio-accent) 14%, transparent);
+  box-shadow: 0 0 0.85em color-mix(in srgb, var(--inline-audio-accent) 24%, transparent);
+  text-shadow: 0 0 0.65em color-mix(in srgb, var(--inline-audio-accent) 52%, transparent);
+}
+
+.inline-audio-highlight[data-state='error'] {
+  color: var(--color-entity-enemy);
+  text-decoration-color: currentColor;
+  text-decoration-style: dotted;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+@keyframes inline-audio-breathe {
+  from {
+    box-shadow: 0 0 0.2em color-mix(in srgb, var(--inline-audio-accent) 10%, transparent);
+    opacity: 0.76;
+  }
+  to {
+    box-shadow: 0 0 0.75em color-mix(in srgb, var(--inline-audio-accent) 26%, transparent);
+    opacity: 1;
+  }
+}
+
+@media (pointer: coarse) {
+  .inline-audio-highlight::before {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    right: -0.28em;
+    width: calc(100% + 0.56em);
+    height: max(1.8em, 44px);
+    transform: translateY(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inline-audio-highlight {
+    transition: none;
+  }
+
+  .inline-audio-highlight[data-state='loading'] {
+    animation: none;
+  }
+}

@@ -5,10 +5,64 @@ import type {
   ReaderPreferences,
   StoryWorld,
 } from '../../../components/reader-chamber/shared/types';
+import type { InlineAudioHighlight } from '../../../audio/inlineAudio';
 export const MOCK_READER_FALLBACK_LABEL = 'Mock fallback · No generated batch supplied · Four-chapter preview story only';
 
 export const MOCK_STORY_ID = 'workshop-story-emberfall';
 const CODEX_PREVIEW_IMAGE = '/story-seed/library-auth-backdrop.jpg';
+
+/**
+ * Phase 2 stays outside StoryBlock: these controlled annotations resolve real
+ * Phase 1 catalog URLs and are passed only to the Development Reader pane.
+ */
+export const INLINE_AUDIO_HIGHLIGHTS = [
+  {
+    id: 'inline-beast-vermilion-debt-fox',
+    phrase: 'Vermilion Debt Fox',
+    action: {
+      type: 'sound',
+      cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3',
+    },
+    accentColor: 'var(--color-entity-enemy)',
+  },
+  {
+    id: 'inline-weapon-ashen-sword',
+    phrase: 'Ashen Sword',
+    action: {
+      type: 'sound',
+      cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_1.mp3',
+    },
+    accentColor: 'var(--color-item-great)',
+  },
+  {
+    id: 'inline-artifact-azure-ring',
+    phrase: 'The Azure Ring',
+    action: {
+      type: 'sound',
+      cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Artifacts/Relics/Resonance/Resonance_1.mp3',
+    },
+    accentColor: 'var(--color-item-legendary)',
+  },
+  {
+    id: 'inline-location-collapsed-gate',
+    phrase: 'Collapsed Gate of the Ninth Meridian',
+    action: {
+      type: 'sound',
+      cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Sect_Gong_1.mp3',
+    },
+    accentColor: 'var(--color-location-special)',
+  },
+  {
+    id: 'inline-faction-ninth-meridian-sect',
+    phrase: 'Ninth Meridian Sect',
+    action: {
+      type: 'sound',
+      cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Factions/Monastery_Chant_1.mp3',
+    },
+    // No canonical faction color is available, so the primitive deliberately
+    // falls back to the neutral Library token.
+  },
+] as const satisfies readonly InlineAudioHighlight[];
 
 const createCodexPreviewImage = (
   id: string,
@@ -72,7 +126,12 @@ export function createMockChapters(): ReaderChapter[] {
         {
           id: 'ch1-b1',
           type: 'paragraph',
-          text: 'The night Li Wei swore the Oath of Embers, the collapsed gate of the Ninth Meridian wept rust-red rain. He pressed his palm to the cold stone and felt the meridian answer — a slow, ancient turning, like a key deciding at last to fit its lock.',
+          text: 'The night Li Wei swore the Oath of Embers, the Collapsed Gate of the Ninth Meridian wept rust-red rain. He pressed his palm to the cold stone and felt the meridian answer — a slow, ancient turning, like a key deciding at last to fit its lock.',
+        },
+        {
+          id: 'ch1-b1-inline-audio',
+          type: 'paragraph',
+          text: 'A Vermilion Debt Fox crouched beneath the lintel as Mei Lin drew the Ashen Sword. The Azure Ring answered from Li Wei’s hand, and somewhere within the Ninth Meridian Sect a low chant rose to meet the blade.',
         },
         {
           id: 'ch1-b2',

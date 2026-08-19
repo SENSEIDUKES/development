@@ -1,7 +1,8 @@
 # Audio domain
 
 - **Created:** 2026-08-19
-- **Replica status:** foundation for the future inline-audio system (Phase 1)
+- **Last updated:** 2026-08-19
+- **Replica status:** Phase 2 inline-audio contract and Workshop playback active
 
 ## What lives here
 
@@ -12,6 +13,8 @@
 - `libraryCues.ts` + `data/library-cues.v1.json` — the curated SEN library
   cues, with typed lookups (`getByUrl`, `getByCategory`, `getByVariation`,
   `getByTag`, `getByAnyTag`, `getCategories`).
+- `inlineAudio.ts` — the client-safe `sound` / `voice` action contract,
+  literal-prose annotation shape, and catalog-gated sound resolver.
 - `index.ts` — the client-safe barrel for the audio surface.
 
 The voice catalog data and provider-aware logic live in
@@ -24,8 +27,9 @@ curated SEN audio metadata. Both are static data + typed lookup helpers
 in this domain — they are not a parallel audio system, not a playback
 engine, and not a persistence layer.
 
-Future consumer wiring (Reader Chamber, Codex, World Card replacement)
-will read from this domain, but no such wiring exists in Phase 1.
+The Development Reader Chamber now consumes this domain for controlled inline
+examples. It does not write actions into chapter data and it does not replace
+or modify the legacy World Card path in this phase.
 
 ## Server boundary
 
@@ -49,11 +53,11 @@ Each category belongs to exactly one subsystem:
 
 | Category      | Owner                                                       | Phase 1 consumption |
 | ------------- | ----------------------------------------------------------- | ------------------- |
-| `beasts`      | Future inline-audio highlights                              | Lookup only         |
-| `weapons`     | Future inline-audio highlights                              | Lookup only         |
-| `artifacts`   | Future inline-audio highlights                              | Lookup only         |
-| `locations`   | Future inline-audio highlights                              | Lookup only         |
-| `factions`    | Future inline-audio highlights                              | Lookup only         |
+| `beasts`      | Inline-audio highlights                                     | Phase 2 Workshop    |
+| `weapons`     | Inline-audio highlights                                     | Phase 2 Workshop    |
+| `artifacts`   | Inline-audio highlights                                     | Phase 2 Workshop    |
+| `locations`   | Inline-audio highlights                                     | Phase 2 Workshop    |
+| `factions`    | Inline-audio highlights                                     | Phase 2 Workshop    |
 | `atmosphere`  | Scene audio — `StoryCuePayload.atmosphereCategory`, `trackLibrary.ts` | Not consumed here   |
 | `system`      | System Panels — `SystemBlock.tsx`                            | Not consumed here   |
 
@@ -96,17 +100,33 @@ const fireWeapons = getByTag(cues, 'weapons', 'fire');
 import type { PublicVoiceMeta } from '../server/audio/voiceCatalog';
 ```
 
-## Future consumer contract (Phase 2+)
+## Inline-audio contract (Phase 2)
 
-When the Reader / World Card replacement starts consuming audio
-metadata, it will receive:
+Inline annotations remain separate from `StoryBlock` and use one of two exact
+actions:
 
-- A `PublicVoiceMeta` (internal key + provider-neutral metadata,
-  `ttsAvailable` flag) — never a provider ID.
-- A `LibraryCue[]` (already-loaded) filtered by category, variation, or
-  tag — ready to hand to the existing playback layer with its
-  `public_url`.
+```ts
+type InlineAudioAction =
+  | { type: 'sound'; cueUrl: string }
+  | { type: 'voice'; voiceKey: string; quoteText: string };
+```
 
-This Phase 1 PR establishes the data, types, validation, and lookup
-surface. It does not change the Reader, the World Card, chapter
-generation, the playback layer, or any persistence path.
+`sound` URLs must resolve through `library-cues.v1.json`; arbitrary URLs and
+the separately owned `atmosphere` / `system` categories are rejected. Playback
+uses `DevAudioPlaybackProvider`, which delegates to the existing
+`@seihouse/audio-player` session. Its `replace` operation replaces the shared
+queue with one Cue, so rapid actions cannot create overlapping media elements.
+
+`voiceKey` is the provider-neutral `PublicVoiceMeta.internalKey`. No provider
+ID is allowed in this client shape. Phase 2 has no synthesis endpoint, no
+ElevenLabs call, and no browser `speechSynthesis` fallback; activating a voice
+action reports an explicit unavailable state.
+
+The Reader primitive is a native inline `<button>` and only calls playback from
+its activation handler. Rendering, scrolling, intersection, and viewport entry
+never load or play a Cue. It exposes idle, loading, playing, and error states,
+stops only its own active Cue during cleanup, accepts an entity/category accent
+token when one exists, and otherwise uses the neutral Library color token.
+
+The legacy World Card, chapter generation, prompts, persistence, and production
+payloads remain unchanged.

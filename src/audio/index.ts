@@ -5,3 +5,4 @@
 // `src/server/audio/voiceCatalog.ts` and must stay on the server boundary.
 
 export * from './libraryCues';
+export * from './inlineAudio';

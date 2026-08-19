@@ -13,7 +13,8 @@
     "test:library": "tsc -b && vitest run src/components/library",
     "test:relics": "vitest run src/server/relics/relicFoundation.test.ts",
     "test:story-seed": "vitest run src/components/story-seed src/server/story-seed-blueprint",
-    "test:audio-catalog": "vitest run src/server/audio src/audio/libraryCues.test.ts"
+    "test:audio-catalog": "vitest run src/server/audio src/audio/libraryCues.test.ts",
+    "test:inline-audio": "vitest run src/audio src/components/reader-chamber/development/InlineAudio.test.tsx"
   },
   "dependencies": {
     "@google/genai": "^2.16.0",

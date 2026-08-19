@@ -4,12 +4,15 @@
 - **Source location:** `src/components/ReaderCodex.tsx`, `src/components/CodexSheetOverlay.tsx`, and `src/components/CodexHovercard.tsx` (verified against `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-codex`
 - **Replica created:** 2026-08-11
-- **Last Workshop update:** 2026-08-18
+- **Last Workshop update:** 2026-08-19
 - **Last source comparison:** 2026-08-18
 - **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-08-19:** Documented the refined inline World Cue boundary: a named
+  Reader entity can keep its independent Codex action while a separate neutral
+  Library sound glyph beside the phrase owns cue playback.
 - **2026-08-18:** Review follow-up: the highlighted-term dragon seal now applies its cyan and violet glow as a valid chained filter at rest, on hover, and while pressed. The decorative Manifest backdrop is hidden from assistive technology and carries a `data-slot` hook for focused tests; focus, placement, and local manifestation behavior are unchanged.
 - **2026-08-18:** Brought the highlighted-term `CodexHovercard` to the approved dragon-cycle Manifest seal, matching the Reader Chamber `CodexCard`: the dashed orbit rings and accent core glow are gone — an enlarged `LibraryDragonCycleIcon` now forms the entire portal boundary (masked cyan→violet twin copies, slow 24s rotation), wrapped in the centered two-band conic aura, around a dark glass core holding the star, the Manifest label, and the awakening caption (now "Awaken Portrait" inside the core; the separate "Awaken Aetherial Portrait" line beneath the seal is retired). The pending state reads "Manifesting..." with a small spinning dragon glyph instead of the generic spinner, announces `aria-busy`, and every animation rests under `prefers-reduced-motion`. The card also now carries the story's Manifest backdrop behind the glass until a portrait exists — the same assigned-or-stable-fallback rule as the `CodexCard`, sourced from the new `development/codexManifestBackdrop.ts`: the five real production "IMMORTAL LAND" revelation landscapes, downloaded into `public/manifest-backdrops/` so no production media is hot-linked. Docking, desktop placement, focus/Escape handling, trigger theming, and the local manifestation flow are unchanged.
 - **2026-08-18:** Review pass on the spectral-glass fork: the entity classification rules moved into a single shared `resolveCodexEntityBand` in `development/codexEntityAccent.ts`, and the hovercard trigger theme now maps from that band — this also repairs the modest-tier drift, so decent/uncommon/mortal/profane artifacts highlight in the same teal (`#2DD4BF`) the card ambience already used instead of the legacy dark green. The Manifest seals dropped their redundant keyboard handlers (native button activation already covers Enter/Space), the inline CodexCard seal now announces its "Summoning..." pending state to screen readers, and the transfer notes for the new helpers are marked pending an integration decision. Desktop placement, docking, focus/Escape handling, and the manifestation flow are unchanged.

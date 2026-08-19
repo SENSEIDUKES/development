@@ -28,7 +28,10 @@ export const LibrarySoundGlyph = memo(function LibrarySoundGlyph({
   ...restProps
 }: LibrarySoundGlyphProps) {
   const safeSize = typeof size === 'number' && Number.isFinite(size) && size >= 0 ? size : 16;
-  const isExplicitlyAccessible = decorative === false || Boolean(title) || Boolean(ariaLabel);
+  const isExplicitlyAccessible = decorative === false
+    || Boolean(title)
+    || Boolean(ariaLabel)
+    || Boolean(ariaLabelledBy);
   const isDecorative = decorative ?? !isExplicitlyAccessible;
 
   return (

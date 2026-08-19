@@ -47,4 +47,18 @@ describe('LibrarySoundGlyph', () => {
     expect(glyph?.getAttribute('width')).toBe('16');
     expect(glyph?.querySelector('title')?.textContent).toBe('Play Library sound cue');
   });
+
+  it('stays exposed when an external aria-labelledby supplies its name', () => {
+    act(() => root.render(
+      <>
+        <span id="external-sound-label">Library sound cue</span>
+        <LibrarySoundGlyph aria-labelledby="external-sound-label" />
+      </>,
+    ));
+
+    const glyph = container.querySelector('svg');
+    expect(glyph?.getAttribute('role')).toBe('img');
+    expect(glyph?.getAttribute('aria-labelledby')).toBe('external-sound-label');
+    expect(glyph?.getAttribute('aria-hidden')).toBeNull();
+  });
 });

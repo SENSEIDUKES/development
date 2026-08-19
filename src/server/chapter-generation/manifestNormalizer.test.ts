@@ -57,6 +57,21 @@ describe("Manifest prose recovery", () => {
     });
   });
 
+  it("preserves creature entities from the documented metadata contract", () => {
+    const result = normalizeManifestResponse(ndjson({
+      id: "creature-reveal",
+      type: "paragraph",
+      text: "The Thunder Roc eclipsed the moon.",
+      metadata: {
+        entities: [{ name: "Thunder Roc", type: "creature", mention: "reveal" }],
+      },
+    }), 2);
+
+    expect(result.blocks[0].metadata?.entities).toEqual([
+      { name: "Thunder Roc", type: "creature", mention: "reveal" },
+    ]);
+  });
+
   it("removes malformed optional enrichment without dropping its prose", () => {
     const unsafeField = `<script>${"x".repeat(140)}</script>`;
     const result = normalizeManifestResponse(ndjson({

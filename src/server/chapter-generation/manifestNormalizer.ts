@@ -1,11 +1,12 @@
-import type {
-  BeastSonicProfile,
-  ChapterManifestDiagnostics,
-  ChapterManifestWarning,
-  FateResultData,
-  StoryBlock,
-  StoryBlockMetadata,
-  SystemEvent,
+import {
+  STORY_ENTITY_TYPES,
+  type BeastSonicProfile,
+  type ChapterManifestDiagnostics,
+  type ChapterManifestWarning,
+  type FateResultData,
+  type StoryBlock,
+  type StoryBlockMetadata,
+  type SystemEvent,
 } from "../../components/chapter-generation/shared/types";
 
 type JsonRecord = Record<string, unknown>;
@@ -233,7 +234,7 @@ const parseMetadataEntities = (
     const name = nonEmptyString(item.name);
     const type = nonEmptyString(item.type);
     const mention = nonEmptyString(item.mention);
-    if (!name || !type || !["character", "artifact", "location", "beast", "faction"].includes(type)
+    if (!name || !type || !STORY_ENTITY_TYPES.includes(type as (typeof STORY_ENTITY_TYPES)[number])
       || (mention !== "reveal" && mention !== "reference")) {
       warning(context, "optional-field-removed", `Removed invalid optional ${path}.`, path);
       return [];

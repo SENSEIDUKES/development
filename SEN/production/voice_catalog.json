@@ -1,0 +1,437 @@
+[
+    {
+        "file_name": "voice_preview_ancient master - female.mp3",
+        "voice_id": "KgTGtjXWQOu4lKp3FTGO",
+        "main_voice_type": "Ancient Master",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Wise Oracle",
+            "Ethereal Spirit Guide",
+            "Regal Queen",
+            "Powerful Sorceress",
+            "Ancient Goddess"
+        ],
+        "description": "A deep, resonant, and calm female voice with a deliberate and measured delivery, conveying ancient wisdom, immense patience, and a mystical presence.",
+        "age_range": "Ageless"
+    },
+    {
+        "file_name": "voice_preview_arrogant young master - male.mp3",
+        "voice_id": "fhHSgV9p99eh4gXukJo0",
+        "main_voice_type": "Arrogant Young Master",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Cunning Rival",
+            "Face Slapping",
+            "Arrogant Noble",
+            "Spoiled Heir",
+            "Wealthy Scion"
+        ],
+        "description": "A clear, mid-to-high pitched male voice with a smooth texture and a distinct hint of nasality. The delivery is articulate, deliberate, and theatrical, oozing with condescension, dismissiveness, and an air of entitled superiority.",
+        "age_range": "18-28"
+    },
+    {
+        "file_name": "voice_preview_bright disciple - male.mp3",
+        "voice_id": "oJNN9LhiGwHht5txCQlL",
+        "main_voice_type": "Eager Young Disciple",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Curious Student",
+            "Young Adventurer",
+            "Inquisitive Scholar",
+            "Naive Apprentice",
+            "Comedic Sidekick"
+        ],
+        "description": "A clear, bright male voice with a mid-to-high pitch. It possesses a smooth texture and highly expressive delivery, effectively conveying youthful enthusiasm, curiosity, and sudden panic.",
+        "age_range": "18-28"
+    },
+    {
+        "file_name": "voice_preview_bright heroine – female.mp3",
+        "voice_id": "szSInhKVrxDUcmyQGIdK",
+        "main_voice_type": "Bright Heroine",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Enthusiastic Apprentice",
+            "Young Mage",
+            "Supportive Friend",
+            "Female Adventurer",
+            "Naive Princess"
+        ],
+        "description": "A clear, bright, and articulate female voice with a warm, encouraging tone. It possesses a smooth, light texture, medium-high pitch, and an earnest, slightly formal yet friendly delivery, conveying optimism and support.",
+        "age_range": "18-28"
+    },
+    {
+        "file_name": "voice_preview_dark sect elder - male.mp3",
+        "voice_id": "6Qeekfwgzrswu8umqMZJ",
+        "main_voice_type": "Sinister Cultivator",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Sophisticated Villain",
+            "Cunning Politician",
+            "Demonic Cultivator",
+            "Scheming Noble",
+            "Cunning Advisor"
+        ],
+        "description": "The voice is deep, smooth, and highly resonant, delivered with a deliberate, almost purring cadence. It carries a subtle, sophisticated menace and a confident, theatrical quality, hinting at intelligence and manipulation.",
+        "age_range": "50-70"
+    },
+    {
+        "file_name": "voice_preview_dragonkin - male.mp3",
+        "voice_id": "FYWJbShCUqj6Z8R2llrz",
+        "main_voice_type": "Ancient Dragonkin",
+        "fixed_or_flexible": "fixed",
+        "compatible_character_roles": [],
+        "description": "A very deep, resonant, and heavily guttural voice with a distinct gravelly and raspy texture. The delivery is slow, deliberate, and powerful, conveying a formidable, ancient, and intimidating presence with a growling undertone that occasionally borders on a roar.",
+        "age_range": "Ancient (non-human)"
+    },
+    {
+        "file_name": "voice_preview_goblin - male.mp3",
+        "voice_id": "Z2SAtfW4WDY1YI8YYttm",
+        "main_voice_type": "Cunning Goblin",
+        "fixed_or_flexible": "fixed",
+        "compatible_character_roles": [],
+        "description": "A high-pitched, raspy, and gravelly voice with a pronounced nasal quality. The delivery is fast, chittering, and excitable, fluctuating in pitch to convey a sense of eagerness and sly cunning, often sounding sibilant.",
+        "age_range": "Adult"
+    },
+    {
+        "file_name": "voice_preview_merchant - male.mp3",
+        "voice_id": "tCdSp42cgzvdLNhB6QD6",
+        "main_voice_type": "Persuasive Merchant",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Sophisticated Villain",
+            "Auctioneer",
+            "Master Alchemist",
+            "Prime Minister",
+            "Secret Villian"
+        ],
+        "description": "A smooth, articulate, and highly persuasive male voice with a warm, resonant quality and excellent control over pacing and intonation. It exudes charm and intellectual confidence while subtly hinting at deeper, potentially manipulative motives, making it very engaging.",
+        "age_range": "35-55"
+    },
+    {
+        "file_name": "voice_preview_mysterious oracle – female.mp3",
+        "voice_id": "wT9PqFPncEWcjjy5auMi",
+        "main_voice_type": "Mysterious Oracle",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Enchantress",
+            "Mysterious Woman",
+            "Seductive Villainess",
+            "Succubus",
+            "Siren"
+        ],
+        "description": "A deep, resonant, and smoothly delivered female voice with an unhurried pace, conveying ancient wisdom, serene authority, and a touch of the mystical.",
+        "age_range": "35-65"
+    },
+    {
+        "file_name": "voice_preview_old dragonkin - male.mp3",
+        "voice_id": "OHGMUGeY17IMBjqvVttd",
+        "main_voice_type": "Ancient Draconic Warlord",
+        "fixed_or_flexible": "fixed",
+        "compatible_character_roles": [],
+        "description": "A profoundly deep, resonant, and gravelly male voice, delivered with deliberate, authoritative, and menacing confidence. It possesses a raw, ancient power and a distinctive leathery texture, hinting at a formidable, non-human speaker of immense age and reptilian origin.",
+        "age_range": "Ancient"
+    },
+    {
+        "file_name": "voice_preview_old grandmaster - male.mp3",
+        "voice_id": "JRbxd3N4w8A7cLOs1VG1",
+        "main_voice_type": "Wise Old Grandmaster",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Ancient Monk/Spiritual Guide",
+            "Elderly Wizard/Sorcerer",
+            "Sect Elder",
+            "Ancient Master",
+            "Wise Scholar"
+        ],
+        "description": "A deep, resonant, and smooth male voice with a calm and deliberate delivery, conveying wisdom and ancient knowledge. The tone is authoritative yet gentle.",
+        "age_range": "60-80"
+    },
+    {
+        "file_name": "voice_preview_prodigy - male.mp3",
+        "voice_id": "PfSIrOHCX3rYH29dW1XL",
+        "main_voice_type": "Arrogant Prodigy",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Cunning Mage",
+            "Noble Antagonist",
+            "Intellectual Strategist",
+            "Rival Sect Disciple",
+            "Merciless Assassin"
+        ],
+        "description": "A clear, smooth male voice with a mid-low pitch, delivered with confident, measured articulation and a subtle undertone of arrogance, conveying authority and a controlled demeanor.",
+        "age_range": "20-35"
+    },
+    {
+        "file_name": "voice_preview_sect matriarch - female.mp3",
+        "voice_id": "GTjmyFdCEhqgLQNKhgqD",
+        "main_voice_type": "Authoritative Matron",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Elder Sorceress",
+            "Sect Matriarch",
+            "Stern Grandmother",
+            "Regal Queen",
+            "Wise Ruler"
+        ],
+        "description": "A clear, resonant female voice with a lower-mid pitch and a measured, deliberate delivery. It conveys confidence, gravitas, and a calm, unwavering authority, with a slightly stern but controlled tone.",
+        "age_range": "40-65"
+    },
+    {
+        "file_name": "voice_preview_teacher - male.mp3",
+        "voice_id": "eD61EjEXXDq0YxpgtiA7",
+        "main_voice_type": "Enthusiastic Scholar",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Eccentric Inventor",
+            "Arcane Wizard",
+            "Pill Master",
+            "Helpful Teacher",
+            "Wise Companion"
+        ],
+        "description": "A clear, articulate male voice with a mid-to-high pitch, characterized by an enthusiastic, inquisitive, and slightly theatrical delivery. The tone is warm and engaging, conveying a strong sense of intellectual curiosity and excitement.",
+        "age_range": "35-55"
+    },
+    {
+        "file_name": "voice_preview_the system - unisex.mp3",
+        "voice_id": "f7x70z1O6s31fAV2FjKe",
+        "main_voice_type": "Omniscient AI",
+        "fixed_or_flexible": "fixed",
+        "compatible_character_roles": [],
+        "description": "A synthesized voice with a consistent mid-low pitch, smooth and artificial texture, and a flat, emotionless delivery. It projects an authoritative and slightly unsettling calm, characteristic of an omnipresent digital entity or advanced AI.",
+        "age_range": "Unknown"
+    },
+    {
+        "file_name": "voice_preview_voice of god - male.mp3",
+        "voice_id": "8xK0iQbvuTSrf9kHJSEK",
+        "main_voice_type": "Voice of God / Omniscient Narrator",
+        "fixed_or_flexible": "fixed",
+        "compatible_character_roles": [],
+        "description": "A profoundly deep, resonant, and rich male voice with an unhurried, deliberate, and authoritative delivery. The tone is grave and commanding, possessing a smooth, full texture that conveys immense power and ageless wisdom, bordering on the ethereal.",
+        "age_range": "50-70"
+    },
+    {
+        "file_name": "voice_preview_war veteran - male.mp3",
+        "voice_id": "0iv308RpyiJ0T2xKfyFM",
+        "main_voice_type": "Gruff Drill Sergeant",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Seasoned Warrior",
+            "Tough Mentor",
+            "Experienced Storyteller",
+            "Hardened Detective",
+            "Rugged Cultivator"
+        ],
+        "description": "A deep, resonant, and gravelly voice with a stern and commanding delivery, conveying a sense of world-weary authority and unwavering toughness.",
+        "age_range": "50-70"
+    },
+    {
+        "file_name": "voice_preview_weathered wanderer - male.mp3",
+        "voice_id": "KHJgHO0Ietrdwebu29hV",
+        "main_voice_type": "Weathered Wanderer",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Weary Traveler",
+            "Wise Mentor",
+            "Old Adventurer",
+            "Narrator",
+            "Gruff Shopkeeper"
+        ],
+        "description": "A deep, resonant male voice with a warm, slightly gravelly texture. Delivers lines with a deliberate, world-weary cadence, conveying a sense of experience and contemplative wisdom.",
+        "age_range": "50-70"
+    },
+    {
+        "file_name": "voice_preview_wise sect elder - male.mp3",
+        "voice_id": "uNAub1ulI6Rzxf0alGPc",
+        "main_voice_type": "Wise Sect Elder",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Mystic Sage",
+            "Caring Mentor",
+            "Experienced Storyteller",
+            "Benevolent King/Leader",
+            "Clan Head"
+        ],
+        "description": "The voice is deep and warm, possessing a soothing yet authoritative presence. It carries a slight, pleasant gravelly texture that hints at age and experience, while maintaining a clear, gentle, and deliberate delivery.",
+        "age_range": "55-75"
+    },
+    {
+        "file_name": "voice_preview_young disciple – male.mp3",
+        "voice_id": "W51DVt5FW5rbBECoeFNR",
+        "main_voice_type": "young disciple",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Young aspiring hero",
+            "Student/Apprentice",
+            "Innocent villager",
+            "Little Brother",
+            "Young Prince"
+        ],
+        "description": "A clear, earnest, and somewhat breathy male voice with a mid-to-high pitch. It conveys a blend of youthful awe, humility, and growing determination, with a smooth and clean vocal texture.",
+        "age_range": "12-18"
+    },
+    {
+        "file_name": "voice_preview_powerful spirit -  female.mp3",
+        "voice_id": "EqK3dN4HTzV1FByDvTGe",
+        "main_voice_type": "Ancient Ethereal Being",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Sorceress/Enchantress",
+            "Deity/Goddess",
+            "Ancient Queen/Empress",
+            "Artistic Spirit",
+            "Seductive Villainess"
+        ],
+        "description": "A deep, resonant, and velvety female voice with an ancient, ethereal quality. The delivery is deliberate, commanding, and subtly seductive, conveying immense power, wisdom, and a hint of menace.",
+        "age_range": "35-55"
+    },
+    {
+        "file_name": "voice_preview_sensei - pragmatic narrator - male.mp3",
+        "voice_id": null,
+        "main_voice_type": "Pragmatic Narrator",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Unnammed Charecter",
+            "Storyteller",
+            "Announcer",
+            "Narrator",
+            "Guide"
+        ],
+        "description": "A clear, smooth, and mid-range male voice with a calm, articulate, and trustworthy delivery, suitable for conveying information or guiding listeners.",
+        "age_range": "25-40"
+    },
+    {
+        "file_name": "voice_preview_strict sect elder - male.mp3",
+        "voice_id": "UIDKPbI9qqa1VZkq6jCQ",
+        "main_voice_type": "Strict Sect Elder",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Ancient Sorcerer",
+            "Wise Monk/Grandmaster",
+            "Sect Leader",
+            "Stern Mentor",
+            "Imperial Guard Captain"
+        ],
+        "description": "A deep, resonant male voice with a slightly gravelly texture and a slow, deliberate delivery, conveying stern authority, gravitas, and ancient wisdom.",
+        "age_range": "60-80"
+    },
+    {
+        "file_name": "voice_preview_bright protagonist - male.mp3",
+        "voice_id": "fjnwTZkKtQOJaYzGLa6n",
+        "main_voice_type": "Diligent Researcher",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Junior Engineer",
+            "Energetic Explorer",
+            "Strategic Analyst",
+            "Apprentice Mage",
+            "Focused Protagonist"
+        ],
+        "description": "The voice is clear, articulate, and possesses a steady, mid-range pitch with a smooth, bright texture. The delivery is composed and focused, conveying a sense of intelligence, diligence, and calm competence.",
+        "age_range": "28-38"
+    },
+    {
+        "file_name": "voice_preview_bright protagonist – female.mp3",
+        "voice_id": "x3RxgickyETi2wAfb1FO",
+        "main_voice_type": "Encouraging mentor",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Wise young leader",
+            "Spiritual guide",
+            "Noble heroine",
+            "Kind healer",
+            "Pure-hearted noble"
+        ],
+        "description": "A clear, articulate, and warm female voice with a medium-high pitch and an encouraging, somewhat formal delivery, conveying wisdom and calm resolve.",
+        "age_range": "25-35"
+    },
+    {
+        "file_name": "voice_preview_dark protagonist - female.mp3",
+        "voice_id": "WPX8kSaw1s5TSgWgZzzN",
+        "main_voice_type": "Disciplined Operative",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Ruthless Assassin",
+            "Strong Women",
+            "Cold-hearted Swordswoman",
+            "Jade Beauty",
+            "Calculated Antagonist"
+        ],
+        "description": "A smooth, low-mid pitched female voice with a highly controlled and deliberate delivery. The tone is firm, calm, and resolute, conveying a sense of unwavering discipline and authority. Articulation is precise and clear, with a steady, measured pace.",
+        "age_range": "30-45"
+    },
+    {
+        "file_name": "voice_preview_dark protagonist - male.mp3",
+        "voice_id": "HZV9BhXdntYyMBnbQ2VZ",
+        "main_voice_type": "Stoic Protagonist",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Seasoned Warrior",
+            "Philosophical Narrator",
+            "Cold-hearted Protagonist",
+            "Calculated Antagonist",
+            "Dark Fantasy MC"
+        ],
+        "description": "A deep, resonant male voice with a smooth yet grounded texture. The delivery is deliberate and controlled, conveying a sense of unwavering resolve and introspection. It possesses a slightly melancholic yet strong undertone, with clear articulation and a measured pace that lends gravity to each word.",
+        "age_range": "28-45"
+    },
+    {
+        "file_name": "voice_preview_demonic warrior - male.mp3",
+        "voice_id": "crOUkQiKN5lgIwS7zzl2",
+        "main_voice_type": "demonic warrior",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "dark lord",
+            "evil entity",
+            "Dark Arts",
+            "intimidating warlord",
+            "Demon General"
+        ],
+        "description": "A deep, guttural, and gravelly voice with a menacing, commanding tone. The delivery is slow, deliberate, and theatrical, imbued with a powerful, sneering disdain and occasional heavy breathing, conveying immense power and a sadistic temperament.",
+        "age_range": "Unknown"
+    },
+    {
+        "file_name": "voice_preview_jiangshi - unisex.mp3",
+        "voice_id": "mZcn0IyuVHJmQqXcJQFp",
+        "main_voice_type": "Ancient Jiangshi",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Ancient Golem",
+            "Ghoul",
+            "Ominous Spirit",
+            "Zombie",
+            "Cursed Puppet"
+        ],
+        "description": "A profoundly deep, resonant, and slow-spoken voice with a dry, almost gravelly texture, conveying an ancient, reanimated, and slightly ominous presence. The delivery is deliberate and effortful, suggesting a stiff or unnatural speaker.",
+        "age_range": "Unknown"
+    },
+    {
+        "file_name": "voice_preview_young cat girl - female.mp3",
+        "voice_id": "bxNGRCOlZjYpKHPEoFxa",
+        "main_voice_type": "Energetic Young Cat Girl",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Cute Beast Girl",
+            "Energetic Explorer",
+            "Fox Spirit",
+            "Enthusiastic Apprentice",
+            "Curious Companion"
+        ],
+        "description": "A high-pitched, energetic, and expressive female voice with a clear, bright tone and a hint of playful mischief. It carries a youthful enthusiasm, capable of conveying excitement, curiosity, and a touch of mock sternness with an animated delivery.",
+        "age_range": "12-18"
+    },
+    {
+        "file_name": "voice_preview_old demonic cultivator  - male.mp3",
+        "voice_id": "YsfUhHr1QXCzixWfrop6",
+        "main_voice_type": "Aged Demonic Cultivator",
+        "fixed_or_flexible": "flexible",
+        "compatible_character_roles": [
+            "Dark Lord",
+            "Ancient Lich",
+            "Grizzled Pirate Captain",
+            "Sinister Wise Man",
+            "Orc Chieftain"
+        ],
+        "description": "A very deep, gravelly male voice with a pronounced, theatrical rasp. The delivery is slow, deliberate, and resonating, conveying an ancient, menacing, and powerful presence.",
+        "age_range": "60-90"
+    }
+]

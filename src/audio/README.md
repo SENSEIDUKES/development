@@ -57,10 +57,14 @@ Each category belongs to exactly one subsystem:
 | `atmosphere`  | Scene audio — `StoryCuePayload.atmosphereCategory`, `trackLibrary.ts` | Not consumed here   |
 | `system`      | System Panels — `SystemBlock.tsx`                            | Not consumed here   |
 
-The loader preserves raw data and exposes a uniform lookup surface for
-all seven categories, but Phase 1 introduces no new consumer for the
-two reserved-by-other-systems categories. Adding one is a separate,
-explicit task.
+The loader preserves every input row in `LibraryCuesLoadResult.rawEntries`
+(in order, untrusted) and exposes a uniform lookup surface for all seven
+categories. Invalid and unknown-category entries stay in `rawEntries` and
+surface in `issues`, but are excluded from `cues`, `byUrl`, `byCategory`,
+and `byVariation` so the lookup views only contain validated rows.
+
+Phase 1 introduces no new consumer for the two reserved-by-other-systems
+categories. Adding one is a separate, explicit task.
 
 ## Data files
 

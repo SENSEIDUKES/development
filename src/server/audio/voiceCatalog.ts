@@ -183,6 +183,11 @@ export const parseVoiceCatalog = (raw: unknown): VoiceCatalogLoadResult => {
       });
       continue;
     }
+    // Normalize blank / whitespace-only voice_id values to null so a voice
+    // with no usable provider ID is a valid but unavailable entry, and
+    // resolveProviderId returns null for it without special-casing.
+    const normalizedVoiceId =
+      e.voice_id === null || e.voice_id.trim() === '' ? null : e.voice_id;
     if (!isString(e.main_voice_type) || !e.main_voice_type.trim()) {
       issues.push({
         kind: 'malformed_entry',
@@ -226,7 +231,7 @@ export const parseVoiceCatalog = (raw: unknown): VoiceCatalogLoadResult => {
 
     const entry: VoiceCatalogEntry = {
       file_name: e.file_name,
-      voice_id: e.voice_id,
+      voice_id: normalizedVoiceId,
       main_voice_type: e.main_voice_type,
       fixed_or_flexible: e.fixed_or_flexible,
       compatible_character_roles: e.compatible_character_roles,

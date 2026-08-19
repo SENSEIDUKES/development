@@ -48,8 +48,8 @@ describe('libraryCues loader', () => {
   it('loads the real catalog without throwing', () => {
     const loaded = loadLibraryCues();
     expect(loaded.cues.length).toBeGreaterThan(0);
-    // The raw data is preserved — every parsed cue appears in the public view.
-    expect(loaded.cues.length).toBe(loaded.cues.length);
+    // Every input row is preserved in rawEntries, in order.
+    expect(loaded.rawEntries.length).toBe(loaded.cues.length);
   });
 
   it('reports zero issues on the well-formed real catalog', () => {
@@ -71,8 +71,8 @@ describe('libraryCues loader', () => {
     expect(LIBRARY_CUE_CATEGORIES.length).toBe(7);
   });
 
-  it('surfaces malformed entries without dropping the rest', () => {
-    const loaded = parseLibraryCues([
+  it('surfaces malformed entries while preserving every raw input', () => {
+    const input = [
       makeValidCue(),
       {
         file_path: 'DEFAULT/Bad/MissingUrl.mp3',
@@ -84,42 +84,61 @@ describe('libraryCues loader', () => {
         public_url: 'https://celestialaudio.seihouse.org/DEFAULT/Bad/MissingMetadata.mp3',
         // Missing metadata — surfaces as malformed_entry.
       },
-    ]);
+    ];
+    const loaded = parseLibraryCues(input);
 
+    // All three inputs preserved verbatim, in order.
+    expect(loaded.rawEntries).toEqual(input);
+    // Only the well-formed cue is in the lookup view.
     expect(loaded.cues.length).toBe(1);
+    expect(loaded.cues[0].file_path).toBe('DEFAULT/Weapons/Magic/Fire_Magic_1.mp3');
+    // Both bad rows surface as issues, but the malformed one is also
+    // excluded from the byUrl / byCategory indexes.
     expect(loaded.issues.length).toBe(2);
     const kinds = loaded.issues.map((i) => i.kind);
     expect(kinds).toContain('invalid_url');
     expect(kinds).toContain('malformed_entry');
+    expect(loaded.byUrl.has('https://celestialaudio.seihouse.org/DEFAULT/Bad/MissingMetadata.mp3')).toBe(false);
   });
 
-  it('flags unknown main_category values without dropping the entry from raw data', () => {
-    const loaded = parseLibraryCues([
+  it('preserves the unknown-category entry in rawEntries while keeping it out of lookup indexes', () => {
+    const input = [
       makeValidCue(),
       makeValidCue({
         file_path: 'DEFAULT/Mystery/Unknown.mp3',
         public_url: 'https://celestialaudio.seihouse.org/DEFAULT/Mystery/Unknown.mp3',
         main_category: 'gibberish-category',
       }),
-    ]);
-    // Only the well-formed known-category cue is included in the lookup view.
+    ];
+    const loaded = parseLibraryCues(input);
+
+    // Both raw inputs preserved.
+    expect(loaded.rawEntries).toEqual(input);
+    // Only the well-formed known-category cue is in the lookup view.
     expect(loaded.cues.length).toBe(1);
     const unknownIssue = loaded.issues.find((i) => i.kind === 'unknown_category');
     expect(unknownIssue).toBeDefined();
     if (unknownIssue && unknownIssue.kind === 'unknown_category') {
       expect(unknownIssue.category).toBe('gibberish-category');
     }
+    // The unknown-category cue is not reachable by URL or by its raw category.
+    expect(
+      getByUrl(loaded, 'https://celestialaudio.seihouse.org/DEFAULT/Mystery/Unknown.mp3'),
+    ).toBeNull();
   });
 
-  it('rejects out-of-range confidence_score', () => {
-    const loaded = parseLibraryCues([
+  it('preserves out-of-range confidence_score entries in rawEntries', () => {
+    const input = [
       makeValidCue({ confidence_score: 1.5 }),
       makeValidCue({
         file_path: 'DEFAULT/Weapons/Magic/Wind_Magic_1.mp3',
         public_url: 'https://celestialaudio.seihouse.org/DEFAULT/Weapons/Magic/Wind_Magic_1.mp3',
         confidence_score: -0.1,
       }),
-    ]);
+    ];
+    const loaded = parseLibraryCues(input);
+
+    expect(loaded.rawEntries).toEqual(input);
     expect(loaded.cues.length).toBe(0);
     expect(loaded.issues.length).toBe(2);
     expect(loaded.issues.every((i) => i.kind === 'malformed_entry')).toBe(true);
@@ -127,16 +146,18 @@ describe('libraryCues loader', () => {
 
   it('flags duplicate public_url values without dropping the entries', () => {
     const sharedUrl = 'https://celestialaudio.seihouse.org/shared.mp3';
-    const loaded = parseLibraryCues([
+    const input = [
       makeValidCue({ file_path: 'DEFAULT/A/Shared.mp3', public_url: sharedUrl }),
       makeValidCue({
         file_path: 'DEFAULT/B/Shared.mp3',
         public_url: sharedUrl,
         main_category: 'factions',
       }),
-    ]);
+    ];
+    const loaded = parseLibraryCues(input);
 
     // Both raw entries preserved.
+    expect(loaded.rawEntries).toEqual(input);
     expect(loaded.cues.length).toBe(2);
     const duplicate = loaded.issues.find((i) => i.kind === 'duplicate_url');
     expect(duplicate).toBeDefined();
@@ -148,6 +169,38 @@ describe('libraryCues loader', () => {
     // First-seen cue wins for getByUrl.
     const byUrl = getByUrl(loaded, sharedUrl);
     expect(byUrl?.file_path).toBe('DEFAULT/A/Shared.mp3');
+  });
+});
+
+describe('libraryCues URL validation', () => {
+  it.each([
+    ['empty string', ''],
+    ['whitespace only', '   '],
+    ['scheme with no host', 'https://'],
+    ['scheme with whitespace', 'https:// '],
+    ['plain text', 'not-a-url'],
+    ['non-http protocol', 'ftp://example.com/file.mp3'],
+    ['data url', 'data:audio/mp3;base64,xyz'],
+    ['file url', 'file:///etc/passwd'],
+  ])('rejects %s as invalid_url', (_label, url) => {
+    const loaded = parseLibraryCues([
+      makeValidCue({ file_path: 'DEFAULT/Bad/BadUrl.mp3', public_url: url }),
+    ]);
+    expect(loaded.cues.length).toBe(0);
+    expect(loaded.rawEntries.length).toBe(1);
+    const issue = loaded.issues.find((i) => i.kind === 'invalid_url');
+    expect(issue).toBeDefined();
+  });
+
+  it('accepts a valid http URL with a port and path', () => {
+    const loaded = parseLibraryCues([
+      makeValidCue({
+        file_path: 'DEFAULT/Weapons/Magic/Fire_Magic_1.mp3',
+        public_url: 'https://celestialaudio.seihouse.org:8443/path/to/cue.mp3',
+      }),
+    ]);
+    expect(loaded.cues.length).toBe(1);
+    expect(loaded.issues).toEqual([]);
   });
 });
 

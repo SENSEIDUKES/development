@@ -152,6 +152,46 @@ describe('voiceCatalog loader', () => {
     }
   });
 
+  it('normalizes blank and whitespace-only voice_id values to null', () => {
+    const loaded = parseVoiceCatalog([
+      {
+        file_name: 'voice_preview_blank - male.mp3',
+        voice_id: '',
+        main_voice_type: 'Blank',
+        fixed_or_flexible: 'flexible',
+        compatible_character_roles: [],
+        description: 'blank id',
+        age_range: 'Adult',
+      },
+      {
+        file_name: 'voice_preview_whitespace - male.mp3',
+        voice_id: '   ',
+        main_voice_type: 'Whitespace',
+        fixed_or_flexible: 'fixed',
+        compatible_character_roles: [],
+        description: 'whitespace id',
+        age_range: 'Adult',
+      },
+      {
+        file_name: 'voice_preview_mixed - male.mp3',
+        voice_id: '\n\t  ',
+        main_voice_type: 'Mixed',
+        fixed_or_flexible: 'flexible',
+        compatible_character_roles: [],
+        description: 'mixed whitespace',
+        age_range: 'Adult',
+      },
+    ]);
+
+    // All three rows parsed; no malformed_entry issue for blank/whitespace IDs.
+    expect(loaded.entries.length).toBe(3);
+    expect(loaded.entries.every((e) => e.voice_id === null)).toBe(true);
+    expect(loaded.issues.filter((i) => i.kind === 'malformed_entry')).toHaveLength(0);
+
+    // The public view flags them all as unavailable.
+    expect(loaded.publicView.every((v) => v.ttsAvailable === false)).toBe(true);
+  });
+
   it('flags duplicate internal keys (file-name collision) without dropping the entries', () => {
     // Both file names slug to the same internal key ("test-male") because the
     // derivation lowercases the result. The raw file names are distinct.
@@ -263,6 +303,32 @@ describe('voiceCatalog provider ID resolution (server-internal)', () => {
     expect(withoutId).toBeDefined();
     const key = deriveInternalKey((withoutId as VoiceCatalogEntry).file_name);
     expect(resolveProviderId(loaded.entries, key)).toBeNull();
+  });
+
+  it('returns null for a voice whose provider ID was blank or whitespace in the source', () => {
+    const loaded = parseVoiceCatalog([
+      {
+        file_name: 'voice_preview_blank - male.mp3',
+        voice_id: '',
+        main_voice_type: 'Blank',
+        fixed_or_flexible: 'flexible',
+        compatible_character_roles: [],
+        description: 'blank id',
+        age_range: 'Adult',
+      },
+      {
+        file_name: 'voice_preview_whitespace - female.mp3',
+        voice_id: '   ',
+        main_voice_type: 'Whitespace',
+        fixed_or_flexible: 'fixed',
+        compatible_character_roles: [],
+        description: 'whitespace id',
+        age_range: 'Adult',
+      },
+    ]);
+
+    expect(resolveProviderId(loaded.entries, 'blank-male')).toBeNull();
+    expect(resolveProviderId(loaded.entries, 'whitespace-female')).toBeNull();
   });
 
   it('returns null for an unknown internal key', () => {

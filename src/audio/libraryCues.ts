@@ -80,7 +80,14 @@ export type LibraryCueIssue =
     };
 
 export interface LibraryCuesLoadResult {
-  /** All entries that parsed and passed validation. */
+  /**
+   * Every input entry from the raw array, in order, untrusted. Preserved so
+   * that a malformed or unknown-category entry can still be inspected at its
+   * original index after load — the loader never silently drops a row.
+   * `rawEntries.length` always equals the length of the input array.
+   */
+  rawEntries: unknown[];
+  /** Entries that parsed and passed validation. */
   cues: LibraryCue[];
   /** First-seen cue per public URL. Duplicates are surfaced in `issues`. */
   byUrl: Map<string, LibraryCue>;
@@ -105,7 +112,17 @@ const isFiniteNumberInUnitInterval = (v: unknown): v is number =>
 
 const isValidUrl = (url: string): boolean => {
   if (!url.trim()) return false;
-  return url.startsWith('http://') || url.startsWith('https://');
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+  // A URL like "https://" parses in some environments without throwing but
+  // has no hostname; require one so empty-scheme strings are rejected.
+  if (!parsed.hostname) return false;
+  return true;
 };
 
 const normalizeCategory = (raw: string): LibraryCueCategory | null => {
@@ -119,6 +136,9 @@ export const parseLibraryCues = (raw: unknown): LibraryCuesLoadResult => {
   if (!Array.isArray(raw)) {
     throw new LibraryCueValidationError(['root must be an array of cue entries.']);
   }
+  // Preserve every input entry so a malformed row can still be inspected by
+  // index after load. Lookup indexes are built only from valid rows.
+  const rawEntries: unknown[] = [...raw];
   const cues: LibraryCue[] = [];
   const issues: LibraryCueIssue[] = [];
   const urlIndex = new Map<string, string[]>();
@@ -150,7 +170,7 @@ export const parseLibraryCues = (raw: unknown): LibraryCuesLoadResult => {
       issues.push({
         kind: 'invalid_url',
         filePath: e.file_path,
-        reason: 'public_url must be a non-empty http(s) URL',
+        reason: 'public_url must be a parseable http(s) URL with a hostname',
       });
       continue;
     }
@@ -253,7 +273,7 @@ export const parseLibraryCues = (raw: unknown): LibraryCuesLoadResult => {
     }
   }
 
-  return { cues, byUrl, byCategory, byVariation, issues };
+  return { rawEntries, cues, byUrl, byCategory, byVariation, issues };
 };
 
 /**

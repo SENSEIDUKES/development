@@ -12,7 +12,8 @@
     "test:chapter-generation": "vitest run src/components/chapter-generation src/server/chapter-generation",
     "test:library": "tsc -b && vitest run src/components/library",
     "test:relics": "vitest run src/server/relics/relicFoundation.test.ts",
-    "test:story-seed": "vitest run src/components/story-seed src/server/story-seed-blueprint"
+    "test:story-seed": "vitest run src/components/story-seed src/server/story-seed-blueprint",
+    "test:audio-catalog": "vitest run src/server/audio src/audio/libraryCues.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.16.0",

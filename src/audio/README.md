@@ -123,16 +123,16 @@ ElevenLabs call, and no browser `speechSynthesis` fallback; activating a voice
 action reports an explicit unavailable state.
 
 The Reader primitive is a native inline `<button>` containing the custom
-`LibrarySoundGlyph` and only calls playback from its activation handler. Its
-visible mark is a circle-free, `0.76em` typographic annotation while an
-invisible pseudo-element expands the pointer target without changing line
-height. The final word, mark, and immediately adjacent punctuation are joined
-so the mark cannot begin a line by itself while longer entity names remain free
-to wrap. Rendering, scrolling, intersection, and viewport entry never load or
-play a Cue. The glyph is neutral at rest, gains a soft Library aura while
-playing, exposes idle, loading, playing, and error states, and stops only its
-own active Cue during cleanup. Because the glyph is a separate accessible tap
-target, the adjacent phrase can keep its native prose styling or its
+`LibrarySoundGlyph`. Activation is the only path that starts or replaces a Cue;
+cleanup stops only the control's own active Cue. Its visible mark is a
+circle-free, `0.76em` typographic annotation while an invisible pseudo-element
+expands the pointer target without changing line height. The final word, mark,
+and immediately adjacent punctuation are joined so the mark cannot begin a
+line by itself while longer entity names remain free to wrap. Rendering,
+scrolling, intersection, and viewport entry never load or play a Cue. The glyph
+is neutral at rest, gains a soft Library aura while playing, and exposes idle,
+loading, playing, and error states. Because the glyph is a separate accessible
+tap target, the adjacent phrase can keep its native prose styling or its
 independent Codex action.
 
 Chapter generation, persistence, and production cue payload integration remain

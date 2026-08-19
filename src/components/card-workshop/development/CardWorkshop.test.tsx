@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CardWorkshopView } from './CardWorkshopView';
 import { createCardWorkshopContextualFixture } from './CardWorkshopContextualReader';
+import { getManifestBackdrop } from '../../reader-codex/development/codexManifestBackdrop';
 import { getReaderChamberSurfaceClass } from '../../reader-chamber/development/ReaderChamber';
 import { CardWorkshopWorkspace } from '../../../workshop/previews/card-workshop/CardWorkshopWorkspace';
 import { ACTIVE_CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
@@ -227,7 +228,7 @@ describe('CardWorkshopView', () => {
     await selectByLabel('Image state', 'manifest');
     expect(getButton('Manifest portrait for Lei')).toBeTruthy();
     await clickButton('Manifest portrait for Lei');
-    expect(container.textContent).toContain('Summoning...');
+    expect(container.textContent).toContain('Manifesting...');
     await clickButton('Reset Local Awaken State');
     await act(async () => {
       vi.advanceTimersByTime(1200);
@@ -286,7 +287,7 @@ describe('CardWorkshopView', () => {
     );
 
     expect(fixture.activeStory.assignedRevealBackdrops?.['codex-char-rin'])
-      .toBe('/card-workshop/reveal-backdrop.svg');
+      .toBe(getManifestBackdrop('codex-char-rin'));
     expect(fixture.chapter.blocks?.map(block => block.id)).toEqual([
       'card-workshop-context-opening',
       'card-workshop-context-mention',

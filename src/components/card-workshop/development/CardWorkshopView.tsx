@@ -16,6 +16,7 @@ import {
 import { WorldCard } from '../../reader-chamber/development/WorldCard';
 import { SystemBlock } from '../../reader-chamber/development/SystemBlock';
 import { CodexCard } from '../../reader-chamber/development/CodexCard';
+import { getManifestBackdrop } from '../../reader-codex/development/codexManifestBackdrop';
 import type { SystemEvent } from '../../reader-chamber/shared/types';
 import type {
   AudioPreviewState,
@@ -45,7 +46,6 @@ const WORKSHOP_CARD_AUDIO_SAMPLE = 'https://lines.seihouse.org/LIBRARY/Lines/SYS
 
 const resolveCardAudioSource = (_asset: WorldCardAudioAsset): string => WORKSHOP_CARD_AUDIO_SAMPLE;
 
-const LOCAL_REVEAL_BACKDROP = '/card-workshop/reveal-backdrop.svg';
 const LOCAL_HUMAN_PORTRAIT = '/card-workshop/test-images/ye_chen_portrait.png';
 const LOCAL_CREATURE_PORTRAIT = '/card-workshop/test-images/lyra_meadowlight_portrait.png';
 
@@ -236,7 +236,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
         <div className="w-full flex justify-center py-2">
           <CodexCard
             revealTerm={term}
-            activeStory={{ assignedRevealBackdrops: { [term.entry.id]: LOCAL_REVEAL_BACKDROP } }}
+            activeStory={{ assignedRevealBackdrops: { [term.entry.id]: getManifestBackdrop(term.entry.id) } }}
             isSenMode={overrides.isSenMode}
             isRevealed={overrides.isRevealVisible}
             generatingRevealId={summoningId}

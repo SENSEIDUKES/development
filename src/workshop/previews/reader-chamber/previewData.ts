@@ -146,6 +146,16 @@ export function createMockChapters(): ReaderChapter[] {
           type: 'paragraph',
           text: 'Li Wei rose, ash falling from his shoulders like a mantle being shed. Beyond the gate, the first stair of the Ninth Meridian lit from within, and the night drew a long, expectant breath.',
         },
+        {
+          id: 'ch1-b9',
+          type: 'paragraph',
+          text: 'Above the gate, the Stair of a Thousand Debts climbed into the dark, and every step he had not taken yet was already keeping his ledger.',
+          metadata: {
+            intensity: 6,
+            danger: 4,
+            entities: [{ name: 'Stair of a Thousand Debts', type: 'location', mention: 'reveal' }],
+          },
+        },
       ],
       contextManifest: {
         version: 1,
@@ -456,7 +466,16 @@ export function createMockStory(): StoryWorld {
           safetyLevel: 'Lethal',
           description: 'The steep ascent required to reach the inner sanctuaries.',
           realm: 'Ninth Meridian Domain',
-          firstAppeared: 3,
+          firstAppeared: 1,
+          // Deliberately artwork-less: these editorial signals keep the Stair
+          // manifestation-eligible, so the Reading state renders the Codex
+          // Card's unmanifested dragon Manifest seal.
+          manifestationImportance: {
+            namedStatus: true,
+            narrativeWeight: 'major',
+            recurrence: true,
+            plotRelevance: true,
+          },
         },
       ],
       artifacts: [

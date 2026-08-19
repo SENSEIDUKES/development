@@ -1,0 +1,16 @@
+/**
+ * CodexCardSeal.css — the Codex Card Manifest seal's reduced-motion backstop.
+ * The seal's motion — the dragon portal's slow rotation, the aura's spin, and
+ * the Manifesting spinner — is inline Tailwind (`animate-[spin_*]` utilities)
+ * in `CodexCard.tsx`, each already carrying `motion-reduce:animate-none`; this
+ * media query guarantees every seal animation rests fully under
+ * `prefers-reduced-motion`. Co-located and transferred alongside the
+ * component, like `CodexCardInscription.css`.
+ */
+
+@media (prefers-reduced-motion: reduce) {
+  .codex-seal,
+  .codex-seal * {
+    animation: none !important;
+  }
+}

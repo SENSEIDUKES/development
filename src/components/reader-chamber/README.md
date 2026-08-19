@@ -5,11 +5,14 @@
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
 - **Last Workshop update:** 2026-08-18
-- **Last source comparison:** 2026-08-17
+- **Last source comparison:** 2026-08-18
 - **Replica status:** faithful replica
 
 ## Workshop history
 
+- **2026-08-18:** Review follow-up: the Development `CodexCard` dragon seal now applies its cyan and violet glows as valid chained filter functions in base, hover, and press states. Interaction, layout, and reduced-motion behavior are unchanged.
+- **2026-08-18:** Manifest backdrops are real art again in Development: the `CodexCard` fallback backdrop pool moved from the five hot-linked public R2 `LIBRARY BACKDROPS` URLs to the published "IMMORTAL LAND" revelation landscapes, downloaded into `public/manifest-backdrops/` and owned by the new shared `reader-codex/development/codexManifestBackdrop.ts`. `CodexCard` re-exports the pool under the established `FALLBACK_BACKDROPS` / `getFallbackBackdrop` names, so `ReaderViewport` assignment, the Card Workshop fixtures, and the reveal rendering are untouched. The locked Reference `ReaderViewport` keeps the production R2 list.
+- **2026-08-18:** Reimagined the Development `CodexCard` Manifest seal as the dragon itself: the circular glass orb, dashed/dotted orbit rings, and accent core glow were replaced by an enlarged `LibraryDragonCycleIcon` — the shared Library cycle glyph, reused unchanged — that forms the entire portal boundary. Two stacked `currentColor` copies with a vertical mask tint the silhouette cyan→violet, wrapped in a slow-turning blurred conic aura in the Library portal spectrum (`#04ACFF → #7C5CFF`), around a dark glass core that now holds both the Manifest label and the "Awaken Portrait" caption (previously a separate line beneath the seal). The seal remains one real keyboard-operable `<button>` with the same `onManifestReveal` callback, a Manifest/Manifesting aria-label swap, and a disabled Manifesting state (also `aria-busy` with a lit aura); hover and press brighten the aura and the dragon's glow. The aura spin and the dragon's motion rest fully under `prefers-reduced-motion`. The preview mock gains one artwork-less eligible reveal (the "Stair of a Thousand Debts" location, chapter 1) so the unmanifested seal renders in the Reading state and in Compare. Portrait media, eyebrow, inscribed name, description, glass surface, ambience, accent resolution, reveal routing, and card layout are unchanged. **Same-day refinement:** the aura's conic gradient now carries two diametrically opposed bright bands so the blurred glow reads centered through the whole spin (the single bright band pooled to one side); the dragon now rotates slowly (24s/rev) instead of the barely-visible scale breath, so the `codex-seal-breathe` keyframes are gone and `CodexCardSeal.css` is the reduced-motion backstop only; and the pending state is renamed "Manifesting..." with a small spinning `LibraryDragonCycleIcon` in place of the generic lucide spinner.
 - **2026-08-18:** Gave the Development `CodexCard` title an "Inscribed Name" treatment (`development/CodexCardInscription.css`, imported by `CodexCard.tsx`): the entity name settles ~6px into place as the card reveals, a thin frayed-thread SVG underline in the entity's ambient accent draws itself outward from the center and holds, and a faint glint periodically travels the thread; pointer-fine hover lifts the name, opens tracking slightly, and passes a single accent sheen across the glyphs. Motion wakes on the card's own reveal (`onViewportEnter` / SEN `isRevealed`) and rests fully under `prefers-reduced-motion`; the name remains real selectable text. Portrait, eyebrow, flavor text, glass surface, seal, layout, and reveal behavior are unchanged.
 - **2026-08-18:** Removed the "Reveal · " prefix from the `CodexCard` eyebrow header in Development so the card displays the entity type directly (e.g. `HUMAN PORTRAIT`, `NON-HUMAN PORTRAIT`, `ARTIFACT`, `LOCATION`) without repetitive reveal wording. Styling, spectral-glass treatment, seal behavior, and entity classification are unchanged.
 - **2026-08-18:** PR review follow-up on the spectral-glass `CodexCard`: suppressed the `LibraryCard` accent hairline on this card (`after:!content-none`) so no solid accent line crosses the top edge — the entity accent still speaks through the aura, motes, seal, and eyebrow. The artwork state no longer letterboxes inside a fixed 180px square; the media frame is now full-width at the image's natural aspect (`block w-full h-auto`), matching the hovercard's media behavior. Glass recipe, seal, ambience, and behavior unchanged.
@@ -269,8 +272,11 @@ All substitutions are import-level aliases only — JSX is byte-identical to pro
   in Compare mode both panes navigate/toggle in lockstep (intended: same data on
   both sides). The bottom control bar is viewport-`fixed`, so the two bars overlap
   exactly in Compare mode.
-- **R2 backdrop URLs** — the 5 hard-coded public `FALLBACK_BACKDROPS` URLs were
-  kept and now back metadata-driven Codex reveal cards that have no entity image.
+- **R2 backdrop URLs** — Reference keeps the 5 hard-coded public
+  `FALLBACK_BACKDROPS` R2 URLs; Development resolves the same
+  `FALLBACK_BACKDROPS` / `getFallbackBackdrop` names from
+  `reader-codex/development/codexManifestBackdrop.ts`, whose pool is the five
+  local "IMMORTAL LAND" Manifest landscapes in `public/manifest-backdrops/`.
 
 ## Exact files needed for transfer (verified)
 
@@ -301,7 +307,10 @@ and the Codex Card ambience/accent helpers per the Reader Codex README:
 - `development/CodexCard.tsx` → `src/components/CodexCard.tsx`
 - `development/CodexCardInscription.css` → `src/components/CodexCardInscription.css`
   (new file; the inscribed-name title styles imported by `CodexCard.tsx`)
-- `src/components/library/LibraryCard.tsx` and its existing shared Library dependencies → the source application's compatible Library foundation before transferring `CodexCard`
+- `development/CodexCardSeal.css` → `src/components/CodexCardSeal.css`
+  (new file; the Manifest seal idle-breath keyframes and reduced-motion backstop
+  imported by `CodexCard.tsx`)
+- `src/components/library/LibraryCard.tsx` and its existing shared Library dependencies (including `LibraryDragonCycleIcon`, which the Manifest seal reuses unchanged) → the source application's compatible Library foundation before transferring `CodexCard`
 - `development/ReaderFateAlerts.tsx` → `src/components/ReaderFateAlerts.tsx`
 - `development/FateSurvivalExplanation.tsx` → `src/components/FateSurvivalExplanation.tsx`
 - `development/SystemColorLegend.tsx` → `src/components/SystemColorLegend.tsx`

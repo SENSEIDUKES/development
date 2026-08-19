@@ -22,6 +22,8 @@ Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studi
 
 ## Workshop history
 
+- **2026-08-18:** Development fixtures now dress Codex reveals in the real Manifest backdrop art: the placeholder `reveal-backdrop.svg` assignment was replaced by each entity's stable pick from the shared `reader-codex/development/codexManifestBackdrop.ts` pool (the five "IMMORTAL LAND" landscapes in `public/manifest-backdrops/`), so both the inline `CodexCard` and the highlighted-term `CodexHovercard` show the darkened production-style backdrop until a portrait exists. The placeholder SVG remains for the locked Reference view.
+- **2026-08-18:** Codex Card Manifest seal refinement (shared with the Reader Chamber `development/CodexCard.tsx`): the seal's aura glow now stays centered through its spin (two opposed bright gradient bands instead of one), the dragon portal rotates slowly instead of sitting static, and the pending state reads "Manifesting..." with a small spinning dragon glyph in place of the generic spinner. Visible in the Codex Card presets with Image state set to "Manifest / Awaken action".
 - **2026-08-18:** Removed the "Reveal · " prefix from the `CodexCard` eyebrow header in Development so cards display their entity type directly (e.g. `Human Portrait`, `Non-Human Portrait`, `Artifact`, `Location`).
 - **2026-08-18:** Replaced the abstract SVG placeholder artwork with the real published Library test images (`public/card-workshop/test-images/` — Ye Chen, Lyra Meadowlight, Elder Kaelen, Sergeant Anya Petrova portraits, and the Lotus Lake Pavilion location), so card work is judged against accurate Codex media. The retired `human-portrait`, `creature-portrait`, `artifact-seal`, `rain-court`, and `chapter-memory` SVGs were removed; the reveal backdrop SVG remains.
 - **2026-08-18:** Both Codex Card experiences moved to the approved Library spectral-glass treatment in Development: the inline `CodexCard` reveal and the highlighted-term `CodexHovercard` (now the `reader-codex/development` fork, imported by the Contextual Reader) wear translucent glass with an entity ambient accent, a subtle spectral mote field, and the circular Manifest seal (orbit rings, star, label, awakening caption) instead of the former rectangular Manifest button. Card content, routing, overrides, and the manifest/summoning lifecycle are unchanged.
@@ -51,9 +53,9 @@ Card Type Tabs exposes every preset in a horizontally scrollable tab list and mo
 
 ## Mock and production boundaries
 
-- Fixtures are static local objects and the real Library test images under `/public/card-workshop/test-images` (plus the `reveal-backdrop.svg` backdrop).
+- Fixtures are static local objects and the real Library test images under `/public/card-workshop/test-images`; Development Codex reveals wear the real Manifest backdrop pool under `/public/manifest-backdrops/`, while the `reveal-backdrop.svg` placeholder remains for Reference mode.
 - The Card Workshop makes no model, generation, API, database, story-write, persistence, or production-media calls.
-- Contextual View preassigns its fixed local reveal backdrop, so ReaderViewport never enters its normal backdrop-assignment update path.
+- Contextual View preassigns each entity's stable Manifest backdrop pick, so ReaderViewport never enters its normal backdrop-assignment update path.
 - The Development sound adapter routes World Card taps through the shared audio session. The local fixture resolves to one published Library Help sample because this preview tests the existing audio lifecycle, not catalog selection.
 - Reference mode uses locked production presentation replicas and has no Development controls.
 - Bestiary and Faction records remain informational and expose no Codex image-generation action.

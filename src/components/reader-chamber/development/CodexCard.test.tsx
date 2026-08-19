@@ -355,7 +355,7 @@ describe('Reader card routing', () => {
     expect(container.querySelector('[data-slot="card-footer"]')).toBeFalsy();
   });
 
-  it('keeps Manifest callbacks and the Summoning state through LibraryCard actions', () => {
+  it('keeps Manifest callbacks and the Manifesting state through LibraryCard actions', () => {
     const entry = {
       id: 'codex-manifest-artifact',
       name: 'Oath Seal',
@@ -395,11 +395,11 @@ describe('Reader card routing', () => {
       );
     });
 
-    expect(container.textContent).toContain('Summoning...');
+    expect(container.textContent).toContain('Manifesting...');
     // The pending state is announced through the swapped aria-label.
     expect(container.querySelector('button[aria-label="Manifest portrait for Oath Seal"]')).toBeFalsy();
     expect(container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Summoning portrait for Oath Seal"]',
+      'button[aria-label="Manifesting portrait for Oath Seal"]',
     )?.disabled).toBe(true);
   });
 
@@ -429,6 +429,14 @@ describe('Reader card routing', () => {
       'button[aria-label="Manifest portrait for Oath Seal"]',
     );
     expect(seal?.className).toContain('rounded-full');
+    const dragonClass = Array.from(
+      seal?.querySelectorAll<HTMLSpanElement>('span[aria-hidden="true"]') ?? [],
+    ).find(element => element.className.includes('[filter:drop-shadow('))?.className;
+    expect(dragonClass).toContain('[filter:drop-shadow(');
+    expect(dragonClass).toContain('group-hover/seal:[filter:drop-shadow(');
+    expect(dragonClass).toContain('group-active/seal:[filter:drop-shadow(');
+    // The portal boundary is the shared Library cycle glyph, kept decorative.
+    expect(seal?.querySelector('svg[aria-hidden="true"]')).toBeTruthy();
     expect(container.textContent).toContain('Awaken Portrait');
   });
 

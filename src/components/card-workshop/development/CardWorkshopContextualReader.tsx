@@ -3,6 +3,7 @@ import { getReaderChamberSurfaceClass } from '../../reader-chamber/development/R
 import { ReaderViewport } from '../../reader-chamber/development/ReaderViewport';
 import type { WorldCardAudioAdapter } from '../../reader-chamber/development/WorldCard';
 import { CodexHovercard } from '../../reader-codex/development/CodexHovercard';
+import { getManifestBackdrop } from '../../reader-codex/development/codexManifestBackdrop';
 import {
   createCodexHighlighter,
   splitByCodexTerms,
@@ -19,7 +20,6 @@ import type {
 } from '../../reader-chamber/shared/types';
 import type { CardPreset, CardWorkshopOverrides } from '../shared/types';
 
-const LOCAL_REVEAL_BACKDROP = '/card-workshop/reveal-backdrop.svg';
 const LOCAL_HUMAN_PORTRAIT = '/card-workshop/test-images/ye_chen_portrait.png';
 const LOCAL_CREATURE_PORTRAIT = '/card-workshop/test-images/lyra_meadowlight_portrait.png';
 
@@ -228,8 +228,10 @@ export function createCardWorkshopContextualFixture(
   const codexTerms = [CONTEXT_WITNESS, codexTerm].filter(
     (term): term is CodexTerm => Boolean(term),
   );
+  // Real Manifest backdrop art per entity (the shared pool's stable pick), so
+  // Codex surfaces in this fixture show the production revelation landscapes.
   const assignedRevealBackdrops = Object.fromEntries(
-    codexTerms.map(term => [term.entry.id, LOCAL_REVEAL_BACKDROP]),
+    codexTerms.map(term => [term.entry.id, getManifestBackdrop(term.entry.id)]),
   );
   const activeStory: StoryWorld = {
     id: 'card-workshop-context-fixture',

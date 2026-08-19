@@ -136,9 +136,9 @@ export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'reader-chamber',
     title: 'Reader Chamber',
-    description: 'The full reading UI with generated five-chapter session support, chapter-scoped Reader Codex memory, and Development-only inline Library Cue highlights inside controlled prose.',
+    description: 'The full reading UI with generated five-chapter session support, chapter-scoped Reader Codex memory, and Development-only inline World Cues beside controlled prose.',
     category: 'reader-ui',
-    version: 'v1.2',
+    version: 'v1.3',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/ReaderChamber.tsx; src/components/ReaderViewport.tsx',
@@ -148,13 +148,13 @@ export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'card-workshop',
     title: 'Card Workshop',
-    description: 'Development-only Card Type Tabs and contextual ReaderViewport preview for inspecting Codex Cards, World Cards, System Panels, and Fate results without generating a chapter.',
+    description: 'Development-only Card Type Tabs and contextual ReaderViewport preview for inspecting Codex Cards, System Panels, Fate results, and the separate inline World Cue action without generating a chapter.',
     category: 'reader-ui',
-    version: 'v1.1',
+    version: 'v1.2',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
-      path: 'src/components/WorldEntityCard.tsx; src/components/SystemBlock.tsx; src/components/FateResultCard.tsx; src/components/ReaderViewport.tsx',
-      lastCompared: '2026-08-15',
+      path: 'src/components/SystemBlock.tsx; src/components/FateResultCard.tsx; src/components/ReaderViewport.tsx',
+      lastCompared: '2026-08-19',
     },
   },
 ];

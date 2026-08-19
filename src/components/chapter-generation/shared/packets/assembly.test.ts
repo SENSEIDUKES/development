@@ -58,7 +58,6 @@ const EXPECTED_TRACE_IDS = [
   "ndjson-output-structure",
   "story-block-metadata-format",
   "system-event-format",
-  "world-card-format",
   "music-atmosphere-cue-format",
   "beast-event-format",
   "content-safety-protocols",
@@ -124,7 +123,7 @@ describe("Chapter Generation packet assembly", () => {
     ];
     const ids = packet.trace.map(entry => entry.id);
 
-    expect(packet.trace).toHaveLength(66);
+    expect(packet.trace).toHaveLength(EXPECTED_TRACE_IDS.length);
     expect(new Set(ids).size).toBe(ids.length);
     packet.trace.forEach(entry => {
       expect(validOwners).toContain(entry.packageId);

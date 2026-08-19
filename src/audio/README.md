@@ -27,9 +27,9 @@ curated SEN audio metadata. Both are static data + typed lookup helpers
 in this domain — they are not a parallel audio system, not a playback
 engine, and not a persistence layer.
 
-The Development Reader Chamber now consumes this domain for controlled inline
-examples. It does not write actions into chapter data and it does not replace
-or modify the legacy World Card path in this phase.
+The Development Reader Chamber consumes this domain for controlled inline
+World Cue examples. It does not write actions into chapter data; the retired
+standalone world presentation and its parallel audio adapter have been removed.
 
 ## Server boundary
 
@@ -100,7 +100,7 @@ const fireWeapons = getByTag(cues, 'weapons', 'fire');
 import type { PublicVoiceMeta } from '../server/audio/voiceCatalog';
 ```
 
-## Inline-audio contract (Phase 2)
+## Inline World Cue contract (Phase 2)
 
 Inline annotations remain separate from `StoryBlock` and use one of two exact
 actions:
@@ -122,11 +122,14 @@ ID is allowed in this client shape. Phase 2 has no synthesis endpoint, no
 ElevenLabs call, and no browser `speechSynthesis` fallback; activating a voice
 action reports an explicit unavailable state.
 
-The Reader primitive is a native inline `<button>` and only calls playback from
-its activation handler. Rendering, scrolling, intersection, and viewport entry
-never load or play a Cue. It exposes idle, loading, playing, and error states,
-stops only its own active Cue during cleanup, accepts an entity/category accent
-token when one exists, and otherwise uses the neutral Library color token.
+The Reader primitive is a native inline `<button>` containing the custom
+`LibrarySoundGlyph` and only calls playback from its activation handler.
+Rendering, scrolling, intersection, and viewport entry never load or play a
+Cue. The glyph is neutral at rest, gains a soft Library aura while playing,
+exposes idle, loading, playing, and error states, and stops only its own active
+Cue during cleanup. Because the glyph is a separate accessible tap target, the
+adjacent phrase can keep its native prose styling or its independent Codex
+action.
 
-The legacy World Card, chapter generation, prompts, persistence, and production
-payloads remain unchanged.
+Chapter generation, persistence, and production cue payload integration remain
+outside Phase 2 and are deferred to Phase 3.

@@ -604,7 +604,7 @@ export function createCompletedBatchReaderSession(
 const proseForExport = (chapter: ReaderChapter): string => {
   if (chapter.generatedContent?.trim()) return chapter.generatedContent.trim();
   return (chapter.blocks ?? [])
-    .map(block => block.text?.trim() || block.system?.title || block.worldCard?.displayTitle || "")
+    .map(block => block.text?.trim() || block.system?.title || "")
     .filter(Boolean)
     .join("\n\n");
 };

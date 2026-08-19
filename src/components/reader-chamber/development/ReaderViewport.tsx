@@ -6,7 +6,6 @@ import { extractSFXCues } from '../shared/readerPlayback';
 import { collectBlockAutoCues } from '../shared/autoCuePolicy';
 import { SystemBlock } from './SystemBlock';
 import { SYSTEM_COLORS_LEGEND } from '../shared/systemColors';
-import { WorldCard } from './WorldCard';
 import { useAppStore } from '../shared/stubs';
 import { ReaderFateAlerts } from './ReaderFateAlerts';
 import { SystemColorLegend } from './SystemColorLegend';
@@ -15,7 +14,6 @@ import { ContextInspector } from './ContextInspector';
 import { getReaderTypography, getReadingDirection } from '../shared/readerTypography';
 import { createCodexHighlighter } from '../../reader-codex/shared/codexHighlighting';
 import { CodexCard, FALLBACK_BACKDROPS } from './CodexCard';
-import type { WorldCardAudioAdapter } from './WorldCard';
 import { InlineAudioText } from './InlineAudio';
 import type { InlineAudioHighlight } from '../../../audio/inlineAudio';
 
@@ -79,13 +77,6 @@ interface ReaderViewportProps {
 
   chapters: ReaderChapter[];
   /**
-   * Development-only dependency seam used by the Card Workshop contextual
-   * fixture. Omitting it preserves the Reader's normal World Card lifecycle.
-   */
-  worldCardAudioAdapter?: WorldCardAudioAdapter;
-  /** Resets a Workshop-simulated card when its local audio state changes. */
-  worldCardPresentationKey?: string;
-  /**
    * Development-only prose annotations. They are separate from StoryBlock so
    * this phase cannot change generated or persisted chapter payloads.
    */
@@ -141,8 +132,6 @@ export function ReaderViewport({
   setShowLegend,
   hasSystemBlocks,
   chapters,
-  worldCardAudioAdapter,
-  worldCardPresentationKey,
   inlineAudioHighlights = [],
 }: ReaderViewportProps) {
   const readingLanguage = activeTranslationContent ? preferredLang : 'en';
@@ -584,7 +573,7 @@ export function ReaderViewport({
                       })
                   : selectedChapter.blocks
                     ? selectedChapter.blocks.map((block, index) => {
-                        const hasStructuredVisual = !!block.system || !!block.worldCard;
+                        const hasStructuredVisual = !!block.system;
                         if (!(block.text || '').trim() && !hasStructuredVisual) return null;
                         const { cleanText, sfxList } = extractSFXCues(
                           block.text || '',
@@ -606,44 +595,13 @@ export function ReaderViewport({
                               || matched.type === 'location'
                             )
                           ));
-                        // Characters cover both Human and Non-Human Portraits.
-                        // Bestiary species are not Codex terms here, while
-                        // Factions remain highlightable informational records.
-                        const resolvedWorldCardTerm = block.worldCard
-                          ? codexHighlighter.resolve(block.worldCard.entityName)
-                          : undefined;
-                        const duplicateVisualSignal = Boolean(
-                          visualCodexTerm
-                          && block.worldCard
-                          && (
-                            block.worldCard.codexEntryId === visualCodexTerm.entry.id
-                            || resolvedWorldCardTerm?.entry?.id === visualCodexTerm.entry.id
-                          )
-                        );
-                        const systemWorldCard = block.worldCard?.entityType === 'system'
-                          || block.worldCard?.entityType === 'fate_event';
-
                         const isSenMode = readerMode === "sen";
                         const currentParaIdx = currentNarratedBlockIndex;
                         const isPlayerPlaying = isPlayingText || isPausedText;
                         const isRevealed = !isSenMode || !immersion.imagePopups || (!isPlayerPlaying) || index <= (currentParaIdx || 0);
 
-                        let revealCard = null;
-                        if (
-                          block.worldCard
-                          && !duplicateVisualSignal
-                          && !systemWorldCard
-                          && (!isSenMode || immersion.imagePopups)
-                        ) {
-                          revealCard = isRevealed ? (
-                            <WorldCard
-                              key={worldCardPresentationKey}
-                              card={block.worldCard}
-                              audioAdapter={worldCardAudioAdapter}
-                            />
-                          ) : null;
-                        } else if (visualCodexTerm && (!isSenMode || immersion.imagePopups)) {
-                          revealCard = (
+                        const revealCard = visualCodexTerm && (!isSenMode || immersion.imagePopups)
+                          ? (
                             <CodexCard
                               revealTerm={visualCodexTerm}
                               activeStory={activeStory}
@@ -652,8 +610,8 @@ export function ReaderViewport({
                               generatingRevealId={generatingRevealId}
                               onManifestReveal={handleManifestReveal}
                             />
-                          );
-                        }
+                          )
+                          : null;
 
                         const isSystemLine =
                           cleanText.startsWith("[") &&
@@ -684,8 +642,6 @@ export function ReaderViewport({
                           );
                         }
 
-                        // Standalone worldCard block with no prose: render only the
-                        // card, not an empty paragraph container beneath it.
                         if (!cleanText) {
                           return revealCard ? (
                             <React.Fragment key={block.id || `para-${index}`}>

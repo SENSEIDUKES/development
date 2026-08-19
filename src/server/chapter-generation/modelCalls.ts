@@ -38,7 +38,6 @@ import {
   type StoryBlockMetadata,
   type StoryEntityType,
   type SystemEvent,
-  type WorldCardEvent,
   type ChapterContent,
 } from "../../components/chapter-generation/shared/types";
 import type { ChapterTextModelProvider } from "./provider";
@@ -46,7 +45,6 @@ import type { ChapterTextModelProvider } from "./provider";
 const EFFECT_KINDS: ChapterEffectKind[] = [
   "narration-metadata",
   "beast-sound",
-  "world-card",
   "system-panel",
   "scene-music",
   "atmosphere",
@@ -368,23 +366,6 @@ const SYSTEM_PROMPT_TYPES = [
   "corruption", "death_event", "quest_update", "choice_consequence", "system_error",
 ] as const;
 const FATE_RESULT_OUTCOMES = ["FATE AVERTED", "FATE SCARRED", "DOOM MANIFESTED"] as const;
-const WORLD_CARD_ENTITY_TYPES = ["character", "creature", "artifact", "location", "faction"] as const;
-const CREATURE_WORLD_CARD_AUDIO_TYPES = ["roar", "call", "hiss", "howl", "screech", "wingbeat"] as const;
-const ARTIFACT_WORLD_CARD_AUDIO_TYPES = [
-  "unsheathe", "metallic_ring", "reload", "activation_hum", "resonance", "awakening", "pulse", "magical_activation",
-] as const;
-
-const isSupportedWorldCardAudioType = (entityType: string, audioType: string): boolean =>
-  (entityType === "character" && audioType === "tts_line")
-  || (entityType === "creature" && CREATURE_WORLD_CARD_AUDIO_TYPES.includes(
-    audioType as (typeof CREATURE_WORLD_CARD_AUDIO_TYPES)[number],
-  ))
-  || (entityType === "artifact" && ARTIFACT_WORLD_CARD_AUDIO_TYPES.includes(
-    audioType as (typeof ARTIFACT_WORLD_CARD_AUDIO_TYPES)[number],
-  ))
-  || (entityType === "location" && audioType === "signature")
-  || (entityType === "faction" && audioType === "chant");
-
 const optionalMetadataStringArray = (value: unknown, label: string): string[] | undefined => {
   if (value === undefined || value === null) return undefined;
   return stringArray(value, label);
@@ -547,71 +528,18 @@ const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefine
   };
 };
 
-const parseWorldCardEvent = (value: unknown, label: string): WorldCardEvent | undefined => {
-  if (value === undefined || value === null) return undefined;
-  const event = requiredRecord(value, label);
-  const entityType = requiredString(event.entityType, `${label}.entityType`);
-  if (!WORLD_CARD_ENTITY_TYPES.includes(entityType as (typeof WORLD_CARD_ENTITY_TYPES)[number])) {
-    throw new Error(`${label}.entityType is unsupported.`);
-  }
-  const audioType = optionalValidatedString(event.audioType, `${label}.audioType`);
-  const validAudioType = !audioType || isSupportedWorldCardAudioType(entityType, audioType);
-  if (!validAudioType) {
-    throw new Error(`${label}.audioType is unsupported.`);
-  }
-  const sound = event.sound === undefined
-    ? undefined
-    : (() => {
-        const hints = requiredRecord(event.sound, `${label}.sound`);
-        const tags = hints.tags === undefined
-          ? undefined
-          : stringArray(hints.tags, `${label}.sound.tags`);
-        const size = optionalValidatedString(hints.size, `${label}.sound.size`);
-        if (size && !BEAST_SIZES.includes(size as (typeof BEAST_SIZES)[number])) {
-          throw new Error(`${label}.sound.size is unsupported.`);
-        }
-        const assetFamily = optionalValidatedString(hints.assetFamily, `${label}.sound.assetFamily`);
-        if (assetFamily && assetFamily !== "weapon" && assetFamily !== "relic") {
-          throw new Error(`${label}.sound.assetFamily is unsupported.`);
-        }
-        return {
-          ...(optionalValidatedString(hints.element, `${label}.sound.element`) ? { element: optionalValidatedString(hints.element, `${label}.sound.element`) } : {}),
-          ...(size ? { size: size as (typeof BEAST_SIZES)[number] } : {}),
-          ...(optionalValidatedString(hints.threatTier, `${label}.sound.threatTier`) ? { threatTier: optionalValidatedString(hints.threatTier, `${label}.sound.threatTier`) } : {}),
-          ...(assetFamily ? { assetFamily: assetFamily as "weapon" | "relic" } : {}),
-          ...(optionalValidatedString(hints.weaponType, `${label}.sound.weaponType`) ? { weaponType: optionalValidatedString(hints.weaponType, `${label}.sound.weaponType`) } : {}),
-          ...(optionalValidatedString(hints.artifactCategory, `${label}.sound.artifactCategory`) ? { artifactCategory: optionalValidatedString(hints.artifactCategory, `${label}.sound.artifactCategory`) } : {}),
-          ...(tags ? { tags } : {}),
-        };
-      })();
-  return {
-    entityType: entityType as WorldCardEvent["entityType"],
-    entityName: requiredString(event.entityName, `${label}.entityName`),
-    displayTitle: requiredString(event.displayTitle, `${label}.displayTitle`),
-    ...(optionalValidatedString(event.quote, `${label}.quote`) ? { quote: optionalValidatedString(event.quote, `${label}.quote`) } : {}),
-    ...(optionalValidatedString(event.audioText, `${label}.audioText`) ? { audioText: optionalValidatedString(event.audioText, `${label}.audioText`) } : {}),
-    ...(audioType ? { audioType: audioType as WorldCardEvent["audioType"] } : {}),
-    ...(sound ? { sound } : {}),
-    ...(optionalValidatedString(event.voicePreset, `${label}.voicePreset`) ? { voicePreset: optionalValidatedString(event.voicePreset, `${label}.voicePreset`) } : {}),
-    ...(optionalValidatedString(event.rarity, `${label}.rarity`) ? { rarity: optionalValidatedString(event.rarity, `${label}.rarity`) } : {}),
-  };
-};
-
 const sanitizeStoryBlock = (value: JsonRecord, index: number): StoryBlock => {
   const id = requiredString(value.id, `Manifest Chapter block ${index + 1} id`);
   const returnedType = requiredString(value.type, `Manifest Chapter block ${index + 1} type`);
   const metadata = parseBlockMetadata(value.metadata, `Manifest Chapter block '${id}' metadata`);
   const system = parseSystemEvent(value.system, `Manifest Chapter block '${id}' system`);
-  const worldCard = parseWorldCardEvent(value.worldCard, `Manifest Chapter block '${id}' worldCard`);
   const type = returnedType === "paragraph" || returnedType === "dialogue"
     ? returnedType
     : returnedType === "narration"
       ? "paragraph"
       : returnedType === "system" && system
         ? "paragraph"
-        : (returnedType === "world-card" || returnedType === "world_card") && worldCard
-          ? "paragraph"
-          : metadata?.mode === "dialogue"
+        : metadata?.mode === "dialogue"
             ? "dialogue"
             : undefined;
   if (!type) {
@@ -623,7 +551,6 @@ const sanitizeStoryBlock = (value: JsonRecord, index: number): StoryBlock => {
     text: requiredString(value.text, `Manifest Chapter block '${id}' text`),
     ...(metadata ? { metadata } : {}),
     ...(system ? { system } : {}),
-    ...(worldCard ? { worldCard } : {}),
   };
 };
 
@@ -1068,7 +995,7 @@ export function createLiveChapterModelCalls(
       },
 
       async manifestChapter(input) {
-        const systemInstruction = `${input.consolidatedPermanentInstructions}\n\n=== LIVE MANIFEST BOUNDARY ===\nWrite one complete chapter from the exact packet and plan below. Return only ---CHAPTER_BLOCKS--- followed by NDJSON blocks. Every block must contain a unique non-empty string \"id\", a \"type\" exactly equal to \"paragraph\" or \"dialogue\", and non-empty prose \"text\". A system or world-card event remains a paragraph block with its structured sibling object. This live boundary requires model-supplied block IDs even if an earlier general instruction says otherwise. Do not return a summary, state update, plan, word count, run identity, or analysis.`;
+        const systemInstruction = `${input.consolidatedPermanentInstructions}\n\n=== LIVE MANIFEST BOUNDARY ===\nWrite one complete chapter from the exact packet and plan below. Return only ---CHAPTER_BLOCKS--- followed by NDJSON blocks. Every block must contain a unique non-empty string \"id\", a \"type\" exactly equal to \"paragraph\" or \"dialogue\", and non-empty prose \"text\". A System Panel event remains a paragraph block with its structured sibling object. This live boundary requires model-supplied block IDs even if an earlier general instruction says otherwise. Do not return a summary, state update, plan, word count, run identity, or analysis.`;
         const response = await generate({
           kind: "manifest",
           stage: "Manifest Chapter",
@@ -1101,7 +1028,7 @@ export function createLiveChapterModelCalls(
       },
 
       async repairChapter(input) {
-        const systemInstruction = `${input.chapterPacket.generationRules.permanentWritingInstructions}\n\n=== SERIOUS-ISSUE REPAIR ===\nRewrite the complete chapter only to correct the serious processing findings. Preserve sound prose and all canon that is not implicated. Return only ---CHAPTER_BLOCKS--- followed by the full repaired NDJSON chapter. Every block must contain a unique non-empty string \"id\", a \"type\" exactly equal to \"paragraph\" or \"dialogue\", and non-empty prose \"text\". A system or world-card event remains a paragraph block with its structured sibling object. This repair boundary requires model-supplied block IDs even if an earlier general instruction says otherwise.`;
+        const systemInstruction = `${input.chapterPacket.generationRules.permanentWritingInstructions}\n\n=== SERIOUS-ISSUE REPAIR ===\nRewrite the complete chapter only to correct the serious processing findings. Preserve sound prose and all canon that is not implicated. Return only ---CHAPTER_BLOCKS--- followed by the full repaired NDJSON chapter. Every block must contain a unique non-empty string \"id\", a \"type\" exactly equal to \"paragraph\" or \"dialogue\", and non-empty prose \"text\". A System Panel event remains a paragraph block with its structured sibling object. This repair boundary requires model-supplied block IDs even if an earlier general instruction says otherwise.`;
         const response = await generate({
           kind: "repair",
           stage: "Repair Chapter",

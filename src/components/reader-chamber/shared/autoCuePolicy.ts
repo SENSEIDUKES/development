@@ -8,9 +8,8 @@ const isDevBuild = () => false; // Workshop: dev-build curation logging disabled
  * break immersion when they fire at the wrong moment, so the automatic path
  * is restricted to a small set of high-confidence, narratively important
  * events. Anything that doesn't clearly match is suppressed — never guessed.
- * Intentional entity sounds live on the World Card instead (see
- * cardSoundCatalog), which is a separate system with no shared budget or
- * dedupe state.
+ * User-triggered inline World Cues use the shared playback owner separately;
+ * they do not consume this automatic budget or its dedupe state.
  *
  * The cinematicEffectGovernor's rules still apply downstream of this policy:
  * cinematic modes only (TTS/listen or cinematic scroll — never default

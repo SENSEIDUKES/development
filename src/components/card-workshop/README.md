@@ -1,39 +1,33 @@
 # Card Workshop
 
 - **Source repository:** `SENSEIDUKES/Light-Novels`
-- **Verified source locations:** `src/components/ReaderViewport.tsx`, `src/components/WorldEntityCard.tsx`, `src/components/SystemBlock.tsx`, `src/components/FateResultCard.tsx`
+- **Verified source locations:** `src/components/ReaderViewport.tsx`, `src/components/SystemBlock.tsx`, `src/components/FateResultCard.tsx`
 - **Workshop preview:** `?preview=card-workshop`
 - **Replica created:** 2026-08-14
-- **Last Workshop update:** 2026-08-18
-- **Last source comparison:** 2026-08-15
+- **Last Workshop update:** 2026-08-19
+- **Last source comparison:** 2026-08-19
 - **Replica status:** under refinement
 
 ## Purpose
 
-The development-only Card Workshop makes the active Reader presentations inspectable without generating a chapter. Card Type Tabs keeps the isolated preset gallery, while Contextual View routes the same selected preset through the real Development `ReaderViewport` inside a deterministic local chapter.
+The development-only Card Workshop makes the active Reader presentations inspectable without generating a chapter. Card Type Tabs keeps an isolated preset gallery, while Contextual View routes the selected preset through the real Development `ReaderViewport` inside a deterministic local chapter.
 
-The current structure is deliberately limited to:
+The current presentation set is deliberately limited to:
 
-- `CodexCard` for visually presented Human Portraits, Non-Human Portraits, Artifacts, and Locations resolved from application-owned Codex entries;
-- `WorldCard` for highlighted Bestiary species, highlighted Factions, and encounter-only beasts that do not belong on a visual Codex Card;
-- `SystemBlock` and its existing nested `FateResultCard` presentation as independent System Panels.
+- `CodexCard` for Human Portraits, Non-Human Portraits, Artifacts, and Locations resolved from application-owned Codex entries;
+- `SystemBlock` and its nested `FateResultCard` presentation as independent System Panels;
+- an inline World Cue example that keeps the prose native and places the shared Library sound glyph beside a Codex-linked location name.
 
 Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studio is outside this feature and is unchanged.
 
 ## Workshop history
 
-- **2026-08-18:** Development fixtures now dress Codex reveals in the real Manifest backdrop art: the placeholder `reveal-backdrop.svg` assignment was replaced by each entity's stable pick from the shared `reader-codex/development/codexManifestBackdrop.ts` pool (the five "IMMORTAL LAND" landscapes in `public/manifest-backdrops/`), so both the inline `CodexCard` and the highlighted-term `CodexHovercard` show the darkened production-style backdrop until a portrait exists. The placeholder SVG remains for the locked Reference view.
-- **2026-08-18:** Codex Card Manifest seal refinement (shared with the Reader Chamber `development/CodexCard.tsx`): the seal's aura glow now stays centered through its spin (two opposed bright gradient bands instead of one), the dragon portal rotates slowly instead of sitting static, and the pending state reads "Manifesting..." with a small spinning dragon glyph in place of the generic spinner. Visible in the Codex Card presets with Image state set to "Manifest / Awaken action".
-- **2026-08-18:** Removed the "Reveal · " prefix from the `CodexCard` eyebrow header in Development so cards display their entity type directly (e.g. `Human Portrait`, `Non-Human Portrait`, `Artifact`, `Location`).
-- **2026-08-18:** Replaced the abstract SVG placeholder artwork with the real published Library test images (`public/card-workshop/test-images/` — Ye Chen, Lyra Meadowlight, Elder Kaelen, Sergeant Anya Petrova portraits, and the Lotus Lake Pavilion location), so card work is judged against accurate Codex media. The retired `human-portrait`, `creature-portrait`, `artifact-seal`, `rain-court`, and `chapter-memory` SVGs were removed; the reveal backdrop SVG remains.
-- **2026-08-18:** Both Codex Card experiences moved to the approved Library spectral-glass treatment in Development: the inline `CodexCard` reveal and the highlighted-term `CodexHovercard` (now the `reader-codex/development` fork, imported by the Contextual Reader) wear translucent glass with an entity ambient accent, a subtle spectral mote field, and the circular Manifest seal (orbit rings, star, label, awakening caption) instead of the former rectangular Manifest button. Card content, routing, overrides, and the manifest/summoning lifecycle are unchanged.
-- **2026-08-17:** Adopted the shared responsive `FeatureWorkspace` Workshop Controls shell. This preview intentionally supplies no external options because Card Type Tabs and viewport modes are real navigation inside the component under test.
-- **2026-08-15:** Replaced the standalone Inspection Mode with Contextual View. The selected Codex Card, World Card, or System Panel now enters the real ReaderViewport structured-block path between fixed prose and a highlighted entity mention; technical routing, capability, and override controls live beneath the preview in a collapsible Technical Details section.
+- **2026-08-19:** Removed the retired standalone world presentation and every Card Workshop preset, adapter, override, and Reference rendering branch that existed only for it. Contextual View now demonstrates the replacement inline World Cue beside `Rain Court`: the name opens its Codex entry and the separate Library sound glyph starts playback.
+- **2026-08-18:** Development fixtures adopted the real Manifest backdrop pool and published Library test images for Codex media.
+- **2026-08-18:** Refined the shared Codex Manifest seal, awakening state, spectral glass, and entity accent treatment without changing its content or routing.
+- **2026-08-17:** Adopted the shared responsive `FeatureWorkspace` Workshop Controls shell.
+- **2026-08-15:** Added Contextual View so selected Codex or System presentations enter the real Reader structured-block path between fixed prose.
 - **2026-08-14:** Created the Card Workshop, extracted the production-inline Codex presentation for shared Reader/Workshop rendering, and added deterministic local state simulation.
-- **2026-08-14:** Rebased Part Two onto merged Part One, restored a locked Reference pane, isolated sound simulation, and completed missing-image, Codex, reveal, audio, and responsive states.
-- **2026-08-14:** Replaced the all-at-once Overview with one accessible tab per card preset so only the selected card renders.
-- **2026-08-14:** Routed Development World Card audio through the shared `@seihouse/audio-player` session.
-- **2026-08-14:** Completed the first Part Three cleanup: renamed the active card components, restricted Codex Cards to the four visual Codex categories, moved Bestiary/Faction highlights to World Cards, removed System/Fate World Card fixtures, and removed Chapter Visual Memories. Existing Portrait, Artifact, and Location audio direction remains in the chapter payload; this Workshop does not decide future Codex Card audio interaction.
 
 ## Development states
 
@@ -44,31 +38,32 @@ Contextual View supports:
 - existing Codex artwork, eligible Manifest/Awaken state, and missing-without-action state;
 - Codex entry present or missing;
 - first reveal or existing-entity reference;
-- highlighted Bestiary species, highlighted Factions, and random encounter beasts as World Cards;
-- sound available, unavailable, loading after tap, playing after tap, and muted for World Cards;
+- a Codex-linked phrase with an independently operable inline World Cue;
 - every current `SystemBlock` kind and all existing Fate outcomes;
-- mobile (375px), tablet (768px), and desktop widths.
+- mobile, tablet, and desktop widths.
 
-Card Type Tabs exposes every preset in a horizontally scrollable tab list and mounts exactly one presentation at a time. Arrow keys plus Home and End move between tabs. Card Type Tabs and Contextual View share one selected preset and one override state.
+Card Type Tabs exposes every remaining preset in a horizontally scrollable tab list and mounts exactly one presentation at a time. Arrow keys plus Home and End move between tabs. Card Type Tabs and Contextual View share one selected preset and one override state.
 
 ## Mock and production boundaries
 
-- Fixtures are static local objects and the real Library test images under `/public/card-workshop/test-images`; Development Codex reveals wear the real Manifest backdrop pool under `/public/manifest-backdrops/`, while the `reveal-backdrop.svg` placeholder remains for Reference mode.
-- The Card Workshop makes no model, generation, API, database, story-write, persistence, or production-media calls.
-- Contextual View preassigns each entity's stable Manifest backdrop pick, so ReaderViewport never enters its normal backdrop-assignment update path.
-- The Development sound adapter routes World Card taps through the shared audio session. The local fixture resolves to one published Library Help sample because this preview tests the existing audio lifecycle, not catalog selection.
+- Fixtures are static local objects and real Library test images under `/public/card-workshop/test-images`.
+- Development Codex reveals use the Manifest backdrop pool under `/public/manifest-backdrops`; the locked Reference keeps its existing placeholder.
+- The Workshop makes no model, generation, API, database, story-write, persistence, or production-media calls.
+- The contextual World Cue resolves an existing public Library catalog URL and starts only from its own tap target through the shared Development audio owner.
 - Reference mode uses locked production presentation replicas and has no Development controls.
 - Bestiary and Faction records remain informational and expose no Codex image-generation action.
-- System Panels retain their existing information, size, layout, colors, Fate presentation, and routing.
+- System Panels retain their existing information, layout, colors, Fate presentation, and routing.
 
 ## Transfer notes
 
-The active Development exports are:
+The active Development presentation owners are:
 
 - `src/components/reader-chamber/development/CodexCard.tsx`
-- `src/components/reader-chamber/development/WorldCard.tsx`
-- the existing routing point in `src/components/reader-chamber/development/ReaderViewport.tsx`
+- `src/components/reader-chamber/development/InlineAudio.tsx`
+- `src/components/reader-chamber/development/ReaderViewport.tsx`
+- `src/components/reader-chamber/development/SystemBlock.tsx`
+- `src/components/library/LibrarySoundGlyph.tsx`
 
-The verified `Light-Novels` `main` source still uses `src/components/WorldEntityCard.tsx` and keeps the Codex presentation inline in `ReaderViewport.tsx` as of commit `66643f6`. Those upstream paths are recorded only as the inspected source baseline; the active Development names are `WorldCard` and `CodexCard`.
+`Light-Novels` `main` was inspected at commit `66643f609067fea9bc6da6a779673f1681d2c70e` on 2026-08-19. Its current Reader, System, and Fate source paths remain the comparison baseline; this Workshop change does not modify that repository.
 
-Do not transfer Workshop controls, fixtures, contextual Reader harness, local sound adapter, or the optional Development ReaderViewport audio seam into production.
+Do not transfer Workshop controls, fixtures, contextual Reader harness, or preview overrides into production.

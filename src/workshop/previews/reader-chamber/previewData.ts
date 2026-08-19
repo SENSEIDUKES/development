@@ -12,8 +12,8 @@ export const MOCK_STORY_ID = 'workshop-story-emberfall';
 const CODEX_PREVIEW_IMAGE = '/story-seed/library-auth-backdrop.jpg';
 
 /**
- * Phase 2 stays outside StoryBlock: these controlled annotations resolve real
- * Phase 1 catalog URLs and are passed only to the Development Reader pane.
+ * Inline World Cues stay outside StoryBlock: these controlled annotations
+ * resolve real catalog URLs and are passed only to the Development Reader.
  */
 export const INLINE_AUDIO_HIGHLIGHTS = [
   {
@@ -23,7 +23,6 @@ export const INLINE_AUDIO_HIGHLIGHTS = [
       type: 'sound',
       cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3',
     },
-    accentColor: 'var(--color-entity-enemy)',
   },
   {
     id: 'inline-weapon-ashen-sword',
@@ -32,7 +31,6 @@ export const INLINE_AUDIO_HIGHLIGHTS = [
       type: 'sound',
       cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_1.mp3',
     },
-    accentColor: 'var(--color-item-great)',
   },
   {
     id: 'inline-artifact-azure-ring',
@@ -41,7 +39,6 @@ export const INLINE_AUDIO_HIGHLIGHTS = [
       type: 'sound',
       cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Artifacts/Relics/Resonance/Resonance_1.mp3',
     },
-    accentColor: 'var(--color-item-legendary)',
   },
   {
     id: 'inline-location-collapsed-gate',
@@ -50,7 +47,6 @@ export const INLINE_AUDIO_HIGHLIGHTS = [
       type: 'sound',
       cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Sect_Gong_1.mp3',
     },
-    accentColor: 'var(--color-location-special)',
   },
   {
     id: 'inline-faction-ninth-meridian-sect',
@@ -59,8 +55,6 @@ export const INLINE_AUDIO_HIGHLIGHTS = [
       type: 'sound',
       cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Factions/Monastery_Chant_1.mp3',
     },
-    // No canonical faction color is available, so the primitive deliberately
-    // falls back to the neutral Library token.
   },
 ] as const satisfies readonly InlineAudioHighlight[];
 
@@ -94,8 +88,8 @@ export const mockReaderPreferences: ReaderPreferences = {
 /**
  * One mock StoryWorld with four chapters covering the chamber's meaningful
  * visual states:
- *  1. Rich structured-blocks chapter (system blocks, a Fate Result card, a
- *     World Card, a Context Inspector manifest, soft continuity notes).
+ *  1. Rich structured-blocks chapter (System Panels, a Fate Result card,
+ *     inline World Cues, a Context Inspector manifest, soft continuity notes).
  *  2. Long legacy `generatedContent` prose chapter with a hard continuity
  *     divergence banner and a legacy [bracket] system line.
  *  3. Sealed chapter that is also a death/critical scene (menacing shading).
@@ -186,19 +180,6 @@ export function createMockChapters(): ReaderChapter[] {
           id: 'ch1-b6',
           type: 'paragraph',
           text: '“You pay the toll either way,” said a woman’s voice from the far side of the gate. “The only choice the Dao ever offers is whether you pay it kneeling.”',
-        },
-        {
-          id: 'ch1-b7',
-          type: 'worldCard',
-          text: '',
-          worldCard: {
-            entityType: 'character',
-            entityName: 'Mei Lin',
-            displayTitle: 'Mei Lin, the Ashen Sword Saint',
-            quote: 'The ninth stance is not a technique. It is a promise you make to your own grave.',
-            audioText: 'The ninth stance is not a technique. It is a promise you make to your own grave.',
-            audioType: 'tts_line',
-          },
         },
         {
           id: 'ch1-b8',

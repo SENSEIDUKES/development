@@ -84,7 +84,6 @@ export interface ChapterFateDecision {
 export type ChapterEffectKind =
   | "narration-metadata"
   | "beast-sound"
-  | "world-card"
   | "system-panel"
   | "scene-music"
   | "atmosphere"

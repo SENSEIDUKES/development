@@ -123,16 +123,6 @@ const manifestedResponse = [
         profile: { size: "large", bodyType: "dragon", signatureSound: "thunder-purr" },
       },
     },
-    worldCard: {
-      id: "model-owned-world-card",
-      entityType: "creature",
-      entityName: "Witness Drake",
-      displayTitle: "The Witness Drake",
-      imageUrl: "https://model.invalid/witness-drake.png",
-      codexEntryId: "model-owned-codex-id",
-      audioType: "hiss",
-      sound: { assetId: "model-owned-sound-id", element: "lightning", tags: ["drake", "oath"] },
-    },
   }),
   JSON.stringify({
     id: "c1-p2",
@@ -356,56 +346,6 @@ class ThreadProvenanceProvider implements ChapterTextModelProvider {
 }
 
 describe("live Chapter Generation model boundaries", () => {
-  it("preserves established Portrait, Artifact, and Location World Card audio payloads", () => {
-    const chapter = parseManifestedChapter([
-      "---CHAPTER_BLOCKS---",
-      JSON.stringify({
-        id: "c1-p1",
-        type: "paragraph",
-        text: "Rin spoke before the rain court.",
-        worldCard: {
-          entityType: "character",
-          entityName: "Rin",
-          displayTitle: "The First Witness",
-          audioText: "The oath is broken.",
-          audioType: "tts_line",
-        },
-      }),
-      JSON.stringify({
-        id: "c1-p2",
-        type: "paragraph",
-        text: "The seal woke in Rin's hand.",
-        worldCard: {
-          entityType: "artifact",
-          entityName: "Nine Cauldrons Oath Seal",
-          displayTitle: "Oath Seal",
-          audioText: "A low oath tone rises.",
-          audioType: "activation_hum",
-          sound: { assetFamily: "relic", artifactCategory: "seal" },
-        },
-      }),
-      JSON.stringify({
-        id: "c1-p3",
-        type: "paragraph",
-        text: "Thunder answered across the pavilion.",
-        worldCard: {
-          entityType: "location",
-          entityName: "Rain Court Grand Pavilion",
-          displayTitle: "Rain Court",
-          audioText: "Rain and distant thunder.",
-          audioType: "signature",
-          sound: { tags: ["rain", "thunder"] },
-        },
-      }),
-    ].join("\n"), { chapterPacket: buildPacket() } as Parameters<typeof parseManifestedChapter>[1]);
-
-    expect(chapter.blocks?.map(block => block.worldCard)).toEqual([
-      expect.objectContaining({ entityType: "character", audioType: "tts_line" }),
-      expect.objectContaining({ entityType: "artifact", audioType: "activation_hum", sound: { assetFamily: "relic", artifactCategory: "seal" } }),
-      expect.objectContaining({ entityType: "location", audioType: "signature", sound: { tags: ["rain", "thunder"] } }),
-    ]);
-  });
-
   it("requires the dynamically requested Plan identity and preserves returned rhythm history", async () => {
     const packet = buildPacket();
     const position = createArcChapterPosition(3);
@@ -531,14 +471,6 @@ describe("live Chapter Generation model boundaries", () => {
       type: "reveal",
       profile: { size: "large", bodyType: "dragon", signatureSound: "thunder-purr" },
     });
-    expect(run.manifestedChapter.blocks?.[0].worldCard).toMatchObject({
-      audioType: "hiss",
-      sound: { element: "lightning", tags: ["drake", "oath"] },
-    });
-    expect(run.manifestedChapter.blocks?.[0].worldCard).not.toHaveProperty("id");
-    expect(run.manifestedChapter.blocks?.[0].worldCard).not.toHaveProperty("imageUrl");
-    expect(run.manifestedChapter.blocks?.[0].worldCard).not.toHaveProperty("codexEntryId");
-    expect(run.manifestedChapter.blocks?.[0].worldCard?.sound).not.toHaveProperty("assetId");
     expect(run.manifestedChapter.blocks?.[2].system?.fateResult).toMatchObject({
       outcome: "FATE SCARRED",
       timelineScar: "The court remembers Rin's defiance.",

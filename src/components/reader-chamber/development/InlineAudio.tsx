@@ -5,9 +5,9 @@ import React, {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type ReactNode,
 } from 'react';
+import { LibrarySoundGlyph } from '../../library';
 import {
   getInlineCueTrackId,
   resolveInlineSoundAction,
@@ -21,10 +21,6 @@ import {
 import './InlineAudio.css';
 
 export type InlineAudioStatus = 'idle' | 'loading' | 'playing' | 'error';
-
-type InlineAudioStyle = CSSProperties & {
-  '--inline-audio-accent': string;
-};
 
 export interface InlineAudioControlProps {
   highlight: InlineAudioHighlight;
@@ -133,7 +129,7 @@ export function InlineAudioControl({ highlight, playback }: InlineAudioControlPr
   }, [highlight.action, highlight.phrase, playback, resolution, trackId]);
 
   const isVoice = highlight.action.type === 'voice';
-  const actionLabel = isVoice ? 'quote' : 'sound';
+  const actionLabel = isVoice ? 'voice cue' : 'World Cue';
   const stateMessage = status === 'loading'
     ? `Loading ${actionLabel} for ${highlight.phrase}.`
     : status === 'playing'
@@ -141,24 +137,20 @@ export function InlineAudioControl({ highlight, playback }: InlineAudioControlPr
       : status === 'error'
         ? localError ?? `The ${actionLabel} for ${highlight.phrase} is unavailable.`
         : '';
-  const style: InlineAudioStyle = {
-    '--inline-audio-accent': highlight.accentColor?.trim() || 'var(--color-neutral-400)',
-  };
-
   return (
     <>
       <button
         type="button"
-        className="inline-audio-highlight"
+        className="inline-world-cue"
         data-action-type={highlight.action.type}
+        data-cue-phrase={highlight.phrase}
         data-state={status}
         aria-busy={status === 'loading' || undefined}
         aria-describedby={status === 'idle' ? undefined : statusId}
-        aria-label={`${status === 'playing' ? 'Restart' : 'Play'} ${actionLabel} for ${highlight.phrase}`}
+        aria-label={`${status === 'playing' ? 'Replay' : 'Play'} ${actionLabel} for ${highlight.phrase}`}
         onClick={activate}
-        style={style}
       >
-        {highlight.phrase}
+        <LibrarySoundGlyph size={14} />
       </button>
       <span id={statusId} className="sr-only" aria-live="polite">
         {stateMessage}
@@ -194,7 +186,12 @@ export function InlineAudioText({ highlights, renderText, text }: InlineAudioTex
     <>
       {segments.map((segment, index) => (
         segment.highlight
-          ? <InlineAudio key={`${segment.highlight.id}-${index}`} highlight={segment.highlight} />
+          ? (
+              <React.Fragment key={`${segment.highlight.id}-${index}`}>
+                {renderText(segment.text)}
+                <InlineAudio highlight={segment.highlight} />
+              </React.Fragment>
+            )
           : <React.Fragment key={`text-${index}`}>{renderText(segment.text)}</React.Fragment>
       ))}
     </>

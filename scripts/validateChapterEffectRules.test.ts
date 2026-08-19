@@ -6,7 +6,6 @@ import { assembleChapterPacket } from "../src/components/chapter-generation/shar
 const representativeDetails = [
   ["narration and dialogue metadata", "OUTPUT FORMAT TARGET:", "DO NOT output direct voice IDs."],
   ["beast sound cues", "BEAST SOUND CUES", "Use this sparingly and only on significant narrative beats."],
-  ["World Card audio and visual cues", "WORLD CARD AUDIO AND VISUAL CUES", "application code owns identity and resolves stored media."],
   ["system-panel visual cues", "SYSTEM PANEL VISUAL CUES", "DOOM MANIFESTED"],
   ["scene music", "SCENE MUSIC DIRECTION", '"boss-fight"'],
   ["atmosphere", "ATMOSPHERE DIRECTION", "never infer rain merely because characters are travelling."],
@@ -14,7 +13,7 @@ const representativeDetails = [
 ] as const;
 
 describe("Chapter Packet effect rules", () => {
-  it("carries complete permanent rules for all seven effect categories", () => {
+  it("carries complete permanent rules for all six effect categories", () => {
     const packet = assembleChapterPacket(
       assembleChapterGenerationPacket(ESTABLISHED_SCENARIO),
     );

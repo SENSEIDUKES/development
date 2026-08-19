@@ -10,7 +10,7 @@ import {
 } from '../../../audio/DevAudioPlayback';
 import type { InlineAudioHighlight } from '../../../audio/inlineAudio';
 import { installAudioMediaStubs } from '../../../test-utils/renderWithDevAudio';
-import { InlineAudio, InlineAudioControl } from './InlineAudio';
+import { InlineAudio, InlineAudioControl, InlineAudioText } from './InlineAudio';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -21,7 +21,6 @@ const beastHighlight: InlineAudioHighlight = {
     type: 'sound',
     cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3',
   },
-  accentColor: 'var(--color-entity-enemy)',
 };
 
 const weaponHighlight: InlineAudioHighlight = {
@@ -102,7 +101,7 @@ const render = (node: React.ReactNode) => {
 };
 
 const buttonFor = (phrase: string) => [...container.querySelectorAll<HTMLButtonElement>('button')]
-  .find(button => button.textContent === phrase)!;
+  .find(button => button.dataset.cuePhrase === phrase)!;
 
 describe('InlineAudioControl', () => {
   it('is an accessible inline native button and never plays without user activation', () => {
@@ -113,10 +112,11 @@ describe('InlineAudioControl', () => {
     expect(button.tagName).toBe('BUTTON');
     expect(button.type).toBe('button');
     expect(button.tabIndex).toBe(0);
-    expect(button.getAttribute('aria-label')).toBe('Play sound for Vermilion Debt Fox');
+    expect(button.getAttribute('aria-label')).toBe('Play World Cue for Vermilion Debt Fox');
     expect(button.hasAttribute('aria-pressed')).toBe(false);
     expect(button.dataset.state).toBe('idle');
-    expect(button.style.getPropertyValue('--inline-audio-accent')).toBe('var(--color-entity-enemy)');
+    expect(button.textContent).toBe('');
+    expect(button.querySelector('[data-library-glyph="sound"]')).toBeTruthy();
     act(() => {
       window.dispatchEvent(new Event('scroll'));
       button.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
@@ -229,6 +229,33 @@ describe('InlineAudioControl', () => {
     expect(buttonFor(voice.phrase).dataset.state).toBe('error');
     expect(fake.playback.replace).not.toHaveBeenCalled();
     expect(speak).not.toHaveBeenCalled();
+  });
+
+  it('keeps Codex text and the sound glyph as independent accessible actions', () => {
+    render(
+      <DevAudioPlaybackProvider>
+        <InlineAudioText
+          highlights={[weaponHighlight]}
+          text="Mei Lin drew the Ashen Sword in silence."
+          renderText={(text) => text === weaponHighlight.phrase
+            ? <button type="button" aria-label={`Open Codex entry for ${text}`}>{text}</button>
+            : text}
+        />
+        <PlaybackProbe />
+      </DevAudioPlaybackProvider>,
+    );
+
+    const codexButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Open Codex entry for Ashen Sword"]',
+    );
+    const cueButton = buttonFor(weaponHighlight.phrase);
+    expect(codexButton).toBeTruthy();
+    expect(cueButton).toBeTruthy();
+    expect(cueButton).not.toBe(codexButton);
+    expect(container.textContent).toContain('Mei Lin drew the Ashen Sword in silence.');
+
+    act(() => codexButton!.click());
+    expect(container.querySelector('[data-testid="track-id"]')?.textContent).toBe('');
   });
 });
 

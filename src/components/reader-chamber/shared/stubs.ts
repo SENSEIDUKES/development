@@ -13,8 +13,8 @@
  * - `useChapterTranslation`, `useCinematicScroll`, `useReadingPosition` —
  *   inert hooks matching the exact destructured shapes the copied components
  *   use. `useReaderVisuals` still returns local Codex terms from story memory.
- * - `useAudioMix`, `vibrate`, card-sound helpers — inert audio engine:
- *   settings are real state (so the toggles move), but no sound ever plays.
+ * - `useAudioMix` / `vibrate` — inert presentation dependencies: settings are
+ *   real state (so the toggles move), but no sound plays from this stub.
  */
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
@@ -273,14 +273,3 @@ export function useAudioMix() {
 }
 
 export const vibrate = (_pattern?: string) => {};
-
-// World Card curated-sound catalog: nothing resolves, playback never starts.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const resolveCardSound = (_card: unknown): any => null;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const playCardSound = async (_asset: unknown, _opts?: { volume?: number }): Promise<any> => {
-  throw new Error('Audio playback is inert in the Workshop replica.');
-};
-export const stopCardSound = (_assetId?: string) => {};
-export const effectiveChannelVolume = (_channel: AudioChannelId) => 0;
-export const isChannelAudible = (_channel: AudioChannelId) => false;

@@ -6,7 +6,6 @@ import { extractSFXCues } from '../shared/readerPlayback';
 import { collectBlockAutoCues } from '../shared/autoCuePolicy';
 import { SystemBlock } from './SystemBlock';
 import { SYSTEM_COLORS_LEGEND } from '../shared/systemColors';
-import { WorldEntityCard } from './WorldEntityCard';
 import { useAppStore } from '../shared/stubs';
 import { ReaderFateAlerts } from './ReaderFateAlerts';
 import { SystemColorLegend } from './SystemColorLegend';
@@ -581,7 +580,7 @@ export function ReaderViewport({
                       })
                   : selectedChapter.blocks
                     ? selectedChapter.blocks.map((block, index) => {
-                        const hasStructuredVisual = !!block.system || !!block.worldCard;
+                        const hasStructuredVisual = !!block.system;
                         if (!(block.text || '').trim() && !hasStructuredVisual) return null;
                         const { cleanText, sfxList } = extractSFXCues(
                           block.text || '',
@@ -613,17 +612,8 @@ export function ReaderViewport({
                         const isPlayerPlaying = isPlayingText || isPausedText;
                         const isRevealed = !isSenMode || !immersion.imagePopups || (!isPlayerPlaying) || index <= (currentParaIdx || 0);
 
-                        let revealCard = null;
-                        if (block.worldCard) {
-                          const cardWithImage = { ...block.worldCard };
-                          if (!cardWithImage.imageUrl && revealImageUrl) {
-                            cardWithImage.imageUrl = revealImageUrl;
-                          }
-                          revealCard = (isRevealed || !isSenMode || immersion.imagePopups) ? (
-                            <WorldEntityCard card={cardWithImage} />
-                          ) : null;
-                        } else if (revealTerm && (!isSenMode || immersion.imagePopups)) {
-                          revealCard = (
+                        const revealCard = revealTerm && (!isSenMode || immersion.imagePopups)
+                          ? (
                             <motion.div
                               initial={{ opacity: 0, scale: 0.95 }}
                               whileInView={!isSenMode ? { opacity: 1, scale: 1 } : undefined}
@@ -705,8 +695,8 @@ export function ReaderViewport({
                                 )}
                               </div>
                             </motion.div>
-                          );
-                        }
+                          )
+                          : null;
 
                         const isSystemLine =
                           cleanText.startsWith("[") &&
@@ -737,8 +727,6 @@ export function ReaderViewport({
                           );
                         }
 
-                        // Standalone worldCard block with no prose: render only the
-                        // card, not an empty paragraph container beneath it.
                         if (!cleanText) {
                           return revealCard ? (
                             <React.Fragment key={block.id || `para-${index}`}>

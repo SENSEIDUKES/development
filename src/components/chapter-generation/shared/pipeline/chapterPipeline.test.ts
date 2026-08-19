@@ -181,7 +181,6 @@ describe("four-stage Chapter Generation pipeline", () => {
       applies: false,
     });
     expect(quieterPlan.resolvedSceneType).toBe("worldBuilding");
-    expect(quieterPlan.effects.map(effect => effect.kind)).toContain("world-card");
 
     const unconfiguredPlan = buildWorkshopChapterPlan({
       chapterPacket: assembleChapterPacket(

@@ -1,5 +1,5 @@
-import { FlaskConical, Image, Music } from "lucide-react";
-import type { ChapterContent, StoryBlock, StoryBlockMetadata, SystemEvent, WorldCardEvent } from "../shared/types";
+import { FlaskConical, Music } from "lucide-react";
+import type { ChapterContent, StoryBlock, StoryBlockMetadata, SystemEvent } from "../shared/types";
 import { Chip, EmptyNote } from "./workspaceUi";
 
 const formatToken = (token: string) =>
@@ -71,27 +71,6 @@ function SystemPanel({ system }: { system: SystemEvent }) {
   );
 }
 
-function WorldCardPanel({ worldCard }: { worldCard: WorldCardEvent }) {
-  return (
-    <div className="min-w-0 rounded-md border border-violet-500/25 bg-violet-500/5 px-3 py-2">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <Image size={11} className="text-violet-200/70" />
-        <span className="text-[9px] font-semibold uppercase tracking-widest text-violet-200/80">
-          World Card · {formatToken(worldCard.entityType)}
-        </span>
-        {worldCard.rarity && <Chip tone="violet">{worldCard.rarity}</Chip>}
-      </div>
-      <div className="mt-1 text-xs font-semibold text-violet-100">{worldCard.displayTitle}</div>
-      {worldCard.entityName !== worldCard.displayTitle && (
-        <div className="text-[11px] text-white/50">{worldCard.entityName}</div>
-      )}
-      {worldCard.quote && (
-        <p className="mt-1 text-[11px] italic leading-relaxed text-white/60">“{worldCard.quote}”</p>
-      )}
-    </div>
-  );
-}
-
 function ChapterBlockView({ block }: { block: StoryBlock }) {
   const isDialogue = block.type === "dialogue" || block.metadata?.mode === "dialogue";
   return (
@@ -114,7 +93,6 @@ function ChapterBlockView({ block }: { block: StoryBlock }) {
         </p>
       )}
       {block.system && <div className="mt-2"><SystemPanel system={block.system} /></div>}
-      {block.worldCard && <div className="mt-2"><WorldCardPanel worldCard={block.worldCard} /></div>}
       <EffectMarkerRow metadata={block.metadata} />
     </div>
   );
@@ -132,7 +110,7 @@ export interface ManifestedChapterViewProps {
 
 /**
  * Renders the manifested chapter as it is meant to be read: prose, dialogue,
- * system panels, world cards, and visible effect markers — never raw JSON.
+ * System Panels and visible effect markers — never raw JSON.
  */
 export function ManifestedChapterView({
   chapter,

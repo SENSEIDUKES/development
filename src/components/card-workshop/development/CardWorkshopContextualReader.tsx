@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { getReaderChamberSurfaceClass } from '../../reader-chamber/development/ReaderChamber';
 import { ReaderViewport } from '../../reader-chamber/development/ReaderViewport';
-import type { WorldCardAudioAdapter } from '../../reader-chamber/development/WorldCard';
 import { CodexHovercard } from '../../reader-codex/development/CodexHovercard';
 import { getManifestBackdrop } from '../../reader-codex/development/codexManifestBackdrop';
 import {
@@ -16,8 +15,8 @@ import type {
   StoryBlock,
   StoryWorld,
   SystemEvent,
-  WorldCardEvent,
 } from '../../reader-chamber/shared/types';
+import type { InlineAudioHighlight } from '../../../audio/inlineAudio';
 import type { CardPreset, CardWorkshopOverrides } from '../shared/types';
 
 const LOCAL_HUMAN_PORTRAIT = '/card-workshop/test-images/ye_chen_portrait.png';
@@ -40,6 +39,26 @@ const CONTEXT_WITNESS: CodexTerm = {
     portraitKind: 'human',
   },
 };
+
+const CONTEXT_CUE_LOCATION: CodexTerm = {
+  term: 'Rain Court',
+  type: 'location',
+  isCanonicalName: true,
+  entry: {
+    id: 'card-workshop-context-rain-court',
+    name: 'Rain Court',
+    description: 'An oathbound tribunal where each false vow answers with a bell-like peal of thunder.',
+  },
+};
+
+const CONTEXT_INLINE_WORLD_CUES = [{
+  id: 'card-workshop-rain-court-cue',
+  phrase: 'Rain Court',
+  action: {
+    type: 'sound',
+    cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Sect_Gong_1.mp3',
+  },
+}] as const satisfies readonly InlineAudioHighlight[];
 
 const CONTEXT_READER_PREFERENCES: ReaderPreferences = {
   fontSize: 'lg',
@@ -68,7 +87,6 @@ export interface CardWorkshopContextualReaderProps {
   manifestedIds: Set<string>;
   generatingRevealId: string | null;
   onManifestReveal: (entry: { id?: string }, type: string) => void;
-  audioAdapter: WorldCardAudioAdapter;
 }
 
 /** Whether the preset reveals a human or non-human portrait entity. */
@@ -124,24 +142,6 @@ function createContextualCodexTerm(
 }
 
 /**
- * Builds the World Card event for the fixture, honoring the image-state and
- * Codex-entry overrides. Undefined when the preset has no World Card.
- */
-function createContextualWorldCard(
-  preset: CardPreset,
-  overrides: CardWorkshopOverrides,
-): WorldCardEvent | undefined {
-  if (!preset.worldCard) return undefined;
-  return {
-    ...preset.worldCard,
-    imageUrl: overrides.imageState === 'existing' ? preset.worldCard.imageUrl : undefined,
-    codexEntryId: overrides.codexEntryState === 'present'
-      ? preset.worldCard.codexEntryId
-      : undefined,
-  };
-}
-
-/**
  * Builds the System event for the fixture, honoring the selected system-kind
  * and Fate-outcome overrides. Undefined when the preset has no System event.
  */
@@ -165,7 +165,6 @@ function createContextualSystemEvent(
 /** The display name of the entity the fixture spotlights. */
 function selectedEntityName(preset: CardPreset, codexTerm: CodexTerm | null) {
   return codexTerm?.term
-    ?? preset.worldCard?.entityName
     ?? preset.systemEvent?.title
     ?? preset.title;
 }
@@ -180,7 +179,6 @@ export function createCardWorkshopContextualFixture(
   manifestedIds: Set<string>,
 ): CardWorkshopContextualFixture {
   const codexTerm = createContextualCodexTerm(preset, overrides, manifestedIds);
-  const worldCard = createContextualWorldCard(preset, overrides);
   const systemEvent = createContextualSystemEvent(preset, overrides);
   const entityName = selectedEntityName(preset, codexTerm);
   const mentionEntities: StoryBlock['metadata'] = {
@@ -201,7 +199,6 @@ export function createCardWorkshopContextualFixture(
           }],
         }
       : mentionEntities,
-    ...(worldCard ? { worldCard } : {}),
     ...(systemEvent ? { system: systemEvent } : {}),
   };
 
@@ -209,7 +206,7 @@ export function createCardWorkshopContextualFixture(
     {
       id: 'card-workshop-context-opening',
       type: 'prose',
-      text: 'Rain threaded down the bronze eaves in silver cords, each drop sounding like a small bell against the empty court.',
+      text: 'Rain threaded down the bronze eaves of the Rain Court in silver cords, each drop sounding like a small bell against the empty tribunal.',
     },
     {
       id: 'card-workshop-context-mention',
@@ -225,7 +222,7 @@ export function createCardWorkshopContextualFixture(
     },
   ];
 
-  const codexTerms = [CONTEXT_WITNESS, codexTerm].filter(
+  const codexTerms = [CONTEXT_WITNESS, CONTEXT_CUE_LOCATION, codexTerm].filter(
     (term): term is CodexTerm => Boolean(term),
   );
   // Real Manifest backdrop art per entity (the shared pool's stable pick), so
@@ -265,7 +262,8 @@ export function createCardWorkshopContextualFixture(
 /**
  * Card Workshop Contextual View: renders the selected card preset inside the
  * real Development ReaderViewport using the fixed local fixture, so Codex
- * Cards, World Cards, and System Panels can be inspected in their true host.
+ * Cards and System Panels can be inspected in their true host, with a separate
+ * inline World Cue demonstrating independent Codex and sound actions.
  */
 export function CardWorkshopContextualReader({
   preset,
@@ -273,7 +271,6 @@ export function CardWorkshopContextualReader({
   manifestedIds,
   generatingRevealId,
   onManifestReveal,
-  audioAdapter,
 }: CardWorkshopContextualReaderProps) {
   const readerRef = useRef<HTMLDivElement>(null);
   const [editingBookmarkParagraphIndex, setEditingBookmarkParagraphIndex] = useState<number | null>(null);
@@ -374,8 +371,7 @@ export function CardWorkshopContextualReader({
           setShowLegend={() => undefined}
           hasSystemBlocks={Boolean(fixture.chapter.blocks?.some(block => block.system))}
           chapters={[fixture.chapter]}
-          worldCardAudioAdapter={audioAdapter}
-          worldCardPresentationKey={`${preset.id}-${overrides.audioState}-${overrides.isAudioMuted}`}
+          inlineAudioHighlights={CONTEXT_INLINE_WORLD_CUES}
         />
       </div>
     </section>

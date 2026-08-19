@@ -18,6 +18,7 @@ import {
   LibraryNavigationDrawer,
   LibraryNavigationDrawerPanel,
   LibraryPanel,
+  LibrarySoundGlyph,
   LibraryTextArea,
   LibraryTextBox,
   ManifestButton,
@@ -238,6 +239,17 @@ function DragonCycleIconPreview() {
   );
 }
 
+function SoundGlyphPreview() {
+  return (
+    <div className="flex items-center gap-5 text-neutral-400">
+      <LibrarySoundGlyph size={18} decorative={false} title="Library sound cue" />
+      <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-neutral-300 shadow-[0_0_18px_rgba(112,188,255,0.12)]">
+        <LibrarySoundGlyph size={16} decorative={false} title="Active Library sound cue" />
+      </span>
+    </div>
+  );
+}
+
 type LibraryComponentEntry = {
   /** The exact export name in the `src/components/library` barrel. */
   name: string;
@@ -300,6 +312,11 @@ const LIBRARY_COMPONENTS: LibraryComponentEntry[] = [
     name: 'LibraryDragonCycleIcon',
     description: 'The shared cycle glyph (Re-do / Re-try / shuffle) — a dragon chasing its own tail, tinting like the Lucide icons it sits beside.',
     Preview: DragonCycleIconPreview,
+  },
+  {
+    name: 'LibrarySoundGlyph',
+    description: 'The custom Library sound mark — an open folio with quiet resonance rings for neutral audio actions without platform emoji.',
+    Preview: SoundGlyphPreview,
   },
 ];
 

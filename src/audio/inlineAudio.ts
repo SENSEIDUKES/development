@@ -40,8 +40,6 @@ export interface InlineAudioHighlight {
   id: string;
   phrase: string;
   action: InlineAudioAction;
-  /** Entity/category color token when the caller has one. */
-  accentColor?: string;
 }
 
 export type InlineSoundCueResolution =

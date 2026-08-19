@@ -55,7 +55,7 @@ const activeStory: StoryWorld = {
   assignedRevealBackdrops: {},
 };
 
-describe('Reader card routing', () => {
+describe('Reader Codex and System routing', () => {
   let container: HTMLDivElement;
   let root: Root;
 
@@ -192,56 +192,11 @@ describe('Reader card routing', () => {
     expect(container.textContent).not.toContain('Manifest portrait');
   });
 
-  it('renders highlighted Bestiary species and random encounter beasts as WorldCards', () => {
-    const species = revealBlock('Shadow Void Stalker', 'creature');
-    species.worldCard = {
-      entityType: 'creature',
-      entityName: 'Shadow Void Stalker',
-      displayTitle: 'Apex Abyss Beast',
-      quote: 'It walks between breaths.',
-    };
-    renderReader(species);
-    expect(container.textContent).toContain('Apex Abyss Beast');
-    expect(container.querySelector('[data-slot="card-content"]')).toBeFalsy();
-
-    const random = revealBlock('Ash-Maw Prowler', 'creature');
-    random.worldCard = {
-      entityType: 'creature',
-      entityName: 'Ash-Maw Prowler',
-      displayTitle: 'The Beast Beneath the Cinders',
-    };
-    renderReader(random);
-    expect(container.textContent).toContain('The Beast Beneath the Cinders');
-    expect(container.querySelector('[data-slot="card-content"]')).toBeFalsy();
-  });
-
-  it('does not mount a WorldCard when SEN image popups are disabled', () => {
-    const block = revealBlock('Ash-Maw Prowler', 'creature');
-    block.worldCard = {
-      entityType: 'creature',
-      entityName: 'Ash-Maw Prowler',
-      displayTitle: 'The Beast Beneath the Cinders',
-    };
-
-    renderReader(block, [], {}, { imagePopups: false });
-
-    expect(container.textContent).not.toContain('The Beast Beneath the Cinders');
-  });
-
-  it('keeps Factions informational unless a highlight explicitly uses a WorldCard', () => {
+  it('keeps Factions informational rather than creating a visual Codex Card', () => {
     const factionTerm = codexTerm('Ninth House', 'faction', { imageUrl: '/legacy-faction.png' });
     renderReader(revealBlock('Ninth House', 'faction'), [factionTerm]);
     expect(container.textContent).not.toContain('faction');
     expect(container.textContent).not.toContain('Manifest portrait');
-
-    const highlighted = revealBlock('Ninth House', 'faction');
-    highlighted.worldCard = {
-      entityType: 'faction',
-      entityName: 'Ninth House',
-      displayTitle: 'Judicial Enforcement Syndicate',
-    };
-    renderReader(highlighted, [factionTerm]);
-    expect(container.textContent).toContain('Judicial Enforcement Syndicate');
     expect(container.querySelector('img[src="/legacy-faction.png"]')).toBeFalsy();
   });
 
@@ -265,11 +220,9 @@ describe('Reader card routing', () => {
       type: 'paragraph',
       text: 'A ledger opened.',
       system: { kind: 'status', title: 'Meridian Status', rows: [{ label: 'Qi', value: '84%' }] },
-      worldCard: { entityType: 'system', entityName: 'System', displayTitle: 'Forbidden World Card' },
     };
     renderReader(systemBlock);
     expect(container.textContent).toContain('Meridian Status');
-    expect(container.textContent).not.toContain('Forbidden World Card');
 
     const fateBlock: StoryBlock = {
       id: 'fate-only',
@@ -284,24 +237,9 @@ describe('Reader card routing', () => {
           permanentCosts: ['The magistrate marks Rin.'],
         },
       },
-      worldCard: { entityType: 'fate_event', entityName: 'Fate', displayTitle: 'Forbidden Fate World Card' },
     };
     renderReader(fateBlock);
     expect(container.textContent).toContain('FATE RESULT: FATE SCARRED');
-    expect(container.textContent).not.toContain('Forbidden Fate World Card');
-  });
-
-  it('suppresses a duplicate World signal when the same visual entity resolves to CodexCard', () => {
-    const block = revealBlock('Lei', 'character');
-    block.worldCard = {
-      entityType: 'character',
-      entityName: 'Lei',
-      displayTitle: 'Duplicate Storm Sovereign',
-    };
-    renderReader(block, [codexTerm('Lei', 'character', { portraitKind: 'non-human', imageUrl: '/lei.png' })]);
-
-    expect(container.textContent).toContain('character');
-    expect(container.textContent).not.toContain('Duplicate Storm Sovereign');
   });
 
   it('does not render or trigger an automatic Chapter Visual Memory', () => {

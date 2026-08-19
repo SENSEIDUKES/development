@@ -10,13 +10,7 @@ import { CardWorkshopWorkspace } from '../../../workshop/previews/card-workshop/
 import { ACTIVE_CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
 import { INITIAL_CARD_WORKSHOP_OVERRIDES } from '../../../workshop/previews/card-workshop/previewStates';
 import { resetMockState } from '../../reader-chamber/shared/stubs';
-import type { WorldCardEvent } from '../../reader-chamber/shared/types';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
-import {
-  CARD_WORKSHOP_FALLBACK_PLAYBACK_MS,
-  createCardWorkshopAudioAdapter,
-  type DevAudioPlayerBridge,
-} from '../shared/cardWorkshopAudioAdapter';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -58,23 +52,6 @@ const openTechnicalDetails = async () => {
   });
   expect(details!.open).toBe(true);
 };
-
-const audioCard = {
-  entityType: 'creature',
-  entityName: 'Test Echo',
-  displayTitle: 'Test Echo',
-  audioType: 'hiss',
-  sound: { assetId: 'test-echo' },
-} satisfies WorldCardEvent;
-
-const createPlayer = (): DevAudioPlayerBridge => ({
-  currentTrackId: null,
-  isPlaying: false,
-  play: vi.fn(),
-  stop: vi.fn(),
-  subscribeToTrackChange: vi.fn(),
-  subscribeToQueueEnd: vi.fn(),
-});
 
 class MockIntersectionObserver {
   observe = vi.fn();
@@ -145,9 +122,9 @@ describe('CardWorkshopView', () => {
     expect(container.querySelector('[role="tabpanel"]')?.textContent).toContain('Non-Human Portrait');
     expect(document.activeElement).toBe(tabs[1]);
 
-    await clickButton('Highlighted Bestiary Species');
-    expect(container.textContent).toContain('World Cards');
-    expect(container.textContent).toContain('Apex Abyss Beast');
+    await clickButton('System Status');
+    expect(container.textContent).toContain('System Panels & Fate Outcomes');
+    expect(container.textContent).toContain('Meridian Status & Vitality Flow');
     expect(container.querySelector('[role="tabpanel"]')?.textContent).not.toContain('Human Portrait');
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
   });
@@ -189,6 +166,14 @@ describe('CardWorkshopView', () => {
     const highlightedMention = [...(reader?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
       .find(element => element.textContent === 'Aster');
     expect(highlightedMention).toBeTruthy();
+    const rainCourtCodexAction = [...(reader?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
+      .find(element => element.textContent === 'Rain Court');
+    const rainCourtCueAction = reader?.querySelector<HTMLButtonElement>(
+      'button[aria-label="Play World Cue for Rain Court"]',
+    );
+    expect(rainCourtCodexAction).toBeTruthy();
+    expect(rainCourtCueAction).toBeTruthy();
+    expect(rainCourtCueAction).not.toBe(rainCourtCodexAction);
 
     const cardTitle = [...(reader?.querySelectorAll('h4') ?? [])]
       .find(element => element.textContent === 'Rin');
@@ -201,21 +186,17 @@ describe('CardWorkshopView', () => {
     expect(cardTitle!.compareDocumentPosition(afterCard!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it('renders the selected World Card and System Panel inside the same deterministic Reader fixture', async () => {
+  it('renders the selected System Panel inside the same deterministic Reader fixture', async () => {
     act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)));
     await openTechnicalDetails();
 
-    await selectByLabel('Card preset', 'preset-creature-species');
     const reader = container.querySelector<HTMLElement>('[data-testid="card-workshop-contextual-reader"]');
-    expect(reader?.textContent).toContain('Apex Abyss Beast');
-    expect(reader?.textContent).toContain('Then the thunder moved on');
-
     await selectByLabel('Card preset', 'preset-system-status');
     expect(reader?.textContent).toContain('Meridian Status & Vitality Flow');
     expect(reader?.textContent).toContain('Then the thunder moved on');
   });
 
-  it('keeps image, Manifest/Awaken, Codex, entity-mention, portrait, audio, and mute overrides active in Contextual View', async () => {
+  it('keeps image, Manifest/Awaken, Codex, entity-mention, and portrait overrides active in Contextual View', async () => {
     vi.useFakeTimers();
     act(() => root.render(
       renderWithDevAudio(
@@ -247,18 +228,6 @@ describe('CardWorkshopView', () => {
     expect(container.querySelector('img[alt="Lei"]')?.getAttribute('src'))
       .toBe('/card-workshop/test-images/ye_chen_portrait.png');
 
-    await selectByLabel('Card preset', 'preset-creature-species');
-    expect(container.textContent).toContain('Tap to Listen');
-    await selectByLabel('Audio state', 'unavailable');
-    expect(container.textContent).toContain('Echo Unavailable');
-    await selectByLabel('Audio state', 'loading');
-    await clickButton('Tap to Listen');
-    expect(container.textContent).toContain('Channeling...');
-    await selectByLabel('Audio state', 'playing');
-    await clickButton('Tap to Listen');
-    expect(container.textContent).toContain('Resonating...');
-    await clickButton('Simulate Audio Mute');
-    expect(container.textContent).toContain('Mute: On');
   });
 
   it('preserves the device-size controls for the contextual Reader preview', async () => {
@@ -297,7 +266,7 @@ describe('CardWorkshopView', () => {
 
     act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)));
     await openTechnicalDetails();
-    await selectByLabel('Card preset', 'preset-random-beast');
+    await selectByLabel('Card preset', 'preset-system-status');
     await clickButton('Card Type Tabs');
     await clickButton('Contextual View');
 
@@ -306,84 +275,20 @@ describe('CardWorkshopView', () => {
     expect(container.querySelector('[data-testid="card-workshop-contextual-reader"] img[src^="http"]')).toBeFalsy();
   });
 
-  it('dispatches the real @seihouse/audio-player session when a contextual World Card is tapped', async () => {
+  it('dispatches the real @seihouse/audio-player session when the contextual World Cue glyph is tapped', async () => {
     vi.useFakeTimers();
     const playSpy = vi
       .spyOn(HTMLMediaElement.prototype, 'play')
       .mockResolvedValue(undefined);
 
     act(() => root.render(
-      renderWithDevAudio(
-        <CardWorkshopView initialMode="contextual" initialPresetId="preset-creature-species" />,
-      ),
+      renderWithDevAudio(<CardWorkshopView initialMode="contextual" />),
     ));
 
-    await clickButton('Tap to Listen');
+    await clickButton('Play World Cue for Rain Court');
     await act(async () => {
       vi.advanceTimersByTime(50);
     });
     expect(playSpy).toHaveBeenCalled();
-  });
-});
-
-describe('createCardWorkshopAudioAdapter', () => {
-  it('uses the shared player lifecycle, ignores replacement-track completion, and stops active Workshop audio during cleanup', async () => {
-    vi.useFakeTimers();
-    const player = createPlayer();
-    const adapter = createCardWorkshopAudioAdapter({
-      state: 'available',
-      muted: false,
-      resolveSource: () => 'https://example.com/test-echo.mp3',
-      player,
-    });
-    const asset = adapter.resolve(audioCard)!;
-    const playback = await adapter.play(asset);
-    const ended = vi.fn();
-    playback.onended = ended;
-
-    expect(player.play).toHaveBeenCalledWith(expect.objectContaining({ id: asset.id }));
-    const queueEnded = vi.mocked(player.subscribeToQueueEnd).mock.calls[0][0];
-    queueEnded();
-    expect(ended).toHaveBeenCalledTimes(1);
-
-    await act(async () => {
-      vi.advanceTimersByTime(CARD_WORKSHOP_FALLBACK_PLAYBACK_MS);
-    });
-    expect(ended).toHaveBeenCalledTimes(1);
-
-    const replacementPlayback = await adapter.play(asset);
-    replacementPlayback.onended = ended;
-    const trackChanged = vi.mocked(player.subscribeToTrackChange).mock.calls[1][0];
-    const replacementQueueEnded = vi.mocked(player.subscribeToQueueEnd).mock.calls[1][0];
-    trackChanged('story-seed-help');
-    replacementQueueEnded();
-    expect(ended).toHaveBeenCalledTimes(1);
-
-    await adapter.play(asset);
-    adapter.dispose();
-    expect(player.stop).toHaveBeenCalledWith(asset.id);
-  });
-
-  it('retains the deterministic timer ending when no shared player is supplied', async () => {
-    vi.useFakeTimers();
-    const adapter = createCardWorkshopAudioAdapter({
-      state: 'available',
-      muted: false,
-      resolveSource: () => null,
-      player: null,
-    });
-    const playback = await adapter.play(adapter.resolve(audioCard)!);
-    const ended = vi.fn();
-    playback.onended = ended;
-
-    await act(async () => {
-      vi.advanceTimersByTime(899);
-    });
-    expect(ended).not.toHaveBeenCalled();
-
-    await act(async () => {
-      vi.advanceTimersByTime(1);
-    });
-    expect(ended).toHaveBeenCalledTimes(1);
   });
 });

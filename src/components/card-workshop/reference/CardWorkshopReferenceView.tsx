@@ -1,5 +1,4 @@
 import React from 'react';
-import { WorldEntityCard } from '../../reader-chamber/reference/WorldEntityCard';
 import { SystemBlock } from '../../reader-chamber/reference/SystemBlock';
 import { ManifestationImage } from '../../reader-chamber/reference/ManifestationImage';
 import type { Chapter } from '../../reader-chamber/shared/types';
@@ -9,7 +8,6 @@ import { CodexRevealCardReference } from './CodexRevealCardReference';
 const preset = (id: string) => CARD_PRESETS.find(candidate => candidate.id === id)!;
 
 const human = preset('preset-human-character');
-const species = preset('preset-creature-species');
 const system = preset('preset-system-status');
 const fate = preset('preset-fate-result');
 const manifestation = preset('preset-manifestation-image');
@@ -49,13 +47,10 @@ export function CardWorkshopReferenceView() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <ReferencePanel title="WorldEntityCard">
-            {human.worldCard && <WorldEntityCard card={human.worldCard} />}
-          </ReferencePanel>
           <ReferencePanel title="Inline Codex Reveal">
-            {species.codexReveal && (
+            {human.codexReveal && (
               <CodexRevealCardReference
-                revealTerm={species.codexReveal}
+                revealTerm={human.codexReveal}
                 backdropUrl="/card-workshop/reveal-backdrop.svg"
               />
             )}

@@ -10,7 +10,8 @@
 
 ## Workshop history
 
-- **2026-08-19:** Added Phase 2 of the World Card audio replacement to the Development Reader only: a native inline prose button with entity-token or neutral Library highlighting, catalog-gated `sound` actions, provider-neutral future `voice` actions, and user-only loading/playing/error behavior through the existing `@seihouse/audio-player` session. Five real beast, weapon, artifact, location, and faction Cues now sit in controlled Chapter 1 prose. The legacy World Card, Reference fork, chapter shape, generation, prompts, persistence, and production payloads are unchanged. Source Reader/World Card paths were rechecked on Light-Novels `origin/main` at `66643f6`.
+- **2026-08-19:** Refined inline World Cues into a separate prose action: entity names retain their normal text or Codex highlight, while a small neutral `LibrarySoundGlyph` owns playback beside the phrase and gains a soft Library aura only while active. Removed the retired card presentation, Reader render branch, generation contract, Workshop presets and adapter, dedicated fixtures/tests, and exclusive shared types/stubs. Codex Cards, System Panels, the one shared audio owner, and Development-only cue annotations remain intact.
+- **2026-08-19:** Added Phase 2 inline audio to the Development Reader: catalog-gated `sound` actions, provider-neutral future `voice` actions, and user-only loading/playing/error behavior through the existing `@seihouse/audio-player` session. Five real beast, weapon, artifact, location, and faction cues sit in controlled Chapter 1 prose outside persisted StoryBlock data.
 - **2026-08-18:** Review follow-up: the Development `CodexCard` dragon seal now applies its cyan and violet glows as valid chained filter functions in base, hover, and press states. Interaction, layout, and reduced-motion behavior are unchanged.
 - **2026-08-18:** Manifest backdrops are real art again in Development: the `CodexCard` fallback backdrop pool moved from the five hot-linked public R2 `LIBRARY BACKDROPS` URLs to the published "IMMORTAL LAND" revelation landscapes, downloaded into `public/manifest-backdrops/` and owned by the new shared `reader-codex/development/codexManifestBackdrop.ts`. `CodexCard` re-exports the pool under the established `FALLBACK_BACKDROPS` / `getFallbackBackdrop` names, so `ReaderViewport` assignment, the Card Workshop fixtures, and the reveal rendering are untouched. The locked Reference `ReaderViewport` keeps the production R2 list.
 - **2026-08-18:** Reimagined the Development `CodexCard` Manifest seal as the dragon itself: the circular glass orb, dashed/dotted orbit rings, and accent core glow were replaced by an enlarged `LibraryDragonCycleIcon` — the shared Library cycle glyph, reused unchanged — that forms the entire portal boundary. Two stacked `currentColor` copies with a vertical mask tint the silhouette cyan→violet, wrapped in a slow-turning blurred conic aura in the Library portal spectrum (`#04ACFF → #7C5CFF`), around a dark glass core that now holds both the Manifest label and the "Awaken Portrait" caption (previously a separate line beneath the seal). The seal remains one real keyboard-operable `<button>` with the same `onManifestReveal` callback, a Manifest/Manifesting aria-label swap, and a disabled Manifesting state (also `aria-busy` with a lit aura); hover and press brighten the aura and the dragon's glow. The aura spin and the dragon's motion rest fully under `prefers-reduced-motion`. The preview mock gains one artwork-less eligible reveal (the "Stair of a Thousand Debts" location, chapter 1) so the unmanifested seal renders in the Reading state and in Compare. Portrait media, eyebrow, inscribed name, description, glass surface, ambience, accent resolution, reveal routing, and card layout are unchanged. **Same-day refinement:** the aura's conic gradient now carries two diametrically opposed bright bands so the blurred glow reads centered through the whole spin (the single bright band pooled to one side); the dragon now rotates slowly (24s/rev) instead of the barely-visible scale breath, so the `codex-seal-breathe` keyframes are gone and `CodexCardSeal.css` is the reduced-motion backstop only; and the pending state is renamed "Manifesting..." with a small spinning `LibraryDragonCycleIcon` in place of the generic lucide spinner.
@@ -20,9 +21,8 @@
 - **2026-08-18:** Reimagined the Development `CodexCard` with the approved Library spectral-glass treatment, adopting the full `LibraryCard` glass skin the card was rebuilt for on 2026-08-15: translucent black-blue depth, top-light falloff, inner rim lighting, the masked 1px spectral edge, and an entity ambient accent (via `accentColor`) resolved from the entity's own identity rules (`reader-codex/development/codexEntityAccent.ts`). A sparse spectral mote field (`reader-codex/development/CodexCardAmbience.tsx`) sits under the content, the flat min-height and dead space are gone, and the Manifest trigger is now the circular seal itself — orbit rings, star, and Manifest label preserved, "Awaken Portrait" caption beneath — rather than a rectangular button. Reveal routing, backdrop assignment, Manifest/Summoning callbacks, entrance behavior, typography, and the LibraryCard region contract are unchanged. The highlighted-term card path now imports the new Development `CodexHovercard` fork (`reader-codex/development/CodexHovercard.tsx`); the locked Reference fork keeps the shared copy.
 - **2026-08-17:** Fixed the real highlighted-term Codex card path used by `ReaderChamber`: mobile and tablet cards now dock at the safe upper viewport edge with a smaller phone width and a scrollable height cap that leaves most novel text visible; desktop cards retain contextual word placement with viewport-edge clamping. Card media now follows the complete artwork's natural aspect ratio so the image and rounded frame corners align without cropping. Portal keyboard focus/Escape behavior was restored. No Reader routing, Codex data, card content, or visual skin changed.
 - **2026-08-17:** Replaced the Reader-specific preview menu shell with `FeatureWorkspace` Workshop Controls. Reader page shortcuts, deterministic reading/menu states, chapter selection, themes, and particles now use the shared Pages / States / Effects structure while continuing to drive the real Reader controls and one shared mock story. Reader Chamber navigation and component behavior were not changed.
-- **2026-08-15:** Added an optional Development-only `ReaderViewport` World Card adapter seam and shared Reader Chamber surface helper for the Card Workshop's deterministic Contextual View. Normal Reader callers omit the seam and retain the existing presentation and audio lifecycle; neither the seam nor its remount key transfers to production.
 - **2026-08-15:** Rebuilt the active Development `CodexCard` on the shared `LibraryCard` region structure without changing the Reader reveal's presentation or flow. Existing media/backdrop, Manifest/Awaken action and Summoning state, entrance/hover behavior, typography, spacing, and routing remain intact; no generic LibraryCard visual treatment has been adopted.
-- **2026-08-14:** Completed the first Part Three card cleanup on the existing Reader route: renamed the active presentations to `CodexCard` and `WorldCard`, limited visual Codex Cards to Human Portraits, Non-Human Portraits, Artifacts, and Locations, kept Bestiary/Faction highlights on World Cards, kept System/Fate content on System Panels, suppressed duplicate visual Codex/World signals in favor of the Codex Card, and removed the end-of-chapter Chapter Visual Memory render and trigger.
+- **2026-08-14:** Limited visual Codex Cards to Human Portraits, Non-Human Portraits, Artifacts, and Locations, kept System/Fate content on System Panels, and removed the end-of-chapter Chapter Visual Memory render and trigger.
 - **2026-08-13:** Added an isolated, disposable one-chapter entry at the existing Reader/Codex adapter boundary. A successfully processed direct Chapter Generation result now opens the unchanged Reader Chamber and complete Reader Codex with one prose chapter and one processed-state snapshot. The existing five-chapter adapter, exact-five completion guard, navigation, highlighting, layouts, and Codex internals remain unchanged. Verified with a real Gemini-generated Timeless chapter in a protected Preview.
 - **2026-08-11:** Migrated the complete production Reader Codex as its own Workshop feature and restored the Reader Chamber integration: the existing Codex control now opens the production-style sheet over the still-mounted Reader, all six Codex pages are present, and prose highlighting/reveal-card resolution again use the story's Codex terms. The generated five-chapter session keeps its disposable, chapter-scoped snapshot boundary; generation and `batchToReaderAdapter.ts` were not changed.
 - **2026-08-10:** Completed the Pass 3 connection from Chapter Generation: a completed five-chapter batch now opens as a disposable real Reader Chamber session with repaired final prose, Chapters 1–5 navigation, structured blocks/system panels, chapter-scoped cumulative Reader Codex snapshots, chapter and batch token totals (including repair/retry usage), five-chapter text export, and selected-chapter reuse of the existing four-stage Diagnostics. The standalone four-chapter story is now explicitly labeled as the no-batch mock fallback.
@@ -62,7 +62,6 @@ reference/                    — untouched replica of production, locked
   AudioWidget.tsx
   SystemBlock.tsx
   FateResultCard.tsx
-  WorldCard.tsx
   CodexCard.tsx
   ReaderFateAlerts.tsx
   FateSurvivalExplanation.tsx
@@ -75,7 +74,7 @@ development/                  — active Workshop version; started as an exact c
    InlineAudio.css add the Phase 2 prose primitive — see history)
 shared/                       — code genuinely identical between the two forks
   types.ts                    — ReaderChapter + composing types, StoryBlock/metadata/SystemEvent/
-                                WorldCardEvent/FateResultData, StoryCuePayload, ContextManifest,
+                                FateResultData, StoryCuePayload, ContextManifest,
                                 ReaderPreferences, StoryWorld + Codex entities, StoryArc, Bookmark,
                                 and production-narrow Reader/Codex story patch contracts
   batchToReaderAdapter.ts     — immutable disposable accepted single-chapter and exact-five batch Reader/Codex session boundary
@@ -103,7 +102,7 @@ The full Reader Chamber presentation tree from `src/components/` in Light-Novels
 `ReaderHeader.tsx` (+ `AudioWidget`), `ReaderPreferencesPanel.tsx`, the whole
 `ReaderControls/` folder, `CosmicBookmarksPanel.tsx` (+ `VirtualizedList`),
 `AlterFatePanel.tsx`, `ParticleSystem.tsx`, `SystemBlock.tsx` (+ `FateResultCard`,
-`lib/systemColors.ts`), the World Card presentation now named `WorldCard.tsx`,
+`lib/systemColors.ts`),
 `ReaderFateAlerts.tsx` (+ `FateSurvivalExplanation`), `SystemColorLegend.tsx`,
 `ContextInspector.tsx`, plus the pure libraries listed under `shared/` above and the
 reader-specific styling from `src/index.css` (`.light-novel-reader`,
@@ -126,9 +125,8 @@ already carries the same font and color tokens.
   preferences, and the audio mix visibly work.
 - **Story data** — one mock `StoryWorld` ("Ashes of the Ninth Meridian", genre
   `Fate Survival`) with 4 chapters:
-  1. rich structured-`blocks` chapter (breakthrough system block, Fate Result card,
-     World Card with a browser-native TTS line, soft continuity notes, Context
-     Inspector manifest);
+  1. rich structured-`blocks` chapter (breakthrough System Panel, Fate Result card,
+     inline World Cues, soft continuity notes, Context Inspector manifest);
   2. long legacy `generatedContent` prose chapter with a hard Timeline Divergence
      banner and a legacy `[bracket]` system line;
   3. sealed chapter that is also a death/critical scene (menacing red chamber
@@ -172,7 +170,7 @@ Effects section when supplied.
 
 **States — Reading** — normal reading states and reading setup
 
-- `reading` — rich blocks chapter 1 (system blocks, Fate Result card, World Card,
+- `reading` — rich blocks chapter 1 (System Panels, Fate Result card, inline World Cues,
   Context Inspector, legend, Fate Survival banner)
 - `fullscreen` — header hidden; click prose to toggle back
 - Chapter selector (1–4)
@@ -216,12 +214,10 @@ line so the current state is never ambiguous.
 - Firebase (`lib/firebase`, `LOCAL_ONLY_MODE`) → constant `true`
 - storyStorage / IndexedDB persistence
 - Generation pipeline (`onGenerateChapter`/`onGenerateNextFiveChapters` log only)
-- Scene, narration, and legacy World Card audio engines (`useReaderPlayback` internals, `hooks/audio/useAudioMix`
-  playback, `lib/audio/cardSoundCatalog`/`cardSoundPlayer`/`audioMixSettings`,
-  `lib/vibration`, `lib/narrativeCues`) — settings state is real; the new inline
-  Cues are the narrow exception and play through the existing DEV audio owner.
-  World Card SFX still resolves to nothing ("Echo Unavailable"), and its legacy
-  `tts_line` path still uses the browser's own `speechSynthesis`.
+- Scene and narration audio engines (`useReaderPlayback` internals,
+  `hooks/audio/useAudioMix` playback, `audioMixSettings`, `lib/vibration`, and
+  `lib/narrativeCues`) — settings state is real; inline World Cues are the narrow
+  exception and play through the existing DEV audio owner.
 - `hooks/useChapterTranslation`, `hooks/useCinematicScroll`, and
   `hooks/useReadingPosition` — inert stubs
 - Production Codex authentication, quota, persistence, image/audio generation,
@@ -240,7 +236,7 @@ line so the current state is never ambiguous.
 The Workshop's `lucide-react@^1.27.0` removed several legacy aliases the source uses.
 All substitutions are import-level aliases only — JSX is byte-identical to production:
 
-- `Loader2` → `LoaderCircle as Loader2` (ReaderViewport, WorldCard)
+- `Loader2` → `LoaderCircle as Loader2` (ReaderViewport)
 - `Sliders` → `SlidersHorizontal as Sliders` (ReaderHeader, ReaderSettings)
 - `AlertTriangle` → `TriangleAlert as AlertTriangle` (SystemBlock, FateSurvivalExplanation)
 - `AlertCircle` → `CircleAlert as AlertCircle` (FateResultCard)
@@ -254,10 +250,9 @@ All substitutions are import-level aliases only — JSX is byte-identical to pro
   authentication, quota charging, and remote persistence do not run in the Workshop.
 - **Alter Fate focus behavior is unchanged from the existing Workshop replica**;
   the migrated Codex context dialog uses `react-focus-lock` like production.
-- **Audio is intentionally partial** — the mixer's music, atmosphere, narration,
-  and legacy World Card SFX remain inert; `tts_line` World Cards retain their
-  browser speech-synthesis compatibility path. Only the five controlled Phase 2
-  inline Library Cues play, through the single shared DEV audio session.
+- **Audio is intentionally partial** — the mixer's music, atmosphere, and
+  narration remain inert. Only the controlled inline World Cues play, through
+  the single shared DEV audio session.
 - **No TTS sync highlighting** — `activeChunks` is always empty, so the
   portal-colored narration span and `reading-focus-*` classes never activate;
   the play/pause vinyl still flips and spins.
@@ -312,7 +307,6 @@ and the Codex Card ambience/accent helpers per the Reader Codex README:
 - `development/ParticleSystem.tsx` → `src/components/ParticleSystem.tsx`
 - `development/SystemBlock.tsx` → `src/components/SystemBlock.tsx`
 - `development/FateResultCard.tsx` → `src/components/FateResultCard.tsx`
-- `development/WorldCard.tsx` → `src/components/WorldCard.tsx`
 - `development/CodexCard.tsx` → `src/components/CodexCard.tsx`
 - `development/CodexCardInscription.css` → `src/components/CodexCardInscription.css`
   (new file; the inscribed-name title styles imported by `CodexCard.tsx`)
@@ -332,9 +326,7 @@ Workshop-only — never transfer: `shared/stubs.ts`, `shared/types.ts` (producti
 `src/types.ts` is authoritative), `shared/trackLibrary.ts` (production
 `lib/audio/musicResolver.ts` is authoritative), everything under
 `src/workshop/previews/reader-chamber/`, the manifest entry, and the registry line.
-The optional `worldCardAudioAdapter` and `worldCardPresentationKey` props in the
-Development `ReaderViewport`, plus `getReaderChamberSurfaceClass`, are Card Workshop
-seams, not production API.
+`getReaderChamberSurfaceClass` is a Card Workshop presentation seam, not production API.
 The `inlineAudioHighlights` prop and all five `previewData.ts` examples are also
 Workshop-only annotations in Phase 2; do not transfer them as a new chapter field.
 

@@ -35,42 +35,6 @@ export interface FateResultData {
   genreShift?: string;
 }
 
-export type WorldCardSoundRole =
-  | "roar" | "call" | "hiss" | "howl" | "screech" | "wingbeat"
-  | "unsheathe" | "metallic_ring" | "reload" | "activation_hum"
-  | "resonance" | "awakening" | "pulse" | "magical_activation"
-  | "signature" | "chant" | "chime";
-
-export type WorldCardArtifactAssetFamily = "weapon" | "relic";
-
-export interface WorldCardSoundHints {
-  assetId?: string;
-  element?: string;
-  size?: BeastSonicProfile["size"];
-  threatTier?: BeastSonicProfile["threatTier"];
-  assetFamily?: WorldCardArtifactAssetFamily;
-  weaponType?: string;
-  artifactCategory?: string;
-  tags?: string[];
-}
-
-export interface WorldCardEvent {
-  id?: string;
-  /** System and Fate remain System Panels, not World Card payloads. */
-  entityType: "character" | "creature" | "artifact" | "location" | "faction" | "system" | "fate_event";
-  entityName: string;
-  displayTitle: string;
-  imageUrl?: string;
-  quote?: string;
-  audioText?: string;
-  audioType?: "tts_line" | WorldCardSoundRole;
-  sound?: WorldCardSoundHints;
-  voicePreset?: string;
-  codexEntryId?: string;
-  /** Simplified from production's `CosmicArtifact["rarity"]` reference. */
-  rarity?: string;
-}
-
 export interface RelevanceState {}
 export type RelevanceStateValue = "active" | "warm" | "dormant" | "archived" | "reactivated";
 
@@ -157,7 +121,6 @@ export interface StoryBlock {
   text: string;
   metadata?: StoryBlockMetadata;
   system?: SystemEvent;
-  worldCard?: WorldCardEvent;
 }
 
 export type ChapterManifestStatus = "healthy" | "needs-review";

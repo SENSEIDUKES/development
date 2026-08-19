@@ -47,7 +47,6 @@ const SCENE_TYPE_LABELS: Record<SceneType, string> = {
 const EFFECT_KIND_LABELS: Record<string, string> = {
   "narration-metadata": "Narration Metadata",
   "beast-sound": "Beast Sound",
-  "world-card": "World Card",
   "system-panel": "System Panel",
   "scene-music": "Scene Music",
   atmosphere: "Atmosphere",

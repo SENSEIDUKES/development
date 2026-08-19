@@ -53,14 +53,6 @@ const planEffects = (sceneType: SceneType): ChapterEffectSelection[] => {
       required: false,
     });
   }
-  if (sceneType === "worldBuilding") {
-    shared.push({
-      kind: "world-card",
-      intent: "Reveal a World Card only for a genuinely new story entity or location discovery.",
-      required: false,
-    });
-  }
-
   return shared;
 };
 

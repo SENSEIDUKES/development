@@ -145,7 +145,6 @@ export const CHAPTER_GENERATION_PACKAGE_TRACE: readonly ChapterInstructionTrace[
   { id: "ndjson-output-structure", packageId: "generationRules", source: "CHAPTER_PROMPTS.system", description: "NDJSON chapter/block output structure." },
   { id: "story-block-metadata-format", packageId: "generationRules", source: "CHAPTER_PROMPTS.system", description: "Paragraph/dialogue metadata formatting." },
   { id: "system-event-format", packageId: "generationRules", source: "CHAPTER_PROMPTS.system", description: "Visible Celestial Library system-panel format." },
-  { id: "world-card-format", packageId: "generationRules", source: "CHAPTER_PROMPTS.system", description: "World Card event format." },
   { id: "music-atmosphere-cue-format", packageId: "generationRules", source: "CHAPTER_PROMPTS.system + cue payload rules", description: "Music, atmosphere, and audio cue formatting." },
   { id: "beast-event-format", packageId: "generationRules", source: "CHAPTER_PROMPTS.system", description: "Beast event metadata formatting." },
   { id: "content-safety-protocols", packageId: "generationRules", source: "CHAPTER_PROMPTS.system", description: "Permanent content-safety rules." },

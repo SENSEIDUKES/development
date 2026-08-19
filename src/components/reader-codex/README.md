@@ -18,7 +18,7 @@
 - **2026-08-17:** Moved the Workshop-only Codex page shortcuts into `FeatureWorkspace` Workshop Controls. The shortcuts still activate the real Codex tabs in each mounted pane; Reader Codex navigation and local story-state behavior remain unchanged.
 - **2026-08-11:** Migrated the complete production Reader Codex, its responsive sheet, all six primary pages and nested sections, Reader prose highlighting/hovercards, local editing controls, and Reader Chamber navigation into DEV. Production-only auth, AI, media, and persistence seams were replaced with explicit local compatibility behavior.
 - **2026-08-12:** Aligned generated Reader sessions with DEV Story Seed, World Blueprint, Process Result, and Living Story State contracts. The adapter now translates Seed character/profile aliases, power ranks, relationships, abilities, permanent power-system data, factions, locations, artifacts, mysteries, and resolved threads; Process updates merge into existing named entities; and each Codex timeline is limited to the selected chapter.
-- **2026-08-13:** Added Part One's Development-only creature boundary: Process Result normalizes species into a lean Bestiary and persistent named non-human individuals into Portraits, with application-owned stable IDs, encounter history, and reciprocal species links. Development now separates Human and Non-Human Portraits and adds a Bestiary tab; the frozen Reference and World Card/Card Workshop behavior remain unchanged.
+- **2026-08-13:** Added Part One's Development-only creature boundary: Process Result normalizes species into a lean Bestiary and persistent named non-human individuals into Portraits, with application-owned stable IDs, encounter history, and reciprocal species links. Development now separates Human and Non-Human Portraits and adds a Bestiary tab while preserving the frozen Reference.
 - **2026-08-14:** Applied the first Part Three visual eligibility cleanup: only Human Portraits, Non-Human Portraits, Artifacts, and Locations can create new Codex artwork or render as Codex Cards. Bestiary species and Factions remain informational; legacy stored media stays readable without exposing a new Manifest action.
 
 ## What was migrated
@@ -117,10 +117,11 @@ Legacy Bestiary/Faction media fields remain readable so existing data is not
 destructively migrated, but neither informational collection has an active
 Codex image-generation or Manifest action.
 
-The first Part Three cleanup keeps Human Portraits, Non-Human Portraits,
-Artifacts, and Locations on the visual Codex Card path. Highlighted Bestiary
-species and Factions use World Cards; System and Fate content remains on the
-existing System Panel path.
+The current boundary keeps Human Portraits, Non-Human Portraits, Artifacts,
+and Locations on the visual Codex Card path. Bestiary species and Factions
+remain informational Codex entries. A named entity in Reader prose can also
+have a separate inline World Cue glyph without changing its Codex action;
+System and Fate content remains on the existing System Panel path.
 
 Moving chapters deliberately shows that chapter's cumulative generated memory
 and only the completed chapter timeline through that point. The full

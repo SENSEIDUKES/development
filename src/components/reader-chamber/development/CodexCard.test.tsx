@@ -437,7 +437,13 @@ describe('Reader card routing', () => {
     expect(dragonClass).toContain('group-active/seal:[filter:drop-shadow(');
     // The portal boundary is the shared Library cycle glyph, kept decorative.
     expect(seal?.querySelector('svg[aria-hidden="true"]')).toBeTruthy();
-    expect(container.textContent).toContain('Awaken Portrait');
+    // The core holds only the star and the Manifest label — the card type
+    // eyebrow beneath already says what is being manifested.
+    expect(container.textContent).toContain('Manifest');
+    expect(container.textContent).not.toContain('Awaken Portrait');
+    // Seal tones derive from the entity accent (untiered Artifact → #E5E7EB).
+    expect(seal?.style.getPropertyValue('--codex-seal-light')).toBe('color-mix(in srgb, #E5E7EB 70%, white)');
+    expect(seal?.style.getPropertyValue('--codex-seal-deep')).toBe('color-mix(in srgb, #E5E7EB 78%, black)');
   });
 
   it('tints the glass with the character relationship accent', () => {

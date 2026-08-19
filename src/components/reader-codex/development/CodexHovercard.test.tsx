@@ -67,7 +67,7 @@ describe('Development CodexHovercard spectral glass', () => {
     expect(document.body.querySelector('button[aria-label*="Manifest portrait"]')).toBeFalsy();
   });
 
-  it('keeps the Manifest action as a circular seal with the awakening caption', async () => {
+  it('keeps the Manifest action as a circular seal tinted by the entity accent', async () => {
     act(() => root.render(
       <CodexHovercard
         term="Oath Seal"
@@ -89,7 +89,11 @@ describe('Development CodexHovercard spectral glass', () => {
     );
     expect(button).toBeTruthy();
     expect(button!.className).toContain('rounded-full');
-    expect(document.body.textContent).toContain('Awaken Portrait');
+    // The core holds only the star and the Manifest label; the entity accent
+    // (Rare Artifact → #04ACFF) tints the seal through its derived tones.
+    expect(document.body.textContent).not.toContain('Awaken Portrait');
+    expect(button!.style.getPropertyValue('--codex-seal-light')).toBe('color-mix(in srgb, #04ACFF 70%, white)');
+    expect(button!.style.getPropertyValue('--codex-seal-deep')).toBe('color-mix(in srgb, #04ACFF 78%, black)');
 
     // Until a portrait exists the glass carries the entity's Manifest backdrop.
     const backdrop = document.body.querySelector<HTMLImageElement>('img[data-slot="manifest-backdrop"]');

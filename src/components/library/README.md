@@ -43,6 +43,11 @@ Reusable visual names use the `library-*` namespace:
 `library-title-presence`, and `library-subtitle-shimmer`. There are no legacy
 `seed-*` aliases.
 
+- **2026-08-18:** Refined the `LibraryDragonCycleIcon` silhouette alongside the
+  Codex Manifest seal work: the tail now narrows gradually into a clean curved
+  point rising into the head's open jaws instead of ending in a blunt stub.
+  Head, back ridges, ring geometry, viewBox, `currentColor` tinting, and the
+  accessibility/size contract are unchanged.
 - **2026-08-18:** Enhanced `LibraryDragonCycleIcon` with full accessibility
   support (`title`, `titleId`, `decorative`, `role`, and `aria-*` attributes),
   defensive `size` normalization, `React.memo` wrapping, and dedicated contract

@@ -61,9 +61,10 @@ export const LibraryDragonCycleIcon = memo(function LibraryDragonCycleIcon({
       {...restProps}
     >
       {title && <title id={titleId}>{title}</title>}
-      {/* Serpentine body: crescent from the neck clockwise around to the tail
-          wisp, which rises toward the head's open jaws. */}
-      <path d="M13.65 2.64 A 9.5 9.5 0 1 1 5.89 4.72 Q 6.3 3.3 7.0 3.0 Q 8.5 4.4 9.19 6.70 A 6 6 0 1 0 13.04 6.09 Z" />
+      {/* Serpentine body: crescent from the neck clockwise around to the tail,
+          which narrows gradually into a clean curved point rising toward the
+          head's open jaws. */}
+      <path d="M13.65 2.64 A 9.5 9.5 0 1 1 5.28 5.28 C 6.13 4.43 7.77 3.24 8.20 2.89 Q 8.55 2.60 8.80 2.98 C 9.30 3.73 12.04 5.88 10.86 6.11 A 6 6 0 1 0 13.04 6.09 Z" />
       {/* Back ridges along the outer curve. */}
       <path d="M19.44 6.08 L20.85 5.80 L20.10 7.04 Z M21.50 12.25 L22.76 12.94 L21.40 13.41 Z M18.54 18.90 L18.94 20.27 L17.64 19.64 Z M11.75 21.50 L11.06 22.76 L10.51 21.38 Z" />
       {/* Head: horn swept back, open jaws chasing the tail wisp; the evenodd

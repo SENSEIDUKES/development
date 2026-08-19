@@ -59,13 +59,15 @@ const HOVERCARD_GLASS_CLASS = [
 
 /**
  * The Manifest seal matches the Codex Card's dragon-cycle portal at hovercard
- * scale: an enlarged `LibraryDragonCycleIcon` forms the entire boundary —
- * cyan head chasing violet tail — rotating inside a soft cyan→violet aura,
- * around a dark glass core holding the Manifest label and the awakening
- * caption. The seal is the button: keyboard-operable, with the Manifesting
+ * scale: an enlarged `LibraryDragonCycleIcon` forms the entire boundary,
+ * rotating inside a soft aura around a dark glass core holding the Manifest
+ * label. Color comes from the entity's own accent, never a fixed hue: the
+ * button sets `--codex-seal-light` / `--codex-seal-deep` as lighter and darker
+ * mixes of the resolved card accent (the neutral Library token when no accent
+ * exists). The seal is the button: keyboard-operable, with the Manifesting
  * state inside the core. The Library glyph is reused unchanged and purely
- * decorative — two stacked `currentColor` copies, the cyan one masked so it
- * dissolves down the body, tint the single silhouette into the cyan→violet
+ * decorative — two stacked `currentColor` copies, the light one masked so it
+ * dissolves down the body, tint the single silhouette into the accent
  * gradient. The aura's conic gradient carries two diametrically opposed
  * bright bands so the blurred glow stays centered through the whole spin.
  * Every animation carries `motion-reduce:animate-none` so the seal rests
@@ -75,13 +77,13 @@ const SEAL_BUTTON_CLASS = [
   'codex-seal group/seal relative flex h-32 w-32 sm:h-36 sm:w-36 shrink-0 items-center justify-center rounded-full',
   'cursor-pointer transition-transform duration-300 active:scale-[0.97]',
   'outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black',
-  'focus-visible:ring-[rgba(4,172,255,0.7)]',
+  'focus-visible:ring-[var(--codex-seal-light)]',
   'disabled:cursor-wait',
 ].join(' ');
 
 const SEAL_AURA_CLASS = [
   'pointer-events-none absolute -inset-2 rounded-full blur-lg transition-opacity duration-500',
-  'bg-[conic-gradient(from_210deg,#04ACFF,#7C5CFF_25%,#04ACFF_50%,#7C5CFF_75%,#04ACFF)]',
+  'bg-[conic-gradient(from_210deg,var(--codex-seal-light),var(--codex-seal-deep)_25%,var(--codex-seal-light)_50%,var(--codex-seal-deep)_75%,var(--codex-seal-light))]',
   'opacity-35 animate-[spin_26s_linear_infinite] motion-reduce:animate-none',
   'group-hover/seal:opacity-70 group-active/seal:opacity-80 group-disabled/seal:opacity-60',
 ].join(' ');
@@ -89,19 +91,19 @@ const SEAL_AURA_CLASS = [
 const SEAL_DRAGON_CLASS = [
   'pointer-events-none absolute inset-0',
   'animate-[spin_24s_linear_infinite] motion-reduce:animate-none',
-  '[filter:drop-shadow(0_0_9px_rgba(4,172,255,0.42))_drop-shadow(0_0_26px_rgba(124,92,255,0.36))]',
+  '[filter:drop-shadow(0_0_9px_color-mix(in_srgb,var(--codex-seal-light)_42%,transparent))_drop-shadow(0_0_26px_color-mix(in_srgb,var(--codex-seal-deep)_36%,transparent))]',
   'transition-[filter] duration-500',
-  'group-hover/seal:[filter:drop-shadow(0_0_13px_rgba(4,172,255,0.62))_drop-shadow(0_0_38px_rgba(124,92,255,0.55))]',
-  'group-active/seal:[filter:drop-shadow(0_0_15px_rgba(4,172,255,0.72))_drop-shadow(0_0_44px_rgba(124,92,255,0.62))]',
+  'group-hover/seal:[filter:drop-shadow(0_0_13px_color-mix(in_srgb,var(--codex-seal-light)_62%,transparent))_drop-shadow(0_0_38px_color-mix(in_srgb,var(--codex-seal-deep)_55%,transparent))]',
+  'group-active/seal:[filter:drop-shadow(0_0_15px_color-mix(in_srgb,var(--codex-seal-light)_72%,transparent))_drop-shadow(0_0_44px_color-mix(in_srgb,var(--codex-seal-deep)_62%,transparent))]',
 ].join(' ');
 
-const SEAL_DRAGON_VIOLET_CLASS = 'absolute inset-0 h-full w-full text-[#7C5CFF]';
+const SEAL_DRAGON_DEEP_CLASS = 'absolute inset-0 h-full w-full text-[var(--codex-seal-deep)]';
 
-// The cyan twin wears a vertical mask so it owns the head and upper coil and
-// dissolves before the tail — the single-tone glyph reads as one cyan→violet
-// dragon without touching the shared primitive.
-const SEAL_DRAGON_CYAN_CLASS = [
-  'absolute inset-0 h-full w-full text-[#04ACFF]',
+// The light twin wears a vertical mask so it owns the head and upper coil and
+// dissolves before the tail — the single-tone glyph reads as one
+// light-to-deep accent dragon without touching the shared primitive.
+const SEAL_DRAGON_LIGHT_CLASS = [
+  'absolute inset-0 h-full w-full text-[var(--codex-seal-light)]',
   '[-webkit-mask-image:linear-gradient(180deg,black_15%,transparent_68%)]',
   '[mask-image:linear-gradient(180deg,black_15%,transparent_68%)]',
 ].join(' ');
@@ -211,6 +213,13 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
   );
 
   const accent = resolveCodexEntityAccent(type, entry, activeStory?.mcName);
+  // Seal tones: the Manifest seal derives its gradient from the entity's own
+  // accent — a lighter and a darker mix of the same color, falling back to the
+  // neutral Library token when no accent exists.
+  const sealAccentStyle = {
+    '--codex-seal-light': `color-mix(in srgb, ${accent || 'var(--color-neutral-400)'} 70%, white)`,
+    '--codex-seal-deep': `color-mix(in srgb, ${accent || 'var(--color-neutral-400)'} 78%, black)`,
+  } as CSSProperties;
   const theme = CODEX_BAND_THEME[resolveCodexEntityBand(type, entry, activeStory?.mcName)];
   // The story's assigned Manifest backdrop wins when present; otherwise the
   // stable pool pick, so the card always shows the same art for an entity.
@@ -454,28 +463,26 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
                       aria-busy={isGeneratingImage || undefined}
                       aria-label={isGeneratingImage ? `Manifesting portrait for ${entry.name}` : `Manifest portrait for ${entry.name}`}
                       className={SEAL_BUTTON_CLASS}
+                      style={sealAccentStyle}
                     >
                       <span aria-hidden="true" className={SEAL_AURA_CLASS} />
                       <span aria-hidden="true" className={SEAL_DRAGON_CLASS}>
-                        <LibraryDragonCycleIcon className={SEAL_DRAGON_VIOLET_CLASS} />
-                        <LibraryDragonCycleIcon className={SEAL_DRAGON_CYAN_CLASS} />
+                        <LibraryDragonCycleIcon className={SEAL_DRAGON_DEEP_CLASS} />
+                        <LibraryDragonCycleIcon className={SEAL_DRAGON_LIGHT_CLASS} />
                       </span>
                       <span className={SEAL_CORE_CLASS}>
                         {isGeneratingImage ? (
                           <>
-                            <LibraryDragonCycleIcon className="h-4 w-4 text-cyan-300 animate-spin motion-reduce:animate-none drop-shadow-[0_0_6px_rgba(4,172,255,0.6)]" />
-                            <span className="font-mono text-[8px] text-cyan-300 uppercase tracking-widest animate-pulse motion-reduce:animate-none font-medium">
+                            <LibraryDragonCycleIcon className="h-4 w-4 text-[var(--codex-seal-light)] animate-spin motion-reduce:animate-none drop-shadow-[0_0_6px_color-mix(in_srgb,var(--codex-seal-light)_60%,transparent)]" />
+                            <span className="font-mono text-[8px] text-[var(--codex-seal-light)] uppercase tracking-widest animate-pulse motion-reduce:animate-none font-medium">
                               Manifesting...
                             </span>
                           </>
                         ) : (
                           <>
-                            <span className="text-violet-300 text-xs transition-transform duration-300 group-hover/seal:scale-110">✦</span>
+                            <span className="text-[var(--codex-seal-light)] text-xs transition-transform duration-300 group-hover/seal:scale-110">✦</span>
                             <span className="font-sc text-[10px] text-signal tracking-widest font-bold uppercase">
                               Manifest
-                            </span>
-                            <span className="font-mono text-[7px] text-neutral-400 tracking-wider">
-                              Awaken Portrait
                             </span>
                           </>
                         )}

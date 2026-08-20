@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDevAudioPlayback } from '../../../../audio/DevAudioPlayback';
-import { isApplicationOwnedDialogueArtifactUrl } from '../../../../audio/dialogueArtifacts';
+import { isApplicationOwnedVoiceArtifactUrl } from '../../../../audio/voiceArtifacts';
 
 const LEGACY_WORKSHOP_VOICE_PREFIX = 'workshop-voice:';
+
+/** One shared-queue track identity per Character, so voices can never overlap. */
+export const codexVoiceTrackId = (characterId: string): string => `codex-voice:${characterId}`;
 
 /**
  * A Character's voiceKey is only an identity. Reader playback is available
@@ -11,7 +14,7 @@ const LEGACY_WORKSHOP_VOICE_PREFIX = 'workshop-voice:';
 export const isPlayableCodexVoiceSource = (value?: string): boolean => {
   const source = value?.trim();
   if (!source || source.startsWith(LEGACY_WORKSHOP_VOICE_PREFIX)) return false;
-  return isApplicationOwnedDialogueArtifactUrl(source);
+  return isApplicationOwnedVoiceArtifactUrl(source);
 };
 
 /**
@@ -58,7 +61,7 @@ export function useCodexVoiceCards() {
     stopCurrentVoice();
     if (!isPlayableCodexVoiceSource(source)) return;
 
-    const trackId = `codex-voice:${characterId}`;
+    const trackId = codexVoiceTrackId(characterId);
     activeTrackIdRef.current = trackId;
     activeCharacterIdRef.current = characterId;
     replace({
@@ -69,6 +72,9 @@ export function useCodexVoiceCards() {
   }, [replace, stopCurrentVoice]);
 
   return {
+    /** Track currently owned by the shared audio session, if any. */
+    currentTrackId,
+    codexVoiceTrackId,
     playingVoiceId,
     handlePlayVoice,
     handleStopVoice: stopCurrentVoice,

@@ -353,7 +353,7 @@ describe("four-stage Chapter Generation pipeline", () => {
     expect(repairedChapter.blocks?.[0].metadata).toHaveProperty("audioMoments");
   });
 
-  it("preserves only valid server-produced dialogue artifacts on their exact quote", () => {
+  it("never turns generated dialogue into chapter voice audio", () => {
     const packet = buildPacket();
     const dialogueChapter: ChapterContent = {
       ...MANIFESTED_CHAPTER,
@@ -364,33 +364,25 @@ describe("four-stage Chapter Generation pipeline", () => {
         text: '“The archive remembers.”',
         metadata: { speakerName: "Wen Shu", mode: "dialogue" },
       }],
+      // A model-proposed voice annotation is never a Worldcue and never
+      // reaches the Reader: Character voice lives only in Reader Codex.
       audioMoments: [{
         id: "dialogue:c6-p1:0:wen-shu",
         blockId: "c6-p1",
         triggerPhrase: '“The archive remembers.”',
         occurrenceIndex: 0,
         sourceCategory: "voice",
-        actionType: "spoken-dialogue",
         semanticTags: ["dialogue"],
-        relatedEntity: { id: "character-wen-shu", name: "Wen Shu", type: "character" },
-        voiceKey: "ancient-master-female",
-        artifact: {
-          publicUrl: "https://celestialaudio.seihouse.org/dialogue/character-wen-shu/c6-p1.mp3",
-        },
-      }],
+        relatedEntity: { name: "Wen Shu", type: "character" },
+      }] as unknown as ChapterContent["audioMoments"],
     };
     const calls = makeModel();
     calls.manifestChapter.mockReturnValue(dialogueChapter);
 
     const run = runChapterPipeline({ chapterPacket: packet, model: calls.model });
 
-    expect(run.finalOutput.audioMoments).toEqual([
-      expect.objectContaining({
-        id: "dialogue:c6-p1:0:wen-shu",
-        sourceCategory: "voice",
-        blockId: "c6-p1",
-      }),
-    ]);
+    expect(run.finalOutput.audioMoments ?? []).toEqual([]);
+    expect(JSON.stringify(run.finalOutput)).not.toContain("celestialaudio");
   });
 
   it("includes the arc/chapter counter in context visible to planning and writing", () => {

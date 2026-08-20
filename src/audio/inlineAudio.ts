@@ -6,13 +6,6 @@ import {
   type LibraryCuesLoadResult,
 } from './libraryCues';
 import { extractReaderVisibleAudioText } from './readerVisibleText';
-import { isApplicationOwnedDialogueArtifactUrl } from './dialogueArtifacts';
-
-export {
-  DIALOGUE_ARTIFACT_PATH_PREFIX,
-  DIALOGUE_ARTIFACT_PUBLIC_ORIGIN,
-  isApplicationOwnedDialogueArtifactUrl,
-} from './dialogueArtifacts';
 
 export const INLINE_AUDIO_CUE_CATEGORIES = [
   'beasts',
@@ -78,27 +71,8 @@ export interface ResolvedWorldCueMoment {
   };
 }
 
-/**
- * A server/application-owned synthesized quote artifact. Character voice
- * identity stays provider-neutral; no provider ID or synthesis credential is
- * part of this client contract.
- */
-export interface ResolvedDialogueAudioMoment {
-  id: string;
-  blockId: string;
-  triggerPhrase: string;
-  occurrenceIndex: number;
-  sourceCategory: 'voice';
-  actionType: 'spoken-dialogue';
-  semanticTags: string[];
-  relatedEntity: RelatedWorldCueEntity & { id: string; type: 'character' };
-  voiceKey: string;
-  artifact: {
-    publicUrl: string;
-  };
-}
-
-export type ResolvedAudioMoment = ResolvedWorldCueMoment | ResolvedDialogueAudioMoment;
+/** World Cues are the only inline prose annotation. Character voice lives in Reader Codex. */
+export type ResolvedAudioMoment = ResolvedWorldCueMoment;
 
 export type WorldCueIntentValidation =
   | { ok: true; intent: WorldCueIntent & { occurrenceIndex: number } }
@@ -139,16 +113,8 @@ export type ResolvedWorldCueValidation =
       message: string;
     };
 
-export type ResolvedDialogueAudioValidation =
-  | { ok: true; publicUrl: string }
-  | {
-      ok: false;
-      reason: 'invalid-dialogue-moment' | 'invalid-artifact' | 'provider-exposure';
-      message: string;
-    };
-
 export type PlayableAudioMomentResolution =
-  | { ok: true; publicUrl: string; actionLabel: 'World Cue' | 'dialogue audio' }
+  | { ok: true; publicUrl: string; actionLabel: 'World Cue' }
   | {
       ok: false;
       reason: string;
@@ -185,8 +151,6 @@ const MAX_TAG_LENGTH = 48;
 const MAX_RELATED_ENTITY_NAME_LENGTH = 160;
 const MAX_RELATED_ENTITY_TYPE_LENGTH = 64;
 const MAX_AUDIO_MOMENT_ID_LENGTH = 240;
-const MAX_VOICE_KEY_LENGTH = 160;
-const MAX_ARTIFACT_URL_LENGTH = 2048;
 const INTENT_FIELDS = new Set([
   'blockId',
   'triggerPhrase',
@@ -197,20 +161,6 @@ const INTENT_FIELDS = new Set([
   'relatedEntity',
 ]);
 const RELATED_ENTITY_FIELDS = new Set(['name', 'type']);
-const DIALOGUE_MOMENT_FIELDS = new Set([
-  'id',
-  'blockId',
-  'triggerPhrase',
-  'occurrenceIndex',
-  'sourceCategory',
-  'actionType',
-  'semanticTags',
-  'relatedEntity',
-  'voiceKey',
-  'artifact',
-]);
-const RESOLVED_RELATED_ENTITY_FIELDS = new Set(['id', 'name', 'type']);
-const DIALOGUE_ARTIFACT_FIELDS = new Set(['publicUrl']);
 const FORBIDDEN_MODEL_FIELD_FRAGMENTS = [
   'url',
   'uri',
@@ -725,191 +675,6 @@ export function resolveChapterAudioMoments(
   return { audioMoments, issues };
 }
 
-/**
- * Revalidate server-produced dialogue artifacts at the shared persistence
- * boundary. Model-authored World Cue proposals can never enter through this
- * path because only the resolved voice shape and application-owned URL pass.
- */
-export function retainValidDialogueAudioMoments(
-  blocks: readonly WorldCueChapterBlock[],
-  candidates: readonly unknown[],
-): ResolvedDialogueAudioMoment[] {
-  const blockById = new Map(blocks.map(block => [block.id, block]));
-  const blockOrder = new Map(blocks.map((block, index) => [block.id, index]));
-  const accepted: ResolvedDialogueAudioMoment[] = [];
-  const seenIds = new Set<string>();
-  const seenPlacements = new Set<string>();
-
-  for (const candidate of candidates.slice(0, MAX_WORLD_CUE_MOMENTS_PER_CHAPTER)) {
-    const validation = validateResolvedDialogueAudioMoment(candidate);
-    if (!validation.ok) continue;
-    const moment = candidate as ResolvedDialogueAudioMoment;
-    const block = blockById.get(moment.blockId);
-    if (!block || block.type !== 'dialogue' || block.system) continue;
-    const visibleText = getReaderVisibleBlockText(block);
-    const offset = exactOccurrenceOffset(
-      visibleText,
-      moment.triggerPhrase,
-      moment.occurrenceIndex,
-    );
-    if (offset < 0) continue;
-    const placementKey = [moment.blockId, offset, offset + moment.triggerPhrase.length].join('\u001f');
-    if (seenIds.has(moment.id) || seenPlacements.has(placementKey)) continue;
-    seenIds.add(moment.id);
-    seenPlacements.add(placementKey);
-    accepted.push(structuredClone(moment));
-  }
-
-  return accepted.sort((left, right) => (
-    (blockOrder.get(left.blockId) ?? Number.MAX_SAFE_INTEGER)
-      - (blockOrder.get(right.blockId) ?? Number.MAX_SAFE_INTEGER)
-    || exactOccurrenceOffset(
-      getReaderVisibleBlockText(blockById.get(left.blockId)!),
-      left.triggerPhrase,
-      left.occurrenceIndex,
-    ) - exactOccurrenceOffset(
-      getReaderVisibleBlockText(blockById.get(right.blockId)!),
-      right.triggerPhrase,
-      right.occurrenceIndex,
-    )
-    || compareStrings(left.id, right.id)
-  ));
-}
-
-const isExactQuotedPhrase = (value: string) => (
-  (/^"[^"\r\n]+"$/u.test(value))
-  || (/^“[^”\r\n]+”$/u.test(value))
-  || (/^'[^'\r\n]+'$/u.test(value))
-  || (/^‘[^’\r\n]+’$/u.test(value))
-);
-
-/**
- * Validate a synthesized dialogue artifact supplied by trusted application or
- * server code. This never synthesizes in the browser and rejects direct
- * provider URLs or provider-specific fields.
- */
-export function validateResolvedDialogueAudioMoment(
-  candidate: unknown,
-): ResolvedDialogueAudioValidation {
-  if (!isPlainObject(candidate)) {
-    return { ok: false, reason: 'invalid-dialogue-moment', message: 'Dialogue audio moment must be an object.' };
-  }
-  const unexpectedField = Object.keys(candidate).find(field => !DIALOGUE_MOMENT_FIELDS.has(field));
-  if (unexpectedField) {
-    const reason = isForbiddenModelField(unexpectedField)
-      ? 'provider-exposure'
-      : 'invalid-dialogue-moment';
-    return { ok: false, reason, message: `Dialogue audio moment contains unsupported field ${unexpectedField}.` };
-  }
-  const {
-    id,
-    blockId,
-    triggerPhrase,
-    occurrenceIndex,
-    sourceCategory,
-    actionType,
-    semanticTags,
-    relatedEntity,
-    voiceKey,
-    artifact,
-  } = candidate;
-  if (
-    typeof id !== 'string'
-    || !id.trim()
-    || id.length > MAX_AUDIO_MOMENT_ID_LENGTH
-    || typeof blockId !== 'string'
-    || !blockId.trim()
-    || blockId.length > MAX_BLOCK_ID_LENGTH
-    || typeof triggerPhrase !== 'string'
-    || triggerPhrase !== triggerPhrase.trim()
-    || triggerPhrase.length > MAX_WORLD_CUE_TRIGGER_LENGTH
-    || !isExactQuotedPhrase(triggerPhrase)
-    || !Number.isInteger(occurrenceIndex)
-    || (occurrenceIndex as number) < 0
-    || sourceCategory !== 'voice'
-    || actionType !== 'spoken-dialogue'
-  ) {
-    return {
-      ok: false,
-      reason: 'invalid-dialogue-moment',
-      message: 'Dialogue audio moment requires an exact quoted phrase and zero-based block placement.',
-    };
-  }
-  if (
-    !Array.isArray(semanticTags)
-    || semanticTags.length > MAX_WORLD_CUE_TAGS
-    || semanticTags.some(tag => (
-      typeof tag !== 'string'
-      || !tag.trim()
-      || tag.length > MAX_TAG_LENGTH
-    ))
-  ) {
-    return { ok: false, reason: 'invalid-dialogue-moment', message: 'Dialogue semantic tags are invalid.' };
-  }
-  if (
-    typeof voiceKey !== 'string'
-    || !/^[a-z0-9][a-z0-9._:-]*$/iu.test(voiceKey)
-    || voiceKey.length > MAX_VOICE_KEY_LENGTH
-  ) {
-    return { ok: false, reason: 'invalid-dialogue-moment', message: 'Dialogue voiceKey must be provider-neutral.' };
-  }
-  if (!isPlainObject(relatedEntity)) {
-    return { ok: false, reason: 'invalid-dialogue-moment', message: 'Dialogue audio requires related Character context.' };
-  }
-  const unexpectedEntityField = Object.keys(relatedEntity)
-    .find(field => !RESOLVED_RELATED_ENTITY_FIELDS.has(field));
-  if (unexpectedEntityField) {
-    const reason = isForbiddenModelField(unexpectedEntityField)
-      ? 'provider-exposure'
-      : 'invalid-dialogue-moment';
-    return { ok: false, reason, message: `Dialogue Character context contains unsupported field ${unexpectedEntityField}.` };
-  }
-  if (
-    typeof relatedEntity.id !== 'string'
-    || !relatedEntity.id.trim()
-    || relatedEntity.id.length > MAX_AUDIO_MOMENT_ID_LENGTH
-    || typeof relatedEntity.name !== 'string'
-    || !relatedEntity.name.trim()
-    || relatedEntity.name.length > MAX_RELATED_ENTITY_NAME_LENGTH
-    || relatedEntity.type !== 'character'
-  ) {
-    return { ok: false, reason: 'invalid-dialogue-moment', message: 'Dialogue audio is limited to a named Character identity.' };
-  }
-  if (!isPlainObject(artifact)) {
-    return { ok: false, reason: 'invalid-artifact', message: 'No playable dialogue artifact is available.' };
-  }
-  const unexpectedArtifactField = Object.keys(artifact)
-    .find(field => !DIALOGUE_ARTIFACT_FIELDS.has(field));
-  if (unexpectedArtifactField) {
-    const reason = isForbiddenModelField(unexpectedArtifactField)
-      ? 'provider-exposure'
-      : 'invalid-artifact';
-    return { ok: false, reason, message: `Dialogue artifact contains unsupported field ${unexpectedArtifactField}.` };
-  }
-  if (
-    typeof artifact.publicUrl !== 'string'
-    || !artifact.publicUrl.trim()
-    || artifact.publicUrl.length > MAX_ARTIFACT_URL_LENGTH
-  ) {
-    return { ok: false, reason: 'invalid-artifact', message: 'No playable dialogue artifact is available.' };
-  }
-  let parsedUrl: URL;
-  try {
-    parsedUrl = new URL(artifact.publicUrl);
-  } catch {
-    return { ok: false, reason: 'invalid-artifact', message: 'Dialogue artifact URL is invalid.' };
-  }
-  if (/(?:^|\.)elevenlabs\.(?:io|com)$/iu.test(parsedUrl.hostname)) {
-    return { ok: false, reason: 'provider-exposure', message: 'Direct voice-provider artifacts are server-only.' };
-  }
-  if (
-    !isApplicationOwnedDialogueArtifactUrl(artifact.publicUrl)
-  ) {
-    return { ok: false, reason: 'invalid-artifact', message: 'Dialogue artifact must use application-owned public storage.' };
-  }
-  return { ok: true, publicUrl: artifact.publicUrl };
-}
-
 /** Revalidate persisted resolution so stale/unapproved URLs never get a glyph. */
 export function resolveResolvedAudioMomentCue(
   moment: ResolvedWorldCueMoment,
@@ -959,17 +724,11 @@ export function resolveResolvedAudioMomentCue(
   return { ok: true, cue: cue as LibraryCue & { category: InlineAudioCueCategory } };
 }
 
-/** Resolve either application-owned audio artifact to the shared playback source. */
+/** Resolve an application-owned World Cue artifact to the shared playback source. */
 export function resolvePlayableAudioMoment(
   moment: ResolvedAudioMoment,
   loaded: LibraryCuesLoadResult = DEFAULT_LIBRARY_CUES,
 ): PlayableAudioMomentResolution {
-  if (moment.sourceCategory === 'voice') {
-    const validation = validateResolvedDialogueAudioMoment(moment);
-    return validation.ok
-      ? { ok: true, publicUrl: validation.publicUrl, actionLabel: 'dialogue audio' }
-      : validation;
-  }
   const resolution = resolveResolvedAudioMomentCue(moment, loaded);
   return resolution.ok
     ? { ok: true, publicUrl: resolution.cue.public_url, actionLabel: 'World Cue' }

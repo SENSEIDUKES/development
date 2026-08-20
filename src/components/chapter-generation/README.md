@@ -325,7 +325,7 @@ per-chapter coverage.
 
 ## Workshop history
 
-- **2026-08-20:** Completed the separate dialogue-audio path after Worldcue Phase 3. The existing server resolver now extracts exact accepted dialogue quotes, privately resolves each canonical Character's stable `voiceKey` to ElevenLabs, reuses or uploads an immutable artifact through the existing SEIHouse public-audio R2 namespace, and appends only validated block/quote/occurrence annotations. A first completed quote can populate the Character's Codex `voiceClipUrl`; synthesis and storage failures remain additive and never invalidate chapter generation.
+- **2026-08-20:** Disconnected chapter generation from voice synthesis entirely. The dialogue-audio resolver, its chapter-dialogue annotation path, and the Codex voice-clip write-back are removed from the handler, the Vercel entry point, and the Development server. Generated dialogue now produces no provider call, no voice annotation in chapter prose, and no Character voice clip. Worldcues are unchanged and still resolve only curated sound effects for audible narrative actions; Character voice moved to the Reader Codex signature quote.
 
 - **2026-08-17:** Adopted the shared responsive `FeatureWorkspace` Workshop Controls shell. Chapter Generation supplies no external menu options because its workflow controls and Reader handoff are part of the Development component being tested.
 - **2026-07-31:** Created the Reference replica and Development fork from the inspected production flow.

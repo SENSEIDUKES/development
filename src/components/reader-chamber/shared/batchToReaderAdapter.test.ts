@@ -70,7 +70,7 @@ describe("batchToReaderAdapter", () => {
     expect(repaired.repairApplied).toBe(true);
   });
 
-  it("clones resolved World Cues and dialogue artifacts without crossing chapters", () => {
+  it("clones resolved World Cues without crossing chapters", () => {
     const batch = createCompletedFiveChapterTestBatch();
     const firstOutput = batch.chapters[0].result!.run.finalOutput;
     const secondOutput = batch.chapters[1].result!.run.finalOutput;
@@ -101,19 +101,6 @@ describe("batchToReaderAdapter", () => {
       cue: {
         publicUrl: "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Temple_Bell_1.mp3",
       },
-    }, {
-      id: "dialogue:c1-p2:0:rin",
-      blockId: "c1-p2",
-      triggerPhrase: '“The archive remembers.”',
-      occurrenceIndex: 0,
-      sourceCategory: "voice",
-      actionType: "spoken-dialogue",
-      semanticTags: ["dialogue"],
-      relatedEntity: { id: "character-rin", name: "Rin", type: "character" },
-      voiceKey: "ancient-master-female",
-      artifact: {
-        publicUrl: "https://celestialaudio.seihouse.org/dialogue/character-rin/c1-p2.mp3",
-      },
     }];
     secondOutput.audioMoments = [{
       id: "world-cue:c2-p1:0:second",
@@ -133,11 +120,10 @@ describe("batchToReaderAdapter", () => {
     const chapters = convertBatchToReaderChapters(batch);
 
     expect(chapters[0].audioMoments?.map(moment => moment.id))
-      .toEqual(["world-cue:c1-p1:0:first", "dialogue:c1-p2:0:rin"]);
+      .toEqual(["world-cue:c1-p1:0:first"]);
     expect(chapters[1].audioMoments?.map(moment => moment.id))
       .toEqual(["world-cue:c2-p1:0:second"]);
     expect(chapters[0].audioMoments?.[0].blockId).toBe("c1-p1");
-    expect(chapters[0].audioMoments?.[1].blockId).toBe("c1-p2");
     expect(chapters[1].audioMoments?.[0].blockId).toBe("c2-p1");
     expect(chapters[0].audioMoments).not.toBe(firstOutput.audioMoments);
     expect(batch).toEqual(sourceBefore);

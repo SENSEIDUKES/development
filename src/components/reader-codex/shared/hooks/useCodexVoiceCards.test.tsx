@@ -14,8 +14,8 @@ const playback = vi.hoisted(() => ({
   stop: vi.fn(),
 }));
 
-const YAN_SHI_ARTIFACT = 'https://celestialaudio.seihouse.org/dialogue/yan-shi/line.mp3';
-const LI_MEI_ARTIFACT = 'https://celestialaudio.seihouse.org/dialogue/li-mei/line.mp3';
+const YAN_SHI_ARTIFACT = 'https://celestialaudio.seihouse.org/voice/yan-shi/line.mp3';
+const LI_MEI_ARTIFACT = 'https://celestialaudio.seihouse.org/voice/li-mei/line.mp3';
 
 vi.mock('../../../../audio/DevAudioPlayback', () => ({
   useDevAudioPlayback: () => playback,

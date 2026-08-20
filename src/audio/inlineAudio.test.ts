@@ -7,9 +7,7 @@ import {
   resolveResolvedAudioMomentCue,
   resolveWorldCueIntent,
   splitByResolvedAudioMoments,
-  validateResolvedDialogueAudioMoment,
   validateWorldCueIntent,
-  type ResolvedDialogueAudioMoment,
   type ResolvedWorldCueMoment,
   type WorldCueIntent,
 } from './inlineAudio';
@@ -36,22 +34,6 @@ const resolvedMoment = (overrides: Partial<ResolvedWorldCueMoment> = {}): Resolv
   cue: {
     publicUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3',
   },
-  ...overrides,
-});
-
-const dialogueMoment = (
-  overrides: Partial<ResolvedDialogueAudioMoment> = {},
-): ResolvedDialogueAudioMoment => ({
-  id: 'dialogue:block-a:0:mei-lin',
-  blockId: 'block-a',
-  triggerPhrase: '“Stand behind me.”',
-  occurrenceIndex: 0,
-  sourceCategory: 'voice',
-  actionType: 'spoken-dialogue',
-  semanticTags: ['dialogue', 'protective'],
-  relatedEntity: { id: 'mei-lin', name: 'Mei Lin', type: 'character' },
-  voiceKey: 'character.mei-lin',
-  artifact: { publicUrl: 'https://celestialaudio.seihouse.org/dialogue/mei-lin/stand-behind-me.mp3' },
   ...overrides,
 });
 
@@ -434,58 +416,5 @@ describe('World Cue placement and chapter resolution', () => {
       reason: 'invalid-intent',
       intentIndex: 24,
     }));
-  });
-});
-
-describe('resolved dialogue audio artifacts', () => {
-  it('validates provider-neutral Character audio and places only the exact quote occurrence', () => {
-    const moment = dialogueMoment({ occurrenceIndex: 1 });
-    const text = 'Mei Lin said, “Stand behind me.” Later she repeated, “Stand behind me.”';
-
-    expect(validateResolvedDialogueAudioMoment(moment)).toEqual({
-      ok: true,
-      publicUrl: moment.artifact.publicUrl,
-    });
-    expect(resolvePlayableAudioMoment(moment)).toEqual({
-      ok: true,
-      publicUrl: moment.artifact.publicUrl,
-      actionLabel: 'dialogue audio',
-    });
-    const segments = splitByResolvedAudioMoments(text, [moment]);
-    expect(segments.filter(segment => segment.moment)).toHaveLength(1);
-    expect(segments[0].text).toContain('Mei Lin said, “Stand behind me.”');
-    expect(segments.map(segment => segment.text).join('')).toBe(text);
-  });
-
-  it('requires a synthesized artifact and rejects provider exposure', () => {
-    const { artifact: _artifact, ...withoutArtifact } = dialogueMoment();
-    expect(validateResolvedDialogueAudioMoment(withoutArtifact))
-      .toMatchObject({ ok: false, reason: 'invalid-artifact' });
-    expect(validateResolvedDialogueAudioMoment({
-      ...dialogueMoment(),
-      providerId: 'server-only-provider-id',
-    })).toMatchObject({ ok: false, reason: 'provider-exposure' });
-    expect(validateResolvedDialogueAudioMoment(dialogueMoment({
-      artifact: { publicUrl: 'https://api.elevenlabs.io/v1/audio/private-id' },
-    }))).toMatchObject({ ok: false, reason: 'provider-exposure' });
-    expect(validateResolvedDialogueAudioMoment(dialogueMoment({
-      artifact: { publicUrl: 'https://api.elevenlabs.com/v1/audio/private-id' },
-    }))).toMatchObject({ ok: false, reason: 'provider-exposure' });
-    expect(validateResolvedDialogueAudioMoment(dialogueMoment({
-      artifact: { publicUrl: 'https://audio.example/dialogue/mei-lin/private.mp3' },
-    }))).toMatchObject({ ok: false, reason: 'invalid-artifact' });
-    expect(Object.keys(dialogueMoment()).sort()).not.toContain('providerId');
-  });
-
-  it('rejects narration fragments that are not the exact quoted dialogue', () => {
-    expect(validateResolvedDialogueAudioMoment(dialogueMoment({
-      triggerPhrase: 'Stand behind me.',
-    }))).toMatchObject({ ok: false, reason: 'invalid-dialogue-moment' });
-    expect(validateResolvedDialogueAudioMoment(dialogueMoment({
-      relatedEntity: { name: 'Vermilion Debt Fox', type: 'creature' } as never,
-    }))).toMatchObject({ ok: false, reason: 'invalid-dialogue-moment' });
-    expect(validateResolvedDialogueAudioMoment(dialogueMoment({
-      relatedEntity: { name: 'Mei Lin', type: 'character' } as never,
-    }))).toMatchObject({ ok: false, reason: 'invalid-dialogue-moment' });
   });
 });

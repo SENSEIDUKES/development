@@ -11,7 +11,6 @@ import {
 import {
   getInlineCueTrackId,
   type ResolvedAudioMoment,
-  type ResolvedDialogueAudioMoment,
 } from '../../../audio/inlineAudio';
 import { installAudioMediaStubs } from '../../../test-utils/renderWithDevAudio';
 import { InlineAudio, InlineAudioControl, InlineAudioText } from './InlineAudio';
@@ -43,21 +42,6 @@ const weaponMoment: ResolvedAudioMoment = {
   relatedEntity: { name: 'Ashen Sword', type: 'artifact' },
   cue: {
     publicUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_1.mp3',
-  },
-};
-
-const dialogueMoment: ResolvedDialogueAudioMoment = {
-  id: 'dialogue:block-a:0:mei-lin',
-  blockId: 'block-a',
-  triggerPhrase: '“Stand behind me.”',
-  occurrenceIndex: 0,
-  sourceCategory: 'voice',
-  actionType: 'spoken-dialogue',
-  semanticTags: ['dialogue', 'protective'],
-  relatedEntity: { id: 'mei-lin', name: 'Mei Lin', type: 'character' },
-  voiceKey: 'character.mei-lin',
-  artifact: {
-    publicUrl: 'https://celestialaudio.seihouse.org/dialogue/mei-lin/stand-behind-me.mp3',
   },
 };
 
@@ -286,37 +270,22 @@ describe('InlineAudioControl', () => {
     expect(fake.playback.replace).not.toHaveBeenCalled();
   });
 
-  it('attaches a provider-neutral dialogue artifact to its exact quote without autoplay or client synthesis', () => {
-    const fake = createFakePlayback();
-    const speak = vi.fn();
-    Object.defineProperty(window, 'speechSynthesis', {
-      configurable: true,
-      value: { speak },
-    });
-    render(<InlineAudioControl moment={dialogueMoment} playback={fake.playback} />);
-
-    const button = buttonFor(dialogueMoment.triggerPhrase);
-    expect(button.getAttribute('aria-label')).toBe('Play dialogue audio for “Stand behind me.”');
-    expect(button.dataset.actionType).toBe('spoken-dialogue');
-    expect(fake.playback.replace).not.toHaveBeenCalled();
-    expect(speak).not.toHaveBeenCalled();
-
-    act(() => button.click());
-    expect(fake.playback.replace).toHaveBeenCalledWith(expect.objectContaining({
-      id: `reader-inline:${dialogueMoment.id}`,
-      source: dialogueMoment.artifact.publicUrl,
-    }));
-    expect(speak).not.toHaveBeenCalled();
-  });
-
-  it('renders no dialogue glyph when no synthesized artifact exists', () => {
-    const missingArtifact = {
-      ...dialogueMoment,
-      artifact: undefined,
+  it('never renders a voice glyph in chapter prose', () => {
+    // Character voice belongs to the Reader Codex signature quote. A voice
+    // annotation reaching Reader prose is not playable and stays plain text.
+    const voiceAnnotation = {
+      id: 'dialogue:block-a:0:mei-lin',
+      blockId: 'block-a',
+      triggerPhrase: '“Stand behind me.”',
+      occurrenceIndex: 0,
+      sourceCategory: 'voice',
+      semanticTags: ['dialogue'],
+      relatedEntity: { id: 'mei-lin', name: 'Mei Lin', type: 'character' },
+      artifact: { publicUrl: 'https://celestialaudio.seihouse.org/voice/v1/whatever.mp3' },
     } as unknown as ResolvedAudioMoment;
     render(
       <InlineAudioText
-        moments={[missingArtifact]}
+        moments={[voiceAnnotation]}
         text="Mei Lin said, “Stand behind me.”"
         renderText={text => text}
       />,

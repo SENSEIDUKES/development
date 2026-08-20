@@ -144,7 +144,7 @@ export function InlineAudioControl({ moment, playback }: InlineAudioControlProps
       <button
         type="button"
         className="inline-world-cue"
-        data-action-type={moment.sourceCategory === 'voice' ? moment.actionType : 'world-cue'}
+        data-action-type="world-cue"
         data-cue-phrase={moment.triggerPhrase}
         data-audio-moment-id={moment.id}
         data-state={status}

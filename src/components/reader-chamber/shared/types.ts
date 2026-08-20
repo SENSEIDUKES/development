@@ -10,6 +10,7 @@
 
 import type { StoryEntityType } from "../../chapter-generation/shared/types";
 import type { ResolvedAudioMoment } from "../../../audio/inlineAudio";
+import type { CodexVoiceArtifact } from "../../../audio/voiceArtifacts";
 
 export interface FateResultData {
   outcome: "FATE AVERTED" | "FATE SCARRED" | "DOOM MANIFESTED";
@@ -480,8 +481,15 @@ export interface Character extends BaseCodexEntry {
   /** Stable provider-neutral voice identity assigned by server application logic. */
   voiceKey?: string;
   signatureQuote?: string;
-  /** Playable synthesized artifact; a voiceKey alone never makes Reader audio available. */
+  /** @deprecated Legacy flat artifact link; `voiceClip` owns the current contract. */
   voiceClipUrl?: string;
+  /**
+   * Completed signature-quote recording produced by the server on a deliberate
+   * Reader Codex tap. It is bound to the exact quote, voiceKey, model, and
+   * artifact version that produced it, so a changed quote or voice cannot
+   * reuse an outdated recording.
+   */
+  voiceClip?: CodexVoiceArtifact;
   voiceAssetId?: string;
 }
 

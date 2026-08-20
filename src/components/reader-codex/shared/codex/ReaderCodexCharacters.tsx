@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Character, Location } from '../types';
 import { useCodex } from './CodexContext';
 import { useAppStore } from '../codexCompatibility';
 import { isHubStoryLockedForUser } from '../codexCompatibility';
-import { useCodexVoiceCards } from '../hooks/useCodexVoiceCards';
+import { useCodexVoiceQuote, type CodexVoiceResolution } from '../hooks/useCodexVoiceQuote';
 import { useCodexLocations } from '../hooks/useCodexLocations';
 import { useCodexCharacterEditing } from '../hooks/useCodexCharacterEditing';
 import { CharacterCard } from './character-cards/CharacterCard';
@@ -39,17 +39,39 @@ export function ReaderCodexCharacters({
     handleAwakenCardImage,
     getPowerRankScore,
     openEntryContextEditor,
+    voiceAccessToken,
   } = useCodex();
 
   const userProfile = useAppStore(state => state.userProfile);
   const isFreeUserOnHubStory = isHubStoryLockedForUser(activeStory, userProfile);
 
   const [charViewStyle, setCharViewStyle] = useState<'cards' | 'profiles'>('cards');
-  const {
-    playingVoiceId,
-    handlePlayVoice,
-    handleStopVoice,
-  } = useCodexVoiceCards();
+  // Synthesis resolves seconds after the tap, so the write must start from the
+  // newest memory rather than the snapshot captured when the tap began.
+  const memoryRef = useRef(memory);
+  memoryRef.current = memory;
+
+  /** The server-resolved voice identity becomes part of the Codex Character. */
+  const persistResolvedVoice = useCallback((resolution: CodexVoiceResolution) => {
+    const current = memoryRef.current;
+    onUpdateMemory({
+      ...current,
+      characters: (current.characters || []).map(character => (
+        character.id === resolution.characterId
+          ? {
+              ...character,
+              voiceKey: resolution.voiceKey,
+              voiceClip: resolution.artifact,
+            }
+          : character
+      )),
+    });
+  }, [onUpdateMemory]);
+
+  const { handleQuoteTap, voiceStatus } = useCodexVoiceQuote({
+    accessToken: voiceAccessToken,
+    onVoiceResolved: persistResolvedVoice,
+  });
 
   const {
     showAddLocationForm,
@@ -123,12 +145,11 @@ export function ReaderCodexCharacters({
         activeStory={activeStory}
         cScore={cScore}
         hasAppeared={hasAppeared}
-        playingVoiceId={playingVoiceId}
+        voiceStatus={voiceStatus(char)}
         isGenerating={isGenerating}
         canGenerate={canGenerate}
         isFreeUserOnHubStory={isFreeUserOnHubStory}
-        handlePlayVoice={handlePlayVoice}
-        handleStopVoice={handleStopVoice}
+        onQuoteTap={handleQuoteTap}
         beginCharEdit={beginCharEdit}
         handleAwakenCardImage={handleAwakenCardImage}
       />

@@ -3,9 +3,6 @@ import {
   Smartphone,
   Tablet,
   Monitor,
-  Volume2,
-  VolumeX,
-  Sparkles,
   Layers,
   BookOpen,
   Info,
@@ -13,38 +10,23 @@ import {
   XCircle,
   Zap,
 } from 'lucide-react';
-import { WorldCard } from '../../reader-chamber/development/WorldCard';
 import { SystemBlock } from '../../reader-chamber/development/SystemBlock';
 import { CodexCard } from '../../reader-chamber/development/CodexCard';
 import { getManifestBackdrop } from '../../reader-codex/development/codexManifestBackdrop';
 import type { SystemEvent } from '../../reader-chamber/shared/types';
 import type {
-  AudioPreviewState,
   CardPreset,
   CardWorkshopOverrides,
   ImagePreviewState,
 } from '../shared/types';
-import { createCardWorkshopAudioAdapter } from '../shared/cardWorkshopAudioAdapter';
-import type { WorldCardAudioAsset } from '../../reader-chamber/development/WorldCard';
-import { useDevAudioPlayback } from '../../../audio/DevAudioPlayback';
 import { CardWorkshopContextualReader } from './CardWorkshopContextualReader';
 import { ACTIVE_CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
 import {
   SYSTEM_KIND_OPTIONS,
   FATE_OUTCOME_OPTIONS,
   IMAGE_STATE_OPTIONS,
-  AUDIO_STATE_OPTIONS,
   INITIAL_CARD_WORKSHOP_OVERRIDES,
 } from '../../../workshop/previews/card-workshop/previewStates';
-
-// Reuse the same published Library Help narration that backs the
-// audio-player smoke workspace. The workshop has no curated SFX catalog,
-// so the adapter routes every tap through this single shared sample. The
-// actual audio content is irrelevant to the visual demo — what matters
-// is that the real shared `@seihouse/audio-player` session is exercised.
-const WORKSHOP_CARD_AUDIO_SAMPLE = 'https://lines.seihouse.org/LIBRARY/Lines/SYSTEM/SYSTEM/HELP%20LINES/STORY%20SEED%20ENG.mp3';
-
-const resolveCardAudioSource = (_asset: WorldCardAudioAsset): string => WORKSHOP_CARD_AUDIO_SAMPLE;
 
 const LOCAL_HUMAN_PORTRAIT = '/card-workshop/test-images/ye_chen_portrait.png';
 const LOCAL_CREATURE_PORTRAIT = '/card-workshop/test-images/lyra_meadowlight_portrait.png';
@@ -106,21 +88,6 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
     }));
   }, [selectedPreset]);
 
-  const player = useDevAudioPlayback();
-  const audioAdapter = useMemo(
-    () => createCardWorkshopAudioAdapter({
-      state: overrides.audioState,
-      muted: overrides.isAudioMuted,
-      resolveSource: resolveCardAudioSource,
-      player,
-    }),
-    [overrides.audioState, overrides.isAudioMuted, player],
-  );
-
-  useEffect(() => () => {
-    audioAdapter.dispose();
-  }, [audioAdapter]);
-
   useEffect(() => () => {
     if (manifestTimerRef.current) clearTimeout(manifestTimerRef.current);
   }, []);
@@ -142,10 +109,6 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
       setManifestedIds((prev) => new Set([...prev, id]));
       manifestTimerRef.current = null;
     }, 1200);
-  };
-
-  const toggleMute = () => {
-    setOverrides((prev) => ({ ...prev, isAudioMuted: !prev.isAudioMuted }));
   };
 
   const handleCardTabKeyDown = (
@@ -179,28 +142,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
       ? manifestedIds.has(preset.codexReveal.entry.id)
       : false;
 
-    // 1. World Card
-    if (preset.kind === 'world-card') {
-      if (!preset.worldCard) return null;
-      const cardPayload = {
-        ...preset.worldCard,
-        imageUrl: overrides.imageState === 'existing' ? preset.worldCard.imageUrl : undefined,
-        codexEntryId: overrides.codexEntryState === 'present'
-          ? preset.worldCard.codexEntryId
-          : undefined,
-      };
-      return (
-        <div className="w-full flex justify-center py-2">
-          <WorldCard
-            key={`${preset.id}-${overrides.audioState}-${overrides.isAudioMuted}`}
-            card={cardPayload}
-            audioAdapter={audioAdapter}
-          />
-        </div>
-      );
-    }
-
-    // 2. Codex Card
+    // 1. Codex Card
     if (preset.kind === 'codex-card') {
       if (!preset.codexReveal) return null;
       if (overrides.codexEntryState === 'missing') {
@@ -246,7 +188,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
       );
     }
 
-    // 3. System Block & Fate Result
+    // 2. System Block & Fate Result
     if (preset.kind === 'system-block' || preset.kind === 'fate-result') {
       const activeSystemEvent = preset.systemEvent
         ? {
@@ -637,37 +579,6 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
             </select>
           </label>
 
-          <label className="flex items-center gap-1.5 rounded-lg border border-neutral-800 bg-neutral-900/80 px-2 py-1 text-[10px] font-mono text-neutral-400">
-            <span>Audio</span>
-            <select
-              aria-label="Audio state"
-              value={overrides.audioState}
-              onChange={(event) => setOverrides(prev => ({
-                ...prev,
-                audioState: event.target.value as AudioPreviewState,
-              }))}
-              className="max-w-[145px] bg-[#020914] px-1.5 py-1 text-[11px] text-signal"
-            >
-              {AUDIO_STATE_OPTIONS.map(option => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </label>
-
-          {/* Audio Mute Simulator */}
-          <button
-            type="button"
-            onClick={toggleMute}
-            className={`p-2 rounded-lg border text-xs font-mono flex items-center gap-1.5 transition-colors ${
-              !overrides.isAudioMuted
-                ? 'bg-portal/10 text-portal border-portal/30'
-                : 'bg-amber-500/10 text-amber-300 border-amber-500/30'
-            }`}
-            title="Simulate Audio Mute / Cues Disabled"
-          >
-            {!overrides.isAudioMuted ? <Volume2 size={14} /> : <VolumeX size={14} />}
-            <span className="hidden sm:inline">Mute: {overrides.isAudioMuted ? 'On' : 'Off'}</span>
-          </button>
         </div>
       </header>
 
@@ -712,63 +623,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
               </div>
             </div>
 
-            {/* 1. World Cards */}
-            {selectedPreset.kind === 'world-card' && (
-            <section
-              id={`card-panel-${selectedPreset.id}`}
-              role="tabpanel"
-              aria-labelledby={`card-tab-${selectedPreset.id}`}
-              className="space-y-6"
-            >
-              <div className="border-b border-neutral-800 pb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Sparkles size={16} className="text-portal" />
-                  <h2 className="text-sm font-sc font-bold uppercase tracking-widest text-signal">
-                    World Cards
-                  </h2>
-                </div>
-                <span className="text-xs text-neutral-500 font-mono">
-                  Full artwork, title, quote & sound cues
-                </span>
-              </div>
-
-              <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 items-start">
-                {ACTIVE_CARD_PRESETS.filter((p) => p.id === selectedPreset.id).map((preset) => (
-                  <div
-                    key={preset.id}
-                    className="flex flex-col space-y-3 p-4 rounded-2xl bg-neutral-950/40 border border-neutral-900"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-display font-semibold text-sm text-signal">
-                          {preset.title}
-                        </h3>
-                        <p className="text-[11px] text-neutral-400 font-sans">{preset.subtitle}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedPresetId(preset.id);
-                          setActiveTab('contextual');
-                        }}
-                        className="text-[10px] font-mono text-portal hover:underline"
-                      >
-                        View in Reader →
-                      </button>
-                    </div>
-
-                    <div className={`mx-auto w-full ${viewportWidthClass} transition-all duration-300`}>
-                      {renderCardInstance(preset)}
-                    </div>
-
-                    {renderExplanationBadge(preset.explanation)}
-                  </div>
-                ))}
-              </div>
-            </section>
-            )}
-
-            {/* 2. Codex Cards */}
+            {/* 1. Codex Cards */}
             {selectedPreset.kind === 'codex-card' && (
             <section
               id={`card-panel-${selectedPreset.id}`}
@@ -824,7 +679,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
             </section>
             )}
 
-            {/* 3. System Blocks & Fate Results */}
+            {/* 2. System Blocks & Fate Results */}
             {(selectedPreset.kind === 'system-block' || selectedPreset.kind === 'fate-result') && (
             <section
               id={`card-panel-${selectedPreset.id}`}
@@ -909,7 +764,6 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 manifestedIds={manifestedIds}
                 generatingRevealId={summoningId}
                 onManifestReveal={handleManifestReveal}
-                audioAdapter={audioAdapter}
               />
             </div>
 

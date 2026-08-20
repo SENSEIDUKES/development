@@ -1,8 +1,8 @@
 /**
  * Reader playback — Workshop replica.
  *
- * `extractSFXCues` is copied verbatim from production
- * `src/hooks/useReaderPlayback.ts` (pure text processing, no dependencies).
+ * `extractSFXCues` reuses the dependency-free Reader-visible text boundary
+ * that inline-audio placement also validates against.
  *
  * `useReaderPlayback` is an inert stand-in matching the exact destructured
  * shape `ReaderChamber.tsx` consumes. Playback state lives in the mock app
@@ -12,32 +12,9 @@
 
 import type { ReaderChapter } from './types';
 import { setMockState, useAppStore } from './stubs';
+import { extractReaderVisibleAudioText } from '../../../audio/readerVisibleText';
 
-export const extractSFXCues = (text: string) => {
-  const sfxList: string[] = [];
-
-  let cleanText = text.replace(
-    /\{[^{}]*?"(?:sceneType|intensity|tension|danger|mysticism|emotion|audioSignature|beastEvent|summary|statsChangeMessage|memoryUpdates)"[^{}]*?\}/gi,
-    "",
-  );
-
-  cleanText = cleanText.replace(/\[\s*\{[\s\S]*?\}\s*\]/g, "");
-  cleanText = cleanText.replace(/\[\s*\{[^{}]*?\}\s*\]/g, "");
-
-  const hiddenSystemTagsRegex =
-    /\[(?:SFX|Audio|Sound|Beat|Timing|Time|Duration|Trigger|SAP|Audio-Metadata|Metadata|Intensity|Tension|Danger|Mood|Emotion|Narrative):\s*([^\]]+)\]/gi;
-
-  cleanText = cleanText.replace(hiddenSystemTagsRegex, (match, val) => {
-    if (match.match(/\[(?:SFX|Audio|Sound):\s*/i)) {
-      sfxList.push(val.trim().toLowerCase());
-    }
-    return "";
-  });
-
-  cleanText = cleanText.replace(/\[\s*\]/g, "");
-
-  return { cleanText: cleanText.trim(), sfxList };
-};
+export const extractSFXCues = extractReaderVisibleAudioText;
 
 export interface MockVoice {
   voiceURI: string;

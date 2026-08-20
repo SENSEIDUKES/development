@@ -151,9 +151,9 @@ describe("finalized Story Seed to Chapter Generation adapter", () => {
     expect(packet.generationRules.permanentWritingInstructions)
       .toContain("PERMANENT SYSTEM AND FORMAT RULES");
     expect(packet.generationRules.permanentWritingInstructions)
-      .toContain('containing an "id" (unique string), "type"');
+      .toContain('containing "type" (either "paragraph" or "dialogue")');
     expect(packet.generationRules.permanentWritingInstructions)
-      .not.toContain("code supplies them");
+      .toContain("Do not output block IDs; the application assigns stable chapter-position IDs after validation.");
     expect(packet.generationRules.effectRules)
       .toContain("For any Celestial Library system moment");
     expect(adapted.mapping.chapterMissionSource).toBe("WorldBlueprint.firstArcPromise");

@@ -27,14 +27,34 @@ import {
   GeminiChapterTextProvider,
   type ChapterTextModelProvider,
 } from "./provider";
+import {
+  finalizeResolvedDialogueAudioMoments,
+  type CompletedDialogueArtifactCandidate,
+} from "../audio/resolvedDialogueAudio";
+import type { ChapterContent } from "../../components/chapter-generation/shared/types";
+import type { LivingStoryRecord } from "../../components/chapter-generation/shared/packets/livingStoryEntityIdentity";
 
 export type ChapterProviderFactory = (input: {
   apiKey: string;
   model: string;
 }) => ChapterTextModelProvider;
 
+export interface DialogueArtifactResolverInput {
+  /** Accepted final chapter after any repair and World Cue resolution. */
+  chapter: ChapterContent;
+  /** Canonical Characters with their persisted provider-neutral voiceKey. */
+  characters: LivingStoryRecord[];
+}
+
+/** Separate server synthesis owner. It returns completed public artifacts only. */
+export type DialogueArtifactResolver = (
+  input: DialogueArtifactResolverInput,
+) => Promise<readonly CompletedDialogueArtifactCandidate[]>;
+
 export interface ExecuteChapterGenerationOptions {
   providerFactory?: ChapterProviderFactory;
+  dialogueArtifactResolver?: DialogueArtifactResolver;
+  onDialogueAudioError?: (error: unknown) => void;
   onStageChange?: (stage: ChapterUsageStage) => void;
   verifiedContinuation?: ChapterGenerationContinuation;
 }
@@ -172,6 +192,33 @@ export async function executeChapterGeneration(
         ...(validationIssues?.length ? { validationIssues } : {}),
       },
     );
+  }
+
+  if (options.dialogueArtifactResolver) {
+    try {
+      const characters = run.processingResult.proposedLivingStoryState.codex.characters;
+      const candidates = await options.dialogueArtifactResolver({
+        chapter: structuredClone(run.finalOutput),
+        characters: structuredClone(characters),
+      });
+      const dialogueMoments = finalizeResolvedDialogueAudioMoments({
+        characters,
+        blocks: run.finalOutput.blocks ?? [],
+        candidates,
+      });
+      if (dialogueMoments.length > 0) {
+        const existingMoments = run.finalOutput.audioMoments ?? [];
+        const existingIds = new Set(existingMoments.map(moment => moment.id));
+        run.finalOutput.audioMoments = [
+          ...existingMoments,
+          ...dialogueMoments.filter(moment => !existingIds.has(moment.id)),
+        ];
+      }
+    } catch (error) {
+      // Voice synthesis is additive. A provider failure cannot invalidate an
+      // otherwise accepted chapter, and no glyph appears without an artifact.
+      options.onDialogueAudioError?.(error);
+    }
   }
 
   const nextContinuation = sealChapterContinuation({

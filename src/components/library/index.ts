@@ -88,6 +88,8 @@ export { LibraryHeaderBadge } from './LibraryHeaderBadge';
 export type { LibraryHeaderBadgeProps } from './LibraryHeaderBadge';
 export { LibraryDragonCycleIcon } from './LibraryDragonCycleIcon';
 export type { LibraryDragonCycleIconProps } from './LibraryDragonCycleIcon';
+export { LibrarySoundGlyph } from './LibrarySoundGlyph';
+export type { LibrarySoundGlyphProps } from './LibrarySoundGlyph';
 export { LibraryTextArea } from './LibraryTextArea';
 export type { LibraryTextAreaProps } from './LibraryTextArea';
 export { LibraryTextBox } from './LibraryTextBox';

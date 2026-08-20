@@ -275,9 +275,9 @@ describe('ReaderCodex', () => {
     const memoryUpdates = vi.fn<(memory: StoryMemory) => void>();
     act(() => root.render(<CodexHarness onMemoryUpdate={memoryUpdates} />));
 
-    expect(container.textContent).not.toContain('Vermilion Debt Fox');
+    expect(container.textContent).not.toContain('Moon-Tally Fox');
     await click('Deep Memory');
-    expect(container.textContent).toContain('Vermilion Debt Fox');
+    expect(container.textContent).toContain('Moon-Tally Fox');
 
     expect(container.textContent).toContain('Continuity Alerts (1)');
     await click('Clear Alerts');

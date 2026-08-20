@@ -46,12 +46,10 @@ export function ReaderCodexCharacters({
 
   const [charViewStyle, setCharViewStyle] = useState<'cards' | 'profiles'>('cards');
   const {
-    generatingVoiceId,
     playingVoiceId,
-    handleGenerateVoiceCard,
     handlePlayVoice,
     handleStopVoice,
-  } = useCodexVoiceCards({ memory, onUpdateMemory });
+  } = useCodexVoiceCards();
 
   const {
     showAddLocationForm,
@@ -126,13 +124,11 @@ export function ReaderCodexCharacters({
         cScore={cScore}
         hasAppeared={hasAppeared}
         playingVoiceId={playingVoiceId}
-        generatingVoiceId={generatingVoiceId}
         isGenerating={isGenerating}
         canGenerate={canGenerate}
         isFreeUserOnHubStory={isFreeUserOnHubStory}
         handlePlayVoice={handlePlayVoice}
         handleStopVoice={handleStopVoice}
-        handleGenerateVoiceCard={handleGenerateVoiceCard}
         beginCharEdit={beginCharEdit}
         handleAwakenCardImage={handleAwakenCardImage}
       />

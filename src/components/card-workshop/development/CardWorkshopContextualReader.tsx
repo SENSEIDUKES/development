@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { getReaderChamberSurfaceClass } from '../../reader-chamber/development/ReaderChamber';
 import { ReaderViewport } from '../../reader-chamber/development/ReaderViewport';
-import type { WorldCardAudioAdapter } from '../../reader-chamber/development/WorldCard';
 import { CodexHovercard } from '../../reader-codex/development/CodexHovercard';
 import { getManifestBackdrop } from '../../reader-codex/development/codexManifestBackdrop';
 import {
@@ -16,14 +15,19 @@ import type {
   StoryBlock,
   StoryWorld,
   SystemEvent,
-  WorldCardEvent,
 } from '../../reader-chamber/shared/types';
+import {
+  resolveChapterAudioMoments,
+  type WorldCueIntent,
+} from '../../../audio/inlineAudio';
 import type { CardPreset, CardWorkshopOverrides } from '../shared/types';
 
 const LOCAL_HUMAN_PORTRAIT = '/card-workshop/test-images/ye_chen_portrait.png';
 const LOCAL_CREATURE_PORTRAIT = '/card-workshop/test-images/lyra_meadowlight_portrait.png';
 
 const CONTEXT_CARD_BLOCK_ID = 'card-workshop-context-card';
+const CONTEXT_OPENING_BLOCK_ID = 'card-workshop-context-opening';
+const CONTEXT_OPENING_TEXT = 'Rain threaded down the bronze eaves. The Rain Court bell tolled once as a Vermilion Debt Fox growled beneath the empty tribunal.';
 const CONTEXT_CHAPTER_NUMBER = 1;
 
 const CONTEXT_WITNESS: CodexTerm = {
@@ -40,6 +44,49 @@ const CONTEXT_WITNESS: CodexTerm = {
     portraitKind: 'human',
   },
 };
+
+const CONTEXT_CUE_LOCATION: CodexTerm = {
+  term: 'Rain Court',
+  type: 'location',
+  isCanonicalName: true,
+  entry: {
+    id: 'card-workshop-context-rain-court',
+    name: 'Rain Court',
+    description: 'An oathbound tribunal where each false vow answers with a bell-like peal of thunder.',
+  },
+};
+
+const CONTEXT_WORLD_CUE_INTENTS = [
+  {
+    blockId: CONTEXT_OPENING_BLOCK_ID,
+    triggerPhrase: 'The Rain Court bell tolled once',
+    occurrenceIndex: 0,
+    sourceCategory: 'locations',
+    variation: 'signatures',
+    semanticTags: ['gong', 'resonant', 'deep'],
+    relatedEntity: { name: 'Rain Court', type: 'location' },
+  },
+  {
+    blockId: CONTEXT_OPENING_BLOCK_ID,
+    triggerPhrase: 'a Vermilion Debt Fox growled',
+    occurrenceIndex: 0,
+    sourceCategory: 'beasts',
+    variation: 'growl',
+    semanticTags: ['growl', 'predator', 'threatening'],
+    relatedEntity: { name: 'Vermilion Debt Fox', type: 'creature' },
+  },
+] as const satisfies readonly WorldCueIntent[];
+
+const CONTEXT_AUDIO_MOMENTS = (() => {
+  const resolution = resolveChapterAudioMoments(
+    [{ id: CONTEXT_OPENING_BLOCK_ID, text: CONTEXT_OPENING_TEXT }],
+    CONTEXT_WORLD_CUE_INTENTS,
+  );
+  if (resolution.issues.length > 0) {
+    throw new Error('Card Workshop World Cue fixture failed validation.');
+  }
+  return resolution.audioMoments;
+})();
 
 const CONTEXT_READER_PREFERENCES: ReaderPreferences = {
   fontSize: 'lg',
@@ -68,7 +115,6 @@ export interface CardWorkshopContextualReaderProps {
   manifestedIds: Set<string>;
   generatingRevealId: string | null;
   onManifestReveal: (entry: { id?: string }, type: string) => void;
-  audioAdapter: WorldCardAudioAdapter;
 }
 
 /** Whether the preset reveals a human or non-human portrait entity. */
@@ -124,24 +170,6 @@ function createContextualCodexTerm(
 }
 
 /**
- * Builds the World Card event for the fixture, honoring the image-state and
- * Codex-entry overrides. Undefined when the preset has no World Card.
- */
-function createContextualWorldCard(
-  preset: CardPreset,
-  overrides: CardWorkshopOverrides,
-): WorldCardEvent | undefined {
-  if (!preset.worldCard) return undefined;
-  return {
-    ...preset.worldCard,
-    imageUrl: overrides.imageState === 'existing' ? preset.worldCard.imageUrl : undefined,
-    codexEntryId: overrides.codexEntryState === 'present'
-      ? preset.worldCard.codexEntryId
-      : undefined,
-  };
-}
-
-/**
  * Builds the System event for the fixture, honoring the selected system-kind
  * and Fate-outcome overrides. Undefined when the preset has no System event.
  */
@@ -165,7 +193,6 @@ function createContextualSystemEvent(
 /** The display name of the entity the fixture spotlights. */
 function selectedEntityName(preset: CardPreset, codexTerm: CodexTerm | null) {
   return codexTerm?.term
-    ?? preset.worldCard?.entityName
     ?? preset.systemEvent?.title
     ?? preset.title;
 }
@@ -180,7 +207,6 @@ export function createCardWorkshopContextualFixture(
   manifestedIds: Set<string>,
 ): CardWorkshopContextualFixture {
   const codexTerm = createContextualCodexTerm(preset, overrides, manifestedIds);
-  const worldCard = createContextualWorldCard(preset, overrides);
   const systemEvent = createContextualSystemEvent(preset, overrides);
   const entityName = selectedEntityName(preset, codexTerm);
   const mentionEntities: StoryBlock['metadata'] = {
@@ -201,15 +227,14 @@ export function createCardWorkshopContextualFixture(
           }],
         }
       : mentionEntities,
-    ...(worldCard ? { worldCard } : {}),
     ...(systemEvent ? { system: systemEvent } : {}),
   };
 
   const blocks: StoryBlock[] = [
     {
-      id: 'card-workshop-context-opening',
+      id: CONTEXT_OPENING_BLOCK_ID,
       type: 'prose',
-      text: 'Rain threaded down the bronze eaves in silver cords, each drop sounding like a small bell against the empty court.',
+      text: CONTEXT_OPENING_TEXT,
     },
     {
       id: 'card-workshop-context-mention',
@@ -225,7 +250,7 @@ export function createCardWorkshopContextualFixture(
     },
   ];
 
-  const codexTerms = [CONTEXT_WITNESS, codexTerm].filter(
+  const codexTerms = [CONTEXT_WITNESS, CONTEXT_CUE_LOCATION, codexTerm].filter(
     (term): term is CodexTerm => Boolean(term),
   );
   // Real Manifest backdrop art per entity (the shared pool's stable pick), so
@@ -255,6 +280,7 @@ export function createCardWorkshopContextualFixture(
       premise: 'A fixed, local Reader fixture.',
       status: 'read',
       hasContent: true,
+      audioMoments: CONTEXT_AUDIO_MOMENTS,
       blocks,
     },
     codexTerms,
@@ -265,7 +291,9 @@ export function createCardWorkshopContextualFixture(
 /**
  * Card Workshop Contextual View: renders the selected card preset inside the
  * real Development ReaderViewport using the fixed local fixture, so Codex
- * Cards, World Cards, and System Panels can be inspected in their true host.
+ * Cards and System Panels can be inspected in their true host, with a separate
+ * inline World Cues demonstrating both independent Codex/sound actions and a
+ * sound-only annotation that leaves its phrase as ordinary prose.
  */
 export function CardWorkshopContextualReader({
   preset,
@@ -273,7 +301,6 @@ export function CardWorkshopContextualReader({
   manifestedIds,
   generatingRevealId,
   onManifestReveal,
-  audioAdapter,
 }: CardWorkshopContextualReaderProps) {
   const readerRef = useRef<HTMLDivElement>(null);
   const [editingBookmarkParagraphIndex, setEditingBookmarkParagraphIndex] = useState<number | null>(null);
@@ -374,8 +401,6 @@ export function CardWorkshopContextualReader({
           setShowLegend={() => undefined}
           hasSystemBlocks={Boolean(fixture.chapter.blocks?.some(block => block.system))}
           chapters={[fixture.chapter]}
-          worldCardAudioAdapter={audioAdapter}
-          worldCardPresentationKey={`${preset.id}-${overrides.audioState}-${overrides.isAudioMuted}`}
         />
       </div>
     </section>

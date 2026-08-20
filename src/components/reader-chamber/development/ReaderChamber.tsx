@@ -37,7 +37,6 @@ import {
   createCodexHighlighter,
   splitByCodexTerms,
 } from '../../reader-codex/shared/codexHighlighting';
-import type { InlineAudioHighlight } from '../../../audio/inlineAudio';
 
 interface ReaderChamberProps {
   chapters: ReaderChapter[];
@@ -60,8 +59,6 @@ interface ReaderChamberProps {
   ) => Promise<void>;
   handleSealChapter?: (chapterNumber: number) => Promise<void>;
   handleCheckConsistency?: (chapterNumber: number) => Promise<string[]>;
-  /** Workshop-local Phase 2 annotations; never part of the chapter payload. */
-  inlineAudioHighlights?: readonly InlineAudioHighlight[];
 }
 
 /**
@@ -119,7 +116,6 @@ export default function ReaderChamber({
   handleAlterFate,
   handleSealChapter,
   handleCheckConsistency,
-  inlineAudioHighlights,
 }: ReaderChamberProps) {
   const selectedChapter =
     chapters.find((c) => c.number === selectedChapterNum) || chapters[0];
@@ -1112,7 +1108,6 @@ export default function ReaderChamber({
         setShowLegend={setShowLegend}
         hasSystemBlocks={hasSystemBlocks}
         chapters={chapters}
-        inlineAudioHighlights={inlineAudioHighlights}
       />
 
       <ReaderControls

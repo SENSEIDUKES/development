@@ -6,7 +6,6 @@ import { extractSFXCues } from '../shared/readerPlayback';
 import { collectBlockAutoCues } from '../shared/autoCuePolicy';
 import { SystemBlock } from './SystemBlock';
 import { SYSTEM_COLORS_LEGEND } from '../shared/systemColors';
-import { WorldCard } from './WorldCard';
 import { useAppStore } from '../shared/stubs';
 import { ReaderFateAlerts } from './ReaderFateAlerts';
 import { SystemColorLegend } from './SystemColorLegend';
@@ -15,9 +14,8 @@ import { ContextInspector } from './ContextInspector';
 import { getReaderTypography, getReadingDirection } from '../shared/readerTypography';
 import { createCodexHighlighter } from '../../reader-codex/shared/codexHighlighting';
 import { CodexCard, FALLBACK_BACKDROPS } from './CodexCard';
-import type { WorldCardAudioAdapter } from './WorldCard';
 import { InlineAudioText } from './InlineAudio';
-import type { InlineAudioHighlight } from '../../../audio/inlineAudio';
+import type { ResolvedAudioMoment } from '../../../audio/inlineAudio';
 
 interface ReaderViewportProps {
   readerRef: React.RefObject<HTMLDivElement | null>;
@@ -78,18 +76,6 @@ interface ReaderViewportProps {
   hasSystemBlocks: boolean;
 
   chapters: ReaderChapter[];
-  /**
-   * Development-only dependency seam used by the Card Workshop contextual
-   * fixture. Omitting it preserves the Reader's normal World Card lifecycle.
-   */
-  worldCardAudioAdapter?: WorldCardAudioAdapter;
-  /** Resets a Workshop-simulated card when its local audio state changes. */
-  worldCardPresentationKey?: string;
-  /**
-   * Development-only prose annotations. They are separate from StoryBlock so
-   * this phase cannot change generated or persisted chapter payloads.
-   */
-  inlineAudioHighlights?: readonly InlineAudioHighlight[];
 }
 
 export function ReaderViewport({
@@ -141,23 +127,24 @@ export function ReaderViewport({
   setShowLegend,
   hasSystemBlocks,
   chapters,
-  worldCardAudioAdapter,
-  worldCardPresentationKey,
-  inlineAudioHighlights = [],
 }: ReaderViewportProps) {
   const readingLanguage = activeTranslationContent ? preferredLang : 'en';
   const typography = getReaderTypography(currentPrefs);
-  const renderProseText = (text: string, paragraphIndex: number) => (
-    inlineAudioHighlights.length > 0
+  const chapterAudioMoments: readonly ResolvedAudioMoment[] = selectedChapter.audioMoments ?? [];
+  const renderProseText = (text: string, paragraphIndex: number, blockId?: string) => {
+    const blockAudioMoments = blockId
+      ? chapterAudioMoments.filter(moment => moment.blockId === blockId)
+      : [];
+    return blockAudioMoments.length > 0
       ? (
           <InlineAudioText
-            highlights={inlineAudioHighlights}
+            moments={blockAudioMoments}
             renderText={segment => renderHighlightedText(segment, paragraphIndex)}
             text={text}
           />
         )
-      : renderHighlightedText(text, paragraphIndex)
-  );
+      : renderHighlightedText(text, paragraphIndex);
+  };
 
   const getThemeAccentColor = (theme: string) => {
     switch (theme) {
@@ -584,13 +571,13 @@ export function ReaderViewport({
                       })
                   : selectedChapter.blocks
                     ? selectedChapter.blocks.map((block, index) => {
-                        const hasStructuredVisual = !!block.system || !!block.worldCard;
+                        const hasStructuredVisual = !!block.system;
                         if (!(block.text || '').trim() && !hasStructuredVisual) return null;
                         const { cleanText, sfxList } = extractSFXCues(
                           block.text || '',
                         );
-                        // High-confidence [SFX] tags plus structured
-                        // system/beast events; footsteps and environment
+                        // High-confidence [SFX] tags plus structured System
+                        // events; footsteps, beasts, and environment
                         // Foley never render a trigger span at all.
                         const autoCueList = collectBlockAutoCues(sfxList, block);
                         if (!cleanText && !hasStructuredVisual) return null;
@@ -606,44 +593,13 @@ export function ReaderViewport({
                               || matched.type === 'location'
                             )
                           ));
-                        // Characters cover both Human and Non-Human Portraits.
-                        // Bestiary species are not Codex terms here, while
-                        // Factions remain highlightable informational records.
-                        const resolvedWorldCardTerm = block.worldCard
-                          ? codexHighlighter.resolve(block.worldCard.entityName)
-                          : undefined;
-                        const duplicateVisualSignal = Boolean(
-                          visualCodexTerm
-                          && block.worldCard
-                          && (
-                            block.worldCard.codexEntryId === visualCodexTerm.entry.id
-                            || resolvedWorldCardTerm?.entry?.id === visualCodexTerm.entry.id
-                          )
-                        );
-                        const systemWorldCard = block.worldCard?.entityType === 'system'
-                          || block.worldCard?.entityType === 'fate_event';
-
                         const isSenMode = readerMode === "sen";
                         const currentParaIdx = currentNarratedBlockIndex;
                         const isPlayerPlaying = isPlayingText || isPausedText;
                         const isRevealed = !isSenMode || !immersion.imagePopups || (!isPlayerPlaying) || index <= (currentParaIdx || 0);
 
-                        let revealCard = null;
-                        if (
-                          block.worldCard
-                          && !duplicateVisualSignal
-                          && !systemWorldCard
-                          && (!isSenMode || immersion.imagePopups)
-                        ) {
-                          revealCard = isRevealed ? (
-                            <WorldCard
-                              key={worldCardPresentationKey}
-                              card={block.worldCard}
-                              audioAdapter={worldCardAudioAdapter}
-                            />
-                          ) : null;
-                        } else if (visualCodexTerm && (!isSenMode || immersion.imagePopups)) {
-                          revealCard = (
+                        const revealCard = visualCodexTerm && (!isSenMode || immersion.imagePopups)
+                          ? (
                             <CodexCard
                               revealTerm={visualCodexTerm}
                               activeStory={activeStory}
@@ -652,8 +608,8 @@ export function ReaderViewport({
                               generatingRevealId={generatingRevealId}
                               onManifestReveal={handleManifestReveal}
                             />
-                          );
-                        }
+                          )
+                          : null;
 
                         const isSystemLine =
                           cleanText.startsWith("[") &&
@@ -684,8 +640,6 @@ export function ReaderViewport({
                           );
                         }
 
-                        // Standalone worldCard block with no prose: render only the
-                        // card, not an empty paragraph container beneath it.
                         if (!cleanText) {
                           return revealCard ? (
                             <React.Fragment key={block.id || `para-${index}`}>
@@ -734,7 +688,7 @@ export function ReaderViewport({
                               />
                             ))}
                             <div className={`reader-paragraph relative ${getFocusClass(index)}`}>
-                              {renderProseText(cleanText, index)}
+                              {renderProseText(cleanText, index, block.id)}
                               <button
                                  tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => {
                                   if (existingBookmark) {

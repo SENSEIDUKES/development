@@ -2,7 +2,7 @@
 
 - **Created:** 2026-08-19
 - **Last updated:** 2026-08-19
-- **Replica status:** Phase 2 inline-audio contract and Workshop playback active
+- **Replica status:** Phase 3 generated Worldcue pipeline and Reader playback active
 
 ## What lives here
 
@@ -13,8 +13,9 @@
 - `libraryCues.ts` + `data/library-cues.v1.json` — the curated SEN library
   cues, with typed lookups (`getByUrl`, `getByCategory`, `getByVariation`,
   `getByTag`, `getByAnyTag`, `getCategories`).
-- `inlineAudio.ts` — the client-safe `sound` / `voice` action contract,
-  literal-prose annotation shape, and catalog-gated sound resolver.
+- `inlineAudio.ts` — the model-safe audible-event intent, validated resolved
+  annotation contract, exact-placement utilities, and deterministic
+  catalog-backed Worldcue resolver.
 - `index.ts` — the client-safe barrel for the audio surface.
 
 The voice catalog data and provider-aware logic live in
@@ -27,14 +28,16 @@ curated SEN audio metadata. Both are static data + typed lookup helpers
 in this domain — they are not a parallel audio system, not a playback
 engine, and not a persistence layer.
 
-The Development Reader Chamber now consumes this domain for controlled inline
-examples. It does not write actions into chapter data and it does not replace
-or modify the legacy World Card path in this phase.
+Chapter Generation resolves valid audible-event intents into chapter-owned
+annotations. The Development Reader Chamber consumes those persisted
+annotations in both generated sessions and controlled Workshop examples. The
+retired standalone world presentation and its parallel audio adapter remain
+removed.
 
 ## Server boundary
 
 Provider IDs (ElevenLabs `voice_id`) and any provider-facing lookups
-(e.g. `resolveProviderId(internalKey)`) are server-only. They live in
+(e.g. `resolveProviderId(voiceKey)`) are server-only. They live in
 `src/server/audio/voiceCatalog.ts` and must not be imported by client
 or shared code. To reference the provider-neutral voice shape from
 shared code, use `import type { PublicVoiceMeta } from
@@ -53,11 +56,11 @@ Each category belongs to exactly one subsystem:
 
 | Category      | Owner                                                       | Current consumption |
 | ------------- | ----------------------------------------------------------- | ------------------- |
-| `beasts`      | Inline-audio highlights                                     | Phase 2 Workshop    |
-| `weapons`     | Inline-audio highlights                                     | Phase 2 Workshop    |
-| `artifacts`   | Inline-audio highlights                                     | Phase 2 Workshop    |
-| `locations`   | Inline-audio highlights                                     | Phase 2 Workshop    |
-| `factions`    | Inline-audio highlights                                     | Phase 2 Workshop    |
+| `beasts`      | Inline audible-event annotations                            | Phase 3 Reader      |
+| `weapons`     | Inline audible-event annotations                            | Phase 3 Reader      |
+| `artifacts`   | Inline audible-event annotations                            | Phase 3 Reader      |
+| `locations`   | Inline audible-event annotations                            | Phase 3 Reader      |
+| `factions`    | Inline audible-event annotations                            | Phase 3 Reader      |
 | `atmosphere`  | Scene audio — `StoryCuePayload.atmosphereCategory`, `trackLibrary.ts` | Not consumed here   |
 | `system`      | System Panels — `SystemBlock.tsx`                            | Not consumed here   |
 
@@ -67,8 +70,8 @@ categories. Invalid and unknown-category entries stay in `rawEntries` and
 surface in `issues`, but are excluded from `cues`, `byUrl`, `byCategory`,
 and `byVariation` so the lookup views only contain validated rows.
 
-Phase 1 introduces no new consumer for the two reserved-by-other-systems
-categories. Adding one is a separate, explicit task.
+Worldcues never consume the two reserved-by-other-systems categories.
+Atmosphere loops and System Panel sounds retain their existing owners.
 
 ## Data files
 
@@ -100,33 +103,67 @@ const fireWeapons = getByTag(cues, 'weapons', 'fire');
 import type { PublicVoiceMeta } from '../server/audio/voiceCatalog';
 ```
 
-## Inline-audio contract (Phase 2)
+## Inline Worldcue contract (Phase 3)
 
-Inline annotations remain separate from `StoryBlock` and use one of two exact
-actions:
+The model can propose only an audible narrative intent. It cannot choose a
+catalog row or playback source:
 
 ```ts
-type InlineAudioAction =
-  | { type: 'sound'; cueUrl: string }
-  | { type: 'voice'; voiceKey: string; quoteText: string };
+interface WorldCueIntent {
+  blockId: string;
+  triggerPhrase: string;
+  occurrenceIndex?: number;
+  sourceCategory: 'beasts' | 'weapons' | 'artifacts' | 'locations' | 'factions';
+  variation: string;
+  semanticTags: string[];
+  relatedEntity?: { name: string; type: StoryEntityType };
+}
 ```
 
-`sound` URLs must resolve through `library-cues.v1.json`; arbitrary URLs and
-the separately owned `atmosphere` / `system` categories are rejected. Playback
-uses `DevAudioPlaybackProvider`, which delegates to the existing
-`@seihouse/audio-player` session. Its `replace` operation replaces the shared
-queue with one Cue, so rapid actions cannot create overlapping media elements.
+Application logic validates the exact action phrase against its final block,
+normalizes the zero-based occurrence, rejects noun-only entity mentions and
+overlaps, and deterministically chooses an approved Library Cue by category,
+variation, semantic-tag overlap, confidence, and a stable tie-break. Only a
+successful resolution becomes `ChapterContent.audioMoments`; that resolved
+shape adds an application-owned ID and a minimal `{ publicUrl }` playback
+source. URLs, filenames, asset IDs, catalog entries, provider identifiers, and
+voice keys are not accepted from model output.
 
-`voiceKey` is the provider-neutral `PublicVoiceMeta.internalKey`. No provider
-ID is allowed in this client shape. Phase 2 has no synthesis endpoint, no
-ElevenLabs call, and no browser `speechSynthesis` fallback; activating a voice
-action reports an explicit unavailable state.
+Character speech is a separate identity system. A server helper assigns one
+provider-neutral `voiceKey` to a named Character when validated dialogue proves
+that the character speaks, preserves it in later chapter state, requires
+explicit intelligence metadata for any non-human Character voice,
+and never assigns one to a Bestiary species. The browser receives no provider
+ID and no client-side speech fallback. A server-produced quote artifact is
+validated under the application-owned `/dialogue/` namespace and stored as its
+own exact block/phrase/occurrence annotation; the character keeps only the
+stable identity key. The live server exposes a separate optional synthesis
+resolver and finalizes its completed artifacts against canonical Character and
+block identity. Until that playable artifact exists, the Reader renders no
+dialogue glyph.
 
-The Reader primitive is a native inline `<button>` and only calls playback from
-its activation handler. Rendering, scrolling, intersection, and viewport entry
-never load or play a Cue. It exposes idle, loading, playing, and error states,
-stops only its own active Cue during cleanup, accepts an entity/category accent
-token when one exists, and otherwise uses the neutral Library color token.
+Worldcue playback uses `DevAudioPlaybackProvider`, which delegates to the
+existing `@seihouse/audio-player` session. Its `replace` operation replaces the
+shared queue with one cue, so rapid actions cannot create overlapping media
+elements. Each playback track is scoped to the annotation ID even when two
+moments resolve to the same catalog clip.
 
-The legacy World Card, chapter generation, prompts, persistence, and production
-payloads remain unchanged.
+The Reader primitive is a native inline `<button>` containing the custom
+`LibrarySoundGlyph`. Activation is the only path that starts or replaces a Cue;
+cleanup stops only the control's own active Cue. Its visible mark is a
+circle-free, `0.76em` typographic annotation while an invisible pseudo-element
+expands the pointer target without changing line height. The final word, mark,
+and immediately adjacent punctuation are joined so the mark cannot begin a
+line by itself while longer entity names remain free to wrap. Rendering,
+scrolling, intersection, and viewport entry never load or play a Cue. The glyph
+is neutral at rest, gains a soft Library aura while playing, and exposes idle,
+loading, playing, and error states. Because the glyph is a separate accessible
+tap target, the adjacent phrase can keep its native prose styling or its
+independent Codex action.
+
+Resolved annotations survive the accepted Manifest/Process/Repair result, the
+five-chapter batch, and the Reader adapter. They are scoped to an application-
+owned block ID and occurrence, so one event cannot propagate to other mentions,
+chapters, legacy prose, or translations. Block-local model proposals are removed
+from the accepted output after resolution; only successful resolved annotations
+and validated server dialogue artifacts persist.

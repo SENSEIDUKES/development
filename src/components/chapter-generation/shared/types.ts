@@ -7,6 +7,8 @@
  * exactly as production does.
  */
 
+import type { ResolvedAudioMoment, WorldCueIntent } from "../../../audio/inlineAudio";
+
 export interface BeastSonicProfile {
   size?: "tiny" | "small" | "medium" | "large" | "giant" | "colossal";
   bodyType?:
@@ -33,42 +35,6 @@ export interface FateResultData {
   newStoryState?: string;
   newActiveStats?: string[];
   genreShift?: string;
-}
-
-export type WorldCardSoundRole =
-  | "roar" | "call" | "hiss" | "howl" | "screech" | "wingbeat"
-  | "unsheathe" | "metallic_ring" | "reload" | "activation_hum"
-  | "resonance" | "awakening" | "pulse" | "magical_activation"
-  | "signature" | "chant" | "chime";
-
-export type WorldCardArtifactAssetFamily = "weapon" | "relic";
-
-export interface WorldCardSoundHints {
-  assetId?: string;
-  element?: string;
-  size?: BeastSonicProfile["size"];
-  threatTier?: BeastSonicProfile["threatTier"];
-  assetFamily?: WorldCardArtifactAssetFamily;
-  weaponType?: string;
-  artifactCategory?: string;
-  tags?: string[];
-}
-
-export interface WorldCardEvent {
-  id?: string;
-  /** System and Fate remain System Panels, not World Card payloads. */
-  entityType: "character" | "creature" | "artifact" | "location" | "faction" | "system" | "fate_event";
-  entityName: string;
-  displayTitle: string;
-  imageUrl?: string;
-  quote?: string;
-  audioText?: string;
-  audioType?: "tts_line" | WorldCardSoundRole;
-  sound?: WorldCardSoundHints;
-  voicePreset?: string;
-  codexEntryId?: string;
-  /** Simplified from production's `CosmicArtifact["rarity"]` reference. */
-  rarity?: string;
 }
 
 export interface RelevanceState {}
@@ -137,6 +103,8 @@ export interface StoryBlockMetadata {
     type: "reveal" | "power-up" | "technique" | "injury" | "turning-point" | "death" | "breakthrough";
     profile: BeastSonicProfile;
   };
+  /** Model-safe, block-scoped audible actions; application code resolves them. */
+  audioMoments?: WorldCueIntent[];
 }
 
 export interface SystemEvent {
@@ -157,7 +125,6 @@ export interface StoryBlock {
   text: string;
   metadata?: StoryBlockMetadata;
   system?: SystemEvent;
-  worldCard?: WorldCardEvent;
 }
 
 export type ChapterManifestStatus = "healthy" | "needs-review";
@@ -308,6 +275,8 @@ export interface ChapterContent {
   manifestDiagnostics?: ChapterManifestDiagnostics;
   blocks?: StoryBlock[];
   archivedBlocks?: StoryBlock[];
+  /** Resolved, precisely placed World Cues and server-produced dialogue artifacts. */
+  audioMoments?: ResolvedAudioMoment[];
   summary?: string;
   episodicSummary?: string;
   statsChangeMessage?: string;

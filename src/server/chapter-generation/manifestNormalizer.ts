@@ -1,20 +1,17 @@
 import {
-  stableLivingStoryEntityId,
-  splitDescriptiveLivingStoryEntityLabel,
-  splitDescriptiveLivingStoryLocationLabel,
-} from "../../components/chapter-generation/shared/packets/livingStoryEntityIdentity";
-import type {
-  BeastSonicProfile,
-  ChapterManifestDiagnostics,
-  ChapterManifestWarning,
-  FateResultData,
-  StoryBlock,
-  StoryBlockMetadata,
-  SystemEvent,
-  WorldCardEvent,
-  WorldCardSoundHints,
-  WorldCardSoundRole,
+  STORY_ENTITY_TYPES,
+  type BeastSonicProfile,
+  type ChapterManifestDiagnostics,
+  type ChapterManifestWarning,
+  type FateResultData,
+  type StoryBlock,
+  type StoryBlockMetadata,
+  type SystemEvent,
 } from "../../components/chapter-generation/shared/types";
+import {
+  validateWorldCueIntent,
+  type WorldCueIntent,
+} from "../../audio/inlineAudio";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -30,13 +27,6 @@ const SYSTEM_PROMPT_TYPES = [
   "progression", "breakthrough", "reward", "romance", "karmic_bond", "mystery", "fate_event",
   "corruption", "death_event", "quest_update", "choice_consequence", "system_error",
 ] as const;
-const WORLD_CARD_ENTITY_TYPES = ["character", "creature", "artifact", "location", "faction"] as const;
-const CREATURE_WORLD_CARD_SOUND_ROLES: WorldCardSoundRole[] = [
-  "roar", "call", "hiss", "howl", "screech", "wingbeat",
-];
-const ARTIFACT_WORLD_CARD_SOUND_ROLES: WorldCardSoundRole[] = [
-  "unsheathe", "metallic_ring", "reload", "activation_hum", "resonance", "awakening", "pulse", "magical_activation",
-];
 const FATE_OUTCOMES: FateResultData["outcome"][] = ["FATE AVERTED", "FATE SCARRED", "DOOM MANIFESTED"];
 
 const isRecord = (value: unknown): value is JsonRecord =>
@@ -248,7 +238,7 @@ const parseMetadataEntities = (
     const name = nonEmptyString(item.name);
     const type = nonEmptyString(item.type);
     const mention = nonEmptyString(item.mention);
-    if (!name || !type || !["character", "artifact", "location", "beast", "faction"].includes(type)
+    if (!name || !type || !STORY_ENTITY_TYPES.includes(type as (typeof STORY_ENTITY_TYPES)[number])
       || (mention !== "reveal" && mention !== "reference")) {
       warning(context, "optional-field-removed", `Removed invalid optional ${path}.`, path);
       return [];
@@ -284,8 +274,12 @@ const parseMusic = (
     warning(context, "optional-field-removed", "Removed unsupported optional metadata.music.region.", "metadata.music.region");
   }
   const intensity = optionalNumberField(value, "intensity", context, "metadata.music.intensity");
-  const customUrl = optionalStringField(value, "customUrl", context, "metadata.music.customUrl");
-  const trackId = optionalStringField(value, "trackId", context, "metadata.music.trackId");
+  if (value.customUrl !== undefined) {
+    warning(context, "optional-field-removed", "Removed model-owned metadata.music.customUrl.", "metadata.music.customUrl");
+  }
+  if (value.trackId !== undefined) {
+    warning(context, "optional-field-removed", "Removed model-owned metadata.music.trackId.", "metadata.music.trackId");
+  }
   for (const field of Object.keys(value)) {
     if (!["mood", "region", "intensity", "customUrl", "trackId"].includes(field)) {
       const path = safeFieldLabel(`metadata.music.${field}`);
@@ -296,8 +290,6 @@ const parseMusic = (
     mood,
     ...(validRegion ? { region: validRegion } : {}),
     ...(intensity === undefined ? {} : { intensity }),
-    ...(customUrl ? { customUrl } : {}),
-    ...(trackId ? { trackId } : {}),
   };
 };
 
@@ -329,9 +321,87 @@ const parseBeastEvent = (
   return { type: type as NonNullable<StoryBlockMetadata["beastEvent"]>["type"], profile };
 };
 
+const exactOccurrenceOffset = (
+  text: string,
+  phrase: string,
+  occurrenceIndex: number,
+): number => {
+  let fromIndex = 0;
+  for (let index = 0; index <= occurrenceIndex; index += 1) {
+    const found = text.indexOf(phrase, fromIndex);
+    if (found < 0) return -1;
+    if (index === occurrenceIndex) return found;
+    fromIndex = found + phrase.length;
+  }
+  return -1;
+};
+
+export interface ParsedModelWorldCueIntents {
+  intents: WorldCueIntent[];
+  droppedCount: number;
+}
+
+/**
+ * Converts untrusted, block-local model annotations into the shared model-safe
+ * contract. The application supplies the stable block reference and discards
+ * invalid annotations without sacrificing otherwise valid prose.
+ */
+export function parseModelWorldCueIntents(
+  value: unknown,
+  blockId: string,
+  blockText: string,
+): ParsedModelWorldCueIntents {
+  if (!Array.isArray(value)) {
+    return { intents: [], droppedCount: value === undefined || value === null ? 0 : 1 };
+  }
+
+  const intents: WorldCueIntent[] = [];
+  const seenPlacements = new Set<string>();
+  let droppedCount = 0;
+  for (const candidate of value) {
+    if (!isRecord(candidate)) {
+      droppedCount += 1;
+      continue;
+    }
+    if (isRecord(candidate.relatedEntity) && "id" in candidate.relatedEntity) {
+      droppedCount += 1;
+      continue;
+    }
+    const validation = validateWorldCueIntent({
+      ...candidate,
+      blockId,
+    });
+    const offset = validation.ok
+      ? exactOccurrenceOffset(
+          blockText,
+          validation.intent.triggerPhrase,
+          validation.intent.occurrenceIndex,
+        )
+      : -1;
+    if (!validation.ok || offset < 0) {
+      droppedCount += 1;
+      continue;
+    }
+    const intent = validation.intent;
+    const placementKey = [
+      intent.blockId,
+      offset,
+      offset + intent.triggerPhrase.length,
+    ].join("\u001f");
+    if (seenPlacements.has(placementKey)) {
+      droppedCount += 1;
+      continue;
+    }
+    seenPlacements.add(placementKey);
+    intents.push(intent);
+  }
+  return { intents, droppedCount };
+}
+
 const parseBlockMetadata = (
   value: unknown,
   context: BlockWarningContext,
+  blockText: string,
 ): StoryBlockMetadata | undefined => {
   if (value === undefined || value === null) return undefined;
   if (!isRecord(value)) {
@@ -372,11 +442,27 @@ const parseBlockMetadata = (
   if (music) metadata.music = music;
   const beastEvent = parseBeastEvent(value.beastEvent, context);
   if (beastEvent) metadata.beastEvent = beastEvent;
+  const parsedAudioMoments = parseModelWorldCueIntents(
+    value.audioMoments,
+    context.blockId ?? `block-${context.blockIndex + 1}`,
+    blockText,
+  );
+  if (parsedAudioMoments.intents.length > 0) {
+    metadata.audioMoments = parsedAudioMoments.intents;
+  }
+  if (parsedAudioMoments.droppedCount > 0) {
+    warning(
+      context,
+      "optional-field-removed",
+      `Removed ${parsedAudioMoments.droppedCount} invalid optional World Cue audio moment${parsedAudioMoments.droppedCount === 1 ? "" : "s"}.`,
+      "metadata.audioMoments",
+    );
+  }
 
   const knownFields = new Set([
     "sceneType", "environment", "atmosphereCategory", "atmosphereTags", "theme", "motion", "emotion",
     "intensity", "tension", "danger", "mysticism", "audioSignature", "speakerName", "mode",
-    "speakerRole", "entities", "music", "beastEvent",
+    "speakerRole", "entities", "music", "beastEvent", "audioMoments",
   ]);
   for (const field of Object.keys(value)) {
     if (!knownFields.has(field)) {
@@ -476,111 +562,6 @@ const parseSystemEvent = (
   };
 };
 
-const parseSoundHints = (
-  value: unknown,
-  context: BlockWarningContext,
-): WorldCardSoundHints | undefined => {
-  if (value === undefined || value === null) return undefined;
-  if (!isRecord(value)) {
-    warning(context, "optional-field-removed", "Removed invalid optional worldCard.sound.", "worldCard.sound");
-    return undefined;
-  }
-  const sound: WorldCardSoundHints = {};
-  if (value.assetId !== undefined) {
-    warning(context, "optional-field-removed", "Removed model-supplied worldCard.sound.assetId; media identity is code-owned.", "worldCard.sound.assetId");
-  }
-  for (const field of ["element", "threatTier", "weaponType", "artifactCategory"] as const) {
-    const parsed = optionalStringField(value, field, context, `worldCard.sound.${field}`);
-    if (parsed) sound[field] = parsed;
-  }
-  const size = optionalStringField(value, "size", context, "worldCard.sound.size");
-  if (size && BEAST_SIZES.includes(size as (typeof BEAST_SIZES)[number])) {
-    sound.size = size as WorldCardSoundHints["size"];
-  } else if (size) {
-    warning(context, "optional-field-removed", "Removed unsupported optional worldCard.sound.size.", "worldCard.sound.size");
-  }
-  const assetFamily = optionalStringField(value, "assetFamily", context, "worldCard.sound.assetFamily");
-  if (assetFamily === "weapon" || assetFamily === "relic") sound.assetFamily = assetFamily;
-  else if (assetFamily) {
-    warning(context, "optional-field-removed", "Removed unsupported optional worldCard.sound.assetFamily.", "worldCard.sound.assetFamily");
-  }
-  const tags = optionalStringArrayField(value, "tags", context, "worldCard.sound.tags");
-  if (tags) sound.tags = tags;
-  for (const field of Object.keys(value)) {
-    if (!["assetId", "element", "size", "threatTier", "assetFamily", "weaponType", "artifactCategory", "tags"].includes(field)) {
-      const path = safeFieldLabel(`worldCard.sound.${field}`);
-      warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
-    }
-  }
-  return Object.keys(sound).length > 0 ? sound : undefined;
-};
-
-const parseWorldCardEvent = (
-  value: unknown,
-  context: BlockWarningContext,
-): WorldCardEvent | undefined => {
-  if (value === undefined || value === null) return undefined;
-  if (!isRecord(value)) {
-    warning(context, "optional-field-removed", "Removed invalid optional worldCard object.", "worldCard");
-    return undefined;
-  }
-  const rawEntityType = nonEmptyString(value.entityType);
-  const rawEntityName = nonEmptyString(value.entityName);
-  const displayTitle = nonEmptyString(value.displayTitle);
-  if (!rawEntityType || !WORLD_CARD_ENTITY_TYPES.includes(
-    rawEntityType as (typeof WORLD_CARD_ENTITY_TYPES)[number],
-  ) || !rawEntityName || !displayTitle) {
-    warning(context, "optional-field-removed", "Removed invalid optional worldCard object.", "worldCard");
-    return undefined;
-  }
-  const entityName = (rawEntityType === "location"
-    ? splitDescriptiveLivingStoryLocationLabel(rawEntityName)
-    : splitDescriptiveLivingStoryEntityLabel(rawEntityName)).name;
-  const id = stableLivingStoryEntityId(rawEntityType, entityName);
-  if (value.id !== undefined) {
-    warning(context, "optional-field-removed", "Ignored model-supplied worldCard.id; code assigned the stable entity ID.", "worldCard.id");
-  }
-  if (value.codexEntryId !== undefined) {
-    warning(context, "optional-field-removed", "Ignored model-supplied worldCard.codexEntryId; canonical identity is code-owned.", "worldCard.codexEntryId");
-  }
-  if (value.imageUrl !== undefined) {
-    warning(context, "optional-field-removed", "Ignored model-supplied worldCard.imageUrl; stored media is application-owned.", "worldCard.imageUrl");
-  }
-  const audioType = optionalStringField(value, "audioType", context, "worldCard.audioType");
-  const validAudioType = audioType && (
-    (rawEntityType === "character" && audioType === "tts_line")
-    || (rawEntityType === "creature" && CREATURE_WORLD_CARD_SOUND_ROLES.includes(audioType as WorldCardSoundRole))
-    || (rawEntityType === "artifact" && ARTIFACT_WORLD_CARD_SOUND_ROLES.includes(audioType as WorldCardSoundRole))
-    || (rawEntityType === "location" && audioType === "signature")
-    || (rawEntityType === "faction" && audioType === "chant")
-  ) ? audioType as WorldCardEvent["audioType"] : undefined;
-  if (audioType && !validAudioType) {
-    warning(context, "optional-field-removed", "Removed unsupported optional worldCard.audioType.", "worldCard.audioType");
-  }
-  const sound = parseSoundHints(
-    value.sound,
-    context,
-  );
-  for (const field of Object.keys(value)) {
-    if (!["id", "entityType", "entityName", "displayTitle", "imageUrl", "quote", "audioText", "audioType", "sound", "voicePreset", "codexEntryId", "rarity"].includes(field)) {
-      const path = safeFieldLabel(`worldCard.${field}`);
-      warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
-    }
-  }
-  return {
-    id,
-    entityType: rawEntityType as WorldCardEvent["entityType"],
-    entityName,
-    displayTitle,
-    ...(optionalStringField(value, "quote", context, "worldCard.quote") ? { quote: optionalStringField(value, "quote", context, "worldCard.quote") } : {}),
-    ...(optionalStringField(value, "audioText", context, "worldCard.audioText") ? { audioText: optionalStringField(value, "audioText", context, "worldCard.audioText") } : {}),
-    ...(validAudioType ? { audioType: validAudioType } : {}),
-    ...(sound ? { sound } : {}),
-    ...(optionalStringField(value, "voicePreset", context, "worldCard.voicePreset") ? { voicePreset: optionalStringField(value, "voicePreset", context, "worldCard.voicePreset") } : {}),
-    ...(optionalStringField(value, "rarity", context, "worldCard.rarity") ? { rarity: optionalStringField(value, "rarity", context, "worldCard.rarity") } : {}),
-  };
-};
-
 const normalizedBlockId = (
   record: JsonRecord,
   index: number,
@@ -621,15 +602,14 @@ const normalizeBlock = (
   }
   const id = normalizedBlockId(record, index, chapterNumber, warnings);
   const context: BlockWarningContext = { warnings, blockIndex: index, blockId: id };
-  const metadata = parseBlockMetadata(record.metadata, context);
+  const metadata = parseBlockMetadata(record.metadata, context, text);
   const system = parseSystemEvent(record.system, context);
-  const worldCard = parseWorldCardEvent(record.worldCard, context);
   const rawType = nonEmptyString(record.type);
   const type = rawType === "dialogue" || (!rawType && metadata?.mode === "dialogue")
     ? "dialogue"
     : "paragraph";
   if (rawType && rawType !== type) {
-    const safeType = ["narration", "system", "world-card", "world_card"].includes(rawType)
+    const safeType = ["narration", "system"].includes(rawType)
       ? `'${rawType}'`
       : "an unsupported prose-like label";
     warning(
@@ -641,7 +621,7 @@ const normalizeBlock = (
   } else if (record.type !== undefined && !rawType) {
     warning(context, "block-type-normalized", "Normalized an invalid prose block type to 'paragraph'.", "type");
   }
-  const knownFields = new Set(["id", "type", "text", "metadata", "system", "worldCard"]);
+  const knownFields = new Set(["id", "type", "text", "metadata", "system"]);
   for (const field of Object.keys(record)) {
     if (!knownFields.has(field)) {
       const label = safeFieldLabel(field);
@@ -654,7 +634,6 @@ const normalizeBlock = (
     text,
     ...(metadata ? { metadata } : {}),
     ...(system ? { system } : {}),
-    ...(worldCard ? { worldCard } : {}),
   };
 };
 

@@ -1,96 +1,150 @@
-.inline-audio-highlight {
-  --inline-audio-accent: var(--color-neutral-400);
-
-  position: relative;
-  display: inline;
-  margin: 0 -0.02em;
-  padding: 0 0.08em;
-  border: 0;
-  border-radius: 0.18em;
-  background:
-    linear-gradient(
-      to top,
-      color-mix(in srgb, var(--inline-audio-accent) 17%, transparent) 0 32%,
-      transparent 32%
-    );
-  color: var(--inline-audio-accent);
+.inline-world-cue-annotation {
+  color: inherit;
   font: inherit;
-  font-weight: 500;
-  line-height: inherit;
-  text-align: inherit;
-  text-decoration-line: underline;
-  text-decoration-color: color-mix(in srgb, var(--inline-audio-accent) 52%, transparent);
-  text-decoration-thickness: 0.07em;
-  text-underline-offset: 0.2em;
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
+  white-space: nowrap;
+}
+
+/*
+ * The phrase remains free to wrap inside this inner inline span while the
+ * outer no-wrap boundary binds its final rendered word to the independent
+ * glyph and punctuation. This also works when the final word lives inside a
+ * Codex trigger rather than a plain text node.
+ */
+.inline-world-cue-annotation__text {
+  white-space: normal;
+}
+
+.inline-world-cue-annotation__text [data-slot='codex-hovercard-anchor'] {
+  display: inline;
+}
+
+.inline-world-cue-joiner {
+  user-select: none;
+}
+
+.inline-world-cue {
+  position: relative;
+  display: inline-flex;
+  inline-size: 0.78em;
+  block-size: 0.78em;
+  margin: 0 0.02em 0 0.08em;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-neutral-500);
+  font: inherit;
+  line-height: 0;
+  vertical-align: 0.24em;
   cursor: pointer;
+  opacity: 0.68;
   transition:
-    background-color 160ms ease,
-    box-shadow 160ms ease,
     color 160ms ease,
-    text-shadow 160ms ease;
+    opacity 160ms ease,
+    transform 160ms ease;
 }
 
-.inline-audio-highlight:hover {
-  background-color: color-mix(in srgb, var(--inline-audio-accent) 10%, transparent);
-  text-shadow: 0 0 0.7em color-mix(in srgb, var(--inline-audio-accent) 42%, transparent);
+.inline-world-cue::before {
+  content: '';
+  position: absolute;
+  inset-block: -0.56em;
+  inset-inline: -0.16em -0.7em;
 }
 
-.inline-audio-highlight:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--inline-audio-accent) 82%, white);
-  outline-offset: 0.15em;
-  background-color: color-mix(in srgb, var(--inline-audio-accent) 13%, transparent);
+.inline-world-cue__glyph {
+  inline-size: 0.76em;
+  block-size: 0.76em;
+  overflow: visible;
+  transition:
+    filter 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
 }
 
-.inline-audio-highlight[data-state='loading'] {
-  animation: inline-audio-breathe 900ms ease-in-out infinite alternate;
+.inline-world-cue:hover {
+  color: var(--color-neutral-300);
+  opacity: 0.94;
 }
 
-.inline-audio-highlight[data-state='playing'] {
-  background-color: color-mix(in srgb, var(--inline-audio-accent) 14%, transparent);
-  box-shadow: 0 0 0.85em color-mix(in srgb, var(--inline-audio-accent) 24%, transparent);
-  text-shadow: 0 0 0.65em color-mix(in srgb, var(--inline-audio-accent) 52%, transparent);
+.inline-world-cue:active {
+  transform: scale(0.9);
 }
 
-.inline-audio-highlight[data-state='error'] {
-  color: var(--color-entity-enemy);
-  text-decoration-color: currentcolor;
-  text-decoration-style: dotted;
-  box-shadow: none;
-  text-shadow: none;
+.inline-world-cue:focus-visible {
+  outline: 1px solid color-mix(in srgb, var(--color-portal) 72%, white);
+  outline-offset: 0.2em;
+  border-radius: 0.18em;
+  color: var(--color-neutral-200);
+  opacity: 1;
 }
 
-@keyframes inline-audio-breathe {
+.inline-world-cue[data-state='loading'] {
+  color: var(--color-neutral-300);
+  opacity: 1;
+}
+
+.inline-world-cue[data-state='loading'] .inline-world-cue__glyph {
+  animation: inline-world-cue-breathe 900ms ease-in-out infinite alternate;
+}
+
+.inline-world-cue[data-state='playing'] {
+  color: color-mix(in srgb, var(--color-portal) 72%, white);
+  opacity: 1;
+}
+
+.inline-world-cue[data-state='playing'] .inline-world-cue__glyph {
+  animation: inline-world-cue-playing 1.35s ease-in-out infinite;
+}
+
+.inline-world-cue[data-state='error'] {
+  color: color-mix(in srgb, var(--color-entity-enemy) 48%, var(--color-neutral-400));
+  opacity: 0.82;
+}
+
+@keyframes inline-world-cue-breathe {
   from {
-    box-shadow: 0 0 0.2em color-mix(in srgb, var(--inline-audio-accent) 10%, transparent);
-    opacity: 0.76;
+    opacity: 0.5;
   }
+
   to {
-    box-shadow: 0 0 0.75em color-mix(in srgb, var(--inline-audio-accent) 26%, transparent);
     opacity: 1;
   }
 }
 
+@keyframes inline-world-cue-playing {
+  0%, 100% {
+    filter:
+      drop-shadow(0 0 0.12em color-mix(in srgb, var(--color-portal) 24%, transparent))
+      drop-shadow(0 0 0.3em color-mix(in srgb, #7c5cff 12%, transparent));
+    transform: scale(0.98);
+  }
+
+  50% {
+    filter:
+      drop-shadow(0 0 0.25em color-mix(in srgb, var(--color-portal) 52%, transparent))
+      drop-shadow(0 0 0.58em color-mix(in srgb, #7c5cff 30%, transparent));
+    transform: scale(1.06);
+  }
+}
+
 @media (pointer: coarse) {
-  .inline-audio-highlight::before {
-    content: '';
-    position: absolute;
-    z-index: 1;
-    top: 50%;
-    right: -0.28em;
-    width: calc(100% + 0.56em);
-    height: max(1.8em, 44px);
-    transform: translateY(-50%);
+  .inline-world-cue::before {
+    inset-block: -0.72em;
+    inset-inline: -0.18em -0.9em;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .inline-audio-highlight {
+  .inline-world-cue {
     transition: none;
   }
 
-  .inline-audio-highlight[data-state='loading'] {
+  .inline-world-cue__glyph,
+  .inline-world-cue[data-state='loading'] .inline-world-cue__glyph,
+  .inline-world-cue[data-state='playing'] .inline-world-cue__glyph {
     animation: none;
+    transition: none;
   }
 }

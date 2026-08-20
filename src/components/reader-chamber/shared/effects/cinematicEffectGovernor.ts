@@ -27,9 +27,9 @@
  *
  * Deliberately OUT of scope (they have their own toggles and pacing):
  * atmosphere beds, the scene-score music engine (narrative.metadata.signature
- * consumers), the rare death/critical-health chamber dimming, and World Card
- * sound-button playback (a user-initiated tap — see lib/audio/cardSoundCatalog
- * — which never consumes this budget or its dedupe state).
+ * consumers), the rare death/critical-health chamber dimming, and inline
+ * World Cue playback (a user-initiated tap that never consumes this budget
+ * or its dedupe state).
  */
 
 export type CinematicSignalSource = 'narration' | 'cinematic-scroll';

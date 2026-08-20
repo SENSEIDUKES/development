@@ -21,21 +21,12 @@ export const IMAGE_STATE_OPTIONS = [
   { value: 'missing', label: 'Missing with no action' },
 ] as const;
 
-export const AUDIO_STATE_OPTIONS = [
-  { value: 'available', label: 'Available' },
-  { value: 'unavailable', label: 'Unavailable' },
-  { value: 'loading', label: 'Loading after tap' },
-  { value: 'playing', label: 'Playing after tap' },
-] as const;
-
 export const INITIAL_CARD_WORKSHOP_OVERRIDES: CardWorkshopOverrides = {
   viewportMode: 'desktop',
   imageState: 'existing',
-  audioState: 'available',
   codexEntryState: 'present',
   entityMention: 'reveal',
   portraitKind: 'non-human',
-  isAudioMuted: false,
   isSenMode: true,
   isRevealVisible: true,
   selectedSystemKind: 'status',

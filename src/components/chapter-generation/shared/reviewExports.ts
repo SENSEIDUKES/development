@@ -28,7 +28,7 @@ const finalProse = (response: ManifestChapterResponse): string => {
   const output = response.run.finalOutput;
   if (output.generatedContent?.trim()) return output.generatedContent.trim();
   return (output.blocks ?? [])
-    .map(block => block.text?.trim() || block.system?.title || block.worldCard?.displayTitle || "")
+    .map(block => block.text?.trim() || block.system?.title || "")
     .filter(Boolean)
     .join("\n\n");
 };

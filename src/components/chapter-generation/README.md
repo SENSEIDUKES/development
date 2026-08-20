@@ -4,7 +4,7 @@
 - **Source location:** `src/hooks/chapterPipeline/chapterBatch.ts`, `src/aiRouter.ts`, `src/server/routes/storyRouter.ts`, and the Story Seed, prompt, handoff, formatting, and context dependencies
 - **Workshop preview:** `?preview=chapter-generation-flow`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-17
+- **Last Workshop update:** 2026-08-19
 - **Last source comparison:** 2026-08-09
 - **Replica status:** Chapter Generation 1.0 recovery restores the proven one-chapter Plan → Manifest → Process boundary and opens its accepted result in the current Reader Chamber and Reader Codex
 
@@ -92,20 +92,33 @@ authoritative. No unapproved legacy `FatePressureTier` mapping is inferred.
 ### 3. Manifest Chapter
 
 One writing call receives the complete Chapter Packet, the `ChapterPlan`, and the
-consolidated permanent writing and formatting instructions. The restored `9f90f95`
-boundary accepts the original NDJSON block contract: Gemini supplies each unique block
-ID, paragraph/dialogue type, prose text, and any supported optional presentation
-metadata. The parser joins readable blocks into the chapter without introducing a
-normalizer, generated IDs, technical status, or a word-count acceptance rule. Manifest
-does not generate anchors, mutate story state, or advance the chapter counter.
+consolidated permanent writing and formatting instructions. Gemini supplies each
+paragraph/dialogue type, prose text, and supported optional presentation metadata;
+application code assigns the stable `c{chapter}-p{position}` block ID used by persisted
+annotations and Reader placement. Manifest does not generate anchors, mutate story
+state, or advance the chapter counter.
 
 Card output keeps the existing block structure. Human Portraits, Non-Human
 Portraits, Artifacts, and Locations use `metadata.entities` reveal moments so
 the Reader can resolve application-owned Codex identity and stored media.
-`worldCard` accepts only highlighted creature or Faction moments that do not
-belong on a visual Codex Card. System and Fate content continues through the
-structured `system` object and System Panels. The model is never asked for a
-Codex ID, media ID, storage key, or image URL.
+Bestiary species and Factions remain informational Codex metadata rather than
+visual card payloads. System and Fate content continues through the structured
+`system` object and System Panels. An audible action may include a model-safe
+`metadata.audioMoments` intent with its block reference, exact triggering phrase,
+occurrence when needed, category, variation, semantic tags, and optional related
+entity context. An entity mention, Bestiary update, or `beastEvent` alone never
+creates one. The model cannot choose or return a cue URL, filename, asset/catalog
+ID, voice key, provider ID, or catalog row.
+
+After the final Process result (including any repaired chapter), application code
+validates each intent against its exact block and action phrase, resolves it
+deterministically through the approved Library Cue catalog, and persists only
+successful annotations on `ChapterContent.audioMoments`. Model proposals are
+removed from block metadata after this resolution. A separate optional server
+voice resolver may append only completed dialogue artifacts after binding them
+to the canonical Character ID, persisted `voiceKey`, exact quote, and accepted
+block. The batch-to-Reader adapter copies that exact field; atmosphere and
+System Panel audio remain outside Worldcues.
 
 ### 4. Process Result
 
@@ -202,7 +215,7 @@ shared/
     storySeedChapterAdapter.ts canonical Story Seed/Blueprint bridge
   pipeline/
     assembleChapterPacket.ts   pure Stage 1 assembly
-    chapterEffectRules.ts      permanent seven-category effect rules
+    chapterEffectRules.ts      permanent six-category effect rules
     index.ts                   portable pipeline exports
     runChapterPipeline.ts      shared four-stage orchestration
     runChapterPipelineAsync.ts live asynchronous orchestration
@@ -249,8 +262,10 @@ architecture.
   each POST and is held only in page memory after the tester enters it.
 - Calls that complete before a later structured-output failure still return their
   provider-reported or estimated token/time records for diagnosis.
-- Five-chapter state, checkpoints, chapters, attempts, and token totals exist only in
-  page memory and are discarded on refresh or input replacement.
+- Five-chapter state, checkpoints, chapters, resolved audio annotations, attempts,
+  and token totals exist only in page memory and are discarded on refresh or input
+  replacement. Persistence here means the accepted ChapterContent → batch → Reader
+  handoff; this Workshop has no durable story repository.
 - Chapter length remains a prompt-only target. The recovery path neither enforces the
   2,000-word minimum nor makes word count part of result acceptance.
 - No database, persistence, R2, credit, queue, notification, Story Library, Reader,
@@ -327,7 +342,9 @@ per-chapter coverage.
 - **2026-08-12:** Stabilized Plan → Manifest → Process without adding a model call: code now owns chapter/arc facts, block and entity IDs, thread provenance, word counts, state construction, and technical status; Manifest preserves readable prose while warning on recovered formatting or removed optional enrichment; Blueprint descriptions normalize into canonical entity identity; under-length candidates remain reviewable and exportable; sequencing, repair, checkpoints, Reader, Codex, diagnostics, and safe exports remain intact.
 - **2026-08-13:** Recovery branch restored the proven `9f90f95` Plan, Manifest, and Process contracts; removed live-path Manifest normalization and generation-time identity reconciliation; restored positive Blueprint thread origins; and added an isolated one-chapter adapter/session that opens the accepted result in the current Reader Chamber and complete Reader Codex without changing five-chapter sequencing.
 - **2026-08-13:** Verified the recovery with the real Timeless Story Seed/Blueprint export on Gemini 3.1 Flash Lite: one manual rerun after a logged provider-demand 503 completed Plan → Manifest → Process, rendered 1,083 words, advanced a valid proposed state, and opened the same live result in the current Reader and Reader Codex.
-- **2026-08-14:** Applied the first Part Three card contract cleanup without changing Plan → Manifest → Process: visual Codex categories use metadata reveals, World Cards accept only highlighted creatures/Factions, System/Fate stay on System Panels, and model-owned card IDs or image URLs are discarded.
+- **2026-08-19:** Removed the retired standalone world-presentation payload, parser, prompt direction, effect kind, fixtures, and tests. Generation still emits visual Codex metadata and structured System/Fate content.
+- **2026-08-19:** Implemented Phase 3 audible events without another model stage: application-owned block IDs, strict model-safe action intents, exact phrase/occurrence validation, deterministic approved-catalog resolution after the accepted Process/Repair result, persisted Reader annotations, and server-owned stable character `voiceKey` assignment. Bestiary/entity metadata never creates automatic markers; atmosphere and System Panel sound ownership is unchanged.
+- **2026-08-14:** Applied the first Part Three card contract cleanup without changing Plan → Manifest → Process: visual Codex categories use metadata reveals, Bestiary/Faction records remain informational, System/Fate stay on System Panels, and model-owned card IDs or image URLs are discarded.
 
 ## Transfer notes
 

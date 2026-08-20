@@ -11,6 +11,7 @@ import {
   loadVoiceCatalog,
   parseVoiceCatalog,
   resolveProviderId,
+  resolveVoiceKeyToProviderId,
   toPublicVoiceMeta,
   VoiceCatalogValidationError,
   type PublicVoiceMeta,
@@ -334,6 +335,16 @@ describe('voiceCatalog provider ID resolution (server-internal)', () => {
   it('returns null for an unknown internal key', () => {
     const loaded = loadVoiceCatalog();
     expect(resolveProviderId(loaded.entries, 'no-such-key')).toBeNull();
+  });
+
+  it('resolves a persisted voiceKey without exposing raw catalog entries to callers', () => {
+    const loaded = loadVoiceCatalog();
+    const withId = loaded.entries.find((entry) => entry.voice_id !== null);
+    expect(withId).toBeDefined();
+    const voiceKey = deriveInternalKey((withId as VoiceCatalogEntry).file_name);
+
+    expect(resolveVoiceKeyToProviderId(voiceKey)).toBe(withId?.voice_id);
+    expect(resolveVoiceKeyToProviderId('unknown-voice-key')).toBeNull();
   });
 });
 

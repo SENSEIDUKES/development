@@ -5,7 +5,13 @@ generated/chapter-generation-api
 generated/story-seed-blueprint-api
 *.tsbuildinfo
 vite-preview.log
+vite-preview-error.log
 .firebase
+# Provider credentials are server-owned and must never be committed. Keep the
+# checked-in example contract while ignoring every local environment variant.
+.env
+.env.*
+!.env.example
 # Local Vite dev / preview logs and ad-hoc preview output
 dev.log
 dev-err.log

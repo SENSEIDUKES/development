@@ -36,7 +36,7 @@ describe("Manifest prose recovery", () => {
     }));
   });
 
-  it("preserves valid System and World Card enrichment on paragraph prose", () => {
+  it("preserves valid System Panel enrichment on paragraph prose", () => {
     const result = normalizeManifestResponse(ndjson(
       {
         id: "system-panel",
@@ -49,126 +49,111 @@ describe("Manifest prose recovery", () => {
           rows: [{ label: "State", value: "Sealed" }],
         },
       },
-      {
-        id: "world-card",
-        type: "world-card",
-        text: "The Lower Periphery opened beneath the mountain wall.",
-        worldCard: {
-          id: "model-owned-id",
-          entityType: "creature",
-          entityName: "Shadow Void Stalker (an abyss-hunting species)",
-          displayTitle: "Shadow Void Stalker",
-          imageUrl: "https://model.invalid/species.png",
-          codexEntryId: "model-owned-codex-id",
-          audioType: "hiss",
-          sound: {
-            assetId: "model-owned-audio-id",
-            size: "huge",
-            assetFamily: "spell",
-            tags: ["district", 42],
-          },
-        },
-      },
     ), 2);
 
     expect(result.blocks[0].system).toMatchObject({
       kind: "appraisal",
       title: "Hidden Meridian",
     });
-    expect(result.blocks[1]).toMatchObject({
+  });
+
+  it("preserves creature entities from the documented metadata contract", () => {
+    const result = normalizeManifestResponse(ndjson({
+      id: "creature-reveal",
       type: "paragraph",
-      worldCard: {
-        id: "dev-creature-shadow-void-stalker",
-        entityName: "Shadow Void Stalker",
-        sound: { tags: ["district"] },
-      },
-    });
-    expect(result.diagnostics.warnings).toEqual(expect.arrayContaining([
-      expect.objectContaining({ code: "block-type-normalized", blockId: "c2-p2" }),
-      expect.objectContaining({ field: "worldCard.id" }),
-      expect.objectContaining({ field: "worldCard.imageUrl" }),
-      expect.objectContaining({ field: "worldCard.codexEntryId" }),
-      expect.objectContaining({ field: "worldCard.sound.assetId" }),
-      expect.objectContaining({ field: "worldCard.sound.size" }),
-      expect.objectContaining({ field: "worldCard.sound.assetFamily" }),
-      expect.objectContaining({ field: "worldCard.sound.tags[1]" }),
-    ]));
-  });
-
-  it.each(["system", "fate_event"])(
-    "removes %s from active World Card eligibility without dropping prose",
-    (entityType) => {
-      const result = normalizeManifestResponse(ndjson({
-        id: `legacy-${entityType}`,
-        type: "paragraph",
-        text: "The chapter moment remains readable.",
-        worldCard: {
-          entityType,
-          entityName: "Legacy Signal",
-          displayTitle: "Legacy World Card",
-        },
-      }), 2);
-
-      expect(result.blocks[0].text).toBe("The chapter moment remains readable.");
-      expect(result.blocks[0].worldCard).toBeUndefined();
-      expect(result.diagnostics.warnings).toContainEqual(expect.objectContaining({
-        field: "worldCard",
-      }));
-    },
-  );
-
-  it.each([
-    ['character', 'tts_line', undefined],
-    ['artifact', 'activation_hum', { assetFamily: 'relic', artifactCategory: 'seal', tags: ['ancient', 'oath'] }],
-    ['location', 'signature', { tags: ['rain', 'court'] }],
-  ] as const)('preserves the established %s World Card audio contract', (entityType, audioType, sound) => {
-    const result = normalizeManifestResponse(ndjson({
-      id: `audio-${entityType}`,
-      type: 'paragraph',
-      text: 'The chapter highlight retains its audio direction.',
-      worldCard: {
-        entityType,
-        entityName: 'Audio Signal',
-        displayTitle: 'Audio Signal',
-        audioText: 'The signal answers.',
-        audioType,
-        ...(sound ? { sound } : {}),
+      text: "The Thunder Roc eclipsed the moon.",
+      metadata: {
+        entities: [{ name: "Thunder Roc", type: "creature", mention: "reveal" }],
       },
     }), 2);
 
-    expect(result.blocks[0].worldCard).toMatchObject({
-      entityType,
-      audioText: 'The signal answers.',
-      audioType,
-      ...(sound ? { sound } : {}),
-    });
+    expect(result.blocks[0].metadata?.entities).toEqual([
+      { name: "Thunder Roc", type: "creature", mention: "reveal" },
+    ]);
   });
 
-  it('preserves semantic sound hints for Faction World Cards', () => {
+  it("normalizes exact audible actions onto stable block references", () => {
     const result = normalizeManifestResponse(ndjson({
-      id: 'faction-highlight',
-      type: 'paragraph',
-      text: 'The oathbound procession entered the court.',
-      worldCard: {
-        entityType: 'faction',
-        entityName: 'Ninth House',
-        displayTitle: 'Judicial Enforcement Syndicate',
-        audioType: 'chant',
-        sound: {
-          element: 'lightning',
-          assetFamily: 'relic',
-          weaponType: 'bell',
-          tags: ['oath', 'procession'],
-        },
+      id: "model-picked-id",
+      type: "paragraph",
+      text: "The bell tolled once. Then the bell tolled once again.",
+      metadata: {
+        audioMoments: [{
+          blockId: "model-picked-id",
+          triggerPhrase: "bell tolled once",
+          occurrenceIndex: 1,
+          sourceCategory: "locations",
+          variation: "signatures",
+          semanticTags: ["bell", "resonant"],
+          relatedEntity: { name: "Witness Bell", type: "location" },
+        }],
+      },
+    }), 7);
+
+    expect(result.blocks[0].id).toBe("c7-p1");
+    expect(result.blocks[0].metadata?.audioMoments).toEqual([{
+      blockId: "c7-p1",
+      triggerPhrase: "bell tolled once",
+      occurrenceIndex: 1,
+      sourceCategory: "locations",
+      variation: "signatures",
+      semanticTags: ["bell", "resonant"],
+      relatedEntity: { name: "Witness Bell", type: "location" },
+    }]);
+  });
+
+  it("drops noun-only, technical, misplaced, and duplicate audio moments without losing prose", () => {
+    const result = normalizeManifestResponse(ndjson({
+      type: "paragraph",
+      text: "Wen drew the Ashen Sword from its sheath with a metallic ring.",
+      metadata: {
+        audioMoments: [{
+          triggerPhrase: "Ashen Sword",
+          sourceCategory: "weapons",
+          variation: "unsheathe",
+          semanticTags: ["sword"],
+          relatedEntity: { name: "Ashen Sword", type: "artifact" },
+        }, {
+          triggerPhrase: "drew the Ashen Sword from its sheath",
+          sourceCategory: "weapons",
+          variation: "unsheathe",
+          semanticTags: ["sword", "draw"],
+          cueUrl: "https://model.invalid/cue.mp3",
+        }, {
+          triggerPhrase: "rang three times",
+          sourceCategory: "weapons",
+          variation: "unsheathe",
+          semanticTags: ["ring"],
+        }, {
+          triggerPhrase: "drew the Ashen Sword from its sheath",
+          sourceCategory: "weapons",
+          variation: "unsheathe",
+          semanticTags: ["draw"],
+        }, {
+          triggerPhrase: "drew the Ashen Sword from its sheath",
+          sourceCategory: "weapons",
+          variation: "reload",
+          semanticTags: ["magic"],
+        }, {
+          triggerPhrase: "metallic ring",
+          sourceCategory: "weapons",
+          variation: "unsheathe",
+          semanticTags: ["ring"],
+          relatedEntity: { id: "model-owned-id", name: "Ashen Sword" },
+        }],
       },
     }), 2);
 
-    expect(result.blocks[0].worldCard?.sound).toEqual({
-      element: 'lightning',
-      assetFamily: 'relic',
-      weaponType: 'bell',
-      tags: ['oath', 'procession'],
-    });
+    expect(result.blocks[0].text).toContain("Ashen Sword");
+    expect(result.blocks[0].metadata?.audioMoments).toEqual([expect.objectContaining({
+      blockId: "c2-p1",
+      triggerPhrase: "drew the Ashen Sword from its sheath",
+      sourceCategory: "weapons",
+    })]);
+    expect(result.diagnostics.warnings).toContainEqual(expect.objectContaining({
+      code: "optional-field-removed",
+      field: "metadata.audioMoments",
+    }));
   });
 
   it("removes malformed optional enrichment without dropping its prose", () => {
@@ -185,7 +170,6 @@ describe("Manifest prose recovery", () => {
         beastEvent: { type: "reveal", profile: "not-an-object" },
       },
       system: { kind: "unknown", title: "Broken" },
-      worldCard: { entityType: "place", entityName: "Court" },
       audio: { clip: "model-owned" },
       [unsafeField]: true,
     }), 2);
@@ -202,7 +186,6 @@ describe("Manifest prose recovery", () => {
       "metadata.entities[0]",
       "metadata.beastEvent",
       "system",
-      "worldCard",
       "audio",
     ]));
     const sanitized = result.diagnostics.warnings.find(item => item.message.includes("block field"));

@@ -9,6 +9,7 @@
  */
 
 import type { StoryEntityType } from "../../chapter-generation/shared/types";
+import type { ResolvedAudioMoment } from "../../../audio/inlineAudio";
 
 export interface FateResultData {
   outcome: "FATE AVERTED" | "FATE SCARRED" | "DOOM MANIFESTED";
@@ -32,65 +33,6 @@ export interface BeastSonicProfile {
 
 /** Canonical sonic metadata for creature species and non-human portraits. */
 export interface CreatureSonicProfile extends BeastSonicProfile {}
-
-/**
- * Intentional sound roles a World Card can carry. Character quotes stay on
- * the separate "tts_line" audioType — spoken lines are never SFX assets.
- */
-export type WorldCardSoundRole =
-  | "roar"
-  | "call"
-  | "hiss"
-  | "howl"
-  | "screech"
-  | "wingbeat"
-  | "unsheathe"
-  | "metallic_ring"
-  | "reload"
-  | "activation_hum"
-  | "resonance"
-  | "awakening"
-  | "pulse"
-  | "magical_activation"
-  | "signature"
-  | "chant"
-  | "chime";
-
-export type WorldCardArtifactAssetFamily = "weapon" | "relic";
-
-export interface WorldCardSoundHints {
-  assetId?: string;
-  element?: string;
-  size?: string;
-  threatTier?: string;
-  assetFamily?: WorldCardArtifactAssetFamily;
-  weaponType?: string;
-  artifactCategory?: string;
-  tags?: string[];
-}
-
-export interface WorldCardEvent {
-  id?: string;
-  /** Active generation accepts visual-entity audio payloads; System and Fate remain legacy-reader compatibility. */
-  entityType:
-    | "character"
-    | "creature"
-    | "artifact"
-    | "location"
-    | "faction"
-    | "system"
-    | "fate_event";
-  entityName: string;
-  displayTitle: string;
-  imageUrl?: string;
-  quote?: string;
-  audioText?: string;
-  audioType?: "tts_line" | WorldCardSoundRole;
-  sound?: WorldCardSoundHints;
-  voicePreset?: string;
-  codexEntryId?: string;
-  rarity?: string;
-}
 
 export interface StoryBlockMetadata {
   sceneType?: string;
@@ -192,7 +134,6 @@ export interface StoryBlock {
   text: string;
   metadata?: StoryBlockMetadata;
   system?: SystemEvent;
-  worldCard?: WorldCardEvent;
 }
 
 export interface StoryCuePayload {
@@ -313,6 +254,8 @@ export interface ChapterMedia {
 export interface ChapterProse {
   generatedContent?: string;
   blocks?: StoryBlock[];
+  /** Validated, block-scoped Worldcues and dialogue artifacts. */
+  audioMoments?: ResolvedAudioMoment[];
   statsChangeMessage?: string;
   cuePayload?: StoryCuePayload;
 }
@@ -534,8 +477,10 @@ export interface Character extends BaseCodexEntry {
   evolutionReady?: boolean;
   evolutionReason?: string;
   availableVisualUpdate?: boolean;
-  voicePresetId?: string;
+  /** Stable provider-neutral voice identity assigned by server application logic. */
+  voiceKey?: string;
   signatureQuote?: string;
+  /** Playable synthesized artifact; a voiceKey alone never makes Reader audio available. */
   voiceClipUrl?: string;
   voiceAssetId?: string;
 }

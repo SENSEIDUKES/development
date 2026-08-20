@@ -4,12 +4,16 @@
 - **Source location:** `src/components/ReaderCodex.tsx`, `src/components/CodexSheetOverlay.tsx`, and `src/components/CodexHovercard.tsx` (verified against `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-codex`
 - **Replica created:** 2026-08-11
-- **Last Workshop update:** 2026-08-18
+- **Last Workshop update:** 2026-08-19
 - **Last source comparison:** 2026-08-18
 - **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-08-19:** Replaced the Workshop-local voice preset and browser `speechSynthesis` path with the Phase 3 identity boundary. A validated named dialogue speaker receives one deterministic provider-neutral `voiceKey` on the server-owned canonical Character and reuses it in later chapters; Bestiary species never receive voices. Reader Codex can play an existing synthesized `voiceClipUrl` through the shared audio owner, but it neither assigns a voice nor advertises generation without a working server artifact path.
+- **2026-08-19:** Documented the refined inline World Cue boundary: a named
+  Reader entity can keep its independent Codex action while a separate neutral
+  Library sound glyph beside the phrase owns cue playback.
 - **2026-08-18:** Review follow-up: the highlighted-term dragon seal now applies its cyan and violet glow as a valid chained filter at rest, on hover, and while pressed. The decorative Manifest backdrop is hidden from assistive technology and carries a `data-slot` hook for focused tests; focus, placement, and local manifestation behavior are unchanged.
 - **2026-08-18:** Brought the highlighted-term `CodexHovercard` to the approved dragon-cycle Manifest seal, matching the Reader Chamber `CodexCard`: the dashed orbit rings and accent core glow are gone — an enlarged `LibraryDragonCycleIcon` now forms the entire portal boundary (masked cyan→violet twin copies, slow 24s rotation), wrapped in the centered two-band conic aura, around a dark glass core holding the star, the Manifest label, and the awakening caption (now "Awaken Portrait" inside the core; the separate "Awaken Aetherial Portrait" line beneath the seal is retired). The pending state reads "Manifesting..." with a small spinning dragon glyph instead of the generic spinner, announces `aria-busy`, and every animation rests under `prefers-reduced-motion`. The card also now carries the story's Manifest backdrop behind the glass until a portrait exists — the same assigned-or-stable-fallback rule as the `CodexCard`, sourced from the new `development/codexManifestBackdrop.ts`: the five real production "IMMORTAL LAND" revelation landscapes, downloaded into `public/manifest-backdrops/` so no production media is hot-linked. Docking, desktop placement, focus/Escape handling, trigger theming, and the local manifestation flow are unchanged.
 - **2026-08-18:** Review pass on the spectral-glass fork: the entity classification rules moved into a single shared `resolveCodexEntityBand` in `development/codexEntityAccent.ts`, and the hovercard trigger theme now maps from that band — this also repairs the modest-tier drift, so decent/uncommon/mortal/profane artifacts highlight in the same teal (`#2DD4BF`) the card ambience already used instead of the legacy dark green. The Manifest seals dropped their redundant keyboard handlers (native button activation already covers Enter/Space), the inline CodexCard seal now announces its "Summoning..." pending state to screen readers, and the transfer notes for the new helpers are marked pending an integration decision. Desktop placement, docking, focus/Escape handling, and the manifestation flow are unchanged.
@@ -18,7 +22,7 @@
 - **2026-08-17:** Moved the Workshop-only Codex page shortcuts into `FeatureWorkspace` Workshop Controls. The shortcuts still activate the real Codex tabs in each mounted pane; Reader Codex navigation and local story-state behavior remain unchanged.
 - **2026-08-11:** Migrated the complete production Reader Codex, its responsive sheet, all six primary pages and nested sections, Reader prose highlighting/hovercards, local editing controls, and Reader Chamber navigation into DEV. Production-only auth, AI, media, and persistence seams were replaced with explicit local compatibility behavior.
 - **2026-08-12:** Aligned generated Reader sessions with DEV Story Seed, World Blueprint, Process Result, and Living Story State contracts. The adapter now translates Seed character/profile aliases, power ranks, relationships, abilities, permanent power-system data, factions, locations, artifacts, mysteries, and resolved threads; Process updates merge into existing named entities; and each Codex timeline is limited to the selected chapter.
-- **2026-08-13:** Added Part One's Development-only creature boundary: Process Result normalizes species into a lean Bestiary and persistent named non-human individuals into Portraits, with application-owned stable IDs, encounter history, and reciprocal species links. Development now separates Human and Non-Human Portraits and adds a Bestiary tab; the frozen Reference and World Card/Card Workshop behavior remain unchanged.
+- **2026-08-13:** Added Part One's Development-only creature boundary: Process Result normalizes species into a lean Bestiary and persistent named non-human individuals into Portraits, with application-owned stable IDs, encounter history, and reciprocal species links. Development now separates Human and Non-Human Portraits and adds a Bestiary tab while preserving the frozen Reference.
 - **2026-08-14:** Applied the first Part Three visual eligibility cleanup: only Human Portraits, Non-Human Portraits, Artifacts, and Locations can create new Codex artwork or render as Codex Cards. Bestiary species and Factions remain informational; legacy stored media stays readable without exposing a new Manifest action.
 
 ## What was migrated
@@ -86,7 +90,10 @@ AI-route ownership. The smallest local substitutes are used instead:
 - image manifestation/evolution produces selectable local preview images;
   saved card evolutions patch the in-memory story, while a Reader hovercard's
   one-off manifestation remains component-local;
-- voice-card generation uses a local browser speech compatibility path;
+- existing application-owned `/dialogue/` voice artifacts use the shared DEV
+  audio owner; third-party, relative, blob, and data sources are rejected; a bare
+  `voiceKey` remains an assigned-but-not-yet-synthesized identity and exposes
+  no client-side generation action;
 - story-lore extraction produces deterministic local terms while retaining the
   source loading/cache/search/deduplication behavior;
 - historical media resolution uses URLs already present on fixture records;
@@ -117,10 +124,11 @@ Legacy Bestiary/Faction media fields remain readable so existing data is not
 destructively migrated, but neither informational collection has an active
 Codex image-generation or Manifest action.
 
-The first Part Three cleanup keeps Human Portraits, Non-Human Portraits,
-Artifacts, and Locations on the visual Codex Card path. Highlighted Bestiary
-species and Factions use World Cards; System and Fate content remains on the
-existing System Panel path.
+The current boundary keeps Human Portraits, Non-Human Portraits, Artifacts,
+and Locations on the visual Codex Card path. Bestiary species and Factions
+remain informational Codex entries. A named entity in Reader prose can also
+have a separate inline World Cue glyph without changing its Codex action;
+System and Fate content remains on the existing System Panel path.
 
 Moving chapters deliberately shows that chapter's cumulative generated memory
 and only the completed chapter timeline through that point. The full
@@ -132,8 +140,9 @@ completed chapter through the existing in-memory batch/checkpoint state.
 DEV still has no reliable generated source for numeric custom relationship
 bonds, Karma fate nodes, portrait media, reward/inventory ledgers, or canonical
 story glossary entries. Those fields remain empty; the adapter does not create
-placeholder records. Existing local Codex authoring and Workshop-only media,
-voice, and glossary controls remain presentation compatibility behavior.
+placeholder records. Existing local Codex authoring plus Workshop-only media
+and glossary controls remain presentation compatibility behavior. Voice
+assignment is no longer a client compatibility control.
 
 ## Production dependencies intentionally excluded
 

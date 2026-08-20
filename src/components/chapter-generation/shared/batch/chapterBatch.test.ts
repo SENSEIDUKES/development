@@ -464,6 +464,32 @@ describe("five-chapter Development batch", () => {
 
   it("retries a failed chapter from its clean checkpoint without advancing or duplicating state", async () => {
     let failedOnce = false;
+    const withChapterThreeMoment = (
+      result: ManifestChapterResponse,
+      chapterNumber: number,
+    ): ManifestChapterResponse => {
+      if (chapterNumber !== 3) return result;
+      result.run.finalOutput.generatedContent = "The witness bell tolled once above the court.";
+      result.run.finalOutput.blocks = [{
+        id: "c3-p1",
+        type: "paragraph",
+        text: "The witness bell tolled once above the court.",
+      }];
+      result.run.finalOutput.audioMoments = [{
+        id: "world-cue:c3-p1:0:test",
+        blockId: "c3-p1",
+        triggerPhrase: "witness bell tolled once",
+        occurrenceIndex: 0,
+        sourceCategory: "locations",
+        variation: "signatures",
+        semanticTags: ["bell", "resonant"],
+        relatedEntity: { name: "Witness Hall", type: "location" },
+        cue: {
+          publicUrl: "https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Temple_Bell_1.mp3",
+        },
+      }];
+      return result;
+    };
     const firstRun = await runFiveChapterBatch({
       state: createFiveChapterBatchState(),
       request: batchRequest(),
@@ -476,7 +502,7 @@ describe("five-chapter Development batch", () => {
             usage: usageFor(3, 1),
           });
         }
-        return resultFor(request);
+        return withChapterThreeMoment(resultFor(request), chapterNumber);
       },
     });
     const checkpoint = structuredClone(firstRun.chapters[2].checkpoint);
@@ -489,7 +515,7 @@ describe("five-chapter Development batch", () => {
         const chapterNumber = request.continuation?.chapterMission.number ?? 1;
         retried.push(chapterNumber);
         if (chapterNumber === 3) expect(request.continuation).toEqual(checkpoint);
-        return resultFor(request);
+        return withChapterThreeMoment(resultFor(request), chapterNumber);
       },
     });
 
@@ -498,6 +524,9 @@ describe("five-chapter Development batch", () => {
     expect(retried).toEqual([3, 4, 5]);
     expect(completed.status).toBe("completed");
     expect(completed.chapters[2].attempts).toHaveLength(2);
+    expect(completed.chapters[2].result?.run.finalOutput.audioMoments).toHaveLength(1);
+    expect(completed.chapters[2].result?.run.finalOutput.audioMoments?.[0].id)
+      .toBe("world-cue:c3-p1:0:test");
     expect(completed.usage.calls).toHaveLength(16);
     expect(completed.usage.totals.totalTokens).toBe(
       completed.usage.calls.reduce((total, call) => total + call.totalTokens, 0),

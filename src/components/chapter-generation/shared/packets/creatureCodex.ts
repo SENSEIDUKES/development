@@ -38,6 +38,13 @@ const MODEL_OWNED_FIELDS = new Set([
   "soundUrl",
   "voiceAssetId",
   "voiceClipUrl",
+  "voiceKey",
+  "voicePresetId",
+  "voiceId",
+  "voice_id",
+  "providerVoiceId",
+  "provider_voice_id",
+  "providerId",
   "speciesId",
   "notableIndividualIds",
   "firstEncounteredChapter",
@@ -50,6 +57,70 @@ const MODEL_OWNED_FIELDS = new Set([
   "attemptId",
   "provenance",
 ]);
+
+const PROVIDER_VOICE_FIELD_KEYS = new Set([
+  "voicekey",
+  "voicepresetid",
+  "voiceid",
+  "providervoiceid",
+  "voiceproviderid",
+  "providerid",
+  "providerapikey",
+  "providertoken",
+  "providersecret",
+  "providercredential",
+  "providercredentials",
+  "elevenlabsid",
+  "elevenlabsvoiceid",
+  "elevenlabsapikey",
+  "apikey",
+  "accesstoken",
+  "secretkey",
+]);
+
+const compactProviderFieldKey = (field: string): string => field
+  .replace(/[^A-Za-z0-9]/g, "")
+  .toLocaleLowerCase();
+
+export const isProviderVoiceField = (field: string): boolean => {
+  const key = compactProviderFieldKey(field);
+  return PROVIDER_VOICE_FIELD_KEYS.has(key)
+    || key.startsWith("elevenlabs")
+    || (
+      (key.startsWith("provider") || key.startsWith("voiceprovider"))
+      && /(?:id|key|token|secret|credential|credentials)$/u.test(key)
+    );
+};
+
+export interface ScrubProviderVoiceFieldsOptions {
+  /** The canonical Character root may retain its application-owned voiceKey. */
+  preserveRootVoiceKey?: boolean;
+}
+
+/**
+ * Recursively removes provider selectors regardless of casing or separators.
+ * Canonical Character data may retain exactly one root `voiceKey`; nested
+ * voice/provider fields and every Bestiary/model-supplied voice key are gone.
+ */
+export const scrubProviderVoiceFields = (
+  record: LivingStoryRecord,
+  options: ScrubProviderVoiceFieldsOptions = {},
+): LivingStoryRecord => {
+  const scrub = (value: unknown, depth: number): unknown => {
+    if (Array.isArray(value)) return value.map(item => scrub(item, depth + 1));
+    if (!value || typeof value !== "object") return value;
+    return Object.fromEntries(
+      Object.entries(value as LivingStoryRecord).flatMap(([field, nested]) => {
+        const preserveVoiceKey = depth === 0
+          && options.preserveRootVoiceKey === true
+          && field === "voiceKey";
+        if (!preserveVoiceKey && isProviderVoiceField(field)) return [];
+        return [[field, scrub(nested, depth + 1)]];
+      }),
+    );
+  };
+  return scrub(record, 0) as LivingStoryRecord;
+};
 
 const isRecord = (value: unknown): value is LivingStoryRecord => (
   Boolean(value) && typeof value === "object" && !Array.isArray(value)
@@ -109,7 +180,10 @@ const normalizePortraitRecord = (
   record: LivingStoryRecord,
   source: RecordSource,
 ): LivingStoryRecord => {
-  const original = source === "model" ? omitModelOwnedFields(record) : structuredClone(record);
+  const original = scrubProviderVoiceFields(
+    source === "model" ? omitModelOwnedFields(record) : record,
+    { preserveRootVoiceKey: source === "current" },
+  );
   const legacyIsBeast = original.isBeast === true;
   const legacyProfile = isRecord(original.beastProfile) ? original.beastProfile : undefined;
   const existingCreatureProfile = isRecord(original.creatureProfile)
@@ -150,7 +224,9 @@ const normalizeBestiaryRecord = (
   record: LivingStoryRecord,
   source: RecordSource,
 ): LivingStoryRecord => {
-  const original = source === "model" ? omitModelOwnedFields(record) : structuredClone(record);
+  const original = scrubProviderVoiceFields(
+    source === "model" ? omitModelOwnedFields(record) : record,
+  );
   const traits = stringList(original.traits ?? original.knownTraits ?? original.abilities);
   const description = stringField(original, "description", "details", "summary");
   const classification = stringField(original, "classification", "kind", "type");
@@ -170,6 +246,12 @@ const normalizeBestiaryRecord = (
   delete original.classification;
   delete original.threatLevel;
   delete original.signatureSound;
+  // Species are informational Bestiary records. Voice identity belongs only
+  // to a named Character that has a validated spoken-dialogue moment.
+  delete original.voiceKey;
+  delete original.voiceAssetId;
+  delete original.voiceClipUrl;
+  delete original.signatureQuote;
 
   return {
     ...original,

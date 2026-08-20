@@ -65,25 +65,25 @@ function buildMockManifestedChapterDev(input: {
   const blocks: StoryBlock[] = scenario.id === "opening"
     ? [
         {
-          id: "c1-dev-p1",
+          id: "c1-p1",
           type: "paragraph",
           text: "Dust hung gold in the shaft of light through the tomb's broken roof, and Wen Shu had already swept the same corner three times just to avoid touching the altar at its center.",
           metadata: { mode: "narration", sceneType: "exploration", emotion: "wary", intensity: 0.3, tension: 0.25 },
         },
         {
-          id: "c1-dev-p2",
+          id: "c1-p2",
           type: "dialogue",
           text: "\"You've swept that corner enough for three lifetimes,\" Elder Nan said from the doorway, not unkindly. \"Finish before the incense burns out.\"",
           metadata: { mode: "dialogue", speakerName: "Elder Nan", speakerRole: "authority", emotion: "stern", intensity: 0.4 },
         },
         {
-          id: "c1-dev-p3",
+          id: "c1-p3",
           type: "paragraph",
           text: "It was the altar's shadow that gave it away — a seam in the stone too straight to be an accident. Wen Shu's fingers found the manual before his mind caught up to what he was doing.",
           metadata: { mode: "narration", emotion: "startled", intensity: 0.55, tension: 0.5, mysticism: 0.6 },
         },
         {
-          id: "c1-dev-p4",
+          id: "c1-p4",
           type: "paragraph",
           text: "A holographic seal flickered faintly across the cover the moment his qi brushed it, dim and cracked with age.",
           metadata: { mode: "narration", intensity: 0.5 },
@@ -100,32 +100,42 @@ function buildMockManifestedChapterDev(input: {
       ]
     : [
         {
-          id: "c6-dev-p1",
+          id: "c6-p1",
           type: "paragraph",
           text: `Directed toward a ${sceneTypeUsed} beat: the crack in the seal exhaled a breath that smelled of cold iron, and Mei Lian's grip on Wen Shu's wrist tightened until it hurt.`,
           metadata: { mode: "narration", sceneType: "confrontation", emotion: "dread", intensity: 0.7, tension: 0.75, danger: 0.5 },
         },
         {
-          id: "c6-dev-p2",
+          id: "c6-p2",
           type: "dialogue",
           text: "\"Whatever that is,\" Mei Lian said, voice level despite the shake in her hand, \"it's older than the seal. Older than the sect.\"",
           metadata: { mode: "dialogue", speakerName: "Mei Lian", speakerRole: "ally", emotion: "controlled fear", intensity: 0.6, tension: 0.7 },
         },
         {
-          id: "c6-dev-p3",
+          id: "c6-p3",
           type: "paragraph",
-          text: "Wen Shu called on the Ashfall Draw without thinking, and qi tore through his newly-formed meridians like a second breakthrough trying to happen too fast.",
+          text: "Wen Shu drew the Ashen Sword from its sheath, and qi tore through his newly-formed meridians like a second breakthrough trying to happen too fast.",
           metadata: {
             mode: "narration",
             intensity: 0.85,
             tension: 0.8,
             danger: 0.6,
             mysticism: 0.7,
+            entities: [{ name: "Ashen Sword", type: "artifact", mention: "reference" }],
+            audioMoments: [{
+              blockId: "c6-p3",
+              triggerPhrase: "drew the Ashen Sword from its sheath",
+              occurrenceIndex: 0,
+              sourceCategory: "weapons",
+              variation: "unsheathe",
+              semanticTags: ["sword", "draw", "blade", "metal"],
+              relatedEntity: { name: "Ashen Sword", type: "artifact" },
+            }],
             music: { mood: "restrained escalation", region: "chinese", intensity: 0.6 },
           },
         },
         {
-          id: "c6-dev-p4",
+          id: "c6-p4",
           type: "paragraph",
           text: "The Ashfall Draw settled into his meridians instead of scarring them — mastery, not just access, the manual's old pages finally making sense.",
           metadata: { mode: "narration", intensity: 0.5 },

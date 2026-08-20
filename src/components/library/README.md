@@ -4,15 +4,15 @@ Shared, reusable Library-skinned components. Not a Workshop preview feature —
 these primitives back the feature replicas (Story Seed, Story Seed Settings,
 Relics, Reader surfaces) and transfer to production alongside them.
 
-The Workshop home page's **Library Components** tab renders the ten page-level
+The Workshop home page's **Library Components** tab renders the eleven page-level
 primitives live from this folder — `LibraryPanel`, `LibraryCard`,
 `LibraryButton`, `ManifestButton`, `LibraryTextBox`, `LibraryTextArea`,
 `LibraryHeaderBadge`, `LibraryNavigationDrawer`, `LibraryBottomNavigation`,
-and `LibraryDragonCycleIcon` — the quick visual inventory of what already
+`LibraryDragonCycleIcon`, and `LibrarySoundGlyph` — the quick visual inventory of what already
 exists. The base layers `SEIButton`, `SEIBottomNavigation`, and `cn` are
 intentionally excluded: they back the primitives above and pages never import
 them. The inventory list lives in `src/workshop/LibraryComponents.tsx`;
-update it whenever one of these ten primitives is added to or renamed in the
+update it whenever one of these eleven primitives is added to or renamed in the
 barrel.
 
 ## Component ownership
@@ -29,6 +29,8 @@ Celestial Library UI system:
 - `LibraryHeaderBadge` and its emblem/header spectrum treatments
 - `LibraryDragonCycleIcon` — the shared cycle glyph (Re-do / Re-try /
   shuffle): a dragon chasing its own tail
+- `LibrarySoundGlyph` — the shared open-folio resonance mark for neutral,
+  non-platform audio actions such as inline World Cues
 - `SEIButton`, `SEIBottomNavigation`, `cn`, shared glass-field styles, and the
   Library spectrum styles
 - the public `index.ts` exports used by feature consumers
@@ -42,6 +44,12 @@ Reusable visual names use the `library-*` namespace:
 `library-spectrum-glow`, `library-spectrum-flow`,
 `library-title-presence`, and `library-subtitle-shimmer`. There are no legacy
 `seed-*` aliases.
+
+- **2026-08-19:** Added `LibrarySoundGlyph`, the custom neutral open-folio and
+  resonance mark used by inline World Cue controls, and added it to the live
+  Library Components inventory. Refined its Reader presentation into a
+  circle-free, footnote-scale annotation with a separate invisible pointer
+  target and a soft active glow.
 
 - **2026-08-18:** Enhanced `LibraryDragonCycleIcon` with full accessibility
   support (`title`, `titleId`, `decorative`, `role`, and `aria-*` attributes),

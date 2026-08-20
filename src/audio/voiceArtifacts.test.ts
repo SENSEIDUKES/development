@@ -27,6 +27,10 @@ describe('application-owned voice artifacts', () => {
       .toBe(false);
     expect(isApplicationOwnedVoiceArtifactUrl('blob:https://celestialaudio.seihouse.org/local'))
       .toBe(false);
+    expect(isApplicationOwnedVoiceArtifactUrl('https://user:pass@celestialaudio.seihouse.org/voice/x.mp3'))
+      .toBe(false);
+    expect(isApplicationOwnedVoiceArtifactUrl('https://celestialaudio.seihouse.org/cues/x.mp3'))
+      .toBe(false);
     expect(isApplicationOwnedVoiceArtifactUrl(undefined)).toBe(false);
   });
 

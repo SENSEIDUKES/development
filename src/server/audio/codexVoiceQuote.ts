@@ -37,6 +37,9 @@ const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 const MAX_SIGNATURE_QUOTE_LENGTH = 320;
 const DEFAULT_TIMEOUT_MS = 45_000;
+const R2_CONNECTION_TIMEOUT_MS = 5_000;
+const R2_REQUEST_TIMEOUT_MS = 30_000;
+const R2_MAX_ATTEMPTS = 3;
 
 export type CodexVoiceEnvironment = Record<string, string | undefined>;
 
@@ -242,10 +245,18 @@ export class R2VoiceArtifactStore implements VoiceArtifactStore {
     private readonly config: CodexVoiceConfig['r2'],
     client?: S3Client,
   ) {
+    // A stalled storage call would hold the reader's tap open indefinitely,
+    // so connection and request lifetimes and retries are all bounded.
     const clientConfig: S3ClientConfig = {
       region: config.region,
       endpoint: config.endpoint,
       forcePathStyle: true,
+      maxAttempts: R2_MAX_ATTEMPTS,
+      requestHandler: {
+        connectionTimeout: R2_CONNECTION_TIMEOUT_MS,
+        requestTimeout: R2_REQUEST_TIMEOUT_MS,
+        throwOnRequestTimeout: true,
+      },
       credentials: {
         accessKeyId: config.accessKeyId,
         secretAccessKey: config.secretAccessKey,

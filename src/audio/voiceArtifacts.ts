@@ -15,7 +15,10 @@ export const VOICE_ARTIFACT_PATH_PREFIX = '/voice/';
 /**
  * Artifact contract version. It is part of the stored object identity, so a
  * future change to how a signature quote is recorded cannot silently reuse an
- * older recording.
+ * older recording. The synthesis model is part of the server object key but is
+ * not visible to the client-side validity check below, so changing
+ * ELEVENLABS_MODEL_ID also requires bumping this version to invalidate every
+ * persisted artifact.
  */
 export const CODEX_VOICE_ARTIFACT_VERSION = 'v1';
 

@@ -1126,6 +1126,7 @@ describe("server model selection and failure handling", () => {
     // Chapter generation is completely disconnected from ElevenLabs. Any
     // network call at all during a run would be a regression of that boundary.
     const fetchSpy = vi.spyOn(globalThis, "fetch");
+    try {
     const response = await handleChapterGenerationHttp({
       method: "POST",
       headers: { Authorization: "Bearer development-access-token" },
@@ -1146,16 +1147,18 @@ describe("server model selection and failure handling", () => {
     expect(body.run.finalOutput.audioMoments ?? []).not.toEqual(expect.arrayContaining([
       expect.objectContaining({ sourceCategory: "voice" }),
     ]));
-    const serialized = JSON.stringify(body);
+    const serialized = JSON.stringify(body).toLowerCase();
     expect(serialized).not.toContain("elevenlabs");
     // Worldcue library URLs share this origin; only the voice namespace is banned.
     expect(serialized).not.toContain("celestialaudio.seihouse.org/voice/");
-    expect(serialized).not.toContain("voiceClip");
+    expect(serialized).not.toContain("voiceclip");
     expect(serialized).not.toContain("voice_id");
-    expect(serialized).not.toContain("providerVoiceId");
-    expect(fetchSpy.mock.calls.map(([input]) => String(input)))
-      .not.toEqual(expect.arrayContaining([expect.stringContaining("elevenlabs")]));
-    fetchSpy.mockRestore();
+    expect(serialized).not.toContain("providervoiceid");
+    // Chapter generation reaches no network at all through this path.
+    expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      fetchSpy.mockRestore();
+    }
   });
 
   it("rejects a browser model outside the server allow-list as a request error", async () => {

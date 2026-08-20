@@ -2,7 +2,11 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useCodexVoiceQuote, type CodexVoiceResolution } from './useCodexVoiceQuote';
+import {
+  codexVoiceIdentity,
+  useCodexVoiceQuote,
+  type CodexVoiceResolution,
+} from './useCodexVoiceQuote';
 import type { Character } from '../types';
 import { CODEX_VOICE_ARTIFACT_VERSION } from '../../../../audio/voiceArtifacts';
 
@@ -222,6 +226,25 @@ describe('useCodexVoiceQuote', () => {
     });
     expect(state()).toBe('ready');
     expect(playback.replace).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends the stored Codex identity the server needs, and nothing it must own', () => {
+    const identity = codexVoiceIdentity(character({
+      voiceKey: 'ancient-master-female',
+      portraitKind: 'human',
+    }));
+
+    // Without the persisted quote the server cannot resolve anything.
+    expect(identity).toMatchObject({
+      id: 'character-wen-shu',
+      name: 'Wen Shu',
+      signatureQuote: QUOTE,
+      voiceKey: 'ancient-master-female',
+    });
+    // The client never proposes the audio itself.
+    for (const forbidden of ['text', 'quote', 'model', 'voice_id', 'objectKey', 'publicUrl', 'url']) {
+      expect(identity).not.toHaveProperty(forbidden);
+    }
   });
 
   it('marks a Character with no signature quote unavailable', () => {

@@ -190,12 +190,9 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
             <span>"{char.signatureQuote}"</span>
             <button
               type="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }}
               onClick={() => onQuoteTap(char)}
               disabled={voiceIsBusy || voiceStatus.state === 'unavailable'}
               aria-label={voiceAriaLabel}
-              aria-live="polite"
               data-voice-state={voiceStatus.state}
               title={voiceStatus.state === 'error' ? voiceStatus.message : undefined}
               className={`flex items-center gap-1.5 self-start min-h-[32px] px-1 -mx-1 text-[9px] uppercase tracking-wider font-mono transition-colors not-italic ${
@@ -211,9 +208,11 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
               {voiceIcon}
               <span>{voiceLabel}</span>
             </button>
-            {voiceStatus.state === 'error' && voiceStatus.message && (
-              <span className="text-[9px] not-italic text-human/80 font-mono">{voiceStatus.message}</span>
-            )}
+            {/* One polite region for the status text, so a transition is
+                announced without re-announcing the whole control. */}
+            <span role="status" aria-live="polite" className="text-[9px] not-italic text-human/80 font-mono">
+              {voiceStatus.state === 'error' && voiceStatus.message ? voiceStatus.message : ''}
+            </span>
           </div>
         )}
 

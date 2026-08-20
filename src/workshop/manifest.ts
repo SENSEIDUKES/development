@@ -130,7 +130,7 @@ export const workshopEntries: WorkshopEntry[] = [
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/ReaderCodex.tsx',
-      lastCompared: '2026-08-20',
+      lastCompared: '2026-08-13',
     },
   },
   {

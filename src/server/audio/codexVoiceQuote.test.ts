@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { S3Client } from '@aws-sdk/client-s3';
 import {
   CodexVoiceQuoteService,
+  R2VoiceArtifactStore,
+  assertVoiceObjectKey,
   codexVoiceObjectKey,
   createConfiguredCodexVoiceQuoteService,
   isCodexVoiceConfigured,
@@ -229,5 +232,97 @@ describe('Codex voice configuration', () => {
 
   it('creates no service at all when nothing is configured', () => {
     expect(createConfiguredCodexVoiceQuoteService({})).toBeUndefined();
+  });
+});
+
+describe('R2 voice artifact store', () => {
+  const objectKey = `voice/${CODEX_VOICE_ARTIFACT_VERSION}/${'a'.repeat(64)}.mp3`;
+  const r2 = {
+    accessKeyId: 'server-only-access-key',
+    bucket: 'library',
+    endpoint: 'https://accountid.r2.cloudflarestorage.com',
+    publicBaseUrl: 'https://celestialaudio.seihouse.org',
+    region: 'auto',
+    secretAccessKey: 'server-only-secret',
+  };
+  const httpError = (status: number, name: string) => Object.assign(new Error(name), {
+    name,
+    $metadata: { httpStatusCode: status },
+  });
+  const fakeClient = (send: (command: unknown) => Promise<unknown>) => {
+    const spy = vi.fn(send);
+    return { client: { send: spy } as unknown as S3Client, send: spy };
+  };
+  const commandName = (command: unknown) => (command as object).constructor.name;
+
+  it('uploads once under an if-none-match precondition', async () => {
+    const { client, send } = fakeClient(async command => (
+      commandName(command) === 'HeadObjectCommand'
+        ? Promise.reject(httpError(404, 'NotFound'))
+        : {}
+    ));
+    const store = new R2VoiceArtifactStore(r2, client);
+
+    expect(await store.has(objectKey)).toBe(false);
+    await store.put({ objectKey, bytes: new Uint8Array([1]), checksumSha256: 'abc' });
+
+    const put = send.mock.calls.map(([command]) => command)
+      .find(command => commandName(command) === 'PutObjectCommand') as { input: Record<string, unknown> };
+    expect(put.input).toMatchObject({
+      Bucket: 'library',
+      Key: objectKey,
+      ContentType: 'audio/mpeg',
+      IfNoneMatch: '*',
+    });
+  });
+
+  it('treats a precondition failure on an existing object as success', async () => {
+    const { client, send } = fakeClient(async command => (
+      commandName(command) === 'PutObjectCommand'
+        ? Promise.reject(httpError(412, 'PreconditionFailed'))
+        : { ContentLength: 1024, ContentType: 'audio/mpeg' }
+    ));
+    const store = new R2VoiceArtifactStore(r2, client);
+
+    await expect(store.put({ objectKey, bytes: new Uint8Array([1]), checksumSha256: 'abc' }))
+      .resolves.toBeUndefined();
+    expect(send).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries a single conditional conflict before failing', async () => {
+    let putAttempts = 0;
+    const { client } = fakeClient(async command => {
+      if (commandName(command) === 'PutObjectCommand') {
+        putAttempts += 1;
+        if (putAttempts === 1) return Promise.reject(httpError(409, 'ConditionalRequestConflict'));
+        return {};
+      }
+      return Promise.reject(httpError(404, 'NotFound'));
+    });
+    const store = new R2VoiceArtifactStore(r2, client);
+
+    await store.put({ objectKey, bytes: new Uint8Array([1]), checksumSha256: 'abc' });
+    expect(putAttempts).toBe(2);
+  });
+
+  it('refuses any key outside the immutable voice namespace', async () => {
+    const { client, send } = fakeClient(async () => ({}));
+    const store = new R2VoiceArtifactStore(r2, client);
+
+    expect(() => assertVoiceObjectKey(`voice/${CODEX_VOICE_ARTIFACT_VERSION}/not-a-digest.mp3`))
+      .toThrow(/immutable voice namespace/u);
+    expect(() => assertVoiceObjectKey('dialogue/v1/' + 'a'.repeat(64) + '.mp3'))
+      .toThrow(/immutable voice namespace/u);
+    await expect(store.has('../secrets.mp3')).rejects.toThrow(/immutable voice namespace/u);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('encodes each path segment of the public URL', () => {
+    const { client } = fakeClient(async () => ({}));
+    const store = new R2VoiceArtifactStore(r2, client);
+
+    expect(store.publicUrl(objectKey))
+      .toBe(`https://celestialaudio.seihouse.org/${objectKey}`);
+    expect(() => store.publicUrl('voice/v1/../../escape.mp3')).toThrow();
   });
 });

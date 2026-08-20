@@ -46,6 +46,12 @@ export interface UseCodexVoiceQuoteOptions {
 
 const VOICE_QUOTE_ENDPOINT = '/api/codex-voice-quote';
 
+/**
+ * Server synthesis is bounded at 45–120s, so a stalled request must abort or
+ * the Character stays stuck in `generating`.
+ */
+const VOICE_QUOTE_TIMEOUT_MS = 130_000;
+
 const GENERIC_ERROR = 'That voice could not be prepared. Tap to try again.';
 
 const isRecord = (value: unknown): value is Record<string, unknown> => (
@@ -75,15 +81,28 @@ export const currentCodexVoiceArtifact = (
     : undefined
 );
 
+const nonEmpty = (value: unknown): value is string => (
+  typeof value === 'string' && value.trim().length > 0
+);
+
+/**
+ * Every persisted artifact field is validated before it can reach the Codex.
+ * A partial artifact would still look playable but would fail the reuse check,
+ * silently regenerating on each later tap.
+ */
 const parseResolution = (payload: unknown): CodexVoiceResolution => {
   const voice = isRecord(payload) && isRecord(payload.voice) ? payload.voice : undefined;
   const artifact = voice && isRecord(voice.artifact) ? voice.artifact : undefined;
   if (
     !voice
     || !artifact
-    || typeof voice.characterId !== 'string'
-    || typeof voice.voiceKey !== 'string'
-    || typeof artifact.publicUrl !== 'string'
+    || !nonEmpty(voice.characterId)
+    || !nonEmpty(voice.voiceKey)
+    || !nonEmpty(artifact.publicUrl)
+    || !nonEmpty(artifact.quote)
+    || !nonEmpty(artifact.voiceKey)
+    || !nonEmpty(artifact.model)
+    || !nonEmpty(artifact.artifactVersion)
     || !isApplicationOwnedVoiceArtifactUrl(artifact.publicUrl)
   ) {
     throw new Error('The server returned an unusable Character voice.');
@@ -91,9 +110,31 @@ const parseResolution = (payload: unknown): CodexVoiceResolution => {
   return {
     characterId: voice.characterId,
     voiceKey: voice.voiceKey,
-    artifact: artifact as unknown as CodexVoiceArtifact,
+    artifact: {
+      publicUrl: artifact.publicUrl,
+      quote: artifact.quote,
+      voiceKey: artifact.voiceKey,
+      model: artifact.model,
+      artifactVersion: artifact.artifactVersion,
+    },
   };
 };
+
+/**
+ * The stored Codex fields the server needs to resolve one canonical Character:
+ * its identity, its persisted signature quote, its existing voice identity,
+ * and the metadata that decides whether it is an eligible speaking Character.
+ */
+export const codexVoiceIdentity = (character: Character) => ({
+  id: character.id,
+  name: character.name,
+  signatureQuote: character.signatureQuote,
+  ...(character.voiceKey ? { voiceKey: character.voiceKey } : {}),
+  ...(character.portraitKind ? { portraitKind: character.portraitKind } : {}),
+  ...(character.isBeast === undefined ? {} : { isBeast: character.isBeast }),
+  ...(character.creatureProfile ? { creatureProfile: character.creatureProfile } : {}),
+  ...(character.speciesId ? { speciesId: character.speciesId } : {}),
+});
 
 const defaultRequestVoice = async (
   character: Character,
@@ -105,8 +146,11 @@ const defaultRequestVoice = async (
       'Content-Type': 'application/json',
       ...(accessToken?.trim() ? { Authorization: `Bearer ${accessToken.trim()}` } : {}),
     },
-    // The client sends identity only: never text, a voice, a key, or a URL.
-    body: JSON.stringify({ character: { id: character.id, name: character.name } }),
+    signal: AbortSignal.timeout(VOICE_QUOTE_TIMEOUT_MS),
+    // The persisted Codex identity the server validates. It carries no free
+    // text, provider voice, object key, model, or playback URL: the server
+    // owns all of those, and the endpoint rejects the request if any appear.
+    body: JSON.stringify({ character: codexVoiceIdentity(character) }),
   });
   const payload = await response.json().catch(() => undefined);
   if (!response.ok) {

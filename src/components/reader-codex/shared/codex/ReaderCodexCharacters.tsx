@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Character, Location } from '../types';
 import { useCodex } from './CodexContext';
 import { useAppStore } from '../codexCompatibility';
@@ -46,11 +46,17 @@ export function ReaderCodexCharacters({
   const isFreeUserOnHubStory = isHubStoryLockedForUser(activeStory, userProfile);
 
   const [charViewStyle, setCharViewStyle] = useState<'cards' | 'profiles'>('cards');
+  // Synthesis resolves seconds after the tap, so the write must start from the
+  // newest memory rather than the snapshot captured when the tap began.
+  const memoryRef = useRef(memory);
+  memoryRef.current = memory;
+
   /** The server-resolved voice identity becomes part of the Codex Character. */
   const persistResolvedVoice = useCallback((resolution: CodexVoiceResolution) => {
+    const current = memoryRef.current;
     onUpdateMemory({
-      ...memory,
-      characters: (memory.characters || []).map(character => (
+      ...current,
+      characters: (current.characters || []).map(character => (
         character.id === resolution.characterId
           ? {
               ...character,
@@ -60,7 +66,7 @@ export function ReaderCodexCharacters({
           : character
       )),
     });
-  }, [memory, onUpdateMemory]);
+  }, [onUpdateMemory]);
 
   const { handleQuoteTap, voiceStatus } = useCodexVoiceQuote({
     accessToken: voiceAccessToken,

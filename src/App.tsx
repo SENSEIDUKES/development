@@ -20,6 +20,10 @@ const ClosedDoorCultivationWorkspace = lazy(() =>
   import('./workshop/previews/closed-door-cultivation/ClosedDoorCultivationWorkspace')
     .then(module => ({ default: module.ClosedDoorCultivationWorkspace })),
 );
+const CharacterVoiceWorkspace = lazy(() =>
+  import('./workshop/previews/character-voice/CharacterVoiceWorkspace')
+    .then(module => ({ default: module.CharacterVoiceWorkspace })),
+);
 const ReaderCodexWorkspace = lazy(() =>
   import('./workshop/previews/reader-codex/ReaderCodexWorkspace')
     .then(module => ({ default: module.ReaderCodexWorkspace })),
@@ -55,6 +59,7 @@ const previewRegistry: Record<string, ComponentType> = {
   'audio-player-smoke': AudioPlayerSmokeWorkspace,
   'card-workshop': CardWorkshopWorkspace,
   'celestial-backdrop': CelestialBackdropWorkspace,
+  'character-voice': CharacterVoiceWorkspace,
   'chapter-generation-flow': ChapterGenerationFlowWorkspace,
   'chapter-generation-manifestation': ChapterManifestationWorkspace,
   'idle-cultivation': ClosedDoorCultivationWorkspace,

@@ -1122,22 +1122,10 @@ describe("server model selection and failure handling", () => {
     expect(JSON.stringify(response.body)).not.toContain("stack");
   });
 
-  it("finalizes server-produced dialogue artifacts into the accepted chapter", async () => {
-    const dialogueArtifactResolver = vi.fn(async ({ characters }: {
-      characters: Array<Record<string, unknown>>;
-    }) => {
-      const rin = characters.find(character => character.name === "Rin");
-      expect(rin?.id).toEqual(expect.any(String));
-      expect(rin?.voiceKey).toEqual(expect.any(String));
-      return [{
-        characterId: String(rin?.id),
-        blockId: "c1-p2",
-        triggerPhrase: '"Your oath has a seam, Magistrate,"',
-        occurrenceIndex: 0,
-        publicUrl: "https://celestialaudio.seihouse.org/dialogue/rin/c1-p2.mp3",
-        semanticTags: ["dialogue", "accusation"],
-      }];
-    });
+  it("never calls a speech provider or attaches voice audio while generating a chapter", async () => {
+    // Chapter generation is completely disconnected from ElevenLabs. Any
+    // network call at all during a run would be a regression of that boundary.
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
     const response = await handleChapterGenerationHttp({
       method: "POST",
       headers: { Authorization: "Bearer development-access-token" },
@@ -1148,54 +1136,6 @@ describe("server model selection and failure handling", () => {
     }, {
       environment,
       providerFactory: () => new RecordingProvider(),
-      dialogueArtifactResolver,
-    });
-
-    expect(response.status).toBe(200);
-    const body = response.body as ManifestChapterResponse;
-    expect(dialogueArtifactResolver).toHaveBeenCalledTimes(1);
-    expect(body.run.finalOutput.audioMoments).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        sourceCategory: "voice",
-        blockId: "c1-p2",
-        triggerPhrase: '"Your oath has a seam, Magistrate,"',
-        relatedEntity: expect.objectContaining({ id: expect.any(String), name: "Rin" }),
-      }),
-    ]));
-    const persistedRin = body.run.processingResult.proposedLivingStoryState.codex.characters
-      .find(character => character.name === "Rin");
-    expect(persistedRin).toMatchObject({
-      voiceKey: expect.any(String),
-      voiceClipUrl: "https://celestialaudio.seihouse.org/dialogue/rin/c1-p2.mp3",
-    });
-    const rinUpdates = body.run.processingResult.codexUpdates.characters
-      .filter(character => character.name === "Rin");
-    expect(rinUpdates).toHaveLength(1);
-    expect(rinUpdates[0]).toMatchObject({
-      name: "Rin",
-      voiceKey: expect.any(String),
-      voiceClipUrl: "https://celestialaudio.seihouse.org/dialogue/rin/c1-p2.mp3",
-    });
-    expect(JSON.stringify(body)).not.toContain("voice_id");
-    expect(JSON.stringify(body)).not.toContain("providerVoiceId");
-  });
-
-  it("keeps an accepted chapter readable when dialogue synthesis fails", async () => {
-    const onError = vi.fn();
-    const response = await handleChapterGenerationHttp({
-      method: "POST",
-      headers: { Authorization: "Bearer development-access-token" },
-      body: {
-        artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
-        model: "google/gemini-test",
-      },
-    }, {
-      environment,
-      providerFactory: () => new RecordingProvider(),
-      dialogueArtifactResolver: async () => {
-        throw new Error("private synthesis failure");
-      },
-      onError,
     });
 
     expect(response.status).toBe(200);
@@ -1206,8 +1146,16 @@ describe("server model selection and failure handling", () => {
     expect(body.run.finalOutput.audioMoments ?? []).not.toEqual(expect.arrayContaining([
       expect.objectContaining({ sourceCategory: "voice" }),
     ]));
-    expect(JSON.stringify(body)).not.toContain("private synthesis failure");
-    expect(onError).toHaveBeenCalledWith(expect.any(Error));
+    const serialized = JSON.stringify(body);
+    expect(serialized).not.toContain("elevenlabs");
+    // Worldcue library URLs share this origin; only the voice namespace is banned.
+    expect(serialized).not.toContain("celestialaudio.seihouse.org/voice/");
+    expect(serialized).not.toContain("voiceClip");
+    expect(serialized).not.toContain("voice_id");
+    expect(serialized).not.toContain("providerVoiceId");
+    expect(fetchSpy.mock.calls.map(([input]) => String(input)))
+      .not.toEqual(expect.arrayContaining([expect.stringContaining("elevenlabs")]));
+    fetchSpy.mockRestore();
   });
 
   it("rejects a browser model outside the server allow-list as a request error", async () => {

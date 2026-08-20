@@ -122,11 +122,23 @@ export const workshopEntries: WorkshopEntry[] = [
     },
   },
   {
+    id: 'character-voice',
+    title: 'Character Voice',
+    description: 'The Reader Codex signature-quote voice on a named Character Portrait card: the control is offered before any recording exists, the first tap generates once through the server, and every later tap replays the stored SEIHouse artifact.',
+    category: 'codex-ui',
+    version: 'v1.0',
+    source: {
+      repository: 'SENSEIDUKES/Light-Novels',
+      path: 'src/components/ReaderCodex.tsx',
+      lastCompared: '2026-08-20',
+    },
+  },
+  {
     id: 'reader-codex',
     title: 'Reader Codex',
     description: 'The complete Living Codex sheet with separate Human/Non-Human Portraits, a species Bestiary, Karma, Power Rankings, Artifacts, Fate, and Lore, wired to local Reader story state.',
     category: 'codex-ui',
-    version: 'v1.1',
+    version: 'v1.2',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/ReaderCodex.tsx; src/components/CodexSheetOverlay.tsx',

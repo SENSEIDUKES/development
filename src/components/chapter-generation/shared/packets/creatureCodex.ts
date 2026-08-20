@@ -38,6 +38,7 @@ const MODEL_OWNED_FIELDS = new Set([
   "soundUrl",
   "voiceAssetId",
   "voiceClipUrl",
+  "voiceClip",
   "voiceKey",
   "voicePresetId",
   "voiceId",
@@ -251,6 +252,7 @@ const normalizeBestiaryRecord = (
   delete original.voiceKey;
   delete original.voiceAssetId;
   delete original.voiceClipUrl;
+  delete original.voiceClip;
   delete original.signatureQuote;
 
   return {

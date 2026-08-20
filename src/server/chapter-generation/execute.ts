@@ -27,102 +27,14 @@ import {
   GeminiChapterTextProvider,
   type ChapterTextModelProvider,
 } from "./provider";
-import {
-  finalizeResolvedDialogueAudioMoments,
-  type CompletedDialogueArtifactCandidate,
-} from "../audio/resolvedDialogueAudio";
-import type { ResolvedDialogueAudioMoment } from "../../audio/inlineAudio";
-import { isApplicationOwnedDialogueArtifactUrl } from "../../audio/dialogueArtifacts";
-import type { ChapterContent } from "../../components/chapter-generation/shared/types";
-import {
-  canonicalLivingStoryEntityKey,
-  type LivingStoryRecord,
-} from "../../components/chapter-generation/shared/packets/livingStoryEntityIdentity";
-
-const nonEmptyCharacterValue = (value: unknown): string | undefined => (
-  typeof value === "string" && value.trim() ? value.trim() : undefined
-);
-
-const characterIdentity = (character: LivingStoryRecord): string | undefined => (
-  nonEmptyCharacterValue(character.id)
-    ?? nonEmptyCharacterValue(character.persistenceId)
-);
-
-const characterNameKey = (character: LivingStoryRecord): string | undefined => {
-  const name = nonEmptyCharacterValue(character.name);
-  return name ? canonicalLivingStoryEntityKey(name) : undefined;
-};
-
-const persistCharacterVoiceArtifacts = (
-  run: ManifestChapterResponse["run"],
-  moments: readonly ResolvedDialogueAudioMoment[],
-): void => {
-  const firstArtifactByCharacter = new Map<string, string>();
-  for (const moment of moments) {
-    if (!firstArtifactByCharacter.has(moment.relatedEntity.id)) {
-      firstArtifactByCharacter.set(moment.relatedEntity.id, moment.artifact.publicUrl);
-    }
-  }
-  if (firstArtifactByCharacter.size === 0) return;
-
-  const changedVoiceClipIds = new Set<string>();
-  const characters = run.processingResult.proposedLivingStoryState.codex.characters
-    .map(character => {
-      if (isApplicationOwnedDialogueArtifactUrl(nonEmptyCharacterValue(character.voiceClipUrl))) {
-        return character;
-      }
-      const id = characterIdentity(character);
-      const voiceClipUrl = id ? firstArtifactByCharacter.get(id) : undefined;
-      if (!id || !voiceClipUrl) return character;
-      changedVoiceClipIds.add(id);
-      return { ...character, voiceClipUrl };
-    });
-  if (changedVoiceClipIds.size === 0) return;
-  run.processingResult.proposedLivingStoryState.codex.characters = characters;
-
-  const updates = run.processingResult.codexUpdates.characters.map(character => ({ ...character }));
-  for (const character of characters) {
-    const id = characterIdentity(character);
-    if (!id || !changedVoiceClipIds.has(id)) continue;
-    const nameKey = characterNameKey(character);
-    const updateIndex = updates.findIndex(update => {
-      const updateId = characterIdentity(update);
-      if (updateId) return updateId === id;
-      return Boolean(nameKey && characterNameKey(update) === nameKey);
-    });
-    if (updateIndex >= 0) {
-      updates[updateIndex] = { ...updates[updateIndex], voiceClipUrl: character.voiceClipUrl };
-    } else {
-      updates.push({
-        name: character.name,
-        voiceClipUrl: character.voiceClipUrl,
-      });
-    }
-  }
-  run.processingResult.codexUpdates.characters = updates;
-};
 
 export type ChapterProviderFactory = (input: {
   apiKey: string;
   model: string;
 }) => ChapterTextModelProvider;
 
-export interface DialogueArtifactResolverInput {
-  /** Accepted final chapter after any repair and World Cue resolution. */
-  chapter: ChapterContent;
-  /** Canonical Characters with their persisted provider-neutral voiceKey. */
-  characters: LivingStoryRecord[];
-}
-
-/** Separate server synthesis owner. It returns completed public artifacts only. */
-export type DialogueArtifactResolver = (
-  input: DialogueArtifactResolverInput,
-) => Promise<readonly CompletedDialogueArtifactCandidate[]>;
-
 export interface ExecuteChapterGenerationOptions {
   providerFactory?: ChapterProviderFactory;
-  dialogueArtifactResolver?: DialogueArtifactResolver;
-  onDialogueAudioError?: (error: unknown) => void;
   onStageChange?: (stage: ChapterUsageStage) => void;
   verifiedContinuation?: ChapterGenerationContinuation;
 }
@@ -260,34 +172,6 @@ export async function executeChapterGeneration(
         ...(validationIssues?.length ? { validationIssues } : {}),
       },
     );
-  }
-
-  if (options.dialogueArtifactResolver) {
-    try {
-      const characters = run.processingResult.proposedLivingStoryState.codex.characters;
-      const candidates = await options.dialogueArtifactResolver({
-        chapter: structuredClone(run.finalOutput),
-        characters: structuredClone(characters),
-      });
-      const dialogueMoments = finalizeResolvedDialogueAudioMoments({
-        characters,
-        blocks: run.finalOutput.blocks ?? [],
-        candidates,
-      });
-      if (dialogueMoments.length > 0) {
-        const existingMoments = run.finalOutput.audioMoments ?? [];
-        const existingIds = new Set(existingMoments.map(moment => moment.id));
-        run.finalOutput.audioMoments = [
-          ...existingMoments,
-          ...dialogueMoments.filter(moment => !existingIds.has(moment.id)),
-        ];
-        persistCharacterVoiceArtifacts(run, dialogueMoments);
-      }
-    } catch (error) {
-      // Voice synthesis is additive. A provider failure cannot invalidate an
-      // otherwise accepted chapter, and no glyph appears without an artifact.
-      options.onDialogueAudioError?.(error);
-    }
   }
 
   const nextContinuation = sealChapterContinuation({

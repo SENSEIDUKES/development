@@ -1,8 +1,5 @@
 import { estimateTokens } from "../lib/helpers";
-import {
-  resolveChapterAudioMoments,
-  retainValidDialogueAudioMoments,
-} from "../../../../audio/inlineAudio";
+import { resolveChapterAudioMoments } from "../../../../audio/inlineAudio";
 import type { GenerationStage } from "../stageTypes";
 import type { ChapterContent } from "../types";
 import type {
@@ -68,14 +65,9 @@ export function buildChapterPipelineRun(
   } = input;
   const chapterForOutput = repairedChapter ?? manifestedChapter;
   const acceptedChapter: ChapterContent = { ...chapterForOutput };
-  const dialogueAudioMoments = retainValidDialogueAudioMoments(
-    chapterForOutput.blocks ?? [],
-    chapterForOutput.audioMoments ?? [],
-  );
   delete acceptedChapter.audioMoments;
   const acceptedBlocks = acceptedChapter.blocks ?? [];
-  const worldCueMoments = resolveChapterAudioMoments(acceptedBlocks).audioMoments;
-  const audioMoments = [...worldCueMoments, ...dialogueAudioMoments];
+  const audioMoments = resolveChapterAudioMoments(acceptedBlocks).audioMoments;
   if (acceptedChapter.blocks) {
     acceptedChapter.blocks = acceptedBlocks.map(block => {
       if (!block.metadata?.audioMoments) return block;

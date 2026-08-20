@@ -5,7 +5,8 @@ import tailwindcss from '@tailwindcss/vite';
 import { handleChapterGenerationHttp } from './src/server/chapter-generation/http';
 import type { ChapterGenerationStreamEvent } from './src/components/chapter-generation/shared/liveChapterGeneration';
 import { handleStorySeedBlueprintHttp } from './src/server/story-seed-blueprint/http';
-import { createConfiguredDialogueArtifactResolver } from './src/server/audio/dialogueArtifactResolver';
+import { handleCodexVoiceQuoteHttp } from './src/server/audio/codexVoiceQuoteHttp';
+import { createConfiguredCodexVoiceQuoteService } from './src/server/audio/codexVoiceQuote';
 
 const MAX_CHAPTER_REQUEST_BYTES = 2 * 1024 * 1024;
 
@@ -41,13 +42,15 @@ const acceptsChapterStream = (request: IncomingMessage) =>
 const generationApis = (
   environment: Record<string, string | undefined>,
 ): Plugin => {
-  const dialogueArtifactResolver = (() => {
+  // One shared service instance so concurrent Codex taps on the same
+  // signature quote collapse into a single provider call.
+  const codexVoiceQuoteService = (() => {
     try {
-      return createConfiguredDialogueArtifactResolver(environment, {
-        onError: error => console.error('[dialogue-audio]', error),
+      return createConfiguredCodexVoiceQuoteService(environment, {
+        onError: error => console.error('[codex-voice]', error),
       });
     } catch (error) {
-      console.error('[dialogue-audio] configuration failure', error);
+      console.error('[codex-voice] configuration failure', error);
       return undefined;
     }
   })();
@@ -58,7 +61,11 @@ const generationApis = (
   ) => void) => void } }) => {
     server.middlewares.use(async (request, response, next) => {
       const pathname = new URL(request.url ?? '/', 'http://development.local').pathname;
-      if (pathname !== '/api/chapter-generation' && pathname !== '/api/generate-blueprint') {
+      if (
+        pathname !== '/api/chapter-generation'
+        && pathname !== '/api/generate-blueprint'
+        && pathname !== '/api/codex-voice-quote'
+      ) {
         next();
         return;
       }
@@ -72,6 +79,18 @@ const generationApis = (
             {
               environment,
               onError: error => console.error('[story-seed-blueprint]', error),
+            },
+          );
+          writeJson(response, result.status, result.body, result.headers);
+          return;
+        }
+        if (pathname === '/api/codex-voice-quote') {
+          const result = await handleCodexVoiceQuoteHttp(
+            { method: request.method, body, headers: request.headers },
+            {
+              environment,
+              service: codexVoiceQuoteService,
+              onError: error => console.error('[codex-voice]', error),
             },
           );
           writeJson(response, result.status, result.body, result.headers);
@@ -92,7 +111,6 @@ const generationApis = (
           { method: request.method, body, headers: request.headers },
           {
             environment,
-            dialogueArtifactResolver,
             onError: error => console.error('[chapter-generation]', error),
             ...(streaming ? { onStageChange: stage => writeEvent({ type: 'stage', stage }) } : {}),
           },

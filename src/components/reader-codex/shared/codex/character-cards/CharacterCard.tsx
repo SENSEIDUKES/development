@@ -1,11 +1,11 @@
 import React from 'react';
 import { Character, Story } from '../../types';
-import { Download, Compass, Lock, Award, Play, Square, Sparkles } from 'lucide-react';
+import { Download, Compass, Lock, Award, Play, Square, Sparkles, Loader2, RotateCcw, VolumeX } from 'lucide-react';
 import { ReaderCodexImageGallery } from '../ReaderCodexImageGallery';
 import { resolveEntityImageHistory } from '../entityImageHistory';
 import { handleDownload } from '../../codexCompatibility';
 import { AGENTS } from '../../codexCompatibility';
-import { isPlayableCodexVoiceSource } from '../../hooks/useCodexVoiceCards';
+import type { CodexVoiceQuoteStatus } from '../../hooks/useCodexVoiceQuote';
 
 interface CharacterCardProps {
   char: Character;
@@ -13,12 +13,12 @@ interface CharacterCardProps {
   activeStory: Story;
   cScore: any;
   hasAppeared: boolean;
-  playingVoiceId: string | null;
+  voiceStatus: CodexVoiceQuoteStatus;
   isGenerating: boolean;
   canGenerate: boolean;
   isFreeUserOnHubStory: boolean;
-  handlePlayVoice: (url: string, id: string) => void;
-  handleStopVoice: () => void;
+  /** A deliberate tap is the only thing that can create or play voice audio. */
+  onQuoteTap: (char: Character) => void;
   beginCharEdit: (char: Character) => void;
   handleAwakenCardImage: (id: string, type: "character", obj: any) => void;
 }
@@ -29,12 +29,11 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
   activeStory,
   cScore,
   hasAppeared,
-  playingVoiceId,
+  voiceStatus,
   isGenerating,
   canGenerate,
   isFreeUserOnHubStory,
-  handlePlayVoice,
-  handleStopVoice,
+  onQuoteTap,
   beginCharEdit,
   handleAwakenCardImage
 }) => {
@@ -54,6 +53,33 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
           : hasImage
             ? `Progression required for ${char.name} visual`
             : `Awaken portrait for ${char.name}`;
+
+  const voiceIsBusy = voiceStatus.state === 'generating' || voiceStatus.state === 'stopping';
+  const voiceLabel = {
+    ready: 'Hear Voice',
+    generating: 'Preparing Voice...',
+    playing: 'Stop Voice',
+    stopping: 'Stopping...',
+    unavailable: 'Voice Unavailable',
+    error: 'Retry Voice',
+  }[voiceStatus.state];
+  const voiceAriaLabel = {
+    ready: `Hear ${char.name} speak their signature quote`,
+    generating: `Preparing the voice for ${char.name}`,
+    playing: `Stop the voice for ${char.name}`,
+    stopping: `Stopping the voice for ${char.name}`,
+    unavailable: `Voice is unavailable for ${char.name}`,
+    error: `Retry the voice for ${char.name}`,
+  }[voiceStatus.state];
+  const voiceIcon = voiceStatus.state === 'generating' || voiceStatus.state === 'stopping'
+    ? <Loader2 size={10} className="animate-spin" />
+    : voiceStatus.state === 'playing'
+    ? <Square size={10} fill="currentColor" />
+    : voiceStatus.state === 'error'
+    ? <RotateCcw size={10} />
+    : voiceStatus.state === 'unavailable'
+    ? <VolumeX size={10} />
+    : <Play size={10} fill="currentColor" />;
 
   return (
     <div
@@ -157,19 +183,36 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
           </div>
         </div>
 
-        {/* Voice Card Section */}
+        {/* Signature quote voice. The control is offered before any recording
+            exists: the first tap is what creates it. */}
         {char.signatureQuote && (
           <div className="pt-2 pb-2 text-[10px] text-neutral-400 italic flex flex-col gap-2 relative">
             <span>"{char.signatureQuote}"</span>
-            {isPlayableCodexVoiceSource(char.voiceClipUrl) && (
-              <button
-                onClick={() => playingVoiceId === char.id ? handleStopVoice() : handlePlayVoice(char.voiceClipUrl!, char.id)}
-                aria-label={playingVoiceId === char.id ? `Stop voice for ${char.name}` : `Play voice for ${char.name}`}
-                className="flex items-center gap-1.5 self-start text-[9px] text-portal uppercase tracking-wider font-mono hover:text-portal/80 transition-colors"
-              >
-                {playingVoiceId === char.id ? <Square size={10} fill="currentColor" /> : <Play size={10} fill="currentColor" />}
-                <span>{playingVoiceId === char.id ? 'Stop Voice' : 'Play Voice'}</span>
-              </button>
+            <button
+              type="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } }}
+              onClick={() => onQuoteTap(char)}
+              disabled={voiceIsBusy || voiceStatus.state === 'unavailable'}
+              aria-label={voiceAriaLabel}
+              aria-live="polite"
+              data-voice-state={voiceStatus.state}
+              title={voiceStatus.state === 'error' ? voiceStatus.message : undefined}
+              className={`flex items-center gap-1.5 self-start min-h-[32px] px-1 -mx-1 text-[9px] uppercase tracking-wider font-mono transition-colors not-italic ${
+                voiceStatus.state === 'unavailable'
+                  ? 'text-neutral-600 cursor-not-allowed'
+                  : voiceStatus.state === 'error'
+                  ? 'text-human hover:text-human/80'
+                  : voiceIsBusy
+                  ? 'text-neutral-400 cursor-wait'
+                  : 'text-portal hover:text-portal/80'
+              }`}
+            >
+              {voiceIcon}
+              <span>{voiceLabel}</span>
+            </button>
+            {voiceStatus.state === 'error' && voiceStatus.message && (
+              <span className="text-[9px] not-italic text-human/80 font-mono">{voiceStatus.message}</span>
             )}
           </div>
         )}

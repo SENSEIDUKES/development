@@ -10,6 +10,7 @@
 
 ## Workshop history
 
+- **2026-08-19:** Completed the Phase 3 Worldcue boundary. Manifested audible-action intents are validated against application-owned block IDs and exact zero-based phrase occurrences, resolved by application logic to approved Library Cues, persisted on the accepted chapter result, and copied through batch and Reader adapters. The Reader now consumes only the selected chapter's block-scoped resolved annotations, so a cue cannot spread to another mention, chapter, legacy paragraph, or translation. Entity/Bestiary metadata alone creates no marker; atmosphere and System Panel audio keep their existing owners. Dialogue receives a permanent server-assigned character `voiceKey`, but no quote glyph renders until a playable server-generated artifact exists.
 - **2026-08-19:** Refined inline World Cues into a typographic prose annotation: entity names retain their normal text or Codex highlight, while a circle-free `0.76em` `LibrarySoundGlyph` owns playback beside the phrase, uses an invisible expanded pointer target, keeps the final word and punctuation joined without preventing long names from wrapping, and gains a soft Library aura only while active. The Reader fixture now makes `Vermilion Debt Fox` sound-only plain prose while `The Azure Ring` keeps its orange Codex action plus the independent cue mark. Removed the retired card presentation, Reader render branch, generation contract, Workshop presets and adapter, dedicated fixtures/tests, and exclusive shared types/stubs. Codex Cards, System Panels, the one shared audio owner, and Development-only cue annotations remain intact.
 - **2026-08-19:** Added Phase 2 inline audio to the Development Reader: catalog-gated `sound` actions, provider-neutral future `voice` actions, and user-only loading/playing/error behavior through the existing `@seihouse/audio-player` session. Five real beast, weapon, artifact, location, and faction cues sit in controlled Chapter 1 prose outside persisted StoryBlock data.
 - **2026-08-18:** Review follow-up: the Development `CodexCard` dragon seal now applies its cyan and violet glows as valid chained filter functions in base, hover, and press states. Interaction, layout, and reduced-motion behavior are unchanged.
@@ -71,7 +72,7 @@ development/                  — active Workshop version; started as an exact c
   (same files, except: ReaderSettings.tsx replaces ReaderPreferencesPanel.tsx;
    ReaderControls/ no longer contains ImmersionSettings.tsx or
    ChapterNavigation.tsx; AudioWidget.tsx was removed; InlineAudio.tsx and
-   InlineAudio.css add the Phase 2 prose primitive — see history)
+   InlineAudio.css add the Phase 3 prose primitive — see history)
 shared/                       — code genuinely identical between the two forks
   types.ts                    — ReaderChapter + composing types, StoryBlock/metadata/SystemEvent/
                                 FateResultData, StoryCuePayload, ContextManifest,
@@ -251,8 +252,8 @@ All substitutions are import-level aliases only — JSX is byte-identical to pro
 - **Alter Fate focus behavior is unchanged from the existing Workshop replica**;
   the migrated Codex context dialog uses `react-focus-lock` like production.
 - **Audio is intentionally partial** — the mixer's music, atmosphere, and
-  narration remain inert. Only the controlled inline World Cues play, through
-  the single shared DEV audio session.
+  narration remain inert. Only valid persisted Worldcues play, through the
+  single shared DEV audio session and only after their own tap target is used.
 - **No TTS sync highlighting** — `activeChunks` is always empty, so the
   portal-colored narration span and `reading-focus-*` classes never activate;
   the play/pause vinyl still flips and spins.
@@ -327,8 +328,9 @@ Workshop-only — never transfer: `shared/stubs.ts`, `shared/types.ts` (producti
 `lib/audio/musicResolver.ts` is authoritative), everything under
 `src/workshop/previews/reader-chamber/`, the manifest entry, and the registry line.
 `getReaderChamberSurfaceClass` is a Card Workshop presentation seam, not production API.
-The `inlineAudioHighlights` prop and all five `previewData.ts` examples are also
-Workshop-only annotations in Phase 2; do not transfer them as a new chapter field.
+`audioMoments` is chapter-owned generation output rather than a Workshop prop.
+Transfer its validator, resolver, accepted-result persistence, Reader adapter,
+and block-scoped rendering together; do not copy the preview fixtures as data.
 
 ## Transfer notes and cautions
 

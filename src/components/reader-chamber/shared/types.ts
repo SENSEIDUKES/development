@@ -9,6 +9,7 @@
  */
 
 import type { StoryEntityType } from "../../chapter-generation/shared/types";
+import type { ResolvedAudioMoment } from "../../../audio/inlineAudio";
 
 export interface FateResultData {
   outcome: "FATE AVERTED" | "FATE SCARRED" | "DOOM MANIFESTED";
@@ -253,6 +254,8 @@ export interface ChapterMedia {
 export interface ChapterProse {
   generatedContent?: string;
   blocks?: StoryBlock[];
+  /** Validated, block-scoped Worldcues and dialogue artifacts. */
+  audioMoments?: ResolvedAudioMoment[];
   statsChangeMessage?: string;
   cuePayload?: StoryCuePayload;
 }
@@ -474,8 +477,10 @@ export interface Character extends BaseCodexEntry {
   evolutionReady?: boolean;
   evolutionReason?: string;
   availableVisualUpdate?: boolean;
-  voicePresetId?: string;
+  /** Stable provider-neutral voice identity assigned by server application logic. */
+  voiceKey?: string;
   signatureQuote?: string;
+  /** Playable synthesized artifact; a voiceKey alone never makes Reader audio available. */
   voiceClipUrl?: string;
   voiceAssetId?: string;
 }

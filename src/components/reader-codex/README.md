@@ -10,6 +10,7 @@
 
 ## Workshop history
 
+- **2026-08-19:** Replaced the Workshop-local voice preset and browser `speechSynthesis` path with the Phase 3 identity boundary. A validated named dialogue speaker receives one deterministic provider-neutral `voiceKey` on the server-owned canonical Character and reuses it in later chapters; Bestiary species never receive voices. Reader Codex can play an existing synthesized `voiceClipUrl` through the shared audio owner, but it neither assigns a voice nor advertises generation without a working server artifact path.
 - **2026-08-19:** Documented the refined inline World Cue boundary: a named
   Reader entity can keep its independent Codex action while a separate neutral
   Library sound glyph beside the phrase owns cue playback.
@@ -89,7 +90,10 @@ AI-route ownership. The smallest local substitutes are used instead:
 - image manifestation/evolution produces selectable local preview images;
   saved card evolutions patch the in-memory story, while a Reader hovercard's
   one-off manifestation remains component-local;
-- voice-card generation uses a local browser speech compatibility path;
+- existing application-owned `/dialogue/` voice artifacts use the shared DEV
+  audio owner; third-party, relative, blob, and data sources are rejected; a bare
+  `voiceKey` remains an assigned-but-not-yet-synthesized identity and exposes
+  no client-side generation action;
 - story-lore extraction produces deterministic local terms while retaining the
   source loading/cache/search/deduplication behavior;
 - historical media resolution uses URLs already present on fixture records;
@@ -136,8 +140,9 @@ completed chapter through the existing in-memory batch/checkpoint state.
 DEV still has no reliable generated source for numeric custom relationship
 bonds, Karma fate nodes, portrait media, reward/inventory ledgers, or canonical
 story glossary entries. Those fields remain empty; the adapter does not create
-placeholder records. Existing local Codex authoring and Workshop-only media,
-voice, and glossary controls remain presentation compatibility behavior.
+placeholder records. Existing local Codex authoring plus Workshop-only media
+and glossary controls remain presentation compatibility behavior. Voice
+assignment is no longer a client compatibility control.
 
 ## Production dependencies intentionally excluded
 

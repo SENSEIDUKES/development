@@ -211,4 +211,96 @@ describe("creature Codex normalization", () => {
       appearanceChapters: [],
     })]);
   });
+
+  it("preserves an application-owned Character voiceKey while stripping model voice choices", () => {
+    const result = normalize({
+      currentCharacters: [{
+        id: "character-yan-shi",
+        name: "Yan Shi",
+        voiceKey: "persisted-provider-neutral-key",
+        voice_id: "legacy-provider-id",
+        voicePresetId: "legacy-browser-preset",
+        profile: {
+          provider_voice_id: "nested-existing-provider-id",
+          combat: { ElevenLabsVoiceId: "deeply-nested-provider-id" },
+          epithet: "Ash Disciple",
+        },
+      }],
+      characterUpdates: [{
+        name: "Yan Shi",
+        role: "Disciple",
+        voiceKey: "model-selected-key",
+        voice_id: "model-provider-id",
+        providerVoiceId: "alternate-model-provider-id",
+        voiceAssetId: "model-voice-asset",
+        voiceClipUrl: "https://model.invalid/voice.mp3",
+      }],
+    });
+
+    expect(result.characters).toEqual([expect.objectContaining({
+      id: "character-yan-shi",
+      name: "Yan Shi",
+      role: "Disciple",
+      voiceKey: "persisted-provider-neutral-key",
+    })]);
+    expect(result.characters[0].profile).toEqual({
+      combat: {},
+      epithet: "Ash Disciple",
+    });
+    const serialized = JSON.stringify(result);
+    expect(serialized).not.toContain("legacy-provider-id");
+    expect(serialized).not.toContain("legacy-browser-preset");
+    expect(serialized).not.toContain("nested-existing-provider-id");
+    expect(serialized).not.toContain("deeply-nested-provider-id");
+    expect(serialized).not.toContain("model-selected-key");
+    expect(serialized).not.toContain("model-provider-id");
+    expect(serialized).not.toContain("alternate-model-provider-id");
+    expect(serialized).not.toContain("model-voice-asset");
+    expect(serialized).not.toContain("model.invalid");
+  });
+
+  it("removes voice identity and playback artifacts from generic Bestiary species", () => {
+    const result = normalize({
+      currentBestiary: [{
+        id: "creature-ember-foxes",
+        name: "Ember Foxes",
+        voiceKey: "species-must-not-have-a-voice",
+        voice_id: "species-provider-id",
+        voiceClipUrl: "/generated/species-voice.mp3",
+        voiceAssetId: "species-voice-asset",
+        signatureQuote: "A generic species does not speak with one identity.",
+        sonicMetadata: {
+          profile: { provider_voice_id: "nested-current-species-provider-id" },
+          note: "A crackling chitter",
+        },
+      }],
+      bestiaryUpdates: [{
+        name: "Ember Foxes",
+        voiceKey: "model-species-voice",
+        providerId: "model-species-provider-id",
+        encounterMetadata: {
+          Provider_Voice_ID: "nested-model-species-provider-id",
+          note: "Heard beneath the oath bell",
+        },
+      }],
+    });
+
+    expect(result.bestiary).toHaveLength(1);
+    expect(result.bestiary[0]).not.toHaveProperty("voiceKey");
+    expect(result.bestiary[0]).not.toHaveProperty("voiceClipUrl");
+    expect(result.bestiary[0]).not.toHaveProperty("voiceAssetId");
+    expect(result.bestiary[0]).not.toHaveProperty("signatureQuote");
+    expect(result.bestiary[0].sonicMetadata).toEqual({
+      profile: {},
+      note: "A crackling chitter",
+    });
+    expect(result.bestiary[0].encounterMetadata).toEqual({
+      note: "Heard beneath the oath bell",
+    });
+    const serialized = JSON.stringify(result);
+    expect(serialized).not.toContain("species-provider-id");
+    expect(serialized).not.toContain("model-species-provider-id");
+    expect(serialized).not.toContain("nested-current-species-provider-id");
+    expect(serialized).not.toContain("nested-model-species-provider-id");
+  });
 });

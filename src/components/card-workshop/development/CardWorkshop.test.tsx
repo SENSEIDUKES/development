@@ -169,25 +169,25 @@ describe('CardWorkshopView', () => {
     const rainCourtCodexAction = [...(reader?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
       .find(element => element.textContent === 'Rain Court');
     const rainCourtCueAction = reader?.querySelector<HTMLButtonElement>(
-      'button[aria-label="Play World Cue for Rain Court"]',
+      'button[aria-label="Play World Cue for The Rain Court bell tolled once"]',
     );
     expect(rainCourtCodexAction).toBeTruthy();
     expect(rainCourtCueAction).toBeTruthy();
     expect(rainCourtCueAction).not.toBe(rainCourtCodexAction);
-    expect(rainCourtCueAction?.closest('[data-cue-annotation="Rain Court"]')?.textContent
+    expect(rainCourtCueAction?.closest('[data-cue-annotation="The Rain Court bell tolled once"]')?.textContent
       ?.replace(/\u2060/g, ''))
-      .toBe('Rain Court,');
+      .toBe('The Rain Court bell tolled once');
 
     const foxCueAction = reader?.querySelector<HTMLButtonElement>(
-      'button[aria-label="Play World Cue for Vermilion Debt Fox"]',
+      'button[aria-label="Play World Cue for a Vermilion Debt Fox growled"]',
     );
     const foxCodexAction = [...(reader?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
       .find(element => element.textContent === 'Vermilion Debt Fox');
     expect(foxCueAction).toBeTruthy();
     expect(foxCodexAction).toBeFalsy();
-    expect(foxCueAction?.closest('[data-cue-annotation="Vermilion Debt Fox"]')?.textContent
+    expect(foxCueAction?.closest('[data-cue-annotation="a Vermilion Debt Fox growled"]')?.textContent
       ?.replace(/\u2060/g, ''))
-      .toBe('Vermilion Debt Fox');
+      .toBe('a Vermilion Debt Fox growled');
 
     const cardTitle = [...(reader?.querySelectorAll('h4') ?? [])]
       .find(element => element.textContent === 'Rin');
@@ -299,7 +299,7 @@ describe('CardWorkshopView', () => {
       renderWithDevAudio(<CardWorkshopView initialMode="contextual" />),
     ));
 
-    await clickButton('Play World Cue for Rain Court');
+    await clickButton('Play World Cue for The Rain Court bell tolled once');
     await act(async () => {
       vi.advanceTimersByTime(50);
     });

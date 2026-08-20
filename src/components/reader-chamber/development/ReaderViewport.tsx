@@ -15,7 +15,7 @@ import { getReaderTypography, getReadingDirection } from '../shared/readerTypogr
 import { createCodexHighlighter } from '../../reader-codex/shared/codexHighlighting';
 import { CodexCard, FALLBACK_BACKDROPS } from './CodexCard';
 import { InlineAudioText } from './InlineAudio';
-import type { InlineAudioHighlight } from '../../../audio/inlineAudio';
+import type { ResolvedAudioMoment } from '../../../audio/inlineAudio';
 
 interface ReaderViewportProps {
   readerRef: React.RefObject<HTMLDivElement | null>;
@@ -76,11 +76,6 @@ interface ReaderViewportProps {
   hasSystemBlocks: boolean;
 
   chapters: ReaderChapter[];
-  /**
-   * Development-only prose annotations. They are separate from StoryBlock so
-   * this phase cannot change generated or persisted chapter payloads.
-   */
-  inlineAudioHighlights?: readonly InlineAudioHighlight[];
 }
 
 export function ReaderViewport({
@@ -132,21 +127,24 @@ export function ReaderViewport({
   setShowLegend,
   hasSystemBlocks,
   chapters,
-  inlineAudioHighlights = [],
 }: ReaderViewportProps) {
   const readingLanguage = activeTranslationContent ? preferredLang : 'en';
   const typography = getReaderTypography(currentPrefs);
-  const renderProseText = (text: string, paragraphIndex: number) => (
-    inlineAudioHighlights.length > 0
+  const chapterAudioMoments: readonly ResolvedAudioMoment[] = selectedChapter.audioMoments ?? [];
+  const renderProseText = (text: string, paragraphIndex: number, blockId?: string) => {
+    const blockAudioMoments = blockId
+      ? chapterAudioMoments.filter(moment => moment.blockId === blockId)
+      : [];
+    return blockAudioMoments.length > 0
       ? (
           <InlineAudioText
-            highlights={inlineAudioHighlights}
+            moments={blockAudioMoments}
             renderText={segment => renderHighlightedText(segment, paragraphIndex)}
             text={text}
           />
         )
-      : renderHighlightedText(text, paragraphIndex)
-  );
+      : renderHighlightedText(text, paragraphIndex);
+  };
 
   const getThemeAccentColor = (theme: string) => {
     switch (theme) {
@@ -578,8 +576,8 @@ export function ReaderViewport({
                         const { cleanText, sfxList } = extractSFXCues(
                           block.text || '',
                         );
-                        // High-confidence [SFX] tags plus structured
-                        // system/beast events; footsteps and environment
+                        // High-confidence [SFX] tags plus structured System
+                        // events; footsteps, beasts, and environment
                         // Foley never render a trigger span at all.
                         const autoCueList = collectBlockAutoCues(sfxList, block);
                         if (!cleanText && !hasStructuredVisual) return null;
@@ -690,7 +688,7 @@ export function ReaderViewport({
                               />
                             ))}
                             <div className={`reader-paragraph relative ${getFocusClass(index)}`}>
-                              {renderProseText(cleanText, index)}
+                              {renderProseText(cleanText, index, block.id)}
                               <button
                                  tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => {
                                   if (existingBookmark) {

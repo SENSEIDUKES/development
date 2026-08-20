@@ -10,10 +10,11 @@ import React, {
 import { LibrarySoundGlyph } from '../../library';
 import {
   getInlineCueTrackId,
-  resolveInlineSoundAction,
-  splitByInlineAudioHighlights,
-  type InlineAudioHighlight,
+  matchLeadingInlineAudioPunctuation,
+  resolvePlayableAudioMoment,
+  splitByResolvedAudioMoments,
   type InlineAudioTextSegment,
+  type ResolvedAudioMoment,
 } from '../../../audio/inlineAudio';
 import {
   useDevAudioPlayback,
@@ -24,7 +25,7 @@ import './InlineAudio.css';
 export type InlineAudioStatus = 'idle' | 'loading' | 'playing' | 'error';
 
 export interface InlineAudioControlProps {
-  highlight: InlineAudioHighlight;
+  moment: ResolvedAudioMoment;
   playback: DevAudioPlayback;
 }
 
@@ -32,7 +33,7 @@ export interface InlineAudioControlProps {
  * Native inline button kept separate from the playback hook so its complete
  * lifecycle can be tested with the same adapter contract the Reader uses.
  */
-export function InlineAudioControl({ highlight, playback }: InlineAudioControlProps) {
+export function InlineAudioControl({ moment, playback }: InlineAudioControlProps) {
   const statusId = useId();
   const [status, setStatus] = useState<InlineAudioStatus>('idle');
   const [localError, setLocalError] = useState<string | null>(null);
@@ -42,12 +43,8 @@ export function InlineAudioControl({ highlight, playback }: InlineAudioControlPr
     playbackRef.current = playback;
   }, [playback]);
 
-  const resolution = useMemo(() => (
-    highlight.action.type === 'sound'
-      ? resolveInlineSoundAction(highlight.action)
-      : null
-  ), [highlight.action]);
-  const trackId = resolution?.ok ? getInlineCueTrackId(resolution.cue) : null;
+  const resolution = useMemo(() => resolvePlayableAudioMoment(moment), [moment]);
+  const trackId = resolution.ok ? getInlineCueTrackId(moment) : null;
 
   useEffect(() => playback.subscribe((event) => {
     if (!trackId) return;
@@ -66,6 +63,10 @@ export function InlineAudioControl({ highlight, playback }: InlineAudioControlPr
     }
     if (event.trackId !== trackId) return;
     if (event.type === 'play') {
+      if (playbackRef.current.currentTrackId !== trackId) {
+        setStatus('idle');
+        return;
+      }
       setLocalError(null);
       setStatus('playing');
     } else if (event.type === 'pause') {
@@ -77,7 +78,12 @@ export function InlineAudioControl({ highlight, playback }: InlineAudioControlPr
   }), [playback, trackId]);
 
   useEffect(() => {
-    if (!trackId || playback.currentTrackId !== trackId) return;
+    if (!trackId) return;
+    if (playback.currentTrackId !== trackId) {
+      setLocalError(null);
+      setStatus('idle');
+      return;
+    }
     if (playback.hasError) {
       setLocalError(playback.errorMessage || 'The Library Cue could not be played.');
       setStatus('error');
@@ -99,13 +105,8 @@ export function InlineAudioControl({ highlight, playback }: InlineAudioControlPr
 
   const activate = useCallback(() => {
     setLocalError(null);
-    if (highlight.action.type === 'voice') {
-      setLocalError('Voice quotes are reserved for a later server-synthesis phase.');
-      setStatus('error');
-      return;
-    }
-    if (!resolution || !resolution.ok) {
-      setLocalError(resolution?.message ?? 'The Library Cue could not be resolved.');
+    if (!resolution.ok) {
+      setLocalError(resolution.message);
       setStatus('error');
       return;
     }
@@ -119,36 +120,37 @@ export function InlineAudioControl({ highlight, playback }: InlineAudioControlPr
     try {
       playback.replace({
         id: trackId,
-        source: resolution.cue.public_url,
-        title: highlight.phrase,
+        source: resolution.publicUrl,
+        title: moment.triggerPhrase,
         artist: 'SEN Library Cue',
       });
     } catch (error) {
       setLocalError(error instanceof Error ? error.message : 'The Library Cue could not be played.');
       setStatus('error');
     }
-  }, [highlight.action, highlight.phrase, playback, resolution, trackId]);
+  }, [moment.triggerPhrase, playback, resolution, trackId]);
 
-  const isVoice = highlight.action.type === 'voice';
-  const actionLabel = isVoice ? 'voice cue' : 'World Cue';
+  const actionLabel = resolution.ok ? resolution.actionLabel : 'audio';
   const stateMessage = status === 'loading'
-    ? `Loading ${actionLabel} for ${highlight.phrase}.`
+    ? `Loading ${actionLabel} for ${moment.triggerPhrase}.`
     : status === 'playing'
-      ? `Playing ${actionLabel} for ${highlight.phrase}.`
+      ? `Playing ${actionLabel} for ${moment.triggerPhrase}.`
       : status === 'error'
-        ? localError ?? `The ${actionLabel} for ${highlight.phrase} is unavailable.`
+        ? localError ?? `The ${actionLabel} for ${moment.triggerPhrase} is unavailable.`
         : '';
+  if (!resolution.ok) return null;
   return (
     <>
       <button
         type="button"
         className="inline-world-cue"
-        data-action-type={highlight.action.type}
-        data-cue-phrase={highlight.phrase}
+        data-action-type={moment.sourceCategory === 'voice' ? moment.actionType : 'world-cue'}
+        data-cue-phrase={moment.triggerPhrase}
+        data-audio-moment-id={moment.id}
         data-state={status}
         aria-busy={status === 'loading' || undefined}
         aria-describedby={status === 'idle' ? undefined : statusId}
-        aria-label={`${status === 'playing' ? 'Replay' : 'Play'} ${actionLabel} for ${highlight.phrase}`}
+        aria-label={`${status === 'playing' ? 'Replay' : 'Play'} ${actionLabel} for ${moment.triggerPhrase}`}
         onClick={activate}
       >
         <LibrarySoundGlyph className="inline-world-cue__glyph" />
@@ -161,17 +163,17 @@ export function InlineAudioControl({ highlight, playback }: InlineAudioControlPr
 }
 
 export interface InlineAudioProps {
-  highlight: InlineAudioHighlight;
+  moment: ResolvedAudioMoment;
 }
 
 /** Production-portable Reader primitive bound to the one shared audio owner. */
-export function InlineAudio({ highlight }: InlineAudioProps) {
+export function InlineAudio({ moment }: InlineAudioProps) {
   const playback = useDevAudioPlayback();
-  return <InlineAudioControl highlight={highlight} playback={playback} />;
+  return <InlineAudioControl moment={moment} playback={playback} />;
 }
 
 export interface InlineAudioTextProps {
-  highlights: readonly InlineAudioHighlight[];
+  moments: readonly ResolvedAudioMoment[];
   renderText: (text: string) => ReactNode;
   text: string;
 }
@@ -184,7 +186,6 @@ interface InlineAudioRenderSegment extends InlineAudioTextSegment {
 }
 
 const INLINE_POSSESSIVE = /^(?:['’][sS])(?=$|[\s,.;:!?…—–"”')\]}])/u;
-const INLINE_PUNCTUATION = /^[,.;:!?…—–"”')\]}]+/u;
 const WORD_JOINER = '\u2060';
 
 /**
@@ -199,20 +200,20 @@ function attachTrailingProse(
 
   for (let index = 0; index < segments.length; index += 1) {
     const segment = segments[index];
-    if (!segment.highlight) {
+    if (!segment.moment) {
       result.push(segment);
       continue;
     }
 
     const next = segments[index + 1];
-    if (!next || next.highlight) {
+    if (!next || next.moment) {
       result.push(segment);
       continue;
     }
 
     const possessive = next.text.match(INLINE_POSSESSIVE)?.[0] ?? '';
     const afterPossessive = next.text.slice(possessive.length);
-    const punctuation = afterPossessive.match(INLINE_PUNCTUATION)?.[0] ?? '';
+    const punctuation = matchLeadingInlineAudioPunctuation(afterPossessive);
     const consumedLength = possessive.length + punctuation.length;
 
     result.push({
@@ -230,26 +231,32 @@ function attachTrailingProse(
 }
 
 /** Replace only configured literal phrases; every other text run stays native prose. */
-export function InlineAudioText({ highlights, renderText, text }: InlineAudioTextProps) {
+export function InlineAudioText({ moments, renderText, text }: InlineAudioTextProps) {
+  const playableMoments = useMemo(
+    () => moments.filter(moment => resolvePlayableAudioMoment(moment).ok),
+    [moments],
+  );
   const segments = useMemo(
-    () => attachTrailingProse(splitByInlineAudioHighlights(text, highlights)),
-    [highlights, text],
+    () => attachTrailingProse(splitByResolvedAudioMoments(text, playableMoments)),
+    [playableMoments, text],
   );
 
   return (
     <>
       {segments.map((segment, index) => (
-        segment.highlight
+        segment.moment
           ? (
               <span
-                key={`${segment.highlight.id}-${index}`}
+                key={`${segment.moment.id}-${index}`}
                 className="inline-world-cue-annotation"
-                data-cue-annotation={segment.highlight.phrase}
+                data-cue-annotation={segment.moment.triggerPhrase}
               >
-                {renderText(segment.text)}
+                <span className="inline-world-cue-annotation__text">
+                  {renderText(segment.text)}
+                </span>
                 {segment.possessive}
                 <span className="inline-world-cue-joiner" aria-hidden="true">{WORD_JOINER}</span>
-                <InlineAudio highlight={segment.highlight} />
+                <InlineAudio moment={segment.moment} />
                 {segment.punctuation && (
                   <>
                     <span className="inline-world-cue-joiner" aria-hidden="true">{WORD_JOINER}</span>

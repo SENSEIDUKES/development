@@ -169,6 +169,10 @@ describe("four-stage Chapter Generation pipeline", () => {
     expect(run.chapterPlan.selectedScenePath?.type).toBe("conflict");
     expect(run.chapterPlan.resolvedSceneType).toBe("conflict");
     expect(run.chapterPlan.effects.map(effect => effect.kind)).toContain("scene-music");
+    expect(run.chapterPlan.effects).toContainEqual(expect.objectContaining({
+      kind: "world-cue",
+      intent: expect.stringContaining("drew the Ashen Sword from its sheath"),
+    }));
     expect(run.chapterPlan.rhythmResponse.selectedPressureTier).toBe("Hardcore");
     expect(calls.planChapter).toHaveBeenCalledTimes(1);
 
@@ -274,6 +278,119 @@ describe("four-stage Chapter Generation pipeline", () => {
     expect(seriousCalls.processResult.mock.calls[1][0].manifestedChapter.generatedContent)
       .toContain("[repaired]");
     expect(seriousRun.finalOutput.generatedContent).toContain("[repaired]");
+  });
+
+  it("resolves only the accepted repaired chapter's audible action moments", () => {
+    const packet = buildPacket();
+    const originalChapter: ChapterContent = {
+      ...MANIFESTED_CHAPTER,
+      generatedContent: "Wen Shu drew the Ashen Sword from its sheath.",
+      blocks: [{
+        id: "c6-p1",
+        type: "paragraph",
+        text: "Wen Shu drew the Ashen Sword from its sheath.",
+        metadata: {
+          audioMoments: [{
+            blockId: "c6-p1",
+            triggerPhrase: "drew the Ashen Sword from its sheath",
+            occurrenceIndex: 0,
+            sourceCategory: "weapons",
+            variation: "unsheathe",
+            semanticTags: ["sword", "draw", "metal"],
+            relatedEntity: { name: "Ashen Sword", type: "artifact" },
+          }],
+        },
+      }],
+    };
+    const repairedChapter: ChapterContent = {
+      ...MANIFESTED_CHAPTER,
+      generatedContent: "The sect gong sounded once above the shrine.",
+      blocks: [{
+        id: "c6-p1",
+        type: "paragraph",
+        text: "The sect gong sounded once above the shrine.",
+        metadata: {
+          audioMoments: [{
+            blockId: "c6-p1",
+            triggerPhrase: "sect gong sounded once",
+            occurrenceIndex: 0,
+            sourceCategory: "locations",
+            variation: "signatures",
+            semanticTags: ["gong", "resonant", "deep"],
+            relatedEntity: { name: "Azure Bell Peak", type: "location" },
+          }],
+        },
+      }],
+    };
+    const calls = makeModel();
+    calls.manifestChapter.mockReturnValue(originalChapter);
+    calls.processResult
+      .mockImplementationOnce((input: ProcessChapterInput): ChapterProcessingResult => ({
+        ...buildWorkshopProcessingResult(input, GENERATED_HANDOFF),
+        continuityFindings: [{
+          severity: "serious",
+          code: "wrong-audible-beat",
+          message: "The original action contradicts the required opening.",
+        }],
+        repairRecommended: true,
+      }))
+      .mockImplementationOnce((input: ProcessChapterInput) =>
+        buildWorkshopProcessingResult(input, GENERATED_HANDOFF));
+    calls.repairChapter.mockReturnValue(repairedChapter);
+
+    const run = runChapterPipeline({ chapterPacket: packet, model: calls.model });
+
+    expect(run.repairApplied).toBe(true);
+    expect(run.finalOutput.audioMoments).toEqual([
+      expect.objectContaining({
+        blockId: "c6-p1",
+        triggerPhrase: "sect gong sounded once",
+        cue: { publicUrl: expect.stringContaining("/Locations/Signatures/") },
+      }),
+    ]);
+    expect(JSON.stringify(run.finalOutput.audioMoments)).not.toContain("Ashen Sword");
+    expect(run.finalOutput.blocks?.[0].metadata?.audioMoments).toBeUndefined();
+    expect(repairedChapter.blocks?.[0].metadata).toHaveProperty("audioMoments");
+  });
+
+  it("preserves only valid server-produced dialogue artifacts on their exact quote", () => {
+    const packet = buildPacket();
+    const dialogueChapter: ChapterContent = {
+      ...MANIFESTED_CHAPTER,
+      generatedContent: '“The archive remembers.”',
+      blocks: [{
+        id: "c6-p1",
+        type: "dialogue",
+        text: '“The archive remembers.”',
+        metadata: { speakerName: "Wen Shu", mode: "dialogue" },
+      }],
+      audioMoments: [{
+        id: "dialogue:c6-p1:0:wen-shu",
+        blockId: "c6-p1",
+        triggerPhrase: '“The archive remembers.”',
+        occurrenceIndex: 0,
+        sourceCategory: "voice",
+        actionType: "spoken-dialogue",
+        semanticTags: ["dialogue"],
+        relatedEntity: { id: "character-wen-shu", name: "Wen Shu", type: "character" },
+        voiceKey: "ancient-master-female",
+        artifact: {
+          publicUrl: "https://celestialaudio.seihouse.org/dialogue/character-wen-shu/c6-p1.mp3",
+        },
+      }],
+    };
+    const calls = makeModel();
+    calls.manifestChapter.mockReturnValue(dialogueChapter);
+
+    const run = runChapterPipeline({ chapterPacket: packet, model: calls.model });
+
+    expect(run.finalOutput.audioMoments).toEqual([
+      expect.objectContaining({
+        id: "dialogue:c6-p1:0:wen-shu",
+        sourceCategory: "voice",
+        blockId: "c6-p1",
+      }),
+    ]);
   });
 
   it("includes the arc/chapter counter in context visible to planning and writing", () => {

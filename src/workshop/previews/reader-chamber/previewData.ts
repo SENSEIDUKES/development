@@ -5,60 +5,82 @@ import type {
   ReaderPreferences,
   StoryWorld,
 } from '../../../components/reader-chamber/shared/types';
-import type { InlineAudioHighlight } from '../../../audio/inlineAudio';
+import {
+  resolveChapterAudioMoments,
+  type WorldCueIntent,
+} from '../../../audio/inlineAudio';
 export const MOCK_READER_FALLBACK_LABEL = 'Mock fallback · No generated batch supplied · Four-chapter preview story only';
 
 export const MOCK_STORY_ID = 'workshop-story-emberfall';
 const CODEX_PREVIEW_IMAGE = '/story-seed/library-auth-backdrop.jpg';
 
+const INLINE_AUDIO_BLOCK_ID = 'ch1-b1-inline-audio';
+const INLINE_AUDIO_BLOCK_TEXT = 'A Vermilion Debt Fox growled beneath the lintel as Mei Lin drew the Ashen Sword. The Azure Ring chimed awake in Li Wei’s hand; the Collapsed Gate of the Ninth Meridian tolled once, and the Ninth Meridian Sect chanted in answer.';
+
 /**
- * Inline World Cues stay outside StoryBlock: these controlled annotations
- * resolve real catalog URLs and are passed only to the Development Reader.
- * Vermilion Debt Fox is intentionally absent from StoryMemory so it proves a
- * cue-only phrase stays plain; The Azure Ring remains a dual Codex/cue entity.
+ * Action-based, model-safe examples. Resolution runs after the final block
+ * text exists, so these fixtures never choose catalog files or URLs.
+ * Vermilion Debt Fox remains absent from StoryMemory (sound-only prose), while
+ * The Azure Ring still demonstrates independent Codex and World Cue actions.
  */
-export const INLINE_AUDIO_HIGHLIGHTS = [
+export const READER_WORLD_CUE_INTENTS = [
   {
-    id: 'inline-beast-vermilion-debt-fox',
-    phrase: 'Vermilion Debt Fox',
-    action: {
-      type: 'sound',
-      cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3',
-    },
+    blockId: INLINE_AUDIO_BLOCK_ID,
+    triggerPhrase: 'A Vermilion Debt Fox growled',
+    occurrenceIndex: 0,
+    sourceCategory: 'beasts',
+    variation: 'growl',
+    semanticTags: ['growl', 'predator', 'threatening'],
+    relatedEntity: { name: 'Vermilion Debt Fox', type: 'creature' },
   },
   {
-    id: 'inline-weapon-ashen-sword',
-    phrase: 'Ashen Sword',
-    action: {
-      type: 'sound',
-      cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_1.mp3',
-    },
+    blockId: INLINE_AUDIO_BLOCK_ID,
+    triggerPhrase: 'Mei Lin drew the Ashen Sword',
+    occurrenceIndex: 0,
+    sourceCategory: 'weapons',
+    variation: 'unsheathe',
+    semanticTags: ['sword', 'draw', 'metal'],
+    relatedEntity: { name: 'Ashen Sword', type: 'artifact' },
   },
   {
-    id: 'inline-artifact-azure-ring',
-    phrase: 'The Azure Ring',
-    action: {
-      type: 'sound',
-      cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Artifacts/Relics/Resonance/Resonance_1.mp3',
-    },
+    blockId: INLINE_AUDIO_BLOCK_ID,
+    triggerPhrase: 'The Azure Ring chimed awake',
+    occurrenceIndex: 0,
+    sourceCategory: 'artifacts',
+    variation: 'relics',
+    semanticTags: ['resonance', 'tonal', 'evolving'],
+    relatedEntity: { name: 'The Azure Ring', type: 'artifact' },
   },
   {
-    id: 'inline-location-collapsed-gate',
-    phrase: 'Collapsed Gate of the Ninth Meridian',
-    action: {
-      type: 'sound',
-      cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Sect_Gong_1.mp3',
-    },
+    blockId: INLINE_AUDIO_BLOCK_ID,
+    triggerPhrase: 'the Collapsed Gate of the Ninth Meridian tolled once',
+    occurrenceIndex: 0,
+    sourceCategory: 'locations',
+    variation: 'signatures',
+    semanticTags: ['gong', 'resonant', 'deep'],
+    relatedEntity: { name: 'Collapsed Gate of the Ninth Meridian', type: 'location' },
   },
   {
-    id: 'inline-faction-ninth-meridian-sect',
-    phrase: 'Ninth Meridian Sect',
-    action: {
-      type: 'sound',
-      cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Factions/Monastery_Chant_1.mp3',
-    },
+    blockId: INLINE_AUDIO_BLOCK_ID,
+    triggerPhrase: 'the Ninth Meridian Sect chanted in answer',
+    occurrenceIndex: 0,
+    sourceCategory: 'factions',
+    variation: 'general',
+    semanticTags: ['chant', 'solemn', 'vocal'],
+    relatedEntity: { name: 'Ninth Meridian Sect', type: 'faction' },
   },
-] as const satisfies readonly InlineAudioHighlight[];
+] as const satisfies readonly WorldCueIntent[];
+
+const INLINE_AUDIO_MOMENTS = (() => {
+  const resolution = resolveChapterAudioMoments(
+    [{ id: INLINE_AUDIO_BLOCK_ID, text: INLINE_AUDIO_BLOCK_TEXT }],
+    READER_WORLD_CUE_INTENTS,
+  );
+  if (resolution.issues.length > 0) {
+    throw new Error(`Reader World Cue fixture failed validation: ${resolution.issues[0].message}`);
+  }
+  return resolution.audioMoments;
+})();
 
 const createCodexPreviewImage = (
   id: string,
@@ -118,6 +140,7 @@ export function createMockChapters(): ReaderChapter[] {
         tension: 5,
         danger: 4,
       },
+      audioMoments: INLINE_AUDIO_MOMENTS,
       blocks: [
         {
           id: 'ch1-b1',
@@ -125,9 +148,9 @@ export function createMockChapters(): ReaderChapter[] {
           text: 'The night Li Wei swore the Oath of Embers, the Collapsed Gate of the Ninth Meridian wept rust-red rain. He pressed his palm to the cold stone and felt the meridian answer — a slow, ancient turning, like a key deciding at last to fit its lock.',
         },
         {
-          id: 'ch1-b1-inline-audio',
+          id: INLINE_AUDIO_BLOCK_ID,
           type: 'paragraph',
-          text: 'A Vermilion Debt Fox crouched beneath the lintel as Mei Lin drew the Ashen Sword. The Azure Ring answered from Li Wei’s hand, and somewhere within the Ninth Meridian Sect a low chant rose to meet the blade.',
+          text: INLINE_AUDIO_BLOCK_TEXT,
         },
         {
           id: 'ch1-b2',

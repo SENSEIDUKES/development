@@ -21,6 +21,9 @@ export function effectMarkers(metadata?: StoryBlockMetadata): string[] {
     markers.push(`entities: ${metadata.entities.map(entity => entity.name).join(", ")}`);
   }
   if (metadata.beastEvent) markers.push(`beast: ${formatToken(metadata.beastEvent.type)}`);
+  for (const moment of metadata.audioMoments ?? []) {
+    markers.push(`world cue: ${moment.triggerPhrase}`);
+  }
   return markers;
 }
 

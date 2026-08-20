@@ -7,6 +7,8 @@
  * exactly as production does.
  */
 
+import type { ResolvedAudioMoment, WorldCueIntent } from "../../../audio/inlineAudio";
+
 export interface BeastSonicProfile {
   size?: "tiny" | "small" | "medium" | "large" | "giant" | "colossal";
   bodyType?:
@@ -101,6 +103,8 @@ export interface StoryBlockMetadata {
     type: "reveal" | "power-up" | "technique" | "injury" | "turning-point" | "death" | "breakthrough";
     profile: BeastSonicProfile;
   };
+  /** Model-safe, block-scoped audible actions; application code resolves them. */
+  audioMoments?: WorldCueIntent[];
 }
 
 export interface SystemEvent {
@@ -271,6 +275,8 @@ export interface ChapterContent {
   manifestDiagnostics?: ChapterManifestDiagnostics;
   blocks?: StoryBlock[];
   archivedBlocks?: StoryBlock[];
+  /** Resolved, precisely placed World Cues and server-produced dialogue artifacts. */
+  audioMoments?: ResolvedAudioMoment[];
   summary?: string;
   episodicSummary?: string;
   statsChangeMessage?: string;

@@ -16,13 +16,18 @@ import type {
   StoryWorld,
   SystemEvent,
 } from '../../reader-chamber/shared/types';
-import type { InlineAudioHighlight } from '../../../audio/inlineAudio';
+import {
+  resolveChapterAudioMoments,
+  type WorldCueIntent,
+} from '../../../audio/inlineAudio';
 import type { CardPreset, CardWorkshopOverrides } from '../shared/types';
 
 const LOCAL_HUMAN_PORTRAIT = '/card-workshop/test-images/ye_chen_portrait.png';
 const LOCAL_CREATURE_PORTRAIT = '/card-workshop/test-images/lyra_meadowlight_portrait.png';
 
 const CONTEXT_CARD_BLOCK_ID = 'card-workshop-context-card';
+const CONTEXT_OPENING_BLOCK_ID = 'card-workshop-context-opening';
+const CONTEXT_OPENING_TEXT = 'Rain threaded down the bronze eaves. The Rain Court bell tolled once as a Vermilion Debt Fox growled beneath the empty tribunal.';
 const CONTEXT_CHAPTER_NUMBER = 1;
 
 const CONTEXT_WITNESS: CodexTerm = {
@@ -51,24 +56,37 @@ const CONTEXT_CUE_LOCATION: CodexTerm = {
   },
 };
 
-const CONTEXT_INLINE_WORLD_CUES = [
+const CONTEXT_WORLD_CUE_INTENTS = [
   {
-    id: 'card-workshop-rain-court-cue',
-    phrase: 'Rain Court',
-    action: {
-      type: 'sound',
-      cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Locations/Signatures/Sect_Gong_1.mp3',
-    },
+    blockId: CONTEXT_OPENING_BLOCK_ID,
+    triggerPhrase: 'The Rain Court bell tolled once',
+    occurrenceIndex: 0,
+    sourceCategory: 'locations',
+    variation: 'signatures',
+    semanticTags: ['gong', 'resonant', 'deep'],
+    relatedEntity: { name: 'Rain Court', type: 'location' },
   },
   {
-    id: 'card-workshop-vermilion-debt-fox-cue',
-    phrase: 'Vermilion Debt Fox',
-    action: {
-      type: 'sound',
-      cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3',
-    },
+    blockId: CONTEXT_OPENING_BLOCK_ID,
+    triggerPhrase: 'a Vermilion Debt Fox growled',
+    occurrenceIndex: 0,
+    sourceCategory: 'beasts',
+    variation: 'growl',
+    semanticTags: ['growl', 'predator', 'threatening'],
+    relatedEntity: { name: 'Vermilion Debt Fox', type: 'creature' },
   },
-] as const satisfies readonly InlineAudioHighlight[];
+] as const satisfies readonly WorldCueIntent[];
+
+const CONTEXT_AUDIO_MOMENTS = (() => {
+  const resolution = resolveChapterAudioMoments(
+    [{ id: CONTEXT_OPENING_BLOCK_ID, text: CONTEXT_OPENING_TEXT }],
+    CONTEXT_WORLD_CUE_INTENTS,
+  );
+  if (resolution.issues.length > 0) {
+    throw new Error('Card Workshop World Cue fixture failed validation.');
+  }
+  return resolution.audioMoments;
+})();
 
 const CONTEXT_READER_PREFERENCES: ReaderPreferences = {
   fontSize: 'lg',
@@ -214,9 +232,9 @@ export function createCardWorkshopContextualFixture(
 
   const blocks: StoryBlock[] = [
     {
-      id: 'card-workshop-context-opening',
+      id: CONTEXT_OPENING_BLOCK_ID,
       type: 'prose',
-      text: 'Rain threaded down the bronze eaves of the Rain Court, while a Vermilion Debt Fox barked once beneath the empty tribunal.',
+      text: CONTEXT_OPENING_TEXT,
     },
     {
       id: 'card-workshop-context-mention',
@@ -262,6 +280,7 @@ export function createCardWorkshopContextualFixture(
       premise: 'A fixed, local Reader fixture.',
       status: 'read',
       hasContent: true,
+      audioMoments: CONTEXT_AUDIO_MOMENTS,
       blocks,
     },
     codexTerms,
@@ -382,7 +401,6 @@ export function CardWorkshopContextualReader({
           setShowLegend={() => undefined}
           hasSystemBlocks={Boolean(fixture.chapter.blocks?.some(block => block.system))}
           chapters={[fixture.chapter]}
-          inlineAudioHighlights={CONTEXT_INLINE_WORLD_CUES}
         />
       </div>
     </section>

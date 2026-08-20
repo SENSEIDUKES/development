@@ -22,14 +22,8 @@ export const HIGH_CONFIDENCE_AUTO_CUES = [
   'system_alert',
   /** A genuine cultivation/realm breakthrough. */
   'breakthrough',
-  /** A powerful artifact activating. */
-  'artifact_activation',
-  /** A major beast reveal. */
-  'beast_reveal',
   /** A major Fate/death event. */
   'fate_shift',
-  /** A clearly defined high-impact attack. */
-  'major_impact',
 ] as const;
 
 export type HighConfidenceAutoCue = (typeof HIGH_CONFIDENCE_AUTO_CUES)[number];
@@ -47,10 +41,7 @@ const SUPPRESSED_PATTERN =
 const CUE_PATTERNS: Array<[HighConfidenceAutoCue, RegExp]> = [
   ['system_alert', /^system_alert$|\bsystem\b.*\b(alert|notification|warning|announcement)\b/i],
   ['breakthrough', /^breakthrough$|\b(realm|cultivation|core|dao)\b.*\bbreakthrough\b|\bbreakthrough\b.*\b(realm|cultivation|core|dao)\b|\bascension\b/i],
-  ['artifact_activation', /^artifact_activation$|\b(artifact|relic|talisman|treasure)\b.*\b(activat\w*|awaken\w*)\b/i],
-  ['beast_reveal', /^beast_reveal$|\b(beast|dragon|monster)\b.*\b(reveal\w*|descend\w*|emerg\w*|appear\w*)\b/i],
   ['fate_shift', /^fate_shift$|\b(fate|doom|karma)\b.*\b(shift\w*|seal\w*|manifest\w*)\b|\bdeath knell\b/i],
-  ['major_impact', /^major_impact$|\b(devastating|cataclysmic|earth-?shattering|world-?shaking)\b.*\b(blow|strike|impact|attack)\b/i],
 ];
 
 const warnedSuppressions = new Set<string>();
@@ -76,9 +67,6 @@ export function normalizeAutoCue(raw: string): HighConfidenceAutoCue | null {
   return null;
 }
 
-/** Beast reveals only qualify when the beast is a genuine headline threat. */
-const MAJOR_THREAT_TIERS = ['boss', 'calamity', 'mythic'];
-
 /**
  * Derive an automatic cue from a block's STRUCTURED narrative data — the
  * only justification besides an explicitly high-confidence [SFX] tag.
@@ -90,16 +78,8 @@ export function deriveStructuredAutoCue(
   const promptType = block.system?.promptType;
   if (promptType === 'breakthrough') return 'breakthrough';
   if (promptType === 'death_event' || promptType === 'fate_event') return 'fate_shift';
-  if (promptType === 'critical_danger') return 'major_impact';
+  if (promptType === 'critical_danger') return 'system_alert';
 
-  const beastEvent = block.metadata?.beastEvent;
-  if (
-    beastEvent?.type === 'reveal' &&
-    beastEvent.profile &&
-    MAJOR_THREAT_TIERS.includes(beastEvent.profile.threatTier)
-  ) {
-    return 'beast_reveal';
-  }
   return null;
 }
 

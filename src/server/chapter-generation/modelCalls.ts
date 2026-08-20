@@ -14,7 +14,10 @@ import {
   type LivingStoryCharacterStateUpdate,
   type LivingStoryCodexUpdates,
 } from "../../components/chapter-generation/shared/packets/livingStoryState";
-import { normalizeCreatureCodexRecords } from "../../components/chapter-generation/shared/packets/creatureCodex";
+import {
+  isProviderVoiceField,
+  normalizeCreatureCodexRecords,
+} from "../../components/chapter-generation/shared/packets/creatureCodex";
 import type {
   AsyncChapterGenerationModelCalls,
   ChapterEffectKind,
@@ -41,10 +44,12 @@ import {
   type ChapterContent,
 } from "../../components/chapter-generation/shared/types";
 import type { ChapterTextModelProvider } from "./provider";
+import { parseModelWorldCueIntents } from "./manifestNormalizer";
+import { assignCharacterVoices } from "../audio/characterVoiceAssignments";
 
 const EFFECT_KINDS: ChapterEffectKind[] = [
   "narration-metadata",
-  "beast-sound",
+  "world-cue",
   "system-panel",
   "scene-music",
   "atmosphere",
@@ -161,6 +166,71 @@ const recordArray = (value: unknown, label: string): JsonRecord[] => {
     ...requiredRecord(item, `${label}[${index}]`),
   }));
 };
+
+const MODEL_PRIVATE_FIELD_KEYS = new Set([
+  "voicekey",
+  "voicepresetid",
+  "voiceid",
+  "providervoiceid",
+  "providerid",
+  "soundurl",
+  "audiourl",
+  "voiceclipurl",
+  "imageurl",
+  "portraiturl",
+  "assetid",
+  "imageassetid",
+  "voiceassetid",
+  "audioassetid",
+  "mediaassetid",
+  "filepath",
+  "filename",
+  "filekey",
+  "fileid",
+  "storagekey",
+  "catalogid",
+  "catalogentry",
+  "catalogentryid",
+  "catalogkey",
+  "catalogurl",
+]);
+
+const compactFieldKey = (field: string): string => field
+  .replace(/[^A-Za-z0-9]/g, "")
+  .toLocaleLowerCase();
+
+/**
+ * Model-owned records may describe meaning, but never select media or a
+ * provider identity. This recursively removes selectors before an update can
+ * reach canonical Living Story State.
+ */
+const isModelPrivateField = (field: string): boolean => {
+  const key = compactFieldKey(field);
+  return isProviderVoiceField(field)
+    || MODEL_PRIVATE_FIELD_KEYS.has(key)
+    || key.endsWith("url")
+    || key.endsWith("uri")
+    || key.includes("filepath")
+    || key.includes("filename")
+    || key.includes("assetid")
+    || key.startsWith("catalog");
+};
+
+const stripModelPrivateFields = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map(stripModelPrivateFields);
+  if (!isRecord(value)) return value;
+  return Object.fromEntries(
+    Object.entries(value).flatMap(([field, nested]) => (
+      isModelPrivateField(field)
+        ? []
+        : [[field, stripModelPrivateFields(nested)]]
+    )),
+  );
+};
+
+const sanitizedRecordArray = (value: unknown, label: string): JsonRecord[] => (
+  recordArray(value, label).map(record => stripModelPrivateFields(record) as JsonRecord)
+);
 
 const cleanModelEnvelope = (text: string): string => text
   .replace(/<think>[\s\S]*?<\/think>/gi, "")
@@ -371,7 +441,12 @@ const optionalMetadataStringArray = (value: unknown, label: string): string[] | 
   return stringArray(value, label);
 };
 
-const parseBlockMetadata = (value: unknown, label: string): StoryBlockMetadata | undefined => {
+const parseBlockMetadata = (
+  value: unknown,
+  label: string,
+  blockId: string,
+  blockText: string,
+): StoryBlockMetadata | undefined => {
   if (value === undefined || value === null) return undefined;
   const metadata = requiredRecord(value, label);
   const atmosphereCategory = optionalValidatedString(metadata.atmosphereCategory, `${label}.atmosphereCategory`);
@@ -418,12 +493,6 @@ const parseBlockMetadata = (value: unknown, label: string): StoryBlockMetadata |
           ...(optionalFiniteNumber(item.intensity, `${label}.music.intensity`) !== undefined
             ? { intensity: optionalFiniteNumber(item.intensity, `${label}.music.intensity`) }
             : {}),
-          ...(optionalValidatedString(item.customUrl, `${label}.music.customUrl`)
-            ? { customUrl: optionalValidatedString(item.customUrl, `${label}.music.customUrl`) }
-            : {}),
-          ...(optionalValidatedString(item.trackId, `${label}.music.trackId`)
-            ? { trackId: optionalValidatedString(item.trackId, `${label}.music.trackId`) }
-            : {}),
         };
       })();
   const theme = metadata.theme === undefined
@@ -457,6 +526,11 @@ const parseBlockMetadata = (value: unknown, label: string): StoryBlockMetadata |
           },
         };
       })();
+  const audioMoments = parseModelWorldCueIntents(
+    metadata.audioMoments,
+    blockId,
+    blockText,
+  ).intents;
 
   return {
     ...(optionalValidatedString(metadata.sceneType, `${label}.sceneType`) ? { sceneType: optionalValidatedString(metadata.sceneType, `${label}.sceneType`) } : {}),
@@ -477,6 +551,7 @@ const parseBlockMetadata = (value: unknown, label: string): StoryBlockMetadata |
     ...(entities ? { entities } : {}),
     ...(music ? { music } : {}),
     ...(beastEvent ? { beastEvent } : {}),
+    ...(audioMoments.length > 0 ? { audioMoments } : {}),
   };
 };
 
@@ -528,10 +603,20 @@ const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefine
   };
 };
 
-const sanitizeStoryBlock = (value: JsonRecord, index: number): StoryBlock => {
-  const id = requiredString(value.id, `Manifest Chapter block ${index + 1} id`);
+const sanitizeStoryBlock = (
+  value: JsonRecord,
+  index: number,
+  chapterNumber: number,
+): StoryBlock => {
+  const id = `c${chapterNumber}-p${index + 1}`;
   const returnedType = requiredString(value.type, `Manifest Chapter block ${index + 1} type`);
-  const metadata = parseBlockMetadata(value.metadata, `Manifest Chapter block '${id}' metadata`);
+  const text = requiredString(value.text, `Manifest Chapter block '${id}' text`);
+  const metadata = parseBlockMetadata(
+    value.metadata,
+    `Manifest Chapter block '${id}' metadata`,
+    id,
+    text,
+  );
   const system = parseSystemEvent(value.system, `Manifest Chapter block '${id}' system`);
   const type = returnedType === "paragraph" || returnedType === "dialogue"
     ? returnedType
@@ -548,7 +633,7 @@ const sanitizeStoryBlock = (value: JsonRecord, index: number): StoryBlock => {
   return {
     id,
     type,
-    text: requiredString(value.text, `Manifest Chapter block '${id}' text`),
+    text,
     ...(metadata ? { metadata } : {}),
     ...(system ? { system } : {}),
   };
@@ -568,12 +653,12 @@ export function parseManifestedChapter(
   if (rawBlocks.length > 500) {
     throw new Error("Manifest Chapter returned too many blocks.");
   }
-  const blocks = rawBlocks.map(sanitizeStoryBlock);
-  const ids = new Set<string>();
-  for (const block of blocks) {
-    if (ids.has(block.id)) throw new Error(`Manifest Chapter returned duplicate block id '${block.id}'.`);
-    ids.add(block.id);
-  }
+  const chapterNumber = input.chapterPacket.chapterMission.number;
+  const blocks = rawBlocks.map((block, index) => sanitizeStoryBlock(
+    block,
+    index,
+    chapterNumber,
+  ));
   const generatedContent = blocks.map(block => block.text).join("\n\n");
   const title = input.chapterPacket.storyConstitution.worldBlueprint?.title
     || input.chapterPacket.chapterMission.title;
@@ -656,7 +741,7 @@ const buildProposedState = (
       currentPowerStage: characterStateUpdates.currentPowerStage
         ?? current.characterState.currentPowerStage,
       abilities: mergeCarriedValues(
-        current.characterState.abilities,
+        current.characterState.abilities.map(ability => stripModelPrivateFields(ability)),
         characterStateUpdates.abilities,
       ),
     },
@@ -680,7 +765,9 @@ const buildProposedState = (
       carriedAnchors: newAnchors,
     },
     carriedChanges: [
-      ...(current.carriedChanges ?? []).map(entry => structuredClone(entry)),
+      ...(current.carriedChanges ?? []).map(entry => (
+        stripModelPrivateFields(entry) as typeof entry
+      )),
       {
         chapterNumber: input.chapterPacket.chapterMission.number,
         characterChanges: [...characterChanges],
@@ -821,22 +908,46 @@ export function parseProcessingResult(
     abilities: unknownArray(
       characterStateValue.abilities,
       "Process Result characterStateUpdates.abilities",
-    ),
+    ).map(ability => stripModelPrivateFields(ability)),
   };
   const codexValue = requiredRecord(value.codexUpdates, "Process Result codexUpdates");
   const normalizedCreatureCodex = normalizeCreatureCodexRecords({
     currentCharacters: input.chapterPacket.livingStoryState.codex.characters,
     currentBestiary: input.chapterPacket.livingStoryState.codex.bestiary ?? [],
-    characterUpdates: recordArray(codexValue.characters, "Process Result codexUpdates.characters"),
-    bestiaryUpdates: recordArray(codexValue.bestiary, "Process Result codexUpdates.bestiary"),
+    characterUpdates: sanitizedRecordArray(
+      codexValue.characters,
+      "Process Result codexUpdates.characters",
+    ),
+    bestiaryUpdates: sanitizedRecordArray(
+      codexValue.bestiary,
+      "Process Result codexUpdates.bestiary",
+    ),
     chapterNumber: input.chapterPacket.chapterMission.number,
   });
+  const dialogueSpeakers = (input.manifestedChapter.blocks ?? []).flatMap(block => {
+    const speakerName = block.metadata?.speakerName?.trim();
+    return block.type === "dialogue"
+      && speakerName
+      ? [{ speakerName }]
+      : [];
+  });
+  const characterVoices = assignCharacterVoices({
+    characters: normalizedCreatureCodex.characters,
+    dialogueSpeakers,
+  });
+  const normalizedCodexWithVoices = {
+    characters: characterVoices.characters,
+    bestiary: normalizedCreatureCodex.bestiary,
+  };
   const codexUpdates: LivingStoryCodexUpdates = {
-    characters: normalizedCreatureCodex.characterUpdates,
+    characters: mergeCarriedRecords(
+      normalizedCreatureCodex.characterUpdates,
+      characterVoices.changedCharacters,
+    ),
     bestiary: normalizedCreatureCodex.bestiaryUpdates,
-    factions: recordArray(codexValue.factions, "Process Result codexUpdates.factions"),
-    locations: recordArray(codexValue.locations, "Process Result codexUpdates.locations"),
-    artifacts: recordArray(codexValue.artifacts, "Process Result codexUpdates.artifacts"),
+    factions: sanitizedRecordArray(codexValue.factions, "Process Result codexUpdates.factions"),
+    locations: sanitizedRecordArray(codexValue.locations, "Process Result codexUpdates.locations"),
+    artifacts: sanitizedRecordArray(codexValue.artifacts, "Process Result codexUpdates.artifacts"),
   };
 
   return {
@@ -882,7 +993,7 @@ export function parseProcessingResult(
       worldStateChanges,
       characterStateUpdates,
       codexUpdates,
-      normalizedCreatureCodex,
+      normalizedCodexWithVoices,
     ),
     repairRecommended: requiredBoolean(
       value.repairRecommended,
@@ -907,14 +1018,19 @@ Report new anchors, character/world changes, explicit character-state and Codex-
 characterChanges, worldStateChanges, threads.completed, and threads.changed must each be arrays of plain strings; use [] when there are no entries.
 characterStateUpdates.abilities and every codexUpdates collection must be arrays; use [] when there are no structured updates. Return currentPowerStage only when it genuinely changed. Preserve every discovered character, faction, location, artifact, or ability update in the matching structured collection as a JSON record.
 Use "creature" as the canonical term. The codexUpdates.bestiary collection holds whole-species records only: name, short description, classification, traits, threatLevel, and signatureSound when known. A species encounter updates its Bestiary entry even when no individual matters enough for a Portrait. Never put a generic, disposable, or one-scene creature in codexUpdates.characters.
-codexUpdates.characters holds persistent individuals. Set portraitKind to "non-human" only for an important named creature, bonded pet, companion, recurring monster, intelligent creature with lasting identity, or other non-human individual; intelligence alone is not enough. A non-human individual may include speciesName when it belongs to a real species. If both are new, include the species in bestiary and the individual in characters. A unique individual without a real species has no speciesName. Human characters use portraitKind "human". Bestiary species and Factions are informational records only; never propose generated Codex artwork or visual-manifestation state for either collection.
-Never return image URLs, storage keys, asset IDs, sound URLs, internal Codex IDs, speciesId, notableIndividualIds, encounter chapters, first-encounter values, or provenance. The application assigns IDs, resolves media, encounter history, and links itself.
+codexUpdates.characters holds persistent individuals. Set portraitKind to "non-human" only for an important named creature, bonded pet, companion, recurring monster, intelligent creature with lasting identity, or other non-human individual; intelligence alone is not enough. When a non-human Character speaks dialogue, include explicit creatureProfile.intelligence evidence such as "sapient" or "human-like"; a name or Portrait alone does not make it voice-eligible. A non-human individual may include speciesName when it belongs to a real species. If both are new, include the species in bestiary and the individual in characters. A unique individual without a real species has no speciesName. Human characters use portraitKind "human". Bestiary species and Factions are informational records only; never propose generated Codex artwork or visual-manifestation state for either collection.
+Never return voiceKey, voicePresetId, voiceId, voice_id, providerVoiceId, provider_voice_id, providerId, provider credentials, URLs, filenames, file paths, storage keys, asset IDs, catalog IDs or entries, internal Codex IDs, speciesId, notableIndividualIds, encounter chapters, first-encounter values, or provenance. The application assigns identities, resolves media, encounter history, and links itself.
 Use severity "serious" only for a defect that requires rewriting the manifested chapter. Set repairRecommended true only when at least one serious finding exists; do not force repair on a healthy run.
 The server clones and advances Living Story State from this structured result; do not return a proposedLivingStoryState object.
 Required shape:
 {"version":1,"newAnchors":{"worldBuilding":"...","conflict":"...","progression":"..."},"characterChanges":[],"worldStateChanges":[],"characterStateUpdates":{"abilities":[]},"codexUpdates":{"characters":[{"name":"...","portraitKind":"human"}],"bestiary":[{"name":"...","description":"...","classification":"...","traits":[],"threatLevel":"...","signatureSound":"..."}],"factions":[],"locations":[],"artifacts":[]},"threads":{"completed":[],"changed":[],"unresolved":[{"description":"...","originChapter":1}]},"missionCompletion":{"completed":true,"evidence":"..."},"continuityFindings":[],"repetitionFindings":[],"nextChapterHandoff":{"version":1,"chapterNumber":1,"endState":{"location":"...","timeMarker":"...","charactersPresent":[],"mcCondition":"...","openTension":"..."},"completedEvents":[],"nextImmediateAction":"...","fingerprints":[{"actionType":"other","participants":[],"location":"...","outcome":"...","chapterNumber":1}]},"repairRecommended":false}`;
 
-const packetJson = (value: unknown) => JSON.stringify(value, null, 2);
+/** Model-visible serialization omits canonical provider and media selectors. */
+const packetJson = (value: unknown) => JSON.stringify(
+  value,
+  (field, nested) => (field && isModelPrivateField(field) ? undefined : nested),
+  2,
+);
 
 const estimateStageInputBreakdown = (
   input: PlanChapterInput | ManifestChapterInput | ProcessChapterInput | RepairChapterInput,
@@ -995,7 +1111,7 @@ export function createLiveChapterModelCalls(
       },
 
       async manifestChapter(input) {
-        const systemInstruction = `${input.consolidatedPermanentInstructions}\n\n=== LIVE MANIFEST BOUNDARY ===\nWrite one complete chapter from the exact packet and plan below. Return only ---CHAPTER_BLOCKS--- followed by NDJSON blocks. Every block must contain a unique non-empty string \"id\", a \"type\" exactly equal to \"paragraph\" or \"dialogue\", and non-empty prose \"text\". A System Panel event remains a paragraph block with its structured sibling object. This live boundary requires model-supplied block IDs even if an earlier general instruction says otherwise. Do not return a summary, state update, plan, word count, run identity, or analysis.`;
+        const systemInstruction = `${input.consolidatedPermanentInstructions}\n\n=== LIVE MANIFEST BOUNDARY ===\nWrite one complete chapter from the exact packet and plan below. Return only ---CHAPTER_BLOCKS--- followed by NDJSON blocks. Every block must contain a \"type\" exactly equal to \"paragraph\" or \"dialogue\" and non-empty prose \"text\". Do not output block IDs; the application assigns stable chapter-position IDs after validation. A System Panel event remains a paragraph block with its structured sibling object. Do not return a summary, state update, plan, word count, run identity, or analysis.`;
         const response = await generate({
           kind: "manifest",
           stage: "Manifest Chapter",
@@ -1028,7 +1144,7 @@ export function createLiveChapterModelCalls(
       },
 
       async repairChapter(input) {
-        const systemInstruction = `${input.chapterPacket.generationRules.permanentWritingInstructions}\n\n=== SERIOUS-ISSUE REPAIR ===\nRewrite the complete chapter only to correct the serious processing findings. Preserve sound prose and all canon that is not implicated. Return only ---CHAPTER_BLOCKS--- followed by the full repaired NDJSON chapter. Every block must contain a unique non-empty string \"id\", a \"type\" exactly equal to \"paragraph\" or \"dialogue\", and non-empty prose \"text\". A System Panel event remains a paragraph block with its structured sibling object. This repair boundary requires model-supplied block IDs even if an earlier general instruction says otherwise.`;
+        const systemInstruction = `${input.chapterPacket.generationRules.permanentWritingInstructions}\n\n=== SERIOUS-ISSUE REPAIR ===\nRewrite the complete chapter only to correct the serious processing findings. Preserve sound prose and all canon that is not implicated. Return only ---CHAPTER_BLOCKS--- followed by the full repaired NDJSON chapter. Every block must contain a \"type\" exactly equal to \"paragraph\" or \"dialogue\" and non-empty prose \"text\". Do not output block IDs; the application assigns stable chapter-position IDs after validation. A System Panel event remains a paragraph block with its structured sibling object.`;
         const response = await generate({
           kind: "repair",
           stage: "Repair Chapter",

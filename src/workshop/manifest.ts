@@ -136,7 +136,7 @@ export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'reader-chamber',
     title: 'Reader Chamber',
-    description: 'The full reading UI with generated five-chapter session support, chapter-scoped Reader Codex memory, and Development-only inline World Cues beside controlled prose.',
+    description: 'The full reading UI with generated five-chapter sessions, chapter-scoped Reader Codex memory, and persisted action-scoped Worldcues resolved through the approved Library catalog.',
     category: 'reader-ui',
     version: 'v1.3',
     source: {
@@ -148,7 +148,7 @@ export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'card-workshop',
     title: 'Card Workshop',
-    description: 'Development-only Card Type Tabs and contextual ReaderViewport preview for inspecting Codex Cards, System Panels, Fate results, and the separate inline World Cue action without generating a chapter.',
+    description: 'Development-only Card Type Tabs and contextual ReaderViewport preview for inspecting Codex Cards, System Panels, Fate results, and independent action-scoped Worldcue annotations without generating a chapter.',
     category: 'reader-ui',
     version: 'v1.2',
     source: {

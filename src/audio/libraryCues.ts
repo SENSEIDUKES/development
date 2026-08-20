@@ -6,8 +6,8 @@
  * directly. No credentials or provider lookups are required to consume a cue.
  *
  * Category ownership is documented in `src/audio/README.md`. In short:
- *   - beasts, weapons, artifacts, locations, factions — reserved for the
- *     future inline-audio system (Phase 2+).
+ *   - beasts, weapons, artifacts, locations, factions — resolved by the
+ *     Phase 3 inline Worldcue system after model-safe intent validation.
  *   - atmosphere — owned by scene audio (the `atmosphereCategory` field on
  *     `StoryCuePayload` / `StoryBlock.metadata` and the `TRACK_LIBRARY` in
  *     `src/components/reader-chamber/shared/trackLibrary.ts`).

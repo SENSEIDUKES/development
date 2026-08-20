@@ -325,7 +325,7 @@ export const isTtsAvailable = (voice: PublicVoiceMeta): boolean => voice.ttsAvai
  * — never expose the returned ID to client/shared code.
  */
 export const resolveProviderId = (
-  entries: VoiceCatalogEntry[],
+  entries: readonly VoiceCatalogEntry[],
   internalKey: string,
 ): string | null => {
   for (const entry of entries) {
@@ -335,3 +335,12 @@ export const resolveProviderId = (
   }
   return null;
 };
+
+/**
+ * Server synthesis boundary for a persisted provider-neutral voiceKey.
+ * Callers never need access to raw catalog entries and must not return this
+ * value through Reader or chapter payloads.
+ */
+export const resolveVoiceKeyToProviderId = (voiceKey: string): string | null => (
+  resolveProviderId(loadVoiceCatalog().entries, voiceKey)
+);

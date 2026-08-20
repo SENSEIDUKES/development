@@ -45,6 +45,11 @@ const planEffects = (sceneType: SceneType): ChapterEffectSelection[] => {
       intent: "Use restrained escalation music that follows the confrontation's intensity curve.",
       required: true,
     });
+    shared.push({
+      kind: "world-cue",
+      intent: "Annotate the exact audible action phrase 'drew the Ashen Sword from its sheath'; the artifact name alone remains ordinary Codex prose.",
+      required: false,
+    });
   }
   if (sceneType === "progression") {
     shared.push({

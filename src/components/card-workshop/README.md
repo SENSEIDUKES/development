@@ -22,7 +22,7 @@ Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studi
 
 ## Workshop history
 
-- **2026-08-19:** Removed the retired standalone world presentation and every Card Workshop preset, adapter, override, and Reference rendering branch that existed only for it. Contextual View now demonstrates the replacement circle-free, footnote-scale annotations: `Rain Court` opens its Codex entry while its separate mark starts playback, and `Vermilion Debt Fox` remains ordinary prose with only the small sound mark identifying its cue. Each final word, mark, and punctuation stays together while longer names can wrap normally.
+- **2026-08-19:** Removed the retired standalone world presentation and every Card Workshop preset, adapter, override, and Reference rendering branch that existed only for it. Contextual View now demonstrates the replacement circle-free, footnote-scale annotations on audible actions: `the Rain Court bell tolled` contains the independently linked Codex name while its separate mark starts playback, and `a Vermilion Debt Fox growled once` remains ordinary prose with only the small sound mark identifying the event. Each final word, mark, and punctuation stays together while longer phrases can wrap normally.
 - **2026-08-18:** Development fixtures adopted the real Manifest backdrop pool and published Library test images for Codex media.
 - **2026-08-18:** Refined the shared Codex Manifest seal, awakening state, spectral glass, and entity accent treatment without changing its content or routing.
 - **2026-08-17:** Adopted the shared responsive `FeatureWorkspace` Workshop Controls shell.
@@ -38,8 +38,8 @@ Contextual View supports:
 - existing Codex artwork, eligible Manifest/Awaken state, and missing-without-action state;
 - Codex entry present or missing;
 - first reveal or existing-entity reference;
-- a Codex-linked phrase with an independently operable inline World Cue;
-- a sound-only phrase that remains ordinary Reader prose;
+- a Codex-linked audible action with an independently operable inline Worldcue;
+- a sound-only audible action that remains ordinary Reader prose;
 - every current `SystemBlock` kind and all existing Fate outcomes;
 - mobile, tablet, and desktop widths.
 
@@ -50,7 +50,9 @@ Card Type Tabs exposes every remaining preset in a horizontally scrollable tab l
 - Fixtures are static local objects and real Library test images under `/public/card-workshop/test-images`.
 - Development Codex reveals use the Manifest backdrop pool under `/public/manifest-backdrops`; the locked Reference keeps its existing placeholder.
 - The Workshop makes no model, generation, API, database, story-write, persistence, or production-media calls.
-- The contextual World Cue resolves an existing public Library catalog URL and starts only from its own tap target through the shared Development audio owner.
+- The contextual Worldcue starts from a block-scoped resolved annotation only;
+  the model-safe fixture chooses category, variation, and semantic tags while
+  application logic selects the approved public Library Cue.
 - Reference mode uses locked production presentation replicas and has no Development controls.
 - Bestiary and Faction records remain informational and expose no Codex image-generation action.
 - System Panels retain their existing information, layout, colors, Fate presentation, and routing.

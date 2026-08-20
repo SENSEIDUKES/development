@@ -38,13 +38,13 @@ export function buildChapterEffectRules(
       "NARRATION AND DIALOGUE METADATA",
       extractInstructionBlock(systemInstruction, {
         start: "OUTPUT FORMAT TARGET:",
-        end: "You can include a \"beastEvent\" object inside the block \"metadata\"",
+        end: "WORLD CUE AUDIO MOMENTS:",
       }),
     ),
     section(
-      "BEAST SOUND CUES",
+      "WORLD CUE AUDIO MOMENTS",
       extractInstructionBlock(systemInstruction, {
-        start: "You can include a \"beastEvent\" object inside the block \"metadata\"",
+        start: "WORLD CUE AUDIO MOMENTS:",
         end: "For any Celestial Library system moment",
       }),
     ),

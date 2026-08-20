@@ -72,6 +72,90 @@ describe("Manifest prose recovery", () => {
     ]);
   });
 
+  it("normalizes exact audible actions onto stable block references", () => {
+    const result = normalizeManifestResponse(ndjson({
+      id: "model-picked-id",
+      type: "paragraph",
+      text: "The bell tolled once. Then the bell tolled once again.",
+      metadata: {
+        audioMoments: [{
+          blockId: "model-picked-id",
+          triggerPhrase: "bell tolled once",
+          occurrenceIndex: 1,
+          sourceCategory: "locations",
+          variation: "signatures",
+          semanticTags: ["bell", "resonant"],
+          relatedEntity: { name: "Witness Bell", type: "location" },
+        }],
+      },
+    }), 7);
+
+    expect(result.blocks[0].id).toBe("c7-p1");
+    expect(result.blocks[0].metadata?.audioMoments).toEqual([{
+      blockId: "c7-p1",
+      triggerPhrase: "bell tolled once",
+      occurrenceIndex: 1,
+      sourceCategory: "locations",
+      variation: "signatures",
+      semanticTags: ["bell", "resonant"],
+      relatedEntity: { name: "Witness Bell", type: "location" },
+    }]);
+  });
+
+  it("drops noun-only, technical, misplaced, and duplicate audio moments without losing prose", () => {
+    const result = normalizeManifestResponse(ndjson({
+      type: "paragraph",
+      text: "Wen drew the Ashen Sword from its sheath with a metallic ring.",
+      metadata: {
+        audioMoments: [{
+          triggerPhrase: "Ashen Sword",
+          sourceCategory: "weapons",
+          variation: "unsheathe",
+          semanticTags: ["sword"],
+          relatedEntity: { name: "Ashen Sword", type: "artifact" },
+        }, {
+          triggerPhrase: "drew the Ashen Sword from its sheath",
+          sourceCategory: "weapons",
+          variation: "unsheathe",
+          semanticTags: ["sword", "draw"],
+          cueUrl: "https://model.invalid/cue.mp3",
+        }, {
+          triggerPhrase: "rang three times",
+          sourceCategory: "weapons",
+          variation: "unsheathe",
+          semanticTags: ["ring"],
+        }, {
+          triggerPhrase: "drew the Ashen Sword from its sheath",
+          sourceCategory: "weapons",
+          variation: "unsheathe",
+          semanticTags: ["draw"],
+        }, {
+          triggerPhrase: "drew the Ashen Sword from its sheath",
+          sourceCategory: "weapons",
+          variation: "reload",
+          semanticTags: ["magic"],
+        }, {
+          triggerPhrase: "metallic ring",
+          sourceCategory: "weapons",
+          variation: "unsheathe",
+          semanticTags: ["ring"],
+          relatedEntity: { id: "model-owned-id", name: "Ashen Sword" },
+        }],
+      },
+    }), 2);
+
+    expect(result.blocks[0].text).toContain("Ashen Sword");
+    expect(result.blocks[0].metadata?.audioMoments).toEqual([expect.objectContaining({
+      blockId: "c2-p1",
+      triggerPhrase: "drew the Ashen Sword from its sheath",
+      sourceCategory: "weapons",
+    })]);
+    expect(result.diagnostics.warnings).toContainEqual(expect.objectContaining({
+      code: "optional-field-removed",
+      field: "metadata.audioMoments",
+    }));
+  });
+
   it("removes malformed optional enrichment without dropping its prose", () => {
     const unsafeField = `<script>${"x".repeat(140)}</script>`;
     const result = normalizeManifestResponse(ndjson({

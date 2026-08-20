@@ -1,10 +1,11 @@
 import React from 'react';
 import { Character, Story } from '../../types';
-import { Download, Compass, Lock, Award, Play, Square, Loader2, Volume2, Sparkles } from 'lucide-react';
+import { Download, Compass, Lock, Award, Play, Square, Sparkles } from 'lucide-react';
 import { ReaderCodexImageGallery } from '../ReaderCodexImageGallery';
 import { resolveEntityImageHistory } from '../entityImageHistory';
 import { handleDownload } from '../../codexCompatibility';
 import { AGENTS } from '../../codexCompatibility';
+import { isPlayableCodexVoiceSource } from '../../hooks/useCodexVoiceCards';
 
 interface CharacterCardProps {
   char: Character;
@@ -13,13 +14,11 @@ interface CharacterCardProps {
   cScore: any;
   hasAppeared: boolean;
   playingVoiceId: string | null;
-  generatingVoiceId: string | null;
   isGenerating: boolean;
   canGenerate: boolean;
   isFreeUserOnHubStory: boolean;
   handlePlayVoice: (url: string, id: string) => void;
   handleStopVoice: () => void;
-  handleGenerateVoiceCard: (char: Character) => void;
   beginCharEdit: (char: Character) => void;
   handleAwakenCardImage: (id: string, type: "character", obj: any) => void;
 }
@@ -31,13 +30,11 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
   cScore,
   hasAppeared,
   playingVoiceId,
-  generatingVoiceId,
   isGenerating,
   canGenerate,
   isFreeUserOnHubStory,
   handlePlayVoice,
   handleStopVoice,
-  handleGenerateVoiceCard,
   beginCharEdit,
   handleAwakenCardImage
 }) => {
@@ -164,7 +161,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
         {char.signatureQuote && (
           <div className="pt-2 pb-2 text-[10px] text-neutral-400 italic flex flex-col gap-2 relative">
             <span>"{char.signatureQuote}"</span>
-            {char.voiceClipUrl ? (
+            {isPlayableCodexVoiceSource(char.voiceClipUrl) && (
               <button
                 onClick={() => playingVoiceId === char.id ? handleStopVoice() : handlePlayVoice(char.voiceClipUrl!, char.id)}
                 aria-label={playingVoiceId === char.id ? `Stop voice for ${char.name}` : `Play voice for ${char.name}`}
@@ -172,16 +169,6 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
               >
                 {playingVoiceId === char.id ? <Square size={10} fill="currentColor" /> : <Play size={10} fill="currentColor" />}
                 <span>{playingVoiceId === char.id ? 'Stop Voice' : 'Play Voice'}</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => handleGenerateVoiceCard(char)}
-                disabled={generatingVoiceId === char.id}
-                aria-label={`Generate voice for ${char.name}`}
-                className="flex items-center gap-1.5 self-start text-[9px] text-human uppercase tracking-wider font-mono hover:text-human/80 transition-colors disabled:opacity-50"
-              >
-                {generatingVoiceId === char.id ? <Loader2 size={10} className="animate-spin" /> : <Volume2 size={10} />}
-                <span>{generatingVoiceId === char.id ? 'Manifesting Voice...' : 'Generate Voice'}</span>
               </button>
             )}
           </div>

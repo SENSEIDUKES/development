@@ -112,16 +112,20 @@ const planResponse = JSON.stringify({
 const manifestedResponse = [
   "---CHAPTER_BLOCKS---",
   JSON.stringify({
-    id: "c1-p1",
+    id: "model-picked-rain-block",
     type: "paragraph",
-    text: "Rain moved across the court roof while Rin waited beneath the witness bell.",
+    text: "Rain moved across the court roof while Rin waited, and the witness bell tolled once.",
     metadata: {
       mode: "narration",
       atmosphereCategory: "rain",
-      beastEvent: {
-        type: "reveal",
-        profile: { size: "large", bodyType: "dragon", signatureSound: "thunder-purr" },
-      },
+      audioMoments: [{
+        triggerPhrase: "witness bell tolled once",
+        occurrenceIndex: 0,
+        sourceCategory: "locations",
+        variation: "signatures",
+        semanticTags: ["bell", "metallic", "resonant"],
+        relatedEntity: { name: "The Rain Court", type: "location" },
+      }],
     },
   }),
   JSON.stringify({
@@ -467,10 +471,21 @@ describe("live Chapter Generation model boundaries", () => {
       }),
     ]);
     expect(run.manifestedChapter.blocks?.[2].type).toBe("paragraph");
-    expect(run.manifestedChapter.blocks?.[0].metadata?.beastEvent).toEqual({
-      type: "reveal",
-      profile: { size: "large", bodyType: "dragon", signatureSound: "thunder-purr" },
-    });
+    expect(run.manifestedChapter.blocks?.[0].id).toBe("c1-p1");
+    expect(run.manifestedChapter.blocks?.[0].metadata?.audioMoments).toEqual([
+      expect.objectContaining({
+        blockId: "c1-p1",
+        triggerPhrase: "witness bell tolled once",
+        sourceCategory: "locations",
+      }),
+    ]);
+    expect(run.finalOutput.audioMoments).toEqual([
+      expect.objectContaining({
+        blockId: "c1-p1",
+        triggerPhrase: "witness bell tolled once",
+        cue: { publicUrl: expect.stringContaining("/Locations/Signatures/") },
+      }),
+    ]);
     expect(run.manifestedChapter.blocks?.[2].system?.fateResult).toMatchObject({
       outcome: "FATE SCARRED",
       timelineScar: "The court remembers Rin's defiance.",
@@ -482,7 +497,7 @@ describe("live Chapter Generation model boundaries", () => {
     expect(packet.livingStoryState).toEqual(originalState);
     expect(provider.requests[0].userPrompt).toContain("COMPLETE CHAPTER PACKET");
     expect(provider.requests[1].userPrompt).toContain("CHAPTER PLAN");
-    expect(provider.requests[1].systemInstruction).toContain("unique non-empty string \"id\"");
+    expect(provider.requests[1].systemInstruction).toContain("application assigns stable chapter-position IDs");
     expect(provider.requests[2].userPrompt).toContain("MANIFESTED CHAPTER");
     expect(usage.calls.map(call => call.stage)).toEqual([
       "Plan Chapter",
@@ -508,6 +523,87 @@ describe("live Chapter Generation model boundaries", () => {
       systemPrompts: expect.any(Number),
       total: expect.any(Number),
     });
+  });
+
+  it("keeps Bestiary metadata informational and drops invalid entity-based audio annotations", () => {
+    const packet = buildPacket();
+    const chapterPlan = parseChapterPlan(planResponse, {
+      chapterPacket: packet,
+      planningSignals: {},
+    });
+    const chapter = parseManifestedChapter([
+      "---CHAPTER_BLOCKS---",
+      JSON.stringify({
+        id: "model-creature-reveal",
+        type: "paragraph",
+        text: "The Thunder Roc crossed the moon without a sound.",
+        metadata: {
+          entities: [{ name: "Thunder Roc", type: "creature", mention: "reveal" }],
+          beastEvent: {
+            type: "reveal",
+            profile: { size: "giant", bodyType: "bird", threatTier: "mythic" },
+          },
+          audioMoments: [{
+            triggerPhrase: "Thunder Roc",
+            sourceCategory: "beasts",
+            variation: "screech",
+            semanticTags: ["bird"],
+            relatedEntity: { name: "Thunder Roc", type: "creature" },
+          }, {
+            triggerPhrase: "crossed the moon",
+            sourceCategory: "beasts",
+            variation: "wingbeat",
+            semanticTags: ["wings"],
+            publicUrl: "https://model.invalid/beast.mp3",
+          }],
+        },
+      }),
+      JSON.stringify({
+        id: "model-creature-reveal",
+        type: "paragraph",
+        text: "Only its shadow reached the court.",
+      }),
+    ].join("\n"), {
+      chapterPacket: packet,
+      chapterPlan,
+      consolidatedPermanentInstructions: packet.generationRules.permanentWritingInstructions,
+    });
+
+    expect(chapter.blocks?.map(block => block.id)).toEqual(["c1-p1", "c1-p2"]);
+    expect(chapter.blocks?.[0].metadata?.beastEvent?.type).toBe("reveal");
+    expect(chapter.blocks?.[0].metadata?.audioMoments).toBeUndefined();
+    expect(chapter.audioMoments).toBeUndefined();
+  });
+
+  it("assigns a stable Character voice for a validated dialogue block without optional mode metadata", async () => {
+    const base = new RecordingProvider();
+    const provider: ChapterTextModelProvider = {
+      provider: base.provider,
+      model: base.model,
+      async generate(request) {
+        const result = await base.generate(request);
+        if (request.kind !== "manifest") return result;
+        const withoutOptionalMode = result.text.replace(
+          '"metadata":{"mode":"dialogue","speakerName":"Rin"',
+          '"metadata":{"speakerName":"Rin"',
+        );
+        expect(withoutOptionalMode).not.toBe(result.text);
+        return { ...result, text: withoutOptionalMode };
+      },
+    };
+    const calls = createLiveChapterModelCalls(provider, {
+      temperature: 1,
+      maxOutputTokens: 16_384,
+    });
+
+    const run = await runChapterPipelineAsync({ chapterPacket: buildPacket(), model: calls.model });
+    const dialogueBlock = run.manifestedChapter.blocks?.find(block => block.type === "dialogue");
+    const speaker = run.processingResult.proposedLivingStoryState.codex.characters
+      .find(character => character.name === "Rin");
+
+    expect(dialogueBlock?.metadata?.speakerName).toBe("Rin");
+    expect(dialogueBlock?.metadata?.mode).toBeUndefined();
+    expect(speaker?.voiceKey).toEqual(expect.any(String));
   });
 
   it("adds repair and reprocessing only after a serious repair recommendation", async () => {
@@ -811,6 +907,122 @@ describe("live Chapter Generation model boundaries", () => {
       .toContain('codexUpdates.bestiary');
   });
 
+  it("keeps provider and media selectors out of model packets and every Codex update", async () => {
+    const base = new RecordingProvider();
+    const provider: ChapterTextModelProvider = {
+      provider: base.provider,
+      model: base.model,
+      async generate(request) {
+        const result = await base.generate(request);
+        if (request.kind !== "process") return result;
+        const response = JSON.parse(result.text);
+        response.codexUpdates.characters = [{
+          name: "Magistrate Yun",
+          voiceKey: "model-character-voice",
+          profile: { provider_voice_id: "provider-character-id" },
+        }];
+        response.codexUpdates.bestiary = [{
+          name: "Rain Moths",
+          description: "Pale insects that gather beneath oath bells.",
+          classification: "Spirit insect",
+          traits: ["Oath-light attraction"],
+          threatLevel: "Low",
+          voice_id: "model-species-voice",
+        }];
+        response.codexUpdates.factions = [{
+          name: "Ninth House",
+          voicePresetId: "model-faction-voice",
+          heraldry: { assetId: "model-faction-asset", imageUrl: "https://model.invalid/faction.png" },
+        }];
+        response.codexUpdates.locations = [{
+          name: "Witness Hall",
+          soundtrack: { filePath: "model/location.mp3", catalogEntry: "location-row" },
+        }];
+        response.codexUpdates.artifacts = [{
+          name: "Oath Bell",
+          media: { providerId: "model-provider", publicUrl: "https://model.invalid/bell.mp3" },
+        }];
+        response.characterStateUpdates.abilities = [{
+          name: "Archive Echo",
+          delivery: {
+            providerApiKey: "model-provider-api-key",
+            provider_token: "model-provider-token",
+            ElevenLabsVoiceId: "model-elevenlabs-voice",
+            cadence: "measured",
+          },
+        }];
+        return { ...result, text: JSON.stringify(response) };
+      },
+    };
+    const packet = buildPacket();
+    packet.livingStoryState.codex.characters = [{
+      name: "Rin",
+      voiceKey: "server-owned-rin-voice",
+      providerVoiceId: "server-only-provider-id",
+      profile: {
+        provider_voice_id: "nested-existing-provider-id",
+        publicStanding: "Disgraced witness",
+      },
+    }];
+    packet.livingStoryState.characterState.abilities = [{
+      name: "Legacy Echo",
+      delivery: {
+        providerSecret: "persisted-provider-secret",
+        cadence: "restrained",
+      },
+    }];
+    const calls = createLiveChapterModelCalls(provider, {
+      temperature: 1,
+      maxOutputTokens: 16_384,
+    });
+
+    const run = await runChapterPipelineAsync({ chapterPacket: packet, model: calls.model });
+    const modelVisiblePrompts = base.requests.map(request => request.userPrompt).join("\n");
+    const updates = JSON.stringify(run.processingResult.codexUpdates);
+
+    expect(modelVisiblePrompts).not.toContain("server-owned-rin-voice");
+    expect(modelVisiblePrompts).not.toContain("server-only-provider-id");
+    expect(modelVisiblePrompts).not.toContain("nested-existing-provider-id");
+    for (const forbidden of [
+      "model-character-voice",
+      "provider-character-id",
+      "model-species-voice",
+      "model-faction-voice",
+      "model-faction-asset",
+      "model.invalid",
+      "model/location.mp3",
+      "location-row",
+      "model-provider",
+      "model-provider-api-key",
+      "model-provider-token",
+      "model-elevenlabs-voice",
+    ]) {
+      expect(updates).not.toContain(forbidden);
+    }
+    const serializedState = JSON.stringify(run.processingResult.proposedLivingStoryState);
+    for (const forbidden of [
+      "model-provider-api-key",
+      "model-provider-token",
+      "model-elevenlabs-voice",
+      "persisted-provider-secret",
+    ]) {
+      expect(modelVisiblePrompts).not.toContain(forbidden);
+      expect(serializedState).not.toContain(forbidden);
+    }
+    expect(run.processingResult.characterStateUpdates.abilities).toEqual([{
+      name: "Archive Echo",
+      delivery: { cadence: "measured" },
+    }]);
+    expect(run.processingResult.proposedLivingStoryState.codex.characters[0])
+      .toMatchObject({ name: "Rin", voiceKey: "server-owned-rin-voice" });
+    expect(run.processingResult.proposedLivingStoryState.codex.characters[0].profile)
+      .toEqual({ publicStanding: "Disgraced witness" });
+    expect(JSON.stringify(run.processingResult.proposedLivingStoryState))
+      .not.toContain("nested-existing-provider-id");
+    expect(base.requests.find(request => request.kind === "process")?.systemInstruction)
+      .toContain("providerVoiceId");
+  });
+
   it("requires the original positive model-provided Process thread provenance", async () => {
     const base = new RecordingProvider();
     const provider: ChapterTextModelProvider = {
@@ -908,6 +1120,48 @@ describe("server model selection and failure handling", () => {
     });
     expect(JSON.stringify(response.body)).not.toContain("provider secret diagnostic");
     expect(JSON.stringify(response.body)).not.toContain("stack");
+  });
+
+  it("finalizes server-produced dialogue artifacts into the accepted chapter", async () => {
+    const dialogueArtifactResolver = vi.fn(async ({ characters }: {
+      characters: Array<Record<string, unknown>>;
+    }) => {
+      const rin = characters.find(character => character.name === "Rin");
+      expect(rin?.id).toEqual(expect.any(String));
+      expect(rin?.voiceKey).toEqual(expect.any(String));
+      return [{
+        characterId: String(rin?.id),
+        blockId: "c1-p2",
+        triggerPhrase: '"Your oath has a seam, Magistrate,"',
+        occurrenceIndex: 0,
+        publicUrl: "https://celestialaudio.seihouse.org/dialogue/rin/c1-p2.mp3",
+        semanticTags: ["dialogue", "accusation"],
+      }];
+    });
+    const response = await handleChapterGenerationHttp({
+      method: "POST",
+      headers: { Authorization: "Bearer development-access-token" },
+      body: {
+        artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
+        model: "google/gemini-test",
+      },
+    }, {
+      environment,
+      providerFactory: () => new RecordingProvider(),
+      dialogueArtifactResolver,
+    });
+
+    expect(response.status).toBe(200);
+    const body = response.body as ManifestChapterResponse;
+    expect(dialogueArtifactResolver).toHaveBeenCalledTimes(1);
+    expect(body.run.finalOutput.audioMoments).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        sourceCategory: "voice",
+        blockId: "c1-p2",
+        triggerPhrase: '"Your oath has a seam, Magistrate,"',
+        relatedEntity: expect.objectContaining({ id: expect.any(String), name: "Rin" }),
+      }),
+    ]));
   });
 
   it("rejects a browser model outside the server allow-list as a request error", async () => {
@@ -1072,6 +1326,14 @@ describe("server model selection and failure handling", () => {
       ]));
     expect(secondResult.run.chapterPacket.livingStoryState.codex.characters)
       .toEqual(firstResult.run.processingResult.proposedLivingStoryState.codex.characters);
+    const firstRin = firstResult.run.processingResult.proposedLivingStoryState.codex.characters
+      .find(character => character.name === "Rin");
+    const secondRin = secondResult.run.processingResult.proposedLivingStoryState.codex.characters
+      .find(character => character.name === "Rin");
+    expect(firstRin?.voiceKey).toEqual(expect.any(String));
+    expect(secondRin?.voiceKey).toBe(firstRin?.voiceKey);
+    expect(providers[1].requests.map(request => request.userPrompt).join("\n"))
+      .not.toContain(String(firstRin?.voiceKey));
     expect(secondResult.run.chapterPacket.livingStoryState.characterState.abilities)
       .toContainEqual(expect.objectContaining({
         name: "Oath Sight 1",

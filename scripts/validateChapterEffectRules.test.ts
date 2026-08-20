@@ -5,7 +5,7 @@ import { assembleChapterPacket } from "../src/components/chapter-generation/shar
 
 const representativeDetails = [
   ["narration and dialogue metadata", "OUTPUT FORMAT TARGET:", "DO NOT output direct voice IDs."],
-  ["beast sound cues", "BEAST SOUND CUES", "Use this sparingly and only on significant narrative beats."],
+  ["world cue audio moments", "WORLD CUE AUDIO MOMENTS", "never entities"],
   ["system-panel visual cues", "SYSTEM PANEL VISUAL CUES", "DOOM MANIFESTED"],
   ["scene music", "SCENE MUSIC DIRECTION", '"boss-fight"'],
   ["atmosphere", "ATMOSPHERE DIRECTION", "never infer rain merely because characters are travelling."],

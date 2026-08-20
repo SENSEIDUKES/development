@@ -333,6 +333,9 @@ export function convertSingleChapterRunToReader(run: BatchChapterRun): ReaderCha
     hasContent: Boolean(generatedContent.trim() || blocks?.length),
     generatedContent,
     ...(blocks ? { blocks } : {}),
+    ...(finalOutput.audioMoments
+      ? { audioMoments: clone(finalOutput.audioMoments) }
+      : {}),
     ...(processedSummary ? { summary: processedSummary } : {}),
     ...(finalOutput.statsChangeMessage
       ? { statsChangeMessage: finalOutput.statsChangeMessage }

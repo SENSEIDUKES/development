@@ -8,27 +8,56 @@ import {
   type DevAudioPlayback,
   type DevAudioPlaybackEvent,
 } from '../../../audio/DevAudioPlayback';
-import type { InlineAudioHighlight } from '../../../audio/inlineAudio';
+import {
+  getInlineCueTrackId,
+  type ResolvedAudioMoment,
+  type ResolvedDialogueAudioMoment,
+} from '../../../audio/inlineAudio';
 import { installAudioMediaStubs } from '../../../test-utils/renderWithDevAudio';
 import { InlineAudio, InlineAudioControl, InlineAudioText } from './InlineAudio';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-const beastHighlight: InlineAudioHighlight = {
-  id: 'beast',
-  phrase: 'Vermilion Debt Fox',
-  action: {
-    type: 'sound',
-    cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3',
+const beastMoment: ResolvedAudioMoment = {
+  id: 'world-cue:block-a:0:beast-growl',
+  blockId: 'block-a',
+  triggerPhrase: 'Vermilion Debt Fox growled',
+  occurrenceIndex: 0,
+  sourceCategory: 'beasts',
+  variation: 'growl',
+  semanticTags: ['tiger', 'close'],
+  relatedEntity: { name: 'Vermilion Debt Fox', type: 'creature' },
+  cue: {
+    publicUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3',
   },
 };
 
-const weaponHighlight: InlineAudioHighlight = {
-  id: 'weapon',
-  phrase: 'Ashen Sword',
-  action: {
-    type: 'sound',
-    cueUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_1.mp3',
+const weaponMoment: ResolvedAudioMoment = {
+  id: 'world-cue:block-a:0:weapon-unsheathe',
+  blockId: 'block-a',
+  triggerPhrase: 'drew the Ashen Sword',
+  occurrenceIndex: 0,
+  sourceCategory: 'weapons',
+  variation: 'unsheathe',
+  semanticTags: ['sword', 'metal'],
+  relatedEntity: { name: 'Ashen Sword', type: 'artifact' },
+  cue: {
+    publicUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_1.mp3',
+  },
+};
+
+const dialogueMoment: ResolvedDialogueAudioMoment = {
+  id: 'dialogue:block-a:0:mei-lin',
+  blockId: 'block-a',
+  triggerPhrase: '“Stand behind me.”',
+  occurrenceIndex: 0,
+  sourceCategory: 'voice',
+  actionType: 'spoken-dialogue',
+  semanticTags: ['dialogue', 'protective'],
+  relatedEntity: { id: 'mei-lin', name: 'Mei Lin', type: 'character' },
+  voiceKey: 'character.mei-lin',
+  artifact: {
+    publicUrl: 'https://celestialaudio.seihouse.org/dialogue/mei-lin/stand-behind-me.mp3',
   },
 };
 
@@ -110,14 +139,15 @@ const visibleAnnotationText = (annotation: HTMLElement | null | undefined) => (
 describe('InlineAudioControl', () => {
   it('is an accessible inline native button and never plays without user activation', () => {
     const { playback } = createFakePlayback();
-    render(<p>Before <InlineAudioControl highlight={beastHighlight} playback={playback} /> after.</p>);
+    render(<p>Before <InlineAudioControl moment={beastMoment} playback={playback} /> after.</p>);
 
-    const button = buttonFor(beastHighlight.phrase);
+    const button = buttonFor(beastMoment.triggerPhrase);
     expect(button.tagName).toBe('BUTTON');
     expect(button.type).toBe('button');
     expect(button.tabIndex).toBe(0);
-    expect(button.getAttribute('aria-label')).toBe('Play World Cue for Vermilion Debt Fox');
-    expect(button.hasAttribute('aria-pressed')).toBe(false);
+    expect(button.getAttribute('aria-label'))
+      .toBe('Play World Cue for Vermilion Debt Fox growled');
+    expect(button.dataset.audioMomentId).toBe(beastMoment.id);
     expect(button.dataset.state).toBe('idle');
     expect(button.textContent).toBe('');
     expect(button.querySelector('[data-library-glyph="sound"]')).toBeTruthy();
@@ -133,8 +163,8 @@ describe('InlineAudioControl', () => {
 
   it('exposes loading, playing, and failure states from the shared playback lifecycle', () => {
     const fake = createFakePlayback();
-    render(<InlineAudioControl highlight={beastHighlight} playback={fake.playback} />);
-    const button = buttonFor(beastHighlight.phrase);
+    render(<InlineAudioControl moment={beastMoment} playback={fake.playback} />);
+    const button = buttonFor(beastMoment.triggerPhrase);
 
     act(() => button.click());
     expect(button.dataset.state).toBe('loading');
@@ -143,7 +173,6 @@ describe('InlineAudioControl', () => {
     const trackId = fake.playback.currentTrackId!;
     act(() => fake.emit({ type: 'play', trackId }));
     expect(button.dataset.state).toBe('playing');
-    expect(button.hasAttribute('aria-pressed')).toBe(false);
 
     act(() => fake.emit({ type: 'error', trackId, error: 'Cue network failure' }));
     expect(button.dataset.state).toBe('error');
@@ -154,13 +183,13 @@ describe('InlineAudioControl', () => {
     const fake = createFakePlayback(true);
     render(
       <p>
-        <InlineAudioControl highlight={beastHighlight} playback={fake.playback} /> then{' '}
-        <InlineAudioControl highlight={weaponHighlight} playback={fake.playback} />
+        <InlineAudioControl moment={beastMoment} playback={fake.playback} /> then{' '}
+        <InlineAudioControl moment={weaponMoment} playback={fake.playback} />
       </p>,
     );
 
-    const beast = buttonFor(beastHighlight.phrase);
-    const weapon = buttonFor(weaponHighlight.phrase);
+    const beast = buttonFor(beastMoment.triggerPhrase);
+    const weapon = buttonFor(weaponMoment.triggerPhrase);
     act(() => {
       beast.click();
       weapon.click();
@@ -169,15 +198,51 @@ describe('InlineAudioControl', () => {
     expect(fake.playback.replace).toHaveBeenCalledTimes(2);
     expect(beast.dataset.state).toBe('idle');
     expect(weapon.dataset.state).toBe('playing');
-    expect(fake.playback.currentSource).toBe(weaponHighlight.action.type === 'sound'
-      ? weaponHighlight.action.cueUrl
-      : null);
+    expect(fake.playback.currentSource).toBe(weaponMoment.cue.publicUrl);
+  });
+
+  it('keeps separate annotation state when two events resolve to the same cue URL', () => {
+    const fake = createFakePlayback(true);
+    const secondMoment: ResolvedAudioMoment = {
+      ...beastMoment,
+      id: 'world-cue:block-b:0:beast-growl',
+      blockId: 'block-b',
+      triggerPhrase: 'the beast growled',
+    };
+    render(
+      <p>
+        <InlineAudioControl moment={beastMoment} playback={fake.playback} />
+        <InlineAudioControl moment={secondMoment} playback={fake.playback} />
+      </p>,
+    );
+
+    act(() => buttonFor(beastMoment.triggerPhrase).click());
+    const firstTrackId = fake.playback.currentTrackId;
+    act(() => buttonFor(secondMoment.triggerPhrase).click());
+    expect(fake.playback.currentTrackId).not.toBe(firstTrackId);
+    expect(buttonFor(beastMoment.triggerPhrase).dataset.state).toBe('idle');
+    expect(buttonFor(secondMoment.triggerPhrase).dataset.state).toBe('playing');
+  });
+
+  it('clears stale playing UI when a context update already points at another track', () => {
+    const first = createFakePlayback();
+    first.playback.currentTrackId = getInlineCueTrackId(beastMoment);
+    first.playback.isPlaying = true;
+    render(<InlineAudioControl moment={beastMoment} playback={first.playback} />);
+    expect(buttonFor(beastMoment.triggerPhrase).dataset.state).toBe('playing');
+
+    const replacement = createFakePlayback();
+    replacement.playback.currentTrackId = getInlineCueTrackId(weaponMoment);
+    replacement.playback.isPlaying = true;
+    render(<InlineAudioControl moment={beastMoment} playback={replacement.playback} />);
+
+    expect(buttonFor(beastMoment.triggerPhrase).dataset.state).toBe('idle');
   });
 
   it('unsubscribes and stops only its own cue on cleanup', () => {
     const fake = createFakePlayback();
-    render(<InlineAudioControl highlight={beastHighlight} playback={fake.playback} />);
-    act(() => buttonFor(beastHighlight.phrase).click());
+    render(<InlineAudioControl moment={beastMoment} playback={fake.playback} />);
+    act(() => buttonFor(beastMoment.triggerPhrase).click());
     const trackId = fake.playback.currentTrackId;
 
     act(() => root.unmount());
@@ -189,11 +254,11 @@ describe('InlineAudioControl', () => {
   it('uses the latest committed playback adapter for cleanup', () => {
     const first = createFakePlayback();
     const second = createFakePlayback();
-    render(<InlineAudioControl highlight={beastHighlight} playback={first.playback} />);
-    act(() => buttonFor(beastHighlight.phrase).click());
+    render(<InlineAudioControl moment={beastMoment} playback={first.playback} />);
+    act(() => buttonFor(beastMoment.triggerPhrase).click());
     const trackId = first.playback.currentTrackId;
 
-    render(<InlineAudioControl highlight={beastHighlight} playback={second.playback} />);
+    render(<InlineAudioControl moment={beastMoment} playback={second.playback} />);
     act(() => root.unmount());
     mounted = false;
 
@@ -201,48 +266,73 @@ describe('InlineAudioControl', () => {
     expect(second.playback.stop).toHaveBeenCalledWith(trackId);
   });
 
-  it('reports catalog and future voice failures without using browser speech synthesis', () => {
+  it('renders no glyph and never plays when a persisted cue cannot resolve', () => {
+    const fake = createFakePlayback();
+    const missing: ResolvedAudioMoment = {
+      ...beastMoment,
+      id: 'world-cue:block-a:0:missing',
+      cue: { publicUrl: 'https://example.com/missing.mp3' },
+    };
+    render(
+      <InlineAudioText
+        moments={[missing]}
+        text="Vermilion Debt Fox growled."
+        renderText={text => text}
+      />,
+    );
+
+    expect(container.querySelector('[data-library-glyph="sound"]')).toBeNull();
+    expect(container.textContent).toBe('Vermilion Debt Fox growled.');
+    expect(fake.playback.replace).not.toHaveBeenCalled();
+  });
+
+  it('attaches a provider-neutral dialogue artifact to its exact quote without autoplay or client synthesis', () => {
     const fake = createFakePlayback();
     const speak = vi.fn();
     Object.defineProperty(window, 'speechSynthesis', {
       configurable: true,
       value: { speak },
     });
-    const missing: InlineAudioHighlight = {
-      id: 'missing',
-      phrase: 'Missing Cue',
-      action: { type: 'sound', cueUrl: 'https://example.com/missing.mp3' },
-    };
-    const voice: InlineAudioHighlight = {
-      id: 'voice',
-      phrase: 'Mei Lin',
-      action: { type: 'voice', voiceKey: 'ashen-sword-saint', quoteText: 'Stand.' },
-    };
-    render(
-      <p>
-        <InlineAudioControl highlight={missing} playback={fake.playback} />{' '}
-        <InlineAudioControl highlight={voice} playback={fake.playback} />
-      </p>,
-    );
+    render(<InlineAudioControl moment={dialogueMoment} playback={fake.playback} />);
 
-    act(() => {
-      buttonFor(missing.phrase).click();
-      buttonFor(voice.phrase).click();
-    });
-    expect(buttonFor(missing.phrase).dataset.state).toBe('error');
-    expect(buttonFor(voice.phrase).dataset.state).toBe('error');
+    const button = buttonFor(dialogueMoment.triggerPhrase);
+    expect(button.getAttribute('aria-label')).toBe('Play dialogue audio for “Stand behind me.”');
+    expect(button.dataset.actionType).toBe('spoken-dialogue');
     expect(fake.playback.replace).not.toHaveBeenCalled();
     expect(speak).not.toHaveBeenCalled();
+
+    act(() => button.click());
+    expect(fake.playback.replace).toHaveBeenCalledWith(expect.objectContaining({
+      id: `reader-inline:${dialogueMoment.id}`,
+      source: dialogueMoment.artifact.publicUrl,
+    }));
+    expect(speak).not.toHaveBeenCalled();
+  });
+
+  it('renders no dialogue glyph when no synthesized artifact exists', () => {
+    const missingArtifact = {
+      ...dialogueMoment,
+      artifact: undefined,
+    } as unknown as ResolvedAudioMoment;
+    render(
+      <InlineAudioText
+        moments={[missingArtifact]}
+        text="Mei Lin said, “Stand behind me.”"
+        renderText={text => text}
+      />,
+    );
+    expect(container.querySelector('[data-library-glyph="sound"]')).toBeNull();
+    expect(container.textContent).toBe('Mei Lin said, “Stand behind me.”');
   });
 
   it('keeps Codex text and the sound glyph as independent accessible actions', () => {
     render(
       <DevAudioPlaybackProvider>
         <InlineAudioText
-          highlights={[weaponHighlight]}
+          moments={[weaponMoment]}
           text="Mei Lin drew the Ashen Sword, in silence."
-          renderText={(text) => text === weaponHighlight.phrase
-            ? <button type="button" aria-label={`Open Codex entry for ${text}`}>{text}</button>
+          renderText={(text) => text === weaponMoment.triggerPhrase
+            ? <>drew the <button type="button" aria-label="Open Codex entry for Ashen Sword">Ashen Sword</button></>
             : text}
         />
         <PlaybackProbe />
@@ -252,66 +342,50 @@ describe('InlineAudioControl', () => {
     const codexButton = container.querySelector<HTMLButtonElement>(
       'button[aria-label="Open Codex entry for Ashen Sword"]',
     );
-    const cueButton = buttonFor(weaponHighlight.phrase);
+    const cueButton = buttonFor(weaponMoment.triggerPhrase);
     expect(codexButton).toBeTruthy();
     expect(cueButton).toBeTruthy();
     expect(cueButton).not.toBe(codexButton);
     expect(container.textContent?.replace(/\u2060/g, ''))
       .toContain('Mei Lin drew the Ashen Sword, in silence.');
 
-    const annotation = cueButton.closest<HTMLElement>('[data-cue-annotation="Ashen Sword"]');
-    expect(visibleAnnotationText(annotation)).toBe('Ashen Sword,');
-    expect(codexButton?.parentElement).toBe(annotation);
+    const annotation = cueButton.closest<HTMLElement>(
+      '[data-cue-annotation="drew the Ashen Sword"]',
+    );
+    expect(visibleAnnotationText(annotation)).toBe('drew the Ashen Sword,');
+    expect(codexButton?.parentElement).toBe(
+      annotation?.querySelector('.inline-world-cue-annotation__text'),
+    );
     expect(cueButton.parentElement).toBe(annotation);
 
     act(() => codexButton!.click());
     expect(container.querySelector('[data-testid="track-id"]')?.textContent).toBe('');
   });
 
-  it('leaves cue-only terms as ordinary prose while binding the term, mark, and punctuation', () => {
+  it('leaves sound-only action prose unstyled while binding the phrase, mark, and punctuation', () => {
     render(
       <DevAudioPlaybackProvider>
         <InlineAudioText
-          highlights={[beastHighlight]}
-          text="A Vermilion Debt Fox, crouched beneath the lintel."
-          renderText={(text) => text}
+          moments={[beastMoment]}
+          text="A Vermilion Debt Fox growled, then crouched beneath the lintel."
+          renderText={text => text}
         />
       </DevAudioPlaybackProvider>,
     );
 
-    const cueButton = buttonFor(beastHighlight.phrase);
+    const cueButton = buttonFor(beastMoment.triggerPhrase);
     const annotation = cueButton.closest<HTMLElement>(
-      '[data-cue-annotation="Vermilion Debt Fox"]',
+      '[data-cue-annotation="Vermilion Debt Fox growled"]',
     );
-    expect(visibleAnnotationText(annotation)).toBe('Vermilion Debt Fox,');
-    expect(annotation?.firstChild?.nodeType).toBe(Node.TEXT_NODE);
-    expect(annotation?.firstChild?.textContent).toBe('Vermilion Debt Fox');
+    expect(visibleAnnotationText(annotation)).toBe('Vermilion Debt Fox growled,');
+    expect(annotation?.firstElementChild?.classList)
+      .toContain('inline-world-cue-annotation__text');
     expect(annotation?.querySelectorAll('button')).toHaveLength(1);
+    expect(annotation?.lastChild?.textContent).toBe(',');
+    expect(cueButton.compareDocumentPosition(annotation!.lastChild!))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     expect(container.textContent?.replace(/\u2060/g, ''))
-      .toBe('A Vermilion Debt Fox, crouched beneath the lintel.');
-  });
-
-  it('keeps a possessive suffix ahead of the cue mark and sentence punctuation after it', () => {
-    render(
-      <DevAudioPlaybackProvider>
-        <InlineAudioText
-          highlights={[weaponHighlight]}
-          text="The Ashen Sword’s edge rang clear."
-          renderText={(text) => text}
-        />
-      </DevAudioPlaybackProvider>,
-    );
-
-    const cueButton = buttonFor(weaponHighlight.phrase);
-    const annotation = cueButton.closest<HTMLElement>('[data-cue-annotation="Ashen Sword"]');
-    expect(visibleAnnotationText(annotation)).toBe('Ashen Sword’s');
-    const cueIndex = [...(annotation?.childNodes ?? [])].indexOf(cueButton);
-    const proseBeforeCue = [...(annotation?.childNodes ?? [])]
-      .slice(0, cueIndex)
-      .map(node => node.textContent)
-      .join('')
-      .replace(/\u2060/g, '');
-    expect(proseBeforeCue).toBe('Ashen Sword’s');
+      .toBe('A Vermilion Debt Fox growled, then crouched beneath the lintel.');
   });
 });
 
@@ -324,20 +398,20 @@ describe('InlineAudio shared-session integration', () => {
   it('keeps one package-owned audio element while replacing the active Cue', async () => {
     render(
       <DevAudioPlaybackProvider>
-        <InlineAudio highlight={beastHighlight} />
-        <InlineAudio highlight={weaponHighlight} />
+        <InlineAudio moment={beastMoment} />
+        <InlineAudio moment={weaponMoment} />
         <PlaybackProbe />
       </DevAudioPlaybackProvider>,
     );
     expect(container.querySelectorAll('audio')).toHaveLength(1);
 
-    await act(async () => buttonFor(beastHighlight.phrase).click());
+    await act(async () => buttonFor(beastMoment.triggerPhrase).click());
     const firstTrack = container.querySelector('[data-testid="track-id"]')?.textContent;
-    expect(firstTrack).toContain('Tiger_Growl_1.mp3');
+    expect(firstTrack).toContain(beastMoment.id);
 
-    await act(async () => buttonFor(weaponHighlight.phrase).click());
+    await act(async () => buttonFor(weaponMoment.triggerPhrase).click());
     const secondTrack = container.querySelector('[data-testid="track-id"]')?.textContent;
-    expect(secondTrack).toContain('Sword_Unsheathe_1.mp3');
+    expect(secondTrack).toContain(weaponMoment.id);
     expect(secondTrack).not.toBe(firstTrack);
     expect(container.querySelectorAll('audio')).toHaveLength(1);
   });

@@ -1,14 +1,20 @@
 .inline-world-cue-annotation {
   color: inherit;
   font: inherit;
+  white-space: nowrap;
 }
 
 /*
- * Codex triggers are normally atomic inline blocks. Inside a cue annotation
- * they become wrapping inline text so a long entity name can break normally;
- * the word-joiner still binds its final word to the independent sound action.
+ * The phrase remains free to wrap inside this inner inline span while the
+ * outer no-wrap boundary binds its final rendered word to the independent
+ * glyph and punctuation. This also works when the final word lives inside a
+ * Codex trigger rather than a plain text node.
  */
-.inline-world-cue-annotation > [data-slot='codex-hovercard-anchor'] {
+.inline-world-cue-annotation__text {
+  white-space: normal;
+}
+
+.inline-world-cue-annotation__text [data-slot='codex-hovercard-anchor'] {
   display: inline;
 }
 

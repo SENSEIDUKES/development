@@ -13,6 +13,7 @@ import {
 import {
   ChapterGenerationExecutionError,
   executeChapterGeneration,
+  type DialogueArtifactResolver,
   type ChapterProviderFactory,
 } from "./execute";
 import { verifyChapterContinuation } from "./continuationSecurity";
@@ -33,6 +34,7 @@ export interface ChapterGenerationHttpResponse {
 export interface ChapterGenerationHttpDependencies {
   environment: ChapterGenerationEnvironment;
   providerFactory?: ChapterProviderFactory;
+  dialogueArtifactResolver?: DialogueArtifactResolver;
   onStageChange?: (stage: ChapterUsageStage) => void;
   onError?: (error: unknown) => void;
 }
@@ -153,6 +155,8 @@ export async function handleChapterGenerationHttp(
       : undefined;
     const result = await executeChapterGeneration(parsedRequest, config, {
       providerFactory: dependencies.providerFactory,
+      dialogueArtifactResolver: dependencies.dialogueArtifactResolver,
+      onDialogueAudioError: dependencies.onError,
       onStageChange: dependencies.onStageChange,
       verifiedContinuation,
     });

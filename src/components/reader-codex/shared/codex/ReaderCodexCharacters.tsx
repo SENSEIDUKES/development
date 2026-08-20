@@ -39,7 +39,6 @@ export function ReaderCodexCharacters({
     handleAwakenCardImage,
     getPowerRankScore,
     openEntryContextEditor,
-    voiceAccessToken,
   } = useCodex();
 
   const userProfile = useAppStore(state => state.userProfile);
@@ -69,7 +68,6 @@ export function ReaderCodexCharacters({
   }, [onUpdateMemory]);
 
   const { handleQuoteTap, voiceStatus } = useCodexVoiceQuote({
-    accessToken: voiceAccessToken,
     onVoiceResolved: persistResolvedVoice,
   });
 

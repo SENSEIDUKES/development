@@ -38,8 +38,6 @@ export interface CodexVoiceResolution {
 export interface UseCodexVoiceQuoteOptions {
   /** Persist the server-resolved voice identity onto the Codex Character. */
   onVoiceResolved?: (resolution: CodexVoiceResolution) => void;
-  /** Development access token for the server-only voice endpoint. */
-  accessToken?: string;
   /** Test/Workshop override for the server endpoint call. */
   requestVoice?: (character: Character) => Promise<CodexVoiceResolution>;
 }
@@ -138,13 +136,11 @@ export const codexVoiceIdentity = (character: Character) => ({
 
 const defaultRequestVoice = async (
   character: Character,
-  accessToken?: string,
 ): Promise<CodexVoiceResolution> => {
   const response = await fetch(VOICE_QUOTE_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(accessToken?.trim() ? { Authorization: `Bearer ${accessToken.trim()}` } : {}),
     },
     signal: AbortSignal.timeout(VOICE_QUOTE_TIMEOUT_MS),
     // The persisted Codex identity the server validates. It carries no free
@@ -180,14 +176,14 @@ export function useCodexVoiceQuote(options: UseCodexVoiceQuoteOptions = {}) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const inFlight = useRef(new Set<string>());
   const [stoppingId, setStoppingId] = useState<string | null>(null);
-  const { accessToken, onVoiceResolved, requestVoice: requestVoiceOverride } = options;
+  const { onVoiceResolved, requestVoice: requestVoiceOverride } = options;
   const requestVoice = useCallback(
     (character: Character) => (
       requestVoiceOverride
         ? requestVoiceOverride(character)
-        : defaultRequestVoice(character, accessToken)
+        : defaultRequestVoice(character)
     ),
-    [accessToken, requestVoiceOverride],
+    [requestVoiceOverride],
   );
 
   // The stopping state clears once the shared audio owner has actually

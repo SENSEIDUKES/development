@@ -16,7 +16,6 @@ import {
   type ChapterProviderFactory,
 } from "./execute";
 import { verifyChapterContinuation } from "./continuationSecurity";
-import { hasValidBearerToken } from "../shared/bearerToken";
 
 export interface ChapterGenerationHttpRequest {
   method?: string;
@@ -82,7 +81,6 @@ const parseRequest = (body: unknown): ManifestChapterRequest => {
 
 const isConfigurationError = (message: string) =>
   message.includes("GEMINI_API_KEY is not configured")
-  || message.includes("CHAPTER_GENERATION_ACCESS_TOKEN is not configured")
   || message.includes("CHAPTER_GENERATION_MODELS");
 
 const isRequestError = (message: string) => [
@@ -135,12 +133,6 @@ export async function handleChapterGenerationHttp(
 
   try {
     const config = resolveChapterGenerationConfig(dependencies.environment);
-    if (!config.accessToken) {
-      throw new Error("CHAPTER_GENERATION_ACCESS_TOKEN is not configured on the Development server.");
-    }
-    if (!hasValidBearerToken(request, config.accessToken)) {
-      return errorResponse(401, "A valid Development chapter-generation access token is required.");
-    }
     if (!config.apiKey) {
       throw new Error("GEMINI_API_KEY is not configured on the Development server.");
     }

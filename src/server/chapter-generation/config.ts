@@ -34,7 +34,6 @@ const modelLabel = (model: string): string => model
 
 export interface ResolvedChapterGenerationConfig {
   apiKey?: string;
-  accessToken?: string;
   provider: "gemini";
   models: ChapterGenerationModelOption[];
   defaultModel: string;
@@ -58,11 +57,9 @@ export function resolveChapterGenerationConfig(
     : modelIds[0];
   const rawKey = environment.GEMINI_API_KEY?.trim();
   const apiKey = rawKey && rawKey !== "MY_GEMINI_API_KEY" ? rawKey : undefined;
-  const accessToken = environment.CHAPTER_GENERATION_ACCESS_TOKEN?.trim() || undefined;
 
   return {
     apiKey,
-    accessToken,
     provider: "gemini",
     models: modelIds.map(id => ({ id, label: modelLabel(id) })),
     defaultModel,
@@ -87,7 +84,7 @@ export function chapterGenerationServerInfo(
   const config = resolveChapterGenerationConfig(environment);
   return {
     provider: config.provider,
-    configured: Boolean(config.apiKey && config.accessToken),
+    configured: Boolean(config.apiKey),
     models: config.models,
     defaultModel: config.defaultModel,
   };

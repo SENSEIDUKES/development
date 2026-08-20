@@ -267,7 +267,6 @@ const errorMessage = async (response: Response): Promise<string> =>
 
 const manifestThroughServer = async (
   request: ManifestChapterRequest,
-  accessToken: string,
   onStage: (stage: ChapterUsageStage) => void = () => undefined,
   signal?: AbortSignal,
 ): Promise<ManifestChapterResponse> => {
@@ -285,7 +284,6 @@ const manifestThroughServer = async (
       headers: {
         "Content-Type": "application/json",
         Accept: "application/x-ndjson",
-        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(request),
       signal: controller.signal,
@@ -533,7 +531,6 @@ export function ChapterGenerationTestFlow() {
   const [selectedId, setSelectedId] = useState("");
   const [serverInfo, setServerInfo] = useState<ChapterGenerationServerInfo | null>(null);
   const [model, setModel] = useState("");
-  const [accessToken, setAccessToken] = useState("");
   const [temporaryInstruction, setTemporaryInstruction] = useState("");
   const [loadingSources, setLoadingSources] = useState(true);
   const [sourceError, setSourceError] = useState<string | null>(null);
@@ -663,7 +660,6 @@ export function ChapterGenerationTestFlow() {
       manifestInFlight.current
       || !selectedChoice
       || !model
-      || !accessToken.trim()
       || preflight.error
       || !preflight.artifact
     ) return;
@@ -685,7 +681,6 @@ export function ChapterGenerationTestFlow() {
           model,
           ...(temporaryInstruction.trim() ? { temporaryInstruction: temporaryInstruction.trim() } : {}),
         },
-        accessToken.trim(),
         setSingleStage,
         controller.signal,
       );
@@ -708,7 +703,6 @@ export function ChapterGenerationTestFlow() {
       manifestInFlight.current
       || !selectedChoice
       || !model
-      || !accessToken.trim()
       || preflight.error
       || !preflight.artifact
     ) return;
@@ -731,7 +725,7 @@ export function ChapterGenerationTestFlow() {
             : {}),
         },
         manifestChapter: (request, onStage, signal) =>
-          manifestThroughServer(request, accessToken.trim(), onStage, signal),
+          manifestThroughServer(request, onStage, signal),
         onUpdate: update => {
           setBatch(update);
           const readableActive = update.chapters.find(chapter =>
@@ -852,29 +846,6 @@ export function ChapterGenerationTestFlow() {
             </label>
           </div>
 
-          <label className="flex flex-col gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-white/55">
-            Development access token
-            <input
-              type="password"
-              value={accessToken}
-              onChange={event => {
-                abortActiveManifest();
-                setAccessToken(event.target.value);
-                setResult(null);
-                setFailedUsage(null);
-                setGenerationFailure(null);
-                setGenerationError(null);
-              }}
-              autoComplete="off"
-              disabled={generating}
-              placeholder="Enter the server-configured testing token"
-              className="min-h-11 w-full rounded-lg border border-white/10 bg-[#080b14] px-3 text-sm font-normal normal-case tracking-normal text-white/85 outline-none placeholder:text-white/25 focus:border-cyan-500/60"
-            />
-            <span className="text-[9px] font-normal normal-case tracking-normal text-white/30">
-              Held in memory for this page only. This is separate from the server-side Gemini key.
-            </span>
-          </label>
-
           <div className="flex flex-wrap items-center gap-2">
             <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-xs text-white/70 hover:bg-white/10">
               <FileUp size={13} /> Upload Story Seed JSON
@@ -935,7 +906,6 @@ export function ChapterGenerationTestFlow() {
                 || !selectedChoice
                 || !preflight.artifact
                 || !model
-                || !accessToken.trim()
                 || Boolean(preflight.error)
                 || !serverInfo?.configured
               }
@@ -953,7 +923,6 @@ export function ChapterGenerationTestFlow() {
                 || !selectedChoice
                 || !preflight.artifact
                 || !model
-                || !accessToken.trim()
                 || Boolean(preflight.error)
                 || !serverInfo?.configured
               }

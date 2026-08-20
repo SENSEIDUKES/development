@@ -1049,7 +1049,6 @@ describe("live Chapter Generation model boundaries", () => {
 describe("server model selection and failure handling", () => {
   const environment = {
     GEMINI_API_KEY: "server-only-test-key",
-    CHAPTER_GENERATION_ACCESS_TOKEN: "development-access-token",
     CHAPTER_GENERATION_MODELS: "google/gemini-test,google/gemini-second",
     CHAPTER_GENERATION_DEFAULT_MODEL: "google/gemini-second",
   };
@@ -1063,7 +1062,6 @@ describe("server model selection and failure handling", () => {
       defaultModel: "google/gemini-second",
     });
     expect(JSON.stringify(serverInfo)).not.toContain(environment.GEMINI_API_KEY);
-    expect(JSON.stringify(serverInfo)).not.toContain(environment.CHAPTER_GENERATION_ACCESS_TOKEN);
     expect(config.models.map(option => option.id)).toEqual([
       "google/gemini-test",
       "google/gemini-second",
@@ -1072,7 +1070,7 @@ describe("server model selection and failure handling", () => {
       .toBe("google/gemini-test");
     expect(() => resolveConfiguredChapterModel("arbitrary/model", config))
       .toThrow(/not configured/);
-    expect(chapterGenerationServerInfo({ ...environment, CHAPTER_GENERATION_ACCESS_TOKEN: "" }).configured)
+    expect(chapterGenerationServerInfo({ GEMINI_API_KEY: "" }).configured)
       .toBe(false);
   });
 
@@ -1092,7 +1090,6 @@ describe("server model selection and failure handling", () => {
   it("returns a safe API error when the provider fails", async () => {
     const response = await handleChapterGenerationHttp({
       method: "POST",
-      headers: { Authorization: "Bearer development-access-token" },
       body: {
         artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
         model: "google/gemini-test",
@@ -1129,7 +1126,6 @@ describe("server model selection and failure handling", () => {
     try {
     const response = await handleChapterGenerationHttp({
       method: "POST",
-      headers: { Authorization: "Bearer development-access-token" },
       body: {
         artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
         model: "google/gemini-test",
@@ -1165,7 +1161,6 @@ describe("server model selection and failure handling", () => {
     const generate = vi.fn();
     const response = await handleChapterGenerationHttp({
       method: "POST",
-      headers: { Authorization: "Bearer development-access-token" },
       body: {
         artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
         model: "google/gemini-arbitrary",
@@ -1183,7 +1178,6 @@ describe("server model selection and failure handling", () => {
     const generate = vi.fn();
     const response = await handleChapterGenerationHttp({
       method: "POST",
-      headers: { Authorization: "Bearer development-access-token" },
       body: {
         artifact: { seed: canonicalSeed() },
         model: "google/gemini-test",
@@ -1198,35 +1192,9 @@ describe("server model selection and failure handling", () => {
     expect(generate).not.toHaveBeenCalled();
   });
 
-  it("rejects a missing or invalid Development access token before any provider call", async () => {
-    const generate = vi.fn();
-    const request = {
-      method: "POST",
-      body: {
-        artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
-        model: "google/gemini-test",
-      },
-    };
-    const dependencies = {
-      environment,
-      providerFactory: () => ({ provider: "gemini", model: "google/gemini-test", generate }),
-    };
-
-    const missing = await handleChapterGenerationHttp(request, dependencies);
-    const invalid = await handleChapterGenerationHttp({
-      ...request,
-      headers: { Authorization: "Bearer wrong-token" },
-    }, dependencies);
-
-    expect(missing.status).toBe(401);
-    expect(invalid.status).toBe(401);
-    expect(generate).not.toHaveBeenCalled();
-  });
-
   it("returns completed model-call usage when a later structured parse fails", async () => {
     const response = await handleChapterGenerationHttp({
       method: "POST",
-      headers: { Authorization: "Bearer development-access-token" },
       body: {
         artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
         model: "google/gemini-test",
@@ -1284,7 +1252,6 @@ describe("server model selection and failure handling", () => {
     };
     const first = await handleChapterGenerationHttp({
       method: "POST",
-      headers: { Authorization: "Bearer development-access-token" },
       body: {
         artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
         model: "google/gemini-test",
@@ -1296,7 +1263,6 @@ describe("server model selection and failure handling", () => {
 
     const second = await handleChapterGenerationHttp({
       method: "POST",
-      headers: { Authorization: "Bearer development-access-token" },
       body: {
         artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
         model: "google/gemini-test",
@@ -1351,7 +1317,6 @@ describe("server model selection and failure handling", () => {
     };
     const request = {
       method: "POST" as const,
-      headers: { Authorization: "Bearer development-access-token" },
       body: {
         artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
         model: "google/gemini-test",
@@ -1400,7 +1365,6 @@ describe("server model selection and failure handling", () => {
     };
     const first = await handleChapterGenerationHttp({
       method: "POST",
-      headers: { Authorization: "Bearer development-access-token" },
       body: {
         artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
         model: "google/gemini-test",
@@ -1413,7 +1377,6 @@ describe("server model selection and failure handling", () => {
 
     const forgedResponse = await handleChapterGenerationHttp({
       method: "POST",
-      headers: { Authorization: "Bearer development-access-token" },
       body: {
         artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
         model: "google/gemini-test",
@@ -1424,7 +1387,6 @@ describe("server model selection and failure handling", () => {
     differentBlueprint.title = "Different Story";
     const mismatchedResponse = await handleChapterGenerationHttp({
       method: "POST",
-      headers: { Authorization: "Bearer development-access-token" },
       body: {
         artifact: { seed: canonicalSeed(), blueprint: differentBlueprint },
         model: "google/gemini-test",

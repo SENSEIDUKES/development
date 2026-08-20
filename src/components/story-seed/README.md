@@ -189,8 +189,8 @@ Browser verification covers phone and desktop layouts plus Origin, ARC,
 World, Settings persistence, Help audio, navigation, auth, Story Bank actions,
 Blueprint editing, generation loading/error, and Story Bank loading, empty,
 error, and populated states. Live Gemini verification additionally requires
-server-side `GEMINI_API_KEY` plus a configured Story Seed or Chapter Generation
-Development access token.
+server-side `GEMINI_API_KEY` plus a configured Story Seed Development access
+token. Chapter Generation no longer needs a Development access token.
 
 Measured against the merged refactor baseline on the same production build
 harness:

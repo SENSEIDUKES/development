@@ -4,7 +4,6 @@ import { CodexVoiceQuoteService, type VoiceArtifactStore } from './codexVoiceQuo
 import { CODEX_VOICE_ARTIFACT_VERSION } from '../../audio/voiceArtifacts';
 
 const environment = {
-  CHAPTER_GENERATION_ACCESS_TOKEN: 'development-access-token',
   ELEVENLABS_API_KEY: 'server-only-provider-key',
   R2_ACCESS_KEY_ID: 'server-only-access-key',
   R2_SECRET_ACCESS_KEY: 'server-only-secret',
@@ -12,8 +11,6 @@ const environment = {
   R2_PUBLIC_BUCKET_NAME: 'library',
   R2_PUBLIC_AUDIO_URL: 'https://celestialaudio.seihouse.org',
 };
-
-const authorized = { Authorization: 'Bearer development-access-token' };
 
 const createService = () => {
   const objects = new Map<string, Uint8Array>();
@@ -48,7 +45,7 @@ describe('Codex voice quote endpoint', () => {
     const { service, synthesize } = createService();
 
     const response = await handleCodexVoiceQuoteHttp(
-      { method: 'POST', headers: authorized, body: characterBody() },
+      { method: 'POST', body: characterBody() },
       { environment, service },
     );
 
@@ -72,7 +69,7 @@ describe('Codex voice quote endpoint', () => {
 
   it('reuses the stored artifact on a repeated request', async () => {
     const { service, synthesize } = createService();
-    const request = { method: 'POST', headers: authorized, body: characterBody() };
+    const request = { method: 'POST', body: characterBody() };
 
     const first = await handleCodexVoiceQuoteHttp(request, { environment, service });
     const second = await handleCodexVoiceQuoteHttp(request, { environment, service });
@@ -94,7 +91,7 @@ describe('Codex voice quote endpoint', () => {
 
     for (const body of rejected) {
       const response = await handleCodexVoiceQuoteHttp(
-        { method: 'POST', headers: authorized, body },
+        { method: 'POST', body },
         { environment, service },
       );
       expect(response.status).toBe(400);
@@ -102,29 +99,21 @@ describe('Codex voice quote endpoint', () => {
     expect(synthesize).not.toHaveBeenCalled();
   });
 
-  it('requires POST and a valid access token', async () => {
+  it('requires POST', async () => {
     const { service, synthesize } = createService();
 
     await expect(handleCodexVoiceQuoteHttp(
-      { method: 'GET', headers: authorized },
+      { method: 'GET' },
       { environment, service },
     )).resolves.toMatchObject({ status: 405 });
-    await expect(handleCodexVoiceQuoteHttp(
-      { method: 'POST', headers: { Authorization: 'Bearer wrong-token' }, body: characterBody() },
-      { environment, service },
-    )).resolves.toMatchObject({ status: 401 });
-    await expect(handleCodexVoiceQuoteHttp(
-      { method: 'POST', body: characterBody() },
-      { environment, service },
-    )).resolves.toMatchObject({ status: 401 });
 
     expect(synthesize).not.toHaveBeenCalled();
   });
 
   it('reports the control as unavailable when nothing is configured', async () => {
     const response = await handleCodexVoiceQuoteHttp(
-      { method: 'POST', headers: authorized, body: characterBody() },
-      { environment: { CHAPTER_GENERATION_ACCESS_TOKEN: 'development-access-token' } },
+      { method: 'POST', body: characterBody() },
+      { environment: {} },
     );
 
     expect(response.status).toBe(503);
@@ -136,7 +125,6 @@ describe('Codex voice quote endpoint', () => {
     const response = await handleCodexVoiceQuoteHttp(
       {
         method: 'POST',
-        headers: authorized,
         body: characterBody({
           portraitKind: 'non-human',
           creatureProfile: { intelligence: 'mindless' },

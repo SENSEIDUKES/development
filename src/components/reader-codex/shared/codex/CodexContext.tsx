@@ -30,11 +30,6 @@ interface CodexContextType {
   setPreviews: React.Dispatch<React.SetStateAction<Record<string, any>>>;
   generatingId: string | null;
   openEntryContextEditor: (target: CodexContextEditorTarget) => void;
-  /**
-   * Development access token forwarded to the server-only Character voice
-   * endpoint. No provider credential ever reaches the browser.
-   */
-  voiceAccessToken?: string;
 }
 
 const CodexContext = createContext<CodexContextType | undefined>(undefined);

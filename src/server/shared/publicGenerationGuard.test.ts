@@ -35,4 +35,24 @@ describe('public Development generation guard', () => {
     current += 5_000;
     expect(guard(request())).toEqual({ allowed: true });
   });
+
+  it('reaps expired visitors on each call so the window map does not grow without bound', () => {
+    let current = 1_000;
+    const guard = createPublicGenerationGuard(
+      { key: 'reap', limit: 5, windowMs: 1_000 },
+      () => current,
+    );
+
+    for (let index = 0; index < 20; index += 1) {
+      expect(guard(request({ 'x-forwarded-for': `198.51.100.${index + 1}` }))).toEqual({
+        allowed: true,
+      });
+    }
+
+    current += 1_000;
+
+    // Once the window has elapsed every prior visitor is reaped before the new
+    // request is admitted, so the limiter still has room for a fresh entry.
+    expect(guard(request({ 'x-forwarded-for': '198.51.100.99' }))).toEqual({ allowed: true });
+  });
 });

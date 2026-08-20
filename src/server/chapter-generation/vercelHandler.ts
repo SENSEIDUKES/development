@@ -92,6 +92,10 @@ export default async function chapterGenerationHandler(
   if (streaming) {
     if (!streamStarted) {
       response.status(result.status);
+      for (const [name, value] of Object.entries(result.headers ?? {})) {
+        if (name.toLowerCase() === "content-type" || name.toLowerCase() === "cache-control") continue;
+        response.setHeader(name, value);
+      }
       response.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
       response.setHeader("Cache-Control", "no-store");
       streamStarted = true;

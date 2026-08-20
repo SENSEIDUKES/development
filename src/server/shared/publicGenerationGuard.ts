@@ -56,12 +56,25 @@ interface RateWindow {
   count: number;
 }
 
+const MAX_TRACKED_VISITORS = 1_000;
+
 /** One Vercel process can safely share this small, bounded limiter. */
 export const createPublicGenerationGuard = (
   limit: PublicGenerationLimit,
   now: () => number = () => Date.now(),
 ) => {
   const windows = new Map<string, RateWindow>();
+
+  const reapExpired = (current: number) => {
+    for (const [key, window] of windows) {
+      if (current - window.startsAt >= limit.windowMs) windows.delete(key);
+    }
+  };
+
+  const evictOldest = () => {
+    const oldestKey = windows.keys().next().value;
+    if (oldestKey !== undefined) windows.delete(oldestKey);
+  };
 
   return (request: RequestWithHeaders): PublicGenerationGuardResult => {
     if (!isSameOriginBrowserRequest(request)) {
@@ -74,13 +87,15 @@ export const createPublicGenerationGuard = (
 
     const current = now();
     const key = `${limit.key}:${visitorKey(request)}`;
+    reapExpired(current);
     const existing = windows.get(key);
-    const active = !existing || current - existing.startsAt >= limit.windowMs
+    const active = !existing
       ? { startsAt: current, count: 0 }
       : existing;
 
     if (active.count >= limit.limit) {
       const remainingMs = Math.max(0, limit.windowMs - (current - active.startsAt));
+      windows.set(key, active);
       return {
         allowed: false,
         status: 429,
@@ -90,6 +105,10 @@ export const createPublicGenerationGuard = (
     }
 
     active.count += 1;
+    if (!existing) {
+      if (windows.size >= MAX_TRACKED_VISITORS) evictOldest();
+      active.startsAt = current;
+    }
     windows.set(key, active);
     return { allowed: true };
   };

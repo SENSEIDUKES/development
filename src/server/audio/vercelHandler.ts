@@ -1,7 +1,19 @@
 import { handleCodexVoiceQuoteHttp } from "./codexVoiceQuoteHttp";
 import { createConfiguredCodexVoiceQuoteService } from "./codexVoiceQuote";
+import {
+  createPublicGenerationGuard,
+  type PublicGenerationGuardResult,
+} from "../shared/publicGenerationGuard";
 
 export const maxDuration = 120;
+
+// A quote is only synthesized once and then reused from R2. This still keeps
+// a public Development page from being used to create unlimited new artifacts.
+const guardCodexVoiceQuote = createPublicGenerationGuard({
+  key: "codex-voice-quote",
+  limit: 8,
+  windowMs: 60 * 60 * 1_000,
+});
 
 interface RequestLike {
   method?: string;
@@ -37,14 +49,26 @@ export default async function codexVoiceQuoteHandler(
   request: RequestLike,
   response: ResponseLike,
 ) {
-  const result = await handleCodexVoiceQuoteHttp(
-    { method: request.method, body: request.body, headers: request.headers },
-    {
-      environment: process.env,
-      service: configuredService(),
-      onError: error => console.error("[codex-voice]", error),
-    },
-  );
+  const admission: PublicGenerationGuardResult = request.method?.toUpperCase() === "POST"
+    ? guardCodexVoiceQuote(request)
+    : { allowed: true };
+  const result = !admission.allowed
+    ? {
+        status: admission.status ?? 403,
+        body: { error: admission.error ?? "Character voice is unavailable." },
+        headers: {
+          "Cache-Control": "no-store",
+          ...(admission.retryAfterSeconds ? { "Retry-After": String(admission.retryAfterSeconds) } : {}),
+        },
+      }
+    : await handleCodexVoiceQuoteHttp(
+        { method: request.method, body: request.body, headers: request.headers },
+        {
+          environment: process.env,
+          service: configuredService(),
+          onError: error => console.error("[codex-voice]", error),
+        },
+      );
   for (const [name, value] of Object.entries(result.headers ?? {})) {
     response.setHeader(name, value);
   }

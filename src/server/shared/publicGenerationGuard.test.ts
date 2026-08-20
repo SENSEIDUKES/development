@@ -1,0 +1,58 @@
+import { describe, expect, it } from 'vitest';
+import { createPublicGenerationGuard } from './publicGenerationGuard';
+
+const request = (overrides: Record<string, string> = {}) => ({
+  headers: {
+    host: 'dev.seaportal.world',
+    origin: 'https://dev.seaportal.world',
+    'x-forwarded-for': '198.51.100.10',
+    ...overrides,
+  },
+});
+
+describe('public Development generation guard', () => {
+  it('allows the current Library page but rejects another site', () => {
+    const guard = createPublicGenerationGuard({ key: 'chapter', limit: 2, windowMs: 60_000 });
+
+    expect(guard(request())).toEqual({ allowed: true });
+    expect(guard(request({ origin: 'https://unrelated.example' }))).toMatchObject({
+      allowed: false,
+      status: 403,
+    });
+  });
+
+  it('enforces a separate temporary budget per visitor', () => {
+    let current = 1_000;
+    const guard = createPublicGenerationGuard(
+      { key: 'voice', limit: 1, windowMs: 5_000 },
+      () => current,
+    );
+
+    expect(guard(request())).toEqual({ allowed: true });
+    expect(guard(request())).toMatchObject({ allowed: false, status: 429, retryAfterSeconds: 5 });
+    expect(guard(request({ 'x-forwarded-for': '203.0.113.20' }))).toEqual({ allowed: true });
+
+    current += 5_000;
+    expect(guard(request())).toEqual({ allowed: true });
+  });
+
+  it('reaps expired visitors on each call so the window map does not grow without bound', () => {
+    let current = 1_000;
+    const guard = createPublicGenerationGuard(
+      { key: 'reap', limit: 5, windowMs: 1_000 },
+      () => current,
+    );
+
+    for (let index = 0; index < 20; index += 1) {
+      expect(guard(request({ 'x-forwarded-for': `198.51.100.${index + 1}` }))).toEqual({
+        allowed: true,
+      });
+    }
+
+    current += 1_000;
+
+    // Once the window has elapsed every prior visitor is reaped before the new
+    // request is admitted, so the limiter still has room for a fresh entry.
+    expect(guard(request({ 'x-forwarded-for': '198.51.100.99' }))).toEqual({ allowed: true });
+  });
+});

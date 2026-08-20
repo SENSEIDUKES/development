@@ -23,9 +23,7 @@ export function resolveStorySeedBlueprintConfig(
 ): ResolvedStorySeedBlueprintConfig {
   const rawKey = environment.GEMINI_API_KEY?.trim();
   const apiKey = rawKey && rawKey !== "MY_GEMINI_API_KEY" ? rawKey : undefined;
-  const accessToken = environment.STORY_SEED_BLUEPRINT_ACCESS_TOKEN?.trim()
-    || environment.CHAPTER_GENERATION_ACCESS_TOKEN?.trim()
-    || undefined;
+  const accessToken = environment.STORY_SEED_BLUEPRINT_ACCESS_TOKEN?.trim() || undefined;
   const model = environment.STORY_SEED_BLUEPRINT_MODEL?.trim()
     || environment.CHAPTER_GENERATION_DEFAULT_MODEL?.trim()
     || DEFAULT_MODEL;

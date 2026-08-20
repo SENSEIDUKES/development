@@ -11,7 +11,6 @@ import {
   createConfiguredCodexVoiceQuoteService,
   type CodexVoiceEnvironment,
 } from './codexVoiceQuote';
-import { hasValidBearerToken } from '../shared/bearerToken';
 import type { LivingStoryRecord } from '../../components/chapter-generation/shared/packets/livingStoryEntityIdentity';
 
 export interface CodexVoiceQuoteHttpRequest {
@@ -99,14 +98,6 @@ export async function handleCodexVoiceQuoteHttp(
 ): Promise<CodexVoiceQuoteHttpResponse> {
   if ((request.method ?? 'GET').toUpperCase() !== 'POST') {
     return { status: 405, body: { error: 'Use POST.' }, headers: { Allow: 'POST' } };
-  }
-
-  const accessToken = dependencies.environment.CHAPTER_GENERATION_ACCESS_TOKEN?.trim();
-  if (!accessToken) {
-    return failure(503, 'Character voice is not available on this server.');
-  }
-  if (!hasValidBearerToken(request, accessToken)) {
-    return failure(401, 'A valid Development access token is required.');
   }
 
   let parsed: unknown;

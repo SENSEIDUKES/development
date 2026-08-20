@@ -118,7 +118,6 @@ describe("Chapter Generation review exports", () => {
     Object.assign(batch.chapters[2].attempts[0].failure!, {
       cause: "raw provider secret diagnostic",
       stack: "provider stack trace",
-      accessToken: "development-access-token",
     });
 
     const markdown = buildBatchReviewMarkdown(batch);
@@ -160,10 +159,8 @@ describe("Chapter Generation review exports", () => {
     );
     expect(runDataText).not.toContain("test-signature");
     expect(runDataText).not.toContain('"proof"');
-    expect(runDataText).not.toContain("accessToken");
     expect(runDataText).not.toContain("raw provider secret diagnostic");
     expect(runDataText).not.toContain("provider stack trace");
-    expect(runDataText).not.toContain("development-access-token");
     expect(runDataText).not.toContain('"cause"');
     expect(runDataText).not.toContain('"stack"');
   });
@@ -208,7 +205,6 @@ describe("Chapter Generation review exports", () => {
     const runData = JSON.parse(runDataText);
     expect(runData.run.status).toBe("needs-review");
     expect(runData.run.chapter.diagnostics.manifest).toEqual(diagnostics);
-    expect(runDataText).not.toContain("accessToken");
     expect(runDataText).not.toContain('"proof"');
     expect(runDataText).not.toContain('"stack"');
   });

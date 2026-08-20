@@ -258,6 +258,8 @@ architecture.
 
 - Development makes live Gemini calls only through the server. The Gemini credential
   never enters browser code; no shared bearer token is required to call the endpoint.
+  The live endpoint only accepts same-origin Library requests and has a small
+  per-visitor Development request budget before provider work begins.
 - Calls that complete before a later structured-output failure still return their
   provider-reported or estimated token/time records for diagnosis.
 - Five-chapter state, checkpoints, chapters, resolved audio annotations, attempts,
@@ -324,7 +326,7 @@ per-chapter coverage.
 ## Workshop history
 
 - **2026-08-20:** Disconnected chapter generation from voice synthesis entirely. The dialogue-audio resolver, its chapter-dialogue annotation path, and the Codex voice-clip write-back are removed from the handler, the Vercel entry point, and the Development server. Generated dialogue now produces no provider call, no voice annotation in chapter prose, and no Character voice clip. Worldcues are unchanged and still resolve only curated sound effects for audible narrative actions; Character voice moved to the Reader Codex signature quote.
-- **2026-08-20:** Removed the `CHAPTER_GENERATION_ACCESS_TOKEN` shared bearer token. Chapter generation and the Codex signature-quote audio endpoint no longer require an additional manually entered application token; server-only provider credentials remain private to the server.
+- **2026-08-20:** Removed the `CHAPTER_GENERATION_ACCESS_TOKEN` shared bearer token. Chapter generation and the Codex signature-quote audio endpoint no longer require an additional manually entered application token; server-only provider credentials remain private to the server, while same-origin and per-visitor request budgets protect the live Development calls from casual public abuse.
 
 - **2026-08-17:** Adopted the shared responsive `FeatureWorkspace` Workshop Controls shell. Chapter Generation supplies no external menu options because its workflow controls and Reader handoff are part of the Development component being tested.
 - **2026-07-31:** Created the Reference replica and Development fork from the inspected production flow.
@@ -334,7 +336,7 @@ per-chapter coverage.
 - **2026-08-08:** Pass 3 rebuilt the Development pane as a readable Chapter Generation workspace (Permanent Story Rules, four run steps, collapsed Technical Details) consuming the structured `ChapterPipelineRun` directly; the Reference inspector is unchanged.
 - **2026-08-08:** Pass 3 usability: the run became a sticky four-stage stepper showing one stage at a time (Manifested Chapter by default, with the main reading space), Permanent Story Rules collapsed to a compact digest closed by default, and copy controls now report clipboard success/failure truthfully.
 - **2026-08-09:** Chapter Generation 1.0 Pass 1 connected finalized Story Seed v3 and World Blueprint artifacts to the existing packet contracts, added server-side Gemini Plan/Manifest/Process calls with conditional repair, exposed per-stage token/time usage, and made the one-chapter test harness the primary Development experience while retaining the four-stage workspace as Diagnostics.
-- **2026-08-09:** (Historical) Originally protected the live Development model boundary with a separate server-configured bearer token; that shared token was later removed in favor of the same-origin Vercel endpoint with server-only provider credentials. Preserved omitted Blueprint threads during Process Result, and retained completed-call usage when a later stage fails.
+- **2026-08-09:** (Historical) Originally protected the live Development model boundary with a separate server-configured bearer token; that shared token was later removed in favor of same-origin guarded Development endpoints with server-only provider credentials. Preserved omitted Blueprint threads during Process Result, and retained completed-call usage when a later stage fails.
 - **2026-08-09:** Chapter Generation 1.0 Pass 2 added a disposable five-chapter sequence using five separate chapter-sized requests, authoritative processed-state handoffs, explicit change/Codex carry-forward, truthful live stage progress, pause/retry checkpoints, and per-chapter plus complete-batch token totals.
 - **2026-08-09:** Bound disposable continuations to their exact Story Seed and Blueprint with a server-only signature, added cancellation and request timeouts for batch calls, and tightened accessibility, carry-forward ordering, and checkpoint coverage during PR review.
 - **2026-08-10:** Pass 3 connected completed five-chapter batches to the existing Reader Chamber through the batch adapter, added chapter-scoped cumulative Reader Codex snapshots, chapter/batch/repair/retry token visibility, five-chapter export, and selected-chapter access to the existing four-stage Diagnostics without adding persistence.

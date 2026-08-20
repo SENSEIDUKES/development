@@ -1,8 +1,20 @@
 import { handleChapterGenerationHttp } from "./http";
 import type { ChapterGenerationStreamEvent } from "../../components/chapter-generation/shared/liveChapterGeneration";
 import { ChapterGenerationExecutionError } from "./execute";
+import {
+  createPublicGenerationGuard,
+  type PublicGenerationGuardResult,
+} from "../shared/publicGenerationGuard";
 
 export const maxDuration = 300;
+
+// One five-chapter run consumes five requests; leave one retry in the same
+// window without leaving the live Gemini endpoint unbounded.
+const guardChapterGeneration = createPublicGenerationGuard({
+  key: "chapter-generation",
+  limit: 6,
+  windowMs: 30 * 60 * 1_000,
+});
 
 interface RequestLike {
   method?: string;
@@ -47,6 +59,9 @@ export default async function chapterGenerationHandler(
   response: ResponseLike,
 ) {
   const streaming = acceptsStream(request) && request.method?.toUpperCase() === "POST";
+  const admission: PublicGenerationGuardResult = request.method?.toUpperCase() === "POST"
+    ? guardChapterGeneration(request)
+    : { allowed: true };
   let streamStarted = false;
   const writeEvent = (event: ChapterGenerationStreamEvent) => {
     if (!streamStarted) {
@@ -57,14 +72,23 @@ export default async function chapterGenerationHandler(
     }
     response.write(`${JSON.stringify(event)}\n`);
   };
-  const result = await handleChapterGenerationHttp(
-    { method: request.method, body: request.body, headers: request.headers },
-    {
-      environment: process.env,
-      onError: logChapterGenerationError,
-      ...(streaming ? { onStageChange: stage => writeEvent({ type: "stage", stage }) } : {}),
-    },
-  );
+  const result = !admission.allowed
+    ? {
+        status: admission.status ?? 403,
+        body: { error: admission.error ?? "This Development action is unavailable." },
+        headers: {
+          "Cache-Control": "no-store",
+          ...(admission.retryAfterSeconds ? { "Retry-After": String(admission.retryAfterSeconds) } : {}),
+        },
+      }
+    : await handleChapterGenerationHttp(
+        { method: request.method, body: request.body, headers: request.headers },
+        {
+          environment: process.env,
+          onError: logChapterGenerationError,
+          ...(streaming ? { onStageChange: stage => writeEvent({ type: "stage", stage }) } : {}),
+        },
+      );
   if (streaming) {
     if (!streamStarted) {
       response.status(result.status);

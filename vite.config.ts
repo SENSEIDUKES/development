@@ -7,6 +7,10 @@ import type { ChapterGenerationStreamEvent } from './src/components/chapter-gene
 import { handleStorySeedBlueprintHttp } from './src/server/story-seed-blueprint/http';
 import { handleCodexVoiceQuoteHttp } from './src/server/audio/codexVoiceQuoteHttp';
 import { createConfiguredCodexVoiceQuoteService } from './src/server/audio/codexVoiceQuote';
+import {
+  createPublicGenerationGuard,
+  type PublicGenerationGuardResult,
+} from './src/server/shared/publicGenerationGuard';
 
 const MAX_CHAPTER_REQUEST_BYTES = 2 * 1024 * 1024;
 
@@ -42,6 +46,16 @@ const acceptsChapterStream = (request: IncomingMessage) =>
 const generationApis = (
   environment: Record<string, string | undefined>,
 ): Plugin => {
+  const guardChapterGeneration = createPublicGenerationGuard({
+    key: 'chapter-generation',
+    limit: 6,
+    windowMs: 30 * 60 * 1_000,
+  });
+  const guardCodexVoiceQuote = createPublicGenerationGuard({
+    key: 'codex-voice-quote',
+    limit: 8,
+    windowMs: 60 * 60 * 1_000,
+  });
   // One shared service instance so concurrent Codex taps on the same
   // signature quote collapse into a single provider call.
   const codexVoiceQuoteService = (() => {
@@ -70,6 +84,22 @@ const generationApis = (
         return;
       }
       try {
+        const admission: PublicGenerationGuardResult = request.method?.toUpperCase() !== 'POST'
+          ? { allowed: true }
+          : pathname === '/api/chapter-generation'
+            ? guardChapterGeneration(request)
+            : pathname === '/api/codex-voice-quote'
+              ? guardCodexVoiceQuote(request)
+              : { allowed: true };
+        if (!admission.allowed) {
+          writeJson(response, admission.status ?? 403, {
+            error: admission.error ?? 'This Development action is unavailable.',
+          }, {
+            'Cache-Control': 'no-store',
+            ...(admission.retryAfterSeconds ? { 'Retry-After': String(admission.retryAfterSeconds) } : {}),
+          });
+          return;
+        }
         const body = request.method?.toUpperCase() === 'POST'
           ? await readJsonBody(request)
           : undefined;

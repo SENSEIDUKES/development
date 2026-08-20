@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { handleChapterGenerationHttp } from './src/server/chapter-generation/http';
 import type { ChapterGenerationStreamEvent } from './src/components/chapter-generation/shared/liveChapterGeneration';
 import { handleStorySeedBlueprintHttp } from './src/server/story-seed-blueprint/http';
+import { createConfiguredDialogueArtifactResolver } from './src/server/audio/dialogueArtifactResolver';
 
 const MAX_CHAPTER_REQUEST_BYTES = 2 * 1024 * 1024;
 
@@ -40,6 +41,16 @@ const acceptsChapterStream = (request: IncomingMessage) =>
 const generationApis = (
   environment: Record<string, string | undefined>,
 ): Plugin => {
+  const dialogueArtifactResolver = (() => {
+    try {
+      return createConfiguredDialogueArtifactResolver(environment, {
+        onError: error => console.error('[dialogue-audio]', error),
+      });
+    } catch (error) {
+      console.error('[dialogue-audio] configuration failure', error);
+      return undefined;
+    }
+  })();
   const configure = (server: { middlewares: { use: (handler: (
     request: IncomingMessage,
     response: ServerResponse,
@@ -81,6 +92,7 @@ const generationApis = (
           { method: request.method, body, headers: request.headers },
           {
             environment,
+            dialogueArtifactResolver,
             onError: error => console.error('[chapter-generation]', error),
             ...(streaming ? { onStageChange: stage => writeEvent({ type: 'stage', stage }) } : {}),
           },

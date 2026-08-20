@@ -4,11 +4,13 @@
 - **Source location:** `src/components/ReaderCodex.tsx`, `src/components/CodexSheetOverlay.tsx`, and `src/components/CodexHovercard.tsx` (verified against `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-codex`
 - **Replica created:** 2026-08-11
-- **Last Workshop update:** 2026-08-19
+- **Last Workshop update:** 2026-08-20
 - **Last source comparison:** 2026-08-18
 - **Replica status:** under refinement
 
 ## Workshop history
+
+- **2026-08-20:** Completed the server side of the permanent Character voice identity. The first valid synthesized dialogue artifact may become that Character's provider-neutral Codex `voiceClipUrl`, while `voiceKey` remains stable across future chapters. Reader Codex still plays only through the shared audio owner; Bestiary species, unnamed speakers, and non-intelligent entities never receive a voice or playback control.
 
 - **2026-08-19:** Replaced the Workshop-local voice preset and browser `speechSynthesis` path with the Phase 3 identity boundary. A validated named dialogue speaker receives one deterministic provider-neutral `voiceKey` on the server-owned canonical Character and reuses it in later chapters; Bestiary species never receive voices. Reader Codex can play an existing synthesized `voiceClipUrl` through the shared audio owner, but it neither assigns a voice nor advertises generation without a working server artifact path.
 - **2026-08-19:** Documented the refined inline World Cue boundary: a named

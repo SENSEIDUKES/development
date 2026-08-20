@@ -17,6 +17,7 @@
     "test:inline-audio": "vitest run src/audio src/components/reader-chamber/development/InlineAudio.test.tsx"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1114.0",
     "@google/genai": "^2.16.0",
     "@seihouse/audio-player": "github:SENSEIDUKES/AUDIO-PLAYER#b1e05870f4c3e9cad2ddb74119371c5c7cba6471",
     "@vitejs/plugin-react": "latest",

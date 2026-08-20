@@ -4,11 +4,13 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-19
+- **Last Workshop update:** 2026-08-20
 - **Last source comparison:** 2026-08-19
 - **Replica status:** under refinement
 
 ## Workshop history
+
+- **2026-08-20:** Connected the existing dialogue annotation contract to completed server artifacts. Named intelligent Character quotes now receive a glyph only after the accepted block's exact quoted occurrence has a validated SEIHouse audio URL; activation still replaces the one shared audio queue, so playback remains user-triggered with no autoplay or overlap. Provider/storage failure leaves ordinary readable dialogue and no dead control.
 
 - **2026-08-19:** Completed the Phase 3 Worldcue boundary. Manifested audible-action intents are validated against application-owned block IDs and exact zero-based phrase occurrences, resolved by application logic to approved Library Cues, persisted on the accepted chapter result, and copied through batch and Reader adapters. The Reader now consumes only the selected chapter's block-scoped resolved annotations, so a cue cannot spread to another mention, chapter, legacy paragraph, or translation. Entity/Bestiary metadata alone creates no marker; atmosphere and System Panel audio keep their existing owners. Dialogue receives a permanent server-assigned character `voiceKey`, but no quote glyph renders until a playable server-generated artifact exists.
 - **2026-08-19:** Refined inline World Cues into a typographic prose annotation: entity names retain their normal text or Codex highlight, while a circle-free `0.76em` `LibrarySoundGlyph` owns playback beside the phrase, uses an invisible expanded pointer target, keeps the final word and punctuation joined without preventing long names from wrapping, and gains a soft Library aura only while active. The Reader fixture now makes `Vermilion Debt Fox` sound-only plain prose while `The Azure Ring` keeps its orange Codex action plus the independent cue mark. Removed the retired card presentation, Reader render branch, generation contract, Workshop presets and adapter, dedicated fixtures/tests, and exclusive shared types/stubs. Codex Cards, System Panels, the one shared audio owner, and Development-only cue annotations remain intact.

@@ -1162,6 +1162,51 @@ describe("server model selection and failure handling", () => {
         relatedEntity: expect.objectContaining({ id: expect.any(String), name: "Rin" }),
       }),
     ]));
+    const persistedRin = body.run.processingResult.proposedLivingStoryState.codex.characters
+      .find(character => character.name === "Rin");
+    expect(persistedRin).toMatchObject({
+      voiceKey: expect.any(String),
+      voiceClipUrl: "https://celestialaudio.seihouse.org/dialogue/rin/c1-p2.mp3",
+    });
+    expect(body.run.processingResult.codexUpdates.characters).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        name: "Rin",
+        voiceKey: expect.any(String),
+        voiceClipUrl: "https://celestialaudio.seihouse.org/dialogue/rin/c1-p2.mp3",
+      }),
+    ]));
+    expect(JSON.stringify(body)).not.toContain("voice_id");
+    expect(JSON.stringify(body)).not.toContain("providerVoiceId");
+  });
+
+  it("keeps an accepted chapter readable when dialogue synthesis fails", async () => {
+    const onError = vi.fn();
+    const response = await handleChapterGenerationHttp({
+      method: "POST",
+      headers: { Authorization: "Bearer development-access-token" },
+      body: {
+        artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
+        model: "google/gemini-test",
+      },
+    }, {
+      environment,
+      providerFactory: () => new RecordingProvider(),
+      dialogueArtifactResolver: async () => {
+        throw new Error("private synthesis failure");
+      },
+      onError,
+    });
+
+    expect(response.status).toBe(200);
+    const body = response.body as ManifestChapterResponse;
+    expect(body.run.finalOutput.blocks).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "c1-p2", type: "dialogue" }),
+    ]));
+    expect(body.run.finalOutput.audioMoments ?? []).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ sourceCategory: "voice" }),
+    ]));
+    expect(JSON.stringify(body)).not.toContain("private synthesis failure");
+    expect(onError).toHaveBeenCalledWith(expect.any(Error));
   });
 
   it("rejects a browser model outside the server allow-list as a request error", async () => {

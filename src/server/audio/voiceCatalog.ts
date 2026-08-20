@@ -29,8 +29,8 @@ export interface VoiceCatalogEntry {
   /** Source file name, e.g. "voice_preview_ancient master - female.mp3". */
   file_name: string;
   /**
-   * Public provider voice ID (ElevenLabs). `null` when the entry is a valid
-   * but currently unprovisioned voice (no TTS available).
+   * Server-private provider voice ID (ElevenLabs). `null` when the entry is a
+   * valid but currently unprovisioned voice (no TTS available).
    */
   voice_id: string | null;
   /** Free-form archetype label, e.g. "Ancient Master". */

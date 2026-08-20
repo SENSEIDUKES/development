@@ -1,6 +1,7 @@
 import { handleChapterGenerationHttp } from "./http";
 import type { ChapterGenerationStreamEvent } from "../../components/chapter-generation/shared/liveChapterGeneration";
 import { ChapterGenerationExecutionError } from "./execute";
+import { createConfiguredDialogueArtifactResolver } from "../audio/dialogueArtifactResolver";
 
 export const maxDuration = 300;
 
@@ -42,6 +43,17 @@ const logChapterGenerationError = (error: unknown) => {
   console.error("[chapter-generation] request failure", error);
 };
 
+const configuredDialogueArtifactResolver = () => {
+  try {
+    return createConfiguredDialogueArtifactResolver(process.env, {
+      onError: error => console.error("[dialogue-audio] synthesis failure", error),
+    });
+  } catch (error) {
+    console.error("[dialogue-audio] configuration failure", error);
+    return undefined;
+  }
+};
+
 export default async function chapterGenerationHandler(
   request: RequestLike,
   response: ResponseLike,
@@ -61,6 +73,7 @@ export default async function chapterGenerationHandler(
     { method: request.method, body: request.body, headers: request.headers },
     {
       environment: process.env,
+      dialogueArtifactResolver: configuredDialogueArtifactResolver(),
       onError: logChapterGenerationError,
       ...(streaming ? { onStageChange: stage => writeEvent({ type: "stage", stage }) } : {}),
     },

@@ -48,13 +48,13 @@ describe('WorkshopHome', () => {
     }
   });
 
-  it('specifically includes Chapter Generation (v2.1) which was previously filtered out', () => {
+  it('specifically includes the current Chapter Generation release which was previously filtered out', () => {
     renderHome();
 
     const chapterGenCard = container.querySelector('a[href="?preview=chapter-generation-flow"]');
     expect(chapterGenCard).not.toBeNull();
     expect(chapterGenCard?.querySelector('h2')?.textContent).toBe('Chapter Generation');
-    expect(chapterGenCard?.querySelector('.workshop-status')?.textContent).toContain('v2.1');
+    expect(chapterGenCard?.querySelector('.workshop-status')?.textContent).toContain('v2.2');
   });
 
   it('switches between Development and Library Components tabs', () => {

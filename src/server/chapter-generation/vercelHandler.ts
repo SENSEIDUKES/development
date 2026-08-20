@@ -43,15 +43,21 @@ const logChapterGenerationError = (error: unknown) => {
   console.error("[chapter-generation] request failure", error);
 };
 
+let dialogueArtifactResolver: ReturnType<typeof createConfiguredDialogueArtifactResolver>;
+let dialogueArtifactResolverReady = false;
+
 const configuredDialogueArtifactResolver = () => {
+  if (dialogueArtifactResolverReady) return dialogueArtifactResolver;
+  dialogueArtifactResolverReady = true;
   try {
-    return createConfiguredDialogueArtifactResolver(process.env, {
+    dialogueArtifactResolver = createConfiguredDialogueArtifactResolver(process.env, {
       onError: error => console.error("[dialogue-audio] synthesis failure", error),
     });
   } catch (error) {
     console.error("[dialogue-audio] configuration failure", error);
-    return undefined;
+    dialogueArtifactResolver = undefined;
   }
+  return dialogueArtifactResolver;
 };
 
 export default async function chapterGenerationHandler(

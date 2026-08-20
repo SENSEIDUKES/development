@@ -1,12 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { S3Client } from '@aws-sdk/client-s3';
 import { DIALOGUE_ARTIFACT_PUBLIC_ORIGIN } from '../../audio/dialogueArtifacts';
 import type { ChapterContent } from '../../components/chapter-generation/shared/types';
 import {
+  assertDialogueObjectKey,
   createConfiguredDialogueArtifactResolver,
   createDialogueArtifactResolver,
   ElevenLabsDialogueSpeechProvider,
   extractExactDialogueQuotes,
   loadDialogueAudioConfig,
+  R2DialogueAudioArtifactStore,
+  requiredServerValue,
   type DialogueAudioArtifactStore,
   type DialogueSpeechProvider,
 } from './dialogueArtifactResolver';
@@ -122,10 +126,54 @@ describe('dialogue artifact resolver', () => {
         { id: 'character-rin-2', name: 'Rin', voiceKey: voice.internalKey },
       ],
     });
+    const unnamedChapter = chapter();
+    unnamedChapter.blocks![0].metadata = { mode: 'dialogue' };
+    const unnamed = await resolver({ chapter: unnamedChapter, characters });
+    const wrongModeChapter = chapter();
+    wrongModeChapter.blocks![0].metadata = { mode: 'narration', speakerName: 'Rin' };
+    const wrongMode = await resolver({ chapter: wrongModeChapter, characters });
+    const missingVoiceKey = await resolver({
+      chapter: chapter(),
+      characters: [{ id: 'character-rin', name: 'Rin' }],
+    });
+    const unknownVoiceKey = await resolver({
+      chapter: chapter(),
+      characters: [{ id: 'character-rin', name: 'Rin', voiceKey: 'not-in-catalog' }],
+    });
 
     expect(ineligible).toEqual([]);
     expect(ambiguous).toEqual([]);
+    expect(unnamed).toEqual([]);
+    expect(wrongMode).toEqual([]);
+    expect(missingVoiceKey).toEqual([]);
+    expect(unknownVoiceKey).toEqual([]);
     expect(synthesize).not.toHaveBeenCalled();
+  });
+
+  it('bounds distinct artifact work while retaining every annotation', async () => {
+    const objectStore = new MemoryArtifactStore();
+    let active = 0;
+    let maxActive = 0;
+    const synthesize = vi.fn(async () => {
+      active += 1;
+      maxActive = Math.max(maxActive, active);
+      await new Promise(resolve => setTimeout(resolve, 2));
+      active -= 1;
+      return new Uint8Array([1]);
+    });
+    const resolver = createDialogueArtifactResolver({
+      model: 'eleven_multilingual_v2',
+      objectStore,
+      provider: { synthesize },
+    });
+    const result = await resolver({
+      chapter: chapter('Rin said, “One.” “Two.” “Three.” “Four.” “Five.” “Six.”'),
+      characters,
+    });
+
+    expect(result).toHaveLength(6);
+    expect(synthesize).toHaveBeenCalledTimes(6);
+    expect(maxActive).toBe(4);
   });
 
   it('contains synthesis failures and returns no dead annotation candidate', async () => {
@@ -184,6 +232,50 @@ describe('ElevenLabs server adapter', () => {
     expect(createConfiguredDialogueArtifactResolver({})).toBeUndefined();
     expect(() => loadDialogueAudioConfig({ ELEVENLABS_API_KEY: 'partial' }))
       .toThrow('partially configured');
+  });
+
+  it('enforces server-only credential names and the immutable object namespace', () => {
+    expect(() => requiredServerValue({ VITE_PRIVATE_KEY: 'exposed' }, 'VITE_PRIVATE_KEY'))
+      .toThrow('server-side');
+    expect(() => assertDialogueObjectKey('other/v1/deadbeef.mp3'))
+      .toThrow('immutable dialogue namespace');
+    expect(() => assertDialogueObjectKey('dialogue/v1/not-a-digest.mp3'))
+      .toThrow('immutable dialogue namespace');
+  });
+
+  it('retries a conditional upload conflict when the artifact is still absent', async () => {
+    let call = 0;
+    const send = vi.fn(async () => {
+      call += 1;
+      if (call === 1) {
+        throw Object.assign(new Error('conflict'), {
+          name: 'ConditionalRequestConflict',
+          $metadata: { httpStatusCode: 409 },
+        });
+      }
+      if (call === 2) {
+        throw Object.assign(new Error('missing'), {
+          name: 'NotFound',
+          $metadata: { httpStatusCode: 404 },
+        });
+      }
+      return {};
+    });
+    const store = new R2DialogueAudioArtifactStore({
+      accessKeyId: 'private-access-key',
+      secretAccessKey: 'private-secret',
+      endpoint: 'https://account.r2.cloudflarestorage.com',
+      bucket: 'library',
+      publicBaseUrl: DIALOGUE_ARTIFACT_PUBLIC_ORIGIN,
+      region: 'auto',
+    }, { send } as unknown as S3Client);
+
+    await expect(store.put({
+      objectKey: `dialogue/v1/${'a'.repeat(64)}.mp3`,
+      bytes: new Uint8Array([1, 2, 3]),
+      checksumSha256: 'checksum',
+    })).resolves.toBeUndefined();
+    expect(send).toHaveBeenCalledTimes(3);
   });
 
   it('supports injected provider and storage adapters without exposing credentials', async () => {

@@ -34,7 +34,10 @@ import {
 import type { ResolvedDialogueAudioMoment } from "../../audio/inlineAudio";
 import { isApplicationOwnedDialogueArtifactUrl } from "../../audio/dialogueArtifacts";
 import type { ChapterContent } from "../../components/chapter-generation/shared/types";
-import type { LivingStoryRecord } from "../../components/chapter-generation/shared/packets/livingStoryEntityIdentity";
+import {
+  canonicalLivingStoryEntityKey,
+  type LivingStoryRecord,
+} from "../../components/chapter-generation/shared/packets/livingStoryEntityIdentity";
 
 const nonEmptyCharacterValue = (value: unknown): string | undefined => (
   typeof value === "string" && value.trim() ? value.trim() : undefined
@@ -44,6 +47,11 @@ const characterIdentity = (character: LivingStoryRecord): string | undefined => 
   nonEmptyCharacterValue(character.id)
     ?? nonEmptyCharacterValue(character.persistenceId)
 );
+
+const characterNameKey = (character: LivingStoryRecord): string | undefined => {
+  const name = nonEmptyCharacterValue(character.name);
+  return name ? canonicalLivingStoryEntityKey(name) : undefined;
+};
 
 const persistCharacterVoiceArtifacts = (
   run: ManifestChapterResponse["run"],
@@ -76,11 +84,19 @@ const persistCharacterVoiceArtifacts = (
   for (const character of characters) {
     const id = characterIdentity(character);
     if (!id || !changedVoiceClipIds.has(id)) continue;
-    const updateIndex = updates.findIndex(update => characterIdentity(update) === id);
+    const nameKey = characterNameKey(character);
+    const updateIndex = updates.findIndex(update => {
+      const updateId = characterIdentity(update);
+      if (updateId) return updateId === id;
+      return Boolean(nameKey && characterNameKey(update) === nameKey);
+    });
     if (updateIndex >= 0) {
       updates[updateIndex] = { ...updates[updateIndex], voiceClipUrl: character.voiceClipUrl };
     } else {
-      updates.push(structuredClone(character));
+      updates.push({
+        name: character.name,
+        voiceClipUrl: character.voiceClipUrl,
+      });
     }
   }
   run.processingResult.codexUpdates.characters = updates;

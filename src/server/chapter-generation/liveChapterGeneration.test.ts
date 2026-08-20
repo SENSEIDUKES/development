@@ -1168,13 +1168,14 @@ describe("server model selection and failure handling", () => {
       voiceKey: expect.any(String),
       voiceClipUrl: "https://celestialaudio.seihouse.org/dialogue/rin/c1-p2.mp3",
     });
-    expect(body.run.processingResult.codexUpdates.characters).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        name: "Rin",
-        voiceKey: expect.any(String),
-        voiceClipUrl: "https://celestialaudio.seihouse.org/dialogue/rin/c1-p2.mp3",
-      }),
-    ]));
+    const rinUpdates = body.run.processingResult.codexUpdates.characters
+      .filter(character => character.name === "Rin");
+    expect(rinUpdates).toHaveLength(1);
+    expect(rinUpdates[0]).toMatchObject({
+      name: "Rin",
+      voiceKey: expect.any(String),
+      voiceClipUrl: "https://celestialaudio.seihouse.org/dialogue/rin/c1-p2.mp3",
+    });
     expect(JSON.stringify(body)).not.toContain("voice_id");
     expect(JSON.stringify(body)).not.toContain("providerVoiceId");
   });

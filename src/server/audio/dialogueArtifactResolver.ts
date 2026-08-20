@@ -31,6 +31,7 @@ const DIALOGUE_ARTIFACT_VERSION = 'v1';
 const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 const MAX_QUOTE_LENGTH = 240;
+const MAX_CONCURRENT_ARTIFACTS = 4;
 const DEFAULT_TIMEOUT_MS = 45_000;
 const QUOTED_PHRASE = /"[^"\r\n]+"|“[^”\r\n]+”|(?<![\p{L}\p{N}])'[^'\r\n]+'(?![\p{L}\p{N}])|‘[^’\r\n]+’/gu;
 
@@ -106,7 +107,7 @@ const boundedInteger = (
     : fallback;
 };
 
-const requiredServerValue = (
+export const requiredServerValue = (
   environment: DialogueAudioEnvironment,
   name: string,
 ): string => {
@@ -249,7 +250,7 @@ const encodeObjectKey = (key: string): string => (
   key.split('/').map(encodeURIComponent).join('/')
 );
 
-const assertDialogueObjectKey = (objectKey: string): void => {
+export const assertDialogueObjectKey = (objectKey: string): void => {
   const prefix = `${DIALOGUE_OBJECT_PREFIX}/${DIALOGUE_ARTIFACT_VERSION}/`;
   if (
     !objectKey.startsWith(prefix)
@@ -304,23 +305,29 @@ export class R2DialogueAudioArtifactStore implements DialogueAudioArtifactStore 
     checksumSha256: string;
   }): Promise<void> {
     assertDialogueObjectKey(input.objectKey);
-    try {
-      await this.client.send(new PutObjectCommand({
-        Bucket: this.config.bucket,
-        Key: input.objectKey,
-        Body: input.bytes,
-        ContentLength: input.bytes.byteLength,
-        ContentType: 'audio/mpeg',
-        CacheControl: IMMUTABLE_CACHE_CONTROL,
-        IfNoneMatch: '*',
-        Metadata: { sha256: input.checksumSha256 },
-      }));
-    } catch (error) {
-      const candidate = error as { $metadata?: { httpStatusCode?: number }; name?: string };
-      if (candidate.$metadata?.httpStatusCode === 412 || candidate.name === 'PreconditionFailed') {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        await this.client.send(new PutObjectCommand({
+          Bucket: this.config.bucket,
+          Key: input.objectKey,
+          Body: input.bytes,
+          ContentLength: input.bytes.byteLength,
+          ContentType: 'audio/mpeg',
+          CacheControl: IMMUTABLE_CACHE_CONTROL,
+          IfNoneMatch: '*',
+          Metadata: { sha256: input.checksumSha256 },
+        }));
+        return;
+      } catch (error) {
+        const candidate = error as { $metadata?: { httpStatusCode?: number }; name?: string };
+        const preconditionFailed = candidate.$metadata?.httpStatusCode === 412
+          || candidate.name === 'PreconditionFailed';
+        const conditionalConflict = candidate.$metadata?.httpStatusCode === 409
+          || candidate.name === 'ConditionalRequestConflict';
+        if (!preconditionFailed && !conditionalConflict) throw error;
         if (await this.has(input.objectKey)) return;
+        if (!conditionalConflict || attempt === 1) throw error;
       }
-      throw error;
     }
   }
 
@@ -392,6 +399,26 @@ const dialogueBlocks = (chapter: ChapterContent) => (
   (chapter.blocks ?? []).filter(block => block.type === 'dialogue' && !block.system)
 );
 
+const runBounded = async <T>(
+  tasks: readonly (() => Promise<T>)[],
+  limit: number,
+): Promise<T[]> => {
+  const results = new Array<T>(tasks.length);
+  let cursor = 0;
+  const workers = Array.from(
+    { length: Math.min(limit, tasks.length) },
+    async () => {
+      while (cursor < tasks.length) {
+        const index = cursor;
+        cursor += 1;
+        results[index] = await tasks[index]();
+      }
+    },
+  );
+  await Promise.all(workers);
+  return results;
+};
+
 export function createDialogueArtifactResolver(input: {
   model: string;
   objectStore: DialogueAudioArtifactStore;
@@ -399,8 +426,13 @@ export function createDialogueArtifactResolver(input: {
   onError?: (error: unknown) => void;
 }): DialogueArtifactResolver {
   return async ({ chapter, characters }: DialogueArtifactResolverInput) => {
-    const artifactWork = new Map<string, Promise<string>>();
-    const pending: Array<Promise<CompletedDialogueArtifactCandidate | null>> = [];
+    const artifactRequests = new Map<string, {
+      providerVoiceId: string;
+      spokenText: string;
+    }>();
+    const pending: Array<Omit<CompletedDialogueArtifactCandidate, 'publicUrl'> & {
+      objectKey: string;
+    }> = [];
 
     for (const block of dialogueBlocks(chapter)) {
       const metadata = record(block.metadata);
@@ -415,51 +447,55 @@ export function createDialogueArtifactResolver(input: {
       if (!providerVoiceId) continue;
 
       for (const quote of extractExactDialogueQuotes(block.text)) {
-        pending.push((async () => {
-          try {
-            const objectKey = artifactObjectKey({
-              voiceKey,
-              spokenText: quote.spokenText,
-              model: input.model,
-            });
-            let publicUrlPromise = artifactWork.get(objectKey);
-            if (!publicUrlPromise) {
-              publicUrlPromise = (async () => {
-                if (!await input.objectStore.has(objectKey)) {
-                  const bytes = await input.provider.synthesize({
-                    providerVoiceId,
-                    text: quote.spokenText,
-                  });
-                  await input.objectStore.put({
-                    objectKey,
-                    bytes,
-                    checksumSha256: createHash('sha256').update(bytes).digest('hex'),
-                  });
-                }
-                return input.objectStore.publicUrl(objectKey);
-              })();
-              artifactWork.set(objectKey, publicUrlPromise);
-            }
-            return {
-              characterId: id,
-              blockId: block.id,
-              triggerPhrase: quote.triggerPhrase,
-              occurrenceIndex: quote.occurrenceIndex,
-              publicUrl: await publicUrlPromise,
-              semanticTags: ['dialogue'],
-            } satisfies CompletedDialogueArtifactCandidate;
-          } catch (error) {
-            input.onError?.(error);
-            return null;
-          }
-        })());
+        const objectKey = artifactObjectKey({
+          voiceKey,
+          spokenText: quote.spokenText,
+          model: input.model,
+        });
+        if (!artifactRequests.has(objectKey)) {
+          artifactRequests.set(objectKey, {
+            providerVoiceId,
+            spokenText: quote.spokenText,
+          });
+        }
+        pending.push({
+          characterId: id,
+          blockId: block.id,
+          triggerPhrase: quote.triggerPhrase,
+          occurrenceIndex: quote.occurrenceIndex,
+          objectKey,
+          semanticTags: ['dialogue'],
+        });
       }
     }
 
-    const candidates = await Promise.all(pending);
-    return candidates.filter((candidate): candidate is CompletedDialogueArtifactCandidate => (
-      candidate !== null
-    ));
+    const completedArtifacts = await runBounded(
+      [...artifactRequests].map(([objectKey, request]) => async () => {
+        try {
+          if (!await input.objectStore.has(objectKey)) {
+            const bytes = await input.provider.synthesize({
+              providerVoiceId: request.providerVoiceId,
+              text: request.spokenText,
+            });
+            await input.objectStore.put({
+              objectKey,
+              bytes,
+              checksumSha256: createHash('sha256').update(bytes).digest('hex'),
+            });
+          }
+          return [objectKey, input.objectStore.publicUrl(objectKey)] as const;
+        } catch (error) {
+          input.onError?.(error);
+          return [objectKey, null] as const;
+        }
+      }),
+      MAX_CONCURRENT_ARTIFACTS,
+    );
+    const publicUrls = new Map(completedArtifacts);
+    return pending.flatMap(({ objectKey, ...candidate }) => {
+      const publicUrl = publicUrls.get(objectKey);
+      return publicUrl ? [{ ...candidate, publicUrl }] : [];
+    });
   };
 }
 

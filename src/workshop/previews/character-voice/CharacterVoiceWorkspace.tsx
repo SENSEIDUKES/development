@@ -1,26 +1,20 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { CharacterCard } from '../../../components/reader-codex/shared/codex/character-cards/CharacterCard';
 import { CodexProvider } from '../../../components/reader-codex/shared/codex/CodexContext';
 import {
   useCodexVoiceQuote,
   type CodexVoiceQuoteState,
-  type CodexVoiceResolution,
 } from '../../../components/reader-codex/shared/hooks/useCodexVoiceQuote';
 import type { Character, Story } from '../../../components/reader-codex/shared/types';
-import { CODEX_VOICE_ARTIFACT_VERSION } from '../../../audio/voiceArtifacts';
 import '../../../components/reader-codex/shared/reader-codex.css';
 
 /**
- * Inspectable Character Portrait voice interaction.
+ * Live Character Portrait voice interaction.
  *
- * Every state is reachable here without an already-generated clip and without
- * spending a real ElevenLabs call: the workspace substitutes the server
- * request with a local stub. The live path is identical — the same card, the
- * same hook, the same shared audio owner — only the network call is stubbed.
+ * This uses the same real endpoint as the Reader Codex. A tap on the
+ * signature quote calls ElevenLabs through the server, stores the resulting
+ * artifact in R2, and reuses that artifact on later taps.
  */
-
-const SAMPLE_ARTIFACT_URL = 'https://celestialaudio.seihouse.org/voice/v1/'
-  + '0000000000000000000000000000000000000000000000000000000000000000.mp3';
 
 const baseCharacter = {
   id: 'workshop-character-mei-lin',
@@ -33,8 +27,6 @@ const baseCharacter = {
   faction: 'Ashen Sword Pavilion',
   signatureQuote: 'A promise is only a blade held by its edge.',
 } as Character;
-
-type StubOutcome = 'succeeds' | 'fails' | 'slow';
 
 const codexValue = {
   memory: { characters: [baseCharacter] },
@@ -63,46 +55,28 @@ const stateNotes: Record<CodexVoiceQuoteState, string> = {
 };
 
 export function CharacterVoiceWorkspace() {
-  const [outcome, setOutcome] = useState<StubOutcome>('succeeds');
   const [character, setCharacter] = useState<Character>(baseCharacter);
-  const [log, setLog] = useState<string[]>([]);
-
-  const requestVoice = useMemo(() => async (target: Character): Promise<CodexVoiceResolution> => {
-    setLog(current => [`Server call for ${target.name} (${new Date().toLocaleTimeString()})`, ...current]);
-    if (outcome === 'slow') await new Promise(resolve => { window.setTimeout(resolve, 4000); });
-    if (outcome === 'fails') throw new Error('The voice service is unavailable right now.');
-    return {
-      characterId: target.id,
-      voiceKey: 'ancient-master-female',
-      artifact: {
-        publicUrl: SAMPLE_ARTIFACT_URL,
-        quote: target.signatureQuote ?? '',
-        voiceKey: 'ancient-master-female',
-        model: 'eleven_multilingual_v2',
-        artifactVersion: CODEX_VOICE_ARTIFACT_VERSION,
-      },
-    };
-  }, [outcome]);
 
   const { handleQuoteTap, voiceStatus } = useCodexVoiceQuote({
-    requestVoice,
     onVoiceResolved: resolution => {
       setCharacter(current => ({
         ...current,
         voiceKey: resolution.voiceKey,
         voiceClip: resolution.artifact,
       }));
-      setLog(current => ['Artifact persisted on the Codex Character', ...current]);
     },
   });
   const status = voiceStatus(character);
+  const statusNote = status.state === 'error' && status.message
+    ? status.message
+    : stateNotes[status.state];
 
   return (
     <main className="min-h-screen bg-[#04060d] px-4 py-8 text-slate-200 sm:px-8">
       <div className="mx-auto flex max-w-5xl flex-col gap-6 lg:flex-row">
         <section className="w-full max-w-sm">
           <p className="text-[10px] font-mono uppercase tracking-[0.22em] text-cyan-200/70">
-            Development-only example
+            Live development integration
           </p>
           <h1 className="mt-2 text-xl font-semibold text-white">Character Voice</h1>
           <p className="mt-2 text-sm leading-6 text-slate-400">
@@ -131,59 +105,13 @@ export function CharacterVoiceWorkspace() {
 
         <section className="flex-1 rounded-2xl border border-cyan-300/20 bg-slate-950/70 p-5">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-cyan-200/80">
-            Inspect the interaction
+            Live ElevenLabs → R2
           </h2>
           <p className="mt-2 text-xs leading-5 text-slate-400">
-            The server request is stubbed locally, so no provider call is made and no clip needs
-            to exist beforehand.
+            Pressing Hear Voice calls <code className="text-slate-300">/api/codex-voice-quote</code>.
+            The first successful tap generates and stores this Character’s quote; later taps reuse
+            the stored R2 artifact.
           </p>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {(['succeeds', 'slow', 'fails'] as StubOutcome[]).map(option => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setOutcome(option)}
-                className={`workshop-touch-target rounded-full border px-4 py-2 text-xs ${
-                  outcome === option
-                    ? 'border-cyan-300 bg-cyan-300/15 text-cyan-100'
-                    : 'border-white/15 text-slate-300 hover:bg-white/10'
-                }`}
-              >
-                Server {option}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => {
-                setCharacter(baseCharacter);
-                setLog(current => ['Stored artifact cleared', ...current]);
-              }}
-              className="workshop-touch-target rounded-full border border-white/15 px-4 py-2 text-xs text-slate-300 hover:bg-white/10"
-            >
-              Clear stored artifact
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setCharacter(current => ({
-                  ...current,
-                  signatureQuote: 'The gate remembers who closed it.',
-                }));
-                setLog(current => ['Signature quote changed — the old recording is invalid', ...current]);
-              }}
-              className="workshop-touch-target rounded-full border border-white/15 px-4 py-2 text-xs text-slate-300 hover:bg-white/10"
-            >
-              Change the quote
-            </button>
-            <button
-              type="button"
-              onClick={() => setCharacter(current => ({ ...current, signatureQuote: undefined }))}
-              className="workshop-touch-target rounded-full border border-white/15 px-4 py-2 text-xs text-slate-300 hover:bg-white/10"
-            >
-              Remove the quote
-            </button>
-          </div>
 
           <dl className="mt-5 space-y-2 text-xs">
             <div className="flex gap-2">
@@ -192,7 +120,11 @@ export function CharacterVoiceWorkspace() {
             </div>
             <div className="flex gap-2">
               <dt className="w-28 shrink-0 font-mono uppercase tracking-wider text-slate-500">Note</dt>
-              <dd className="text-slate-300">{stateNotes[status.state]}</dd>
+              <dd className="text-slate-300">{statusNote}</dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="w-28 shrink-0 font-mono uppercase tracking-wider text-slate-500">Endpoint</dt>
+              <dd className="font-mono text-slate-400">/api/codex-voice-quote</dd>
             </div>
             <div className="flex gap-2">
               <dt className="w-28 shrink-0 font-mono uppercase tracking-wider text-slate-500">Stored</dt>
@@ -201,14 +133,6 @@ export function CharacterVoiceWorkspace() {
               </dd>
             </div>
           </dl>
-
-          <h3 className="mt-5 text-[10px] font-mono uppercase tracking-[0.22em] text-slate-500">
-            Server calls
-          </h3>
-          <ul className="mt-2 space-y-1 text-xs text-slate-400">
-            {log.length === 0 ? <li>None yet. Opening or scrolling never generates audio.</li> : null}
-            {log.slice(0, 8).map((entry, index) => <li key={`${entry}-${index}`}>{entry}</li>)}
-          </ul>
         </section>
       </div>
     </main>

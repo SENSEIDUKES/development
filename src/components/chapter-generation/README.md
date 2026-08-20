@@ -4,7 +4,7 @@
 - **Source location:** `src/hooks/chapterPipeline/chapterBatch.ts`, `src/aiRouter.ts`, `src/server/routes/storyRouter.ts`, and the Story Seed, prompt, handoff, formatting, and context dependencies
 - **Workshop preview:** `?preview=chapter-generation-flow`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-19
+- **Last Workshop update:** 2026-08-20
 - **Last source comparison:** 2026-08-09
 - **Replica status:** Chapter Generation 1.0 recovery restores the proven one-chapter Plan → Manifest → Process boundary and opens its accepted result in the current Reader Chamber and Reader Codex
 
@@ -324,6 +324,8 @@ pause behavior, clean-checkpoint retry, complete attempt usage totals, and one-r
 per-chapter coverage.
 
 ## Workshop history
+
+- **2026-08-20:** Completed the separate dialogue-audio path after Worldcue Phase 3. The existing server resolver now extracts exact accepted dialogue quotes, privately resolves each canonical Character's stable `voiceKey` to ElevenLabs, reuses or uploads an immutable artifact through the existing SEIHouse public-audio R2 namespace, and appends only validated block/quote/occurrence annotations. A first completed quote can populate the Character's Codex `voiceClipUrl`; synthesis and storage failures remain additive and never invalidate chapter generation.
 
 - **2026-08-17:** Adopted the shared responsive `FeatureWorkspace` Workshop Controls shell. Chapter Generation supplies no external menu options because its workflow controls and Reader handoff are part of the Development component being tested.
 - **2026-07-31:** Created the Reference replica and Development fork from the inspected production flow.

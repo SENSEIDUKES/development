@@ -66,7 +66,7 @@ export const workshopEntries: WorkshopEntry[] = [
     title: 'Chapter Generation',
     description: 'Development-only one- or five-chapter manifestation harness with sequential server-side Gemini calls, disposable processed-state handoffs, retry checkpoints, token usage, per-chapter Diagnostics, and a completed-batch Reader Chamber handoff.',
     category: 'other',
-    version: 'v2.1',
+    version: 'v2.2',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/hooks/chapterPipeline/chapterBatch.ts; src/aiRouter.ts; src/server/routes/storyRouter.ts',
@@ -126,7 +126,7 @@ export const workshopEntries: WorkshopEntry[] = [
     title: 'Reader Codex',
     description: 'The complete Living Codex sheet with separate Human/Non-Human Portraits, a species Bestiary, Karma, Power Rankings, Artifacts, Fate, and Lore, wired to local Reader story state.',
     category: 'codex-ui',
-    version: 'v1.0',
+    version: 'v1.1',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/ReaderCodex.tsx; src/components/CodexSheetOverlay.tsx',
@@ -138,7 +138,7 @@ export const workshopEntries: WorkshopEntry[] = [
     title: 'Reader Chamber',
     description: 'The full reading UI with generated five-chapter sessions, chapter-scoped Reader Codex memory, and persisted action-scoped Worldcues resolved through the approved Library catalog.',
     category: 'reader-ui',
-    version: 'v1.3',
+    version: 'v1.4',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/ReaderChamber.tsx; src/components/ReaderViewport.tsx',

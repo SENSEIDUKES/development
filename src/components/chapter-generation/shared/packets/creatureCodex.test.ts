@@ -218,6 +218,7 @@ describe("creature Codex normalization", () => {
         id: "character-yan-shi",
         name: "Yan Shi",
         voiceKey: "persisted-provider-neutral-key",
+        voiceClipUrl: "https://celestialaudio.seihouse.org/dialogue/v1/existing.mp3",
         voice_id: "legacy-provider-id",
         voicePresetId: "legacy-browser-preset",
         profile: {
@@ -242,6 +243,7 @@ describe("creature Codex normalization", () => {
       name: "Yan Shi",
       role: "Disciple",
       voiceKey: "persisted-provider-neutral-key",
+      voiceClipUrl: "https://celestialaudio.seihouse.org/dialogue/v1/existing.mp3",
     })]);
     expect(result.characters[0].profile).toEqual({
       combat: {},

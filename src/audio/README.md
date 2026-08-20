@@ -1,8 +1,8 @@
 # Audio domain
 
 - **Created:** 2026-08-19
-- **Last updated:** 2026-08-19
-- **Replica status:** Phase 3 generated Worldcue pipeline and Reader playback active
+- **Last updated:** 2026-08-20
+- **Replica status:** Worldcue Phase 3 and separate server-generated dialogue audio active
 
 ## What lives here
 
@@ -20,6 +20,9 @@
 
 The voice catalog data and provider-aware logic live in
 `src/server/audio/voiceCatalog.ts` (see "Server boundary" below).
+`src/server/audio/dialogueArtifactResolver.ts` is the server-only synthesis and
+SEIHouse R2 adapter; `src/server/audio/resolvedDialogueAudio.ts` remains the
+provider-neutral annotation validation boundary.
 
 ## Ownership
 
@@ -44,10 +47,14 @@ shared code, use `import type { PublicVoiceMeta } from
 '<relative-path>/server/audio/voiceCatalog'` — the type is erased at
 compile time and does not drag the provider data into the client bundle.
 
-This directory holds no provider SDK and no credentials. Any future
-synthesis endpoint must live under `api/` and read its key from a
-server-side env var (e.g. `ELEVENLABS_API_KEY`) without ever prefixing
-it with `VITE_`.
+The chapter-generation server now calls ElevenLabs' text-to-speech endpoint
+through `dialogueArtifactResolver.ts`. It reads `ELEVENLABS_API_KEY` and the R2
+credential set only from server environment values. The resolver hashes the
+provider-neutral voice identity, model contract, output format, and exact spoken
+text into an opaque immutable `/dialogue/v1/*.mp3` key. It checks the existing
+SEIHouse audio object before synthesis and uploads only on a cache miss. Neither
+the provider voice ID, credential, bucket, object key, nor provider response
+enters the chapter, Reader, or Codex payload.
 
 ## Category ownership (library cues)
 
@@ -134,13 +141,15 @@ provider-neutral `voiceKey` to a named Character when validated dialogue proves
 that the character speaks, preserves it in later chapter state, requires
 explicit intelligence metadata for any non-human Character voice,
 and never assigns one to a Bestiary species. The browser receives no provider
-ID and no client-side speech fallback. A server-produced quote artifact is
-validated under the application-owned `/dialogue/` namespace and stored as its
-own exact block/phrase/occurrence annotation; the character keeps only the
-stable identity key. The live server exposes a separate optional synthesis
-resolver and finalizes its completed artifacts against canonical Character and
-block identity. Until that playable artifact exists, the Reader renders no
-dialogue glyph.
+ID and no client-side speech fallback. The server extracts only literal quoted
+spans from an accepted named-speaker dialogue block, synthesizes the exact spoken
+text, and validates the resulting application-owned URL before storing its exact
+block/phrase/occurrence annotation. The Character keeps the stable identity key
+and, once available, one reusable Codex `voiceClipUrl`. The live resolver checks
+the immutable SEIHouse audio object first, so repeated occurrences and future
+chapters reuse a completed artifact instead of paying for duplicate synthesis.
+Per-quote failures are contained; without a completed playable artifact, no
+annotation survives and the Reader renders no dead dialogue glyph.
 
 Worldcue playback uses `DevAudioPlaybackProvider`, which delegates to the
 existing `@seihouse/audio-player` session. Its `replace` operation replaces the

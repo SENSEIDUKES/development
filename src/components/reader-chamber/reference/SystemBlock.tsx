@@ -41,7 +41,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, cl
     // palette when semantic inference found nothing better than gray. Truly
     // unknown events stay on the intentional neutral/gray style.
     if (!system.promptType && (meaning.type === 'neutral' || meaning.type === 'other')) {
-      const kind = system.kind as string;
+      const kind = system.kind;
       if (kind === 'level_up') colorStyles = 'border-amber-400/50 text-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.15)] bg-amber-400/10';
       else if (kind === 'skill_acquired') colorStyles = 'border-[#00ffff]/40 text-[#00ffff] shadow-[0_0_15px_rgba(0,255,255,0.15)] bg-[#00ffff]/10';
       else if (kind === 'quest') colorStyles = 'border-violet-500/40 text-violet-400 shadow-[0_0_15px_rgba(139,92,246,0.15)] bg-violet-500/10';

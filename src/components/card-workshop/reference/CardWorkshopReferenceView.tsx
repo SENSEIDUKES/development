@@ -1,28 +1,62 @@
 import React from 'react';
 import { SystemBlock } from '../../reader-chamber/reference/SystemBlock';
 import { ManifestationImage } from '../../reader-chamber/reference/ManifestationImage';
-import type { Chapter } from '../../reader-chamber/shared/types';
-import { CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
+import type { Chapter, SystemEvent } from '../../reader-chamber/shared/types';
 import { CodexRevealCardReference } from './CodexRevealCardReference';
 
-const preset = (id: string) => CARD_PRESETS.find(candidate => candidate.id === id)!;
+const REFERENCE_HUMAN_REVEAL = {
+  type: 'character',
+  entry: {
+    id: 'char-ye-chen-ref',
+    name: 'Ye Chen',
+    role: 'Former Core Disciple',
+    status: 'alive',
+    relationshipToMC: 'protagonist',
+    description: 'Stripped of his core cultivation after unearthing the sect’s prohibited ninth meridian ledger.',
+    portraitKind: 'human',
+    imageUrl: '/card-workshop/test-images/ye_chen_portrait.png',
+  },
+};
 
-const human = preset('preset-human-character');
-const system = preset('preset-system-prompt');
-const fate = preset('preset-fate-system-prompt');
-const manifestation = preset('preset-manifestation-image');
+const REFERENCE_SYSTEM_CONTENT = '[ SYSTEM NOTIFICATION: Meridian Resonance 84% — Minor Bottleneck Cleared ]';
+const REFERENCE_SYSTEM_EVENT: SystemEvent = {
+  kind: 'system_prompt',
+  title: 'Meridian Status & Vitality Flow',
+  rarity: 'First Witness Core Resonance',
+  rows: [
+    { label: 'Cultivation Stage', value: 'Foundation Establishment — Stage 4' },
+    { label: 'Spiritual Qi Pool', value: '1,420 / 1,500 (+12/min in Rain)' },
+    { label: 'Soul Seam Sight', value: 'Active (Radius: 30 paces)' },
+    { label: 'Dao Alignment', value: 'Unbroken Celestial Truth' },
+  ],
+};
 
-const manifestationChapter = {
-  number: manifestation.manifestationImage?.chapterNumber ?? 1,
-  title: manifestation.title,
-  premise: manifestation.description,
+const REFERENCE_FATE_CONTENT = '[ FATE SCARRED: Rin shattered the Magistrate\'s Blood Oath at great personal cost ]';
+const REFERENCE_FATE_EVENT: SystemEvent = {
+  kind: 'fate_system_prompt',
+  title: 'Destiny Divergence Manifested',
+  fateResult: {
+    outcome: 'FATE SCARRED',
+    timelineScar: 'Left arm spiritual meridians permanently sealed against celestial Qi.',
+    permanentCosts: [
+      'Cannot channel direct lightning or thunderstorm arts without severe backlash.',
+      'Disabled off-hand spellcasting',
+      'Rain sight limited to right eye',
+    ],
+    newStoryState: 'First false oath exposed before the Rain Court',
+    newActiveStats: ['Willpower +25', 'Left Arm Flow: 0%', 'Karmic Weight: Heavy'],
+  },
+};
+
+const manifestationChapter: Chapter = {
+  number: 1,
+  title: 'Manifestation Image',
+  premise: 'Legacy chapter-level artwork retained only for the locked production Reference pane.',
   status: 'read',
-  summary: manifestation.manifestationImage?.quote ?? manifestation.description,
+  summary: '"Your oath has a seam, Magistrate."',
   generatedContent: '',
-  assetManifest: manifestation.manifestationImage?.url
-    ? { heroImage: manifestation.manifestationImage.url }
-    : undefined,
-} satisfies Chapter;
+  assetManifest: { heroImage: '/card-workshop/test-images/sergeant_anya_petrova_portrait.png' },
+};
 
 function ReferencePanel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -48,18 +82,16 @@ export function CardWorkshopReferenceView() {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <ReferencePanel title="Inline Codex Reveal">
-            {human.codexReveal && (
-              <CodexRevealCardReference
-                revealTerm={human.codexReveal}
-                backdropUrl="/card-workshop/reveal-backdrop.svg"
-              />
-            )}
+            <CodexRevealCardReference
+              revealTerm={REFERENCE_HUMAN_REVEAL}
+              backdropUrl="/card-workshop/reveal-backdrop.svg"
+            />
           </ReferencePanel>
           <ReferencePanel title="SystemBlock">
-            <SystemBlock content={system.systemContent ?? ''} system={system.systemEvent} />
+            <SystemBlock content={REFERENCE_SYSTEM_CONTENT} system={REFERENCE_SYSTEM_EVENT} />
           </ReferencePanel>
           <ReferencePanel title="FateResultCard through SystemBlock">
-            <SystemBlock content={fate.systemContent ?? ''} system={fate.systemEvent} />
+            <SystemBlock content={REFERENCE_FATE_CONTENT} system={REFERENCE_FATE_EVENT} />
           </ReferencePanel>
         </div>
 

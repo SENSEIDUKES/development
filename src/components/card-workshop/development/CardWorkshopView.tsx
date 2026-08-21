@@ -22,7 +22,6 @@ import type {
 import { CardWorkshopContextualReader } from './CardWorkshopContextualReader';
 import { ACTIVE_CARD_PRESETS, SYSTEM_PROMPT_PRESET_EXAMPLES } from '../../../workshop/previews/card-workshop/previewData';
 import {
-  SYSTEM_KIND_OPTIONS,
   SYSTEM_PROMPT_STYLE_OPTIONS,
   FATE_OUTCOME_OPTIONS,
   IMAGE_STATE_OPTIONS,
@@ -201,20 +200,20 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
         baseSystemEvent = example.systemEvent;
       }
 
-      const activeSystemEvent = baseSystemEvent
-        ? {
-            ...baseSystemEvent,
-            kind: overrides.selectedSystemKind
-              ? overrides.selectedSystemKind as SystemEvent['kind']
-              : baseSystemEvent.kind,
-            fateResult:
-              baseSystemEvent.fateResult && overrides.selectedFateOutcome
+      const activeSystemEvent: SystemEvent | undefined = baseSystemEvent
+        ? baseSystemEvent.fateResult
+          ? {
+              ...baseSystemEvent,
+              fateResult: overrides.selectedFateOutcome
                 ? {
                     ...baseSystemEvent.fateResult,
                     outcome: overrides.selectedFateOutcome,
                   }
                 : baseSystemEvent.fateResult,
-          }
+            }
+          : {
+              ...baseSystemEvent,
+            }
         : undefined;
 
       return (
@@ -336,34 +335,21 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
           {(selectedPreset.kind === 'system-block' || selectedPreset.kind === 'fate-result') && (
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-[10px] font-mono uppercase text-neutral-500">
-                  System Panel Kind
-                </label>
-                <select
-                  aria-label="System panel kind"
-                  value={overrides.selectedSystemKind || selectedPreset.systemEvent?.kind}
-                  onChange={(event) =>
-                    setOverrides((previous) => ({
-                      ...previous,
-                      selectedSystemKind: event.target.value,
-                    }))
-                  }
-                  className="w-full rounded border border-neutral-800 bg-[#020914] px-2.5 py-1.5 text-[11px] font-mono text-signal"
-                >
-                  {SYSTEM_KIND_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                <span className="mb-1 block text-[10px] font-mono uppercase text-neutral-500">
+                  System Category (Top-Level Preset)
+                </span>
+                <div className="rounded border border-neutral-800/80 bg-[#020914] px-2.5 py-1.5 text-[11px] font-mono text-neutral-300">
+                  {selectedPreset.kind === 'fate-result' ? 'Fate System Prompt' : 'System Prompt'}
+                </div>
               </div>
 
               {selectedPreset.id === 'preset-system-prompt' && (
                 <div>
-                  <label className="mb-1 block text-[10px] font-mono uppercase text-neutral-500">
+                  <label htmlFor="system-prompt-example-style" className="mb-1 block text-[10px] font-mono uppercase text-neutral-500">
                     Content Example Style (Development Only)
                   </label>
                   <select
+                    id="system-prompt-example-style"
                     aria-label="System prompt example style"
                     value={overrides.systemPromptContentStyle || 'literary'}
                     onChange={(event) =>

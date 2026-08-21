@@ -597,15 +597,33 @@ const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefine
           ...(optionalValidatedString(result.genreShift, `${label}.fateResult.genreShift`) ? { genreShift: optionalValidatedString(result.genreShift, `${label}.fateResult.genreShift`) } : {}),
         };
       })();
+
+  const title = requiredString(event.title, `${label}.title`);
+  const validatedPromptType = promptType && SYSTEM_PROMPT_TYPES.includes(promptType as (typeof SYSTEM_PROMPT_TYPES)[number])
+    ? (promptType as SystemEvent["promptType"])
+    : undefined;
+  const validatedRarity = optionalValidatedString(event.rarity, `${label}.rarity`);
+
+  if (kind === "fate_system_prompt") {
+    if (!fateResult) {
+      throw new Error(`Invalid chapter model payload: ${label}.fateResult is required for fate_system_prompt.`);
+    }
+    return {
+      kind: "fate_system_prompt",
+      title,
+      ...(validatedPromptType ? { promptType: validatedPromptType } : {}),
+      ...(rows ? { rows } : {}),
+      ...(validatedRarity ? { rarity: validatedRarity } : {}),
+      fateResult,
+    };
+  }
+
   return {
-    kind: kind as SystemEvent["kind"],
-    title: requiredString(event.title, `${label}.title`),
-    ...(promptType && SYSTEM_PROMPT_TYPES.includes(promptType as (typeof SYSTEM_PROMPT_TYPES)[number])
-      ? { promptType: promptType as SystemEvent["promptType"] }
-      : {}),
+    kind: "system_prompt",
+    title,
+    ...(validatedPromptType ? { promptType: validatedPromptType } : {}),
     ...(rows ? { rows } : {}),
-    ...(optionalValidatedString(event.rarity, `${label}.rarity`) ? { rarity: optionalValidatedString(event.rarity, `${label}.rarity`) } : {}),
-    ...(fateResult ? { fateResult } : {}),
+    ...(validatedRarity ? { rarity: validatedRarity } : {}),
   };
 };
 

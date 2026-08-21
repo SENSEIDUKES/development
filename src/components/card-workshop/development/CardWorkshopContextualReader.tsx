@@ -187,15 +187,21 @@ function createContextualSystemEvent(
       kind: 'system_prompt',
     };
   }
+  if (preset.systemEvent.fateResult) {
+    return {
+      ...preset.systemEvent,
+      kind: 'fate_system_prompt',
+      fateResult: overrides.selectedFateOutcome
+        ? {
+            ...preset.systemEvent.fateResult,
+            outcome: overrides.selectedFateOutcome,
+          }
+        : preset.systemEvent.fateResult,
+    };
+  }
   return {
     ...preset.systemEvent,
-    kind: (overrides.selectedSystemKind ?? preset.systemEvent.kind) as SystemEvent['kind'],
-    fateResult: preset.systemEvent.fateResult && overrides.selectedFateOutcome
-      ? {
-          ...preset.systemEvent.fateResult,
-          outcome: overrides.selectedFateOutcome,
-        }
-      : preset.systemEvent.fateResult,
+    kind: 'system_prompt',
   };
 }
 

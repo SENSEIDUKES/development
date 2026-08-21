@@ -1,10 +1,5 @@
 import type { CardWorkshopOverrides } from '../../../components/card-workshop/shared/types';
 
-export const SYSTEM_KIND_OPTIONS = [
-  { value: 'system_prompt', label: 'System Prompt' },
-  { value: 'fate_system_prompt', label: 'Fate System Prompt' },
-];
-
 export const SYSTEM_PROMPT_STYLE_OPTIONS = [
   { value: 'literary', label: 'Simple Literary' },
   { value: 'structured', label: 'Structured Mechanical' },
@@ -30,7 +25,6 @@ export const INITIAL_CARD_WORKSHOP_OVERRIDES: CardWorkshopOverrides = {
   portraitKind: 'non-human',
   isSenMode: true,
   isRevealVisible: true,
-  selectedSystemKind: 'system_prompt',
   selectedFateOutcome: 'FATE SCARRED',
   systemPromptContentStyle: 'literary',
 };

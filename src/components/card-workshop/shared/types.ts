@@ -63,7 +63,6 @@ export interface CardWorkshopOverrides {
   portraitKind: PortraitKindPreviewState;
   isSenMode: boolean;
   isRevealVisible: boolean;
-  selectedSystemKind?: string;
   selectedFateOutcome?: 'FATE AVERTED' | 'FATE SCARRED' | 'DOOM MANIFESTED';
   systemPromptContentStyle?: SystemPromptContentStyle;
 }

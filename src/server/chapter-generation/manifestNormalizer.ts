@@ -566,13 +566,24 @@ const parseSystemEvent = (
       warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
     }
   }
+  if (kind === "fate_system_prompt") {
+    if (!fateResult) return undefined;
+    return {
+      kind: "fate_system_prompt",
+      title,
+      ...(validPromptType ? { promptType: validPromptType } : {}),
+      ...(rows ? { rows } : {}),
+      ...(rarity ? { rarity } : {}),
+      fateResult,
+    };
+  }
+
   return {
-    kind: kind as SystemEvent["kind"],
+    kind: "system_prompt",
     title,
     ...(validPromptType ? { promptType: validPromptType } : {}),
     ...(rows ? { rows } : {}),
     ...(rarity ? { rarity } : {}),
-    ...(fateResult ? { fateResult } : {}),
   };
 };
 

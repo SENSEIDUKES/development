@@ -6,9 +6,13 @@
  * utilities a host application needs to feed them. The chamber stylesheet
  * travels with this entry so consumers never hand-import it.
  *
- * Workshop mocks (`shared/stubs`, `shared/trackLibrary`, `MOCK_VOICES`) are
- * deliberately not part of this surface — a host application supplies its own
- * application store and audio catalog.
+ * `ReaderChamber`, `ReaderViewport`, and `ReaderControls/AudioMenu` still
+ * import the Workshop's mock application state directly (`shared/stubs`,
+ * `shared/trackLibrary`, `MOCK_VOICES`), so those mocks are bundled into this
+ * entry today rather than excluded from it. They are temporary DEV runtime
+ * dependencies, not a real store or audio catalog — replacing them with a
+ * host-supplied store and audio catalog is follow-up work for production
+ * integration, not something this restructure has done yet.
  */
 import '../components/reader-chamber/shared/reader-chamber.css';
 

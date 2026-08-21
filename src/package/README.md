@@ -30,13 +30,21 @@ consumer never hand-imports a component stylesheet.
 - **Locked reference replicas** — `reference/` folders are the untouched
   production snapshots the Workshop compares against, never the shipped code.
   Every entry publishes `development/` (and `shared/`).
-- **Mock application state** — `reader-chamber/shared/stubs`,
-  `shared/trackLibrary`, and `MOCK_VOICES`. A host application supplies its
-  own store and audio catalog; these remain the Workshop's stand-ins and are
-  the one boundary a real publish still has to replace.
-
 The build fails if a Workshop, preview, or server module is ever reachable
 from an entry — see `scripts/finalizeSenPackage.mjs`.
+
+## Known temporary dependency: mock application state
+
+`@seihouse/sen/reader-chamber` is **not yet fully decoupled from the
+Workshop's mock application state.** `ReaderChamber`, `ReaderViewport`, and
+`ReaderControls/AudioMenu` import `reader-chamber/shared/stubs`,
+`shared/trackLibrary`, and `MOCK_VOICES` directly, so those mocks are bundled
+into the published entry today, not excluded from it. They are temporary DEV
+runtime dependencies carried over by this restructure, not the real store or
+audio catalog a production integration needs. Replacing them with a
+host-supplied application store and audio catalog is follow-up work, tracked
+separately from this package surface — `scripts/finalizeSenPackage.mjs` does
+not check for this boundary the way it checks for Workshop/server leakage.
 
 ## Building
 

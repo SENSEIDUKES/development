@@ -95,38 +95,21 @@ export interface StoryBlockMetadata {
   };
 }
 
-export interface SystemEvent {
-  kind:
-    | "status"
-    | "skill_acquired"
-    | "level_up"
-    | "quest"
-    | "appraisal"
-    | "fate_result";
-  promptType?:
-    | "neutral"
-    | "codex_update"
-    | "friendly_scan"
-    | "enemy_scan"
-    | "warning"
-    | "critical_danger"
-    | "progression"
-    | "breakthrough"
-    | "reward"
-    | "romance"
-    | "karmic_bond"
-    | "mystery"
-    | "fate_event"
-    | "corruption"
-    | "death_event"
-    | "quest_update"
-    | "choice_consequence"
-    | "system_error";
-  title: string;
-  rows?: { label: string; value: string }[];
-  rarity?: string;
-  fateResult?: FateResultData;
-}
+import type {
+  SystemEventKind,
+  BaseSystemEvent,
+  RegularSystemEvent,
+  FateSystemEvent,
+  SystemEvent,
+} from '../../chapter-generation/shared/types';
+
+export type {
+  SystemEventKind,
+  BaseSystemEvent,
+  RegularSystemEvent,
+  FateSystemEvent,
+  SystemEvent,
+};
 
 export interface StoryBlock {
   id: string;

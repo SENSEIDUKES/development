@@ -219,7 +219,7 @@ describe('Reader Codex and System routing', () => {
       id: 'system-only',
       type: 'paragraph',
       text: 'A ledger opened.',
-      system: { kind: 'status', title: 'Meridian Status', rows: [{ label: 'Qi', value: '84%' }] },
+      system: { kind: 'system_prompt', title: 'Meridian Status', rows: [{ label: 'Qi', value: '84%' }] },
     };
     renderReader(systemBlock);
     expect(container.textContent).toContain('Meridian Status');
@@ -229,7 +229,7 @@ describe('Reader Codex and System routing', () => {
       type: 'paragraph',
       text: 'The timeline scarred.',
       system: {
-        kind: 'fate_result',
+        kind: 'fate_system_prompt',
         title: 'Destiny Divergence',
         fateResult: {
           outcome: 'FATE SCARRED',

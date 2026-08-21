@@ -107,8 +107,10 @@ export interface StoryBlockMetadata {
   audioMoments?: WorldCueIntent[];
 }
 
-export interface SystemEvent {
-  kind: "status" | "skill_acquired" | "level_up" | "quest" | "appraisal" | "fate_result";
+export type SystemEventKind = "system_prompt" | "fate_system_prompt";
+
+export interface BaseSystemEvent {
+  kind: SystemEventKind | (string & {});
   promptType?:
     | "neutral" | "codex_update" | "friendly_scan" | "enemy_scan" | "warning" | "critical_danger"
     | "progression" | "breakthrough" | "reward" | "romance" | "karmic_bond" | "mystery" | "fate_event"
@@ -116,8 +118,19 @@ export interface SystemEvent {
   title: string;
   rows?: { label: string; value: string }[];
   rarity?: string;
-  fateResult?: FateResultData;
 }
+
+export interface RegularSystemEvent extends BaseSystemEvent {
+  kind: "system_prompt" | (string & {});
+  fateResult?: never;
+}
+
+export interface FateSystemEvent extends BaseSystemEvent {
+  kind: "fate_system_prompt";
+  fateResult: FateResultData;
+}
+
+export type SystemEvent = RegularSystemEvent | FateSystemEvent;
 
 export interface StoryBlock {
   id: string;

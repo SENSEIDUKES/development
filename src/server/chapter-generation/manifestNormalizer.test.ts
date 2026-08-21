@@ -36,25 +36,111 @@ describe("Manifest prose recovery", () => {
     }));
   });
 
-  it("preserves valid System Panel enrichment on paragraph prose", () => {
+  it("preserves valid System Prompt enrichment on paragraph prose (structured and literary)", () => {
     const result = normalizeManifestResponse(ndjson(
       {
-        id: "system-panel",
+        id: "system-panel-structured",
         type: "paragraph",
         text: "A pale ledger unfolded across his sight.",
         system: {
-          kind: "appraisal",
+          kind: "system_prompt",
           promptType: "mystery",
           title: "Hidden Meridian",
+          rarity: "Ancient",
           rows: [{ label: "State", value: "Sealed" }],
+        },
+      },
+      {
+        id: "system-panel-literary",
+        type: "paragraph",
+        text: "The Dao resonant voice echoed in the void.",
+        system: {
+          kind: "system_prompt",
+          promptType: "breakthrough",
+          title: "Heavenly Recognition",
+        },
+      },
+      {
+        id: "fate-system-panel",
+        type: "paragraph",
+        text: "The rain court shattered.",
+        system: {
+          kind: "fate_system_prompt",
+          title: "Destiny Severed",
+          fateResult: {
+            outcome: "FATE SCARRED",
+            timelineScar: "The vow was broken before witnesses.",
+            permanentCosts: ["Lost right eye sight"],
+          },
         },
       },
     ), 2);
 
-    expect(result.blocks[0].system).toMatchObject({
-      kind: "appraisal",
+    expect(result.blocks[0].system).toEqual({
+      kind: "system_prompt",
+      promptType: "mystery",
       title: "Hidden Meridian",
+      rarity: "Ancient",
+      rows: [{ label: "State", value: "Sealed" }],
     });
+    expect(result.blocks[1].system).toEqual({
+      kind: "system_prompt",
+      promptType: "breakthrough",
+      title: "Heavenly Recognition",
+    });
+    expect(result.blocks[2].system).toEqual({
+      kind: "fate_system_prompt",
+      title: "Destiny Severed",
+      fateResult: {
+        outcome: "FATE SCARRED",
+        timelineScar: "The vow was broken before witnesses.",
+        permanentCosts: ["Lost right eye sight"],
+      },
+    });
+  });
+
+  it("removes disallowed fateResult from regular system_prompt and rejects fate_system_prompt lacking fateResult", () => {
+    const result = normalizeManifestResponse(ndjson(
+      {
+        id: "system-with-disallowed-fate",
+        type: "paragraph",
+        text: "Notice appears.",
+        system: {
+          kind: "system_prompt",
+          title: "Regular Prompt",
+          fateResult: { outcome: "FATE AVERTED", timelineScar: "None", permanentCosts: [] },
+        },
+      },
+      {
+        id: "fate-without-payload",
+        type: "paragraph",
+        text: "Fate event occurs.",
+        system: {
+          kind: "fate_system_prompt",
+          title: "Broken Fate Prompt",
+        },
+      },
+      {
+        id: "obsolete-kind",
+        type: "paragraph",
+        text: "Obsolete status event.",
+        system: {
+          kind: "status",
+          title: "Old Status",
+        },
+      },
+    ), 2);
+
+    expect(result.blocks[0].system).toEqual({
+      kind: "system_prompt",
+      title: "Regular Prompt",
+    });
+    expect(result.blocks[1].system).toBeUndefined();
+    expect(result.blocks[2].system).toBeUndefined();
+    expect(result.diagnostics.warnings).toContainEqual(expect.objectContaining({
+      code: "optional-field-removed",
+      field: "system.fateResult",
+    }));
   });
 
   it("preserves creature entities from the documented metadata contract", () => {

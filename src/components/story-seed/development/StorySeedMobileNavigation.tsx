@@ -121,6 +121,19 @@ const StorySeedMobileNavigationComponent = ({
     return () => cancelAnimationFrame(frame);
   }, [settingsOpen, seed.story.optional.fateSurvival.enabled, updateSettingsScrollEnd]);
 
+  // Re-measure when the scroll region's clientHeight changes (e.g., viewport
+  // resize, keyboard open/close, orientation change) while the sheet is open.
+  useEffect(() => {
+    if (!settingsOpen) return;
+    const region = settingsScrollRef.current;
+    if (!region) return;
+    const observer = new ResizeObserver(() => {
+      updateSettingsScrollEnd();
+    });
+    observer.observe(region);
+    return () => observer.disconnect();
+  }, [settingsOpen, updateSettingsScrollEnd]);
+
   const toggleSettings = useCallback(() => {
     setSelectorOpen(false);
     if (settingsOpen) {

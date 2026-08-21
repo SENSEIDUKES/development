@@ -211,6 +211,11 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-08-21:** Kept the mobile Fate Survival master toggle from stretching
+  edge to edge. The Settings header retains its stacked phone layout, but the
+  switch pill now shrinks to content width below the description instead of
+  dominating the section. Desktop presentation and the shared 2.75rem
+  coarse-pointer touch floor are unchanged.
 - **2026-08-21:** Reworked the mobile Settings sheet so expanded Fate Survival
   content no longer clips invisibly. The header and Save Draft action are now
   pinned sheet chrome while only the settings body scrolls, the oversized top

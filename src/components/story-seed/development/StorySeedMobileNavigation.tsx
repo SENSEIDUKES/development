@@ -249,6 +249,13 @@ const StorySeedMobileNavigationComponent = ({
               tabIndex={-1}
               className="absolute inset-x-0 bottom-0"
             >
+              {/* The sheet is bottom-anchored, so `max-h-[calc(100dvh-3rem)]`
+                  caps the panel just below the viewport top, leaving a strip of
+                  tap-to-dismiss scrim visible above it. The 3rem is a peek
+                  affordance only — it is deliberately not derived from
+                  LibraryBottomNavigation's height. This overlay (z-240) covers
+                  the nav, so nav growth (e.g. the Manifest tab) can never
+                  desync the sheet. */}
               <LibraryPanel
                 padding="none"
                 className="story-seed-overlay-panel flex max-h-[calc(100dvh-3rem)] flex-col rounded-b-none border-x-0 border-b-0 [padding-left:env(safe-area-inset-left)] [padding-right:env(safe-area-inset-right)]"

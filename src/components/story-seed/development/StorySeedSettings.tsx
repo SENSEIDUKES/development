@@ -131,7 +131,7 @@ const FateSurvivalSetting = ({ settings, onChange }: FateSurvivalSettingProps) =
           aria-checked={settings.enabled}
           aria-label="Fate Survival"
           onClick={() => onChange({ enabled: !settings.enabled })}
-          className={`story-seed-touch-target flex w-full shrink-0 items-center justify-between gap-2 rounded-full border px-3 py-2 transition-colors motion-reduce:transition-none sm:w-auto sm:px-2.5 sm:py-1.5 ${settings.enabled
+          className={`story-seed-touch-target flex shrink-0 items-center gap-2 self-start rounded-full border px-3 py-2 transition-colors motion-reduce:transition-none sm:px-2.5 sm:py-1.5 ${settings.enabled
             ? 'border-portal/60 bg-portal/10 text-portal'
             : 'border-neutral-700 bg-black/30 text-neutral-400 hover:border-neutral-600 hover:text-signal'
           }`}

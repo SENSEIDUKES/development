@@ -211,6 +211,18 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-08-21:** Stacked the Mature Audiences row on phones to match Fate
+  Survival: the Rated 18+ pill now rests at content width below its
+  description instead of competing with wrapped text. Anchored both Settings
+  toggle knobs with an explicit left inset — the unanchored knob previously
+  derived its start position from inherited text alignment, resting
+  flush-right when off and sliding past the pill's right edge when on; it now
+  settles with a symmetric 2px inset in both states.
+- **2026-08-21:** Kept the mobile Fate Survival master toggle from stretching
+  edge to edge. The Settings header retains its stacked phone layout, but the
+  switch pill now shrinks to content width below the description instead of
+  dominating the section. Desktop presentation and the shared 2.75rem
+  coarse-pointer touch floor are unchanged.
 - **2026-08-21:** Reworked the mobile Settings sheet so expanded Fate Survival
   content no longer clips invisibly. The header and Save Draft action are now
   pinned sheet chrome while only the settings body scrolls, the oversized top

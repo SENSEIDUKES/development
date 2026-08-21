@@ -3,12 +3,12 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  audioDataUri,
   codexVoiceIdentity,
   useCodexVoiceQuote,
   type CodexVoiceResolution,
 } from './useCodexVoiceQuote';
 import type { Character } from '../types';
-import { CODEX_VOICE_ARTIFACT_VERSION } from '../../../../audio/voiceArtifacts';
 
 const playback = vi.hoisted(() => ({
   currentTrackId: null as string | null,
@@ -24,8 +24,6 @@ vi.mock('../../../../audio/DevAudioPlayback', () => ({
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const QUOTE = 'The archive remembers what the court forgets.';
-const ARTIFACT_URL = 'https://celestialaudio.seihouse.org/voice/v1/'
-  + 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.mp3';
 
 const character = (overrides: Partial<Character> = {}): Character => ({
   id: 'character-wen-shu',
@@ -41,12 +39,9 @@ const character = (overrides: Partial<Character> = {}): Character => ({
 const resolution = (): CodexVoiceResolution => ({
   characterId: 'character-wen-shu',
   voiceKey: 'ancient-master-female',
-  artifact: {
-    publicUrl: ARTIFACT_URL,
-    quote: QUOTE,
-    voiceKey: 'ancient-master-female',
-    model: 'eleven_multilingual_v2',
-    artifactVersion: CODEX_VOICE_ARTIFACT_VERSION,
+  audio: {
+    base64: 'AAAA',
+    mimeType: 'audio/mpeg',
   },
 });
 
@@ -99,7 +94,7 @@ afterEach(() => {
 });
 
 describe('useCodexVoiceQuote', () => {
-  it('offers the interaction before any artifact exists and never generates on render', () => {
+  it('offers the interaction before any audio has been heard and never generates on render', () => {
     const requestVoice = vi.fn(async () => resolution());
     render({ char: character(), requestVoice });
 
@@ -108,7 +103,7 @@ describe('useCodexVoiceQuote', () => {
     expect(playback.replace).not.toHaveBeenCalled();
   });
 
-  it('generates once on the first tap and then plays through the shared audio owner', async () => {
+  it('calls the server on every tap and plays the returned audio through the shared owner', async () => {
     const requestVoice = vi.fn(async () => resolution());
     const onVoiceResolved = vi.fn();
     render({ char: character(), requestVoice, onVoiceResolved });
@@ -121,17 +116,13 @@ describe('useCodexVoiceQuote', () => {
     expect(onVoiceResolved).toHaveBeenCalledWith(resolution());
     expect(playback.replace).toHaveBeenCalledWith(expect.objectContaining({
       id: 'codex-voice:character-wen-shu',
-      source: ARTIFACT_URL,
+      source: audioDataUri(resolution().audio),
     }));
   });
 
-  it('reuses the stored artifact on later taps without calling the server again', async () => {
+  it('calls the server again on a later tap — nothing is stored or reused', async () => {
     const requestVoice = vi.fn(async () => resolution());
-    const stored = character({
-      voiceKey: 'ancient-master-female',
-      voiceClip: resolution().artifact,
-    });
-    render({ char: stored, requestVoice });
+    render({ char: character(), requestVoice });
 
     await act(async () => {
       (container.querySelector('[data-testid="tap"]') as HTMLButtonElement).click();
@@ -140,32 +131,8 @@ describe('useCodexVoiceQuote', () => {
       (container.querySelector('[data-testid="tap"]') as HTMLButtonElement).click();
     });
 
-    expect(requestVoice).not.toHaveBeenCalled();
-    expect(playback.replace).toHaveBeenCalledTimes(2);
-  });
-
-  it('regenerates when the quote or the voice no longer matches the stored artifact', async () => {
-    const requestVoice = vi.fn(async () => resolution());
-    const changedQuote = character({
-      voiceKey: 'ancient-master-female',
-      voiceClip: resolution().artifact,
-      signatureQuote: 'A seam runs through every oath.',
-    });
-    render({ char: changedQuote, requestVoice });
-    await act(async () => {
-      (container.querySelector('[data-testid="tap"]') as HTMLButtonElement).click();
-    });
-    expect(requestVoice).toHaveBeenCalledTimes(1);
-
-    const changedVoice = character({
-      voiceKey: 'merchant-male',
-      voiceClip: resolution().artifact,
-    });
-    render({ char: changedVoice, requestVoice });
-    await act(async () => {
-      (container.querySelector('[data-testid="tap"]') as HTMLButtonElement).click();
-    });
     expect(requestVoice).toHaveBeenCalledTimes(2);
+    expect(playback.replace).toHaveBeenCalledTimes(2);
   });
 
   it('never starts a second generation while the first tap is still running', async () => {
@@ -187,11 +154,8 @@ describe('useCodexVoiceQuote', () => {
   });
 
   it('stops the current playback instead of overlapping a second track', async () => {
-    const stored = character({
-      voiceKey: 'ancient-master-female',
-      voiceClip: resolution().artifact,
-    });
-    render({ char: stored, requestVoice: async () => resolution() });
+    const requestVoice = async () => resolution();
+    render({ char: character(), requestVoice });
 
     await act(async () => {
       (container.querySelector('[data-testid="tap"]') as HTMLButtonElement).click();
@@ -199,7 +163,7 @@ describe('useCodexVoiceQuote', () => {
     // The shared owner now reports this Character as the playing track.
     playback.currentTrackId = 'codex-voice:character-wen-shu';
     playback.isPlaying = true;
-    render({ char: stored, requestVoice: async () => resolution() });
+    render({ char: character(), requestVoice });
     expect(state()).toBe('playing');
 
     tap();
@@ -242,7 +206,7 @@ describe('useCodexVoiceQuote', () => {
       voiceKey: 'ancient-master-female',
     });
     // The client never proposes the audio itself.
-    for (const forbidden of ['text', 'quote', 'model', 'voice_id', 'objectKey', 'publicUrl', 'url']) {
+    for (const forbidden of ['text', 'quote', 'model', 'voice_id', 'audio', 'base64']) {
       expect(identity).not.toHaveProperty(forbidden);
     }
   });

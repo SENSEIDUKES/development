@@ -124,7 +124,7 @@ export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'character-voice',
     title: 'Character Voice',
-    description: 'The Reader Codex signature-quote voice on a named Character Portrait card: the control is offered before any recording exists, the first tap generates once through the server, and every later tap replays the stored SEIHouse artifact.',
+    description: 'The Reader Codex signature-quote voice on a named Character Portrait card: a tap calls ElevenLabs through the server and plays the returned audio immediately. Nothing is stored — every tap calls ElevenLabs again.',
     category: 'codex-ui',
     version: 'v1.0',
     source: {

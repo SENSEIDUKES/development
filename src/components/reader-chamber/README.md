@@ -4,11 +4,13 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-20
+- **Last Workshop update:** 2026-08-21
 - **Last source comparison:** 2026-08-19
 - **Replica status:** under refinement
 
 ## Workshop history
+
+- **2026-08-21:** Published this feature as `@seihouse/sen/reader-chamber`. The entry barrel in `src/package/reader-chamber.ts` exports the `development/` chamber, its controls and surfaces, and the `shared/` reading model, and carries `reader-chamber.css` as a side effect so consumers no longer hand-import it. **Known gap:** `ReaderChamber`, `ReaderViewport`, and `ReaderControls/AudioMenu` still import the Workshop's mock application state directly (`shared/stubs`, `shared/trackLibrary`, `MOCK_VOICES`), so those mocks are bundled into the published entry today, not excluded from it — they're temporary DEV runtime dependencies this restructure carried over, and replacing them with a host-supplied store and audio catalog is follow-up work for production integration. The locked `reference/` replica is Workshop-only and is never published.
 
 - **2026-08-20:** Removed the dialogue-audio annotation path from the Reader. Chapter prose carries Worldcues only: a voice annotation reaching the Reader is not playable and stays plain readable dialogue. Character speech is now a Reader Codex interaction, and the one shared audio owner is still the only playback path, so a Codex voice and a Worldcue can never overlap.
 

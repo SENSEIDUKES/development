@@ -4,11 +4,13 @@
 - **Source location:** `src/components/ReaderCodex.tsx`, `src/components/CodexSheetOverlay.tsx`, and `src/components/CodexHovercard.tsx` (verified against `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-codex`
 - **Replica created:** 2026-08-11
-- **Last Workshop update:** 2026-08-20
+- **Last Workshop update:** 2026-08-21
 - **Last source comparison:** 2026-08-18
 - **Replica status:** under refinement
 
 ## Workshop history
+
+- **2026-08-21:** Published this feature as `@seihouse/sen/reader-codex`, with the card-level pieces published separately as `@seihouse/sen/codex-cards`. The entries carry `reader-codex.css` (and the Reader Chamber typography the Codex renders inside) as a side effect. Removed the `shared/VirtualizedList.tsx` re-export shim — the Codex views now import the Reader Chamber list directly. The locked `reference/` replica stays Workshop-only.
 
 - **2026-08-21:** Removed R2 from the Character voice flow entirely. A tap now calls `POST /api/codex-voice-quote`, which resolves the canonical Character, assigns a stable provider-neutral `voiceKey` when needed, and calls ElevenLabs for that exact stored quote. The response carries the synthesized audio bytes directly for immediate playback — nothing is stored, hashed into an object key, or reused between taps; every tap calls ElevenLabs again. The `voiceClip` artifact, its public-URL validation, and the R2 store are gone. `voiceKey` assignment, eligibility rules, and the ready/generating/playing/stopping/unavailable/error card states are unchanged.
 - **2026-08-20:** Moved Character voice onto the `signatureQuote` of named, intelligent Character Portrait cards. The quote offers the interaction before any recording exists: the first tap calls `POST /api/codex-voice-quote`, which resolves the canonical Character, assigns and persists a stable provider-neutral `voiceKey` when needed, generates that exact stored quote once through the server-only provider, saves it in the existing SEIHouse R2 audio namespace, and persists a `voiceClip` artifact bound to the character, quote, voiceKey, model, and artifact version. Later taps reuse the stored file, concurrent taps cannot duplicate generation, and a changed quote or voice invalidates the old recording. Opening, scrolling, or viewing the Codex generates nothing. The card exposes ready, generating, playing, stopping, unavailable, error, and retry states. The `character-voice` Workshop screen uses that same live endpoint and reports its real result; it does not simulate provider or storage responses. Bestiary species, unnamed entities, and non-intelligent Characters remain ineligible.

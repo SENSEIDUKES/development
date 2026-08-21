@@ -10,8 +10,7 @@ import {
   SlidersHorizontal,
   Sparkles,
 } from 'lucide-react';
-import { LibraryButton } from '../components/library/LibraryButton';
-import { LibraryPanel } from '../components/library/LibraryPanel';
+import { LibraryButton, LibraryPanel } from '@seihouse/sen/library';
 import { getWorkshopVersionLabel, type WorkshopEntry } from './manifest';
 
 export type WorkspaceView = 'reference' | 'development' | 'compare';

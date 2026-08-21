@@ -10,10 +10,8 @@ import {
   XCircle,
   Zap,
 } from 'lucide-react';
-import { SystemBlock } from '../../reader-chamber/development/SystemBlock';
-import { CodexCard } from '../../reader-chamber/development/CodexCard';
-import { getManifestBackdrop } from '../../reader-codex/development/codexManifestBackdrop';
-import type { SystemEvent } from '../../reader-chamber/shared/types';
+import { SystemBlock, type SystemEvent } from '@seihouse/sen/reader-chamber';
+import { CodexCard, getManifestBackdrop } from '@seihouse/sen/codex-cards';
 import type {
   CardPreset,
   CardWorkshopOverrides,

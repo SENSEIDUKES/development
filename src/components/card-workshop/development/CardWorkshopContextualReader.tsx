@@ -1,25 +1,26 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { getReaderChamberSurfaceClass } from '../../reader-chamber/development/ReaderChamber';
-import { ReaderViewport } from '../../reader-chamber/development/ReaderViewport';
-import { CodexHovercard } from '../../reader-codex/development/CodexHovercard';
-import { getManifestBackdrop } from '../../reader-codex/development/codexManifestBackdrop';
+import {
+  ReaderViewport,
+  getReaderChamberSurfaceClass,
+} from '@seihouse/sen/reader-chamber';
+import { CodexHovercard, getManifestBackdrop } from '@seihouse/sen/codex-cards';
 import {
   createCodexHighlighter,
   splitByCodexTerms,
   type CodexTerm,
   type CodexTermType,
-} from '../../reader-codex/shared/codexHighlighting';
+} from '@seihouse/sen/reader-codex';
 import type {
   ReaderChapter,
   ReaderPreferences,
   StoryBlock,
   StoryWorld,
   SystemEvent,
-} from '../../reader-chamber/shared/types';
+} from '@seihouse/sen/reader-chamber';
 import {
   resolveChapterAudioMoments,
   type WorldCueIntent,
-} from '../../../audio/inlineAudio';
+} from '@seihouse/sen/audio';
 import type { CardPreset, CardWorkshopOverrides } from '../shared/types';
 import { SYSTEM_PROMPT_PRESET_EXAMPLES } from '../../../workshop/previews/card-workshop/previewData';
 

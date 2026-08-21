@@ -35,7 +35,9 @@ Celestial Library UI system:
   Library spectrum styles
 - the public `index.ts` exports used by feature consumers
 
-Feature folders import these components from the Library barrel. They must not
+Feature folders import these components from the Library barrel; Workshop
+code and other package consumers import the same barrel through
+`@seihouse/sen/library`. They must not
 keep local copies or compatibility barrels. Feature-only presentation remains
 with the feature; for example, Story Seed owns only its workspace ambience in
 `src/components/story-seed/development/story-seed.css`.
@@ -44,6 +46,14 @@ Reusable visual names use the `library-*` namespace:
 `library-spectrum-glow`, `library-spectrum-flow`,
 `library-title-presence`, and `library-subtitle-shimmer`. There are no legacy
 `seed-*` aliases.
+
+- **2026-08-21:** Moved the shared celestial particle canvas from
+  `src/ParticleEffect.tsx` into the Library set as `ParticleEffect` and added
+  it to the barrel, so relic reveals, loading veils, and the celestial
+  backdrop draw their motes from a Library-owned component instead of an
+  application-root file. The barrel is now published as
+  `@seihouse/sen/library`; see `src/package/README.md` for the package
+  surface.
 
 - **2026-08-19:** Added `LibrarySoundGlyph`, the custom neutral open-folio and
   resonance mark used by inline World Cue controls, and added it to the live

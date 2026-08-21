@@ -54,6 +54,15 @@ Do not turn this repository into a second full application. Use mock data and pr
   - `reference/` — an untouched, locked replica of what exists in production. Never modified during normal Workshop tweaking.
   - `development/` — the active Workshop version. Starts as a copy of `reference/`. This is the only folder agents change.
   - `shared/` (when it applies) — logic genuinely identical between the two, such as shared utilities or components that have no fork yet.
+- `src/package/` holds the entry barrels for the `@seihouse/sen` package —
+  one file per published surface (Library, Reader Chamber, Reader Codex,
+  Codex cards, Manifestations, Relics, audio). It contains no components of
+  its own: entries re-export `development/` and `shared/` code so the
+  Workshop and the package always render the same source. Workshop shells,
+  preview mocks, locked `reference/` replicas, and `src/server/` code stay
+  out of every entry, and `npm run build:package` fails if one is ever
+  reachable. Workshop code consumes package surfaces through
+  `@seihouse/sen/*`, which is aliased to `src/package/*`.
 - Static visual assets belong in `public/` under a clearly named folder.
 - Keep component-specific styles close to the component when practical.
 - Portable agent skills live under `skills/`.

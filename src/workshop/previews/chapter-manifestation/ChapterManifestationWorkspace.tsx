@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import ReferenceAILoadingVeil from '../../../components/chapter-manifestation/reference/AILoadingVeil';
-import DevelopmentAILoadingVeil from '../../../components/chapter-manifestation/development/AILoadingVeil';
-import { defaultDestinationFor } from '../../../components/chapter-manifestation/development/journey-scrubber/destinations';
+import {
+  AILoadingVeil as DevelopmentAILoadingVeil,
+  defaultDestinationFor,
+} from '@seihouse/sen/manifestations';
 import {
   manifestationModeForOperation,
   type MediaRevealState,
   type RevealedMediaAsset,
-} from '../../../components/chapter-manifestation/shared/manifestation';
+} from '@seihouse/sen/manifestations';
 import {
   FeatureWorkspace,
   type WorkshopControlSection,

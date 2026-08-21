@@ -4,7 +4,7 @@ import type {
   ReaderChapter,
   ReaderPreferences,
   StoryWorld,
-} from '../../../components/reader-chamber/shared/types';
+} from '@seihouse/sen/reader-chamber';
 import {
   resolveChapterAudioMoments,
   type WorldCueIntent,

@@ -1,7 +1,7 @@
 import { generateId } from '../codexCompatibility';
 import React, { useState, useMemo } from 'react';
 import { Network, HelpCircle, ArrowLeftRight, Trash2, Download, Scan, Info } from 'lucide-react';
-import { VirtualizedList } from '../VirtualizedList';
+import { VirtualizedList } from '../../../reader-chamber/development/VirtualizedList';
 import { Character, CharacterRelationship } from '../types';
 import { useCodex } from './CodexContext';
 import { useDialect } from '../codexCompatibility';

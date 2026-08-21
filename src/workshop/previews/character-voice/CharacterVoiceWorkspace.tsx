@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { CharacterCard } from '../../../components/reader-codex/shared/codex/character-cards/CharacterCard';
-import { CodexProvider } from '../../../components/reader-codex/shared/codex/CodexContext';
+import { CharacterCard } from '@seihouse/sen/codex-cards';
+import { CodexProvider } from '@seihouse/sen/reader-codex';
 import {
   useCodexVoiceQuote,
   type CodexVoiceQuoteState,
-} from '../../../components/reader-codex/shared/hooks/useCodexVoiceQuote';
-import type { Character, Story } from '../../../components/reader-codex/shared/types';
-import '../../../components/reader-codex/shared/reader-codex.css';
+} from '@seihouse/sen/reader-codex';
+import type { Character, Story } from '@seihouse/sen/reader-codex';
 
 /**
  * Live Character Portrait voice interaction.

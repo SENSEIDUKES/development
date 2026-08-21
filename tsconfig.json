@@ -15,7 +15,11 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "@seihouse/sen": ["./src/package/index.ts"],
+      "@seihouse/sen/*": ["./src/package/*.ts"]
+    }
   },
   "include": ["src", "api", "vite.config.ts"],
   "references": []

@@ -3,8 +3,6 @@ import { CardWorkshopView } from '../../../components/card-workshop/development/
 import { CardWorkshopReferenceView } from '../../../components/card-workshop/reference/CardWorkshopReferenceView';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
-import '../../../components/reader-chamber/shared/reader-chamber.css';
-import '../../../components/reader-codex/shared/reader-codex.css';
 
 export const CardWorkshopWorkspace: React.FC = () => {
   const entry = workshopEntries.find((item) => item.id === 'card-workshop')!;

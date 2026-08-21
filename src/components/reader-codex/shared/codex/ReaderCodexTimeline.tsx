@@ -1,5 +1,5 @@
 import React from 'react';
-import { VirtualizedList } from '../VirtualizedList';
+import { VirtualizedList } from '../../../reader-chamber/development/VirtualizedList';
 import { Chapter } from '../types';
 
 interface ReaderCodexTimelineProps {

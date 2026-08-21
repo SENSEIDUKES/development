@@ -40,7 +40,11 @@ const codexValue = {
 let container: HTMLDivElement;
 let root: Root;
 
-const render = (status: CodexVoiceQuoteStatus, onQuoteTap = vi.fn()) => {
+const render = (
+  status: CodexVoiceQuoteStatus,
+  onQuoteTap = vi.fn(),
+  downloadProps: { canDownloadVoice?: boolean; onDownloadVoice?: () => void } = {},
+) => {
   act(() => root.render(
     <CodexProvider value={codexValue}>
       <CharacterCard
@@ -56,6 +60,7 @@ const render = (status: CodexVoiceQuoteStatus, onQuoteTap = vi.fn()) => {
         onQuoteTap={onQuoteTap}
         beginCharEdit={vi.fn()}
         handleAwakenCardImage={vi.fn()}
+        {...downloadProps}
       />
     </CodexProvider>,
   ));
@@ -64,6 +69,10 @@ const render = (status: CodexVoiceQuoteStatus, onQuoteTap = vi.fn()) => {
 
 const voiceControl = () => (
   container.querySelector<HTMLButtonElement>('button[data-voice-state]')
+);
+
+const downloadControl = () => (
+  container.querySelector<HTMLButtonElement>('button[aria-label^="Download the voice recording"]')
 );
 
 beforeEach(() => {
@@ -125,5 +134,23 @@ describe('Character Portrait card signature-quote voice', () => {
     expect(container.textContent).toContain('The voice service is unavailable.');
     act(() => voiceControl()!.click());
     expect(onQuoteTap).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the download control until this session has heard the voice', () => {
+    render({ state: 'ready', canRetry: false });
+    expect(downloadControl()).toBeNull();
+  });
+
+  it('offers a download once audio has been resolved this session', () => {
+    const onDownloadVoice = vi.fn();
+    render({ state: 'playing', canRetry: false }, vi.fn(), {
+      canDownloadVoice: true,
+      onDownloadVoice,
+    });
+
+    const control = downloadControl();
+    expect(control).not.toBeNull();
+    act(() => control!.click());
+    expect(onDownloadVoice).toHaveBeenCalledTimes(1);
   });
 });

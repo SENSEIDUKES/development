@@ -17,18 +17,16 @@
   annotation contract, exact-placement utilities, and deterministic
   catalog-backed Worldcue resolver. It carries no voice path: chapter prose is
   never annotated with Character speech.
-- `voiceArtifacts.ts` — the client-safe Character voice artifact boundary:
-  the application-owned public namespace, the persisted `CodexVoiceArtifact`
-  shape, and the reuse rule that invalidates a recording when the quote, the
-  voiceKey, or the artifact version changes.
 - `index.ts` — the client-safe barrel for the audio surface.
 
 The voice catalog data and provider-aware logic live in
 `src/server/audio/voiceCatalog.ts` (see "Server boundary" below).
-`src/server/audio/codexVoiceQuote.ts` is the server-only ElevenLabs + SEIHouse
-R2 adapter for one Character signature quote, and
+`src/server/audio/codexVoiceQuote.ts` is the server-only ElevenLabs adapter
+for one Character signature quote, and
 `src/server/audio/codexVoiceQuoteHttp.ts` is its dedicated endpoint
-(`POST /api/codex-voice-quote`).
+(`POST /api/codex-voice-quote`). Nothing is stored: each tap calls
+ElevenLabs again and the response carries the audio bytes for immediate
+playback.
 
 ## Ownership
 
@@ -56,15 +54,11 @@ compile time and does not drag the provider data into the client bundle.
 The only server code that calls ElevenLabs' text-to-speech endpoint is
 `codexVoiceQuote.ts`, reached exclusively through `POST /api/codex-voice-quote`
 when a reader taps a Character's signature quote. It reads `ELEVENLABS_API_KEY`
-and the R2 credential set only from server environment values, and a partially
-configured environment disables the control instead of half-working. The
-service hashes the character identity, provider-neutral voice identity, model
-contract, output format, artifact version, and the exact stored quote into an
-opaque immutable `/voice/v1/*.mp3` key. It checks the existing SEIHouse audio
-object before synthesis and uploads only on a cache miss. Neither the provider
-voice ID, credential, bucket, object key, nor provider response enters any
-Reader or Codex payload. Chapter generation has no reference to this module at
-all.
+only from server environment values; a missing key disables the control
+instead of half-working. Every call synthesizes the exact stored quote fresh
+— nothing is cached, hashed into an object key, or persisted anywhere.
+Neither the provider voice ID nor the credential enters any Reader or Codex
+payload. Chapter generation has no reference to this module at all.
 
 ## Category ownership (library cues)
 
@@ -148,23 +142,19 @@ voice keys are not accepted from model output.
 
 Character speech is a separate system that chapter generation never touches.
 Generated dialogue triggers no synthesis, creates no prose annotation, and
-produces no Codex voice clip. The only entry point is a deliberate reader tap
-on the `signatureQuote` of a named, intelligent Character Portrait card in
-Reader Codex.
+produces no stored Codex voice clip. The only entry point is a deliberate
+reader tap on the `signatureQuote` of a named, intelligent Character Portrait
+card in Reader Codex.
 
-On that first tap the dedicated server endpoint resolves the canonical
-Character, assigns and persists a stable provider-neutral `voiceKey` when the
-Character has none, requires explicit intelligence metadata for a non-human
-Character, and refuses Bestiary species and unnamed entities. It then generates
-that exact stored quote once, saves it under the immutable SEIHouse audio
-namespace, and returns an application-owned artifact bound to the character,
-quote, voiceKey, model, and artifact version. Because the object key is derived
-from all five, a changed quote or reassigned voice can never replay an
-outdated recording. Every later tap reuses the stored R2 object, and concurrent
-taps on one artifact collapse into a single generation. The browser sends a
-Character identity and nothing else: it cannot choose text, a provider voice, an
-object key, or a playback URL, and no provider credential exists outside the
-server.
+On every tap the dedicated server endpoint resolves the canonical Character,
+assigns and persists a stable provider-neutral `voiceKey` when the Character
+has none, requires explicit intelligence metadata for a non-human Character,
+and refuses Bestiary species and unnamed entities. It then calls ElevenLabs
+for that exact stored quote and returns the synthesized audio bytes directly
+for immediate playback. Nothing is stored or reused between taps: each tap
+calls ElevenLabs again. The browser sends a Character identity and nothing
+else: it cannot choose text, a provider voice, or a model, and no provider
+credential exists outside the server.
 
 Worldcue playback uses `DevAudioPlaybackProvider`, which delegates to the
 existing `@seihouse/audio-player` session. Its `replace` operation replaces the
@@ -190,5 +180,5 @@ five-chapter batch, and the Reader adapter. They are scoped to an application-
 owned block ID and occurrence, so one event cannot propagate to other mentions,
 chapters, legacy prose, or translations. Block-local model proposals are removed
 from the accepted output after resolution; only successful resolved Worldcue
-annotations persist. Character voice artifacts persist on the Codex Character,
-never on chapter prose.
+annotations persist. Character voice audio is never persisted anywhere and
+never touches chapter prose.

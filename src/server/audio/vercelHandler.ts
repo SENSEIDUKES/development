@@ -7,8 +7,8 @@ import {
 
 export const maxDuration = 120;
 
-// A quote is only synthesized once and then reused from R2. This still keeps
-// a public Development page from being used to create unlimited new artifacts.
+// Every tap calls ElevenLabs again — nothing is cached or stored. This guard
+// keeps a public Development page from being used to run unlimited synthesis.
 const guardCodexVoiceQuote = createPublicGenerationGuard({
   key: "codex-voice-quote",
   limit: 8,

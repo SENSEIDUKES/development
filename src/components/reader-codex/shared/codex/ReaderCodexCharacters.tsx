@@ -60,14 +60,18 @@ export function ReaderCodexCharacters({
           ? {
               ...character,
               voiceKey: resolution.voiceKey,
-              voiceClip: resolution.artifact,
             }
           : character
       )),
     });
   }, [onUpdateMemory]);
 
-  const { handleQuoteTap, voiceStatus } = useCodexVoiceQuote({
+  const {
+    handleQuoteTap,
+    voiceStatus,
+    canDownloadVoice,
+    handleDownloadVoice,
+  } = useCodexVoiceQuote({
     onVoiceResolved: persistResolvedVoice,
   });
 
@@ -148,6 +152,8 @@ export function ReaderCodexCharacters({
         canGenerate={canGenerate}
         isFreeUserOnHubStory={isFreeUserOnHubStory}
         onQuoteTap={handleQuoteTap}
+        canDownloadVoice={canDownloadVoice(char)}
+        onDownloadVoice={() => handleDownloadVoice(char)}
         beginCharEdit={beginCharEdit}
         handleAwakenCardImage={handleAwakenCardImage}
       />

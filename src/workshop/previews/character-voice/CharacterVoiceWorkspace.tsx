@@ -12,8 +12,8 @@ import '../../../components/reader-codex/shared/reader-codex.css';
  * Live Character Portrait voice interaction.
  *
  * This uses the same real endpoint as the Reader Codex. A tap on the
- * signature quote calls ElevenLabs through the server, stores the resulting
- * artifact in R2, and reuses that artifact on later taps.
+ * signature quote calls ElevenLabs through the server and plays the returned
+ * audio immediately. Nothing is stored: every tap calls ElevenLabs again.
  */
 
 const baseCharacter = {
@@ -46,9 +46,9 @@ const codexValue = {
 } as unknown as Parameters<typeof CodexProvider>[0]['value'];
 
 const stateNotes: Record<CodexVoiceQuoteState, string> = {
-  ready: 'No recording exists yet. The control is still offered — the first tap is what creates it.',
-  generating: 'The server is resolving the voice, generating the quote once, and storing it in R2.',
-  playing: 'The stored artifact is playing through the one shared audio owner.',
+  ready: 'No audio has been heard yet. Every tap calls ElevenLabs fresh.',
+  generating: 'The server is resolving the voice and calling ElevenLabs.',
+  playing: 'The returned audio is playing through the one shared audio owner.',
   stopping: 'The shared audio owner is releasing this Character’s track.',
   unavailable: 'No stored signature quote, or the Character is not an eligible speaking identity.',
   error: 'The attempt failed. The control stays tappable so the reader can retry.',
@@ -57,12 +57,16 @@ const stateNotes: Record<CodexVoiceQuoteState, string> = {
 export function CharacterVoiceWorkspace() {
   const [character, setCharacter] = useState<Character>(baseCharacter);
 
-  const { handleQuoteTap, voiceStatus } = useCodexVoiceQuote({
+  const {
+    handleQuoteTap,
+    voiceStatus,
+    canDownloadVoice,
+    handleDownloadVoice,
+  } = useCodexVoiceQuote({
     onVoiceResolved: resolution => {
       setCharacter(current => ({
         ...current,
         voiceKey: resolution.voiceKey,
-        voiceClip: resolution.artifact,
       }));
     },
   });
@@ -96,6 +100,8 @@ export function CharacterVoiceWorkspace() {
                 canGenerate
                 isFreeUserOnHubStory={false}
                 onQuoteTap={handleQuoteTap}
+                canDownloadVoice={canDownloadVoice(character)}
+                onDownloadVoice={() => handleDownloadVoice(character)}
                 beginCharEdit={() => {}}
                 handleAwakenCardImage={() => {}}
               />
@@ -105,12 +111,12 @@ export function CharacterVoiceWorkspace() {
 
         <section className="flex-1 rounded-2xl border border-cyan-300/20 bg-slate-950/70 p-5">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-cyan-200/80">
-            Live ElevenLabs → R2
+            Live ElevenLabs
           </h2>
           <p className="mt-2 text-xs leading-5 text-slate-400">
-            Pressing Hear Voice calls <code className="text-slate-300">/api/codex-voice-quote</code>.
-            The first successful tap generates and stores this Character’s quote; later taps reuse
-            the stored R2 artifact.
+            Pressing Hear Voice calls <code className="text-slate-300">/api/codex-voice-quote</code>,
+            which calls ElevenLabs server-side and returns the audio for immediate playback. Nothing
+            is stored — the next tap calls ElevenLabs again.
           </p>
 
           <dl className="mt-5 space-y-2 text-xs">
@@ -127,9 +133,9 @@ export function CharacterVoiceWorkspace() {
               <dd className="font-mono text-slate-400">/api/codex-voice-quote</dd>
             </div>
             <div className="flex gap-2">
-              <dt className="w-28 shrink-0 font-mono uppercase tracking-wider text-slate-500">Stored</dt>
+              <dt className="w-28 shrink-0 font-mono uppercase tracking-wider text-slate-500">Voice</dt>
               <dd className="break-all text-slate-400">
-                {character.voiceClip?.publicUrl ?? 'no artifact yet'}
+                {character.voiceKey ?? 'not yet assigned'}
               </dd>
             </div>
           </dl>

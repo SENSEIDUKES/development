@@ -2,8 +2,9 @@
  * Reader Codex signature-quote voice endpoint — server only.
  *
  * The browser posts a Character identity and nothing else. It cannot choose
- * the spoken text, a provider voice, a storage key, or a playback URL: the
- * request is rejected outright when it carries any such field.
+ * the spoken text, a provider voice, or a model: the request is rejected
+ * outright when it carries any such field. The response carries the
+ * synthesized audio bytes for immediate playback; nothing is stored.
  */
 
 import {
@@ -42,15 +43,13 @@ const FORBIDDEN_REQUEST_FIELDS = [
   'voiceid',
   'voice_id',
   'providervoiceid',
-  'objectkey',
-  'key',
-  'url',
-  'publicurl',
-  'voicecliurl',
-  'voiceclipurl',
   'model',
   'modelid',
   'apikey',
+  'audio',
+  'base64',
+  'mimetype',
+  'url',
 ];
 
 /** Character fields the endpoint reads. Everything else is ignored. */
@@ -143,7 +142,7 @@ export async function handleCodexVoiceQuoteHttp(
       voice: {
         characterId: result.characterId,
         voiceKey: result.voiceKey,
-        artifact: result.artifact,
+        audio: result.audio,
       },
     },
   };

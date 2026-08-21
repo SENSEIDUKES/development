@@ -1,20 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDevAudioPlayback } from '../../../../audio/DevAudioPlayback';
-import { isApplicationOwnedVoiceArtifactUrl } from '../../../../audio/voiceArtifacts';
 
 const LEGACY_WORKSHOP_VOICE_PREFIX = 'workshop-voice:';
+
+/** The only source shape the server's synthesized response ever produces. */
+const PLAYABLE_VOICE_DATA_URI = /^data:audio\/mpeg;base64,[a-z0-9+/]+=*$/iu;
 
 /** One shared-queue track identity per Character, so voices can never overlap. */
 export const codexVoiceTrackId = (characterId: string): string => `codex-voice:${characterId}`;
 
 /**
  * A Character's voiceKey is only an identity. Reader playback is available
- * only after server synthesis has produced a real audio artifact.
+ * only for the exact audio data URI the server's synthesis response produced
+ * this session; nothing else is ever accepted as a playback source.
  */
 export const isPlayableCodexVoiceSource = (value?: string): boolean => {
   const source = value?.trim();
   if (!source || source.startsWith(LEGACY_WORKSHOP_VOICE_PREFIX)) return false;
-  return isApplicationOwnedVoiceArtifactUrl(source);
+  return PLAYABLE_VOICE_DATA_URI.test(source);
 };
 
 /**

@@ -19,6 +19,9 @@ interface CharacterCardProps {
   isFreeUserOnHubStory: boolean;
   /** A deliberate tap is the only thing that can create or play voice audio. */
   onQuoteTap: (char: Character) => void;
+  /** True once this session's most recent tap produced audio to download. */
+  canDownloadVoice?: boolean;
+  onDownloadVoice?: () => void;
   beginCharEdit: (char: Character) => void;
   handleAwakenCardImage: (id: string, type: "character", obj: any) => void;
 }
@@ -34,6 +37,8 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
   canGenerate,
   isFreeUserOnHubStory,
   onQuoteTap,
+  canDownloadVoice = false,
+  onDownloadVoice,
   beginCharEdit,
   handleAwakenCardImage
 }) => {
@@ -188,26 +193,40 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
         {char.signatureQuote && (
           <div className="pt-2 pb-2 text-[10px] text-neutral-400 italic flex flex-col gap-2 relative">
             <span>"{char.signatureQuote}"</span>
-            <button
-              type="button"
-              onClick={() => onQuoteTap(char)}
-              disabled={voiceIsBusy || voiceStatus.state === 'unavailable'}
-              aria-label={voiceAriaLabel}
-              data-voice-state={voiceStatus.state}
-              title={voiceStatus.state === 'error' ? voiceStatus.message : undefined}
-              className={`flex items-center gap-1.5 self-start min-h-[32px] px-1 -mx-1 text-[9px] uppercase tracking-wider font-mono transition-colors not-italic ${
-                voiceStatus.state === 'unavailable'
-                  ? 'text-neutral-600 cursor-not-allowed'
-                  : voiceStatus.state === 'error'
-                  ? 'text-human hover:text-human/80'
-                  : voiceIsBusy
-                  ? 'text-neutral-400 cursor-wait'
-                  : 'text-portal hover:text-portal/80'
-              }`}
-            >
-              {voiceIcon}
-              <span>{voiceLabel}</span>
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => onQuoteTap(char)}
+                disabled={voiceIsBusy || voiceStatus.state === 'unavailable'}
+                aria-label={voiceAriaLabel}
+                data-voice-state={voiceStatus.state}
+                title={voiceStatus.state === 'error' ? voiceStatus.message : undefined}
+                className={`flex items-center gap-1.5 self-start min-h-[32px] px-1 -mx-1 text-[9px] uppercase tracking-wider font-mono transition-colors not-italic ${
+                  voiceStatus.state === 'unavailable'
+                    ? 'text-neutral-600 cursor-not-allowed'
+                    : voiceStatus.state === 'error'
+                    ? 'text-human hover:text-human/80'
+                    : voiceIsBusy
+                    ? 'text-neutral-400 cursor-wait'
+                    : 'text-portal hover:text-portal/80'
+                }`}
+              >
+                {voiceIcon}
+                <span>{voiceLabel}</span>
+              </button>
+              {canDownloadVoice && onDownloadVoice && (
+                <button
+                  type="button"
+                  onClick={onDownloadVoice}
+                  aria-label={`Download the voice recording for ${char.name}`}
+                  title="Download voice recording"
+                  className="flex items-center gap-1 min-h-[32px] px-1 text-[9px] uppercase tracking-wider font-mono not-italic text-neutral-400 hover:text-portal transition-colors"
+                >
+                  <Download size={10} />
+                  <span>Download</span>
+                </button>
+              )}
+            </div>
             {/* One polite region for the status text, so a transition is
                 announced without re-announcing the whole control. */}
             <span role="status" aria-live="polite" className="text-[9px] not-italic text-human/80 font-mono">

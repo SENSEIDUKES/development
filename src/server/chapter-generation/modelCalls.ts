@@ -429,7 +429,7 @@ const extractBalancedObjects = (text: string): JsonRecord[] => {
 const BLOCK_ATMOSPHERE_CATEGORIES = ["wind", "crowd", "waves", "rain", "combat", "noise"] as const;
 const BEAST_EVENT_TYPES = ["reveal", "power-up", "technique", "injury", "turning-point", "death", "breakthrough"] as const;
 const BEAST_SIZES = ["tiny", "small", "medium", "large", "giant", "colossal"] as const;
-const SYSTEM_EVENT_KINDS = ["status", "skill_acquired", "level_up", "quest", "appraisal", "fate_result"] as const;
+const SYSTEM_EVENT_KINDS = ["system_prompt", "fate_system_prompt"] as const;
 const SYSTEM_PROMPT_TYPES = [
   "neutral", "codex_update", "friendly_scan", "enemy_scan", "warning", "critical_danger",
   "progression", "breakthrough", "reward", "romance", "karmic_bond", "mystery", "fate_event",
@@ -561,6 +561,12 @@ const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefine
   const kind = requiredString(event.kind, `${label}.kind`);
   if (!SYSTEM_EVENT_KINDS.includes(kind as (typeof SYSTEM_EVENT_KINDS)[number])) {
     throw new Error(`${label}.kind is unsupported.`);
+  }
+  if (kind === "fate_system_prompt" && (event.fateResult === undefined || event.fateResult === null)) {
+    throw new Error(`${label} of kind 'fate_system_prompt' requires a fateResult payload.`);
+  }
+  if (kind === "system_prompt" && event.fateResult !== undefined && event.fateResult !== null) {
+    throw new Error(`${label} of kind 'system_prompt' cannot accept a fateResult payload.`);
   }
   const rows = event.rows === undefined
     ? undefined

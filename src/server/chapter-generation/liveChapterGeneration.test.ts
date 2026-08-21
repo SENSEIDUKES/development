@@ -139,7 +139,7 @@ const manifestedResponse = [
     type: "system",
     text: "The Celestial Library marked the broken oath.",
     system: {
-      kind: "fate_result",
+      kind: "fate_system_prompt",
       promptType: "fate_event",
       title: "Oath Seam Identified",
       fateResult: {

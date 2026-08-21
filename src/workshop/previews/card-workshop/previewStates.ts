@@ -1,13 +1,14 @@
 import type { CardWorkshopOverrides } from '../../../components/card-workshop/shared/types';
 
 export const SYSTEM_KIND_OPTIONS = [
-  { value: 'status', label: 'System Status' },
-  { value: 'skill_acquired', label: 'Skill Acquired' },
-  { value: 'level_up', label: 'Breakthrough / Level Up' },
-  { value: 'quest', label: 'Quest Directive' },
-  { value: 'appraisal', label: 'Item Appraisal' },
-  { value: 'fate_result', label: 'Fate Result Panel' },
+  { value: 'system_prompt', label: 'System Prompt' },
+  { value: 'fate_system_prompt', label: 'Fate System Prompt' },
 ];
+
+export const SYSTEM_PROMPT_STYLE_OPTIONS = [
+  { value: 'literary', label: 'Simple Literary' },
+  { value: 'structured', label: 'Structured Mechanical' },
+] as const;
 
 export const FATE_OUTCOME_OPTIONS: Array<'FATE AVERTED' | 'FATE SCARRED' | 'DOOM MANIFESTED'> = [
   'FATE AVERTED',
@@ -29,6 +30,7 @@ export const INITIAL_CARD_WORKSHOP_OVERRIDES: CardWorkshopOverrides = {
   portraitKind: 'non-human',
   isSenMode: true,
   isRevealVisible: true,
-  selectedSystemKind: 'status',
+  selectedSystemKind: 'system_prompt',
   selectedFateOutcome: 'FATE SCARRED',
+  systemPromptContentStyle: 'literary',
 };

@@ -20,9 +20,10 @@ import type {
   ImagePreviewState,
 } from '../shared/types';
 import { CardWorkshopContextualReader } from './CardWorkshopContextualReader';
-import { ACTIVE_CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
+import { ACTIVE_CARD_PRESETS, SYSTEM_PROMPT_PRESET_EXAMPLES } from '../../../workshop/previews/card-workshop/previewData';
 import {
   SYSTEM_KIND_OPTIONS,
+  SYSTEM_PROMPT_STYLE_OPTIONS,
   FATE_OUTCOME_OPTIONS,
   IMAGE_STATE_OPTIONS,
   INITIAL_CARD_WORKSHOP_OVERRIDES,
@@ -190,26 +191,36 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
 
     // 2. System Block & Fate Result
     if (preset.kind === 'system-block' || preset.kind === 'fate-result') {
-      const activeSystemEvent = preset.systemEvent
+      let content = preset.systemContent || '[ SYSTEM NOTIFICATION ]';
+      let baseSystemEvent = preset.systemEvent;
+
+      if (preset.id === 'preset-system-prompt') {
+        const style = overrides.systemPromptContentStyle || 'literary';
+        const example = SYSTEM_PROMPT_PRESET_EXAMPLES[style];
+        content = example.systemContent;
+        baseSystemEvent = example.systemEvent;
+      }
+
+      const activeSystemEvent = baseSystemEvent
         ? {
-            ...preset.systemEvent,
+            ...baseSystemEvent,
             kind: overrides.selectedSystemKind
               ? overrides.selectedSystemKind as SystemEvent['kind']
-              : preset.systemEvent.kind,
+              : baseSystemEvent.kind,
             fateResult:
-              preset.systemEvent.fateResult && overrides.selectedFateOutcome
+              baseSystemEvent.fateResult && overrides.selectedFateOutcome
                 ? {
-                    ...preset.systemEvent.fateResult,
+                    ...baseSystemEvent.fateResult,
                     outcome: overrides.selectedFateOutcome,
                   }
-                : preset.systemEvent.fateResult,
+                : baseSystemEvent.fateResult,
           }
         : undefined;
 
       return (
         <div className="w-full flex justify-center py-2">
           <SystemBlock
-            content={preset.systemContent || '[ SYSTEM NOTIFICATION ]'}
+            content={content}
             system={activeSystemEvent}
           />
         </div>
@@ -346,6 +357,31 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                   ))}
                 </select>
               </div>
+
+              {selectedPreset.id === 'preset-system-prompt' && (
+                <div>
+                  <label className="mb-1 block text-[10px] font-mono uppercase text-neutral-500">
+                    Content Example Style (Development Only)
+                  </label>
+                  <select
+                    aria-label="System prompt example style"
+                    value={overrides.systemPromptContentStyle || 'literary'}
+                    onChange={(event) =>
+                      setOverrides((previous) => ({
+                        ...previous,
+                        systemPromptContentStyle: event.target.value as CardWorkshopOverrides['systemPromptContentStyle'],
+                      }))
+                    }
+                    className="w-full rounded border border-neutral-800 bg-[#020914] px-2.5 py-1.5 text-[11px] font-mono text-signal"
+                  >
+                    {SYSTEM_PROMPT_STYLE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {selectedPreset.kind === 'fate-result' && (
                 <div>
@@ -705,23 +741,47 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                     key={preset.id}
                     className="flex flex-col space-y-3 p-4 rounded-2xl bg-neutral-950/40 border border-neutral-900"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
                       <div>
                         <h3 className="font-display font-semibold text-sm text-signal">
                           {preset.title}
                         </h3>
                         <p className="text-[11px] text-neutral-400 font-sans">{preset.subtitle}</p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedPresetId(preset.id);
-                          setActiveTab('contextual');
-                        }}
-                        className="text-[10px] font-mono text-portal hover:underline"
-                      >
-                        View in Reader →
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {preset.id === 'preset-system-prompt' && (
+                          <div className="flex items-center gap-1 bg-neutral-900/90 p-1 rounded-lg border border-neutral-800">
+                            <span className="text-[9px] font-mono uppercase text-neutral-500 px-1">Example:</span>
+                            {SYSTEM_PROMPT_STYLE_OPTIONS.map((styleOpt) => {
+                              const isCurrentStyle = (overrides.systemPromptContentStyle || 'literary') === styleOpt.value;
+                              return (
+                                <button
+                                  key={styleOpt.value}
+                                  type="button"
+                                  onClick={() => setOverrides(prev => ({ ...prev, systemPromptContentStyle: styleOpt.value }))}
+                                  className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors ${
+                                    isCurrentStyle
+                                      ? 'bg-portal/20 text-portal border border-portal/40 font-semibold'
+                                      : 'text-neutral-400 hover:text-neutral-200'
+                                  }`}
+                                >
+                                  {styleOpt.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPresetId(preset.id);
+                            setActiveTab('contextual');
+                          }}
+                          className="text-[10px] font-mono text-portal hover:underline"
+                        >
+                          View in Reader →
+                        </button>
+                      </div>
                     </div>
 
                     <div className={`mx-auto w-full ${viewportWidthClass} transition-all duration-300`}>

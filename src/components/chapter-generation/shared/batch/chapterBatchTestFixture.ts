@@ -78,7 +78,7 @@ export function createCompletedFiveChapterTestBatch(): FiveChapterBatchState {
           type: "system",
           text: "",
           system: {
-            kind: "status",
+            kind: "system_prompt",
             promptType: "codex_update",
             title: `System Panel ${chapterNumber}`,
             rows: [{ label: "Chapter", value: String(chapterNumber) }],

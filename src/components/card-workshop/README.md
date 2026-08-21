@@ -4,7 +4,7 @@
 - **Verified source locations:** `src/components/ReaderViewport.tsx`, `src/components/SystemBlock.tsx`, `src/components/FateResultCard.tsx`
 - **Workshop preview:** `?preview=card-workshop`
 - **Replica created:** 2026-08-14
-- **Last Workshop update:** 2026-08-19
+- **Last Workshop update:** 2026-08-21
 - **Last source comparison:** 2026-08-19
 - **Replica status:** under refinement
 
@@ -22,6 +22,7 @@ Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studi
 
 ## Workshop history
 
+- **2026-08-21:** Consolidated System Prompt categories across the Workshop, types, normalizer, model parsers, and prompt directives into strictly two top-level options: universal System Prompt (`system_prompt`), which supports concise literary notices and optional structured mechanical rows with a development example switch, and Fate System Prompt (`fate_system_prompt`), which strictly requires a valid Fate Survival payload. Removed obsolete legacy kinds cleanly across all contracts and test suites without altering visual rendering or layout.
 - **2026-08-19:** Removed the retired standalone world presentation and every Card Workshop preset, adapter, override, and Reference rendering branch that existed only for it. Contextual View now demonstrates the replacement circle-free, footnote-scale annotations on audible actions: `the Rain Court bell tolled` contains the independently linked Codex name while its separate mark starts playback, and `a Vermilion Debt Fox growled once` remains ordinary prose with only the small sound mark identifying the event. Each final word, mark, and punctuation stays together while longer phrases can wrap normally.
 - **2026-08-18:** Development fixtures adopted the real Manifest backdrop pool and published Library test images for Codex media.
 - **2026-08-18:** Refined the shared Codex Manifest seal, awakening state, spectral glass, and entity accent treatment without changing its content or routing.

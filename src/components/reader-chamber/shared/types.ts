@@ -95,14 +95,10 @@ export interface StoryBlockMetadata {
   };
 }
 
+export type SystemEventKind = "system_prompt" | "fate_system_prompt";
+
 export interface SystemEvent {
-  kind:
-    | "status"
-    | "skill_acquired"
-    | "level_up"
-    | "quest"
-    | "appraisal"
-    | "fate_result";
+  kind: SystemEventKind;
   promptType?:
     | "neutral"
     | "codex_update"

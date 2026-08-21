@@ -21,6 +21,7 @@ import {
   type WorldCueIntent,
 } from '../../../audio/inlineAudio';
 import type { CardPreset, CardWorkshopOverrides } from '../shared/types';
+import { SYSTEM_PROMPT_PRESET_EXAMPLES } from '../../../workshop/previews/card-workshop/previewData';
 
 const LOCAL_HUMAN_PORTRAIT = '/card-workshop/test-images/ye_chen_portrait.png';
 const LOCAL_CREATURE_PORTRAIT = '/card-workshop/test-images/lyra_meadowlight_portrait.png';
@@ -178,6 +179,14 @@ function createContextualSystemEvent(
   overrides: CardWorkshopOverrides,
 ): SystemEvent | undefined {
   if (!preset.systemEvent) return undefined;
+  if (preset.id === 'preset-system-prompt') {
+    const style = overrides.systemPromptContentStyle || 'literary';
+    const example = SYSTEM_PROMPT_PRESET_EXAMPLES[style];
+    return {
+      ...example.systemEvent,
+      kind: 'system_prompt',
+    };
+  }
   return {
     ...preset.systemEvent,
     kind: (overrides.selectedSystemKind ?? preset.systemEvent.kind) as SystemEvent['kind'],
@@ -212,12 +221,15 @@ export function createCardWorkshopContextualFixture(
   const mentionEntities: StoryBlock['metadata'] = {
     entities: [{ name: 'Aster', type: 'character', mention: 'reference' }],
   };
+  const cardBlockText = preset.id === 'preset-system-prompt'
+    ? SYSTEM_PROMPT_PRESET_EXAMPLES[overrides.systemPromptContentStyle || 'literary'].systemContent
+    : (preset.kind === 'system-block' || preset.kind === 'fate-result')
+      ? (preset.systemContent || '[ SYSTEM NOTIFICATION ]')
+      : `For one measured breath, the whole Rain Court waited to see what the broken oath would reveal.`;
   const cardBlock: StoryBlock = {
     id: CONTEXT_CARD_BLOCK_ID,
     type: preset.kind,
-    text: preset.kind === 'system-block' || preset.kind === 'fate-result'
-      ? (preset.systemContent || '[ SYSTEM NOTIFICATION ]')
-      : `For one measured breath, the whole Rain Court waited to see what the broken oath would reveal.`,
+    text: cardBlockText,
     metadata: preset.kind === 'codex-card' && codexTerm && overrides.entityMention === 'reveal'
       ? {
           entities: [{

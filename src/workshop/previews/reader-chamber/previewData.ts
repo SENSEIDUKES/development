@@ -163,7 +163,7 @@ export function createMockChapters(): ReaderChapter[] {
           type: 'system',
           text: '[The Heavenly Dao acknowledges your ascension. The Ninth Meridian has marked you.]',
           system: {
-            kind: 'level_up',
+            kind: 'system_prompt',
             promptType: 'breakthrough',
             title: 'Breakthrough Achieved',
             rows: [
@@ -185,7 +185,7 @@ export function createMockChapters(): ReaderChapter[] {
           type: 'system',
           text: '',
           system: {
-            kind: 'fate_result',
+            kind: 'fate_system_prompt',
             title: 'Fate Result',
             fateResult: {
               outcome: 'FATE SCARRED',
@@ -335,7 +335,7 @@ export function createMockChapters(): ReaderChapter[] {
           type: 'system',
           text: '[A thread of fate has reached its terminus. The record cannot be unwritten.]',
           system: {
-            kind: 'status',
+            kind: 'system_prompt',
             promptType: 'corruption',
             title: 'Death Flag Fulfilled',
             rows: [

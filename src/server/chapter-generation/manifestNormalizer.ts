@@ -21,7 +21,7 @@ const BLOCK_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 const BLOCK_ATMOSPHERE_CATEGORIES = ["wind", "crowd", "waves", "rain", "combat", "noise"] as const;
 const BEAST_EVENT_TYPES = ["reveal", "power-up", "technique", "injury", "turning-point", "death", "breakthrough"] as const;
 const BEAST_SIZES = ["tiny", "small", "medium", "large", "giant", "colossal"] as const;
-const SYSTEM_EVENT_KINDS = ["status", "skill_acquired", "level_up", "quest", "appraisal", "fate_result"] as const;
+const SYSTEM_EVENT_KINDS = ["system_prompt", "fate_system_prompt"] as const;
 const SYSTEM_PROMPT_TYPES = [
   "neutral", "codex_update", "friendly_scan", "enemy_scan", "warning", "critical_danger",
   "progression", "breakthrough", "reward", "romance", "karmic_bond", "mystery", "fate_event",
@@ -522,6 +522,10 @@ const parseSystemEvent = (
     warning(context, "optional-field-removed", "Removed invalid optional system object.", "system");
     return undefined;
   }
+  if (kind === "fate_system_prompt" && (value.fateResult === undefined || value.fateResult === null)) {
+    warning(context, "optional-field-removed", "Removed fate_system_prompt lacking required fateResult object.", "system.fateResult");
+    return undefined;
+  }
   const promptType = optionalStringField(value, "promptType", context, "system.promptType");
   const validPromptType = promptType && SYSTEM_PROMPT_TYPES.includes(promptType as (typeof SYSTEM_PROMPT_TYPES)[number])
     ? promptType as SystemEvent["promptType"]
@@ -545,7 +549,17 @@ const parseSystemEvent = (
     }
   }
   const rarity = optionalStringField(value, "rarity", context, "system.rarity");
-  const fateResult = parseFateResult(value.fateResult, context);
+  let fateResult: FateResultData | undefined;
+  if (kind === "fate_system_prompt") {
+    fateResult = parseFateResult(value.fateResult, context);
+    if (!fateResult) {
+      warning(context, "optional-field-removed", "Removed fate_system_prompt with invalid fateResult object.", "system.fateResult");
+      return undefined;
+    }
+  } else if (value.fateResult !== undefined && value.fateResult !== null) {
+    warning(context, "optional-field-removed", "Removed disallowed fateResult from regular system_prompt.", "system.fateResult");
+  }
+
   for (const field of Object.keys(value)) {
     if (!["kind", "title", "promptType", "rows", "rarity", "fateResult"].includes(field)) {
       const path = safeFieldLabel(`system.${field}`);

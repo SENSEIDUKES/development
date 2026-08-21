@@ -107,8 +107,10 @@ export interface StoryBlockMetadata {
   audioMoments?: WorldCueIntent[];
 }
 
+export type SystemEventKind = "system_prompt" | "fate_system_prompt";
+
 export interface SystemEvent {
-  kind: "status" | "skill_acquired" | "level_up" | "quest" | "appraisal" | "fate_result";
+  kind: SystemEventKind;
   promptType?:
     | "neutral" | "codex_update" | "friendly_scan" | "enemy_scan" | "warning" | "critical_danger"
     | "progression" | "breakthrough" | "reward" | "romance" | "karmic_bond" | "mystery" | "fate_event"

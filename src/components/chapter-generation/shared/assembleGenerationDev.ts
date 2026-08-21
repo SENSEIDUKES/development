@@ -88,7 +88,7 @@ function buildMockManifestedChapterDev(input: {
           text: "A holographic seal flickered faintly across the cover the moment his qi brushed it, dim and cracked with age.",
           metadata: { mode: "narration", intensity: 0.5 },
           system: {
-            kind: "status",
+            kind: "system_prompt",
             promptType: "codex_update",
             title: "Forbidden Item Discovered",
             rows: [
@@ -140,7 +140,7 @@ function buildMockManifestedChapterDev(input: {
           text: "The Ashfall Draw settled into his meridians instead of scarring them — mastery, not just access, the manual's old pages finally making sense.",
           metadata: { mode: "narration", intensity: 0.5 },
           system: {
-            kind: "skill_acquired",
+            kind: "system_prompt",
             promptType: "progression",
             title: "Technique Refined",
             rarity: "Rare",

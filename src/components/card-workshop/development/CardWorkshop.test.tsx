@@ -122,17 +122,21 @@ describe('CardWorkshopView', () => {
     expect(container.querySelector('[role="tabpanel"]')?.textContent).toContain('Non-Human Portrait');
     expect(document.activeElement).toBe(tabs[1]);
 
-    await clickButton('System Status');
+    await clickButton('System Prompt');
     expect(container.textContent).toContain('System Panels & Fate Outcomes');
-    expect(container.textContent).toContain('Meridian Status & Vitality Flow');
+    expect(container.textContent).toContain('Heavenly Dao Resonance');
     expect(container.querySelector('[role="tabpanel"]')?.textContent).not.toContain('Human Portrait');
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
+
+    // Toggle to structured mechanical example
+    await clickButton('Structured Mechanical');
+    expect(container.textContent).toContain('Meridian Status & Vitality Flow');
   });
 
   it('switches between Card Type Tabs and Contextual View without losing the selected preset or override state', async () => {
     act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="tabs" />)));
 
-    await clickButton('Fate Result Card');
+    await clickButton('Fate System Prompt');
     await clickButton('Contextual View');
     expect(container.querySelector('[data-testid="card-workshop-contextual-reader"]')).toBeTruthy();
     expect(container.textContent).toContain('FATE RESULT: FATE SCARRED');
@@ -142,7 +146,7 @@ describe('CardWorkshopView', () => {
     expect(container.textContent).toContain('FATE RESULT: DOOM MANIFESTED');
 
     await clickButton('Card Type Tabs');
-    const selectedTab = container.querySelector<HTMLButtonElement>('#card-tab-preset-fate-result');
+    const selectedTab = container.querySelector<HTMLButtonElement>('#card-tab-preset-fate-system-prompt');
     expect(selectedTab?.getAttribute('aria-selected')).toBe('true');
     expect(container.textContent).toContain('FATE RESULT: DOOM MANIFESTED');
 
@@ -205,8 +209,8 @@ describe('CardWorkshopView', () => {
     await openTechnicalDetails();
 
     const reader = container.querySelector<HTMLElement>('[data-testid="card-workshop-contextual-reader"]');
-    await selectByLabel('Card preset', 'preset-system-status');
-    expect(reader?.textContent).toContain('Meridian Status & Vitality Flow');
+    await selectByLabel('Card preset', 'preset-system-prompt');
+    expect(reader?.textContent).toContain('Heavenly Dao Resonance');
     expect(reader?.textContent).toContain('Then the thunder moved on');
   });
 

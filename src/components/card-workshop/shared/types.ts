@@ -53,6 +53,8 @@ export interface CardPreset {
   };
 }
 
+export type SystemPromptContentStyle = 'literary' | 'structured';
+
 export interface CardWorkshopOverrides {
   viewportMode: ViewportMode;
   imageState: ImagePreviewState;
@@ -63,4 +65,5 @@ export interface CardWorkshopOverrides {
   isRevealVisible: boolean;
   selectedSystemKind?: string;
   selectedFateOutcome?: 'FATE AVERTED' | 'FATE SCARRED' | 'DOOM MANIFESTED';
+  systemPromptContentStyle?: SystemPromptContentStyle;
 }

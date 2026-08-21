@@ -8,8 +8,8 @@ import { CodexRevealCardReference } from './CodexRevealCardReference';
 const preset = (id: string) => CARD_PRESETS.find(candidate => candidate.id === id)!;
 
 const human = preset('preset-human-character');
-const system = preset('preset-system-status');
-const fate = preset('preset-fate-result');
+const system = preset('preset-system-prompt');
+const fate = preset('preset-fate-system-prompt');
 const manifestation = preset('preset-manifestation-image');
 
 const manifestationChapter = {

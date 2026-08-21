@@ -49,7 +49,7 @@ function SystemPanel({ system }: { system: SystemEvent }) {
     <div className="min-w-0 rounded-md border border-cyan-500/25 bg-cyan-500/5 px-3 py-2">
       <div className="flex flex-wrap items-center gap-1.5">
         <span className="text-[9px] font-semibold uppercase tracking-widest text-cyan-200/80">
-          System Panel · {formatToken(system.kind)}
+          {system.kind === "fate_system_prompt" ? "Fate System Prompt" : "System Prompt"}
         </span>
         {system.promptType && <Chip tone="cyan">{formatToken(system.promptType)}</Chip>}
         {system.rarity && <Chip tone="amber">{system.rarity}</Chip>}

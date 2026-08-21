@@ -189,6 +189,25 @@
   }
 }
 
+/* Mobile Settings sheet scroll region. The native scrollbar fights the
+   dark-glass surface, so it is hidden; a bottom edge fade takes its place as
+   the "more below" signal while the region can scroll further, and lifts once
+   the end is reached so the final option never reads as dimmed. */
+.story-seed-sheet-scroll {
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 3rem), transparent);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 3rem), transparent);
+  scrollbar-width: none;
+}
+
+.story-seed-sheet-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.story-seed-sheet-scroll[data-scroll-end='true'] {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
 /* Long Story Bank lists skip layout and paint work until a card approaches
    the viewport. `auto` remembers the real height after first rendering, so
    revisiting a card does not disturb scroll position. */

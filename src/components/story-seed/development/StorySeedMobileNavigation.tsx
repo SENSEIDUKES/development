@@ -52,6 +52,8 @@ const StorySeedMobileNavigationComponent = ({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const mobileSheetRef = useRef<HTMLDivElement>(null);
   const mobileSheetTriggerRef = useRef<HTMLElement | null>(null);
+  const settingsScrollRef = useRef<HTMLDivElement>(null);
+  const [settingsScrollEnd, setSettingsScrollEnd] = useState(true);
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -102,6 +104,35 @@ const StorySeedMobileNavigationComponent = ({
       trigger?.focus();
     };
   }, [settingsOpen]);
+
+  const updateSettingsScrollEnd = useCallback(() => {
+    const region = settingsScrollRef.current;
+    if (!region) return;
+    // Slack keeps sub-pixel rounding from pinning the "more below" fade on at
+    // the scroll end.
+    setSettingsScrollEnd(region.scrollTop + region.clientHeight >= region.scrollHeight - 8);
+  }, []);
+
+  // Re-measure on open and when the Fate Survival toggle changes the content
+  // height, so the edge fade only shows while scrolling can reveal more.
+  useEffect(() => {
+    if (!settingsOpen) return;
+    const frame = requestAnimationFrame(updateSettingsScrollEnd);
+    return () => cancelAnimationFrame(frame);
+  }, [settingsOpen, seed.story.optional.fateSurvival.enabled, updateSettingsScrollEnd]);
+
+  // Re-measure when the scroll region's clientHeight changes (e.g., viewport
+  // resize, keyboard open/close, orientation change) while the sheet is open.
+  useEffect(() => {
+    if (!settingsOpen) return;
+    const region = settingsScrollRef.current;
+    if (!region) return;
+    const observer = new ResizeObserver(() => {
+      updateSettingsScrollEnd();
+    });
+    observer.observe(region);
+    return () => observer.disconnect();
+  }, [settingsOpen, updateSettingsScrollEnd]);
 
   const toggleSettings = useCallback(() => {
     setSelectorOpen(false);
@@ -220,9 +251,9 @@ const StorySeedMobileNavigationComponent = ({
             >
               <LibraryPanel
                 padding="none"
-                className="story-seed-overlay-panel max-h-[calc(100dvh-5rem)] overscroll-contain overflow-y-auto rounded-b-none border-x-0 border-b-0 pb-[calc(5.5rem+env(safe-area-inset-bottom))] [padding-left:env(safe-area-inset-left)] [padding-right:env(safe-area-inset-right)]"
+                className="story-seed-overlay-panel flex max-h-[calc(100dvh-3rem)] flex-col rounded-b-none border-x-0 border-b-0 [padding-left:env(safe-area-inset-left)] [padding-right:env(safe-area-inset-right)]"
               >
-                <div className="flex items-center justify-between gap-3 px-4 pt-3">
+                <div className="flex shrink-0 items-center justify-between gap-3 px-4 pt-3">
                   <p className="font-sc text-[11px] font-bold uppercase tracking-[0.2em] text-neutral-400">
                     Settings
                   </p>
@@ -235,20 +266,32 @@ const StorySeedMobileNavigationComponent = ({
                   />
                 </div>
 
-                <div className="mt-2 space-y-3 px-4">
-                  <StorySeedSettings seed={seed} updateSeed={updateSeed} />
-                  <div className="space-y-2">
-                    <LibraryButton
-                      fullWidth
-                      onClick={onSaveDraft}
-                      disabled={isGenerating}
-                      title="Save this Story Seed draft"
-                      icon={savedFeedback ? Check : Bookmark}
-                    >
-                      {savedFeedback ? 'Saved' : 'Save Draft'}
-                    </LibraryButton>
+                <div
+                  ref={settingsScrollRef}
+                  onScroll={updateSettingsScrollEnd}
+                  data-scroll-end={settingsScrollEnd ? 'true' : undefined}
+                  className="story-seed-sheet-scroll mt-2 min-h-0 flex-1 overscroll-contain overflow-y-auto px-4"
+                >
+                  <div className="space-y-3 pb-3">
+                    <StorySeedSettings seed={seed} updateSeed={updateSeed} />
                   </div>
                 </div>
+
+                <LibraryPanel
+                  variant="footer"
+                  padding="none"
+                  className="shrink-0 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3"
+                >
+                  <LibraryButton
+                    fullWidth
+                    onClick={onSaveDraft}
+                    disabled={isGenerating}
+                    title="Save this Story Seed draft"
+                    icon={savedFeedback ? Check : Bookmark}
+                  >
+                    {savedFeedback ? 'Saved' : 'Save Draft'}
+                  </LibraryButton>
+                </LibraryPanel>
               </LibraryPanel>
             </motion.div>
           </div>

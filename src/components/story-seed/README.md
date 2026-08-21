@@ -4,7 +4,7 @@
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **Replica created:** 2026-08-01
-- **Last Workshop update:** 2026-08-18
+- **Last Workshop update:** 2026-08-21
 - **Last source comparison:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and ready for production transfer
 
@@ -211,6 +211,12 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-08-21:** Reworked the mobile Settings sheet so expanded Fate Survival
+  content no longer clips invisibly. The header and Save Draft action are now
+  pinned sheet chrome while only the settings body scrolls, the oversized top
+  reservation and bottom dead-zone padding were corrected to real header and
+  safe-area sizes, and the native scrollbar was replaced with a bottom edge
+  fade that lifts once the scroll end is reached.
 - **2026-08-18:** Raised Story Seed helper and status copy to a WCAG AA
   contrast floor, strengthened placeholder legibility, announced the missing
   requirements on the disabled Manifest action, and moved automatic tag

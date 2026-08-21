@@ -1,19 +1,19 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ReferenceReaderChamber from '../../../components/reader-chamber/reference/ReaderChamber';
-import DevelopmentReaderChamber from '../../../components/reader-chamber/development/ReaderChamber';
 import { CodexSheetOverlay as ReferenceCodexSheetOverlay } from '../../../components/reader-codex/reference/CodexSheetOverlay';
-import { CodexSheetOverlay as DevelopmentCodexSheetOverlay } from '../../../components/reader-codex/development/CodexSheetOverlay';
-import type {
-  ReaderPreferences,
-  StoryMemory,
-  UpdateStoryFields,
-} from '../../../components/reader-chamber/shared/types';
+import {
+  DEFAULT_READER_TYPOGRAPHY,
+  ReaderChamber as DevelopmentReaderChamber,
+  type ReaderPreferences,
+  type StoryMemory,
+  type UpdateStoryFields,
+} from '@seihouse/sen/reader-chamber';
+import { CodexSheetOverlay as DevelopmentCodexSheetOverlay } from '@seihouse/sen/reader-codex';
 import {
   resetMockState,
   updateMockStory,
   useAppStore,
 } from '../../../components/reader-chamber/shared/stubs';
-import { DEFAULT_READER_TYPOGRAPHY } from '../../../components/reader-chamber/shared/readerTypography';
 import { FeatureWorkspace, type WorkshopControlsConfig } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import {
@@ -32,7 +32,6 @@ import {
   type PreviewCategory,
   type PreviewState,
 } from './previewStates';
-import '../../../components/reader-chamber/shared/reader-chamber.css';
 
 type ReaderTab = 'reader' | 'codex' | 'memory';
 

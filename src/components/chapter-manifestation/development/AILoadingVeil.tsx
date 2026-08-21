@@ -8,7 +8,7 @@ import {
   type MediaRevealState,
   type RevealedMediaAsset,
 } from '../shared/manifestation';
-import { ParticleEffect } from '../../../ParticleEffect';
+import { ParticleEffect } from '../../library/ParticleEffect';
 import type { AILoadingVeilProps } from '../reference/AILoadingVeil';
 
 /**

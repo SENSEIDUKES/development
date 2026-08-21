@@ -1,0 +1,55 @@
+{
+  "name": "@seihouse/sen",
+  "version": "0.1.0",
+  "description": "The SEN component package: the Celestial Library design system and the Reader Chamber, Reader Codex, Codex card, Manifestation, and Relic surfaces.",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/types/package/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./library": {
+      "types": "./dist/types/package/library.d.ts",
+      "import": "./dist/library.js"
+    },
+    "./reader-chamber": {
+      "types": "./dist/types/package/reader-chamber.d.ts",
+      "import": "./dist/reader-chamber.js"
+    },
+    "./reader-codex": {
+      "types": "./dist/types/package/reader-codex.d.ts",
+      "import": "./dist/reader-codex.js"
+    },
+    "./codex-cards": {
+      "types": "./dist/types/package/codex-cards.d.ts",
+      "import": "./dist/codex-cards.js"
+    },
+    "./manifestations": {
+      "types": "./dist/types/package/manifestations.d.ts",
+      "import": "./dist/manifestations.js"
+    },
+    "./relics": {
+      "types": "./dist/types/package/relics.d.ts",
+      "import": "./dist/relics.js"
+    },
+    "./audio": {
+      "types": "./dist/types/package/audio.d.ts",
+      "import": "./dist/audio.js"
+    },
+    "./styles.css": "./dist/sen.css"
+  },
+  "peerDependencies": {
+    "@seihouse/audio-player": "*",
+    "lucide-react": ">=1",
+    "motion": ">=12",
+    "react": ">=18",
+    "react-dom": ">=18",
+    "react-focus-lock": ">=2"
+  }
+}

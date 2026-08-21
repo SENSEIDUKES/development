@@ -1,17 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Play, RotateCcw } from 'lucide-react';
-import ManifestationReveal from '../../../components/chapter-manifestation/development/ManifestationReveal';
-import CelestialScrollVessel from '../../../components/chapter-manifestation/development/vessels/CelestialScrollVessel';
+import {
+  CelestialScrollVessel,
+  ManifestationReveal,
+} from '@seihouse/sen/manifestations';
 import {
   MANIFESTATION_REVEAL_STATES,
   type ManifestationRevealState,
   type RevealedContent,
-} from '../../../components/chapter-manifestation/shared/manifestationReveal';
+} from '@seihouse/sen/manifestations';
 import {
   MEDIA_KIND_LABEL,
   type MediaKind,
   type RevealedMediaAsset,
-} from '../../../components/chapter-manifestation/shared/manifestation';
+} from '@seihouse/sen/manifestations';
 
 const MOCK_REVEALED_ASSET: RevealedMediaAsset = {
   src: '/icons/sacred-tree.svg',

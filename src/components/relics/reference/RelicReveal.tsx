@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Sparkles, Award, Shield, Zap, RefreshCw, Save, Sliders, Compass, Globe, Key } from 'lucide-react';
-import { ParticleEffect } from '../../../ParticleEffect';
+import { ParticleEffect } from '../../library/ParticleEffect';
 import { CosmicArtifact } from '../shared/types';
 
 /**

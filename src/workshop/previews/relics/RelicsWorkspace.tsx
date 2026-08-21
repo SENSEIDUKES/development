@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { RelicCard } from '../../../components/relics/shared/RelicCard';
-import { RelicModal } from '../../../components/relics/shared/RelicModal';
 import { RelicReveal as ReferenceRelicReveal } from '../../../components/relics/reference/RelicReveal';
-import { RelicReveal as DevelopmentRelicReveal } from '../../../components/relics/development/RelicReveal';
-import { CosmicArtifact } from '../../../components/relics/shared/types';
+import {
+  RelicCard,
+  RelicModal,
+  RelicReveal as DevelopmentRelicReveal,
+  type CosmicArtifact,
+} from '@seihouse/sen/relics';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { mockRelics } from './mockData';

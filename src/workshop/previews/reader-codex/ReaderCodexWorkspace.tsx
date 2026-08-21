@@ -1,18 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import DevelopmentReaderCodex from '../../../components/reader-codex/development/ReaderCodex';
+import { ReaderCodex as DevelopmentReaderCodex } from '@seihouse/sen/reader-codex';
 import ReferenceReaderCodex from '../../../components/reader-codex/reference/ReaderCodex';
 import type {
   ReaderCodexStoryPatchUpdater,
   StoryMemory,
   StoryWorld,
   UpdateStoryFields,
-} from '../../../components/reader-chamber/shared/types';
+} from '@seihouse/sen/reader-chamber';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { createReaderCodexPreviewStory } from './previewData';
 import { readerCodexPages, type ReaderCodexPage } from './previewStates';
-import '../../../components/reader-chamber/shared/reader-chamber.css';
-import '../../../components/reader-codex/shared/reader-codex.css';
 
 type ReaderCodexComponent = typeof ReferenceReaderCodex;
 

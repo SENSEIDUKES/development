@@ -23,7 +23,7 @@ import {
   LibraryTextBox,
   ManifestButton,
   type LibraryNavigationDrawerSection,
-} from '../components/library';
+} from '@seihouse/sen/library';
 
 /**
  * LibraryComponents — the home page's Library Components tab.

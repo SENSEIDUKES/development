@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -184,5 +185,21 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       generationApis(serverEnvironment),
     ],
+    resolve: {
+      // DEV consumes the same entries the future `@seihouse/sen` package
+      // publishes, so a Workshop preview imports exactly what a consuming
+      // application will. The package itself is built by
+      // `vite.package.config.ts`.
+      alias: [
+        {
+          find: /^@seihouse\/sen$/,
+          replacement: fileURLToPath(new URL('./src/package/index.ts', import.meta.url)),
+        },
+        {
+          find: /^@seihouse\/sen\/(.*)$/,
+          replacement: `${fileURLToPath(new URL('./src/package', import.meta.url))}/$1.ts`,
+        },
+      ],
+    },
   };
 });

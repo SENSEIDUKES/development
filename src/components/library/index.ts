@@ -12,6 +12,9 @@
  * (media / content / header / title / description / body / metadata /
  * actions / footer) that future Library cards build on; it complements
  * `LibraryPanel`, which stays the section container.
+ * `ParticleEffect` is the shared celestial particle canvas every ambient
+ * Library surface — relic reveals, loading veils, the celestial backdrop —
+ * draws its motes with.
  * `SEIButton` and
  * `SEIBottomNavigation` are exported only for building new Library-skinned
  * controls on top of the shared base behavior; pages should not use them
@@ -94,4 +97,6 @@ export { LibraryTextArea } from './LibraryTextArea';
 export type { LibraryTextAreaProps } from './LibraryTextArea';
 export { LibraryTextBox } from './LibraryTextBox';
 export type { LibraryTextBoxProps, LibraryTextBoxType } from './LibraryTextBox';
+export { ParticleEffect } from './ParticleEffect';
+export type { ParticleEffectProps } from './ParticleEffect';
 export { cn } from './cn';

@@ -4,11 +4,13 @@
 - **Source location:** `src/components/AILoadingVeil.tsx`
 - **Workshop preview:** `?preview=chapter-generation-manifestation`
 - **Replica created:** 2026-07-29
-- **Last Workshop update:** 2026-08-17
+- **Last Workshop update:** 2026-08-21
 - **Last source comparison:** 2026-07-29
 - **Replica status:** under refinement
 
 ## Workshop history
+
+- **2026-08-21:** Published this feature as `@seihouse/sen/manifestations`: the chamber and its zones, the loading system and veils, the journey scrubber with its destinations, travelers, and trails, the omen scenes, and the manifestation model. `AILoadingVeil` now draws its motes from the Library-owned `ParticleEffect` instead of an application-root file. The locked `reference/` replica stays Workshop-only.
 
 - **2026-08-17:** Moved the Aura Veil / Manifestation Reveal page switcher and every preview-only state, effect, simulation, containment, and advanced option into the responsive `FeatureWorkspace` Workshop Controls menu. The standalone reveal now shares one controller with that menu; the Aura Veil and Manifestation Reveal component contracts, internal interaction, and locked Reference implementation remain unchanged. The Development-only reveal reports that it has no Original Reference instead of presenting Development code as a locked replica.
 - **2026-08-16 (merge with main):** Resolved the conflict with PR #113's visual upgrade pass, which merged into `main` while this motion redesign was in review. The persistent-scene rebuild above supersedes that pass's scene-swap choreography and vessel artwork, so `ManifestationReveal.tsx` and `CelestialScrollVessel.tsx` resolved to this branch's versions; `MediaManifestationZone.tsx` (progression-reactive golden ambient) and the preview controls merged cleanly from both sides. The performance audit's vista fallback was ported forward into the rebuilt vessel: a supplied asset now renders over the placeholder vista inside the revealed frame until the asset reports `load` (the vista stays on failure), with the readiness flag living on the vessel itself so a once-loaded asset never re-shows the vista on later reveals. The visual pass's sealed-button hover grow and state-aware scene-swap transitions were dropped along with the per-state scenes they animated.

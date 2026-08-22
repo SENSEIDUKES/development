@@ -237,8 +237,8 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
       title: 'Hostile Target Scan Complete',
       changes: [
         { direction: 'gain' as const, label: 'Intel' },
-        { direction: 'gain' as const, label: 'Weakness Identified' },
-        { direction: 'loss' as const, label: 'Presence Exposed' },
+        { direction: 'gain' as const, label: 'Weakness' },
+        { direction: 'loss' as const, label: 'Exposed' },
       ],
     },
   },

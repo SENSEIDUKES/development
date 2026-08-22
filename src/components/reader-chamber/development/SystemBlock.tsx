@@ -110,11 +110,11 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, cl
               </p>
             )}
             {visibleChanges.length > 0 && (
-              <div className="mt-3 flex items-center gap-x-4 md:gap-x-6 overflow-x-auto whitespace-nowrap border-t border-inherit/30 pt-2.5">
+              <div className="mt-3 flex items-center gap-x-3 md:gap-x-6 overflow-x-auto whitespace-nowrap border-t border-inherit/30 pt-2.5">
                 {visibleChanges.map((change, index) => (
                   <span
                     key={index}
-                    className="font-mono text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-current opacity-90"
+                    className="font-mono text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.10em] md:tracking-[0.22em] text-current opacity-90"
                   >
                     {change.direction === 'loss' ? '−' : '+'} {change.label}
                   </span>

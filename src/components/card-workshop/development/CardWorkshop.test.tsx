@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CardWorkshopView } from './CardWorkshopView';
 import { createCardWorkshopContextualFixture } from './CardWorkshopContextualReader';
 import { getManifestBackdrop } from '@seihouse/sen/codex-cards';
-import { getReaderChamberSurfaceClass } from '@seihouse/sen/reader-chamber';
+import { getReaderChamberSurfaceClass, SystemBlock } from '@seihouse/sen/reader-chamber';
 import { CardWorkshopWorkspace } from '../../../workshop/previews/card-workshop/CardWorkshopWorkspace';
 import { ACTIVE_CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
 import { INITIAL_CARD_WORKSHOP_OVERRIDES } from '../../../workshop/previews/card-workshop/previewStates';
@@ -124,18 +124,69 @@ describe('CardWorkshopView', () => {
 
     await clickButton('System Prompt');
     expect(container.textContent).toContain('System Panels & Fate Outcomes');
-    expect(container.textContent).toContain('Aster now considers you someone she can trust.');
-    expect(container.textContent).toContain('+ Karma Bond');
-    // Compact prompts keep the semantic System color system (codex_update → blue).
+    // Default compact event: the cultivation breakthrough — SYSTEM kicker,
+    // dramatic headline, serif prose, and the signed consequence row.
     const compactBlock = container.querySelector('.system-block');
-    expect(compactBlock?.className).toContain('border-blue-500/40');
-    expect(compactBlock?.className).toContain('text-blue-400');
+    expect(compactBlock?.textContent).toContain('Mortal Tribulation Surpassed');
+    expect(compactBlock?.textContent).toContain('Yun Che has successfully broken through into the Foundation Establishment realm.');
+    expect(compactBlock?.textContent).toContain('+ Stage 4');
+    expect(compactBlock?.textContent).toContain('+ 100 Lifespan');
+    expect(compactBlock?.textContent).toContain('− Easier to Detect');
+    // The serif prose paragraph stays the only narration text: it carries the
+    // sentence alone — never the headline or the consequence row.
+    expect(compactBlock?.querySelector('p')?.textContent)
+      .toBe('Yun Che has successfully broken through into the Foundation Establishment realm.');
+    // Compact prompts keep the semantic System color system (breakthrough → gold).
+    expect(compactBlock?.className).toContain('border-amber-400/50');
+    expect(compactBlock?.className).toContain('text-amber-400');
     expect(container.querySelector('[role="tabpanel"]')?.textContent).not.toContain('Human Portrait');
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
+
+    // Switch between the mocked Wuxia events — the same data-driven compact
+    // card renders each without per-event branches.
+    await clickButton('Broken Promise');
+    const promiseBlock = container.querySelector('.system-block');
+    expect(promiseBlock?.textContent).toContain('Oath Before the Rain Court Broken');
+    expect(promiseBlock?.textContent).toContain("The Magistrate's sworn promise to the Riverside Sect lies broken.");
+    expect(promiseBlock?.textContent).toContain('− Reputation');
+    expect(promiseBlock?.textContent).toContain('+ Sect Enmity');
+
+    await clickButton('Target Scan');
+    const scanBlock = container.querySelector('.system-block');
+    expect(scanBlock?.textContent).toContain('Hostile Target Scan Complete');
+    expect(scanBlock?.textContent).toContain('Elder Kaelen — Foundation Establishment, Stage 7. Threat assessment: moderate.');
+    expect(scanBlock?.textContent).toContain('+ Intel');
+    expect(scanBlock?.textContent).toContain('+ Weakness');
+    expect(scanBlock?.textContent).toContain('− Exposed');
 
     // Toggle to structured mechanical example
     await clickButton('Structured Mechanical');
     expect(container.textContent).toContain('Meridian Status & Vitality Flow');
+  });
+
+  it('caps the compact System Prompt consequence row at four prioritized changes', () => {
+    act(() => root.render(renderWithDevAudio(
+      <SystemBlock
+        content="[ Yun Che has successfully broken through into the Foundation Establishment realm. ]"
+        system={{
+          kind: 'system_prompt',
+          promptType: 'breakthrough',
+          title: 'Mortal Tribulation Surpassed',
+          changes: [
+            { direction: 'gain', label: 'Stage 4' },
+            { direction: 'gain', label: '100 Lifespan' },
+            { direction: 'loss', label: 'Easier to Detect' },
+            { direction: 'gain', label: 'Dao Heart Tempered' },
+            { direction: 'loss', label: 'Fifth Consequence' },
+          ],
+        }}
+      />,
+    )));
+
+    const compactBlock = container.querySelector('.system-block');
+    expect(compactBlock?.textContent).toContain('Mortal Tribulation Surpassed');
+    expect(compactBlock?.textContent).toContain('+ Dao Heart Tempered');
+    expect(compactBlock?.textContent).not.toContain('Fifth Consequence');
   });
 
   it('switches between Card Type Tabs and Contextual View without losing the selected preset or override state', async () => {
@@ -215,8 +266,9 @@ describe('CardWorkshopView', () => {
 
     const reader = container.querySelector<HTMLElement>('[data-testid="card-workshop-contextual-reader"]');
     await selectByLabel('Card preset', 'preset-system-prompt');
-    expect(reader?.textContent).toContain('Aster now considers you someone she can trust.');
-    expect(reader?.textContent).toContain('+ Karma Bond');
+    expect(reader?.textContent).toContain('Mortal Tribulation Surpassed');
+    expect(reader?.textContent).toContain('Yun Che has successfully broken through into the Foundation Establishment realm.');
+    expect(reader?.textContent).toContain('+ Stage 4');
     expect(reader?.textContent).toContain('Then the thunder moved on');
   });
 

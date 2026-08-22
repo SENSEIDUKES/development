@@ -7,7 +7,10 @@ import { createCardWorkshopContextualFixture } from './CardWorkshopContextualRea
 import { getManifestBackdrop } from '@seihouse/sen/codex-cards';
 import { getReaderChamberSurfaceClass, SystemBlock } from '@seihouse/sen/reader-chamber';
 import { CardWorkshopWorkspace } from '../../../workshop/previews/card-workshop/CardWorkshopWorkspace';
-import { ACTIVE_CARD_PRESETS } from '../../../workshop/previews/card-workshop/previewData';
+import {
+  ACTIVE_CARD_PRESETS,
+  SYSTEM_PROMPT_PRESET_EXAMPLES,
+} from '../../../workshop/previews/card-workshop/previewData';
 import { INITIAL_CARD_WORKSHOP_OVERRIDES } from '../../../workshop/previews/card-workshop/previewStates';
 import { resetMockState } from '../../reader-chamber/shared/stubs';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
@@ -199,6 +202,99 @@ describe('CardWorkshopView', () => {
     expect(compactBlock?.textContent).not.toContain('Fifth Consequence');
   });
 
+  it('uses the celestial orb to expand in place, replace consequences, and collapse to the compact default', async () => {
+    act(() => root.render(renderWithDevAudio(
+      <CardWorkshopView initialMode="tabs" initialPresetId="preset-system-prompt" />,
+    )));
+
+    const systemBlock = container.querySelector<HTMLElement>('.system-block');
+    const compactSummary = 'Yun Che has successfully broken through into the Foundation Establishment realm.';
+    expect(systemBlock?.dataset.systemPromptState).toBe('compact');
+    expect(systemBlock?.querySelector('[data-consequence-count]')).toBeTruthy();
+    expect(systemBlock?.querySelector('[data-system-expanded]')).toBeFalsy();
+    expect(systemBlock?.querySelector('[data-system-orb-icon="closed"]')).toBeTruthy();
+    expect(systemBlock?.querySelector('[data-system-summary]')?.textContent).toBe(compactSummary);
+    expect(getButton('Expand System Prompt details')?.getAttribute('aria-expanded')).toBe('false');
+
+    await clickButton('Expand System Prompt details');
+
+    expect(systemBlock?.dataset.systemPromptState).toBe('expanded');
+    expect(systemBlock?.querySelector('[data-consequence-count]')).toBeFalsy();
+    expect(systemBlock?.querySelector('[data-system-expanded]')?.getAttribute('data-reader-narration'))
+      .toBe('excluded');
+    expect(systemBlock?.querySelector('[data-system-orb-icon="open"]')).toBeTruthy();
+    expect(getButton('Collapse System Prompt details')?.getAttribute('aria-expanded')).toBe('true');
+    expect(systemBlock?.textContent).toContain('MC (You)');
+    expect(systemBlock?.textContent).toContain('Power Rankings');
+    expect(systemBlock?.textContent).toContain('Foundation Establishment — Stage 4');
+    expect(systemBlock?.textContent).toContain('37/100');
+    expect(systemBlock?.textContent).toContain('Karma Bond');
+    expect(systemBlock?.textContent).toContain('−75/100');
+    expect(systemBlock?.textContent).toContain('Danger');
+    expect(systemBlock?.textContent).toContain('Lore');
+    expect(systemBlock?.textContent).toContain('Warning');
+    expect(systemBlock?.textContent).toContain('Narrative Consequences');
+    expect(systemBlock?.querySelector('[data-system-summary]')?.textContent).toBe(compactSummary);
+    expect(systemBlock?.querySelector('[role="progressbar"][aria-label="Power Rankings progress"]'))
+      .toBeTruthy();
+
+    const elderHanAction = [...(systemBlock?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
+      .find(element => element.textContent === 'Elder Han');
+    expect(elderHanAction).toBeTruthy();
+    expect(elderHanAction?.className).toContain('text-[#d4af37]');
+    await act(async () => elderHanAction!.click());
+    expect(document.body.querySelector('[role="dialog"][aria-label="Elder Han Codex details"]'))
+      .toBeTruthy();
+    await act(async () => elderHanAction!.click());
+
+    await clickButton('Collapse System Prompt details');
+    expect(systemBlock?.dataset.systemPromptState).toBe('compact');
+    expect(systemBlock?.querySelector('[data-system-expanded]')).toBeFalsy();
+    expect(systemBlock?.querySelector('[data-consequence-count]')).toBeTruthy();
+    expect(systemBlock?.querySelector('[data-system-orb-icon="closed"]')).toBeTruthy();
+  });
+
+  it('provides complete local expanded breakdowns for all three System Prompt examples', async () => {
+    act(() => root.render(renderWithDevAudio(
+      <CardWorkshopView initialMode="tabs" initialPresetId="preset-system-prompt" />,
+    )));
+
+    const examples = [
+      {
+        control: 'Cultivation Breakthrough',
+        subject: 'Yun Che',
+        value: 'Foundation Establishment — Stage 4',
+        consequence: 'Elder Han will move openly against Yun Che.',
+      },
+      {
+        control: 'Broken Promise',
+        subject: 'Magistrate Jinhai',
+        value: 'Rain Court Standing — Disgraced',
+        consequence: 'Magistrate Jinhai loses access to Riverside Sect testimony.',
+      },
+      {
+        control: 'Target Scan',
+        subject: 'Elder Kaelen',
+        value: 'Foundation Establishment — Stage 7',
+        consequence: 'Elder Kaelen will prepare a countermeasure before the next encounter.',
+      },
+    ];
+
+    for (const example of examples) {
+      await clickButton(example.control);
+      const systemBlock = container.querySelector<HTMLElement>('.system-block');
+      expect(systemBlock?.dataset.systemPromptState).toBe('compact');
+
+      await clickButton('Expand System Prompt details');
+      expect(systemBlock?.textContent).toContain(example.subject);
+      expect(systemBlock?.textContent).toContain(example.value);
+      expect(systemBlock?.textContent).toContain('Lore');
+      expect(systemBlock?.textContent).toContain('Warning');
+      expect(systemBlock?.textContent).toContain('Narrative Consequences');
+      expect(systemBlock?.textContent).toContain(example.consequence);
+    }
+  });
+
   it('switches between Card Type Tabs and Contextual View without losing the selected preset or override state', async () => {
     act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="tabs" />)));
 
@@ -310,6 +406,26 @@ describe('CardWorkshopView', () => {
     );
     expect(targetScanFixture.chapter.blocks?.[2]?.text)
       .toBe('[ Elder Kaelen — Foundation Establishment, Stage 7. Threat assessment: moderate. ]');
+  });
+
+  it('keeps expanded mock information outside the short System Prompt TTS source', () => {
+    const systemPreset = ACTIVE_CARD_PRESETS.find(preset => preset.id === 'preset-system-prompt')!;
+    const styles = ['breakthrough', 'broken-promise', 'target-scan'] as const;
+
+    for (const style of styles) {
+      const fixture = createCardWorkshopContextualFixture(
+        systemPreset,
+        { ...INITIAL_CARD_WORKSHOP_OVERRIDES, systemPromptContentStyle: style },
+        new Set(),
+      );
+      const systemBlock = fixture.chapter.blocks?.[2];
+
+      expect(systemBlock?.text).toBe(SYSTEM_PROMPT_PRESET_EXAMPLES[style].systemContent);
+      expect(systemBlock?.system?.expanded?.sections.length).toBeGreaterThan(0);
+      expect(systemBlock?.text).not.toContain('Power Rankings');
+      expect(systemBlock?.text).not.toContain('Narrative Consequences');
+      expect(systemBlock?.text).not.toContain(systemBlock?.system?.expanded?.sections[0]?.value ?? '__missing__');
+    }
   });
 
   it('keeps image, Manifest/Awaken, Codex, entity-mention, and portrait overrides active in Contextual View', async () => {

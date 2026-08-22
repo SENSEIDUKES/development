@@ -35,7 +35,7 @@ const LOCAL_HUMAN_PORTRAIT = '/card-workshop/test-images/ye_chen_portrait.png';
 const LOCAL_CREATURE_PORTRAIT = '/card-workshop/test-images/lyra_meadowlight_portrait.png';
 const SYSTEM_PROMPT_CHARACTER_HIGHLIGHTER = createCodexHighlighter(SYSTEM_PROMPT_CHARACTER_TERMS);
 
-/** Workshop-only renderer proving the reusable SystemBlock accepts Reader-owned character links. */
+/** Workshop-only renderer proving all System copy accepts Reader-owned character links. */
 function renderSystemPromptProse(text: string) {
   const segments = splitByCodexTerms(text, SYSTEM_PROMPT_CHARACTER_HIGHLIGHTER);
   if (segments.length === 1) return <>{text}</>;

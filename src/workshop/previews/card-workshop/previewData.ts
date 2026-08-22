@@ -1,11 +1,135 @@
 import type { CardPreset } from '../../../components/card-workshop/shared/types';
 import type { CodexTerm } from '@seihouse/sen/reader-codex';
+import type { SystemPromptExpandedData } from '@seihouse/sen/reader-chamber';
 
 const durableVisualImportance = {
   namedStatus: true,
   narrativeWeight: 'major' as const,
   recurrence: true,
   plotRelevance: true,
+};
+
+const BREAKTHROUGH_EXPANDED: SystemPromptExpandedData = {
+  subject: {
+    name: 'Yun Che',
+    role: 'MC (You)',
+  },
+  sections: [
+    {
+      heading: 'Power Rankings',
+      value: 'Foundation Establishment — Stage 4',
+      progress: { value: 37, max: 100, label: '37/100' },
+    },
+    {
+      heading: 'Karma Bond',
+      detail: 'Yun Che’s successful breakthrough has angered Elder Han.',
+      progress: { value: -75, min: -100, max: 100, label: '−75/100' },
+      status: { label: 'Danger', tone: 'danger' },
+      tone: 'danger',
+    },
+    {
+      heading: 'Lore',
+      detail: 'Foundation Establishment Stage 4 stabilizes the cultivator’s mortal meridians and extends natural lifespan by one century.',
+    },
+    {
+      heading: 'Warning',
+      detail: 'The tribulation signature can be tracked for seven days by cultivators above Yun Che’s current realm.',
+      status: { label: 'Spirit Trace', tone: 'warning' },
+      tone: 'warning',
+    },
+    {
+      heading: 'Narrative Consequences',
+      items: [
+        'Elder Han will move openly against Yun Che.',
+        'Nearby sects may investigate the tribulation site.',
+      ],
+    },
+  ],
+};
+
+const BROKEN_PROMISE_EXPANDED: SystemPromptExpandedData = {
+  subject: {
+    name: 'Magistrate Jinhai',
+    role: 'Rain Court Magistrate',
+  },
+  sections: [
+    {
+      heading: 'Reputation',
+      value: 'Rain Court Standing — Disgraced',
+      progress: { value: -64, min: -100, max: 100, label: '−64/100' },
+      status: { label: 'Falling', tone: 'warning' },
+      tone: 'warning',
+    },
+    {
+      heading: 'Karma Bond',
+      detail: 'Magistrate Jinhai’s broken oath has severed the Riverside Sect’s remaining trust.',
+      progress: { value: -92, min: -100, max: 100, label: '−92/100' },
+      status: { label: 'Danger', tone: 'danger' },
+      tone: 'danger',
+    },
+    {
+      heading: 'Lore',
+      detail: 'Rain Court promises are witnessed by the Nine Cauldrons Oath Seal and entered into the public karmic record.',
+    },
+    {
+      heading: 'Warning',
+      detail: 'A second sworn breach will strip Magistrate Jinhai of the court’s spiritual protection.',
+      status: { label: 'Oath Fracture', tone: 'warning' },
+      tone: 'warning',
+    },
+    {
+      heading: 'Narrative Consequences',
+      items: [
+        'Magistrate Jinhai loses access to Riverside Sect testimony.',
+        'The Riverside Sect may demand judgment before the next court assembly.',
+      ],
+    },
+  ],
+};
+
+const TARGET_SCAN_EXPANDED: SystemPromptExpandedData = {
+  subject: {
+    name: 'Elder Kaelen',
+    role: 'Hostile Elder',
+  },
+  sections: [
+    {
+      heading: 'Power Rankings',
+      value: 'Foundation Establishment — Stage 7',
+      progress: { value: 82, max: 100, label: '82/100' },
+    },
+    {
+      heading: 'Combat Profile',
+      value: 'Spear Arts · Lightning Affinity',
+      detail: 'Weakness: spiritual defense drops briefly after his third chained thrust.',
+      status: { label: 'Moderate Threat', tone: 'warning' },
+      tone: 'warning',
+    },
+    {
+      heading: 'Karma Bond',
+      detail: 'Elder Kaelen suspects Yun Che is concealing his true cultivation stage.',
+      progress: { value: -48, min: -100, max: 100, label: '−48/100' },
+      status: { label: 'Watchful', tone: 'warning' },
+      tone: 'warning',
+    },
+    {
+      heading: 'Lore',
+      detail: 'Elder Kaelen is the Seventh Spear of the Northern Foundation Hall and favors direct suppression over negotiation.',
+    },
+    {
+      heading: 'Warning',
+      detail: 'Elder Kaelen detected the edge of Yun Che’s spiritual scan.',
+      status: { label: 'Exposed', tone: 'danger' },
+      tone: 'danger',
+    },
+    {
+      heading: 'Narrative Consequences',
+      items: [
+        'Elder Kaelen will prepare a countermeasure before the next encounter.',
+        'Yun Che can exploit the opening after the third chained thrust.',
+      ],
+    },
+  ],
 };
 
 export const CARD_PRESETS: CardPreset[] = [
@@ -121,7 +245,7 @@ export const CARD_PRESETS: CardPreset[] = [
     title: 'System Prompt',
     subtitle: 'In-World Celestial Library Notification',
     kind: 'system-block',
-    description: 'Universal in-world System Prompt panel. Default output is a dramatic headline, concise TTS prose with named-character Codex links, an optional event badge, and one non-scrolling priority consequence row, with optional structured mechanical rows when a novel calls for them.',
+    description: 'Universal in-world System Prompt panel. The compact default keeps its concise TTS summary and non-scrolling priority consequences; the celestial action opens a complete Codex-shaped event breakdown in place.',
     explanation: {
       componentName: 'SystemBlock',
       sourceFile: 'src/components/reader-chamber/development/SystemBlock.tsx',
@@ -129,13 +253,14 @@ export const CARD_PRESETS: CardPreset[] = [
       entityOrEventType: 'system (system_prompt)',
       codexDestination: 'ReaderCodex > Power Rankings / Ability Ledger / Karma',
       capabilities: { hasImage: false, hasManifestAction: false, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
-      architecturalNotes: 'Universal System Prompt contract supporting a dramatic headline, a concise literary message (the only text narration reads), an optional structured badge, and priority-ordered consequences. Mobile shows three only when all three fit, otherwise two; roomy layouts may show four.',
+      architecturalNotes: 'Universal System Prompt contract supporting a dramatic headline, a concise literary message (the only text narration reads), an optional structured badge, and priority-ordered consequences. Reader-only expanded data replaces the compact row after an explicit tap; it is not emitted by generation or read by TTS.',
     },
     systemContent: '[ Yun Che has successfully broken through into the Foundation Establishment realm. ]',
     systemEvent: {
       kind: 'system_prompt',
       promptType: 'breakthrough',
       title: 'Mortal Tribulation Surpassed',
+      expanded: BREAKTHROUGH_EXPANDED,
       changes: [
         { direction: 'gain', label: 'Stage 4' },
         { direction: 'gain', label: '100 Lifespan' },
@@ -220,6 +345,34 @@ export const SYSTEM_PROMPT_CHARACTER_TERMS: CodexTerm[] = [
     },
   },
   {
+    term: 'Elder Han',
+    type: 'character',
+    isCanonicalName: true,
+    entry: {
+      id: 'card-workshop-system-elder-han',
+      name: 'Elder Han',
+      role: 'Sect elder',
+      status: 'alive',
+      relationshipToMC: 'hostile enemy',
+      description: 'A sect elder angered by Yun Che’s advancing cultivation and growing influence.',
+      portraitKind: 'human',
+    },
+  },
+  {
+    term: 'Magistrate Jinhai',
+    type: 'character',
+    isCanonicalName: true,
+    entry: {
+      id: 'card-workshop-system-magistrate-jinhai',
+      name: 'Magistrate Jinhai',
+      role: 'Rain Court magistrate',
+      status: 'alive',
+      relationshipToMC: 'hostile official',
+      description: 'An oathbound magistrate whose standing depends on the Rain Court accepting his word.',
+      portraitKind: 'human',
+    },
+  },
+  {
     term: 'Elder Kaelen',
     type: 'character',
     isCanonicalName: true,
@@ -242,6 +395,7 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
       kind: 'system_prompt' as const,
       promptType: 'breakthrough' as const,
       title: 'Mortal Tribulation Surpassed',
+      expanded: BREAKTHROUGH_EXPANDED,
       changes: [
         { direction: 'gain' as const, label: 'Stage 4' },
         { direction: 'gain' as const, label: '100 Lifespan' },
@@ -255,6 +409,7 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
       kind: 'system_prompt' as const,
       promptType: 'choice_consequence' as const,
       title: 'Oath Before the Rain Court Broken',
+      expanded: BROKEN_PROMISE_EXPANDED,
       changes: [
         { direction: 'loss' as const, label: 'Reputation' },
         { direction: 'loss' as const, label: 'Karma Bond' },
@@ -268,6 +423,7 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
       kind: 'system_prompt' as const,
       promptType: 'enemy_scan' as const,
       title: 'Hostile Target Scan Complete',
+      expanded: TARGET_SCAN_EXPANDED,
       badge: {
         label: 'Threat Assessment',
         value: 'Moderate',

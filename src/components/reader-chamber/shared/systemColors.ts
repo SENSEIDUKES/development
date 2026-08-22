@@ -172,6 +172,36 @@ export const SYSTEM_COLORS_LEGEND: SystemColorMeaning[] = [
   }
 ];
 
+/**
+ * Short two-part classification for the compact System Prompt card: simple,
+ * immediate language where the main category renders neutral (white/gray) and
+ * only the meaningful subtype carries the meaning's assigned color, so color
+ * communicates instead of decorating. The full `name` remains the legend and
+ * structured-panel wording.
+ */
+const COMPACT_CLASSIFICATIONS: Record<string, { category: string; subtype: string }> = {
+  neutral: { category: 'System', subtype: 'Info' },
+  other: { category: 'System', subtype: 'General' },
+  codex_update: { category: 'Codex', subtype: 'Update' },
+  progression: { category: 'Growth', subtype: 'Stable' },
+  breakthrough: { category: 'Breakthrough', subtype: 'Awakening' },
+  reward: { category: 'Reward', subtype: 'Loot' },
+  warning: { category: 'Warning', subtype: 'Risk' },
+  critical_danger: { category: 'Combat', subtype: 'Enemy' },
+  combat_artifact: { category: 'Combat', subtype: 'Artifact' },
+  combat_breakthrough: { category: 'Combat', subtype: 'Breakthrough' },
+  heavenly_tribulation: { category: 'Tribulation', subtype: 'Divine' },
+  corruption: { category: 'Curse', subtype: 'Permanent' },
+  mystery: { category: 'Fate', subtype: 'Prophecy' },
+  romance: { category: 'Bond', subtype: 'Karmic' },
+  choice_consequence: { category: 'Karma', subtype: 'Consequence' },
+  system_error: { category: 'System', subtype: 'Error' },
+};
+
+export function getSystemCompactClassification(meaning: SystemColorMeaning) {
+  return COMPACT_CLASSIFICATIONS[meaning.type] ?? COMPACT_CLASSIFICATIONS.neutral;
+}
+
 // Backwards and alternative type aliases produced by older saves or model drift.
 const SYSTEM_TYPE_ALIASES: Record<string, string> = {
   friendly_scan: 'codex_update',

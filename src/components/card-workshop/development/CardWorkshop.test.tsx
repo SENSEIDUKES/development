@@ -132,7 +132,7 @@ describe('CardWorkshopView', () => {
     // serif TTS prose in its own bottom section.
     const compactBlock = container.querySelector('.system-block');
     expect(compactBlock?.textContent).toContain('Mortal Tribulation Surpassed');
-    expect(compactBlock?.textContent).toContain('✦ Awakening | Mentor & Special Location (Gold) ✦');
+    expect(compactBlock?.textContent).toContain('✦ Breakthrough | Awakening (Gold) ✦');
     expect(compactBlock?.textContent).toContain('New Realm');
     expect(compactBlock?.textContent).toContain('Foundation Establishment');
     expect(compactBlock?.textContent).toContain('Meridian State');
@@ -166,7 +166,7 @@ describe('CardWorkshopView', () => {
     await clickButton('Broken Promise');
     const promiseBlock = container.querySelector('.system-block');
     expect(promiseBlock?.textContent).toContain('Oath Before the Rain Court Broken');
-    expect(promiseBlock?.textContent).toContain('✦ Karmic Consequence | Great Item (Orange) ✦');
+    expect(promiseBlock?.textContent).toContain('✦ Karma | Consequence (Orange) ✦');
     expect(promiseBlock?.textContent).toContain('A solemn interface surfaced before Magistrate Jinhai, its gilt script cold as the rain outside.');
     expect(promiseBlock?.textContent).toContain('Celestial Record');
     expect(promiseBlock?.textContent).toContain('Witnesses');
@@ -176,7 +176,7 @@ describe('CardWorkshopView', () => {
     await clickButton('Target Scan');
     const scanBlock = container.querySelector('.system-block');
     expect(scanBlock?.textContent).toContain('Hostile Target Scan Complete');
-    expect(scanBlock?.textContent).toContain('✦ Combat Threat | Enemy (Red) ✦');
+    expect(scanBlock?.textContent).toContain('✦ Combat | Enemy (Red) ✦');
     expect(scanBlock?.querySelector('[data-system-summary]')?.textContent)
       .toBe('A crimson interface unfolded beside Elder Kaelen, taking his measure in silence.');
     expect(scanBlock?.textContent).toContain('Threat Assessment · Moderate');
@@ -185,6 +185,22 @@ describe('CardWorkshopView', () => {
     expect(scanBlock?.textContent).toContain('+ Intel');
     expect(scanBlock?.textContent).toContain('+ Weakness');
     expect(scanBlock?.textContent).toContain('− Exposed');
+    // Color communicates meaning: the classification subtype carries the
+    // assigned color, row labels stay neutral gray, ordinary values stay
+    // white, and only the badge severity takes the severity color.
+    const scanSpans = [...(scanBlock?.querySelectorAll('span') ?? [])];
+    const enemySubtype = scanSpans.find(element => element.textContent === 'Enemy');
+    expect(enemySubtype?.className).toContain('text-red-500');
+    const combatCategory = scanSpans.find(element => element.textContent === 'Combat');
+    expect(combatCategory?.className).toContain('text-neutral-300');
+    const cultivationLabel = scanSpans.find(element => element.textContent === 'Cultivation');
+    expect(cultivationLabel?.className).toContain('text-neutral-400');
+    const cultivationValue = scanSpans.find(element => element.textContent === 'Foundation Establishment, Stage 7');
+    expect(cultivationValue?.className).toContain('text-neutral-100');
+    const badgeLabel = scanSpans.find(element => element.textContent === 'Threat Assessment');
+    expect(badgeLabel?.className).toContain('text-neutral-300');
+    const badgeSeverity = scanSpans.find(element => element.textContent === 'Moderate');
+    expect(badgeSeverity?.className).toContain('text-orange-400');
     const elderCodexAction = [...(scanBlock?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
       .find(element => element.textContent === 'Elder Kaelen');
     expect(elderCodexAction).toBeTruthy();

@@ -17,7 +17,9 @@ const events = [
     consequence: 'Elder Han will move openly against Yun Che.',
     codexName: 'Elder Han',
     codexColorClass: 'text-[#d4af37]',
-    classification: '✦ Awakening | Mentor & Special Location (Gold) ✦',
+    classification: '✦ Breakthrough | Awakening (Gold) ✦',
+    subtype: 'Awakening',
+    subtypeColorClass: 'text-amber-400',
     rowLabel: 'New Realm',
     rowValue: 'Foundation Establishment',
     prose: 'A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.',
@@ -30,7 +32,9 @@ const events = [
     consequence: 'Magistrate Jinhai loses access to Riverside Sect testimony.',
     codexName: 'Magistrate Jinhai',
     codexColorClass: 'text-red-500',
-    classification: '✦ Karmic Consequence | Great Item (Orange) ✦',
+    classification: '✦ Karma | Consequence (Orange) ✦',
+    subtype: 'Consequence',
+    subtypeColorClass: 'text-orange-400',
     rowLabel: 'Celestial Record',
     rowValue: 'Sealed',
     prose: 'A solemn interface surfaced before Magistrate Jinhai, its gilt script cold as the rain outside.',
@@ -43,7 +47,9 @@ const events = [
     consequence: 'Elder Kaelen will prepare a countermeasure before the next encounter.',
     codexName: 'Elder Kaelen',
     codexColorClass: 'text-red-500',
-    classification: '✦ Combat Threat | Enemy (Red) ✦',
+    classification: '✦ Combat | Enemy (Red) ✦',
+    subtype: 'Enemy',
+    subtypeColorClass: 'text-red-500',
     rowLabel: 'Cultivation',
     rowValue: 'Foundation Establishment, Stage 7',
     prose: 'A crimson interface unfolded beside Elder Kaelen, taking his measure in silence.',
@@ -101,6 +107,20 @@ async function verifyCompactHierarchy(block, event, deviceName) {
   });
   if (signReport !== 'ok') {
     throw new Error(`${event.slug} consequence sign coloring broken at ${deviceName}: ${signReport}`);
+  }
+
+  // Color communicates meaning: only the classification subtype carries the
+  // assigned color; row labels stay neutral gray and ordinary values white.
+  const colorReport = await block.evaluate((element, expected) => {
+    const spans = [...element.querySelectorAll('span')];
+    const byText = (text) => spans.find((span) => span.textContent === text);
+    if (!byText(expected.subtype)?.classList.contains(expected.subtypeColorClass)) return 'subtype-not-colored';
+    if (!byText(expected.rowLabel)?.classList.contains('text-neutral-400')) return 'row-label-not-neutral';
+    if (!byText(expected.rowValue)?.classList.contains('text-neutral-100')) return 'row-value-not-neutral';
+    return 'ok';
+  }, { subtype: event.subtype, subtypeColorClass: event.subtypeColorClass, rowLabel: event.rowLabel, rowValue: event.rowValue });
+  if (colorReport !== 'ok') {
+    throw new Error(`${event.slug} color semantics broken at ${deviceName}: ${colorReport}`);
   }
 
   const order = await block.evaluate((element) => {
@@ -204,6 +224,19 @@ for (const device of devices) {
     await verifyCompactHierarchy(tabsBlock, event, device.name);
     if (event.slug === 'target-scan') {
       await tabsBlock.getByText('Threat Assessment · Moderate', { exact: true }).waitFor();
+      // Badge severity coloring: neutral label, only the severity takes color.
+      const badgeReport = await tabsBlock.evaluate((element) => {
+        const spans = [...element.querySelectorAll('span')];
+        const label = spans.find((span) => span.textContent === 'Threat Assessment');
+        const severity = spans.find((span) => span.textContent === 'Moderate');
+        return {
+          labelNeutral: label?.classList.contains('text-neutral-300') ?? false,
+          severityColored: severity?.classList.contains('text-orange-400') ?? false,
+        };
+      });
+      if (!badgeReport.labelNeutral || !badgeReport.severityColored) {
+        throw new Error(`target scan badge lost its neutral label / orange severity at ${device.name}.`);
+      }
       const elderLink = tabsBlock.getByRole('button', { name: 'Elder Kaelen', exact: true });
       await elderLink.waitFor();
       if (!(await elderLink.getAttribute('class'))?.includes('text-red-500')) {

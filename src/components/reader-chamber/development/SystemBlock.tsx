@@ -11,7 +11,7 @@ import type {
   SystemPromptExpandedTone,
 } from '../shared/types';
 import { FateResultCard } from './FateResultCard';
-import { getSystemPromptColor, getSystemColorMeaning, buildSystemContext } from '../shared/systemColors';
+import { getSystemPromptColor, getSystemColorMeaning, getSystemCompactClassification, buildSystemContext } from '../shared/systemColors';
 export { SYSTEM_COLORS_LEGEND } from '../shared/systemColors';
 
 interface SystemBlockProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -53,6 +53,30 @@ function getVisibleSystemSentence(content: string, badge?: SystemPromptBadge) {
     .replace(/\s{2,}/g, ' ')
     .replace(/\s+([,.;!?])/g, '$1')
     .trim();
+}
+
+/**
+ * Threat-severity treatment for the compact badge: the label stays neutral
+ * and only the severity value carries color, so severity reads at a glance.
+ * Deadly inverts the pill itself — black surface, white text, strong border.
+ */
+const BADGE_SEVERITY_STYLES: Record<string, { pill: string; label: string; value: string }> = {
+  light: { pill: 'border-white/15 bg-white/[0.04]', label: 'text-neutral-300', value: 'text-yellow-300' },
+  moderate: { pill: 'border-white/15 bg-white/[0.04]', label: 'text-neutral-300', value: 'text-orange-400' },
+  severe: { pill: 'border-white/15 bg-white/[0.04]', label: 'text-neutral-300', value: 'text-red-400' },
+  deadly: { pill: 'border-neutral-100/80 bg-black', label: 'text-white', value: 'text-white' },
+  unknown: { pill: 'border-white/15 bg-white/[0.04]', label: 'text-neutral-300', value: 'text-neutral-400' },
+};
+
+/** Unrecognized badge values stay ordinary: neutral label, white value. */
+const BADGE_SEVERITY_NEUTRAL = {
+  pill: 'border-white/15 bg-white/[0.04]',
+  label: 'text-neutral-300',
+  value: 'text-neutral-100',
+};
+
+function getBadgeSeverityStyles(badge: SystemPromptBadge) {
+  return BADGE_SEVERITY_STYLES[badge.value.trim().toLowerCase()] ?? BADGE_SEVERITY_NEUTRAL;
 }
 
 const EXPANDED_TONE_STYLES: Record<SystemPromptExpandedTone, {
@@ -490,6 +514,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
     // row-bearing events stay untouched.
     if (rows.length === 0 || visibleChanges.length > 0) {
       const badge = normalizeSystemPromptBadge(system.badge);
+      const badgeSeverity = badge ? getBadgeSeverityStyles(badge) : undefined;
       const sentence = getVisibleSystemSentence(content, badge);
       const headline = (system.title || '').trim();
       const compactRows = rows.slice(0, 3);
@@ -498,6 +523,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
       const renderSystemText = renderProse ?? ((text: string) => text);
       const inferenceContext = buildSystemContext(system, content);
       const meaning = getSystemColorMeaning(system.promptType, inferenceContext);
+      const classification = getSystemCompactClassification(meaning);
       const accent = `${meaning.borderColor} ${meaning.textColor}`;
 
       return (
@@ -520,8 +546,12 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
                     {headline}
                   </span>
                 )}
-                <span className="mt-1 block font-mono text-[9px] uppercase tracking-wider opacity-60">
-                  ✦ {meaning.name} ✦
+                <span className="mt-1 block font-mono text-[9px] uppercase tracking-wider text-neutral-500">
+                  {'✦ '}
+                  <span className="text-neutral-300">{classification.category}</span>
+                  {' | '}
+                  <span className={meaning.textColor}>{classification.subtype}</span>
+                  {` (${meaning.colorName}) ✦`}
                 </span>
               </div>
               <SystemOrbEmblem
@@ -547,16 +577,17 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
               <div className="mt-3 space-y-1.5 font-mono text-[11px] md:text-xs">
                 {compactRows.map((row, idx) => (
                   <div key={idx} className="flex items-center justify-between gap-3">
-                    <span className="opacity-70 uppercase tracking-widest">{row.label}</span>
-                    <span className="font-semibold tracking-wide text-right">{row.value}</span>
+                    <span className="text-neutral-400 uppercase tracking-widest">{row.label}</span>
+                    <span className="font-semibold tracking-wide text-right text-neutral-100">{row.value}</span>
                   </div>
                 ))}
               </div>
             )}
-            {badge && (
-              <span className="mt-2.5 self-start rounded-full border border-current/35 bg-[color-mix(in_srgb,currentColor_10%,transparent)] px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-current shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em]">
-                {badge.label} <span aria-hidden="true">·</span>{' '}
-                <span className="font-bold">{badge.value}</span>
+            {badge && badgeSeverity && (
+              <span className={`mt-2.5 self-start rounded-full border px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em] ${badgeSeverity.pill}`}>
+                <span className={badgeSeverity.label}>{badge.label}</span>{' '}
+                <span aria-hidden="true" className={badgeSeverity.label}>·</span>{' '}
+                <span className={`font-bold ${badgeSeverity.value}`}>{badge.value}</span>
               </span>
             )}
             {isExpanded && expandedData ? (

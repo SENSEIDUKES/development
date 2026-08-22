@@ -240,7 +240,7 @@ describe('CardWorkshopView', () => {
     expect(compactBlock?.textContent).not.toContain('Fifth Consequence');
   });
 
-  it('uses the celestial orb to expand in place, replace consequences, and collapse to the compact default', async () => {
+  it('opens the expanded event report in a viewport overlay and restores focus to the orb action', async () => {
     act(() => root.render(renderWithDevAudio(
       <CardWorkshopView initialMode="tabs" initialPresetId="preset-system-prompt" />,
     )));
@@ -249,50 +249,99 @@ describe('CardWorkshopView', () => {
     const compactSummary = 'A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.';
     expect(systemBlock?.dataset.systemPromptState).toBe('compact');
     expect(systemBlock?.querySelector('[data-consequence-count]')).toBeTruthy();
-    expect(systemBlock?.querySelector('[data-system-expanded]')).toBeFalsy();
     expect(systemBlock?.querySelector('[data-system-orb-icon="closed"]')).toBeTruthy();
     expect(systemBlock?.querySelector('[data-system-summary]')?.textContent).toBe(compactSummary);
+    expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
     expect(getButton('Expand System Prompt details')?.getAttribute('aria-expanded')).toBe('false');
 
     await clickButton('Expand System Prompt details');
 
+    // The report is a viewport-locked dialog portaled above the reader —
+    // outside the compact card, which keeps its compact content untouched.
+    const overlay = document.body.querySelector<HTMLElement>('[role="dialog"][data-system-expanded="true"]');
+    expect(overlay).toBeTruthy();
+    expect(overlay?.getAttribute('aria-modal')).toBe('true');
+    expect(overlay?.getAttribute('data-reader-narration')).toBe('excluded');
+    expect(systemBlock?.contains(overlay!)).toBe(false);
     expect(systemBlock?.dataset.systemPromptState).toBe('expanded');
-    expect(systemBlock?.querySelector('[data-consequence-count]')).toBeFalsy();
-    expect(systemBlock?.querySelector('[data-system-expanded]')?.getAttribute('data-reader-narration'))
-      .toBe('excluded');
+    expect(systemBlock?.querySelector('[data-consequence-count]')).toBeTruthy();
+    expect(systemBlock?.querySelector('[data-system-summary]')?.textContent).toBe(compactSummary);
+    expect(systemBlock?.textContent).not.toContain('Power Rankings');
     expect(systemBlock?.querySelector('[data-system-orb-icon="open"]')).toBeTruthy();
     expect(getButton('Collapse System Prompt details')?.getAttribute('aria-expanded')).toBe('true');
-    expect(systemBlock?.textContent).toContain('MC (You)');
-    expect(systemBlock?.textContent).toContain('Power Rankings');
-    expect(systemBlock?.textContent).toContain('Foundation Establishment — Stage 4');
-    expect(systemBlock?.textContent).toContain('37/100');
-    expect(systemBlock?.textContent).toContain('Karma Bond');
-    expect(systemBlock?.textContent).toContain('−75/100');
-    expect(systemBlock?.textContent).toContain('Danger');
-    expect(systemBlock?.textContent).toContain('Lore');
-    expect(systemBlock?.textContent).toContain('Warning');
-    expect(systemBlock?.textContent).toContain('Narrative Consequences');
-    expect(systemBlock?.querySelector('[data-system-summary]')?.textContent).toBe(compactSummary);
-    expect(systemBlock?.querySelector('[role="progressbar"][aria-label="Power Rankings progress"]'))
-      .toBeTruthy();
 
-    const elderHanAction = [...(systemBlock?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
+    // One flat report: classification, headline, subject, the signed
+    // consequence row, and the Codex sections with progress — never narration.
+    expect(overlay?.textContent).toContain('✦ Breakthrough | Awakening ✦');
+    expect(overlay?.textContent).toContain('Mortal Tribulation Surpassed');
+    expect(overlay?.textContent).toContain('MC (You)');
+    expect(overlay?.textContent).toContain('Power Rankings');
+    expect(overlay?.textContent).toContain('Foundation Establishment — Stage 4');
+    expect(overlay?.textContent).toContain('37/100');
+    expect(overlay?.textContent).toContain('Karma Bond');
+    expect(overlay?.textContent).toContain('−75/100');
+    expect(overlay?.textContent).toContain('Danger');
+    expect(overlay?.textContent).toContain('Lore');
+    expect(overlay?.textContent).toContain('Warning');
+    expect(overlay?.textContent).toContain('Narrative Consequences');
+    expect(overlay?.querySelector('[data-consequence-count]')?.textContent).toContain('+ Stage 4');
+    expect(overlay?.querySelector('[role="progressbar"][aria-label="Power Rankings progress"]'))
+      .toBeTruthy();
+    // Flat sections with simple dividers — no stacked card boxes.
+    const powerSection = overlay?.querySelector('[data-system-expanded-section="power-rankings"]');
+    expect(powerSection?.className).toContain('border-t');
+    expect(powerSection?.className).not.toContain('rounded-xl');
+
+    // Mobile keeps only the three highest-priority sections; the rest are
+    // desktop-only through `hidden md:block`.
+    const narrativeSection = overlay?.querySelector('[data-system-expanded-section="narrative-consequences"]');
+    expect(narrativeSection?.className).toContain('hidden');
+    expect(narrativeSection?.className).toContain('md:block');
+    expect(powerSection?.className).not.toContain('hidden');
+
+    // Character names inside the report keep their Codex colors and links.
+    const elderHanAction = [...(overlay?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
       .find(element => element.textContent === 'Elder Han');
     expect(elderHanAction).toBeTruthy();
     expect(elderHanAction?.className).toContain('text-[#d4af37]');
     await act(async () => elderHanAction!.click());
     expect(document.body.querySelector('[role="dialog"][aria-label="Elder Han Codex details"]'))
       .toBeTruthy();
-    await act(async () => elderHanAction!.click());
+    // Escape closes the hovercard first; the event report stays open. The
+    // hovercard unmounts through its own exit animation, so wait it out.
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    await vi.waitFor(() => {
+      expect(document.body.querySelector('[role="dialog"][aria-label="Elder Han Codex details"]'))
+        .toBeFalsy();
+    });
+    expect(document.body.querySelector('[role="dialog"][data-system-expanded="true"]')).toBeTruthy();
 
-    await clickButton('Collapse System Prompt details');
+    // Escape then closes the report and returns focus to the orb action.
+    const orbAction = getButton('Collapse System Prompt details');
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
     expect(systemBlock?.dataset.systemPromptState).toBe('compact');
-    expect(systemBlock?.querySelector('[data-system-expanded]')).toBeFalsy();
     expect(systemBlock?.querySelector('[data-consequence-count]')).toBeTruthy();
     expect(systemBlock?.querySelector('[data-system-orb-icon="closed"]')).toBeTruthy();
+    expect(document.activeElement).toBe(orbAction);
+
+    // Reopening and using the dedicated close button restores focus the same way.
+    await clickButton('Expand System Prompt details');
+    expect(document.body.querySelector('[data-system-expanded]')).toBeTruthy();
+    const reopenOrb = getButton('Collapse System Prompt details');
+    const closeAction = [...document.body.querySelectorAll<HTMLButtonElement>('button')]
+      .find(element => element.getAttribute('aria-label') === 'Close System event report');
+    expect(closeAction).toBeTruthy();
+    await act(async () => closeAction!.click());
+    expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
+    expect(document.activeElement).toBe(reopenOrb);
   });
 
-  it('provides complete local expanded breakdowns for all three System Prompt examples', async () => {
+  it('provides complete local expanded reports for all three System Prompt examples', async () => {
     act(() => root.render(renderWithDevAudio(
       <CardWorkshopView initialMode="tabs" initialPresetId="preset-system-prompt" />,
     )));
@@ -303,18 +352,21 @@ describe('CardWorkshopView', () => {
         subject: 'Yun Che',
         value: 'Foundation Establishment — Stage 4',
         consequence: 'Elder Han will move openly against Yun Che.',
+        badge: null,
       },
       {
         control: 'Broken Promise',
         subject: 'Magistrate Jinhai',
         value: 'Rain Court Standing — Disgraced',
         consequence: 'Magistrate Jinhai loses access to Riverside Sect testimony.',
+        badge: null,
       },
       {
         control: 'Target Scan',
         subject: 'Elder Kaelen',
         value: 'Foundation Establishment — Stage 7',
         consequence: 'Elder Kaelen will prepare a countermeasure before the next encounter.',
+        badge: 'Threat Assessment',
       },
     ];
 
@@ -324,12 +376,25 @@ describe('CardWorkshopView', () => {
       expect(systemBlock?.dataset.systemPromptState).toBe('compact');
 
       await clickButton('Expand System Prompt details');
-      expect(systemBlock?.textContent).toContain(example.subject);
-      expect(systemBlock?.textContent).toContain(example.value);
-      expect(systemBlock?.textContent).toContain('Lore');
-      expect(systemBlock?.textContent).toContain('Warning');
-      expect(systemBlock?.textContent).toContain('Narrative Consequences');
-      expect(systemBlock?.textContent).toContain(example.consequence);
+      // The full report lives in the overlay, never in the compact card.
+      const overlay = document.body.querySelector<HTMLElement>('[role="dialog"][data-system-expanded="true"]');
+      expect(overlay).toBeTruthy();
+      expect(systemBlock?.textContent).not.toContain('Narrative Consequences');
+      expect(overlay?.textContent).toContain(example.subject);
+      expect(overlay?.textContent).toContain(example.value);
+      expect(overlay?.textContent).toContain('Lore');
+      expect(overlay?.textContent).toContain('Warning');
+      expect(overlay?.textContent).toContain('Narrative Consequences');
+      expect(overlay?.textContent).toContain(example.consequence);
+      if (example.badge) {
+        expect(overlay?.textContent).toContain(example.badge);
+      }
+
+      await act(async () => {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      });
+      expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
+      expect(systemBlock?.dataset.systemPromptState).toBe('compact');
     }
   });
 

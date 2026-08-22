@@ -245,7 +245,7 @@ export const CARD_PRESETS: CardPreset[] = [
     title: 'System Prompt',
     subtitle: 'In-World Celestial Library Notification',
     kind: 'system-block',
-    description: 'Universal in-world System Prompt panel. The compact default follows the production hierarchy — event title, classification line, concise key/value rows, optional badge, and signed priority consequences — with the concise TTS prose in its own bottom section; the celestial action opens a complete Codex-shaped event breakdown in place.',
+    description: 'Universal in-world System Prompt panel. The compact default follows the production hierarchy — event title, classification line, concise key/value rows, optional badge, and signed priority consequences — with the concise TTS prose in its own bottom section; the celestial action opens a complete Codex-shaped event report in a viewport-locked overlay above the reader.',
     explanation: {
       componentName: 'SystemBlock',
       sourceFile: 'src/components/reader-chamber/development/SystemBlock.tsx',
@@ -253,7 +253,7 @@ export const CARD_PRESETS: CardPreset[] = [
       entityOrEventType: 'system (system_prompt)',
       codexDestination: 'ReaderCodex > Power Rankings / Ability Ledger / Karma',
       capabilities: { hasImage: false, hasManifestAction: false, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
-      architecturalNotes: 'Universal System Prompt contract supporting a dramatic headline, a semantic classification line, up to three concise key/value rows, an optional structured badge, and priority-ordered signed consequences, with the concise literary message (the only text narration reads) in its own bottom section. Reader-only expanded data replaces the compact row after an explicit tap; it is not emitted by generation or read by TTS.',
+      architecturalNotes: 'Universal System Prompt contract supporting a dramatic headline, a semantic classification line, up to three concise key/value rows, an optional structured badge, and priority-ordered signed consequences, with the concise literary message (the only text narration reads) in its own bottom section. Reader-only expanded data opens after an explicit tap as a viewport-locked overlay event report — flat Codex sections with simple dividers, the three highest-priority sections on mobile — while the compact card and the reader position stay untouched; it is not emitted by generation or read by TTS.',
     },
     systemContent: '[ A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before. ]',
     systemEvent: {

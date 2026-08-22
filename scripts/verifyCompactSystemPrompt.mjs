@@ -134,7 +134,27 @@ async function verifyCompactHierarchy(block, event, deviceName) {
   }
 }
 
-async function verifyExpandedBreakdown(page, block, event, deviceName) {
+/**
+ * The expanded event report is a viewport-locked overlay portaled above the
+ * reader: the compact card keeps its consequence row and prose underneath,
+ * the page scrolls neither behind nor inside the panel, mobile shows only the
+ * three highest-priority Codex sections, and closing restores focus to the
+ * orb and the exact scroll position.
+ */
+async function verifyExpandedOverlay(page, block, event, deviceName) {
+  const isMobile = deviceName.startsWith('mobile-');
+  // The shared Workshop Controls bar is preview tooling pinned above reader
+  // surfaces (z-[200]) and can cover the viewport-locked overlay when the page
+  // scroll leaves it near the top. It is not part of the reader contract, so
+  // it steps aside (visibility keeps layout, so scroll positions stay exact)
+  // while the overlay is verified.
+  const workshopControls = page.locator('[data-workshop-controls]');
+  await workshopControls.evaluateAll((elements) => elements.forEach((element) => {
+    element.dataset.previousVisibility = element.style.visibility;
+    element.style.visibility = 'hidden';
+  }));
+  // Horizontal-overflow baseline: the Workshop page itself may overflow at
+  // 320px, so the overlay is judged on what it adds, never an absolute.
   const compactDocumentOverflow = await page.evaluate(() => (
     document.documentElement.scrollWidth - document.documentElement.clientWidth
   ));
@@ -145,67 +165,127 @@ async function verifyExpandedBreakdown(page, block, event, deviceName) {
   await block.locator('[data-system-orb-icon="closed"]').waitFor();
   await expandButton.click();
 
-  const expanded = block.locator('[data-system-expanded]');
-  await expanded.waitFor({ state: 'visible' });
+  const overlay = page.locator('[role="dialog"][data-system-expanded="true"]');
+  await overlay.waitFor({ state: 'visible' });
+  // Playwright's own pre-click scroll-into-view may move the page, so the
+  // reader-position contract is measured from the open overlay onward.
+  const scrollBefore = await page.evaluate(() => window.scrollY);
+  if (await overlay.getAttribute('aria-modal') !== 'true') {
+    throw new Error(`${event.slug} overlay is not modal at ${deviceName}.`);
+  }
+  if (await overlay.getAttribute('data-reader-narration') !== 'excluded') {
+    throw new Error(`${event.slug} overlay lost its narration boundary at ${deviceName}.`);
+  }
   if (await block.getAttribute('data-system-prompt-state') !== 'expanded') {
     throw new Error(`${event.slug} did not enter expanded state at ${deviceName}.`);
   }
-  if (await expanded.getAttribute('data-reader-narration') !== 'excluded') {
-    throw new Error(`${event.slug} expanded information lost its narration boundary at ${deviceName}.`);
+  if (await block.locator('[data-consequence-count]').count() !== 1) {
+    throw new Error(`${event.slug} compact card did not keep its consequence row under the overlay at ${deviceName}.`);
   }
-  if (await block.locator('[data-consequence-count]').count() !== 0) {
-    throw new Error(`${event.slug} kept the compact consequence row while expanded at ${deviceName}.`);
-  }
-
-  await block.getByText(event.subject, { exact: true }).first().waitFor();
-  await block.getByText(event.value, { exact: true }).waitFor();
-  await block.getByText(event.consequence, { exact: true }).waitFor();
-  await block.getByText('Lore', { exact: true }).waitFor();
-  await block.getByText('Warning', { exact: true }).waitFor();
-  await block.getByText('Narrative Consequences', { exact: true }).waitFor();
-  if (await expanded.getByRole('progressbar').count() === 0) {
-    throw new Error(`${event.slug} expanded breakdown has no progress value at ${deviceName}.`);
+  if ((await page.evaluate(() => document.body.style.overflow)) !== 'hidden') {
+    throw new Error(`${event.slug} overlay did not lock page scroll at ${deviceName}.`);
   }
 
-  const codexLink = block.getByRole('button', { name: event.codexName, exact: true }).first();
+  await overlay.getByText(event.subject, { exact: true }).first().waitFor();
+  await overlay.getByText(event.value, { exact: true }).waitFor();
+  if (await overlay.getByRole('progressbar').count() === 0) {
+    throw new Error(`${event.slug} overlay has no progress value at ${deviceName}.`);
+  }
+  // The overlay keeps its own signed consequence row.
+  await overlay.locator('[data-consequence-count]').waitFor();
+
+  // Mobile: only the three highest-priority sections are visible. Larger
+  // screens: every section, same flat structure.
+  const narrativeSection = overlay.locator('[data-system-expanded-section="narrative-consequences"]');
+  await narrativeSection.waitFor({ state: 'attached' });
+  if (isMobile) {
+    if (await narrativeSection.isVisible()) {
+      throw new Error(`${event.slug} shows more than three Codex sections on mobile at ${deviceName}.`);
+    }
+  } else {
+    if (!(await narrativeSection.isVisible())) {
+      throw new Error(`${event.slug} hides expanded sections at ${deviceName}.`);
+    }
+    await overlay.getByText(event.consequence, { exact: true }).waitFor();
+    await overlay.getByText('Lore', { exact: true }).waitFor();
+    await overlay.getByText('Warning', { exact: true }).waitFor();
+    await overlay.getByText('Narrative Consequences', { exact: true }).waitFor();
+  }
+
+  // One-screen fit: the panel never scrolls internally, never escapes the
+  // viewport, and the page behind gains no horizontal overflow.
+  const fit = await overlay.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return {
+      clientHeight: element.clientHeight,
+      scrollHeight: element.scrollHeight,
+      left: rect.left,
+      top: rect.top,
+      right: rect.right,
+      bottom: rect.bottom,
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+      documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  });
+  if (fit.scrollHeight > fit.clientHeight + 1) {
+    throw new Error(`${event.slug} overlay panel scrolls internally at ${deviceName}: ${JSON.stringify(fit)}`);
+  }
+  if (fit.left < -1 || fit.top < -1 || fit.right > fit.viewportWidth + 1 || fit.bottom > fit.viewportHeight + 1) {
+    throw new Error(`${event.slug} overlay escapes the viewport at ${deviceName}: ${JSON.stringify(fit)}`);
+  }
+  if (fit.documentOverflow > compactDocumentOverflow + 1) {
+    throw new Error(`${event.slug} overlay added horizontal page overflow at ${deviceName}: ${JSON.stringify(fit)} (baseline ${compactDocumentOverflow})`);
+  }
+
+  // Codex links inside the overlay keep their colors; their hovercard opens
+  // above the dialog and closes first on Escape.
+  const codexLink = overlay.getByRole('button', { name: event.codexName, exact: true }).first();
   await codexLink.waitFor();
   if (!(await codexLink.getAttribute('class'))?.includes(event.codexColorClass)) {
     throw new Error(`${event.codexName} did not preserve its assigned character color at ${deviceName}.`);
   }
   await codexLink.click();
-  await page.getByRole('dialog', { name: `${event.codexName} Codex details` }).waitFor();
+  const hovercard = page.getByRole('dialog', { name: `${event.codexName} Codex details` });
+  await hovercard.waitFor();
   await page.keyboard.press('Escape');
-
-  const overflow = await block.evaluate((element) => ({
-    clientWidth: element.clientWidth,
-    scrollWidth: element.scrollWidth,
-    documentClientWidth: document.documentElement.clientWidth,
-    documentScrollWidth: document.documentElement.scrollWidth,
-  }));
-  const expandedDocumentOverflow = overflow.documentScrollWidth - overflow.documentClientWidth;
-  if (
-    overflow.scrollWidth > overflow.clientWidth + 1
-    || expandedDocumentOverflow > compactDocumentOverflow + 1
-  ) {
-    throw new Error(`${event.slug} expanded breakdown overflows at ${deviceName}: ${JSON.stringify(overflow)}`);
+  await hovercard.waitFor({ state: 'detached' });
+  if (!(await overlay.isVisible())) {
+    throw new Error(`${event.slug} overlay closed together with its Codex hovercard at ${deviceName}.`);
   }
 
-  await block.screenshot({ path: `output/playwright/system-prompt-${event.slug}-${deviceName}-expanded-card.png` });
-  if (event.slug === 'breakthrough' && deviceName === 'mobile-390') {
-    await page.screenshot({
-      path: 'output/playwright/system-prompt-breakthrough-mobile-390-expanded-page.png',
-      fullPage: true,
-    });
-  }
+  await page.screenshot({ path: `output/playwright/system-prompt-${event.slug}-${deviceName}-overlay.png` });
 
-  const collapseButton = block.getByRole('button', { name: 'Collapse System Prompt details' });
-  await block.locator('[data-system-orb-icon="open"]').waitFor();
-  await collapseButton.click();
-  await block.locator('[data-consequence-count]').waitFor();
+  // Closing restores the reader: compact state, focus back on the orb action,
+  // page scroll unlocked, and the exact same scroll position.
+  await overlay.getByRole('button', { name: 'Close System event report' }).click();
+  await overlay.waitFor({ state: 'detached' });
   if (await block.getAttribute('data-system-prompt-state') !== 'compact') {
-    throw new Error(`${event.slug} did not collapse in place at ${deviceName}.`);
+    throw new Error(`${event.slug} did not return to compact at ${deviceName}.`);
   }
   await block.locator('[data-system-orb-icon="closed"]').waitFor();
+  try {
+    await page.waitForFunction(
+      () => document.activeElement?.getAttribute('aria-label') === 'Expand System Prompt details',
+      undefined,
+      { timeout: 5000 },
+    );
+  } catch {
+    throw new Error(`${event.slug} did not restore focus to the orb action at ${deviceName}.`);
+  }
+  if ((await page.evaluate(() => document.body.style.overflow)) === 'hidden') {
+    throw new Error(`${event.slug} left the page scroll locked at ${deviceName}.`);
+  }
+  const scrollAfter = await page.evaluate(() => window.scrollY);
+  if (Math.abs(scrollAfter - scrollBefore) > 1) {
+    throw new Error(`${event.slug} moved the reader position at ${deviceName}: ${scrollBefore} -> ${scrollAfter}`);
+  }
+
+  // Restore the preview tooling hidden during the overlay pass.
+  await workshopControls.evaluateAll((elements) => elements.forEach((element) => {
+    element.style.visibility = element.dataset.previousVisibility || '';
+    delete element.dataset.previousVisibility;
+  }));
 }
 
 const browser = await chromium.launch();
@@ -247,7 +327,7 @@ for (const device of devices) {
       await page.keyboard.press('Escape');
     }
     await tabsBlock.screenshot({ path: `output/playwright/system-prompt-${event.slug}-${device.name}-tabs-card.png` });
-    await verifyExpandedBreakdown(page, tabsBlock, event, device.name);
+    await verifyExpandedOverlay(page, tabsBlock, event, device.name);
     if (event.slug === 'breakthrough') {
       await page.screenshot({ path: `output/playwright/system-prompt-breakthrough-${device.name}-tabs.png` });
     }
@@ -263,7 +343,7 @@ for (const device of devices) {
   await page.waitForTimeout(800);
   await verifyConsequenceRow(contextBlock, 'breakthrough', device.name);
   await verifyCompactHierarchy(contextBlock, events[0], device.name);
-  await verifyExpandedBreakdown(page, contextBlock, events[0], `${device.name}-contextual`);
+  await verifyExpandedOverlay(page, contextBlock, events[0], `${device.name}-contextual`);
   await page.screenshot({ path: `output/playwright/system-prompt-breakthrough-${device.name}-contextual.png` });
   await contextBlock.screenshot({ path: `output/playwright/system-prompt-breakthrough-${device.name}-contextual-card.png` });
 

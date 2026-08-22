@@ -1,6 +1,7 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
-import { ChevronUp, Skull, TriangleAlert as AlertTriangle } from 'lucide-react';
+import { ChevronUp, Skull, TriangleAlert as AlertTriangle, X } from 'lucide-react';
 import type {
   SystemEvent,
   SystemPromptBadge,
@@ -12,6 +13,7 @@ import type {
 } from '../shared/types';
 import { FateResultCard } from './FateResultCard';
 import { getSystemPromptColor, getSystemColorMeaning, getSystemCompactClassification, buildSystemContext } from '../shared/systemColors';
+import type { SystemColorMeaning } from '../shared/systemColors';
 export { SYSTEM_COLORS_LEGEND } from '../shared/systemColors';
 
 interface SystemBlockProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -44,7 +46,7 @@ function getVisibleSystemSentence(content: string, badge?: SystemPromptBadge) {
 
   const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const badgePhrase = new RegExp(
-    `${escapeRegExp(badge.label.trim())}\\s*[:\u00b7-]\\s*${escapeRegExp(badge.value.trim())}\\.?`,
+    `${escapeRegExp(badge.label.trim())}\\s*[:·-]\\s*${escapeRegExp(badge.value.trim())}\\.?`,
     'i',
   );
 
@@ -80,27 +82,22 @@ function getBadgeSeverityStyles(badge: SystemPromptBadge) {
 }
 
 const EXPANDED_TONE_STYLES: Record<SystemPromptExpandedTone, {
-  surface: string;
   accent: string;
   progress: string;
 }> = {
   neutral: {
-    surface: 'border-current/20 bg-white/[0.025]',
     accent: 'text-current',
     progress: 'bg-current',
   },
   positive: {
-    surface: 'border-emerald-400/25 bg-emerald-500/[0.045]',
     accent: 'text-emerald-300',
     progress: 'bg-emerald-400',
   },
   warning: {
-    surface: 'border-amber-400/30 bg-amber-500/[0.045]',
     accent: 'text-amber-300',
     progress: 'bg-amber-400',
   },
   danger: {
-    surface: 'border-red-400/30 bg-red-500/[0.05]',
     accent: 'text-red-300',
     progress: 'bg-red-400',
   },
@@ -203,82 +200,250 @@ function SystemExpandedProgress({
   );
 }
 
-function SystemExpandedBreakdown({
+/**
+ * Marker of an open Codex hovercard anywhere in the document. The hovercard
+ * portals above the overlay, so while one is open the overlay defers Escape to
+ * it — the topmost layer always closes first.
+ */
+const CODEX_HOVERCARD_SELECTOR = '[data-slot="codex-hovercard"]';
+
+const OVERLAY_FOCUSABLE_SELECTOR = 'button, a[href], [role="button"], [tabindex]:not([tabindex="-1"])';
+
+/** Codex sections beyond this index render only on md and wider viewports. */
+const MOBILE_SECTION_LIMIT = 3;
+
+/**
+ * The expanded System event report: a focused, viewport-locked overlay opened
+ * by the compact card's orb action and portaled to <body>, floating above the
+ * Reader Chamber. The chapter never grows and the reader's scroll position
+ * never moves. One flat panel — classification, headline, subject, optional
+ * badge, the signed consequence row, then Codex sections separated by simple
+ * dividers (never stacked cards). Mobile fits one screen with no page or
+ * panel scrolling by showing only the three highest-priority sections (the
+ * rest are `hidden md:block`); larger screens show every section in the same
+ * structure. Nothing here is narration: the root keeps the
+ * `data-reader-narration="excluded"` boundary and lives outside the reader
+ * DOM, so TTS still reads only the compact card's prose. Escape, the close
+ * button, or a backdrop tap closes the report and returns focus to the orb.
+ */
+function SystemExpandedOverlay({
   data,
   detailsId,
+  headline,
+  meaning,
+  badge,
+  changes,
   renderText,
+  onClose,
+  returnFocusRef,
 }: {
   data: SystemPromptExpandedData;
   detailsId: string;
+  headline: string;
+  meaning: SystemColorMeaning;
+  badge?: SystemPromptBadge;
+  changes: SystemPromptChange[];
   renderText: (text: string) => React.ReactNode;
+  onClose: () => void;
+  returnFocusRef: React.RefObject<HTMLButtonElement | null>;
 }) {
-  return (
-    <div
-      id={detailsId}
-      data-system-expanded="true"
-      data-reader-narration="excluded"
-      className="mt-4 border-t border-inherit/30 pt-4"
-    >
-      <div className="space-y-3">
-        {data.sections.map((section, index) => {
-          const tone = getExpandedTone(section.tone);
-          const toneStyles = EXPANDED_TONE_STYLES[tone];
-          const statusTone = section.status?.tone
-            ? getExpandedTone(section.status.tone)
-            : tone;
-          const statusStyles = EXPANDED_TONE_STYLES[statusTone];
-          const items = Array.isArray(section.items)
-            ? section.items.filter(item => typeof item === 'string' && item.trim() !== '')
-            : [];
-          const headingId = `${detailsId}-section-${index}`;
+  const panelRef = React.useRef<HTMLDivElement>(null);
+  const classification = getSystemCompactClassification(meaning);
+  const badgeSeverity = badge ? getBadgeSeverityStyles(badge) : undefined;
 
-          return (
-            <section
-              key={`${section.heading}-${index}`}
-              aria-labelledby={headingId}
-              data-system-expanded-section={section.heading.toLowerCase().replace(/[^a-z0-9]+/g, '-')}
-              className={`rounded-xl border px-3.5 py-3 ${toneStyles.surface}`}
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3
-                  id={headingId}
-                  className={`font-mono text-[10px] font-bold uppercase tracking-[0.22em] ${toneStyles.accent}`}
+  // Lock page scroll while the report is open; restore whatever the page had.
+  React.useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
+  // Move focus into the dialog on open. On close, hand it back to the orb —
+  // but only when focus was inside the report (its removal drops focus to
+  // <body>), so an unrelated click elsewhere never gets its focus stolen.
+  React.useEffect(() => {
+    panelRef.current?.focus();
+    return () => {
+      if (document.activeElement === document.body || document.activeElement === null) {
+        returnFocusRef.current?.focus();
+      }
+    };
+  }, [returnFocusRef]);
+
+  React.useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        // An open Codex hovercard floats above this dialog; it closes first.
+        if (document.querySelector(CODEX_HOVERCARD_SELECTOR)) return;
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const focusable = [...panel.querySelectorAll<HTMLElement>(OVERLAY_FOCUSABLE_SELECTOR)]
+        .filter(element => element.offsetParent !== null || element === document.activeElement);
+      if (focusable.length === 0) {
+        event.preventDefault();
+        panel.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (event.shiftKey && (active === first || !panel.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !panel.contains(active))) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.15 }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      style={{
+        paddingTop: 'max(1rem, env(safe-area-inset-top, 0px))',
+        paddingRight: 'max(1rem, env(safe-area-inset-right, 0px))',
+        paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))',
+        paddingLeft: 'max(1rem, env(safe-area-inset-left, 0px))',
+      }}
+      onClick={onClose}
+    >
+      <motion.div
+        ref={panelRef}
+        id={detailsId}
+        role="dialog"
+        aria-modal="true"
+        {...(headline
+          ? { 'aria-labelledby': `${detailsId}-title` }
+          : { 'aria-label': 'System event report' })}
+        tabIndex={-1}
+        data-system-expanded="true"
+        data-reader-narration="excluded"
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.15 }}
+        onClick={(event) => event.stopPropagation()}
+        className={`max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-hidden rounded-2xl border bg-[#020a16]/95 px-5 py-4 md:px-6 md:py-5 shadow-[0_0_32px_color-mix(in_srgb,currentColor_18%,transparent),inset_0_1px_0_rgba(255,255,255,0.06)] outline-none ${meaning.borderColor} ${meaning.textColor}`}
+      >
+        <div className="flex flex-col">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <span className="block font-mono text-[9px] uppercase tracking-wider text-neutral-500">
+                {'✦ '}
+                <span className="text-neutral-300">{classification.category}</span>
+                {' | '}
+                <span className={meaning.textColor}>{classification.subtype}</span>
+                {' ✦'}
+              </span>
+              {headline && (
+                <h2
+                  id={`${detailsId}-title`}
+                  className="mt-1 font-mono text-base md:text-lg font-bold uppercase tracking-[0.18em] leading-snug text-current drop-shadow-[0_0_10px_color-mix(in_srgb,currentColor_55%,transparent)]"
                 >
-                  {section.heading}
-                </h3>
-                {section.status?.label?.trim() && (
-                  <span className={`rounded-full border border-current/30 bg-black/25 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.14em] ${statusStyles.accent}`}>
-                    {section.status.label.trim()}
-                  </span>
+                  {headline}
+                </h2>
+              )}
+            </div>
+            <button
+              type="button"
+              aria-label="Close System event report"
+              onClick={onClose}
+              className="-mr-2 -mt-1 flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-full text-neutral-400 outline-none transition-[color,transform] duration-200 hover:text-neutral-100 active:scale-95 focus-visible:ring-2 focus-visible:ring-current/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#020a16] motion-reduce:transition-none"
+            >
+              <X className="h-5 w-5" strokeWidth={2.2} />
+            </button>
+          </div>
+          {data.subject && (
+            <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-300 md:text-[11px]">
+              <span>{renderText(data.subject.name)}</span>
+              {data.subject.role && (
+                <>
+                  <span aria-hidden="true" className="text-current/45">|</span>
+                  <span className="text-neutral-400">{data.subject.role}</span>
+                </>
+              )}
+            </div>
+          )}
+          {badge && badgeSeverity && (
+            <span className={`mt-2.5 self-start rounded-full border px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em] ${badgeSeverity.pill}`}>
+              <span className={badgeSeverity.label}>{badge.label}</span>{' '}
+              <span aria-hidden="true" className={badgeSeverity.label}>·</span>{' '}
+              <span className={`font-bold ${badgeSeverity.value}`}>{badge.value}</span>
+            </span>
+          )}
+          <SystemConsequenceRow changes={changes} />
+          {data.sections.map((section, index) => {
+            const tone = getExpandedTone(section.tone);
+            const toneStyles = EXPANDED_TONE_STYLES[tone];
+            const statusTone = section.status?.tone
+              ? getExpandedTone(section.status.tone)
+              : tone;
+            const statusStyles = EXPANDED_TONE_STYLES[statusTone];
+            const items = Array.isArray(section.items)
+              ? section.items.filter(item => typeof item === 'string' && item.trim() !== '')
+              : [];
+            const headingId = `${detailsId}-section-${index}`;
+
+            return (
+              <section
+                key={`${section.heading}-${index}`}
+                aria-labelledby={headingId}
+                data-system-expanded-section={section.heading.toLowerCase().replace(/[^a-z0-9]+/g, '-')}
+                className={`mt-3 border-t border-white/10 pt-3${index >= MOBILE_SECTION_LIMIT ? ' hidden md:block' : ''}`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3
+                    id={headingId}
+                    className={`font-mono text-[10px] font-bold uppercase tracking-[0.22em] ${toneStyles.accent}`}
+                  >
+                    {section.heading}
+                  </h3>
+                  {section.status?.label?.trim() && (
+                    <span className={`rounded-full border border-current/30 bg-black/25 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.14em] ${statusStyles.accent}`}>
+                      {section.status.label.trim()}
+                    </span>
+                  )}
+                </div>
+                {typeof section.value === 'string' && section.value.trim() && (
+                  <p className="mt-2 break-words font-serif text-sm leading-relaxed text-neutral-100 md:text-base">
+                    {renderText(section.value.trim())}
+                  </p>
                 )}
-              </div>
-              {typeof section.value === 'string' && section.value.trim() && (
-                <p className="mt-2 break-words font-serif text-sm leading-relaxed text-neutral-100 md:text-base">
-                  {renderText(section.value.trim())}
-                </p>
-              )}
-              {typeof section.detail === 'string' && section.detail.trim() && (
-                <p className="mt-1.5 break-words font-serif text-[13px] leading-relaxed text-neutral-300 md:text-sm">
-                  {renderText(section.detail.trim())}
-                </p>
-              )}
-              {section.progress && (
-                <SystemExpandedProgress heading={section.heading} progress={section.progress} tone={tone} />
-              )}
-              {items.length > 0 && (
-                <ul className="mt-2.5 space-y-2 border-l border-current/25 pl-3">
-                  {items.map((item, itemIndex) => (
-                    <li key={`${item}-${itemIndex}`} className="break-words font-serif text-[13px] leading-relaxed text-neutral-200 md:text-sm">
-                      {renderText(item.trim())}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          );
-        })}
-      </div>
-    </div>
+                {typeof section.detail === 'string' && section.detail.trim() && (
+                  <p className="mt-1.5 break-words font-serif text-[13px] leading-relaxed text-neutral-300 md:text-sm">
+                    {renderText(section.detail.trim())}
+                  </p>
+                )}
+                {section.progress && (
+                  <SystemExpandedProgress heading={section.heading} progress={section.progress} tone={tone} />
+                )}
+                {items.length > 0 && (
+                  <ul className="mt-2.5 space-y-2 border-l border-current/25 pl-3">
+                    {items.map((item, itemIndex) => (
+                      <li key={`${item}-${itemIndex}`} className="break-words font-serif text-[13px] leading-relaxed text-neutral-200 md:text-sm">
+                        {renderText(item.trim())}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            );
+          })}
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -401,18 +566,21 @@ function SystemConsequenceRow({ changes }: { changes: SystemPromptChange[] }) {
  * Temporary System action: the existing Codex orb — radial glow, glass sphere,
  * dashed and dotted orbit rings, luminous ✦ core — scaled down to the compact
  * System Prompt's kicker row until a dedicated System sigil is approved. When
- * expanded data exists it is the one accessible open/close control; the core
- * changes to an upward chevron while open. Its ring spin rests under
- * `prefers-reduced-motion`.
+ * expanded data exists it is the one accessible control that opens the
+ * viewport-locked event report overlay; the core changes to an upward chevron
+ * while the report is open, and `buttonRef` lets the overlay restore focus
+ * here on close. Its ring spin rests under `prefers-reduced-motion`.
  */
 function SystemOrbEmblem({
   isExpanded,
   detailsId,
   onToggle,
+  buttonRef,
 }: {
   isExpanded?: boolean;
   detailsId?: string;
   onToggle?: () => void;
+  buttonRef?: React.Ref<HTMLButtonElement>;
 }) {
   const orb = (
     <span className="relative block h-9 w-9 shrink-0 md:h-10 md:w-10">
@@ -440,6 +608,7 @@ function SystemOrbEmblem({
 
   return (
     <button
+      ref={buttonRef}
       type="button"
       aria-expanded={Boolean(isExpanded)}
       aria-controls={isExpanded ? detailsId : undefined}
@@ -460,6 +629,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
   const detailsId = React.useId();
   const eventKey = `${system?.kind ?? ''}|${system?.promptType ?? ''}|${system?.title ?? ''}|${content}`;
   const [expandedEventKey, setExpandedEventKey] = React.useState<string | null>(null);
+  const orbButtonRef = React.useRef<HTMLButtonElement>(null);
 
   const isIronFate = (system?.title || '').toLowerCase().includes('iron fate') || 
                      (system?.kind || '').toLowerCase().includes('iron fate') || 
@@ -500,13 +670,24 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
     // (`system.changes`, gains green / losses red), and the concise serif
     // sentence (`content` — the only text narration reads) in its own bottom
     // section. Mobile shows three consequences only when all three fit,
-    // otherwise the first two; roomy layouts may show four. Optional
-    // Reader-owned expanded data turns the orb into an in-place disclosure
-    // control and replaces only that consequence row with a complete
-    // Codex-shaped breakdown. Everything renders from structured data; the
-    // component hardcodes no event text. Tinted by the same semantic System
-    // color system as the structured panels (blue is the default voice) over
-    // blue-black depth.
+    // otherwise the first two; roomy layouts may show four. Everything renders
+    // from structured data; the component hardcodes no event text. Tinted by
+    // the same semantic System color system as the structured panels (blue is
+    // the default voice) over blue-black depth.
+    //
+    // Expanded event report (2026-08-22): optional Reader-owned expanded data
+    // turns the orb into the control that opens a viewport-locked overlay
+    // portaled above the Reader Chamber — never an in-place expansion. The
+    // compact card keeps its consequence row and prose untouched underneath,
+    // so the reader's position and the chapter layout never move. The overlay
+    // is one flat panel (classification, headline, subject, badge, the signed
+    // consequence row, then Codex sections with simple dividers) capped to the
+    // three highest-priority sections on mobile so everything fits one screen
+    // without page or panel scrolling; larger screens show every section in
+    // the same structure. The overlay root carries the
+    // `data-reader-narration="excluded"` boundary and lives outside the reader
+    // DOM, so TTS still reads only the compact card's prose. Escape, the close
+    // button, or a backdrop tap closes it and returns focus to the orb.
     //
     // Routing: events carrying signed consequences (or no rows at all) render
     // compact. Events carrying rows without consequences keep the holographic
@@ -527,85 +708,83 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
       const accent = `${meaning.borderColor} ${meaning.textColor}`;
 
       return (
-        <motion.div
-          initial={{ opacity: 0, y: 10, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          whileHover={{ scale: 1.02 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          data-system-prompt-state={isExpanded ? 'expanded' : 'compact'}
-          className={`system-block cursor-default my-6 md:my-8 mx-auto max-w-xl relative overflow-hidden rounded-2xl border bg-[#020a16]/85 px-5 py-4 md:px-6 md:py-5 shadow-[0_0_28px_color-mix(in_srgb,currentColor_16%,transparent),inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-300 ${accent}${menacingTone} ${className || ''}`}
-          {...safeProps}
-        >
-          {/* Blue-black depth: the emblem's glow bleeds in from the right. */}
-          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_82%_50%,color-mix(in_srgb,currentColor_13%,transparent)_0%,transparent_62%)]" />
-          <div className="relative flex flex-col">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                {headline && (
-                  <span className="block font-mono text-base md:text-lg font-bold uppercase tracking-[0.18em] leading-snug text-current drop-shadow-[0_0_10px_color-mix(in_srgb,currentColor_55%,transparent)]">
-                    {headline}
+        <>
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            data-system-prompt-state={isExpanded ? 'expanded' : 'compact'}
+            className={`system-block cursor-default my-6 md:my-8 mx-auto max-w-xl relative overflow-hidden rounded-2xl border bg-[#020a16]/85 px-5 py-4 md:px-6 md:py-5 shadow-[0_0_28px_color-mix(in_srgb,currentColor_16%,transparent),inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-300 ${accent}${menacingTone} ${className || ''}`}
+            {...safeProps}
+          >
+            {/* Blue-black depth: the emblem's glow bleeds in from the right. */}
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_82%_50%,color-mix(in_srgb,currentColor_13%,transparent)_0%,transparent_62%)]" />
+            <div className="relative flex flex-col">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  {headline && (
+                    <span className="block font-mono text-base md:text-lg font-bold uppercase tracking-[0.18em] leading-snug text-current drop-shadow-[0_0_10px_color-mix(in_srgb,currentColor_55%,transparent)]">
+                      {headline}
+                    </span>
+                  )}
+                  <span className="mt-1 block font-mono text-[9px] uppercase tracking-wider text-neutral-500">
+                    {'✦ '}
+                    <span className="text-neutral-300">{classification.category}</span>
+                    {' | '}
+                    <span className={meaning.textColor}>{classification.subtype}</span>
+                    {' ✦'}
                   </span>
-                )}
-                <span className="mt-1 block font-mono text-[9px] uppercase tracking-wider text-neutral-500">
-                  {'✦ '}
-                  <span className="text-neutral-300">{classification.category}</span>
-                  {' | '}
-                  <span className={meaning.textColor}>{classification.subtype}</span>
-                  {' ✦'}
+                </div>
+                <SystemOrbEmblem
+                  isExpanded={isExpanded}
+                  detailsId={expandedData ? detailsId : undefined}
+                  onToggle={expandedData
+                    ? () => setExpandedEventKey(current => current === eventKey ? null : eventKey)
+                    : undefined}
+                  buttonRef={orbButtonRef}
+                />
+              </div>
+              {compactRows.length > 0 && (
+                <div className="mt-3 space-y-1.5 font-mono text-[11px] md:text-xs">
+                  {compactRows.map((row, idx) => (
+                    <div key={idx} className="flex items-center justify-between gap-3">
+                      <span className="text-neutral-400 uppercase tracking-widest">{row.label}</span>
+                      <span className="font-semibold tracking-wide text-right text-neutral-100">{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {badge && badgeSeverity && (
+                <span className={`mt-2.5 self-start rounded-full border px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em] ${badgeSeverity.pill}`}>
+                  <span className={badgeSeverity.label}>{badge.label}</span>{' '}
+                  <span aria-hidden="true" className={badgeSeverity.label}>·</span>{' '}
+                  <span className={`font-bold ${badgeSeverity.value}`}>{badge.value}</span>
                 </span>
-              </div>
-              <SystemOrbEmblem
-                isExpanded={isExpanded}
-                detailsId={expandedData ? detailsId : undefined}
-                onToggle={expandedData
-                  ? () => setExpandedEventKey(current => current === eventKey ? null : eventKey)
-                  : undefined}
-              />
-            </div>
-            {isExpanded && expandedData?.subject && (
-              <div className="mt-2.5 flex flex-wrap items-baseline gap-x-2 gap-y-1 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-300 md:text-[11px]">
-                <span>{renderSystemText(expandedData.subject.name)}</span>
-                {expandedData.subject.role && (
-                  <>
-                    <span aria-hidden="true" className="text-current/45">|</span>
-                    <span className="text-neutral-400">{expandedData.subject.role}</span>
-                  </>
-                )}
-              </div>
-            )}
-            {compactRows.length > 0 && (
-              <div className="mt-3 space-y-1.5 font-mono text-[11px] md:text-xs">
-                {compactRows.map((row, idx) => (
-                  <div key={idx} className="flex items-center justify-between gap-3">
-                    <span className="text-neutral-400 uppercase tracking-widest">{row.label}</span>
-                    <span className="font-semibold tracking-wide text-right text-neutral-100">{row.value}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {badge && badgeSeverity && (
-              <span className={`mt-2.5 self-start rounded-full border px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em] ${badgeSeverity.pill}`}>
-                <span className={badgeSeverity.label}>{badge.label}</span>{' '}
-                <span aria-hidden="true" className={badgeSeverity.label}>·</span>{' '}
-                <span className={`font-bold ${badgeSeverity.value}`}>{badge.value}</span>
-              </span>
-            )}
-            {isExpanded && expandedData ? (
-              <SystemExpandedBreakdown
-                data={expandedData}
-                detailsId={detailsId}
-                renderText={renderSystemText}
-              />
-            ) : (
+              )}
               <SystemConsequenceRow changes={visibleChanges} />
-            )}
-            {sentence && (
-              <p data-system-summary="true" className="mt-3 border-t border-inherit/30 pt-2.5 text-center font-serif text-base italic leading-relaxed text-neutral-100 md:text-lg">
-                {renderSystemText(sentence)}
-              </p>
-            )}
-          </div>
-        </motion.div>
+              {sentence && (
+                <p data-system-summary="true" className="mt-3 border-t border-inherit/30 pt-2.5 text-center font-serif text-base italic leading-relaxed text-neutral-100 md:text-lg">
+                  {renderSystemText(sentence)}
+                </p>
+              )}
+            </div>
+          </motion.div>
+          {isExpanded && expandedData && typeof document !== 'undefined' && createPortal(
+            <SystemExpandedOverlay
+              data={expandedData}
+              detailsId={detailsId}
+              headline={headline}
+              meaning={meaning}
+              badge={badge}
+              changes={visibleChanges}
+              renderText={renderSystemText}
+              onClose={() => setExpandedEventKey(null)}
+              returnFocusRef={orbButtonRef}
+            />,
+            document.body,
+          )}
+        </>
       );
     }
 

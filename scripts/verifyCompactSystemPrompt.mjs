@@ -17,6 +17,10 @@ const events = [
     consequence: 'Elder Han will move openly against Yun Che.',
     codexName: 'Elder Han',
     codexColorClass: 'text-[#d4af37]',
+    classification: '✦ Awakening | Mentor & Special Location (Gold) ✦',
+    rowLabel: 'New Realm',
+    rowValue: 'Foundation Establishment',
+    prose: 'A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.',
   },
   {
     label: 'Broken Promise',
@@ -26,6 +30,10 @@ const events = [
     consequence: 'Magistrate Jinhai loses access to Riverside Sect testimony.',
     codexName: 'Magistrate Jinhai',
     codexColorClass: 'text-red-500',
+    classification: '✦ Karmic Consequence | Great Item (Orange) ✦',
+    rowLabel: 'Celestial Record',
+    rowValue: 'Sealed',
+    prose: 'A solemn interface surfaced before Magistrate Jinhai, its gilt script cold as the rain outside.',
   },
   {
     label: 'Target Scan',
@@ -35,6 +43,10 @@ const events = [
     consequence: 'Elder Kaelen will prepare a countermeasure before the next encounter.',
     codexName: 'Elder Kaelen',
     codexColorClass: 'text-red-500',
+    classification: '✦ Combat Threat | Enemy (Red) ✦',
+    rowLabel: 'Cultivation',
+    rowValue: 'Foundation Establishment, Stage 7',
+    prose: 'A crimson interface unfolded beside Elder Kaelen, taking his measure in silence.',
   },
 ];
 
@@ -57,6 +69,48 @@ async function verifyConsequenceRow(block, eventSlug, deviceName) {
   }
   if (deviceName.startsWith('mobile-') && eventSlug === 'target-scan' && metrics.count !== 3) {
     throw new Error(`target scan must keep all three short consequences on mobile: ${JSON.stringify(metrics)}`);
+  }
+}
+
+async function verifyCompactHierarchy(block, event, deviceName) {
+  // Production hierarchy: classification line, key/value rows, signed
+  // consequences with green gains and red losses, and the TTS prose as the
+  // bottom section below the consequence row.
+  await block.getByText(event.classification, { exact: true }).waitFor();
+  await block.getByText(event.rowLabel, { exact: true }).waitFor();
+  await block.getByText(event.rowValue, { exact: true }).waitFor();
+
+  const summaryText = (await block.locator('[data-system-summary]').innerText()).replace(/\s+/g, ' ').trim();
+  if (summaryText !== event.prose) {
+    throw new Error(`${event.slug} TTS prose mismatch at ${deviceName}: "${summaryText}"`);
+  }
+
+  // Every visible gain sign is green and every visible loss sign is red.
+  // (Fit-culling may legitimately hide an event's only loss on narrow mobile,
+  // so assert the per-chip contract instead of fixed sign counts.)
+  const signReport = await block.evaluate((element) => {
+    const row = element.querySelector('[data-consequence-count]');
+    if (!row) return 'missing-row';
+    for (const chip of [...row.children]) {
+      const text = chip.textContent.trim();
+      const sign = chip.firstElementChild;
+      if (text.startsWith('−') && !sign?.classList.contains('text-red-400')) return `loss-not-red:${text}`;
+      if (text.startsWith('+') && !sign?.classList.contains('text-emerald-400')) return `gain-not-green:${text}`;
+    }
+    return 'ok';
+  });
+  if (signReport !== 'ok') {
+    throw new Error(`${event.slug} consequence sign coloring broken at ${deviceName}: ${signReport}`);
+  }
+
+  const order = await block.evaluate((element) => {
+    const row = element.querySelector('[data-consequence-count]');
+    const summary = element.querySelector('[data-system-summary]');
+    if (!row || !summary) return 'missing';
+    return (row.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING) ? 'ok' : 'inverted';
+  });
+  if (order !== 'ok') {
+    throw new Error(`${event.slug} TTS prose is not the bottom section at ${deviceName}: ${order}`);
   }
 }
 
@@ -147,6 +201,7 @@ for (const device of devices) {
     await tabsBlock.waitFor({ state: 'visible' });
     await page.waitForTimeout(800);
     await verifyConsequenceRow(tabsBlock, event.slug, device.name);
+    await verifyCompactHierarchy(tabsBlock, event, device.name);
     if (event.slug === 'target-scan') {
       await tabsBlock.getByText('Threat Assessment · Moderate', { exact: true }).waitFor();
       const elderLink = tabsBlock.getByRole('button', { name: 'Elder Kaelen', exact: true });
@@ -174,6 +229,7 @@ for (const device of devices) {
   await contextBlock.scrollIntoViewIfNeeded();
   await page.waitForTimeout(800);
   await verifyConsequenceRow(contextBlock, 'breakthrough', device.name);
+  await verifyCompactHierarchy(contextBlock, events[0], device.name);
   await verifyExpandedBreakdown(page, contextBlock, events[0], `${device.name}-contextual`);
   await page.screenshot({ path: `output/playwright/system-prompt-breakthrough-${device.name}-contextual.png` });
   await contextBlock.screenshot({ path: `output/playwright/system-prompt-breakthrough-${device.name}-contextual-card.png` });

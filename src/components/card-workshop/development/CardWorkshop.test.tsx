@@ -127,18 +127,34 @@ describe('CardWorkshopView', () => {
 
     await clickButton('System Prompt');
     expect(container.textContent).toContain('System Panels & Fate Outcomes');
-    // Default compact event: the cultivation breakthrough — SYSTEM kicker,
-    // dramatic headline, serif prose, and the signed consequence row.
+    // Default compact event: the cultivation breakthrough — title-led header,
+    // classification line, key/value rows, signed consequence row, and the
+    // serif TTS prose in its own bottom section.
     const compactBlock = container.querySelector('.system-block');
     expect(compactBlock?.textContent).toContain('Mortal Tribulation Surpassed');
-    expect(compactBlock?.textContent).toContain('Yun Che has successfully broken through into the Foundation Establishment realm.');
+    expect(compactBlock?.textContent).toContain('✦ Awakening | Mentor & Special Location (Gold) ✦');
+    expect(compactBlock?.textContent).toContain('New Realm');
+    expect(compactBlock?.textContent).toContain('Foundation Establishment');
+    expect(compactBlock?.textContent).toContain('Meridian State');
     expect(compactBlock?.textContent).toContain('+ Stage 4');
     expect(compactBlock?.textContent).toContain('+ 100 Lifespan');
     expect(compactBlock?.textContent).toContain('− Easier to Detect');
     // The serif prose paragraph stays the only narration text: it carries the
-    // sentence alone — never the headline or the consequence row.
-    expect(compactBlock?.querySelector('p')?.textContent)
-      .toBe('Yun Che has successfully broken through into the Foundation Establishment realm.');
+    // sentence alone — never the headline, rows, or the consequence row — and
+    // sits in its own section below the consequences.
+    const compactSummary = compactBlock?.querySelector('[data-system-summary]');
+    expect(compactSummary?.textContent)
+      .toBe('A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.');
+    const consequenceRow = compactBlock?.querySelector('[data-consequence-count]');
+    expect(consequenceRow).toBeTruthy();
+    expect(
+      consequenceRow!.compareDocumentPosition(compactSummary!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // Gains render green, losses red; the labels stay readable neutral.
+    const gainSigns = [...(compactBlock?.querySelectorAll('[data-consequence-count] .text-emerald-400') ?? [])];
+    expect(gainSigns.map(element => element.textContent)).toEqual(['+', '+']);
+    const lossSigns = [...(compactBlock?.querySelectorAll('[data-consequence-count] .text-red-400') ?? [])];
+    expect(lossSigns.map(element => element.textContent)).toEqual(['−']);
     // Compact prompts keep the semantic System color system (breakthrough → gold).
     expect(compactBlock?.className).toContain('border-amber-400/50');
     expect(compactBlock?.className).toContain('text-amber-400');
@@ -150,16 +166,22 @@ describe('CardWorkshopView', () => {
     await clickButton('Broken Promise');
     const promiseBlock = container.querySelector('.system-block');
     expect(promiseBlock?.textContent).toContain('Oath Before the Rain Court Broken');
-    expect(promiseBlock?.textContent).toContain("The Magistrate's sworn promise to the Riverside Sect lies broken.");
+    expect(promiseBlock?.textContent).toContain('✦ Karmic Consequence | Great Item (Orange) ✦');
+    expect(promiseBlock?.textContent).toContain('A solemn interface surfaced before Magistrate Jinhai, its gilt script cold as the rain outside.');
+    expect(promiseBlock?.textContent).toContain('Celestial Record');
+    expect(promiseBlock?.textContent).toContain('Witnesses');
     expect(promiseBlock?.textContent).toContain('− Reputation');
     expect(promiseBlock?.textContent).toContain('+ Sect Enmity');
 
     await clickButton('Target Scan');
     const scanBlock = container.querySelector('.system-block');
     expect(scanBlock?.textContent).toContain('Hostile Target Scan Complete');
-    expect(scanBlock?.querySelector('p')?.textContent)
-      .toBe('Elder Kaelen — Foundation Establishment, Stage 7.');
+    expect(scanBlock?.textContent).toContain('✦ Combat Threat | Enemy (Red) ✦');
+    expect(scanBlock?.querySelector('[data-system-summary]')?.textContent)
+      .toBe('A crimson interface unfolded beside Elder Kaelen, taking his measure in silence.');
     expect(scanBlock?.textContent).toContain('Threat Assessment · Moderate');
+    expect(scanBlock?.textContent).toContain('Cultivation');
+    expect(scanBlock?.textContent).toContain('Foundation Establishment, Stage 7');
     expect(scanBlock?.textContent).toContain('+ Intel');
     expect(scanBlock?.textContent).toContain('+ Weakness');
     expect(scanBlock?.textContent).toContain('− Exposed');
@@ -208,7 +230,7 @@ describe('CardWorkshopView', () => {
     )));
 
     const systemBlock = container.querySelector<HTMLElement>('.system-block');
-    const compactSummary = 'Yun Che has successfully broken through into the Foundation Establishment realm.';
+    const compactSummary = 'A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.';
     expect(systemBlock?.dataset.systemPromptState).toBe('compact');
     expect(systemBlock?.querySelector('[data-consequence-count]')).toBeTruthy();
     expect(systemBlock?.querySelector('[data-system-expanded]')).toBeFalsy();
@@ -373,7 +395,8 @@ describe('CardWorkshopView', () => {
     const reader = container.querySelector<HTMLElement>('[data-testid="card-workshop-contextual-reader"]');
     await selectByLabel('Card preset', 'preset-system-prompt');
     expect(reader?.textContent).toContain('Mortal Tribulation Surpassed');
-    expect(reader?.textContent).toContain('Yun Che has successfully broken through into the Foundation Establishment realm.');
+    expect(reader?.textContent).toContain('A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.');
+    expect(reader?.textContent).toContain('New Realm');
     expect(reader?.textContent).toContain('+ Stage 4');
     expect(reader?.textContent).toContain('Then the thunder moved on');
   });
@@ -386,8 +409,8 @@ describe('CardWorkshopView', () => {
 
     const reader = container.querySelector<HTMLElement>('[data-testid="card-workshop-contextual-reader"]');
     const systemBlock = reader?.querySelector<HTMLElement>('.system-block');
-    expect(systemBlock?.querySelector('p')?.textContent)
-      .toBe('Elder Kaelen — Foundation Establishment, Stage 7.');
+    expect(systemBlock?.querySelector('[data-system-summary]')?.textContent)
+      .toBe('A crimson interface unfolded beside Elder Kaelen, taking his measure in silence.');
     expect(systemBlock?.textContent).toContain('Threat Assessment · Moderate');
 
     const elderCodexAction = [...(systemBlock?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
@@ -405,7 +428,7 @@ describe('CardWorkshopView', () => {
       new Set(),
     );
     expect(targetScanFixture.chapter.blocks?.[2]?.text)
-      .toBe('[ Elder Kaelen — Foundation Establishment, Stage 7. Threat assessment: moderate. ]');
+      .toBe('[ A crimson interface unfolded beside Elder Kaelen, taking his measure in silence. Threat assessment: moderate. ]');
   });
 
   it('keeps expanded mock information outside the short System Prompt TTS source', () => {

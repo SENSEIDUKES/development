@@ -17,7 +17,7 @@
     "test:story-seed": "vitest run src/components/story-seed src/server/story-seed-blueprint",
     "test:audio-catalog": "vitest run src/server/audio src/audio/libraryCues.test.ts",
     "test:codex-voice": "vitest run src/server/audio src/components/reader-codex/shared/hooks",
-    "test:inline-audio": "vitest run src/audio src/components/reader-chamber/development/InlineAudio.test.tsx"
+    "test:inline-audio": "vitest run src/audio src/components/reader-chamber/development/InlineAudio.test.tsx src/components/reader-chamber/development/InlineAudio.styles.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.16.0",

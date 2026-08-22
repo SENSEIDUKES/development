@@ -11,7 +11,7 @@ import type {
   SystemPromptExpandedTone,
 } from '../shared/types';
 import { FateResultCard } from './FateResultCard';
-import { getSystemPromptColor, getSystemColorMeaning, buildSystemContext } from '../shared/systemColors';
+import { getSystemPromptColor, getSystemColorMeaning, getSystemCompactClassification, buildSystemContext } from '../shared/systemColors';
 export { SYSTEM_COLORS_LEGEND } from '../shared/systemColors';
 
 interface SystemBlockProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -53,6 +53,30 @@ function getVisibleSystemSentence(content: string, badge?: SystemPromptBadge) {
     .replace(/\s{2,}/g, ' ')
     .replace(/\s+([,.;!?])/g, '$1')
     .trim();
+}
+
+/**
+ * Threat-severity treatment for the compact badge: the label stays neutral
+ * and only the severity value carries color, so severity reads at a glance.
+ * Deadly inverts the pill itself — black surface, white text, strong border.
+ */
+const BADGE_SEVERITY_STYLES: Record<string, { pill: string; label: string; value: string }> = {
+  light: { pill: 'border-white/15 bg-white/[0.04]', label: 'text-neutral-300', value: 'text-yellow-300' },
+  moderate: { pill: 'border-white/15 bg-white/[0.04]', label: 'text-neutral-300', value: 'text-orange-400' },
+  severe: { pill: 'border-white/15 bg-white/[0.04]', label: 'text-neutral-300', value: 'text-red-400' },
+  deadly: { pill: 'border-neutral-100/80 bg-black', label: 'text-white', value: 'text-white' },
+  unknown: { pill: 'border-white/15 bg-white/[0.04]', label: 'text-neutral-300', value: 'text-neutral-400' },
+};
+
+/** Unrecognized badge values stay ordinary: neutral label, white value. */
+const BADGE_SEVERITY_NEUTRAL = {
+  pill: 'border-white/15 bg-white/[0.04]',
+  label: 'text-neutral-300',
+  value: 'text-neutral-100',
+};
+
+function getBadgeSeverityStyles(badge: SystemPromptBadge) {
+  return BADGE_SEVERITY_STYLES[badge.value.trim().toLowerCase()] ?? BADGE_SEVERITY_NEUTRAL;
 }
 
 const EXPANDED_TONE_STYLES: Record<SystemPromptExpandedTone, {
@@ -329,7 +353,19 @@ function SystemConsequenceRow({ changes }: { changes: SystemPromptChange[] }) {
     };
   }, [prioritizedChanges]);
 
-  const consequenceClass = 'shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.10em] text-current opacity-90 md:text-[11px] md:tracking-[0.18em]';
+  const consequenceClass = 'shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.10em] text-neutral-200 md:text-[11px] md:tracking-[0.18em]';
+
+  // One shared chip body so the hidden measurement mirror matches the visible
+  // row exactly: the sign carries the direction color (gains green, losses
+  // red) while the label stays readable neutral.
+  const renderConsequence = (change: SystemPromptChange) => (
+    <>
+      <span className={change.direction === 'loss' ? 'text-red-400' : 'text-emerald-400'}>
+        {change.direction === 'loss' ? '−' : '+'}
+      </span>{' '}
+      {change.label.trim()}
+    </>
+  );
 
   if (prioritizedChanges.length === 0) return null;
 
@@ -342,7 +378,7 @@ function SystemConsequenceRow({ changes }: { changes: SystemPromptChange[] }) {
       >
         {prioritizedChanges.slice(0, visibleCount).map((change, index) => (
           <span key={`${change.direction}-${change.label}-${index}`} className={consequenceClass}>
-            {change.direction === 'loss' ? '−' : '+'} {change.label.trim()}
+            {renderConsequence(change)}
           </span>
         ))}
       </div>
@@ -353,7 +389,7 @@ function SystemConsequenceRow({ changes }: { changes: SystemPromptChange[] }) {
       >
         {prioritizedChanges.map((change, index) => (
           <span key={`${change.direction}-${change.label}-${index}`} className={consequenceClass}>
-            {change.direction === 'loss' ? '−' : '+'} {change.label.trim()}
+            {renderConsequence(change)}
           </span>
         ))}
       </div>
@@ -446,6 +482,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
     // Parsed payloads can deliver a non-array `rows`; normalize once before the
     // presentation branch and the row mapping (same guard as buildSystemContext).
     const rows = Array.isArray(system.rows) ? system.rows : [];
+    const visibleChanges = Array.isArray(system.changes) ? system.changes : [];
 
     const menacingTone = isDeathFlag
       ? ' animate-menacing-red'
@@ -453,30 +490,40 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
         ? ' animate-menacing-amber'
         : '';
 
-    // Approved 2026-08-22 compact System Prompt, rebuilt around three parts:
-    // the fixed SYSTEM kicker (with the temporary orb emblem resting beside
-    // it), one dramatic per-event headline from `system.title`, one concise
-    // event sentence in reader serif from `content` — the only text narration
-    // reads — an optional event badge, and one non-scrolling horizontal bottom
-    // row of prioritized signed consequences from `system.changes`. Mobile
-    // shows three only when all three fit, otherwise the first two; roomy
-    // layouts may show four. Optional Reader-owned expanded data turns the orb
-    // into an in-place disclosure control and replaces only that consequence
-    // row with a complete Codex-shaped breakdown. Everything renders from
-    // structured data; the component hardcodes no event text. Tinted by the same semantic
-    // System color system as the structured panels (blue is the default voice)
-    // over blue-black depth. Events carrying mechanical rows keep the
-    // holographic panel below.
-    if (rows.length === 0) {
+    // Reworked 2026-08-22 to the production information hierarchy. The compact
+    // System Prompt is title-led: the dramatic per-event headline
+    // (`system.title`) leads with the temporary orb emblem resting at the right
+    // edge, followed by a small `✦ classification ✦` line from the semantic
+    // System color meaning, up to three concise key/value rows
+    // (`system.rows`, production panel anatomy), an optional event badge, one
+    // non-scrolling horizontal row of prioritized signed consequences
+    // (`system.changes`, gains green / losses red), and the concise serif
+    // sentence (`content` — the only text narration reads) in its own bottom
+    // section. Mobile shows three consequences only when all three fit,
+    // otherwise the first two; roomy layouts may show four. Optional
+    // Reader-owned expanded data turns the orb into an in-place disclosure
+    // control and replaces only that consequence row with a complete
+    // Codex-shaped breakdown. Everything renders from structured data; the
+    // component hardcodes no event text. Tinted by the same semantic System
+    // color system as the structured panels (blue is the default voice) over
+    // blue-black depth.
+    //
+    // Routing: events carrying signed consequences (or no rows at all) render
+    // compact. Events carrying rows without consequences keep the holographic
+    // panel below, so dense mechanical readouts, rarity chips, and existing
+    // row-bearing events stay untouched.
+    if (rows.length === 0 || visibleChanges.length > 0) {
       const badge = normalizeSystemPromptBadge(system.badge);
+      const badgeSeverity = badge ? getBadgeSeverityStyles(badge) : undefined;
       const sentence = getVisibleSystemSentence(content, badge);
       const headline = (system.title || '').trim();
-      const visibleChanges = Array.isArray(system.changes) ? system.changes : [];
+      const compactRows = rows.slice(0, 3);
       const expandedData = normalizeExpandedData(system.expanded);
       const isExpanded = Boolean(expandedData && expandedEventKey === eventKey);
       const renderSystemText = renderProse ?? ((text: string) => text);
       const inferenceContext = buildSystemContext(system, content);
       const meaning = getSystemColorMeaning(system.promptType, inferenceContext);
+      const classification = getSystemCompactClassification(meaning);
       const accent = `${meaning.borderColor} ${meaning.textColor}`;
 
       return (
@@ -493,9 +540,20 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_82%_50%,color-mix(in_srgb,currentColor_13%,transparent)_0%,transparent_62%)]" />
           <div className="relative flex flex-col">
             <div className="flex items-center justify-between gap-3">
-              <span className="font-mono text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.3em] text-current drop-shadow-[0_0_6px_color-mix(in_srgb,currentColor_45%,transparent)]">
-                System
-              </span>
+              <div className="min-w-0">
+                {headline && (
+                  <span className="block font-mono text-base md:text-lg font-bold uppercase tracking-[0.18em] leading-snug text-current drop-shadow-[0_0_10px_color-mix(in_srgb,currentColor_55%,transparent)]">
+                    {headline}
+                  </span>
+                )}
+                <span className="mt-1 block font-mono text-[9px] uppercase tracking-wider text-neutral-500">
+                  {'✦ '}
+                  <span className="text-neutral-300">{classification.category}</span>
+                  {' | '}
+                  <span className={meaning.textColor}>{classification.subtype}</span>
+                  {' ✦'}
+                </span>
+              </div>
               <SystemOrbEmblem
                 isExpanded={isExpanded}
                 detailsId={expandedData ? detailsId : undefined}
@@ -515,21 +573,22 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
                 )}
               </div>
             )}
-            {headline && (
-              <span className="mt-3 font-mono text-base md:text-lg font-bold uppercase tracking-[0.18em] leading-snug text-current drop-shadow-[0_0_10px_color-mix(in_srgb,currentColor_55%,transparent)]">
-                {headline}
-              </span>
+            {compactRows.length > 0 && (
+              <div className="mt-3 space-y-1.5 font-mono text-[11px] md:text-xs">
+                {compactRows.map((row, idx) => (
+                  <div key={idx} className="flex items-center justify-between gap-3">
+                    <span className="text-neutral-400 uppercase tracking-widest">{row.label}</span>
+                    <span className="font-semibold tracking-wide text-right text-neutral-100">{row.value}</span>
+                  </div>
+                ))}
+              </div>
             )}
-            {badge && (
-              <span className="mt-2.5 self-start rounded-full border border-current/35 bg-[color-mix(in_srgb,currentColor_10%,transparent)] px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-current shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em]">
-                {badge.label} <span aria-hidden="true">·</span>{' '}
-                <span className="font-bold">{badge.value}</span>
+            {badge && badgeSeverity && (
+              <span className={`mt-2.5 self-start rounded-full border px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em] ${badgeSeverity.pill}`}>
+                <span className={badgeSeverity.label}>{badge.label}</span>{' '}
+                <span aria-hidden="true" className={badgeSeverity.label}>·</span>{' '}
+                <span className={`font-bold ${badgeSeverity.value}`}>{badge.value}</span>
               </span>
-            )}
-            {sentence && (
-              <p data-system-summary="true" className="mt-2 font-serif text-base leading-relaxed text-neutral-100 md:text-lg">
-                {renderSystemText(sentence)}
-              </p>
             )}
             {isExpanded && expandedData ? (
               <SystemExpandedBreakdown
@@ -539,6 +598,11 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
               />
             ) : (
               <SystemConsequenceRow changes={visibleChanges} />
+            )}
+            {sentence && (
+              <p data-system-summary="true" className="mt-3 border-t border-inherit/30 pt-2.5 text-center font-serif text-base italic leading-relaxed text-neutral-100 md:text-lg">
+                {renderSystemText(sentence)}
+              </p>
             )}
           </div>
         </motion.div>

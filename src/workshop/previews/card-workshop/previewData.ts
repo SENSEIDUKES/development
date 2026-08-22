@@ -245,7 +245,7 @@ export const CARD_PRESETS: CardPreset[] = [
     title: 'System Prompt',
     subtitle: 'In-World Celestial Library Notification',
     kind: 'system-block',
-    description: 'Universal in-world System Prompt panel. The compact default keeps its concise TTS summary and non-scrolling priority consequences; the celestial action opens a complete Codex-shaped event breakdown in place.',
+    description: 'Universal in-world System Prompt panel. The compact default follows the production hierarchy — event title, classification line, concise key/value rows, optional badge, and signed priority consequences — with the concise TTS prose in its own bottom section; the celestial action opens a complete Codex-shaped event breakdown in place.',
     explanation: {
       componentName: 'SystemBlock',
       sourceFile: 'src/components/reader-chamber/development/SystemBlock.tsx',
@@ -253,14 +253,18 @@ export const CARD_PRESETS: CardPreset[] = [
       entityOrEventType: 'system (system_prompt)',
       codexDestination: 'ReaderCodex > Power Rankings / Ability Ledger / Karma',
       capabilities: { hasImage: false, hasManifestAction: false, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
-      architecturalNotes: 'Universal System Prompt contract supporting a dramatic headline, a concise literary message (the only text narration reads), an optional structured badge, and priority-ordered consequences. Reader-only expanded data replaces the compact row after an explicit tap; it is not emitted by generation or read by TTS.',
+      architecturalNotes: 'Universal System Prompt contract supporting a dramatic headline, a semantic classification line, up to three concise key/value rows, an optional structured badge, and priority-ordered signed consequences, with the concise literary message (the only text narration reads) in its own bottom section. Reader-only expanded data replaces the compact row after an explicit tap; it is not emitted by generation or read by TTS.',
     },
-    systemContent: '[ Yun Che has successfully broken through into the Foundation Establishment realm. ]',
+    systemContent: '[ A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before. ]',
     systemEvent: {
       kind: 'system_prompt',
       promptType: 'breakthrough',
       title: 'Mortal Tribulation Surpassed',
       expanded: BREAKTHROUGH_EXPANDED,
+      rows: [
+        { label: 'New Realm', value: 'Foundation Establishment' },
+        { label: 'Meridian State', value: 'Widened' },
+      ],
       changes: [
         { direction: 'gain', label: 'Stage 4' },
         { direction: 'gain', label: '100 Lifespan' },
@@ -390,12 +394,16 @@ export const SYSTEM_PROMPT_CHARACTER_TERMS: CodexTerm[] = [
 
 export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
   breakthrough: {
-    systemContent: '[ Yun Che has successfully broken through into the Foundation Establishment realm. ]',
+    systemContent: '[ A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before. ]',
     systemEvent: {
       kind: 'system_prompt' as const,
       promptType: 'breakthrough' as const,
       title: 'Mortal Tribulation Surpassed',
       expanded: BREAKTHROUGH_EXPANDED,
+      rows: [
+        { label: 'New Realm', value: 'Foundation Establishment' },
+        { label: 'Meridian State', value: 'Widened' },
+      ],
       changes: [
         { direction: 'gain' as const, label: 'Stage 4' },
         { direction: 'gain' as const, label: '100 Lifespan' },
@@ -404,12 +412,16 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
     },
   },
   'broken-promise': {
-    systemContent: '[ The Magistrate\'s sworn promise to the Riverside Sect lies broken. ]',
+    systemContent: '[ A solemn interface surfaced before Magistrate Jinhai, its gilt script cold as the rain outside. ]',
     systemEvent: {
       kind: 'system_prompt' as const,
       promptType: 'choice_consequence' as const,
       title: 'Oath Before the Rain Court Broken',
       expanded: BROKEN_PROMISE_EXPANDED,
+      rows: [
+        { label: 'Celestial Record', value: 'Sealed' },
+        { label: 'Witnesses', value: 'Twelve Elder Seats' },
+      ],
       changes: [
         { direction: 'loss' as const, label: 'Reputation' },
         { direction: 'loss' as const, label: 'Karma Bond' },
@@ -418,7 +430,7 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
     },
   },
   'target-scan': {
-    systemContent: '[ Elder Kaelen — Foundation Establishment, Stage 7. Threat assessment: moderate. ]',
+    systemContent: '[ A crimson interface unfolded beside Elder Kaelen, taking his measure in silence. Threat assessment: moderate. ]',
     systemEvent: {
       kind: 'system_prompt' as const,
       promptType: 'enemy_scan' as const,
@@ -428,6 +440,10 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
         label: 'Threat Assessment',
         value: 'Moderate',
       },
+      rows: [
+        { label: 'Cultivation', value: 'Foundation Establishment, Stage 7' },
+        { label: 'Stance', value: 'Guarded' },
+      ],
       changes: [
         { direction: 'gain' as const, label: 'Intel' },
         { direction: 'gain' as const, label: 'Weakness' },

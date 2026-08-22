@@ -76,12 +76,22 @@ describe('LibrarySoundGlyph', () => {
       expect(svg?.getAttribute('tabindex')).toBeNull();
     });
 
-    it('drops a stray onClick so the static mark never enters the click chain', () => {
+    it('drops a stray onClick so a real click on the glyph never invokes the handler', () => {
+      // React handlers do not show up as an `onclick` HTML attribute,
+      // so checking the attribute is meaningless. Instead, capture any
+      // forwarded handler and assert that dispatching a real click on
+      // the rendered <svg> never invokes it.
+      let calls = 0;
       const svg = renderGlyph({
-        onClick: () => { throw new Error('onClick must not be forwarded to the glyph'); },
+        onClick: () => { calls += 1; },
       });
       expect(svg).toBeTruthy();
-      expect(svg?.getAttribute('onclick')).toBeNull();
+      svg?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      // Yield once so any forwarded React listener (synthetic event)
+      // gets a chance to fire before we assert.
+      return Promise.resolve().then(() => {
+        expect(calls).toBe(0);
+      });
     });
 
     it('drops interactive ARIA state on the decorative default', () => {

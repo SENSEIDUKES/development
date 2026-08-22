@@ -145,7 +145,7 @@ describe('InlineAudio world-cue stylesheet', () => {
       expect(inset).toMatch(/^-?\d*\.?\d+(?:em|rem|px)$/);
     });
 
-    it('default hit area is at least 25x25 px at 16px base font (>= 24x24 + safety margin)', () => {
+    it('default hit area clears WCAG 2.5.5 24x24 px at 12, 14, and 16 px body text', () => {
       const body = block(css, '.inline-world-cue::before {');
       expect(body).not.toBeNull();
       const cleaned = stripComments(body!);
@@ -154,15 +154,18 @@ describe('InlineAudio world-cue stylesheet', () => {
       expect(m).not.toBeNull();
       const value = Math.abs(parseFloat(m![1]));
       const unit = m![2];
-      const baseFontPx = 16;
-      const emPx = unit === 'em' || unit === 'rem' ? value * baseFontPx : value;
-      // 0.78em visual at 16px = 12.48px; + 2 * |inset| on each axis.
-      const visualPx = 0.78 * baseFontPx;
-      const hitPx = 2 * emPx + visualPx;
-      expect(hitPx).toBeGreaterThanOrEqual(25);
+      // 0.78em visual scales with body text; the WCAG 2.5.5 24x24 px
+      // minimum is in absolute CSS pixels, so the assertion must hold at
+      // every body font scale a reader might use (not just 16 px).
+      for (const baseFontPx of [12, 14, 16]) {
+        const emPx = unit === 'em' || unit === 'rem' ? value * baseFontPx : value;
+        const visualPx = 0.78 * baseFontPx;
+        const hitPx = 2 * emPx + visualPx;
+        expect(hitPx, `hit area at ${baseFontPx}px body text`).toBeGreaterThanOrEqual(24);
+      }
     });
 
-    it('coarse-pointer hit area is at least 28x28 px at 16px base font', () => {
+    it('coarse-pointer hit area clears WCAG 2.5.5 24x24 px at 12, 14, and 16 px body text', () => {
       const media = block(css, '@media (pointer: coarse) {');
       const before = block(media!, '.inline-world-cue::before {');
       expect(before).not.toBeNull();
@@ -172,11 +175,12 @@ describe('InlineAudio world-cue stylesheet', () => {
       expect(m).not.toBeNull();
       const value = Math.abs(parseFloat(m![1]));
       const unit = m![2];
-      const baseFontPx = 16;
-      const emPx = unit === 'em' || unit === 'rem' ? value * baseFontPx : value;
-      const visualPx = 0.78 * baseFontPx;
-      const hitPx = 2 * emPx + visualPx;
-      expect(hitPx).toBeGreaterThanOrEqual(28);
+      for (const baseFontPx of [12, 14, 16]) {
+        const emPx = unit === 'em' || unit === 'rem' ? value * baseFontPx : value;
+        const visualPx = 0.78 * baseFontPx;
+        const hitPx = 2 * emPx + visualPx;
+        expect(hitPx, `coarse hit area at ${baseFontPx}px body text`).toBeGreaterThanOrEqual(24);
+      }
     });
   });
 

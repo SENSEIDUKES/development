@@ -551,7 +551,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
                   <span className="text-neutral-300">{classification.category}</span>
                   {' | '}
                   <span className={meaning.textColor}>{classification.subtype}</span>
-                  {` (${meaning.colorName}) ✦`}
+                  {' ✦'}
                 </span>
               </div>
               <SystemOrbEmblem

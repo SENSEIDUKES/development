@@ -132,7 +132,7 @@ describe('CardWorkshopView', () => {
     // serif TTS prose in its own bottom section.
     const compactBlock = container.querySelector('.system-block');
     expect(compactBlock?.textContent).toContain('Mortal Tribulation Surpassed');
-    expect(compactBlock?.textContent).toContain('✦ Breakthrough | Awakening (Gold) ✦');
+    expect(compactBlock?.textContent).toContain('✦ Breakthrough | Awakening ✦');
     expect(compactBlock?.textContent).toContain('New Realm');
     expect(compactBlock?.textContent).toContain('Foundation Establishment');
     expect(compactBlock?.textContent).toContain('Meridian State');
@@ -166,7 +166,7 @@ describe('CardWorkshopView', () => {
     await clickButton('Broken Promise');
     const promiseBlock = container.querySelector('.system-block');
     expect(promiseBlock?.textContent).toContain('Oath Before the Rain Court Broken');
-    expect(promiseBlock?.textContent).toContain('✦ Karma | Consequence (Orange) ✦');
+    expect(promiseBlock?.textContent).toContain('✦ Karma | Consequence ✦');
     expect(promiseBlock?.textContent).toContain('A solemn interface surfaced before Magistrate Jinhai, its gilt script cold as the rain outside.');
     expect(promiseBlock?.textContent).toContain('Celestial Record');
     expect(promiseBlock?.textContent).toContain('Witnesses');
@@ -176,7 +176,7 @@ describe('CardWorkshopView', () => {
     await clickButton('Target Scan');
     const scanBlock = container.querySelector('.system-block');
     expect(scanBlock?.textContent).toContain('Hostile Target Scan Complete');
-    expect(scanBlock?.textContent).toContain('✦ Combat | Enemy (Red) ✦');
+    expect(scanBlock?.textContent).toContain('✦ Combat | Enemy ✦');
     expect(scanBlock?.querySelector('[data-system-summary]')?.textContent)
       .toBe('A crimson interface unfolded beside Elder Kaelen, taking his measure in silence.');
     expect(scanBlock?.textContent).toContain('Threat Assessment · Moderate');

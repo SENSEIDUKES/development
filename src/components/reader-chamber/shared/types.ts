@@ -97,18 +97,69 @@ export interface StoryBlockMetadata {
 
 import type {
   SystemEventKind,
+  SystemPromptBadge,
+  SystemPromptChange,
   BaseSystemEvent,
   RegularSystemEvent,
   FateSystemEvent,
-  SystemEvent,
+  SystemEvent as ChapterSystemEvent,
 } from '../../chapter-generation/shared/types';
 
 export type {
   SystemEventKind,
+  SystemPromptBadge,
+  SystemPromptChange,
   BaseSystemEvent,
   RegularSystemEvent,
   FateSystemEvent,
-  SystemEvent,
+};
+
+export type SystemPromptExpandedTone = 'neutral' | 'positive' | 'warning' | 'danger';
+
+/** Reader-only progress presentation for an expanded System Prompt section. */
+export interface SystemPromptExpandedProgress {
+  value: number;
+  min?: number;
+  max: number;
+  /** Optional authored display such as “−75/100”; never used as narration. */
+  label?: string;
+}
+
+/** Reader-only status treatment for warnings and important event values. */
+export interface SystemPromptExpandedStatus {
+  label: string;
+  tone?: SystemPromptExpandedTone;
+}
+
+/**
+ * One Codex-shaped section in the in-place expanded System Prompt view.
+ * These fields are application/Workshop-owned display data: chapter generation
+ * does not emit, normalize, persist, or narrate them.
+ */
+export interface SystemPromptExpandedSection {
+  heading: string;
+  value?: string;
+  detail?: string;
+  progress?: SystemPromptExpandedProgress;
+  status?: SystemPromptExpandedStatus;
+  tone?: SystemPromptExpandedTone;
+  items?: string[];
+}
+
+export interface SystemPromptExpandedData {
+  subject?: {
+    name: string;
+    role?: string;
+  };
+  sections: SystemPromptExpandedSection[];
+}
+
+/**
+ * Reader extension of the shared chapter System event. Expanded information is
+ * optional UI data and deliberately remains outside the generation contract.
+ */
+export type SystemEvent = ChapterSystemEvent & {
+  expanded?: SystemPromptExpandedData;
 };
 
 export interface StoryBlock {

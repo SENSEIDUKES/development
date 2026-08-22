@@ -22,7 +22,10 @@ import {
   type WorldCueIntent,
 } from '@seihouse/sen/audio';
 import type { CardPreset, CardWorkshopOverrides } from '../shared/types';
-import { SYSTEM_PROMPT_PRESET_EXAMPLES } from '../../../workshop/previews/card-workshop/previewData';
+import {
+  SYSTEM_PROMPT_CHARACTER_TERMS,
+  SYSTEM_PROMPT_PRESET_EXAMPLES,
+} from '../../../workshop/previews/card-workshop/previewData';
 
 const LOCAL_HUMAN_PORTRAIT = '/card-workshop/test-images/ye_chen_portrait.png';
 const LOCAL_CREATURE_PORTRAIT = '/card-workshop/test-images/lyra_meadowlight_portrait.png';
@@ -181,7 +184,7 @@ function createContextualSystemEvent(
 ): SystemEvent | undefined {
   if (!preset.systemEvent) return undefined;
   if (preset.id === 'preset-system-prompt') {
-    const style = overrides.systemPromptContentStyle || 'literary';
+    const style = overrides.systemPromptContentStyle || 'breakthrough';
     const example = SYSTEM_PROMPT_PRESET_EXAMPLES[style];
     return {
       ...example.systemEvent,
@@ -229,7 +232,7 @@ export function createCardWorkshopContextualFixture(
     entities: [{ name: 'Aster', type: 'character', mention: 'reference' }],
   };
   const cardBlockText = preset.id === 'preset-system-prompt'
-    ? SYSTEM_PROMPT_PRESET_EXAMPLES[overrides.systemPromptContentStyle || 'literary'].systemContent
+    ? SYSTEM_PROMPT_PRESET_EXAMPLES[overrides.systemPromptContentStyle || 'breakthrough'].systemContent
     : (preset.kind === 'system-block' || preset.kind === 'fate-result')
       ? (preset.systemContent || '[ SYSTEM NOTIFICATION ]')
       : `For one measured breath, the whole Rain Court waited to see what the broken oath would reveal.`;
@@ -269,7 +272,12 @@ export function createCardWorkshopContextualFixture(
     },
   ];
 
-  const codexTerms = [CONTEXT_WITNESS, CONTEXT_CUE_LOCATION, codexTerm].filter(
+  const codexTerms = [
+    CONTEXT_WITNESS,
+    CONTEXT_CUE_LOCATION,
+    ...SYSTEM_PROMPT_CHARACTER_TERMS,
+    codexTerm,
+  ].filter(
     (term): term is CodexTerm => Boolean(term),
   );
   // Real Manifest backdrop art per entity (the shared pool's stable pick), so

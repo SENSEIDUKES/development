@@ -109,6 +109,27 @@ export interface StoryBlockMetadata {
 
 export type SystemEventKind = "system_prompt" | "fate_system_prompt";
 
+/**
+ * One signed consequence listed in the compact System Prompt's bottom row
+ * (e.g. + KARMA BOND, − REPUTATION). Structured so the row never relies on
+ * arbitrary free text; the compact prompt renders at most four, in priority
+ * order. Generation does not emit these yet — application-owned fixtures only.
+ */
+export interface SystemPromptChange {
+  direction: "gain" | "loss";
+  label: string;
+}
+
+/**
+ * One compact, event-specific status badge rendered outside the visible serif
+ * prose without changing the Reader's narration source (for example
+ * THREAT ASSESSMENT · MODERATE).
+ */
+export interface SystemPromptBadge {
+  label: string;
+  value: string;
+}
+
 export interface BaseSystemEvent {
   kind: SystemEventKind | (string & {});
   promptType?:
@@ -118,6 +139,13 @@ export interface BaseSystemEvent {
   title: string;
   rows?: { label: string; value: string }[];
   rarity?: string;
+  /** Optional event-specific status kept visually separate from narrated prose. */
+  badge?: SystemPromptBadge;
+  /**
+   * Priority-ordered signed consequences. Roomy layouts may show four; narrow
+   * layouts show three only when they fit cleanly, otherwise the first two.
+   */
+  changes?: SystemPromptChange[];
 }
 
 export interface RegularSystemEvent extends BaseSystemEvent {

@@ -6,7 +6,7 @@
  * exist, and no Workshop shell, preview mock, or server module may have been
  * pulled into the bundle.
  */
-import { copyFile, readFile, readdir, stat } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,6 +14,22 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const source = join(root, 'src/package');
 const target = join(root, 'dist/sen');
+
+const PUBLIC_ASSETS = [
+  'favicon.jpg',
+  'icons/book-scroll.svg',
+  'icons/cultivator.svg',
+  'icons/sacred-tree.svg',
+  'icons/shen-long-dragon.svg',
+  'icons/thunder-cloud.svg',
+  'icons/yin-yang.svg',
+  'manifest-backdrops/immortal-land-1.jpg',
+  'manifest-backdrops/immortal-land-2.jpg',
+  'manifest-backdrops/immortal-land-3.jpg',
+  'manifest-backdrops/immortal-land-4.jpg',
+  'manifest-backdrops/immortal-land-5.jpg',
+  'story-seed/library-auth-backdrop.jpg',
+];
 
 const readJson = async path => JSON.parse(await readFile(path, 'utf8'));
 
@@ -34,6 +50,11 @@ const fail = message => {
 
 await copyFile(join(source, 'package.json'), join(target, 'package.json'));
 await copyFile(join(source, 'README.md'), join(target, 'README.md'));
+for (const relative of PUBLIC_ASSETS) {
+  const destination = join(target, 'dist', relative);
+  await mkdir(dirname(destination), { recursive: true });
+  await copyFile(join(root, 'public', relative), destination);
+}
 
 const manifest = await readJson(join(target, 'package.json'));
 for (const [name, entry] of Object.entries(manifest.exports)) {
@@ -43,6 +64,12 @@ for (const [name, entry] of Object.entries(manifest.exports)) {
       fail(`export "${name}" points at missing file ${relative}`);
     }
   }
+  if (name !== './audio' && typeof entry === 'object' && typeof entry.import === 'string') {
+    const contents = await readFile(join(target, entry.import), 'utf8');
+    if (!contents.includes("import './sen.css';") && !contents.includes('import "./sen.css";')) {
+      fail(`export "${name}" does not load the shared SEN stylesheet`);
+    }
+  }
 }
 
 const FORBIDDEN = [
@@ -50,6 +77,10 @@ const FORBIDDEN = [
   ['src/server/', 'server module'],
   ['src/components/card-workshop/', 'Workshop-only card workshop view'],
 ];
+
+if (existsSync(join(target, 'dist/card-workshop'))) {
+  fail('dist/card-workshop contains Workshop-only preview assets');
+}
 
 for (const file of await collectFiles(join(target, 'dist'))) {
   if (!file.endsWith('.js') && !file.endsWith('.css')) continue;

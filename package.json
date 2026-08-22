@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build && node scripts/buildChapterGenerationApi.mjs && node scripts/buildStorySeedBlueprintApi.mjs && node scripts/buildCodexVoiceApi.mjs",
     "preview": "vite preview",
     "build:package": "vite build --config vite.package.config.ts && tsc -p tsconfig.package.json && node scripts/finalizeSenPackage.mjs",
+    "test:package": "npm run build:package && node scripts/smokeSenPackage.mjs",
     "validate:chapter-effects": "vitest run scripts/validateChapterEffectRules.test.ts",
     "test:chapter-manifestation": "vitest run src/components/chapter-manifestation",
     "test:chapter-generation": "vitest run src/components/chapter-generation src/server/chapter-generation",

@@ -211,6 +211,12 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-08-21:** Published the Development creation workspace, Story Bank,
+  Blueprint review, supporting UI, repository port, serialization, and
+  canonical Creator / Story / World contracts through
+  `@seihouse/sen/story-seed`. The Workshop Development pane now consumes that
+  package entry; preview fixtures, mock-state controls, the locked Reference,
+  and the server-side Blueprint implementation remain outside the entry.
 - **2026-08-21:** Stacked the Mature Audiences row on phones to match Fate
   Survival: the Rated 18+ pill now rests at content width below its
   description instead of competing with wrapped text. Anchored both Settings

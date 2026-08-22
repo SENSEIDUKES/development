@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import ChapterGenerationTestFlow from "../../../components/chapter-generation/development/ChapterGenerationTestFlow";
+import { ChapterGenerationTestFlow } from "@seihouse/sen/chapter-generation";
 import ReferenceChapterGenerationInspector from "../../../components/chapter-generation/reference/ChapterGenerationInspector";
 import { assembleChapterGeneration } from "../../../components/chapter-generation/shared/assembleGeneration";
 import { FeatureWorkspace } from "../../FeatureWorkspace";

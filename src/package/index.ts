@@ -12,10 +12,13 @@
  * - `@seihouse/sen/manifestations`  — the Manifestation surfaces
  * - `@seihouse/sen/relics`          — the Relic surfaces
  * - `@seihouse/sen/audio`           — the client-safe audio surface
+ * - `@seihouse/sen/closed-door-cultivation` — the idle-Qi reward surface
+ * - `@seihouse/sen/story-seed`       — Story Seed creation and contracts
+ * - `@seihouse/sen/chapter-generation` — DEV generation and handoff surfaces
  *
  * Workshop mocks, preview shells, and server code are not part of any entry.
  */
 export * from './library';
 
 /** The package surface version, bumped with the published package. */
-export const SEN_PACKAGE_VERSION = '0.1.0';
+export const SEN_PACKAGE_VERSION = '0.2.0';

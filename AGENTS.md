@@ -56,8 +56,9 @@ Do not turn this repository into a second full application. Use mock data and pr
   - `shared/` (when it applies) — logic genuinely identical between the two, such as shared utilities or components that have no fork yet.
 - `src/package/` holds the entry barrels for the `@seihouse/sen` package —
   one file per published surface (Library, Reader Chamber, Reader Codex,
-  Codex cards, Manifestations, Relics, audio). It contains no components of
-  its own: entries re-export `development/` and `shared/` code so the
+  Codex cards, Manifestations, Relics, audio, Closed-Door Cultivation, Story
+  Seed, Chapter Generation). It contains no components of its own: entries
+  re-export `development/` and `shared/` code so the
   Workshop and the package always render the same source. Workshop shells,
   preview mocks, locked `reference/` replicas, and `src/server/` code stay
   out of every entry, and `npm run build:package` fails if one is ever

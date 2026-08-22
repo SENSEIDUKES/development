@@ -1,10 +1,10 @@
 {
   "name": "@seihouse/sen",
-  "version": "0.1.0",
-  "description": "The SEN component package: the Celestial Library design system and the Reader Chamber, Reader Codex, Codex card, Manifestation, and Relic surfaces.",
+  "version": "0.2.0",
+  "description": "The SEN component package: Celestial Library, Story Seed, Chapter Generation, Reader Chamber, Reader Codex, Cultivation, Manifestation, and Relic surfaces.",
   "type": "module",
   "sideEffects": [
-    "*.css"
+    "**/*.css"
   ],
   "files": [
     "dist"
@@ -41,6 +41,18 @@
     "./audio": {
       "types": "./dist/types/package/audio.d.ts",
       "import": "./dist/audio.js"
+    },
+    "./closed-door-cultivation": {
+      "types": "./dist/types/package/closed-door-cultivation.d.ts",
+      "import": "./dist/closed-door-cultivation.js"
+    },
+    "./story-seed": {
+      "types": "./dist/types/package/story-seed.d.ts",
+      "import": "./dist/story-seed.js"
+    },
+    "./chapter-generation": {
+      "types": "./dist/types/package/chapter-generation.d.ts",
+      "import": "./dist/chapter-generation.js"
     },
     "./styles.css": "./dist/sen.css"
   },

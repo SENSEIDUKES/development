@@ -4,10 +4,13 @@
 - **Source location:** `src/components/ClosedDoorCultivationModal.tsx`
 - **Workshop preview:** `?preview=idle-cultivation`
 - **Replica created:** 2026-07-29
-- **Last Workshop update:** 2026-08-18
+- **Last Workshop update:** 2026-08-21
 - **Last source comparison:** 2026-07-30
 - **Replica status:** development focus & accessibility enhancements
 
+- **2026-08-21:** Published the Development modal and its props through
+  `@seihouse/sen/closed-door-cultivation`; the Workshop Development pane now
+  imports that package entry while the locked Reference pane stays relative.
 - **2026-08-18:** Keyboard / focus behavior pass (SEIHouse Gemini Verification Loop K1–K2):
   - **K1 (Escape Dismissal):** Added a `keydown` listener on `document` while `qiEarned !== null && !isClaiming` that dismisses the vignette by calling `onClose()`. The listener is detached during claim animation (`isClaiming === true`) and on unmount so Escape cannot fire mid-animation.
   - **K2 (Predictable Tab Order & Trap):** Added active focus trapping within the dialog container (`dialogRef.current`) on `Tab`/`Shift+Tab` when expanded, `tabIndex={-1}` on decorative vignette wrapper and progression containers, and strict `tabIndex={-1}` / `aria-hidden="true"` handling on the collapsed button and expanded claim button during exit/transition states to guarantee Tab order never leaks out into background library cards.

@@ -4,7 +4,7 @@
 - **Source location:** `src/hooks/chapterPipeline/chapterBatch.ts`, `src/aiRouter.ts`, `src/server/routes/storyRouter.ts`, and the Story Seed, prompt, handoff, formatting, and context dependencies
 - **Workshop preview:** `?preview=chapter-generation-flow`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-20
+- **Last Workshop update:** 2026-08-21
 - **Last source comparison:** 2026-08-09
 - **Replica status:** Chapter Generation 1.0 recovery restores the proven one-chapter Plan → Manifest → Process boundary and opens its accepted result in the current Reader Chamber and Reader Codex
 
@@ -325,6 +325,12 @@ per-chapter coverage.
 
 ## Workshop history
 
+- **2026-08-21:** Published the Development one-/five-chapter flow,
+  Diagnostics, Reader handoffs, batch contracts, Story Seed packet adapter,
+  and reusable four-stage pipeline through
+  `@seihouse/sen/chapter-generation`. The Workshop Development pane now
+  consumes that entry; the server provider/API, deterministic Workshop model
+  adapters, fixtures, and locked Reference inspector remain excluded.
 - **2026-08-20:** Disconnected chapter generation from voice synthesis entirely. The dialogue-audio resolver, its chapter-dialogue annotation path, and the Codex voice-clip write-back are removed from the handler, the Vercel entry point, and the Development server. Generated dialogue now produces no provider call, no voice annotation in chapter prose, and no Character voice clip. Worldcues are unchanged and still resolve only curated sound effects for audible narrative actions; Character voice moved to the Reader Codex signature quote.
 - **2026-08-20:** Removed the `CHAPTER_GENERATION_ACCESS_TOKEN` shared bearer token. Chapter generation and the Codex signature-quote audio endpoint no longer require an additional manually entered application token; server-only provider credentials remain private to the server, while same-origin and per-visitor request budgets protect the live Development calls from casual public abuse.
 

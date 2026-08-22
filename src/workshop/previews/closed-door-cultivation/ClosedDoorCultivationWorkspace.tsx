@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { ClosedDoorCultivationModal as ReferenceClosedDoorCultivationModal } from '../../../components/closed-door-cultivation/reference/ClosedDoorCultivationModal';
-import { ClosedDoorCultivationModal as DevelopmentClosedDoorCultivationModal } from '../../../components/closed-door-cultivation/development/ClosedDoorCultivationModal';
-import type { ClosedDoorCultivationModalProps } from '../../../components/closed-door-cultivation/development/ClosedDoorCultivationModal';
+import {
+  ClosedDoorCultivationModal as DevelopmentClosedDoorCultivationModal,
+  type ClosedDoorCultivationModalProps,
+} from '@seihouse/sen/closed-door-cultivation';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { scenarios, type PreviewState } from './previewStates';

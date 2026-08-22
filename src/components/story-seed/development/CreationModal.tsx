@@ -67,7 +67,7 @@ import { StorySeedMobileNavigation } from './StorySeedMobileNavigation';
 import { useStoryBankRecords } from './useStoryBankRecords';
 import { downloadStorySeed, downloadStorySeedCollection } from '../shared/storySeedSerialization';
 
-interface CreationModalProps {
+export interface CreationModalProps {
   onStartStory: (payload: InitialStoryGenerationPayload) => Promise<void>;
   onGenerateBlueprint: (payload: BlueprintGenerationPayload) => Promise<WorldBlueprint>;
   isGenerating: boolean;

@@ -1,17 +1,17 @@
 import { lazy, useCallback, useEffect, useRef, useState } from 'react';
-import DevelopmentCreationModal from '../../../components/story-seed/development/CreationModal';
-import { requestWorldBlueprint } from '../../../components/story-seed/shared/blueprintGenerationClient';
-import type { BlueprintGenerationPayload } from '../../../components/story-seed/shared/storySeedSchema';
+import {
+  CreationModal as DevelopmentCreationModal,
+  requestWorldBlueprint,
+  resetStorySeedRepository,
+  setStorySeedRepository,
+  type BlueprintGenerationPayload,
+} from '@seihouse/sen/story-seed';
 import {
   resetMockSeeds,
   resetMockState,
   setMockLocalOnlyMode,
   useAppStore,
 } from '../../../components/story-seed/shared/stubs';
-import {
-  resetStorySeedRepository,
-  setStorySeedRepository,
-} from '../../../components/story-seed/shared/storySeedRepository';
 import {
   FeatureWorkspace,
   type WorkshopControlsConfig,

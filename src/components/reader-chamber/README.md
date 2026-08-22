@@ -4,11 +4,13 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-21
+- **Last Workshop update:** 2026-08-22
 - **Last source comparison:** 2026-08-19
 - **Replica status:** under refinement
 
 ## Workshop history
+
+- **2026-08-22:** Hardened the inline World Cue resting-state contrast and touch-target symmetry (`development/InlineAudio.css`): resting color lifted to `var(--color-neutral-450)` (Library muted-copy convention; holds ≥ 4.5:1 on the dark glass) and the `opacity: 0.68` multiplier removed so the effective contrast is the token's contrast regardless of the underlying panel/card; the `::before` hit-area expansion is now a symmetric 1-value `inset: -0.4em` shorthand (25.28 × 25.28 px at 16 px base, clearing WCAG 2.5.5) with `-0.5em` under `pointer: coarse` (28.48 × 28.48 px), so the left edge is as reachable as the right instead of essentially unreachable. Hover/focus/playing/error state colors and the `<LibrarySoundGlyph>` rendering are unchanged. Added `InlineAudio.styles.test.ts` (string-based CSS contract test) and wired it into the `test:inline-audio` script.
 
 - **2026-08-21:** Published this feature as `@seihouse/sen/reader-chamber`. The entry barrel in `src/package/reader-chamber.ts` exports the `development/` chamber, its controls and surfaces, and the `shared/` reading model, and carries `reader-chamber.css` as a side effect so consumers no longer hand-import it. **Known gap:** `ReaderChamber`, `ReaderViewport`, and `ReaderControls/AudioMenu` still import the Workshop's mock application state directly (`shared/stubs`, `shared/trackLibrary`, `MOCK_VOICES`), so those mocks are bundled into the published entry today, not excluded from it — they're temporary DEV runtime dependencies this restructure carried over, and replacing them with a host-supplied store and audio catalog is follow-up work for production integration. The locked `reference/` replica is Workshop-only and is never published.
 

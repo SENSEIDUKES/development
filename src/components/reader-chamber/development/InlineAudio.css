@@ -34,23 +34,35 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: var(--color-neutral-500);
+  /* Resting color holds >= 4.5:1 on the dark glass on its own (Library
+     muted-copy convention; see LibraryCard.tsx and the Library README
+     note that neutral-500 is too quiet here). No opacity multiplier
+     so the effective contrast is the token's contrast — the cue can
+     sit over page bg, a LibraryPanel, a Codex card, or a LibraryCard,
+     and the visible affordance is the same. */
+  color: var(--color-neutral-450);
   font: inherit;
   line-height: 0;
   vertical-align: 0.24em;
   cursor: pointer;
-  opacity: 0.68;
   transition:
     color 160ms ease,
-    opacity 160ms ease,
     transform 160ms ease;
 }
 
 .inline-world-cue::before {
   content: '';
   position: absolute;
-  inset-block: -0.56em;
-  inset-inline: -0.16em -0.7em;
+  /* Symmetric hit-area expansion. A 1-value `inset` shorthand cannot
+     drift to asymmetric values, so the left edge stays as reachable as
+     the right (the previous -0.16em / -0.7em left the visual's left
+     border essentially unreachable on touchpads). The 0.78em visual +
+     2 * 0.4em = 1.58em hit area at 16px base = 25.28px, clearing the
+     WCAG 2.5.5 24x24 minimum. Adjacent cues in the same sentence have
+     a 0.1em visual gap and overlapping hit areas; the browser
+     disambiguates overlap taps by nearest-visual proximity, which is
+     the natural shape of inline controls in prose. */
+  inset: -0.4em;
 }
 
 .inline-world-cue__glyph {
@@ -131,8 +143,10 @@
 
 @media (pointer: coarse) {
   .inline-world-cue::before {
-    inset-block: -0.72em;
-    inset-inline: -0.18em -0.9em;
+    /* Same symmetry contract as the default ::before; wider value to
+       give a comfortable fingertip target on touch. 0.78em + 2 * 0.5em
+       = 1.78em at 16px base = 28.48px, well above the 24x24 minimum. */
+    inset: -0.5em;
   }
 }
 

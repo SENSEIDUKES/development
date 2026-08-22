@@ -181,7 +181,7 @@ function createContextualSystemEvent(
 ): SystemEvent | undefined {
   if (!preset.systemEvent) return undefined;
   if (preset.id === 'preset-system-prompt') {
-    const style = overrides.systemPromptContentStyle || 'literary';
+    const style = overrides.systemPromptContentStyle || 'breakthrough';
     const example = SYSTEM_PROMPT_PRESET_EXAMPLES[style];
     return {
       ...example.systemEvent,
@@ -229,7 +229,7 @@ export function createCardWorkshopContextualFixture(
     entities: [{ name: 'Aster', type: 'character', mention: 'reference' }],
   };
   const cardBlockText = preset.id === 'preset-system-prompt'
-    ? SYSTEM_PROMPT_PRESET_EXAMPLES[overrides.systemPromptContentStyle || 'literary'].systemContent
+    ? SYSTEM_PROMPT_PRESET_EXAMPLES[overrides.systemPromptContentStyle || 'breakthrough'].systemContent
     : (preset.kind === 'system-block' || preset.kind === 'fate-result')
       ? (preset.systemContent || '[ SYSTEM NOTIFICATION ]')
       : `For one measured breath, the whole Rain Court waited to see what the broken oath would reveal.`;

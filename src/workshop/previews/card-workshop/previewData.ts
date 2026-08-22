@@ -120,7 +120,7 @@ export const CARD_PRESETS: CardPreset[] = [
     title: 'System Prompt',
     subtitle: 'In-World Celestial Library Notification',
     kind: 'system-block',
-    description: 'Universal in-world System Prompt panel. Default output is a concise literary message with up to two signed metadata changes, with optional structured mechanical rows when a novel calls for them.',
+    description: 'Universal in-world System Prompt panel. Default output is a dramatic headline, one concise literary sentence, and one horizontal row of up to four signed consequences, with optional structured mechanical rows when a novel calls for them.',
     explanation: {
       componentName: 'SystemBlock',
       sourceFile: 'src/components/reader-chamber/development/SystemBlock.tsx',
@@ -128,15 +128,17 @@ export const CARD_PRESETS: CardPreset[] = [
       entityOrEventType: 'system (system_prompt)',
       codexDestination: 'ReaderCodex > Power Rankings / Ability Ledger / Karma',
       capabilities: { hasImage: false, hasManifestAction: false, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
-      architecturalNotes: 'Universal System Prompt contract supporting concise literary messages, a signed metadata changes row (structured, max two), and optional structured mechanical rows.',
+      architecturalNotes: 'Universal System Prompt contract supporting a dramatic headline, a concise literary message (the only text narration reads), a signed consequence row (structured, max four, priority order), and optional structured mechanical rows.',
     },
-    systemContent: '[ Aster now considers you someone she can trust. ]',
+    systemContent: '[ Yun Che has successfully broken through into the Foundation Establishment realm. ]',
     systemEvent: {
       kind: 'system_prompt',
-      promptType: 'codex_update',
-      title: 'Karma Bond Formed',
+      promptType: 'breakthrough',
+      title: 'Mortal Tribulation Surpassed',
       changes: [
-        { direction: 'gain', label: 'Karma Bond' },
+        { direction: 'gain', label: 'Stage 4' },
+        { direction: 'gain', label: '100 Lifespan' },
+        { direction: 'loss', label: 'Easier to Detect' },
       ],
     },
   },
@@ -201,14 +203,42 @@ export const CARD_PRESETS: CardPreset[] = [
 export const ACTIVE_CARD_PRESETS = CARD_PRESETS.filter(preset => !preset.referenceOnly);
 
 export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
-  literary: {
-    systemContent: '[ Aster now considers you someone she can trust. ]',
+  breakthrough: {
+    systemContent: '[ Yun Che has successfully broken through into the Foundation Establishment realm. ]',
     systemEvent: {
       kind: 'system_prompt' as const,
-      promptType: 'codex_update' as const,
-      title: 'Karma Bond Formed',
+      promptType: 'breakthrough' as const,
+      title: 'Mortal Tribulation Surpassed',
       changes: [
-        { direction: 'gain' as const, label: 'Karma Bond' },
+        { direction: 'gain' as const, label: 'Stage 4' },
+        { direction: 'gain' as const, label: '100 Lifespan' },
+        { direction: 'loss' as const, label: 'Easier to Detect' },
+      ],
+    },
+  },
+  'broken-promise': {
+    systemContent: '[ The Magistrate\'s sworn promise to the Riverside Sect lies broken. ]',
+    systemEvent: {
+      kind: 'system_prompt' as const,
+      promptType: 'choice_consequence' as const,
+      title: 'Oath Before the Rain Court Broken',
+      changes: [
+        { direction: 'loss' as const, label: 'Reputation' },
+        { direction: 'loss' as const, label: 'Karma Bond' },
+        { direction: 'gain' as const, label: 'Sect Enmity' },
+      ],
+    },
+  },
+  'target-scan': {
+    systemContent: '[ Elder Kaelen — Foundation Establishment, Stage 7. Threat assessment: moderate. ]',
+    systemEvent: {
+      kind: 'system_prompt' as const,
+      promptType: 'enemy_scan' as const,
+      title: 'Hostile Target Scan Complete',
+      changes: [
+        { direction: 'gain' as const, label: 'Intel' },
+        { direction: 'gain' as const, label: 'Weakness Identified' },
+        { direction: 'loss' as const, label: 'Presence Exposed' },
       ],
     },
   },

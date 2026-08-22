@@ -53,7 +53,7 @@ export interface CardPreset {
   };
 }
 
-export type SystemPromptContentStyle = 'literary' | 'structured';
+export type SystemPromptContentStyle = 'breakthrough' | 'broken-promise' | 'target-scan' | 'structured';
 
 export interface CardWorkshopOverrides {
   viewportMode: ViewportMode;

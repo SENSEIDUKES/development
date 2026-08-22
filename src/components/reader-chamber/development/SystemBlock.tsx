@@ -13,20 +13,20 @@ interface SystemBlockProps extends React.HTMLAttributes<HTMLDivElement> {
 
 /**
  * Temporary System emblem: the existing Codex orb — radial glow, glass sphere,
- * dashed and dotted orbit rings, luminous ✦ core — scaled down beside the
- * compact System Prompt until a dedicated System sigil is approved. Purely
+ * dashed and dotted orbit rings, luminous ✦ core — scaled down to the compact
+ * System Prompt's kicker row until a dedicated System sigil is approved. Purely
  * decorative; it inherits the block's semantic accent through `currentColor`,
  * and the ring spin rests under `prefers-reduced-motion`.
  */
 function SystemOrbEmblem() {
   return (
-    <div aria-hidden="true" className="relative h-[68px] w-[68px] shrink-0 md:h-20 md:w-20">
+    <div aria-hidden="true" className="relative h-9 w-9 shrink-0 md:h-10 md:w-10">
       <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,color-mix(in_srgb,currentColor_30%,transparent)_0%,transparent_70%)] animate-pulse" />
-      <div className="absolute inset-[6px] rounded-full border border-[color-mix(in_srgb,currentColor_40%,transparent)] bg-[radial-gradient(circle_at_35%_30%,color-mix(in_srgb,currentColor_38%,transparent)_0%,rgba(1,11,20,0.95)_72%)] shadow-[0_0_20px_color-mix(in_srgb,currentColor_45%,transparent),inset_0_0_10px_color-mix(in_srgb,currentColor_28%,transparent)]" />
+      <div className="absolute inset-[3px] rounded-full border border-[color-mix(in_srgb,currentColor_40%,transparent)] bg-[radial-gradient(circle_at_35%_30%,color-mix(in_srgb,currentColor_38%,transparent)_0%,rgba(1,11,20,0.95)_72%)] shadow-[0_0_12px_color-mix(in_srgb,currentColor_45%,transparent),inset_0_0_6px_color-mix(in_srgb,currentColor_28%,transparent)]" />
       <div className="absolute inset-0 rounded-full border border-dashed border-[color-mix(in_srgb,currentColor_45%,transparent)] animate-[spin_12s_linear_infinite] motion-reduce:animate-none" />
       <div className="absolute -inset-1 rounded-full border border-dotted border-[color-mix(in_srgb,currentColor_25%,transparent)] animate-[spin_20s_linear_infinite_reverse] motion-reduce:animate-none" />
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-sm md:text-base text-current drop-shadow-[0_0_8px_currentColor]">✦</span>
+        <span className="text-[10px] md:text-xs text-current drop-shadow-[0_0_6px_currentColor]">✦</span>
       </div>
     </div>
   );
@@ -63,15 +63,20 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, cl
         ? ' animate-menacing-amber'
         : '';
 
-    // Approved 2026-08-22 compact System Prompt: the fixed SYSTEM label, one
-    // concise event sentence in reader serif, up to two structured signed
-    // changes beneath it, and the temporary orb emblem — tinted by the same
-    // semantic System color system as the structured panels (blue is the
-    // default voice) over blue-black depth. Events carrying mechanical rows
-    // keep the holographic panel below.
+    // Approved 2026-08-22 compact System Prompt, rebuilt around three parts:
+    // the fixed SYSTEM kicker (with the temporary orb emblem resting beside
+    // it), one dramatic per-event headline from `system.title`, one concise
+    // event sentence in reader serif from `content` — the only text narration
+    // reads — and one horizontal bottom row of up to four prioritized signed
+    // consequences from `system.changes`. Everything renders from structured
+    // data; the component hardcodes no event text. Tinted by the same semantic
+    // System color system as the structured panels (blue is the default voice)
+    // over blue-black depth. Events carrying mechanical rows keep the
+    // holographic panel below.
     if (rows.length === 0) {
       const sentence = content.replace(/^\[|\]$/g, '').trim();
-      const visibleChanges = (system.changes ?? []).slice(0, 2);
+      const headline = (system.title || '').trim();
+      const visibleChanges = (system.changes ?? []).slice(0, 4);
       const inferenceContext = buildSystemContext(system, content);
       const meaning = getSystemColorMeaning(system.promptType, inferenceContext);
       const accent = `${meaning.borderColor} ${meaning.textColor}`;
@@ -87,30 +92,35 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, cl
         >
           {/* Blue-black depth: the emblem's glow bleeds in from the right. */}
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_82%_50%,color-mix(in_srgb,currentColor_13%,transparent)_0%,transparent_62%)]" />
-          <div className="relative flex items-center gap-4 md:gap-6">
-            <div className="flex min-w-0 flex-1 flex-col">
+          <div className="relative flex flex-col">
+            <div className="flex items-center justify-between gap-3">
               <span className="font-mono text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.3em] text-current drop-shadow-[0_0_6px_color-mix(in_srgb,currentColor_45%,transparent)]">
                 System
               </span>
-              {sentence && (
-                <p className="mt-2 font-serif text-base leading-relaxed text-neutral-100 md:text-lg">
-                  {sentence}
-                </p>
-              )}
-              {visibleChanges.length > 0 && (
-                <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
-                  {visibleChanges.map((change, index) => (
-                    <span
-                      key={index}
-                      className="font-mono text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-current opacity-90"
-                    >
-                      {change.direction === 'loss' ? '−' : '+'} {change.label}
-                    </span>
-                  ))}
-                </div>
-              )}
+              <SystemOrbEmblem />
             </div>
-            <SystemOrbEmblem />
+            {headline && (
+              <span className="mt-3 font-mono text-base md:text-lg font-bold uppercase tracking-[0.18em] leading-snug text-current drop-shadow-[0_0_10px_color-mix(in_srgb,currentColor_55%,transparent)]">
+                {headline}
+              </span>
+            )}
+            {sentence && (
+              <p className="mt-2 font-serif text-base leading-relaxed text-neutral-100 md:text-lg">
+                {sentence}
+              </p>
+            )}
+            {visibleChanges.length > 0 && (
+              <div className="mt-3 flex items-center gap-x-4 md:gap-x-6 overflow-x-auto whitespace-nowrap border-t border-inherit/30 pt-2.5">
+                {visibleChanges.map((change, index) => (
+                  <span
+                    key={index}
+                    className="font-mono text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-current opacity-90"
+                  >
+                    {change.direction === 'loss' ? '−' : '+'} {change.label}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </motion.div>
       );

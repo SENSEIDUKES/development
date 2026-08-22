@@ -192,7 +192,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
       let baseSystemEvent = preset.systemEvent;
 
       if (preset.id === 'preset-system-prompt') {
-        const style = overrides.systemPromptContentStyle || 'literary';
+        const style = overrides.systemPromptContentStyle || 'breakthrough';
         const example = SYSTEM_PROMPT_PRESET_EXAMPLES[style];
         content = example.systemContent;
         baseSystemEvent = example.systemEvent;
@@ -349,7 +349,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                   <select
                     id="system-prompt-example-style"
                     aria-label="System prompt example style"
-                    value={overrides.systemPromptContentStyle || 'literary'}
+                    value={overrides.systemPromptContentStyle || 'breakthrough'}
                     onChange={(event) =>
                       setOverrides((previous) => ({
                         ...previous,
@@ -737,7 +737,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                           <div className="flex items-center gap-1 bg-neutral-900/90 p-1 rounded-lg border border-neutral-800">
                             <span className="text-[9px] font-mono uppercase text-neutral-500 px-1">Example:</span>
                             {SYSTEM_PROMPT_STYLE_OPTIONS.map((styleOpt) => {
-                              const isCurrentStyle = (overrides.systemPromptContentStyle || 'literary') === styleOpt.value;
+                              const isCurrentStyle = (overrides.systemPromptContentStyle || 'breakthrough') === styleOpt.value;
                               return (
                                 <button
                                   key={styleOpt.value}

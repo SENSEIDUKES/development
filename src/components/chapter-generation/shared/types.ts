@@ -110,10 +110,10 @@ export interface StoryBlockMetadata {
 export type SystemEventKind = "system_prompt" | "fate_system_prompt";
 
 /**
- * One signed metadata change listed beneath the compact System Prompt's event
- * sentence (e.g. + KARMA BOND, − REPUTATION). Structured so the row never
- * relies on arbitrary free text; the compact prompt renders at most two.
- * Generation does not emit these yet — application-owned fixtures only.
+ * One signed consequence listed in the compact System Prompt's bottom row
+ * (e.g. + KARMA BOND, − REPUTATION). Structured so the row never relies on
+ * arbitrary free text; the compact prompt renders at most four, in priority
+ * order. Generation does not emit these yet — application-owned fixtures only.
  */
 export interface SystemPromptChange {
   direction: "gain" | "loss";
@@ -129,7 +129,7 @@ export interface BaseSystemEvent {
   title: string;
   rows?: { label: string; value: string }[];
   rarity?: string;
-  /** Signed metadata row for the compact System Prompt (max two rendered). */
+  /** Signed consequence row for the compact System Prompt (max four rendered). */
   changes?: SystemPromptChange[];
 }
 

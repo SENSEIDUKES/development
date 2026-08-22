@@ -53,6 +53,10 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, cl
       );
     }
 
+    // Parsed payloads can deliver a non-array `rows`; normalize once before the
+    // presentation branch and the row mapping (same guard as buildSystemContext).
+    const rows = Array.isArray(system.rows) ? system.rows : [];
+
     const menacingTone = isDeathFlag
       ? ' animate-menacing-red'
       : isIronFate
@@ -65,7 +69,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, cl
     // semantic System color system as the structured panels (blue is the
     // default voice) over blue-black depth. Events carrying mechanical rows
     // keep the holographic panel below.
-    if (!system.rows || system.rows.length === 0) {
+    if (rows.length === 0) {
       const sentence = content.replace(/^\[|\]$/g, '').trim();
       const visibleChanges = (system.changes ?? []).slice(0, 2);
       const inferenceContext = buildSystemContext(system, content);
@@ -147,9 +151,9 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, cl
             )}
           </div>
           
-          {system.rows && system.rows.length > 0 && (
+          {rows.length > 0 && (
             <div className="space-y-1.5">
-              {system.rows.map((row, idx) => (
+              {rows.map((row, idx) => (
                 <div key={idx} className="flex justify-between items-center text-[11px] md:text-xs">
                   <span className="opacity-70 uppercase tracking-widest">{row.label}</span>
                   <span className="font-semibold tracking-wide text-right">{row.value}</span>

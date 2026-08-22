@@ -11,6 +11,27 @@ interface SystemBlockProps extends React.HTMLAttributes<HTMLDivElement> {
   system?: SystemEvent;
 }
 
+/**
+ * Temporary System emblem: the existing Codex orb — radial glow, glass sphere,
+ * dashed and dotted orbit rings, luminous ✦ core — scaled down beside the
+ * compact System Prompt until a dedicated System sigil is approved. Purely
+ * decorative; it inherits the block's semantic accent through `currentColor`,
+ * and the ring spin rests under `prefers-reduced-motion`.
+ */
+function SystemOrbEmblem() {
+  return (
+    <div aria-hidden="true" className="relative h-[68px] w-[68px] shrink-0 md:h-20 md:w-20">
+      <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,color-mix(in_srgb,currentColor_30%,transparent)_0%,transparent_70%)] animate-pulse" />
+      <div className="absolute inset-[6px] rounded-full border border-[color-mix(in_srgb,currentColor_40%,transparent)] bg-[radial-gradient(circle_at_35%_30%,color-mix(in_srgb,currentColor_38%,transparent)_0%,rgba(1,11,20,0.95)_72%)] shadow-[0_0_20px_color-mix(in_srgb,currentColor_45%,transparent),inset_0_0_10px_color-mix(in_srgb,currentColor_28%,transparent)]" />
+      <div className="absolute inset-0 rounded-full border border-dashed border-[color-mix(in_srgb,currentColor_45%,transparent)] animate-[spin_12s_linear_infinite] motion-reduce:animate-none" />
+      <div className="absolute -inset-1 rounded-full border border-dotted border-[color-mix(in_srgb,currentColor_25%,transparent)] animate-[spin_20s_linear_infinite_reverse] motion-reduce:animate-none" />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-sm md:text-base text-current drop-shadow-[0_0_8px_currentColor]">✦</span>
+      </div>
+    </div>
+  );
+}
+
 export const SystemBlock = React.memo(function SystemBlock({ content, system, className, ...props }: SystemBlockProps) {
   const { onAnimationStart: _anim, onDrag: _drag, onDragStart: _dStart, onDragEnd: _dEnd, ...safeProps } = props;
 
@@ -22,7 +43,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, cl
                       (system?.kind || '').toLowerCase().includes('death flag') || 
                       content.toLowerCase().includes('death flag');
 
-  // If structured system object exists, render holographic panel
+  // If structured system object exists, render the matching System presentation.
   if (system) {
     if (system.fateResult) {
       return (
@@ -32,16 +53,71 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, cl
       );
     }
 
+    const menacingTone = isDeathFlag
+      ? ' animate-menacing-red'
+      : isIronFate
+        ? ' animate-menacing-amber'
+        : '';
+
+    // Approved 2026-08-22 compact System Prompt: the fixed SYSTEM label, one
+    // concise event sentence in reader serif, up to two structured signed
+    // changes beneath it, and the temporary orb emblem — tinted by the same
+    // semantic System color system as the structured panels (blue is the
+    // default voice) over blue-black depth. Events carrying mechanical rows
+    // keep the holographic panel below.
+    if (!system.rows || system.rows.length === 0) {
+      const sentence = content.replace(/^\[|\]$/g, '').trim();
+      const visibleChanges = (system.changes ?? []).slice(0, 2);
+      const inferenceContext = buildSystemContext(system, content);
+      const meaning = getSystemColorMeaning(system.promptType, inferenceContext);
+      const accent = `${meaning.borderColor} ${meaning.textColor}`;
+
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 10, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          whileHover={{ scale: 1.02 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className={`system-block cursor-pointer my-6 md:my-8 mx-auto max-w-xl relative overflow-hidden rounded-2xl border bg-[#020a16]/85 px-5 py-4 md:px-6 md:py-5 shadow-[0_0_28px_color-mix(in_srgb,currentColor_16%,transparent),inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-300 ${accent}${menacingTone} ${className || ''}`}
+          {...safeProps}
+        >
+          {/* Blue-black depth: the emblem's glow bleeds in from the right. */}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_82%_50%,color-mix(in_srgb,currentColor_13%,transparent)_0%,transparent_62%)]" />
+          <div className="relative flex items-center gap-4 md:gap-6">
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="font-mono text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.3em] text-current drop-shadow-[0_0_6px_color-mix(in_srgb,currentColor_45%,transparent)]">
+                System
+              </span>
+              {sentence && (
+                <p className="mt-2 font-serif text-base leading-relaxed text-neutral-100 md:text-lg">
+                  {sentence}
+                </p>
+              )}
+              {visibleChanges.length > 0 && (
+                <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                  {visibleChanges.map((change, index) => (
+                    <span
+                      key={index}
+                      className="font-mono text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-current opacity-90"
+                    >
+                      {change.direction === 'loss' ? '−' : '+'} {change.label}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <SystemOrbEmblem />
+          </div>
+        </motion.div>
+      );
+    }
+
     // Semantic inference context: title, row labels/values, and visible content.
     const inferenceContext = buildSystemContext(system, content);
     let colorStyles = getSystemPromptColor(system.promptType, inferenceContext);
     const meaning = getSystemColorMeaning(system.promptType, inferenceContext);
 
-    if (isDeathFlag) {
-      colorStyles += ' animate-menacing-red';
-    } else if (isIronFate) {
-      colorStyles += ' animate-menacing-amber';
-    }
+    colorStyles += menacingTone;
 
     return (
       <motion.div 

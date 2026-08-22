@@ -4,7 +4,7 @@
 - **Verified source locations:** `src/components/ReaderViewport.tsx`, `src/components/SystemBlock.tsx`, `src/components/FateResultCard.tsx`
 - **Workshop preview:** `?preview=card-workshop`
 - **Replica created:** 2026-08-14
-- **Last Workshop update:** 2026-08-21
+- **Last Workshop update:** 2026-08-22
 - **Last source comparison:** 2026-08-19
 - **Replica status:** under refinement
 
@@ -22,6 +22,7 @@ Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studi
 
 ## Workshop history
 
+- **2026-08-22:** Rebuilt the compact regular System Prompt (Development `SystemBlock`, events without mechanical rows) to the approved reference: the fixed SYSTEM label, one concise event sentence in reader serif, and one small signed metadata row beneath it carrying no more than two structured changes. Supporting that row, the shared `BaseSystemEvent` contract gains an optional `changes: { direction: "gain" | "loss"; label }[]` field, so the row never relies on arbitrary text. The existing Codex orb (radial glow, glass sphere, dashed/dotted orbit rings, ✦ core) sits at the right edge as the temporary System emblem. The card keeps the semantic System color system — label, changes row, border, and orb all inherit the event's `promptType` accent, with the approved reference's blue as the default new-info voice — over blue-black depth; death-flag and iron-fate events keep their menacing border pulses. Fate System Prompts, the structured mechanical rows panel, the legacy string fallback, and the locked Reference are unchanged. The literary example becomes the bond notice "Aster now considers you someone she can trust." with `+ Karma Bond`. The expanded view, Codex overhaul, broader terminology system, and chapter-generation wiring remain out of scope.
 - **2026-08-21:** Consolidated System Prompt categories across the Workshop, types, normalizer, model parsers, and prompt directives into strictly two top-level options: universal System Prompt (`system_prompt`), which supports concise literary notices and optional structured mechanical rows with a development example switch, and Fate System Prompt (`fate_system_prompt`), which strictly requires a valid Fate Survival payload. Removed obsolete legacy kinds cleanly across all contracts and test suites without altering visual rendering or layout.
 - **2026-08-19:** Removed the retired standalone world presentation and every Card Workshop preset, adapter, override, and Reference rendering branch that existed only for it. Contextual View now demonstrates the replacement circle-free, footnote-scale annotations on audible actions: `the Rain Court bell tolled` contains the independently linked Codex name while its separate mark starts playback, and `a Vermilion Debt Fox growled once` remains ordinary prose with only the small sound mark identifying the event. Each final word, mark, and punctuation stays together while longer phrases can wrap normally.
 - **2026-08-18:** Development fixtures adopted the real Manifest backdrop pool and published Library test images for Codex media.
@@ -56,7 +57,7 @@ Card Type Tabs exposes every remaining preset in a horizontally scrollable tab l
   application logic selects the approved public Library Cue.
 - Reference mode uses locked production presentation replicas and has no Development controls.
 - Bestiary and Faction records remain informational and expose no Codex image-generation action.
-- System Panels retain their existing information, layout, colors, Fate presentation, and routing.
+- Fate panels, the structured mechanical System example, and System routing retain their existing presentation; the compact System Prompt follows the approved 2026-08-22 reference (fixed SYSTEM label, one concise sentence, signed changes row, temporary orb emblem) while keeping the semantic System color system.
 
 ## Transfer notes
 

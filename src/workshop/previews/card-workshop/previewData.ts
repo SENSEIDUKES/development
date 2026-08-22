@@ -120,7 +120,7 @@ export const CARD_PRESETS: CardPreset[] = [
     title: 'System Prompt',
     subtitle: 'In-World Celestial Library Notification',
     kind: 'system-block',
-    description: 'Universal in-world System Prompt panel. Default output is a concise literary message, with optional structured mechanical rows when a novel calls for them.',
+    description: 'Universal in-world System Prompt panel. Default output is a concise literary message with up to two signed metadata changes, with optional structured mechanical rows when a novel calls for them.',
     explanation: {
       componentName: 'SystemBlock',
       sourceFile: 'src/components/reader-chamber/development/SystemBlock.tsx',
@@ -128,13 +128,16 @@ export const CARD_PRESETS: CardPreset[] = [
       entityOrEventType: 'system (system_prompt)',
       codexDestination: 'ReaderCodex > Power Rankings / Ability Ledger / Karma',
       capabilities: { hasImage: false, hasManifestAction: false, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
-      architecturalNotes: 'Universal System Prompt contract supporting concise literary messages and optional structured mechanical rows.',
+      architecturalNotes: 'Universal System Prompt contract supporting concise literary messages, a signed metadata changes row (structured, max two), and optional structured mechanical rows.',
     },
-    systemContent: '[ The Heavenly Dao acknowledges your ascension. The Ninth Meridian has marked you. ]',
+    systemContent: '[ Aster now considers you someone she can trust. ]',
     systemEvent: {
       kind: 'system_prompt',
-      promptType: 'mystery',
-      title: 'Heavenly Dao Resonance',
+      promptType: 'codex_update',
+      title: 'Karma Bond Formed',
+      changes: [
+        { direction: 'gain', label: 'Karma Bond' },
+      ],
     },
   },
   {
@@ -199,11 +202,14 @@ export const ACTIVE_CARD_PRESETS = CARD_PRESETS.filter(preset => !preset.referen
 
 export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
   literary: {
-    systemContent: '[ The Heavenly Dao acknowledges your ascension. The Ninth Meridian has marked you. ]',
+    systemContent: '[ Aster now considers you someone she can trust. ]',
     systemEvent: {
       kind: 'system_prompt' as const,
-      promptType: 'mystery' as const,
-      title: 'Heavenly Dao Resonance',
+      promptType: 'codex_update' as const,
+      title: 'Karma Bond Formed',
+      changes: [
+        { direction: 'gain' as const, label: 'Karma Bond' },
+      ],
     },
   },
   structured: {

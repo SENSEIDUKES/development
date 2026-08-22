@@ -4,12 +4,13 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-21
+- **Last Workshop update:** 2026-08-22
 - **Last source comparison:** 2026-08-19
 - **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-08-22:** Rebuilt the Development `SystemBlock` compact regular System Prompt to the approved reference design: the fixed SYSTEM label, one concise event sentence in reader serif, and one small signed metadata row beneath it carrying at most two structured changes, with the existing Codex orb (radial glow, glass sphere, dashed/dotted orbit rings, ✦ core) reused as the temporary System emblem at the right edge. The block keeps its Reader rhythm (`my-6 md:my-8`, `max-w-xl`) and entrance/hover motion, and stays on the per-`promptType` semantic palette — label, changes row, border, and orb inherit the event's accent through `currentColor`, with the approved reference's blue as the default new-info voice — over blue-black depth; death-flag and iron-fate events keep their menacing border pulses. Regular events carrying mechanical `rows` keep the existing holographic panel, Fate results still route to `FateResultCard`, and the legacy string fallback and locked Reference replica are untouched. The shared `BaseSystemEvent` contract gains the optional `changes: { direction: "gain" | "loss"; label }[]` field; generation prompts, the normalizer, and parsers were not wired to emit it.
 - **2026-08-21:** Published this feature as `@seihouse/sen/reader-chamber`. The entry barrel in `src/package/reader-chamber.ts` exports the `development/` chamber, its controls and surfaces, and the `shared/` reading model, and carries `reader-chamber.css` as a side effect so consumers no longer hand-import it. **Known gap:** `ReaderChamber`, `ReaderViewport`, and `ReaderControls/AudioMenu` still import the Workshop's mock application state directly (`shared/stubs`, `shared/trackLibrary`, `MOCK_VOICES`), so those mocks are bundled into the published entry today, not excluded from it — they're temporary DEV runtime dependencies this restructure carried over, and replacing them with a host-supplied store and audio catalog is follow-up work for production integration. The locked `reference/` replica is Workshop-only and is never published.
 
 - **2026-08-20:** Removed the dialogue-audio annotation path from the Reader. Chapter prose carries Worldcues only: a voice annotation reaching the Reader is not playable and stays plain readable dialogue. Character speech is now a Reader Codex interaction, and the one shared audio owner is still the only playback path, so a Codex voice and a Worldcue can never overlap.

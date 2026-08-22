@@ -124,7 +124,12 @@ describe('CardWorkshopView', () => {
 
     await clickButton('System Prompt');
     expect(container.textContent).toContain('System Panels & Fate Outcomes');
-    expect(container.textContent).toContain('Heavenly Dao Resonance');
+    expect(container.textContent).toContain('Aster now considers you someone she can trust.');
+    expect(container.textContent).toContain('+ Karma Bond');
+    // Compact prompts keep the semantic System color system (codex_update → blue).
+    const compactBlock = container.querySelector('.system-block');
+    expect(compactBlock?.className).toContain('border-blue-500/40');
+    expect(compactBlock?.className).toContain('text-blue-400');
     expect(container.querySelector('[role="tabpanel"]')?.textContent).not.toContain('Human Portrait');
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
 
@@ -210,7 +215,8 @@ describe('CardWorkshopView', () => {
 
     const reader = container.querySelector<HTMLElement>('[data-testid="card-workshop-contextual-reader"]');
     await selectByLabel('Card preset', 'preset-system-prompt');
-    expect(reader?.textContent).toContain('Heavenly Dao Resonance');
+    expect(reader?.textContent).toContain('Aster now considers you someone she can trust.');
+    expect(reader?.textContent).toContain('+ Karma Bond');
     expect(reader?.textContent).toContain('Then the thunder moved on');
   });
 

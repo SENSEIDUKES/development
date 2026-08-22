@@ -97,6 +97,7 @@ export interface StoryBlockMetadata {
 
 import type {
   SystemEventKind,
+  SystemPromptBadge,
   SystemPromptChange,
   BaseSystemEvent,
   RegularSystemEvent,
@@ -106,6 +107,7 @@ import type {
 
 export type {
   SystemEventKind,
+  SystemPromptBadge,
   SystemPromptChange,
   BaseSystemEvent,
   RegularSystemEvent,

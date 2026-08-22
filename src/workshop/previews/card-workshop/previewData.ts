@@ -1,4 +1,5 @@
 import type { CardPreset } from '../../../components/card-workshop/shared/types';
+import type { CodexTerm } from '@seihouse/sen/reader-codex';
 
 const durableVisualImportance = {
   namedStatus: true,
@@ -120,7 +121,7 @@ export const CARD_PRESETS: CardPreset[] = [
     title: 'System Prompt',
     subtitle: 'In-World Celestial Library Notification',
     kind: 'system-block',
-    description: 'Universal in-world System Prompt panel. Default output is a dramatic headline, one concise literary sentence, and one horizontal row of up to four signed consequences, with optional structured mechanical rows when a novel calls for them.',
+    description: 'Universal in-world System Prompt panel. Default output is a dramatic headline, concise TTS prose with named-character Codex links, an optional event badge, and one non-scrolling priority consequence row, with optional structured mechanical rows when a novel calls for them.',
     explanation: {
       componentName: 'SystemBlock',
       sourceFile: 'src/components/reader-chamber/development/SystemBlock.tsx',
@@ -128,7 +129,7 @@ export const CARD_PRESETS: CardPreset[] = [
       entityOrEventType: 'system (system_prompt)',
       codexDestination: 'ReaderCodex > Power Rankings / Ability Ledger / Karma',
       capabilities: { hasImage: false, hasManifestAction: false, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
-      architecturalNotes: 'Universal System Prompt contract supporting a dramatic headline, a concise literary message (the only text narration reads), a signed consequence row (structured, max four, priority order), and optional structured mechanical rows.',
+      architecturalNotes: 'Universal System Prompt contract supporting a dramatic headline, a concise literary message (the only text narration reads), an optional structured badge, and priority-ordered consequences. Mobile shows three only when all three fit, otherwise two; roomy layouts may show four.',
     },
     systemContent: '[ Yun Che has successfully broken through into the Foundation Establishment realm. ]',
     systemEvent: {
@@ -202,6 +203,38 @@ export const CARD_PRESETS: CardPreset[] = [
 /** Active Workshop presets exclude legacy production-reference snapshots. */
 export const ACTIVE_CARD_PRESETS = CARD_PRESETS.filter(preset => !preset.referenceOnly);
 
+/** Named character entries used to prove System Prompt prose reuses Codex identity colors and links. */
+export const SYSTEM_PROMPT_CHARACTER_TERMS: CodexTerm[] = [
+  {
+    term: 'Yun Che',
+    type: 'character',
+    isCanonicalName: true,
+    entry: {
+      id: 'card-workshop-system-yun-che',
+      name: 'Yun Che',
+      role: 'Main character',
+      status: 'alive',
+      relationshipToMC: 'self',
+      description: 'A cultivator who survived the mortal tribulation and entered Foundation Establishment.',
+      portraitKind: 'human',
+    },
+  },
+  {
+    term: 'Elder Kaelen',
+    type: 'character',
+    isCanonicalName: true,
+    entry: {
+      id: 'card-workshop-system-elder-kaelen',
+      name: 'Elder Kaelen',
+      role: 'Sect enforcer',
+      status: 'alive',
+      relationshipToMC: 'hostile enemy',
+      description: 'A Foundation Establishment elder whose guarded stance marks him as an immediate threat.',
+      portraitKind: 'human',
+    },
+  },
+];
+
 export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
   breakthrough: {
     systemContent: '[ Yun Che has successfully broken through into the Foundation Establishment realm. ]',
@@ -235,6 +268,10 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
       kind: 'system_prompt' as const,
       promptType: 'enemy_scan' as const,
       title: 'Hostile Target Scan Complete',
+      badge: {
+        label: 'Threat Assessment',
+        value: 'Moderate',
+      },
       changes: [
         { direction: 'gain' as const, label: 'Intel' },
         { direction: 'gain' as const, label: 'Weakness' },

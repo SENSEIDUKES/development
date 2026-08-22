@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Skull, TriangleAlert as AlertTriangle } from 'lucide-react';
-import { SystemEvent } from '../shared/types';
+import type { SystemEvent, SystemPromptBadge, SystemPromptChange } from '../shared/types';
 import { FateResultCard } from './FateResultCard';
 import { getSystemPromptColor, getSystemColorMeaning, buildSystemContext } from '../shared/systemColors';
 export { SYSTEM_COLORS_LEGEND } from '../shared/systemColors';
@@ -9,6 +9,145 @@ export { SYSTEM_COLORS_LEGEND } from '../shared/systemColors';
 interface SystemBlockProps extends React.HTMLAttributes<HTMLDivElement> {
   content: string;
   system?: SystemEvent;
+  /** Reader-owned rendering for named character Codex links inside prose. */
+  renderProse?: (text: string) => React.ReactNode;
+}
+
+const CONSEQUENCE_FIT_SAFETY_PX = 24;
+
+function normalizeSystemPromptBadge(badge: unknown): SystemPromptBadge | undefined {
+  if (!badge || typeof badge !== 'object') return undefined;
+  const candidate = badge as Partial<SystemPromptBadge>;
+  if (typeof candidate.label !== 'string' || typeof candidate.value !== 'string') return undefined;
+  const label = candidate.label.trim();
+  const value = candidate.value.trim();
+  return label && value ? { label, value } : undefined;
+}
+
+/**
+ * Keeps badge information in the original `content` string for narration, but
+ * removes the matching label/value phrase from the visible prose so it appears
+ * once, as integrated System UI. If the prose does not contain the badge text,
+ * the sentence is left untouched.
+ */
+function getVisibleSystemSentence(content: string, badge?: SystemPromptBadge) {
+  const sentence = content.replace(/^\[|\]$/g, '').trim();
+  if (!badge?.label.trim() || !badge.value.trim()) return sentence;
+
+  const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const badgePhrase = new RegExp(
+    `${escapeRegExp(badge.label.trim())}\\s*[:\u00b7-]\\s*${escapeRegExp(badge.value.trim())}\\.?`,
+    'i',
+  );
+
+  return sentence
+    .replace(badgePhrase, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([,.;!?])/g, '$1')
+    .trim();
+}
+
+/**
+ * One non-scrolling consequence row. Changes are priority ordered: mobile and
+ * other narrow containers reveal a third item only when its measured natural
+ * width fits with breathing room, otherwise they keep the first two. A fourth
+ * remains available only on roomy non-mobile layouts.
+ */
+function SystemConsequenceRow({ changes }: { changes: SystemPromptChange[] }) {
+  const prioritizedChanges = React.useMemo(
+    () => changes
+      .filter(change => typeof change?.label === 'string' && change.label.trim() !== '')
+      .slice(0, 4),
+    [changes],
+  );
+  const rowRef = React.useRef<HTMLDivElement>(null);
+  const measurementRef = React.useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = React.useState(prioritizedChanges.length);
+
+  React.useLayoutEffect(() => {
+    const row = rowRef.current;
+    const measurement = measurementRef.current;
+    if (!row || !measurement) return;
+
+    const updateVisibleCount = () => {
+      const availableWidth = row.clientWidth;
+      if (availableWidth <= 0) return;
+
+      const widths = [...measurement.children].map(child => (
+        (child as HTMLElement).getBoundingClientRect().width
+      ));
+      const gap = Number.parseFloat(window.getComputedStyle(measurement).columnGap) || 0;
+      const fits = (count: number) => (
+        widths.slice(0, count).reduce((total, width) => total + width, 0)
+        + gap * Math.max(0, count - 1)
+        <= availableWidth - CONSEQUENCE_FIT_SAFETY_PX
+      );
+      const isMobileViewport = window.innerWidth < 768;
+
+      let nextCount = Math.min(2, prioritizedChanges.length);
+      if (
+        !isMobileViewport
+        && prioritizedChanges.length >= 4
+        && fits(4)
+      ) {
+        nextCount = 4;
+      } else if (prioritizedChanges.length >= 3 && fits(3)) {
+        nextCount = 3;
+      }
+      setVisibleCount(nextCount);
+    };
+
+    let isMounted = true;
+    const updateWhileMounted = () => {
+      if (isMounted) updateVisibleCount();
+    };
+
+    updateVisibleCount();
+    const resizeObserver = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(updateWhileMounted);
+    resizeObserver?.observe(row);
+    resizeObserver?.observe(measurement);
+    window.addEventListener('resize', updateWhileMounted);
+    void document.fonts?.ready.then(updateWhileMounted);
+
+    return () => {
+      isMounted = false;
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', updateWhileMounted);
+    };
+  }, [prioritizedChanges]);
+
+  const consequenceClass = 'shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.10em] text-current opacity-90 md:text-[11px] md:tracking-[0.18em]';
+
+  if (prioritizedChanges.length === 0) return null;
+
+  return (
+    <div className="relative mt-3 border-t border-inherit/30 pt-2.5">
+      <div
+        ref={rowRef}
+        data-consequence-count={visibleCount}
+        className="flex min-w-0 flex-nowrap items-center justify-between gap-x-3 whitespace-nowrap"
+      >
+        {prioritizedChanges.slice(0, visibleCount).map((change, index) => (
+          <span key={`${change.direction}-${change.label}-${index}`} className={consequenceClass}>
+            {change.direction === 'loss' ? '−' : '+'} {change.label.trim()}
+          </span>
+        ))}
+      </div>
+      <div
+        ref={measurementRef}
+        aria-hidden="true"
+        className="pointer-events-none absolute left-0 top-0 flex w-max items-center gap-x-3 whitespace-nowrap opacity-0"
+      >
+        {prioritizedChanges.map((change, index) => (
+          <span key={`${change.direction}-${change.label}-${index}`} className={consequenceClass}>
+            {change.direction === 'loss' ? '−' : '+'} {change.label.trim()}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -31,7 +170,7 @@ function SystemOrbEmblem() {
   );
 }
 
-export const SystemBlock = React.memo(function SystemBlock({ content, system, className, ...props }: SystemBlockProps) {
+export const SystemBlock = React.memo(function SystemBlock({ content, system, renderProse, className, ...props }: SystemBlockProps) {
   const { onAnimationStart: _anim, onDrag: _drag, onDragStart: _dStart, onDragEnd: _dEnd, ...safeProps } = props;
 
   const isIronFate = (system?.title || '').toLowerCase().includes('iron fate') || 
@@ -66,16 +205,19 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, cl
     // the fixed SYSTEM kicker (with the temporary orb emblem resting beside
     // it), one dramatic per-event headline from `system.title`, one concise
     // event sentence in reader serif from `content` — the only text narration
-    // reads — and one horizontal bottom row of up to four prioritized signed
-    // consequences from `system.changes`. Everything renders from structured
-    // data; the component hardcodes no event text. Tinted by the same semantic
+    // reads — an optional event badge, and one non-scrolling horizontal bottom
+    // row of prioritized signed consequences from `system.changes`. Mobile
+    // shows three only when all three fit, otherwise the first two; roomy
+    // layouts may show four. Everything renders from structured data; the
+    // component hardcodes no event text. Tinted by the same semantic
     // System color system as the structured panels (blue is the default voice)
     // over blue-black depth. Events carrying mechanical rows keep the
     // holographic panel below.
     if (rows.length === 0) {
-      const sentence = content.replace(/^\[|\]$/g, '').trim();
+      const badge = normalizeSystemPromptBadge(system.badge);
+      const sentence = getVisibleSystemSentence(content, badge);
       const headline = (system.title || '').trim();
-      const visibleChanges = (system.changes ?? []).slice(0, 4);
+      const visibleChanges = Array.isArray(system.changes) ? system.changes : [];
       const inferenceContext = buildSystemContext(system, content);
       const meaning = getSystemColorMeaning(system.promptType, inferenceContext);
       const accent = `${meaning.borderColor} ${meaning.textColor}`;
@@ -103,23 +245,18 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, cl
                 {headline}
               </span>
             )}
+            {badge && (
+              <span className="mt-2.5 self-start rounded-full border border-current/35 bg-[color-mix(in_srgb,currentColor_10%,transparent)] px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-current shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em]">
+                {badge.label} <span aria-hidden="true">·</span>{' '}
+                <span className="font-bold">{badge.value}</span>
+              </span>
+            )}
             {sentence && (
               <p className="mt-2 font-serif text-base leading-relaxed text-neutral-100 md:text-lg">
-                {sentence}
+                {renderProse ? renderProse(sentence) : sentence}
               </p>
             )}
-            {visibleChanges.length > 0 && (
-              <div className="mt-3 flex items-center gap-x-3 md:gap-x-6 overflow-x-auto whitespace-nowrap border-t border-inherit/30 pt-2.5">
-                {visibleChanges.map((change, index) => (
-                  <span
-                    key={index}
-                    className="font-mono text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.10em] md:tracking-[0.22em] text-current opacity-90"
-                  >
-                    {change.direction === 'loss' ? '−' : '+'} {change.label}
-                  </span>
-                ))}
-              </div>
-            )}
+            <SystemConsequenceRow changes={visibleChanges} />
           </div>
         </motion.div>
       );

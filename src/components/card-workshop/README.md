@@ -5,7 +5,7 @@
 - **Workshop preview:** `?preview=card-workshop`
 - **Replica created:** 2026-08-14
 - **Last Workshop update:** 2026-08-22
-- **Last source comparison:** 2026-08-19
+- **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
 ## Purpose
@@ -22,6 +22,7 @@ Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studi
 
 ## Workshop history
 
+- **2026-08-22:** Finished the compact System Prompt refinement without changing its narration owner. Named characters in the TTS prose now reuse the existing Reader Codex highlighter and hovercard only when a character entry resolves, preserving the entry's assigned novel color; Artifacts, Locations, Factions, and unnamed mentions remain outside this System-prose pass. Added an optional structured `badge` such as `THREAT ASSESSMENT · MODERATE`; the full original `content` stays intact for TTS while the matching badge phrase moves out of the visible serif sentence. Replaced consequence scrolling with measured priority selection: mobile shows three only when all three fit with breathing room, otherwise the first two, while roomy layouts may still show four. Every visible item remains untruncated on one line. The target-scan mock proves the red hostile character link, badge, and three-item row; the breakthrough mock proves the two-item mobile fallback. The locked Reference and existing TTS playback path remain unchanged.
 - **2026-08-22:** Rebuilt the compact System Prompt around three parts: the fixed SYSTEM kicker with the temporary orb emblem resting small beside it, a dramatic per-event headline from `system.title`, the concise serif sentence from `content` (still the only text narration reads), and one horizontal bottom row of up to four prioritized signed consequences from `system.changes`. The single-column stack fixes the portrait layout — the large side orb no longer squeezes the text column at 390px. The component stays fully data-driven; the Workshop example switch now offers three mocked Wuxia events — cultivation breakthrough (gold), broken promise (orange), and target scan (red) — beside the unchanged structured mechanical example. The shared `SystemPromptChange` contract now documents the four-consequence cap in priority order; generation is still not wired to emit it.
 - **2026-08-22:** Rebuilt the compact regular System Prompt (Development `SystemBlock`, events without mechanical rows) to the approved reference: the fixed SYSTEM label, one concise event sentence in reader serif, and one small signed metadata row beneath it carrying no more than two structured changes. Supporting that row, the shared `BaseSystemEvent` contract gains an optional `changes: { direction: "gain" | "loss"; label }[]` field, so the row never relies on arbitrary text. The existing Codex orb (radial glow, glass sphere, dashed/dotted orbit rings, ✦ core) sits at the right edge as the temporary System emblem. The card keeps the semantic System color system — label, changes row, border, and orb all inherit the event's `promptType` accent, with the approved reference's blue as the default new-info voice — over blue-black depth; death-flag and iron-fate events keep their menacing border pulses. Fate System Prompts, the structured mechanical rows panel, the legacy string fallback, and the locked Reference are unchanged. The literary example becomes the bond notice "Aster now considers you someone she can trust." with `+ Karma Bond`. The expanded view, Codex overhaul, broader terminology system, and chapter-generation wiring remain out of scope.
 - **2026-08-21:** Consolidated System Prompt categories across the Workshop, types, normalizer, model parsers, and prompt directives into strictly two top-level options: universal System Prompt (`system_prompt`), which supports concise literary notices and optional structured mechanical rows with a development example switch, and Fate System Prompt (`fate_system_prompt`), which strictly requires a valid Fate Survival payload. Removed obsolete legacy kinds cleanly across all contracts and test suites without altering visual rendering or layout.
@@ -58,7 +59,7 @@ Card Type Tabs exposes every remaining preset in a horizontally scrollable tab l
   application logic selects the approved public Library Cue.
 - Reference mode uses locked production presentation replicas and has no Development controls.
 - Bestiary and Faction records remain informational and expose no Codex image-generation action.
-- Fate panels, the structured mechanical System example, and System routing retain their existing presentation; the compact System Prompt follows the approved 2026-08-22 three-part reference (SYSTEM kicker with the small orb emblem, dramatic headline, one concise serif sentence, one horizontal row of up to four signed consequences) while keeping the semantic System color system.
+- Fate panels, the structured mechanical System example, and System routing retain their existing presentation; the compact System Prompt follows the approved 2026-08-22 reference with a small orb emblem, dramatic headline, character-linked TTS prose, optional event badge, and one non-scrolling priority consequence row while keeping the semantic System color system.
 
 ## Transfer notes
 
@@ -70,6 +71,6 @@ The active Development presentation owners are:
 - `src/components/reader-chamber/development/SystemBlock.tsx`
 - `src/components/library/LibrarySoundGlyph.tsx`
 
-`Light-Novels` `main` was inspected at commit `66643f609067fea9bc6da6a779673f1681d2c70e` on 2026-08-19. Its current Reader, System, and Fate source paths remain the comparison baseline; this Workshop change does not modify that repository.
+`Light-Novels` `main` was inspected at commit `f89cb41` on 2026-08-22. Its current Reader, System, and Fate source paths remain the comparison baseline; this Workshop change does not modify that repository.
 
 Do not transfer Workshop controls, fixtures, contextual Reader harness, or preview overrides into production.

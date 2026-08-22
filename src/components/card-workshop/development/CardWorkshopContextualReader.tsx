@@ -22,7 +22,10 @@ import {
   type WorldCueIntent,
 } from '@seihouse/sen/audio';
 import type { CardPreset, CardWorkshopOverrides } from '../shared/types';
-import { SYSTEM_PROMPT_PRESET_EXAMPLES } from '../../../workshop/previews/card-workshop/previewData';
+import {
+  SYSTEM_PROMPT_CHARACTER_TERMS,
+  SYSTEM_PROMPT_PRESET_EXAMPLES,
+} from '../../../workshop/previews/card-workshop/previewData';
 
 const LOCAL_HUMAN_PORTRAIT = '/card-workshop/test-images/ye_chen_portrait.png';
 const LOCAL_CREATURE_PORTRAIT = '/card-workshop/test-images/lyra_meadowlight_portrait.png';
@@ -269,7 +272,12 @@ export function createCardWorkshopContextualFixture(
     },
   ];
 
-  const codexTerms = [CONTEXT_WITNESS, CONTEXT_CUE_LOCATION, codexTerm].filter(
+  const codexTerms = [
+    CONTEXT_WITNESS,
+    CONTEXT_CUE_LOCATION,
+    ...SYSTEM_PROMPT_CHARACTER_TERMS,
+    codexTerm,
+  ].filter(
     (term): term is CodexTerm => Boolean(term),
   );
   // Real Manifest backdrop art per entity (the shared pool's stable pick), so

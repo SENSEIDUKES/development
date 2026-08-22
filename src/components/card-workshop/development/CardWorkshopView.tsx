@@ -11,14 +11,19 @@ import {
   Zap,
 } from 'lucide-react';
 import { SystemBlock, type SystemEvent } from '@seihouse/sen/reader-chamber';
-import { CodexCard, getManifestBackdrop } from '@seihouse/sen/codex-cards';
+import { CodexCard, CodexHovercard, getManifestBackdrop } from '@seihouse/sen/codex-cards';
+import { createCodexHighlighter, splitByCodexTerms } from '@seihouse/sen/reader-codex';
 import type {
   CardPreset,
   CardWorkshopOverrides,
   ImagePreviewState,
 } from '../shared/types';
 import { CardWorkshopContextualReader } from './CardWorkshopContextualReader';
-import { ACTIVE_CARD_PRESETS, SYSTEM_PROMPT_PRESET_EXAMPLES } from '../../../workshop/previews/card-workshop/previewData';
+import {
+  ACTIVE_CARD_PRESETS,
+  SYSTEM_PROMPT_CHARACTER_TERMS,
+  SYSTEM_PROMPT_PRESET_EXAMPLES,
+} from '../../../workshop/previews/card-workshop/previewData';
 import {
   SYSTEM_PROMPT_STYLE_OPTIONS,
   FATE_OUTCOME_OPTIONS,
@@ -28,6 +33,32 @@ import {
 
 const LOCAL_HUMAN_PORTRAIT = '/card-workshop/test-images/ye_chen_portrait.png';
 const LOCAL_CREATURE_PORTRAIT = '/card-workshop/test-images/lyra_meadowlight_portrait.png';
+const SYSTEM_PROMPT_CHARACTER_HIGHLIGHTER = createCodexHighlighter(SYSTEM_PROMPT_CHARACTER_TERMS);
+
+/** Workshop-only renderer proving the reusable SystemBlock accepts Reader-owned character links. */
+function renderSystemPromptProse(text: string) {
+  const segments = splitByCodexTerms(text, SYSTEM_PROMPT_CHARACTER_HIGHLIGHTER);
+  if (segments.length === 1) return <>{text}</>;
+
+  return (
+    <>
+      {segments.map((segment, index) => (
+        segment.match ? (
+          <CodexHovercard
+            key={`${segment.text}-${index}`}
+            term={segment.text}
+            type="character"
+            entry={segment.match.entry}
+          >
+            {segment.text}
+          </CodexHovercard>
+        ) : (
+          <React.Fragment key={`${segment.text}-${index}`}>{segment.text}</React.Fragment>
+        )
+      ))}
+    </>
+  );
+}
 
 function MissingPreview({ children }: { children: React.ReactNode }) {
   return (
@@ -219,6 +250,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
           <SystemBlock
             content={content}
             system={activeSystemEvent}
+            renderProse={renderSystemPromptProse}
           />
         </div>
       );

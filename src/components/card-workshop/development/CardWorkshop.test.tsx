@@ -154,10 +154,20 @@ describe('CardWorkshopView', () => {
     await clickButton('Target Scan');
     const scanBlock = container.querySelector('.system-block');
     expect(scanBlock?.textContent).toContain('Hostile Target Scan Complete');
-    expect(scanBlock?.textContent).toContain('Elder Kaelen — Foundation Establishment, Stage 7. Threat assessment: moderate.');
+    expect(scanBlock?.querySelector('p')?.textContent)
+      .toBe('Elder Kaelen — Foundation Establishment, Stage 7.');
+    expect(scanBlock?.textContent).toContain('Threat Assessment · Moderate');
     expect(scanBlock?.textContent).toContain('+ Intel');
     expect(scanBlock?.textContent).toContain('+ Weakness');
     expect(scanBlock?.textContent).toContain('− Exposed');
+    const elderCodexAction = [...(scanBlock?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
+      .find(element => element.textContent === 'Elder Kaelen');
+    expect(elderCodexAction).toBeTruthy();
+    expect(elderCodexAction?.className).toContain('text-red-500');
+    await act(async () => elderCodexAction!.click());
+    expect(document.body.querySelector('[role="dialog"][aria-label="Elder Kaelen Codex details"]'))
+      .toBeTruthy();
+    await act(async () => elderCodexAction!.click());
 
     // Toggle to structured mechanical example
     await clickButton('Structured Mechanical');
@@ -270,6 +280,36 @@ describe('CardWorkshopView', () => {
     expect(reader?.textContent).toContain('Yun Che has successfully broken through into the Foundation Establishment realm.');
     expect(reader?.textContent).toContain('+ Stage 4');
     expect(reader?.textContent).toContain('Then the thunder moved on');
+  });
+
+  it('keeps the full target-scan narration source while linking only its named character in Reader prose', async () => {
+    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)));
+    await openTechnicalDetails();
+    await selectByLabel('Card preset', 'preset-system-prompt');
+    await selectByLabel('System prompt example style', 'target-scan');
+
+    const reader = container.querySelector<HTMLElement>('[data-testid="card-workshop-contextual-reader"]');
+    const systemBlock = reader?.querySelector<HTMLElement>('.system-block');
+    expect(systemBlock?.querySelector('p')?.textContent)
+      .toBe('Elder Kaelen — Foundation Establishment, Stage 7.');
+    expect(systemBlock?.textContent).toContain('Threat Assessment · Moderate');
+
+    const elderCodexAction = [...(systemBlock?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
+      .find(element => element.textContent === 'Elder Kaelen');
+    expect(elderCodexAction).toBeTruthy();
+    expect(elderCodexAction?.className).toContain('text-red-500');
+    await act(async () => elderCodexAction!.click());
+    expect(document.body.querySelector('[role="dialog"][aria-label="Elder Kaelen Codex details"]'))
+      .toBeTruthy();
+
+    const targetScanPreset = ACTIVE_CARD_PRESETS.find(preset => preset.id === 'preset-system-prompt')!;
+    const targetScanFixture = createCardWorkshopContextualFixture(
+      targetScanPreset,
+      { ...INITIAL_CARD_WORKSHOP_OVERRIDES, systemPromptContentStyle: 'target-scan' },
+      new Set(),
+    );
+    expect(targetScanFixture.chapter.blocks?.[2]?.text)
+      .toBe('[ Elder Kaelen — Foundation Establishment, Stage 7. Threat assessment: moderate. ]');
   });
 
   it('keeps image, Manifest/Awaken, Codex, entity-mention, and portrait overrides active in Contextual View', async () => {

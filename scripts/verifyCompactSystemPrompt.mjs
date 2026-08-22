@@ -1,7 +1,9 @@
 import { chromium } from 'playwright';
+import { mkdir } from 'node:fs/promises';
 
 const base = 'http://localhost:5173/?preview=card-workshop';
 const devices = [
+  { name: 'mobile-320', width: 320, height: 700, emulation: 'Mobile Viewport' },
   { name: 'mobile-390', width: 390, height: 844, emulation: 'Mobile Viewport' },
   { name: 'tablet-768', width: 768, height: 1024, emulation: 'Tablet Viewport' },
   { name: 'desktop-1440', width: 1440, height: 900, emulation: 'Desktop Viewport' },
@@ -11,6 +13,28 @@ const events = [
   { label: 'Broken Promise', slug: 'broken-promise' },
   { label: 'Target Scan', slug: 'target-scan' },
 ];
+
+await mkdir('output/playwright', { recursive: true });
+
+async function verifyConsequenceRow(block, eventSlug, deviceName) {
+  const row = block.locator('[data-consequence-count]');
+  const metrics = await row.evaluate((element) => ({
+    count: Number(element.getAttribute('data-consequence-count')),
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+    overflowX: getComputedStyle(element).overflowX,
+  }));
+
+  if (metrics.scrollWidth > metrics.clientWidth + 1 || metrics.overflowX === 'auto' || metrics.overflowX === 'scroll') {
+    throw new Error(`${eventSlug} consequence row scrolls or overflows at ${deviceName}: ${JSON.stringify(metrics)}`);
+  }
+  if (deviceName.startsWith('mobile-') && eventSlug === 'breakthrough' && metrics.count !== 2) {
+    throw new Error(`breakthrough must keep only its two highest-priority consequences on mobile: ${JSON.stringify(metrics)}`);
+  }
+  if (deviceName.startsWith('mobile-') && eventSlug === 'target-scan' && metrics.count !== 3) {
+    throw new Error(`target scan must keep all three short consequences on mobile: ${JSON.stringify(metrics)}`);
+  }
+}
 
 const browser = await chromium.launch();
 for (const device of devices) {
@@ -24,6 +48,18 @@ for (const device of devices) {
     const tabsBlock = page.locator('.system-block').first();
     await tabsBlock.waitFor({ state: 'visible' });
     await page.waitForTimeout(800);
+    await verifyConsequenceRow(tabsBlock, event.slug, device.name);
+    if (event.slug === 'target-scan') {
+      await tabsBlock.getByText('Threat Assessment · Moderate', { exact: true }).waitFor();
+      const elderLink = tabsBlock.getByRole('button', { name: 'Elder Kaelen', exact: true });
+      await elderLink.waitFor();
+      if (!(await elderLink.getAttribute('class'))?.includes('text-red-500')) {
+        throw new Error(`Elder Kaelen did not preserve the hostile character color at ${device.name}.`);
+      }
+      await elderLink.click();
+      await page.getByRole('dialog', { name: 'Elder Kaelen Codex details' }).waitFor();
+      await page.keyboard.press('Escape');
+    }
     await tabsBlock.screenshot({ path: `output/playwright/system-prompt-${event.slug}-${device.name}-tabs-card.png` });
     if (event.slug === 'breakthrough') {
       await page.screenshot({ path: `output/playwright/system-prompt-breakthrough-${device.name}-tabs.png` });
@@ -38,6 +74,7 @@ for (const device of devices) {
   await contextBlock.waitFor({ state: 'visible' });
   await contextBlock.scrollIntoViewIfNeeded();
   await page.waitForTimeout(800);
+  await verifyConsequenceRow(contextBlock, 'breakthrough', device.name);
   await page.screenshot({ path: `output/playwright/system-prompt-breakthrough-${device.name}-contextual.png` });
   await contextBlock.screenshot({ path: `output/playwright/system-prompt-breakthrough-${device.name}-contextual-card.png` });
 

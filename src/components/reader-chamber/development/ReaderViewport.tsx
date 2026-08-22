@@ -12,7 +12,8 @@ import { SystemColorLegend } from './SystemColorLegend';
 import { anchorAttributes } from '../shared/cinematicScroll/anchors';
 import { ContextInspector } from './ContextInspector';
 import { getReaderTypography, getReadingDirection } from '../shared/readerTypography';
-import { createCodexHighlighter } from '../../reader-codex/shared/codexHighlighting';
+import { createCodexHighlighter, splitByCodexTerms } from '../../reader-codex/shared/codexHighlighting';
+import { CodexHovercard } from '../../reader-codex/development/CodexHovercard';
 import { CodexCard, FALLBACK_BACKDROPS } from './CodexCard';
 import { InlineAudioText } from './InlineAudio';
 import type { ResolvedAudioMoment } from '../../../audio/inlineAudio';
@@ -282,6 +283,35 @@ export function ReaderViewport({
     () => createCodexHighlighter(codexTerms ?? []),
     [codexTerms],
   );
+  const systemCharacterHighlighter = React.useMemo(
+    () => createCodexHighlighter(
+      (codexTerms ?? []).filter(term => term?.type === 'character'),
+    ),
+    [codexTerms],
+  );
+  const renderSystemProse = React.useCallback((text: string) => {
+    const segments = splitByCodexTerms(text, systemCharacterHighlighter);
+    if (segments.length === 1) return <>{text}</>;
+
+    return (
+      <>
+        {segments.map((segment, index) => (
+          segment.match ? (
+            <CodexHovercard
+              key={`${segment.text}-${index}`}
+              term={segment.text}
+              type="character"
+              entry={segment.match.entry}
+            >
+              {segment.text}
+            </CodexHovercard>
+          ) : (
+            <React.Fragment key={`${segment.text}-${index}`}>{segment.text}</React.Fragment>
+          )
+        ))}
+      </>
+    );
+  }, [systemCharacterHighlighter]);
 
   const bookmarkMap = React.useMemo(() => {
     const map = new Map<number, Bookmark>();
@@ -534,6 +564,7 @@ export function ReaderViewport({
                               id={`para-${index}`}
                               {...anchorAttributes(selectedChapter.number, index, undefined, cleanText)}
                               content={cleanText}
+                              renderProse={renderSystemProse}
                             />
                           );
                         }
@@ -622,6 +653,7 @@ export function ReaderViewport({
                               <SystemBlock
                                 content={cleanText}
                                 system={block.system}
+                                renderProse={renderSystemProse}
                                 data-cue-type="narrative.metadata.signature"
                                 data-cue-id={
                                   block.id ||
@@ -792,6 +824,7 @@ export function ReaderViewport({
                                 id={`para-${index}`}
                                 {...anchorAttributes(selectedChapter.number, index, undefined, cleanText)}
                                 content={cleanText}
+                                renderProse={renderSystemProse}
                                 data-cue-type="narrative.metadata.signature"
                                 data-cue-id={`system-line-${selectedChapter.number}-${index}`}
                                 className="narrative-trigger"

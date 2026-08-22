@@ -120,6 +120,16 @@ export interface SystemPromptChange {
   label: string;
 }
 
+/**
+ * One compact, event-specific status badge rendered outside the visible serif
+ * prose without changing the Reader's narration source (for example
+ * THREAT ASSESSMENT · MODERATE).
+ */
+export interface SystemPromptBadge {
+  label: string;
+  value: string;
+}
+
 export interface BaseSystemEvent {
   kind: SystemEventKind | (string & {});
   promptType?:
@@ -129,7 +139,12 @@ export interface BaseSystemEvent {
   title: string;
   rows?: { label: string; value: string }[];
   rarity?: string;
-  /** Signed consequence row for the compact System Prompt (max four rendered). */
+  /** Optional event-specific status kept visually separate from narrated prose. */
+  badge?: SystemPromptBadge;
+  /**
+   * Priority-ordered signed consequences. Roomy layouts may show four; narrow
+   * layouts show three only when they fit cleanly, otherwise the first two.
+   */
   changes?: SystemPromptChange[];
 }
 

@@ -154,7 +154,7 @@ export const workshopEntries: WorkshopEntry[] = [
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/ReaderChamber.tsx; src/components/ReaderViewport.tsx',
-      lastCompared: '2026-08-19',
+      lastCompared: '2026-08-22',
     },
   },
   {
@@ -166,7 +166,7 @@ export const workshopEntries: WorkshopEntry[] = [
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/SystemBlock.tsx; src/components/FateResultCard.tsx; src/components/ReaderViewport.tsx',
-      lastCompared: '2026-08-19',
+      lastCompared: '2026-08-22',
     },
   },
 ];

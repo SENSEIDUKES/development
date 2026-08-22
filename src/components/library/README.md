@@ -47,6 +47,14 @@ Reusable visual names use the `library-*` namespace:
 `library-title-presence`, and `library-subtitle-shimmer`. There are no legacy
 `seed-*` aliases.
 
+- **2026-08-22:** Hardened `LibrarySoundGlyph` accessibility contract: dropped
+  interaction/focus props from `...restProps` (so a stray `onClick` /
+  `tabIndex` / `aria-pressed` cannot turn the static mark into an
+  interactive surface or a duplicate focus stop) and always wire
+  `aria-labelledby` to a `useId()`-generated id on the inner `<title>` when
+  a standalone `title` is provided without `titleId`. Added focused contract
+  tests in `LibrarySoundGlyph.test.tsx` covering the new behavior.
+
 - **2026-08-21:** Moved the shared celestial particle canvas from
   `src/ParticleEffect.tsx` into the Library set as `ParticleEffect` and added
   it to the barrel, so relic reveals, loading veils, and the celestial

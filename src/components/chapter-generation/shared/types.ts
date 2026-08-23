@@ -141,6 +141,8 @@ export interface BaseSystemEvent {
     | "progression" | "breakthrough" | "reward" | "romance" | "karmic_bond" | "mystery" | "fate_event"
     | "corruption" | "death_event" | "quest_update" | "choice_consequence" | "system_error";
   title: string;
+  /** Secondary world-specific or dramatic flavor displayed beneath the direct title. */
+  flavor?: string;
   /**
    * Concise key/value facts. The compact System Prompt renders at most three
    * and marks a changed value with a small direction arrow when `trend` is

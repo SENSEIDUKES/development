@@ -259,7 +259,8 @@ export const CARD_PRESETS: CardPreset[] = [
     systemEvent: {
       kind: 'system_prompt',
       promptType: 'breakthrough',
-      title: 'Mortal Tribulation Surpassed',
+      title: 'Cultivation Breakthrough',
+      flavor: 'Mortal Tribulation Surpassed',
       expanded: BREAKTHROUGH_EXPANDED,
       rows: [
         { label: 'New Realm', value: 'Foundation Establishment', trend: 'up' },
@@ -398,7 +399,8 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
     systemEvent: {
       kind: 'system_prompt' as const,
       promptType: 'breakthrough' as const,
-      title: 'Mortal Tribulation Surpassed',
+      title: 'Cultivation Breakthrough',
+      flavor: 'Mortal Tribulation Surpassed',
       expanded: BREAKTHROUGH_EXPANDED,
       rows: [
         { label: 'New Realm', value: 'Foundation Establishment', trend: 'up' as const },
@@ -416,7 +418,8 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
     systemEvent: {
       kind: 'system_prompt' as const,
       promptType: 'choice_consequence' as const,
-      title: 'Oath Before the Rain Court Broken',
+      title: 'Karmic Consequence',
+      flavor: 'Oath Before the Rain Court Broken',
       expanded: BROKEN_PROMISE_EXPANDED,
       rows: [
         { label: 'Celestial Record', value: 'Sealed', trend: 'down' as const },
@@ -434,7 +437,8 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
     systemEvent: {
       kind: 'system_prompt' as const,
       promptType: 'enemy_scan' as const,
-      title: 'Hostile Target Scan Complete',
+      title: 'Hostile Target Scan',
+      flavor: 'Elder Kaelen Assessment',
       expanded: TARGET_SCAN_EXPANDED,
       badge: {
         label: 'Threat Assessment',

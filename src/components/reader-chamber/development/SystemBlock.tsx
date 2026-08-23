@@ -471,70 +471,22 @@ function SystemExpandedOverlay({
  * containers reveal the third outcome only when its measured natural width
  * fits with breathing room, otherwise they keep the first two.
  */
+/**
+ * System outcome row carrying genre-native outcomes as dedicated badges
+ * that wrap cleanly when needed rather than forcing into a single line.
+ * Plus and minus signs appear only on genuine mathematical changes — labels
+ * carrying a numeric quantity (QI 200, KARMA 15, HEALTH 30%) render with
+ * the direction's sign before the number (QI +200, KARMA −15, HEALTH −30%);
+ * plain status outcomes (REALM ASCENDED, TITLE ACQUIRED, DETECTION RISK: HIGH)
+ * render unsigned.
+ */
 function SystemConsequenceRow({ changes }: { changes: SystemPromptChange[] }) {
   const prioritizedChanges = React.useMemo(
     () => changes
-      .filter(change => typeof change?.label === 'string' && change.label.trim() !== '')
-      .slice(0, 3),
+      .filter(change => typeof change?.label === 'string' && change.label.trim() !== ''),
     [changes],
   );
-  const rowRef = React.useRef<HTMLDivElement>(null);
-  const measurementRef = React.useRef<HTMLDivElement>(null);
-  const [visibleCount, setVisibleCount] = React.useState(prioritizedChanges.length);
 
-  React.useLayoutEffect(() => {
-    const row = rowRef.current;
-    const measurement = measurementRef.current;
-    if (!row || !measurement) return;
-
-    const updateVisibleCount = () => {
-      const availableWidth = row.clientWidth;
-      if (availableWidth <= 0) return;
-
-      const widths = [...measurement.children].map(child => (
-        (child as HTMLElement).getBoundingClientRect().width
-      ));
-      const gap = Number.parseFloat(window.getComputedStyle(measurement).columnGap) || 0;
-      const fits = (count: number) => (
-        widths.slice(0, count).reduce((total, width) => total + width, 0)
-        + gap * Math.max(0, count - 1)
-        <= availableWidth - CONSEQUENCE_FIT_SAFETY_PX
-      );
-      let nextCount = Math.min(2, prioritizedChanges.length);
-      if (prioritizedChanges.length >= 3 && fits(3)) {
-        nextCount = 3;
-      }
-      setVisibleCount(nextCount);
-    };
-
-    let isMounted = true;
-    const updateWhileMounted = () => {
-      if (isMounted) updateVisibleCount();
-    };
-
-    updateVisibleCount();
-    const resizeObserver = typeof ResizeObserver === 'undefined'
-      ? null
-      : new ResizeObserver(updateWhileMounted);
-    resizeObserver?.observe(row);
-    resizeObserver?.observe(measurement);
-    window.addEventListener('resize', updateWhileMounted);
-    void document.fonts?.ready.then(updateWhileMounted);
-
-    return () => {
-      isMounted = false;
-      resizeObserver?.disconnect();
-      window.removeEventListener('resize', updateWhileMounted);
-    };
-  }, [prioritizedChanges]);
-
-  const consequenceClass = 'shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.10em] text-neutral-200 md:text-[11px] md:tracking-[0.18em]';
-
-  // One shared outcome body so the hidden measurement mirror matches the
-  // visible row exactly. Only genuine mathematical changes carry a sign: the
-  // direction's sign sits immediately before the number (LIFESPAN +100,
-  // KARMA −15) and keeps its green/red direction color, while plain status
-  // outcomes stay unsigned and readable neutral.
   const renderConsequence = (change: SystemPromptChange) => {
     const label = change.label.trim();
     const quantityStart = label.search(/\d/);
@@ -552,33 +504,19 @@ function SystemConsequenceRow({ changes }: { changes: SystemPromptChange[] }) {
 
   if (prioritizedChanges.length === 0) return null;
 
-  // overflow-hidden also contains the invisible full-width measurement
-  // mirror, so it can never reach page scroll overflow even if an ancestor's
-  // overflow contract changes.
   return (
-    <div className="relative mt-3 overflow-hidden border-t border-[color-mix(in_srgb,currentColor_22%,transparent)] pt-2.5">
-      <div
-        ref={rowRef}
-        data-consequence-count={visibleCount}
-        className="flex min-w-0 flex-nowrap items-center justify-between gap-x-3 whitespace-nowrap"
-      >
-        {prioritizedChanges.slice(0, visibleCount).map((change, index) => (
-          <span key={`${change.direction}-${change.label}-${index}`} className={consequenceClass}>
-            {renderConsequence(change)}
-          </span>
-        ))}
-      </div>
-      <div
-        ref={measurementRef}
-        aria-hidden="true"
-        className="pointer-events-none absolute left-0 top-0 flex w-max items-center gap-x-3 whitespace-nowrap opacity-0"
-      >
-        {prioritizedChanges.map((change, index) => (
-          <span key={`${change.direction}-${change.label}-${index}`} className={consequenceClass}>
-            {renderConsequence(change)}
-          </span>
-        ))}
-      </div>
+    <div
+      data-consequence-count={prioritizedChanges.length}
+      className="mt-2.5 flex flex-wrap items-center gap-1.5 md:gap-2 border-t border-[color-mix(in_srgb,currentColor_18%,transparent)] pt-2"
+    >
+      {prioritizedChanges.map((change, index) => (
+        <span
+          key={`${change.direction}-${change.label}-${index}`}
+          className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.10em] text-neutral-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:text-[10px] md:tracking-[0.14em]"
+        >
+          {renderConsequence(change)}
+        </span>
+      ))}
     </div>
   );
 }
@@ -685,63 +623,17 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
         ? ' animate-menacing-amber'
         : '';
 
-    // Reworked 2026-08-22 to the production information hierarchy, then
-    // restyled 2026-08-23 from the holographic colored System window into a
-    // dark smoky event-tinted panel matching the approved compact reference:
-    // a mostly opaque near-black surface with a faint event-color tint and a
-    // mild backdrop blur (`.system-window` in reader-chamber.css — the
-    // scanline veil and brightness/saturation frost are gone), a thin
-    // luminous border on smaller rounded corners, a restrained outer glow,
-    // compact padding, a thin divider beneath the headline block instead of
-    // the full-bleed tinted header band, and the concise serif sentence
-    // (`content` — the only text narration reads) demoted to a muted gray
-    // secondary layer so it never competes with the reader's prose, while
-    // Codex-linked names keep their assigned colors. Everything is still
-    // driven by the event's assigned semantic System color through
-    // `currentColor` (gold Awakening, orange Karma, red Combat, green stable
-    // growth; blue remains the default new-info voice). The layout itself is
-    // unchanged: the dramatic per-event headline (`system.title`) leads with
-    // the temporary orb emblem resting at the right edge, followed by a small
-    // `✦ classification ✦` line from the semantic System color meaning, up to
-    // three concise key/value rows (`system.rows`, production panel anatomy)
-    // whose changed values carry a small green up-arrow (`trend: "up"`) or
-    // red down-arrow (`trend: "down"`), an optional event badge, one
-    // non-scrolling horizontal metadata row of one to three short System
-    // outcomes (`system.changes` — plus/minus signs only on genuine
-    // mathematical changes such as QI +200 or KARMA −15, with the sign before
-    // the number; plain status outcomes stay unsigned), and the muted serif
-    // sentence, which rests collapsed by default behind a small centered
-    // arrow toggle at the bottom edge to conserve reader screen space
-    // (2026-08-23 follow-up: narration still reads the sentence from the
-    // block data exactly as before — the toggle only changes visibility).
-    // Narrow containers show the third
-    // outcome only when all three fit, otherwise the first two. Everything
-    // renders from structured data; the component hardcodes no event text.
-    //
-    // Expanded event report (2026-08-22): optional Reader-owned expanded data
-    // turns the orb into the control that opens a viewport-locked overlay
-    // portaled above the Reader Chamber — never an in-place expansion. The
-    // compact card keeps its outcome row and prose untouched underneath,
-    // so the reader's position and the chapter layout never move. The overlay
-    // is one flat panel (classification, headline, subject, badge, the System
-    // outcome row, then Codex sections with simple dividers) capped to the
-    // three highest-priority sections on mobile so everything fits one screen
-    // without page or panel scrolling; larger screens show every section in
-    // the same structure. The overlay root carries the
-    // `data-reader-narration="excluded"` boundary and lives outside the reader
-    // DOM, so TTS still reads only the compact card's prose. Escape, the close
-    // button, or a backdrop tap closes it and returns focus to the orb.
-    //
-    // Routing: events carrying System outcomes (or no rows at all) render
-    // compact. Events carrying rows without outcomes keep the holographic
-    // panel below, so dense mechanical readouts, rarity chips, and existing
-    // row-bearing events stay untouched.
+    // Compact regular System Prompt: title-led header with direct understandable
+    // headline, secondary flavor text, semantic classification line, dedicated
+    // wrapping metadata badges, cleanly wrapping outcome pills, and tightened
+    // layout with no vertical dead space when TTS summary is minimized.
     if (rows.length === 0 || visibleChanges.length > 0) {
       const badge = normalizeSystemPromptBadge(system.badge);
       const badgeSeverity = badge ? getBadgeSeverityStyles(badge) : undefined;
       const sentence = getVisibleSystemSentence(content, badge);
       const summaryId = `${detailsId}-summary`;
       const headline = (system.title || '').trim();
+      const flavor = (system.flavor || '').trim();
       const compactRows = rows.slice(0, 3);
       const expandedData = normalizeExpandedData(system.expanded);
       const isExpanded = Boolean(expandedData && expandedEventKey === eventKey);
@@ -759,44 +651,62 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
             data-system-prompt-state={isExpanded ? 'expanded' : 'compact'}
-            className={`system-block system-window cursor-default my-6 md:my-8 mx-auto max-w-xl relative overflow-hidden rounded-xl border border-[color-mix(in_srgb,currentColor_40%,transparent)] bg-[color-mix(in_srgb,currentColor_7%,rgba(5,7,11,0.92))] px-4 py-3.5 md:px-5 md:py-4 shadow-[0_0_20px_color-mix(in_srgb,currentColor_10%,transparent),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all duration-300 ${accent}${menacingTone} ${className || ''}`}
+            className={`system-block system-window cursor-default my-6 md:my-8 mx-auto max-w-xl relative overflow-hidden rounded-xl border border-[color-mix(in_srgb,currentColor_40%,transparent)] bg-[color-mix(in_srgb,currentColor_7%,rgba(5,7,11,0.92))] px-4 py-3 md:px-5 md:py-3.5 shadow-[0_0_20px_color-mix(in_srgb,currentColor_10%,transparent),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all duration-300 ${accent}${menacingTone} ${className || ''}`}
             {...safeProps}
           >
             {/* The emblem's glow bleeds in from the right. */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_82%_50%,color-mix(in_srgb,currentColor_8%,transparent)_0%,transparent_62%)]" />
             <div className="relative flex flex-col">
               <div className="border-b border-[color-mix(in_srgb,currentColor_18%,transparent)] pb-2">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  {headline && (
-                    <span className="block font-mono text-base md:text-lg font-bold uppercase tracking-[0.18em] leading-snug text-current drop-shadow-[0_0_10px_color-mix(in_srgb,currentColor_55%,transparent)]">
-                      {headline}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    {headline && (
+                      <span className="block font-mono text-base md:text-lg font-bold uppercase tracking-[0.18em] leading-snug text-current drop-shadow-[0_0_10px_color-mix(in_srgb,currentColor_55%,transparent)]">
+                        {headline}
+                      </span>
+                    )}
+                    {flavor && (
+                      <span className="mt-0.5 block font-serif text-xs md:text-sm italic text-neutral-300">
+                        {flavor}
+                      </span>
+                    )}
+                    <span className="mt-1 block font-mono text-[9px] uppercase tracking-wider text-neutral-500">
+                      {'✦ '}
+                      <span className="text-neutral-300">{classification.category}</span>
+                      {' | '}
+                      <span className={meaning.textColor}>{classification.subtype}</span>
+                      {' ✦'}
+                    </span>
+                  </div>
+                  <SystemOrbEmblem
+                    isExpanded={isExpanded}
+                    detailsId={expandedData ? detailsId : undefined}
+                    onToggle={expandedData
+                      ? () => setExpandedEventKey(current => current === eventKey ? null : eventKey)
+                      : undefined}
+                    buttonRef={orbButtonRef}
+                  />
+                </div>
+              </div>
+
+              {/* Dedicated wrapping metadata badges */}
+              {(compactRows.length > 0 || (badge && badgeSeverity)) && (
+                <div className="mt-2.5 flex flex-wrap items-center gap-1.5 md:gap-2">
+                  {badge && badgeSeverity && (
+                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em] ${badgeSeverity.pill}`}>
+                      <span className={badgeSeverity.label}>{badge.label}</span>{' '}
+                      <span aria-hidden="true" className={badgeSeverity.label}>·</span>{' '}
+                      <span className={`font-bold ${badgeSeverity.value}`}>{badge.value}</span>
                     </span>
                   )}
-                  <span className="mt-1 block font-mono text-[9px] uppercase tracking-wider text-neutral-500">
-                    {'✦ '}
-                    <span className="text-neutral-300">{classification.category}</span>
-                    {' | '}
-                    <span className={meaning.textColor}>{classification.subtype}</span>
-                    {' ✦'}
-                  </span>
-                </div>
-                <SystemOrbEmblem
-                  isExpanded={isExpanded}
-                  detailsId={expandedData ? detailsId : undefined}
-                  onToggle={expandedData
-                    ? () => setExpandedEventKey(current => current === eventKey ? null : eventKey)
-                    : undefined}
-                  buttonRef={orbButtonRef}
-                />
-              </div>
-              </div>
-              {compactRows.length > 0 && (
-                <div className="mt-2.5 space-y-1 font-mono text-[11px] md:text-xs">
                   {compactRows.map((row, idx) => (
-                    <div key={idx} className="flex items-center justify-between gap-3">
-                      <span className="text-neutral-400 uppercase tracking-widest">{row.label}</span>
-                      <span className="flex items-center justify-end gap-1.5 font-semibold tracking-wide text-right text-neutral-100">
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em]"
+                    >
+                      <span className="text-neutral-400">{row.label}</span>
+                      <span aria-hidden="true" className="text-neutral-500">·</span>
+                      <span className="flex items-center gap-1 font-bold text-neutral-100">
                         {row.value}
                         {row.trend === 'up' && (
                           <ArrowUp data-row-trend="up" aria-hidden="true" className="h-3 w-3 shrink-0 text-emerald-400" strokeWidth={2.6} />
@@ -805,24 +715,19 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
                           <ArrowDown data-row-trend="down" aria-hidden="true" className="h-3 w-3 shrink-0 text-red-400" strokeWidth={2.6} />
                         )}
                       </span>
-                    </div>
+                    </span>
                   ))}
                 </div>
               )}
-              {badge && badgeSeverity && (
-                <span className={`mt-2.5 self-start rounded-full border px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em] ${badgeSeverity.pill}`}>
-                  <span className={badgeSeverity.label}>{badge.label}</span>{' '}
-                  <span aria-hidden="true" className={badgeSeverity.label}>·</span>{' '}
-                  <span className={`font-bold ${badgeSeverity.value}`}>{badge.value}</span>
-                </span>
-              )}
+
               <SystemConsequenceRow changes={visibleChanges} />
+
               {sentence && (
                 <p
                   id={summaryId}
                   data-system-summary="true"
                   hidden={!sentenceRevealed}
-                  className="mt-2.5 border-t border-[color-mix(in_srgb,currentColor_18%,transparent)] pt-2 text-center font-serif text-sm italic leading-relaxed text-neutral-400 md:text-base"
+                  className="mt-2 border-t border-[color-mix(in_srgb,currentColor_18%,transparent)] pt-1.5 text-center font-serif text-xs md:text-sm italic leading-relaxed text-neutral-400"
                 >
                   {renderSystemText(sentence)}
                 </p>
@@ -838,11 +743,11 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
                     event.stopPropagation();
                     setSentenceRevealed(current => !current);
                   }}
-                  className="mx-auto -mb-1.5 mt-0.5 flex h-11 w-11 items-center justify-center rounded-full text-neutral-500 outline-none transition-[color,transform] duration-200 hover:text-neutral-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-current/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070b] motion-reduce:transition-none"
+                  className="mx-auto mt-1 -mb-0.5 flex h-6 w-6 touch-manipulation items-center justify-center rounded-full text-neutral-500 outline-none transition-[color,transform] duration-200 hover:text-neutral-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-current/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070b] motion-reduce:transition-none"
                 >
                   <ChevronDown
                     data-system-summary-toggle-icon="true"
-                    className={`h-4 w-4 transition-transform duration-200 motion-reduce:transition-none ${sentenceRevealed ? 'rotate-180' : ''}`}
+                    className={`h-3.5 w-3.5 transition-transform duration-200 motion-reduce:transition-none ${sentenceRevealed ? 'rotate-180' : ''}`}
                     strokeWidth={2.2}
                   />
                 </button>

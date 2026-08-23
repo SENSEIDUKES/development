@@ -4,7 +4,7 @@
 - **Verified source locations:** `src/components/ReaderViewport.tsx`, `src/components/SystemBlock.tsx`, `src/components/FateResultCard.tsx`
 - **Workshop preview:** `?preview=card-workshop`
 - **Replica created:** 2026-08-14
-- **Last Workshop update:** 2026-08-22
+- **Last Workshop update:** 2026-08-23
 - **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
@@ -21,6 +21,8 @@ The current presentation set is deliberately limited to:
 Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studio is outside this feature and is unchanged.
 
 ## Workshop history
+
+- **2026-08-23:** Updated the System Prompt examples and Development `SystemBlock` compact cards with direct, immediately understandable main titles (`Cultivation Breakthrough`, `Karmic Consequence`, `Hostile Target Scan`) while retaining dramatic/world-specific context as secondary flavor (`Mortal Tribulation Surpassed`, `Oath Before the Rain Court Broken`, `Elder Kaelen Assessment`). Meaningful metadata items and outcomes render as dedicated metadata badges in a flexible wrapping container, and the minimized TTS summary empty space was tightened. Presets, expanded overlay reports, and structured mechanical panels remain intact.
 
 - **2026-08-22:** System Prompt examples adopt the pill-cornered holographic window finish and demonstrate the new row direction arrows: the breakthrough's `New Realm` and `Meridian State` values carry green up-arrows, the broken oath's sealed `Celestial Record` carries a red down-arrow, and the target scan stays unmarked (a scan changes nothing). Fixture text, outcomes, expanded breakdowns, and event structure are unchanged.
 - **2026-08-22:** Adopted the translucent System window treatment and the genre-native outcome convention in the System Prompt examples. The three mocked events keep their assigned event colors, data, and layout while the compact card renders as a tinted, clipped-corner System window, and their metadata rows now carry one to three short System outcomes: Cultivation Breakthrough — `Realm Ascended`, `Lifespan 100` (renders LIFESPAN +100), `Presence Exposed`; Broken Promise — `Karma 15` (renders KARMA −15), `Title Stripped`, `Sect Enmity`; Target Scan — `Intel Gained`, `Weakness Found`, `Detection Risk: High`. Signs appear only on the genuine mathematical changes. Expanded breakdowns, the example switch, event slugs, the structured mechanical panel, Fate results, and the locked Reference are unchanged.

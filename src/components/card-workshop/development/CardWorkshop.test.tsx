@@ -136,6 +136,7 @@ describe('CardWorkshopView', () => {
     const compactBlock = container.querySelector('.system-block');
     expect(compactBlock?.className).toContain('system-window');
     expect(compactBlock?.className).toContain('rounded-xl');
+    expect(compactBlock?.textContent).toContain('Cultivation Breakthrough');
     expect(compactBlock?.textContent).toContain('Mortal Tribulation Surpassed');
     expect(compactBlock?.textContent).toContain('✦ Breakthrough | Awakening ✦');
     expect(compactBlock?.textContent).toContain('New Realm');
@@ -180,6 +181,7 @@ describe('CardWorkshopView', () => {
     // card renders each without per-event branches.
     await clickButton('Broken Promise');
     const promiseBlock = container.querySelector('.system-block');
+    expect(promiseBlock?.textContent).toContain('Karmic Consequence');
     expect(promiseBlock?.textContent).toContain('Oath Before the Rain Court Broken');
     expect(promiseBlock?.textContent).toContain('✦ Karma | Consequence ✦');
     expect(promiseBlock?.textContent).toContain('A solemn interface surfaced before Magistrate Jinhai, its gilt script cold as the rain outside.');
@@ -195,7 +197,8 @@ describe('CardWorkshopView', () => {
 
     await clickButton('Target Scan');
     const scanBlock = container.querySelector('.system-block');
-    expect(scanBlock?.textContent).toContain('Hostile Target Scan Complete');
+    expect(scanBlock?.textContent).toContain('Hostile Target Scan');
+    expect(scanBlock?.textContent).toContain('Elder Kaelen Assessment');
     expect(scanBlock?.textContent).toContain('✦ Combat | Enemy ✦');
     expect(scanBlock?.querySelector('[data-system-summary]')?.textContent)
       .toBe('A crimson interface unfolded beside Elder Kaelen, taking his measure in silence.');
@@ -237,14 +240,15 @@ describe('CardWorkshopView', () => {
     expect(container.textContent).toContain('Meridian Status & Vitality Flow');
   });
 
-  it('caps the compact System Prompt outcome row at three prioritized outcomes', () => {
+  it('renders the compact System Prompt outcome row with wrapping dedicated badges', () => {
     act(() => root.render(renderWithDevAudio(
       <SystemBlock
         content="[ Yun Che has successfully broken through into the Foundation Establishment realm. ]"
         system={{
           kind: 'system_prompt',
           promptType: 'breakthrough',
-          title: 'Mortal Tribulation Surpassed',
+          title: 'Cultivation Breakthrough',
+          flavor: 'Mortal Tribulation Surpassed',
           changes: [
             { direction: 'gain', label: 'Realm Ascended' },
             { direction: 'gain', label: 'Lifespan 100' },
@@ -256,11 +260,12 @@ describe('CardWorkshopView', () => {
     )));
 
     const compactBlock = container.querySelector('.system-block');
+    expect(compactBlock?.textContent).toContain('Cultivation Breakthrough');
     expect(compactBlock?.textContent).toContain('Mortal Tribulation Surpassed');
     expect(compactBlock?.textContent).toContain('Realm Ascended');
     expect(compactBlock?.textContent).toContain('Lifespan +100');
     expect(compactBlock?.textContent).toContain('Presence Exposed');
-    expect(compactBlock?.textContent).not.toContain('Dao Heart Tempered');
+    expect(compactBlock?.textContent).toContain('Dao Heart Tempered');
   });
 
   it('opens the expanded event report in a viewport overlay and restores focus to the orb action', async () => {
@@ -299,7 +304,7 @@ describe('CardWorkshopView', () => {
     // One flat report: classification, headline, subject, the System
     // outcome row, and the Codex sections with progress — never narration.
     expect(overlay?.textContent).toContain('✦ Breakthrough | Awakening ✦');
-    expect(overlay?.textContent).toContain('Mortal Tribulation Surpassed');
+    expect(overlay?.textContent).toContain('Cultivation Breakthrough');
     expect(overlay?.textContent).toContain('MC (You)');
     expect(overlay?.textContent).toContain('Power Rankings');
     expect(overlay?.textContent).toContain('Foundation Establishment — Stage 4');
@@ -540,6 +545,7 @@ describe('CardWorkshopView', () => {
 
     const reader = container.querySelector<HTMLElement>('[data-testid="card-workshop-contextual-reader"]');
     await selectByLabel('Card preset', 'preset-system-prompt');
+    expect(reader?.textContent).toContain('Cultivation Breakthrough');
     expect(reader?.textContent).toContain('Mortal Tribulation Surpassed');
     expect(reader?.textContent).toContain('A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.');
     expect(reader?.textContent).toContain('New Realm');

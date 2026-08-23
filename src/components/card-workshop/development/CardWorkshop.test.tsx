@@ -127,21 +127,26 @@ describe('CardWorkshopView', () => {
 
     await clickButton('System Prompt');
     expect(container.textContent).toContain('System Panels & Fate Outcomes');
-    // Default compact event: the cultivation breakthrough — title-led header,
-    // classification line, key/value rows, signed consequence row, and the
-    // serif TTS prose in its own bottom section.
+    // Default compact event: the cultivation breakthrough — a holographic
+    // event-colored System window (frosted tinted pane, bright border on
+    // pill-rounded corners, stronger header band) with the title-led header,
+    // classification line, key/value rows carrying direction arrows on
+    // changed values, the System outcome row, and the serif TTS prose in its
+    // own bottom section.
     const compactBlock = container.querySelector('.system-block');
+    expect(compactBlock?.className).toContain('system-window');
+    expect(compactBlock?.className).toContain('rounded-3xl');
     expect(compactBlock?.textContent).toContain('Mortal Tribulation Surpassed');
     expect(compactBlock?.textContent).toContain('✦ Breakthrough | Awakening ✦');
     expect(compactBlock?.textContent).toContain('New Realm');
     expect(compactBlock?.textContent).toContain('Foundation Establishment');
     expect(compactBlock?.textContent).toContain('Meridian State');
-    expect(compactBlock?.textContent).toContain('+ Stage 4');
-    expect(compactBlock?.textContent).toContain('+ 100 Lifespan');
-    expect(compactBlock?.textContent).toContain('− Easier to Detect');
+    expect(compactBlock?.textContent).toContain('Realm Ascended');
+    expect(compactBlock?.textContent).toContain('Lifespan +100');
+    expect(compactBlock?.textContent).toContain('Presence Exposed');
     // The serif prose paragraph stays the only narration text: it carries the
-    // sentence alone — never the headline, rows, or the consequence row — and
-    // sits in its own section below the consequences.
+    // sentence alone — never the headline, rows, or the outcome row — and
+    // sits in its own section below the outcomes.
     const compactSummary = compactBlock?.querySelector('[data-system-summary]');
     expect(compactSummary?.textContent)
       .toBe('A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.');
@@ -150,14 +155,19 @@ describe('CardWorkshopView', () => {
     expect(
       consequenceRow!.compareDocumentPosition(compactSummary!) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    // Gains render green, losses red; the labels stay readable neutral.
+    // Signs appear only on genuine mathematical changes: LIFESPAN 100 is a
+    // real quantity delta (green gain sign before the number), while REALM
+    // ASCENDED and PRESENCE EXPOSED stay unsigned.
     const gainSigns = [...(compactBlock?.querySelectorAll('[data-consequence-count] .text-emerald-400') ?? [])];
-    expect(gainSigns.map(element => element.textContent)).toEqual(['+', '+']);
+    expect(gainSigns.map(element => element.textContent)).toEqual(['+']);
     const lossSigns = [...(compactBlock?.querySelectorAll('[data-consequence-count] .text-red-400') ?? [])];
-    expect(lossSigns.map(element => element.textContent)).toEqual(['−']);
+    expect(lossSigns.map(element => element.textContent)).toEqual([]);
     // Compact prompts keep the semantic System color system (breakthrough → gold).
-    expect(compactBlock?.className).toContain('border-amber-400/50');
     expect(compactBlock?.className).toContain('text-amber-400');
+    // Changed row values carry a direction arrow: upgrades green.
+    const trendArrows = [...(compactBlock?.querySelectorAll('[data-row-trend]') ?? [])];
+    expect(trendArrows.map(element => element.getAttribute('data-row-trend'))).toEqual(['up', 'up']);
+    expect(trendArrows.every(element => element.classList.contains('text-emerald-400'))).toBe(true);
     expect(container.querySelector('[role="tabpanel"]')?.textContent).not.toContain('Human Portrait');
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
 
@@ -170,8 +180,13 @@ describe('CardWorkshopView', () => {
     expect(promiseBlock?.textContent).toContain('A solemn interface surfaced before Magistrate Jinhai, its gilt script cold as the rain outside.');
     expect(promiseBlock?.textContent).toContain('Celestial Record');
     expect(promiseBlock?.textContent).toContain('Witnesses');
-    expect(promiseBlock?.textContent).toContain('− Reputation');
-    expect(promiseBlock?.textContent).toContain('+ Sect Enmity');
+    expect(promiseBlock?.textContent).toContain('Karma −15');
+    expect(promiseBlock?.textContent).toContain('Title Stripped');
+    expect(promiseBlock?.textContent).toContain('Sect Enmity');
+    // The broken oath's sealed record is a regression: red down-arrow.
+    const promiseTrends = [...(promiseBlock?.querySelectorAll('[data-row-trend]') ?? [])];
+    expect(promiseTrends.map(element => element.getAttribute('data-row-trend'))).toEqual(['down']);
+    expect(promiseTrends[0]?.classList.contains('text-red-400')).toBe(true);
 
     await clickButton('Target Scan');
     const scanBlock = container.querySelector('.system-block');
@@ -182,9 +197,11 @@ describe('CardWorkshopView', () => {
     expect(scanBlock?.textContent).toContain('Threat Assessment · Moderate');
     expect(scanBlock?.textContent).toContain('Cultivation');
     expect(scanBlock?.textContent).toContain('Foundation Establishment, Stage 7');
-    expect(scanBlock?.textContent).toContain('+ Intel');
-    expect(scanBlock?.textContent).toContain('+ Weakness');
-    expect(scanBlock?.textContent).toContain('− Exposed');
+    expect(scanBlock?.textContent).toContain('Intel Gained');
+    expect(scanBlock?.textContent).toContain('Weakness Found');
+    expect(scanBlock?.textContent).toContain('Detection Risk: High');
+    // A scan changes nothing: no direction arrows on its facts.
+    expect(scanBlock?.querySelector('[data-row-trend]')).toBeFalsy();
     // Color communicates meaning: the classification subtype carries the
     // assigned color, row labels stay neutral gray, ordinary values stay
     // white, and only the badge severity takes the severity color.
@@ -215,7 +232,7 @@ describe('CardWorkshopView', () => {
     expect(container.textContent).toContain('Meridian Status & Vitality Flow');
   });
 
-  it('caps the compact System Prompt consequence row at four prioritized changes', () => {
+  it('caps the compact System Prompt outcome row at three prioritized outcomes', () => {
     act(() => root.render(renderWithDevAudio(
       <SystemBlock
         content="[ Yun Che has successfully broken through into the Foundation Establishment realm. ]"
@@ -224,11 +241,10 @@ describe('CardWorkshopView', () => {
           promptType: 'breakthrough',
           title: 'Mortal Tribulation Surpassed',
           changes: [
-            { direction: 'gain', label: 'Stage 4' },
-            { direction: 'gain', label: '100 Lifespan' },
-            { direction: 'loss', label: 'Easier to Detect' },
+            { direction: 'gain', label: 'Realm Ascended' },
+            { direction: 'gain', label: 'Lifespan 100' },
+            { direction: 'loss', label: 'Presence Exposed' },
             { direction: 'gain', label: 'Dao Heart Tempered' },
-            { direction: 'loss', label: 'Fifth Consequence' },
           ],
         }}
       />,
@@ -236,8 +252,10 @@ describe('CardWorkshopView', () => {
 
     const compactBlock = container.querySelector('.system-block');
     expect(compactBlock?.textContent).toContain('Mortal Tribulation Surpassed');
-    expect(compactBlock?.textContent).toContain('+ Dao Heart Tempered');
-    expect(compactBlock?.textContent).not.toContain('Fifth Consequence');
+    expect(compactBlock?.textContent).toContain('Realm Ascended');
+    expect(compactBlock?.textContent).toContain('Lifespan +100');
+    expect(compactBlock?.textContent).toContain('Presence Exposed');
+    expect(compactBlock?.textContent).not.toContain('Dao Heart Tempered');
   });
 
   it('opens the expanded event report in a viewport overlay and restores focus to the orb action', async () => {
@@ -273,8 +291,8 @@ describe('CardWorkshopView', () => {
     expect(systemBlock?.querySelector('[data-system-orb-icon="open"]')).toBeTruthy();
     expect(getButton('Collapse System Prompt details')?.getAttribute('aria-expanded')).toBe('true');
 
-    // One flat report: classification, headline, subject, the signed
-    // consequence row, and the Codex sections with progress — never narration.
+    // One flat report: classification, headline, subject, the System
+    // outcome row, and the Codex sections with progress — never narration.
     expect(overlay?.textContent).toContain('✦ Breakthrough | Awakening ✦');
     expect(overlay?.textContent).toContain('Mortal Tribulation Surpassed');
     expect(overlay?.textContent).toContain('MC (You)');
@@ -287,7 +305,8 @@ describe('CardWorkshopView', () => {
     expect(overlay?.textContent).toContain('Lore');
     expect(overlay?.textContent).toContain('Warning');
     expect(overlay?.textContent).toContain('Narrative Consequences');
-    expect(overlay?.querySelector('[data-consequence-count]')?.textContent).toContain('+ Stage 4');
+    expect(overlay?.querySelector('[data-consequence-count]')?.textContent).toContain('Realm Ascended');
+    expect(overlay?.querySelector('[data-consequence-count]')?.textContent).toContain('Lifespan +100');
     expect(overlay?.querySelector('[role="progressbar"][aria-label="Power Rankings progress"]'))
       .toBeTruthy();
     // Flat sections with simple dividers — no stacked card boxes.
@@ -519,7 +538,7 @@ describe('CardWorkshopView', () => {
     expect(reader?.textContent).toContain('Mortal Tribulation Surpassed');
     expect(reader?.textContent).toContain('A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.');
     expect(reader?.textContent).toContain('New Realm');
-    expect(reader?.textContent).toContain('+ Stage 4');
+    expect(reader?.textContent).toContain('Realm Ascended');
     expect(reader?.textContent).toContain('Then the thunder moved on');
   });
 

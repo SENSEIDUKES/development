@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
-import { ChevronUp, Skull, TriangleAlert as AlertTriangle, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronUp, Skull, TriangleAlert as AlertTriangle, X } from 'lucide-react';
 import type {
   SystemEvent,
   SystemPromptBadge,
@@ -217,7 +217,7 @@ const MOBILE_SECTION_LIMIT = 3;
  * by the compact card's orb action and portaled to <body>, floating above the
  * Reader Chamber. The chapter never grows and the reader's scroll position
  * never moves. One flat panel — classification, headline, subject, optional
- * badge, the signed consequence row, then Codex sections separated by simple
+ * badge, the System outcome row, then Codex sections separated by simple
  * dividers (never stacked cards). Mobile fits one screen with no page or
  * panel scrolling by showing only the three highest-priority sections (the
  * rest are `hidden md:block`); larger screens show every section in the same
@@ -462,16 +462,20 @@ function SystemExpandedOverlay({
 }
 
 /**
- * One non-scrolling consequence row. Changes are priority ordered: mobile and
- * other narrow containers reveal a third item only when its measured natural
- * width fits with breathing room, otherwise they keep the first two. A fourth
- * remains available only on roomy non-mobile layouts.
+ * One non-scrolling System outcome row carrying one to three short,
+ * genre-native outcomes in priority order. Plus and minus signs appear only
+ * on genuine mathematical changes — labels carrying a numeric quantity such
+ * as QI 200, KARMA 15, or HEALTH 30% render with the direction's sign before
+ * the number (QI +200, KARMA −15, HEALTH −30%); plain status outcomes (REALM
+ * ASCENDED, TITLE ACQUIRED, DETECTION RISK: HIGH) render unsigned. Narrow
+ * containers reveal the third outcome only when its measured natural width
+ * fits with breathing room, otherwise they keep the first two.
  */
 function SystemConsequenceRow({ changes }: { changes: SystemPromptChange[] }) {
   const prioritizedChanges = React.useMemo(
     () => changes
       .filter(change => typeof change?.label === 'string' && change.label.trim() !== '')
-      .slice(0, 4),
+      .slice(0, 3),
     [changes],
   );
   const rowRef = React.useRef<HTMLDivElement>(null);
@@ -496,16 +500,8 @@ function SystemConsequenceRow({ changes }: { changes: SystemPromptChange[] }) {
         + gap * Math.max(0, count - 1)
         <= availableWidth - CONSEQUENCE_FIT_SAFETY_PX
       );
-      const isMobileViewport = window.innerWidth < 768;
-
       let nextCount = Math.min(2, prioritizedChanges.length);
-      if (
-        !isMobileViewport
-        && prioritizedChanges.length >= 4
-        && fits(4)
-      ) {
-        nextCount = 4;
-      } else if (prioritizedChanges.length >= 3 && fits(3)) {
+      if (prioritizedChanges.length >= 3 && fits(3)) {
         nextCount = 3;
       }
       setVisibleCount(nextCount);
@@ -534,22 +530,33 @@ function SystemConsequenceRow({ changes }: { changes: SystemPromptChange[] }) {
 
   const consequenceClass = 'shrink-0 font-mono text-[10px] font-semibold uppercase tracking-[0.10em] text-neutral-200 md:text-[11px] md:tracking-[0.18em]';
 
-  // One shared chip body so the hidden measurement mirror matches the visible
-  // row exactly: the sign carries the direction color (gains green, losses
-  // red) while the label stays readable neutral.
-  const renderConsequence = (change: SystemPromptChange) => (
-    <>
-      <span className={change.direction === 'loss' ? 'text-red-400' : 'text-emerald-400'}>
-        {change.direction === 'loss' ? '−' : '+'}
-      </span>{' '}
-      {change.label.trim()}
-    </>
-  );
+  // One shared outcome body so the hidden measurement mirror matches the
+  // visible row exactly. Only genuine mathematical changes carry a sign: the
+  // direction's sign sits immediately before the number (LIFESPAN +100,
+  // KARMA −15) and keeps its green/red direction color, while plain status
+  // outcomes stay unsigned and readable neutral.
+  const renderConsequence = (change: SystemPromptChange) => {
+    const label = change.label.trim();
+    const quantityStart = label.search(/\d/);
+    if (quantityStart === -1) return label;
+    return (
+      <>
+        {label.slice(0, quantityStart)}
+        <span className={change.direction === 'loss' ? 'text-red-400' : 'text-emerald-400'}>
+          {change.direction === 'loss' ? '−' : '+'}
+        </span>
+        {label.slice(quantityStart)}
+      </>
+    );
+  };
 
   if (prioritizedChanges.length === 0) return null;
 
+  // overflow-hidden also contains the invisible full-width measurement
+  // mirror, so it can never reach page scroll overflow even if an ancestor's
+  // overflow contract changes.
   return (
-    <div className="relative mt-3 border-t border-inherit/30 pt-2.5">
+    <div className="relative mt-3 overflow-hidden border-t border-[color-mix(in_srgb,currentColor_22%,transparent)] pt-2.5">
       <div
         ref={rowRef}
         data-consequence-count={visibleCount}
@@ -674,28 +681,38 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
         ? ' animate-menacing-amber'
         : '';
 
-    // Reworked 2026-08-22 to the production information hierarchy. The compact
-    // System Prompt is title-led: the dramatic per-event headline
-    // (`system.title`) leads with the temporary orb emblem resting at the right
-    // edge, followed by a small `✦ classification ✦` line from the semantic
-    // System color meaning, up to three concise key/value rows
-    // (`system.rows`, production panel anatomy), an optional event badge, one
-    // non-scrolling horizontal row of prioritized signed consequences
-    // (`system.changes`, gains green / losses red), and the concise serif
-    // sentence (`content` — the only text narration reads) in its own bottom
-    // section. Mobile shows three consequences only when all three fit,
-    // otherwise the first two; roomy layouts may show four. Everything renders
-    // from structured data; the component hardcodes no event text. Tinted by
-    // the same semantic System color system as the structured panels (blue is
-    // the default voice) over blue-black depth.
+    // Reworked 2026-08-22 to the production information hierarchy, then
+    // restyled the same day from the nearly black card into a holographic
+    // colored System window: a visibly tinted frosted pane (backdrop blur +
+    // saturation with a faint scanline veil, `.system-window` in
+    // reader-chamber.css), a brighter accent border on softly rounded pill
+    // corners, a restrained outer glow, a slightly stronger full-bleed header
+    // band, and simple tinted dividers — all driven by the event's assigned
+    // semantic System color through `currentColor` (gold Awakening, orange
+    // Karma, red Combat, green stable growth; blue remains the default
+    // new-info voice). The layout itself is unchanged: the dramatic per-event
+    // headline (`system.title`) leads with the temporary orb emblem resting
+    // at the right edge, followed by a small `✦ classification ✦` line from
+    // the semantic System color meaning, up to three concise key/value rows
+    // (`system.rows`, production panel anatomy) whose changed values carry a
+    // small green up-arrow (`trend: "up"`) or red down-arrow
+    // (`trend: "down"`), an optional event badge, one non-scrolling
+    // horizontal metadata row of one to three short System outcomes
+    // (`system.changes` — plus/minus signs only on genuine mathematical
+    // changes such as QI +200 or KARMA −15, with the sign before the number;
+    // plain status outcomes stay unsigned), and the concise serif sentence
+    // (`content` — the only text narration reads) in its own bottom section.
+    // Narrow containers show the third outcome only when all three fit,
+    // otherwise the first two. Everything renders from structured data; the
+    // component hardcodes no event text.
     //
     // Expanded event report (2026-08-22): optional Reader-owned expanded data
     // turns the orb into the control that opens a viewport-locked overlay
     // portaled above the Reader Chamber — never an in-place expansion. The
-    // compact card keeps its consequence row and prose untouched underneath,
+    // compact card keeps its outcome row and prose untouched underneath,
     // so the reader's position and the chapter layout never move. The overlay
-    // is one flat panel (classification, headline, subject, badge, the signed
-    // consequence row, then Codex sections with simple dividers) capped to the
+    // is one flat panel (classification, headline, subject, badge, the System
+    // outcome row, then Codex sections with simple dividers) capped to the
     // three highest-priority sections on mobile so everything fits one screen
     // without page or panel scrolling; larger screens show every section in
     // the same structure. The overlay root carries the
@@ -703,8 +720,8 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
     // DOM, so TTS still reads only the compact card's prose. Escape, the close
     // button, or a backdrop tap closes it and returns focus to the orb.
     //
-    // Routing: events carrying signed consequences (or no rows at all) render
-    // compact. Events carrying rows without consequences keep the holographic
+    // Routing: events carrying System outcomes (or no rows at all) render
+    // compact. Events carrying rows without outcomes keep the holographic
     // panel below, so dense mechanical readouts, rarity chips, and existing
     // row-bearing events stay untouched.
     if (rows.length === 0 || visibleChanges.length > 0) {
@@ -719,7 +736,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
       const inferenceContext = buildSystemContext(system, content);
       const meaning = getSystemColorMeaning(system.promptType, inferenceContext);
       const classification = getSystemCompactClassification(meaning);
-      const accent = `${meaning.borderColor} ${meaning.textColor}`;
+      const accent = meaning.textColor;
 
       return (
         <>
@@ -729,12 +746,13 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
             data-system-prompt-state={isExpanded ? 'expanded' : 'compact'}
-            className={`system-block cursor-default my-6 md:my-8 mx-auto max-w-xl relative overflow-hidden rounded-2xl border bg-[#020a16]/85 px-5 py-4 md:px-6 md:py-5 shadow-[0_0_28px_color-mix(in_srgb,currentColor_16%,transparent),inset_0_1px_0_rgba(255,255,255,0.06)] transition-all duration-300 ${accent}${menacingTone} ${className || ''}`}
+            className={`system-block system-window cursor-default my-6 md:my-8 mx-auto max-w-xl relative overflow-hidden rounded-3xl border border-[color-mix(in_srgb,currentColor_60%,transparent)] bg-[color-mix(in_srgb,currentColor_14%,rgba(2,6,12,0.84))] px-5 py-4 md:px-6 md:py-5 shadow-[0_0_28px_color-mix(in_srgb,currentColor_16%,transparent),inset_0_1px_0_rgba(255,255,255,0.07)] transition-all duration-300 ${accent}${menacingTone} ${className || ''}`}
             {...safeProps}
           >
-            {/* Blue-black depth: the emblem's glow bleeds in from the right. */}
+            {/* The emblem's glow bleeds in from the right. */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_82%_50%,color-mix(in_srgb,currentColor_13%,transparent)_0%,transparent_62%)]" />
             <div className="relative flex flex-col">
+              <div className="-mx-5 -mt-4 border-b border-[color-mix(in_srgb,currentColor_22%,transparent)] bg-[color-mix(in_srgb,currentColor_9%,transparent)] px-5 pb-2.5 pt-4 md:-mx-6 md:-mt-5 md:px-6 md:pt-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   {headline && (
@@ -759,12 +777,21 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
                   buttonRef={orbButtonRef}
                 />
               </div>
+              </div>
               {compactRows.length > 0 && (
                 <div className="mt-3 space-y-1.5 font-mono text-[11px] md:text-xs">
                   {compactRows.map((row, idx) => (
                     <div key={idx} className="flex items-center justify-between gap-3">
                       <span className="text-neutral-400 uppercase tracking-widest">{row.label}</span>
-                      <span className="font-semibold tracking-wide text-right text-neutral-100">{row.value}</span>
+                      <span className="flex items-center justify-end gap-1.5 font-semibold tracking-wide text-right text-neutral-100">
+                        {row.value}
+                        {row.trend === 'up' && (
+                          <ArrowUp data-row-trend="up" aria-hidden="true" className="h-3 w-3 shrink-0 text-emerald-400" strokeWidth={2.6} />
+                        )}
+                        {row.trend === 'down' && (
+                          <ArrowDown data-row-trend="down" aria-hidden="true" className="h-3 w-3 shrink-0 text-red-400" strokeWidth={2.6} />
+                        )}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -778,7 +805,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
               )}
               <SystemConsequenceRow changes={visibleChanges} />
               {sentence && (
-                <p data-system-summary="true" className="mt-3 border-t border-inherit/30 pt-2.5 text-center font-serif text-base italic leading-relaxed text-neutral-100 md:text-lg">
+                <p data-system-summary="true" className="mt-3 border-t border-[color-mix(in_srgb,currentColor_22%,transparent)] pt-2.5 text-center font-serif text-base italic leading-relaxed text-neutral-100 md:text-lg">
                   {renderSystemText(sentence)}
                 </p>
               )}

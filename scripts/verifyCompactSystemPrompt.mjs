@@ -22,6 +22,7 @@ const events = [
     subtypeColorClass: 'text-amber-400',
     rowLabel: 'New Realm',
     rowValue: 'Foundation Establishment',
+    outcomes: ['Realm Ascended', 'Lifespan +100', 'Presence Exposed'],
     prose: 'A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.',
   },
   {
@@ -37,6 +38,7 @@ const events = [
     subtypeColorClass: 'text-orange-400',
     rowLabel: 'Celestial Record',
     rowValue: 'Sealed',
+    outcomes: ['Karma −15', 'Title Stripped', 'Sect Enmity'],
     prose: 'A solemn interface surfaced before Magistrate Jinhai, its gilt script cold as the rain outside.',
   },
   {
@@ -52,6 +54,7 @@ const events = [
     subtypeColorClass: 'text-red-500',
     rowLabel: 'Cultivation',
     rowValue: 'Foundation Establishment, Stage 7',
+    outcomes: ['Intel Gained', 'Weakness Found', 'Detection Risk: High'],
     prose: 'A crimson interface unfolded beside Elder Kaelen, taking his measure in silence.',
   },
 ];
@@ -68,45 +71,54 @@ async function verifyConsequenceRow(block, eventSlug, deviceName) {
   }));
 
   if (metrics.scrollWidth > metrics.clientWidth + 1 || metrics.overflowX === 'auto' || metrics.overflowX === 'scroll') {
-    throw new Error(`${eventSlug} consequence row scrolls or overflows at ${deviceName}: ${JSON.stringify(metrics)}`);
+    throw new Error(`${eventSlug} outcome row scrolls or overflows at ${deviceName}: ${JSON.stringify(metrics)}`);
   }
-  if (deviceName.startsWith('mobile-') && eventSlug === 'breakthrough' && metrics.count !== 2) {
-    throw new Error(`breakthrough must keep only its two highest-priority consequences on mobile: ${JSON.stringify(metrics)}`);
+  if (deviceName.startsWith('mobile-') && (metrics.count < 2 || metrics.count > 3)) {
+    throw new Error(`${eventSlug} must keep two or three short outcomes on mobile: ${JSON.stringify(metrics)}`);
   }
-  if (deviceName.startsWith('mobile-') && eventSlug === 'target-scan' && metrics.count !== 3) {
-    throw new Error(`target scan must keep all three short consequences on mobile: ${JSON.stringify(metrics)}`);
+  if (!deviceName.startsWith('mobile-') && metrics.count !== 3) {
+    throw new Error(`${eventSlug} must show all three outcomes at ${deviceName}: ${JSON.stringify(metrics)}`);
   }
 }
 
 async function verifyCompactHierarchy(block, event, deviceName) {
-  // Production hierarchy: classification line, key/value rows, signed
-  // consequences with green gains and red losses, and the TTS prose as the
-  // bottom section below the consequence row.
+  // Production hierarchy: classification line, key/value rows, the System
+  // outcome row (signs only on genuine mathematical changes), and the TTS
+  // prose as the bottom section below the outcome row.
   await block.getByText(event.classification, { exact: true }).waitFor();
   await block.getByText(event.rowLabel, { exact: true }).waitFor();
   await block.getByText(event.rowValue, { exact: true }).waitFor();
+  // The two highest-priority outcomes are always rendered in the visible row;
+  // the third may be fit-culled on narrow containers, so it is not awaited
+  // here. Scoping to the visible row skips the hidden measurement mirror.
+  const visibleOutcomeRow = block.locator('[data-consequence-count]');
+  await visibleOutcomeRow.getByText(event.outcomes[0], { exact: true }).waitFor();
+  await visibleOutcomeRow.getByText(event.outcomes[1], { exact: true }).waitFor();
 
   const summaryText = (await block.locator('[data-system-summary]').innerText()).replace(/\s+/g, ' ').trim();
   if (summaryText !== event.prose) {
     throw new Error(`${event.slug} TTS prose mismatch at ${deviceName}: "${summaryText}"`);
   }
 
-  // Every visible gain sign is green and every visible loss sign is red.
-  // (Fit-culling may legitimately hide an event's only loss on narrow mobile,
-  // so assert the per-chip contract instead of fixed sign counts.)
+  // Signs appear only on genuine mathematical changes: an outcome carrying a
+  // numeric quantity gets the direction's sign before the number (green gain,
+  // red loss); plain status outcomes carry no sign span at all.
   const signReport = await block.evaluate((element) => {
     const row = element.querySelector('[data-consequence-count]');
     if (!row) return 'missing-row';
     for (const chip of [...row.children]) {
       const text = chip.textContent.trim();
-      const sign = chip.firstElementChild;
-      if (text.startsWith('−') && !sign?.classList.contains('text-red-400')) return `loss-not-red:${text}`;
-      if (text.startsWith('+') && !sign?.classList.contains('text-emerald-400')) return `gain-not-green:${text}`;
+      const sign = [...chip.querySelectorAll('span')].find((s) => s.textContent === '+' || s.textContent === '−');
+      const isMathematical = /\d/.test(text);
+      if (isMathematical && !sign) return `math-unsigned:${text}`;
+      if (!isMathematical && sign) return `status-signed:${text}`;
+      if (sign && sign.textContent === '−' && !sign.classList.contains('text-red-400')) return `loss-not-red:${text}`;
+      if (sign && sign.textContent === '+' && !sign.classList.contains('text-emerald-400')) return `gain-not-green:${text}`;
     }
     return 'ok';
   });
   if (signReport !== 'ok') {
-    throw new Error(`${event.slug} consequence sign coloring broken at ${deviceName}: ${signReport}`);
+    throw new Error(`${event.slug} outcome sign contract broken at ${deviceName}: ${signReport}`);
   }
 
   // Color communicates meaning: only the classification subtype carries the
@@ -192,7 +204,7 @@ async function verifyExpandedOverlay(page, block, event, deviceName) {
     if (await overlay.getByRole('progressbar').count() === 0) {
       throw new Error(`${event.slug} overlay has no progress value at ${deviceName}.`);
     }
-    // The overlay keeps its own signed consequence row.
+    // The overlay keeps its own System outcome row.
     await overlay.locator('[data-consequence-count]').waitFor();
 
     // Mobile: only the three highest-priority sections are visible. Larger

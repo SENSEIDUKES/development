@@ -59,6 +59,36 @@
   color: #00A86B;
 }
 
+/* Compact System Prompt window: lightly clipped corners, shared by the bright
+   accent rim layer and the tinted translucent pane inside it so the border
+   follows the clipped outline (clip-path alone would cut a rectangular
+   border's corners away). */
+.system-window-clip {
+  clip-path: polygon(
+    10px 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    10px 100%,
+    0 calc(100% - 10px),
+    0 10px
+  );
+}
+
+/* Full-bleed header band of the compact System window: clips only the top
+   corners so the band never paints over the window's angled outline. */
+.system-window-clip-top {
+  clip-path: polygon(
+    10px 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    0 100%,
+    0 10px
+  );
+}
+
 @keyframes holographic-pulse {
   0% { box-shadow: 0 0 4px currentColor, inset 0 0 2px currentColor; border-color: rgba(255,255,255,0.2); }
   50% { box-shadow: 0 0 12px currentColor, inset 0 0 6px currentColor; border-color: currentColor; }

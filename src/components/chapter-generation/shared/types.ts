@@ -110,10 +110,14 @@ export interface StoryBlockMetadata {
 export type SystemEventKind = "system_prompt" | "fate_system_prompt";
 
 /**
- * One signed consequence listed in the compact System Prompt's bottom row
- * (e.g. + KARMA BOND, − REPUTATION). Structured so the row never relies on
- * arbitrary free text; the compact prompt renders at most four, in priority
- * order. Generation does not emit these yet — application-owned fixtures only.
+ * One short, genre-native System outcome listed in the compact System
+ * Prompt's metadata row. Plus/minus signs render only for genuine
+ * mathematical changes — labels carrying a numeric quantity (QI 200,
+ * KARMA 15, HEALTH 30%) get the direction's sign before the number
+ * (QI +200, KARMA −15, HEALTH −30%); plain status outcomes (REALM ASCENDED,
+ * TITLE ACQUIRED, DETECTION RISK: HIGH) render unsigned. The compact prompt
+ * renders at most three, in priority order. Generation does not emit these
+ * yet — application-owned fixtures only.
  */
 export interface SystemPromptChange {
   direction: "gain" | "loss";
@@ -142,8 +146,8 @@ export interface BaseSystemEvent {
   /** Optional event-specific status kept visually separate from narrated prose. */
   badge?: SystemPromptBadge;
   /**
-   * Priority-ordered signed consequences. Roomy layouts may show four; narrow
-   * layouts show three only when they fit cleanly, otherwise the first two.
+   * Priority-ordered System outcomes, one to three. Narrow layouts show the
+   * third only when all three fit cleanly, otherwise the first two.
    */
   changes?: SystemPromptChange[];
 }

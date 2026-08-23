@@ -262,6 +262,9 @@ describe('CardWorkshopView', () => {
     expect(overlay).toBeTruthy();
     expect(overlay?.getAttribute('aria-modal')).toBe('true');
     expect(overlay?.getAttribute('data-reader-narration')).toBe('excluded');
+    expect(overlay?.className).toContain('max-h-full');
+    expect(overlay?.className).toContain('overflow-y-auto');
+    expect(overlay?.className).toContain('overscroll-contain');
     expect(systemBlock?.contains(overlay!)).toBe(false);
     expect(systemBlock?.dataset.systemPromptState).toBe('expanded');
     expect(systemBlock?.querySelector('[data-consequence-count]')).toBeTruthy();
@@ -308,17 +311,14 @@ describe('CardWorkshopView', () => {
     expect(document.body.querySelector('[role="dialog"][aria-label="Elder Han Codex details"]'))
       .toBeTruthy();
     // Escape closes the hovercard first; the event report stays open. The
-    // hovercard unmounts through its own exit animation, so wait it out.
+    // hovercard marker is stripped immediately, so a rapid second Escape closes
+    // the report without waiting for exit animation.
     await act(async () => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     });
-    await vi.waitFor(() => {
-      expect(document.body.querySelector('[role="dialog"][aria-label="Elder Han Codex details"]'))
-        .toBeFalsy();
-    });
     expect(document.body.querySelector('[role="dialog"][data-system-expanded="true"]')).toBeTruthy();
 
-    // Escape then closes the report and returns focus to the orb action.
+    // Second Escape immediately closes the report and returns focus to the orb action.
     const orbAction = getButton('Collapse System Prompt details');
     await act(async () => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -339,6 +339,26 @@ describe('CardWorkshopView', () => {
     await act(async () => closeAction!.click());
     expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
     expect(document.activeElement).toBe(reopenOrb);
+
+    // Backdrop click requires pointer-down on the backdrop itself to avoid
+    // closing during text selection drag releases.
+    await clickButton('Expand System Prompt details');
+    const backdrop = document.body.querySelector<HTMLElement>('.fixed.inset-0.z-\\[100\\]');
+    const activeOverlay = document.body.querySelector<HTMLElement>('[role="dialog"][data-system-expanded="true"]');
+    expect(backdrop).toBeTruthy();
+    expect(activeOverlay).toBeTruthy();
+    // Drag starting inside panel and releasing on backdrop does not close
+    await act(async () => {
+      activeOverlay?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+      backdrop?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(document.body.querySelector('[data-system-expanded]')).toBeTruthy();
+    // Direct click on backdrop closes
+    await act(async () => {
+      backdrop?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+      backdrop?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
   });
 
   it('provides complete local expanded reports for all three System Prompt examples', async () => {

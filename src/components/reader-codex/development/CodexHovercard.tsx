@@ -246,6 +246,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node;
       if (containerRef.current?.contains(target) || cardRef.current?.contains(target)) return;
+      cardRef.current?.removeAttribute('data-slot');
       setIsOpen(false);
     };
 
@@ -253,6 +254,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       event.preventDefault();
+      cardRef.current?.removeAttribute('data-slot');
       setIsOpen(false);
       triggerRef.current?.focus();
     };
@@ -373,7 +375,11 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
     e.stopPropagation();
     const nextOpen = !isOpen;
     openedWithKeyboardRef.current = nextOpen && openedWithKeyboard;
-    if (nextOpen) setIsPortalMounted(true);
+    if (nextOpen) {
+      setIsPortalMounted(true);
+    } else {
+      cardRef.current?.removeAttribute('data-slot');
+    }
     setIsOpen(nextOpen);
   };
 

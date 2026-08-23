@@ -248,6 +248,7 @@ function SystemExpandedOverlay({
   returnFocusRef: React.RefObject<HTMLButtonElement | null>;
 }) {
   const panelRef = React.useRef<HTMLDivElement>(null);
+  const backdropPressRef = React.useRef(false);
   const classification = getSystemCompactClassification(meaning);
   const badgeSeverity = badge ? getBadgeSeverityStyles(badge) : undefined;
 
@@ -276,7 +277,12 @@ function SystemExpandedOverlay({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         // An open Codex hovercard floats above this dialog; it closes first.
-        if (document.querySelector(CODEX_HOVERCARD_SELECTOR)) return;
+        // Strip the marker immediately so a subsequent Escape during its exit animation is not swallowed.
+        const hovercard = document.querySelector<HTMLElement>(CODEX_HOVERCARD_SELECTOR);
+        if (hovercard) {
+          hovercard.removeAttribute('data-slot');
+          return;
+        }
         event.preventDefault();
         onClose();
         return;
@@ -318,7 +324,13 @@ function SystemExpandedOverlay({
         paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))',
         paddingLeft: 'max(1rem, env(safe-area-inset-left, 0px))',
       }}
-      onClick={onClose}
+      onPointerDown={(event) => {
+        backdropPressRef.current = event.target === event.currentTarget;
+      }}
+      onClick={(event) => {
+        if (backdropPressRef.current && event.target === event.currentTarget) onClose();
+        backdropPressRef.current = false;
+      }}
     >
       <motion.div
         ref={panelRef}
@@ -335,7 +347,7 @@ function SystemExpandedOverlay({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.15 }}
         onClick={(event) => event.stopPropagation()}
-        className={`max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-hidden rounded-2xl border bg-[#020a16]/95 px-5 py-4 md:px-6 md:py-5 shadow-[0_0_32px_color-mix(in_srgb,currentColor_18%,transparent),inset_0_1px_0_rgba(255,255,255,0.06)] outline-none ${meaning.borderColor} ${meaning.textColor}`}
+        className={`max-h-full w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl border bg-[#020a16]/95 px-5 py-4 md:px-6 md:py-5 shadow-[0_0_32px_color-mix(in_srgb,currentColor_18%,transparent),inset_0_1px_0_rgba(255,255,255,0.06)] outline-none ${meaning.borderColor} ${meaning.textColor}`}
       >
         <div className="flex flex-col">
           <div className="flex items-start justify-between gap-3">

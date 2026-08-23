@@ -359,6 +359,27 @@ describe('CardWorkshopView', () => {
       backdrop?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
     expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
+
+    // Pre-existing Codex hovercard open before expanded overlay mounts:
+    // Opening a hovercard in compact summary, then opening the overlay,
+    // verifies that the first Escape dismisses the hovercard and leaves the overlay open.
+    const compactCharacterLink = [...(container.querySelectorAll<HTMLElement>('.system-block [role="button"]') ?? [])]
+      .find(element => element.textContent === 'Yun Che' || element.textContent === 'Elder Han');
+    if (compactCharacterLink) {
+      await act(async () => compactCharacterLink.click());
+      await clickButton('Expand System Prompt details');
+      expect(document.body.querySelector('[role="dialog"][data-system-expanded="true"]')).toBeTruthy();
+      // First Escape dismisses the hovercard only
+      await act(async () => {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+      });
+      expect(document.body.querySelector('[role="dialog"][data-system-expanded="true"]')).toBeTruthy();
+      // Second Escape dismisses the overlay
+      await act(async () => {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+      });
+      expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
+    }
   });
 
   it('provides complete local expanded reports for all three System Prompt examples', async () => {

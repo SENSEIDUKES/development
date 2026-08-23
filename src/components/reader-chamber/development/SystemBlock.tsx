@@ -276,10 +276,12 @@ function SystemExpandedOverlay({
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        if (event.defaultPrevented) return;
         // An open Codex hovercard floats above this dialog; it closes first.
         // Strip the marker immediately so a subsequent Escape during its exit animation is not swallowed.
         const hovercard = document.querySelector<HTMLElement>(CODEX_HOVERCARD_SELECTOR);
         if (hovercard) {
+          event.preventDefault();
           hovercard.removeAttribute('data-slot');
           return;
         }

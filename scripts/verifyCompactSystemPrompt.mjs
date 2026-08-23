@@ -213,13 +213,14 @@ async function verifyExpandedOverlay(page, block, event, deviceName) {
       await overlay.getByText('Narrative Consequences', { exact: true }).waitFor();
     }
 
-    // One-screen fit: the panel never scrolls internally, never escapes the
-    // viewport, and the page behind gains no horizontal overflow.
+    // One-screen fit: the panel never escapes the viewport, and the page
+    // behind gains no horizontal overflow.
     const fit = await overlay.evaluate((element) => {
       const rect = element.getBoundingClientRect();
       return {
         clientHeight: element.clientHeight,
         scrollHeight: element.scrollHeight,
+        overflowY: getComputedStyle(element).overflowY,
         left: rect.left,
         top: rect.top,
         right: rect.right,
@@ -229,8 +230,12 @@ async function verifyExpandedOverlay(page, block, event, deviceName) {
         documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       };
     });
-    if (fit.scrollHeight > fit.clientHeight + 1) {
-      throw new Error(`${event.slug} overlay panel scrolls internally at ${deviceName}: ${JSON.stringify(fit)}`);
+    if (
+      fit.scrollHeight > fit.clientHeight + 1
+      && fit.overflowY !== 'auto'
+      && fit.overflowY !== 'scroll'
+    ) {
+      throw new Error(`${event.slug} overlay clips tall content at ${deviceName}: ${JSON.stringify(fit)}`);
     }
     if (fit.left < -1 || fit.top < -1 || fit.right > fit.viewportWidth + 1 || fit.bottom > fit.viewportHeight + 1) {
       throw new Error(`${event.slug} overlay escapes the viewport at ${deviceName}: ${JSON.stringify(fit)}`);

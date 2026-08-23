@@ -254,6 +254,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       event.preventDefault();
+      event.stopImmediatePropagation();
       cardRef.current?.removeAttribute('data-slot');
       setIsOpen(false);
       triggerRef.current?.focus();

@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
-import { ArrowDown, ArrowUp, ChevronUp, Skull, TriangleAlert as AlertTriangle, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Skull, TriangleAlert as AlertTriangle, X } from 'lucide-react';
 import type {
   SystemEvent,
   SystemPromptBadge,
@@ -650,6 +650,10 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
   const detailsId = React.useId();
   const eventKey = `${system?.kind ?? ''}|${system?.promptType ?? ''}|${system?.title ?? ''}|${content}`;
   const [expandedEventKey, setExpandedEventKey] = React.useState<string | null>(null);
+  // The compact card's TTS sentence rests collapsed behind the bottom arrow
+  // toggle to conserve reader screen space; narration reads it from the
+  // block data, never from this visibility state.
+  const [sentenceRevealed, setSentenceRevealed] = React.useState(false);
   const orbButtonRef = React.useRef<HTMLButtonElement>(null);
 
   const isIronFate = (system?.title || '').toLowerCase().includes('iron fate') || 
@@ -706,7 +710,11 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
     // outcomes (`system.changes` — plus/minus signs only on genuine
     // mathematical changes such as QI +200 or KARMA −15, with the sign before
     // the number; plain status outcomes stay unsigned), and the muted serif
-    // sentence in its own bottom section. Narrow containers show the third
+    // sentence, which rests collapsed by default behind a small centered
+    // arrow toggle at the bottom edge to conserve reader screen space
+    // (2026-08-23 follow-up: narration still reads the sentence from the
+    // block data exactly as before — the toggle only changes visibility).
+    // Narrow containers show the third
     // outcome only when all three fit, otherwise the first two. Everything
     // renders from structured data; the component hardcodes no event text.
     //
@@ -732,6 +740,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
       const badge = normalizeSystemPromptBadge(system.badge);
       const badgeSeverity = badge ? getBadgeSeverityStyles(badge) : undefined;
       const sentence = getVisibleSystemSentence(content, badge);
+      const summaryId = `${detailsId}-summary`;
       const headline = (system.title || '').trim();
       const compactRows = rows.slice(0, 3);
       const expandedData = normalizeExpandedData(system.expanded);
@@ -809,9 +818,34 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
               )}
               <SystemConsequenceRow changes={visibleChanges} />
               {sentence && (
-                <p data-system-summary="true" className="mt-2.5 border-t border-[color-mix(in_srgb,currentColor_18%,transparent)] pt-2 text-center font-serif text-sm italic leading-relaxed text-neutral-400 md:text-base">
+                <p
+                  id={summaryId}
+                  data-system-summary="true"
+                  hidden={!sentenceRevealed}
+                  className="mt-2.5 border-t border-[color-mix(in_srgb,currentColor_18%,transparent)] pt-2 text-center font-serif text-sm italic leading-relaxed text-neutral-400 md:text-base"
+                >
                   {renderSystemText(sentence)}
                 </p>
+              )}
+              {sentence && (
+                <button
+                  type="button"
+                  data-system-summary-toggle="true"
+                  aria-expanded={sentenceRevealed}
+                  aria-controls={summaryId}
+                  aria-label={sentenceRevealed ? 'Hide System narration' : 'Reveal System narration'}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setSentenceRevealed(current => !current);
+                  }}
+                  className="mx-auto -mb-1.5 mt-0.5 flex h-11 w-11 items-center justify-center rounded-full text-neutral-500 outline-none transition-[color,transform] duration-200 hover:text-neutral-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-current/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070b] motion-reduce:transition-none"
+                >
+                  <ChevronDown
+                    data-system-summary-toggle-icon="true"
+                    className={`h-4 w-4 transition-transform duration-200 motion-reduce:transition-none ${sentenceRevealed ? 'rotate-180' : ''}`}
+                    strokeWidth={2.2}
+                  />
+                </button>
               )}
             </div>
           </motion.div>

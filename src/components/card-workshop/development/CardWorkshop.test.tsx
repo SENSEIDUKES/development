@@ -146,10 +146,15 @@ describe('CardWorkshopView', () => {
     expect(compactBlock?.textContent).toContain('Presence Exposed');
     // The serif prose paragraph stays the only narration text: it carries the
     // sentence alone — never the headline, rows, or the outcome row — and
-    // sits in its own section below the outcomes.
+    // rests collapsed by default behind a centered bottom arrow toggle (the
+    // reader expands it on demand; TTS reads it from the block data).
     const compactSummary = compactBlock?.querySelector('[data-system-summary]');
     expect(compactSummary?.textContent)
       .toBe('A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.');
+    expect(compactSummary?.hasAttribute('hidden')).toBe(true);
+    const summaryToggle = compactBlock?.querySelector('[aria-controls]');
+    expect(summaryToggle?.getAttribute('aria-label')).toBe('Reveal System narration');
+    expect(summaryToggle?.getAttribute('aria-expanded')).toBe('false');
     const consequenceRow = compactBlock?.querySelector('[data-consequence-count]');
     expect(consequenceRow).toBeTruthy();
     expect(

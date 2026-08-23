@@ -110,16 +110,19 @@ export interface StoryBlockMetadata {
 export type SystemEventKind = "system_prompt" | "fate_system_prompt";
 
 /**
- * One short, genre-native System outcome listed in the compact System
- * Prompt's flat outcome row. Plus/minus signs render only for genuine
- * mathematical changes — labels carrying a numeric quantity (QI 200,
- * KARMA 15, HEALTH 30%) get the direction's sign before the number
- * (QI +200, KARMA −15, HEALTH −30%); plain status outcomes (REALM ASCENDED,
- * TITLE ACQUIRED, DETECTION RISK: HIGH) render unsigned. Each outcome's text
- * is color-coded by meaning: `tone` overrides the color explicitly
- * ("positive" green, "uncertain" yellow, "warning" orange, "negative" red);
- * when omitted, the tone derives from `direction` ("gain" → positive,
- * "loss" → negative), so set `tone` whenever the literal direction
+ * One short, genre-native System outcome. The compact System Prompt renders
+ * at most the first two outcomes as flat slots separated by a divider, each
+ * split into a neutral white subject and a meaning-colored state word with no
+ * numbers: a label carrying a numeric quantity (QI 200, KARMA 15, HEALTH 30%)
+ * compresses to its subject plus Increased/Decreased from `direction`
+ * (KARMA DECREASED, LIFESPAN INCREASED), while any other label colors only
+ * its final state word (REALM ASCENDED, TITLE STRIPPED). The expanded event
+ * report lists every outcome in full with the direction's sign before any
+ * quantity (QI +200, KARMA −15, HEALTH −30%); plain status outcomes render
+ * unsigned. The state word is color-coded by meaning: `tone` overrides the
+ * color explicitly ("positive" green, "uncertain" yellow, "warning" orange,
+ * "negative" red); when omitted, the tone derives from `direction` ("gain" →
+ * positive, "loss" → negative), so set `tone` whenever the literal direction
  * contradicts the meaning (a gained enmity is still negative).
  * Generation does not emit these yet — application-owned fixtures only.
  */
@@ -161,8 +164,9 @@ export interface BaseSystemEvent {
   /** Optional event-specific status kept visually separate from narrated prose. */
   badge?: SystemPromptBadge;
   /**
-   * Priority-ordered System outcomes rendered as clean flat rows of
-   * meaning-colored text that wrap cleanly across viewports.
+   * Priority-ordered System outcomes. The compact card renders at most the
+   * first two as flat subject/state slots with no numbers; the expanded
+   * report lists them all with signed quantities.
    */
   changes?: SystemPromptChange[];
 }

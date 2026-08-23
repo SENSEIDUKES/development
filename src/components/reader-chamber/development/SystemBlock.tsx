@@ -395,7 +395,7 @@ function SystemExpandedOverlay({
               <span className={`font-bold ${badgeSeverity.value}`}>{badge.value}</span>
             </span>
           )}
-          <SystemConsequenceRow changes={changes} />
+          <SystemConsequenceRow changes={changes} variant="expanded" />
           {data.sections.map((section, index) => {
             const tone = getExpandedTone(section.tone);
             const toneStyles = EXPANDED_TONE_STYLES[tone];
@@ -460,15 +460,19 @@ function SystemExpandedOverlay({
 }
 
 /**
- * System outcome row carrying genre-native outcomes as clean, flat rows of
- * meaning-colored text that wrap cleanly when needed rather than forcing
- * into a single line. Plus and minus signs appear only on genuine
- * mathematical changes — labels carrying a numeric quantity (QI 200,
- * KARMA 15, HEALTH 30%) render with the direction's sign before the number
- * (QI +200, KARMA −15, HEALTH −30%); plain status outcomes (REALM ASCENDED,
- * TITLE ACQUIRED, DETECTION RISK: HIGH) render unsigned.
+ * System outcome row carrying genre-native outcomes as clean, flat text.
+ * The compact card shows at most the first two outcomes as slots separated by
+ * a clear divider, each split into a neutral white subject and a
+ * meaning-colored state word with no numbers — a label carrying a numeric
+ * quantity (Lifespan 100, Karma 15) compresses to its subject plus
+ * Increased/Decreased from the direction (LIFESPAN INCREASED, KARMA
+ * DECREASED), while other labels color only their final state word (REALM
+ * ASCENDED, TITLE STRIPPED). The expanded event report lists every outcome in
+ * full and keeps the exact figures: plus and minus signs appear only on
+ * genuine mathematical changes (QI +200, KARMA −15, HEALTH −30%); plain
+ * status outcomes render unsigned.
  */
-/** Meaning colors for the flat outcome text: green positive, yellow
+/** Meaning colors for the outcome state word: green positive, yellow
  * uncertain, orange warning, red negative or severe risk. */
 const OUTCOME_TONE_STYLES: Record<NonNullable<SystemPromptChange['tone']>, string> = {
   positive: 'text-emerald-400',
@@ -482,7 +486,30 @@ function getOutcomeTone(change: SystemPromptChange): NonNullable<SystemPromptCha
   return change.tone ?? (change.direction === 'loss' ? 'negative' : 'positive');
 }
 
-function SystemConsequenceRow({ changes }: { changes: SystemPromptChange[] }) {
+/** The compact card's bottom half holds at most two outcome slots. */
+const COMPACT_OUTCOME_LIMIT = 2;
+
+/**
+ * Compact outcome wording: the white subject plus the meaning-colored state
+ * word, never a number. A quantity label (Lifespan 100) yields its subject
+ * with Increased/Decreased from the direction; any other label colors its
+ * final word as the state (Realm ASCENDED, Title STRIPPED).
+ */
+function getCompactOutcomeParts(change: SystemPromptChange): { subject: string; state: string } {
+  const label = change.label.trim();
+  const quantityStart = label.search(/\d/);
+  if (quantityStart !== -1) {
+    return {
+      subject: label.slice(0, quantityStart).trim(),
+      state: change.direction === 'loss' ? 'Decreased' : 'Increased',
+    };
+  }
+  const lastSpace = label.lastIndexOf(' ');
+  if (lastSpace === -1) return { subject: '', state: label };
+  return { subject: label.slice(0, lastSpace), state: label.slice(lastSpace + 1) };
+}
+
+function SystemConsequenceRow({ changes, variant }: { changes: SystemPromptChange[]; variant: 'compact' | 'expanded' }) {
   const prioritizedChanges = React.useMemo(
     () => changes
       .filter(change => typeof change?.label === 'string' && change.label.trim() !== ''),
@@ -503,6 +530,36 @@ function SystemConsequenceRow({ changes }: { changes: SystemPromptChange[] }) {
   };
 
   if (prioritizedChanges.length === 0) return null;
+
+  if (variant === 'compact') {
+    const slots = prioritizedChanges.slice(0, COMPACT_OUTCOME_LIMIT);
+    return (
+      <div
+        data-consequence-count={slots.length}
+        className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-[color-mix(in_srgb,currentColor_18%,transparent)] pt-2"
+      >
+        {slots.map((change, index) => {
+          const { subject, state } = getCompactOutcomeParts(change);
+          return (
+            <React.Fragment key={`${change.direction}-${change.label}-${index}`}>
+              {index > 0 && (
+                <span aria-hidden="true" className="font-mono text-[10px] text-current/35 md:text-[11px]">|</span>
+              )}
+              <span
+                data-outcome-slot="true"
+                className="font-mono text-[10px] font-semibold uppercase tracking-[0.10em] md:text-[11px] md:tracking-[0.18em]"
+              >
+                {subject && (
+                  <span data-outcome-subject="true" className="text-neutral-100">{subject}{' '}</span>
+                )}
+                <span data-outcome-state="true" className={OUTCOME_TONE_STYLES[getOutcomeTone(change)]}>{state}</span>
+              </span>
+            </React.Fragment>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -626,9 +683,10 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
     // Compact regular System Prompt: title-led header with direct understandable
     // headline, secondary flavor text, single-term semantic classification line,
     // clean flat key/value rows with values spread to the card's ends, a
-    // full-width status badge reserved for true status information, flat
-    // meaning-colored outcome rows, and tightened layout with no vertical dead
-    // space when the TTS summary is minimized.
+    // full-width status badge reserved for true status information, a two-slot
+    // outcome row of white subjects and meaning-colored state words, and
+    // tightened layout with no vertical dead space when the TTS summary is
+    // minimized.
     if (rows.length === 0 || visibleChanges.length > 0) {
       const badge = normalizeSystemPromptBadge(system.badge);
       const badgeSeverity = badge ? getBadgeSeverityStyles(badge) : undefined;
@@ -718,7 +776,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
                 </span>
               )}
 
-              <SystemConsequenceRow changes={visibleChanges} />
+              <SystemConsequenceRow changes={visibleChanges} variant="compact" />
 
               {sentence && (
                 <p

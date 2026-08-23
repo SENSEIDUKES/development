@@ -17,13 +17,14 @@ const events = [
     consequence: 'Elder Han will move openly against Yun Che.',
     codexName: 'Elder Han',
     codexColorClass: 'text-[#d4af37]',
-    classification: '✦ Breakthrough | Awakening ✦',
+    classification: '✦ Awakening ✦',
     subtype: 'Awakening',
     subtypeColorClass: 'text-amber-400',
     rowLabel: 'New Realm',
     rowValue: 'Foundation Establishment',
     trends: [['Foundation Establishment', 'up'], ['Widened', 'up']],
-    outcomes: ['Realm Ascended', 'Lifespan +100', 'Presence Exposed'],
+    outcomes: ['Realm Ascended', 'Lifespan Increased'],
+    overlayOutcome: 'Lifespan +100',
     prose: 'A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.',
   },
   {
@@ -34,13 +35,14 @@ const events = [
     consequence: 'Magistrate Jinhai loses access to Riverside Sect testimony.',
     codexName: 'Magistrate Jinhai',
     codexColorClass: 'text-red-500',
-    classification: '✦ Karma | Consequence ✦',
+    classification: '✦ Consequence ✦',
     subtype: 'Consequence',
     subtypeColorClass: 'text-orange-400',
     rowLabel: 'Celestial Record',
     rowValue: 'Sealed',
     trends: [['Sealed', 'down']],
-    outcomes: ['Karma −15', 'Title Stripped', 'Sect Enmity'],
+    outcomes: ['Karma Decreased', 'Title Stripped'],
+    overlayOutcome: 'Karma −15',
     prose: 'A solemn interface surfaced before Magistrate Jinhai, its gilt script cold as the rain outside.',
   },
   {
@@ -51,13 +53,14 @@ const events = [
     consequence: 'Elder Kaelen will prepare a countermeasure before the next encounter.',
     codexName: 'Elder Kaelen',
     codexColorClass: 'text-red-500',
-    classification: '✦ Combat | Enemy ✦',
+    classification: '✦ Enemy ✦',
     subtype: 'Enemy',
     subtypeColorClass: 'text-red-500',
     rowLabel: 'Cultivation',
     rowValue: 'Foundation Establishment, Stage 7',
     trends: [],
-    outcomes: ['Intel Gained', 'Weakness Found', 'Detection Risk: High'],
+    outcomes: ['Intel Gained', 'Weakness Found'],
+    overlayOutcome: 'Detection Risk: High',
     prose: 'A crimson interface unfolded beside Elder Kaelen, taking his measure in silence.',
   },
 ];
@@ -76,24 +79,19 @@ async function verifyConsequenceRow(block, eventSlug, deviceName) {
   if (metrics.scrollWidth > metrics.clientWidth + 1 || metrics.overflowX === 'auto' || metrics.overflowX === 'scroll') {
     throw new Error(`${eventSlug} outcome row scrolls or overflows at ${deviceName}: ${JSON.stringify(metrics)}`);
   }
-  if (deviceName.startsWith('mobile-') && (metrics.count < 2 || metrics.count > 3)) {
-    throw new Error(`${eventSlug} must keep two or three short outcomes on mobile: ${JSON.stringify(metrics)}`);
-  }
-  if (!deviceName.startsWith('mobile-') && metrics.count !== 3) {
-    throw new Error(`${eventSlug} must show all three outcomes at ${deviceName}: ${JSON.stringify(metrics)}`);
+  if (metrics.count !== 2) {
+    throw new Error(`${eventSlug} must keep exactly two outcome slots at ${deviceName}: ${JSON.stringify(metrics)}`);
   }
 }
 
 async function verifyCompactHierarchy(block, event, deviceName) {
   // Production hierarchy: classification line, key/value rows, the System
-  // outcome row (signs only on genuine mathematical changes), and the TTS
+  // outcome row (two flat subject/state slots, no numbers), and the TTS
   // prose as the bottom section below the outcome row.
   await block.getByText(event.classification, { exact: true }).waitFor();
   await block.getByText(event.rowLabel, { exact: true }).waitFor();
   await block.getByText(event.rowValue, { exact: true }).waitFor();
-  // The two highest-priority outcomes are always rendered in the visible row;
-  // the third may be fit-culled on narrow containers, so it is not awaited
-  // here. Scoping to the visible row skips the hidden measurement mirror.
+  // Both prioritized outcome slots are always rendered in the visible row.
   const visibleOutcomeRow = block.locator('[data-consequence-count]');
   await visibleOutcomeRow.getByText(event.outcomes[0], { exact: true }).waitFor();
   await visibleOutcomeRow.getByText(event.outcomes[1], { exact: true }).waitFor();
@@ -134,25 +132,30 @@ async function verifyCompactHierarchy(block, event, deviceName) {
     throw new Error(`${event.slug} TTS prose did not collapse again at ${deviceName}`);
   }
 
-  // Signs appear only on genuine mathematical changes: an outcome carrying a
-  // numeric quantity gets the direction's sign before the number (green gain,
-  // red loss); plain status outcomes carry no sign span at all.
-  const signReport = await block.evaluate((element) => {
+  // Compact outcome wording: two flat slots separated by a clear divider,
+  // each a neutral white subject plus a meaning-colored state word — and
+  // never a number (quantities compress to Increased/Decreased from the
+  // direction; the signed figures live only in the expanded report).
+  const compactReport = await block.evaluate((element) => {
     const row = element.querySelector('[data-consequence-count]');
     if (!row) return 'missing-row';
-    for (const chip of [...row.children]) {
-      const text = chip.textContent.trim();
-      const sign = [...chip.querySelectorAll('span')].find((s) => s.textContent === '+' || s.textContent === '−');
-      const isMathematical = /\d/.test(text);
-      if (isMathematical && !sign) return `math-unsigned:${text}`;
-      if (!isMathematical && sign) return `status-signed:${text}`;
-      if (sign && sign.textContent === '−' && !sign.classList.contains('text-red-400')) return `loss-not-red:${text}`;
-      if (sign && sign.textContent === '+' && !sign.classList.contains('text-emerald-400')) return `gain-not-green:${text}`;
+    if (!row.textContent.includes('|')) return 'missing-divider';
+    const slots = [...row.querySelectorAll('[data-outcome-slot]')];
+    if (slots.length !== 2) return `slot-count:${slots.length}`;
+    for (const slot of slots) {
+      if (/\d/.test(slot.textContent)) return `compact-number:${slot.textContent.trim()}`;
+      const subject = slot.querySelector('[data-outcome-subject]');
+      if (subject && !subject.classList.contains('text-neutral-100')) return `subject-not-white:${subject.textContent}`;
+      const state = slot.querySelector('[data-outcome-state]');
+      if (!state) return `missing-state:${slot.textContent.trim()}`;
+      const toned = ['text-emerald-400', 'text-yellow-300', 'text-orange-400', 'text-red-400']
+        .some((toneClass) => state.classList.contains(toneClass));
+      if (!toned) return `state-uncolored:${state.textContent}`;
     }
     return 'ok';
   });
-  if (signReport !== 'ok') {
-    throw new Error(`${event.slug} outcome sign contract broken at ${deviceName}: ${signReport}`);
+  if (compactReport !== 'ok') {
+    throw new Error(`${event.slug} compact outcome contract broken at ${deviceName}: ${compactReport}`);
   }
 
   // Color communicates meaning: only the classification subtype carries the
@@ -257,8 +260,10 @@ async function verifyExpandedOverlay(page, block, event, deviceName) {
     if (await overlay.getByRole('progressbar').count() === 0) {
       throw new Error(`${event.slug} overlay has no progress value at ${deviceName}.`);
     }
-    // The overlay keeps its own System outcome row.
+    // The overlay keeps its own System outcome row — the full list with the
+    // signed figures the compact two-slot row drops.
     await overlay.locator('[data-consequence-count]').waitFor();
+    await overlay.locator('[data-consequence-count]').getByText(event.overlayOutcome, { exact: true }).waitFor();
 
     // Mobile: only the three highest-priority sections are visible. Larger
     // screens: every section, same flat structure.
@@ -375,7 +380,7 @@ for (const device of devices) {
     await verifyConsequenceRow(tabsBlock, event.slug, device.name);
     await verifyCompactHierarchy(tabsBlock, event, device.name);
     if (event.slug === 'target-scan') {
-      await tabsBlock.getByText('Threat Assessment · Moderate', { exact: true }).waitFor();
+      await tabsBlock.getByText('Threat Assessment Moderate', { exact: true }).waitFor();
       // Badge severity coloring: neutral label, only the severity takes color.
       const badgeReport = await tabsBlock.evaluate((element) => {
         const spans = [...element.querySelectorAll('span')];

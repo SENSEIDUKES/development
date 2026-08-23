@@ -153,139 +153,146 @@ async function verifyExpandedOverlay(page, block, event, deviceName) {
     element.dataset.previousVisibility = element.style.visibility;
     element.style.visibility = 'hidden';
   }));
-  // Horizontal-overflow baseline: the Workshop page itself may overflow at
-  // 320px, so the overlay is judged on what it adds, never an absolute.
-  const compactDocumentOverflow = await page.evaluate(() => (
-    document.documentElement.scrollWidth - document.documentElement.clientWidth
-  ));
-  const expandButton = block.getByRole('button', { name: 'Expand System Prompt details' });
-  if (await expandButton.getAttribute('aria-expanded') !== 'false') {
-    throw new Error(`${event.slug} did not start compact at ${deviceName}.`);
-  }
-  await block.locator('[data-system-orb-icon="closed"]').waitFor();
-  await expandButton.click();
-
-  const overlay = page.locator('[role="dialog"][data-system-expanded="true"]');
-  await overlay.waitFor({ state: 'visible' });
-  // Playwright's own pre-click scroll-into-view may move the page, so the
-  // reader-position contract is measured from the open overlay onward.
-  const scrollBefore = await page.evaluate(() => window.scrollY);
-  if (await overlay.getAttribute('aria-modal') !== 'true') {
-    throw new Error(`${event.slug} overlay is not modal at ${deviceName}.`);
-  }
-  if (await overlay.getAttribute('data-reader-narration') !== 'excluded') {
-    throw new Error(`${event.slug} overlay lost its narration boundary at ${deviceName}.`);
-  }
-  if (await block.getAttribute('data-system-prompt-state') !== 'expanded') {
-    throw new Error(`${event.slug} did not enter expanded state at ${deviceName}.`);
-  }
-  if (await block.locator('[data-consequence-count]').count() !== 1) {
-    throw new Error(`${event.slug} compact card did not keep its consequence row under the overlay at ${deviceName}.`);
-  }
-  if ((await page.evaluate(() => document.body.style.overflow)) !== 'hidden') {
-    throw new Error(`${event.slug} overlay did not lock page scroll at ${deviceName}.`);
-  }
-
-  await overlay.getByText(event.subject, { exact: true }).first().waitFor();
-  await overlay.getByText(event.value, { exact: true }).waitFor();
-  if (await overlay.getByRole('progressbar').count() === 0) {
-    throw new Error(`${event.slug} overlay has no progress value at ${deviceName}.`);
-  }
-  // The overlay keeps its own signed consequence row.
-  await overlay.locator('[data-consequence-count]').waitFor();
-
-  // Mobile: only the three highest-priority sections are visible. Larger
-  // screens: every section, same flat structure.
-  const narrativeSection = overlay.locator('[data-system-expanded-section="narrative-consequences"]');
-  await narrativeSection.waitFor({ state: 'attached' });
-  if (isMobile) {
-    if (await narrativeSection.isVisible()) {
-      throw new Error(`${event.slug} shows more than three Codex sections on mobile at ${deviceName}.`);
-    }
-  } else {
-    if (!(await narrativeSection.isVisible())) {
-      throw new Error(`${event.slug} hides expanded sections at ${deviceName}.`);
-    }
-    await overlay.getByText(event.consequence, { exact: true }).waitFor();
-    await overlay.getByText('Lore', { exact: true }).waitFor();
-    await overlay.getByText('Warning', { exact: true }).waitFor();
-    await overlay.getByText('Narrative Consequences', { exact: true }).waitFor();
-  }
-
-  // One-screen fit: the panel never scrolls internally, never escapes the
-  // viewport, and the page behind gains no horizontal overflow.
-  const fit = await overlay.evaluate((element) => {
-    const rect = element.getBoundingClientRect();
-    return {
-      clientHeight: element.clientHeight,
-      scrollHeight: element.scrollHeight,
-      left: rect.left,
-      top: rect.top,
-      right: rect.right,
-      bottom: rect.bottom,
-      viewportWidth: window.innerWidth,
-      viewportHeight: window.innerHeight,
-      documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-    };
-  });
-  if (fit.scrollHeight > fit.clientHeight + 1) {
-    throw new Error(`${event.slug} overlay panel scrolls internally at ${deviceName}: ${JSON.stringify(fit)}`);
-  }
-  if (fit.left < -1 || fit.top < -1 || fit.right > fit.viewportWidth + 1 || fit.bottom > fit.viewportHeight + 1) {
-    throw new Error(`${event.slug} overlay escapes the viewport at ${deviceName}: ${JSON.stringify(fit)}`);
-  }
-  if (fit.documentOverflow > compactDocumentOverflow + 1) {
-    throw new Error(`${event.slug} overlay added horizontal page overflow at ${deviceName}: ${JSON.stringify(fit)} (baseline ${compactDocumentOverflow})`);
-  }
-
-  // Codex links inside the overlay keep their colors; their hovercard opens
-  // above the dialog and closes first on Escape.
-  const codexLink = overlay.getByRole('button', { name: event.codexName, exact: true }).first();
-  await codexLink.waitFor();
-  if (!(await codexLink.getAttribute('class'))?.includes(event.codexColorClass)) {
-    throw new Error(`${event.codexName} did not preserve its assigned character color at ${deviceName}.`);
-  }
-  await codexLink.click();
-  const hovercard = page.getByRole('dialog', { name: `${event.codexName} Codex details` });
-  await hovercard.waitFor();
-  await page.keyboard.press('Escape');
-  await hovercard.waitFor({ state: 'detached' });
-  if (!(await overlay.isVisible())) {
-    throw new Error(`${event.slug} overlay closed together with its Codex hovercard at ${deviceName}.`);
-  }
-
-  await page.screenshot({ path: `output/playwright/system-prompt-${event.slug}-${deviceName}-overlay.png` });
-
-  // Closing restores the reader: compact state, focus back on the orb action,
-  // page scroll unlocked, and the exact same scroll position.
-  await overlay.getByRole('button', { name: 'Close System event report' }).click();
-  await overlay.waitFor({ state: 'detached' });
-  if (await block.getAttribute('data-system-prompt-state') !== 'compact') {
-    throw new Error(`${event.slug} did not return to compact at ${deviceName}.`);
-  }
-  await block.locator('[data-system-orb-icon="closed"]').waitFor();
   try {
-    await page.waitForFunction(
-      () => document.activeElement?.getAttribute('aria-label') === 'Expand System Prompt details',
-      undefined,
-      { timeout: 5000 },
-    );
-  } catch {
-    throw new Error(`${event.slug} did not restore focus to the orb action at ${deviceName}.`);
-  }
-  if ((await page.evaluate(() => document.body.style.overflow)) === 'hidden') {
-    throw new Error(`${event.slug} left the page scroll locked at ${deviceName}.`);
-  }
-  const scrollAfter = await page.evaluate(() => window.scrollY);
-  if (Math.abs(scrollAfter - scrollBefore) > 1) {
-    throw new Error(`${event.slug} moved the reader position at ${deviceName}: ${scrollBefore} -> ${scrollAfter}`);
-  }
+    // Horizontal-overflow baseline: the Workshop page itself may overflow at
+    // 320px, so the overlay is judged on what it adds, never an absolute.
+    const compactDocumentOverflow = await page.evaluate(() => (
+      document.documentElement.scrollWidth - document.documentElement.clientWidth
+    ));
+    const expandButton = block.getByRole('button', { name: 'Expand System Prompt details' });
+    if (await expandButton.getAttribute('aria-expanded') !== 'false') {
+      throw new Error(`${event.slug} did not start compact at ${deviceName}.`);
+    }
+    await block.locator('[data-system-orb-icon="closed"]').waitFor();
+    await expandButton.click();
 
-  // Restore the preview tooling hidden during the overlay pass.
-  await workshopControls.evaluateAll((elements) => elements.forEach((element) => {
-    element.style.visibility = element.dataset.previousVisibility || '';
-    delete element.dataset.previousVisibility;
-  }));
+    const overlay = page.locator('[role="dialog"][data-system-expanded="true"]');
+    await overlay.waitFor({ state: 'visible' });
+    // Playwright's own pre-click scroll-into-view may move the page, so the
+    // reader-position contract is measured from the open overlay onward.
+    const scrollBefore = await page.evaluate(() => window.scrollY);
+    if (await overlay.getAttribute('aria-modal') !== 'true') {
+      throw new Error(`${event.slug} overlay is not modal at ${deviceName}.`);
+    }
+    if (await overlay.getAttribute('data-reader-narration') !== 'excluded') {
+      throw new Error(`${event.slug} overlay lost its narration boundary at ${deviceName}.`);
+    }
+    if (await block.getAttribute('data-system-prompt-state') !== 'expanded') {
+      throw new Error(`${event.slug} did not enter expanded state at ${deviceName}.`);
+    }
+    if (await block.locator('[data-consequence-count]').count() !== 1) {
+      throw new Error(`${event.slug} compact card did not keep its consequence row under the overlay at ${deviceName}.`);
+    }
+    if ((await page.evaluate(() => document.body.style.overflow)) !== 'hidden') {
+      throw new Error(`${event.slug} overlay did not lock page scroll at ${deviceName}.`);
+    }
+
+    await overlay.getByText(event.subject, { exact: true }).first().waitFor();
+    await overlay.getByText(event.value, { exact: true }).first().waitFor();
+    if (await overlay.getByRole('progressbar').count() === 0) {
+      throw new Error(`${event.slug} overlay has no progress value at ${deviceName}.`);
+    }
+    // The overlay keeps its own signed consequence row.
+    await overlay.locator('[data-consequence-count]').waitFor();
+
+    // Mobile: only the three highest-priority sections are visible. Larger
+    // screens: every section, same flat structure.
+    const narrativeSection = overlay.locator('[data-system-expanded-section="narrative-consequences"]');
+    await narrativeSection.waitFor({ state: 'attached' });
+    if (isMobile) {
+      if (await narrativeSection.isVisible()) {
+        throw new Error(`${event.slug} shows more than three Codex sections on mobile at ${deviceName}.`);
+      }
+    } else {
+      if (!(await narrativeSection.isVisible())) {
+        throw new Error(`${event.slug} hides expanded sections at ${deviceName}.`);
+      }
+      await overlay.getByText(event.consequence, { exact: true }).waitFor();
+      await overlay.getByText('Lore', { exact: true }).waitFor();
+      await overlay.getByText('Warning', { exact: true }).waitFor();
+      await overlay.getByText('Narrative Consequences', { exact: true }).waitFor();
+    }
+
+    // One-screen fit: the panel never escapes the viewport, and the page
+    // behind gains no horizontal overflow.
+    const fit = await overlay.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        clientHeight: element.clientHeight,
+        scrollHeight: element.scrollHeight,
+        overflowY: getComputedStyle(element).overflowY,
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+    if (
+      fit.scrollHeight > fit.clientHeight + 1
+      && fit.overflowY !== 'auto'
+      && fit.overflowY !== 'scroll'
+    ) {
+      throw new Error(`${event.slug} overlay clips tall content at ${deviceName}: ${JSON.stringify(fit)}`);
+    }
+    if (fit.left < -1 || fit.top < -1 || fit.right > fit.viewportWidth + 1 || fit.bottom > fit.viewportHeight + 1) {
+      throw new Error(`${event.slug} overlay escapes the viewport at ${deviceName}: ${JSON.stringify(fit)}`);
+    }
+    if (fit.documentOverflow > compactDocumentOverflow + 1) {
+      throw new Error(`${event.slug} overlay added horizontal page overflow at ${deviceName}: ${JSON.stringify(fit)} (baseline ${compactDocumentOverflow})`);
+    }
+
+    // Codex links inside the overlay keep their colors; their hovercard opens
+    // above the dialog and closes first on Escape.
+    const codexLink = overlay.getByRole('button', { name: event.codexName, exact: true }).first();
+    await codexLink.waitFor();
+    if (!(await codexLink.getAttribute('class'))?.includes(event.codexColorClass)) {
+      throw new Error(`${event.codexName} did not preserve its assigned character color at ${deviceName}.`);
+    }
+    await codexLink.click();
+    const hovercard = page.getByRole('dialog', { name: `${event.codexName} Codex details` });
+    await hovercard.waitFor();
+    await page.keyboard.press('Escape');
+    await hovercard.waitFor({ state: 'detached' });
+    if (!(await overlay.isVisible())) {
+      throw new Error(`${event.slug} overlay closed together with its Codex hovercard at ${deviceName}.`);
+    }
+
+    await page.screenshot({ path: `output/playwright/system-prompt-${event.slug}-${deviceName}-overlay.png` });
+
+    // Closing restores the reader: compact state, focus back on the orb action,
+    // page scroll unlocked, and the exact same scroll position.
+    await overlay.getByRole('button', { name: 'Close System event report' }).click();
+    await overlay.waitFor({ state: 'detached' });
+    if (await block.getAttribute('data-system-prompt-state') !== 'compact') {
+      throw new Error(`${event.slug} did not return to compact at ${deviceName}.`);
+    }
+    await block.locator('[data-system-orb-icon="closed"]').waitFor();
+    try {
+      await page.waitForFunction(
+        () => document.activeElement?.getAttribute('aria-label') === 'Expand System Prompt details',
+        undefined,
+        { timeout: 5000 },
+      );
+    } catch {
+      throw new Error(`${event.slug} did not restore focus to the orb action at ${deviceName}.`);
+    }
+    if ((await page.evaluate(() => document.body.style.overflow)) === 'hidden') {
+      throw new Error(`${event.slug} left the page scroll locked at ${deviceName}.`);
+    }
+    const scrollAfter = await page.evaluate(() => window.scrollY);
+    if (Math.abs(scrollAfter - scrollBefore) > 1) {
+      throw new Error(`${event.slug} moved the reader position at ${deviceName}: ${scrollBefore} -> ${scrollAfter}`);
+    }
+  } finally {
+    // Restore the preview tooling hidden during the overlay pass.
+    await workshopControls.evaluateAll((elements) => elements.forEach((element) => {
+      element.style.visibility = element.dataset.previousVisibility || '';
+      delete element.dataset.previousVisibility;
+    }));
+  }
 }
 
 const browser = await chromium.launch();

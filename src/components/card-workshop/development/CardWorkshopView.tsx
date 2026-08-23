@@ -525,19 +525,19 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
   return (
     <div className="min-h-screen bg-[#01070e] text-signal flex flex-col">
       {/* Top Header & Mode Navigation */}
-      <header className="sticky top-0 z-30 border-b border-neutral-800/80 bg-[#010914]/90 backdrop-blur-md px-4 sm:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-lg">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-portal/10 border border-portal/30 flex items-center justify-center text-portal shadow-[0_0_12px_rgba(4,172,255,0.2)]">
-            <Layers size={18} />
+      <header className="relative sm:sticky sm:top-0 z-30 border-b border-neutral-800/80 bg-[#010914]/90 backdrop-blur-md px-3 sm:px-8 py-2.5 sm:py-3.5 flex flex-wrap items-center justify-between gap-2.5 sm:gap-4 shadow-lg">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-portal/10 border border-portal/30 flex items-center justify-center text-portal shadow-[0_0_12px_rgba(4,172,255,0.2)] shrink-0">
+            <Layers size={16} className="sm:w-[18px] sm:h-[18px]" />
           </div>
           <div>
-            <h1 className="text-base font-sc font-bold uppercase tracking-wider text-signal flex items-center gap-2">
+            <h1 className="text-xs sm:text-base font-sc font-bold uppercase tracking-wider text-signal flex items-center gap-2">
               Reader Card Workshop
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-portal/10 text-portal border border-portal/30">
+              <span className="text-[9px] sm:text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-portal/10 text-portal border border-portal/30">
                 Development Only
               </span>
             </h1>
-            <p className="text-xs text-neutral-400 font-sans">
+            <p className="hidden sm:block text-xs text-neutral-400 font-sans">
               Compare Reader card presets, then place the same selection in a fixed local chapter without generating anything.
             </p>
           </div>

@@ -94,23 +94,23 @@ function WorkshopControls({ config }: { config?: WorkshopControlsConfig }) {
   const contentId = `${panelId}-content`;
 
   return (
-    <div className="relative z-[200] px-4 pt-4 sm:px-6 sm:pt-6" data-workshop-controls>
+    <div className="relative z-[200] px-4 pt-2 sm:px-6 sm:pt-4" data-workshop-controls>
       <LibraryPanel
         as="section"
         padding="none"
         aria-label="Workshop Controls"
-        className="mx-auto w-full max-w-7xl !rounded-2xl"
+        className="mx-auto w-full max-w-7xl !rounded-xl sm:!rounded-2xl"
       >
-        <header className="relative z-10 flex min-h-16 items-center justify-between gap-4 px-4 py-3 sm:px-5">
+        <header className="relative z-10 flex min-h-12 sm:min-h-16 items-center justify-between gap-3 px-3 py-2 sm:px-5 sm:py-3">
           <div className="min-w-0">
             <p className="text-[9px] font-mono uppercase tracking-[0.22em] text-cyan-200/45">
               Preview tooling
             </p>
-            <h2 className="mt-0.5 text-sm font-semibold tracking-wide text-white/90">
+            <h2 className="mt-0.5 text-xs sm:text-sm font-semibold tracking-wide text-white/90">
               Workshop Controls
             </h2>
             {config?.description && (
-              <div className="mt-1 text-[11px] leading-relaxed text-white/45">
+              <div className="mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] leading-relaxed text-white/45">
                 {config.description}
               </div>
             )}
@@ -118,7 +118,7 @@ function WorkshopControls({ config }: { config?: WorkshopControlsConfig }) {
           <LibraryButton
             variant="ghost"
             size="sm"
-            className="shrink-0 md:hidden"
+            className="shrink-0 md:hidden !px-2.5 !py-1 text-xs"
             aria-controls={contentId}
             aria-expanded={mobileOpen}
             icon={SlidersHorizontal}
@@ -224,16 +224,16 @@ export function FeatureWorkspace({
 
   return (
     <div className="relative min-h-screen bg-[#04060d] text-slate-300 font-sans flex flex-col">
-      <header className="px-6 pt-6 pb-6 border-b border-white/5">
-        <h1 className="text-xl sm:text-2xl font-display font-medium tracking-wide text-white/90 uppercase">
+      <header className="px-4 py-3 sm:px-6 sm:py-5 border-b border-white/5">
+        <h1 className="text-lg sm:text-2xl font-display font-medium tracking-wide text-white/90 uppercase">
           {entry.title}
         </h1>
-        <p className="mt-1 text-xs text-white/40 font-mono">
+        <p className="mt-0.5 sm:mt-1 text-[11px] sm:text-xs text-white/40 font-mono">
           {getWorkshopVersionLabel(entry.version)}
           {entry.source?.lastCompared ? ` · Source checked ${entry.source.lastCompared}` : ''}
         </p>
 
-        <div className="mt-4 inline-flex max-w-full flex-wrap rounded-2xl border border-white/10 bg-white/5 p-1 gap-1 sm:rounded-full">
+        <div className="mt-2.5 sm:mt-4 inline-flex max-w-full flex-wrap rounded-xl sm:rounded-full border border-white/10 bg-white/5 p-0.5 sm:p-1 gap-0.5 sm:gap-1">
           <button
             type="button"
             onPointerEnter={onReferenceIntent}
@@ -244,11 +244,11 @@ export function FeatureWorkspace({
               setView('reference');
               onViewChange?.('reference');
             }}
-            className={`workshop-touch-target flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors sm:px-4 ${
+            className={`workshop-touch-target flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-lg sm:rounded-full text-[11px] sm:text-xs font-medium transition-colors ${
               view === 'reference' ? 'bg-white/15 text-white' : 'text-white/50 hover:text-white/80'
             }`}
           >
-            <Lock size={12} /> Original Reference
+            <Lock size={11} className="sm:w-3 sm:h-3" /> Original Reference
           </button>
           <button
             type="button"
@@ -256,11 +256,11 @@ export function FeatureWorkspace({
               setView('development');
               onViewChange?.('development');
             }}
-            className={`workshop-touch-target flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors sm:px-4 ${
+            className={`workshop-touch-target flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-lg sm:rounded-full text-[11px] sm:text-xs font-medium transition-colors ${
               view === 'development' ? 'bg-cyan-500/20 text-cyan-100' : 'text-white/50 hover:text-white/80'
             }`}
           >
-            <FlaskConical size={12} /> Development
+            <FlaskConical size={11} className="sm:w-3 sm:h-3" /> Development
           </button>
           {allowCompare && (
             <button
@@ -273,11 +273,11 @@ export function FeatureWorkspace({
                 setView('compare');
                 onViewChange?.('compare');
               }}
-              className={`workshop-touch-target flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors sm:px-4 ${
+              className={`workshop-touch-target flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 sm:px-4 sm:py-1.5 rounded-lg sm:rounded-full text-[11px] sm:text-xs font-medium transition-colors ${
                 view === 'compare' ? 'bg-violet-500/20 text-violet-100' : 'text-white/50 hover:text-white/80'
               }`}
             >
-              <Columns2 size={12} /> Compare
+              <Columns2 size={11} className="sm:w-3 sm:h-3" /> Compare
             </button>
           )}
         </div>

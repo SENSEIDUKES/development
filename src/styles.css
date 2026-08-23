@@ -331,6 +331,30 @@ body {
 }
 
 @media (max-width: 40rem) {
+  .workshop-topbar {
+    padding: 1rem 0 0.85rem;
+  }
+  .workshop-nav-tab {
+    padding-bottom: 0.85rem;
+  }
+  .workshop-header {
+    padding: 1.5rem 0 0;
+  }
+  .workshop-title {
+    font-size: clamp(2rem, 8vw, 2.75rem);
+  }
+  .workshop-kicker {
+    margin: 0.75rem 0 0;
+    font-size: 0.62rem;
+  }
+  .workshop-subtitle {
+    margin: 0.9rem 0 0;
+    font-size: 0.85rem;
+    line-height: 1.55;
+  }
+  .workshop-grid {
+    margin-top: 1.75rem;
+  }
   .workshop-nav { position: static; transform: none; }
   .workshop-topbar-spacer { display: none; }
   .workshop-orbit { opacity: 0.5; }

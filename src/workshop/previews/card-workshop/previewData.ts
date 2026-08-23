@@ -245,7 +245,7 @@ export const CARD_PRESETS: CardPreset[] = [
     title: 'System Prompt',
     subtitle: 'In-World Celestial Library Notification',
     kind: 'system-block',
-    description: 'Universal in-world System Prompt panel. The compact default is a holographic event-colored System window following the production hierarchy — event title, classification line, concise key/value rows with direction arrows on changed values, optional badge, and one to three prioritized System outcomes (signs only on genuine mathematical changes) — with the concise TTS prose in its own bottom section; the celestial action opens a complete Codex-shaped event report in a viewport-locked overlay above the reader.',
+    description: 'Universal in-world System Prompt panel. The compact default is a dark smoky event-tinted System window — thin luminous border, smaller radius, restrained glow, compact spacing — following the production hierarchy: event title, classification line, concise key/value rows with direction arrows on changed values, optional badge, and one to three prioritized System outcomes (signs only on genuine mathematical changes), with the concise TTS prose collapsed by default behind a centered bottom arrow toggle as a muted gray bottom section; the celestial action opens a complete Codex-shaped event report in a viewport-locked overlay above the reader.',
     explanation: {
       componentName: 'SystemBlock',
       sourceFile: 'src/components/reader-chamber/development/SystemBlock.tsx',

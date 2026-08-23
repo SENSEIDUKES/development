@@ -98,9 +98,40 @@ async function verifyCompactHierarchy(block, event, deviceName) {
   await visibleOutcomeRow.getByText(event.outcomes[0], { exact: true }).waitFor();
   await visibleOutcomeRow.getByText(event.outcomes[1], { exact: true }).waitFor();
 
-  const summaryText = (await block.locator('[data-system-summary]').innerText()).replace(/\s+/g, ' ').trim();
+  // The TTS prose rests collapsed by default behind a small centered arrow
+  // toggle at the bottom edge (screen-space conservation); narration reads it
+  // from the block data, never from this visibility state. Reveal it for the
+  // content check, then collapse again so later screenshots show the default
+  // resting state.
+  const summary = block.locator('[data-system-summary]');
+  if (await summary.isVisible()) {
+    throw new Error(`${event.slug} TTS prose should start collapsed at ${deviceName}`);
+  }
+  // The toggle is selected by its stable marker, not its accessible name:
+  // the label swaps between 'Reveal' and 'Hide System narration' on each
+  // activation, so a name-based locator would stop matching after the click.
+  const summaryToggle = block.locator('[data-system-summary-toggle]');
+  await summaryToggle.waitFor();
+  if (await summaryToggle.getAttribute('aria-label') !== 'Reveal System narration') {
+    throw new Error(`${event.slug} narration toggle is not the collapsed reveal affordance at ${deviceName}`);
+  }
+  if (await summaryToggle.getAttribute('aria-expanded') !== 'false') {
+    throw new Error(`${event.slug} narration toggle did not start collapsed at ${deviceName}`);
+  }
+  await summaryToggle.click();
+  if (await summaryToggle.getAttribute('aria-expanded') !== 'true') {
+    throw new Error(`${event.slug} narration toggle did not expand at ${deviceName}`);
+  }
+  if (await summaryToggle.getAttribute('aria-label') !== 'Hide System narration') {
+    throw new Error(`${event.slug} narration toggle did not become the hide affordance at ${deviceName}`);
+  }
+  const summaryText = (await summary.innerText()).replace(/\s+/g, ' ').trim();
   if (summaryText !== event.prose) {
     throw new Error(`${event.slug} TTS prose mismatch at ${deviceName}: "${summaryText}"`);
+  }
+  await summaryToggle.click();
+  if (await summary.isVisible()) {
+    throw new Error(`${event.slug} TTS prose did not collapse again at ${deviceName}`);
   }
 
   // Signs appear only on genuine mathematical changes: an outcome carrying a
@@ -358,6 +389,10 @@ for (const device of devices) {
       if (!badgeReport.labelNeutral || !badgeReport.severityColored) {
         throw new Error(`target scan badge lost its neutral label / orange severity at ${device.name}.`);
       }
+      // The prose Codex links rest inside the collapsed narration line, so
+      // reveal it for the link checks and restore the collapsed default
+      // afterward (later screenshots then show the resting state).
+      await tabsBlock.locator('[data-system-summary-toggle]').click();
       const elderLink = tabsBlock.getByRole('button', { name: 'Elder Kaelen', exact: true });
       await elderLink.waitFor();
       if (!(await elderLink.getAttribute('class'))?.includes('text-red-500')) {
@@ -366,6 +401,7 @@ for (const device of devices) {
       await elderLink.click();
       await page.getByRole('dialog', { name: 'Elder Kaelen Codex details' }).waitFor();
       await page.keyboard.press('Escape');
+      await tabsBlock.locator('[data-system-summary-toggle]').click();
     }
     await tabsBlock.screenshot({ path: `output/playwright/system-prompt-${event.slug}-${device.name}-tabs-card.png` });
     await verifyExpandedOverlay(page, tabsBlock, event, device.name);

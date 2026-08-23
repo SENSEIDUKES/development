@@ -127,15 +127,15 @@ describe('CardWorkshopView', () => {
 
     await clickButton('System Prompt');
     expect(container.textContent).toContain('System Panels & Fate Outcomes');
-    // Default compact event: the cultivation breakthrough — a holographic
-    // event-colored System window (frosted tinted pane, bright border on
-    // pill-rounded corners, stronger header band) with the title-led header,
-    // classification line, key/value rows carrying direction arrows on
-    // changed values, the System outcome row, and the serif TTS prose in its
-    // own bottom section.
+    // Default compact event: the cultivation breakthrough — a dark smoky
+    // event-tinted System window (mostly opaque pane with a mild backdrop
+    // blur, thin luminous border on smaller rounded corners, restrained glow)
+    // with the title-led header, classification line, key/value rows carrying
+    // direction arrows on changed values, the System outcome row, and the
+    // muted gray serif TTS prose in its own bottom section.
     const compactBlock = container.querySelector('.system-block');
     expect(compactBlock?.className).toContain('system-window');
-    expect(compactBlock?.className).toContain('rounded-3xl');
+    expect(compactBlock?.className).toContain('rounded-xl');
     expect(compactBlock?.textContent).toContain('Mortal Tribulation Surpassed');
     expect(compactBlock?.textContent).toContain('✦ Breakthrough | Awakening ✦');
     expect(compactBlock?.textContent).toContain('New Realm');
@@ -146,10 +146,15 @@ describe('CardWorkshopView', () => {
     expect(compactBlock?.textContent).toContain('Presence Exposed');
     // The serif prose paragraph stays the only narration text: it carries the
     // sentence alone — never the headline, rows, or the outcome row — and
-    // sits in its own section below the outcomes.
+    // rests collapsed by default behind a centered bottom arrow toggle (the
+    // reader expands it on demand; TTS reads it from the block data).
     const compactSummary = compactBlock?.querySelector('[data-system-summary]');
     expect(compactSummary?.textContent)
       .toBe('A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.');
+    expect(compactSummary?.hasAttribute('hidden')).toBe(true);
+    const summaryToggle = compactBlock?.querySelector('[aria-controls]');
+    expect(summaryToggle?.getAttribute('aria-label')).toBe('Reveal System narration');
+    expect(summaryToggle?.getAttribute('aria-expanded')).toBe('false');
     const consequenceRow = compactBlock?.querySelector('[data-consequence-count]');
     expect(consequenceRow).toBeTruthy();
     expect(

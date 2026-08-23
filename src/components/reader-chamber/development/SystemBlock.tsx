@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
-import { ArrowDown, ArrowUp, ChevronUp, Skull, TriangleAlert as AlertTriangle, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Skull, TriangleAlert as AlertTriangle, X } from 'lucide-react';
 import type {
   SystemEvent,
   SystemPromptBadge,
@@ -650,6 +650,10 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
   const detailsId = React.useId();
   const eventKey = `${system?.kind ?? ''}|${system?.promptType ?? ''}|${system?.title ?? ''}|${content}`;
   const [expandedEventKey, setExpandedEventKey] = React.useState<string | null>(null);
+  // The compact card's TTS sentence rests collapsed behind the bottom arrow
+  // toggle to conserve reader screen space; narration reads it from the
+  // block data, never from this visibility state.
+  const [sentenceRevealed, setSentenceRevealed] = React.useState(false);
   const orbButtonRef = React.useRef<HTMLButtonElement>(null);
 
   const isIronFate = (system?.title || '').toLowerCase().includes('iron fate') || 
@@ -682,29 +686,37 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
         : '';
 
     // Reworked 2026-08-22 to the production information hierarchy, then
-    // restyled the same day from the nearly black card into a holographic
-    // colored System window: a visibly tinted frosted pane (backdrop blur +
-    // saturation with a faint scanline veil, `.system-window` in
-    // reader-chamber.css), a brighter accent border on softly rounded pill
-    // corners, a restrained outer glow, a slightly stronger full-bleed header
-    // band, and simple tinted dividers — all driven by the event's assigned
-    // semantic System color through `currentColor` (gold Awakening, orange
-    // Karma, red Combat, green stable growth; blue remains the default
-    // new-info voice). The layout itself is unchanged: the dramatic per-event
-    // headline (`system.title`) leads with the temporary orb emblem resting
-    // at the right edge, followed by a small `✦ classification ✦` line from
-    // the semantic System color meaning, up to three concise key/value rows
-    // (`system.rows`, production panel anatomy) whose changed values carry a
-    // small green up-arrow (`trend: "up"`) or red down-arrow
-    // (`trend: "down"`), an optional event badge, one non-scrolling
-    // horizontal metadata row of one to three short System outcomes
-    // (`system.changes` — plus/minus signs only on genuine mathematical
-    // changes such as QI +200 or KARMA −15, with the sign before the number;
-    // plain status outcomes stay unsigned), and the concise serif sentence
-    // (`content` — the only text narration reads) in its own bottom section.
-    // Narrow containers show the third outcome only when all three fit,
-    // otherwise the first two. Everything renders from structured data; the
-    // component hardcodes no event text.
+    // restyled 2026-08-23 from the holographic colored System window into a
+    // dark smoky event-tinted panel matching the approved compact reference:
+    // a mostly opaque near-black surface with a faint event-color tint and a
+    // mild backdrop blur (`.system-window` in reader-chamber.css — the
+    // scanline veil and brightness/saturation frost are gone), a thin
+    // luminous border on smaller rounded corners, a restrained outer glow,
+    // compact padding, a thin divider beneath the headline block instead of
+    // the full-bleed tinted header band, and the concise serif sentence
+    // (`content` — the only text narration reads) demoted to a muted gray
+    // secondary layer so it never competes with the reader's prose, while
+    // Codex-linked names keep their assigned colors. Everything is still
+    // driven by the event's assigned semantic System color through
+    // `currentColor` (gold Awakening, orange Karma, red Combat, green stable
+    // growth; blue remains the default new-info voice). The layout itself is
+    // unchanged: the dramatic per-event headline (`system.title`) leads with
+    // the temporary orb emblem resting at the right edge, followed by a small
+    // `✦ classification ✦` line from the semantic System color meaning, up to
+    // three concise key/value rows (`system.rows`, production panel anatomy)
+    // whose changed values carry a small green up-arrow (`trend: "up"`) or
+    // red down-arrow (`trend: "down"`), an optional event badge, one
+    // non-scrolling horizontal metadata row of one to three short System
+    // outcomes (`system.changes` — plus/minus signs only on genuine
+    // mathematical changes such as QI +200 or KARMA −15, with the sign before
+    // the number; plain status outcomes stay unsigned), and the muted serif
+    // sentence, which rests collapsed by default behind a small centered
+    // arrow toggle at the bottom edge to conserve reader screen space
+    // (2026-08-23 follow-up: narration still reads the sentence from the
+    // block data exactly as before — the toggle only changes visibility).
+    // Narrow containers show the third
+    // outcome only when all three fit, otherwise the first two. Everything
+    // renders from structured data; the component hardcodes no event text.
     //
     // Expanded event report (2026-08-22): optional Reader-owned expanded data
     // turns the orb into the control that opens a viewport-locked overlay
@@ -728,6 +740,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
       const badge = normalizeSystemPromptBadge(system.badge);
       const badgeSeverity = badge ? getBadgeSeverityStyles(badge) : undefined;
       const sentence = getVisibleSystemSentence(content, badge);
+      const summaryId = `${detailsId}-summary`;
       const headline = (system.title || '').trim();
       const compactRows = rows.slice(0, 3);
       const expandedData = normalizeExpandedData(system.expanded);
@@ -746,13 +759,13 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
             data-system-prompt-state={isExpanded ? 'expanded' : 'compact'}
-            className={`system-block system-window cursor-default my-6 md:my-8 mx-auto max-w-xl relative overflow-hidden rounded-3xl border border-[color-mix(in_srgb,currentColor_60%,transparent)] bg-[color-mix(in_srgb,currentColor_14%,rgba(2,6,12,0.84))] px-5 py-4 md:px-6 md:py-5 shadow-[0_0_28px_color-mix(in_srgb,currentColor_16%,transparent),inset_0_1px_0_rgba(255,255,255,0.07)] transition-all duration-300 ${accent}${menacingTone} ${className || ''}`}
+            className={`system-block system-window cursor-default my-6 md:my-8 mx-auto max-w-xl relative overflow-hidden rounded-xl border border-[color-mix(in_srgb,currentColor_40%,transparent)] bg-[color-mix(in_srgb,currentColor_7%,rgba(5,7,11,0.92))] px-4 py-3.5 md:px-5 md:py-4 shadow-[0_0_20px_color-mix(in_srgb,currentColor_10%,transparent),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all duration-300 ${accent}${menacingTone} ${className || ''}`}
             {...safeProps}
           >
             {/* The emblem's glow bleeds in from the right. */}
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_82%_50%,color-mix(in_srgb,currentColor_13%,transparent)_0%,transparent_62%)]" />
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_82%_50%,color-mix(in_srgb,currentColor_8%,transparent)_0%,transparent_62%)]" />
             <div className="relative flex flex-col">
-              <div className="-mx-5 -mt-4 border-b border-[color-mix(in_srgb,currentColor_22%,transparent)] bg-[color-mix(in_srgb,currentColor_9%,transparent)] px-5 pb-2.5 pt-4 md:-mx-6 md:-mt-5 md:px-6 md:pt-5">
+              <div className="border-b border-[color-mix(in_srgb,currentColor_18%,transparent)] pb-2">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   {headline && (
@@ -779,7 +792,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
               </div>
               </div>
               {compactRows.length > 0 && (
-                <div className="mt-3 space-y-1.5 font-mono text-[11px] md:text-xs">
+                <div className="mt-2.5 space-y-1 font-mono text-[11px] md:text-xs">
                   {compactRows.map((row, idx) => (
                     <div key={idx} className="flex items-center justify-between gap-3">
                       <span className="text-neutral-400 uppercase tracking-widest">{row.label}</span>
@@ -805,9 +818,34 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
               )}
               <SystemConsequenceRow changes={visibleChanges} />
               {sentence && (
-                <p data-system-summary="true" className="mt-3 border-t border-[color-mix(in_srgb,currentColor_22%,transparent)] pt-2.5 text-center font-serif text-base italic leading-relaxed text-neutral-100 md:text-lg">
+                <p
+                  id={summaryId}
+                  data-system-summary="true"
+                  hidden={!sentenceRevealed}
+                  className="mt-2.5 border-t border-[color-mix(in_srgb,currentColor_18%,transparent)] pt-2 text-center font-serif text-sm italic leading-relaxed text-neutral-400 md:text-base"
+                >
                   {renderSystemText(sentence)}
                 </p>
+              )}
+              {sentence && (
+                <button
+                  type="button"
+                  data-system-summary-toggle="true"
+                  aria-expanded={sentenceRevealed}
+                  aria-controls={summaryId}
+                  aria-label={sentenceRevealed ? 'Hide System narration' : 'Reveal System narration'}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setSentenceRevealed(current => !current);
+                  }}
+                  className="mx-auto -mb-1.5 mt-0.5 flex h-11 w-11 items-center justify-center rounded-full text-neutral-500 outline-none transition-[color,transform] duration-200 hover:text-neutral-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-current/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070b] motion-reduce:transition-none"
+                >
+                  <ChevronDown
+                    data-system-summary-toggle-icon="true"
+                    className={`h-4 w-4 transition-transform duration-200 motion-reduce:transition-none ${sentenceRevealed ? 'rotate-180' : ''}`}
+                    strokeWidth={2.2}
+                  />
+                </button>
               )}
             </div>
           </motion.div>

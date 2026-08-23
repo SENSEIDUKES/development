@@ -269,7 +269,7 @@ export const CARD_PRESETS: CardPreset[] = [
       changes: [
         { direction: 'gain', label: 'Realm Ascended' },
         { direction: 'gain', label: 'Lifespan 100' },
-        { direction: 'loss', label: 'Presence Exposed' },
+        { direction: 'loss', label: 'Presence Exposed', tone: 'warning' },
       ],
     },
   },
@@ -409,7 +409,7 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
       changes: [
         { direction: 'gain' as const, label: 'Realm Ascended' },
         { direction: 'gain' as const, label: 'Lifespan 100' },
-        { direction: 'loss' as const, label: 'Presence Exposed' },
+        { direction: 'loss' as const, label: 'Presence Exposed', tone: 'warning' as const },
       ],
     },
   },
@@ -428,7 +428,7 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
       changes: [
         { direction: 'loss' as const, label: 'Karma 15' },
         { direction: 'loss' as const, label: 'Title Stripped' },
-        { direction: 'gain' as const, label: 'Sect Enmity' },
+        { direction: 'gain' as const, label: 'Sect Enmity', tone: 'negative' as const },
       ],
     },
   },

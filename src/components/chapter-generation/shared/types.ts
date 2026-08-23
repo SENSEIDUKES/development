@@ -111,17 +111,23 @@ export type SystemEventKind = "system_prompt" | "fate_system_prompt";
 
 /**
  * One short, genre-native System outcome listed in the compact System
- * Prompt's metadata badges. Plus/minus signs render only for genuine
+ * Prompt's flat outcome row. Plus/minus signs render only for genuine
  * mathematical changes — labels carrying a numeric quantity (QI 200,
  * KARMA 15, HEALTH 30%) get the direction's sign before the number
  * (QI +200, KARMA −15, HEALTH −30%); plain status outcomes (REALM ASCENDED,
- * TITLE ACQUIRED, DETECTION RISK: HIGH) render unsigned. The compact prompt
- * renders valid outcomes as dedicated badges that wrap cleanly across viewports.
+ * TITLE ACQUIRED, DETECTION RISK: HIGH) render unsigned. Each outcome's text
+ * is color-coded by meaning: `tone` overrides the color explicitly
+ * ("positive" green, "uncertain" yellow, "warning" orange, "negative" red);
+ * when omitted, the tone derives from `direction` ("gain" → positive,
+ * "loss" → negative), so set `tone` whenever the literal direction
+ * contradicts the meaning (a gained enmity is still negative).
  * Generation does not emit these yet — application-owned fixtures only.
  */
 export interface SystemPromptChange {
   direction: "gain" | "loss";
   label: string;
+  /** Optional meaning color override; defaults from `direction`. */
+  tone?: "positive" | "uncertain" | "warning" | "negative";
 }
 
 /**
@@ -155,8 +161,8 @@ export interface BaseSystemEvent {
   /** Optional event-specific status kept visually separate from narrated prose. */
   badge?: SystemPromptBadge;
   /**
-   * Priority-ordered System outcomes rendered as dedicated badges that wrap
-   * cleanly across viewports.
+   * Priority-ordered System outcomes rendered as clean flat rows of
+   * meaning-colored text that wrap cleanly across viewports.
    */
   changes?: SystemPromptChange[];
 }

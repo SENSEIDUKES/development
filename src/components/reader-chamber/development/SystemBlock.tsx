@@ -23,8 +23,6 @@ interface SystemBlockProps extends React.HTMLAttributes<HTMLDivElement> {
   renderProse?: (text: string) => React.ReactNode;
 }
 
-const CONSEQUENCE_FIT_SAFETY_PX = 24;
-
 function normalizeSystemPromptBadge(badge: unknown): SystemPromptBadge | undefined {
   if (!badge || typeof badge !== 'object') return undefined;
   const candidate = badge as Partial<SystemPromptBadge>;
@@ -462,24 +460,28 @@ function SystemExpandedOverlay({
 }
 
 /**
- * One non-scrolling System outcome row carrying one to three short,
- * genre-native outcomes in priority order. Plus and minus signs appear only
- * on genuine mathematical changes — labels carrying a numeric quantity such
- * as QI 200, KARMA 15, or HEALTH 30% render with the direction's sign before
- * the number (QI +200, KARMA −15, HEALTH −30%); plain status outcomes (REALM
- * ASCENDED, TITLE ACQUIRED, DETECTION RISK: HIGH) render unsigned. Narrow
- * containers reveal the third outcome only when its measured natural width
- * fits with breathing room, otherwise they keep the first two.
+ * System outcome row carrying genre-native outcomes as clean, flat rows of
+ * meaning-colored text that wrap cleanly when needed rather than forcing
+ * into a single line. Plus and minus signs appear only on genuine
+ * mathematical changes — labels carrying a numeric quantity (QI 200,
+ * KARMA 15, HEALTH 30%) render with the direction's sign before the number
+ * (QI +200, KARMA −15, HEALTH −30%); plain status outcomes (REALM ASCENDED,
+ * TITLE ACQUIRED, DETECTION RISK: HIGH) render unsigned.
  */
-/**
- * System outcome row carrying genre-native outcomes as dedicated badges
- * that wrap cleanly when needed rather than forcing into a single line.
- * Plus and minus signs appear only on genuine mathematical changes — labels
- * carrying a numeric quantity (QI 200, KARMA 15, HEALTH 30%) render with
- * the direction's sign before the number (QI +200, KARMA −15, HEALTH −30%);
- * plain status outcomes (REALM ASCENDED, TITLE ACQUIRED, DETECTION RISK: HIGH)
- * render unsigned.
- */
+/** Meaning colors for the flat outcome text: green positive, yellow
+ * uncertain, orange warning, red negative or severe risk. */
+const OUTCOME_TONE_STYLES: Record<NonNullable<SystemPromptChange['tone']>, string> = {
+  positive: 'text-emerald-400',
+  uncertain: 'text-yellow-300',
+  warning: 'text-orange-400',
+  negative: 'text-red-400',
+};
+
+/** Explicit `tone` wins; otherwise the direction carries the meaning. */
+function getOutcomeTone(change: SystemPromptChange): NonNullable<SystemPromptChange['tone']> {
+  return change.tone ?? (change.direction === 'loss' ? 'negative' : 'positive');
+}
+
 function SystemConsequenceRow({ changes }: { changes: SystemPromptChange[] }) {
   const prioritizedChanges = React.useMemo(
     () => changes
@@ -494,9 +496,7 @@ function SystemConsequenceRow({ changes }: { changes: SystemPromptChange[] }) {
     return (
       <>
         {label.slice(0, quantityStart)}
-        <span className={change.direction === 'loss' ? 'text-red-400' : 'text-emerald-400'}>
-          {change.direction === 'loss' ? '−' : '+'}
-        </span>
+        {change.direction === 'loss' ? '−' : '+'}
         {label.slice(quantityStart)}
       </>
     );
@@ -507,12 +507,12 @@ function SystemConsequenceRow({ changes }: { changes: SystemPromptChange[] }) {
   return (
     <div
       data-consequence-count={prioritizedChanges.length}
-      className="mt-2.5 flex flex-wrap items-center gap-1.5 md:gap-2 border-t border-[color-mix(in_srgb,currentColor_18%,transparent)] pt-2"
+      className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-[color-mix(in_srgb,currentColor_18%,transparent)] pt-2"
     >
       {prioritizedChanges.map((change, index) => (
         <span
           key={`${change.direction}-${change.label}-${index}`}
-          className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.10em] text-neutral-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:text-[10px] md:tracking-[0.14em]"
+          className={`font-mono text-[10px] font-semibold uppercase tracking-[0.10em] md:text-[11px] md:tracking-[0.18em] ${OUTCOME_TONE_STYLES[getOutcomeTone(change)]}`}
         >
           {renderConsequence(change)}
         </span>
@@ -624,9 +624,11 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
         : '';
 
     // Compact regular System Prompt: title-led header with direct understandable
-    // headline, secondary flavor text, semantic classification line, dedicated
-    // wrapping metadata badges, cleanly wrapping outcome pills, and tightened
-    // layout with no vertical dead space when TTS summary is minimized.
+    // headline, secondary flavor text, single-term semantic classification line,
+    // clean flat key/value rows with values spread to the card's ends, a
+    // full-width status badge reserved for true status information, flat
+    // meaning-colored outcome rows, and tightened layout with no vertical dead
+    // space when the TTS summary is minimized.
     if (rows.length === 0 || visibleChanges.length > 0) {
       const badge = normalizeSystemPromptBadge(system.badge);
       const badgeSeverity = badge ? getBadgeSeverityStyles(badge) : undefined;
@@ -672,8 +674,6 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
                     )}
                     <span className="mt-1 block font-mono text-[9px] uppercase tracking-wider text-neutral-500">
                       {'✦ '}
-                      <span className="text-neutral-300">{classification.category}</span>
-                      {' | '}
                       <span className={meaning.textColor}>{classification.subtype}</span>
                       {' ✦'}
                     </span>
@@ -689,24 +689,13 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
                 </div>
               </div>
 
-              {/* Dedicated wrapping metadata badges */}
-              {(compactRows.length > 0 || (badge && badgeSeverity)) && (
-                <div className="mt-2.5 flex flex-wrap items-center gap-1.5 md:gap-2">
-                  {badge && badgeSeverity && (
-                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em] ${badgeSeverity.pill}`}>
-                      <span className={badgeSeverity.label}>{badge.label}</span>{' '}
-                      <span aria-hidden="true" className={badgeSeverity.label}>·</span>{' '}
-                      <span className={`font-bold ${badgeSeverity.value}`}>{badge.value}</span>
-                    </span>
-                  )}
+              {/* Concise key/value facts as clean flat rows, values at the right edge */}
+              {compactRows.length > 0 && (
+                <div className="mt-2.5 space-y-1 font-mono text-[11px] md:text-xs">
                   {compactRows.map((row, idx) => (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em]"
-                    >
-                      <span className="text-neutral-400">{row.label}</span>
-                      <span aria-hidden="true" className="text-neutral-500">·</span>
-                      <span className="flex items-center gap-1 font-bold text-neutral-100">
+                    <div key={idx} className="flex items-center justify-between gap-3">
+                      <span className="text-neutral-400 uppercase tracking-widest">{row.label}</span>
+                      <span className="flex items-center justify-end gap-1.5 font-semibold tracking-wide text-right text-neutral-100">
                         {row.value}
                         {row.trend === 'up' && (
                           <ArrowUp data-row-trend="up" aria-hidden="true" className="h-3 w-3 shrink-0 text-emerald-400" strokeWidth={2.6} />
@@ -715,9 +704,18 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
                           <ArrowDown data-row-trend="down" aria-hidden="true" className="h-3 w-3 shrink-0 text-red-400" strokeWidth={2.6} />
                         )}
                       </span>
-                    </span>
+                    </div>
                   ))}
                 </div>
+              )}
+              {/* True status information keeps a badge: one static full-width
+                  pill with the label at the left end and the severity value at
+                  the right end, so its size never varies with content. */}
+              {badge && badgeSeverity && (
+                <span className={`mt-2.5 flex w-full items-center justify-between gap-3 rounded-full border px-3 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em] ${badgeSeverity.pill}`}>
+                  <span className={badgeSeverity.label}>{badge.label}</span>{' '}
+                  <span className={`font-bold ${badgeSeverity.value}`}>{badge.value}</span>
+                </span>
               )}
 
               <SystemConsequenceRow changes={visibleChanges} />

@@ -138,7 +138,7 @@ describe('CardWorkshopView', () => {
     expect(compactBlock?.className).toContain('rounded-xl');
     expect(compactBlock?.textContent).toContain('Cultivation Breakthrough');
     expect(compactBlock?.textContent).toContain('Mortal Tribulation Surpassed');
-    expect(compactBlock?.textContent).toContain('✦ Breakthrough | Awakening ✦');
+    expect(compactBlock?.textContent).toContain('✦ Awakening ✦');
     expect(compactBlock?.textContent).toContain('New Realm');
     expect(compactBlock?.textContent).toContain('Foundation Establishment');
     expect(compactBlock?.textContent).toContain('Meridian State');
@@ -161,13 +161,14 @@ describe('CardWorkshopView', () => {
     expect(
       consequenceRow!.compareDocumentPosition(compactSummary!) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
-    // Signs appear only on genuine mathematical changes: LIFESPAN 100 is a
-    // real quantity delta (green gain sign before the number), while REALM
-    // ASCENDED and PRESENCE EXPOSED stay unsigned.
-    const gainSigns = [...(compactBlock?.querySelectorAll('[data-consequence-count] .text-emerald-400') ?? [])];
-    expect(gainSigns.map(element => element.textContent)).toEqual(['+']);
-    const lossSigns = [...(compactBlock?.querySelectorAll('[data-consequence-count] .text-red-400') ?? [])];
-    expect(lossSigns.map(element => element.textContent)).toEqual([]);
+    // Outcomes are color-coded by meaning as clean flat text: gains render
+    // green, the exposed presence carries its explicit warning orange, and
+    // the genuine mathematical change keeps its sign before the number
+    // (LIFESPAN +100) while plain status outcomes stay unsigned.
+    const gainOutcomes = [...(compactBlock?.querySelectorAll('[data-consequence-count] .text-emerald-400') ?? [])];
+    expect(gainOutcomes.map(element => element.textContent)).toEqual(['Realm Ascended', 'Lifespan +100']);
+    const warningOutcomes = [...(compactBlock?.querySelectorAll('[data-consequence-count] .text-orange-400') ?? [])];
+    expect(warningOutcomes.map(element => element.textContent)).toEqual(['Presence Exposed']);
     // Compact prompts keep the semantic System color system (breakthrough → gold).
     expect(compactBlock?.className).toContain('text-amber-400');
     // Changed row values carry a direction arrow: upgrades green.
@@ -183,7 +184,7 @@ describe('CardWorkshopView', () => {
     const promiseBlock = container.querySelector('.system-block');
     expect(promiseBlock?.textContent).toContain('Karmic Consequence');
     expect(promiseBlock?.textContent).toContain('Oath Before the Rain Court Broken');
-    expect(promiseBlock?.textContent).toContain('✦ Karma | Consequence ✦');
+    expect(promiseBlock?.textContent).toContain('✦ Consequence ✦');
     expect(promiseBlock?.textContent).toContain('A solemn interface surfaced before Magistrate Jinhai, its gilt script cold as the rain outside.');
     expect(promiseBlock?.textContent).toContain('Celestial Record');
     expect(promiseBlock?.textContent).toContain('Witnesses');
@@ -199,10 +200,10 @@ describe('CardWorkshopView', () => {
     const scanBlock = container.querySelector('.system-block');
     expect(scanBlock?.textContent).toContain('Hostile Target Scan');
     expect(scanBlock?.textContent).toContain('Elder Kaelen Assessment');
-    expect(scanBlock?.textContent).toContain('✦ Combat | Enemy ✦');
+    expect(scanBlock?.textContent).toContain('✦ Enemy ✦');
     expect(scanBlock?.querySelector('[data-system-summary]')?.textContent)
       .toBe('A crimson interface unfolded beside Elder Kaelen, taking his measure in silence.');
-    expect(scanBlock?.textContent).toContain('Threat Assessment · Moderate');
+    expect(scanBlock?.textContent).toContain('Threat Assessment Moderate');
     expect(scanBlock?.textContent).toContain('Cultivation');
     expect(scanBlock?.textContent).toContain('Foundation Establishment, Stage 7');
     expect(scanBlock?.textContent).toContain('Intel Gained');
@@ -210,14 +211,14 @@ describe('CardWorkshopView', () => {
     expect(scanBlock?.textContent).toContain('Detection Risk: High');
     // A scan changes nothing: no direction arrows on its facts.
     expect(scanBlock?.querySelector('[data-row-trend]')).toBeFalsy();
-    // Color communicates meaning: the classification subtype carries the
-    // assigned color, row labels stay neutral gray, ordinary values stay
-    // white, and only the badge severity takes the severity color.
+    // Color communicates meaning: the compact classification keeps only its
+    // most useful term (the subtype) in the assigned color, row labels stay
+    // neutral gray, ordinary values stay white, and only the badge severity
+    // takes the severity color.
     const scanSpans = [...(scanBlock?.querySelectorAll('span') ?? [])];
     const enemySubtype = scanSpans.find(element => element.textContent === 'Enemy');
     expect(enemySubtype?.className).toContain('text-red-500');
-    const combatCategory = scanSpans.find(element => element.textContent === 'Combat');
-    expect(combatCategory?.className).toContain('text-neutral-300');
+    expect(scanBlock?.textContent).not.toContain('Combat');
     const cultivationLabel = scanSpans.find(element => element.textContent === 'Cultivation');
     expect(cultivationLabel?.className).toContain('text-neutral-400');
     const cultivationValue = scanSpans.find(element => element.textContent === 'Foundation Establishment, Stage 7');
@@ -240,7 +241,7 @@ describe('CardWorkshopView', () => {
     expect(container.textContent).toContain('Meridian Status & Vitality Flow');
   });
 
-  it('renders the compact System Prompt outcome row with wrapping dedicated badges', () => {
+  it('renders the compact System Prompt outcomes as flat meaning-colored rows', () => {
     act(() => root.render(renderWithDevAudio(
       <SystemBlock
         content="[ Yun Che has successfully broken through into the Foundation Establishment realm. ]"
@@ -266,6 +267,23 @@ describe('CardWorkshopView', () => {
     expect(compactBlock?.textContent).toContain('Lifespan +100');
     expect(compactBlock?.textContent).toContain('Presence Exposed');
     expect(compactBlock?.textContent).toContain('Dao Heart Tempered');
+    // Clean flat rows: outcomes carry meaning colors (green gains, red losses
+    // by default) and never individual badge containers.
+    const outcomeRow = compactBlock?.querySelector('[data-consequence-count]');
+    expect(outcomeRow?.className).toContain('flex-wrap');
+    const outcomeSpans = [...(outcomeRow?.children ?? [])] as HTMLElement[];
+    expect(outcomeSpans.map(element => element.textContent))
+      .toEqual(['Realm Ascended', 'Lifespan +100', 'Presence Exposed', 'Dao Heart Tempered']);
+    expect(outcomeSpans.map(element => element.className)).toEqual([
+      expect.stringContaining('text-emerald-400'),
+      expect.stringContaining('text-emerald-400'),
+      expect.stringContaining('text-red-400'),
+      expect.stringContaining('text-emerald-400'),
+    ]);
+    outcomeSpans.forEach(element => {
+      expect(element.className).not.toContain('rounded-full');
+      expect(element.className).not.toContain('border');
+    });
   });
 
   it('opens the expanded event report in a viewport overlay and restores focus to the orb action', async () => {
@@ -563,7 +581,7 @@ describe('CardWorkshopView', () => {
     const systemBlock = reader?.querySelector<HTMLElement>('.system-block');
     expect(systemBlock?.querySelector('[data-system-summary]')?.textContent)
       .toBe('A crimson interface unfolded beside Elder Kaelen, taking his measure in silence.');
-    expect(systemBlock?.textContent).toContain('Threat Assessment · Moderate');
+    expect(systemBlock?.textContent).toContain('Threat Assessment Moderate');
 
     const elderCodexAction = [...(systemBlock?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
       .find(element => element.textContent === 'Elder Kaelen');

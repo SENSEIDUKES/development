@@ -67,7 +67,7 @@ Card Type Tabs exposes every remaining preset in a horizontally scrollable tab l
   application logic selects the approved public Library Cue.
 - Reference mode uses locked production presentation replicas and has no Development controls.
 - Bestiary and Faction records remain informational and expose no Codex image-generation action.
-- Fate panels, the structured mechanical System example, and System routing retain their existing presentation; the compact System Prompt renders as a holographic event-colored System window (frosted tinted pane, bright border on pill-rounded corners, stronger header band, simple dividers) with a small orb emblem, dramatic headline, direction arrows on changed row values, character-linked TTS prose, optional event badge, and one non-scrolling row of one to three short System outcomes — signs only on genuine mathematical changes — while keeping the semantic System color system.
+- Fate panels, the structured mechanical System example, and System routing retain their existing presentation; the compact System Prompt renders as an event-tinted System window with a small orb emblem, direct headline, optional flavor text, direction arrows on changed row values, character-linked TTS prose, optional event badge, and dedicated metadata badges that wrap cleanly across viewports (with signs on genuine mathematical changes) while keeping the semantic System color system.
 
 ## Transfer notes
 

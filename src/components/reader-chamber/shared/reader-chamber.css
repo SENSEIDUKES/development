@@ -59,33 +59,27 @@
   color: #00A86B;
 }
 
-/* Compact System Prompt window: lightly clipped corners, shared by the bright
-   accent rim layer and the tinted translucent pane inside it so the border
-   follows the clipped outline (clip-path alone would cut a rectangular
-   border's corners away). */
-.system-window-clip {
-  clip-path: polygon(
-    10px 0,
-    calc(100% - 10px) 0,
-    100% 10px,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    10px 100%,
-    0 calc(100% - 10px),
-    0 10px
-  );
+/* Compact System Prompt window: the holographic finish. A frosted backdrop
+   (blur + brightness + saturation, same recipe family as the holographic
+   panel) keeps the tinted pane rich instead of muddy over reader content,
+   and a faint scanline veil sells the projected-interface feel. */
+.system-window {
+  backdrop-filter: blur(12px) brightness(1.1) saturate(1.25);
+  -webkit-backdrop-filter: blur(12px) brightness(1.1) saturate(1.25);
 }
 
-/* Full-bleed header band of the compact System window: clips only the top
-   corners so the band never paints over the window's angled outline. */
-.system-window-clip-top {
-  clip-path: polygon(
-    10px 0,
-    calc(100% - 10px) 0,
-    100% 10px,
-    100% 100%,
-    0 100%,
-    0 10px
+.system-window::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.028) 0,
+    rgba(255, 255, 255, 0.028) 1px,
+    transparent 1px,
+    transparent 3px
   );
 }
 

@@ -22,6 +22,7 @@ const events = [
     subtypeColorClass: 'text-amber-400',
     rowLabel: 'New Realm',
     rowValue: 'Foundation Establishment',
+    trends: [['Foundation Establishment', 'up'], ['Widened', 'up']],
     outcomes: ['Realm Ascended', 'Lifespan +100', 'Presence Exposed'],
     prose: 'A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.',
   },
@@ -38,6 +39,7 @@ const events = [
     subtypeColorClass: 'text-orange-400',
     rowLabel: 'Celestial Record',
     rowValue: 'Sealed',
+    trends: [['Sealed', 'down']],
     outcomes: ['Karma −15', 'Title Stripped', 'Sect Enmity'],
     prose: 'A solemn interface surfaced before Magistrate Jinhai, its gilt script cold as the rain outside.',
   },
@@ -54,6 +56,7 @@ const events = [
     subtypeColorClass: 'text-red-500',
     rowLabel: 'Cultivation',
     rowValue: 'Foundation Establishment, Stage 7',
+    trends: [],
     outcomes: ['Intel Gained', 'Weakness Found', 'Detection Risk: High'],
     prose: 'A crimson interface unfolded beside Elder Kaelen, taking his measure in silence.',
   },
@@ -133,6 +136,25 @@ async function verifyCompactHierarchy(block, event, deviceName) {
   }, { subtype: event.subtype, subtypeColorClass: event.subtypeColorClass, rowLabel: event.rowLabel, rowValue: event.rowValue });
   if (colorReport !== 'ok') {
     throw new Error(`${event.slug} color semantics broken at ${deviceName}: ${colorReport}`);
+  }
+
+  // Changed row values carry exactly the expected direction arrows: upgrades
+  // green, regressions red, neutral facts unmarked.
+  const trendReport = await block.evaluate((element, expectedTrends) => {
+    const arrows = [...element.querySelectorAll('[data-row-trend]')];
+    if (arrows.length !== expectedTrends.length) return `count:${arrows.length}`;
+    const spans = [...element.querySelectorAll('span')];
+    for (const [value, direction] of expectedTrends) {
+      const valueSpan = spans.find((span) => span.textContent === value);
+      const arrow = valueSpan?.querySelector(`[data-row-trend="${direction}"]`);
+      if (!arrow) return `missing:${value}:${direction}`;
+      const colorClass = direction === 'up' ? 'text-emerald-400' : 'text-red-400';
+      if (!arrow.classList.contains(colorClass)) return `color:${value}`;
+    }
+    return 'ok';
+  }, event.trends);
+  if (trendReport !== 'ok') {
+    throw new Error(`${event.slug} row trend arrows broken at ${deviceName}: ${trendReport}`);
   }
 
   const order = await block.evaluate((element) => {

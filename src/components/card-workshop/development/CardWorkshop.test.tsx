@@ -127,14 +127,15 @@ describe('CardWorkshopView', () => {
 
     await clickButton('System Prompt');
     expect(container.textContent).toContain('System Panels & Fate Outcomes');
-    // Default compact event: the cultivation breakthrough — a translucent
-    // event-colored System window (tinted pane, bright clipped border,
-    // stronger header band) with the title-led header, classification line,
-    // key/value rows, the System outcome row, and the serif TTS prose in its
+    // Default compact event: the cultivation breakthrough — a holographic
+    // event-colored System window (frosted tinted pane, bright border on
+    // pill-rounded corners, stronger header band) with the title-led header,
+    // classification line, key/value rows carrying direction arrows on
+    // changed values, the System outcome row, and the serif TTS prose in its
     // own bottom section.
     const compactBlock = container.querySelector('.system-block');
-    expect(compactBlock?.querySelector('[data-system-surface]')).toBeTruthy();
-    expect(compactBlock?.className).not.toContain('rounded-2xl');
+    expect(compactBlock?.className).toContain('system-window');
+    expect(compactBlock?.className).toContain('rounded-3xl');
     expect(compactBlock?.textContent).toContain('Mortal Tribulation Surpassed');
     expect(compactBlock?.textContent).toContain('✦ Breakthrough | Awakening ✦');
     expect(compactBlock?.textContent).toContain('New Realm');
@@ -162,8 +163,11 @@ describe('CardWorkshopView', () => {
     const lossSigns = [...(compactBlock?.querySelectorAll('[data-consequence-count] .text-red-400') ?? [])];
     expect(lossSigns.map(element => element.textContent)).toEqual([]);
     // Compact prompts keep the semantic System color system (breakthrough → gold).
-    expect(compactBlock?.className).toContain('border-amber-400/50');
     expect(compactBlock?.className).toContain('text-amber-400');
+    // Changed row values carry a direction arrow: upgrades green.
+    const trendArrows = [...(compactBlock?.querySelectorAll('[data-row-trend]') ?? [])];
+    expect(trendArrows.map(element => element.getAttribute('data-row-trend'))).toEqual(['up', 'up']);
+    expect(trendArrows.every(element => element.classList.contains('text-emerald-400'))).toBe(true);
     expect(container.querySelector('[role="tabpanel"]')?.textContent).not.toContain('Human Portrait');
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
 
@@ -179,6 +183,10 @@ describe('CardWorkshopView', () => {
     expect(promiseBlock?.textContent).toContain('Karma −15');
     expect(promiseBlock?.textContent).toContain('Title Stripped');
     expect(promiseBlock?.textContent).toContain('Sect Enmity');
+    // The broken oath's sealed record is a regression: red down-arrow.
+    const promiseTrends = [...(promiseBlock?.querySelectorAll('[data-row-trend]') ?? [])];
+    expect(promiseTrends.map(element => element.getAttribute('data-row-trend'))).toEqual(['down']);
+    expect(promiseTrends[0]?.classList.contains('text-red-400')).toBe(true);
 
     await clickButton('Target Scan');
     const scanBlock = container.querySelector('.system-block');
@@ -192,6 +200,8 @@ describe('CardWorkshopView', () => {
     expect(scanBlock?.textContent).toContain('Intel Gained');
     expect(scanBlock?.textContent).toContain('Weakness Found');
     expect(scanBlock?.textContent).toContain('Detection Risk: High');
+    // A scan changes nothing: no direction arrows on its facts.
+    expect(scanBlock?.querySelector('[data-row-trend]')).toBeFalsy();
     // Color communicates meaning: the classification subtype carries the
     // assigned color, row labels stay neutral gray, ordinary values stay
     // white, and only the badge severity takes the severity color.

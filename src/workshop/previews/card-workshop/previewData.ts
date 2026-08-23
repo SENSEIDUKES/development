@@ -245,7 +245,7 @@ export const CARD_PRESETS: CardPreset[] = [
     title: 'System Prompt',
     subtitle: 'In-World Celestial Library Notification',
     kind: 'system-block',
-    description: 'Universal in-world System Prompt panel. The compact default is a translucent event-colored System window following the production hierarchy — event title, classification line, concise key/value rows, optional badge, and one to three prioritized System outcomes (signs only on genuine mathematical changes) — with the concise TTS prose in its own bottom section; the celestial action opens a complete Codex-shaped event report in a viewport-locked overlay above the reader.',
+    description: 'Universal in-world System Prompt panel. The compact default is a holographic event-colored System window following the production hierarchy — event title, classification line, concise key/value rows with direction arrows on changed values, optional badge, and one to three prioritized System outcomes (signs only on genuine mathematical changes) — with the concise TTS prose in its own bottom section; the celestial action opens a complete Codex-shaped event report in a viewport-locked overlay above the reader.',
     explanation: {
       componentName: 'SystemBlock',
       sourceFile: 'src/components/reader-chamber/development/SystemBlock.tsx',
@@ -262,8 +262,8 @@ export const CARD_PRESETS: CardPreset[] = [
       title: 'Mortal Tribulation Surpassed',
       expanded: BREAKTHROUGH_EXPANDED,
       rows: [
-        { label: 'New Realm', value: 'Foundation Establishment' },
-        { label: 'Meridian State', value: 'Widened' },
+        { label: 'New Realm', value: 'Foundation Establishment', trend: 'up' },
+        { label: 'Meridian State', value: 'Widened', trend: 'up' },
       ],
       changes: [
         { direction: 'gain', label: 'Realm Ascended' },
@@ -401,8 +401,8 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
       title: 'Mortal Tribulation Surpassed',
       expanded: BREAKTHROUGH_EXPANDED,
       rows: [
-        { label: 'New Realm', value: 'Foundation Establishment' },
-        { label: 'Meridian State', value: 'Widened' },
+        { label: 'New Realm', value: 'Foundation Establishment', trend: 'up' as const },
+        { label: 'Meridian State', value: 'Widened', trend: 'up' as const },
       ],
       changes: [
         { direction: 'gain' as const, label: 'Realm Ascended' },
@@ -419,7 +419,7 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
       title: 'Oath Before the Rain Court Broken',
       expanded: BROKEN_PROMISE_EXPANDED,
       rows: [
-        { label: 'Celestial Record', value: 'Sealed' },
+        { label: 'Celestial Record', value: 'Sealed', trend: 'down' as const },
         { label: 'Witnesses', value: 'Twelve Elder Seats' },
       ],
       changes: [

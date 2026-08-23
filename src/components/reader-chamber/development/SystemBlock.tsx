@@ -1,7 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
-import { ChevronUp, Skull, TriangleAlert as AlertTriangle, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronUp, Skull, TriangleAlert as AlertTriangle, X } from 'lucide-react';
 import type {
   SystemEvent,
   SystemPromptBadge,
@@ -679,25 +679,29 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
         : '';
 
     // Reworked 2026-08-22 to the production information hierarchy, then
-    // restyled the same day from the nearly black card into a translucent
-    // colored System window: a visibly tinted pane, a brighter accent border
-    // following lightly clipped corners, a restrained outer glow, a slightly
-    // stronger full-bleed header band, and simple tinted dividers — all
-    // driven by the event's assigned semantic System color through
-    // `currentColor` (gold Awakening, orange Karma, red Combat, green stable
-    // growth; blue remains the default new-info voice). The layout itself is
-    // unchanged: the dramatic per-event headline (`system.title`) leads with
-    // the temporary orb emblem resting at the right edge, followed by a small
-    // `✦ classification ✦` line from the semantic System color meaning, up to
-    // three concise key/value rows (`system.rows`, production panel anatomy),
-    // an optional event badge, one non-scrolling horizontal metadata row of
-    // one to three short System outcomes (`system.changes` — plus/minus signs
-    // only on genuine mathematical changes such as QI +200 or KARMA −15, with
-    // the sign before the number; plain status outcomes stay unsigned), and
-    // the concise serif sentence (`content` — the only text narration reads)
-    // in its own bottom section. Narrow containers show the third outcome
-    // only when all three fit, otherwise the first two. Everything renders
-    // from structured data; the component hardcodes no event text.
+    // restyled the same day from the nearly black card into a holographic
+    // colored System window: a visibly tinted frosted pane (backdrop blur +
+    // saturation with a faint scanline veil, `.system-window` in
+    // reader-chamber.css), a brighter accent border on softly rounded pill
+    // corners, a restrained outer glow, a slightly stronger full-bleed header
+    // band, and simple tinted dividers — all driven by the event's assigned
+    // semantic System color through `currentColor` (gold Awakening, orange
+    // Karma, red Combat, green stable growth; blue remains the default
+    // new-info voice). The layout itself is unchanged: the dramatic per-event
+    // headline (`system.title`) leads with the temporary orb emblem resting
+    // at the right edge, followed by a small `✦ classification ✦` line from
+    // the semantic System color meaning, up to three concise key/value rows
+    // (`system.rows`, production panel anatomy) whose changed values carry a
+    // small green up-arrow (`trend: "up"`) or red down-arrow
+    // (`trend: "down"`), an optional event badge, one non-scrolling
+    // horizontal metadata row of one to three short System outcomes
+    // (`system.changes` — plus/minus signs only on genuine mathematical
+    // changes such as QI +200 or KARMA −15, with the sign before the number;
+    // plain status outcomes stay unsigned), and the concise serif sentence
+    // (`content` — the only text narration reads) in its own bottom section.
+    // Narrow containers show the third outcome only when all three fit,
+    // otherwise the first two. Everything renders from structured data; the
+    // component hardcodes no event text.
     //
     // Expanded event report (2026-08-22): optional Reader-owned expanded data
     // turns the orb into the control that opens a viewport-locked overlay
@@ -729,7 +733,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
       const inferenceContext = buildSystemContext(system, content);
       const meaning = getSystemColorMeaning(system.promptType, inferenceContext);
       const classification = getSystemCompactClassification(meaning);
-      const accent = `${meaning.borderColor} ${meaning.textColor}`;
+      const accent = meaning.textColor;
 
       return (
         <>
@@ -739,19 +743,13 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
             data-system-prompt-state={isExpanded ? 'expanded' : 'compact'}
-            className={`system-block cursor-default my-6 md:my-8 mx-auto max-w-xl relative px-5 py-4 md:px-6 md:py-5 shadow-[0_0_28px_color-mix(in_srgb,currentColor_16%,transparent)] transition-all duration-300 ${accent}${menacingTone} ${className || ''}`}
+            className={`system-block system-window cursor-default my-6 md:my-8 mx-auto max-w-xl relative overflow-hidden rounded-3xl border border-[color-mix(in_srgb,currentColor_60%,transparent)] bg-[color-mix(in_srgb,currentColor_14%,rgba(2,6,12,0.84))] px-5 py-4 md:px-6 md:py-5 shadow-[0_0_28px_color-mix(in_srgb,currentColor_16%,transparent),inset_0_1px_0_rgba(255,255,255,0.07)] transition-all duration-300 ${accent}${menacingTone} ${className || ''}`}
             {...safeProps}
           >
-            {/* Translucent colored System window: a bright accent rim with a
-                tinted pane inside it, both lightly clipped at the corners so
-                the border follows the angled outline. Both layers inherit the
-                event's assigned semantic color through `currentColor`. */}
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0 system-window-clip bg-[linear-gradient(180deg,color-mix(in_srgb,currentColor_72%,transparent)_0%,color-mix(in_srgb,currentColor_48%,transparent)_100%)]" />
-            <div aria-hidden="true" data-system-surface="true" className="pointer-events-none absolute inset-[1px] system-window-clip bg-[color-mix(in_srgb,currentColor_16%,rgba(3,8,15,0.80))] shadow-[inset_0_1px_0_rgba(255,255,255,0.07)]" />
             {/* The emblem's glow bleeds in from the right. */}
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_82%_50%,color-mix(in_srgb,currentColor_13%,transparent)_0%,transparent_62%)]" />
             <div className="relative flex flex-col">
-              <div className="system-window-clip-top -mx-5 -mt-4 border-b border-[color-mix(in_srgb,currentColor_22%,transparent)] bg-[color-mix(in_srgb,currentColor_9%,transparent)] px-5 pb-2.5 pt-4 md:-mx-6 md:-mt-5 md:px-6 md:pt-5">
+              <div className="-mx-5 -mt-4 border-b border-[color-mix(in_srgb,currentColor_22%,transparent)] bg-[color-mix(in_srgb,currentColor_9%,transparent)] px-5 pb-2.5 pt-4 md:-mx-6 md:-mt-5 md:px-6 md:pt-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   {headline && (
@@ -782,7 +780,15 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
                   {compactRows.map((row, idx) => (
                     <div key={idx} className="flex items-center justify-between gap-3">
                       <span className="text-neutral-400 uppercase tracking-widest">{row.label}</span>
-                      <span className="font-semibold tracking-wide text-right text-neutral-100">{row.value}</span>
+                      <span className="flex items-center justify-end gap-1.5 font-semibold tracking-wide text-right text-neutral-100">
+                        {row.value}
+                        {row.trend === 'up' && (
+                          <ArrowUp data-row-trend="up" aria-hidden="true" className="h-3 w-3 shrink-0 text-emerald-400" strokeWidth={2.6} />
+                        )}
+                        {row.trend === 'down' && (
+                          <ArrowDown data-row-trend="down" aria-hidden="true" className="h-3 w-3 shrink-0 text-red-400" strokeWidth={2.6} />
+                        )}
+                      </span>
                     </div>
                   ))}
                 </div>

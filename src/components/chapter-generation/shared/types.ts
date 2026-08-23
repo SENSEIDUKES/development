@@ -141,7 +141,13 @@ export interface BaseSystemEvent {
     | "progression" | "breakthrough" | "reward" | "romance" | "karmic_bond" | "mystery" | "fate_event"
     | "corruption" | "death_event" | "quest_update" | "choice_consequence" | "system_error";
   title: string;
-  rows?: { label: string; value: string }[];
+  /**
+   * Concise key/value facts. The compact System Prompt renders at most three
+   * and marks a changed value with a small direction arrow when `trend` is
+   * set: "up" for an upgrade (green), "down" for a regression (red); leave it
+   * unset for neutral facts.
+   */
+  rows?: { label: string; value: string; trend?: "up" | "down" }[];
   rarity?: string;
   /** Optional event-specific status kept visually separate from narrated prose. */
   badge?: SystemPromptBadge;

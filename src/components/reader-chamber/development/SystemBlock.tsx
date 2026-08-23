@@ -552,8 +552,11 @@ function SystemConsequenceRow({ changes }: { changes: SystemPromptChange[] }) {
 
   if (prioritizedChanges.length === 0) return null;
 
+  // overflow-hidden also contains the invisible full-width measurement
+  // mirror, so it can never reach page scroll overflow even if an ancestor's
+  // overflow contract changes.
   return (
-    <div className="relative mt-3 border-t border-[color-mix(in_srgb,currentColor_22%,transparent)] pt-2.5">
+    <div className="relative mt-3 overflow-hidden border-t border-[color-mix(in_srgb,currentColor_22%,transparent)] pt-2.5">
       <div
         ref={rowRef}
         data-consequence-count={visibleCount}

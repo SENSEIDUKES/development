@@ -145,7 +145,8 @@ export interface BaseSystemEvent {
    * Concise key/value facts. The compact System Prompt renders at most three
    * and marks a changed value with a small direction arrow when `trend` is
    * set: "up" for an upgrade (green), "down" for a regression (red); leave it
-   * unset for neutral facts.
+   * unset for neutral facts. Like `changes`, `trend` is application-owned —
+   * generation does not emit it yet and the normalizer drops it.
    */
   rows?: { label: string; value: string; trend?: "up" | "down" }[];
   rarity?: string;

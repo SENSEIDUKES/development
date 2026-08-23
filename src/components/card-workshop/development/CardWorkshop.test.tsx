@@ -127,15 +127,15 @@ describe('CardWorkshopView', () => {
 
     await clickButton('System Prompt');
     expect(container.textContent).toContain('System Panels & Fate Outcomes');
-    // Default compact event: the cultivation breakthrough — a holographic
-    // event-colored System window (frosted tinted pane, bright border on
-    // pill-rounded corners, stronger header band) with the title-led header,
-    // classification line, key/value rows carrying direction arrows on
-    // changed values, the System outcome row, and the serif TTS prose in its
-    // own bottom section.
+    // Default compact event: the cultivation breakthrough — a dark smoky
+    // event-tinted System window (mostly opaque pane with a mild backdrop
+    // blur, thin luminous border on smaller rounded corners, restrained glow)
+    // with the title-led header, classification line, key/value rows carrying
+    // direction arrows on changed values, the System outcome row, and the
+    // muted gray serif TTS prose in its own bottom section.
     const compactBlock = container.querySelector('.system-block');
     expect(compactBlock?.className).toContain('system-window');
-    expect(compactBlock?.className).toContain('rounded-3xl');
+    expect(compactBlock?.className).toContain('rounded-xl');
     expect(compactBlock?.textContent).toContain('Mortal Tribulation Surpassed');
     expect(compactBlock?.textContent).toContain('✦ Breakthrough | Awakening ✦');
     expect(compactBlock?.textContent).toContain('New Realm');

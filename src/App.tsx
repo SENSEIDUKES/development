@@ -75,13 +75,13 @@ function PreviewLayout({ children }: { children: ReactNode }) {
       {/* In normal document flow (not fixed) so it scrolls away with the page
           instead of permanently floating over a preview's own sticky header
           (e.g. the Reader Chamber's in-chamber title bar) at the same corner. */}
-      <div className="p-4">
+      <div className="px-4 pt-3 pb-1 sm:px-6 sm:pt-4 sm:pb-2">
         <a
           href="/"
-          className="workshop-touch-target inline-flex items-center gap-2 px-4 py-2 bg-neutral-900/80 hover:bg-neutral-800 text-neutral-300 hover:text-white rounded-full backdrop-blur transition-all duration-200 border border-neutral-700/50 shadow-lg"
-          style={{ textDecoration: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.875rem' }}
+          className="workshop-touch-target inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-neutral-900/80 hover:bg-neutral-800 text-neutral-300 hover:text-white rounded-full backdrop-blur transition-all duration-200 border border-neutral-700/50 shadow-lg text-xs sm:text-sm"
+          style={{ textDecoration: 'none', fontFamily: 'var(--font-sans)' }}
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={14} className="shrink-0" />
           Back to Workshop
         </a>
       </div>

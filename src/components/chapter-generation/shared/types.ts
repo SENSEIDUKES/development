@@ -110,18 +110,27 @@ export interface StoryBlockMetadata {
 export type SystemEventKind = "system_prompt" | "fate_system_prompt";
 
 /**
- * One short, genre-native System outcome listed in the compact System
- * Prompt's metadata row. Plus/minus signs render only for genuine
- * mathematical changes — labels carrying a numeric quantity (QI 200,
- * KARMA 15, HEALTH 30%) get the direction's sign before the number
- * (QI +200, KARMA −15, HEALTH −30%); plain status outcomes (REALM ASCENDED,
- * TITLE ACQUIRED, DETECTION RISK: HIGH) render unsigned. The compact prompt
- * renders at most three, in priority order. Generation does not emit these
- * yet — application-owned fixtures only.
+ * One short, genre-native System outcome. The compact System Prompt renders
+ * at most the first two outcomes as flat slots separated by a divider, each
+ * split into a neutral white subject and a meaning-colored state word with no
+ * numbers: a label carrying a numeric quantity (QI 200, KARMA 15, HEALTH 30%)
+ * compresses to its subject plus Increased/Decreased from `direction`
+ * (KARMA DECREASED, LIFESPAN INCREASED), while any other label colors only
+ * its final state word (REALM ASCENDED, TITLE STRIPPED). The expanded event
+ * report lists every outcome in full with the direction's sign before any
+ * quantity (QI +200, KARMA −15, HEALTH −30%); plain status outcomes render
+ * unsigned. The state word is color-coded by meaning: `tone` overrides the
+ * color explicitly ("positive" green, "uncertain" yellow, "warning" orange,
+ * "negative" red); when omitted, the tone derives from `direction` ("gain" →
+ * positive, "loss" → negative), so set `tone` whenever the literal direction
+ * contradicts the meaning (a gained enmity is still negative).
+ * Generation does not emit these yet — application-owned fixtures only.
  */
 export interface SystemPromptChange {
   direction: "gain" | "loss";
   label: string;
+  /** Optional meaning color override; defaults from `direction`. */
+  tone?: "positive" | "uncertain" | "warning" | "negative";
 }
 
 /**
@@ -141,6 +150,8 @@ export interface BaseSystemEvent {
     | "progression" | "breakthrough" | "reward" | "romance" | "karmic_bond" | "mystery" | "fate_event"
     | "corruption" | "death_event" | "quest_update" | "choice_consequence" | "system_error";
   title: string;
+  /** Secondary world-specific or dramatic flavor displayed beneath the direct title. */
+  flavor?: string;
   /**
    * Concise key/value facts. The compact System Prompt renders at most three
    * and marks a changed value with a small direction arrow when `trend` is
@@ -153,8 +164,9 @@ export interface BaseSystemEvent {
   /** Optional event-specific status kept visually separate from narrated prose. */
   badge?: SystemPromptBadge;
   /**
-   * Priority-ordered System outcomes, one to three. Narrow layouts show the
-   * third only when all three fit cleanly, otherwise the first two.
+   * Priority-ordered System outcomes. The compact card renders at most the
+   * first two as flat subject/state slots with no numbers; the expanded
+   * report lists them all with signed quantities.
    */
   changes?: SystemPromptChange[];
 }

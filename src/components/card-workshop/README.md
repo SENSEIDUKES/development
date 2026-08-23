@@ -4,7 +4,7 @@
 - **Verified source locations:** `src/components/ReaderViewport.tsx`, `src/components/SystemBlock.tsx`, `src/components/FateResultCard.tsx`
 - **Workshop preview:** `?preview=card-workshop`
 - **Replica created:** 2026-08-14
-- **Last Workshop update:** 2026-08-22
+- **Last Workshop update:** 2026-08-23
 - **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
@@ -21,6 +21,12 @@ The current presentation set is deliberately limited to:
 Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studio is outside this feature and is unchanged.
 
 ## Workshop history
+
+- **2026-08-23:** Adopted the two-slot compact outcome treatment in the System Prompt examples: each example's bottom half now shows at most two outcomes as flat slots separated by a clear divider — a white subject plus a meaning-colored state word (Cultivation Breakthrough: `Realm Ascended` | `Lifespan Increased`; Broken Promise: `Karma Decreased` | `Title Stripped`; Target Scan: `Intel Gained` | `Weakness Found`) — with no numbers compact. The signed figures (`Lifespan +100`, `Karma −15`) and the remaining outcomes (`Presence Exposed`, `Sect Enmity`, `Detection Risk: High`) still render in the expanded event report. Fixture data, priority order, and tone overrides are unchanged.
+
+- **2026-08-23:** Refined the compact System Prompt cards after review: key/value facts returned to clean flat rows spread across the card's ends, badges are reserved for true status information as one static full-width pill (Threat Assessment · Moderate), and the bottom outcomes returned to clean flat rows of meaning-colored text — green positive (`Intel Gained`, `Weakness Found`), yellow uncertain, orange warnings (`Presence Exposed`), red negative or severe risk (`Detection Risk: High`, `Sect Enmity`) — through an optional `tone` on `SystemPromptChange` that defaults from `direction`. The compact classification line simplifies to its most useful term (`✦ AWAKENING ✦`, `✦ CONSEQUENCE ✦`, `✦ ENEMY ✦`); the expanded overlay keeps the full classification. Expanded reports, structured mechanical panels, Fate results, and event fixtures are otherwise unchanged.
+
+- **2026-08-23:** Updated the System Prompt examples and Development `SystemBlock` compact cards with direct, immediately understandable main titles (`Cultivation Breakthrough`, `Karmic Consequence`, `Hostile Target Scan`) while retaining dramatic/world-specific context as secondary flavor (`Mortal Tribulation Surpassed`, `Oath Before the Rain Court Broken`, `Elder Kaelen Assessment`). Meaningful metadata items and outcomes render as dedicated metadata badges in a flexible wrapping container, and the minimized TTS summary empty space was tightened. Presets, expanded overlay reports, and structured mechanical panels remain intact.
 
 - **2026-08-22:** System Prompt examples adopt the pill-cornered holographic window finish and demonstrate the new row direction arrows: the breakthrough's `New Realm` and `Meridian State` values carry green up-arrows, the broken oath's sealed `Celestial Record` carries a red down-arrow, and the target scan stays unmarked (a scan changes nothing). Fixture text, outcomes, expanded breakdowns, and event structure are unchanged.
 - **2026-08-22:** Adopted the translucent System window treatment and the genre-native outcome convention in the System Prompt examples. The three mocked events keep their assigned event colors, data, and layout while the compact card renders as a tinted, clipped-corner System window, and their metadata rows now carry one to three short System outcomes: Cultivation Breakthrough — `Realm Ascended`, `Lifespan 100` (renders LIFESPAN +100), `Presence Exposed`; Broken Promise — `Karma 15` (renders KARMA −15), `Title Stripped`, `Sect Enmity`; Target Scan — `Intel Gained`, `Weakness Found`, `Detection Risk: High`. Signs appear only on the genuine mathematical changes. Expanded breakdowns, the example switch, event slugs, the structured mechanical panel, Fate results, and the locked Reference are unchanged.
@@ -65,7 +71,7 @@ Card Type Tabs exposes every remaining preset in a horizontally scrollable tab l
   application logic selects the approved public Library Cue.
 - Reference mode uses locked production presentation replicas and has no Development controls.
 - Bestiary and Faction records remain informational and expose no Codex image-generation action.
-- Fate panels, the structured mechanical System example, and System routing retain their existing presentation; the compact System Prompt renders as a holographic event-colored System window (frosted tinted pane, bright border on pill-rounded corners, stronger header band, simple dividers) with a small orb emblem, dramatic headline, direction arrows on changed row values, character-linked TTS prose, optional event badge, and one non-scrolling row of one to three short System outcomes — signs only on genuine mathematical changes — while keeping the semantic System color system.
+- Fate panels, the structured mechanical System example, and System routing retain their existing presentation; the compact System Prompt renders as an event-tinted System window with a small orb emblem, direct headline, optional flavor text, a single-term classification line, flat key/value rows with direction arrows on changed values and values spread to the right edge, a full-width reserved status badge, character-linked TTS prose, and clean flat outcome rows of meaning-colored text (with signs on genuine mathematical changes) while keeping the semantic System color system.
 
 ## Transfer notes
 

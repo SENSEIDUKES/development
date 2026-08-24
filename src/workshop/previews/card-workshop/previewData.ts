@@ -241,6 +241,32 @@ export const CARD_PRESETS: CardPreset[] = [
     },
   },
   {
+    id: 'preset-faction',
+    title: 'Faction',
+    subtitle: 'The Riverside Sect',
+    kind: 'codex-card',
+    description: 'A visually presented Faction resolved through the Codex reveal path.',
+    explanation: {
+      componentName: 'CodexCard',
+      sourceFile: 'src/components/reader-chamber/development/CodexCard.tsx',
+      currentTrigger: 'metadata.entities faction reveal resolves to the stored Faction entry',
+      entityOrEventType: 'faction',
+      codexDestination: 'ReaderCodex > Factions',
+      capabilities: { hasImage: true, hasManifestAction: true, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
+      architecturalNotes: 'Factions share the Codex reveal path with Artifacts and Locations. Their crest artwork is application-owned, and an eligible missing image keeps the Manifest action.',
+    },
+    codexReveal: {
+      type: 'Faction',
+      entry: {
+        id: 'codex-fac-riverside-sect',
+        name: 'Riverside Sect',
+        description: 'An upriver cultivation sect that keeps the Rain Court honest by witnessing every oath sworn before the Nine Cauldrons.',
+        imageUrl: '/card-workshop/test-images/lotus_lake_pavilion_portrait.jpg',
+        manifestationImportance: durableVisualImportance,
+      },
+    },
+  },
+  {
     id: 'preset-system-prompt',
     title: 'System Prompt',
     subtitle: 'In-World Celestial Library Notification',

@@ -30,6 +30,13 @@ import {
   IMAGE_STATE_OPTIONS,
   INITIAL_CARD_WORKSHOP_OVERRIDES,
 } from '../../../workshop/previews/card-workshop/previewStates';
+import {
+  CARD_BRANCHES,
+  findBranchForCategory,
+  findCardCategory,
+  findCategoryForPreset,
+  type CardBranchId,
+} from '../../../workshop/previews/card-workshop/cardCategories';
 
 const LOCAL_HUMAN_PORTRAIT = '/card-workshop/test-images/ye_chen_portrait.png';
 const LOCAL_CREATURE_PORTRAIT = '/card-workshop/test-images/lyra_meadowlight_portrait.png';
@@ -95,7 +102,11 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
   const [activeTab, setActiveTab] = useState<'tabs' | 'contextual'>(
     normalizeInitialMode(initialMode),
   );
-  const [selectedPresetId, setSelectedPresetId] = useState<string>(initialPresetId);
+  const initialCategory = findCategoryForPreset(initialPresetId);
+  const [activeBranchId, setActiveBranchId] = useState<CardBranchId>(
+    findBranchForCategory(initialCategory.id).id,
+  );
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(initialCategory.id);
   const [overrides, setOverrides] = useState<CardWorkshopOverrides>(
     INITIAL_CARD_WORKSHOP_OVERRIDES,
   );
@@ -104,10 +115,51 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
   const manifestTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardTabListRef = useRef<HTMLDivElement | null>(null);
 
+  const activeBranch = useMemo(
+    () => CARD_BRANCHES.find((branch) => branch.id === activeBranchId) ?? CARD_BRANCHES[0],
+    [activeBranchId],
+  );
+  /** Only the selected parent's categories are ever selectable. */
+  const visibleCategories = activeBranch.categories;
+  const selectedCategory = useMemo(
+    () => findCardCategory(selectedCategoryId) ?? visibleCategories[0],
+    [selectedCategoryId, visibleCategories],
+  );
+  const selectedPresetId = selectedCategory.presetId;
+
   const selectedPreset = useMemo(
     () => ACTIVE_CARD_PRESETS.find((p) => p.id === selectedPresetId) || ACTIVE_CARD_PRESETS[0],
     [selectedPresetId],
   );
+
+  /** System categories expose only the content styles that belong to them. */
+  const categoryStyleOptions = useMemo(() => {
+    const allowed = selectedCategory.systemPromptStyles;
+    if (!allowed) return SYSTEM_PROMPT_STYLE_OPTIONS;
+    return SYSTEM_PROMPT_STYLE_OPTIONS.filter((option) => allowed.includes(option.value));
+  }, [selectedCategory]);
+
+  const selectCategory = (categoryId: string) => {
+    const category = findCardCategory(categoryId);
+    if (!category) return;
+    setSelectedCategoryId(category.id);
+    setActiveBranchId(findBranchForCategory(category.id).id);
+    if (category.systemPromptStyles) {
+      setOverrides((previous) => (
+        previous.systemPromptContentStyle
+          && category.systemPromptStyles!.includes(previous.systemPromptContentStyle)
+          ? previous
+          : { ...previous, systemPromptContentStyle: category.systemPromptStyles![0] }
+      ));
+    }
+  };
+
+  const selectBranch = (branchId: CardBranchId) => {
+    if (branchId === activeBranchId) return;
+    const branch = CARD_BRANCHES.find((candidate) => candidate.id === branchId) ?? CARD_BRANCHES[0];
+    setActiveBranchId(branch.id);
+    selectCategory(branch.categories[0].id);
+  };
 
   useEffect(() => {
     if (!selectedPreset.systemEvent) return;
@@ -123,10 +175,10 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
 
   useEffect(() => {
     if (activeTab !== 'tabs') return;
-    const activePresetTab = [...(cardTabListRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])]
-      .find(tab => tab.dataset.presetId === selectedPresetId);
-    activePresetTab?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
-  }, [activeTab, selectedPresetId]);
+    const activeCategoryTab = [...(cardTabListRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])]
+      .find(tab => tab.dataset.categoryId === selectedCategoryId);
+    activeCategoryTab?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [activeTab, selectedCategoryId]);
 
   // Handle local portrait awaken simulation
   const handleManifestReveal = (entry: { id?: string }) => {
@@ -144,15 +196,16 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
     event: React.KeyboardEvent<HTMLButtonElement>,
     currentIndex: number,
   ) => {
+    const count = visibleCategories.length;
     let nextIndex: number | undefined;
-    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % ACTIVE_CARD_PRESETS.length;
-    if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + ACTIVE_CARD_PRESETS.length) % ACTIVE_CARD_PRESETS.length;
+    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % count;
+    if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + count) % count;
     if (event.key === 'Home') nextIndex = 0;
-    if (event.key === 'End') nextIndex = ACTIVE_CARD_PRESETS.length - 1;
+    if (event.key === 'End') nextIndex = count - 1;
     if (nextIndex === undefined) return;
 
     event.preventDefault();
-    setSelectedPresetId(ACTIVE_CARD_PRESETS[nextIndex].id);
+    selectCategory(visibleCategories[nextIndex].id);
     event.currentTarget.parentElement
       ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
       [nextIndex]?.focus();
@@ -261,12 +314,12 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
 
   // Developer metadata explanation block
   const renderExplanationBadge = (explanation: CardPreset['explanation']) => (
-    <div className="rounded-xl border border-neutral-800/80 bg-[#020813]/90 p-4 space-y-3 shadow-md text-xs font-mono">
-      <div className="flex items-center justify-between border-b border-neutral-800 pb-2">
-        <span className="text-portal font-semibold flex items-center gap-1.5 uppercase tracking-wider">
+    <div className="min-w-0 space-y-3 rounded-xl border border-neutral-800/80 bg-[#020813]/90 p-3 text-xs font-mono shadow-md sm:p-4">
+      <div className="flex items-center justify-between gap-2 border-b border-neutral-800 pb-2">
+        <span className="flex min-w-0 shrink-0 items-center gap-1.5 font-semibold uppercase tracking-wider text-portal">
           <Info size={13} /> {explanation.componentName}
         </span>
-        <span className="text-[10px] text-neutral-500 truncate max-w-[200px]">
+        <span className="min-w-0 truncate text-right text-[10px] text-neutral-500 sm:max-w-[200px]">
           {explanation.sourceFile}
         </span>
       </div>
@@ -330,29 +383,33 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
   );
 
   const renderTechnicalDetails = () => (
-    <details className="w-full rounded-2xl border border-neutral-800 bg-neutral-950/70 shadow-xl">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-mono text-xs uppercase tracking-widest text-neutral-300 transition-colors hover:text-portal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portal [&::-webkit-details-marker]:hidden">
+    <details className="w-full min-w-0 max-w-full rounded-2xl border border-neutral-800 bg-neutral-950/70 shadow-xl">
+      <summary className="flex cursor-pointer list-none flex-col items-start justify-between gap-1 px-4 py-4 font-mono text-xs uppercase tracking-widest text-neutral-300 sm:flex-row sm:items-center sm:gap-4 sm:px-5 transition-colors hover:text-portal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portal [&::-webkit-details-marker]:hidden">
         <span>Technical Details</span>
         <span className="text-[10px] normal-case tracking-normal text-neutral-500">
           Preset, routing, capabilities, and local-only overrides
         </span>
       </summary>
 
-      <div className="space-y-6 border-t border-neutral-800 p-5">
+      <div className="space-y-6 border-t border-neutral-800 p-4 sm:p-5">
         <div>
           <label className="mb-2 block text-xs font-mono font-semibold uppercase tracking-widest text-portal">
-            Select Card Preset
+            Select Card Category
           </label>
           <select
-            aria-label="Card preset"
-            value={selectedPresetId}
-            onChange={(event) => setSelectedPresetId(event.target.value)}
-            className="w-full rounded-lg border border-neutral-800 bg-[#020914] px-3 py-2 text-xs font-mono text-signal focus:border-portal focus:outline-none"
+            aria-label="Card category"
+            value={selectedCategoryId}
+            onChange={(event) => selectCategory(event.target.value)}
+            className="w-full max-w-full rounded-lg border border-neutral-800 bg-[#020914] px-3 py-2 text-xs font-mono text-signal focus:border-portal focus:outline-none"
           >
-            {ACTIVE_CARD_PRESETS.map((preset) => (
-              <option key={preset.id} value={preset.id}>
-                {preset.title} — {preset.subtitle}
-              </option>
+            {CARD_BRANCHES.map((branch) => (
+              <optgroup key={branch.id} label={branch.label}>
+                {branch.categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.label}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </div>
@@ -366,10 +423,10 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
             <div className="space-y-3">
               <div>
                 <span className="mb-1 block text-[10px] font-mono uppercase text-neutral-500">
-                  System Category (Top-Level Preset)
+                  System Category
                 </span>
                 <div className="rounded border border-neutral-800/80 bg-[#020914] px-2.5 py-1.5 text-[11px] font-mono text-neutral-300">
-                  {selectedPreset.kind === 'fate-result' ? 'Fate System Prompt' : 'System Prompt'}
+                  {activeBranch.label} › {selectedCategory.label}
                 </div>
               </div>
 
@@ -390,7 +447,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                     }
                     className="w-full rounded border border-neutral-800 bg-[#020914] px-2.5 py-1.5 text-[11px] font-mono text-signal"
                   >
-                    {SYSTEM_PROMPT_STYLE_OPTIONS.map((option) => (
+                    {categoryStyleOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
@@ -523,15 +580,15 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-[#01070e] text-signal flex flex-col">
+    <div className="flex min-h-screen w-full max-w-full flex-col overflow-x-hidden bg-[#01070e] text-signal">
       {/* Top Header & Mode Navigation */}
-      <header className="relative sm:sticky sm:top-0 z-30 border-b border-neutral-800/80 bg-[#010914]/90 backdrop-blur-md px-3 sm:px-8 py-2.5 sm:py-3.5 flex flex-wrap items-center justify-between gap-2.5 sm:gap-4 shadow-lg">
-        <div className="flex items-center gap-2.5 sm:gap-3">
+      <header className="relative z-30 flex w-full min-w-0 max-w-full flex-col gap-2.5 border-b border-neutral-800/80 bg-[#010914]/90 px-3 py-2.5 shadow-lg backdrop-blur-md sm:sticky sm:top-0 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 sm:px-8 sm:py-3.5">
+        <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
           <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-portal/10 border border-portal/30 flex items-center justify-center text-portal shadow-[0_0_12px_rgba(4,172,255,0.2)] shrink-0">
             <Layers size={16} className="sm:w-[18px] sm:h-[18px]" />
           </div>
-          <div>
-            <h1 className="text-xs sm:text-base font-sc font-bold uppercase tracking-wider text-signal flex items-center gap-2">
+          <div className="min-w-0">
+            <h1 className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-sc font-bold uppercase tracking-wider text-signal sm:text-base">
               Reader Card Workshop
               <span className="text-[9px] sm:text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-portal/10 text-portal border border-portal/30">
                 Development Only
@@ -544,13 +601,13 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
         </div>
 
         {/* Global Toolbar Controls */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto">
           {/* Mode Switcher */}
-          <div className="flex bg-neutral-900/80 p-1 rounded-lg border border-neutral-800">
+          <div className="flex w-full rounded-lg border border-neutral-800 bg-neutral-900/80 p-1 sm:w-auto">
             <button
               type="button"
               onClick={() => setActiveTab('tabs')}
-              className={`px-3 py-1.5 rounded-md text-xs font-mono font-medium transition-all ${
+              className={`flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-mono font-medium transition-all sm:flex-none ${
                 activeTab === 'tabs'
                   ? 'bg-portal text-void font-bold shadow'
                   : 'text-neutral-400 hover:text-neutral-200'
@@ -561,7 +618,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
             <button
               type="button"
               onClick={() => setActiveTab('contextual')}
-              className={`px-3 py-1.5 rounded-md text-xs font-mono font-medium transition-all ${
+              className={`flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-mono font-medium transition-all sm:flex-none ${
                 activeTab === 'contextual'
                   ? 'bg-portal text-void font-bold shadow'
                   : 'text-neutral-400 hover:text-neutral-200'
@@ -572,7 +629,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
           </div>
 
           {/* Viewport Width Emulation */}
-          <div className="flex bg-neutral-900/80 p-1 rounded-lg border border-neutral-800">
+          <div className="flex shrink-0 rounded-lg border border-neutral-800 bg-neutral-900/80 p-1">
             <button
               type="button"
               aria-label="Mobile Viewport"
@@ -614,8 +671,8 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
             </button>
           </div>
 
-          <label className="flex items-center gap-1.5 rounded-lg border border-neutral-800 bg-neutral-900/80 px-2 py-1 text-[10px] font-mono text-neutral-400">
-            <span>Image</span>
+          <label className="flex min-w-0 flex-1 basis-40 items-center gap-1.5 rounded-lg border border-neutral-800 bg-neutral-900/80 px-2 py-1 text-[10px] font-mono text-neutral-400 sm:flex-none sm:basis-auto">
+            <span className="shrink-0">Image</span>
             <select
               aria-label="Image state"
               value={overrides.imageState}
@@ -623,7 +680,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 ...prev,
                 imageState: event.target.value as ImagePreviewState,
               }))}
-              className="max-w-[150px] bg-[#020914] px-1.5 py-1 text-[11px] text-signal"
+              className="w-full min-w-0 bg-[#020914] px-1.5 py-1 text-[11px] text-signal sm:w-auto sm:max-w-[150px]"
             >
               {IMAGE_STATE_OPTIONS.map(option => (
                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -635,63 +692,100 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full">
+      <main className="mx-auto w-full min-w-0 max-w-7xl flex-1 p-3 sm:p-8">
         {/* OVERVIEW MODE */}
         {activeTab === 'tabs' && (
           <div className="space-y-12">
-            <div
-              role="tablist"
-              aria-label="Card types"
-              className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0"
-            >
+            <div className="space-y-3">
+              {/* Parent branch: only the selected family's categories are offered below. */}
               <div
-                ref={cardTabListRef}
-                className="flex min-w-max gap-2 rounded-xl border border-neutral-800 bg-neutral-950/70 p-2 lg:min-w-0 lg:flex-wrap"
+                role="tablist"
+                aria-label="Card families"
+                className="w-full min-w-0"
               >
-                {ACTIVE_CARD_PRESETS.map((preset, index) => {
-                  const isSelected = preset.id === selectedPresetId;
-                  return (
-                    <button
-                      key={preset.id}
-                      id={`card-tab-${preset.id}`}
-                      data-preset-id={preset.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={isSelected}
-                      aria-controls={`card-panel-${preset.id}`}
-                      tabIndex={isSelected ? 0 : -1}
-                      onClick={() => setSelectedPresetId(preset.id)}
-                      onKeyDown={(event) => handleCardTabKeyDown(event, index)}
-                      className={`whitespace-nowrap rounded-lg border px-3 py-2 text-[11px] font-mono transition-colors ${
-                        isSelected
-                          ? 'border-portal/50 bg-portal/15 text-portal'
-                          : 'border-transparent text-neutral-400 hover:border-neutral-700 hover:text-signal'
-                      }`}
-                    >
-                      {preset.title}
-                    </button>
-                  );
-                })}
+                <div className="flex flex-wrap gap-2 rounded-xl border border-neutral-800 bg-neutral-950/70 p-1.5">
+                  {CARD_BRANCHES.map((branch) => {
+                    const isSelected = branch.id === activeBranchId;
+                    return (
+                      <button
+                        key={branch.id}
+                        id={`card-branch-tab-${branch.id}`}
+                        data-branch-id={branch.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={isSelected}
+                        aria-controls="card-category-tablist"
+                        onClick={() => selectBranch(branch.id)}
+                        className={`whitespace-nowrap rounded-lg border px-3 py-2 text-[11px] font-mono uppercase tracking-wider transition-colors ${
+                          isSelected
+                            ? 'border-portal/50 bg-portal/15 text-portal'
+                            : 'border-transparent text-neutral-400 hover:border-neutral-700 hover:text-signal'
+                        }`}
+                      >
+                        {branch.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Child categories of the selected branch. */}
+              <div
+                id="card-category-tablist"
+                role="tablist"
+                aria-label="Card types"
+                className="w-full min-w-0"
+              >
+                <div
+                  ref={cardTabListRef}
+                  className="flex flex-wrap gap-1.5 rounded-xl border border-neutral-800 bg-neutral-950/70 p-2 sm:gap-2"
+                >
+                  {visibleCategories.map((category, index) => {
+                    const isSelected = category.id === selectedCategoryId;
+                    return (
+                      <button
+                        key={category.id}
+                        id={`card-tab-${category.id}`}
+                        data-category-id={category.id}
+                        data-preset-id={category.presetId}
+                        type="button"
+                        role="tab"
+                        aria-selected={isSelected}
+                        aria-controls={`card-panel-${category.id}`}
+                        tabIndex={isSelected ? 0 : -1}
+                        onClick={() => selectCategory(category.id)}
+                        onKeyDown={(event) => handleCardTabKeyDown(event, index)}
+                        className={`whitespace-nowrap rounded-lg border px-3 py-2 text-[11px] font-mono transition-colors ${
+                          isSelected
+                            ? 'border-portal/50 bg-portal/15 text-portal'
+                            : 'border-transparent text-neutral-400 hover:border-neutral-700 hover:text-signal'
+                        }`}
+                      >
+                        {category.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
             {/* 1. Codex Cards */}
             {selectedPreset.kind === 'codex-card' && (
             <section
-              id={`card-panel-${selectedPreset.id}`}
+              id={`card-panel-${selectedCategory.id}`}
               role="tabpanel"
-              aria-labelledby={`card-tab-${selectedPreset.id}`}
+              aria-labelledby={`card-tab-${selectedCategory.id}`}
               className="space-y-6"
             >
-              <div className="border-b border-neutral-800 pb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <BookOpen size={16} className="text-portal" />
+              <div className="flex flex-col gap-1.5 border-b border-neutral-800 pb-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                <div className="flex min-w-0 items-center gap-2">
+                  <BookOpen size={16} className="shrink-0 text-portal" />
                   <h2 className="text-sm font-sc font-bold uppercase tracking-widest text-signal">
                     Codex Cards
                   </h2>
                 </div>
-                <span className="text-xs text-neutral-500 font-mono">
-                  Human Portraits, Non-Human Portraits, Artifacts & Locations
+                <span className="min-w-0 break-words text-[11px] text-neutral-500 font-mono sm:text-xs sm:text-right">
+                  {activeBranch.categories.map((category) => category.label).join(', ')}
                 </span>
               </div>
 
@@ -699,10 +793,10 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 {ACTIVE_CARD_PRESETS.filter((p) => p.id === selectedPreset.id).map((preset) => (
                   <div
                     key={preset.id}
-                    className="flex flex-col space-y-3 p-4 rounded-2xl bg-neutral-950/40 border border-neutral-900"
+                    className="flex min-w-0 flex-col space-y-3 rounded-2xl border border-neutral-900 bg-neutral-950/40 p-3 sm:p-4"
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
                         <h3 className="font-display font-semibold text-sm text-signal">
                           {preset.title}
                         </h3>
@@ -711,16 +805,15 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                       <button
                         type="button"
                         onClick={() => {
-                          setSelectedPresetId(preset.id);
                           setActiveTab('contextual');
                         }}
-                        className="text-[10px] font-mono text-portal hover:underline"
+                        className="shrink-0 whitespace-nowrap text-[10px] font-mono text-portal hover:underline"
                       >
                         View in Reader →
                       </button>
                     </div>
 
-                    <div className={`mx-auto w-full ${viewportWidthClass} transition-all duration-300`}>
+                    <div className={`mx-auto w-full min-w-0 overflow-x-auto ${viewportWidthClass} transition-all duration-300`}>
                       {renderCardInstance(preset)}
                     </div>
 
@@ -734,20 +827,20 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
             {/* 2. System Blocks & Fate Results */}
             {(selectedPreset.kind === 'system-block' || selectedPreset.kind === 'fate-result') && (
             <section
-              id={`card-panel-${selectedPreset.id}`}
+              id={`card-panel-${selectedCategory.id}`}
               role="tabpanel"
-              aria-labelledby={`card-tab-${selectedPreset.id}`}
+              aria-labelledby={`card-tab-${selectedCategory.id}`}
               className="space-y-6"
             >
-              <div className="border-b border-neutral-800 pb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Zap size={16} className="text-portal" />
+              <div className="flex flex-col gap-1.5 border-b border-neutral-800 pb-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                <div className="flex min-w-0 items-center gap-2">
+                  <Zap size={16} className="shrink-0 text-portal" />
                   <h2 className="text-sm font-sc font-bold uppercase tracking-widest text-signal">
-                    System Panels & Fate Outcomes
+                    System Panels &amp; Fate Outcomes
                   </h2>
                 </div>
-                <span className="text-xs text-neutral-500 font-mono">
-                  Real SystemBlock & FateResultCard integration
+                <span className="min-w-0 break-words text-[11px] text-neutral-500 font-mono sm:text-xs sm:text-right">
+                  Real SystemBlock &amp; FateResultCard integration
                 </span>
               </div>
 
@@ -755,7 +848,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 {ACTIVE_CARD_PRESETS.filter((p) => p.id === selectedPreset.id).map((preset) => (
                   <div
                     key={preset.id}
-                    className="flex flex-col space-y-3 p-4 rounded-2xl bg-neutral-950/40 border border-neutral-900"
+                    className="flex min-w-0 flex-col space-y-3 rounded-2xl border border-neutral-900 bg-neutral-950/40 p-3 sm:p-4"
                   >
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <div>
@@ -764,11 +857,11 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                         </h3>
                         <p className="text-[11px] text-neutral-400 font-sans">{preset.subtitle}</p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                         {preset.id === 'preset-system-prompt' && (
-                          <div className="flex items-center gap-1 bg-neutral-900/90 p-1 rounded-lg border border-neutral-800">
+                          <div className="flex min-w-0 flex-wrap items-center gap-1 bg-neutral-900/90 p-1 rounded-lg border border-neutral-800">
                             <span className="text-[9px] font-mono uppercase text-neutral-500 px-1">Example:</span>
-                            {SYSTEM_PROMPT_STYLE_OPTIONS.map((styleOpt) => {
+                            {categoryStyleOptions.map((styleOpt) => {
                               const isCurrentStyle = (overrides.systemPromptContentStyle || 'breakthrough') === styleOpt.value;
                               return (
                                 <button
@@ -790,7 +883,6 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                         <button
                           type="button"
                           onClick={() => {
-                            setSelectedPresetId(preset.id);
                             setActiveTab('contextual');
                           }}
                           className="text-[10px] font-mono text-portal hover:underline"
@@ -800,7 +892,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                       </div>
                     </div>
 
-                    <div className={`mx-auto w-full ${viewportWidthClass} transition-all duration-300`}>
+                    <div className={`mx-auto w-full min-w-0 overflow-x-auto ${viewportWidthClass} transition-all duration-300`}>
                       {renderCardInstance(preset)}
                     </div>
 
@@ -815,7 +907,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
         )}
 
         {activeTab === 'contextual' && (
-          <section className="mx-auto w-full max-w-5xl space-y-6">
+          <section className="mx-auto w-full min-w-0 max-w-5xl space-y-6">
             <div className="flex flex-wrap items-end justify-between gap-3 border-b border-neutral-800 pb-3">
               <div>
                 <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-portal">

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Shield, MapPin, Swords, User, Loader2 } from 'lucide-react';
 import { Character, Faction, Artifact, Location } from './types';
 import { useAppStore } from './codexCompatibility';
+import { getColorCodeStyle, resolveCodexEntityColorCode } from '../../reader-chamber/shared/colorCodes';
 
 interface CodexHovercardProps {
   term: string;
@@ -65,103 +66,27 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
     state.stories.find((s) => s.id === activeStoryId)
   );
 
-  const getDynamicTheme = () => {
-    const fallback = {
-      text: 'text-portal',
-      bg: 'bg-portal/10',
-      border: 'border-portal/30',
-      hoverBg: 'hover:bg-portal/20',
-      icon: 'text-portal'
-    };
-
-    if (type === 'character') {
-      const char = entry as Character;
-      const rel = (char.relationshipToMC || '').toLowerCase();
-      const role = (char.role || '').toLowerCase();
-      const isMC = activeStory?.mcName === char.name || rel.includes('self') || role.includes('main character') || rel.includes('mc');
-
-      if (isMC) {
-        return fallback; // Blue
-      } else if (rel.includes('lover') || rel.includes('wife') || rel.includes('husband') || rel.includes('fiance') || rel.includes('partner') || rel.includes('spouse') || rel.includes('concubine') || rel.includes('dao companion')) {
-        return { text: 'text-pink-400', bg: 'bg-pink-400/10', border: 'border-pink-400/30', hoverBg: 'hover:bg-pink-400/20', icon: 'text-pink-400' };
-      } else if (rel.includes('mentor') || rel.includes('master') || rel.includes('teacher') || role.includes('mentor') || role.includes('elder')) {
-        return { text: 'text-[#d4af37]', bg: 'bg-[#d4af37]/10', border: 'border-[#d4af37]/30', hoverBg: 'hover:bg-[#d4af37]/20', icon: 'text-[#d4af37]' };
-      } else if (rel.includes('friend') || rel.includes('ally') || rel.includes('brother') || rel.includes('sister') || rel.includes('companion') || rel.includes('comrade')) {
-        return { text: 'text-green-400', bg: 'bg-green-400/10', border: 'border-green-400/30', hoverBg: 'hover:bg-green-400/20', icon: 'text-green-400' };
-      } else if (rel.includes('enemy') || rel.includes('rival') || rel.includes('nemesis') || rel.includes('antagonist') || rel.includes('hostile') || rel.includes('villain')) {
-        return { text: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/30', hoverBg: 'hover:bg-red-500/20', icon: 'text-red-500' };
-      } else if (rel.includes('unknown') || rel.includes('stranger') || rel.includes('neutral') || rel.includes('mystery')) {
-        return { text: 'text-neutral-400', bg: 'bg-neutral-400/10', border: 'border-neutral-400/30', hoverBg: 'hover:bg-neutral-400/20', icon: 'text-neutral-400' };
-      }
-      return fallback;
-    }
-
-    if (type === 'location') {
-      const loc = entry as Location;
-      const desc = (loc.description || '').toLowerCase();
-      const safety = (loc.safetyLevel || '').toLowerCase();
-      const realm = (loc.realm || '').toLowerCase();
-
-      const isSpecial = desc.includes('special') || desc.includes('sacred') || desc.includes('divine') || desc.includes('secret') || desc.includes('hidden') || desc.includes('forbidden') || realm.includes('divine') || realm.includes('heaven') || safety.includes('lethal');
-
-      if (isSpecial) {
-        return { text: 'text-[#d4af37]', bg: 'bg-[#d4af37]/10', border: 'border-[#d4af37]/30', hoverBg: 'hover:bg-[#d4af37]/20', icon: 'text-[#d4af37]' };
-      }
-      return { text: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/30', hoverBg: 'hover:bg-purple-400/20', icon: 'text-purple-400' };
-    }
-
-    if (type === 'artifact') {
-      const art = entry as Artifact;
-      const tier = (art.tier || '').toLowerCase();
-      const desc = (art.description || '').toLowerCase();
-
-      if (tier.includes('legendary') || tier.includes('divine') || tier.includes('mythic') || tier.includes('primordial') || tier.includes('supreme')) {
-        return { text: 'text-[#d4af37]', bg: 'bg-[#d4af37]/10', border: 'border-[#d4af37]/30', hoverBg: 'hover:bg-[#d4af37]/20', icon: 'text-[#d4af37]' };
-      } else if (tier.includes('great') || tier.includes('epic') || tier.includes('heaven') || tier.includes('saint')) {
-        return { text: 'text-orange-400', bg: 'bg-orange-400/10', border: 'border-orange-400/30', hoverBg: 'hover:bg-orange-400/20', icon: 'text-orange-400' };
-      } else if (tier.includes('good') || tier.includes('rare') || tier.includes('earth') || tier.includes('spirit')) {
-        return { text: 'text-[#04ACFF]', bg: 'bg-[#04ACFF]/10', border: 'border-[#04ACFF]/30', hoverBg: 'hover:bg-[#04ACFF]/20', icon: 'text-[#04ACFF]' };
-      } else if (tier.includes('decent') || tier.includes('uncommon') || tier.includes('mortal') || tier.includes('profane')) {
-        return { text: 'text-[#0f5132]', bg: 'bg-[#0f5132]/20', border: 'border-[#0f5132]/40', hoverBg: 'hover:bg-[#0f5132]/40', icon: 'text-[#0f5132]' };
-      } else if (tier.includes('basic') || tier.includes('common') || tier.includes('trash') || tier === '') {
-        // Since many default to empty tier, we'll check description for keywords just in case, but default to Basic White
-        if (desc.includes('legendary') || desc.includes('divine')) {
-          return { text: 'text-[#d4af37]', bg: 'bg-[#d4af37]/10', border: 'border-[#d4af37]/30', hoverBg: 'hover:bg-[#d4af37]/20', icon: 'text-[#d4af37]' };
-        }
-        return { text: 'text-white', bg: 'bg-white/10', border: 'border-white/30', hoverBg: 'hover:bg-white/20', icon: 'text-white' };
-      }
-      return { text: 'text-white', bg: 'bg-white/10', border: 'border-white/30', hoverBg: 'hover:bg-white/20', icon: 'text-white' };
-    }
-
-    if (type === 'faction') {
-      return { text: 'text-[#b9d6c1]', bg: 'bg-[#0f5132]/20', border: 'border-[#0f5132]/30', hoverBg: 'hover:bg-[#0f5132]/40', icon: 'text-[#0f5132]' };
-    }
-
-    return fallback;
-  };
-
-  const theme = getDynamicTheme();
+  const colorCode = resolveCodexEntityColorCode(type, entry, activeStory?.mcName);
+  const colorCodeStyle = getColorCodeStyle(colorCode);
 
   const getIcon = () => {
     switch (type) {
-      case 'character': return <User size={14} className={theme.icon} />;
-      case 'faction': return <Shield size={14} className={theme.icon} />;
-      case 'artifact': return <Swords size={14} className={theme.icon} />;
-      case 'location': return <MapPin size={14} className={theme.icon} />;
+      case 'character': return <User size={14} className="text-current" style={colorCodeStyle} />;
+      case 'faction': return <Shield size={14} className="text-current" style={colorCodeStyle} />;
+      case 'artifact': return <Swords size={14} className="text-current" style={colorCodeStyle} />;
+      case 'location': return <MapPin size={14} className="text-current" style={colorCodeStyle} />;
       default: return null;
     }
   };
 
-  const getBorderColor = () => theme.border;
-
   const getTextStyles = () => {
     const highlightStyle = activeStory?.readerPreferences?.highlightStyle || 'full';
     if (highlightStyle === 'underline') {
-      return `${theme.text} font-medium px-0.5 cursor-pointer transition-colors border-b border-dashed ${theme.border} hover:bg-neutral-800/10`;
+      return 'text-current font-medium px-0.5 cursor-pointer transition-colors border-b border-dashed border-[color-mix(in_srgb,currentColor_30%,transparent)] hover:bg-neutral-800/10';
     } else if (highlightStyle === 'tint') {
-      return `${theme.text} font-medium px-0.5 cursor-pointer transition-all duration-300 hover:bg-neutral-800/10 rounded-sm`;
+      return 'text-current font-medium px-0.5 cursor-pointer transition-all duration-300 hover:bg-neutral-800/10 rounded-sm';
     }
-    return `${theme.text} ${theme.bg} font-medium px-1 rounded-sm cursor-pointer ${theme.hoverBg} transition-colors border-b ${theme.border}`;
+    return 'text-current bg-[color-mix(in_srgb,currentColor_10%,transparent)] font-medium px-1 rounded-sm cursor-pointer hover:bg-[color-mix(in_srgb,currentColor_20%,transparent)] transition-colors border-b border-[color-mix(in_srgb,currentColor_30%,transparent)]';
   };
 
   useEffect(() => {
@@ -314,12 +239,14 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 5, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className={`pointer-events-auto w-56 sm:w-64 max-w-full overflow-y-auto overscroll-contain p-3 bg-void border rounded-xl shadow-2xl backdrop-blur-md ${getBorderColor()}`}
+            className="pointer-events-auto w-56 sm:w-64 max-w-full overflow-y-auto overscroll-contain p-3 bg-void border border-[color-mix(in_srgb,currentColor_30%,transparent)] rounded-xl shadow-2xl backdrop-blur-md"
             style={{
+              ...colorCodeStyle,
               maxHeight: isDesktopViewport
                 ? 'calc(100dvh - 2rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))'
                 : 'min(42dvh, 100%)',
             }}
+            data-color-code={colorCode}
             onClick={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
             role="dialog"
@@ -386,7 +313,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
               </div>
             )}
             {type === 'artifact' && (entry as Artifact).tier && (
-              <div className="mt-2 text-[10px] text-[#d4af37] uppercase tracking-wider font-bold">
+              <div className="mt-2 text-[10px] text-current uppercase tracking-wider font-bold" style={colorCodeStyle}>
                 Tier: {(entry as Artifact).tier}
               </div>
             )}
@@ -398,10 +325,12 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
   );
 
   return (
-    <span className="relative inline-block" ref={containerRef}>
+    <span className="relative inline-block" data-color-code={colorCode} ref={containerRef}>
       <span
         ref={triggerRef}
+        data-color-code={colorCode}
         className={getTextStyles()}
+        style={colorCodeStyle}
         onClick={handleToggle}
         onTouchEnd={(e) => {
           e.preventDefault();

@@ -16,14 +16,15 @@ const events = [
     value: 'Foundation Establishment — Stage 4',
     consequence: 'Elder Han will move openly against Yun Che.',
     codexName: 'Elder Han',
-    codexColorClass: 'text-[#d4af37]',
+    codexColorCode: 'enemy',
     classification: '✦ Awakening ✦',
     subtype: 'Awakening',
-    subtypeColorClass: 'text-amber-400',
+    subtypeColorCode: 'mentor',
     rowLabel: 'New Realm',
     rowValue: 'Foundation Establishment',
     trends: [['Foundation Establishment', 'up'], ['Widened', 'up']],
     outcomes: ['Realm Ascended', 'Lifespan Increased'],
+    outcomeColorCodes: ['ally', 'ally'],
     overlayOutcome: 'Lifespan +100',
     prose: 'A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.',
   },
@@ -34,14 +35,15 @@ const events = [
     value: 'Rain Court Standing — Disgraced',
     consequence: 'Magistrate Jinhai loses access to Riverside Sect testimony.',
     codexName: 'Magistrate Jinhai',
-    codexColorClass: 'text-red-500',
+    codexColorCode: 'enemy',
     classification: '✦ Consequence ✦',
     subtype: 'Consequence',
-    subtypeColorClass: 'text-orange-400',
+    subtypeColorCode: 'itemGreat',
     rowLabel: 'Celestial Record',
     rowValue: 'Sealed',
     trends: [['Sealed', 'down']],
     outcomes: ['Karma Decreased', 'Title Stripped'],
+    outcomeColorCodes: ['enemy', 'enemy'],
     overlayOutcome: 'Karma −15',
     prose: 'A solemn interface surfaced before Magistrate Jinhai, its gilt script cold as the rain outside.',
   },
@@ -52,14 +54,15 @@ const events = [
     value: 'Foundation Establishment — Stage 7',
     consequence: 'Elder Kaelen will prepare a countermeasure before the next encounter.',
     codexName: 'Elder Kaelen',
-    codexColorClass: 'text-red-500',
+    codexColorCode: 'enemy',
     classification: '✦ Enemy ✦',
     subtype: 'Enemy',
-    subtypeColorClass: 'text-red-500',
+    subtypeColorCode: 'enemy',
     rowLabel: 'Cultivation',
     rowValue: 'Foundation Establishment, Stage 7',
     trends: [],
     outcomes: ['Intel Gained', 'Weakness Found'],
+    outcomeColorCodes: ['ally', 'ally'],
     overlayOutcome: 'Detection Risk: High',
     prose: 'A crimson interface unfolded beside Elder Kaelen, taking his measure in silence.',
   },
@@ -136,24 +139,24 @@ async function verifyCompactHierarchy(block, event, deviceName) {
   // each a neutral white subject plus a meaning-colored state word — and
   // never a number (quantities compress to Increased/Decreased from the
   // direction; the signed figures live only in the expanded report).
-  const compactReport = await block.evaluate((element) => {
+  const compactReport = await block.evaluate((element, expectedOutcomeColorCodes) => {
     const row = element.querySelector('[data-consequence-count]');
     if (!row) return 'missing-row';
     if (!row.textContent.includes('|')) return 'missing-divider';
     const slots = [...row.querySelectorAll('[data-outcome-slot]')];
     if (slots.length !== 2) return `slot-count:${slots.length}`;
-    for (const slot of slots) {
+    for (const [index, slot] of slots.entries()) {
       if (/\d/.test(slot.textContent)) return `compact-number:${slot.textContent.trim()}`;
       const subject = slot.querySelector('[data-outcome-subject]');
       if (subject && !subject.classList.contains('text-neutral-100')) return `subject-not-white:${subject.textContent}`;
       const state = slot.querySelector('[data-outcome-state]');
       if (!state) return `missing-state:${slot.textContent.trim()}`;
-      const toned = ['text-emerald-400', 'text-yellow-300', 'text-orange-400', 'text-red-400']
-        .some((toneClass) => state.classList.contains(toneClass));
-      if (!toned) return `state-uncolored:${state.textContent}`;
+      if (state.dataset.colorCode !== expectedOutcomeColorCodes[index]) {
+        return `state-color:${state.textContent}:${state.dataset.colorCode}`;
+      }
     }
     return 'ok';
-  });
+  }, event.outcomeColorCodes);
   if (compactReport !== 'ok') {
     throw new Error(`${event.slug} compact outcome contract broken at ${deviceName}: ${compactReport}`);
   }
@@ -163,11 +166,11 @@ async function verifyCompactHierarchy(block, event, deviceName) {
   const colorReport = await block.evaluate((element, expected) => {
     const spans = [...element.querySelectorAll('span')];
     const byText = (text) => spans.find((span) => span.textContent === text);
-    if (!byText(expected.subtype)?.classList.contains(expected.subtypeColorClass)) return 'subtype-not-colored';
+    if (byText(expected.subtype)?.dataset.colorCode !== expected.subtypeColorCode) return 'subtype-not-colored';
     if (!byText(expected.rowLabel)?.classList.contains('text-neutral-400')) return 'row-label-not-neutral';
     if (!byText(expected.rowValue)?.classList.contains('text-neutral-100')) return 'row-value-not-neutral';
     return 'ok';
-  }, { subtype: event.subtype, subtypeColorClass: event.subtypeColorClass, rowLabel: event.rowLabel, rowValue: event.rowValue });
+  }, { subtype: event.subtype, subtypeColorCode: event.subtypeColorCode, rowLabel: event.rowLabel, rowValue: event.rowValue });
   if (colorReport !== 'ok') {
     throw new Error(`${event.slug} color semantics broken at ${deviceName}: ${colorReport}`);
   }
@@ -182,8 +185,8 @@ async function verifyCompactHierarchy(block, event, deviceName) {
       const valueSpan = spans.find((span) => span.textContent === value);
       const arrow = valueSpan?.querySelector(`[data-row-trend="${direction}"]`);
       if (!arrow) return `missing:${value}:${direction}`;
-      const colorClass = direction === 'up' ? 'text-emerald-400' : 'text-red-400';
-      if (!arrow.classList.contains(colorClass)) return `color:${value}`;
+      const colorCode = direction === 'up' ? 'ally' : 'enemy';
+      if (arrow.dataset.colorCode !== colorCode) return `color:${value}:${arrow.dataset.colorCode}`;
     }
     return 'ok';
   }, event.trends);
@@ -318,7 +321,7 @@ async function verifyExpandedOverlay(page, block, event, deviceName) {
     // above the dialog and closes first on Escape.
     const codexLink = overlay.getByRole('button', { name: event.codexName, exact: true }).first();
     await codexLink.waitFor();
-    if (!(await codexLink.getAttribute('class'))?.includes(event.codexColorClass)) {
+    if (await codexLink.getAttribute('data-color-code') !== event.codexColorCode) {
       throw new Error(`${event.codexName} did not preserve its assigned character color at ${deviceName}.`);
     }
     await codexLink.click();
@@ -388,7 +391,7 @@ for (const device of devices) {
         const severity = spans.find((span) => span.textContent === 'Moderate');
         return {
           labelNeutral: label?.classList.contains('text-neutral-300') ?? false,
-          severityColored: severity?.classList.contains('text-orange-400') ?? false,
+          severityColored: severity?.dataset.colorCode === 'itemGreat',
         };
       });
       if (!badgeReport.labelNeutral || !badgeReport.severityColored) {
@@ -400,7 +403,7 @@ for (const device of devices) {
       await tabsBlock.locator('[data-system-summary-toggle]').click();
       const elderLink = tabsBlock.getByRole('button', { name: 'Elder Kaelen', exact: true });
       await elderLink.waitFor();
-      if (!(await elderLink.getAttribute('class'))?.includes('text-red-500')) {
+      if (await elderLink.getAttribute('data-color-code') !== 'enemy') {
         throw new Error(`Elder Kaelen did not preserve the hostile character color at ${device.name}.`);
       }
       await elderLink.click();

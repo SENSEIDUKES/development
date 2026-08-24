@@ -9,8 +9,8 @@ import { SPECTRAL_EDGE } from '../../library/LibraryPanel';
 import { LibraryDragonCycleIcon } from '../../library/LibraryDragonCycleIcon';
 import { CodexCardAmbience } from './CodexCardAmbience';
 import { getManifestBackdrop } from './codexManifestBackdrop';
-import { resolveCodexEntityAccent, resolveCodexEntityBand } from './codexEntityAccent';
-import type { CodexEntityBand } from './codexEntityAccent';
+import { getColorCodeStyle } from '../../reader-chamber/shared/colorCodes';
+import { resolveCodexEntityAccent, resolveCodexEntityColorCode } from './codexEntityAccent';
 
 interface CodexHovercardProps {
   term: string;
@@ -113,52 +113,6 @@ const SEAL_CORE_CLASS = [
 ].join(' ');
 
 /**
- * Tailwind class bundle the highlighted-term trigger wears per entity band.
- * Keyed by the shared `resolveCodexEntityBand` classification so the prose
- * highlight always agrees with the card ambience resolved from the same band.
- */
-interface CodexBandTheme {
-  text: string;
-  bg: string;
-  border: string;
-  hoverBg: string;
-  icon: string;
-}
-
-const PORTAL_BAND_THEME: CodexBandTheme = {
-  text: 'text-portal',
-  bg: 'bg-portal/10',
-  border: 'border-portal/30',
-  hoverBg: 'hover:bg-portal/20',
-  icon: 'text-portal',
-};
-
-const GOLD_BAND_THEME: CodexBandTheme = {
-  text: 'text-[#d4af37]',
-  bg: 'bg-[#d4af37]/10',
-  border: 'border-[#d4af37]/30',
-  hoverBg: 'hover:bg-[#d4af37]/20',
-  icon: 'text-[#d4af37]',
-};
-
-const CODEX_BAND_THEME: Record<CodexEntityBand, CodexBandTheme> = {
-  protagonist: PORTAL_BAND_THEME,
-  fallback: PORTAL_BAND_THEME,
-  bond: { text: 'text-pink-400', bg: 'bg-pink-400/10', border: 'border-pink-400/30', hoverBg: 'hover:bg-pink-400/20', icon: 'text-pink-400' },
-  gold: GOLD_BAND_THEME,
-  ally: { text: 'text-green-400', bg: 'bg-green-400/10', border: 'border-green-400/30', hoverBg: 'hover:bg-green-400/20', icon: 'text-green-400' },
-  hostile: { text: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/30', hoverBg: 'hover:bg-red-500/20', icon: 'text-red-500' },
-  mystery: { text: 'text-neutral-400', bg: 'bg-neutral-400/10', border: 'border-neutral-400/30', hoverBg: 'hover:bg-neutral-400/20', icon: 'text-neutral-400' },
-  nonHuman: { text: 'text-violet-400', bg: 'bg-violet-400/10', border: 'border-violet-400/30', hoverBg: 'hover:bg-violet-400/20', icon: 'text-violet-400' },
-  artifactGreat: { text: 'text-orange-400', bg: 'bg-orange-400/10', border: 'border-orange-400/30', hoverBg: 'hover:bg-orange-400/20', icon: 'text-orange-400' },
-  artifactGood: { text: 'text-[#04ACFF]', bg: 'bg-[#04ACFF]/10', border: 'border-[#04ACFF]/30', hoverBg: 'hover:bg-[#04ACFF]/20', icon: 'text-[#04ACFF]' },
-  artifactModest: { text: 'text-[#2DD4BF]', bg: 'bg-[#2DD4BF]/10', border: 'border-[#2DD4BF]/30', hoverBg: 'hover:bg-[#2DD4BF]/20', icon: 'text-[#2DD4BF]' },
-  artifactPlain: { text: 'text-white', bg: 'bg-white/10', border: 'border-white/30', hoverBg: 'hover:bg-white/20', icon: 'text-white' },
-  location: { text: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/30', hoverBg: 'hover:bg-purple-400/20', icon: 'text-purple-400' },
-  faction: { text: 'text-[#b9d6c1]', bg: 'bg-[#0f5132]/20', border: 'border-[#0f5132]/30', hoverBg: 'hover:bg-[#0f5132]/40', icon: 'text-[#0f5132]' },
-};
-
-/**
  * Highlighted-term Codex card: the trigger is the entity name inline in the
  * Reader prose; clicking, tapping, or keyboard-activating it opens the
  * spectral-glass hovercard in a portal — docked at the safe viewport edge on
@@ -210,35 +164,36 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
     state.stories.find((s) => s.id === activeStoryId)
   );
 
+  const colorCode = resolveCodexEntityColorCode(type, entry, activeStory?.mcName);
+  const colorCodeStyle = getColorCodeStyle(colorCode);
   const accent = resolveCodexEntityAccent(type, entry, activeStory?.mcName);
-  const theme = CODEX_BAND_THEME[resolveCodexEntityBand(type, entry, activeStory?.mcName)];
   // The story's assigned Manifest backdrop wins when present; otherwise the
   // stable pool pick, so the card always shows the same art for an entity.
   const manifestBackdrop = activeStory?.assignedRevealBackdrops?.[entry.id] ?? getManifestBackdrop(entry.id);
 
-  /** The entity-type icon shown in the card header, tinted by the band theme. */
+  /** The entity-type icon inherits the shared Color Code. */
   const getIcon = () => {
     switch (type) {
-      case 'character': return <User size={14} className={theme.icon} />;
-      case 'faction': return <Shield size={14} className={theme.icon} />;
-      case 'artifact': return <Swords size={14} className={theme.icon} />;
-      case 'location': return <MapPin size={14} className={theme.icon} />;
+      case 'character': return <User size={14} className="text-current" style={colorCodeStyle} />;
+      case 'faction': return <Shield size={14} className="text-current" style={colorCodeStyle} />;
+      case 'artifact': return <Swords size={14} className="text-current" style={colorCodeStyle} />;
+      case 'location': return <MapPin size={14} className="text-current" style={colorCodeStyle} />;
       default: return null;
     }
   };
 
   /**
    * The trigger text classes for the story's configured highlight style
-   * (`full`, `underline`, or `tint`), all colored by the band theme.
+   * (`full`, `underline`, or `tint`), all colored by the shared Color Code.
    */
   const getTextStyles = () => {
     const highlightStyle = activeStory?.readerPreferences?.highlightStyle || 'full';
     if (highlightStyle === 'underline') {
-      return `${theme.text} font-medium px-0.5 cursor-pointer transition-colors border-b border-dashed ${theme.border} hover:bg-neutral-800/10`;
+      return 'text-current font-medium px-0.5 cursor-pointer transition-colors border-b border-dashed border-[color-mix(in_srgb,currentColor_30%,transparent)] hover:bg-neutral-800/10';
     } else if (highlightStyle === 'tint') {
-      return `${theme.text} font-medium px-0.5 cursor-pointer transition-all duration-300 hover:bg-neutral-800/10 rounded-sm`;
+      return 'text-current font-medium px-0.5 cursor-pointer transition-all duration-300 hover:bg-neutral-800/10 rounded-sm';
     }
-    return `${theme.text} ${theme.bg} font-medium px-1 rounded-sm cursor-pointer ${theme.hoverBg} transition-colors border-b ${theme.border}`;
+    return 'text-current bg-[color-mix(in_srgb,currentColor_10%,transparent)] font-medium px-1 rounded-sm cursor-pointer hover:bg-[color-mix(in_srgb,currentColor_20%,transparent)] transition-colors border-b border-[color-mix(in_srgb,currentColor_30%,transparent)]';
   };
 
   useEffect(() => {
@@ -412,7 +367,8 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
             exit={{ opacity: 0, y: 5, scale: 0.95 }}
             transition={{ duration: 0.15 }}
             className={HOVERCARD_GLASS_CLASS}
-            style={{ '--codex-card-accent': accent } as CSSProperties}
+            style={{ ...colorCodeStyle, '--codex-card-accent': accent } as CSSProperties}
+            data-color-code={colorCode}
             onClick={(e) => e.stopPropagation()}
             onTouchEnd={(e) => e.stopPropagation()}
             role="dialog"
@@ -508,7 +464,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
                 </div>
               )}
               {type === 'artifact' && (entry as Artifact).tier && (
-                <div className="mt-2 text-[10px] text-[#d4af37] uppercase tracking-wider font-bold">
+                <div className="mt-2 text-[10px] text-current uppercase tracking-wider font-bold" style={colorCodeStyle}>
                   Tier: {(entry as Artifact).tier}
                 </div>
               )}
@@ -521,10 +477,12 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
   );
 
   return (
-    <span data-slot="codex-hovercard-anchor" className="relative inline-block" ref={containerRef}>
+    <span data-slot="codex-hovercard-anchor" data-color-code={colorCode} className="relative inline-block" ref={containerRef}>
       <span
         ref={triggerRef}
+        data-color-code={colorCode}
         className={getTextStyles()}
+        style={colorCodeStyle}
         onClick={handleToggle}
         onTouchEnd={(e) => {
           e.preventDefault();

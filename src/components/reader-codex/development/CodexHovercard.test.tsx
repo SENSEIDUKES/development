@@ -3,6 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetMockState } from '../../reader-chamber/shared/stubs';
+import { getColorCodeValue } from '../../reader-chamber/shared/colorCodes';
 import { CodexHovercard } from './CodexHovercard';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -131,13 +132,50 @@ describe('Development CodexHovercard spectral glass', () => {
     openHovercard();
 
     const card = document.body.querySelector<HTMLElement>('[data-slot="codex-hovercard"]');
-    expect(card?.style.getPropertyValue('--codex-card-accent')).toBe('#4ADE80');
+    expect(card?.getAttribute('data-color-code')).toBe('ally');
+    expect(card?.style.getPropertyValue('--codex-card-accent')).toBe(getColorCodeValue('ally'));
     expect(card?.className).toContain('rounded-[1.35rem]');
     expect(card?.className).toContain('backdrop-blur-md');
 
     const ambience = card?.querySelector<HTMLElement>('[data-slot="codex-card-ambience"]');
     expect(ambience).toBeTruthy();
     expect(ambience?.querySelectorAll('.animate-codex-mote').length).toBeGreaterThan(0);
+  });
+
+  it('updates the Reader Codex link and hovercard when a character changes ally → enemy → ally', () => {
+    const entry = {
+      id: 'character-dynamic-aster',
+      name: 'Aster',
+      description: 'A rain-court witness.',
+      relationshipToMC: 'ally',
+    };
+    const renderHovercard = () => {
+      act(() => root.render(
+        <CodexHovercard term="Aster" type="character" entry={entry}>
+          Aster
+        </CodexHovercard>,
+      ));
+    };
+
+    renderHovercard();
+    let anchor = container.querySelector<HTMLElement>('[data-slot="codex-hovercard-anchor"]');
+    let trigger = container.querySelector<HTMLElement>('[role="button"]');
+    expect(anchor?.getAttribute('data-color-code')).toBe('ally');
+    expect(trigger?.style.color).toBe(getColorCodeValue('ally'));
+
+    entry.relationshipToMC = 'enemy';
+    renderHovercard();
+    anchor = container.querySelector<HTMLElement>('[data-slot="codex-hovercard-anchor"]');
+    trigger = container.querySelector<HTMLElement>('[role="button"]');
+    expect(anchor?.getAttribute('data-color-code')).toBe('enemy');
+    expect(trigger?.style.color).toBe(getColorCodeValue('enemy'));
+
+    openHovercard();
+    expect(document.body.querySelector('[data-slot="codex-hovercard"]')?.getAttribute('data-color-code')).toBe('enemy');
+
+    entry.relationshipToMC = 'ally';
+    renderHovercard();
+    expect(container.querySelector('[data-slot="codex-hovercard-anchor"]')?.getAttribute('data-color-code')).toBe('ally');
   });
 
   it('docks at the mobile viewport edge with the scroll region inside the glass shell', () => {

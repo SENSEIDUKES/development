@@ -4,6 +4,11 @@ import { Character, Faction } from '../types';
 import { useCodex } from './CodexContext';
 import { ReaderCodexImageGallery } from './ReaderCodexImageGallery';
 import { resolveEntityImageHistory } from './entityImageHistory';
+import {
+  getColorCodeSurfaceStyle,
+  resolveFactionAlignmentColorCode,
+  resolveFactionStatusColorCode,
+} from '../../../reader-chamber/shared/colorCodes';
 
 interface ReaderCodexFactionsProps {
   factionsToRender: Faction[];
@@ -139,11 +144,8 @@ export function ReaderCodexFactions({
           factionsToRender.map((fac) => {
             // Find all living characters whose sector affiliation matches this faction
             const mates = memoryCharacters.filter(c => c.faction?.toLowerCase().includes((fac.name || '').toLowerCase()));
-            const alignmentColor =
-              fac.alignment === 'Righteous' ? 'text-green-400 border-green-950 bg-green-950/10' :
-              fac.alignment === 'Demonic' ? 'text-human border-red-950 bg-red-950/10' :
-              fac.alignment === 'Mysterious' ? 'text-portal border-cyan-950 bg-cyan-950/10 animate-pulse' :
-              'text-neutral-400 border-neutral-850 bg-neutral-950';
+            const alignmentColorCode = resolveFactionAlignmentColorCode(fac.alignment);
+            const statusColorCode = resolveFactionStatusColorCode(fac.status);
 
             const leaders: Character[] = [];
             const elders: Character[] = [];
@@ -197,16 +199,28 @@ export function ReaderCodexFactions({
                 )}
                 <div className="flex items-start justify-between flex-wrap gap-2">
                   <div>
-                    <span className={`text-[8.5px] font-mono border px-2 py-0.5 rounded uppercase tracking-wider ${alignmentColor}`}>
+                    <span
+                      data-color-code={alignmentColorCode}
+                      style={getColorCodeSurfaceStyle(alignmentColorCode, {
+                        borderOpacity: 0.25,
+                        backgroundOpacity: 0.1,
+                      })}
+                      className={`text-[8.5px] font-mono border px-2 py-0.5 rounded uppercase tracking-wider ${fac.alignment === 'Mysterious' ? 'animate-pulse' : ''}`}
+                    >
                       {fac.alignment} Sector
                     </span>
                     <h4 className="font-sc font-bold text-signal text-base mt-2">{fac.name}</h4>
                     <span className="text-[10px] text-neutral-500 font-sans block mt-0.5">HQ: {fac.headquarters || 'Unknown Space coordinates'}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className={`text-[9px] px-1.5 py-0.25 rounded border font-mono ${
-                      fac.status === 'Active' ? 'text-green-500 border-green-950' : 'text-yellow-500 border-yellow-950'
-                    }`}>
+                    <span
+                      data-color-code={statusColorCode}
+                      style={getColorCodeSurfaceStyle(statusColorCode, {
+                        borderOpacity: 0.25,
+                        backgroundOpacity: 0,
+                      })}
+                      className="text-[9px] px-1.5 py-0.25 rounded border font-mono"
+                    >
                       {fac.status}
                     </span>
                     {openEntryContextEditor && (

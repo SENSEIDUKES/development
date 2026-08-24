@@ -2,6 +2,33 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { StoryWorld } from '../shared/types';
 import { FateSurvivalExplanation } from './FateSurvivalExplanation';
+import { getColorCodeStyle, getColorCodeSurfaceStyle, getColorCodeValue, type ColorCodeId } from '../shared/colorCodes';
+
+const FATE_ALERT_COLOR_CODE: ColorCodeId = 'corruption';
+const fateAlertColorStyle = getColorCodeStyle(FATE_ALERT_COLOR_CODE);
+const fateAlertColorValue = getColorCodeValue(FATE_ALERT_COLOR_CODE);
+
+function getFateAlertSurfaceStyle(glowOpacity: number): React.CSSProperties {
+  const { color: _color, ...surfaceStyle } = getColorCodeSurfaceStyle(FATE_ALERT_COLOR_CODE, {
+    borderOpacity: 0.4,
+    backgroundOpacity: 0.04,
+    glowOpacity,
+  });
+  return surfaceStyle;
+}
+
+const fateAlertDividerStyle: React.CSSProperties = {
+  borderColor: `color-mix(in srgb, ${fateAlertColorValue} 20%, transparent)`,
+};
+
+const fateAlertCornerStyle: React.CSSProperties = {
+  backgroundImage: `linear-gradient(to bottom right, color-mix(in srgb, ${fateAlertColorValue} 10%, transparent), transparent)`,
+};
+
+const fateAlertBadgeStyle: React.CSSProperties = getColorCodeSurfaceStyle(FATE_ALERT_COLOR_CODE, {
+  borderOpacity: 0.3,
+  backgroundOpacity: 0.12,
+});
 
 interface ReaderFateAlertsProps {
   activeStory: StoryWorld;
@@ -21,16 +48,16 @@ export function ReaderFateAlerts({
   return (
     <>
       {activeStory.genre === 'Fate Survival' && (
-        <div className="mb-8 p-5 rounded-lg bg-neutral-950 border border-red-950/40 relative overflow-hidden shadow-[0_0_25px_rgba(139,0,0,0.15)] animate-fadeIn">
-          <div className="absolute top-0 right-0 h-16 w-16 bg-gradient-to-br from-red-600/10 to-transparent pointer-events-none rounded-bl-full" />
-          <div className="flex items-center justify-between border-b border-red-950/20 pb-2 mb-3">
+        <div data-color-code={FATE_ALERT_COLOR_CODE} style={getFateAlertSurfaceStyle(0.15)} className="mb-8 p-5 rounded-lg bg-neutral-950 border relative overflow-hidden animate-fadeIn">
+          <div style={fateAlertCornerStyle} className="absolute top-0 right-0 h-16 w-16 pointer-events-none rounded-bl-full" />
+          <div style={fateAlertDividerStyle} className="flex items-center justify-between border-b pb-2 mb-3">
             <div className="flex items-center gap-2">
-              <span className="text-red-500 animate-pulse text-xs">💀</span>
-              <h4 className="font-sc font-bold text-xs sm:text-sm text-red-500 tracking-[0.2em] uppercase">
+              <span data-color-code={FATE_ALERT_COLOR_CODE} style={fateAlertColorStyle} className="animate-pulse text-xs">💀</span>
+              <h4 data-color-code={FATE_ALERT_COLOR_CODE} style={fateAlertColorStyle} className="font-sc font-bold text-xs sm:text-sm tracking-[0.2em] uppercase">
                 Fate Survival Mode Active
               </h4>
             </div>
-            <div className="px-2 py-0.5 rounded bg-red-950/30 border border-red-900/30 text-red-400 font-mono text-[9px] tracking-wider uppercase">
+            <div data-color-code={FATE_ALERT_COLOR_CODE} style={fateAlertBadgeStyle} className="px-2 py-0.5 rounded border font-mono text-[9px] tracking-wider uppercase">
               DOOM DEADLINE: CHAPTER 7
             </div>
           </div>
@@ -57,10 +84,10 @@ export function ReaderFateAlerts({
                 Chronos Calibration
               </div>
               <div className="font-display font-medium text-signal">
-                Remaining Steps: <span className="text-red-500 font-bold">{Math.max(0, 7 - selectedChapterNum)} Chapters</span>
+                Remaining Steps: <span data-color-code={FATE_ALERT_COLOR_CODE} style={fateAlertColorStyle} className="font-bold">{Math.max(0, 7 - selectedChapterNum)} Chapters</span>
               </div>
               <div className="text-neutral-400">
-                Status: <span className="text-red-400 font-bold uppercase tracking-wider">{selectedChapterNum >= 7 ? 'Critical Apex' : 'Fate Approaching'}</span>
+                Status: <span data-color-code={FATE_ALERT_COLOR_CODE} style={fateAlertColorStyle} className="font-bold uppercase tracking-wider">{selectedChapterNum >= 7 ? 'Critical Apex' : 'Fate Approaching'}</span>
               </div>
             </div>
           </div>
@@ -98,16 +125,16 @@ export function ReaderFateAlerts({
       )}
 
       {activeStory.hardcoreFateMode && (
-        <div className="mb-8 p-5 rounded-lg bg-neutral-950 border border-red-950/40 relative overflow-hidden shadow-[0_0_20px_rgba(139,0,0,0.1)] animate-fadeIn">
-          <div className="absolute top-0 right-0 h-16 w-16 bg-gradient-to-br from-red-600/10 to-transparent pointer-events-none rounded-bl-full" />
-          <div className="flex items-center justify-between border-b border-red-950/20 pb-2 mb-3">
+        <div data-color-code={FATE_ALERT_COLOR_CODE} style={getFateAlertSurfaceStyle(0.1)} className="mb-8 p-5 rounded-lg bg-neutral-950 border relative overflow-hidden animate-fadeIn">
+          <div style={fateAlertCornerStyle} className="absolute top-0 right-0 h-16 w-16 pointer-events-none rounded-bl-full" />
+          <div style={fateAlertDividerStyle} className="flex items-center justify-between border-b pb-2 mb-3">
             <div className="flex items-center gap-2">
-              <span className="text-red-500 animate-pulse text-xs">☠️</span>
-              <h4 className="font-sc font-bold text-xs sm:text-sm text-red-500 tracking-[0.2em] uppercase">
+              <span data-color-code={FATE_ALERT_COLOR_CODE} style={fateAlertColorStyle} className="animate-pulse text-xs">☠️</span>
+              <h4 data-color-code={FATE_ALERT_COLOR_CODE} style={fateAlertColorStyle} className="font-sc font-bold text-xs sm:text-sm tracking-[0.2em] uppercase">
                 Hardcore Fate Mode Engaged
               </h4>
             </div>
-            <div className="px-2 py-0.5 rounded bg-red-950/30 border border-red-900/30 text-red-400 font-mono text-[9px] tracking-wider uppercase animate-pulse">
+            <div data-color-code={FATE_ALERT_COLOR_CODE} style={fateAlertBadgeStyle} className="px-2 py-0.5 rounded border font-mono text-[9px] tracking-wider uppercase animate-pulse">
               HIGH DANGER
             </div>
           </div>

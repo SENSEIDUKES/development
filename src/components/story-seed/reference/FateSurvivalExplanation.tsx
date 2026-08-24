@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Shield, Sparkles, AlertTriangle, Eye, HelpCircle, Heart, Flame, ShieldAlert, Award, RefreshCw, Star, Skull } from 'lucide-react';
+import '../../reader-chamber/shared/reader-chamber.css';
+import { getColorCodeSurfaceStyle, getColorCodeValue, resolveFateTypeColorCode } from '../../reader-chamber/shared/colorCodes';
 
 interface FateType {
   type: string;
   doomedOutcome: string;
   description: string;
   icon: React.ReactNode;
-  color: string;
 }
 
 const FATE_TYPES: FateType[] = [
@@ -15,71 +16,61 @@ const FATE_TYPES: FateType[] = [
     type: 'Death Fate',
     doomedOutcome: 'Someone is destined to die',
     description: 'A physical expiry written in the stars. A master, a lover, or the protagonist themselves has a finite countdown that must be interrupted.',
-    icon: <Skull size={15} />,
-    color: 'from-red-950/40 to-black border-red-800/40 text-red-400'
+    icon: <Skull size={15} />
   },
   {
     type: 'Love Fate',
     doomedOutcome: 'Two people always end up separated',
     description: 'An emotional doom. Perfect alignment cursed by geographic, political, or karmic schisms, forcing eternal distance.',
-    icon: <Heart size={15} />,
-    color: 'from-pink-950/40 to-black border-pink-800/40 text-pink-400'
+    icon: <Heart size={15} />
   },
   {
     type: 'Kingdom Fate',
     doomedOutcome: 'A nation always collapses',
     description: 'Structural decay. Civil war, imperial invasion, or spiritual corruption that inevitably turns a magnificent dynasty to ash.',
-    icon: <Shield size={15} />,
-    color: 'from-yellow-950/40 to-black border-yellow-800/40 text-amber-400'
+    icon: <Shield size={15} />
   },
   {
     type: 'Villain Fate',
     doomedOutcome: 'The MC always becomes corrupted',
     description: 'The tragedy of forced descent. No matter how noble their starting heart, the MC is systematically stripped of hope until they become the final boss.',
-    icon: <Flame size={15} />,
-    color: 'from-purple-950/40 to-black border-purple-800/40 text-purple-400'
+    icon: <Flame size={15} />
   },
   {
     type: 'Betrayal Fate',
     doomedOutcome: 'A trusted ally always turns',
     description: 'The dagger in the dark. An unbreakable brotherhood or sworn partnership is doomed by external leverage, memory wipe, or hidden avarice.',
-    icon: <ShieldAlert size={15} />,
-    color: 'from-orange-950/40 to-black border-orange-800/40 text-orange-400'
+    icon: <ShieldAlert size={15} />
   },
   {
     type: 'Poverty Fate',
     doomedOutcome: 'A clan/business/family falls into ruin',
     description: 'Socioeconomic oblivion. The merchant empire or ancient noble clan is bled dry by sabotage, high-tier sanctions, or consecutive tragedies.',
-    icon: <Award size={15} />,
-    color: 'from-yellow-950/30 to-black border-amber-900/30 text-amber-500'
+    icon: <Award size={15} />
   },
   {
     type: 'War Fate',
     doomedOutcome: 'Peace always fails',
     description: 'The cycle of conflict. Treaties are broken, borders are raided, and peace summits are assassinated, keeping the world locked in endless bloodletting.',
-    icon: <AlertTriangle size={15} />,
-    color: 'from-red-900/30 to-black border-red-700/30 text-red-500'
+    icon: <AlertTriangle size={15} />
   },
   {
     type: 'Regression Fate',
     doomedOutcome: 'No matter what changes, the loop returns',
     description: 'The temporal cage. Defeating the dark lord or saving the realm only triggers a silent rewind, wiping memory and forcing a re-run of history.',
-    icon: <RefreshCw size={15} />,
-    color: 'from-blue-950/40 to-black border-blue-800/40 text-blue-400'
+    icon: <RefreshCw size={15} />
   },
   {
     type: 'Reputation Fate',
     doomedOutcome: 'The MC is always framed or disgraced',
     description: 'Social exile. Every act of heroism is twisted into a demonic plot, turning the entire righteous alliance and public memory against them.',
-    icon: <HelpCircle size={15} />,
-    color: 'from-neutral-900 to-black border-neutral-700/40 text-neutral-400'
+    icon: <HelpCircle size={15} />
   },
   {
     type: 'World Fate',
     doomedOutcome: 'The timeline always ends in apocalypse',
     description: 'Cosmic extinction. Void beasts break the celestial dome, or the world energy dries up entirely, collapsing the timeline in beautiful heat-death.',
-    icon: <Star size={15} />,
-    color: 'from-cyan-950/40 to-black border-cyan-800/40 text-cyan-400'
+    icon: <Star size={15} />
   }
 ];
 
@@ -143,14 +134,24 @@ export const FateSurvivalExplanation: React.FC<{ compact?: boolean }> = React.me
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {FATE_TYPES.map((fate, index) => {
             const isSelected = selectedFate === index;
+            const colorCode = resolveFateTypeColorCode(fate.type);
+            const colorValue = getColorCodeValue(colorCode);
+            const selectedFateStyle = isSelected
+              ? {
+                  ...getColorCodeSurfaceStyle(colorCode, { borderOpacity: 0.4, backgroundOpacity: 0.1, glowOpacity: 0.15 }),
+                  backgroundImage: `linear-gradient(to right, color-mix(in srgb, ${colorValue} 16%, #000), #000)`,
+                }
+              : undefined;
             return (
               <div key={fate.type} className="flex flex-col">
                 <button
                   type="button"
                    tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => setSelectedFate(isSelected ? null : index)}
+                  data-color-code={colorCode}
+                  style={selectedFateStyle}
                   className={`w-full text-left p-2.5 rounded-lg border bg-gradient-to-r transition-all duration-300 flex items-center justify-between ${
                     isSelected 
-                      ? `${fate.color} shadow-[0_0_12px_rgba(139,0,0,0.15)] scale-[1.01]` 
+                      ? 'scale-[1.01]'
                       : 'border-neutral-900 hover:border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-signal'
                   }`}
                 >

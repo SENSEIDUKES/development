@@ -1,6 +1,7 @@
 import React from 'react';
 import { Character, Story } from '../../types';
 import { Users, Eye, Sparkles, RefreshCcw } from 'lucide-react';
+import { getColorCodeStyle, resolveCharacterRelationshipColorCode } from '../../../../reader-chamber/shared/colorCodes';
 
 interface CharacterProfileProps {
   char: Character;
@@ -24,15 +25,15 @@ export const CharacterProfile: React.FC<CharacterProfileProps> = ({
   setSelectedNodeChar
 }) => {
   const hasImage = Boolean(char.imageAssetId || char.imageUrl);
-  const isNonHumanPortrait = char.portraitKind === 'non-human' || char.isBeast === true;
+  const relationshipColorCode = resolveCharacterRelationshipColorCode(char, activeStory.mcName);
   const portraitImageType = 'character' as const;
 
   return (
     <div key={char.id} className="bg-neutral-950 border border-neutral-900 hover:border-neutral-800 rounded-lg p-3 flex flex-col justify-between group transition-all duration-300">
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h5 className="font-sc font-medium text-signal text-sm flex items-center gap-1.5">
-            <Users size={12} className={isNonHumanPortrait ? "text-amber-500" : "text-portal"} /> {char.name}
+          <h5 className="font-sc font-medium text-signal text-sm flex items-center gap-1.5" data-color-code={relationshipColorCode}>
+            <Users size={12} className="text-current" style={getColorCodeStyle(relationshipColorCode)} /> {char.name}
           </h5>
           <span className="text-[9px] text-neutral-500 font-mono">Ch. {char.firstAppeared || 1}</span>
         </div>

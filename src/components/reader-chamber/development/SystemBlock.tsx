@@ -12,9 +12,21 @@ import type {
   SystemPromptExpandedTone,
 } from '../shared/types';
 import { FateResultCard } from './FateResultCard';
-import { getSystemPromptColor, getSystemColorMeaning, getSystemCompactClassification, buildSystemContext } from '../shared/systemColors';
-import type { SystemColorMeaning } from '../shared/systemColors';
-export { SYSTEM_COLORS_LEGEND } from '../shared/systemColors';
+import {
+  buildSystemContext,
+  getColorCodeStyle,
+  getColorCodeSurfaceStyle,
+  getColorCodeValue,
+  getSystemColorMeaning,
+  getSystemColorStyle,
+  getSystemCompactClassification,
+  getSystemPromptColor,
+  resolveSystemBadgeColorCode,
+  resolveFateFlagColorCode,
+  resolveSystemOutcomeColorCode,
+} from '../shared/colorCodes';
+import type { ColorCodeId, SystemColorMeaning } from '../shared/colorCodes';
+export { SYSTEM_COLORS_LEGEND } from '../shared/colorCodes';
 
 interface SystemBlockProps extends React.HTMLAttributes<HTMLDivElement> {
   content: string;
@@ -55,56 +67,40 @@ function getVisibleSystemSentence(content: string, badge?: SystemPromptBadge) {
     .trim();
 }
 
-/**
- * Threat-severity treatment for the compact badge: the label stays neutral
- * and only the severity value carries color, so severity reads at a glance.
- * Deadly inverts the pill itself — black surface, white text, strong border.
- */
-const BADGE_SEVERITY_STYLES: Record<string, { pill: string; label: string; value: string }> = {
-  light: { pill: 'border-white/15 bg-white/[0.04]', label: 'text-neutral-300', value: 'text-yellow-300' },
-  moderate: { pill: 'border-white/15 bg-white/[0.04]', label: 'text-neutral-300', value: 'text-orange-400' },
-  severe: { pill: 'border-white/15 bg-white/[0.04]', label: 'text-neutral-300', value: 'text-red-400' },
-  deadly: { pill: 'border-neutral-100/80 bg-black', label: 'text-white', value: 'text-white' },
-  unknown: { pill: 'border-white/15 bg-white/[0.04]', label: 'text-neutral-300', value: 'text-neutral-400' },
-};
-
-/** Unrecognized badge values stay ordinary: neutral label, white value. */
-const BADGE_SEVERITY_NEUTRAL = {
-  pill: 'border-white/15 bg-white/[0.04]',
-  label: 'text-neutral-300',
-  value: 'text-neutral-100',
-};
-
-function getBadgeSeverityStyles(badge: SystemPromptBadge) {
-  return BADGE_SEVERITY_STYLES[badge.value.trim().toLowerCase()] ?? BADGE_SEVERITY_NEUTRAL;
-}
-
-const EXPANDED_TONE_STYLES: Record<SystemPromptExpandedTone, {
-  accent: string;
-  progress: string;
-}> = {
-  neutral: {
-    accent: 'text-current',
-    progress: 'bg-current',
-  },
-  positive: {
-    accent: 'text-emerald-300',
-    progress: 'bg-emerald-400',
-  },
-  warning: {
-    accent: 'text-amber-300',
-    progress: 'bg-amber-400',
-  },
-  danger: {
-    accent: 'text-red-300',
-    progress: 'bg-red-400',
-  },
-};
-
 function getExpandedTone(value: unknown): SystemPromptExpandedTone {
-  return typeof value === 'string' && value in EXPANDED_TONE_STYLES
+  return typeof value === 'string' && ['neutral', 'positive', 'warning', 'danger'].includes(value)
     ? value as SystemPromptExpandedTone
     : 'neutral';
+}
+
+/**
+ * Expanded sections share the outcome semantics. Neutral sections retain the
+ * event's System color so an informational panel still reads as one event.
+ */
+function getExpandedToneColorCode(
+  tone: SystemPromptExpandedTone,
+  fallbackColorCode: ColorCodeId,
+): ColorCodeId {
+  if (tone === 'neutral') return fallbackColorCode;
+  return resolveSystemOutcomeColorCode(tone === 'danger' ? 'negative' : tone);
+}
+
+function getBadgeSeverityStyles(badge: SystemPromptBadge) {
+  const { colorCode, inverted } = resolveSystemBadgeColorCode(badge.value);
+  const pillStyle = getColorCodeSurfaceStyle(colorCode, {
+    borderOpacity: inverted ? 0.8 : 0.15,
+    backgroundOpacity: inverted ? 0 : 0.04,
+  });
+
+  return {
+    colorCode,
+    inverted,
+    pillStyle: inverted
+      ? { ...pillStyle, backgroundColor: 'rgb(0 0 0)' }
+      : pillStyle,
+    labelStyle: inverted ? getColorCodeStyle(colorCode) : undefined,
+    valueStyle: getColorCodeStyle(colorCode),
+  };
 }
 
 function normalizeExpandedData(value: unknown): SystemPromptExpandedData | undefined {
@@ -139,10 +135,12 @@ function SystemExpandedProgress({
   heading,
   progress,
   tone,
+  fallbackColorCode,
 }: {
   heading: string;
   progress: SystemPromptExpandedProgress;
   tone: SystemPromptExpandedTone;
+  fallbackColorCode: ColorCodeId;
 }) {
   const min = Number.isFinite(progress.min) ? progress.min! : 0;
   const max = Number.isFinite(progress.max) && progress.max > min ? progress.max : min + 1;
@@ -154,14 +152,18 @@ function SystemExpandedProgress({
   const zeroPosition = isBipolar ? ((0 - min) / (max - min)) * 100 : 0;
   const segmentStart = Math.min(position, zeroPosition);
   const segmentWidth = Math.abs(position - zeroPosition);
-  const toneStyles = EXPANDED_TONE_STYLES[tone];
+  const colorCode = getExpandedToneColorCode(tone, fallbackColorCode);
+  const colorStyle = getColorCodeStyle(colorCode);
   const label = typeof progress.label === 'string' && progress.label.trim()
     ? progress.label.trim()
     : `${progress.value}/${progress.max}`;
 
   return (
-    <div className="mt-2.5">
-      <div className={`mb-1.5 font-mono text-[10px] font-semibold tracking-[0.16em] ${toneStyles.accent}`}>
+    <div data-color-code={colorCode} className="mt-2.5">
+      <div
+        className="mb-1.5 font-mono text-[10px] font-semibold tracking-[0.16em]"
+        style={colorStyle}
+      >
         {label}
       </div>
       <div
@@ -182,16 +184,17 @@ function SystemExpandedProgress({
         )}
         <span
           aria-hidden="true"
-          className={`absolute inset-y-0 rounded-full shadow-[0_0_8px_currentColor] ${toneStyles.progress}`}
+          className="absolute inset-y-0 rounded-full bg-current shadow-[0_0_8px_currentColor]"
           style={{
+            ...colorStyle,
             left: `${isBipolar ? segmentStart : 0}%`,
             width: `${isBipolar ? segmentWidth : position}%`,
           }}
         />
         <span
           aria-hidden="true"
-          className={`absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/50 ${toneStyles.progress}`}
-          style={{ left: `${position}%` }}
+          className="absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/50 bg-current"
+          style={{ ...colorStyle, left: `${position}%` }}
         />
       </div>
     </div>
@@ -342,11 +345,13 @@ function SystemExpandedOverlay({
           : { 'aria-label': 'System event report' })}
         tabIndex={-1}
         data-system-expanded="true"
+        data-color-code={meaning.colorCode}
         data-reader-narration="excluded"
         initial={{ opacity: 0, scale: 0.96, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.15 }}
         onClick={(event) => event.stopPropagation()}
+        style={getSystemColorStyle(meaning) as React.CSSProperties}
         className={`max-h-full w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl border bg-[#020a16]/95 px-5 py-4 md:px-6 md:py-5 shadow-[0_0_32px_color-mix(in_srgb,currentColor_18%,transparent),inset_0_1px_0_rgba(255,255,255,0.06)] outline-none ${meaning.borderColor} ${meaning.textColor}`}
       >
         <div className="flex flex-col">
@@ -389,20 +394,26 @@ function SystemExpandedOverlay({
             </div>
           )}
           {badge && badgeSeverity && (
-            <span className={`mt-2.5 self-start rounded-full border px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em] ${badgeSeverity.pill}`}>
-              <span className={badgeSeverity.label}>{badge.label}</span>{' '}
-              <span aria-hidden="true" className={badgeSeverity.label}>·</span>{' '}
-              <span className={`font-bold ${badgeSeverity.value}`}>{badge.value}</span>
+            <span
+              data-color-code={badgeSeverity.colorCode}
+              style={badgeSeverity.pillStyle}
+              className="mt-2.5 self-start rounded-full border px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em]"
+            >
+              <span className="text-neutral-300" style={badgeSeverity.labelStyle}>{badge.label}</span>{' '}
+              <span aria-hidden="true" className="text-neutral-300" style={badgeSeverity.labelStyle}>·</span>{' '}
+              <span className="font-bold" data-color-code={badgeSeverity.colorCode} style={badgeSeverity.valueStyle}>{badge.value}</span>
             </span>
           )}
           <SystemConsequenceRow changes={changes} variant="expanded" />
           {data.sections.map((section, index) => {
             const tone = getExpandedTone(section.tone);
-            const toneStyles = EXPANDED_TONE_STYLES[tone];
+            const toneColorCode = getExpandedToneColorCode(tone, meaning.colorCode);
+            const toneStyle = getColorCodeStyle(toneColorCode);
             const statusTone = section.status?.tone
               ? getExpandedTone(section.status.tone)
               : tone;
-            const statusStyles = EXPANDED_TONE_STYLES[statusTone];
+            const statusColorCode = getExpandedToneColorCode(statusTone, meaning.colorCode);
+            const statusStyle = getColorCodeStyle(statusColorCode);
             const items = Array.isArray(section.items)
               ? section.items.filter(item => typeof item === 'string' && item.trim() !== '')
               : [];
@@ -413,17 +424,23 @@ function SystemExpandedOverlay({
                 key={`${section.heading}-${index}`}
                 aria-labelledby={headingId}
                 data-system-expanded-section={section.heading.toLowerCase().replace(/[^a-z0-9]+/g, '-')}
+                data-color-code={toneColorCode}
                 className={`mt-3 border-t border-white/10 pt-3${index >= MOBILE_SECTION_LIMIT ? ' hidden md:block' : ''}`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3
                     id={headingId}
-                    className={`font-mono text-[10px] font-bold uppercase tracking-[0.22em] ${toneStyles.accent}`}
+                    className="font-mono text-[10px] font-bold uppercase tracking-[0.22em]"
+                    style={toneStyle}
                   >
                     {section.heading}
                   </h3>
                   {section.status?.label?.trim() && (
-                    <span className={`rounded-full border border-current/30 bg-black/25 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.14em] ${statusStyles.accent}`}>
+                    <span
+                      data-color-code={statusColorCode}
+                      className="rounded-full border border-current/30 bg-black/25 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.14em]"
+                      style={statusStyle}
+                    >
                       {section.status.label.trim()}
                     </span>
                   )}
@@ -439,7 +456,12 @@ function SystemExpandedOverlay({
                   </p>
                 )}
                 {section.progress && (
-                  <SystemExpandedProgress heading={section.heading} progress={section.progress} tone={tone} />
+                  <SystemExpandedProgress
+                    heading={section.heading}
+                    progress={section.progress}
+                    tone={tone}
+                    fallbackColorCode={meaning.colorCode}
+                  />
                 )}
                 {items.length > 0 && (
                   <ul className="mt-2.5 space-y-2 border-l border-current/25 pl-3">
@@ -472,20 +494,6 @@ function SystemExpandedOverlay({
  * genuine mathematical changes (QI +200, KARMA −15, HEALTH −30%); plain
  * status outcomes render unsigned.
  */
-/** Meaning colors for the outcome state word: green positive, yellow
- * uncertain, orange warning, red negative or severe risk. */
-const OUTCOME_TONE_STYLES: Record<NonNullable<SystemPromptChange['tone']>, string> = {
-  positive: 'text-emerald-400',
-  uncertain: 'text-yellow-300',
-  warning: 'text-orange-400',
-  negative: 'text-red-400',
-};
-
-/** Explicit `tone` wins; otherwise the direction carries the meaning. */
-function getOutcomeTone(change: SystemPromptChange): NonNullable<SystemPromptChange['tone']> {
-  return change.tone ?? (change.direction === 'loss' ? 'negative' : 'positive');
-}
-
 /** The compact card's bottom half holds at most two outcome slots. */
 const COMPACT_OUTCOME_LIMIT = 2;
 
@@ -540,6 +548,7 @@ function SystemConsequenceRow({ changes, variant }: { changes: SystemPromptChang
       >
         {slots.map((change, index) => {
           const { subject, state } = getCompactOutcomeParts(change);
+          const outcomeColorCode = resolveSystemOutcomeColorCode(change.tone, change.direction);
           return (
             <React.Fragment key={`${change.direction}-${change.label}-${index}`}>
               {index > 0 && (
@@ -552,7 +561,13 @@ function SystemConsequenceRow({ changes, variant }: { changes: SystemPromptChang
                 {subject && (
                   <span data-outcome-subject="true" className="text-neutral-100">{subject}{' '}</span>
                 )}
-                <span data-outcome-state="true" className={OUTCOME_TONE_STYLES[getOutcomeTone(change)]}>{state}</span>
+                <span
+                  data-outcome-state="true"
+                  data-color-code={outcomeColorCode}
+                  style={getColorCodeStyle(outcomeColorCode)}
+                >
+                  {state}
+                </span>
               </span>
             </React.Fragment>
           );
@@ -566,14 +581,19 @@ function SystemConsequenceRow({ changes, variant }: { changes: SystemPromptChang
       data-consequence-count={prioritizedChanges.length}
       className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-[color-mix(in_srgb,currentColor_18%,transparent)] pt-2"
     >
-      {prioritizedChanges.map((change, index) => (
-        <span
-          key={`${change.direction}-${change.label}-${index}`}
-          className={`font-mono text-[10px] font-semibold uppercase tracking-[0.10em] md:text-[11px] md:tracking-[0.18em] ${OUTCOME_TONE_STYLES[getOutcomeTone(change)]}`}
-        >
-          {renderConsequence(change)}
-        </span>
-      ))}
+      {prioritizedChanges.map((change, index) => {
+        const outcomeColorCode = resolveSystemOutcomeColorCode(change.tone, change.direction);
+        return (
+          <span
+            key={`${change.direction}-${change.label}-${index}`}
+            data-color-code={outcomeColorCode}
+            className="font-mono text-[10px] font-semibold uppercase tracking-[0.10em] md:text-[11px] md:tracking-[0.18em]"
+            style={getColorCodeStyle(outcomeColorCode)}
+          >
+            {renderConsequence(change)}
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -641,7 +661,19 @@ function SystemOrbEmblem({
 }
 
 export const SystemBlock = React.memo(function SystemBlock({ content, system, renderProse, className, ...props }: SystemBlockProps) {
-  const { onAnimationStart: _anim, onDrag: _drag, onDragStart: _dStart, onDragEnd: _dEnd, ...safeProps } = props;
+  const {
+    onAnimationStart: _anim,
+    onDrag: _drag,
+    onDragStart: _dStart,
+    onDragEnd: _dEnd,
+    style: suppliedStyle,
+    ...safeProps
+  } = props;
+  const getSystemRootStyle = (meaning: SystemColorMeaning, fateFlagColorCode?: ColorCodeId) => ({
+    ...getSystemColorStyle(meaning),
+    ...(fateFlagColorCode ? { '--fate-flag-color': getColorCodeValue(fateFlagColorCode) } : {}),
+    ...suppliedStyle,
+  }) as React.CSSProperties;
   const detailsId = React.useId();
   const eventKey = `${system?.kind ?? ''}|${system?.promptType ?? ''}|${system?.title ?? ''}|${content}`;
   const [expandedEventKey, setExpandedEventKey] = React.useState<string | null>(null);
@@ -658,12 +690,17 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
   const isDeathFlag = (system?.title || '').toLowerCase().includes('death flag') || 
                       (system?.kind || '').toLowerCase().includes('death flag') || 
                       content.toLowerCase().includes('death flag');
+  const fateFlagColorCode = isDeathFlag
+    ? resolveFateFlagColorCode('death')
+    : isIronFate
+      ? resolveFateFlagColorCode('ironFate')
+      : undefined;
 
   // If structured system object exists, render the matching System presentation.
   if (system) {
     if (system.fateResult) {
       return (
-        <div {...safeProps}>
+        <div {...safeProps} style={suppliedStyle}>
           <FateResultCard data={system.fateResult} />
         </div>
       );
@@ -674,11 +711,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
     const rows = Array.isArray(system.rows) ? system.rows : [];
     const visibleChanges = Array.isArray(system.changes) ? system.changes : [];
 
-    const menacingTone = isDeathFlag
-      ? ' animate-menacing-red'
-      : isIronFate
-        ? ' animate-menacing-amber'
-        : '';
+    const menacingTone = fateFlagColorCode ? ' animate-menacing-fate' : '';
 
     // Compact regular System Prompt: title-led header with direct understandable
     // headline, secondary flavor text, single-term semantic classification line,
@@ -711,6 +744,8 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
             data-system-prompt-state={isExpanded ? 'expanded' : 'compact'}
+            data-color-code={meaning.colorCode}
+            style={getSystemRootStyle(meaning, fateFlagColorCode)}
             className={`system-block system-window cursor-default my-6 md:my-8 mx-auto max-w-xl relative overflow-hidden rounded-xl border border-[color-mix(in_srgb,currentColor_40%,transparent)] bg-[color-mix(in_srgb,currentColor_7%,rgba(5,7,11,0.92))] px-4 py-3 md:px-5 md:py-3.5 shadow-[0_0_20px_color-mix(in_srgb,currentColor_10%,transparent),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all duration-300 ${accent}${menacingTone} ${className || ''}`}
             {...safeProps}
           >
@@ -732,7 +767,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
                     )}
                     <span className="mt-1 block font-mono text-[9px] uppercase tracking-wider text-neutral-500">
                       {'✦ '}
-                      <span className={meaning.textColor}>{classification.subtype}</span>
+                      <span className={meaning.textColor} data-color-code={meaning.colorCode}>{classification.subtype}</span>
                       {' ✦'}
                     </span>
                   </div>
@@ -756,10 +791,24 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
                       <span className="flex items-center justify-end gap-1.5 font-semibold tracking-wide text-right text-neutral-100">
                         {row.value}
                         {row.trend === 'up' && (
-                          <ArrowUp data-row-trend="up" aria-hidden="true" className="h-3 w-3 shrink-0 text-emerald-400" strokeWidth={2.6} />
+                          <ArrowUp
+                            data-row-trend="up"
+                            data-color-code={resolveSystemOutcomeColorCode(undefined, 'gain')}
+                            aria-hidden="true"
+                            className="h-3 w-3 shrink-0"
+                            style={getColorCodeStyle(resolveSystemOutcomeColorCode(undefined, 'gain'))}
+                            strokeWidth={2.6}
+                          />
                         )}
                         {row.trend === 'down' && (
-                          <ArrowDown data-row-trend="down" aria-hidden="true" className="h-3 w-3 shrink-0 text-red-400" strokeWidth={2.6} />
+                          <ArrowDown
+                            data-row-trend="down"
+                            data-color-code={resolveSystemOutcomeColorCode(undefined, 'loss')}
+                            aria-hidden="true"
+                            className="h-3 w-3 shrink-0"
+                            style={getColorCodeStyle(resolveSystemOutcomeColorCode(undefined, 'loss'))}
+                            strokeWidth={2.6}
+                          />
                         )}
                       </span>
                     </div>
@@ -770,9 +819,13 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
                   pill with the label at the left end and the severity value at
                   the right end, so its size never varies with content. */}
               {badge && badgeSeverity && (
-                <span className={`mt-2.5 flex w-full items-center justify-between gap-3 rounded-full border px-3 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em] ${badgeSeverity.pill}`}>
-                  <span className={badgeSeverity.label}>{badge.label}</span>{' '}
-                  <span className={`font-bold ${badgeSeverity.value}`}>{badge.value}</span>
+                <span
+                  data-color-code={badgeSeverity.colorCode}
+                  style={badgeSeverity.pillStyle}
+                  className="mt-2.5 flex w-full items-center justify-between gap-3 rounded-full border px-3 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.14em] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] md:text-[10px] md:tracking-[0.18em]"
+                >
+                  <span className="text-neutral-300" style={badgeSeverity.labelStyle}>{badge.label}</span>{' '}
+                  <span className="font-bold" data-color-code={badgeSeverity.colorCode} style={badgeSeverity.valueStyle}>{badge.value}</span>
                 </span>
               )}
 
@@ -841,14 +894,16 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
         animate={{ opacity: 1, y: 0, scale: 1 }}
         whileHover={{ scale: 1.02 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
+        data-color-code={meaning.colorCode}
+        style={getSystemRootStyle(meaning, fateFlagColorCode)}
         className={`system-block holographic-panel cursor-pointer my-6 md:my-8 rounded-md border font-mono p-3 md:p-4 max-w-xl mx-auto transition-all duration-300 ${colorStyles} ${className || ''}`}
         {...safeProps}
       >
         <div className="flex flex-col space-y-3">
           <div className="flex items-center justify-between border-b pb-2 border-inherit/30">
             <div className="flex items-center space-x-2">
-              {isDeathFlag && <Skull className="w-5 h-5 text-red-500 animate-pulse shrink-0" />}
-              {isIronFate && <AlertTriangle className="w-5 h-5 text-amber-500 animate-bounce shrink-0" />}
+              {isDeathFlag && <Skull data-color-code={resolveFateFlagColorCode('death')} style={getColorCodeStyle(resolveFateFlagColorCode('death'))} className="w-5 h-5 animate-pulse shrink-0" />}
+              {isIronFate && <AlertTriangle data-color-code={resolveFateFlagColorCode('ironFate')} style={getColorCodeStyle(resolveFateFlagColorCode('ironFate'))} className="w-5 h-5 animate-bounce shrink-0" />}
               <div className="flex flex-col">
                 <span className="font-bold uppercase tracking-widest text-xs md:text-sm leading-tight">{system.title}</span>
                 <span className="text-[9px] uppercase tracking-wider opacity-60 font-mono mt-0.5">
@@ -889,17 +944,18 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
   let fallbackColorStyles = getSystemPromptColor(undefined, text);
   const meaning = getSystemColorMeaning(undefined, text);
 
-  if (isDeathFlag) {
-    fallbackColorStyles += ' animate-menacing-red';
-  } else if (isIronFate) {
-    fallbackColorStyles += ' animate-menacing-amber';
-  }
+  if (fateFlagColorCode) fallbackColorStyles += ' animate-menacing-fate';
 
   return (
-    <div {...props} className={`my-6 md:my-8 p-4 md:p-5 bg-black/50 border font-mono text-[11px] md:text-sm rounded-lg text-center tracking-widest leading-relaxed transition-all duration-500 hover:brightness-125 hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] ${fallbackColorStyles} ${className || ''}`}>
+    <div
+      {...props}
+      data-color-code={meaning.colorCode}
+      style={getSystemRootStyle(meaning, fateFlagColorCode)}
+      className={`my-6 md:my-8 p-4 md:p-5 bg-black/50 border font-mono text-[11px] md:text-sm rounded-lg text-center tracking-widest leading-relaxed transition-all duration-500 hover:brightness-125 hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] ${fallbackColorStyles} ${className || ''}`}
+    >
       <div className="flex flex-col items-center justify-center mb-1.5 md:mb-2">
-        {isDeathFlag && <Skull className="w-5 h-5 md:w-6 md:h-6 text-red-500 animate-pulse mb-1.5" />}
-        {isIronFate && <AlertTriangle className="w-5 h-5 md:w-6 md:h-6 text-amber-500 animate-bounce mb-1.5" />}
+        {isDeathFlag && <Skull data-color-code={resolveFateFlagColorCode('death')} style={getColorCodeStyle(resolveFateFlagColorCode('death'))} className="w-5 h-5 md:w-6 md:h-6 animate-pulse mb-1.5" />}
+        {isIronFate && <AlertTriangle data-color-code={resolveFateFlagColorCode('ironFate')} style={getColorCodeStyle(resolveFateFlagColorCode('ironFate'))} className="w-5 h-5 md:w-6 md:h-6 animate-bounce mb-1.5" />}
         <div className="text-[9px] uppercase tracking-wider opacity-60 font-semibold">
           ✦ {meaning.name} ✦
         </div>

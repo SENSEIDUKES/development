@@ -44,7 +44,7 @@ export type {
 } from '../components/reader-chamber/development/InlineAudio';
 
 export * from '../components/reader-chamber/shared/types';
-export * from '../components/reader-chamber/shared/systemColors';
+export * from '../components/reader-chamber/shared/colorCodes';
 export * from '../components/reader-chamber/shared/readerTypography';
 export * from '../components/reader-chamber/shared/readerLegend';
 export * from '../components/reader-chamber/shared/autoCuePolicy';

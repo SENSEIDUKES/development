@@ -103,34 +103,19 @@
   transition: color 0.4s ease, opacity 0.4s ease;
 }
 
-@keyframes menacing-pulse-red {
+@keyframes menacing-pulse-fate {
   0%, 100% {
-    box-shadow: 0 0 12px rgba(225, 29, 72, 0.25), inset 0 0 6px rgba(225, 29, 72, 0.15);
-    border-color: rgba(225, 29, 72, 0.4);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--fate-flag-color, currentColor) 25%, transparent), inset 0 0 6px color-mix(in srgb, var(--fate-flag-color, currentColor) 15%, transparent);
+    border-color: color-mix(in srgb, var(--fate-flag-color, currentColor) 40%, transparent);
   }
   50% {
-    box-shadow: 0 0 25px rgba(225, 29, 72, 0.75), inset 0 0 12px rgba(225, 29, 72, 0.35);
-    border-color: rgba(225, 29, 72, 1);
+    box-shadow: 0 0 25px color-mix(in srgb, var(--fate-flag-color, currentColor) 75%, transparent), inset 0 0 12px color-mix(in srgb, var(--fate-flag-color, currentColor) 35%, transparent);
+    border-color: var(--fate-flag-color, currentColor);
   }
 }
 
-@keyframes menacing-pulse-amber {
-  0%, 100% {
-    box-shadow: 0 0 12px rgba(245, 158, 11, 0.25), inset 0 0 6px rgba(245, 158, 11, 0.15);
-    border-color: rgba(245, 158, 11, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 25px rgba(245, 158, 11, 0.75), inset 0 0 12px rgba(245, 158, 11, 0.35);
-    border-color: rgba(245, 158, 11, 1);
-  }
-}
-
-.animate-menacing-red {
-  animation: menacing-pulse-red 3s infinite ease-in-out;
-}
-
-.animate-menacing-amber {
-  animation: menacing-pulse-amber 3s infinite ease-in-out;
+.animate-menacing-fate {
+  animation: menacing-pulse-fate 3s infinite ease-in-out;
 }
 
 @keyframes screen-shake-intense {
@@ -205,7 +190,9 @@
   --color-entity-unknown: #a3a3a3; /* Unknown - Gray (neutral-400) */
   --color-entity-lover: #f472b6; /* Lover - Pink (pink-400) */
   --color-entity-mentor: #fbbf24; /* Mentor - Yellow/Gold (amber-400) */
+  --color-entity-non-human: #a78bfa; /* Named non-human individual - Violet */
   --color-entity-fallback: var(--color-entity-mc);
+  --color-system-corruption: #fb7185; /* Permanent curse/tragedy - accessible dark rose */
 
   --color-location-regular: #c084fc; /* Regular Location - Purple (purple-400) */
   --color-location-special: #f59e0b; /* Special Location - Gold (amber-500) */
@@ -225,6 +212,8 @@
   --color-entity-lover: #60a5fa; /* Shift pinks to clear blue */
   --color-entity-friend: #fbbf24; /* Shift greens to warm yellow */
   --color-item-decent: #fbbf24;
+  --color-entity-non-human: #a78bfa;
+  --color-system-corruption: #fca5a5;
 }
 
 :root[data-palette="deuteranopia"] {
@@ -232,6 +221,8 @@
   --color-entity-lover: #38bdf8; /* Shift pinks to deep sky blue */
   --color-entity-friend: #daa520; /* High-contrast goldenrod yellow */
   --color-item-decent: #daa520;
+  --color-entity-non-human: #a78bfa;
+  --color-system-corruption: #fca5a5;
 }
 
 :root[data-palette="tritanopia"] {
@@ -240,6 +231,8 @@
   --color-entity-friend: #14b8a6; /* Shift greens to teal/cyan */
   --color-entity-mc: #fca5a5; /* Shift blues */
   --color-item-good: #c084fc;
+  --color-entity-non-human: #c084fc;
+  --color-system-corruption: #fca5a5;
 }
 
 :root[data-palette="high_contrast_dark"] {
@@ -249,6 +242,8 @@
   --color-entity-unknown: #cccccc;
   --color-entity-lover: #ff66ff; /* Pure vivid magenta */
   --color-entity-mentor: #ffff33;
+  --color-entity-non-human: #cc33ff;
+  --color-system-corruption: #ff3333;
   --color-location-regular: #cc33ff;
   --color-location-special: #ffff33;
   --color-item-basic: #ffffff;
@@ -270,6 +265,8 @@
 .highlight-lover { color: var(--color-entity-lover); font-weight: 500; transition: color 0.3s ease; }
 .highlight-mentor { color: var(--color-entity-mentor); font-weight: 500; transition: color 0.3s ease; }
 .highlight-ally { color: var(--color-entity-ally); font-weight: 500; transition: color 0.3s ease; }
+.highlight-non-human { color: var(--color-entity-non-human); font-weight: 500; transition: color 0.3s ease; }
+.highlight-corruption { color: var(--color-system-corruption); font-weight: 500; transition: color 0.3s ease; }
 .highlight-fallback { color: var(--color-entity-fallback); font-weight: 500; transition: color 0.3s ease; }
 
 .highlight-location { color: var(--color-location-regular); font-weight: 500; transition: color 0.3s ease; }

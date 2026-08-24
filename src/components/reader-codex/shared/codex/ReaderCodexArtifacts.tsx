@@ -7,6 +7,11 @@ import { isHubStoryLockedForUser } from '../codexCompatibility';
 import { ReaderCodexImageGallery } from './ReaderCodexImageGallery';
 import { resolveEntityImageHistory } from './entityImageHistory';
 import { handleDownload } from '../codexCompatibility';
+import {
+  getColorCodeSurfaceStyle,
+  getColorCodeValue,
+  resolveArtifactColorCode,
+} from '../../../reader-chamber/shared/colorCodes';
 
 
 interface ReaderCodexArtifactsProps {
@@ -152,14 +157,28 @@ export function ReaderCodexArtifacts({
             const canGenerate = hasAppeared && (!hasImage || art.evolutionReady) && !isFreeUserOnHubStory;
             const displayedImage = activePreview ? activePreview.urls[activePreview.selectedIndex] : art.imageUrl;
             const isMythicOrTranscendent = art.tier === 'Primordial' || art.tier === 'Heaven';
-            const tierColor =
-              art.tier === 'Primordial' ? 'text-yellow-400 border-yellow-500/50 shadow-[0_0_15px_rgba(250,204,21,0.2)] bg-gradient-to-br from-yellow-950/40 to-neutral-950/90' :
-              art.tier === 'Heaven' ? 'text-cyan-400 border-cyan-500/50 shadow-[0_0_15px_rgba(34,211,238,0.2)] animate-pulse bg-gradient-to-br from-cyan-950/40 to-neutral-950/90' :
-              art.tier === 'Earth' ? 'text-emerald-400 border-emerald-900 bg-emerald-950/20' :
-              'text-neutral-500 border-neutral-900 bg-neutral-950';
+            const tierColorCode = resolveArtifactColorCode(art);
+            const tierColorValue = getColorCodeValue(tierColorCode);
+            const tierCardStyle = {
+              ...getColorCodeSurfaceStyle(tierColorCode, {
+                borderOpacity: isMythicOrTranscendent ? 0.5 : art.tier === 'Earth' ? 0.3 : 0.2,
+                backgroundOpacity: art.tier === 'Earth' ? 0.12 : 0.08,
+                glowOpacity: isMythicOrTranscendent ? 0.2 : undefined,
+              }),
+              ...(isMythicOrTranscendent
+                ? {
+                    backgroundImage: `linear-gradient(to bottom right, color-mix(in srgb, ${tierColorValue} 18%, transparent), rgb(10 10 10 / 90%))`,
+                  }
+                : {}),
+            };
 
             return (
-              <div key={art.id} className={`collectible-card p-4 border flex flex-col justify-between transition-all overflow-hidden relative group/card ${tierColor} ${art.evolutionReady && !activePreview ? 'ring-2 ring-portal/50' : ''}`}>
+              <div
+                key={art.id}
+                data-color-code={tierColorCode}
+                style={tierCardStyle}
+                className={`collectible-card p-4 border flex flex-col justify-between transition-all overflow-hidden relative group/card ${art.tier === 'Heaven' ? 'animate-pulse' : ''} ${art.evolutionReady && !activePreview ? 'ring-2 ring-portal/50' : ''}`}
+              >
                 {/* Holographic foil effect for higher tiers */}
                 {isMythicOrTranscendent && (
                   <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMDAwIi8+CjxwYXRoIGQ9Ik0wIDRMMCAwTDQgNEwwIDQiIGZpbGw9IiMzMzMiLz4KPC9zdmc+')] opacity-20 mix-blend-color-dodge pointer-events-none"></div>
@@ -204,7 +223,14 @@ export function ReaderCodexArtifacts({
                   <div className="flex items-start justify-between mb-2">
                     <h4 className="font-sc font-bold text-signal text-sm tracking-wide max-w-[60%]">{art.name}</h4>
                     <div className="flex flex-col items-end gap-1">
-                      <span className={`text-[9px] border px-2 py-0.5 rounded font-mono uppercase tracking-widest ${tierColor}`}>
+                      <span
+                        data-color-code={tierColorCode}
+                        style={getColorCodeSurfaceStyle(tierColorCode, {
+                          borderOpacity: 0.5,
+                          backgroundOpacity: 0.1,
+                        })}
+                        className="text-[9px] border px-2 py-0.5 rounded font-mono uppercase tracking-widest"
+                      >
                         {art.tier}
                       </span>
                       {hasAppeared ? (

@@ -4,6 +4,10 @@ import {
 } from 'lucide-react';
 import type { CodexContextEditorTarget } from './CodexContext';
 import { StoryMemory, StoryWorld } from '../types';
+import {
+  getColorCodeSurfaceStyle,
+  resolvePowerStageColorCode,
+} from '../../../reader-chamber/shared/colorCodes';
 
 interface ReaderCodexPowerProps {
   memory: StoryMemory;
@@ -24,6 +28,8 @@ export function ReaderCodexPower({
   charsToRender,
   openEntryContextEditor,
 }: ReaderCodexPowerProps) {
+  const activeTierColorCode = resolvePowerStageColorCode(memory.currentPowerStage);
+
   return (
     <>
 {/* PAGE 3: Power system (Sovereign Cultivation Power-Ranking Chart) */}
@@ -45,7 +51,11 @@ export function ReaderCodexPower({
                 <span className="hidden sm:flex items-center px-2 py-1.5 rounded-lg border border-white/10 bg-black/50 text-neutral-400">
                   <LayoutGrid size={10} />
                 </span>
-                <span className="text-[10px] px-2.5 py-1.5 font-mono codex-panel-gold text-amber-400 rounded-lg">
+                <span
+                  className="text-[10px] px-2.5 py-1.5 font-mono border rounded-lg"
+                  data-color-code={activeTierColorCode}
+                  style={getColorCodeSurfaceStyle(activeTierColorCode, { borderOpacity: 0.2, backgroundOpacity: 0.08 })}
+                >
                   Active Tier: {memory.currentPowerStage}
                 </span>
               </div>

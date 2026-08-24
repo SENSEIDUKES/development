@@ -6,6 +6,12 @@ import { resolveEntityImageHistory } from '../entityImageHistory';
 import { handleDownload } from '../../codexCompatibility';
 import { AGENTS } from '../../codexCompatibility';
 import type { CodexVoiceQuoteStatus } from '../../hooks/useCodexVoiceQuote';
+import {
+  getColorCodeStyle,
+  getColorCodeSurfaceStyle,
+  resolveCharacterRelationshipColorCode,
+  resolveCharacterStatusColorCode,
+} from '../../../../reader-chamber/shared/colorCodes';
 
 interface CharacterCardProps {
   char: Character;
@@ -45,6 +51,8 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
   const displayedImage = activePreview ? activePreview.urls[activePreview.selectedIndex] : char.imageUrl;
   const portraitImageType = 'character' as const;
   const hasImage = Boolean(char.imageAssetId || char.imageUrl);
+  const statusColorCode = resolveCharacterStatusColorCode(char.status);
+  const relationshipColorCode = resolveCharacterRelationshipColorCode(char, activeStory.mcName);
   const visualAriaLabel = isGenerating
     ? `VERSA is working on visual for ${char.name}`
     : !hasAppeared
@@ -138,11 +146,14 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
                 {char.relevanceState}
               </span>
             )}
-            <span className={`text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded border ${
-              char.status === 'alive' ? 'bg-green-950/40 text-green-400 border-green-900' :
-              char.status === 'deceased' ? 'bg-red-950/40 text-human border-red-900' :
-              'bg-neutral-950 text-neutral-500 border-neutral-800'
-            }`}>
+            <span
+              data-color-code={statusColorCode}
+              style={getColorCodeSurfaceStyle(statusColorCode, {
+                borderOpacity: 0.35,
+                backgroundOpacity: 0.12,
+              })}
+              className="text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded border"
+            >
               {char.status}
             </span>
           </div>
@@ -283,7 +294,16 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
         </div>
 
         <div className="border-t border-neutral-900 mt-4 pt-3 flex justify-between items-center text-[10px]">
-          <span className="text-neutral-500">Relation to MC: <strong className="text-neutral-300 font-medium">{char.relationshipToMC || 'Neutral'}</strong></span>
+          <span className="text-neutral-500">
+            Relation to MC:{' '}
+            <strong
+              data-color-code={relationshipColorCode}
+              style={getColorCodeStyle(relationshipColorCode)}
+              className="font-medium"
+            >
+              {char.relationshipToMC || 'Neutral'}
+            </strong>
+          </span>
           <button
              tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => beginCharEdit(char)}
             className="text-neutral-500 hover:text-portal transition-colors font-sc uppercase"

@@ -9,6 +9,7 @@ import type {
   StoryWorld,
 } from '../shared/types';
 import { resetMockState } from '../shared/stubs';
+import { getColorCodeValue } from '../shared/colorCodes';
 import { CodexCard } from './CodexCard';
 import { ReaderViewport } from './ReaderViewport';
 
@@ -359,7 +360,8 @@ describe('Reader Codex and System routing', () => {
     });
 
     const surface = container.querySelector<HTMLElement>('[data-accent="true"]');
-    expect(surface?.style.getPropertyValue('--library-card-accent')).toBe('#E5E7EB');
+    expect(surface?.getAttribute('data-color-code')).toBe('itemBasic');
+    expect(surface?.style.getPropertyValue('--library-card-accent')).toBe(getColorCodeValue('itemBasic'));
     expect(surface?.className).toContain('group/reveal');
     expect(surface?.querySelector('[data-slot="codex-card-ambience"]')).toBeTruthy();
 
@@ -398,6 +400,42 @@ describe('Reader Codex and System routing', () => {
     });
 
     const surface = container.querySelector<HTMLElement>('[data-accent="true"]');
-    expect(surface?.style.getPropertyValue('--library-card-accent')).toBe('#4ADE80');
+    expect(surface?.getAttribute('data-color-code')).toBe('ally');
+    expect(surface?.style.getPropertyValue('--library-card-accent')).toBe(getColorCodeValue('ally'));
+  });
+
+  it('updates the reveal card Color Code when the current relationship changes', () => {
+    const entry = {
+      id: 'codex-dynamic-relationship',
+      name: 'Aster',
+      description: 'A watcher whose allegiance changes with the story.',
+      relationshipToMC: 'ally',
+      manifestationImportance: visualImportance,
+    };
+    const renderCard = () => {
+      act(() => {
+        root.render(
+          <CodexCard
+            revealTerm={{ type: 'character', entry }}
+            activeStory={{ mcName: 'Rin', assignedRevealBackdrops: {} }}
+          />,
+        );
+      });
+    };
+
+    renderCard();
+    let surface = container.querySelector<HTMLElement>('[data-accent="true"]');
+    expect(surface?.getAttribute('data-color-code')).toBe('ally');
+    expect(surface?.style.getPropertyValue('--library-card-accent')).toBe(getColorCodeValue('ally'));
+
+    entry.relationshipToMC = 'enemy';
+    renderCard();
+    surface = container.querySelector<HTMLElement>('[data-accent="true"]');
+    expect(surface?.getAttribute('data-color-code')).toBe('enemy');
+    expect(surface?.style.getPropertyValue('--library-card-accent')).toBe(getColorCodeValue('enemy'));
+
+    entry.relationshipToMC = 'ally';
+    renderCard();
+    expect(container.querySelector<HTMLElement>('[data-accent="true"]')?.getAttribute('data-color-code')).toBe('ally');
   });
 });

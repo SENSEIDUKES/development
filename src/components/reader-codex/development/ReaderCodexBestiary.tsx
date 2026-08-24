@@ -1,10 +1,16 @@
 import { BookOpen, ShieldAlert, Sparkles, Users, Volume2 } from 'lucide-react';
 import type { Character, CreatureSpecies } from '../shared/types';
 import { resolveEntityImageHistory } from '../shared/codex/entityImageHistory';
+import {
+  getColorCodeSurfaceStyle,
+  resolveCharacterRelationshipColorCode,
+  resolveCreatureThreatColorCode,
+} from '../../reader-chamber/shared/colorCodes';
 
 interface ReaderCodexBestiaryProps {
   bestiary: CreatureSpecies[];
   characters: Character[];
+  mcName?: string;
 }
 
 const manifestationUrl = (species: CreatureSpecies): string => {
@@ -27,6 +33,7 @@ const chapterList = (chapters: number[]): string => chapters.length > 0
 export function ReaderCodexBestiary({
   bestiary,
   characters,
+  mcName,
 }: ReaderCodexBestiaryProps) {
   const charactersById = new Map(characters.map(character => [character.id, character]));
 
@@ -65,6 +72,7 @@ export function ReaderCodexBestiary({
               .map(id => charactersById.get(id))
               .filter((character): character is Character => Boolean(character));
             const hasLinkedIndividuals = species.notableIndividualIds.length > 0;
+            const threatColorCode = resolveCreatureThreatColorCode(species.threatLevel);
 
             return (
               <article
@@ -98,7 +106,14 @@ export function ReaderCodexBestiary({
                           {species.classification}
                         </p>
                       </div>
-                      <span className="rounded border border-orange-900/70 bg-orange-950/20 px-1.5 py-1 font-mono text-[8px] uppercase tracking-wider text-orange-300">
+                      <span
+                        data-color-code={threatColorCode}
+                        style={getColorCodeSurfaceStyle(threatColorCode, {
+                          borderOpacity: 0.3,
+                          backgroundOpacity: 0.1,
+                        })}
+                        className="rounded border px-1.5 py-1 font-mono text-[8px] uppercase tracking-wider"
+                      >
                         {species.threatLevel}
                       </span>
                     </div>
@@ -146,11 +161,22 @@ export function ReaderCodexBestiary({
                     </p>
                     {notableIndividuals.length > 0 ? (
                       <div className="flex flex-wrap gap-1.5">
-                        {notableIndividuals.map(individual => (
-                          <span key={individual.id} className="rounded border border-portal/30 bg-portal/5 px-1.5 py-1 text-[9px] text-portal">
-                            {individual.name}
-                          </span>
-                        ))}
+                        {notableIndividuals.map(individual => {
+                          const relationshipColorCode = resolveCharacterRelationshipColorCode(individual, mcName);
+                          return (
+                            <span
+                              key={individual.id}
+                              data-color-code={relationshipColorCode}
+                              style={getColorCodeSurfaceStyle(relationshipColorCode, {
+                                borderOpacity: 0.3,
+                                backgroundOpacity: 0.05,
+                              })}
+                              className="rounded border px-1.5 py-1 text-[9px]"
+                            >
+                              {individual.name}
+                            </span>
+                          );
+                        })}
                       </div>
                     ) : (
                       <p className="text-[10px] text-neutral-600">

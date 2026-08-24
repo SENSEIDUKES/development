@@ -133,7 +133,7 @@ describe('CardWorkshopView', () => {
     // with the title-led header, classification line, key/value rows carrying
     // direction arrows on changed values, the System outcome row, and the
     // muted gray serif TTS prose in its own bottom section.
-    const compactBlock = container.querySelector('.system-block');
+    const compactBlock = container.querySelector<HTMLElement>('.system-block');
     expect(compactBlock?.className).toContain('system-window');
     expect(compactBlock?.className).toContain('rounded-xl');
     expect(compactBlock?.textContent).toContain('Cultivation Breakthrough');
@@ -172,16 +172,16 @@ describe('CardWorkshopView', () => {
     expect(consequenceRow?.textContent).toContain('|');
     const outcomeStates = [...(consequenceRow?.querySelectorAll('[data-outcome-state]') ?? [])] as HTMLElement[];
     expect(outcomeStates.map(element => element.textContent)).toEqual(['Ascended', 'Increased']);
-    expect(outcomeStates.every(element => element.classList.contains('text-emerald-400'))).toBe(true);
+    expect(outcomeStates.map(element => element.dataset.colorCode)).toEqual(['ally', 'ally']);
     const outcomeSubjects = [...(consequenceRow?.querySelectorAll('[data-outcome-subject]') ?? [])] as HTMLElement[];
     expect(outcomeSubjects.map(element => element.textContent?.trim())).toEqual(['Realm', 'Lifespan']);
     expect(outcomeSubjects.every(element => element.classList.contains('text-neutral-100'))).toBe(true);
     // Compact prompts keep the semantic System color system (breakthrough → gold).
-    expect(compactBlock?.className).toContain('text-amber-400');
+    expect(compactBlock?.dataset.colorCode).toBe('mentor');
     // Changed row values carry a direction arrow: upgrades green.
     const trendArrows = [...(compactBlock?.querySelectorAll('[data-row-trend]') ?? [])];
     expect(trendArrows.map(element => element.getAttribute('data-row-trend'))).toEqual(['up', 'up']);
-    expect(trendArrows.every(element => element.classList.contains('text-emerald-400'))).toBe(true);
+    expect(trendArrows.every(element => element.getAttribute('data-color-code') === 'ally')).toBe(true);
     expect(container.querySelector('[role="tabpanel"]')?.textContent).not.toContain('Human Portrait');
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
 
@@ -203,11 +203,11 @@ describe('CardWorkshopView', () => {
     expect(promiseBlock?.textContent).not.toContain('Sect Enmity');
     const promiseStates = [...(promiseBlock?.querySelectorAll('[data-consequence-count] [data-outcome-state]') ?? [])] as HTMLElement[];
     expect(promiseStates.map(element => element.textContent)).toEqual(['Decreased', 'Stripped']);
-    expect(promiseStates.every(element => element.classList.contains('text-red-400'))).toBe(true);
+    expect(promiseStates.every(element => element.getAttribute('data-color-code') === 'enemy')).toBe(true);
     // The broken oath's sealed record is a regression: red down-arrow.
     const promiseTrends = [...(promiseBlock?.querySelectorAll('[data-row-trend]') ?? [])];
     expect(promiseTrends.map(element => element.getAttribute('data-row-trend'))).toEqual(['down']);
-    expect(promiseTrends[0]?.classList.contains('text-red-400')).toBe(true);
+    expect(promiseTrends[0]?.getAttribute('data-color-code')).toBe('enemy');
 
     await clickButton('Target Scan');
     const scanBlock = container.querySelector('.system-block');
@@ -231,7 +231,7 @@ describe('CardWorkshopView', () => {
     // takes the severity color.
     const scanSpans = [...(scanBlock?.querySelectorAll('span') ?? [])];
     const enemySubtype = scanSpans.find(element => element.textContent === 'Enemy');
-    expect(enemySubtype?.className).toContain('text-red-500');
+    expect(enemySubtype?.getAttribute('data-color-code')).toBe('enemy');
     expect(scanBlock?.textContent).not.toContain('Combat');
     const cultivationLabel = scanSpans.find(element => element.textContent === 'Cultivation');
     expect(cultivationLabel?.className).toContain('text-neutral-400');
@@ -240,11 +240,11 @@ describe('CardWorkshopView', () => {
     const badgeLabel = scanSpans.find(element => element.textContent === 'Threat Assessment');
     expect(badgeLabel?.className).toContain('text-neutral-300');
     const badgeSeverity = scanSpans.find(element => element.textContent === 'Moderate');
-    expect(badgeSeverity?.className).toContain('text-orange-400');
+    expect(badgeSeverity?.getAttribute('data-color-code')).toBe('itemGreat');
     const elderCodexAction = [...(scanBlock?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
       .find(element => element.textContent === 'Elder Kaelen');
     expect(elderCodexAction).toBeTruthy();
-    expect(elderCodexAction?.className).toContain('text-red-500');
+    expect(elderCodexAction?.getAttribute('data-color-code')).toBe('enemy');
     await act(async () => elderCodexAction!.click());
     expect(document.body.querySelector('[role="dialog"][aria-label="Elder Kaelen Codex details"]'))
       .toBeTruthy();
@@ -294,10 +294,7 @@ describe('CardWorkshopView', () => {
       .toEqual(['Realm Ascended', 'Karma Decreased']);
     const outcomeStates = [...(outcomeRow?.querySelectorAll('[data-outcome-state]') ?? [])] as HTMLElement[];
     expect(outcomeStates.map(element => element.textContent)).toEqual(['Ascended', 'Decreased']);
-    expect(outcomeStates.map(element => element.className)).toEqual([
-      expect.stringContaining('text-emerald-400'),
-      expect.stringContaining('text-red-400'),
-    ]);
+    expect(outcomeStates.map(element => element.dataset.colorCode)).toEqual(['ally', 'enemy']);
     const outcomeSubjects = [...(outcomeRow?.querySelectorAll('[data-outcome-subject]') ?? [])] as HTMLElement[];
     expect(outcomeSubjects.map(element => element.textContent?.trim())).toEqual(['Realm', 'Karma']);
     expect(outcomeSubjects.every(element => element.classList.contains('text-neutral-100'))).toBe(true);
@@ -377,7 +374,7 @@ describe('CardWorkshopView', () => {
     const elderHanAction = [...(overlay?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
       .find(element => element.textContent === 'Elder Han');
     expect(elderHanAction).toBeTruthy();
-    expect(elderHanAction?.className).toContain('text-[#d4af37]');
+    expect(elderHanAction?.getAttribute('data-color-code')).toBe('enemy');
     await act(async () => elderHanAction!.click());
     expect(document.body.querySelector('[role="dialog"][aria-label="Elder Han Codex details"]'))
       .toBeTruthy();
@@ -610,7 +607,7 @@ describe('CardWorkshopView', () => {
     const elderCodexAction = [...(systemBlock?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
       .find(element => element.textContent === 'Elder Kaelen');
     expect(elderCodexAction).toBeTruthy();
-    expect(elderCodexAction?.className).toContain('text-red-500');
+    expect(elderCodexAction?.getAttribute('data-color-code')).toBe('enemy');
     await act(async () => elderCodexAction!.click());
     expect(document.body.querySelector('[role="dialog"][aria-label="Elder Kaelen Codex details"]'))
       .toBeTruthy();

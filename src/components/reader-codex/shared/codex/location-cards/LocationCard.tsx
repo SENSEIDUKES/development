@@ -4,6 +4,10 @@ import { Download, Compass, Lock, MapPin, Eye, RefreshCcw, Loader2, Sparkles, Se
 import { ReaderCodexImageGallery } from '../ReaderCodexImageGallery';
 import { resolveEntityImageHistory } from '../entityImageHistory';
 import { handleDownload } from '../../codexCompatibility';
+import {
+  getColorCodeSurfaceStyle,
+  resolveLocationSafetyColorCode,
+} from '../../../../reader-chamber/shared/colorCodes';
 
 interface LocationCardProps {
   loc: Location;
@@ -32,6 +36,7 @@ export const LocationCard: React.FC<LocationCardProps> = ({
 }) => {
   const displayedImage = activePreview ? activePreview.urls[activePreview.selectedIndex] : loc.imageUrl;
   const hasImage = Boolean(loc.imageAssetId || loc.imageUrl);
+  const safetyColorCode = resolveLocationSafetyColorCode(loc.safetyLevel);
 
   return (
     <div key={loc.id} className={`bg-neutral-950 border ${loc.evolutionReady && !activePreview ? 'border-portal/50 shadow-[0_0_15px_rgba(4,172,255,0.15)]' : 'border-neutral-900'} hover:border-neutral-800 rounded-lg overflow-hidden flex flex-col justify-between group transition-all duration-300`}>
@@ -72,11 +77,17 @@ export const LocationCard: React.FC<LocationCardProps> = ({
 
         {/* Safety index rating badge */}
         <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
-          <span className={`text-[7.5px] font-mono font-bold uppercase px-1.5 py-0.5 rounded border ${
-            loc.safetyLevel === 'Safe' ? 'bg-green-950/30 text-green-400 border-green-900' :
-            loc.safetyLevel === 'Dangerous' ? 'bg-yellow-950/30 text-yellow-500 border-yellow-900' :
-            'bg-red-950/30 text-human border-red-900 animate-pulse'
-          }`}>
+          <span
+            data-color-code={safetyColorCode}
+            style={getColorCodeSurfaceStyle(safetyColorCode, {
+              borderOpacity: 0.35,
+              backgroundOpacity: 0.12,
+              glowOpacity: loc.safetyLevel !== 'Safe' && loc.safetyLevel !== 'Dangerous' ? 0.2 : undefined,
+            })}
+            className={`text-[7.5px] font-mono font-bold uppercase px-1.5 py-0.5 rounded border ${
+              loc.safetyLevel !== 'Safe' && loc.safetyLevel !== 'Dangerous' ? 'animate-pulse' : ''
+            }`}
+          >
             {loc.safetyLevel}
           </span>
           {hasAppeared ? (

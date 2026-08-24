@@ -7,6 +7,8 @@ import {
   type StoryBlock,
   type StoryBlockMetadata,
   type SystemEvent,
+  type SystemPromptPresentation,
+  type WorldNoticeData,
 } from "../../components/chapter-generation/shared/types";
 import {
   validateWorldCueIntent,
@@ -27,6 +29,7 @@ const SYSTEM_PROMPT_TYPES = [
   "progression", "breakthrough", "reward", "romance", "karmic_bond", "mystery", "fate_event",
   "corruption", "death_event", "quest_update", "choice_consequence", "system_error",
 ] as const;
+const SYSTEM_PROMPT_PRESENTATIONS = ["narrative", "mechanical", "world_notice"] as const;
 const FATE_OUTCOMES: FateResultData["outcome"][] = ["FATE AVERTED", "FATE SCARRED", "DOOM MANIFESTED"];
 
 const isRecord = (value: unknown): value is JsonRecord =>
@@ -507,6 +510,92 @@ const parseFateResult = (
   };
 };
 
+/**
+ * World Notices remain a small, generic document contract: one entry renders a
+ * notice and multiple entries render a board. Invalid entries are discarded
+ * independently so a readable board does not disappear because of one bad row.
+ */
+const parseWorldNotice = (
+  value: unknown,
+  context: BlockWarningContext,
+): WorldNoticeData | undefined => {
+  if (!isRecord(value)) {
+    if (value !== undefined && value !== null) {
+      warning(context, "optional-field-removed", "Removed invalid optional system.worldNotice.", "system.worldNotice");
+    }
+    return undefined;
+  }
+  if (!Array.isArray(value.entries)) {
+    warning(context, "optional-field-removed", "Removed invalid optional system.worldNotice.entries.", "system.worldNotice.entries");
+    return undefined;
+  }
+
+  const entries = value.entries.flatMap((entry, entryIndex) => {
+    const entryPath = `system.worldNotice.entries[${entryIndex}]`;
+    if (!isRecord(entry)) {
+      warning(context, "optional-field-removed", `Removed invalid optional ${entryPath}.`, entryPath);
+      return [];
+    }
+    const title = nonEmptyString(entry.title);
+    if (!title) {
+      warning(context, "optional-field-removed", `Removed invalid optional ${entryPath}.title.`, `${entryPath}.title`);
+      return [];
+    }
+    const body = optionalStringField(entry, "body", context, `${entryPath}.body`);
+    let details: WorldNoticeData["entries"][number]["details"];
+    if (entry.details !== undefined && entry.details !== null) {
+      if (!Array.isArray(entry.details)) {
+        warning(context, "optional-field-removed", `Removed invalid optional ${entryPath}.details.`, `${entryPath}.details`);
+      } else {
+        const parsedDetails = entry.details.flatMap((detail, detailIndex) => {
+          const detailPath = `${entryPath}.details[${detailIndex}]`;
+          if (!isRecord(detail)) {
+            warning(context, "optional-field-removed", `Removed invalid optional ${detailPath}.`, detailPath);
+            return [];
+          }
+          const label = nonEmptyString(detail.label);
+          const value = nonEmptyString(detail.value);
+          if (!label || !value) {
+            warning(context, "optional-field-removed", `Removed invalid optional ${detailPath}.`, detailPath);
+            return [];
+          }
+          for (const field of Object.keys(detail)) {
+            if (!["label", "value"].includes(field)) {
+              const path = safeFieldLabel(`${detailPath}.${field}`);
+              warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
+            }
+          }
+          return [{ label, value }];
+        });
+        if (parsedDetails.length > 0) details = parsedDetails;
+      }
+    }
+    for (const field of Object.keys(entry)) {
+      if (!["title", "body", "details"].includes(field)) {
+        const path = safeFieldLabel(`${entryPath}.${field}`);
+        warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
+      }
+    }
+    return [{
+      title,
+      ...(body ? { body } : {}),
+      ...(details ? { details } : {}),
+    }];
+  });
+
+  for (const field of Object.keys(value)) {
+    if (field !== "entries") {
+      const path = safeFieldLabel(`system.worldNotice.${field}`);
+      warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
+    }
+  }
+  if (entries.length === 0) {
+    warning(context, "optional-field-removed", "Removed invalid optional system.worldNotice with no readable entries.", "system.worldNotice.entries");
+    return undefined;
+  }
+  return { entries };
+};
+
 const parseSystemEvent = (
   value: unknown,
   context: BlockWarningContext,
@@ -560,14 +649,23 @@ const parseSystemEvent = (
     warning(context, "optional-field-removed", "Removed disallowed fateResult from regular system_prompt.", "system.fateResult");
   }
 
+  const allowedFields = kind === "system_prompt"
+    ? ["kind", "title", "promptType", "flavor", "rows", "rarity", "fateResult", "presentation", "worldNotice"]
+    : ["kind", "title", "promptType", "rows", "rarity", "fateResult", "presentation", "worldNotice"];
   for (const field of Object.keys(value)) {
-    if (!["kind", "title", "promptType", "rows", "rarity", "fateResult"].includes(field)) {
+    if (!allowedFields.includes(field)) {
       const path = safeFieldLabel(`system.${field}`);
       warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
     }
   }
   if (kind === "fate_system_prompt") {
     if (!fateResult) return undefined;
+    for (const field of ["presentation", "worldNotice"] as const) {
+      if (value[field] !== undefined && value[field] !== null) {
+        const path = `system.${field}`;
+        warning(context, "optional-field-removed", `Removed unsupported optional ${path} from fate_system_prompt.`, path);
+      }
+    }
     return {
       kind: "fate_system_prompt",
       title,
@@ -578,12 +676,47 @@ const parseSystemEvent = (
     };
   }
 
+  const flavor = optionalStringField(value, "flavor", context, "system.flavor");
+  const requestedPresentation = optionalStringField(value, "presentation", context, "system.presentation");
+  let presentation = requestedPresentation && SYSTEM_PROMPT_PRESENTATIONS.includes(
+    requestedPresentation as (typeof SYSTEM_PROMPT_PRESENTATIONS)[number],
+  )
+    ? requestedPresentation as SystemPromptPresentation
+    : undefined;
+  if (requestedPresentation && !presentation) {
+    warning(context, "optional-field-removed", "Removed unsupported optional system.presentation.", "system.presentation");
+  }
+
+  let worldNotice: WorldNoticeData | undefined;
+  if (presentation === "world_notice") {
+    worldNotice = parseWorldNotice(value.worldNotice, context);
+    if (!worldNotice) {
+      warning(
+        context,
+        "optional-field-removed",
+        "Removed world_notice presentation lacking a readable system.worldNotice.entries payload.",
+        "system.presentation",
+      );
+      presentation = undefined;
+    }
+  } else if (value.worldNotice !== undefined && value.worldNotice !== null) {
+    warning(
+      context,
+      "optional-field-removed",
+      "Removed system.worldNotice without presentation \"world_notice\".",
+      "system.worldNotice",
+    );
+  }
+
   return {
     kind: "system_prompt",
     title,
     ...(validPromptType ? { promptType: validPromptType } : {}),
+    ...(flavor ? { flavor } : {}),
     ...(rows ? { rows } : {}),
     ...(rarity ? { rarity } : {}),
+    ...(presentation ? { presentation } : {}),
+    ...(worldNotice ? { worldNotice } : {}),
   };
 };
 

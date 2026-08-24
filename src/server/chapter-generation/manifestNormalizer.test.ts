@@ -143,6 +143,113 @@ describe("Manifest prose recovery", () => {
     }));
   });
 
+  it("preserves valid World Notices and removes malformed or misplaced notice presentation data", () => {
+    const result = normalizeManifestResponse(ndjson(
+      {
+        id: "world-notice",
+        type: "system",
+        text: "A notice is pinned beside the east gate.",
+        system: {
+          kind: "system_prompt",
+          presentation: "world_notice",
+          promptType: "quest_update",
+          title: "GUILD BOUNTY",
+          flavor: "East Gate Guild Dispatch",
+          worldNotice: {
+            entries: [{
+              title: "BLACKTHORN WOLF PACK",
+              body: "Cull the pack on the Rain Road.",
+              details: [{ label: "Reward", value: "42 silver marks" }],
+            }],
+          },
+        },
+      },
+      {
+        id: "empty-world-notice",
+        type: "system",
+        text: "An incomplete notice remains readable prose.",
+        system: {
+          kind: "system_prompt",
+          presentation: "world_notice",
+          promptType: "warning",
+          title: "WANTED NOTICE",
+          worldNotice: { entries: [] },
+        },
+      },
+      {
+        id: "regular-misplaced-world-notice",
+        type: "system",
+        text: "The status display remains readable prose.",
+        system: {
+          kind: "system_prompt",
+          presentation: "mechanical",
+          promptType: "quest_update",
+          title: "Objective Update",
+          worldNotice: { entries: [{ title: "Ignored notice" }] },
+        },
+      },
+      {
+        id: "misplaced-world-notice",
+        type: "system",
+        text: "Fate settles its account.",
+        system: {
+          kind: "fate_system_prompt",
+          promptType: "fate_event",
+          title: "Fate Result",
+          presentation: "mechanical",
+          worldNotice: { entries: [{ title: "Ignored notice" }] },
+          fateResult: {
+            outcome: "FATE AVERTED",
+            timelineScar: "The deadline was turned aside.",
+            permanentCosts: [],
+          },
+        },
+      },
+    ), 2);
+
+    expect(result.blocks[0].system).toEqual({
+      kind: "system_prompt",
+      presentation: "world_notice",
+      promptType: "quest_update",
+      title: "GUILD BOUNTY",
+      flavor: "East Gate Guild Dispatch",
+      worldNotice: {
+        entries: [{
+          title: "BLACKTHORN WOLF PACK",
+          body: "Cull the pack on the Rain Road.",
+          details: [{ label: "Reward", value: "42 silver marks" }],
+        }],
+      },
+    });
+    expect(result.blocks[1].system).toEqual({
+      kind: "system_prompt",
+      promptType: "warning",
+      title: "WANTED NOTICE",
+    });
+    expect(result.blocks[2].system).toEqual({
+      kind: "system_prompt",
+      presentation: "mechanical",
+      promptType: "quest_update",
+      title: "Objective Update",
+    });
+    expect(result.blocks[3].system).toEqual({
+      kind: "fate_system_prompt",
+      promptType: "fate_event",
+      title: "Fate Result",
+      fateResult: {
+        outcome: "FATE AVERTED",
+        timelineScar: "The deadline was turned aside.",
+        permanentCosts: [],
+      },
+    });
+    expect(result.diagnostics.warnings).toContainEqual(expect.objectContaining({
+      field: "system.presentation",
+    }));
+    expect(result.diagnostics.warnings).toContainEqual(expect.objectContaining({
+      field: "system.worldNotice",
+    }));
+  });
+
   it("preserves creature entities from the documented metadata contract", () => {
     const result = normalizeManifestResponse(ndjson({
       id: "creature-reveal",

@@ -5,6 +5,8 @@ export const SYSTEM_PROMPT_STYLE_OPTIONS = [
   { value: 'broken-promise', label: 'Broken Promise' },
   { value: 'target-scan', label: 'Target Scan' },
   { value: 'structured', label: 'Structured Mechanical' },
+  { value: 'guild-bounty', label: 'Guild Bounty' },
+  { value: 'mission-board', label: 'Mission Board' },
 ] as const;
 
 export const FATE_OUTCOME_OPTIONS: Array<'FATE AVERTED' | 'FATE SCARRED' | 'DOOM MANIFESTED'> = [

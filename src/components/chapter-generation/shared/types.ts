@@ -143,6 +143,33 @@ export interface SystemPromptBadge {
   value: string;
 }
 
+/**
+ * Presentation family selects a regular System Prompt's Reader layout. It is
+ * deliberately separate from `promptType`, which continues to communicate
+ * semantic meaning and color only.
+ */
+export type SystemPromptPresentation = "narrative" | "mechanical" | "world_notice";
+
+/** One labeled fact shown on a static World Notice entry. */
+export interface WorldNoticeDetail {
+  label: string;
+  value: string;
+}
+
+/**
+ * A single item on an in-world document. One entry is a notice; multiple
+ * entries form a board without needing document-specific component variants.
+ */
+export interface WorldNoticeEntry {
+  title: string;
+  body?: string;
+  details?: WorldNoticeDetail[];
+}
+
+export interface WorldNoticeData {
+  entries: WorldNoticeEntry[];
+}
+
 export interface BaseSystemEvent {
   kind: SystemEventKind | (string & {});
   promptType?:
@@ -173,6 +200,13 @@ export interface BaseSystemEvent {
 
 export interface RegularSystemEvent extends BaseSystemEvent {
   kind: "system_prompt" | (string & {});
+  /**
+   * Explicit presentation for newly generated prompts. Omitted values are
+   * retained for legacy saved chapters and resolved at the Reader boundary.
+   */
+  presentation?: SystemPromptPresentation;
+  /** Static in-world document data, valid only with `presentation: "world_notice"`. */
+  worldNotice?: WorldNoticeData;
   fateResult?: never;
 }
 

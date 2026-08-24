@@ -41,6 +41,8 @@ import {
   type StoryBlockMetadata,
   type StoryEntityType,
   type SystemEvent,
+  type SystemPromptPresentation,
+  type WorldNoticeData,
   type ChapterContent,
 } from "../../components/chapter-generation/shared/types";
 import type { ChapterTextModelProvider } from "./provider";
@@ -435,6 +437,7 @@ const SYSTEM_PROMPT_TYPES = [
   "progression", "breakthrough", "reward", "romance", "karmic_bond", "mystery", "fate_event",
   "corruption", "death_event", "quest_update", "choice_consequence", "system_error",
 ] as const;
+const SYSTEM_PROMPT_PRESENTATIONS = ["narrative", "mechanical", "world_notice"] as const;
 const FATE_RESULT_OUTCOMES = ["FATE AVERTED", "FATE SCARRED", "DOOM MANIFESTED"] as const;
 const optionalMetadataStringArray = (value: unknown, label: string): string[] | undefined => {
   if (value === undefined || value === null) return undefined;
@@ -555,6 +558,36 @@ const parseBlockMetadata = (
   };
 };
 
+const parseWorldNotice = (value: unknown, label: string): WorldNoticeData => {
+  const notice = requiredRecord(value, label);
+  if (!Array.isArray(notice.entries) || notice.entries.length === 0) {
+    throw new Error(`${label}.entries must be a non-empty array.`);
+  }
+  return {
+    entries: notice.entries.map((item, index) => {
+      const entry = requiredRecord(item, `${label}.entries[${index}]`);
+      const details = entry.details === undefined
+        ? undefined
+        : Array.isArray(entry.details)
+          ? entry.details.map((detail, detailIndex) => {
+              const value = requiredRecord(detail, `${label}.entries[${index}].details[${detailIndex}]`);
+              return {
+                label: requiredString(value.label, `${label}.entries[${index}].details[${detailIndex}].label`),
+                value: requiredString(value.value, `${label}.entries[${index}].details[${detailIndex}].value`),
+              };
+            })
+          : (() => { throw new Error(`${label}.entries[${index}].details must be an array.`); })();
+      return {
+        title: requiredString(entry.title, `${label}.entries[${index}].title`),
+        ...(optionalValidatedString(entry.body, `${label}.entries[${index}].body`)
+          ? { body: optionalValidatedString(entry.body, `${label}.entries[${index}].body`) }
+          : {}),
+        ...(details && details.length > 0 ? { details } : {}),
+      };
+    }),
+  };
+};
+
 const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefined => {
   if (value === undefined || value === null) return undefined;
   const event = requiredRecord(value, label);
@@ -567,6 +600,9 @@ const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefine
   }
   if (kind === "system_prompt" && event.fateResult !== undefined && event.fateResult !== null) {
     throw new Error(`${label} of kind 'system_prompt' cannot accept a fateResult payload.`);
+  }
+  if (kind === "fate_system_prompt" && (event.presentation !== undefined || event.worldNotice !== undefined)) {
+    throw new Error(`${label} of kind 'fate_system_prompt' cannot accept a presentation or worldNotice payload.`);
   }
   const rows = event.rows === undefined
     ? undefined
@@ -618,12 +654,34 @@ const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefine
     };
   }
 
+  if (!validatedPromptType) {
+    throw new Error(`${label}.promptType is required and must be supported for system_prompt.`);
+  }
+
+  const receivedPresentation = requiredString(event.presentation, `${label}.presentation`);
+  if (!SYSTEM_PROMPT_PRESENTATIONS.includes(
+    receivedPresentation as (typeof SYSTEM_PROMPT_PRESENTATIONS)[number],
+  )) {
+    throw new Error(`${label}.presentation is unsupported.`);
+  }
+  const presentation = receivedPresentation as SystemPromptPresentation;
+  const flavor = optionalValidatedString(event.flavor, `${label}.flavor`);
+  const worldNotice = presentation === "world_notice"
+    ? parseWorldNotice(event.worldNotice, `${label}.worldNotice`)
+    : undefined;
+  if (presentation !== "world_notice" && event.worldNotice !== undefined && event.worldNotice !== null) {
+    throw new Error(`${label}.worldNotice requires presentation 'world_notice'.`);
+  }
+
   return {
     kind: "system_prompt",
     title,
-    ...(validatedPromptType ? { promptType: validatedPromptType } : {}),
+    promptType: validatedPromptType,
+    ...(flavor ? { flavor } : {}),
     ...(rows ? { rows } : {}),
     ...(validatedRarity ? { rarity: validatedRarity } : {}),
+    presentation,
+    ...(worldNotice ? { worldNotice } : {}),
   };
 };
 

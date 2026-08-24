@@ -53,7 +53,13 @@ export interface CardPreset {
   };
 }
 
-export type SystemPromptContentStyle = 'breakthrough' | 'broken-promise' | 'target-scan' | 'structured';
+export type SystemPromptContentStyle =
+  | 'breakthrough'
+  | 'broken-promise'
+  | 'target-scan'
+  | 'structured'
+  | 'guild-bounty'
+  | 'mission-board';
 
 export interface CardWorkshopOverrides {
   viewportMode: ViewportMode;

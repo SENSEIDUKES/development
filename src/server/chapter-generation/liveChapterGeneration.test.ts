@@ -575,6 +575,98 @@ describe("live Chapter Generation model boundaries", () => {
     expect(chapter.audioMoments).toBeUndefined();
   });
 
+  it("requires an explicit regular System Prompt presentation and validates World Notice data", () => {
+    const packet = buildPacket();
+    const chapterPlan = parseChapterPlan(planResponse, {
+      chapterPacket: packet,
+      planningSignals: {},
+    });
+    const input = {
+      chapterPacket: packet,
+      chapterPlan,
+      consolidatedPermanentInstructions: packet.generationRules.permanentWritingInstructions,
+    };
+    const manifested = (system: Record<string, unknown>) => [
+      "---CHAPTER_BLOCKS---",
+      JSON.stringify({
+        id: "model-world-notice",
+        type: "system",
+        text: "A guild notice waits by the east gate.",
+        system,
+      }),
+    ].join("\n");
+
+    const chapter = parseManifestedChapter(manifested({
+      kind: "system_prompt",
+      presentation: "world_notice",
+      promptType: "quest_update",
+      title: "GUILD BOUNTY",
+      flavor: "East Gate Dispatch",
+      worldNotice: {
+        entries: [{
+          title: "BLACKTHORN WOLF PACK",
+          body: "Cull the pack before the next caravan arrives.",
+          details: [{ label: "Reward", value: "42 silver marks" }],
+        }],
+      },
+    }), input);
+
+    expect(chapter.blocks?.[0].system).toEqual({
+      kind: "system_prompt",
+      presentation: "world_notice",
+      promptType: "quest_update",
+      title: "GUILD BOUNTY",
+      flavor: "East Gate Dispatch",
+      worldNotice: {
+        entries: [{
+          title: "BLACKTHORN WOLF PACK",
+          body: "Cull the pack before the next caravan arrives.",
+          details: [{ label: "Reward", value: "42 silver marks" }],
+        }],
+      },
+    });
+    expect(() => parseManifestedChapter(manifested({
+      kind: "system_prompt",
+      promptType: "quest_update",
+      title: "GUILD BOUNTY",
+    }), input)).toThrow(/system\.presentation must be a non-empty string/);
+    expect(() => parseManifestedChapter(manifested({
+      kind: "system_prompt",
+      presentation: "narrative",
+      title: "GUILD BOUNTY",
+    }), input)).toThrow(/system\.promptType is required and must be supported/);
+    expect(() => parseManifestedChapter(manifested({
+      kind: "system_prompt",
+      presentation: "narrative",
+      promptType: "unsupported_panel",
+      title: "GUILD BOUNTY",
+    }), input)).toThrow(/system\.promptType is required and must be supported/);
+    expect(() => parseManifestedChapter(manifested({
+      kind: "system_prompt",
+      presentation: "world_notice",
+      promptType: "quest_update",
+      title: "GUILD BOUNTY",
+      worldNotice: { entries: [] },
+    }), input)).toThrow(/system\.worldNotice\.entries must be a non-empty array/);
+    expect(() => parseManifestedChapter(manifested({
+      kind: "system_prompt",
+      presentation: "mechanical",
+      promptType: "quest_update",
+      title: "Objective Update",
+      worldNotice: { entries: [{ title: "Misplaced" }] },
+    }), input)).toThrow(/system\.worldNotice requires presentation 'world_notice'/);
+    expect(() => parseManifestedChapter(manifested({
+      kind: "fate_system_prompt",
+      title: "Fate Result",
+      presentation: "narrative",
+      fateResult: {
+        outcome: "FATE AVERTED",
+        timelineScar: "The deadline was turned aside.",
+        permanentCosts: [],
+      },
+    }), input)).toThrow(/cannot accept a presentation or worldNotice payload/);
+  });
+
   it("assigns a stable Character voice for a validated dialogue block without optional mode metadata", async () => {
     const base = new RecordingProvider();
     const provider: ChapterTextModelProvider = {

@@ -4,11 +4,13 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `f89cb41`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-23
+- **Last Workshop update:** 2026-08-24
 - **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
 ## Workshop history
+
+- **2026-08-24:** Clarified regular System Prompt presentation into three explicit families without altering the two top-level kinds: `system_prompt` now selects `narrative`, `mechanical`, or `world_notice`, while `fate_system_prompt` remains wholly on its existing Fate Result route. `promptType` continues to own semantic meaning and color only; it no longer selects a layout for new prompts. The new Development `WorldNotice` is one static, diegetic document surface for direct headings such as `GUILD BOUNTY`, `WANTED NOTICE`, and `MISSION BRIEF`: a single entry reads as one notice and multiple entries as a divided board, with optional subdued flavor and labeled details. It has no links, controls, hovercards, focus behavior, or narration role; `StoryBlock.text` remains the sole TTS source. Legacy regular data with no presentation retains the prior shape-based fallback (row-only mechanical, otherwise narrative). The Reader Chamber fixture and Card Workshop selector add single-notice and mission-board examples; the compact Narrative Notification card, LitRPG holographic display, Fate card, locked Reference, and source-comparison date are unchanged.
 
 - **2026-08-24:** The `CodexCard` Manifest seal's dragon loop now spins counterclockwise from the reader's point of view (same 24s period, `animation-direction: reverse` via `animate-[spin_24s_linear_infinite_reverse]`). The dark glass core holding the Manifest label and caption is a sibling of the rotating layer, so the center content stays fixed; the aura spin (26s), glows, hover/press states, Manifesting state, and reduced-motion backstop are unchanged.
 - **2026-08-23:** The Manifest seal label now wears the same accent sheen as the inscribed name, but self-running instead of contact-only: a single bright band sweeps the glyphs every ~5s (`codex-seal-manifest-sheen` in `CodexCardSeal.css`, gated on `background-clip: text`), then rests in its plain signal color; the existing reduced-motion backstop stills the sweep at the rest position. Seal button behavior, dragon, aura, and Manifesting state are unchanged.

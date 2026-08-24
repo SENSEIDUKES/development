@@ -164,6 +164,7 @@ export function createMockChapters(): ReaderChapter[] {
           text: '[The Heavenly Dao acknowledges your ascension. The Ninth Meridian has marked you.]',
           system: {
             kind: 'system_prompt',
+            presentation: 'mechanical',
             promptType: 'breakthrough',
             title: 'Breakthrough Achieved',
             rows: [
@@ -179,6 +180,38 @@ export function createMockChapters(): ReaderChapter[] {
           id: 'ch1-b4',
           type: 'paragraph',
           text: 'He laughed then — a raw, disbelieving sound — and the rain stopped mid-air. For three breaths the whole valley held still, every drop suspended like a bead of glass, reflecting a thousand tiny versions of his burning hand.',
+        },
+        {
+          id: 'ch1-b4a',
+          type: 'system',
+          text: '[ A weathered notice catches Li Wei\'s eye beside the guild hall door. ]',
+          system: {
+            kind: 'system_prompt',
+            presentation: 'world_notice',
+            promptType: 'quest_update',
+            title: 'MISSION BRIEF',
+            flavor: 'Dusthaven Guild Hall - East Gate postings',
+            worldNotice: {
+              entries: [
+                {
+                  title: 'WANTED NOTICE: RAIN ROAD RAIDERS',
+                  body: 'Track the masked riders who struck three supply wagons before dawn.',
+                  details: [
+                    { label: 'Reward', value: '80 silver marks' },
+                    { label: 'Last report', value: 'South ford' },
+                  ],
+                },
+                {
+                  title: 'ESCORT CONTRACT: EMBER HERBS',
+                  body: 'Guard a healer\'s cart through the flooded lower road before nightfall.',
+                  details: [
+                    { label: 'Term', value: 'One night' },
+                    { label: 'Reward', value: 'One spirit vial' },
+                  ],
+                },
+              ],
+            },
+          },
         },
         {
           id: 'ch1-b5',
@@ -336,6 +369,7 @@ export function createMockChapters(): ReaderChapter[] {
           text: '[A thread of fate has reached its terminus. The record cannot be unwritten.]',
           system: {
             kind: 'system_prompt',
+            presentation: 'mechanical',
             promptType: 'corruption',
             title: 'Death Flag Fulfilled',
             rows: [

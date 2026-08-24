@@ -89,6 +89,7 @@ function buildMockManifestedChapterDev(input: {
           metadata: { mode: "narration", intensity: 0.5 },
           system: {
             kind: "system_prompt",
+            presentation: "mechanical",
             promptType: "codex_update",
             title: "Forbidden Item Discovered",
             rows: [
@@ -141,6 +142,7 @@ function buildMockManifestedChapterDev(input: {
           metadata: { mode: "narration", intensity: 0.5 },
           system: {
             kind: "system_prompt",
+            presentation: "mechanical",
             promptType: "progression",
             title: "Technique Refined",
             rarity: "Rare",

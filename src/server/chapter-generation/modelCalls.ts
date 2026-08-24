@@ -654,6 +654,10 @@ const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefine
     };
   }
 
+  if (!validatedPromptType) {
+    throw new Error(`${label}.promptType is required and must be supported for system_prompt.`);
+  }
+
   const receivedPresentation = requiredString(event.presentation, `${label}.presentation`);
   if (!SYSTEM_PROMPT_PRESENTATIONS.includes(
     receivedPresentation as (typeof SYSTEM_PROMPT_PRESENTATIONS)[number],
@@ -672,7 +676,7 @@ const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefine
   return {
     kind: "system_prompt",
     title,
-    ...(validatedPromptType ? { promptType: validatedPromptType } : {}),
+    promptType: validatedPromptType,
     ...(flavor ? { flavor } : {}),
     ...(rows ? { rows } : {}),
     ...(validatedRarity ? { rarity: validatedRarity } : {}),

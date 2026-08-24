@@ -632,6 +632,17 @@ describe("live Chapter Generation model boundaries", () => {
     }), input)).toThrow(/system\.presentation must be a non-empty string/);
     expect(() => parseManifestedChapter(manifested({
       kind: "system_prompt",
+      presentation: "narrative",
+      title: "GUILD BOUNTY",
+    }), input)).toThrow(/system\.promptType is required and must be supported/);
+    expect(() => parseManifestedChapter(manifested({
+      kind: "system_prompt",
+      presentation: "narrative",
+      promptType: "unsupported_panel",
+      title: "GUILD BOUNTY",
+    }), input)).toThrow(/system\.promptType is required and must be supported/);
+    expect(() => parseManifestedChapter(manifested({
+      kind: "system_prompt",
       presentation: "world_notice",
       promptType: "quest_update",
       title: "GUILD BOUNTY",

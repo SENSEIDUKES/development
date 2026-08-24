@@ -11,7 +11,7 @@ export interface WorldNoticeProps {
   meaning: SystemColorMeaning;
   className?: string;
   style?: React.CSSProperties;
-  /** Structural Reader attributes only; interactive props are always discarded. */
+  /** Structural Reader attributes only; interactive and raw HTML props are always discarded. */
   readOnlyProps?: React.HTMLAttributes<HTMLElement>;
 }
 
@@ -26,7 +26,14 @@ function getStaticProps(
   return Object.fromEntries(
     Object.entries(props).filter(([name]) => (
       !/^on[A-Z]/.test(name)
-      && !['autoFocus', 'contentEditable', 'draggable', 'role', 'tabIndex'].includes(name)
+      && ![
+        'autoFocus',
+        'contentEditable',
+        'dangerouslySetInnerHTML',
+        'draggable',
+        'role',
+        'tabIndex',
+      ].includes(name)
     )),
   ) as React.HTMLAttributes<HTMLElement>;
 }

@@ -47,6 +47,16 @@ Reusable visual names use the `library-*` namespace:
 `library-title-presence`, and `library-subtitle-shimmer`. There are no legacy
 `seed-*` aliases.
 
+- **2026-08-24:** Redrew the `LibraryDragonCycleIcon` silhouette: the tail now
+  tapers smoothly into a curved point rising toward the jaws (replacing the
+  stepped block terminal), the face reads cleaner and more intelligent at icon
+  size (sharpened brow, narrower slit eye still punched via `evenodd`, defined
+  snout and parted jaw, smooth neck flow into the body), and the back ridges
+  are smaller, evenly spaced slivers. The component contract — three paths,
+  `viewBox="0 0 24 24"`, `fill: currentColor`, head-at-top composition — is
+  unchanged, so every consumer (Manifest seals, Story Seed cycle button,
+  Manifesting spinner) inherits the refinement untouched.
+
 - **2026-08-22:** Hardened `LibrarySoundGlyph` accessibility contract: dropped
   interaction/focus props from `...restProps` (so a stray `onClick` /
   `tabIndex` / `aria-pressed` cannot turn the static mark into an

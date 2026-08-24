@@ -6,10 +6,10 @@ import React, { memo, type SVGAttributes } from 'react';
  * icon language and means "Re-do, Re-try, or shuffle" wherever it appears —
  * cycling a suggestion, reshuffling a draw, retrying a roll.
  *
- * Custom silhouette (not a Lucide glyph): a spiked serpentine body curling
- * clockwise, the tail wisp rising into the head's open jaws. `fill:
- * currentColor` so it inherits the surrounding accent (portal blue, gold,
- * signal) exactly like the Lucide icons it sits beside.
+ * Custom silhouette (not a Lucide glyph): a spined serpentine body curling
+ * clockwise, the tail tapering into a curved point that rises into the head's
+ * open jaws. `fill: currentColor` so it inherits the surrounding accent
+ * (portal blue, gold, signal) exactly like the Lucide icons it sits beside.
  *
  * First used by the Story Seed Origin page to cycle system premise examples
  * (2026-08-04). Reuse it anywhere the Library needs the cycle meaning —
@@ -61,16 +61,18 @@ export const LibraryDragonCycleIcon = memo(function LibraryDragonCycleIcon({
       {...restProps}
     >
       {title && <title id={titleId}>{title}</title>}
-      {/* Serpentine body: crescent from the neck clockwise around to the tail
-          wisp, which rises toward the head's open jaws. */}
-      <path d="M13.65 2.64 A 9.5 9.5 0 1 1 5.89 4.72 Q 6.3 3.3 7.0 3.0 Q 8.5 4.4 9.19 6.70 A 6 6 0 1 0 13.04 6.09 Z" />
-      {/* Back ridges along the outer curve. */}
-      <path d="M19.44 6.08 L20.85 5.80 L20.10 7.04 Z M21.50 12.25 L22.76 12.94 L21.40 13.41 Z M18.54 18.90 L18.94 20.27 L17.64 19.64 Z M11.75 21.50 L11.06 22.76 L10.51 21.38 Z" />
-      {/* Head: horn swept back, open jaws chasing the tail wisp; the evenodd
-          subpath punches the eye. */}
+      {/* Serpentine body: crescent from the neck clockwise around to the tail,
+          whose outer and inner edges converge through two cubic sweeps into a
+          single curved point rising toward the head's open jaws. */}
+      <path d="M13.6 2.75 A 9.5 9.5 0 1 1 6.55 4.22 C 7.53 3.53 7.35 2.55 7.9 2.2 C 8.6 2.9 8.7 4.8 8.4 6.4 A 6.5 6.5 0 1 0 13 6 Z" />
+      {/* Back spines: small, evenly spaced slivers along the outer curve. */}
+      <path d="M19.46 6.1 L20.44 6.09 L20.1 7 Z M21.5 11.45 L22.3 12 L21.5 12.55 Z M19.07 18.37 L19.21 19.21 L18.37 19.07 Z M10.84 21.45 L10.23 22.05 L9.86 21.27 Z" />
+      {/* Head: horn swept back, a sharpened brow over a narrow slit eye, parted
+          snout and jaw chasing the tail point, and a smooth neck flow into the
+          body; the evenodd subpath punches the eye. */}
       <path
         fillRule="evenodd"
-        d="M8.6 1.8 L10.2 0.9 L11.6 0.8 L13.0 1.4 L16.6 0.4 L14.2 2.8 L16.0 4.4 L13.8 4.5 L13.2 5.6 L11.2 5.1 L9.6 4.5 L10.7 3.1 Z M11.05 1.75 a 0.5 0.5 0 1 0 0.001 0 Z"
+        d="M8.3 1.9 C 9.1 1.2 9.9 0.9 10.7 0.85 L 12.5 1.15 L 16.4 0.35 L 14 2.6 L 15.8 4.2 L 13.7 4.4 C 13.3 5.2 12.9 5.6 12.3 5.75 L 11 5.15 C 10.3 4.9 9.6 4.6 9.2 4.3 L 10.5 3.05 L 8.9 2.55 Z M10.35 1.65 C 10.75 1.42 11.4 1.45 11.65 1.72 C 11.3 1.9 10.7 1.88 10.35 1.65 Z"
       />
     </svg>
   );

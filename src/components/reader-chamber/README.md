@@ -4,12 +4,13 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `f89cb41`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-23
+- **Last Workshop update:** 2026-08-24
 - **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-08-24:** The Manifest seal's dragon loop now turns counterclockwise (the 24s rotation runs in reverse) around the fixed Manifest core, and the seal inherits the refined shared `LibraryDragonCycleIcon` silhouette — smoothly tapering tail point, cleaner face, subtler back spines. Aura, colors, glow, mask, card layout, text, and manifestation behavior are unchanged.
 - **2026-08-23:** Fixed the deployed mobile gray-color regression by separating the canonical accessibility palette variables into `shared/color-codes.css` and loading that authority from the Workshop entrypoint as well as the portable Reader stylesheet. Color Code consumers still resolve semantic meaning exclusively through `shared/colorCodes.ts`; the new global load guarantees those CSS variables exist before any lazy Reader, Codex, card, badge, link, or consequence surface renders, without adding literal-color fallbacks or changing any established palette meanings.
 - **2026-08-23:** Consolidated the Reader and Codex color authority into shared `shared/colorCodes.ts`. It preserves the established System-event meanings and accessibility palette variables while extending them to Codex links, reveal cards, Portrait/Location/Faction/Artifact cards, Bestiary individual and threat badges, relationship nodes and status markers, Karma/mystery/timeline badges, affinity and power-stage charts, System badges/outcomes/trends/expanded reports, Fate Result cards, Fate Survival alerts and taxonomy, and the visible Story Seed Reference taxonomy. The visible legend is now named **Color Codes**. Current `relationshipToMC` data re-resolves on every render (including a stored Karma selection), so ally/enemy changes repaint rather than leaving stale card or graph accents; the separate numeric `StoryWorld.relationships` affinity graph retains its own neutral bands. `systemColors.ts` remains a compatibility re-export only.
 

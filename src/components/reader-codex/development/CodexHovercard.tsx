@@ -88,7 +88,7 @@ const SEAL_AURA_CLASS = [
 
 const SEAL_DRAGON_CLASS = [
   'pointer-events-none absolute inset-0',
-  'animate-[spin_24s_linear_infinite] motion-reduce:animate-none',
+  'animate-[spin_24s_linear_infinite_reverse] motion-reduce:animate-none',
   '[filter:drop-shadow(0_0_9px_rgba(4,172,255,0.42))_drop-shadow(0_0_26px_rgba(124,92,255,0.36))]',
   'transition-[filter] duration-500',
   'group-hover/seal:[filter:drop-shadow(0_0_13px_rgba(4,172,255,0.62))_drop-shadow(0_0_38px_rgba(124,92,255,0.55))]',

@@ -4,12 +4,13 @@
 - **Source location:** `src/components/ReaderCodex.tsx`, `src/components/CodexSheetOverlay.tsx`, and `src/components/CodexHovercard.tsx` (verified against `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-codex`
 - **Replica created:** 2026-08-11
-- **Last Workshop update:** 2026-08-23
+- **Last Workshop update:** 2026-08-24
 - **Last source comparison:** 2026-08-18
 - **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-08-24:** The highlighted-term Manifest seal matches the Reader Chamber `CodexCard` refinement: the dragon loop now rotates counterclockwise around the fixed Manifest core, and the seal inherits the redrawn shared `LibraryDragonCycleIcon` silhouette (tapered tail point, refined face, subtler spines). Docking, placement, colors, glow, focus/Escape handling, and the local manifestation flow are unchanged.
 - **2026-08-23:** Moved every Reader/Codex semantic color consumer to the shared Reader Chamber **Color Codes** registry and its accessibility-palette CSS variables. Development and Reference inline links, reveal cards, Portrait/Location/Faction/Artifact surfaces, Bestiary individual/threat badges, relationship nodes and status markers, mystery/thread and timeline badges, affinity and power-stage charts, active-tier and Karma metric badges, System outcomes, and the visible legend now resolve through the same semantic token rather than local hex or Tailwind maps. Character relationship colors re-read the current `relationshipToMC` record, including a selected Karma node after a story update; numeric inter-character affinity remains separately mapped from `StoryWorld.relationships`.
 
 - **2026-08-21:** Published this feature as `@seihouse/sen/reader-codex`, with the card-level pieces published separately as `@seihouse/sen/codex-cards`. The entries carry `reader-codex.css` (and the Reader Chamber typography the Codex renders inside) as a side effect. Removed the `shared/VirtualizedList.tsx` re-export shim — the Codex views now import the Reader Chamber list directly. The locked `reference/` replica stays Workshop-only.

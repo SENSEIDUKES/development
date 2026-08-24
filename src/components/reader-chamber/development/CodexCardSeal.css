@@ -8,6 +8,35 @@
  * component, like `CodexCardInscription.css`.
  */
 
+/* The Manifest label wears the same accent sheen as the inscribed name
+   (`CodexCardInscription.css`), but self-running instead of contact-only: a
+   single bright band sweeps the glyphs, then the label rests in its plain
+   signal color until the next pass. Gated on background-clip: text so
+   unsupported engines keep the solid label; the reduced-motion backstop
+   below stills the sweep at its plain-color rest position. */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .codex-seal__manifest-label {
+    background-image: linear-gradient(
+      100deg,
+      var(--color-signal) 42%,
+      color-mix(in srgb, var(--library-card-accent) 70%, white) 50%,
+      var(--color-signal) 58%
+    );
+    background-size: 300% 100%;
+    background-position: 100% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: codex-seal-manifest-sheen 5s ease-in-out infinite;
+  }
+}
+
+@keyframes codex-seal-manifest-sheen {
+  0% { background-position: 100% 0; }
+  22% { background-position: 0% 0; }
+  100% { background-position: 0% 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .codex-seal,
   .codex-seal * {

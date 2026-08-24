@@ -196,6 +196,24 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
           className="relative z-10 w-full !items-center !justify-center !gap-0"
         >
           <LibraryCardBody className={TRANSPARENT_REGION_CLASS}>
+            <LibraryCardHeader
+              eyebrow={(
+                <span className="mb-2.5 sm:mb-3 flex items-center justify-center gap-2.5 sm:gap-3">
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none h-px w-8 min-w-3 sm:w-12 bg-[linear-gradient(to_right,transparent,color-mix(in_srgb,var(--library-card-accent)_50%,transparent))]"
+                  />
+                  <span className="whitespace-nowrap font-mono text-[10px] sm:text-[11px] text-[var(--library-card-accent)] uppercase tracking-widest font-bold [text-shadow:0_0_14px_color-mix(in_srgb,var(--library-card-accent)_45%,transparent)]">
+                    {revealTerm.type}
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none h-px w-8 min-w-3 sm:w-12 bg-[linear-gradient(to_left,transparent,color-mix(in_srgb,var(--library-card-accent)_50%,transparent))]"
+                  />
+                </span>
+              )}
+              className={REVEAL_HEADER_REGION_CLASS}
+            />
             {revealImageUrl ? (
               <LibraryCardMedia className="relative w-full shrink-0 rounded-lg overflow-hidden border bg-neutral-950 mb-3 border-[color-mix(in_srgb,var(--library-card-accent)_30%,#171717)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6),0_0_28px_-8px_color-mix(in_srgb,var(--library-card-accent)_45%,transparent)]">
                 <img
@@ -240,7 +258,7 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
                         ) : (
                           <>
                             <span className="text-violet-300 text-sm transition-transform duration-300 group-hover/seal:scale-110">✦</span>
-                            <span className="font-sc text-[11px] sm:text-xs text-signal tracking-widest font-bold uppercase">
+                            <span className="codex-seal__manifest-label font-sc text-[11px] sm:text-xs text-signal tracking-widest font-bold uppercase">
                               Manifest
                             </span>
                             <span className="font-mono text-[8px] text-neutral-400 tracking-wider">
@@ -254,14 +272,6 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
                 </LibraryCardActions>
               )
             )}
-            <LibraryCardHeader
-              eyebrow={(
-                <span className="font-mono text-[9px] text-[var(--library-card-accent)] uppercase tracking-widest mb-1 font-bold">
-                  {revealTerm.type}
-                </span>
-              )}
-              className={REVEAL_HEADER_REGION_CLASS}
-            />
             <LibraryCardTitle
               as="h4"
               className={`codex-inscription${titleAwake ? ' codex-inscription--awake' : ''} font-display !font-medium !text-lg !leading-[normal] !text-signal !tracking-wide !wrap-normal drop-shadow-md`}

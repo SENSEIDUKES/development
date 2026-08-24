@@ -196,6 +196,14 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
           className="relative z-10 w-full !items-center !justify-center !gap-0"
         >
           <LibraryCardBody className={TRANSPARENT_REGION_CLASS}>
+            <LibraryCardHeader
+              eyebrow={(
+                <span className="font-mono text-[9px] text-[var(--library-card-accent)] uppercase tracking-widest mb-1 font-bold">
+                  {revealTerm.type}
+                </span>
+              )}
+              className={REVEAL_HEADER_REGION_CLASS}
+            />
             {revealImageUrl ? (
               <LibraryCardMedia className="relative w-full shrink-0 rounded-lg overflow-hidden border bg-neutral-950 mb-3 border-[color-mix(in_srgb,var(--library-card-accent)_30%,#171717)] shadow-[inset_0_1px_2px_rgba(0,0,0,0.6),0_0_28px_-8px_color-mix(in_srgb,var(--library-card-accent)_45%,transparent)]">
                 <img
@@ -254,14 +262,6 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
                 </LibraryCardActions>
               )
             )}
-            <LibraryCardHeader
-              eyebrow={(
-                <span className="font-mono text-[9px] text-[var(--library-card-accent)] uppercase tracking-widest mb-1 font-bold">
-                  {revealTerm.type}
-                </span>
-              )}
-              className={REVEAL_HEADER_REGION_CLASS}
-            />
             <LibraryCardTitle
               as="h4"
               className={`codex-inscription${titleAwake ? ' codex-inscription--awake' : ''} font-display !font-medium !text-lg !leading-[normal] !text-signal !tracking-wide !wrap-normal drop-shadow-md`}

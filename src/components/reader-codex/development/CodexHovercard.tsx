@@ -106,8 +106,12 @@ const SEAL_DRAGON_CYAN_CLASS = [
   '[mask-image:linear-gradient(180deg,black_15%,transparent_68%)]',
 ].join(' ');
 
+// The core sizes up a touch on mobile (64% vs. the 58% it settles to from
+// `sm:` up) so the Manifest label and "Awaken Portrait" caption sit fully
+// inside the circular boundary at the hovercard's smaller seal size, without
+// touching the dragon glyph or aura, which are sized off the button itself.
 const SEAL_CORE_CLASS = [
-  'relative z-10 flex h-[58%] w-[58%] flex-col items-center justify-center gap-1 rounded-full',
+  'relative z-10 flex h-[64%] w-[64%] sm:h-[58%] sm:w-[58%] flex-col items-center justify-center gap-0.5 rounded-full px-2 text-center',
   'border border-white/10 bg-[rgba(1,11,20,0.72)] backdrop-blur-sm',
   'shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]',
 ].join(' ');
@@ -427,17 +431,17 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
                         {isGeneratingImage ? (
                           <>
                             <LibraryDragonCycleIcon className="h-4 w-4 text-cyan-300 animate-spin motion-reduce:animate-none drop-shadow-[0_0_6px_rgba(4,172,255,0.6)]" />
-                            <span className="font-mono text-[8px] text-cyan-300 uppercase tracking-widest animate-pulse motion-reduce:animate-none font-medium">
+                            <span className="font-mono text-[8px] leading-none text-cyan-300 uppercase tracking-widest animate-pulse motion-reduce:animate-none font-medium">
                               Manifesting...
                             </span>
                           </>
                         ) : (
                           <>
-                            <span className="text-violet-300 text-xs transition-transform duration-300 group-hover/seal:scale-110">✦</span>
-                            <span className="font-sc text-[10px] text-signal tracking-widest font-bold uppercase">
+                            <span className="text-violet-300 text-xs leading-none transition-transform duration-300 group-hover/seal:scale-110">✦</span>
+                            <span className="font-sc text-[10px] leading-none text-signal tracking-widest font-bold uppercase">
                               Manifest
                             </span>
-                            <span className="font-mono text-[7px] text-neutral-400 tracking-wider">
+                            <span className="font-mono text-[7px] leading-none text-neutral-400 tracking-wider">
                               Awaken Portrait
                             </span>
                           </>
@@ -449,7 +453,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
               )}
               <div className="flex items-center gap-2 mb-2 pb-2 border-b border-[color-mix(in_srgb,var(--codex-card-accent)_20%,#262626)] flex-wrap">
                 {getIcon()}
-                <span className="font-display font-medium text-sm text-signal">
+                <span className="font-display font-medium text-sm text-[var(--codex-card-accent)]">
                   {entry.name}
                 </span>
               </div>

@@ -127,8 +127,12 @@ const SEAL_DRAGON_CYAN_CLASS = [
   '[mask-image:linear-gradient(180deg,black_15%,transparent_68%)]',
 ].join(' ');
 
+// The core sizes up a touch on mobile (62% vs. the 58% it settles to from
+// `sm:` up) so the Manifest label and "Awaken Portrait" caption sit fully
+// inside the circular boundary at the seal's smallest rendered size, without
+// touching the dragon glyph or aura, which are sized off the button itself.
 const SEAL_CORE_CLASS = [
-  'relative z-10 flex h-[58%] w-[58%] flex-col items-center justify-center gap-1 rounded-full',
+  'relative z-10 flex h-[62%] w-[62%] sm:h-[58%] sm:w-[58%] flex-col items-center justify-center gap-0.5 rounded-full px-2 text-center',
   'border border-white/10 bg-[rgba(1,11,20,0.72)] backdrop-blur-sm',
   'shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]',
 ].join(' ');
@@ -251,17 +255,17 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
                         {generatingRevealId === entry.id ? (
                           <>
                             <LibraryDragonCycleIcon className="h-5 w-5 text-cyan-300 animate-spin motion-reduce:animate-none drop-shadow-[0_0_6px_rgba(4,172,255,0.6)]" />
-                            <span className="font-mono text-[9px] text-cyan-300 uppercase tracking-widest animate-pulse font-medium">
+                            <span className="font-mono text-[9px] leading-none text-cyan-300 uppercase tracking-widest animate-pulse font-medium">
                               Manifesting...
                             </span>
                           </>
                         ) : (
                           <>
-                            <span className="text-violet-300 text-sm transition-transform duration-300 group-hover/seal:scale-110">✦</span>
-                            <span className="codex-seal__manifest-label font-sc text-[11px] sm:text-xs text-signal tracking-widest font-bold uppercase">
+                            <span className="text-violet-300 text-sm leading-none transition-transform duration-300 group-hover/seal:scale-110">✦</span>
+                            <span className="codex-seal__manifest-label font-sc text-[11px] sm:text-xs leading-none text-signal tracking-widest font-bold uppercase">
                               Manifest
                             </span>
-                            <span className="font-mono text-[8px] text-neutral-400 tracking-wider">
+                            <span className="font-mono text-[8px] leading-none text-neutral-400 tracking-wider">
                               Awaken Portrait
                             </span>
                           </>
@@ -274,7 +278,7 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
             )}
             <LibraryCardTitle
               as="h4"
-              className={`codex-inscription${titleAwake ? ' codex-inscription--awake' : ''} font-display !font-medium !text-lg !leading-[normal] !text-signal !tracking-wide !wrap-normal drop-shadow-md`}
+              className={`codex-inscription${titleAwake ? ' codex-inscription--awake' : ''} font-display !font-medium !text-lg !leading-[normal] !tracking-wide !wrap-normal drop-shadow-md`}
             >
               <span className="codex-inscription__name">{entry.name}</span>
               <svg

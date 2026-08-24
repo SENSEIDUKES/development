@@ -687,6 +687,7 @@ export default function ReaderCodex({
             <ReaderCodexBestiary
               bestiary={bestiaryToRender}
               characters={charsToRender}
+              mcName={mcName}
             />
           </div>
         )}

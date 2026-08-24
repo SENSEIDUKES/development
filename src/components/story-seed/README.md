@@ -4,7 +4,7 @@
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **Replica created:** 2026-08-01
-- **Last Workshop update:** 2026-08-21
+- **Last Workshop update:** 2026-08-23
 - **Last source comparison:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and ready for production transfer
 
@@ -211,6 +211,11 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-08-23:** Routed the visible Fate Survival taxonomy in the locked
+  Story Seed Reference pane through the shared Reader **Color Codes** registry.
+  Its ten original Fate meanings remain intact while the active accessibility
+  palette now repaints it with the Reader and Codex; Story Seed intake,
+  persistence, and generation behavior remain unchanged.
 - **2026-08-21:** Published the Development creation workspace, Story Bank,
   Blueprint review, supporting UI, repository port, serialization, and
   canonical Creator / Story / World contracts through

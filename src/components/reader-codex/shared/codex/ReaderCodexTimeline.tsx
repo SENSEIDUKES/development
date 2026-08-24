@@ -1,5 +1,9 @@
 import React from 'react';
 import { VirtualizedList } from '../../../reader-chamber/development/VirtualizedList';
+import {
+  getColorCodeSurfaceStyle,
+  POWER_STAGE_BREAKTHROUGH_COLOR_CODE,
+} from '../../../reader-chamber/shared/colorCodes';
 import { Chapter } from '../types';
 
 interface ReaderCodexTimelineProps {
@@ -45,7 +49,11 @@ function TimelineItem({ item, onJumpToChapter }: TimelineItemProps) {
           </span>
           <div className="flex items-center gap-2 shrink-0">
             {ch.statsChangeMessage && ch.statsChangeMessage !== 'None' && (
-              <span className="text-[8.5px] px-1.5 py-0.25 bg-amber-950/25 border border-amber-950 font-mono text-yellow-500 rounded">
+              <span
+                className="text-[8.5px] px-1.5 py-0.25 border font-mono rounded"
+                data-color-code={POWER_STAGE_BREAKTHROUGH_COLOR_CODE}
+                style={getColorCodeSurfaceStyle(POWER_STAGE_BREAKTHROUGH_COLOR_CODE, { borderOpacity: 0.35, backgroundOpacity: 0.12 })}
+              >
                 {ch.statsChangeMessage}
               </span>
             )}

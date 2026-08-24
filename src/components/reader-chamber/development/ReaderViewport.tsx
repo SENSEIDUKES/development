@@ -5,7 +5,7 @@ import { ReaderChapter, StoryWorld, Bookmark } from '../shared/types';
 import { extractSFXCues } from '../shared/readerPlayback';
 import { collectBlockAutoCues } from '../shared/autoCuePolicy';
 import { SystemBlock } from './SystemBlock';
-import { SYSTEM_COLORS_LEGEND } from '../shared/systemColors';
+import { SYSTEM_COLORS_LEGEND } from '../shared/colorCodes';
 import { useAppStore } from '../shared/stubs';
 import { ReaderFateAlerts } from './ReaderFateAlerts';
 import { SystemColorLegend } from './SystemColorLegend';

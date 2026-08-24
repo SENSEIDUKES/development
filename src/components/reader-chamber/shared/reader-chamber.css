@@ -1,3 +1,5 @@
+@import './color-codes.css';
+
 /**
  * Reader Chamber scoped styles.
  *
@@ -103,34 +105,19 @@
   transition: color 0.4s ease, opacity 0.4s ease;
 }
 
-@keyframes menacing-pulse-red {
+@keyframes menacing-pulse-fate {
   0%, 100% {
-    box-shadow: 0 0 12px rgba(225, 29, 72, 0.25), inset 0 0 6px rgba(225, 29, 72, 0.15);
-    border-color: rgba(225, 29, 72, 0.4);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--fate-flag-color, currentColor) 25%, transparent), inset 0 0 6px color-mix(in srgb, var(--fate-flag-color, currentColor) 15%, transparent);
+    border-color: color-mix(in srgb, var(--fate-flag-color, currentColor) 40%, transparent);
   }
   50% {
-    box-shadow: 0 0 25px rgba(225, 29, 72, 0.75), inset 0 0 12px rgba(225, 29, 72, 0.35);
-    border-color: rgba(225, 29, 72, 1);
+    box-shadow: 0 0 25px color-mix(in srgb, var(--fate-flag-color, currentColor) 75%, transparent), inset 0 0 12px color-mix(in srgb, var(--fate-flag-color, currentColor) 35%, transparent);
+    border-color: var(--fate-flag-color, currentColor);
   }
 }
 
-@keyframes menacing-pulse-amber {
-  0%, 100% {
-    box-shadow: 0 0 12px rgba(245, 158, 11, 0.25), inset 0 0 6px rgba(245, 158, 11, 0.15);
-    border-color: rgba(245, 158, 11, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 25px rgba(245, 158, 11, 0.75), inset 0 0 12px rgba(245, 158, 11, 0.35);
-    border-color: rgba(245, 158, 11, 1);
-  }
-}
-
-.animate-menacing-red {
-  animation: menacing-pulse-red 3s infinite ease-in-out;
-}
-
-.animate-menacing-amber {
-  animation: menacing-pulse-amber 3s infinite ease-in-out;
+.animate-menacing-fate {
+  animation: menacing-pulse-fate 3s infinite ease-in-out;
 }
 
 @keyframes screen-shake-intense {
@@ -196,66 +183,6 @@
   --reader-font-size-scale: 1;
   --reader-line-height-scale: 1.62;
   --reader-letter-spacing: 0;
-
-  /* Default semantic entity colors - all >= 4.5:1 contrast on dark novel bg (#111111) */
-  --color-entity-mc: #60a5fa; /* Main Character - Blue (blue-400) */
-  --color-entity-friend: #34d399; /* Friend - Green (emerald-400) */
-  --color-entity-ally: var(--color-entity-friend); /* Legacy */
-  --color-entity-enemy: #f87171; /* Enemy - Red (red-400) */
-  --color-entity-unknown: #a3a3a3; /* Unknown - Gray (neutral-400) */
-  --color-entity-lover: #f472b6; /* Lover - Pink (pink-400) */
-  --color-entity-mentor: #fbbf24; /* Mentor - Yellow/Gold (amber-400) */
-  --color-entity-fallback: var(--color-entity-mc);
-
-  --color-location-regular: #c084fc; /* Regular Location - Purple (purple-400) */
-  --color-location-special: #f59e0b; /* Special Location - Gold (amber-500) */
-
-  --color-item-basic: #ffffff; /* Basic Item - White */
-  --color-item-decent: #34d399; /* Decent Item - Green (emerald-400) */
-  --color-item-good: #38bdf8; /* Good Item - Light Blue (sky-400) */
-  --color-item-great: #fb923c; /* Great Item - Orange (orange-400) */
-  --color-item-legendary: #fbbf24; /* Legendary Item - Gold (amber-400) */
-}
-
-/* ---------------------------------------------------------
-   COLOR PALETTES (Accessibility Profiles)
-   --------------------------------------------------------- */
-:root[data-palette="protanopia"] {
-  --color-entity-enemy: #fca5a5; /* High contrast peach/pink for protanopia text */
-  --color-entity-lover: #60a5fa; /* Shift pinks to clear blue */
-  --color-entity-friend: #fbbf24; /* Shift greens to warm yellow */
-  --color-item-decent: #fbbf24;
-}
-
-:root[data-palette="deuteranopia"] {
-  --color-entity-enemy: #fca5a5; /* High contrast peach/pink for deuteranopia text */
-  --color-entity-lover: #38bdf8; /* Shift pinks to deep sky blue */
-  --color-entity-friend: #daa520; /* High-contrast goldenrod yellow */
-  --color-item-decent: #daa520;
-}
-
-:root[data-palette="tritanopia"] {
-  --color-entity-enemy: #fca5a5; /* High-contrast red/pink */
-  --color-entity-lover: #c084fc; /* Shift pinks to violet */
-  --color-entity-friend: #14b8a6; /* Shift greens to teal/cyan */
-  --color-entity-mc: #fca5a5; /* Shift blues */
-  --color-item-good: #c084fc;
-}
-
-:root[data-palette="high_contrast_dark"] {
-  --color-entity-mc: #3388ff;
-  --color-entity-friend: #33ff33; /* Pure vivid green */
-  --color-entity-enemy: #ff3333; /* Pure vivid red */
-  --color-entity-unknown: #cccccc;
-  --color-entity-lover: #ff66ff; /* Pure vivid magenta */
-  --color-entity-mentor: #ffff33;
-  --color-location-regular: #cc33ff;
-  --color-location-special: #ffff33;
-  --color-item-basic: #ffffff;
-  --color-item-decent: #33ff33;
-  --color-item-good: #33ccff;
-  --color-item-great: #ff9933;
-  --color-item-legendary: #ffff33;
 }
 
 /* ---------------------------------------------------------
@@ -270,6 +197,8 @@
 .highlight-lover { color: var(--color-entity-lover); font-weight: 500; transition: color 0.3s ease; }
 .highlight-mentor { color: var(--color-entity-mentor); font-weight: 500; transition: color 0.3s ease; }
 .highlight-ally { color: var(--color-entity-ally); font-weight: 500; transition: color 0.3s ease; }
+.highlight-non-human { color: var(--color-entity-non-human); font-weight: 500; transition: color 0.3s ease; }
+.highlight-corruption { color: var(--color-system-corruption); font-weight: 500; transition: color 0.3s ease; }
 .highlight-fallback { color: var(--color-entity-fallback); font-weight: 500; transition: color 0.3s ease; }
 
 .highlight-location { color: var(--color-location-regular); font-weight: 500; transition: color 0.3s ease; }

@@ -1,6 +1,31 @@
 import React, { useState } from 'react';
 import { Heart, Zap, Network, Sparkles } from 'lucide-react';
 import { StoryMemory, StoryWorld, Character } from '../types';
+import {
+  getColorCodeStyle,
+  getColorCodeSurfaceStyle,
+  getColorCodeValue,
+  resolveKarmaMetricColorCode,
+  resolvePowerStageColorCode,
+  resolveRelationshipAffinityColorCode,
+  POWER_STAGE_BREAKTHROUGH_COLOR_CODE,
+} from '../../../reader-chamber/shared/colorCodes';
+
+const AFFINITY_NEUTRAL_THRESHOLD = 20;
+
+const POWER_STAGE_THRESHOLDS = [
+  { label: 'Nascent (85)', position: 0.15, stageName: 'Nascent' },
+  { label: 'Core (70)', position: 0.3, stageName: 'Core' },
+  { label: 'Found. (55)', position: 0.45, stageName: 'Foundation' },
+  { label: 'Qi (35)', position: 0.65, stageName: 'Qi' },
+  { label: 'Mortal', position: 1, stageName: 'Mortal' },
+] as const;
+
+function resolveChartAffinityColorCode(affinity: number) {
+  return resolveRelationshipAffinityColorCode(
+    Math.abs(affinity) <= AFFINITY_NEUTRAL_THRESHOLD ? 0 : affinity,
+  );
+}
 
 interface ReaderCodexDashboardsProps {
   memory: StoryMemory;
@@ -25,6 +50,7 @@ export function ReaderCodexDashboards({
 }: ReaderCodexDashboardsProps) {
   const [hoveredAffPoint, setHoveredAffPoint] = useState<any | null>(null);
   const [hoveredPowerPoint, setHoveredPowerPoint] = useState<any | null>(null);
+  const currentPowerStageColorCode = resolvePowerStageColorCode(memory.currentPowerStage);
 
   // Clear local hover details and ensure selectedChartCharId is valid whenever charsToRender or selectedChartCharId changes.
   React.useEffect(() => {
@@ -45,7 +71,11 @@ export function ReaderCodexDashboards({
           <span className="text-[10px] px-2 py-0.5 font-mono bg-neutral-900 border border-neutral-850 text-cyan-400 rounded">
             Chapters Logged: {flatChapters.length}
           </span>
-          <span className="text-[10px] px-2 py-0.5 font-mono bg-neutral-900 border border-neutral-850 text-yellow-500 rounded">
+          <span
+            className="text-[10px] px-2 py-0.5 font-mono rounded"
+            data-color-code={currentPowerStageColorCode}
+            style={getColorCodeSurfaceStyle(currentPowerStageColorCode, { borderOpacity: 0.2, backgroundOpacity: 0.08 })}
+          >
             Current Rank: {memory.currentPowerStage || 'None'}
           </span>
         </div>
@@ -66,7 +96,12 @@ export function ReaderCodexDashboards({
             <div className="bg-neutral-950/40 border border-neutral-900 rounded-xl p-4 md:p-5 flex flex-col space-y-4 shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-900 pb-3">
                 <div className="flex items-center space-x-2">
-                  <Heart size={14} className="text-rose-500 shrink-0" />
+                  <Heart
+                    size={14}
+                    className="shrink-0"
+                    data-color-code="bond"
+                    style={{ color: getColorCodeValue('bond') }}
+                  />
                   <span className="font-sc font-bold text-xs uppercase tracking-wider text-signal">Affinity Chronology</span>
                 </div>
 
@@ -138,13 +173,22 @@ export function ReaderCodexDashboards({
                           <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto overflow-visible select-none">
                             {/* Gridlines */}
                             <line x1={padL} y1={padT} x2={w - padR} y2={padT} stroke="#1b1b1b" strokeDasharray="3,3" />
-                            <line x1={padL} y1={padT + graphH/2} x2={w - padR} y2={padT + graphH/2} stroke="#3b2218" strokeDasharray="4,4" />
+                            <line
+                              x1={padL}
+                              y1={padT + graphH/2}
+                              x2={w - padR}
+                              y2={padT + graphH/2}
+                              data-color-code="unknown"
+                              stroke={getColorCodeValue('unknown')}
+                              strokeOpacity="0.25"
+                              strokeDasharray="4,4"
+                            />
                             <line x1={padL} y1={padT + graphH} x2={w - padR} y2={padT + graphH} stroke="#1b1b1b" strokeDasharray="3,3" />
 
                             {/* Axes notes */}
-                            <text x={padL - 10} y={padT + 4} textAnchor="end" fill="#10b981" className="font-mono text-[8px] font-bold">100 (Boon)</text>
-                            <text x={padL - 10} y={padT + graphH/2 + 3} textAnchor="end" fill="#eab308" className="font-mono text-[8px] font-bold">0 (Neutral)</text>
-                            <text x={padL - 10} y={padT + graphH + 2} textAnchor="end" fill="#ef4444" className="font-mono text-[8px] font-bold">-100 (Foe)</text>
+                            <text x={padL - 10} y={padT + 4} textAnchor="end" data-color-code="ally" fill={getColorCodeValue('ally')} className="font-mono text-[8px] font-bold">100 (Boon)</text>
+                            <text x={padL - 10} y={padT + graphH/2 + 3} textAnchor="end" data-color-code="unknown" fill={getColorCodeValue('unknown')} className="font-mono text-[8px] font-bold">0 (Neutral)</text>
+                            <text x={padL - 10} y={padT + graphH + 2} textAnchor="end" data-color-code="enemy" fill={getColorCodeValue('enemy')} className="font-mono text-[8px] font-bold">-100 (Foe)</text>
 
                             {total > 1 && (
                               <>
@@ -158,9 +202,9 @@ export function ReaderCodexDashboards({
                                 />
                                 <defs>
                                   <linearGradient id="gradient-affinity" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" stopColor="#ef4444" />
-                                    <stop offset="50%" stopColor="#ca8a04" />
-                                    <stop offset="100%" stopColor="#10b981" />
+                                    <stop offset="0%" data-color-code="enemy" stopColor={getColorCodeValue('enemy')} />
+                                    <stop offset="50%" data-color-code="unknown" stopColor={getColorCodeValue('unknown')} />
+                                    <stop offset="100%" data-color-code="ally" stopColor={getColorCodeValue('ally')} />
                                   </linearGradient>
                                 </defs>
                               </>
@@ -168,19 +212,19 @@ export function ReaderCodexDashboards({
 
                             {coords.map((c) => {
                               const isHovered = hoveredAffPoint?.chapterNumber === c.p.chapterNumber || (!hoveredAffPoint && c.index === total - 1);
-                              let nodeColor = '#3b82f6';
-                              if (c.p.affinity > 20) nodeColor = '#10b981';
-                              else if (c.p.affinity < -20) nodeColor = '#ef4444';
-                              else nodeColor = '#a3a3a3';
+                              // Affinity is the separate inter-character
+                              // ledger. Keep its ±20 neutral band while using
+                              // the shared Color Code resolver for every hue.
+                              const affinityColorCode = resolveChartAffinityColorCode(c.p.affinity);
 
                               return (
-                                <g key={c.p.chapterNumber}>
+                                <g key={c.p.chapterNumber} data-color-code={affinityColorCode}>
                                   <circle
                                     cx={c.x}
                                     cy={c.y}
                                     r={isHovered ? "6.5" : "4"}
                                     fill="#0a0a0a"
-                                    stroke={nodeColor}
+                                    stroke={getColorCodeValue(affinityColorCode)}
                                     strokeWidth={isHovered ? "2.5" : "1.2"}
                                     className="cursor-pointer transition-all duration-200 hover:scale-125"
                                     onClick={() => setHoveredAffPoint(c.p)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setHoveredAffPoint(c.p); } }}
@@ -202,29 +246,32 @@ export function ReaderCodexDashboards({
                           </svg>
                         </div>
 
-                        {displayPoint && (
-                          <div className="p-3 bg-neutral-900/60 border border-neutral-850 rounded-lg space-y-1.5 text-xs">
-                            <div className="flex items-center justify-between font-mono">
-                              <span className="font-bold text-signal">Chapter {displayPoint.chapterNumber}: {displayPoint.title}</span>
-                              <span className={`px-2 py-0.5 font-bold uppercase rounded text-[9px] ${
-                                displayPoint.affinity > 20 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                displayPoint.affinity < -20 ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-                                'bg-neutral-800 text-neutral-400'
-                              }`}>
-                                Affinity: {displayPoint.affinity > 0 ? `+${displayPoint.affinity}` : displayPoint.affinity}
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-neutral-400 leading-normal italic font-light font-serif">
-                              {displayPoint.eventSummary}
-                            </p>
-                            {displayPoint.hasInteraction && (
-                              <div className="flex items-center space-x-1 py-0.5 text-[9px] text-portal/80 font-mono">
-                                <span className="animate-pulse text-xs">•</span>
-                                <span>Direct alchemical alignment interface response logged inside original chapter script.</span>
+                        {displayPoint && (() => {
+                          const affinityColorCode = resolveChartAffinityColorCode(displayPoint.affinity);
+                          return (
+                            <div className="p-3 bg-neutral-900/60 border border-neutral-850 rounded-lg space-y-1.5 text-xs">
+                              <div className="flex items-center justify-between font-mono">
+                                <span className="font-bold text-signal">Chapter {displayPoint.chapterNumber}: {displayPoint.title}</span>
+                                <span
+                                  className="px-2 py-0.5 font-bold uppercase rounded text-[9px] border"
+                                  data-color-code={affinityColorCode}
+                                  style={getColorCodeSurfaceStyle(affinityColorCode, { borderOpacity: 0.2, backgroundOpacity: 0.1 })}
+                                >
+                                  Affinity: {displayPoint.affinity > 0 ? `+${displayPoint.affinity}` : displayPoint.affinity}
+                                </span>
                               </div>
-                            )}
-                          </div>
-                        )}
+                              <p className="text-[11px] text-neutral-400 leading-normal italic font-light font-serif">
+                                {displayPoint.eventSummary}
+                              </p>
+                              {displayPoint.hasInteraction && (
+                                <div className="flex items-center space-x-1 py-0.5 text-[9px] text-portal/80 font-mono">
+                                  <span className="animate-pulse text-xs">•</span>
+                                  <span>Direct alchemical alignment interface response logged inside original chapter script.</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })()}
@@ -236,10 +283,19 @@ export function ReaderCodexDashboards({
             <div className="bg-neutral-950/40 border border-neutral-900 rounded-xl p-4 md:p-5 flex flex-col space-y-4 shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-900 pb-3">
                 <div className="flex items-center space-x-2">
-                  <Zap size={14} className="text-yellow-500 shrink-0" />
+                  <Zap
+                    size={14}
+                    className="shrink-0"
+                    data-color-code={POWER_STAGE_BREAKTHROUGH_COLOR_CODE}
+                    style={getColorCodeStyle(POWER_STAGE_BREAKTHROUGH_COLOR_CODE)}
+                  />
                   <span className="font-sc font-bold text-xs uppercase tracking-wider text-signal">MC breakthroughs progress</span>
                 </div>
-                <span className="text-[9.5px] uppercase font-mono px-2 py-0.5 border border-amber-500/20 text-yellow-500 bg-amber-500/5 rounded">
+                <span
+                  className="text-[9.5px] uppercase font-mono px-2 py-0.5 border rounded"
+                  data-color-code={POWER_STAGE_BREAKTHROUGH_COLOR_CODE}
+                  style={getColorCodeSurfaceStyle(POWER_STAGE_BREAKTHROUGH_COLOR_CODE, { borderOpacity: 0.2, backgroundOpacity: 0.05 })}
+                >
                   Ascension Path
                 </span>
               </div>
@@ -291,18 +347,30 @@ export function ReaderCodexDashboards({
                           <line x1={padL} y1={padT + graphH * 0.65} x2={w - padR} y2={padT + graphH * 0.65} stroke="#222" strokeDasharray="3,3" />
                           <line x1={padL} y1={padT + graphH} x2={w - padR} y2={padT + graphH} stroke="#1b1b1b" />
 
-                          {/* threshold labels */}
-                          <text x={padL - 10} y={padT + graphH * 0.15 + 3} textAnchor="end" fill="#a855f7" className="font-mono text-[7px] font-medium">Nascent (85)</text>
-                          <text x={padL - 10} y={padT + graphH * 0.3 + 3} textAnchor="end" fill="#ca8a04" className="font-mono text-[7px] font-medium">Core (70)</text>
-                          <text x={padL - 10} y={padT + graphH * 0.45 + 3} textAnchor="end" fill="#04ACFF" className="font-mono text-[7px] font-medium">Found. (55)</text>
-                          <text x={padL - 10} y={padT + graphH * 0.65 + 3} textAnchor="end" fill="#10b981" className="font-mono text-[7px] font-medium">Qi (35)</text>
-                          <text x={padL - 10} y={padT + graphH + 2} textAnchor="end" fill="#525252" className="font-mono text-[7px] font-medium">Mortal</text>
+                          {/* Threshold labels retain their established stage meanings through the shared registry. */}
+                          {POWER_STAGE_THRESHOLDS.map((threshold) => {
+                            const colorCode = resolvePowerStageColorCode(threshold.stageName);
+                            return (
+                              <text
+                                key={threshold.stageName}
+                                x={padL - 10}
+                                y={padT + graphH * threshold.position + (threshold.position === 1 ? 2 : 3)}
+                                textAnchor="end"
+                                data-color-code={colorCode}
+                                fill={getColorCodeValue(colorCode)}
+                                className="font-mono text-[7px] font-medium"
+                              >
+                                {threshold.label}
+                              </text>
+                            );
+                          })}
 
                           {total > 1 && (
                             <path
                               d={curvePath}
                               fill="none"
-                              stroke="#eab308"
+                              data-color-code={POWER_STAGE_BREAKTHROUGH_COLOR_CODE}
+                              stroke={getColorCodeValue(POWER_STAGE_BREAKTHROUGH_COLOR_CODE)}
                               strokeWidth="2.5"
                               strokeLinecap="round"
                               className="transition-all duration-500"
@@ -314,13 +382,14 @@ export function ReaderCodexDashboards({
                             const breakthroughNode = c.p.breakthrough;
 
                             return (
-                              <g key={c.p.chapterNumber}>
+                              <g key={c.p.chapterNumber} data-color-code={POWER_STAGE_BREAKTHROUGH_COLOR_CODE}>
                                 <circle
                                   cx={c.x}
                                   cy={c.y}
                                   r={isHovered ? "6.5" : breakthroughNode ? "5" : "3.5"}
-                                  fill={breakthroughNode ? "#eab308" : "#0d0d0d"}
-                                  stroke={breakthroughNode ? "#ca8a04" : "#ca8a04"}
+                                  data-color-code={POWER_STAGE_BREAKTHROUGH_COLOR_CODE}
+                                  fill={breakthroughNode ? getColorCodeValue(POWER_STAGE_BREAKTHROUGH_COLOR_CODE) : "#0d0d0d"}
+                                  stroke={getColorCodeValue(POWER_STAGE_BREAKTHROUGH_COLOR_CODE)}
                                   strokeWidth={isHovered ? "2.5" : breakthroughNode ? "1.5" : "1.2"}
                                   className={`cursor-pointer transition-all duration-200 ${breakthroughNode ? 'animate-pulse' : ''} hover:scale-125`}
                                   onClick={() => setHoveredPowerPoint(c.p)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setHoveredPowerPoint(c.p); } }}
@@ -346,7 +415,11 @@ export function ReaderCodexDashboards({
                         <div className="p-3 bg-neutral-900/60 border border-neutral-850 rounded-lg space-y-1.5 text-xs">
                           <div className="flex items-center justify-between font-mono">
                             <span className="font-bold text-signal">Chapter {displayPoint.chapterNumber}: {displayPoint.title}</span>
-                            <span className="font-bold text-yellow-500 bg-yellow-500/10 border border-yellow-500/20 px-2 py-0.5 rounded text-[9.5px] uppercase">
+                            <span
+                              className="font-bold border px-2 py-0.5 rounded text-[9.5px] uppercase"
+                              data-color-code={resolvePowerStageColorCode(displayPoint.stageName)}
+                              style={getColorCodeSurfaceStyle(resolvePowerStageColorCode(displayPoint.stageName), { borderOpacity: 0.2, backgroundOpacity: 0.1 })}
+                            >
                               {displayPoint.stageName}
                             </span>
                           </div>
@@ -354,8 +427,12 @@ export function ReaderCodexDashboards({
                             {displayPoint.summary}
                           </p>
                           {displayPoint.breakthrough && (
-                            <div className="flex items-center space-x-1 text-[9px] text-yellow-500 font-mono">
-                              <Sparkles size={11} className="text-yellow-400 shrink-0" />
+                            <div
+                              className="flex items-center space-x-1 text-[9px] font-mono"
+                              data-color-code={POWER_STAGE_BREAKTHROUGH_COLOR_CODE}
+                              style={getColorCodeStyle(POWER_STAGE_BREAKTHROUGH_COLOR_CODE)}
+                            >
+                              <Sparkles size={11} className="shrink-0" />
                               <span>Core breakthrough advancement recorded inside celestial memory layers.</span>
                             </div>
                           )}
@@ -402,6 +479,10 @@ export function ReaderCodexDashboards({
                 if (n.type === 'Destiny') destinies++;
               }
 
+              const debtColorCode = resolveKarmaMetricColorCode('debt');
+              const boonColorCode = resolveKarmaMetricColorCode('boon');
+              const destinyColorCode = resolveKarmaMetricColorCode('destiny');
+
               return (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
@@ -414,27 +495,27 @@ export function ReaderCodexDashboards({
                   <div className="p-4 bg-void/50 border border-neutral-900 rounded-lg flex flex-col justify-between">
                     <div className="flex items-center justify-between text-[9px] font-mono uppercase text-neutral-500 tracking-wider">
                       <span>Karmic Debts</span>
-                      <span className="text-red-500">●</span>
+                      <span data-color-code={debtColorCode} style={getColorCodeStyle(debtColorCode)}>●</span>
                     </div>
-                    <span className="text-2xl font-bold font-sc text-red-400 mt-2">{debts}</span>
+                    <span data-color-code={debtColorCode} style={getColorCodeStyle(debtColorCode)} className="text-2xl font-bold font-sc mt-2">{debts}</span>
                     <span className="text-[9.5px] text-neutral-500 font-sans mt-0.5 leading-snug">Spiritual blockages requiring master settlement.</span>
                   </div>
 
                   <div className="p-4 bg-void/50 border border-neutral-900 rounded-lg flex flex-col justify-between">
                     <div className="flex items-center justify-between text-[9px] font-mono uppercase text-neutral-500 tracking-wider">
                       <span>Celestial Boons</span>
-                      <span className="text-emerald-500">●</span>
+                      <span data-color-code={boonColorCode} style={getColorCodeStyle(boonColorCode)}>●</span>
                     </div>
-                    <span className="text-2xl font-bold font-sc text-emerald-400 mt-2">{boons}</span>
+                    <span data-color-code={boonColorCode} style={getColorCodeStyle(boonColorCode)} className="text-2xl font-bold font-sc mt-2">{boons}</span>
                     <span className="text-[9.5px] text-neutral-500 font-sans mt-0.5 leading-snug">Sect inheritance or Master Gu blessings active.</span>
                   </div>
 
                   <div className="p-4 bg-void/50 border border-neutral-900 rounded-lg flex flex-col justify-between">
                     <div className="flex items-center justify-between text-[9px] font-mono uppercase text-neutral-500 tracking-wider">
                       <span>Destinies & Enmities</span>
-                      <span className="text-amber-500">●</span>
+                      <span data-color-code={destinyColorCode} style={getColorCodeStyle(destinyColorCode)}>●</span>
                     </div>
-                    <span className="text-2xl font-bold font-sc text-amber-500 mt-2">{destinies + enmities}</span>
+                    <span data-color-code={destinyColorCode} style={getColorCodeStyle(destinyColorCode)} className="text-2xl font-bold font-sc mt-2">{destinies + enmities}</span>
                     <span className="text-[9.5px] text-neutral-500 font-sans mt-0.5 leading-snug">Vengeful sect elders or fated ascension loops.</span>
                   </div>
 

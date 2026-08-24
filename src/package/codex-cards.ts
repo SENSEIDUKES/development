@@ -6,6 +6,7 @@
  * their profile views, the ambience layer behind them, and the accent and
  * backdrop resolvers that give each entity its spectral identity.
  */
+import '../components/reader-chamber/shared/reader-chamber.css';
 import '../components/reader-codex/shared/reader-codex.css';
 
 export {
@@ -23,6 +24,7 @@ export {
 export {
   CODEX_ENTITY_ACCENT_FALLBACK,
   resolveCodexEntityAccent,
+  resolveCodexEntityColorCode,
   resolveCodexEntityBand,
   type CodexEntityAccentInput,
   type CodexEntityBand,

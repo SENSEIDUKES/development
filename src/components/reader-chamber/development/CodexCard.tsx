@@ -13,7 +13,7 @@ import {
 import { LibraryDragonCycleIcon } from '../../library/LibraryDragonCycleIcon';
 import { isManifestationEligible } from '../shared/manifestationEligibility';
 import { CodexCardAmbience } from '../../reader-codex/development/CodexCardAmbience';
-import { resolveCodexEntityAccent } from '../../reader-codex/development/codexEntityAccent';
+import { resolveCodexEntityAccent, resolveCodexEntityColorCode } from '../../reader-codex/development/codexEntityAccent';
 import { MANIFEST_BACKDROPS, getManifestBackdrop } from '../../reader-codex/development/codexManifestBackdrop';
 import './CodexCardInscription.css';
 import './CodexCardSeal.css';
@@ -154,6 +154,7 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
   const revealImageAssetId = entry && 'imageAssetId' in entry ? entry.imageAssetId : undefined;
   const entryId = entry?.id || 'reveal-entity';
   const assignedBackdrop = activeStory?.assignedRevealBackdrops?.[entryId] || getFallbackBackdrop(entryId);
+  const colorCode = resolveCodexEntityColorCode(revealTerm.type, entry, activeStory?.mcName);
   const accent = resolveCodexEntityAccent(revealTerm.type, entry, activeStory?.mcName);
   // The inscription treatment sleeps until the card's own reveal fires, so
   // the name settle and thread draw never play inside a hidden card.
@@ -174,6 +175,7 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
         as="div"
         padding="none"
         accentColor={accent}
+        data-color-code={colorCode}
         className={`${CODEX_CARD_SURFACE_CLASS} ${className}`}
       >
         {!revealImageUrl && (

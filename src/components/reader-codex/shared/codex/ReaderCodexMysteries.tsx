@@ -1,6 +1,11 @@
 import React from 'react';
 import { HelpCircle, Check } from 'lucide-react';
 import { StoryMemory } from '../types';
+import {
+  getColorCodeStyle,
+  getColorCodeSurfaceStyle,
+  resolvePlotThreadStatusColorCode,
+} from '../../../reader-chamber/shared/colorCodes';
 
 interface ReaderCodexMysteriesProps {
   memory: StoryMemory;
@@ -9,6 +14,8 @@ interface ReaderCodexMysteriesProps {
 export function ReaderCodexMysteries({ memory }: ReaderCodexMysteriesProps) {
   const unresolvedThreads = memory.unresolvedPlotThreads || [];
   const resolvedThreads = memory.resolvedPlotThreads || [];
+  const unresolvedColorCode = resolvePlotThreadStatusColorCode('unresolved');
+  const resolvedColorCode = resolvePlotThreadStatusColorCode('resolved');
 
   return (
     <div className="space-y-6 animate-fadeIn" id="codex-karma-ledger">
@@ -21,7 +28,13 @@ export function ReaderCodexMysteries({ memory }: ReaderCodexMysteriesProps) {
 
         {/* Unresolved threads column */}
         <div className="space-y-3">
-          <span className="text-[10px] font-sc text-human uppercase tracking-widest block font-bold">Unresolved mysteries ({unresolvedThreads.length})</span>
+          <span
+            data-color-code={unresolvedColorCode}
+            style={getColorCodeStyle(unresolvedColorCode)}
+            className="text-[10px] font-sc uppercase tracking-widest block font-bold"
+          >
+            Unresolved mysteries ({unresolvedThreads.length})
+          </span>
           <div className="space-y-2">
             {unresolvedThreads.length === 0 ? (
               <p className="text-xs text-neutral-600 text-center py-6 bg-void/40 border border-neutral-950 rounded italic font-serif">
@@ -30,7 +43,14 @@ export function ReaderCodexMysteries({ memory }: ReaderCodexMysteriesProps) {
             ) : (
               unresolvedThreads.map((thread, idx) => (
                 <div key={idx} className="p-3 bg-neutral-950/40 border border-neutral-900 rounded-lg text-xs hover:border-neutral-850 flex items-start gap-2.5 animate-fadeIn">
-                  <span className="p-1 bg-red-950/30 rounded text-human border border-red-950 flex-shrink-0">
+                  <span
+                    data-color-code={unresolvedColorCode}
+                    style={getColorCodeSurfaceStyle(unresolvedColorCode, {
+                      borderOpacity: 0.3,
+                      backgroundOpacity: 0.15,
+                    })}
+                    className="p-1 rounded border flex-shrink-0"
+                  >
                     <HelpCircle size={12} className="animate-pulse" />
                   </span>
                   <div className="space-y-1">
@@ -47,7 +67,13 @@ export function ReaderCodexMysteries({ memory }: ReaderCodexMysteriesProps) {
 
         {/* Resolved threads column */}
         <div className="space-y-3">
-          <span className="text-[10px] font-sc text-green-500 uppercase tracking-widest block font-bold">Severed karma ({resolvedThreads.length})</span>
+          <span
+            data-color-code={resolvedColorCode}
+            style={getColorCodeStyle(resolvedColorCode)}
+            className="text-[10px] font-sc uppercase tracking-widest block font-bold"
+          >
+            Severed karma ({resolvedThreads.length})
+          </span>
           <div className="space-y-2">
             {resolvedThreads.length === 0 ? (
               <p className="text-xs text-neutral-600 text-center py-6 bg-void/40 border border-neutral-950 rounded italic font-serif">
@@ -56,12 +82,25 @@ export function ReaderCodexMysteries({ memory }: ReaderCodexMysteriesProps) {
             ) : (
               resolvedThreads.map((thread, idx) => (
                 <div key={idx} className="p-3 bg-neutral-950/50 border border-neutral-950 rounded-lg text-xs hover:border-neutral-850 opacity-60 flex items-start gap-2.5">
-                  <span className="p-1 bg-green-950/30 rounded text-green-400 border border-green-950 flex-shrink-0">
+                  <span
+                    data-color-code={resolvedColorCode}
+                    style={getColorCodeSurfaceStyle(resolvedColorCode, {
+                      borderOpacity: 0.3,
+                      backgroundOpacity: 0.15,
+                    })}
+                    className="p-1 rounded border flex-shrink-0"
+                  >
                     <Check size={12} />
                   </span>
                   <div className="space-y-1">
                     <p className="text-neutral-500 leading-relaxed font-sans line-through italic">{typeof thread === 'string' ? thread : thread.description}</p>
-                    <span className="text-[9px] text-green-700 uppercase font-sc block">Causal resolution achieved</span>
+                    <span
+                      data-color-code={resolvedColorCode}
+                      style={getColorCodeStyle(resolvedColorCode)}
+                      className="text-[9px] uppercase font-sc block opacity-70"
+                    >
+                      Causal resolution achieved
+                    </span>
                   </div>
                 </div>
               ))

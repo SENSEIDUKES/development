@@ -2,45 +2,60 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { CircleAlert as AlertCircle, CircleCheck as CheckCircle, Flame } from 'lucide-react';
 import { FateResultData } from '../shared/types';
+import {
+  getColorCodeStyle,
+  getColorCodeSurfaceStyle,
+  getColorCodeValue,
+  resolveFateConsequenceDetailColorCode,
+  resolveFateResultColorCode,
+} from '../shared/colorCodes';
 
 interface FateResultCardProps {
   data: FateResultData;
 }
 
 export const FateResultCard = React.memo(function FateResultCard({ data }: FateResultCardProps) {
-  let themeColor = '';
+  const colorCode = resolveFateResultColorCode(data.outcome);
   let Icon = Flame;
-  let bgEffect = '';
-  let shadowGlow = '';
+  let borderOpacity = 0.6;
+  let backgroundOpacity = 0.4;
+  let glowOpacity = 0.4;
 
   switch (data.outcome) {
     case 'FATE AVERTED':
-      themeColor = 'border-amber-500/50 text-amber-400 bg-amber-500/10';
-      shadowGlow = 'shadow-[0_0_40px_rgba(245,158,11,0.3)]';
-      bgEffect = 'bg-gradient-to-br from-amber-950/40 via-neutral-900 to-amber-900/20';
       Icon = CheckCircle;
+      borderOpacity = 0.5;
+      backgroundOpacity = 0.1;
+      glowOpacity = 0.3;
       break;
     case 'FATE SCARRED':
-      themeColor = 'border-orange-500/50 text-orange-400 bg-orange-500/10';
-      shadowGlow = 'shadow-[0_0_40px_rgba(249,115,22,0.3)]';
-      bgEffect = 'bg-gradient-to-br from-orange-950/40 via-neutral-900 to-orange-900/20';
       Icon = AlertCircle;
+      borderOpacity = 0.5;
+      backgroundOpacity = 0.1;
+      glowOpacity = 0.3;
       break;
     case 'DOOM MANIFESTED':
     default:
-      themeColor = 'border-red-600/60 text-red-500 bg-red-950/40 animate-pulse';
-      shadowGlow = 'shadow-[0_0_50px_rgba(220,38,38,0.4)]';
-      bgEffect = 'bg-gradient-to-br from-red-950/40 via-neutral-900 to-red-900/20';
       Icon = Flame;
       break;
   }
+
+  const colorValue = getColorCodeValue(colorCode);
+  const newStoryStateColorCode = resolveFateConsequenceDetailColorCode('newStoryState');
+  const genreShiftColorCode = resolveFateConsequenceDetailColorCode('genreShift');
+  const fateStyle: React.CSSProperties = {
+    ...getColorCodeSurfaceStyle(colorCode, { borderOpacity, backgroundOpacity, glowOpacity }),
+    backgroundImage: `linear-gradient(to bottom right, color-mix(in srgb, ${colorValue} 18%, #171717), #171717, color-mix(in srgb, ${colorValue} 9%, #171717))`,
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 100, damping: 15 }}
-      className={`my-6 md:my-8 mx-auto max-w-2xl p-5 md:p-6 border-2 rounded-2xl font-mono collectible-card relative overflow-hidden ${themeColor} ${shadowGlow} ${bgEffect}`}
+      data-color-code={colorCode}
+      style={fateStyle}
+      className={`my-6 md:my-8 mx-auto max-w-2xl p-5 md:p-6 border-2 rounded-2xl font-mono collectible-card relative overflow-hidden ${data.outcome === 'DOOM MANIFESTED' ? 'animate-pulse' : ''}`}
     >
       {/* Mystical background overlay */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMDAwIi8+CjxwYXRoIGQ9Ik0wIDRMMCAwTDQgNEwwIDQiIGZpbGw9IiMzMzMiLz4KPC9zdmc+')] opacity-20 pointer-events-none mix-blend-screen" />
@@ -86,14 +101,28 @@ export const FateResultCard = React.memo(function FateResultCard({ data }: FateR
               {data.newStoryState && (
                 <div className="bg-black/40 p-4 rounded-xl border border-inherit/20 backdrop-blur-sm">
                   <h3 className="uppercase tracking-[0.2em] opacity-80 mb-2 text-xs md:text-sm font-bold">New Story State</h3>
-                  <p className="font-bold text-portal text-base">{data.newStoryState}</p>
+                  <p
+                    className="font-bold text-base"
+                    data-color-code={newStoryStateColorCode}
+                    data-fate-consequence-detail="newStoryState"
+                    style={getColorCodeStyle(newStoryStateColorCode)}
+                  >
+                    {data.newStoryState}
+                  </p>
                 </div>
               )}
 
               {data.genreShift && (
                 <div className="bg-black/40 p-4 rounded-xl border border-inherit/20 backdrop-blur-sm">
                   <h3 className="uppercase tracking-[0.2em] opacity-80 mb-2 text-xs md:text-sm font-bold">Genre Shift</h3>
-                  <p className="font-bold text-purple-400 text-base">{data.genreShift}</p>
+                  <p
+                    className="font-bold text-base"
+                    data-color-code={genreShiftColorCode}
+                    data-fate-consequence-detail="genreShift"
+                    style={getColorCodeStyle(genreShiftColorCode)}
+                  >
+                    {data.genreShift}
+                  </p>
                 </div>
               )}
             </div>

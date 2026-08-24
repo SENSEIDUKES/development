@@ -4,7 +4,7 @@
 - **Verified source locations:** `src/components/ReaderViewport.tsx`, `src/components/SystemBlock.tsx`, `src/components/FateResultCard.tsx`
 - **Workshop preview:** `?preview=card-workshop`
 - **Replica created:** 2026-08-14
-- **Last Workshop update:** 2026-08-23
+- **Last Workshop update:** 2026-08-24
 - **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
@@ -21,6 +21,8 @@ The current presentation set is deliberately limited to:
 Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studio is outside this feature and is unchanged.
 
 ## Workshop history
+
+- **2026-08-24:** Clarified the regular System Prompt selector into explicit `narrative`, `mechanical`, and `world_notice` families while retaining `system_prompt` and `fate_system_prompt` as the only top-level kinds. The existing Narrative Notification compact/expanded card and LitRPG mechanical panel retain their approved layouts; `promptType` supplies their shared semantic color, never layout choice. Added deterministic **Guild Bounty** (single notice) and **Mission Board** (multi-entry board) examples through the existing System Prompt selector, rendered by the Reader's static `WorldNotice` document surface with direct headings, secondary flavor, ordered labeled details, no controls, no Codex links, and no TTS ownership. The contextual Reader adds a board fixture; Fate, locked Reference, preview routes, and source-comparison metadata are unchanged.
 
 - **2026-08-23:** Adopted the two-slot compact outcome treatment in the System Prompt examples: each example's bottom half now shows at most two outcomes as flat slots separated by a clear divider — a white subject plus a meaning-colored state word (Cultivation Breakthrough: `Realm Ascended` | `Lifespan Increased`; Broken Promise: `Karma Decreased` | `Title Stripped`; Target Scan: `Intel Gained` | `Weakness Found`) — with no numbers compact. The signed figures (`Lifespan +100`, `Karma −15`) and the remaining outcomes (`Presence Exposed`, `Sect Enmity`, `Detection Risk: High`) still render in the expanded event report. Fixture data, priority order, and tone overrides are unchanged.
 
@@ -56,7 +58,7 @@ Contextual View supports:
 - first reveal or existing-entity reference;
 - a Codex-linked audible action with an independently operable inline Worldcue;
 - a sound-only audible action that remains ordinary Reader prose;
-- every current `SystemBlock` kind, the compact-default/expanded disclosure states for all three regular examples, and all existing Fate outcomes;
+- every current `SystemBlock` kind, explicit Narrative Notification and LitRPG/Mechanical Display examples, single-notice and multi-entry World Notice fixtures, the compact-default/expanded disclosure states for the Narrative examples, and all existing Fate outcomes;
 - mobile, tablet, and desktop widths.
 
 Card Type Tabs exposes every remaining preset in a horizontally scrollable tab list and mounts exactly one presentation at a time. Arrow keys plus Home and End move between tabs. Card Type Tabs and Contextual View share one selected preset and one override state.
@@ -72,6 +74,7 @@ Card Type Tabs exposes every remaining preset in a horizontally scrollable tab l
 - Reference mode uses locked production presentation replicas and has no Development controls.
 - Bestiary and Faction records remain informational and expose no Codex image-generation action.
 - Fate panels, the structured mechanical System example, and System routing retain their existing presentation; the compact System Prompt renders as an event-tinted System window with a small orb emblem, direct headline, optional flavor text, a single-term classification line, flat key/value rows with direction arrows on changed values and values spread to the right edge, a full-width reserved status badge, character-linked TTS prose, and clean flat outcome rows of meaning-colored text (with signs on genuine mathematical changes) while keeping the semantic System color system.
+- Regular System Prompt `presentation` explicitly selects the unchanged Narrative Notification, unchanged LitRPG/Mechanical Display, or the static World Notice document surface; `promptType` keeps the same semantic color meaning across all three. World Notices use direct document titles, optional flavor, and plain-text entries/details without controls, Codex links, hovercards, or TTS ownership.
 
 ## Transfer notes
 
@@ -81,6 +84,7 @@ The active Development presentation owners are:
 - `src/components/reader-chamber/development/InlineAudio.tsx`
 - `src/components/reader-chamber/development/ReaderViewport.tsx`
 - `src/components/reader-chamber/development/SystemBlock.tsx`
+- `src/components/reader-chamber/development/WorldNotice.tsx`
 - `src/components/library/LibrarySoundGlyph.tsx`
 
 `Light-Novels` `main` was inspected at commit `f89cb41` on 2026-08-22. Its current Reader, System, and Fate source paths remain the comparison baseline; this Workshop change does not modify that repository.

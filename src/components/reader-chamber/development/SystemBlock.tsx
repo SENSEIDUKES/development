@@ -10,8 +10,10 @@ import type {
   SystemPromptExpandedProgress,
   SystemPromptExpandedSection,
   SystemPromptExpandedTone,
+  SystemPromptPresentation,
 } from '../shared/types';
 import { FateResultCard } from './FateResultCard';
+import { normalizeWorldNoticeData, WorldNotice } from './WorldNotice';
 import {
   buildSystemContext,
   getColorCodeStyle,
@@ -660,6 +662,23 @@ function SystemOrbEmblem({
   );
 }
 
+/**
+ * Existing chapters predate explicit presentation data. Preserve their current
+ * layout only at this compatibility boundary; new prompts always use the
+ * authored discriminator rather than rows or promptType to select a layout.
+ */
+function resolveSystemPromptPresentation(
+  system: SystemEvent,
+  rows: unknown[],
+  changes: SystemPromptChange[],
+  worldNotice: ReturnType<typeof normalizeWorldNoticeData>,
+): SystemPromptPresentation {
+  const requested = 'presentation' in system ? system.presentation : undefined;
+  if (requested === 'world_notice' && worldNotice) return requested;
+  if (requested === 'narrative' || requested === 'mechanical') return requested;
+  return rows.length === 0 || changes.length > 0 ? 'narrative' : 'mechanical';
+}
+
 export const SystemBlock = React.memo(function SystemBlock({ content, system, renderProse, className, ...props }: SystemBlockProps) {
   const {
     onAnimationStart: _anim,
@@ -675,7 +694,8 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
     ...suppliedStyle,
   }) as React.CSSProperties;
   const detailsId = React.useId();
-  const eventKey = `${system?.kind ?? ''}|${system?.promptType ?? ''}|${system?.title ?? ''}|${content}`;
+  const requestedPresentation = system && 'presentation' in system ? system.presentation : undefined;
+  const eventKey = `${system?.kind ?? ''}|${system?.promptType ?? ''}|${requestedPresentation ?? ''}|${system?.title ?? ''}|${content}`;
   const [expandedEventKey, setExpandedEventKey] = React.useState<string | null>(null);
   // The compact card's TTS sentence rests collapsed behind the bottom arrow
   // toggle to conserve reader screen space; narration reads it from the
@@ -710,8 +730,29 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
     // presentation branch and the row mapping (same guard as buildSystemContext).
     const rows = Array.isArray(system.rows) ? system.rows : [];
     const visibleChanges = Array.isArray(system.changes) ? system.changes : [];
+    const worldNotice = requestedPresentation === 'world_notice' && 'worldNotice' in system
+      ? normalizeWorldNoticeData(system.worldNotice)
+      : undefined;
+    const presentation = resolveSystemPromptPresentation(system, rows, visibleChanges, worldNotice);
 
     const menacingTone = fateFlagColorCode ? ' animate-menacing-fate' : '';
+
+    if (presentation === 'world_notice' && worldNotice) {
+      const inferenceContext = buildSystemContext(system, content);
+      const meaning = getSystemColorMeaning(system.promptType, inferenceContext);
+      return (
+        <WorldNotice
+          title={system.title}
+          flavor={system.flavor}
+          content={content}
+          notice={worldNotice}
+          meaning={meaning}
+          style={getSystemRootStyle(meaning, fateFlagColorCode)}
+          className={className}
+          readOnlyProps={safeProps}
+        />
+      );
+    }
 
     // Compact regular System Prompt: title-led header with direct understandable
     // headline, secondary flavor text, single-term semantic classification line,
@@ -720,7 +761,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
     // outcome row of white subjects and meaning-colored state words, and
     // tightened layout with no vertical dead space when the TTS summary is
     // minimized.
-    if (rows.length === 0 || visibleChanges.length > 0) {
+    if (presentation === 'narrative') {
       const badge = normalizeSystemPromptBadge(system.badge);
       const badgeSeverity = badge ? getBadgeSeverityStyles(badge) : undefined;
       const sentence = getVisibleSystemSentence(content, badge);
@@ -744,6 +785,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
             data-system-prompt-state={isExpanded ? 'expanded' : 'compact'}
+            data-system-presentation="narrative"
             data-color-code={meaning.colorCode}
             style={getSystemRootStyle(meaning, fateFlagColorCode)}
             className={`system-block system-window cursor-default my-6 md:my-8 mx-auto max-w-xl relative overflow-hidden rounded-xl border border-[color-mix(in_srgb,currentColor_40%,transparent)] bg-[color-mix(in_srgb,currentColor_7%,rgba(5,7,11,0.92))] px-4 py-3 md:px-5 md:py-3.5 shadow-[0_0_20px_color-mix(in_srgb,currentColor_10%,transparent),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all duration-300 ${accent}${menacingTone} ${className || ''}`}
@@ -895,6 +937,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
         whileHover={{ scale: 1.02 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
         data-color-code={meaning.colorCode}
+        data-system-presentation="mechanical"
         style={getSystemRootStyle(meaning, fateFlagColorCode)}
         className={`system-block holographic-panel cursor-pointer my-6 md:my-8 rounded-md border font-mono p-3 md:p-4 max-w-xl mx-auto transition-all duration-300 ${colorStyles} ${className || ''}`}
         {...safeProps}

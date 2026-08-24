@@ -245,7 +245,7 @@ export const CARD_PRESETS: CardPreset[] = [
     title: 'System Prompt',
     subtitle: 'In-World Celestial Library Notification',
     kind: 'system-block',
-    description: 'Universal in-world System Prompt panel. The compact default is a dark smoky event-tinted System window — thin luminous border, smaller radius, restrained glow, compact spacing — following the production hierarchy: event title, classification line, concise key/value rows with direction arrows on changed values, optional badge, and up to two prioritized System outcome slots (a white subject plus a meaning-colored state word, quantities compressed to Increased/Decreased so no numbers show compact), with the concise TTS prose collapsed by default behind a centered bottom arrow toggle as a muted gray bottom section; the celestial action opens a complete Codex-shaped event report in a viewport-locked overlay above the reader, listing every outcome with its signed figures.',
+    description: 'Regular System Prompts use one explicit presentation family: Narrative Notification, LitRPG/Mechanical Display, or World Notice. The default Narrative Notification is the existing dark smoky event-tinted System window, with a direct event title, semantic classification, concise rows, optional badge, prioritized outcomes, and collapsed TTS prose; its celestial action opens the existing Codex-shaped event report above the reader. The Mechanical Display retains the existing holographic row panel. World Notice is a static, diegetic document surface for a single notice or a divided board.',
     explanation: {
       componentName: 'SystemBlock',
       sourceFile: 'src/components/reader-chamber/development/SystemBlock.tsx',
@@ -253,11 +253,12 @@ export const CARD_PRESETS: CardPreset[] = [
       entityOrEventType: 'system (system_prompt)',
       codexDestination: 'ReaderCodex > Power Rankings / Ability Ledger / Karma',
       capabilities: { hasImage: false, hasManifestAction: false, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
-      architecturalNotes: 'Universal System Prompt contract supporting a dramatic headline, a semantic classification line, up to three concise key/value rows, an optional structured badge, and priority-ordered outcomes (at most two flat subject/state slots compact, the full signed list in the report), with the concise literary message (the only text narration reads) in its own bottom section. Reader-only expanded data opens after an explicit tap as a viewport-locked overlay event report — flat Codex sections with simple dividers, the three highest-priority sections on mobile — while the compact card and the reader position stay untouched; it is not emitted by generation or read by TTS.',
+      architecturalNotes: 'Regular System Prompt presentation is explicit: Narrative Notification preserves the compact/expanded event card, LitRPG/Mechanical Display preserves the holographic rows panel, and World Notice is one static diegetic document renderer for a single notice or a divided board. promptType only carries semantic meaning and color across those layouts. A World Notice accepts a direct document title, optional flavor, and one or more plain-text entries with optional labeled details; it has no controls, links, hovercards, or narration ownership. Narrative expanded data opens after an explicit tap as a viewport-locked overlay event report while the compact card and reader position stay untouched. Legacy saved regular prompts preserve their prior row-shape fallback.',
     },
     systemContent: '[ A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before. ]',
     systemEvent: {
       kind: 'system_prompt',
+      presentation: 'narrative',
       promptType: 'breakthrough',
       title: 'Cultivation Breakthrough',
       flavor: 'Mortal Tribulation Surpassed',
@@ -398,6 +399,7 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
     systemContent: '[ A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before. ]',
     systemEvent: {
       kind: 'system_prompt' as const,
+      presentation: 'narrative' as const,
       promptType: 'breakthrough' as const,
       title: 'Cultivation Breakthrough',
       flavor: 'Mortal Tribulation Surpassed',
@@ -417,6 +419,7 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
     systemContent: '[ A solemn interface surfaced before Magistrate Jinhai, its gilt script cold as the rain outside. ]',
     systemEvent: {
       kind: 'system_prompt' as const,
+      presentation: 'narrative' as const,
       promptType: 'choice_consequence' as const,
       title: 'Karmic Consequence',
       flavor: 'Oath Before the Rain Court Broken',
@@ -436,6 +439,7 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
     systemContent: '[ A crimson interface unfolded beside Elder Kaelen, taking his measure in silence. Threat assessment: moderate. ]',
     systemEvent: {
       kind: 'system_prompt' as const,
+      presentation: 'narrative' as const,
       promptType: 'enemy_scan' as const,
       title: 'Hostile Target Scan',
       flavor: 'Elder Kaelen Assessment',
@@ -459,6 +463,7 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
     systemContent: '[ SYSTEM NOTIFICATION: Meridian Resonance 84% — Minor Bottleneck Cleared ]',
     systemEvent: {
       kind: 'system_prompt' as const,
+      presentation: 'mechanical' as const,
       promptType: 'progression' as const,
       title: 'Meridian Status & Vitality Flow',
       rarity: 'First Witness Core Resonance',
@@ -468,6 +473,67 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
         { label: 'Soul Seam Sight', value: 'Active (Radius: 30 paces)' },
         { label: 'Dao Alignment', value: 'Unbroken Celestial Truth' },
       ],
+    },
+  },
+  'guild-bounty': {
+    systemContent: '[ A weathered guild notice is pinned beneath the lantern outside the east gate. ]',
+    systemEvent: {
+      kind: 'system_prompt' as const,
+      presentation: 'world_notice' as const,
+      promptType: 'reward' as const,
+      title: 'GUILD BOUNTY',
+      flavor: 'West Gate Guild - East District Dispatch',
+      worldNotice: {
+        entries: [
+          {
+            title: 'BLACKTHORN WOLF PACK',
+            body: 'Cull the pack preying on caravans along the Rain Road. Proof of the alpha is required.',
+            details: [
+              { label: 'Reward', value: '42 silver marks' },
+              { label: 'Last seen', value: 'Old mill crossing' },
+              { label: 'Issuer', value: 'West Gate Guild' },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  'mission-board': {
+    systemContent: '[ The guild hall wall is crowded with fresh notices, each sealed by a different hand. ]',
+    systemEvent: {
+      kind: 'system_prompt' as const,
+      presentation: 'world_notice' as const,
+      promptType: 'quest_update' as const,
+      title: 'MISSION BRIEF',
+      flavor: 'Rain Court Guild Hall - Morning postings',
+      worldNotice: {
+        entries: [
+          {
+            title: 'WANTED NOTICE: ASHEN KNIFE',
+            body: 'Bring the smuggler alive for questioning after the river-market fire.',
+            details: [
+              { label: 'Reward', value: '60 silver marks' },
+              { label: 'Jurisdiction', value: 'River Ward' },
+            ],
+          },
+          {
+            title: 'ESCORT CONTRACT: SALT CARAVAN',
+            body: 'Three wagons depart at dusk. Hostile scouts were seen beyond the north bridge.',
+            details: [
+              { label: 'Term', value: 'Two days' },
+              { label: 'Reward', value: '1 spirit stone' },
+            ],
+          },
+          {
+            title: 'MISSION: SHRINE LANTERNS',
+            body: 'Relight the abandoned boundary lanterns before the rain reaches the lower road.',
+            details: [
+              { label: 'Priority', value: 'Urgent' },
+              { label: 'Issuer', value: 'Wardens Office' },
+            ],
+          },
+        ],
+      },
     },
   },
 };

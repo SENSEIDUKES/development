@@ -261,6 +261,7 @@ describe('CardWorkshopView', () => {
         content="[ Yun Che has successfully broken through into the Foundation Establishment realm. ]"
         system={{
           kind: 'system_prompt',
+          presentation: 'narrative',
           promptType: 'breakthrough',
           title: 'Cultivation Breakthrough',
           flavor: 'Mortal Tribulation Surpassed',
@@ -302,6 +303,147 @@ describe('CardWorkshopView', () => {
       expect(element.className).not.toContain('rounded-full');
       expect(element.className).not.toContain('border');
     });
+  });
+
+  it('routes explicit System Prompt presentations independently of their shared semantic color', () => {
+    const renderProse = vi.fn((text: string) => <button data-world-notice-prose-link>{text}</button>);
+    const onNoticeClick = vi.fn();
+
+    act(() => root.render(renderWithDevAudio(
+      <>
+        <SystemBlock
+          content="[ A message arrives from the guild. ]"
+          system={{
+            kind: 'system_prompt',
+            presentation: 'narrative',
+            promptType: 'quest_update',
+            title: 'Quest Update',
+          }}
+        />
+        <SystemBlock
+          content="[ Objective parameters updated. ]"
+          system={{
+            kind: 'system_prompt',
+            presentation: 'mechanical',
+            promptType: 'quest_update',
+            title: 'Objective Update',
+            rows: [{ label: 'Status', value: 'Active' }],
+          }}
+        />
+        <SystemBlock
+          content="[ The guild board bears a fresh seal. ]"
+          system={{
+            kind: 'system_prompt',
+            presentation: 'world_notice',
+            promptType: 'quest_update',
+            title: 'GUILD BOUNTY',
+            flavor: 'Issued by the East Gate Adventurers Guild',
+            worldNotice: {
+              entries: [{
+                title: 'Ashfang Direwolf',
+                body: 'Cull the alpha before it reaches the trade road.',
+                details: [
+                  { label: 'Reward', value: '80 silver' },
+                  { label: 'Location', value: 'Blackpine Pass' },
+                ],
+              }],
+            },
+          }}
+          renderProse={renderProse}
+          onClick={onNoticeClick}
+          role="button"
+          tabIndex={0}
+        />
+      </>,
+    )));
+
+    const presentations = [...container.querySelectorAll<HTMLElement>('[data-system-presentation]')];
+    expect(presentations.map(element => element.dataset.systemPresentation))
+      .toEqual(['narrative', 'mechanical', 'world_notice']);
+    expect(new Set(presentations.map(element => element.dataset.colorCode)).size).toBe(1);
+    expect(presentations[0]?.dataset.colorCode).toBe('mainCharacter');
+
+    const notice = container.querySelector<HTMLElement>('[data-world-notice="true"]');
+    expect(notice?.textContent).toContain('GUILD BOUNTY');
+    expect(notice?.textContent).toContain('Issued by the East Gate Adventurers Guild');
+    expect(notice?.textContent).toContain('Ashfang Direwolf');
+    expect(notice?.textContent).toContain('Cull the alpha before it reaches the trade road.');
+    expect(notice?.textContent).toContain('Reward');
+    expect(notice?.textContent).toContain('80 silver');
+    expect(notice?.dataset.worldNoticeBoard).toBe('false');
+    expect(notice?.dataset.worldNoticeEntryCount).toBe('1');
+    expect(notice?.dataset.readerNarration).toBe('excluded');
+    expect(notice?.querySelectorAll('button, a[href], [role="button"], [tabindex]:not([tabindex="-1"])')).toHaveLength(0);
+    expect(notice?.getAttribute('role')).toBeNull();
+    expect(notice?.getAttribute('tabindex')).toBeNull();
+    expect(notice?.querySelector('[data-system-summary-toggle]')).toBeFalsy();
+    expect(notice?.querySelector('[data-world-notice-prose-link]')).toBeFalsy();
+    act(() => notice?.click());
+    expect(onNoticeClick).not.toHaveBeenCalled();
+    expect(renderProse).not.toHaveBeenCalled();
+  });
+
+  it('renders multi-entry World Notices as a static board and retains legacy layout fallback only when presentation is absent', () => {
+    act(() => root.render(renderWithDevAudio(
+      <>
+        <SystemBlock
+          content="[ The mission board is refreshed at dawn. ]"
+          system={{
+            kind: 'system_prompt',
+            presentation: 'world_notice',
+            promptType: 'quest_update',
+            title: 'MISSION BRIEF',
+            worldNotice: {
+              entries: [
+                {
+                  title: 'WANTED NOTICE',
+                  body: 'Bandit captain seen north of the river.',
+                  details: [{ label: 'Reward', value: '120 silver' }],
+                },
+                {
+                  title: 'ESCORT CONTRACT',
+                  body: 'Guard the apothecary caravan to Rainwatch.',
+                  details: [{ label: 'Departure', value: 'First bell' }],
+                },
+              ],
+            },
+          }}
+        />
+        <SystemBlock
+          content="[ A legacy narrative notification. ]"
+          system={{
+            kind: 'system_prompt',
+            promptType: 'quest_update',
+            title: 'Legacy Narrative',
+          }}
+        />
+        <SystemBlock
+          content="[ A legacy mechanical display. ]"
+          system={{
+            kind: 'system_prompt',
+            promptType: 'quest_update',
+            title: 'Legacy Mechanical',
+            rows: [{ label: 'Progress', value: '1/3' }],
+          }}
+        />
+      </>,
+    )));
+
+    const notice = container.querySelector<HTMLElement>('[data-world-notice="true"]');
+    expect(notice?.dataset.worldNoticeBoard).toBe('true');
+    expect(notice?.dataset.worldNoticeEntryCount).toBe('2');
+    const entries = [...(notice?.querySelectorAll<HTMLElement>('[data-world-notice-entry="true"]') ?? [])];
+    expect(entries.map(entry => entry.textContent)).toEqual([
+      expect.stringContaining('WANTED NOTICE'),
+      expect.stringContaining('ESCORT CONTRACT'),
+    ]);
+    expect(entries[0]?.textContent).toContain('120 silver');
+    expect(entries[1]?.textContent).toContain('First bell');
+    expect(notice?.querySelectorAll('button, a[href], [role="button"], [tabindex]:not([tabindex="-1"])')).toHaveLength(0);
+
+    const legacyPresentations = [...container.querySelectorAll<HTMLElement>('[data-system-presentation]')]
+      .map(element => element.dataset.systemPresentation);
+    expect(legacyPresentations).toEqual(['world_notice', 'narrative', 'mechanical']);
   });
 
   it('opens the expanded event report in a viewport overlay and restores focus to the orb action', async () => {

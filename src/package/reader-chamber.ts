@@ -29,6 +29,8 @@ export { FateResultCard } from '../components/reader-chamber/development/FateRes
 export { FateSurvivalExplanation } from '../components/reader-chamber/development/FateSurvivalExplanation';
 export { ParticleSystem } from '../components/reader-chamber/development/ParticleSystem';
 export { SystemBlock } from '../components/reader-chamber/development/SystemBlock';
+export { WorldNotice, normalizeWorldNoticeData } from '../components/reader-chamber/development/WorldNotice';
+export type { WorldNoticeProps } from '../components/reader-chamber/development/WorldNotice';
 export { SystemColorLegend } from '../components/reader-chamber/development/SystemColorLegend';
 export { VirtualizedList } from '../components/reader-chamber/development/VirtualizedList';
 export {

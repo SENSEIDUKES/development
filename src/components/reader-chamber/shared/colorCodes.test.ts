@@ -169,7 +169,9 @@ describe('Color Codes', () => {
   });
 
   it('uses CSS variables for every surface so all accessibility palettes remain authoritative', () => {
-    const css = readFileSync(fileURLToPath(new URL('./reader-chamber.css', import.meta.url)), 'utf8');
+    const css = readFileSync(fileURLToPath(new URL('./color-codes.css', import.meta.url)), 'utf8');
+    const readerCss = readFileSync(fileURLToPath(new URL('./reader-chamber.css', import.meta.url)), 'utf8');
+    const appEntry = readFileSync(fileURLToPath(new URL('../../../App.tsx', import.meta.url)), 'utf8');
     expect(COLOR_CODE_PALETTE_IDS).toEqual([
       'default',
       'protanopia',
@@ -189,6 +191,9 @@ describe('Color Codes', () => {
     for (const paletteId of COLOR_CODE_PALETTE_IDS.filter(id => id !== 'default')) {
       expect(css).toContain(`:root[data-palette="${paletteId}"]`);
     }
+
+    expect(readerCss).toContain("@import './color-codes.css';");
+    expect(appEntry).toContain("import './components/reader-chamber/shared/color-codes.css';");
 
     const breakthrough = getSystemColorMeaning('breakthrough');
     expect(getSystemColorStyle(breakthrough)).toMatchObject({

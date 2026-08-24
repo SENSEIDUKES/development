@@ -1,3 +1,5 @@
+@import './color-codes.css';
+
 /**
  * Reader Chamber scoped styles.
  *
@@ -181,76 +183,6 @@
   --reader-font-size-scale: 1;
   --reader-line-height-scale: 1.62;
   --reader-letter-spacing: 0;
-
-  /* Default semantic entity colors - all >= 4.5:1 contrast on dark novel bg (#111111) */
-  --color-entity-mc: #60a5fa; /* Main Character - Blue (blue-400) */
-  --color-entity-friend: #34d399; /* Friend - Green (emerald-400) */
-  --color-entity-ally: var(--color-entity-friend); /* Legacy */
-  --color-entity-enemy: #f87171; /* Enemy - Red (red-400) */
-  --color-entity-unknown: #a3a3a3; /* Unknown - Gray (neutral-400) */
-  --color-entity-lover: #f472b6; /* Lover - Pink (pink-400) */
-  --color-entity-mentor: #fbbf24; /* Mentor - Yellow/Gold (amber-400) */
-  --color-entity-non-human: #a78bfa; /* Named non-human individual - Violet */
-  --color-entity-fallback: var(--color-entity-mc);
-  --color-system-corruption: #fb7185; /* Permanent curse/tragedy - accessible dark rose */
-
-  --color-location-regular: #c084fc; /* Regular Location - Purple (purple-400) */
-  --color-location-special: #f59e0b; /* Special Location - Gold (amber-500) */
-
-  --color-item-basic: #ffffff; /* Basic Item - White */
-  --color-item-decent: #34d399; /* Decent Item - Green (emerald-400) */
-  --color-item-good: #38bdf8; /* Good Item - Light Blue (sky-400) */
-  --color-item-great: #fb923c; /* Great Item - Orange (orange-400) */
-  --color-item-legendary: #fbbf24; /* Legendary Item - Gold (amber-400) */
-}
-
-/* ---------------------------------------------------------
-   COLOR PALETTES (Accessibility Profiles)
-   --------------------------------------------------------- */
-:root[data-palette="protanopia"] {
-  --color-entity-enemy: #fca5a5; /* High contrast peach/pink for protanopia text */
-  --color-entity-lover: #60a5fa; /* Shift pinks to clear blue */
-  --color-entity-friend: #fbbf24; /* Shift greens to warm yellow */
-  --color-item-decent: #fbbf24;
-  --color-entity-non-human: #a78bfa;
-  --color-system-corruption: #fca5a5;
-}
-
-:root[data-palette="deuteranopia"] {
-  --color-entity-enemy: #fca5a5; /* High contrast peach/pink for deuteranopia text */
-  --color-entity-lover: #38bdf8; /* Shift pinks to deep sky blue */
-  --color-entity-friend: #daa520; /* High-contrast goldenrod yellow */
-  --color-item-decent: #daa520;
-  --color-entity-non-human: #a78bfa;
-  --color-system-corruption: #fca5a5;
-}
-
-:root[data-palette="tritanopia"] {
-  --color-entity-enemy: #fca5a5; /* High-contrast red/pink */
-  --color-entity-lover: #c084fc; /* Shift pinks to violet */
-  --color-entity-friend: #14b8a6; /* Shift greens to teal/cyan */
-  --color-entity-mc: #fca5a5; /* Shift blues */
-  --color-item-good: #c084fc;
-  --color-entity-non-human: #c084fc;
-  --color-system-corruption: #fca5a5;
-}
-
-:root[data-palette="high_contrast_dark"] {
-  --color-entity-mc: #3388ff;
-  --color-entity-friend: #33ff33; /* Pure vivid green */
-  --color-entity-enemy: #ff3333; /* Pure vivid red */
-  --color-entity-unknown: #cccccc;
-  --color-entity-lover: #ff66ff; /* Pure vivid magenta */
-  --color-entity-mentor: #ffff33;
-  --color-entity-non-human: #cc33ff;
-  --color-system-corruption: #ff3333;
-  --color-location-regular: #cc33ff;
-  --color-location-special: #ffff33;
-  --color-item-basic: #ffffff;
-  --color-item-decent: #33ff33;
-  --color-item-good: #33ccff;
-  --color-item-great: #ff9933;
-  --color-item-legendary: #ffff33;
 }
 
 /* ---------------------------------------------------------

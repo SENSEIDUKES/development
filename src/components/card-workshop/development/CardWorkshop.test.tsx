@@ -11,6 +11,7 @@ import {
   ACTIVE_CARD_PRESETS,
   SYSTEM_PROMPT_PRESET_EXAMPLES,
 } from '../../../workshop/previews/card-workshop/previewData';
+import { CARD_BRANCHES } from '../../../workshop/previews/card-workshop/cardCategories';
 import { INITIAL_CARD_WORKSHOP_OVERRIDES } from '../../../workshop/previews/card-workshop/previewStates';
 import { resetMockState } from '../../reader-chamber/shared/stubs';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
@@ -105,27 +106,38 @@ describe('CardWorkshopView', () => {
     act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="tabs" />)));
 
     const tablist = container.querySelector('[role="tablist"][aria-label="Card types"]');
-    const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const tabs = () => [...(tablist?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])];
     expect(tablist).toBeTruthy();
-    expect(tabs).toHaveLength(ACTIVE_CARD_PRESETS.length);
+    expect(tabs()).toHaveLength(CARD_BRANCHES[0].categories.length);
     expect(container.querySelectorAll('[role="tabpanel"]')).toHaveLength(1);
 
-    for (const preset of ACTIVE_CARD_PRESETS) {
-      expect(tabs.some(tab => tab.textContent?.includes(preset.title))).toBe(true);
+    // Only the selected parent branch's categories are ever offered.
+    for (const category of CARD_BRANCHES[0].categories) {
+      expect(tabs().some(tab => tab.textContent?.trim() === category.label)).toBe(true);
+    }
+    for (const category of CARD_BRANCHES[1].categories) {
+      expect(tabs().some(tab => tab.textContent?.trim() === category.label)).toBe(false);
     }
 
     expect(container.textContent).toContain('Codex Cards');
     expect(container.querySelector('[role="tabpanel"]')?.textContent).toContain('Human Portrait');
-    expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+    expect(tabs()[0].getAttribute('aria-selected')).toBe('true');
 
     await act(async () => {
-      tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+      tabs()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
     });
-    expect(tabs[1].getAttribute('aria-selected')).toBe('true');
+    expect(tabs()[1].getAttribute('aria-selected')).toBe('true');
     expect(container.querySelector('[role="tabpanel"]')?.textContent).toContain('Non-Human Portrait');
-    expect(document.activeElement).toBe(tabs[1]);
+    expect(document.activeElement).toBe(tabs()[1]);
 
-    await clickButton('System Prompt');
+    await clickButton('System Prompts');
+    expect(tabs()).toHaveLength(CARD_BRANCHES[1].categories.length);
+    for (const category of CARD_BRANCHES[1].categories) {
+      expect(tabs().some(tab => tab.textContent?.trim() === category.label)).toBe(true);
+    }
+    for (const category of CARD_BRANCHES[0].categories) {
+      expect(tabs().some(tab => tab.textContent?.trim() === category.label)).toBe(false);
+    }
     expect(container.textContent).toContain('System Panels & Fate Outcomes');
     // Default compact event: the cultivation breakthrough — a dark smoky
     // event-tinted System window (mostly opaque pane with a mild backdrop
@@ -209,6 +221,8 @@ describe('CardWorkshopView', () => {
     expect(promiseTrends.map(element => element.getAttribute('data-row-trend'))).toEqual(['down']);
     expect(promiseTrends[0]?.getAttribute('data-color-code')).toBe('enemy');
 
+    // Target Scan lives under the Mechanical category, not Narrative.
+    await clickButton('Mechanical');
     await clickButton('Target Scan');
     const scanBlock = container.querySelector('.system-block');
     expect(scanBlock?.textContent).toContain('Hostile Target Scan');
@@ -253,6 +267,52 @@ describe('CardWorkshopView', () => {
     // Toggle to structured mechanical example
     await clickButton('Structured Mechanical');
     expect(container.textContent).toContain('Meridian Status & Vitality Flow');
+  });
+
+  it('branches Codex Cards and System Prompts into their own category sets', async () => {
+    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="tabs" />)));
+
+    const branchList = container.querySelector('[role="tablist"][aria-label="Card families"]');
+    const branchTabs = [...(branchList?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])];
+    expect(branchTabs.map(tab => tab.textContent?.trim())).toEqual(['Codex Cards', 'System Prompts']);
+    expect(branchTabs[0].getAttribute('aria-selected')).toBe('true');
+
+    const categoryLabels = () => [...container.querySelectorAll<HTMLButtonElement>(
+      '[role="tablist"][aria-label="Card types"] [role="tab"]',
+    )].map(tab => tab.textContent?.trim());
+
+    expect(categoryLabels())
+      .toEqual(['Human', 'Non-Human', 'Artifacts', 'Locations', 'Factions']);
+
+    // The remaining Codex category resolves to a real Faction card.
+    await clickButton('Factions');
+    expect(container.querySelector('[role="tabpanel"]')?.textContent).toContain('Riverside Sect');
+    expect(container.querySelector('[role="tabpanel"]')?.textContent).toContain('ReaderCodex > Factions');
+
+    await clickButton('System Prompts');
+    expect(branchTabs[1].getAttribute('aria-selected')).toBe('true');
+    expect(categoryLabels())
+      .toEqual(['Narrative', 'Mechanical', 'World Notice', 'Fate System']);
+
+    // Each System category offers only the content examples that belong to it.
+    const exampleLabels = () => [...container.querySelectorAll<HTMLButtonElement>('button')]
+      .filter(button => button.closest('[role="tabpanel"]') && /^(Cultivation Breakthrough|Broken Promise|Target Scan|Structured Mechanical|Guild Bounty|Mission Board)$/
+        .test(button.textContent?.trim() ?? ''))
+      .map(button => button.textContent?.trim());
+
+    expect(exampleLabels()).toEqual(['Cultivation Breakthrough', 'Broken Promise']);
+    await clickButton('World Notice');
+    expect(exampleLabels()).toEqual(['Guild Bounty', 'Mission Board']);
+    expect(container.querySelector('[role="tabpanel"]')?.textContent).toContain('BLACKTHORN WOLF PACK');
+
+    await clickButton('Fate System');
+    expect(container.querySelector('[role="tabpanel"]')?.textContent).toContain('Fate System Prompt');
+
+    // Returning to the Codex branch restores its own categories only.
+    await clickButton('Codex Cards');
+    expect(categoryLabels())
+      .toEqual(['Human', 'Non-Human', 'Artifacts', 'Locations', 'Factions']);
+    expect(container.querySelector('[role="tabpanel"]')?.textContent).toContain('Human Portrait');
   });
 
   it('renders the compact System Prompt outcomes as two flat subject/state slots', () => {
@@ -602,6 +662,7 @@ describe('CardWorkshopView', () => {
 
     const examples = [
       {
+        category: 'Narrative',
         control: 'Cultivation Breakthrough',
         subject: 'Yun Che',
         value: 'Foundation Establishment — Stage 4',
@@ -609,6 +670,7 @@ describe('CardWorkshopView', () => {
         badge: null,
       },
       {
+        category: 'Narrative',
         control: 'Broken Promise',
         subject: 'Magistrate Jinhai',
         value: 'Rain Court Standing — Disgraced',
@@ -616,6 +678,7 @@ describe('CardWorkshopView', () => {
         badge: null,
       },
       {
+        category: 'Mechanical',
         control: 'Target Scan',
         subject: 'Elder Kaelen',
         value: 'Foundation Establishment — Stage 7',
@@ -625,6 +688,7 @@ describe('CardWorkshopView', () => {
     ];
 
     for (const example of examples) {
+      await clickButton(example.category);
       await clickButton(example.control);
       const systemBlock = container.querySelector<HTMLElement>('.system-block');
       expect(systemBlock?.dataset.systemPromptState).toBe('compact');
@@ -655,7 +719,8 @@ describe('CardWorkshopView', () => {
   it('switches between Card Type Tabs and Contextual View without losing the selected preset or override state', async () => {
     act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="tabs" />)));
 
-    await clickButton('Fate System Prompt');
+    await clickButton('System Prompts');
+    await clickButton('Fate System');
     await clickButton('Contextual View');
     expect(container.querySelector('[data-testid="card-workshop-contextual-reader"]')).toBeTruthy();
     expect(container.textContent).toContain('FATE RESULT: FATE SCARRED');
@@ -665,7 +730,7 @@ describe('CardWorkshopView', () => {
     expect(container.textContent).toContain('FATE RESULT: DOOM MANIFESTED');
 
     await clickButton('Card Type Tabs');
-    const selectedTab = container.querySelector<HTMLButtonElement>('#card-tab-preset-fate-system-prompt');
+    const selectedTab = container.querySelector<HTMLButtonElement>('#card-tab-system-fate');
     expect(selectedTab?.getAttribute('aria-selected')).toBe('true');
     expect(container.textContent).toContain('FATE RESULT: DOOM MANIFESTED');
 
@@ -728,7 +793,7 @@ describe('CardWorkshopView', () => {
     await openTechnicalDetails();
 
     const reader = container.querySelector<HTMLElement>('[data-testid="card-workshop-contextual-reader"]');
-    await selectByLabel('Card preset', 'preset-system-prompt');
+    await selectByLabel('Card category', 'system-narrative');
     expect(reader?.textContent).toContain('Cultivation Breakthrough');
     expect(reader?.textContent).toContain('Mortal Tribulation Surpassed');
     expect(reader?.textContent).toContain('A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.');
@@ -740,7 +805,7 @@ describe('CardWorkshopView', () => {
   it('keeps the full target-scan narration source while linking only its named character in Reader prose', async () => {
     act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)));
     await openTechnicalDetails();
-    await selectByLabel('Card preset', 'preset-system-prompt');
+    await selectByLabel('Card category', 'system-mechanical');
     await selectByLabel('System prompt example style', 'target-scan');
 
     const reader = container.querySelector<HTMLElement>('[data-testid="card-workshop-contextual-reader"]');
@@ -857,7 +922,7 @@ describe('CardWorkshopView', () => {
 
     act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)));
     await openTechnicalDetails();
-    await selectByLabel('Card preset', 'preset-system-status');
+    await selectByLabel('Card category', 'system-world-notice');
     await clickButton('Card Type Tabs');
     await clickButton('Contextual View');
 

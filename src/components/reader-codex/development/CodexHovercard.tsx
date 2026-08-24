@@ -107,7 +107,7 @@ const SEAL_DRAGON_CYAN_CLASS = [
 ].join(' ');
 
 // The core sizes up a touch on mobile (64% vs. the 58% it settles to from
-// `sm:` up) so the Manifest label and "Awaken Portrait" caption sit fully
+// `sm:` up) so the Manifest label and "Portrait" caption sit fully
 // inside the circular boundary at the hovercard's smaller seal size, without
 // touching the dragon glyph or aura, which are sized off the button itself.
 const SEAL_CORE_CLASS = [
@@ -442,7 +442,7 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
                               Manifest
                             </span>
                             <span className="font-mono text-[7px] leading-none text-neutral-400 tracking-wider">
-                              Awaken Portrait
+                              Portrait
                             </span>
                           </>
                         )}

@@ -128,7 +128,7 @@ const SEAL_DRAGON_CYAN_CLASS = [
 ].join(' ');
 
 // The core sizes up a touch on mobile (62% vs. the 58% it settles to from
-// `sm:` up) so the Manifest label and "Awaken Portrait" caption sit fully
+// `sm:` up) so the Manifest label and "Portrait" caption sit fully
 // inside the circular boundary at the seal's smallest rendered size, without
 // touching the dragon glyph or aura, which are sized off the button itself.
 const SEAL_CORE_CLASS = [
@@ -266,7 +266,7 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
                               Manifest
                             </span>
                             <span className="font-mono text-[8px] leading-none text-neutral-400 tracking-wider">
-                              Awaken Portrait
+                              Portrait
                             </span>
                           </>
                         )}

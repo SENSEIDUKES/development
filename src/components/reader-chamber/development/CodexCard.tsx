@@ -80,11 +80,11 @@ const REVEAL_HEADER_REGION_CLASS = [
 
 /**
  * The Manifest seal is the dragon itself: an enlarged `LibraryDragonCycleIcon`
- * forms the entire portal boundary — cyan head chasing violet tail — rotating
- * slowly inside a soft cyan→violet aura, around a dark glass core holding the
- * Manifest label and the awakening caption. The seal is the button:
- * keyboard-operable, with the Manifesting state inside the core. The Library's
- * cycle glyph is reused unchanged and purely decorative — two stacked
+ * forms the entire portal boundary — cyan head chasing violet tail — turning
+ * slowly counterclockwise inside a soft cyan→violet aura, around a dark glass
+ * core holding the Manifest label and the awakening caption. The seal is the
+ * button: keyboard-operable, with the Manifesting state inside the core. The
+ * Library's cycle glyph is reused unchanged and purely decorative — two stacked
  * `currentColor` copies, the cyan one masked so it dissolves down the body,
  * tint the single silhouette into the cyan→violet gradient. The aura's conic
  * gradient carries two diametrically opposed bright bands so the blurred glow
@@ -109,7 +109,7 @@ const SEAL_AURA_CLASS = [
 
 const SEAL_DRAGON_CLASS = [
   'pointer-events-none absolute inset-0',
-  'animate-[spin_24s_linear_infinite] motion-reduce:animate-none',
+  'animate-[spin_24s_linear_infinite_reverse] motion-reduce:animate-none',
   '[filter:drop-shadow(0_0_9px_rgba(4,172,255,0.42))_drop-shadow(0_0_26px_rgba(124,92,255,0.36))]',
   'transition-[filter] duration-500',
   'group-hover/seal:[filter:drop-shadow(0_0_13px_rgba(4,172,255,0.62))_drop-shadow(0_0_38px_rgba(124,92,255,0.55))]',

@@ -47,6 +47,18 @@ Reusable visual names use the `library-*` namespace:
 `library-title-presence`, and `library-subtitle-shimmer`. There are no legacy
 `seed-*` aliases.
 
+- **2026-08-24:** Redrew the `LibraryDragonCycleIcon` silhouette. The body is
+  now a single ring on a curved centreline — thickest over the shoulder,
+  tapering smoothly to a fine point where the tail hooks back inside the coil
+  toward the jaws, replacing the old boot-shaped tail block. The head is
+  refined for icon scale: a slimmer swept horn, a brow ridge that breaks into
+  a straight snout, a defined jaw with a shallow parted mouth, a narrow lens
+  eye, and a neck that meets the body at its full width. The four back spines
+  are smaller and sweep back, shrinking with the body taper. Component API,
+  `viewBox`, `fill: currentColor`, accessibility contract, and the three-path
+  structure are unchanged, so every consumer inherits the new silhouette
+  without edits.
+
 - **2026-08-22:** Hardened `LibrarySoundGlyph` accessibility contract: dropped
   interaction/focus props from `...restProps` (so a stray `onClick` /
   `tabIndex` / `aria-pressed` cannot turn the static mark into an

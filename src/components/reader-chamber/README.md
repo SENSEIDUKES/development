@@ -4,11 +4,15 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `f89cb41`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-24
+- **Last Workshop update:** 2026-08-25
 - **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
 ## Workshop history
+
+- **2026-08-25:** Audited the Development System Prompt family through the real Reader/Card Workshop path for accessibility, responsive fit, correctness, motion, long content, palette contrast, and rendering cost. Expanded reports now keep their title and 44px close action pinned while a single keyboard-focusable body region handles short-height or authored long-content overflow; the full-viewport backdrop blur is removed, focus remains trapped and returns to the orb for every report close path, and nested Codex Escape handling leaves the hovercard to close itself. The compact narration toggle is now a 44px target. Narrative, Mechanical, Fate, menacing, and rarity animation paths honor reduced motion; inert Mechanical and legacy panels no longer advertise click behavior through pointer cursors or hover scaling; and long unbroken headings, rows, statuses, sections, and World Notice details wrap without horizontal overflow. Rendered contrast checks passed unchanged across the default, protanopia, deuteranopia, tritanopia, and high-contrast-dark palettes. The visual direction, ReaderViewport integration, Workshop-local data boundary, TTS ownership, and locked Reference remain unchanged.
+
+- **2026-08-24:** Consolidated the reusable System presentation boundary behind `resolveSystemPromptRoute`: `kind: "fate_system_prompt"` is the sole Fate route, while a regular `system_prompt` explicitly selects Narrative, Mechanical, or World Notice. The shared boundary now normalizes public Reader payloads before rendering, keeps `promptType` as semantic color only, and preserves the legacy shape fallback only for regular prompts with no authored presentation. `SystemBlock` delegates the Mechanical form to `SystemPromptMechanical`, World Notice remains the inert document renderer, and Fate Result remains the outcome-specific card. The `@seihouse/sen/reader-chamber` entry now exports the three component prop contracts plus route, payload-normalization, and shared-color helpers; direct World Notice and Fate Result consumers receive the same malformed-payload safety. No generation, persistence, TTS source, locked Reference, or source-comparison metadata changed.
 
 - **2026-08-24:** Clarified regular System Prompt presentation into three explicit families without altering the two top-level kinds: `system_prompt` now selects `narrative`, `mechanical`, or `world_notice`, while `fate_system_prompt` remains wholly on its existing Fate Result route. `promptType` continues to own semantic meaning and color only; it no longer selects a layout for new prompts. The new Development `WorldNotice` is one static, diegetic document surface for direct headings such as `GUILD BOUNTY`, `WANTED NOTICE`, and `MISSION BRIEF`: a single entry reads as one notice and multiple entries as a divided board, with optional subdued flavor and labeled details. It has no links, controls, hovercards, focus behavior, or narration role; `StoryBlock.text` remains the sole TTS source. Legacy regular data with no presentation retains the prior shape-based fallback (row-only mechanical, otherwise narrative). The Reader Chamber fixture and Card Workshop selector add single-notice and mission-board examples; the compact Narrative Notification card, LitRPG holographic display, Fate card, locked Reference, and source-comparison date are unchanged.
 
@@ -339,7 +343,10 @@ and the Codex Card ambience/accent helpers per the Reader Codex README:
 - `development/AlterFatePanel.tsx` → `src/components/AlterFatePanel.tsx`
 - `development/ParticleSystem.tsx` → `src/components/ParticleSystem.tsx`
 - `development/SystemBlock.tsx` → `src/components/SystemBlock.tsx`
+- `development/SystemPromptMechanical.tsx` → new `src/components/SystemPromptMechanical.tsx`
+- `development/WorldNotice.tsx` → new `src/components/WorldNotice.tsx`
 - `development/FateResultCard.tsx` → `src/components/FateResultCard.tsx`
+- `shared/systemPromptPresentation.ts` → new `src/lib/systemPromptPresentation.ts` (transfer with all four System presentation consumers so their route and semantic-color contract stays singular)
 - `development/CodexCard.tsx` → `src/components/CodexCard.tsx`
 - `development/CodexCardInscription.css` → `src/components/CodexCardInscription.css`
   (new file; the inscribed-name title styles imported by `CodexCard.tsx`)

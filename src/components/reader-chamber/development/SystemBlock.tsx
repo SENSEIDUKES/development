@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Skull, TriangleAlert as AlertTriangle, X } from 'lucide-react';
 import type {
   SystemEvent,
@@ -10,27 +10,28 @@ import type {
   SystemPromptExpandedProgress,
   SystemPromptExpandedSection,
   SystemPromptExpandedTone,
-  SystemPromptPresentation,
 } from '../shared/types';
 import { FateResultCard } from './FateResultCard';
-import { normalizeWorldNoticeData, WorldNotice } from './WorldNotice';
+import { WorldNotice } from './WorldNotice';
+import { SystemPromptMechanical } from './SystemPromptMechanical';
 import {
-  buildSystemContext,
+  getSystemPromptSurface,
+  getSystemPromptSurfaceClasses,
+  getSystemPromptSurfaceStyle,
+  resolveSystemPromptRoute,
+} from '../shared/systemPromptPresentation';
+import {
   getColorCodeStyle,
   getColorCodeSurfaceStyle,
-  getColorCodeValue,
-  getSystemColorMeaning,
   getSystemColorStyle,
   getSystemCompactClassification,
-  getSystemPromptColor,
   resolveSystemBadgeColorCode,
-  resolveFateFlagColorCode,
   resolveSystemOutcomeColorCode,
 } from '../shared/colorCodes';
 import type { ColorCodeId, SystemColorMeaning } from '../shared/colorCodes';
 export { SYSTEM_COLORS_LEGEND } from '../shared/colorCodes';
 
-interface SystemBlockProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface SystemBlockProps extends React.HTMLAttributes<HTMLDivElement> {
   content: string;
   system?: SystemEvent;
   /** Reader-owned rendering for named character Codex links in summary and expanded copy. */
@@ -221,10 +222,12 @@ const MOBILE_SECTION_LIMIT = 3;
  * Reader Chamber. The chapter never grows and the reader's scroll position
  * never moves. One flat panel — classification, headline, subject, optional
  * badge, the System outcome row, then Codex sections separated by simple
- * dividers (never stacked cards). Mobile fits one screen with no page or
- * panel scrolling by showing only the three highest-priority sections (the
- * rest are `hidden md:block`); larger screens show every section in the same
- * structure. Nothing here is narration: the root keeps the
+ * dividers (never stacked cards). Mobile prioritizes the three highest-value
+ * sections (the rest are `hidden md:block`); larger screens show every section
+ * in the same structure. A single keyboard-focusable body scroller handles
+ * short-height screens and Reader-authored long content while the title and
+ * close action remain pinned, so the page itself never moves. Nothing here is
+ * narration: the root keeps the
  * `data-reader-narration="excluded"` boundary and lives outside the reader
  * DOM, so TTS still reads only the compact card's prose. Escape, the close
  * button, or a backdrop tap closes the report and returns focus to the orb.
@@ -252,8 +255,14 @@ function SystemExpandedOverlay({
 }) {
   const panelRef = React.useRef<HTMLDivElement>(null);
   const backdropPressRef = React.useRef(false);
+  const reduceMotion = useReducedMotion();
   const classification = getSystemCompactClassification(meaning);
   const badgeSeverity = badge ? getBadgeSeverityStyles(badge) : undefined;
+
+  const closeAndRestoreFocus = React.useCallback(() => {
+    onClose();
+    returnFocusRef.current?.focus();
+  }, [onClose, returnFocusRef]);
 
   // Lock page scroll while the report is open; restore whatever the page had.
   React.useEffect(() => {
@@ -264,15 +273,14 @@ function SystemExpandedOverlay({
     };
   }, []);
 
-  // Move focus into the dialog on open. On close, hand it back to the orb —
-  // but only when focus was inside the report (its removal drops focus to
-  // <body>), so an unrelated click elsewhere never gets its focus stolen.
+  // Move focus into the dialog on open. Explicit close paths restore focus
+  // immediately; cleanup also covers a live event replacement unmounting it.
   React.useEffect(() => {
     panelRef.current?.focus();
+    const returnTarget = returnFocusRef;
     return () => {
-      if (document.activeElement === document.body || document.activeElement === null) {
-        returnFocusRef.current?.focus();
-      }
+      const orb = returnTarget.current;
+      if (orb?.isConnected && document.activeElement === document.body) orb.focus();
     };
   }, [returnFocusRef]);
 
@@ -281,15 +289,10 @@ function SystemExpandedOverlay({
       if (event.key === 'Escape') {
         if (event.defaultPrevented) return;
         // An open Codex hovercard floats above this dialog; it closes first.
-        // Strip the marker immediately so a subsequent Escape during its exit animation is not swallowed.
         const hovercard = document.querySelector<HTMLElement>(CODEX_HOVERCARD_SELECTOR);
-        if (hovercard) {
-          event.preventDefault();
-          hovercard.removeAttribute('data-slot');
-          return;
-        }
+        if (hovercard) return;
         event.preventDefault();
-        onClose();
+        closeAndRestoreFocus();
         return;
       }
       if (event.key !== 'Tab') return;
@@ -315,14 +318,15 @@ function SystemExpandedOverlay({
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [closeAndRestoreFocus]);
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
+      initial={reduceMotion ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.15 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+      transition={{ duration: reduceMotion ? 0 : 0.15 }}
+      data-motion={reduceMotion ? 'reduced' : 'full'}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75"
       style={{
         paddingTop: 'max(1rem, env(safe-area-inset-top, 0px))',
         paddingRight: 'max(1rem, env(safe-area-inset-right, 0px))',
@@ -333,7 +337,7 @@ function SystemExpandedOverlay({
         backdropPressRef.current = event.target === event.currentTarget;
       }}
       onClick={(event) => {
-        if (backdropPressRef.current && event.target === event.currentTarget) onClose();
+        if (backdropPressRef.current && event.target === event.currentTarget) closeAndRestoreFocus();
         backdropPressRef.current = false;
       }}
     >
@@ -349,14 +353,14 @@ function SystemExpandedOverlay({
         data-system-expanded="true"
         data-color-code={meaning.colorCode}
         data-reader-narration="excluded"
-        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        initial={reduceMotion ? false : { opacity: 0, scale: 0.96, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.15 }}
+        transition={{ duration: reduceMotion ? 0 : 0.15 }}
         onClick={(event) => event.stopPropagation()}
         style={getSystemColorStyle(meaning) as React.CSSProperties}
-        className={`max-h-full w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl border bg-[#020a16]/95 px-5 py-4 md:px-6 md:py-5 shadow-[0_0_32px_color-mix(in_srgb,currentColor_18%,transparent),inset_0_1px_0_rgba(255,255,255,0.06)] outline-none ${meaning.borderColor} ${meaning.textColor}`}
+        className={`flex max-h-full w-full max-w-lg flex-col overflow-hidden rounded-2xl border bg-[#020a16]/95 shadow-[0_0_32px_color-mix(in_srgb,currentColor_18%,transparent),inset_0_1px_0_rgba(255,255,255,0.06)] outline-none ${meaning.borderColor} ${meaning.textColor}`}
       >
-        <div className="flex flex-col">
+        <div className="shrink-0 px-5 pt-4 md:px-6 md:pt-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <span className="block font-mono text-[9px] uppercase tracking-wider text-neutral-500">
@@ -369,7 +373,7 @@ function SystemExpandedOverlay({
               {headline && (
                 <h2
                   id={`${detailsId}-title`}
-                  className="mt-1 font-mono text-base md:text-lg font-bold uppercase tracking-[0.18em] leading-snug text-current drop-shadow-[0_0_10px_color-mix(in_srgb,currentColor_55%,transparent)]"
+                  className="mt-1 break-words font-mono text-base font-bold uppercase leading-snug tracking-[0.18em] text-current [overflow-wrap:anywhere] drop-shadow-[0_0_10px_color-mix(in_srgb,currentColor_55%,transparent)] md:text-lg"
                 >
                   {headline}
                 </h2>
@@ -378,12 +382,20 @@ function SystemExpandedOverlay({
             <button
               type="button"
               aria-label="Close System event report"
-              onClick={onClose}
+              onClick={closeAndRestoreFocus}
               className="-mr-2 -mt-1 flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-full text-neutral-400 outline-none transition-[color,transform] duration-200 hover:text-neutral-100 active:scale-95 focus-visible:ring-2 focus-visible:ring-current/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#020a16] motion-reduce:transition-none"
             >
               <X className="h-5 w-5" strokeWidth={2.2} />
             </button>
           </div>
+        </div>
+        <div
+          data-system-expanded-scroll-region="true"
+          role="region"
+          aria-label="System event report details"
+          tabIndex={0}
+          className="min-h-0 overflow-y-auto overscroll-contain px-5 pb-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-current/60 md:px-6 md:pb-5"
+        >
           {data.subject && (
             <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-300 md:text-[11px]">
               <span>{renderText(data.subject.name)}</span>
@@ -440,7 +452,7 @@ function SystemExpandedOverlay({
                   {section.status?.label?.trim() && (
                     <span
                       data-color-code={statusColorCode}
-                      className="rounded-full border border-current/30 bg-black/25 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.14em]"
+                      className="max-w-full break-words rounded-full border border-current/30 bg-black/25 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.14em] [overflow-wrap:anywhere]"
                       style={statusStyle}
                     >
                       {section.status.label.trim()}
@@ -448,12 +460,12 @@ function SystemExpandedOverlay({
                   )}
                 </div>
                 {typeof section.value === 'string' && section.value.trim() && (
-                  <p className="mt-2 break-words font-serif text-sm leading-relaxed text-neutral-100 md:text-base">
+                  <p className="mt-2 break-words font-serif text-sm leading-relaxed text-neutral-100 [overflow-wrap:anywhere] md:text-base">
                     {renderText(section.value.trim())}
                   </p>
                 )}
                 {typeof section.detail === 'string' && section.detail.trim() && (
-                  <p className="mt-1.5 break-words font-serif text-[13px] leading-relaxed text-neutral-300 md:text-sm">
+                  <p className="mt-1.5 break-words font-serif text-[13px] leading-relaxed text-neutral-300 [overflow-wrap:anywhere] md:text-sm">
                     {renderText(section.detail.trim())}
                   </p>
                 )}
@@ -468,7 +480,7 @@ function SystemExpandedOverlay({
                 {items.length > 0 && (
                   <ul className="mt-2.5 space-y-2 border-l border-current/25 pl-3">
                     {items.map((item, itemIndex) => (
-                      <li key={`${item}-${itemIndex}`} className="break-words font-serif text-[13px] leading-relaxed text-neutral-200 md:text-sm">
+                      <li key={`${item}-${itemIndex}`} className="break-words font-serif text-[13px] leading-relaxed text-neutral-200 [overflow-wrap:anywhere] md:text-sm">
                         {renderText(item.trim())}
                       </li>
                     ))}
@@ -546,7 +558,7 @@ function SystemConsequenceRow({ changes, variant }: { changes: SystemPromptChang
     return (
       <div
         data-consequence-count={slots.length}
-        className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-[color-mix(in_srgb,currentColor_18%,transparent)] pt-2"
+        className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-[color-mix(in_srgb,currentColor_18%,transparent)] pt-2 [overflow-wrap:anywhere]"
       >
         {slots.map((change, index) => {
           const { subject, state } = getCompactOutcomeParts(change);
@@ -581,7 +593,7 @@ function SystemConsequenceRow({ changes, variant }: { changes: SystemPromptChang
   return (
     <div
       data-consequence-count={prioritizedChanges.length}
-      className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-[color-mix(in_srgb,currentColor_18%,transparent)] pt-2"
+      className="mt-2.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-[color-mix(in_srgb,currentColor_18%,transparent)] pt-2 [overflow-wrap:anywhere]"
     >
       {prioritizedChanges.map((change, index) => {
         const outcomeColorCode = resolveSystemOutcomeColorCode(change.tone, change.direction);
@@ -662,23 +674,6 @@ function SystemOrbEmblem({
   );
 }
 
-/**
- * Existing chapters predate explicit presentation data. Preserve their current
- * layout only at this compatibility boundary; new prompts always use the
- * authored discriminator rather than rows or promptType to select a layout.
- */
-function resolveSystemPromptPresentation(
-  system: SystemEvent,
-  rows: unknown[],
-  changes: SystemPromptChange[],
-  worldNotice: ReturnType<typeof normalizeWorldNoticeData>,
-): SystemPromptPresentation {
-  const requested = 'presentation' in system ? system.presentation : undefined;
-  if (requested === 'world_notice' && worldNotice) return requested;
-  if (requested === 'narrative' || requested === 'mechanical') return requested;
-  return rows.length === 0 || changes.length > 0 ? 'narrative' : 'mechanical';
-}
-
 export const SystemBlock = React.memo(function SystemBlock({ content, system, renderProse, className, ...props }: SystemBlockProps) {
   const {
     onAnimationStart: _anim,
@@ -688,14 +683,12 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
     style: suppliedStyle,
     ...safeProps
   } = props;
-  const getSystemRootStyle = (meaning: SystemColorMeaning, fateFlagColorCode?: ColorCodeId) => ({
-    ...getSystemColorStyle(meaning),
-    ...(fateFlagColorCode ? { '--fate-flag-color': getColorCodeValue(fateFlagColorCode) } : {}),
-    ...suppliedStyle,
-  }) as React.CSSProperties;
+  const reduceMotion = useReducedMotion();
+  const surface = React.useMemo(() => getSystemPromptSurface(system, content), [content, system]);
+  const systemRootStyle = getSystemPromptSurfaceStyle(surface, suppliedStyle);
   const detailsId = React.useId();
-  const requestedPresentation = system && 'presentation' in system ? system.presentation : undefined;
-  const eventKey = `${system?.kind ?? ''}|${system?.promptType ?? ''}|${requestedPresentation ?? ''}|${system?.title ?? ''}|${content}`;
+  const route = React.useMemo(() => resolveSystemPromptRoute(system), [system]);
+  const eventKey = `${system?.kind ?? ''}|${system?.promptType ?? ''}|${route?.presentation ?? ''}|${system?.title ?? ''}|${content}`;
   const [expandedEventKey, setExpandedEventKey] = React.useState<string | null>(null);
   // The compact card's TTS sentence rests collapsed behind the bottom arrow
   // toggle to conserve reader screen space; narration reads it from the
@@ -703,65 +696,57 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
   const [sentenceRevealed, setSentenceRevealed] = React.useState(false);
   const orbButtonRef = React.useRef<HTMLButtonElement>(null);
 
-  const isIronFate = (system?.title || '').toLowerCase().includes('iron fate') || 
-                     (system?.kind || '').toLowerCase().includes('iron fate') || 
-                     content.toLowerCase().includes('iron fate');
+  const isIronFate = surface.fateFlag === 'ironFate';
+  const isDeathFlag = surface.fateFlag === 'death';
+  const fateFlagColorCode = surface.fateFlagColorCode;
 
-  const isDeathFlag = (system?.title || '').toLowerCase().includes('death flag') || 
-                      (system?.kind || '').toLowerCase().includes('death flag') || 
-                      content.toLowerCase().includes('death flag');
-  const fateFlagColorCode = isDeathFlag
-    ? resolveFateFlagColorCode('death')
-    : isIronFate
-      ? resolveFateFlagColorCode('ironFate')
-      : undefined;
+  // Fate is a distinct top-level contract. Invalid Fate payloads never leak
+  // into the legacy regular-prompt fallback.
+  if (system?.kind === 'fate_system_prompt') {
+    if (route?.presentation !== 'fate') return null;
+    return (
+      <FateResultCard
+        {...safeProps}
+        data={route.fateResult}
+        style={suppliedStyle}
+        className={className}
+      />
+    );
+  }
 
-  // If structured system object exists, render the matching System presentation.
+  // An explicit World Notice must have readable document data. Only prompts
+  // with no authored presentation are eligible for the legacy shape fallback.
+  if (system?.kind === 'system_prompt' && !route) return null;
+
+  // Regular System Prompts delegate through the shared presentation route.
   if (system) {
-    if (system.fateResult) {
-      return (
-        <div {...safeProps} style={suppliedStyle}>
-          <FateResultCard data={system.fateResult} />
-        </div>
-      );
-    }
+    if (route && route.presentation !== 'fate') {
+      const { presentation, rows, changes: visibleChanges } = route;
+      const menacingTone = surface.fateFlag ? ' animate-menacing-fate' : '';
 
-    // Parsed payloads can deliver a non-array `rows`; normalize once before the
-    // presentation branch and the row mapping (same guard as buildSystemContext).
-    const rows = Array.isArray(system.rows) ? system.rows : [];
-    const visibleChanges = Array.isArray(system.changes) ? system.changes : [];
-    const worldNotice = requestedPresentation === 'world_notice' && 'worldNotice' in system
-      ? normalizeWorldNoticeData(system.worldNotice)
-      : undefined;
-    const presentation = resolveSystemPromptPresentation(system, rows, visibleChanges, worldNotice);
-
-    const menacingTone = fateFlagColorCode ? ' animate-menacing-fate' : '';
-
-    if (presentation === 'world_notice' && worldNotice) {
-      const inferenceContext = buildSystemContext(system, content);
-      const meaning = getSystemColorMeaning(system.promptType, inferenceContext);
+      if (presentation === 'world_notice') {
       return (
         <WorldNotice
           title={system.title}
           flavor={system.flavor}
           content={content}
-          notice={worldNotice}
-          meaning={meaning}
-          style={getSystemRootStyle(meaning, fateFlagColorCode)}
+          notice={route.worldNotice}
+          meaning={surface.meaning}
+          style={systemRootStyle}
           className={className}
           readOnlyProps={safeProps}
         />
       );
-    }
+      }
 
-    // Compact regular System Prompt: title-led header with direct understandable
-    // headline, secondary flavor text, single-term semantic classification line,
-    // clean flat key/value rows with values spread to the card's ends, a
-    // full-width status badge reserved for true status information, a two-slot
-    // outcome row of white subjects and meaning-colored state words, and
-    // tightened layout with no vertical dead space when the TTS summary is
-    // minimized.
-    if (presentation === 'narrative') {
+      // Compact regular System Prompt: title-led header with direct understandable
+      // headline, secondary flavor text, single-term semantic classification line,
+      // clean flat key/value rows with values spread to the card's ends, a
+      // full-width status badge reserved for true status information, a two-slot
+      // outcome row of white subjects and meaning-colored state words, and
+      // tightened layout with no vertical dead space when the TTS summary is
+      // minimized.
+      if (presentation === 'narrative') {
       const badge = normalizeSystemPromptBadge(system.badge);
       const badgeSeverity = badge ? getBadgeSeverityStyles(badge) : undefined;
       const sentence = getVisibleSystemSentence(content, badge);
@@ -772,22 +757,21 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
       const expandedData = normalizeExpandedData(system.expanded);
       const isExpanded = Boolean(expandedData && expandedEventKey === eventKey);
       const renderSystemText = renderProse ?? ((text: string) => text);
-      const inferenceContext = buildSystemContext(system, content);
-      const meaning = getSystemColorMeaning(system.promptType, inferenceContext);
+      const meaning = surface.meaning;
       const classification = getSystemCompactClassification(meaning);
       const accent = meaning.textColor;
 
       return (
         <>
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            initial={reduceMotion ? false : { opacity: 0, y: 10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
+            transition={{ duration: reduceMotion ? 0 : 0.5, ease: "easeOut" }}
+            data-motion={reduceMotion ? 'reduced' : 'full'}
             data-system-prompt-state={isExpanded ? 'expanded' : 'compact'}
             data-system-presentation="narrative"
             data-color-code={meaning.colorCode}
-            style={getSystemRootStyle(meaning, fateFlagColorCode)}
+            style={systemRootStyle}
             className={`system-block system-window cursor-default my-6 md:my-8 mx-auto max-w-xl relative overflow-hidden rounded-xl border border-[color-mix(in_srgb,currentColor_40%,transparent)] bg-[color-mix(in_srgb,currentColor_7%,rgba(5,7,11,0.92))] px-4 py-3 md:px-5 md:py-3.5 shadow-[0_0_20px_color-mix(in_srgb,currentColor_10%,transparent),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all duration-300 ${accent}${menacingTone} ${className || ''}`}
             {...safeProps}
           >
@@ -894,7 +878,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
                     event.stopPropagation();
                     setSentenceRevealed(current => !current);
                   }}
-                  className="mx-auto mt-1 -mb-0.5 flex h-6 w-6 touch-manipulation items-center justify-center rounded-full text-neutral-500 outline-none transition-[color,transform] duration-200 hover:text-neutral-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-current/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070b] motion-reduce:transition-none"
+                  className="mx-auto mt-1 -mb-2.5 flex h-11 w-11 touch-manipulation items-center justify-center rounded-full text-neutral-500 outline-none transition-[color,transform] duration-200 hover:text-neutral-300 active:scale-95 focus-visible:ring-2 focus-visible:ring-current/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070b] motion-reduce:transition-none"
                 >
                   <ChevronDown
                     data-system-summary-toggle-icon="true"
@@ -923,82 +907,35 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
       );
     }
 
-    // Semantic inference context: title, row labels/values, and visible content.
-    const inferenceContext = buildSystemContext(system, content);
-    let colorStyles = getSystemPromptColor(system.promptType, inferenceContext);
-    const meaning = getSystemColorMeaning(system.promptType, inferenceContext);
-
-    colorStyles += menacingTone;
-
-    return (
-      <motion.div 
-        initial={{ opacity: 0, y: 10, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        whileHover={{ scale: 1.02 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        data-color-code={meaning.colorCode}
-        data-system-presentation="mechanical"
-        style={getSystemRootStyle(meaning, fateFlagColorCode)}
-        className={`system-block holographic-panel cursor-pointer my-6 md:my-8 rounded-md border font-mono p-3 md:p-4 max-w-xl mx-auto transition-all duration-300 ${colorStyles} ${className || ''}`}
-        {...safeProps}
-      >
-        <div className="flex flex-col space-y-3">
-          <div className="flex items-center justify-between border-b pb-2 border-inherit/30">
-            <div className="flex items-center space-x-2">
-              {isDeathFlag && <Skull data-color-code={resolveFateFlagColorCode('death')} style={getColorCodeStyle(resolveFateFlagColorCode('death'))} className="w-5 h-5 animate-pulse shrink-0" />}
-              {isIronFate && <AlertTriangle data-color-code={resolveFateFlagColorCode('ironFate')} style={getColorCodeStyle(resolveFateFlagColorCode('ironFate'))} className="w-5 h-5 animate-bounce shrink-0" />}
-              <div className="flex flex-col">
-                <span className="font-bold uppercase tracking-widest text-xs md:text-sm leading-tight">{system.title}</span>
-                <span className="text-[9px] uppercase tracking-wider opacity-60 font-mono mt-0.5">
-                  ✦ {meaning.name} ✦
-                </span>
-              </div>
-            </div>
-            {system.rarity && (
-              <span className="rarity-accent text-[10px] uppercase px-2 py-0.5 border rounded-sm bg-black/40 text-inherit">
-                {system.rarity}
-              </span>
-            )}
-          </div>
-          
-          {rows.length > 0 && (
-            <div className="space-y-1.5">
-              {rows.map((row, idx) => (
-                <div key={idx} className="flex justify-between items-center text-[11px] md:text-xs">
-                  <span className="opacity-70 uppercase tracking-widest">{row.label}</span>
-                  <span className="font-semibold tracking-wide text-right">{row.value}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          {content && content.trim() !== '' && (
-            <div className="mt-1.5 text-[11px] md:text-xs opacity-70 border-t border-inherit/30 pt-2 text-center italic leading-relaxed">
-              {content.replace(/^\[|\]$/g, '').trim()}
-            </div>
-          )}
-        </div>
-      </motion.div>
-    );
+      return (
+        <SystemPromptMechanical
+          {...safeProps}
+          content={content}
+          system={system}
+          rows={rows}
+          surface={surface}
+          style={systemRootStyle}
+          className={className}
+        />
+      );
+    }
   }
 
   // Fallback to legacy string-based parsing
   const text = content.replace(/^\[|\]$/g, '').trim();
-  let fallbackColorStyles = getSystemPromptColor(undefined, text);
-  const meaning = getSystemColorMeaning(undefined, text);
-
-  if (fateFlagColorCode) fallbackColorStyles += ' animate-menacing-fate';
+  const fallbackColorStyles = getSystemPromptSurfaceClasses(surface);
+  const meaning = surface.meaning;
 
   return (
     <div
       {...props}
       data-color-code={meaning.colorCode}
-      style={getSystemRootStyle(meaning, fateFlagColorCode)}
-      className={`my-6 md:my-8 p-4 md:p-5 bg-black/50 border font-mono text-[11px] md:text-sm rounded-lg text-center tracking-widest leading-relaxed transition-all duration-500 hover:brightness-125 hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] ${fallbackColorStyles} ${className || ''}`}
+      style={systemRootStyle}
+      className={`my-6 md:my-8 p-4 md:p-5 bg-black/50 border font-mono text-[11px] md:text-sm rounded-lg text-center tracking-widest leading-relaxed ${fallbackColorStyles} ${className || ''}`}
     >
       <div className="flex flex-col items-center justify-center mb-1.5 md:mb-2">
-        {isDeathFlag && <Skull data-color-code={resolveFateFlagColorCode('death')} style={getColorCodeStyle(resolveFateFlagColorCode('death'))} className="w-5 h-5 md:w-6 md:h-6 animate-pulse mb-1.5" />}
-        {isIronFate && <AlertTriangle data-color-code={resolveFateFlagColorCode('ironFate')} style={getColorCodeStyle(resolveFateFlagColorCode('ironFate'))} className="w-5 h-5 md:w-6 md:h-6 animate-bounce mb-1.5" />}
+        {isDeathFlag && fateFlagColorCode && <Skull data-color-code={fateFlagColorCode} style={getColorCodeStyle(fateFlagColorCode)} className="w-5 h-5 md:w-6 md:h-6 animate-pulse motion-reduce:animate-none mb-1.5" />}
+        {isIronFate && fateFlagColorCode && <AlertTriangle data-color-code={fateFlagColorCode} style={getColorCodeStyle(fateFlagColorCode)} className="w-5 h-5 md:w-6 md:h-6 animate-bounce motion-reduce:animate-none mb-1.5" />}
         <div className="text-[9px] uppercase tracking-wider opacity-60 font-semibold">
           ✦ {meaning.name} ✦
         </div>

@@ -40,7 +40,14 @@ try {
   const checks = {
     '@seihouse/sen': ['LibraryPanel', 'SEN_PACKAGE_VERSION'],
     '@seihouse/sen/library': ['LibraryPanel', 'ManifestButton'],
-    '@seihouse/sen/reader-chamber': ['ReaderChamber', 'ReaderViewport'],
+    '@seihouse/sen/reader-chamber': [
+      'ReaderChamber',
+      'ReaderViewport',
+      'SystemBlock',
+      'WorldNotice',
+      'FateResultCard',
+      'resolveSystemPromptRoute',
+    ],
     '@seihouse/sen/reader-codex': ['ReaderCodex', 'CodexSheetOverlay'],
     '@seihouse/sen/codex-cards': ['CodexCard', 'CodexHovercard'],
     '@seihouse/sen/manifestations': ['ManifestationChamber', 'ManifestationReveal'],
@@ -71,12 +78,24 @@ try {
     import type { ClosedDoorCultivationModalProps } from '@seihouse/sen/closed-door-cultivation';
     import type { CreationModalProps, StorySeedInput } from '@seihouse/sen/story-seed';
     import type { FiveChapterBatchState, ManifestChapterRequest } from '@seihouse/sen/chapter-generation';
+    import type {
+      FateResultCardProps,
+      SystemBlockProps,
+      SystemPromptRoute,
+      SystemPromptRoutePresentation,
+      WorldNoticeProps,
+    } from '@seihouse/sen/reader-chamber';
     declare const cultivation: ClosedDoorCultivationModalProps;
     declare const creation: CreationModalProps;
     declare const seed: StorySeedInput;
     declare const batch: FiveChapterBatchState;
     declare const request: ManifestChapterRequest;
-    void [cultivation, creation, seed, batch, request];
+    declare const fateResultCard: FateResultCardProps;
+    declare const systemBlock: SystemBlockProps;
+    declare const systemRoute: SystemPromptRoute;
+    declare const systemRoutePresentation: SystemPromptRoutePresentation;
+    declare const worldNotice: WorldNoticeProps;
+    void [cultivation, creation, seed, batch, request, fateResultCard, systemBlock, systemRoute, systemRoutePresentation, worldNotice];
   `);
   run(
     process.execPath,

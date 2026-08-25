@@ -2,7 +2,7 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { FateResultData, StoryWorld } from '../shared/types';
+import type { FateResultData, StoryWorld, SystemEvent } from '../shared/types';
 import { getColorCodeValue, resolveFateConsequenceDetailColorCode } from '../shared/colorCodes';
 import { FateResultCard } from './FateResultCard';
 import { FateSurvivalExplanation } from './FateSurvivalExplanation';
@@ -76,6 +76,36 @@ describe('Reader fate Color Codes', () => {
     });
     expect(container.querySelector('[data-color-code="mentor"]')).toBeTruthy();
     expect(container.querySelector('.animate-menacing-fate')).toBeTruthy();
+  });
+
+  it('does not let malformed explicit Fate or World Notice data fall through to a regular System Prompt', () => {
+    const malformedFateResult = { outcome: 'FATE SCARRED' };
+    const malformedFate = {
+      kind: 'fate_system_prompt',
+      title: 'Invalid Fate',
+      fateResult: malformedFateResult,
+    } as SystemEvent;
+
+    act(() => {
+      root.render(<SystemBlock content="[ A broken fate result. ]" system={malformedFate} />);
+    });
+    expect(container.innerHTML).toBe('');
+
+    act(() => {
+      root.render(<FateResultCard data={malformedFateResult as unknown as FateResultData} />);
+    });
+    expect(container.innerHTML).toBe('');
+
+    const malformedWorldNotice = {
+      kind: 'system_prompt',
+      presentation: 'world_notice',
+      title: 'Incomplete Notice',
+      worldNotice: { entries: [] },
+    } as SystemEvent;
+    act(() => {
+      root.render(<SystemBlock content="[ A broken notice. ]" system={malformedWorldNotice} />);
+    });
+    expect(container.innerHTML).toBe('');
   });
 
   it('uses the same Color Codes in fate-type choices and Reader fate alerts', () => {

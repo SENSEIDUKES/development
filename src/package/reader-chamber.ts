@@ -26,10 +26,12 @@ export { AlterFatePanel } from '../components/reader-chamber/development/AlterFa
 export { CosmicBookmarksPanel } from '../components/reader-chamber/development/CosmicBookmarksPanel';
 export { ContextInspector } from '../components/reader-chamber/development/ContextInspector';
 export { FateResultCard } from '../components/reader-chamber/development/FateResultCard';
+export type { FateResultCardProps } from '../components/reader-chamber/development/FateResultCard';
 export { FateSurvivalExplanation } from '../components/reader-chamber/development/FateSurvivalExplanation';
 export { ParticleSystem } from '../components/reader-chamber/development/ParticleSystem';
 export { SystemBlock } from '../components/reader-chamber/development/SystemBlock';
-export { WorldNotice, normalizeWorldNoticeData } from '../components/reader-chamber/development/WorldNotice';
+export type { SystemBlockProps } from '../components/reader-chamber/development/SystemBlock';
+export { WorldNotice } from '../components/reader-chamber/development/WorldNotice';
 export type { WorldNoticeProps } from '../components/reader-chamber/development/WorldNotice';
 export { SystemColorLegend } from '../components/reader-chamber/development/SystemColorLegend';
 export { VirtualizedList } from '../components/reader-chamber/development/VirtualizedList';
@@ -47,6 +49,7 @@ export type {
 
 export * from '../components/reader-chamber/shared/types';
 export * from '../components/reader-chamber/shared/colorCodes';
+export * from '../components/reader-chamber/shared/systemPromptPresentation';
 export * from '../components/reader-chamber/shared/readerTypography';
 export * from '../components/reader-chamber/shared/readerLegend';
 export * from '../components/reader-chamber/shared/autoCuePolicy';

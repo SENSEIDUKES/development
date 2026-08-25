@@ -4,7 +4,7 @@
 - **Verified source locations:** `src/components/ReaderViewport.tsx`, `src/components/SystemBlock.tsx`, `src/components/FateResultCard.tsx`
 - **Workshop preview:** `?preview=card-workshop`
 - **Replica created:** 2026-08-14
-- **Last Workshop update:** 2026-08-24
+- **Last Workshop update:** 2026-08-25
 - **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
@@ -27,6 +27,8 @@ The current presentation set is deliberately limited to:
 Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studio is outside this feature and is unchanged.
 
 ## Workshop history
+
+- **2026-08-25:** Audited the real Reader/Card Workshop presentation for accessibility, narrow and short viewports, keyboard behavior, reduced motion, long-content overflow, palette contrast, and rendering cost. Expanded System reports now keep a pinned header and one keyboard-focusable scrolling body, restore focus to their opener, and avoid backdrop blur; Workshop controls preserve the branch/category architecture while meeting touch-target and selected-state semantics. Non-interactive System surfaces no longer advertise hover/click behavior, long values wrap safely, and motion-heavy effects respect reduced-motion preferences.
 
 - **2026-08-24:** Split Card Type Tabs into real parent/child branches — **Codex Cards** (Human, Non-Human, Artifacts, Locations, Factions) and **System Prompts** (Narrative, Mechanical, World Notice, Fate System) — so only the selected parent's categories are shown, and each System category exposes only the content examples that belong to it. Added the missing Faction Codex preset to complete the Codex categories. Mobile-optimized the development page so every control wraps and stays usable from 320px up with no horizontal page cut-off. Card components themselves are unchanged.
 

@@ -663,37 +663,249 @@ describe('CardWorkshopView', () => {
     expect(getButton('Contextual View')?.getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('leaves the compact Narrative card with no Expanded Info action', async () => {
+  it('opens the expanded event report in a viewport overlay and restores focus to the orb action', async () => {
     act(() => root.render(renderWithDevAudio(
       <CardWorkshopView initialMode="tabs" initialPresetId="preset-system-prompt" />,
     )));
 
-    // The Narrative Notification keeps its compact card and every piece of its
-    // information; the orb rests as an inert emblem, and the small bottom
-    // chevron is the card's only control.
-    for (const control of ['Cultivation Breakthrough', 'Broken Promise']) {
-      await clickButton('Narrative');
-      await clickButton(control);
-      const systemBlock = container.querySelector<HTMLElement>('.system-block');
-      expect(systemBlock?.dataset.systemPresentation).toBe('narrative');
-      expect(systemBlock?.dataset.systemPromptState).toBe('compact');
-      expect(systemBlock?.querySelector('[data-consequence-count]')).toBeTruthy();
-      expect(systemBlock?.querySelector('[data-system-orb-icon="closed"]')).toBeTruthy();
-      expect(getButton('Expand System Prompt details')).toBeFalsy();
-      expect(document.body.querySelector('[data-system-status-panel]')).toBeFalsy();
+    const systemBlock = container.querySelector<HTMLElement>('.system-block');
+    const compactSummary = 'A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.';
+    expect(systemBlock?.dataset.systemPromptState).toBe('compact');
+    expect(systemBlock?.querySelector('[data-consequence-count]')).toBeTruthy();
+    expect(systemBlock?.querySelector('[data-system-orb-icon="closed"]')).toBeTruthy();
+    expect(systemBlock?.querySelector('[data-system-summary]')?.textContent).toBe(compactSummary);
+    expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
+    expect(getButton('Expand System Prompt details')?.getAttribute('aria-expanded')).toBe('false');
 
-      const summaryToggle = systemBlock?.querySelector<HTMLButtonElement>('[data-system-summary-toggle="true"]');
-      const summary = systemBlock?.querySelector<HTMLElement>('[data-system-summary]');
-      expect(summaryToggle?.className).toContain('h-11');
-      expect(summaryToggle?.className).toContain('w-11');
-      expect(summary?.hasAttribute('hidden')).toBe(true);
-      await act(async () => summaryToggle!.click());
-      expect(summary?.hasAttribute('hidden')).toBe(false);
-      expect(document.body.querySelector('[role="dialog"]')).toBeFalsy();
-      // Collapse again so the next example starts from the resting card.
-      await act(async () => summaryToggle!.click());
+    await clickButton('Expand System Prompt details');
+
+    // The report is a viewport-locked dialog portaled above the reader —
+    // outside the compact card, which keeps its compact content untouched.
+    const overlay = document.body.querySelector<HTMLElement>('[role="dialog"][data-system-expanded="true"]');
+    expect(overlay).toBeTruthy();
+    expect(overlay?.getAttribute('aria-modal')).toBe('true');
+    expect(overlay?.getAttribute('data-reader-narration')).toBe('excluded');
+    expect(overlay?.className).toContain('max-h-full');
+    expect(overlay?.className).toContain('overflow-hidden');
+    const scrollRegion = overlay?.querySelector<HTMLElement>('[data-system-expanded-scroll-region="true"]');
+    expect(scrollRegion?.className).toContain('min-h-0');
+    expect(scrollRegion?.className).toContain('overflow-y-auto');
+    expect(scrollRegion?.className).toContain('overscroll-contain');
+    expect(scrollRegion?.getAttribute('role')).toBe('region');
+    expect(scrollRegion?.getAttribute('aria-label')).toBe('System event report details');
+    expect(scrollRegion?.tabIndex).toBe(0);
+    const backdropLayer = overlay?.parentElement;
+    expect(backdropLayer?.className).not.toContain('backdrop-blur');
+    expect(systemBlock?.contains(overlay!)).toBe(false);
+    expect(systemBlock?.dataset.systemPromptState).toBe('expanded');
+    expect(systemBlock?.querySelector('[data-consequence-count]')).toBeTruthy();
+    expect(systemBlock?.querySelector('[data-system-summary]')?.textContent).toBe(compactSummary);
+    expect(systemBlock?.textContent).not.toContain('Power Rankings');
+    expect(systemBlock?.querySelector('[data-system-orb-icon="open"]')).toBeTruthy();
+    const expandedOrb = getButton('Collapse System Prompt details');
+    expect(expandedOrb?.getAttribute('aria-expanded')).toBe('true');
+    expect(expandedOrb?.className).toContain('h-11');
+    expect(expandedOrb?.className).toContain('w-11');
+    const closeControl = overlay?.querySelector<HTMLButtonElement>('button[aria-label="Close System event report"]');
+    expect(closeControl?.className).toContain('h-11');
+    expect(closeControl?.className).toContain('w-11');
+    const summaryToggle = systemBlock?.querySelector<HTMLButtonElement>('[data-system-summary-toggle="true"]');
+    expect(summaryToggle?.className).toContain('h-11');
+    expect(summaryToggle?.className).toContain('w-11');
+
+    // Tab and Shift+Tab remain trapped inside the modal, including the body
+    // scroller used by keyboard users on short-height and long-content layouts.
+    const focusable = [...(overlay?.querySelectorAll<HTMLElement>(
+      'button, [role="button"], [tabindex]:not([tabindex="-1"])',
+    ) ?? [])];
+    focusable.forEach(element => Object.defineProperty(element, 'offsetParent', {
+      configurable: true,
+      value: overlay,
+    }));
+    closeControl?.focus();
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Tab',
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    })));
+    expect(overlay?.contains(document.activeElement)).toBe(true);
+    expect(document.activeElement).not.toBe(closeControl);
+
+    // One flat report: classification, headline, subject, the System
+    // outcome row, and the Codex sections with progress — never narration.
+    expect(overlay?.textContent).toContain('✦ Breakthrough | Awakening ✦');
+    expect(overlay?.textContent).toContain('Cultivation Breakthrough');
+    expect(overlay?.textContent).toContain('MC (You)');
+    expect(overlay?.textContent).toContain('Power Rankings');
+    expect(overlay?.textContent).toContain('Foundation Establishment — Stage 4');
+    expect(overlay?.textContent).toContain('37/100');
+    expect(overlay?.textContent).toContain('Karma Bond');
+    expect(overlay?.textContent).toContain('−75/100');
+    expect(overlay?.textContent).toContain('Danger');
+    expect(overlay?.textContent).toContain('Lore');
+    expect(overlay?.textContent).toContain('Warning');
+    expect(overlay?.textContent).toContain('Narrative Consequences');
+    expect(overlay?.querySelector('[data-consequence-count]')?.textContent).toContain('Realm Ascended');
+    expect(overlay?.querySelector('[data-consequence-count]')?.textContent).toContain('Lifespan +100');
+    // The report keeps every outcome with its signed figures — including the
+    // quantity and the third outcome the compact two-slot row drops.
+    expect(overlay?.querySelector('[data-consequence-count]')?.textContent).toContain('Presence Exposed');
+    expect(overlay?.querySelector('[role="progressbar"][aria-label="Power Rankings progress"]'))
+      .toBeTruthy();
+    // Flat sections with simple dividers — no stacked card boxes.
+    const powerSection = overlay?.querySelector('[data-system-expanded-section="power-rankings"]');
+    expect(powerSection?.className).toContain('border-t');
+    expect(powerSection?.className).not.toContain('rounded-xl');
+
+    // Mobile keeps only the three highest-priority sections; the rest are
+    // desktop-only through `hidden md:block`.
+    const narrativeSection = overlay?.querySelector('[data-system-expanded-section="narrative-consequences"]');
+    expect(narrativeSection?.className).toContain('hidden');
+    expect(narrativeSection?.className).toContain('md:block');
+    expect(powerSection?.className).not.toContain('hidden');
+
+    // Character names inside the report keep their Codex colors and links.
+    const elderHanAction = [...(overlay?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
+      .find(element => element.textContent === 'Elder Han');
+    expect(elderHanAction).toBeTruthy();
+    expect(elderHanAction?.getAttribute('data-color-code')).toBe('enemy');
+    await act(async () => elderHanAction!.click());
+    expect(document.body.querySelector('[role="dialog"][aria-label="Elder Han Codex details"]'))
+      .toBeTruthy();
+    // Escape closes the hovercard first; the event report stays open. The
+    // hovercard marker is stripped immediately, so a rapid second Escape closes
+    // the report without waiting for exit animation.
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(document.body.querySelector('[role="dialog"][data-system-expanded="true"]')).toBeTruthy();
+
+    // Second Escape immediately closes the report and returns focus to the orb action.
+    const orbAction = getButton('Collapse System Prompt details');
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
+    expect(systemBlock?.dataset.systemPromptState).toBe('compact');
+    expect(systemBlock?.querySelector('[data-consequence-count]')).toBeTruthy();
+    expect(systemBlock?.querySelector('[data-system-orb-icon="closed"]')).toBeTruthy();
+    expect(document.activeElement).toBe(orbAction);
+
+    // Reopening and using the dedicated close button restores focus the same way.
+    await clickButton('Expand System Prompt details');
+    expect(document.body.querySelector('[data-system-expanded]')).toBeTruthy();
+    const reopenOrb = getButton('Collapse System Prompt details');
+    const closeAction = [...document.body.querySelectorAll<HTMLButtonElement>('button')]
+      .find(element => element.getAttribute('aria-label') === 'Close System event report');
+    expect(closeAction).toBeTruthy();
+    await act(async () => closeAction!.click());
+    expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
+    expect(document.activeElement).toBe(reopenOrb);
+
+    // Backdrop click requires pointer-down on the backdrop itself to avoid
+    // closing during text selection drag releases.
+    await clickButton('Expand System Prompt details');
+    const backdrop = document.body.querySelector<HTMLElement>('.fixed.inset-0.z-\\[100\\]');
+    const activeOverlay = document.body.querySelector<HTMLElement>('[role="dialog"][data-system-expanded="true"]');
+    expect(backdrop).toBeTruthy();
+    expect(activeOverlay).toBeTruthy();
+    // Drag starting inside panel and releasing on backdrop does not close
+    await act(async () => {
+      activeOverlay?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+      backdrop?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(document.body.querySelector('[data-system-expanded]')).toBeTruthy();
+    // Direct click on backdrop closes
+    await act(async () => {
+      backdrop?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+      backdrop?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
+
+    // Pre-existing Codex hovercard open before expanded overlay mounts:
+    // Opening a hovercard in compact summary, then opening the overlay,
+    // verifies that the first Escape dismisses the hovercard and leaves the overlay open.
+    const compactCharacterLink = [...(container.querySelectorAll<HTMLElement>('.system-block [role="button"]') ?? [])]
+      .find(element => element.textContent === 'Yun Che' || element.textContent === 'Elder Han');
+    if (compactCharacterLink) {
+      await act(async () => compactCharacterLink.click());
+      await clickButton('Expand System Prompt details');
+      expect(document.body.querySelector('[role="dialog"][data-system-expanded="true"]')).toBeTruthy();
+      // First Escape dismisses the hovercard only
+      await act(async () => {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+      });
+      expect(document.body.querySelector('[role="dialog"][data-system-expanded="true"]')).toBeTruthy();
+      // Second Escape dismisses the overlay
+      await act(async () => {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+      });
+      expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
     }
   });
+
+  it('provides complete local expanded reports for all three System Prompt examples', async () => {
+    act(() => root.render(renderWithDevAudio(
+      <CardWorkshopView initialMode="tabs" initialPresetId="preset-system-prompt" />,
+    )));
+
+    const examples = [
+      {
+        category: 'Narrative',
+        control: 'Cultivation Breakthrough',
+        subject: 'Yun Che',
+        value: 'Foundation Establishment — Stage 4',
+        consequence: 'Elder Han will move openly against Yun Che.',
+        badge: null,
+      },
+      {
+        category: 'Narrative',
+        control: 'Broken Promise',
+        subject: 'Magistrate Jinhai',
+        value: 'Rain Court Standing — Disgraced',
+        consequence: 'Magistrate Jinhai loses access to Riverside Sect testimony.',
+        badge: null,
+      },
+      {
+        category: 'Mechanical',
+        control: 'Target Scan',
+        subject: 'Elder Kaelen',
+        value: 'Foundation Establishment — Stage 7',
+        consequence: 'Elder Kaelen will prepare a countermeasure before the next encounter.',
+        badge: 'Threat Assessment',
+      },
+    ];
+
+    for (const example of examples) {
+      await clickButton(example.category);
+      await clickButton(example.control);
+      const systemBlock = container.querySelector<HTMLElement>('.system-block');
+      expect(systemBlock?.dataset.systemPromptState).toBe('compact');
+
+      await clickButton('Expand System Prompt details');
+      // The full report lives in the overlay, never in the compact card.
+      const overlay = document.body.querySelector<HTMLElement>('[role="dialog"][data-system-expanded="true"]');
+      expect(overlay).toBeTruthy();
+      expect(systemBlock?.textContent).not.toContain('Narrative Consequences');
+      expect(overlay?.textContent).toContain(example.subject);
+      expect(overlay?.textContent).toContain(example.value);
+      expect(overlay?.textContent).toContain('Lore');
+      expect(overlay?.textContent).toContain('Warning');
+      expect(overlay?.textContent).toContain('Narrative Consequences');
+      expect(overlay?.textContent).toContain(example.consequence);
+      if (example.badge) {
+        expect(overlay?.textContent).toContain(example.badge);
+      }
+
+      await act(async () => {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      });
+      expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
+      expect(systemBlock?.dataset.systemPromptState).toBe('compact');
+    }
+  });
+
 
   it('opens the Structured Mechanical stat panel from the orb and restores focus to it', async () => {
     act(() => root.render(renderWithDevAudio(
@@ -948,7 +1160,7 @@ describe('CardWorkshopView', () => {
       .toBe('[ A crimson interface unfolded beside Elder Kaelen, taking his measure in silence. Threat assessment: moderate. ]');
   });
 
-  it('keeps stat-panel mock information outside the short System Prompt TTS source', () => {
+  it('keeps expanded and stat-panel mock information outside the short System Prompt TTS source', () => {
     const systemPreset = ACTIVE_CARD_PRESETS.find(preset => preset.id === 'preset-system-prompt')!;
     const fixture = createCardWorkshopContextualFixture(
       systemPreset,
@@ -969,6 +1181,23 @@ describe('CardWorkshopView', () => {
     }
     expect(systemBlock?.text).not.toContain(status?.effects?.[0]?.name ?? '__missing__');
     expect(systemBlock?.text).not.toContain(status?.abilities?.[0]?.name ?? '__missing__');
+
+    // The restored Narrative expanded reports stay out of the TTS source the
+    // same way the stat panel does.
+    for (const style of ['breakthrough', 'broken-promise', 'target-scan'] as const) {
+      const narrativeFixture = createCardWorkshopContextualFixture(
+        systemPreset,
+        { ...INITIAL_CARD_WORKSHOP_OVERRIDES, systemPromptContentStyle: style },
+        new Set(),
+      );
+      const narrativeBlock = narrativeFixture.chapter.blocks?.[2];
+
+      expect(narrativeBlock?.text).toBe(SYSTEM_PROMPT_PRESET_EXAMPLES[style].systemContent);
+      expect(narrativeBlock?.system?.expanded?.sections.length).toBeGreaterThan(0);
+      expect(narrativeBlock?.text).not.toContain('Power Rankings');
+      expect(narrativeBlock?.text).not.toContain('Narrative Consequences');
+      expect(narrativeBlock?.text).not.toContain(narrativeBlock?.system?.expanded?.sections[0]?.value ?? '__missing__');
+    }
   });
 
   it('keeps image, Manifest/Awaken, Codex, entity-mention, and portrait overrides active in Contextual View', async () => {

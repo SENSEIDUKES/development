@@ -82,25 +82,39 @@ describe('System Prompt accessibility and motion', () => {
     expect(scopedStyles).toContain('.animate-menacing-fate');
   });
 
-  it('gives the Narrative card no Expanded Info action', () => {
-    act(() => root.render(
+  it('restores focus when a live event replacement unmounts an open report', () => {
+    const renderEvent = (title: string, content: string) => (
       <SystemBlock
-        content="The archive records the oath."
+        content={content}
         system={{
           kind: 'system_prompt',
           presentation: 'narrative',
-          title: 'Oath Recorded',
+          title,
           changes: [{ label: 'Realm Advanced', direction: 'gain' }],
+          expanded: {
+            sections: [{ heading: 'Realm', value: 'Advanced' }],
+          },
         }}
-      />,
-    ));
+      />
+    );
 
-    // The orb rests as an inert emblem; the bottom narration chevron is the
-    // compact Narrative card's only control.
-    expect(container.querySelector('button[aria-label="Expand System Prompt details"]')).toBeFalsy();
-    expect(container.querySelector('[data-system-orb-icon="closed"]')).toBeTruthy();
-    expect(container.querySelector('[data-system-summary-toggle="true"]')).toBeTruthy();
+    act(() => root.render(renderEvent('First Report', 'The first event is recorded.')));
+    const opener = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Expand System Prompt details"]',
+    );
+    expect(opener).toBeTruthy();
+    act(() => opener!.click());
+    expect(document.body.querySelector('[role="dialog"]')).toBeTruthy();
+    expect(document.activeElement?.getAttribute('role')).toBe('dialog');
+
+    act(() => root.render(renderEvent('Replacement Report', 'A newer event replaces it.')));
+
+    const replacementOpener = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Expand System Prompt details"]',
+    );
     expect(document.body.querySelector('[role="dialog"]')).toBeFalsy();
+    expect(replacementOpener).toBeTruthy();
+    expect(document.activeElement).toBe(replacementOpener);
   });
 
   it('restores focus when a live event replacement unmounts an open stat panel', () => {
@@ -120,7 +134,7 @@ describe('System Prompt accessibility and motion', () => {
       />
     );
 
-    act(() => root.render(renderEvent('First Report', 'The first event is recorded.')));
+    act(() => root.render(renderEvent('First Status', 'The first status is recorded.')));
     const opener = container.querySelector<HTMLButtonElement>(
       'button[aria-label="Expand System Prompt details"]',
     );
@@ -129,7 +143,7 @@ describe('System Prompt accessibility and motion', () => {
     expect(document.body.querySelector('[role="dialog"][data-system-status-panel="true"]')).toBeTruthy();
     expect(document.activeElement?.getAttribute('role')).toBe('dialog');
 
-    act(() => root.render(renderEvent('Replacement Report', 'A newer event replaces it.')));
+    act(() => root.render(renderEvent('Replacement Status', 'A newer status replaces it.')));
 
     const replacementOpener = container.querySelector<HTMLButtonElement>(
       'button[aria-label="Expand System Prompt details"]',

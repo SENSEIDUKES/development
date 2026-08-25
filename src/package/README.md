@@ -47,6 +47,10 @@ Workshop and the packages always render the same source.
   artifact, then pack it, install it into a fresh consumer (Library alongside
   the packed SEN tarball), type-check the public contracts, and bundle every
   entry.
+- `scripts/requirePackageTypes.mjs` — Library type-checks against SEN's
+  *published* declarations rather than SEN source, so it never re-emits a copy
+  of the engine's types. That makes SEN's build a prerequisite; this guard says
+  so plainly instead of letting `tsc` fail on a missing module.
 
 ```bash
 npm run check:package-boundaries

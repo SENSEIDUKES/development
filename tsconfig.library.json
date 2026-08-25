@@ -5,7 +5,17 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "outDir": "dist/library/dist/types",
-    "rootDir": "src"
+    "rootDir": "src",
+    // Library type-checks against SEN's *published* declarations, not SEN
+    // source. Without this, `tsc` follows `@seihouse/sen/ui` into
+    // `src/components/` and emits a second copy of the engine's types inside
+    // the Library package. `build:package` builds SEN first, so these exist.
+    "paths": {
+      "@seihouse/sen": ["./dist/sen/dist/types/package/sen/index.d.ts"],
+      "@seihouse/sen/*": ["./dist/sen/dist/types/package/sen/*.d.ts"],
+      "@Seihouse/Library": ["./src/package/library/index.ts"],
+      "@Seihouse/Library/*": ["./src/package/library/*.ts"]
+    }
   },
   "include": ["src/package/library", "src/vite-env.d.ts"]
 }

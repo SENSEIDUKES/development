@@ -50,9 +50,17 @@ loads once.
 ## Building
 
 ```bash
+npm run build:package           # SEN then Library, in order
 npm run build:package:library   # bundle, emit types, verify
 npm run test:package            # boundary check + both packages, packed and smoke-tested
 ```
+
+Library type-checks against SEN's **published declarations**, not SEN source:
+`tsconfig.library.json` maps `@seihouse/sen/*` to SEN's emitted `.d.ts` files.
+Without that, `tsc` follows the import into `src/components/` and emits a
+second copy of the engine's types inside this package. It makes SEN's build a
+prerequisite, so `build:package:library` checks for it first and says so
+plainly if SEN has not been built.
 
 `test:package` packs the finished `dist/library/`, installs it into a fresh
 consumer **alongside the packed `@seihouse/sen` tarball**, type-checks the
@@ -72,6 +80,10 @@ import { RelicCard, RelicReveal } from '@Seihouse/Library/relics';
 
 ## History
 
+- **2026-08-25:** Pointed the package's type build at SEN's published
+  declarations, so Library no longer emits a duplicate copy of the engine's
+  types (its `dist/types/` now carries only Library's own surfaces), and added
+  the build-order guard that enforces it.
 - **2026-08-25:** Created the package when SEN and Library split into separate
   lanes. Closed-Door Cultivation and the relic surfaces moved out of
   `@seihouse/sen` (where they were published as `./closed-door-cultivation`

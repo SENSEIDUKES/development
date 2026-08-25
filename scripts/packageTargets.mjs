@@ -59,6 +59,7 @@ export const PACKAGE_TARGETS = {
       'story-seed/library-auth-backdrop.jpg',
     ],
     /** Tarballs a smoke consumer must install before this one. */
+    typeDependencies: [],
     smokeDependencies: [],
     /** Named exports the packed consumer must be able to import and bundle. */
     smokeExports: {
@@ -133,6 +134,12 @@ export const PACKAGE_TARGETS = {
     tsconfig: 'tsconfig.library.json',
     forbiddenBundleContents: NEVER_PUBLISHED,
     assets: [],
+    /**
+     * Library resolves `@seihouse/sen/*` to SEN's emitted declarations, so the
+     * SEN package must be built first. `scripts/requirePackageTypes.mjs`
+     * enforces this before `tsc` runs.
+     */
+    typeDependencies: ['sen'],
     smokeDependencies: ['sen'],
     smokeExports: {
       '@Seihouse/Library': ['LIBRARY_PACKAGE_VERSION', 'RelicCard', 'ClosedDoorCultivationModal'],

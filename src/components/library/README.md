@@ -4,6 +4,46 @@ Shared, reusable primitives. Not a Workshop preview feature — they back the
 feature replicas (Story Seed, Story Seed Settings, Relics, Reader surfaces)
 and transfer to production alongside them.
 
+## Component set record
+
+- **Source repository:** SENSEIDUKES UI repo (`UI`) — `packages/seihouse-ui/`
+- **Package lane:** SEN — published as `@seihouse/sen/ui`; `LibraryCard` also
+  ships through `@seihouse/sen/cards`
+- **Set created:** 2026-08-04
+- **Last Workshop update:** 2026-08-25
+- **Last source comparison:** 2026-08-15 (`SEICard`, at UI `main` commit
+  `53fb8934e7b126807194654c9af10a504b4db6e8`) — the most recent inspection of
+  the UI source across this set. This set is not one replica: each ported
+  primitive keeps its own source record, replica dates, and comparison date in
+  its section below, and those are the dates to trust per component. Do not
+  advance this line unless the UI source was actually re-inspected.
+- **Set status:** in use — the shared primitive layer for every SEN surface
+
+### Mock boundaries
+
+None. Every primitive here is stateless and presentational: no Workshop state
+simulator, fixture data, authentication, persistence, API call, routing, or
+production environment dependency. Consumers own all content, state, and
+actions. The one capability that is *not* wired is `LibraryNavigationDrawer`'s
+optional `profile` block — a placeholder that renders no account behavior (see
+its section).
+
+### Transfer instructions
+
+- Transfer a primitive into `SENSEIDUKES/Light-Novels` (or another SEN host)
+  only alongside an approved feature that adopts it, as a separate authorized
+  integration task.
+- Move the component file, its contract tests, and its export block from
+  `index.ts`. Carry the shared dependencies when the destination lacks them:
+  `cn.ts`, `glass-field.css`, `library-spectrum.css`, and the `SPECTRAL_EDGE`
+  export from `LibraryPanel.tsx`.
+- Reuse the destination's canonical `cn` and spectral edge if it already has
+  them; never duplicate class-merging or spectral-edge logic.
+- Do not copy these back into the UI repo as replacements for the `SEI*`
+  sources — UI `main` remains the source contract.
+- Run the destination typecheck and test suite. Never transfer Workshop
+  navigation, previews, or mock controls; this set has none.
+
 ## Lane ownership
 
 These primitives are the **SEN** surface kit: they are the substrate every

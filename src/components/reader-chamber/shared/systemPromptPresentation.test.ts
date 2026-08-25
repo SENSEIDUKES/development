@@ -99,7 +99,7 @@ describe('System Prompt presentation routing', () => {
       presentation: 'mechanical',
       rows: [{ label: 'Rank', value: 'Copper' }, { label: 'Strength', value: '18', trend: 'up' }],
     });
-    expect(resolveSystemPromptRoute(malformedWorldNotice)).toMatchObject({ presentation: 'mechanical' });
+    expect(resolveSystemPromptRoute(malformedWorldNotice)).toBeUndefined();
     expect(resolveSystemPromptRoute(malformedFate)).toBeUndefined();
     expect(normalizeWorldNoticeData(malformedWorldNoticePayload)).toBeUndefined();
     expect(normalizeFateResultData(malformedFatePayload)).toBeUndefined();

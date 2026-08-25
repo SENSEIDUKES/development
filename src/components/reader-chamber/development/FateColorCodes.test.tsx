@@ -78,7 +78,7 @@ describe('Reader fate Color Codes', () => {
     expect(container.querySelector('.animate-menacing-fate')).toBeTruthy();
   });
 
-  it('does not let malformed explicit Fate data fall through to a regular System Prompt', () => {
+  it('does not let malformed explicit Fate or World Notice data fall through to a regular System Prompt', () => {
     const malformedFateResult = { outcome: 'FATE SCARRED' };
     const malformedFate = {
       kind: 'fate_system_prompt',
@@ -93,6 +93,17 @@ describe('Reader fate Color Codes', () => {
 
     act(() => {
       root.render(<FateResultCard data={malformedFateResult as unknown as FateResultData} />);
+    });
+    expect(container.innerHTML).toBe('');
+
+    const malformedWorldNotice = {
+      kind: 'system_prompt',
+      presentation: 'world_notice',
+      title: 'Incomplete Notice',
+      worldNotice: { entries: [] },
+    } as SystemEvent;
+    act(() => {
+      root.render(<SystemBlock content="[ A broken notice. ]" system={malformedWorldNotice} />);
     });
     expect(container.innerHTML).toBe('');
   });

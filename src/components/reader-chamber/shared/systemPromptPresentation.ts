@@ -193,7 +193,9 @@ export function resolveSystemPromptRoute(system?: SystemEvent): SystemPromptRout
     const worldNotice = normalizeWorldNoticeData(
       'worldNotice' in system ? system.worldNotice : undefined,
     );
-    if (worldNotice) return { presentation: 'world_notice', system, rows, changes, worldNotice };
+    return worldNotice
+      ? { presentation: 'world_notice', system, rows, changes, worldNotice }
+      : undefined;
   }
   if (requested === 'narrative' || requested === 'mechanical') {
     return { presentation: requested, system, rows, changes };

@@ -702,6 +702,10 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
     );
   }
 
+  // An explicit World Notice must have readable document data. Only prompts
+  // with no authored presentation are eligible for the legacy shape fallback.
+  if (system?.kind === 'system_prompt' && !route) return null;
+
   // Regular System Prompts delegate through the shared presentation route.
   if (system) {
     if (route && route.presentation !== 'fate') {

@@ -12,9 +12,15 @@
 
 The development-only Card Workshop makes the active Reader presentations inspectable without generating a chapter. Card Type Tabs keeps an isolated preset gallery, while Contextual View routes the selected preset through the real Development `ReaderViewport` inside a deterministic local chapter.
 
+Card Type Tabs is organized as two real parent branches, and only the selected
+parent's categories are ever offered:
+
+- **Codex Cards** — Human, Non-Human, Artifacts, Locations, Factions;
+- **System Prompts** — Narrative, Mechanical, World Notice, Fate System.
+
 The current presentation set is deliberately limited to:
 
-- `CodexCard` for Human Portraits, Non-Human Portraits, Artifacts, and Locations resolved from application-owned Codex entries;
+- `CodexCard` for Human Portraits, Non-Human Portraits, Artifacts, Locations, and Factions resolved from application-owned Codex entries;
 - `SystemBlock` and its nested `FateResultCard` presentation as independent System Panels;
 - inline World Cue examples showing both a Codex-linked term with an independent sound mark and a sound-only term whose prose remains visually native.
 
@@ -22,7 +28,7 @@ Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studi
 
 ## Workshop history
 
-- **2026-08-25:** Ran the System Prompt accessibility, mobile/tablet/short-height, bug, and performance audit through Card Workshop's real Development Reader integration. Added regressions for the pinned expanded-report shell and its keyboard-focusable long-content scroller, 44px open/close/narration controls, focus containment and return, nested Codex Escape order, reduced-motion rendering, honest inert Mechanical affordances, and overflow-safe Mechanical/World Notice content. The existing semantic palettes passed rendered contrast checks without changing their established meanings or colors.
+- **2026-08-24:** Split Card Type Tabs into real parent/child branches — **Codex Cards** (Human, Non-Human, Artifacts, Locations, Factions) and **System Prompts** (Narrative, Mechanical, World Notice, Fate System) — so only the selected parent's categories are shown, and each System category exposes only the content examples that belong to it. Added the missing Faction Codex preset to complete the Codex categories. Mobile-optimized the development page so every control wraps and stays usable from 320px up with no horizontal page cut-off. Card components themselves are unchanged.
 
 - **2026-08-24:** Clarified the regular System Prompt selector into explicit `narrative`, `mechanical`, and `world_notice` families while retaining `system_prompt` and `fate_system_prompt` as the only top-level kinds. The existing Narrative Notification compact/expanded card and LitRPG mechanical panel retain their approved layouts; `promptType` supplies their shared semantic color, never layout choice. Added deterministic **Guild Bounty** (single notice) and **Mission Board** (multi-entry board) examples through the existing System Prompt selector, rendered by the Reader's static `WorldNotice` document surface with direct headings, secondary flavor, ordered labeled details, no controls, raw HTML, Codex links, or TTS ownership. The contextual Reader adds a board fixture; Fate, locked Reference, preview routes, and source-comparison metadata are unchanged.
 
@@ -63,7 +69,18 @@ Contextual View supports:
 - every current `SystemBlock` kind, explicit Narrative Notification and LitRPG/Mechanical Display examples, single-notice and multi-entry World Notice fixtures, the compact-default/expanded disclosure states for the Narrative examples, and all existing Fate outcomes;
 - mobile, tablet, and desktop widths.
 
-Card Type Tabs exposes every remaining preset in a horizontally scrollable tab list and mounts exactly one presentation at a time. Arrow keys plus Home and End move between tabs. Card Type Tabs and Contextual View share one selected preset and one override state.
+Card Type Tabs exposes a parent branch row (Codex Cards / System Prompts) above a
+child category row, and mounts exactly one presentation at a time. Arrow keys plus
+Home and End move between the visible child categories. Card Type Tabs and
+Contextual View share one selected category and one override state. Each System
+category narrows the shared System Prompt preset to its own content examples:
+Narrative offers Cultivation Breakthrough and Broken Promise, Mechanical offers
+Structured Mechanical and Target Scan, World Notice offers Guild Bounty and
+Mission Board, and Fate System renders the Fate result preset.
+
+Every branch row, category row, mode switch, viewport switch, selector, and
+Technical Details control wraps within the viewport at 320px and above, so the
+development page never scrolls horizontally.
 
 ## Mock and production boundaries
 

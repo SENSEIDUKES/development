@@ -149,7 +149,12 @@ export const CARD_PRESETS: CardPreset[] = [
       architecturalNotes: 'The Reader uses stored Codex media and never accepts a model-generated Codex ID or image URL. Any inline World Cue remains a separate prose action beside the Codex link.',
     },
     codexReveal: {
-      type: 'Human Portrait',
+      // The on-card eyebrow shows the same production label every Codex
+      // character card uses ('character' → "CHARACTER"), regardless of
+      // Human/Non-Human portraitKind. The preset id, category, and
+      // portraitKind still carry the Human/Non-Human distinction for
+      // routing and generation.
+      type: 'character',
       entry: {
         id: 'codex-char-rin',
         name: 'Rin',
@@ -176,7 +181,9 @@ export const CARD_PRESETS: CardPreset[] = [
       architecturalNotes: 'Named, bonded, intelligent, or recurring individuals are character-owned Portraits. Their species remains informational, and inline World Cues stay independent from the card.',
     },
     codexReveal: {
-      type: 'Non-Human Portrait',
+      // See the Human preset above: the eyebrow reads "CHARACTER" like real
+      // Reader cards, while portraitKind keeps the Non-Human routing intact.
+      type: 'character',
       entry: {
         id: 'codex-char-lei',
         name: 'Lei',
@@ -235,6 +242,32 @@ export const CARD_PRESETS: CardPreset[] = [
         id: 'codex-loc-rain-court',
         name: 'Rain Court Grand Pavilion',
         description: 'The ancient administrative center where false vows trigger celestial thunder.',
+        imageUrl: '/card-workshop/test-images/lotus_lake_pavilion_portrait.jpg',
+        manifestationImportance: durableVisualImportance,
+      },
+    },
+  },
+  {
+    id: 'preset-faction',
+    title: 'Faction',
+    subtitle: 'The Riverside Sect',
+    kind: 'codex-card',
+    description: 'A visually presented Faction resolved through the Codex reveal path.',
+    explanation: {
+      componentName: 'CodexCard',
+      sourceFile: 'src/components/reader-chamber/development/CodexCard.tsx',
+      currentTrigger: 'metadata.entities faction reveal resolves to the stored Faction entry',
+      entityOrEventType: 'faction',
+      codexDestination: 'ReaderCodex > Factions',
+      capabilities: { hasImage: true, hasManifestAction: true, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
+      architecturalNotes: 'Factions share the Codex reveal path with Artifacts and Locations. Their crest artwork is application-owned, and an eligible missing image keeps the Manifest action.',
+    },
+    codexReveal: {
+      type: 'Faction',
+      entry: {
+        id: 'codex-fac-riverside-sect',
+        name: 'Riverside Sect',
+        description: 'An upriver cultivation sect that keeps the Rain Court honest by witnessing every oath sworn before the Nine Cauldrons.',
         imageUrl: '/card-workshop/test-images/lotus_lake_pavilion_portrait.jpg',
         manifestationImportance: durableVisualImportance,
       },

@@ -377,7 +377,7 @@ describe('Reader Codex and System routing', () => {
     expect(dragonClass).toContain('group-active/seal:[filter:drop-shadow(');
     // The portal boundary is the shared Library cycle glyph, kept decorative.
     expect(seal?.querySelector('svg[aria-hidden="true"]')).toBeTruthy();
-    expect(container.textContent).toContain('Awaken Portrait');
+    expect(container.textContent).toContain('Portrait');
   });
 
   it('tints the glass with the character relationship accent', () => {

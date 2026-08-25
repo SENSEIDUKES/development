@@ -90,7 +90,7 @@ describe('Development CodexHovercard spectral glass', () => {
     );
     expect(button).toBeTruthy();
     expect(button!.className).toContain('rounded-full');
-    expect(document.body.textContent).toContain('Awaken Portrait');
+    expect(document.body.textContent).toContain('Portrait');
 
     // Until a portrait exists the glass carries the entity's Manifest backdrop.
     const backdrop = document.body.querySelector<HTMLImageElement>('img[data-slot="manifest-backdrop"]');

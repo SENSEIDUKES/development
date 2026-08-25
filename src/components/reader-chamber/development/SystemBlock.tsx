@@ -10,27 +10,28 @@ import type {
   SystemPromptExpandedProgress,
   SystemPromptExpandedSection,
   SystemPromptExpandedTone,
-  SystemPromptPresentation,
 } from '../shared/types';
 import { FateResultCard } from './FateResultCard';
-import { normalizeWorldNoticeData, WorldNotice } from './WorldNotice';
+import { WorldNotice } from './WorldNotice';
+import { SystemPromptMechanical } from './SystemPromptMechanical';
 import {
-  buildSystemContext,
+  getSystemPromptSurface,
+  getSystemPromptSurfaceClasses,
+  getSystemPromptSurfaceStyle,
+  resolveSystemPromptRoute,
+} from '../shared/systemPromptPresentation';
+import {
   getColorCodeStyle,
   getColorCodeSurfaceStyle,
-  getColorCodeValue,
-  getSystemColorMeaning,
   getSystemColorStyle,
   getSystemCompactClassification,
-  getSystemPromptColor,
   resolveSystemBadgeColorCode,
-  resolveFateFlagColorCode,
   resolveSystemOutcomeColorCode,
 } from '../shared/colorCodes';
 import type { ColorCodeId, SystemColorMeaning } from '../shared/colorCodes';
 export { SYSTEM_COLORS_LEGEND } from '../shared/colorCodes';
 
-interface SystemBlockProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface SystemBlockProps extends React.HTMLAttributes<HTMLDivElement> {
   content: string;
   system?: SystemEvent;
   /** Reader-owned rendering for named character Codex links in summary and expanded copy. */
@@ -662,23 +663,6 @@ function SystemOrbEmblem({
   );
 }
 
-/**
- * Existing chapters predate explicit presentation data. Preserve their current
- * layout only at this compatibility boundary; new prompts always use the
- * authored discriminator rather than rows or promptType to select a layout.
- */
-function resolveSystemPromptPresentation(
-  system: SystemEvent,
-  rows: unknown[],
-  changes: SystemPromptChange[],
-  worldNotice: ReturnType<typeof normalizeWorldNoticeData>,
-): SystemPromptPresentation {
-  const requested = 'presentation' in system ? system.presentation : undefined;
-  if (requested === 'world_notice' && worldNotice) return requested;
-  if (requested === 'narrative' || requested === 'mechanical') return requested;
-  return rows.length === 0 || changes.length > 0 ? 'narrative' : 'mechanical';
-}
-
 export const SystemBlock = React.memo(function SystemBlock({ content, system, renderProse, className, ...props }: SystemBlockProps) {
   const {
     onAnimationStart: _anim,
@@ -688,14 +672,11 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
     style: suppliedStyle,
     ...safeProps
   } = props;
-  const getSystemRootStyle = (meaning: SystemColorMeaning, fateFlagColorCode?: ColorCodeId) => ({
-    ...getSystemColorStyle(meaning),
-    ...(fateFlagColorCode ? { '--fate-flag-color': getColorCodeValue(fateFlagColorCode) } : {}),
-    ...suppliedStyle,
-  }) as React.CSSProperties;
+  const surface = getSystemPromptSurface(system, content);
+  const systemRootStyle = getSystemPromptSurfaceStyle(surface, suppliedStyle);
   const detailsId = React.useId();
-  const requestedPresentation = system && 'presentation' in system ? system.presentation : undefined;
-  const eventKey = `${system?.kind ?? ''}|${system?.promptType ?? ''}|${requestedPresentation ?? ''}|${system?.title ?? ''}|${content}`;
+  const route = resolveSystemPromptRoute(system);
+  const eventKey = `${system?.kind ?? ''}|${system?.promptType ?? ''}|${route?.presentation ?? ''}|${system?.title ?? ''}|${content}`;
   const [expandedEventKey, setExpandedEventKey] = React.useState<string | null>(null);
   // The compact card's TTS sentence rests collapsed behind the bottom arrow
   // toggle to conserve reader screen space; narration reads it from the
@@ -703,65 +684,50 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
   const [sentenceRevealed, setSentenceRevealed] = React.useState(false);
   const orbButtonRef = React.useRef<HTMLButtonElement>(null);
 
-  const isIronFate = (system?.title || '').toLowerCase().includes('iron fate') || 
-                     (system?.kind || '').toLowerCase().includes('iron fate') || 
-                     content.toLowerCase().includes('iron fate');
-
-  const isDeathFlag = (system?.title || '').toLowerCase().includes('death flag') || 
-                      (system?.kind || '').toLowerCase().includes('death flag') || 
-                      content.toLowerCase().includes('death flag');
-  const fateFlagColorCode = isDeathFlag
-    ? resolveFateFlagColorCode('death')
-    : isIronFate
-      ? resolveFateFlagColorCode('ironFate')
-      : undefined;
+  const isIronFate = surface.fateFlag === 'ironFate';
+  const isDeathFlag = surface.fateFlag === 'death';
+  const fateFlagColorCode = surface.fateFlagColorCode;
 
   // If structured system object exists, render the matching System presentation.
   if (system) {
-    if (system.fateResult) {
+    if (route?.presentation === 'fate') {
       return (
-        <div {...safeProps} style={suppliedStyle}>
-          <FateResultCard data={system.fateResult} />
-        </div>
+        <FateResultCard
+          {...safeProps}
+          data={route.fateResult}
+          style={suppliedStyle}
+          className={className}
+        />
       );
     }
 
-    // Parsed payloads can deliver a non-array `rows`; normalize once before the
-    // presentation branch and the row mapping (same guard as buildSystemContext).
-    const rows = Array.isArray(system.rows) ? system.rows : [];
-    const visibleChanges = Array.isArray(system.changes) ? system.changes : [];
-    const worldNotice = requestedPresentation === 'world_notice' && 'worldNotice' in system
-      ? normalizeWorldNoticeData(system.worldNotice)
-      : undefined;
-    const presentation = resolveSystemPromptPresentation(system, rows, visibleChanges, worldNotice);
+    if (route) {
+      const { presentation, rows, changes: visibleChanges } = route;
+      const menacingTone = surface.fateFlag ? ' animate-menacing-fate' : '';
 
-    const menacingTone = fateFlagColorCode ? ' animate-menacing-fate' : '';
-
-    if (presentation === 'world_notice' && worldNotice) {
-      const inferenceContext = buildSystemContext(system, content);
-      const meaning = getSystemColorMeaning(system.promptType, inferenceContext);
+      if (presentation === 'world_notice') {
       return (
         <WorldNotice
           title={system.title}
           flavor={system.flavor}
           content={content}
-          notice={worldNotice}
-          meaning={meaning}
-          style={getSystemRootStyle(meaning, fateFlagColorCode)}
+          notice={route.worldNotice}
+          meaning={surface.meaning}
+          style={systemRootStyle}
           className={className}
           readOnlyProps={safeProps}
         />
       );
-    }
+      }
 
-    // Compact regular System Prompt: title-led header with direct understandable
-    // headline, secondary flavor text, single-term semantic classification line,
-    // clean flat key/value rows with values spread to the card's ends, a
-    // full-width status badge reserved for true status information, a two-slot
-    // outcome row of white subjects and meaning-colored state words, and
-    // tightened layout with no vertical dead space when the TTS summary is
-    // minimized.
-    if (presentation === 'narrative') {
+      // Compact regular System Prompt: title-led header with direct understandable
+      // headline, secondary flavor text, single-term semantic classification line,
+      // clean flat key/value rows with values spread to the card's ends, a
+      // full-width status badge reserved for true status information, a two-slot
+      // outcome row of white subjects and meaning-colored state words, and
+      // tightened layout with no vertical dead space when the TTS summary is
+      // minimized.
+      if (presentation === 'narrative') {
       const badge = normalizeSystemPromptBadge(system.badge);
       const badgeSeverity = badge ? getBadgeSeverityStyles(badge) : undefined;
       const sentence = getVisibleSystemSentence(content, badge);
@@ -772,8 +738,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
       const expandedData = normalizeExpandedData(system.expanded);
       const isExpanded = Boolean(expandedData && expandedEventKey === eventKey);
       const renderSystemText = renderProse ?? ((text: string) => text);
-      const inferenceContext = buildSystemContext(system, content);
-      const meaning = getSystemColorMeaning(system.promptType, inferenceContext);
+      const meaning = surface.meaning;
       const classification = getSystemCompactClassification(meaning);
       const accent = meaning.textColor;
 
@@ -787,7 +752,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
             data-system-prompt-state={isExpanded ? 'expanded' : 'compact'}
             data-system-presentation="narrative"
             data-color-code={meaning.colorCode}
-            style={getSystemRootStyle(meaning, fateFlagColorCode)}
+            style={systemRootStyle}
             className={`system-block system-window cursor-default my-6 md:my-8 mx-auto max-w-xl relative overflow-hidden rounded-xl border border-[color-mix(in_srgb,currentColor_40%,transparent)] bg-[color-mix(in_srgb,currentColor_7%,rgba(5,7,11,0.92))] px-4 py-3 md:px-5 md:py-3.5 shadow-[0_0_20px_color-mix(in_srgb,currentColor_10%,transparent),inset_0_1px_0_rgba(255,255,255,0.05)] transition-all duration-300 ${accent}${menacingTone} ${className || ''}`}
             {...safeProps}
           >
@@ -923,82 +888,35 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
       );
     }
 
-    // Semantic inference context: title, row labels/values, and visible content.
-    const inferenceContext = buildSystemContext(system, content);
-    let colorStyles = getSystemPromptColor(system.promptType, inferenceContext);
-    const meaning = getSystemColorMeaning(system.promptType, inferenceContext);
-
-    colorStyles += menacingTone;
-
-    return (
-      <motion.div 
-        initial={{ opacity: 0, y: 10, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        whileHover={{ scale: 1.02 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        data-color-code={meaning.colorCode}
-        data-system-presentation="mechanical"
-        style={getSystemRootStyle(meaning, fateFlagColorCode)}
-        className={`system-block holographic-panel cursor-pointer my-6 md:my-8 rounded-md border font-mono p-3 md:p-4 max-w-xl mx-auto transition-all duration-300 ${colorStyles} ${className || ''}`}
-        {...safeProps}
-      >
-        <div className="flex flex-col space-y-3">
-          <div className="flex items-center justify-between border-b pb-2 border-inherit/30">
-            <div className="flex items-center space-x-2">
-              {isDeathFlag && <Skull data-color-code={resolveFateFlagColorCode('death')} style={getColorCodeStyle(resolveFateFlagColorCode('death'))} className="w-5 h-5 animate-pulse shrink-0" />}
-              {isIronFate && <AlertTriangle data-color-code={resolveFateFlagColorCode('ironFate')} style={getColorCodeStyle(resolveFateFlagColorCode('ironFate'))} className="w-5 h-5 animate-bounce shrink-0" />}
-              <div className="flex flex-col">
-                <span className="font-bold uppercase tracking-widest text-xs md:text-sm leading-tight">{system.title}</span>
-                <span className="text-[9px] uppercase tracking-wider opacity-60 font-mono mt-0.5">
-                  ✦ {meaning.name} ✦
-                </span>
-              </div>
-            </div>
-            {system.rarity && (
-              <span className="rarity-accent text-[10px] uppercase px-2 py-0.5 border rounded-sm bg-black/40 text-inherit">
-                {system.rarity}
-              </span>
-            )}
-          </div>
-          
-          {rows.length > 0 && (
-            <div className="space-y-1.5">
-              {rows.map((row, idx) => (
-                <div key={idx} className="flex justify-between items-center text-[11px] md:text-xs">
-                  <span className="opacity-70 uppercase tracking-widest">{row.label}</span>
-                  <span className="font-semibold tracking-wide text-right">{row.value}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          {content && content.trim() !== '' && (
-            <div className="mt-1.5 text-[11px] md:text-xs opacity-70 border-t border-inherit/30 pt-2 text-center italic leading-relaxed">
-              {content.replace(/^\[|\]$/g, '').trim()}
-            </div>
-          )}
-        </div>
-      </motion.div>
-    );
+      return (
+        <SystemPromptMechanical
+          {...safeProps}
+          content={content}
+          system={system}
+          rows={rows}
+          surface={surface}
+          style={systemRootStyle}
+          className={className}
+        />
+      );
+    }
   }
 
   // Fallback to legacy string-based parsing
   const text = content.replace(/^\[|\]$/g, '').trim();
-  let fallbackColorStyles = getSystemPromptColor(undefined, text);
-  const meaning = getSystemColorMeaning(undefined, text);
-
-  if (fateFlagColorCode) fallbackColorStyles += ' animate-menacing-fate';
+  const fallbackColorStyles = getSystemPromptSurfaceClasses(surface);
+  const meaning = surface.meaning;
 
   return (
     <div
       {...props}
       data-color-code={meaning.colorCode}
-      style={getSystemRootStyle(meaning, fateFlagColorCode)}
+      style={systemRootStyle}
       className={`my-6 md:my-8 p-4 md:p-5 bg-black/50 border font-mono text-[11px] md:text-sm rounded-lg text-center tracking-widest leading-relaxed transition-all duration-500 hover:brightness-125 hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] ${fallbackColorStyles} ${className || ''}`}
     >
       <div className="flex flex-col items-center justify-center mb-1.5 md:mb-2">
-        {isDeathFlag && <Skull data-color-code={resolveFateFlagColorCode('death')} style={getColorCodeStyle(resolveFateFlagColorCode('death'))} className="w-5 h-5 md:w-6 md:h-6 animate-pulse mb-1.5" />}
-        {isIronFate && <AlertTriangle data-color-code={resolveFateFlagColorCode('ironFate')} style={getColorCodeStyle(resolveFateFlagColorCode('ironFate'))} className="w-5 h-5 md:w-6 md:h-6 animate-bounce mb-1.5" />}
+        {isDeathFlag && fateFlagColorCode && <Skull data-color-code={fateFlagColorCode} style={getColorCodeStyle(fateFlagColorCode)} className="w-5 h-5 md:w-6 md:h-6 animate-pulse mb-1.5" />}
+        {isIronFate && fateFlagColorCode && <AlertTriangle data-color-code={fateFlagColorCode} style={getColorCodeStyle(fateFlagColorCode)} className="w-5 h-5 md:w-6 md:h-6 animate-bounce mb-1.5" />}
         <div className="text-[9px] uppercase tracking-wider opacity-60 font-semibold">
           ✦ {meaning.name} ✦
         </div>

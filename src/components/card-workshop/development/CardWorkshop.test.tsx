@@ -355,14 +355,28 @@ describe('CardWorkshopView', () => {
           tabIndex={0}
           dangerouslySetInnerHTML={{ __html: '<p>Unsafe notice markup</p>' }}
         />
+        <SystemBlock
+          content="[ The Rain Court records the cost of defiance. ]"
+          system={{
+            kind: 'fate_system_prompt',
+            promptType: 'fate_event',
+            title: 'Fate Result',
+            fateResult: {
+              outcome: 'FATE SCARRED',
+              timelineScar: 'The oath remains visible in every future storm.',
+              permanentCosts: ['Storm channels remain scarred.'],
+            },
+          }}
+        />
       </>,
     )));
 
     const presentations = [...container.querySelectorAll<HTMLElement>('[data-system-presentation]')];
     expect(presentations.map(element => element.dataset.systemPresentation))
-      .toEqual(['narrative', 'mechanical', 'world_notice']);
-    expect(new Set(presentations.map(element => element.dataset.colorCode)).size).toBe(1);
-    expect(presentations[0]?.dataset.colorCode).toBe('mainCharacter');
+      .toEqual(['narrative', 'mechanical', 'world_notice', 'fate']);
+    const regularPresentations = presentations.filter(element => element.dataset.systemPresentation !== 'fate');
+    expect(new Set(regularPresentations.map(element => element.dataset.colorCode)).size).toBe(1);
+    expect(regularPresentations[0]?.dataset.colorCode).toBe('mainCharacter');
 
     const notice = container.querySelector<HTMLElement>('[data-world-notice="true"]');
     expect(notice?.textContent).toContain('GUILD BOUNTY');
@@ -384,6 +398,10 @@ describe('CardWorkshopView', () => {
     act(() => notice?.click());
     expect(onNoticeClick).not.toHaveBeenCalled();
     expect(renderProse).not.toHaveBeenCalled();
+
+    const fate = presentations.find(element => element.dataset.systemPresentation === 'fate');
+    expect(fate?.textContent).toContain('FATE RESULT: FATE SCARRED');
+    expect(fate?.dataset.readerNarration).toBe('excluded');
   });
 
   it('renders multi-entry World Notices as a static board and retains legacy layout fallback only when presentation is absent', () => {

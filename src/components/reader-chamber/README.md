@@ -10,6 +10,8 @@
 
 ## Workshop history
 
+- **2026-08-24:** Consolidated the reusable System presentation boundary behind `resolveSystemPromptRoute`: `kind: "fate_system_prompt"` is the sole Fate route, while a regular `system_prompt` explicitly selects Narrative, Mechanical, or World Notice. The shared boundary now normalizes public Reader payloads before rendering, keeps `promptType` as semantic color only, and preserves the legacy shape fallback only for regular prompts with no authored presentation. `SystemBlock` delegates the Mechanical form to `SystemPromptMechanical`, World Notice remains the inert document renderer, and Fate Result remains the outcome-specific card. The `@seihouse/sen/reader-chamber` entry now exports the three component prop contracts plus route, payload-normalization, and shared-color helpers; direct World Notice and Fate Result consumers receive the same malformed-payload safety. No generation, persistence, TTS source, locked Reference, or source-comparison metadata changed.
+
 - **2026-08-24:** Clarified regular System Prompt presentation into three explicit families without altering the two top-level kinds: `system_prompt` now selects `narrative`, `mechanical`, or `world_notice`, while `fate_system_prompt` remains wholly on its existing Fate Result route. `promptType` continues to own semantic meaning and color only; it no longer selects a layout for new prompts. The new Development `WorldNotice` is one static, diegetic document surface for direct headings such as `GUILD BOUNTY`, `WANTED NOTICE`, and `MISSION BRIEF`: a single entry reads as one notice and multiple entries as a divided board, with optional subdued flavor and labeled details. It has no links, controls, hovercards, focus behavior, or narration role; `StoryBlock.text` remains the sole TTS source. Legacy regular data with no presentation retains the prior shape-based fallback (row-only mechanical, otherwise narrative). The Reader Chamber fixture and Card Workshop selector add single-notice and mission-board examples; the compact Narrative Notification card, LitRPG holographic display, Fate card, locked Reference, and source-comparison date are unchanged.
 
 - **2026-08-24:** The `CodexCard` Manifest seal's dragon loop now spins counterclockwise from the reader's point of view (same 24s period, `animation-direction: reverse` via `animate-[spin_24s_linear_infinite_reverse]`). The dark glass core holding the Manifest label and caption is a sibling of the rotating layer, so the center content stays fixed; the aura spin (26s), glows, hover/press states, Manifesting state, and reduced-motion backstop are unchanged.
@@ -339,7 +341,10 @@ and the Codex Card ambience/accent helpers per the Reader Codex README:
 - `development/AlterFatePanel.tsx` → `src/components/AlterFatePanel.tsx`
 - `development/ParticleSystem.tsx` → `src/components/ParticleSystem.tsx`
 - `development/SystemBlock.tsx` → `src/components/SystemBlock.tsx`
+- `development/SystemPromptMechanical.tsx` → new `src/components/SystemPromptMechanical.tsx`
+- `development/WorldNotice.tsx` → new `src/components/WorldNotice.tsx`
 - `development/FateResultCard.tsx` → `src/components/FateResultCard.tsx`
+- `shared/systemPromptPresentation.ts` → new `src/lib/systemPromptPresentation.ts` (transfer with all four System presentation consumers so their route and semantic-color contract stays singular)
 - `development/CodexCard.tsx` → `src/components/CodexCard.tsx`
 - `development/CodexCardInscription.css` → `src/components/CodexCardInscription.css`
   (new file; the inscribed-name title styles imported by `CodexCard.tsx`)

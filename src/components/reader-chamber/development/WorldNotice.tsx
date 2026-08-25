@@ -1,6 +1,9 @@
 import React from 'react';
-import type { WorldNoticeData, WorldNoticeEntry } from '../shared/types';
+import type { WorldNoticeData } from '../shared/types';
 import type { SystemColorMeaning } from '../shared/colorCodes';
+import { normalizeWorldNoticeData } from '../shared/systemPromptPresentation';
+
+export { normalizeWorldNoticeData } from '../shared/systemPromptPresentation';
 
 export interface WorldNoticeProps {
   title: string;
@@ -38,40 +41,6 @@ function getStaticProps(
   ) as React.HTMLAttributes<HTMLElement>;
 }
 
-function normalizeEntry(value: unknown): WorldNoticeEntry | undefined {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-  const entry = value as Partial<WorldNoticeEntry>;
-  const title = cleanText(entry.title);
-  if (!title) return undefined;
-  const body = cleanText(entry.body);
-  const details = Array.isArray(entry.details)
-    ? entry.details.flatMap(detail => {
-        if (!detail || typeof detail !== 'object' || Array.isArray(detail)) return [];
-        const candidate = detail as { label?: unknown; value?: unknown };
-        const label = cleanText(candidate.label);
-        const value = cleanText(candidate.value);
-        return label && value ? [{ label, value }] : [];
-      })
-    : undefined;
-  return {
-    title,
-    ...(body ? { body } : {}),
-    ...(details && details.length > 0 ? { details } : {}),
-  };
-}
-
-/** Runtime guard for historical or externally supplied Reader data. */
-export function normalizeWorldNoticeData(value: unknown): WorldNoticeData | undefined {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-  const entries = Array.isArray((value as Partial<WorldNoticeData>).entries)
-    ? (value as Partial<WorldNoticeData>).entries!.flatMap(entry => {
-        const normalized = normalizeEntry(entry);
-        return normalized ? [normalized] : [];
-      })
-    : [];
-  return entries.length > 0 ? { entries } : undefined;
-}
-
 function getStaticCaption(content: string): string | undefined {
   const caption = content.replace(/^\s*\[|\]\s*$/g, '').trim();
   return caption || undefined;
@@ -93,10 +62,12 @@ export function WorldNotice({
 }: WorldNoticeProps) {
   const headingId = React.useId();
   const staticProps = getStaticProps(readOnlyProps);
+  const normalizedNotice = normalizeWorldNoticeData(notice);
+  if (!normalizedNotice) return null;
   const documentTitle = cleanText(title) ?? 'WORLD NOTICE';
   const documentFlavor = cleanText(flavor);
   const caption = getStaticCaption(content);
-  const isBoard = notice.entries.length > 1;
+  const isBoard = normalizedNotice.entries.length > 1;
 
   return (
     <section
@@ -105,7 +76,7 @@ export function WorldNotice({
       data-system-presentation="world_notice"
       data-world-notice="true"
       data-world-notice-board={isBoard ? 'true' : 'false'}
-      data-world-notice-entry-count={notice.entries.length}
+      data-world-notice-entry-count={normalizedNotice.entries.length}
       data-reader-narration="excluded"
       data-color-code={meaning.colorCode}
       style={style}
@@ -132,7 +103,7 @@ export function WorldNotice({
       )}
 
       <div className={isBoard ? 'divide-y divide-amber-100/15' : ''}>
-        {notice.entries.map((entry, index) => (
+        {normalizedNotice.entries.map((entry, index) => (
           <article
             key={`${entry.title}-${index}`}
             data-world-notice-entry="true"

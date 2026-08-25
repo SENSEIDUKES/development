@@ -688,20 +688,23 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
   const isDeathFlag = surface.fateFlag === 'death';
   const fateFlagColorCode = surface.fateFlagColorCode;
 
-  // If structured system object exists, render the matching System presentation.
-  if (system) {
-    if (route?.presentation === 'fate') {
-      return (
-        <FateResultCard
-          {...safeProps}
-          data={route.fateResult}
-          style={suppliedStyle}
-          className={className}
-        />
-      );
-    }
+  // Fate is a distinct top-level contract. Invalid Fate payloads never leak
+  // into the legacy regular-prompt fallback.
+  if (system?.kind === 'fate_system_prompt') {
+    if (route?.presentation !== 'fate') return null;
+    return (
+      <FateResultCard
+        {...safeProps}
+        data={route.fateResult}
+        style={suppliedStyle}
+        className={className}
+      />
+    );
+  }
 
-    if (route) {
+  // Regular System Prompts delegate through the shared presentation route.
+  if (system) {
+    if (route && route.presentation !== 'fate') {
       const { presentation, rows, changes: visibleChanges } = route;
       const menacingTone = surface.fateFlag ? ' animate-menacing-fate' : '';
 

@@ -198,6 +198,60 @@ export interface BaseSystemEvent {
   changes?: SystemPromptChange[];
 }
 
+/**
+ * One resource meter on a mechanical status screen. `tone` carries the
+ * established semantic color: "health" renders Enemy red, "spirit" Main
+ * Character blue, "progress" Mentor gold. `display` is the bright authored
+ * figure ("780 / 780", "62%"); `value`/`max` drive the fill alone.
+ */
+export interface SystemStatusBar {
+  label: string;
+  value: number;
+  max: number;
+  display?: string;
+  tone: "health" | "spirit" | "progress";
+}
+
+/**
+ * One numerical attribute on a mechanical status screen. A signed `delta`
+ * marks a recent change: positive renders gain green, negative loss red.
+ */
+export interface SystemStatusStat {
+  label: string;
+  value: string;
+  delta?: number;
+}
+
+/** One active effect line; `tone` colors the trailing value, default positive. */
+export interface SystemStatusEffect {
+  name: string;
+  detail?: string;
+  value?: string;
+  tone?: "positive" | "negative";
+}
+
+/** One ability line on a mechanical status screen; the name renders System blue. */
+export interface SystemStatusAbility {
+  name: string;
+  detail?: string;
+}
+
+/**
+ * The LitRPG status-screen payload of a mechanical System Prompt: character or
+ * target header metadata, resource meters, a numerical stat grid, active
+ * effects, and abilities. Like `rows` and `changes`, it is application-owned —
+ * generation does not emit it yet and the normalizer guards it at the Reader
+ * boundary. Valid only with `presentation: "mechanical"`; events without it
+ * keep the legacy plain-rows rendering.
+ */
+export interface SystemStatusScreen {
+  level?: string;
+  bars?: SystemStatusBar[];
+  stats?: SystemStatusStat[];
+  effects?: SystemStatusEffect[];
+  abilities?: SystemStatusAbility[];
+}
+
 export interface RegularSystemEvent extends BaseSystemEvent {
   kind: "system_prompt" | (string & {});
   /**
@@ -207,6 +261,8 @@ export interface RegularSystemEvent extends BaseSystemEvent {
   presentation?: SystemPromptPresentation;
   /** Static in-world document data, valid only with `presentation: "world_notice"`. */
   worldNotice?: WorldNoticeData;
+  /** LitRPG status-screen data, valid only with `presentation: "mechanical"`. */
+  status?: SystemStatusScreen;
   fateResult?: never;
 }
 

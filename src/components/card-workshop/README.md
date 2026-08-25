@@ -28,6 +28,9 @@ Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studi
 
 ## Workshop history
 
+- **2026-08-25:** Kept the Structured Mechanical card compact and restored everything else. The in-flow mechanical card stays the vitals preview — headline, class line, classification, LEVEL pill, and the semantic HP/QI/EXP meters — with its orb opening the holographic stat panel that carries the full two-column stat grid with signed deltas, the active effect, and the ability. The Narrative Notification gets its Expanded Info pop-out back exactly as before: the Codex-shaped breakdown fixtures for Cultivation Breakthrough, Broken Promise, and Target Scan return, and the orb is once again the action that opens the event report above the reader. Both surfaces keep their TTS summary collapsed behind the centered chevron. World Notice, Fate, and the locked Reference are unchanged.
+- **2026-08-25:** Rebuilt the Structured Mechanical System Prompt as a modern LitRPG status screen on the approved reference: layered dark-emerald holographic glass with a controlled edge glow and corner ticks, a headline with a bordered LEVEL pill and muted class line, semantic resource meters (HP red, QI blue, EXP gold) with full progressbar semantics, a two-column inset stat grid carrying signed gain/loss deltas in green and red, and active-effect and ability lines with muted labels and bright values. A new optional, application-owned `status` payload on `RegularSystemEvent` — normalized at the Reader boundary and attached only to the mechanical route — drives the layout; mechanical events without it keep the legacy plain-rows grid. The TTS summary now rests collapsed by default behind the same small centered chevron toggle the Narrative card uses, and narration still reads only the block data, never the stats. Narrative Notifications, World Notices, Fate results, the expanded overlay, and the locked Reference are unchanged.
+
 - **2026-08-25:** Audited the real Reader/Card Workshop presentation for accessibility, narrow and short viewports, keyboard behavior, reduced motion, long-content overflow, palette contrast, and rendering cost. Expanded System reports now keep a pinned header and one keyboard-focusable scrolling body, restore focus to their opener, and avoid backdrop blur; Workshop controls preserve the branch/category architecture while meeting touch-target and selected-state semantics. Non-interactive System surfaces no longer advertise hover/click behavior, long values wrap safely, and motion-heavy effects respect reduced-motion preferences.
 
 - **2026-08-24:** Split Card Type Tabs into real parent/child branches — **Codex Cards** (Human, Non-Human, Artifacts, Locations, Factions) and **System Prompts** (Narrative, Mechanical, World Notice, Fate System) — so only the selected parent's categories are shown, and each System category exposes only the content examples that belong to it. Added the missing Faction Codex preset to complete the Codex categories. Mobile-optimized the development page so every control wraps and stays usable from 320px up with no horizontal page cut-off. Card components themselves are unchanged.
@@ -86,7 +89,7 @@ development page never scrolls horizontally.
 
 ## Mock and production boundaries
 
-- Fixtures are static local objects, including the three expanded System Prompt breakdowns and their local character entries, plus real Library test images under `/public/card-workshop/test-images`.
+- Fixtures are static local objects, including the three expanded System Prompt breakdowns with their local character entries and the Structured Mechanical status screen, plus real Library test images under `/public/card-workshop/test-images`.
 - Development Codex reveals use the Manifest backdrop pool under `/public/manifest-backdrops`; the locked Reference keeps its existing placeholder.
 - The Workshop makes no model, generation, API, database, story-write, persistence, or production-media calls.
 - The contextual Worldcue starts from a block-scoped resolved annotation only;
@@ -94,7 +97,7 @@ development page never scrolls horizontally.
   application logic selects the approved public Library Cue.
 - Reference mode uses locked production presentation replicas and has no Development controls.
 - Bestiary and Faction records remain informational and expose no Codex image-generation action.
-- Fate panels, the structured mechanical System example, and System routing retain their existing presentation; the compact System Prompt renders as an event-tinted System window with a small orb emblem, direct headline, optional flavor text, a single-term classification line, flat key/value rows with direction arrows on changed values and values spread to the right edge, a full-width reserved status badge, character-linked TTS prose, and clean flat outcome rows of meaning-colored text (with signs on genuine mathematical changes) while keeping the semantic System color system.
+- Fate panels and System routing retain their existing presentation; the Structured Mechanical example renders as a modern status screen from the optional application-owned `status` payload, with the in-flow card carrying the level pill and semantic HP/QI/EXP meters and its orb opening the holographic stat panel that holds the full two-column stat grid with signed deltas, active effects, and abilities — while mechanical events without a `status` payload keep the legacy plain-rows panel, and its TTS summary stays collapsed behind the centered chevron; the compact Narrative System Prompt renders as an event-tinted System window with a small orb emblem, direct headline, optional flavor text, a single-term classification line, flat key/value rows with direction arrows on changed values and values spread to the right edge, a full-width reserved status badge, character-linked TTS prose, and clean flat outcome rows of meaning-colored text (with signs on genuine mathematical changes) while keeping the semantic System color system.
 - Regular System Prompt `presentation` explicitly selects the unchanged Narrative Notification, unchanged LitRPG/Mechanical Display, or the static World Notice document surface; `promptType` keeps the same semantic color meaning across all three. World Notices use direct document titles, optional flavor, and plain-text entries/details without controls, Codex links, hovercards, or TTS ownership.
 
 ## Transfer notes
@@ -105,6 +108,9 @@ The active Development presentation owners are:
 - `src/components/reader-chamber/development/InlineAudio.tsx`
 - `src/components/reader-chamber/development/ReaderViewport.tsx`
 - `src/components/reader-chamber/development/SystemBlock.tsx`
+- `src/components/reader-chamber/development/SystemPromptMechanical.tsx`
+- `src/components/reader-chamber/development/SystemStatusPanel.tsx`
+- `src/components/reader-chamber/development/SystemOrbEmblem.tsx`
 - `src/components/reader-chamber/development/WorldNotice.tsx`
 - `src/components/library/LibrarySoundGlyph.tsx`
 

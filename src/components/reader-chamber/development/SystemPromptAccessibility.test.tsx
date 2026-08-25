@@ -116,4 +116,40 @@ describe('System Prompt accessibility and motion', () => {
     expect(replacementOpener).toBeTruthy();
     expect(document.activeElement).toBe(replacementOpener);
   });
+
+  it('restores focus when a live event replacement unmounts an open stat panel', () => {
+    const renderEvent = (title: string, content: string) => (
+      <SystemBlock
+        content={content}
+        system={{
+          kind: 'system_prompt',
+          presentation: 'mechanical',
+          title,
+          status: {
+            level: '24',
+            bars: [{ label: 'HP', value: 780, max: 780, tone: 'health' }],
+            stats: [{ label: 'STR', value: '38' }],
+          },
+        }}
+      />
+    );
+
+    act(() => root.render(renderEvent('First Status', 'The first status is recorded.')));
+    const opener = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Expand System Prompt details"]',
+    );
+    expect(opener).toBeTruthy();
+    act(() => opener!.click());
+    expect(document.body.querySelector('[role="dialog"][data-system-status-panel="true"]')).toBeTruthy();
+    expect(document.activeElement?.getAttribute('role')).toBe('dialog');
+
+    act(() => root.render(renderEvent('Replacement Status', 'A newer status replaces it.')));
+
+    const replacementOpener = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Expand System Prompt details"]',
+    );
+    expect(document.body.querySelector('[role="dialog"]')).toBeFalsy();
+    expect(replacementOpener).toBeTruthy();
+    expect(document.activeElement).toBe(replacementOpener);
+  });
 });

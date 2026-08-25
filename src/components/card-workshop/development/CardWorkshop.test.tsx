@@ -264,9 +264,45 @@ describe('CardWorkshopView', () => {
       .toBeTruthy();
     await act(async () => elderCodexAction!.click());
 
-    // Toggle to structured mechanical example
+    // Toggle to the structured mechanical status screen. In the chapter it
+    // reads as a compact vitals card — headline, class line, classification,
+    // level pill, and the semantic resource meters (HP red, QI blue, EXP gold)
+    // — with its TTS summary collapsed behind the centered chevron. The full
+    // stat grid, effects, and abilities live behind the Expanded Info action.
     await clickButton('Structured Mechanical');
-    expect(container.textContent).toContain('Meridian Status & Vitality Flow');
+    const statusBlock = container.querySelector<HTMLElement>('.system-block');
+    expect(statusBlock?.dataset.systemPresentation).toBe('mechanical');
+    expect(statusBlock?.dataset.systemPromptState).toBe('compact');
+    expect(statusBlock?.textContent).toContain('STATUS // YUN CHE');
+    expect(statusBlock?.textContent).toContain('Meridian Adept · Foundation Realm');
+    expect(statusBlock?.textContent).toContain('✦ Stable ✦');
+    expect(statusBlock?.textContent).toContain('Level 24');
+
+    const meters = [...(statusBlock?.querySelectorAll<HTMLElement>('[role="progressbar"]') ?? [])];
+    expect(meters.map(meter => meter.getAttribute('aria-valuetext')))
+      .toEqual(['780 / 780', '1,420 / 1,500', '62%']);
+    expect(meters.map(meter => meter.closest('[data-status-bar]')?.getAttribute('data-color-code')))
+      .toEqual(['enemy', 'mainCharacter', 'mentor']);
+
+    // The compact card is a preview, not the whole screen.
+    expect(statusBlock?.querySelector('[data-status-stat]')).toBeFalsy();
+    expect(statusBlock?.textContent).not.toContain('Rain Attunement');
+    expect(statusBlock?.textContent).not.toContain('Soul Seam Sight');
+
+    // The TTS summary starts collapsed behind the centered chevron; narration
+    // still reads the block data, so the sentence stays in the DOM hidden.
+    const statusSummary = statusBlock?.querySelector<HTMLElement>('[data-system-summary]');
+    expect(statusSummary?.textContent)
+      .toBe('SYSTEM NOTIFICATION: Meridian Resonance 84% — Minor Bottleneck Cleared');
+    expect(statusSummary?.hasAttribute('hidden')).toBe(true);
+    const statusToggle = statusBlock?.querySelector<HTMLButtonElement>('[data-system-summary-toggle="true"]');
+    expect(statusToggle?.getAttribute('aria-label')).toBe('Reveal System narration');
+    expect(statusToggle?.getAttribute('aria-expanded')).toBe('false');
+    await act(async () => statusToggle!.click());
+    expect(statusToggle?.getAttribute('aria-expanded')).toBe('true');
+    expect(statusSummary?.hasAttribute('hidden')).toBe(false);
+    await act(async () => statusToggle!.click());
+    expect(statusSummary?.hasAttribute('hidden')).toBe(true);
   });
 
   it('branches Codex Cards and System Prompts into their own category sets', async () => {
@@ -870,6 +906,144 @@ describe('CardWorkshopView', () => {
     }
   });
 
+
+  it('opens the Structured Mechanical stat panel from the orb and restores focus to it', async () => {
+    act(() => root.render(renderWithDevAudio(
+      <CardWorkshopView initialMode="tabs" initialPresetId="preset-system-prompt" />,
+    )));
+    await clickButton('Mechanical');
+    await clickButton('Structured Mechanical');
+
+    const systemBlock = container.querySelector<HTMLElement>('.system-block');
+    expect(systemBlock?.dataset.systemPromptState).toBe('compact');
+    expect(systemBlock?.querySelector('[data-system-orb-icon="closed"]')).toBeTruthy();
+    expect(document.body.querySelector('[data-system-status-panel]')).toBeFalsy();
+    expect(getButton('Expand System Prompt details')?.getAttribute('aria-expanded')).toBe('false');
+
+    await clickButton('Expand System Prompt details');
+
+    // The stat panel is a viewport-locked dialog portaled above the reader —
+    // outside the compact card, which keeps its own content untouched.
+    const panel = document.body.querySelector<HTMLElement>('[role="dialog"][data-system-status-panel="true"]');
+    expect(panel).toBeTruthy();
+    expect(panel?.getAttribute('aria-modal')).toBe('true');
+    expect(panel?.getAttribute('data-reader-narration')).toBe('excluded');
+    expect(panel?.className).toContain('max-h-full');
+    expect(panel?.className).toContain('overflow-hidden');
+    expect(systemBlock?.contains(panel!)).toBe(false);
+    expect(systemBlock?.dataset.systemPromptState).toBe('expanded');
+    expect(systemBlock?.querySelector('[data-system-orb-icon="open"]')).toBeTruthy();
+
+    const scrollRegion = panel?.querySelector<HTMLElement>('[data-system-status-scroll-region="true"]');
+    expect(scrollRegion?.className).toContain('min-h-0');
+    expect(scrollRegion?.className).toContain('overflow-y-auto');
+    expect(scrollRegion?.className).toContain('overscroll-contain');
+    expect(scrollRegion?.getAttribute('role')).toBe('region');
+    expect(scrollRegion?.getAttribute('aria-label')).toBe('System status details');
+    expect(scrollRegion?.tabIndex).toBe(0);
+    const backdropLayer = panel?.parentElement;
+    expect(backdropLayer?.className).not.toContain('backdrop-blur');
+
+    // The whole modern status screen at reading scale: headline, class line,
+    // classification, level pill, semantic meters, the full two-column stat
+    // grid with signed deltas, active effects, and abilities.
+    expect(panel?.textContent).toContain('STATUS // YUN CHE');
+    expect(panel?.textContent).toContain('Meridian Adept · Foundation Realm');
+    expect(panel?.textContent).toContain('✦ Stable ✦');
+    expect(panel?.textContent).toContain('Level 24');
+
+    const panelMeters = [...(panel?.querySelectorAll<HTMLElement>('[role="progressbar"]') ?? [])];
+    expect(panelMeters.map(meter => meter.getAttribute('aria-valuetext')))
+      .toEqual(['780 / 780', '1,420 / 1,500', '62%']);
+    expect(panelMeters.map(meter => meter.closest('[data-status-bar]')?.getAttribute('data-color-code')))
+      .toEqual(['enemy', 'mainCharacter', 'mentor']);
+
+    const statCells = [...(panel?.querySelectorAll<HTMLElement>('[data-status-stat]') ?? [])];
+    expect(statCells.map(cell => cell.getAttribute('data-status-stat')))
+      .toEqual(['STR', 'VIT', 'AGI', 'INT', 'WIS', 'LUCK']);
+    const gainDelta = panel?.querySelector<HTMLElement>('[data-status-delta="gain"]');
+    expect(gainDelta?.textContent).toBe('+3');
+    expect(gainDelta?.getAttribute('data-color-code')).toBe('ally');
+    const lossDelta = panel?.querySelector<HTMLElement>('[data-status-delta="loss"]');
+    expect(lossDelta?.textContent).toBe('−2');
+    expect(lossDelta?.getAttribute('data-color-code')).toBe('enemy');
+
+    expect(panel?.textContent).toContain('Active Effect');
+    expect(panel?.textContent).toContain('Rain Attunement');
+    expect(panel?.textContent).toContain('+12/min');
+    expect(panel?.textContent).toContain('Ability');
+    expect(panel?.textContent).toContain('Soul Seam Sight');
+    expect(panel?.textContent).toContain('Range 30 paces');
+
+    const expandedOrb = getButton('Collapse System Prompt details');
+    expect(expandedOrb?.getAttribute('aria-expanded')).toBe('true');
+    expect(expandedOrb?.className).toContain('h-11');
+    expect(expandedOrb?.className).toContain('w-11');
+    const closeControl = panel?.querySelector<HTMLButtonElement>('button[aria-label="Close System status panel"]');
+    expect(closeControl?.className).toContain('h-11');
+    expect(closeControl?.className).toContain('w-11');
+
+    // Tab and Shift+Tab remain trapped inside the modal, including the body
+    // scroller used by keyboard users on short-height and long-content layouts.
+    const focusable = [...(panel?.querySelectorAll<HTMLElement>(
+      'button, [role="button"], [tabindex]:not([tabindex="-1"])',
+    ) ?? [])];
+    focusable.forEach(element => Object.defineProperty(element, 'offsetParent', {
+      configurable: true,
+      value: panel,
+    }));
+    closeControl?.focus();
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Tab',
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    })));
+    expect(panel?.contains(document.activeElement)).toBe(true);
+    expect(document.activeElement).not.toBe(closeControl);
+
+    // Escape closes the panel and returns focus to the orb action.
+    const orbAction = getButton('Collapse System Prompt details');
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(document.body.querySelector('[data-system-status-panel]')).toBeFalsy();
+    expect(systemBlock?.dataset.systemPromptState).toBe('compact');
+    expect(systemBlock?.querySelector('[data-system-orb-icon="closed"]')).toBeTruthy();
+    expect(document.activeElement).toBe(orbAction);
+
+    // Reopening and using the dedicated close button restores focus the same way.
+    await clickButton('Expand System Prompt details');
+    expect(document.body.querySelector('[data-system-status-panel]')).toBeTruthy();
+    const reopenOrb = getButton('Collapse System Prompt details');
+    const closeAction = [...document.body.querySelectorAll<HTMLButtonElement>('button')]
+      .find(element => element.getAttribute('aria-label') === 'Close System status panel');
+    expect(closeAction).toBeTruthy();
+    await act(async () => closeAction!.click());
+    expect(document.body.querySelector('[data-system-status-panel]')).toBeFalsy();
+    expect(document.activeElement).toBe(reopenOrb);
+
+    // Backdrop click requires pointer-down on the backdrop itself to avoid
+    // closing during text selection drag releases.
+    await clickButton('Expand System Prompt details');
+    const backdrop = document.body.querySelector<HTMLElement>('.fixed.inset-0.z-\\[100\\]');
+    const activePanel = document.body.querySelector<HTMLElement>('[role="dialog"][data-system-status-panel="true"]');
+    expect(backdrop).toBeTruthy();
+    expect(activePanel).toBeTruthy();
+    // Drag starting inside panel and releasing on backdrop does not close
+    await act(async () => {
+      activePanel?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+      backdrop?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(document.body.querySelector('[data-system-status-panel]')).toBeTruthy();
+    // Direct click on backdrop closes
+    await act(async () => {
+      backdrop?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+      backdrop?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    expect(document.body.querySelector('[data-system-status-panel]')).toBeFalsy();
+  });
+
   it('switches between Card Type Tabs and Contextual View without losing the selected preset or override state', async () => {
     act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="tabs" />)));
 
@@ -986,23 +1160,43 @@ describe('CardWorkshopView', () => {
       .toBe('[ A crimson interface unfolded beside Elder Kaelen, taking his measure in silence. Threat assessment: moderate. ]');
   });
 
-  it('keeps expanded mock information outside the short System Prompt TTS source', () => {
+  it('keeps expanded and stat-panel mock information outside the short System Prompt TTS source', () => {
     const systemPreset = ACTIVE_CARD_PRESETS.find(preset => preset.id === 'preset-system-prompt')!;
-    const styles = ['breakthrough', 'broken-promise', 'target-scan'] as const;
+    const fixture = createCardWorkshopContextualFixture(
+      systemPreset,
+      { ...INITIAL_CARD_WORKSHOP_OVERRIDES, systemPromptContentStyle: 'structured' },
+      new Set(),
+    );
+    const systemBlock = fixture.chapter.blocks?.[2];
+    const status = systemBlock?.system && 'status' in systemBlock.system
+      ? systemBlock.system.status
+      : undefined;
 
-    for (const style of styles) {
-      const fixture = createCardWorkshopContextualFixture(
+    expect(systemBlock?.text).toBe(SYSTEM_PROMPT_PRESET_EXAMPLES.structured.systemContent);
+    expect(status?.stats?.length).toBeGreaterThan(0);
+    expect(status?.effects?.length).toBeGreaterThan(0);
+    expect(status?.abilities?.length).toBeGreaterThan(0);
+    for (const stat of status?.stats ?? []) {
+      expect(systemBlock?.text).not.toContain(stat.label);
+    }
+    expect(systemBlock?.text).not.toContain(status?.effects?.[0]?.name ?? '__missing__');
+    expect(systemBlock?.text).not.toContain(status?.abilities?.[0]?.name ?? '__missing__');
+
+    // The restored Narrative expanded reports stay out of the TTS source the
+    // same way the stat panel does.
+    for (const style of ['breakthrough', 'broken-promise', 'target-scan'] as const) {
+      const narrativeFixture = createCardWorkshopContextualFixture(
         systemPreset,
         { ...INITIAL_CARD_WORKSHOP_OVERRIDES, systemPromptContentStyle: style },
         new Set(),
       );
-      const systemBlock = fixture.chapter.blocks?.[2];
+      const narrativeBlock = narrativeFixture.chapter.blocks?.[2];
 
-      expect(systemBlock?.text).toBe(SYSTEM_PROMPT_PRESET_EXAMPLES[style].systemContent);
-      expect(systemBlock?.system?.expanded?.sections.length).toBeGreaterThan(0);
-      expect(systemBlock?.text).not.toContain('Power Rankings');
-      expect(systemBlock?.text).not.toContain('Narrative Consequences');
-      expect(systemBlock?.text).not.toContain(systemBlock?.system?.expanded?.sections[0]?.value ?? '__missing__');
+      expect(narrativeBlock?.text).toBe(SYSTEM_PROMPT_PRESET_EXAMPLES[style].systemContent);
+      expect(narrativeBlock?.system?.expanded?.sections.length).toBeGreaterThan(0);
+      expect(narrativeBlock?.text).not.toContain('Power Rankings');
+      expect(narrativeBlock?.text).not.toContain('Narrative Consequences');
+      expect(narrativeBlock?.text).not.toContain(narrativeBlock?.system?.expanded?.sections[0]?.value ?? '__missing__');
     }
   });
 

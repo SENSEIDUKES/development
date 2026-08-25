@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CharacterCard } from '@seihouse/sen/codex-cards';
+import { CharacterCard } from '@seihouse/sen/cards';
 import { CodexProvider } from '@seihouse/sen/reader-codex';
 import {
   useCodexVoiceQuote,

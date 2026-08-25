@@ -3,7 +3,7 @@ import {
   ReaderViewport,
   getReaderChamberSurfaceClass,
 } from '@seihouse/sen/reader-chamber';
-import { CodexHovercard, getManifestBackdrop } from '@seihouse/sen/codex-cards';
+import { CodexHovercard, getManifestBackdrop } from '@seihouse/sen/cards';
 import {
   createCodexHighlighter,
   splitByCodexTerms,

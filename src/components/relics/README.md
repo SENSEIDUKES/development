@@ -4,11 +4,14 @@
 - **Source location:** `src/components/UserProfileInventoryPanel.tsx` (cards), `src/components/ModalsAndToasts.tsx` (the `unlockedArtifactAlert` reveal flow)
 - **Workshop preview:** `?preview=relics-gallery`
 - **Replica created:** 2026-07-29
-- **Last Workshop update:** 2026-08-21
+- **Last Workshop update:** 2026-08-25
 - **Last source comparison:** 2026-07-29
 - **Replica status:** under refinement
 
 ## Workshop history
+
+- **2026-08-25:** Moved to the Library lane. The relic economy is SEIHouse product, not portable SEN behavior, so these surfaces now publish as `@Seihouse/Library/relics` instead of `@seihouse/sen/relics`. `development/RelicReveal` draws its motes through `@seihouse/sen/ui`, so Library links against the published engine instead of reaching into SEN source. Components, props, and presentation are unchanged.
+
 
 - **2026-08-21:** Published this feature as `@seihouse/sen/relics`: the relic card, its inspection modal, the `development/` claim reveal, and the relic model. `RelicReveal` now draws its motes from the Library-owned `ParticleEffect` instead of an application-root file. The locked `reference/` replica stays Workshop-only.
 

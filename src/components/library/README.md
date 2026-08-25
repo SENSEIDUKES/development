@@ -1,8 +1,29 @@
-# Celestial Library component set
+# SEN surface primitives (the Celestial Library component set)
 
-Shared, reusable Library-skinned components. Not a Workshop preview feature —
-these primitives back the feature replicas (Story Seed, Story Seed Settings,
-Relics, Reader surfaces) and transfer to production alongside them.
+Shared, reusable primitives. Not a Workshop preview feature — they back the
+feature replicas (Story Seed, Story Seed Settings, Relics, Reader surfaces)
+and transfer to production alongside them.
+
+## Lane ownership
+
+These primitives are the **SEN** surface kit: they are the substrate every
+SEN surface is composed from, so they publish as `@seihouse/sen/ui` (and the
+card primitive also through `@seihouse/sen/cards`). They are *not* the
+`@Seihouse/Library` application package — Library is SEIHouse's first-party
+host app, and SEN may never depend on it. See
+[`src/package/README.md`](../../package/README.md).
+
+The exported names keep their historical `Library*` prefix, and the default
+presentation is still SEIHouse's Celestial skin: gold, portal blue, and the
+spectral edge. **This is the one genuinely unresolved surface in the SEN /
+Library split.** The behavior is portable; the skin is SEIHouse branding
+fused into it through Tailwind class maps and the two stylesheets here. An
+embedding author who wants their own look currently has to override CSS
+variables rather than swap a theme. The `SEIButton` / `LibraryButton` and
+`SEIBottomNavigation` / `LibraryBottomNavigation` pairs already model the
+right answer — an unskinned base plus a skin — and extending that split to
+the remaining primitives is deliberate follow-up work, not a rename. Until
+then, do not duplicate a primitive to re-skin it.
 
 The Workshop home page's **Library Components** tab renders the eleven page-level
 primitives live from this folder — `LibraryPanel`, `LibraryCard`,
@@ -37,7 +58,7 @@ Celestial Library UI system:
 
 Feature folders import these components from the Library barrel; Workshop
 code and other package consumers import the same barrel through
-`@seihouse/sen/library`. They must not
+`@seihouse/sen/ui`. They must not
 keep local copies or compatibility barrels. Feature-only presentation remains
 with the feature; for example, Story Seed owns only its workspace ambience in
 `src/components/story-seed/development/story-seed.css`.
@@ -46,6 +67,13 @@ Reusable visual names use the `library-*` namespace:
 `library-spectrum-glow`, `library-spectrum-flow`,
 `library-title-presence`, and `library-subtitle-shimmer`. There are no legacy
 `seed-*` aliases.
+
+- **2026-08-25:** Assigned to the SEN lane in the SEN / Library package split.
+  The barrel now publishes as `@seihouse/sen/ui` (`@seihouse/sen/library`
+  remains a deprecated alias for one version), and `LibraryCard` is also
+  published through the shared card system at `@seihouse/sen/cards`. No
+  component, prop, or style changed. The Celestial skin fused into these
+  primitives is recorded above as the open question for a later decision.
 
 - **2026-08-22:** Hardened `LibrarySoundGlyph` accessibility contract: dropped
   interaction/focus props from `...restProps` (so a stray `onClick` /

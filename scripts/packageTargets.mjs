@@ -1,0 +1,159 @@
+/**
+ * The packages DEV publishes, and the boundary each one is held to.
+ *
+ * `@seihouse/sen` is the portable expanded-narrative engine: an author or
+ * company installs it inside their own application and supplies their own
+ * writing, branding, storage, authentication, and generation method.
+ * `@Seihouse/Library` is SEIHouse's first-party host application — the
+ * branded implementation of SEN. Library may depend on SEN; SEN must never
+ * depend on Library, and neither may reach the Workshop shell, its previews
+ * and mocks, or `src/server/`.
+ *
+ * Every build, boundary, and smoke script reads these descriptors, so the
+ * two packages stay verified the same way.
+ */
+
+/** Import paths no published package may reach, whichever lane it is in. */
+const NEVER_PUBLISHED = [
+  ['src/workshop/', 'Workshop shell or preview mock'],
+  ['src/server/', 'server module'],
+  ['src/components/card-workshop/', 'Workshop-only card workshop view'],
+];
+
+/** Source directories owned by the Library lane. */
+export const LIBRARY_OWNED = [
+  'src/components/closed-door-cultivation/',
+  'src/components/relics/',
+  'src/package/library/',
+];
+
+export const PACKAGE_TARGETS = {
+  sen: {
+    id: 'sen',
+    name: '@seihouse/sen',
+    sourceDirectory: 'src/package/sen',
+    distDirectory: 'dist/sen',
+    styleSheet: 'sen.css',
+    /** Entries that carry no styling and must not import the stylesheet. */
+    unstyledEntries: ['audio'],
+    viteConfig: 'vite.package.config.ts',
+    tsconfig: 'tsconfig.package.json',
+    forbiddenBundleContents: [
+      ...NEVER_PUBLISHED,
+      ...LIBRARY_OWNED.map(path => [path, 'Library-owned surface']),
+    ],
+    /** Runtime assets the published components address from root paths. */
+    assets: [
+      'favicon.jpg',
+      'icons/book-scroll.svg',
+      'icons/cultivator.svg',
+      'icons/sacred-tree.svg',
+      'icons/shen-long-dragon.svg',
+      'icons/thunder-cloud.svg',
+      'icons/yin-yang.svg',
+      'manifest-backdrops/immortal-land-1.jpg',
+      'manifest-backdrops/immortal-land-2.jpg',
+      'manifest-backdrops/immortal-land-3.jpg',
+      'manifest-backdrops/immortal-land-4.jpg',
+      'manifest-backdrops/immortal-land-5.jpg',
+      'story-seed/library-auth-backdrop.jpg',
+    ],
+    /** Tarballs a smoke consumer must install before this one. */
+    smokeDependencies: [],
+    /** Named exports the packed consumer must be able to import and bundle. */
+    smokeExports: {
+      '@seihouse/sen': ['LibraryPanel', 'SEN_PACKAGE_VERSION'],
+      '@seihouse/sen/ui': ['LibraryPanel', 'ManifestButton', 'ParticleEffect'],
+      '@seihouse/sen/color-codes': ['COLOR_CODES', 'getColorCodeValue', 'resolveCodexEntityColorCode'],
+      '@seihouse/sen/cards': ['LibraryCard', 'CodexCard', 'CodexHovercard', 'CharacterCard', 'resolveCodexEntityAccent'],
+      '@seihouse/sen/reader-chamber': [
+        'ReaderChamber',
+        'ReaderViewport',
+        'SystemBlock',
+        'WorldNotice',
+        'FateResultCard',
+        'resolveSystemPromptRoute',
+      ],
+      '@seihouse/sen/reader-codex': ['ReaderCodex', 'CodexSheetOverlay'],
+      '@seihouse/sen/manifestations': ['ManifestationChamber', 'ManifestationReveal'],
+      '@seihouse/sen/audio': ['loadLibraryCues', 'resolveWorldCueIntent'],
+      '@seihouse/sen/story-seed': ['CreationModal', 'createEmptyStorySeedInput', 'parseStorySeedJson'],
+      '@seihouse/sen/chapter-generation': [
+        'ChapterGenerationTestFlow',
+        'adaptFinalizedStorySeedToChapterContracts',
+        'runFiveChapterBatch',
+      ],
+      // The compatibility aliases kept for one version.
+      '@seihouse/sen/library': ['LibraryPanel'],
+      '@seihouse/sen/codex-cards': ['CodexCard'],
+    },
+    /** Public types the packed consumer must be able to resolve. */
+    smokeTypes: `
+      import type { CreationModalProps, StorySeedInput } from '@seihouse/sen/story-seed';
+      import type { FiveChapterBatchState, ManifestChapterRequest } from '@seihouse/sen/chapter-generation';
+      import type { ColorCodeId, ColorCodeDefinition } from '@seihouse/sen/color-codes';
+      import type { CodexCardProps, LibraryCardProps } from '@seihouse/sen/cards';
+      import type {
+        FateResultCardProps,
+        SystemBlockProps,
+        SystemPromptRoute,
+        SystemPromptRoutePresentation,
+        WorldNoticeProps,
+      } from '@seihouse/sen/reader-chamber';
+      declare const creation: CreationModalProps;
+      declare const seed: StorySeedInput;
+      declare const batch: FiveChapterBatchState;
+      declare const request: ManifestChapterRequest;
+      declare const colorCode: ColorCodeId;
+      declare const colorCodeDefinition: ColorCodeDefinition;
+      declare const codexCard: CodexCardProps;
+      declare const card: LibraryCardProps;
+      declare const fateResultCard: FateResultCardProps;
+      declare const systemBlock: SystemBlockProps;
+      declare const systemRoute: SystemPromptRoute;
+      declare const systemRoutePresentation: SystemPromptRoutePresentation;
+      declare const worldNotice: WorldNoticeProps;
+      void [
+        creation, seed, batch, request, colorCode, colorCodeDefinition, codexCard, card,
+        fateResultCard, systemBlock, systemRoute, systemRoutePresentation, worldNotice,
+      ];
+    `,
+  },
+
+  library: {
+    id: 'library',
+    name: '@Seihouse/Library',
+    sourceDirectory: 'src/package/library',
+    distDirectory: 'dist/library',
+    // Library adds no stylesheet of its own: its surfaces are Tailwind-only
+    // and inherit the SEN treatments through `@seihouse/sen/styles.css`.
+    styleSheet: 'library.css',
+    unstyledEntries: ['index', 'cultivation', 'relics'],
+    viteConfig: 'vite.library.config.ts',
+    tsconfig: 'tsconfig.library.json',
+    forbiddenBundleContents: NEVER_PUBLISHED,
+    assets: [],
+    smokeDependencies: ['sen'],
+    smokeExports: {
+      '@Seihouse/Library': ['LIBRARY_PACKAGE_VERSION', 'RelicCard', 'ClosedDoorCultivationModal'],
+      '@Seihouse/Library/cultivation': ['ClosedDoorCultivationModal'],
+      '@Seihouse/Library/relics': ['RelicCard', 'RelicModal', 'RelicReveal'],
+    },
+    smokeTypes: `
+      import type { ClosedDoorCultivationModalProps } from '@Seihouse/Library/cultivation';
+      import type { CosmicArtifact, RelicRevealProps } from '@Seihouse/Library/relics';
+      declare const cultivation: ClosedDoorCultivationModalProps;
+      declare const artifact: CosmicArtifact;
+      declare const reveal: RelicRevealProps;
+      void [cultivation, artifact, reveal];
+    `,
+  },
+};
+
+export const resolveTarget = id => {
+  const target = PACKAGE_TARGETS[id];
+  if (!target) {
+    throw new Error(`Unknown package target "${id}" — expected one of ${Object.keys(PACKAGE_TARGETS).join(', ')}.`);
+  }
+  return target;
+};

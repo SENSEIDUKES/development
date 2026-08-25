@@ -9,7 +9,7 @@ import {
   type RevealedMediaAsset,
 } from '../shared/manifestation';
 import { ParticleEffect } from '../../library/ParticleEffect';
-import type { AILoadingVeilProps } from '../reference/AILoadingVeil';
+import type { AILoadingVeilProps } from '../shared/loadingVeil';
 
 /**
  * Development-only extension of the shared veil props: optional journey

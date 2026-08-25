@@ -1,7 +1,4 @@
-import type {
-  StorySeedRecord,
-  StorySeedRepository,
-} from '../../../components/story-seed/shared/storySeedRepository';
+import type { StorySeedRecord, StorySeedRepository } from '@seihouse/sen/story-seed';
 
 type StoryBankRepositoryState = 'loading' | 'error';
 

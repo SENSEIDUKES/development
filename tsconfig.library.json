@@ -4,8 +4,8 @@
     "noEmit": false,
     "declaration": true,
     "emitDeclarationOnly": true,
-    "outDir": "dist/sen/dist/types",
+    "outDir": "dist/library/dist/types",
     "rootDir": "src"
   },
-  "include": ["src/package/sen", "src/vite-env.d.ts"]
+  "include": ["src/package/library", "src/vite-env.d.ts"]
 }

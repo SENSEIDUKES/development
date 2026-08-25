@@ -12,9 +12,6 @@ const events = [
   {
     label: 'Cultivation Breakthrough',
     slug: 'breakthrough',
-    subject: 'Yun Che',
-    value: 'Foundation Establishment — Stage 4',
-    consequence: 'Elder Han will move openly against Yun Che.',
     codexName: 'Elder Han',
     codexColorCode: 'enemy',
     classification: '✦ Awakening ✦',
@@ -25,15 +22,11 @@ const events = [
     trends: [['Foundation Establishment', 'up'], ['Widened', 'up']],
     outcomes: ['Realm Ascended', 'Lifespan Increased'],
     outcomeColorCodes: ['ally', 'ally'],
-    overlayOutcome: 'Lifespan +100',
     prose: 'A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.',
   },
   {
     label: 'Broken Promise',
     slug: 'broken-promise',
-    subject: 'Magistrate Jinhai',
-    value: 'Rain Court Standing — Disgraced',
-    consequence: 'Magistrate Jinhai loses access to Riverside Sect testimony.',
     codexName: 'Magistrate Jinhai',
     codexColorCode: 'enemy',
     classification: '✦ Consequence ✦',
@@ -44,15 +37,11 @@ const events = [
     trends: [['Sealed', 'down']],
     outcomes: ['Karma Decreased', 'Title Stripped'],
     outcomeColorCodes: ['enemy', 'enemy'],
-    overlayOutcome: 'Karma −15',
     prose: 'A solemn interface surfaced before Magistrate Jinhai, its gilt script cold as the rain outside.',
   },
   {
     label: 'Target Scan',
     slug: 'target-scan',
-    subject: 'Elder Kaelen',
-    value: 'Foundation Establishment — Stage 7',
-    consequence: 'Elder Kaelen will prepare a countermeasure before the next encounter.',
     codexName: 'Elder Kaelen',
     codexColorCode: 'enemy',
     classification: '✦ Enemy ✦',
@@ -63,7 +52,6 @@ const events = [
     trends: [],
     outcomes: ['Intel Gained', 'Weakness Found'],
     outcomeColorCodes: ['ally', 'ally'],
-    overlayOutcome: 'Detection Risk: High',
     prose: 'A crimson interface unfolded beside Elder Kaelen, taking his measure in silence.',
   },
 ];
@@ -137,8 +125,8 @@ async function verifyCompactHierarchy(block, event, deviceName) {
 
   // Compact outcome wording: two flat slots separated by a clear divider,
   // each a neutral white subject plus a meaning-colored state word — and
-  // never a number (quantities compress to Increased/Decreased from the
-  // direction; the signed figures live only in the expanded report).
+  // never a number: quantities compress to Increased/Decreased from the
+  // direction.
   const compactReport = await block.evaluate((element, expectedOutcomeColorCodes) => {
     const row = element.querySelector('[data-consequence-count]');
     if (!row) return 'missing-row';
@@ -206,19 +194,36 @@ async function verifyCompactHierarchy(block, event, deviceName) {
 }
 
 /**
- * The expanded event report is a viewport-locked overlay portaled above the
- * reader: the compact card keeps its consequence row and prose underneath,
- * the page scrolls neither behind nor inside the panel, mobile shows only the
- * three highest-priority Codex sections, and closing restores focus to the
- * orb and the exact scroll position.
+ * A Narrative Notification has no expanded presentation. Its orb is an inert
+ * emblem, its only control is the bottom narration chevron, and nothing it can
+ * do opens a dialog.
  */
-async function verifyExpandedOverlay(page, block, event, deviceName) {
-  const isMobile = deviceName.startsWith('mobile-');
+async function verifyNarrativeHasNoExpansion(page, block, event, deviceName) {
+  if (await block.getByRole('button', { name: 'Expand System Prompt details' }).count() !== 0) {
+    throw new Error(`${event.slug} still offers an Expanded Info action at ${deviceName}.`);
+  }
+  await block.locator('[data-system-orb-icon="closed"]').waitFor();
+  if (await block.getAttribute('data-system-prompt-state') !== 'compact') {
+    throw new Error(`${event.slug} is not compact-only at ${deviceName}.`);
+  }
+  if (await page.getByRole('dialog').count() !== 0) {
+    throw new Error(`${event.slug} opened a dialog at ${deviceName}.`);
+  }
+}
+
+/**
+ * The Structured Mechanical stat panel is a viewport-locked dialog portaled
+ * above the reader: the compact vitals card stays untouched underneath, the
+ * page scrolls neither behind nor inside the panel, the whole status screen
+ * renders at reading scale, and closing restores focus to the orb and the exact
+ * scroll position.
+ */
+async function verifyStatusPanel(page, block, deviceName) {
   // The shared Workshop Controls bar is preview tooling pinned above reader
-  // surfaces (z-[200]) and can cover the viewport-locked overlay when the page
+  // surfaces (z-[200]) and can cover the viewport-locked panel when the page
   // scroll leaves it near the top. It is not part of the reader contract, so
   // it steps aside (visibility keeps layout, so scroll positions stay exact)
-  // while the overlay is verified.
+  // while the panel is verified.
   const workshopControls = page.locator('[data-workshop-controls]');
   await workshopControls.evaluateAll((elements) => elements.forEach((element) => {
     element.dataset.previousVisibility = element.style.visibility;
@@ -226,69 +231,50 @@ async function verifyExpandedOverlay(page, block, event, deviceName) {
   }));
   try {
     // Horizontal-overflow baseline: the Workshop page itself may overflow at
-    // 320px, so the overlay is judged on what it adds, never an absolute.
+    // 320px, so the panel is judged on what it adds, never an absolute.
     const compactDocumentOverflow = await page.evaluate(() => (
       document.documentElement.scrollWidth - document.documentElement.clientWidth
     ));
     const expandButton = block.getByRole('button', { name: 'Expand System Prompt details' });
     if (await expandButton.getAttribute('aria-expanded') !== 'false') {
-      throw new Error(`${event.slug} did not start compact at ${deviceName}.`);
+      throw new Error(`status screen did not start compact at ${deviceName}.`);
     }
     await block.locator('[data-system-orb-icon="closed"]').waitFor();
     await expandButton.click();
 
-    const overlay = page.locator('[role="dialog"][data-system-expanded="true"]');
-    await overlay.waitFor({ state: 'visible' });
+    const panel = page.locator('[role="dialog"][data-system-status-panel="true"]');
+    await panel.waitFor({ state: 'visible' });
     // Playwright's own pre-click scroll-into-view may move the page, so the
-    // reader-position contract is measured from the open overlay onward.
+    // reader-position contract is measured from the open panel onward.
     const scrollBefore = await page.evaluate(() => window.scrollY);
-    if (await overlay.getAttribute('aria-modal') !== 'true') {
-      throw new Error(`${event.slug} overlay is not modal at ${deviceName}.`);
+    if (await panel.getAttribute('aria-modal') !== 'true') {
+      throw new Error(`stat panel is not modal at ${deviceName}.`);
     }
-    if (await overlay.getAttribute('data-reader-narration') !== 'excluded') {
-      throw new Error(`${event.slug} overlay lost its narration boundary at ${deviceName}.`);
+    if (await panel.getAttribute('data-reader-narration') !== 'excluded') {
+      throw new Error(`stat panel lost its narration boundary at ${deviceName}.`);
     }
     if (await block.getAttribute('data-system-prompt-state') !== 'expanded') {
-      throw new Error(`${event.slug} did not enter expanded state at ${deviceName}.`);
-    }
-    if (await block.locator('[data-consequence-count]').count() !== 1) {
-      throw new Error(`${event.slug} compact card did not keep its consequence row under the overlay at ${deviceName}.`);
+      throw new Error(`status screen did not enter expanded state at ${deviceName}.`);
     }
     if ((await page.evaluate(() => document.body.style.overflow)) !== 'hidden') {
-      throw new Error(`${event.slug} overlay did not lock page scroll at ${deviceName}.`);
+      throw new Error(`stat panel did not lock page scroll at ${deviceName}.`);
     }
 
-    await overlay.getByText(event.subject, { exact: true }).first().waitFor();
-    await overlay.getByText(event.value, { exact: true }).first().waitFor();
-    if (await overlay.getByRole('progressbar').count() === 0) {
-      throw new Error(`${event.slug} overlay has no progress value at ${deviceName}.`);
+    // The whole status screen at reading scale.
+    await panel.getByText('STATUS // YUN CHE', { exact: true }).waitFor();
+    await panel.getByText('Level 24', { exact: true }).waitFor();
+    if (await panel.getByRole('progressbar').count() !== 3) {
+      throw new Error(`stat panel lost its HP/QI/EXP meters at ${deviceName}.`);
     }
-    // The overlay keeps its own System outcome row — the full list with the
-    // signed figures the compact two-slot row drops.
-    await overlay.locator('[data-consequence-count]').waitFor();
-    await overlay.locator('[data-consequence-count]').getByText(event.overlayOutcome, { exact: true }).waitFor();
-
-    // Mobile: only the three highest-priority sections are visible. Larger
-    // screens: every section, same flat structure.
-    const narrativeSection = overlay.locator('[data-system-expanded-section="narrative-consequences"]');
-    await narrativeSection.waitFor({ state: 'attached' });
-    if (isMobile) {
-      if (await narrativeSection.isVisible()) {
-        throw new Error(`${event.slug} shows more than three Codex sections on mobile at ${deviceName}.`);
-      }
-    } else {
-      if (!(await narrativeSection.isVisible())) {
-        throw new Error(`${event.slug} hides expanded sections at ${deviceName}.`);
-      }
-      await overlay.getByText(event.consequence, { exact: true }).waitFor();
-      await overlay.getByText('Lore', { exact: true }).waitFor();
-      await overlay.getByText('Warning', { exact: true }).waitFor();
-      await overlay.getByText('Narrative Consequences', { exact: true }).waitFor();
+    if (await panel.locator('[data-status-stat]').count() !== 6) {
+      throw new Error(`stat panel lost its stat grid at ${deviceName}.`);
     }
+    await panel.getByText('Rain Attunement', { exact: true }).waitFor();
+    await panel.getByText('Soul Seam Sight', { exact: true }).waitFor();
 
     // One-screen fit: the panel never escapes the viewport, and the page
     // behind gains no horizontal overflow.
-    const fit = await overlay.evaluate((element) => {
+    const fit = await panel.evaluate((element) => {
       const rect = element.getBoundingClientRect();
       return {
         clientHeight: element.clientHeight,
@@ -308,39 +294,23 @@ async function verifyExpandedOverlay(page, block, event, deviceName) {
       && fit.overflowY !== 'auto'
       && fit.overflowY !== 'scroll'
     ) {
-      throw new Error(`${event.slug} overlay clips tall content at ${deviceName}: ${JSON.stringify(fit)}`);
+      throw new Error(`stat panel clips tall content at ${deviceName}: ${JSON.stringify(fit)}`);
     }
     if (fit.left < -1 || fit.top < -1 || fit.right > fit.viewportWidth + 1 || fit.bottom > fit.viewportHeight + 1) {
-      throw new Error(`${event.slug} overlay escapes the viewport at ${deviceName}: ${JSON.stringify(fit)}`);
+      throw new Error(`stat panel escapes the viewport at ${deviceName}: ${JSON.stringify(fit)}`);
     }
     if (fit.documentOverflow > compactDocumentOverflow + 1) {
-      throw new Error(`${event.slug} overlay added horizontal page overflow at ${deviceName}: ${JSON.stringify(fit)} (baseline ${compactDocumentOverflow})`);
+      throw new Error(`stat panel added horizontal page overflow at ${deviceName}: ${JSON.stringify(fit)} (baseline ${compactDocumentOverflow})`);
     }
 
-    // Codex links inside the overlay keep their colors; their hovercard opens
-    // above the dialog and closes first on Escape.
-    const codexLink = overlay.getByRole('button', { name: event.codexName, exact: true }).first();
-    await codexLink.waitFor();
-    if (await codexLink.getAttribute('data-color-code') !== event.codexColorCode) {
-      throw new Error(`${event.codexName} did not preserve its assigned character color at ${deviceName}.`);
-    }
-    await codexLink.click();
-    const hovercard = page.getByRole('dialog', { name: `${event.codexName} Codex details` });
-    await hovercard.waitFor();
-    await page.keyboard.press('Escape');
-    await hovercard.waitFor({ state: 'detached' });
-    if (!(await overlay.isVisible())) {
-      throw new Error(`${event.slug} overlay closed together with its Codex hovercard at ${deviceName}.`);
-    }
-
-    await page.screenshot({ path: `output/playwright/system-prompt-${event.slug}-${deviceName}-overlay.png` });
+    await page.screenshot({ path: `output/playwright/system-prompt-structured-${deviceName}-stat-panel.png` });
 
     // Closing restores the reader: compact state, focus back on the orb action,
     // page scroll unlocked, and the exact same scroll position.
-    await overlay.getByRole('button', { name: 'Close System event report' }).click();
-    await overlay.waitFor({ state: 'detached' });
+    await panel.getByRole('button', { name: 'Close System status panel' }).click();
+    await panel.waitFor({ state: 'detached' });
     if (await block.getAttribute('data-system-prompt-state') !== 'compact') {
-      throw new Error(`${event.slug} did not return to compact at ${deviceName}.`);
+      throw new Error(`status screen did not return to compact at ${deviceName}.`);
     }
     await block.locator('[data-system-orb-icon="closed"]').waitFor();
     try {
@@ -350,17 +320,17 @@ async function verifyExpandedOverlay(page, block, event, deviceName) {
         { timeout: 5000 },
       );
     } catch {
-      throw new Error(`${event.slug} did not restore focus to the orb action at ${deviceName}.`);
+      throw new Error(`status screen did not restore focus to the orb action at ${deviceName}.`);
     }
     if ((await page.evaluate(() => document.body.style.overflow)) === 'hidden') {
-      throw new Error(`${event.slug} left the page scroll locked at ${deviceName}.`);
+      throw new Error(`stat panel left the page scroll locked at ${deviceName}.`);
     }
     const scrollAfter = await page.evaluate(() => window.scrollY);
     if (Math.abs(scrollAfter - scrollBefore) > 1) {
-      throw new Error(`${event.slug} moved the reader position at ${deviceName}: ${scrollBefore} -> ${scrollAfter}`);
+      throw new Error(`stat panel moved the reader position at ${deviceName}: ${scrollBefore} -> ${scrollAfter}`);
     }
   } finally {
-    // Restore the preview tooling hidden during the overlay pass.
+    // Restore the preview tooling hidden during the stat panel pass.
     await workshopControls.evaluateAll((elements) => elements.forEach((element) => {
       element.style.visibility = element.dataset.previousVisibility || '';
       delete element.dataset.previousVisibility;
@@ -412,7 +382,7 @@ for (const device of devices) {
       await tabsBlock.locator('[data-system-summary-toggle]').click();
     }
     await tabsBlock.screenshot({ path: `output/playwright/system-prompt-${event.slug}-${device.name}-tabs-card.png` });
-    await verifyExpandedOverlay(page, tabsBlock, event, device.name);
+    await verifyNarrativeHasNoExpansion(page, tabsBlock, event, device.name);
     if (event.slug === 'breakthrough') {
       await page.screenshot({ path: `output/playwright/system-prompt-breakthrough-${device.name}-tabs.png` });
     }
@@ -428,7 +398,7 @@ for (const device of devices) {
   await page.waitForTimeout(800);
   await verifyConsequenceRow(contextBlock, 'breakthrough', device.name);
   await verifyCompactHierarchy(contextBlock, events[0], device.name);
-  await verifyExpandedOverlay(page, contextBlock, events[0], `${device.name}-contextual`);
+  await verifyNarrativeHasNoExpansion(page, contextBlock, events[0], `${device.name}-contextual`);
   await page.screenshot({ path: `output/playwright/system-prompt-breakthrough-${device.name}-contextual.png` });
   await contextBlock.screenshot({ path: `output/playwright/system-prompt-breakthrough-${device.name}-contextual-card.png` });
 
@@ -436,8 +406,9 @@ for (const device of devices) {
   console.log(`captured ${device.name}`);
 }
 
-// Regression: structured mechanical rows keep the holographic panel,
-// Fate System Prompt stays on the unchanged FateResultCard.
+// The Structured Mechanical status screen: the compact vitals card plus its
+// Expanded Info stat panel. Fate System Prompt stays on the unchanged
+// FateResultCard.
 const page = await browser.newPage({ viewport: { width: 768, height: 1024 } });
 await page.goto(base, { waitUntil: 'domcontentloaded' });
 await page.getByRole('tab', { name: 'System Prompt', exact: true }).click();
@@ -446,6 +417,7 @@ const structured = page.locator('.system-block.holographic-panel').first();
 await structured.waitFor({ state: 'visible' });
 await page.waitForTimeout(500);
 await structured.screenshot({ path: 'output/playwright/system-prompt-structured-panel.png' });
+await verifyStatusPanel(page, structured, 'tablet-768');
 await page.getByRole('tab', { name: 'Fate System Prompt', exact: true }).click();
 const fate = page.locator('.collectible-card').first();
 await fate.waitFor({ state: 'visible' });

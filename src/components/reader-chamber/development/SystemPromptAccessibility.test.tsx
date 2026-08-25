@@ -82,17 +82,39 @@ describe('System Prompt accessibility and motion', () => {
     expect(scopedStyles).toContain('.animate-menacing-fate');
   });
 
-  it('restores focus when a live event replacement unmounts an open report', () => {
+  it('gives the Narrative card no Expanded Info action', () => {
+    act(() => root.render(
+      <SystemBlock
+        content="The archive records the oath."
+        system={{
+          kind: 'system_prompt',
+          presentation: 'narrative',
+          title: 'Oath Recorded',
+          changes: [{ label: 'Realm Advanced', direction: 'gain' }],
+        }}
+      />,
+    ));
+
+    // The orb rests as an inert emblem; the bottom narration chevron is the
+    // compact Narrative card's only control.
+    expect(container.querySelector('button[aria-label="Expand System Prompt details"]')).toBeFalsy();
+    expect(container.querySelector('[data-system-orb-icon="closed"]')).toBeTruthy();
+    expect(container.querySelector('[data-system-summary-toggle="true"]')).toBeTruthy();
+    expect(document.body.querySelector('[role="dialog"]')).toBeFalsy();
+  });
+
+  it('restores focus when a live event replacement unmounts an open stat panel', () => {
     const renderEvent = (title: string, content: string) => (
       <SystemBlock
         content={content}
         system={{
           kind: 'system_prompt',
-          presentation: 'narrative',
+          presentation: 'mechanical',
           title,
-          changes: [{ label: 'Realm Advanced', direction: 'gain' }],
-          expanded: {
-            sections: [{ heading: 'Realm', value: 'Advanced' }],
+          status: {
+            level: '24',
+            bars: [{ label: 'HP', value: 780, max: 780, tone: 'health' }],
+            stats: [{ label: 'STR', value: '38' }],
           },
         }}
       />
@@ -104,7 +126,7 @@ describe('System Prompt accessibility and motion', () => {
     );
     expect(opener).toBeTruthy();
     act(() => opener!.click());
-    expect(document.body.querySelector('[role="dialog"]')).toBeTruthy();
+    expect(document.body.querySelector('[role="dialog"][data-system-status-panel="true"]')).toBeTruthy();
     expect(document.activeElement?.getAttribute('role')).toBe('dialog');
 
     act(() => root.render(renderEvent('Replacement Report', 'A newer event replaces it.')));

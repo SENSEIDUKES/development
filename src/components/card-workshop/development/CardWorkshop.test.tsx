@@ -264,14 +264,15 @@ describe('CardWorkshopView', () => {
       .toBeTruthy();
     await act(async () => elderCodexAction!.click());
 
-    // Toggle to the structured mechanical status screen: the modern LitRPG
-    // layout shows the level pill, semantic resource meters (HP red, QI blue,
-    // EXP gold), the two-column inset stat grid with signed deltas, one active
-    // effect, one ability, and keeps its TTS summary collapsed behind the
-    // centered chevron.
+    // Toggle to the structured mechanical status screen. In the chapter it
+    // reads as a compact vitals card — headline, class line, classification,
+    // level pill, and the semantic resource meters (HP red, QI blue, EXP gold)
+    // — with its TTS summary collapsed behind the centered chevron. The full
+    // stat grid, effects, and abilities live behind the Expanded Info action.
     await clickButton('Structured Mechanical');
     const statusBlock = container.querySelector<HTMLElement>('.system-block');
     expect(statusBlock?.dataset.systemPresentation).toBe('mechanical');
+    expect(statusBlock?.dataset.systemPromptState).toBe('compact');
     expect(statusBlock?.textContent).toContain('STATUS // YUN CHE');
     expect(statusBlock?.textContent).toContain('Meridian Adept · Foundation Realm');
     expect(statusBlock?.textContent).toContain('✦ Stable ✦');
@@ -283,22 +284,10 @@ describe('CardWorkshopView', () => {
     expect(meters.map(meter => meter.closest('[data-status-bar]')?.getAttribute('data-color-code')))
       .toEqual(['enemy', 'mainCharacter', 'mentor']);
 
-    const statCells = [...(statusBlock?.querySelectorAll<HTMLElement>('[data-status-stat]') ?? [])];
-    expect(statCells.map(cell => cell.getAttribute('data-status-stat')))
-      .toEqual(['STR', 'VIT', 'AGI', 'INT', 'WIS', 'LUCK']);
-    const gainDelta = statusBlock?.querySelector<HTMLElement>('[data-status-delta="gain"]');
-    expect(gainDelta?.textContent).toBe('+3');
-    expect(gainDelta?.getAttribute('data-color-code')).toBe('ally');
-    const lossDelta = statusBlock?.querySelector<HTMLElement>('[data-status-delta="loss"]');
-    expect(lossDelta?.textContent).toBe('−2');
-    expect(lossDelta?.getAttribute('data-color-code')).toBe('enemy');
-
-    expect(statusBlock?.textContent).toContain('Active Effect');
-    expect(statusBlock?.textContent).toContain('Rain Attunement');
-    expect(statusBlock?.textContent).toContain('+12/min');
-    expect(statusBlock?.textContent).toContain('Ability');
-    expect(statusBlock?.textContent).toContain('Soul Seam Sight');
-    expect(statusBlock?.textContent).toContain('Range 30 paces');
+    // The compact card is a preview, not the whole screen.
+    expect(statusBlock?.querySelector('[data-status-stat]')).toBeFalsy();
+    expect(statusBlock?.textContent).not.toContain('Rain Attunement');
+    expect(statusBlock?.textContent).not.toContain('Soul Seam Sight');
 
     // The TTS summary starts collapsed behind the centered chevron; narration
     // still reads the block data, so the sentence stays in the DOM hidden.
@@ -674,64 +663,122 @@ describe('CardWorkshopView', () => {
     expect(getButton('Contextual View')?.getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('opens the expanded event report in a viewport overlay and restores focus to the orb action', async () => {
+  it('leaves the compact Narrative card with no Expanded Info action', async () => {
     act(() => root.render(renderWithDevAudio(
       <CardWorkshopView initialMode="tabs" initialPresetId="preset-system-prompt" />,
     )));
 
+    // The Narrative Notification keeps its compact card and every piece of its
+    // information; the orb rests as an inert emblem, and the small bottom
+    // chevron is the card's only control.
+    for (const control of ['Cultivation Breakthrough', 'Broken Promise']) {
+      await clickButton('Narrative');
+      await clickButton(control);
+      const systemBlock = container.querySelector<HTMLElement>('.system-block');
+      expect(systemBlock?.dataset.systemPresentation).toBe('narrative');
+      expect(systemBlock?.dataset.systemPromptState).toBe('compact');
+      expect(systemBlock?.querySelector('[data-consequence-count]')).toBeTruthy();
+      expect(systemBlock?.querySelector('[data-system-orb-icon="closed"]')).toBeTruthy();
+      expect(getButton('Expand System Prompt details')).toBeFalsy();
+      expect(document.body.querySelector('[data-system-status-panel]')).toBeFalsy();
+
+      const summaryToggle = systemBlock?.querySelector<HTMLButtonElement>('[data-system-summary-toggle="true"]');
+      const summary = systemBlock?.querySelector<HTMLElement>('[data-system-summary]');
+      expect(summaryToggle?.className).toContain('h-11');
+      expect(summaryToggle?.className).toContain('w-11');
+      expect(summary?.hasAttribute('hidden')).toBe(true);
+      await act(async () => summaryToggle!.click());
+      expect(summary?.hasAttribute('hidden')).toBe(false);
+      expect(document.body.querySelector('[role="dialog"]')).toBeFalsy();
+      // Collapse again so the next example starts from the resting card.
+      await act(async () => summaryToggle!.click());
+    }
+  });
+
+  it('opens the Structured Mechanical stat panel from the orb and restores focus to it', async () => {
+    act(() => root.render(renderWithDevAudio(
+      <CardWorkshopView initialMode="tabs" initialPresetId="preset-system-prompt" />,
+    )));
+    await clickButton('Mechanical');
+    await clickButton('Structured Mechanical');
+
     const systemBlock = container.querySelector<HTMLElement>('.system-block');
-    const compactSummary = 'A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.';
     expect(systemBlock?.dataset.systemPromptState).toBe('compact');
-    expect(systemBlock?.querySelector('[data-consequence-count]')).toBeTruthy();
     expect(systemBlock?.querySelector('[data-system-orb-icon="closed"]')).toBeTruthy();
-    expect(systemBlock?.querySelector('[data-system-summary]')?.textContent).toBe(compactSummary);
-    expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
+    expect(document.body.querySelector('[data-system-status-panel]')).toBeFalsy();
     expect(getButton('Expand System Prompt details')?.getAttribute('aria-expanded')).toBe('false');
 
     await clickButton('Expand System Prompt details');
 
-    // The report is a viewport-locked dialog portaled above the reader —
-    // outside the compact card, which keeps its compact content untouched.
-    const overlay = document.body.querySelector<HTMLElement>('[role="dialog"][data-system-expanded="true"]');
-    expect(overlay).toBeTruthy();
-    expect(overlay?.getAttribute('aria-modal')).toBe('true');
-    expect(overlay?.getAttribute('data-reader-narration')).toBe('excluded');
-    expect(overlay?.className).toContain('max-h-full');
-    expect(overlay?.className).toContain('overflow-hidden');
-    const scrollRegion = overlay?.querySelector<HTMLElement>('[data-system-expanded-scroll-region="true"]');
+    // The stat panel is a viewport-locked dialog portaled above the reader —
+    // outside the compact card, which keeps its own content untouched.
+    const panel = document.body.querySelector<HTMLElement>('[role="dialog"][data-system-status-panel="true"]');
+    expect(panel).toBeTruthy();
+    expect(panel?.getAttribute('aria-modal')).toBe('true');
+    expect(panel?.getAttribute('data-reader-narration')).toBe('excluded');
+    expect(panel?.className).toContain('max-h-full');
+    expect(panel?.className).toContain('overflow-hidden');
+    expect(systemBlock?.contains(panel!)).toBe(false);
+    expect(systemBlock?.dataset.systemPromptState).toBe('expanded');
+    expect(systemBlock?.querySelector('[data-system-orb-icon="open"]')).toBeTruthy();
+
+    const scrollRegion = panel?.querySelector<HTMLElement>('[data-system-status-scroll-region="true"]');
     expect(scrollRegion?.className).toContain('min-h-0');
     expect(scrollRegion?.className).toContain('overflow-y-auto');
     expect(scrollRegion?.className).toContain('overscroll-contain');
     expect(scrollRegion?.getAttribute('role')).toBe('region');
-    expect(scrollRegion?.getAttribute('aria-label')).toBe('System event report details');
+    expect(scrollRegion?.getAttribute('aria-label')).toBe('System status details');
     expect(scrollRegion?.tabIndex).toBe(0);
-    const backdropLayer = overlay?.parentElement;
+    const backdropLayer = panel?.parentElement;
     expect(backdropLayer?.className).not.toContain('backdrop-blur');
-    expect(systemBlock?.contains(overlay!)).toBe(false);
-    expect(systemBlock?.dataset.systemPromptState).toBe('expanded');
-    expect(systemBlock?.querySelector('[data-consequence-count]')).toBeTruthy();
-    expect(systemBlock?.querySelector('[data-system-summary]')?.textContent).toBe(compactSummary);
-    expect(systemBlock?.textContent).not.toContain('Power Rankings');
-    expect(systemBlock?.querySelector('[data-system-orb-icon="open"]')).toBeTruthy();
+
+    // The whole modern status screen at reading scale: headline, class line,
+    // classification, level pill, semantic meters, the full two-column stat
+    // grid with signed deltas, active effects, and abilities.
+    expect(panel?.textContent).toContain('STATUS // YUN CHE');
+    expect(panel?.textContent).toContain('Meridian Adept · Foundation Realm');
+    expect(panel?.textContent).toContain('✦ Stable ✦');
+    expect(panel?.textContent).toContain('Level 24');
+
+    const panelMeters = [...(panel?.querySelectorAll<HTMLElement>('[role="progressbar"]') ?? [])];
+    expect(panelMeters.map(meter => meter.getAttribute('aria-valuetext')))
+      .toEqual(['780 / 780', '1,420 / 1,500', '62%']);
+    expect(panelMeters.map(meter => meter.closest('[data-status-bar]')?.getAttribute('data-color-code')))
+      .toEqual(['enemy', 'mainCharacter', 'mentor']);
+
+    const statCells = [...(panel?.querySelectorAll<HTMLElement>('[data-status-stat]') ?? [])];
+    expect(statCells.map(cell => cell.getAttribute('data-status-stat')))
+      .toEqual(['STR', 'VIT', 'AGI', 'INT', 'WIS', 'LUCK']);
+    const gainDelta = panel?.querySelector<HTMLElement>('[data-status-delta="gain"]');
+    expect(gainDelta?.textContent).toBe('+3');
+    expect(gainDelta?.getAttribute('data-color-code')).toBe('ally');
+    const lossDelta = panel?.querySelector<HTMLElement>('[data-status-delta="loss"]');
+    expect(lossDelta?.textContent).toBe('−2');
+    expect(lossDelta?.getAttribute('data-color-code')).toBe('enemy');
+
+    expect(panel?.textContent).toContain('Active Effect');
+    expect(panel?.textContent).toContain('Rain Attunement');
+    expect(panel?.textContent).toContain('+12/min');
+    expect(panel?.textContent).toContain('Ability');
+    expect(panel?.textContent).toContain('Soul Seam Sight');
+    expect(panel?.textContent).toContain('Range 30 paces');
+
     const expandedOrb = getButton('Collapse System Prompt details');
     expect(expandedOrb?.getAttribute('aria-expanded')).toBe('true');
     expect(expandedOrb?.className).toContain('h-11');
     expect(expandedOrb?.className).toContain('w-11');
-    const closeControl = overlay?.querySelector<HTMLButtonElement>('button[aria-label="Close System event report"]');
+    const closeControl = panel?.querySelector<HTMLButtonElement>('button[aria-label="Close System status panel"]');
     expect(closeControl?.className).toContain('h-11');
     expect(closeControl?.className).toContain('w-11');
-    const summaryToggle = systemBlock?.querySelector<HTMLButtonElement>('[data-system-summary-toggle="true"]');
-    expect(summaryToggle?.className).toContain('h-11');
-    expect(summaryToggle?.className).toContain('w-11');
 
     // Tab and Shift+Tab remain trapped inside the modal, including the body
     // scroller used by keyboard users on short-height and long-content layouts.
-    const focusable = [...(overlay?.querySelectorAll<HTMLElement>(
+    const focusable = [...(panel?.querySelectorAll<HTMLElement>(
       'button, [role="button"], [tabindex]:not([tabindex="-1"])',
     ) ?? [])];
     focusable.forEach(element => Object.defineProperty(element, 'offsetParent', {
       configurable: true,
-      value: overlay,
+      value: panel,
     }));
     closeControl?.focus();
     act(() => document.dispatchEvent(new KeyboardEvent('keydown', {
@@ -740,181 +787,49 @@ describe('CardWorkshopView', () => {
       bubbles: true,
       cancelable: true,
     })));
-    expect(overlay?.contains(document.activeElement)).toBe(true);
+    expect(panel?.contains(document.activeElement)).toBe(true);
     expect(document.activeElement).not.toBe(closeControl);
 
-    // One flat report: classification, headline, subject, the System
-    // outcome row, and the Codex sections with progress — never narration.
-    expect(overlay?.textContent).toContain('✦ Breakthrough | Awakening ✦');
-    expect(overlay?.textContent).toContain('Cultivation Breakthrough');
-    expect(overlay?.textContent).toContain('MC (You)');
-    expect(overlay?.textContent).toContain('Power Rankings');
-    expect(overlay?.textContent).toContain('Foundation Establishment — Stage 4');
-    expect(overlay?.textContent).toContain('37/100');
-    expect(overlay?.textContent).toContain('Karma Bond');
-    expect(overlay?.textContent).toContain('−75/100');
-    expect(overlay?.textContent).toContain('Danger');
-    expect(overlay?.textContent).toContain('Lore');
-    expect(overlay?.textContent).toContain('Warning');
-    expect(overlay?.textContent).toContain('Narrative Consequences');
-    expect(overlay?.querySelector('[data-consequence-count]')?.textContent).toContain('Realm Ascended');
-    expect(overlay?.querySelector('[data-consequence-count]')?.textContent).toContain('Lifespan +100');
-    // The report keeps every outcome with its signed figures — including the
-    // quantity and the third outcome the compact two-slot row drops.
-    expect(overlay?.querySelector('[data-consequence-count]')?.textContent).toContain('Presence Exposed');
-    expect(overlay?.querySelector('[role="progressbar"][aria-label="Power Rankings progress"]'))
-      .toBeTruthy();
-    // Flat sections with simple dividers — no stacked card boxes.
-    const powerSection = overlay?.querySelector('[data-system-expanded-section="power-rankings"]');
-    expect(powerSection?.className).toContain('border-t');
-    expect(powerSection?.className).not.toContain('rounded-xl');
-
-    // Mobile keeps only the three highest-priority sections; the rest are
-    // desktop-only through `hidden md:block`.
-    const narrativeSection = overlay?.querySelector('[data-system-expanded-section="narrative-consequences"]');
-    expect(narrativeSection?.className).toContain('hidden');
-    expect(narrativeSection?.className).toContain('md:block');
-    expect(powerSection?.className).not.toContain('hidden');
-
-    // Character names inside the report keep their Codex colors and links.
-    const elderHanAction = [...(overlay?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])]
-      .find(element => element.textContent === 'Elder Han');
-    expect(elderHanAction).toBeTruthy();
-    expect(elderHanAction?.getAttribute('data-color-code')).toBe('enemy');
-    await act(async () => elderHanAction!.click());
-    expect(document.body.querySelector('[role="dialog"][aria-label="Elder Han Codex details"]'))
-      .toBeTruthy();
-    // Escape closes the hovercard first; the event report stays open. The
-    // hovercard marker is stripped immediately, so a rapid second Escape closes
-    // the report without waiting for exit animation.
-    await act(async () => {
-      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    });
-    expect(document.body.querySelector('[role="dialog"][data-system-expanded="true"]')).toBeTruthy();
-
-    // Second Escape immediately closes the report and returns focus to the orb action.
+    // Escape closes the panel and returns focus to the orb action.
     const orbAction = getButton('Collapse System Prompt details');
     await act(async () => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     });
-    expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
+    expect(document.body.querySelector('[data-system-status-panel]')).toBeFalsy();
     expect(systemBlock?.dataset.systemPromptState).toBe('compact');
-    expect(systemBlock?.querySelector('[data-consequence-count]')).toBeTruthy();
     expect(systemBlock?.querySelector('[data-system-orb-icon="closed"]')).toBeTruthy();
     expect(document.activeElement).toBe(orbAction);
 
     // Reopening and using the dedicated close button restores focus the same way.
     await clickButton('Expand System Prompt details');
-    expect(document.body.querySelector('[data-system-expanded]')).toBeTruthy();
+    expect(document.body.querySelector('[data-system-status-panel]')).toBeTruthy();
     const reopenOrb = getButton('Collapse System Prompt details');
     const closeAction = [...document.body.querySelectorAll<HTMLButtonElement>('button')]
-      .find(element => element.getAttribute('aria-label') === 'Close System event report');
+      .find(element => element.getAttribute('aria-label') === 'Close System status panel');
     expect(closeAction).toBeTruthy();
     await act(async () => closeAction!.click());
-    expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
+    expect(document.body.querySelector('[data-system-status-panel]')).toBeFalsy();
     expect(document.activeElement).toBe(reopenOrb);
 
     // Backdrop click requires pointer-down on the backdrop itself to avoid
     // closing during text selection drag releases.
     await clickButton('Expand System Prompt details');
     const backdrop = document.body.querySelector<HTMLElement>('.fixed.inset-0.z-\\[100\\]');
-    const activeOverlay = document.body.querySelector<HTMLElement>('[role="dialog"][data-system-expanded="true"]');
+    const activePanel = document.body.querySelector<HTMLElement>('[role="dialog"][data-system-status-panel="true"]');
     expect(backdrop).toBeTruthy();
-    expect(activeOverlay).toBeTruthy();
+    expect(activePanel).toBeTruthy();
     // Drag starting inside panel and releasing on backdrop does not close
     await act(async () => {
-      activeOverlay?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+      activePanel?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
       backdrop?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    expect(document.body.querySelector('[data-system-expanded]')).toBeTruthy();
+    expect(document.body.querySelector('[data-system-status-panel]')).toBeTruthy();
     // Direct click on backdrop closes
     await act(async () => {
       backdrop?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
       backdrop?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
-    expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
-
-    // Pre-existing Codex hovercard open before expanded overlay mounts:
-    // Opening a hovercard in compact summary, then opening the overlay,
-    // verifies that the first Escape dismisses the hovercard and leaves the overlay open.
-    const compactCharacterLink = [...(container.querySelectorAll<HTMLElement>('.system-block [role="button"]') ?? [])]
-      .find(element => element.textContent === 'Yun Che' || element.textContent === 'Elder Han');
-    if (compactCharacterLink) {
-      await act(async () => compactCharacterLink.click());
-      await clickButton('Expand System Prompt details');
-      expect(document.body.querySelector('[role="dialog"][data-system-expanded="true"]')).toBeTruthy();
-      // First Escape dismisses the hovercard only
-      await act(async () => {
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
-      });
-      expect(document.body.querySelector('[role="dialog"][data-system-expanded="true"]')).toBeTruthy();
-      // Second Escape dismisses the overlay
-      await act(async () => {
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
-      });
-      expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
-    }
-  });
-
-  it('provides complete local expanded reports for all three System Prompt examples', async () => {
-    act(() => root.render(renderWithDevAudio(
-      <CardWorkshopView initialMode="tabs" initialPresetId="preset-system-prompt" />,
-    )));
-
-    const examples = [
-      {
-        category: 'Narrative',
-        control: 'Cultivation Breakthrough',
-        subject: 'Yun Che',
-        value: 'Foundation Establishment — Stage 4',
-        consequence: 'Elder Han will move openly against Yun Che.',
-        badge: null,
-      },
-      {
-        category: 'Narrative',
-        control: 'Broken Promise',
-        subject: 'Magistrate Jinhai',
-        value: 'Rain Court Standing — Disgraced',
-        consequence: 'Magistrate Jinhai loses access to Riverside Sect testimony.',
-        badge: null,
-      },
-      {
-        category: 'Mechanical',
-        control: 'Target Scan',
-        subject: 'Elder Kaelen',
-        value: 'Foundation Establishment — Stage 7',
-        consequence: 'Elder Kaelen will prepare a countermeasure before the next encounter.',
-        badge: 'Threat Assessment',
-      },
-    ];
-
-    for (const example of examples) {
-      await clickButton(example.category);
-      await clickButton(example.control);
-      const systemBlock = container.querySelector<HTMLElement>('.system-block');
-      expect(systemBlock?.dataset.systemPromptState).toBe('compact');
-
-      await clickButton('Expand System Prompt details');
-      // The full report lives in the overlay, never in the compact card.
-      const overlay = document.body.querySelector<HTMLElement>('[role="dialog"][data-system-expanded="true"]');
-      expect(overlay).toBeTruthy();
-      expect(systemBlock?.textContent).not.toContain('Narrative Consequences');
-      expect(overlay?.textContent).toContain(example.subject);
-      expect(overlay?.textContent).toContain(example.value);
-      expect(overlay?.textContent).toContain('Lore');
-      expect(overlay?.textContent).toContain('Warning');
-      expect(overlay?.textContent).toContain('Narrative Consequences');
-      expect(overlay?.textContent).toContain(example.consequence);
-      if (example.badge) {
-        expect(overlay?.textContent).toContain(example.badge);
-      }
-
-      await act(async () => {
-        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-      });
-      expect(document.body.querySelector('[data-system-expanded]')).toBeFalsy();
-      expect(systemBlock?.dataset.systemPromptState).toBe('compact');
-    }
+    expect(document.body.querySelector('[data-system-status-panel]')).toBeFalsy();
   });
 
   it('switches between Card Type Tabs and Contextual View without losing the selected preset or override state', async () => {
@@ -1033,24 +948,27 @@ describe('CardWorkshopView', () => {
       .toBe('[ A crimson interface unfolded beside Elder Kaelen, taking his measure in silence. Threat assessment: moderate. ]');
   });
 
-  it('keeps expanded mock information outside the short System Prompt TTS source', () => {
+  it('keeps stat-panel mock information outside the short System Prompt TTS source', () => {
     const systemPreset = ACTIVE_CARD_PRESETS.find(preset => preset.id === 'preset-system-prompt')!;
-    const styles = ['breakthrough', 'broken-promise', 'target-scan'] as const;
+    const fixture = createCardWorkshopContextualFixture(
+      systemPreset,
+      { ...INITIAL_CARD_WORKSHOP_OVERRIDES, systemPromptContentStyle: 'structured' },
+      new Set(),
+    );
+    const systemBlock = fixture.chapter.blocks?.[2];
+    const status = systemBlock?.system && 'status' in systemBlock.system
+      ? systemBlock.system.status
+      : undefined;
 
-    for (const style of styles) {
-      const fixture = createCardWorkshopContextualFixture(
-        systemPreset,
-        { ...INITIAL_CARD_WORKSHOP_OVERRIDES, systemPromptContentStyle: style },
-        new Set(),
-      );
-      const systemBlock = fixture.chapter.blocks?.[2];
-
-      expect(systemBlock?.text).toBe(SYSTEM_PROMPT_PRESET_EXAMPLES[style].systemContent);
-      expect(systemBlock?.system?.expanded?.sections.length).toBeGreaterThan(0);
-      expect(systemBlock?.text).not.toContain('Power Rankings');
-      expect(systemBlock?.text).not.toContain('Narrative Consequences');
-      expect(systemBlock?.text).not.toContain(systemBlock?.system?.expanded?.sections[0]?.value ?? '__missing__');
+    expect(systemBlock?.text).toBe(SYSTEM_PROMPT_PRESET_EXAMPLES.structured.systemContent);
+    expect(status?.stats?.length).toBeGreaterThan(0);
+    expect(status?.effects?.length).toBeGreaterThan(0);
+    expect(status?.abilities?.length).toBeGreaterThan(0);
+    for (const stat of status?.stats ?? []) {
+      expect(systemBlock?.text).not.toContain(stat.label);
     }
+    expect(systemBlock?.text).not.toContain(status?.effects?.[0]?.name ?? '__missing__');
+    expect(systemBlock?.text).not.toContain(status?.abilities?.[0]?.name ?? '__missing__');
   });
 
   it('keeps image, Manifest/Awaken, Codex, entity-mention, and portrait overrides active in Contextual View', async () => {

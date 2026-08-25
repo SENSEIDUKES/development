@@ -211,6 +211,25 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
       [nextIndex]?.focus();
   };
 
+  const handleBranchTabKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    currentIndex: number,
+  ) => {
+    const count = CARD_BRANCHES.length;
+    let nextIndex: number | undefined;
+    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % count;
+    if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + count) % count;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = count - 1;
+    if (nextIndex === undefined) return;
+
+    event.preventDefault();
+    selectBranch(CARD_BRANCHES[nextIndex].id);
+    event.currentTarget.parentElement
+      ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+      [nextIndex]?.focus();
+  };
+
   // Viewport container width style
   const viewportWidthClass = {
     mobile: 'max-w-[375px]',
@@ -582,7 +601,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
   return (
     <div className="flex min-h-screen w-full max-w-full flex-col overflow-x-hidden bg-[#01070e] text-signal">
       {/* Top Header & Mode Navigation */}
-      <header className="relative z-30 flex w-full min-w-0 max-w-full flex-col gap-2.5 border-b border-neutral-800/80 bg-[#010914]/90 px-3 py-2.5 shadow-lg backdrop-blur-md sm:sticky sm:top-0 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 sm:px-8 sm:py-3.5">
+      <header className="relative z-30 flex w-full min-w-0 max-w-full flex-col gap-2.5 border-b border-neutral-800/80 bg-[#010914]/90 px-3 py-2.5 shadow-lg sm:sticky sm:top-0 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 sm:px-8 sm:py-3.5 sm:backdrop-blur-md">
         <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
           <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-portal/10 border border-portal/30 flex items-center justify-center text-portal shadow-[0_0_12px_rgba(4,172,255,0.2)] shrink-0">
             <Layers size={16} className="sm:w-[18px] sm:h-[18px]" />
@@ -608,7 +627,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
               type="button"
               aria-pressed={activeTab === 'tabs'}
               onClick={() => setActiveTab('tabs')}
-              className={`flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-mono font-medium transition-all sm:flex-none ${
+              className={`min-h-11 flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-mono font-medium transition-colors sm:flex-none ${
                 activeTab === 'tabs'
                   ? 'bg-portal text-void font-bold shadow'
                   : 'text-neutral-400 hover:text-neutral-200'
@@ -620,7 +639,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
               type="button"
               aria-pressed={activeTab === 'contextual'}
               onClick={() => setActiveTab('contextual')}
-              className={`flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-mono font-medium transition-all sm:flex-none ${
+              className={`min-h-11 flex-1 whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-mono font-medium transition-colors sm:flex-none ${
                 activeTab === 'contextual'
                   ? 'bg-portal text-void font-bold shadow'
                   : 'text-neutral-400 hover:text-neutral-200'
@@ -676,7 +695,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
             </button>
           </div>
 
-          <label className="flex min-w-0 flex-1 basis-40 items-center gap-1.5 rounded-lg border border-neutral-800 bg-neutral-900/80 px-2 py-1 text-[10px] font-mono text-neutral-400 sm:flex-none sm:basis-auto">
+          <label className="flex min-h-11 min-w-0 flex-1 basis-40 items-center gap-1.5 rounded-lg border border-neutral-800 bg-neutral-900/80 px-2 py-1 text-[10px] font-mono text-neutral-400 sm:flex-none sm:basis-auto">
             <span className="shrink-0">Image</span>
             <select
               aria-label="Image state"
@@ -685,7 +704,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 ...prev,
                 imageState: event.target.value as ImagePreviewState,
               }))}
-              className="w-full min-w-0 bg-[#020914] px-1.5 py-1 text-[11px] text-signal sm:w-auto sm:max-w-[150px]"
+              className="min-h-11 w-full min-w-0 bg-[#020914] px-1.5 py-1 text-[11px] text-signal sm:w-auto sm:max-w-[150px]"
             >
               {IMAGE_STATE_OPTIONS.map(option => (
                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -709,7 +728,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                 className="w-full min-w-0"
               >
                 <div className="flex flex-wrap gap-2 rounded-xl border border-neutral-800 bg-neutral-950/70 p-1.5">
-                  {CARD_BRANCHES.map((branch) => {
+                  {CARD_BRANCHES.map((branch, index) => {
                     const isSelected = branch.id === activeBranchId;
                     return (
                       <button
@@ -720,8 +739,10 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                         role="tab"
                         aria-selected={isSelected}
                         aria-controls="card-category-tablist"
+                        tabIndex={isSelected ? 0 : -1}
                         onClick={() => selectBranch(branch.id)}
-                        className={`whitespace-nowrap rounded-lg border px-3 py-2 text-[11px] font-mono uppercase tracking-wider transition-colors ${
+                        onKeyDown={(event) => handleBranchTabKeyDown(event, index)}
+                        className={`min-h-11 whitespace-nowrap rounded-lg border px-3 py-2 text-[11px] font-mono uppercase tracking-wider transition-colors ${
                           isSelected
                             ? 'border-portal/50 bg-portal/15 text-portal'
                             : 'border-transparent text-neutral-400 hover:border-neutral-700 hover:text-signal'
@@ -760,7 +781,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                         tabIndex={isSelected ? 0 : -1}
                         onClick={() => selectCategory(category.id)}
                         onKeyDown={(event) => handleCardTabKeyDown(event, index)}
-                        className={`whitespace-nowrap rounded-lg border px-3 py-2 text-[11px] font-mono transition-colors ${
+                        className={`min-h-11 whitespace-nowrap rounded-lg border px-3 py-2 text-[11px] font-mono transition-colors ${
                           isSelected
                             ? 'border-portal/50 bg-portal/15 text-portal'
                             : 'border-transparent text-neutral-400 hover:border-neutral-700 hover:text-signal'
@@ -812,13 +833,13 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                         onClick={() => {
                           setActiveTab('contextual');
                         }}
-                        className="shrink-0 whitespace-nowrap text-[10px] font-mono text-portal hover:underline"
+                        className="inline-flex min-h-11 shrink-0 items-center px-2 text-[10px] font-mono text-portal hover:underline"
                       >
                         View in Reader →
                       </button>
                     </div>
 
-                    <div className={`mx-auto w-full min-w-0 overflow-x-auto ${viewportWidthClass} transition-all duration-300`}>
+                    <div className={`mx-auto w-full min-w-0 overflow-x-auto ${viewportWidthClass} transition-[width,max-width] duration-300 motion-reduce:transition-none`}>
                       {renderCardInstance(preset)}
                     </div>
 
@@ -864,7 +885,11 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                       </div>
                       <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                         {preset.id === 'preset-system-prompt' && (
-                          <div className="flex min-w-0 flex-wrap items-center gap-1 bg-neutral-900/90 p-1 rounded-lg border border-neutral-800">
+                          <div
+                            role="group"
+                            aria-label="System prompt examples"
+                            className="flex min-w-0 flex-wrap items-center gap-1 rounded-lg border border-neutral-800 bg-neutral-900/90 p-1"
+                          >
                             <span className="text-[9px] font-mono uppercase text-neutral-500 px-1">Example:</span>
                             {categoryStyleOptions.map((styleOpt) => {
                               const isCurrentStyle = (overrides.systemPromptContentStyle || 'breakthrough') === styleOpt.value;
@@ -898,7 +923,7 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
                       </div>
                     </div>
 
-                    <div className={`mx-auto w-full min-w-0 overflow-x-auto ${viewportWidthClass} transition-all duration-300`}>
+                    <div className={`mx-auto w-full min-w-0 overflow-x-auto ${viewportWidthClass} transition-[width,max-width] duration-300 motion-reduce:transition-none`}>
                       {renderCardInstance(preset)}
                     </div>
 

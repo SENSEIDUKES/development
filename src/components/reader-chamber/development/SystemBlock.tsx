@@ -273,11 +273,16 @@ function SystemExpandedOverlay({
     };
   }, []);
 
-  // Move focus into the dialog on open. Every report-owned close path hands
-  // focus back to the orb through closeAndRestoreFocus.
+  // Move focus into the dialog on open. Explicit close paths restore focus
+  // immediately; cleanup also covers a live event replacement unmounting it.
   React.useEffect(() => {
     panelRef.current?.focus();
-  }, []);
+    const returnTarget = returnFocusRef;
+    return () => {
+      const orb = returnTarget.current;
+      if (orb?.isConnected && document.activeElement === document.body) orb.focus();
+    };
+  }, [returnFocusRef]);
 
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

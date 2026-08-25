@@ -81,4 +81,39 @@ describe('System Prompt accessibility and motion', () => {
     expect(scopedStyles).toContain('.system-block.holographic-panel .rarity-accent');
     expect(scopedStyles).toContain('.animate-menacing-fate');
   });
+
+  it('restores focus when a live event replacement unmounts an open report', () => {
+    const renderEvent = (title: string, content: string) => (
+      <SystemBlock
+        content={content}
+        system={{
+          kind: 'system_prompt',
+          presentation: 'narrative',
+          title,
+          changes: [{ label: 'Realm Advanced', direction: 'gain' }],
+          expanded: {
+            sections: [{ heading: 'Realm', value: 'Advanced' }],
+          },
+        }}
+      />
+    );
+
+    act(() => root.render(renderEvent('First Report', 'The first event is recorded.')));
+    const opener = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Expand System Prompt details"]',
+    );
+    expect(opener).toBeTruthy();
+    act(() => opener!.click());
+    expect(document.body.querySelector('[role="dialog"]')).toBeTruthy();
+    expect(document.activeElement?.getAttribute('role')).toBe('dialog');
+
+    act(() => root.render(renderEvent('Replacement Report', 'A newer event replaces it.')));
+
+    const replacementOpener = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Expand System Prompt details"]',
+    );
+    expect(document.body.querySelector('[role="dialog"]')).toBeFalsy();
+    expect(replacementOpener).toBeTruthy();
+    expect(document.activeElement).toBe(replacementOpener);
+  });
 });

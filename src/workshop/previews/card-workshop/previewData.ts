@@ -149,7 +149,12 @@ export const CARD_PRESETS: CardPreset[] = [
       architecturalNotes: 'The Reader uses stored Codex media and never accepts a model-generated Codex ID or image URL. Any inline World Cue remains a separate prose action beside the Codex link.',
     },
     codexReveal: {
-      type: 'Human Portrait',
+      // The on-card eyebrow shows the same production label every Codex
+      // character card uses ('character' → "CHARACTER"), regardless of
+      // Human/Non-Human portraitKind. The preset id, category, and
+      // portraitKind still carry the Human/Non-Human distinction for
+      // routing and generation.
+      type: 'character',
       entry: {
         id: 'codex-char-rin',
         name: 'Rin',
@@ -176,7 +181,9 @@ export const CARD_PRESETS: CardPreset[] = [
       architecturalNotes: 'Named, bonded, intelligent, or recurring individuals are character-owned Portraits. Their species remains informational, and inline World Cues stay independent from the card.',
     },
     codexReveal: {
-      type: 'Non-Human Portrait',
+      // See the Human preset above: the eyebrow reads "CHARACTER" like real
+      // Reader cards, while portraitKind keeps the Non-Human routing intact.
+      type: 'character',
       entry: {
         id: 'codex-char-lei',
         name: 'Lei',

@@ -162,7 +162,7 @@ export const workshopEntries: WorkshopEntry[] = [
     title: 'Card Workshop',
     description: 'Development-only Card Type Tabs and contextual ReaderViewport preview for inspecting Codex Cards, compact or expanded System Panels, Fate results, and independent action-scoped Worldcue annotations without generating a chapter.',
     category: 'reader-ui',
-    version: 'v1.2',
+    version: 'v1.5',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/SystemBlock.tsx; src/components/FateResultCard.tsx; src/components/ReaderViewport.tsx',

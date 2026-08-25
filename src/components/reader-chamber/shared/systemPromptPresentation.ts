@@ -12,6 +12,9 @@ import type {
   SystemEvent,
   SystemPromptChange,
   SystemPromptPresentation,
+  SystemStatusBar,
+  SystemStatusEffect,
+  SystemStatusScreen,
   WorldNoticeData,
   WorldNoticeEntry,
 } from './types';
@@ -30,6 +33,8 @@ interface RegularSystemPromptRoute {
   system: SystemEvent;
   rows: SystemPromptRow[];
   changes: SystemPromptChange[];
+  /** Normalized mechanical status screen, present only on the mechanical route. */
+  status?: SystemStatusScreen;
 }
 
 /**
@@ -173,6 +178,82 @@ export function normalizeSystemPromptChanges(value: unknown): SystemPromptChange
   });
 }
 
+const STATUS_BAR_TONES: SystemStatusBar['tone'][] = ['health', 'spirit', 'progress'];
+
+/**
+ * Normalizes a loose runtime mechanical status screen. Bars need a label and
+ * finite value/max with max above zero; stats need label and value; effects
+ * and abilities need a name. Invalid entries drop out individually, and the
+ * screen itself drops when nothing meaningful survives.
+ */
+export function normalizeSystemStatusScreen(value: unknown): SystemStatusScreen | undefined {
+  if (!isRecord(value)) return undefined;
+
+  const level = cleanText(value.level);
+  const bars = Array.isArray(value.bars)
+    ? value.bars.flatMap(bar => {
+        if (!isRecord(bar)) return [];
+        const label = cleanText(bar.label);
+        const barValue = Number(bar.value);
+        const max = Number(bar.max);
+        const tone = STATUS_BAR_TONES.includes(bar.tone as SystemStatusBar['tone'])
+          ? bar.tone as SystemStatusBar['tone']
+          : undefined;
+        if (!label || !Number.isFinite(barValue) || !Number.isFinite(max) || max <= 0 || !tone) return [];
+        const display = cleanText(bar.display);
+        return [{ label, value: barValue, max, tone, ...(display ? { display } : {}) }];
+      })
+    : [];
+  const stats = Array.isArray(value.stats)
+    ? value.stats.flatMap(stat => {
+        if (!isRecord(stat)) return [];
+        const label = cleanText(stat.label);
+        const statValue = cleanText(stat.value);
+        if (!label || !statValue) return [];
+        const delta = Number(stat.delta);
+        return [{ label, value: statValue, ...(Number.isFinite(delta) && delta !== 0 ? { delta } : {}) }];
+      })
+    : [];
+  const effects = Array.isArray(value.effects)
+    ? value.effects.flatMap(effect => {
+        if (!isRecord(effect)) return [];
+        const name = cleanText(effect.name);
+        if (!name) return [];
+        const detail = cleanText(effect.detail);
+        const effectValue = cleanText(effect.value);
+        const tone = effect.tone === 'positive' || effect.tone === 'negative'
+          ? effect.tone as SystemStatusEffect['tone']
+          : undefined;
+        return [{
+          name,
+          ...(detail ? { detail } : {}),
+          ...(effectValue ? { value: effectValue } : {}),
+          ...(tone ? { tone } : {}),
+        }];
+      })
+    : [];
+  const abilities = Array.isArray(value.abilities)
+    ? value.abilities.flatMap(ability => {
+        if (!isRecord(ability)) return [];
+        const name = cleanText(ability.name);
+        if (!name) return [];
+        const detail = cleanText(ability.detail);
+        return [{ name, ...(detail ? { detail } : {}) }];
+      })
+    : [];
+
+  if (!level && bars.length === 0 && stats.length === 0 && effects.length === 0 && abilities.length === 0) {
+    return undefined;
+  }
+  return {
+    ...(level ? { level } : {}),
+    ...(bars.length > 0 ? { bars } : {}),
+    ...(stats.length > 0 ? { stats } : {}),
+    ...(effects.length > 0 ? { effects } : {}),
+    ...(abilities.length > 0 ? { abilities } : {}),
+  };
+}
+
 /**
  * Resolves the only legal presentation route for the Reader. It never uses
  * `promptType` to choose layout: colors remain semantic, and form selection
@@ -188,6 +269,7 @@ export function resolveSystemPromptRoute(system?: SystemEvent): SystemPromptRout
 
   const rows = normalizeSystemPromptRows(system.rows);
   const changes = normalizeSystemPromptChanges(system.changes);
+  const status = normalizeSystemStatusScreen('status' in system ? system.status : undefined);
   const requested = 'presentation' in system ? system.presentation : undefined;
   if (requested === 'world_notice') {
     const worldNotice = normalizeWorldNoticeData(
@@ -198,14 +280,22 @@ export function resolveSystemPromptRoute(system?: SystemEvent): SystemPromptRout
       : undefined;
   }
   if (requested === 'narrative' || requested === 'mechanical') {
-    return { presentation: requested, system, rows, changes };
+    return {
+      presentation: requested,
+      system,
+      rows,
+      changes,
+      ...(requested === 'mechanical' && status ? { status } : {}),
+    };
   }
 
+  const resolved = rows.length === 0 || changes.length > 0 ? 'narrative' : 'mechanical';
   return {
-    presentation: rows.length === 0 || changes.length > 0 ? 'narrative' : 'mechanical',
+    presentation: resolved,
     system,
     rows,
     changes,
+    ...(resolved === 'mechanical' && status ? { status } : {}),
   };
 }
 

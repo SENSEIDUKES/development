@@ -913,6 +913,7 @@ export const SystemBlock = React.memo(function SystemBlock({ content, system, re
           content={content}
           system={system}
           rows={rows}
+          status={route.status}
           surface={surface}
           style={systemRootStyle}
           className={className}

@@ -264,9 +264,56 @@ describe('CardWorkshopView', () => {
       .toBeTruthy();
     await act(async () => elderCodexAction!.click());
 
-    // Toggle to structured mechanical example
+    // Toggle to the structured mechanical status screen: the modern LitRPG
+    // layout shows the level pill, semantic resource meters (HP red, QI blue,
+    // EXP gold), the two-column inset stat grid with signed deltas, one active
+    // effect, one ability, and keeps its TTS summary collapsed behind the
+    // centered chevron.
     await clickButton('Structured Mechanical');
-    expect(container.textContent).toContain('Meridian Status & Vitality Flow');
+    const statusBlock = container.querySelector<HTMLElement>('.system-block');
+    expect(statusBlock?.dataset.systemPresentation).toBe('mechanical');
+    expect(statusBlock?.textContent).toContain('STATUS // YUN CHE');
+    expect(statusBlock?.textContent).toContain('Meridian Adept · Foundation Realm');
+    expect(statusBlock?.textContent).toContain('✦ Stable ✦');
+    expect(statusBlock?.textContent).toContain('Level 24');
+
+    const meters = [...(statusBlock?.querySelectorAll<HTMLElement>('[role="progressbar"]') ?? [])];
+    expect(meters.map(meter => meter.getAttribute('aria-valuetext')))
+      .toEqual(['780 / 780', '1,420 / 1,500', '62%']);
+    expect(meters.map(meter => meter.closest('[data-status-bar]')?.getAttribute('data-color-code')))
+      .toEqual(['enemy', 'mainCharacter', 'mentor']);
+
+    const statCells = [...(statusBlock?.querySelectorAll<HTMLElement>('[data-status-stat]') ?? [])];
+    expect(statCells.map(cell => cell.getAttribute('data-status-stat')))
+      .toEqual(['STR', 'VIT', 'AGI', 'INT', 'WIS', 'LUCK']);
+    const gainDelta = statusBlock?.querySelector<HTMLElement>('[data-status-delta="gain"]');
+    expect(gainDelta?.textContent).toBe('+3');
+    expect(gainDelta?.getAttribute('data-color-code')).toBe('ally');
+    const lossDelta = statusBlock?.querySelector<HTMLElement>('[data-status-delta="loss"]');
+    expect(lossDelta?.textContent).toBe('−2');
+    expect(lossDelta?.getAttribute('data-color-code')).toBe('enemy');
+
+    expect(statusBlock?.textContent).toContain('Active Effect');
+    expect(statusBlock?.textContent).toContain('Rain Attunement');
+    expect(statusBlock?.textContent).toContain('+12/min');
+    expect(statusBlock?.textContent).toContain('Ability');
+    expect(statusBlock?.textContent).toContain('Soul Seam Sight');
+    expect(statusBlock?.textContent).toContain('Range 30 paces');
+
+    // The TTS summary starts collapsed behind the centered chevron; narration
+    // still reads the block data, so the sentence stays in the DOM hidden.
+    const statusSummary = statusBlock?.querySelector<HTMLElement>('[data-system-summary]');
+    expect(statusSummary?.textContent)
+      .toBe('SYSTEM NOTIFICATION: Meridian Resonance 84% — Minor Bottleneck Cleared');
+    expect(statusSummary?.hasAttribute('hidden')).toBe(true);
+    const statusToggle = statusBlock?.querySelector<HTMLButtonElement>('[data-system-summary-toggle="true"]');
+    expect(statusToggle?.getAttribute('aria-label')).toBe('Reveal System narration');
+    expect(statusToggle?.getAttribute('aria-expanded')).toBe('false');
+    await act(async () => statusToggle!.click());
+    expect(statusToggle?.getAttribute('aria-expanded')).toBe('true');
+    expect(statusSummary?.hasAttribute('hidden')).toBe(false);
+    await act(async () => statusToggle!.click());
+    expect(statusSummary?.hasAttribute('hidden')).toBe(true);
   });
 
   it('branches Codex Cards and System Prompts into their own category sets', async () => {

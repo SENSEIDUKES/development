@@ -498,14 +498,30 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
       kind: 'system_prompt' as const,
       presentation: 'mechanical' as const,
       promptType: 'progression' as const,
-      title: 'Meridian Status & Vitality Flow',
-      rarity: 'First Witness Core Resonance',
-      rows: [
-        { label: 'Cultivation Stage', value: 'Foundation Establishment — Stage 4' },
-        { label: 'Spiritual Qi Pool', value: '1,420 / 1,500 (+12/min in Rain)' },
-        { label: 'Soul Seam Sight', value: 'Active (Radius: 30 paces)' },
-        { label: 'Dao Alignment', value: 'Unbroken Celestial Truth' },
-      ],
+      title: 'STATUS // YUN CHE',
+      flavor: 'Meridian Adept · Foundation Realm',
+      status: {
+        level: '24',
+        bars: [
+          { label: 'HP', value: 780, max: 780, display: '780 / 780', tone: 'health' as const },
+          { label: 'QI', value: 1420, max: 1500, display: '1,420 / 1,500', tone: 'spirit' as const },
+          { label: 'EXP', value: 62, max: 100, display: '62%', tone: 'progress' as const },
+        ],
+        stats: [
+          { label: 'STR', value: '38' },
+          { label: 'VIT', value: '44', delta: 3 },
+          { label: 'AGI', value: '31', delta: -2 },
+          { label: 'INT', value: '27' },
+          { label: 'WIS', value: '35' },
+          { label: 'LUCK', value: '12' },
+        ],
+        effects: [
+          { name: 'Rain Attunement', detail: 'Qi Recovery', value: '+12/min', tone: 'positive' as const },
+        ],
+        abilities: [
+          { name: 'Soul Seam Sight', detail: 'Range 30 paces' },
+        ],
+      },
     },
   },
   'guild-bounty': {

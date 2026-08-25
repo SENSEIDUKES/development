@@ -63,6 +63,14 @@ const readEntries = (sourceDirectory: string) => {
   return entries;
 };
 
+/**
+ * Builds one package's Vite library configuration from its target descriptor.
+ *
+ * @param options - The package target id, plus any externals beyond the
+ * host-provided set (Library marks `@seihouse/sen` external so it links
+ * against the published engine rather than bundling a second copy).
+ * @returns The Vite configuration for that package's library build.
+ */
 export const createPackageBuildConfig = (options: PackageBuildOptions) => {
   // One descriptor per package, shared with the boundary, finalize, and smoke
   // scripts, so the entry list, output directory, and stylesheet cannot drift

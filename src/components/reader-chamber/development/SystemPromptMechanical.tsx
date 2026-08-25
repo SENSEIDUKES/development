@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Skull, TriangleAlert as AlertTriangle } from 'lucide-react';
 import type { SystemEvent } from '../shared/types';
 import { getColorCodeStyle } from '../shared/colorCodes';
@@ -25,6 +25,7 @@ export function SystemPromptMechanical({
   className,
   ...props
 }: SystemPromptMechanicalProps) {
+  const reduceMotion = useReducedMotion();
   const {
     onAnimationStart: _animationStart,
     onDrag: _drag,
@@ -39,14 +40,15 @@ export function SystemPromptMechanical({
   return (
     <motion.div
       {...safeProps}
-      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 10, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      whileHover={{ scale: 1.02 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
+      transition={{ duration: reduceMotion ? 0 : 0.5, ease: 'easeOut' }}
+      data-interactive="false"
+      data-motion={reduceMotion ? 'reduced' : 'full'}
       data-color-code={surface.meaning.colorCode}
       data-system-presentation="mechanical"
       style={style}
-      className={`system-block holographic-panel cursor-pointer my-6 md:my-8 rounded-md border font-mono p-3 md:p-4 max-w-xl mx-auto transition-all duration-300 ${getSystemPromptSurfaceClasses(surface)} ${className || ''}`}
+      className={`system-block holographic-panel cursor-default my-6 md:my-8 rounded-md border font-mono p-3 md:p-4 max-w-xl mx-auto transition-[border-color,box-shadow] duration-300 motion-reduce:transition-none ${getSystemPromptSurfaceClasses(surface)} ${className || ''}`}
     >
       <div className="flex flex-col space-y-3">
         <div className="flex items-center justify-between border-b pb-2 border-inherit/30">
@@ -55,18 +57,18 @@ export function SystemPromptMechanical({
               <Skull
                 data-color-code={surface.fateFlagColorCode}
                 style={getColorCodeStyle(surface.fateFlagColorCode)}
-                className="w-5 h-5 animate-pulse shrink-0"
+                className="w-5 h-5 animate-pulse motion-reduce:animate-none shrink-0"
               />
             )}
             {isIronFate && surface.fateFlagColorCode && (
               <AlertTriangle
                 data-color-code={surface.fateFlagColorCode}
                 style={getColorCodeStyle(surface.fateFlagColorCode)}
-                className="w-5 h-5 animate-bounce shrink-0"
+                className="w-5 h-5 animate-bounce motion-reduce:animate-none shrink-0"
               />
             )}
-            <div className="flex flex-col">
-              <span className="font-bold uppercase tracking-widest text-xs md:text-sm leading-tight">{system.title}</span>
+            <div className="min-w-0 flex flex-col">
+              <span className="break-words font-bold uppercase tracking-widest text-xs md:text-sm leading-tight [overflow-wrap:anywhere]">{system.title}</span>
               <span className="text-[9px] uppercase tracking-wider opacity-60 font-mono mt-0.5">
                 ✦ {surface.meaning.name} ✦
               </span>
@@ -82,9 +84,9 @@ export function SystemPromptMechanical({
         {rows.length > 0 && (
           <div className="space-y-1.5">
             {rows.map((row, index) => (
-              <div key={`${row.label}-${index}`} className="flex justify-between items-center text-[11px] md:text-xs">
-                <span className="opacity-70 uppercase tracking-widest">{row.label}</span>
-                <span className="font-semibold tracking-wide text-right">{row.value}</span>
+              <div key={`${row.label}-${index}`} className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] items-start gap-3 text-[11px] md:text-xs">
+                <span className="min-w-0 break-words opacity-70 uppercase tracking-widest [overflow-wrap:anywhere]">{row.label}</span>
+                <span className="min-w-0 break-words font-semibold tracking-wide text-right [overflow-wrap:anywhere]">{row.value}</span>
               </div>
             ))}
           </div>

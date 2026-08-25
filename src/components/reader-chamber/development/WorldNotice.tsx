@@ -85,7 +85,7 @@ export function WorldNotice({
       <header className="border-b border-amber-100/20 pb-3 text-center">
         <h2
           id={headingId}
-          className="font-mono text-sm font-black uppercase tracking-[0.2em] text-current drop-shadow-[0_0_9px_color-mix(in_srgb,currentColor_42%,transparent)] md:text-base"
+          className="break-words font-mono text-sm font-black uppercase tracking-[0.2em] text-current [overflow-wrap:anywhere] drop-shadow-[0_0_9px_color-mix(in_srgb,currentColor_42%,transparent)] md:text-base"
         >
           {documentTitle}
         </h2>
@@ -110,7 +110,7 @@ export function WorldNotice({
             data-reader-narration="excluded"
             className={`py-4 ${!isBoard ? 'pb-0' : ''}`}
           >
-            <h3 className="font-mono text-xs font-bold uppercase tracking-[0.16em] text-amber-50 md:text-sm">
+            <h3 className="break-words font-mono text-xs font-bold uppercase tracking-[0.16em] text-amber-50 [overflow-wrap:anywhere] md:text-sm">
               {entry.title}
             </h3>
             {entry.body && (
@@ -121,9 +121,9 @@ export function WorldNotice({
             {entry.details && entry.details.length > 0 && (
               <dl className="mt-3 grid gap-x-4 gap-y-1.5 border-t border-amber-100/10 pt-3 font-mono text-[10px] uppercase tracking-[0.1em] md:text-[11px]">
                 {entry.details.map((detail, detailIndex) => (
-                  <div key={`${detail.label}-${detailIndex}`} className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3">
-                    <dt className="text-amber-100/55">{detail.label}</dt>
-                    <dd className="text-right font-semibold text-amber-50">{detail.value}</dd>
+                  <div key={`${detail.label}-${detailIndex}`} className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] items-baseline gap-3">
+                    <dt className="min-w-0 break-words text-amber-100/65 [overflow-wrap:anywhere]">{detail.label}</dt>
+                    <dd className="min-w-0 break-words text-right font-semibold text-amber-50 [overflow-wrap:anywhere]">{detail.value}</dd>
                   </div>
                 ))}
               </dl>

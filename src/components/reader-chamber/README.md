@@ -4,11 +4,13 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `f89cb41`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-24
+- **Last Workshop update:** 2026-08-25
 - **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
 ## Workshop history
+
+- **2026-08-25:** Audited the Development System Prompt family through the real Reader/Card Workshop path for accessibility, responsive fit, correctness, motion, long content, palette contrast, and rendering cost. Expanded reports now keep their title and 44px close action pinned while a single keyboard-focusable body region handles short-height or authored long-content overflow; the full-viewport backdrop blur is removed, focus remains trapped and returns to the orb for every report close path, and nested Codex Escape handling leaves the hovercard to close itself. The compact narration toggle is now a 44px target. Narrative, Mechanical, Fate, menacing, and rarity animation paths honor reduced motion; inert Mechanical and legacy panels no longer advertise click behavior through pointer cursors or hover scaling; and long unbroken headings, rows, statuses, sections, and World Notice details wrap without horizontal overflow. Rendered contrast checks passed unchanged across the default, protanopia, deuteranopia, tritanopia, and high-contrast-dark palettes. The visual direction, ReaderViewport integration, Workshop-local data boundary, TTS ownership, and locked Reference remain unchanged.
 
 - **2026-08-24:** Consolidated the reusable System presentation boundary behind `resolveSystemPromptRoute`: `kind: "fate_system_prompt"` is the sole Fate route, while a regular `system_prompt` explicitly selects Narrative, Mechanical, or World Notice. The shared boundary now normalizes public Reader payloads before rendering, keeps `promptType` as semantic color only, and preserves the legacy shape fallback only for regular prompts with no authored presentation. `SystemBlock` delegates the Mechanical form to `SystemPromptMechanical`, World Notice remains the inert document renderer, and Fate Result remains the outcome-specific card. The `@seihouse/sen/reader-chamber` entry now exports the three component prop contracts plus route, payload-normalization, and shared-color helpers; direct World Notice and Fate Result consumers receive the same malformed-payload safety. No generation, persistence, TTS source, locked Reference, or source-comparison metadata changed.
 

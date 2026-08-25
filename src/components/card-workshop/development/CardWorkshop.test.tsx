@@ -11,7 +11,10 @@ import {
   ACTIVE_CARD_PRESETS,
   SYSTEM_PROMPT_PRESET_EXAMPLES,
 } from '../../../workshop/previews/card-workshop/previewData';
-import { INITIAL_CARD_WORKSHOP_OVERRIDES } from '../../../workshop/previews/card-workshop/previewStates';
+import {
+  INITIAL_CARD_WORKSHOP_OVERRIDES,
+  SYSTEM_PROMPT_STYLE_OPTIONS,
+} from '../../../workshop/previews/card-workshop/previewStates';
 import { resetMockState } from '../../reader-chamber/shared/stubs';
 import { installAudioMediaStubs, renderWithDevAudio } from '../../../test-utils/renderWithDevAudio';
 
@@ -467,6 +470,90 @@ describe('CardWorkshopView', () => {
     expect(legacyPresentations).toEqual(['world_notice', 'narrative', 'mechanical']);
   });
 
+  it('keeps inert System documents honest and wraps long authored values without horizontal overflow', () => {
+    const longToken = 'BOUNDARYLESSCELESTIALARCHIVEIDENTIFIER'.repeat(4);
+    act(() => root.render(renderWithDevAudio(
+      <>
+        <SystemBlock
+          content="[ A mechanical record. ]"
+          system={{
+            kind: 'system_prompt',
+            presentation: 'mechanical',
+            title: longToken,
+            rows: [{ label: longToken, value: longToken }],
+          }}
+        />
+        <SystemBlock
+          content="[ A posted record. ]"
+          system={{
+            kind: 'system_prompt',
+            presentation: 'world_notice',
+            title: longToken,
+            worldNotice: {
+              entries: [{
+                title: longToken,
+                details: [{ label: longToken, value: longToken }],
+              }],
+            },
+          }}
+        />
+      </>,
+    )));
+
+    const mechanical = container.querySelector<HTMLElement>('[data-system-presentation="mechanical"]');
+    expect(mechanical?.dataset.interactive).toBe('false');
+    expect(mechanical?.className).toContain('cursor-default');
+    expect(mechanical?.className).not.toContain('cursor-pointer');
+    const mechanicalRow = mechanical?.querySelector<HTMLElement>('.grid');
+    expect(mechanicalRow?.className).toContain('minmax(0,0.8fr)');
+    expect(mechanicalRow?.querySelectorAll('[class*="overflow-wrap:anywhere"]')).toHaveLength(2);
+
+    const notice = container.querySelector<HTMLElement>('[data-world-notice="true"]');
+    expect(notice?.querySelector('h2')?.className).toContain('overflow-wrap:anywhere');
+    expect(notice?.querySelector('h3')?.className).toContain('overflow-wrap:anywhere');
+    expect(notice?.querySelector('dl > div')?.className).toContain('minmax(0,1.2fr)');
+    expect(notice?.querySelector('dt')?.className).toContain('overflow-wrap:anywhere');
+    expect(notice?.querySelector('dd')?.className).toContain('overflow-wrap:anywhere');
+  });
+
+  it('keeps the mobile Workshop controls contained, semantically selected, and touch sized', async () => {
+    act(() => root.render(renderWithDevAudio(
+      <CardWorkshopView initialMode="tabs" initialPresetId="preset-system-prompt" />,
+    )));
+
+    expect(container.querySelector<HTMLElement>('.min-h-screen')?.className).toContain('overflow-x-clip');
+    expect(getButton('Card Type Tabs')?.getAttribute('aria-pressed')).toBe('true');
+    expect(getButton('Contextual View')?.getAttribute('aria-pressed')).toBe('false');
+    expect(getButton('Card Type Tabs')?.className).toContain('min-h-11');
+    expect(getButton('Contextual View')?.className).toContain('min-h-11');
+
+    for (const label of ['Mobile Viewport', 'Tablet Viewport', 'Desktop Viewport']) {
+      const viewportControl = getButton(label);
+      expect(viewportControl?.className).toContain('h-11');
+      expect(viewportControl?.className).toContain('w-11');
+      expect(viewportControl?.hasAttribute('aria-pressed')).toBe(true);
+    }
+
+    const cardTabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    expect(cardTabs.every(tab => tab.className.includes('min-h-11'))).toBe(true);
+
+    const exampleGroup = container.querySelector<HTMLElement>('[role="group"][aria-label="System prompt examples"]');
+    expect(exampleGroup?.className).toContain('flex-wrap');
+    const exampleControls = [...(exampleGroup?.querySelectorAll<HTMLButtonElement>('button') ?? [])];
+    expect(exampleControls).toHaveLength(SYSTEM_PROMPT_STYLE_OPTIONS.length);
+    expect(exampleControls.every(button => button.className.includes('min-h-11'))).toBe(true);
+    expect(exampleControls.filter(button => button.getAttribute('aria-pressed') === 'true')).toHaveLength(1);
+
+    const readerAction = [...container.querySelectorAll<HTMLButtonElement>('button')]
+      .find(button => button.textContent?.includes('View in Reader'));
+    expect(readerAction?.className).toContain('min-h-11');
+
+    await clickButton('Tablet Viewport');
+    expect(getButton('Tablet Viewport')?.getAttribute('aria-pressed')).toBe('true');
+    await clickButton('Contextual View');
+    expect(getButton('Contextual View')?.getAttribute('aria-pressed')).toBe('true');
+  });
+
   it('opens the expanded event report in a viewport overlay and restores focus to the orb action', async () => {
     act(() => root.render(renderWithDevAudio(
       <CardWorkshopView initialMode="tabs" initialPresetId="preset-system-prompt" />,
@@ -490,15 +577,51 @@ describe('CardWorkshopView', () => {
     expect(overlay?.getAttribute('aria-modal')).toBe('true');
     expect(overlay?.getAttribute('data-reader-narration')).toBe('excluded');
     expect(overlay?.className).toContain('max-h-full');
-    expect(overlay?.className).toContain('overflow-y-auto');
-    expect(overlay?.className).toContain('overscroll-contain');
+    expect(overlay?.className).toContain('overflow-hidden');
+    const scrollRegion = overlay?.querySelector<HTMLElement>('[data-system-expanded-scroll-region="true"]');
+    expect(scrollRegion?.className).toContain('min-h-0');
+    expect(scrollRegion?.className).toContain('overflow-y-auto');
+    expect(scrollRegion?.className).toContain('overscroll-contain');
+    expect(scrollRegion?.getAttribute('role')).toBe('region');
+    expect(scrollRegion?.getAttribute('aria-label')).toBe('System event report details');
+    expect(scrollRegion?.tabIndex).toBe(0);
+    const backdropLayer = overlay?.parentElement;
+    expect(backdropLayer?.className).not.toContain('backdrop-blur');
     expect(systemBlock?.contains(overlay!)).toBe(false);
     expect(systemBlock?.dataset.systemPromptState).toBe('expanded');
     expect(systemBlock?.querySelector('[data-consequence-count]')).toBeTruthy();
     expect(systemBlock?.querySelector('[data-system-summary]')?.textContent).toBe(compactSummary);
     expect(systemBlock?.textContent).not.toContain('Power Rankings');
     expect(systemBlock?.querySelector('[data-system-orb-icon="open"]')).toBeTruthy();
-    expect(getButton('Collapse System Prompt details')?.getAttribute('aria-expanded')).toBe('true');
+    const expandedOrb = getButton('Collapse System Prompt details');
+    expect(expandedOrb?.getAttribute('aria-expanded')).toBe('true');
+    expect(expandedOrb?.className).toContain('h-11');
+    expect(expandedOrb?.className).toContain('w-11');
+    const closeControl = overlay?.querySelector<HTMLButtonElement>('button[aria-label="Close System event report"]');
+    expect(closeControl?.className).toContain('h-11');
+    expect(closeControl?.className).toContain('w-11');
+    const summaryToggle = systemBlock?.querySelector<HTMLButtonElement>('[data-system-summary-toggle="true"]');
+    expect(summaryToggle?.className).toContain('h-11');
+    expect(summaryToggle?.className).toContain('w-11');
+
+    // Tab and Shift+Tab remain trapped inside the modal, including the body
+    // scroller used by keyboard users on short-height and long-content layouts.
+    const focusable = [...(overlay?.querySelectorAll<HTMLElement>(
+      'button, [role="button"], [tabindex]:not([tabindex="-1"])',
+    ) ?? [])];
+    focusable.forEach(element => Object.defineProperty(element, 'offsetParent', {
+      configurable: true,
+      value: overlay,
+    }));
+    closeControl?.focus();
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'Tab',
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    })));
+    expect(overlay?.contains(document.activeElement)).toBe(true);
+    expect(document.activeElement).not.toBe(closeControl);
 
     // One flat report: classification, headline, subject, the System
     // outcome row, and the Codex sections with progress — never narration.

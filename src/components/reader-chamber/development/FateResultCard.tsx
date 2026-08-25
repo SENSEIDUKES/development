@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { CircleAlert as AlertCircle, CircleCheck as CheckCircle, Flame } from 'lucide-react';
 import { FateResultData } from '../shared/types';
 import {
@@ -21,6 +21,7 @@ export const FateResultCard = React.memo(function FateResultCard({
   style: suppliedStyle,
   ...props
 }: FateResultCardProps) {
+  const reduceMotion = useReducedMotion();
   const data = normalizeFateResultData(receivedData);
   if (!data) return null;
   const {
@@ -66,14 +67,15 @@ export const FateResultCard = React.memo(function FateResultCard({
   return (
     <motion.div
       {...safeProps}
-      initial={{ opacity: 0, scale: 0.9, y: 20 }}
+      initial={reduceMotion ? false : { opacity: 0, scale: 0.9, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 100, damping: 15 }}
+      transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 100, damping: 15 }}
+      data-motion={reduceMotion ? 'reduced' : 'full'}
       data-system-presentation="fate"
       data-reader-narration="excluded"
       data-color-code={colorCode}
       style={{ ...fateStyle, ...suppliedStyle }}
-      className={`my-6 md:my-8 mx-auto max-w-2xl p-5 md:p-6 border-2 rounded-2xl font-mono collectible-card relative overflow-hidden ${data.outcome === 'DOOM MANIFESTED' ? 'animate-pulse' : ''} ${className || ''}`}
+      className={`my-6 md:my-8 mx-auto max-w-2xl p-5 md:p-6 border-2 rounded-2xl font-mono collectible-card relative overflow-hidden ${data.outcome === 'DOOM MANIFESTED' ? 'animate-pulse motion-reduce:animate-none' : ''} ${className || ''}`}
     >
       {/* Mystical background overlay */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMDAwIi8+CjxwYXRoIGQ9Ik0wIDRMMCAwTDQgNEwwIDQiIGZpbGw9IiMzMzMiLz4KPC9zdmc+')] opacity-20 pointer-events-none mix-blend-screen" />

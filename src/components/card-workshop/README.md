@@ -4,7 +4,7 @@
 - **Verified source locations:** `src/components/ReaderViewport.tsx`, `src/components/SystemBlock.tsx`, `src/components/FateResultCard.tsx`
 - **Workshop preview:** `?preview=card-workshop`
 - **Replica created:** 2026-08-14
-- **Last Workshop update:** 2026-08-24
+- **Last Workshop update:** 2026-08-25
 - **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
@@ -21,6 +21,8 @@ The current presentation set is deliberately limited to:
 Chapter Visual Memories are not part of the Reader or Card Workshop. Manga Studio is outside this feature and is unchanged.
 
 ## Workshop history
+
+- **2026-08-25:** Ran the System Prompt accessibility, mobile/tablet/short-height, bug, and performance audit through Card Workshop's real Development Reader integration. Added regressions for the pinned expanded-report shell and its keyboard-focusable long-content scroller, 44px open/close/narration controls, focus containment and return, nested Codex Escape order, reduced-motion rendering, honest inert Mechanical affordances, and overflow-safe Mechanical/World Notice content. The existing semantic palettes passed rendered contrast checks without changing their established meanings or colors.
 
 - **2026-08-24:** Clarified the regular System Prompt selector into explicit `narrative`, `mechanical`, and `world_notice` families while retaining `system_prompt` and `fate_system_prompt` as the only top-level kinds. The existing Narrative Notification compact/expanded card and LitRPG mechanical panel retain their approved layouts; `promptType` supplies their shared semantic color, never layout choice. Added deterministic **Guild Bounty** (single notice) and **Mission Board** (multi-entry board) examples through the existing System Prompt selector, rendered by the Reader's static `WorldNotice` document surface with direct headings, secondary flavor, ordered labeled details, no controls, raw HTML, Codex links, or TTS ownership. The contextual Reader adds a board fixture; Fate, locked Reference, preview routes, and source-comparison metadata are unchanged.
 

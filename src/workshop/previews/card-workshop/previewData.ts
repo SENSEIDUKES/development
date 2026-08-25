@@ -1,11 +1,135 @@
 import type { CardPreset } from '../../../components/card-workshop/shared/types';
 import type { CodexTerm } from '@seihouse/sen/reader-codex';
+import type { SystemPromptExpandedData } from '@seihouse/sen/reader-chamber';
 
 const durableVisualImportance = {
   namedStatus: true,
   narrativeWeight: 'major' as const,
   recurrence: true,
   plotRelevance: true,
+};
+
+const BREAKTHROUGH_EXPANDED: SystemPromptExpandedData = {
+  subject: {
+    name: 'Yun Che',
+    role: 'MC (You)',
+  },
+  sections: [
+    {
+      heading: 'Power Rankings',
+      value: 'Foundation Establishment — Stage 4',
+      progress: { value: 37, max: 100, label: '37/100' },
+    },
+    {
+      heading: 'Karma Bond',
+      detail: 'Yun Che’s successful breakthrough has angered Elder Han.',
+      progress: { value: -75, min: -100, max: 100, label: '−75/100' },
+      status: { label: 'Danger', tone: 'danger' },
+      tone: 'danger',
+    },
+    {
+      heading: 'Lore',
+      detail: 'Foundation Establishment Stage 4 stabilizes the cultivator’s mortal meridians and extends natural lifespan by one century.',
+    },
+    {
+      heading: 'Warning',
+      detail: 'The tribulation signature can be tracked for seven days by cultivators above Yun Che’s current realm.',
+      status: { label: 'Spirit Trace', tone: 'warning' },
+      tone: 'warning',
+    },
+    {
+      heading: 'Narrative Consequences',
+      items: [
+        'Elder Han will move openly against Yun Che.',
+        'Nearby sects may investigate the tribulation site.',
+      ],
+    },
+  ],
+};
+
+const BROKEN_PROMISE_EXPANDED: SystemPromptExpandedData = {
+  subject: {
+    name: 'Magistrate Jinhai',
+    role: 'Rain Court Magistrate',
+  },
+  sections: [
+    {
+      heading: 'Reputation',
+      value: 'Rain Court Standing — Disgraced',
+      progress: { value: -64, min: -100, max: 100, label: '−64/100' },
+      status: { label: 'Falling', tone: 'warning' },
+      tone: 'warning',
+    },
+    {
+      heading: 'Karma Bond',
+      detail: 'Magistrate Jinhai’s broken oath has severed the Riverside Sect’s remaining trust.',
+      progress: { value: -92, min: -100, max: 100, label: '−92/100' },
+      status: { label: 'Danger', tone: 'danger' },
+      tone: 'danger',
+    },
+    {
+      heading: 'Lore',
+      detail: 'Rain Court promises are witnessed by the Nine Cauldrons Oath Seal and entered into the public karmic record.',
+    },
+    {
+      heading: 'Warning',
+      detail: 'A second sworn breach will strip Magistrate Jinhai of the court’s spiritual protection.',
+      status: { label: 'Oath Fracture', tone: 'warning' },
+      tone: 'warning',
+    },
+    {
+      heading: 'Narrative Consequences',
+      items: [
+        'Magistrate Jinhai loses access to Riverside Sect testimony.',
+        'The Riverside Sect may demand judgment before the next court assembly.',
+      ],
+    },
+  ],
+};
+
+const TARGET_SCAN_EXPANDED: SystemPromptExpandedData = {
+  subject: {
+    name: 'Elder Kaelen',
+    role: 'Hostile Elder',
+  },
+  sections: [
+    {
+      heading: 'Power Rankings',
+      value: 'Foundation Establishment — Stage 7',
+      progress: { value: 82, max: 100, label: '82/100' },
+    },
+    {
+      heading: 'Combat Profile',
+      value: 'Spear Arts · Lightning Affinity',
+      detail: 'Weakness: spiritual defense drops briefly after his third chained thrust.',
+      status: { label: 'Moderate Threat', tone: 'warning' },
+      tone: 'warning',
+    },
+    {
+      heading: 'Karma Bond',
+      detail: 'Elder Kaelen suspects Yun Che is concealing his true cultivation stage.',
+      progress: { value: -48, min: -100, max: 100, label: '−48/100' },
+      status: { label: 'Watchful', tone: 'warning' },
+      tone: 'warning',
+    },
+    {
+      heading: 'Lore',
+      detail: 'Elder Kaelen is the Seventh Spear of the Northern Foundation Hall and favors direct suppression over negotiation.',
+    },
+    {
+      heading: 'Warning',
+      detail: 'Elder Kaelen detected the edge of Yun Che’s spiritual scan.',
+      status: { label: 'Exposed', tone: 'danger' },
+      tone: 'danger',
+    },
+    {
+      heading: 'Narrative Consequences',
+      items: [
+        'Elder Kaelen will prepare a countermeasure before the next encounter.',
+        'Yun Che can exploit the opening after the third chained thrust.',
+      ],
+    },
+  ],
 };
 
 export const CARD_PRESETS: CardPreset[] = [
@@ -154,7 +278,7 @@ export const CARD_PRESETS: CardPreset[] = [
     title: 'System Prompt',
     subtitle: 'In-World Celestial Library Notification',
     kind: 'system-block',
-    description: 'Regular System Prompts use one explicit presentation family: Narrative Notification, LitRPG/Mechanical Display, or World Notice. The Narrative Notification is the dark smoky event-tinted System window, with a direct event title, semantic classification, concise rows, optional badge, prioritized outcomes, and collapsed TTS prose behind its small bottom chevron; it has no expanded presentation and no pop-out action. The Mechanical Display is the modern LitRPG status screen: a compact vitals card whose celestial orb is the Expanded Info action, opening the holographic stat panel above the reader. World Notice is a static, diegetic document surface for a single notice or a divided board.',
+    description: 'Regular System Prompts use one explicit presentation family: Narrative Notification, LitRPG/Mechanical Display, or World Notice. The default Narrative Notification is the existing dark smoky event-tinted System window, with a direct event title, semantic classification, concise rows, optional badge, prioritized outcomes, and collapsed TTS prose; its celestial action opens the existing Codex-shaped event report above the reader. The Mechanical Display is the modern LitRPG status screen: a compact vitals card whose celestial orb is the Expanded Info action, opening the holographic stat panel above the reader. World Notice is a static, diegetic document surface for a single notice or a divided board.',
     explanation: {
       componentName: 'SystemBlock',
       sourceFile: 'src/components/reader-chamber/development/SystemBlock.tsx',
@@ -162,7 +286,7 @@ export const CARD_PRESETS: CardPreset[] = [
       entityOrEventType: 'system (system_prompt)',
       codexDestination: 'ReaderCodex > Power Rankings / Ability Ledger / Karma',
       capabilities: { hasImage: false, hasManifestAction: false, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
-      architecturalNotes: 'Regular System Prompt presentation is explicit: Narrative Notification is a compact-only event card, LitRPG/Mechanical Display is the status screen, and World Notice is one static diegetic document renderer for a single notice or a divided board. promptType only carries semantic meaning and color across those layouts. A World Notice accepts a direct document title, optional flavor, and one or more plain-text entries with optional labeled details; it has no controls, links, hovercards, or narration ownership. The one expanded System presentation is the Structured Mechanical stat panel: the orb opens a viewport-locked holographic status screen built from the application-owned status payload, while the compact card and reader position stay untouched. Legacy saved regular prompts preserve their prior row-shape fallback.',
+      architecturalNotes: 'Regular System Prompt presentation is explicit: Narrative Notification preserves the compact/expanded event card, LitRPG/Mechanical Display is the status screen — a compact vitals card plus its stat panel — and World Notice is one static diegetic document renderer for a single notice or a divided board. promptType only carries semantic meaning and color across those layouts. A World Notice accepts a direct document title, optional flavor, and one or more plain-text entries with optional labeled details; it has no controls, links, hovercards, or narration ownership. Narrative expanded data opens after an explicit tap as a viewport-locked overlay event report while the compact card and reader position stay untouched. The Structured Mechanical orb opens its own viewport-locked holographic stat panel, built from the application-owned status payload rather than the Reader-only expanded contract. Legacy saved regular prompts preserve their prior row-shape fallback.',
     },
     systemContent: '[ A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before. ]',
     systemEvent: {
@@ -171,6 +295,7 @@ export const CARD_PRESETS: CardPreset[] = [
       promptType: 'breakthrough',
       title: 'Cultivation Breakthrough',
       flavor: 'Mortal Tribulation Surpassed',
+      expanded: BREAKTHROUGH_EXPANDED,
       rows: [
         { label: 'New Realm', value: 'Foundation Establishment', trend: 'up' },
         { label: 'Meridian State', value: 'Widened', trend: 'up' },
@@ -311,6 +436,7 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
       promptType: 'breakthrough' as const,
       title: 'Cultivation Breakthrough',
       flavor: 'Mortal Tribulation Surpassed',
+      expanded: BREAKTHROUGH_EXPANDED,
       rows: [
         { label: 'New Realm', value: 'Foundation Establishment', trend: 'up' as const },
         { label: 'Meridian State', value: 'Widened', trend: 'up' as const },
@@ -330,6 +456,7 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
       promptType: 'choice_consequence' as const,
       title: 'Karmic Consequence',
       flavor: 'Oath Before the Rain Court Broken',
+      expanded: BROKEN_PROMISE_EXPANDED,
       rows: [
         { label: 'Celestial Record', value: 'Sealed', trend: 'down' as const },
         { label: 'Witnesses', value: 'Twelve Elder Seats' },
@@ -349,6 +476,7 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
       promptType: 'enemy_scan' as const,
       title: 'Hostile Target Scan',
       flavor: 'Elder Kaelen Assessment',
+      expanded: TARGET_SCAN_EXPANDED,
       badge: {
         label: 'Threat Assessment',
         value: 'Moderate',

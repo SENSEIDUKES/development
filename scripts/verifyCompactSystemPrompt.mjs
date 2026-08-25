@@ -12,6 +12,9 @@ const events = [
   {
     label: 'Cultivation Breakthrough',
     slug: 'breakthrough',
+    subject: 'Yun Che',
+    value: 'Foundation Establishment — Stage 4',
+    consequence: 'Elder Han will move openly against Yun Che.',
     codexName: 'Elder Han',
     codexColorCode: 'enemy',
     classification: '✦ Awakening ✦',
@@ -22,11 +25,15 @@ const events = [
     trends: [['Foundation Establishment', 'up'], ['Widened', 'up']],
     outcomes: ['Realm Ascended', 'Lifespan Increased'],
     outcomeColorCodes: ['ally', 'ally'],
+    overlayOutcome: 'Lifespan +100',
     prose: 'A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.',
   },
   {
     label: 'Broken Promise',
     slug: 'broken-promise',
+    subject: 'Magistrate Jinhai',
+    value: 'Rain Court Standing — Disgraced',
+    consequence: 'Magistrate Jinhai loses access to Riverside Sect testimony.',
     codexName: 'Magistrate Jinhai',
     codexColorCode: 'enemy',
     classification: '✦ Consequence ✦',
@@ -37,11 +44,15 @@ const events = [
     trends: [['Sealed', 'down']],
     outcomes: ['Karma Decreased', 'Title Stripped'],
     outcomeColorCodes: ['enemy', 'enemy'],
+    overlayOutcome: 'Karma −15',
     prose: 'A solemn interface surfaced before Magistrate Jinhai, its gilt script cold as the rain outside.',
   },
   {
     label: 'Target Scan',
     slug: 'target-scan',
+    subject: 'Elder Kaelen',
+    value: 'Foundation Establishment — Stage 7',
+    consequence: 'Elder Kaelen will prepare a countermeasure before the next encounter.',
     codexName: 'Elder Kaelen',
     codexColorCode: 'enemy',
     classification: '✦ Enemy ✦',
@@ -52,6 +63,7 @@ const events = [
     trends: [],
     outcomes: ['Intel Gained', 'Weakness Found'],
     outcomeColorCodes: ['ally', 'ally'],
+    overlayOutcome: 'Detection Risk: High',
     prose: 'A crimson interface unfolded beside Elder Kaelen, taking his measure in silence.',
   },
 ];
@@ -125,8 +137,8 @@ async function verifyCompactHierarchy(block, event, deviceName) {
 
   // Compact outcome wording: two flat slots separated by a clear divider,
   // each a neutral white subject plus a meaning-colored state word — and
-  // never a number: quantities compress to Increased/Decreased from the
-  // direction.
+  // never a number (quantities compress to Increased/Decreased from the
+  // direction; the signed figures live only in the expanded report).
   const compactReport = await block.evaluate((element, expectedOutcomeColorCodes) => {
     const row = element.querySelector('[data-consequence-count]');
     if (!row) return 'missing-row';
@@ -194,22 +206,168 @@ async function verifyCompactHierarchy(block, event, deviceName) {
 }
 
 /**
- * A Narrative Notification has no expanded presentation. Its orb is an inert
- * emblem, its only control is the bottom narration chevron, and nothing it can
- * do opens a dialog.
+ * The expanded event report is a viewport-locked overlay portaled above the
+ * reader: the compact card keeps its consequence row and prose underneath,
+ * the page scrolls neither behind nor inside the panel, mobile shows only the
+ * three highest-priority Codex sections, and closing restores focus to the
+ * orb and the exact scroll position.
  */
-async function verifyNarrativeHasNoExpansion(page, block, event, deviceName) {
-  if (await block.getByRole('button', { name: 'Expand System Prompt details' }).count() !== 0) {
-    throw new Error(`${event.slug} still offers an Expanded Info action at ${deviceName}.`);
-  }
-  await block.locator('[data-system-orb-icon="closed"]').waitFor();
-  if (await block.getAttribute('data-system-prompt-state') !== 'compact') {
-    throw new Error(`${event.slug} is not compact-only at ${deviceName}.`);
-  }
-  if (await page.getByRole('dialog').count() !== 0) {
-    throw new Error(`${event.slug} opened a dialog at ${deviceName}.`);
+async function verifyExpandedOverlay(page, block, event, deviceName) {
+  const isMobile = deviceName.startsWith('mobile-');
+  // The shared Workshop Controls bar is preview tooling pinned above reader
+  // surfaces (z-[200]) and can cover the viewport-locked overlay when the page
+  // scroll leaves it near the top. It is not part of the reader contract, so
+  // it steps aside (visibility keeps layout, so scroll positions stay exact)
+  // while the overlay is verified.
+  const workshopControls = page.locator('[data-workshop-controls]');
+  await workshopControls.evaluateAll((elements) => elements.forEach((element) => {
+    element.dataset.previousVisibility = element.style.visibility;
+    element.style.visibility = 'hidden';
+  }));
+  try {
+    // Horizontal-overflow baseline: the Workshop page itself may overflow at
+    // 320px, so the overlay is judged on what it adds, never an absolute.
+    const compactDocumentOverflow = await page.evaluate(() => (
+      document.documentElement.scrollWidth - document.documentElement.clientWidth
+    ));
+    const expandButton = block.getByRole('button', { name: 'Expand System Prompt details' });
+    if (await expandButton.getAttribute('aria-expanded') !== 'false') {
+      throw new Error(`${event.slug} did not start compact at ${deviceName}.`);
+    }
+    await block.locator('[data-system-orb-icon="closed"]').waitFor();
+    await expandButton.click();
+
+    const overlay = page.locator('[role="dialog"][data-system-expanded="true"]');
+    await overlay.waitFor({ state: 'visible' });
+    // Playwright's own pre-click scroll-into-view may move the page, so the
+    // reader-position contract is measured from the open overlay onward.
+    const scrollBefore = await page.evaluate(() => window.scrollY);
+    if (await overlay.getAttribute('aria-modal') !== 'true') {
+      throw new Error(`${event.slug} overlay is not modal at ${deviceName}.`);
+    }
+    if (await overlay.getAttribute('data-reader-narration') !== 'excluded') {
+      throw new Error(`${event.slug} overlay lost its narration boundary at ${deviceName}.`);
+    }
+    if (await block.getAttribute('data-system-prompt-state') !== 'expanded') {
+      throw new Error(`${event.slug} did not enter expanded state at ${deviceName}.`);
+    }
+    if (await block.locator('[data-consequence-count]').count() !== 1) {
+      throw new Error(`${event.slug} compact card did not keep its consequence row under the overlay at ${deviceName}.`);
+    }
+    if ((await page.evaluate(() => document.body.style.overflow)) !== 'hidden') {
+      throw new Error(`${event.slug} overlay did not lock page scroll at ${deviceName}.`);
+    }
+
+    await overlay.getByText(event.subject, { exact: true }).first().waitFor();
+    await overlay.getByText(event.value, { exact: true }).first().waitFor();
+    if (await overlay.getByRole('progressbar').count() === 0) {
+      throw new Error(`${event.slug} overlay has no progress value at ${deviceName}.`);
+    }
+    // The overlay keeps its own System outcome row — the full list with the
+    // signed figures the compact two-slot row drops.
+    await overlay.locator('[data-consequence-count]').waitFor();
+    await overlay.locator('[data-consequence-count]').getByText(event.overlayOutcome, { exact: true }).waitFor();
+
+    // Mobile: only the three highest-priority sections are visible. Larger
+    // screens: every section, same flat structure.
+    const narrativeSection = overlay.locator('[data-system-expanded-section="narrative-consequences"]');
+    await narrativeSection.waitFor({ state: 'attached' });
+    if (isMobile) {
+      if (await narrativeSection.isVisible()) {
+        throw new Error(`${event.slug} shows more than three Codex sections on mobile at ${deviceName}.`);
+      }
+    } else {
+      if (!(await narrativeSection.isVisible())) {
+        throw new Error(`${event.slug} hides expanded sections at ${deviceName}.`);
+      }
+      await overlay.getByText(event.consequence, { exact: true }).waitFor();
+      await overlay.getByText('Lore', { exact: true }).waitFor();
+      await overlay.getByText('Warning', { exact: true }).waitFor();
+      await overlay.getByText('Narrative Consequences', { exact: true }).waitFor();
+    }
+
+    // One-screen fit: the panel never escapes the viewport, and the page
+    // behind gains no horizontal overflow.
+    const fit = await overlay.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        clientHeight: element.clientHeight,
+        scrollHeight: element.scrollHeight,
+        overflowY: getComputedStyle(element).overflowY,
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+    if (
+      fit.scrollHeight > fit.clientHeight + 1
+      && fit.overflowY !== 'auto'
+      && fit.overflowY !== 'scroll'
+    ) {
+      throw new Error(`${event.slug} overlay clips tall content at ${deviceName}: ${JSON.stringify(fit)}`);
+    }
+    if (fit.left < -1 || fit.top < -1 || fit.right > fit.viewportWidth + 1 || fit.bottom > fit.viewportHeight + 1) {
+      throw new Error(`${event.slug} overlay escapes the viewport at ${deviceName}: ${JSON.stringify(fit)}`);
+    }
+    if (fit.documentOverflow > compactDocumentOverflow + 1) {
+      throw new Error(`${event.slug} overlay added horizontal page overflow at ${deviceName}: ${JSON.stringify(fit)} (baseline ${compactDocumentOverflow})`);
+    }
+
+    // Codex links inside the overlay keep their colors; their hovercard opens
+    // above the dialog and closes first on Escape.
+    const codexLink = overlay.getByRole('button', { name: event.codexName, exact: true }).first();
+    await codexLink.waitFor();
+    if (await codexLink.getAttribute('data-color-code') !== event.codexColorCode) {
+      throw new Error(`${event.codexName} did not preserve its assigned character color at ${deviceName}.`);
+    }
+    await codexLink.click();
+    const hovercard = page.getByRole('dialog', { name: `${event.codexName} Codex details` });
+    await hovercard.waitFor();
+    await page.keyboard.press('Escape');
+    await hovercard.waitFor({ state: 'detached' });
+    if (!(await overlay.isVisible())) {
+      throw new Error(`${event.slug} overlay closed together with its Codex hovercard at ${deviceName}.`);
+    }
+
+    await page.screenshot({ path: `output/playwright/system-prompt-${event.slug}-${deviceName}-overlay.png` });
+
+    // Closing restores the reader: compact state, focus back on the orb action,
+    // page scroll unlocked, and the exact same scroll position.
+    await overlay.getByRole('button', { name: 'Close System event report' }).click();
+    await overlay.waitFor({ state: 'detached' });
+    if (await block.getAttribute('data-system-prompt-state') !== 'compact') {
+      throw new Error(`${event.slug} did not return to compact at ${deviceName}.`);
+    }
+    await block.locator('[data-system-orb-icon="closed"]').waitFor();
+    try {
+      await page.waitForFunction(
+        () => document.activeElement?.getAttribute('aria-label') === 'Expand System Prompt details',
+        undefined,
+        { timeout: 5000 },
+      );
+    } catch {
+      throw new Error(`${event.slug} did not restore focus to the orb action at ${deviceName}.`);
+    }
+    if ((await page.evaluate(() => document.body.style.overflow)) === 'hidden') {
+      throw new Error(`${event.slug} left the page scroll locked at ${deviceName}.`);
+    }
+    const scrollAfter = await page.evaluate(() => window.scrollY);
+    if (Math.abs(scrollAfter - scrollBefore) > 1) {
+      throw new Error(`${event.slug} moved the reader position at ${deviceName}: ${scrollBefore} -> ${scrollAfter}`);
+    }
+  } finally {
+    // Restore the preview tooling hidden during the overlay pass.
+    await workshopControls.evaluateAll((elements) => elements.forEach((element) => {
+      element.style.visibility = element.dataset.previousVisibility || '';
+      delete element.dataset.previousVisibility;
+    }));
   }
 }
+
 
 /**
  * The Structured Mechanical stat panel is a viewport-locked dialog portaled
@@ -382,7 +540,7 @@ for (const device of devices) {
       await tabsBlock.locator('[data-system-summary-toggle]').click();
     }
     await tabsBlock.screenshot({ path: `output/playwright/system-prompt-${event.slug}-${device.name}-tabs-card.png` });
-    await verifyNarrativeHasNoExpansion(page, tabsBlock, event, device.name);
+    await verifyExpandedOverlay(page, tabsBlock, event, device.name);
     if (event.slug === 'breakthrough') {
       await page.screenshot({ path: `output/playwright/system-prompt-breakthrough-${device.name}-tabs.png` });
     }
@@ -398,7 +556,7 @@ for (const device of devices) {
   await page.waitForTimeout(800);
   await verifyConsequenceRow(contextBlock, 'breakthrough', device.name);
   await verifyCompactHierarchy(contextBlock, events[0], device.name);
-  await verifyNarrativeHasNoExpansion(page, contextBlock, events[0], `${device.name}-contextual`);
+  await verifyExpandedOverlay(page, contextBlock, events[0], `${device.name}-contextual`);
   await page.screenshot({ path: `output/playwright/system-prompt-breakthrough-${device.name}-contextual.png` });
   await contextBlock.screenshot({ path: `output/playwright/system-prompt-breakthrough-${device.name}-contextual-card.png` });
 

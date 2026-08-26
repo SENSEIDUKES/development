@@ -186,18 +186,27 @@ export default defineConfig(({ mode }) => {
       generationApis(serverEnvironment),
     ],
     resolve: {
-      // DEV consumes the same entries the future `@seihouse/sen` package
-      // publishes, so a Workshop preview imports exactly what a consuming
-      // application will. The package itself is built by
-      // `vite.package.config.ts`.
+      // DEV consumes the same entries both packages publish, so a Workshop
+      // preview imports exactly what a consuming application will:
+      // `@seihouse/sen` for the portable engine and `@seihouse/library` for
+      // SEIHouse's own surfaces. The packages themselves are built by
+      // `vite.package.config.ts` and `vite.library.config.ts`.
       alias: [
         {
           find: /^@seihouse\/sen$/,
-          replacement: fileURLToPath(new URL('./src/package/index.ts', import.meta.url)),
+          replacement: fileURLToPath(new URL('./src/package/sen/index.ts', import.meta.url)),
         },
         {
           find: /^@seihouse\/sen\/(.*)$/,
-          replacement: `${fileURLToPath(new URL('./src/package', import.meta.url))}/$1.ts`,
+          replacement: `${fileURLToPath(new URL('./src/package/sen', import.meta.url))}/$1.ts`,
+        },
+        {
+          find: /^@seihouse\/library$/,
+          replacement: fileURLToPath(new URL('./src/package/library/index.ts', import.meta.url)),
+        },
+        {
+          find: /^@seihouse\/library\/(.*)$/,
+          replacement: `${fileURLToPath(new URL('./src/package/library', import.meta.url))}/$1.ts`,
         },
       ],
     },

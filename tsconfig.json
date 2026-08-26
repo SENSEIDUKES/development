@@ -17,8 +17,10 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "paths": {
-      "@seihouse/sen": ["./src/package/index.ts"],
-      "@seihouse/sen/*": ["./src/package/*.ts"]
+      "@seihouse/sen": ["./src/package/sen/index.ts"],
+      "@seihouse/sen/*": ["./src/package/sen/*.ts"],
+      "@seihouse/library": ["./src/package/library/index.ts"],
+      "@seihouse/library/*": ["./src/package/library/*.ts"]
     }
   },
   "include": ["src", "api", "vite.config.ts"],

@@ -7,5 +7,5 @@
     "outDir": "dist/sen/dist/types",
     "rootDir": "src"
   },
-  "include": ["src/package", "src/vite-env.d.ts"]
+  "include": ["src/package/sen", "src/vite-env.d.ts"]
 }

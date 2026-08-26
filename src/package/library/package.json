@@ -1,0 +1,30 @@
+{
+  "name": "@seihouse/library",
+  "version": "0.1.0",
+  "description": "SEIHouse's first-party host application surfaces built on SEN: cultivation and Qi progression, and the relic economy.",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/types/package/library/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./cultivation": {
+      "types": "./dist/types/package/library/cultivation.d.ts",
+      "import": "./dist/cultivation.js"
+    },
+    "./relics": {
+      "types": "./dist/types/package/library/relics.d.ts",
+      "import": "./dist/relics.js"
+    }
+  },
+  "peerDependencies": {
+    "@seihouse/sen": ">=0.3.0",
+    "lucide-react": ">=1",
+    "motion": ">=12",
+    "react": ">=18",
+    "react-dom": ">=18"
+  }
+}

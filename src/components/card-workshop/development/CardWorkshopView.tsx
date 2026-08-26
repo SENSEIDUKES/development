@@ -10,8 +10,13 @@ import {
   XCircle,
   Zap,
 } from 'lucide-react';
-import { SystemBlock, type SystemEvent } from '@seihouse/sen/reader-chamber';
-import { CodexCard, CodexHovercard, getManifestBackdrop } from '@seihouse/sen/codex-cards';
+import {
+  CodexCard,
+  CodexHovercard,
+  getManifestBackdrop,
+  SystemBlock,
+  type SystemEvent,
+} from '@seihouse/sen/cards';
 import { createCodexHighlighter, splitByCodexTerms } from '@seihouse/sen/reader-codex';
 import type {
   CardPreset,

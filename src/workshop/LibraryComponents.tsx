@@ -23,13 +23,14 @@ import {
   LibraryTextBox,
   ManifestButton,
   type LibraryNavigationDrawerSection,
-} from '@seihouse/sen/library';
+} from '@seihouse/sen/ui';
 
 /**
  * LibraryComponents — the home page's Library Components tab.
  *
- * A live inventory of the reusable Celestial Library primitives owned by
- * `src/components/library/` (see its README for the ownership contract).
+ * A live inventory of the reusable SEN surface primitives owned by
+ * `src/components/library/` and published as `@seihouse/sen/ui` (see its
+ * README for the ownership contract).
  * Every card below renders the real component imported from the shared
  * barrel — no replicas, no screenshots — so the tab always shows what
  * actually exists today. When a primitive is added to or renamed in the
@@ -357,9 +358,10 @@ export function LibraryComponentsGrid() {
         ))}
       </section>
       <p className="workshop-library-note">
-        Every preview above renders the real component from <code>src/components/library</code> — import from
-        that barrel instead of rebuilding. <code>SEIButton</code>, <code>SEIBottomNavigation</code>, and{' '}
-        <code>cn</code> are exported only as bases for building new Library-skinned controls.
+        Every preview above renders the real component from <code>src/components/library</code>, published as{' '}
+        <code>@seihouse/sen/ui</code> — import from that entry instead of rebuilding. <code>SEIButton</code>,{' '}
+        <code>SEIBottomNavigation</code>, and <code>cn</code> are exported only as bases for building new
+        skinned controls.
       </p>
     </>
   );

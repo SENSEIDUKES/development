@@ -4,10 +4,11 @@
 - **Source location:** `src/components/ClosedDoorCultivationModal.tsx`
 - **Workshop preview:** `?preview=idle-cultivation`
 - **Replica created:** 2026-07-29
-- **Last Workshop update:** 2026-08-21
+- **Last Workshop update:** 2026-08-25
 - **Last source comparison:** 2026-07-30
 - **Replica status:** development focus & accessibility enhancements
 
+- **2026-08-25:** Moved to the Library lane. Cultivation and Qi progression are Library product behavior, so this surface now publishes as `@seihouse/library/cultivation` instead of `@seihouse/sen/closed-door-cultivation`. The modal stays props-driven — the host still owns reward calculation and persistence — and its behavior and styling are unchanged.
 - **2026-08-21:** Published the Development modal and its props through
   `@seihouse/sen/closed-door-cultivation`; the Workshop Development pane now
   imports that package entry while the locked Reference pane stays relative.

@@ -1,4 +1,4 @@
-import { CosmicArtifact } from '@seihouse/sen/relics';
+import { CosmicArtifact } from '@seihouse/library/relics';
 
 export const mockRelics: CosmicArtifact[] = [
   {

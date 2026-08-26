@@ -5,7 +5,7 @@ import {
   RelicModal,
   RelicReveal as DevelopmentRelicReveal,
   type CosmicArtifact,
-} from '@seihouse/sen/relics';
+} from '@seihouse/library/relics';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { mockRelics } from './mockData';

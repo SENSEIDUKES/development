@@ -5,4 +5,4 @@
  * Voice catalog data with provider IDs stays on the server boundary and is
  * never part of this package.
  */
-export * from '../audio';
+export * from '../../audio';

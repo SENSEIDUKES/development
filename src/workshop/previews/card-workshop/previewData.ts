@@ -1,6 +1,6 @@
 import type { CardPreset } from '../../../components/card-workshop/shared/types';
 import type { CodexTerm } from '@seihouse/sen/reader-codex';
-import type { SystemPromptExpandedData } from '@seihouse/sen/reader-chamber';
+import type { SystemPromptExpandedData } from '@seihouse/sen/cards';
 
 const durableVisualImportance = {
   namedStatus: true,

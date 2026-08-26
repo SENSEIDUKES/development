@@ -17,3 +17,4 @@ vite-preview-error.log
 dev.log
 dev-err.log
 seiv-0/
+.package-smoke-*/

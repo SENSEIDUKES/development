@@ -4,7 +4,14 @@ Read this file before making changes.
 
 ## Purpose
 
-This repository is the **SEN Development space**: a centralized visual development and preview environment for SEN components and the main `SENSEIDUKES/Light-Novels` application.
+This repository is the **SEN Development space**: a centralized visual development and preview environment for SEN and Library components and the main `SENSEIDUKES/Light-Novels` application.
+
+### SEN and Library are two products, not one
+
+- **SEN (SEIHouse Expanded Novels)** is an embeddable expanded-narrative engine, like the faceless SEIHouse audio player. Another author or company installs SEN inside their own application and supplies their own writing, branding, storage, authentication, and generation method. SEN provides reusable systems: expanded reading behavior, structured chapter contracts, scoring, Color Codes, Codex behavior, cards, and related narrative surfaces. AI chapter generation is an optional SEN content source, not a requirement.
+- **Library** is SEIHouse's first-party host application and branded implementation of SEN. Library-specific visuals, language, cultivation/Qi progression, hub behavior, economy, services, and infrastructure belong to Library.
+
+**Library may depend on SEN. SEN must never depend on Library.** Never describe SEN as a Library feature, and before adding a surface decide which lane owns it — see [`src/package/README.md`](./src/package/README.md). When a surface mixes reusable behavior with Library presentation, separate the behavior into SEN and leave the skin in Library rather than duplicating it.
 
 Use it to isolate, preview, and refine UI components, animations, icons, rewards, and visual effects without needing the production app, authentication, story data, or migration infrastructure.
 
@@ -54,16 +61,21 @@ Do not turn this repository into a second full application. Use mock data and pr
   - `reference/` — an untouched, locked replica of what exists in production. Never modified during normal Workshop tweaking.
   - `development/` — the active Workshop version. Starts as a copy of `reference/`. This is the only folder agents change.
   - `shared/` (when it applies) — logic genuinely identical between the two, such as shared utilities or components that have no fork yet.
-- `src/package/` holds the entry barrels for the `@seihouse/sen` package —
-  one file per published surface (Library, Reader Chamber, Reader Codex,
-  Codex cards, Manifestations, Relics, audio, Closed-Door Cultivation, Story
-  Seed, Chapter Generation). It contains no components of its own: entries
-  re-export `development/` and `shared/` code so the
-  Workshop and the package always render the same source. Workshop shells,
-  preview mocks, locked `reference/` replicas, and `src/server/` code stay
-  out of every entry, and `npm run build:package` fails if one is ever
-  reachable. Workshop code consumes package surfaces through
-  `@seihouse/sen/*`, which is aliased to `src/package/*`.
+- `src/package/` holds the entry barrels for the two published packages —
+  `src/package/sen/` for `@seihouse/sen` (the portable engine: surface
+  primitives, Color Codes, cards, Reader Chamber, Reader Codex,
+  Manifestations, audio, Story Seed, Chapter Generation) and
+  `src/package/library/` for `@seihouse/library` (SEIHouse's own surfaces:
+  cultivation and the relic economy). Neither contains components of its own:
+  entries re-export `development/` and `shared/` code so the Workshop and the
+  packages always render the same source. Workshop shells, preview mocks,
+  locked `reference/` replicas, and `src/server/` code stay out of every
+  entry — and no SEN entry may reach a Library surface.
+  `npm run check:package-boundaries` walks the real import graph and fails on
+  the file that breaks the rule; `npm run build:package` re-checks the built
+  output. Workshop code consumes package surfaces through `@seihouse/sen/*`
+  and `@seihouse/library/*`, aliased to `src/package/sen/*` and
+  `src/package/library/*`.
 - Static visual assets belong in `public/` under a clearly named folder.
 - Keep component-specific styles close to the component when practical.
 - Portable agent skills live under `skills/`.

@@ -1,6 +1,21 @@
-# SEN Visual Development
+# SEN Development
 
-The central development and preview space for SEN components and experiences. This repository isolates UI refinement from the main `SENSEIDUKES/Light-Novels` production environment.
+The central development and preview space for SEN and Library components and experiences. This repository isolates UI refinement from the main `SENSEIDUKES/Light-Novels` production environment.
+
+## SEN and Library are two different products
+
+**SEN (SEIHouse Expanded Novels) is an embeddable expanded-narrative engine** — the same kind of product as the faceless SEIHouse audio player. Another author or company can install SEN inside their own application and supply their own writing, branding, storage, authentication, and generation method. SEN provides the reusable systems: expanded reading behavior, structured chapter contracts, scoring, Color Codes, Codex behavior, cards, and the narrative surfaces built on them. AI chapter generation is an **optional** SEN content source, not a requirement.
+
+**Library is SEIHouse's first-party host application** — our own branded implementation of SEN. Library-specific visuals, language, cultivation/Qi progression, hub behavior, economy, services, and infrastructure belong to Library, not to the portable engine.
+
+SEN is therefore never "a Library feature". The two ship as separate packages from this repository:
+
+| Package | Entries | What it is |
+| --- | --- | --- |
+| `@seihouse/sen` | [`src/package/sen/`](./src/package/sen/README.md) | The portable expanded-narrative engine |
+| `@seihouse/library` | [`src/package/library/`](./src/package/library/README.md) | SEIHouse's first-party surfaces built on it |
+
+**Library may depend on SEN. SEN must never depend on Library.** [`src/package/README.md`](./src/package/README.md) explains how a surface is assigned to a lane, and `npm run check:package-boundaries` enforces it.
 
 ## Production application boundary
 
@@ -67,6 +82,19 @@ Every feature preview is wrapped by `FeatureWorkspace`, which owns the responsiv
 from the canonical Pages, States, Scenes, Effects, and Advanced structure. The
 menu may reuse Library surface primitives, but it is Workshop tooling: product
 navigation stays inside the Reference and Development components being tested.
+
+## Packages
+
+```bash
+npm run check:package-boundaries   # SEN/Library boundary, checked from source
+npm run build:package              # build and verify both packages
+npm run test:package               # pack both, install into fresh consumers, type-check, bundle
+```
+
+Workshop previews import through the same public package entries a consumer
+receives — `@seihouse/sen/*` and `@seihouse/library/*`, aliased to
+`src/package/sen/*` and `src/package/library/*` — so a preview never renders
+something a consumer could not.
 
 ## Moving work into another application
 

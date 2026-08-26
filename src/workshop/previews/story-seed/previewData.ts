@@ -8,8 +8,8 @@ import {
   createEmptyStorySeedInput,
   normalizeWorldBlueprint,
   type StorySeedInput,
-} from '../../../components/story-seed/shared/storySeedSchema';
-import type { StorySeedRecord } from '../../../components/story-seed/shared/storySeedRepository';
+  type StorySeedRecord,
+} from '@seihouse/sen/story-seed';
 
 export const MOCK_USER_ID = 'mock-user-workshop';
 

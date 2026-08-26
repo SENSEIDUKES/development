@@ -27,8 +27,10 @@ export const isPlayableCodexVoiceSource = (value?: string): boolean => {
 export function useCodexVoiceCards() {
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
   const {
+    autoplayBlocked,
     currentTrackId,
     isPlaying,
+    restart,
     replace,
     stop,
   } = useDevAudioPlayback();
@@ -74,12 +76,23 @@ export function useCodexVoiceCards() {
     });
   }, [replace, stopCurrentVoice]);
 
+  /**
+   * Synthesis necessarily completes after the initiating tap. When a browser
+   * blocks that delayed start, replaying the already-queued track from a
+   * second explicit tap keeps the same player and avoids another provider call.
+   */
+  const retryBlockedVoice = useCallback((characterId: string): boolean => (
+    autoplayBlocked && restart(codexVoiceTrackId(characterId))
+  ), [autoplayBlocked, restart]);
+
   return {
+    autoplayBlocked,
     /** Track currently owned by the shared audio session, if any. */
     currentTrackId,
     codexVoiceTrackId,
     playingVoiceId,
     handlePlayVoice,
     handleStopVoice: stopCurrentVoice,
+    retryBlockedVoice,
   };
 }

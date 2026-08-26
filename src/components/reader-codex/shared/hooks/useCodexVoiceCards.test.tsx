@@ -8,9 +8,11 @@ import {
 } from './useCodexVoiceCards';
 
 const playback = vi.hoisted(() => ({
+  autoplayBlocked: false,
   currentTrackId: null as string | null,
   isPlaying: false,
   replace: vi.fn(),
+  restart: vi.fn(() => true),
   stop: vi.fn(),
 }));
 
@@ -68,6 +70,7 @@ const render = () => {
 };
 
 beforeEach(() => {
+  playback.autoplayBlocked = false;
   playback.currentTrackId = null;
   playback.isPlaying = false;
   vi.clearAllMocks();

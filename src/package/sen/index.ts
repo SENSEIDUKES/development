@@ -25,7 +25,7 @@
  *
  * SEIHouse's own first-party surfaces — cultivation and Qi progression, the
  * relic economy, and the rest of the Library application — ship separately as
- * `@Seihouse/Library`. Library may depend on SEN; SEN never depends on
+ * `@seihouse/library`. Library may depend on SEN; SEN never depends on
  * Library. Workshop mocks, preview shells, and server code are not part of
  * any entry.
  */

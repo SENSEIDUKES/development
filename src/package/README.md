@@ -6,7 +6,7 @@ not a build convenience.
 | Directory | Package | What it is |
 | --- | --- | --- |
 | [`sen/`](./sen/README.md) | `@seihouse/sen` | **The portable engine.** SEIHouse Expanded Novels: an embeddable expanded-narrative engine another author or company installs in their own application, supplying their own writing, branding, storage, authentication, and generation method. |
-| [`library/`](./library/README.md) | `@Seihouse/Library` | **The first-party host application.** SEIHouse's own branded implementation of SEN: cultivation and Qi progression, the relic economy, and Library-specific presentation. |
+| [`library/`](./library/README.md) | `@seihouse/library` | **The first-party host application.** SEIHouse's own branded implementation of SEN: cultivation and Qi progression, the relic economy, and Library-specific presentation. |
 
 **Library may depend on SEN. SEN must never depend on Library.**
 

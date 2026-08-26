@@ -68,7 +68,7 @@ const FORBIDDEN_PATTERNS = [
 const LIBRARY_OWNED_PATTERNS = [
   [/^src\/components\/closed-door-cultivation\//, 'the Library cultivation surface'],
   [/^src\/components\/relics\//, 'the Library relic economy'],
-  [/^src\/package\/library\//, 'a @Seihouse/Library package entry'],
+  [/^src\/package\/library\//, 'a @seihouse/library package entry'],
 ];
 
 const IMPORT_PATTERN = /(?:^|[\s;}])(?:import|export)\s*(?:[\s\S]*?\sfrom\s*)?['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)/g;
@@ -205,6 +205,6 @@ if (failures.length > 0) {
 console.log(
   `[package-boundaries] ${Object.keys(PACKAGE_TARGETS).length} packages verified — `
   + `no Workshop, preview, mock, reference, test, or server module is reachable, `
-  + `and no @seihouse/sen entry reaches @Seihouse/Library. `
+  + `and no @seihouse/sen entry reaches @seihouse/library. `
   + `${MOCK_APPLICATION_WAIVERS.length} recorded DEV mock dependencies remain.`,
 );

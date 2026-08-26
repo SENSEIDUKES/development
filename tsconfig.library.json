@@ -13,8 +13,8 @@
     "paths": {
       "@seihouse/sen": ["./dist/sen/dist/types/package/sen/index.d.ts"],
       "@seihouse/sen/*": ["./dist/sen/dist/types/package/sen/*.d.ts"],
-      "@Seihouse/Library": ["./src/package/library/index.ts"],
-      "@Seihouse/Library/*": ["./src/package/library/*.ts"]
+      "@seihouse/library": ["./src/package/library/index.ts"],
+      "@seihouse/library/*": ["./src/package/library/*.ts"]
     }
   },
   "include": ["src/package/library", "src/vite-env.d.ts"]

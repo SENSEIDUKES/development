@@ -2,7 +2,7 @@
  * Guards a package build that type-checks against another package's published
  * declarations.
  *
- * `@Seihouse/Library` resolves `@seihouse/sen/*` to SEN's emitted `.d.ts`
+ * `@seihouse/library` resolves `@seihouse/sen/*` to SEN's emitted `.d.ts`
  * files rather than SEN source, so Library never re-emits a second copy of the
  * engine's types. That makes SEN's declarations a build input; without this
  * guard a missing SEN build surfaces as an opaque "Cannot find module

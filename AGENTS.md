@@ -65,7 +65,7 @@ Do not turn this repository into a second full application. Use mock data and pr
   `src/package/sen/` for `@seihouse/sen` (the portable engine: surface
   primitives, Color Codes, cards, Reader Chamber, Reader Codex,
   Manifestations, audio, Story Seed, Chapter Generation) and
-  `src/package/library/` for `@Seihouse/Library` (SEIHouse's own surfaces:
+  `src/package/library/` for `@seihouse/library` (SEIHouse's own surfaces:
   cultivation and the relic economy). Neither contains components of its own:
   entries re-export `development/` and `shared/` code so the Workshop and the
   packages always render the same source. Workshop shells, preview mocks,
@@ -74,7 +74,7 @@ Do not turn this repository into a second full application. Use mock data and pr
   `npm run check:package-boundaries` walks the real import graph and fails on
   the file that breaks the rule; `npm run build:package` re-checks the built
   output. Workshop code consumes package surfaces through `@seihouse/sen/*`
-  and `@Seihouse/Library/*`, aliased to `src/package/sen/*` and
+  and `@seihouse/library/*`, aliased to `src/package/sen/*` and
   `src/package/library/*`.
 - Static visual assets belong in `public/` under a clearly named folder.
 - Keep component-specific styles close to the component when practical.

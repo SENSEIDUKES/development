@@ -3,7 +3,7 @@ import { ClosedDoorCultivationModal as ReferenceClosedDoorCultivationModal } fro
 import {
   ClosedDoorCultivationModal as DevelopmentClosedDoorCultivationModal,
   type ClosedDoorCultivationModalProps,
-} from '@Seihouse/Library/cultivation';
+} from '@seihouse/library/cultivation';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { scenarios, type PreviewState } from './previewStates';

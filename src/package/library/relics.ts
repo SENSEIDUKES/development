@@ -1,5 +1,5 @@
 /**
- * `@Seihouse/Library/relics` — the Relic surfaces.
+ * `@seihouse/library/relics` — the Relic surfaces.
  *
  * Relics are part of the Library economy — the reward tiers, the claim
  * ceremony, and the artifact language belong to SEIHouse's own application,

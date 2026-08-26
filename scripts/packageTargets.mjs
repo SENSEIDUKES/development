@@ -4,7 +4,7 @@
  * `@seihouse/sen` is the portable expanded-narrative engine: an author or
  * company installs it inside their own application and supplies their own
  * writing, branding, storage, authentication, and generation method.
- * `@Seihouse/Library` is SEIHouse's first-party host application — the
+ * `@seihouse/library` is SEIHouse's first-party host application — the
  * branded implementation of SEN. Library may depend on SEN; SEN must never
  * depend on Library, and neither may reach the Workshop shell, its previews
  * and mocks, or `src/server/`.
@@ -123,7 +123,7 @@ export const PACKAGE_TARGETS = {
 
   library: {
     id: 'library',
-    name: '@Seihouse/Library',
+    name: '@seihouse/library',
     sourceDirectory: 'src/package/library',
     distDirectory: 'dist/library',
     // Library adds no stylesheet of its own: its surfaces are Tailwind-only
@@ -142,13 +142,13 @@ export const PACKAGE_TARGETS = {
     typeDependencies: ['sen'],
     smokeDependencies: ['sen'],
     smokeExports: {
-      '@Seihouse/Library': ['LIBRARY_PACKAGE_VERSION', 'RelicCard', 'ClosedDoorCultivationModal'],
-      '@Seihouse/Library/cultivation': ['ClosedDoorCultivationModal'],
-      '@Seihouse/Library/relics': ['RelicCard', 'RelicModal', 'RelicReveal'],
+      '@seihouse/library': ['LIBRARY_PACKAGE_VERSION', 'RelicCard', 'ClosedDoorCultivationModal'],
+      '@seihouse/library/cultivation': ['ClosedDoorCultivationModal'],
+      '@seihouse/library/relics': ['RelicCard', 'RelicModal', 'RelicReveal'],
     },
     smokeTypes: `
-      import type { ClosedDoorCultivationModalProps } from '@Seihouse/Library/cultivation';
-      import type { CosmicArtifact, RelicRevealProps } from '@Seihouse/Library/relics';
+      import type { ClosedDoorCultivationModalProps } from '@seihouse/library/cultivation';
+      import type { CosmicArtifact, RelicRevealProps } from '@seihouse/library/relics';
       declare const cultivation: ClosedDoorCultivationModalProps;
       declare const artifact: CosmicArtifact;
       declare const reveal: RelicRevealProps;

@@ -6,7 +6,7 @@ import { createPackageBuildConfig } from './vite.package.shared';
  *
  * Only the entries in `src/package/sen/` are built. Nothing reachable from
  * them may import the Workshop shell, its previews and mocks, `src/server/`,
- * or `@Seihouse/Library`: SEN never depends on Library.
+ * or `@seihouse/library`: SEN never depends on Library.
  */
 export default createPackageBuildConfig({
   target: 'sen',

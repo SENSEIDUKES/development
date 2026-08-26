@@ -15,7 +15,7 @@ its own generator and still get the full expanded reading experience.
 
 SEIHouse's own application — cultivation and Qi progression, the relic
 economy, hub behavior, services, and branding — ships separately as
-[`@Seihouse/Library`](../library/README.md). **Library may depend on SEN. SEN
+[`@seihouse/library`](../library/README.md). **Library may depend on SEN. SEN
 never depends on Library**, and `npm run check:package-boundaries` fails the
 build if that reverses.
 
@@ -65,7 +65,7 @@ instead of reaching into component paths.
 ## What is deliberately not published
 
 - **Library surfaces** — cultivation, Qi progression, and the relic economy
-  live in `@Seihouse/Library`.
+  live in `@seihouse/library`.
 - **Workshop shell and previews** — `src/workshop/` and its preview mocks and
   preview-state simulators.
 - **Server code** — everything under `src/server/`, including the voice
@@ -163,10 +163,11 @@ package boundary visible in review.
 
 ## History
 
-- **2026-08-25:** Split SEN and Library into separate packages. SEN is now
+- **2026-08-25:** Split SEN and Library into separate packages. The Library
+  package is `@seihouse/library` (lowercase, per npm's package-name rule). SEN is now
   documented as the portable engine rather than a Library feature; the entries
   moved to `src/package/sen/`; Closed-Door Cultivation and the relic surfaces
-  left for `@Seihouse/Library`; `./library` became `./ui` and `./codex-cards`
+  left for `@seihouse/library`; `./library` became `./ui` and `./codex-cards`
   became `./cards` (both aliased for one version); `./color-codes` publishes
   the single Color Code authority and `./cards` the shared card system, ready
   for chapter generation to be connected through them; the Development loading

@@ -1,5 +1,5 @@
 /**
- * Finalizes a package build — `@seihouse/sen` or `@Seihouse/Library`.
+ * Finalizes a package build — `@seihouse/sen` or `@seihouse/library`.
  *
  * Copies the package manifest and README next to the built `dist/`, copies the
  * runtime assets the published components address from root paths, then

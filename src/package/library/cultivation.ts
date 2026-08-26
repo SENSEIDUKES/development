@@ -1,5 +1,5 @@
 /**
- * `@Seihouse/Library/cultivation` — the Closed-Door Cultivation surface.
+ * `@seihouse/library/cultivation` — the Closed-Door Cultivation surface.
  *
  * Cultivation and Qi progression are Library product behavior, not portable
  * SEN engine behavior: the idle-Qi reward, its realm language, and its claim

@@ -1,4 +1,4 @@
-# `@Seihouse/Library`
+# `@seihouse/library`
 
 SEIHouse's first-party host application surfaces, built on SEN.
 
@@ -16,9 +16,9 @@ ever runs the other.
 
 | Import | Surface |
 | --- | --- |
-| `@Seihouse/Library` | Every Library surface, plus `LIBRARY_PACKAGE_VERSION` |
-| `@Seihouse/Library/cultivation` | Closed-Door Cultivation: the props-driven idle-Qi reward presentation and its claim ceremony |
-| `@Seihouse/Library/relics` | The relic economy: the relic card, its inspection modal, the claim reveal, and the relic model |
+| `@seihouse/library` | Every Library surface, plus `LIBRARY_PACKAGE_VERSION` |
+| `@seihouse/library/cultivation` | Closed-Door Cultivation: the props-driven idle-Qi reward presentation and its claim ceremony |
+| `@seihouse/library/relics` | The relic economy: the relic card, its inspection modal, the claim reveal, and the relic model |
 
 ## What belongs here, and what does not
 
@@ -69,17 +69,23 @@ verified through the published packages, not through repo source.
 
 ## Using it from DEV
 
-DEV consumes the same entries it publishes. `@Seihouse/Library/*` is aliased
+DEV consumes the same entries it publishes. `@seihouse/library/*` is aliased
 to `src/package/library/*` in `tsconfig.json` and `vite.config.ts`, so a
 Workshop preview imports exactly what a consuming application will:
 
 ```ts
-import { ClosedDoorCultivationModal } from '@Seihouse/Library/cultivation';
-import { RelicCard, RelicReveal } from '@Seihouse/Library/relics';
+import { ClosedDoorCultivationModal } from '@seihouse/library/cultivation';
+import { RelicCard, RelicReveal } from '@seihouse/library/relics';
 ```
 
 ## History
 
+- **2026-08-25:** Renamed the package from `@Seihouse/Library` to
+  `@seihouse/library`. The npm registry rejects uppercase letters in new
+  package names, and the owner confirmed Library is intended for registry
+  publication, so the identifier follows npm's rule and matches
+  `@seihouse/sen`'s casing. Nothing about the package's contents, exports, or
+  behavior changed — only the identifier and the paths that name it.
 - **2026-08-25:** Pointed the package's type build at SEN's published
   declarations, so Library no longer emits a duplicate copy of the engine's
   types (its `dist/types/` now carries only Library's own surfaces), and added

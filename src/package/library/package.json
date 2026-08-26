@@ -1,5 +1,5 @@
 {
-  "name": "@Seihouse/Library",
+  "name": "@seihouse/library",
   "version": "0.1.0",
   "description": "SEIHouse's first-party host application surfaces built on SEN: cultivation and Qi progression, and the relic economy.",
   "type": "module",

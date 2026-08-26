@@ -49,7 +49,7 @@ its section).
 These primitives are the **SEN** surface kit: they are the substrate every
 SEN surface is composed from, so they publish as `@seihouse/sen/ui` (and the
 card primitive also through `@seihouse/sen/cards`). They are *not* the
-`@Seihouse/Library` application package — Library is SEIHouse's first-party
+`@seihouse/library` application package — Library is SEIHouse's first-party
 host app, and SEN may never depend on it. See
 [`src/package/README.md`](../../package/README.md).
 

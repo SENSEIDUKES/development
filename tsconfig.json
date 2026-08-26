@@ -19,8 +19,8 @@
     "paths": {
       "@seihouse/sen": ["./src/package/sen/index.ts"],
       "@seihouse/sen/*": ["./src/package/sen/*.ts"],
-      "@Seihouse/Library": ["./src/package/library/index.ts"],
-      "@Seihouse/Library/*": ["./src/package/library/*.ts"]
+      "@seihouse/library": ["./src/package/library/index.ts"],
+      "@seihouse/library/*": ["./src/package/library/*.ts"]
     }
   },
   "include": ["src", "api", "vite.config.ts"],

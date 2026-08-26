@@ -1,7 +1,7 @@
 import { createPackageBuildConfig } from './vite.package.shared';
 
 /**
- * Build configuration for the `@Seihouse/Library` npm package — SEIHouse's
+ * Build configuration for the `@seihouse/library` npm package — SEIHouse's
  * first-party host surfaces.
  *
  * Only the entries in `src/package/library/` are built. SEN is a peer

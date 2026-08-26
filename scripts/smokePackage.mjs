@@ -1,5 +1,5 @@
 /**
- * Packs a finished package artifact — `@seihouse/sen` or `@Seihouse/Library` —
+ * Packs a finished package artifact — `@seihouse/sen` or `@seihouse/library` —
  * installs it into a fresh local consumer alongside the packages it depends
  * on, then type-checks its public contracts and bundles every advertised
  * JavaScript entry with Vite. This validates the browser distribution

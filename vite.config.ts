@@ -188,7 +188,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       // DEV consumes the same entries both packages publish, so a Workshop
       // preview imports exactly what a consuming application will:
-      // `@seihouse/sen` for the portable engine and `@Seihouse/Library` for
+      // `@seihouse/sen` for the portable engine and `@seihouse/library` for
       // SEIHouse's own surfaces. The packages themselves are built by
       // `vite.package.config.ts` and `vite.library.config.ts`.
       alias: [
@@ -201,11 +201,11 @@ export default defineConfig(({ mode }) => {
           replacement: `${fileURLToPath(new URL('./src/package/sen', import.meta.url))}/$1.ts`,
         },
         {
-          find: /^@Seihouse\/Library$/,
+          find: /^@seihouse\/library$/,
           replacement: fileURLToPath(new URL('./src/package/library/index.ts', import.meta.url)),
         },
         {
-          find: /^@Seihouse\/Library\/(.*)$/,
+          find: /^@seihouse\/library\/(.*)$/,
           replacement: `${fileURLToPath(new URL('./src/package/library', import.meta.url))}/$1.ts`,
         },
       ],

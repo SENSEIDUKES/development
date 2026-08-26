@@ -9,7 +9,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 /**
  * Shared build configuration for the packages DEV publishes:
- * `@seihouse/sen` (the portable engine) and `@Seihouse/Library` (SEIHouse's
+ * `@seihouse/sen` (the portable engine) and `@seihouse/library` (SEIHouse's
  * first-party surfaces built on it).
  *
  * Both builds work the same way, so they share one factory: entries come from

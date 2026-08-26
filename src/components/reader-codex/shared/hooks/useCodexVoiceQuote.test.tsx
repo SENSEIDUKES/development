@@ -11,9 +11,11 @@ import {
 import type { Character } from '../types';
 
 const playback = vi.hoisted(() => ({
+  autoplayBlocked: false,
   currentTrackId: null as string | null,
   isPlaying: false,
   replace: vi.fn(),
+  restart: vi.fn(() => true),
   stop: vi.fn(),
 }));
 
@@ -84,7 +86,9 @@ beforeEach(() => {
   root = createRoot(container);
   playback.currentTrackId = null;
   playback.isPlaying = false;
+  playback.autoplayBlocked = false;
   playback.replace.mockReset();
+  playback.restart.mockClear();
   playback.stop.mockReset();
 });
 
@@ -169,6 +173,28 @@ describe('useCodexVoiceQuote', () => {
     tap();
     expect(playback.stop).toHaveBeenCalledWith('codex-voice:character-wen-shu');
     expect(state()).toBe('stopping');
+    expect(playback.replace).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries a browser-blocked quote from the second tap without resynthesizing it', async () => {
+    const requestVoice = vi.fn(async () => resolution());
+    render({ char: character(), requestVoice });
+
+    await act(async () => {
+      (container.querySelector('[data-testid="tap"]') as HTMLButtonElement).click();
+    });
+    playback.currentTrackId = 'codex-voice:character-wen-shu';
+    playback.autoplayBlocked = true;
+    render({ char: character(), requestVoice });
+
+    expect(state()).toBe('error');
+    expect(container.querySelector('[data-testid="message"]')!.textContent)
+      .toBe('Your browser needs one more tap to start this voice.');
+
+    tap();
+
+    expect(requestVoice).toHaveBeenCalledTimes(1);
+    expect(playback.restart).toHaveBeenCalledWith('codex-voice:character-wen-shu');
     expect(playback.replace).toHaveBeenCalledTimes(1);
   });
 

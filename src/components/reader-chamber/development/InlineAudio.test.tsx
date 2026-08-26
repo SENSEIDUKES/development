@@ -74,6 +74,7 @@ function createFakePlayback(autoPlay = false): FakePlayback {
       emit({ type: 'track-change', trackId: request.id });
       if (autoPlay) emit({ type: 'play', trackId: request.id });
     }),
+    restart: vi.fn(() => true),
     setVolume: vi.fn(),
     stop: vi.fn(),
     subscribe: vi.fn((handler) => {

@@ -160,10 +160,12 @@ const downloadFilename = (character: Character): string => (
  */
 export function useCodexVoiceQuote(options: UseCodexVoiceQuoteOptions = {}) {
   const {
+    autoplayBlocked,
     currentTrackId,
     playingVoiceId,
     handlePlayVoice,
     handleStopVoice,
+    retryBlockedVoice,
   } = useCodexVoiceCards();
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -206,6 +208,12 @@ export function useCodexVoiceQuote(options: UseCodexVoiceQuoteOptions = {}) {
     // second generation.
     if (inFlight.current.has(characterId)) return;
 
+    // The source is already in the shared queue, but browser autoplay policy
+    // rejected the delayed post-synthesis start. This explicit retry is a
+    // direct user gesture, so replay the same in-memory quote rather than
+    // charging another provider request for identical audio.
+    if (audioByCharacterId[characterId] && retryBlockedVoice(characterId)) return;
+
     inFlight.current.add(characterId);
     clearError(characterId);
     setGeneratingId(characterId);
@@ -224,7 +232,16 @@ export function useCodexVoiceQuote(options: UseCodexVoiceQuoteOptions = {}) {
       inFlight.current.delete(characterId);
       setGeneratingId(current => (current === characterId ? null : current));
     }
-  }, [clearError, handlePlayVoice, handleStopVoice, onVoiceResolved, playingVoiceId, requestVoice]);
+  }, [
+    audioByCharacterId,
+    clearError,
+    handlePlayVoice,
+    handleStopVoice,
+    onVoiceResolved,
+    playingVoiceId,
+    requestVoice,
+    retryBlockedVoice,
+  ]);
 
   const voiceStatus = useCallback((character: Character): CodexVoiceQuoteStatus => {
     if (!isCodexVoiceQuoteEligible(character)) {
@@ -233,10 +250,27 @@ export function useCodexVoiceQuote(options: UseCodexVoiceQuoteOptions = {}) {
     if (generatingId === character.id) return { state: 'generating', canRetry: false };
     if (stoppingId === character.id) return { state: 'stopping', canRetry: false };
     if (playingVoiceId === character.id) return { state: 'playing', canRetry: false };
+    if (autoplayBlocked
+      && currentTrackId === codexVoiceTrackId(character.id)
+      && audioByCharacterId[character.id]) {
+      return {
+        state: 'error',
+        message: 'Your browser needs one more tap to start this voice.',
+        canRetry: true,
+      };
+    }
     const message = errors[character.id];
     if (message) return { state: 'error', message, canRetry: true };
     return { state: 'ready', canRetry: false };
-  }, [errors, generatingId, playingVoiceId, stoppingId]);
+  }, [
+    audioByCharacterId,
+    autoplayBlocked,
+    currentTrackId,
+    errors,
+    generatingId,
+    playingVoiceId,
+    stoppingId,
+  ]);
 
   /** True once this Character's most recent tap produced audio this session. */
   const canDownloadVoice = useCallback((character: Character): boolean => (

@@ -66,7 +66,19 @@ export const PACKAGE_TARGETS = {
       '@seihouse/sen': ['LibraryPanel', 'SEN_PACKAGE_VERSION'],
       '@seihouse/sen/ui': ['LibraryPanel', 'ManifestButton', 'ParticleEffect'],
       '@seihouse/sen/color-codes': ['COLOR_CODES', 'getColorCodeValue', 'resolveCodexEntityColorCode'],
-      '@seihouse/sen/cards': ['LibraryCard', 'CodexCard', 'CodexHovercard', 'CharacterCard', 'resolveCodexEntityAccent'],
+      '@seihouse/sen/cards': [
+        'LibraryCard',
+        'CodexCard',
+        'CodexHovercard',
+        'CharacterCard',
+        'resolveCodexEntityAccent',
+        'SystemBlock',
+        'WorldNotice',
+        'FateResultCard',
+        'resolveSystemPromptRoute',
+        'normalizeFateResultData',
+        'normalizeWorldNoticeData',
+      ],
       '@seihouse/sen/reader-chamber': [
         'ReaderChamber',
         'ReaderViewport',
@@ -93,13 +105,23 @@ export const PACKAGE_TARGETS = {
       import type { CreationModalProps, StorySeedInput } from '@seihouse/sen/story-seed';
       import type { FiveChapterBatchState, ManifestChapterRequest } from '@seihouse/sen/chapter-generation';
       import type { ColorCodeId, ColorCodeDefinition } from '@seihouse/sen/color-codes';
-      import type { CodexCardProps, LibraryCardProps } from '@seihouse/sen/cards';
       import type {
+        CodexCardProps,
         FateResultCardProps,
+        FateResultData,
+        LibraryCardProps,
         SystemBlockProps,
+        SystemEvent,
+        SystemPromptExpandedData,
+        SystemPromptPresentation,
         SystemPromptRoute,
         SystemPromptRoutePresentation,
+        WorldNoticeData,
+        WorldNoticeEntry,
         WorldNoticeProps,
+      } from '@seihouse/sen/cards';
+      import type {
+        ReaderChapter,
       } from '@seihouse/sen/reader-chamber';
       declare const creation: CreationModalProps;
       declare const seed: StorySeedInput;
@@ -114,9 +136,18 @@ export const PACKAGE_TARGETS = {
       declare const systemRoute: SystemPromptRoute;
       declare const systemRoutePresentation: SystemPromptRoutePresentation;
       declare const worldNotice: WorldNoticeProps;
+      declare const fateResult: FateResultData;
+      declare const systemEvent: SystemEvent;
+      declare const systemPromptPresentation: SystemPromptPresentation;
+      declare const systemPromptExpanded: SystemPromptExpandedData;
+      declare const worldNoticeData: WorldNoticeData;
+      declare const worldNoticeEntry: WorldNoticeEntry;
+      declare const readerChapter: ReaderChapter;
       void [
         creation, seed, batch, request, colorCode, colorCodeDefinition, codexCard, card,
         fateResultCard, systemBlock, systemRoute, systemRoutePresentation, worldNotice,
+        fateResult, systemEvent, systemPromptPresentation, systemPromptExpanded,
+        worldNoticeData, worldNoticeEntry, readerChapter,
       ];
     `,
   },

@@ -5,8 +5,8 @@
  * (media / content / header / title / description / body / metadata /
  * actions / footer) is the base every entity card is built from; the Codex
  * card, its hovercard trigger, the character and location cards, their
- * profile views, and the ambience layer behind them are the narrative cards
- * SEN ships on top of it.
+ * profile views, the System Prompt families, and the ambience layer behind
+ * them are the narrative cards SEN ships on top of it.
  *
  * Card identity colors come from the single Color Code authority
  * (`@seihouse/sen/color-codes`) through the accent resolvers re-exported
@@ -72,3 +72,33 @@ export { CharacterEditCard } from '../../components/reader-codex/shared/codex/ch
 export { CharacterProfile } from '../../components/reader-codex/shared/codex/character-profiles/CharacterProfile';
 export { LocationCard } from '../../components/reader-codex/shared/codex/location-cards/LocationCard';
 export { LocationProfile } from '../../components/reader-codex/shared/codex/location-profiles/LocationProfile';
+
+// System Prompt cards remain implemented by Reader Chamber, but every card
+// family is published from this one public entry. Reader Chamber keeps its
+// existing exports as compatibility aliases for established consumers.
+export { FateResultCard } from '../../components/reader-chamber/development/FateResultCard';
+export type { FateResultCardProps } from '../../components/reader-chamber/development/FateResultCard';
+export { SystemBlock } from '../../components/reader-chamber/development/SystemBlock';
+export type { SystemBlockProps } from '../../components/reader-chamber/development/SystemBlock';
+export { WorldNotice } from '../../components/reader-chamber/development/WorldNotice';
+export type { WorldNoticeProps } from '../../components/reader-chamber/development/WorldNotice';
+export * from '../../components/reader-chamber/shared/systemPromptPresentation';
+export type {
+  BaseSystemEvent,
+  FateResultData,
+  FateSystemEvent,
+  RegularSystemEvent,
+  SystemEvent,
+  SystemEventKind,
+  SystemPromptBadge,
+  SystemPromptChange,
+  SystemPromptExpandedData,
+  SystemPromptExpandedProgress,
+  SystemPromptExpandedSection,
+  SystemPromptExpandedStatus,
+  SystemPromptExpandedTone,
+  SystemPromptPresentation,
+  WorldNoticeData,
+  WorldNoticeDetail,
+  WorldNoticeEntry,
+} from '../../components/reader-chamber/shared/types';

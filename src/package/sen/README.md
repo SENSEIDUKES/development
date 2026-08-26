@@ -30,7 +30,7 @@ the exact same code.
 | `@seihouse/sen` | The SEN surface primitives (re-exported from `./ui`) plus `SEN_PACKAGE_VERSION` |
 | `@seihouse/sen/ui` | The portable surface primitives: panels, cards, buttons, the primary creation action, inputs, navigation, particles, glyphs |
 | `@seihouse/sen/color-codes` | **The single Color Code authority**: the registry, the accessibility palettes, and every semantic resolver |
-| `@seihouse/sen/cards` | **The shared card system**: the composable card primitive plus the Codex, character, and location cards built on it |
+| `@seihouse/sen/cards` | **The complete shared card system**: the composable primitive, Codex/entity cards, and every System Prompt family (`SystemBlock`, `WorldNotice`, `FateResultCard`) with its presentation contracts and routes |
 | `@seihouse/sen/reader-chamber` | The Reader Chamber shell, viewport, header, controls, settings, fate surfaces, reading model |
 | `@seihouse/sen/reader-codex` | The Reader Codex shell, sheet overlay, bestiary, section views, Codex context, Codex hooks |
 | `@seihouse/sen/manifestations` | The Manifestation chamber, zones, loading system and veils, journey scrubber, omen scenes, manifestation model |
@@ -57,10 +57,12 @@ prompts. `@seihouse/sen/reader-chamber` deliberately no longer re-exports the
 registry — a second export path is how two surfaces start disagreeing about
 what an enemy, a legendary item, or a special location looks like.
 
-The same holds for cards. `@seihouse/sen/cards` publishes the card primitive
-and the narrative cards together, so chapter generation can be connected to
-the card system and the Color Code authority through one public contract
-instead of reaching into component paths.
+The same holds for cards. `@seihouse/sen/cards` publishes the card primitive,
+Codex/entity cards, and every System Prompt family together. It also publishes
+the System Prompt presentation routes, guards, and payload contracts that
+those cards require, so chapter generation can connect through one public
+contract instead of reaching into component paths. `@seihouse/sen/reader-chamber`
+keeps its existing System Prompt exports for compatibility.
 
 ## What is deliberately not published
 
@@ -152,7 +154,13 @@ preview imports exactly what a consuming application will:
 ```ts
 import { LibraryPanel } from '@seihouse/sen/ui';
 import { COLOR_CODES } from '@seihouse/sen/color-codes';
-import { CodexCard } from '@seihouse/sen/cards';
+import {
+  CodexCard,
+  FateResultCard,
+  SystemBlock,
+  WorldNotice,
+  resolveSystemPromptRoute,
+} from '@seihouse/sen/cards';
 import { ReaderChamber } from '@seihouse/sen/reader-chamber';
 import { CreationModal } from '@seihouse/sen/story-seed';
 ```

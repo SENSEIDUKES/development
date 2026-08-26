@@ -3,7 +3,11 @@ import {
   ReaderViewport,
   getReaderChamberSurfaceClass,
 } from '@seihouse/sen/reader-chamber';
-import { CodexHovercard, getManifestBackdrop } from '@seihouse/sen/cards';
+import {
+  CodexHovercard,
+  getManifestBackdrop,
+  type SystemEvent,
+} from '@seihouse/sen/cards';
 import {
   createCodexHighlighter,
   splitByCodexTerms,
@@ -15,7 +19,6 @@ import type {
   ReaderPreferences,
   StoryBlock,
   StoryWorld,
-  SystemEvent,
 } from '@seihouse/sen/reader-chamber';
 import {
   resolveChapterAudioMoments,

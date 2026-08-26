@@ -135,11 +135,15 @@ npm run check:package-boundaries # the source-graph boundary check on its own
 vite.package.config.ts` bundles the entries with React, Motion, Lucide,
 react-focus-lock, and `@seihouse/audio-player` left external, and
 `scripts/finalizePackage.mjs sen` copies this manifest into `dist/sen/` and
-verifies the result — including that every JavaScript entry reconnects the
-extracted `sen.css` stylesheet. `scripts/smokePackage.mjs sen` then packs that
-finished directory, installs the tarball into a fresh local Vite consumer,
-type-checks the public contracts, bundles every JavaScript entry, and verifies
-that Workshop-only public assets did not enter the artifact.
+verifies the result — including that every **styled** JavaScript entry
+reconnects the extracted `sen.css` stylesheet. `./audio` is the one entry
+deliberately exempt: it carries no styling, so it is listed in that target's
+`unstyledEntries` and must *not* import the stylesheet.
+
+`scripts/smokePackage.mjs sen` then packs that finished directory, installs
+the tarball into a fresh local Vite consumer, type-checks the public
+contracts, bundles every JavaScript entry, and verifies that Workshop-only
+public assets did not enter the artifact.
 
 Both packages share one build: `vite.package.shared.ts` reads the entry list
 straight from each package manifest, and `scripts/packageTargets.mjs` holds
@@ -165,9 +169,14 @@ import { ReaderChamber } from '@seihouse/sen/reader-chamber';
 import { CreationModal } from '@seihouse/sen/story-seed';
 ```
 
-Workshop-only code — mocks, preview controls, the locked `reference/`
-replicas — keeps importing through relative paths, which is what keeps the
-package boundary visible in review.
+Workshop-only code keeps importing through relative paths where there is no
+published entry to import from — the mock application state, preview controls,
+preview fixtures, and the locked `reference/` replicas — which is what keeps
+the package boundary visible in review. Where a surface *is* published,
+Workshop code imports the public entry like any other consumer: the Card
+Workshop takes its Codex and System Prompt cards from `@seihouse/sen/cards`,
+and the Story Seed previews take their schema and repository types from
+`@seihouse/sen/story-seed`.
 
 ## History
 

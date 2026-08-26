@@ -65,18 +65,28 @@ export const PACKAGE_TARGETS = {
     smokeExports: {
       '@seihouse/sen': ['LibraryPanel', 'SEN_PACKAGE_VERSION'],
       '@seihouse/sen/ui': ['LibraryPanel', 'ManifestButton', 'ParticleEffect'],
-      '@seihouse/sen/color-codes': ['COLOR_CODES', 'getColorCodeValue', 'resolveCodexEntityColorCode'],
+      '@seihouse/sen/color-codes': [
+        'COLOR_CODES',
+        'getColorCodeValue',
+        'resolveCharacterRelationshipColorCode',
+        'resolveCodexEntityColorCode',
+        'resolveLocationColorCode',
+        'resolveSystemOutcomeColorCode',
+      ],
       '@seihouse/sen/cards': [
         'LibraryCard',
         'CodexCard',
         'CodexHovercard',
         'CharacterCard',
+        'LocationCard',
         'resolveCodexEntityAccent',
         'SystemBlock',
         'WorldNotice',
         'FateResultCard',
         'resolveSystemPromptRoute',
         'normalizeFateResultData',
+        'normalizeSystemPromptChanges',
+        'normalizeSystemPromptRows',
         'normalizeSystemStatusScreen',
         'normalizeWorldNoticeData',
       ],
@@ -104,7 +114,7 @@ export const PACKAGE_TARGETS = {
     /** Public types the packed consumer must be able to resolve. */
     smokeTypes: `
       import type { CreationModalProps, StorySeedInput } from '@seihouse/sen/story-seed';
-      import type { FiveChapterBatchState, ManifestChapterRequest } from '@seihouse/sen/chapter-generation';
+      import type { ChapterContent, FiveChapterBatchState, ManifestChapterRequest } from '@seihouse/sen/chapter-generation';
       import type { ColorCodeId, ColorCodeDefinition } from '@seihouse/sen/color-codes';
       import type {
         CodexCardProps,
@@ -113,6 +123,8 @@ export const PACKAGE_TARGETS = {
         LibraryCardProps,
         SystemBlockProps,
         SystemEvent,
+        SystemPromptBadge,
+        SystemPromptChange,
         SystemPromptExpandedData,
         SystemPromptPresentation,
         SystemPromptRoute,
@@ -133,6 +145,7 @@ export const PACKAGE_TARGETS = {
       declare const seed: StorySeedInput;
       declare const batch: FiveChapterBatchState;
       declare const request: ManifestChapterRequest;
+      declare const generatedBlock: NonNullable<ChapterContent['blocks']>[number];
       declare const colorCode: ColorCodeId;
       declare const colorCodeDefinition: ColorCodeDefinition;
       declare const codexCard: CodexCardProps;
@@ -144,6 +157,8 @@ export const PACKAGE_TARGETS = {
       declare const worldNotice: WorldNoticeProps;
       declare const fateResult: FateResultData;
       declare const systemEvent: SystemEvent;
+      declare const systemPromptBadge: SystemPromptBadge;
+      declare const systemPromptChange: SystemPromptChange;
       declare const systemPromptPresentation: SystemPromptPresentation;
       declare const systemPromptExpanded: SystemPromptExpandedData;
       declare const systemStatusAbility: SystemStatusAbility;
@@ -154,12 +169,13 @@ export const PACKAGE_TARGETS = {
       declare const worldNoticeData: WorldNoticeData;
       declare const worldNoticeEntry: WorldNoticeEntry;
       declare const readerChapter: ReaderChapter;
+      const readerBlock: NonNullable<ReaderChapter['blocks']>[number] = generatedBlock;
       void [
-        creation, seed, batch, request, colorCode, colorCodeDefinition, codexCard, card,
+        creation, seed, batch, request, generatedBlock, colorCode, colorCodeDefinition, codexCard, card,
         fateResultCard, systemBlock, systemRoute, systemRoutePresentation, worldNotice,
-        fateResult, systemEvent, systemPromptPresentation, systemPromptExpanded,
+        fateResult, systemEvent, systemPromptBadge, systemPromptChange, systemPromptPresentation, systemPromptExpanded,
         systemStatusAbility, systemStatusBar, systemStatusEffect, systemStatusScreen, systemStatusStat,
-        worldNoticeData, worldNoticeEntry, readerChapter,
+        worldNoticeData, worldNoticeEntry, readerChapter, readerBlock,
       ];
     `,
   },

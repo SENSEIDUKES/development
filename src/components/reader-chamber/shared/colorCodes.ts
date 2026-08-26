@@ -144,7 +144,7 @@ export type CodexEntityBand =
 
 const CODEX_BAND_COLOR_CODES: Record<CodexEntityBand, ColorCodeId> = {
   protagonist: 'mainCharacter', bond: 'bond', gold: 'mentor', ally: 'ally', hostile: 'enemy', mystery: 'unknown', nonHuman: 'nonHuman',
-  artifactGreat: 'itemGreat', artifactGood: 'itemGood', artifactModest: 'itemDecent', artifactPlain: 'itemBasic', location: 'location', faction: 'ally', fallback: 'mainCharacter',
+  artifactGreat: 'itemGreat', artifactGood: 'itemGood', artifactModest: 'itemDecent', artifactPlain: 'itemBasic', location: 'location', faction: 'unknown', fallback: 'unknown',
 };
 
 /**
@@ -172,7 +172,7 @@ export function resolveCharacterRelationshipColorCode(
   if (/(friend|ally|brother|sister|companion|comrade|loyal)/.test(relationship)) return 'ally';
   if (/(unknown|stranger|neutral|mystery)/.test(relationship)) return 'unknown';
   if (entry.portraitKind === 'non-human') return 'nonHuman';
-  return 'mainCharacter';
+  return 'unknown';
 }
 
 function resolveCharacterBand(entry: CodexEntityAccentInput, mcName?: string): CodexEntityBand {
@@ -224,7 +224,7 @@ export function getCodexEntityBandColorCode(band: CodexEntityBand): ColorCodeId 
 
 export function resolveCodexEntityColorCode(type: string, entry?: CodexEntityAccentInput | null, mcName?: string): ColorCodeId {
   const kind = (type || '').toLowerCase();
-  if (!entry) return 'mainCharacter';
+  if (!entry) return 'unknown';
   if (kind === 'character' || kind.includes('portrait') || kind === 'creature') {
     return resolveCharacterRelationshipColorCode(entry, mcName);
   }

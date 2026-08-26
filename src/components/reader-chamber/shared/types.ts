@@ -8,7 +8,10 @@
  * preserve the production Reader/Codex contracts used by this replica.
  */
 
-import type { StoryEntityType } from "../../chapter-generation/shared/types";
+import type {
+  BeastSonicProfile as ChapterBeastSonicProfile,
+  StoryBlockMetadata as ChapterStoryBlockMetadata,
+} from "../../chapter-generation/shared/types";
 import type { ResolvedAudioMoment } from "../../../audio/inlineAudio";
 
 export interface FateResultData {
@@ -20,80 +23,14 @@ export interface FateResultData {
   genreShift?: string;
 }
 
-/** Minimal sonic profile shape used by the auto-cue policy and sound hints. */
-export interface BeastSonicProfile {
-  threatTier: string;
-  size?: string;
-  bodyType?: string;
-  element?: string;
-  movement?: string;
-  intelligence?: string;
-  signatureSound?: string;
-}
+/** The Reader consumes the same generated sonic profile contract. */
+export type BeastSonicProfile = ChapterBeastSonicProfile;
 
 /** Canonical sonic metadata for creature species and non-human portraits. */
 export interface CreatureSonicProfile extends BeastSonicProfile {}
 
-export interface StoryBlockMetadata {
-  sceneType?: string;
-  environment?: string[];
-  atmosphereCategory?: "wind" | "crowd" | "waves" | "rain" | "combat" | "noise";
-  atmosphereTags?: string[];
-  theme?: string | string[];
-  motion?: string;
-  emotion?: string;
-  intensity?: number;
-  tension?: number;
-  danger?: number;
-  mysticism?: number;
-  audioSignature?: string;
-  speakerName?: string;
-  mode?: string;
-  speakerRole?: string;
-  entities?: {
-    name: string;
-    type: StoryEntityType;
-    mention: "reveal" | "reference";
-  }[];
-  music?: {
-    mood:
-      | "war"
-      | "duel"
-      | "serenity"
-      | "romance"
-      | "dread"
-      | "mystery"
-      | "triumph"
-      | "tribulation"
-      | "travel"
-      | "tragedy"
-      | "fighting"
-      | "adventure"
-      | "ambient"
-      | "boss-fight"
-      | "tension"
-      | "sad"
-      | "mystical"
-      | "excitement"
-      | "tired"
-      | "horror";
-    region?: "chinese" | "japanese" | "western";
-    intensity?: number;
-    customUrl?: string;
-    trackId?: string;
-  };
-  beastEvent?: {
-    type:
-      | "reveal"
-      | "power-up"
-      | "technique"
-      | "injury"
-      | "turning-point"
-      | "death"
-      | "breakthrough";
-    profile: BeastSonicProfile;
-  };
-}
+/** Generated block metadata is the Reader's one canonical metadata contract. */
+export type StoryBlockMetadata = ChapterStoryBlockMetadata;
 
 import type {
   SystemEventKind,

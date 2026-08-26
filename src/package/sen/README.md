@@ -64,6 +64,15 @@ those cards require, so chapter generation can connect through one public
 contract instead of reaching into component paths. `@seihouse/sen/reader-chamber`
 keeps its existing System Prompt exports for compatibility.
 
+Generated chapters use those boundaries directly. The live Manifest parser
+preserves the cards' structured badge, outcome, row-trend, mechanical status,
+World Notice, and Fate contracts; accepted results remain JSON-safe through
+session storage and the Reader adapter; and the generated Reader and
+Diagnostics surfaces render the packaged cards rather than a legacy local
+panel. Entity and System semantics are resolved through
+`@seihouse/sen/color-codes`, including current relationship state and a neutral
+Unknown fallback when the Codex cannot resolve an entity.
+
 ## What is deliberately not published
 
 - **Library surfaces** — cultivation, Qi progression, and the relic economy
@@ -179,6 +188,13 @@ and the Story Seed previews take their schema and repository types from
 `@seihouse/sen/story-seed`.
 
 ## History
+
+- **2026-08-26:** Connected generated chapter parsing, serialized session
+  state, Reader adaptation, Reader rendering, and Diagnostics to the public
+  cards and Color Codes authorities. Packed-consumer coverage now includes
+  both Codex card families, structured System contracts, normalization routes,
+  semantic resolvers, and generation-to-Reader block compatibility. Bumped to
+  `0.3.1`.
 
 - **2026-08-25:** Split SEN and Library into separate packages. The Library
   package is `@seihouse/library` (lowercase, per npm's package-name rule). SEN is now

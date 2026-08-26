@@ -4,11 +4,22 @@
 - **Source location:** `src/hooks/chapterPipeline/chapterBatch.ts`, `src/aiRouter.ts`, `src/server/routes/storyRouter.ts`, and the Story Seed, prompt, handoff, formatting, and context dependencies
 - **Workshop preview:** `?preview=chapter-generation-flow`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-21
+- **Last Workshop update:** 2026-08-26
 - **Last source comparison:** 2026-08-09
 - **Replica status:** Chapter Generation 1.0 recovery restores the proven one-chapter Plan → Manifest → Process boundary and opens its accepted result in the current Reader Chamber and Reader Codex
 
 ## Purpose
+
+Generated chapters now retain the complete public `@seihouse/sen/cards`
+System contract through the live Manifest parser, accepted result, serialized
+batch/session state, Reader adapter, and Reader render. The generated-session
+composition imports the packaged Reader entries, and Diagnostics delegates
+System blocks to packaged `SystemBlock` instead of maintaining a simplified
+cyan renderer. Narrative, Mechanical status, World Notice, Fate, character,
+and location presentations therefore follow the same routing and components
+as Card Workshop. Semantic presentation is resolved only by
+`@seihouse/sen/color-codes`; a missing entity remains Unknown rather than
+being guessed as the main character.
 
 This Workshop entry proves real Chapter Generation 1.0 runs without creating a
 second Story Seed contract. Development accepts a saved or uploaded portable Story
@@ -52,6 +63,17 @@ and Reader-shaped fields only at this boundary. The generator does not reconcile
 rewrite entity identity. The Codex receives a chapter-scoped arc view, so its timeline
 cannot reveal later completed chapters even though Reader navigation still retains
 the complete batch.
+
+## Workshop history
+
+- **2026-08-26:** Reconnected live generated chapter output to the packaged
+  cards and Color Codes authorities. Manifest parsing now preserves badges,
+  outcomes, row trends, and mechanical status screens; serialized accepted
+  results keep those structures through the Reader adapter; generated Reader
+  sessions consume the public Reader/Codex entries; and Diagnostics uses the
+  packaged `SystemBlock`. Added end-to-end coverage for character and location
+  reveals, Narrative, Mechanical, World Notice, Fate, and an ally-to-enemy
+  relationship change. No Card Workshop visuals or behavior changed.
 
 ## Four actual stages
 

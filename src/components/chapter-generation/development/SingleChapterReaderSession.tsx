@@ -1,17 +1,16 @@
 import { useMemo, useState } from "react";
-import ReaderChamber from "../../reader-chamber/development/ReaderChamber";
-import { CodexSheetOverlay } from "../../reader-codex/development/CodexSheetOverlay";
 import {
+  ReaderChamber,
   createChapterScopedCodexStory,
   createCompletedSingleChapterReaderSession,
-} from "../../reader-chamber/shared/batchToReaderAdapter";
+} from "@seihouse/sen/reader-chamber";
+import { CodexSheetOverlay } from "@seihouse/sen/reader-codex";
 import type {
   StoryMemory,
   StoryWorld,
   UpdateStoryFields,
-} from "../../reader-chamber/shared/types";
+} from "@seihouse/sen/reader-chamber";
 import type { ManifestChapterResponse } from "../shared/liveChapterGeneration";
-import "../../reader-chamber/shared/reader-chamber.css";
 
 export interface SingleChapterReaderSessionProps {
   result: ManifestChapterResponse;

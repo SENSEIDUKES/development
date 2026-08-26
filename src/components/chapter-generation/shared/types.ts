@@ -124,7 +124,8 @@ export type SystemEventKind = "system_prompt" | "fate_system_prompt";
  * "negative" red); when omitted, the tone derives from `direction` ("gain" →
  * positive, "loss" → negative), so set `tone` whenever the literal direction
  * contradicts the meaning (a gained enmity is still negative).
- * Generation does not emit these yet — application-owned fixtures only.
+ * Generated chapters may emit these when a visible outcome is earned; the
+ * live parser validates and preserves them for the packaged card renderer.
  */
 export interface SystemPromptChange {
   direction: "gain" | "loss";
@@ -183,8 +184,8 @@ export interface BaseSystemEvent {
    * Concise key/value facts. The compact System Prompt renders at most three
    * and marks a changed value with a small direction arrow when `trend` is
    * set: "up" for an upgrade (green), "down" for a regression (red); leave it
-   * unset for neutral facts. Like `changes`, `trend` is application-owned —
-   * generation does not emit it yet and the normalizer drops it.
+   * unset for neutral facts. Generated rows retain this semantic direction
+   * through parsing and Reader adaptation.
    */
   rows?: { label: string; value: string; trend?: "up" | "down" }[];
   rarity?: string;
@@ -239,10 +240,9 @@ export interface SystemStatusAbility {
 /**
  * The LitRPG status-screen payload of a mechanical System Prompt: character or
  * target header metadata, resource meters, a numerical stat grid, active
- * effects, and abilities. Like `rows` and `changes`, it is application-owned —
- * generation does not emit it yet and the normalizer guards it at the Reader
- * boundary. Valid only with `presentation: "mechanical"`; events without it
- * keep the legacy plain-rows rendering.
+ * effects, and abilities. Generation may emit it for a mechanical presentation;
+ * both the live parser and Reader boundary validate it. Events without it keep
+ * the legacy plain-rows rendering.
  */
 export interface SystemStatusScreen {
   level?: string;

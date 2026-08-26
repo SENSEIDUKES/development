@@ -2,6 +2,8 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CodexCard } from "@seihouse/sen/cards";
+import { createCompletedSingleChapterReaderSession } from "@seihouse/sen/reader-chamber";
 import {
   installAudioMediaStubs,
   renderWithDevAudio,
@@ -66,5 +68,131 @@ describe("SingleChapterReaderSession", () => {
     expect(codex!.textContent).toContain("Known by Chapter 1");
     expect(codex!.textContent).toContain("Generated Title 1");
     expect(codex!.textContent).not.toContain("Known by Chapter 2");
+  });
+
+  it("renders generated Codex and every System card family through packaged Reader contracts", () => {
+    const result = structuredClone(createCompletedFiveChapterTestBatch().chapters[0].result!);
+    result.run.processingResult.proposedLivingStoryState.codex.characters = [{
+      id: "sable",
+      name: "Sable",
+      role: "Scout",
+      relationshipToMC: "Trusted ally",
+      description: "The court scout who crossed the rain archive.",
+    }];
+    result.run.processingResult.proposedLivingStoryState.codex.locations = [{
+      id: "moon-gate",
+      name: "Moon Gate",
+      description: "An ordinary gate below the court terraces.",
+      realm: "Mortal Realm",
+    }];
+    result.run.finalOutput.blocks = [{
+      id: "c1-p1",
+      type: "paragraph",
+      text: "Sable entered the rain archive.",
+      metadata: { entities: [{ name: "Sable", type: "character", mention: "reveal" }] },
+    }, {
+      id: "c1-p2",
+      type: "paragraph",
+      text: "Moon Gate opened below the terraces.",
+      metadata: { entities: [{ name: "Moon Gate", type: "location", mention: "reveal" }] },
+    }, {
+      id: "c1-p3",
+      type: "paragraph",
+      text: "Sable's warning reached Rin.",
+      system: {
+        kind: "system_prompt",
+        presentation: "narrative",
+        promptType: "warning",
+        title: "OATH PRESSURE RISING",
+        badge: { label: "Threat", value: "Severe" },
+        changes: [{ direction: "gain", label: "ENMITY GAINED", tone: "negative" }],
+      },
+    }, {
+      id: "c1-p4",
+      type: "paragraph",
+      text: "Rin's witness matrix resolved.",
+      system: {
+        kind: "system_prompt",
+        presentation: "mechanical",
+        promptType: "progression",
+        title: "WITNESS MATRIX",
+        status: {
+          level: "Ninefold",
+          bars: [{ label: "Spirit", value: 72, max: 100, tone: "spirit" }],
+          abilities: [{ name: "Oath Sight", detail: "Reads fractures in sworn testimony." }],
+        },
+      },
+    }, {
+      id: "c1-p5",
+      type: "paragraph",
+      text: "A court notice waited at Moon Gate.",
+      system: {
+        kind: "system_prompt",
+        presentation: "world_notice",
+        promptType: "quest_update",
+        title: "COURT NOTICE",
+        worldNotice: { entries: [{ title: "NINTH HOUSE HEARING", body: "Witnesses assemble before rainfall." }] },
+      },
+    }, {
+      id: "c1-p6",
+      type: "paragraph",
+      text: "The deadline broke around Rin.",
+      system: {
+        kind: "fate_system_prompt",
+        title: "FATE RESULT",
+        fateResult: {
+          outcome: "FATE AVERTED",
+          timelineScar: "The Ninth House remembers the broken deadline.",
+          permanentCosts: ["Sable is marked by the court."],
+        },
+      },
+    }];
+    result.run.finalOutput.generatedContent = result.run.finalOutput.blocks
+      .map(block => block.text)
+      .join("\n\n");
+    const storedResult = JSON.parse(JSON.stringify(result)) as typeof result;
+
+    act(() => {
+      root.render(renderWithDevAudio(
+        <SingleChapterReaderSession result={storedResult} onClose={() => undefined} />,
+      ));
+    });
+
+    expect(container.querySelector('[data-color-code="ally"]')).toBeTruthy();
+    expect(container.querySelector('[data-color-code="location"]')).toBeTruthy();
+    expect(container.querySelector('[data-system-presentation="narrative"]')).toBeTruthy();
+    expect(container.querySelector('[data-system-presentation="mechanical"]')).toBeTruthy();
+    expect(container.querySelector('[data-system-presentation="world_notice"]')).toBeTruthy();
+    expect(container.querySelector('[data-system-presentation="fate"]')).toBeTruthy();
+    expect(container.querySelector('[data-status-bar="spirit"][data-color-code="mainCharacter"]')).toBeTruthy();
+    expect([...container.querySelectorAll('[data-color-code="enemy"]')]
+      .some(element => element.textContent?.toUpperCase().includes("GAINED"))).toBe(true);
+    expect(container.textContent).toContain("NINTH HOUSE HEARING");
+    expect(container.textContent).toContain("FATE AVERTED");
+  });
+
+  it("re-resolves a generated character card when current Codex relationship state changes", () => {
+    const result = structuredClone(createCompletedFiveChapterTestBatch().chapters[0].result!);
+    result.run.processingResult.proposedLivingStoryState.codex.characters = [{
+      id: "sable",
+      name: "Sable",
+      role: "Scout",
+      relationshipToMC: "Trusted ally",
+      description: "The court scout.",
+    }];
+    const session = createCompletedSingleChapterReaderSession(result);
+    const ally = session.story.memory!.characters![0];
+
+    act(() => {
+      root.render(<CodexCard revealTerm={{ type: "character", entry: ally }} activeStory={session.story} isSenMode />);
+    });
+    expect(container.querySelector('[data-color-code="ally"]')).toBeTruthy();
+
+    const enemy = { ...ally, relationshipToMC: "Former ally, now enemy" };
+    act(() => {
+      root.render(<CodexCard revealTerm={{ type: "character", entry: enemy }} activeStory={session.story} isSenMode />);
+    });
+    expect(container.querySelector('[data-color-code="enemy"]')).toBeTruthy();
+    expect(container.querySelector('[data-color-code="ally"]')).toBeFalsy();
   });
 });

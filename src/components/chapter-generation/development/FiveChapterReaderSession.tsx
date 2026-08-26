@@ -1,21 +1,20 @@
 import { ArrowLeft, Download, FlaskConical, Sigma } from "lucide-react";
 import { useMemo, useRef, useState, type ReactNode } from "react";
-import ReaderChamber from "../../reader-chamber/development/ReaderChamber";
-import { CodexSheetOverlay } from "../../reader-codex/development/CodexSheetOverlay";
 import {
+  ReaderChamber,
   buildFiveChapterReaderExport,
   createChapterScopedCodexStory,
   createCompletedBatchReaderSession,
-} from "../../reader-chamber/shared/batchToReaderAdapter";
+} from "@seihouse/sen/reader-chamber";
+import { CodexSheetOverlay } from "@seihouse/sen/reader-codex";
 import type {
   ReaderTokenUsageTotals,
   StoryMemory,
   StoryWorld,
   UpdateStoryFields,
-} from "../../reader-chamber/shared/types";
+} from "@seihouse/sen/reader-chamber";
 import type { FiveChapterBatchState } from "../shared/batch/chapterBatch";
 import ChapterGenerationWorkspace from "./ChapterGenerationWorkspace";
-import "../../reader-chamber/shared/reader-chamber.css";
 
 type SessionView = "reader" | "diagnostics";
 

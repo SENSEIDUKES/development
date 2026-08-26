@@ -47,6 +47,20 @@ function PlaybackHarness() {
       >
         Restart voice
       </button>
+      <button
+        type="button"
+        data-testid="pause-voice"
+        onClick={playback.pause}
+      >
+        Pause voice
+      </button>
+      <button
+        type="button"
+        data-testid="stop-voice"
+        onClick={() => playback.stop('codex-voice:mei-lin')}
+      >
+        Stop voice
+      </button>
     </>
   );
 }
@@ -119,5 +133,22 @@ describe('DevAudioPlayback data-URI sources', () => {
 
     expect(play).toHaveBeenCalledTimes(2);
     expect(container.querySelector('[data-testid="autoplay-blocked"]')?.textContent).toBe('false');
+  });
+
+  it.each(['pause-voice', 'stop-voice'])('cancels queued playback when the user clicks %s', async (controlId) => {
+    vi.useFakeTimers();
+    try {
+      const play = vi.spyOn(HTMLMediaElement.prototype, 'play');
+
+      await act(async () => control('play-voice').click());
+      await act(async () => control(controlId).click());
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(100);
+      });
+
+      expect(play).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

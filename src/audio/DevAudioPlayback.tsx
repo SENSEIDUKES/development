@@ -80,10 +80,23 @@ const audioDataUriToBlob = (source: string): Blob | null => {
 function DevAudioPlaybackBridge({ children }: PropsWithChildren) {
   const session = useAudioSession();
   const sessionRef = useRef(session);
-  sessionRef.current = session;
   const transientAudioUrlsRef = useRef(new Set<string>());
   const replacePlaybackTokenRef = useRef(0);
   const replacePlaybackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // The timer must use only a committed session. Updating the ref in an effect
+  // keeps a discarded concurrent render from leaking into the playback action.
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
+
+  const cancelPendingReplacementPlayback = useCallback(() => {
+    replacePlaybackTokenRef.current += 1;
+    if (replacePlaybackTimerRef.current !== null) {
+      clearTimeout(replacePlaybackTimerRef.current);
+      replacePlaybackTimerRef.current = null;
+    }
+  }, []);
 
   const toTrack = useCallback((request: DevAudioRequest): Track => {
     const audioBlob = audioDataUriToBlob(request.source);
@@ -111,58 +124,62 @@ function DevAudioPlaybackBridge({ children }: PropsWithChildren) {
   }, [session.currentTrack?.audioFile]);
 
   useEffect(() => () => {
-    replacePlaybackTokenRef.current += 1;
-    if (replacePlaybackTimerRef.current !== null) {
-      clearTimeout(replacePlaybackTimerRef.current);
-      replacePlaybackTimerRef.current = null;
-    }
+    cancelPendingReplacementPlayback();
     for (const source of transientAudioUrlsRef.current) URL.revokeObjectURL(source);
     transientAudioUrlsRef.current.clear();
-  }, []);
+  }, [cancelPendingReplacementPlayback]);
 
   const load = useCallback((request: DevAudioRequest) => {
+    cancelPendingReplacementPlayback();
     session.setQueue([toTrack(request)]);
-  }, [session, toTrack]);
+  }, [cancelPendingReplacementPlayback, session, toTrack]);
 
   const play = useCallback((request?: DevAudioRequest) => {
     if (request) {
+      cancelPendingReplacementPlayback();
       session.playNow(toTrack(request));
       return;
     }
     void session.play();
-  }, [session, toTrack]);
+  }, [cancelPendingReplacementPlayback, session, toTrack]);
+
+  const pause = useCallback(() => {
+    cancelPendingReplacementPlayback();
+    session.pause();
+  }, [cancelPendingReplacementPlayback, session]);
 
   const replace = useCallback((request: DevAudioRequest) => {
-    const playbackToken = replacePlaybackTokenRef.current + 1;
-    replacePlaybackTokenRef.current = playbackToken;
+    cancelPendingReplacementPlayback();
+    const playbackToken = replacePlaybackTokenRef.current;
     // `setQueue(..., true)` asks the player to begin while its own source
     // reset effect is still running. That follow-up reset pauses the newly
     // started track and rejects the play promise as AbortError. Queue first,
     // then start after that reset window using the latest session state.
     session.pause();
     session.setQueue([toTrack(request)]);
-    if (replacePlaybackTimerRef.current !== null) clearTimeout(replacePlaybackTimerRef.current);
     replacePlaybackTimerRef.current = setTimeout(() => {
       if (replacePlaybackTokenRef.current !== playbackToken) return;
       replacePlaybackTimerRef.current = null;
       void sessionRef.current.play();
     }, POST_QUEUE_PLAYBACK_DELAY_MS);
-  }, [session, toTrack]);
+  }, [cancelPendingReplacementPlayback, session, toTrack]);
 
   const restart = useCallback((trackId: string): boolean => {
     if (session.currentTrack?.id !== trackId) return false;
+    cancelPendingReplacementPlayback();
     session.pause();
     session.seek(0);
     session.dismissAutoplayBlocked();
     void session.play();
     return true;
-  }, [session]);
+  }, [cancelPendingReplacementPlayback, session]);
 
   const stop = useCallback((trackId?: string) => {
     if (trackId && session.currentTrack?.id !== trackId) return;
+    cancelPendingReplacementPlayback();
     session.pause();
     session.seek(0);
-  }, [session]);
+  }, [cancelPendingReplacementPlayback, session]);
 
   const subscribeToQueueEnd = useCallback((handler: () => void) => (
     session.subscribe('queue-end', handler)
@@ -204,7 +221,7 @@ function DevAudioPlaybackBridge({ children }: PropsWithChildren) {
     isPlaying: session.isPlaying,
     volume: session.volume,
     load,
-    pause: session.pause,
+    pause,
     play,
     replace,
     restart,
@@ -214,7 +231,7 @@ function DevAudioPlaybackBridge({ children }: PropsWithChildren) {
     subscribeToTrackChange,
     subscribeToQueueEnd,
     toggleMute: session.toggleMute,
-  }), [load, play, replace, restart, session, stop, subscribe, subscribeToQueueEnd, subscribeToTrackChange]);
+  }), [load, pause, play, replace, restart, session, stop, subscribe, subscribeToQueueEnd, subscribeToTrackChange]);
 
   return (
     <DevAudioPlaybackContext.Provider value={value}>

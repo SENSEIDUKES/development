@@ -110,6 +110,7 @@ describe('Color Codes', () => {
     expect(resolveCharacterRelationshipColorCode({ relationshipToMC: 'sect elder' })).toBe('mentor');
     expect(resolveCharacterRelationshipColorCode({ relationshipToMC: 'unknown traveller' })).toBe('unknown');
     expect(resolveCharacterRelationshipColorCode({ portraitKind: 'non-human' })).toBe('nonHuman');
+    expect(resolveCharacterRelationshipColorCode({ name: 'Unresolved stranger' }, 'Rin')).toBe('unknown');
 
     expect(resolveArtifactColorCode({ tier: 'Primordial' })).toBe('itemLegendary');
     expect(resolveArtifactColorCode({ tier: 'Heaven' })).toBe('itemGreat');
@@ -155,6 +156,8 @@ describe('Color Codes', () => {
     expect(resolveFateTypeColorCode('Regression Fate')).toBe('mainCharacter');
     expect(resolveFateTypeColorCode('Reputation Fate')).toBe('unknown');
     expect(resolveFateTypeColorCode('World Fate')).toBe('itemGood');
+    expect(resolveCodexEntityColorCode('character')).toBe('unknown');
+    expect(resolveCodexEntityColorCode('unsupported', { name: 'Unresolved record' })).toBe('unknown');
   });
 
   it('gives cards and links the same context-sensitive relationship token', () => {

@@ -191,6 +191,7 @@ describe("Chapter Generation Development workspace navigation", () => {
     expect(panel!.textContent).toContain("Mei Lian");
     expect(panel!.textContent).toContain("Technique Refined");
     expect(panel!.textContent).toContain("tension 0.75");
+    expect(panel!.querySelector('[data-system-presentation]')).toBeTruthy();
   });
 
   it("applies control changes to the current run without losing the selected stage", async () => {

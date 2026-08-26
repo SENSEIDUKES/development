@@ -11,6 +11,10 @@ import {
   type WorldNoticeData,
 } from "../../components/chapter-generation/shared/types";
 import {
+  normalizeSystemPromptChanges,
+  normalizeSystemStatusScreen,
+} from "../../components/reader-chamber/shared/systemPromptPresentation";
+import {
   validateWorldCueIntent,
   type WorldCueIntent,
 } from "../../audio/inlineAudio";
@@ -632,12 +636,31 @@ const parseSystemEvent = (
           warning(context, "optional-field-removed", `Removed invalid optional system.rows[${index}].`, `system.rows[${index}]`);
           return [];
         }
-        return [{ label: nonEmptyString(item.label)!, value: nonEmptyString(item.value)! }];
+        const trend = item.trend === "up" || item.trend === "down"
+          ? item.trend as "up" | "down"
+          : undefined;
+        return [{
+          label: nonEmptyString(item.label)!,
+          value: nonEmptyString(item.value)!,
+          ...(trend ? { trend } : {}),
+        }];
       });
       if (parsedRows.length > 0) rows = parsedRows;
     }
   }
   const rarity = optionalStringField(value, "rarity", context, "system.rarity");
+  const badge = isRecord(value.badge)
+    && nonEmptyString(value.badge.label)
+    && nonEmptyString(value.badge.value)
+    ? { label: nonEmptyString(value.badge.label)!, value: nonEmptyString(value.badge.value)! }
+    : undefined;
+  if (value.badge !== undefined && value.badge !== null && !badge) {
+    warning(context, "optional-field-removed", "Removed invalid optional system.badge.", "system.badge");
+  }
+  const changes = normalizeSystemPromptChanges(value.changes);
+  if (value.changes !== undefined && (!Array.isArray(value.changes) || changes.length !== value.changes.length)) {
+    warning(context, "optional-field-removed", "Removed invalid optional system.changes entries.", "system.changes");
+  }
   let fateResult: FateResultData | undefined;
   if (kind === "fate_system_prompt") {
     fateResult = parseFateResult(value.fateResult, context);
@@ -650,8 +673,8 @@ const parseSystemEvent = (
   }
 
   const allowedFields = kind === "system_prompt"
-    ? ["kind", "title", "promptType", "flavor", "rows", "rarity", "fateResult", "presentation", "worldNotice"]
-    : ["kind", "title", "promptType", "rows", "rarity", "fateResult", "presentation", "worldNotice"];
+    ? ["kind", "title", "promptType", "flavor", "rows", "rarity", "badge", "changes", "status", "fateResult", "presentation", "worldNotice"]
+    : ["kind", "title", "promptType", "rows", "rarity", "badge", "changes", "fateResult", "presentation", "worldNotice"];
   for (const field of Object.keys(value)) {
     if (!allowedFields.includes(field)) {
       const path = safeFieldLabel(`system.${field}`);
@@ -672,6 +695,8 @@ const parseSystemEvent = (
       ...(validPromptType ? { promptType: validPromptType } : {}),
       ...(rows ? { rows } : {}),
       ...(rarity ? { rarity } : {}),
+      ...(badge ? { badge } : {}),
+      ...(changes.length > 0 ? { changes } : {}),
       fateResult,
     };
   }
@@ -707,6 +732,14 @@ const parseSystemEvent = (
       "system.worldNotice",
     );
   }
+  const status = presentation === "mechanical"
+    ? normalizeSystemStatusScreen(value.status)
+    : undefined;
+  if (presentation === "mechanical" && value.status !== undefined && value.status !== null && !status) {
+    warning(context, "optional-field-removed", "Removed invalid optional system.status.", "system.status");
+  } else if (presentation !== "mechanical" && value.status !== undefined && value.status !== null) {
+    warning(context, "optional-field-removed", "Removed system.status without presentation \"mechanical\".", "system.status");
+  }
 
   return {
     kind: "system_prompt",
@@ -715,8 +748,11 @@ const parseSystemEvent = (
     ...(flavor ? { flavor } : {}),
     ...(rows ? { rows } : {}),
     ...(rarity ? { rarity } : {}),
+    ...(badge ? { badge } : {}),
+    ...(changes.length > 0 ? { changes } : {}),
     ...(presentation ? { presentation } : {}),
     ...(worldNotice ? { worldNotice } : {}),
+    ...(status ? { status } : {}),
   };
 };
 

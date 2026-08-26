@@ -250,6 +250,36 @@ describe("Manifest prose recovery", () => {
     }));
   });
 
+  it("preserves packaged narrative and mechanical presentation data", () => {
+    const result = normalizeManifestResponse(ndjson({
+      type: "system",
+      text: "The hostile seal resolves.",
+      system: {
+        kind: "system_prompt",
+        presentation: "mechanical",
+        promptType: "enemy_scan",
+        title: "HOSTILE SEAL",
+        badge: { label: "Threat", value: "Severe" },
+        rows: [{ label: "Seal", value: "Fractured", trend: "down" }],
+        changes: [{ direction: "gain", label: "ENMITY GAINED", tone: "negative" }],
+        status: {
+          bars: [{ label: "Integrity", value: 31, max: 100, tone: "health" }],
+          abilities: [{ name: "Witness Break" }],
+        },
+      },
+    }), 2);
+
+    expect(result.blocks[0].system).toMatchObject({
+      badge: { label: "Threat", value: "Severe" },
+      rows: [{ label: "Seal", value: "Fractured", trend: "down" }],
+      changes: [{ direction: "gain", label: "ENMITY GAINED", tone: "negative" }],
+      status: {
+        bars: [{ label: "Integrity", value: 31, max: 100, tone: "health" }],
+        abilities: [{ name: "Witness Break" }],
+      },
+    });
+  });
+
   it("preserves creature entities from the documented metadata contract", () => {
     const result = normalizeManifestResponse(ndjson({
       id: "creature-reveal",

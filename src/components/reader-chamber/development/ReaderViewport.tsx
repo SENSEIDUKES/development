@@ -1,11 +1,16 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LoaderCircle as Loader2, Plus, Trash2, Bookmark as BookmarkIcon, Lock, ArrowLeft, ArrowRight, Sparkles, Zap, Play, ShieldAlert, Info } from 'lucide-react';
+import {
+  CodexCard,
+  CodexHovercard,
+  FALLBACK_BACKDROPS,
+  SystemBlock,
+} from '@seihouse/sen/cards';
+import { SYSTEM_COLORS_LEGEND } from '@seihouse/sen/color-codes';
 import { ReaderChapter, StoryWorld, Bookmark } from '../shared/types';
 import { extractSFXCues } from '../shared/readerPlayback';
 import { collectBlockAutoCues } from '../shared/autoCuePolicy';
-import { SystemBlock } from './SystemBlock';
-import { SYSTEM_COLORS_LEGEND } from '../shared/colorCodes';
 import { useAppStore } from '../shared/stubs';
 import { ReaderFateAlerts } from './ReaderFateAlerts';
 import { SystemColorLegend } from './SystemColorLegend';
@@ -13,8 +18,6 @@ import { anchorAttributes } from '../shared/cinematicScroll/anchors';
 import { ContextInspector } from './ContextInspector';
 import { getReaderTypography, getReadingDirection } from '../shared/readerTypography';
 import { createCodexHighlighter, splitByCodexTerms } from '../../reader-codex/shared/codexHighlighting';
-import { CodexHovercard } from '../../reader-codex/development/CodexHovercard';
-import { CodexCard, FALLBACK_BACKDROPS } from './CodexCard';
 import { InlineAudioText } from './InlineAudio';
 import type { ResolvedAudioMoment } from '../../../audio/inlineAudio';
 

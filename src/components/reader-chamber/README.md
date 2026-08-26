@@ -4,11 +4,21 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `f89cb41`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-25
+- **Last Workshop update:** 2026-08-26
 - **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
 ## Workshop history
+
+- **2026-08-26:** Reconnected generated chapters through the public SEN card
+  and Color Codes entries. `ReaderViewport` now takes `SystemBlock`,
+  `CodexCard`, `CodexHovercard`, and their semantic registry through the same
+  package boundaries as Card Workshop. Missing or unsupported Codex entities
+  retain the intentional Unknown fallback rather than receiving the Main
+  Character color, while current relationship state is still resolved on
+  every render so ally-to-enemy changes repaint immediately. Card visuals,
+  interaction behavior, accessibility palettes, narration, and the locked
+  Reference remain unchanged.
 
 - **2026-08-25:** Kept the compact Structured Mechanical card and restored the Narrative Expanded Info. The in-flow mechanical card remains the vitals preview (headline, level pill, meters, legacy rows) and its orb still opens `SystemStatusPanel` — the portaled `role="dialog" aria-modal="true"` status screen with corner brackets, the STATUS headline, class line, classification, LEVEL pill, semantic HP/QI/EXP meters, the full two-column stat grid with signed deltas, active effects, abilities, and any legacy rows. Everything else from the split is reverted: the Codex-shaped `expanded` payload, the `SystemPromptExpanded*` Reader-only types, the viewport-locked event report overlay, and `SystemConsequenceRow`'s `expanded` variant are all back, so the Narrative Notification orb is once again its Expanded Info action. `SystemOrbEmblem` stays its own module, now shared as the action form on both cards. Focus trap, scroll lock, Escape/close/backdrop dismissal, nested Codex hovercard Escape deferral, focus return to the orb, and the `data-reader-narration="excluded"` boundary hold on both dialogs. World Notices, Fate results, reduced-motion behavior, the semantic Color Code registry, and the locked Reference are unchanged.
 - **2026-08-25:** Restyled the Development `SystemPromptMechanical` LitRPG display as a modern status screen on the approved reference: layered dark-emerald holographic glass with a controlled edge glow and corner ticks, a bright headline with muted flavor and classification lines plus a bordered LEVEL pill, semantic resource meters (HP red, QI blue, EXP gold through the existing Color Code registry) with `role="progressbar"` and full aria values, a two-column inset stat grid with signed gain/loss deltas in green and red, and active-effect and ability lines with muted labels and bright values. The layout is driven by a new optional, application-owned `status` payload on `RegularSystemEvent`, normalized at the Reader boundary by `normalizeSystemStatusScreen` and attached only to the mechanical route; mechanical events without it keep the legacy plain-rows grid and rarity pill. The TTS summary now rests collapsed by default behind the same small centered chevron toggle the Narrative card uses (`data-system-summary` / `data-system-summary-toggle`), and narration still reads only the block data, never the stats. Narrative Notifications, World Notices, Fate results, the expanded overlay, reduced-motion behavior, and the locked Reference are unchanged.

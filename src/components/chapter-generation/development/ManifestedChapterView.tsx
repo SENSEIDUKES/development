@@ -1,5 +1,6 @@
 import { FlaskConical, Music } from "lucide-react";
-import type { ChapterContent, StoryBlock, StoryBlockMetadata, SystemEvent } from "../shared/types";
+import { SystemBlock } from "@seihouse/sen/cards";
+import type { ChapterContent, StoryBlock, StoryBlockMetadata } from "../shared/types";
 import { Chip, EmptyNote } from "./workspaceUi";
 
 const formatToken = (token: string) =>
@@ -44,37 +45,15 @@ function EffectMarkerRow({ metadata }: { metadata?: StoryBlockMetadata }) {
   );
 }
 
-function SystemPanel({ system }: { system: SystemEvent }) {
-  return (
-    <div className="min-w-0 rounded-md border border-cyan-500/25 bg-cyan-500/5 px-3 py-2">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-[9px] font-semibold uppercase tracking-widest text-cyan-200/80">
-          {system.kind === "fate_system_prompt" ? "Fate System Prompt" : "System Prompt"}
-        </span>
-        {system.promptType && <Chip tone="cyan">{formatToken(system.promptType)}</Chip>}
-        {system.rarity && <Chip tone="amber">{system.rarity}</Chip>}
-      </div>
-      <div className="mt-1 text-xs font-semibold text-cyan-100">{system.title}</div>
-      {system.rows && system.rows.length > 0 && (
-        <dl className="mt-1.5 flex flex-col gap-1">
-          {system.rows.map(row => (
-            <div key={`${row.label}-${row.value}`} className="flex min-w-0 flex-wrap items-baseline gap-x-2 text-[11px]">
-              <dt className="shrink-0 uppercase tracking-wider text-white/40">{row.label}</dt>
-              <dd className="min-w-0 break-words text-white/80">{row.value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-      {system.fateResult && (
-        <div className="mt-1.5 text-[11px] text-rose-200/80">
-          {system.fateResult.outcome} — {system.fateResult.timelineScar}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function ChapterBlockView({ block }: { block: StoryBlock }) {
+  if (block.system) {
+    return (
+      <div className="min-w-0">
+        <SystemBlock content={block.text} system={block.system} />
+        <EffectMarkerRow metadata={block.metadata} />
+      </div>
+    );
+  }
   const isDialogue = block.type === "dialogue" || block.metadata?.mode === "dialogue";
   return (
     <div className="min-w-0">
@@ -95,7 +74,6 @@ function ChapterBlockView({ block }: { block: StoryBlock }) {
           {block.text}
         </p>
       )}
-      {block.system && <div className="mt-2"><SystemPanel system={block.system} /></div>}
       <EffectMarkerRow metadata={block.metadata} />
     </div>
   );

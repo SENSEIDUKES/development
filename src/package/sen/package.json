@@ -1,6 +1,6 @@
 {
   "name": "@seihouse/sen",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "SEIHouse Expanded Novels: an embeddable expanded-narrative engine \u2014 expanded reading behavior, structured chapter contracts, Color Codes, Codex behavior, cards, and the narrative surfaces built on them.",
   "type": "module",
   "sideEffects": [

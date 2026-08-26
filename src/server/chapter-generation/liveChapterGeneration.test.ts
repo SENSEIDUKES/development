@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { resolveSystemPromptRoute } from "@seihouse/sen/cards";
 import type { StorySeedInput } from "../../components/story-seed/shared/storySeedSchema";
 import type { WorldBlueprint } from "../../components/story-seed/shared/types";
 import type { ManifestChapterResponse } from "../../components/chapter-generation/shared/liveChapterGeneration";
@@ -665,6 +666,58 @@ describe("live Chapter Generation model boundaries", () => {
         permanentCosts: [],
       },
     }), input)).toThrow(/cannot accept a presentation or worldNotice payload/);
+  });
+
+  it("preserves packaged mechanical card data from Manifest output to the SEN card route", () => {
+    const packet = buildPacket();
+    const chapterPlan = parseChapterPlan(planResponse, {
+      chapterPacket: packet,
+      planningSignals: {},
+    });
+    const chapter = parseManifestedChapter([
+      "---CHAPTER_BLOCKS---",
+      JSON.stringify({
+        type: "system",
+        text: "Rin's oath sight resolves the hostile seal.",
+        system: {
+          kind: "system_prompt",
+          presentation: "mechanical",
+          promptType: "enemy_scan",
+          title: "HOSTILE SEAL ANALYSIS",
+          badge: { label: "Threat", value: "Severe" },
+          rows: [{ label: "Seal", value: "Fractured", trend: "down" }],
+          changes: [{ direction: "gain", label: "ENMITY GAINED", tone: "negative" }],
+          status: {
+            level: "Ninefold",
+            bars: [{ label: "Integrity", value: 31, max: 100, display: "31%", tone: "health" }],
+            stats: [{ label: "Pressure", value: "87", delta: 12 }],
+            effects: [{ name: "Oath Rot", value: "Active", tone: "negative" }],
+            abilities: [{ name: "Witness Break", detail: "Exposes one false vow." }],
+          },
+        },
+      }),
+    ].join("\n"), {
+      chapterPacket: packet,
+      chapterPlan,
+      consolidatedPermanentInstructions: packet.generationRules.permanentWritingInstructions,
+    });
+
+    const route = resolveSystemPromptRoute(chapter.blocks?.[0].system);
+    expect(route).toMatchObject({
+      presentation: "mechanical",
+      rows: [{ label: "Seal", value: "Fractured", trend: "down" }],
+      changes: [{ direction: "gain", label: "ENMITY GAINED", tone: "negative" }],
+      status: {
+        level: "Ninefold",
+        bars: [{ label: "Integrity", value: 31, max: 100, display: "31%", tone: "health" }],
+        stats: [{ label: "Pressure", value: "87", delta: 12 }],
+        effects: [{ name: "Oath Rot", value: "Active", tone: "negative" }],
+        abilities: [{ name: "Witness Break", detail: "Exposes one false vow." }],
+      },
+    });
+    expect(chapter.blocks?.[0].system).toMatchObject({
+      badge: { label: "Threat", value: "Severe" },
+    });
   });
 
   it("assigns a stable Character voice for a validated dialogue block without optional mode metadata", async () => {

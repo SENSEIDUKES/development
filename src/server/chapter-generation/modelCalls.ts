@@ -41,7 +41,10 @@ import {
   type StoryBlockMetadata,
   type StoryEntityType,
   type SystemEvent,
+  type SystemPromptBadge,
+  type SystemPromptChange,
   type SystemPromptPresentation,
+  type SystemStatusScreen,
   type WorldNoticeData,
   type ChapterContent,
 } from "../../components/chapter-generation/shared/types";
@@ -588,6 +591,120 @@ const parseWorldNotice = (value: unknown, label: string): WorldNoticeData => {
   };
 };
 
+const parseSystemBadge = (value: unknown, label: string): SystemPromptBadge | undefined => {
+  if (value === undefined || value === null) return undefined;
+  const badge = requiredRecord(value, label);
+  return {
+    label: requiredString(badge.label, `${label}.label`),
+    value: requiredString(badge.value, `${label}.value`),
+  };
+};
+
+const parseSystemChanges = (value: unknown, label: string): SystemPromptChange[] | undefined => {
+  if (value === undefined || value === null) return undefined;
+  if (!Array.isArray(value)) throw new Error(`${label} must be an array.`);
+  return value.map((item, index) => {
+    const change = requiredRecord(item, `${label}[${index}]`);
+    const direction = requiredString(change.direction, `${label}[${index}].direction`);
+    if (direction !== "gain" && direction !== "loss") {
+      throw new Error(`${label}[${index}].direction is unsupported.`);
+    }
+    const tone = optionalValidatedString(change.tone, `${label}[${index}].tone`);
+    if (tone && !["positive", "uncertain", "warning", "negative"].includes(tone)) {
+      throw new Error(`${label}[${index}].tone is unsupported.`);
+    }
+    return {
+      direction,
+      label: requiredString(change.label, `${label}[${index}].label`),
+      ...(tone ? { tone: tone as SystemPromptChange["tone"] } : {}),
+    };
+  });
+};
+
+const parseSystemStatus = (value: unknown, label: string): SystemStatusScreen | undefined => {
+  if (value === undefined || value === null) return undefined;
+  const status = requiredRecord(value, label);
+  const level = optionalValidatedString(status.level, `${label}.level`);
+  const bars = status.bars === undefined
+    ? undefined
+    : Array.isArray(status.bars)
+      ? status.bars.map((item, index) => {
+          const bar = requiredRecord(item, `${label}.bars[${index}]`);
+          const tone = requiredString(bar.tone, `${label}.bars[${index}].tone`);
+          if (!["health", "spirit", "progress"].includes(tone)) {
+            throw new Error(`${label}.bars[${index}].tone is unsupported.`);
+          }
+          const barValue = optionalFiniteNumber(bar.value, `${label}.bars[${index}].value`);
+          const max = optionalFiniteNumber(bar.max, `${label}.bars[${index}].max`);
+          if (barValue === undefined || max === undefined || max <= 0) {
+            throw new Error(`${label}.bars[${index}] requires finite value and positive max numbers.`);
+          }
+          const display = optionalValidatedString(bar.display, `${label}.bars[${index}].display`);
+          return {
+            label: requiredString(bar.label, `${label}.bars[${index}].label`),
+            value: barValue,
+            max,
+            tone: tone as "health" | "spirit" | "progress",
+            ...(display ? { display } : {}),
+          };
+        })
+      : (() => { throw new Error(`${label}.bars must be an array.`); })();
+  const stats = status.stats === undefined
+    ? undefined
+    : Array.isArray(status.stats)
+      ? status.stats.map((item, index) => {
+          const stat = requiredRecord(item, `${label}.stats[${index}]`);
+          const delta = optionalFiniteNumber(stat.delta, `${label}.stats[${index}].delta`);
+          return {
+            label: requiredString(stat.label, `${label}.stats[${index}].label`),
+            value: requiredString(stat.value, `${label}.stats[${index}].value`),
+            ...(delta !== undefined ? { delta } : {}),
+          };
+        })
+      : (() => { throw new Error(`${label}.stats must be an array.`); })();
+  const effects = status.effects === undefined
+    ? undefined
+    : Array.isArray(status.effects)
+      ? status.effects.map((item, index) => {
+          const effect = requiredRecord(item, `${label}.effects[${index}]`);
+          const tone = optionalValidatedString(effect.tone, `${label}.effects[${index}].tone`);
+          if (tone && tone !== "positive" && tone !== "negative") {
+            throw new Error(`${label}.effects[${index}].tone is unsupported.`);
+          }
+          const detail = optionalValidatedString(effect.detail, `${label}.effects[${index}].detail`);
+          const effectValue = optionalValidatedString(effect.value, `${label}.effects[${index}].value`);
+          return {
+            name: requiredString(effect.name, `${label}.effects[${index}].name`),
+            ...(detail ? { detail } : {}),
+            ...(effectValue ? { value: effectValue } : {}),
+            ...(tone ? { tone: tone as "positive" | "negative" } : {}),
+          };
+        })
+      : (() => { throw new Error(`${label}.effects must be an array.`); })();
+  const abilities = status.abilities === undefined
+    ? undefined
+    : Array.isArray(status.abilities)
+      ? status.abilities.map((item, index) => {
+          const ability = requiredRecord(item, `${label}.abilities[${index}]`);
+          const detail = optionalValidatedString(ability.detail, `${label}.abilities[${index}].detail`);
+          return {
+            name: requiredString(ability.name, `${label}.abilities[${index}].name`),
+            ...(detail ? { detail } : {}),
+          };
+        })
+      : (() => { throw new Error(`${label}.abilities must be an array.`); })();
+  if (!level && !bars?.length && !stats?.length && !effects?.length && !abilities?.length) {
+    throw new Error(`${label} must contain at least one supported status field.`);
+  }
+  return {
+    ...(level ? { level } : {}),
+    ...(bars?.length ? { bars } : {}),
+    ...(stats?.length ? { stats } : {}),
+    ...(effects?.length ? { effects } : {}),
+    ...(abilities?.length ? { abilities } : {}),
+  };
+};
+
 const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefined => {
   if (value === undefined || value === null) return undefined;
   const event = requiredRecord(value, label);
@@ -601,17 +718,26 @@ const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefine
   if (kind === "system_prompt" && event.fateResult !== undefined && event.fateResult !== null) {
     throw new Error(`${label} of kind 'system_prompt' cannot accept a fateResult payload.`);
   }
-  if (kind === "fate_system_prompt" && (event.presentation !== undefined || event.worldNotice !== undefined)) {
-    throw new Error(`${label} of kind 'fate_system_prompt' cannot accept a presentation or worldNotice payload.`);
+  if (
+    kind === "fate_system_prompt"
+    && (event.presentation !== undefined || event.worldNotice !== undefined || event.status !== undefined)
+  ) {
+    throw new Error(`${label} of kind 'fate_system_prompt' cannot accept a presentation or worldNotice payload, or status data.`);
   }
   const rows = event.rows === undefined
     ? undefined
     : Array.isArray(event.rows)
       ? event.rows.map((item, index) => {
           const row = requiredRecord(item, `${label}.rows[${index}]`);
+          if (row.trend !== undefined && row.trend !== "up" && row.trend !== "down") {
+            throw new Error(`${label}.rows[${index}].trend is unsupported.`);
+          }
           return {
             label: requiredString(row.label, `${label}.rows[${index}].label`),
             value: requiredString(row.value, `${label}.rows[${index}].value`),
+            ...(row.trend === "up" || row.trend === "down"
+              ? { trend: row.trend as "up" | "down" }
+              : {}),
           };
         })
       : (() => { throw new Error(`${label}.rows must be an array.`); })();
@@ -639,6 +765,8 @@ const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefine
     ? (promptType as SystemEvent["promptType"])
     : undefined;
   const validatedRarity = optionalValidatedString(event.rarity, `${label}.rarity`);
+  const badge = parseSystemBadge(event.badge, `${label}.badge`);
+  const changes = parseSystemChanges(event.changes, `${label}.changes`);
 
   if (kind === "fate_system_prompt") {
     if (!fateResult) {
@@ -650,6 +778,8 @@ const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefine
       ...(validatedPromptType ? { promptType: validatedPromptType } : {}),
       ...(rows ? { rows } : {}),
       ...(validatedRarity ? { rarity: validatedRarity } : {}),
+      ...(badge ? { badge } : {}),
+      ...(changes?.length ? { changes } : {}),
       fateResult,
     };
   }
@@ -672,6 +802,12 @@ const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefine
   if (presentation !== "world_notice" && event.worldNotice !== undefined && event.worldNotice !== null) {
     throw new Error(`${label}.worldNotice requires presentation 'world_notice'.`);
   }
+  const status = presentation === "mechanical"
+    ? parseSystemStatus(event.status, `${label}.status`)
+    : undefined;
+  if (presentation !== "mechanical" && event.status !== undefined && event.status !== null) {
+    throw new Error(`${label}.status requires presentation 'mechanical'.`);
+  }
 
   return {
     kind: "system_prompt",
@@ -680,8 +816,11 @@ const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefine
     ...(flavor ? { flavor } : {}),
     ...(rows ? { rows } : {}),
     ...(validatedRarity ? { rarity: validatedRarity } : {}),
+    ...(badge ? { badge } : {}),
+    ...(changes?.length ? { changes } : {}),
     presentation,
     ...(worldNotice ? { worldNotice } : {}),
+    ...(status ? { status } : {}),
   };
 };
 

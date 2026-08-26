@@ -20,7 +20,7 @@ export type {
 };
 
 /** Existing exported fallback now follows the selected accessibility palette. */
-export const CODEX_ENTITY_ACCENT_FALLBACK = getColorCodeValue('mainCharacter');
+export const CODEX_ENTITY_ACCENT_FALLBACK = getColorCodeValue('unknown');
 
 export function resolveCodexEntityBand(
   type: string,

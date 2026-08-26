@@ -368,6 +368,134 @@ async function verifyExpandedOverlay(page, block, event, deviceName) {
   }
 }
 
+
+/**
+ * The Structured Mechanical stat panel is a viewport-locked dialog portaled
+ * above the reader: the compact vitals card stays untouched underneath, the
+ * page scrolls neither behind nor inside the panel, the whole status screen
+ * renders at reading scale, and closing restores focus to the orb and the exact
+ * scroll position.
+ */
+async function verifyStatusPanel(page, block, deviceName) {
+  // The shared Workshop Controls bar is preview tooling pinned above reader
+  // surfaces (z-[200]) and can cover the viewport-locked panel when the page
+  // scroll leaves it near the top. It is not part of the reader contract, so
+  // it steps aside (visibility keeps layout, so scroll positions stay exact)
+  // while the panel is verified.
+  const workshopControls = page.locator('[data-workshop-controls]');
+  await workshopControls.evaluateAll((elements) => elements.forEach((element) => {
+    element.dataset.previousVisibility = element.style.visibility;
+    element.style.visibility = 'hidden';
+  }));
+  try {
+    // Horizontal-overflow baseline: the Workshop page itself may overflow at
+    // 320px, so the panel is judged on what it adds, never an absolute.
+    const compactDocumentOverflow = await page.evaluate(() => (
+      document.documentElement.scrollWidth - document.documentElement.clientWidth
+    ));
+    const expandButton = block.getByRole('button', { name: 'Expand System Prompt details' });
+    if (await expandButton.getAttribute('aria-expanded') !== 'false') {
+      throw new Error(`status screen did not start compact at ${deviceName}.`);
+    }
+    await block.locator('[data-system-orb-icon="closed"]').waitFor();
+    await expandButton.click();
+
+    const panel = page.locator('[role="dialog"][data-system-status-panel="true"]');
+    await panel.waitFor({ state: 'visible' });
+    // Playwright's own pre-click scroll-into-view may move the page, so the
+    // reader-position contract is measured from the open panel onward.
+    const scrollBefore = await page.evaluate(() => window.scrollY);
+    if (await panel.getAttribute('aria-modal') !== 'true') {
+      throw new Error(`stat panel is not modal at ${deviceName}.`);
+    }
+    if (await panel.getAttribute('data-reader-narration') !== 'excluded') {
+      throw new Error(`stat panel lost its narration boundary at ${deviceName}.`);
+    }
+    if (await block.getAttribute('data-system-prompt-state') !== 'expanded') {
+      throw new Error(`status screen did not enter expanded state at ${deviceName}.`);
+    }
+    if ((await page.evaluate(() => document.body.style.overflow)) !== 'hidden') {
+      throw new Error(`stat panel did not lock page scroll at ${deviceName}.`);
+    }
+
+    // The whole status screen at reading scale.
+    await panel.getByText('STATUS // YUN CHE', { exact: true }).waitFor();
+    await panel.getByText('Level 24', { exact: true }).waitFor();
+    if (await panel.getByRole('progressbar').count() !== 3) {
+      throw new Error(`stat panel lost its HP/QI/EXP meters at ${deviceName}.`);
+    }
+    if (await panel.locator('[data-status-stat]').count() !== 6) {
+      throw new Error(`stat panel lost its stat grid at ${deviceName}.`);
+    }
+    await panel.getByText('Rain Attunement', { exact: true }).waitFor();
+    await panel.getByText('Soul Seam Sight', { exact: true }).waitFor();
+
+    // One-screen fit: the panel never escapes the viewport, and the page
+    // behind gains no horizontal overflow.
+    const fit = await panel.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        clientHeight: element.clientHeight,
+        scrollHeight: element.scrollHeight,
+        overflowY: getComputedStyle(element).overflowY,
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        documentOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+    if (
+      fit.scrollHeight > fit.clientHeight + 1
+      && fit.overflowY !== 'auto'
+      && fit.overflowY !== 'scroll'
+    ) {
+      throw new Error(`stat panel clips tall content at ${deviceName}: ${JSON.stringify(fit)}`);
+    }
+    if (fit.left < -1 || fit.top < -1 || fit.right > fit.viewportWidth + 1 || fit.bottom > fit.viewportHeight + 1) {
+      throw new Error(`stat panel escapes the viewport at ${deviceName}: ${JSON.stringify(fit)}`);
+    }
+    if (fit.documentOverflow > compactDocumentOverflow + 1) {
+      throw new Error(`stat panel added horizontal page overflow at ${deviceName}: ${JSON.stringify(fit)} (baseline ${compactDocumentOverflow})`);
+    }
+
+    await page.screenshot({ path: `output/playwright/system-prompt-structured-${deviceName}-stat-panel.png` });
+
+    // Closing restores the reader: compact state, focus back on the orb action,
+    // page scroll unlocked, and the exact same scroll position.
+    await panel.getByRole('button', { name: 'Close System status panel' }).click();
+    await panel.waitFor({ state: 'detached' });
+    if (await block.getAttribute('data-system-prompt-state') !== 'compact') {
+      throw new Error(`status screen did not return to compact at ${deviceName}.`);
+    }
+    await block.locator('[data-system-orb-icon="closed"]').waitFor();
+    try {
+      await page.waitForFunction(
+        () => document.activeElement?.getAttribute('aria-label') === 'Expand System Prompt details',
+        undefined,
+        { timeout: 5000 },
+      );
+    } catch {
+      throw new Error(`status screen did not restore focus to the orb action at ${deviceName}.`);
+    }
+    if ((await page.evaluate(() => document.body.style.overflow)) === 'hidden') {
+      throw new Error(`stat panel left the page scroll locked at ${deviceName}.`);
+    }
+    const scrollAfter = await page.evaluate(() => window.scrollY);
+    if (Math.abs(scrollAfter - scrollBefore) > 1) {
+      throw new Error(`stat panel moved the reader position at ${deviceName}: ${scrollBefore} -> ${scrollAfter}`);
+    }
+  } finally {
+    // Restore the preview tooling hidden during the stat panel pass.
+    await workshopControls.evaluateAll((elements) => elements.forEach((element) => {
+      element.style.visibility = element.dataset.previousVisibility || '';
+      delete element.dataset.previousVisibility;
+    }));
+  }
+}
+
 const browser = await chromium.launch();
 for (const device of devices) {
   const page = await browser.newPage({ viewport: { width: device.width, height: device.height } });
@@ -436,8 +564,9 @@ for (const device of devices) {
   console.log(`captured ${device.name}`);
 }
 
-// Regression: structured mechanical rows keep the holographic panel,
-// Fate System Prompt stays on the unchanged FateResultCard.
+// The Structured Mechanical status screen: the compact vitals card plus its
+// Expanded Info stat panel. Fate System Prompt stays on the unchanged
+// FateResultCard.
 const page = await browser.newPage({ viewport: { width: 768, height: 1024 } });
 await page.goto(base, { waitUntil: 'domcontentloaded' });
 await page.getByRole('tab', { name: 'System Prompt', exact: true }).click();
@@ -446,6 +575,7 @@ const structured = page.locator('.system-block.holographic-panel').first();
 await structured.waitFor({ state: 'visible' });
 await page.waitForTimeout(500);
 await structured.screenshot({ path: 'output/playwright/system-prompt-structured-panel.png' });
+await verifyStatusPanel(page, structured, 'tablet-768');
 await page.getByRole('tab', { name: 'Fate System Prompt', exact: true }).click();
 const fate = page.locator('.collectible-card').first();
 await fate.waitFor({ state: 'visible' });

@@ -77,6 +77,7 @@ export const PACKAGE_TARGETS = {
         'FateResultCard',
         'resolveSystemPromptRoute',
         'normalizeFateResultData',
+        'normalizeSystemStatusScreen',
         'normalizeWorldNoticeData',
       ],
       '@seihouse/sen/reader-chamber': [
@@ -116,6 +117,11 @@ export const PACKAGE_TARGETS = {
         SystemPromptPresentation,
         SystemPromptRoute,
         SystemPromptRoutePresentation,
+        SystemStatusAbility,
+        SystemStatusBar,
+        SystemStatusEffect,
+        SystemStatusScreen,
+        SystemStatusStat,
         WorldNoticeData,
         WorldNoticeEntry,
         WorldNoticeProps,
@@ -140,6 +146,11 @@ export const PACKAGE_TARGETS = {
       declare const systemEvent: SystemEvent;
       declare const systemPromptPresentation: SystemPromptPresentation;
       declare const systemPromptExpanded: SystemPromptExpandedData;
+      declare const systemStatusAbility: SystemStatusAbility;
+      declare const systemStatusBar: SystemStatusBar;
+      declare const systemStatusEffect: SystemStatusEffect;
+      declare const systemStatusScreen: SystemStatusScreen;
+      declare const systemStatusStat: SystemStatusStat;
       declare const worldNoticeData: WorldNoticeData;
       declare const worldNoticeEntry: WorldNoticeEntry;
       declare const readerChapter: ReaderChapter;
@@ -147,6 +158,7 @@ export const PACKAGE_TARGETS = {
         creation, seed, batch, request, colorCode, colorCodeDefinition, codexCard, card,
         fateResultCard, systemBlock, systemRoute, systemRoutePresentation, worldNotice,
         fateResult, systemEvent, systemPromptPresentation, systemPromptExpanded,
+        systemStatusAbility, systemStatusBar, systemStatusEffect, systemStatusScreen, systemStatusStat,
         worldNoticeData, worldNoticeEntry, readerChapter,
       ];
     `,

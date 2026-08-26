@@ -278,7 +278,7 @@ export const CARD_PRESETS: CardPreset[] = [
     title: 'System Prompt',
     subtitle: 'In-World Celestial Library Notification',
     kind: 'system-block',
-    description: 'Regular System Prompts use one explicit presentation family: Narrative Notification, LitRPG/Mechanical Display, or World Notice. The default Narrative Notification is the existing dark smoky event-tinted System window, with a direct event title, semantic classification, concise rows, optional badge, prioritized outcomes, and collapsed TTS prose; its celestial action opens the existing Codex-shaped event report above the reader. The Mechanical Display retains the existing holographic row panel. World Notice is a static, diegetic document surface for a single notice or a divided board.',
+    description: 'Regular System Prompts use one explicit presentation family: Narrative Notification, LitRPG/Mechanical Display, or World Notice. The default Narrative Notification is the existing dark smoky event-tinted System window, with a direct event title, semantic classification, concise rows, optional badge, prioritized outcomes, and collapsed TTS prose; its celestial action opens the existing Codex-shaped event report above the reader. The Mechanical Display is the modern LitRPG status screen: a compact vitals card whose celestial orb is the Expanded Info action, opening the holographic stat panel above the reader. World Notice is a static, diegetic document surface for a single notice or a divided board.',
     explanation: {
       componentName: 'SystemBlock',
       sourceFile: 'src/components/reader-chamber/development/SystemBlock.tsx',
@@ -286,7 +286,7 @@ export const CARD_PRESETS: CardPreset[] = [
       entityOrEventType: 'system (system_prompt)',
       codexDestination: 'ReaderCodex > Power Rankings / Ability Ledger / Karma',
       capabilities: { hasImage: false, hasManifestAction: false, hasAudio: false, hasCodexLink: true, hasQuoteOrProse: true },
-      architecturalNotes: 'Regular System Prompt presentation is explicit: Narrative Notification preserves the compact/expanded event card, LitRPG/Mechanical Display preserves the holographic rows panel, and World Notice is one static diegetic document renderer for a single notice or a divided board. promptType only carries semantic meaning and color across those layouts. A World Notice accepts a direct document title, optional flavor, and one or more plain-text entries with optional labeled details; it has no controls, links, hovercards, or narration ownership. Narrative expanded data opens after an explicit tap as a viewport-locked overlay event report while the compact card and reader position stay untouched. Legacy saved regular prompts preserve their prior row-shape fallback.',
+      architecturalNotes: 'Regular System Prompt presentation is explicit: Narrative Notification preserves the compact/expanded event card, LitRPG/Mechanical Display is the status screen — a compact vitals card plus its stat panel — and World Notice is one static diegetic document renderer for a single notice or a divided board. promptType only carries semantic meaning and color across those layouts. A World Notice accepts a direct document title, optional flavor, and one or more plain-text entries with optional labeled details; it has no controls, links, hovercards, or narration ownership. Narrative expanded data opens after an explicit tap as a viewport-locked overlay event report while the compact card and reader position stay untouched. The Structured Mechanical orb opens its own viewport-locked holographic stat panel, built from the application-owned status payload rather than the Reader-only expanded contract. Legacy saved regular prompts preserve their prior row-shape fallback.',
     },
     systemContent: '[ A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before. ]',
     systemEvent: {
@@ -498,14 +498,30 @@ export const SYSTEM_PROMPT_PRESET_EXAMPLES = {
       kind: 'system_prompt' as const,
       presentation: 'mechanical' as const,
       promptType: 'progression' as const,
-      title: 'Meridian Status & Vitality Flow',
-      rarity: 'First Witness Core Resonance',
-      rows: [
-        { label: 'Cultivation Stage', value: 'Foundation Establishment — Stage 4' },
-        { label: 'Spiritual Qi Pool', value: '1,420 / 1,500 (+12/min in Rain)' },
-        { label: 'Soul Seam Sight', value: 'Active (Radius: 30 paces)' },
-        { label: 'Dao Alignment', value: 'Unbroken Celestial Truth' },
-      ],
+      title: 'STATUS // YUN CHE',
+      flavor: 'Meridian Adept · Foundation Realm',
+      status: {
+        level: '24',
+        bars: [
+          { label: 'HP', value: 780, max: 780, display: '780 / 780', tone: 'health' as const },
+          { label: 'QI', value: 1420, max: 1500, display: '1,420 / 1,500', tone: 'spirit' as const },
+          { label: 'EXP', value: 62, max: 100, display: '62%', tone: 'progress' as const },
+        ],
+        stats: [
+          { label: 'STR', value: '38' },
+          { label: 'VIT', value: '44', delta: 3 },
+          { label: 'AGI', value: '31', delta: -2 },
+          { label: 'INT', value: '27' },
+          { label: 'WIS', value: '35' },
+          { label: 'LUCK', value: '12' },
+        ],
+        effects: [
+          { name: 'Rain Attunement', detail: 'Qi Recovery', value: '+12/min', tone: 'positive' as const },
+        ],
+        abilities: [
+          { name: 'Soul Seam Sight', detail: 'Range 30 paces' },
+        ],
+      },
     },
   },
   'guild-bounty': {

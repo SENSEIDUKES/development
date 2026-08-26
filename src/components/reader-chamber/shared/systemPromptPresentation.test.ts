@@ -4,6 +4,7 @@ import {
   getSystemPromptSurface,
   normalizeFateResultData,
   normalizeSystemPromptRows,
+  normalizeSystemStatusScreen,
   normalizeWorldNoticeData,
   resolveSystemPromptRoute,
 } from './systemPromptPresentation';
@@ -103,5 +104,65 @@ describe('System Prompt presentation routing', () => {
     expect(resolveSystemPromptRoute(malformedFate)).toBeUndefined();
     expect(normalizeWorldNoticeData(malformedWorldNoticePayload)).toBeUndefined();
     expect(normalizeFateResultData(malformedFatePayload)).toBeUndefined();
+  });
+
+  it('normalizes the mechanical status screen and attaches it only to the mechanical route', () => {
+    const statusPayload = {
+      level: '24',
+      bars: [
+        { label: 'HP', value: 780, max: 780, display: '780 / 780', tone: 'health' },
+        { label: 'Bad Bar', value: 'x', max: 0, tone: 'glitch' },
+        { label: '', value: 62, max: 100, tone: 'progress' },
+      ],
+      stats: [
+        { label: 'VIT', value: '44', delta: 3 },
+        { label: 'AGI', value: '31', delta: -2 },
+        { label: 'STR', value: '38', delta: 0 },
+        { label: '', value: '27' },
+      ],
+      effects: [
+        { name: 'Rain Attunement', detail: 'Qi Recovery', value: '+12/min', tone: 'positive' },
+        { name: '', value: 'dropped' },
+      ],
+      abilities: [
+        { name: 'Soul Seam Sight', detail: 'Range 30 paces' },
+        { detail: 'nameless' },
+      ],
+    };
+    const statusEvent = {
+      kind: 'system_prompt',
+      presentation: 'mechanical',
+      promptType: 'progression',
+      title: 'STATUS // YUN CHE',
+      status: statusPayload,
+    } as SystemEvent;
+
+    const route = resolveSystemPromptRoute(statusEvent);
+    expect(route).toMatchObject({
+      presentation: 'mechanical',
+      status: {
+        level: '24',
+        bars: [{ label: 'HP', value: 780, max: 780, display: '780 / 780', tone: 'health' }],
+        stats: [
+          { label: 'VIT', value: '44', delta: 3 },
+          { label: 'AGI', value: '31', delta: -2 },
+          { label: 'STR', value: '38' },
+        ],
+        effects: [{ name: 'Rain Attunement', detail: 'Qi Recovery', value: '+12/min', tone: 'positive' }],
+        abilities: [{ name: 'Soul Seam Sight', detail: 'Range 30 paces' }],
+      },
+    });
+
+    // A status payload never leaks onto a narrative route, and an empty one drops.
+    const narrativeRoute = resolveSystemPromptRoute({
+      kind: 'system_prompt',
+      presentation: 'narrative',
+      title: 'Narrative Event',
+      status: statusPayload,
+    } as SystemEvent);
+    expect(narrativeRoute).toMatchObject({ presentation: 'narrative' });
+    expect((narrativeRoute as { status?: unknown } | undefined)?.status).toBeUndefined();
+    expect(normalizeSystemStatusScreen({ level: '   ', bars: 'no' })).toBeUndefined();
+    expect(normalizeSystemStatusScreen(null)).toBeUndefined();
   });
 });

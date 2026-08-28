@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Shield, MapPin, Swords, User } from 'lucide-react';
 import { Character, Faction, Artifact, Location } from '../shared/types';
-import { useAppStore } from '../shared/codexCompatibility';
+import type { StoryWorld } from '../../reader-chamber/shared/types';
 import { SPECTRAL_EDGE } from '../../library/LibraryPanel';
 import { LibraryDragonCycleIcon } from '../../library/LibraryDragonCycleIcon';
 import { CodexCardAmbience } from './CodexCardAmbience';
@@ -16,6 +16,8 @@ interface CodexHovercardProps {
   term: string;
   type: 'character' | 'faction' | 'artifact' | 'location';
   entry: Character | Faction | Artifact | Location;
+  /** The Reader-owned identity and preferences for this rendered story. */
+  activeStory?: Pick<StoryWorld, 'mcName' | 'readerPreferences' | 'assignedRevealBackdrops'>;
   children: React.ReactNode;
 }
 
@@ -125,7 +127,7 @@ const SEAL_CORE_CLASS = [
  * behind the glass until a portrait exists, and the dragon-cycle Manifest
  * seal (matching the Codex Card) for eligible entries.
  */
-export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, children }) => {
+export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, activeStory, children }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isPortalMounted, setIsPortalMounted] = useState(false);
   const containerRef = useRef<HTMLSpanElement>(null);
@@ -162,11 +164,6 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
       setIsGeneratingImage(false);
     }
   };
-
-  const activeStoryId = useAppStore((state) => state.activeStoryId);
-  const activeStory = useAppStore((state) =>
-    state.stories.find((s) => s.id === activeStoryId)
-  );
 
   const colorCode = resolveCodexEntityColorCode(type, entry, activeStory?.mcName);
   const colorCodeStyle = getColorCodeStyle(colorCode);

@@ -670,6 +670,7 @@ export default function ReaderChamber({
               term={segment.text}
               type={segment.match.type}
               entry={segment.match.entry}
+              activeStory={activeStory}
             >
               {segment.text}
             </CodexHovercard>
@@ -679,7 +680,7 @@ export default function ReaderChamber({
         ))}
       </>
     );
-  }, [activeChunks, codexHighlighter, codexTerms.length, currentChunkIndex, highlightRegex, isPausedText, isPlayingText]);
+  }, [activeChunks, activeStory, codexHighlighter, codexTerms.length, currentChunkIndex, highlightRegex, isPausedText, isPlayingText]);
 
 
   // --- Swipe Navigation States ---

@@ -305,6 +305,7 @@ export function ReaderViewport({
               term={segment.text}
               type="character"
               entry={segment.match.entry}
+              activeStory={activeStory}
             >
               {segment.text}
             </CodexHovercard>
@@ -314,7 +315,7 @@ export function ReaderViewport({
         ))}
       </>
     );
-  }, [systemCharacterHighlighter]);
+  }, [activeStory, systemCharacterHighlighter]);
 
   const bookmarkMap = React.useMemo(() => {
     const map = new Map<number, Bookmark>();

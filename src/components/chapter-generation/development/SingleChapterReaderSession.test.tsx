@@ -171,6 +171,36 @@ describe("SingleChapterReaderSession", () => {
     expect(container.textContent).toContain("FATE AVERTED");
   });
 
+  it("passes the generated story main-character identity into inline Codex hovercards", () => {
+    const result = structuredClone(createCompletedFiveChapterTestBatch().chapters[0].result!);
+    const mainCharacterName = result.run.chapterPacket.storyConstitution.mainCharacterName;
+    result.run.processingResult.proposedLivingStoryState.codex.characters = [{
+      id: "generated-main-character",
+      name: mainCharacterName,
+      role: "Witness",
+      portraitKind: "non-human",
+      description: "The generated story's oath-reader.",
+    }];
+    result.run.finalOutput.blocks = [{
+      id: "generated-main-character-reference",
+      type: "paragraph",
+      text: `${mainCharacterName} entered the rain archive.`,
+      metadata: {
+        entities: [{ name: mainCharacterName, type: "character", mention: "reference" }],
+      },
+    }];
+    result.run.finalOutput.generatedContent = result.run.finalOutput.blocks[0].text;
+
+    act(() => {
+      root.render(renderWithDevAudio(
+        <SingleChapterReaderSession result={result} onClose={() => undefined} />,
+      ));
+    });
+
+    const anchor = container.querySelector<HTMLElement>('[data-slot="codex-hovercard-anchor"]');
+    expect(anchor?.getAttribute("data-color-code")).toBe("mainCharacter");
+  });
+
   it("re-resolves a generated character card when current Codex relationship state changes", () => {
     const result = structuredClone(createCompletedFiveChapterTestBatch().chapters[0].result!);
     result.run.processingResult.proposedLivingStoryState.codex.characters = [{

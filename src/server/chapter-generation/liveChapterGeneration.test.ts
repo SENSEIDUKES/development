@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { resolveSystemPromptRoute } from "@seihouse/sen/cards";
+import { createCompletedSingleChapterReaderSession } from "@seihouse/sen/reader-chamber";
 import type { StorySeedInput } from "../../components/story-seed/shared/storySeedSchema";
 import type { WorldBlueprint } from "../../components/story-seed/shared/types";
 import type { ManifestChapterResponse } from "../../components/chapter-generation/shared/liveChapterGeneration";
@@ -654,6 +655,13 @@ describe("live Chapter Generation model boundaries", () => {
       presentation: "mechanical",
       promptType: "quest_update",
       title: "Objective Update",
+      rows: [{ label: "Objective", value: "Continue" }],
+    }), input)).toThrow(/system\.status is required for mechanical system_prompt/);
+    expect(() => parseManifestedChapter(manifested({
+      kind: "system_prompt",
+      presentation: "mechanical",
+      promptType: "quest_update",
+      title: "Objective Update",
       worldNotice: { entries: [{ title: "Misplaced" }] },
     }), input)).toThrow(/system\.worldNotice requires presentation 'world_notice'/);
     expect(() => parseManifestedChapter(manifested({
@@ -685,7 +693,6 @@ describe("live Chapter Generation model boundaries", () => {
           promptType: "enemy_scan",
           title: "HOSTILE SEAL ANALYSIS",
           badge: { label: "Threat", value: "Severe" },
-          rows: [{ label: "Seal", value: "Fractured", trend: "down" }],
           changes: [{ direction: "gain", label: "ENMITY GAINED", tone: "negative" }],
           status: {
             level: "Ninefold",
@@ -705,7 +712,6 @@ describe("live Chapter Generation model boundaries", () => {
     const route = resolveSystemPromptRoute(chapter.blocks?.[0].system);
     expect(route).toMatchObject({
       presentation: "mechanical",
-      rows: [{ label: "Seal", value: "Fractured", trend: "down" }],
       changes: [{ direction: "gain", label: "ENMITY GAINED", tone: "negative" }],
       status: {
         level: "Ninefold",
@@ -1300,6 +1306,92 @@ describe("server model selection and failure handling", () => {
     } finally {
       fetchSpy.mockRestore();
     }
+  });
+
+  it("runs structured Mechanical status data and the Story Seed identity through a generated Reader session", async () => {
+    const base = new RecordingProvider();
+    const provider: ChapterTextModelProvider = {
+      provider: base.provider,
+      model: base.model,
+      async generate(request) {
+        const result = await base.generate(request);
+        if (request.kind !== "manifest") return result;
+        return {
+          ...result,
+          text: [
+            "---CHAPTER_BLOCKS---",
+            JSON.stringify({
+              id: "generated-rin-reference",
+              type: "paragraph",
+              text: "Rin read the rain-scarred oath before the chamber.",
+              metadata: {
+                mode: "narration",
+                entities: [{ name: "Rin", type: "character", mention: "reference" }],
+              },
+            }),
+            JSON.stringify({
+              id: "generated-status-screen",
+              type: "system",
+              text: "The oath scar opens a new path.",
+              system: {
+                kind: "system_prompt",
+                presentation: "mechanical",
+                promptType: "breakthrough",
+                title: "OATH SIGHT AWAKENING",
+                status: {
+                  level: "Witness II",
+                  bars: [{ label: "Oath Sight", value: 42, max: 100, tone: "spirit" }],
+                  stats: [{ label: "False Oaths Seen", value: "1", delta: 1 }],
+                  effects: [{ name: "Rain Memory", value: "Active", tone: "positive" }],
+                  abilities: [{ name: "Seam Reading", detail: "Reveals one hidden fracture." }],
+                },
+              },
+            }),
+          ].join("\n"),
+        };
+      },
+    };
+    const blueprint = {
+      ...canonicalBlueprint(),
+      mainCharacter: {
+        name: "Blueprint Placeholder",
+        age: "",
+        personality: "",
+        appearance: "",
+        backgroundProfile: "",
+      },
+    } satisfies WorldBlueprint;
+    const response = await handleChapterGenerationHttp({
+      method: "POST",
+      body: {
+        artifact: { seed: canonicalSeed(), blueprint },
+        model: "google/gemini-test",
+      },
+    }, {
+      environment,
+      providerFactory: () => provider,
+    });
+
+    expect(response.status).toBe(200);
+    const generated = response.body as ManifestChapterResponse;
+    const session = createCompletedSingleChapterReaderSession(generated);
+    const mechanical = session.chapters[0].blocks
+      ?.find(block => block.system?.title === "OATH SIGHT AWAKENING")?.system;
+    const manifestRequest = base.requests.find(request => request.kind === "manifest");
+
+    expect(session.story.mcName).toBe("Rin");
+    expect(manifestRequest?.systemInstruction)
+      .toContain('Every new Mechanical System Prompt MUST include a non-empty "status" object');
+    expect(resolveSystemPromptRoute(mechanical)).toMatchObject({
+      presentation: "mechanical",
+      status: {
+        level: "Witness II",
+        bars: [{ label: "Oath Sight", value: 42, max: 100, tone: "spirit" }],
+        stats: [{ label: "False Oaths Seen", value: "1", delta: 1 }],
+        effects: [{ name: "Rain Memory", value: "Active", tone: "positive" }],
+        abilities: [{ name: "Seam Reading", detail: "Reveals one hidden fracture." }],
+      },
+    });
   });
 
   it("rejects a browser model outside the server allow-list as a request error", async () => {

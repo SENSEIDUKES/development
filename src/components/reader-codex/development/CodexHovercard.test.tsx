@@ -142,6 +142,29 @@ describe('Development CodexHovercard spectral glass', () => {
     expect(ambience?.querySelectorAll('.animate-codex-mote').length).toBeGreaterThan(0);
   });
 
+  it('uses the Reader-owned main-character identity instead of empty Workshop store state', () => {
+    act(() => root.render(
+      <CodexHovercard
+        term="Rin"
+        type="character"
+        entry={{
+          id: 'character-rin',
+          name: 'Rin',
+          description: 'The oath-reader at the center of this generated story.',
+          portraitKind: 'non-human',
+        }}
+        activeStory={{ mcName: 'Rin', assignedRevealBackdrops: {} }}
+      >
+        Rin
+      </CodexHovercard>,
+    ));
+
+    const anchor = container.querySelector<HTMLElement>('[data-slot="codex-hovercard-anchor"]');
+    const trigger = container.querySelector<HTMLElement>('[role="button"]');
+    expect(anchor?.getAttribute('data-color-code')).toBe('mainCharacter');
+    expect(trigger?.style.color).toBe(getColorCodeValue('mainCharacter'));
+  });
+
   it('updates the Reader Codex link and hovercard when a character changes ally → enemy → ally', () => {
     const entry = {
       id: 'character-dynamic-aster',

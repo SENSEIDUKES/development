@@ -805,6 +805,9 @@ const parseSystemEvent = (value: unknown, label: string): SystemEvent | undefine
   const status = presentation === "mechanical"
     ? parseSystemStatus(event.status, `${label}.status`)
     : undefined;
+  if (presentation === "mechanical" && !status) {
+    throw new Error(`${label}.status is required for mechanical system_prompt.`);
+  }
   if (presentation !== "mechanical" && event.status !== undefined && event.status !== null) {
     throw new Error(`${label}.status requires presentation 'mechanical'.`);
   }

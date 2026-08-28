@@ -128,6 +128,21 @@ describe("Story Constitution packet", () => {
     });
   });
 
+  it("keeps the Story Seed main-character identity when an older Blueprint disagrees", () => {
+    const constitution = storyConstitutionFromSeed(finalizedSeed, {
+      ...blueprint,
+      mainCharacter: {
+        name: "Blueprint Placeholder",
+        age: blueprint.mainCharacter?.age ?? "",
+        personality: blueprint.mainCharacter?.personality ?? "",
+        appearance: blueprint.mainCharacter?.appearance ?? "",
+        backgroundProfile: blueprint.mainCharacter?.backgroundProfile ?? "",
+      },
+    });
+
+    expect(constitution.mainCharacterName).toBe("Wen Shu");
+  });
+
   it("leaves unapproved vocabulary bridges unset instead of guessing", () => {
     const constitution = storyConstitutionFromSeed(finalizedSeed, blueprint);
 

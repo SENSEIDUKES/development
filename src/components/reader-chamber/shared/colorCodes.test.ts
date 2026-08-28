@@ -109,7 +109,11 @@ describe('Color Codes', () => {
     expect(resolveCharacterRelationshipColorCode({ relationshipToMC: 'fiancée' })).toBe('bond');
     expect(resolveCharacterRelationshipColorCode({ relationshipToMC: 'sect elder' })).toBe('mentor');
     expect(resolveCharacterRelationshipColorCode({ relationshipToMC: 'unknown traveller' })).toBe('unknown');
-    expect(resolveCharacterRelationshipColorCode({ portraitKind: 'non-human' })).toBe('nonHuman');
+    expect(resolveCharacterRelationshipColorCode({ portraitKind: 'non-human' })).toBe('unknown');
+    expect(resolveCharacterRelationshipColorCode({ portraitKind: 'non-human', relationshipToMC: 'ally' })).toBe('ally');
+    expect(resolveCharacterRelationshipColorCode({ portraitKind: 'non-human', relationshipToMC: 'enemy' })).toBe('enemy');
+    expect(resolveCharacterRelationshipColorCode({ portraitKind: 'non-human', relationshipToMC: 'partner' })).toBe('bond');
+    expect(resolveCharacterRelationshipColorCode({ portraitKind: 'non-human', relationshipToMC: 'mentor' })).toBe('mentor');
     expect(resolveCharacterRelationshipColorCode({ name: 'Unresolved stranger' }, 'Rin')).toBe('unknown');
 
     expect(resolveArtifactColorCode({ tier: 'Primordial' })).toBe('itemLegendary');

@@ -115,7 +115,7 @@ export function storyConstitutionFromSeed(
     },
     storySeed: seed,
     ...(blueprint ? { worldBlueprint: blueprint } : {}),
-    mainCharacterName: blueprint?.mainCharacter?.name || foundations.mainCharacter?.name || "",
+    mainCharacterName: foundations.mainCharacter?.name || blueprint?.mainCharacter?.name || "",
     genre: seed.story.required.genre,
     storyTags: [...seed.story.required.storyTags],
     corePremise: seed.story.required.premise,

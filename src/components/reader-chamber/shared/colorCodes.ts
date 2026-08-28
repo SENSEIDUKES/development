@@ -171,7 +171,8 @@ export function resolveCharacterRelationshipColorCode(
   if (/(lover|wife|husband|fianc[ée]?|partner|spouse|concubine|dao companion)/.test(relationship)) return 'bond';
   if (/(friend|ally|brother|sister|companion|comrade|loyal)/.test(relationship)) return 'ally';
   if (/(unknown|stranger|neutral|mystery)/.test(relationship)) return 'unknown';
-  if (entry.portraitKind === 'non-human') return 'nonHuman';
+  // Portrait and species metadata describe the Codex record; relationship is
+  // the only approved source of a Character Color Code.
   return 'unknown';
 }
 
@@ -182,7 +183,6 @@ function resolveCharacterBand(entry: CodexEntityAccentInput, mcName?: string): C
     case 'ally': return 'ally';
     case 'enemy': return 'hostile';
     case 'unknown': return 'mystery';
-    case 'nonHuman': return 'nonHuman';
     default: return 'protagonist';
   }
 }

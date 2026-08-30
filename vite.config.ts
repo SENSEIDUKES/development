@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { handleChapterGenerationHttp } from './src/server/chapter-generation/http';
 import type { ChapterGenerationStreamEvent } from './src/components/chapter-generation/shared/liveChapterGeneration';
+import { handleHarnessGenerationHttp } from './src/server/harness-generation/http';
 import { handleStorySeedBlueprintHttp } from './src/server/story-seed-blueprint/http';
 import { handleCodexVoiceQuoteHttp } from './src/server/audio/codexVoiceQuoteHttp';
 import { createConfiguredCodexVoiceQuoteService } from './src/server/audio/codexVoiceQuote';
@@ -13,7 +14,7 @@ import {
   type PublicGenerationGuardResult,
 } from './src/server/shared/publicGenerationGuard';
 
-const MAX_CHAPTER_REQUEST_BYTES = 2 * 1024 * 1024;
+const MAX_GENERATION_REQUEST_BYTES = 2 * 1024 * 1024;
 
 const readJsonBody = async (request: IncomingMessage): Promise<string> => {
   const chunks: Buffer[] = [];
@@ -21,8 +22,8 @@ const readJsonBody = async (request: IncomingMessage): Promise<string> => {
   for await (const chunk of request) {
     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
     size += buffer.length;
-    if (size > MAX_CHAPTER_REQUEST_BYTES) {
-      throw new Error('The Story Seed upload exceeds the 2 MB Development limit.');
+    if (size > MAX_GENERATION_REQUEST_BYTES) {
+      throw new Error('The generation request exceeds the 2 MB Development limit.');
     }
     chunks.push(buffer);
   }
@@ -52,6 +53,11 @@ const generationApis = (
     limit: 6,
     windowMs: 30 * 60 * 1_000,
   });
+  const guardHarnessGeneration = createPublicGenerationGuard({
+    key: 'harness-generation',
+    limit: 6,
+    windowMs: 30 * 60 * 1_000,
+  });
   const guardCodexVoiceQuote = createPublicGenerationGuard({
     key: 'codex-voice-quote',
     limit: 8,
@@ -78,6 +84,7 @@ const generationApis = (
       const pathname = new URL(request.url ?? '/', 'http://development.local').pathname;
       if (
         pathname !== '/api/chapter-generation'
+        && pathname !== '/api/harness-generation'
         && pathname !== '/api/generate-blueprint'
         && pathname !== '/api/codex-voice-quote'
       ) {
@@ -89,6 +96,8 @@ const generationApis = (
           ? { allowed: true }
           : pathname === '/api/chapter-generation'
             ? guardChapterGeneration(request)
+            : pathname === '/api/harness-generation'
+              ? guardHarnessGeneration(request)
             : pathname === '/api/codex-voice-quote'
               ? guardCodexVoiceQuote(request)
               : { allowed: true };
@@ -122,6 +131,17 @@ const generationApis = (
               environment,
               service: codexVoiceQuoteService,
               onError: error => console.error('[codex-voice]', error),
+            },
+          );
+          writeJson(response, result.status, result.body, result.headers);
+          return;
+        }
+        if (pathname === '/api/harness-generation') {
+          const result = await handleHarnessGenerationHttp(
+            { method: request.method, body, headers: request.headers },
+            {
+              environment,
+              onError: error => console.error('[harness-generation]', error),
             },
           );
           writeJson(response, result.status, result.body, result.headers);

@@ -50,6 +50,10 @@
       "types": "./dist/types/package/sen/chapter-generation.d.ts",
       "import": "./dist/chapter-generation.js"
     },
+    "./harness-generation": {
+      "types": "./dist/types/package/sen/harness-generation.d.ts",
+      "import": "./dist/harness-generation.js"
+    },
     "./library": {
       "types": "./dist/types/package/sen/library.d.ts",
       "import": "./dist/library.js"

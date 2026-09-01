@@ -7,9 +7,8 @@ import {
 import { LibraryComponentsGrid } from './LibraryComponents';
 
 /**
- * The home page has two tabs: Development (the workshop feature grid, driven
- * by the manifest) and Library Components (the live inventory of the shared
- * Celestial Library primitives, driven by LibraryComponentsGrid).
+ * Development and Library Components switch the home content in place.
+ * Harness opens its existing standalone generation workspace directly.
  */
 type HomeTab = 'development' | 'library';
 

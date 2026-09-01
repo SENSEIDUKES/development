@@ -160,6 +160,16 @@ export function WorkshopHome() {
                 {tab.label}
               </button>
             ))}
+            <a
+              href="?preview=harness-generation"
+              role="tab"
+              aria-selected="false"
+              aria-label="Open Harness Generation workspace"
+              className="workshop-nav-tab"
+              style={{ textDecoration: 'none' }}
+            >
+              Harness
+            </a>
           </nav>
           <span className="workshop-topbar-spacer" aria-hidden="true" />
         </div>

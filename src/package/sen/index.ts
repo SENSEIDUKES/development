@@ -22,6 +22,7 @@
  * - `@seihouse/sen/audio`              — the client-safe audio surface
  * - `@seihouse/sen/story-seed`         — Story Seed creation and contracts
  * - `@seihouse/sen/chapter-generation` — generation and handoff surfaces
+ * - `@seihouse/sen/harness-generation` — independent checkpoint-first novel core
  *
  * SEIHouse's own first-party surfaces — cultivation and Qi progression, the
  * relic economy, and the rest of the Library application — ship separately as

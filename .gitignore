@@ -2,6 +2,7 @@
 node_modules
 dist
 generated/chapter-generation-api
+generated/harness-generation-api
 generated/story-seed-blueprint-api
 generated/codex-voice-api
 *.tsbuildinfo

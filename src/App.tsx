@@ -13,6 +13,10 @@ const ChapterGenerationFlowWorkspace = lazy(() =>
   import('./workshop/previews/chapter-generation-flow/ChapterGenerationFlowWorkspace')
     .then(module => ({ default: module.ChapterGenerationFlowWorkspace })),
 );
+const HarnessGenerationWorkspace = lazy(() =>
+  import('./workshop/previews/harness-generation/HarnessGenerationWorkspace')
+    .then(module => ({ default: module.HarnessGenerationWorkspace })),
+);
 const ChapterManifestationWorkspace = lazy(() =>
   import('./workshop/previews/chapter-manifestation/ChapterManifestationWorkspace')
     .then(module => ({ default: module.ChapterManifestationWorkspace })),
@@ -63,6 +67,7 @@ const previewRegistry: Record<string, ComponentType> = {
   'character-voice': CharacterVoiceWorkspace,
   'chapter-generation-flow': ChapterGenerationFlowWorkspace,
   'chapter-generation-manifestation': ChapterManifestationWorkspace,
+  'harness-generation': HarnessGenerationWorkspace,
   'idle-cultivation': ClosedDoorCultivationWorkspace,
   'reader-codex': ReaderCodexWorkspace,
   'reader-chamber': ReaderChamberWorkspace,

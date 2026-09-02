@@ -37,6 +37,7 @@ the exact same code.
 | `@seihouse/sen/audio` | The client-safe audio surface: world cues and the inline audio model |
 | `@seihouse/sen/story-seed` | The Story Seed creation workspace, Story Bank, Blueprint review, import/help surfaces, and canonical portable contracts |
 | `@seihouse/sen/chapter-generation` | The live generation flow, Diagnostics, Reader handoffs, batch state, packet adapter, and four-stage pipeline contracts |
+| `@seihouse/sen/harness-generation` | Independent deterministic novel harness: checkpoint-first one-call prose generation, semantic-event evidence, canonical projections, corrections, replay, audited continuity context, and sequential local batches; it does not import legacy generation or Reader systems |
 | `@seihouse/sen/styles.css` | The bundled stylesheet, for consumers that prefer to load CSS explicitly |
 
 Each entry that needs styling imports its own CSS as a side effect, so a
@@ -121,6 +122,15 @@ adapters, or preview fixtures. A host that renders the full test flow must
 provide the endpoint; consumers can also use the exported packet, pipeline,
 batch, Diagnostics, and Reader-handoff surfaces independently — chapter
 generation is one optional content source for SEN, never a requirement.
+
+`@seihouse/sen/harness-generation` is a separate deterministic novel core. Its
+published client surface owns its own feature-scoped browser persistence and
+calls `/api/harness-generation` when a host renders its full workspace. The
+Gemini provider, server handler, Vercel shim, Workshop preview, and locked
+independent-baseline pane remain outside the package. It intentionally does
+not use Story Seed, legacy Chapter Generation, Reader, Codex, cards, or System
+Prompt contracts. Its Codex and System projections are internal intents, not
+imports or compatibility payloads for those excluded systems.
 
 ## Static assets
 

@@ -74,6 +74,18 @@ export const workshopEntries: WorkshopEntry[] = [
     },
   },
   {
+    id: 'harness-generation',
+    title: 'Harness Generation',
+    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter, independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and Chapter 1 → Chapter 2 continuity without Reader or legacy generation dependencies.',
+    category: 'other',
+    version: 'v1.0',
+    source: {
+      repository: 'SENSEIDUKES/development',
+      path: 'src/components/harness-generation/',
+      lastCompared: '2026-08-29',
+    },
+  },
+  {
     id: 'chapter-generation-manifestation',
     title: 'Chapter Generation Manifestation',
     description: 'Aura Veil state simulator with two workshop areas — the full-shell Aura Veil (narrative and media manifestation modes, driven by one task-card format) and a focused standalone Manifestation Reveal preview for the agnostic sealed → unsealing → revealed mechanic and its current celestial scroll vessel.',

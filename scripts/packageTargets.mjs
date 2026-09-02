@@ -107,6 +107,11 @@ export const PACKAGE_TARGETS = {
         'adaptFinalizedStorySeedToChapterContracts',
         'runFiveChapterBatch',
       ],
+      '@seihouse/sen/harness-generation': [
+        'HarnessGenerationWorkspace',
+        'HarnessGenerationController',
+        'HARNESS_GENERATION_INDEXED_DB_NAME',
+      ],
       // The compatibility aliases kept for one version.
       '@seihouse/sen/library': ['LibraryPanel'],
       '@seihouse/sen/codex-cards': ['CodexCard'],
@@ -115,6 +120,7 @@ export const PACKAGE_TARGETS = {
     smokeTypes: `
       import type { CreationModalProps, StorySeedInput } from '@seihouse/sen/story-seed';
       import type { ChapterContent, FiveChapterBatchState, ManifestChapterRequest } from '@seihouse/sen/chapter-generation';
+      import type { HarnessGenerationWorkspaceProps, HarnessStory } from '@seihouse/sen/harness-generation';
       import type { ColorCodeId, ColorCodeDefinition } from '@seihouse/sen/color-codes';
       import type {
         CodexCardProps,
@@ -145,6 +151,8 @@ export const PACKAGE_TARGETS = {
       declare const seed: StorySeedInput;
       declare const batch: FiveChapterBatchState;
       declare const request: ManifestChapterRequest;
+      declare const harnessWorkspace: HarnessGenerationWorkspaceProps;
+      declare const harnessStory: HarnessStory;
       declare const generatedBlock: NonNullable<ChapterContent['blocks']>[number];
       declare const colorCode: ColorCodeId;
       declare const colorCodeDefinition: ColorCodeDefinition;
@@ -171,7 +179,7 @@ export const PACKAGE_TARGETS = {
       declare const readerChapter: ReaderChapter;
       const readerBlock: NonNullable<ReaderChapter['blocks']>[number] = generatedBlock;
       void [
-        creation, seed, batch, request, generatedBlock, colorCode, colorCodeDefinition, codexCard, card,
+        creation, seed, batch, request, harnessWorkspace, harnessStory, generatedBlock, colorCode, colorCodeDefinition, codexCard, card,
         fateResultCard, systemBlock, systemRoute, systemRoutePresentation, worldNotice,
         fateResult, systemEvent, systemPromptBadge, systemPromptChange, systemPromptPresentation, systemPromptExpanded,
         systemStatusAbility, systemStatusBar, systemStatusEffect, systemStatusScreen, systemStatusStat,

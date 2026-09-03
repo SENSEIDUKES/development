@@ -25,7 +25,7 @@ const importsOf = (file: string) => [...readFileSync(file, 'utf8').matchAll(/\bf
   .map(match => match[1]);
 
 describe('Harness Generation isolation boundary', () => {
-  it('has no import edge to legacy generation, Story Seed, Reader, Codex, cards, or System Prompt code', () => {
+  it('has no import edge to legacy generation or host-owned Story Seed, Reader, Codex, cards, or System Prompt code', () => {
     for (const file of [...sourceFiles(featureRoot), packageEntry]) {
       for (const specifier of importsOf(file)) {
         for (const denied of forbidden) {

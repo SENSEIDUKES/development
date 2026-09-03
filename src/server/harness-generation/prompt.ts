@@ -11,6 +11,7 @@ const presentFoundation = (request: HarnessGenerationRequest) => ({
   characters: request.foundation.input.characters,
   worldFacts: request.foundation.input.worldFacts,
   intendedDirection: request.foundation.input.intendedDirection,
+  sourceSnapshot: request.foundation.input.sourceSnapshot,
 });
 
 /**

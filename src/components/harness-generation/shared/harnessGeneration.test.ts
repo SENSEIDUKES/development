@@ -100,6 +100,30 @@ describe('Harness Generation Phase 2 novel core', () => {
     expect(provider.generate.mock.calls[0][0].foundation.input.premise).toContain('courier');
   });
 
+  it('freezes an injected Story Seed snapshot inside the Harness-owned Foundation and generation context', async () => {
+    const repository = new InMemoryHarnessGenerationRepository();
+    const provider = adapter(response(JSON.stringify({ prose: 'The archive door opened beneath the tide.' })));
+    const controller = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime() });
+    await controller.hydrate();
+    const sourceSnapshot = {
+      kind: 'story-seed' as const,
+      sourceId: 'seed-1',
+      sourceUpdatedAt: '2026-09-03T12:00:00.000Z',
+      schemaVersion: 3,
+      seed: { story: { required: { premise: 'Original seed premise.' } } },
+      blueprint: { title: 'The Drowned Archive' },
+    };
+    const story = await controller.createStory({ premise: 'Original seed premise.', sourceSnapshot });
+    (sourceSnapshot.seed as { story: { required: { premise: string } } }).story.required.premise = 'Mutated outside the Harness.';
+
+    await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
+
+    const request = provider.generate.mock.calls[0][0] as HarnessGenerationRequest;
+    const frozenSeed = request.foundation.input.sourceSnapshot?.seed as { story: { required: { premise: string } } };
+    expect(frozenSeed.story.required.premise).toBe('Original seed premise.');
+    expect(request.context.foundationRevision.input.sourceSnapshot?.sourceId).toBe('seed-1');
+  });
+
   it('preserves valid semantic events, including a description-only and unknown-category event', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const provider = adapter(response(JSON.stringify({

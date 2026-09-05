@@ -15,7 +15,7 @@
     "validate:chapter-effects": "vitest run scripts/validateChapterEffectRules.test.ts",
     "test:chapter-manifestation": "vitest run src/components/chapter-manifestation",
     "test:chapter-generation": "vitest run src/components/chapter-generation src/server/chapter-generation",
-    "test:harness-generation": "vitest run src/components/harness-generation src/server/harness-generation",
+    "test:harness-generation": "vitest run src/components/harness-generation src/server/harness-generation src/workshop/previews/harness-generation",
     "test:library": "tsc -b && vitest run src/components/library",
     "test:relics": "vitest run src/server/relics/relicFoundation.test.ts",
     "test:story-seed": "vitest run src/components/story-seed src/server/story-seed-blueprint",

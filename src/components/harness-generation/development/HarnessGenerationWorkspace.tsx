@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   BookOpen,
   CheckCircle2,
@@ -40,6 +40,8 @@ import type {
   HarnessCorrectionKind,
   HarnessSemanticEvent,
   HarnessStory,
+  HarnessStorySeedOption,
+  HarnessStorySeedSource,
   HarnessWorkspaceState,
   StoryFoundationInput,
 } from '../shared/types';
@@ -48,6 +50,8 @@ export interface HarnessGenerationWorkspaceProps {
   /** Injection points keep the live UI testable without a provider or browser database. */
   repository?: HarnessGenerationRepository;
   modelAdapter?: HarnessGenerationModelAdapter;
+  /** Optional host bridge that supplies saved Story Seeds as frozen inputs. */
+  storySeedSource?: HarnessStorySeedSource;
 }
 
 const emptyFoundation = (): StoryFoundationInput => ({ premise: '' });
@@ -82,7 +86,7 @@ const storyEvents = (state: HarnessWorkspaceState, storyId: string) => state.eve
 
 const field = (
   input: StoryFoundationInput,
-  key: keyof StoryFoundationInput,
+  key: Exclude<keyof StoryFoundationInput, 'sourceSnapshot'>,
   value: string,
 ): StoryFoundationInput => ({ ...input, [key]: value });
 
@@ -108,10 +112,12 @@ function FoundationEditor({
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-200/55">Permanent author canon</p>
           <h2 id="harness-foundation-title" className="mt-1 font-display text-xl text-white">Story Foundation</h2>
           <p className="mt-1 max-w-2xl text-sm leading-relaxed text-neutral-400">
-            Premise is the only requirement. Every generation freezes the active revision before the provider is called.
+            {form.sourceSnapshot
+              ? 'This independent snapshot was copied from Story Seed. Saving changes creates a new Harness revision without rewriting the source.'
+              : 'Premise is the only requirement. Every generation freezes the active revision before the provider is called.'}
           </p>
         </div>
-        {story && <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 font-mono text-[10px] text-cyan-100">Revision saved</span>}
+        {story && <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 font-mono text-[10px] text-cyan-100">{form.sourceSnapshot ? 'Story Seed snapshot' : 'Revision saved'}</span>}
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -218,6 +224,83 @@ function FoundationEditor({
           {story ? 'Save Foundation Revision' : 'Create Harness Story'}
         </ManifestButton>
       </div>
+    </LibraryPanel>
+  );
+}
+
+function StorySeedStart({
+  options,
+  loading,
+  error,
+  busy,
+  manageHref,
+  onRefresh,
+  onSelect,
+  onManual,
+}: {
+  options: HarnessStorySeedOption[];
+  loading: boolean;
+  error?: string;
+  busy: boolean;
+  manageHref?: string;
+  onRefresh: () => void;
+  onSelect: (option: HarnessStorySeedOption) => void;
+  onManual: () => void;
+}) {
+  return (
+    <LibraryPanel as="section" padding="md" aria-labelledby="harness-story-seed-title">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-200/55">Story Seed → Harness → Story</p>
+          <h2 id="harness-story-seed-title" className="mt-1 font-display text-xl text-white">Choose a Story Seed</h2>
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-neutral-400">
+            The Harness copies the selected seed and Blueprint into its own frozen Foundation, then owns generation from there.
+          </p>
+        </div>
+        <LibraryButton type="button" size="sm" variant="ghost" icon={RefreshCcw} onClick={onRefresh} loading={loading} disabled={busy}>
+          Refresh
+        </LibraryButton>
+      </div>
+
+      {error && <p role="alert" className="mt-4 text-sm text-human">{error}</p>}
+      {!loading && options.length === 0 ? (
+        <div className="mt-5 rounded-xl border border-dashed border-white/15 bg-black/15 p-4">
+          <p className="text-sm text-neutral-300">No saved Story Seeds are available in this browser yet.</p>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {manageHref && <a className="inline-flex min-h-11 items-center rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-4 text-sm font-medium text-cyan-100 no-underline" href={manageHref}>Open Story Seed</a>}
+            <LibraryButton type="button" variant="ghost" onClick={onManual}>Start from a premise instead</LibraryButton>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          {options.map(option => (
+            <article key={option.id} className="rounded-xl border border-white/10 bg-black/20 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="truncate text-sm font-semibold text-white">{option.title}</h3>
+                  <p className="mt-1 text-xs text-neutral-500">Updated {formatDate(option.updatedAt)}</p>
+                </div>
+                <span className={`shrink-0 rounded-full border px-2 py-1 font-mono text-[9px] uppercase tracking-[0.12em] ${option.hasBlueprint ? 'border-cyan-300/25 bg-cyan-400/10 text-cyan-100' : 'border-white/10 text-neutral-500'}`}>
+                  {option.hasBlueprint ? 'Blueprint ready' : 'Seed only'}
+                </span>
+              </div>
+              <p className="mt-3 line-clamp-3 text-xs leading-relaxed text-neutral-400">{option.foundation.premise}</p>
+              <div className="mt-4">
+                <ManifestButton type="button" onClick={() => onSelect(option)} disabled={busy}>
+                  Start with Harness
+                </ManifestButton>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      {options.length > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-white/10 pt-4">
+          {manageHref && <a className="text-xs text-cyan-200 no-underline hover:text-cyan-100" href={manageHref}>Manage Story Seeds</a>}
+          <LibraryButton type="button" size="sm" variant="ghost" onClick={onManual}>Manual premise</LibraryButton>
+        </div>
+      )}
     </LibraryPanel>
   );
 }
@@ -477,7 +560,11 @@ function HarnessInspection({
   );
 }
 
-export function HarnessGenerationWorkspace({ repository: injectedRepository, modelAdapter: injectedAdapter }: HarnessGenerationWorkspaceProps) {
+export function HarnessGenerationWorkspace({
+  repository: injectedRepository,
+  modelAdapter: injectedAdapter,
+  storySeedSource,
+}: HarnessGenerationWorkspaceProps) {
   const repository = useMemo(
     () => injectedRepository ?? new IndexedDbHarnessGenerationRepository(),
     [injectedRepository],
@@ -499,6 +586,23 @@ export function HarnessGenerationWorkspace({ repository: injectedRepository, mod
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
   const [foundationError, setFoundationError] = useState<string>();
+  const [storySeedOptions, setStorySeedOptions] = useState<HarnessStorySeedOption[]>([]);
+  const [storySeedLoading, setStorySeedLoading] = useState(Boolean(storySeedSource));
+  const [storySeedError, setStorySeedError] = useState<string>();
+  const [manualStart, setManualStart] = useState(!storySeedSource);
+
+  const loadStorySeeds = useCallback(async () => {
+    if (!storySeedSource) return;
+    setStorySeedLoading(true);
+    setStorySeedError(undefined);
+    try {
+      setStorySeedOptions(await storySeedSource.list());
+    } catch (error) {
+      setStorySeedError(error instanceof Error ? error.message : 'Saved Story Seeds could not be loaded.');
+    } finally {
+      setStorySeedLoading(false);
+    }
+  }, [storySeedSource]);
 
   useEffect(() => {
     let active = true;
@@ -519,6 +623,10 @@ export function HarnessGenerationWorkspace({ repository: injectedRepository, mod
       unsubscribe();
     };
   }, [controller, modelAdapter]);
+
+  useEffect(() => {
+    void loadStorySeeds();
+  }, [loadStorySeeds]);
 
   const selectedStory = state && selectedStoryId ? findStory(state, selectedStoryId) : undefined;
   const selectedFoundation = state && selectedStory
@@ -573,6 +681,14 @@ export function HarnessGenerationWorkspace({ repository: injectedRepository, mod
         setFoundationError(next);
         throw error;
       }
+    });
+  };
+
+  const startFromStorySeed = (option: HarnessStorySeedOption) => {
+    void run(async () => {
+      const created = await controller.createStory(option.foundation);
+      setSelectedStoryId(created.id);
+      setManualStart(false);
     });
   };
 
@@ -682,13 +798,14 @@ export function HarnessGenerationWorkspace({ repository: injectedRepository, mod
                     setFoundationForm(emptyFoundation());
                     setFoundationError(undefined);
                     setMessage(undefined);
+                    setManualStart(!storySeedSource);
                   }}
                   disabled={busy}
                 />
               </div>
               <div className="space-y-2">
                 {state.stories.length === 0 ? (
-                  <p className="rounded-xl border border-dashed border-white/10 px-3 py-4 text-xs leading-relaxed text-neutral-500">Create a premise-first story. It stays in this browser’s Harness Generation storage.</p>
+                  <p className="rounded-xl border border-dashed border-white/10 px-3 py-4 text-xs leading-relaxed text-neutral-500">Choose a saved Story Seed to begin. The resulting story stays independently durable in Harness storage.</p>
                 ) : state.stories.map(story => {
                   const selected = story.id === selectedStoryId;
                   return (
@@ -710,14 +827,35 @@ export function HarnessGenerationWorkspace({ repository: injectedRepository, mod
           </aside>
 
           <div className="min-w-0 space-y-5">
-            <FoundationEditor
-              form={foundationForm}
-              story={selectedStory}
-              busy={busy}
-              error={foundationError}
-              onChange={setFoundationForm}
-              onSubmit={saveFoundation}
-            />
+            {!selectedStory && storySeedSource && !manualStart && (
+              <StorySeedStart
+                options={storySeedOptions}
+                loading={storySeedLoading}
+                error={storySeedError}
+                busy={busy}
+                manageHref={storySeedSource.manageHref}
+                onRefresh={() => void loadStorySeeds()}
+                onSelect={startFromStorySeed}
+                onManual={() => setManualStart(true)}
+              />
+            )}
+
+            {!selectedStory && (!storySeedSource || manualStart) && (
+              <>
+                {storySeedSource && (
+                  <LibraryButton type="button" size="sm" variant="ghost" onClick={() => setManualStart(false)}>
+                    Back to saved Story Seeds
+                  </LibraryButton>
+                )}
+                <FoundationEditor
+                  form={foundationForm}
+                  busy={busy}
+                  error={foundationError}
+                  onChange={setFoundationForm}
+                  onSubmit={saveFoundation}
+                />
+              </>
+            )}
 
             {selectedStory && (
               <LibraryPanel as="section" padding="md" aria-labelledby="harness-generate-title">
@@ -773,6 +911,22 @@ export function HarnessGenerationWorkspace({ repository: injectedRepository, mod
                   {batch?.failure && <p className="mt-2 text-xs text-human">{batch.failure}</p>}
                 </div>
               </LibraryPanel>
+            )}
+
+            {selectedStory && (
+              <details className="rounded-xl border border-white/10 bg-black/15 p-3">
+                <summary className="cursor-pointer text-sm font-medium text-neutral-300">Foundation snapshot and revisions</summary>
+                <div className="mt-3">
+                  <FoundationEditor
+                    form={foundationForm}
+                    story={selectedStory}
+                    busy={busy}
+                    error={foundationError}
+                    onChange={setFoundationForm}
+                    onSubmit={saveFoundation}
+                  />
+                </div>
+              </details>
             )}
 
             {selectedStory && chapters.length > 0 && (

@@ -3,7 +3,7 @@
 ## Purpose
 
 Harness Generation is an independent, checkpoint-first novel core. It gives an
-author a small permanent Story Foundation, asks a provider for one complete
+author a frozen Foundation copied from a saved Story Seed, asks a provider for one complete
 chapter, preserves raw output before interpreting it, accepts usable prose
 without requiring rich application structures, and carries committed prose and
 semantic-event evidence into the next chapter.
@@ -32,6 +32,10 @@ existing Chapter Generation feature.
   append-only corrections, audited context selection, internal Codex/System
   intents, idempotent replay, and persisted sequential batches. Prose and raw
   semantic evidence remain the authority beneath every derived record.
+- **2026-09-03:** Connected the Workshop experience through a one-way Story
+  Seed handoff. Selecting a saved seed copies the seed and optional Blueprint
+  into a frozen Harness Foundation; manual premise entry remains a secondary
+  development fallback.
 
 ## Source and transfer boundary
 
@@ -45,9 +49,10 @@ existing Chapter Generation feature.
 - `src/workshop/previews/harness-generation/` is Workshop-only mounting.
 
 The portable package entry is `@seihouse/sen/harness-generation`. It may use
-generic SEN UI primitives, but it must never import existing Chapter
-Generation, Story Seed, Reader, Reader Codex, cards, System Prompt, or their
-contracts.
+generic SEN UI primitives and accept a neutral, host-injected Story Seed source,
+but it never imports Story Seed internals. The Workshop preview owns the only
+Story Seed-to-Foundation adapter. Chapter Generation, Reader, Reader Codex,
+cards, System Prompt, and their contracts remain outside the Harness graph.
 
 ## Durable generation behavior
 

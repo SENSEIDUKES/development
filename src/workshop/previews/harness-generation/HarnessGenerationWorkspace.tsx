@@ -2,6 +2,9 @@ import { HarnessGenerationWorkspace as HarnessGenerationSurface } from '@seihous
 import { HarnessGenerationReference } from '../../../components/harness-generation/reference/HarnessGenerationReference';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
+import { createWorkshopStorySeedSource } from './storySeedHandoff';
+
+const storySeedSource = createWorkshopStorySeedSource();
 
 export function HarnessGenerationWorkspace() {
   const entry = workshopEntries.find(item => item.id === 'harness-generation')!;
@@ -10,7 +13,7 @@ export function HarnessGenerationWorkspace() {
       entry={entry}
       allowCompare={false}
       renderReference={() => <HarnessGenerationReference />}
-      renderDevelopment={() => <HarnessGenerationSurface />}
+      renderDevelopment={() => <HarnessGenerationSurface storySeedSource={storySeedSource} />}
     />
   );
 }

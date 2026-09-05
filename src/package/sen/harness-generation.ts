@@ -1,7 +1,8 @@
 /**
  * `@seihouse/sen/harness-generation` — an independent, checkpoint-first
- * novel core. It intentionally has no dependency on the legacy Chapter
- * Generation, Story Seed, Reader, Codex, or presentation systems.
+ * novel core. A host may inject a neutral Story Seed source, but the package
+ * has no dependency on Story Seed internals, legacy Chapter Generation,
+ * Reader, Codex, or presentation systems.
  */
 export {
   HarnessGenerationWorkspace,

@@ -3,6 +3,15 @@
 export const HARNESS_GENERATION_SCHEMA_VERSION = 2 as const;
 export const HARNESS_GENERATION_PHASE_2_SCHEMA_VERSION = 1 as const;
 
+export interface HarnessStorySeedSnapshot {
+  kind: 'story-seed';
+  sourceId: string;
+  sourceUpdatedAt: string;
+  schemaVersion: number;
+  seed: unknown;
+  blueprint?: unknown;
+}
+
 export interface StoryFoundationInput {
   title?: string;
   /** The only author field required to start a Harness story. */
@@ -15,6 +24,22 @@ export interface StoryFoundationInput {
   characters?: string;
   worldFacts?: string;
   intendedDirection?: string;
+  /** Immutable source evidence copied at the Story Seed -> Harness boundary. */
+  sourceSnapshot?: HarnessStorySeedSnapshot;
+}
+
+export interface HarnessStorySeedOption {
+  id: string;
+  title: string;
+  updatedAt: string;
+  hasBlueprint: boolean;
+  foundation: StoryFoundationInput;
+}
+
+/** Host-provided one-way input. The Harness never imports Story Seed internals. */
+export interface HarnessStorySeedSource {
+  list(): Promise<HarnessStorySeedOption[]>;
+  manageHref?: string;
 }
 
 export interface StoryFoundationRevision {

@@ -1,4 +1,4 @@
-import { defaultHarnessRuntime, emptyStoryHead, type HarnessRuntime } from './ids';
+import { cloneHarnessValue, defaultHarnessRuntime, emptyStoryHead, type HarnessRuntime } from './ids';
 import type {
   HarnessStory,
   HarnessWorkspaceState,
@@ -26,6 +26,9 @@ export const normalizeStoryFoundationInput = (input: StoryFoundationInput): Stor
   for (const key of optionalFoundationKeys) {
     const value = input[key]?.trim();
     if (value) normalized[key] = value;
+  }
+  if (input.sourceSnapshot?.kind === 'story-seed') {
+    normalized.sourceSnapshot = cloneHarnessValue(input.sourceSnapshot);
   }
   return normalized;
 };

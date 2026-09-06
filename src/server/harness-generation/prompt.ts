@@ -2,6 +2,11 @@ import type { HarnessGenerationRequest, HarnessMemoryRecoveryRequest } from '../
 import { HARNESS_MEMORY_CATEGORIES } from '../../components/harness-generation/shared/types';
 
 const memoryEntryProperties = {
+    details: { type: 'object', properties: {
+      character: { type: 'object', properties: { name: { type: 'string' }, role: { type: 'string' }, relationshipToMC: { type: 'string' }, isMainCharacter: { type: 'boolean' } }, required: ['name'] },
+      speech: { type: 'object', properties: { speaker: { type: 'string' }, quote: { type: 'string' } }, required: ['speaker', 'quote'] },
+      mechanics: { type: 'object', properties: { subject: { type: 'string' }, name: { type: 'string' }, value: { type: 'string' }, unit: { type: 'string' } }, required: ['subject', 'name', 'value'] },
+    } },
     description: { type: 'string' },
     significance: { type: 'string', enum: ['major', 'minor'] },
     evidence: { type: 'string', description: 'One continuous verbatim passage copied from the chapter. No ellipses, paraphrase, or stitched excerpts.' },
@@ -34,6 +39,7 @@ const memorySchema = { type: 'object', properties: Object.fromEntries(Object.key
 const memoryResponseSchema = { type: 'object', properties: { memory: memorySchema }, required: ['memory'] };
 
 export const HARNESS_MEMORY_INSTRUCTIONS = [
+  'Each memory entry may include details with character {name, role, relationshipToMC, isMainCharacter}, speech {speaker, quote}, or mechanics {subject, name, value, unit}. Include only information supported by its evidence and the chapter. Keep speaker role separate from relationship. Use the exact unique speech substring and an established named speaker. Mechanical values are exact absolute observations, including zero, never inferred deltas. The subject names the actual owner, which may be a character or an item. Put semantic objects inside details; do not emit application cards or IDs.',
   'Return a memory object with the named arrays required by the schema. Each entry has description, subjects, significance (major or minor), evidence, and facts (an object of short string values). Use an empty array for a bucket with no supported developments. The harness assigns processor categories from the bucket; do not invent category names.',
   'Scan the entire chapter, including every System block, for each memory bucket. Keep consequential decisions separate from outcomes; place conditions separate from personal progression; initial quantities separate from later changes. A character entry describes one character, not everyone in the scene. Do not merge multiple facts under the wrong subject to shorten the response.',
   'Subjects are typed objects {name, kind}. Use explicit names: characters for character/decision/personal progression; both character names for relationships; the location for location; the faction for faction; the named item for artifact; a short consistent thread, mystery, or deadline label for those categories. Never label a location or core as a character. Use Foundation names and declared aliases consistently; do not invent entity IDs.',
@@ -59,6 +65,7 @@ const presentFoundation = (request: HarnessGenerationRequest) => {
       premise: input.premise,
       declaredCanon: input.declaredCanon,
       characters: input.characters,
+      cast: input.cast,
       worldFacts: input.worldFacts,
       identities: input.identities,
     },
@@ -85,6 +92,10 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
     HARNESS_MEMORY_INSTRUCTIONS,
     'An event description may be brief. Do not invent ids, chapter numbers, ordering, persistence records, Codex records, cards, System Prompt payloads, Color Codes, Reader blocks, continuation tokens, provider metadata, or application schemas.',
     'Do not let event formatting displace the chapter itself. If uncertain about an event, omit it rather than fabricating precise mechanics.',
+    'Prepare only the context needed for this chapter, write it, and preserve its meaningful developments. No routine literary review, repeated critique, or mandatory full-novel plan is required.',
+    'AUTHOR AUTHORITY: Apply persistent steering in order. The newest direction wins where directions conflict; unrelated earlier directions still apply. Future steering changes what happens next, not what already happened. Retain consequences of prior events unless a direction explicitly uses revise-history. Author corrections override the targeted interpretations.',
+    'The Foundation, Blueprint, intendedDirection and any old plan are proposals wherever they concern future events. Adapt them to steering and committed developments. Never restore a planned enemy after the author makes them an ally. Past hostility may still have consequences without forcing renewed enmity.',
+    'Preserve compact memory for relationships, decisions, unresolved consequences, clues and exact mechanical changes in the supported buckets. Later chapter evidence updates current state; older evidence explains history. Unresolved or conflicted interpretations are not established facts. Introduce speaking characters in the characters bucket and include current balances in the appropriate owner bucket when prose changes them.',
   ].join('\n\n');
 
   const userPrompt = [
@@ -111,10 +122,13 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
           ...(event.evidence ? { evidence: event.evidence } : {}),
           ...(event.requestedEffects ? { requestedEffects: event.requestedEffects } : {}),
           ...(event.facts ? { facts: event.facts } : {}),
+          ...(event.details ? { details: event.details } : {}),
           evidenceVerified: event.evidenceVerified,
         })),
       })),
       canonicalEvidence: request.context.canonicalContext?.records.map(record => ({
+        sourceId: record.id,
+        sourceEventId: record.sourceEventId,
         id: record.id,
         sourceCorrectionId: record.sourceCorrectionId,
         entityId: record.entityId,
@@ -126,6 +140,8 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
         facts: record.facts,
       })) ?? [],
       deterministicHandoff: request.context.canonicalContext?.handoff ?? [],
+      committedDevelopments: request.context.developments ?? [],
+      originalEvidenceLookups: request.context.lookups ?? [],
     }, null, 2),
     'FROZEN STORY SEED AND BLUEPRINT SOURCE (background provenance; subordinate to active Foundation and explicit changes)',
     JSON.stringify(request.foundation.input.sourceSnapshot ?? null, null, 2),
@@ -138,6 +154,16 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
         ? request.context.committedChapters.some(chapter => chapter.chapterId === request.context.storyHead.lastCommittedChapterId)
         : null,
     }, null, 2),
+    'AUTHOR DIRECTION FOR THE NEXT CHAPTER',
+    request.context.steering?.length ? [
+      'These are instructions to execute, not historical events or optional themes. Retain unrelated earlier directions; newest wins on conflict.',
+      ...request.context.steering.map(direction => `${direction.mode === 'revise-history' ? 'EXPLICIT HISTORY REVISION' : 'FUTURE DIRECTION'} (effective Chapter ${direction.effectiveChapter}): ${direction.direction}`),
+      `NEXT CHAPTER ASSIGNMENT: ${request.context.steering.at(-1)!.direction}`,
+      'Make concrete progress on that assignment in this chapter; if already fulfilled, develop its consequences without repeating the completed action. If characters have moved away, show a plausible transition or new consequence that brings the requested action into the story. Do not repeat an old ending or departure in place of the requested action. Earlier prose remains historical evidence unless explicitly revised above.',
+    ].join('\n') : 'Continue from committed developments and the Foundation.',
+    'MECHANICAL CONTINUITY — DO NOT RESET RESOURCES',
+    JSON.stringify(request.context.mechanicalContinuity ?? [], null, 2),
+    'Each quantity above was observed in its source chapter. Subsequent transfers, spending, losses, or depletion take precedence over that old number. Never restore the Foundation opening balance, silently refill resources, or use an old owner after a transfer. If later evidence leaves the balance uncertain, establish it through the story before using it. Emit absolute balances for every affected owner when a transfer or depletion occurs, including zero. Preserve established names and units.',
     'Write the next chapter now. Return only the requested JSON object.',
   ].join('\n\n');
 

@@ -1,8 +1,8 @@
 /**
  * `@seihouse/sen/harness-generation` — an independent, checkpoint-first
  * novel core. A host may inject a neutral Story Seed source, but the package
- * has no dependency on Story Seed internals, legacy Chapter Generation,
- * Reader, Codex, or presentation systems.
+ * has no dependency on Story Seed internals or the legacy generation cycle.
+ * A derived adapter and session compose the existing SEN Reader/Codex surfaces.
  */
 export {
   HarnessGenerationWorkspace,
@@ -35,4 +35,5 @@ export {
   type AppendHarnessCorrectionInput,
 } from '../../components/harness-generation/shared/canonicalState';
 export { DEFAULT_HARNESS_CONTEXT_POLICY } from '../../components/harness-generation/shared/context';
+export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../components/harness-generation/shared/types';

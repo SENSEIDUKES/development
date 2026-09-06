@@ -44,7 +44,7 @@ export type HarnessProjectionBuilder = (
 ) => HarnessProjectionRecord[];
 
 const categoryTokens = (event: HarnessSemanticEvent) => (event.category ?? '')
-  .toLocaleLowerCase()
+  .toLowerCase()
   .split(/[,+/|]/)
   .map(value => value.trim().replace(/[ _]+/g, '-'))
   .filter(Boolean);
@@ -60,10 +60,10 @@ const correctionAliases = (corrections: HarnessAuthorCorrection[]) => {
   const aliases = new Map<string, string>();
   for (const correction of corrections) {
     if (correction.acceptedAlias && correction.resolvedRecordId) {
-      aliases.set(correction.acceptedAlias.toLocaleLowerCase(), correction.resolvedRecordId);
+      aliases.set(correction.acceptedAlias.toLowerCase(), correction.resolvedRecordId);
     }
     if (correction.kind === 'resolve-entity' && correction.referenceLabel && correction.resolvedRecordId) {
-      aliases.set(correction.referenceLabel.toLocaleLowerCase(), correction.resolvedRecordId);
+      aliases.set(correction.referenceLabel.toLowerCase(), correction.resolvedRecordId);
     }
   }
   return aliases;
@@ -79,14 +79,14 @@ export const resolveHarnessEntity = (
   const characters = [...state.canonicalRecords, ...additionalRecords].filter(record =>
     record.storyId === storyId && record.kind === 'character' && !record.supersededAt,
   );
-  const aliasId = correctionAliases(state.corrections.filter(correction => correction.storyId === storyId)).get(label.trim().toLocaleLowerCase());
+  const aliasId = correctionAliases(state.corrections.filter(correction => correction.storyId === storyId)).get(label.trim().toLowerCase());
   const corrected = characters.find(record => record.id === aliasId);
   if (corrected) return { label, resolution: 'alias', resolvedRecordId: corrected.id, entityId: corrected.entityId };
   const unique = (records: HarnessCanonicalRecord[]) => [...new Map(records.map(record => [record.entityId ?? record.id, record])).values()];
-  const exact = unique(characters.filter(record => record.label?.trim().toLocaleLowerCase() === label.trim().toLocaleLowerCase()));
+  const exact = unique(characters.filter(record => record.label?.trim().toLowerCase() === label.trim().toLowerCase()));
   if (exact.length === 1) return { label, resolution: 'exact', resolvedRecordId: exact[0].id, entityId: exact[0].entityId };
   if (exact.length > 1) return { label, resolution: 'conflicted', candidateRecordIds: exact.map(record => record.id) };
-  const aliases = unique(characters.filter(record => record.aliases?.some(alias => alias.trim().toLocaleLowerCase() === label.trim().toLocaleLowerCase())));
+  const aliases = unique(characters.filter(record => record.aliases?.some(alias => alias.trim().toLowerCase() === label.trim().toLowerCase())));
   if (aliases.length === 1) return { label, resolution: 'alias', resolvedRecordId: aliases[0].id, entityId: aliases[0].entityId };
   if (aliases.length > 1) return { label, resolution: 'conflicted', candidateRecordIds: aliases.map(record => record.id) };
   const active = unique(characters.filter(record => activeRecordIds.includes(record.id)));
@@ -183,7 +183,7 @@ export const buildHarnessProjectionIntents: HarnessProjectionBuilder = (
     }
   }
 
-  const requested = new Set((event.requestedEffects ?? []).map(value => value.toLocaleLowerCase().replace(/[ _]+/g, '-')));
+  const requested = new Set((event.requestedEffects ?? []).map(value => value.toLowerCase().replace(/[ _]+/g, '-')));
   const source = records[0];
   if (source && (hasCategory(event, ['fate-outcome']) || requested.has('fate'))) {
     result.push(projection(event, source, 'fate', hasCategory(event, ['fate-outcome']) ? 'ready' : 'unresolved',
@@ -231,7 +231,14 @@ const subjectsAsRecords = (
   kind: HarnessCanonicalRecord['kind'],
 ) => {
   const version = '2.0.0';
-  const subjects = cleanSubjects(context.event).filter(subject => !context.event.subjectKinds?.[subject] || context.event.subjectKinds[subject] === kind
+  const story = context.state.stories.find(story => story.id === context.event.storyId);
+  const cast = context.state.foundations.find(foundation => foundation.id === story?.activeFoundationRevisionId)?.input.cast ?? [];
+  const candidates = kind === 'character' ? Array.from(new Set([
+      ...(context.event.details?.character ? [context.event.details.character.name] : []),
+      ...cleanSubjects(context.event), ...cast.filter(character =>
+      character.name === context.event.details?.mechanics?.subject || character.name === context.event.details?.speech?.speaker).map(character => character.name)]))
+    : cleanSubjects(context.event);
+  const subjects = candidates.filter(subject => !context.event.subjectKinds?.[subject] || context.event.subjectKinds[subject] === kind
     || (kind === 'plot-thread' && context.event.subjectKinds[subject] === 'timeline-event'));
   if (!subjects.length) {
     return [canonicalRecord(context.event, capabilityId, version, 0, kind, context.now, {
@@ -243,11 +250,13 @@ const subjectsAsRecords = (
     const known = reference?.resolvedRecordId ? context.state.canonicalRecords.find(record => record.id === reference.resolvedRecordId) : undefined;
     const record = canonicalRecord(context.event, capabilityId, version, index, kind, context.now, {
       label: known?.label ?? subject,
+      facts: context.event.details?.character?.name === subject ? { ...context.event.details.character }
+        : context.event.details?.mechanics?.subject === subject ? { ...context.event.details.mechanics } : {},
       ...(reference?.resolution === 'conflicted' ? { references: [reference] } : {}),
     });
     return { ...record, aliases: known?.aliases,
       entityId: reference?.resolution === 'conflicted' ? undefined
-        : known?.entityId ?? stableHarnessId('hentity', context.event.storyId, kind, (known?.label ?? subject).trim().toLocaleLowerCase()) };
+        : known?.entityId ?? stableHarnessId('hentity', context.event.storyId, kind, (known?.label ?? subject).trim().toLowerCase()) };
   });
 };
 
@@ -286,7 +295,7 @@ export const defaultHarnessCapabilityHandlers: HarnessCapabilityHandler[] = [
   makeHandler('progression', ['ability', 'abilities', 'progression'], context => {
     const subjects = cleanSubjects(context.event);
     const references = subjects.map(subject => resolveHarnessEntity(subject, context.state, context.event.storyId, [], context.activeRecordIds));
-    return [canonicalRecord(context.event, 'progression', '2.0.0', 0, 'progression', context.now, { references,
+    return [canonicalRecord(context.event, 'progression', '2.0.0', 0, 'progression', context.now, { references, facts: context.event.details?.mechanics ? { ...context.event.details.mechanics } : {},
       warnings: subjects.length ? [] : ['Progression requires an explicit character subject.'] })];
   }),
 ];
@@ -302,6 +311,17 @@ export class HarnessCapabilityRegistry {
 
   processEvent(context: HarnessCapabilityContext): HarnessCapabilityResult[] {
     let routed = this.handlers.filter(handler => handler.canHandle(context.event));
+    const story = context.state.stories.find(story => story.id === context.event.storyId);
+    const knownCast = context.state.foundations.find(foundation => foundation.id === story?.activeFoundationRevisionId)?.input.cast ?? [];
+    const mentionsCast = knownCast.some(character => character.name === context.event.details?.mechanics?.subject || character.name === context.event.details?.speech?.speaker);
+    if (mentionsCast) {
+      const characters = this.handlers.find(handler => handler.id === 'characters');
+      if (characters && !routed.includes(characters)) routed.unshift(characters);
+    }
+    for (const [present, id] of [[context.event.details?.character, 'characters'], [context.event.details?.mechanics, 'progression']] as const) {
+      const handler = present && this.handlers.find(candidate => candidate.id === id);
+      if (handler && !routed.includes(handler)) routed.push(handler);
+    }
     if (hasCategory(context.event, ['deadline'])) {
       const threads = this.handlers.find(handler => handler.id === 'plot-threads');
       if (threads && !routed.includes(threads)) routed.push(threads);
@@ -352,7 +372,9 @@ export class HarnessCapabilityRegistry {
           replayCount: (prior?.replayCount ?? -1) + 1,
         };
         results.push({ records: output.records, projections, receipt });
-        workingState = { ...workingState, canonicalRecords: [...workingState.canonicalRecords, ...output.records] };
+        workingState = { ...workingState, canonicalRecords: [
+          ...workingState.canonicalRecords.filter(record => !output.records.some(next => next.id === record.id)), ...output.records,
+        ] };
       } catch (error) {
         results.push({
           records: [],

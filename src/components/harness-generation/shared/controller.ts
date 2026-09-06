@@ -248,6 +248,27 @@ export class HarnessGenerationController {
     return cloneHarnessValue(corrected.correction);
   }
 
+  async steerStory(storyId: string, direction: string, mode: 'future' | 'revise-history' = 'future') {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Pause after the active chapter before changing direction.');
+    if (!direction.trim()) throw new Error('Describe the direction for the story.');
+    if (mode !== 'future' && mode !== 'revise-history') throw new Error('Choose a supported steering mode.');
+    const candidate = cloneHarnessValue(this.state);
+    const story = findStory(candidate, storyId);
+    if (!story) throw new Error('Open a Harness story before steering it.');
+    if (activeAttemptForStory(candidate, storyId)) {
+      throw new Error('Finish or explicitly retry the current chapter checkpoint before changing direction.');
+    }
+    const steering = {
+      id: this.runtime.createId('hsteer'), direction: direction.trim(), mode,
+      effectiveChapter: story.head.nextChapterNumber, createdAt: this.runtime.now(),
+    };
+    story.steering = [...(story.steering ?? []), steering];
+    story.updatedAt = steering.createdAt;
+    await this.persist(candidate);
+    return cloneHarnessValue(steering);
+  }
+
   private appendFailure(
     attemptId: string,
     failure: HarnessAttemptFailure,
@@ -321,10 +342,9 @@ export class HarnessGenerationController {
     }
     // This must succeed before the request leaves the browser. On reload a
     // saved request_started checkpoint becomes provider_outcome_unknown.
-    await this.persist(requestStarted);
-
     this.generating = true;
     try {
+      await this.persist(requestStarted);
       let response;
       try {
         response = await this.modelAdapter.generate({
@@ -336,7 +356,7 @@ export class HarnessGenerationController {
           context: attempt.contextSnapshot,
         });
       } catch (error) {
-        return this.appendFailure(attemptId, {
+        return await this.appendFailure(attemptId, {
           stage: 'provider',
           message: errorMessage(error, 'The configured provider could not complete the chapter request.'),
         });
@@ -351,7 +371,7 @@ export class HarnessGenerationController {
       rawAttempt.failure = undefined;
       if (!await this.persistCheckpoint(rawReceived, attemptId, 'raw_received')) return this.snapshot();
 
-      return this.acceptRawResponse(attemptId);
+      return await this.acceptRawResponse(attemptId);
     } finally {
       this.generating = false;
     }
@@ -413,6 +433,7 @@ export class HarnessGenerationController {
         attemptId: attempt.id,
         chapterNumber: attempt.chapterNumber,
         createdAt: this.runtime.now(),
+        prose: attempt.acceptedDraft.prose,
       }, this.runtime);
     } catch (error) {
       const candidate = cloneHarnessValue(this.state);
@@ -572,8 +593,8 @@ export class HarnessGenerationController {
       }
       const preserved = preserveSemanticEvents(rawEvents, {
         storyId: chapter.storyId, attemptId: chapter.attemptId, chapterNumber: chapter.chapterNumber,
-        createdAt: recovery.startedAt,
-      }, { now: this.runtime.now, createId: (() => { let index = 0; return () => stableHarnessId('hev', recoveryId, index++); })() });
+        createdAt: recovery.startedAt, prose: chapter.prose, eventNamespace: recoveryId,
+      }, this.runtime);
       if (preserved.rejected.length || !preserved.events.length) {
         candidate = cloneHarnessValue(this.state);
         const invalid = candidate.memoryRecoveries!.find(entry => entry.id === recoveryId)!;
@@ -586,7 +607,7 @@ export class HarnessGenerationController {
       recovery = candidate.memoryRecoveries!.find(entry => entry.id === recoveryId)!;
       const savedChapter = candidate.chapters.find(entry => entry.id === chapterId)!;
       const fingerprint = (event: HarnessWorkspaceState['events'][number]) => JSON.stringify([
-        event.category, event.subjects, event.subjectKinds, event.description, event.evidence, event.facts,
+        event.category, event.subjects, event.subjectKinds, event.description, event.evidence, event.facts, event.details,
       ]);
       recovery.eventIds = [];
       for (const event of preserved.events) {
@@ -643,7 +664,7 @@ export class HarnessGenerationController {
     // Recover those events from the raw checkpoint before processing capabilities.
     for (const chapter of committedChapters) {
       const attempt = candidate.attempts.find(entry => entry.id === chapter.attemptId);
-      if (!attempt || chapter.eventIds.length || !attempt.rawProviderResponse) continue;
+      if (!attempt || !attempt.rawProviderResponse) continue;
       const rawEvents = this.rawEventsForAttempt(attempt);
       if (!rawEvents.length) continue;
       try {
@@ -652,10 +673,22 @@ export class HarnessGenerationController {
           attemptId: attempt.id,
           chapterNumber: chapter.chapterNumber,
           createdAt: attempt.eventsPreservedAt ?? attempt.proseAcceptedAt ?? attempt.startedAt,
+          prose: chapter.prose,
         }, this.runtime);
-        const recoveredEvents = preserved.events.map(event => ({ ...event, chapterId: chapter.id }));
-        chapter.eventIds = recoveredEvents.map(event => event.id);
-        candidate.events.push(...recoveredEvents.filter(event => !candidate.events.some(existing => existing.id === event.id)));
+        const reusedIds = new Set<string>();
+        const recoveredEvents = preserved.events.map(event => {
+          const existing = candidate.events.find(previous => previous.id === event.id)
+            ?? candidate.events.find(previous => previous.chapterId === chapter.id && !previous.recoveryId && !reusedIds.has(previous.id)
+              && previous.description === event.description && !preserved.events.some(item => item.id === previous.id));
+          if (existing) reusedIds.add(existing.id);
+          return { ...event, id: existing?.id ?? event.id, chapterId: chapter.id };
+        });
+        chapter.eventIds = Array.from(new Set([...chapter.eventIds, ...recoveredEvents.map(event => event.id)]));
+        for (const event of recoveredEvents) {
+          const index = candidate.events.findIndex(existing => existing.id === event.id);
+          if (index < 0) candidate.events.push(event);
+          else candidate.events[index] = event;
+        }
         attempt.preservedEvents = preserved.events;
         attempt.rejectedEvents = preserved.rejected;
         addWarnings(attempt, preserved.warnings);

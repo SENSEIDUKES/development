@@ -1,4 +1,5 @@
 import { buildCanonicalStoryView } from './canonicalState';
+import { buildHarnessMechanicalContinuity } from './mechanicalContinuity';
 import { verifyHarnessEventEvidence } from './responseAcceptance';
 import { cloneHarnessValue, defaultHarnessRuntime, type HarnessRuntime } from './ids';
 import type {
@@ -43,6 +44,7 @@ const chapterContext = (state: HarnessWorkspaceState, chapterId: string): Harnes
         ...(event.evidence ? { evidence: event.evidence } : {}),
         ...(event.requestedEffects ? { requestedEffects: [...event.requestedEffects] } : {}),
         ...(event.facts ? { facts: { ...event.facts } } : {}),
+        ...(event.details ? { details: cloneHarnessValue(event.details) } : {}),
       }] : [];
     }),
   };
@@ -78,6 +80,14 @@ export const compileHarnessContext = (
   const omitted: HarnessContextAuditItem[] = [];
   let remaining = policy.maxEstimatedTokens;
 
+  // Never silently discard author authority, even under an unusually small budget.
+  const steering = cloneHarnessValue(story.steering ?? []);
+  for (const direction of steering) {
+    const item = auditItem(`ctx-${direction.id}`, 'correction', [direction.id], 'Author direction',
+      'Persistent author direction takes precedence over proposed plans; only explicit history revisions change past facts.', direction);
+    included.push(item);
+    remaining -= item.estimatedTokens;
+  }
   const foundationItem = auditItem(`ctx-foundation-${foundationRevision.id}`, 'foundation', [foundationRevision.id],
     `Story Foundation revision ${foundationRevision.revision}`, 'The selected permanent Foundation revision is always included.', foundationRevision.input);
   included.push(foundationItem);
@@ -118,6 +128,17 @@ export const compileHarnessContext = (
     throw new Error('The latest committed chapter is missing. Restore its saved context before continuing; the harness will not substitute an older chapter.');
   }
   const recentIds = new Set(allChapters.slice(-policy.recentChapterCount).map(chapter => chapter.id));
+  const chaptersById = new Map(allChapters.map(chapter => [chapter.id, chapter]));
+  const committedEvents = state.events.filter(event => event.storyId === story.id && event.chapterId && chaptersById.has(event.chapterId))
+    .map(event => verifyHarnessEventEvidence(event, chaptersById.get(event.chapterId!)!.prose))
+    .sort((a, b) => a.chapterNumber - b.chapterNumber);
+  const mechanicalContinuity = buildHarnessMechanicalContinuity(committedEvents);
+  for (const observation of mechanicalContinuity) {
+    const item = auditItem(`ctx-mechanics-${observation.sourceId}`, 'canonical-record',
+      [observation.sourceId, ...observation.subsequentDevelopments.map(event => event.sourceId)],
+      `${observation.subject}: ${observation.name}`, 'Preserve quantified observations and later transfers or spending before optional prose.', observation);
+    included.push(item); remaining -= item.estimatedTokens;
+  }
   const committedChapters: HarnessContextChapter[] = [];
   for (const chapter of [...allChapters].reverse()) {
     const context = chapterContext(state, chapter.id)!;
@@ -139,10 +160,57 @@ export const compileHarnessContext = (
   // Allocate newest first, but read the retained prose in narrative order.
   committedChapters.sort((left, right) => left.chapterNumber - right.chapterNumber);
 
+  const developments: NonNullable<HarnessContextSnapshot['developments']> = [];
+  // Reserve half the remaining budget for compact developments, after recent prose.
+  // Latest subject/category observations come first; older consequences stay searchable.
+  let memoryBudget = Math.max(0, Math.floor(remaining / 2));
+  const keys = new Set<string>();
+  const recentFirst = [...committedEvents].reverse();
+  const current = recentFirst.filter(event => {
+    const key = event.details?.mechanics
+      ? `mechanics:${event.details.mechanics.subject}:${event.details.mechanics.name}`
+      : `${event.category ?? 'event'}:${[...(event.subjects ?? [event.id])].sort().join('|')}`;
+    if (keys.has(key)) return false;
+    keys.add(key);
+    return true;
+  });
+  const ordered = [...current, ...recentFirst.filter(event => !current.includes(event))];
+  for (const event of ordered) {
+    const value = { chapterNumber: event.chapterNumber, sourceId: event.id, description: event.description, evidence: event.evidence, evidenceVerified: event.evidenceVerified,
+      ...(event.details ? { details: cloneHarnessValue(event.details) } : {}) };
+    const item = auditItem(`ctx-development-${event.id}`, 'canonical-record', [event.id],
+      `Development in Chapter ${event.chapterNumber}`, 'Committed event evidence survives optional processing failures.', value);
+    if (item.estimatedTokens <= memoryBudget) {
+      developments.push(value); included.push(item);
+      memoryBudget -= item.estimatedTokens; remaining -= item.estimatedTokens;
+    } else omitted.push({ ...item, reason: 'Omitted from compact memory; original chapter and event remain available for targeted lookup.' });
+  }
+  developments.sort((a, b) => a.chapterNumber - b.chapterNumber);
+
+  // At most three excerpts, matched against explicit names/direction, not another model loop.
+  const terms = Array.from(new Set((steering.slice(-1)[0]?.direction ?? '').toLowerCase().match(/[\p{L}\p{N}]{4,}/gu) ?? []))
+    .filter(term => !['with', 'that', 'this', 'from', 'have', 'into', 'should', 'chapter', 'story'].includes(term));
+  const lookups: NonNullable<HarnessContextSnapshot['lookups']> = [];
+  const candidates = allChapters.filter(chapter => !recentIds.has(chapter.id)).map(chapter => {
+    const haystack = terms.length ? chapter.prose.toLowerCase() : '';
+    return { chapter, haystack, score: terms.filter(term => haystack.includes(term)).length };
+  }).filter(item => item.score > 0 || !item.chapter.eventIds.length)
+    .sort((a, b) => b.score - a.score || b.chapter.chapterNumber - a.chapter.chapterNumber).slice(0, 3);
+  for (const { chapter, haystack } of candidates) {
+    const match = terms.map(term => haystack.indexOf(term)).find(index => index >= 0) ?? 0;
+    const value = { chapterNumber: chapter.chapterNumber, sourceId: chapter.id,
+      excerpt: chapter.prose.slice(Math.max(0, match - 200), Math.max(0, match - 200) + 1600) };
+    const item = auditItem(`ctx-lookup-${chapter.id}`, 'chapter-prose', [chapter.id], `Lookup: Chapter ${chapter.chapterNumber}`,
+      'Bounded original evidence lookup for current direction or a chapter awaiting event repair.', value);
+    if (item.estimatedTokens <= remaining) { lookups.push(value); included.push(item); remaining -= item.estimatedTokens; }
+    else omitted.push({ ...item, reason: 'Lookup omitted because the context budget was exhausted.' });
+  }
   const view = buildCanonicalStoryView(state, story.id);
   const currentThreadIds = new Set(view.currentThreads.map(record => record.id));
   const selectedRecords: HarnessCanonicalRecord[] = [];
-  const records = [...view.records].sort((left, right) => recordPriority(left) - recordPriority(right) || left.createdAt.localeCompare(right.createdAt));
+  const chapterNumbers = new Map(allChapters.map(chapter => [chapter.id, chapter.chapterNumber]));
+  const records = [...view.records].sort((left, right) => recordPriority(left) - recordPriority(right)
+    || (chapterNumbers.get(right.chapterId ?? '') ?? Infinity) - (chapterNumbers.get(left.chapterId ?? '') ?? Infinity));
   for (const record of records) {
     const minor = record.sourceEventId ? state.events.find(event => event.id === record.sourceEventId)?.significance === 'minor' : false;
     const item = auditItem(`ctx-record-${record.id}`, 'canonical-record', [record.id, ...(record.sourceEventId ? [record.sourceEventId] : [])],
@@ -185,6 +253,10 @@ export const compileHarnessContext = (
     chapterNumber: story.head.nextChapterNumber,
     createdAt: runtime.now(),
     committedChapters,
+    steering,
+    developments,
+    lookups,
+    mechanicalContinuity,
     contextVersion: 2,
     selectionPolicy: policy,
     canonicalContext: { corrections: cloneHarnessValue(selectedCorrections), records: cloneHarnessValue(selectedRecords), handoff },

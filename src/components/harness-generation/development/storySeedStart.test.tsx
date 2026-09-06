@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InMemoryHarnessGenerationRepository } from '../shared/repository';
 import type { HarnessGenerationModelAdapter, HarnessStorySeedSource } from '../shared/types';
 import { HarnessGenerationWorkspace } from './HarnessGenerationWorkspace';
+import { HarnessGenerationController } from '../shared/controller';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -56,6 +57,31 @@ afterEach(() => {
 });
 
 describe('Harness Story Seed entry', () => {
+  it('clears an unsaved steering draft before another story can receive it', async () => {
+    const repository = new InMemoryHarnessGenerationRepository();
+    const controller = new HarnessGenerationController({ repository, modelAdapter });
+    await controller.hydrate();
+    await controller.createStory({ title: 'Story A', premise: 'A courier crosses the sea.' });
+    await controller.createStory({ title: 'Story B', premise: 'A healer crosses the mountains.' });
+    await act(async () => root.render(<HarnessGenerationWorkspace repository={repository} modelAdapter={modelAdapter} />));
+    const select = (title: string) => [...container.querySelectorAll('button')].find(button => button.textContent?.includes(`${title}Next:`))!;
+    await act(async () => select('Story A').click());
+    const draft = container.querySelector<HTMLTextAreaElement>('#harness-direction')!;
+    const checkbox = container.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(draft, 'Make the enemy an ally.');
+      draft.dispatchEvent(new Event('input', { bubbles: true }));
+      checkbox.click();
+    });
+    expect(draft.value).toBe('Make the enemy an ally.');
+    expect(checkbox.checked).toBe(true);
+    await act(async () => select('Story B').click());
+    expect(draft.value).toBe('');
+    expect(checkbox.checked).toBe(false);
+    expect([...container.querySelectorAll('button')].find(button => button.textContent === 'Save direction')?.disabled).toBe(true);
+    expect(repository.snapshot().stories.every(story => !story.steering?.length)).toBe(true);
+  });
+
   it('starts with saved Story Seeds and freezes the selection before generation', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     await act(async () => {

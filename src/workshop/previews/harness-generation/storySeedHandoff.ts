@@ -77,6 +77,10 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
       ['Blueprint character profile', blueprint?.mcProfile],
       ['Blueprint initial characters', blueprint?.initialCharacters],
     ]),
+    cast: (world.mainCharacter?.name || blueprint?.mainCharacter?.name) ? [{
+      name: world.mainCharacter?.name || blueprint!.mainCharacter!.name!,
+      role: 'Main character', isMainCharacter: true, relationshipToMC: 'Self',
+    }] : undefined,
     worldFacts: joinSections([
       ['World identity', identity],
       ['Factions', world.factions],

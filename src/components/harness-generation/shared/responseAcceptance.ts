@@ -1,4 +1,4 @@
-import { chapterTitleFallback, defaultHarnessRuntime, type HarnessRuntime } from './ids';
+import { chapterTitleFallback, defaultHarnessRuntime, stableHarnessId, type HarnessRuntime } from './ids';
 import { HARNESS_MEMORY_CATEGORIES } from './types';
 import type {
   HarnessAcceptedChapterDraft,
@@ -6,6 +6,7 @@ import type {
   HarnessRejectedEventDiagnostic,
   HarnessSemanticEvent,
   HarnessWarning,
+  HarnessEventDetails,
   HarnessCanonicalKind,
 } from './types';
 
@@ -25,6 +26,9 @@ export interface SemanticEventPreservationInput {
   attemptId: string;
   chapterNumber: number;
   createdAt: string;
+  prose?: string;
+  /** A separate saved extraction must never reuse writer event IDs. */
+  eventNamespace?: string;
 }
 
 export interface SemanticEventPreservationResult {
@@ -248,6 +252,45 @@ const eventFieldWarning = (field: string): HarnessWarning => ({
   message: `An optional event ${field} value was malformed and was omitted without affecting the chapter.`,
 });
 
+const smallNumberWords = (value: string): string | undefined => {
+  if (!/^(?:0|[1-9]\d?)$/.test(value)) return undefined;
+  const number = Number(value);
+  const small = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+  if (number < 20) return small[number];
+  const tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+  return `${tens[Math.floor(number / 10)]}${number % 10 ? `[- ]${small[number % 10]}` : ''}`;
+};
+
+const parseDetails = (value: unknown, warnings: HarnessWarning[]): HarnessEventDetails | undefined => {
+  if (value === undefined) return undefined;
+  if (!isRecord(value)) { warnings.push(eventFieldWarning('details')); return undefined; }
+  const details: HarnessEventDetails = {};
+  const character = value.character;
+  if (isRecord(character) && nonEmptyString(character.name)) {
+    details.character = {
+      name: nonEmptyString(character.name)!,
+      ...(nonEmptyString(character.role) ? { role: nonEmptyString(character.role) } : {}),
+      ...(nonEmptyString(character.relationshipToMC) ? { relationshipToMC: nonEmptyString(character.relationshipToMC) } : {}),
+      ...(typeof character.isMainCharacter === 'boolean' ? { isMainCharacter: character.isMainCharacter } : {}),
+    };
+  } else if (character !== undefined) warnings.push(eventFieldWarning('character'));
+  const speech = value.speech;
+  if (isRecord(speech) && nonEmptyString(speech.speaker) && nonEmptyString(speech.quote)) {
+    details.speech = { speaker: nonEmptyString(speech.speaker)!, quote: nonEmptyString(speech.quote)! };
+  } else if (speech !== undefined) warnings.push(eventFieldWarning('speech'));
+  const mechanics = value.mechanics;
+  const exactValue = isRecord(mechanics) && (typeof mechanics.value === 'string'
+    ? nonEmptyString(mechanics.value)
+    : typeof mechanics.value === 'number' && Number.isFinite(mechanics.value) ? String(mechanics.value) : undefined);
+  if (isRecord(mechanics) && nonEmptyString(mechanics.subject) && nonEmptyString(mechanics.name) && exactValue) {
+    details.mechanics = {
+      subject: nonEmptyString(mechanics.subject)!, name: nonEmptyString(mechanics.name)!, value: exactValue,
+      ...(nonEmptyString(mechanics.unit) ? { unit: nonEmptyString(mechanics.unit) } : {}),
+    };
+  } else if (mechanics !== undefined) warnings.push(eventFieldWarning('mechanics'));
+  return Object.keys(details).length ? details : undefined;
+};
+
 /** Preserve any meaningful description in the lossless general source lane.
  * Deterministic capabilities consume these records only after chapter commit. */
 export const preserveSemanticEvents = (
@@ -262,7 +305,13 @@ export const preserveSemanticEvents = (
   rawEvents.forEach((raw, index) => {
     const stringDescription = nonEmptyString(raw);
     const source = isRecord(raw) ? raw : undefined;
-    const description = stringDescription ?? nonEmptyString(source?.description);
+    // Tolerate the provider placing semantic details at the event root. The
+    // original raw checkpoint remains unchanged and replay can recover these.
+    const details = parseDetails(source?.details ?? (source && ['character', 'speech', 'mechanics'].some(key => source[key] !== undefined) ? source : undefined), warnings);
+    const fallbackDescription = details?.character ? `${details.character.name}: ${details.character.role ?? 'character'}${details.character.relationshipToMC ? `; relationship to main character: ${details.character.relationshipToMC}` : ''}.`
+      : details?.mechanics ? `${details.mechanics.subject}: ${details.mechanics.name} = ${details.mechanics.value}${details.mechanics.unit ? ` ${details.mechanics.unit}` : ''}.`
+      : details?.speech ? `${details.speech.speaker} says: ${details.speech.quote}` : undefined;
+    const description = stringDescription ?? nonEmptyString(source?.description) ?? fallbackDescription;
     if (!description) {
       rejected.push({
         index,
@@ -286,6 +335,24 @@ export const preserveSemanticEvents = (
       : undefined;
     const evidence = nonEmptyString(source?.evidence);
     const requestedEffects = stringList(source?.requestedEffects);
+    if (details && input.prose !== undefined) {
+      const prose = input.prose;
+      if (details.character && !prose.includes(details.character.name)) {
+        delete details.character; warnings.push(eventFieldWarning('character absent from prose'));
+      }
+      if (details.speech && (!prose.includes(details.speech.quote) || !prose.includes(details.speech.speaker))) {
+        delete details.speech; warnings.push(eventFieldWarning('speech absent from prose'));
+      }
+      if (details.mechanics) {
+        const escapedValue = details.mechanics.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const words = smallNumberWords(details.mechanics.value);
+        const numberInProse = new RegExp(`(?<![\\p{L}\\p{N}.])${escapedValue}(?![\\p{L}\\p{N}]|\\.\\d)`, 'u').test(prose)
+          || Boolean(words && new RegExp(`\\b${words}\\b`, 'i').test(prose));
+        if (!prose.includes(details.mechanics.subject) || !numberInProse) {
+          delete details.mechanics; warnings.push(eventFieldWarning('mechanical value absent from prose'));
+        }
+      }
+    }
     const facts = isRecord(source?.facts) ? Object.fromEntries(Object.entries(source.facts)
       .filter((entry): entry is [string, string] => typeof entry[1] === 'string' && Boolean(entry[1].trim()))) : undefined;
     if (source) {
@@ -298,7 +365,7 @@ export const preserveSemanticEvents = (
     }
 
     events.push({
-      id: runtime.createId('hev'),
+      id: stableHarnessId('hev', input.storyId, input.eventNamespace ?? input.attemptId, index),
       storyId: input.storyId,
       attemptId: input.attemptId,
       chapterNumber: input.chapterNumber,
@@ -310,6 +377,7 @@ export const preserveSemanticEvents = (
       ...(significance ? { significance } : {}),
       ...(evidence ? { evidence } : {}),
       ...(requestedEffects ? { requestedEffects } : {}),
+      ...(details && Object.keys(details).length ? { details } : {}),
       ...(facts ? { facts } : {}),
       capability: 'general-narrative-event',
     });

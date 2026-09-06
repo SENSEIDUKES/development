@@ -28,6 +28,7 @@ import {
 import { findFoundationRevision, findStory } from '../shared/foundation';
 import { buildCanonicalStoryView } from '../shared/canonicalState';
 import { DEFAULT_HARNESS_CONTEXT_POLICY } from '../shared/context';
+import { HarnessReaderSession } from './HarnessReaderSession';
 import { HarnessGenerationHttpClient } from '../shared/httpClient';
 import {
   IndexedDbHarnessGenerationRepository,
@@ -601,6 +602,9 @@ export function HarnessGenerationWorkspace({
   const [foundationForm, setFoundationForm] = useState<StoryFoundationInput>(emptyFoundation);
   const [model, setModel] = useState('');
   const [batchCount, setBatchCount] = useState('');
+  const [direction, setDirection] = useState('');
+  const [reviseHistory, setReviseHistory] = useState(false);
+  const [reading, setReading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
   const [foundationError, setFoundationError] = useState<string>();
@@ -647,6 +651,11 @@ export function HarnessGenerationWorkspace({
   }, [loadStorySeeds]);
 
   const selectedStory = state && selectedStoryId ? findStory(state, selectedStoryId) : undefined;
+  useEffect(() => {
+    setDirection('');
+    setReviseHistory(false);
+  }, [selectedStory?.id]);
+
   const selectedFoundation = state && selectedStory
     ? findFoundationRevision(state, selectedStory.activeFoundationRevisionId)
     : undefined;
@@ -767,6 +776,8 @@ export function HarnessGenerationWorkspace({
 
   const generationAvailable = Boolean(selectedStory && serverInfo?.configured && model && !busy);
 
+  if (reading && state && selectedStory) return <HarnessReaderSession key={selectedStory.id} state={state} storyId={selectedStory.id} onClose={() => setReading(false)} />;
+
   return (
     <main className="mx-auto max-w-7xl px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-generation-workspace">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -877,6 +888,21 @@ export function HarnessGenerationWorkspace({
 
             {selectedStory && (
               <LibraryPanel as="section" padding="md" aria-labelledby="harness-generate-title">
+                <div className="mb-5 space-y-3">
+                  <label className="block text-sm text-neutral-300" htmlFor="harness-direction">Story direction</label>
+                  <textarea id="harness-direction" value={direction} onChange={event => setDirection(event.target.value)} disabled={busy}
+                    placeholder="Make the planned enemy an ally. Keep the consequences of their earlier actions."
+                    className="min-h-24 w-full rounded-lg border border-white/15 bg-black/35 p-3 text-sm text-white" />
+                  <label className="flex min-h-11 items-center gap-2 text-xs text-neutral-400">
+                    <input type="checkbox" checked={reviseHistory} onChange={event => setReviseHistory(event.target.checked)} disabled={busy} />
+                    This direction explicitly revises past history
+                  </label>
+                  <LibraryButton type="button" size="sm" disabled={busy || !direction.trim()} onClick={() => void run(async () => {
+                    await controller.steerStory(selectedStory.id, direction, reviseHistory ? 'revise-history' : 'future');
+                    setDirection(''); setReviseHistory(false);
+                  })}>Save direction</LibraryButton>
+                  {selectedStory.steering?.at(-1) && <p className="text-sm text-neutral-300">Latest direction: {selectedStory.steering.at(-1)!.direction}</p>}
+                </div>
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-200/55">One-call generation</p>
@@ -952,12 +978,14 @@ export function HarnessGenerationWorkspace({
                 <div className="flex items-center gap-2">
                   <BookOpen size={18} className="text-cyan-200" aria-hidden="true" />
                   <h2 id="harness-chapters-title" className="font-display text-xl text-white">Committed chapters</h2>
+                  <LibraryButton type="button" size="sm" onClick={() => setReading(true)}>Open in SEN</LibraryButton>
                 </div>
                 <div className="mt-5 space-y-5">
                   {chapters.map(chapter => (
                     <article key={chapter.id} className="rounded-2xl border border-white/10 bg-black/20 p-4 sm:p-5">
                       <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-cyan-200/55">Chapter {chapter.chapterNumber} · {chapter.responseMode === 'plain-prose-recovery' ? 'plain prose recovery' : 'structured response'}</p>
                       <h3 className="mt-2 font-display text-xl text-white">{chapter.title}</h3>
+                      <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} onClick={() => void run(() => controller.replayStory(selectedStory.id, chapter.id))}>Repair chapter enhancements</LibraryButton>
                       {chapter.plan && (
                         <details className="mt-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs text-neutral-300">
                           <summary className="cursor-pointer">Optional plan</summary>

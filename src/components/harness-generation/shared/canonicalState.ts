@@ -12,7 +12,7 @@ const activeRecordsForStory = (state: HarnessWorkspaceState, storyId: string) =>
   return state.canonicalRecords.filter(record =>
     record.storyId === storyId
     && !record.supersededAt
-    && (record.sourceCorrectionId || (record.chapterId && committedChapterIds.has(record.chapterId))),
+    && (record.sourceCorrectionId || record.sourceFoundationRevisionId || (record.chapterId && committedChapterIds.has(record.chapterId))),
   );
 };
 export const buildCanonicalStoryView = (
@@ -95,6 +95,7 @@ export const appendHarnessCorrection = (
       storyId,
       sourceCorrectionId: correction.id,
       ...(input.sourceEventId ? { sourceEventId: input.sourceEventId } : {}),
+      entityId: candidate.canonicalRecords.find(record => targetRecordIds.includes(record.id))?.entityId,
       capabilityId: 'author-correction',
       capabilityVersion: '1.0.0',
       kind: input.replacement.kind,

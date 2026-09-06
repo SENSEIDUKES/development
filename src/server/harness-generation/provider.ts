@@ -8,6 +8,7 @@ export interface HarnessTextGenerationRequest {
   temperature: number;
   maxOutputTokens: number;
   timeoutMs: number;
+  responseJsonSchema?: unknown;
 }
 
 export interface HarnessTextGenerationResult {
@@ -52,6 +53,7 @@ export class GeminiHarnessTextProvider implements HarnessTextModelProvider {
           temperature: request.temperature,
           maxOutputTokens: request.maxOutputTokens,
           responseMimeType: 'application/json',
+          ...(request.responseJsonSchema ? { responseJsonSchema: request.responseJsonSchema } : {}),
           abortSignal: controller.signal,
         },
       });

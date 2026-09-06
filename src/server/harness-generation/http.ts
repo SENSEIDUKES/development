@@ -1,6 +1,7 @@
 import type {
   HarnessGenerationRequest,
   HarnessGenerationResponse,
+  HarnessMemoryRecoveryRequest,
 } from '../../components/harness-generation/shared/types';
 import {
   harnessGenerationServerInfo,
@@ -40,7 +41,7 @@ const requestError = (message: string): HarnessGenerationHttpResponse => ({
   headers: { 'Cache-Control': 'no-store' },
 });
 
-const parseRequest = (body: unknown): HarnessGenerationRequest => {
+const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRecoveryRequest => {
   const parsed = typeof body === 'string' ? JSON.parse(body) : body;
   if (!isRecord(parsed)) throw new Error('The Harness Generation request must be a JSON object.');
   if (!isRecord(parsed.foundation) || !isRecord(parsed.foundation.input)) {
@@ -49,6 +50,13 @@ const parseRequest = (body: unknown): HarnessGenerationRequest => {
   if (typeof parsed.foundation.input.premise !== 'string' || !parsed.foundation.input.premise.trim()) {
     throw new Error('A Story Foundation premise is required.');
   }
+  if (parsed.operation === 'recover-memory') {
+    if (![parsed.storyId, parsed.chapterId, parsed.model, parsed.prose].every(value => typeof value === 'string' && value.trim())) {
+      throw new Error('Memory recovery requires a story, saved chapter prose, chapter identity, and configured model.');
+    }
+    return parsed as unknown as HarnessMemoryRecoveryRequest;
+  }
+  if (parsed.operation !== undefined) throw new Error('Unknown Harness Generation operation.');
   if (!isRecord(parsed.context) || !Array.isArray(parsed.context.committedChapters)) {
     throw new Error('Harness Generation needs an auditable context snapshot.');
   }
@@ -94,7 +102,7 @@ export const handleHarnessGenerationHttp = async (
     };
   }
 
-  let parsed: HarnessGenerationRequest;
+  let parsed: HarnessGenerationRequest | HarnessMemoryRecoveryRequest;
   try {
     parsed = parseRequest(request.body);
   } catch (error) {

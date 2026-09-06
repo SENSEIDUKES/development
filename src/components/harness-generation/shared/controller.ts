@@ -11,6 +11,8 @@ import { cloneHarnessValue, defaultHarnessRuntime, stableHarnessId, type Harness
 import {
   acceptHarnessModelResponse,
   preserveSemanticEvents,
+  readHarnessMemoryEvents,
+  verifyHarnessEventEvidence,
   type SemanticEventPreservationInput,
   type SemanticEventPreservationResult,
 } from './responseAcceptance';
@@ -31,6 +33,7 @@ import type {
   HarnessWarning,
   HarnessWorkspaceState,
   StoryFoundationInput,
+  HarnessMemoryRecovery,
 } from './types';
 
 export type HarnessEventPreserver = (
@@ -166,6 +169,12 @@ export class HarnessGenerationController {
     const loaded = await this.repository.load();
     const recovered = cloneHarnessValue(loaded);
     let changed = false;
+    for (const recovery of recovered.memoryRecoveries ?? []) {
+      if (recovery.status !== 'request_started') continue;
+      recovery.status = 'provider_outcome_unknown';
+      recovery.failure = 'The browser closed during memory extraction. Retry explicitly; the chapter is already saved.';
+      changed = true;
+    }
     for (const attempt of recovered.attempts) {
       if (attempt.stage !== 'request_started') continue;
       attempt.stage = 'provider_outcome_unknown';
@@ -516,6 +525,108 @@ export class HarnessGenerationController {
     return this.snapshot();
   }
 
+  /** A separate extraction call reads frozen prose; it never requests a new chapter. */
+  async recoverChapterMemory(chapterId: string, model: string): Promise<HarnessWorkspaceState> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the active Harness operation to finish.');
+    const chapter = this.state.chapters.find(chapter => chapter.id === chapterId);
+    if (!chapter) throw new Error('Choose a saved chapter before recovering memory.');
+    if (activeAttemptForStory(this.state, chapter.storyId)) throw new Error('Finish the pending chapter checkpoint before recovering memory.');
+    const foundation = findFoundationRevision(this.state, chapter.foundationRevisionId);
+    if (!foundation) throw new Error('The saved chapter Foundation is missing.');
+    this.generating = true;
+    let candidate = cloneHarnessValue(this.state);
+    candidate.memoryRecoveries ??= [];
+    let recovery = candidate.memoryRecoveries.find(entry => entry.chapterId === chapterId && entry.status === 'raw_received');
+    try {
+      if (!recovery) {
+        if (!this.modelAdapter.recoverMemory) throw new Error('This host has not configured memory extraction.');
+        recovery = {
+          id: this.runtime.createId('hmem'), storyId: chapter.storyId, chapterId,
+          startedAt: this.runtime.now(), status: 'request_started',
+          request: { operation: 'recover-memory', storyId: chapter.storyId, chapterId, model,
+            prose: chapter.prose, foundation: cloneHarnessValue(foundation) },
+        };
+        candidate.memoryRecoveries.push(recovery);
+        await this.persist(candidate);
+        const response = await this.modelAdapter.recoverMemory(recovery.request);
+        // Do not mutate the durable snapshot until the raw response is saved.
+        candidate = cloneHarnessValue(this.state);
+        recovery = candidate.memoryRecoveries!.find(entry => entry.id === recovery!.id)!;
+        recovery.rawProviderResponse = response.rawProviderResponse;
+        recovery.providerReceipt = response.providerReceipt;
+        recovery.status = 'raw_received';
+        await this.persist(candidate);
+      } else await this.persist(candidate);
+
+      const recoveryId = recovery.id;
+      let rawEvents: unknown[];
+      try { rawEvents = readHarnessMemoryEvents(recovery.rawProviderResponse!); }
+      catch (error) {
+        candidate = cloneHarnessValue(this.state);
+        const invalid = candidate.memoryRecoveries!.find(entry => entry.id === recoveryId)!;
+        invalid.status = 'failed';
+        invalid.failure = errorMessage(error, 'Unreadable memory extraction.');
+        await this.persist(candidate);
+        throw error;
+      }
+      const preserved = preserveSemanticEvents(rawEvents, {
+        storyId: chapter.storyId, attemptId: chapter.attemptId, chapterNumber: chapter.chapterNumber,
+        createdAt: recovery.startedAt,
+      }, { now: this.runtime.now, createId: (() => { let index = 0; return () => stableHarnessId('hev', recoveryId, index++); })() });
+      if (preserved.rejected.length || !preserved.events.length) {
+        candidate = cloneHarnessValue(this.state);
+        const invalid = candidate.memoryRecoveries!.find(entry => entry.id === recoveryId)!;
+        invalid.status = 'failed';
+        invalid.failure = 'Some recovered events were unreadable; the raw extraction is saved for inspection.';
+        await this.persist(candidate);
+        throw new Error(invalid.failure);
+      }
+      candidate = cloneHarnessValue(this.state);
+      recovery = candidate.memoryRecoveries!.find(entry => entry.id === recoveryId)!;
+      const savedChapter = candidate.chapters.find(entry => entry.id === chapterId)!;
+      const fingerprint = (event: HarnessWorkspaceState['events'][number]) => JSON.stringify([
+        event.category, event.subjects, event.subjectKinds, event.description, event.evidence, event.facts,
+      ]);
+      recovery.eventIds = [];
+      for (const event of preserved.events) {
+        const existing = candidate.events.find(entry => entry.chapterId === chapterId && fingerprint(entry) === fingerprint(event));
+        if (existing) recovery.eventIds.push(existing.id);
+        else {
+          const recovered = { ...event, chapterId, recoveryId };
+          candidate.events.push(recovered);
+          savedChapter.eventIds.push(recovered.id);
+          recovery.eventIds.push(recovered.id);
+        }
+      }
+      recovery.status = 'applied';
+      recovery.warnings = preserved.warnings.map(warning => warning.message);
+      recovery.failure = undefined;
+      // Applying events and their recovery receipt is atomic; prose/head/attempt stay intact.
+      await this.persist(candidate);
+      return await this.replayStory(chapter.storyId, chapterId);
+    } catch (error) {
+      // Keep any received raw extraction retryable after a failed persistence write.
+      // Never keep unsaved derived events as though they were applied.
+      const retained = cloneHarnessValue(this.state);
+      const received = candidate.memoryRecoveries?.find(entry => entry.id === recovery?.id);
+      let failed: HarnessMemoryRecovery | undefined = retained.memoryRecoveries?.find(entry => entry.id === recovery?.id);
+      if (received?.rawProviderResponse && failed && !failed.rawProviderResponse) {
+        Object.assign(failed, { rawProviderResponse: received.rawProviderResponse, providerReceipt: received.providerReceipt, status: 'raw_received' });
+      }
+      if (failed) {
+        failed.failure = errorMessage(error, 'Memory recovery failed.');
+        if (failed.status === 'request_started') failed.status = 'failed';
+      }
+      this.state = retained;
+      this.notify();
+      try { await this.repository.save(retained); } catch { /* The raw checkpoint remains retryable in memory. */ }
+      throw error;
+    } finally {
+      this.generating = false;
+    }
+  }
+
   /**
    * Deterministic replay never calls the provider and only reads committed chapters.
    * Stable derived IDs make the operation idempotent across reloads and upgrades.
@@ -571,31 +682,31 @@ export class HarnessGenerationController {
       } : next);
     };
     const events = candidate.events.filter(event => event.chapterId && committedChapterIds.has(event.chapterId));
-    for (const event of events) {
+    for (const sourceEvent of events) {
+      const chapter = candidate.chapters.find(chapter => chapter.id === sourceEvent.chapterId)!;
+      const event = verifyHarnessEventEvidence(sourceEvent, chapter.prose);
       try {
         const results = this.capabilityRegistry.processEvent({ state: candidate, event, now: this.runtime.now() });
-        for (const result of results) {
-          for (const previous of candidate.capabilityReceipts) {
-            if (
-              previous.sourceEventId !== event.id
-              || previous.capabilityId !== result.receipt.capabilityId
-              || previous.capabilityVersion === result.receipt.capabilityVersion
-              || previous.status === 'superseded'
-            ) continue;
-            previous.status = 'superseded';
-            previous.supersededByReceiptId = result.receipt.id;
-            for (const recordId of previous.canonicalRecordIds) {
-              const oldRecord = candidate.canonicalRecords.find(record => record.id === recordId);
-              if (oldRecord && !oldRecord.supersededAt) {
-                oldRecord.supersededAt = result.receipt.processedAt;
-                oldRecord.supersededByRecordId = result.records[0]?.id;
-              }
-            }
-            for (const projectionId of previous.projectionIntentIds) {
-              const oldProjection = candidate.projections.find(projection => projection.id === projectionId);
-              if (oldProjection) oldProjection.status = 'superseded';
+        for (const previous of candidate.capabilityReceipts) {
+          if (previous.sourceEventId !== event.id || previous.status === 'superseded'
+            || results.some(result => result.receipt.id === previous.id)) continue;
+          const result = results.find(result => result.receipt.capabilityId === previous.capabilityId) ?? results[0];
+          if (!result) continue;
+          previous.status = 'superseded';
+          previous.supersededByReceiptId = result.receipt.id;
+          for (const recordId of previous.canonicalRecordIds) {
+            const oldRecord = candidate.canonicalRecords.find(record => record.id === recordId);
+            if (oldRecord && !oldRecord.supersededAt) {
+              oldRecord.supersededAt = result.receipt.processedAt;
+              oldRecord.supersededByRecordId = result.records[0]?.id;
             }
           }
+          for (const projectionId of previous.projectionIntentIds) {
+            const oldProjection = candidate.projections.find(projection => projection.id === projectionId);
+            if (oldProjection) oldProjection.status = 'superseded';
+          }
+        }
+        for (const result of results) {
           upsert(candidate.capabilityReceipts, result.receipt);
           for (const record of result.records) upsertCanonical(record);
           for (const projection of result.projections) upsert(candidate.projections, projection);
@@ -630,19 +741,23 @@ export class HarnessGenerationController {
     for (const chapter of committedChapters) {
       const attempt = candidate.attempts.find(entry => entry.id === chapter.attemptId);
       if (!attempt) continue;
+      const recoveredMemory = candidate.memoryRecoveries?.filter(recovery => recovery.chapterId === chapter.id && recovery.status === 'applied').at(-1);
+      const memoryEventIds = recoveredMemory?.eventIds ?? chapter.eventIds;
       const receipts = candidate.capabilityReceipts.filter(receipt =>
-        chapter.eventIds.includes(receipt.sourceEventId) && receipt.status !== 'superseded',
+        memoryEventIds.includes(receipt.sourceEventId) && receipt.status !== 'superseded',
       );
       attempt.postCommitProcessing = receipts.some(receipt => receipt.status === 'failed')
         ? 'failed'
-        : receipts.some(receipt => receipt.status === 'unresolved') ? 'warnings' : 'complete';
+        : !receipts.length || receipts.some(receipt => receipt.status === 'unresolved')
+          || (recoveredMemory ? Boolean(recoveredMemory.warnings?.length)
+            : Boolean(attempt.rejectedEvents?.length) || attempt.warnings.some(warning => ['optional_event_field_omitted', 'invalid_events_omitted'].includes(warning.code))) ? 'warnings' : 'complete';
       if (attempt.postCommitProcessing === 'failed') addWarnings(attempt, [{
         code: 'capability_failed',
         message: 'One or more deterministic capabilities failed. The chapter remains committed and can be replayed.',
       }]);
       if (attempt.postCommitProcessing === 'warnings') addWarnings(attempt, [{
         code: 'capability_unresolved',
-        message: 'Some story evidence remains unresolved. No identity or fact was guessed.',
+        message: 'Prose is saved, but story memory is incomplete: evidence, subjects, or specific interpretation are missing. Recover memory from saved prose to fill these gaps without rewriting the chapter.',
       }]);
     }
 
@@ -859,5 +974,6 @@ export const exportHarnessStory = (state: HarnessWorkspaceState, storyId: string
     corrections: state.corrections.filter(correction => correction.storyId === storyId),
     projections: state.projections.filter(projection => projection.storyId === storyId),
     batches: state.batches.filter(batch => batch.storyId === storyId),
+    memoryRecoveries: state.memoryRecoveries?.filter(recovery => recovery.storyId === storyId) ?? [],
   };
 };

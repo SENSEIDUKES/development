@@ -1,7 +1,9 @@
 import { buildCanonicalStoryView } from './canonicalState';
+import { verifyHarnessEventEvidence } from './responseAcceptance';
 import { cloneHarnessValue, defaultHarnessRuntime, type HarnessRuntime } from './ids';
 import type {
   HarnessCanonicalRecord,
+  HarnessCanonicalContext,
   HarnessContextAuditItem,
   HarnessContextChapter,
   HarnessContextSelectionPolicy,
@@ -33,11 +35,14 @@ const chapterContext = (state: HarnessWorkspaceState, chapterId: string): Harnes
       return event ? [{
         id: event.id,
         description: event.description,
+        evidenceVerified: verifyHarnessEventEvidence(event, chapter.prose).evidenceVerified,
         ...(event.category ? { category: event.category } : {}),
         ...(event.subjects ? { subjects: [...event.subjects] } : {}),
+        ...(event.subjectKinds ? { subjectKinds: { ...event.subjectKinds } } : {}),
         ...(event.significance ? { significance: event.significance } : {}),
         ...(event.evidence ? { evidence: event.evidence } : {}),
         ...(event.requestedEffects ? { requestedEffects: [...event.requestedEffects] } : {}),
+        ...(event.facts ? { facts: { ...event.facts } } : {}),
       }] : [];
     }),
   };
@@ -77,23 +82,52 @@ export const compileHarnessContext = (
     `Story Foundation revision ${foundationRevision.revision}`, 'The selected permanent Foundation revision is always included.', foundationRevision.input);
   included.push(foundationItem);
   remaining -= foundationItem.estimatedTokens;
+  if (remaining < 0) foundationItem.reason += ` Foundation alone exceeds the soft selection budget by ${-remaining} estimated tokens; it was not truncated.`;
+
+  // Reserve author intent before prose or derived records can consume the budget.
+  // Reverse append order also makes equal timestamps deterministic (latest wins).
+  const corrections = state.corrections.filter(correction => correction.storyId === story.id)
+    .reverse().sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+  const selectedCorrections: HarnessCanonicalContext['corrections'] = [];
+  const referent = (id: string) => {
+    const record = state.canonicalRecords.find(candidate => candidate.id === id && candidate.storyId === story.id);
+    if (!record) return [];
+    const { kind, label, evidence, facts } = record;
+    return [{ id, kind, label, evidence, facts }];
+  };
+  for (const correction of corrections) {
+    const value = {
+      ...correction,
+      targetEvidence: correction.targetRecordIds.flatMap(referent),
+      ...(correction.resolvedRecordId ? { resolvedEntity: referent(correction.resolvedRecordId)[0] } : {}),
+    };
+    const item = auditItem(`ctx-correction-${correction.id}`, 'correction', [correction.id, ...correction.targetRecordIds],
+      `Author correction: ${correction.kind}`, 'Selected newest first, before chapter prose and canonical records; includes available target evidence.', value);
+    if (item.estimatedTokens <= remaining) {
+      selectedCorrections.push(value);
+      included.push(item);
+      remaining -= item.estimatedTokens;
+    } else omitted.push({ ...item, reason: `Author correction omitted: needs ${item.estimatedTokens} estimated tokens, ${Math.max(0, remaining)} remain after Foundation and newer corrections.` });
+  }
 
   const allChapters = state.chapters.filter(chapter => chapter.storyId === story.id)
     .sort((left, right) => left.chapterNumber - right.chapterNumber);
   const recentIds = new Set(allChapters.slice(-policy.recentChapterCount).map(chapter => chapter.id));
   const committedChapters: HarnessContextChapter[] = [];
-  for (const chapter of allChapters) {
+  for (const chapter of [...allChapters].reverse()) {
     const context = chapterContext(state, chapter.id)!;
     const item = auditItem(`ctx-chapter-${chapter.id}`, 'chapter-prose', [chapter.id, ...chapter.eventIds],
       `Chapter ${chapter.chapterNumber}: ${chapter.title}`,
-      recentIds.has(chapter.id) ? `Included by the recent-chapter window (${policy.recentChapterCount}).` : `Omitted outside the recent-chapter window (${policy.recentChapterCount}).`, context);
+      recentIds.has(chapter.id) ? `Selected newest first within the recent-chapter window (${policy.recentChapterCount}), before derived records.` : `Omitted outside the recent-chapter window (${policy.recentChapterCount}).`, context);
     if (!recentIds.has(chapter.id)) omitted.push(item);
     else if (item.estimatedTokens <= remaining) {
       committedChapters.push(context);
       included.push(item);
       remaining -= item.estimatedTokens;
-    } else omitted.push({ ...item, reason: 'Omitted because the visible context token budget was exhausted.' });
+    } else omitted.push({ ...item, reason: `Chapter omitted: needs ${item.estimatedTokens} estimated tokens, ${Math.max(0, remaining)} remain after Foundation, author corrections, and newer chapters. Prose was not truncated.` });
   }
+  // Allocate newest first, but read the retained prose in narrative order.
+  committedChapters.sort((left, right) => left.chapterNumber - right.chapterNumber);
 
   const view = buildCanonicalStoryView(state, story.id);
   const selectedRecords: HarnessCanonicalRecord[] = [];
@@ -106,18 +140,6 @@ export const compileHarnessContext = (
     if (minor && !policy.includeMinorEvents) omitted.push(item);
     else if (item.estimatedTokens <= remaining) {
       selectedRecords.push(record);
-      included.push(item);
-      remaining -= item.estimatedTokens;
-    } else omitted.push({ ...item, reason: 'Omitted because the visible context token budget was exhausted.' });
-  }
-
-  const corrections = state.corrections.filter(correction => correction.storyId === story.id);
-  const selectedCorrections = [] as typeof corrections;
-  for (const correction of corrections) {
-    const item = auditItem(`ctx-correction-${correction.id}`, 'correction', [correction.id, ...correction.targetRecordIds],
-      `Author correction: ${correction.kind}`, 'Author corrections have precedence and are included when budget allows.', correction);
-    if (item.estimatedTokens <= remaining) {
-      selectedCorrections.push(correction);
       included.push(item);
       remaining -= item.estimatedTokens;
     } else omitted.push({ ...item, reason: 'Omitted because the visible context token budget was exhausted.' });

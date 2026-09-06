@@ -1,22 +1,6 @@
-/**
- * Automatic Story Tag inference.
- *
- * Story Tags stay critical system data — they steer world, character, and
- * conflict generation — but they are no longer a required manual input. When
- * a creator leaves them empty, the Library derives them from the three
- * required Story inputs (Premise, Genre, Style) right before generation, and
- * the inferred set is saved into the Story Seed like any hand-picked tag.
- *
- * The vocabulary below is a deliberate subset of the Story Tag library
- * (`development/constants.ts`), kept here so the schema/generation boundary
- * never imports presentation code.
- */
+import { normalizeStoryTagIdentity, STORY_TAG_CATALOG, type StoryTagMetadata } from './storyTagCatalog';
 
-/**
- * Tags every seed of a given genre can safely assume. `Fate Survival` is
- * deliberately absent — it is not a genre. Fate ingredients are inferred from
- * the keyword rules below instead, so a novel of any genre can carry them.
- */
+/** Genre supplies a small prior; premise evidence always ranks ahead of it. */
 const GENRE_TAGS: Record<string, string[]> = {
   Xianxia: ['cultivation realms', 'sect politics', 'dao comprehension', 'tribulation events'],
   Xuanhuan: ['bloodline awakening', 'martial techniques', 'tribulation events'],
@@ -35,76 +19,102 @@ const GENRE_TAGS: Record<string, string[]> = {
   'Mystery Cultivation': ['mystery cultivation', 'forbidden cases', 'hidden murders'],
 };
 
-/** Keyword → tag rules scanned across Premise + Genre + Style. */
-const KEYWORD_TAGS: { match: RegExp; tags: string[] }[] = [
-  { match: /\brevenge|avenge|vengeance\b/i, tags: ['revenge spiral', 'revenge through preparation'] },
-  { match: /\bbetray|traitor\b/i, tags: ['betrayal fallout', 'trust rupture'] },
-  { match: /\bassassin|murder|killed?\b/i, tags: ['assassination plots', 'death flags'] },
-  { match: /\bregress|reincarnat|reborn|time ?loop|timeline/i, tags: ['regression/reincarnation', 'time loops', 'future knowledge'] },
-  // Fate ingredients — what kinds of fate mechanics the novel may contain.
-  // Unrelated to the Fate Survival experience layer in Story Seed Settings.
-  { match: /\bdoomed?|dies|death sentence|destined to\b/i, tags: ['destined death', 'doom timers'] },
-  { match: /\bstolen (?:fate|destiny)|fate (?:theft|exchange|trade)\b/i, tags: ['stolen fate', 'fate exchange'] },
-  { match: /\b(?:blood|life|karmic) debt|owes? (?:a life|blood)\b/i, tags: ['blood debt', 'life debt'] },
-  { match: /\bkarma|karmic\b/i, tags: ['karmic bonds', 'moral debt'] },
-  { match: /\b(?:broken|failed|false) prophec|prophecy (?:breaks|shatters)\b/i, tags: ['broken prophecy', 'prophecy tracking'] },
-  { match: /\bheaven'?s? (?:punishment|wrath|judgment)|tribulation\b/i, tags: ["heaven's punishment", 'tribulation events'] },
-  { match: /\bborrowed (?:life|lifespan|time)|lifespan\b/i, tags: ['borrowed lifespan', 'curse tracking'] },
-  { match: /\bsystem\b|\binterface\b|\bstatus (?:screen|window)\b/i, tags: ['game systems', 'system missions'] },
-  { match: /\bsect|clan\b/i, tags: ['sect politics', 'clan politics'] },
-  { match: /\bacademy|school|exam|student\b/i, tags: ['academy cultivation', 'exam arcs'] },
-  { match: /\bkingdom|empire|territory|city building\b/i, tags: ['kingdom building', 'territory control'] },
-  { match: /\bwar|army|battlefield|siege\b/i, tags: ['military strategy', 'battlefield tactics'] },
-  { match: /\bcourt|noble|throne|succession\b/i, tags: ['court intrigue', 'succession crisis'] },
-  { match: /\bromance|lover|marriage|beloved\b/i, tags: ['slow-burn romance', 'romantic tension'] },
-  { match: /\bharem\b/i, tags: ['harem harmony'] },
-  { match: /\bcripple|weak|trash|discarded|abandoned\b/i, tags: ['rising from nothing', 'antihero rise'] },
-  { match: /\bprophec|destin|fate\b/i, tags: ['fate bonds', 'fate intervention', 'foreknowledge'] },
-  { match: /\bmystery|secret|hidden|buried truth\b/i, tags: ['mystery clues', 'hidden identities'] },
-  { match: /\bdungeon|tower|floor\b/i, tags: ['dungeon/tower climb', 'floor bosses'] },
-  { match: /\bbeast|monster|tame\b/i, tags: ['beast-taming / monster evolution', 'monster evolution'] },
-  { match: /\balchemy|pill|forge|craft\b/i, tags: ['crafting/alchemy', 'pill refinement'] },
-  { match: /\bapocalyp|ruin|survival\b/i, tags: ['apocalypse cultivation', 'survival camps'] },
-  { match: /\bmerchant|trade|economy|auction\b/i, tags: ['trade routes', 'auction politics'] },
-  { match: /\bgrim|dark|brutal|ruthless\b/i, tags: ['long-term consequences', 'stakes escalation'] },
-  { match: /\bcozy|gentle|quiet|farming|village\b/i, tags: ['cozy / slice-of-life cultivation', 'village bonds'] },
-  { match: /\bhumou?r|comed|wry|banter\b/i, tags: ['tone control'] },
-  { match: /\bfamily|brotherhood|companion\b/i, tags: ['found family', 'sworn brotherhood'] },
-];
-
-/** Tags used only when premise, genre, and style yield nothing specific. */
-const FALLBACK_TAGS = ['long-term consequences', 'emotional continuity', 'character status'];
-
-/** How many tags inference is allowed to add. Manual tags are never capped here. */
 export const INFERRED_TAG_LIMIT = 8;
-
 export interface StoryTagInferenceInput {
   premise?: string;
   genre?: string;
   style?: string;
 }
 
+// These cues translate ordinary premise language into existing catalog concepts.
+// Specific tropes require specific evidence: love does not imply arranged marriage,
+// a town does not imply kingdom building, and a star does not imply cultivation.
+const PREMISE_CUES: { match: RegExp; tags: string[] }[] = [
+  { match: /\b(?:cultivat(?:ion|or|ors|e|es|ing)|qi|meridians?|dantian)\b/i, tags: ['cultivation realms'] },
+  { match: /\b(?:game system|litrpg|status screen|status window)\b/i, tags: ['game systems'] },
+  { match: /\b(?:level up|levels up|experience points)\b/i, tags: ['level progression'] },
+  { match: /\b(?:sect|sects|disciple|disciples)\b/i, tags: ['sect politics'] },
+  { match: /\b(?:reborn|reincarnat(?:ion|ed|es)|past lives)\b/i, tags: ['reincarnation rules'] },
+  { match: /\b(?:back in time|time loops?|timelines?|regress(?:ion|or|ed))\b/i, tags: ['regression/reincarnation'] },
+  { match: /\b(?:doomed|dies|destined to die|death sentence)\b/i, tags: ['destined death'] },
+  { match: /\b(?:fall(?:s|ing)? in love|romance|romantic|lovers?|beloved|wife|husband)\b/i, tags: ['romantic tension'] },
+  { match: /\b(?:forced to marry|marriage of convenience|arranged marriage)\b/i, tags: ['arranged marriage'] },
+  { match: /\b(?:slow burn|gradually fall(?:s|ing)? in love)\b/i, tags: ['slow-burn romance'] },
+  { match: /\b(?:grief|grieving|mourn(?:s|ing)?|trauma|haunted by the past)\b/i, tags: ['emotional continuity', 'tragedy'] },
+  { match: /\b(?:old promises?|unresolved promises?|remember(?:s|ing)?|memories|years later)\b/i, tags: ['chapter memory', 'delayed payoffs'] },
+  { match: /\b(?:consequences|lasting scars?|past decisions|past mistakes)\b/i, tags: ['long-term consequences'] },
+  { match: /\b(?:clues?|investigat(?:e|es|ion|ing)|detective|disappearance)\b/i, tags: ['mystery clues', 'mystery'] },
+  { match: /\b(?:cozy|gentle|wholesome|peaceful)\b/i, tags: ['cozy fantasy', 'slow life'] },
+  { match: /\b(?:daily life|everyday life|slice of life)\b/i, tags: ['slice of life'] },
+  { match: /\b(?:funny|comedy|humou?r|banter)\b/i, tags: ['comedy'] },
+  { match: /\b(?:cook(?:s|ing)?|bakery|restaurant|chef)\b/i, tags: ['food'] },
+  { match: /\b(?:farm(?:s|ing)?|crops?|harvest)\b/i, tags: ['farming'] },
+  { match: /\b(?:harbou?r|port city|seaside|maritime)\b/i, tags: ['port economy'] },
+  { match: /\b(?:ancient ruins|ruined temple|lost civilization)\b/i, tags: ['ancient ruins', 'lost history'] },
+  { match: /\b(?:found family|adopted family|chosen family)\b/i, tags: ['found family'] },
+  { match: /\b(?:betray(?:al|ed|s)?|backstab(?:bed|bing)?)\b/i, tags: ['betrayal fallout'] },
+];
+
+const normalize = (value: string) => value.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+const containsPhrase = (text: string, phrase: string) => (` ${text} `).includes(` ${phrase} `);
+// Preserve the catalog lookup's last-entry authority for historical duplicate labels.
+const catalog = [...new Map(STORY_TAG_CATALOG.map(entry => [normalizeStoryTagIdentity(entry.label), entry])).values()].map(entry => ({
+  entry,
+  phrases: [entry.label, ...entry.aliases].map(normalize).filter(Boolean),
+}));
+const moodTags = new Set(['comedy', 'tragedy', 'mystery', 'slow life', 'slice of life', 'cozy fantasy', 'tone control']);
+const settingTags = new Set(['ancient ruins', 'secret realms', 'port economy', 'lost history', 'map expansion']);
+const dimension = (entry: StoryTagMetadata) => moodTags.has(entry.label)
+  ? 'Mood' : settingTags.has(entry.label) ? 'Setting' : entry.category;
+
 /**
- * Derives a Story Tag set from the three required Story inputs. Deterministic
- * (no model call), so the same seed always generates from the same tags.
+ * Rank the entire catalog, then spread relevant candidates across dimensions.
+ * Style breaks ties, never excludes tags or supplies evidence on its own.
+ * No random filler: a sparse premise may correctly yield fewer suggestions.
  */
-export const inferStoryTags = (input: StoryTagInferenceInput): string[] => {
-  const genre = (input.genre || '').trim();
-  const haystack = [input.premise, genre, input.style].filter(Boolean).join(' \n ');
-
-  const inferred: string[] = [];
-  const add = (tag: string) => {
-    if (inferred.length >= INFERRED_TAG_LIMIT) return;
-    if (!inferred.some(existing => existing.toLowerCase() === tag.toLowerCase())) inferred.push(tag);
-  };
-
-  const genreKey = Object.keys(GENRE_TAGS).find(key => key.toLowerCase() === genre.toLowerCase());
-  if (genreKey) GENRE_TAGS[genreKey].forEach(add);
-
-  for (const rule of KEYWORD_TAGS) {
-    if (rule.match.test(haystack)) rule.tags.forEach(add);
+export const recommendStoryTags = (
+  input: StoryTagInferenceInput,
+  selectedTags: string[] = [],
+  limit = 10,
+): StoryTagMetadata[] => {
+  const raw = input.premise || '';
+  // Handle explicit exclusions conservatively within a clause. This is lexical
+  // matching, not a model: complex negation and implied intent remain limited.
+  const exclusions = [...raw.matchAll(/\b(?:no|without|not|never)\s+([^,.!?;]+?)(?=\b(?:but|instead|yet)\b|[,.;!?]|$)/gi)]
+    .map(match => normalize(match[1]));
+  const premise = normalize(raw.replace(/\b(?:no|without|not|never)\s+[^,.!?;]+?(?=\b(?:but|instead|yet)\b|[,.;!?]|$)/gi, ' '));
+  const selected = new Set(selectedTags.map(normalizeStoryTagIdentity));
+  const genreKey = Object.keys(GENRE_TAGS).find(key => normalize(key) === normalize(input.genre || ''));
+  const genreTags = genreKey ? GENRE_TAGS[genreKey].slice(0, 2) : [];
+  const cueScores = new Set(PREMISE_CUES.filter(rule => rule.match.test(premise)).flatMap(rule => rule.tags));
+  const excludedCues = new Set(PREMISE_CUES.filter(rule => exclusions.some(text => rule.match.test(text))).flatMap(rule => rule.tags));
+  const candidates = catalog.flatMap(({ entry, phrases }) => {
+    if (selected.has(normalizeStoryTagIdentity(entry.label)) || excludedCues.has(entry.label)
+      || exclusions.some(text => phrases.some(phrase => containsPhrase(text, phrase)))) return [];
+    const matched = phrases.filter(phrase => containsPhrase(premise, phrase));
+    const evidence = Math.max(0, ...matched.map(phrase => 12 + Math.min(phrase.split(' ').length, 4)));
+    const score = Math.max(evidence, cueScores.has(entry.label) ? 10 : 0,
+      genreTags.includes(entry.label) ? 2 : 0);
+    return score ? [{ entry, score, style: entry.styles.some(style => style === input.style) ? 1 : 0 }] : [];
+  });
+  const result: StoryTagMetadata[] = [];
+  const counts = new Map<string, number>();
+  while (candidates.length && result.length < Math.max(0, Math.min(limit, 30))) {
+    // A repeated family gradually loses priority, without forcing irrelevant families.
+    candidates.sort((a, b) =>
+      b.score / (1 + (counts.get(dimension(b.entry)) || 0))
+      - a.score / (1 + (counts.get(dimension(a.entry)) || 0))
+      || b.style - a.style || a.entry.label.localeCompare(b.entry.label));
+    const { entry } = candidates.shift()!;
+    result.push(entry);
+    const key = dimension(entry);
+    counts.set(key, (counts.get(key) || 0) + 1);
   }
+  return result;
+};
 
-  if (inferred.length === 0) FALLBACK_TAGS.forEach(add);
-  return inferred;
+/** Same ranked recommendations at generation; creator-selected tags stay untouched. */
+export const inferStoryTags = (input: StoryTagInferenceInput): string[] => {
+  const tags = recommendStoryTags(input, [], INFERRED_TAG_LIMIT).map(entry => entry.label);
+  return tags.length ? tags : ['long-term consequences', 'emotional continuity', 'character status'];
 };

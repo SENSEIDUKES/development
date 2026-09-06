@@ -580,7 +580,7 @@ export default function ReaderCodex({
               <span>Dimensional Node</span>
             </span>
             <div className="text-neutral-400 font-sans">
-              Linked to Han Feng's physical location of resonance inside the active Scripture timeline.
+              Linked to {activeStory.mcName || 'the main character'}'s physical location of resonance inside the active Scripture timeline.
             </div>
           </div>
         </div>

@@ -79,13 +79,15 @@ export const resolveHarnessEntity = (
   const characters = [...state.canonicalRecords, ...additionalRecords].filter(record =>
     record.storyId === storyId && record.kind === 'character' && !record.supersededAt,
   );
-  const exact = characters.filter(record => record.label?.toLocaleLowerCase() === label.toLocaleLowerCase());
-  if (exact.length === 1) return { label, resolution: 'exact', resolvedRecordId: exact[0].id };
-  if (exact.length > 1) return { label, resolution: 'conflicted', candidateRecordIds: exact.map(record => record.id) };
-  const aliasId = correctionAliases(state.corrections).get(label.toLocaleLowerCase());
+  const aliasId = correctionAliases(state.corrections.filter(correction => correction.storyId === storyId)).get(label.toLocaleLowerCase());
   if (aliasId && characters.some(record => record.id === aliasId)) {
     return { label, resolution: 'alias', resolvedRecordId: aliasId };
   }
+  const matching = characters.filter(record => record.label?.toLocaleLowerCase() === label.toLocaleLowerCase());
+  const exact = matching.filter((record, index) => matching.findIndex(candidate =>
+    (candidate.facts.entityKey ?? candidate.id) === (record.facts.entityKey ?? record.id)) === index);
+  if (exact.length === 1) return { label, resolution: 'exact', resolvedRecordId: exact[0].id };
+  if (exact.length > 1) return { label, resolution: 'conflicted', candidateRecordIds: exact.map(record => record.id) };
   const active = characters.filter(record => activeRecordIds.includes(record.id));
   if (active.length === 1) return { label, resolution: 'active-context', resolvedRecordId: active[0].id };
   return { label, resolution: 'unresolved' };
@@ -227,13 +229,25 @@ const subjectsAsRecords = (
   kind: HarnessCanonicalRecord['kind'],
 ) => {
   const version = '1.0.0';
-  const subjects = cleanSubjects(context.event);
+  const story = context.state.stories.find(story => story.id === context.event.storyId);
+  const cast = context.state.foundations.find(foundation => foundation.id === story?.activeFoundationRevisionId)?.input.cast ?? [];
+  const subjects = kind === 'character' && context.event.details?.character
+    ? Array.from(new Set([context.event.details.character.name, ...cleanSubjects(context.event)]))
+    : kind === 'character' ? Array.from(new Set([...cleanSubjects(context.event), ...cast.filter(character =>
+      character.name === context.event.details?.mechanics?.subject || character.name === context.event.details?.speech?.speaker).map(character => character.name)]))
+    : cleanSubjects(context.event);
   if (!subjects.length) {
     return [canonicalRecord(context.event, capabilityId, version, 0, kind, context.now, {
       warnings: ['The event had no explicit subject, so its identity remains unresolved.'],
     })];
   }
-  return subjects.map((subject, index) => canonicalRecord(context.event, capabilityId, version, index, kind, context.now, { label: subject }));
+  return subjects.map((subject, index) => canonicalRecord(context.event, capabilityId, version, index, kind, context.now, {
+    label: subject,
+    facts: kind === 'character' ? {
+      entityKey: stableHarnessId('hentity', context.event.storyId, 'character', subject.toLocaleLowerCase()),
+      ...(context.event.details?.character?.name === subject ? context.event.details.character : {}),
+    } : {},
+  }));
 };
 
 export const defaultHarnessCapabilityHandlers: HarnessCapabilityHandler[] = [
@@ -271,7 +285,9 @@ export const defaultHarnessCapabilityHandlers: HarnessCapabilityHandler[] = [
   makeHandler('progression', ['ability', 'abilities', 'progression'], context => {
     const subjects = cleanSubjects(context.event);
     const references = subjects.map(subject => resolveHarnessEntity(subject, context.state, context.event.storyId, [], context.activeRecordIds));
-    return [canonicalRecord(context.event, 'progression', '1.0.0', 0, 'progression', context.now, { references })];
+    return [canonicalRecord(context.event, 'progression', '1.0.0', 0, 'progression', context.now, {
+      references, facts: context.event.details?.mechanics ? { ...context.event.details.mechanics } : {},
+    })];
   }),
 ];
 
@@ -286,6 +302,17 @@ export class HarnessCapabilityRegistry {
 
   processEvent(context: HarnessCapabilityContext): HarnessCapabilityResult[] {
     let routed = this.handlers.filter(handler => handler.canHandle(context.event));
+    const story = context.state.stories.find(story => story.id === context.event.storyId);
+    const knownCast = context.state.foundations.find(foundation => foundation.id === story?.activeFoundationRevisionId)?.input.cast ?? [];
+    const mentionsCast = knownCast.some(character => character.name === context.event.details?.mechanics?.subject || character.name === context.event.details?.speech?.speaker);
+    if (mentionsCast) {
+      const characters = this.handlers.find(handler => handler.id === 'characters');
+      if (characters && !routed.includes(characters)) routed.unshift(characters);
+    }
+    for (const [present, id] of [[context.event.details?.character, 'characters'], [context.event.details?.mechanics, 'progression']] as const) {
+      const handler = present && this.handlers.find(candidate => candidate.id === id);
+      if (handler && !routed.includes(handler)) routed.push(handler);
+    }
     // An explicit relationship supports both the named characters and their relationship.
     if (routed.some(handler => handler.id === 'relationships') && cleanSubjects(context.event).length >= 2) {
       const character = this.handlers.find(handler => handler.id === 'characters');
@@ -324,7 +351,9 @@ export class HarnessCapabilityRegistry {
           replayCount: (prior?.replayCount ?? -1) + 1,
         };
         results.push({ records: output.records, projections, receipt });
-        workingState = { ...workingState, canonicalRecords: [...workingState.canonicalRecords, ...output.records] };
+        workingState = { ...workingState, canonicalRecords: [
+          ...workingState.canonicalRecords.filter(record => !output.records.some(next => next.id === record.id)), ...output.records,
+        ] };
       } catch (error) {
         results.push({
           records: [],

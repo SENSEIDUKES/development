@@ -22,6 +22,8 @@ export interface StoryFoundationInput {
   openingSituation?: string;
   declaredCanon?: string;
   characters?: string;
+  /** Known identities supplied by the host; never inferred from paragraph order. */
+  cast?: NonNullable<HarnessEventDetails['character']>[];
   worldFacts?: string;
   intendedDirection?: string;
   /** Immutable source evidence copied at the Story Seed -> Harness boundary. */
@@ -65,6 +67,23 @@ export interface HarnessStory {
   foundationRevisionIds: string[];
   head: HarnessStoryHead;
   contextPolicy?: HarnessContextSelectionPolicy;
+  /** Append-only author directions, independent of the frozen opening outline. */
+  steering?: HarnessSteering[];
+}
+
+export interface HarnessSteering {
+  id: string;
+  direction: string;
+  mode: 'future' | 'revise-history';
+  effectiveChapter: number;
+  createdAt: string;
+}
+
+/** Provider-neutral semantic details. All identities are assigned by the host. */
+export interface HarnessEventDetails {
+  character?: { name: string; role?: string; relationshipToMC?: string; isMainCharacter?: boolean };
+  speech?: { speaker: string; quote: string };
+  mechanics?: { subject: string; name: string; value: string; unit?: string };
 }
 
 export type HarnessModelPlan = string | {
@@ -84,6 +103,7 @@ export interface HarnessModelChapterReply {
     significance?: 'minor' | 'major';
     evidence?: string;
     requestedEffects?: string[];
+    details?: HarnessEventDetails;
   }>;
 }
 
@@ -109,6 +129,7 @@ export interface HarnessSemanticEvent {
   significance?: 'minor' | 'major';
   evidence?: string;
   requestedEffects?: string[];
+  details?: HarnessEventDetails;
   /** Lossless source lane. Derived capabilities never replace this evidence. */
   capability: 'general-narrative-event';
 }
@@ -181,6 +202,11 @@ export interface HarnessContextSnapshot {
   selectionPolicy?: HarnessContextSelectionPolicy;
   canonicalContext?: HarnessCanonicalContext;
   selectionAudit?: HarnessContextSelectionAudit;
+  steering?: HarnessSteering[];
+  /** Compact committed evidence survives capability failure and the prose window. */
+  developments?: Array<{ chapterNumber: number; sourceId: string; description: string; details?: HarnessEventDetails }>;
+  lookups?: Array<{ chapterNumber: number; sourceId: string; excerpt: string }>;
+  mechanicalContinuity?: ReturnType<typeof import('./mechanicalContinuity').buildHarnessMechanicalContinuity>;
 }
 
 export interface HarnessChapter {

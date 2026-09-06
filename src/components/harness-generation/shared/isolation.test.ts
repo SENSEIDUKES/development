@@ -7,8 +7,6 @@ const packageEntry = join(process.cwd(), 'src', 'package', 'sen', 'harness-gener
 const forbidden = [
   'chapter-generation',
   'story-seed',
-  'reader-chamber',
-  'reader-codex',
   'cards',
   'system-prompt',
 ];
@@ -25,9 +23,12 @@ const importsOf = (file: string) => [...readFileSync(file, 'utf8').matchAll(/\bf
   .map(match => match[1]);
 
 describe('Harness Generation isolation boundary', () => {
-  it('has no import edge to legacy generation or host-owned Story Seed, Reader, Codex, cards, or System Prompt code', () => {
+  it('keeps legacy generation and Story Seed outside the Harness; SEN enters only through the adapter and Reader session', () => {
     for (const file of [...sourceFiles(featureRoot), packageEntry]) {
       for (const specifier of importsOf(file)) {
+        if (/reader-chamber|reader-codex/.test(specifier)) {
+          expect(/(?:senAdapter\.ts|HarnessReaderSession\.tsx)$/.test(file), `Unexpected SEN edge: ${file}`).toBe(true);
+        }
         for (const denied of forbidden) {
           expect(
             specifier.toLowerCase(),

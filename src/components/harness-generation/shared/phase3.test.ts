@@ -110,6 +110,8 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
       { id: 'iven', storyId: 'story_fixture', capabilityId: 'characters', capabilityVersion: '1', kind: 'character', evidence: 'Iven appears.', confidence: 'resolved', label: 'Iven', facts: {}, createdAt: 'c', warnings: [] },
     );
     expect(resolveHarnessEntity('Mara', base, 'story_fixture').resolution).toBe('conflicted');
+    const resolved = appendHarnessCorrection(base, 'story_fixture', { kind: 'resolve-entity', reason: 'The author disambiguates Mara.', referenceLabel: 'Mara', resolvedRecordId: 'mara_1' }, runtime());
+    expect(resolveHarnessEntity('Mara', resolved.state, 'story_fixture')).toMatchObject({ resolution: 'alias', resolvedRecordId: 'mara_1' });
     const corrected = appendHarnessCorrection(base, 'story_fixture', { kind: 'resolve-entity', reason: 'The author confirms the nickname.', referenceLabel: 'Captain', resolvedRecordId: 'iven', acceptedAlias: 'Captain' }, runtime());
     expect(resolveHarnessEntity('Captain', corrected.state, 'story_fixture')).toMatchObject({ resolution: 'alias', resolvedRecordId: 'iven' });
     expect(resolveHarnessEntity('the active speaker', corrected.state, 'story_fixture', [], ['iven'])).toMatchObject({ resolution: 'active-context', resolvedRecordId: 'iven' });

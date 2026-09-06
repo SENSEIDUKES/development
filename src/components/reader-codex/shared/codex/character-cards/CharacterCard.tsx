@@ -169,10 +169,10 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
         </div>
 
         {/* Combat power ranking level index label floating top left */}
-        <div className="absolute top-2 left-2 flex items-center space-x-1 font-mono text-[8.5px] bg-black/80 px-1.5 py-0.5 rounded border border-neutral-850">
+        {char.powerLevel && <div className="absolute top-2 left-2 flex items-center space-x-1 font-mono text-[8.5px] bg-black/80 px-1.5 py-0.5 rounded border border-neutral-850">
           <Award size={10} className="text-yellow-500" />
-          <span className="text-neutral-300">Pwr:{cScore?.score || 0}</span>
-        </div>
+          <span className="text-neutral-300">Pwr:{cScore?.score ?? 0}</span>
+        </div>}
 
         {activePreview && (
           <div className="absolute inset-x-0 bottom-0 bg-neutral-950/90 text-[9px] font-mono font-bold uppercase py-1 text-center text-gold-accent border-t border-gold-accent/30 tracking-widest z-10 animate-pulse">
@@ -192,7 +192,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
             "{char.description || 'Stature secrets kept by standard cause matrices.'}"
           </p>
           <div className="pt-2 text-[9.5px]">
-            <span className="text-neutral-500 block">Cultivation: <strong className="text-neutral-300 font-mono">{char.powerLevel || 'Ordinary'}</strong></span>
+            <span className="text-neutral-500 block">Cultivation: <strong className="text-neutral-300 font-mono">{char.powerLevel || 'Not established'}</strong></span>
             {char.faction && (
               <span className="text-neutral-500 block">Affiliation: <strong className="text-neutral-300 font-mono">{char.faction}</strong></span>
             )}

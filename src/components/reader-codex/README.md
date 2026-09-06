@@ -4,11 +4,13 @@
 - **Source location:** `src/components/ReaderCodex.tsx`, `src/components/CodexSheetOverlay.tsx`, and `src/components/CodexHovercard.tsx` (verified against `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-codex`
 - **Replica created:** 2026-08-11
-- **Last Workshop update:** 2026-08-23
+- **Last Workshop update:** 2026-09-06
 - **Last source comparison:** 2026-08-18
 - **Replica status:** under refinement
 
 ## Workshop history
+
+- **2026-09-06:** Generated-story integration now uses the active protagonist's name in the Development location caption. Character cards leave unestablished power values unknown instead of showing an invented rank or Ordinary cultivation level.
 
 - **2026-08-24:** The highlighted-term `CodexHovercard` Manifest seal's dragon loop now spins counterclockwise from the reader's point of view, matching the Reader Chamber `CodexCard` (same 24s period, `animation-direction: reverse` via `animate-[spin_24s_linear_infinite_reverse]`). The dark glass core holding the Manifest label and caption is a sibling of the rotating layer, so the center content stays fixed; the aura spin, glows, Manifesting state, and reduced-motion behavior are unchanged.
 - **2026-08-23:** Moved every Reader/Codex semantic color consumer to the shared Reader Chamber **Color Codes** registry and its accessibility-palette CSS variables. Development and Reference inline links, reveal cards, Portrait/Location/Faction/Artifact surfaces, Bestiary individual/threat badges, relationship nodes and status markers, mystery/thread and timeline badges, affinity and power-stage charts, active-tier and Karma metric badges, System outcomes, and the visible legend now resolve through the same semantic token rather than local hex or Tailwind maps. Character relationship colors re-read the current `relationshipToMC` record, including a selected Karma node after a story update; numeric inter-character affinity remains separately mapped from `StoryWorld.relationships`.

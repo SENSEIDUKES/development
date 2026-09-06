@@ -30,6 +30,14 @@ export const normalizeStoryFoundationInput = (input: StoryFoundationInput): Stor
   if (input.sourceSnapshot?.kind === 'story-seed') {
     normalized.sourceSnapshot = cloneHarnessValue(input.sourceSnapshot);
   }
+  if (Array.isArray(input.cast)) {
+    normalized.cast = input.cast.filter(character => character && typeof character.name === 'string' && character.name.trim()).map(character => ({
+      name: character.name.trim(),
+      ...(typeof character.role === 'string' ? { role: character.role.trim() } : {}),
+      ...(typeof character.relationshipToMC === 'string' ? { relationshipToMC: character.relationshipToMC.trim() } : {}),
+      ...(typeof character.isMainCharacter === 'boolean' ? { isMainCharacter: character.isMainCharacter } : {}),
+    }));
+  }
   return normalized;
 };
 

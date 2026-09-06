@@ -16,11 +16,18 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-08-29 |
+| Last Workshop update | 2026-09-06 |
 | Last source comparison | 2026-08-29 — independent feature; current main Chapter Generation was inspected only as a product-requirements inventory |
-| Lifecycle status | Phase 3 deterministic story harness |
+| Lifecycle status | Steered continuation with a derived SEN Reader adapter |
 
 ### History
+
+- **2026-09-06:** Added persistent future/history steering, priority context for
+  author direction and mechanical continuity, bounded original-evidence lookup,
+  partial-event repair, stable character identities, and a derived SEN Reader,
+  Codex, and System-card session. Tested deterministic continuation through 50
+  chapters and a real Gemini run with corrective checkpoint branches. See
+  `CONTINUATION_EVALUATION.md` for the evidence and limitations.
 
 - **2026-08-29:** Created the independent Harness Generation tab. It owns a
   premise-first Foundation, revision snapshots, a one-call Gemini adapter,
@@ -50,9 +57,11 @@ existing Chapter Generation feature.
 
 The portable package entry is `@seihouse/sen/harness-generation`. It may use
 generic SEN UI primitives and accept a neutral, host-injected Story Seed source,
-but it never imports Story Seed internals. The Workshop preview owns the only
-Story Seed-to-Foundation adapter. Chapter Generation, Reader, Reader Codex,
-cards, System Prompt, and their contracts remain outside the Harness graph.
+  but it never imports Story Seed internals. The Workshop preview owns the only
+Story Seed-to-Foundation adapter. Legacy Chapter Generation remains independent.
+`shared/senAdapter.ts` is the only direct Reader contract edge, and
+`development/HarnessReaderSession.tsx` composes the existing packaged Reader and
+Codex. Neither component owns a second persistence path. SEN stays provider-neutral.
 
 ## Durable generation behavior
 
@@ -76,9 +85,37 @@ versioned receipts, canonical records, and internal projection intents with
 stable replay identities. A handler upgrade changes its version and can
 supersede its prior output without regenerating or rewriting prose.
 
-The internal projections are intentionally not Reader Codex, card, Color Code,
-or System Prompt payloads. Missing presentation rules remain explicit
-unresolved records for a later adapter rather than guessed application data.
+Internal projections remain semantic intents. The SEN adapter translates supported
+canonical character, location, faction, artifact and mechanical facts to existing
+Reader contracts. Unknown relationships, speakers and unsupported effects remain
+unknown. Exact, uniquely anchored speech receives the known speaker's role;
+host-supplied cast identity establishes the main character without guessing from
+paragraph order. Mechanical rows and status stats use the same preserved value.
+
+## Steering and continuation
+
+`controller.steerStory(id, direction)` appends a durable future direction.
+`revise-history` is the explicit alternative when an author changes past canon.
+Directions are frozen into each request and retained in exports/reloads. The latest
+conflicting direction wins; earlier unrelated directions and past consequences
+remain. Foundation/Blueprint future plans are subordinate proposals.
+
+The ordinary cycle remains prepare context → one writing call → commit prose →
+preserve/process developments → continue. There is no routine literary review
+loop or full-novel planning requirement. Context retains three recent chapters,
+compact semantic developments, author corrections and quantified observations.
+Later transfers/spending accompany older quantities. Up to three original-prose
+excerpts may be looked up using the latest direction or missing event coverage.
+The audit records omissions. Author authority and mechanical observations may
+exceed an artificially small budget rather than disappearing silently.
+
+`replayStory(id, chapterId)` repairs a selected chapter from its saved raw response,
+including partially dropped events. Stable event identities make repeated repair
+idempotent; older repairs do not become the latest story state merely because they
+ran later. The Reader preview derives chapter-scoped memory. Its reading settings
+and edits are session-local; durable story changes belong to Harness steering and
+corrections. Fully malformed optional output still requires usable source evidence;
+replay does not invent missing facts or call the model again.
 
 ## Transfer notes
 

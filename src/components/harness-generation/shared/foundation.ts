@@ -1,10 +1,22 @@
-import { cloneHarnessValue, defaultHarnessRuntime, emptyStoryHead, type HarnessRuntime } from './ids';
+import { cloneHarnessValue, defaultHarnessRuntime, emptyStoryHead, stableHarnessId, type HarnessRuntime } from './ids';
 import type {
   HarnessStory,
   HarnessWorkspaceState,
   StoryFoundationInput,
   StoryFoundationRevision,
+  HarnessCanonicalRecord,
 } from './types';
+
+export const foundationIdentityRecords = (foundation: StoryFoundationRevision): HarnessCanonicalRecord[] =>
+  (foundation.input.identities ?? []).map((identity, index) => ({
+    id: stableHarnessId('hcan', foundation.id, 'identity', index), storyId: foundation.storyId,
+    sourceFoundationRevisionId: foundation.id,
+    entityId: stableHarnessId('hentity', foundation.storyId, identity.kind, identity.name.trim().toLowerCase()),
+    kind: identity.kind, label: identity.name, aliases: identity.aliases,
+    capabilityId: identity.kind === 'character' ? 'characters' : identity.kind === 'faction' ? 'factions' : 'locations-world',
+    capabilityVersion: 'foundation-1', evidence: identity.evidence, confidence: 'resolved',
+    facts: { description: identity.evidence }, createdAt: foundation.createdAt, warnings: [],
+  }));
 
 const optionalFoundationKeys = [
   'title',
@@ -37,6 +49,17 @@ export const normalizeStoryFoundationInput = (input: StoryFoundationInput): Stor
       ...(typeof character.relationshipToMC === 'string' ? { relationshipToMC: character.relationshipToMC.trim() } : {}),
       ...(typeof character.isMainCharacter === 'boolean' ? { isMainCharacter: character.isMainCharacter } : {}),
     }));
+  }
+  if (input.identities) {
+    const identities = new Map<string, NonNullable<StoryFoundationInput['identities']>[number]>();
+    for (const identity of input.identities) {
+      if (!identity.name.trim() || !identity.evidence.trim()) continue;
+      const key = `${identity.kind}:${identity.name.trim().toLowerCase()}`;
+      const prior = identities.get(key);
+      identities.set(key, prior ? { ...prior, aliases: Array.from(new Set([...(prior.aliases ?? []), ...(identity.aliases ?? [])])),
+        evidence: `${prior.evidence}\n${identity.evidence}` } : cloneHarnessValue({ ...identity, name: identity.name.trim() }));
+    }
+    normalized.identities = [...identities.values()];
   }
   return normalized;
 };
@@ -84,6 +107,7 @@ export const createHarnessStory = (
       ...state,
       stories: [...state.stories, story],
       foundations: [...state.foundations, foundation],
+      canonicalRecords: [...state.canonicalRecords, ...foundationIdentityRecords(foundation)],
     },
     story,
     foundation,
@@ -119,6 +143,11 @@ export const reviseStoryFoundation = (
       ...state,
       stories: state.stories.map(candidate => candidate.id === storyId ? revisedStory : candidate),
       foundations: [...state.foundations, foundation],
+      canonicalRecords: [
+        ...state.canonicalRecords.map(record => record.storyId === storyId && record.sourceFoundationRevisionId && !record.supersededAt
+          ? { ...record, supersededAt: createdAt } : record),
+        ...foundationIdentityRecords(foundation),
+      ],
     },
     story: revisedStory,
     foundation,

@@ -17,7 +17,8 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
   const visibleState = { ...state, chapters };
   const records = buildCanonicalStoryView(visibleState, storyId).records;
   const position = new Map(chapters.map(chapter => [chapter.id, chapter.chapterNumber]));
-  records.sort((a, b) => (position.get(a.chapterId ?? '') ?? Infinity) - (position.get(b.chapterId ?? '') ?? Infinity));
+  const recordPosition = (record: HarnessCanonicalRecord) => record.sourceFoundationRevisionId ? -1 : position.get(record.chapterId ?? '') ?? Infinity;
+  records.sort((a, b) => recordPosition(a) - recordPosition(b));
   const characters = new Map<string, Character>();
   const names = new Map<string, string>();
   const ambiguous = new Set<string>();
@@ -31,10 +32,15 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
   }
   for (const record of records.filter(record => record.kind === 'character' && record.confidence === 'resolved' && record.label)) {
     const name = record.label!;
-    const id = stringFact(record, 'entityKey') ?? record.id;
+    const id = record.entityId ?? stringFact(record, 'entityKey') ?? record.id;
     const key = name.toLocaleLowerCase();
     if (names.has(key) && names.get(key) !== id) ambiguous.add(key);
     names.set(key, id);
+    for (const alias of record.aliases ?? []) {
+      const aliasKey = alias.trim().toLocaleLowerCase();
+      if (names.has(aliasKey) && names.get(aliasKey) !== id) ambiguous.add(aliasKey);
+      names.set(aliasKey, id);
+    }
     const prior = characters.get(id);
     const isMain = record.facts.isMainCharacter;
     if (isMain === true) mcName = name;
@@ -49,7 +55,7 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
   for (const correction of state.corrections.filter(correction => correction.storyId === storyId && correction.resolvedRecordId)) {
     const record = records.find(record => record.id === correction.resolvedRecordId);
     if (!record) continue;
-    const id = stringFact(record, 'entityKey') ?? record.id;
+    const id = record.entityId ?? stringFact(record, 'entityKey') ?? record.id;
     if (!characters.has(id)) continue;
     for (const alias of [correction.referenceLabel, correction.acceptedAlias].filter((alias): alias is string => Boolean(alias))) {
       names.set(alias.toLowerCase(), id); ambiguous.delete(alias.toLowerCase());
@@ -71,7 +77,7 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
   const mechanics = new Map<string, string>();
   const chapterIds = new Set(chapters.map(chapter => chapter.id));
   const quantitativeHistory = buildHarnessMechanicalContinuity(state.events.filter(event => event.storyId === storyId && event.chapterId && chapterIds.has(event.chapterId)));
-  for (const record of records.filter(record => record.kind === 'progression' && record.confidence === 'resolved')) {
+  for (const record of records.filter(record => ['progression', 'artifact', 'location-world'].includes(record.kind) && record.confidence === 'resolved')) {
     const subject = stringFact(record, 'subject');
     const name = stringFact(record, 'name');
     const value = stringFact(record, 'value');
@@ -132,7 +138,7 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
       // Use successful canonical outputs only; replay makes failed enhancements appear.
       const supported = records.filter(record => record.sourceEventId === event.id && record.confidence === 'resolved');
       if (!supported.length) continue;
-      const mechanical = supported.find(record => record.kind === 'progression' && stringFact(record, 'value') !== undefined);
+      const mechanical = supported.find(record => ['progression', 'artifact', 'location-world'].includes(record.kind) && stringFact(record, 'value') !== undefined);
       const value = mechanical && [stringFact(mechanical, 'value'), stringFact(mechanical, 'unit')].filter(Boolean).join(' ');
       blocks.push({ id: stableHarnessId('hblock', chapter.id, event.id), type: 'system', text: event.description,
         system: mechanical ? {

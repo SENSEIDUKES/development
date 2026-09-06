@@ -1,4 +1,5 @@
 import { chapterTitleFallback, defaultHarnessRuntime, stableHarnessId, type HarnessRuntime } from './ids';
+import { HARNESS_MEMORY_CATEGORIES } from './types';
 import type {
   HarnessAcceptedChapterDraft,
   HarnessModelPlan,
@@ -6,6 +7,7 @@ import type {
   HarnessSemanticEvent,
   HarnessWarning,
   HarnessEventDetails,
+  HarnessCanonicalKind,
 } from './types';
 
 type ParsedResponse = {
@@ -25,6 +27,8 @@ export interface SemanticEventPreservationInput {
   chapterNumber: number;
   createdAt: string;
   prose?: string;
+  /** A separate saved extraction must never reuse writer event IDs. */
+  eventNamespace?: string;
 }
 
 export interface SemanticEventPreservationResult {
@@ -132,6 +136,39 @@ const parseRawEvents = (value: unknown, warnings: HarnessWarning[]): unknown[] =
   return [];
 };
 
+export const readHarnessMemoryEvents = (raw: string): unknown[] => {
+  const parsed = parseJsonObject(raw);
+  const events = parsed ? memoryEvents(parsed) : [];
+  if (!events.length) {
+    throw new Error('Memory recovery returned no event list. Saved prose is unchanged.');
+  }
+  return events;
+};
+
+const memoryEvents = (parsed: Record<string, unknown>): unknown[] => {
+  if (!isRecord(parsed.memory)) return Array.isArray(parsed.events) ? parsed.events : [];
+  const result: unknown[] = [];
+  for (const [bucket, category] of Object.entries(HARNESS_MEMORY_CATEGORIES)) {
+    const entries = parsed.memory[bucket];
+    if (entries === undefined) continue;
+    if (!Array.isArray(entries)) { result.push(entries); continue; }
+    for (const entry of entries) result.push(isRecord(entry) ? { ...entry, category } : entry);
+  }
+  return result;
+};
+
+export const verifyHarnessEventEvidence = (event: HarnessSemanticEvent, prose: string): HarnessSemanticEvent => {
+  const normalize = (value: string) => value.replace(/\s+/g, ' ').trim();
+  const quote = event.evidence ? normalize(event.evidence) : '';
+  // Literal quantities, deadlines and ranks must be present in the cited passage.
+  // Other semantic descriptions remain model interpretations with inspectable evidence.
+  const factsSupported = Object.entries(event.facts ?? {}).every(([key, value]) =>
+    (!/^(?:deadline|timeLimit|energy(?:Reserves)?|rank|level|amount|count|quantity|duration|age|version)$/i.test(key)
+      && !/\d|\b(?:tier|hours?|days?|weeks?)\b/i.test(value))
+    || quote.toLowerCase().includes(normalize(value).toLowerCase()));
+  return { ...event, evidenceVerified: Boolean(quote && normalize(prose).includes(quote) && factsSupported) };
+};
+
 export const acceptHarnessModelResponse = (raw: string, chapterNumber: number): ParsedResponse => {
   const warnings: HarnessWarning[] = [];
   const parsed = parseJsonObject(raw);
@@ -162,7 +199,7 @@ export const acceptHarnessModelResponse = (raw: string, chapterNumber: number): 
         ...(plan ? { plan } : {}),
         responseMode: 'json',
       },
-      rawEvents: parseRawEvents(parsed.events, warnings),
+      rawEvents: parsed.memory !== undefined ? memoryEvents(parsed) : parseRawEvents(parsed.events, warnings),
       warnings,
     };
   }
@@ -289,7 +326,10 @@ export const preserveSemanticEvents = (
     }
 
     const category = nonEmptyString(source?.category);
-    const subjects = stringList(source?.subjects);
+    const typedSubjects = Array.isArray(source?.subjects) ? source.subjects.filter(isRecord)
+      .filter(subject => nonEmptyString(subject.name) && ['character', 'location-world', 'faction', 'artifact', 'plot-thread', 'mystery', 'timeline-event'].includes(String(subject.kind))) : [];
+    const subjects = typedSubjects.length ? typedSubjects.map(subject => String(subject.name).trim()) : stringList(source?.subjects);
+    const subjectKinds = typedSubjects.length ? Object.fromEntries(typedSubjects.map(subject => [String(subject.name).trim(), subject.kind as HarnessCanonicalKind])) : undefined;
     const significance = source?.significance === 'minor' || source?.significance === 'major'
       ? source.significance
       : undefined;
@@ -313,16 +353,19 @@ export const preserveSemanticEvents = (
         }
       }
     }
+    const facts = isRecord(source?.facts) ? Object.fromEntries(Object.entries(source.facts)
+      .filter((entry): entry is [string, string] => typeof entry[1] === 'string' && Boolean(entry[1].trim()))) : undefined;
     if (source) {
       if (source.category !== undefined && !category) warnings.push(eventFieldWarning('category'));
-      if (source.subjects !== undefined && !subjects) warnings.push(eventFieldWarning('subjects'));
+      if (source.subjects !== undefined && (!subjects || (Array.isArray(source.subjects) && subjects.length !== source.subjects.length))) warnings.push(eventFieldWarning('subjects'));
       if (source.significance !== undefined && !significance) warnings.push(eventFieldWarning('significance'));
       if (source.evidence !== undefined && !evidence) warnings.push(eventFieldWarning('evidence'));
       if (source.requestedEffects !== undefined && !requestedEffects) warnings.push(eventFieldWarning('requested effects'));
+      if (source.facts !== undefined && (!facts || (isRecord(source.facts) && Object.keys(facts).length !== Object.keys(source.facts).length))) warnings.push(eventFieldWarning('facts'));
     }
 
     events.push({
-      id: stableHarnessId('hev', input.storyId, input.attemptId, index),
+      id: stableHarnessId('hev', input.storyId, input.eventNamespace ?? input.attemptId, index),
       storyId: input.storyId,
       attemptId: input.attemptId,
       chapterNumber: input.chapterNumber,
@@ -330,10 +373,12 @@ export const preserveSemanticEvents = (
       description,
       ...(category ? { category } : {}),
       ...(subjects ? { subjects } : {}),
+      ...(subjectKinds ? { subjectKinds } : {}),
       ...(significance ? { significance } : {}),
       ...(evidence ? { evidence } : {}),
       ...(requestedEffects ? { requestedEffects } : {}),
       ...(details ? { details } : {}),
+      ...(facts ? { facts } : {}),
       capability: 'general-narrative-event',
     });
   });

@@ -10,6 +10,55 @@ import { buildHarnessGenerationPrompt } from '../../../server/harness-generation
 import type { HarnessGenerationModelAdapter, HarnessGenerationRequest } from './types';
 
 describe('Steered continuation and SEN boundaries', () => {
+  it('projects typed memory and keeps recovered mechanical details distinct from writer events', async () => {
+    const prose = 'Mara has 16 sparks. Captain Iven says, "Stay together." Mara spends her sparks and has 0 sparks. The bell has 3 charges.';
+    const measurement = (value: string) => ({ description: 'Mara checks her balance.', evidence: prose, facts: {},
+      subjects: [{ name: 'Mara', kind: 'character' }], details: { mechanics: { subject: 'Mara', name: 'Sparks', value, unit: 'sparks' } } });
+    let writes = 0;
+    let request: HarnessGenerationRequest | undefined;
+    const response = (body: unknown) => ({ rawProviderResponse: JSON.stringify(body),
+      providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } } });
+    const modelAdapter: HarnessGenerationModelAdapter = {
+      getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
+      generate: async input => {
+        writes++; request = input;
+        return response({ prose, memory: {
+          characters: [{ description: 'Iven addresses Mara.', evidence: prose, facts: {}, subjects: [{ name: 'Iven', kind: 'character' }],
+            details: { character: { name: 'Iven', role: 'Captain', relationshipToMC: 'Ally' }, speech: { speaker: 'Iven', quote: '"Stay together."' } } }],
+          progression: [measurement('16')],
+          artifacts: [{ description: 'The bell has 3 charges.', evidence: prose, facts: {}, subjects: [{ name: 'bell', kind: 'artifact' }],
+            details: { mechanics: { subject: 'bell', name: 'Charges', value: '3', unit: 'charges' } } }],
+        } });
+      },
+      recoverMemory: async () => response({ memory: { progression: [measurement('0')] } }),
+    };
+    const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), modelAdapter });
+    await controller.hydrate();
+    const story = await controller.createStory({ premise: 'Mara and Iven evacuate the islands.',
+      cast: [{ name: 'Mara', role: 'Courier', isMainCharacter: true }],
+      identities: [{ name: 'Mara', kind: 'character', evidence: 'Mara is a courier.' },
+        { name: 'Iven', aliases: ['Captain'], kind: 'character', evidence: 'Iven is the captain.' }],
+    });
+    await controller.generateNextChapter(story.id, 'fixture');
+    const before = controller.snapshot();
+    const schema = buildHarnessGenerationPrompt(request!).responseJsonSchema;
+    expect(schema.properties.memory.properties.progression.items.properties.details.properties.mechanics.required).toContain('value');
+    expect(createHarnessSenStory(before, story.id).memory?.characters).toHaveLength(2);
+    await controller.recoverChapterMemory(before.chapters[0].id, 'fixture');
+    await controller.replayStory(story.id);
+    const repaired = controller.snapshot();
+    expect(repaired.events.slice(0, before.events.length)).toEqual(before.events);
+    expect(new Set(repaired.events.map(event => event.id)).size).toBe(repaired.events.length);
+    expect(repaired.events).toHaveLength(before.events.length + 1);
+    const sen = createHarnessSenStory(repaired, story.id);
+    expect(sen.mcName).toBe('Mara');
+    expect(sen.memory?.worldRules).toContain('Mara: Sparks: 0 sparks');
+    expect(sen.memory?.worldRules).toContain('bell: Charges: 3 charges');
+    expect(sen.arcs[0].chapters[0].blocks?.find(block => block.type === 'dialogue')?.metadata?.speakerRole).toBe('Captain');
+    expect(sen.arcs[0].chapters[0].generatedContent).toBe(prose);
+    expect(writes).toBe(1);
+  });
+
   it('continues through Chapter 50 with multiple directions, reload, and an older enhancement repair', async () => {
     const requests: HarnessGenerationRequest[] = [];
     const repository = new InMemoryHarnessGenerationRepository();
@@ -32,10 +81,10 @@ describe('Steered continuation and SEN boundaries', () => {
         return { rawProviderResponse: JSON.stringify({
           prose: `Mara meets Iven. Iven is her ${relationship}. "We remember the burned bridge." Iven speaks as captain. Mara has ${n} sparks.`,
           events: [
-            { description: 'Mara is the protagonist.', category: 'character', subjects: ['Mara'], details: { character: { name: 'Mara', role: 'Protagonist', isMainCharacter: true } } },
-            { description: `Iven is now an ${relationship}; the burned bridge still limits their escape.`, category: 'character,relationship', subjects: ['Iven', 'Mara'],
+            { description: 'Mara is the protagonist.', category: 'character', subjects: ['Mara'], evidence: 'Mara meets Iven.', details: { character: { name: 'Mara', role: 'Protagonist', isMainCharacter: true } } },
+            { description: `Iven is now an ${relationship}; the burned bridge still limits their escape.`, category: 'character,relationship', subjects: ['Iven', 'Mara'], evidence: `Iven is her ${relationship}.`,
               details: { character: { name: 'Iven', role: 'Captain', relationshipToMC: relationship }, speech: { speaker: 'Iven', quote: '"We remember the burned bridge."' } } },
-            { description: `Mara has ${n} sparks.`, category: 'progression', subjects: ['Mara'], details: { mechanics: { subject: 'Mara', name: 'Sparks', value: n, unit: 'sparks' } } },
+            { description: `Mara has ${n} sparks.`, category: 'progression', subjects: ['Mara'], evidence: `Mara has ${n} sparks.`, details: { mechanics: { subject: 'Mara', name: 'Sparks', value: n, unit: 'sparks' } } },
           ],
         }), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: new Date().toISOString(), usage: { source: 'unavailable' } } };
       },

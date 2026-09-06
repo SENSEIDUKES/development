@@ -1,12 +1,13 @@
 import type {
   HarnessGenerationRequest,
   HarnessGenerationResponse,
+  HarnessMemoryRecoveryRequest,
 } from '../../components/harness-generation/shared/types';
 import {
   resolveConfiguredHarnessModel,
   type ResolvedHarnessGenerationConfig,
 } from './config';
-import { buildHarnessGenerationPrompt } from './prompt';
+import { buildHarnessGenerationPrompt, buildHarnessMemoryRecoveryPrompt } from './prompt';
 import {
   GeminiHarnessTextProvider,
   type HarnessTextModelProvider,
@@ -23,7 +24,7 @@ export class HarnessGenerationExecutionError extends Error {
 }
 
 export const executeHarnessGeneration = async (
-  request: HarnessGenerationRequest,
+  request: HarnessGenerationRequest | HarnessMemoryRecoveryRequest,
   config: ResolvedHarnessGenerationConfig,
   providerFactory?: HarnessProviderFactory,
 ): Promise<HarnessGenerationResponse> => {
@@ -32,11 +33,11 @@ export const executeHarnessGeneration = async (
   const provider = providerFactory
     ? providerFactory({ apiKey: config.apiKey, model })
     : new GeminiHarnessTextProvider(config.apiKey, model);
-  const prompt = buildHarnessGenerationPrompt(request);
+  const prompt = 'operation' in request ? buildHarnessMemoryRecoveryPrompt(request) : buildHarnessGenerationPrompt(request);
   try {
     return await provider.generate({
       ...prompt,
-      temperature: config.temperature,
+      temperature: 'operation' in request ? 0 : config.temperature,
       maxOutputTokens: config.maxOutputTokens,
       timeoutMs: config.timeoutMs,
     });

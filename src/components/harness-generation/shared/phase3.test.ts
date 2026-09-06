@@ -159,7 +159,9 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     expect(first.capabilityReceipts.some(receipt => receipt.capabilityId === 'relationships')).toBe(true);
     expect(first.capabilityReceipts.some(receipt => receipt.capabilityId === 'mysteries')).toBe(true);
     expect(first.capabilityReceipts.some(receipt => receipt.capabilityId === 'artifacts')).toBe(true);
-    expect(first.projections.some(item => item.kind === 'world-notice' && item.status === 'ready')).toBe(true);
+    // Legacy descriptions without supporting quotes remain preserved but unverified.
+    expect(first.projections.some(item => item.kind === 'world-notice' && item.status === 'unresolved')).toBe(true);
+    expect(first.attempts[0].postCommitProcessing).toBe('warnings');
     expect(first.projections.some(item => item.kind === 'color-code' && item.status === 'unresolved')).toBe(true);
     expect(first.projections.some(item => item.kind === 'fate')).toBe(false);
     const counts = [first.capabilityReceipts.length, first.canonicalRecords.length, first.projections.length];

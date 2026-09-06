@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { HarnessGenerationRequest } from '../../components/harness-generation/shared/types';
 import { handleHarnessGenerationHttp } from './http';
+import type { HarnessTextGenerationRequest } from './provider';
 
 const request = (): HarnessGenerationRequest => ({
   storyId: 'hst_test',
@@ -35,6 +36,29 @@ const request = (): HarnessGenerationRequest => ({
 const environment = { GEMINI_API_KEY: 'test-key' };
 
 describe('Harness Generation HTTP boundary', () => {
+  it('serializes recovery as evidence extraction, with no chapter-generation response schema', async () => {
+    const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({ rawProviderResponse: '{"memory":{}}',
+      providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-05', usage: { source: 'unavailable' as const } } }));
+    const original = request();
+    original.foundation.input.intendedDirection = 'Future plan must not become an extracted fact.';
+    const result = await handleHarnessGenerationHttp({ method: 'POST', body: JSON.stringify({
+      operation: 'recover-memory', storyId: original.storyId, chapterId: 'saved', model: original.model,
+      prose: 'Aria warned that the core would collapse in six hours.', foundation: original.foundation,
+    }) }, { environment, providerFactory: () => ({ provider: 'gemini', model: original.model, generate }) });
+    expect(result.status).toBe(200);
+    expect(generate).toHaveBeenCalledOnce();
+    const input = generate.mock.calls[0][0] as unknown as { userPrompt: string; temperature: number; responseJsonSchema: { properties: Record<string, unknown> } };
+    expect(input.userPrompt).toContain('collapse in six hours');
+    expect(input.userPrompt).not.toContain('Future plan');
+    expect(input.temperature).toBe(0);
+    expect(Object.keys(input.responseJsonSchema.properties)).toEqual(['memory']);
+  });
+
+  it('rejects unknown operations and empty recovery identities before contacting the provider', async () => {
+    for (const body of [{ ...request(), operation: 'unknown' }, {
+      ...request(), operation: 'recover-memory', chapterId: ' ', prose: 'Saved prose.',
+    }]) expect((await handleHarnessGenerationHttp({ method: 'POST', body }, { environment })).status).toBe(400);
+  });
   it('reports independent model configuration', async () => {
     const result = await handleHarnessGenerationHttp({ method: 'GET' }, { environment });
     expect(result.status).toBe(200);

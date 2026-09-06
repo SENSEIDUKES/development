@@ -69,6 +69,15 @@ recovering quantities such as prose “zero” into the structured value `0`.
 
 ## Browser and package verification
 
+Before publication, this change was reconciled with PR #174's categorized memory,
+evidence verification, protected immediate continuation, and current-thread
+handling. Optional SEN details now travel inside the same typed memory entries
+for generation and explicit extraction. A regression checks Foundation aliases,
+character and artifact quantities, and distinct recovery event IDs while replay
+retains writer evidence. The live 50-chapter evidence above predates this
+integration; the combined implementation was verified with deterministic tests
+and package/build checks, not another full live 50-chapter run.
+
 The real Harness UI saved a direction to IndexedDB and retained it after reload.
 Reader navigation from Chapter 1 to Chapter 2 changed Iven from Enemy to ally in
 Codex while keeping Captain as his role. The existing System card rendered the

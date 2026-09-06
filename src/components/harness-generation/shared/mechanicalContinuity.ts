@@ -7,6 +7,7 @@ export const buildHarnessMechanicalContinuity = (events: HarnessSemanticEvent[])
     subsequentDevelopments: Array<{ sourceId: string; chapterNumber: number; description: string }>;
   }>();
   for (const event of [...events].sort((a, b) => a.chapterNumber - b.chapterNumber)) {
+    if (event.evidenceVerified === false) continue;
     const measurement = event.details?.mechanics;
     const key = measurement && `${measurement.subject}:${measurement.name}`.toLowerCase();
     for (const [observationKey, observation] of observations) {

@@ -74,9 +74,6 @@ describe('Steered continuation and SEN boundaries', () => {
       generate: async request => {
         requests.push(request);
         const n = request.chapterNumber;
-        if (n > 1) expect(request.context.steering?.[0].direction).toContain('ally');
-        if (n > 10) expect(request.context.steering?.[1].direction).toContain('mercy');
-        if (n > 20) expect(request.context.steering?.[2].mode).toBe('revise-history');
         const relationship = n === 1 ? 'Enemy' : 'Ally';
         return { rawProviderResponse: JSON.stringify({
           prose: `Mara meets Iven. Iven is her ${relationship}. "We remember the burned bridge." Iven speaks as captain. Mara has ${n} sparks.`,
@@ -114,6 +111,11 @@ describe('Steered continuation and SEN boundaries', () => {
         expect(requests).toHaveLength(12);
         expect(createHarnessSenStory(controller.snapshot(), story.id).memory?.worldRules).toContain('Mara: Sparks: 12 sparks');
       }
+    }
+    for (const request of requests) {
+      if (request.chapterNumber > 1) expect(request.context.steering?.[0].direction).toContain('ally');
+      if (request.chapterNumber > 10) expect(request.context.steering?.[1].direction).toContain('mercy');
+      if (request.chapterNumber > 20) expect(request.context.steering?.[2].mode).toBe('revise-history');
     }
     const state = controller.snapshot();
     expect(state.chapters).toHaveLength(50);
@@ -154,7 +156,7 @@ describe('Steered continuation and SEN boundaries', () => {
       { description: 'Bad extraction', details: { mechanics: { subject: 'Mara', name: 'Sparks', value: 2 }, speech: { speaker: 'Nobody', quote: 'Made up' } } },
     ], { storyId: 's', attemptId: 'a', chapterNumber: 1, createdAt: 'now', prose: 'Mara has 0 sparks and a balance of -12.5.' });
     expect(result.events.map(event => event.details?.mechanics?.value)).toEqual(['0', '-12.5', undefined]);
-    expect(result.events[2].details?.speech).toBeUndefined();
+    expect(result.events[2].details).toBeUndefined();
     expect(result.warnings.length).toBeGreaterThan(0);
     expect(preserveSemanticEvents([{ description: 'Mara is out of sparks.', details: { mechanics: { subject: 'Mara', name: 'Sparks', value: '0' } } }],
       { storyId: 's', attemptId: 'z', chapterNumber: 2, createdAt: 'now', prose: 'Mara has zero sparks.' }).events[0].details?.mechanics?.value).toBe('0');

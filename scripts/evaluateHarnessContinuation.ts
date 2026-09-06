@@ -11,6 +11,7 @@ import { executeHarnessGeneration } from '../src/server/harness-generation/execu
 import type { HarnessWorkspaceState } from '../src/components/harness-generation/shared/types';
 
 const output = resolve(process.argv[2] ?? 'seiv-0/harness-continuation/state.json');
+const outputStem = output.replace(/\.json$/i, '');
 const environmentFile = process.argv[3];
 const environment = { ...(environmentFile ? parseEnv(readFileSync(environmentFile, 'utf8')) : {}), ...process.env };
 const config = resolveHarnessGenerationConfig(environment);
@@ -88,8 +89,8 @@ for (let number = controller.snapshot().stories[0].head.nextChapterNumber; numbe
   }
 }
 const final = controller.snapshot();
-writeFileSync(output.replace(/\.json$/, '-sen.json'), JSON.stringify(createHarnessSenStory(final, story.id)));
-writeFileSync(output.replace(/\.json$/, '-metrics.json'), JSON.stringify({
+writeFileSync(`${outputStem}-sen.json`, JSON.stringify(createHarnessSenStory(final, story.id)));
+writeFileSync(`${outputStem}-metrics.json`, JSON.stringify({
   model: config.defaultModel, chapters: final.chapters.length, steering: final.stories[0].steering,
   reportedInputTokens: final.attempts.reduce((sum, attempt) => sum + (attempt.providerReceipt?.usage.inputTokens ?? 0), 0),
   reportedOutputTokens: final.attempts.reduce((sum, attempt) => sum + (attempt.providerReceipt?.usage.outputTokens ?? 0), 0),

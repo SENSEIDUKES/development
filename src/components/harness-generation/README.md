@@ -22,6 +22,10 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-09-06:** Addressed PR #175 review: scoped unsaved steering to the selected
+  story, blocked steering at pending checkpoints, retained semantic details in
+  protected chapter context, verified SEN quantity history, and isolated historical
+  speaker resolution from later identities and corrections. Added focused regressions.
 - **2026-09-06:** Added persistent future/history steering, priority context for
   author direction and mechanical continuity, bounded original-evidence lookup,
   partial-event repair, stable character identities, and a derived SEN Reader,

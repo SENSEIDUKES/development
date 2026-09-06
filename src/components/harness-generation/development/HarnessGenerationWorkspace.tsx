@@ -651,6 +651,11 @@ export function HarnessGenerationWorkspace({
   }, [loadStorySeeds]);
 
   const selectedStory = state && selectedStoryId ? findStory(state, selectedStoryId) : undefined;
+  useEffect(() => {
+    setDirection('');
+    setReviseHistory(false);
+  }, [selectedStory?.id]);
+
   const selectedFoundation = state && selectedStory
     ? findFoundationRevision(state, selectedStory.activeFoundationRevisionId)
     : undefined;

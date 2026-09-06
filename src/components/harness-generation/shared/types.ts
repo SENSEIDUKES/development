@@ -207,7 +207,7 @@ export interface HarnessContextChapter {
   prose: string;
   events: Array<Pick<
     HarnessSemanticEvent,
-    'id' | 'description' | 'category' | 'subjects' | 'subjectKinds' | 'significance' | 'evidence' | 'evidenceVerified' | 'requestedEffects' | 'facts'
+    'id' | 'description' | 'category' | 'subjects' | 'subjectKinds' | 'significance' | 'evidence' | 'evidenceVerified' | 'requestedEffects' | 'facts' | 'details'
   >>;
 }
 

@@ -44,6 +44,7 @@ const chapterContext = (state: HarnessWorkspaceState, chapterId: string): Harnes
         ...(event.evidence ? { evidence: event.evidence } : {}),
         ...(event.requestedEffects ? { requestedEffects: [...event.requestedEffects] } : {}),
         ...(event.facts ? { facts: { ...event.facts } } : {}),
+        ...(event.details ? { details: cloneHarnessValue(event.details) } : {}),
       }] : [];
     }),
   };
@@ -127,9 +128,9 @@ export const compileHarnessContext = (
     throw new Error('The latest committed chapter is missing. Restore its saved context before continuing; the harness will not substitute an older chapter.');
   }
   const recentIds = new Set(allChapters.slice(-policy.recentChapterCount).map(chapter => chapter.id));
-  const chapterIds = new Set(allChapters.map(chapter => chapter.id));
-  const committedEvents = state.events.filter(event => event.storyId === story.id && event.chapterId && chapterIds.has(event.chapterId))
-    .map(event => verifyHarnessEventEvidence(event, allChapters.find(chapter => chapter.id === event.chapterId)!.prose))
+  const chaptersById = new Map(allChapters.map(chapter => [chapter.id, chapter]));
+  const committedEvents = state.events.filter(event => event.storyId === story.id && event.chapterId && chaptersById.has(event.chapterId))
+    .map(event => verifyHarnessEventEvidence(event, chaptersById.get(event.chapterId!)!.prose))
     .sort((a, b) => a.chapterNumber - b.chapterNumber);
   const mechanicalContinuity = buildHarnessMechanicalContinuity(committedEvents);
   for (const observation of mechanicalContinuity) {
@@ -190,12 +191,13 @@ export const compileHarnessContext = (
   const terms = Array.from(new Set((steering.slice(-1)[0]?.direction ?? '').toLowerCase().match(/[\p{L}\p{N}]{4,}/gu) ?? []))
     .filter(term => !['with', 'that', 'this', 'from', 'have', 'into', 'should', 'chapter', 'story'].includes(term));
   const lookups: NonNullable<HarnessContextSnapshot['lookups']> = [];
-  const candidates = allChapters.filter(chapter => !recentIds.has(chapter.id)).map(chapter => ({
-    chapter, score: terms.filter(term => chapter.prose.toLowerCase().includes(term)).length,
-  })).filter(item => item.score > 0 || !item.chapter.eventIds.length)
+  const candidates = allChapters.filter(chapter => !recentIds.has(chapter.id)).map(chapter => {
+    const haystack = terms.length ? chapter.prose.toLowerCase() : '';
+    return { chapter, haystack, score: terms.filter(term => haystack.includes(term)).length };
+  }).filter(item => item.score > 0 || !item.chapter.eventIds.length)
     .sort((a, b) => b.score - a.score || b.chapter.chapterNumber - a.chapter.chapterNumber).slice(0, 3);
-  for (const { chapter } of candidates) {
-    const match = terms.map(term => chapter.prose.toLowerCase().indexOf(term)).find(index => index >= 0) ?? 0;
+  for (const { chapter, haystack } of candidates) {
+    const match = terms.map(term => haystack.indexOf(term)).find(index => index >= 0) ?? 0;
     const value = { chapterNumber: chapter.chapterNumber, sourceId: chapter.id,
       excerpt: chapter.prose.slice(Math.max(0, match - 200), Math.max(0, match - 200) + 1600) };
     const item = auditItem(`ctx-lookup-${chapter.id}`, 'chapter-prose', [chapter.id], `Lookup: Chapter ${chapter.chapterNumber}`,

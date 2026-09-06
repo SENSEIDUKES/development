@@ -44,7 +44,7 @@ export type HarnessProjectionBuilder = (
 ) => HarnessProjectionRecord[];
 
 const categoryTokens = (event: HarnessSemanticEvent) => (event.category ?? '')
-  .toLocaleLowerCase()
+  .toLowerCase()
   .split(/[,+/|]/)
   .map(value => value.trim().replace(/[ _]+/g, '-'))
   .filter(Boolean);
@@ -60,10 +60,10 @@ const correctionAliases = (corrections: HarnessAuthorCorrection[]) => {
   const aliases = new Map<string, string>();
   for (const correction of corrections) {
     if (correction.acceptedAlias && correction.resolvedRecordId) {
-      aliases.set(correction.acceptedAlias.toLocaleLowerCase(), correction.resolvedRecordId);
+      aliases.set(correction.acceptedAlias.toLowerCase(), correction.resolvedRecordId);
     }
     if (correction.kind === 'resolve-entity' && correction.referenceLabel && correction.resolvedRecordId) {
-      aliases.set(correction.referenceLabel.toLocaleLowerCase(), correction.resolvedRecordId);
+      aliases.set(correction.referenceLabel.toLowerCase(), correction.resolvedRecordId);
     }
   }
   return aliases;
@@ -79,14 +79,14 @@ export const resolveHarnessEntity = (
   const characters = [...state.canonicalRecords, ...additionalRecords].filter(record =>
     record.storyId === storyId && record.kind === 'character' && !record.supersededAt,
   );
-  const aliasId = correctionAliases(state.corrections.filter(correction => correction.storyId === storyId)).get(label.trim().toLocaleLowerCase());
+  const aliasId = correctionAliases(state.corrections.filter(correction => correction.storyId === storyId)).get(label.trim().toLowerCase());
   const corrected = characters.find(record => record.id === aliasId);
   if (corrected) return { label, resolution: 'alias', resolvedRecordId: corrected.id, entityId: corrected.entityId };
   const unique = (records: HarnessCanonicalRecord[]) => [...new Map(records.map(record => [record.entityId ?? record.id, record])).values()];
-  const exact = unique(characters.filter(record => record.label?.trim().toLocaleLowerCase() === label.trim().toLocaleLowerCase()));
+  const exact = unique(characters.filter(record => record.label?.trim().toLowerCase() === label.trim().toLowerCase()));
   if (exact.length === 1) return { label, resolution: 'exact', resolvedRecordId: exact[0].id, entityId: exact[0].entityId };
   if (exact.length > 1) return { label, resolution: 'conflicted', candidateRecordIds: exact.map(record => record.id) };
-  const aliases = unique(characters.filter(record => record.aliases?.some(alias => alias.trim().toLocaleLowerCase() === label.trim().toLocaleLowerCase())));
+  const aliases = unique(characters.filter(record => record.aliases?.some(alias => alias.trim().toLowerCase() === label.trim().toLowerCase())));
   if (aliases.length === 1) return { label, resolution: 'alias', resolvedRecordId: aliases[0].id, entityId: aliases[0].entityId };
   if (aliases.length > 1) return { label, resolution: 'conflicted', candidateRecordIds: aliases.map(record => record.id) };
   const active = unique(characters.filter(record => activeRecordIds.includes(record.id)));
@@ -183,7 +183,7 @@ export const buildHarnessProjectionIntents: HarnessProjectionBuilder = (
     }
   }
 
-  const requested = new Set((event.requestedEffects ?? []).map(value => value.toLocaleLowerCase().replace(/[ _]+/g, '-')));
+  const requested = new Set((event.requestedEffects ?? []).map(value => value.toLowerCase().replace(/[ _]+/g, '-')));
   const source = records[0];
   if (source && (hasCategory(event, ['fate-outcome']) || requested.has('fate'))) {
     result.push(projection(event, source, 'fate', hasCategory(event, ['fate-outcome']) ? 'ready' : 'unresolved',
@@ -233,9 +233,9 @@ const subjectsAsRecords = (
   const version = '2.0.0';
   const story = context.state.stories.find(story => story.id === context.event.storyId);
   const cast = context.state.foundations.find(foundation => foundation.id === story?.activeFoundationRevisionId)?.input.cast ?? [];
-  const candidates = kind === 'character' && context.event.details?.character
-    ? Array.from(new Set([context.event.details.character.name, ...cleanSubjects(context.event)]))
-    : kind === 'character' ? Array.from(new Set([...cleanSubjects(context.event), ...cast.filter(character =>
+  const candidates = kind === 'character' ? Array.from(new Set([
+      ...(context.event.details?.character ? [context.event.details.character.name] : []),
+      ...cleanSubjects(context.event), ...cast.filter(character =>
       character.name === context.event.details?.mechanics?.subject || character.name === context.event.details?.speech?.speaker).map(character => character.name)]))
     : cleanSubjects(context.event);
   const subjects = candidates.filter(subject => !context.event.subjectKinds?.[subject] || context.event.subjectKinds[subject] === kind
@@ -256,7 +256,7 @@ const subjectsAsRecords = (
     });
     return { ...record, aliases: known?.aliases,
       entityId: reference?.resolution === 'conflicted' ? undefined
-        : known?.entityId ?? stableHarnessId('hentity', context.event.storyId, kind, (known?.label ?? subject).trim().toLocaleLowerCase()) };
+        : known?.entityId ?? stableHarnessId('hentity', context.event.storyId, kind, (known?.label ?? subject).trim().toLowerCase()) };
   });
 };
 

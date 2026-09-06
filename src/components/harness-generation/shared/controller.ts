@@ -256,6 +256,9 @@ export class HarnessGenerationController {
     const candidate = cloneHarnessValue(this.state);
     const story = findStory(candidate, storyId);
     if (!story) throw new Error('Open a Harness story before steering it.');
+    if (activeAttemptForStory(candidate, storyId)) {
+      throw new Error('Finish or explicitly retry the current chapter checkpoint before changing direction.');
+    }
     const steering = {
       id: this.runtime.createId('hsteer'), direction: direction.trim(), mode,
       effectiveChapter: story.head.nextChapterNumber, createdAt: this.runtime.now(),

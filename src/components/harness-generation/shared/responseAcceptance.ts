@@ -377,7 +377,7 @@ export const preserveSemanticEvents = (
       ...(significance ? { significance } : {}),
       ...(evidence ? { evidence } : {}),
       ...(requestedEffects ? { requestedEffects } : {}),
-      ...(details ? { details } : {}),
+      ...(details && Object.keys(details).length ? { details } : {}),
       ...(facts ? { facts } : {}),
       capability: 'general-narrative-event',
     });

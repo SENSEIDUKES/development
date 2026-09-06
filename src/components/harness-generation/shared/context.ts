@@ -103,15 +103,20 @@ export const compileHarnessContext = (
     };
     const item = auditItem(`ctx-correction-${correction.id}`, 'correction', [correction.id, ...correction.targetRecordIds],
       `Author correction: ${correction.kind}`, 'Selected newest first, before chapter prose and canonical records; includes available target evidence.', value);
-    if (item.estimatedTokens <= remaining) {
-      selectedCorrections.push(value);
-      included.push(item);
-      remaining -= item.estimatedTokens;
-    } else omitted.push({ ...item, reason: `Author correction omitted: needs ${item.estimatedTokens} estimated tokens, ${Math.max(0, remaining)} remain after Foundation and newer corrections.` });
+    // Corrections are authoritative, not optional retrieval candidates. Skipping a
+    // long new correction and fitting a shorter old one reverses author intent.
+    selectedCorrections.push(value);
+    included.push(item);
+    remaining -= item.estimatedTokens;
+    if (remaining < 0) item.reason += ` Protected author correction exceeds the soft selection budget by ${-remaining} estimated tokens; optional history is omitted first.`;
   }
 
   const allChapters = state.chapters.filter(chapter => chapter.storyId === story.id)
     .sort((left, right) => left.chapterNumber - right.chapterNumber);
+  const latestChapterId = story.head.lastCommittedChapterId ?? allChapters.at(-1)?.id;
+  if (latestChapterId && !allChapters.some(chapter => chapter.id === latestChapterId)) {
+    throw new Error('The latest committed chapter is missing. Restore its saved context before continuing; the harness will not substitute an older chapter.');
+  }
   const recentIds = new Set(allChapters.slice(-policy.recentChapterCount).map(chapter => chapter.id));
   const committedChapters: HarnessContextChapter[] = [];
   for (const chapter of [...allChapters].reverse()) {
@@ -119,17 +124,23 @@ export const compileHarnessContext = (
     const item = auditItem(`ctx-chapter-${chapter.id}`, 'chapter-prose', [chapter.id, ...chapter.eventIds],
       `Chapter ${chapter.chapterNumber}: ${chapter.title}`,
       recentIds.has(chapter.id) ? `Selected newest first within the recent-chapter window (${policy.recentChapterCount}), before derived records.` : `Omitted outside the recent-chapter window (${policy.recentChapterCount}).`, context);
-    if (!recentIds.has(chapter.id)) omitted.push(item);
-    else if (item.estimatedTokens <= remaining) {
+    const immediateContinuation = chapter.id === latestChapterId;
+    if (!recentIds.has(chapter.id) && !immediateContinuation) omitted.push(item);
+    else if (immediateContinuation || item.estimatedTokens <= remaining) {
       committedChapters.push(context);
       included.push(item);
       remaining -= item.estimatedTokens;
+      if (immediateContinuation) {
+        item.reason = 'Protected immediate continuation: the latest committed chapter is always included intact.';
+        if (remaining < 0) item.reason += ` Mandatory context exceeds the soft selection budget by ${-remaining} estimated tokens; optional history is omitted first.`;
+      }
     } else omitted.push({ ...item, reason: `Chapter omitted: needs ${item.estimatedTokens} estimated tokens, ${Math.max(0, remaining)} remain after Foundation, author corrections, and newer chapters. Prose was not truncated.` });
   }
   // Allocate newest first, but read the retained prose in narrative order.
   committedChapters.sort((left, right) => left.chapterNumber - right.chapterNumber);
 
   const view = buildCanonicalStoryView(state, story.id);
+  const currentThreadIds = new Set(view.currentThreads.map(record => record.id));
   const selectedRecords: HarnessCanonicalRecord[] = [];
   const records = [...view.records].sort((left, right) => recordPriority(left) - recordPriority(right) || left.createdAt.localeCompare(right.createdAt));
   for (const record of records) {
@@ -137,7 +148,9 @@ export const compileHarnessContext = (
     const item = auditItem(`ctx-record-${record.id}`, 'canonical-record', [record.id, ...(record.sourceEventId ? [record.sourceEventId] : [])],
       `${record.kind}: ${record.label ?? record.facts.description ?? record.id}`,
       minor && !policy.includeMinorEvents ? 'Omitted because the visible policy excludes minor events.' : 'Included as active, explicitly evidenced canonical state.', record);
-    if (minor && !policy.includeMinorEvents) omitted.push(item);
+    if (record.kind === 'plot-thread' && !currentThreadIds.has(record.id)) {
+      omitted.push({ ...item, reason: 'Historical or unsupported thread state: only the latest supported status enters continuation; the original record remains in story history.' });
+    } else if (minor && !policy.includeMinorEvents) omitted.push(item);
     else if (item.estimatedTokens <= remaining) {
       selectedRecords.push(record);
       included.push(item);
@@ -145,10 +158,10 @@ export const compileHarnessContext = (
     } else omitted.push({ ...item, reason: 'Omitted because the visible context token budget was exhausted.' });
   }
 
-  const handoff = selectedRecords.filter(record =>
-    (record.kind === 'plot-thread' && record.facts.state === 'open')
+  const handoff = selectedRecords.filter(record => record.confidence === 'resolved' && (
+    (record.kind === 'plot-thread' && currentThreadIds.has(record.id) && record.facts.state === 'open')
     || (record.kind === 'mystery' && record.facts.knowledgeState !== 'revealed')
-    || record.kind === 'narrative-event')
+    || record.kind === 'narrative-event'))
     .slice(-12)
     .map(record => ({ description: String(record.facts.description ?? record.evidence), sourceRecordIds: [record.id, ...(record.sourceEventId ? [record.sourceEventId] : [])] }));
   if (handoff.length) {

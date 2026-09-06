@@ -15,6 +15,47 @@ const activeRecordsForStory = (state: HarnessWorkspaceState, storyId: string) =>
     && (record.sourceCorrectionId || record.sourceFoundationRevisionId || (record.chapterId && committedChapterIds.has(record.chapterId))),
   );
 };
+
+const currentThreadRecords = (state: HarnessWorkspaceState, records: HarnessCanonicalRecord[]) => {
+  const chapters = new Map(state.chapters.map(chapter => [chapter.id, chapter]));
+  const corrections = new Map(state.corrections.map((correction, index) => [correction.id, index]));
+  const position = (record: HarnessCanonicalRecord) => {
+    const chapter = record.chapterId ? chapters.get(record.chapterId) : undefined;
+    return [
+      record.sourceCorrectionId ? 1 : 0,
+      record.sourceCorrectionId ? corrections.get(record.sourceCorrectionId) ?? -1 : chapter?.chapterNumber ?? -1,
+      chapter?.eventIds.indexOf(record.sourceEventId ?? '') ?? -1,
+    ];
+  };
+  const latest = new Map<string, HarnessCanonicalRecord>();
+  const entityIdsByLabel = new Map<string, Set<string>>();
+  for (const record of records.filter(record => record.kind === 'plot-thread' && record.confidence === 'resolved')) {
+    if (!record.entityId || !record.label?.trim()) continue;
+    const label = record.label.trim().toLowerCase();
+    const ids = entityIdsByLabel.get(label) ?? new Set<string>();
+    ids.add(record.entityId);
+    entityIdsByLabel.set(label, ids);
+  }
+  // Processing/recovery timestamps are not story order. Replaying an early chapter
+  // must not reopen a thread that a later chapter resolved. Author corrections win.
+  const ordered = records.filter(record => record.kind === 'plot-thread' && record.confidence === 'resolved'
+    && (record.facts.state === 'open' || record.facts.state === 'resolved'))
+    .sort((left, right) => {
+      const a = position(left);
+      const b = position(right);
+      return a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
+    });
+  for (const record of ordered) {
+    const label = record.label?.trim().toLowerCase();
+    const matchingIds = label ? entityIdsByLabel.get(label) : undefined;
+    // Older saves have no entityId. Bridge an exact label only when unambiguous.
+    const entityId = record.entityId ?? (matchingIds?.size === 1 ? [...matchingIds][0] : undefined);
+    const key = entityId ? `entity:${entityId}` : label ? `label:${label}` : `record:${record.id}`;
+    latest.set(key, record);
+  }
+  return [...latest.values()];
+};
+
 export const buildCanonicalStoryView = (
   state: HarnessWorkspaceState,
   storyId: string,
@@ -31,6 +72,7 @@ export const buildCanonicalStoryView = (
     locations: byKind('location-world'),
     factions: byKind('faction'),
     threads: byKind('plot-thread'),
+    currentThreads: currentThreadRecords(state, records),
     mysteries: byKind('mystery'),
     timeline: byKind('timeline-event'),
     artifacts: byKind('artifact'),

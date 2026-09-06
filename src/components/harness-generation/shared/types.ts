@@ -410,6 +410,8 @@ export interface HarnessCanonicalStoryView {
   locations: HarnessCanonicalRecord[];
   factions: HarnessCanonicalRecord[];
   threads: HarnessCanonicalRecord[];
+  /** Latest supported status per thread; `threads` retains the full evidence history. */
+  currentThreads: HarnessCanonicalRecord[];
   mysteries: HarnessCanonicalRecord[];
   timeline: HarnessCanonicalRecord[];
   artifacts: HarnessCanonicalRecord[];

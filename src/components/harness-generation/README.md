@@ -16,12 +16,19 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-09-05 |
+| Last Workshop update | 2026-09-06 |
 | Last source comparison | 2026-08-29 — independent feature; current main Chapter Generation was inspected only as a product-requirements inventory |
 | Lifecycle status | Phase 3 deterministic story harness |
 
 ### History
 
+- **2026-09-06:** Protected every author correction and the latest committed
+  chapter from context trimming. These mandatory inputs may exceed the soft
+  selection target, with the excess explained in the audit; optional history
+  is omitted first. A missing head chapter stops generation before a provider
+  call. Added a derived current-thread view ordered by chapter/event evidence,
+  not replay timestamps: resolved threads leave the open handoff, supported
+  reopenings remain possible, and original thread history stays intact.
 - **2026-09-05:** Added typed, evidence-backed chapter memory, Foundation identity
   references, and explicit recovery from saved prose. Generation and recovery use
   the same categorized memory contract. Saving prose and interpreting it now have

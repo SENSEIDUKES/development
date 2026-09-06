@@ -237,6 +237,49 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(currentSeed.story.required.storyTags).toContain('cozy fantasy');
   });
 
+  it('uses custom tag identity for catalog selection, duplicate prevention, and removal', () => {
+    let currentSeed = createEmptyStorySeedInput();
+    currentSeed.story.required.premise = 'A cozy bakery.';
+    const Harness = () => {
+      const [seed, setSeed] = useState(currentSeed);
+      currentSeed = seed;
+      return <OriginPremiseAndTags
+        premise={seed.story.required.premise}
+        storyTags={seed.story.required.storyTags}
+        onPremiseChange={() => {}}
+        updateSeed={setSeed}
+        genrePicker={null}
+      />;
+    };
+    act(() => root.render(<Harness />));
+    const fill = (selector: string, value: string) => act(() => {
+      const input = container.querySelector<HTMLInputElement>(selector)!;
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const addCustom = (value: string) => {
+      fill('#custom-tag-input', value);
+      act(() => container.querySelector('#custom-tag-input')!.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+      ));
+    };
+    addCustom('Cozy Fantasy');
+    addCustom('cozy fantasy');
+    expect(currentSeed.story.required.storyTags).toEqual(['Cozy Fantasy']);
+    expect(container.querySelector('#style-suggested-tags')!.textContent).not.toContain('cozy fantasy');
+    fill('#celestial-tag-search-input', 'cozy fantasy');
+    const chip = () => Array.from(container.querySelectorAll<HTMLButtonElement>('#filtered-tags-list button'))
+      .find(button => button.textContent?.includes('cozy fantasy'))!;
+    expect(chip().textContent).toContain('✓');
+    act(() => chip().click());
+    expect(currentSeed.story.required.storyTags).toEqual([]);
+    expect(chip().textContent).toContain('+');
+    act(() => chip().click());
+    expect(currentSeed.story.required.storyTags).toEqual(['cozy fantasy']);
+    act(() => container.querySelector<HTMLButtonElement>('[aria-label="Remove tag cozy fantasy"]')!.click());
+    expect(currentSeed.story.required.storyTags).toEqual([]);
+  });
+
   it('adds Manifest to the labeled mobile navigation only when generation is ready', () => {
     const onManifest = vi.fn();
     const renderNavigation = (canManifest: boolean) => act(() => root.render(

@@ -551,11 +551,14 @@ export const CATEGORIZED_TAGS: Record<string, string[]> = {
 
 export const TAG_PRESETS: string[] = Array.from(new Set(STORY_TAG_CATALOG.map(t => t.label)));
 
+/** Tag identity preserves punctuation and creator spelling while ignoring case and outer whitespace. */
+export const normalizeStoryTagIdentity = (label: string): string => label.trim().toLowerCase();
+
 /** Map of lowercase tag label -> metadata for O(1) lookups */
 export const STORY_TAG_LOOKUP: Record<string, StoryTagMetadata> = Object.fromEntries(
-  STORY_TAG_CATALOG.map(entry => [entry.label.toLowerCase(), entry])
+  STORY_TAG_CATALOG.map(entry => [normalizeStoryTagIdentity(entry.label), entry])
 );
 
 export const getTagMetadata = (label: string): StoryTagMetadata | undefined =>
-  STORY_TAG_LOOKUP[label.toLowerCase()];
+  STORY_TAG_LOOKUP[normalizeStoryTagIdentity(label)];
 

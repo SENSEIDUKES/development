@@ -1,4 +1,4 @@
-import { STORY_TAG_CATALOG, type StoryTagMetadata } from './storyTagCatalog';
+import { normalizeStoryTagIdentity, STORY_TAG_CATALOG, type StoryTagMetadata } from './storyTagCatalog';
 
 /** Genre supplies a small prior; premise evidence always ranks ahead of it. */
 const GENRE_TAGS: Record<string, string[]> = {
@@ -58,7 +58,7 @@ const PREMISE_CUES: { match: RegExp; tags: string[] }[] = [
 const normalize = (value: string) => value.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 const containsPhrase = (text: string, phrase: string) => (` ${text} `).includes(` ${phrase} `);
 // Preserve the catalog lookup's last-entry authority for historical duplicate labels.
-const catalog = [...new Map(STORY_TAG_CATALOG.map(entry => [normalize(entry.label), entry])).values()].map(entry => ({
+const catalog = [...new Map(STORY_TAG_CATALOG.map(entry => [normalizeStoryTagIdentity(entry.label), entry])).values()].map(entry => ({
   entry,
   phrases: [entry.label, ...entry.aliases].map(normalize).filter(Boolean),
 }));
@@ -83,13 +83,13 @@ export const recommendStoryTags = (
   const exclusions = [...raw.matchAll(/\b(?:no|without|not|never)\s+([^,.!?;]+?)(?=\b(?:but|instead|yet)\b|[,.;!?]|$)/gi)]
     .map(match => normalize(match[1]));
   const premise = normalize(raw.replace(/\b(?:no|without|not|never)\s+[^,.!?;]+?(?=\b(?:but|instead|yet)\b|[,.;!?]|$)/gi, ' '));
-  const selected = new Set(selectedTags.map(tag => normalize(tag)));
+  const selected = new Set(selectedTags.map(normalizeStoryTagIdentity));
   const genreKey = Object.keys(GENRE_TAGS).find(key => normalize(key) === normalize(input.genre || ''));
   const genreTags = genreKey ? GENRE_TAGS[genreKey].slice(0, 2) : [];
   const cueScores = new Set(PREMISE_CUES.filter(rule => rule.match.test(premise)).flatMap(rule => rule.tags));
   const excludedCues = new Set(PREMISE_CUES.filter(rule => exclusions.some(text => rule.match.test(text))).flatMap(rule => rule.tags));
   const candidates = catalog.flatMap(({ entry, phrases }) => {
-    if (selected.has(normalize(entry.label)) || excludedCues.has(entry.label)
+    if (selected.has(normalizeStoryTagIdentity(entry.label)) || excludedCues.has(entry.label)
       || exclusions.some(text => phrases.some(phrase => containsPhrase(text, phrase)))) return [];
     const matched = phrases.filter(phrase => containsPhrase(premise, phrase));
     const evidence = Math.max(0, ...matched.map(phrase => 12 + Math.min(phrase.split(' ').length, 4)));

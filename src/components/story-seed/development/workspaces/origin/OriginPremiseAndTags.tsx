@@ -21,6 +21,7 @@ import {
   CATEGORY_COLORS,
   CURATED_PREMISE_EXAMPLES,
   getTagMetadata,
+  normalizeStoryTagIdentity,
   STORY_TAG_CATALOG,
   type StoryTagCategory,
   type StoryTagCategoryColor,
@@ -143,7 +144,7 @@ export const OriginPremiseAndTags = ({
   }, [premiseBank.length]);
 
   const addTag = useCallback((tag: string) => {
-    if (storyTags.some(existing => existing.toLowerCase() === tag.toLowerCase())) return false;
+    if (storyTags.some(existing => normalizeStoryTagIdentity(existing) === normalizeStoryTagIdentity(tag))) return false;
     if (storyTags.length >= TAG_LIMIT) {
       setTagLimitError(TAG_LIMIT_MESSAGE);
       return false;
@@ -250,10 +251,16 @@ const OriginTagEditor = memo(({
   const tagSearchResults = useMemo(() => searchStoryTagCatalog(tagSearch), [tagSearch]);
   const isTagSearchActive = tagSearch.trim().length > 0;
 
+  const selectedTagIdentities = useMemo(
+    () => new Set(storyTags.map(normalizeStoryTagIdentity)),
+    [storyTags],
+  );
+  const isSelected = (tag: string) => selectedTagIdentities.has(normalizeStoryTagIdentity(tag));
+
   const toggleTag = (tag: string) => {
-    if (storyTags.includes(tag)) {
+    if (isSelected(tag)) {
       setTagLimitError(null);
-      updateSeed(updateStoryTags(previous => previous.filter(existing => existing !== tag)));
+      updateSeed(updateStoryTags(previous => previous.filter(existing => normalizeStoryTagIdentity(existing) !== normalizeStoryTagIdentity(tag))));
     } else addTag(tag);
   };
 
@@ -296,7 +303,7 @@ const OriginTagEditor = memo(({
           <div className="scrollbar-thin flex gap-1.5 overflow-x-auto pb-1" id="style-suggested-tags">
             {tagSuggestions.length === 0 && <p className="font-sans text-xs text-neutral-400">Add more premise detail, or explore the tag families below.</p>}
             {tagSuggestions.map(entry => (
-              <CatalogTagChip key={entry.label} entry={entry} selected={storyTags.includes(entry.label)} onToggle={toggleTag} className="shrink-0 whitespace-nowrap" />
+              <CatalogTagChip key={entry.label} entry={entry} selected={isSelected(entry.label)} onToggle={toggleTag} className="shrink-0 whitespace-nowrap" />
             ))}
           </div>
         </div>
@@ -314,7 +321,7 @@ const OriginTagEditor = memo(({
                 {tagSearchResults.length === 0 ? (
                   <p className="w-full py-3 text-center font-sans text-xs italic text-neutral-400">No tags, aliases, or families match this search.</p>
                 ) : tagSearchResults.slice(0, SEARCH_RESULT_LIMIT).map(entry => (
-                  <CatalogTagChip key={entry.label} entry={entry} selected={storyTags.includes(entry.label)} onToggle={toggleTag} />
+                  <CatalogTagChip key={entry.label} entry={entry} selected={isSelected(entry.label)} onToggle={toggleTag} />
                 ))}
                 {tagSearchResults.length > SEARCH_RESULT_LIMIT && (
                   <p className="w-full pt-1 text-center font-sans text-[11px] italic text-neutral-400">
@@ -342,7 +349,7 @@ const OriginTagEditor = memo(({
                   <motion.div id="origin-family-tags" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mt-3 overflow-hidden">
                     <div className="glass-panel scrollbar-thin flex max-h-52 flex-wrap content-start gap-1.5 overflow-y-auto p-3" id="filtered-tags-list">
                       {familyEntries.map(entry => (
-                        <CatalogTagChip key={entry.label} entry={entry} selected={storyTags.includes(entry.label)} onToggle={toggleTag} />
+                        <CatalogTagChip key={entry.label} entry={entry} selected={isSelected(entry.label)} onToggle={toggleTag} />
                       ))}
                     </div>
                   </motion.div>

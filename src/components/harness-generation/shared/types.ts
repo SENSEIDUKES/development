@@ -3,6 +3,13 @@
 export const HARNESS_GENERATION_SCHEMA_VERSION = 2 as const;
 export const HARNESS_GENERATION_PHASE_2_SCHEMA_VERSION = 1 as const;
 
+/** Output buckets assign processor categories; legacy event arrays remain readable. */
+export const HARNESS_MEMORY_CATEGORIES = {
+  characters: 'character', decisions: 'decision', relationships: 'relationship', locations: 'location',
+  factions: 'faction', deadlines: 'deadline', timeline: 'timeline', progression: 'progression',
+  threads: 'plot-thread', mysteries: 'mystery', clues: 'clue', revelations: 'revelation', artifacts: 'artifact',
+} as const;
+
 export interface HarnessStorySeedSnapshot {
   kind: 'story-seed';
   sourceId: string;
@@ -24,6 +31,8 @@ export interface StoryFoundationInput {
   characters?: string;
   worldFacts?: string;
   intendedDirection?: string;
+  /** Host-declared identities; names and aliases are author data, not model IDs. */
+  identities?: Array<{ name: string; aliases?: string[]; kind: 'character' | 'location-world' | 'faction'; evidence: string }>;
   /** Immutable source evidence copied at the Story Seed -> Harness boundary. */
   sourceSnapshot?: HarnessStorySeedSnapshot;
 }
@@ -77,6 +86,13 @@ export interface HarnessModelChapterReply {
   prose: string;
   title?: string;
   plan?: HarnessModelPlan;
+  memory?: Partial<Record<keyof typeof HARNESS_MEMORY_CATEGORIES, Array<{
+    description: string;
+    subjects: Array<{ name: string; kind: HarnessCanonicalKind }>;
+    significance?: 'minor' | 'major';
+    evidence: string;
+    facts?: Record<string, string>;
+  }>>>;
   events?: Array<{
     description: string;
     category?: string;
@@ -84,6 +100,7 @@ export interface HarnessModelChapterReply {
     significance?: 'minor' | 'major';
     evidence?: string;
     requestedEffects?: string[];
+    facts?: Record<string, string>;
   }>;
 }
 
@@ -106,9 +123,14 @@ export interface HarnessSemanticEvent {
   description: string;
   category?: string;
   subjects?: string[];
+  subjectKinds?: Record<string, HarnessCanonicalKind>;
   significance?: 'minor' | 'major';
   evidence?: string;
   requestedEffects?: string[];
+  facts?: Record<string, string>;
+  /** Checked against immutable chapter prose during interpretation. */
+  evidenceVerified?: boolean;
+  recoveryId?: string;
   /** Lossless source lane. Derived capabilities never replace this evidence. */
   capability: 'general-narrative-event';
 }
@@ -163,7 +185,7 @@ export interface HarnessContextChapter {
   prose: string;
   events: Array<Pick<
     HarnessSemanticEvent,
-    'id' | 'description' | 'category' | 'subjects' | 'significance' | 'evidence' | 'requestedEffects'
+    'id' | 'description' | 'category' | 'subjects' | 'subjectKinds' | 'significance' | 'evidence' | 'evidenceVerified' | 'requestedEffects' | 'facts'
   >>;
 }
 
@@ -276,6 +298,7 @@ export interface HarnessEntityReference {
   label: string;
   resolution: 'exact' | 'alias' | 'active-context' | 'unresolved' | 'conflicted';
   resolvedRecordId?: string;
+  entityId?: string;
   candidateRecordIds?: string[];
 }
 
@@ -285,6 +308,9 @@ export interface HarnessCanonicalRecord {
   chapterId?: string;
   sourceEventId?: string;
   sourceCorrectionId?: string;
+  sourceFoundationRevisionId?: string;
+  entityId?: string;
+  aliases?: string[];
   capabilityId: HarnessCapabilityId | 'author-correction';
   capabilityVersion: string;
   kind: HarnessCanonicalKind;
@@ -384,6 +410,8 @@ export interface HarnessCanonicalStoryView {
   locations: HarnessCanonicalRecord[];
   factions: HarnessCanonicalRecord[];
   threads: HarnessCanonicalRecord[];
+  /** Latest supported status per thread; `threads` retains the full evidence history. */
+  currentThreads: HarnessCanonicalRecord[];
   mysteries: HarnessCanonicalRecord[];
   timeline: HarnessCanonicalRecord[];
   artifacts: HarnessCanonicalRecord[];
@@ -424,7 +452,11 @@ export interface HarnessContextSelectionAudit {
 }
 
 export interface HarnessCanonicalContext {
-  corrections: HarnessAuthorCorrection[];
+  corrections: Array<HarnessAuthorCorrection & {
+    /** Frozen referents remain intelligible even when their records are omitted. */
+    targetEvidence?: Array<Pick<HarnessCanonicalRecord, 'id' | 'kind' | 'label' | 'evidence' | 'facts'>>;
+    resolvedEntity?: Pick<HarnessCanonicalRecord, 'id' | 'kind' | 'label' | 'evidence' | 'facts'>;
+  }>;
   records: HarnessCanonicalRecord[];
   handoff: Array<{ description: string; sourceRecordIds: string[] }>;
 }
@@ -465,6 +497,30 @@ export interface HarnessWorkspaceState {
   projections: HarnessProjectionRecord[];
   corrections: HarnessAuthorCorrection[];
   batches: HarnessBatchRun[];
+  memoryRecoveries?: HarnessMemoryRecovery[];
+}
+
+export interface HarnessMemoryRecoveryRequest {
+  operation: 'recover-memory';
+  storyId: string;
+  chapterId: string;
+  model: string;
+  prose: string;
+  foundation: StoryFoundationRevision;
+}
+
+export interface HarnessMemoryRecovery {
+  id: string;
+  storyId: string;
+  chapterId: string;
+  request: HarnessMemoryRecoveryRequest;
+  startedAt: string;
+  status: 'request_started' | 'provider_outcome_unknown' | 'raw_received' | 'applied' | 'failed';
+  rawProviderResponse?: string;
+  providerReceipt?: HarnessProviderReceipt;
+  eventIds?: string[];
+  failure?: string;
+  warnings?: string[];
 }
 
 export interface HarnessGenerationServerInfo {
@@ -491,4 +547,5 @@ export interface HarnessGenerationResponse {
 export interface HarnessGenerationModelAdapter {
   getServerInfo(): Promise<HarnessGenerationServerInfo>;
   generate(request: HarnessGenerationRequest): Promise<HarnessGenerationResponse>;
+  recoverMemory?(request: HarnessMemoryRecoveryRequest): Promise<HarnessGenerationResponse>;
 }

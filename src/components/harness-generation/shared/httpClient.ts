@@ -3,6 +3,7 @@ import type {
   HarnessGenerationRequest,
   HarnessGenerationResponse,
   HarnessGenerationServerInfo,
+  HarnessMemoryRecoveryRequest,
 } from './types';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -44,6 +45,14 @@ export class HarnessGenerationHttpClient implements HarnessGenerationModelAdapte
   }
 
   async generate(request: HarnessGenerationRequest): Promise<HarnessGenerationResponse> {
+    return this.post(request);
+  }
+
+  async recoverMemory(request: HarnessMemoryRecoveryRequest): Promise<HarnessGenerationResponse> {
+    return this.post(request);
+  }
+
+  private async post(request: HarnessGenerationRequest | HarnessMemoryRecoveryRequest): Promise<HarnessGenerationResponse> {
     const response = await fetch(this.endpoint, {
       method: 'POST',
       headers: {

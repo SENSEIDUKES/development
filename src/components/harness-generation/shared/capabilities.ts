@@ -79,15 +79,18 @@ export const resolveHarnessEntity = (
   const characters = [...state.canonicalRecords, ...additionalRecords].filter(record =>
     record.storyId === storyId && record.kind === 'character' && !record.supersededAt,
   );
-  const exact = characters.filter(record => record.label?.toLocaleLowerCase() === label.toLocaleLowerCase());
-  if (exact.length === 1) return { label, resolution: 'exact', resolvedRecordId: exact[0].id };
+  const aliasId = correctionAliases(state.corrections.filter(correction => correction.storyId === storyId)).get(label.trim().toLocaleLowerCase());
+  const corrected = characters.find(record => record.id === aliasId);
+  if (corrected) return { label, resolution: 'alias', resolvedRecordId: corrected.id, entityId: corrected.entityId };
+  const unique = (records: HarnessCanonicalRecord[]) => [...new Map(records.map(record => [record.entityId ?? record.id, record])).values()];
+  const exact = unique(characters.filter(record => record.label?.trim().toLocaleLowerCase() === label.trim().toLocaleLowerCase()));
+  if (exact.length === 1) return { label, resolution: 'exact', resolvedRecordId: exact[0].id, entityId: exact[0].entityId };
   if (exact.length > 1) return { label, resolution: 'conflicted', candidateRecordIds: exact.map(record => record.id) };
-  const aliasId = correctionAliases(state.corrections).get(label.toLocaleLowerCase());
-  if (aliasId && characters.some(record => record.id === aliasId)) {
-    return { label, resolution: 'alias', resolvedRecordId: aliasId };
-  }
-  const active = characters.filter(record => activeRecordIds.includes(record.id));
-  if (active.length === 1) return { label, resolution: 'active-context', resolvedRecordId: active[0].id };
+  const aliases = unique(characters.filter(record => record.aliases?.some(alias => alias.trim().toLocaleLowerCase() === label.trim().toLocaleLowerCase())));
+  if (aliases.length === 1) return { label, resolution: 'alias', resolvedRecordId: aliases[0].id, entityId: aliases[0].entityId };
+  if (aliases.length > 1) return { label, resolution: 'conflicted', candidateRecordIds: aliases.map(record => record.id) };
+  const active = unique(characters.filter(record => activeRecordIds.includes(record.id)));
+  if (active.length === 1) return { label, resolution: 'active-context', resolvedRecordId: active[0].id, entityId: active[0].entityId };
   return { label, resolution: 'unresolved' };
 };
 
@@ -105,7 +108,8 @@ const canonicalRecord = (
     warnings?: string[];
   } = {},
 ): HarnessCanonicalRecord => {
-  const unresolved = options.references?.some(reference => reference.resolution === 'unresolved') || Boolean(options.warnings?.length);
+  const warnings = [...(options.warnings ?? []), ...(event.evidenceVerified === false ? ['The quote or its literal fact values could not be verified against committed prose.'] : [])];
+  const unresolved = options.references?.some(reference => reference.resolution === 'unresolved') || Boolean(warnings.length);
   const conflicted = options.references?.some(reference => reference.resolution === 'conflicted');
   return {
     id: stableHarnessId('hcan', event.id, capabilityId, capabilityVersion, kind, index),
@@ -119,9 +123,9 @@ const canonicalRecord = (
     confidence: conflicted ? 'conflicted' : unresolved ? 'unresolved' : 'resolved',
     ...(options.label ? { label: options.label } : {}),
     ...(options.references?.length ? { references: options.references } : {}),
-    facts: { description: event.description, ...options.facts },
+    facts: { ...event.facts, description: event.description, ...options.facts },
     createdAt: now,
-    warnings: options.warnings ?? [],
+    warnings,
   };
 };
 
@@ -139,7 +143,7 @@ const projection = (
   sourceEventId: event.id,
   sourceCanonicalRecordIds: [record.id],
   kind,
-  status,
+  status: status === 'ready' && record.confidence !== 'resolved' ? 'unresolved' : status,
   ...(record.label ? { label: record.label } : {}),
   description: event.description,
   explanation,
@@ -204,7 +208,7 @@ const makeHandler = (
   process: (context: HarnessCapabilityContext) => HarnessCanonicalRecord[],
 ): HarnessCapabilityHandler => ({
   id,
-  version: '1.0.0',
+  version: '2.0.0',
   canHandle: event => hasCategory(event, aliases),
   process: context => {
     const records = process(context);
@@ -217,7 +221,7 @@ const makeHandler = (
           : 'No exact name or accepted alias resolved this reference.',
         ...(reference.candidateRecordIds ? { candidateRecordIds: reference.candidateRecordIds } : {}),
       })));
-    return { records, projections: [], unresolvedReferences };
+    return { records, projections: [], unresolvedReferences, warnings: records.flatMap(record => record.warnings) };
   },
 });
 
@@ -226,23 +230,34 @@ const subjectsAsRecords = (
   capabilityId: HarnessCapabilityId,
   kind: HarnessCanonicalRecord['kind'],
 ) => {
-  const version = '1.0.0';
-  const subjects = cleanSubjects(context.event);
+  const version = '2.0.0';
+  const subjects = cleanSubjects(context.event).filter(subject => !context.event.subjectKinds?.[subject] || context.event.subjectKinds[subject] === kind
+    || (kind === 'plot-thread' && context.event.subjectKinds[subject] === 'timeline-event'));
   if (!subjects.length) {
     return [canonicalRecord(context.event, capabilityId, version, 0, kind, context.now, {
-      warnings: ['The event had no explicit subject, so its identity remains unresolved.'],
+      warnings: [`No subject of the expected ${kind} kind was supplied; interpretation remains unresolved.`],
     })];
   }
-  return subjects.map((subject, index) => canonicalRecord(context.event, capabilityId, version, index, kind, context.now, { label: subject }));
+  return subjects.map((subject, index) => {
+    const reference = kind === 'character' ? resolveHarnessEntity(subject, context.state, context.event.storyId) : undefined;
+    const known = reference?.resolvedRecordId ? context.state.canonicalRecords.find(record => record.id === reference.resolvedRecordId) : undefined;
+    const record = canonicalRecord(context.event, capabilityId, version, index, kind, context.now, {
+      label: known?.label ?? subject,
+      ...(reference?.resolution === 'conflicted' ? { references: [reference] } : {}),
+    });
+    return { ...record, aliases: known?.aliases,
+      entityId: reference?.resolution === 'conflicted' ? undefined
+        : known?.entityId ?? stableHarnessId('hentity', context.event.storyId, kind, (known?.label ?? subject).trim().toLocaleLowerCase()) };
+  });
 };
 
 export const defaultHarnessCapabilityHandlers: HarnessCapabilityHandler[] = [
-  makeHandler('characters', ['character', 'characters', 'character-development'], context =>
+  makeHandler('characters', ['character', 'characters', 'character-development', 'decision'], context =>
     subjectsAsRecords(context, 'characters', 'character')),
   makeHandler('relationships', ['relationship', 'relationships'], context => {
     const subjects = cleanSubjects(context.event);
     const references = subjects.map(subject => resolveHarnessEntity(subject, context.state, context.event.storyId, [], context.activeRecordIds));
-    return [canonicalRecord(context.event, 'relationships', '1.0.0', 0, 'relationship', context.now, {
+    return [canonicalRecord(context.event, 'relationships', '2.0.0', 0, 'relationship', context.now, {
       label: subjects.length >= 2 ? `${subjects[0]} ↔ ${subjects[1]}` : undefined,
       references,
       warnings: subjects.length < 2 ? ['A relationship requires at least two explicit subjects; the event remains unresolved.'] : [],
@@ -254,7 +269,7 @@ export const defaultHarnessCapabilityHandlers: HarnessCapabilityHandler[] = [
   makeHandler('plot-threads', ['plot', 'plot-thread', 'thread'], context =>
     subjectsAsRecords(context, 'plot-threads', 'plot-thread').map(record => ({
       ...record,
-      facts: { ...record.facts, state: /\b(resolved|closed|concluded)\b/i.test(context.event.description) ? 'resolved' : 'open' },
+      facts: { ...record.facts, state: context.event.facts?.state === 'resolved' ? 'resolved' : 'open' },
     }))),
   makeHandler('mysteries', ['mystery', 'clue', 'revelation'], context =>
     subjectsAsRecords(context, 'mysteries', 'mystery').map(record => ({
@@ -264,19 +279,20 @@ export const defaultHarnessCapabilityHandlers: HarnessCapabilityHandler[] = [
         knowledgeState: hasCategory(context.event, ['revelation']) ? 'revealed' : hasCategory(context.event, ['clue']) ? 'clue' : 'unknown',
       },
     }))),
-  makeHandler('timeline', ['timeline', 'timeline-event'], context =>
-    [canonicalRecord(context.event, 'timeline', '1.0.0', 0, 'timeline-event', context.now)]),
+  makeHandler('timeline', ['timeline', 'timeline-event', 'deadline'], context =>
+    [canonicalRecord(context.event, 'timeline', '2.0.0', 0, 'timeline-event', context.now, { label: cleanSubjects(context.event)[0] })]),
   makeHandler('artifacts', ['artifact', 'artifacts', 'relic', 'item'], context =>
     subjectsAsRecords(context, 'artifacts', 'artifact')),
   makeHandler('progression', ['ability', 'abilities', 'progression'], context => {
     const subjects = cleanSubjects(context.event);
     const references = subjects.map(subject => resolveHarnessEntity(subject, context.state, context.event.storyId, [], context.activeRecordIds));
-    return [canonicalRecord(context.event, 'progression', '1.0.0', 0, 'progression', context.now, { references })];
+    return [canonicalRecord(context.event, 'progression', '2.0.0', 0, 'progression', context.now, { references,
+      warnings: subjects.length ? [] : ['Progression requires an explicit character subject.'] })];
   }),
 ];
 
 const generalHandler = makeHandler('general-narrative-event', [], context =>
-  [canonicalRecord(context.event, 'general-narrative-event', '1.0.0', 0, 'narrative-event', context.now)]);
+  [canonicalRecord(context.event, 'general-narrative-event', '2.0.0', 0, 'narrative-event', context.now)]);
 
 export class HarnessCapabilityRegistry {
   constructor(
@@ -286,6 +302,18 @@ export class HarnessCapabilityRegistry {
 
   processEvent(context: HarnessCapabilityContext): HarnessCapabilityResult[] {
     let routed = this.handlers.filter(handler => handler.canHandle(context.event));
+    if (hasCategory(context.event, ['deadline'])) {
+      const threads = this.handlers.find(handler => handler.id === 'plot-threads');
+      if (threads && !routed.includes(threads)) routed.push(threads);
+    }
+    if (routed.some(handler => handler.id === 'progression') && context.event.subjectKinds) {
+      const kinds = new Set(Object.values(context.event.subjectKinds));
+      // A dungeon/item's progression belongs to that entity, never its human owner.
+      if (!kinds.has('character') && (kinds.has('location-world') || kinds.has('artifact'))) {
+        routed = this.handlers.filter(handler => (kinds.has('location-world') && handler.id === 'locations-world')
+          || (kinds.has('artifact') && handler.id === 'artifacts'));
+      }
+    }
     // An explicit relationship supports both the named characters and their relationship.
     if (routed.some(handler => handler.id === 'relationships') && cleanSubjects(context.event).length >= 2) {
       const character = this.handlers.find(handler => handler.id === 'characters');
@@ -315,7 +343,7 @@ export class HarnessCapabilityRegistry {
           sourceEventId: context.event.id,
           capabilityId: handler.id,
           capabilityVersion: handler.version,
-          status: unresolved.length ? 'unresolved' : 'succeeded',
+          status: unresolved.length || output.records.some(record => record.confidence !== 'resolved') || handler.id === 'general-narrative-event' ? 'unresolved' : 'succeeded',
           canonicalRecordIds: output.records.map(record => record.id),
           projectionIntentIds: projections.map(intent => intent.id),
           warnings,
@@ -374,7 +402,7 @@ export class HarnessCapabilityRegistry {
             sourceEventId: context.event.id,
             capabilityId: fallback.id,
             capabilityVersion: fallback.version,
-            status: 'succeeded',
+            status: 'unresolved',
             canonicalRecordIds: output.records.map(record => record.id),
             projectionIntentIds: projections.map(intent => intent.id),
             warnings,

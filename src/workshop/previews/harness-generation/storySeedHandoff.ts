@@ -32,10 +32,30 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
   const identity = seed.world.optional.worldIdentity;
   const world = seed.world.optional.worldFoundations;
   const style = getStoryStyleLabel(required.style);
+  const blueprintCharacters = (blueprint?.initialCharacters ?? []).map(entry => {
+    // Blueprint's named-list convention separates a name from its parenthesized role.
+    const annotated = entry.match(/^([^()]+?)\s+\((.+)\)$/);
+    return { name: (annotated?.[1] ?? entry).trim(), aliases: annotated ? [entry] : [],
+      kind: 'character' as const, evidence: entry };
+  });
 
   return {
     title: identity.title || blueprint?.title || record.title,
     premise: required.premise,
+    identities: [
+      ...((world.mainCharacter?.name || blueprint?.mainCharacter?.name) ? [{
+        name: world.mainCharacter?.name || blueprint!.mainCharacter!.name,
+        kind: 'character' as const,
+        evidence: JSON.stringify(world.mainCharacter?.name ? world.mainCharacter : blueprint?.mainCharacter),
+      }] : []),
+      ...(world.additionalCharacters ?? []).filter(character => character.name.trim()).map(character => ({
+        name: character.name, aliases: character.aliases, kind: 'character' as const, evidence: JSON.stringify(character),
+      })),
+      ...blueprintCharacters.filter(character => character.name),
+      ...(world.factions ?? []).filter(faction => faction.name.trim()).map(faction => ({
+        name: faction.name, aliases: faction.aliases, kind: 'faction' as const, evidence: JSON.stringify(faction),
+      })),
+    ],
     genre: required.genre,
     toneStyle: joinSections([
       ['Story tradition', style],
@@ -45,17 +65,16 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
       ['Make it work', optional.makeItWorkInstruction],
       ['Blueprint trope rules', blueprint?.tropeRules],
     ]),
-    openingSituation: blueprint?.startingLocation || identity.startingLocation,
+    openingSituation: identity.startingLocation || blueprint?.startingLocation,
     declaredCanon: joinSections([
       ['Story tags', required.storyTags],
-      ['Blueprint logline', blueprint?.logline],
       ['World overview', blueprint?.worldOverview],
-      ['Major mysteries', blueprint?.majorMysteries],
     ]),
     characters: joinSections([
       ['Main character', world.mainCharacter],
       ['Additional characters', world.additionalCharacters],
-      ['Blueprint main character', blueprint?.mainCharacter ?? blueprint?.mcProfile],
+      ['Blueprint main character', blueprint?.mainCharacter],
+      ['Blueprint character profile', blueprint?.mcProfile],
       ['Blueprint initial characters', blueprint?.initialCharacters],
     ]),
     worldFacts: joinSections([
@@ -71,9 +90,12 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
       ['Additional story direction', optional.additionalStoryDirection],
       ['Plot and trope settings', optional.plotAndTropeSettings],
       ['Fate and survival settings', optional.fateSurvival],
+      ['Blueprint logline', blueprint?.logline],
+      ['Major mysteries (unresolved; not character knowledge)', blueprint?.majorMysteries],
       ['First arc promise', blueprint?.firstArcPromise],
+      ['Estimated arcs (pacing guide, not a chapter deadline)', blueprint?.estimatedArcs],
       ['Unresolved plot threads', blueprint?.unresolvedPlotThreads],
-      ['Destined ending', blueprint?.destinedEnding ?? world.destinedEnding],
+      ['Destined ending', world.destinedEnding || blueprint?.destinedEnding],
     ]),
     sourceSnapshot: {
       kind: 'story-seed',

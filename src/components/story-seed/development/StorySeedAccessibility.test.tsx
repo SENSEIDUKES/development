@@ -200,6 +200,43 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(suggestion?.closest('.glass-field-wrap')).toBeNull();
   });
 
+  it('refreshes visible recommendations with the premise and keeps additions in seed state', () => {
+    let currentSeed = createEmptyStorySeedInput();
+    const Harness = () => {
+      const [seed, setSeed] = useState(currentSeed);
+      currentSeed = seed;
+      return <OriginPremiseAndTags
+        premise={seed.story.required.premise}
+        genre="Xianxia"
+        selectedStyle="chinese"
+        storyTags={seed.story.required.storyTags}
+        onPremiseChange={premise => setSeed(previous => ({ ...previous, story: {
+          ...previous.story, required: { ...previous.story.required, premise },
+        } }))}
+        updateSeed={setSeed}
+        genrePicker={null}
+      />;
+    };
+    act(() => root.render(<Harness />));
+    const input = container.querySelector<HTMLTextAreaElement>('#core-premise-input')!;
+    const setPremise = (value: string) => act(() => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(input, value);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    setPremise('Two lovers run a cozy bakery in a port city.');
+    const suggestions = () => container.querySelector('#style-suggested-tags')!;
+    expect(suggestions().textContent).toContain('cozy fantasy');
+    expect(suggestions().textContent).toContain('port economy');
+    const cozy = Array.from(suggestions().querySelectorAll('button')).find(button => button.textContent?.includes('cozy fantasy'))!;
+    act(() => cozy.click());
+    expect(currentSeed.story.required.storyTags).toContain('cozy fantasy');
+    expect(suggestions().textContent).not.toContain('cozy fantasy');
+    setPremise('A detective investigates ancient ruins and clues.');
+    expect(suggestions().textContent).toContain('ancient ruins');
+    expect(suggestions().textContent).not.toContain('romantic tension');
+    expect(currentSeed.story.required.storyTags).toContain('cozy fantasy');
+  });
+
   it('adds Manifest to the labeled mobile navigation only when generation is ready', () => {
     const onManifest = vi.fn();
     const renderNavigation = (canManifest: boolean) => act(() => root.render(

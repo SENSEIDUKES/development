@@ -15,18 +15,18 @@ import {
   STORY_PREMISE_MAX_LENGTH,
   STORY_TAG_LIMIT,
 } from '../../../shared/storySeedSchema';
-import { getStoryStyleLabel, type StoryStyle } from '../../../shared/storyStyle';
+import type { StoryStyle } from '../../../shared/storyStyle';
 import {
   CATEGORIZED_TAGS,
   CATEGORY_COLORS,
   CURATED_PREMISE_EXAMPLES,
   getTagMetadata,
   STORY_TAG_CATALOG,
-  TAG_PRESETS,
   type StoryTagCategory,
   type StoryTagCategoryColor,
   type StoryTagMetadata,
 } from '../../constants';
+import { recommendStoryTags } from '../../../shared/storyTagInference';
 import { updateStoryTags, type UpdateSeed } from '../../seedState';
 import { LibraryDragonCycleIcon, LibraryTextArea, LibraryTextBox } from '../../../../library';
 import { workspaceCompactLabelClass } from '../WorkspaceShell';
@@ -35,36 +35,7 @@ const TAG_LIMIT = STORY_TAG_LIMIT;
 const TAG_LIMIT_MESSAGE = `Fated limit reached. Only up to ${TAG_LIMIT} celestial tags can be woven into the universe.`;
 const TAG_RECOMMENDED_COPY = 'Recommended: 4–8 tags.';
 const SEARCH_RESULT_LIMIT = 24;
-const STYLE_SUGGESTION_LIMIT = 10;
-const STYLE_SPECIFIC_SHARE = 6;
 const ALL_CURATED_PREMISE_EXAMPLES = Object.values(CURATED_PREMISE_EXAMPLES).flat();
-
-const SEMANTIC_TAGS = [
-  { keywords: ['system', 'cheat', 'status', 'panel', 'attribute', 'litrpg'], tag: 'game systems' },
-  { keywords: ['level', 'progression', 'exp', 'grow', 'ladder', 'rank'], tag: 'level progression' },
-  { keywords: ['cultivat', 'meridian', 'dantian', 'qi ', 'immortal', 'spirit root'], tag: 'cultivation realms' },
-  { keywords: ['regress', 'return', 'back in time', 'years ago', 'loop', 'timeline'], tag: 'regression/reincarnation' },
-  { keywords: ['reincarnat', 'reborn', 'transmigrat', 'isekai', 'another world'], tag: 'reincarnation rules' },
-  { keywords: ['academy', 'school', 'sect school', 'dorm', 'class', 'rankings', 'exam'], tag: 'academy cultivation' },
-  { keywords: ['sect', 'clan', 'faction', 'disciple', 'elder', 'patriarch'], tag: 'sect politics' },
-  { keywords: ['kingdom', 'build', 'territory', 'village', 'town', 'lord', 'ruler'], tag: 'kingdom building' },
-  { keywords: ['alchem', 'pill', 'cauldron', 'elixir', 'herb', 'refine'], tag: 'pill refinement' },
-  { keywords: ['forge', 'weapon', 'sword', 'artifact', 'hammer', 'craft'], tag: 'weapon forging' },
-  { keywords: ['tame', 'beast', 'monster', 'pet', 'animal', 'dragon', 'phoenix'], tag: 'bonded beasts' },
-  { keywords: ['tower', 'dungeon', 'floor', 'boss', 'raid', 'climb'], tag: 'dungeon/tower climb' },
-  { keywords: ['intrigue', 'noble', 'politics', 'court', 'emperor', 'prince', 'king'], tag: 'political intrigue' },
-  { keywords: ['marry', 'marriage', 'romance', 'love', 'wife', 'husband', 'bride', 'groom'], tag: 'arranged marriage' },
-  { keywords: ['enemies', 'lovers', 'hate', 'rivals to lovers'], tag: 'enemies to lovers' },
-  { keywords: ['death', 'die', 'assassinate', 'doom', 'kill', 'murder'], tag: 'death flags' },
-  { keywords: ['curse', 'cursed', 'blessing', 'hex'], tag: 'curse tracking' },
-  { keywords: ['fate', 'destiny', 'karma', 'karmic', 'fated'], tag: 'fate bonds' },
-  { keywords: ['apocalypse', 'zombie', 'collapse', 'ruin', 'camp', 'survival'], tag: 'apocalypse cultivation' },
-  { keywords: ['space', 'star', 'galaxy', 'cosmic', 'void', 'moon', 'stellar'], tag: 'cosmic cultivation' },
-  { keywords: ['cozy', 'slice of life', 'slice-of-life', 'slow life', 'peaceful', 'farm'], tag: 'cozy / slice-of-life cultivation' },
-  { keywords: ['betray', 'backstab', 'trust', 'allies', 'alliance'], tag: 'betrayal fallout' },
-  { keywords: ['rebellion', 'rebel', 'war', 'army', 'battle', 'soldier', 'siege'], tag: 'military strategy' },
-  { keywords: ['slow burn', 'slow-burn'], tag: 'slow-burn romance' },
-];
 
 const TAG_COLOR_ACCENTS: Record<StoryTagCategoryColor, string> = {
   gray: '#9CA3AF',
@@ -123,50 +94,9 @@ const searchStoryTagCatalog = (query: string): StoryTagMetadata[] => {
     || entry.aliases.some(alias => alias.toLowerCase().includes(normalized)));
 };
 
-const pickVariedTags = (entries: StoryTagMetadata[], limit: number): StoryTagMetadata[] => {
-  const buckets = new Map<StoryTagCategory, StoryTagMetadata[]>();
-  entries.forEach(entry => {
-    const bucket = buckets.get(entry.category);
-    if (bucket) bucket.push(entry);
-    else buckets.set(entry.category, [entry]);
-  });
-  const queues = Array.from(buckets.values());
-  const picked: StoryTagMetadata[] = [];
-  for (let index = 0; picked.length < limit && queues.some(queue => queue.length > 0); index += 1) {
-    const next = queues[index % queues.length]?.shift();
-    if (next) picked.push(next);
-  }
-  return picked;
-};
-
-const buildStyleSuggestions = (style: StoryStyle | undefined): StoryTagMetadata[] => {
-  const general = STORY_TAG_CATALOG.filter(entry => entry.styles.includes('all'));
-  if (!style) return pickVariedTags(general, STYLE_SUGGESTION_LIMIT);
-  const specific = STORY_TAG_CATALOG.filter(entry => entry.styles.includes(style) && !entry.styles.includes('all'));
-  const specificPicks = pickVariedTags(specific, STYLE_SPECIFIC_SHARE);
-  const generalPicks = pickVariedTags(general, STYLE_SUGGESTION_LIMIT - specificPicks.length);
-  return [...specificPicks, ...generalPicks];
-};
-
-const findGhostSuggestion = (premise: string, storyTags: string[]): string | null => {
-  if (!premise.trim() || storyTags.length >= TAG_LIMIT) return null;
-  const selectedTags = new Set(storyTags.map(tag => tag.toLowerCase()));
-  const isSelected = (tag: string) => selectedTags.has(tag.toLowerCase());
-  const lastWord = premise.split(/[\s,.;!?]+/).filter(Boolean).pop();
-  const prefixMatch = lastWord && lastWord.length >= 2
-    ? TAG_PRESETS.find(tag => tag.toLowerCase().startsWith(lastWord.toLowerCase()) && !isSelected(tag))
-    : undefined;
-  if (prefixMatch) return prefixMatch;
-  const lowerPremise = premise.toLowerCase();
-  const semanticMatch = SEMANTIC_TAGS.find(({ keywords, tag }) =>
-    !isSelected(tag) && keywords.some(keyword => lowerPremise.includes(keyword)))?.tag;
-  return semanticMatch && TAG_PRESETS.includes(semanticMatch)
-    ? semanticMatch
-    : TAG_PRESETS.find(tag => lowerPremise.includes(tag.toLowerCase()) && !isSelected(tag)) ?? null;
-};
-
 interface OriginPremiseAndTagsProps {
   premise: string;
+  genre?: string;
   storyTags: string[];
   selectedStyle?: StoryStyle;
   onPremiseChange: (premise: string) => void;
@@ -176,6 +106,7 @@ interface OriginPremiseAndTagsProps {
 
 export const OriginPremiseAndTags = ({
   premise,
+  genre,
   storyTags,
   selectedStyle,
   onPremiseChange,
@@ -191,8 +122,10 @@ export const OriginPremiseAndTags = ({
     : ALL_CURATED_PREMISE_EXAMPLES;
   const premiseExample = premiseBank[exampleIndex % premiseBank.length];
   const ghostSuggestionCandidate = useMemo(
-    () => findGhostSuggestion(premise, storyTags),
-    [premise, storyTags],
+    () => premise.trim() && storyTags.length < TAG_LIMIT
+      ? recommendStoryTags({ premise, genre, style: selectedStyle }, storyTags, 1)[0]?.label ?? null
+      : null,
+    [premise, genre, selectedStyle, storyTags],
   );
   const ghostSuggestionKey = ghostSuggestionCandidate
     ? `${premise}\u0000${ghostSuggestionCandidate}`
@@ -273,6 +206,8 @@ export const OriginPremiseAndTags = ({
       {genrePicker}
 
       <OriginTagEditor
+        premise={premise}
+        genre={genre}
         storyTags={storyTags}
         selectedStyle={selectedStyle}
         updateSeed={updateSeed}
@@ -285,6 +220,8 @@ export const OriginPremiseAndTags = ({
 };
 
 interface OriginTagEditorProps {
+  premise: string;
+  genre?: string;
   storyTags: string[];
   selectedStyle?: StoryStyle;
   updateSeed: UpdateSeed;
@@ -294,6 +231,8 @@ interface OriginTagEditorProps {
 }
 
 const OriginTagEditor = memo(({
+  premise,
+  genre,
   storyTags,
   selectedStyle,
   updateSeed,
@@ -304,7 +243,10 @@ const OriginTagEditor = memo(({
   const [activeTagFamily, setActiveTagFamily] = useState<string | null>(null);
   const [customTagInput, setCustomTagInput] = useState('');
   const [tagSearch, setTagSearch] = useState('');
-  const styleSuggestions = useMemo(() => buildStyleSuggestions(selectedStyle), [selectedStyle]);
+  const tagSuggestions = useMemo(
+    () => recommendStoryTags({ premise, genre, style: selectedStyle }, storyTags),
+    [premise, genre, selectedStyle, storyTags],
+  );
   const tagSearchResults = useMemo(() => searchStoryTagCatalog(tagSearch), [tagSearch]);
   const isTagSearchActive = tagSearch.trim().length > 0;
 
@@ -349,10 +291,11 @@ const OriginTagEditor = memo(({
         <div>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <p className="flex items-center gap-1.5 font-sc text-[10px] font-bold uppercase tracking-widest text-neutral-300"><Wand2 size={12} className="text-[#CDB271]" aria-hidden="true" />Suggested Tags</p>
-            <span className="font-sans text-[11px] text-neutral-400">{selectedStyle ? `Tuned to ${getStoryStyleLabel(selectedStyle)} tradition` : 'Pick a Style above to tune these'}</span>
+            <span className="font-sans text-[11px] text-neutral-400">{premise.trim() ? 'Based on your premise and genre' : 'Describe your premise to tune these'}</span>
           </div>
           <div className="scrollbar-thin flex gap-1.5 overflow-x-auto pb-1" id="style-suggested-tags">
-            {styleSuggestions.map(entry => (
+            {tagSuggestions.length === 0 && <p className="font-sans text-xs text-neutral-400">Add more premise detail, or explore the tag families below.</p>}
+            {tagSuggestions.map(entry => (
               <CatalogTagChip key={entry.label} entry={entry} selected={storyTags.includes(entry.label)} onToggle={toggleTag} className="shrink-0 whitespace-nowrap" />
             ))}
           </div>

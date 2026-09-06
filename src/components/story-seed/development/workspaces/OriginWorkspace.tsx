@@ -71,6 +71,7 @@ export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
 
       <OriginPremiseAndTags
         premise={premise}
+        genre={genre}
         storyTags={storyTags}
         selectedStyle={selectedStyle}
         onPremiseChange={updatePremise}

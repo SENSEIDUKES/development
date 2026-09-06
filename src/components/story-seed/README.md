@@ -4,7 +4,7 @@
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **Replica created:** 2026-08-01
-- **Last Workshop update:** 2026-08-23
+- **Last Workshop update:** 2026-09-06
 - **Last source comparison:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and ready for production transfer
 
@@ -65,7 +65,8 @@ shared/
   legacySeedImport.ts             isolated compatibility adapter for old files
   storyAdministrativeMetadata.ts  separate minimal story metadata
   storyStyle.ts                   canonical Style values
-  storyTagInference.ts            deterministic empty-tag inference
+  storyTagCatalog.ts              shared canonical tag vocabulary and metadata
+  storyTagInference.ts            premise-ranked suggestions and empty-tag inference
   types.ts                        Blueprint and shared domain types
   stubs.ts                        Workshop-only app/store boundary
 
@@ -210,6 +211,20 @@ harness:
   render without loading-boundary, console, or page errors.
 
 ## Concise Workshop history
+
+- **2026-09-06:** Audited and unified Story Tag recommendations. The Suggested
+  Tags row previously ignored premise and genre; the premise button used a
+  first-match mechanics-heavy list; empty-tag generation used a third,
+  genre-first vocabulary. All three now rank the full shared catalog by
+  premise phrases, aliases, and focused language cues, with genre as a weak
+  prior and Style as a tie-breaker. Relevant families share recommendation
+  space, including mood, setting, romance, and continuity. Selected tags are
+  excluded from new suggestions; manual tags, catalog labels/colors, seed
+  persistence, and the locked Reference remain unchanged. No model call or
+  new backend is required. Matching remains lexical: complex implication and
+  negation are not semantic understanding, and sparse premises yield fewer
+  options instead of unrelated filler. Transfer the shared catalog and
+  inference module alongside the updated Origin components.
 
 - **2026-08-23:** Routed the visible Fate Survival taxonomy in the locked
   Story Seed Reference pane through the shared Reader **Color Codes** registry.

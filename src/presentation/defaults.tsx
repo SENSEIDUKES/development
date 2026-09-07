@@ -256,7 +256,7 @@ function Glyph(
   }: P.NarrativeDragonCycleIconProps,
   Icon: typeof RefreshCw,
 ) {
-  const hidden = decorative ?? !(title || props['aria-label']);
+  const hidden = decorative ?? !(title || props['aria-label'] || props['aria-labelledby']);
   return (
     <Icon
       {...props}
@@ -264,8 +264,10 @@ function Glyph(
       aria-hidden={hidden || undefined}
       role={hidden ? undefined : 'img'}
       aria-label={hidden ? undefined : (props['aria-label'] ?? title)}
-      aria-labelledby={titleId}
-    />
+      aria-labelledby={hidden ? undefined : (props['aria-labelledby'] ?? (title ? titleId : undefined))}
+    >
+      {title ? <title id={titleId}>{title}</title> : null}
+    </Icon>
   );
 }
 export const CycleIcon = (props: P.NarrativeDragonCycleIconProps) =>

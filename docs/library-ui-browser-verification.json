@@ -117,5 +117,19 @@
       "violations": [],
       "overflow": false
     }
+  ],
+  "particles": [
+    {
+      "surface": "Manifestations",
+      "count": 1,
+      "reducedMotionHidden": true,
+      "resumesWhenAllowed": true
+    },
+    {
+      "surface": "Relics",
+      "count": 1,
+      "reducedMotionHidden": true,
+      "resumesWhenAllowed": true
+    }
   ]
 }

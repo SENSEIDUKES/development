@@ -9,6 +9,7 @@ import {
   NarrativePresentationProvider,
   NarrativeTextBox,
   AmbientEffect,
+  NarrativeDragonCycleIcon,
 } from './index';
 
 (
@@ -53,11 +54,13 @@ describe('narrative host presentation', () => {
             defaultValue="Astral"
           />
           <NarrativeButton>Save</NarrativeButton>
+          <NarrativeDragonCycleIcon title="Retry" titleId="retry-title" decorative={false} />
           <AmbientEffect />
         </>,
       ),
     );
     expect(ref.current?.value).toBe('Astral');
+    expect(container.querySelector('[aria-labelledby=retry-title] title')?.textContent).toBe('Retry');
     expect(container.querySelector('label')?.htmlFor).toBe(ref.current?.id);
     expect(container.querySelector('.glass-field')).toBeNull();
     expect(container.querySelector('canvas')).toBeNull();

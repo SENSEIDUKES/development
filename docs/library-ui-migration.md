@@ -41,10 +41,10 @@ The only file retained under `src/components/library` is an import-only `Particl
 ## Verification
 
 - UI: typechecks, 484 unit tests, lint, production workbench and Storybook builds, reproducible tarballs, fresh ESM/types/Tailwind consumers, and desktop/mobile browser/accessibility coverage passed. Both remote CI jobs passed before merge; both actionable review threads were resolved. CodeRabbit's later run was rate-limited, not a substantive approval.
-- Development: artifact-integrity checks, the real source import graph, built output and declarations, TypeScript, all 545 unit tests (one opt-in live-provider test skipped), SEN/Library builds, and fresh consumers outside the repository are exercised. The SEN consumer explicitly verifies Library UI is absent.
+- Development: artifact-integrity checks, the real source import graph, built output and declarations, TypeScript, all 546 unit tests (one opt-in live-provider test skipped), SEN/Library builds, and fresh consumers outside the repository are exercised. The SEN consumer explicitly verifies Library UI is absent.
 - Browser coverage targets Story Seed, Reader, Codex, Manifestations, Relics, Harness, and the Library component inventory at 1280px and 390px. Checks include document overflow, axe, field editing, drawer trapping/Escape/focus return, card keyboard behavior, particles, and motion settings.
 - Small accessibility fixes found by this verification preserve the same flows: only mounted Workshop panels receive `aria-controls`; Reader's palette selector is named and its legend scroll region is focusable; Codex collage open/download actions are separate native controls; flagged text contrast is corrected.
-- Host presentation tests verify universal defaults, controlled string callbacks, refs, nested providers, compact class overrides, canonical particle rendering, and descendant keyboard isolation. First-party skin assertions now supply the first-party provider. An existing audio test now waits for the already-established 100ms playback queue delay.
+- Host presentation tests verify universal defaults, controlled string callbacks, refs, nested providers, compact class overrides, canonical particle rendering, and descendant keyboard isolation. First-party skin assertions now supply the first-party provider. An existing audio test now waits for the already-established 100ms playback queue delay. The Relics gallery Reveal button now renders its already-selected reveal, with a regression test. Active Manifestations and Relics each render one canonical particle canvas and respect changes to reduced motion.
 
 ## Remaining consumers and limits
 
@@ -82,3 +82,5 @@ SEN retains its existing shrink-only ledger of 11 development mock integration e
 - `src/components/library/library-spectrum.css`
 - `src/package/sen/library.ts`
 - `src/package/sen/ui.ts`
+
+Development PR #176 has no unresolved review threads. CodeRabbit skipped substantive review because the change exceeds its 100-file plan limit and review capacity is unavailable; its green status is not a code-review approval.

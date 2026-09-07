@@ -15,7 +15,7 @@ import {
   type StorySeedStoryRequired,
 } from '../shared/storySeedSchema';
 import { AGENTS, useAppStore } from '../shared/stubs';
-import { LibraryButton, LibraryPanel, ManifestButton } from '../../library';
+import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '../../../presentation';
 import { patchStoryRequired, patchWorldIdentity, type UpdateSeed } from './seedState';
 import { BlueprintCollectionSections } from './blueprint/BlueprintCollectionSections';
 import {

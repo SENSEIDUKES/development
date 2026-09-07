@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -110,7 +111,7 @@ afterEach(() => {
 });
 
 const render = (node: React.ReactNode) => {
-  act(() => root.render(node));
+  act(() => root.render(<LibraryPresentationProvider>{node}</LibraryPresentationProvider>));
   mounted = true;
 };
 

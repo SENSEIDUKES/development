@@ -71,8 +71,12 @@ if (existsSync(join(output, 'dist/card-workshop'))) {
 }
 
 for (const file of await collectFiles(join(output, 'dist'))) {
-  if (!file.endsWith('.js') && !file.endsWith('.css')) continue;
-  const contents = await readFile(file, 'utf8');
+  if (!file.endsWith('.js') && !file.endsWith('.css') && !file.endsWith('.d.ts')) continue;
+  const source = await readFile(file, 'utf8');
+  // Declaration documentation may name historical paths without importing them.
+  const contents = file.endsWith('.d.ts')
+    ? source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+    : source;
   for (const [needle, label] of target.forbiddenBundleContents) {
     if (contents.includes(needle)) {
       fail(`${file.slice(output.length + 1)} bundles a ${label} (${needle})`);

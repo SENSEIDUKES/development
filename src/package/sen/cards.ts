@@ -16,32 +16,7 @@
 import '../../components/reader-chamber/shared/reader-chamber.css';
 import '../../components/reader-codex/shared/reader-codex.css';
 
-export {
-  LibraryCard,
-  LibraryCardActions,
-  LibraryCardBody,
-  LibraryCardContent,
-  LibraryCardDescription,
-  LibraryCardFooter,
-  LibraryCardHeader,
-  LibraryCardMedia,
-  LibraryCardMetadata,
-  LibraryCardTitle,
-} from '../../components/library/LibraryCard';
-export type {
-  LibraryCardActionsProps,
-  LibraryCardBodyProps,
-  LibraryCardContentProps,
-  LibraryCardDescriptionProps,
-  LibraryCardFooterProps,
-  LibraryCardHeaderProps,
-  LibraryCardMediaProps,
-  LibraryCardMetadataProps,
-  LibraryCardPadding,
-  LibraryCardProps,
-  LibraryCardTitleProps,
-  LibraryCardVariant,
-} from '../../components/library/LibraryCard';
+export { SEICard, SEICardMedia, SEICardContent, SEICardHeader, SEICardTitle, SEICardDescription, SEICardBody, SEICardMetadata, SEICardActions, SEICardFooter } from '@seihouse/ui';
 
 export {
   CodexCard,

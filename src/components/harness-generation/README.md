@@ -206,3 +206,7 @@ Copy the `development/` and `shared/` code, its package barrel, and the server
 route as one feature. Leave the Workshop preview, manifest registration,
 reference pane, and local Development endpoint guard behind unless the target
 application explicitly needs them.
+
+### 2026-09-06 — Library UI ownership migration
+
+Reusable presentation now comes from the canonical Library UI package. Portable SEN surfaces resolve presentation through the host provider; the first-party Workshop supplies LibraryPresentationProvider. Domain, generation, persistence, media, and locked reference sources are unchanged.

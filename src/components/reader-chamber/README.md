@@ -426,3 +426,7 @@ and block-scoped rendering together; do not copy the preview fixtures as data.
    code, record the new comparison date, and reset `development/` for the next
    redesign cycle. There is no V2/V3 — only "what production currently is" vs "what
    we are currently trying to make it become."
+
+### 2026-09-06 — Library UI ownership migration
+
+Reusable presentation now comes from the canonical Library UI package. Portable SEN surfaces resolve presentation through the host provider; the first-party Workshop supplies LibraryPresentationProvider. Domain, generation, persistence, media, and locked reference sources are unchanged.

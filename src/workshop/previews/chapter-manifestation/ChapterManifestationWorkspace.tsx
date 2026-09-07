@@ -483,7 +483,7 @@ function AuraVeilSimulationControls({
 function VeilCanvas({ Veil, sim }: { Veil: typeof ReferenceAILoadingVeil; sim: ReturnType<typeof useGenerationSimulation> }) {
   return (
     <div className="relative min-h-[calc(100vh-11rem)] bg-neutral-950 p-4 sm:p-8 font-sans text-neutral-200">
-      <div className="p-6 border border-neutral-800/50 rounded-lg text-neutral-500 text-sm">
+      <div className="p-6 border border-neutral-800/50 rounded-lg text-neutral-400 text-sm">
         Background app content... (Testing minimize state visibility)
       </div>
       <Veil
@@ -517,7 +517,7 @@ function DevelopmentVeilCanvas({
 }) {
   return (
     <div className="relative min-h-[calc(100vh-11rem)] bg-neutral-950 p-4 sm:p-8 font-sans text-neutral-200">
-      <div className="p-6 border border-neutral-800/50 rounded-lg text-neutral-500 text-sm">
+      <div className="p-6 border border-neutral-800/50 rounded-lg text-neutral-400 text-sm">
         Background app content... (Testing minimize state visibility)
       </div>
       <DevelopmentAILoadingVeil

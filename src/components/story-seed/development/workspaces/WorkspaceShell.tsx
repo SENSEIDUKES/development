@@ -4,7 +4,7 @@ import { SEED_FAMILIES, type SeedSection } from '../seedSections';
 
 /**
  * Shared field styling for the finalized workspaces — the glass field system
- * from `src/components/library/glass-field.css` (imported via the Library
+ * from `@seihouse/library-uiglass-field.css` (imported via the Library
  * barrel), combined
  * with layout utilities. Text inputs and textareas use `LibraryTextBox` /
  * `LibraryTextArea` (which own these classes internally); only

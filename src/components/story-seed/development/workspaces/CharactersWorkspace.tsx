@@ -17,7 +17,7 @@ import {
   worldFoundations,
   type UpdateSeed,
 } from '../seedState';
-import { LibraryTextArea, LibraryTextBox } from '../../../library';
+import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '../../../../presentation';
 import { WorkspaceShell, WorkspaceSubheading } from './WorkspaceShell';
 
 interface CharactersWorkspaceProps {

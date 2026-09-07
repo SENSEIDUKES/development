@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkshopHome } from './WorkshopHome';
 import { getWorkshopVersionLabel, workshopEntries } from './manifest';
 
@@ -11,6 +11,7 @@ let container: HTMLDivElement;
 let root: Root;
 
 beforeEach(() => {
+  Object.defineProperty(window, 'matchMedia', { configurable: true, value: vi.fn().mockImplementation((media: string) => ({ media, matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })) });
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);

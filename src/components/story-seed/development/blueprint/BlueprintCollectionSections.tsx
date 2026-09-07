@@ -1,7 +1,7 @@
 import { memo, type Dispatch, type SetStateAction } from 'react';
 import { GitBranch, HelpCircle, Shield, Users } from 'lucide-react';
 import type { WorldBlueprint } from '../../shared/types';
-import { LibraryPanel, LibraryTextArea } from '../../../library';
+import { NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea } from '../../../../presentation';
 import { BlueprintSectionHeading, EditableChip } from './BlueprintDossierPrimitives';
 
 interface BlueprintCollectionSectionsProps {

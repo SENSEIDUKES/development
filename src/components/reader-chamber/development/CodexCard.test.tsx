@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import React, { act, createRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -91,7 +92,7 @@ describe('Reader Codex and System routing', () => {
     };
     act(() => {
       root.render(
-        <ReaderViewport
+        <LibraryPresentationProvider>{<ReaderViewport
           readerRef={createRef<HTMLDivElement>()}
           isReaderFullscreen={false}
           handleTouchStart={vi.fn()}
@@ -139,7 +140,7 @@ describe('Reader Codex and System routing', () => {
           setShowLegend={vi.fn()}
           hasSystemBlocks={Boolean(block.system)}
           chapters={[chapter]}
-        />,
+        />}</LibraryPresentationProvider>,
       );
     });
   };
@@ -264,7 +265,7 @@ describe('Reader Codex and System routing', () => {
 
     act(() => {
       root.render(
-        <CodexCard
+        <LibraryPresentationProvider>{<CodexCard
           revealTerm={{
             type: 'Artifact',
             entry: {
@@ -275,7 +276,7 @@ describe('Reader Codex and System routing', () => {
               manifestationImportance: visualImportance,
             },
           }}
-        />,
+        />}</LibraryPresentationProvider>,
       );
     });
 
@@ -305,10 +306,10 @@ describe('Reader Codex and System routing', () => {
 
     act(() => {
       root.render(
-        <CodexCard
+        <LibraryPresentationProvider>{<CodexCard
           revealTerm={{ type: 'Artifact', entry }}
           onManifestReveal={onManifestReveal}
-        />,
+        />}</LibraryPresentationProvider>,
       );
     });
 
@@ -326,11 +327,11 @@ describe('Reader Codex and System routing', () => {
 
     act(() => {
       root.render(
-        <CodexCard
+        <LibraryPresentationProvider>{<CodexCard
           revealTerm={{ type: 'Artifact', entry }}
           generatingRevealId={entry.id}
           onManifestReveal={onManifestReveal}
-        />,
+        />}</LibraryPresentationProvider>,
       );
     });
 
@@ -345,7 +346,7 @@ describe('Reader Codex and System routing', () => {
   it('wears the spectral glass with the entity ambient accent, mote field, and circular seal', () => {
     act(() => {
       root.render(
-        <CodexCard
+        <LibraryPresentationProvider>{<CodexCard
           revealTerm={{
             type: 'Artifact',
             entry: {
@@ -355,7 +356,7 @@ describe('Reader Codex and System routing', () => {
               manifestationImportance: visualImportance,
             },
           }}
-        />,
+        />}</LibraryPresentationProvider>,
       );
     });
 
@@ -383,7 +384,7 @@ describe('Reader Codex and System routing', () => {
   it('tints the glass with the character relationship accent', () => {
     act(() => {
       root.render(
-        <CodexCard
+        <LibraryPresentationProvider>{<CodexCard
           revealTerm={{
             type: 'character',
             entry: {
@@ -395,7 +396,7 @@ describe('Reader Codex and System routing', () => {
             },
           }}
           activeStory={{ mcName: 'Rin', assignedRevealBackdrops: {} }}
-        />,
+        />}</LibraryPresentationProvider>,
       );
     });
 
@@ -415,10 +416,10 @@ describe('Reader Codex and System routing', () => {
     const renderCard = () => {
       act(() => {
         root.render(
-          <CodexCard
+          <LibraryPresentationProvider>{<CodexCard
             revealTerm={{ type: 'character', entry }}
             activeStory={{ mcName: 'Rin', assignedRevealBackdrops: {} }}
-          />,
+          />}</LibraryPresentationProvider>,
         );
       });
     };

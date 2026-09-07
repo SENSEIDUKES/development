@@ -39,7 +39,7 @@ export function RelicCard({ artifact: art, onClick }: RelicCardProps) {
 
   let borderClass = 'border-neutral-900 hover:border-neutral-800';
   let bgGlowClass = 'bg-[#030303]';
-  let rarityTextClass = 'text-neutral-500';
+  let rarityTextClass = 'text-neutral-400';
 
   if (isTranscendent) {
     borderClass = 'border-cyan-500/30 hover:border-cyan-400/50';
@@ -90,7 +90,7 @@ export function RelicCard({ artifact: art, onClick }: RelicCardProps) {
       </div>
 
       <div className="mt-4 pt-3 border-t border-neutral-900/40 flex items-center justify-between text-[9px] text-neutral-500 font-mono">
-        <div className="flex items-center gap-1 text-portal/70">
+        <div className="flex items-center gap-1 text-portal/90">
           <Zap size={10} />
           <span>+{art.rewardValueQi || 0} Qi</span>
           <Award size={10} className="ml-1" />

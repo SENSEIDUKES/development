@@ -1,3 +1,4 @@
+import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -6,7 +7,7 @@ import { DevAudioPlaybackProvider } from './audio/DevAudioPlayback';
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <DevAudioPlaybackProvider>
-      <App />
+      <LibraryPresentationProvider><App /></LibraryPresentationProvider>
     </DevAudioPlaybackProvider>
   </React.StrictMode>,
 );

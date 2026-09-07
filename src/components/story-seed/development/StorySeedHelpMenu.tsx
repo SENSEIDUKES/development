@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ChevronRight, CircleHelp, Pause, Play, Search, X } from 'lucide-react';
-import { LibraryButton, LibraryPanel, cn } from '../../library';
+import { cn } from '@seihouse/ui';
+import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel } from '../../../presentation';
 import { useDevAudioPlayback } from '../../../audio/DevAudioPlayback';
 import {
   DEFAULT_HELP_LANGUAGE,

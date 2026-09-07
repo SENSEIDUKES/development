@@ -17,6 +17,7 @@ ever runs the other.
 | Import | Surface |
 | --- | --- |
 | `@seihouse/library` | Every Library surface, plus `LIBRARY_PACKAGE_VERSION` |
+| `@seihouse/library/presentation` | LibraryPresentationProvider supplies canonical Library UI to nested SEN features |
 | `@seihouse/library/cultivation` | Closed-Door Cultivation: the props-driven idle-Qi reward presentation and its claim ceremony |
 | `@seihouse/library/relics` | The relic economy: the relic card, its inspection modal, the claim reveal, and the relic model |
 
@@ -43,9 +44,7 @@ it is never copied into both.
 the published engine so a host application runs exactly one copy of SEN. React,
 Motion, and Lucide stay host-provided the same way.
 
-Library ships no stylesheet of its own. Its surfaces are Tailwind-only and
-inherit the shared treatments from `@seihouse/sen/styles.css`, which a host
-loads once.
+Library ships no stylesheet of its own. Load `@seihouse/library-ui/styles.css` once in the host Tailwind v4 entry; it includes universal UI styles. Keep `data-experience="sen"` and the Rubik, Noto Serif, Alegreya, and Alegreya SC fonts. Wrap first-party SEN surfaces in `LibraryPresentationProvider`. Relics imports Library UI particles directly.
 
 ## Building
 
@@ -79,6 +78,8 @@ import { RelicCard, RelicReveal } from '@seihouse/library/relics';
 ```
 
 ## History
+
+- **2026-09-06:** Library UI moves to `@seihouse/library-ui@0.4.0`. The first-party presentation provider composes it with the independent SEN narrative package. The older particle ownership below is historical and superseded.
 
 - **2026-08-25:** Renamed the package from `@Seihouse/Library` to
   `@seihouse/library`. The npm registry rejects uppercase letters in new

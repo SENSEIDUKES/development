@@ -27,8 +27,8 @@ the exact same code.
 
 | Import | Surface |
 | --- | --- |
-| `@seihouse/sen` | The SEN surface primitives (re-exported from `./ui`) plus `SEN_PACKAGE_VERSION` |
-| `@seihouse/sen/ui` | The portable surface primitives: panels, cards, buttons, the primary creation action, inputs, navigation, particles, glyphs |
+| `@seihouse/sen` | Host presentation contracts and universal defaults plus `SEN_PACKAGE_VERSION` |
+| `@seihouse/sen/presentation` | NarrativePresentationProvider, typed presentation slots and universal defaults; ambient decoration is host supplied |
 | `@seihouse/sen/color-codes` | **The single Color Code authority**: the registry, the accessibility palettes, and every semantic resolver |
 | `@seihouse/sen/cards` | **The complete shared card system**: the composable primitive, Codex/entity cards, and every System Prompt family (`SystemBlock`, `WorldNotice`, `FateResultCard`) with its presentation contracts and routes |
 | `@seihouse/sen/reader-chamber` | The Reader Chamber shell, viewport, header, controls, settings, fate surfaces, reading model |
@@ -40,14 +40,12 @@ the exact same code.
 | `@seihouse/sen/harness-generation` | Independent deterministic novel harness: checkpoint-first one-call prose generation, semantic-event evidence, canonical projections, corrections, replay, audited continuity context, and sequential local batches; it does not import legacy generation or Reader systems |
 | `@seihouse/sen/styles.css` | The bundled stylesheet, for consumers that prefer to load CSS explicitly |
 
-Each entry that needs styling imports its own CSS as a side effect, so a
-consumer never hand-imports a component stylesheet.
+Feature entries retain their feature CSS. Root, audio, and presentation entries are unstyled. The host processes `@seihouse/ui/styles.css` with Tailwind v4 for universal presentation, or `@seihouse/library-ui/styles.css` once when using the first-party Library provider.
 
 ### Compatibility aliases (one version only)
 
 | Import | Replacement |
 | --- | --- |
-| `@seihouse/sen/library` | `@seihouse/sen/ui` — the primitives are SEN's own surface kit, not the Library application |
 | `@seihouse/sen/codex-cards` | `@seihouse/sen/cards` — the Codex cards are the narrative cards of the one shared card system |
 
 ### Color Codes and cards are published once
@@ -175,7 +173,7 @@ DEV consumes the same entries it publishes. `@seihouse/sen/*` is aliased to
 preview imports exactly what a consuming application will:
 
 ```ts
-import { LibraryPanel } from '@seihouse/sen/ui';
+import { NarrativePresentationProvider } from '@seihouse/sen/presentation';
 import { COLOR_CODES } from '@seihouse/sen/color-codes';
 import {
   CodexCard,

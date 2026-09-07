@@ -66,12 +66,13 @@ const FORBIDDEN_PATTERNS = [
 ];
 
 const LIBRARY_OWNED_PATTERNS = [
+  [/^src\/components\/library(?:-presentation)?\//, 'Library UI presentation'],
   [/^src\/components\/closed-door-cultivation\//, 'the Library cultivation surface'],
   [/^src\/components\/relics\//, 'the Library relic economy'],
   [/^src\/package\/library\//, 'a @seihouse/library package entry'],
 ];
 
-const IMPORT_PATTERN = /(?:^|[\s;}])(?:import|export)\s*(?:[\s\S]*?\sfrom\s*)?['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)/g;
+const IMPORT_PATTERN = /(?:^|[\s;}])(?:import|export|@import)\s*(?:[\s\S]*?\sfrom\s*)?['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)/g;
 
 const EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx', '.css', '.json'];
 
@@ -99,7 +100,7 @@ const resolveRelative = (fromFile, specifier) => {
   return undefined;
 };
 
-/** Resolves a package self-reference (`@seihouse/sen/ui`) to its entry file. */
+/** Resolves a package self-reference (`@seihouse/sen/presentation`) to its entry file. */
 const resolvePackageSpecifier = specifier => {
   for (const target of Object.values(PACKAGE_TARGETS)) {
     const manifest = JSON.parse(readFileSync(join(root, target.sourceDirectory, 'package.json'), 'utf8'));
@@ -127,6 +128,10 @@ const usedWaivers = new Set();
 
 const checkTarget = target => {
   const isSen = target.id === 'sen';
+  if (isSen) {
+    const manifest = JSON.parse(readFileSync(join(root, target.sourceDirectory, 'package.json'), 'utf8'));
+    if (manifest.exports['./ui'] || manifest.exports['./library'] || /@seihouse\/library/.test(JSON.stringify(manifest))) failures.push('SEN manifest claims or depends on Library UI');
+  }
   const seen = new Set();
   const queue = readEntries(target).map(file => ({ file, trail: [] }));
 
@@ -157,9 +162,12 @@ const checkTarget = target => {
         }
       }
     }
-    if (relativePath.endsWith('.css') || relativePath.endsWith('.json')) continue;
+    if (relativePath.endsWith('.json')) continue;
 
     for (const specifier of collectSpecifiers(readFileSync(file, 'utf8'))) {
+      if (isSen && /^@seihouse\/library(?:-ui)?(?:\/|$)/.test(specifier)) {
+        failures.push(target.name + ': ' + relativePath + ' imports forbidden ' + specifier);
+      }
       const resolved = specifier.startsWith('.')
         ? resolveRelative(file, specifier)
         : resolvePackageSpecifier(specifier);

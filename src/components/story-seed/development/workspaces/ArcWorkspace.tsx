@@ -13,7 +13,7 @@ import {
   worldFoundations,
   type UpdateSeed,
 } from '../seedState';
-import { LibraryTextArea, LibraryTextBox } from '../../../library';
+import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '../../../../presentation';
 import { WorkspaceShell } from './WorkspaceShell';
 import { handleRadioGroupKeyDown } from '../radioGroupKeyboard';
 

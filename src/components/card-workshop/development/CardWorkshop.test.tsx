@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -82,7 +83,7 @@ afterEach(() => {
 
 describe('CardWorkshopWorkspace', () => {
   it('opens through the shared Workshop shell with independent Reference and Development panes', async () => {
-    act(() => root.render(renderWithDevAudio(<CardWorkshopWorkspace />)));
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(<CardWorkshopWorkspace />)}</LibraryPresentationProvider>));
 
     expect(container.textContent).toContain('Card Workshop');
     expect(container.textContent).toContain('Reader Card Workshop');
@@ -103,7 +104,7 @@ describe('CardWorkshopWorkspace', () => {
 
 describe('CardWorkshopView', () => {
   it('keeps the accessible Card Type Tabs gallery and mounts only the selected presentation', async () => {
-    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="tabs" />)));
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(<CardWorkshopView initialMode="tabs" />)}</LibraryPresentationProvider>));
 
     const tablist = container.querySelector('[role="tablist"][aria-label="Card types"]');
     const tabs = () => [...(tablist?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])];
@@ -306,7 +307,7 @@ describe('CardWorkshopView', () => {
   });
 
   it('branches Codex Cards and System Prompts into their own category sets', async () => {
-    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="tabs" />)));
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(<CardWorkshopView initialMode="tabs" />)}</LibraryPresentationProvider>));
 
     const branchList = container.querySelector('[role="tablist"][aria-label="Card families"]');
     const branchTabs = [...(branchList?.querySelectorAll<HTMLButtonElement>('[role="tab"]') ?? [])];
@@ -368,7 +369,7 @@ describe('CardWorkshopView', () => {
   });
 
   it('renders the compact System Prompt outcomes as two flat subject/state slots', () => {
-    act(() => root.render(renderWithDevAudio(
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(
       <SystemBlock
         content="[ Yun Che has successfully broken through into the Foundation Establishment realm. ]"
         system={{
@@ -384,7 +385,7 @@ describe('CardWorkshopView', () => {
           ],
         }}
       />,
-    )));
+    )}</LibraryPresentationProvider>));
 
     const compactBlock = container.querySelector('.system-block');
     expect(compactBlock?.textContent).toContain('Cultivation Breakthrough');
@@ -421,7 +422,7 @@ describe('CardWorkshopView', () => {
     const renderProse = vi.fn((text: string) => <button data-world-notice-prose-link>{text}</button>);
     const onNoticeClick = vi.fn();
 
-    act(() => root.render(renderWithDevAudio(
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(
       <>
         <SystemBlock
           content="[ A message arrives from the guild. ]"
@@ -481,7 +482,7 @@ describe('CardWorkshopView', () => {
           }}
         />
       </>,
-    )));
+    )}</LibraryPresentationProvider>));
 
     const presentations = [...container.querySelectorAll<HTMLElement>('[data-system-presentation]')];
     expect(presentations.map(element => element.dataset.systemPresentation))
@@ -517,7 +518,7 @@ describe('CardWorkshopView', () => {
   });
 
   it('renders multi-entry World Notices as a static board and retains legacy layout fallback only when presentation is absent', () => {
-    act(() => root.render(renderWithDevAudio(
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(
       <>
         <SystemBlock
           content="[ The mission board is refreshed at dawn. ]"
@@ -560,7 +561,7 @@ describe('CardWorkshopView', () => {
           }}
         />
       </>,
-    )));
+    )}</LibraryPresentationProvider>));
 
     const notice = container.querySelector<HTMLElement>('[data-world-notice="true"]');
     expect(notice?.dataset.worldNoticeBoard).toBe('true');
@@ -581,7 +582,7 @@ describe('CardWorkshopView', () => {
 
   it('keeps inert System documents honest and wraps long authored values without horizontal overflow', () => {
     const longToken = 'BOUNDARYLESSCELESTIALARCHIVEIDENTIFIER'.repeat(4);
-    act(() => root.render(renderWithDevAudio(
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(
       <>
         <SystemBlock
           content="[ A mechanical record. ]"
@@ -607,7 +608,7 @@ describe('CardWorkshopView', () => {
           }}
         />
       </>,
-    )));
+    )}</LibraryPresentationProvider>));
 
     const mechanical = container.querySelector<HTMLElement>('[data-system-presentation="mechanical"]');
     expect(mechanical?.dataset.interactive).toBe('false');
@@ -626,9 +627,9 @@ describe('CardWorkshopView', () => {
   });
 
   it('keeps the mobile Workshop controls contained, semantically selected, and touch sized', async () => {
-    act(() => root.render(renderWithDevAudio(
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(
       <CardWorkshopView initialMode="tabs" initialPresetId="preset-system-prompt" />,
-    )));
+    )}</LibraryPresentationProvider>));
 
     expect(container.querySelector<HTMLElement>('.min-h-screen')?.className).toContain('overflow-x-hidden');
     expect(getButton('Card Type Tabs')?.getAttribute('aria-pressed')).toBe('true');
@@ -664,9 +665,9 @@ describe('CardWorkshopView', () => {
   });
 
   it('opens the expanded event report in a viewport overlay and restores focus to the orb action', async () => {
-    act(() => root.render(renderWithDevAudio(
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(
       <CardWorkshopView initialMode="tabs" initialPresetId="preset-system-prompt" />,
-    )));
+    )}</LibraryPresentationProvider>));
 
     const systemBlock = container.querySelector<HTMLElement>('.system-block');
     const compactSummary = 'A golden interface unfurled before Yun Che, quiet where the tribulation\'s lightning had raged a breath before.';
@@ -846,9 +847,9 @@ describe('CardWorkshopView', () => {
   });
 
   it('provides complete local expanded reports for all three System Prompt examples', async () => {
-    act(() => root.render(renderWithDevAudio(
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(
       <CardWorkshopView initialMode="tabs" initialPresetId="preset-system-prompt" />,
-    )));
+    )}</LibraryPresentationProvider>));
 
     const examples = [
       {
@@ -908,9 +909,9 @@ describe('CardWorkshopView', () => {
 
 
   it('opens the Structured Mechanical stat panel from the orb and restores focus to it', async () => {
-    act(() => root.render(renderWithDevAudio(
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(
       <CardWorkshopView initialMode="tabs" initialPresetId="preset-system-prompt" />,
-    )));
+    )}</LibraryPresentationProvider>));
     await clickButton('Mechanical');
     await clickButton('Structured Mechanical');
 
@@ -1045,7 +1046,7 @@ describe('CardWorkshopView', () => {
   });
 
   it('switches between Card Type Tabs and Contextual View without losing the selected preset or override state', async () => {
-    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="tabs" />)));
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(<CardWorkshopView initialMode="tabs" />)}</LibraryPresentationProvider>));
 
     await clickButton('System Prompts');
     await clickButton('Fate System');
@@ -1067,7 +1068,7 @@ describe('CardWorkshopView', () => {
   });
 
   it('uses the real ReaderViewport path with highlighted prose before and after the selected Codex card', () => {
-    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)));
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)}</LibraryPresentationProvider>));
 
     const reader = container.querySelector<HTMLElement>('[data-testid="card-workshop-contextual-reader"]');
     expect(reader).toBeTruthy();
@@ -1117,7 +1118,7 @@ describe('CardWorkshopView', () => {
   });
 
   it('renders the selected System Panel inside the same deterministic Reader fixture', async () => {
-    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)));
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)}</LibraryPresentationProvider>));
     await openTechnicalDetails();
 
     const reader = container.querySelector<HTMLElement>('[data-testid="card-workshop-contextual-reader"]');
@@ -1131,7 +1132,7 @@ describe('CardWorkshopView', () => {
   });
 
   it('keeps the full target-scan narration source while linking only its named character in Reader prose', async () => {
-    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)));
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)}</LibraryPresentationProvider>));
     await openTechnicalDetails();
     await selectByLabel('Card category', 'system-mechanical');
     await selectByLabel('System prompt example style', 'target-scan');
@@ -1203,9 +1204,9 @@ describe('CardWorkshopView', () => {
   it('keeps image, Manifest/Awaken, Codex, entity-mention, and portrait overrides active in Contextual View', async () => {
     vi.useFakeTimers();
     act(() => root.render(
-      renderWithDevAudio(
+      <LibraryPresentationProvider>{renderWithDevAudio(
         <CardWorkshopView initialMode="contextual" initialPresetId="preset-nonhuman-individual" />,
-      ),
+      )}</LibraryPresentationProvider>,
     ));
     await openTechnicalDetails();
 
@@ -1235,7 +1236,7 @@ describe('CardWorkshopView', () => {
   });
 
   it('preserves the device-size controls for the contextual Reader preview', async () => {
-    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)));
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)}</LibraryPresentationProvider>));
 
     const contextualStage = () => container.querySelector<HTMLElement>(
       '[data-testid="card-workshop-contextual-reader"]',
@@ -1268,7 +1269,7 @@ describe('CardWorkshopView', () => {
       'card-workshop-context-aftermath',
     ]);
 
-    act(() => root.render(renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)));
+    act(() => root.render(<LibraryPresentationProvider>{renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)}</LibraryPresentationProvider>));
     await openTechnicalDetails();
     await selectByLabel('Card category', 'system-world-notice');
     await clickButton('Card Type Tabs');
@@ -1286,12 +1287,13 @@ describe('CardWorkshopView', () => {
       .mockResolvedValue(undefined);
 
     act(() => root.render(
-      renderWithDevAudio(<CardWorkshopView initialMode="contextual" />),
+      <LibraryPresentationProvider>{renderWithDevAudio(<CardWorkshopView initialMode="contextual" />)}</LibraryPresentationProvider>,
     ));
 
     await clickButton('Play World Cue for The Rain Court bell tolled once');
     await act(async () => {
-      vi.advanceTimersByTime(50);
+      // The shared playback bridge waits 100ms for its queue commit.
+      await vi.advanceTimersByTimeAsync(100);
     });
     expect(playSpy).toHaveBeenCalled();
   });

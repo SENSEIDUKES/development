@@ -10,7 +10,7 @@ import {
   worldIdentity,
   type UpdateSeed,
 } from '../seedState';
-import { LibraryTextBox } from '../../../library';
+import { NarrativeTextBox as LibraryTextBox } from '../../../../presentation';
 import { WorkspaceShell } from './WorkspaceShell';
 import { OriginGenrePicker } from './origin/OriginGenrePicker';
 import { OriginPremiseAndTags } from './origin/OriginPremiseAndTags';

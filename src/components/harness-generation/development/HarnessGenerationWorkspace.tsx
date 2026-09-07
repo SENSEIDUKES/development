@@ -14,13 +14,7 @@ import {
   Sparkles,
   WandSparkles,
 } from 'lucide-react';
-import {
-  LibraryButton,
-  LibraryPanel,
-  LibraryTextArea,
-  LibraryTextBox,
-  ManifestButton,
-} from '@seihouse/sen/ui';
+import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox, CreationButton as ManifestButton } from '../../../presentation';
 import {
   HarnessGenerationController,
   exportHarnessStory,

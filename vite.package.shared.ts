@@ -20,6 +20,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 /** Everything a consuming application provides, not the package. */
 export const HOST_PROVIDED = [
+  /^@seihouse\/(ui|library-ui)(\/.*)?$/,
   'react',
   'react/jsx-runtime',
   'react-dom',

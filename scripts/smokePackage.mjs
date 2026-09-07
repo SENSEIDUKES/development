@@ -10,7 +10,9 @@
  */
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+import assert from 'node:assert/strict';
+import { dirname, join, resolve, relative, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveTarget } from './packageTargets.mjs';
 
@@ -18,7 +20,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const target = resolveTarget(process.argv[2]);
 const npmCli = process.env.npm_execpath;
 if (!npmCli) throw new Error('npm_execpath is unavailable; run this check through npm run test:package.');
-const consumerDirectory = await mkdtemp(join(root, '.package-smoke-'));
+const consumerDirectory = await mkdtemp(join(tmpdir(), 'seihouse-narrative-consumer-'));
 const tarballs = [];
 
 const run = (command, args, cwd) => execFileSync(command, args, {
@@ -41,6 +43,10 @@ const pack = packageTarget => {
 };
 
 try {
+  const lock = JSON.parse(await readFile(join(root, 'package-lock.json'), 'utf8'));
+  const peers = ['react', 'react-dom', 'react-focus-lock', 'lucide-react', 'motion', '@types/react', '@types/react-dom'].map(name => name + '@' + lock.packages['node_modules/' + name].version);
+  const audioPack = JSON.parse(runNpm(['pack', join(root, 'node_modules/@seihouse/audio-player'), '--ignore-scripts', '--pack-destination', consumerDirectory, '--json'], root))[0];
+  peers.push(join(consumerDirectory, audioPack.filename));
   const dependencyTarballs = target.smokeDependencies.map(id => pack(resolveTarget(id)));
   const tarballPath = pack(target);
 
@@ -50,9 +56,24 @@ try {
     type: 'module',
   }, null, 2));
   runNpm(
-    ['install', '--ignore-scripts', '--legacy-peer-deps', ...dependencyTarballs, tarballPath],
+    ['install', '--ignore-scripts', ...peers, join(root, 'vendor/seihouse-ui-0.4.0.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.4.0.tgz')] : []), ...dependencyTarballs, tarballPath],
     consumerDirectory,
   );
+
+  // Native ESM also proves Library's provider and SEN's root resolve the same
+  // context across the package boundary, without a bundler alias or host CSS.
+  await writeFile(join(consumerDirectory, 'presentation-smoke.mjs'), `
+    import assert from 'node:assert/strict';
+    import { createElement } from 'react';
+    import { renderToStaticMarkup } from 'react-dom/server';
+    import { NarrativeTextBox } from '@seihouse/sen';
+    ${target.id === 'library' ? "import { LibraryPresentationProvider } from '@seihouse/library/presentation';" : ''}
+    const field = createElement(NarrativeTextBox, { label: 'World', defaultValue: 'Astral' });
+    const html = renderToStaticMarkup(${target.id === 'library' ? 'createElement(LibraryPresentationProvider, null, field)' : 'field'});
+    assert.match(html, /Astral/);
+    assert.equal(html.includes('glass-field'), ${target.id === 'library'});
+  `);
+  run(process.execPath, ['presentation-smoke.mjs'], consumerDirectory);
 
   const imports = [];
   const bindings = [];
@@ -97,6 +118,12 @@ try {
     join(consumerDirectory, 'node_modules', manifest.name, 'package.json'),
     'utf8',
   ));
+  if (target.id === 'sen') {
+    assert(!installedManifest.exports['./ui']);
+    assert(!installedManifest.exports['./library']);
+    assert(!JSON.stringify(installedManifest).includes('@seihouse/library'));
+    assert(!(await import('node:fs')).existsSync(join(consumerDirectory, 'node_modules/@seihouse/library-ui')));
+  }
   const linked = target.smokeDependencies.length > 0
     ? ` linked against ${target.smokeDependencies.join(', ')},`
     : '';
@@ -105,6 +132,8 @@ try {
     + `type-checked, and bundled — ${Object.keys(installedManifest.exports).length} exports.`,
   );
 } finally {
+  const cleanupPath = relative(tmpdir(), consumerDirectory);
+  assert(!cleanupPath.startsWith('..') && !isAbsolute(cleanupPath) && cleanupPath.startsWith('seihouse-narrative-consumer-'));
   await rm(consumerDirectory, { recursive: true, force: true });
   for (const tarball of tarballs) await rm(tarball, { force: true });
 }

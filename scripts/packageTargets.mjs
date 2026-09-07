@@ -25,6 +25,8 @@ export const LIBRARY_OWNED = [
   'src/components/closed-door-cultivation/',
   'src/components/relics/',
   'src/package/library/',
+  'src/components/library/',
+  'src/components/library-presentation/',
 ];
 
 export const PACKAGE_TARGETS = {
@@ -35,22 +37,17 @@ export const PACKAGE_TARGETS = {
     distDirectory: 'dist/sen',
     styleSheet: 'sen.css',
     /** Entries that carry no styling and must not import the stylesheet. */
-    unstyledEntries: ['audio'],
+    unstyledEntries: ['audio', 'presentation', 'index'],
     viteConfig: 'vite.package.config.ts',
     tsconfig: 'tsconfig.package.json',
     forbiddenBundleContents: [
       ...NEVER_PUBLISHED,
+      ['@seihouse/library-ui', 'Library UI dependency'],
       ...LIBRARY_OWNED.map(path => [path, 'Library-owned surface']),
     ],
     /** Runtime assets the published components address from root paths. */
     assets: [
       'favicon.jpg',
-      'icons/book-scroll.svg',
-      'icons/cultivator.svg',
-      'icons/sacred-tree.svg',
-      'icons/shen-long-dragon.svg',
-      'icons/thunder-cloud.svg',
-      'icons/yin-yang.svg',
       'manifest-backdrops/immortal-land-1.jpg',
       'manifest-backdrops/immortal-land-2.jpg',
       'manifest-backdrops/immortal-land-3.jpg',
@@ -63,8 +60,8 @@ export const PACKAGE_TARGETS = {
     smokeDependencies: [],
     /** Named exports the packed consumer must be able to import and bundle. */
     smokeExports: {
-      '@seihouse/sen': ['LibraryPanel', 'SEN_PACKAGE_VERSION'],
-      '@seihouse/sen/ui': ['LibraryPanel', 'ManifestButton', 'ParticleEffect'],
+      '@seihouse/sen': ['NarrativePresentationProvider', 'SEN_PACKAGE_VERSION'],
+      '@seihouse/sen/presentation': ['NarrativePresentationProvider', 'NarrativeTextBox', 'AmbientEffect'],
       '@seihouse/sen/color-codes': [
         'COLOR_CODES',
         'getColorCodeValue',
@@ -74,7 +71,7 @@ export const PACKAGE_TARGETS = {
         'resolveSystemOutcomeColorCode',
       ],
       '@seihouse/sen/cards': [
-        'LibraryCard',
+        'SEICard',
         'CodexCard',
         'CodexHovercard',
         'CharacterCard',
@@ -113,7 +110,6 @@ export const PACKAGE_TARGETS = {
         'HARNESS_GENERATION_INDEXED_DB_NAME',
       ],
       // The compatibility aliases kept for one version.
-      '@seihouse/sen/library': ['LibraryPanel'],
       '@seihouse/sen/codex-cards': ['CodexCard'],
     },
     /** Public types the packed consumer must be able to resolve. */
@@ -126,7 +122,7 @@ export const PACKAGE_TARGETS = {
         CodexCardProps,
         FateResultCardProps,
         FateResultData,
-        LibraryCardProps,
+
         SystemBlockProps,
         SystemEvent,
         SystemPromptBadge,
@@ -157,7 +153,7 @@ export const PACKAGE_TARGETS = {
       declare const colorCode: ColorCodeId;
       declare const colorCodeDefinition: ColorCodeDefinition;
       declare const codexCard: CodexCardProps;
-      declare const card: LibraryCardProps;
+      declare const card: import('@seihouse/ui').SEICardProps;
       declare const fateResultCard: FateResultCardProps;
       declare const systemBlock: SystemBlockProps;
       declare const systemRoute: SystemPromptRoute;
@@ -194,9 +190,9 @@ export const PACKAGE_TARGETS = {
     sourceDirectory: 'src/package/library',
     distDirectory: 'dist/library',
     // Library adds no stylesheet of its own: its surfaces are Tailwind-only
-    // and inherit the SEN treatments through `@seihouse/sen/styles.css`.
+    // and use the host import of `@seihouse/library-ui/styles.css`.
     styleSheet: 'library.css',
-    unstyledEntries: ['index', 'cultivation', 'relics'],
+    unstyledEntries: ['index', 'cultivation', 'relics', 'presentation'],
     viteConfig: 'vite.library.config.ts',
     tsconfig: 'tsconfig.library.json',
     forbiddenBundleContents: NEVER_PUBLISHED,
@@ -210,6 +206,7 @@ export const PACKAGE_TARGETS = {
     smokeDependencies: ['sen'],
     smokeExports: {
       '@seihouse/library': ['LIBRARY_PACKAGE_VERSION', 'RelicCard', 'ClosedDoorCultivationModal'],
+      '@seihouse/library/presentation': ['LibraryPresentationProvider'],
       '@seihouse/library/cultivation': ['ClosedDoorCultivationModal'],
       '@seihouse/library/relics': ['RelicCard', 'RelicModal', 'RelicReveal'],
     },

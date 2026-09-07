@@ -1,13 +1,7 @@
 import { memo } from 'react';
 import { Check, ChevronRight, Sparkles } from 'lucide-react';
 import type { StorySeedInput } from '../shared/storySeedSchema';
-import {
-  LibraryNavigationDrawerPanel,
-  type LibraryNavigationDrawerAccent,
-  type LibraryNavigationDrawerItem,
-  type LibraryNavigationDrawerProfile,
-  type LibraryNavigationDrawerSection,
-} from '../../library';
+import { NarrativeNavigationDrawerPanel as LibraryNavigationDrawerPanel, type NarrativeNavigationDrawerAccent as LibraryNavigationDrawerAccent, type NarrativeNavigationDrawerItem as LibraryNavigationDrawerItem, type NarrativeNavigationDrawerProfile as LibraryNavigationDrawerProfile, type NarrativeNavigationDrawerSection as LibraryNavigationDrawerSection } from '../../../presentation';
 import {
   FAMILY_ICONS,
   FAMILY_SECTIONS,

@@ -83,7 +83,7 @@ function RelicsScene({ scene, RevealComponent }: { scene: Scene; RevealComponent
                           ? 'text-purple-400'
                           : rarity === 'Rare'
                             ? 'text-emerald-400'
-                            : 'text-neutral-500'
+                            : 'text-neutral-400'
                 }`}
               >
                 {rarity} Rank

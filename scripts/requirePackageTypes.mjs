@@ -6,7 +6,7 @@
  * files rather than SEN source, so Library never re-emits a second copy of the
  * engine's types. That makes SEN's declarations a build input; without this
  * guard a missing SEN build surfaces as an opaque "Cannot find module
- * '@seihouse/sen/ui'" from `tsc`.
+ * '@seihouse/sen/presentation'" from `tsc`.
  *
  * Usage: `node scripts/requirePackageTypes.mjs <target> requires <dependency>`
  */

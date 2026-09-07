@@ -1,7 +1,7 @@
 {
   "name": "@seihouse/sen",
-  "version": "0.3.1",
-  "description": "SEIHouse Expanded Novels: an embeddable expanded-narrative engine \u2014 expanded reading behavior, structured chapter contracts, Color Codes, Codex behavior, cards, and the narrative surfaces built on them.",
+  "version": "0.4.0",
+  "description": "SEIHouse Expanded Novels: an embeddable expanded-narrative engine — expanded reading behavior, structured chapter contracts, Color Codes, Codex behavior, cards, and the narrative surfaces built on them.",
   "type": "module",
   "sideEffects": [
     "**/*.css"
@@ -13,10 +13,6 @@
     ".": {
       "types": "./dist/types/package/sen/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./ui": {
-      "types": "./dist/types/package/sen/ui.d.ts",
-      "import": "./dist/ui.js"
     },
     "./color-codes": {
       "types": "./dist/types/package/sen/color-codes.d.ts",
@@ -54,22 +50,23 @@
       "types": "./dist/types/package/sen/harness-generation.d.ts",
       "import": "./dist/harness-generation.js"
     },
-    "./library": {
-      "types": "./dist/types/package/sen/library.d.ts",
-      "import": "./dist/library.js"
-    },
     "./codex-cards": {
       "types": "./dist/types/package/sen/codex-cards.d.ts",
       "import": "./dist/codex-cards.js"
     },
-    "./styles.css": "./dist/sen.css"
+    "./styles.css": "./dist/sen.css",
+    "./presentation": {
+      "types": "./dist/types/package/sen/presentation.d.ts",
+      "import": "./dist/presentation.js"
+    }
   },
   "peerDependencies": {
     "@seihouse/audio-player": "*",
     "lucide-react": ">=1",
     "motion": ">=12",
-    "react": ">=18",
-    "react-dom": ">=18",
-    "react-focus-lock": ">=2"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-focus-lock": ">=2",
+    "@seihouse/ui": "0.4.0"
   }
 }

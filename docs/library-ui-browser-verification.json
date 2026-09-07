@@ -1,0 +1,121 @@
+{
+  "date": "2026-09-06",
+  "uiSourceCommit": "e272b18d7960ed7d1fa32b0d5d111c7da55e170b",
+  "browser": "Chromium",
+  "routes": [
+    {
+      "route": "story-seed",
+      "width": 1280,
+      "overflow": false,
+      "experience": "sen",
+      "violations": [],
+      "errors": []
+    },
+    {
+      "route": "reader-chamber",
+      "width": 1280,
+      "overflow": false,
+      "experience": "sen",
+      "violations": [],
+      "errors": []
+    },
+    {
+      "route": "reader-codex",
+      "width": 1280,
+      "overflow": false,
+      "experience": "sen",
+      "violations": [],
+      "errors": []
+    },
+    {
+      "route": "chapter-generation-manifestation",
+      "width": 1280,
+      "overflow": false,
+      "experience": "sen",
+      "violations": [],
+      "errors": []
+    },
+    {
+      "route": "relics-gallery",
+      "width": 1280,
+      "overflow": false,
+      "experience": "sen",
+      "violations": [],
+      "errors": []
+    },
+    {
+      "route": "harness-generation",
+      "width": 1280,
+      "overflow": false,
+      "experience": "sen",
+      "violations": [],
+      "errors": []
+    },
+    {
+      "route": "story-seed",
+      "width": 390,
+      "overflow": false,
+      "experience": "sen",
+      "violations": [],
+      "errors": []
+    },
+    {
+      "route": "reader-chamber",
+      "width": 390,
+      "overflow": false,
+      "experience": "sen",
+      "violations": [],
+      "errors": []
+    },
+    {
+      "route": "reader-codex",
+      "width": 390,
+      "overflow": false,
+      "experience": "sen",
+      "violations": [],
+      "errors": []
+    },
+    {
+      "route": "chapter-generation-manifestation",
+      "width": 390,
+      "overflow": false,
+      "experience": "sen",
+      "violations": [],
+      "errors": []
+    },
+    {
+      "route": "relics-gallery",
+      "width": 390,
+      "overflow": false,
+      "experience": "sen",
+      "violations": [],
+      "errors": []
+    },
+    {
+      "route": "harness-generation",
+      "width": 390,
+      "overflow": false,
+      "experience": "sen",
+      "violations": [],
+      "errors": []
+    }
+  ],
+  "inventory": [
+    {
+      "width": 390,
+      "focusTrap": true,
+      "focusRestored": true,
+      "fieldValue": "The Astral Archive",
+      "violations": [],
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "focusTrap": true,
+      "focusRestored": true,
+      "fieldValue": "The Astral Archive",
+      "violations": [],
+      "overflow": false
+    }
+  ]
+}

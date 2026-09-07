@@ -44,6 +44,7 @@ export function SystemColorLegend({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <select
+            aria-label="Color Code palette"
             value={currentPrefs?.colorPaletteId || 'default'}
             onChange={(e) => handleUpdatePreference('colorPaletteId', e.target.value)}
             className="text-[9px] uppercase font-mono tracking-wider text-portal transition-colors px-2.5 py-1.5 border border-portal/30 hover:border-portal rounded-sm bg-portal/5 hover:bg-portal/15 cursor-pointer outline-none focus:ring-1 focus:ring-portal appearance-none"
@@ -70,7 +71,7 @@ export function SystemColorLegend({
         The Heavenly System speaks through colors. The resonance of each hue carries deep narrative significance. Learn to feel the thread of your fate.
       </p>
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
+      <div tabIndex={0} role="region" aria-label="Color Code meanings" className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
         {SYSTEM_COLORS_LEGEND.map((m) => (
           <div
             key={m.type}

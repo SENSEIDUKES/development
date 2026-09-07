@@ -538,7 +538,7 @@ export default function ReaderCodex({
              className={`w-full flex items-center justify-between px-3 py-2 rounded text-[10px] font-mono tracking-wider transition-all border ${
                showDeepMemory
                  ? 'bg-portal/10 border-portal text-portal shadow-sm shadow-portal/20'
-                 : 'bg-void border-neutral-900 text-neutral-500 hover:text-portal hover:border-portal'
+                 : 'bg-void border-neutral-900 text-neutral-400 hover:text-portal hover:border-portal'
              }`}
            >
              <span className="flex items-center gap-1.5 uppercase">

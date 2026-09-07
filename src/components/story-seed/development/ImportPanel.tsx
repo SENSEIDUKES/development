@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Layers, Upload, X } from 'lucide-react';
 import type { StorySeedArtifact } from '../shared/storySeedRepository';
 import { parseStorySeedJson } from '../shared/storySeedSerialization';
-import { LibraryButton, LibraryTextArea } from '../../library';
+import { NarrativeButton as LibraryButton, NarrativeTextArea as LibraryTextArea } from '../../../presentation';
 
 /**
  * Import Story Seed — the portable-JSON intake surface, living inside the

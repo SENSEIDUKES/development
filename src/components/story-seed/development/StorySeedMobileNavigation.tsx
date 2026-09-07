@@ -2,13 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Bookmark, Check, CircleHelp, List, Settings, Sparkles, Sprout, X } from 'lucide-react';
 import type { StorySeedInput } from '../shared/storySeedSchema';
-import {
-  LibraryBottomNavigation,
-  type LibraryBottomNavigationItem,
-  LibraryButton,
-  LibraryNavigationDrawer,
-  LibraryPanel,
-} from '../../library';
+import { NarrativeBottomNavigation as LibraryBottomNavigation, type NarrativeBottomNavigationItem as LibraryBottomNavigationItem, NarrativeButton as LibraryButton, NarrativeNavigationDrawer as LibraryNavigationDrawer, NarrativePanel as LibraryPanel } from '../../../presentation';
 import { haveSameSeedSectionState, type SeedSectionId } from './seedSections';
 import type { SeedUpdate } from './seedState';
 import { buildStorySeedDrawerSections, storySeedDrawerProfile } from './StorySeedSelector';

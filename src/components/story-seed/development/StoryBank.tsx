@@ -14,7 +14,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { StorySeedRecord } from '../shared/storySeedRepository';
-import { LibraryButton, LibraryPanel, ManifestButton } from '../../library';
+import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '../../../presentation';
 
 /**
  * Story Bank — the permanent home for every saved Story Seed and its latest

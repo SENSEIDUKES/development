@@ -7,7 +7,7 @@
     "outDir": "dist/library/dist/types",
     "rootDir": "src",
     // Library type-checks against SEN's *published* declarations, not SEN
-    // source. Without this, `tsc` follows `@seihouse/sen/ui` into
+    // source. Without this, `tsc` follows `@seihouse/sen/presentation` into
     // `src/components/` and emits a second copy of the engine's types inside
     // the Library package. `build:package` builds SEN first, so these exist.
     "paths": {

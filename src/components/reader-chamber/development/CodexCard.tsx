@@ -1,16 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import {
-  LibraryCard,
-  LibraryCardActions,
-  LibraryCardBody,
-  LibraryCardContent,
-  LibraryCardDescription,
-  LibraryCardHeader,
-  LibraryCardMedia,
-  LibraryCardTitle,
-} from '../../library/LibraryCard';
-import { LibraryDragonCycleIcon } from '../../library/LibraryDragonCycleIcon';
+import { NarrativeCard as LibraryCard, NarrativeCardActions as LibraryCardActions, NarrativeCardBody as LibraryCardBody, NarrativeCardContent as LibraryCardContent, NarrativeCardDescription as LibraryCardDescription, NarrativeCardHeader as LibraryCardHeader, NarrativeCardMedia as LibraryCardMedia, NarrativeCardTitle as LibraryCardTitle } from '../../../presentation';
+import { NarrativeDragonCycleIcon as LibraryDragonCycleIcon } from '../../../presentation';
 import { isManifestationEligible } from '../shared/manifestationEligibility';
 import { CodexCardAmbience } from '../../reader-codex/development/CodexCardAmbience';
 import { resolveCodexEntityAccent, resolveCodexEntityColorCode } from '../../reader-codex/development/codexEntityAccent';

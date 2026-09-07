@@ -25,7 +25,7 @@ import {
   type StorySeedStoryRequired,
 } from '../../shared/storySeedSchema';
 import { STORY_STYLE_OPTIONS, type StoryStyle } from '../../shared/storyStyle';
-import { LibraryPanel, LibraryTextArea, LibraryTextBox } from '../../../library';
+import { NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '../../../../presentation';
 import {
   BlueprintSectionHeading,
   EditableChip,

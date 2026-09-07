@@ -28,6 +28,16 @@ function RelicsScene({ scene, RevealComponent }: { scene: Scene; RevealComponent
     setRevealArtifact(relic);
   };
 
+  const reveal = revealArtifact ? (
+    <RevealComponent
+      key={revealArtifact.id}
+      artifact={revealArtifact}
+      replayKey={replayKey}
+      onClaim={() => setRevealArtifact(null)}
+      onDismiss={() => setRevealArtifact(null)}
+    />
+  ) : null;
+
   if (scene === 'reveal') {
     return (
       <div className="min-h-[calc(100vh-11rem)] bg-black text-white font-sans flex items-center justify-center p-6">
@@ -41,13 +51,7 @@ function RelicsScene({ scene, RevealComponent }: { scene: Scene; RevealComponent
           </button>
         ) : (
           <>
-            <RevealComponent
-              key={revealArtifact.id}
-              artifact={revealArtifact}
-              replayKey={replayKey}
-              onClaim={() => setRevealArtifact(null)}
-              onDismiss={() => setRevealArtifact(null)}
-            />
+            {reveal}
             <button
               type="button"
               onClick={() => setReplayKey((k) => k + 1)}
@@ -83,7 +87,7 @@ function RelicsScene({ scene, RevealComponent }: { scene: Scene; RevealComponent
                           ? 'text-purple-400'
                           : rarity === 'Rare'
                             ? 'text-emerald-400'
-                            : 'text-neutral-500'
+                            : 'text-neutral-400'
                 }`}
               >
                 {rarity} Rank
@@ -110,6 +114,7 @@ function RelicsScene({ scene, RevealComponent }: { scene: Scene; RevealComponent
       </div>
 
       <RelicModal inspectArtifact={inspectArtifact} onClose={() => setInspectArtifact(null)} />
+      {reveal}
     </div>
   );
 }

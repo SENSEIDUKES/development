@@ -7,7 +7,7 @@ import React, {
   useState,
   type ReactNode,
 } from 'react';
-import { LibrarySoundGlyph } from '../../library';
+import { NarrativeSoundGlyph as LibrarySoundGlyph } from '../../../presentation';
 import {
   getInlineCueTrackId,
   matchLeadingInlineAudioPunctuation,

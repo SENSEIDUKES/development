@@ -322,3 +322,7 @@ harness:
 - **2026-08-02:** Corrected the creation hierarchy around Origin, ARC, World,
   and Settings without changing the locked reference replica.
 - **2026-08-01:** Created the production replica and initial development fork.
+
+### 2026-09-06 — Library UI ownership migration
+
+Reusable presentation now comes from the canonical Library UI package. Portable SEN surfaces resolve presentation through the host provider; the first-party Workshop supplies LibraryPresentationProvider. Domain, generation, persistence, media, and locked reference sources are unchanged.

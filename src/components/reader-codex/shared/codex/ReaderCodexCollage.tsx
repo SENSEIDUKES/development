@@ -61,12 +61,14 @@ const CollageItem = React.memo(({ mem, isDownloading, handleDownload, handleOpen
         boxShadow: '0 10px 30px rgba(4,172,255,0.25)'
       }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      onClick={() => handleOpenLightbox(mem)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenLightbox(mem); } }}
       className="cursor-pointer bg-neutral-950 border border-neutral-900/90 rounded-sm p-2.5 pb-5 hover:border-portal/40 transition-colors relative flex flex-col justify-between group shadow-lg"
     >
+      <button
+        type="button"
+        aria-label={`Open memory: ${mem.title}`}
+        onClick={() => handleOpenLightbox(mem)}
+        className="absolute inset-0 z-10 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-portal"
+      />
       {/* Silver Push Pin Indicator */}
       <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-neutral-400 border border-neutral-600 shadow-md z-10 group-hover:bg-portal group-hover:border-portal/60 transition-colors" />
 
@@ -97,10 +99,9 @@ const CollageItem = React.memo(({ mem, isDownloading, handleDownload, handleOpen
         <button
           type="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }}
           onClick={(e) => handleDownload(mem, e)}
           aria-label={`Download portrait of ${mem.title}`}
-          className="absolute top-2 left-2 p-1.5 text-neutral-400 bg-black/60 border border-neutral-800 backdrop-blur-sm hover:text-portal hover:border-portal/40 rounded-xl opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all z-20 cursor-pointer"
+          className="absolute top-2 left-2 z-20 p-1.5 text-neutral-400 bg-black/60 border border-neutral-800 backdrop-blur-sm hover:text-portal hover:border-portal/40 rounded-xl opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all z-20 cursor-pointer"
           title="Download Portrait"
         >
           {isDownloading ? (

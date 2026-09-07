@@ -2,7 +2,7 @@ import { Flame, Layers } from 'lucide-react';
 import type { StorySeedInput } from '../../shared/storySeedSchema';
 import { getSeedSection } from '../seedSections';
 import { patchPowerSystem, worldFoundations, type UpdateSeed } from '../seedState';
-import { LibraryTextArea, LibraryTextBox } from '../../../library';
+import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '../../../../presentation';
 import { WorkspaceShell } from './WorkspaceShell';
 
 interface PowerSystemWorkspaceProps {

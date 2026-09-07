@@ -10,7 +10,7 @@ import {
   SlidersHorizontal,
   Sparkles,
 } from 'lucide-react';
-import { LibraryButton, LibraryPanel } from '@seihouse/sen/ui';
+import { LibraryButton, LibraryPanel } from '@seihouse/library-ui';
 import { getWorkshopVersionLabel, type WorkshopEntry } from './manifest';
 
 export type WorkspaceView = 'reference' | 'development' | 'compare';
@@ -152,7 +152,7 @@ function WorkshopControls({ config }: { config?: WorkshopControlsConfig }) {
                       key={section.id}
                       id={`${panelId}-${section.id}-button`}
                       type="button"
-                      aria-controls={`${panelId}-${section.id}`}
+                      aria-controls={selected ? `${panelId}-${section.id}` : undefined}
                       aria-pressed={selected}
                       onClick={() => setActiveSection(section.id)}
                       className={`workshop-touch-target flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs transition-colors md:w-full ${
@@ -228,7 +228,7 @@ export function FeatureWorkspace({
         <h1 className="text-lg sm:text-2xl font-display font-medium tracking-wide text-white/90 uppercase">
           {entry.title}
         </h1>
-        <p className="mt-0.5 sm:mt-1 text-[11px] sm:text-xs text-white/40 font-mono">
+        <p className="mt-0.5 sm:mt-1 text-[11px] sm:text-xs text-white/60 font-mono">
           {getWorkshopVersionLabel(entry.version)}
           {entry.source?.lastCompared ? ` · Source checked ${entry.source.lastCompared}` : ''}
         </p>

@@ -9,11 +9,10 @@
  * built on them. AI chapter generation is one optional content source, never
  * a requirement.
  *
- * The root entry publishes the surface primitives — the layer the other SEN
- * surfaces are composed from. Every larger system is its own subpath, so a
- * consumer only pays for what it uses:
+ * The root exposes host presentation contracts and universal defaults.
+ * Feature systems retain their independent public subpaths:
  *
- * - `@seihouse/sen/ui`                 — the SEN surface primitives
+ * - `@seihouse/sen/presentation`      — host presentation provider and contracts
  * - `@seihouse/sen/color-codes`        — the single Color Code authority
  * - `@seihouse/sen/cards`              — the shared card system
  * - `@seihouse/sen/reader-chamber`     — the Reader Chamber
@@ -30,7 +29,7 @@
  * Library. Workshop mocks, preview shells, and server code are not part of
  * any entry.
  */
-export * from './ui';
+export * from './presentation';
 
 /** The package surface version, bumped with the published package. */
-export const SEN_PACKAGE_VERSION = '0.3.1';
+export const SEN_PACKAGE_VERSION = '0.4.0';

@@ -211,3 +211,7 @@ Development-fork refinement is approved for transfer, map:
 
 Never transfer Workshop compatibility adapters, mock fixtures, preview routes,
 or local media/voice/glossary simulators over production's real services.
+
+### 2026-09-06 — Library UI ownership migration
+
+Reusable presentation now comes from the canonical Library UI package. Portable SEN surfaces resolve presentation through the host provider; the first-party Workshop supplies LibraryPresentationProvider. Domain, generation, persistence, media, and locked reference sources are unchanged.

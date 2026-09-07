@@ -60,7 +60,7 @@ import { FactionsWorkspace } from './workspaces/FactionsWorkspace';
 import { AbilitiesWorkspace } from './workspaces/AbilitiesWorkspace';
 import { PowerSystemWorkspace } from './workspaces/PowerSystemWorkspace';
 
-import { LibraryPanel, ManifestButton } from '../../library';
+import { NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '../../../presentation';
 import { DeferredStorySeedView } from './DeferredStorySeedView';
 import { StorySeedHeader } from './StorySeedHeader';
 import { StorySeedMobileNavigation } from './StorySeedMobileNavigation';

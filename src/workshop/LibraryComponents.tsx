@@ -9,27 +9,13 @@ import {
   Sparkles,
   User,
 } from 'lucide-react';
-import {
-  LibraryBottomNavigation,
-  LibraryButton,
-  LibraryCard,
-  LibraryDragonCycleIcon,
-  LibraryHeaderBadge,
-  LibraryNavigationDrawer,
-  LibraryNavigationDrawerPanel,
-  LibraryPanel,
-  LibrarySoundGlyph,
-  LibraryTextArea,
-  LibraryTextBox,
-  ManifestButton,
-  type LibraryNavigationDrawerSection,
-} from '@seihouse/sen/ui';
+import { LibraryBottomNavigation, LibraryButton, LibraryCard, LibraryDragonCycleIcon, LibraryHeaderBadge, LibraryNavigationDrawer, LibraryNavigationDrawerPanel, LibraryPanel, LibrarySoundGlyph, LibraryTextArea, LibraryTextBox, ManifestButton, type LibraryNavigationDrawerSection } from '@seihouse/library-ui';
 
 /**
  * LibraryComponents — the home page's Library Components tab.
  *
  * A live inventory of the reusable SEN surface primitives owned by
- * `src/components/library/` and published as `@seihouse/sen/ui` (see its
+ * `@seihouse/library-ui` and published as `@seihouse/library-ui` (see its
  * README for the ownership contract).
  * Every card below renders the real component imported from the shared
  * barrel — no replicas, no screenshots — so the tab always shows what
@@ -266,7 +252,7 @@ function SoundGlyphPreview() {
 }
 
 type LibraryComponentEntry = {
-  /** The exact export name in the `src/components/library` barrel. */
+  /** The exact export name in the `@seihouse/library-ui` barrel. */
   name: string;
   /** One line on what the primitive is for, so reuse starts from the right component. */
   description: string;
@@ -358,8 +344,8 @@ export function LibraryComponentsGrid() {
         ))}
       </section>
       <p className="workshop-library-note">
-        Every preview above renders the real component from <code>src/components/library</code>, published as{' '}
-        <code>@seihouse/sen/ui</code> — import from that entry instead of rebuilding. <code>SEIButton</code>,{' '}
+        Every preview above renders the real component from <code>@seihouse/library-ui</code>, published as{' '}
+        <code>@seihouse/library-ui</code> — import from that entry instead of rebuilding. <code>SEIButton</code>,{' '}
         <code>SEIBottomNavigation</code>, and <code>cn</code> are exported only as bases for building new
         skinned controls.
       </p>

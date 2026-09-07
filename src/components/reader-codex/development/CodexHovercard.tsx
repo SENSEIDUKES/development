@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Shield, MapPin, Swords, User } from 'lucide-react';
 import { Character, Faction, Artifact, Location } from '../shared/types';
 import type { StoryWorld } from '../../reader-chamber/shared/types';
-import { SPECTRAL_EDGE } from '../../library/LibraryPanel';
-import { LibraryDragonCycleIcon } from '../../library/LibraryDragonCycleIcon';
+import { CODEX_SPECTRAL_EDGE } from './codexHovercardStyles';
+import { NarrativeDragonCycleIcon as LibraryDragonCycleIcon } from '../../../presentation';
 import { CodexCardAmbience } from './CodexCardAmbience';
 import { getManifestBackdrop } from './codexManifestBackdrop';
 import { getColorCodeStyle } from '../../reader-chamber/shared/colorCodes';
@@ -56,7 +56,7 @@ const HOVERCARD_GLASS_CLASS = [
   'bg-[rgba(8,12,20,0.95)] supports-[backdrop-filter]:bg-[rgba(8,12,20,0.60)]',
   'border-[color-mix(in_srgb,var(--codex-card-accent)_34%,rgba(190,216,255,0.26))]',
   'shadow-[inset_0_1px_0_rgba(255,255,255,0.16),inset_0_-1px_0_rgba(150,195,255,0.07),0_18px_50px_rgba(0,0,0,0.6),0_0_42px_-10px_color-mix(in_srgb,var(--codex-card-accent)_50%,transparent)]',
-  SPECTRAL_EDGE,
+  CODEX_SPECTRAL_EDGE,
 ].join(' ');
 
 /**

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -111,7 +112,7 @@ const sampleRecord = (id = 'seed-1'): StorySeedRecord => {
 describe('Story Seed keyboard and mobile navigation', () => {
   it('traps desktop Settings focus and restores it to the trigger on Escape', () => {
     act(() => root.render(
-      <StorySeedHeader
+      <LibraryPresentationProvider>{<StorySeedHeader
         seed={createEmptyStorySeedInput()}
         updateSeed={vi.fn()}
         isGenerating={false}
@@ -120,7 +121,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
         onSaveDraft={vi.fn()}
         onToggleStoryBank={vi.fn()}
         onOpenHelp={vi.fn()}
-      />,
+      />}</LibraryPresentationProvider>,
     ));
 
     const trigger = buttonNamed('Settings');
@@ -163,13 +164,13 @@ describe('Story Seed keyboard and mobile navigation', () => {
     const onPremiseChange = vi.fn();
     const updateSeed = vi.fn();
     act(() => root.render(
-      <OriginPremiseAndTags
+      <LibraryPresentationProvider>{<OriginPremiseAndTags
         premise=""
         storyTags={[]}
         onPremiseChange={onPremiseChange}
         updateSeed={updateSeed}
         genrePicker={<button type="button">Genre</button>}
-      />,
+      />}</LibraryPresentationProvider>,
     ));
 
     const textarea = container.querySelector<HTMLTextAreaElement>('#core-premise-input');
@@ -184,13 +185,13 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(container.textContent).not.toContain('press Tab');
 
     act(() => root.render(
-      <OriginPremiseAndTags
+      <LibraryPresentationProvider>{<OriginPremiseAndTags
         premise="A reborn cultivator returns to the ruined sect."
         storyTags={[]}
         onPremiseChange={onPremiseChange}
         updateSeed={updateSeed}
         genrePicker={<button type="button">Genre</button>}
-      />,
+      />}</LibraryPresentationProvider>,
     ));
     expect(container.textContent).toContain('Add tag:');
     expect(container.textContent).not.toContain('Tab:');
@@ -217,7 +218,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
         genrePicker={null}
       />;
     };
-    act(() => root.render(<Harness />));
+    act(() => root.render(<LibraryPresentationProvider>{<Harness />}</LibraryPresentationProvider>));
     const input = container.querySelector<HTMLTextAreaElement>('#core-premise-input')!;
     const setPremise = (value: string) => act(() => {
       Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(input, value);
@@ -251,7 +252,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
         genrePicker={null}
       />;
     };
-    act(() => root.render(<Harness />));
+    act(() => root.render(<LibraryPresentationProvider>{<Harness />}</LibraryPresentationProvider>));
     const fill = (selector: string, value: string) => act(() => {
       const input = container.querySelector<HTMLInputElement>(selector)!;
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, value);
@@ -283,7 +284,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
   it('adds Manifest to the labeled mobile navigation only when generation is ready', () => {
     const onManifest = vi.fn();
     const renderNavigation = (canManifest: boolean) => act(() => root.render(
-      <StorySeedMobileNavigation
+      <LibraryPresentationProvider>{<StorySeedMobileNavigation
         seed={createEmptyStorySeedInput()}
         updateSeed={vi.fn()}
         activeSection="origin"
@@ -297,13 +298,13 @@ describe('Story Seed keyboard and mobile navigation', () => {
         onOpenHelp={vi.fn()}
         onSaveDraft={vi.fn()}
         onManifest={onManifest}
-      />,
+      />}</LibraryPresentationProvider>,
     ));
 
     renderNavigation(false);
     let nav = container.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]');
     let buttons = Array.from(nav!.querySelectorAll<HTMLButtonElement>('button'));
-    expect(buttons.map(button => button.getAttribute('aria-label'))).toEqual([
+    expect(buttons.map(button => button.getAttribute('aria-label') ?? button.textContent?.trim())).toEqual([
       'Sections',
       'Story Bank',
       'Help',
@@ -314,7 +315,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     renderNavigation(true);
     nav = container.querySelector<HTMLElement>('nav[aria-label="Story Seed navigation"]');
     buttons = Array.from(nav!.querySelectorAll<HTMLButtonElement>('button'));
-    expect(buttons.map(button => button.getAttribute('aria-label'))).toEqual([
+    expect(buttons.map(button => button.getAttribute('aria-label') ?? button.textContent?.trim())).toEqual([
       'Sections',
       'Story Bank',
       'Help',
@@ -328,12 +329,12 @@ describe('Story Seed keyboard and mobile navigation', () => {
 
   it('announces why the primary Manifest action is disabled', () => {
     act(() => root.render(
-      <CreationModal
+      <LibraryPresentationProvider>{<CreationModal
         onStartStory={vi.fn()}
         onGenerateBlueprint={vi.fn()}
         isGenerating={false}
         error={null}
-      />,
+      />}</LibraryPresentationProvider>,
     ));
 
     const manifest = container.querySelector<HTMLButtonElement>('button[data-variant="manifest"]');
@@ -345,7 +346,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
 
   it('keeps custom radio groups to one Tab stop and selects with navigation keys', () => {
     const onStyleSelect = vi.fn();
-    act(() => root.render(<OriginStyleSelector selectedStyle="chinese" onSelect={onStyleSelect} />));
+    act(() => root.render(<LibraryPresentationProvider>{<OriginStyleSelector selectedStyle="chinese" onSelect={onStyleSelect} />}</LibraryPresentationProvider>));
     let radios = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="radio"]'));
     expect(radios.map(radio => radio.tabIndex)).toEqual([0, -1, -1]);
     radios[0].focus();
@@ -361,7 +362,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(onStyleSelect).toHaveBeenLastCalledWith('chinese');
 
     const onGenreChange = vi.fn();
-    act(() => root.render(<OriginGenrePicker genre="" onChange={onGenreChange} />));
+    act(() => root.render(<LibraryPresentationProvider>{<OriginGenrePicker genre="" onChange={onGenreChange} />}</LibraryPresentationProvider>));
     act(() => buttonNamed('Pick a path')!.click());
     radios = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="radio"]'));
     expect(radios.filter(radio => radio.tabIndex === 0)).toHaveLength(1);
@@ -371,7 +372,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(onGenreChange).toHaveBeenLastCalledWith('Mystery Cultivation');
 
     const arcUpdate = vi.fn();
-    act(() => root.render(<ArcWorkspace seed={createEmptyStorySeedInput()} updateSeed={arcUpdate} />));
+    act(() => root.render(<LibraryPresentationProvider>{<ArcWorkspace seed={createEmptyStorySeedInput()} updateSeed={arcUpdate} />}</LibraryPresentationProvider>));
     radios = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="radiogroup"]')[0].querySelectorAll('[role="radio"]'));
     expect(radios.map(radio => radio.tabIndex)).toEqual([-1, 0, -1]);
     radios[1].focus();
@@ -382,7 +383,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     const settingsSeed = createEmptyStorySeedInput();
     settingsSeed.story.optional.fateSurvival.enabled = true;
     const settingsUpdate = vi.fn();
-    act(() => root.render(<StorySeedSettings seed={settingsSeed} updateSeed={settingsUpdate} />));
+    act(() => root.render(<LibraryPresentationProvider>{<StorySeedSettings seed={settingsSeed} updateSeed={settingsUpdate} />}</LibraryPresentationProvider>));
     radios = Array.from(container.querySelectorAll<HTMLButtonElement>('[aria-label="Fate Visibility"] [role="radio"]'));
     expect(radios.filter(radio => radio.tabIndex === 0)).toHaveLength(1);
     radios[0].focus();
@@ -394,10 +395,10 @@ describe('Story Seed keyboard and mobile navigation', () => {
   it('traps Help focus and returns it to the control that opened the dialog', () => {
     const onClose = vi.fn();
     const renderHelp = (open: boolean) => act(() => root.render(
-      <>
+      <LibraryPresentationProvider>{<>
         <button type="button">Open Help</button>
         <StorySeedHelpMenu open={open} onClose={onClose} topics={[]} />
-      </>,
+      </>}</LibraryPresentationProvider>,
     ));
 
     renderHelp(false);
@@ -436,7 +437,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     });
 
     act(() => root.render(
-      <BlueprintReview
+      <LibraryPresentationProvider>{<BlueprintReview
         blueprint={blueprint}
         setBlueprint={vi.fn()}
         seed={seed}
@@ -445,7 +446,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
         onStartStory={vi.fn()}
         onExportSeed={vi.fn()}
         isGenerating
-      />,
+      />}</LibraryPresentationProvider>,
     ));
 
     const versaBadge = container.querySelector<HTMLImageElement>('img');
@@ -458,7 +459,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
   it('keeps loaded Story Bank records visible while a new owner is loading', () => {
     const record = sampleRecord();
     act(() => root.render(
-      <StoryBank
+      <LibraryPresentationProvider>{<StoryBank
         seeds={[record]}
         isLoading
         manifestedSeedIds={new Set()}
@@ -471,7 +472,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
         onUseSeed={vi.fn()}
         onExportSeed={vi.fn()}
         onManifest={vi.fn()}
-      />,
+      />}</LibraryPresentationProvider>,
     ));
 
     expect(container.textContent).toContain('Refreshing saved seeds…');
@@ -504,7 +505,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
       );
     };
 
-    act(() => root.render(<RecordsHarness />));
+    act(() => root.render(<LibraryPresentationProvider>{<RecordsHarness />}</LibraryPresentationProvider>));
     await act(async () => {
       resolveFirst?.([firstRecord]);
       await Promise.resolve();
@@ -530,7 +531,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
       return null;
     };
 
-    act(() => root.render(<StoreProbe />));
+    act(() => root.render(<LibraryPresentationProvider>{<StoreProbe />}</LibraryPresentationProvider>));
     expect(renders).toHaveBeenCalledTimes(1);
     act(() => setMockState({ activeStoryId: 'unrelated-route-change' }));
     expect(renders).toHaveBeenCalledTimes(1);

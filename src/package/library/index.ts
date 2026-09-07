@@ -13,6 +13,7 @@
  */
 export * from './cultivation';
 export * from './relics';
+export * from './presentation';
 
 /** The Library package surface version, bumped with the published package. */
-export const LIBRARY_PACKAGE_VERSION = '0.1.0';
+export const LIBRARY_PACKAGE_VERSION = '0.2.0';

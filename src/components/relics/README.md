@@ -74,3 +74,7 @@ development/RelicReveal.tsx  — active Workshop version of the celebration flow
 ### Transfer notes
 
 - The `replayKey` prop on `RelicReveal` is a Workshop fine-tuning tool; it can be dropped or kept when transferring.
+
+### 2026-09-06 — Library UI ownership migration
+
+Reusable presentation now comes from the canonical Library UI package. Portable SEN surfaces resolve presentation through the host provider; the first-party Workshop supplies LibraryPresentationProvider. Domain, generation, persistence, media, and locked reference sources are unchanged.

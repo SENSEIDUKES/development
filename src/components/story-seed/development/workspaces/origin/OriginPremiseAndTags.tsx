@@ -29,7 +29,7 @@ import {
 } from '../../constants';
 import { recommendStoryTags } from '../../../shared/storyTagInference';
 import { updateStoryTags, type UpdateSeed } from '../../seedState';
-import { LibraryDragonCycleIcon, LibraryTextArea, LibraryTextBox } from '../../../../library';
+import { NarrativeDragonCycleIcon as LibraryDragonCycleIcon, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '../../../../../presentation';
 import { workspaceCompactLabelClass } from '../WorkspaceShell';
 
 const TAG_LIMIT = STORY_TAG_LIMIT;

@@ -1,11 +1,7 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { Bookmark, Check, CircleHelp, Settings, Vault } from 'lucide-react';
 import type { StorySeedInput } from '../shared/storySeedSchema';
-import {
-  LibraryButton,
-  LibraryHeaderBadge,
-  LibraryPanel,
-} from '../../library';
+import { NarrativeButton as LibraryButton, NarrativeHeaderBadge as LibraryHeaderBadge, NarrativePanel as LibraryPanel } from '../../../presentation';
 import type { SeedUpdate } from './seedState';
 import { haveSameStorySeedSettings, StorySeedSettings } from './StorySeedSettings';
 

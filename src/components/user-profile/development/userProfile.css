@@ -1,0 +1,35 @@
+/*
+ * Celestial Aura text animations.
+ *
+ * Copied from `SENSEIDUKES/Light-Novels` `src/index.css`. `getAuraTextStyle`
+ * returns these two class names for the Sage of Branching Paths and Dao Master
+ * tiers, so without them those tiers render as transparent text. Kept beside
+ * the component per the Workshop's component-scoped styling rule.
+ *
+ * Every other class the replica uses is a Tailwind utility already available in
+ * the Workshop's theme.
+ */
+
+@keyframes aura-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.aura-animated-custom {
+  background: linear-gradient(to right, #00ffff, #ff007f, #ffd700, #00ffff);
+  background-size: 300% auto;
+  animation: aura-shimmer 4s linear infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.aura-gradient-violet-gold {
+  background: linear-gradient(to right, #8b5cf6, #ec4899, #ffd700);
+  background-size: 200% auto;
+  animation: aura-shimmer 3s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

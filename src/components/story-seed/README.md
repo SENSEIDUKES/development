@@ -4,7 +4,7 @@
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **Replica created:** 2026-08-01
-- **Last Workshop update:** 2026-09-06
+- **Last Workshop update:** 2026-09-08
 - **Last source comparison:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and ready for production transfer
 
@@ -212,6 +212,9 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-09-08:** Made the existing cinematic auth gate host-driven without changing its Story
+  Seed presentation. The Cultivator Cave now uses the same provider UI as its complete signed-out
+  surface through an injected authentication callback; Story Seed's mock login remains the default.
 - **2026-09-06:** Audited and unified Story Tag recommendations. The Suggested
   Tags row previously ignored premise and genre; the premise button used a
   first-match mechanics-heavy list; empty-tag generation used a third,

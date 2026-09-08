@@ -132,12 +132,21 @@ describe('Cultivator Cave home', () => {
     expect(container.querySelector('#cave-qi-core-description')?.textContent).toContain('community contribution');
   });
 
-  it('shows the unlinked state without a settings gear and links the mock account', async () => {
+  it('replaces the signed-out Cave with OAuth and links the mock account', async () => {
     const { onSignIn } = await renderCave({ state: 'signed-out' });
-    expect(text()).toContain('Spirit Unlinked');
+    expect(text()).not.toContain('Spirit Unlinked');
+    expect(text()).not.toContain('Link Spirit Realm');
     expect(container.querySelector('[data-cave-settings-trigger]')).toBeNull();
     expect(container.querySelector('[data-cave-card="stories"]')).toBeNull();
-    await click(byText('button', 'Link Spirit Realm'));
+    expect(container.querySelector('[data-auth-context="spirit-link"]')).not.toBeNull();
+    expect(text()).toContain('Continue with Google');
+    expect(text()).toContain('Continue with Apple');
+    expect(text()).toContain('Continue with Email');
+
+    await click(byText('button', 'Continue with Google'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(650);
+    });
     expect(onSignIn).toHaveBeenCalledTimes(1);
   });
 

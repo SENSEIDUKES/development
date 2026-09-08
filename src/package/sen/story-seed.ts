@@ -31,6 +31,14 @@ export {
   haveSameStorySeedSettings,
 } from '../../components/story-seed/development/StorySeedSettings';
 export { DeferredStorySeedView } from '../../components/story-seed/development/DeferredStorySeedView';
+export {
+  default as StoryAuthGate,
+  STORY_AUTH_DISSOLVE_MS,
+  type AuthProviderId,
+  type EmailMode,
+  type StoryAuthAttempt,
+  type StoryAuthGateProps,
+} from '../../components/story-seed/development/StoryAuthGate';
 export * from '../../components/story-seed/development/constants';
 export * from '../../components/story-seed/development/seedSections';
 export * from '../../components/story-seed/development/seedState';

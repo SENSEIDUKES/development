@@ -6,7 +6,7 @@
 - **Replica created:** 2026-09-08
 - **Last Workshop update:** 2026-09-08
 - **Last source comparison:** 2026-09-08
-- **Replica status:** faithful shell capture; locked baseline, no refinement candidate.
+- **Replica status:** under refinement; locked captures plus Development header family.
 
 ## Capture boundary
 
@@ -14,11 +14,11 @@ This area records two existing systems for comparison. It does not define a new 
 
 `reference/main-library/` freezes the global header, DAO presentation and animation logic, production theme stylesheet, and the exact collection-tab fragment that displays sync state. It localizes the source font payloads so external network and CSP changes cannot alter the captured layout. `reference/story-seed/` freezes the current shell components, section model, settings body, supporting pure helpers, and CSS. `StorySeedShell.tsx` copies the shell JSX from `CreationModal`; its domain editor, Story Bank, and Help children are explicit host slots. This capture is distinct from the older locked reference inside the existing Story Seed Workshop.
 
-`development/LibraryShell.ts` points at these baselines. Original Reference, Development, and Compare therefore show the same captured implementations. No future design has been implied by the Development label. A later authorized refinement can fork its files there; the locked capture must remain unchanged.
+`development/LibraryShell.ts` now exports the actual header family: separate Main Library and Workspace compositions over a shared foundation. Original Reference retains the locked shell captures; Development shows only the header candidate and local host content. See [header contract and ownership](../../../docs/library-header-family.md). Sidebar, drawer, bottom navigation, and page-specific settings extraction remain a later phase.
 
 ## Inspect the references
 
-Use Workshop Controls → Pages to select Main Library or Story Seed, Phone (390 × 844) or Desktop (1440 × 900), and a mock state. Desktop frames retain their actual viewport width and can be scrolled horizontally on smaller hosts. The **Open responsive capture at browser width** link is the appropriate route for inspecting 320px phones, tablets, landscape, or native browser resizing.
+Use Workshop Controls → Pages to select Main Library or Story Seed, Phone (390 × 844), Tablet (768 × 1024), or Desktop (1440 × 900), and a mock state. Desktop frames retain their actual viewport width and can be scrolled horizontally on smaller hosts. The **Open responsive capture at browser width** link is the appropriate route for inspecting 320px phones, tablets, landscape, or native browser resizing.
 
 | Reference | Phone preview | Desktop preview |
 | --- | --- | --- |
@@ -85,3 +85,5 @@ For an eventual approved change, identify the owning lane first. Main header/DAO
 
 - **2026-09-08:** Updated source repositories; captured current Main Library and Story Seed shells with separate responsive documents, local adapters and assets, explicit content boundaries, source provenance, dependency guards, and ownership/overlap documentation. No redesign or shared extraction.
 - **2026-09-08:** Applied capture-only accessibility and sticky-action corrections, narrowed the DAO adapter contract, localized the exact source-requested font payloads, and retained the production sources unchanged.
+
+- **2026-09-08:** Built the Development header family from merged PR #182: shared foundation, separate Main Library and Workspace compositions, three local configurations, tablet previews, header accessibility, and explicit host contracts. Both references and active product/navigation implementations remain unchanged.

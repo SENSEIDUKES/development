@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
-import { GlobalHeader, LibraryCollectionStrip } from '../../../components/library-shell/development/LibraryShell';
+import { GlobalHeader } from '../../../components/library-shell/reference/main-library/GlobalHeader';
+import { LibraryCollectionStrip } from '../../../components/library-shell/reference/main-library/LibraryCollectionStrip';
 import { MainLibraryAdapterContext, type MainLibraryAdapter } from '../../../components/library-shell/shared/MainLibraryAdapter';
 
-export function MainLibraryPreview({ state }: { state: string }) {
+export function MainLibraryPreview({ state, developmentHeader, extraFeedback }: { state: string; developmentHeader?: (adapter: MainLibraryAdapter) => React.ReactNode; extraFeedback?: string }) {
   const [currentScreen, setCurrentScreen] = useState(state === 'profile' ? 'profile' : 'home');
   const [activeStoryId, setActiveStoryId] = useState<string | null>(state === 'active-story' ? 'mock-story' : null);
   const [activeTab, chooseTab] = useState('my-library');
@@ -29,7 +30,7 @@ export function MainLibraryPreview({ state }: { state: string }) {
   };
   return <MainLibraryAdapterContext.Provider value={adapter}>
     <div className="min-h-dvh bg-[#050505] text-[#dfd8cf] font-serif overflow-x-hidden selection:bg-human/30 pb-safe">
-      <GlobalHeader />
+      {developmentHeader ? developmentHeader(adapter) : <GlobalHeader />}
       <main className="relative z-10 w-full min-h-[calc(100dvh-140px)]">
         <div className="px-4 py-8 max-w-7xl mx-auto w-full">
           <div className="mb-8 min-h-52 border border-dashed border-neutral-800 rounded-xl p-6 text-neutral-400 text-sm font-sans">
@@ -37,6 +38,7 @@ export function MainLibraryPreview({ state }: { state: string }) {
             <p className="mt-3" role="status">{destination ? `Workshop destination: ${destination}` : 'Local account and story fixtures. Shell actions stay in this preview.'}</p>
             {(currentScreen === 'reader' || currentScreen === 'codex') && <button className="mt-4 underline" onClick={() => setCurrentScreen('home')}>Return to header capture</button>}
           </div>
+          {extraFeedback && <p role="status" className="mb-4 text-sm text-portal">{extraFeedback}</p>}
           <LibraryCollectionStrip activeTab={activeTab} chooseTab={chooseTab} syncStatus={adapter.syncStatus} libraryStories={state === 'guest' ? [] : adapter.stories} />
           <p className="font-sans text-xs text-neutral-400">Workshop collection destination: {activeTab}</p>
         </div>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { StorySeedShell } from '../../../components/library-shell/development/LibraryShell';
+import { StorySeedShell } from '../../../components/library-shell/reference/story-seed/StorySeedShell';
 import { getSeedSection, type SeedSectionId } from '../../../components/library-shell/reference/story-seed/seedSections';
 import type { SeedUpdate } from '../../../components/library-shell/reference/story-seed/seedState';
 import { makeSeed } from './previewData';

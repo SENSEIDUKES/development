@@ -10,6 +10,15 @@ import { createMockUserProfileServices } from '../../../workshop/previews/user-p
 import { getPreviewScenario } from '../../../workshop/previews/user-profile/previewData';
 import type { UserProfilePreviewState } from '../../../workshop/previews/user-profile/previewStates';
 import { CAVE_ENVIRONMENTS, getCultivationStage } from './caveEnvironment';
+import {
+  MASTER_RANK,
+  RANKS,
+  getAuraSelection,
+  getAuraTextStyle,
+  getRankForQi,
+  rankBackground,
+  resolveRankVisual,
+} from './qi';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -110,7 +119,7 @@ describe('Cultivator Cave home', () => {
     expect(container.querySelector('[data-cave-backdrop]')?.getAttribute('src')).toBe(CAVE_ENVIRONMENTS[0].src);
     expect(container.querySelector('[data-cave-portrait] img')?.getAttribute('src')).toBe(profile.avatarUrl);
     expect(container.querySelector('#cave-cultivator-name')?.textContent).toContain(profile.displayName);
-    expect(container.querySelector('[data-cave-rank]')?.textContent).toContain('Sage of Branching Paths · Early Stage');
+    expect(container.querySelector('[data-cave-rank]')?.textContent).toContain('Leader · Early Stage');
     expect(container.querySelector('[data-cave-qi]')?.textContent).toBe('13,480 / 25,000');
     expect(container.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('11');
 
@@ -340,10 +349,137 @@ describe('Cultivator Cave settings', () => {
 
 describe('Cultivator Cave stage helper', () => {
   it('derives a stage from progress and reports the peak at max rank', () => {
-    expect(getCultivationStage(10, 'Dao Master')).toBe('Early Stage');
-    expect(getCultivationStage(50, 'Dao Master')).toBe('Middle Stage');
-    expect(getCultivationStage(80, 'Dao Master')).toBe('Late Stage');
+    expect(getCultivationStage(10, 'Master')).toBe('Early Stage');
+    expect(getCultivationStage(50, 'Master')).toBe('Middle Stage');
+    expect(getCultivationStage(80, 'Master')).toBe('Late Stage');
     expect(getCultivationStage(100, null)).toBe('Peak');
+  });
+});
+
+describe('rank colour system', () => {
+  it('is one ten-rank ladder with the agreed Qi thresholds', () => {
+    expect(RANKS.map(rank => [rank.name, rank.unlockedAt])).toEqual([
+      ['Reader', 0],
+      ['Disciple', 100],
+      ['Scribe', 300],
+      ['Scholar', 750],
+      ['Author', 1500],
+      ['Adept', 3000],
+      ['Elder', 6000],
+      ['Leader', 12000],
+      ['Sage', 25000],
+      ['Master', 50000],
+    ]);
+    expect(MASTER_RANK.name).toBe('Master');
+    expect(MASTER_RANK.visual.kind).toBe('spectrum');
+  });
+
+  it('renders solid colours and weighted multi-stop gradients from the same data', () => {
+    const reader = RANKS[0];
+    expect(reader.visual.kind).toBe('solid');
+    expect(rankBackground(reader.visual)).toBe('#E5E7EB');
+
+    const leader = RANKS.find(rank => rank.id === 'leader')!;
+    expect(leader.visual.kind).toBe('gradient');
+    // Red into trophy gold, with the restrained orange support stop between them.
+    expect(rankBackground(leader.visual)).toBe(
+      'linear-gradient(90deg, #DC2626 0%, #F2762A 52%, #FFD700 100%)',
+    );
+  });
+
+  it('chains the ladder end to end so no two adjacent ranks read alike', () => {
+    const stopsFor = (id: string) => RANKS.find(rank => rank.id === id)!.visual.stops;
+    const LIGHT_BLUE = '#7DD3FC';
+    const YELLOW = '#FFE02E';
+    const PINK = '#EC4899';
+    const RED = '#DC2626';
+    const TROPHY_GOLD = '#FFD700';
+
+    // Each rank hands its end colour to the next: light blue → yellow → pink →
+    // red → gold → violet. Adept, Elder and Leader all ran through orange
+    // before, which made their swatches near-indistinguishable.
+    expect(stopsFor('author')[0]).toBe(LIGHT_BLUE);
+    expect(stopsFor('author').at(-1)).toBe(YELLOW);
+    expect(stopsFor('adept')[0]).toBe(YELLOW);
+    expect(stopsFor('adept').at(-1)).toBe(PINK);
+    expect(stopsFor('elder')[0]).toBe(PINK);
+    expect(stopsFor('elder').at(-1)).toBe(RED);
+    expect(stopsFor('leader')[0]).toBe(RED);
+    expect(stopsFor('leader').at(-1)).toBe(TROPHY_GOLD);
+    expect(stopsFor('sage')[0]).toBe(TROPHY_GOLD);
+    expect(stopsFor('sage').at(-1)).toBe('#A855F7');
+
+    // The trophy ranks use gold, never the yellow above.
+    expect(stopsFor('leader')).not.toContain(YELLOW);
+    expect(stopsFor('sage')).not.toContain(YELLOW);
+  });
+
+  it('falls back to the rank the cultivator has earned when nothing is selected', () => {
+    expect(getRankForQi(0).id).toBe('reader');
+    expect(getRankForQi(11999).id).toBe('elder');
+    expect(getRankForQi(12000).id).toBe('leader');
+    expect(getRankForQi(50000).id).toBe('master');
+    expect(resolveRankVisual(undefined, 6000).rank.id).toBe('elder');
+  });
+
+  it('resolves rank tokens, the legacy aura values, and a custom spectrum', () => {
+    expect(resolveRankVisual('rank:sage', 0).rank.id).toBe('sage');
+
+    // Legacy values map by the Qi threshold they were unlocked at, so nobody is
+    // promoted or demoted by the ladder change.
+    expect(resolveRankVisual('#8B5CF6', 0).rank.id).toBe('author');
+    expect(resolveRankVisual('gradient-violet-gold', 0).rank.id).toBe('leader');
+    expect(resolveRankVisual('animated-custom', 0).rank.id).toBe('sage');
+
+    const custom = resolveRankVisual('#00FFFF', 50000);
+    expect(custom.source).toBe('custom');
+    expect(custom.visual.stops).toEqual(['#00FFFF']);
+    expect(getAuraSelection('#00FFFF', 50000)).toBe('#00FFFF');
+    expect(getAuraSelection(undefined, 3000)).toBe('rank:adept');
+  });
+
+  it('paints a solid rank as text colour and a gradient rank as clipped background', () => {
+    const scribe = getAuraTextStyle('rank:scribe', undefined, 300);
+    expect(scribe.style?.color).toBe('#2563EB');
+    expect(scribe.className).not.toContain('aura-gradient-text');
+
+    const sage = getAuraTextStyle('rank:sage', undefined, 25000);
+    expect(sage.className).toContain('aura-gradient-text');
+    expect(sage.style?.backgroundImage).toContain('#FFD700');
+
+    const master = getAuraTextStyle('rank:master', undefined, 50000);
+    expect(master.className).toContain('aura-spectrum-text');
+  });
+
+  it('lists every rank in Settings as name, colour and Qi, with no aura lore', async () => {
+    await renderCave();
+    await click(container.querySelector('[data-cave-settings-trigger]')!);
+    const rows = Array.from(
+      document.body.querySelectorAll('[role="radiogroup"][aria-label="Celestial Aura rank"] [role="radio"]'),
+    );
+    expect(rows).toHaveLength(RANKS.length);
+    expect(rows[0].textContent).toBe('Reader0 Qi');
+    expect(rows[RANKS.length - 1].textContent).toBe('Master50,000 Qi');
+
+    // The developed cultivator sits at 13,480 Qi: Leader is equipped, Sage is locked.
+    const leader = rows[7];
+    expect(leader.textContent).toContain('Leader');
+    expect(leader.textContent).toContain('Equipped');
+    expect(leader.getAttribute('aria-checked')).toBe('true');
+    expect(rows[8].hasAttribute('disabled')).toBe(true);
+
+    // The old per-tier aura names are gone from the list.
+    expect(document.body.textContent).not.toContain('Prism Branching Gradient');
+    expect(document.body.textContent).not.toContain('Sect Entrance Aura');
+  });
+
+  it('gates the custom spectrum on reaching Master at 50,000 Qi', async () => {
+    await renderCave();
+    await click(container.querySelector('[data-cave-settings-trigger]')!);
+    expect(document.body.textContent).toContain('Requires Master (50,000 Qi)');
+
+    const spectrum = document.body.querySelector<HTMLButtonElement>('[aria-label="Custom spectrum"]')!;
+    expect(spectrum.disabled).toBe(true);
   });
 });
 

@@ -35,7 +35,15 @@ import {
 import type { AppUser, ChapterWritingStyle, Story } from '../shared/types';
 import { useUserProfileServices, type UserProfileController } from '../shared/userProfileServices';
 import { CHAPTER_WRITING_STYLE_OPTIONS, normalizeChapterWritingStyle } from './chapterWritingStyle';
-import { AURA_TIERS, getAuraColorForXp, getAuraTextStyle } from './qi';
+import {
+  MASTER_RANK,
+  RANKS,
+  getAuraSelection,
+  getAuraSwatchStyle,
+  getAuraTextStyle,
+  rankToken,
+  resolveRankVisual,
+} from './qi';
 import { CAVE_ENVIRONMENTS } from './caveEnvironment';
 
 /** The persisted language option values, exactly as production stores them. */
@@ -123,10 +131,13 @@ export function UserProfileSettingsPanel({
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const currentXp = profile?.dao_xp || profile?.qi || 0;
-  const isDaoMaster = currentXp >= 25000;
-  const auraColor = getAuraColorForXp(formData.displayNameColor ?? profile?.displayNameColor, currentXp);
-  const previewStyle = getAuraTextStyle(auraColor, profile?.activeStatusEffects);
-  const isCustomSelected = Boolean(formData.displayNameColor) && !AURA_TIERS.some(t => t.colorHex === formData.displayNameColor);
+  const isMaster = currentXp >= MASTER_RANK.unlockedAt;
+  const selectedAura = formData.displayNameColor ?? profile?.displayNameColor;
+  const auraSelection = getAuraSelection(selectedAura, currentXp);
+  const previewStyle = getAuraTextStyle(auraSelection, profile?.activeStatusEffects, currentXp);
+  // A custom spectrum is any stored value that resolves to the cultivator's own
+  // colour rather than to a rank on the ladder.
+  const isCustomSelected = Boolean(selectedAura) && resolveRankVisual(selectedAura, currentXp).source === 'custom';
   const isIdentityDirty = IDENTITY_FIELDS.some(field => (formData[field] ?? '') !== (profile?.[field] ?? ''));
   const isPrivileged = profile?.role === 'owner' || profile?.role === 'admin';
 
@@ -234,18 +245,20 @@ export function UserProfileSettingsPanel({
                     </p>
                     <p className="font-mono text-[9px] text-neutral-500">Current XP: {currentXp.toLocaleString()} Qi</p>
                   </div>
-                  <div role="radiogroup" aria-label="Celestial Aura tier" className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
-                    {AURA_TIERS.map(tier => {
-                      const isUnlocked = currentXp >= tier.unlockedAt;
-                      const isSelected = formData.displayNameColor === tier.colorHex;
+                  {/* One row per rank: the name, its colour, and the Qi it costs. */}
+                  <div role="radiogroup" aria-label="Celestial Aura rank" className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
+                    {RANKS.map(rank => {
+                      const token = rankToken(rank);
+                      const isUnlocked = currentXp >= rank.unlockedAt;
+                      const isSelected = auraSelection === token;
                       return (
                         <button
-                          key={tier.rank}
+                          key={rank.id}
                           type="button"
                           role="radio"
                           aria-checked={isSelected}
                           disabled={!isUnlocked || !profile}
-                          onClick={() => setFormData(previous => ({ ...previous, displayNameColor: tier.colorHex }))}
+                          onClick={() => setFormData(previous => ({ ...previous, displayNameColor: token }))}
                           className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors ${
                             !isUnlocked
                               ? 'cursor-not-allowed border-white/5 bg-black/30 opacity-60'
@@ -257,17 +270,13 @@ export function UserProfileSettingsPanel({
                           <span
                             aria-hidden="true"
                             className={`h-6 w-6 shrink-0 rounded-full border border-black/50 ${!isUnlocked ? 'grayscale' : ''}`}
-                            style={
-                              tier.colorHex.startsWith('#')
-                                ? { backgroundColor: tier.colorHex, boxShadow: `0 0 8px ${tier.colorHex}` }
-                                : { background: 'linear-gradient(to right, #a855f7, #ec4899, #eab308)' }
-                            }
+                            style={getAuraSwatchStyle(rank.visual)}
                           />
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate font-sans text-[12px] font-semibold text-neutral-200">{tier.name}</span>
-                            <span className="block truncate font-mono text-[9px] uppercase tracking-wider text-neutral-500">
-                              {tier.rank} · {isUnlocked ? 'Unlocked' : `${currentXp.toLocaleString()} / ${tier.unlockedAt.toLocaleString()} Qi`}
-                            </span>
+                          <span className="min-w-0 flex-1 truncate font-sans text-[13px] font-semibold text-neutral-200">
+                            {rank.name}
+                          </span>
+                          <span className="shrink-0 font-mono text-[10px] tracking-wider text-neutral-400">
+                            {rank.unlockedAt.toLocaleString()} Qi
                           </span>
                           {isSelected ? (
                             <span className="shrink-0 rounded-full bg-[#04ACFF] px-2 py-0.5 font-sc text-[9px] font-bold uppercase tracking-widest text-black">
@@ -279,18 +288,19 @@ export function UserProfileSettingsPanel({
                     })}
                   </div>
 
-                  {/* Transcendent Custom spectrum input - only active for Dao Master */}
-                  <div className={`flex items-center gap-3 border-t border-white/10 pt-3 ${isDaoMaster ? '' : 'opacity-50'}`}>
+                  {/* The Master endgame: the cultivator's own colour, in place of the ladder's. */}
+                  <div className={`flex items-center gap-3 border-t border-white/10 pt-3 ${isMaster ? '' : 'opacity-50'}`}>
                     <div className="relative">
                       <button
                         type="button"
-                        disabled={!isDaoMaster}
-                        onClick={() => { if (isDaoMaster) colorInputRef.current?.click(); }}
-                        className={`flex h-9 w-9 items-center justify-center rounded-full border bg-gradient-to-tr from-red-500 via-green-500 via-blue-500 to-yellow-500 transition-transform hover:scale-105 motion-reduce:transform-none ${
+                        disabled={!isMaster}
+                        onClick={() => { if (isMaster) colorInputRef.current?.click(); }}
+                        className={`flex h-9 w-9 items-center justify-center rounded-full border transition-transform hover:scale-105 motion-reduce:transform-none ${
                           isCustomSelected ? 'border-[#04ACFF] ring-2 ring-[#04ACFF]/30' : 'border-white/20'
                         }`}
-                        title={isDaoMaster ? 'Custom Color Spectrum…' : 'Locked until Dao Master'}
-                        aria-label="Transcendent custom spectrum"
+                        style={getAuraSwatchStyle(MASTER_RANK.visual)}
+                        title={isMaster ? 'Custom Color Spectrum…' : `Locked until ${MASTER_RANK.name}`}
+                        aria-label="Custom spectrum"
                       >
                         {isCustomSelected ? (
                           <span className="h-2.5 w-2.5 rounded-full border border-black" style={{ backgroundColor: formData.displayNameColor }} />
@@ -300,7 +310,7 @@ export function UserProfileSettingsPanel({
                         ref={colorInputRef}
                         type="color"
                         name="displayNameColor"
-                        disabled={!isDaoMaster}
+                        disabled={!isMaster}
                         value={isCustomSelected && formData.displayNameColor ? formData.displayNameColor : '#00FFFF'}
                         onChange={handleChange}
                         className="pointer-events-none absolute inset-0 h-0 w-0 opacity-0"
@@ -310,11 +320,15 @@ export function UserProfileSettingsPanel({
                     </div>
                     <div className="min-w-0">
                       <p className="font-mono text-[10px] text-neutral-400">
-                        Transcendent Custom Spectrum
-                        {!isDaoMaster ? <span className="ml-2 rounded border border-white/10 px-1.5 py-0.5 text-[8px] text-neutral-500">Requires Dao Master (25k Qi)</span> : null}
+                        Custom Spectrum
+                        {!isMaster ? (
+                          <span className="ml-2 rounded border border-white/10 px-1.5 py-0.5 text-[8px] text-neutral-500">
+                            Requires {MASTER_RANK.name} ({MASTER_RANK.unlockedAt.toLocaleString()} Qi)
+                          </span>
+                        ) : null}
                       </p>
                       <p className="font-sans text-[9px] italic text-neutral-500">
-                        {isDaoMaster ? 'Click the sphere to define your custom frequency' : 'Transcend normal UI limits'}
+                        {isMaster ? 'Click the sphere to define your custom frequency' : 'Transcend normal UI limits'}
                       </p>
                     </div>
                   </div>

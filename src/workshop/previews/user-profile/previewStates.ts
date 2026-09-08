@@ -32,13 +32,13 @@ export const USER_PROFILE_PREVIEW_STATES: readonly UserProfilePreviewStateOption
     id: 'new-cultivator',
     label: 'New cultivator',
     description:
-      'A freshly linked Mortal Reader: no portrait, no relics, no streak, no status effects. Shows every empty state.',
+      'A freshly linked Reader: no portrait, no relics, no streak, no status effects. Shows every empty state.',
   },
   {
     id: 'developed-cultivator',
     label: 'Developed cultivator',
     description:
-      'Sage of Branching Paths with a portrait, all three Qi cores, an attuned relic, active status effects, a 12-day Dao Pillar, relics awaiting offering, stories and seeds.',
+      'A Leader with a portrait, all three Qi cores, an attuned relic, active status effects, a 12-day Dao Pillar, relics awaiting offering, stories and seeds.',
   },
   {
     id: 'loading',

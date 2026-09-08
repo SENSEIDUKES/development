@@ -31,6 +31,12 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
   accepts a host-owned provider dispatcher, uses account-wide Spirit Link copy, and preserves its
   loading, email, reduced-motion, constrained-network, and post-link dissolve behavior. No real
   authentication runs in the Workshop.
+- **2026-09-08:** Replaced the Celestial Aura tier list with the canonical **rank colour system** in
+  `rankVisuals.ts`: the ten-rank ladder (Reader → Master) with its Qi thresholds, and each rank's
+  solid colour or multi-stop gradient as first-class data. The display name, the rank orb, the
+  portrait glow, the portrait motes, and the Settings rank list all render from it. Settings now
+  shows only name, swatch and Qi per rank. Master remains the user-controlled spectrum, at
+  50,000 Qi. Qi earning mechanics are untouched.
 
 ## Folder layout
 
@@ -55,8 +61,10 @@ shared/       — the services port, domain types, and the unforked offering-wee
 | `UserProfileAdminPanel.tsx` | The Akashic Switchboard, unchanged from production, opened as a destination |
 | `UserProfilePortraitModal.tsx` | The Divine Mirror, unchanged from production |
 | `caveEnvironment.ts` | The five stock cave environments, the destination tile art, the emblem, the motto, and the stage helper |
-| `qi.ts`, `chapterWritingStyle.ts` | Unchanged presentation values from production |
-| `userProfile.css` | The two Celestial Aura animations plus the Cave ornament (title presence, rules, plaques, portrait ring) |
+| `rankVisuals.ts` | **The canonical rank colour system** — the ten ranks, their Qi thresholds, and each rank's colour identity as data, with the renderers every surface consumes |
+| `qi.ts` | Rank progression maths and the Celestial Aura style helpers, derived from `rankVisuals.ts` |
+| `chapterWritingStyle.ts` | Unchanged presentation values from production |
+| `userProfile.css` | The two rank-agnostic aura text classes plus the Cave ornament (title presence, rules, plaques, portrait ring) |
 
 `shared/` is unchanged: `types.ts`, `userProfileServices.ts` (the port), and `offeringWeek.ts`.
 
@@ -78,12 +86,77 @@ focus moved to its heading. The Akashic Switchboard is a fifth destination reach
 Settings, and only for owner and admin accounts.
 
 The **Settings** drawer opens from the gear and holds every remaining control in collapsible
-sections: Identity & Celestial Aura (Dao name, display name, the tier picker, the Transcendent
-Custom Spectrum, Guard Changes / Discard), Cultivator Portrait (opens the Divine Mirror), Cave
+sections: Identity & Celestial Aura (Dao name, display name, the rank picker, the Custom
+Spectrum, Guard Changes / Discard), Cultivator Portrait (opens the Divine Mirror), Cave
 Environment (five stock backdrops and the ambient motes toggle), Language (both selectors with
 the 30-second confirmation), Writing Preferences (default chapter writing style), Harmony & Sync,
 Backup, Import & Export (Import Scroll, Backup All), Advanced Tools (Aether Router, Shortcuts),
 Authorized Controls (owner/admin only), and Account (Sever Link).
+
+### The rank colour system
+
+`rankVisuals.ts` is the single source for the rank ladder and for every colour the profile paints.
+`DAO_RANKS` in `qi.ts` is derived from it, so a rank cannot carry one threshold in the ladder and a
+different one in its colour data.
+
+| # | Rank | Qi | Colour identity |
+| --- | --- | --- | --- |
+| 1 | Reader | 0 | solid white `#E5E7EB` |
+| 2 | Disciple | 100 | solid green `#22C55E` |
+| 3 | Scribe | 300 | solid blue `#2563EB` |
+| 4 | Scholar | 750 | blue → light blue |
+| 5 | Author | 1,500 | light blue → yellow |
+| 6 | Adept | 3,000 | yellow → pink |
+| 7 | Elder | 6,000 | pink → red |
+| 8 | Leader | 12,000 | red → gold |
+| 9 | Sage | 25,000 | gold → violet |
+| 10 | Master | 50,000 | the user-controlled spectrum |
+
+Adjacent swatches in the rank reference sheet are **one gradient identity**, not two alternatives:
+both are dominant stops, and the value between them is a restrained support stop that keeps the
+blend from going muddy (Leader's orange between red and gold, Author's pale seafoam between light
+blue and yellow). `positions` weights those support stops so the dominant colours keep the majority
+of the ramp.
+
+The reference's colours are named once at the top of `rankVisuals.ts` and composed from there.
+🟡 `YELLOW` (Author, Adept) and 🏆 `TROPHY_GOLD` (Leader, Sage) are deliberately kept apart: yellow
+is the brighter and more luminous, gold the deeper and richer. They sit close in hue — every
+convincing yellow does — so what really separates them is what each is paired with.
+
+`PINK` carries the warm middle of the ladder in place of the reference sheet's orange. Running
+Adept and Elder through orange left Adept, Elder and Leader reading as three near-identical
+orange-red discs at swatch size. Every rank now hands its end colour to the next — light blue →
+yellow → pink → red → gold → violet — so each orb stays legible on its own.
+
+A `RankVisual` is `kind` (`solid` / `gradient` / `spectrum`), its `stops`, an `angle`, optional
+`positions`, and a `glow`. Solid colours and multi-stop gradients are the same data shape, so every
+renderer takes one path:
+
+| Surface | Renderer |
+| --- | --- |
+| Display name, in the Cave and in the Settings preview | `getAuraTextStyle` — a flat `color` for a solid rank, an inline `backgroundImage` clipped through `.aura-gradient-text` for the rest |
+| Rank orb beside `rank · stage`, Settings rank swatches, the custom-spectrum sphere | `getAuraSwatchStyle` |
+| Portrait ring glow | `getAuraGlowStyle` |
+| Portrait motes | `rank.motes` and `rank.visual.stops`, rather than a hardcoded list of colour values |
+
+The only CSS the system still needs is the two rank-agnostic classes in `userProfile.css`: text
+clipping, and the spectrum drift. No rank has a class, a magic gradient name, or a branch of its own.
+
+**Settings** lists each rank as its name, its colour or gradient swatch, and the Qi it unlocks at —
+nothing else. The per-tier aura names and lore lines ("Prism Branching Gradient", "You master
+branches") are gone.
+
+**Master** stays the endgame: reaching 50,000 Qi unlocks the colour picker, and the chosen colour is
+stored on `displayNameColor` as a raw hex.
+
+#### `displayNameColor` compatibility
+
+The field now stores a `rank:<id>` token, or a raw hex for a Master custom spectrum.
+`resolveRankVisual` still reads every value production has ever written. The nine legacy values map
+by the Qi threshold they were unlocked at, so nobody is promoted or demoted by the ladder change:
+`#8B5CF6` (Dao Adept, 1,500) resolves to Author, `gradient-violet-gold` (12,000) to Leader, and
+`animated-custom` (25,000) to Sage. A stored raw hex is honoured whenever it is present — the
+50,000 Qi gate is on *setting* one, not on painting one that was already earned.
 
 ### Stage label
 
@@ -151,8 +224,8 @@ is never transferred.
 | State | What it shows |
 | --- | --- |
 | Spirit Unlinked | No account, cloud mode on — lands directly on the cinematic OAuth page. Linking reveals the Cave. |
-| New cultivator | A freshly linked Mortal Reader: no portrait, no relics, no streak, no effects — every empty state. |
-| Developed cultivator | Sage of Branching Paths with a portrait, three Qi cores, an attuned relic, two status effects, a 12-day Dao Pillar, relics awaiting offering, stories and seeds. |
+| New cultivator | A freshly linked Reader: no portrait, no relics, no streak, no effects — every empty state. |
+| Developed cultivator | A Leader with a portrait, three Qi cores, an attuned relic, two status effects, a 12-day Dao Pillar, relics awaiting offering, stories and seeds. |
 | Loading | The profile snapshot never resolves; the identity plaque shows its loading state. |
 | Error | Every asynchronous service rejects — page error band, admin failure, seed failure, portrait failure, offering failure. |
 | Owner / Admin | Owner role: the cracked pillar, and the Authorized Controls section opens the Akashic Switchboard. |
@@ -167,6 +240,11 @@ each destination and its return path, relic inspection with attunement and a ful
 submission, the daily refinement and pillar repair, the status-effect cards and empty state, the
 Settings sections, identity editing, the language confirmation, the owner's Switchboard, the stage
 helper, and a check that the locked reference still renders the original page.
+
+The rank colour system has its own block: the ten thresholds, `rankBackground` over both a solid and
+a weighted multi-stop gradient, the earned-rank fallback, `resolveRankVisual` over rank tokens /
+legacy aura values / a custom hex, the solid-versus-gradient text treatments, the simplified
+Settings rank list, and the 50,000 Qi gate on the custom spectrum.
 
 ## Reusable Workshop dependencies
 
@@ -220,8 +298,13 @@ Once the Cave is approved, copy back from `development/`:
   `UserProfileStatusEffectsPanel.tsx`, `caveEnvironment.ts` → `src/components/` in Light-Novels.
 - Transfer `StoryAuthGate.tsx` and `public/story-seed/library-auth-backdrop.jpg` with the Cave, or
   consume the gate from the SEN package once that package version is installed in Light-Novels.
-- Any visual change made to `qi.ts` → the matching exports in `src/lib/qi.ts`.
-- `userProfile.css` → the aura block in `src/index.css` plus the Cave ornament rules.
+- `rankVisuals.ts` → a new `src/lib/rankVisuals.ts`, plus the changes to `qi.ts` → the matching
+  exports in `src/lib/qi.ts`. Production's `AURA_TIERS`, `getAuraColorForXp`, and the two magic
+  `colorHex` strings are gone; see *The rank colour system* for what replaces them and for the
+  `displayNameColor` compatibility rules.
+- `userProfile.css` → the aura block in `src/index.css` plus the Cave ornament rules. The per-tier
+  `.aura-gradient-violet-gold` / `.aura-animated-custom` classes are replaced by the rank-agnostic
+  `.aura-gradient-text` / `.aura-spectrum-text` pair.
 - The host must serve the five `manifest-backdrops/immortal-land-*.jpg` files and
   `icons/sacred-tree.svg` at the same paths, or `caveEnvironment.ts` must be pointed at the
   production image URLs.
@@ -257,6 +340,11 @@ const services: UserProfileServices = {
   `seihouse-local-user-profile` and `seihouse-local-cosmic-inventory` storage keys (referenced by
   the production hook, not by these components), and the `profilePicture` naming. Do not rename any
   of them without a deliberate migration task.
+- **`displayNameColor` is the one exception.** Its vocabulary changed with the rank colour system:
+  it now stores a `rank:<id>` token, or a raw hex for a Master custom spectrum. No migration is
+  required — `resolveRankVisual` reads every legacy value production wrote, mapped by the Qi
+  threshold it was unlocked at (see *The rank colour system*). Keep that legacy map when
+  transferring, or existing cultivators lose their aura.
 - The cave environment choice is not persisted. Adding a profile field for it is a production
   schema decision, not a Workshop one.
 - `AdminStoryRow` narrows what production types `any[]`. If the admin overview grows a field the

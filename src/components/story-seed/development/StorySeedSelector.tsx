@@ -22,8 +22,15 @@ interface StorySeedSelectorProps {
 const familyAccent = (family: SeedFamily): LibraryNavigationDrawerAccent =>
   family === 'story' ? 'portal' : 'gold';
 
+/**
+ * The default title is the second rank on the cultivation ladder, renamed with
+ * it: 'Wandering Disciple' became plain 'Disciple'. The ladder itself lives in
+ * the user-profile fork (`user-profile/development/rankVisuals.ts`) and is not
+ * imported here — the two forks transfer back to production separately, so
+ * neither may depend on the other's `development/` folder.
+ */
 export const storySeedDrawerProfile = (equippedTitle?: string | null): LibraryNavigationDrawerProfile => ({
-  name: equippedTitle?.trim() || 'Wandering Disciple',
+  name: equippedTitle?.trim() || 'Disciple',
   detail: equippedTitle?.trim() ? 'Equipped relic title' : 'Default Library title',
   eyebrow: 'Equipped Relic',
   emblem: (

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { Mail } from 'lucide-react';
+import { ArrowLeft, Mail } from 'lucide-react';
 import { mockLogin, useAppStore } from '../shared/stubs';
 
 /**
@@ -47,8 +47,28 @@ const canLoadCinematicBackdrop = () => {
     && !['slow-2g', '2g', '3g'].includes(connection?.effectiveType ?? '');
 };
 
-type AuthProviderId = 'google' | 'apple' | 'email';
-type EmailMode = 'signin' | 'create';
+export type AuthProviderId = 'google' | 'apple' | 'email';
+export type EmailMode = 'signin' | 'create';
+
+export interface StoryAuthAttempt {
+  provider: AuthProviderId;
+  emailMode?: EmailMode;
+  email?: string;
+  password?: string;
+}
+
+export interface StoryAuthGateProps {
+  /** Controlled linked state for hosts outside the Story Seed mock store. */
+  linked?: boolean;
+  /** Host-owned authentication. Omit to retain Story Seed's local mock login. */
+  onAuthenticate?: (attempt: StoryAuthAttempt) => Promise<unknown> | unknown;
+  /** Optional return action when the gate is opened from an existing surface. */
+  onDismiss?: () => void;
+  dismissLabel?: string;
+  description?: string;
+  reassurance?: string;
+  context?: 'story-seed' | 'spirit-link';
+}
 
 /** Firebase Auth code → calm copy. Dormant in the Workshop (mockLogin never rejects). */
 const mapAuthError = (error: unknown): string | null => {
@@ -115,8 +135,17 @@ const PROVIDER_BUTTON_BASE =
 /** Simulated provider round-trip so pending/loading states are inspectable. */
 const simulateProviderDelay = () => new Promise<void>(resolve => setTimeout(resolve, 650));
 
-export default function StoryAuthGate() {
-  const currentUser = useAppStore(state => state.currentUser);
+export default function StoryAuthGate({
+  linked,
+  onAuthenticate,
+  onDismiss,
+  dismissLabel = 'Return',
+  description = 'Sign in to preserve this world, begin its first chapter, and return to it from any device.',
+  reassurance = 'Your Story Seed will not be lost.',
+  context = 'story-seed',
+}: StoryAuthGateProps = {}) {
+  const storySeedUser = useAppStore(state => state.currentUser);
+  const isLinked = linked ?? Boolean(storySeedUser);
   const prefersReducedMotion = useReducedMotion();
   const [videoReady, setVideoReady] = useState(false);
   const [videoAllowed, setVideoAllowed] = useState(false);
@@ -132,8 +161,8 @@ export default function StoryAuthGate() {
   // STORY_AUTH_DISSOLVE_MS) so the shell can dissolve over the still-visible
   // world instead of vanishing instantly.
   useEffect(() => {
-    if (currentUser) setDissolving(true);
-  }, [currentUser]);
+    if (isLinked) setDissolving(true);
+  }, [isLinked]);
 
   // Let the local poster paint first, and keep the 14 MB cinematic backdrop
   // off reduced-motion, data-saver, and constrained mobile connections. A
@@ -186,7 +215,7 @@ export default function StoryAuthGate() {
   const handleProviderSignIn = (provider: Exclude<AuthProviderId, 'email'>) => {
     void runSignIn(provider, async () => {
       await simulateProviderDelay();
-      await mockLogin();
+      await (onAuthenticate ? onAuthenticate({ provider }) : mockLogin());
     });
   };
 
@@ -196,7 +225,9 @@ export default function StoryAuthGate() {
     if (!trimmedEmail || !password) return; // native `required` attributes guide the guest
     void runSignIn('email', async () => {
       await simulateProviderDelay();
-      await mockLogin();
+      await (onAuthenticate
+        ? onAuthenticate({ provider: 'email', emailMode, email: trimmedEmail, password })
+        : mockLogin());
     });
   };
 
@@ -220,7 +251,8 @@ export default function StoryAuthGate() {
       role="dialog"
       aria-modal="true"
       aria-label="Your Destiny Awaits — sign in"
-      className="story-seed-development-surface absolute inset-0 z-50 overflow-hidden bg-black"
+      data-auth-context={context}
+      className="story-seed-development-surface absolute inset-0 z-[100] min-h-[100dvh] overflow-hidden bg-black"
     >{/* TRANSFER NOTE: `absolute` → `fixed` when moved to Light-Novels. The
       Workshop scopes the takeover to the preview canvas (FeatureWorkspace's
       positioned pane) so it never collides with the Workshop controls that
@@ -268,6 +300,17 @@ export default function StoryAuthGate() {
 
       {/* Content */}
       <div className="relative z-10 flex min-h-full flex-col items-center justify-center [padding-top:env(safe-area-inset-top)] [padding-bottom:env(safe-area-inset-bottom)] [padding-left:max(1.25rem,env(safe-area-inset-left))] [padding-right:max(1.25rem,env(safe-area-inset-right))]">
+        {onDismiss ? (
+          <button
+            type="button"
+            onClick={onDismiss}
+            disabled={isBusy}
+            className="absolute left-[max(1rem,env(safe-area-inset-left))] top-[max(1rem,env(safe-area-inset-top))] flex min-h-11 items-center gap-2 rounded-full border border-white/20 bg-black/35 px-4 font-sans text-sm text-neutral-200 backdrop-blur-md transition-colors hover:border-[#D4AF37]/45 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal/70 disabled:pointer-events-none disabled:opacity-50"
+          >
+            <ArrowLeft size={17} aria-hidden="true" />
+            <span>{dismissLabel}</span>
+          </button>
+        ) : null}
         <motion.div
           initial={shellInitial}
           animate={shellAnimate}
@@ -289,7 +332,7 @@ export default function StoryAuthGate() {
             </h1>
 
             <p className="font-sans font-light text-neutral-300 text-sm sm:text-[0.95rem] leading-relaxed max-w-[34ch] mx-auto [text-shadow:0_1px_12px_rgba(0,0,0,0.55)]">
-              Sign in to preserve this world, begin its first chapter, and return to it from any device.
+              {description}
             </p>
 
             <div className="flex items-center justify-center gap-3 opacity-70" aria-hidden="true">
@@ -402,7 +445,7 @@ export default function StoryAuthGate() {
 
             <div className="flex items-center justify-center gap-3">
               <span className="h-px w-8 bg-white/15" aria-hidden="true" />
-              <p className="font-sans text-xs text-neutral-400">Your Story Seed will not be lost.</p>
+              <p className="font-sans text-xs text-neutral-400">{reassurance}</p>
               <span className="h-px w-8 bg-white/15" aria-hidden="true" />
             </div>
           </div>

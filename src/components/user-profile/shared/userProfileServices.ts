@@ -12,8 +12,9 @@
  * - `UserProfileController` is the exact value production's `useUserProfile`
  *   returns (same names, same call signatures), so the transfer back to
  *   Light-Novels is a provider swap rather than a rewrite.
- * - The remaining members cover the four production dependencies the panels
- *   import on their own: `lib/firebase` (local-only mode), `lib/storage`
+ * - The remaining members cover the production dependencies the panels
+ *   import on their own: provider-aware authentication, `lib/firebase`
+ *   (local-only mode), `lib/storage`
  *   (library sync), `lib/artifacts` (weekly offerings), and
  *   `lib/storySeedStorage` + `lib/storySeedFormat` (seed listing and export).
  *
@@ -170,6 +171,14 @@ export interface UserProfileController {
 export interface UserProfileServices {
   /** Production: `useUserProfile(props)` from `src/hooks/useUserProfile.ts`. */
   useController: (props: UserProfileControllerProps) => UserProfileController;
+
+  /** Host-owned Google, Apple, or email authentication for the Spirit Link gate. */
+  authenticate: (attempt: {
+    provider: 'google' | 'apple' | 'email';
+    emailMode?: 'signin' | 'create';
+    email?: string;
+    password?: string;
+  }) => Promise<unknown> | unknown;
 
   /** Production: `LOCAL_ONLY_MODE` / `setLocalOnlyMode` from `src/lib/firebase.ts`. */
   localOnlyMode: boolean;

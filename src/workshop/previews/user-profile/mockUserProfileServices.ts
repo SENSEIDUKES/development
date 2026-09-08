@@ -12,7 +12,7 @@
  * | `lib/persistence` admin routes                           | the fixed registries in `previewData` |
  * | `services/profilePicture` (Gemini image generation)      | a stepped timer that resolves a locally drawn SVG |
  * | `services/profilePicturePersistence` (R2 upload/commit)  | an 800 ms delay, then a local `avatarUrl` write |
- * | `lib/artifacts.submitCurrentWeekOfferings`               | a local inventory mutation |
+ * | `lib/artifacts.submitCurrentWeekOfferings`               | marks this week's pouch submitted and pays its rewards into the local profile |
  * | `lib/storySeedStorage` / `lib/storySeedFormat`           | the fixed seed list; export is logged, never downloaded |
  * | `lib/storage.performSync` / `lib/firebase` local-only    | logged as an excluded action |
  * | `useAppStore` (settings, shortcuts, import/export)       | logged as an excluded action |
@@ -46,6 +46,7 @@ import type {
   UserProfile,
 } from '../../../components/user-profile/shared/types';
 import { getDaoRankData } from '../../../components/user-profile/development/qi';
+import { getCurrentOfferingWeekId } from '../../../components/user-profile/shared/offeringWeek';
 import {
   MOCK_ACCOUNT,
   MOCK_ADMIN_STORIES,
@@ -102,6 +103,14 @@ export function createMockUserProfileServices({
   const failIfScenarioFails = async (message: string) => {
     if (scenario.servicesFail) throw new Error(message);
   };
+
+  /**
+   * Production's `submitCurrentWeekOfferings` writes the account inventory and
+   * the app store listener refreshes the page. The mock has no store, so the
+   * controller registers a local handler here and the service calls it: the
+   * pouch relics are marked submitted and their rewards land on the profile.
+   */
+  let submitOfferingsLocally: (() => { qi: number; sectMerit: number }) | null = null;
 
   const useController = (props: UserProfileControllerProps): UserProfileController => {
     const { currentUser, stories, onLogout, onNavigateHome } = props;
@@ -595,6 +604,40 @@ export function createMockUserProfileServices({
       [commitProfile, profile],
     );
 
+    // ---- Weekly offerings (local stand-in for `lib/artifacts`) -------------
+    useEffect(() => {
+      submitOfferingsLocally = () => {
+        if (!profile) return { qi: 0, sectMerit: 0 };
+        const currentWeek = getCurrentOfferingWeekId();
+        const now = new Date().toISOString();
+        let qi = 0;
+        let sectMerit = 0;
+        const cosmicInventory = (profile.cosmicInventory || []).map(artifact => {
+          const inPouch =
+            artifact.status === 'unsubmitted'
+            || (!artifact.status && artifact.offeringWeekId === currentWeek);
+          if (!inPouch) return artifact;
+          qi += artifact.rewardValueQi || 0;
+          sectMerit += artifact.rewardValueSectMerit || 0;
+          return { ...artifact, status: 'submitted' as const, gatheredAt: now };
+        });
+        const currentQiVal = profile.heavenly_qi !== undefined ? profile.heavenly_qi : (profile.qi || 0);
+        commitProfile({
+          ...profile,
+          cosmicInventory,
+          qi: (profile.qi || 0) + qi,
+          dao_xp: (profile.dao_xp || 0) + qi,
+          heavenly_qi: currentQiVal + qi,
+          sect_qi: (profile.sect_qi || 0) + sectMerit,
+          updatedAt: now,
+        });
+        return { qi, sectMerit };
+      };
+      return () => {
+        submitOfferingsLocally = null;
+      };
+    }, [commitProfile, profile]);
+
     // ---- Auth and app-shell actions the Workshop excludes -----------------
     const handleLogin = useCallback(() => {
       logExcludedAction('Google sign-in — mock account linked locally instead');
@@ -705,7 +748,7 @@ export function createMockUserProfileServices({
     submitCurrentWeekOfferings: async () => {
       await failIfScenarioFails('This week’s offerings could not be submitted.');
       await delay(900);
-      return { qi: 7250, sectMerit: 175 };
+      return submitOfferingsLocally?.() ?? { qi: 0, sectMerit: 0 };
     },
 
     listStorySeeds: async () => {

@@ -25,23 +25,47 @@ const daysAgo = (days: number): string =>
 const dayStamp = (days: number): string => daysAgo(days).split('T')[0];
 
 /**
- * A locally drawn portrait so the "developed" scenario can show a real avatar
- * without fetching an image. Production serves a signed R2 delivery URL.
+ * A locally drawn, static 2D cultivator portrait so the "developed" scenario
+ * shows a real likeness without fetching an image: a robed bust with a
+ * topknot and hairpin against a blue spirit halo. Production serves a signed
+ * R2 delivery URL for the generated portrait.
  */
 const portraitDataUri = (): string => {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
     <defs>
-      <radialGradient id="g" cx="50%" cy="35%" r="75%">
-        <stop offset="0%" stop-color="#1b3a5c"/>
-        <stop offset="60%" stop-color="#08131f"/>
-        <stop offset="100%" stop-color="#000000"/>
+      <radialGradient id="sky" cx="50%" cy="38%" r="70%">
+        <stop offset="0%" stop-color="#1f4f86"/>
+        <stop offset="55%" stop-color="#0a1a30"/>
+        <stop offset="100%" stop-color="#02050b"/>
       </radialGradient>
+      <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+        <stop offset="60%" stop-color="#04ACFF" stop-opacity="0"/>
+        <stop offset="88%" stop-color="#04ACFF" stop-opacity="0.55"/>
+        <stop offset="100%" stop-color="#04ACFF" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="robe" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#e7edf7"/>
+        <stop offset="100%" stop-color="#8ea3c4"/>
+      </linearGradient>
     </defs>
-    <rect width="200" height="200" fill="url(#g)"/>
-    <circle cx="100" cy="76" r="30" fill="#0b1c2c" stroke="#04ACFF" stroke-opacity="0.55" stroke-width="2"/>
-    <path d="M46 178c0-32 24-52 54-52s54 20 54 52z" fill="#0b1c2c" stroke="#04ACFF" stroke-opacity="0.45" stroke-width="2"/>
-    <circle cx="100" cy="40" r="7" fill="#FFD700" fill-opacity="0.75"/>
-    <circle cx="100" cy="76" r="46" fill="none" stroke="#8B5CF6" stroke-opacity="0.28" stroke-width="1"/>
+    <rect width="200" height="200" fill="url(#sky)"/>
+    <circle cx="100" cy="92" r="78" fill="url(#halo)"/>
+    <circle cx="100" cy="92" r="62" fill="none" stroke="#7dd3ff" stroke-opacity="0.35" stroke-width="1.5"/>
+    <g fill="#ffffff" fill-opacity="0.7">
+      <circle cx="38" cy="52" r="1.4"/><circle cx="160" cy="40" r="1.1"/><circle cx="172" cy="118" r="1.3"/>
+      <circle cx="28" cy="132" r="1"/><circle cx="146" cy="160" r="1.2"/><circle cx="60" cy="24" r="0.9"/>
+    </g>
+    <path d="M40 200c2-34 26-56 60-56s58 22 60 56z" fill="url(#robe)"/>
+    <path d="M78 148l22 34 22-34" fill="none" stroke="#1d3358" stroke-width="2"/>
+    <path d="M100 152l-10 40h20z" fill="#2c4f86" fill-opacity="0.85"/>
+    <path d="M92 118h16v22c0 6-16 6-16 0z" fill="#f0d9c2"/>
+    <ellipse cx="100" cy="98" rx="27" ry="33" fill="#f6e2cc"/>
+    <path d="M73 96c0-26 12-40 27-40s27 14 27 40c-6-10-14-18-27-18s-21 8-27 18z" fill="#151a2b"/>
+    <path d="M88 44c4-14 20-14 24 0-8-6-16-6-24 0z" fill="#151a2b"/>
+    <rect x="92" y="34" width="16" height="8" rx="3" fill="#1b2340"/>
+    <path d="M74 42h52" stroke="#d4af37" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M89 100c4-3 8-3 12 0M99 100c4-3 8-3 12 0" stroke="#3a2c25" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <path d="M96 116c2 1.6 6 1.6 8 0" stroke="#b07a6c" stroke-width="1.6" stroke-linecap="round" fill="none"/>
   </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg.replace(/\s+/g, ' ').trim())}`;
 };

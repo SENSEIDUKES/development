@@ -109,7 +109,7 @@ export function UserProfileWorkspace() {
       entry={entry}
       workshopControls={{
         description:
-          'Each scenario fixes the account and its profile snapshot. Everything inside a scenario — editing, check-in, attunement, portrait generation, admin edits — runs for real against local state.',
+          'Each scenario fixes the account and its profile snapshot. Everything inside a scenario — the Cave destinations, Settings edits, check-in, attunement, offerings, portrait generation, admin edits — runs for real against local state.',
         defaultSection: 'states',
         sections: [
           {

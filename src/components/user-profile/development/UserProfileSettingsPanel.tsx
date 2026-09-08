@@ -1,32 +1,97 @@
-import { CloudOff, RefreshCw, Cloud, Globe, Sliders, AlertTriangle, BookOpen } from 'lucide-react';
+import React, { useRef, useState } from 'react';
 import {
-  ChapterWritingStyle,
-  UserProfile as UserProfileType,
-} from '../shared/types';
-import { useUserProfileServices } from '../shared/userProfileServices';
+  AlertTriangle,
+  Archive,
+  BookOpen,
+  Camera,
+  Cloud,
+  CloudOff,
+  Download,
+  Globe,
+  Keyboard,
+  LogOut,
+  Mountain,
+  RefreshCw,
+  Shield,
+  Sliders,
+  Sparkles,
+  Upload,
+  User as UserIcon,
+} from 'lucide-react';
+import { LibraryButton, LibraryTextBox } from '@seihouse/library-ui';
 import {
-  CHAPTER_WRITING_STYLE_OPTIONS,
-  normalizeChapterWritingStyle,
-} from './chapterWritingStyle';
+  SEIDisclosure,
+  SEIDisclosureGroup,
+  SEIDrawer,
+  SEIDrawerBody,
+  SEIDrawerContent,
+  SEIDrawerDescription,
+  SEIDrawerHeader,
+  SEIDrawerTitle,
+  SEIField,
+  SEISelect,
+  SEISwitch,
+} from '@seihouse/ui';
+import type { AppUser, ChapterWritingStyle, Story } from '../shared/types';
+import { useUserProfileServices, type UserProfileController } from '../shared/userProfileServices';
+import { CHAPTER_WRITING_STYLE_OPTIONS, normalizeChapterWritingStyle } from './chapterWritingStyle';
+import { AURA_TIERS, getAuraColorForXp, getAuraTextStyle } from './qi';
+import { CAVE_ENVIRONMENTS } from './caveEnvironment';
+
+/** The persisted language option values, exactly as production stores them. */
+const LANGUAGE_OPTIONS = [
+  'English',
+  'Spanish',
+  'Simplified Chinese (简体中文)',
+  'Traditional Chinese (繁體中文)',
+  'Japanese (日本語)',
+  'Korean (한국어)',
+  'Vietnamese (Tiếng Việt)',
+  'Indonesian (Bahasa Indonesia)',
+  'Thai (ภาษาไทย)',
+  'Tagalog (Filipino)',
+  'Malay (Bahasa Melayu)',
+] as const;
+
+const IDENTITY_FIELDS = ['username', 'displayName', 'displayNameColor'] as const;
 
 interface UserProfileSettingsPanelProps {
-  syncStatus: string;
-  lastSavedTime: Date | null;
-  formData: Partial<UserProfileType>;
-  profile: UserProfileType | null;
-  handleLanguageChangeDirect: (name: 'preferredLanguage' | 'defaultTranslationLanguage', value: string) => void;
-  handleDefaultChapterWritingStyleChange: (value: ChapterWritingStyle) => Promise<void>;
-  isSavingChapterWritingStyle: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  controller: UserProfileController;
+  currentUser: AppUser | null;
+  stories: Story[];
+  onLogout: () => void;
+  environmentId: string;
+  onEnvironmentChange: (id: string) => void;
+  ambientMotes: boolean;
+  onAmbientMotesChange: (on: boolean) => void;
+  onOpenPortrait: () => void;
+  onOpenSwitchboard: () => void;
 }
 
+/**
+ * The gear-triggered Settings panel: every profile control that is not one of
+ * the four Cave destinations lives here — identity and Celestial Aura editing,
+ * portrait controls, the cave environment, language, writing preferences,
+ * Harmony sync, backup and import, the advanced tools, Sever Link, and the
+ * authorized Akashic Switchboard entry.
+ *
+ * All state and behaviour is the controller's; this file only arranges it.
+ */
 export function UserProfileSettingsPanel({
-  syncStatus,
-  lastSavedTime,
-  formData,
-  profile,
-  handleLanguageChangeDirect,
-  handleDefaultChapterWritingStyleChange,
-  isSavingChapterWritingStyle,
+  open,
+  onOpenChange,
+  controller,
+  currentUser,
+  stories,
+  onLogout,
+  environmentId,
+  onEnvironmentChange,
+  ambientMotes,
+  onAmbientMotesChange,
+  onOpenPortrait,
+  onOpenSwitchboard,
 }: UserProfileSettingsPanelProps) {
   // Production reads the local-only flag and its setter from `lib/firebase` and
   // calls the deep library sync on `lib/storage`. All three arrive through the
@@ -36,6 +101,54 @@ export function UserProfileSettingsPanel({
     setLocalOnlyMode,
     requestLibrarySync,
   } = useUserProfileServices();
+  const {
+    profile,
+    formData,
+    setFormData,
+    handleChange,
+    handleSave,
+    colorInputRef,
+    syncStatus,
+    lastSavedTime,
+    handleLanguageChangeDirect,
+    handleDefaultChapterWritingStyleChange,
+    isSavingChapterWritingStyle,
+    setIsSettingsOpen,
+    setIsShortcutsOpen,
+    handleExportLibrary,
+    handleImportLibrary,
+  } = controller;
+
+  const [isSavingIdentity, setIsSavingIdentity] = useState(false);
+  const importInputRef = useRef<HTMLInputElement>(null);
+
+  const currentXp = profile?.dao_xp || profile?.qi || 0;
+  const isDaoMaster = currentXp >= 25000;
+  const auraColor = getAuraColorForXp(formData.displayNameColor ?? profile?.displayNameColor, currentXp);
+  const previewStyle = getAuraTextStyle(auraColor, profile?.activeStatusEffects);
+  const isCustomSelected = Boolean(formData.displayNameColor) && !AURA_TIERS.some(t => t.colorHex === formData.displayNameColor);
+  const isIdentityDirty = IDENTITY_FIELDS.some(field => (formData[field] ?? '') !== (profile?.[field] ?? ''));
+  const isPrivileged = profile?.role === 'owner' || profile?.role === 'admin';
+
+  const saveIdentity = async () => {
+    setIsSavingIdentity(true);
+    try {
+      await handleSave();
+    } finally {
+      setIsSavingIdentity(false);
+    }
+  };
+
+  const discardIdentity = () => {
+    setFormData(previous => ({
+      ...previous,
+      username: profile?.username,
+      displayName: profile?.displayName,
+      displayNameColor: profile?.displayNameColor,
+    }));
+  };
+
+  // ---- Harmony (production behaviour, verbatim) ----------------------------
   const isHarmonizing = syncStatus === 'syncing';
   const harmonyDetail = syncStatus === 'offline'
     ? 'Offline'
@@ -60,169 +173,373 @@ export function UserProfileSettingsPanel({
     }
     requestLibrarySync();
   };
+  const HarmonyIcon = syncStatus === 'offline'
+    ? CloudOff
+    : isHarmonizing
+      ? RefreshCw
+      : syncStatus === 'error'
+        ? AlertTriangle
+        : Cloud;
 
   return (
-    <>
-      {/* Celestial Tools Section (Always Visible) */}
-      <div className="border-t border-neutral-900/50 pt-10">
-        <h3 className="text-[11px] uppercase font-bold tracking-widest text-neutral-500 font-sc mb-6 flex items-center gap-2">
-          <Sliders size={14} className="text-portal" />
-          Environment & Sync Settings
-        </h3>
-        <div className="flex flex-col gap-5 bg-[#030303] p-5 rounded-xl border border-neutral-900 shadow-inner">
-          <div className="flex flex-wrap items-center gap-4 border-b border-neutral-900/50 pb-4">
-            <button
-              type="button"
-              onClick={activateHarmony}
-              disabled={isHarmonizing}
-              title={harmonyTitle}
-              aria-label={`Harmony: ${harmonyDetail}`}
-              aria-busy={isHarmonizing}
-              className={`group flex min-w-48 items-center gap-3 rounded-lg border bg-black px-4 py-2.5 text-left transition-all disabled:cursor-wait ${
-                syncStatus === 'error'
-                  ? 'border-human/40 text-human hover:bg-human/10'
-                  : syncStatus === 'offline'
-                    ? 'border-neutral-800 text-neutral-500 hover:border-portal/40 hover:text-portal'
-                    : 'border-portal/30 text-portal hover:border-portal/60 hover:bg-portal/5'
-              }`}
-            >
-              <span aria-hidden="true" className="shrink-0">
-                {syncStatus === 'offline' ? (
-                  <CloudOff size={16} />
-                ) : isHarmonizing ? (
-                  <RefreshCw size={16} className="animate-spin" />
-                ) : syncStatus === 'error' ? (
-                  <AlertTriangle size={16} />
-                ) : (
-                  <Cloud size={16} />
-                )}
-              </span>
-              <span className="flex min-w-0 flex-col">
-                <span className="font-sc text-[11px] font-bold uppercase tracking-widest">Harmony</span>
-                <span
-                  aria-live="polite"
-                  className="font-sans text-[9px] font-medium uppercase tracking-[0.16em] opacity-70"
-                >
-                  {harmonyDetail}
-                </span>
-              </span>
-              {isHarmonizing ? (
-                <span className="sr-only">Library synchronization is in progress.</span>
-              ) : (
-                <span className="sr-only">Activate to reconcile every story and chapter now.</span>
-              )}
-            </button>
-            {lastSavedTime && (
-              <div className="text-[10px] font-mono text-neutral-600 tracking-wider">
-                Saved on device: {new Date(lastSavedTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </div>
-            )}
+    <SEIDrawer open={open} onOpenChange={next => onOpenChange(next)}>
+      <SEIDrawerContent side="right" tone="dark" className="z-[310] sm:max-w-[30rem]" backdropClassName="z-[300]" data-cave-settings>
+        <SEIDrawerHeader>
+          <div className="flex items-center gap-3">
+            <Sliders size={18} aria-hidden="true" className="text-[#e2c46a]" />
+            <div>
+              <SEIDrawerTitle className="cave-title font-display text-xl">Settings</SEIDrawerTitle>
+              <SEIDrawerDescription>Everything about your cultivator that is not a destination.</SEIDrawerDescription>
+            </div>
           </div>
+        </SEIDrawerHeader>
 
-          {/* Interactive Language & Translation Settings - Un-gatekept */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 border-b border-neutral-900/50 pb-5">
-            <div className="flex items-center justify-between bg-black/40 border border-neutral-850 rounded-xl p-3 sm:p-3.5 gap-2">
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                <div className="p-2 bg-neutral-900/50 rounded-lg shrink-0"><Globe size={13} className="text-portal animate-pulse" /></div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-neutral-400 font-sc truncate">Preferred Language</span>
-                  <span className="text-[8px] text-neutral-500 font-sans truncate">Active UI dialect</span>
+        <SEIDrawerBody className="text-neutral-300">
+          <SEIDisclosureGroup type="multiple" defaultValue={['identity']}>
+            {/* ---- Identity & Aura ------------------------------------------ */}
+            <SEIDisclosure value="identity" heading="Identity & Celestial Aura" icon={UserIcon} supportingText="Dao name, display name, and the aura your name carries.">
+              <div className="space-y-4 pt-1">
+                <div className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center">
+                  <p className="font-sc text-[9px] uppercase tracking-widest text-neutral-500">Preview</p>
+                  <p className="mt-1 font-serif text-lg italic">
+                    <span className={previewStyle.className || 'text-neutral-100'} style={previewStyle.style}>
+                      {formData.displayName || profile?.displayName || 'Unknown Ascendant'}
+                    </span>
+                  </p>
+                </div>
+
+                <LibraryTextBox
+                  id="cave-username"
+                  label="Username (Dao Name)"
+                  value={formData.username || ''}
+                  onChange={value => setFormData(previous => ({ ...previous, username: value }))}
+                  placeholder="Enter Dao Name"
+                  size="compact"
+                  disabled={!profile}
+                />
+                <LibraryTextBox
+                  id="cave-display-name"
+                  label="Display Name"
+                  value={formData.displayName || ''}
+                  onChange={value => setFormData(previous => ({ ...previous, displayName: value }))}
+                  placeholder="Your identity…"
+                  size="compact"
+                  disabled={!profile}
+                />
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="flex items-center gap-1.5 font-sc text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                      <Sparkles size={11} aria-hidden="true" className="text-[#7dd3ff]" /> Celestial Aura
+                    </p>
+                    <p className="font-mono text-[9px] text-neutral-500">Current XP: {currentXp.toLocaleString()} Qi</p>
+                  </div>
+                  <div role="radiogroup" aria-label="Celestial Aura tier" className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
+                    {AURA_TIERS.map(tier => {
+                      const isUnlocked = currentXp >= tier.unlockedAt;
+                      const isSelected = formData.displayNameColor === tier.colorHex;
+                      return (
+                        <button
+                          key={tier.rank}
+                          type="button"
+                          role="radio"
+                          aria-checked={isSelected}
+                          disabled={!isUnlocked || !profile}
+                          onClick={() => setFormData(previous => ({ ...previous, displayNameColor: tier.colorHex }))}
+                          className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors ${
+                            !isUnlocked
+                              ? 'cursor-not-allowed border-white/5 bg-black/30 opacity-60'
+                              : isSelected
+                                ? 'border-[#04ACFF] bg-[#04ACFF]/10'
+                                : 'border-white/10 bg-black/30 hover:border-white/25'
+                          }`}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className={`h-6 w-6 shrink-0 rounded-full border border-black/50 ${!isUnlocked ? 'grayscale' : ''}`}
+                            style={
+                              tier.colorHex.startsWith('#')
+                                ? { backgroundColor: tier.colorHex, boxShadow: `0 0 8px ${tier.colorHex}` }
+                                : { background: 'linear-gradient(to right, #a855f7, #ec4899, #eab308)' }
+                            }
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-sans text-[12px] font-semibold text-neutral-200">{tier.name}</span>
+                            <span className="block truncate font-mono text-[9px] uppercase tracking-wider text-neutral-500">
+                              {tier.rank} · {isUnlocked ? 'Unlocked' : `${currentXp.toLocaleString()} / ${tier.unlockedAt.toLocaleString()} Qi`}
+                            </span>
+                          </span>
+                          {isSelected ? (
+                            <span className="shrink-0 rounded-full bg-[#04ACFF] px-2 py-0.5 font-sc text-[9px] font-bold uppercase tracking-widest text-black">
+                              Equipped
+                            </span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Transcendent Custom spectrum input - only active for Dao Master */}
+                  <div className={`flex items-center gap-3 border-t border-white/10 pt-3 ${isDaoMaster ? '' : 'opacity-50'}`}>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        disabled={!isDaoMaster}
+                        onClick={() => { if (isDaoMaster) colorInputRef.current?.click(); }}
+                        className={`flex h-9 w-9 items-center justify-center rounded-full border bg-gradient-to-tr from-red-500 via-green-500 via-blue-500 to-yellow-500 transition-transform hover:scale-105 motion-reduce:transform-none ${
+                          isCustomSelected ? 'border-[#04ACFF] ring-2 ring-[#04ACFF]/30' : 'border-white/20'
+                        }`}
+                        title={isDaoMaster ? 'Custom Color Spectrum…' : 'Locked until Dao Master'}
+                        aria-label="Transcendent custom spectrum"
+                      >
+                        {isCustomSelected ? (
+                          <span className="h-2.5 w-2.5 rounded-full border border-black" style={{ backgroundColor: formData.displayNameColor }} />
+                        ) : null}
+                      </button>
+                      <input
+                        ref={colorInputRef}
+                        type="color"
+                        name="displayNameColor"
+                        disabled={!isDaoMaster}
+                        value={isCustomSelected && formData.displayNameColor ? formData.displayNameColor : '#00FFFF'}
+                        onChange={handleChange}
+                        className="pointer-events-none absolute inset-0 h-0 w-0 opacity-0"
+                        aria-hidden="true"
+                        tabIndex={-1}
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-mono text-[10px] text-neutral-400">
+                        Transcendent Custom Spectrum
+                        {!isDaoMaster ? <span className="ml-2 rounded border border-white/10 px-1.5 py-0.5 text-[8px] text-neutral-500">Requires Dao Master (25k Qi)</span> : null}
+                      </p>
+                      <p className="font-sans text-[9px] italic text-neutral-500">
+                        {isDaoMaster ? 'Click the sphere to define your custom frequency' : 'Transcend normal UI limits'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <LibraryButton
+                    variant="primary"
+                    fullWidth
+                    loading={isSavingIdentity}
+                    disabled={!profile || !isIdentityDirty || isSavingIdentity}
+                    onClick={() => void saveIdentity()}
+                  >
+                    Guard Changes
+                  </LibraryButton>
+                  <LibraryButton variant="ghost" fullWidth disabled={!isIdentityDirty || isSavingIdentity} onClick={discardIdentity}>
+                    Discard
+                  </LibraryButton>
                 </div>
               </div>
-              <div className="relative shrink-0">
-                <select 
-                  name="preferredLanguage" 
-                  value={formData.preferredLanguage || profile?.preferredLanguage || 'English'} 
-                  onChange={(e) => handleLanguageChangeDirect('preferredLanguage', e.target.value)}
-                  className="bg-black border border-neutral-800 hover:border-portal/50 rounded pl-2 pr-6 py-1.5 text-[11px] text-signal focus:border-portal outline-none font-sans cursor-pointer transition-all appearance-none w-24 sm:w-32 text-ellipsis overflow-hidden"
-                >
-                  <option value="English">English</option>
-                  <option value="Spanish">Spanish</option>
-                  <option value="Simplified Chinese (简体中文)">Simplified Chinese (简体中文)</option>
-                  <option value="Traditional Chinese (繁體中文)">Traditional Chinese (繁體中文)</option>
-                  <option value="Japanese (日本語)">Japanese (日本語)</option>
-                  <option value="Korean (한국어)">Korean (한국어)</option>
-                  <option value="Vietnamese (Tiếng Việt)">Vietnamese (Tiếng Việt)</option>
-                  <option value="Indonesian (Bahasa Indonesia)">Indonesian (Bahasa Indonesia)</option>
-                  <option value="Thai (ภาษาไทย)">Thai (ภาษาไทย)</option>
-                  <option value="Tagalog (Filipino)">Tagalog (Filipino)</option>
-                  <option value="Malay (Bahasa Melayu)">Malay (Bahasa Melayu)</option>
-                </select>
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500 text-[9px]">▼</div>
-              </div>
-            </div>
+            </SEIDisclosure>
 
-            <div className="flex items-center justify-between bg-black/40 border border-neutral-850 rounded-xl p-3 sm:p-3.5 gap-2">
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                <div className="p-2 bg-neutral-900/50 rounded-lg shrink-0"><Globe size={13} className="text-human animate-pulse" /></div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-neutral-400 font-sc truncate">Translation Default</span>
-                  <span className="text-[8px] text-neutral-500 font-sans truncate">Automatic translation</span>
+            {/* ---- Portrait -------------------------------------------------- */}
+            <SEIDisclosure value="portrait" heading="Cultivator Portrait" icon={Camera} supportingText="Cast your likeness through the Divine Mirror.">
+              <div className="flex items-center gap-4 pt-1">
+                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-[#d4af37]/50 bg-black">
+                  {formData.avatarUrl || profile?.avatarUrl ? (
+                    <img src={formData.avatarUrl || profile?.avatarUrl} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center text-neutral-600"><UserIcon size={24} aria-hidden="true" /></span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <p className="font-sans text-[11px] text-neutral-400">
+                    {profile?.activePortraitId ? 'A sealed portrait is active.' : 'No portrait has been sealed yet.'}
+                  </p>
+                  <LibraryButton variant="secondary" size="sm" icon={Sparkles} disabled={!profile} onClick={onOpenPortrait}>
+                    Open Divine Mirror
+                  </LibraryButton>
                 </div>
               </div>
-              <div className="relative shrink-0">
-                <select 
-                  name="defaultTranslationLanguage" 
-                  value={formData.defaultTranslationLanguage || profile?.defaultTranslationLanguage || 'English'} 
-                  onChange={(e) => handleLanguageChangeDirect('defaultTranslationLanguage', e.target.value)}
-                  className="bg-black border border-neutral-800 hover:border-human/50 rounded pl-2 pr-6 py-1.5 text-[11px] text-signal focus:border-human outline-none font-sans cursor-pointer transition-all appearance-none w-24 sm:w-32 text-ellipsis overflow-hidden"
-                >
-                  <option value="English">English</option>
-                  <option value="Spanish">Spanish</option>
-                  <option value="Simplified Chinese (简体中文)">Simplified Chinese (简体中文)</option>
-                  <option value="Traditional Chinese (繁體中文)">Traditional Chinese (繁體中文)</option>
-                  <option value="Japanese (日本語)">Japanese (日本語)</option>
-                  <option value="Korean (한국어)">Korean (한국어)</option>
-                  <option value="Vietnamese (Tiếng Việt)">Vietnamese (Tiếng Việt)</option>
-                  <option value="Indonesian (Bahasa Indonesia)">Indonesian (Bahasa Indonesia)</option>
-                  <option value="Thai (ภาษาไทย)">Thai (ภาษาไทย)</option>
-                  <option value="Tagalog (Filipino)">Tagalog (Filipino)</option>
-                  <option value="Malay (Bahasa Melayu)">Malay (Bahasa Melayu)</option>
-                </select>
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500 text-[9px]">▼</div>
-              </div>
-            </div>
-          </div>
+            </SEIDisclosure>
 
-          <div className="flex flex-col gap-3 rounded-xl border border-neutral-850 bg-black/40 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-3.5">
-            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-              <div className="shrink-0 rounded-lg bg-neutral-900/50 p-2">
-                <BookOpen size={13} className="text-jade-accent" />
+            {/* ---- Cave environment ------------------------------------------ */}
+            <SEIDisclosure value="environment" heading="Cave Environment" icon={Mountain} supportingText="The realm seen from your cave mouth.">
+              <div className="space-y-3 pt-1">
+                <div role="radiogroup" aria-label="Cave environment" className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {CAVE_ENVIRONMENTS.map(environment => {
+                    const isSelected = environment.id === environmentId;
+                    return (
+                      <button
+                        key={environment.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        onClick={() => onEnvironmentChange(environment.id)}
+                        className={`group relative overflow-hidden rounded-lg border text-left transition-colors ${
+                          isSelected ? 'border-[#e2c46a]' : 'border-white/10 hover:border-white/30'
+                        }`}
+                      >
+                        <img src={environment.src} alt="" className="aspect-[16/10] w-full object-cover" loading="lazy" />
+                        <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-2 pb-1.5 pt-4">
+                          <span className="block truncate font-sc text-[10px] font-bold uppercase tracking-wider text-neutral-100">{environment.name}</span>
+                          <span className="block truncate font-sans text-[9px] text-neutral-400">{environment.mood}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <SEISwitch isSelected={ambientMotes} onChange={onAmbientMotesChange} size="compact">
+                  Ambient spirit motes
+                </SEISwitch>
               </div>
-              <div className="flex min-w-0 flex-col">
-                <label
-                  htmlFor="default-chapter-writing-style"
-                  className="font-sc text-[9px] font-bold uppercase tracking-widest text-neutral-400 sm:text-[10px]"
+            </SEIDisclosure>
+
+            {/* ---- Language -------------------------------------------------- */}
+            <SEIDisclosure value="language" heading="Language" icon={Globe} supportingText="Interface dialect and automatic translation.">
+              <div className="space-y-3 pt-1">
+                <SEIField label="Preferred Language" htmlFor="cave-preferred-language" helperText="Active UI dialect" size="compact">
+                  <SEISelect
+                    id="cave-preferred-language"
+                    name="preferredLanguage"
+                    size="compact"
+                    disabled={!profile}
+                    value={formData.preferredLanguage || profile?.preferredLanguage || 'English'}
+                    onChange={event => handleLanguageChangeDirect('preferredLanguage', event.target.value)}
+                  >
+                    {LANGUAGE_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}
+                  </SEISelect>
+                </SEIField>
+                <SEIField label="Translation Default" htmlFor="cave-translation-language" helperText="Automatic translation" size="compact">
+                  <SEISelect
+                    id="cave-translation-language"
+                    name="defaultTranslationLanguage"
+                    size="compact"
+                    disabled={!profile}
+                    value={formData.defaultTranslationLanguage || profile?.defaultTranslationLanguage || 'English'}
+                    onChange={event => handleLanguageChangeDirect('defaultTranslationLanguage', event.target.value)}
+                  >
+                    {LANGUAGE_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}
+                  </SEISelect>
+                </SEIField>
+                <p className="font-sans text-[10px] text-neutral-500">
+                  A language change asks for confirmation and reverts on its own after 30 seconds.
+                </p>
+              </div>
+            </SEIDisclosure>
+
+            {/* ---- Writing preferences -------------------------------------- */}
+            <SEIDisclosure value="writing" heading="Writing Preferences" icon={BookOpen} supportingText="Defaults copied onto newly created stories.">
+              <div className="pt-1">
+                <SEIField label="Default Chapter Writing Style" htmlFor="cave-writing-style" helperText="Used when a new story is created" size="compact" disabled={!profile || isSavingChapterWritingStyle}>
+                  <SEISelect
+                    id="cave-writing-style"
+                    size="compact"
+                    value={normalizeChapterWritingStyle(formData.defaultChapterWritingStyle ?? profile?.defaultChapterWritingStyle)}
+                    onChange={event => { void handleDefaultChapterWritingStyleChange(event.target.value as ChapterWritingStyle); }}
+                    disabled={!profile || isSavingChapterWritingStyle}
+                    loading={isSavingChapterWritingStyle}
+                    loadingLabel="Saving writing style"
+                  >
+                    {CHAPTER_WRITING_STYLE_OPTIONS.map(style => <option key={style} value={style}>{style}</option>)}
+                  </SEISelect>
+                </SEIField>
+              </div>
+            </SEIDisclosure>
+
+            {/* ---- Sync ------------------------------------------------------ */}
+            <SEIDisclosure value="sync" heading="Harmony & Sync" icon={Cloud} supportingText={LOCAL_ONLY_MODE ? 'Legacy device-only mode.' : 'Cloud storage across your devices.'}>
+              <div className="space-y-3 pt-1">
+                <button
+                  type="button"
+                  onClick={activateHarmony}
+                  disabled={isHarmonizing}
+                  title={harmonyTitle}
+                  aria-label={`Harmony: ${harmonyDetail}`}
+                  aria-busy={isHarmonizing}
+                  className={`flex w-full items-center gap-3 rounded-lg border bg-black/40 px-4 py-3 text-left transition-colors disabled:cursor-wait ${
+                    syncStatus === 'error'
+                      ? 'border-[#ff3333]/40 text-[#ff3333] hover:bg-[#ff3333]/10'
+                      : syncStatus === 'offline'
+                        ? 'border-white/10 text-neutral-500 hover:border-[#04ACFF]/40 hover:text-[#7dd3ff]'
+                        : 'border-[#04ACFF]/30 text-[#7dd3ff] hover:border-[#04ACFF]/60 hover:bg-[#04ACFF]/5'
+                  }`}
                 >
-                  Default Chapter Writing Style
-                </label>
-                <span className="font-sans text-[8px] text-neutral-500">
-                  Used when a new story is created
-                </span>
+                  <HarmonyIcon size={16} aria-hidden="true" className={isHarmonizing ? 'animate-spin motion-reduce:animate-none' : ''} />
+                  <span className="flex min-w-0 flex-col">
+                    <span className="font-sc text-[11px] font-bold uppercase tracking-widest">Harmony</span>
+                    <span aria-live="polite" className="font-sans text-[9px] font-medium uppercase tracking-[0.16em] opacity-70">{harmonyDetail}</span>
+                  </span>
+                  {isHarmonizing ? (
+                    <span className="sr-only">Library synchronization is in progress.</span>
+                  ) : (
+                    <span className="sr-only">Activate to reconcile every story and chapter now.</span>
+                  )}
+                </button>
+                {lastSavedTime ? (
+                  <p className="font-mono text-[10px] tracking-wider text-neutral-500">
+                    Saved on device: {new Date(lastSavedTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  </p>
+                ) : null}
               </div>
-            </div>
-            <select
-              id="default-chapter-writing-style"
-              value={normalizeChapterWritingStyle(
-                formData.defaultChapterWritingStyle
-                  ?? profile?.defaultChapterWritingStyle,
-              )}
-              onChange={(event) => {
-                void handleDefaultChapterWritingStyleChange(
-                  event.target.value as ChapterWritingStyle,
-                );
-              }}
-              disabled={!profile || isSavingChapterWritingStyle}
-              aria-busy={isSavingChapterWritingStyle}
-              className="w-full cursor-pointer rounded border border-neutral-800 bg-black px-3 py-2 font-sans text-[11px] text-signal outline-none transition-all hover:border-jade-accent/50 focus:border-jade-accent disabled:cursor-wait disabled:opacity-60 sm:w-44"
-            >
-              {CHAPTER_WRITING_STYLE_OPTIONS.map(style => (
-                <option key={style} value={style}>{style}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-    </>
+            </SEIDisclosure>
+
+            {/* ---- Backup & import ------------------------------------------ */}
+            <SEIDisclosure value="backup" heading="Backup, Import & Export" icon={Archive} supportingText="Move your whole library as a scroll.">
+              <div className="flex flex-col gap-2 pt-1 sm:flex-row">
+                <input
+                  ref={importInputRef}
+                  id="cave-import-scroll"
+                  type="file"
+                  accept=".json"
+                  onChange={handleImportLibrary}
+                  className="sr-only"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                />
+                <LibraryButton variant="secondary" fullWidth icon={Upload} onClick={() => importInputRef.current?.click()}>
+                  Import Scroll
+                </LibraryButton>
+                <LibraryButton variant="secondary" fullWidth icon={Download} disabled={stories.length === 0} onClick={handleExportLibrary}>
+                  Backup All
+                </LibraryButton>
+              </div>
+            </SEIDisclosure>
+
+            {/* ---- Advanced tools ------------------------------------------- */}
+            <SEIDisclosure value="advanced" heading="Advanced Tools" icon={Sliders} supportingText="Model presets, routing overrides, and shortcuts.">
+              <div className="space-y-3 pt-1">
+                <p className="font-sans text-[10px] text-neutral-500">
+                  Configure custom model presets, routing overrides, or API credential endpoints.
+                </p>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <LibraryButton variant="secondary" fullWidth icon={Sliders} title="Aether Router" onClick={() => setIsSettingsOpen(true)}>
+                    Aether Router
+                  </LibraryButton>
+                  <LibraryButton variant="secondary" fullWidth icon={Keyboard} title="Shortcuts Manual (or press ? key)" onClick={() => setIsShortcutsOpen(true)}>
+                    Shortcuts
+                  </LibraryButton>
+                </div>
+              </div>
+            </SEIDisclosure>
+
+            {/* ---- Authorized controls --------------------------------------- */}
+            {isPrivileged ? (
+              <SEIDisclosure value="authorized" heading="Authorized Controls" icon={Shield} supportingText={`Signed in with ${profile?.role} authority.`}>
+                <div className="pt-1">
+                  <LibraryButton variant="danger" fullWidth icon={Shield} onClick={onOpenSwitchboard}>
+                    Open Akashic Switchboard
+                  </LibraryButton>
+                </div>
+              </SEIDisclosure>
+            ) : null}
+
+            {/* ---- Account --------------------------------------------------- */}
+            <SEIDisclosure value="account" heading="Account" icon={LogOut} supportingText={currentUser?.email ? `Linked as ${currentUser.email}` : 'Linked spirit'}>
+              <div className="pt-1">
+                <LibraryButton variant="danger" fullWidth icon={LogOut} onClick={onLogout}>
+                  Sever Link
+                </LibraryButton>
+              </div>
+            </SEIDisclosure>
+          </SEIDisclosureGroup>
+        </SEIDrawerBody>
+      </SEIDrawerContent>
+    </SEIDrawer>
   );
 }

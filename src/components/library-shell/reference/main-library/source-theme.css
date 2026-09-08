@@ -1,0 +1,546 @@
+@import url('https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,500;0,700;1,500;1,700&family=Alegreya+SC:wght@500;700&family=Noto+Serif:ital,wght@0,200;0,300;0,400;1,200;1,300;1,400&family=Rubik:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap');
+@import "tailwindcss";
+@import "@seihouse/library-ui/styles.css";
+
+@theme {
+  --font-sans: "Rubik", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Noto Serif", ui-serif, Georgia, serif;
+  --font-display: "Alegreya", serif;
+  --font-sc: "Alegreya SC", serif;
+
+  --color-void: #000000;
+  --color-signal: #FAFAFA;
+  --color-human: #ff3333; /* High-contrast red for text components (WCAG AA compliant) */
+  --color-human-brand: #8B0000; /* Original deep brand red for backgrounds, borders, and ambient glow */
+  --color-portal: #04ACFF;
+
+  --color-neutral-500: #a3a3a3;
+  --color-neutral-600: #949494;
+  --color-neutral-700: #858585;
+
+  --color-gray-500: #9ca3af;
+  --color-gray-600: #8e95a1;
+  --color-gray-700: #808691;
+
+  --color-zinc-500: #a1a1aa;
+  --color-zinc-600: #93939c;
+  --color-zinc-700: #85858d;
+
+  --color-slate-500: #94a3b8;
+  --color-slate-600: #8694a8;
+  --color-slate-700: #788596;
+
+  --color-stone-500: #a8a29e;
+  --color-stone-600: #9c9692;
+  --color-stone-700: #8f8985;
+}
+
+html, body {
+  overscroll-behavior-y: none;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
+  /* Prevent tap highlight on mobile iOS */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent double tap zoom and enforce readable inputs to avoid iOS auto-zoom */
+@supports (-webkit-touch-callout: none) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* Base utility for iOS home bar safe area padding */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Custom scrollbar for an immersive feeling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0d0d0d;
+}
+::-webkit-scrollbar-thumb {
+  background: #8b0000;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a30000;
+}
+
+/* Aesthetic light-novel reading view styling */
+.light-novel-reader {
+  font-family: var(--font-serif);
+  font-size: calc(1rem * var(--reader-font-size-scale, 1));
+  line-height: var(--reader-line-height-scale, 1.62);
+  letter-spacing: var(--reader-letter-spacing, 0);
+  color: #dfd8cf;
+  background-color: #111111;
+}
+
+/* Reader prose is deliberately scoped so chamber UI keeps its cinematic layout. */
+.reader-prose {
+  line-height: var(--reader-line-height, 1.62);
+  letter-spacing: var(--reader-letter-spacing, 0);
+  word-spacing: var(--reader-word-spacing, normal);
+  text-align: start;
+  overflow-wrap: normal;
+  word-break: normal;
+  line-break: auto;
+  hyphens: auto;
+  hanging-punctuation: first last;
+}
+
+.reader-prose .reader-paragraph {
+  margin-block: 0 var(--reader-paragraph-spacing, 1.15em);
+  text-indent: 1.25em;
+}
+
+/* CJK does not use spaces between most words; preserve its native line-breaking rules. */
+.reader-prose:lang(zh),
+.reader-prose:lang(ja),
+.reader-prose:lang(ko) {
+  line-break: strict;
+  word-spacing: normal;
+  text-spacing: auto;
+}
+
+.ink-gradient {
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 50%, rgba(0,0,0,1) 100%);
+}
+
+.gold-accent {
+  color: #D4AF37;
+}
+
+.jade-accent {
+  color: #00A86B;
+}
+
+/* Hide scrollbar for fullscreen view */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+@keyframes holographic-pulse {
+  0% { box-shadow: 0 0 4px currentColor, inset 0 0 2px currentColor; border-color: rgba(255,255,255,0.2); }
+  50% { box-shadow: 0 0 12px currentColor, inset 0 0 6px currentColor; border-color: currentColor; }
+  100% { box-shadow: 0 0 4px currentColor, inset 0 0 2px currentColor; border-color: rgba(255,255,255,0.2); }
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+.system-block.holographic-panel {
+  backdrop-filter: blur(12px) brightness(1.1) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) brightness(1.1) saturate(1.2);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.system-block.holographic-panel:hover {
+  filter: brightness(1.2) saturate(1.3);
+  box-shadow:
+    0 0 20px color-mix(in srgb, currentColor 25%, transparent),
+    inset 0 0 10px color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.system-block.holographic-panel .rarity-accent {
+  animation: holographic-pulse 2.5s infinite ease-in-out;
+}
+
+/* SEN/Paced Mode Narration Sync Styles */
+.reading-focus-active {
+  color: var(--color-signal);
+  text-shadow: 0 0 8px rgba(250, 250, 250, 0.15);
+  transition: color 0.4s ease, text-shadow 0.4s ease;
+}
+
+.reading-focus-dimmed {
+  color: var(--color-neutral-600);
+  opacity: 0.6;
+  transition: color 0.4s ease, opacity 0.4s ease;
+}
+
+/* Dao Aura custom animations */
+@keyframes aura-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.aura-animated-custom {
+  background: linear-gradient(to right, #00ffff, #ff007f, #ffd700, #00ffff);
+  background-size: 300% auto;
+  animation: aura-shimmer 4s linear infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.aura-gradient-violet-gold {
+  background: linear-gradient(to right, #8b5cf6, #ec4899, #ffd700);
+  background-size: 200% auto;
+  animation: aura-shimmer 3s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@keyframes menacing-pulse-red {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(225, 29, 72, 0.25), inset 0 0 6px rgba(225, 29, 72, 0.15);
+    border-color: rgba(225, 29, 72, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(225, 29, 72, 0.75), inset 0 0 12px rgba(225, 29, 72, 0.35);
+    border-color: rgba(225, 29, 72, 1);
+  }
+}
+
+@keyframes menacing-pulse-amber {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.25), inset 0 0 6px rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.75), inset 0 0 12px rgba(245, 158, 11, 0.35);
+    border-color: rgba(245, 158, 11, 1);
+  }
+}
+
+.animate-menacing-red {
+  animation: menacing-pulse-red 3s infinite ease-in-out;
+}
+
+.animate-menacing-amber {
+  animation: menacing-pulse-amber 3s infinite ease-in-out;
+}
+
+@keyframes screen-shake-intense {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  10% { transform: translate(-1.4px, -1.4px) rotate(-0.35deg); }
+  20% { transform: translate(1.4px, 1.4px) rotate(0.35deg); }
+  30% { transform: translate(-1.4px, 1.4px) rotate(0deg); }
+  40% { transform: translate(1.4px, -1.4px) rotate(0.35deg); }
+  50% { transform: translate(-0.7px, 0.7px) rotate(-0.35deg); }
+  60% { transform: translate(0.7px, -0.7px) rotate(0deg); }
+  70% { transform: translate(-0.7px, 0px) rotate(0.35deg); }
+  80% { transform: translate(0.7px, 0.7px) rotate(-0.35deg); }
+  90% { transform: translate(0px, -0.7px) rotate(0deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+.animate-screen-shake {
+  animation: screen-shake-intense 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* Collectible Card Styling */
+.collectible-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease;
+}
+
+.collectible-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  z-index: 20;
+}
+
+.collectible-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(105deg, transparent 20%, rgba(255, 255, 255, 0.1) 25%, transparent 30%);
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+  z-index: 10;
+  mix-blend-mode: overlay;
+}
+
+.collectible-card:hover::after {
+  opacity: 1;
+  animation: shine 2s infinite;
+}
+
+@keyframes shine {
+  0% { transform: translateX(-100%) translateY(-100%) rotate(30deg); }
+  100% { transform: translateX(200%) translateY(200%) rotate(30deg); }
+}
+
+/* ==========================================================================
+   READER ACCESSIBILITY & THEME VARIABLES
+   ========================================================================== */
+:root {
+  /* Default typography multipliers */
+  --reader-font-size-scale: 1;
+  --reader-line-height-scale: 1.62;
+  --reader-letter-spacing: 0;
+
+  /* Default semantic entity colors - all >= 4.5:1 contrast on dark novel bg (#111111) */
+  --color-entity-mc: #60a5fa; /* Main Character - Blue (blue-400) */
+  --color-entity-friend: #34d399; /* Friend - Green (emerald-400) */
+  --color-entity-ally: var(--color-entity-friend); /* Legacy */
+  --color-entity-enemy: #f87171; /* Enemy - Red (red-400) */
+  --color-entity-unknown: #a3a3a3; /* Unknown - Gray (neutral-400) */
+  --color-entity-lover: #f472b6; /* Lover - Pink (pink-400) */
+  --color-entity-mentor: #fbbf24; /* Mentor - Yellow/Gold (amber-400) */
+  --color-entity-fallback: var(--color-entity-mc);
+
+  --color-location-regular: #c084fc; /* Regular Location - Purple (purple-400) */
+  --color-location-special: #f59e0b; /* Special Location - Gold (amber-500) */
+
+  --color-item-basic: #ffffff; /* Basic Item - White */
+  --color-item-decent: #34d399; /* Decent Item - Green (emerald-400) */
+  --color-item-good: #38bdf8; /* Good Item - Light Blue (sky-400) */
+  --color-item-great: #fb923c; /* Great Item - Orange (orange-400) */
+  --color-item-legendary: #fbbf24; /* Legendary Item - Gold (amber-400) */
+}
+
+/* ---------------------------------------------------------
+   COLOR PALETTES (Accessibility Profiles)
+   --------------------------------------------------------- */
+:root[data-palette="protanopia"] {
+  --color-entity-enemy: #fca5a5; /* High contrast peach/pink for protanopia text */
+  --color-entity-lover: #60a5fa; /* Shift pinks to clear blue */
+  --color-entity-friend: #fbbf24; /* Shift greens to warm yellow */
+  --color-item-decent: #fbbf24;
+}
+
+:root[data-palette="deuteranopia"] {
+  --color-entity-enemy: #fca5a5; /* High contrast peach/pink for deuteranopia text */
+  --color-entity-lover: #38bdf8; /* Shift pinks to deep sky blue */
+  --color-entity-friend: #daa520; /* High-contrast goldenrod yellow */
+  --color-item-decent: #daa520;
+}
+
+:root[data-palette="tritanopia"] {
+  --color-entity-enemy: #fca5a5; /* High-contrast red/pink */
+  --color-entity-lover: #c084fc; /* Shift pinks to violet */
+  --color-entity-friend: #14b8a6; /* Shift greens to teal/cyan */
+  --color-entity-mc: #fca5a5; /* Shift blues */
+  --color-item-good: #c084fc;
+}
+
+:root[data-palette="high_contrast_dark"] {
+  --color-entity-mc: #3388ff;
+  --color-entity-friend: #33ff33; /* Pure vivid green */
+  --color-entity-enemy: #ff3333; /* Pure vivid red */
+  --color-entity-unknown: #cccccc;
+  --color-entity-lover: #ff66ff; /* Pure vivid magenta */
+  --color-entity-mentor: #ffff33;
+  --color-location-regular: #cc33ff;
+  --color-location-special: #ffff33;
+  --color-item-basic: #ffffff;
+  --color-item-decent: #33ff33;
+  --color-item-good: #33ccff;
+  --color-item-great: #ff9933;
+  --color-item-legendary: #ffff33;
+}
+
+/* ---------------------------------------------------------
+   FONT FAMILY OVERRIDES
+   --------------------------------------------------------- */
+:root[data-font="system"] .light-novel-reader {
+  font-family: var(--font-sans);
+}
+
+:root[data-font="serif"] .light-novel-reader {
+  font-family: var(--font-serif);
+}
+
+:root[data-font="dyslexic"] .light-novel-reader {
+  /* Common dyslexic-friendly fallbacks if specific font isn't loaded */
+  font-family: "Comic Sans MS", "OpenDyslexic", sans-serif;
+}
+
+:root[data-font="custom"] .light-novel-reader {
+  /* Allows for user-provided custom font down the line */
+  font-family: inherit;
+}
+
+/* ---------------------------------------------------------
+   SEMANTIC ENTITY HIGHLIGHT CLASSES
+   --------------------------------------------------------- */
+.highlight-mc { color: var(--color-entity-mc); font-weight: 500; transition: color 0.3s ease; }
+.highlight-friend { color: var(--color-entity-friend); font-weight: 500; transition: color 0.3s ease; }
+.highlight-enemy { color: var(--color-entity-enemy); font-weight: 500; transition: color 0.3s ease; }
+.highlight-unknown { color: var(--color-entity-unknown); font-weight: 500; transition: color 0.3s ease; }
+.highlight-lover { color: var(--color-entity-lover); font-weight: 500; transition: color 0.3s ease; }
+.highlight-mentor { color: var(--color-entity-mentor); font-weight: 500; transition: color 0.3s ease; }
+.highlight-ally { color: var(--color-entity-ally); font-weight: 500; transition: color 0.3s ease; }
+.highlight-fallback { color: var(--color-entity-fallback); font-weight: 500; transition: color 0.3s ease; }
+
+.highlight-location { color: var(--color-location-regular); font-weight: 500; transition: color 0.3s ease; }
+.highlight-location-special { color: var(--color-location-special); font-weight: 500; transition: color 0.3s ease; }
+
+.highlight-item-basic { color: var(--color-item-basic); font-weight: 500; transition: color 0.3s ease; }
+.highlight-item-decent { color: var(--color-item-decent); font-weight: 500; transition: color 0.3s ease; }
+.highlight-item-good { color: var(--color-item-good); font-weight: 500; transition: color 0.3s ease; }
+.highlight-item-great { color: var(--color-item-great); font-weight: 500; transition: color 0.3s ease; }
+.highlight-item-legendary { color: var(--color-item-legendary); font-weight: 500; transition: color 0.3s ease; text-shadow: 0 0 8px rgba(251, 191, 36, 0.4); }
+
+/* ==========================================================================
+   LIVING CODEX PREMIUM SHELL & PANEL UTILITIES
+   ========================================================================== */
+
+/* Outer Codex shell: deep midnight gradient with a faint cosmic blue aura */
+.codex-premium-shell {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(4, 172, 255, 0.10), transparent 60%),
+    radial-gradient(ellipse 60% 45% at 85% 110%, rgba(4, 172, 255, 0.05), transparent 65%),
+    linear-gradient(180deg, #05080f 0%, #010204 45%, #000000 100%);
+  border: 1px solid rgba(4, 172, 255, 0.16);
+  box-shadow:
+    0 0 40px rgba(4, 172, 255, 0.06),
+    0 24px 60px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(4, 172, 255, 0.10);
+}
+
+/* Standard premium panel — layered midnight card with luminous hairline border */
+.codex-panel {
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 0%, rgba(255, 255, 255, 0.025), transparent 70%),
+    linear-gradient(180deg, rgba(10, 14, 22, 0.9), rgba(2, 3, 6, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 24px rgba(0, 0, 0, 0.55);
+}
+
+/* Portal-blue variant, used for Codex / Karma / MC states */
+.codex-panel-blue {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(4, 172, 255, 0.10), transparent 70%),
+    linear-gradient(180deg, rgba(4, 20, 38, 0.85), rgba(1, 4, 10, 0.95));
+  border: 1px solid rgba(4, 172, 255, 0.35);
+  box-shadow:
+    0 0 24px rgba(4, 172, 255, 0.12),
+    inset 0 1px 0 rgba(4, 172, 255, 0.20),
+    inset 0 0 40px rgba(4, 172, 255, 0.04);
+}
+
+/* Gold/amber variant, used for Power rankings and important rank states */
+.codex-panel-gold {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(212, 175, 55, 0.09), transparent 70%),
+    linear-gradient(180deg, rgba(28, 20, 4, 0.8), rgba(6, 4, 1, 0.95));
+  border: 1px solid rgba(212, 175, 55, 0.30);
+  box-shadow:
+    0 0 20px rgba(212, 175, 55, 0.08),
+    inset 0 1px 0 rgba(212, 175, 55, 0.18),
+    inset 0 0 36px rgba(212, 175, 55, 0.03);
+}
+
+/* Text glow accents */
+.codex-glow-blue {
+  text-shadow: 0 0 10px rgba(4, 172, 255, 0.55), 0 0 24px rgba(4, 172, 255, 0.25);
+}
+.codex-glow-gold {
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.5), 0 0 24px rgba(251, 191, 36, 0.2);
+}
+
+/* Faint constellation grid / starfield backdrop for map panels */
+.codex-grid-bg {
+  background-image:
+    radial-gradient(circle at 18% 28%, rgba(4, 172, 255, 0.5) 1px, transparent 1.5px),
+    radial-gradient(circle at 76% 16%, rgba(250, 250, 250, 0.35) 1px, transparent 1.5px),
+    radial-gradient(circle at 62% 78%, rgba(212, 175, 55, 0.4) 1px, transparent 1.5px),
+    radial-gradient(circle at 34% 88%, rgba(250, 250, 250, 0.25) 1px, transparent 1.5px),
+    radial-gradient(circle at 88% 62%, rgba(4, 172, 255, 0.3) 1px, transparent 1.5px),
+    linear-gradient(rgba(4, 172, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(4, 172, 255, 0.035) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+}
+
+/* Luminous progress bar shimmer sweep */
+.codex-progress-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.codex-progress-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  animation: shimmer 2.6s infinite;
+}
+
+/* ==========================================================================
+   FATE BRANCH TIMELINE PREMIUM UTILITIES
+   ========================================================================== */
+
+/* Modal shell — deep midnight gradient with portal aura */
+.fate-timeline-shell {
+  background:
+    radial-gradient(ellipse 70% 40% at 50% -5%, rgba(4, 172, 255, 0.14), transparent 60%),
+    radial-gradient(ellipse 55% 40% at 90% 108%, rgba(168, 85, 247, 0.07), transparent 65%),
+    linear-gradient(180deg, #06090f 0%, #010204 50%, #000000 100%);
+  border: 1px solid rgba(4, 172, 255, 0.22);
+  box-shadow:
+    0 0 50px rgba(4, 172, 255, 0.08),
+    0 30px 70px rgba(0, 0, 0, 0.92),
+    inset 0 1px 0 rgba(4, 172, 255, 0.12);
+}
+
+/* Faint cosmic grid backdrop for the graph canvas */
+.fate-grid-bg {
+  background-image:
+    radial-gradient(circle at 22% 30%, rgba(4, 172, 255, 0.4) 1px, transparent 1.5px),
+    radial-gradient(circle at 78% 18%, rgba(250, 250, 250, 0.28) 1px, transparent 1.5px),
+    radial-gradient(circle at 58% 82%, rgba(168, 85, 247, 0.35) 1px, transparent 1.5px),
+    linear-gradient(rgba(4, 172, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(4, 172, 255, 0.05) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 4rem 4rem, 4rem 4rem;
+}
+
+/* Inner control / picker panel */
+.fate-panel {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(4, 172, 255, 0.08), transparent 70%),
+    linear-gradient(180deg, rgba(8, 12, 20, 0.92), rgba(1, 3, 6, 0.96));
+  border: 1px solid rgba(4, 172, 255, 0.28);
+  box-shadow: inset 0 1px 0 rgba(4, 172, 255, 0.14), 0 -8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Text glow accents by branch color */
+.fate-glow-blue { text-shadow: 0 0 10px rgba(4, 172, 255, 0.55), 0 0 22px rgba(4, 172, 255, 0.25); }
+.fate-glow-purple { text-shadow: 0 0 10px rgba(168, 85, 247, 0.55), 0 0 22px rgba(168, 85, 247, 0.25); }
+.fate-glow-gold { text-shadow: 0 0 10px rgba(234, 179, 8, 0.5), 0 0 22px rgba(234, 179, 8, 0.22); }
+.fate-glow-red { text-shadow: 0 0 10px rgba(255, 51, 51, 0.5), 0 0 22px rgba(255, 51, 51, 0.22); }
+
+/* Horizontal-scroll edge fade mask on the graph canvas wrapper */
+.fate-scroll-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
+}
+
+/* Chapter dot / node tap target — visual dot centered, hit area padded */
+.fate-node-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.fate-node-button:hover,
+.fate-node-button:focus-visible {
+  transform: scale(1.15);
+  outline: none;
+}

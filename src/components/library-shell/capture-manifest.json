@@ -1,0 +1,175 @@
+{
+  "captured": "2026-09-08",
+  "commits": {
+    "development": "7e1302bd2d5c3205706ddb1362607abed6a850e6",
+    "Light-Novels": "4a3dd02b6640b2ec50d8d1d136e37fb808249ed2",
+    "UI": "6856594171546fee1a243e1dc3422fcb952c5022"
+  },
+  "files": [
+    {
+      "repository": "SENSEIDUKES/Light-Novels",
+      "source": "src/components/GlobalHeader.tsx",
+      "sourceSha256": "41a51e8ba18c6ebbbda4aca15420c0b93850a3b82965791891af461edec72792",
+      "capture": "src/components/library-shell/reference/main-library/GlobalHeader.tsx",
+      "captureSha256": "09c6a935ef6c6cb60b7691ff96558d4771467499a642d8258579b88a5939b21e"
+    },
+    {
+      "repository": "SENSEIDUKES/Light-Novels",
+      "source": "src/components/DaoInsights.tsx",
+      "sourceSha256": "44f50f7346121e1d407349cea7a997ee6fdade14dff2bfe953627f4d8f3bffdd",
+      "capture": "src/components/library-shell/reference/main-library/DaoInsights.tsx",
+      "captureSha256": "56b886b221b1f8d537f53ded29ee38819c95e3a26cec069d48c621b2cfc63501"
+    },
+    {
+      "repository": "SENSEIDUKES/Light-Novels",
+      "source": "src/index.css",
+      "sourceSha256": "1952a7b9b18044412e66db32dc275e327bcb5bdefd10f5c19f03af5340d57ce5",
+      "capture": "src/components/library-shell/reference/main-library/source-theme.css",
+      "captureSha256": "5defbb5776c6d70385d24a890c0f493f0f053795cc58ca94920b3de836bfaf78"
+    },
+    {
+      "repository": "SENSEIDUKES/development",
+      "source": "src/components/story-seed/development/StorySeedHeader.tsx",
+      "sourceSha256": "b4f5aede9064c18267dd15c34ff8bb8a1c340766f49dd6233448a4c60e334762",
+      "capture": "src/components/library-shell/reference/story-seed/StorySeedHeader.tsx",
+      "captureSha256": "a061b9d8f19bd85b0ab0603f02a66154e2404d465c4b32de253723a46f5517aa"
+    },
+    {
+      "repository": "SENSEIDUKES/development",
+      "source": "src/components/story-seed/development/StorySeedMobileNavigation.tsx",
+      "sourceSha256": "277c860a122e92461858b6d3d87880918f57e340c69c5cf7980bc2b4934adf07",
+      "capture": "src/components/library-shell/reference/story-seed/StorySeedMobileNavigation.tsx",
+      "captureSha256": "17ef96acc6aeb9935037722e0555fbeedbaa9f7eec063f6da34ae69b6cb3d722"
+    },
+    {
+      "repository": "SENSEIDUKES/development",
+      "source": "src/components/story-seed/development/StorySeedSettings.tsx",
+      "sourceSha256": "99ab28c46c2063b9cddc1b1409aedfec19f77e1ce2b9c50a5cad28f4f25b75e6",
+      "capture": "src/components/library-shell/reference/story-seed/StorySeedSettings.tsx",
+      "captureSha256": "e521497ef5e63d0b197d57fae3e5799e996342a728f0c1494695997c17fe42f0"
+    },
+    {
+      "repository": "SENSEIDUKES/development",
+      "source": "src/components/story-seed/development/StorySeedSelector.tsx",
+      "sourceSha256": "ecf822aa7e8a2577e44738b78dd8e496e2a98d378455ae151bee08fe097e39e5",
+      "capture": "src/components/library-shell/reference/story-seed/StorySeedSelector.tsx",
+      "captureSha256": "039cf7ebf371806a4dd3401684267583706a7514342f93af0064cfa054ad01cc"
+    },
+    {
+      "repository": "SENSEIDUKES/development",
+      "source": "src/components/story-seed/development/seedSections.ts",
+      "sourceSha256": "35b413237999aec5bf8970ec4886da6dc5a615d5ce38c4cfd1f4da83da22e2eb",
+      "capture": "src/components/library-shell/reference/story-seed/seedSections.ts",
+      "captureSha256": "e3a5a4d011177fe70767973657946497ec385fc394b763e119ef38bdc1116210"
+    },
+    {
+      "repository": "SENSEIDUKES/development",
+      "source": "src/components/story-seed/development/seedState.ts",
+      "sourceSha256": "b8fba1ea6a86cb58b22491ff9584bbbcbcd90c1d7a2f1ba3c87786ec1b4a8d43",
+      "capture": "src/components/library-shell/reference/story-seed/seedState.ts",
+      "captureSha256": "438583aa7dc8398edfd70e6fb6aac89e4b3a201ddd7a38fc7ff9acae4ce35f8b"
+    },
+    {
+      "repository": "SENSEIDUKES/development",
+      "source": "src/components/story-seed/development/radioGroupKeyboard.ts",
+      "sourceSha256": "5a26a074699be5aac1b46b50c8aa60fa39bdd42b61ec67425e690bd04f1b442f",
+      "capture": "src/components/library-shell/reference/story-seed/radioGroupKeyboard.ts",
+      "captureSha256": "5a26a074699be5aac1b46b50c8aa60fa39bdd42b61ec67425e690bd04f1b442f"
+    },
+    {
+      "repository": "SENSEIDUKES/development",
+      "source": "src/components/story-seed/development/story-seed.css",
+      "sourceSha256": "fa365a39deb18b455cb4ea5df2bfb2de0adf08ff5ce7095d17dd913285918a8a",
+      "capture": "src/components/library-shell/reference/story-seed/story-seed.css",
+      "captureSha256": "fa365a39deb18b455cb4ea5df2bfb2de0adf08ff5ce7095d17dd913285918a8a"
+    },
+    {
+      "repository": "SENSEIDUKES/development",
+      "source": "src/components/story-seed/shared/storyStyle.ts",
+      "sourceSha256": "0f1b3bf582f62f4acd546f998e30593a7276a323bd29f354a63736f6cfd23ba4",
+      "capture": "src/components/library-shell/reference/story-seed/storyStyle.ts",
+      "captureSha256": "0f1b3bf582f62f4acd546f998e30593a7276a323bd29f354a63736f6cfd23ba4"
+    },
+    {
+      "repository": "SENSEIDUKES/development",
+      "source": "src/components/story-seed/development/CreationModal.tsx",
+      "sourceSha256": "227ad78eb6d7a81ce17c35369e7ba87c146f91b93f9f3c205f2b344cebfe7c7c",
+      "capture": "src/components/library-shell/reference/story-seed/StorySeedShell.tsx",
+      "captureSha256": "62b9b5e1b63569801eec25b7d779b7cee1c19881f26fc0a81ca07c078aa9f6ef"
+    },
+    {
+      "repository": "SENSEIDUKES/Light-Novels",
+      "source": "src/components/LibraryScreen.tsx",
+      "sourceSha256": "8d5c7bee7d011eb067f033a350e263fcdabf3760a4cd3f4386406665320dc1b6",
+      "capture": "src/components/library-shell/reference/main-library/LibraryCollectionStrip.tsx",
+      "captureSha256": "415a36d065cc9a4b146115ed2a639d92597a4343948805301bd0446802e61090"
+    }
+  ],
+  "dependencies": [
+    {
+      "path": "vendor/seihouse-ui-0.4.0.tgz",
+      "binary": true,
+      "sha256": "6789306bcd7660707d5a39fa6eb8f9b00342ee9cfedd646308a3eda091066907"
+    },
+    {
+      "path": "vendor/seihouse-library-ui-0.4.0.tgz",
+      "binary": true,
+      "sha256": "c1789b4b264f24978d8cbcf6fb66956c011c5d34c86f2def9b6eced1c593e652"
+    },
+    {
+      "path": "public/favicon.jpg",
+      "binary": true,
+      "sha256": "48dfbf7eab596cbd1f68de41790fe40283bded15cefb41d6a68c43921c1b7367"
+    },
+    {
+      "path": "public/library-shell/celestial-library.jpg",
+      "binary": true,
+      "sha256": "b1f859caf9319d123f1ade6abb513ea681c86d4b7f01daf4f4df17e6daf27b2b"
+    },
+    {
+      "path": "public/library-shell/versa.png",
+      "binary": true,
+      "sha256": "2df9ba4234bae77bcb7b543d22e14a3787378b75c856cc56ce05a8c147a8b909"
+    },
+    {
+      "path": "src/styles.css",
+      "binary": false,
+      "sha256": "53f85bd28553aa5402c68a45823eb198950bc6590ba1aa22bc815ee8d1f5523e"
+    },
+    {
+      "path": "src/components/library-presentation/LibraryPresentationProvider.tsx",
+      "binary": false,
+      "sha256": "aa3b253990e7ed91ebdff1a8e96bc47e9617f03a8df2740cbce5eb884acc5e1b"
+    },
+    {
+      "path": "src/components/story-seed/shared/storySeedSchema.ts",
+      "binary": false,
+      "sha256": "8e040177f0b78fc7ecf0a47f632d3b359089a9c0a5dc0a4796a95109d5c6f31b"
+    },
+    {
+      "path": "src/presentation/contracts.ts",
+      "binary": false,
+      "sha256": "96a8299d7781afbe13054919b989aea52c15389026223fee696aaa90167e80cf"
+    },
+    {
+      "path": "src/presentation/defaults.tsx",
+      "binary": false,
+      "sha256": "8d3c1ed197b831874d197eb3d7bbe5ec74e5b26a905e08bedace8bae5a155a3b"
+    },
+    {
+      "path": "src/presentation/index.tsx",
+      "binary": false,
+      "sha256": "1352ccd45a01e5a144e4ebff69b81f6638090256e76872926794709aedabc22f"
+    }
+  ],
+  "assets": [
+    {
+      "path": "public/library-shell/celestial-library.jpg",
+      "source": "https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/images/CELESTIAL%20LIBRARY%20ICON.jpg"
+    },
+    {
+      "path": "public/library-shell/versa.png",
+      "source": "https://images.seihouse.org/AGENT%20EMBLEM/Versa/VERSA_OFFICAL.png"
+    }
+  ]
+}

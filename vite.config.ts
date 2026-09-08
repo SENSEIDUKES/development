@@ -200,6 +200,14 @@ export default defineConfig(({ mode }) => {
   const loadedEnvironment = loadEnv(mode, process.cwd(), '');
   const serverEnvironment = { ...loadedEnvironment, ...process.env };
   return {
+    build: {
+      rollupOptions: {
+        input: {
+          workshop: fileURLToPath(new URL('./index.html', import.meta.url)),
+          libraryShell: fileURLToPath(new URL('./library-shell.html', import.meta.url)),
+        },
+      },
+    },
     plugins: [
       react(),
       tailwindcss(),

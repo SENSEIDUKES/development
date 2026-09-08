@@ -33,7 +33,13 @@ import {
 import { StoryAuthGate, STORY_AUTH_DISSOLVE_MS } from '@seihouse/sen/story-seed';
 import type { AppUser, Story } from '../shared/types';
 import { useUserProfileServices } from '../shared/userProfileServices';
-import { getAuraColorForXp, getAuraGlowStyle, getAuraTextStyle } from './qi';
+import {
+  getAuraGlowStyle,
+  getAuraSelection,
+  getAuraSwatchStyle,
+  getAuraTextStyle,
+  resolveRankVisual,
+} from './qi';
 import {
   CAVE_EMBLEM_SRC,
   CAVE_MOTTO,
@@ -201,8 +207,10 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   }, []);
   const returnHome = useCallback(() => setView('home'), []);
 
-  const auraColor = getAuraColorForXp(profile?.displayNameColor, profile?.dao_xp ?? profile?.qi);
-  const nameStyle = getAuraTextStyle(auraColor, profile?.activeStatusEffects);
+  const auraXp = profile?.dao_xp ?? profile?.qi;
+  const auraSelection = getAuraSelection(profile?.displayNameColor, auraXp);
+  const nameStyle = getAuraTextStyle(auraSelection, profile?.activeStatusEffects, auraXp);
+  const auraGlow = getAuraGlowStyle(auraSelection, profile?.activeStatusEffects, auraXp);
   const heavenlyQi = profile?.heavenly_qi !== undefined ? profile.heavenly_qi : daoData.currentQi;
   const stage = getCultivationStage(daoData.progress, daoData.nextRank);
   const attunedArtifact = (profile?.cosmicInventory || []).find(a => a.id === profile?.equippedArtifactId);
@@ -213,8 +221,11 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     sect: profile ? profile.sect_qi || 0 : undefined,
     demonic: profile ? profile.demonic_qi || 0 : undefined,
   };
-  const showsRankParticles =
-    auraColor === '#FFD700' || auraColor === 'gradient-violet-gold' || auraColor === 'animated-custom';
+  // Which ranks carry the mote layer, and what colour those motes are, is rank
+  // data — not a list of colour values this file has to keep in step.
+  const activeRank = resolveRankVisual(auraSelection, auraXp);
+  const showsRankParticles = activeRank.rank.motes;
+  const moteColors = activeRank.visual.stops;
 
   const renderHome = () => (
     <div className="md:grid md:grid-cols-[minmax(0,21rem)_minmax(0,1fr)] md:items-start md:gap-8 lg:grid-cols-[minmax(0,23rem)_minmax(0,1fr)]">
@@ -239,7 +250,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
             <span aria-hidden="true" className="cave-diamond left-[-6px] top-1/2" />
             <span aria-hidden="true" className="cave-diamond right-[-15px] top-1/2" />
             <div
-              className={`absolute inset-1 rounded-full border p-1 transition-all duration-700 ${getAuraGlowStyle(auraColor, profile?.activeStatusEffects)}`}
+              className={`absolute inset-1 rounded-full p-1 transition-all duration-700 ${auraGlow.className}`}
+              style={auraGlow.style}
               data-cave-portrait
             >
               <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#04070f]">
@@ -256,9 +268,9 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
                 {showsRankParticles ? (
                   <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden mix-blend-screen">
                     <div className="absolute inset-x-0 bottom-2 flex h-8 justify-around opacity-75">
-                      <span className="h-1 w-1 animate-ping rounded-full bg-yellow-400 motion-reduce:animate-none" style={{ animationDuration: '3s' }} />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-yellow-300 motion-reduce:animate-none" style={{ animationDuration: '2s' }} />
-                      <span className="h-1 w-1 animate-pulse rounded-full bg-amber-400 motion-reduce:animate-none" style={{ animationDuration: '2.5s' }} />
+                      <span className="h-1 w-1 animate-ping rounded-full motion-reduce:animate-none" style={{ animationDuration: '3s', backgroundColor: moteColors[0] }} />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full motion-reduce:animate-none" style={{ animationDuration: '2s', backgroundColor: moteColors[moteColors.length - 1] }} />
+                      <span className="h-1 w-1 animate-pulse rounded-full motion-reduce:animate-none" style={{ animationDuration: '2.5s', backgroundColor: moteColors[Math.floor(moteColors.length / 2)] }} />
                     </div>
                   </div>
                 ) : null}
@@ -300,9 +312,13 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
               </p>
 
               <p className="mt-3 flex items-center justify-center gap-2 font-serif text-base text-neutral-200 sm:text-lg" data-cave-rank>
-                <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center rounded-full border border-[#04ACFF]/60 bg-[#04ACFF]/15 text-[#7dd3ff]">
-                  <Sparkles size={12} />
-                </span>
+                {/* The rank orb, painted from the same data as the Settings swatch. */}
+                <span
+                  aria-hidden="true"
+                  className="h-5 w-5 shrink-0 rounded-full border border-black/40"
+                  style={getAuraSwatchStyle(activeRank.visual)}
+                  data-cave-rank-orb
+                />
                 <span>
                   {daoData.rank} · {stage}
                 </span>

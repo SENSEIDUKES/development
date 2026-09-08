@@ -1,10 +1,12 @@
 /*
  * Cultivator Cave styles.
  *
- * The two Celestial Aura text animations are copied from
- * `SENSEIDUKES/Light-Novels` `src/index.css`. `getAuraTextStyle` returns those
- * class names for the Sage of Branching Paths and Dao Master tiers, so without
- * them those tiers render as transparent text.
+ * The Celestial Aura block is the only part of the rank colour system that
+ * cannot be expressed as data: clipping a gradient through text, and the
+ * spectrum drift. The colours themselves arrive inline from `rankBackground`
+ * in `rankVisuals.ts`, so these two classes are rank-agnostic and no rank
+ * needs a class of its own. They replace the per-tier classes copied from
+ * `SENSEIDUKES/Light-Novels` `src/index.css`.
  *
  * Everything below the aura block is the Cave's own ornament: the gold title
  * presence, the ornamental rules and vertical calligraphy plaques, and the
@@ -19,22 +21,20 @@
   100% { background-position: 0% 50%; }
 }
 
-.aura-animated-custom {
-  background: linear-gradient(to right, #00ffff, #ff007f, #ffd700, #00ffff);
-  background-size: 300% auto;
-  animation: aura-shimmer 4s linear infinite;
+/* Clips any rank gradient through the glyphs. The gradient itself is inline. */
+.aura-gradient-text {
+  background-size: 200% auto;
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: aura-shimmer 3s ease infinite;
 }
 
-.aura-gradient-violet-gold {
-  background: linear-gradient(to right, #8b5cf6, #ec4899, #ffd700);
-  background-size: 200% auto;
-  animation: aura-shimmer 3s ease infinite;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* The Master spectrum: a longer ramp drifting at a steadier pace. */
+.aura-spectrum-text {
+  background-size: 300% auto;
+  animation: aura-shimmer 4s linear infinite;
 }
 
 /* ---- Cave ornament -------------------------------------------------- */
@@ -111,8 +111,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .cave-drift,
-  .aura-animated-custom,
-  .aura-gradient-violet-gold {
+  .aura-gradient-text,
+  .aura-spectrum-text {
     animation: none;
   }
 }

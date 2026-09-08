@@ -322,7 +322,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     const manifest = container.querySelector<HTMLButtonElement>('button[data-variant="manifest"]');
     expect(manifest?.disabled).toBe(true);
     expect(manifest?.getAttribute('aria-label')).toBe(
-      'Manifest disabled — missing: Style, Genre, Premise',
+      'Manifest World Blueprint — Manifest disabled — missing: Style, Genre, Premise',
     );
   });
 

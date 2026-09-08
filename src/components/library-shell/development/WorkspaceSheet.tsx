@@ -1,22 +1,17 @@
-import { useRef, type ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { SEIDialog, SEIDialogContent, SEIDialogTitle } from '@seihouse/ui';
 import { NarrativeButton, NarrativePanel } from '../../../presentation';
 import { X } from 'lucide-react';
 import './workspace-navigation.css';
 
 /** Responsive host-content overlay. Canonical dialog owns modal focus, Escape and scroll lock. */
-export function WorkspaceSheet({ open, onOpenChange, title, closeLabel, children, footer }: {
+export function WorkspaceSheet({ open, onOpenChange, title, closeLabel, children, footer, returnFocusRef }: {
   open: boolean; onOpenChange: (open: boolean) => void; title: string; closeLabel: string;
-  children: ReactNode; footer?: ReactNode;
+  children: ReactNode; footer?: ReactNode; returnFocusRef: RefObject<HTMLElement | null>;
 }) {
-  const trigger = useRef<HTMLElement | null>(null);
-  // Capture the actual opening control, including a header overflow trigger.
-  const wasOpen = useRef(false);
-  if (open && !wasOpen.current && typeof document !== 'undefined') trigger.current = document.activeElement as HTMLElement;
-  wasOpen.current = open;
   return <SEIDialog open={open} onOpenChange={onOpenChange}>
     <SEIDialogContent aria-modal="true" hideClose variant="dark" className="workspace-sheet" backdropClassName="!z-[240]"
-      bodyClassName="flex min-h-0 flex-col !overflow-hidden" finalFocus={trigger}>
+      bodyClassName="flex min-h-0 flex-col !overflow-hidden" finalFocus={returnFocusRef}>
       <div className="flex shrink-0 items-center justify-between gap-4 pb-3">
         <SEIDialogTitle>{title}</SEIDialogTitle>
         <NarrativeButton size="icon" variant="ghost" icon={X} aria-label={closeLabel} onClick={() => onOpenChange(false)} />

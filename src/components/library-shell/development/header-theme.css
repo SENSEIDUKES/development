@@ -1,3 +1,6 @@
+@import "tailwindcss";
+@import "@seihouse/library-ui/styles.css";
+
 /* Header preview local copies of the font files requested by the source stylesheet.
    Keeping them local prevents CSP, network, or upstream font changes from
    changing the captured layout. */
@@ -19,9 +22,6 @@
 @font-face { font-family: 'Rubik'; font-style: normal; font-weight: 300; font-display: swap; src: url('/library-shell/fonts/rubik-300.ttf') format('truetype'); }
 @font-face { font-family: 'Rubik'; font-style: normal; font-weight: 400; font-display: swap; src: url('/library-shell/fonts/rubik-400.ttf') format('truetype'); }
 @font-face { font-family: 'Rubik'; font-style: normal; font-weight: 500; font-display: swap; src: url('/library-shell/fonts/rubik-500.ttf') format('truetype'); }
-@import "tailwindcss";
-@import "@seihouse/library-ui/styles.css";
-
 @theme {
   --font-sans: "Rubik", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Noto Serif", ui-serif, Georgia, serif;

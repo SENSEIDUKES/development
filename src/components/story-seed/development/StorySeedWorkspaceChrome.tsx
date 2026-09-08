@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Bookmark, Check, CircleHelp, List, Settings, Sparkles, Sprout, Vault } from 'lucide-react';
 import type { StorySeedInput } from '../shared/storySeedSchema';
 import type { SeedUpdate } from './seedState';
@@ -50,13 +50,19 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
 
 function StorySeedChromeContent(props: StorySeedWorkspaceChromeProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsReturnFocusRef = useRef<HTMLElement | null>(null);
   const navigation = useWorkspaceNavigation();
-  const openSettings = () => { navigation.closeDrawer(); setSettingsOpen(true); };
+  const openSettings = () => {
+    settingsReturnFocusRef.current = document.activeElement as HTMLElement;
+    navigation.closeDrawer();
+    setSettingsOpen(true);
+  };
   const save: HeaderAction = { id: 'save', label: props.savedFeedback ? 'Saved' : 'Save Draft',
     icon: props.savedFeedback ? Check : Bookmark, disabled: props.isGenerating, onAction: props.onSaveDraft };
   const manifest: HeaderAction = { id: 'manifest', label: props.manifestLabel, icon: Sparkles,
     disabled: !props.canManifest, loading: props.isGenerating, loadingIndicator: props.manifestIndicator,
-    ariaLabel: props.manifestDisabledReason, title: props.manifestDisabledReason, kind: 'creation', onAction: props.onManifest };
+    ariaLabel: props.manifestDisabledReason ? `${props.manifestLabel} — ${props.manifestDisabledReason}` : undefined,
+    title: props.manifestDisabledReason, kind: 'creation', onAction: props.onManifest };
   const settings: HeaderAction = { id: 'settings', label: 'Settings', icon: Settings,
     expanded: settingsOpen, hasPopup: 'dialog', onAction: openSettings };
   const bank: HeaderAction = { id: 'story-bank', label: 'Story Bank', icon: Vault, pressed: props.showStoryBank,
@@ -82,6 +88,7 @@ function StorySeedChromeContent(props: StorySeedWorkspaceChromeProps) {
         onSelect: () => { setSettingsOpen(false); manifest.onAction(); } }] : []),
     ]} />}
     <WorkspaceSheet open={settingsOpen} onOpenChange={setSettingsOpen} title="Story Seed settings" closeLabel="Close settings"
+      returnFocusRef={settingsReturnFocusRef}
       footer={<HeaderActionButton action={save} primary />}>
       <StorySeedSettings seed={props.seed} updateSeed={props.updateSeed} />
     </WorkspaceSheet>

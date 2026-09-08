@@ -485,7 +485,7 @@ export const DaoInsights: React.FC = () => {
                       <Sparkles size={16} className={isRolling ? "text-portal text-portal" : "text-portal group-hover:text-signal"} />
                     </motion.div>
                     <span>
-                      {isRolling ? 'Divine Tuning...' : isAiGenerating ? 'Invoking the Dao...' : 'Seek Dao Insights'}
+                      {isAiGenerating ? 'Invoking the Dao...' : isRolling ? 'Divine Tuning...' : 'Seek Dao Insights'}
                     </span>
                   </button>
                 </div>

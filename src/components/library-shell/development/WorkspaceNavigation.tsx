@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   NarrativeNavigationDrawer, NarrativeNavigationDrawerPanel, NarrativeBottomNavigation,
   type NarrativeNavigationDrawerProfile, type NarrativeNavigationDrawerSection,
@@ -36,10 +36,14 @@ export function WorkspaceNavigation({ definition, children }: { definition: Work
   const sections = useMemo(() => definition.sections.map(section => ({ ...section,
     items: section.items.map(item => ({ ...item, onSelect: (id: string) => { setDrawerOpen(false); item.onSelect?.(id); } })),
   })), [definition.sections]);
-  return <Context.Provider value={{ definition: { ...definition, sections }, drawerOpen,
-    openDrawer: () => setDrawerOpen(true), closeDrawer: () => setDrawerOpen(false) }}>
+  const openDrawer = useCallback(() => setDrawerOpen(true), []);
+  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
+  const contextValue = useMemo(() => ({
+    definition: { ...definition, sections }, drawerOpen, openDrawer, closeDrawer,
+  }), [definition, sections, drawerOpen, openDrawer, closeDrawer]);
+  return <Context.Provider value={contextValue}>
     {children}
-    <NarrativeNavigationDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}
+    <NarrativeNavigationDrawer open={drawerOpen} onClose={closeDrawer}
       aria-label={definition.label} closeLabel={definition.closeLabel} profile={definition.profile} sections={sections} />
   </Context.Provider>;
 }

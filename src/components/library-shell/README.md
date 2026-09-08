@@ -6,19 +6,19 @@
 - **Replica created:** 2026-09-08
 - **Last Workshop update:** 2026-09-08
 - **Last source comparison:** 2026-09-08
-- **Replica status:** faithful shell capture; locked baseline, no refinement candidate.
+- **Replica status:** under refinement; locked captures plus integrated Development headers and workspace navigation.
 
 ## Capture boundary
 
-This area records two existing systems for comparison. It does not define a new product shell, redesign either source, extract shared components, or modify the active Story Seed. Main Library was read at `4a3dd02b6640b2ec50d8d1d136e37fb808249ed2`, Story Seed at development `7e1302bd2d5c3205706ddb1362607abed6a850e6`, and UI at `6856594171546fee1a243e1dc3422fcb952c5022`, after updating all three repositories from their remotes.
+The locked reference area records two existing systems for comparison. Its captures remain unchanged. The separate Development area now proves the shared header family and responsive navigation in the active Story Seed and Cultivator Cave; see [component contracts](../../../docs/library-header-family.md). Main Library was read at `4a3dd02b6640b2ec50d8d1d136e37fb808249ed2`, Story Seed at development `7e1302bd2d5c3205706ddb1362607abed6a850e6`, and UI at `6856594171546fee1a243e1dc3422fcb952c5022`, after updating all three repositories from their remotes.
 
 `reference/main-library/` freezes the global header, DAO presentation and animation logic, production theme stylesheet, and the exact collection-tab fragment that displays sync state. It localizes the source font payloads so external network and CSP changes cannot alter the captured layout. `reference/story-seed/` freezes the current shell components, section model, settings body, supporting pure helpers, and CSS. `StorySeedShell.tsx` copies the shell JSX from `CreationModal`; its domain editor, Story Bank, and Help children are explicit host slots. This capture is distinct from the older locked reference inside the existing Story Seed Workshop.
 
-`development/LibraryShell.ts` points at these baselines. Original Reference, Development, and Compare therefore show the same captured implementations. No future design has been implied by the Development label. A later authorized refinement can fork its files there; the locked capture must remain unchanged.
+`development/LibraryShell.ts` now exports the actual header family: separate Main Library and Workspace compositions over a shared foundation. Original Reference retains the locked shell captures; Development shows only the header candidate and local host content. See [header contract and ownership](../../../docs/library-header-family.md). Sidebar, drawer, bottom navigation, and page-specific settings extraction remain a later phase.
 
 ## Inspect the references
 
-Use Workshop Controls → Pages to select Main Library or Story Seed, Phone (390 × 844) or Desktop (1440 × 900), and a mock state. Desktop frames retain their actual viewport width and can be scrolled horizontally on smaller hosts. The **Open responsive capture at browser width** link is the appropriate route for inspecting 320px phones, tablets, landscape, or native browser resizing.
+Use Workshop Controls → Pages to select Main Library or Story Seed, Phone (390 × 844), Tablet (768 × 1024), or Desktop (1440 × 900), and a mock state. Desktop frames retain their actual viewport width and can be scrolled horizontally on smaller hosts. The **Open responsive capture at browser width** link is the appropriate route for inspecting 320px phones, tablets, landscape, or native browser resizing.
 
 | Reference | Phone preview | Desktop preview |
 | --- | --- | --- |
@@ -77,7 +77,7 @@ See [validation evidence](../../../docs/library-shell-validation.md) for the che
 
 ## Transfer guidance
 
-Nothing in this PR is intended to be transferred back automatically. Light-Novels and the active Story Seed are unchanged. The source components named above remain their production owners.
+Nothing in this PR is transferred back automatically. Light-Novels and locked references are unchanged; active Development Story Seed and Cultivator Cave now consume the header family. The source components named above remain their production owners.
 
 For an eventual approved change, identify the owning lane first. Main header/DAO changes would target Light-Novels `src/components/GlobalHeader.tsx`, `src/components/DaoInsights.tsx`, relevant `src/index.css` rules, and only if needed the collection fragment in `src/components/LibraryScreen.tsx`. Story Seed changes would target its existing development header, selector, mobile navigation, settings, `CreationModal` integration, and `story-seed.css`, then ship through the established SEN package and Library host presentation adapter. Shared visual primitives would be changed in UI, published/packed first, then consumed by the hosts. Do not copy the frame HTML, Workshop wrappers, mock context, fixture data, content slots, or capture manifest into a production application.
 
@@ -85,3 +85,7 @@ For an eventual approved change, identify the owning lane first. Main header/DAO
 
 - **2026-09-08:** Updated source repositories; captured current Main Library and Story Seed shells with separate responsive documents, local adapters and assets, explicit content boundaries, source provenance, dependency guards, and ownership/overlap documentation. No redesign or shared extraction.
 - **2026-09-08:** Applied capture-only accessibility and sticky-action corrections, narrowed the DAO adapter contract, localized the exact source-requested font payloads, and retained the production sources unchanged.
+
+- **2026-09-08:** Built the Development header family from merged PR #182: shared foundation, separate Main Library and Workspace compositions, three local configurations, tablet previews, header accessibility, and explicit host contracts. Both references and active product/navigation implementations remain unchanged.
+
+- **2026-09-08:** Integrated active Development Story Seed and Cultivator Cave in PR #184, extracted feature-configured workspace navigation and settings-sheet mechanics, and replaced header-only fixtures with real Development consumers. Main Library remains a host-adapted preview. No recapture or source comparison was performed.

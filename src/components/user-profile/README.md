@@ -358,3 +358,7 @@ const services: UserProfileServices = {
 4. **Approve** — transfer `development/` back to Light-Novels in a separate task.
 5. **Resynchronize** — refresh `reference/` from the integrated production code, update
    `source.lastCompared`, and reset `development/` for the next cycle.
+
+## Development shell integration — 2026-09-08
+
+Connected WorkspaceHeader to Cultivator Cave emblem/home and its existing consolidated Settings panel. Cave destinations, portrait, Qi and role rules remain unchanged; no Story Seed sidebar or bottom controls were added. See [shared contracts](../../../docs/library-header-family.md). Locked references and source-comparison dates are unchanged.

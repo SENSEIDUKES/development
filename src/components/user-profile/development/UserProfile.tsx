@@ -1,3 +1,4 @@
+import { WorkspaceHeader } from '../../library-shell/development/WorkspaceHeader';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Award,
@@ -598,29 +599,12 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
 
       <div className="relative mx-auto w-full max-w-5xl px-4 pb-12 pt-3 sm:px-6 sm:pt-5">
         {/* Cave header */}
-        <header className="flex items-center justify-between gap-3">
-          <img src={CAVE_EMBLEM_SRC} alt="" aria-hidden="true" className="h-9 w-9 opacity-90 sm:h-10 sm:w-10" />
-          <div className="flex min-w-0 flex-1 items-center justify-center gap-3">
-            <span aria-hidden="true" className="hidden h-px w-8 bg-gradient-to-r from-transparent to-[#d4af37]/70 sm:block" />
-            <h1 className="cave-title truncate font-display text-2xl sm:text-4xl">Cultivator Cave</h1>
-            <span aria-hidden="true" className="hidden h-px w-8 bg-gradient-to-l from-transparent to-[#d4af37]/70 sm:block" />
-          </div>
-          {currentUser ? (
-            <LibraryButton
-              variant="ghost"
-              size="icon"
-              icon={Settings}
-              aria-label="Open settings"
-              aria-haspopup="dialog"
-              aria-expanded={settingsOpen}
-              onClick={() => setSettingsOpen(true)}
-              className="!rounded-full !border-[#d4af37]/50 text-[#e2c46a]"
-              data-cave-settings-trigger
-            />
-          ) : (
-            <span aria-hidden="true" className="h-9 w-9 sm:h-10 sm:w-10" />
-          )}
-        </header>
+        <WorkspaceHeader title="Cultivator Cave"
+          emblem={{ src: CAVE_EMBLEM_SRC, alt: 'Library sacred tree' }}
+          home={{ href: '/', label: 'Return to Library', onNavigate: onNavigateHome }}
+          primaryAction={currentUser ? { id: 'settings', label: 'Settings', ariaLabel: 'Open settings', icon: Settings,
+            expanded: settingsOpen, hasPopup: 'dialog', onAction: () => setSettingsOpen(true) } : undefined}
+        />
         <div className="cave-rule mt-3 sm:mt-4" aria-hidden="true" />
 
         {error ? (

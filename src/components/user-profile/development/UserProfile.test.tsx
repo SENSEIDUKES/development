@@ -128,7 +128,7 @@ describe('Cultivator Cave home', () => {
     }
     expect(open('dao-pillar').textContent).toContain('12 Day Streak');
     expect(open('status-effects').textContent).toContain('Blessing of the Unwritten + Curse of the Half-Finished Arc');
-    expect(container.querySelector('[data-cave-settings-trigger]')).not.toBeNull();
+    expect(container.querySelector('[aria-label="Open settings"]')).not.toBeNull();
     expect(text()).toContain('Cultivate in silence. Ascend in the unseen.');
   });
 
@@ -145,7 +145,7 @@ describe('Cultivator Cave home', () => {
     const { onSignIn } = await renderCave({ state: 'signed-out' });
     expect(text()).not.toContain('Spirit Unlinked');
     expect(text()).not.toContain('Link Spirit Realm');
-    expect(container.querySelector('[data-cave-settings-trigger]')).toBeNull();
+    expect(container.querySelector('[aria-label="Open settings"]')).toBeNull();
     expect(container.querySelector('[data-cave-card="stories"]')).toBeNull();
     expect(container.querySelector('[data-auth-context="spirit-link"]')).not.toBeNull();
     expect(text()).toContain('Continue with Google');
@@ -271,7 +271,7 @@ describe('Cultivator Cave settings', () => {
   it('opens one gear-triggered panel holding every setting section', async () => {
     const onLogout = vi.fn();
     await renderCave({ onLogout });
-    await click(container.querySelector('[data-cave-settings-trigger]')!);
+    await click(container.querySelector('[aria-label="Open settings"]')!);
     const panel = () => document.body.querySelector('[data-cave-settings]');
     expect(panel()).not.toBeNull();
     const headings = Array.from(panel()!.querySelectorAll('[data-slot="disclosure-heading"]')).map(
@@ -304,7 +304,7 @@ describe('Cultivator Cave settings', () => {
 
   it('edits identity through the panel and saves it to the profile', async () => {
     await renderCave();
-    await click(container.querySelector('[data-cave-settings-trigger]')!);
+    await click(container.querySelector('[aria-label="Open settings"]')!);
     const input = document.body.querySelector<HTMLInputElement>('#cave-display-name')!;
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
     await act(async () => {
@@ -320,7 +320,7 @@ describe('Cultivator Cave settings', () => {
 
   it('asks for confirmation on a language change and reverts on request', async () => {
     await renderCave();
-    await click(container.querySelector('[data-cave-settings-trigger]')!);
+    await click(container.querySelector('[aria-label="Open settings"]')!);
     await click(byText('[data-slot="disclosure-trigger"]', 'Language'));
     const select = document.body.querySelector<HTMLSelectElement>('#cave-preferred-language')!;
     await act(async () => {
@@ -335,7 +335,7 @@ describe('Cultivator Cave settings', () => {
 
   it('exposes the Akashic Switchboard to an owner and opens it as a destination', async () => {
     await renderCave({ state: 'owner-admin' });
-    await click(container.querySelector('[data-cave-settings-trigger]')!);
+    await click(container.querySelector('[aria-label="Open settings"]')!);
     await click(byText('button', 'Open Akashic Switchboard'));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(800);
@@ -453,7 +453,7 @@ describe('rank colour system', () => {
 
   it('lists every rank in Settings as name, colour and Qi, with no aura lore', async () => {
     await renderCave();
-    await click(container.querySelector('[data-cave-settings-trigger]')!);
+    await click(container.querySelector('[aria-label="Open settings"]')!);
     const rows = Array.from(
       document.body.querySelectorAll('[role="radiogroup"][aria-label="Celestial Aura rank"] [role="radio"]'),
     );
@@ -475,7 +475,7 @@ describe('rank colour system', () => {
 
   it('gates the custom spectrum on reaching Master at 50,000 Qi', async () => {
     await renderCave();
-    await click(container.querySelector('[data-cave-settings-trigger]')!);
+    await click(container.querySelector('[aria-label="Open settings"]')!);
     expect(document.body.textContent).toContain('Requires Master (50,000 Qi)');
 
     const spectrum = document.body.querySelector<HTMLButtonElement>('[aria-label="Custom spectrum"]')!;

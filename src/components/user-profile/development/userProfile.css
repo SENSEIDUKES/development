@@ -1,13 +1,16 @@
 /*
- * Celestial Aura text animations.
+ * Cultivator Cave styles.
  *
- * Copied from `SENSEIDUKES/Light-Novels` `src/index.css`. `getAuraTextStyle`
- * returns these two class names for the Sage of Branching Paths and Dao Master
- * tiers, so without them those tiers render as transparent text. Kept beside
- * the component per the Workshop's component-scoped styling rule.
+ * The two Celestial Aura text animations are copied from
+ * `SENSEIDUKES/Light-Novels` `src/index.css`. `getAuraTextStyle` returns those
+ * class names for the Sage of Branching Paths and Dao Master tiers, so without
+ * them those tiers render as transparent text.
  *
- * Every other class the replica uses is a Tailwind utility already available in
- * the Workshop's theme.
+ * Everything below the aura block is the Cave's own ornament: the gold title
+ * presence, the ornamental rules and vertical calligraphy plaques, and the
+ * portrait ring. Kept beside the component per the Workshop's component-scoped
+ * styling rule. Every other class the Cave uses is a Tailwind utility or a
+ * canonical Library UI component style.
  */
 
 @keyframes aura-shimmer {
@@ -32,4 +35,84 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* ---- Cave ornament -------------------------------------------------- */
+
+/* Ivory-to-gold title presence, the same reading as the Library header plaque. */
+.cave-title {
+  background: linear-gradient(180deg, #fbf3dc 0%, #e9cf8a 55%, #c9a24a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 0 14px rgba(212, 175, 55, 0.22));
+}
+
+/* A hairline rule with a small diamond at its centre. */
+.cave-rule {
+  position: relative;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.55) 30%, rgba(212, 175, 55, 0.55) 70%, transparent);
+}
+.cave-rule::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: #d4af37;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
+}
+
+/* Vertical calligraphy plaques that flank the portrait. Decorative only. */
+.cave-plaque {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font-family: var(--font-serif, serif);
+  font-size: 0.95rem;
+  letter-spacing: 0.55em;
+  color: rgba(216, 226, 244, 0.42);
+  text-shadow: 0 0 12px rgba(4, 172, 255, 0.35);
+  padding: 0.9rem 0.45rem;
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  border-radius: 0.35rem;
+  background: linear-gradient(180deg, rgba(8, 14, 28, 0.55), rgba(3, 6, 12, 0.35));
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Gold ring around the portrait: a conic band, brightest at the top. */
+.cave-portrait-ring {
+  background: conic-gradient(from 200deg, #c9a24a, #f3e4b0 25%, #b8933d 50%, #f3e4b0 75%, #c9a24a);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px));
+}
+
+.cave-diamond {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background: #e2c46a;
+  transform: translate(-50%, -50%) rotate(45deg);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.7);
+}
+
+/* The faint slow spin of the outer aura band. */
+@keyframes cave-drift {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.cave-drift {
+  animation: cave-drift 24s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cave-drift,
+  .aura-animated-custom,
+  .aura-gradient-violet-gold {
+    animation: none;
+  }
 }

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { UserProfile as UserProfileType, AppUser, Story, StorySeed } from '../shared/types';
 import { BookOpen, Download, Sprout } from 'lucide-react';
+import { LibraryButton, LibraryPanel } from '@seihouse/library-ui';
+import { SEIEmptyState, SEIInlineAlert, SEILoadingState } from '@seihouse/ui';
+import type { AppUser, Story, StorySeed, UserProfile as UserProfileType } from '../shared/types';
 import { useUserProfileServices } from '../shared/userProfileServices';
 
 interface UserProfileStoriesPanelProps {
@@ -9,6 +11,12 @@ interface UserProfileStoriesPanelProps {
   stories: Story[];
 }
 
+/**
+ * Stories destination: Manifested Stories and the account's Story Seeds in one
+ * place. The story filtering, the seed index request, and the export calls are
+ * production behaviour unchanged; the services port still owns seed listing
+ * and export.
+ */
 export function UserProfileStoriesPanel({ profile, currentUser, stories }: UserProfileStoriesPanelProps) {
   // Production imports these three from `lib/storySeedStorage` and
   // `lib/storySeedFormat`; both read the signed-in account. Injected here.
@@ -16,6 +24,7 @@ export function UserProfileStoriesPanel({ profile, currentUser, stories }: UserP
   const inactiveFlowIds = profile?.inactiveStories || [];
   const userStories = stories.filter(s => !s.deleted && (s.userId === currentUser?.uid || !s.userId));
   const activeFlows = userStories.filter(s => !inactiveFlowIds.includes(s.id));
+  const restingFlows = userStories.filter(s => inactiveFlowIds.includes(s.id));
   const [seeds, setSeeds] = useState<StorySeed[]>([]);
   const [isLoadingSeeds, setIsLoadingSeeds] = useState(false);
   const [seedError, setSeedError] = useState<string | null>(null);
@@ -73,94 +82,137 @@ export function UserProfileStoriesPanel({ profile, currentUser, stories }: UserP
     return Number.isNaN(date.getTime()) ? 'Date unavailable' : date.toLocaleDateString();
   };
 
+  const seedTitleById = new Map(seeds.map(seed => [seed.id, seed.title]));
+
   return (
-    <div className="pt-10 border-t border-neutral-900/50 mt-10">
-      <h3 className="text-[11px] uppercase font-bold tracking-widest text-neutral-500 font-sc mb-6 flex items-center gap-2">
-        <BookOpen size={14} className="text-human" />
-        Manifested Realms
-      </h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Active Stories */}
-        <div className="border border-portal/10 bg-void rounded-xl p-5 shadow-[0_0_15px_rgba(4,172,255,0.03)] hover:border-portal/30 transition-all duration-300">
-          <div className="flex items-center justify-between border-b border-neutral-900 pb-3 mb-4">
-            <h4 className="text-[10px] uppercase font-bold tracking-widest text-portal font-sc">Active Flows</h4>
-            <span className="text-[9px] px-2 py-0.5 bg-portal/10 text-portal rounded-full font-bold">{activeFlows.length}</span>
-          </div>
-          <div className="space-y-3">
-            {activeFlows.length === 0 ? (
-              <div className="text-[11px] text-neutral-600 font-sans italic tracking-wide">No realms manifested yet.</div>
-            ) : (
-              activeFlows.map(s => (
-                <div key={s.id} className="text-[13px] text-neutral-300 font-sans flex items-center gap-3 overflow-hidden group hover:text-signal transition-colors py-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-portal flex-shrink-0 animate-pulse"></span>
-                  <span className="truncate">{s.title}</span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Account-owned story seed index */}
-        <div className="border border-emerald-500/10 bg-void rounded-xl p-5 shadow-[0_0_15px_rgba(16,185,129,0.03)] hover:border-emerald-500/30 transition-all duration-300">
-          <div className="flex items-center justify-between border-b border-neutral-900 pb-3 mb-4">
-            <h4 className="text-[10px] uppercase font-bold tracking-widest text-emerald-400 font-sc flex items-center gap-2">
-              <Sprout size={13} />
-              Story Seeds
-            </h4>
-            <span className="text-[9px] px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-full font-bold">{seeds.length}</span>
-          </div>
-          <p className="mb-4 text-[11px] leading-relaxed text-neutral-500 font-sans">
-            Private account seeds are stored separately from generated stories. Deleting a story does not delete its seed. Import seeds from the Creation Portal or export them here as portable JSON.
-          </p>
-
-          {seedError && (
-            <p className="mb-3 rounded border border-human/30 bg-human/5 p-2 text-[10px] leading-relaxed text-human font-sans" role="alert">
-              {seedError}
-            </p>
-          )}
-
-          <div className="space-y-3">
-            {isLoadingSeeds ? (
-              <div className="text-[11px] text-neutral-600 font-sans italic tracking-wide" role="status">Loading account seeds…</div>
-            ) : seeds.length === 0 ? (
-              <div className="text-[11px] text-neutral-600 font-sans italic tracking-wide">No account seeds indexed yet.</div>
-            ) : (
-              <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
-                {seeds.map(seed => (
-                  <div key={seed.id} className="flex items-center justify-between gap-3 rounded border border-neutral-900 bg-neutral-950/40 px-3 py-2">
-                    <div className="min-w-0">
-                      <div className="truncate text-[12px] text-neutral-300 font-sans">{seed.title}</div>
-                      <div className="mt-0.5 text-[9px] uppercase tracking-wider text-neutral-600 font-mono">
-                        Updated {formatSeedDate(seed)}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => exportSeed(seed)}
-                      aria-label={`Export ${seed.title} seed`}
-                      className="shrink-0 inline-flex items-center gap-1.5 rounded border border-emerald-500/30 px-2.5 py-1.5 text-[9px] uppercase tracking-widest text-emerald-400 font-sc font-bold hover:bg-emerald-500/10 transition-colors"
-                    >
-                      <Download size={11} />
-                      Export
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={exportAllSeeds}
-            disabled={seeds.length === 0 || isLoadingSeeds}
-            className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded border border-neutral-800 px-3 py-2 text-[9px] uppercase tracking-widest text-neutral-300 font-sc font-bold hover:border-emerald-500/50 hover:text-emerald-400 disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start">
+      {/* Manifested Stories */}
+      <LibraryPanel as="section" aria-labelledby="cave-manifested-stories" padding="md" className="space-y-4">
+        <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+          <h3
+            id="cave-manifested-stories"
+            className="flex items-center gap-2 font-sc text-[11px] font-bold uppercase tracking-widest text-[#7dd3ff]"
           >
-            <Download size={12} />
-            Export All Seed JSON
-          </button>
+            <BookOpen size={14} aria-hidden="true" />
+            Manifested Stories
+          </h3>
+          <span className="rounded-full bg-[#04ACFF]/10 px-2 py-0.5 font-mono text-[10px] font-bold text-[#7dd3ff]">
+            {activeFlows.length}
+          </span>
         </div>
-      </div>
+
+        {activeFlows.length === 0 ? (
+          <SEIEmptyState
+            icon={BookOpen}
+            size="sm"
+            titleAs="p"
+            title="No realms manifested yet"
+            description="Stories you manifest from the Creation Portal gather here."
+          />
+        ) : (
+          <ul className="space-y-2" aria-label="Manifested stories">
+            {activeFlows.map(story => (
+              <li
+                key={story.id}
+                className="flex items-center gap-3 rounded-lg border border-white/10 bg-black/30 px-3 py-2.5"
+              >
+                <span
+                  aria-hidden="true"
+                  className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[#04ACFF] motion-reduce:animate-none"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-sans text-[13px] text-neutral-200">{story.title}</p>
+                  {story.sourceSeedId ? (
+                    <p className="truncate font-mono text-[9px] uppercase tracking-wider text-neutral-500">
+                      Seed: {seedTitleById.get(story.sourceSeedId) ?? story.sourceSeedId}
+                    </p>
+                  ) : null}
+                </div>
+                <span className="shrink-0 font-sc text-[9px] uppercase tracking-widest text-[#7dd3ff]/80">Active</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {restingFlows.length > 0 ? (
+          <p className="font-mono text-[10px] uppercase tracking-wider text-neutral-500">
+            {restingFlows.length} resting {restingFlows.length === 1 ? 'realm' : 'realms'} not shown
+          </p>
+        ) : null}
+      </LibraryPanel>
+
+      {/* Story Seeds */}
+      <LibraryPanel as="section" aria-labelledby="cave-story-seeds" padding="md" className="space-y-4">
+        <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+          <h3
+            id="cave-story-seeds"
+            className="flex items-center gap-2 font-sc text-[11px] font-bold uppercase tracking-widest text-emerald-400"
+          >
+            <Sprout size={14} aria-hidden="true" />
+            Story Seeds
+          </h3>
+          <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-400">
+            {seeds.length}
+          </span>
+        </div>
+        <p className="font-sans text-[11px] leading-relaxed text-neutral-400">
+          Private account seeds are stored separately from generated stories. Deleting a story does not
+          delete its seed. Import seeds from the Creation Portal or export them here as portable JSON.
+        </p>
+
+        {seedError ? (
+          <SEIInlineAlert tone="danger" role="alert" className="text-xs">
+            {seedError}
+          </SEIInlineAlert>
+        ) : null}
+
+        {isLoadingSeeds ? (
+          <SEILoadingState size="sm" title="Loading account seeds" />
+        ) : seeds.length === 0 ? (
+          <SEIEmptyState
+            icon={Sprout}
+            size="sm"
+            titleAs="p"
+            title="No account seeds indexed yet"
+          />
+        ) : (
+          <ul className="max-h-64 space-y-2 overflow-y-auto pr-1" aria-label="Story seeds">
+            {seeds.map(seed => (
+              <li
+                key={seed.id}
+                className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/30 px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <p className="truncate font-sans text-[12px] text-neutral-200">{seed.title}</p>
+                  <p className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-neutral-500">
+                    Updated {formatSeedDate(seed)}
+                  </p>
+                </div>
+                <LibraryButton
+                  variant="ghost"
+                  size="sm"
+                  icon={Download}
+                  aria-label={`Export ${seed.title} seed`}
+                  onClick={() => exportSeed(seed)}
+                  className="shrink-0"
+                >
+                  Export
+                </LibraryButton>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <LibraryButton
+          variant="secondary"
+          icon={Download}
+          fullWidth
+          disabled={seeds.length === 0 || isLoadingSeeds}
+          onClick={exportAllSeeds}
+        >
+          Export all seed JSON
+        </LibraryButton>
+      </LibraryPanel>
     </div>
   );
 }

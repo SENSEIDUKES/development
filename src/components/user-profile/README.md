@@ -10,7 +10,7 @@
 - **Replica created:** 2026-09-08
 - **Last Workshop update:** 2026-09-08
 - **Last source comparison:** 2026-09-08
-- **Replica status:** faithful replica
+- **Replica status:** under refinement
 
 The page is reached in production from `src/App.tsx`, which renders `<UserProfile currentUser
 stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Light-Novels`
@@ -20,89 +20,97 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 - **2026-09-08:** Created the faithful Workshop replica of the complete Celestial Tools profile
   page and all five of its panels, the injected services port, the local mock adapter, and the
-  six-scenario state simulator. `reference/` and `development/` are byte-identical.
+  six-scenario state simulator. `reference/` and `development/` were byte-identical.
+- **2026-09-08:** Redesigned `development/` into the **Cultivator Cave**: a portrait, identity,
+  rank and Qi plaque over a stock Immortal Land backdrop; four destinations (Stories, Relics, Dao
+  Pillar, Active Status Effects); and one gear-triggered Settings panel. Built on canonical
+  `@seihouse/library-ui` and `@seihouse/ui` components and the `@seihouse/library/relics` relic
+  card. `reference/` is unchanged. Added the component test suite and `npm run test:user-profile`.
 
 ## Folder layout
 
-```
+```text
 reference/    — untouched replica of production, locked
-development/  — the active Workshop version, started as a copy of reference/
+development/  — the Cultivator Cave redesign
 shared/       — the services port, domain types, and the unforked offering-week helper
 ```
 
-Both forks contain the same ten files:
+`reference/` still contains the ten production files listed under *The locked reference*.
+`development/` now contains:
 
-| File | Origin |
+| File | Role in the Cave |
 | --- | --- |
-| `UserProfile.tsx` | `src/components/UserProfile.tsx` |
-| `UserProfileAdminPanel.tsx` | `src/components/UserProfileAdminPanel.tsx` |
-| `UserProfileInventoryPanel.tsx` | `src/components/UserProfileInventoryPanel.tsx` |
-| `UserProfilePortraitModal.tsx` | `src/components/UserProfilePortraitModal.tsx` |
-| `UserProfileSettingsPanel.tsx` | `src/components/UserProfileSettingsPanel.tsx` |
-| `UserProfileStoriesPanel.tsx` | `src/components/UserProfileStoriesPanel.tsx` |
-| `qi.ts` | presentation exports of `src/lib/qi.ts` |
-| `chapterWritingStyle.ts` | option exports of `src/lib/chapterWritingStyle.ts` |
-| `userProfile.css` | the two Celestial Aura classes from `src/index.css` |
+| `UserProfile.tsx` | The Cave shell: backdrop, header and gear, portrait and identity plaque, destination cards, destination routing, the portrait modal, and the language-confirmation dialog |
+| `UserProfileCaveDestination.tsx` | The frame every destination opens into (back control, title, heading focus) |
+| `UserProfileStoriesPanel.tsx` | **Stories** — Manifested Stories and Story Seeds in one destination |
+| `UserProfileInventoryPanel.tsx` | **Relics** — inventory, soul attunement, the Offering Hall pouch, submitted history, and rewards |
+| `UserProfileDaoPillarPanel.tsx` | **Dao Pillar** — streak, cracked state and repair, milestones, daily refinement |
+| `UserProfileStatusEffectsPanel.tsx` | **Active Status Effects** — one card per effect, with an empty state |
+| `UserProfileSettingsPanel.tsx` | The gear-triggered **Settings** drawer |
+| `UserProfileAdminPanel.tsx` | The Akashic Switchboard, unchanged from production, opened as a destination |
+| `UserProfilePortraitModal.tsx` | The Divine Mirror, unchanged from production |
+| `caveEnvironment.ts` | The five stock cave environments, the destination tile art, the emblem, the motto, and the stage helper |
+| `qi.ts`, `chapterWritingStyle.ts` | Unchanged presentation values from production |
+| `userProfile.css` | The two Celestial Aura animations plus the Cave ornament (title presence, rules, plaques, portrait ring) |
 
-`shared/` holds `types.ts` (domain types trimmed from `src/types.ts`),
-`userProfileServices.ts` (the port), and `offeringWeek.ts` (`getCurrentOfferingWeekId`,
-copied verbatim from `src/lib/artifacts.ts`).
+`shared/` is unchanged: `types.ts`, `userProfileServices.ts` (the port), and `offeringWeek.ts`.
 
-## What was copied
+## The Cultivator Cave
 
-Every JSX body, class string, icon, animation, and conditional branch of the six components was
-copied verbatim from production. The only edits are import paths and the five lines noted under
-*What was changed* below. Nothing was simplified, restyled, or reorganised.
+The Cave home shows, top to bottom on a phone and side by side from the `md` breakpoint:
 
-That covers the whole user-facing experience:
+- the cave header — the Library sacred-tree glyph, the gold "Cultivator Cave" title, and the
+  Settings gear;
+- the central cultivator portrait inside a gold ring, wearing the aura glow and the rank-gated
+  mote layer from production, flanked by two decorative calligraphy plaques;
+- the identity plaque — display name in its Celestial Aura style, the attuned-relic mark, Dao name,
+  `rank · stage`, the Heavenly Qi bar toward the next rank, the three Qi cores (tap a chip to read
+  its description), and the cave motto;
+- four destination cards: **Stories**, **Relics**, **Dao Pillar**, **Active Status Effects**.
 
-- the Celestial Tools shell, Sever Link, and the owner/admin tab strip;
-- the "Spirit Unlinked" cloud-linking screen;
-- the avatar ring with its rank-gated particle layer and aura glow;
-- the Celestial Portrait button and the Advanced Tools popover (Aether Router, Shortcuts, Import
-  Scroll, Backup All);
-- the Dao rank badge, the Qi Cores menu with all three cores and their tooltips, the Soul Attuned
-  banner, and the cultivation progress bar;
-- identity editing, the full Celestial Aura tier picker with locked-tier progress, and the
-  Transcendent Custom Spectrum colour input gated at 25k Qi;
-- Ascent Commenced, Scrolls Accumulated, and the Daily Dao Pillar with its cracked state, repair
-  button, milestone pills, and check-in;
-- Active Status Effects, including challenge progress, completion, counterplay, and reward hooks;
-- the Cosmic Inventory / Celestial Library Offering Hall with rarity styling, the weekly offering
-  pouch, submitted history, and relic inspection;
-- Manifested Realms (Active Flows) and the account Story Seeds index with per-seed and bulk export;
-- Environment & Sync settings — Harmony, both language selectors, and the default chapter writing
-  style;
-- the Divine Mirror portrait modal (upload, drag-and-drop, description, stepped generation,
-  regenerate, seal);
-- the Akashic Switchboard with account and story registries, search, role and tier edits, and
-  story deletion;
-- the 30-second language-change confirmation modal.
+Every destination opens in place, over the same backdrop, with a "Return to cave" control and
+focus moved to its heading. The Akashic Switchboard is a fifth destination reachable only from
+Settings, and only for owner and admin accounts.
 
-## What was changed
+The **Settings** drawer opens from the gear and holds every remaining control in collapsible
+sections: Identity & Celestial Aura (Dao name, display name, the tier picker, the Transcendent
+Custom Spectrum, Guard Changes / Discard), Cultivator Portrait (opens the Divine Mirror), Cave
+Environment (five stock backdrops and the ambient motes toggle), Language (both selectors with
+the 30-second confirmation), Writing Preferences (default chapter writing style), Harmony & Sync,
+Backup, Import & Export (Import Scroll, Backup All), Advanced Tools (Aether Router, Shortcuts),
+Authorized Controls (owner/admin only), and Account (Sever Link).
 
-Five deliberate edits, all of them import wiring:
+### Stage label
 
-1. `UserProfile.tsx` reads `useController` and `localOnlyMode` from the injected services instead
-   of importing `useUserProfile` and `LOCAL_ONLY_MODE` directly.
-2. `UserProfileSettingsPanel.tsx` reads `localOnlyMode`, `setLocalOnlyMode`, and
-   `requestLibrarySync` from the services instead of `lib/firebase` and `lib/storage`.
-3. `UserProfileInventoryPanel.tsx` reads `submitCurrentWeekOfferings` from the services and
-   `getCurrentOfferingWeekId` from `shared/offeringWeek`.
-4. `UserProfileStoriesPanel.tsx` reads `listStorySeeds`, `downloadStorySeed`, and
-   `downloadStorySeedCollection` from the services.
-5. `UserProfileAdminPanel.tsx` types `allStories` as `AdminStoryRow[]` instead of `any[]`, listing
-   the fields the panel already reads. No rendering change.
+`rank · stage` derives the stage from progress toward the next rank (Early below 34%, Middle below
+67%, Late otherwise, Peak at the final rank). It is presentation only; the rank still comes from
+`getDaoRankData` and nothing new is persisted.
 
-`reference/` and `development/` are byte-identical, so the Development pane is currently a true
-baseline for the next redesign.
+### Backdrops and portrait
+
+The five cave environments are the production "IMMORTAL LAND" images already in
+`public/manifest-backdrops/`; the two destination tiles reuse two of them. No new background art
+was added. The chosen environment and the motes toggle are transient component state — persisting
+them needs a profile field in Light-Novels and is out of scope here. The portrait is whatever
+`avatarUrl` the profile carries; the Workshop's developed scenario supplies a locally drawn static
+SVG bust, and the Divine Mirror flow still seals a new one.
+
+### Canonical components used
+
+`LibraryPanel`, `LibraryCard` (+ title/description slots), `LibraryButton`, `LibraryTextBox`, and
+`ParticleEffect` from `@seihouse/library-ui`; `SEIDrawer`, `SEIDialog`, `SEIDisclosureGroup`,
+`SEITabs`, `SEIProgressBar`, `SEIInlineAlert`, `SEIEmptyState`, `SEILoadingState`, `SEIField`,
+`SEISelect`, and `SEISwitch` from `@seihouse/ui`; `RelicCard` and `renderArtifactIcon` from
+`@seihouse/library/relics`. The Workshop's `--color-neutral-500` is darker than production's, so
+judge fine contrast against production.
 
 ## The services port
 
-`shared/userProfileServices.ts` is the entire production boundary. `UserProfileController` mirrors
-the return value of `useUserProfile` name for name, so transferring back is a provider swap rather
-than a rewrite. The remaining members cover the four production modules the panels import on their
-own.
+Unchanged. `shared/userProfileServices.ts` is the entire production boundary. `UserProfileController`
+mirrors the return value of `useUserProfile` name for name, and the Cave consumes it without adding
+a member, so transferring back is still a provider swap. Two controller members the Cave no longer
+reads — `isQiMenuOpen` / `setIsQiMenuOpen` (the cores are always visible; `activeQiTooltip` still
+drives the descriptions) and `currentPowerStage` — remain in the contract for production.
 
 Nothing in `reference/`, `development/`, or `shared/` imports Firebase, PostgreSQL, R2, an API
 route, a secret, or an environment variable.
@@ -120,7 +128,7 @@ the portable components.
 | `services/profilePicture` (Gemini image generation) | a stepped 9 s timer resolving a locally drawn SVG |
 | `services/profilePicturePersistence` (R2 upload + commit) | an 800 ms delay, then a local `avatarUrl` write |
 | Portrait upload | a real `FileReader` read; the base64 never leaves the browser |
-| `lib/artifacts.submitCurrentWeekOfferings` | a local reward total |
+| `lib/artifacts.submitCurrentWeekOfferings` | marks this week's pouch submitted and pays its Qi and Sect Merit into the local profile |
 | `lib/storySeedStorage` / `lib/storySeedFormat` | the fixed seed list; export is logged, never downloaded |
 | `lib/storage.performSync`, `lib/firebase` local-only mode | logged as excluded actions |
 | `useAppStore` (Aether Router, Shortcuts, library import/export) | logged as excluded actions |
@@ -130,34 +138,38 @@ and milestone maths, the 30-second language-confirmation countdown, the attuneme
 status-effect replacement rules, and the optimistic writing-style save with its rollback.
 
 Actions the Workshop deliberately does not perform are recorded in a preview-only
-"excluded production actions" panel rendered by the workspace, so the boundary stays visible while
-inspecting. That panel is Workshop tooling and is never transferred.
+"excluded production actions" panel rendered by the workspace. That panel is Workshop tooling and
+is never transferred.
 
 ### Available preview states
 
 | State | What it shows |
 | --- | --- |
-| Spirit Unlinked | No account, cloud mode on — the linking screen. Linking signs the mock account in. |
-| New cultivator | A freshly linked Mortal Reader: every empty state, no relics, no streak, no portrait. |
+| Spirit Unlinked | No account, cloud mode on — the linking plaque in the cave. Linking signs the mock account in. |
+| New cultivator | A freshly linked Mortal Reader: no portrait, no relics, no streak, no effects — every empty state. |
 | Developed cultivator | Sage of Branching Paths with a portrait, three Qi cores, an attuned relic, two status effects, a 12-day Dao Pillar, relics awaiting offering, stories and seeds. |
-| Loading | The profile snapshot never resolves. |
-| Error | Every asynchronous service rejects — page error band, admin failure, seed failure, portrait failure. |
-| Owner / Admin | Owner role with the Akashic Switchboard and working role/tier edits. |
+| Loading | The profile snapshot never resolves; the identity plaque shows its loading state. |
+| Error | Every asynchronous service rejects — page error band, admin failure, seed failure, portrait failure, offering failure. |
+| Owner / Admin | Owner role: the cracked pillar, and the Authorized Controls section opens the Akashic Switchboard. |
 
 Switching state remounts the pane, so each scenario starts from its own snapshot.
+
+## Tests
+
+`npm run test:user-profile` runs `development/UserProfile.test.tsx` (jsdom) against the Workshop
+mock adapter: the home plaque and cards, the Qi core chips, the unlinked / loading / error states,
+each destination and its return path, relic inspection with attunement and a full Offering Hall
+submission, the daily refinement and pillar repair, the status-effect cards and empty state, the
+Settings sections, identity editing, the language confirmation, the owner's Switchboard, the stage
+helper, and a check that the locked reference still renders the original page.
 
 ## Reusable Workshop dependencies
 
 - `src/workshop/FeatureWorkspace.tsx` — the shared Original Reference / Development / Compare shell
   and the Workshop Controls menu.
 - `src/workshop/manifest.ts` and the `previewRegistry` in `src/App.tsx`.
-- The Workshop theme tokens in `src/styles.css` (`void`, `signal`, `portal`, `human`,
-  `font-display`, `font-sc`).
-
-The relics feature already replicates `UserProfileInventoryPanel` for its own Relic Reveal work
-(`?preview=relics-gallery`). That replica is a rarity-card gallery with a reveal flow, not the
-profile's Offering Hall, so this feature keeps its own copy rather than importing across feature
-folders. If the two are ever reconciled, the Offering Hall is the surface to consolidate.
+- `public/manifest-backdrops/` (the Immortal Land pool) and `public/icons/sacred-tree.svg`.
+- The Workshop theme tokens in `src/styles.css`.
 
 ## Production dependencies intentionally excluded
 
@@ -170,34 +182,47 @@ issues no external network request beyond the Workshop shell's own Google Fonts 
 ## Known differences from the source
 
 1. **Neutral text tokens.** The Workshop's `styles.css` sets `--color-neutral-500: #737373`;
-   Light-Novels sets `#a3a3a3`. Secondary label text reads slightly darker here than in
-   production. Judge fine contrast decisions against production, not the Workshop.
-2. **Portrait modal containment.** The Divine Mirror overlay is `fixed inset-0`, but its ancestor
-   card carries `backdrop-blur-sm`, which makes that card the containing block. The overlay
-   therefore scrolls with the profile instead of pinning to the viewport. This is production's own
-   markup and behaviour, reproduced exactly — not a Workshop artifact. The language-confirmation
-   modal is rendered outside that ancestor and does pin correctly.
-3. **Generation step labels.** `useUserProfile` advances `generationStep` through six messages,
-   but the modal only labels four (`Features`, `Aura`, `Soul`, `Completing`), so a real generation
-   long enough to reach step 4 renders "Manifesting undefined…". The mock's 9 s generation lands on
-   step 3, so the replica does not show it — the defect is production's and is recorded here.
-4. **`currentPowerStage`.** Production reads it from the active story's narrative memory. No story
-   graph exists in the Workshop, so the portrait modal receives a fixed stage string.
-5. **Toasts.** Production dispatches a `seihouse-toast` event after a pillar repair. There is no
+   Light-Novels sets `#a3a3a3`. Judge fine contrast decisions against production.
+2. **Generation step labels.** `useUserProfile` advances `generationStep` through six messages,
+   but the Divine Mirror only labels four, so a real generation long enough to reach step 4 renders
+   "Manifesting undefined…". The mock's 9 s generation lands on step 3. Production's defect,
+   recorded here; the modal is unchanged.
+3. **`currentPowerStage`.** Production reads it from the active story's narrative memory. The
+   Workshop controller returns a fixed string, and the Cave does not display it.
+4. **Toasts.** Production dispatches a `seihouse-toast` event after a pillar repair. There is no
    toast host in the Workshop, so that confirmation is not shown.
+5. **Offering submission.** Production refreshes the inventory through the app store listener. The
+   Workshop mock now performs the equivalent local mutation so the pouch empties into History.
+6. **Overlay layering.** The Settings drawer and the two dialogs carry `z-[300]`/`z-[310]` so they
+   sit above the Workshop Controls panel (`z-[200]`). Production has no such panel; the classes are
+   harmless there.
+
+## The locked reference
+
+`reference/` is the production page exactly as imported on 2026-09-08 and must not be edited during
+Workshop work. It contains `UserProfile.tsx`, `UserProfileAdminPanel.tsx`,
+`UserProfileInventoryPanel.tsx`, `UserProfilePortraitModal.tsx`, `UserProfileSettingsPanel.tsx`,
+`UserProfileStoriesPanel.tsx`, `qi.ts`, `chapterWritingStyle.ts`, and `userProfile.css`, with the
+five import-wiring edits described in the first history entry.
 
 ## Exact files needed for transfer
 
-Once a redesign is approved, copy back from `development/`:
+Once the Cave is approved, copy back from `development/`:
 
 - `UserProfile.tsx`, `UserProfileAdminPanel.tsx`, `UserProfileInventoryPanel.tsx`,
-  `UserProfilePortraitModal.tsx`, `UserProfileSettingsPanel.tsx`, `UserProfileStoriesPanel.tsx`
-  → `src/components/` in Light-Novels.
+  `UserProfilePortraitModal.tsx`, `UserProfileSettingsPanel.tsx`, `UserProfileStoriesPanel.tsx`,
+  `UserProfileCaveDestination.tsx`, `UserProfileDaoPillarPanel.tsx`,
+  `UserProfileStatusEffectsPanel.tsx`, `caveEnvironment.ts` → `src/components/` in Light-Novels.
 - Any visual change made to `qi.ts` → the matching exports in `src/lib/qi.ts`.
-- Any change to `userProfile.css` → the aura block in `src/index.css`.
+- `userProfile.css` → the aura block in `src/index.css` plus the Cave ornament rules.
+- The host must serve the five `manifest-backdrops/immortal-land-*.jpg` files and
+  `icons/sacred-tree.svg` at the same paths, or `caveEnvironment.ts` must be pointed at the
+  production image URLs.
+- The host must provide `@seihouse/library-ui`, `@seihouse/ui`, and `@seihouse/library/relics`
+  (Light-Novels already consumes the UI packages).
 
-Then restore the production wiring. Either revert the five import edits listed above, or — the
-smaller diff — keep the port and mount one real adapter in `App.tsx`:
+Then restore the production wiring. Either revert the port, or — the smaller diff — keep the port
+and mount one real adapter in `App.tsx`:
 
 ```tsx
 const services: UserProfileServices = {
@@ -216,13 +241,16 @@ const services: UserProfileServices = {
 
 - **Do not transfer** `shared/types.ts` or `shared/offeringWeek.ts`. Light-Novels owns `src/types.ts`
   and `src/lib/artifacts.ts`; the Workshop copies are trimmed and would regress those files.
-- **Do not transfer** anything under `src/workshop/previews/user-profile/`.
+- **Do not transfer** anything under `src/workshop/previews/user-profile/` or the test file's mock
+  imports.
 - Persisted values and API compatibility strings were kept exactly as production has them —
   `defaultChapterWritingStyle` option strings, the language option values including their native
   script suffixes, `premiumTier` and `role` unions, `offeringWeekId` / `status` on artifacts, the
   `seihouse-local-user-profile` and `seihouse-local-cosmic-inventory` storage keys (referenced by
   the production hook, not by these components), and the `profilePicture` naming. Do not rename any
   of them without a deliberate migration task.
+- The cave environment choice is not persisted. Adding a profile field for it is a production
+  schema decision, not a Workshop one.
 - `AdminStoryRow` narrows what production types `any[]`. If the admin overview grows a field the
   panel renders, add it to the interface rather than widening it back to `any`.
 
@@ -230,7 +258,7 @@ const services: UserProfileServices = {
 
 1. **Import** — copy production's current implementation into `reference/`. *(done 2026-09-08)*
 2. **Fork once** — `development/` starts as a copy of `reference/`. *(done 2026-09-08)*
-3. **Refine** — every Workshop task modifies `development/` only. *(next)*
+3. **Refine** — every Workshop task modifies `development/` only. *(in progress: Cultivator Cave)*
 4. **Approve** — transfer `development/` back to Light-Novels in a separate task.
 5. **Resynchronize** — refresh `reference/` from the integrated production code, update
    `source.lastCompared`, and reset `development/` for the next cycle.

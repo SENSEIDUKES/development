@@ -184,9 +184,9 @@ export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'user-profile',
     title: 'User Profile',
-    description: "The complete Celestial Tools profile page: identity and Celestial Aura editing, the three Qi cores and cultivation progression, the Daily Dao Pillar, active status effects, the Divine Mirror portrait flow, the Cosmic Inventory and Weekly Offering hall, Manifested Realms and Story Seeds, environment and sync settings, and the owner-only Akashic Switchboard — driven entirely by local mock adapters.",
+    description: "The cultivator's profile. The locked reference is the production Celestial Tools page; Development is the Cultivator Cave redesign — a portrait, identity, rank and Qi over a stock Immortal Land backdrop, four destinations (Stories, Relics, Dao Pillar, Active Status Effects), and one gear-triggered Settings panel holding identity, aura, portrait, environment, language, writing, sync, backup, advanced tools, Sever Link, and the authorized Akashic Switchboard — driven entirely by local mock adapters.",
     category: 'other',
-    version: 'v1.0',
+    version: 'v1.1',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/UserProfile.tsx; src/components/UserProfileAdminPanel.tsx; src/components/UserProfileInventoryPanel.tsx; src/components/UserProfilePortraitModal.tsx; src/components/UserProfileSettingsPanel.tsx; src/components/UserProfileStoriesPanel.tsx; src/hooks/useUserProfile.ts',

@@ -31,6 +31,7 @@ import {
   SEILoadingState,
   SEIProgressBar,
 } from '@seihouse/ui';
+import { StoryAuthGate, STORY_AUTH_DISSOLVE_MS } from '@seihouse/sen/story-seed';
 import type { AppUser, Story } from '../shared/types';
 import { useUserProfileServices } from '../shared/userProfileServices';
 import { getAuraColorForXp, getAuraGlowStyle, getAuraTextStyle } from './qi';
@@ -101,7 +102,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   // Production calls `useUserProfile(...)` and reads the Firebase local-only flag
   // directly. Both arrive through the injected services port here, so this file
   // carries no Firebase, PostgreSQL, or generation dependency of its own.
-  const { useController: useUserProfile, localOnlyMode } = useUserProfileServices();
+  const { useController: useUserProfile, localOnlyMode, authenticate } = useUserProfileServices();
   const controller = useUserProfile({ currentUser, stories, onLogout, onNavigateHome });
   const {
     profile,
@@ -127,7 +128,6 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     countdown,
     confirmLanguageChange,
     revertLanguageChange,
-    handleLogin,
     handleAttuneArtifact,
     activeStoriesCount,
     currentStreak,
@@ -159,6 +159,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [environmentId, setEnvironmentId] = useState(DEFAULT_CAVE_ENVIRONMENT_ID);
   const [ambientMotes, setAmbientMotes] = useState(true);
+  const [spiritLinkOpen, setSpiritLinkOpen] = useState(false);
 
   const environment = getCaveEnvironment(environmentId);
   const isSignedOut = !currentUser && !localOnlyMode;
@@ -177,6 +178,14 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
       setSettingsOpen(false);
     }
   }, [currentUser]);
+
+  // Keep the recovered OAuth gate mounted long enough to complete its existing
+  // post-link dissolve before revealing the linked Cultivator Cave.
+  useEffect(() => {
+    if (!spiritLinkOpen || !currentUser) return;
+    const timer = window.setTimeout(() => setSpiritLinkOpen(false), STORY_AUTH_DISSOLVE_MS);
+    return () => window.clearTimeout(timer);
+  }, [currentUser, spiritLinkOpen]);
 
   const openDestination = useCallback((destination: CaveDestinationId) => {
     setSettingsOpen(false);
@@ -483,7 +492,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         Link your soul to the Celestial Cloud to permanently etch your stories into the matrix and sync
         across different planes of existence.
       </p>
-      <LibraryButton variant="primary" size="lg" icon={Sparkles} className="mt-6" onClick={() => void handleLogin()}>
+      <LibraryButton variant="primary" size="lg" icon={Sparkles} className="mt-6" onClick={() => setSpiritLinkOpen(true)}>
         Link Spirit Realm
       </LibraryButton>
     </LibraryPanel>
@@ -612,6 +621,18 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
 
         <main className="mt-5 sm:mt-6">{renderView()}</main>
       </div>
+
+      {spiritLinkOpen ? (
+        <StoryAuthGate
+          linked={Boolean(currentUser)}
+          context="spirit-link"
+          onAuthenticate={authenticate}
+          onDismiss={() => setSpiritLinkOpen(false)}
+          dismissLabel="Return to Cultivator Cave"
+          description="Sign in to preserve your stories, cultivation, and relics, then return to them from any device."
+          reassurance="Your Cultivator Cave will remain intact."
+        />
+      ) : null}
 
       {currentUser ? (
         <UserProfileSettingsPanel

@@ -27,9 +27,9 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
   `@seihouse/library-ui` and `@seihouse/ui` components and the `@seihouse/library/relics` relic
   card. `reference/` is unchanged. Added the component test suite and `npm run test:user-profile`.
 - **2026-09-08:** Recovered the existing cinematic OAuth gate from Story Seed and connected it to
-  the Cave's **Link Spirit Realm** action. The gate now accepts a host-owned provider dispatcher,
-  offers a return path to the Cave, uses account-wide Spirit Link copy, and preserves its loading,
-  email, reduced-motion, constrained-network, and post-link dissolve behavior. No real
+  the Cave's signed-out state. It replaces the intermediate **Spirit Unlinked** plaque entirely,
+  accepts a host-owned provider dispatcher, uses account-wide Spirit Link copy, and preserves its
+  loading, email, reduced-motion, constrained-network, and post-link dissolve behavior. No real
   authentication runs in the Workshop.
 
 ## Folder layout
@@ -150,7 +150,7 @@ is never transferred.
 
 | State | What it shows |
 | --- | --- |
-| Spirit Unlinked | No account, cloud mode on — the linking plaque in the cave. Linking signs the mock account in. |
+| Spirit Unlinked | No account, cloud mode on — lands directly on the cinematic OAuth page. Linking reveals the Cave. |
 | New cultivator | A freshly linked Mortal Reader: no portrait, no relics, no streak, no effects — every empty state. |
 | Developed cultivator | Sage of Branching Paths with a portrait, three Qi cores, an attuned relic, two status effects, a 12-day Dao Pillar, relics awaiting offering, stories and seeds. |
 | Loading | The profile snapshot never resolves; the identity plaque shows its loading state. |

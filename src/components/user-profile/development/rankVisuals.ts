@@ -67,13 +67,18 @@ export interface Rank {
  * deliberately separate: yellow is the brighter, more luminous of the two, gold
  * the deeper and richer. They are close in hue — every convincing yellow is —
  * so what really separates them is what each is paired with.
+ *
+ * `PINK` carries the warm middle of the ladder in place of the reference
+ * sheet's orange. Running Adept and Elder through orange left Adept, Elder and
+ * Leader reading as three near-identical orange-red discs at swatch size;
+ * chaining them yellow → pink → red → gold keeps every orb legible on its own.
  */
 const WHITE = '#E5E7EB'; //       ⚪
 const GREEN = '#22C55E'; //       🟢
 const BLUE = '#2563EB'; //        🔵
 const LIGHT_BLUE = '#7DD3FC'; //  💙
 const YELLOW = '#FFE02E'; //      🟡
-const ORANGE = '#F97316'; //      🟠
+const PINK = '#EC4899'; //        🩷
 const RED = '#DC2626'; //         🔴
 const TROPHY_GOLD = '#FFD700'; // 🏆
 const VIOLET = '#A855F7'; //      🟣
@@ -134,28 +139,28 @@ export const RANKS: Rank[] = [
     },
   },
   {
-    // 🟡 → 🟠 yellow into orange, through a warm amber.
+    // 🟡 → 🩷 yellow into pink, through a warm coral.
     id: 'adept',
     name: 'Adept',
     unlockedAt: 3000,
     motes: false,
     visual: {
       kind: 'gradient',
-      stops: [YELLOW, '#F9AE22', ORANGE],
+      stops: [YELLOW, '#F78F63', PINK],
       positions: [0, 0.5, 1],
       angle: 90,
-      glow: 'rgba(249,115,22,0.55)',
+      glow: 'rgba(236,72,153,0.55)',
     },
   },
   {
-    // 🟠 → 🔴 orange into red, through a scorched vermilion.
+    // 🩷 → 🔴 pink into red, through a crimson rose.
     id: 'elder',
     name: 'Elder',
     unlockedAt: 6000,
     motes: true,
     visual: {
       kind: 'gradient',
-      stops: [ORANGE, '#F04E2E', RED],
+      stops: [PINK, '#E63963', RED],
       positions: [0, 0.52, 1],
       angle: 90,
       glow: 'rgba(220,38,38,0.55)',

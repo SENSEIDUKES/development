@@ -87,7 +87,7 @@ Settings, and only for owner and admin accounts.
 
 The **Settings** drawer opens from the gear and holds every remaining control in collapsible
 sections: Identity & Celestial Aura (Dao name, display name, the rank picker, the Custom
-Custom Spectrum, Guard Changes / Discard), Cultivator Portrait (opens the Divine Mirror), Cave
+Spectrum, Guard Changes / Discard), Cultivator Portrait (opens the Divine Mirror), Cave
 Environment (five stock backdrops and the ambient motes toggle), Language (both selectors with
 the 30-second confirmation), Writing Preferences (default chapter writing style), Harmony & Sync,
 Backup, Import & Export (Import Scroll, Backup All), Advanced Tools (Aether Router, Shortcuts),
@@ -106,8 +106,8 @@ different one in its colour data.
 | 3 | Scribe | 300 | solid blue `#2563EB` |
 | 4 | Scholar | 750 | blue → light blue |
 | 5 | Author | 1,500 | light blue → yellow |
-| 6 | Adept | 3,000 | yellow → orange |
-| 7 | Elder | 6,000 | orange → red |
+| 6 | Adept | 3,000 | yellow → pink |
+| 7 | Elder | 6,000 | pink → red |
 | 8 | Leader | 12,000 | red → gold |
 | 9 | Sage | 25,000 | gold → violet |
 | 10 | Master | 50,000 | the user-controlled spectrum |
@@ -122,6 +122,11 @@ The reference's colours are named once at the top of `rankVisuals.ts` and compos
 🟡 `YELLOW` (Author, Adept) and 🏆 `TROPHY_GOLD` (Leader, Sage) are deliberately kept apart: yellow
 is the brighter and more luminous, gold the deeper and richer. They sit close in hue — every
 convincing yellow does — so what really separates them is what each is paired with.
+
+`PINK` carries the warm middle of the ladder in place of the reference sheet's orange. Running
+Adept and Elder through orange left Adept, Elder and Leader reading as three near-identical
+orange-red discs at swatch size. Every rank now hands its end colour to the next — light blue →
+yellow → pink → red → gold → violet — so each orb stays legible on its own.
 
 A `RankVisual` is `kind` (`solid` / `gradient` / `spectrum`), its `stops`, an `angle`, optional
 `positions`, and a `glow`. Solid colours and multi-stop gradients are the same data shape, so every

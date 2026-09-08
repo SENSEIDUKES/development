@@ -387,20 +387,29 @@ describe('rank colour system', () => {
     );
   });
 
-  it('carries yellow through Author and Adept, and trophy gold through Leader and Sage', () => {
+  it('chains the ladder end to end so no two adjacent ranks read alike', () => {
     const stopsFor = (id: string) => RANKS.find(rank => rank.id === id)!.visual.stops;
+    const LIGHT_BLUE = '#7DD3FC';
     const YELLOW = '#FFE02E';
+    const PINK = '#EC4899';
+    const RED = '#DC2626';
     const TROPHY_GOLD = '#FFD700';
 
-    // 5 is light blue → yellow, 6 is yellow → orange: one shared yellow endpoint.
-    expect(stopsFor('author')[0]).toBe('#7DD3FC');
+    // Each rank hands its end colour to the next: light blue → yellow → pink →
+    // red → gold → violet. Adept, Elder and Leader all ran through orange
+    // before, which made their swatches near-indistinguishable.
+    expect(stopsFor('author')[0]).toBe(LIGHT_BLUE);
     expect(stopsFor('author').at(-1)).toBe(YELLOW);
     expect(stopsFor('adept')[0]).toBe(YELLOW);
-    expect(stopsFor('adept').at(-1)).toBe('#F97316');
-
-    // The trophy ranks use gold, never the yellow above.
+    expect(stopsFor('adept').at(-1)).toBe(PINK);
+    expect(stopsFor('elder')[0]).toBe(PINK);
+    expect(stopsFor('elder').at(-1)).toBe(RED);
+    expect(stopsFor('leader')[0]).toBe(RED);
     expect(stopsFor('leader').at(-1)).toBe(TROPHY_GOLD);
     expect(stopsFor('sage')[0]).toBe(TROPHY_GOLD);
+    expect(stopsFor('sage').at(-1)).toBe('#A855F7');
+
+    // The trophy ranks use gold, never the yellow above.
     expect(stopsFor('leader')).not.toContain(YELLOW);
     expect(stopsFor('sage')).not.toContain(YELLOW);
   });

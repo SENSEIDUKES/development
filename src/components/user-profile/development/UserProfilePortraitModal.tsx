@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { SEIDialog, SEIDialogContent, SEIDialogTitle } from '@seihouse/ui';
 import { Camera, Image as ImageIcon, X } from 'lucide-react';
 import { UserProfile } from '../shared/types';
 
@@ -69,16 +70,12 @@ export const UserProfilePortraitModal: React.FC<UserProfilePortraitModalProps> =
   if (!showPortraitModal) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn" role="presentation">
-      <div 
-        className="bg-[#050505] border border-portal/30 rounded-2xl w-full max-w-lg shadow-[0_0_50px_rgba(4,172,255,0.15)] overflow-hidden flex flex-col max-h-[90vh]"
-        role="dialog"
-        aria-labelledby="portrait-modal-title"
-      >
+    <SEIDialog open={showPortraitModal} onOpenChange={open => { if (!isSavingPortrait) setShowPortraitModal(open); }}>
+      <SEIDialogContent hideClose variant="dark" className="z-[310] !p-0 !gap-0 bg-[#050505] border border-portal/30 rounded-2xl w-full max-w-lg shadow-[0_0_50px_rgba(4,172,255,0.15)] overflow-hidden flex flex-col max-h-[90dvh]" backdropClassName="z-[300]" aria-describedby={undefined}>
         <div className="p-4 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-          <h3 id="portrait-modal-title" className="font-sc font-bold uppercase tracking-widest text-portal text-xs flex items-center gap-2">
+          <SEIDialogTitle id="portrait-modal-title" className="font-sc font-bold uppercase tracking-widest text-portal text-xs flex items-center gap-2">
             <Camera size={14} /> Cultivator Portrait Builder
-          </h3>
+          </SEIDialogTitle>
           <button onClick={() => setShowPortraitModal(false)} disabled={isSavingPortrait} className="text-neutral-500 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed" aria-label="Close Portrait Builder">
             <X size={16} />
           </button>
@@ -210,7 +207,7 @@ export const UserProfilePortraitModal: React.FC<UserProfilePortraitModalProps> =
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </SEIDialogContent>
+    </SEIDialog>
   );
 };

@@ -51,15 +51,15 @@ shared/       — the services port, domain types, and the unforked offering-wee
 
 | File | Role in the Cave |
 | --- | --- |
-| `UserProfile.tsx` | The Cave shell: backdrop, header and gear, portrait and identity plaque, destination cards, destination routing, the portrait modal, and the language-confirmation dialog |
+| `UserProfile.tsx` | The Cave workspace: shared header and navigation, persistent controller, four page destinations, portrait and language dialogs |
 | `UserProfileCaveDestination.tsx` | The frame every destination opens into (back control, title, heading focus) |
 | `UserProfileStoriesPanel.tsx` | **Stories** — Manifested Stories and Story Seeds in one destination |
 | `UserProfileInventoryPanel.tsx` | **Relics** — inventory, soul attunement, the Offering Hall pouch, submitted history, and rewards |
 | `UserProfileDaoPillarPanel.tsx` | **Dao Pillar** — streak, cracked state and repair, milestones, daily refinement |
 | `UserProfileStatusEffectsPanel.tsx` | **Active Status Effects** — one card per effect, with an empty state |
-| `UserProfileSettingsPanel.tsx` | The gear-triggered **Settings** drawer |
+| `UserProfileSettingsPanel.tsx` | The **Settings** page content |
 | `UserProfileAdminPanel.tsx` | The Akashic Switchboard, unchanged from production, opened as a destination |
-| `UserProfilePortraitModal.tsx` | The Divine Mirror, unchanged from production |
+| `UserProfilePortraitModal.tsx` | The Divine Mirror content with the shared accessible dialog frame |
 | `caveEnvironment.ts` | The five stock cave environments, the destination tile art, the emblem, the motto, and the stage helper |
 | `rankVisuals.ts` | **The canonical rank colour system** — the ten ranks, their Qi thresholds, and each rank's colour identity as data, with the renderers every surface consumes |
 | `qi.ts` | Rank progression maths and the Celestial Aura style helpers, derived from `rankVisuals.ts` |
@@ -362,3 +362,62 @@ const services: UserProfileServices = {
 ## Development shell integration — 2026-09-08
 
 Connected WorkspaceHeader to Cultivator Cave emblem/home and its existing consolidated Settings panel. Cave destinations, portrait, Qi and role rules remain unchanged; no Story Seed sidebar or bottom controls were added. See [shared contracts](../../../docs/library-header-family.md). Locked references and source-comparison dates are unchanged.
+
+
+## Four-destination Cave workspace — 2026-09-08
+
+Navigation and page structure only. Home retains the portrait, identity, Qi, and existing
+shortcut cards; Stories and Relics reuse their existing panels; Settings presents the existing
+settings sections in the page. Current text, placeholders, economy, and media content are not
+approved or finalized by this change.
+
+`caveNavigation.tsx` owns the Cave labels, icons, route resolution, and browser history adapter.
+It supplies the existing `WorkspaceNavigation`, `WorkspaceSidebar`, and `WorkspaceBottomControls`.
+The reusable shell contains no Cave destinations or domain rules. `WorkspaceHeader` has no
+redundant Settings action. Below 1024px the dock is fixed with content clearance and safe-area
+insets; tablet widths constrain the dock to 40rem. At 1024px the sidebar replaces the dock.
+
+Routes coexist with the existing preview query and preserve unrelated URL parameters, hash,
+and host history state:
+
+| Page | Direct preview URL |
+| --- | --- |
+| Home | `?preview=user-profile&cave=/home` (also the default) |
+| Stories | `?preview=user-profile&cave=/stories` |
+| Relics | `?preview=user-profile&cave=/relics` |
+| Settings | `?preview=user-profile&cave=/settings` |
+| Existing Dao Pillar | `?preview=user-profile&cave=/home/dao-pillar` |
+| Existing status effects | `?preview=user-profile&cave=/home/status-effects` |
+| Existing authorized Switchboard | `?preview=user-profile&cave=/settings/switchboard` |
+
+The route resolver separates the primary destination from its remaining path. Unimplemented
+nested paths display Page unavailable and a return-to-parent control while keeping their parent
+selected. Future story pages can connect a canonical novel with other manifestations; future relic
+pages can include collected items, titles, rewards, details, and the Library Offering Hall. This
+PR implements none of those future schemas, interfaces, reward rules, or multimedia layouts.
+
+Page headings receive focus when the route changes, including Back/Forward. The portrait frame
+uses the shared dialog for focus containment, Escape, focus restoration, and layering above the
+dock; portrait controls and service calls are preserved. Navigating through browser history closes
+the portrait overlay and reverts any unanswered language change. Ordinary portrait closing returns
+focus to its opener in Settings. Settings drafts remain owned by the existing controller.
+
+Validation: `npm run test:user-profile` includes destination selection, direct links, parent
+selection, host URL preservation, popstate handling, authorized-page gating, and existing Cave
+functionality. `scripts/verifyCaveWorkspace.browser.mjs` exports a repeatable browser matrix for
+the Codex Browser API. Open the developed user-profile preview, then pass the tab, the browser's
+`viewport` capability, and the tab's `cdp` capability to `verifyCaveWorkspace`. It checks all four
+pages at 320, 390, 768, 1024, and 1440px, Back/Forward, Enter/Space/Tab, portrait and language
+focus containment, history during an overlay, and 34px bottom / 12px side safe-area emulation.
+Temporary emulation is reset even if a check fails. Tests use local Workshop services, not live
+account persistence or providers.
+
+Transfer also requires `caveNavigation.tsx`, the shared Library workspace shell/header modules and
+their styles, and the existing presentation provider. A host can replace the query transport in
+`useCaveRoute` with its router; retain the destination/child separation. Locked references and the
+last source comparison date are unchanged. Production integration remains a separate task.
+
+Verified on 2026-09-08: 88 targeted component tests passed; production build and package-boundary
+checks passed; all five browser widths passed destination/history/geometry checks, and the keyboard,
+overlay, safe-area, and persistent-dock checks passed. Safe-area values are browser emulation, not
+a claim of testing physical iOS hardware.

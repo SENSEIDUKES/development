@@ -1,5 +1,5 @@
 import { WorkspaceHeader } from '../../library-shell/development/WorkspaceHeader';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Award,
   BookOpen,
@@ -8,7 +8,6 @@ import {
   Gem,
   Globe,
   Orbit,
-  Settings,
   Shield,
   Sparkles,
   User as UserIcon,
@@ -59,6 +58,8 @@ import { UserProfileSettingsPanel } from './UserProfileSettingsPanel';
 import { UserProfileStatusEffectsPanel } from './UserProfileStatusEffectsPanel';
 import { UserProfileStoriesPanel } from './UserProfileStoriesPanel';
 import './userProfile.css';
+import { CAVE_DESTINATIONS, useCaveRoute } from './caveNavigation';
+import { WorkspaceNavigation, WorkspaceSidebar, WorkspaceBottomControls } from '../../library-shell/development/WorkspaceNavigation';
 
 interface UserProfileProps {
   currentUser: AppUser | null;
@@ -66,8 +67,6 @@ interface UserProfileProps {
   onLogout: () => void;
   onNavigateHome: () => void;
 }
-
-type CaveView = 'home' | CaveDestinationId;
 
 /** The three Qi cores and their production descriptions, verbatim. */
 const QI_CORES = [
@@ -100,8 +99,7 @@ const formatQi = (value: number | undefined | null): string =>
 /**
  * The Cultivator Cave — the profile page as a place. The home shows the
  * cultivator's portrait, identity, rank, and Qi over a stock Immortal Land
- * backdrop, with four destinations (Stories, Relics, Dao Pillar, Active Status
- * Effects) and one gear-triggered Settings panel. Every value and action is the
+ * backdrop, within Home, Stories, Relics, and Settings navigation. Every value and action is the
  * controller's; the Cave only decides where each one lives.
  */
 export default function UserProfile({ currentUser, stories, onLogout, onNavigateHome }: UserProfileProps) {
@@ -161,8 +159,20 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     handleApplyPortrait,
   } = controller;
 
-  const [view, setView] = useState<CaveView>('home');
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const route = useCaveRoute();
+  const { view, navigate } = route;
+  const mainRef = useRef<HTMLElement>(null);
+  const previousUser = useRef(currentUser);
+  const previousPath = useRef(route.path);
+  const focusedPath = useRef<string | undefined>(undefined);
+  const navigationItems = useMemo(() => CAVE_DESTINATIONS.map(({ id, label, icon: Icon }) => ({
+    id, label, icon: <Icon size={20} />, active: route.destination === id,
+    onSelect: () => navigate(`/${id}`),
+  })), [route.destination, navigate]);
+  const navigationDefinition = useMemo(() => ({
+    label: 'Cultivator Cave navigation', closeLabel: 'Close Cave navigation',
+    sections: [{ id: 'cave', items: navigationItems }],
+  }), [navigationItems]);
   const [environmentId, setEnvironmentId] = useState(DEFAULT_CAVE_ENVIRONMENT_ID);
   const [ambientMotes, setAmbientMotes] = useState(true);
   const [spiritLinkGateMounted, setSpiritLinkGateMounted] = useState(
@@ -176,16 +186,29 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   // The Akashic Switchboard is a destination here; the controller still owns
   // when its registries are fetched, keyed off this flag exactly as in production.
   useEffect(() => {
-    setIsAdminPanelOpen(view === 'switchboard');
-  }, [setIsAdminPanelOpen, view]);
+    setIsAdminPanelOpen(view === 'switchboard' && isPrivileged && !isSignedOut);
+  }, [setIsAdminPanelOpen, view, isPrivileged, isSignedOut]);
 
-  // Severing the link (or the account changing) always returns to the cave mouth.
+  // Signing out returns to Home; initial signed-out deep links survive linking.
   useEffect(() => {
-    if (!currentUser) {
-      setView('home');
-      setSettingsOpen(false);
+    if (previousUser.current && !currentUser) navigate('/home', true);
+    previousUser.current = currentUser;
+  }, [currentUser, navigate]);
+
+  useEffect(() => {
+    if (previousPath.current !== route.path) {
+      setShowPortraitModal(false);
+      if (pendingLanguageChange) revertLanguageChange();
+      previousPath.current = route.path;
     }
-  }, [currentUser]);
+  }, [route.path, setShowPortraitModal, pendingLanguageChange, revertLanguageChange]);
+
+  useEffect(() => {
+    if (focusedPath.current !== route.path && !isSignedOut && !spiritLinkGateMounted && !showPortraitModal && !pendingLanguageChange) {
+      mainRef.current?.querySelector<HTMLElement>('h2')?.focus();
+      focusedPath.current = route.path;
+    }
+  }, [route.path, isSignedOut, spiritLinkGateMounted, showPortraitModal, pendingLanguageChange]);
 
   // Keep the recovered OAuth gate mounted long enough to complete its existing
   // post-link dissolve before revealing the linked Cultivator Cave.
@@ -202,11 +225,11 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     return () => window.clearTimeout(timer);
   }, [isSignedOut, spiritLinkGateMounted]);
 
-  const openDestination = useCallback((destination: CaveDestinationId) => {
-    setSettingsOpen(false);
-    setView(destination);
-  }, []);
-  const returnHome = useCallback(() => setView('home'), []);
+  const openDestination = useCallback((destination: Exclude<CaveDestinationId, 'unavailable'>) => {
+    navigate(destination === 'dao-pillar' || destination === 'status-effects'
+      ? `/home/${destination}` : destination === 'switchboard' ? '/settings/switchboard' : `/${destination}`);
+  }, [navigate]);
+  const returnHome = useCallback(() => navigate('/home'), [navigate]);
 
   const auraXp = profile?.dao_xp ?? profile?.qi;
   const auraSelection = getAuraSelection(profile?.displayNameColor, auraXp);
@@ -291,7 +314,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
             <SEILoadingState size="sm" title="Reading your celestial record" className="mx-auto" />
           ) : (
             <>
-              <h2 id="cave-cultivator-name" className="flex flex-wrap items-center justify-center gap-2 font-display text-3xl leading-tight sm:text-4xl">
+              <h2 id="cave-cultivator-name" tabIndex={-1} className="flex flex-wrap items-center justify-center gap-2 font-display text-3xl leading-tight sm:text-4xl">
                 <span className={nameStyle.className || 'text-neutral-100'} style={nameStyle.style}>
                   {profile?.displayName || 'Unknown Ascendant'}
                 </span>
@@ -512,6 +535,27 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const renderView = () => {
     if (isSignedOut) return null;
     switch (view) {
+      case 'settings':
+        return (
+          <UserProfileCaveDestination id="settings" title="Settings" onBack={returnHome}>
+            <UserProfileSettingsPanel
+              controller={controller}
+              currentUser={currentUser}
+              stories={stories}
+              onLogout={onLogout}
+              environmentId={environmentId}
+              onEnvironmentChange={setEnvironmentId}
+              ambientMotes={ambientMotes}
+              onAmbientMotesChange={setAmbientMotes}
+              onOpenPortrait={() => setShowPortraitModal(true)}
+              onOpenSwitchboard={() => openDestination('switchboard')}
+            />
+          </UserProfileCaveDestination>
+        );
+      case 'unavailable':
+        return <UserProfileCaveDestination id="unavailable" title="Page unavailable" backLabel={`Return to ${route.destination ?? 'Home'}`} onBack={() => navigate(`/${route.destination ?? 'home'}`)}>
+          <p className="text-neutral-400">This Cave page is not available.</p>
+        </UserProfileCaveDestination>;
       case 'stories':
         return (
           <UserProfileCaveDestination id="stories" title="Stories" subtitle="Seeds and Manifested Stories" icon={<BookOpen size={18} />} onBack={returnHome}>
@@ -546,7 +590,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         );
       case 'switchboard':
         return (
-          <UserProfileCaveDestination id="switchboard" title="Akashic Switchboard" subtitle="Authorized account and story registries" icon={<Shield size={18} />} onBack={returnHome}>
+          <UserProfileCaveDestination id="switchboard" title="Akashic Switchboard" subtitle="Authorized account and story registries" icon={<Shield size={18} />} onBack={() => navigate('/settings')} backLabel="Return to Settings">
             {isPrivileged ? (
               <UserProfileAdminPanel
                 profile={profile}
@@ -577,7 +621,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   };
 
   return (
-    <div className="relative min-h-[100dvh] overflow-hidden bg-[#03060c] text-neutral-200" data-cave-environment={environment.id}>
+    <WorkspaceNavigation definition={navigationDefinition}>
+    <div className="cave-workspace relative min-h-[100dvh] overflow-clip bg-[#03060c] text-neutral-200" data-cave-environment={environment.id}>
       {/* Backdrop: stock Immortal Land art, cooled into the cave palette */}
       <div aria-hidden="true" className="absolute inset-0">
         <img
@@ -597,13 +642,11 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         ) : null}
       </div>
 
-      <div className="relative mx-auto w-full max-w-5xl px-4 pb-12 pt-3 sm:px-6 sm:pt-5">
+      <div className="relative mx-auto w-full max-w-7xl px-4 pb-12 pt-3 sm:px-6 sm:pt-5">
         {/* Cave header */}
         <WorkspaceHeader title="Cultivator Cave"
           emblem={{ src: CAVE_EMBLEM_SRC, alt: 'Library sacred tree' }}
           home={{ href: '/', label: 'Return to Library', onNavigate: onNavigateHome }}
-          primaryAction={currentUser ? { id: 'settings', label: 'Settings', ariaLabel: 'Open settings', icon: Settings,
-            expanded: settingsOpen, hasPopup: 'dialog', onAction: () => setSettingsOpen(true) } : undefined}
         />
         <div className="cave-rule mt-3 sm:mt-4" aria-hidden="true" />
 
@@ -613,7 +656,13 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           </SEIInlineAlert>
         ) : null}
 
-        <main className="mt-5 sm:mt-6">{renderView()}</main>
+        <div className="cave-workspace-body mt-5 sm:mt-6">
+          {!isSignedOut && !spiritLinkGateMounted && <WorkspaceSidebar />}
+          <main ref={mainRef} className="min-w-0" data-cave-page={route.destination ?? 'unavailable'}>{renderView()}</main>
+        </div>
+        {!isSignedOut && !spiritLinkGateMounted && <div className="cave-workspace-dock">
+          <WorkspaceBottomControls label="Cultivator Cave navigation" items={navigationItems} />
+        </div>}
       </div>
 
       {isSignedOut || spiritLinkGateMounted ? (
@@ -623,26 +672,6 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           onAuthenticate={authenticate}
           description="Sign in to preserve your stories, cultivation, and relics, then return to them from any device."
           reassurance="Your Cultivator Cave will remain intact."
-        />
-      ) : null}
-
-      {currentUser ? (
-        <UserProfileSettingsPanel
-          open={settingsOpen}
-          onOpenChange={setSettingsOpen}
-          controller={controller}
-          currentUser={currentUser}
-          stories={stories}
-          onLogout={onLogout}
-          environmentId={environmentId}
-          onEnvironmentChange={setEnvironmentId}
-          ambientMotes={ambientMotes}
-          onAmbientMotesChange={setAmbientMotes}
-          onOpenPortrait={() => {
-            setSettingsOpen(false);
-            setShowPortraitModal(true);
-          }}
-          onOpenSwitchboard={() => openDestination('switchboard')}
         />
       ) : null}
 
@@ -696,5 +725,6 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         </SEIDialogContent>
       </SEIDialog>
     </div>
+    </WorkspaceNavigation>
   );
 }

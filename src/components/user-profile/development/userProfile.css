@@ -116,3 +116,24 @@
     animation: none;
   }
 }
+
+/* Cave placement; shared navigation owns controls and interaction states. */
+.cave-workspace { --cave-safe-bottom: env(safe-area-inset-bottom, 0px); }
+.cave-workspace-body { padding-bottom: calc(7rem + var(--cave-safe-bottom)); }
+.cave-workspace-dock > nav {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 50;
+  padding-bottom: calc(0.75rem + var(--cave-safe-bottom));
+  padding-left: max(0.5rem, env(safe-area-inset-left));
+  padding-right: max(0.5rem, env(safe-area-inset-right));
+}
+.cave-workspace h2:focus-visible { outline: 2px solid var(--color-sen-portal); outline-offset: 4px; }
+@media (min-width: 768px) and (max-width: 1023px) {
+  .cave-workspace-dock > nav { max-width: 40rem; margin-inline: auto; }
+}
+@media (min-width: 1024px) {
+  .cave-workspace-body { display: grid; grid-template-columns: 13rem minmax(0, 1fr); gap: 1.5rem; padding-bottom: 0; }
+  .cave-workspace-body > aside { position: sticky; top: 1rem; align-self: start; max-height: calc(100dvh - 2rem); overflow-y: auto; }
+}

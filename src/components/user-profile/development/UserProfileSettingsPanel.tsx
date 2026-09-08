@@ -22,12 +22,6 @@ import { LibraryButton, LibraryTextBox } from '@seihouse/library-ui';
 import {
   SEIDisclosure,
   SEIDisclosureGroup,
-  SEIDrawer,
-  SEIDrawerBody,
-  SEIDrawerContent,
-  SEIDrawerDescription,
-  SEIDrawerHeader,
-  SEIDrawerTitle,
   SEIField,
   SEISelect,
   SEISwitch,
@@ -64,8 +58,6 @@ const LANGUAGE_OPTIONS = [
 const IDENTITY_FIELDS = ['username', 'displayName', 'displayNameColor'] as const;
 
 interface UserProfileSettingsPanelProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
   controller: UserProfileController;
   currentUser: AppUser | null;
   stories: Story[];
@@ -79,7 +71,7 @@ interface UserProfileSettingsPanelProps {
 }
 
 /**
- * The gear-triggered Settings panel: every profile control that is not one of
+ * The Settings page content: every profile control that is not one of
  * the four Cave destinations lives here — identity and Celestial Aura editing,
  * portrait controls, the cave environment, language, writing preferences,
  * Harmony sync, backup and import, the advanced tools, Sever Link, and the
@@ -88,8 +80,6 @@ interface UserProfileSettingsPanelProps {
  * All state and behaviour is the controller's; this file only arranges it.
  */
 export function UserProfileSettingsPanel({
-  open,
-  onOpenChange,
   controller,
   currentUser,
   stories,
@@ -193,19 +183,7 @@ export function UserProfileSettingsPanel({
         : Cloud;
 
   return (
-    <SEIDrawer open={open} onOpenChange={next => onOpenChange(next)}>
-      <SEIDrawerContent side="right" tone="dark" className="z-[310] sm:max-w-[30rem]" backdropClassName="z-[300]" data-cave-settings>
-        <SEIDrawerHeader>
-          <div className="flex items-center gap-3">
-            <Sliders size={18} aria-hidden="true" className="text-[#e2c46a]" />
-            <div>
-              <SEIDrawerTitle className="cave-title font-display text-xl">Settings</SEIDrawerTitle>
-              <SEIDrawerDescription>Everything about your cultivator that is not a destination.</SEIDrawerDescription>
-            </div>
-          </div>
-        </SEIDrawerHeader>
-
-        <SEIDrawerBody className="text-neutral-300">
+    <div className="text-neutral-300" data-cave-settings>
           <SEIDisclosureGroup type="multiple" defaultValue={['identity']}>
             {/* ---- Identity & Aura ------------------------------------------ */}
             <SEIDisclosure value="identity" heading="Identity & Celestial Aura" icon={UserIcon} supportingText="Dao name, display name, and the aura your name carries.">
@@ -552,8 +530,6 @@ export function UserProfileSettingsPanel({
               </div>
             </SEIDisclosure>
           </SEIDisclosureGroup>
-        </SEIDrawerBody>
-      </SEIDrawerContent>
-    </SEIDrawer>
+    </div>
   );
 }

@@ -7,7 +7,7 @@
  *
  * | Production dependency                                   | Mocked as |
  * | ------------------------------------------------------- | --------- |
- * | Firebase Auth (`signInWithPopup`, `auth.currentUser`)    | `handleLogin` flips the scenario's mock account on |
+ * | Firebase Auth (Google, Apple, or email)                  | `authenticate` flips the scenario's mock account on |
  * | `lib/persistence` (`getUserProfile` / `saveUserProfile`) | a local snapshot resolved on a timer |
  * | `lib/persistence` admin routes                           | the fixed registries in `previewData` |
  * | `services/profilePicture` (Gemini image generation)      | a stepped timer that resolves a locally drawn SVG |
@@ -738,6 +738,10 @@ export function createMockUserProfileServices({
   };
 
   return {
+    authenticate: attempt => {
+      logExcludedAction(`${attempt.provider} sign-in — mock account linked locally instead`);
+      onSignIn(MOCK_ACCOUNT);
+    },
     useController,
 
     localOnlyMode: scenario.localOnlyMode,

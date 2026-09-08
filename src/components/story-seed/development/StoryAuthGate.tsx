@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ArrowLeft, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { mockLogin, useAppStore } from '../shared/stubs';
 
 /**
@@ -62,9 +62,6 @@ export interface StoryAuthGateProps {
   linked?: boolean;
   /** Host-owned authentication. Omit to retain Story Seed's local mock login. */
   onAuthenticate?: (attempt: StoryAuthAttempt) => Promise<unknown> | unknown;
-  /** Optional return action when the gate is opened from an existing surface. */
-  onDismiss?: () => void;
-  dismissLabel?: string;
   description?: string;
   reassurance?: string;
   context?: 'story-seed' | 'spirit-link';
@@ -138,8 +135,6 @@ const simulateProviderDelay = () => new Promise<void>(resolve => setTimeout(reso
 export default function StoryAuthGate({
   linked,
   onAuthenticate,
-  onDismiss,
-  dismissLabel = 'Return',
   description = 'Sign in to preserve this world, begin its first chapter, and return to it from any device.',
   reassurance = 'Your Story Seed will not be lost.',
   context = 'story-seed',
@@ -300,17 +295,6 @@ export default function StoryAuthGate({
 
       {/* Content */}
       <div className="relative z-10 flex min-h-full flex-col items-center justify-center [padding-top:env(safe-area-inset-top)] [padding-bottom:env(safe-area-inset-bottom)] [padding-left:max(1.25rem,env(safe-area-inset-left))] [padding-right:max(1.25rem,env(safe-area-inset-right))]">
-        {onDismiss ? (
-          <button
-            type="button"
-            onClick={onDismiss}
-            disabled={isBusy}
-            className="absolute left-[max(1rem,env(safe-area-inset-left))] top-[max(1rem,env(safe-area-inset-top))] flex min-h-11 items-center gap-2 rounded-full border border-white/20 bg-black/35 px-4 font-sans text-sm text-neutral-200 backdrop-blur-md transition-colors hover:border-[#D4AF37]/45 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal/70 disabled:pointer-events-none disabled:opacity-50"
-          >
-            <ArrowLeft size={17} aria-hidden="true" />
-            <span>{dismissLabel}</span>
-          </button>
-        ) : null}
         <motion.div
           initial={shellInitial}
           animate={shellAnimate}

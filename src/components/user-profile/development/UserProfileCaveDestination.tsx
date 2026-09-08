@@ -9,6 +9,8 @@ import { LibraryButton } from '@seihouse/library-ui';
  * surface instead of staying on the card they activated.
  */
 export type CaveDestinationId =
+  | 'settings'
+  | 'unavailable'
   | 'stories'
   | 'relics'
   | 'dao-pillar'
@@ -21,6 +23,7 @@ interface UserProfileCaveDestinationProps {
   subtitle?: string;
   icon?: React.ReactNode;
   onBack: () => void;
+  backLabel?: string;
   children: React.ReactNode;
 }
 
@@ -30,6 +33,7 @@ export function UserProfileCaveDestination({
   subtitle,
   icon,
   onBack,
+  backLabel = 'Return to cave',
   children,
 }: UserProfileCaveDestinationProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -49,7 +53,7 @@ export function UserProfileCaveDestination({
           variant="ghost"
           size="icon"
           icon={ArrowLeft}
-          aria-label="Return to cave"
+          aria-label={backLabel}
           onClick={onBack}
           className="shrink-0"
         />

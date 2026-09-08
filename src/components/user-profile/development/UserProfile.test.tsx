@@ -26,6 +26,7 @@ let container: HTMLDivElement;
 let root: Root;
 
 beforeEach(() => {
+  window.history.replaceState(null, '', '/?preview=user-profile');
   vi.useFakeTimers();
   container = document.createElement('div');
   document.body.appendChild(container);
@@ -128,7 +129,8 @@ describe('Cultivator Cave home', () => {
     }
     expect(open('dao-pillar').textContent).toContain('12 Day Streak');
     expect(open('status-effects').textContent).toContain('Blessing of the Unwritten + Curse of the Half-Finished Arc');
-    expect(container.querySelector('[aria-label="Open settings"]')).not.toBeNull();
+    expect(container.querySelector('.workspace-header [aria-label="Open settings"]')).toBeNull();
+    expect(container.querySelectorAll('nav[aria-label="Cultivator Cave navigation"]')).toHaveLength(2);
     expect(text()).toContain('Cultivate in silence. Ascend in the unseen.');
   });
 
@@ -262,16 +264,17 @@ describe('Cultivator Cave destinations', () => {
     });
     root = createRoot(container);
     await renderCave({ state: 'new-cultivator' });
-    await click(open('status-effects'));
+    // URL selection survives remounts, just as a direct link survives reload.
+    expect(container.querySelector('[data-cave-destination="status-effects"]')).not.toBeNull();
     expect(text()).toContain('No status effects are active');
   });
 });
 
 describe('Cultivator Cave settings', () => {
-  it('opens one gear-triggered panel holding every setting section', async () => {
+  it('opens a Settings page holding every existing setting section', async () => {
     const onLogout = vi.fn();
     await renderCave({ onLogout });
-    await click(container.querySelector('[aria-label="Open settings"]')!);
+    await click(byText('.cave-workspace-dock button', 'Settings'));
     const panel = () => document.body.querySelector('[data-cave-settings]');
     expect(panel()).not.toBeNull();
     const headings = Array.from(panel()!.querySelectorAll('[data-slot="disclosure-heading"]')).map(
@@ -304,7 +307,7 @@ describe('Cultivator Cave settings', () => {
 
   it('edits identity through the panel and saves it to the profile', async () => {
     await renderCave();
-    await click(container.querySelector('[aria-label="Open settings"]')!);
+    await click(byText('.cave-workspace-dock button', 'Settings'));
     const input = document.body.querySelector<HTMLInputElement>('#cave-display-name')!;
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
     await act(async () => {
@@ -315,12 +318,13 @@ describe('Cultivator Cave settings', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(700);
     });
+    await click(byText('.cave-workspace-dock button', 'Home'));
     expect(container.querySelector('#cave-cultivator-name')?.textContent).toContain('The Cave Dweller');
   });
 
   it('asks for confirmation on a language change and reverts on request', async () => {
     await renderCave();
-    await click(container.querySelector('[aria-label="Open settings"]')!);
+    await click(byText('.cave-workspace-dock button', 'Settings'));
     await click(byText('[data-slot="disclosure-trigger"]', 'Language'));
     const select = document.body.querySelector<HTMLSelectElement>('#cave-preferred-language')!;
     await act(async () => {
@@ -335,7 +339,7 @@ describe('Cultivator Cave settings', () => {
 
   it('exposes the Akashic Switchboard to an owner and opens it as a destination', async () => {
     await renderCave({ state: 'owner-admin' });
-    await click(container.querySelector('[aria-label="Open settings"]')!);
+    await click(byText('.cave-workspace-dock button', 'Settings'));
     await click(byText('button', 'Open Akashic Switchboard'));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(800);
@@ -453,7 +457,7 @@ describe('rank colour system', () => {
 
   it('lists every rank in Settings as name, colour and Qi, with no aura lore', async () => {
     await renderCave();
-    await click(container.querySelector('[aria-label="Open settings"]')!);
+    await click(byText('.cave-workspace-dock button', 'Settings'));
     const rows = Array.from(
       document.body.querySelectorAll('[role="radiogroup"][aria-label="Celestial Aura rank"] [role="radio"]'),
     );
@@ -475,7 +479,7 @@ describe('rank colour system', () => {
 
   it('gates the custom spectrum on reaching Master at 50,000 Qi', async () => {
     await renderCave();
-    await click(container.querySelector('[aria-label="Open settings"]')!);
+    await click(byText('.cave-workspace-dock button', 'Settings'));
     expect(document.body.textContent).toContain('Requires Master (50,000 Qi)');
 
     const spectrum = document.body.querySelector<HTMLButtonElement>('[aria-label="Custom spectrum"]')!;
@@ -488,5 +492,96 @@ describe('locked reference replica', () => {
     await renderCave({ Component: ReferenceUserProfile });
     expect(text()).toContain('Celestial Tools');
     expect(text()).not.toContain('Cultivator Cave');
+  });
+});
+
+
+describe('Cave workspace routing', () => {
+  it('selects all four destinations and focuses each page without duplicating history', async () => {
+    await renderCave();
+    for (const label of ['Stories', 'Relics', 'Settings', 'Home']) {
+      await click(byText('.cave-workspace-dock button', label));
+      expect(new URLSearchParams(location.search).get('cave')).toBe('/' + label.toLowerCase());
+      expect(document.activeElement?.tagName).toBe('H2');
+      const selected = container.querySelectorAll('nav[aria-label="Cultivator Cave navigation"] [aria-current="page"]');
+      expect(selected).toHaveLength(2);
+      for (const item of selected) expect(item.textContent).toContain(label);
+      const count = history.length;
+      await click(byText('.cave-workspace-dock button', label));
+      expect(history.length).toBe(count);
+    }
+  });
+
+  it('loads a direct Settings link and retains host URL and history state', async () => {
+    history.replaceState({ host: 'kept' }, '', '/?preview=user-profile&state=owner-admin&cave=/settings#host');
+    await renderCave();
+    expect(container.querySelector('[data-cave-settings]')).not.toBeNull();
+    await click(byText('.cave-workspace-dock button', 'Stories'));
+    expect(location.hash).toBe('#host');
+    expect(new URLSearchParams(location.search).get('state')).toBe('owner-admin');
+    expect(history.state).toEqual({ host: 'kept' });
+    await act(async () => {
+      history.replaceState(history.state, '', '/?preview=user-profile&cave=/settings');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    expect(container.querySelector('[data-cave-settings]')).not.toBeNull();
+    expect(document.activeElement?.id).toBe('cave-destination-settings-title');
+  });
+
+  it.each(['/stories/story-123/manifestations', '/relics/item-123', '/relics/offering-hall'])('keeps parent navigation for future route %s', async path => {
+    history.replaceState(null, '', '/?preview=user-profile&cave=' + encodeURIComponent(path));
+    await renderCave();
+    expect(text()).toContain('Page unavailable');
+    expect(container.querySelector('.cave-workspace-dock [aria-current="page"]')?.textContent?.toLowerCase()).toContain(path.split('/')[1]);
+    await click(container.querySelector('[data-cave-destination="unavailable"] button')!);
+    expect(new URLSearchParams(location.search).get('cave')).toBe('/' + path.split('/')[1]);
+  });
+
+  it('keeps Home active for existing cultivation pages and denies unauthorized admin links', async () => {
+    await renderCave();
+    await click(open('dao-pillar'));
+    expect(container.querySelector('.cave-workspace-dock [aria-current="page"]')?.textContent).toContain('Home');
+    await act(async () => {
+      history.replaceState(null, '', '/?cave=/settings/switchboard');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    expect(text()).toContain('Authorization required');
+    expect(container.querySelector('.cave-workspace-dock [aria-current="page"]')?.textContent).toContain('Settings');
+  });
+});
+
+
+describe('Cave overlays and history', () => {
+  it('dismisses the portrait when history selects another destination', async () => {
+    await renderCave();
+    await click(byText('.cave-workspace-dock button', 'Settings'));
+    await click(byText('button', 'Open Divine Mirror'));
+    expect(document.body.querySelector('[role="dialog"]')?.textContent).toContain('Cultivator Portrait Builder');
+    await act(async () => {
+      history.replaceState(null, '', '/?preview=user-profile&cave=/stories');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      await vi.advanceTimersByTimeAsync(300);
+    });
+    expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+    expect(container.querySelector('[data-cave-destination="stories"]')).not.toBeNull();
+  });
+
+  it('reverts an unanswered language change when history leaves Settings', async () => {
+    await renderCave();
+    await click(byText('.cave-workspace-dock button', 'Settings'));
+    const select = document.body.querySelector<HTMLSelectElement>('#cave-preferred-language')!;
+    await act(async () => {
+      select.value = 'Spanish';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    expect(document.body.querySelector('[data-cave-language-confirm]')).not.toBeNull();
+    await act(async () => {
+      history.replaceState(null, '', '/?preview=user-profile&cave=/home');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      await vi.advanceTimersByTimeAsync(300);
+    });
+    expect(document.body.querySelector('[data-cave-language-confirm]')).toBeNull();
+    await click(byText('.cave-workspace-dock button', 'Settings'));
+    expect(document.body.querySelector<HTMLSelectElement>('#cave-preferred-language')?.value).toBe('English');
   });
 });

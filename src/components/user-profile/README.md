@@ -26,6 +26,11 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
   Pillar, Active Status Effects); and one gear-triggered Settings panel. Built on canonical
   `@seihouse/library-ui` and `@seihouse/ui` components and the `@seihouse/library/relics` relic
   card. `reference/` is unchanged. Added the component test suite and `npm run test:user-profile`.
+- **2026-09-08:** Recovered the existing cinematic OAuth gate from Story Seed and connected it to
+  the Cave's **Link Spirit Realm** action. The gate now accepts a host-owned provider dispatcher,
+  offers a return path to the Cave, uses account-wide Spirit Link copy, and preserves its loading,
+  email, reduced-motion, constrained-network, and post-link dissolve behavior. No real
+  authentication runs in the Workshop.
 
 ## Folder layout
 
@@ -122,7 +127,7 @@ the portable components.
 
 | Production dependency | Workshop stand-in |
 | --- | --- |
-| Firebase Auth (`signInWithPopup`, `auth.currentUser`) | "Link Spirit Realm" links a mock account locally |
+| Firebase Auth (Google, Apple, or email) | the recovered OAuth gate links a mock account locally |
 | `lib/persistence` (`getUserProfile`, `saveUserProfile`) | a local snapshot resolved on a 450 ms timer |
 | `lib/persistence` admin routes | the fixed registries in `previewData.ts`, 700 ms |
 | `services/profilePicture` (Gemini image generation) | a stepped 9 s timer resolving a locally drawn SVG |
@@ -157,7 +162,7 @@ Switching state remounts the pane, so each scenario starts from its own snapshot
 ## Tests
 
 `npm run test:user-profile` runs `development/UserProfile.test.tsx` (jsdom) against the Workshop
-mock adapter: the home plaque and cards, the Qi core chips, the unlinked / loading / error states,
+mock adapter: the home plaque and cards, the Qi core chips, the unlinked OAuth / loading / error states,
 each destination and its return path, relic inspection with attunement and a full Offering Hall
 submission, the daily refinement and pillar repair, the status-effect cards and empty state, the
 Settings sections, identity editing, the language confirmation, the owner's Switchboard, the stage
@@ -213,6 +218,8 @@ Once the Cave is approved, copy back from `development/`:
   `UserProfilePortraitModal.tsx`, `UserProfileSettingsPanel.tsx`, `UserProfileStoriesPanel.tsx`,
   `UserProfileCaveDestination.tsx`, `UserProfileDaoPillarPanel.tsx`,
   `UserProfileStatusEffectsPanel.tsx`, `caveEnvironment.ts` → `src/components/` in Light-Novels.
+- Transfer `StoryAuthGate.tsx` and `public/story-seed/library-auth-backdrop.jpg` with the Cave, or
+  consume the gate from the SEN package once that package version is installed in Light-Novels.
 - Any visual change made to `qi.ts` → the matching exports in `src/lib/qi.ts`.
 - `userProfile.css` → the aura block in `src/index.css` plus the Cave ornament rules.
 - The host must serve the five `manifest-backdrops/immortal-land-*.jpg` files and
@@ -227,6 +234,7 @@ and mount one real adapter in `App.tsx`:
 ```tsx
 const services: UserProfileServices = {
   useController: useUserProfile,
+  authenticate: dispatchFirebaseAuthentication,
   localOnlyMode: LOCAL_ONLY_MODE,
   setLocalOnlyMode,
   requestLibrarySync: () => { void storyStorage.performSync({ deep: true }); },

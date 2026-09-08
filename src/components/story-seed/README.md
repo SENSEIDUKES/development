@@ -213,8 +213,8 @@ harness:
 ## Concise Workshop history
 
 - **2026-09-08:** Made the existing cinematic auth gate host-driven without changing its Story
-  Seed presentation. The Cultivator Cave can now reuse the same provider UI through an injected
-  authentication callback and optional return action; Story Seed's mock login remains the default.
+  Seed presentation. The Cultivator Cave now uses the same provider UI as its complete signed-out
+  surface through an injected authentication callback; Story Seed's mock login remains the default.
 - **2026-09-06:** Audited and unified Story Tag recommendations. The Suggested
   Tags row previously ignored premise and genre; the premise button used a
   first-match mechanics-heavy list; empty-tag generation used a third,

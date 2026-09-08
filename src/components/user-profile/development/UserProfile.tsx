@@ -9,6 +9,7 @@ import {
   Orbit,
   Settings,
   Shield,
+  Sparkles,
   User as UserIcon,
   Zap,
 } from 'lucide-react';

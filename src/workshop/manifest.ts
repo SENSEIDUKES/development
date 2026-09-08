@@ -181,4 +181,16 @@ export const workshopEntries: WorkshopEntry[] = [
       lastCompared: '2026-08-22',
     },
   },
+  {
+    id: 'user-profile',
+    title: 'User Profile',
+    description: "The complete Celestial Tools profile page: identity and Celestial Aura editing, the three Qi cores and cultivation progression, the Daily Dao Pillar, active status effects, the Divine Mirror portrait flow, the Cosmic Inventory and Weekly Offering hall, Manifested Realms and Story Seeds, environment and sync settings, and the owner-only Akashic Switchboard — driven entirely by local mock adapters.",
+    category: 'other',
+    version: 'v1.0',
+    source: {
+      repository: 'SENSEIDUKES/Light-Novels',
+      path: 'src/components/UserProfile.tsx; src/components/UserProfileAdminPanel.tsx; src/components/UserProfileInventoryPanel.tsx; src/components/UserProfilePortraitModal.tsx; src/components/UserProfileSettingsPanel.tsx; src/components/UserProfileStoriesPanel.tsx; src/hooks/useUserProfile.ts',
+      lastCompared: '2026-09-08',
+    },
+  },
 ];

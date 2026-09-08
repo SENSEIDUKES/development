@@ -22,9 +22,8 @@ import {
 import { BlueprintReview } from './BlueprintReview';
 import CreationModal from './CreationModal';
 import { StoryBank } from './StoryBank';
-import { StorySeedHeader } from './StorySeedHeader';
+import { StorySeedWorkspaceChrome } from './StorySeedWorkspaceChrome';
 import { StorySeedHelpMenu } from './StorySeedHelpMenu';
-import { StorySeedMobileNavigation } from './StorySeedMobileNavigation';
 import { StorySeedSettings } from './StorySeedSettings';
 import { useStoryBankRecords } from './useStoryBankRecords';
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
@@ -110,9 +109,9 @@ const sampleRecord = (id = 'seed-1'): StorySeedRecord => {
 };
 
 describe('Story Seed keyboard and mobile navigation', () => {
-  it('traps desktop Settings focus and restores it to the trigger on Escape', () => {
+  it('opens shared Settings with modal semantics and restores focus on Escape', async () => {
     act(() => root.render(
-      <LibraryPresentationProvider>{<StorySeedHeader
+      <LibraryPresentationProvider>{<StorySeedWorkspaceChrome activeSection="origin" onSelectSection={vi.fn()} helpOpen={false} canManifest={false} manifestLabel="Manifest" status="Draft" onManifest={vi.fn()} children={null}
         seed={createEmptyStorySeedInput()}
         updateSeed={vi.fn()}
         isGenerating={false}
@@ -126,37 +125,20 @@ describe('Story Seed keyboard and mobile navigation', () => {
 
     const trigger = buttonNamed('Settings');
     expect(trigger).toBeTruthy();
-    act(() => trigger!.click());
+    act(() => { trigger!.focus(); trigger!.click(); });
 
-    const dialog = container.querySelector<HTMLElement>('[role="dialog"]');
-    const focusable = Array.from(dialog!.querySelectorAll<HTMLButtonElement>('button'));
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
     expect(dialog).toBeTruthy();
     expect(dialog?.contains(document.activeElement)).toBe(true);
 
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    last.focus();
-    act(() => document.dispatchEvent(new KeyboardEvent('keydown', {
-      key: 'Tab',
-      bubbles: true,
-      cancelable: true,
-    })));
-    expect(document.activeElement).toBe(first);
-
-    first.focus();
-    act(() => document.dispatchEvent(new KeyboardEvent('keydown', {
-      key: 'Tab',
-      shiftKey: true,
-      bubbles: true,
-      cancelable: true,
-    })));
-    expect(document.activeElement).toBe(last);
-
-    act(() => document.dispatchEvent(new KeyboardEvent('keydown', {
+    expect(dialog?.getAttribute('aria-modal')).toBe('true');
+    act(() => dialog!.dispatchEvent(new KeyboardEvent('keydown', {
       key: 'Escape',
       bubbles: true,
     })));
-    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 300)); });
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
     expect(document.activeElement).toBe(trigger);
   });
 
@@ -284,7 +266,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
   it('adds Manifest to the labeled mobile navigation only when generation is ready', () => {
     const onManifest = vi.fn();
     const renderNavigation = (canManifest: boolean) => act(() => root.render(
-      <LibraryPresentationProvider>{<StorySeedMobileNavigation
+      <LibraryPresentationProvider>{<StorySeedWorkspaceChrome manifestLabel="Manifest" status="Draft" children={null}
         seed={createEmptyStorySeedInput()}
         updateSeed={vi.fn()}
         activeSection="origin"

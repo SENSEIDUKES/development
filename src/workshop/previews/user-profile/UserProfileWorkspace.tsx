@@ -26,9 +26,9 @@ const entry = workshopEntries.find(candidate => candidate.id === 'user-profile')
 
 const MAX_LOGGED_ACTIONS = 8;
 
-export function UserProfileWorkspace() {
+export function UserProfileWorkspace({ embedded = false, initialState }: { embedded?: boolean; initialState?: UserProfilePreviewState } = {}) {
   const [previewState, setPreviewState] = useState<UserProfilePreviewState>(
-    DEFAULT_USER_PROFILE_PREVIEW_STATE,
+    initialState ?? DEFAULT_USER_PROFILE_PREVIEW_STATE,
   );
   const [linkedAccount, setLinkedAccount] = useState<AppUser | null>(null);
   const [excludedActions, setExcludedActions] = useState<string[]>([]);
@@ -103,6 +103,8 @@ export function UserProfileWorkspace() {
       </section>
     </div>
   );
+
+  if (embedded) return renderPane(DevelopmentUserProfile, 'development');
 
   return (
     <FeatureWorkspace

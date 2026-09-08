@@ -329,3 +329,7 @@ harness:
 ### 2026-09-06 — Library UI ownership migration
 
 Reusable presentation now comes from the canonical Library UI package. Portable SEN surfaces resolve presentation through the host provider; the first-party Workshop supplies LibraryPresentationProvider. Domain, generation, persistence, media, and locked reference sources are unchanged.
+
+## Development shell integration — 2026-09-08
+
+Integrated WorkspaceHeader through StorySeedWorkspaceChrome, one feature-owned section definition for desktop/mobile navigation, shared bottom controls and Settings sheet. Existing schema, eligibility, storage, Help and generation/review owners are preserved; public header/navigation exports remain compatible. See [shared contracts](../../../docs/library-header-family.md). Locked references and source-comparison dates are unchanged.

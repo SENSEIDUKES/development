@@ -307,7 +307,7 @@ async function runDevelopmentFillScenario(isCancelled: () => boolean) {
   await selectSection(/^Origin/);
 }
 
-export function StorySeedWorkspace() {
+export function StorySeedWorkspace({ embedded = false, initialState, localGeneration = false }: { embedded?: boolean; initialState?: PreviewState; localGeneration?: boolean } = {}) {
   const entry = workshopEntries.find(e => e.id === 'story-seed')!;
   const [activeState, setActiveState] = useState<PreviewState>('empty-intake');
   const [activeCategory, setActiveCategory] = useState<PreviewCategory>('intake');
@@ -352,12 +352,12 @@ export function StorySeedWorkspace() {
     // Deep-link support: `?preview=story-seed&state=<scenario-id>` opens the
     // workspace directly in a given preview state (used for inspection and
     // screenshot verification).
-    const requested = new URLSearchParams(window.location.search).get('state') as PreviewState | null;
+    const requested = initialState ?? new URLSearchParams(window.location.search).get('state') as PreviewState | null;
     const initial = requested && scenarios.some(s => s.id === requested) ? requested : 'empty-intake';
     // The default local Workshop behaves like the actual local adapter: a
     // refresh must not erase drafts or reviewed Blueprints. Explicit preview
     // state changes still reset fixtures so visual scenarios stay deterministic.
-    applyScenario(initial, { preserveLocalSeeds: initial === 'empty-intake' });
+    applyScenario(initial, { preserveLocalSeeds: !embedded && initial === 'empty-intake' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -370,7 +370,7 @@ export function StorySeedWorkspace() {
     (async () => {
       if (!await waitUnlessCancelled(220, isCancelled)) return;
       if (scenario.uiAction === 'open-import-panel') {
-        const referenceAction = clickWhenAvailable(
+        const referenceAction = embedded ? Promise.resolve() : clickWhenAvailable(
           'reference',
           'button',
           /Import (?:World Seed \/ Blueprint|Story Seed)/,
@@ -389,7 +389,7 @@ export function StorySeedWorkspace() {
       } else if (scenario.uiAction === 'use-first-seed') {
         // Development reaches a banked seed through the Story Bank; the
         // locked reference fork still renders its own always-visible panel.
-        const referenceAction = clickWhenAvailable(
+        const referenceAction = embedded ? Promise.resolve() : clickWhenAvailable(
           'reference',
           'button',
           /^Use Seed$/,
@@ -403,7 +403,7 @@ export function StorySeedWorkspace() {
         ]);
       } else if (scenario.uiAction === 'fill-intake') {
         await Promise.all([
-          runReferenceFillScenario(isCancelled),
+          embedded ? Promise.resolve() : runReferenceFillScenario(isCancelled),
           runDevelopmentFillScenario(isCancelled),
         ]);
       }
@@ -434,6 +434,7 @@ export function StorySeedWorkspace() {
       activeBlueprintRequestRef.current = controller;
       setBlueprintGenerating(true);
       try {
+        if (localGeneration) { await wait(300); return createMockBlueprint(); }
         return await requestWorldBlueprint(payload, blueprintAccessToken, controller.signal);
       } finally {
         if (activeBlueprintRequestRef.current === controller) {
@@ -541,6 +542,10 @@ export function StorySeedWorkspace() {
       },
     ],
   };
+
+  if (embedded) return <div key={`development-${activeState}`} data-story-seed-pane="development" className="min-h-screen bg-void p-2 sm:p-4">
+    <DevelopmentCreationModal {...developmentChamberProps} />
+  </div>;
 
   return (
     <FeatureWorkspace

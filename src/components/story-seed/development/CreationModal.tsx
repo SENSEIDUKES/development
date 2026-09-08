@@ -51,7 +51,7 @@ import {
   type SeedSectionId,
 } from './seedSections';
 import type { SeedUpdate } from './seedState';
-import { StorySeedSelector } from './StorySeedSelector';
+import { WorkspaceSidebar } from '../../library-shell/development/WorkspaceNavigation';
 import { OriginWorkspace } from './workspaces/OriginWorkspace';
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
 import { WorldIdentityWorkspace } from './workspaces/WorldIdentityWorkspace';
@@ -62,8 +62,7 @@ import { PowerSystemWorkspace } from './workspaces/PowerSystemWorkspace';
 
 import { NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '../../../presentation';
 import { DeferredStorySeedView } from './DeferredStorySeedView';
-import { StorySeedHeader } from './StorySeedHeader';
-import { StorySeedMobileNavigation } from './StorySeedMobileNavigation';
+import { StorySeedWorkspaceChrome } from './StorySeedWorkspaceChrome';
 import { useStoryBankRecords } from './useStoryBankRecords';
 import { downloadStorySeed, downloadStorySeedCollection } from '../shared/storySeedSerialization';
 
@@ -88,8 +87,7 @@ const useLatestCallback = <Args extends unknown[], Result>(
 };
 
 const loadStorySeedSecondary = () => import('./StorySeedSecondary');
-// Keep the intent handler module-scoped so StorySeedHeader's memo comparison
-// can skip unrelated intake renders (including each premise keystroke).
+// Keep the secondary-content preload callback stable across intake edits.
 const preloadStorySeedSecondary = () => {
   void loadStorySeedSecondary().catch(() => undefined);
 };
@@ -592,7 +590,7 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
     setHelpOpen(true);
   }, []);
   const closeHelp = useCallback(() => setHelpOpen(false), []);
-  const selectMobileSection = useCallback((id: SeedSectionId) => {
+  const selectWorkspaceSection = useCallback((id: SeedSectionId) => {
     setActiveSection(id);
     setShowStoryBank(false);
   }, []);
@@ -641,18 +639,17 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
     <div className="story-seed-development-surface mx-auto max-w-7xl pb-24 max-lg:pb-0" id="creation-portal-root">
       {/* Header — wraps on narrow screens so the action buttons drop to a
           second row instead of overflowing the viewport. */}
-      <StorySeedHeader
-        seed={seed}
-        updateSeed={updateSeed}
-        isGenerating={isGenerating}
-        savedFeedback={savedFeedback}
-        showStoryBank={showStoryBank}
-        onSaveDraft={requestSaveDraft}
-        onToggleStoryBank={toggleStoryBank}
-        onOpenHelp={openHelp}
-        onStoryBankIntent={preloadStorySeedSecondary}
-        onHelpIntent={preloadStorySeedSecondary}
-      />
+      <StorySeedWorkspaceChrome
+        seed={seed} updateSeed={updateSeed} activeSection={activeSection} equippedTitle={equippedRelicTitle}
+        onSelectSection={selectWorkspaceSection} isGenerating={isGenerating} savedFeedback={savedFeedback}
+        showStoryBank={showStoryBank} helpOpen={helpOpen} canManifest={canGenerate}
+        manifestLabel={isGenerating ? (activeAgentId === 'versa' ? 'VERSA is drafting...' : 'Manifesting...') : 'Manifest World Blueprint'}
+        manifestDisabledReason={missing.length ? `Manifest disabled — missing: ${missingRequiredLabels}` : undefined}
+        manifestIndicator={activeAgentId === 'versa' ? <img src={AGENTS.VERSA.logoUrl} className="h-5 w-5 animate-pulse object-contain" alt="" aria-hidden="true" /> : undefined}
+        status={isGenerating ? 'Creating your World Blueprint' : savedFeedback ? 'Draft saved' : missing.length ? `Missing required: ${missingRequiredLabels}` : 'All required Story inputs complete'}
+        error={seedError || error} onSaveDraft={requestSaveDraft} onManifest={requestGenerateBlueprint}
+        onToggleStoryBank={toggleStoryBank} onOpenHelp={openHelp} onSecondaryIntent={preloadStorySeedSecondary}
+      >
 
       {showStoryBank && (
         <DeferredStorySeedView label="Story Bank">
@@ -692,14 +689,7 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
           Bank view replaces it while the bank is open. */}
       {!showStoryBank && (
       <LibraryPanel padding="none" className="mt-6 lg:grid lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <aside className="hidden border-r border-neutral-900/70 lg:block">
-          <StorySeedSelector
-            seed={seed}
-            activeSection={activeSection}
-            equippedTitle={equippedRelicTitle}
-            onSelect={setActiveSection}
-          />
-        </aside>
+        <WorkspaceSidebar />
 
         <div className="relative min-w-0">
           {/* Restrained celestial ambience the glass fields float over —
@@ -722,7 +712,7 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
               bottom navigation on mobile and the sidebar on desktop. On
               mobile the strip rests in flow at the panel bottom (sticky is
               off) so it always stays clear of the bottom navigation. */}
-          <LibraryPanel variant="footer" padding="none" className="sticky max-lg:static z-30 px-4 py-3.5 sm:px-8">
+          <LibraryPanel variant="footer" padding="none" className="sticky bottom-0 max-lg:static z-30 px-4 py-3.5 sm:px-8">
             <div className="flex items-center gap-3">
               <div className="hidden min-w-0 flex-1 items-center gap-3 sm:flex">
                 <div className="flex shrink-0 items-center gap-2" aria-label={`${requiredComplete} of ${REQUIRED_STORY_SECTIONS.length} required Story inputs complete`}>
@@ -791,25 +781,6 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
         </p>
       )}
 
-      {/* Mobile section drawer — the Library navigation shell focused purely
-          on Story/World section navigation, with no unfinished destination. */}
-      <StorySeedMobileNavigation
-        seed={seed}
-        updateSeed={updateSeed}
-        activeSection={activeSection}
-        equippedTitle={equippedRelicTitle}
-        showStoryBank={showStoryBank}
-        helpOpen={helpOpen}
-        isGenerating={isGenerating}
-        savedFeedback={savedFeedback}
-        canManifest={canGenerate && !showStoryBank}
-        onSelectSection={selectMobileSection}
-        onToggleStoryBank={toggleStoryBank}
-        onOpenHelp={openHelp}
-        onSaveDraft={requestSaveDraft}
-        onManifest={requestGenerateBlueprint}
-      />
-
       {/* Story Seed Help — the `?` guidance menu shared by the mobile bottom
           navigation and the desktop header button. */}
       {helpRequested && (
@@ -822,6 +793,7 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
           />
         </DeferredStorySeedView>
       )}
+      </StorySeedWorkspaceChrome>
     </div>
   );
 }

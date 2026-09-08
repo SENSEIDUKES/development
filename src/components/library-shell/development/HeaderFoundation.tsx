@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
-import { LibraryButton, LibraryPanel } from '@seihouse/library-ui';
+import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton } from '../../../presentation';
 import { MoreHorizontal, type LucideIcon } from 'lucide-react';
 import './header-family.css';
 
@@ -12,6 +12,13 @@ export interface HeaderAction {
   disabled?: boolean;
   loading?: boolean;
   pressed?: boolean;
+  onIntent?: () => void;
+  ariaLabel?: string;
+  title?: string;
+  expanded?: boolean;
+  hasPopup?: 'dialog';
+  kind?: 'creation';
+  loadingIndicator?: ReactNode;
 }
 
 export function HeaderFoundation({ children, className = '', label }: { children: ReactNode; className?: string; label: string }) {
@@ -21,9 +28,12 @@ export function HeaderFoundation({ children, className = '', label }: { children
 }
 
 export function HeaderActionButton({ action, primary = false }: { action: HeaderAction; primary?: boolean }) {
-  return <LibraryButton variant={primary ? 'primary' : 'ghost'} icon={action.icon}
+  const Button = action.kind === 'creation' ? CreationButton : LibraryButton;
+  return <Button variant={primary ? 'primary' : 'ghost'} icon={action.icon}
     disabled={action.disabled} loading={action.loading} aria-pressed={action.pressed}
-    onClick={action.onAction}>{action.label}</LibraryButton>;
+    onClick={action.onAction} onPointerEnter={action.onIntent} onFocus={action.onIntent}
+    aria-label={action.ariaLabel} title={action.title} aria-expanded={action.expanded}
+    aria-haspopup={action.hasPopup} loadingIndicator={action.loadingIndicator}>{action.label}</Button>;
 }
 
 const compactQuery = '(max-width: 767px)';

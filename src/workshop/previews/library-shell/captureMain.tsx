@@ -10,12 +10,15 @@ async function mount() {
   // Separate documents preserve each source's CSS, portal target and media queries.
   const root = createRoot(document.getElementById('root')!);
   if (query.get('variant') === 'development') {
-    await import('../../../components/library-shell/development/header-theme.css');
-    const { DevelopmentHeaderPreview, headerStates } = await import('./DevelopmentHeaderPreview');
+    if (source === 'main-library' && query.get('source') !== 'cultivator-cave') await import('../../../components/library-shell/development/header-theme.css');
+    else await import('../../../styles.css');
+    const { DevelopmentHeaderPreview } = await import('./DevelopmentHeaderPreview');
+    const { DevAudioPlaybackProvider } = await import('../../../audio/DevAudioPlayback');
+    const { headerStates } = await import('./headerPreviewData');
     const configuration = query.get('source') === 'cultivator-cave' ? 'cultivator-cave' : source;
     const headerState = (headerStates[configuration] as readonly string[]).includes(requested) ? requested : headerStates[configuration][0];
     document.title = 'Library Shell — Development headers';
-    root.render(<DevelopmentHeaderPreview source={configuration} state={headerState} />);
+    root.render(<DevAudioPlaybackProvider><LibraryPresentationProvider><DevelopmentHeaderPreview source={configuration} state={headerState} /></LibraryPresentationProvider></DevAudioPlaybackProvider>);
   } else if (source === 'main-library') {
     await import('../../../components/library-shell/reference/main-library/source-theme.css');
     const { MainLibraryPreview } = await import('./MainLibraryPreview');

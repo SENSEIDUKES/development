@@ -1,0 +1,28 @@
+import { useRef, type ReactNode } from 'react';
+import { SEIDialog, SEIDialogContent, SEIDialogTitle } from '@seihouse/ui';
+import { NarrativeButton, NarrativePanel } from '../../../presentation';
+import { X } from 'lucide-react';
+import './workspace-navigation.css';
+
+/** Responsive host-content overlay. Canonical dialog owns modal focus, Escape and scroll lock. */
+export function WorkspaceSheet({ open, onOpenChange, title, closeLabel, children, footer }: {
+  open: boolean; onOpenChange: (open: boolean) => void; title: string; closeLabel: string;
+  children: ReactNode; footer?: ReactNode;
+}) {
+  const trigger = useRef<HTMLElement | null>(null);
+  // Capture the actual opening control, including a header overflow trigger.
+  const wasOpen = useRef(false);
+  if (open && !wasOpen.current && typeof document !== 'undefined') trigger.current = document.activeElement as HTMLElement;
+  wasOpen.current = open;
+  return <SEIDialog open={open} onOpenChange={onOpenChange}>
+    <SEIDialogContent aria-modal="true" hideClose variant="dark" className="workspace-sheet" backdropClassName="!z-[240]"
+      bodyClassName="flex min-h-0 flex-col !overflow-hidden" finalFocus={trigger}>
+      <div className="flex shrink-0 items-center justify-between gap-4 pb-3">
+        <SEIDialogTitle>{title}</SEIDialogTitle>
+        <NarrativeButton size="icon" variant="ghost" icon={X} aria-label={closeLabel} onClick={() => onOpenChange(false)} />
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</div>
+      {footer && <NarrativePanel variant="footer" padding="sm" className="shrink-0 mt-4">{footer}</NarrativePanel>}
+    </SEIDialogContent>
+  </SEIDialog>;
+}

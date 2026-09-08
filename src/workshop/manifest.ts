@@ -52,7 +52,7 @@ export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'library-shell',
     title: 'Library Shell',
-    description: 'Main Library and Workspace Development headers with phone, tablet, and desktop configurations for Main Library, Story Seed, and Cultivator Cave; locked shell captures remain available for comparison. Story Seed source is captured from development: CreationModal, StorySeedHeader, StorySeedSelector, StorySeedMobileNavigation, and StorySeedSettings.',
+    description: 'Main Library header and integrated Story Seed/Cultivator Cave Development workspaces with shared headers and responsive navigation at phone, tablet, and desktop sizes; locked shell captures remain available for comparison. Story Seed source is captured from development: CreationModal, StorySeedHeader, StorySeedSelector, StorySeedMobileNavigation, and StorySeedSettings.',
     category: 'other',
     version: 'v1.0',
     source: {

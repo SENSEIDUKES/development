@@ -1,23 +1,15 @@
-import { memo } from 'react';
+import { NarrativeNavigationDrawerPanel } from '../../../presentation';
 import { Check, ChevronRight, Sparkles } from 'lucide-react';
 import type { StorySeedInput } from '../shared/storySeedSchema';
-import { NarrativeNavigationDrawerPanel as LibraryNavigationDrawerPanel, type NarrativeNavigationDrawerAccent as LibraryNavigationDrawerAccent, type NarrativeNavigationDrawerItem as LibraryNavigationDrawerItem, type NarrativeNavigationDrawerProfile as LibraryNavigationDrawerProfile, type NarrativeNavigationDrawerSection as LibraryNavigationDrawerSection } from '../../../presentation';
+import { type NarrativeNavigationDrawerAccent as LibraryNavigationDrawerAccent, type NarrativeNavigationDrawerItem as LibraryNavigationDrawerItem, type NarrativeNavigationDrawerProfile as LibraryNavigationDrawerProfile, type NarrativeNavigationDrawerSection as LibraryNavigationDrawerSection } from '../../../presentation';
 import {
   FAMILY_ICONS,
   FAMILY_SECTIONS,
-  haveSameSeedSectionState,
   SEED_FAMILIES,
   type SeedFamily,
   type SeedSection,
   type SeedSectionId,
 } from './seedSections';
-
-interface StorySeedSelectorProps {
-  seed: StorySeedInput;
-  activeSection: SeedSectionId;
-  onSelect: (id: SeedSectionId) => void;
-  equippedTitle?: string | null;
-}
 
 const familyAccent = (family: SeedFamily): LibraryNavigationDrawerAccent =>
   family === 'story' ? 'portal' : 'gold';
@@ -47,12 +39,12 @@ const sectionTrailing = (section: SeedSection, filled: boolean, active: boolean)
   <>
     {section.required ? (
       filled ? (
-        <Check size={13} className="text-portal" aria-label="complete" />
+        <Check size={13} className="text-portal" role="img" aria-label="complete" />
       ) : (
-        <span className="h-1.5 w-1.5 rounded-full bg-human/90" aria-label="missing" />
+        <span className="h-1.5 w-1.5 rounded-full bg-human/90" role="img" aria-label="missing" />
       )
     ) : (
-      filled && <span className="h-1.5 w-1.5 rounded-full bg-portal/70" aria-label="has content" />
+      filled && <span className="h-1.5 w-1.5 rounded-full bg-portal/70" role="img" aria-label="has content" />
     )}
     <ChevronRight
       size={13}
@@ -115,25 +107,11 @@ export function buildStorySeedDrawerSections(
   });
 }
 
-/**
- * The Story Seed navigation menu (Story → World) rendered through the Library
- * navigation drawer panel. The desktop sidebar renders it directly; the
- * mobile drawer wraps the same sections in `LibraryNavigationDrawer` (see
- * CreationModal). Pure section navigation — profile access lives in the
- * bottom navigation's Profile tab, not here.
- */
-const StorySeedSelectorComponent = ({ seed, activeSection, onSelect, equippedTitle }: StorySeedSelectorProps) => (
-  <LibraryNavigationDrawerPanel
-    aria-label="Story Seed sections"
-    profile={storySeedDrawerProfile(equippedTitle)}
-    sections={buildStorySeedDrawerSections(seed, activeSection, onSelect)}
-  />
-);
 
-export const StorySeedSelector = memo(
-  StorySeedSelectorComponent,
-  (previous, next) => previous.activeSection === next.activeSection
-    && previous.equippedTitle === next.equippedTitle
-    && previous.onSelect === next.onSelect
-    && haveSameSeedSectionState(previous.seed, next.seed),
-);
+/** Compatibility entry for consumers rendering only the feature section panel. */
+export function StorySeedSelector({ seed, activeSection, onSelect, equippedTitle }: {
+  seed: StorySeedInput; activeSection: SeedSectionId; onSelect: (id: SeedSectionId) => void; equippedTitle?: string | null;
+}) {
+  return <NarrativeNavigationDrawerPanel aria-label="Story Seed sections" profile={storySeedDrawerProfile(equippedTitle)}
+    sections={buildStorySeedDrawerSections(seed, activeSection, onSelect)} />;
+}

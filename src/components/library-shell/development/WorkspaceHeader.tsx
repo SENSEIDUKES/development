@@ -1,4 +1,4 @@
-import { LibraryButton, LibraryHeaderBadge } from '@seihouse/library-ui';
+import { NarrativeButton as LibraryButton, NarrativeHeaderBadge as LibraryHeaderBadge } from '../../../presentation';
 import { ArrowLeft } from 'lucide-react';
 import { HeaderActionButton, HeaderFoundation, HeaderOverflow, useCompactHeader, type HeaderAction } from './HeaderFoundation';
 

@@ -134,20 +134,15 @@ describe('Cultivator Cave home', () => {
 
   it('shows the unlinked state without a settings gear and links the mock account', async () => {
     const { onSignIn } = await renderCave({ state: 'signed-out' });
-    expect(text()).toContain('Spirit Unlinked');
+    expect(text()).not.toContain('Spirit Unlinked');
+    expect(text()).not.toContain('Link Spirit Realm');
     expect(container.querySelector('[data-cave-settings-trigger]')).toBeNull();
     expect(container.querySelector('[data-cave-card="stories"]')).toBeNull();
-    await click(byText('button', 'Link Spirit Realm'));
     expect(container.querySelector('[data-auth-context="spirit-link"]')).not.toBeNull();
     expect(text()).toContain('Continue with Google');
     expect(text()).toContain('Continue with Apple');
     expect(text()).toContain('Continue with Email');
-    expect(text()).toContain('Return to Cultivator Cave');
 
-    await click(byText('button', 'Return to Cultivator Cave'));
-    expect(container.querySelector('[data-auth-context="spirit-link"]')).toBeNull();
-
-    await click(byText('button', 'Link Spirit Realm'));
     await click(byText('button', 'Continue with Google'));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(650);

@@ -132,7 +132,7 @@ describe('Cultivator Cave home', () => {
     expect(container.querySelector('#cave-qi-core-description')?.textContent).toContain('community contribution');
   });
 
-  it('shows the unlinked state without a settings gear and links the mock account', async () => {
+  it('replaces the signed-out Cave with OAuth and links the mock account', async () => {
     const { onSignIn } = await renderCave({ state: 'signed-out' });
     expect(text()).not.toContain('Spirit Unlinked');
     expect(text()).not.toContain('Link Spirit Realm');

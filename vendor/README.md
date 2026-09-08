@@ -1,6 +1,6 @@
 # Private UI artifacts
 
-These committed tarballs are built from UI PR [#56](https://github.com/SENSEIDUKES/UI/pull/56), commit `bb7638a38676e6b7a1673885f92f071d4cbde259`:
+These committed tarballs are built from UI PR [#56](https://github.com/SENSEIDUKES/UI/pull/56), commit `1b9890cb9854db7f58702d4a5b567ff853908e32`:
 
 - `@seihouse/ui@0.4.0`: universal SEIHouse primitives and experience tokens.
 - `@seihouse/library-ui@0.4.0`: the Celestial Library component system.

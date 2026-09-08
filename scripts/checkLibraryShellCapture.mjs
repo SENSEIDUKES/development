@@ -15,6 +15,9 @@ for (const file of manifest.files) {
 for (const file of manifest.dependencies) {
   if (digest(file.path, file.binary) !== file.sha256) errors.push(`Capture dependency drifted: ${file.path}`);
 }
+for (const font of manifest.fontAssets ?? []) {
+  if (digest(font.path, true) !== font.sha256) errors.push(`Capture font drifted: ${font.path}`);
+}
 function inspect(directory) {
   for (const entry of readdirSync(resolve(root, directory), { withFileTypes: true })) {
     const path = `${directory}/${entry.name}`;
@@ -31,4 +34,4 @@ function inspect(directory) {
 inspect('src/components/library-shell');
 inspect('src/workshop/previews/library-shell');
 if (errors.length) throw new Error(errors.join('\n'));
-console.log(`[library-shell] ${manifest.files.length} locked captures and ${manifest.dependencies.length} dependencies verified; no production data or live Story Seed implementation imports.`);
+console.log(`[library-shell] ${manifest.files.length} locked captures, ${manifest.dependencies.length} dependencies, and ${(manifest.fontAssets ?? []).length} fonts verified; no production data or live Story Seed implementation imports.`);

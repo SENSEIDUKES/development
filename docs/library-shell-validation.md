@@ -24,7 +24,7 @@ Checks used the Codex browser against the local Workshop server on port 5186. Po
 | Reduced motion | Drawer open/close checked with reduced-motion emulation. Existing source behavior retained; no claim that every Main Library CSS animation honors reduced motion. |
 | Workshop integration | Single homepage/registry entry, phone and desktop frame selection, state selection, direct capture route, and Compare checked. Compare uses independent documents so source viewport rules and body portals remain isolated. |
 | Existing preview | Current `?preview=story-seed` opens and retains its original editor and shell. |
-| Network | Complete focused recordings for Main Library load plus DAO seek and Story Seed load plus Save/Manifest each captured 49 requests, with no API requests and no event truncation. Broader state-check recordings showed only Google Fonts outside localhost but were buffer-limited; the focused recordings provide the complete action checks. |
+| Network | Complete focused recordings for Main Library load plus DAO seek and Story Seed load plus Save/Manifest each captured 49 requests, with no API requests and no event truncation. The capture now self-hosts the source-requested font payloads, so its layout no longer depends on Google Fonts at render time. |
 | Console | No browser error logs in the focused capture checks. The deliberately failed DAO fixture retains its source fallback warning. |
 
 ## Local checks
@@ -39,4 +39,4 @@ Checks used the Codex browser against the local Workshop server on port 5186. Po
 
 This is shell verification with local state. It does not validate account sign-in, Profile screens, cloud persistence, production synchronization, AI providers, full Story Bank/Help/editor/Blueprint content, audio, or live story data. These systems are intentionally absent from the capture. Mock content has a different height from full page content, so content-dependent footer position and full-page pixel parity are not asserted. Source body/viewport theme behavior, shell markup, spacing, fonts, breakpoints, and interactive controls are the comparison target.
 
-The browser's screenshot scaling was inconsistent after switching emulated viewports between tabs; element measurements and DOM/interaction checks were used for the recorded source parity result. No pixel-diff score or screenshot baseline is claimed. Safe-area rules are preserved from source but have not been tested on physical iOS hardware.
+The browser's screenshot scaling was inconsistent after switching emulated viewports between tabs; element measurements and DOM/interaction checks were used for the recorded source parity result. No pixel-diff score or screenshot baseline is claimed. Safe-area rules are preserved from source but have not been tested on physical iOS hardware. The review follow-up added capture-only focus, assistive-status, sticky-footer, local-font, and adapter-contract corrections; production source behavior remains unmodified.

@@ -89,7 +89,7 @@ export function StorySeedShell({ seed, updateSeed, activeSection, setActiveSecti
               bottom navigation on mobile and the sidebar on desktop. On
               mobile the strip rests in flow at the panel bottom (sticky is
               off) so it always stays clear of the bottom navigation. */}
-          <LibraryPanel variant="footer" padding="none" className="sticky max-lg:static z-30 px-4 py-3.5 sm:px-8">
+          <LibraryPanel variant="footer" padding="none" className="sticky bottom-0 max-lg:static z-30 px-4 py-3.5 sm:px-8">
             <div className="flex items-center gap-3">
               <div className="hidden min-w-0 flex-1 items-center gap-3 sm:flex">
                 <div className="flex shrink-0 items-center gap-2" aria-label={`${requiredComplete} of ${REQUIRED_STORY_SECTIONS.length} required Story inputs complete`}>

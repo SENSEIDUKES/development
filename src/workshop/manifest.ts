@@ -52,12 +52,12 @@ export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'library-shell',
     title: 'Library Shell',
-    description: 'Locked Main Library and Story Seed shell captures with phone and desktop previews, local host adapters, and ownership documentation.',
+    description: 'Locked Main Library and Story Seed shell captures with phone and desktop previews, local host adapters, and ownership documentation. Story Seed source is captured from development: CreationModal, StorySeedHeader, StorySeedSelector, StorySeedMobileNavigation, and StorySeedSettings.',
     category: 'other',
     version: 'v1.0',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
-      path: 'src/components/GlobalHeader.tsx',
+      path: 'src/components/GlobalHeader.tsx; src/components/DaoInsights.tsx; src/components/LibraryScreen.tsx; src/index.css',
       lastCompared: '2026-09-08',
     },
   },

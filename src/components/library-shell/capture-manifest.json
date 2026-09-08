@@ -18,21 +18,21 @@
       "source": "src/components/DaoInsights.tsx",
       "sourceSha256": "44f50f7346121e1d407349cea7a997ee6fdade14dff2bfe953627f4d8f3bffdd",
       "capture": "src/components/library-shell/reference/main-library/DaoInsights.tsx",
-      "captureSha256": "56b886b221b1f8d537f53ded29ee38819c95e3a26cec069d48c621b2cfc63501"
+      "captureSha256": "ea4698cf0f3c2183da0d764b14612eca912123ba94647d8de60ba13530c35d7d"
     },
     {
       "repository": "SENSEIDUKES/Light-Novels",
       "source": "src/index.css",
       "sourceSha256": "1952a7b9b18044412e66db32dc275e327bcb5bdefd10f5c19f03af5340d57ce5",
       "capture": "src/components/library-shell/reference/main-library/source-theme.css",
-      "captureSha256": "5defbb5776c6d70385d24a890c0f493f0f053795cc58ca94920b3de836bfaf78"
+      "captureSha256": "52f7eb70aa0e43416d243f0d31d0e1e6176d5c2a621070b43b8f97081ddd1052"
     },
     {
       "repository": "SENSEIDUKES/development",
       "source": "src/components/story-seed/development/StorySeedHeader.tsx",
       "sourceSha256": "b4f5aede9064c18267dd15c34ff8bb8a1c340766f49dd6233448a4c60e334762",
       "capture": "src/components/library-shell/reference/story-seed/StorySeedHeader.tsx",
-      "captureSha256": "a061b9d8f19bd85b0ab0603f02a66154e2404d465c4b32de253723a46f5517aa"
+      "captureSha256": "240372e0e86dcc83b712d3f1ca50b03b07abc600c2fab85bd48ca4c296d1f2c0"
     },
     {
       "repository": "SENSEIDUKES/development",
@@ -53,7 +53,7 @@
       "source": "src/components/story-seed/development/StorySeedSelector.tsx",
       "sourceSha256": "ecf822aa7e8a2577e44738b78dd8e496e2a98d378455ae151bee08fe097e39e5",
       "capture": "src/components/library-shell/reference/story-seed/StorySeedSelector.tsx",
-      "captureSha256": "039cf7ebf371806a4dd3401684267583706a7514342f93af0064cfa054ad01cc"
+      "captureSha256": "4e599a529a75993eba8c05f89afff4e41376bdcf3dc65ca8251cf8ab0112c49e"
     },
     {
       "repository": "SENSEIDUKES/development",
@@ -95,7 +95,7 @@
       "source": "src/components/story-seed/development/CreationModal.tsx",
       "sourceSha256": "227ad78eb6d7a81ce17c35369e7ba87c146f91b93f9f3c205f2b344cebfe7c7c",
       "capture": "src/components/library-shell/reference/story-seed/StorySeedShell.tsx",
-      "captureSha256": "62b9b5e1b63569801eec25b7d779b7cee1c19881f26fc0a81ca07c078aa9f6ef"
+      "captureSha256": "e6ca57b349aeb8290a69dc92506de915f2a1d776bae7a45562692290827500ed"
     },
     {
       "repository": "SENSEIDUKES/Light-Novels",
@@ -161,6 +161,26 @@
       "binary": false,
       "sha256": "1352ccd45a01e5a144e4ebff69b81f6638090256e76872926794709aedabc22f"
     }
+  ],
+  "fontAssets": [
+    { "path": "public/library-shell/fonts/alegreya-500.ttf", "sha256": "3ae790f5b3f70bf2a9d990c07bbbfc22af476fb5835f309128f5978baf7a9bd6" },
+    { "path": "public/library-shell/fonts/alegreya-700.ttf", "sha256": "613bb372fa6f66a19ed652ea8eea88768ff4321d5eb03cf8b28a217ba8942fbf" },
+    { "path": "public/library-shell/fonts/alegreya-italic-500.ttf", "sha256": "f4dca2c57cf809e432f5c859160b0a0e371242718f9e39f6bd72ee1d86346893" },
+    { "path": "public/library-shell/fonts/alegreya-italic-700.ttf", "sha256": "f53cdbe4db23177569d2002a7c77489982b4137b6e3442ed468b8d49d20bf55b" },
+    { "path": "public/library-shell/fonts/alegreya-sc-500.ttf", "sha256": "61c7d16c4b3952c7129c77ef56eb540f3ea459867adbb4df0a95da07a44bf7cb" },
+    { "path": "public/library-shell/fonts/alegreya-sc-700.ttf", "sha256": "7ad21084a1bf53139200231d1b4e900e712cf3eccce9cca12de1657153e64911" },
+    { "path": "public/library-shell/fonts/noto-serif-200.ttf", "sha256": "e361da0b9dd56ad6752ed28e024a5dc2f6f0d2902fb6719f7bac6bb6e0c22c6e" },
+    { "path": "public/library-shell/fonts/noto-serif-300.ttf", "sha256": "cb6ac56a7f30eeb92fbba99db888560bb921e2e3ab824d93ac1966021a2ecd74" },
+    { "path": "public/library-shell/fonts/noto-serif-400.ttf", "sha256": "5473d2e43bdd018ee124a4addba8091fd0a29894b121cbb741023af6549662b6" },
+    { "path": "public/library-shell/fonts/noto-serif-italic-200.ttf", "sha256": "5a020d1f8d1bbb89331013ede01477303bec54d8276a2f5e6d8ab881bacb659a" },
+    { "path": "public/library-shell/fonts/noto-serif-italic-300.ttf", "sha256": "3c734b959a235838077a801b07a8f285401406a76e4829d6ef8dc89235171c36" },
+    { "path": "public/library-shell/fonts/noto-serif-italic-400.ttf", "sha256": "f06cb5f088620048826b520a145b0410065bfef099113c4e8898b3fab48d506d" },
+    { "path": "public/library-shell/fonts/rubik-300.ttf", "sha256": "d7d352463b5e127d5cece345418de1906fcfaf03cac2bd0e11686ff4445b1c63" },
+    { "path": "public/library-shell/fonts/rubik-400.ttf", "sha256": "cc6a4222027f8e57ff86a50c5ba88f12326d7223bde9bf6531538633ebad3343" },
+    { "path": "public/library-shell/fonts/rubik-500.ttf", "sha256": "d73c60557ccc500ea9828bcc34437e7ea7a0d05f1c60c87be85790ebe8e62dbc" },
+    { "path": "public/library-shell/fonts/rubik-italic-300.ttf", "sha256": "13e9507be1d7834c8bad04349da2dd448c07a4ddfa137e2346b6c549ff9da975" },
+    { "path": "public/library-shell/fonts/rubik-italic-400.ttf", "sha256": "16fc8b9b98fdf8c100a2266321c23da5b686aac084645053ad169f0a5b9fadee" },
+    { "path": "public/library-shell/fonts/rubik-italic-500.ttf", "sha256": "242f69f7deaa260406f32b75ed4b200f6b8c5e947d7abd5110c7aa92342f9c07" }
   ],
   "assets": [
     {

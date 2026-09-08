@@ -1,5 +1,11 @@
 import { createContext, useContext } from 'react';
 
+export type DaoQuoteCategory = 'comedic' | 'inspirational' | 'comforting';
+export type DaoRequestKind = 'status' | DaoQuoteCategory;
+export type DaoStatusPayload = { hasServerGemini?: boolean };
+export type DaoQuotePayload = { quote: string; author: string; category: DaoQuoteCategory };
+export type DaoResponse<T> = { ok: boolean; json: () => Promise<T> };
+
 /** Host-only contracts for the frozen header. No production store or credentials. */
 export interface MainLibraryAdapter {
   currentScreen: string;
@@ -14,7 +20,10 @@ export interface MainLibraryAdapter {
   setIsSettingsOpen: (open: boolean) => void;
   setIsCodexSheetOpen: (open: boolean) => void;
   setIsShortcutsOpen: (open: boolean) => void;
-  requestDao: (kind: string) => Promise<{ ok: boolean; json: () => Promise<{ hasServerGemini?: boolean; quote: string; author: string; category: 'comedic' | 'inspirational' | 'comforting' }> }>;
+  requestDao: {
+    (kind: 'status'): Promise<DaoResponse<DaoStatusPayload>>;
+    (kind: DaoQuoteCategory): Promise<DaoResponse<DaoQuotePayload>>;
+  };
 }
 export const MainLibraryAdapterContext = createContext<MainLibraryAdapter | null>(null);
 export function useMainLibraryAdapter<T>(select: (adapter: MainLibraryAdapter) => T): T {

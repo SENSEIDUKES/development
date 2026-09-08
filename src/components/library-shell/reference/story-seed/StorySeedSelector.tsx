@@ -40,12 +40,12 @@ const sectionTrailing = (section: SeedSection, filled: boolean, active: boolean)
   <>
     {section.required ? (
       filled ? (
-        <Check size={13} className="text-portal" aria-label="complete" />
+        <Check size={13} className="text-portal" role="img" aria-label="complete" />
       ) : (
-        <span className="h-1.5 w-1.5 rounded-full bg-human/90" aria-label="missing" />
+        <span role="img" className="h-1.5 w-1.5 rounded-full bg-human/90" aria-label="missing" />
       )
     ) : (
-      filled && <span className="h-1.5 w-1.5 rounded-full bg-portal/70" aria-label="has content" />
+      filled && <span role="img" className="h-1.5 w-1.5 rounded-full bg-portal/70" aria-label="has content" />
     )}
     <ChevronRight
       size={13}

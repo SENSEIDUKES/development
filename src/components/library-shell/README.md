@@ -12,7 +12,7 @@
 
 This area records two existing systems for comparison. It does not define a new product shell, redesign either source, extract shared components, or modify the active Story Seed. Main Library was read at `4a3dd02b6640b2ec50d8d1d136e37fb808249ed2`, Story Seed at development `7e1302bd2d5c3205706ddb1362607abed6a850e6`, and UI at `6856594171546fee1a243e1dc3422fcb952c5022`, after updating all three repositories from their remotes.
 
-`reference/main-library/` freezes the global header, DAO presentation and animation logic, production theme stylesheet, and the exact collection-tab fragment that displays sync state. `reference/story-seed/` freezes the current shell components, section model, settings body, supporting pure helpers, and CSS. `StorySeedShell.tsx` copies the shell JSX from `CreationModal`; its domain editor, Story Bank, and Help children are explicit host slots. This capture is distinct from the older locked reference inside the existing Story Seed Workshop.
+`reference/main-library/` freezes the global header, DAO presentation and animation logic, production theme stylesheet, and the exact collection-tab fragment that displays sync state. It localizes the source font payloads so external network and CSP changes cannot alter the captured layout. `reference/story-seed/` freezes the current shell components, section model, settings body, supporting pure helpers, and CSS. `StorySeedShell.tsx` copies the shell JSX from `CreationModal`; its domain editor, Story Bank, and Help children are explicit host slots. This capture is distinct from the older locked reference inside the existing Story Seed Workshop.
 
 `development/LibraryShell.ts` points at these baselines. Original Reference, Development, and Compare therefore show the same captured implementations. No future design has been implied by the Development label. A later authorized refinement can fork its files there; the locked capture must remain unchanged.
 
@@ -63,7 +63,7 @@ The **cloud is not the sync spinner**. In current `GlobalHeader`, it is an anima
 
 Account linking, full Profile, collection contents, Story Bank, Help content, editor forms, Blueprint review, reader, and Codex destinations are clearly labeled mock content slots. Their domain implementations are not captured. This preserves the shell's dimensions, classes, breakpoints and interaction structure; **full-page pixel parity and content-dependent footer positions are not claimed**. The neutral fixture's height differs from a complete editor or library hero. The requested work ends at these shell boundaries.
 
-The Library emblem and VERSA mark are local copies under `public/library-shell/`. Story Seed retains `/favicon.jpg`. Google Fonts remains the same source font request; no production data, auth, generation, storage, sync, or media-service calls occur. No backend, API, schema, database, routing store, or auth system was added.
+The Library emblem, VERSA mark, and the source-requested Alegreya, Alegreya SC, Noto Serif, and Rubik font payloads are local copies under `public/library-shell/`. Story Seed retains `/favicon.jpg`. No production data, auth, generation, storage, sync, or media-service calls occur. No backend, API, schema, database, routing store, or auth system was added.
 
 ## Lock and provenance
 
@@ -73,7 +73,7 @@ The capture reuses canonical presentation packages and type contracts rather tha
 
 ## Validation
 
-See [validation evidence](../../../../docs/library-shell-validation.md) for the checked viewports, interactions, source comparisons, and exact limits of verification.
+See [validation evidence](../../../docs/library-shell-validation.md) for the checked viewports, interactions, source comparisons, and exact limits of verification.
 
 ## Transfer guidance
 
@@ -84,3 +84,4 @@ For an eventual approved change, identify the owning lane first. Main header/DAO
 ## Workshop history
 
 - **2026-09-08:** Updated source repositories; captured current Main Library and Story Seed shells with separate responsive documents, local adapters and assets, explicit content boundaries, source provenance, dependency guards, and ownership/overlap documentation. No redesign or shared extraction.
+- **2026-09-08:** Applied capture-only accessibility and sticky-action corrections, narrowed the DAO adapter contract, localized the exact source-requested font payloads, and retained the production sources unchanged.

@@ -54,7 +54,7 @@ const StorySeedHeaderComponent = ({
     const trigger = settingsTriggerRef.current;
     const focusableElements = () => Array.from(
       dialog?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? [],
-    ).filter(element => !element.hasAttribute('hidden'));
+    ).filter(element => !element.hasAttribute('hidden') && element.tabIndex >= 0);
 
     (focusableElements()[0] ?? dialog)?.focus();
     const onKeyDown = (event: KeyboardEvent) => {

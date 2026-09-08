@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, RefreshCw, Layers, Compass, HelpCircle, X, ChevronRight, Copy, Check } from 'lucide-react';
-import { useMainLibraryAdapter as useAppStore } from '../../shared/MainLibraryAdapter';
+import {
+  useMainLibraryAdapter as useAppStore,
+  type DaoQuoteCategory,
+} from '../../shared/MainLibraryAdapter';
 
 export interface DaoQuote {
   quote: string;
@@ -189,8 +192,8 @@ export const DaoInsights: React.FC = () => {
       return q.category === categoryFilter;
     });
 
-    const currentCategory = categoryFilter === 'all'
-      ? (['comedic', 'inspirational', 'comforting'][Math.floor(Math.random() * 3)] as any)
+    const currentCategory: DaoQuoteCategory = categoryFilter === 'all'
+      ? (['comedic', 'inspirational', 'comforting'][Math.floor(Math.random() * 3)] as DaoQuoteCategory)
       : categoryFilter;
 
     // Start cycling local quotes for a beautiful scrolling slots effect

@@ -132,8 +132,33 @@ export async function verifyCaveHome(page) {
   await page.locator('main[data-cave-audience="private"]').waitFor();
   check(new URL(page.url()).searchParams.get('cave') === '/relics', 'Exit must return to the previous location');
 
+  // Account entries originate from Home. Inbox and Redeem Code use keyboard
+  // activation; each unavailable development destination must offer its route
+  // specific return control.
+  await button('Home').first().click();
+  await page.locator('[data-cave-home]').waitFor();
+  await page.locator('[data-cave-account-controls] button').press('Enter');
+  await page.getByRole('heading', { name: 'Inbox', exact: true }).waitFor();
+  check(new URL(page.url()).searchParams.get('cave') === '/home/inbox', 'Inbox must open its fallback route');
+  await button('Return to cave').click();
+  await page.locator('[data-cave-home]').waitFor();
+
+  await button('Store').click();
+  await page.getByRole('heading', { name: 'Store', exact: true }).waitFor();
+  check(new URL(page.url()).searchParams.get('cave') === '/home/store', 'Store must open its fallback route');
+  await button('Return to cave').click();
+  await page.locator('[data-cave-home]').waitFor();
+
+  await button('Settings').click();
+  await page.getByRole('heading', { name: 'Settings', exact: true }).waitFor();
+  await page.locator('[data-slot="disclosure-trigger"]').filter({ hasText: 'Account' }).click();
+  await button('Redeem Code').press('Enter');
+  await page.getByRole('heading', { name: 'Redeem Code', exact: true }).waitFor();
+  check(new URL(page.url()).searchParams.get('cave') === '/settings/redeem-code', 'Redeem Code must open its fallback route');
+  await button('Return to Settings').click();
+  await page.getByRole('heading', { name: 'Settings', exact: true }).waitFor();
+
   // The twelve-character display-name cap, where the name is edited.
-  await button('Settings').first().click();
   const nameField = page.locator('#cave-display-name');
   await nameField.fill('A Name Far Beyond The Limit');
   check(await nameField.inputValue() === 'A Name Far B', 'display name must clamp to twelve characters');
@@ -141,5 +166,5 @@ export async function verifyCaveHome(page) {
   await page.locator('#cave-username').fill('a_very_long_private_dao_name_kept_whole');
   check(await page.locator('#cave-username').inputValue() === 'a_very_long_private_dao_name_kept_whole', 'username must not be capped');
 
-  return { widths: [320, 390, 768, 1024, 1440], geometry: 'passed', emptyReserves: 'passed', expirationFocus: 'passed', claims: 'passed', reducedMotion: 'passed', publicView: 'passed', boost: 'passed', displayNameLimit: 'passed' };
+  return { widths: [320, 390, 768, 1024, 1440], geometry: 'passed', emptyReserves: 'passed', expirationFocus: 'passed', claims: 'passed', reducedMotion: 'passed', publicView: 'passed', boost: 'passed', accountEntries: 'passed', displayNameLimit: 'passed' };
 }

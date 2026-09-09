@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -25,6 +25,22 @@ function readTarball(file) {
       files.set(`${prefix ? `${prefix}/` : ''}${name}`.replace(/^package\//, ''), archive.subarray(offset, offset + size));
     }
     offset += Math.ceil(size / 512) * 512;
+  }
+  return files;
+}
+
+/**
+ * Every regular file under `directory`, as paths relative to it. A nested
+ * `node_modules` is skipped: npm may legitimately place a non-hoistable
+ * dependency there, and it is not part of the published package.
+ */
+function readInstalled(directory, prefix = '') {
+  const files = [];
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    if (entry.name === 'node_modules') continue;
+    const relative = `${prefix}${entry.name}`;
+    if (entry.isDirectory()) files.push(...readInstalled(path.join(directory, entry.name), `${relative}/`));
+    else if (entry.isFile()) files.push(relative);
   }
   return files;
 }
@@ -61,17 +77,23 @@ for (const name of ['ui', 'library-ui']) {
   const packageName = `@seihouse/${name}`;
   const installed = path.join(root, 'node_modules', packageName);
   if (!existsSync(installed)) continue;
+  const tarball = `vendor/seihouse-${name}-0.4.0.tgz`;
+  const entries = readTarball(path.join(root, tarball));
   const stale = [];
-  for (const [entry, content] of readTarball(
-    path.join(root, `vendor/seihouse-${name}-0.4.0.tgz`),
-  )) {
+  for (const [entry, content] of entries) {
     const file = path.join(installed, entry);
     if (!existsSync(file) || !readFileSync(file).equals(content)) stale.push(entry);
+  }
+  // Both directions. A file the previous build shipped and this one dropped
+  // survives in node_modules, and comparing only the tarball's own entries
+  // would call that a match — the exact staleness this check exists to catch.
+  for (const entry of readInstalled(installed)) {
+    if (!entries.has(entry)) stale.push(`${entry} (not in the tarball)`);
   }
   assert.equal(
     stale.length,
     0,
-    `${packageName} in node_modules does not match ${`vendor/seihouse-${name}-0.4.0.tgz`} (${stale.length} file(s) differ, first: ${stale[0]}). Run \`npm ci\` — \`npm install\` will not replace a same-version file: dependency.`,
+    `${packageName} in node_modules does not match ${tarball} (${stale.length} file(s) differ, first: ${stale[0]}). Run \`npm ci\` — \`npm install\` will not replace a same-version file: dependency.`,
   );
 }
 

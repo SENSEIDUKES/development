@@ -3,7 +3,7 @@ import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '../../library-presentation/LibraryPresentationProvider';
-import { LibraryNavigation } from './LibraryNavigation';
+import { LibraryNavigation, LibrarySectionSidebar } from './LibraryNavigation';
 import { MainLibraryNavigation } from './MainLibraryNavigation';
 import { activeLibraryDestination, librarySectionItems, type LibraryLocation } from './libraryRoutes';
 import { StorySeedWorkspaceChrome } from '../../story-seed/development/StorySeedWorkspaceChrome';
@@ -40,7 +40,7 @@ it('uses ordered global destinations, preserves host routes and updates selectio
   const navigate = vi.fn();
   const page = (location: LibraryLocation) => <MainLibraryNavigation location={location} onNavigate={navigate}><main>Existing content</main></MainLibraryNavigation>;
   await render(page({ screen: 'profile', cave: '/settings' }));
-  expect(Array.from(globalNav().querySelectorAll('button')).map(button => button.textContent)).toEqual(['Section', 'Home', 'Library', 'Discover', 'Profile']);
+  expect(Array.from(globalNav().querySelectorAll('button')).map(button => button.textContent)).toEqual(['Home', 'Library', 'Discover', 'Profile']);
   expect(globalNav().querySelector('[aria-current="page"]')?.textContent).toBe('Profile');
   for (const [label, target] of [
     ['Home', { screen: 'home', collection: 'featured' }],
@@ -58,65 +58,24 @@ it('uses ordered global destinations, preserves host routes and updates selectio
   expect(navigate).not.toHaveBeenCalled();
 });
 
-it('opens page sections as a disclosure, returns focus on Escape and dispatches after dismissal', async () => {
-  const action = vi.fn(() => {
-    expect(document.querySelector('[role="dialog"]')).toBeNull();
-    document.querySelector<HTMLElement>('h2')!.focus();
-  });
-  await render(<LibraryNavigation location={{ screen: 'profile' }} onNavigate={vi.fn()} sectionMenu={{ label: 'Cave sections', sections: [{ id: 'cave', items: [{ id: 'stories', label: 'Stories', active: true, onSelect: action }] }] }}>
-    <h2 tabIndex={-1}>Existing page</h2>
-  </LibraryNavigation>);
-  const section = button('Section');
-  expect(section.getAttribute('aria-haspopup')).toBe('dialog');
-  expect(section.getAttribute('aria-current')).toBeNull();
-  await click(section);
-  expect(section.getAttribute('aria-expanded')).toBe('true');
-  expect(document.querySelector('[role="dialog"]')?.getAttribute('aria-modal')).toBe('true');
-  await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
-  await settle();
-  expect(document.activeElement).toBe(section);
-  await click(section);
-  await click(button('Stories'));
-  expect(action).toHaveBeenCalledTimes(1);
-  expect(document.activeElement?.tagName).toBe('H2');
-});
-
-it('keeps empty sections usable, omits unfinished links, and closes menus on host route changes without remounting page state', async () => {
+it('keeps four destinations with or without page options and preserves page state', async () => {
   function Content() { const [value, setValue] = useState(0); return <button onClick={() => setValue(value + 1)}>Page state {value}</button>; }
-  const page = (screen: string) => <LibraryNavigation location={{ screen }} onNavigate={vi.fn()}><Content /></LibraryNavigation>;
-  await render(page('home'));
-  await click(button('Page state 0'));
-  await click(button('Section'));
-  expect(document.body.textContent).toContain('There are no sections on this page.');
-  await render(page('pricing'));
-  await settle();
-  expect(document.querySelector('[role="dialog"]')).toBeNull();
-  expect(button('Page state 1')).toBeDefined();
-  expect(librarySectionItems('discover', {})).toEqual([]);
-  expect(librarySectionItems('library', { 'my-library': vi.fn() }).map(item => item.label)).toEqual(['My Library']);
-});
-
-it('uses only available Home/Library/Discover sections and reuses the existing seed screen', async () => {
-  const navigate = vi.fn();
-  await render(<MainLibraryNavigation location={{ screen: 'home', collection: 'my-library' }} onNavigate={navigate}><main /></MainLibraryNavigation>);
-  await click(button('Section'));
-  expect(document.querySelector('.library-section-menu')?.textContent).toBe('Seed BankMy Library');
-  await click(button('Seed Bank'));
-  expect(navigate).toHaveBeenCalledWith({ screen: 'profile', cave: '/stories' });
-});
-
-it('restores focus for the current section and gives a history destination focus when its menu was open', async () => {
-  const page = (cave: string) => <LibraryNavigation location={{ screen: 'profile', cave }} onNavigate={vi.fn()} sectionMenu={{ label: 'Cave sections', sections: [{ id: 'cave', items: [{ id: 'home', label: 'Cave Home', active: true, onSelect: () => {} }] }] }}>
-    <main><h2 tabIndex={-1}>{cave}</h2></main>
+  const action = vi.fn();
+  const page = (screen: string, options: boolean) => <LibraryNavigation location={{ screen }} onNavigate={vi.fn()}
+    sectionMenu={options ? { label: 'Cave navigation', sections: [{ id: 'cave', items: [{ id: 'stories', label: 'Stories', onSelect: action }] }] } : undefined}>
+    <Content /><LibrarySectionSidebar />
   </LibraryNavigation>;
-  await render(page('/home'));
-  await click(button('Section'));
-  await click(button('Cave Home'));
-  expect(document.activeElement).toBe(button('Section'));
-  await click(button('Section'));
-  await render(page('/stories'));
-  await settle();
-  expect(document.activeElement?.textContent).toBe('/stories');
+  await render(page('home', false));
+  await click(button('Page state 0'));
+  await render(page('profile', true));
+  expect(button('Page state 1')).toBeDefined();
+  expect(Array.from(globalNav().querySelectorAll('button')).map(button => button.textContent)).toEqual(['Home', 'Library', 'Discover', 'Profile']);
+  expect(globalNav().querySelector('[aria-haspopup], [aria-expanded], [aria-controls]')).toBeNull();
+  expect(button('Section')).toBeUndefined();
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+  await click(button('Stories'));
+  expect(action).toHaveBeenCalledWith('stories');
+  expect(librarySectionItems('discover', {})).toEqual([]);
 });
 
 it.each(['reader', 'codex'])('excludes immersive %s even when standard mode is requested', async screen => {
@@ -135,6 +94,10 @@ it('preserves the real Story Seed strip, sections, bank, Help and settings insid
   expect(globalNav()).toBeNull();
   const nav = document.querySelector('nav[aria-label="Story Seed navigation"]')!;
   expect(Array.from(nav.querySelectorAll('button')).map(button => button.textContent)).toEqual(['Sections', 'Story Bank', 'Help', 'Settings']);
+  await click(button('Sections', nav));
+  expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+  await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+  await settle();
   await click(button('Story Bank', nav)); expect(bank).toHaveBeenCalledTimes(1);
   await click(button('Help', nav)); expect(help).toHaveBeenCalledTimes(1);
   await click(button('Settings', nav));

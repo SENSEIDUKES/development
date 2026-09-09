@@ -159,7 +159,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           id, label, icon: <Icon size={20} />, active: route.destination === id,
           onSelect: () => navigate(publicCavePath(id)),
         })),
-        // Exit leaves the public view and remains an action in its Section menu.
+        // Exit leaves the public view and remains an action in Search and the desktop rail.
         { id: 'exit', label: 'Exit', icon: <CAVE_EXIT_ICON size={20} />, active: false,
           onSelect: exitPublicView },
       ];
@@ -461,7 +461,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           contextualItem={isPublicView ? <p role="status" className="workspace-header-public-view" title="Public View">
             <Eye size={20} aria-hidden="true" /><span>Public View</span>
           </p> : undefined}
-          searchItems={navigationItems.filter(item => item.id !== 'exit').map(item => ({ id: item.id, label: item.label, onAction: item.onSelect }))}
+          searchItems={navigationItems.filter(item => item.id !== 'exit').map(item => ({ id: item.id, label: item.label, pressed: item.active, onAction: item.onSelect }))}
           secondaryActions={headerActions}
         />}
       >

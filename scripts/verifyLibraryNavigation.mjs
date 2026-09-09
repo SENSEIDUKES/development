@@ -12,14 +12,20 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
     }
     assert.fail(label);
   };
-  const openSection = async () => { await button('Section').click(); await menu().waitFor({ state: 'visible' }); };
-  const closeSection = async () => { await button('Close Section menu').press('Escape'); await menu().waitFor({ state: 'hidden' }); };
-  const selectSection = async label => {
-    await openSection();
+  const openSearch = async () => {
+    await button('Search').click();
+    await menu().waitFor({ state: 'visible' });
+    await waitFor(() => tab.playwright.evaluate(() => document.activeElement?.matches('input[type="search"]')), 'Search field receives initial focus');
+  };
+  const closeSearch = async () => { await button('Close Search').press('Escape'); await menu().waitFor({ state: 'hidden' }); };
+  const searchDestination = async label => {
+    await openSearch();
     await menu().getByRole('button', { name: label, exact: true }).click();
     await menu().waitFor({ state: 'hidden' });
   };
-  const geometry = () => tab.playwright.evaluate(() => {
+  const geometry = async () => {
+    await tab.playwright.getByRole('navigation', { name: 'Library global navigation', exact: true }).waitFor({ state: 'visible' });
+    return tab.playwright.evaluate(() => {
     const nav = document.querySelector('.library-global-navigation');
     const r = nav.getBoundingClientRect();
     const style = getComputedStyle(nav);
@@ -33,20 +39,21 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
         return { label: button.textContent, x: rect.x, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height };
       }),
     };
-  });
+    });
+  };
   for (const width of widths) {
     await viewport.set({ width, height: 740 });
-    for (const [source, state, active, sections] of [
-      ['main-library', 'linked', 'Home', 'Immortal Hub,Sects,Tiers'],
-      ['main-library', 'library', 'Library', 'Seed Bank,My Library'],
-      ['main-library', 'discover', 'Discover', 'Fate Survival Challenges'],
-      ['cultivator-cave', 'developed-cultivator', 'Profile', 'Home,Stories,Relics'],
+    for (const [source, state, active] of [
+      ['main-library', 'linked', 'Home'],
+      ['main-library', 'library', 'Library'],
+      ['main-library', 'discover', 'Discover'],
+      ['cultivator-cave', 'developed-cultivator', 'Profile'],
     ]) {
       await tab.goto(`${baseUrl}/library-shell.html?variant=development&source=${source}&state=${state}`);
-      await button('Section').waitFor({ state: 'visible' });
+      await button('Search').waitFor({ state: 'visible' });
       if (source === 'cultivator-cave') await button('Settings').waitFor({ state: 'visible' });
       const size = await geometry();
-      assert.equal(size.buttons.map(button => button.label).join(','), 'Section,Home,Library,Discover,Profile');
+      assert.equal(size.buttons.map(button => button.label).join(','), 'Home,Library,Discover,Profile');
       assert.equal(size.selected, active);
       assert.equal(size.overflow, false, `${width}/${active}: overflow`);
       assert.equal(size.position, 'fixed');
@@ -56,11 +63,11 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
         assert(target.width >= 43.9 && target.height >= 43.9, `${width}/${target.label}: touch target`);
         assert(target.x >= 0 && target.right <= width + 1);
       }
-      await openSection();
-      assert.equal(await tab.playwright.evaluate(() => [...document.querySelectorAll('.library-section-menu button')].map(button => button.textContent).join(',')), sections);
-      await closeSection();
-      assert.equal(await tab.playwright.evaluate(() => document.activeElement?.textContent), 'Section');
-      report.push({ width, active, sections });
+      await openSearch();
+      assert.equal(await tab.playwright.evaluate(() => Boolean(document.querySelector('.library-section-menu'))), false);
+      await closeSearch();
+      assert.equal(await tab.playwright.evaluate(() => document.activeElement?.getAttribute('aria-label')), 'Search');
+      report.push({ width, active });
     }
   }
 
@@ -68,15 +75,17 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
   await viewport.set({ width: 390, height: 740 });
   await tab.goto(`${baseUrl}/library-shell.html?variant=development&source=cultivator-cave&state=developed-cultivator`);
   await button('Settings').waitFor({ state: 'visible' });
-  await openSection();
-  await button('Close Section menu').press('Shift+Tab');
-  await waitFor(() => tab.playwright.evaluate(() => document.activeElement?.textContent === 'Relics'), 'Shift+Tab must wrap to Relics');
-  await menu().getByRole('button', { name: 'Relics', exact: true }).press('Tab');
-  await waitFor(() => tab.playwright.evaluate(() => document.activeElement?.getAttribute('aria-label') === 'Close Section menu'), 'Tab must wrap to Close');
-  await closeSection();
-  await selectSection('Stories');
+  await openSearch();
+  await tab.playwright.getByRole('searchbox').press('Shift+Tab');
+  await waitFor(() => tab.playwright.evaluate(() => document.activeElement?.getAttribute('aria-label') === 'Close Search'), 'Shift+Tab from Search reaches Close');
+  await button('Close Search').press('Shift+Tab');
+  await waitFor(() => tab.playwright.evaluate(() => document.activeElement?.textContent === 'View Public Profile'), 'Shift+Tab must wrap to the last search result');
+  await menu().getByRole('button', { name: 'View Public Profile', exact: true }).press('Tab');
+  await waitFor(() => tab.playwright.evaluate(() => document.activeElement?.getAttribute('aria-label') === 'Close Search'), 'Tab must wrap to Close');
+  await closeSearch();
+  await searchDestination('Stories');
   await waitFor(() => tab.playwright.evaluate(() => document.activeElement?.id === 'cave-destination-stories-title'), 'Stories heading must receive focus');
-  await selectSection('Home');
+  await searchDestination('Home');
   await button('Settings').click();
   await tab.playwright.getByRole('heading', { name: 'Settings', exact: true }).waitFor({ state: 'visible' });
   assert.equal((await geometry()).selected, 'Profile');
@@ -84,12 +93,12 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
   await button('Settings').waitFor({ state: 'visible' });
   await tab.forward();
   await tab.playwright.getByRole('heading', { name: 'Settings', exact: true }).waitFor({ state: 'visible' });
-  await selectSection('Relics');
+  await searchDestination('Relics');
   await button('More actions').click();
   await button('View Public Profile').click();
   await button('More actions').waitFor({ state: 'visible' });
-  await openSection();
-  assert.equal(await tab.playwright.evaluate(() => [...document.querySelectorAll('.library-section-menu button')].map(button => button.textContent).join(',')), 'Home,Stories,Relics,Exit');
+  await openSearch();
+  assert.equal(await tab.playwright.evaluate(() => [...document.querySelectorAll('.workspace-search-results button')].map(button => button.textContent).join(',')), 'Home,Stories,Relics,Exit');
   await menu().getByRole('button', { name: 'Exit', exact: true }).click();
   await menu().waitFor({ state: 'hidden' });
   await waitFor(() => tab.playwright.evaluate(() => new URLSearchParams(location.search).get('cave') === '/relics'), 'Public Exit must preserve its prior destination');
@@ -110,19 +119,19 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
   for (const [safeArea, width, height] of [['on', 390, 740], ['landscape', 844, 390]]) {
     await viewport.set({ width, height });
     await tab.goto(`${baseUrl}/library-shell.html?variant=development&source=main-library&state=linked&safeArea=${safeArea}&motion=reduced`);
-    await button('Section').waitFor({ state: 'visible' });
+    await button('Search').waitFor({ state: 'visible' });
     const size = await geometry();
     assert(size.paddingBottom >= (safeArea === 'on' ? 34 : 21));
     assert(size.clearance >= size.navHeight);
     assert(!size.overflow);
     if (safeArea === 'landscape') assert(size.paddingLeft >= 44 && size.paddingRight >= 44);
-    await openSection();
+    await openSearch();
     const sheet = await tab.playwright.evaluate(() => {
       const r = document.querySelector('.workspace-sheet').getBoundingClientRect();
       return { top: r.top, bottom: r.bottom, height: innerHeight };
     });
     assert(sheet.top >= 0 && sheet.bottom <= sheet.height + 1);
-    await closeSection();
+    await closeSearch();
     report.push({ safeArea, clearance: size.clearance, navHeight: size.navHeight });
   }
   }
@@ -141,12 +150,12 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
     await button('Return to header capture').waitFor({ state: 'visible' });
     assert.equal(await tab.playwright.evaluate(() => Boolean(document.querySelector('.library-global-navigation'))), false);
     await button('Return to header capture').click();
-    await button('Section').waitFor({ state: 'visible' });
+    await button('Search').waitFor({ state: 'visible' });
     const location = new URL(await tab.url());
     assert.equal(location.searchParams.get('screen'), 'home');
     assert.equal(location.searchParams.get('collection'), 'featured');
     await tab.reload();
-    await button('Section').waitFor({ state: 'visible' });
+    await button('Search').waitFor({ state: 'visible' });
     assert.equal((await geometry()).selected, 'Home');
   }
   report.push({ storySeed: 'original controls preserved', immersiveRoute: 'global strip excluded; return URL and reload passed' });

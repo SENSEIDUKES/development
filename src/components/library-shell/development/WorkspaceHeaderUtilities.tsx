@@ -1,4 +1,4 @@
-import { lazy, Suspense, useId, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Search } from 'lucide-react';
 import { NarrativeButton, NarrativeTextBox } from '../../../presentation';
@@ -22,6 +22,8 @@ export function WorkspaceHeaderUtilities({ items, help }: {
   const helpRef = useRef<HTMLButtonElement>(null);
   const searchRef = useRef<HTMLButtonElement>(null);
   const pendingAction = useRef<(() => void) | null>(null);
+  const dispatchTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => { window.clearTimeout(dispatchTimer.current); }, []);
   const searchId = useId();
   const needle = query.trim().toLocaleLowerCase();
   const results = items.filter(item => `${item.label} ${item.description ?? ''}`.toLocaleLowerCase().includes(needle));
@@ -47,7 +49,8 @@ export function WorkspaceHeaderUtilities({ items, help }: {
         if (!open && pendingAction.current) {
           const action = pendingAction.current;
           pendingAction.current = null;
-          action();
+          // Release the dialog's final focus restoration before the destination focuses its heading.
+          dispatchTimer.current = window.setTimeout(action, 0);
         }
       }} title="Search" closeLabel="Close Search" returnFocusRef={searchRef}>
       <div role="search">

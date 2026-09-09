@@ -5,17 +5,17 @@ export async function verifyCaveHome(page) {
   const check = (value, message) => { if (!value) throw new Error(message); };
   const button = name => page.getByRole('button', { name, exact: true });
   const card = name => page.locator(`[data-cave-card="${name}"]`);
-  const selectSection = async name => {
+  const searchDestination = async name => {
     const before = page.url();
-    await button('Section').click();
+    await button('Search').click();
     await page.getByRole('dialog').getByRole('button', { name, exact: true }).click();
     await page.getByRole('dialog').waitFor({ state: 'hidden' });
     if (page.url() !== before) await page.waitForFunction(() => document.activeElement?.matches('h2'));
   };
-  const sectionLabels = async () => {
-    await button('Section').click();
-    const labels = (await page.locator('.library-section-menu button').allInnerTexts()).map(label => label.trim().toLowerCase()).join();
-    await button('Close Section menu').press('Escape');
+  const destinationLabels = async () => {
+    await button('Search').click();
+    const labels = (await page.locator('.workspace-search-results button').allInnerTexts()).map(label => label.trim().toLowerCase()).filter(label => ['home', 'stories', 'relics', 'exit'].includes(label)).join();
+    await button('Close Search').press('Escape');
     await page.getByRole('dialog').waitFor({ state: 'hidden' });
     return labels;
   };
@@ -86,12 +86,12 @@ export async function verifyCaveHome(page) {
 
   // ---- Public view ----------------------------------------------------
   await choose('Developed cultivator');
-  // The global dock is stable; Cave destinations now live in Section.
+  // The global dock is stable; Cave destinations now remain in Search.
   const dockLabels = async () =>
     (await page.locator('.library-global-navigation button').allInnerTexts()).map(label => label.trim().toLowerCase()).join();
-  check(await dockLabels() === 'section,home,library,discover,profile', 'global dock order');
-  check(await sectionLabels() === 'home,stories,relics', 'private Section must leave Settings beneath Daily Dao Pillar');
-  await selectSection('Relics');
+  check(await dockLabels() === 'home,library,discover,profile', 'global dock order');
+  check(await destinationLabels() === 'home,stories,relics', 'private Search must leave Settings beneath Daily Dao Pillar');
+  await searchDestination('Relics');
   // Below the header's compact breakpoint the secondary actions live in the
   // existing overflow menu; above it they sit inline.
   const headerAction = async name => {
@@ -102,8 +102,8 @@ export async function verifyCaveHome(page) {
   await headerAction('View Public Profile');
   await page.locator('[data-cave-home-mode="public"]').waitFor();
   check((await page.locator('.workspace-header-context').innerText()).includes('Public View'), 'public view must be indicated');
-  check(await dockLabels() === 'section,home,library,discover,profile', 'public global dock remains stable');
-  check(await sectionLabels() === 'home,stories,relics,exit', 'public Section must end in Exit');
+  check(await dockLabels() === 'home,library,discover,profile', 'public global dock remains stable');
+  check(await destinationLabels() === 'home,stories,relics,exit', 'public Search must end in Exit');
   check(await page.locator('[data-cave-card="dao-pillar"]').count() === 0, 'private Pillar must not render publicly');
   check(await page.locator('[data-cave-progress]').count() === 0, 'cultivation progress must not render publicly');
   check(await page.locator('[data-cave-bio]').count() === 1, 'public Home must show the bio');
@@ -136,22 +136,22 @@ export async function verifyCaveHome(page) {
   await page.setViewportSize({ width: 390, height: 844 });
 
   // Public Stories and Relics stay scoped and carry no private surface.
-  await selectSection('Stories');
+  await searchDestination('Stories');
   await page.locator('[data-cave-public-panel="stories"]').waitFor();
   check(!(await page.locator('main').innerText()).includes('Story Seeds'), 'public Stories must not expose seeds');
-  await selectSection('Relics');
+  await searchDestination('Relics');
   await page.locator('[data-cave-public-panel="relics"]').waitFor();
   check(!(await page.locator('main').innerText()).includes('Offering Hall'), 'public Relics must not expose the Offering Hall');
 
   // Exit returns to the page the public view was opened from.
-  await selectSection('Exit');
+  await searchDestination('Exit');
   await page.locator('[data-cave-page][data-cave-audience="private"]').waitFor();
   check(new URL(page.url()).searchParams.get('cave') === '/relics', 'Exit must return to the previous location');
 
   // Account entries originate from Home. Inbox and Redeem Code use keyboard
   // activation; each unavailable development destination must offer its route
   // specific return control.
-  await selectSection('Home');
+  await searchDestination('Home');
   await page.locator('[data-cave-home]').waitFor();
   await page.locator('[data-cave-account-controls] button').press('Enter');
   await page.getByRole('heading', { name: 'Inbox', exact: true }).waitFor();

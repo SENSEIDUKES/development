@@ -23,10 +23,6 @@
   letter-spacing: normal !important;
 }
 .library-global-navigation button > span:last-child { max-width: none; overflow: visible; }
-.library-global-navigation button[aria-expanded="true"] { box-shadow: inset 0 0 0 1px var(--color-sen-portal); }
-.library-section-menu { min-height: 0; }
-.library-section-menu > div { height: auto; background: transparent; }
-.library-section-menu nav { padding: .5rem !important; }
 .library-navigation-layout .workspace-shell-rail {
   height: calc(100dvh - var(--workspace-header-height) - var(--library-bottom-clearance));
 }

@@ -14,9 +14,9 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
   };
   const button = name => tab.playwright.getByRole('button', { name, exact: true });
   const heading = name => tab.playwright.getByRole('heading', { name, exact: true });
-  const selectSection = async (name, keyboard = false) => {
+  const searchDestination = async (name, keyboard = false) => {
     const before = await tab.url();
-    await button('Section').click();
+    await button('Search').click();
     const item = tab.playwright.getByRole('dialog').getByRole('button', { name, exact: true });
     if (keyboard) await item.press('Enter'); else await item.click();
     await tab.playwright.getByRole('dialog').waitFor({ state: 'hidden' });
@@ -45,15 +45,15 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
       await viewport.set({ width, height: 900 });
       for (const destination of ['Home', 'Stories', 'Relics', 'Settings']) {
         report({ width, destination });
-        if (destination === 'Settings') { await selectSection('Home'); await button('Settings').click(); }
-        else await selectSection(destination);
+        if (destination === 'Settings') { await searchDestination('Home'); await button('Settings').click(); }
+        else await searchDestination(destination);
         if (destination !== 'Home') assert.equal(await heading(destination).innerText(), destination);
         assert.equal((new URL(await tab.url()).searchParams.get('cave') || '/home'), '/' + destination.toLowerCase());
-        await button('Section').click();
-        const selected = await tab.playwright.evaluate(() => [...document.querySelectorAll('.library-section-menu [aria-current="page"]')]
+        await button('Search').click();
+        const selected = await tab.playwright.evaluate(() => [...document.querySelectorAll('.workspace-search-results [aria-pressed="true"]')]
           .filter(el => el.getBoundingClientRect().width > 0).map(el => el.textContent.trim()));
         assert.equal(selected.join(','), destination === 'Settings' ? '' : destination);
-        await button('Close Section menu').press('Escape');
+        await button('Close Search').press('Escape');
         await tab.playwright.getByRole('dialog').waitFor({ state: 'hidden' });
         const size = await geometry();
         assert.equal(size.overflow, false, `${width} ${destination}: horizontal overflow`);
@@ -75,9 +75,9 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
 
     report('Keyboard, overlays, and safe areas');
     await viewport.set({ width: 390, height: 844 });
-    await selectSection('Stories', true);
+    await searchDestination('Stories', true);
     assert.equal(await tab.playwright.evaluate(() => document.activeElement?.textContent), 'Stories');
-    await selectSection('Home');
+    await searchDestination('Home');
     await button('Settings').press('Space');
     assert.equal(await tab.playwright.evaluate(() => document.activeElement?.textContent), 'Settings');
     await tab.playwright.getByRole('heading', { name: 'Settings', exact: true }).press('Tab');

@@ -18,6 +18,7 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-09 follow-up:** Removed Section from the main global strip, leaving Home, Library, Discover and Profile. Cave destinations remain in top Search and the existing desktop rail; Search releases focus before navigation. Story Seed retains its Sections control. This supersedes the global Section menu described in the earlier entry below.
 - **2026-09-09:** Migrated the Cave's bottom destinations into the Library Shell Section menu. The shared global strip is Section, Home, Library, Discover, Profile; Profile stays active for every Cave route. The existing desktop rail reads the same Section definition. Private Settings stays beneath Daily Dao Pillar, public Exit keeps its previous destination, and all existing pages and internal UI are unchanged. The host now supplies `onNavigateLibrary(location)` for leaving the Cave. See [Library navigation](../../../docs/library-navigation.md).
 
 - **2026-09-09:** Wired the Cave to the shared top navigation, using the optional contextual slot for Public View and existing destinations/actions for Search. Universal Help reuses Library guidance. Page content, visibility rules and bottom navigation are unchanged.
@@ -423,9 +424,9 @@ settings sections in the page. Current text, placeholders, economy, and media co
 approved or finalized by this change.
 
 `caveNavigation.tsx` retains Cave route resolution and its browser history adapter.
-`UserProfile` supplies the Cave destinations as a Section definition to the Library Shell.
-`LibraryNavigation` owns the global strip, active global destination, safe-area spacing and
-Section menu; `LibrarySectionSidebar` reads that same definition in the existing 14rem rail
+`UserProfile` supplies Cave destinations to top Search and the existing Library Shell desktop rail.
+`LibraryNavigation` owns the four-destination global strip, active global destination and safe-area spacing;
+`LibrarySectionSidebar` reads the retained page definition in the existing 14rem rail
 from 1024px. The global strip remains available at every width, with shell-owned clearance.
 Settings remains the existing button beneath Daily Dao Pillar. See the current
 [navigation contract](../../../docs/library-navigation.md).

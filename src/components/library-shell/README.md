@@ -14,7 +14,7 @@ Development now uses Logo — existing Library Header Badge — optional context
 
 ## Bottom navigation update — 2026-09-09
 
-`LibraryNavigation` now owns Section — Home — Library — Discover — Profile, active-route matching, content clearance and safe-area spacing. Pages supply a Section definition; the Cave reuses it for its existing desktop rail. `MainLibraryNavigation` adapts the existing LibraryScreen collections and routes. Story Seed keeps its current navigation; Reader/Reader Codex are immersive exclusions. No page content, cards or internal controls were redesigned. [Contracts, route mappings and transfer details](../../../docs/library-navigation.md).
+`LibraryNavigation` now owns Home — Library — Discover — Profile, active-route matching, content clearance and safe-area spacing. The global Section control and drawer were removed on 2026-09-09 at user request; page destinations remain in top Search. Page definitions still supply the Cave’s existing desktop rail. `MainLibraryNavigation` adapts the existing LibraryScreen collections and routes. Story Seed keeps its current navigation, including Sections; Reader/Reader Codex are immersive exclusions. No page content, cards or internal controls were redesigned. [Contracts, route mappings and transfer details](../../../docs/library-navigation.md).
 
 ## Capture boundary
 

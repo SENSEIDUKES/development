@@ -8,6 +8,7 @@ import {
   CloudOff,
   Download,
   Eye,
+  Gift,
   Globe,
   Keyboard,
   LogOut,
@@ -81,11 +82,12 @@ interface UserProfileSettingsPanelProps {
   publicVisibility: PublicProfileVisibility;
   onPublicVisibilityChange: (next: PublicProfileVisibility) => void;
   onPreviewPublicView: () => void;
+  onRedeemCode: () => void;
 }
 
 /**
  * The Settings page content: every profile control that is not one of
- * the four Cave destinations lives here — identity and Celestial Aura editing,
+ * the three Cave navigation destinations lives here — identity and Celestial Aura editing,
  * portrait controls, the cave environment, language, writing preferences,
  * Harmony sync, backup and import, the advanced tools, Sever Link, and the
  * authorized Akashic Switchboard entry.
@@ -106,6 +108,7 @@ export function UserProfileSettingsPanel({
   publicVisibility,
   onPublicVisibilityChange,
   onPreviewPublicView,
+  onRedeemCode,
 }: UserProfileSettingsPanelProps) {
   // Production reads the local-only flag and its setter from `lib/firebase` and
   // calls the deep library sync on `lib/storage`. All three arrive through the
@@ -596,6 +599,7 @@ export function UserProfileSettingsPanel({
 
             {/* ---- Account --------------------------------------------------- */}
             <SEIDisclosure value="account" heading="Account" icon={LogOut} supportingText={currentUser?.email ? `Linked as ${currentUser.email}` : 'Linked spirit'}>
+              <LibraryButton variant="secondary" fullWidth icon={Gift} onClick={onRedeemCode}>Redeem Code</LibraryButton>
               <div className="pt-1">
                 <LibraryButton variant="danger" fullWidth icon={LogOut} onClick={onLogout}>
                   Sever Link

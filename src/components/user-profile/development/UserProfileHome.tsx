@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   ChevronRight,
+  Mail,
+  Zap,
+  Settings,
+  Store,
   Flame,
   Image as ImageIcon,
   Orbit,
@@ -19,6 +23,7 @@ import {
 import type { UserProfileController } from "../shared/userProfileServices";
 import type { ActiveStatusEffect, PremiumTier } from "../shared/types";
 import type { PublicProfilePresentation } from "./publicProfile";
+import type { CaveAccountControls } from "./caveAccountControls";
 import {
   getDaoRankData,
   getRankForQi,
@@ -110,11 +115,15 @@ export function UserProfileHome({
   mode = "private",
   publicProfile,
   boost,
+  accountControls,
+  onOpenSettings,
 }: {
   controller: UserProfileController;
   mode?: UserProfileHomeMode;
   publicProfile?: PublicProfilePresentation;
   boost?: HomeBoostState;
+  accountControls?: CaveAccountControls;
+  onOpenSettings?: () => void;
 }) {
   const {
     profile,
@@ -354,6 +363,26 @@ export function UserProfileHome({
           className="cave-home-identity relative -mt-9 !rounded-[1.35rem] !border-[#d4af37]/45 !pt-12 text-center"
           data-cave-identity
         >
+          {!isPublic && (
+            <div className="cave-account-emblems" data-cave-account-controls>
+              <button type="button" className="cave-account-emblem" onClick={accountControls?.onOpenInbox}
+                disabled={!accountControls?.onOpenInbox}
+                aria-label={accountControls?.inboxUnreadCount ? `Inbox, ${accountControls.inboxUnreadCount} unread messages` : "Inbox"}>
+                <span className="relative">
+                  <Mail size={24} aria-hidden="true" />
+                  {(accountControls?.inboxUnreadCount ?? 0) > 0 && <span className="cave-unread-dot" data-cave-unread aria-hidden="true" />}
+                </span>
+                <span>Inbox</span>
+              </button>
+              <div className="cave-account-emblem" title="Energy is used to generate content" data-cave-energy>
+                <Zap size={24} aria-hidden="true" />
+                <span>Energy</span>
+                <span className="font-mono" aria-live="polite">
+                  {accountControls?.energyBalance == null ? "Unavailable" : formatQi(accountControls.energyBalance)}
+                </span>
+              </div>
+            </div>
+          )}
           {isLoading && !profile ? (
             <SEILoadingState size="sm" title="Loading profile" />
           ) : (
@@ -633,6 +662,12 @@ export function UserProfileHome({
           </>
         )}
       </div>
+      {!isPublic && (
+        <div className="mt-3 grid grid-cols-2 gap-3" data-cave-account-actions>
+          <LibraryButton fullWidth variant="secondary" icon={Store} onClick={accountControls?.onOpenStore} disabled={!accountControls?.onOpenStore}>Store</LibraryButton>
+          <LibraryButton fullWidth variant="secondary" icon={Settings} onClick={onOpenSettings} disabled={!onOpenSettings}>Settings</LibraryButton>
+        </div>
+      )}
       <SEIDialog
         open={panel !== null}
         onOpenChange={(open) => {

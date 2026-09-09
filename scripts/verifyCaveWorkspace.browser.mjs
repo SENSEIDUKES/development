@@ -37,12 +37,13 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
       await viewport.set({ width, height: 900 });
       for (const destination of ['Home', 'Stories', 'Relics', 'Settings']) {
         report({ width, destination });
+        if (destination === 'Settings') await button('Home').click();
         await button(destination).click({ timeoutMs: 8000 });
         if (destination !== 'Home') assert.equal(await heading(destination).innerText(), destination);
         assert.equal((new URL(await tab.url()).searchParams.get('cave') || '/home'), '/' + destination.toLowerCase());
         const selected = await tab.playwright.evaluate(() => [...document.querySelectorAll('nav[aria-label="Cultivator Cave navigation"] [aria-current="page"]')]
           .filter(el => el.getBoundingClientRect().width > 0).map(el => el.textContent.trim()));
-        assert.equal(selected.join(','), destination);
+        assert.equal(selected.join(','), destination === 'Settings' ? '' : destination);
         const size = await geometry();
         assert.equal(size.overflow, false, `${width} ${destination}: horizontal overflow`);
         assert.equal(size.sidebarVisible, width >= 1024);
@@ -55,7 +56,7 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
         }
       }
       await tab.back();
-      assert.equal(await heading('Relics').innerText(), 'Relics');
+      assert.equal(await button('Settings').isVisible(), true);
       await tab.forward();
       assert.equal(await heading('Settings').innerText(), 'Settings');
       results.push({ width, destinations: 4, history: 'passed' });
@@ -65,6 +66,7 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
     await viewport.set({ width: 390, height: 844 });
     await button('Stories').press('Enter');
     assert.equal(await tab.playwright.evaluate(() => document.activeElement?.textContent), 'Stories');
+    await button('Home').click();
     await button('Settings').press('Space');
     assert.equal(await tab.playwright.evaluate(() => document.activeElement?.textContent), 'Settings');
     await tab.playwright.getByRole('heading', { name: 'Settings', exact: true }).press('Tab');
@@ -82,8 +84,7 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
     await button('Open Divine Mirror').click();
     await tab.back();
     await tab.playwright.getByRole('dialog').waitFor({ state: 'hidden' });
-    assert.equal(await heading('Stories').innerText(), 'Stories');
-    assert.equal(await tab.playwright.evaluate(() => document.activeElement?.textContent), 'Stories');
+    assert.equal(await button('Settings').isVisible(), true);
 
     await button('Settings').click();
     await button('Language Interface dialect and automatic translation.').click();

@@ -75,7 +75,7 @@ export async function verifyCaveHome(page) {
   // The dock uppercases its labels in CSS, so compare on the accessible text.
   const dockLabels = async () =>
     (await page.locator('.cave-workspace-dock button').allInnerTexts()).map(label => label.trim().toLowerCase()).join();
-  check(await dockLabels() === 'home,stories,relics,settings', 'private dock must end in Settings');
+  check(await dockLabels() === 'home,stories,relics', 'private dock must leave Settings unassigned');
   await button('Relics').first().click();
   // Below the header's compact breakpoint the secondary actions live in the
   // existing overflow menu; above it they sit inline.

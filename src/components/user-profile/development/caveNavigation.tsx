@@ -57,8 +57,8 @@ export function resolveCaveRoute(path: string) {
   const view = !destination ? 'unavailable'
     : audience === 'public' ? (child ? 'unavailable' : destination)
     : !child ? destination
-    : destination === 'home' && (child === 'dao-pillar' || child === 'status-effects') ? child
-    : destination === 'settings' && child === 'switchboard' ? child
+    : destination === 'home' && (child === 'dao-pillar' || child === 'status-effects' || child === 'inbox' || child === 'store') ? child
+    : destination === 'settings' && (child === 'switchboard' || child === 'redeem-code') ? child
     : 'unavailable';
   return { path, audience, destination, child, view };
 }

@@ -658,3 +658,5 @@ Validation: 80 profile component tests, production build, package boundaries and
 ## 2026-09-09 navigation polish
 
 Changed only the shared page header title to Profile. Cultivator Cave terminology, routes, theme and contents remain unchanged.
+
+- **2026-09-09 header emblem follow-up:** Profile now uses the existing SEN logo in its shared clickable header emblem. The existing Home callback is preserved. `public/icons/sacred-tree.svg` and `CAVE_EMBLEM_SRC` remain available for future use; the sacred tree is no longer displayed in the Profile header.

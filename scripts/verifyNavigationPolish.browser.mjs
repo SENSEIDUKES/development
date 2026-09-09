@@ -40,6 +40,14 @@ try {
     const title = page.locator('[data-slot="library-header-badge-title"]');
     await title.waitFor();
     assert.equal(await title.textContent(), 'Profile');
+    const logo = page.locator('header a[aria-label="Return to Library"] img');
+    assert.equal(await logo.getAttribute('src'), '/favicon.jpg');
+    assert.equal(await page.locator('header img[src="/icons/sacred-tree.svg"]').count(), 0);
+    assert(await logo.evaluate(img => img.complete && img.naturalWidth > 0));
+    const logoLink = page.locator('header a[aria-label="Return to Library"]');
+    const bounds = await logoLink.boundingBox();
+    assert(bounds && bounds.width >= 44 && bounds.height >= 44);
+    assert.equal((await page.request.get(origin + '/icons/sacred-tree.svg')).status(), 200);
     console.log(`Navigation polish passed at ${width}px`);
   }
 } finally { await browser.close(); }

@@ -5,6 +5,7 @@ import { StorySeedWorkspaceChrome } from './StorySeedWorkspaceChrome';
 
 /** Compatibility adapter; responsive mechanics live in the reusable workspace infrastructure. */
 export function StorySeedMobileNavigation(props: {
+  onNavigateHome: () => void;
   seed: StorySeedInput; updateSeed: (update: SeedUpdate) => void; activeSection: SeedSectionId;
   equippedTitle?: string | null; showStoryBank: boolean; helpOpen: boolean; isGenerating: boolean;
   savedFeedback: boolean; canManifest: boolean; onSelectSection: (id: SeedSectionId) => void;

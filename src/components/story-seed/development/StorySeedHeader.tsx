@@ -4,6 +4,7 @@ import { StorySeedWorkspaceChrome } from './StorySeedWorkspaceChrome';
 
 /** Compatibility adapter for hosts using the existing standalone header export. */
 export function StorySeedHeader(props: {
+  onNavigateHome: () => void;
   seed: StorySeedInput; updateSeed: (update: SeedUpdate) => void; isGenerating: boolean;
   savedFeedback: boolean; showStoryBank: boolean; onSaveDraft: () => void;
   onToggleStoryBank: () => void; onOpenHelp: () => void;

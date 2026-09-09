@@ -111,7 +111,7 @@ const sampleRecord = (id = 'seed-1'): StorySeedRecord => {
 describe('Story Seed keyboard and mobile navigation', () => {
   it('opens shared Settings with modal semantics and restores focus on Escape', async () => {
     act(() => root.render(
-      <LibraryPresentationProvider>{<StorySeedWorkspaceChrome activeSection="origin" onSelectSection={vi.fn()} helpOpen={false} canManifest={false} manifestLabel="Manifest" status="Draft" onManifest={vi.fn()} children={null}
+      <LibraryPresentationProvider>{<StorySeedWorkspaceChrome onNavigateHome={vi.fn()} activeSection="origin" onSelectSection={vi.fn()} helpOpen={false} canManifest={false} manifestLabel="Manifest" status="Draft" onManifest={vi.fn()} children={null}
         seed={createEmptyStorySeedInput()}
         updateSeed={vi.fn()}
         isGenerating={false}
@@ -263,10 +263,10 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(currentSeed.story.required.storyTags).toEqual([]);
   });
 
-  it('adds Manifest to the labeled mobile navigation only when generation is ready', () => {
+  it('keeps four navigation entries regardless of Manifest eligibility', () => {
     const onManifest = vi.fn();
     const renderNavigation = (canManifest: boolean) => act(() => root.render(
-      <LibraryPresentationProvider>{<StorySeedWorkspaceChrome manifestLabel="Manifest" status="Draft" children={null}
+      <LibraryPresentationProvider>{<StorySeedWorkspaceChrome onNavigateHome={vi.fn()} manifestLabel="Manifest" status="Draft" children={null}
         seed={createEmptyStorySeedInput()}
         updateSeed={vi.fn()}
         activeSection="origin"
@@ -289,8 +289,8 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(buttons.map(button => button.getAttribute('aria-label') ?? button.textContent?.trim())).toEqual([
       'Sections',
       'Story Bank',
-      'Help',
       'Settings',
+      'Back',
     ]);
     expect(container.textContent).not.toContain('Profile');
 
@@ -300,18 +300,17 @@ describe('Story Seed keyboard and mobile navigation', () => {
     expect(buttons.map(button => button.getAttribute('aria-label') ?? button.textContent?.trim())).toEqual([
       'Sections',
       'Story Bank',
-      'Help',
       'Settings',
-      'Manifest',
+      'Back',
     ]);
     expect(buttons.every(button => !button.querySelector('.sr-only'))).toBe(true);
-    act(() => buttons[4].click());
+    act(() => buttonNamed('Manifest')!.click());
     expect(onManifest).toHaveBeenCalledTimes(1);
   });
 
   it('announces why the primary Manifest action is disabled', () => {
     act(() => root.render(
-      <LibraryPresentationProvider>{<CreationModal
+      <LibraryPresentationProvider>{<CreationModal onNavigateHome={vi.fn()}
         onStartStory={vi.fn()}
         onGenerateBlueprint={vi.fn()}
         isGenerating={false}

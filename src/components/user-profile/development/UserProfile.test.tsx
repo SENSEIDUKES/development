@@ -216,7 +216,7 @@ describe('Cultivator Cave home', () => {
     expect(container.querySelector('.workspace-header [aria-label="Open settings"]')).toBeNull();
     // The chrome names the workspace without owning the page heading.
     expect(container.querySelector('h1')).toBeNull();
-    expect(container.querySelector('[data-slot="library-header-badge-title"]')?.textContent).toBe('Cultivator Cave');
+    expect(container.querySelector('[data-slot="library-header-badge-title"]')?.textContent).toBe('Profile');
     // Below the desktop breakpoint the drawer is the only navigation mounted:
     // no rail, and so no second copy of the same destinations.
     expect(container.querySelectorAll('nav[aria-label="Library global navigation"]')).toHaveLength(1);

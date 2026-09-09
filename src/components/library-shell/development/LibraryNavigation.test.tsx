@@ -87,19 +87,19 @@ it.each(['reader', 'codex'])('excludes immersive %s even when standard mode is r
 it('preserves the real Story Seed strip, sections, bank, Help and settings inside the shell exclusion', async () => {
   const bank = vi.fn(); const help = vi.fn(); const select = vi.fn();
   await render(<LibraryNavigation location={{ screen: 'creator' }} onNavigate={vi.fn()}>
-    <StorySeedWorkspaceChrome seed={createEmptyStorySeedInput()} updateSeed={vi.fn()} activeSection="origin" showStoryBank={false} helpOpen={false}
+    <StorySeedWorkspaceChrome onNavigateHome={vi.fn()} seed={createEmptyStorySeedInput()} updateSeed={vi.fn()} activeSection="origin" showStoryBank={false} helpOpen={false}
       isGenerating={false} savedFeedback={false} canManifest={false} manifestLabel="Manifest" status="Ready" onSaveDraft={vi.fn()} onManifest={vi.fn()}
       onToggleStoryBank={bank} onOpenHelp={help} onSelectSection={select} layout="mobile"><p>Existing editor</p></StorySeedWorkspaceChrome>
   </LibraryNavigation>);
   expect(globalNav()).toBeNull();
   const nav = document.querySelector('nav[aria-label="Story Seed navigation"]')!;
-  expect(Array.from(nav.querySelectorAll('button')).map(button => button.textContent)).toEqual(['Sections', 'Story Bank', 'Help', 'Settings']);
+  expect(Array.from(nav.querySelectorAll('button')).map(button => button.textContent)).toEqual(['Sections', 'Story Bank', 'Settings', 'Back']);
   await click(button('Sections', nav));
   expect(document.querySelector('[role="dialog"]')).not.toBeNull();
   await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
   await settle();
   await click(button('Story Bank', nav)); expect(bank).toHaveBeenCalledTimes(1);
-  await click(button('Help', nav)); expect(help).toHaveBeenCalledTimes(1);
+  expect(button('Help', nav)).toBeUndefined();
   await click(button('Settings', nav));
   expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Story Seed settings');
 });

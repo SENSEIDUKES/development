@@ -453,7 +453,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         mainClassName="cave-workspace-main"
         sidebarLabel={navigationDefinition.label}
         sidebar={caveSidebarMounted ? <LibrarySectionSidebar /> : undefined}
-        header={<WorkspaceHeader title="Cultivator Cave" landmark="none"
+        header={<WorkspaceHeader title="Profile" landmark="none"
           emblem={{ src: CAVE_EMBLEM_SRC, alt: 'Library sacred tree' }}
           home={{ href: '/', label: 'Return to Library', onNavigate: onNavigateHome }}
           contextualItem={isPublicView ? <p role="status" className="workspace-header-public-view" title="Public View">

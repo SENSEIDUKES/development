@@ -36,6 +36,9 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
   Effects with Highlights, and the Daily Dao Pillar with Boost, and swaps Settings for Exit in the
   navigation. Added the twelve visible-character display-name cap, a local public-visibility
   configuration, and minimum-safe public Stories and Relics pages.
+- **2026-09-09:** Restored the Cave's layer order after the shared App Shell migration. The
+  interactive shell now paints above the decorative environment, and the backdrop cannot intercept
+  pointer input, so profile cards remain visible and tappable on mobile and desktop.
 - **2026-09-08:** Replaced the Celestial Aura tier list with the canonical **rank colour system** in
   `rankVisuals.ts`: the ten-rank ladder (Reader → Master) with its Qi thresholds, and each rank's
   solid colour or multi-stop gradient as first-class data. The display name, the rank orb, the

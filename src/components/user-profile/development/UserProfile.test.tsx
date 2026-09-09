@@ -524,6 +524,16 @@ describe('locked reference replica', () => {
 
 
 describe('Cave workspace shell', () => {
+  it('keeps the decorative backdrop behind the interactive shell', async () => {
+    await renderCave();
+    const backdrop = container.querySelector('[data-cave-backdrop-layer]');
+    const shell = container.querySelector('[data-slot="app-shell"]');
+
+    expect(backdrop?.classList.contains('pointer-events-none')).toBe(true);
+    expect(shell?.classList.contains('relative')).toBe(true);
+    expect(shell?.classList.contains('z-10')).toBe(true);
+  });
+
   it('mounts the desktop rail only once the desktop breakpoint fits', async () => {
     desktopViewport = true;
     await renderCave();

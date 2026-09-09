@@ -408,7 +408,11 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     <WorkspaceNavigation definition={navigationDefinition}>
     <div className="cave-workspace relative min-h-[100dvh] bg-[#03060c] text-neutral-200" data-cave-environment={environment.id} data-cave-audience={route.audience}>
       {/* Backdrop: stock Immortal Land art, cooled into the cave palette */}
-      <div aria-hidden="true" className="absolute inset-0 overflow-clip">
+      <div
+        aria-hidden="true"
+        data-cave-backdrop-layer
+        className="pointer-events-none absolute inset-0 overflow-clip"
+      >
         <img
           key={environment.src}
           src={environment.src}
@@ -427,7 +431,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
       </div>
 
       <WorkspaceShell
-        className="cave-shell"
+        className="cave-shell relative z-10"
         mainClassName="cave-workspace-main"
         sidebarLabel={navigationDefinition.label}
         sidebar={caveSidebarMounted ? <WorkspaceSidebar /> : undefined}

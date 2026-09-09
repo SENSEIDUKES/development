@@ -62,8 +62,6 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const controller = useUserProfile({ currentUser, stories, onLogout, onNavigateHome });
   const {
     profile,
-    formData,
-    isLoading,
     error,
     setIsAdminPanelOpen,
     allUsers,

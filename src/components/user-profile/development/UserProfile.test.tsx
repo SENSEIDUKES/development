@@ -712,3 +712,27 @@ describe('Claim reconciliation', () => {
     expect(result.controller().profile?.heavenly_qi).toBe(before - 50);
   });
 });
+
+
+describe('Claim and existing profile edits', () => {
+  it('preserves the award and daily key when an overlapping profile save finishes', async () => {
+    const result = await renderCave();
+    await click(open('dao-pillar'));
+    await act(async () => { result.controller().setFormData(previous => ({ ...previous, displayName: 'Updated Display Name' })); });
+    let save: Promise<void> | void;
+    await act(async () => { save = result.controller().handleSave(); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(650); await save; });
+    expect(result.controller().profile?.displayName).toBe('Updated Display Name');
+    expect(result.controller().profile?.dao_xp).toBe(13485);
+    expect(result.controller().profile?.lastReadDate).toBe(new Date().toISOString().split('T')[0]);
+    expect((open('dao-pillar') as HTMLButtonElement).disabled).toBe(true);
+  });
+  it('updates the rank and bar together when collection crosses a threshold', async () => {
+    await renderCave({ adapter: { profileOverride: { dao_xp: 99, qi: 99 } } });
+    expect(container.querySelector('[data-cave-rank]')?.textContent).toBe(getRankForQi(99).name);
+    await click(open('dao-pillar'));
+    await act(async () => { await vi.advanceTimersByTimeAsync(650); });
+    expect(container.querySelector('[data-cave-rank]')?.textContent).toBe(getRankForQi(104).name);
+    expect((container.querySelector('[data-cave-progress]') as HTMLElement).style.getPropertyValue('--cave-rank-background')).toBe(rankBackground(getRankForQi(104).visual));
+  });
+});

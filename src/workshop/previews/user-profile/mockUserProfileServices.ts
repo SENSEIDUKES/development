@@ -258,13 +258,20 @@ export function createMockUserProfileServices({
     const performSave = useCallback(
       async (preferredLanguage: string, defaultTranslationLanguage: string) => {
         if (!profile) return;
+        const epoch = accountEpoch.current;
+        // Apply only edits made in this form. An in-flight daily claim may
+        // update cultivation and lastReadDate before this save finishes.
+        const changes = Object.fromEntries(Object.entries(formData).filter(
+          ([key, value]) => value !== profile[key as keyof UserProfile],
+        ));
         setError('');
         try {
           await failIfScenarioFails('Your changes could not be etched into the matrix. Please retry.');
           await delay(PROFILE_SAVE_MS);
+          if (!mounted.current || epoch !== accountEpoch.current || !profileRef.current) return;
           commitProfile({
-            ...profile,
-            ...formData,
+            ...profileRef.current,
+            ...changes,
             preferredLanguage,
             defaultTranslationLanguage,
             updatedAt: new Date().toISOString(),
@@ -436,14 +443,16 @@ export function createMockUserProfileServices({
 
     const handleApplyPortrait = useCallback(async () => {
       if (!generatedPortraitUrl || isSavingPortrait || !profile) return;
+      const epoch = accountEpoch.current;
       setIsSavingPortrait(true);
       setPortraitError('');
       try {
         // Production uploads to R2 and commits the asset descriptor here.
         await failIfScenarioFails('The portrait could not be sealed to your record.');
         await delay(PORTRAIT_APPLY_MS);
+        if (!mounted.current || epoch !== accountEpoch.current || !profileRef.current) return;
         commitProfile({
-          ...profile,
+          ...profileRef.current,
           avatarUrl: generatedPortraitUrl,
           activePortraitId: `portrait_${generateId(8)}`,
           updatedAt: new Date().toISOString(),

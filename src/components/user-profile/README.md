@@ -471,3 +471,6 @@ uses local simulated accounts, not production authentication/storage or physical
 `verifyCaveHome` in `scripts/verifyCaveHome.browser.mjs` accepts a Playwright page on
 the developed preview and verifies these states and five viewport widths. The
 existing `verifyCaveWorkspace.browser.mjs` remains the navigation regression check.
+
+Self-review also verified overlapping profile edits: delayed profile/portrait saves
+merge their edits into the latest local snapshot so a completed claim is retained.

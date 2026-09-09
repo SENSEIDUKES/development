@@ -1,4 +1,5 @@
 export { MainLibraryHeader, type MainLibraryHeaderAdapter } from './MainLibraryHeader';
+export { MainLibraryHomeInsights } from './MainLibraryHomeInsights';
 export { WorkspaceHeader, type WorkspaceHeaderProps } from './WorkspaceHeader';
 export { type HeaderSearchItem } from './WorkspaceHeaderUtilities';
 export { WorkspaceShell, WORKSPACE_SIDEBAR_WIDTH, type WorkspaceShellProps } from './WorkspaceShell';

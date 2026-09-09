@@ -1,23 +1,18 @@
-import { createContext, useContext } from 'react';
 import { MotionConfig } from 'motion/react';
 import { MainLibraryAdapterContext, type MainLibraryAdapter } from '../shared/MainLibraryAdapter';
 import { GlobalHeader } from './main-library/GlobalHeader';
+import { MainLibraryClipboardProvider, type MainLibraryCopyText, useHeaderClipboard } from './mainLibraryClipboard';
 
 export interface MainLibraryHeaderAdapter extends MainLibraryAdapter {
-  copyText: (text: string) => Promise<void>;
+  copyText: MainLibraryCopyText;
 }
-const CopyContext = createContext<MainLibraryHeaderAdapter['copyText'] | null>(null);
-export function useHeaderClipboard() {
-  const copy = useContext(CopyContext);
-  if (!copy) throw new Error('MainLibraryHeader requires a clipboard adapter');
-  return copy;
-}
+export { useHeaderClipboard };
 
-/** Home contributes its identity, guidance, commands and optional Dao slot to the shared header. */
+/** Home contributes its identity, guidance and commands to the shared header. */
 export function MainLibraryHeader({ adapter }: { adapter: MainLibraryHeaderAdapter }) {
   return <MainLibraryAdapterContext.Provider value={adapter}>
-    <CopyContext.Provider value={adapter.copyText}>
+    <MainLibraryClipboardProvider copyText={adapter.copyText}>
       <MotionConfig reducedMotion="user"><GlobalHeader /></MotionConfig>
-    </CopyContext.Provider>
+    </MainLibraryClipboardProvider>
   </MainLibraryAdapterContext.Provider>;
 }

@@ -18,6 +18,8 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-09 regression fix:** Restored the Relics connection on Cave Home. Relics is a full-width destination directly beneath the Daily Dao Pillar and above the Store / Settings pair, showing the inventory count and opening the existing `/relics` route — the same `UserProfileInventoryPanel`, the same navigation entry, no second relic implementation or state. The public view is unchanged.
+
 - **2026-09-09 follow-up:** Removed Section from the main global strip, leaving Home, Library, Discover and Profile. Cave destinations remain in top Search and the existing desktop rail; Search releases focus before navigation. Story Seed retains its Sections control. This supersedes the global Section menu described in the earlier entry below.
 - **2026-09-09:** Migrated the Cave's bottom destinations into the Library Shell Section menu. The shared global strip is Section, Home, Library, Discover, Profile; Profile stays active for every Cave route. The existing desktop rail reads the same Section definition. Private Settings stays beneath Daily Dao Pillar, public Exit keeps its previous destination, and all existing pages and internal UI are unchanged. The host now supplies `onNavigateLibrary(location)` for leaving the Cave. See [Library navigation](../../../docs/library-navigation.md).
 

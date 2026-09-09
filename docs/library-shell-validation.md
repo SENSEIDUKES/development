@@ -56,7 +56,20 @@ Checked with Playwright/Chromium against `npm run build` output served by `vite 
 | Narrow header packing (added 2026-09-09 after device review) | At 320, 360, 390 and 430px the primary action's button matches its wrapper exactly (46px) and clears the overflow trigger by 8px. Previously at 320px a 31px wrapper held a 44px button, which painted outside it and 5px on top of the overflow trigger. |
 | Overflow menu surface | The panel paints on an opaque ground with a hairline border, so page headings and body text no longer read through the menu items. |
 
-Local checks re-run for this change: `npx tsc -b`, `npx vitest run` (627 passed, 1 skipped), `npm run build`, `node scripts/checkLibraryShellCapture.mjs`, `npm run check:ui-artifacts`, `npm run check:package-boundaries`.
+## Regression fixes — 2026-09-09
+
+Measured with Playwright/Chromium against the running Development preview at 320, 375, 390, 430 and 1440px for the Main Library home, Story Seed and the Cultivator Cave.
+
+| Check | Evidence |
+| --- | --- |
+| Help and Search separate | Both controls render as their own `<button>` inside `.workspace-header-utilities` at every measured width; no `Header options` trigger and no `.header-overflow` exists in the header. Each measures 44 × 44px on phones; on desktop Search adds its label (112–117px wide) and Help stays 44 × 44px. |
+| Title readability | `Celestial Library`, `Story Seed` and `Cultivator Cave` render in full at all five widths with `scrollWidth <= clientWidth` on the badge title — no ellipsis and no overlap with the two utilities. The 479px type rule and the wrap fallback are unchanged, so the plaque keeps its height, shape, glow, border and colors. |
+| Story Seed header count | One product header and no `.workspace-header-toolbar`, `.workspace-primary-action`, `.workspace-secondary-actions` or `.workspace-header-status` beneath it. |
+| Story Seed action row | `[data-story-seed-action-row]` renders inside `<main>`, above the form, with the status, Save Draft and Manifest. No document horizontal overflow at 320–1440px: on phones the status takes its own line and the Manifest label wraps rather than being reduced to an unlabeled icon. |
+| Dao Insights placement | No `.dao-insights-trigger` inside `<header>` on any screen; `[data-home-dao-insights]` renders in Home content between the featured area and the collection tabs. |
+| Cave Relics | `[data-cave-card="relics"]` renders full width directly after `[data-cave-card="dao-pillar"]` and before `[data-cave-account-actions]`, and opens `cave=/relics` with the single existing inventory panel. |
+
+Local checks re-run for this change: `npx tsc -b`, `npx vitest run` (670 passed, 1 skipped), `npm run build`, `node scripts/checkLibraryShellCapture.mjs`, `npm run check:ui-artifacts`, `npm run check:package-boundaries`.
 
 ## Limits of this evidence
 

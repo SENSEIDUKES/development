@@ -3,6 +3,7 @@ import {
   ChevronRight,
   Mail,
   Zap,
+  Gem,
   Settings,
   Store,
   Flame,
@@ -116,6 +117,7 @@ export function UserProfileHome({
   publicProfile,
   boost,
   accountControls,
+  onOpenRelics,
   onOpenSettings,
 }: {
   controller: UserProfileController;
@@ -123,6 +125,8 @@ export function UserProfileHome({
   publicProfile?: PublicProfilePresentation;
   boost?: HomeBoostState;
   accountControls?: CaveAccountControls;
+  /** Opens the Cave's existing `/relics` route and its inventory panel. */
+  onOpenRelics?: () => void;
   onOpenSettings?: () => void;
 }) {
   const {
@@ -135,6 +139,8 @@ export function UserProfileHome({
     handleRepairPillar,
   } = controller;
   const isPublic = mode === "public";
+  // The same inventory the Relics destination reads; counted, never copied.
+  const relicCount = profile?.cosmicInventory?.length ?? 0;
   const [panel, setPanel] = useState<HomePanel | null>(null);
   const [now, setNow] = useState(Date.now);
   const [repairing, setRepairing] = useState(false);
@@ -662,6 +668,34 @@ export function UserProfileHome({
           </>
         )}
       </div>
+      {/* Relics is a destination of its own, the same weight as the Dao Pillar
+          it follows and above the smaller Store and Settings pair. It opens the
+          Cave's existing `/relics` route, which mounts the one inventory panel;
+          nothing about relics is implemented or stored a second time here. */}
+      {!isPublic && (
+        <div className="mt-3">
+          <button
+            type="button"
+            className="cave-home-pillar"
+            disabled={!onOpenRelics}
+            onClick={onOpenRelics}
+            data-cave-card="relics"
+          >
+            <span className="cave-home-pillar-art" aria-hidden="true">
+              <Gem size={30} />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-display text-lg">Relics</span>
+              <span className="mt-1 block font-serif text-lg text-sky-300">
+                {formatQi(relicCount)} {relicCount === 1 ? "Relic" : "Relics"}
+              </span>
+              <span className="mt-1 block text-sm">
+                Inventory, attunement, and the Offering Hall
+              </span>
+            </span>
+          </button>
+        </div>
+      )}
       {!isPublic && (
         <div className="mt-3 grid grid-cols-2 gap-3" data-cave-account-actions>
           <LibraryButton fullWidth variant="secondary" icon={Store} onClick={accountControls?.onOpenStore} disabled={!accountControls?.onOpenStore}>Store</LibraryButton>

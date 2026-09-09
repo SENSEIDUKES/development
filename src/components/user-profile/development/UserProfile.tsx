@@ -409,7 +409,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           </UserProfileCaveDestination>
         );
       default:
-        return <UserProfileHome controller={controller} onOpenSettings={() => navigate('/settings')} accountControls={{
+        return <UserProfileHome controller={controller} onOpenRelics={() => navigate('/relics')}
+          onOpenSettings={() => navigate('/settings')} accountControls={{
           ...accountControls,
           onOpenInbox: accountControls?.onOpenInbox ?? (() => navigate('/home/inbox')),
           onOpenStore: accountControls?.onOpenStore ?? (() => navigate('/home/store')),

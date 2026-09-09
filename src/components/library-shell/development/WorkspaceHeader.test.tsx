@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -50,21 +52,59 @@ it('calls the existing page Help owner and preserves preload and expanded state'
   expect(document.querySelector('[role="dialog"]')).toBeNull();
 });
 
-it('keeps mobile Help and Search accessible through the overflow with focus restoration', async () => {
-  vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+// Regression: Help and Search were consolidated into a "…" menu below 480px.
+// They are two separate, individually visible controls again, at every width,
+// and the badge title stays whole beside them.
+const TEST_WIDTHS = [320, 375, 390, 430, 1440];
+const stubViewport = (width: number) => vi.stubGlobal('matchMedia', (query: string) => {
+  const max = /max-width:\s*(\d+)px/.exec(query);
+  const min = /min-width:\s*(\d+)px/.exec(query);
+  return { media: query, matches: (!max || width <= Number(max[1])) && (!min || width >= Number(min[1])),
+    addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn() };
+});
+
+it.each(TEST_WIDTHS)('regression: keeps Help and Search separate at %ipx with a readable full title', async width => {
+  stubViewport(width);
   const onAction = vi.fn();
-  await render(<WorkspaceHeader title="Celestial Library" help={{ id: 'help', label: 'Help', onAction }} />);
-  expect(button('Help')).toBeNull();
-  await click(button('Header options'));
-  expect(document.activeElement).toBe(button('Help'));
+  await render(<WorkspaceHeader title="Celestial Library" emblem={{ src: '/favicon.jpg', alt: 'Library' }}
+    home={{ href: '/', label: 'Home' }} help={{ id: 'help', label: 'Help', onAction }} />);
+  const header = container.querySelector('header')!;
+  // Never a "…" consolidation: both utilities are their own visible control.
+  expect(button('Header options')).toBeNull();
+  expect(header.querySelector('.header-overflow')).toBeNull();
+  const utilities = header.querySelector('.workspace-header-utilities')!;
+  expect(Array.from(utilities.querySelectorAll('button')).map(element => element.getAttribute('aria-label')))
+    .toEqual(['Help', 'Search']);
+  expect(button('Help')).not.toBe(button('Search'));
+  // Each keeps its own touch target rather than sharing one trigger.
+  for (const control of [button('Help'), button('Search')]) expect(control.className).toContain('min-h-11');
+  // Full titles stay whole: no ellipsis, no truncation of the badge plaque.
+  const title = header.querySelector('[data-slot="library-header-badge-title"]')!;
+  expect(title.textContent).toBe('Celestial Library');
+  expect(title.textContent).not.toContain('…');
+  expect(header.querySelector('[data-mode="app-header"]')).not.toBeNull();
+
   await click(button('Help'));
   expect(onAction).toHaveBeenCalledTimes(1);
-  expect(document.activeElement).toBe(button('Header options'));
-  await click(button('Header options'));
   await click(button('Search'));
   expect(document.activeElement?.getAttribute('type')).toBe('search');
   await click(button('Close Search')); await settle();
-  expect(document.activeElement).toBe(button('Header options'));
+  // Focus returns to Search itself, not to a shared overflow trigger.
+  expect(document.activeElement).toBe(button('Search'));
+});
+
+it('regression: keeps the badge legibility rules that let long titles wrap instead of clipping', () => {
+  const css = readFileSync(join(process.cwd(), 'src/components/library-shell/development/workspace-header.css'), 'utf8');
+  const badgeTitle = css.slice(css.indexOf('[data-slot="library-header-badge-title"]'));
+  expect(badgeTitle).toContain('overflow: visible');
+  expect(badgeTitle).toContain('text-overflow: clip');
+  expect(badgeTitle).toContain('white-space: normal');
+  expect(badgeTitle).toContain('overflow-wrap: anywhere');
+  // The phone type adjustment that keeps the plaque height is unchanged.
+  expect(css).toContain('font-size: 13px; line-height: 14px; letter-spacing: 0.02em;');
+  // Help and Search hold their own 44px targets; the pair never shrinks.
+  expect(css).toContain('.workspace-header-utilities > :is(button, [role="button"]) { min-width: 44px; min-height: 44px; }');
+  expect(css).not.toContain('workspace-header-utilities .header-overflow');
 });
 
 it('reuses Library Help topics and original guidance, closes with Escape and returns focus', async () => {

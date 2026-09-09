@@ -1,5 +1,5 @@
 import FocusLock from 'react-focus-lock';
-import { useHeaderClipboard } from '../MainLibraryHeader';
+import { useHeaderClipboard } from '../mainLibraryClipboard';
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';

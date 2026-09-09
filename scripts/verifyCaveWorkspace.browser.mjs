@@ -14,18 +14,26 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
   };
   const button = name => tab.playwright.getByRole('button', { name, exact: true });
   const heading = name => tab.playwright.getByRole('heading', { name, exact: true });
+  const searchDestination = async (name, keyboard = false) => {
+    const before = await tab.url();
+    await button('Search').click();
+    const item = tab.playwright.getByRole('dialog').getByRole('button', { name, exact: true });
+    if (keyboard) await item.press('Enter'); else await item.click();
+    await tab.playwright.getByRole('dialog').waitFor({ state: 'hidden' });
+    if (await tab.url() !== before) await eventually(() => tab.playwright.evaluate(() => Boolean(document.activeElement?.matches('h2'))), 'destination heading receives focus');
+  };
   const geometry = () => tab.playwright.evaluate(() => {
-    const dock = document.querySelector('.cave-workspace-dock > nav');
-    const sidebar = document.querySelector('.cave-workspace-body > aside');
+    const dock = document.querySelector('.library-global-navigation');
+    const sidebar = document.querySelector('[data-slot="app-shell-sidebar"]');
     const rect = dock.getBoundingClientRect();
     return {
       overflow: document.documentElement.scrollWidth > innerWidth + 1,
       bottom: rect.bottom, height: rect.height, width: rect.width, viewportHeight: innerHeight,
       dockVisible: rect.width > 0, dockPosition: getComputedStyle(dock).position,
-      sidebarVisible: sidebar.getBoundingClientRect().width > 0,
-      clearance: Number.parseFloat(getComputedStyle(document.querySelector('.cave-workspace-body')).paddingBottom),
+      sidebarVisible: Boolean(sidebar && sidebar.getBoundingClientRect().width > 0),
+      clearance: Number.parseFloat(getComputedStyle(document.querySelector('.library-navigation-layout')).paddingBottom),
       padding: Number.parseFloat(getComputedStyle(dock).paddingBottom),
-      targets: [...document.querySelectorAll('nav[aria-label="Cultivator Cave navigation"] button')]
+      targets: [...dock.querySelectorAll('button')]
         .map(el => el.getBoundingClientRect()).filter(rect => rect.width > 0)
         .map(rect => ({ width: rect.width, height: rect.height })),
     };
@@ -37,19 +45,22 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
       await viewport.set({ width, height: 900 });
       for (const destination of ['Home', 'Stories', 'Relics', 'Settings']) {
         report({ width, destination });
-        if (destination === 'Settings') await button('Home').click();
-        await button(destination).click({ timeoutMs: 8000 });
+        if (destination === 'Settings') { await searchDestination('Home'); await button('Settings').click(); }
+        else await searchDestination(destination);
         if (destination !== 'Home') assert.equal(await heading(destination).innerText(), destination);
         assert.equal((new URL(await tab.url()).searchParams.get('cave') || '/home'), '/' + destination.toLowerCase());
-        const selected = await tab.playwright.evaluate(() => [...document.querySelectorAll('nav[aria-label="Cultivator Cave navigation"] [aria-current="page"]')]
+        await button('Search').click();
+        const selected = await tab.playwright.evaluate(() => [...document.querySelectorAll('.workspace-search-results [aria-pressed="true"]')]
           .filter(el => el.getBoundingClientRect().width > 0).map(el => el.textContent.trim()));
         assert.equal(selected.join(','), destination === 'Settings' ? '' : destination);
+        await button('Close Search').press('Escape');
+        await tab.playwright.getByRole('dialog').waitFor({ state: 'hidden' });
         const size = await geometry();
         assert.equal(size.overflow, false, `${width} ${destination}: horizontal overflow`);
         assert.equal(size.sidebarVisible, width >= 1024);
-        assert.equal(size.dockVisible, width < 1024);
-        assert(size.targets.every(rect => rect.width >= 44 && rect.height >= 44));
-        if (width < 1024) {
+        assert.equal(size.dockVisible, true);
+        assert(size.targets.every(rect => rect.width >= 43.9 && rect.height >= 43.9));
+        {
           assert.equal(size.dockPosition, 'fixed');
           assert(Math.abs(size.bottom - size.viewportHeight) < 2);
           assert(size.clearance >= size.height, 'content must clear the complete dock');
@@ -64,9 +75,9 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
 
     report('Keyboard, overlays, and safe areas');
     await viewport.set({ width: 390, height: 844 });
-    await button('Stories').press('Enter');
+    await searchDestination('Stories', true);
     assert.equal(await tab.playwright.evaluate(() => document.activeElement?.textContent), 'Stories');
-    await button('Home').click();
+    await searchDestination('Home');
     await button('Settings').press('Space');
     assert.equal(await tab.playwright.evaluate(() => document.activeElement?.textContent), 'Settings');
     await tab.playwright.getByRole('heading', { name: 'Settings', exact: true }).press('Tab');

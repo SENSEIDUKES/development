@@ -69,12 +69,17 @@ function StorySeedChromeContent(props: StorySeedWorkspaceChromeProps) {
   const bank: HeaderAction = { id: 'story-bank', label: 'Story Bank', icon: Vault, pressed: props.showStoryBank,
     onIntent: props.onStoryBankIntent ?? props.onSecondaryIntent, onAction: props.onToggleStoryBank };
   const help: HeaderAction = { id: 'help', label: 'Help', icon: CircleHelp,
+    expanded: props.helpOpen, hasPopup: 'dialog',
     onIntent: props.onHelpIntent ?? props.onSecondaryIntent, onAction: props.onOpenHelp };
   const header = <WorkspaceHeader title="Story Seed" subtitle="Grow Your Universe"
     landmark={props.layout === 'complete' || props.layout === undefined ? 'none' : 'banner'}
     emblem={{ src: '/favicon.jpg', alt: 'Celestial Library' }} home={{ href: '/', label: 'Return to Workshop home' }}
     primaryAction={props.showStoryBank || props.headerSaveOnly ? save : manifest}
-    secondaryActions={props.showStoryBank || props.headerSaveOnly ? [settings, bank] : [save, settings, bank]} overflowActions={[help]}
+    secondaryActions={props.showStoryBank || props.headerSaveOnly ? [settings, bank] : [save, settings, bank]} help={help}
+    searchItems={navigation.definition.sections.flatMap(section => section.items.map(item => ({
+      id: item.id, label: item.label,
+      onAction: () => item.onSelect?.(item.id),
+    })))}
     status={{ label: props.error || props.status, tone: props.error ? 'error' : props.isGenerating ? 'busy' : props.savedFeedback ? 'success' : 'neutral' }} />;
   const bottomControls = <WorkspaceBottomControls label="Story Seed navigation" items={[
     { id: 'sections', label: 'Sections', icon: <List size={20} />, active: navigation.drawerOpen,

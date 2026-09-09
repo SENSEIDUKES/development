@@ -8,13 +8,21 @@
 - **Last source comparison:** 2026-09-08
 - **Replica status:** under refinement; locked captures plus Development workspaces on the canonical `SEIAppHeader` and `SEIAppShell`.
 
+## Top navigation update
+
+Development now uses Logo — existing Library Header Badge — optional contextual item — Help — Search. Home supplies Dao Insights; the public Cave supplies Public View. Help reuses the original Library Help menu and Search finds host destinations/actions. Existing page commands remain in a shared toolbar below the top row. See [the header contract](../../../docs/library-header-family.md) and its focused Header slot states preview.
+
+## Bottom navigation update — 2026-09-09
+
+`LibraryNavigation` now owns Home — Library — Discover — Profile, active-route matching, content clearance and safe-area spacing. The global Section control and drawer were removed on 2026-09-09 at user request; page destinations remain in top Search. Page definitions still supply the Cave’s existing desktop rail. `MainLibraryNavigation` adapts the existing LibraryScreen collections and routes. Story Seed keeps its current navigation, including Sections; Reader/Reader Codex are immersive exclusions. No page content, cards or internal controls were redesigned. [Contracts, route mappings and transfer details](../../../docs/library-navigation.md).
+
 ## Capture boundary
 
 The locked reference area records two existing systems for comparison. Its captures remain unchanged. The separate Development area now proves the shared header family and responsive navigation in the active Story Seed and Cultivator Cave; see [component contracts](../../../docs/library-header-family.md). Main Library was read at `4a3dd02b6640b2ec50d8d1d136e37fb808249ed2` and Story Seed at development `7e1302bd2d5c3205706ddb1362607abed6a850e6`; neither was re-read on 2026-09-09, so their source-comparison dates are unchanged. The vendored UI artifacts now come from UI commit `42961e48e78ee816f9c2801a37a7f66af8aa2ae2` (UI PR #60), which adds `SEIAppHeader`, `SEIAppShell` and the compact `LibraryHeaderBadge` presentation.
 
 `reference/main-library/` freezes the global header, DAO presentation and animation logic, production theme stylesheet, and the exact collection-tab fragment that displays sync state. It localizes the source font payloads so external network and CSP changes cannot alter the captured layout. `reference/story-seed/` freezes the current shell components, section model, settings body, supporting pure helpers, and CSS. `StorySeedShell.tsx` copies the shell JSX from `CreationModal`; its domain editor, Story Bank, and Help children are explicit host slots. This capture is distinct from the older locked reference inside the existing Story Seed Workshop.
 
-`development/LibraryShell.ts` exports the workspace system: `WorkspaceHeader` as a thin adapter over the canonical `SEIAppHeader`, `WorkspaceShell` as a thin adapter over `SEIAppShell`, and the shared header-action presentation. The custom `HeaderFoundation` and the old `WorkspaceHeader` visual implementation are gone; only one header system remains. `MainLibraryHeader` keeps the homepage header exactly as it was, on its own scoped surface. See [header contract and ownership](../../../docs/library-header-family.md).
+`development/LibraryShell.ts` exports the workspace system: `WorkspaceHeader` as a thin adapter over the canonical `SEIAppHeader`, `WorkspaceShell` as a thin adapter over `SEIAppShell`, and the shared header-action presentation. The custom `HeaderFoundation` and the old `WorkspaceHeader` visual implementation are gone; only one header system remains. `MainLibraryHeader` now supplies Home context and commands to the same shared top header; the locked homepage capture stays unchanged. See [header contract and ownership](../../../docs/library-header-family.md).
 
 ## Inspect the references
 
@@ -84,6 +92,8 @@ Nothing in this PR is transferred back automatically. Light-Novels and locked re
 For an eventual approved change, identify the owning lane first. Main header/DAO changes would target Light-Novels `src/components/GlobalHeader.tsx`, `src/components/DaoInsights.tsx`, relevant `src/index.css` rules, and only if needed the collection fragment in `src/components/LibraryScreen.tsx`. Story Seed changes would target its existing development header, selector, mobile navigation, settings, `CreationModal` integration, and `story-seed.css`, then ship through the established SEN package and Library host presentation adapter. Shared visual primitives would be changed in UI, published/packed first, then consumed by the hosts. Do not copy the frame HTML, Workshop wrappers, mock context, fixture data, content slots, or capture manifest into a production application.
 
 ## Workshop history
+
+- **2026-09-09:** Unified the top row across Home, Story Seed and Cultivator Cave; reused the custom badge and existing Library Help, added optional page context and responsive Search, retained page commands below the row, and added focused slot/mobile/keyboard previews and tests. Bottom navigation, locked captures and source-comparison dates are unchanged.
 
 - **2026-09-08:** Updated source repositories; captured current Main Library and Story Seed shells with separate responsive documents, local adapters and assets, explicit content boundaries, source provenance, dependency guards, and ownership/overlap documentation. No redesign or shared extraction.
 - **2026-09-08:** Applied capture-only accessibility and sticky-action corrections, narrowed the DAO adapter contract, localized the exact source-requested font payloads, and retained the production sources unchanged.

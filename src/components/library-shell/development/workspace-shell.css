@@ -2,8 +2,8 @@
    and the landmarks are the canonical component's; these rules only give the
    rail its Library surface and keep it usable while the workspace scrolls. */
 .workspace-shell {
-  /* The canonical header row is 3.5rem tall, 4rem from `sm` up, plus the top
-     safe-area inset the header pads itself with. */
+  /* First-paint fallback; WorkspaceShell measures the complete header,
+     including the optional page toolbar, before the rail can scroll. */
   --workspace-header-height: calc(3.5rem + var(--sh-safe-top, 0px));
   --workspace-safe-bottom: env(safe-area-inset-bottom, 0px);
   background: transparent;

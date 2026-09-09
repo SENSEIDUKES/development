@@ -1,0 +1,28 @@
+/* Global placement and content clearance belong to the Library Shell. */
+.library-navigation-layout {
+  --library-bottom-clearance: calc(6rem + var(--sh-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  padding-bottom: var(--library-bottom-clearance);
+  min-width: 0;
+}
+.library-global-navigation {
+  position: fixed !important;
+  bottom: 0;
+  inset-inline: 0;
+  z-index: 80;
+  max-width: 42rem;
+  margin-inline: auto;
+  padding-bottom: calc(.5rem + var(--sh-safe-bottom, env(safe-area-inset-bottom, 0px))) !important;
+  padding-left: max(.5rem, var(--sh-safe-left, env(safe-area-inset-left, 0px))) !important;
+  padding-right: max(.5rem, var(--sh-safe-right, env(safe-area-inset-right, 0px))) !important;
+}
+.library-global-navigation button {
+  min-height: 52px;
+  min-width: 44px;
+  padding-inline: 1px !important;
+  font-size: 10px !important;
+  letter-spacing: normal !important;
+}
+.library-global-navigation button > span:last-child { max-width: none; overflow: visible; }
+.library-navigation-layout .workspace-shell-rail {
+  height: calc(100dvh - var(--workspace-header-height) - var(--library-bottom-clearance));
+}

@@ -270,7 +270,7 @@ export const DaoInsights: React.FC = () => {
       <div
         id="dao-insights-header-center"
         onClick={() => setIsOpen(true)}
-        className="flex flex-col flex-1 min-w-0 items-center justify-center max-w-[200px] sm:max-w-[340px] xl:max-w-md mx-2 sm:mx-4 px-2 py-1 bg-neutral-950/40 border border-neutral-900 hover:border-portal/30 hover:bg-neutral-950/70 rounded-xl transition-all duration-300 cursor-pointer select-none group text-center overflow-hidden h-10 sm:h-12"
+        className="dao-insights-trigger flex flex-col flex-1 min-w-0 items-center justify-center max-w-[200px] sm:max-w-[340px] xl:max-w-md mx-2 sm:mx-4 px-2 py-1 bg-neutral-950/40 border border-neutral-900 hover:border-portal/30 hover:bg-neutral-950/70 rounded-xl transition-all duration-300 cursor-pointer select-none group text-center overflow-hidden h-10 sm:h-12"
         role="button" aria-haspopup="dialog" aria-expanded={isOpen} aria-label="Insights from the Dao"
         title="Insights From The Dao — Click to Seek Divine Fortune" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsOpen(true); } }}
       >

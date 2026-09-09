@@ -27,7 +27,10 @@ function inspect(directory) {
       if (/\bfetch\s*\(|\b(?:localStorage|sessionStorage|indexedDB)\b|from\s+['"][^'"]*(?:firebase|\/store\/|\/server\/|storySeedRepository)/.test(text)) {
         errors.push(`Production dependency entered capture: ${path}`);
       }
-      if (/from\s+['"][^'"]*story-seed\/development/.test(text)) errors.push(`Capture imports live Story Seed: ${path}`);
+      // Active Development headers intentionally reuse the existing Library Help
+      // menu. The prohibition belongs to the frozen captures and their adapters.
+      const locked = path.startsWith('src/components/library-shell/reference/') || path.startsWith('src/components/library-shell/shared/');
+      if (locked && /(?:from\s+|import\s*\(\s*)['"][^'"]*story-seed\/development/.test(text)) errors.push(`Capture imports live Story Seed: ${path}`);
     }
   }
 }

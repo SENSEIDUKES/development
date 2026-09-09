@@ -118,30 +118,10 @@
 }
 
 /* Cave placement; shared navigation owns controls and interaction states. */
-.cave-workspace { --cave-safe-bottom: env(safe-area-inset-bottom, 0px); }
 /* The Cave backdrop sits behind the whole shell, so the shell itself paints
    nothing; the header and the rail keep their own translucent surfaces. */
 .cave-shell { background: transparent; }
-/* Clears the fixed bottom controls at the end of the scroll. */
-.cave-workspace-body { padding-bottom: calc(7rem + var(--cave-safe-bottom)); }
-.cave-workspace-dock > nav {
-  position: fixed;
-  inset-inline: 0;
-  bottom: 0;
-  z-index: 50;
-  padding-bottom: calc(0.75rem + var(--cave-safe-bottom));
-  padding-left: max(0.5rem, env(safe-area-inset-left));
-  padding-right: max(0.5rem, env(safe-area-inset-right));
-}
 .cave-workspace h2:focus-visible { outline: 2px solid var(--color-sen-portal); outline-offset: 4px; }
-@media (min-width: 768px) and (max-width: 1023px) {
-  .cave-workspace-dock > nav { max-width: 40rem; margin-inline: auto; }
-}
-@media (min-width: 1024px) {
-  /* The rail is the shell's sidebar column from here up, and the bottom
-     controls are gone, so the workspace fills the remaining width. */
-  .cave-workspace-body { padding-bottom: 3rem; }
-}
 
 /* Home composition; workspace navigation owns safe-area spacing. */
 .cave-home-control, .cave-home-pillar {
@@ -224,11 +204,4 @@ button.cave-account-emblem:focus-visible { outline: 2px solid #7dd3ff; outline-o
   border-radius: 50%;
   background: #7dd3ff;
   box-shadow: 0 0 0 2px #061022;
-}
-/* Reserve the former Settings slot without introducing a focusable placeholder. */
-.cave-workspace[data-cave-audience="private"] .cave-workspace-dock > nav > div::after {
-  content: "";
-  flex: 1;
-  min-width: 0;
-  max-width: 10rem;
 }

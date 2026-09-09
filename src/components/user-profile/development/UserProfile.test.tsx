@@ -100,6 +100,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
           accountControls={accountControls}
           onLogout={onLogout}
           onNavigateHome={vi.fn()}
+          onNavigateLibrary={vi.fn()}
         />
       </UserProfileServicesProvider>,
     );
@@ -128,6 +129,22 @@ const click = async (element: Element) => {
 };
 
 const open = (id: string) => id === 'stories' || id === 'relics' ? byText<HTMLElement>('nav button', id === 'stories' ? 'Stories' : 'Relics') : byText<HTMLElement>(`[data-cave-card="${id}"]`, '');
+const openSearch = async () => {
+  if (!document.querySelector('.workspace-search-results')) {
+    await click(document.querySelector('[aria-label="Search"]')!);
+    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+  }
+};
+const closeSearch = async () => {
+  const close = document.querySelector('[aria-label="Close Search"]');
+  if (close) await click(close);
+  await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+};
+const searchCaveDestination = async (label: string) => {
+  await openSearch();
+  await click(byText('.workspace-search-results button', label));
+  await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+};
 const navigateTo = async (path: string) => { await act(async () => { window.history.pushState(null, '', `?preview=user-profile&cave=${path}`); window.dispatchEvent(new PopStateEvent('popstate')); }); };
 
 describe('Cultivator Cave home', () => {
@@ -145,7 +162,8 @@ describe('Cultivator Cave home', () => {
     await click(byText('button', 'Account'));
     await click(byText('button', 'Redeem Code'));
     expect(accountControls.onRedeemCode).toHaveBeenCalledTimes(1);
-    expect(container.querySelector('.cave-workspace-dock')?.textContent).not.toContain('Settings');
+    expect(container.querySelector('.cave-workspace-dock')).toBeNull();
+    expect(container.querySelector('.library-global-navigation')?.textContent).not.toContain('Settings');
   });
 
   it('shows zero Energy and no unread dot, and routes unconnected entries with working returns', async () => {
@@ -201,7 +219,8 @@ describe('Cultivator Cave home', () => {
     expect(container.querySelector('[data-slot="library-header-badge-title"]')?.textContent).toBe('Cultivator Cave');
     // Below the desktop breakpoint the drawer is the only navigation mounted:
     // no rail, and so no second copy of the same destinations.
-    expect(container.querySelectorAll('nav[aria-label="Cultivator Cave navigation"]')).toHaveLength(1);
+    expect(container.querySelectorAll('nav[aria-label="Library global navigation"]')).toHaveLength(1);
+    expect(container.querySelectorAll('nav[aria-label="Cultivator Cave navigation"]')).toHaveLength(0);
     expect(container.querySelector('[data-slot="app-shell-sidebar"]')).toBeNull();
     expect(text()).not.toContain('Cultivate in silence. Ascend in the unseen.');
   });
@@ -251,7 +270,7 @@ describe('Cultivator Cave home', () => {
 describe('Cultivator Cave destinations', () => {
   it('opens Stories with manifested stories and seeds, then returns home', async () => {
     await renderCave();
-    await click(open('stories'));
+    await searchCaveDestination('Stories');
     const destination = container.querySelector('[data-cave-destination="stories"]');
     expect(destination).not.toBeNull();
     expect(document.activeElement?.id).toBe('cave-destination-stories-title');
@@ -270,7 +289,7 @@ describe('Cultivator Cave destinations', () => {
 
   it('opens Relics with inventory, attunement, and a working Offering Hall', async () => {
     await renderCave();
-    await click(open('relics'));
+    await searchCaveDestination('Relics');
     const destination = () => container.querySelector('[data-cave-destination="relics"]')!;
     expect(destination().textContent).toContain('Soul Attuned');
     expect(destination().textContent).toContain('Fragment of the First Sentence');
@@ -393,7 +412,7 @@ describe('Cultivator Cave settings', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(700);
     });
-    await click(byText('.cave-workspace-dock button', 'Home'));
+    await searchCaveDestination('Home');
     expect(container.querySelector('#cave-cultivator-name')?.textContent).toContain('Cave Dweller');
   });
 
@@ -600,14 +619,15 @@ describe('Cave workspace routing', () => {
   it('selects the three navigation destinations and focuses each page without duplicating history', async () => {
     await renderCave();
     for (const label of ['Stories', 'Relics', 'Home']) {
-      await click(byText('.cave-workspace-dock button', label));
+      await searchCaveDestination(label);
       expect(new URLSearchParams(location.search).get('cave')).toBe('/' + label.toLowerCase());
       expect(document.activeElement?.tagName).toBe('H2');
-      const selected = container.querySelectorAll('nav[aria-label="Cultivator Cave navigation"] [aria-current="page"]');
+      await openSearch();
+      const selected = document.querySelectorAll('.workspace-search-results [aria-pressed="true"]');
       expect(selected).toHaveLength(1);
       for (const item of selected) expect(item.textContent).toContain(label);
       const count = history.length;
-      await click(byText('.cave-workspace-dock button', label));
+      await searchCaveDestination(label);
       expect(history.length).toBe(count);
     }
   });
@@ -616,7 +636,7 @@ describe('Cave workspace routing', () => {
     history.replaceState({ host: 'kept' }, '', '/?preview=user-profile&state=owner-admin&cave=/settings#host');
     await renderCave();
     expect(container.querySelector('[data-cave-settings]')).not.toBeNull();
-    await click(byText('.cave-workspace-dock button', 'Stories'));
+    await searchCaveDestination('Stories');
     expect(location.hash).toBe('#host');
     expect(new URLSearchParams(location.search).get('state')).toBe('owner-admin');
     expect(history.state).toEqual({ host: 'kept' });
@@ -632,7 +652,10 @@ describe('Cave workspace routing', () => {
     history.replaceState(null, '', '/?preview=user-profile&cave=' + encodeURIComponent(path));
     await renderCave();
     expect(text()).toContain('Page unavailable');
-    expect(container.querySelector('.cave-workspace-dock [aria-current="page"]')?.textContent?.toLowerCase()).toContain(path.split('/')[1]);
+    await openSearch();
+    expect(document.querySelector('.workspace-search-results [aria-pressed="true"]')?.textContent?.toLowerCase()).toContain(path.split('/')[1]);
+    expect(container.querySelector('.library-global-navigation [aria-current="page"]')?.textContent).toBe('Profile');
+    await closeSearch();
     await click(container.querySelector('[data-cave-destination="unavailable"] button')!);
     expect(new URLSearchParams(location.search).get('cave')).toBe('/' + path.split('/')[1]);
   });
@@ -640,13 +663,17 @@ describe('Cave workspace routing', () => {
   it('keeps Home active for existing cultivation pages and denies unauthorized admin links', async () => {
     await renderCave();
     await click(open('dao-pillar'));
-    expect(container.querySelector('.cave-workspace-dock [aria-current="page"]')?.textContent).toContain('Home');
+    await openSearch();
+    expect(document.querySelector('.workspace-search-results [aria-pressed="true"]')?.textContent).toContain('Home');
+    await closeSearch();
     await act(async () => {
       history.replaceState(null, '', '/?cave=/settings/switchboard');
       window.dispatchEvent(new PopStateEvent('popstate'));
     });
     expect(text()).toContain('Authorization required');
-    expect(container.querySelector('.cave-workspace-dock [aria-current="page"]')).toBeNull();
+    await openSearch();
+    expect(document.querySelector('.workspace-search-results [aria-pressed="true"]')).toBeNull();
+    expect(container.querySelector('.library-global-navigation [aria-current="page"]')?.textContent).toBe('Profile');
   });
 });
 
@@ -835,10 +862,12 @@ describe('Claim and existing profile edits', () => {
 });
 
 describe('Public view of the Cave', () => {
-  const dockLabels = () =>
-    Array.from(container.querySelectorAll('.cave-workspace-dock button')).map(button =>
-      (button.textContent ?? '').trim(),
-    );
+  const destinationLabels = async () => {
+    await openSearch();
+    const labels = Array.from(document.querySelectorAll('.workspace-search-results button')).map(button => (button.textContent ?? '').trim()).filter(label => ['Home', 'Stories', 'Relics', 'Exit'].includes(label));
+    await closeSearch();
+    return labels;
+  };
   const enterPublicView = async () => {
     await click(byText('.workspace-secondary-actions button', 'View Public Profile'));
   };
@@ -886,22 +915,23 @@ describe('Public view of the Cave', () => {
     expect(container.querySelector('[data-cave-rank-row] .cave-tier-badge')).not.toBeNull();
 
     await enterPublicView();
-    expect(container.querySelector('.workspace-header-status')?.textContent).toContain('Public View');
+    expect(container.querySelector('.workspace-header-context [role="status"]')?.textContent).toContain('Public View');
     expect(container.querySelector('#cave-cultivator-name .cave-tier-badge')).toBeNull();
     expect(container.querySelector('[data-cave-rank-row] .cave-tier-badge')).not.toBeNull();
   });
 
-  it('replaces Settings with Exit and returns to the previous location', async () => {
+  it('keeps Cave destinations in Search and public Exit returns to the previous location', async () => {
     await renderCave();
-    expect(dockLabels()).toEqual(['Home', 'Stories', 'Relics']);
+    expect(await destinationLabels()).toEqual(['Home', 'Stories', 'Relics']);
+    expect(Array.from(container.querySelectorAll('.library-global-navigation button')).map(button => button.textContent)).toEqual(['Home', 'Library', 'Discover', 'Profile']);
 
-    await click(byText('.cave-workspace-dock button', 'Relics'));
+    await searchCaveDestination('Relics');
     expect(cave()).toBe('/relics');
     await enterPublicView();
-    expect(dockLabels()).toEqual(['Home', 'Stories', 'Relics', 'Exit']);
+    expect(await destinationLabels()).toEqual(['Home', 'Stories', 'Relics', 'Exit']);
     expect(container.querySelector('[data-cave-settings]')).toBeNull();
 
-    await click(byText('.cave-workspace-dock button', 'Exit'));
+    await searchCaveDestination('Exit');
     expect(cave()).toBe('/relics');
     expect(container.querySelector('[data-cave-audience="private"]')).not.toBeNull();
   });
@@ -910,7 +940,7 @@ describe('Public view of the Cave', () => {
     history.replaceState(null, '', '/?preview=user-profile&cave=/public/home');
     await renderCave();
     expect(container.querySelector('[data-cave-home-mode]')?.getAttribute('data-cave-home-mode')).toBe('public');
-    await click(byText('.cave-workspace-dock button', 'Exit'));
+    await searchCaveDestination('Exit');
     expect(cave()).toBe('/home');
     expect(container.querySelector('[data-cave-card="dao-pillar"]')).not.toBeNull();
   });
@@ -959,7 +989,7 @@ describe('Public view of the Cave', () => {
     await renderCave();
     await enterPublicView();
 
-    await click(byText('.cave-workspace-dock button', 'Stories'));
+    await searchCaveDestination('Stories');
     expect(cave()).toBe('/public/stories');
     expect(container.querySelector('[data-cave-public-panel="stories"]')).not.toBeNull();
     expect(text()).toContain('Ashes of the Ninth Heaven');
@@ -967,7 +997,7 @@ describe('Public view of the Cave', () => {
     expect(text()).not.toContain('Story Seeds');
     expect(text()).not.toContain('Manifested Stories');
 
-    await click(byText('.cave-workspace-dock button', 'Relics'));
+    await searchCaveDestination('Relics');
     expect(cave()).toBe('/public/relics');
     expect(container.querySelector('[data-cave-public-panel="relics"]')).not.toBeNull();
     expect(text()).toContain('Fragment of the First Sentence');
@@ -981,7 +1011,7 @@ describe('Public view of the Cave', () => {
     // renders, not to whatever story collection the host passed in.
     await renderCave({ state: 'owner-admin' });
     await enterPublicView();
-    await click(byText('.cave-workspace-dock button', 'Stories'));
+    await searchCaveDestination('Stories');
     expect(container.querySelector('[data-cave-public-panel="stories"]')).not.toBeNull();
     expect(container.querySelector('[data-cave-public-title]')).toBeNull();
     expect(container.querySelector('[data-cave-public-empty]')?.textContent).toContain('not published any stories');
@@ -989,7 +1019,7 @@ describe('Public view of the Cave', () => {
     expect(text()).not.toContain('Saltwind Sovereign');
 
     // The owner's own relics, which are their profile's record, still publish.
-    await click(byText('.cave-workspace-dock button', 'Relics'));
+    await searchCaveDestination('Relics');
     expect(text()).toContain('Fragment of the First Sentence');
   });
 
@@ -1025,11 +1055,11 @@ describe('Public view of the Cave', () => {
     expect(container.querySelector<HTMLButtonElement>('[data-cave-card="highlights"]')!.disabled).toBe(true);
     expect(container.querySelector('[data-cave-card="highlights"]')?.textContent).toContain('Kept private');
 
-    await click(byText('.cave-workspace-dock button', 'Stories'));
+    await searchCaveDestination('Stories');
     expect(container.querySelector('[data-cave-public-empty]')?.textContent).toContain('private');
     expect(text()).not.toContain('Ashes of the Ninth Heaven');
 
-    await click(byText('.cave-workspace-dock button', 'Relics'));
+    await searchCaveDestination('Relics');
     expect(container.querySelector('[data-cave-public-empty]')?.textContent).toContain('private');
     expect(text()).not.toContain('Fragment of the First Sentence');
   });

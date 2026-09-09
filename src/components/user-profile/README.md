@@ -18,6 +18,11 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-09:** Added private Home Inbox and Energy emblems and equal-width Store / Settings
+  actions below the Daily Dao Pillar. Settings retains its existing page and controls, with only
+  Redeem Code added under Account. Removed Settings from private navigation; its replacement is
+  unresolved. Public navigation retains Exit. Locked reference and source-comparison date unchanged.
+
 - **2026-09-08:** Created the faithful Workshop replica of the complete Celestial Tools profile
   page and all five of its panels, the injected services port, the local mock adapter, and the
   ten-scenario state simulator. `reference/` and `development/` were byte-identical.
@@ -624,3 +629,18 @@ storage, or physical iOS hardware.
 The viewed cultivator in this build is the signed-in one previewing their own public view, so the
 public record is built from that profile and those stories. Viewing *another* cultivator's public
 profile needs a host-supplied record and its own authorization; this change adds neither.
+
+### Account entry integration — 2026-09-09
+
+`UserProfile.accountControls` accepts host-owned `energyBalance`, `inboxUnreadCount`,
+`onOpenInbox`, `onOpenStore`, and `onRedeemCode`. Energy is generation currency, independent
+of Qi; missing Energy reads Unavailable, while zero remains zero. The development wrapper
+supplies sample 120 Energy and two unread messages. No account schema or persistence is added.
+Hosts should supply their current balance/count and destination callbacks. Without callbacks,
+the Cave opens explicit unavailable previews at `/home/inbox`, `/home/store`, and
+`/settings/redeem-code`, each with a return control. These routes do not pretend to retrieve
+messages, buy items, or redeem codes. `/settings` and `/settings/switchboard` stay compatible.
+Transfer the changed development components, CSS, routing and `caveAccountControls.ts` together;
+keep the sample account values and Workshop wrapper here.
+
+Validation: 80 profile component tests, production build, package boundaries and UI artifact checks passed. Browser checks at 320, 390, 768, 1024 and 1440px confirmed equal button widths, 44px touch targets, centered identity and no horizontal overflow. `verifyCaveHome` exercises the Inbox, Store, Settings, and Redeem Code entry/return paths at mobile size, with keyboard activation for Inbox and Redeem Code. This is local browser emulation, not physical iOS or live account-service verification.

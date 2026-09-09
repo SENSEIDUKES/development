@@ -10,6 +10,9 @@ import { LibraryButton } from '@seihouse/library-ui';
  */
 export type CaveDestinationId =
   | 'settings'
+  | 'inbox'
+  | 'store'
+  | 'redeem-code'
   | 'unavailable'
   | 'stories'
   | 'relics'

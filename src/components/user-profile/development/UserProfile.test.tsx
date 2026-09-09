@@ -76,13 +76,14 @@ afterEach(() => {
 });
 
 interface RenderOptions {
+  accountControls?: import('./caveAccountControls').CaveAccountControls;
   state?: UserProfilePreviewState;
   onLogout?: () => void;
   Component?: typeof UserProfile;
   adapter?: Partial<MockUserProfileServicesOptions>;
 }
 
-async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), Component = UserProfile, adapter = {} }: RenderOptions = {}) {
+async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), Component = UserProfile, adapter = {}, accountControls }: RenderOptions = {}) {
   const scenario = getPreviewScenario(state);
   const logExcludedAction = vi.fn();
   const onSignIn = vi.fn<(account: AppUser) => void>();
@@ -96,6 +97,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
         <Component
           currentUser={scenario.currentUser}
           stories={scenario.stories}
+          accountControls={accountControls}
           onLogout={onLogout}
           onNavigateHome={vi.fn()}
         />
@@ -129,6 +131,52 @@ const open = (id: string) => id === 'stories' || id === 'relics' ? byText<HTMLEl
 const navigateTo = async (path: string) => { await act(async () => { window.history.pushState(null, '', `?preview=user-profile&cave=${path}`); window.dispatchEvent(new PopStateEvent('popstate')); }); };
 
 describe('Cultivator Cave home', () => {
+  it('wires host Inbox, Store and Redeem Code while displaying separate account balances', async () => {
+    const accountControls = { energyBalance: 1234, inboxUnreadCount: 3, onOpenInbox: vi.fn(), onOpenStore: vi.fn(), onRedeemCode: vi.fn() };
+    await renderCave({ accountControls });
+    expect(container.querySelector('[data-cave-energy]')?.textContent).toBe('Energy1,234');
+    expect(container.querySelector('[data-cave-qi]')?.textContent).toBe('13,480 / 25,000 Qi');
+    expect(container.querySelector('[data-cave-unread]')).not.toBeNull();
+    await click(container.querySelector('[aria-label="Inbox, 3 unread messages"]')!);
+    expect(accountControls.onOpenInbox).toHaveBeenCalledTimes(1);
+    await click(byText('[data-cave-account-actions] button', 'Store'));
+    expect(accountControls.onOpenStore).toHaveBeenCalledTimes(1);
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
+    await click(byText('button', 'Account'));
+    await click(byText('button', 'Redeem Code'));
+    expect(accountControls.onRedeemCode).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('.cave-workspace-dock')?.textContent).not.toContain('Settings');
+  });
+
+  it('shows zero Energy and no unread dot, and routes unconnected entries with working returns', async () => {
+    await renderCave({ accountControls: { energyBalance: 0, inboxUnreadCount: 0 } });
+    expect(container.querySelector('[data-cave-energy]')?.textContent).toBe('Energy0');
+    expect(container.querySelector('[data-cave-unread]')).toBeNull();
+    await click(byText('button', 'Inbox'));
+    expect(text()).toContain('Inbox is not connected');
+    await click(container.querySelector('[aria-label="Return to cave"]')!);
+    await click(byText('[data-cave-account-actions] button', 'Store'));
+    expect(text()).toContain('The Store is not available yet.');
+    await click(container.querySelector('[aria-label="Return to cave"]')!);
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
+    await click(byText('button', 'Account'));
+    await click(byText('button', 'Redeem Code'));
+    expect(text()).toContain('Code redemption is not connected');
+    await click(container.querySelector('[aria-label="Return to Settings"]')!);
+    expect(container.querySelector('[data-cave-settings]')).not.toBeNull();
+  });
+
+  it('does not invent an unavailable Energy balance or expose account controls publicly', async () => {
+    await renderCave();
+    expect(container.querySelector('[data-cave-energy]')?.textContent).toBe('EnergyUnavailable');
+    await navigateTo('/public/home');
+    expect(container.querySelector('[data-cave-account-controls]')).toBeNull();
+    expect(container.querySelector('[data-cave-account-actions]')).toBeNull();
+    for (const path of ['/public/home/inbox', '/public/home/store', '/public/settings/redeem-code']) {
+      await navigateTo(path);
+      expect(container.querySelector('[data-cave-destination="unavailable"]')).not.toBeNull();
+    }
+  });
   it('shows the portrait, compact identity, cultivation and Home controls', async () => {
     await renderCave();
     const scenario = getPreviewScenario('developed-cultivator');
@@ -300,7 +348,7 @@ describe('Cultivator Cave settings', () => {
   it('opens a Settings page holding every existing setting section', async () => {
     const onLogout = vi.fn();
     await renderCave({ onLogout });
-    await click(byText('.cave-workspace-dock button', 'Settings'));
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
     const panel = () => document.body.querySelector('[data-cave-settings]');
     expect(panel()).not.toBeNull();
     const headings = Array.from(panel()!.querySelectorAll('[data-slot="disclosure-heading"]')).map(
@@ -334,7 +382,7 @@ describe('Cultivator Cave settings', () => {
 
   it('edits identity through the panel and saves it to the profile', async () => {
     await renderCave();
-    await click(byText('.cave-workspace-dock button', 'Settings'));
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
     const input = document.body.querySelector<HTMLInputElement>('#cave-display-name')!;
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
     await act(async () => {
@@ -351,7 +399,7 @@ describe('Cultivator Cave settings', () => {
 
   it('asks for confirmation on a language change and reverts on request', async () => {
     await renderCave();
-    await click(byText('.cave-workspace-dock button', 'Settings'));
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
     await click(byText('[data-slot="disclosure-trigger"]', 'Language'));
     const select = document.body.querySelector<HTMLSelectElement>('#cave-preferred-language')!;
     await act(async () => {
@@ -366,7 +414,7 @@ describe('Cultivator Cave settings', () => {
 
   it('exposes the Akashic Switchboard to an owner and opens it as a destination', async () => {
     await renderCave({ state: 'owner-admin' });
-    await click(byText('.cave-workspace-dock button', 'Settings'));
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
     await click(byText('button', 'Open Akashic Switchboard'));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(800);
@@ -484,7 +532,7 @@ describe('rank colour system', () => {
 
   it('lists every rank in Settings as name, colour and Qi, with no aura lore', async () => {
     await renderCave();
-    await click(byText('.cave-workspace-dock button', 'Settings'));
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
     const rows = Array.from(
       document.body.querySelectorAll('[role="radiogroup"][aria-label="Celestial Aura rank"] [role="radio"]'),
     );
@@ -506,7 +554,7 @@ describe('rank colour system', () => {
 
   it('gates the custom spectrum on reaching Master at 50,000 Qi', async () => {
     await renderCave();
-    await click(byText('.cave-workspace-dock button', 'Settings'));
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
     expect(document.body.textContent).toContain('Requires Master (50,000 Qi)');
 
     const spectrum = document.body.querySelector<HTMLButtonElement>('[aria-label="Custom spectrum"]')!;
@@ -549,9 +597,9 @@ describe('Cave workspace shell', () => {
 });
 
 describe('Cave workspace routing', () => {
-  it('selects all four destinations and focuses each page without duplicating history', async () => {
+  it('selects the three navigation destinations and focuses each page without duplicating history', async () => {
     await renderCave();
-    for (const label of ['Stories', 'Relics', 'Settings', 'Home']) {
+    for (const label of ['Stories', 'Relics', 'Home']) {
       await click(byText('.cave-workspace-dock button', label));
       expect(new URLSearchParams(location.search).get('cave')).toBe('/' + label.toLowerCase());
       expect(document.activeElement?.tagName).toBe('H2');
@@ -598,7 +646,7 @@ describe('Cave workspace routing', () => {
       window.dispatchEvent(new PopStateEvent('popstate'));
     });
     expect(text()).toContain('Authorization required');
-    expect(container.querySelector('.cave-workspace-dock [aria-current="page"]')?.textContent).toContain('Settings');
+    expect(container.querySelector('.cave-workspace-dock [aria-current="page"]')).toBeNull();
   });
 });
 
@@ -606,7 +654,7 @@ describe('Cave workspace routing', () => {
 describe('Cave overlays and history', () => {
   it('dismisses the portrait when history selects another destination', async () => {
     await renderCave();
-    await click(byText('.cave-workspace-dock button', 'Settings'));
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
     await click(byText('button', 'Open Divine Mirror'));
     expect(document.body.querySelector('[role="dialog"]')?.textContent).toContain('Cultivator Portrait Builder');
     await act(async () => {
@@ -620,7 +668,7 @@ describe('Cave overlays and history', () => {
 
   it('reverts an unanswered language change when history leaves Settings', async () => {
     await renderCave();
-    await click(byText('.cave-workspace-dock button', 'Settings'));
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
     const select = document.body.querySelector<HTMLSelectElement>('#cave-preferred-language')!;
     await act(async () => {
       select.value = 'Spanish';
@@ -633,7 +681,7 @@ describe('Cave overlays and history', () => {
       await vi.advanceTimersByTimeAsync(300);
     });
     expect(document.body.querySelector('[data-cave-language-confirm]')).toBeNull();
-    await click(byText('.cave-workspace-dock button', 'Settings'));
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
     expect(document.body.querySelector<HTMLSelectElement>('#cave-preferred-language')?.value).toBe('English');
   });
 });
@@ -845,7 +893,7 @@ describe('Public view of the Cave', () => {
 
   it('replaces Settings with Exit and returns to the previous location', async () => {
     await renderCave();
-    expect(dockLabels()).toEqual(['Home', 'Stories', 'Relics', 'Settings']);
+    expect(dockLabels()).toEqual(['Home', 'Stories', 'Relics']);
 
     await click(byText('.cave-workspace-dock button', 'Relics'));
     expect(cave()).toBe('/relics');
@@ -960,7 +1008,7 @@ describe('Public view of the Cave', () => {
 
   it('honours the visibility configuration across Home and the public pages', async () => {
     await renderCave();
-    await click(byText('.cave-workspace-dock button', 'Settings'));
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
     await click(byText('[data-slot="disclosure-trigger"]', 'Public Profile'));
     const switches = () =>
       Array.from(document.body.querySelectorAll<HTMLInputElement>('[data-cave-visibility] input'));
@@ -1007,7 +1055,7 @@ describe('Display name limit', () => {
 
   it('clamps the display name as it is typed and leaves the username alone', async () => {
     await renderCave();
-    await click(byText('.cave-workspace-dock button', 'Settings'));
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
     const type = async (selector: string, value: string) => {
       const input = document.body.querySelector<HTMLInputElement>(selector)!;
@@ -1028,7 +1076,7 @@ describe('Display name limit', () => {
 
   it('blocks saving a longer name stored before the limit existed', async () => {
     await renderCave({ state: 'home-edge-cases' });
-    await click(byText('.cave-workspace-dock button', 'Settings'));
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
     expect(text()).toContain('Display names are limited to 12 characters.');
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
     const type = async (selector: string, value: string) => {

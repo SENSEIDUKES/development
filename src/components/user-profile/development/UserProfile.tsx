@@ -1,4 +1,5 @@
 import { UserProfileHome, isEffectActive } from './UserProfileHome';
+import type { CaveAccountControls } from './caveAccountControls';
 import { WorkspaceHeader } from '../../library-shell/development/WorkspaceHeader';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -61,13 +62,14 @@ interface UserProfileProps {
   stories: Story[];
   onLogout: () => void;
   onNavigateHome: () => void;
+  accountControls?: CaveAccountControls;
 }
 
 /**
  * The Cultivator Cave — the profile page as a place. The home shows the
  * cultivator's portrait, identity, rank, and Qi over a stock Immortal Land
- * backdrop, within Home, Stories, Relics, and Settings navigation. Every value and action is the
- * controller's; the Cave only decides where each one lives.
+ * backdrop, within Home, Stories, Relics, and the moved Settings entry. Every
+ * value and action is the controller's; the Cave only decides where each one lives.
  *
  * The Cave has one other audience: the **public view**, reached from the header
  * and routed under `/public/...`. It is the same shell, the same backdrop, and
@@ -76,7 +78,7 @@ interface UserProfileProps {
  * Boost, and Settings becomes Exit. Public routes render only from the built
  * public presentation, so no private panel is mounted behind a public URL.
  */
-export default function UserProfile({ currentUser, stories, onLogout, onNavigateHome }: UserProfileProps) {
+export default function UserProfile({ currentUser, stories, onLogout, onNavigateHome, accountControls }: UserProfileProps) {
   // Production calls `useUserProfile(...)` and reads the Firebase local-only flag
   // directly. Both arrive through the injected services port here, so this file
   // carries no Firebase, PostgreSQL, or generation dependency of its own.
@@ -161,7 +163,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           onSelect: exitPublicView },
       ];
     }
-    return CAVE_DESTINATIONS.map(({ id, label, icon: Icon }) => ({
+    return CAVE_DESTINATIONS.filter(item => item.id !== 'settings').map(({ id, label, icon: Icon }) => ({
       id, label, icon: <Icon size={20} />, active: route.destination === id,
       onSelect: () => navigate(`/${id}`),
     }));
@@ -314,6 +316,16 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     if (isSignedOut) return null;
     if (isPublicView) return renderPublicView();
     switch (view) {
+      case 'inbox':
+      case 'store':
+      case 'redeem-code':
+        return (
+          <UserProfileCaveDestination id={view} title={view === 'inbox' ? 'Inbox' : view === 'store' ? 'Store' : 'Redeem Code'}
+            onBack={view === 'redeem-code' ? () => navigate('/settings') : returnHome}
+            backLabel={view === 'redeem-code' ? 'Return to Settings' : 'Return to cave'}>
+            <p className="text-neutral-400">{view === 'inbox' ? 'Inbox is not connected in this preview.' : view === 'store' ? 'The Store is not available yet.' : 'Code redemption is not connected in this preview.'}</p>
+          </UserProfileCaveDestination>
+        );
       case 'settings':
         return (
           <UserProfileCaveDestination id="settings" title="Settings" onBack={returnHome}>
@@ -331,6 +343,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
               publicVisibility={publicVisibility}
               onPublicVisibilityChange={setPublicVisibility}
               onPreviewPublicView={openPublicView}
+              onRedeemCode={accountControls?.onRedeemCode ?? (() => navigate('/settings/redeem-code'))}
             />
           </UserProfileCaveDestination>
         );
@@ -399,7 +412,11 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           </UserProfileCaveDestination>
         );
       default:
-        return <UserProfileHome controller={controller} />;
+        return <UserProfileHome controller={controller} onOpenSettings={() => navigate('/settings')} accountControls={{
+          ...accountControls,
+          onOpenInbox: accountControls?.onOpenInbox ?? (() => navigate('/home/inbox')),
+          onOpenStore: accountControls?.onOpenStore ?? (() => navigate('/home/store')),
+        }} />;
     }
   };
 

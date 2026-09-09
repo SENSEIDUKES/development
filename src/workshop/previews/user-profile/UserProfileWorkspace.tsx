@@ -60,7 +60,7 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
 
   const currentUser = scenario.currentUser ?? linkedAccount;
 
-  const renderPane = (Component: typeof ReferenceUserProfile, pane: string) => (
+  const renderPane = (Component: typeof DevelopmentUserProfile, pane: string) => (
     // Remounting on scenario change throws away the mock's in-memory account
     // state, so each scenario starts from its own snapshot rather than
     // inheriting edits made in the previous one.
@@ -69,6 +69,10 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
         <Component
           currentUser={currentUser}
           stories={scenario.stories}
+          {...(pane === 'development' ? { accountControls: {
+            energyBalance: currentUser ? 120 : null,
+            inboxUnreadCount: currentUser ? 2 : 0,
+          } } : {})}
           onLogout={() => {
             logExcludedAction('Sign out — mock account unlinked locally instead');
             setLinkedAccount(null);

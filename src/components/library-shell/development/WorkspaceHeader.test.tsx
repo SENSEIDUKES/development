@@ -15,7 +15,7 @@ let container: HTMLDivElement;
 let root: Root;
 beforeEach(() => {
   container = document.createElement('div'); document.body.append(container); root = createRoot(container);
-  vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn() }));
+  vi.stubGlobal('matchMedia', (query: string) => ({ matches: !query.includes('479px'), addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn() }));
 });
 afterEach(() => { act(() => root.unmount()); container.remove(); vi.unstubAllGlobals(); });
 const render = async (node: React.ReactNode) => { await act(async () => root.render(<LibraryPresentationProvider>{node}</LibraryPresentationProvider>)); };
@@ -48,6 +48,23 @@ it('calls the existing page Help owner and preserves preload and expanded state'
   expect(onIntent).toHaveBeenCalled();
   expect(button('Help').getAttribute('aria-expanded')).toBe('true');
   expect(document.querySelector('[role="dialog"]')).toBeNull();
+});
+
+it('keeps mobile Help and Search accessible through the overflow with focus restoration', async () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+  const onAction = vi.fn();
+  await render(<WorkspaceHeader title="Celestial Library" help={{ id: 'help', label: 'Help', onAction }} />);
+  expect(button('Help')).toBeNull();
+  await click(button('Header options'));
+  expect(document.activeElement).toBe(button('Help'));
+  await click(button('Help'));
+  expect(onAction).toHaveBeenCalledTimes(1);
+  expect(document.activeElement).toBe(button('Header options'));
+  await click(button('Header options'));
+  await click(button('Search'));
+  expect(document.activeElement?.getAttribute('type')).toBe('search');
+  await click(button('Close Search')); await settle();
+  expect(document.activeElement).toBe(button('Header options'));
 });
 
 it('reuses Library Help topics and original guidance, closes with Escape and returns focus', async () => {

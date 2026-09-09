@@ -207,18 +207,15 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const isSignedOut = !currentUser && !localOnlyMode;
   const isPrivileged = profile?.role === 'owner' || profile?.role === 'admin';
 
-  // The way in and the way out, through the header's existing action slots.
-  const canPreviewPublicView = Boolean(profile) && !isSignedOut && !spiritLinkGateMounted;
+  // Public Exit remains available through the existing action slot.
   const headerActions = useMemo(() => {
     if (isPublicView) {
       return [{ id: 'exit-public-view', label: 'Exit', icon: CAVE_EXIT_ICON,
         title: 'Leave the public view and return to your Cave', onAction: exitPublicView }];
     }
-    return canPreviewPublicView
-      ? [{ id: 'preview-public-view', label: 'View Public Profile', icon: Eye,
-          title: 'See your Cave the way other cultivators see it', onAction: openPublicView }]
-      : [];
-  }, [isPublicView, canPreviewPublicView, exitPublicView, openPublicView]);
+    // Private preview already lives alongside its visibility controls in Settings.
+    return [];
+  }, [isPublicView, exitPublicView]);
 
   // The Akashic Switchboard is a destination here; the controller still owns
   // when its registries are fetched, keyed off this flag exactly as in production.

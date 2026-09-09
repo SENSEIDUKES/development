@@ -869,7 +869,12 @@ describe('Public view of the Cave', () => {
     return labels;
   };
   const enterPublicView = async () => {
-    await click(byText('.workspace-secondary-actions button', 'View Public Profile'));
+    if (!container.querySelector('[data-cave-settings]')) {
+      await searchCaveDestination('Home');
+      await click(byText('[data-cave-account-actions] button', 'Settings'));
+    }
+    await click(byText('[data-slot="disclosure-trigger"]', 'Public Profile'));
+    await click(byText('button', 'Preview Public View'));
   };
   const cave = () => new URLSearchParams(location.search).get('cave');
 
@@ -910,6 +915,8 @@ describe('Public view of the Cave', () => {
   it('shows a Public View indicator and centres the name in both modes', async () => {
     await renderCave();
     expect(container.querySelector('.workspace-header-status')).toBeNull();
+    expect(container.querySelector('.workspace-header-toolbar')).toBeNull();
+    expect(container.textContent).not.toContain('View Public Profile');
     // The badge is never a sibling of the name inside the heading.
     expect(container.querySelector('#cave-cultivator-name .cave-tier-badge')).toBeNull();
     expect(container.querySelector('[data-cave-rank-row] .cave-tier-badge')).not.toBeNull();
@@ -932,7 +939,7 @@ describe('Public view of the Cave', () => {
     expect(container.querySelector('[data-cave-settings]')).toBeNull();
 
     await searchCaveDestination('Exit');
-    expect(cave()).toBe('/relics');
+    expect(cave()).toBe('/settings');
     expect(container.querySelector('[data-cave-audience="private"]')).not.toBeNull();
   });
 

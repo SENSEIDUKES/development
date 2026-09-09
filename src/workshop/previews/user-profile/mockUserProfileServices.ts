@@ -31,6 +31,7 @@ import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   DaoRankData,
+  DaoClaimResult,
   UserProfileController,
   UserProfileControllerProps,
   UserProfileServices,
@@ -76,6 +77,9 @@ export type ExcludedActionLogger = (action: string) => void;
 
 export interface MockUserProfileServicesOptions {
   state: UserProfilePreviewState;
+  claimMode?: 'success' | 'failed' | 'unresolved';
+  profileOverride?: Partial<UserProfile>;
+  unlockedSpecialQi?: readonly ('sect' | 'demonic')[];
   /** Records a production action the Workshop deliberately does not perform. */
   logExcludedAction: ExcludedActionLogger;
   /**
@@ -88,6 +92,9 @@ export interface MockUserProfileServicesOptions {
 
 export function createMockUserProfileServices({
   state,
+  claimMode = state === 'claim-failed' ? 'failed' : state === 'claim-unresolved' ? 'unresolved' : 'success',
+  profileOverride,
+  unlockedSpecialQi,
   logExcludedAction,
   onSignIn,
 }: MockUserProfileServicesOptions): UserProfileServices {
@@ -116,6 +123,14 @@ export function createMockUserProfileServices({
     const { currentUser, stories, onLogout, onNavigateHome } = props;
 
     const [profile, setProfile] = useState<UserProfile | null>(null);
+    const profileRef = useRef<UserProfile | null>(null);
+    const claimLock = useRef(false);
+    const accountEpoch = useRef(0);
+    const [claimPending, setClaimPending] = useState(false);
+    const [claimResult, setClaimResult] = useState<DaoClaimResult>();
+    const resultRef = useRef<DaoClaimResult | undefined>(undefined);
+    const mounted = useRef(true);
+    useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
     const [formData, setFormData] = useState<Partial<UserProfile>>({});
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(Boolean(currentUser));
@@ -155,7 +170,14 @@ export function createMockUserProfileServices({
     // scenario's snapshot on a timer, hangs forever in the `loading` scenario,
     // and rejects in the `error` scenario.
     useEffect(() => {
+      accountEpoch.current += 1;
+      profileRef.current = null;
+      claimLock.current = false;
+      resultRef.current = undefined;
+      setClaimPending(false);
+      setClaimResult(undefined);
       if (!currentUser) {
+        profileRef.current = null;
         setProfile(null);
         setFormData({});
         setIsLoading(false);
@@ -172,8 +194,9 @@ export function createMockUserProfileServices({
           setError('Your celestial record could not be retrieved. The Akashic link is unstable.');
           return;
         }
-        setProfile(scenario.profile ? { ...scenario.profile } : null);
-        setFormData(scenario.profile ? { ...scenario.profile } : {});
+        profileRef.current = scenario.profile ? { ...scenario.profile, ...profileOverride } : null;
+        setProfile(profileRef.current);
+        setFormData(profileRef.current ?? {});
         setIsLoading(false);
       }, PROFILE_LOAD_MS);
 
@@ -200,6 +223,7 @@ export function createMockUserProfileServices({
     }, [countdown, pendingLanguageChange]);
 
     const commitProfile = useCallback((next: UserProfile) => {
+      profileRef.current = next;
       setProfile(next);
       setFormData(previous => ({ ...previous, ...next }));
     }, []);
@@ -210,12 +234,12 @@ export function createMockUserProfileServices({
     const activeFlows = userStories.filter(story => !inactiveFlowIds.includes(story.id));
     const activeStoriesCount = activeFlows.length;
 
-    const currentStreak = profile?.daoPillarStreak || profile?.writingStreak || 0;
+    const currentStreak = profile?.daoPillarStreak ?? profile?.writingStreak ?? 0;
     const isCracked = profile?.daoPillarCracked || false;
     const daysTo3 = currentStreak === 0 ? 3 : (currentStreak % 3 === 0 ? 3 : 3 - (currentStreak % 3));
     const daysTo10 = currentStreak === 0 ? 10 : (currentStreak % 10 === 0 ? 10 : 10 - (currentStreak % 10));
 
-    const daoData = getDaoRankData(profile?.dao_xp || profile?.qi || 0) as DaoRankData;
+    const daoData = getDaoRankData(profile?.dao_xp ?? profile?.qi ?? 0) as DaoRankData;
     const equippedArtifact = profile?.cosmicInventory?.find(
       artifact => artifact.id === profile?.equippedArtifactId,
     );
@@ -485,16 +509,17 @@ export function createMockUserProfileServices({
       setAllStories(previous => previous.filter(story => story.id !== storyId));
     }, []);
 
-    // ---- Dao Pillar (production behaviour, verbatim) -----------------------
+    // ---- Dao Pillar (existing rules, explicit local claim outcomes) -----------------------
     const handleRepairPillar = useCallback(() => {
-      if (!profile) return;
+      const profile = profileRef.current;
+      if (!profile || !profile.daoPillarCracked || claimLock.current || resultRef.current?.outcome === 'unresolved') return;
       const repairCost = 50;
       const currentQiVal = profile.heavenly_qi !== undefined ? profile.heavenly_qi : (profile.qi || 0);
       if (currentQiVal >= repairCost) {
         commitProfile({
           ...profile,
           qi: Math.max(0, (profile.qi || 0) - repairCost),
-          dao_xp: Math.max(0, (profile.dao_xp || 0) - repairCost),
+          dao_xp: Math.max(0, (profile.dao_xp ?? profile.qi ?? 0) - repairCost),
           heavenly_qi: Math.max(0, currentQiVal - repairCost),
           daoPillarCracked: false,
           daoPillarStreak: currentStreak > 0 ? currentStreak : 1,
@@ -505,56 +530,94 @@ export function createMockUserProfileServices({
       }
     }, [commitProfile, currentStreak, profile]);
 
-    const handleCheckIn = useCallback(() => {
-      if (!profile) return;
-      const todayStr = new Date().toISOString().split('T')[0];
-      const lastReadStr = profile.lastReadDate;
+    const claim = useCallback(async (): Promise<DaoClaimResult> => {
+      if (claimLock.current) return { outcome: 'blocked', message: 'Collection is already pending.' };
+      if (resultRef.current?.outcome === 'unresolved') return resultRef.current;
+      const finish = (outcome: DaoClaimResult['outcome'], message: string) => {
+        const result = { outcome, message };
+        resultRef.current = result;
+        if (mounted.current) setClaimResult(result);
+        return result;
+      };
+      const epoch = accountEpoch.current;
+      const accountId = profileRef.current?.uid;
+      if (!accountId) return finish('blocked', 'Profile unavailable.');
+      claimLock.current = true;
+      setClaimPending(true);
+      try {
+        await delay(PROFILE_SAVE_MS);
+        const profile = profileRef.current;
+        if (!mounted.current || epoch !== accountEpoch.current || !profile || profile.uid !== accountId) return { outcome: 'blocked', message: 'Profile changed.' };
+        if (claimMode === 'failed') return finish('failed', 'Collection failed. Please try again.');
+        if (claimMode === 'unresolved') return finish('unresolved', 'Collection could not be confirmed. Awaiting claim status.');
+        const todayStr = new Date().toISOString().split('T')[0];
+        const lastReadStr = profile.lastReadDate;
 
-      let newStreak = profile.daoPillarStreak || 0;
-      let cracked = profile.daoPillarCracked || false;
+        let newStreak = profile.daoPillarStreak || 0;
+        let cracked = profile.daoPillarCracked || false;
 
-      if (cracked) {
-        setError('Your Dao Pillar is cracked. You must repair it first.');
-        return;
-      }
-      if (lastReadStr === todayStr) {
-        setError('You have already refined your Dao for today.');
-        return;
-      }
+        if (cracked) {
+          return finish('blocked', 'Your Dao Pillar is cracked. Repair it first.');
+        }
+        if (lastReadStr === todayStr) {
+          return finish('already-collected', 'Collected Today');
+        }
 
-      if (lastReadStr) {
-        const lastReadDate = new Date(`${lastReadStr}T00:00:00`);
-        const todayDate = new Date(`${todayStr}T00:00:00`);
-        const diffDays = Math.round(
-          (todayDate.getTime() - lastReadDate.getTime()) / (1000 * 60 * 60 * 24),
-        );
-        if (diffDays === 1) {
-          newStreak += 1;
+        if (lastReadStr) {
+          const lastReadDate = new Date(`${lastReadStr}T00:00:00`);
+          const todayDate = new Date(`${todayStr}T00:00:00`);
+          const diffDays = Math.round(
+            (todayDate.getTime() - lastReadDate.getTime()) / (1000 * 60 * 60 * 24),
+          );
+          if (diffDays === 1) {
+            newStreak += 1;
+          } else {
+            if (newStreak >= 7) cracked = true;
+            newStreak = 1;
+          }
         } else {
-          if (newStreak >= 7) cracked = true;
           newStreak = 1;
         }
-      } else {
-        newStreak = 1;
+
+        let qiBonus = 5;
+        if (newStreak % 10 === 0) qiBonus += 100;
+        else if (newStreak % 3 === 0) qiBonus += 20;
+
+        const currentQiVal = profile.heavenly_qi !== undefined ? profile.heavenly_qi : (profile.qi || 0);
+        commitProfile({
+          ...profile,
+          lastReadDate: todayStr,
+          daoPillarStreak: newStreak,
+          daoPillarCracked: cracked,
+          qi: (profile.qi || 0) + qiBonus,
+          dao_xp: (profile.dao_xp ?? profile.qi ?? 0) + qiBonus,
+          heavenly_qi: currentQiVal + qiBonus,
+          updatedAt: new Date().toISOString(),
+        });
+        setError('');
+        return finish('claimed', `Cultivation collected: +${qiBonus} Qi.`);
+      } catch {
+        return finish('unresolved', 'Collection could not be confirmed. Awaiting claim status.');
+      } finally {
+        if (epoch === accountEpoch.current) {
+          claimLock.current = false;
+          if (mounted.current) setClaimPending(false);
+        }
       }
-
-      let qiBonus = 5;
-      if (newStreak % 10 === 0) qiBonus += 100;
-      else if (newStreak % 3 === 0) qiBonus += 20;
-
-      const currentQiVal = profile.heavenly_qi !== undefined ? profile.heavenly_qi : (profile.qi || 0);
-      commitProfile({
-        ...profile,
-        lastReadDate: todayStr,
-        daoPillarStreak: newStreak,
-        daoPillarCracked: cracked,
-        qi: (profile.qi || 0) + qiBonus,
-        dao_xp: (profile.dao_xp || 0) + qiBonus,
-        heavenly_qi: currentQiVal + qiBonus,
-        updatedAt: new Date().toISOString(),
-      });
-      setError('');
-    }, [commitProfile, profile]);
+    }, [commitProfile]);
+    const reconcile = useCallback(async (): Promise<DaoClaimResult> => {
+      if (claimLock.current) return { outcome: 'blocked', message: 'Collection is already pending.' };
+      // This local adapter knows unresolved simulation never committed. A real
+      // host must read authoritative claim state here, never issue another award.
+      const today = new Date().toISOString().split('T')[0];
+      const result: DaoClaimResult = profileRef.current?.lastReadDate === today
+        ? { outcome: 'already-collected', message: 'Collected Today' }
+        : { outcome: 'failed', message: 'No collection was recorded. You can try again.' };
+      resultRef.current = result;
+      setClaimResult(result);
+      return result;
+    }, []);
+    const handleCheckIn = useCallback(async () => { await claim(); }, [claim]);
 
     // ---- Attunement (production behaviour, verbatim) -----------------------
     const handleAttuneArtifact = useCallback(
@@ -729,6 +792,8 @@ export function createMockUserProfileServices({
       daysTo10,
       handleRepairPillar,
       handleCheckIn,
+      dailyClaim: { pending: claimPending, result: claimResult, claim, reconcile },
+      unlockedSpecialQi: unlockedSpecialQi ?? scenario.unlockedSpecialQi,
       handleAttuneArtifact,
 
       storageType: 'workshop-memory',

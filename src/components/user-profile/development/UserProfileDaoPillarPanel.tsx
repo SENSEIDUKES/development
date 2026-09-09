@@ -2,10 +2,12 @@ import React from 'react';
 import { Flame, Sparkles, Zap } from 'lucide-react';
 import { LibraryButton, LibraryPanel } from '@seihouse/library-ui';
 import { SEIProgressBar } from '@seihouse/ui';
+import type { DaoClaimState } from '../shared/userProfileServices';
 import type { UserProfile as UserProfileType } from '../shared/types';
 
 interface UserProfileDaoPillarPanelProps {
   profile: UserProfileType | null;
+  dailyClaim?: DaoClaimState;
   currentStreak: number;
   isCracked: boolean;
   daysTo3: number;
@@ -21,6 +23,7 @@ interface UserProfileDaoPillarPanelProps {
  */
 export function UserProfileDaoPillarPanel({
   profile,
+  dailyClaim,
   currentStreak,
   isCracked,
   daysTo3,
@@ -102,14 +105,15 @@ export function UserProfileDaoPillarPanel({
                 Refinement complete today (+5 Qi)
               </div>
             ) : (
-              <LibraryButton variant="primary" icon={Flame} onClick={() => void handleCheckIn()}>
-                Refine Daily Dao
+              <LibraryButton variant="primary" icon={Flame} disabled={dailyClaim?.pending || dailyClaim?.result?.outcome === 'unresolved'} onClick={() => void handleCheckIn()}>
+                {dailyClaim?.pending ? 'Collecting…' : 'Refine Daily Dao'}
               </LibraryButton>
             )}
           </div>
         </div>
       </LibraryPanel>
 
+      {dailyClaim?.result && <p role="status">{dailyClaim.result.message}</p>}
       {!isCracked ? (
         <LibraryPanel as="section" aria-label="Streak milestones" padding="md" className="space-y-4">
           <SEIProgressBar

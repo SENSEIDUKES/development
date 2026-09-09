@@ -46,6 +46,18 @@ export interface DaoRankData {
   currentQi: number;
 }
 
+export type SpecialQiId = 'sect' | 'demonic';
+export type DaoClaimOutcome = 'claimed' | 'already-collected' | 'blocked' | 'failed' | 'unresolved';
+export interface DaoClaimResult { outcome: DaoClaimOutcome; message: string }
+/** Host confirms the result; resolving the legacy void callback is not confirmation. */
+export interface DaoClaimState {
+  pending: boolean;
+  result?: DaoClaimResult;
+  claim: () => Promise<DaoClaimResult>;
+  /** Refresh authoritative claim state without awarding again. */
+  reconcile: () => Promise<DaoClaimResult>;
+}
+
 export interface UserProfileControllerProps {
   currentUser: AppUser | null;
   stories: Story[];
@@ -59,6 +71,8 @@ export interface UserProfileControllerProps {
  * does not read.
  */
 export interface UserProfileController {
+  unlockedSpecialQi?: readonly SpecialQiId[];
+  dailyClaim?: DaoClaimState;
   // Library / app-shell state (production: `useAppStore`)
   syncStatus: string;
   lastSavedTime: Date | null;

@@ -13,7 +13,11 @@ export type UserProfilePreviewState =
   | 'developed-cultivator'
   | 'loading'
   | 'error'
-  | 'owner-admin';
+  | 'owner-admin'
+  | 'claim-failed'
+  | 'claim-unresolved'
+  | 'collected-today'
+  | 'home-edge-cases';
 
 export interface UserProfilePreviewStateOption {
   id: UserProfilePreviewState;
@@ -22,6 +26,10 @@ export interface UserProfilePreviewStateOption {
 }
 
 export const USER_PROFILE_PREVIEW_STATES: readonly UserProfilePreviewStateOption[] = [
+  { id: 'claim-failed', label: 'Claim failure', description: 'A claim rejects without changing cultivation; retry remains available.' },
+  { id: 'claim-unresolved', label: 'Uncertain claim', description: 'Collection stays blocked until claim status is checked; no reward is committed in this simulation.' },
+  { id: 'collected-today', label: 'Collected today', description: 'Existing daily claim and streak are preserved.' },
+  { id: 'home-edge-cases', label: 'Home edge cases', description: 'Long display name, maximum rank, an unlocked empty reserve, and an effect expiring after fifteen seconds.' },
   {
     id: 'signed-out',
     label: 'Spirit Unlinked',

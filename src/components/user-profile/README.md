@@ -421,3 +421,53 @@ Verified on 2026-09-08: 88 targeted component tests passed; production build and
 checks passed; all five browser widths passed destination/history/geometry checks, and the keyboard,
 overlay, safe-area, and persistent-dock checks passed. Safe-area values are browser emulation, not
 a claim of testing physical iOS hardware.
+
+
+## Home composition follow-up — 2026-09-08
+
+Home now uses a centered portrait overlapping a compact identity plaque, with the
+subscription badge beside the display name, canonical cultivation progress, two
+compact reserve/effect controls, and a directly claimable Daily Dao Pillar. Private
+handles, stage labels, quotes, Qi chips, and duplicate destination shortcuts are
+removed from Home. The WorkspaceHeader, four permanent destinations, backdrop
+settings, and existing child URLs are preserved. The locked reference is unchanged.
+
+`development/UserProfileHome.tsx` owns Home presentation. Transfer it with the
+existing feature stylesheet and services port. Rank progress and its numeric label
+both read `dao_xp ?? qi ?? 0`, using the existing development rank ladder and shared
+progress primitive. Spendable Heavenly Qi remains compatible in the domain model;
+it is not a special reserve or a substitute for lifetime cultivation.
+
+The services port adds optional `unlockedSpecialQi` (`sect` / `demonic`) and
+`dailyClaim`. Explicit unlocks show zero balances; legacy profiles without unlock
+information show positive balances only. No unlock history is persisted or inferred.
+The host must provide the real unlocked list to distinguish locked from spent-empty.
+
+`dailyClaim` exposes pending state, a result, `claim()`, and `reconcile()`. Results are
+claimed, already-collected, blocked, failed, or unresolved. The adapter owns the
+single-flight guard, daily key, reward/streak rules, and authoritative profile update.
+Reconciliation reads claim state without issuing a second award. An unresolved claim
+stays blocked across destination changes until reconciled. Missing claim capability
+renders collection unavailable; a resolved legacy void callback is not confirmation.
+The existing child Pillar route shares the guarded legacy wrapper.
+
+The Workshop simulates delayed success, definitive failure, and unresolved claims in
+memory. Its unresolved scenario makes no commit; checking status confirms that local
+fact and enables retry. A real host must reconcile against its authoritative daily
+claim record and provide duplicate protection. The currently inspected production
+callback catches save failures after an optimistic update; wrapping it unchanged is
+not sufficient to claim durable success. This PR adds no production persistence,
+reward rules, currencies, or Fate systems.
+
+Cracked Pillars keep the existing 50 Qi repair operation as a separate inline button;
+repair does not collect. Repair and claim both reject repeated submissions against
+the latest local profile. Effects use current remaining duration and disappear on
+expiration, including when a panel stays open; focus falls back to Qi Reserves if
+its effect trigger disappears.
+
+Workshop controls add Claim failure, Uncertain claim, Collected today, and Home edge
+cases (long name, Master rank, unlocked zero reserve, expiring effect). Validation
+uses local simulated accounts, not production authentication/storage or physical iOS.
+`verifyCaveHome` in `scripts/verifyCaveHome.browser.mjs` accepts a Playwright page on
+the developed preview and verifies these states and five viewport widths. The
+existing `verifyCaveWorkspace.browser.mjs` remains the navigation regression check.

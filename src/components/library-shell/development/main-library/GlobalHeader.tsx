@@ -2,10 +2,16 @@ import { BookOpen, Cloud, Gem, Keyboard, Plus, Scroll, ScrollText, Sliders, User
 import { useMainLibraryAdapter } from '../../shared/MainLibraryAdapter';
 import { WorkspaceHeader } from '../WorkspaceHeader';
 import type { HeaderSearchItem } from '../WorkspaceHeaderUtilities';
-import { DaoInsights } from './DaoInsights';
 import './main-library-header.css';
 
-/** Home supplies content and commands to the same header as every workspace. */
+/**
+ * Home supplies its commands to the same header as every workspace.
+ *
+ * Dao Insights is no longer a header item: it lives in Home's own content,
+ * between the featured area and the collection tabs — see
+ * `MainLibraryHomeInsights` — so the header row keeps the full page title, Help
+ * and Search at every width.
+ */
 export function GlobalHeader() {
   const adapter = useMainLibraryAdapter(value => value);
   const activeStory = adapter.stories.find(story => story.id === adapter.activeStoryId);
@@ -32,6 +38,5 @@ export function GlobalHeader() {
   return <WorkspaceHeader title="Celestial Library"
     emblem={{ src: '/library-shell/celestial-library.jpg', alt: 'Celestial Library Logo' }}
     home={{ href: '/', label: 'Return to Home', onNavigate: home }}
-    contextualItem={adapter.currentScreen === 'home' ? <DaoInsights /> : undefined}
     searchItems={items} />;
 }

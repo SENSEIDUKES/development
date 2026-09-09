@@ -1,10 +1,9 @@
 import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { CircleHelp, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { NarrativeButton, NarrativeTextBox } from '../../../presentation';
 import { WorkspaceSheet } from './WorkspaceSheet';
-import { HeaderOverflow, type HeaderAction } from './WorkspaceHeaderActions';
-import { useNarrowHeader } from './workspaceMedia';
+import { type HeaderAction } from './WorkspaceHeaderActions';
 
 const LibraryHelpMenu = lazy(() => import('../../story-seed/development/StorySeedHelpMenu')
   .then(module => ({ default: module.LibraryHelpMenu })));
@@ -13,15 +12,20 @@ export interface HeaderSearchItem extends HeaderAction {
   description?: string;
 }
 
-/** Host destinations and original guidance; no routing, story store or remote search. */
+/**
+ * Host destinations and original guidance; no routing, story store or remote search.
+ *
+ * Help and Search are two separate, always-visible controls at every width.
+ * Neither is ever folded into an overflow menu: they are the header's only two
+ * utilities, and each keeps its own 44px target on the narrowest phone. The
+ * badge gives up horizontal space instead — its title wraps rather than
+ * ellipsizing — so full titles stay readable beside both controls.
+ */
 export function WorkspaceHeaderUtilities({ items, help }: {
   items: readonly HeaderSearchItem[];
   help?: HeaderAction;
 }) {
   const [experience, setExperience] = useState<'help' | 'search' | null>(null);
-  const narrow = useNarrowHeader();
-  const utilitiesRef = useRef<HTMLDivElement>(null);
-  const overflowReturnRef = useRef<HTMLElement | null>(null);
   const [query, setQuery] = useState('');
   const helpRef = useRef<HTMLButtonElement>(null);
   const searchRef = useRef<HTMLButtonElement>(null);
@@ -31,20 +35,9 @@ export function WorkspaceHeaderUtilities({ items, help }: {
   const searchId = useId();
   const needle = query.trim().toLocaleLowerCase();
   const results = items.filter(item => `${item.label} ${item.description ?? ''}`.toLocaleLowerCase().includes(needle));
-  const openSearch = () => {
-    overflowReturnRef.current = utilitiesRef.current?.querySelector('button') ?? null;
-    setQuery(''); setExperience('search');
-  };
+  const openSearch = () => { setQuery(''); setExperience('search'); };
   return <>
-    {narrow ? <div ref={utilitiesRef} className="workspace-header-utilities">
-      <HeaderOverflow label="Header options" actions={[
-        { id: 'help', label: 'Help', icon: CircleHelp, hasPopup: 'dialog',
-          disabled: help?.disabled, expanded: help ? help.expanded : experience === 'help',
-          onIntent: help?.onIntent, onAction: () => help ? help.onAction() : setExperience('help') },
-        { id: 'search', label: 'Search', icon: Search, hasPopup: 'dialog',
-          expanded: experience === 'search', onAction: openSearch },
-      ]} />
-    </div> : <>
+    <div className="workspace-header-utilities">
     <NarrativeButton ref={helpRef} variant="ghost" size="icon" aria-label="Help" title="Help"
       aria-haspopup="dialog" aria-expanded={help ? help.expanded : experience === 'help'}
       onPointerEnter={help?.onIntent} onFocus={help?.onIntent} disabled={help?.disabled}
@@ -56,7 +49,7 @@ export function WorkspaceHeaderUtilities({ items, help }: {
       onClick={openSearch}>
       <span className="workspace-search-label">Search</span>
     </NarrativeButton>
-    </>}
+    </div>
     {experience === 'help' && createPortal(<Suspense fallback={<span role="status">Loading Help…</span>}>
       <LibraryHelpMenu open onClose={() => setExperience(null)} />
     </Suspense>, document.body)}
@@ -70,7 +63,7 @@ export function WorkspaceHeaderUtilities({ items, help }: {
           // Release the dialog's final focus restoration before the destination focuses its heading.
           dispatchTimer.current = window.setTimeout(action, 0);
         }
-      }} title="Search" closeLabel="Close Search" returnFocusRef={narrow ? overflowReturnRef : searchRef}>
+      }} title="Search" closeLabel="Close Search" returnFocusRef={searchRef}>
       <div role="search">
         <label htmlFor={searchId} className="workspace-search-field-label">Search destinations and actions</label>
         <NarrativeTextBox id={searchId} type="search" autoFocus value={query}

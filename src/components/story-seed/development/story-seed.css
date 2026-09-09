@@ -301,3 +301,58 @@
     backdrop-filter: none !important;
   }
 }
+
+/* Story Seed's page-owned action row.
+
+   Save Draft, Manifest and the small save/generation status used to sit in a
+   shared toolbar directly under the top header, which read as a second header
+   above the form. They belong to the page now: an ordinary content row at the
+   top of the Story Seed column, with no banner landmark, no sticky behaviour,
+   no full-bleed surface and no border of its own. */
+.story-seed-action-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-inline: auto;
+  max-width: 80rem;
+  padding: 8px 16px 0;
+}
+@media (min-width: 640px) {
+  .story-seed-action-row { padding-inline: 24px; }
+}
+.story-seed-action-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  min-width: 0;
+  flex: 1 1 8rem;
+  font-size: 12px;
+  color: var(--color-neutral-400);
+}
+.story-seed-action-status > span:first-child {
+  width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: currentColor;
+}
+.story-seed-action-status-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.story-seed-action-status[data-tone='success'] { color: var(--color-sen-portal); }
+.story-seed-action-status[data-tone='busy'] { color: var(--color-sen-gold-accent); }
+.story-seed-action-status[data-tone='error'] { color: var(--color-sen-human); }
+.story-seed-action-controls { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex: 1 1 auto; min-width: 0; }
+/* Each control keeps its 44px target and gives up label width instead. In this
+   page row the label wraps rather than ellipsizing: the row can grow taller,
+   so "Manifest World Blueprint" stays readable where the old header strip had
+   to hide it behind an icon. */
+.story-seed-action-controls :is(button, a) { flex: 0 1 auto; min-width: 44px; min-height: 44px; max-width: 100%; }
+.story-seed-action-controls .workspace-action-label {
+  overflow: visible; text-overflow: clip; white-space: normal;
+}
+@media (max-width: 639px) {
+  /* On a phone the status takes its own line, then Save Draft keeps its
+     natural width and Manifest takes the rest, wrapping onto a second line
+     instead of being reduced to an unlabeled icon. */
+  .story-seed-action-row { align-items: flex-start; gap: 8px; }
+  .story-seed-action-status { flex: 1 1 100%; }
+  .story-seed-action-controls { flex: 1 1 100%; }
+  .story-seed-action-controls > :last-child { flex: 1 1 auto; }
+}

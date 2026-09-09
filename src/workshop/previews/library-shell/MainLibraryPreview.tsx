@@ -6,7 +6,7 @@ import { MainLibraryNavigation } from '../../../components/library-shell/develop
 import type { LibraryLocation } from '../../../components/library-shell/development/libraryRoutes';
 import { libraryPreviewUrl, navigateLibraryPreview } from './libraryPreviewNavigation';
 
-export function MainLibraryPreview({ state, developmentHeader, extraFeedback, developmentNavigation = false }: { state: string; developmentHeader?: (adapter: MainLibraryAdapter) => React.ReactNode; extraFeedback?: string; developmentNavigation?: boolean }) {
+export function MainLibraryPreview({ state, developmentHeader, developmentHomeContent, extraFeedback, developmentNavigation = false }: { state: string; developmentHeader?: (adapter: MainLibraryAdapter) => React.ReactNode; developmentHomeContent?: (adapter: MainLibraryAdapter) => React.ReactNode; extraFeedback?: string; developmentNavigation?: boolean }) {
   const query = new URLSearchParams(window.location.search);
   const initialScreen = state === 'profile' ? 'profile' : state === 'reader' ? 'reader' : state === 'sects' ? 'sects' : state === 'tiers' ? 'pricing' : 'home';
   const [currentScreen, setCurrentScreen] = useState(developmentNavigation ? query.get('screen') ?? initialScreen : state === 'profile' ? 'profile' : 'home');
@@ -69,6 +69,9 @@ export function MainLibraryPreview({ state, developmentHeader, extraFeedback, de
             {(currentScreen === 'reader' || currentScreen === 'codex') && <button className="mt-4 underline" onClick={() => developmentNavigation ? navigate({ screen: 'home', collection: 'featured' }) : setCurrentScreen('home')}>Return to header capture</button>}
           </div>
           {extraFeedback && <p role="status" className="mb-4 text-sm text-portal">{extraFeedback}</p>}
+          {/* Home content between the featured area and the collection tabs —
+              where Dao Insights now lives, out of the top header. */}
+          {currentScreen === 'home' && developmentHomeContent?.(adapter)}
           <LibraryCollectionStrip activeTab={activeTab} chooseTab={tab => developmentNavigation ? navigate({ screen: 'home', collection: tab as LibraryLocation['collection'] }) : chooseTab(tab)} syncStatus={adapter.syncStatus} libraryStories={state === 'guest' ? [] : adapter.stories} />
           <p className="font-sans text-xs text-neutral-400">Workshop collection destination: {activeTab}</p>
         </div>

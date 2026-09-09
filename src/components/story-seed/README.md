@@ -212,6 +212,8 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-09-09 regression fix:** Removed the second header. The shared action toolbar that sat directly beneath the top header is gone; Save Draft, Manifest and the small save/generation status are now a compact page-owned action row at the top of Story Seed's content, above the form. It is ordinary content — no banner landmark, no sticky row, no surface of its own. Every callback, eligibility rule, disabled reason, loading indicator and saved feedback is unchanged. Settings and Story Bank moved into Story Seed's own navigation (the desktop rail, the section drawer, the bottom controls and Search); Help keeps the header's `?` control.
+
 - **2026-09-09:** Adopted the shared top navigation, universal Help entry and Search for existing destinations/actions. Existing Help content, page commands, forms and bottom navigation are unchanged.
 
 - **2026-09-08:** Made the existing cinematic auth gate host-driven without changing its Story
@@ -334,7 +336,7 @@ Reusable presentation now comes from the canonical Library UI package. Portable 
 
 ## Shared App Header and shell — 2026-09-09
 
-`StorySeedWorkspaceChrome` now composes the canonical `SEIAppHeader` and `SEIAppShell` through the shared `WorkspaceHeader` / `WorkspaceShell` adapters. The Library plaque keeps the identity in its compact App Header presentation, and Save Draft, Settings, Story Bank, Help, Manifest, their eligibility, disabled reasons, loading indicator and preload intent are unchanged.
+`StorySeedWorkspaceChrome` now composes the canonical `SEIAppHeader` and `SEIAppShell` through the shared `WorkspaceHeader` / `WorkspaceShell` adapters. The Library plaque keeps the identity in its compact App Header presentation. Save Draft, Settings, Story Bank, Help, Manifest, their eligibility, disabled reasons, loading indicator and preload intent are unchanged, though as of the 2026-09-09 regression fix Save Draft, Manifest and the status live in the page's own action row and Settings and Story Bank live in the workspace navigation, so the header carries no command toolbar of its own.
 
 The section rail moved out of the creation panel's `18rem` column into the shell's shared 14rem sidebar, so the two-panel workspace is a single column that fills the remaining width and the rail matches the Cave's. The rail appears only from 1024px, the width the drawer and bottom controls already handed over at. The `StorySeedHeader` and `StorySeedMobileNavigation` compatibility exports still delegate to this adapter and add no layout of their own. Schema, storage, Help, generation and Blueprint review keep their existing owners.
 

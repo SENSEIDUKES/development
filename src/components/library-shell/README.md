@@ -10,7 +10,7 @@
 
 ## Top navigation update
 
-Development now uses Logo — existing Library Header Badge — optional contextual item — Help — Search. Home supplies Dao Insights; the public Cave supplies Public View. Help reuses the original Library Help menu and Search finds host destinations/actions. Existing page commands remain in a shared toolbar below the top row. See [the header contract](../../../docs/library-header-family.md) and its focused Header slot states preview.
+Development now uses Logo — existing Library Header Badge — optional contextual item — Help — Search. The public Cave supplies Public View; Dao Insights is Home content rather than a header item. Help reuses the original Library Help menu and Search finds host destinations/actions. Help and Search are two separate controls at every width, each keeping its own 44px target; neither is ever folded into a "…" menu. Pages that still supply header commands keep the shared toolbar below the top row; Story Seed no longer does — it owns its Save Draft, Manifest and status row inside its own content. See [the header contract](../../../docs/library-header-family.md) and its focused Header slot states preview.
 
 ## Bottom navigation update — 2026-09-09
 
@@ -92,6 +92,8 @@ Nothing in this PR is transferred back automatically. Light-Novels and locked re
 For an eventual approved change, identify the owning lane first. Main header/DAO changes would target Light-Novels `src/components/GlobalHeader.tsx`, `src/components/DaoInsights.tsx`, relevant `src/index.css` rules, and only if needed the collection fragment in `src/components/LibraryScreen.tsx`. Story Seed changes would target its existing development header, selector, mobile navigation, settings, `CreationModal` integration, and `story-seed.css`, then ship through the established SEN package and Library host presentation adapter. Shared visual primitives would be changed in UI, published/packed first, then consumed by the hosts. Do not copy the frame HTML, Workshop wrappers, mock context, fixture data, content slots, or capture manifest into a production application.
 
 ## Workshop history
+
+- **2026-09-09:** Regression fixes across four connected surfaces. Restored the Cultivator Cave's Relics destination as a full-width card between the Daily Dao Pillar and Store/Settings, opening the existing `/relics` route and its one inventory panel. Removed Story Seed's second header/action toolbar: Save Draft, Manifest and the small save/generation status are a compact page-owned action row above the form, while Settings, Story Bank and Help stay in Story Seed's own navigation. Restored Help and Search as separate, individually visible top-header controls at every width, keeping the recent badge-legibility fix and the badge's shape, glow, border, colors and height. Moved Dao Insights out of the header into Home content, beneath the featured area and above the collection tabs, with its quotes, rotation, filtering, modal, clipboard, provider check and fallback unchanged. Full titles stay readable at 320, 375, 390, 430 and desktop widths. Locked captures and source-comparison dates are unchanged.
 
 - **2026-09-09:** Unified the top row across Home, Story Seed and Cultivator Cave; reused the custom badge and existing Library Help, added optional page context and responsive Search, retained page commands below the row, and added focused slot/mobile/keyboard previews and tests. Bottom navigation, locked captures and source-comparison dates are unchanged.
 

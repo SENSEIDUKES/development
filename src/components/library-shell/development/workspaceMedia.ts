@@ -15,7 +15,6 @@ import { useSyncExternalStore } from 'react';
  */
 export const COMPACT_HEADER_QUERY = '(max-width: 1279px)';
 export const DESKTOP_NAVIGATION_QUERY = '(min-width: 1024px)';
-const NARROW_HEADER_QUERY = '(max-width: 479px)';
 
 function subscribe(query: string) {
   return (notify: () => void) => {
@@ -27,13 +26,6 @@ function subscribe(query: string) {
 
 const compactSubscribe = subscribe(COMPACT_HEADER_QUERY);
 const desktopSubscribe = subscribe(DESKTOP_NAVIGATION_QUERY);
-const narrowSubscribe = subscribe(NARROW_HEADER_QUERY);
-
-export function useNarrowHeader() {
-  return useSyncExternalStore(narrowSubscribe,
-    () => window.matchMedia(NARROW_HEADER_QUERY).matches, () => false);
-}
-
 export function useCompactHeader() {
   return useSyncExternalStore(
     compactSubscribe,

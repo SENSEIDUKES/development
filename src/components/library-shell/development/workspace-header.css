@@ -73,9 +73,14 @@
 .workspace-header-status[data-tone="busy"] { color: var(--color-sen-gold-accent); }
 .workspace-header-status[data-tone="error"] { color: var(--color-sen-human); }
 
-.workspace-header-actions, .workspace-header-command-area, .workspace-secondary-actions {
+.workspace-header-actions, .workspace-header-command-area, .workspace-secondary-actions,
+.workspace-header-utilities {
   display: flex; align-items: center; gap: 8px; min-width: 0;
 }
+/* Help and Search are separate controls at every width — never an overflow
+   menu — so the pair always keeps its intrinsic width and its touch targets. */
+.workspace-header-utilities { flex: none; }
+.workspace-header-utilities > :is(button, [role="button"]) { min-width: 44px; min-height: 44px; }
 .workspace-header-command-area, .workspace-secondary-actions { flex: none; }
 .workspace-primary-action { flex: none; }
 .header-overflow { position: relative; flex: none; }
@@ -141,7 +146,7 @@
 .workspace-search-results button { width: 100%; min-height: 44px; justify-content: flex-start; text-align: left; white-space: normal; }
 .workspace-search-results small { display: block; margin-top: 4px; font-weight: 400; }
 @media (max-width: 639px) {
-  .workspace-header-actions { gap: 4px; }
+  .workspace-header-actions, .workspace-header-utilities { gap: 4px; }
   .workspace-header-context { max-width: 44px; flex: none; }
   .workspace-header-public-view { width: 44px; justify-content: center; }
   .workspace-search-trigger { width: 44px; padding-inline: 0 !important; }

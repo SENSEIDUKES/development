@@ -225,6 +225,29 @@ describe('Cultivator Cave home', () => {
     expect(text()).not.toContain('Cultivate in silence. Ascend in the unseen.');
   });
 
+  it('regression: keeps a full-width Relics destination under the Dao Pillar and above Store/Settings', async () => {
+    await renderCave();
+    const home = container.querySelector('[data-cave-page="home"]')!;
+    const cards = Array.from(home.querySelectorAll('[data-cave-card="dao-pillar"], [data-cave-card="relics"], [data-cave-account-actions]'));
+    // Order on the page: Daily Dao Pillar, then Relics, then Store/Settings.
+    expect(cards.map(card => card.getAttribute('data-cave-card') ?? 'account-actions'))
+      .toEqual(['dao-pillar', 'relics', 'account-actions']);
+    const relics = container.querySelector<HTMLButtonElement>('[data-cave-card="relics"]')!;
+    // Full width, like the Dao Pillar it follows — not one half of the small pair.
+    expect(relics.className).toContain('cave-home-pillar');
+    expect(relics.closest('[data-cave-account-actions]')).toBeNull();
+    expect(relics.disabled).toBe(false);
+    expect(relics.textContent).toContain('Relics');
+
+    await click(relics);
+    // The existing /relics route and the one inventory panel, not a second copy.
+    expect(window.location.search).toContain('cave=%2Frelics');
+    expect(container.querySelector('[data-cave-destination="relics"]')).not.toBeNull();
+    expect(text()).toContain('Inventory, attunement, and the Offering Hall');
+    expect(container.querySelectorAll('[data-cave-destination="relics"]')).toHaveLength(1);
+    expect(container.querySelector('[data-cave-card="relics"]')).toBeNull();
+  });
+
   it('opens special reserves without including cultivation Qi', async () => {
     await renderCave();
     await click(open('qi-reserves'));

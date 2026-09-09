@@ -1,24 +1,17 @@
+import { UserProfileHome, isEffectActive } from './UserProfileHome';
 import { WorkspaceHeader } from '../../library-shell/development/WorkspaceHeader';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Award,
   BookOpen,
-  ChevronRight,
   Flame,
   Gem,
   Globe,
   Orbit,
   Shield,
   Sparkles,
-  User as UserIcon,
-  Zap,
 } from 'lucide-react';
 import {
   LibraryButton,
-  LibraryCard,
-  LibraryCardDescription,
-  LibraryCardTitle,
-  LibraryPanel,
   ParticleEffect,
 } from '@seihouse/library-ui';
 import {
@@ -27,27 +20,14 @@ import {
   SEIDialogDescription,
   SEIDialogTitle,
   SEIInlineAlert,
-  SEILoadingState,
-  SEIProgressBar,
 } from '@seihouse/ui';
 import { StoryAuthGate, STORY_AUTH_DISSOLVE_MS } from '@seihouse/sen/story-seed';
 import type { AppUser, Story } from '../shared/types';
 import { useUserProfileServices } from '../shared/userProfileServices';
 import {
-  getAuraGlowStyle,
-  getAuraSelection,
-  getAuraSwatchStyle,
-  getAuraTextStyle,
-  resolveRankVisual,
-} from './qi';
-import {
   CAVE_EMBLEM_SRC,
-  CAVE_MOTTO,
   DEFAULT_CAVE_ENVIRONMENT_ID,
-  RELICS_TILE_SRC,
-  STORIES_TILE_SRC,
   getCaveEnvironment,
-  getCultivationStage,
 } from './caveEnvironment';
 import { UserProfileCaveDestination, type CaveDestinationId } from './UserProfileCaveDestination';
 import { UserProfileAdminPanel } from './UserProfileAdminPanel';
@@ -68,34 +48,6 @@ interface UserProfileProps {
   onNavigateHome: () => void;
 }
 
-/** The three Qi cores and their production descriptions, verbatim. */
-const QI_CORES = [
-  {
-    id: 'heavenly',
-    label: 'Heavenly Qi',
-    accent: '#04ACFF',
-    description:
-      'Your fundamental essence gained from reading realms, making choices, and overcoming tribulations. Tracks your progression to higher cultivator ranks and determines your celestial aura color.',
-  },
-  {
-    id: 'sect',
-    label: 'Sect Qi',
-    accent: '#c43a3a',
-    description:
-      'Essence stored for your upcoming community contribution achievements. Utilized to exchange for special titles, customize sect affiliations, and fund cooperative arrays when the contribution hall is unlocked.',
-  },
-  {
-    id: 'demonic',
-    label: 'Demonic Qi',
-    accent: '#f59e0b',
-    description:
-      'Corrupted cultivation power, unlocked from demonic artifacts or taboos. Proceed with caution when harnessing this forbidden essence.',
-  },
-] as const;
-
-const formatQi = (value: number | undefined | null): string =>
-  typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString() : '—';
-
 /**
  * The Cultivator Cave — the profile page as a place. The home shows the
  * cultivator's portrait, identity, rank, and Qi over a stock Immortal Land
@@ -110,11 +62,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const controller = useUserProfile({ currentUser, stories, onLogout, onNavigateHome });
   const {
     profile,
-    formData,
-    isLoading,
     error,
-    activeQiTooltip,
-    setActiveQiTooltip,
     setIsAdminPanelOpen,
     allUsers,
     allStories,
@@ -133,7 +81,6 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     confirmLanguageChange,
     revertLanguageChange,
     handleAttuneArtifact,
-    activeStoriesCount,
     currentStreak,
     isCracked,
     daysTo3,
@@ -231,305 +178,20 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   }, [navigate]);
   const returnHome = useCallback(() => navigate('/home'), [navigate]);
 
-  const auraXp = profile?.dao_xp ?? profile?.qi;
-  const auraSelection = getAuraSelection(profile?.displayNameColor, auraXp);
-  const nameStyle = getAuraTextStyle(auraSelection, profile?.activeStatusEffects, auraXp);
-  const auraGlow = getAuraGlowStyle(auraSelection, profile?.activeStatusEffects, auraXp);
-  const heavenlyQi = profile?.heavenly_qi !== undefined ? profile.heavenly_qi : daoData.currentQi;
-  const stage = getCultivationStage(daoData.progress, daoData.nextRank);
-  const attunedArtifact = (profile?.cosmicInventory || []).find(a => a.id === profile?.equippedArtifactId);
-  const activeEffects = profile?.activeStatusEffects ?? [];
-  const activeCore = QI_CORES.find(core => core.id === activeQiTooltip);
-  const qiValues: Record<(typeof QI_CORES)[number]['id'], number | undefined> = {
-    heavenly: profile ? heavenlyQi : undefined,
-    sect: profile ? profile.sect_qi || 0 : undefined,
-    demonic: profile ? profile.demonic_qi || 0 : undefined,
-  };
-  // Which ranks carry the mote layer, and what colour those motes are, is rank
-  // data — not a list of colour values this file has to keep in step.
-  const activeRank = resolveRankVisual(auraSelection, auraXp);
-  const showsRankParticles = activeRank.rank.motes;
-  const moteColors = activeRank.visual.stops;
-
-  const renderHome = () => (
-    <div className="md:grid md:grid-cols-[minmax(0,21rem)_minmax(0,1fr)] md:items-start md:gap-8 lg:grid-cols-[minmax(0,23rem)_minmax(0,1fr)]">
-      {/* Portrait and identity */}
-      <section aria-labelledby="cave-cultivator-name" className="relative md:sticky md:top-6">
-        <div className="relative mx-auto mt-2 flex items-center justify-center">
-          <span aria-hidden="true" className="cave-plaque absolute left-0 top-1/2 hidden -translate-y-1/2 min-[380px]:block md:-left-2">
-            守心见道
-          </span>
-          <span aria-hidden="true" className="cave-plaque absolute right-0 top-1/2 hidden -translate-y-1/2 min-[380px]:block md:-right-2">
-            静修成空
-          </span>
-
-          <div className="relative aspect-square w-[min(58vw,15rem)] md:w-56 lg:w-60">
-            <div
-              aria-hidden="true"
-              className="absolute -inset-10 rounded-full bg-[radial-gradient(circle,rgba(4,172,255,0.28),rgba(4,172,255,0.06)_45%,transparent_70%)] blur-xl"
-            />
-            <div aria-hidden="true" className="cave-portrait-ring cave-drift absolute -inset-1.5 rounded-full opacity-90" />
-            <span aria-hidden="true" className="cave-diamond left-1/2 top-[-6px]" />
-            <span aria-hidden="true" className="cave-diamond left-1/2 bottom-[-15px]" />
-            <span aria-hidden="true" className="cave-diamond left-[-6px] top-1/2" />
-            <span aria-hidden="true" className="cave-diamond right-[-15px] top-1/2" />
-            <div
-              className={`absolute inset-1 rounded-full p-1 transition-all duration-700 ${auraGlow.className}`}
-              style={auraGlow.style}
-              data-cave-portrait
-            >
-              <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#04070f]">
-                {formData.avatarUrl || profile?.avatarUrl ? (
-                  <img
-                    src={formData.avatarUrl || profile?.avatarUrl}
-                    alt={profile ? `${profile.displayName || profile.username} portrait` : 'Cultivator portrait'}
-                    className="h-full w-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <UserIcon size={56} aria-hidden="true" className="text-neutral-700" />
-                )}
-                {showsRankParticles ? (
-                  <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden mix-blend-screen">
-                    <div className="absolute inset-x-0 bottom-2 flex h-8 justify-around opacity-75">
-                      <span className="h-1 w-1 animate-ping rounded-full motion-reduce:animate-none" style={{ animationDuration: '3s', backgroundColor: moteColors[0] }} />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full motion-reduce:animate-none" style={{ animationDuration: '2s', backgroundColor: moteColors[moteColors.length - 1] }} />
-                      <span className="h-1 w-1 animate-pulse rounded-full motion-reduce:animate-none" style={{ animationDuration: '2.5s', backgroundColor: moteColors[Math.floor(moteColors.length / 2)] }} />
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <LibraryPanel
-          as="div"
-          padding="md"
-          className="relative -mt-6 !rounded-[1.35rem] !border-[#d4af37]/45 pt-9 text-center sm:pt-10"
-          data-cave-identity
-        >
-          <span aria-hidden="true" className="cave-diamond left-1/2 top-0" />
-          {isLoading && !profile ? (
-            <SEILoadingState size="sm" title="Reading your celestial record" className="mx-auto" />
-          ) : (
-            <>
-              <h2 id="cave-cultivator-name" tabIndex={-1} className="flex flex-wrap items-center justify-center gap-2 font-display text-3xl leading-tight sm:text-4xl">
-                <span className={nameStyle.className || 'text-neutral-100'} style={nameStyle.style}>
-                  {profile?.displayName || 'Unknown Ascendant'}
-                </span>
-                {attunedArtifact ? (
-                  <span
-                    className="inline-flex items-center text-[#e2c46a]"
-                    title={`Soul Attuned: ${attunedArtifact.name}${attunedArtifact.attributeBoost ? ` (${attunedArtifact.attributeBoost})` : ''}`}
-                  >
-                    <Award size={20} aria-hidden="true" />
-                    <span className="sr-only">
-                      Soul Attuned: {attunedArtifact.name}
-                      {attunedArtifact.attributeBoost ? ` (${attunedArtifact.attributeBoost})` : ''}
-                    </span>
-                  </span>
-                ) : null}
-              </h2>
-              <p className="mt-1 font-serif text-sm text-neutral-400">
-                @{profile?.username || 'anonymous_cultivator'}
-              </p>
-
-              <p className="mt-3 flex items-center justify-center gap-2 font-serif text-base text-neutral-200 sm:text-lg" data-cave-rank>
-                {/* The rank orb, painted from the same data as the Settings swatch. */}
-                <span
-                  aria-hidden="true"
-                  className="h-5 w-5 shrink-0 rounded-full border border-black/40"
-                  style={getAuraSwatchStyle(activeRank.visual)}
-                  data-cave-rank-orb
-                />
-                <span>
-                  {daoData.rank} · {stage}
-                </span>
-              </p>
-
-              <div className="mx-auto mt-4 max-w-xs">
-                <SEIProgressBar
-                  size="sm"
-                  tone="sea"
-                  value={daoData.progress}
-                  aria-label={daoData.nextRank ? `Cultivation toward ${daoData.nextRank}` : 'Cultivation at the peak rank'}
-                  valueText={`${formatQi(heavenlyQi)} of ${daoData.maxQi ? formatQi(daoData.maxQi) : 'peak'} Heavenly Qi`}
-                  className="[&_[data-slot=progress-bar-track]]:bg-black/70 [&_[data-slot=progress-bar-track]]:ring-1 [&_[data-slot=progress-bar-track]]:ring-[#d4af37]/40"
-                />
-                <p className="mt-2 font-mono text-sm tracking-wide" data-cave-qi>
-                  <span className="text-[#7dd3ff]">{formatQi(heavenlyQi)}</span>
-                  <span className="text-neutral-500"> / {daoData.maxQi ? formatQi(daoData.maxQi) : '∞'}</span>
-                </p>
-                {daoData.nextRank ? (
-                  <p className="font-sc text-[9px] uppercase tracking-widest text-neutral-500">
-                    Cultivation to {daoData.nextRank}
-                  </p>
-                ) : (
-                  <p className="font-sc text-[9px] uppercase tracking-widest text-[#e2c46a]">Peak of the Dao</p>
-                )}
-              </div>
-
-              <div role="group" aria-label="Qi cores" className="mt-4 flex flex-wrap justify-center gap-1.5">
-                {QI_CORES.map(core => {
-                  const isActive = activeQiTooltip === core.id;
-                  return (
-                    <button
-                      key={core.id}
-                      type="button"
-                      aria-pressed={isActive}
-                      aria-describedby={isActive ? 'cave-qi-core-description' : undefined}
-                      onClick={() => setActiveQiTooltip(isActive ? null : core.id)}
-                      className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-sc text-[9px] font-bold uppercase tracking-widest transition-colors hover:bg-white/5"
-                      style={{ borderColor: `${core.accent}66`, color: isActive ? '#fafafa' : core.accent }}
-                    >
-                      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: core.accent, boxShadow: `0 0 6px ${core.accent}` }} />
-                      {core.label}
-                      <span className="font-mono text-[10px] normal-case tracking-normal text-neutral-200">{formatQi(qiValues[core.id])}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              {activeCore ? (
-                <p id="cave-qi-core-description" className="mx-auto mt-2 max-w-xs font-sans text-[11px] leading-relaxed text-neutral-400">
-                  {activeCore.description}
-                </p>
-              ) : null}
-
-              <div className="cave-rule mt-5" aria-hidden="true" />
-              <p className="mt-3 font-serif text-sm italic text-[#e2c46a]/90">{CAVE_MOTTO}</p>
-            </>
-          )}
-        </LibraryPanel>
-      </section>
-
-      {/* Destinations */}
-      <nav aria-label="Cave destinations" className="mt-5 md:mt-2">
-        <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          <LibraryCard
-            interactive
-            padding="none"
-            accentColor="#D4AF37"
-            aria-label="Stories: Seeds and Manifested Stories"
-            onClick={() => openDestination('stories')}
-            data-cave-card="stories"
-            media={
-              <div className="relative aspect-[5/4] sm:aspect-[16/9]">
-                <img src={STORIES_TILE_SRC} alt="" className="absolute inset-0 h-full w-full object-cover opacity-75" loading="lazy" />
-                <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#070b16] via-[#070b16]/35 to-transparent" />
-                <BookOpen aria-hidden="true" size={26} className="absolute bottom-3 left-4 text-[#f5b942] drop-shadow-[0_0_10px_rgba(245,185,66,0.55)]" />
-              </div>
-            }
-          >
-            <div className="flex items-end justify-between gap-2 p-3 sm:p-4">
-              <div className="min-w-0">
-                <LibraryCardTitle as="h3" className="break-normal font-display text-lg font-medium text-neutral-100 sm:text-2xl">Stories</LibraryCardTitle>
-                <LibraryCardDescription className="mt-0.5 truncate font-serif text-[11px] text-neutral-400 sm:text-sm">
-                  Seeds · Manifested Stories
-                </LibraryCardDescription>
-                <p className="mt-1 font-mono text-[9px] uppercase tracking-wider text-neutral-500">
-                  {activeStoriesCount} manifested
-                </p>
-              </div>
-              <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#d4af37]/60 text-[#e2c46a]">
-                <ChevronRight size={16} />
-              </span>
-            </div>
-          </LibraryCard>
-
-          <LibraryCard
-            interactive
-            padding="none"
-            accentColor="#D4AF37"
-            aria-label="Relics: Inventory and Offering Hall"
-            onClick={() => openDestination('relics')}
-            data-cave-card="relics"
-            media={
-              <div className="relative aspect-[5/4] sm:aspect-[16/9]">
-                <img src={RELICS_TILE_SRC} alt="" className="absolute inset-0 h-full w-full object-cover opacity-75" loading="lazy" />
-                <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#070b16] via-[#070b16]/35 to-transparent" />
-                <Gem aria-hidden="true" size={26} className="absolute bottom-3 left-4 text-[#7dd3ff] drop-shadow-[0_0_10px_rgba(4,172,255,0.6)]" />
-              </div>
-            }
-          >
-            <div className="flex items-end justify-between gap-2 p-3 sm:p-4">
-              <div className="min-w-0">
-                <LibraryCardTitle as="h3" className="break-normal font-display text-lg font-medium text-neutral-100 sm:text-2xl">Relics</LibraryCardTitle>
-                <LibraryCardDescription className="mt-0.5 truncate font-serif text-[11px] text-neutral-400 sm:text-sm">
-                  Inventory · Offering Hall
-                </LibraryCardDescription>
-                <p className="mt-1 font-mono text-[9px] uppercase tracking-wider text-neutral-500">
-                  {(profile?.cosmicInventory || []).length} gathered
-                </p>
-              </div>
-              <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#d4af37]/60 text-[#e2c46a]">
-                <ChevronRight size={16} />
-              </span>
-            </div>
-          </LibraryCard>
-
-          <LibraryCard
-            interactive
-            padding="sm"
-            accentColor={isCracked ? '#ff3333' : '#f97316'}
-            aria-label={`Dao Pillar: ${isCracked ? 'cracked' : `${currentStreak} day streak`}`}
-            onClick={() => openDestination('dao-pillar')}
-            data-cave-card="dao-pillar"
-            contentClassName="gap-0"
-          >
-            <div className="flex items-center gap-3">
-              <span
-                aria-hidden="true"
-                className={`flex h-11 w-7 shrink-0 items-center justify-center rounded-md border font-serif text-base sm:h-12 sm:w-8 sm:text-lg ${
-                  isCracked
-                    ? 'border-[#ff3333]/40 bg-[#ff3333]/10 text-[#ff3333]'
-                    : 'border-[#04ACFF]/40 bg-[#04ACFF]/10 text-[#7dd3ff] shadow-[0_0_16px_rgba(4,172,255,0.3)]'
-                }`}
-              >
-                道
-              </span>
-              <div className="min-w-0 flex-1">
-                <LibraryCardTitle as="h3" className="break-normal font-display text-base font-medium leading-snug text-neutral-100 sm:text-lg">Dao Pillar</LibraryCardTitle>
-                <p className={`mt-0.5 break-normal font-serif text-[11px] sm:text-sm ${isCracked ? 'text-[#ff3333]' : 'text-[#7dd3ff]'}`}>
-                  {isCracked ? 'Cracked · Repair' : `${currentStreak} Day Streak`}
-                </p>
-              </div>
-              <span aria-hidden="true" className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#d4af37]/60 text-[#e2c46a] sm:flex">
-                <ChevronRight size={14} />
-              </span>
-            </div>
-          </LibraryCard>
-
-          <LibraryCard
-            interactive
-            padding="sm"
-            accentColor="#8b5cf6"
-            aria-label={`Active Status Effects: ${activeEffects.length}`}
-            onClick={() => openDestination('status-effects')}
-            data-cave-card="status-effects"
-            contentClassName="gap-0"
-          >
-            <div className="flex items-center gap-3">
-              <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-violet-400/40 sm:h-12 sm:w-12 bg-violet-950/40 text-violet-300 shadow-[0_0_16px_rgba(139,92,246,0.35)]">
-                <Orbit size={22} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <LibraryCardTitle as="h3" className="break-normal font-display text-base font-medium leading-snug text-neutral-100 sm:text-lg">Active Status Effects</LibraryCardTitle>
-                <p className="mt-0.5 line-clamp-2 break-normal font-serif text-[11px] text-neutral-400 sm:text-sm">
-                  {activeEffects.length === 0
-                    ? 'None active'
-                    : activeEffects.map(effect => effect.effectDef.name).join(' + ')}
-                </p>
-              </div>
-              <span aria-hidden="true" className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#d4af37]/60 text-[#e2c46a] sm:flex">
-                <ChevronRight size={14} />
-              </span>
-            </div>
-          </LibraryCard>
-        </div>
-        <div className="cave-rule mt-8" aria-hidden="true" />
-      </nav>
-    </div>
+  const [effectsNow, setEffectsNow] = useState(Date.now);
+  useEffect(() => {
+    const refreshEffects = () => setEffectsNow(Date.now());
+    window.addEventListener('focus', refreshEffects);
+    document.addEventListener('visibilitychange', refreshEffects);
+    const timer = window.setInterval(refreshEffects, 1000);
+    return () => {
+      window.removeEventListener('focus', refreshEffects);
+      document.removeEventListener('visibilitychange', refreshEffects);
+      window.clearInterval(timer);
+    };
+  }, []);
+  const activeEffects = (profile?.activeStatusEffects ?? []).filter((effect) =>
+    isEffectActive(effect, effectsNow),
   );
 
   const renderView = () => {
@@ -572,6 +234,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         return (
           <UserProfileCaveDestination id="dao-pillar" title="Dao Pillar" subtitle="Daily refinement and the streak it builds" icon={<Flame size={18} />} onBack={returnHome}>
             <UserProfileDaoPillarPanel
+              dailyClaim={controller.dailyClaim}
               profile={profile}
               currentStreak={currentStreak}
               isCracked={isCracked}
@@ -616,7 +279,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           </UserProfileCaveDestination>
         );
       default:
-        return renderHome();
+        return <UserProfileHome controller={controller} />;
     }
   };
 

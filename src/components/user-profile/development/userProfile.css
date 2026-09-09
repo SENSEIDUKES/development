@@ -137,3 +137,24 @@
   .cave-workspace-body { display: grid; grid-template-columns: 13rem minmax(0, 1fr); gap: 1.5rem; padding-bottom: 0; }
   .cave-workspace-body > aside { position: sticky; top: 1rem; align-self: start; max-height: calc(100dvh - 2rem); overflow-y: auto; }
 }
+
+/* Home composition; workspace navigation owns safe-area spacing. */
+.cave-home-control, .cave-home-pillar {
+  display: flex; align-items: center; gap: .65rem; width: 100%; min-width: 0;
+  border: 1px solid #d4af3773; border-radius: 1rem; padding: .85rem;
+  background: linear-gradient(145deg, #101824ed, #040b12ed); color: #eee4cc;
+  text-align: left; cursor: pointer;
+}
+.cave-home-control { min-height: 6rem; }
+.cave-home-control:focus-visible, .cave-home-pillar:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 3px; }
+.cave-home-control:hover, .cave-home-pillar:not(:disabled):hover { border-color: #e2c46a; }
+.cave-home-pillar { min-height: 9rem; gap: 1.5rem; }
+.cave-home-pillar:disabled { cursor: default; }
+.cave-home-pillar-art { display: grid; place-items: center; flex: 0 0 4rem; height: 6rem; border: 1px solid #7dd3ff80; border-radius: 45% 45% 10% 10%; font-size: 2rem; color: #7dd3ff; background: radial-gradient(ellipse, #04acff40, #040b12); box-shadow: 0 0 28px #04acff40, inset 0 0 18px #04acff30; }
+.cave-home-glyph { width: 1.8rem; height: 1.8rem; flex-shrink: 0; color: #7dd3ff; filter: drop-shadow(0 0 8px #04acff80); }
+.cave-tier-badge { flex-shrink: 0; border: 1px solid #d4af3780; border-radius: 99px; padding: .2rem .5rem; font: 11px/1.3 sans-serif; color: #e2c46a; }
+/* Local semantic rank bar: these track/indicator hooks belong to Home and do not
+   depend on private DOM slots inside a package progress primitive. */
+.cave-home-progress { position: relative; height: .65rem; overflow: hidden; border-radius: 99px; background: #020408; outline: 1px solid #d4af3770; outline-offset: 2px; }
+.cave-home-progress-indicator { position: absolute; inset-block: 0; left: 0; width: var(--cave-progress); border-radius: inherit; background: var(--cave-rank-background); }
+@media (max-width: 379px) { .cave-home-control { gap: .4rem; padding: .65rem; } .cave-home-control .cave-home-glyph { display: none; } }

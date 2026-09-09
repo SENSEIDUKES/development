@@ -15,6 +15,7 @@ import type {
   StorySeed,
   UserProfile,
 } from '../../../components/user-profile/shared/types';
+import type { SpecialQiId } from '../../../components/user-profile/shared/userProfileServices';
 import type { UserProfilePreviewState } from './previewStates';
 
 const CURRENT_WEEK = getCurrentOfferingWeekId();
@@ -411,6 +412,7 @@ export const MOCK_ADMIN_STORIES: AdminStoryRow[] = [
 ];
 
 export interface PreviewScenario {
+  unlockedSpecialQi?: readonly SpecialQiId[];
   currentUser: AppUser | null;
   profile: UserProfile | null;
   stories: Story[];
@@ -435,6 +437,18 @@ export function getPreviewScenario(state: UserProfilePreviewState): PreviewScena
   };
 
   switch (state) {
+    case 'claim-failed':
+    case 'claim-unresolved':
+      return { ...base, profile: { ...DEVELOPED_PROFILE } };
+    case 'collected-today':
+      return { ...base, profile: { ...DEVELOPED_PROFILE, lastReadDate: new Date().toISOString().split('T')[0] } };
+    case 'home-edge-cases':
+      return { ...base, unlockedSpecialQi: ['sect', 'demonic'], profile: {
+        ...DEVELOPED_PROFILE, displayName: 'The Cultivator Who Reads Beyond the Edge of Every Forgotten Realm',
+        dao_xp: 50000, premiumTier: 'immortal', sect_qi: 0,
+        activeStatusEffects: [{ ...DEVELOPED_PROFILE.activeStatusEffects![0], expiresAt: new Date(Date.now() + 15000).toISOString(), effectDef: { ...DEVELOPED_PROFILE.activeStatusEffects![0].effectDef, sectQiMultiplier: 1.1 } }],
+      } };
+
     case 'signed-out':
       return { ...base, currentUser: null, profile: null, stories: [], seeds: [] };
     case 'new-cultivator':

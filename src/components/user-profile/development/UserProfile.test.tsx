@@ -5,6 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UserProfile from './UserProfile';
 import ReferenceUserProfile from '../reference/UserProfile';
 import { UserProfileServicesProvider } from '../shared/userProfileServices';
+import type { UserProfileController } from '../shared/userProfileServices';
+import type { MockUserProfileServicesOptions } from '../../../workshop/previews/user-profile/mockUserProfileServices';
+import { effectStatement } from './UserProfileHome';
 import type { AppUser } from '../shared/types';
 import { createMockUserProfileServices } from '../../../workshop/previews/user-profile/mockUserProfileServices';
 import { getPreviewScenario } from '../../../workshop/previews/user-profile/previewData';
@@ -66,13 +69,17 @@ interface RenderOptions {
   state?: UserProfilePreviewState;
   onLogout?: () => void;
   Component?: typeof UserProfile;
+  adapter?: Partial<MockUserProfileServicesOptions>;
 }
 
-async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), Component = UserProfile }: RenderOptions = {}) {
+async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), Component = UserProfile, adapter = {} }: RenderOptions = {}) {
   const scenario = getPreviewScenario(state);
   const logExcludedAction = vi.fn();
   const onSignIn = vi.fn<(account: AppUser) => void>();
-  const services = createMockUserProfileServices({ state, logExcludedAction, onSignIn });
+  const services = createMockUserProfileServices({ state, logExcludedAction, onSignIn, ...adapter });
+  const useOriginalController = services.useController;
+  let controller: UserProfileController;
+  services.useController = props => { controller = useOriginalController(props); return controller; };
   await act(async () => {
     root.render(
       <UserProfileServicesProvider services={services}>
@@ -89,7 +96,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
   await act(async () => {
     await vi.advanceTimersByTimeAsync(600);
   });
-  return { logExcludedAction, onSignIn };
+  return { logExcludedAction, onSignIn, controller: () => controller };
 }
 
 const text = () => document.body.textContent ?? '';
@@ -108,10 +115,11 @@ const click = async (element: Element) => {
   });
 };
 
-const open = (id: string) => byText<HTMLElement>(`[data-cave-card="${id}"]`, '');
+const open = (id: string) => id === 'stories' || id === 'relics' ? byText<HTMLElement>('nav button', id === 'stories' ? 'Stories' : 'Relics') : byText<HTMLElement>(`[data-cave-card="${id}"]`, '');
+const navigateTo = async (path: string) => { await act(async () => { window.history.pushState(null, '', `?preview=user-profile&cave=${path}`); window.dispatchEvent(new PopStateEvent('popstate')); }); };
 
 describe('Cultivator Cave home', () => {
-  it('shows the portrait, identity, rank and stage, Qi, and the four destinations', async () => {
+  it('shows the portrait, compact identity, cultivation and Home controls', async () => {
     await renderCave();
     const scenario = getPreviewScenario('developed-cultivator');
     const profile = scenario.profile!;
@@ -120,27 +128,29 @@ describe('Cultivator Cave home', () => {
     expect(container.querySelector('[data-cave-backdrop]')?.getAttribute('src')).toBe(CAVE_ENVIRONMENTS[0].src);
     expect(container.querySelector('[data-cave-portrait] img')?.getAttribute('src')).toBe(profile.avatarUrl);
     expect(container.querySelector('#cave-cultivator-name')?.textContent).toContain(profile.displayName);
-    expect(container.querySelector('[data-cave-rank]')?.textContent).toContain('Leader · Early Stage');
-    expect(container.querySelector('[data-cave-qi]')?.textContent).toBe('13,480 / 25,000');
+    expect(container.querySelector('[data-cave-rank]')?.textContent).toContain('Leader');
+    expect(container.querySelector('[data-cave-qi]')?.textContent).toBe('13,480 / 25,000 Qi');
     expect(container.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('11');
 
-    for (const id of ['stories', 'relics', 'dao-pillar', 'status-effects']) {
+    for (const id of ['qi-reserves', 'dao-pillar', 'status-effects']) {
       expect(container.querySelector(`[data-cave-card="${id}"]`)).not.toBeNull();
     }
     expect(open('dao-pillar').textContent).toContain('12 Day Streak');
-    expect(open('status-effects').textContent).toContain('Blessing of the Unwritten + Curse of the Half-Finished Arc');
+    expect(open('status-effects').textContent).toContain('Active Effects · 2');
+    expect(text()).not.toContain(profile.username);
     expect(container.querySelector('.workspace-header [aria-label="Open settings"]')).toBeNull();
     expect(container.querySelectorAll('nav[aria-label="Cultivator Cave navigation"]')).toHaveLength(2);
-    expect(text()).toContain('Cultivate in silence. Ascend in the unseen.');
+    expect(text()).not.toContain('Cultivate in silence. Ascend in the unseen.');
   });
 
-  it('reveals a Qi core description when its chip is pressed', async () => {
+  it('opens special reserves without including cultivation Qi', async () => {
     await renderCave();
-    const sect = byText<HTMLButtonElement>('button', 'Sect Qi');
-    expect(sect.textContent).toContain('620');
-    await click(sect);
-    expect(sect.getAttribute('aria-pressed')).toBe('true');
-    expect(container.querySelector('#cave-qi-core-description')?.textContent).toContain('community contribution');
+    await click(open('qi-reserves'));
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog?.textContent).toContain('Sect Qi620');
+    expect(dialog?.textContent).toContain('Demonic Qi145');
+    expect(dialog?.textContent).not.toContain('Heavenly Qi');
+    expect(window.location.search).not.toContain('cave=');
   });
 
   it('replaces the signed-out Cave with OAuth and links the mock account', async () => {
@@ -163,7 +173,7 @@ describe('Cultivator Cave home', () => {
 
   it('keeps a loading and an error state reachable', async () => {
     await renderCave({ state: 'loading' });
-    expect(text()).toContain('Reading your celestial record');
+    expect(text()).toContain('Loading profile');
 
     act(() => {
       root.unmount();
@@ -192,7 +202,7 @@ describe('Cultivator Cave destinations', () => {
     expect(container.querySelectorAll('[aria-label="Story seeds"] li')).toHaveLength(3);
 
     await click(container.querySelector('[aria-label="Return to cave"]')!);
-    expect(container.querySelector('[data-cave-card="stories"]')).not.toBeNull();
+    expect(container.querySelector('[data-cave-home]')).not.toBeNull();
   });
 
   it('opens Relics with inventory, attunement, and a working Offering Hall', async () => {
@@ -231,19 +241,20 @@ describe('Cultivator Cave destinations', () => {
 
   it('opens the Dao Pillar and refines the daily streak', async () => {
     await renderCave();
-    await click(open('dao-pillar'));
+    await navigateTo('/home/dao-pillar');
     expect(container.querySelector('#cave-dao-pillar-streak')?.textContent).toBe('12 Days');
     await click(byText('button', 'Refine Daily Dao'));
+    await act(async () => { await vi.advanceTimersByTimeAsync(650); });
     expect(container.querySelector('#cave-dao-pillar-streak')?.textContent).toBe('13 Days');
     expect(container.querySelector('[role="status"]')?.textContent).toContain('Refinement complete today');
     await click(container.querySelector('[aria-label="Return to cave"]')!);
     expect(open('dao-pillar').textContent).toContain('13 Day Streak');
-    expect(container.querySelector('[data-cave-qi]')?.textContent).toBe('13,485 / 25,000');
+    expect(container.querySelector('[data-cave-qi]')?.textContent).toBe('13,485 / 25,000 Qi');
   });
 
   it('offers repair when the pillar is cracked', async () => {
     await renderCave({ state: 'owner-admin' });
-    await click(open('dao-pillar'));
+    await navigateTo('/home/dao-pillar');
     expect(container.querySelector('[data-cracked="true"]')).not.toBeNull();
     await click(byText('button', 'Repair Pillar (50 Qi)'));
     expect(container.querySelector('[data-cracked="true"]')).toBeNull();
@@ -252,7 +263,7 @@ describe('Cultivator Cave destinations', () => {
 
   it('lists active status effects and shows an empty state for a new cultivator', async () => {
     await renderCave();
-    await click(open('status-effects'));
+    await navigateTo('/home/status-effects');
     const cards = container.querySelectorAll('[aria-label="Active status effects"] > li');
     expect(cards).toHaveLength(2);
     expect(cards[0].textContent).toContain('Blessing • Account-wide');
@@ -583,5 +594,153 @@ describe('Cave overlays and history', () => {
     expect(document.body.querySelector('[data-cave-language-confirm]')).toBeNull();
     await click(byText('.cave-workspace-dock button', 'Settings'));
     expect(document.body.querySelector<HTMLSelectElement>('#cave-preferred-language')?.value).toBe('English');
+  });
+});
+
+
+describe('Home dynamic data and claim contract', () => {
+  it.each(['mortal', 'outer_sect', 'inner_sect', 'sect_master', 'immortal'] as const)('shows the %s subscription accessibly', async premiumTier => {
+    await renderCave({ adapter: { profileOverride: { premiumTier } } });
+    expect(container.querySelector('.cave-tier-badge')?.getAttribute('aria-label')).toMatch(/^Subscription tier: /);
+    expect(container.querySelector('.cave-tier-badge')?.textContent?.toLowerCase()).toBe(premiumTier.replaceAll('_', ' '));
+  });
+  it.each([['', 'Cultivator'], ['A'.repeat(180), 'A'.repeat(180)]])('handles missing or long display names', async (displayName, expected) => {
+    await renderCave({ adapter: { profileOverride: { displayName, username: 'private-handle' } } });
+    expect(container.querySelector('h2')?.textContent).toContain(expected);
+    expect(container.innerHTML).not.toContain('private-handle');
+  });
+  it.each([[0, 1234, 0], [undefined, 300, 300], [50000, 0, 50000]])('uses canonical cultivation %s with legacy %s', async (dao_xp, qi, expected) => {
+    await renderCave({ adapter: { profileOverride: { dao_xp, qi, heavenly_qi: 99 } } });
+    expect(container.querySelector('[data-cave-qi]')?.textContent).toMatch(new RegExp(`^${expected.toLocaleString()}`));
+    expect(container.querySelector('[data-cave-rank]')?.textContent).toBe(getRankForQi(expected).name);
+    expect((container.querySelector('[data-cave-progress]') as HTMLElement).style.getPropertyValue('--cave-rank-background')).toBeTruthy();
+    if (expected === 50000) expect(text()).toContain('Maximum rank');
+  });
+  it('keeps explicitly unlocked zero reserves and excludes locked positive balances', async () => {
+    await renderCave({ adapter: { unlockedSpecialQi: ['sect'], profileOverride: { sect_qi: 0, demonic_qi: 200 } } });
+    await click(open('qi-reserves'));
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Sect Qi0');
+    expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('Demonic Qi');
+  });
+  it('shows empty reserves and hides effects for a new cultivator', async () => {
+    await renderCave({ state: 'new-cultivator' });
+    expect(container.querySelector('[data-cave-card="status-effects"]')).toBeNull();
+    await click(open('qi-reserves'));
+    expect(text()).toContain('No special Qi reserves unlocked.');
+  });
+  it('expires effects while the panel is open and closes on navigation', async () => {
+    const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
+    await renderCave({ adapter: { profileOverride: { activeStatusEffects: [{ ...effect, expiresAt: new Date(Date.now() + 2000).toISOString(), effectDef: { ...effect.effectDef, sectQiMultiplier: 1.1 } }] } } });
+    await click(open('status-effects'));
+    expect(text()).toContain('+10% Sect Qi');
+    await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
+    expect(text()).toContain('No active effects.');
+    expect(container.querySelector('[data-cave-card="status-effects"]')).toBeNull();
+    await navigateTo('/home/status-effects');
+    expect(text()).toContain('No status effects are active');
+    await navigateTo('/stories');
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+  });
+  it('formats multipliers and actual remaining duration without inventing values', () => {
+    const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
+    const now = Date.now();
+    expect(effectStatement({ ...effect, expiresAt: new Date(now + 7 * 86400000).toISOString(), effectDef: { ...effect.effectDef, qiMultiplier: undefined, sectQiMultiplier: 1.1 } }, now)).toBe('+10% Sect Qi · 7 days');
+  });
+  it('claims once across repeated taps and route changes, with rank progress updated', async () => {
+    const result = await renderCave();
+    await click(open('dao-pillar'));
+    expect((open('dao-pillar') as HTMLButtonElement).disabled).toBe(true);
+    await navigateTo('/home/dao-pillar');
+    let repeat;
+    await act(async () => { repeat = await result.controller().dailyClaim!.claim(); });
+    expect(repeat).toMatchObject({ outcome: 'blocked' });
+    await act(async () => { await vi.advanceTimersByTimeAsync(650); });
+    await navigateTo('/home');
+    expect(text()).toContain('Collected Today');
+    expect(container.querySelector('[data-cave-qi]')?.textContent).toBe('13,485 / 25,000 Qi');
+    const pending = result.controller().dailyClaim!.claim();
+    await act(async () => { await vi.advanceTimersByTimeAsync(650); await pending; });
+    expect(result.controller().dailyClaim?.result?.outcome).toBe('already-collected');
+    expect(result.controller().profile?.dao_xp).toBe(13485);
+  });
+  it.each(['failed', 'unresolved'] as const)('does not award Qi for a %s claim', async claimMode => {
+    const result = await renderCave({ adapter: { claimMode } });
+    await click(open('dao-pillar'));
+    await act(async () => { await vi.advanceTimersByTimeAsync(650); });
+    expect(result.controller().profile?.dao_xp).toBe(13480);
+    expect(result.controller().dailyClaim?.result?.outcome).toBe(claimMode);
+    expect((open('dao-pillar') as HTMLButtonElement).disabled).toBe(claimMode === 'unresolved');
+  });
+  it('preserves collected state without awarding again', async () => {
+    await renderCave({ adapter: { profileOverride: { lastReadDate: new Date().toISOString().split('T')[0] } } });
+    expect(open('dao-pillar').textContent).toContain('Collected Today');
+    expect((open('dao-pillar') as HTMLButtonElement).disabled).toBe(true);
+  });
+  it.each([[2, 25], [9, 105], [0, 5]])('preserves streak %s milestone award of %s', async (streak, reward) => {
+    const result = await renderCave({ adapter: { profileOverride: { daoPillarStreak: streak, lastReadDate: new Date(Date.now() - 86400000).toISOString().split('T')[0] } } });
+    await click(open('dao-pillar'));
+    await act(async () => { await vi.advanceTimersByTimeAsync(650); });
+    expect(result.controller().profile?.dao_xp).toBe(13480 + reward);
+    expect(result.controller().currentStreak).toBe(streak + 1);
+  });
+  it.each([10, 100])('repairs inline only with sufficient balance %s', async heavenly_qi => {
+    const result = await renderCave({ adapter: { profileOverride: { daoPillarCracked: true, heavenly_qi } } });
+    expect((open('dao-pillar') as HTMLButtonElement).disabled).toBe(true);
+    await click(byText('button', 'Repair Pillar · 50 Qi'));
+    expect(result.controller().isCracked).toBe(heavenly_qi < 50);
+    expect(result.controller().profile?.heavenly_qi).toBe(heavenly_qi < 50 ? heavenly_qi : heavenly_qi - 50);
+    expect(window.location.search).not.toContain('cave=');
+  });
+  it('announces a repair failure and leaves the Pillar cracked', async () => {
+    const result = await renderCave({ state: 'owner-admin', adapter: { repairMode: 'failed' } });
+    await click(byText('button', 'Repair Pillar · 50 Qi'));
+    expect(text()).toContain('Repair failed. Please try again.');
+    expect(result.controller().isCracked).toBe(true);
+  });
+});
+
+
+describe('Claim reconciliation', () => {
+  it('keeps uncertain claims blocked across navigation until the adapter reconciles', async () => {
+    const result = await renderCave({ adapter: { claimMode: 'unresolved' } });
+    await click(open('dao-pillar'));
+    await act(async () => { await vi.advanceTimersByTimeAsync(650); });
+    await navigateTo('/stories');
+    await navigateTo('/home');
+    expect((open('dao-pillar') as HTMLButtonElement).disabled).toBe(true);
+    await click(byText('button', 'Check collection status'));
+    expect(result.controller().dailyClaim?.result?.outcome).toBe('failed');
+    expect((open('dao-pillar') as HTMLButtonElement).disabled).toBe(false);
+    expect(result.controller().profile?.dao_xp).toBe(13480);
+  });
+  it('protects the existing repair callback against same-turn duplicate charges', async () => {
+    const result = await renderCave({ state: 'owner-admin' });
+    const before = result.controller().profile!.heavenly_qi!;
+    await act(async () => { result.controller().handleRepairPillar(); result.controller().handleRepairPillar(); });
+    expect(result.controller().profile?.heavenly_qi).toBe(before - 50);
+  });
+});
+
+
+describe('Claim and existing profile edits', () => {
+  it('preserves the award and daily key when an overlapping profile save finishes', async () => {
+    const result = await renderCave();
+    await click(open('dao-pillar'));
+    await act(async () => { result.controller().setFormData(previous => ({ ...previous, displayName: 'Updated Display Name' })); });
+    let save: Promise<void> | void;
+    await act(async () => { save = result.controller().handleSave(); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(650); await save; });
+    expect(result.controller().profile?.displayName).toBe('Updated Display Name');
+    expect(result.controller().profile?.dao_xp).toBe(13485);
+    expect(result.controller().profile?.lastReadDate).toBe(new Date().toISOString().split('T')[0]);
+    expect((open('dao-pillar') as HTMLButtonElement).disabled).toBe(true);
+  });
+  it('updates the rank and bar together when collection crosses a threshold', async () => {
+    await renderCave({ adapter: { profileOverride: { dao_xp: 99, qi: 99 } } });
+    expect(container.querySelector('[data-cave-rank]')?.textContent).toBe(getRankForQi(99).name);
+    await click(open('dao-pillar'));
+    await act(async () => { await vi.advanceTimersByTimeAsync(650); });
+    expect(container.querySelector('[data-cave-rank]')?.textContent).toBe(getRankForQi(104).name);
+    expect((container.querySelector('[data-cave-progress]') as HTMLElement).style.getPropertyValue('--cave-rank-background')).toBe(rankBackground(getRankForQi(104).visual));
   });
 });

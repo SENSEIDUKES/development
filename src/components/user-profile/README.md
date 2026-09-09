@@ -392,6 +392,12 @@ const services: UserProfileServices = {
 5. **Resynchronize** — refresh `reference/` from the integrated production code, update
    `source.lastCompared`, and reset `development/` for the next cycle.
 
+## Shared App Header and shell — 2026-09-09
+
+The Cave's header is now the canonical `SEIAppHeader` and its layout the canonical `SEIAppShell`, both reached through the shared `WorkspaceHeader` / `WorkspaceShell` adapters. The Library plaque — `LibraryHeaderBadge` in its compact App Header presentation — is still the visible identity, and the title, emblem, Return-to-Library behavior, Public View status, and the View Public Profile / Exit actions are unchanged.
+
+The old 13rem sticky aside inside `.cave-workspace-body` is replaced by the shell's single 14rem rail, which appears only from 1024px so phones and tablets keep the drawer and the fixed bottom controls. The rail's column runs the full height beneath the header; the navigation panel inside it is sticky and scrolls on its own while the Cave scrolls. The backdrop now does its own clipping, because a clipped ancestor would have become the sticky scrollport and stranded both the header and the rail. Destinations, portrait, Qi, role rules and the public-view routing are untouched.
+
 ## Development shell integration — 2026-09-08
 
 Connected WorkspaceHeader to Cultivator Cave emblem/home and its existing consolidated Settings panel. Cave destinations, portrait, Qi and role rules remain unchanged; no Story Seed sidebar or bottom controls were added. See [shared contracts](../../../docs/library-header-family.md). Locked references and source-comparison dates are unchanged.

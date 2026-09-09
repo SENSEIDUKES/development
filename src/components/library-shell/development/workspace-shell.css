@@ -1,0 +1,58 @@
+/* Library skin over the canonical SEIAppShell. The grid, the sticky header row
+   and the landmarks are the canonical component's; these rules only give the
+   rail its Library surface and keep it usable while the workspace scrolls. */
+.workspace-shell {
+  /* The canonical header row is 3.5rem tall, 4rem from `sm` up, plus the top
+     safe-area inset the header pads itself with. */
+  --workspace-header-height: calc(3.5rem + var(--sh-safe-top, 0px));
+  --workspace-safe-bottom: env(safe-area-inset-bottom, 0px);
+  background: transparent;
+  /* Deliberately no `overflow` here: a clipped ancestor becomes the sticky
+     scrollport, which would strand the header and the rail. Wide content
+     scrolls inside its own container instead. */
+  max-width: 100%;
+}
+@media (min-width: 640px) {
+  .workspace-shell { --workspace-header-height: calc(4rem + var(--sh-safe-top, 0px)); }
+}
+
+/* The page is the scroller, not the main region: `SEIAppShell` marks `<main>`
+   `overflow-y: auto`, which would turn it into its own scroll container, leave
+   the sidebar row stuck at one viewport, and strand the sticky rail. Letting
+   the content grow the row instead keeps one scrollbar, a full-height rail and
+   a header that stays put. */
+.workspace-shell-main { min-width: 0; overflow: visible; }
+
+/* The column itself stretches the full grid row, so its surface and border run
+   from under the header to the bottom of the viewport even when the rail's own
+   contents are short. */
+.workspace-shell [data-slot="app-shell-sidebar"] {
+  min-width: 0;
+  background: color-mix(in srgb, var(--color-sen-void) 72%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--color-sen-portal) 18%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+/* The canonical shell already frames the header row; the Library surface and
+   its hairline come from the workspace header itself, so this wrapper adds
+   neither a second border nor a second background. */
+.workspace-shell [data-slot="app-shell-header"] {
+  border-bottom: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+/* The rail stays put and fills the viewport beneath the header while the
+   workspace scrolls; the navigation panel scrolls inside it. */
+.workspace-shell-rail {
+  position: sticky;
+  top: var(--workspace-header-height);
+  height: calc(100dvh - var(--workspace-header-height));
+  min-width: 0;
+  overflow: hidden;
+}
+.workspace-shell-rail > * { height: 100%; min-width: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-shell-rail { scroll-behavior: auto; }
+}

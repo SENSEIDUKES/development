@@ -2,7 +2,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
-import { HeaderOverflow } from './HeaderFoundation';
+import { HeaderOverflow } from './WorkspaceHeaderActions';
 import { WorkspaceHeader } from './WorkspaceHeader';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -51,7 +51,10 @@ it('dismisses on outside focus without stealing that focus', () => {
 
 it('accepts a minimal identity without creating actions or domain content', () => {
   act(() => root.render(<WorkspaceHeader title="Quiet workspace" />));
-  expect(container.querySelector('h1')?.textContent).toBe('Quiet workspace');
+  // Application chrome names the workspace without owning a heading, so the
+  // document outline still starts at the page's own content.
+  expect(container.querySelector('h1')).toBeNull();
+  expect(container.querySelector('[data-slot="library-header-badge-title"]')?.textContent).toBe('Quiet workspace');
   expect(container.querySelector('button')).toBeNull();
   expect(container.querySelector('[role="status"]')).toBeNull();
   expect(container.textContent).not.toMatch(/Dao|Seed|Qi/);

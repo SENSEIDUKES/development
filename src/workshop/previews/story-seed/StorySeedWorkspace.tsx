@@ -543,7 +543,9 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
     ],
   };
 
-  if (embedded) return <div key={`development-${activeState}`} data-story-seed-pane="development" className="min-h-screen bg-void p-2 sm:p-4">
+  // Full-bleed: the shell owns its own gutters, so preview padding here would
+  // hide the sticky header's top edge and the rail's flush left border.
+  if (embedded) return <div key={`development-${activeState}`} data-story-seed-pane="development" className="min-h-screen bg-void">
     <DevelopmentCreationModal {...developmentChamberProps} />
   </div>;
 

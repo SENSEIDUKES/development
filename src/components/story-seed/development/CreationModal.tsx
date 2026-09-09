@@ -51,7 +51,6 @@ import {
   type SeedSectionId,
 } from './seedSections';
 import type { SeedUpdate } from './seedState';
-import { WorkspaceSidebar } from '../../library-shell/development/WorkspaceNavigation';
 import { OriginWorkspace } from './workspaces/OriginWorkspace';
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
 import { WorldIdentityWorkspace } from './workspaces/WorldIdentityWorkspace';
@@ -634,12 +633,9 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
   const ActiveWorkspace = STORY_SEED_WORKSPACES[activeSection];
 
   return (
-    // `pb-24` clears the sticky Manifest strip at the end of scroll; on mobile
-    // the in-flow bottom navigation occupies that space instead.
-    <div className="story-seed-development-surface mx-auto max-w-7xl pb-24 max-lg:pb-0" id="creation-portal-root">
-      {/* Header — wraps on narrow screens so the action buttons drop to a
-          second row instead of overflowing the viewport. */}
-      <StorySeedWorkspaceChrome
+    // The shared workspace shell owns the header row, the desktop section rail
+    // and the scrolling main region; only Story Seed's own content sits inside.
+    <StorySeedWorkspaceChrome
         seed={seed} updateSeed={updateSeed} activeSection={activeSection} equippedTitle={equippedRelicTitle}
         onSelectSection={selectWorkspaceSection} isGenerating={isGenerating} savedFeedback={savedFeedback}
         showStoryBank={showStoryBank} helpOpen={helpOpen} canManifest={canGenerate}
@@ -648,8 +644,11 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
         manifestIndicator={activeAgentId === 'versa' ? <img src={AGENTS.VERSA.logoUrl} className="h-5 w-5 animate-pulse object-contain" alt="" aria-hidden="true" /> : undefined}
         status={isGenerating ? 'Creating your World Blueprint' : savedFeedback ? 'Draft saved' : missing.length ? `Missing required: ${missingRequiredLabels}` : 'All required Story inputs complete'}
         error={seedError || error} onSaveDraft={requestSaveDraft} onManifest={requestGenerateBlueprint}
-        onToggleStoryBank={toggleStoryBank} onOpenHelp={openHelp} onSecondaryIntent={preloadStorySeedSecondary}
-      >
+      onToggleStoryBank={toggleStoryBank} onOpenHelp={openHelp} onSecondaryIntent={preloadStorySeedSecondary}
+    >
+      {/* `pb-24` clears the sticky Manifest strip at the end of scroll; on
+          mobile the in-flow bottom navigation occupies that space instead. */}
+      <div className="story-seed-development-surface mx-auto max-w-7xl px-4 pb-24 max-lg:pb-0 sm:px-6" id="creation-portal-root">
 
       {showStoryBank && (
         <DeferredStorySeedView label="Story Bank">
@@ -687,15 +686,15 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
       {/* Two-panel creation workspace — shelled in the Celestial Library
           glass panel; the action bar below is its footer strip. The Story
           Bank view replaces it while the bank is open. */}
+      {/* The section rail is the shell's sidebar now, so the panel is a single
+          column at every width and the workspace fills it. */}
       {!showStoryBank && (
-      <LibraryPanel padding="none" className="mt-6 lg:grid lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <WorkspaceSidebar />
-
+      <LibraryPanel padding="none" className="mt-6">
         <div className="relative min-w-0">
           {/* Restrained celestial ambience the glass fields float over —
               gradients only, no blur, so mobile scrolling stays cheap. */}
           <div aria-hidden="true" className="seed-workspace-ambience" />
-          <main className="relative p-4 sm:p-8">
+          <div className="relative p-4 sm:p-8">
             <motion.div
               key={activeSection}
               initial={{ opacity: 0, y: 8 }}
@@ -704,7 +703,7 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
             >
               <ActiveWorkspace seed={seed} updateSeed={updateSeed} />
             </motion.div>
-          </main>
+          </div>
 
           {/* Action bar — required tracking + Manifest as the single primary
               action, rendered as the panel's footer strip (luminous top
@@ -793,7 +792,7 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
           />
         </DeferredStorySeedView>
       )}
-      </StorySeedWorkspaceChrome>
-    </div>
+      </div>
+    </StorySeedWorkspaceChrome>
   );
 }

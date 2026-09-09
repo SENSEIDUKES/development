@@ -153,19 +153,32 @@ export function HeaderBadge({
   emblemAlt = '',
   emblemHref,
   emblemLinkLabel,
+  mode = 'default',
 }: P.NarrativeHeaderBadgeProps) {
   const emblem = emblemSrc ? (
     <img src={emblemSrc} alt={emblemAlt} width={48} height={48} />
   ) : null;
+  const link = emblemHref ? (
+    <a href={emblemHref} aria-label={emblemLinkLabel}>
+      {emblem}
+    </a>
+  ) : (
+    emblem
+  );
+  // Application chrome already owns the surrounding landmark and heading level,
+  // so the compact form contributes neither a <header> nor an <h1>.
+  if (mode === 'app-header') {
+    return (
+      <span data-mode="app-header">
+        {link}
+        <span data-slot="library-header-badge-title">{title}</span>
+        {subtitle ? <span data-slot="library-header-badge-subtitle">{subtitle}</span> : null}
+      </span>
+    );
+  }
   return (
     <header>
-      {emblemHref ? (
-        <a href={emblemHref} aria-label={emblemLinkLabel}>
-          {emblem}
-        </a>
-      ) : (
-        emblem
-      )}
+      {link}
       <h1>{title}</h1>
       {subtitle ? <p>{subtitle}</p> : null}
     </header>

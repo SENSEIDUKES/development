@@ -1,9 +1,16 @@
-import { useEffect, useId, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton } from '../../../presentation';
 import { MoreHorizontal, type LucideIcon } from 'lucide-react';
-import './header-family.css';
+import './workspace-header.css';
 
-/** Presentation and events only. The host owns eligibility, progress and side effects. */
+/**
+ * Header action presentation and events only. The host owns eligibility,
+ * progress and side effects.
+ *
+ * This module carries no layout of its own: `SEIAppHeader` is the only
+ * workspace header chrome, and these are the controls it renders in its
+ * `actions` slot.
+ */
 export interface HeaderAction {
   id: string;
   label: string;
@@ -21,29 +28,19 @@ export interface HeaderAction {
   loadingIndicator?: ReactNode;
 }
 
-export function HeaderFoundation({ children, className = '', label }: { children: ReactNode; className?: string; label: string }) {
-  return <header aria-label={label} className={`library-header-foundation ${className}`}>
-    <div className="library-header-inner">{children}</div>
-  </header>;
-}
-
 export function HeaderActionButton({ action, primary = false }: { action: HeaderAction; primary?: boolean }) {
   const Button = action.kind === 'creation' ? CreationButton : LibraryButton;
   return <Button variant={primary ? 'primary' : 'ghost'} icon={action.icon}
     disabled={action.disabled} loading={action.loading} aria-pressed={action.pressed}
     onClick={action.onAction} onPointerEnter={action.onIntent} onFocus={action.onIntent}
-    aria-label={action.ariaLabel} title={action.title} aria-expanded={action.expanded}
-    aria-haspopup={action.hasPopup} loadingIndicator={action.loadingIndicator}>{action.label}</Button>;
-}
-
-const compactQuery = '(max-width: 767px)';
-const subscribeCompact = (notify: () => void) => {
-  const media = window.matchMedia(compactQuery);
-  media.addEventListener('change', notify);
-  return () => media.removeEventListener('change', notify);
-};
-export function useCompactHeader() {
-  return useSyncExternalStore(subscribeCompact, () => window.matchMedia(compactQuery).matches, () => false);
+    // The label is always the accessible name too, so it survives the narrow
+    // widths where the header shows the primary action as its icon alone.
+    aria-label={action.ariaLabel ?? action.label} title={action.title} aria-expanded={action.expanded}
+    aria-haspopup={action.hasPopup} loadingIndicator={action.loadingIndicator}>
+    {/* Wrapped so a long label ellipsizes inside the single header row instead
+        of pushing the control past the edge. The accessible name is unaffected. */}
+    <span className="workspace-action-label">{action.label}</span>
+  </Button>;
 }
 
 /** Non-modal disclosure: normal Tab order; Escape returns focus, outside focus dismisses. */

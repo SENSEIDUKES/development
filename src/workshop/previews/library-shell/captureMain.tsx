@@ -6,12 +6,20 @@ const query = new URLSearchParams(window.location.search);
 const source: ShellSource = query.get('source') === 'story-seed' ? 'story-seed' : 'main-library';
 const requested = query.get('state') ?? '';
 const state = (shellStates[source] as readonly string[]).includes(requested) ? requested : shellStates[source][0];
+// Workshop-only environment flags. They set attributes the preview stylesheet
+// keys off, so the shell can be inspected under safe-area insets and reduced
+// motion inside this frame.
+const safeArea = query.get('safeArea');
+if (safeArea === 'on' || safeArea === 'landscape') document.documentElement.dataset.previewSafeArea = safeArea;
+if (query.get('motion') === 'reduced') document.documentElement.dataset.previewMotion = 'reduced';
+
 async function mount() {
   // Separate documents preserve each source's CSS, portal target and media queries.
   const root = createRoot(document.getElementById('root')!);
   if (query.get('variant') === 'development') {
     if (source === 'main-library' && query.get('source') !== 'cultivator-cave') await import('../../../components/library-shell/development/header-theme.css');
     else await import('../../../styles.css');
+    await import('./preview-environment.css');
     const { DevelopmentHeaderPreview } = await import('./DevelopmentHeaderPreview');
     const { DevAudioPlaybackProvider } = await import('../../../audio/DevAudioPlayback');
     const { headerStates } = await import('./headerPreviewData');

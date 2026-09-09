@@ -4,17 +4,17 @@
 - **Source locations:** Light-Novels `src/components/GlobalHeader.tsx` (`GlobalHeader`), `src/components/DaoInsights.tsx` (`DaoInsights`), and the collection navigation in `src/components/LibraryScreen.tsx` (`LibraryScreen`). Development `src/components/story-seed/development/CreationModal.tsx` (`CreationModal`), `StorySeedHeader.tsx`, `StorySeedSelector.tsx`, `StorySeedMobileNavigation.tsx`, and `StorySeedSettings.tsx`.
 - **Workshop preview:** `?preview=library-shell`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-08
+- **Last Workshop update:** 2026-09-09
 - **Last source comparison:** 2026-09-08
-- **Replica status:** under refinement; locked captures plus integrated Development headers and workspace navigation.
+- **Replica status:** under refinement; locked captures plus Development workspaces on the canonical `SEIAppHeader` and `SEIAppShell`.
 
 ## Capture boundary
 
-The locked reference area records two existing systems for comparison. Its captures remain unchanged. The separate Development area now proves the shared header family and responsive navigation in the active Story Seed and Cultivator Cave; see [component contracts](../../../docs/library-header-family.md). Main Library was read at `4a3dd02b6640b2ec50d8d1d136e37fb808249ed2`, Story Seed at development `7e1302bd2d5c3205706ddb1362607abed6a850e6`, and UI at `6856594171546fee1a243e1dc3422fcb952c5022`, after updating all three repositories from their remotes.
+The locked reference area records two existing systems for comparison. Its captures remain unchanged. The separate Development area now proves the shared header family and responsive navigation in the active Story Seed and Cultivator Cave; see [component contracts](../../../docs/library-header-family.md). Main Library was read at `4a3dd02b6640b2ec50d8d1d136e37fb808249ed2` and Story Seed at development `7e1302bd2d5c3205706ddb1362607abed6a850e6`; neither was re-read on 2026-09-09, so their source-comparison dates are unchanged. The vendored UI artifacts now come from UI commit `42961e48e78ee816f9c2801a37a7f66af8aa2ae2` (UI PR #60), which adds `SEIAppHeader`, `SEIAppShell` and the compact `LibraryHeaderBadge` presentation.
 
 `reference/main-library/` freezes the global header, DAO presentation and animation logic, production theme stylesheet, and the exact collection-tab fragment that displays sync state. It localizes the source font payloads so external network and CSP changes cannot alter the captured layout. `reference/story-seed/` freezes the current shell components, section model, settings body, supporting pure helpers, and CSS. `StorySeedShell.tsx` copies the shell JSX from `CreationModal`; its domain editor, Story Bank, and Help children are explicit host slots. This capture is distinct from the older locked reference inside the existing Story Seed Workshop.
 
-`development/LibraryShell.ts` now exports the actual header family: separate Main Library and Workspace compositions over a shared foundation. Original Reference retains the locked shell captures; Development shows only the header candidate and local host content. See [header contract and ownership](../../../docs/library-header-family.md). Sidebar, drawer, bottom navigation, and page-specific settings extraction remain a later phase.
+`development/LibraryShell.ts` exports the workspace system: `WorkspaceHeader` as a thin adapter over the canonical `SEIAppHeader`, `WorkspaceShell` as a thin adapter over `SEIAppShell`, and the shared header-action presentation. The custom `HeaderFoundation` and the old `WorkspaceHeader` visual implementation are gone; only one header system remains. `MainLibraryHeader` keeps the homepage header exactly as it was, on its own scoped surface. See [header contract and ownership](../../../docs/library-header-family.md).
 
 ## Inspect the references
 
@@ -26,6 +26,8 @@ Use Workshop Controls → Pages to select Main Library or Story Seed, Phone (390
 | Story Seed | `?preview=library-shell&source=story-seed&device=phone` | `?preview=library-shell&source=story-seed&device=desktop` |
 
 The internal frame route is `/library-shell.html?source=main-library&state=linked` or `/library-shell.html?source=story-seed&state=filled`. It is a second Vite HTML entry, not a second Workshop feature or homepage card. Separate documents preserve source theme differences, viewport media queries, body portals, scroll locking, safe-area CSS, and overlay stacking in Compare mode.
+
+Workshop Controls also carries a **Safe area** selector (notch, landscape) and a **Reduced motion** toggle. Both are preview-only environment simulations applied inside the Development frame, and a per-viewport verification checklist appears beside them.
 
 | Source | Available mock states |
 | --- | --- |
@@ -89,3 +91,7 @@ For an eventual approved change, identify the owning lane first. Main header/DAO
 - **2026-09-08:** Built the Development header family from merged PR #182: shared foundation, separate Main Library and Workspace compositions, three local configurations, tablet previews, header accessibility, and explicit host contracts. Both references and active product/navigation implementations remain unchanged.
 
 - **2026-09-08:** Integrated active Development Story Seed and Cultivator Cave in PR #184, extracted feature-configured workspace navigation and settings-sheet mechanics, and replaced header-only fixtures with real Development consumers. Main Library remains a host-adapted preview. No recapture or source comparison was performed.
+
+- **2026-09-09:** Device review fixes: the header's action group no longer shrinks, so the primary action's button can never be squeezed below its 44px touch target and paint on top of the overflow trigger on a narrow phone; the identity floor is sized per breakpoint to keep a 320px row fitting. The overflow menu paints on an opaque bordered surface instead of glass, so page text no longer reads through the menu items.
+
+- **2026-09-09:** Migrated Story Seed and the Cultivator Cave onto the canonical `SEIAppHeader` and `SEIAppShell` from UI commit `42961e48e78ee816f9c2801a37a7f66af8aa2ae2`, with the compact `LibraryHeaderBadge` keeping the Library identity. Removed the custom `HeaderFoundation` and the old `WorkspaceHeader` visual implementation; the Main Library homepage header is unchanged on its own scoped surface. Reconciled the sidebar breakpoint so phones and tablets keep the drawer and bottom controls, gave both workspaces one narrow full-height rail, and added safe-area, reduced-motion and per-viewport verification controls to the preview. Locked captures and their source-comparison dates are unchanged; the recorded dependency hashes for the UI tarballs and the two presentation contract files were re-recorded for this deliberate upgrade.

@@ -1,0 +1,32 @@
+/* Workshop-only environment simulation for the shell previews.
+   Nothing here ships with a component: it lets the Development frame be
+   inspected under device safe-area insets and under reduced motion without a
+   real notched device or an OS-level accessibility setting. */
+:root[data-preview-safe-area='on'] {
+  --sh-safe-top: 44px;
+  --sh-safe-bottom: 34px;
+  --sh-safe-left: 0px;
+  --sh-safe-right: 0px;
+}
+:root[data-preview-safe-area='on'] .cave-workspace { --cave-safe-bottom: 34px; }
+:root[data-preview-safe-area='on'] .workspace-shell { --workspace-safe-bottom: 34px; }
+/* Landscape notch: the header gutters and the rail must absorb it. */
+:root[data-preview-safe-area='landscape'] {
+  --sh-safe-top: 0px;
+  --sh-safe-bottom: 21px;
+  --sh-safe-left: 44px;
+  --sh-safe-right: 44px;
+}
+:root[data-preview-safe-area='landscape'] .cave-workspace { --cave-safe-bottom: 21px; }
+:root[data-preview-safe-area='landscape'] .workspace-shell { --workspace-safe-bottom: 21px; }
+
+/* Mirrors what `@media (prefers-reduced-motion: reduce)` does, so the frame can
+   be checked without changing the host operating system. */
+:root[data-preview-motion='reduced'] *,
+:root[data-preview-motion='reduced'] *::before,
+:root[data-preview-motion='reduced'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}

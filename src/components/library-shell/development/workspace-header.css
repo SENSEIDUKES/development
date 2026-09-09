@@ -1,0 +1,95 @@
+/* Library skin over the canonical SEIAppHeader. Layout, height, stickiness,
+   safe areas and focus behavior belong to the canonical component; only the
+   Library surface and the action composition are set here. */
+.workspace-header {
+  color: var(--color-sen-signal);
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(ellipse at 20% 0%, color-mix(in srgb, var(--color-sen-portal) 9%, transparent), transparent 65%),
+    color-mix(in srgb, var(--color-sen-void) 92%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-sen-portal) 22%, transparent);
+  backdrop-filter: blur(24px);
+}
+.workspace-header-inner { max-width: 1280px; margin-inline: auto; }
+.workspace-header :is(button, [role="button"], a) { min-height: 44px; min-width: 44px; }
+.workspace-header :is(button, [role="button"], a):focus-visible {
+  outline: 2px solid var(--color-sen-portal);
+  outline-offset: 4px;
+}
+
+/* The badge is the visible identity, so it keeps its own type and its glow is
+   allowed to bleed past the app-name slot instead of being clipped by it. */
+.workspace-header [data-slot="app-header-app-name"] {
+  overflow: visible;
+  text-overflow: clip;
+  font: inherit;
+  letter-spacing: normal;
+}
+.workspace-header-badge { display: block; min-width: 0; }
+
+/* One row, shared fairly. The identity keeps a floor wide enough to read the
+   Library badge; the action group shrinks and its labels ellipsize rather than
+   pushing a control past the edge of the header. */
+.workspace-header [data-slot="app-header-identity"] { flex: 1 1 auto; min-width: 12rem; }
+.workspace-header [data-slot="app-header-actions"] { flex: 0 1 auto; min-width: 0; }
+@media (min-width: 1024px) {
+  .workspace-header [data-slot="app-header-identity"] { min-width: 11rem; }
+}
+.workspace-action-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.workspace-header-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--color-neutral-400);
+}
+.workspace-header-status > span:first-child {
+  width: 6px; height: 6px; flex-shrink: 0; border-radius: 50%; background: currentColor;
+}
+.workspace-header-status-label { min-width: 0; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (min-width: 1536px) { .workspace-header-status-label { max-width: 30ch; } }
+.workspace-header-status[data-tone="success"] { color: var(--color-sen-portal); }
+.workspace-header-status[data-tone="busy"] { color: var(--color-sen-gold-accent); }
+.workspace-header-status[data-tone="error"] { color: var(--color-sen-human); }
+
+.workspace-header-actions, .workspace-header-command-area, .workspace-secondary-actions {
+  display: flex; align-items: center; gap: 8px; min-width: 0;
+}
+.workspace-header-command-area, .workspace-secondary-actions { flex: 0 1 auto; }
+.workspace-primary-action { flex: 0 1 auto; min-width: 0; }
+.workspace-primary-action > button { max-width: 100%; }
+.header-overflow { position: relative; flex: none; }
+.header-overflow-panel {
+  position: absolute; z-index: 60; top: calc(100% + 12px); right: 0;
+  width: 256px; max-width: calc(100vw - 32px); max-height: 60dvh; overflow-y: auto;
+}
+.header-overflow-panel button { width: 100%; justify-content: flex-start; text-align: left; }
+
+/* Below the desktop breakpoint the secondary actions live in the overflow menu
+   and the status keeps only its tone dot — still announced for assistive tech,
+   and each feature repeats the same message in its own content. */
+@media (max-width: 1279px) {
+  .workspace-secondary-actions { display: none; }
+}
+@media (max-width: 639px) {
+  /* On a phone the primary action keeps its icon; its label becomes the
+     button's accessible name so the badge is not squeezed out of the row. */
+  .workspace-primary-action .workspace-action-label {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+  }
+  .workspace-primary-action > button { padding-inline: 0.85rem; }
+}
+@media (max-width: 1023px) {
+  .workspace-header-status-label {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-header * { animation: none !important; transition: none !important; }
+}

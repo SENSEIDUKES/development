@@ -6,8 +6,9 @@ import type { SeedSectionId } from './seedSections';
 import { buildStorySeedDrawerSections, storySeedDrawerProfile } from './StorySeedSelector';
 import { StorySeedSettings } from './StorySeedSettings';
 import { WorkspaceHeader } from '../../library-shell/development/WorkspaceHeader';
-import { HeaderActionButton, type HeaderAction } from '../../library-shell/development/HeaderFoundation';
-import { WorkspaceNavigation, WorkspaceBottomControls, useWorkspaceNavigation } from '../../library-shell/development/WorkspaceNavigation';
+import { WorkspaceShell } from '../../library-shell/development/WorkspaceShell';
+import { HeaderActionButton, type HeaderAction } from '../../library-shell/development/WorkspaceHeaderActions';
+import { WorkspaceNavigation, WorkspaceBottomControls, WorkspaceSidebar, useWorkspaceNavigation } from '../../library-shell/development/WorkspaceNavigation';
 import { WorkspaceSheet } from '../../library-shell/development/WorkspaceSheet';
 
 interface StorySeedWorkspaceChromeProps {
@@ -69,28 +70,36 @@ function StorySeedChromeContent(props: StorySeedWorkspaceChromeProps) {
     onIntent: props.onStoryBankIntent ?? props.onSecondaryIntent, onAction: props.onToggleStoryBank };
   const help: HeaderAction = { id: 'help', label: 'Help', icon: CircleHelp,
     onIntent: props.onHelpIntent ?? props.onSecondaryIntent, onAction: props.onOpenHelp };
+  const header = <WorkspaceHeader title="Story Seed" subtitle="Grow Your Universe"
+    landmark={props.layout === 'complete' || props.layout === undefined ? 'none' : 'banner'}
+    emblem={{ src: '/favicon.jpg', alt: 'Celestial Library' }} home={{ href: '/', label: 'Return to Workshop home' }}
+    primaryAction={props.showStoryBank || props.headerSaveOnly ? save : manifest}
+    secondaryActions={props.showStoryBank || props.headerSaveOnly ? [settings, bank] : [save, settings, bank]} overflowActions={[help]}
+    status={{ label: props.error || props.status, tone: props.error ? 'error' : props.isGenerating ? 'busy' : props.savedFeedback ? 'success' : 'neutral' }} />;
+  const bottomControls = <WorkspaceBottomControls label="Story Seed navigation" items={[
+    { id: 'sections', label: 'Sections', icon: <List size={20} />, active: navigation.drawerOpen,
+      onSelect: () => { setSettingsOpen(false); navigation.openDrawer(); } },
+    { id: bank.id, label: bank.label, icon: <Sprout size={20} />, active: props.showStoryBank,
+      onSelect: () => { setSettingsOpen(false); bank.onAction(); } },
+    { id: help.id, label: help.label, icon: <CircleHelp size={20} />, active: props.helpOpen,
+      onSelect: () => { setSettingsOpen(false); help.onAction(); } },
+    { id: settings.id, label: settings.label, icon: <Settings size={20} />, active: settingsOpen, onSelect: openSettings },
+    ...(props.canManifest && !props.showStoryBank ? [{ id: manifest.id, label: 'Manifest', icon: <Sparkles size={20} />,
+      onSelect: () => { setSettingsOpen(false); manifest.onAction(); } }] : []),
+  ]} />;
+  const settingsSheet = <WorkspaceSheet open={settingsOpen} onOpenChange={setSettingsOpen} title="Story Seed settings" closeLabel="Close settings"
+    returnFocusRef={settingsReturnFocusRef}
+    footer={<HeaderActionButton action={save} primary />}>
+    <StorySeedSettings seed={props.seed} updateSeed={props.updateSeed} />
+  </WorkspaceSheet>;
+  // The compatibility layouts render one slot each and add no shell of their own.
+  if (props.layout === 'header') return <>{header}{settingsSheet}</>;
+  if (props.layout === 'mobile') return <>{bottomControls}{settingsSheet}</>;
   return <>
-    {props.layout !== 'mobile' && <WorkspaceHeader title="Story Seed" subtitle="Grow Your Universe"
-      emblem={{ src: '/favicon.jpg', alt: 'Celestial Library' }} home={{ href: '/', label: 'Return to Workshop home' }}
-      primaryAction={props.showStoryBank || props.headerSaveOnly ? save : manifest}
-      secondaryActions={props.showStoryBank || props.headerSaveOnly ? [settings, bank] : [save, settings, bank]} overflowActions={[help]}
-      status={{ label: props.error || props.status, tone: props.error ? 'error' : props.isGenerating ? 'busy' : props.savedFeedback ? 'success' : 'neutral' }} />}
-    {props.children}
-    {props.layout !== 'header' && <WorkspaceBottomControls label="Story Seed navigation" items={[
-      { id: 'sections', label: 'Sections', icon: <List size={20} />, active: navigation.drawerOpen,
-        onSelect: () => { setSettingsOpen(false); navigation.openDrawer(); } },
-      { id: bank.id, label: bank.label, icon: <Sprout size={20} />, active: props.showStoryBank,
-        onSelect: () => { setSettingsOpen(false); bank.onAction(); } },
-      { id: help.id, label: help.label, icon: <CircleHelp size={20} />, active: props.helpOpen,
-        onSelect: () => { setSettingsOpen(false); help.onAction(); } },
-      { id: settings.id, label: settings.label, icon: <Settings size={20} />, active: settingsOpen, onSelect: openSettings },
-      ...(props.canManifest && !props.showStoryBank ? [{ id: manifest.id, label: 'Manifest', icon: <Sparkles size={20} />,
-        onSelect: () => { setSettingsOpen(false); manifest.onAction(); } }] : []),
-    ]} />}
-    <WorkspaceSheet open={settingsOpen} onOpenChange={setSettingsOpen} title="Story Seed settings" closeLabel="Close settings"
-      returnFocusRef={settingsReturnFocusRef}
-      footer={<HeaderActionButton action={save} primary />}>
-      <StorySeedSettings seed={props.seed} updateSeed={props.updateSeed} />
-    </WorkspaceSheet>
+    <WorkspaceShell header={header} sidebar={<WorkspaceSidebar />} sidebarLabel="Story Seed sections">
+      {props.children}
+      {bottomControls}
+    </WorkspaceShell>
+    {settingsSheet}
   </>;
 }

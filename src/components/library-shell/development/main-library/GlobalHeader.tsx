@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { HeaderFoundation, useHeaderDisclosure } from '../HeaderFoundation';
+import { useHeaderDisclosure } from '../WorkspaceHeaderActions';
+import './main-library-header.css';
 import { Cloud, Plus, User, Sliders, ScrollText, Scroll, Keyboard, Gem, BookOpen, Users, PenTool, Sword } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useMainLibraryAdapter as useAppStore, vibrate } from '../../shared/MainLibraryAdapter';
@@ -38,7 +39,8 @@ export const GlobalHeader: React.FC = () => {
   }
 
   return (
-    <HeaderFoundation label="Main Library header" className="main-library-header shadow-[0_4px_30px_rgba(4,172,255,0.08)]">
+    <header aria-label="Main Library header" className="main-library-header shadow-[0_4px_30px_rgba(4,172,255,0.08)]">
+      <div className="main-library-header-inner">
         <div
           className="flex items-center space-x-2 sm:space-x-3 cursor-pointer min-w-0 mr-2"
           onClick={() => { vibrate('softTap'); setCurrentScreen('home'); setActiveStoryId(null); }}
@@ -452,6 +454,7 @@ export const GlobalHeader: React.FC = () => {
             </AnimatePresence>
           </div>
         </div>
-    </HeaderFoundation>
+      </div>
+    </header>
   );
 };

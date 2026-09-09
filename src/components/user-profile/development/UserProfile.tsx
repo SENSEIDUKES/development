@@ -54,6 +54,7 @@ import {
   useCaveRoute,
 } from './caveNavigation';
 import { WorkspaceNavigation, WorkspaceSidebar, WorkspaceBottomControls } from '../../library-shell/development/WorkspaceNavigation';
+import { WorkspaceShell } from '../../library-shell/development/WorkspaceShell';
 
 interface UserProfileProps {
   currentUser: AppUser | null;
@@ -129,7 +130,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
 
   const route = useCaveRoute();
   const { view, navigate } = route;
-  const mainRef = useRef<HTMLElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
   const previousUser = useRef(currentUser);
   const previousPath = useRef(route.path);
   const focusedPath = useRef<string | undefined>(undefined);
@@ -402,11 +403,12 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     }
   };
 
+  const caveSidebarMounted = !isSignedOut && !spiritLinkGateMounted;
   return (
     <WorkspaceNavigation definition={navigationDefinition}>
-    <div className="cave-workspace relative min-h-[100dvh] overflow-clip bg-[#03060c] text-neutral-200" data-cave-environment={environment.id} data-cave-audience={route.audience}>
+    <div className="cave-workspace relative min-h-[100dvh] bg-[#03060c] text-neutral-200" data-cave-environment={environment.id} data-cave-audience={route.audience}>
       {/* Backdrop: stock Immortal Land art, cooled into the cave palette */}
-      <div aria-hidden="true" className="absolute inset-0">
+      <div aria-hidden="true" className="absolute inset-0 overflow-clip">
         <img
           key={environment.src}
           src={environment.src}
@@ -424,30 +426,33 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         ) : null}
       </div>
 
-      <div className="relative mx-auto w-full max-w-7xl px-4 pb-12 pt-3 sm:px-6 sm:pt-5">
-        {/* Cave header */}
-        <WorkspaceHeader title="Cultivator Cave"
+      <WorkspaceShell
+        className="cave-shell"
+        mainClassName="cave-workspace-main"
+        sidebarLabel={navigationDefinition.label}
+        sidebar={caveSidebarMounted ? <WorkspaceSidebar /> : undefined}
+        header={<WorkspaceHeader title="Cultivator Cave" landmark="none"
           emblem={{ src: CAVE_EMBLEM_SRC, alt: 'Library sacred tree' }}
           home={{ href: '/', label: 'Return to Library', onNavigate: onNavigateHome }}
           status={isPublicView ? { label: 'Public View', tone: 'neutral' } : undefined}
           secondaryActions={headerActions}
-        />
-        <div className="cave-rule mt-3 sm:mt-4" aria-hidden="true" />
+        />}
+      >
+        <div className="cave-workspace-body mx-auto w-full max-w-7xl px-4 pb-12 pt-3 sm:px-6 sm:pt-5">
+          <div className="cave-rule" aria-hidden="true" />
 
-        {error ? (
-          <SEIInlineAlert tone="danger" role="alert" className="mt-4">
-            {error}
-          </SEIInlineAlert>
-        ) : null}
+          {error ? (
+            <SEIInlineAlert tone="danger" role="alert" className="mt-4">
+              {error}
+            </SEIInlineAlert>
+          ) : null}
 
-        <div className="cave-workspace-body mt-5 sm:mt-6">
-          {!isSignedOut && !spiritLinkGateMounted && <WorkspaceSidebar />}
-          <main ref={mainRef} className="min-w-0" data-cave-page={route.destination ?? 'unavailable'} data-cave-audience={route.audience}>{renderView()}</main>
+          <div ref={mainRef} className="mt-5 min-w-0 sm:mt-6" data-cave-page={route.destination ?? 'unavailable'} data-cave-audience={route.audience}>{renderView()}</div>
         </div>
-        {!isSignedOut && !spiritLinkGateMounted && <div className="cave-workspace-dock">
+        {caveSidebarMounted && <div className="cave-workspace-dock">
           <WorkspaceBottomControls label={navigationDefinition.label} items={navigationItems} />
         </div>}
-      </div>
+      </WorkspaceShell>
 
       {isSignedOut || spiritLinkGateMounted ? (
         <StoryAuthGate

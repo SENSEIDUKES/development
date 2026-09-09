@@ -330,6 +330,12 @@ harness:
 
 Reusable presentation now comes from the canonical Library UI package. Portable SEN surfaces resolve presentation through the host provider; the first-party Workshop supplies LibraryPresentationProvider. Domain, generation, persistence, media, and locked reference sources are unchanged.
 
+## Shared App Header and shell — 2026-09-09
+
+`StorySeedWorkspaceChrome` now composes the canonical `SEIAppHeader` and `SEIAppShell` through the shared `WorkspaceHeader` / `WorkspaceShell` adapters. The Library plaque keeps the identity in its compact App Header presentation, and Save Draft, Settings, Story Bank, Help, Manifest, their eligibility, disabled reasons, loading indicator and preload intent are unchanged.
+
+The section rail moved out of the creation panel's `18rem` column into the shell's shared 14rem sidebar, so the two-panel workspace is a single column that fills the remaining width and the rail matches the Cave's. The rail appears only from 1024px, the width the drawer and bottom controls already handed over at. The `StorySeedHeader` and `StorySeedMobileNavigation` compatibility exports still delegate to this adapter and add no layout of their own. Schema, storage, Help, generation and Blueprint review keep their existing owners.
+
 ## Development shell integration — 2026-09-08
 
 Integrated WorkspaceHeader through StorySeedWorkspaceChrome, one feature-owned section definition for desktop/mobile navigation, shared bottom controls and Settings sheet. Existing schema, eligibility, storage, Help and generation/review owners are preserved; public header/navigation exports remain compatible. See [shared contracts](../../../docs/library-header-family.md). Locked references and source-comparison dates are unchanged.

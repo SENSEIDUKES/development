@@ -119,6 +119,10 @@
 
 /* Cave placement; shared navigation owns controls and interaction states. */
 .cave-workspace { --cave-safe-bottom: env(safe-area-inset-bottom, 0px); }
+/* The Cave backdrop sits behind the whole shell, so the shell itself paints
+   nothing; the header and the rail keep their own translucent surfaces. */
+.cave-shell { background: transparent; }
+/* Clears the fixed bottom controls at the end of the scroll. */
 .cave-workspace-body { padding-bottom: calc(7rem + var(--cave-safe-bottom)); }
 .cave-workspace-dock > nav {
   position: fixed;
@@ -134,8 +138,9 @@
   .cave-workspace-dock > nav { max-width: 40rem; margin-inline: auto; }
 }
 @media (min-width: 1024px) {
-  .cave-workspace-body { display: grid; grid-template-columns: 13rem minmax(0, 1fr); gap: 1.5rem; padding-bottom: 0; }
-  .cave-workspace-body > aside { position: sticky; top: 1rem; align-self: start; max-height: calc(100dvh - 2rem); overflow-y: auto; }
+  /* The rail is the shell's sidebar column from here up, and the bottom
+     controls are gone, so the workspace fills the remaining width. */
+  .cave-workspace-body { padding-bottom: 3rem; }
 }
 
 /* Home composition; workspace navigation owns safe-area spacing. */

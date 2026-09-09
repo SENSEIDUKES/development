@@ -1,0 +1,44 @@
+/* The Main Library homepage header keeps its own surface. It is the Library's
+   global chrome, not a workspace, and it is unchanged by the workspace
+   migration to SEIAppHeader — these rules are the same ones it has always
+   rendered with, now scoped to it alone. */
+.main-library-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  isolation: isolate;
+  color: var(--color-sen-signal);
+  font-family: var(--font-sans);
+  background: color-mix(in srgb, var(--color-sen-void) 92%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-sen-portal) 22%, transparent);
+  padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
+  padding-block: max(8px, env(safe-area-inset-top)) 8px;
+  backdrop-filter: blur(24px);
+}
+.main-library-header-inner {
+  max-width: 1280px;
+  margin-inline: auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  justify-content: space-between;
+}
+.main-library-header :is(button, [role="button"], a) { min-height: 44px; min-width: 44px; }
+.main-library-header :is(button, [role="button"], a):focus-visible,
+.library-header-dialog :is(button, [role="button"], a):focus-visible {
+  outline: 2px solid var(--color-sen-portal);
+  outline-offset: 4px;
+}
+.main-library-header .header-global-panel {
+  max-height: calc(100dvh - 100px);
+  overflow-y: auto;
+  max-width: calc(100vw - 32px);
+}
+.library-header-dialog :is(button, [role="button"]) { min-height: 44px; }
+@media (min-width: 640px) {
+  .main-library-header { padding-inline: max(24px, env(safe-area-inset-left)) max(24px, env(safe-area-inset-right)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-library-header *, .library-header-dialog * { animation: none !important; transition: none !important; }
+}

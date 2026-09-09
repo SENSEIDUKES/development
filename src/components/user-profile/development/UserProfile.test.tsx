@@ -33,6 +33,7 @@ import {
 
 let container: HTMLDivElement;
 let root: Root;
+let desktopViewport = false;
 
 beforeEach(() => {
   window.history.replaceState(null, '', '/?preview=user-profile');
@@ -40,11 +41,14 @@ beforeEach(() => {
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
+  desktopViewport = false;
   Object.defineProperty(window, 'matchMedia', {
     configurable: true,
     value: vi.fn().mockImplementation((media: string) => ({
       media,
-      matches: false,
+      // The Cave rail is mounted from the desktop breakpoint only; every other
+      // query stays unmatched, so the default fixture is a phone.
+      matches: media.includes('min-width: 1024px') ? desktopViewport : false,
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       addListener: vi.fn(),
@@ -130,7 +134,6 @@ describe('Cultivator Cave home', () => {
     const scenario = getPreviewScenario('developed-cultivator');
     const profile = scenario.profile!;
 
-    expect(container.querySelector('h1')?.textContent).toBe('Cultivator Cave');
     expect(container.querySelector('[data-cave-backdrop]')?.getAttribute('src')).toBe(CAVE_ENVIRONMENTS[0].src);
     expect(container.querySelector('[data-cave-portrait] img')?.getAttribute('src')).toBe(profile.avatarUrl);
     expect(container.querySelector('#cave-cultivator-name')?.textContent).toContain(profile.displayName);
@@ -145,7 +148,13 @@ describe('Cultivator Cave home', () => {
     expect(open('status-effects').textContent).toContain('Active Effects · 2');
     expect(text()).not.toContain(profile.username);
     expect(container.querySelector('.workspace-header [aria-label="Open settings"]')).toBeNull();
-    expect(container.querySelectorAll('nav[aria-label="Cultivator Cave navigation"]')).toHaveLength(2);
+    // The chrome names the workspace without owning the page heading.
+    expect(container.querySelector('h1')).toBeNull();
+    expect(container.querySelector('[data-slot="library-header-badge-title"]')?.textContent).toBe('Cultivator Cave');
+    // Below the desktop breakpoint the drawer is the only navigation mounted:
+    // no rail, and so no second copy of the same destinations.
+    expect(container.querySelectorAll('nav[aria-label="Cultivator Cave navigation"]')).toHaveLength(1);
+    expect(container.querySelector('[data-slot="app-shell-sidebar"]')).toBeNull();
     expect(text()).not.toContain('Cultivate in silence. Ascend in the unseen.');
   });
 
@@ -514,6 +523,21 @@ describe('locked reference replica', () => {
 });
 
 
+describe('Cave workspace shell', () => {
+  it('mounts the desktop rail only once the desktop breakpoint fits', async () => {
+    desktopViewport = true;
+    await renderCave();
+    const rail = container.querySelector('[data-slot="app-shell-sidebar"]');
+    expect(rail).not.toBeNull();
+    expect(rail?.getAttribute('aria-label')).toBe('Cultivator Cave navigation');
+    expect(rail?.querySelectorAll('nav[aria-label="Cultivator Cave navigation"]')).toHaveLength(1);
+    // One visible rail: the shell column, never a second bare aside beside it.
+    expect(container.querySelectorAll('aside')).toHaveLength(1);
+    // The workspace keeps its own scrolling region beside the rail.
+    expect(container.querySelector('[data-slot="app-shell-main"] .cave-workspace-body')).not.toBeNull();
+  });
+});
+
 describe('Cave workspace routing', () => {
   it('selects all four destinations and focuses each page without duplicating history', async () => {
     await renderCave();
@@ -522,7 +546,7 @@ describe('Cave workspace routing', () => {
       expect(new URLSearchParams(location.search).get('cave')).toBe('/' + label.toLowerCase());
       expect(document.activeElement?.tagName).toBe('H2');
       const selected = container.querySelectorAll('nav[aria-label="Cultivator Cave navigation"] [aria-current="page"]');
-      expect(selected).toHaveLength(2);
+      expect(selected).toHaveLength(1);
       for (const item of selected) expect(item.textContent).toContain(label);
       const count = history.length;
       await click(byText('.cave-workspace-dock button', label));

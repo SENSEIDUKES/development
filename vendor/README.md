@@ -1,9 +1,9 @@
 # Private UI artifacts
 
-These committed tarballs are built from the merged UI PR [#56](https://github.com/SENSEIDUKES/UI/pull/56), commit `6856594171546fee1a243e1dc3422fcb952c5022`:
+These committed tarballs are built from the merged UI PR [#60](https://github.com/SENSEIDUKES/UI/pull/60), commit `42961e48e78ee816f9c2801a37a7f66af8aa2ae2`:
 
-- `@seihouse/ui@0.4.0`: universal SEIHouse primitives and experience tokens.
-- `@seihouse/library-ui@0.4.0`: the Celestial Library component system.
+- `@seihouse/ui@0.4.0`: universal SEIHouse primitives and experience tokens, including the `SEIAppHeader` application chrome and the `SEIAppShell` scaffold.
+- `@seihouse/library-ui@0.4.0`: the Celestial Library component system, including the compact `LibraryHeaderBadge` `mode="app-header"` presentation.
 
 `ui-artifacts.json` records source provenance and SHA-512 integrity. The root manifest pins these files, and `package-lock.json` records their integrity. Run `npm ci` followed by `npm run check:ui-artifacts` to verify the installed dependency inputs. No registry publication or repository visibility change is required.
 

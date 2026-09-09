@@ -3,7 +3,7 @@
   "commits": {
     "development": "7e1302bd2d5c3205706ddb1362607abed6a850e6",
     "Light-Novels": "4a3dd02b6640b2ec50d8d1d136e37fb808249ed2",
-    "UI": "6856594171546fee1a243e1dc3422fcb952c5022"
+    "UI": "42961e48e78ee816f9c2801a37a7f66af8aa2ae2"
   },
   "files": [
     {
@@ -109,12 +109,12 @@
     {
       "path": "vendor/seihouse-ui-0.4.0.tgz",
       "binary": true,
-      "sha256": "6789306bcd7660707d5a39fa6eb8f9b00342ee9cfedd646308a3eda091066907"
+      "sha256": "96a09e28ff95f7609daac49c93797918fb054c1a8c782d45bdec297885e69e59"
     },
     {
       "path": "vendor/seihouse-library-ui-0.4.0.tgz",
       "binary": true,
-      "sha256": "c1789b4b264f24978d8cbcf6fb66956c011c5d34c86f2def9b6eced1c593e652"
+      "sha256": "ee668ae07537d5c85825d540193b14dc44725bd17273d36d27c850cbd47cd005"
     },
     {
       "path": "public/favicon.jpg",
@@ -149,12 +149,12 @@
     {
       "path": "src/presentation/contracts.ts",
       "binary": false,
-      "sha256": "96a8299d7781afbe13054919b989aea52c15389026223fee696aaa90167e80cf"
+      "sha256": "82ccfdeb0f14c658eb1ef0c7a1b9f2cf796ab52d0bc494011286f461584c4972"
     },
     {
       "path": "src/presentation/defaults.tsx",
       "binary": false,
-      "sha256": "8d3c1ed197b831874d197eb3d7bbe5ec74e5b26a905e08bedace8bae5a155a3b"
+      "sha256": "9925b2e616d566dd6e2963d4caa15f8d0adcae58f9454250ed9214c3111dc18d"
     },
     {
       "path": "src/presentation/index.tsx",
@@ -163,24 +163,78 @@
     }
   ],
   "fontAssets": [
-    { "path": "public/library-shell/fonts/alegreya-500.ttf", "sha256": "3ae790f5b3f70bf2a9d990c07bbbfc22af476fb5835f309128f5978baf7a9bd6" },
-    { "path": "public/library-shell/fonts/alegreya-700.ttf", "sha256": "613bb372fa6f66a19ed652ea8eea88768ff4321d5eb03cf8b28a217ba8942fbf" },
-    { "path": "public/library-shell/fonts/alegreya-italic-500.ttf", "sha256": "f4dca2c57cf809e432f5c859160b0a0e371242718f9e39f6bd72ee1d86346893" },
-    { "path": "public/library-shell/fonts/alegreya-italic-700.ttf", "sha256": "f53cdbe4db23177569d2002a7c77489982b4137b6e3442ed468b8d49d20bf55b" },
-    { "path": "public/library-shell/fonts/alegreya-sc-500.ttf", "sha256": "61c7d16c4b3952c7129c77ef56eb540f3ea459867adbb4df0a95da07a44bf7cb" },
-    { "path": "public/library-shell/fonts/alegreya-sc-700.ttf", "sha256": "7ad21084a1bf53139200231d1b4e900e712cf3eccce9cca12de1657153e64911" },
-    { "path": "public/library-shell/fonts/noto-serif-200.ttf", "sha256": "e361da0b9dd56ad6752ed28e024a5dc2f6f0d2902fb6719f7bac6bb6e0c22c6e" },
-    { "path": "public/library-shell/fonts/noto-serif-300.ttf", "sha256": "cb6ac56a7f30eeb92fbba99db888560bb921e2e3ab824d93ac1966021a2ecd74" },
-    { "path": "public/library-shell/fonts/noto-serif-400.ttf", "sha256": "5473d2e43bdd018ee124a4addba8091fd0a29894b121cbb741023af6549662b6" },
-    { "path": "public/library-shell/fonts/noto-serif-italic-200.ttf", "sha256": "5a020d1f8d1bbb89331013ede01477303bec54d8276a2f5e6d8ab881bacb659a" },
-    { "path": "public/library-shell/fonts/noto-serif-italic-300.ttf", "sha256": "3c734b959a235838077a801b07a8f285401406a76e4829d6ef8dc89235171c36" },
-    { "path": "public/library-shell/fonts/noto-serif-italic-400.ttf", "sha256": "f06cb5f088620048826b520a145b0410065bfef099113c4e8898b3fab48d506d" },
-    { "path": "public/library-shell/fonts/rubik-300.ttf", "sha256": "d7d352463b5e127d5cece345418de1906fcfaf03cac2bd0e11686ff4445b1c63" },
-    { "path": "public/library-shell/fonts/rubik-400.ttf", "sha256": "cc6a4222027f8e57ff86a50c5ba88f12326d7223bde9bf6531538633ebad3343" },
-    { "path": "public/library-shell/fonts/rubik-500.ttf", "sha256": "d73c60557ccc500ea9828bcc34437e7ea7a0d05f1c60c87be85790ebe8e62dbc" },
-    { "path": "public/library-shell/fonts/rubik-italic-300.ttf", "sha256": "13e9507be1d7834c8bad04349da2dd448c07a4ddfa137e2346b6c549ff9da975" },
-    { "path": "public/library-shell/fonts/rubik-italic-400.ttf", "sha256": "16fc8b9b98fdf8c100a2266321c23da5b686aac084645053ad169f0a5b9fadee" },
-    { "path": "public/library-shell/fonts/rubik-italic-500.ttf", "sha256": "242f69f7deaa260406f32b75ed4b200f6b8c5e947d7abd5110c7aa92342f9c07" }
+    {
+      "path": "public/library-shell/fonts/alegreya-500.ttf",
+      "sha256": "3ae790f5b3f70bf2a9d990c07bbbfc22af476fb5835f309128f5978baf7a9bd6"
+    },
+    {
+      "path": "public/library-shell/fonts/alegreya-700.ttf",
+      "sha256": "613bb372fa6f66a19ed652ea8eea88768ff4321d5eb03cf8b28a217ba8942fbf"
+    },
+    {
+      "path": "public/library-shell/fonts/alegreya-italic-500.ttf",
+      "sha256": "f4dca2c57cf809e432f5c859160b0a0e371242718f9e39f6bd72ee1d86346893"
+    },
+    {
+      "path": "public/library-shell/fonts/alegreya-italic-700.ttf",
+      "sha256": "f53cdbe4db23177569d2002a7c77489982b4137b6e3442ed468b8d49d20bf55b"
+    },
+    {
+      "path": "public/library-shell/fonts/alegreya-sc-500.ttf",
+      "sha256": "61c7d16c4b3952c7129c77ef56eb540f3ea459867adbb4df0a95da07a44bf7cb"
+    },
+    {
+      "path": "public/library-shell/fonts/alegreya-sc-700.ttf",
+      "sha256": "7ad21084a1bf53139200231d1b4e900e712cf3eccce9cca12de1657153e64911"
+    },
+    {
+      "path": "public/library-shell/fonts/noto-serif-200.ttf",
+      "sha256": "e361da0b9dd56ad6752ed28e024a5dc2f6f0d2902fb6719f7bac6bb6e0c22c6e"
+    },
+    {
+      "path": "public/library-shell/fonts/noto-serif-300.ttf",
+      "sha256": "cb6ac56a7f30eeb92fbba99db888560bb921e2e3ab824d93ac1966021a2ecd74"
+    },
+    {
+      "path": "public/library-shell/fonts/noto-serif-400.ttf",
+      "sha256": "5473d2e43bdd018ee124a4addba8091fd0a29894b121cbb741023af6549662b6"
+    },
+    {
+      "path": "public/library-shell/fonts/noto-serif-italic-200.ttf",
+      "sha256": "5a020d1f8d1bbb89331013ede01477303bec54d8276a2f5e6d8ab881bacb659a"
+    },
+    {
+      "path": "public/library-shell/fonts/noto-serif-italic-300.ttf",
+      "sha256": "3c734b959a235838077a801b07a8f285401406a76e4829d6ef8dc89235171c36"
+    },
+    {
+      "path": "public/library-shell/fonts/noto-serif-italic-400.ttf",
+      "sha256": "f06cb5f088620048826b520a145b0410065bfef099113c4e8898b3fab48d506d"
+    },
+    {
+      "path": "public/library-shell/fonts/rubik-300.ttf",
+      "sha256": "d7d352463b5e127d5cece345418de1906fcfaf03cac2bd0e11686ff4445b1c63"
+    },
+    {
+      "path": "public/library-shell/fonts/rubik-400.ttf",
+      "sha256": "cc6a4222027f8e57ff86a50c5ba88f12326d7223bde9bf6531538633ebad3343"
+    },
+    {
+      "path": "public/library-shell/fonts/rubik-500.ttf",
+      "sha256": "d73c60557ccc500ea9828bcc34437e7ea7a0d05f1c60c87be85790ebe8e62dbc"
+    },
+    {
+      "path": "public/library-shell/fonts/rubik-italic-300.ttf",
+      "sha256": "13e9507be1d7834c8bad04349da2dd448c07a4ddfa137e2346b6c549ff9da975"
+    },
+    {
+      "path": "public/library-shell/fonts/rubik-italic-400.ttf",
+      "sha256": "16fc8b9b98fdf8c100a2266321c23da5b686aac084645053ad169f0a5b9fadee"
+    },
+    {
+      "path": "public/library-shell/fonts/rubik-italic-500.ttf",
+      "sha256": "242f69f7deaa260406f32b75ed4b200f6b8c5e947d7abd5110c7aa92342f9c07"
+    }
   ],
   "assets": [
     {

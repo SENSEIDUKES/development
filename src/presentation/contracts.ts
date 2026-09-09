@@ -162,6 +162,11 @@ export interface NarrativeHeaderBadgeProps {
   emblemAlt?: string;
   emblemHref?: string;
   emblemLinkLabel?: string;
+  /**
+   * `'app-header'` asks the host badge for the compact single-row identity that
+   * fits inside application chrome. Hosts without a compact form may ignore it.
+   */
+  mode?: 'default' | 'app-header';
 }
 
 export type NarrativeNavigationDrawerAccent = 'portal' | 'gold';

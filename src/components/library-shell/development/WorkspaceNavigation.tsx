@@ -48,11 +48,14 @@ export function WorkspaceNavigation({ definition, children }: { definition: Work
   </Context.Provider>;
 }
 
+/**
+ * The desktop rail's contents. `WorkspaceShell` owns the column itself — its
+ * width, its surface, its full-height border, and the breakpoint it appears
+ * at — so this renders only the navigation panel.
+ */
 export function WorkspaceSidebar() {
   const { definition } = useWorkspaceNavigation();
-  return <aside className="hidden border-r border-neutral-900/70 lg:block">
-    <NarrativeNavigationDrawerPanel aria-label={definition.label} profile={definition.profile} sections={definition.sections} />
-  </aside>;
+  return <NarrativeNavigationDrawerPanel aria-label={definition.label} profile={definition.profile} sections={definition.sections} />;
 }
 
 export function WorkspaceBottomControls({ label, items }: { label: string; items: NarrativeBottomNavigationItem[] }) {

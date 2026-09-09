@@ -35,8 +35,31 @@ Checks used the Codex browser against the local Workshop server on port 5186. Po
 - `npm run check:ui-artifacts` — passed; installed UI artifact inputs match the existing provenance and lockfile.
 - `git diff --check` — passed.
 
+## Shared App Header and shell — 2026-09-09
+
+Checked with Playwright/Chromium against `npm run build` output served by `vite preview`, driving `/library-shell.html?variant=development` for Story Seed (`filled-intake`) and the Cultivator Cave (`developed-cultivator`) at 390 × 844, 768 × 1024 and 1440 × 900. Browser emulation is not a physical-device test.
+
+| Check | Evidence |
+| --- | --- |
+| Horizontal overflow | `scrollWidth === clientWidth` at all three viewports for both workspaces, and with the mobile drawer open. |
+| Header row | One row at every width. Phone: badge, tone dot, icon-only primary action, overflow. Tablet: the primary action's label returns. Desktop: status label, all secondary actions and the full primary label render untruncated. |
+| Badge | `LibraryHeaderBadge` renders the title and subtitle at every width (`Story Seed / Grow Your Universe`, `Cultivator Cave`); the chrome contributes no `<h1>`, so the page outline still starts at its own content. |
+| Sidebar width | Exactly 224px (14rem) at 1440px for both workspaces; absent at 390px and 768px, where no `aside` is rendered at all. |
+| Sidebar height and scrolling | The column stretches the full grid row (Story Seed 2489px against 836px of rail); the rail sticks at 64px — flush under the header — after scrolling, and scrolls internally. The page keeps a single scrollbar. |
+| Content under the header | The sticky header holds `top: 0` while scrolling and the first row of content sits below it in both workspaces. |
+| Duplicate navigation | Below 1024px exactly one navigation is mounted; at 1024px and above the rail is the only visible one, and there is exactly one `aside`. |
+| Mobile drawer and bottom navigation | The Cave's fixed bottom controls route to `/stories` and update the selected destination; Story Seed's Sections control opens the drawer over the page. |
+| Overflow menu and focus | At 768px the collapsed Save Draft, Settings, Story Bank and Help appear in the overflow panel, focus moves to the first enabled item, and Escape closes the panel and returns focus to the trigger. Tab from the top of the Cave reaches the home emblem link first. |
+| Safe areas | With the notch simulation the header pads 44px at the top and the Cave's bottom controls pad 46px (0.75rem + 34px). A landscape simulation is also available. |
+| Reduced motion | The preview's reduced-motion simulation applies inside the frame; the shipped rules key off `prefers-reduced-motion: reduce` in `workspace-header.css` and `workspace-shell.css`. |
+| Main Library | Unchanged: its homepage header still renders its own `<h1>` and its own surface at all three viewports. |
+
+Local checks re-run for this change: `npx tsc -b`, `npx vitest run` (627 passed, 1 skipped), `npm run build`, `node scripts/checkLibraryShellCapture.mjs`, `npm run check:ui-artifacts`, `npm run check:package-boundaries`.
+
 ## Limits of this evidence
 
 This is shell verification with local state. It does not validate account sign-in, Profile screens, cloud persistence, production synchronization, AI providers, full Story Bank/Help/editor/Blueprint content, audio, or live story data. These systems are intentionally absent from the capture. Mock content has a different height from full page content, so content-dependent footer position and full-page pixel parity are not asserted. Source body/viewport theme behavior, shell markup, spacing, fonts, breakpoints, and interactive controls are the comparison target.
+
+The 2026-09-09 shell verification measures geometry, mounted landmarks and interaction outcomes; it asserts no pixel baseline, and the safe-area and reduced-motion results come from the preview's own simulation rather than physical hardware or an operating-system setting.
 
 The browser's screenshot scaling was inconsistent after switching emulated viewports between tabs; element measurements and DOM/interaction checks were used for the recorded source parity result. No pixel-diff score or screenshot baseline is claimed. Safe-area rules are preserved from source but have not been tested on physical iOS hardware. The review follow-up added capture-only focus, assistive-status, sticky-footer, local-font, and adapter-contract corrections; production source behavior remains unmodified.

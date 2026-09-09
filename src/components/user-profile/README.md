@@ -561,10 +561,8 @@ reads private state, so it resolves to Page unavailable and returns to public Ho
 | Public Stories | `?preview=user-profile&cave=/public/stories` |
 | Public Relics | `?preview=user-profile&cave=/public/relics` |
 
-**View Public Profile** is a `secondaryActions` entry on the existing `WorkspaceHeader`, so below
-the header's compact breakpoint it collapses into the shared overflow menu exactly as other
-workspace actions do. Settings carries a second, always-visible **Preview Public View** button
-beside the visibility controls. In the public view the header shows a subtle `Public View` status
+As of **2026-09-09**, Settings owns the **Preview Public View** button beside the visibility
+controls. The duplicate private header action and its otherwise empty toolbar were removed. In the public view the header shows a subtle `Public View` status
 indicator and an Exit action, and the navigation's fourth item is Exit in both the dock and the
 desktop sidebar. Exit is an action, never a selected tab: it returns to the Cave path the public
 view was opened from, or to private Home when the public view was linked directly.
@@ -651,3 +649,5 @@ Transfer the changed development components, CSS, routing and `caveAccountContro
 keep the sample account values and Workshop wrapper here.
 
 Validation: 80 profile component tests, production build, package boundaries and UI artifact checks passed. Browser checks at 320, 390, 768, 1024 and 1440px confirmed equal button widths, 44px touch targets, centered identity and no horizontal overflow. `verifyCaveHome` exercises the Inbox, Store, Settings, and Redeem Code entry/return paths at mobile size, with keyboard activation for Inbox and Redeem Code. This is local browser emulation, not physical iOS or live account-service verification.
+
+- **2026-09-09:** Removed the redundant private Public View header row; Settings remains the entry point. Shared mobile title space now preserves Cultivator Cave in full. Locked reference and source-comparison dates are unchanged.

@@ -1,9 +1,10 @@
 import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Search } from 'lucide-react';
+import { CircleHelp, Search } from 'lucide-react';
 import { NarrativeButton, NarrativeTextBox } from '../../../presentation';
 import { WorkspaceSheet } from './WorkspaceSheet';
-import type { HeaderAction } from './WorkspaceHeaderActions';
+import { HeaderOverflow, type HeaderAction } from './WorkspaceHeaderActions';
+import { useNarrowHeader } from './workspaceMedia';
 
 const LibraryHelpMenu = lazy(() => import('../../story-seed/development/StorySeedHelpMenu')
   .then(module => ({ default: module.LibraryHelpMenu })));
@@ -18,6 +19,9 @@ export function WorkspaceHeaderUtilities({ items, help }: {
   help?: HeaderAction;
 }) {
   const [experience, setExperience] = useState<'help' | 'search' | null>(null);
+  const narrow = useNarrowHeader();
+  const utilitiesRef = useRef<HTMLDivElement>(null);
+  const overflowReturnRef = useRef<HTMLElement | null>(null);
   const [query, setQuery] = useState('');
   const helpRef = useRef<HTMLButtonElement>(null);
   const searchRef = useRef<HTMLButtonElement>(null);
@@ -27,7 +31,20 @@ export function WorkspaceHeaderUtilities({ items, help }: {
   const searchId = useId();
   const needle = query.trim().toLocaleLowerCase();
   const results = items.filter(item => `${item.label} ${item.description ?? ''}`.toLocaleLowerCase().includes(needle));
+  const openSearch = () => {
+    overflowReturnRef.current = utilitiesRef.current?.querySelector('button') ?? null;
+    setQuery(''); setExperience('search');
+  };
   return <>
+    {narrow ? <div ref={utilitiesRef} className="workspace-header-utilities">
+      <HeaderOverflow label="Header options" actions={[
+        { id: 'help', label: 'Help', icon: CircleHelp, hasPopup: 'dialog',
+          disabled: help?.disabled, expanded: help ? help.expanded : experience === 'help',
+          onIntent: help?.onIntent, onAction: () => help ? help.onAction() : setExperience('help') },
+        { id: 'search', label: 'Search', icon: Search, hasPopup: 'dialog',
+          expanded: experience === 'search', onAction: openSearch },
+      ]} />
+    </div> : <>
     <NarrativeButton ref={helpRef} variant="ghost" size="icon" aria-label="Help" title="Help"
       aria-haspopup="dialog" aria-expanded={help ? help.expanded : experience === 'help'}
       onPointerEnter={help?.onIntent} onFocus={help?.onIntent} disabled={help?.disabled}
@@ -36,9 +53,10 @@ export function WorkspaceHeaderUtilities({ items, help }: {
     </NarrativeButton>
     <NarrativeButton ref={searchRef} variant="ghost" icon={Search} aria-label="Search" title="Search"
       className="workspace-search-trigger" aria-haspopup="dialog" aria-expanded={experience === 'search'}
-      onClick={() => { setQuery(''); setExperience('search'); }}>
+      onClick={openSearch}>
       <span className="workspace-search-label">Search</span>
     </NarrativeButton>
+    </>}
     {experience === 'help' && createPortal(<Suspense fallback={<span role="status">Loading Help…</span>}>
       <LibraryHelpMenu open onClose={() => setExperience(null)} />
     </Suspense>, document.body)}
@@ -52,7 +70,7 @@ export function WorkspaceHeaderUtilities({ items, help }: {
           // Release the dialog's final focus restoration before the destination focuses its heading.
           dispatchTimer.current = window.setTimeout(action, 0);
         }
-      }} title="Search" closeLabel="Close Search" returnFocusRef={searchRef}>
+      }} title="Search" closeLabel="Close Search" returnFocusRef={narrow ? overflowReturnRef : searchRef}>
       <div role="search">
         <label htmlFor={searchId} className="workspace-search-field-label">Search destinations and actions</label>
         <NarrativeTextBox id={searchId} type="search" autoFocus value={query}

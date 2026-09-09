@@ -10,7 +10,7 @@ let container: HTMLDivElement;
 let root: Root;
 beforeEach(() => {
   container = document.createElement('div'); document.body.append(container); root = createRoot(container);
-  vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+  vi.stubGlobal('matchMedia', (query: string) => ({ matches: !query.includes('479px'), addEventListener: vi.fn(), removeEventListener: vi.fn() }));
 });
 afterEach(() => { act(() => root.unmount()); container.remove(); vi.unstubAllGlobals(); });
 

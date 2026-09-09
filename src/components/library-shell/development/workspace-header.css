@@ -26,6 +26,21 @@
   letter-spacing: normal;
 }
 .workspace-header-badge { display: block; min-width: 0; }
+.workspace-header [data-slot="library-header-badge-title"] {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Keep the plaque treatment and line height; reclaim horizontal space from
+   utility actions and spacing before making a modest phone type adjustment. */
+@media (max-width: 479px) {
+  .workspace-header .workspace-header-inner { padding-inline: max(8px, var(--sh-safe-left, env(safe-area-inset-left))) max(8px, var(--sh-safe-right, env(safe-area-inset-right))); gap: 4px; }
+  .workspace-header-badge [data-mode="app-header"] { gap: 4px; }
+  .workspace-header [data-slot="library-header-badge-title"] { font-size: 13px; line-height: 14px; letter-spacing: 0.02em; }
+  .workspace-header-badge [data-mode="app-header"] > span:last-child > span:last-child { padding-inline: 8px; }
+}
 
 /* One row, shared fairly. The identity is the only item that flexes; the
    controls always get their intrinsic width. Letting the action group shrink
@@ -35,6 +50,9 @@
    stays small enough that a 320px phone still fits identity + controls. */
 .workspace-header [data-slot="app-header-identity"] { flex: 1 1 auto; min-width: 0; }
 .workspace-header [data-slot="app-header-actions"] { flex: none; }
+@media (min-width: 480px) {
+  .workspace-header [data-slot="app-header-identity"] { min-width: 248px; }
+}
 .workspace-action-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .workspace-header-status {
@@ -105,6 +123,9 @@
    Page commands keep their existing controls in the shared toolbar below. */
 .workspace-header-inner { gap: 8px; }
 .workspace-header-context { display: flex; align-items: center; min-width: 0; max-width: min(30vw, 340px); }
+@media (min-width: 640px) {
+  .workspace-header-context { max-width: min(30vw, max(44px, calc(100vw - 500px)), 340px); }
+}
 .workspace-header-public-view { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--color-sen-signal); font-size: 12px; white-space: nowrap; }
 .workspace-help-emblem { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border: 1.5px solid currentColor; border-radius: 50%; font-size: 14px; font-weight: 700; }
 .workspace-header-toolbar {

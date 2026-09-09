@@ -134,7 +134,7 @@
     {
       "path": "src/styles.css",
       "binary": false,
-      "sha256": "53f85bd28553aa5402c68a45823eb198950bc6590ba1aa22bc815ee8d1f5523e"
+      "sha256": "278d67610119d46defa35267e027af04d40d41c11509b0ec341baebd3dc85373"
     },
     {
       "path": "src/components/library-presentation/LibraryPresentationProvider.tsx",

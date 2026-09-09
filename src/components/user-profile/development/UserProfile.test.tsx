@@ -14,6 +14,12 @@ import { getPreviewScenario } from '../../../workshop/previews/user-profile/prev
 import type { UserProfilePreviewState } from '../../../workshop/previews/user-profile/previewStates';
 import { CAVE_ENVIRONMENTS, getCultivationStage } from './caveEnvironment';
 import {
+  DISPLAY_NAME_MAX_VISIBLE,
+  clampDisplayName,
+  countVisibleCharacters,
+  isDisplayNameWithinLimit,
+} from './displayName';
+import {
   MASTER_RANK,
   RANKS,
   getAuraSelection,
@@ -293,6 +299,7 @@ describe('Cultivator Cave settings', () => {
     );
     expect(headings).toEqual([
       'Identity & Celestial Aura',
+      'Public Profile',
       'Cultivator Portrait',
       'Cave Environment',
       'Language',
@@ -322,7 +329,7 @@ describe('Cultivator Cave settings', () => {
     const input = document.body.querySelector<HTMLInputElement>('#cave-display-name')!;
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
     await act(async () => {
-      setter.call(input, 'The Cave Dweller');
+      setter.call(input, 'Cave Dweller');
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
     await click(byText('button', 'Guard Changes'));
@@ -330,7 +337,7 @@ describe('Cultivator Cave settings', () => {
       await vi.advanceTimersByTimeAsync(700);
     });
     await click(byText('.cave-workspace-dock button', 'Home'));
-    expect(container.querySelector('#cave-cultivator-name')?.textContent).toContain('The Cave Dweller');
+    expect(container.querySelector('#cave-cultivator-name')?.textContent).toContain('Cave Dweller');
   });
 
   it('asks for confirmation on a language change and reverts on request', async () => {
@@ -742,5 +749,271 @@ describe('Claim and existing profile edits', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(650); });
     expect(container.querySelector('[data-cave-rank]')?.textContent).toBe(getRankForQi(104).name);
     expect((container.querySelector('[data-cave-progress]') as HTMLElement).style.getPropertyValue('--cave-rank-background')).toBe(rankBackground(getRankForQi(104).visual));
+  });
+});
+
+describe('Public view of the Cave', () => {
+  const dockLabels = () =>
+    Array.from(container.querySelectorAll('.cave-workspace-dock button')).map(button =>
+      (button.textContent ?? '').trim(),
+    );
+  const enterPublicView = async () => {
+    await click(byText('.workspace-secondary-actions button', 'View Public Profile'));
+  };
+  const cave = () => new URLSearchParams(location.search).get('cave');
+
+  it('keeps the identity and swaps only the private information areas', async () => {
+    await renderCave();
+    const profile = getPreviewScenario('developed-cultivator').profile!;
+
+    // Private Home first: progress, reserves, effects, Pillar.
+    expect(container.querySelector('[data-cave-home-mode]')?.getAttribute('data-cave-home-mode')).toBe('private');
+    expect(container.querySelector('[data-cave-progress]')).not.toBeNull();
+
+    await enterPublicView();
+    expect(cave()).toBe('/public/home');
+    expect(container.querySelector('[data-cave-home-mode]')?.getAttribute('data-cave-home-mode')).toBe('public');
+    expect(container.querySelector('[data-cave-audience="public"]')).not.toBeNull();
+
+    // The identity is untouched: same portrait, name, badge, rank.
+    expect(container.querySelector('[data-cave-portrait] img')?.getAttribute('src')).toBe(profile.avatarUrl);
+    expect(container.querySelector('#cave-cultivator-name')?.textContent).toContain(profile.displayName);
+    expect(container.querySelector('[data-cave-rank-row] .cave-tier-badge')?.textContent).toBe('Inner Sect');
+    expect(container.querySelector('[data-cave-rank]')?.textContent).toContain('Leader');
+
+    // The four private areas are replaced, not hidden alongside their public twin.
+    expect(container.querySelector('[data-cave-bio]')?.textContent).toContain('quiet hours');
+    expect(container.querySelector('[data-cave-progress]')).toBeNull();
+    expect(container.querySelector('[data-cave-qi]')).toBeNull();
+    expect(container.querySelector('[data-cave-card="stats"]')).not.toBeNull();
+    expect(container.querySelector('[data-cave-card="qi-reserves"]')).toBeNull();
+    expect(container.querySelector('[data-cave-card="highlights"]')).not.toBeNull();
+    expect(container.querySelector('[data-cave-card="status-effects"]')).toBeNull();
+    expect(container.querySelector('[data-cave-card="boost"]')).not.toBeNull();
+    expect(container.querySelector('[data-cave-card="dao-pillar"]')).toBeNull();
+
+    // The private username never reaches either Home view.
+    expect(text()).not.toContain(profile.username);
+  });
+
+  it('shows a Public View indicator and centres the name in both modes', async () => {
+    await renderCave();
+    expect(container.querySelector('.workspace-header-status')).toBeNull();
+    // The badge is never a sibling of the name inside the heading.
+    expect(container.querySelector('#cave-cultivator-name .cave-tier-badge')).toBeNull();
+    expect(container.querySelector('[data-cave-rank-row] .cave-tier-badge')).not.toBeNull();
+
+    await enterPublicView();
+    expect(container.querySelector('.workspace-header-status')?.textContent).toContain('Public View');
+    expect(container.querySelector('#cave-cultivator-name .cave-tier-badge')).toBeNull();
+    expect(container.querySelector('[data-cave-rank-row] .cave-tier-badge')).not.toBeNull();
+  });
+
+  it('replaces Settings with Exit and returns to the previous location', async () => {
+    await renderCave();
+    expect(dockLabels()).toEqual(['Home', 'Stories', 'Relics', 'Settings']);
+
+    await click(byText('.cave-workspace-dock button', 'Relics'));
+    expect(cave()).toBe('/relics');
+    await enterPublicView();
+    expect(dockLabels()).toEqual(['Home', 'Stories', 'Relics', 'Exit']);
+    expect(container.querySelector('[data-cave-settings]')).toBeNull();
+
+    await click(byText('.cave-workspace-dock button', 'Exit'));
+    expect(cave()).toBe('/relics');
+    expect(container.querySelector('[data-cave-audience="private"]')).not.toBeNull();
+  });
+
+  it('exits a directly linked public view to the private Cave home', async () => {
+    history.replaceState(null, '', '/?preview=user-profile&cave=/public/home');
+    await renderCave();
+    expect(container.querySelector('[data-cave-home-mode]')?.getAttribute('data-cave-home-mode')).toBe('public');
+    await click(byText('.cave-workspace-dock button', 'Exit'));
+    expect(cave()).toBe('/home');
+    expect(container.querySelector('[data-cave-card="dao-pillar"]')).not.toBeNull();
+  });
+
+  it('boosts and withdraws without touching cultivation', async () => {
+    const { controller } = await renderCave();
+    const before = controller().profile?.dao_xp;
+    await enterPublicView();
+    const boost = () => container.querySelector<HTMLButtonElement>('[data-cave-card="boost"]')!;
+    expect(boost().getAttribute('aria-pressed')).toBe('false');
+    expect(boost().textContent).toContain('0 Boosts');
+
+    await click(boost());
+    expect(boost().getAttribute('aria-pressed')).toBe('true');
+    expect(boost().textContent).toContain('1 Boost');
+    expect(boost().className).toContain('is-boosted');
+    expect(container.querySelector('[data-cave-boost-status]')?.textContent).toContain('Your boost is showing.');
+
+    await click(boost());
+    expect(boost().getAttribute('aria-pressed')).toBe('false');
+    expect(boost().textContent).toContain('0 Boosts');
+    expect(controller().profile?.dao_xp).toBe(before);
+  });
+
+  it('opens Stats and Highlights from the same two-card composition', async () => {
+    await renderCave();
+    await enterPublicView();
+
+    await click(container.querySelector('[data-cave-card="stats"]')!);
+    const stats = document.body.querySelector('[role="dialog"]')!;
+    expect(stats.textContent).toContain('Started');
+    expect(stats.textContent).toContain('Reading streak');
+    expect(stats.textContent).toContain('Reading time');
+    await click(document.body.querySelector('[role="dialog"] button')!);
+
+    await click(container.querySelector('[data-cave-card="highlights"]')!);
+    const highlights = document.body.querySelector('[role="dialog"]')!;
+    expect(highlights.querySelectorAll('[data-cave-highlight]').length).toBeGreaterThan(0);
+    expect(highlights.querySelector('[data-cave-highlight="codex-image"]')).not.toBeNull();
+    expect(highlights.querySelector('[data-cave-highlight="audio"]')).not.toBeNull();
+    expect(highlights.querySelector('[data-cave-highlight="clip"]')).not.toBeNull();
+    expect(highlights.querySelector('[data-cave-highlight="moment"]')).not.toBeNull();
+  });
+
+  it('scopes public Stories and Relics to the viewed profile without private content', async () => {
+    await renderCave();
+    await enterPublicView();
+
+    await click(byText('.cave-workspace-dock button', 'Stories'));
+    expect(cave()).toBe('/public/stories');
+    expect(container.querySelector('[data-cave-public-panel="stories"]')).not.toBeNull();
+    expect(text()).toContain('Ashes of the Ninth Heaven');
+    expect(text()).not.toContain('Abandoned Fragment');
+    expect(text()).not.toContain('Story Seeds');
+    expect(text()).not.toContain('Manifested Stories');
+
+    await click(byText('.cave-workspace-dock button', 'Relics'));
+    expect(cave()).toBe('/public/relics');
+    expect(container.querySelector('[data-cave-public-panel="relics"]')).not.toBeNull();
+    expect(text()).toContain('Fragment of the First Sentence');
+    expect(text()).not.toContain('Offering Hall');
+    expect(text()).not.toContain('Attune');
+  });
+
+  it('never attributes another cultivator\'s stories to the viewed profile', async () => {
+    // The owner account owns none of the mock stories; every one belongs to the
+    // developed cultivator. A public page must be scoped to the profile it
+    // renders, not to whatever story collection the host passed in.
+    await renderCave({ state: 'owner-admin' });
+    await enterPublicView();
+    await click(byText('.cave-workspace-dock button', 'Stories'));
+    expect(container.querySelector('[data-cave-public-panel="stories"]')).not.toBeNull();
+    expect(container.querySelector('[data-cave-public-title]')).toBeNull();
+    expect(container.querySelector('[data-cave-public-empty]')?.textContent).toContain('not published any stories');
+    expect(text()).not.toContain('Ashes of the Ninth Heaven');
+    expect(text()).not.toContain('Saltwind Sovereign');
+
+    // The owner's own relics, which are their profile's record, still publish.
+    await click(byText('.cave-workspace-dock button', 'Relics'));
+    expect(text()).toContain('Fragment of the First Sentence');
+  });
+
+  it.each(['/public/settings', '/public/home/dao-pillar', '/public/settings/switchboard'])(
+    'keeps %s out of the public view',
+    async path => {
+      history.replaceState(null, '', '/?preview=user-profile&cave=' + encodeURIComponent(path));
+      await renderCave();
+      expect(text()).toContain('Page unavailable');
+      expect(container.querySelector('[data-cave-settings]')).toBeNull();
+      expect(container.querySelector('[data-cave-card="dao-pillar"]')).toBeNull();
+      await click(container.querySelector('[data-cave-destination="unavailable"] button')!);
+      expect(cave()).toBe('/public/home');
+    },
+  );
+
+  it('honours the visibility configuration across Home and the public pages', async () => {
+    await renderCave();
+    await click(byText('.cave-workspace-dock button', 'Settings'));
+    await click(byText('[data-slot="disclosure-trigger"]', 'Public Profile'));
+    const switches = () =>
+      Array.from(document.body.querySelectorAll<HTMLInputElement>('[data-cave-visibility] input'));
+    expect(switches()).toHaveLength(5);
+    for (const control of switches()) {
+      if (control.checked) await click(control);
+    }
+
+    await click(byText('button', 'Preview Public View'));
+    expect(cave()).toBe('/public/home');
+    expect(container.querySelector('[data-cave-bio]')?.textContent).toContain('keeps their bio private');
+    expect(container.querySelector<HTMLButtonElement>('[data-cave-card="stats"]')!.disabled).toBe(true);
+    expect(container.querySelector('[data-cave-card="stats"]')?.textContent).toContain('Kept private');
+    expect(container.querySelector<HTMLButtonElement>('[data-cave-card="highlights"]')!.disabled).toBe(true);
+    expect(container.querySelector('[data-cave-card="highlights"]')?.textContent).toContain('Kept private');
+
+    await click(byText('.cave-workspace-dock button', 'Stories'));
+    expect(container.querySelector('[data-cave-public-empty]')?.textContent).toContain('private');
+    expect(text()).not.toContain('Ashes of the Ninth Heaven');
+
+    await click(byText('.cave-workspace-dock button', 'Relics'));
+    expect(container.querySelector('[data-cave-public-empty]')?.textContent).toContain('private');
+    expect(text()).not.toContain('Fragment of the First Sentence');
+  });
+});
+
+describe('Display name limit', () => {
+  it('counts what a reader sees, not UTF-16 units', () => {
+    expect(DISPLAY_NAME_MAX_VISIBLE).toBe(12);
+    expect(countVisibleCharacters('')).toBe(0);
+    expect(countVisibleCharacters('Cave Dweller')).toBe(12);
+    expect(countVisibleCharacters('守心见道')).toBe(4);
+    expect(countVisibleCharacters('🌊🌊🌊')).toBe(3);
+    expect(isDisplayNameWithinLimit('Cave Dweller')).toBe(true);
+    expect(isDisplayNameWithinLimit('Cave Dwellers')).toBe(false);
+  });
+
+  it('clamps without splitting a character', () => {
+    expect(clampDisplayName('Cave Dweller')).toBe('Cave Dweller');
+    expect(clampDisplayName('The Cave Dweller')).toBe('The Cave Dwe');
+    expect(clampDisplayName('🌊'.repeat(20))).toBe('🌊'.repeat(12));
+    expect(countVisibleCharacters(clampDisplayName('🌊'.repeat(20)))).toBe(12);
+  });
+
+  it('clamps the display name as it is typed and leaves the username alone', async () => {
+    await renderCave();
+    await click(byText('.cave-workspace-dock button', 'Settings'));
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+    const type = async (selector: string, value: string) => {
+      const input = document.body.querySelector<HTMLInputElement>(selector)!;
+      await act(async () => {
+        setter.call(input, value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      return input;
+    };
+
+    const name = await type('#cave-display-name', 'A Name Far Beyond The Limit');
+    expect(name.value).toBe('A Name Far B');
+    expect(document.body.querySelector('[data-cave-display-name-count]')?.textContent).toBe('12/12');
+
+    const username = await type('#cave-username', 'a_very_long_private_dao_name_kept_whole');
+    expect(username.value).toBe('a_very_long_private_dao_name_kept_whole');
+  });
+
+  it('blocks saving a longer name stored before the limit existed', async () => {
+    await renderCave({ state: 'home-edge-cases' });
+    await click(byText('.cave-workspace-dock button', 'Settings'));
+    expect(text()).toContain('Display names are limited to 12 characters.');
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+    const type = async (selector: string, value: string) => {
+      const input = document.body.querySelector<HTMLInputElement>(selector)!;
+      await act(async () => {
+        setter.call(input, value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    };
+
+    // Dirty the form without touching the display name, so a disabled save
+    // proves the cap rather than merely proving nothing was edited. Typing in
+    // the name field would clamp it and remove the very state under test.
+    await type('#cave-username', 'edge_case_dao_name');
+    expect(text()).toContain('Display names are limited to 12 characters.');
+    expect(byText<HTMLButtonElement>('button', 'Guard Changes').disabled).toBe(true);
+
+    await type('#cave-display-name', 'Edge Reader');
+    expect(text()).not.toContain('Display names are limited to 12 characters.');
+    expect(byText<HTMLButtonElement>('button', 'Guard Changes').disabled).toBe(false);
   });
 });

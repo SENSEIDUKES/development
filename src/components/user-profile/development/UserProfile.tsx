@@ -3,6 +3,7 @@ import { WorkspaceHeader } from '../../library-shell/development/WorkspaceHeader
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BookOpen,
+  Eye,
   Flame,
   Gem,
   Globe,
@@ -37,8 +38,21 @@ import { UserProfilePortraitModal } from './UserProfilePortraitModal';
 import { UserProfileSettingsPanel } from './UserProfileSettingsPanel';
 import { UserProfileStatusEffectsPanel } from './UserProfileStatusEffectsPanel';
 import { UserProfileStoriesPanel } from './UserProfileStoriesPanel';
+import { UserProfilePublicPanel } from './UserProfilePublicPanel';
+import {
+  DEFAULT_PUBLIC_PROFILE_VISIBILITY,
+  buildPublicProfile,
+  developmentPublicRecord,
+  type PublicProfileVisibility,
+} from './publicProfile';
 import './userProfile.css';
-import { CAVE_DESTINATIONS, useCaveRoute } from './caveNavigation';
+import {
+  CAVE_DESTINATIONS,
+  CAVE_EXIT_ICON,
+  CAVE_PUBLIC_DESTINATIONS,
+  publicCavePath,
+  useCaveRoute,
+} from './caveNavigation';
 import { WorkspaceNavigation, WorkspaceSidebar, WorkspaceBottomControls } from '../../library-shell/development/WorkspaceNavigation';
 
 interface UserProfileProps {
@@ -53,6 +67,13 @@ interface UserProfileProps {
  * cultivator's portrait, identity, rank, and Qi over a stock Immortal Land
  * backdrop, within Home, Stories, Relics, and Settings navigation. Every value and action is the
  * controller's; the Cave only decides where each one lives.
+ *
+ * The Cave has one other audience: the **public view**, reached from the header
+ * and routed under `/public/...`. It is the same shell, the same backdrop, and
+ * the same Home composition in its public mode — the private information areas
+ * are swapped for the cultivator's published bio, stats, highlights, and a
+ * Boost, and Settings becomes Exit. Public routes render only from the built
+ * public presentation, so no private panel is mounted behind a public URL.
  */
 export default function UserProfile({ currentUser, stories, onLogout, onNavigateHome }: UserProfileProps) {
   // Production calls `useUserProfile(...)` and reads the Firebase local-only flag
@@ -112,23 +133,89 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const previousUser = useRef(currentUser);
   const previousPath = useRef(route.path);
   const focusedPath = useRef<string | undefined>(undefined);
-  const navigationItems = useMemo(() => CAVE_DESTINATIONS.map(({ id, label, icon: Icon }) => ({
-    id, label, icon: <Icon size={20} />, active: route.destination === id,
-    onSelect: () => navigate(`/${id}`),
-  })), [route.destination, navigate]);
+  const isPublicView = route.audience === 'public';
+  // Where Exit lands. Set as the public view is opened, so leaving returns to
+  // the Cave page the cultivator was on; a direct public link falls back Home.
+  const publicReturnPath = useRef<string | null>(null);
+  const exitPublicView = useCallback(() => {
+    const destination = publicReturnPath.current ?? '/home';
+    publicReturnPath.current = null;
+    navigate(destination);
+  }, [navigate]);
+  const openPublicView = useCallback(() => {
+    publicReturnPath.current = route.path;
+    navigate(publicCavePath('home'));
+  }, [navigate, route.path]);
+
+  const navigationItems = useMemo(() => {
+    if (isPublicView) {
+      return [
+        ...CAVE_PUBLIC_DESTINATIONS.map(({ id, label, icon: Icon }) => ({
+          id, label, icon: <Icon size={20} />, active: route.destination === id,
+          onSelect: () => navigate(publicCavePath(id)),
+        })),
+        // Exit takes Settings' place: it leaves the public view instead of
+        // opening a destination, so it is never the selected tab.
+        { id: 'exit', label: 'Exit', icon: <CAVE_EXIT_ICON size={20} />, active: false,
+          onSelect: exitPublicView },
+      ];
+    }
+    return CAVE_DESTINATIONS.map(({ id, label, icon: Icon }) => ({
+      id, label, icon: <Icon size={20} />, active: route.destination === id,
+      onSelect: () => navigate(`/${id}`),
+    }));
+  }, [isPublicView, route.destination, navigate, exitPublicView]);
   const navigationDefinition = useMemo(() => ({
-    label: 'Cultivator Cave navigation', closeLabel: 'Close Cave navigation',
+    label: isPublicView ? 'Public profile navigation' : 'Cultivator Cave navigation',
+    closeLabel: isPublicView ? 'Close public profile navigation' : 'Close Cave navigation',
     sections: [{ id: 'cave', items: navigationItems }],
-  }), [navigationItems]);
+  }), [isPublicView, navigationItems]);
   const [environmentId, setEnvironmentId] = useState(DEFAULT_CAVE_ENVIRONMENT_ID);
   const [ambientMotes, setAmbientMotes] = useState(true);
   const [spiritLinkGateMounted, setSpiritLinkGateMounted] = useState(
     !currentUser && !localOnlyMode,
   );
 
+  // A local visibility configuration, held beside the other transient Cave
+  // presentation state. Persisting it is a production schema decision.
+  const [publicVisibility, setPublicVisibility] = useState<PublicProfileVisibility>(
+    DEFAULT_PUBLIC_PROFILE_VISIBILITY,
+  );
+  // The viewed cultivator is the signed-in one previewing their own public
+  // view, so the record is built from this profile and these stories. A host
+  // showing someone else's profile passes that cultivator's record instead.
+  const publicProfile = useMemo(
+    () => (profile ? buildPublicProfile(developmentPublicRecord(profile, stories), publicVisibility) : undefined),
+    [profile, stories, publicVisibility],
+  );
+  // Boost is a local endorsement only: no Qi, reward, ranking, or economy.
+  // Count and pressed state are one value so the updater stays pure — nesting
+  // a second setState inside an updater double-counts under StrictMode.
+  const [boostState, setBoostState] = useState({ count: 0, boosted: false });
+  const boost = useMemo(() => ({
+    ...boostState,
+    toggle: () => setBoostState(previous => ({
+      boosted: !previous.boosted,
+      count: Math.max(0, previous.count + (previous.boosted ? -1 : 1)),
+    })),
+  }), [boostState]);
+
   const environment = getCaveEnvironment(environmentId);
   const isSignedOut = !currentUser && !localOnlyMode;
   const isPrivileged = profile?.role === 'owner' || profile?.role === 'admin';
+
+  // The way in and the way out, through the header's existing action slots.
+  const canPreviewPublicView = Boolean(profile) && !isSignedOut && !spiritLinkGateMounted;
+  const headerActions = useMemo(() => {
+    if (isPublicView) {
+      return [{ id: 'exit-public-view', label: 'Exit', icon: CAVE_EXIT_ICON,
+        title: 'Leave the public view and return to your Cave', onAction: exitPublicView }];
+    }
+    return canPreviewPublicView
+      ? [{ id: 'preview-public-view', label: 'View Public Profile', icon: Eye,
+          title: 'See your Cave the way other cultivators see it', onAction: openPublicView }]
+      : [];
+  }, [isPublicView, canPreviewPublicView, exitPublicView, openPublicView]);
 
   // The Akashic Switchboard is a destination here; the controller still owns
   // when its registries are fetched, keyed off this flag exactly as in production.
@@ -172,11 +259,12 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     return () => window.clearTimeout(timer);
   }, [isSignedOut, spiritLinkGateMounted]);
 
-  const openDestination = useCallback((destination: Exclude<CaveDestinationId, 'unavailable'>) => {
+  const openDestination = useCallback((destination: Exclude<CaveDestinationId, 'unavailable' | 'public-stories' | 'public-relics'>) => {
     navigate(destination === 'dao-pillar' || destination === 'status-effects'
       ? `/home/${destination}` : destination === 'switchboard' ? '/settings/switchboard' : `/${destination}`);
   }, [navigate]);
   const returnHome = useCallback(() => navigate('/home'), [navigate]);
+  const returnPublicHome = useCallback(() => navigate(publicCavePath('home')), [navigate]);
 
   const [effectsNow, setEffectsNow] = useState(Date.now);
   useEffect(() => {
@@ -194,8 +282,36 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     isEffectActive(effect, effectsNow),
   );
 
+  const viewedName = profile?.displayName?.trim() || 'This cultivator';
+
+  const renderPublicView = () => {
+    switch (view) {
+      case 'stories':
+        return (
+          <UserProfileCaveDestination id="public-stories" title="Stories" subtitle={`Published by ${viewedName}`} icon={<BookOpen size={18} />} onBack={returnPublicHome} backLabel="Return to public Home">
+            <UserProfilePublicPanel kind="stories" displayName={viewedName} titles={publicProfile?.storyTitles ?? null} />
+          </UserProfileCaveDestination>
+        );
+      case 'relics':
+        return (
+          <UserProfileCaveDestination id="public-relics" title="Relics" subtitle={`Published by ${viewedName}`} icon={<Gem size={18} />} onBack={returnPublicHome} backLabel="Return to public Home">
+            <UserProfilePublicPanel kind="relics" displayName={viewedName} titles={publicProfile?.relicTitles ?? null} />
+          </UserProfileCaveDestination>
+        );
+      case 'home':
+        return <UserProfileHome controller={controller} mode="public" publicProfile={publicProfile} boost={boost} />;
+      default:
+        return (
+          <UserProfileCaveDestination id="unavailable" title="Page unavailable" backLabel="Return to public Home" onBack={returnPublicHome}>
+            <p className="text-neutral-400">This page is not part of the public view.</p>
+          </UserProfileCaveDestination>
+        );
+    }
+  };
+
   const renderView = () => {
     if (isSignedOut) return null;
+    if (isPublicView) return renderPublicView();
     switch (view) {
       case 'settings':
         return (
@@ -211,6 +327,9 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
               onAmbientMotesChange={setAmbientMotes}
               onOpenPortrait={() => setShowPortraitModal(true)}
               onOpenSwitchboard={() => openDestination('switchboard')}
+              publicVisibility={publicVisibility}
+              onPublicVisibilityChange={setPublicVisibility}
+              onPreviewPublicView={openPublicView}
             />
           </UserProfileCaveDestination>
         );
@@ -285,7 +404,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
 
   return (
     <WorkspaceNavigation definition={navigationDefinition}>
-    <div className="cave-workspace relative min-h-[100dvh] overflow-clip bg-[#03060c] text-neutral-200" data-cave-environment={environment.id}>
+    <div className="cave-workspace relative min-h-[100dvh] overflow-clip bg-[#03060c] text-neutral-200" data-cave-environment={environment.id} data-cave-audience={route.audience}>
       {/* Backdrop: stock Immortal Land art, cooled into the cave palette */}
       <div aria-hidden="true" className="absolute inset-0">
         <img
@@ -310,6 +429,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         <WorkspaceHeader title="Cultivator Cave"
           emblem={{ src: CAVE_EMBLEM_SRC, alt: 'Library sacred tree' }}
           home={{ href: '/', label: 'Return to Library', onNavigate: onNavigateHome }}
+          status={isPublicView ? { label: 'Public View', tone: 'neutral' } : undefined}
+          secondaryActions={headerActions}
         />
         <div className="cave-rule mt-3 sm:mt-4" aria-hidden="true" />
 
@@ -321,10 +442,10 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
 
         <div className="cave-workspace-body mt-5 sm:mt-6">
           {!isSignedOut && !spiritLinkGateMounted && <WorkspaceSidebar />}
-          <main ref={mainRef} className="min-w-0" data-cave-page={route.destination ?? 'unavailable'}>{renderView()}</main>
+          <main ref={mainRef} className="min-w-0" data-cave-page={route.destination ?? 'unavailable'} data-cave-audience={route.audience}>{renderView()}</main>
         </div>
         {!isSignedOut && !spiritLinkGateMounted && <div className="cave-workspace-dock">
-          <WorkspaceBottomControls label="Cultivator Cave navigation" items={navigationItems} />
+          <WorkspaceBottomControls label={navigationDefinition.label} items={navigationItems} />
         </div>}
       </div>
 

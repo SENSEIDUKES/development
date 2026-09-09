@@ -8,7 +8,7 @@
   `src/hooks/useUserProfile.ts`
 - **Workshop preview:** `?preview=user-profile`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-08
+- **Last Workshop update:** 2026-09-09
 - **Last source comparison:** 2026-09-08
 - **Replica status:** under refinement
 
@@ -31,6 +31,11 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
   accepts a host-owned provider dispatcher, uses account-wide Spirit Link copy, and preserves its
   loading, email, reduced-motion, constrained-network, and post-link dissolve behavior. No real
   authentication runs in the Workshop.
+- **2026-09-09:** Gave Home a **public view**. One composition now renders in a private or public
+  mode; the public mode replaces cultivation progress with the bio, Qi Reserves with Stats, Active
+  Effects with Highlights, and the Daily Dao Pillar with Boost, and swaps Settings for Exit in the
+  navigation. Added the twelve visible-character display-name cap, a local public-visibility
+  configuration, and minimum-safe public Stories and Relics pages.
 - **2026-09-08:** Replaced the Celestial Aura tier list with the canonical **rank colour system** in
   `rankVisuals.ts`: the ten-rank ladder (Reader → Master) with its Qi thresholds, and each rank's
   solid colour or multi-stop gradient as first-class data. The display name, the rank orb, the
@@ -60,11 +65,14 @@ shared/       — the services port, domain types, and the unforked offering-wee
 | `UserProfileSettingsPanel.tsx` | The **Settings** page content |
 | `UserProfileAdminPanel.tsx` | The Akashic Switchboard, unchanged from production, opened as a destination |
 | `UserProfilePortraitModal.tsx` | The Divine Mirror content with the shared accessible dialog frame |
+| `UserProfilePublicPanel.tsx` | **Public Stories / Relics** — the published titles of the viewed cultivator, or the fact that they are private |
+| `publicProfile.ts` | The public view's domain: the visibility configuration, the stat/highlight shapes, and the record → presentation build |
+| `displayName.ts` | The twelve visible-character display-name rule (grapheme counting and clamping) |
 | `caveEnvironment.ts` | The five stock cave environments, the destination tile art, the emblem, the motto, and the stage helper |
 | `rankVisuals.ts` | **The canonical rank colour system** — the ten ranks, their Qi thresholds, and each rank's colour identity as data, with the renderers every surface consumes |
 | `qi.ts` | Rank progression maths and the Celestial Aura style helpers, derived from `rankVisuals.ts` |
 | `chapterWritingStyle.ts` | Unchanged presentation values from production |
-| `userProfile.css` | The two rank-agnostic aura text classes plus the Cave ornament (title presence, rules, plaques, portrait ring) |
+| `userProfile.css` | The two rank-agnostic aura text classes plus the Cave ornament (title presence, rules, plaques, portrait ring) and the identity rank row, bio, and Boost styles |
 
 `shared/` retains the domain types, offering-week helper, and service port. The port now includes
 optional special-Qi unlocks and the explicit daily-claim status used by both Cave Home and the
@@ -78,7 +86,8 @@ The Cave home shows, top to bottom on a phone and side by side from the `md` bre
   Settings gear;
 - the central cultivator portrait inside a gold ring, wearing the aura glow and the rank-gated
   mote layer from production, flanked by two decorative calligraphy plaques;
-- the compact identity plaque — display name with its subscription badge, current rank, the
+- the compact identity plaque — the centered display name on its own line, then a rank row
+  carrying the current rank with the subscription badge in a dedicated slot beside it, the
   rank-coloured cultivation bar, current Qi versus the next threshold, and "Cultivation to [next
   rank]";
 - two equal-width Home controls for **Qi Reserves** and **Active Effects**, followed by the full-width
@@ -254,6 +263,15 @@ submission, the daily refinement and pillar repair, the status-effect cards and 
 Settings sections, identity editing, the language confirmation, the owner's Switchboard, the stage
 helper, and a check that the locked reference still renders the original page.
 
+The public view has its own block: entering it from the header, the preserved identity against the
+four swapped areas, the Public View indicator, the name centred with the badge outside the heading,
+Exit replacing Settings and returning to the previous location, a directly linked public view
+exiting Home, Boost and its withdrawal leaving cultivation untouched, the Stats and Highlights
+panels, public Stories and Relics scoped without private surfaces, the three refused public child
+routes, and every area under a fully closed visibility configuration. The display-name cap has its
+own block: grapheme counting, clamping without splitting a character, clamping as the field is
+typed, the untouched username, and the blocked save for a name stored before the cap.
+
 The rank colour system has its own block: the ten thresholds, `rankBackground` over both a solid and
 a weighted multi-stop gradient, the earned-rank fallback, `resolveRankVisual` over rank tokens /
 legacy aura values / a custom hex, the solid-versus-gradient text treatments, the simplified
@@ -308,7 +326,9 @@ Once the Cave is approved, copy back from `development/`:
 - `UserProfile.tsx`, `UserProfileAdminPanel.tsx`, `UserProfileInventoryPanel.tsx`,
   `UserProfilePortraitModal.tsx`, `UserProfileSettingsPanel.tsx`, `UserProfileStoriesPanel.tsx`,
   `UserProfileCaveDestination.tsx`, `UserProfileDaoPillarPanel.tsx`,
-  `UserProfileStatusEffectsPanel.tsx`, `caveEnvironment.ts` → `src/components/` in Light-Novels.
+  `UserProfileStatusEffectsPanel.tsx`, `UserProfileHome.tsx`, `UserProfilePublicPanel.tsx`,
+  `caveNavigation.tsx`, `caveEnvironment.ts`, `publicProfile.ts`, `displayName.ts`
+  → `src/components/` in Light-Novels.
 - Transfer `StoryAuthGate.tsx` and `public/story-seed/library-auth-backdrop.jpg` with the Cave, or
   consume the gate from the SEN package once that package version is installed in Light-Novels.
 - `rankVisuals.ts` → a new `src/lib/rankVisuals.ts`, plus the changes to `qi.ts` → the matching
@@ -487,3 +507,111 @@ existing `verifyCaveWorkspace.browser.mjs` remains the navigation regression che
 
 Self-review also verified overlapping profile edits: delayed profile/portrait saves
 merge their edits into the latest local snapshot so a completed claim is retained.
+
+
+## Public Home view — 2026-09-09
+
+Home is now one composition with two modes rather than two pages.
+`development/UserProfileHome.tsx` takes a `mode` of `private` or `public`; the portrait, the
+identity plaque, the centered display name, the subscription badge and the rank are the same in
+both, and only the information areas below them change:
+
+| Area | Private | Public |
+| --- | --- | --- |
+| Under the rank | Cultivation progress and Qi | The cultivator's bio |
+| Left card | Qi Reserves | Stats |
+| Right card | Active Effects | Highlights |
+| Action | Daily Dao Pillar claim | Boost |
+| Fourth navigation item | Settings | Exit |
+
+The subscription badge moved out of the display-name heading into its own column on a new rank
+row, so the name holds the centre line on its own and no tier length can shift it. Below 380px the
+badge drops to a row of its own rather than compressing a long rank name.
+
+### Routing, the way in, and the way out
+
+`caveNavigation.tsx` resolves a `public` prefix into a `CaveAudience` alongside the existing
+destination and child separation. The public view exposes no child routes: every private child
+reads private state, so it resolves to Page unavailable and returns to public Home.
+
+| Page | Direct preview URL |
+| --- | --- |
+| Public Home | `?preview=user-profile&cave=/public/home` |
+| Public Stories | `?preview=user-profile&cave=/public/stories` |
+| Public Relics | `?preview=user-profile&cave=/public/relics` |
+
+**View Public Profile** is a `secondaryActions` entry on the existing `WorkspaceHeader`, so below
+the header's compact breakpoint it collapses into the shared overflow menu exactly as other
+workspace actions do. Settings carries a second, always-visible **Preview Public View** button
+beside the visibility controls. In the public view the header shows a subtle `Public View` status
+indicator and an Exit action, and the navigation's fourth item is Exit in both the dock and the
+desktop sidebar. Exit is an action, never a selected tab: it returns to the Cave path the public
+view was opened from, or to private Home when the public view was linked directly.
+
+### What is real, and what is local
+
+`publicProfile.ts` owns the public domain. `buildPublicProfile(record, visibility)` turns a
+cultivator's record into the presentation every public surface reads; a withheld area resolves to
+`null` so the surface can say it is private rather than render an ambiguous empty block. Public
+surfaces read only that presentation — never the signed-in controller — so no private panel is
+reachable behind a public URL.
+
+Story titles are scoped to the **viewed** cultivator — `story.userId === profile.uid`, with the
+same unowned allowance `UserProfileStoriesPanel` makes — so a public page can never attribute
+another account's stories to this profile. That is enforced in `developmentPublicRecord`, not at
+the surface, and a test on the owner preview (whose account owns none of the mock stories) fails if
+the filter is removed.
+
+`developmentPublicRecord` is the development stand-in for a host-supplied public-profile record and
+is the one function a host replaces. Started, Stories read and Reading streak come from real
+profile fields (`joinedDate`, `savedStoryCount`, `daoPillarStreak`). Reading time has no field in
+the current domain model, so it is derived from lifetime cultivation at a fixed development rate;
+a host with real session telemetry replaces the function, not the constant. The bio and the four
+highlights (a Codex image, audio, a short clip, and a favorite moment) are likewise derived locally
+from the cultivator's own relics and stories.
+
+Visibility is local session state held beside the cave environment and ambient motes, configured
+through five switches in a new Settings **Public Profile** section covering bio, stats, highlights,
+stories, and relic titles. It is not persisted; persisting it is a production schema decision.
+
+Boost is a local endorsement with immediate visual feedback — pressed state, count, a gold sigil,
+and a status line — and nothing else. It touches no Qi, reward, ranking, or economy, and its count
+resets with the session.
+
+Public Stories and Relics are deliberately minimal. `UserProfilePublicPanel.tsx` renders the
+viewed cultivator's published titles, or the fact that they are private, with a standing note that
+the pages are not designed yet. Reading, seeds, inspection, attunement, the Offering Hall and
+rewards stay in the private Cave. Those two destinations were not redesigned in this change.
+
+### The display name cap
+
+`displayName.ts` caps display names at twelve **visible** characters — grapheme clusters, so an
+emoji, a combining accent, and a CJK glyph each cost one, and clamping never splits a character.
+It is enforced where the name is edited, in the Settings identity field: typing and pasting clamp,
+a counter shows `n/12`, and a name stored before the cap existed stays visible, shows an error, and
+blocks Guard Changes until it is shortened rather than being silently rewritten. The username (Dao
+Name) is a separate private identifier: it is not capped, and it appears on neither Home view.
+
+### Validation — 2026-09-09
+
+- `npm run test:user-profile`: 74 targeted component tests passed (59 before this change).
+- `npm run build`, `npm run check:package-boundaries`, `npm run check:ui-artifacts`: passed.
+- `scripts/verifyCaveHome.browser.mjs` gained a public-view block and passed against a Playwright
+  page on the developed preview: the dock swap, the indicator, Boost and its withdrawal, the name
+  centred within 1px with the badge outside the heading and no horizontal overflow at 320, 390,
+  768, 1024 and 1440px, public Stories and Relics carrying no private surface, Exit returning to
+  the previous location, and the display-name cap with the username left whole.
+- `scripts/verifyCaveWorkspace.browser.mjs` re-run unchanged: all four private destinations at all
+  five widths, Back/Forward, keyboard, overlay focus containment, and 34px bottom / 12px side
+  safe-area emulation all still pass.
+- Instrumented request log during those runs: the Workshop shell's Google Fonts stylesheet was the
+  only external request. No production API call was made.
+
+Validation used local Workshop scenarios and browser emulation, not production authentication,
+storage, or physical iOS hardware.
+
+### Known limitation
+
+The viewed cultivator in this build is the signed-in one previewing their own public view, so the
+public record is built from that profile and those stories. Viewing *another* cultivator's public
+profile needs a host-supplied record and its own authorization; this change adds neither.

@@ -66,7 +66,7 @@ export function MainLibraryPreview({ state, developmentHeader, extraFeedback, de
           <div className="mb-8 min-h-52 border border-dashed border-neutral-800 rounded-xl p-6 text-neutral-400 text-sm font-sans">
             Workshop content slot · Featured Ascension and library content are outside this header capture.
             <p className="mt-3" role="status">{destination ? `Workshop destination: ${destination}` : 'Local account and story fixtures. Shell actions stay in this preview.'}</p>
-            {(currentScreen === 'reader' || currentScreen === 'codex') && <button className="mt-4 underline" onClick={() => setCurrentScreen('home')}>Return to header capture</button>}
+            {(currentScreen === 'reader' || currentScreen === 'codex') && <button className="mt-4 underline" onClick={() => developmentNavigation ? navigate({ screen: 'home', collection: 'featured' }) : setCurrentScreen('home')}>Return to header capture</button>}
           </div>
           {extraFeedback && <p role="status" className="mb-4 text-sm text-portal">{extraFeedback}</p>}
           <LibraryCollectionStrip activeTab={activeTab} chooseTab={tab => developmentNavigation ? navigate({ screen: 'home', collection: tab as LibraryLocation['collection'] }) : chooseTab(tab)} syncStatus={adapter.syncStatus} libraryStories={state === 'guest' ? [] : adapter.stories} />

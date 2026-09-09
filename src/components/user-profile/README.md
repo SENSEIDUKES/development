@@ -422,11 +422,13 @@ controls, and directly claimable Pillar; Stories and Relics reuse their existing
 settings sections in the page. Current text, placeholders, economy, and media content are not
 approved or finalized by this change.
 
-`caveNavigation.tsx` owns the Cave labels, icons, route resolution, and browser history adapter.
-It supplies the existing `WorkspaceNavigation`, `WorkspaceSidebar`, and `WorkspaceBottomControls`.
-The reusable shell contains no Cave destinations or domain rules. `WorkspaceHeader` has no
-redundant Settings action. Below 1024px the dock is fixed with content clearance and safe-area
-insets; tablet widths constrain the dock to 40rem. At 1024px the sidebar replaces the dock.
+`caveNavigation.tsx` retains Cave route resolution and its browser history adapter.
+`UserProfile` supplies the Cave destinations as a Section definition to the Library Shell.
+`LibraryNavigation` owns the global strip, active global destination, safe-area spacing and
+Section menu; `LibrarySectionSidebar` reads that same definition in the existing 14rem rail
+from 1024px. The global strip remains available at every width, with shell-owned clearance.
+Settings remains the existing button beneath Daily Dao Pillar. See the current
+[navigation contract](../../../docs/library-navigation.md).
 
 Routes coexist with the existing preview query and preserve unrelated URL parameters, hash,
 and host history state:

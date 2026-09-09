@@ -131,14 +131,24 @@ export async function verifyLibraryNavigation({ tab, viewport, baseUrl, widths =
   if (await tab.url() !== seedUrl) await tab.goto(seedUrl);
   // Story Seed intentionally keeps its in-flow navigation after the editor.
   await tab.playwright.getByRole('navigation', { name: 'Story Seed navigation', exact: true }).waitFor({ state: 'attached' });
-  assert.equal(await tab.playwright.evaluate(() => document.querySelector('.library-global-navigation')), null);
+  assert.equal(await tab.playwright.evaluate(() => Boolean(document.querySelector('.library-global-navigation'))), false);
   await waitFor(() => tab.playwright.evaluate(() => [...document.querySelectorAll('nav[aria-label="Story Seed navigation"] button')].map(button => button.textContent).join(',') === 'Sections,Story Bank,Help,Settings,Manifest'), 'Filled Story Seed keeps its original controls and Manifest eligibility');
   await button('Sections').press('Enter');
   await tab.playwright.getByRole('button', { name: 'Close sections', exact: true }).waitFor({ state: 'visible' });
   await tab.playwright.getByRole('button', { name: 'Close sections', exact: true }).press('Escape');
-  await tab.goto(`${baseUrl}/library-shell.html?variant=development&source=main-library&state=reader`);
-  await tab.playwright.getByRole('button', { name: 'Return to header capture', exact: true }).waitFor({ state: 'visible' });
-  assert.equal(await tab.playwright.evaluate(() => document.querySelector('.library-global-navigation')), null);
-  report.push({ storySeed: 'original controls preserved', immersiveRoute: 'global strip excluded' });
+  for (const screen of ['reader', 'codex']) {
+    await tab.goto(`${baseUrl}/library-shell.html?variant=development&source=main-library&state=reader&screen=${screen}`);
+    await button('Return to header capture').waitFor({ state: 'visible' });
+    assert.equal(await tab.playwright.evaluate(() => Boolean(document.querySelector('.library-global-navigation'))), false);
+    await button('Return to header capture').click();
+    await button('Section').waitFor({ state: 'visible' });
+    const location = new URL(await tab.url());
+    assert.equal(location.searchParams.get('screen'), 'home');
+    assert.equal(location.searchParams.get('collection'), 'featured');
+    await tab.reload();
+    await button('Section').waitFor({ state: 'visible' });
+    assert.equal((await geometry()).selected, 'Home');
+  }
+  report.push({ storySeed: 'original controls preserved', immersiveRoute: 'global strip excluded; return URL and reload passed' });
   return report;
 }

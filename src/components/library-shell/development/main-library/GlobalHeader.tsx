@@ -18,7 +18,7 @@ export function GlobalHeader() {
     { id: 'sects', label: 'Sects', description: 'Earn rewards & shape worlds together', icon: Users, onAction: () => adapter.setCurrentScreen('sects') },
     { id: 'pricing', label: 'Tiers', description: 'Replenish your creative Qi', icon: Gem, onAction: () => adapter.setCurrentScreen('pricing') },
     { id: 'profile', label: 'Celestial Profile', description: 'Manage spirit link settings', icon: Cloud,
-      title: adapter.currentUser ? `Spirit Linked: ${adapter.currentUser.email}` : 'Open Celestial Tools',
+      title: adapter.currentUser?.email ? `Spirit Linked: ${adapter.currentUser.email}` : 'Open Celestial Tools',
       onAction: () => adapter.setCurrentScreen('profile') },
     ...(activeStory ? [
       { id: 'detail', label: 'Tome Chambers', description: `Explore ${activeStory.mcName}'s world logs`, icon: ScrollText, onAction: () => adapter.setCurrentScreen('detail') },

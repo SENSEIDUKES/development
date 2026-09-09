@@ -96,13 +96,14 @@ it('retains Home commands, active story destinations and host effects in Search'
   const setCurrentScreen = vi.fn(); const setIsCodexSheetOpen = vi.fn();
   await render(<MainLibraryHeader adapter={{
     currentScreen: 'detail', setCurrentScreen, activeStoryId: 'story', setActiveStoryId: vi.fn(),
-    syncStatus: 'idle', lastSavedTime: null, currentUser: null, userProfile: null,
+    syncStatus: 'idle', lastSavedTime: null, currentUser: { email: '' }, userProfile: null,
     stories: [{ id: 'story', mcName: 'Ye Chen', genre: 'Xianxia' }],
     setIsSettingsOpen: vi.fn(), setIsCodexSheetOpen, setIsShortcutsOpen: vi.fn(), copyText: vi.fn(),
     requestDao: vi.fn(),
   }} />);
   expect(container.querySelector('.workspace-header-context')).toBeNull();
   await click(button('Search'));
+  expect(button('Celestial Profile').title).toBe('Open Celestial Tools');
   expect(button('Tome Chambers').textContent).toContain("Explore Ye Chen's world logs");
   expect(button('Chamber Reader')).not.toBeNull();
   expect(button('Shortcut Spells')).not.toBeNull();

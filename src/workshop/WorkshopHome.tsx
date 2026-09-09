@@ -1,20 +1,18 @@
-import { useState } from 'react';
+import { useRef, useState, type KeyboardEvent } from 'react';
 import {
   getWorkshopTrack,
   getWorkshopVersionLabel,
   workshopEntries,
+  type WorkshopSection,
 } from './manifest';
 import { LibraryComponentsGrid } from './LibraryComponents';
 
-/**
- * Development and Library Components switch the home content in place.
- * Harness opens its existing standalone generation workspace directly.
- */
-type HomeTab = 'development' | 'library';
-
-const HOME_TABS: ReadonlyArray<{ id: HomeTab; label: string }> = [
-  { id: 'development', label: 'Development' },
-  { id: 'library', label: 'Library Components' },
+const HOME_TABS: ReadonlyArray<{ id: WorkshopSection; label: string; description: string }> = [
+  { id: 'home', label: 'Home', description: 'The Library app shell.' },
+  { id: 'library', label: 'Library', description: 'Story creation in the Library.' },
+  { id: 'sen', label: 'SEN', description: 'Reading, Codex, and chapter generation systems.' },
+  { id: 'shared', label: 'Shared', description: 'Reusable pieces and standalone visual previews.' },
+  { id: 'library-components', label: 'Library Components', description: 'Library surfaces and reusable Celestial Library primitives, rendered live.' },
 ];
 
 function CelestialVisual() {
@@ -133,9 +131,22 @@ function EdgeOrbit({ side }: { side: 'left' | 'right' }) {
 }
 
 export function WorkshopHome() {
-  const [activeTab, setActiveTab] = useState<HomeTab>('development');
-  const isDevelopment = activeTab === 'development';
-  const visibleEntries = workshopEntries;
+  const [activeTab, setActiveTab] = useState<WorkshopSection>('home');
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+    let nextIndex: number;
+    switch (event.key) {
+      case 'ArrowRight': nextIndex = (index + 1) % HOME_TABS.length; break;
+      case 'ArrowLeft': nextIndex = (index - 1 + HOME_TABS.length) % HOME_TABS.length; break;
+      case 'Home': nextIndex = 0; break;
+      case 'End': nextIndex = HOME_TABS.length - 1; break;
+      default: return;
+    }
+    event.preventDefault();
+    setActiveTab(HOME_TABS[nextIndex].id);
+    tabRefs.current[nextIndex]?.focus();
+  }
 
   return (
     <main className="workshop-home">
@@ -145,68 +156,70 @@ export function WorkshopHome() {
       <div className="workshop-shell">
         <div className="workshop-topbar">
           <span className="workshop-brand">SEIHOUSE</span>
-          <nav className="workshop-nav" aria-label="Workshop tracks" role="tablist">
-            {HOME_TABS.map((tab) => (
+          <div className="workshop-nav" aria-label="Workshop sections" role="tablist">
+            {HOME_TABS.map((tab, index) => (
               <button
                 key={tab.id}
                 type="button"
                 role="tab"
+                id={`workshop-tab-${tab.id}`}
+                ref={(element) => { tabRefs.current[index] = element; }}
                 aria-selected={activeTab === tab.id}
-                aria-controls="workshop-component-grid"
+                aria-controls={`workshop-panel-${tab.id}`}
+                tabIndex={activeTab === tab.id ? 0 : -1}
                 className={`workshop-nav-tab ${activeTab === tab.id ? 'workshop-nav-tab-active' : ''}`}
                 onClick={() => setActiveTab(tab.id)}
+                onKeyDown={(event) => handleTabKeyDown(event, index)}
               >
                 {tab.label}
               </button>
             ))}
-            <a
-              href="?preview=harness-generation"
-              role="tab"
-              aria-selected="false"
-              aria-label="Open Harness Generation workspace"
-              className="workshop-nav-tab"
-              style={{ textDecoration: 'none' }}
-            >
-              Harness
-            </a>
-          </nav>
-          <span className="workshop-topbar-spacer" aria-hidden="true" />
+          </div>
         </div>
 
-        <header className="workshop-header">
-          <h1 className="workshop-title">{isDevelopment ? 'Development' : 'Library Components'}</h1>
-          <p className="workshop-kicker">Component Workshop</p>
-          <p className="workshop-subtitle">
-            {isDevelopment
-              ? 'Explore and refine the building blocks of our interface.'
-              : 'The reusable Celestial Library primitives, rendered live. See what already exists before building something new — and import it instead of rebuilding it.'}
-          </p>
-        </header>
-
-        {isDevelopment ? (
-          <section id="workshop-component-grid" className="workshop-grid" aria-label="Development components">
-            {visibleEntries.map((entry) => (
-              <a className="workshop-card" href={`?preview=${entry.id}`} key={entry.id}>
-                <div className="workshop-card-visual">
-                  <CardVisual id={entry.id} />
+        {HOME_TABS.map((tab) => (
+          <section
+            key={tab.id}
+            id={`workshop-panel-${tab.id}`}
+            role="tabpanel"
+            aria-labelledby={`workshop-tab-${tab.id}`}
+            hidden={activeTab !== tab.id}
+            tabIndex={0}
+          >
+            {activeTab === tab.id && (
+              <>
+                <header className="workshop-header">
+                  <h1 className="workshop-title">{tab.label}</h1>
+                  <p className="workshop-kicker">Component Workshop</p>
+                  <p className="workshop-subtitle">
+                    {tab.description}
+                  </p>
+                </header>
+                <div className="workshop-grid">
+                  {workshopEntries.filter((entry) => entry.section === tab.id).map((entry) => (
+                    <a className="workshop-card" href={`?preview=${entry.id}`} key={entry.id}>
+                      <div className="workshop-card-visual">
+                        <CardVisual id={entry.id} />
+                      </div>
+                      <div className="workshop-card-body">
+                        <h2>{entry.title}</h2>
+                        <p>{entry.description}</p>
+                        <div className="workshop-card-meta">
+                          <span className={`workshop-status workshop-status-${getWorkshopTrack(entry.version)}`}>
+                            <span className="workshop-status-dot" aria-hidden="true" />
+                            {getWorkshopVersionLabel(entry.version)}
+                          </span>
+                          <span className="workshop-card-arrow" aria-hidden="true">→</span>
+                        </div>
+                      </div>
+                    </a>
+                  ))}
                 </div>
-                <div className="workshop-card-body">
-                  <h2>{entry.title}</h2>
-                  <p>{entry.description}</p>
-                  <div className="workshop-card-meta">
-                    <span className={`workshop-status workshop-status-${getWorkshopTrack(entry.version)}`}>
-                      <span className="workshop-status-dot" aria-hidden="true" />
-                      {getWorkshopVersionLabel(entry.version)}
-                    </span>
-                    <span className="workshop-card-arrow" aria-hidden="true">→</span>
-                  </div>
-                </div>
-              </a>
-            ))}
+                {tab.id === 'library-components' && <LibraryComponentsGrid />}
+              </>
+            )}
           </section>
-        ) : (
-          <LibraryComponentsGrid />
-        )}
+        ))}
 
         <footer className="workshop-footer">
           <span>Build thoughtful interfaces.</span>

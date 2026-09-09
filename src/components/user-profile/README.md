@@ -20,7 +20,7 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 - **2026-09-08:** Created the faithful Workshop replica of the complete Celestial Tools profile
   page and all five of its panels, the injected services port, the local mock adapter, and the
-  six-scenario state simulator. `reference/` and `development/` were byte-identical.
+  ten-scenario state simulator. `reference/` and `development/` were byte-identical.
 - **2026-09-08:** Redesigned `development/` into the **Cultivator Cave**: a portrait, compact
   identity and rank plaque over a stock Immortal Land backdrop; four destinations (Stories, Relics,
   Dao Pillar, Active Status Effects); and one gear-triggered Settings panel. Built on canonical
@@ -139,7 +139,7 @@ renderer takes one path:
 | Surface | Renderer |
 | --- | --- |
 | Display name, in the Cave and in the Settings preview | `getAuraTextStyle` — a flat `color` for a solid rank, an inline `backgroundImage` clipped through `.aura-gradient-text` for the rest |
-| Rank orb beside `rank · stage`, Settings rank swatches, the custom-spectrum sphere | `getAuraSwatchStyle` |
+| Settings rank swatches and the custom-spectrum sphere | `getAuraSwatchStyle` |
 | Portrait ring glow | `getAuraGlowStyle` |
 | Portrait motes | `rank.motes` and `rank.visual.stops`, rather than a hardcoded list of colour values |
 
@@ -232,7 +232,7 @@ is never transferred.
 | --- | --- |
 | Spirit Unlinked | No account, cloud mode on — lands directly on the cinematic OAuth page. Linking reveals the Cave. |
 | New cultivator | A freshly linked Reader: no portrait, no relics, no streak, no effects — every empty state. |
-| Developed cultivator | A Leader with a portrait, three Qi cores, an attuned relic, two status effects, a 12-day Dao Pillar, relics awaiting offering, stories and seeds. |
+| Developed cultivator | A Leader with a portrait, unlocked reserves, an attuned relic, two status effects, a 12-day Dao Pillar, relics awaiting offering, stories and seeds. |
 | Loading | The profile snapshot never resolves; the identity plaque shows its loading state. |
 | Error | Every asynchronous service rejects — page error band, admin failure, seed failure, portrait failure, offering failure. |
 | Owner / Admin | Owner role: the cracked pillar, and the Authorized Controls section opens the Akashic Switchboard. |

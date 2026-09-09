@@ -1,6 +1,6 @@
 # Library header family
 
-Updated 2026-09-09. Status: Development Story Seed and Cultivator Cave now run on the canonical `SEIAppHeader` and `SEIAppShell` from `@seihouse/ui`, with the Library identity supplied by `LibraryHeaderBadge mode="app-header"` from `@seihouse/library-ui`. Nothing is published or transferred to Light-Novels. UI artifacts come from `SENSEIDUKES/UI` commit `42961e48e78ee816f9c2801a37a7f66af8aa2ae2` (UI PR #60). Locked captures and their source-comparison dates are unchanged; the recorded dependency hashes for the two UI tarballs and the two presentation contract files were re-recorded for this deliberate upgrade.
+Updated 2026-09-09. Status: Development Story Seed and Cultivator Cave now run on the canonical `SEIAppHeader` and `SEIAppShell` from `@seihouse/ui`, with the Library identity supplied by `LibraryHeaderBadge mode="app-header"` from `@seihouse/library-ui`. Nothing is published or transferred to Light-Novels. UI artifacts come from `SENSEIDUKES/UI` commit `42961e48e78ee816f9c2801a37a7f66af8aa2ae2` (UI PR #60); refresh them with `npm ci`, never `npm install`, per [`vendor/README.md`](../vendor/README.md). Locked captures and their source-comparison dates are unchanged; the recorded dependency hashes for the two UI tarballs and the two presentation contract files were re-recorded for this deliberate upgrade.
 
 ## Inspect
 

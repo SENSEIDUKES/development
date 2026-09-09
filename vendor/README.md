@@ -5,7 +5,11 @@ These committed tarballs are built from the merged UI PR [#60](https://github.co
 - `@seihouse/ui@0.4.0`: universal SEIHouse primitives and experience tokens, including the `SEIAppHeader` application chrome and the `SEIAppShell` scaffold.
 - `@seihouse/library-ui@0.4.0`: the Celestial Library component system, including the compact `LibraryHeaderBadge` `mode="app-header"` presentation.
 
-`ui-artifacts.json` records source provenance and SHA-512 integrity. The root manifest pins these files, and `package-lock.json` records their integrity. Run `npm ci` followed by `npm run check:ui-artifacts` to verify the installed dependency inputs. No registry publication or repository visibility change is required.
+`ui-artifacts.json` records source provenance and SHA-512 integrity. The root manifest pins these files, and `package-lock.json` records their integrity. Run `npm ci` followed by `npm run check:ui-artifacts` to verify the installed dependency inputs.
+
+**Install with `npm ci`, never `npm install`, after refreshing these tarballs.** The file names and the `0.4.0` version stay the same across UI commits, so `npm install` over an existing `node_modules` reports "up to date" and leaves the previous build in place — which is why `vercel.json` pins the deploy install command to `npm ci`. `check:ui-artifacts` now compares every file in each tarball against the installed copy and fails with that instruction if they diverge.
+
+No registry publication or repository visibility change is required.
 
 To reproduce, check out the recorded UI commit, install with its frozen pnpm lockfile, and run these commands sequentially from UI:
 

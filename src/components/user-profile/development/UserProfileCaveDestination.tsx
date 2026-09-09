@@ -15,7 +15,9 @@ export type CaveDestinationId =
   | 'relics'
   | 'dao-pillar'
   | 'status-effects'
-  | 'switchboard';
+  | 'switchboard'
+  | 'public-stories'
+  | 'public-relics';
 
 interface UserProfileCaveDestinationProps {
   id: CaveDestinationId;

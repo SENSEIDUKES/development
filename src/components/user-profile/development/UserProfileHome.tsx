@@ -1,5 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ChevronRight, Flame, Orbit, User as UserIcon } from "lucide-react";
+import {
+  ChevronRight,
+  Flame,
+  Image as ImageIcon,
+  Orbit,
+  Sigma,
+  Sparkles,
+  User as UserIcon,
+} from "lucide-react";
 import { LibraryButton, LibraryPanel } from "@seihouse/library-ui";
 import {
   SEIDialog,
@@ -10,6 +18,7 @@ import {
 } from "@seihouse/ui";
 import type { UserProfileController } from "../shared/userProfileServices";
 import type { ActiveStatusEffect, PremiumTier } from "../shared/types";
+import type { PublicProfilePresentation } from "./publicProfile";
 import {
   getDaoRankData,
   getRankForQi,
@@ -61,10 +70,51 @@ export function effectStatement(effect: ActiveStatusEffect, now: number) {
   return `${description} · ${amount} ${unit}${amount === 1 ? "" : "s"}`;
 }
 
+const HIGHLIGHT_MEDIUM_LABELS = {
+  "codex-image": "Codex image",
+  audio: "Audio",
+  clip: "Clip",
+  moment: "Moment",
+} as const;
+
+/** The local endorsement Public Home offers. No Qi, reward, or ranking is attached. */
+export interface HomeBoostState {
+  count: number;
+  boosted: boolean;
+  toggle: () => void;
+}
+
+export type UserProfileHomeMode = "private" | "public";
+
+type HomePanel = "qi" | "effects" | "stats" | "highlights";
+
+/**
+ * The Cave home composition, in one of two modes.
+ *
+ * Both modes render the same portrait, the same centered display name, the
+ * same subscription badge in its own slot beside the rank, and the same rank.
+ * Only the three information areas below them differ:
+ *
+ * | Area        | Private                | Public     |
+ * | ----------- | ---------------------- | ---------- |
+ * | Under rank  | Cultivation progress   | Bio        |
+ * | Left card   | Qi Reserves            | Stats      |
+ * | Right card  | Active Effects         | Highlights |
+ * | Action      | Daily Dao Pillar claim | Boost      |
+ *
+ * Public mode reads nothing but `publicProfile`, which is built for the viewed
+ * cultivator; it never reaches into the signed-in controller's private state.
+ */
 export function UserProfileHome({
   controller,
+  mode = "private",
+  publicProfile,
+  boost,
 }: {
   controller: UserProfileController;
+  mode?: UserProfileHomeMode;
+  publicProfile?: PublicProfilePresentation;
+  boost?: HomeBoostState;
 }) {
   const {
     profile,
@@ -75,14 +125,17 @@ export function UserProfileHome({
     dailyClaim,
     handleRepairPillar,
   } = controller;
-  const [panel, setPanel] = useState<"qi" | "effects" | null>(null);
+  const isPublic = mode === "public";
+  const [panel, setPanel] = useState<HomePanel | null>(null);
   const [now, setNow] = useState(Date.now);
   const [repairing, setRepairing] = useState(false);
   const [repairError, setRepairError] = useState("");
   const repairLock = useRef(false);
   const reservesRef = useRef<HTMLButtonElement>(null);
-  const lastPanel = useRef<"qi" | "effects">("qi");
+  const lastPanel = useRef<HomePanel>("qi");
   const effectsRef = useRef<HTMLButtonElement>(null);
+  const statsRef = useRef<HTMLButtonElement>(null);
+  const highlightsRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     const refresh = () => setNow(Date.now());
     const timer = window.setInterval(refresh, 1000);
@@ -166,8 +219,36 @@ export function UserProfileHome({
       setRepairing(false);
     }
   };
+
+  const stats = publicProfile?.stats ?? null;
+  const highlights = publicProfile?.highlights ?? null;
+  const bio = publicProfile?.bio ?? null;
+  const panelTitles: Record<HomePanel, string> = {
+    qi: "Qi Reserves",
+    effects: "Active Effects",
+    stats: "Stats",
+    highlights: "Highlights",
+  };
+  const openPanel = (next: HomePanel) => {
+    lastPanel.current = next;
+    setPanel(next);
+  };
+  const panelOpener = () => {
+    const openers: Record<HomePanel, HTMLButtonElement | null> = {
+      qi: reservesRef.current,
+      effects: effectsRef.current,
+      stats: statsRef.current,
+      highlights: highlightsRef.current,
+    };
+    return openers[lastPanel.current] ?? reservesRef.current;
+  };
+
   return (
-    <div className="cave-home mx-auto w-full max-w-xl" data-cave-home>
+    <div
+      className="cave-home mx-auto w-full max-w-xl"
+      data-cave-home
+      data-cave-home-mode={mode}
+    >
       <section aria-labelledby="cave-cultivator-name" className="relative">
         <div className="relative z-10 mx-auto mt-2 flex items-center justify-center">
           <span
@@ -277,73 +358,84 @@ export function UserProfileHome({
             <SEILoadingState size="sm" title="Loading profile" />
           ) : (
             <>
+              {/* The name owns the centre line by itself; the subscription badge
+                  sits in its own slot on the rank row below, so a long or short
+                  tier can never shift the name off centre. */}
               <h2
                 id="cave-cultivator-name"
                 tabIndex={-1}
-                className="flex items-center justify-center gap-2 font-display text-2xl leading-tight outline-none sm:text-3xl"
+                className="font-display text-2xl leading-tight outline-none sm:text-3xl"
+                data-cave-name
               >
                 <span
-                  className={`min-w-0 [overflow-wrap:anywhere] ${nameStyle.className || "text-neutral-100"}`}
+                  className={`inline-block min-w-0 max-w-full [overflow-wrap:anywhere] ${nameStyle.className || "text-neutral-100"}`}
                   style={nameStyle.style}
                 >
                   {profile?.displayName?.trim() || "Cultivator"}
                 </span>
-                {profile && (
-                  <span
-                    className="cave-tier-badge"
-                    aria-label={`Subscription tier: ${tiers[profile.premiumTier ?? "mortal"]}`}
-                  >
-                    {tiers[profile.premiumTier ?? "mortal"]}
-                  </span>
-                )}
               </h2>
               {profile && (
                 <>
-                  <p
-                    className="mt-2 font-serif text-base text-neutral-200"
-                    data-cave-rank
-                  >
-                    {daoData.rank}
-                  </p>
-                  <div
-                    className="cave-home-progress mt-3"
-                    role="progressbar"
-                    aria-label={
-                      daoData.nextRank
-                        ? `Cultivation toward ${daoData.nextRank}`
-                        : "Maximum rank"
-                    }
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={Math.round(daoData.progress)}
-                    aria-valuetext={`${formatQi(daoData.currentQi)} Qi${daoData.maxQi ? ` of ${formatQi(daoData.maxQi)}` : ", maximum rank"}`}
-                    style={
-                      {
-                        "--cave-rank-background": rankBackground(rank.visual),
-                        "--cave-progress": `${daoData.progress}%`,
-                      } as React.CSSProperties
-                    }
-                    data-cave-progress
-                  >
+                  <div className="cave-home-rank-row mt-2" data-cave-rank-row>
+                    <p className="font-serif text-base text-neutral-200" data-cave-rank>
+                      {daoData.rank}
+                    </p>
                     <span
-                      aria-hidden="true"
-                      className="cave-home-progress-indicator"
-                    />
+                      className="cave-tier-badge"
+                      aria-label={`Subscription tier: ${tiers[profile.premiumTier ?? "mortal"]}`}
+                    >
+                      {tiers[profile.premiumTier ?? "mortal"]}
+                    </span>
                   </div>
-                  <p
-                    className="mt-1.5 font-mono text-base text-neutral-300"
-                    data-cave-qi
-                  >
-                    {formatQi(daoData.currentQi)}
-                    {daoData.maxQi !== null
-                      ? ` / ${formatQi(daoData.maxQi)} Qi`
-                      : " Qi"}
-                  </p>
-                  <p className="mt-0.5 font-sc text-[10px] uppercase tracking-widest text-neutral-400">
-                    {daoData.nextRank
-                      ? `Cultivation to ${daoData.nextRank}`
-                      : "Maximum rank"}
-                  </p>
+                  {isPublic ? (
+                    <p className="cave-home-bio mt-3" data-cave-bio>
+                      {bio === null
+                        ? "This cultivator keeps their bio private."
+                        : bio.trim() || "This cultivator has not written a bio yet."}
+                    </p>
+                  ) : (
+                    <>
+                      <div
+                        className="cave-home-progress mt-3"
+                        role="progressbar"
+                        aria-label={
+                          daoData.nextRank
+                            ? `Cultivation toward ${daoData.nextRank}`
+                            : "Maximum rank"
+                        }
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={Math.round(daoData.progress)}
+                        aria-valuetext={`${formatQi(daoData.currentQi)} Qi${daoData.maxQi ? ` of ${formatQi(daoData.maxQi)}` : ", maximum rank"}`}
+                        style={
+                          {
+                            "--cave-rank-background": rankBackground(rank.visual),
+                            "--cave-progress": `${daoData.progress}%`,
+                          } as React.CSSProperties
+                        }
+                        data-cave-progress
+                      >
+                        <span
+                          aria-hidden="true"
+                          className="cave-home-progress-indicator"
+                        />
+                      </div>
+                      <p
+                        className="mt-1.5 font-mono text-base text-neutral-300"
+                        data-cave-qi
+                      >
+                        {formatQi(daoData.currentQi)}
+                        {daoData.maxQi !== null
+                          ? ` / ${formatQi(daoData.maxQi)} Qi`
+                          : " Qi"}
+                      </p>
+                      <p className="mt-0.5 font-sc text-[10px] uppercase tracking-widest text-neutral-400">
+                        {daoData.nextRank
+                          ? `Cultivation to ${daoData.nextRank}`
+                          : "Maximum rank"}
+                      </p>
+                    </>
+                  )}
                 </>
               )}
             </>
@@ -351,104 +443,195 @@ export function UserProfileHome({
         </LibraryPanel>
       </section>
       <div className="mt-3 grid grid-cols-2 gap-3">
-        <button
-          ref={reservesRef}
-          type="button"
-          className="cave-home-control"
-          aria-haspopup="dialog"
-          onClick={() => {
-            lastPanel.current = "qi";
-            setPanel("qi");
-          }}
-          data-cave-card="qi-reserves"
-        >
-          <Orbit aria-hidden="true" className="cave-home-glyph" />
-          <span className="min-w-0 flex-1">
-            <span className="block font-display">Qi Reserves</span>
-            <span className="block text-xs text-neutral-400">
-              Unlocked Qi types
-            </span>
-          </span>
-          <ChevronRight size={16} aria-hidden="true" className="shrink-0" />
-        </button>
-        {effects.length > 0 && (
-          <button
-            ref={effectsRef}
-            type="button"
-            className="cave-home-control"
-            aria-haspopup="dialog"
-            onClick={() => {
-              lastPanel.current = "effects";
-              setPanel("effects");
-            }}
-            data-cave-card="status-effects"
-          >
-            <Flame
-              aria-hidden="true"
-              className="cave-home-glyph text-violet-300"
-            />
-            <span className="min-w-0 flex-1">
-              <span className="block font-display">
-                Active Effects · {effects.length}
+        {isPublic ? (
+          <>
+            <button
+              ref={statsRef}
+              type="button"
+              className="cave-home-control"
+              aria-haspopup={stats ? "dialog" : undefined}
+              disabled={!stats}
+              onClick={() => openPanel("stats")}
+              data-cave-card="stats"
+            >
+              <Sigma aria-hidden="true" className="cave-home-glyph" />
+              <span className="min-w-0 flex-1">
+                <span className="block font-display">Stats</span>
+                <span className="block truncate text-xs text-neutral-400">
+                  {stats
+                    ? stats.length
+                      ? `${stats[0].label} ${stats[0].value}`
+                      : "No stats yet"
+                    : "Kept private"}
+                </span>
               </span>
-              <span className="block truncate text-xs text-neutral-400">
-                {effectStatement(effects[0], now)}
+              <ChevronRight size={16} aria-hidden="true" className="shrink-0" />
+            </button>
+            <button
+              ref={highlightsRef}
+              type="button"
+              className="cave-home-control"
+              aria-haspopup={highlights?.length ? "dialog" : undefined}
+              disabled={!highlights?.length}
+              onClick={() => openPanel("highlights")}
+              data-cave-card="highlights"
+            >
+              <ImageIcon
+                aria-hidden="true"
+                className="cave-home-glyph text-violet-300"
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block font-display">
+                  {highlights?.length
+                    ? `Highlights · ${highlights.length}`
+                    : "Highlights"}
+                </span>
+                <span className="block truncate text-xs text-neutral-400">
+                  {highlights === null
+                    ? "Kept private"
+                    : highlights.length
+                      ? highlights[0].title
+                      : "Nothing featured yet"}
+                </span>
               </span>
-            </span>
-            <ChevronRight size={16} aria-hidden="true" className="shrink-0" />
-          </button>
+              <ChevronRight size={16} aria-hidden="true" className="shrink-0" />
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              ref={reservesRef}
+              type="button"
+              className="cave-home-control"
+              aria-haspopup="dialog"
+              onClick={() => openPanel("qi")}
+              data-cave-card="qi-reserves"
+            >
+              <Orbit aria-hidden="true" className="cave-home-glyph" />
+              <span className="min-w-0 flex-1">
+                <span className="block font-display">Qi Reserves</span>
+                <span className="block text-xs text-neutral-400">
+                  Unlocked Qi types
+                </span>
+              </span>
+              <ChevronRight size={16} aria-hidden="true" className="shrink-0" />
+            </button>
+            {effects.length > 0 && (
+              <button
+                ref={effectsRef}
+                type="button"
+                className="cave-home-control"
+                aria-haspopup="dialog"
+                onClick={() => openPanel("effects")}
+                data-cave-card="status-effects"
+              >
+                <Flame
+                  aria-hidden="true"
+                  className="cave-home-glyph text-violet-300"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display">
+                    Active Effects · {effects.length}
+                  </span>
+                  <span className="block truncate text-xs text-neutral-400">
+                    {effectStatement(effects[0], now)}
+                  </span>
+                </span>
+                <ChevronRight size={16} aria-hidden="true" className="shrink-0" />
+              </button>
+            )}
+          </>
         )}
       </div>
       <div className="mt-3">
-        <button
-          type="button"
-          className="cave-home-pillar"
-          disabled={blocked}
-          aria-busy={dailyClaim?.pending}
-          onClick={() => {
-            void dailyClaim?.claim();
-          }}
-          data-cave-card="dao-pillar"
-        >
-          <span className="cave-home-pillar-art" aria-hidden="true">
-            道
-          </span>
-          <span className="min-w-0">
-            <span className="block font-display text-lg">Daily Dao Pillar</span>
-            <span className="mt-1 block font-serif text-lg text-sky-300">
-              {currentStreak} Day Streak
-            </span>
-            <span className="mt-1 block text-sm">{claimLabel}</span>
-          </span>
-        </button>
-        {isCracked && (
-          <LibraryButton
-            className="mt-2"
-            disabled={repairing || dailyClaim?.pending || unresolved}
-            onClick={() => {
-              void repair();
-            }}
-          >
-            {repairing ? "Repairing…" : "Repair Pillar · 50 Qi"}
-          </LibraryButton>
+        {isPublic ? (
+          <>
+            <button
+              type="button"
+              className={`cave-home-pillar cave-home-boost${boost?.boosted ? " is-boosted" : ""}`}
+              aria-pressed={Boolean(boost?.boosted)}
+              disabled={!boost}
+              onClick={() => boost?.toggle()}
+              data-cave-card="boost"
+            >
+              <span className="cave-home-pillar-art" aria-hidden="true">
+                <Sparkles size={30} />
+              </span>
+              <span className="min-w-0">
+                <span className="block font-display text-lg">Boost</span>
+                <span className="mt-1 block font-serif text-lg text-sky-300">
+                  {formatQi(boost?.count ?? 0)}{" "}
+                  {boost?.count === 1 ? "Boost" : "Boosts"}
+                </span>
+                <span className="mt-1 block text-sm">
+                  {boost?.boosted
+                    ? "Boost sent · press again to withdraw"
+                    : "Send this cultivator a boost"}
+                </span>
+              </span>
+            </button>
+            <p
+              role="status"
+              aria-live="polite"
+              className="mt-1 text-sm text-neutral-300"
+              data-cave-boost-status
+            >
+              {boost?.boosted ? "Your boost is showing." : ""}
+            </p>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="cave-home-pillar"
+              disabled={blocked}
+              aria-busy={dailyClaim?.pending}
+              onClick={() => {
+                void dailyClaim?.claim();
+              }}
+              data-cave-card="dao-pillar"
+            >
+              <span className="cave-home-pillar-art" aria-hidden="true">
+                道
+              </span>
+              <span className="min-w-0">
+                <span className="block font-display text-lg">Daily Dao Pillar</span>
+                <span className="mt-1 block font-serif text-lg text-sky-300">
+                  {currentStreak} Day Streak
+                </span>
+                <span className="mt-1 block text-sm">{claimLabel}</span>
+              </span>
+            </button>
+            {isCracked && (
+              <LibraryButton
+                className="mt-2"
+                disabled={repairing || dailyClaim?.pending || unresolved}
+                onClick={() => {
+                  void repair();
+                }}
+              >
+                {repairing ? "Repairing…" : "Repair Pillar · 50 Qi"}
+              </LibraryButton>
+            )}
+            {unresolved && (
+              <LibraryButton
+                className="mt-2"
+                onClick={() => {
+                  void dailyClaim?.reconcile();
+                }}
+              >
+                Check collection status
+              </LibraryButton>
+            )}
+            <p
+              role="status"
+              aria-live="polite"
+              className="mt-1 text-sm text-neutral-300"
+            >
+              {repairError || dailyClaim?.result?.message}
+            </p>
+          </>
         )}
-        {unresolved && (
-          <LibraryButton
-            className="mt-2"
-            onClick={() => {
-              void dailyClaim?.reconcile();
-            }}
-          >
-            Check collection status
-          </LibraryButton>
-        )}
-        <p
-          role="status"
-          aria-live="polite"
-          className="mt-1 text-sm text-neutral-300"
-        >
-          {repairError || dailyClaim?.result?.message}
-        </p>
       </div>
       <SEIDialog
         open={panel !== null}
@@ -460,19 +643,19 @@ export function UserProfileHome({
           variant="dark"
           className="z-[310] max-h-[80dvh] overflow-y-auto sm:max-w-md"
           backdropClassName="z-[300]"
-          finalFocus={() =>
-            effectsRef.current && lastPanel.current === "effects"
-              ? effectsRef.current
-              : reservesRef.current
-          }
+          finalFocus={panelOpener}
         >
           <SEIDialogTitle>
-            {panel === "effects" ? "Active Effects" : "Qi Reserves"}
+            {panel ? panelTitles[panel] : panelTitles.qi}
           </SEIDialogTitle>
           <SEIDialogDescription className="sr-only">
             {panel === "effects"
               ? "Current effects and remaining duration"
-              : "Unlocked special Qi balances"}
+              : panel === "stats"
+                ? "Public reading activity for this cultivator"
+                : panel === "highlights"
+                  ? "Media and moments this cultivator features"
+                  : "Unlocked special Qi balances"}
           </SEIDialogDescription>
           {panel === "effects" ? (
             effects.length ? (
@@ -488,6 +671,55 @@ export function UserProfileHome({
               </ul>
             ) : (
               <p className="mt-4">No active effects.</p>
+            )
+          ) : panel === "stats" ? (
+            stats?.length ? (
+              <dl className="mt-4 space-y-3">
+                {stats.map((stat) => (
+                  <div key={stat.id} className="flex justify-between gap-4">
+                    <dt>{stat.label}</dt>
+                    <dd className="font-mono">{stat.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <p className="mt-4">No public stats.</p>
+            )
+          ) : panel === "highlights" ? (
+            highlights?.length ? (
+              <ul className="mt-4 space-y-3">
+                {highlights.map((highlight) => (
+                  <li
+                    key={highlight.id}
+                    className="flex items-center gap-3 border-b border-white/10 pb-3 text-sm"
+                    data-cave-highlight={highlight.medium}
+                  >
+                    {highlight.previewSrc ? (
+                      <img
+                        src={highlight.previewSrc}
+                        alt=""
+                        className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <span
+                        aria-hidden="true"
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/40 font-sc text-[9px] uppercase tracking-wider text-neutral-400"
+                      >
+                        {HIGHLIGHT_MEDIUM_LABELS[highlight.medium].slice(0, 5)}
+                      </span>
+                    )}
+                    <span className="min-w-0">
+                      <span className="block">{highlight.title}</span>
+                      <span className="block text-xs text-neutral-400">
+                        {highlight.detail}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-4">Nothing featured yet.</p>
             )
           ) : reserves.length ? (
             <dl className="mt-4 space-y-3">

@@ -7,6 +7,7 @@ import {
   Cloud,
   CloudOff,
   Download,
+  Eye,
   Globe,
   Keyboard,
   LogOut,
@@ -39,6 +40,15 @@ import {
   resolveRankVisual,
 } from './qi';
 import { CAVE_ENVIRONMENTS } from './caveEnvironment';
+import {
+  DISPLAY_NAME_MAX_VISIBLE,
+  clampDisplayName,
+  countVisibleCharacters,
+} from './displayName';
+import {
+  PUBLIC_PROFILE_VISIBILITY_FIELDS,
+  type PublicProfileVisibility,
+} from './publicProfile';
 
 /** The persisted language option values, exactly as production stores them. */
 const LANGUAGE_OPTIONS = [
@@ -68,6 +78,9 @@ interface UserProfileSettingsPanelProps {
   onAmbientMotesChange: (on: boolean) => void;
   onOpenPortrait: () => void;
   onOpenSwitchboard: () => void;
+  publicVisibility: PublicProfileVisibility;
+  onPublicVisibilityChange: (next: PublicProfileVisibility) => void;
+  onPreviewPublicView: () => void;
 }
 
 /**
@@ -90,6 +103,9 @@ export function UserProfileSettingsPanel({
   onAmbientMotesChange,
   onOpenPortrait,
   onOpenSwitchboard,
+  publicVisibility,
+  onPublicVisibilityChange,
+  onPreviewPublicView,
 }: UserProfileSettingsPanelProps) {
   // Production reads the local-only flag and its setter from `lib/firebase` and
   // calls the deep library sync on `lib/storage`. All three arrive through the
@@ -129,6 +145,13 @@ export function UserProfileSettingsPanel({
   // colour rather than to a rank on the ladder.
   const isCustomSelected = Boolean(selectedAura) && resolveRankVisual(selectedAura, currentXp).source === 'custom';
   const isIdentityDirty = IDENTITY_FIELDS.some(field => (formData[field] ?? '') !== (profile?.[field] ?? ''));
+  // The twelve-character cap applies to the display name only. Typing and
+  // pasting are clamped; a longer name already stored (written before the cap)
+  // stays visible and blocks saving until it is shortened, rather than being
+  // silently rewritten under the cultivator.
+  const displayNameValue = formData.displayName || '';
+  const displayNameCount = countVisibleCharacters(displayNameValue);
+  const displayNameOverBy = displayNameCount - DISPLAY_NAME_MAX_VISIBLE;
   const isPrivileged = profile?.role === 'owner' || profile?.role === 'admin';
 
   const saveIdentity = async () => {
@@ -209,11 +232,23 @@ export function UserProfileSettingsPanel({
                 <LibraryTextBox
                   id="cave-display-name"
                   label="Display Name"
-                  value={formData.displayName || ''}
-                  onChange={value => setFormData(previous => ({ ...previous, displayName: value }))}
+                  value={displayNameValue}
+                  onChange={value => setFormData(previous => ({ ...previous, displayName: clampDisplayName(value) }))}
                   placeholder="Your identity…"
                   size="compact"
                   disabled={!profile}
+                  helpText={`Shown on your Cave home, public and private. Up to ${DISPLAY_NAME_MAX_VISIBLE} characters.`}
+                  rightElement={
+                    <span
+                      className={`font-mono text-[10px] ${displayNameOverBy > 0 ? 'text-amber-300' : 'text-neutral-500'}`}
+                      data-cave-display-name-count
+                    >
+                      {displayNameCount}/{DISPLAY_NAME_MAX_VISIBLE}
+                    </span>
+                  }
+                  error={displayNameOverBy > 0
+                    ? `Display names are limited to ${DISPLAY_NAME_MAX_VISIBLE} characters. Remove ${displayNameOverBy}.`
+                    : undefined}
                 />
 
                 <div className="space-y-2">
@@ -317,7 +352,7 @@ export function UserProfileSettingsPanel({
                     variant="primary"
                     fullWidth
                     loading={isSavingIdentity}
-                    disabled={!profile || !isIdentityDirty || isSavingIdentity}
+                    disabled={!profile || !isIdentityDirty || isSavingIdentity || displayNameOverBy > 0}
                     onClick={() => void saveIdentity()}
                   >
                     Guard Changes
@@ -326,6 +361,38 @@ export function UserProfileSettingsPanel({
                     Discard
                   </LibraryButton>
                 </div>
+              </div>
+            </SEIDisclosure>
+
+            {/* ---- Public profile -------------------------------------------- */}
+            <SEIDisclosure value="public-profile" heading="Public Profile" icon={Eye} supportingText="What other cultivators see, and the way in.">
+              <div className="space-y-4 pt-1">
+                <p className="font-sans text-[11px] leading-relaxed text-neutral-400">
+                  Your public Cave shows your portrait, display name, subscription and rank. Choose what
+                  else it carries. Your username stays private and appears on neither Home view.
+                </p>
+                <div className="space-y-3" data-cave-visibility>
+                  {PUBLIC_PROFILE_VISIBILITY_FIELDS.map(field => (
+                    <div key={field.id}>
+                      <SEISwitch
+                        size="compact"
+                        isSelected={publicVisibility[field.id]}
+                        onChange={isSelected =>
+                          onPublicVisibilityChange({ ...publicVisibility, [field.id]: isSelected })}
+                      >
+                        {field.label}
+                      </SEISwitch>
+                      <p className="mt-0.5 pl-1 font-sans text-[10px] text-neutral-500">{field.description}</p>
+                    </div>
+                  ))}
+                </div>
+                <LibraryButton variant="secondary" size="sm" icon={Eye} disabled={!profile} onClick={onPreviewPublicView}>
+                  Preview Public View
+                </LibraryButton>
+                <p className="font-sans text-[10px] italic text-neutral-500">
+                  This selection is held for the current session only. Persisting it is a production
+                  decision, not a Workshop one.
+                </p>
               </div>
             </SEIDisclosure>
 

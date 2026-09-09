@@ -4,6 +4,11 @@
  * Nothing here is production data. Every record is invented, deterministic, and
  * local. Production reads the same shapes from PostgreSQL through
  * `lib/persistence`; the Workshop never opens that connection.
+ *
+ * Every scenario's `displayName` sits inside the twelve visible-character cap
+ * in `development/displayName.ts`, except `home-edge-cases`, which keeps a
+ * long name on purpose: it stands in for a name stored before the cap existed
+ * and exercises both the Home layout and the blocked save in Settings.
  */
 
 import { getCurrentOfferingWeekId } from '../../../components/user-profile/shared/offeringWeek';
@@ -239,7 +244,7 @@ export const MOCK_ARTIFACTS: CosmicArtifact[] = [
 const BASE_PROFILE: UserProfile = {
   uid: MOCK_ACCOUNT.uid,
   username: 'Workshop Cultivator',
-  displayName: 'Workshop Cultivator',
+  displayName: 'New Reader',
   avatarUrl: '',
   preferredLanguage: 'English',
   defaultTranslationLanguage: 'English',
@@ -264,7 +269,7 @@ const BASE_PROFILE: UserProfile = {
 const DEVELOPED_PROFILE: UserProfile = {
   ...BASE_PROFILE,
   username: 'Ninefold Ash',
-  displayName: 'The One Who Kept Reading',
+  displayName: 'Kept Reading',
   displayNameColor: 'rank:leader',
   avatarUrl: PREVIEW_PORTRAIT_URL,
   activePortraitId: 'portrait-workshop-1',
@@ -329,7 +334,7 @@ const OWNER_PROFILE: UserProfile = {
   ...DEVELOPED_PROFILE,
   uid: MOCK_OWNER_ACCOUNT.uid,
   username: 'Workshop Owner',
-  displayName: 'Keeper of the Switchboard',
+  displayName: 'Switchboard',
   displayNameColor: 'rank:master',
   role: 'owner',
   premiumTier: 'immortal',
@@ -360,7 +365,7 @@ export const MOCK_ADMIN_USERS: UserProfile[] = [
     ...BASE_PROFILE,
     uid: 'workshop-account-4',
     username: 'lantern_keeper',
-    displayName: 'Lantern Keeper',
+    displayName: 'Lanternwick',
     joinedDate: daysAgo(12),
     qi: 55,
     dao_xp: 55,

@@ -69,5 +69,77 @@ export async function verifyCaveHome(page) {
   check(await card('dao-pillar').isDisabled(), 'claim must disable Pillar');
   check((await page.locator('[data-cave-qi]').innerText()).includes('13,485'), 'claim must update cultivation');
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  return { widths: [320, 390, 768, 1024, 1440], geometry: 'passed', emptyReserves: 'passed', expirationFocus: 'passed', claims: 'passed', reducedMotion: 'passed' };
+
+  // ---- Public view ----------------------------------------------------
+  await choose('Developed cultivator');
+  // The dock uppercases its labels in CSS, so compare on the accessible text.
+  const dockLabels = async () =>
+    (await page.locator('.cave-workspace-dock button').allInnerTexts()).map(label => label.trim().toLowerCase()).join();
+  check(await dockLabels() === 'home,stories,relics,settings', 'private dock must end in Settings');
+  await button('Relics').first().click();
+  // Below the header's compact breakpoint the secondary actions live in the
+  // existing overflow menu; above it they sit inline.
+  const headerAction = async name => {
+    const inline = page.getByRole('button', { name, exact: true });
+    if (!(await inline.first().isVisible())) await page.getByRole('button', { name: 'More actions', exact: true }).click();
+    await page.getByRole('button', { name, exact: true }).locator('visible=true').first().click();
+  };
+  await headerAction('View Public Profile');
+  await page.locator('[data-cave-home-mode="public"]').waitFor();
+  check((await page.locator('.workspace-header-status').innerText()).includes('Public View'), 'public view must be indicated');
+  check(await dockLabels() === 'home,stories,relics,exit', 'public dock must end in Exit');
+  check(await page.locator('[data-cave-card="dao-pillar"]').count() === 0, 'private Pillar must not render publicly');
+  check(await page.locator('[data-cave-progress]').count() === 0, 'cultivation progress must not render publicly');
+  check(await page.locator('[data-cave-bio]').count() === 1, 'public Home must show the bio');
+
+  // Boost: immediate visual feedback, reversible, no cultivation change.
+  const boostControl = page.locator('[data-cave-card="boost"]');
+  await boostControl.press('Enter');
+  check(await boostControl.getAttribute('aria-pressed') === 'true', 'boost must report pressed');
+  check((await boostControl.innerText()).includes('1 Boost'), 'boost must count immediately');
+  await boostControl.press('Enter');
+  check(await boostControl.getAttribute('aria-pressed') === 'false', 'boost must withdraw');
+
+  // The name stays centred in the identity plaque at every width, with the
+  // subscription badge outside the heading.
+  for (const width of [320, 390, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const centring = await page.evaluate(() => {
+      const identity = document.querySelector('[data-cave-identity]').getBoundingClientRect();
+      const name = document.querySelector('#cave-cultivator-name span').getBoundingClientRect();
+      return {
+        offset: Math.abs((name.left + name.right) / 2 - (identity.left + identity.right) / 2),
+        badgeInHeading: Boolean(document.querySelector('#cave-cultivator-name .cave-tier-badge')),
+        badgeNearRank: Boolean(document.querySelector('[data-cave-rank-row] .cave-tier-badge')),
+        overflow: document.documentElement.scrollWidth > innerWidth + 1,
+      };
+    });
+    check(centring.offset <= 1 && !centring.badgeInHeading && centring.badgeNearRank && !centring.overflow,
+      `public name centring at ${width}: ${JSON.stringify(centring)}`);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  // Public Stories and Relics stay scoped and carry no private surface.
+  await button('Stories').first().click();
+  await page.locator('[data-cave-public-panel="stories"]').waitFor();
+  check(!(await page.locator('main').innerText()).includes('Story Seeds'), 'public Stories must not expose seeds');
+  await button('Relics').first().click();
+  await page.locator('[data-cave-public-panel="relics"]').waitFor();
+  check(!(await page.locator('main').innerText()).includes('Offering Hall'), 'public Relics must not expose the Offering Hall');
+
+  // Exit returns to the page the public view was opened from.
+  await button('Exit').first().click();
+  await page.locator('main[data-cave-audience="private"]').waitFor();
+  check(new URL(page.url()).searchParams.get('cave') === '/relics', 'Exit must return to the previous location');
+
+  // The twelve-character display-name cap, where the name is edited.
+  await button('Settings').first().click();
+  const nameField = page.locator('#cave-display-name');
+  await nameField.fill('A Name Far Beyond The Limit');
+  check(await nameField.inputValue() === 'A Name Far B', 'display name must clamp to twelve characters');
+  check((await page.locator('[data-cave-display-name-count]').innerText()) === '12/12', 'counter must report the cap');
+  await page.locator('#cave-username').fill('a_very_long_private_dao_name_kept_whole');
+  check(await page.locator('#cave-username').inputValue() === 'a_very_long_private_dao_name_kept_whole', 'username must not be capped');
+
+  return { widths: [320, 390, 768, 1024, 1440], geometry: 'passed', emptyReserves: 'passed', expirationFocus: 'passed', claims: 'passed', reducedMotion: 'passed', publicView: 'passed', boost: 'passed', displayNameLimit: 'passed' };
 }

@@ -636,6 +636,8 @@ describe('Home dynamic data and claim contract', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
     expect(text()).toContain('No active effects.');
     expect(container.querySelector('[data-cave-card="status-effects"]')).toBeNull();
+    await navigateTo('/home/status-effects');
+    expect(text()).toContain('No status effects are active');
     await navigateTo('/stories');
     expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
@@ -688,6 +690,12 @@ describe('Home dynamic data and claim contract', () => {
     expect(result.controller().isCracked).toBe(heavenly_qi < 50);
     expect(result.controller().profile?.heavenly_qi).toBe(heavenly_qi < 50 ? heavenly_qi : heavenly_qi - 50);
     expect(window.location.search).not.toContain('cave=');
+  });
+  it('announces a repair failure and leaves the Pillar cracked', async () => {
+    const result = await renderCave({ state: 'owner-admin', adapter: { repairMode: 'failed' } });
+    await click(byText('button', 'Repair Pillar · 50 Qi'));
+    expect(text()).toContain('Repair failed. Please try again.');
+    expect(result.controller().isCracked).toBe(true);
   });
 });
 

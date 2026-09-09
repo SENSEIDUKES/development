@@ -15,6 +15,7 @@ import type {
   StorySeed,
   UserProfile,
 } from '../../../components/user-profile/shared/types';
+import type { SpecialQiId } from '../../../components/user-profile/shared/userProfileServices';
 import type { UserProfilePreviewState } from './previewStates';
 
 const CURRENT_WEEK = getCurrentOfferingWeekId();
@@ -411,7 +412,7 @@ export const MOCK_ADMIN_STORIES: AdminStoryRow[] = [
 ];
 
 export interface PreviewScenario {
-  unlockedSpecialQi?: readonly ('sect' | 'demonic')[];
+  unlockedSpecialQi?: readonly SpecialQiId[];
   currentUser: AppUser | null;
   profile: UserProfile | null;
   stories: Story[];

@@ -21,9 +21,9 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 - **2026-09-08:** Created the faithful Workshop replica of the complete Celestial Tools profile
   page and all five of its panels, the injected services port, the local mock adapter, and the
   six-scenario state simulator. `reference/` and `development/` were byte-identical.
-- **2026-09-08:** Redesigned `development/` into the **Cultivator Cave**: a portrait, identity,
-  rank and Qi plaque over a stock Immortal Land backdrop; four destinations (Stories, Relics, Dao
-  Pillar, Active Status Effects); and one gear-triggered Settings panel. Built on canonical
+- **2026-09-08:** Redesigned `development/` into the **Cultivator Cave**: a portrait, compact
+  identity and rank plaque over a stock Immortal Land backdrop; four destinations (Stories, Relics,
+  Dao Pillar, Active Status Effects); and one gear-triggered Settings panel. Built on canonical
   `@seihouse/library-ui` and `@seihouse/ui` components and the `@seihouse/library/relics` relic
   card. `reference/` is unchanged. Added the component test suite and `npm run test:user-profile`.
 - **2026-09-08:** Recovered the existing cinematic OAuth gate from Story Seed and connected it to
@@ -66,7 +66,9 @@ shared/       — the services port, domain types, and the unforked offering-wee
 | `chapterWritingStyle.ts` | Unchanged presentation values from production |
 | `userProfile.css` | The two rank-agnostic aura text classes plus the Cave ornament (title presence, rules, plaques, portrait ring) |
 
-`shared/` is unchanged: `types.ts`, `userProfileServices.ts` (the port), and `offeringWeek.ts`.
+`shared/` retains the domain types, offering-week helper, and service port. The port now includes
+optional special-Qi unlocks and the explicit daily-claim status used by both Cave Home and the
+existing Dao Pillar destination.
 
 ## The Cultivator Cave
 
@@ -76,10 +78,12 @@ The Cave home shows, top to bottom on a phone and side by side from the `md` bre
   Settings gear;
 - the central cultivator portrait inside a gold ring, wearing the aura glow and the rank-gated
   mote layer from production, flanked by two decorative calligraphy plaques;
-- the identity plaque — display name in its Celestial Aura style, the attuned-relic mark, Dao name,
-  `rank · stage`, the Heavenly Qi bar toward the next rank, the three Qi cores (tap a chip to read
-  its description), and the cave motto;
-- four destination cards: **Stories**, **Relics**, **Dao Pillar**, **Active Status Effects**.
+- the compact identity plaque — display name with its subscription badge, current rank, the
+  rank-coloured cultivation bar, current Qi versus the next threshold, and "Cultivation to [next
+  rank]";
+- two equal-width Home controls for **Qi Reserves** and **Active Effects**, followed by the full-width
+  directly claimable **Daily Dao Pillar**;
+- four permanent destinations: **Stories**, **Relics**, **Dao Pillar**, and **Active Status Effects**.
 
 Every destination opens in place, over the same backdrop, with a "Return to cave" control and
 focus moved to its heading. The Akashic Switchboard is a fifth destination reachable only from
@@ -184,11 +188,14 @@ judge fine contrast against production.
 
 ## The services port
 
-Unchanged. `shared/userProfileServices.ts` is the entire production boundary. `UserProfileController`
-mirrors the return value of `useUserProfile` name for name, and the Cave consumes it without adding
-a member, so transferring back is still a provider swap. Two controller members the Cave no longer
-reads — `isQiMenuOpen` / `setIsQiMenuOpen` (the cores are always visible; `activeQiTooltip` still
-drives the descriptions) and `currentPowerStage` — remain in the contract for production.
+`shared/userProfileServices.ts` remains the entire production boundary. `UserProfileController`
+mirrors the return value of `useUserProfile` name for name and adds two optional, additive members:
+`unlockedSpecialQi` distinguishes an explicitly unlocked zero reserve from a locked one, and
+`dailyClaim` exposes pending state, explicit outcomes, and reconciliation for the shared claim
+operation. Hosts must provide reliable duplicate protection and claim outcomes; the current
+production void callback swallows persistence failures and cannot provide that guarantee by itself.
+Two controller members the Cave no longer reads — `isQiMenuOpen` / `setIsQiMenuOpen` and
+`currentPowerStage` — remain in the contract for production compatibility.
 
 Nothing in `reference/`, `development/`, or `shared/` imports Firebase, PostgreSQL, R2, an API
 route, a secret, or an environment variable.
@@ -229,13 +236,19 @@ is never transferred.
 | Loading | The profile snapshot never resolves; the identity plaque shows its loading state. |
 | Error | Every asynchronous service rejects — page error band, admin failure, seed failure, portrait failure, offering failure. |
 | Owner / Admin | Owner role: the cracked pillar, and the Authorized Controls section opens the Akashic Switchboard. |
+| Claim failure | The Daily Dao Pillar reports a definitive failure, awards no Qi, and remains retryable. |
+| Claim unresolved | The Pillar stays blocked until its claim status is reconciled. |
+| Collected today | The Pillar starts in the confirmed collected state and cannot be activated again. |
+| Home edge cases | Long display name, maximum rank, unlocked zero reserves, and an effect expiring after fifteen seconds. |
 
 Switching state remounts the pane, so each scenario starts from its own snapshot.
 
 ## Tests
 
 `npm run test:user-profile` runs `development/UserProfile.test.tsx` (jsdom) against the Workshop
-mock adapter: the home plaque and cards, the Qi core chips, the unlinked OAuth / loading / error states,
+mock adapter: the compact Home identity and controls, dynamic rank and subscription data, locked
+and unlocked reserves, active-effect expiration, claim outcomes and duplicate guards, the unlinked
+OAuth / loading / error states,
 each destination and its return path, relic inspection with attunement and a full Offering Hall
 submission, the daily refinement and pillar repair, the status-effect cards and empty state, the
 Settings sections, identity editing, the language confirmation, the owner's Switchboard, the stage
@@ -366,8 +379,8 @@ Connected WorkspaceHeader to Cultivator Cave emblem/home and its existing consol
 
 ## Four-destination Cave workspace — 2026-09-08
 
-Navigation and page structure only. Home retains the portrait, identity, Qi, and existing
-shortcut cards; Stories and Relics reuse their existing panels; Settings presents the existing
+Navigation and page structure only. Home uses the compact portrait, identity, reserve/effect
+controls, and directly claimable Pillar; Stories and Relics reuse their existing panels; Settings presents the existing
 settings sections in the page. Current text, placeholders, economy, and media content are not
 approved or finalized by this change.
 
@@ -434,8 +447,8 @@ settings, and existing child URLs are preserved. The locked reference is unchang
 
 `development/UserProfileHome.tsx` owns Home presentation. Transfer it with the
 existing feature stylesheet and services port. Rank progress and its numeric label
-both read `dao_xp ?? qi ?? 0`, using the existing development rank ladder and shared
-progress primitive. Spendable Heavenly Qi remains compatible in the domain model;
+both read `dao_xp ?? qi ?? 0`, using the existing development rank ladder and Home's
+semantic rank-bar hooks. Spendable Heavenly Qi remains compatible in the domain model;
 it is not a special reserve or a substitute for lifetime cultivation.
 
 The services port adds optional `unlockedSpecialQi` (`sect` / `demonic`) and

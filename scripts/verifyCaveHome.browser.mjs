@@ -56,6 +56,7 @@ export async function verifyCaveHome(page) {
       await button('Check collection status').waitFor();
       check(await card('dao-pillar').isDisabled(), 'uncertain claim must block repeat collection');
       await button('Check collection status').click();
+      await button('Check collection status').waitFor({ state: 'hidden' });
       check(await card('dao-pillar').isEnabled(), 'reconciled unclaimed state must allow retry');
     } else {
       check(await card('dao-pillar').isDisabled(), 'already collected must stay disabled');

@@ -1,4 +1,4 @@
-import { UserProfileHome } from './UserProfileHome';
+import { UserProfileHome, isEffectActive } from './UserProfileHome';
 import { WorkspaceHeader } from '../../library-shell/development/WorkspaceHeader';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -178,7 +178,21 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   }, [navigate]);
   const returnHome = useCallback(() => navigate('/home'), [navigate]);
 
-  const activeEffects = profile?.activeStatusEffects ?? [];
+  const [effectsNow, setEffectsNow] = useState(Date.now);
+  useEffect(() => {
+    const refreshEffects = () => setEffectsNow(Date.now());
+    window.addEventListener('focus', refreshEffects);
+    document.addEventListener('visibilitychange', refreshEffects);
+    const timer = window.setInterval(refreshEffects, 1000);
+    return () => {
+      window.removeEventListener('focus', refreshEffects);
+      document.removeEventListener('visibilitychange', refreshEffects);
+      window.clearInterval(timer);
+    };
+  }, []);
+  const activeEffects = (profile?.activeStatusEffects ?? []).filter((effect) =>
+    isEffectActive(effect, effectsNow),
+  );
 
   const renderView = () => {
     if (isSignedOut) return null;

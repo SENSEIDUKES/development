@@ -32,6 +32,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   DaoRankData,
   DaoClaimResult,
+  SpecialQiId,
   UserProfileController,
   UserProfileControllerProps,
   UserProfileServices,
@@ -78,8 +79,9 @@ export type ExcludedActionLogger = (action: string) => void;
 export interface MockUserProfileServicesOptions {
   state: UserProfilePreviewState;
   claimMode?: 'success' | 'failed' | 'unresolved';
+  repairMode?: 'success' | 'failed';
   profileOverride?: Partial<UserProfile>;
-  unlockedSpecialQi?: readonly ('sect' | 'demonic')[];
+  unlockedSpecialQi?: readonly SpecialQiId[];
   /** Records a production action the Workshop deliberately does not perform. */
   logExcludedAction: ExcludedActionLogger;
   /**
@@ -93,6 +95,7 @@ export interface MockUserProfileServicesOptions {
 export function createMockUserProfileServices({
   state,
   claimMode = state === 'claim-failed' ? 'failed' : state === 'claim-unresolved' ? 'unresolved' : 'success',
+  repairMode = 'success',
   profileOverride,
   unlockedSpecialQi,
   logExcludedAction,
@@ -522,6 +525,7 @@ export function createMockUserProfileServices({
     const handleRepairPillar = useCallback(() => {
       const profile = profileRef.current;
       if (!profile || !profile.daoPillarCracked || claimLock.current || resultRef.current?.outcome === 'unresolved') return;
+      if (repairMode === 'failed') throw new Error('Repair persistence failed');
       const repairCost = 50;
       const currentQiVal = profile.heavenly_qi !== undefined ? profile.heavenly_qi : (profile.qi || 0);
       if (currentQiVal >= repairCost) {
@@ -537,7 +541,7 @@ export function createMockUserProfileServices({
       } else {
         setError('Insufficient Heavenly Qi to repair Dao Pillar (Requires 50).');
       }
-    }, [commitProfile, currentStreak, profile]);
+    }, [commitProfile, currentStreak, profile, repairMode]);
 
     const claim = useCallback(async (): Promise<DaoClaimResult> => {
       if (claimLock.current) return { outcome: 'blocked', message: 'Collection is already pending.' };

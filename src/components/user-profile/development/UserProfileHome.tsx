@@ -7,7 +7,6 @@ import {
   SEIDialogTitle,
   SEIDialogDescription,
   SEILoadingState,
-  SEIProgressBar,
 } from "@seihouse/ui";
 import type { UserProfileController } from "../shared/userProfileServices";
 import type { ActiveStatusEffect, PremiumTier } from "../shared/types";
@@ -29,6 +28,10 @@ const tiers: Record<PremiumTier, string> = {
   immortal: "Immortal",
 };
 const formatQi = (value: number) => value.toLocaleString();
+export function isEffectActive(effect: ActiveStatusEffect, now: number) {
+  return Date.parse(effect.expiresAt) > now && Date.parse(effect.appliedAt) <= now;
+}
+
 export function effectStatement(effect: ActiveStatusEffect, now: number) {
   const modifiers = [
     [effect.effectDef.qiMultiplier, "Qi"],
@@ -75,6 +78,7 @@ export function UserProfileHome({
   const [panel, setPanel] = useState<"qi" | "effects" | null>(null);
   const [now, setNow] = useState(Date.now);
   const [repairing, setRepairing] = useState(false);
+  const [repairError, setRepairError] = useState("");
   const repairLock = useRef(false);
   const reservesRef = useRef<HTMLButtonElement>(null);
   const lastPanel = useRef<"qi" | "effects">("qi");
@@ -93,24 +97,23 @@ export function UserProfileHome({
   const auraXp = profile?.dao_xp ?? profile?.qi ?? 0;
   const daoData = getDaoRankData(auraXp);
   const rank = getRankForQi(auraXp);
+  const effects = (profile?.activeStatusEffects ?? []).filter((effect) =>
+    isEffectActive(effect, now),
+  );
   const auraSelection = getAuraSelection(profile?.displayNameColor, auraXp);
   const nameStyle = getAuraTextStyle(
     auraSelection,
-    profile?.activeStatusEffects,
+    effects,
     auraXp,
   );
   const auraGlow = getAuraGlowStyle(
     auraSelection,
-    profile?.activeStatusEffects,
+    effects,
     auraXp,
   );
   const activeRank = resolveRankVisual(auraSelection, auraXp);
   const showsRankParticles = activeRank.rank.motes;
   const moteColors = activeRank.visual.stops;
-  const effects = (profile?.activeStatusEffects ?? []).filter(
-    (effect) =>
-      Date.parse(effect.expiresAt) > now && Date.parse(effect.appliedAt) <= now,
-  );
   const reserves = (
     [
       { id: "sect", label: "Sect Qi", balance: profile?.sect_qi ?? 0 },
@@ -153,8 +156,11 @@ export function UserProfileHome({
     if (repairLock.current) return;
     repairLock.current = true;
     setRepairing(true);
+    setRepairError("");
     try {
       await handleRepairPillar();
+    } catch {
+      setRepairError("Repair failed. Please try again.");
     } finally {
       repairLock.current = false;
       setRepairing(false);
@@ -299,23 +305,31 @@ export function UserProfileHome({
                   >
                     {daoData.rank}
                   </p>
-                  <SEIProgressBar
+                  <div
                     className="cave-home-progress mt-3"
-                    size="md"
-                    value={daoData.progress}
+                    role="progressbar"
                     aria-label={
                       daoData.nextRank
                         ? `Cultivation toward ${daoData.nextRank}`
                         : "Maximum rank"
                     }
-                    valueText={`${formatQi(daoData.currentQi)} Qi${daoData.maxQi ? ` of ${formatQi(daoData.maxQi)}` : ", maximum rank"}`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.round(daoData.progress)}
+                    aria-valuetext={`${formatQi(daoData.currentQi)} Qi${daoData.maxQi ? ` of ${formatQi(daoData.maxQi)}` : ", maximum rank"}`}
                     style={
                       {
                         "--cave-rank-background": rankBackground(rank.visual),
+                        "--cave-progress": `${daoData.progress}%`,
                       } as React.CSSProperties
                     }
                     data-cave-progress
-                  />
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="cave-home-progress-indicator"
+                    />
+                  </div>
                   <p
                     className="mt-1.5 font-mono text-base text-neutral-300"
                     data-cave-qi
@@ -433,7 +447,7 @@ export function UserProfileHome({
           aria-live="polite"
           className="mt-1 text-sm text-neutral-300"
         >
-          {dailyClaim?.result?.message}
+          {repairError || dailyClaim?.result?.message}
         </p>
       </div>
       <SEIDialog

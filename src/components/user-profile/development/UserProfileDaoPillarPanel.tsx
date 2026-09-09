@@ -109,11 +109,16 @@ export function UserProfileDaoPillarPanel({
                 {dailyClaim?.pending ? 'Collecting…' : 'Refine Daily Dao'}
               </LibraryButton>
             )}
+            {dailyClaim?.result?.outcome === 'unresolved' ? (
+              <LibraryButton variant="ghost" onClick={() => { void dailyClaim.reconcile(); }}>
+                Check collection status
+              </LibraryButton>
+            ) : null}
           </div>
         </div>
       </LibraryPanel>
 
-      {dailyClaim?.result && <p role="status">{dailyClaim.result.message}</p>}
+      <p role="status" aria-live="polite">{dailyClaim?.result?.message}</p>
       {!isCracked ? (
         <LibraryPanel as="section" aria-label="Streak milestones" padding="md" className="space-y-4">
           <SEIProgressBar

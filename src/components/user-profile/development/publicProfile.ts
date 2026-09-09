@@ -99,11 +99,13 @@ export interface PublicProfilePresentation {
 
 const MONTH_YEAR = new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' });
 
+/** The month a cultivator started, as a public profile shows it. */
 function formatStartedOn(value: string | undefined): string {
   const parsed = value ? Date.parse(value) : Number.NaN;
   return Number.isNaN(parsed) ? 'Unknown' : MONTH_YEAR.format(new Date(parsed));
 }
 
+/** Reading time as hours and minutes, dropping an empty remainder. */
 function formatReadingTime(minutes: number): string {
   if (minutes < 60) return `${minutes}m`;
   const hours = Math.floor(minutes / 60);
@@ -119,6 +121,11 @@ function formatReadingTime(minutes: number): string {
  */
 const DEVELOPMENT_QI_PER_MINUTE = 12;
 
+/**
+ * The four featured entries, one per supported medium, drawn from the
+ * cultivator's own relics and stories. A host with a real highlight selection
+ * replaces this alongside `developmentPublicRecord`.
+ */
 function highlightsFor(profile: UserProfile, stories: readonly Story[]): PublicProfileHighlight[] {
   const inventory: readonly CosmicArtifact[] = profile.cosmicInventory ?? [];
   const relic = inventory.find(artifact => artifact.id === profile.equippedArtifactId) ?? inventory[0];
@@ -170,7 +177,13 @@ export function developmentPublicRecord(
 ): PublicProfileRecord {
   const lifetimeQi = profile.dao_xp ?? profile.qi ?? 0;
   const rank = getDaoRankData(lifetimeQi).rank;
-  const activeStories = stories.filter(story => !story.deleted);
+  // Scoped to the viewed cultivator, not whoever is signed in — a public page
+  // must never attribute another account's stories to this profile. The
+  // unowned allowance matches `UserProfileStoriesPanel`, where a story with no
+  // recorded owner belongs to the local library it is being rendered for.
+  const activeStories = stories.filter(
+    story => !story.deleted && (story.userId === profile.uid || !story.userId),
+  );
 
   return {
     bio: lifetimeQi > 0

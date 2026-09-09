@@ -893,6 +893,24 @@ describe('Public view of the Cave', () => {
     expect(text()).not.toContain('Attune');
   });
 
+  it('never attributes another cultivator\'s stories to the viewed profile', async () => {
+    // The owner account owns none of the mock stories; every one belongs to the
+    // developed cultivator. A public page must be scoped to the profile it
+    // renders, not to whatever story collection the host passed in.
+    await renderCave({ state: 'owner-admin' });
+    await enterPublicView();
+    await click(byText('.cave-workspace-dock button', 'Stories'));
+    expect(container.querySelector('[data-cave-public-panel="stories"]')).not.toBeNull();
+    expect(container.querySelector('[data-cave-public-title]')).toBeNull();
+    expect(container.querySelector('[data-cave-public-empty]')?.textContent).toContain('not published any stories');
+    expect(text()).not.toContain('Ashes of the Ninth Heaven');
+    expect(text()).not.toContain('Saltwind Sovereign');
+
+    // The owner's own relics, which are their profile's record, still publish.
+    await click(byText('.cave-workspace-dock button', 'Relics'));
+    expect(text()).toContain('Fragment of the First Sentence');
+  });
+
   it.each(['/public/settings', '/public/home/dao-pillar', '/public/settings/switchboard'])(
     'keeps %s out of the public view',
     async path => {
@@ -978,13 +996,23 @@ describe('Display name limit', () => {
     await renderCave({ state: 'home-edge-cases' });
     await click(byText('.cave-workspace-dock button', 'Settings'));
     expect(text()).toContain('Display names are limited to 12 characters.');
-    expect(byText<HTMLButtonElement>('button', 'Guard Changes').disabled).toBe(true);
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
-    const input = document.body.querySelector<HTMLInputElement>('#cave-display-name')!;
-    await act(async () => {
-      setter.call(input, 'Edge Reader');
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    });
+    const type = async (selector: string, value: string) => {
+      const input = document.body.querySelector<HTMLInputElement>(selector)!;
+      await act(async () => {
+        setter.call(input, value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    };
+
+    // Dirty the form without touching the display name, so a disabled save
+    // proves the cap rather than merely proving nothing was edited. Typing in
+    // the name field would clamp it and remove the very state under test.
+    await type('#cave-username', 'edge_case_dao_name');
+    expect(text()).toContain('Display names are limited to 12 characters.');
+    expect(byText<HTMLButtonElement>('button', 'Guard Changes').disabled).toBe(true);
+
+    await type('#cave-display-name', 'Edge Reader');
     expect(text()).not.toContain('Display names are limited to 12 characters.');
     expect(byText<HTMLButtonElement>('button', 'Guard Changes').disabled).toBe(false);
   });

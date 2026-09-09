@@ -30,6 +30,7 @@ export type CaveAudience = 'private' | 'public';
 /** The path prefix that switches the Cave into the public view. */
 export const CAVE_PUBLIC_PREFIX = '/public';
 
+/** The route for one public destination. */
 export const publicCavePath = (destination: CavePublicDestination = 'home') =>
   `${CAVE_PUBLIC_PREFIX}/${destination}`;
 

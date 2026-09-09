@@ -32,10 +32,12 @@ export function visibleCharacters(value: string): string[] {
     : Array.from(value);
 }
 
+/** How many characters a reader counts in this name. */
 export function countVisibleCharacters(value: string): number {
   return visibleCharacters(value).length;
 }
 
+/** Whether this name may be saved as it stands. */
 export function isDisplayNameWithinLimit(value: string): boolean {
   return countVisibleCharacters(value) <= DISPLAY_NAME_MAX_VISIBLE;
 }

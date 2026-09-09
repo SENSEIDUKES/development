@@ -556,6 +556,12 @@ cultivator's record into the presentation every public surface reads; a withheld
 surfaces read only that presentation — never the signed-in controller — so no private panel is
 reachable behind a public URL.
 
+Story titles are scoped to the **viewed** cultivator — `story.userId === profile.uid`, with the
+same unowned allowance `UserProfileStoriesPanel` makes — so a public page can never attribute
+another account's stories to this profile. That is enforced in `developmentPublicRecord`, not at
+the surface, and a test on the owner preview (whose account owns none of the mock stories) fails if
+the filter is removed.
+
 `developmentPublicRecord` is the development stand-in for a host-supplied public-profile record and
 is the one function a host replaces. Started, Stories read and Reading streak come from real
 profile fields (`joinedDate`, `savedStoryCount`, `daoPillarStreak`). Reading time has no field in

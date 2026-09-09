@@ -376,13 +376,19 @@ export function UserProfileSettingsPanel({
                     <div key={field.id}>
                       <SEISwitch
                         size="compact"
+                        aria-describedby={`cave-visibility-${field.id}-description`}
                         isSelected={publicVisibility[field.id]}
                         onChange={isSelected =>
                           onPublicVisibilityChange({ ...publicVisibility, [field.id]: isSelected })}
                       >
                         {field.label}
                       </SEISwitch>
-                      <p className="mt-0.5 pl-1 font-sans text-[10px] text-neutral-500">{field.description}</p>
+                      <p
+                        id={`cave-visibility-${field.id}-description`}
+                        className="mt-0.5 pl-1 font-sans text-[10px] text-neutral-500"
+                      >
+                        {field.description}
+                      </p>
                     </div>
                   ))}
                 </div>

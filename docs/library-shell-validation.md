@@ -53,12 +53,16 @@ Checked with Playwright/Chromium against `npm run build` output served by `vite 
 | Safe areas | With the notch simulation the header pads 44px at the top and the Cave's bottom controls pad 46px (0.75rem + 34px). A landscape simulation is also available. |
 | Reduced motion | The preview's reduced-motion simulation applies inside the frame; the shipped rules key off `prefers-reduced-motion: reduce` in `workspace-header.css` and `workspace-shell.css`. |
 | Main Library | Unchanged: its homepage header still renders its own `<h1>` and its own surface at all three viewports. |
+| Narrow header packing (added 2026-09-09 after device review) | At 320, 360, 390 and 430px the primary action's button matches its wrapper exactly (46px) and clears the overflow trigger by 8px. Previously at 320px a 31px wrapper held a 44px button, which painted outside it and 5px on top of the overflow trigger. |
+| Overflow menu surface | The panel paints on an opaque ground with a hairline border, so page headings and body text no longer read through the menu items. |
 
 Local checks re-run for this change: `npx tsc -b`, `npx vitest run` (627 passed, 1 skipped), `npm run build`, `node scripts/checkLibraryShellCapture.mjs`, `npm run check:ui-artifacts`, `npm run check:package-boundaries`.
 
 ## Limits of this evidence
 
 This is shell verification with local state. It does not validate account sign-in, Profile screens, cloud persistence, production synchronization, AI providers, full Story Bank/Help/editor/Blueprint content, audio, or live story data. These systems are intentionally absent from the capture. Mock content has a different height from full page content, so content-dependent footer position and full-page pixel parity are not asserted. Source body/viewport theme behavior, shell markup, spacing, fonts, breakpoints, and interactive controls are the comparison target.
+
+Emulated viewports are narrower-per-glyph than a physical phone with enlarged system text; the 320px case is kept as the packing check precisely because it is harsher than any supported device width.
 
 The 2026-09-09 shell verification measures geometry, mounted landmarks and interaction outcomes; it asserts no pixel baseline, and the safe-area and reduced-motion results come from the preview's own simulation rather than physical hardware or an operating-system setting.
 

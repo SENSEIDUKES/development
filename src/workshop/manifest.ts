@@ -16,11 +16,15 @@ export interface WorkshopSource {
   lastCompared: string;
 }
 
+/** Workshop navigation only; does not change package or implementation ownership. */
+export type WorkshopSection = 'home' | 'library' | 'sen' | 'shared' | 'library-components';
+
 export type WorkshopEntry = {
   id: string;
   title: string;
   description: string;
   category: WorkshopCategory;
+  section: WorkshopSection;
   /** Manually maintained Workshop release version. Never inferred from source changes. */
   version: `v${number}.${number}`;
   source: WorkshopSource;
@@ -51,6 +55,7 @@ export function getWorkshopVersionLabel(version: WorkshopEntry['version']) {
 export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'library-shell',
+    section: 'home',
     title: 'Library Shell',
     description: 'Main Library header and integrated Story Seed/Cultivator Cave Development workspaces with shared headers and responsive navigation at phone, tablet, and desktop sizes; locked shell captures remain available for comparison. Story Seed source is captured from development: CreationModal, StorySeedHeader, StorySeedSelector, StorySeedMobileNavigation, and StorySeedSettings.',
     category: 'other',
@@ -63,6 +68,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'celestial-backdrop',
+    section: 'shared',
     title: 'Celestial Particle Backdrop',
     description: 'Color-adaptive celestial particle field with a hidden scroll absorption point.',
     category: 'backgrounds',
@@ -75,6 +81,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'chapter-generation-flow',
+    section: 'sen',
     title: 'Chapter Generation',
     description: 'Development-only one- or five-chapter manifestation harness with sequential server-side Gemini calls, disposable processed-state handoffs, retry checkpoints, token usage, per-chapter Diagnostics, and a completed-batch Reader Chamber handoff.',
     category: 'other',
@@ -87,6 +94,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'harness-generation',
+    section: 'sen',
     title: 'Harness Generation',
     description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter, independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and Chapter 1 → Chapter 2 continuity without Reader or legacy generation dependencies.',
     category: 'other',
@@ -99,6 +107,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'chapter-generation-manifestation',
+    section: 'sen',
     title: 'Chapter Generation Manifestation',
     description: 'Aura Veil state simulator with two workshop areas — the full-shell Aura Veil (narrative and media manifestation modes, driven by one task-card format) and a focused standalone Manifestation Reveal preview for the agnostic sealed → unsealing → revealed mechanic and its current celestial scroll vessel.',
     category: 'animations',
@@ -111,6 +120,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'idle-cultivation',
+    section: 'shared',
     title: 'Closed-Door Cultivation',
     description: 'Idle Qi reward presentation and absorption animation.',
     category: 'rewards',
@@ -123,6 +133,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'relics-gallery',
+    section: 'shared',
     title: 'Relics Gallery',
     description: 'Cosmic Artifact cards separated by rarity rank, with the full-screen Relic Reveal celebration flow.',
     category: 'rewards',
@@ -135,6 +146,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'story-seed',
+    section: 'library',
     title: 'Story Seed',
     description: 'Two-panel creation workspace on the Creator / Story / World contract — compact Origin and ARC editing, Story Seed Settings, the Story Bank home for saved seeds and their World Blueprints (with import/export), and an editable World Blueprint dossier whose hierarchy keeps canonical Origin provenance separate from generated story direction while preserving every editable Blueprint field, now wearing the modern Library glass skin with gold-edged key fields.',
     category: 'other',
@@ -147,6 +159,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'character-voice',
+    section: 'sen',
     title: 'Character Voice',
     description: 'The Reader Codex signature-quote voice on a named Character Portrait card: a tap calls ElevenLabs through the server and plays the returned audio immediately. Nothing is stored — every tap calls ElevenLabs again.',
     category: 'codex-ui',
@@ -159,6 +172,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'reader-codex',
+    section: 'sen',
     title: 'Reader Codex',
     description: 'The complete Living Codex sheet with separate Human/Non-Human Portraits, a species Bestiary, Karma, Power Rankings, Artifacts, Fate, and Lore, wired to local Reader story state.',
     category: 'codex-ui',
@@ -171,6 +185,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'reader-chamber',
+    section: 'sen',
     title: 'Reader Chamber',
     description: 'The full reading UI with generated five-chapter sessions, chapter-scoped Reader Codex memory, and persisted action-scoped Worldcues resolved through the approved Library catalog.',
     category: 'reader-ui',
@@ -183,6 +198,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'card-workshop',
+    section: 'sen',
     title: 'Card Workshop',
     description: 'Development-only Card Type Tabs and contextual ReaderViewport preview for inspecting Codex Cards, compact or expanded System Panels, Fate results, and independent action-scoped Worldcue annotations without generating a chapter.',
     category: 'reader-ui',
@@ -195,6 +211,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'user-profile',
+    section: 'home',
     title: 'User Profile',
     description: "The cultivator's profile. The locked reference is the production Celestial Tools page; Development is the Cultivator Cave redesign — a portrait, identity, rank and Qi over a stock Immortal Land backdrop, four destinations (Stories, Relics, Dao Pillar, Active Status Effects), a cinematic Spirit Link authentication flow, and one gear-triggered Settings panel holding identity, aura, portrait, environment, language, writing, sync, backup, advanced tools, Sever Link, and the authorized Akashic Switchboard — driven entirely by local mock adapters.",
     category: 'other',

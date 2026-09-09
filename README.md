@@ -66,6 +66,16 @@ Open the local or forwarded Vite preview, usually on port `5173`.
 
 The home screen is driven by [`src/workshop/manifest.ts`](./src/workshop/manifest.ts). Each approved experiment should have its own preview and a clear entry in that manifest.
 
+As of 2026-09-09, the header groups existing previews by their Workshop role:
+
+- **Home:** Library Shell and User Profile.
+- **Library:** Story Seed only.
+- **SEN:** Reader Chamber, Reader Codex, Character Voice, Card Workshop, Chapter Generation, Harness Generation, and Chapter Generation Manifestation.
+- **Shared:** Celestial Particle Backdrop, Closed-Door Cultivation, and Relics Gallery.
+- **Library Components:** the existing live primitive inventory.
+
+Each manifest entry has one required `section`. This is navigation metadata, independent of package ownership, release version, and category. Canonical implementations and direct `?preview=<id>` URLs stay in place. The header wraps on narrow screens and supports Left/Right arrows, Home/End, and Tab into the labelled active panel.
+
 Current entries:
 
 - **Celestial Particle Backdrop** — `?preview=celestial-backdrop`

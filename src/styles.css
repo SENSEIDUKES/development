@@ -107,6 +107,8 @@ body {
 
 .workshop-topbar {
   display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
   align-items: center;
   justify-content: space-between;
   padding: 1.6rem 0 1.35rem;
@@ -119,9 +121,10 @@ body {
   color: rgba(236, 231, 221, 0.88);
 }
 .workshop-nav {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  min-width: 0;
 }
 .workshop-nav-tab {
   position: relative;
@@ -129,12 +132,18 @@ body {
   background: transparent;
   font-size: 0.82rem;
   letter-spacing: 0.06em;
-  color: rgba(236, 231, 221, 0.45);
-  padding-bottom: 1.35rem;
+  color: rgba(236, 231, 221, 0.7);
+  min-height: 44px;
+  padding: 0.65rem 0.25rem;
   cursor: pointer;
   font-family: inherit;
 }
-.workshop-nav-tab + .workshop-nav-tab { margin-left: 1.5rem; }
+.workshop-nav-tab:focus-visible,
+.workshop-home [role='tabpanel']:focus-visible {
+  outline: 2px solid #ece7dd;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
 .workshop-nav-tab-active { color: rgba(236, 231, 221, 0.85); }
 .workshop-nav-tab-active::after {
   content: '';
@@ -145,7 +154,6 @@ body {
   height: 2px;
   background: #b3402f;
 }
-.workshop-topbar-spacer { width: 6rem; }
 
 .workshop-header {
   padding: clamp(2.5rem, 7vw, 4.5rem) 0 0;
@@ -257,7 +265,7 @@ body {
 }
 .workshop-card:hover .workshop-card-arrow { transform: translateX(4px); }
 
-/* Library Components tab — the same card language as the Development grid,
+/* Library Components tab — the same card language as the feature grids,
    holding live previews of the real shared primitives instead of placeholder
    visuals. The cards are not links and the previews are interactive, so the
    hover lift is disabled to keep controls steady under the pointer. */
@@ -355,8 +363,6 @@ body {
   .workshop-grid {
     margin-top: 1.75rem;
   }
-  .workshop-nav { position: static; transform: none; }
-  .workshop-topbar-spacer { display: none; }
   .workshop-orbit { opacity: 0.5; }
   .workshop-footer {
     flex-direction: column;

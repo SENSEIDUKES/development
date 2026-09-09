@@ -8,11 +8,11 @@ import {
 import { LibraryComponentsGrid } from './LibraryComponents';
 
 const HOME_TABS: ReadonlyArray<{ id: WorkshopSection; label: string; description: string }> = [
-  { id: 'home', label: 'Home', description: 'The Library app shell.' },
+  { id: 'home', label: 'Home', description: 'The Library app shell and user profile.' },
   { id: 'library', label: 'Library', description: 'Story creation in the Library.' },
   { id: 'sen', label: 'SEN', description: 'Reading, Codex, and chapter generation systems.' },
   { id: 'shared', label: 'Shared', description: 'Reusable pieces and standalone visual previews.' },
-  { id: 'library-components', label: 'Library Components', description: 'Library surfaces and reusable Celestial Library primitives, rendered live.' },
+  { id: 'library-components', label: 'Library Components', description: 'Reusable Celestial Library primitives, rendered live.' },
 ];
 
 function CelestialVisual() {
@@ -195,7 +195,7 @@ export function WorkshopHome() {
                     {tab.description}
                   </p>
                 </header>
-                <div className="workshop-grid">
+                {workshopEntries.some((entry) => entry.section === tab.id) && <div className="workshop-grid">
                   {workshopEntries.filter((entry) => entry.section === tab.id).map((entry) => (
                     <a className="workshop-card" href={`?preview=${entry.id}`} key={entry.id}>
                       <div className="workshop-card-visual">
@@ -214,7 +214,7 @@ export function WorkshopHome() {
                       </div>
                     </a>
                   ))}
-                </div>
+                </div>}
                 {tab.id === 'library-components' && <LibraryComponentsGrid />}
               </>
             )}

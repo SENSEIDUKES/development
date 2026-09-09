@@ -36,11 +36,11 @@ function previewIds() {
 describe('WorkshopHome', () => {
   it('groups each existing preview exactly once and preserves direct links and release labels', () => {
     const groups = {
-      Home: ['library-shell'],
+      Home: ['library-shell', 'user-profile'],
       Library: ['story-seed'],
       SEN: ['chapter-generation-flow', 'harness-generation', 'chapter-generation-manifestation', 'character-voice', 'reader-codex', 'reader-chamber', 'card-workshop'],
-      Shared: ['celestial-backdrop', 'relics-gallery'],
-      'Library Components': ['idle-cultivation', 'user-profile'],
+      Shared: ['celestial-backdrop', 'idle-cultivation', 'relics-gallery'],
+      'Library Components': [],
     };
     expect(previewIds()).toEqual(groups.Home);
     const visited: Array<string | null> = [];

@@ -120,7 +120,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'idle-cultivation',
-    section: 'library-components',
+    section: 'shared',
     title: 'Closed-Door Cultivation',
     description: 'Idle Qi reward presentation and absorption animation.',
     category: 'rewards',
@@ -211,7 +211,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'user-profile',
-    section: 'library-components',
+    section: 'home',
     title: 'User Profile',
     description: "The cultivator's profile. The locked reference is the production Celestial Tools page; Development is the Cultivator Cave redesign — a portrait, identity, rank and Qi over a stock Immortal Land backdrop, four destinations (Stories, Relics, Dao Pillar, Active Status Effects), a cinematic Spirit Link authentication flow, and one gear-triggered Settings panel holding identity, aura, portrait, environment, language, writing, sync, backup, advanced tools, Sever Link, and the authorized Akashic Switchboard — driven entirely by local mock adapters.",
     category: 'other',

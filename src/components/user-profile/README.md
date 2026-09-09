@@ -18,6 +18,8 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-09:** Wired the Cave to the shared top navigation, using the optional contextual slot for Public View and existing destinations/actions for Search. Universal Help reuses Library guidance. Page content, visibility rules and bottom navigation are unchanged.
+
 - **2026-09-09:** Added private Home Inbox and Energy emblems and equal-width Store / Settings
   actions below the Daily Dao Pillar. Settings retains its existing page and controls, with only
   Redeem Code added under Account. Removed Settings from private navigation; its replacement is

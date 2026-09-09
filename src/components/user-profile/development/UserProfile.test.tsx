@@ -886,7 +886,7 @@ describe('Public view of the Cave', () => {
     expect(container.querySelector('[data-cave-rank-row] .cave-tier-badge')).not.toBeNull();
 
     await enterPublicView();
-    expect(container.querySelector('.workspace-header-status')?.textContent).toContain('Public View');
+    expect(container.querySelector('.workspace-header-context [role="status"]')?.textContent).toContain('Public View');
     expect(container.querySelector('#cave-cultivator-name .cave-tier-badge')).toBeNull();
     expect(container.querySelector('[data-cave-rank-row] .cave-tier-badge')).not.toBeNull();
   });

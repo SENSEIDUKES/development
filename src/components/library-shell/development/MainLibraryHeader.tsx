@@ -13,7 +13,7 @@ export function useHeaderClipboard() {
   return copy;
 }
 
-/** The global Library composition retains host identity, cloud entry, commands and DAO. */
+/** Home contributes its identity, guidance, commands and optional Dao slot to the shared header. */
 export function MainLibraryHeader({ adapter }: { adapter: MainLibraryHeaderAdapter }) {
   return <MainLibraryAdapterContext.Provider value={adapter}>
     <CopyContext.Provider value={adapter.copyText}>

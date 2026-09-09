@@ -23,7 +23,7 @@ async function mount() {
     const { DevelopmentHeaderPreview } = await import('./DevelopmentHeaderPreview');
     const { DevAudioPlaybackProvider } = await import('../../../audio/DevAudioPlayback');
     const { headerStates } = await import('./headerPreviewData');
-    const configuration = query.get('source') === 'cultivator-cave' ? 'cultivator-cave' : source;
+    const configuration = query.get('source') === 'header-states' ? 'header-states' : query.get('source') === 'cultivator-cave' ? 'cultivator-cave' : source;
     const headerState = (headerStates[configuration] as readonly string[]).includes(requested) ? requested : headerStates[configuration][0];
     document.title = 'Library Shell — Development headers';
     root.render(<DevAudioPlaybackProvider><LibraryPresentationProvider><DevelopmentHeaderPreview source={configuration} state={headerState} /></LibraryPresentationProvider></DevAudioPlaybackProvider>);

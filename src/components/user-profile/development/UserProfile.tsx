@@ -455,7 +455,10 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         header={<WorkspaceHeader title="Cultivator Cave" landmark="none"
           emblem={{ src: CAVE_EMBLEM_SRC, alt: 'Library sacred tree' }}
           home={{ href: '/', label: 'Return to Library', onNavigate: onNavigateHome }}
-          status={isPublicView ? { label: 'Public View', tone: 'neutral' } : undefined}
+          contextualItem={isPublicView ? <p role="status" className="workspace-header-public-view" title="Public View">
+            <Eye size={20} aria-hidden="true" /><span>Public View</span>
+          </p> : undefined}
+          searchItems={navigationItems.filter(item => item.id !== 'exit').map(item => ({ id: item.id, label: item.label, onAction: item.onSelect }))}
           secondaryActions={headerActions}
         />}
       >

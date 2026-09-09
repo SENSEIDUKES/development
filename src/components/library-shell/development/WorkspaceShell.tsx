@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import { SEIAppShell } from '@seihouse/ui';
 import { useDesktopNavigation } from './workspaceMedia';
 import './workspace-shell.css';
@@ -35,11 +35,24 @@ export function WorkspaceShell({
   header, sidebar, sidebarLabel, children, className = '',
   mainClassName = '', mainId, mainAriaLabel,
 }: WorkspaceShellProps) {
+  const shellRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const shell = shellRef.current;
+    const headerElement = shell?.querySelector<HTMLElement>('[data-slot="app-shell-header"]');
+    if (!shell || !headerElement) return;
+    const measure = () => shell.style.setProperty('--workspace-header-height', `${headerElement.getBoundingClientRect().height}px`);
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(headerElement);
+    return () => observer.disconnect();
+  }, []);
   const desktop = useDesktopNavigation();
   const rail = desktop && sidebar
     ? <div className="workspace-shell-rail">{sidebar}</div>
     : undefined;
   return <SEIAppShell
+    ref={shellRef}
     header={header}
     sidebar={rail}
     sidebarWidth={WORKSPACE_SIDEBAR_WIDTH}

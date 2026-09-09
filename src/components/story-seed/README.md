@@ -4,7 +4,7 @@
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **Replica created:** 2026-08-01
-- **Last Workshop update:** 2026-09-08
+- **Last Workshop update:** 2026-09-09
 - **Last source comparison:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and ready for production transfer
 
@@ -211,6 +211,8 @@ harness:
   render without loading-boundary, console, or page errors.
 
 ## Concise Workshop history
+
+- **2026-09-09:** Adopted the shared top navigation, universal Help entry and Search for existing destinations/actions. Existing Help content, page commands, forms and bottom navigation are unchanged.
 
 - **2026-09-08:** Made the existing cinematic auth gate host-driven without changing its Story
   Seed presentation. The Cultivator Cave now uses the same provider UI as its complete signed-out

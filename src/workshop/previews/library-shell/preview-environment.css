@@ -2,6 +2,12 @@
    Nothing here ships with a component: it lets the Development frame be
    inspected under device safe-area insets and under reduced motion without a
    real notched device or an OS-level accessibility setting. */
+.header-slot-example { min-width: 0; max-width: 100%; }
+.header-slot-example > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 639px) {
+  .header-slot-example { width: 44px; padding-inline: 0 !important; }
+  .header-slot-example > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+}
 :root[data-preview-safe-area='on'] {
   --sh-safe-top: 44px;
   --sh-safe-bottom: 34px;

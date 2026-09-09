@@ -1,8 +1,10 @@
-import { SEIAppHeader } from '@seihouse/ui';
+import type { ReactNode } from 'react';
+import { SEIAppHeader, SEIToolbar } from '@seihouse/ui';
 import { NarrativeButton as LibraryButton, NarrativeHeaderBadge as LibraryHeaderBadge } from '../../../presentation';
 import { ArrowLeft } from 'lucide-react';
 import { HeaderActionButton, HeaderOverflow, type HeaderAction } from './WorkspaceHeaderActions';
 import { useCompactHeader } from './workspaceMedia';
+import { WorkspaceHeaderUtilities, type HeaderSearchItem } from './WorkspaceHeaderUtilities';
 import './workspace-header.css';
 
 export interface WorkspaceHeaderProps {
@@ -14,6 +16,10 @@ export interface WorkspaceHeaderProps {
   primaryAction?: HeaderAction;
   secondaryActions?: readonly HeaderAction[];
   overflowActions?: readonly HeaderAction[];
+  /** Optional page-owned content after the badge; provide a compact presentation on phones. */
+  contextualItem?: ReactNode;
+  help?: HeaderAction;
+  searchItems?: readonly HeaderSearchItem[];
   status?: { label: string; tone?: 'neutral' | 'success' | 'busy' | 'error' };
   /** `'none'` when a host — `WorkspaceShell` — already provides the banner landmark. */
   landmark?: 'banner' | 'none';
@@ -31,9 +37,13 @@ export interface WorkspaceHeaderProps {
  * Celestial Library inside universal application chrome.
  */
 export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAction,
-  secondaryActions = [], overflowActions = [], status, landmark = 'banner' }: WorkspaceHeaderProps) {
+  secondaryActions = [], overflowActions = [], contextualItem, help, searchItems = [],
+  status, landmark = 'banner' }: WorkspaceHeaderProps) {
   const compact = useCompactHeader();
-  return <SEIAppHeader
+  const commands = [...secondaryActions, ...(primaryAction ? [primaryAction] : []), ...overflowActions];
+  const searchCommands = [...searchItems, ...commands.filter(action => !searchItems.some(item => item.id === action.id))];
+  return <>
+  <SEIAppHeader
     landmark={landmark}
     aria-label={landmark === 'banner' ? `${title} workspace header` : undefined}
     className="workspace-header"
@@ -57,16 +67,19 @@ export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAc
         emblemHref={home?.href} emblemLinkLabel={home?.label} />
     </span>}
     actions={<>
-      {/* The label truncates to keep the single row; the full message stays in
-          the live region and in the tooltip. */}
-      {status && <p role="status" className="workspace-header-status" data-tone={status.tone ?? 'neutral'} title={status.label}>
+      {contextualItem != null && contextualItem !== false && contextualItem !== '' && <div className="workspace-header-context">{contextualItem}</div>}
+      <WorkspaceHeaderUtilities items={searchCommands} help={help} />
+    </>}
+  />
+  {(status || commands.length > 0) && <SEIToolbar aria-label={`${title} actions`} rovingFocus={false}
+    className="workspace-header-toolbar" start={
+      status && <p role="status" className="workspace-header-status" data-tone={status.tone ?? 'neutral'} title={status.label}>
         <span aria-hidden="true" /><span className="workspace-header-status-label">{status.label}</span>
-      </p>}
-      <div className="workspace-header-command-area" role="group" aria-label={`${title} actions`}>
+      </p>
+    } end={<div className="workspace-header-command-area">
         <div className="workspace-secondary-actions">{secondaryActions.map(action => <HeaderActionButton key={action.id} action={action} />)}</div>
         {primaryAction && <div className="workspace-primary-action"><HeaderActionButton action={primaryAction} primary /></div>}
         <HeaderOverflow actions={compact ? [...secondaryActions, ...overflowActions] : overflowActions} />
-      </div>
-    </>}
-  />;
+      </div>} />}
+  </>;
 }

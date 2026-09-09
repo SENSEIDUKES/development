@@ -13,7 +13,9 @@
     width: 100% !important;
     max-width: none !important;
     transform: none !important;
-    translate: none !important;
+    /* WorkspaceSheet resets the dialog's centering variables with responsive
+       translate utilities. A translate:none reset here is lowered to transform
+       by the production CSS optimizer and cannot cancel the inherited translate. */
     border-bottom-left-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
   }

@@ -111,3 +111,8 @@ For an eventual approved change, identify the owning lane first. Main header/DAO
 - **2026-09-09:** Preserved full page titles with responsive width allocation, modest phone typography and a Help/Search overflow below 480px. Current page badges retain their height and artwork; unusually long host titles wrap instead of clipping. Removed the private Cave duplicate Public View toolbar; Settings remains its owner. Verified current names at 320, 375, 390, 430 and desktop widths; locked references and source-comparison dates are unchanged.
 
 - **2026-09-09:** Reconciled the capture manifest global stylesheet hash with already-merged Workshop navigation commit `926d2d6`. Its diff only changes Workshop home navigation selectors; captured product styles and all locked files remain unchanged.
+
+
+## 2026-09-09 production sheet viewport fix
+
+Fixed the shared Settings/Search sheet shifting half its width off-screen in production builds. CSS optimization lowered the mobile `translate: none` reset to `transform`, leaving the canonical dialog centering translation active. WorkspaceSheet now resets the original translation through responsive utilities, while desktop centering, dialog focus/scroll behavior and Settings state remain unchanged. Verify the production output with `node scripts/verifyWorkspaceSheet.browser.mjs` after `npm run build` and `npm run preview -- --port 4173`; dev-server-only testing does not catch this regression.

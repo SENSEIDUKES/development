@@ -10,7 +10,11 @@
 
 ## Top navigation update
 
-Development now uses Logo — existing Library Header Badge — optional contextual item — Help — Search. Home supplies Dao Insights; the public Cave supplies Public View. Help reuses the original Library Help menu and Search finds host destinations/actions. Existing page commands remain in a shared toolbar below the top row. Bottom navigation and page content are unchanged. See [the current contract](../../../docs/library-header-family.md) and its focused Header slot states preview.
+Development now uses Logo — existing Library Header Badge — optional contextual item — Help — Search. Home supplies Dao Insights; the public Cave supplies Public View. Help reuses the original Library Help menu and Search finds host destinations/actions. Existing page commands remain in a shared toolbar below the top row. See [the header contract](../../../docs/library-header-family.md) and its focused Header slot states preview.
+
+## Bottom navigation update — 2026-09-09
+
+`LibraryNavigation` now owns Section — Home — Library — Discover — Profile, active-route matching, content clearance and safe-area spacing. Pages supply a Section definition; the Cave reuses it for its existing desktop rail. `MainLibraryNavigation` adapts the existing LibraryScreen collections and routes. Story Seed keeps its current navigation; Reader/Reader Codex are immersive exclusions. No page content, cards or internal controls were redesigned. [Contracts, route mappings and transfer details](../../../docs/library-navigation.md).
 
 ## Capture boundary
 

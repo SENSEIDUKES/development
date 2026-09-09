@@ -18,6 +18,8 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-09:** Migrated the Cave's bottom destinations into the Library Shell Section menu. The shared global strip is Section, Home, Library, Discover, Profile; Profile stays active for every Cave route. The existing desktop rail reads the same Section definition. Private Settings stays beneath Daily Dao Pillar, public Exit keeps its previous destination, and all existing pages and internal UI are unchanged. The host now supplies `onNavigateLibrary(location)` for leaving the Cave. See [Library navigation](../../../docs/library-navigation.md).
+
 - **2026-09-09:** Wired the Cave to the shared top navigation, using the optional contextual slot for Public View and existing destinations/actions for Search. Universal Help reuses Library guidance. Page content, visibility rules and bottom navigation are unchanged.
 
 - **2026-09-09:** Added private Home Inbox and Energy emblems and equal-width Store / Settings

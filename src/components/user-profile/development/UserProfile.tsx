@@ -54,7 +54,8 @@ import {
   publicCavePath,
   useCaveRoute,
 } from './caveNavigation';
-import { WorkspaceNavigation, WorkspaceSidebar, WorkspaceBottomControls } from '../../library-shell/development/WorkspaceNavigation';
+import { LibraryNavigation, LibrarySectionSidebar } from '../../library-shell/development/LibraryNavigation';
+import type { LibraryLocation } from '../../library-shell/development/libraryRoutes';
 import { WorkspaceShell } from '../../library-shell/development/WorkspaceShell';
 
 interface UserProfileProps {
@@ -62,6 +63,7 @@ interface UserProfileProps {
   stories: Story[];
   onLogout: () => void;
   onNavigateHome: () => void;
+  onNavigateLibrary: (location: LibraryLocation) => void;
   accountControls?: CaveAccountControls;
 }
 
@@ -78,7 +80,7 @@ interface UserProfileProps {
  * Boost, and Settings becomes Exit. Public routes render only from the built
  * public presentation, so no private panel is mounted behind a public URL.
  */
-export default function UserProfile({ currentUser, stories, onLogout, onNavigateHome, accountControls }: UserProfileProps) {
+export default function UserProfile({ currentUser, stories, onLogout, onNavigateHome, onNavigateLibrary, accountControls }: UserProfileProps) {
   // Production calls `useUserProfile(...)` and reads the Firebase local-only flag
   // directly. Both arrive through the injected services port here, so this file
   // carries no Firebase, PostgreSQL, or generation dependency of its own.
@@ -157,8 +159,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           id, label, icon: <Icon size={20} />, active: route.destination === id,
           onSelect: () => navigate(publicCavePath(id)),
         })),
-        // Exit takes Settings' place: it leaves the public view instead of
-        // opening a destination, so it is never the selected tab.
+        // Exit leaves the public view and remains an action in its Section menu.
         { id: 'exit', label: 'Exit', icon: <CAVE_EXIT_ICON size={20} />, active: false,
           onSelect: exitPublicView },
       ];
@@ -170,7 +171,6 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   }, [isPublicView, route.destination, navigate, exitPublicView]);
   const navigationDefinition = useMemo(() => ({
     label: isPublicView ? 'Public profile navigation' : 'Cultivator Cave navigation',
-    closeLabel: isPublicView ? 'Close public profile navigation' : 'Close Cave navigation',
     sections: [{ id: 'cave', items: navigationItems }],
   }), [isPublicView, navigationItems]);
   const [environmentId, setEnvironmentId] = useState(DEFAULT_CAVE_ENVIRONMENT_ID);
@@ -422,7 +422,10 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
 
   const caveSidebarMounted = !isSignedOut && !spiritLinkGateMounted;
   return (
-    <WorkspaceNavigation definition={navigationDefinition}>
+    <LibraryNavigation location={{ screen: 'profile', cave: route.path }} onNavigate={target => {
+      if (target.screen === 'profile') navigate(target.cave ?? '/home');
+      else onNavigateLibrary(target);
+    }} sectionMenu={caveSidebarMounted ? navigationDefinition : undefined}>
     <div className="cave-workspace relative min-h-[100dvh] bg-[#03060c] text-neutral-200" data-cave-environment={environment.id} data-cave-audience={route.audience}>
       {/* Backdrop: stock Immortal Land art, cooled into the cave palette */}
       <div
@@ -451,7 +454,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         className="cave-shell relative z-10"
         mainClassName="cave-workspace-main"
         sidebarLabel={navigationDefinition.label}
-        sidebar={caveSidebarMounted ? <WorkspaceSidebar /> : undefined}
+        sidebar={caveSidebarMounted ? <LibrarySectionSidebar /> : undefined}
         header={<WorkspaceHeader title="Cultivator Cave" landmark="none"
           emblem={{ src: CAVE_EMBLEM_SRC, alt: 'Library sacred tree' }}
           home={{ href: '/', label: 'Return to Library', onNavigate: onNavigateHome }}
@@ -473,9 +476,6 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
 
           <div ref={mainRef} className="mt-5 min-w-0 sm:mt-6" data-cave-page={route.destination ?? 'unavailable'} data-cave-audience={route.audience}>{renderView()}</div>
         </div>
-        {caveSidebarMounted && <div className="cave-workspace-dock">
-          <WorkspaceBottomControls label={navigationDefinition.label} items={navigationItems} />
-        </div>}
       </WorkspaceShell>
 
       {isSignedOut || spiritLinkGateMounted ? (
@@ -538,6 +538,6 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         </SEIDialogContent>
       </SEIDialog>
     </div>
-    </WorkspaceNavigation>
+    </LibraryNavigation>
   );
 }

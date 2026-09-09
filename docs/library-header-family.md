@@ -12,7 +12,7 @@ Help is the small `?` emblem. It opens the existing `LibraryHelpMenu`, including
 
 Page commands remain available in the existing shared button/overflow controls, composed in `SEIToolbar` immediately below the top row. Save, Manifest, Settings, Story Bank and Cave actions keep their original callbacks, disabled/loading states and responsive overflow behavior. Home's previous Command Hub destinations and descriptions are retained in Search, including profile/Celestial Tools, Shortcut Spells, conditional active-story commands, and disabled companion realms. Dao Insights keeps its existing modal and provider/clipboard adapters.
 
-Bottom navigation, page content, existing Help content, reference replicas, data contracts and production repositories are outside this change.
+The follow-on bottom navigation architecture is documented in [Library navigation](library-navigation.md). Page content, existing Help content, reference replicas, data contracts and production repositories remain unchanged.
 
 ## Ownership and inputs
 

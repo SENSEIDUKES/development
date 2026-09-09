@@ -12,7 +12,7 @@ import { HeaderSlotPreview } from './HeaderSlotPreview';
 export function DevelopmentHeaderPreview({ source, state }: { source: HeaderConfiguration; state: string }) {
   const [message, setMessage] = useState('Local preview ready.');
   if (source === 'header-states') return <HeaderSlotPreview state={state} />;
-  if (source === 'main-library') return <MainLibraryPreview state={state} developmentHeader={adapter =>
+  if (source === 'main-library') return <MainLibraryPreview state={state} developmentNavigation developmentHeader={adapter =>
     <MainLibraryHeader adapter={{ ...adapter, copyText: async text => { setMessage(`Local preview clipboard: ${text}`); } }} />
   } extraFeedback={message} />;
   if (source === 'story-seed') return <StorySeedWorkspace embedded localGeneration initialState={state as PreviewState} />;

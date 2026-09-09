@@ -14,6 +14,7 @@ import DevelopmentUserProfile from '../../../components/user-profile/development
 import ReferenceUserProfile from '../../../components/user-profile/reference/UserProfile';
 import { UserProfileServicesProvider } from '../../../components/user-profile/shared/userProfileServices';
 import type { AppUser } from '../../../components/user-profile/shared/types';
+import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigation';
 import { createMockUserProfileServices } from './mockUserProfileServices';
 import { getPreviewScenario } from './previewData';
 import {
@@ -79,6 +80,7 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
             if (scenario.currentUser) setPreviewState('signed-out');
           }}
           onNavigateHome={() => logExcludedAction('Navigate to Library home (production router)')}
+          onNavigateLibrary={navigateLibraryPreview}
         />
       </UserProfileServicesProvider>
 

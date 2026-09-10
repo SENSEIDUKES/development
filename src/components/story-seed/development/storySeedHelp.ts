@@ -71,7 +71,11 @@ export const getLibraryHelpItems = (
 ): StorySeedHelpItem[] => {
   const normalizedQuery = query.trim().toLocaleLowerCase();
   return items
-    .map((item, index) => ({ item, index }))
+    .map((item, index) => ({
+      item,
+      index,
+      isRelevant: item.contexts?.includes(page) ? 1 : 0,
+    }))
     .filter(({ item }) => {
       if (!normalizedQuery) return true;
       const translation = getHelpTranslation(item, language);
@@ -79,9 +83,7 @@ export const getLibraryHelpItems = (
         .some(value => value?.toLocaleLowerCase().includes(normalizedQuery));
     })
     .sort((a, b) => {
-      const aRelevant = a.item.contexts?.includes(page) ? 1 : 0;
-      const bRelevant = b.item.contexts?.includes(page) ? 1 : 0;
-      return bRelevant - aRelevant || a.index - b.index;
+      return b.isRelevant - a.isRelevant || a.index - b.index;
     })
     .map(({ item }) => item);
 };

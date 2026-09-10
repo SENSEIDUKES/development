@@ -776,8 +776,9 @@ export class HarnessGenerationController {
       if (!attempt) continue;
       const recoveredMemory = candidate.memoryRecoveries?.filter(recovery => recovery.chapterId === chapter.id && recovery.status === 'applied').at(-1);
       const memoryEventIds = recoveredMemory?.eventIds ?? chapter.eventIds;
+      const memoryEventIdSet = new Set(memoryEventIds);
       const receipts = candidate.capabilityReceipts.filter(receipt =>
-        memoryEventIds.includes(receipt.sourceEventId) && receipt.status !== 'superseded',
+        memoryEventIdSet.has(receipt.sourceEventId) && receipt.status !== 'superseded',
       );
       attempt.postCommitProcessing = receipts.some(receipt => receipt.status === 'failed')
         ? 'failed'

@@ -20,6 +20,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const target = resolveTarget(process.argv[2]);
 const source = join(root, target.sourceDirectory);
 const output = join(root, target.distDirectory);
+const unstyledEntries = new Set(target.unstyledEntries);
 
 const readJson = async path => JSON.parse(await readFile(path, 'utf8'));
 
@@ -56,7 +57,7 @@ for (const [name, entry] of Object.entries(manifest.exports)) {
   }
   if (typeof entry !== 'object' || typeof entry.import !== 'string') continue;
   const entryName = entry.import.replace(/^\.\/dist\//, '').replace(/\.js$/, '');
-  if (target.unstyledEntries.includes(entryName)) continue;
+  if (unstyledEntries.has(entryName)) continue;
   const contents = await readFile(join(output, entry.import), 'utf8');
   if (
     !contents.includes(`import './${target.styleSheet}';`)

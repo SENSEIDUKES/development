@@ -107,6 +107,7 @@ export const appendHarnessCorrection = (
   if (input.kind === 'resolve-entity' && (!input.referenceLabel?.trim() || !input.resolvedRecordId)) {
     throw new Error('Resolving an entity requires its ambiguous label and the chosen existing record.');
   }
+  const targetRecordIdSet = new Set(targetRecordIds);
   if (['correct-fact', 'mark-incorrect', 'supersede-interpretation'].includes(input.kind) && !targetRecordIds.length) {
     throw new Error('This correction must name at least one canonical record to supersede.');
   }
@@ -137,7 +138,7 @@ export const appendHarnessCorrection = (
       storyId,
       sourceCorrectionId: correction.id,
       ...(input.sourceEventId ? { sourceEventId: input.sourceEventId } : {}),
-      entityId: candidate.canonicalRecords.find(record => targetRecordIds.includes(record.id))?.entityId,
+      entityId: candidate.canonicalRecords.find(record => targetRecordIdSet.has(record.id))?.entityId,
       capabilityId: 'author-correction',
       capabilityVersion: '1.0.0',
       kind: input.replacement.kind,
@@ -152,7 +153,7 @@ export const appendHarnessCorrection = (
   }
 
   for (const record of candidate.canonicalRecords) {
-    if (!targetRecordIds.includes(record.id) || record.supersededAt) continue;
+    if (!targetRecordIdSet.has(record.id) || record.supersededAt) continue;
     record.supersededAt = now;
     record.supersededByCorrectionId = correction.id;
     if (replacementRecord) record.supersededByRecordId = replacementRecord.id;

@@ -94,10 +94,13 @@ const renderBudgetableCard = (
 export const latestHistoryText = (
   blocks: ContextBlock[],
   kinds: ContextBlock["kind"][] = ["recent-full", "recent-summary"],
-) => blocks
-  .filter(block => kinds.includes(block.kind))
-  .sort((a, b) => (b.chapterNumber ?? -1) - (a.chapterNumber ?? -1))[0]
+) => {
+  const kindSet = new Set(kinds);
+  return blocks
+    .filter(block => kindSet.has(block.kind))
+    .sort((a, b) => (b.chapterNumber ?? -1) - (a.chapterNumber ?? -1))[0]
   ?.text;
+};
 
 export const anchorTextFromBlocks = (blocks: ContextBlock[]) =>
   blocks

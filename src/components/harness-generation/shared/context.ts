@@ -174,7 +174,8 @@ export const compileHarnessContext = (
     keys.add(key);
     return true;
   });
-  const ordered = [...current, ...recentFirst.filter(event => !current.includes(event))];
+  const currentSet = new Set(current);
+  const ordered = [...current, ...recentFirst.filter(event => !currentSet.has(event))];
   for (const event of ordered) {
     const value = { chapterNumber: event.chapterNumber, sourceId: event.id, description: event.description, evidence: event.evidence, evidenceVerified: event.evidenceVerified,
       ...(event.details ? { details: cloneHarnessValue(event.details) } : {}) };

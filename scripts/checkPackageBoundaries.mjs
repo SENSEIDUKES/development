@@ -27,14 +27,14 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
  * import directly. These are stand-ins for a host's store, audio catalog, and
  * haptics — not a real application — so nothing new may reach them.
  */
-const MOCK_APPLICATION_MODULES = [
+const MOCK_APPLICATION_MODULES = new Set([
   'src/components/reader-chamber/shared/stubs.ts',
   'src/components/reader-chamber/shared/readerPlayback.ts',
   'src/components/reader-chamber/shared/trackLibrary.ts',
   'src/components/reader-codex/shared/appStore.ts',
   'src/components/reader-codex/shared/vibration.ts',
   'src/components/story-seed/shared/stubs.ts',
-];
+]);
 
 /**
  * The exact set of published modules allowed to import the mocks above,
@@ -42,7 +42,7 @@ const MOCK_APPLICATION_MODULES = [
  * with host-supplied runtime dependencies is tracked in
  * `src/package/README.md`; every entry removed from this list is progress.
  */
-const MOCK_APPLICATION_WAIVERS = [
+const MOCK_APPLICATION_WAIVERS = new Set([
   'src/components/reader-chamber/development/ReaderChamber.tsx',
   'src/components/reader-chamber/development/ReaderControls/AudioMenu.tsx',
   'src/components/reader-chamber/development/ReaderViewport.tsx',
@@ -54,7 +54,7 @@ const MOCK_APPLICATION_WAIVERS = [
   'src/components/story-seed/development/BlueprintReview.tsx',
   'src/components/story-seed/development/CreationModal.tsx',
   'src/components/story-seed/development/StoryAuthGate.tsx',
-];
+]);
 
 const FORBIDDEN_PATTERNS = [
   [/^src\/workshop\//, 'the Workshop shell, a preview, or a preview mock'],
@@ -176,8 +176,8 @@ const checkTarget = target => {
       // Mock dependencies are recorded per import edge, not per module, so
       // every importer of a mock is accounted for even when another importer
       // pulled it into the graph first.
-      if (MOCK_APPLICATION_MODULES.includes(resolvedPath)) {
-        if (MOCK_APPLICATION_WAIVERS.includes(relativePath)) usedWaivers.add(relativePath);
+      if (MOCK_APPLICATION_MODULES.has(resolvedPath)) {
+        if (MOCK_APPLICATION_WAIVERS.has(relativePath)) usedWaivers.add(relativePath);
         else {
           failures.push(
             `${target.name}: ${relativePath} imports DEV mock application state (${resolvedPath}). `
@@ -214,5 +214,5 @@ console.log(
   `[package-boundaries] ${Object.keys(PACKAGE_TARGETS).length} packages verified — `
   + `no Workshop, preview, mock, reference, test, or server module is reachable, `
   + `and no @seihouse/sen entry reaches @seihouse/library. `
-  + `${MOCK_APPLICATION_WAIVERS.length} recorded DEV mock dependencies remain.`,
+  + `${MOCK_APPLICATION_WAIVERS.size} recorded DEV mock dependencies remain.`,
 );

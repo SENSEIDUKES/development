@@ -234,7 +234,8 @@ export function createMockUserProfileServices({
     // ---- Derived cultivation values (production behaviour, verbatim) ------
     const userStories = stories.filter(story => story.userId === currentUser?.uid || !story.userId);
     const inactiveFlowIds = profile?.inactiveStories || [];
-    const activeFlows = userStories.filter(story => !inactiveFlowIds.includes(story.id));
+    const inactiveFlowIdSet = new Set(inactiveFlowIds);
+    const activeFlows = userStories.filter(story => !inactiveFlowIdSet.has(story.id));
     const activeStoriesCount = activeFlows.length;
 
     const currentStreak = profile?.daoPillarStreak ?? profile?.writingStreak ?? 0;

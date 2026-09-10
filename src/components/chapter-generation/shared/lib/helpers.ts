@@ -236,7 +236,7 @@ export function rankRelevantEntityCandidates(
     const canonicalName = typeof entity?.name === "string" ? entity.name.trim() : "";
     const aliases = deterministicAliases[index] || [];
     const canonicalKey = normalizeCodexSurface(canonicalName);
-    const aliasKeys = aliases.map(normalizeCodexSurface);
+    const aliasKeySet = new Set(aliases.map(normalizeCodexSurface));
     const mcNameKey = normalizeCodexSurface(mcName);
     const provenance = entity?.provenance && typeof entity.provenance === "object"
       ? entity.provenance
@@ -258,7 +258,7 @@ export function rankRelevantEntityCandidates(
 
     if (mcNameKey && (
       canonicalKey === mcNameKey
-      || aliasKeys.includes(mcNameKey)
+      || aliasKeySet.has(mcNameKey)
       || canonicalKey.includes(mcNameKey)
       || mcNameKey.includes(canonicalKey)
     )) {
@@ -299,6 +299,7 @@ export function rankRelevantEntityCandidates(
       }
 
       const nameTokens = tokenize(canonicalName);
+      const nameTokenSet = new Set(nameTokens);
       const entityText = [
         canonicalName,
         entity.description,
@@ -314,19 +315,19 @@ export function rankRelevantEntityCandidates(
       const entitySet = new Set(entityTokens);
 
       for (const pt of premiseTokens) {
-        if (nameTokens.includes(pt)) score += 10;
+        if (nameTokenSet.has(pt)) score += 10;
         else if (entitySet.has(pt)) score += 2;
       }
       for (const at of anchorTokens) {
-        if (nameTokens.includes(at)) score += 20;
+        if (nameTokenSet.has(at)) score += 20;
         else if (entitySet.has(at)) score += 4;
       }
       for (const st of lastSummaryTokens) {
-        if (nameTokens.includes(st)) score += 5;
+        if (nameTokenSet.has(st)) score += 5;
         else if (entitySet.has(st)) score += 1;
       }
       for (const bt of bonusTokens) {
-         if (nameTokens.includes(bt)) score += 2;
+         if (nameTokenSet.has(bt)) score += 2;
          else if (entitySet.has(bt)) score += 1;
       }
     }

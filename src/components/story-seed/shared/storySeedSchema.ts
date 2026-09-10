@@ -720,11 +720,15 @@ const mergeAuthoritativeEntries = <T extends { name: string }>(
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim();
   const authoredNames = validAuthored.map(entry => normalizeEntry(entry.name));
+  const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const authoredNamePattern = authoredNames.length > 0
+    ? new RegExp(authoredNames.map(name => ` ${escapeRegExp(name)} `).join('|'))
+    : undefined;
   return [
     ...validAuthored.map(describe),
     ...generated.filter(entry => {
       const candidate = ` ${normalizeEntry(entry)} `;
-      return !authoredNames.some(name => candidate.includes(` ${name} `));
+      return !(authoredNamePattern?.test(candidate) ?? false);
     }),
   ];
 };

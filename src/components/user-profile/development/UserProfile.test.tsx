@@ -31,6 +31,7 @@ import {
   getAuraSelection,
   getAuraGlowStyle,
   getAuraTextStyle,
+  activeAuraOverride,
   getRankForQi,
   rankBackground,
   resolveRankVisual,
@@ -985,7 +986,7 @@ describe('Home dynamic data and claim contract', () => {
   it.each([[0, 1234, 0], [undefined, 300, 300], [50000, 0, 50000]])('uses canonical cultivation %s with legacy %s', async (dao_xp, qi, expected) => {
     await renderCave({ adapter: { profileOverride: { dao_xp, qi, heavenly_qi: 99 } } });
     expect(container.querySelector('[data-cave-qi]')?.textContent).toMatch(new RegExp(`^${expected.toLocaleString()}`));
-    expect(container.querySelector('[data-cave-rank]')?.textContent).toBe(getRankForQi(expected).name);
+    expect(container.querySelector('[data-cave-rank] .library-elemental-title__text, [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(expected).name);
     expect((container.querySelector('[data-cave-progress]') as HTMLElement).style.getPropertyValue('--cave-rank-background')).toBeTruthy();
     if (expected === 50000) expect(text()).toContain('Maximum rank');
   });
@@ -1222,10 +1223,10 @@ describe('Claim and existing profile edits', () => {
   });
   it('updates the rank and bar together when collection crosses a threshold', async () => {
     await renderCave({ adapter: { profileOverride: { dao_xp: 99, qi: 99 } } });
-    expect(container.querySelector('[data-cave-rank]')?.textContent).toBe(getRankForQi(99).name);
+    expect(container.querySelector('[data-cave-rank] .library-elemental-title__text, [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(99).name);
     await click(open('dao-pillar'));
     await act(async () => { await vi.advanceTimersByTimeAsync(650); });
-    expect(container.querySelector('[data-cave-rank]')?.textContent).toBe(getRankForQi(104).name);
+    expect(container.querySelector('[data-cave-rank] .library-elemental-title__text, [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(104).name);
     expect((container.querySelector('[data-cave-progress]') as HTMLElement).style.getPropertyValue('--cave-rank-background')).toBe(rankBackground(getRankForQi(104).visual));
   });
 });
@@ -1539,4 +1540,63 @@ it('uses the SEN emblem as the Profile header home action', async () => {
   expect(link.getAttribute('aria-label')).toBe('Return to Library');
   await act(async () => link.click());
   expect(onNavigateHome).toHaveBeenCalledTimes(1);
+});
+
+
+describe('LibraryElementalTitle profile integration', () => {
+  it('uses semantic package titles for the Leader name and rank', async () => {
+    await renderCave();
+    const name = container.querySelector('[data-cave-name]')!;
+    const rank = container.querySelector('[data-cave-rank]')!;
+    expect(name.tagName).toBe('H2');
+    expect(name.getAttribute('data-element')).toBe('fire');
+    expect(name.getAttribute('tabindex')).toBe('-1');
+    expect(rank.tagName).toBe('P');
+    expect(rank.getAttribute('data-element')).toBe('lightning');
+    expect(rank.querySelector('.library-elemental-title__text')?.textContent).toBe('Leader');
+    expect(container.querySelector('[aria-label="Subscription tier: Inner Sect"]')).not.toBeNull();
+  });
+
+  it.each(['', '<img src=x onerror=alert(1)>', '讀者🌟'.repeat(80)])('safely renders dynamic name %s', async displayName => {
+    await renderCave({ adapter: { profileOverride: { displayName } } });
+    const name = container.querySelector('[data-cave-name]')!;
+    expect(name.querySelector('.library-elemental-title__text')?.textContent).toBe(displayName || 'Cultivator');
+    expect(name.querySelector('img')).toBeNull();
+  });
+
+  it('preserves a custom aura instead of replacing its color with fire', async () => {
+    await renderCave({ adapter: { profileOverride: { displayNameColor: '#abcdef' } } });
+    const name = container.querySelector('[data-cave-name]') as HTMLElement;
+    expect(name.getAttribute('data-element')).not.toBe('fire');
+    expect(name.style.color).toBe('rgb(171, 205, 239)');
+  });
+});
+
+
+describe('elemental aura overrides', () => {
+  it.each(['Ghostly Silence', 'Curse of the Cursed Tome'])('respects %s on the name and rank', async effectName => {
+    const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
+    await renderCave({ adapter: { profileOverride: { activeStatusEffects: [{
+      ...effect, effectDef: { ...effect.effectDef, name: effectName },
+      appliedAt: new Date(Date.now() - 1000).toISOString(),
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    }] } } });
+    expect(container.querySelector('[data-cave-name]')?.getAttribute('data-element')).toBe('none');
+    expect(container.querySelector('[data-cave-rank]')?.getAttribute('data-element')).toBe('none');
+    expect(container.querySelector('[data-cave-name] .library-elemental-title__particles')).toBeNull();
+  });
+});
+
+
+it('uses the supplied profile clock consistently at aura expiry', () => {
+  const clock = Date.now() - 10_000;
+  const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
+  const effects = [{ ...effect, effectDef: { ...effect.effectDef, name: 'Ghostly Silence' },
+    appliedAt: new Date(clock - 1000).toISOString(), expiresAt: new Date(clock + 1000).toISOString() }];
+  expect(activeAuraOverride(effects, clock)).toBe('silenced');
+  expect(getAuraTextStyle('rank:leader', effects, 12000, clock).className).toContain('text-neutral-400');
+  expect(getAuraGlowStyle('rank:leader', effects, 12000, clock).className).toContain('shadow-none');
+  expect(activeAuraOverride(effects, clock + 1000)).toBeNull();
+  expect(getAuraTextStyle('rank:leader', effects, 12000, clock + 1000).className).not.toContain('text-neutral-400');
+  expect(getAuraGlowStyle('rank:leader', effects, 12000, clock + 1000).className).not.toContain('shadow-none');
 });

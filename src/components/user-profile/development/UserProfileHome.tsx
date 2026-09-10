@@ -13,7 +13,7 @@ import {
   Sparkles,
   User as UserIcon,
 } from "lucide-react";
-import { LibraryButton, LibraryPanel } from "@seihouse/library-ui";
+import { LibraryButton, LibraryElementalTitle, LibraryPanel } from "@seihouse/library-ui";
 import {
   SEIDialog,
   SEIDialogContent,
@@ -30,6 +30,7 @@ import {
   getRankForQi,
   getAuraSelection,
   getAuraTextStyle,
+  activeAuraOverride,
   getAuraGlowStyle,
   resolveRankVisual,
   rankBackground,
@@ -163,13 +164,18 @@ export function UserProfileHome({
     auraSelection,
     effects,
     auraXp,
+    now,
   );
   const auraGlow = getAuraGlowStyle(
     auraSelection,
     effects,
     auraXp,
+    now,
   );
   const activeRank = resolveRankVisual(auraSelection, auraXp);
+  const hasAuraOverride = activeAuraOverride(effects, now) !== null;
+  const hasFireTitle = activeRank.rank.id === 'leader' && activeRank.source === 'rank' && !hasAuraOverride;
+  const hasLightningRank = rank.id === 'leader' && !hasAuraOverride;
   const showsRankParticles = activeRank.rank.motes;
   const moteColors = activeRank.visual.stops;
   const reserves = (
@@ -386,25 +392,32 @@ export function UserProfileHome({
               {/* The name owns the centre line by itself; the subscription badge
                   sits in its own slot on the rank row below, so a long or short
                   tier can never shift the name off centre. */}
-              <h2
+              <LibraryElementalTitle
+                as="h2"
+                element={hasFireTitle ? "fire" : "none"}
+                intensity="active"
+                shadow={hasFireTitle ? "outlined" : "none"}
                 id="cave-cultivator-name"
                 tabIndex={-1}
-                className="font-display text-2xl leading-tight outline-none sm:text-3xl"
+                className={`mx-auto w-fit font-display text-2xl leading-tight outline-none sm:text-3xl ${hasFireTitle ? "" : nameStyle.className || "text-neutral-100"}`}
+                style={hasFireTitle ? undefined : nameStyle.style}
                 data-cave-name
               >
-                <span
-                  className={`inline-block min-w-0 max-w-full [overflow-wrap:anywhere] ${nameStyle.className || "text-neutral-100"}`}
-                  style={nameStyle.style}
-                >
-                  {profile?.displayName?.trim() || "Cultivator"}
-                </span>
-              </h2>
+                {profile?.displayName?.trim() || "Cultivator"}
+              </LibraryElementalTitle>
               {profile && (
                 <>
                   <div className="cave-home-rank-row mt-2" data-cave-rank-row>
-                    <p className="font-serif text-base text-neutral-200" data-cave-rank>
+                    <LibraryElementalTitle
+                      as="p"
+                      element={hasLightningRank ? "lightning" : "none"}
+                      intensity="subtle"
+                      shadow={hasLightningRank ? "outlined" : "none"}
+                      className="font-serif text-base text-neutral-200"
+                      data-cave-rank
+                    >
                       {daoData.rank}
-                    </p>
+                    </LibraryElementalTitle>
                     <span
                       className="cave-tier-badge"
                       aria-label={`Subscription tier: ${tiers[profile.premiumTier ?? "mortal"]}`}

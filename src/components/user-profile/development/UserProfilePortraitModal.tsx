@@ -74,10 +74,10 @@ export const UserProfilePortraitModal: React.FC<UserProfilePortraitModalProps> =
       <SEIDialogContent hideClose variant="dark" className="z-[310] !p-0 !gap-0 bg-[#050505] border border-portal/30 rounded-2xl w-full max-w-lg shadow-[0_0_50px_rgba(4,172,255,0.15)] overflow-hidden flex flex-col max-h-[90dvh]" backdropClassName="z-[300]" aria-describedby={undefined}>
         <div className="p-4 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
           <SEIDialogTitle id="portrait-modal-title" className="font-sc font-bold uppercase tracking-widest text-portal text-xs flex items-center gap-2">
-            <Camera size={14} /> Cultivator Portrait Builder
+            <Camera aria-hidden="true" size={14} /> Cultivator Portrait Builder
           </SEIDialogTitle>
-          <button onClick={() => setShowPortraitModal(false)} disabled={isSavingPortrait} className="text-neutral-500 hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed" aria-label="Close Portrait Builder">
-            <X size={16} />
+          <button type="button" onClick={() => setShowPortraitModal(false)} disabled={isSavingPortrait} className="flex h-11 w-11 shrink-0 items-center justify-center text-neutral-400 hover:text-white transition-colors motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] disabled:opacity-40 disabled:cursor-not-allowed" aria-label="Close Portrait Builder">
+            <X aria-hidden="true" size={16} />
           </button>
         </div>
         
@@ -91,7 +91,7 @@ export const UserProfilePortraitModal: React.FC<UserProfilePortraitModalProps> =
           {!generatedPortraitUrl ? (
             <div className="space-y-6">
               <div 
-                className={`border-2 border-dashed ${portraitUploadFile ? 'border-portal/50 bg-portal/5' : 'border-neutral-800 hover:border-portal/30 bg-black/50'} rounded-xl p-8 text-center transition-all cursor-pointer relative overflow-hidden group`}
+                className={`border-2 border-dashed ${portraitUploadFile ? 'border-portal/50 bg-portal/5' : 'border-neutral-800 hover:border-portal/30 bg-black/50'} rounded-xl p-8 text-center transition-all motion-reduce:transition-none cursor-pointer relative overflow-hidden group focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff]`}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInputRef.current?.click(); } }}
@@ -119,7 +119,7 @@ export const UserProfilePortraitModal: React.FC<UserProfilePortraitModalProps> =
                 
                 {portraitUploadBase64 ? (
                   <div className="absolute inset-0">
-                    <img src={portraitUploadBase64} alt="Upload preview" className="w-full h-full object-cover opacity-30 group-hover:opacity-20 transition-opacity" />
+                    <img src={portraitUploadBase64} alt="Upload preview" className="w-full h-full object-cover opacity-30 group-hover:opacity-20 transition-opacity motion-reduce:transition-none" />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="bg-black/60 px-4 py-2 rounded-lg backdrop-blur-sm border border-portal/30">
                         <span className="text-portal font-mono text-xs">Image Selected - Click to change</span>
@@ -128,12 +128,12 @@ export const UserProfilePortraitModal: React.FC<UserProfilePortraitModalProps> =
                   </div>
                 ) : (
                   <div className="space-y-3 flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-full bg-neutral-900 flex items-center justify-center text-neutral-500 group-hover:text-portal transition-colors group-hover:scale-110 duration-500">
-                      <ImageIcon size={20} />
+                    <div className="w-12 h-12 rounded-full bg-neutral-900 flex items-center justify-center text-neutral-400 group-hover:text-portal transition-colors group-hover:scale-110 duration-500 motion-reduce:transition-none motion-reduce:transform-none">
+                      <ImageIcon aria-hidden="true" size={20} />
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm text-neutral-300 font-sans">Drop a base image here</p>
-                      <p className="text-[10px] text-neutral-500 font-sans uppercase tracking-wider">or click to browse</p>
+                      <p className="text-[10px] text-neutral-400 font-sans uppercase tracking-wider">or click to browse</p>
                     </div>
                     <p className="text-[9px] text-portal/60 font-mono mt-4">Optional. If skipped, portrait will be generated from scratch.</p>
                   </div>
@@ -147,24 +147,25 @@ export const UserProfilePortraitModal: React.FC<UserProfilePortraitModalProps> =
                   onChange={(e) => setPortraitDesc(e.target.value)}
                   maxLength={2000}
                   placeholder="e.g. A young scholar with silver hair, sharp eyes, wearing azure robes of the Sky Sword Sect..."
-                  className="w-full h-24 bg-[#080808] border border-neutral-800 rounded-xl p-3 text-sm text-neutral-200 font-sans focus:outline-none focus:border-portal/50 transition-colors resize-none"
+                  className="w-full h-24 bg-[#080808] border border-neutral-800 rounded-xl p-3 text-sm text-neutral-200 font-sans focus:outline-none focus-visible:border-portal/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] transition-colors motion-reduce:transition-none resize-none"
                 />
               </div>
 
-              <button 
+              <button
+                type="button"
                 onClick={handleGeneratePortrait}
                 disabled={isGeneratingPortrait}
-                className="w-full py-4 bg-portal/10 hover:bg-portal/20 border border-portal/30 rounded-xl text-portal font-sc uppercase tracking-[0.2em] text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(4,172,255,0.1)] hover:shadow-[0_0_30px_rgba(4,172,255,0.2)] flex justify-center items-center gap-3 relative overflow-hidden"
+                className="flex min-h-11 w-full items-center justify-center gap-3 overflow-hidden rounded-xl border border-portal/30 bg-portal/10 py-4 text-xs font-bold uppercase tracking-[0.2em] text-portal shadow-[0_0_20px_rgba(4,172,255,0.1)] transition-all hover:bg-portal/20 hover:shadow-[0_0_30px_rgba(4,172,255,0.2)] motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isGeneratingPortrait ? (
                   <>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-portal/10 to-transparent animate-shimmer" />
-                    <Camera size={14} className="animate-pulse" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-portal/10 to-transparent animate-shimmer motion-reduce:animate-none" />
+                    <Camera aria-hidden="true" size={14} className="animate-pulse motion-reduce:animate-none" />
                     <span>Manifesting {['Features', 'Aura', 'Soul', 'Completing'][generationStep]}...</span>
                   </>
                 ) : (
                   <>
-                    <Camera size={14} />
+                    <Camera aria-hidden="true" size={14} />
                     <span>Manifest Portrait</span>
                   </>
                 )}
@@ -173,7 +174,7 @@ export const UserProfilePortraitModal: React.FC<UserProfilePortraitModalProps> =
           ) : (
             <div className="space-y-6">
               <div className="relative aspect-square rounded-xl overflow-hidden border border-portal/30 shadow-[0_0_30px_rgba(4,172,255,0.15)] group">
-                <img src={generatedPortraitUrl} alt="Generated Portrait" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <img src={generatedPortraitUrl} alt="Generated Portrait" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none motion-reduce:transform-none" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
                 <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
                   <div className="space-y-1">
@@ -189,17 +190,19 @@ export const UserProfilePortraitModal: React.FC<UserProfilePortraitModalProps> =
               </div>
 
               <div className="flex gap-3">
-                <button 
+                <button
+                  type="button"
                   onClick={() => handleGeneratePortrait()}
                   disabled={isSavingPortrait}
-                  className="flex-1 py-3 bg-transparent border border-neutral-700 hover:border-neutral-500 rounded-lg text-neutral-300 font-sans text-xs transition-colors"
+                  className="min-h-11 flex-1 rounded-lg border border-neutral-700 bg-transparent py-3 font-sans text-xs text-neutral-300 transition-colors hover:border-neutral-500 motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Regenerate
                 </button>
-                <button 
+                <button
+                  type="button"
                   onClick={handleApplyPortrait}
                   disabled={isSavingPortrait}
-                  className="flex-[2] py-3 bg-portal/20 border border-portal/50 hover:bg-portal/30 rounded-lg text-portal font-sc uppercase font-bold tracking-widest text-xs shadow-[0_0_15px_rgba(4,172,255,0.2)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="min-h-11 flex-[2] rounded-lg border border-portal/50 bg-portal/20 py-3 font-sc text-xs font-bold uppercase tracking-widest text-portal shadow-[0_0_15px_rgba(4,172,255,0.2)] transition-all hover:bg-portal/30 motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isSavingPortrait ? 'Saving Portrait...' : 'Accept & Apply'}
                 </button>

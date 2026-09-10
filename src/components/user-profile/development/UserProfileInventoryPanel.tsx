@@ -140,7 +140,7 @@ export function UserProfileInventoryPanel({ profile, handleAttuneArtifact }: Use
             <p className="font-sans text-sm text-neutral-400">No relic attuned. Inspect a relic to attune your soul.</p>
           )}
         </div>
-        <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-neutral-500">
+        <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-neutral-400">
           {artifacts.length} {artifacts.length === 1 ? 'relic' : 'relics'}
         </span>
       </LibraryPanel>
@@ -173,7 +173,7 @@ export function UserProfileInventoryPanel({ profile, handleAttuneArtifact }: Use
                   The Celestial Library accepts all records of fate, battle, wisdom, and karma. Offer your
                   gathered relics to deepen your cultivation.
                 </p>
-                <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-neutral-500">
+                <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-neutral-400">
                   Week {currentWeek}
                 </p>
                 {unsubmitted.length > 0 ? (
@@ -250,23 +250,23 @@ export function UserProfileInventoryPanel({ profile, handleAttuneArtifact }: Use
                 >
                   {inspectArtifact.rarity} Relic
                 </span>
-                <SEIDialogTitle className="font-display text-xl text-neutral-100">{inspectArtifact.name}</SEIDialogTitle>
+                <SEIDialogTitle className="break-words font-display text-xl text-neutral-100 [overflow-wrap:anywhere]">{inspectArtifact.name}</SEIDialogTitle>
                 <SEIDialogDescription className="font-mono text-[10px] text-neutral-400">
                   Acquired on {safeFormatDate(inspectArtifact.unlockedAt)} · {isSubmitted(inspectArtifact) ? 'Submitted to Library' : 'In Pouch'}
                 </SEIDialogDescription>
               </div>
 
               <div className="rounded-xl border border-white/10 bg-black/40 p-4">
-                <h4 className="font-sc text-[9px] font-bold uppercase tracking-widest text-neutral-500">Sacred Relic Lore</h4>
-                <p className="mt-2 font-serif text-xs italic leading-relaxed text-neutral-300">
+                <h4 className="font-sc text-[9px] font-bold uppercase tracking-widest text-neutral-400">Sacred Relic Lore</h4>
+                <p className="mt-2 break-words font-serif text-xs italic leading-relaxed text-neutral-300 [overflow-wrap:anywhere]">
                   “{inspectArtifact.description}”
                 </p>
               </div>
 
               <div className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/40 p-4">
-                <div>
-                  <h4 className="font-sc text-[9px] font-bold uppercase tracking-widest text-neutral-500">Offering Rewards</h4>
-                  <p className="mt-0.5 font-sans text-[10px] text-neutral-500">Granted by the Celestial Library upon submission</p>
+                <div className="min-w-0">
+                  <h4 className="font-sc text-[9px] font-bold uppercase tracking-widest text-neutral-400">Offering Rewards</h4>
+                  <p className="mt-0.5 font-sans text-[10px] text-neutral-400">Granted by the Celestial Library upon submission</p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-0.5 rounded-lg border border-[#04ACFF]/30 bg-[#04ACFF]/10 px-3 py-1.5 font-mono text-xs font-bold text-[#7dd3ff]">
                   <span className="flex items-center gap-1.5 whitespace-nowrap"><Zap size={12} aria-hidden="true" />+{inspectArtifact.rewardValueQi || 0} Qi</span>
@@ -274,30 +274,30 @@ export function UserProfileInventoryPanel({ profile, handleAttuneArtifact }: Use
                 </div>
               </div>
 
-              <dl className="space-y-1.5 px-1 font-mono text-[10px] text-neutral-500">
-                <div className="flex items-center justify-between gap-3">
-                  <dt>Unlock Catalyst</dt>
-                  <dd className="font-sans font-medium text-neutral-300">{inspectArtifact.milestoneName}</dd>
+              <dl className="space-y-1.5 px-1 font-mono text-[10px] text-neutral-400">
+                <div className="flex min-w-0 items-start justify-between gap-3">
+                  <dt className="shrink-0">Unlock Catalyst</dt>
+                  <dd className="min-w-0 text-right font-sans font-medium text-neutral-300 [overflow-wrap:anywhere]">{inspectArtifact.milestoneName}</dd>
                 </div>
                 {inspectArtifact.sourceStoryTitle ? (
-                  <div className="flex items-center justify-between gap-3">
-                    <dt>Origin</dt>
-                    <dd className="truncate font-sans text-neutral-300">
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <dt className="shrink-0">Origin</dt>
+                    <dd className="min-w-0 text-right font-sans text-neutral-300 [overflow-wrap:anywhere]">
                       {inspectArtifact.sourceStoryTitle}
                       {inspectArtifact.sourceChapterNumber ? ` · Ch. ${inspectArtifact.sourceChapterNumber}` : ''}
                     </dd>
                   </div>
                 ) : null}
                 {inspectArtifact.attributeBoost ? (
-                  <div className="flex items-center justify-between gap-3">
-                    <dt>Attribute Boost</dt>
-                    <dd className="font-sans text-amber-200">{inspectArtifact.attributeBoost}</dd>
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <dt className="shrink-0">Attribute Boost</dt>
+                    <dd className="min-w-0 text-right font-sans text-amber-200 [overflow-wrap:anywhere]">{inspectArtifact.attributeBoost}</dd>
                   </div>
                 ) : null}
                 {inspectArtifact.statusEffectDef ? (
-                  <div className="flex items-center justify-between gap-3">
-                    <dt>Grants</dt>
-                    <dd className="font-sans text-neutral-300">
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <dt className="shrink-0">Grants</dt>
+                    <dd className="min-w-0 text-right font-sans text-neutral-300 [overflow-wrap:anywhere]">
                       {inspectArtifact.statusEffectDef.name} ({inspectArtifact.statusEffectDef.type})
                     </dd>
                   </div>

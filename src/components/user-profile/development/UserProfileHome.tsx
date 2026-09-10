@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   ChevronRight,
   Mail,
@@ -34,6 +34,9 @@ import {
   resolveRankVisual,
   rankBackground,
 } from "./qi";
+import { isEffectActive } from './timedEffects';
+
+export { isEffectActive } from './timedEffects';
 
 const tiers: Record<PremiumTier, string> = {
   mortal: "Mortal",
@@ -43,10 +46,6 @@ const tiers: Record<PremiumTier, string> = {
   immortal: "Immortal",
 };
 const formatQi = (value: number) => value.toLocaleString();
-export function isEffectActive(effect: ActiveStatusEffect, now: number) {
-  return Date.parse(effect.expiresAt) > now && Date.parse(effect.appliedAt) <= now;
-}
-
 export function effectStatement(effect: ActiveStatusEffect, now: number) {
   const modifiers = [
     [effect.effectDef.qiMultiplier, "Qi"],
@@ -113,6 +112,7 @@ type HomePanel = "qi" | "effects" | "stats" | "highlights";
  */
 export function UserProfileHome({
   controller,
+  now,
   mode = "private",
   publicProfile,
   boost,
@@ -121,6 +121,8 @@ export function UserProfileHome({
   onOpenSettings,
 }: {
   controller: UserProfileController;
+  /** The parent-owned effect clock, shared with the Status Effects destination. */
+  now: number;
   mode?: UserProfileHomeMode;
   publicProfile?: PublicProfilePresentation;
   boost?: HomeBoostState;
@@ -142,7 +144,6 @@ export function UserProfileHome({
   // The same inventory the Relics destination reads; counted, never copied.
   const relicCount = profile?.cosmicInventory?.length ?? 0;
   const [panel, setPanel] = useState<HomePanel | null>(null);
-  const [now, setNow] = useState(Date.now);
   const [repairing, setRepairing] = useState(false);
   const [repairError, setRepairError] = useState("");
   const repairLock = useRef(false);
@@ -151,17 +152,6 @@ export function UserProfileHome({
   const effectsRef = useRef<HTMLButtonElement>(null);
   const statsRef = useRef<HTMLButtonElement>(null);
   const highlightsRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    const refresh = () => setNow(Date.now());
-    const timer = window.setInterval(refresh, 1000);
-    window.addEventListener("focus", refresh);
-    document.addEventListener("visibilitychange", refresh);
-    return () => {
-      window.clearInterval(timer);
-      window.removeEventListener("focus", refresh);
-      document.removeEventListener("visibilitychange", refresh);
-    };
-  }, []);
   const auraXp = profile?.dao_xp ?? profile?.qi ?? 0;
   const daoData = getDaoRankData(auraXp);
   const rank = getRankForQi(auraXp);
@@ -305,7 +295,7 @@ export function UserProfileHome({
               className="cave-diamond right-[-15px] top-1/2"
             />
             <div
-              className={`absolute inset-1 rounded-full p-1 transition-all duration-700 ${auraGlow.className}`}
+              className={`absolute inset-1 rounded-full p-1 transition-all duration-700 motion-reduce:transition-none ${auraGlow.className}`}
               style={auraGlow.style}
               data-cave-portrait
             >
@@ -500,7 +490,7 @@ export function UserProfileHome({
                     : "Kept private"}
                 </span>
               </span>
-              <ChevronRight size={16} aria-hidden="true" className="shrink-0" />
+              {stats ? <ChevronRight size={16} aria-hidden="true" className="shrink-0" /> : null}
             </button>
             <button
               ref={highlightsRef}
@@ -529,7 +519,7 @@ export function UserProfileHome({
                       : "Nothing featured yet"}
                 </span>
               </span>
-              <ChevronRight size={16} aria-hidden="true" className="shrink-0" />
+              {highlights?.length ? <ChevronRight size={16} aria-hidden="true" className="shrink-0" /> : null}
             </button>
           </>
         ) : (
@@ -779,8 +769,8 @@ export function UserProfileHome({
                       </span>
                     )}
                     <span className="min-w-0">
-                      <span className="block">{highlight.title}</span>
-                      <span className="block text-xs text-neutral-400">
+                      <span className="block break-words [overflow-wrap:anywhere]">{highlight.title}</span>
+                      <span className="block break-words text-xs text-neutral-400 [overflow-wrap:anywhere]">
                         {highlight.detail}
                       </span>
                     </span>

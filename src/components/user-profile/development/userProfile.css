@@ -132,7 +132,8 @@
 }
 .cave-home-control { min-height: 6rem; }
 .cave-home-control:focus-visible, .cave-home-pillar:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 3px; }
-.cave-home-control:hover, .cave-home-pillar:not(:disabled):hover { border-color: #e2c46a; }
+.cave-home-control:not(:disabled):hover, .cave-home-pillar:not(:disabled):hover { border-color: #e2c46a; }
+.cave-home-control:disabled { cursor: default; opacity: .65; }
 .cave-home-pillar { min-height: 9rem; gap: 1.5rem; }
 .cave-home-pillar:disabled { cursor: default; }
 .cave-home-pillar-art { display: grid; place-items: center; flex: 0 0 4rem; height: 6rem; border: 1px solid #7dd3ff80; border-radius: 45% 45% 10% 10%; font-size: 2rem; color: #7dd3ff; background: radial-gradient(ellipse, #04acff40, #040b12); box-shadow: 0 0 28px #04acff40, inset 0 0 18px #04acff30; }

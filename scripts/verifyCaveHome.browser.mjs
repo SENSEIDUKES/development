@@ -78,6 +78,11 @@ export async function verifyCaveHome(page) {
   }
   await choose('Developed cultivator');
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  const reducedMotion = await page.evaluate(() => {
+    const portrait = getComputedStyle(document.querySelector('[data-cave-portrait]'));
+    return { transitionProperty: portrait.transitionProperty };
+  });
+  check(reducedMotion.transitionProperty === 'none', 'portrait aura transition must stop for reduced motion');
   await card('dao-pillar').press('Enter');
   await page.getByRole('button', { name: /Daily Dao Pillar.*Collected Today/ }).waitFor();
   check(await card('dao-pillar').isDisabled(), 'claim must disable Pillar');
@@ -92,14 +97,16 @@ export async function verifyCaveHome(page) {
   check(await dockLabels() === 'home,library,discover,profile', 'global dock order');
   check(await destinationLabels() === 'home,stories,relics', 'private Search must leave Settings beneath Daily Dao Pillar');
   await searchDestination('Relics');
-  // Below the header's compact breakpoint the secondary actions live in the
-  // existing overflow menu; above it they sit inline.
-  const headerAction = async name => {
-    const inline = page.getByRole('button', { name, exact: true });
-    if (!(await inline.first().isVisible())) await page.getByRole('button', { name: 'More actions', exact: true }).click();
-    await page.getByRole('button', { name, exact: true }).locator('visible=true').first().click();
-  };
-  await headerAction('View Public Profile');
+  // Public View belongs to the Profile settings, so exercise the Profile's
+  // own control rather than depending on responsive header actions.
+  await searchDestination('Home');
+  await button('Settings').click();
+  const publicProfileDisclosure = page.getByRole('button', {
+    name: 'Public Profile What other cultivators see, and the way in.',
+    exact: true,
+  });
+  if ((await publicProfileDisclosure.getAttribute('aria-expanded')) !== 'true') await publicProfileDisclosure.click();
+  await button('Preview Public View').click();
   await page.locator('[data-cave-home-mode="public"]').waitFor();
   check((await page.locator('.workspace-header-context').innerText()).includes('Public View'), 'public view must be indicated');
   check(await dockLabels() === 'home,library,discover,profile', 'public global dock remains stable');
@@ -143,10 +150,10 @@ export async function verifyCaveHome(page) {
   await page.locator('[data-cave-public-panel="relics"]').waitFor();
   check(!(await page.locator('main').innerText()).includes('Offering Hall'), 'public Relics must not expose the Offering Hall');
 
-  // Exit returns to the page the public view was opened from.
+  // Exit returns to the Settings page that opened the public view.
   await searchDestination('Exit');
   await page.locator('[data-cave-page][data-cave-audience="private"]').waitFor();
-  check(new URL(page.url()).searchParams.get('cave') === '/relics', 'Exit must return to the previous location');
+  check(new URL(page.url()).searchParams.get('cave') === '/settings', 'Exit must return to the previous location');
 
   // Account entries originate from Home. Inbox and Redeem Code use keyboard
   // activation; each unavailable development destination must offer its route
@@ -182,5 +189,32 @@ export async function verifyCaveHome(page) {
   await page.locator('#cave-username').fill('a_very_long_private_dao_name_kept_whole');
   check(await page.locator('#cave-username').inputValue() === 'a_very_long_private_dao_name_kept_whole', 'username must not be capped');
 
-  return { widths: [320, 390, 768, 1024, 1440], geometry: 'passed', emptyReserves: 'passed', expirationFocus: 'passed', claims: 'passed', reducedMotion: 'passed', publicView: 'passed', boost: 'passed', accountEntries: 'passed', displayNameLimit: 'passed' };
+  // A private publication turns its two public cards into disabled controls.
+  // They must not keep the pointer/hover affordance that an available card has.
+  const visibilityLabels = page.locator('[data-cave-visibility] label');
+  if ((await publicProfileDisclosure.getAttribute('aria-expanded')) !== 'true') await publicProfileDisclosure.click();
+  for (let index = 0; index < await visibilityLabels.count(); index += 1) {
+    const label = visibilityLabels.nth(index);
+    if (await label.getByRole('switch').isChecked()) await label.click();
+  }
+  await button('Preview Public View').click();
+  await page.locator('[data-cave-home-mode="public"]').waitFor();
+  const disabledCardAffordance = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll('[data-cave-card="stats"], [data-cave-card="highlights"]')];
+    return cards.map(card => {
+      const style = getComputedStyle(card);
+      return {
+        disabled: card.disabled,
+        cursor: style.cursor,
+        opacity: Number.parseFloat(style.opacity),
+        glyphCount: card.querySelectorAll('svg').length,
+      };
+    });
+  });
+  check(
+    disabledCardAffordance.every(card => card.disabled && card.cursor === 'default' && card.opacity <= .65 && card.glyphCount === 1),
+    `disabled public card affordance: ${JSON.stringify(disabledCardAffordance)}`,
+  );
+
+  return { widths: [320, 390, 768, 1024, 1440], geometry: 'passed', emptyReserves: 'passed', expirationFocus: 'passed', claims: 'passed', reducedMotion: 'passed', publicView: 'passed', boost: 'passed', accountEntries: 'passed', displayNameLimit: 'passed', disabledAffordance: 'passed' };
 }

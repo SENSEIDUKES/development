@@ -74,17 +74,17 @@ export function UserProfileDaoPillarPanel({
               <p
                 id="cave-dao-pillar-streak"
                 className={`font-sans text-3xl font-black tracking-wide ${
-                  isCracked ? 'text-[#ff3333]/60 line-through' : 'text-orange-400'
+                  isCracked ? 'text-[#ff3333] line-through' : 'text-orange-400'
                 }`}
               >
                 {currentStreak} {currentStreak === 1 ? 'Day' : 'Days'}
               </p>
               {profile?.lastReadDate ? (
-                <p className="mt-1 font-mono text-[10px] text-neutral-500">
+                <p className="mt-1 font-mono text-[10px] text-neutral-400">
                   Last refined <span className="text-neutral-300">{profile.lastReadDate}</span>
                 </p>
               ) : (
-                <p className="mt-1 font-mono text-[10px] italic text-neutral-500">
+                <p className="mt-1 font-mono text-[10px] italic text-neutral-400">
                   Refine once to establish your pillar.
                 </p>
               )}

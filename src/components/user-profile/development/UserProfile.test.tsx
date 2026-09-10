@@ -79,11 +79,12 @@ interface RenderOptions {
   accountControls?: import('./caveAccountControls').CaveAccountControls;
   state?: UserProfilePreviewState;
   onLogout?: () => void;
+  onNavigateHome?: () => void;
   Component?: typeof UserProfile;
   adapter?: Partial<MockUserProfileServicesOptions>;
 }
 
-async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), Component = UserProfile, adapter = {}, accountControls }: RenderOptions = {}) {
+async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), onNavigateHome = vi.fn(), Component = UserProfile, adapter = {}, accountControls }: RenderOptions = {}) {
   const scenario = getPreviewScenario(state);
   const logExcludedAction = vi.fn();
   const onSignIn = vi.fn<(account: AppUser) => void>();
@@ -99,7 +100,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
           stories={scenario.stories}
           accountControls={accountControls}
           onLogout={onLogout}
-          onNavigateHome={vi.fn()}
+          onNavigateHome={onNavigateHome}
           onNavigateLibrary={vi.fn()}
         />
       </UserProfileServicesProvider>,
@@ -216,7 +217,7 @@ describe('Cultivator Cave home', () => {
     expect(container.querySelector('.workspace-header [aria-label="Open settings"]')).toBeNull();
     // The chrome names the workspace without owning the page heading.
     expect(container.querySelector('h1')).toBeNull();
-    expect(container.querySelector('[data-slot="library-header-badge-title"]')?.textContent).toBe('Cultivator Cave');
+    expect(container.querySelector('[data-slot="library-header-badge-title"]')?.textContent).toBe('Profile');
     // Below the desktop breakpoint the drawer is the only navigation mounted:
     // no rail, and so no second copy of the same destinations.
     expect(container.querySelectorAll('nav[aria-label="Library global navigation"]')).toHaveLength(1);
@@ -1158,4 +1159,18 @@ describe('Display name limit', () => {
     expect(text()).not.toContain('Display names are limited to 12 characters.');
     expect(byText<HTMLButtonElement>('button', 'Guard Changes').disabled).toBe(false);
   });
+});
+
+
+it('uses the SEN emblem as the Profile header home action', async () => {
+  const onNavigateHome = vi.fn();
+  await renderCave({ onNavigateHome });
+  const header = container.querySelector('header')!;
+  const emblem = header.querySelector('img[alt="SEN"]')!;
+  expect(emblem.getAttribute('src')).toBe('/favicon.jpg');
+  expect(header.querySelector('img[src="/icons/sacred-tree.svg"]')).toBeNull();
+  const link = emblem.closest('a')!;
+  expect(link.getAttribute('aria-label')).toBe('Return to Library');
+  await act(async () => link.click());
+  expect(onNavigateHome).toHaveBeenCalledTimes(1);
 });

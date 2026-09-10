@@ -653,3 +653,10 @@ keep the sample account values and Workshop wrapper here.
 Validation: 80 profile component tests, production build, package boundaries and UI artifact checks passed. Browser checks at 320, 390, 768, 1024 and 1440px confirmed equal button widths, 44px touch targets, centered identity and no horizontal overflow. `verifyCaveHome` exercises the Inbox, Store, Settings, and Redeem Code entry/return paths at mobile size, with keyboard activation for Inbox and Redeem Code. This is local browser emulation, not physical iOS or live account-service verification.
 
 - **2026-09-09:** Removed the redundant private Public View header row; Settings remains the entry point. Shared mobile title space now preserves Cultivator Cave in full. Locked reference and source-comparison dates are unchanged.
+
+
+## 2026-09-09 navigation polish
+
+Changed only the shared page header title to Profile. Cultivator Cave terminology, routes, theme and contents remain unchanged.
+
+- **2026-09-09 header emblem follow-up:** Profile now uses the existing SEN logo in its shared clickable header emblem. The existing Home callback is preserved. `public/icons/sacred-tree.svg` and `CAVE_EMBLEM_SRC` remain available for future use; the sacred tree is no longer displayed in the Profile header.

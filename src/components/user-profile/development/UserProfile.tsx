@@ -27,7 +27,6 @@ import { StoryAuthGate, STORY_AUTH_DISSOLVE_MS } from '@seihouse/sen/story-seed'
 import type { AppUser, Story } from '../shared/types';
 import { useUserProfileServices } from '../shared/userProfileServices';
 import {
-  CAVE_EMBLEM_SRC,
   DEFAULT_CAVE_ENVIRONMENT_ID,
   getCaveEnvironment,
 } from './caveEnvironment';
@@ -453,8 +452,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         mainClassName="cave-workspace-main"
         sidebarLabel={navigationDefinition.label}
         sidebar={caveSidebarMounted ? <LibrarySectionSidebar /> : undefined}
-        header={<WorkspaceHeader title="Cultivator Cave" landmark="none"
-          emblem={{ src: CAVE_EMBLEM_SRC, alt: 'Library sacred tree' }}
+        header={<WorkspaceHeader title="Profile" landmark="none"
+          emblem={{ src: '/favicon.jpg', alt: 'SEN' }}
           home={{ href: '/', label: 'Return to Library', onNavigate: onNavigateHome }}
           contextualItem={isPublicView ? <p role="status" className="workspace-header-public-view" title="Public View">
             <Eye size={20} aria-hidden="true" /><span>Public View</span>

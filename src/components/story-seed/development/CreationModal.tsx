@@ -66,6 +66,8 @@ import { useStoryBankRecords } from './useStoryBankRecords';
 import { downloadStorySeed, downloadStorySeedCollection } from '../shared/storySeedSerialization';
 
 export interface CreationModalProps {
+  /** Return explicitly to the host main hub/Home. */
+  onNavigateHome: () => void;
   onStartStory: (payload: InitialStoryGenerationPayload) => Promise<void>;
   onGenerateBlueprint: (payload: BlueprintGenerationPayload) => Promise<WorldBlueprint>;
   isGenerating: boolean;
@@ -145,7 +147,7 @@ const selectCreationModalStore = (state: MockAppStore): CreationModalStoreSlice 
   };
 };
 
-export default function CreationModal({ onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error }: CreationModalProps) {
+export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error }: CreationModalProps) {
   const storeIsGenerating = useAppStore(selectIsGenerating);
   const {
     activeAgentId,
@@ -636,6 +638,7 @@ export default function CreationModal({ onStartStory, onGenerateBlueprint, isGen
     // The shared workspace shell owns the header row, the desktop section rail
     // and the scrolling main region; only Story Seed's own content sits inside.
     <StorySeedWorkspaceChrome
+        onNavigateHome={onNavigateHome}
         seed={seed} updateSeed={updateSeed} activeSection={activeSection} equippedTitle={equippedRelicTitle}
         onSelectSection={selectWorkspaceSection} isGenerating={isGenerating} savedFeedback={savedFeedback}
         showStoryBank={showStoryBank} helpOpen={helpOpen} canManifest={canGenerate}

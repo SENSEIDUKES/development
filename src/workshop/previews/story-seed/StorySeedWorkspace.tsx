@@ -1,3 +1,5 @@
+import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigation';
+import { LIBRARY_DESTINATIONS } from '../../../components/library-shell/development/libraryRoutes';
 import { lazy, useCallback, useEffect, useRef, useState } from 'react';
 import {
   CreationModal as DevelopmentCreationModal,
@@ -426,6 +428,7 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
   };
 
   const developmentChamberProps = {
+    onNavigateHome: () => navigateLibraryPreview(LIBRARY_DESTINATIONS[0].location),
     isGenerating: Boolean(activeScenario?.isGenerating) || blueprintGenerating,
     error: activeScenario?.error ?? null,
     onGenerateBlueprint: async (payload: BlueprintGenerationPayload) => {

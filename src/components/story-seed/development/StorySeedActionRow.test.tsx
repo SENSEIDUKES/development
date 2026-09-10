@@ -23,7 +23,7 @@ afterEach(() => { act(() => root.unmount()); container.remove(); document.body.i
 
 const chrome = (overrides: Partial<React.ComponentProps<typeof StorySeedWorkspaceChrome>> = {}) => (
   <LibraryPresentationProvider>
-    <StorySeedWorkspaceChrome
+    <StorySeedWorkspaceChrome onNavigateHome={vi.fn()}
       seed={createEmptyStorySeedInput()} updateSeed={vi.fn()} activeSection="origin" onSelectSection={vi.fn()}
       showStoryBank={false} helpOpen={false} isGenerating={false} savedFeedback={false}
       canManifest manifestLabel="Manifest World Blueprint" status="All required Story inputs complete"
@@ -108,12 +108,12 @@ it('preserves eligibility, disabled reasons, loading indicators and saved feedba
   expect(failed.textContent).toContain('The seed could not be saved.');
 });
 
-it('keeps Settings, Story Bank and Help in Story Seed navigation rather than a second header', async () => {
+it('keeps ordered navigation and Help in the top header', async () => {
   const onToggleStoryBank = vi.fn(); const onOpenHelp = vi.fn();
   await render({ onToggleStoryBank, onOpenHelp });
   const bottom = container.querySelector('nav[aria-label="Story Seed navigation"]')!;
   expect(Array.from(bottom.querySelectorAll('button')).map(element => element.textContent?.trim()))
-    .toEqual(['Sections', 'Story Bank', 'Help', 'Settings', 'Manifest']);
+    .toEqual(['Sections', 'Story Bank', 'Settings', 'Back']);
   // The section drawer lists them too, so the desktop rail built from the same
   // definition offers them without any header command row.
   await click(Array.from(bottom.querySelectorAll('button')).find(element => element.textContent?.trim() === 'Sections')!);
@@ -123,7 +123,7 @@ it('keeps Settings, Story Bank and Help in Story Seed navigation rather than a s
   expect(drawer.textContent).toContain('Settings');
   await click(Array.from(bottom.querySelectorAll('button')).find(element => element.textContent?.trim() === 'Story Bank')!);
   expect(onToggleStoryBank).toHaveBeenCalledTimes(1);
-  await click(Array.from(bottom.querySelectorAll('button')).find(element => element.textContent?.trim() === 'Help')!);
+  await click(container.querySelector('header button[aria-label="Help"]')!);
   expect(onOpenHelp).toHaveBeenCalledTimes(1);
 });
 
@@ -134,4 +134,20 @@ it('keeps Save Draft available while the Story Bank replaces the form, without o
   expect(Array.from(row.querySelectorAll('button')).map(element => element.textContent?.trim())).toEqual(['Save Draft']);
   await click(button('Save Draft')!);
   expect(onSaveDraft).toHaveBeenCalledTimes(1);
+});
+
+
+it('returns through the host Home callback with the Celestial Library emblem', async () => {
+  const onNavigateHome = vi.fn();
+  const historyBack = vi.spyOn(window.history, 'back');
+  await render({ onNavigateHome });
+  const nav = container.querySelector('nav[aria-label="Story Seed navigation"]')!;
+  const back = Array.from(nav.querySelectorAll('button')).find(item => item.textContent === 'Back')!;
+  expect(back.querySelector('img')?.getAttribute('src')).toBe('/favicon.jpg');
+  expect(back.querySelector('img')?.getAttribute('alt')).toBe('Celestial Library');
+  expect(nav.querySelector('.lucide-circle-help')).toBeNull();
+  expect(container.querySelector('header .workspace-help-emblem')?.textContent).toBe('?');
+  await click(back);
+  expect(onNavigateHome).toHaveBeenCalledTimes(1);
+  expect(historyBack).not.toHaveBeenCalled();
 });

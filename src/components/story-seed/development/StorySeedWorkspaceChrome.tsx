@@ -13,6 +13,8 @@ import { WorkspaceSheet } from '../../library-shell/development/WorkspaceSheet';
 import './story-seed.css';
 
 interface StorySeedWorkspaceChromeProps {
+  /** Host-owned explicit main hub navigation; never browser history. */
+  onNavigateHome: () => void;
   seed: StorySeedInput;
   updateSeed: (update: SeedUpdate) => void;
   activeSection: SeedSectionId;
@@ -141,11 +143,9 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
       onSelect: () => { setSettingsOpen(false); navigation.openDrawer(); } },
     { id: bank.id, label: bank.label, icon: <Sprout size={20} />, active: props.showStoryBank,
       onSelect: () => { setSettingsOpen(false); bank.onAction(); } },
-    { id: help.id, label: help.label, icon: <CircleHelp size={20} />, active: props.helpOpen,
-      onSelect: () => { setSettingsOpen(false); help.onAction(); } },
     { id: settings.id, label: settings.label, icon: <Settings size={20} />, active: settingsOpen, onSelect: openSettings },
-    ...(props.canManifest && !props.showStoryBank ? [{ id: manifest.id, label: 'Manifest', icon: <Sparkles size={20} />,
-      onSelect: () => { setSettingsOpen(false); manifest.onAction(); } }] : []),
+    { id: 'back', label: 'Back', icon: <img src="/favicon.jpg" alt="Celestial Library" className="h-5 w-5 object-contain" />,
+      onSelect: () => { setSettingsOpen(false); navigation.closeDrawer(); props.onNavigateHome(); } },
   ]} />;
   const settingsSheet = <WorkspaceSheet open={settingsOpen} onOpenChange={setSettingsOpen} title="Story Seed settings" closeLabel="Close settings"
     returnFocusRef={settingsReturnFocusRef}

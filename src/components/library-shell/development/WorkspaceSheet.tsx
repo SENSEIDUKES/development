@@ -11,7 +11,7 @@ export function WorkspaceSheet({ open, onOpenChange, onOpenChangeComplete, title
   children: ReactNode; footer?: ReactNode; returnFocusRef: RefObject<HTMLElement | null>;
 }) {
   return <SEIDialog open={open} onOpenChange={onOpenChange} onOpenChangeComplete={onOpenChangeComplete}>
-    <SEIDialogContent aria-modal="true" hideClose variant="dark" className="workspace-sheet" backdropClassName="!z-[240]"
+    <SEIDialogContent aria-modal="true" hideClose variant="dark" className="workspace-sheet max-lg:translate-x-0 max-lg:translate-y-0" backdropClassName="!z-[240]"
       bodyClassName="flex min-h-0 flex-col !overflow-hidden" finalFocus={returnFocusRef}>
       <div className="flex shrink-0 items-center justify-between gap-4 pb-3">
         <SEIDialogTitle>{title}</SEIDialogTitle>

@@ -74,11 +74,11 @@ export const getLibraryHelpItems = (
     .map((item, index) => ({
       item,
       index,
-      translation: getHelpTranslation(item, language),
       isRelevant: item.contexts?.includes(page) ? 1 : 0,
     }))
-    .filter(({ item, translation }) => {
+    .filter(({ item }) => {
       if (!normalizedQuery) return true;
+      const translation = getHelpTranslation(item, language);
       return [item.label, translation?.line, translation?.detail]
         .some(value => value?.toLocaleLowerCase().includes(normalizedQuery));
     })

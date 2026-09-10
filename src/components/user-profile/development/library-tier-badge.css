@@ -1,0 +1,110 @@
+/* LibraryTierBadge — the compact subscription-tier capsule.
+   Premium through material, lighting, and depth only: a champagne interior
+   with dark lettering, a layered gold / portal-blue / violet rim, a soft outer
+   halo, an inner surface highlight, and an occasional restrained sheen.
+   Reduced-motion users get the same lit surface with the sheen removed.
+   Self-contained so it can move into @seihouse/library-ui unchanged. */
+@layer components {
+  :where(.library-tier-badge) {
+    --ltb-ivory-high: #fcf8ee;
+    --ltb-ivory: #f4ecd6;
+    --ltb-ivory-low: #e8dbb8;
+    --ltb-ink: #1c160a;
+    --ltb-gold: #d4af37;
+    --ltb-gold-light: #f1dc93;
+    --ltb-portal: #04acff;
+    --ltb-violet: #7b5cc9;
+    --ltb-rim: linear-gradient(
+      135deg,
+      var(--ltb-gold) 0%,
+      var(--ltb-gold-light) 24%,
+      var(--ltb-portal) 60%,
+      var(--ltb-violet) 100%
+    );
+    --ltb-sheen-period: 9s;
+
+    position: relative;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 1.5rem;
+    margin: 0;
+    padding: 0.28rem 0.72rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    overflow: hidden;
+    isolation: isolate;
+    /* The interior paints over padding-box and the rim over border-box, so
+       the gradient rim reads as a true edge at any capsule size. */
+    background:
+      linear-gradient(180deg, var(--ltb-ivory-high) 0%, var(--ltb-ivory) 58%, var(--ltb-ivory-low) 100%) padding-box,
+      var(--ltb-rim) border-box;
+    color: var(--ltb-ink);
+    font-family: var(--font-sans, "Rubik", ui-sans-serif, system-ui, sans-serif);
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: 0.06em;
+    text-align: center;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+    vertical-align: middle;
+    -webkit-font-smoothing: antialiased;
+    box-shadow:
+      /* inner surface highlight and a faint lower edge for depth */
+      inset 0 1px 0 rgb(255 255 255 / 0.85),
+      inset 0 -1px 0 rgb(118 92 38 / 0.16),
+      /* seat the capsule on the dark plaque */
+      0 1px 2px rgb(0 0 0 / 0.35),
+      /* soft outer halo in gold with a cool portal fringe */
+      0 0 12px rgb(212 175 55 / 0.26),
+      0 0 24px rgb(4 172 255 / 0.1);
+  }
+
+  :where(.library-tier-badge__label) {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* An occasional restrained sheen: one soft sweep, then a long rest. */
+  :where(.library-tier-badge)::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      112deg,
+      transparent 36%,
+      rgb(255 255 255 / 0.55) 48%,
+      rgb(255 255 255 / 0.78) 52%,
+      transparent 64%
+    );
+    transform: translateX(-130%);
+    animation: library-tier-badge-sheen var(--ltb-sheen-period) ease-in-out infinite;
+  }
+
+  :where(.library-tier-badge[data-sheen="none"])::after {
+    display: none;
+  }
+
+  @keyframes library-tier-badge-sheen {
+    0% { transform: translateX(-130%); }
+    16% { transform: translateX(130%); }
+    100% { transform: translateX(130%); }
+  }
+
+  /* The static fallback keeps the lit material; only the moving sheen is
+     removed, so reduced-motion users see the same finished surface. */
+  @media (prefers-reduced-motion: reduce) {
+    :where(.library-tier-badge)::after {
+      animation: none;
+      transform: translateX(130%);
+    }
+  }
+}

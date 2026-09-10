@@ -1557,6 +1557,36 @@ describe('LibraryElementalTitle profile integration', () => {
     expect(container.querySelector('[aria-label="Subscription tier: Inner Sect"]')).not.toBeNull();
   });
 
+  it('renders the subscription tier as the LibraryTierBadge beneath the rank, from the same profile field', async () => {
+    await renderCave();
+    const row = container.querySelector('[data-cave-rank-row]')!;
+    const badge = row.querySelector('[data-slot="library-tier-badge"]') as HTMLElement;
+    expect(badge.classList.contains('cave-tier-badge')).toBe(true);
+    expect(badge.previousElementSibling).toBe(row.querySelector('[data-cave-rank]'));
+    expect(badge.textContent).toBe('Inner Sect');
+    expect(badge.getAttribute('aria-label')).toBe('Subscription tier: Inner Sect');
+    expect(badge.tagName).toBe('SPAN');
+    expect(badge.getAttribute('role')).toBeNull();
+    expect(badge.getAttribute('tabindex')).toBeNull();
+    expect(row.querySelectorAll('[data-slot="library-tier-badge"]')).toHaveLength(1);
+    // The rank treatment, name, and progress bar around it are untouched.
+    expect(row.querySelector('[data-cave-rank]')?.getAttribute('data-element')).toBe('lightning');
+    expect(container.querySelector('[data-cave-name]')?.textContent).toContain(getPreviewScenario('developed-cultivator').profile!.displayName);
+    expect(container.querySelector('[data-cave-progress]')).not.toBeNull();
+  });
+
+  it.each([
+    ['mortal', 'Mortal'],
+    ['outer_sect', 'Outer Sect'],
+    ['sect_master', 'Sect Master'],
+    ['immortal', 'Immortal'],
+  ] as const)('labels the %s tier from the profile as %s', async (premiumTier, label) => {
+    await renderCave({ adapter: { profileOverride: { premiumTier } } });
+    const badge = container.querySelector('[data-cave-rank-row] [data-slot="library-tier-badge"]')!;
+    expect(badge.textContent).toBe(label);
+    expect(badge.getAttribute('aria-label')).toBe(`Subscription tier: ${label}`);
+  });
+
   it.each(['', '<img src=x onerror=alert(1)>', '讀者🌟'.repeat(80)])('safely renders dynamic name %s', async displayName => {
     await renderCave({ adapter: { profileOverride: { displayName } } });
     const name = container.querySelector('[data-cave-name]')!;

@@ -1,6 +1,33 @@
 import { createRoot } from 'react-dom/client';
+import type { ReactNode } from 'react';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { shellStates, type ShellSource } from './previewData';
+
+/**
+ * This capture is its own document (`library-shell.html`), not a route inside
+ * the Workshop app (`index.html`). Reached through a Workshop iframe that's
+ * fine, but "Open responsive … at browser width" (see LightNovelsHomeWorkspace
+ * and LibraryShellWorkspace) navigates the whole tab here, and the captured
+ * app shell has no Workshop chrome of its own — without this, that's a dead
+ * end. Fixed positioning keeps it reachable above the shell's own bottom
+ * navigation on every screen and scroll position, and it only renders when
+ * this document is the top-level page, so the same capture stays clean when
+ * embedded in a Workshop iframe.
+ */
+function CaptureExitToWorkshop({ children }: { children: ReactNode }) {
+  const isTopLevel = (() => {
+    try { return window.top === window.self; } catch { return true; }
+  })();
+  return <>
+    {isTopLevel && <a href="/" style={{
+      position: 'fixed', top: 'max(12px, env(safe-area-inset-top))', left: 'max(12px, env(safe-area-inset-left))',
+      zIndex: 2147483647, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px',
+      borderRadius: 9999, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(15,15,15,0.85)',
+      color: '#e5e5e5', font: '500 12px/1 system-ui, sans-serif', textDecoration: 'none', backdropFilter: 'blur(6px)',
+    }}>← Back to Workshop</a>}
+    {children}
+  </>;
+}
 
 const query = new URLSearchParams(window.location.search);
 const source: ShellSource = query.get('source') === 'story-seed' ? 'story-seed' : 'main-library';
@@ -27,15 +54,15 @@ async function mount() {
     const configuration = query.get('source') === 'header-states' ? 'header-states' : query.get('source') === 'cultivator-cave' ? 'cultivator-cave' : source;
     const headerState = (headerStates[configuration] as readonly string[]).includes(requested) ? requested : headerStates[configuration][0];
     document.title = 'Library Shell — Development headers';
-    root.render(<DevAudioPlaybackProvider><LibraryPresentationProvider><DevelopmentHeaderPreview source={configuration} state={headerState} /></LibraryPresentationProvider></DevAudioPlaybackProvider>);
+    root.render(<CaptureExitToWorkshop><DevAudioPlaybackProvider><LibraryPresentationProvider><DevelopmentHeaderPreview source={configuration} state={headerState} /></LibraryPresentationProvider></DevAudioPlaybackProvider></CaptureExitToWorkshop>);
   } else if (source === 'main-library') {
     await import('../../../components/library-shell/reference/main-library/source-theme.css');
     const { MainLibraryPreview } = await import('./MainLibraryPreview');
-    root.render(<MainLibraryPreview state={state} />);
+    root.render(<CaptureExitToWorkshop><MainLibraryPreview state={state} /></CaptureExitToWorkshop>);
   } else {
     await import('../../../styles.css');
     const { StorySeedPreview } = await import('./StorySeedPreview');
-    root.render(<LibraryPresentationProvider><StorySeedPreview state={state} /></LibraryPresentationProvider>);
+    root.render(<CaptureExitToWorkshop><LibraryPresentationProvider><StorySeedPreview state={state} /></LibraryPresentationProvider></CaptureExitToWorkshop>);
   }
 }
 void mount();

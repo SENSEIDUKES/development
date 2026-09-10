@@ -466,7 +466,7 @@ describe('CardWorkshopView', () => {
           onClick={onNoticeClick}
           role="button"
           tabIndex={0}
-          dangerouslySetInnerHTML={{ __html: '<p>Unsafe notice markup</p>' }}
+          contentEditable={true}
         />
         <SystemBlock
           content="[ The Rain Court records the cost of defiance. ]"
@@ -504,8 +504,7 @@ describe('CardWorkshopView', () => {
     expect(notice?.querySelectorAll('button, a[href], [role="button"], [tabindex]:not([tabindex="-1"])')).toHaveLength(0);
     expect(notice?.getAttribute('role')).toBeNull();
     expect(notice?.getAttribute('tabindex')).toBeNull();
-    expect(notice?.getAttribute('dangerouslySetInnerHTML')).toBeNull();
-    expect(notice?.textContent).not.toContain('Unsafe notice markup');
+    expect(notice?.getAttribute('contenteditable')).toBeNull();
     expect(notice?.querySelector('[data-system-summary-toggle]')).toBeFalsy();
     expect(notice?.querySelector('[data-world-notice-prose-link]')).toBeFalsy();
     act(() => notice?.click());

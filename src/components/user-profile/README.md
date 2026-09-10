@@ -18,6 +18,19 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-10 subscription badge:** Restyled the tier badge beneath the rank as the
+  **LibraryTierBadge** capsule — a cool translucent glass pane with dark lettering under a layered
+  gold / portal / violet rim, a soft halo, and an occasional restrained sheen; reduced-motion users
+  keep the same lit surface with the sheen removed. The pane is tinted glass rather than a milky
+  fill: the plaque behind it is blurred and shows through, a specular crest and refraction step
+  give it thickness, and the rim is a masked ring so its gradient stays an edge instead of washing
+  across the surface. The stop alphas are chosen so the lettering holds AAA contrast even over pure
+  black. The label still comes from `premiumTier` through the existing tier map, sits in the same
+  rank-row slot, and remains non-interactive; the name, rank treatment, progress bar, and the rest
+  of Home are unchanged. The component is self-contained (`LibraryTierBadge.tsx` +
+  `library-tier-badge.css`) so it can be extracted into the UI repository. Locked reference
+  unchanged.
+
 - **2026-09-10:** Imported `LibraryElementalTitle` from UI PR #65, source `packages/seihouse-library-ui/src/ui/LibraryElementalTitle.tsx` at `1470501fa09156019eebb4f5e08179f8f9f2afde`. Cave Home uses fire for the selected Leader aura and lightning for the earned Leader rank. Other ranks, custom colors, and active curse/silence overrides retain their existing presentation. The UI package owns motion, reduced motion, and safe text wrapping; the profile still owns names, rank, and status effects. Locked reference unchanged.
 
 - **2026-09-10 accessibility and performance audit:** Kept the existing Cave composition and
@@ -82,6 +95,7 @@ shared/       — the services port, domain types, and the unforked offering-wee
 | --- | --- |
 | `UserProfile.tsx` | The Cave workspace: shared header and navigation, persistent controller, four page destinations, portrait and language dialogs |
 | `UserProfileCaveDestination.tsx` | The frame every destination opens into (back control, title, heading focus) |
+| `LibraryTierBadge.tsx` / `library-tier-badge.css` | **The subscription-tier capsule** on the rank row — self-contained material, lighting, sheen and reduced-motion fallback, staged for extraction into `@seihouse/library-ui` |
 | `UserProfileStoriesPanel.tsx` | **Stories** — Manifested Stories and Story Seeds in one destination |
 | `UserProfileInventoryPanel.tsx` | **Relics** — inventory, soul attunement, the Offering Hall pouch, submitted history, and rewards |
 | `UserProfileDaoPillarPanel.tsx` | **Dao Pillar** — streak, cracked state and repair, milestones, daily refinement |

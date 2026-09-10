@@ -25,6 +25,7 @@ import type { UserProfileController } from "../shared/userProfileServices";
 import type { ActiveStatusEffect, PremiumTier } from "../shared/types";
 import type { PublicProfilePresentation } from "./publicProfile";
 import type { CaveAccountControls } from "./caveAccountControls";
+import { LibraryTierBadge } from "./LibraryTierBadge";
 import {
   getDaoRankData,
   getRankForQi,
@@ -418,12 +419,12 @@ export function UserProfileHome({
                     >
                       {daoData.rank}
                     </LibraryElementalTitle>
-                    <span
+                    <LibraryTierBadge
                       className="cave-tier-badge"
                       aria-label={`Subscription tier: ${tiers[profile.premiumTier ?? "mortal"]}`}
                     >
                       {tiers[profile.premiumTier ?? "mortal"]}
-                    </span>
+                    </LibraryTierBadge>
                   </div>
                   {isPublic ? (
                     <p className="cave-home-bio mt-3" data-cave-bio>

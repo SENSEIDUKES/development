@@ -164,14 +164,16 @@ export function UserProfileHome({
     auraSelection,
     effects,
     auraXp,
+    now,
   );
   const auraGlow = getAuraGlowStyle(
     auraSelection,
     effects,
     auraXp,
+    now,
   );
   const activeRank = resolveRankVisual(auraSelection, auraXp);
-  const hasAuraOverride = activeAuraOverride(effects) !== null;
+  const hasAuraOverride = activeAuraOverride(effects, now) !== null;
   const hasFireTitle = activeRank.rank.id === 'leader' && activeRank.source === 'rank' && !hasAuraOverride;
   const hasLightningRank = rank.id === 'leader' && !hasAuraOverride;
   const showsRankParticles = activeRank.rank.motes;

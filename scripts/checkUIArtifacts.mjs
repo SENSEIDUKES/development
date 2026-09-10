@@ -67,6 +67,9 @@ for (const name of ['ui', 'library-ui']) {
   );
   assert.equal(provenance.artifacts[packageName].integrity, integrity);
   assert.equal(provenance.artifacts[packageName].file, file);
+  const artifact = provenance.artifacts[packageName];
+  assert.match(artifact.sourceCommit, /^[a-f0-9]{40}$/, packageName + ' requires a source commit');
+  assert.match(artifact.pullRequest, /^https:\/\/github\.com\/SENSEIDUKES\/UI\/pull\/[1-9]\d*$/, packageName + ' requires a UI pull request');
 }
 // The vendored tarballs keep the same name and version across UI commits, so
 // `npm install` over a restored `node_modules` reports "up to date" and leaves

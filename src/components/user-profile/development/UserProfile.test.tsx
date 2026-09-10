@@ -31,6 +31,7 @@ import {
   getAuraSelection,
   getAuraGlowStyle,
   getAuraTextStyle,
+  activeAuraOverride,
   getRankForQi,
   rankBackground,
   resolveRankVisual,
@@ -1584,4 +1585,18 @@ describe('elemental aura overrides', () => {
     expect(container.querySelector('[data-cave-rank]')?.getAttribute('data-element')).toBe('none');
     expect(container.querySelector('[data-cave-name] .library-elemental-title__particles')).toBeNull();
   });
+});
+
+
+it('uses the supplied profile clock consistently at aura expiry', () => {
+  const clock = Date.now() - 10_000;
+  const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
+  const effects = [{ ...effect, effectDef: { ...effect.effectDef, name: 'Ghostly Silence' },
+    appliedAt: new Date(clock - 1000).toISOString(), expiresAt: new Date(clock + 1000).toISOString() }];
+  expect(activeAuraOverride(effects, clock)).toBe('silenced');
+  expect(getAuraTextStyle('rank:leader', effects, 12000, clock).className).toContain('text-neutral-400');
+  expect(getAuraGlowStyle('rank:leader', effects, 12000, clock).className).toContain('shadow-none');
+  expect(activeAuraOverride(effects, clock + 1000)).toBeNull();
+  expect(getAuraTextStyle('rank:leader', effects, 12000, clock + 1000).className).not.toContain('text-neutral-400');
+  expect(getAuraGlowStyle('rank:leader', effects, 12000, clock + 1000).className).not.toContain('shadow-none');
 });

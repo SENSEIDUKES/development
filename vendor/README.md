@@ -1,9 +1,9 @@
 # Private UI artifacts
 
-These committed tarballs are built from the merged UI PR [#60](https://github.com/SENSEIDUKES/UI/pull/60), commit `42961e48e78ee816f9c2801a37a7f66af8aa2ae2`:
+The universal UI tarball is built from the merged UI PR [#60](https://github.com/SENSEIDUKES/UI/pull/60), commit `42961e48e78ee816f9c2801a37a7f66af8aa2ae2`:
 
 - `@seihouse/ui@0.4.0`: universal SEIHouse primitives and experience tokens, including the `SEIAppHeader` application chrome and the `SEIAppShell` scaffold.
-- `@seihouse/library-ui@0.4.0`: the Celestial Library component system, including the compact `LibraryHeaderBadge` `mode="app-header"` presentation.
+- `@seihouse/library-ui@0.4.0`: the Celestial Library component system, including `LibraryElementalTitle`, refreshed from merged [UI PR #65](https://github.com/SENSEIDUKES/UI/pull/65), source commit `1470501fa09156019eebb4f5e08179f8f9f2afde`. The per-artifact source fields override the shared baseline provenance.
 
 `ui-artifacts.json` records source provenance and SHA-512 integrity. The root manifest pins these files, and `package-lock.json` records their integrity. Run `npm ci` followed by `npm run check:ui-artifacts` to verify the installed dependency inputs.
 
@@ -11,7 +11,7 @@ These committed tarballs are built from the merged UI PR [#60](https://github.co
 
 No registry publication or repository visibility change is required.
 
-To reproduce, check out the recorded UI commit, install with its frozen pnpm lockfile, and run these commands sequentially from UI:
+To reproduce an artifact, check out its recorded UI commit (the per-artifact commit when present, otherwise the shared source commit), install with its frozen pnpm lockfile, and build and pack that package from UI. Run each pack at its own recorded commit:
 
 ```sh
 pnpm build:package

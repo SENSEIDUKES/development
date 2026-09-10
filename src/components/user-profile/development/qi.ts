@@ -258,7 +258,7 @@ export function getAuraSelection(
 }
 
 /** Which status effect, if any, is overriding the aura right now. */
-function activeAuraOverride(
+export function activeAuraOverride(
   activeStatusEffects: ActiveStatusEffect[] | undefined,
 ): 'silenced' | 'cursed' | null {
   if (!activeStatusEffects?.length) return null;

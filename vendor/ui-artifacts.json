@@ -11,7 +11,9 @@
     "@seihouse/library-ui": {
       "version": "0.4.0",
       "file": "vendor/seihouse-library-ui-0.4.0.tgz",
-      "integrity": "sha512-t163GHRX4+9U9xMuzBzoqN8L3CmKEHgAhLufPTMbkEGpMYycF2XuJtGoM5eiMNL/ZlwyvTDv7mjvAQzcrcxvVQ=="
+      "integrity": "sha512-+/dflIVH8O8B/NhD7qO0lqdKS4LYsXmnlMwUT+AF26hnDvgZoSvZEp5pfkOZgpWurcENcwo1qLRM+s1qMEVH/Q==",
+      "sourceCommit": "1470501fa09156019eebb4f5e08179f8f9f2afde",
+      "pullRequest": "https://github.com/SENSEIDUKES/UI/pull/65"
     }
   }
 }

@@ -18,6 +18,8 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-10:** Imported `LibraryElementalTitle` from UI PR #65, source `packages/seihouse-library-ui/src/ui/LibraryElementalTitle.tsx` at `1470501fa09156019eebb4f5e08179f8f9f2afde`. Cave Home uses fire for the selected Leader aura and lightning for the earned Leader rank. Other ranks, custom colors, and active curse/silence overrides retain their existing presentation. The UI package owns motion, reduced motion, and safe text wrapping; the profile still owns names, rank, and status effects. Locked reference unchanged.
+
 - **2026-09-10 accessibility and performance audit:** Kept the existing Cave composition and
   behavior intact while correcting User Profile-specific mobile/tablet control targets, roving
   radio keyboard support, focus treatment, reduced-motion fallbacks, long-content wrapping,

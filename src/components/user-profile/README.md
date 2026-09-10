@@ -18,6 +18,13 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-10 main refresh:** Updated the checkout and carried the local action-row work onto current main
+  (`bddf245`), preserving the glass LibraryTierBadge, LibraryElementalTitle, and profile
+  accessibility fixes. Energy now shows only its icon and label; no current balance or
+  unavailable-value text is rendered. Replenishment and spending-history behavior remain undecided.
+  Validation passed: 151 profile/badge tests, TypeScript and app build, installed UI artifact
+  verification, and the six-width creator-navigation browser matrix.
+
 - **2026-09-10 subscription badge:** Restyled the tier badge beneath the rank as the
   **LibraryTierBadge** capsule — a cool translucent glass pane with dark lettering under a layered
   gold / portal / violet rim, a soft halo, and an occasional restrained sheen; reduced-motion users
@@ -39,6 +46,50 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
   rank-text contrast, disabled public-card affordances, and effect-clock scheduling. The changes
   stay in `development/`; the locked reference remains untouched. Focused component and browser
   regression coverage now exercises the corrected interactions and 320px / 768px geometry.
+- **2026-09-10:** Added the compact, evenly spaced **Inbox → Worlds → Store → Energy**
+  identity action row. All icons and labels share the existing emblem color, including Worlds
+  and Store, following the theme-consistency correction. The new entries are real links
+  through `caveNavigation.tsx`, with explicit creator identity and native modified-click support.
+  Creator destinations preserve the global navigation and existing identity/progression controls.
+  Locked reference, package entries, vendored packages, and source-comparison dates are unchanged.
+
+### Creator destinations (2026-09-10)
+
+- Routes use the existing `cave` query: `/public/creators/<encoded uid>/worlds`,
+  `/public/creators/<encoded uid>/storefront`, and `/public/creators/<encoded uid>/home`.
+  A missing creator record renders an unavailable state; it never falls back to another account.
+  Return controls preserve the creator identity. Browser Back restores the original private or
+  public profile view. Supplied public creator records are also viewable while signed out.
+- `UserProfile` accepts optional `publicCreators` presentation records from its host. There is
+  no public-world query service in this repository. `creatorWorlds.ts` is a development-only
+  presentation contract, not a database schema or a replacement authorization system. Hosts must
+  enforce publication and seed permissions before supplying data. Missing records render an
+  empty state; the private account seed index is never used to fill Worlds.
+- Worlds require matching `userId`, `visibility: 'public'`, `status: 'published'`, and no deletion.
+  Highlighting never overrides those requirements. A shared seed must match both `sourceSeedId`
+  and the creator's identity. `seedSharing: 'view'` displays the seed title inside its world;
+  `'reuse'` also exposes the existing `downloadStorySeed` service action for export and import
+  through the Creation Portal. Missing/private permissions hide the seed. No separate seed route
+  is added. The existing private Stories panel remains intact.
+- Store is a creator-specific empty pavilion describing future skills, tools, templates,
+  music packs, and reusable creations, with a return control. No commerce backend or purchasing
+  functionality is introduced. The existing private Store callback is preserved.
+- `publicCreatorData.ts` supplies explicit local publication fixtures for the Workshop only,
+  including Moon Scribe as another creator, private/highlighted and draft exclusion cases, and a
+  permitted seed. The Workshop's existing download adapter logs the requested export; it does
+  not download production seed content. This fixture file is never transferred to a host.
+- Transfer additions, if separately authorized: `creatorWorlds.ts`, `UserProfileCreatorPanel.tsx`,
+  and the changes in the development `UserProfile`, `UserProfileHome`, `UserProfileCaveDestination`,
+  `caveNavigation`, and CSS. Supply creator records through the existing host data layer and
+  connect the existing seed export adapter. No UI repository or published package changes are needed.
+- Verification after the main refresh: `npm run test:user-profile` (151 tests), TypeScript through `npm run build`, and installed UI artifact checks.
+  `scripts/verifyProfileCreatorNavigation.browser.mjs` exercises the rendered action row at
+  320/360/390/768/1024/1440px, 44px targets, consistent colors, focus, keyboard navigation, URLs,
+  creator identity, filtered world fixtures, history/reload, and storefront return paths. Run it
+  against the local developed preview with `playwright-cli run-code --filename=<script>`.
+  This is local Chromium coverage, not a live public-content or production export verification.
+
+### Earlier history
 
 - **2026-09-09 regression fix:** Restored the Relics connection on Cave Home. Relics is a full-width destination directly beneath the Daily Dao Pillar and above the Store / Settings pair, showing the inventory count and opening the existing `/relics` route — the same `UserProfileInventoryPanel`, the same navigation entry, no second relic implementation or state. The public view is unchanged.
 

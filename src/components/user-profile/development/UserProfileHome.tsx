@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import {
   ChevronRight,
+  BookOpen,
   Mail,
   Zap,
   Gem,
@@ -26,6 +27,7 @@ import type { ActiveStatusEffect, PremiumTier } from "../shared/types";
 import type { PublicProfilePresentation } from "./publicProfile";
 import type { CaveAccountControls } from "./caveAccountControls";
 import { LibraryTierBadge } from "./LibraryTierBadge";
+import { caveHref, publicCavePath, useCaveRoute } from './caveNavigation';
 import {
   getDaoRankData,
   getRankForQi,
@@ -143,6 +145,20 @@ export function UserProfileHome({
     handleRepairPillar,
   } = controller;
   const isPublic = mode === "public";
+  const { navigate } = useCaveRoute();
+  const creatorLinks = profile?.uid ? (['worlds', 'storefront'] as const).map(destination => {
+    const path = publicCavePath(destination, profile.uid);
+    const Icon = destination === 'worlds' ? BookOpen : Store;
+    return <a key={destination} href={caveHref(path)}
+      className={`cave-account-emblem cave-creator-link cave-creator-link--${destination}`}
+      onClick={event => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault(); navigate(path);
+      }}>
+      <Icon size={24} aria-hidden="true" />
+      <span>{destination === 'worlds' ? 'Worlds' : 'Store'}</span>
+    </a>;
+  }) : null;
   // The same inventory the Relics destination reads; counted, never copied.
   const relicCount = profile?.cosmicInventory?.length ?? 0;
   const [panel, setPanel] = useState<HomePanel | null>(null);
@@ -366,8 +382,9 @@ export function UserProfileHome({
           className="cave-home-identity relative -mt-9 !rounded-[1.35rem] !border-[#d4af37]/45 !pt-12 text-center"
           data-cave-identity
         >
-          {!isPublic && (
-            <div className="cave-account-emblems" data-cave-account-controls>
+          {(!isPublic || creatorLinks) && (
+            <div className="cave-account-emblems" data-cave-account-controls={isPublic ? undefined : ''} data-cave-identity-actions>
+              {!isPublic && (
               <button type="button" className="cave-account-emblem" onClick={accountControls?.onOpenInbox}
                 disabled={!accountControls?.onOpenInbox}
                 aria-label={accountControls?.inboxUnreadCount ? `Inbox, ${accountControls.inboxUnreadCount} unread messages` : "Inbox"}>
@@ -377,13 +394,14 @@ export function UserProfileHome({
                 </span>
                 <span>Inbox</span>
               </button>
+              )}
+              {creatorLinks}
+              {!isPublic && (
               <div className="cave-account-emblem" title="Energy is used to generate content" data-cave-energy>
                 <Zap size={24} aria-hidden="true" />
                 <span>Energy</span>
-                <span className="font-mono" aria-live="polite">
-                  {accountControls?.energyBalance == null ? "Unavailable" : formatQi(accountControls.energyBalance)}
-                </span>
               </div>
+              )}
             </div>
           )}
           {isLoading && !profile ? (

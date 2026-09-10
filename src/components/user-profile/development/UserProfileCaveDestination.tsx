@@ -9,6 +9,8 @@ import { LibraryButton } from '@seihouse/library-ui';
  * surface instead of staying on the card they activated.
  */
 export type CaveDestinationId =
+  | 'worlds'
+  | 'storefront'
   | 'settings'
   | 'inbox'
   | 'store'

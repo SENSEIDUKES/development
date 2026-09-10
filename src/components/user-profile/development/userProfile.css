@@ -177,27 +177,34 @@
   .cave-home-boost .cave-home-pillar-art { transition: none; }
 }
 .cave-account-emblems {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+  gap: .25rem;
   margin-bottom: .5rem;
 }
 .cave-account-emblem {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: .2rem;
   min-width: 44px;
   min-height: 44px;
-  max-width: 48%;
+  padding-block: .25rem;
   color: #e2c46a;
   font-size: .75rem;
   overflow-wrap: anywhere;
 }
-button.cave-account-emblem { cursor: pointer; border-radius: .5rem; }
-button.cave-account-emblem:hover { background: rgb(212 175 55 / .1); }
-button.cave-account-emblem:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 4px; }
+:is(button, a).cave-account-emblem { cursor: pointer; border-radius: .25rem; text-decoration: none; }
+:is(button, a).cave-account-emblem:hover { background: rgb(212 175 55 / .1); }
+:is(button, a).cave-account-emblem:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 2px; }
+.cave-creator-link--worlds { grid-column: 2; }
+.cave-creator-link--storefront { grid-column: 3; }
+[data-cave-energy] { grid-column: 4; }
+.cave-creator-link span { white-space: nowrap; }
+.cave-creator-empty { text-align: center; background-image: radial-gradient(ellipse at top, #a78bfa0d, transparent 70%); }
+[data-cave-world], [data-cave-storefront] { overflow-wrap: anywhere; }
 .cave-unread-dot {
   position: absolute;
   top: -3px;

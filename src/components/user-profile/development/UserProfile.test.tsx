@@ -9,6 +9,9 @@ import { UserProfileServicesProvider } from '../shared/userProfileServices';
 import type { UserProfileController } from '../shared/userProfileServices';
 import type { MockUserProfileServicesOptions } from '../../../workshop/previews/user-profile/mockUserProfileServices';
 import { effectStatement } from './UserProfileHome';
+import { publicCavePath, resolveCaveRoute } from './caveNavigation';
+import { publicCreatorWorlds, type CreatorWorld, type PublicCreator } from './creatorWorlds';
+import { previewPublicCreators } from '../../../workshop/previews/user-profile/publicCreatorData';
 import type { AppUser } from '../shared/types';
 import { createMockUserProfileServices } from '../../../workshop/previews/user-profile/mockUserProfileServices';
 import { getPreviewScenario } from '../../../workshop/previews/user-profile/previewData';
@@ -85,6 +88,7 @@ afterEach(() => {
 });
 
 interface RenderOptions {
+  publicCreators?: readonly PublicCreator[];
   accountControls?: import('./caveAccountControls').CaveAccountControls;
   state?: UserProfilePreviewState;
   onLogout?: () => void;
@@ -93,7 +97,7 @@ interface RenderOptions {
   adapter?: Partial<MockUserProfileServicesOptions>;
 }
 
-async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), onNavigateHome = vi.fn(), Component = UserProfile, adapter = {}, accountControls }: RenderOptions = {}) {
+async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), onNavigateHome = vi.fn(), Component = UserProfile, adapter = {}, accountControls, publicCreators }: RenderOptions = {}) {
   const scenario = getPreviewScenario(state);
   const logExcludedAction = vi.fn();
   const onSignIn = vi.fn<(account: AppUser) => void>();
@@ -108,6 +112,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
           currentUser={scenario.currentUser}
           stories={scenario.stories}
           accountControls={accountControls}
+          publicCreators={publicCreators}
           onLogout={onLogout}
           onNavigateHome={onNavigateHome}
           onNavigateLibrary={vi.fn()}
@@ -119,7 +124,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
   await act(async () => {
     await vi.advanceTimersByTimeAsync(600);
   });
-  return { logExcludedAction, onSignIn, controller: () => controller };
+  return { logExcludedAction, onSignIn, services, controller: () => controller };
 }
 
 const text = () => document.body.textContent ?? '';
@@ -163,11 +168,159 @@ const searchCaveDestination = async (label: string) => {
 };
 const navigateTo = async (path: string) => { await act(async () => { window.history.pushState(null, '', `?preview=user-profile&cave=${path}`); window.dispatchEvent(new PopStateEvent('popstate')); }); };
 
+describe('Profile creator navigation', () => {
+  const creators = () => previewPublicCreators(getPreviewScenario('developed-cultivator').profile);
+
+  it('places real Worlds and Store links between Inbox and Energy without changing identity', async () => {
+    const { controller } = await renderCave();
+    const row = container.querySelector('[data-cave-identity-actions]')!;
+    expect([...row.children].map(child => child.textContent)).toEqual(['Inbox', 'Worlds', 'Store', 'Energy']);
+    for (const [label, destination] of [['Worlds', 'worlds'], ['Store', 'storefront']] as const) {
+      const link = byText<HTMLAnchorElement>('[data-cave-identity-actions] a', label);
+      expect(link.tabIndex).toBe(0);
+      expect(link.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+      expect(new URL(link.href).searchParams.get('cave')).toBe(publicCavePath(destination, controller().profile!.uid));
+    }
+    expect(container.querySelector('[data-cave-rank] .library-elemental-title__text')?.textContent).toBe('Leader');
+    expect(container.querySelector('[data-cave-qi]')?.textContent).toBe('13,480 / 25,000 Qi');
+    expect(container.querySelector('.cave-tier-badge')?.textContent).toBe('Inner Sect');
+    expect(container.querySelector('.library-global-navigation')?.textContent).toContain('HomeLibraryDiscoverProfile');
+  });
+
+  it('preserves URL context, modified-click behavior and history state', async () => {
+    history.replaceState({ host: 'retained' }, '', '/?preview=user-profile&keep=yes#identity');
+    await renderCave();
+    const link = byText<HTMLAnchorElement>('a', 'Worlds');
+    const modifiedClick = new MouseEvent('click', { bubbles: true, cancelable: true, ctrlKey: true });
+    // Suppress jsdom's native navigation after observing the React handler.
+    let intercepted: boolean | undefined;
+    const observe = (event: MouseEvent) => { intercepted = event.defaultPrevented; event.preventDefault(); };
+    document.addEventListener('click', observe, { once: true });
+    await act(async () => { link.dispatchEvent(modifiedClick); });
+    expect(intercepted).toBe(false);
+    expect(new URLSearchParams(location.search).has('cave')).toBe(false);
+    await click(link);
+    expect(location.hash).toBe('#identity');
+    expect(new URLSearchParams(location.search).get('keep')).toBe('yes');
+    expect(history.state).toEqual({ host: 'retained' });
+    expect(document.activeElement?.textContent).toBe('Worlds');
+  });
+
+  it('uses another viewed creator for their portrait, links, worlds and return path', async () => {
+    const publicCreators = creators();
+    const other = publicCreators[1];
+    await renderCave({ publicCreators });
+    await navigateTo(publicCavePath('home', other.profile.uid));
+    expect(container.querySelector('[data-cave-name] .library-elemental-title__text')?.textContent).toBe('Moon Scribe');
+    expect(container.querySelector('[data-cave-account-controls]')).toBeNull();
+    await click(byText('a', 'Worlds'));
+    expect(container.querySelector('[data-cave-worlds]')?.getAttribute('data-cave-worlds')).toBe(other.profile.uid);
+    const worlds = [...container.querySelectorAll('[data-cave-world]')];
+    expect(worlds).toHaveLength(2);
+    expect(worlds.every(world => world.getAttribute('data-cave-world')?.startsWith(other.profile.uid))).toBe(true);
+    expect(text()).not.toMatch(/Private world fixture|Draft world fixture/);
+    await click(container.querySelector('[aria-label="Return to Moon Scribe’s profile"]')!);
+    expect(container.querySelector('[data-cave-name] .library-elemental-title__text')?.textContent).toBe('Moon Scribe');
+    await click(byText('a', 'Store'));
+    expect(container.querySelector('[data-cave-storefront]')?.getAttribute('data-cave-storefront')).toBe(other.profile.uid);
+    expect(text()).toContain('Moon Scribe’s Store');
+    expect(text()).toContain('No items are available yet.');
+    expect(container.querySelector('[data-cave-storefront] button')).toBeNull();
+  });
+
+  it('keeps a reusable seed in its world and never lists the private account seeds', async () => {
+    const publicCreators = creators();
+    const { services, logExcludedAction } = await renderCave({ publicCreators });
+    const privateIndex = vi.spyOn(services, 'listStorySeeds');
+    await click(byText('a', 'Worlds'));
+    const world = container.querySelector('[data-world-seed]')!.closest('[data-cave-world]');
+    expect(world?.textContent).toContain('The Lantern Sea');
+    expect(world?.textContent).toContain('Lanterns over the quiet sea');
+    await click(world!.querySelector('button')!);
+    expect(logExcludedAction).toHaveBeenCalledWith('Story seed JSON download (Lanterns over the quiet sea)');
+    expect(privateIndex).not.toHaveBeenCalled();
+    expect(container.querySelector('a[href*="seeds"]')).toBeNull();
+  });
+
+  it('shows a seed without reuse when permission is view-only, and reports export failures', async () => {
+    const publicCreators = creators();
+    publicCreators[0].worlds[0].seedSharing = 'view';
+    const { services } = await renderCave({ publicCreators });
+    await click(byText('a', 'Worlds'));
+    expect(container.querySelector('[data-world-seed]')?.textContent).toContain('Reuse is not enabled');
+    expect(container.querySelector('[data-world-seed] button')).toBeNull();
+    publicCreators[0].worlds[0].seedSharing = 'reuse';
+    await navigateTo('/home');
+    vi.spyOn(services, 'downloadStorySeed').mockRejectedValue(new Error('offline'));
+    await click(byText('a', 'Worlds'));
+    await click(container.querySelector('[data-world-seed] button')!);
+    expect(text()).toContain('This seed could not be exported. Please try again.');
+    expect(container.querySelector('[data-world-seed] button')?.hasAttribute('disabled')).toBe(false);
+  });
+
+  it.each(['worlds', 'storefront'] as const)('supports signed-out direct %s links for a supplied public creator', async destination => {
+    const publicCreators = creators();
+    history.replaceState(null, '', `/?preview=user-profile&cave=${publicCavePath(destination, publicCreators[1].profile.uid)}`);
+    await renderCave({ state: 'signed-out', publicCreators });
+    expect(container.querySelector(`[data-cave-destination="${destination}"]`)).not.toBeNull();
+    expect(text()).toContain('Moon Scribe');
+    expect(document.body.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('does not fall back to the signed-in account for an unknown creator', async () => {
+    await renderCave({ publicCreators: creators() });
+    await navigateTo(publicCavePath('worlds', 'unknown-creator'));
+    expect(text()).toContain('Creator unavailable');
+    expect(container.querySelector('[data-cave-world]')).toBeNull();
+    expect(text()).not.toContain('The Lantern Sea');
+  });
+
+  it('renders a safe empty state when no public records have been supplied', async () => {
+    await renderCave();
+    await click(byText('a', 'Worlds'));
+    expect(text()).toContain('No public worlds yet');
+    expect(container.querySelector('[data-world-seed]')).toBeNull();
+  });
+
+  it('encodes creator identities and rejects malformed or private creator paths', () => {
+    const id = 'creator/a ?#雪';
+    expect(resolveCaveRoute(publicCavePath('worlds', id))).toMatchObject({ creatorId: id, view: 'worlds', audience: 'public' });
+    for (const path of ['/public/creators/%ZZ/worlds', '/public/creators/uid/worlds/private', '/public/creators/uid/settings', '/public/worlds', '/public/storefront']) {
+      expect(resolveCaveRoute(path).view).toBe('unavailable');
+    }
+  });
+});
+
+describe('Public creator world filtering', () => {
+  const published: CreatorWorld = { id: 'world', title: 'Published', userId: 'creator', visibility: 'public', status: 'published' };
+  it.each([
+    { visibility: 'private', highlighted: true },
+    { status: 'draft', highlighted: true },
+    { status: undefined },
+    { visibility: undefined },
+    { userId: 'viewer' },
+    { userId: undefined },
+    { deleted: true },
+  ] as Partial<CreatorWorld>[])('excludes unpublished or incorrectly owned content: %j', override => {
+    expect(publicCreatorWorlds('creator', [{ ...published, ...override }])).toEqual([]);
+  });
+  it('includes public and highlighted published worlds, with strict seed provenance and permissions', () => {
+    const seed = { id: 'seed', userId: 'creator', title: 'Shared seed', createdAt: '', updatedAt: '' };
+    expect(publicCreatorWorlds('creator', [published, { ...published, id: 'featured', highlighted: true }])).toHaveLength(2);
+    for (const world of [
+      { ...published, sourceSeedId: 'different', seed, seedSharing: 'reuse' as const },
+      { ...published, sourceSeedId: seed.id, seed: { ...seed, userId: 'viewer' }, seedSharing: 'reuse' as const },
+      { ...published, sourceSeedId: seed.id, seed, seedSharing: 'private' as const },
+      { ...published, sourceSeedId: seed.id, seed },
+    ]) expect(publicCreatorWorlds('creator', [world])[0].seed).toBeUndefined();
+  });
+});
+
 describe('Cultivator Cave home', () => {
-  it('wires host Inbox, Store and Redeem Code while displaying separate account balances', async () => {
+  it('wires host Inbox, Store and Redeem Code while hiding the Energy balance', async () => {
     const accountControls = { energyBalance: 1234, inboxUnreadCount: 3, onOpenInbox: vi.fn(), onOpenStore: vi.fn(), onRedeemCode: vi.fn() };
     await renderCave({ accountControls });
-    expect(container.querySelector('[data-cave-energy]')?.textContent).toBe('Energy1,234');
+    expect(container.querySelector('[data-cave-energy]')?.textContent).toBe('Energy');
     expect(container.querySelector('[data-cave-qi]')?.textContent).toBe('13,480 / 25,000 Qi');
     expect(container.querySelector('[data-cave-unread]')).not.toBeNull();
     await click(container.querySelector('[aria-label="Inbox, 3 unread messages"]')!);
@@ -182,9 +335,9 @@ describe('Cultivator Cave home', () => {
     expect(container.querySelector('.library-global-navigation')?.textContent).not.toContain('Settings');
   });
 
-  it('shows zero Energy and no unread dot, and routes unconnected entries with working returns', async () => {
+  it('keeps Energy label-only at zero and routes unconnected entries with working returns', async () => {
     await renderCave({ accountControls: { energyBalance: 0, inboxUnreadCount: 0 } });
-    expect(container.querySelector('[data-cave-energy]')?.textContent).toBe('Energy0');
+    expect(container.querySelector('[data-cave-energy]')?.textContent).toBe('Energy');
     expect(container.querySelector('[data-cave-unread]')).toBeNull();
     await click(byText('button', 'Inbox'));
     expect(text()).toContain('Inbox is not connected');
@@ -202,7 +355,7 @@ describe('Cultivator Cave home', () => {
 
   it('does not invent an unavailable Energy balance or expose account controls publicly', async () => {
     await renderCave();
-    expect(container.querySelector('[data-cave-energy]')?.textContent).toBe('EnergyUnavailable');
+    expect(container.querySelector('[data-cave-energy]')?.textContent).toBe('Energy');
     await navigateTo('/public/home');
     expect(container.querySelector('[data-cave-account-controls]')).toBeNull();
     expect(container.querySelector('[data-cave-account-actions]')).toBeNull();

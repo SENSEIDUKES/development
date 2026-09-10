@@ -17,6 +17,7 @@ import type { AppUser } from '../../../components/user-profile/shared/types';
 import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigation';
 import { createMockUserProfileServices } from './mockUserProfileServices';
 import { getPreviewScenario } from './previewData';
+import { previewPublicCreators } from './publicCreatorData';
 import {
   DEFAULT_USER_PROFILE_PREVIEW_STATE,
   USER_PROFILE_PREVIEW_STATES,
@@ -70,7 +71,7 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
         <Component
           currentUser={currentUser}
           stories={scenario.stories}
-          {...(pane === 'development' ? { accountControls: {
+          {...(pane === 'development' ? { publicCreators: previewPublicCreators(scenario.profile), accountControls: {
             energyBalance: currentUser ? 120 : null,
             inboxUnreadCount: currentUser ? 2 : 0,
           } } : {})}

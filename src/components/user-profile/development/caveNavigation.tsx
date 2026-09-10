@@ -31,8 +31,17 @@ export type CaveAudience = 'private' | 'public';
 export const CAVE_PUBLIC_PREFIX = '/public';
 
 /** The route for one public destination. */
-export const publicCavePath = (destination: CavePublicDestination = 'home') =>
-  `${CAVE_PUBLIC_PREFIX}/${destination}`;
+export type CreatorDestination = CavePublicDestination | 'worlds' | 'storefront';
+export const publicCavePath = (destination: CreatorDestination = 'home', creatorId?: string) =>
+  creatorId ? `${CAVE_PUBLIC_PREFIX}/creators/${encodeURIComponent(creatorId)}/${destination}`
+    : `${CAVE_PUBLIC_PREFIX}/${destination}`;
+
+/** Real link URLs use the same query transport as the existing Cave router. */
+export function caveHref(path: string) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('cave', path);
+  return `${url.pathname}${url.search}${url.hash}`;
+}
 
 const navigationEvent = 'cave-navigation';
 const subscribe = (notify: () => void) => {
@@ -48,19 +57,23 @@ const snapshot = () => new URLSearchParams(window.location.search).get('cave') |
 export function resolveCaveRoute(path: string) {
   const segments = path.split('/').filter(Boolean);
   const audience: CaveAudience = segments[0] === 'public' ? 'public' : 'private';
-  const routed = audience === 'public' ? segments.slice(1) : segments;
+  const scoped = audience === 'public' && segments[1] === 'creators';
+  let creatorId: string | undefined;
+  try { creatorId = scoped ? decodeURIComponent(segments[2] ?? '') : undefined; } catch { /* Invalid identity stays unavailable. */ }
+  const routed = audience === 'public' ? segments.slice(scoped ? 3 : 1) : segments;
   const destination = (audience === 'public' ? CAVE_PUBLIC_DESTINATIONS : CAVE_DESTINATIONS)
     .find(item => item.id === routed[0])?.id;
   const child = routed.slice(1).join('/');
   // The public view exposes no child pages: every private child route reads
   // private state, so it stays unavailable rather than falling through.
-  const view = !destination ? 'unavailable'
+  const creatorView = scoped && creatorId && routed.length === 1 && (routed[0] === 'worlds' || routed[0] === 'storefront') ? routed[0] : undefined;
+  const view = scoped && !creatorId ? 'unavailable' : creatorView ?? (!destination ? 'unavailable'
     : audience === 'public' ? (child ? 'unavailable' : destination)
     : !child ? destination
     : destination === 'home' && (child === 'dao-pillar' || child === 'status-effects' || child === 'inbox' || child === 'store') ? child
     : destination === 'settings' && (child === 'switchboard' || child === 'redeem-code') ? child
-    : 'unavailable';
-  return { path, audience, destination, child, view };
+    : 'unavailable');
+  return { path, audience, destination, child, view, creatorId };
 }
 
 export function useCaveRoute() {

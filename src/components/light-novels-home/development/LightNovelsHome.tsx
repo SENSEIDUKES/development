@@ -4,6 +4,7 @@ import { Sparkles, Globe, Eye } from 'lucide-react';
 import { LibraryPanel, LibraryCard, LibraryCardMedia, LibraryCardTitle, ManifestButton, ParticleEffect } from '@seihouse/library-ui';
 import { SEIBadge, SEIFilterChip, SEISelect, SEIEmptyState } from '@seihouse/ui';
 import type { LightNovelsHomeProps } from '../shared/homeContracts';
+import { ExpansionSeals, type WorldExpansionPreview } from './WorldExpressions';
 import '../shared/home.css';
 const HERO_VIDEOS = [
   "https://video.seihouse.org/LIGHT%20NOVEL/LIGHT_NOVEL_INTRO.mp4",
@@ -20,7 +21,9 @@ const CELESTIAL_FALLBACK_IMAGES = [
 
 
 /** Existing LibraryScreen Home presentation. Data and navigation belong to the host. */
-export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, children }: LightNovelsHomeProps) {
+export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, children, expansionsByWorld = {} }: LightNovelsHomeProps & {
+  expansionsByWorld?: Readonly<Record<string, readonly WorldExpansionPreview[]>>;
+}) {
   const [currentVideoIdx, setCurrentVideoIdx] = useState(0);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
   const [videoPlaying, setVideoPlaying] = useState(false);
@@ -255,11 +258,13 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
                         padding="none"
                         contentClassName="gap-3"
                         key={world.id}
+                        id={`home-world-${world.id}`}
                         className="h-full"
                         onClick={() => {
                           onOpenWorld(world.id);
                         }}
                         aria-label={`View published world ${world.title}`}
+                        aria-describedby={expansionsByWorld[world.id]?.length ? `world-expansions-${world.id}` : undefined}
                       >
                         <LibraryCardMedia className="aspect-[2/3]">
                           <img
@@ -320,6 +325,9 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
                           <p className="text-[10px] text-neutral-500 font-sans truncate">
                             MC: {world.mcName} • {world.powerStage}
                           </p>
+                          {expansionsByWorld[world.id]?.length ? <span id={`world-expansions-${world.id}`}>
+                            <ExpansionSeals expansions={expansionsByWorld[world.id]} />
+                          </span> : null}
                         </div>
                       </LibraryCard>
                     );

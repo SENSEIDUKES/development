@@ -50,6 +50,10 @@ import {
   PUBLIC_PROFILE_VISIBILITY_FIELDS,
   type PublicProfileVisibility,
 } from './publicProfile';
+import {
+  handleProfileRadioGroupKeyDown,
+  profileRadioTabIndex,
+} from './radioGroupKeyboard';
 
 /** The persisted language option values, exactly as production stores them. */
 const LANGUAGE_OPTIONS = [
@@ -143,6 +147,13 @@ export function UserProfileSettingsPanel({
   const isMaster = currentXp >= MASTER_RANK.unlockedAt;
   const selectedAura = formData.displayNameColor ?? profile?.displayNameColor;
   const auraSelection = getAuraSelection(selectedAura, currentXp);
+  // A legacy saved rank can be above the current Qi threshold. A disabled
+  // checked radio is not a keyboard tab stop, so only an enabled selection
+  // may claim the group's roving tab position.
+  const hasEnabledAuraSelection = RANKS.some(
+    rank => Boolean(profile) && currentXp >= rank.unlockedAt && auraSelection === rankToken(rank),
+  );
+  const hasEnvironmentSelection = CAVE_ENVIRONMENTS.some(environment => environment.id === environmentId);
   const previewStyle = getAuraTextStyle(auraSelection, profile?.activeStatusEffects, currentXp);
   // A custom spectrum is any stored value that resolves to the cultivator's own
   // colour rather than to a rank on the ladder.
@@ -215,9 +226,9 @@ export function UserProfileSettingsPanel({
             <SEIDisclosure value="identity" heading="Identity & Celestial Aura" icon={UserIcon} supportingText="Dao name, display name, and the aura your name carries.">
               <div className="space-y-4 pt-1">
                 <div className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center">
-                  <p className="font-sc text-[9px] uppercase tracking-widest text-neutral-500">Preview</p>
+                  <p className="font-sc text-[9px] uppercase tracking-widest text-neutral-400">Preview</p>
                   <p className="mt-1 font-serif text-lg italic">
-                    <span className={previewStyle.className || 'text-neutral-100'} style={previewStyle.style}>
+                    <span data-cave-aura-preview className={previewStyle.className || 'text-neutral-100'} style={previewStyle.style}>
                       {formData.displayName || profile?.displayName || 'Unknown Ascendant'}
                     </span>
                   </p>
@@ -231,6 +242,7 @@ export function UserProfileSettingsPanel({
                   placeholder="Enter Dao Name"
                   size="compact"
                   disabled={!profile}
+                  className="!min-h-11"
                 />
                 <LibraryTextBox
                   id="cave-display-name"
@@ -241,9 +253,10 @@ export function UserProfileSettingsPanel({
                   size="compact"
                   disabled={!profile}
                   helpText={`Shown on your Cave home, public and private. Up to ${DISPLAY_NAME_MAX_VISIBLE} characters.`}
+                  className="!min-h-11"
                   rightElement={
                     <span
-                      className={`font-mono text-[10px] ${displayNameOverBy > 0 ? 'text-amber-300' : 'text-neutral-500'}`}
+                      className={`font-mono text-[10px] ${displayNameOverBy > 0 ? 'text-amber-300' : 'text-neutral-400'}`}
                       data-cave-display-name-count
                     >
                       {displayNameCount}/{DISPLAY_NAME_MAX_VISIBLE}
@@ -259,11 +272,11 @@ export function UserProfileSettingsPanel({
                     <p className="flex items-center gap-1.5 font-sc text-[10px] font-bold uppercase tracking-wider text-neutral-400">
                       <Sparkles size={11} aria-hidden="true" className="text-[#7dd3ff]" /> Celestial Aura
                     </p>
-                    <p className="font-mono text-[9px] text-neutral-500">Current XP: {currentXp.toLocaleString()} Qi</p>
+                    <p className="font-mono text-[9px] text-neutral-400">Current XP: {currentXp.toLocaleString()} Qi</p>
                   </div>
                   {/* One row per rank: the name, its colour, and the Qi it costs. */}
                   <div role="radiogroup" aria-label="Celestial Aura rank" className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
-                    {RANKS.map(rank => {
+                    {RANKS.map((rank, index) => {
                       const token = rankToken(rank);
                       const isUnlocked = currentXp >= rank.unlockedAt;
                       const isSelected = auraSelection === token;
@@ -274,8 +287,10 @@ export function UserProfileSettingsPanel({
                           role="radio"
                           aria-checked={isSelected}
                           disabled={!isUnlocked || !profile}
+                          tabIndex={profileRadioTabIndex(isSelected && isUnlocked && Boolean(profile), hasEnabledAuraSelection, index)}
+                          onKeyDown={handleProfileRadioGroupKeyDown}
                           onClick={() => setFormData(previous => ({ ...previous, displayNameColor: token }))}
-                          className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors ${
+                          className={`flex min-h-11 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] ${
                             !isUnlocked
                               ? 'cursor-not-allowed border-white/5 bg-black/30 opacity-60'
                               : isSelected
@@ -310,8 +325,9 @@ export function UserProfileSettingsPanel({
                       <button
                         type="button"
                         disabled={!isMaster}
+                        aria-pressed={isCustomSelected}
                         onClick={() => { if (isMaster) colorInputRef.current?.click(); }}
-                        className={`flex h-9 w-9 items-center justify-center rounded-full border transition-transform hover:scale-105 motion-reduce:transform-none ${
+                        className={`flex h-11 w-11 items-center justify-center rounded-full border transition-transform hover:scale-105 motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] ${
                           isCustomSelected ? 'border-[#04ACFF] ring-2 ring-[#04ACFF]/30' : 'border-white/20'
                         }`}
                         style={getAuraSwatchStyle(MASTER_RANK.visual)}
@@ -338,12 +354,12 @@ export function UserProfileSettingsPanel({
                       <p className="font-mono text-[10px] text-neutral-400">
                         Custom Spectrum
                         {!isMaster ? (
-                          <span className="ml-2 rounded border border-white/10 px-1.5 py-0.5 text-[8px] text-neutral-500">
+                          <span className="ml-2 rounded border border-white/10 px-1.5 py-0.5 text-[8px] text-neutral-400">
                             Requires {MASTER_RANK.name} ({MASTER_RANK.unlockedAt.toLocaleString()} Qi)
                           </span>
                         ) : null}
                       </p>
-                      <p className="font-sans text-[9px] italic text-neutral-500">
+                      <p className="font-sans text-[9px] italic text-neutral-400">
                         {isMaster ? 'Click the sphere to define your custom frequency' : 'Transcend normal UI limits'}
                       </p>
                     </div>
@@ -379,6 +395,7 @@ export function UserProfileSettingsPanel({
                     <div key={field.id}>
                       <SEISwitch
                         size="compact"
+                        className="!min-h-11 sm:!min-h-11"
                         aria-describedby={`cave-visibility-${field.id}-description`}
                         isSelected={publicVisibility[field.id]}
                         onChange={isSelected =>
@@ -388,17 +405,17 @@ export function UserProfileSettingsPanel({
                       </SEISwitch>
                       <p
                         id={`cave-visibility-${field.id}-description`}
-                        className="mt-0.5 pl-1 font-sans text-[10px] text-neutral-500"
+                        className="mt-0.5 pl-1 font-sans text-[10px] text-neutral-400"
                       >
                         {field.description}
                       </p>
                     </div>
                   ))}
                 </div>
-                <LibraryButton variant="secondary" size="sm" icon={Eye} disabled={!profile} onClick={onPreviewPublicView}>
+                <LibraryButton variant="secondary" size="sm" icon={Eye} disabled={!profile} onClick={onPreviewPublicView} className="!min-h-11">
                   Preview Public View
                 </LibraryButton>
-                <p className="font-sans text-[10px] italic text-neutral-500">
+                <p className="font-sans text-[10px] italic text-neutral-400">
                   This selection is held for the current session only. Persisting it is a production
                   decision, not a Workshop one.
                 </p>
@@ -419,7 +436,7 @@ export function UserProfileSettingsPanel({
                   <p className="font-sans text-[11px] text-neutral-400">
                     {profile?.activePortraitId ? 'A sealed portrait is active.' : 'No portrait has been sealed yet.'}
                   </p>
-                  <LibraryButton variant="secondary" size="sm" icon={Sparkles} disabled={!profile} onClick={onOpenPortrait}>
+                  <LibraryButton variant="secondary" size="sm" icon={Sparkles} disabled={!profile} onClick={onOpenPortrait} className="!min-h-11">
                     Open Divine Mirror
                   </LibraryButton>
                 </div>
@@ -430,16 +447,18 @@ export function UserProfileSettingsPanel({
             <SEIDisclosure value="environment" heading="Cave Environment" icon={Mountain} supportingText="The realm seen from your cave mouth.">
               <div className="space-y-3 pt-1">
                 <div role="radiogroup" aria-label="Cave environment" className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {CAVE_ENVIRONMENTS.map(environment => {
+                  {CAVE_ENVIRONMENTS.map((environment, index) => {
                     const isSelected = environment.id === environmentId;
                     return (
                       <button
                         key={environment.id}
                         type="button"
-                        role="radio"
-                        aria-checked={isSelected}
-                        onClick={() => onEnvironmentChange(environment.id)}
-                        className={`group relative overflow-hidden rounded-lg border text-left transition-colors ${
+                          role="radio"
+                          aria-checked={isSelected}
+                          tabIndex={profileRadioTabIndex(isSelected, hasEnvironmentSelection, index)}
+                          onKeyDown={handleProfileRadioGroupKeyDown}
+                          onClick={() => onEnvironmentChange(environment.id)}
+                          className={`group relative overflow-hidden rounded-lg border text-left transition-colors motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] ${
                           isSelected ? 'border-[#e2c46a]' : 'border-white/10 hover:border-white/30'
                         }`}
                       >
@@ -452,7 +471,7 @@ export function UserProfileSettingsPanel({
                     );
                   })}
                 </div>
-                <SEISwitch isSelected={ambientMotes} onChange={onAmbientMotesChange} size="compact">
+                <SEISwitch isSelected={ambientMotes} onChange={onAmbientMotesChange} size="compact" className="!min-h-11 sm:!min-h-11">
                   Ambient spirit motes
                 </SEISwitch>
               </div>
@@ -466,6 +485,7 @@ export function UserProfileSettingsPanel({
                     id="cave-preferred-language"
                     name="preferredLanguage"
                     size="compact"
+                    className="!h-11 sm:!h-11"
                     disabled={!profile}
                     value={formData.preferredLanguage || profile?.preferredLanguage || 'English'}
                     onChange={event => handleLanguageChangeDirect('preferredLanguage', event.target.value)}
@@ -478,6 +498,7 @@ export function UserProfileSettingsPanel({
                     id="cave-translation-language"
                     name="defaultTranslationLanguage"
                     size="compact"
+                    className="!h-11 sm:!h-11"
                     disabled={!profile}
                     value={formData.defaultTranslationLanguage || profile?.defaultTranslationLanguage || 'English'}
                     onChange={event => handleLanguageChangeDirect('defaultTranslationLanguage', event.target.value)}
@@ -485,7 +506,7 @@ export function UserProfileSettingsPanel({
                     {LANGUAGE_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}
                   </SEISelect>
                 </SEIField>
-                <p className="font-sans text-[10px] text-neutral-500">
+                <p className="font-sans text-[10px] text-neutral-400">
                   A language change asks for confirmation and reverts on its own after 30 seconds.
                 </p>
               </div>
@@ -498,6 +519,7 @@ export function UserProfileSettingsPanel({
                   <SEISelect
                     id="cave-writing-style"
                     size="compact"
+                    className="!h-11 sm:!h-11"
                     value={normalizeChapterWritingStyle(formData.defaultChapterWritingStyle ?? profile?.defaultChapterWritingStyle)}
                     onChange={event => { void handleDefaultChapterWritingStyleChange(event.target.value as ChapterWritingStyle); }}
                     disabled={!profile || isSavingChapterWritingStyle}
@@ -520,18 +542,18 @@ export function UserProfileSettingsPanel({
                   title={harmonyTitle}
                   aria-label={`Harmony: ${harmonyDetail}`}
                   aria-busy={isHarmonizing}
-                  className={`flex w-full items-center gap-3 rounded-lg border bg-black/40 px-4 py-3 text-left transition-colors disabled:cursor-wait ${
+                  className={`flex min-h-11 w-full items-center gap-3 rounded-lg border bg-black/40 px-4 py-3 text-left transition-colors motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff] disabled:cursor-wait ${
                     syncStatus === 'error'
                       ? 'border-[#ff3333]/40 text-[#ff3333] hover:bg-[#ff3333]/10'
                       : syncStatus === 'offline'
-                        ? 'border-white/10 text-neutral-500 hover:border-[#04ACFF]/40 hover:text-[#7dd3ff]'
+                        ? 'border-white/10 text-neutral-400 hover:border-[#04ACFF]/40 hover:text-[#7dd3ff]'
                         : 'border-[#04ACFF]/30 text-[#7dd3ff] hover:border-[#04ACFF]/60 hover:bg-[#04ACFF]/5'
                   }`}
                 >
                   <HarmonyIcon size={16} aria-hidden="true" className={isHarmonizing ? 'animate-spin motion-reduce:animate-none' : ''} />
                   <span className="flex min-w-0 flex-col">
                     <span className="font-sc text-[11px] font-bold uppercase tracking-widest">Harmony</span>
-                    <span aria-live="polite" className="font-sans text-[9px] font-medium uppercase tracking-[0.16em] opacity-70">{harmonyDetail}</span>
+                    <span aria-live="polite" className="font-sans text-[9px] font-medium uppercase tracking-[0.16em]">{harmonyDetail}</span>
                   </span>
                   {isHarmonizing ? (
                     <span className="sr-only">Library synchronization is in progress.</span>
@@ -540,7 +562,7 @@ export function UserProfileSettingsPanel({
                   )}
                 </button>
                 {lastSavedTime ? (
-                  <p className="font-mono text-[10px] tracking-wider text-neutral-500">
+                  <p className="font-mono text-[10px] tracking-wider text-neutral-400">
                     Saved on device: {new Date(lastSavedTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                   </p>
                 ) : null}
@@ -572,7 +594,7 @@ export function UserProfileSettingsPanel({
             {/* ---- Advanced tools ------------------------------------------- */}
             <SEIDisclosure value="advanced" heading="Advanced Tools" icon={Sliders} supportingText="Model presets, routing overrides, and shortcuts.">
               <div className="space-y-3 pt-1">
-                <p className="font-sans text-[10px] text-neutral-500">
+                <p className="font-sans text-[10px] text-neutral-400">
                   Configure custom model presets, routing overrides, or API credential endpoints.
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row">

@@ -38,6 +38,46 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
         .map(rect => ({ width: rect.width, height: rect.height })),
     };
   });
+  const ensureDisclosure = async (triggerName) => {
+    const trigger = button(triggerName);
+    if ((await trigger.getAttribute('aria-expanded')) !== 'true') await trigger.click();
+  };
+  const profileControlGeometry = async () => {
+    await ensureDisclosure('Public Profile What other cultivators see, and the way in.');
+    await ensureDisclosure('Cultivator Portrait Cast your likeness through the Divine Mirror.');
+    await ensureDisclosure('Language Interface dialect and automatic translation.');
+    await ensureDisclosure('Writing Preferences Defaults copied onto newly created stories.');
+    await button('Open Divine Mirror').click();
+    await tab.playwright.getByRole('dialog', { name: 'Cultivator Portrait Builder' }).waitFor({ state: 'visible' });
+    const controls = await tab.playwright.evaluate(() => {
+      const namedButton = name => [...document.querySelectorAll('button')]
+        .find(button => button.textContent.trim() === name);
+      const labelForSwitch = document.querySelector('[data-cave-visibility] label');
+      const elements = [
+        ['username', document.querySelector('#cave-username')],
+        ['display-name', document.querySelector('#cave-display-name')],
+        ['custom-spectrum', document.querySelector('[aria-label="Custom spectrum"]')],
+        ['public-preview', namedButton('Preview Public View')],
+        ['portrait-open', namedButton('Open Divine Mirror')],
+        ['portrait-close', document.querySelector('[aria-label="Close Portrait Builder"]')],
+        ['visibility-switch', labelForSwitch],
+        ['preferred-language', document.querySelector('#cave-preferred-language')],
+        ['translation-language', document.querySelector('#cave-translation-language')],
+        ['writing-style', document.querySelector('#cave-writing-style')],
+        ...[...document.querySelectorAll('[aria-label="Celestial Aura rank"] [role="radio"]:not(:disabled)')]
+          .map((element, index) => [`aura-${index}`, element]),
+      ];
+      return {
+        overflow: document.documentElement.scrollWidth > innerWidth + 1,
+        controls: elements.map(([name, element]) => {
+          const rect = element.getBoundingClientRect();
+          return { name, width: rect.width, height: rect.height };
+        }),
+      };
+    });
+    await button('Close Portrait Builder').click();
+    return controls;
+  };
   const results = [];
   let safeAreaOverridden = false;
   try {
@@ -64,6 +104,14 @@ export async function verifyCaveWorkspace(tab, viewport, cdp, report = () => {},
           assert.equal(size.dockPosition, 'fixed');
           assert(Math.abs(size.bottom - size.viewportHeight) < 2);
           assert(size.clearance >= size.height, 'content must clear the complete dock');
+        }
+        if (destination === 'Settings' && [320, 768].includes(width)) {
+          const profileControls = await profileControlGeometry();
+          assert.equal(profileControls.overflow, false, `${width} Settings: profile control overflow`);
+          assert(
+            profileControls.controls.every(control => control.width >= 43.9 && control.height >= 43.9),
+            `${width} Settings: undersized profile control ${JSON.stringify(profileControls.controls)}`,
+          );
         }
       }
       await tab.back();

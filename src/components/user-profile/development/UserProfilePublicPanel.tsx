@@ -25,7 +25,7 @@ export function UserProfilePublicPanel({
   const noun = kind === 'stories' ? 'stories' : 'relic titles';
 
   return (
-    <div className="space-y-4" data-cave-public-panel={kind}>
+    <div className="min-w-0 space-y-4 [overflow-wrap:anywhere]" data-cave-public-panel={kind}>
       <SEIInlineAlert tone="info" title="Public view">
         Scoped to {displayName}. Only what they published appears here — this page shows no
         signed-in account content.
@@ -52,7 +52,7 @@ export function UserProfilePublicPanel({
             {titles.map(title => (
               <li
                 key={title}
-                className="border-b border-white/10 pb-2 text-sm text-neutral-200 last:border-b-0 last:pb-0"
+                className="min-w-0 border-b border-white/10 pb-2 text-sm text-neutral-200 [overflow-wrap:anywhere] last:border-b-0 last:pb-0"
                 data-cave-public-title
               >
                 {title}
@@ -62,7 +62,7 @@ export function UserProfilePublicPanel({
         </LibraryPanel>
       )}
 
-      <p className="font-sans text-xs italic text-neutral-500">
+      <p className="font-sans text-xs italic text-neutral-400">
         Titles only. The public {kind === 'stories' ? 'Stories' : 'Relics'} page is not designed
         yet; reading, inspection, attunement, and rewards stay in the private Cave.
       </p>

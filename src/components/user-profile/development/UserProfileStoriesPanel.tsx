@@ -123,7 +123,7 @@ export function UserProfileStoriesPanel({ profile, currentUser, stories }: UserP
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-sans text-[13px] text-neutral-200">{story.title}</p>
                   {story.sourceSeedId ? (
-                    <p className="truncate font-mono text-[9px] uppercase tracking-wider text-neutral-500">
+                    <p className="truncate font-mono text-[9px] uppercase tracking-wider text-neutral-400">
                       Seed: {seedTitleById.get(story.sourceSeedId) ?? story.sourceSeedId}
                     </p>
                   ) : null}
@@ -135,7 +135,7 @@ export function UserProfileStoriesPanel({ profile, currentUser, stories }: UserP
         )}
 
         {restingFlows.length > 0 ? (
-          <p className="font-mono text-[10px] uppercase tracking-wider text-neutral-500">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-neutral-400">
             {restingFlows.length} resting {restingFlows.length === 1 ? 'realm' : 'realms'} not shown
           </p>
         ) : null}
@@ -184,7 +184,7 @@ export function UserProfileStoriesPanel({ profile, currentUser, stories }: UserP
               >
                 <div className="min-w-0">
                   <p className="truncate font-sans text-[12px] text-neutral-200">{seed.title}</p>
-                  <p className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-neutral-500">
+                  <p className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-neutral-400">
                     Updated {formatSeedDate(seed)}
                   </p>
                 </div>
@@ -194,7 +194,7 @@ export function UserProfileStoriesPanel({ profile, currentUser, stories }: UserP
                   icon={Download}
                   aria-label={`Export ${seed.title} seed`}
                   onClick={() => exportSeed(seed)}
-                  className="shrink-0"
+                  className="!min-h-11 shrink-0"
                 >
                   Export
                 </LibraryButton>

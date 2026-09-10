@@ -1,4 +1,4 @@
-import { UserProfileHome, isEffectActive } from './UserProfileHome';
+import { UserProfileHome } from './UserProfileHome';
 import type { CaveAccountControls } from './caveAccountControls';
 import { WorkspaceHeader } from '../../library-shell/development/WorkspaceHeader';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -39,6 +39,11 @@ import { UserProfileSettingsPanel } from './UserProfileSettingsPanel';
 import { UserProfileStatusEffectsPanel } from './UserProfileStatusEffectsPanel';
 import { UserProfileStoriesPanel } from './UserProfileStoriesPanel';
 import { UserProfilePublicPanel } from './UserProfilePublicPanel';
+import {
+  EMPTY_ACTIVE_STATUS_EFFECTS,
+  isEffectActive,
+  useProfileEffectClock,
+} from './timedEffects';
 import {
   DEFAULT_PUBLIC_PROFILE_VISIBILITY,
   buildPublicProfile,
@@ -265,19 +270,16 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const returnHome = useCallback(() => navigate('/home'), [navigate]);
   const returnPublicHome = useCallback(() => navigate(publicCavePath('home')), [navigate]);
 
-  const [effectsNow, setEffectsNow] = useState(Date.now);
-  useEffect(() => {
-    const refreshEffects = () => setEffectsNow(Date.now());
-    window.addEventListener('focus', refreshEffects);
-    document.addEventListener('visibilitychange', refreshEffects);
-    const timer = window.setInterval(refreshEffects, 1000);
-    return () => {
-      window.removeEventListener('focus', refreshEffects);
-      document.removeEventListener('visibilitychange', refreshEffects);
-      window.clearInterval(timer);
-    };
-  }, []);
-  const activeEffects = (profile?.activeStatusEffects ?? []).filter((effect) =>
+  const profileEffects = profile?.activeStatusEffects ?? EMPTY_ACTIVE_STATUS_EFFECTS;
+  // Aura overrides need exact start/end updates anywhere they are painted;
+  // only private Home shows a changing remaining-duration label each minute.
+  const tracksEffectTransitions = view === 'home' || view === 'status-effects' || (!isPublicView && view === 'settings');
+  const showsEffectDuration = !isPublicView && view === 'home';
+  const effectsNow = useProfileEffectClock(
+    tracksEffectTransitions ? profileEffects : EMPTY_ACTIVE_STATUS_EFFECTS,
+    showsEffectDuration,
+  );
+  const activeEffects = profileEffects.filter((effect) =>
     isEffectActive(effect, effectsNow),
   );
 
@@ -298,7 +300,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           </UserProfileCaveDestination>
         );
       case 'home':
-        return <UserProfileHome controller={controller} mode="public" publicProfile={publicProfile} boost={boost} />;
+        return <UserProfileHome controller={controller} now={effectsNow} mode="public" publicProfile={publicProfile} boost={boost} />;
       default:
         return (
           <UserProfileCaveDestination id="unavailable" title="Page unavailable" backLabel="Return to public Home" onBack={returnPublicHome}>
@@ -408,7 +410,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           </UserProfileCaveDestination>
         );
       default:
-        return <UserProfileHome controller={controller} onOpenRelics={() => navigate('/relics')}
+        return <UserProfileHome controller={controller} now={effectsNow} onOpenRelics={() => navigate('/relics')}
           onOpenSettings={() => navigate('/settings')} accountControls={{
           ...accountControls,
           onOpenInbox: accountControls?.onOpenInbox ?? (() => navigate('/home/inbox')),

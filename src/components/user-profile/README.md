@@ -8,15 +8,22 @@
   `src/hooks/useUserProfile.ts`
 - **Workshop preview:** `?preview=user-profile`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-09
-- **Last source comparison:** 2026-09-08
+- **Last Workshop update:** 2026-09-10
+- **Last source comparison:** 2026-09-10
 - **Replica status:** under refinement
 
 The page is reached in production from `src/App.tsx`, which renders `<UserProfile currentUser
 stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Light-Novels`
-`main` at commit `32f9e74`.
+`main` at commit `4a3dd02`.
 
 ## Workshop history
+
+- **2026-09-10 accessibility and performance audit:** Kept the existing Cave composition and
+  behavior intact while correcting User Profile-specific mobile/tablet control targets, roving
+  radio keyboard support, focus treatment, reduced-motion fallbacks, long-content wrapping,
+  rank-text contrast, disabled public-card affordances, and effect-clock scheduling. The changes
+  stay in `development/`; the locked reference remains untouched. Focused component and browser
+  regression coverage now exercises the corrected interactions and 320px / 768px geometry.
 
 - **2026-09-09 regression fix:** Restored the Relics connection on Cave Home. Relics is a full-width destination directly beneath the Daily Dao Pillar and above the Store / Settings pair, showing the inventory count and opening the existing `/relics` route — the same `UserProfileInventoryPanel`, the same navigation entry, no second relic implementation or state. The public view is unchanged.
 

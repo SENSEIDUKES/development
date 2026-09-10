@@ -73,13 +73,13 @@ export function UserProfileCaveDestination({
               id={`cave-destination-${id}-title`}
               ref={headingRef}
               tabIndex={-1}
-              className="cave-title font-display text-2xl leading-tight outline-none sm:text-3xl"
+              className="cave-title break-words font-display text-2xl leading-tight outline-none [overflow-wrap:anywhere] sm:text-3xl"
             >
               {title}
             </h2>
           </div>
           {subtitle ? (
-            <p className="mt-1 font-serif text-xs text-neutral-400 sm:text-sm">{subtitle}</p>
+            <p className="mt-1 break-words font-serif text-xs text-neutral-400 [overflow-wrap:anywhere] sm:text-sm">{subtitle}</p>
           ) : null}
         </div>
       </header>

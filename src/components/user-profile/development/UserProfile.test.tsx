@@ -3,6 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UserProfile from './UserProfile';
+import { UserProfilePublicPanel } from './UserProfilePublicPanel';
 import ReferenceUserProfile from '../reference/UserProfile';
 import { UserProfileServicesProvider } from '../shared/userProfileServices';
 import type { UserProfileController } from '../shared/userProfileServices';
@@ -22,12 +23,19 @@ import {
 import {
   MASTER_RANK,
   RANKS,
+  CAVE_AURA_TEXT_SURFACE,
+  MIN_AURA_TEXT_CONTRAST,
+  accessibleAuraTextColor,
+  auraGradientTextContrastRatio,
+  auraTextContrastRatio,
   getAuraSelection,
+  getAuraGlowStyle,
   getAuraTextStyle,
   getRankForQi,
   rankBackground,
   resolveRankVisual,
 } from './qi';
+import { nextEffectRefreshDelay } from './timedEffects';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -126,6 +134,12 @@ const byText = <T extends HTMLElement>(selector: string, needle: string): T => {
 const click = async (element: Element) => {
   await act(async () => {
     (element as HTMLElement).click();
+  });
+};
+
+const press = async (element: Element, key: string) => {
+  await act(async () => {
+    element.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key }));
   });
 };
 
@@ -306,6 +320,7 @@ describe('Cultivator Cave destinations', () => {
       await vi.advanceTimersByTimeAsync(600);
     });
     expect(container.querySelectorAll('[aria-label="Story seeds"] li')).toHaveLength(3);
+    expect(byText<HTMLButtonElement>('button', 'Export').className).toContain('!min-h-11');
 
     await click(container.querySelector('[aria-label="Return to cave"]')!);
     expect(container.querySelector('[data-cave-home]')).not.toBeNull();
@@ -325,6 +340,7 @@ describe('Cultivator Cave destinations', () => {
     await click(byText('button', 'Crown of the Ninth Refusal'));
     const dialog = () => document.body.querySelector('[data-relic-inspect="relic-mythic"]');
     expect(dialog()).not.toBeNull();
+    expect(dialog()?.querySelector('dd')?.className).toContain('[overflow-wrap:anywhere]');
     await click(byText('button', 'Attune Soul'));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(10);
@@ -423,6 +439,137 @@ describe('Cultivator Cave settings', () => {
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps custom radio groups to one tab stop and supports native radio keys', async () => {
+    await renderCave();
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
+
+    const radios = (label: string) => Array.from(
+      document.body.querySelectorAll<HTMLButtonElement>(`[role="radiogroup"][aria-label="${label}"] [role="radio"]`),
+    );
+    const selected = (label: string) => document.body.querySelector<HTMLButtonElement>(
+      `[role="radiogroup"][aria-label="${label}"] [role="radio"][aria-checked="true"]`,
+    )!;
+    const enabled = (label: string) => radios(label).filter(radio => !radio.disabled);
+
+    const auraLabel = 'Celestial Aura rank';
+    expect(enabled(auraLabel).filter(radio => radio.tabIndex === 0)).toHaveLength(1);
+    expect(selected(auraLabel).textContent).toContain('Leader');
+
+    selected(auraLabel).focus();
+    await press(selected(auraLabel), 'ArrowRight');
+    expect(selected(auraLabel).textContent).toContain('Reader');
+    expect(document.activeElement).toBe(selected(auraLabel));
+    expect(enabled(auraLabel).filter(radio => radio.tabIndex === 0)).toHaveLength(1);
+
+    await press(selected(auraLabel), 'End');
+    expect(selected(auraLabel).textContent).toContain('Leader');
+    await press(selected(auraLabel), 'Home');
+    expect(selected(auraLabel).textContent).toContain('Reader');
+
+    const environmentLabel = 'Cave environment';
+    await click(byText('[data-slot="disclosure-trigger"]', 'Cave Environment'));
+    expect(enabled(environmentLabel).filter(radio => radio.tabIndex === 0)).toHaveLength(1);
+    selected(environmentLabel).focus();
+    await press(selected(environmentLabel), 'End');
+    expect(selected(environmentLabel).textContent).toContain(CAVE_ENVIRONMENTS.at(-1)!.name);
+    await press(selected(environmentLabel), 'Home');
+    expect(selected(environmentLabel).textContent).toContain(CAVE_ENVIRONMENTS[0].name);
+    await press(selected(environmentLabel), 'ArrowDown');
+    expect(selected(environmentLabel).textContent).toContain(CAVE_ENVIRONMENTS[1].name);
+    expect(document.activeElement).toBe(selected(environmentLabel));
+  });
+
+  it('keeps an enabled Aura tab stop when a legacy selected rank is now locked', async () => {
+    await renderCave({
+      adapter: {
+        profileOverride: {
+          dao_xp: 0,
+          qi: 0,
+          displayNameColor: 'rank:master',
+        },
+      },
+    });
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
+
+    const auraRows = Array.from(
+      document.body.querySelectorAll<HTMLButtonElement>(
+        '[role="radiogroup"][aria-label="Celestial Aura rank"] [role="radio"]',
+      ),
+    );
+    const selectedLocked = auraRows.find(row => row.getAttribute('aria-checked') === 'true')!;
+    const enabledRows = auraRows.filter(row => !row.disabled);
+
+    expect(selectedLocked.disabled).toBe(true);
+    expect(selectedLocked.tabIndex).toBe(-1);
+    expect(enabledRows).toHaveLength(1);
+    expect(enabledRows[0].textContent).toContain('Reader');
+    expect(enabledRows[0].tabIndex).toBe(0);
+  });
+
+  it('announces the selected Custom Spectrum without changing its picker behavior', async () => {
+    await renderCave({
+      adapter: {
+        profileOverride: {
+          dao_xp: 50_000,
+          qi: 50_000,
+          displayNameColor: '#000000',
+        },
+      },
+    });
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
+
+    const spectrum = document.body.querySelector<HTMLButtonElement>('[aria-label="Custom spectrum"]')!;
+    expect(spectrum.disabled).toBe(false);
+    expect(spectrum.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('keeps Harmony and a cracked Pillar text opaque enough for their dark surface', async () => {
+    expect(auraTextContrastRatio('#9ca3af')).toBeGreaterThanOrEqual(MIN_AURA_TEXT_CONTRAST);
+    expect(auraTextContrastRatio('#ff3333')).toBeGreaterThanOrEqual(MIN_AURA_TEXT_CONTRAST);
+
+    await renderCave({ adapter: { profileOverride: { daoPillarCracked: true } } });
+    await navigateTo('/home/dao-pillar');
+    expect(document.body.querySelector('#cave-dao-pillar-streak')?.className).not.toContain('/60');
+    await navigateTo('/home');
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
+    await click(byText('[data-slot="disclosure-trigger"]', 'Harmony & Sync'));
+    expect(document.body.querySelector('[aria-label^="Harmony:"] [aria-live="polite"]')?.className).not.toContain('opacity-');
+  });
+
+  it('keeps Profile-specific small controls touch-sized and focusable', async () => {
+    await renderCave();
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
+
+    const username = document.body.querySelector<HTMLInputElement>('#cave-username')!;
+    const displayName = document.body.querySelector<HTMLInputElement>('#cave-display-name')!;
+    const auraRows = Array.from(document.body.querySelectorAll<HTMLButtonElement>('[aria-label="Celestial Aura rank"] [role="radio"]'));
+    const spectrum = document.body.querySelector<HTMLButtonElement>('[aria-label="Custom spectrum"]')!;
+    expect(username.className).toContain('!min-h-11');
+    expect(displayName.className).toContain('!min-h-11');
+    expect(auraRows.every(row => row.className.includes('min-h-11'))).toBe(true);
+    expect(spectrum.className).toContain('h-11');
+    expect(spectrum.className).toContain('focus-visible:outline');
+
+    await click(byText('[data-slot="disclosure-trigger"]', 'Public Profile'));
+    expect(Array.from(document.body.querySelectorAll<HTMLElement>('[data-cave-visibility] label'))
+      .some(control => control.className.includes('!min-h-11'))).toBe(true);
+    expect(byText<HTMLButtonElement>('button', 'Preview Public View').className).toContain('!min-h-11');
+
+    await click(byText('[data-slot="disclosure-trigger"]', 'Cultivator Portrait'));
+    const mirror = byText<HTMLButtonElement>('button', 'Open Divine Mirror');
+    expect(mirror.className).toContain('!min-h-11');
+    await click(mirror);
+    const close = document.body.querySelector<HTMLButtonElement>('[aria-label="Close Portrait Builder"]')!;
+    expect(close.className).toContain('h-11');
+    expect(close.className).toContain('w-11');
+    expect(close.className).toContain('focus-visible:outline');
+
+    await click(close);
+    await click(byText('[data-slot="disclosure-trigger"]', 'Language'));
+    expect(document.body.querySelector<HTMLSelectElement>('#cave-preferred-language')?.className).toContain('!h-11');
+    expect(document.body.querySelector<HTMLSelectElement>('#cave-translation-language')?.className).toContain('!h-11');
+  });
+
   it('edits identity through the panel and saves it to the profile', async () => {
     await renderCave();
     await click(byText('[data-cave-account-actions] button', 'Settings'));
@@ -466,6 +613,38 @@ describe('Cultivator Cave settings', () => {
     expect(destination).not.toBeNull();
     expect(destination?.textContent).toContain('Akashic Records Control Switchboard');
     expect(destination?.textContent).toContain('User Directory (4)');
+  });
+
+  it('makes the Akashic Switchboard controls named, stateful, and touch-sized', async () => {
+    await renderCave({ state: 'owner-admin' });
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
+    await click(byText('button', 'Open Akashic Switchboard'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(800);
+    });
+
+    const viewSwitcher = document.body.querySelector<HTMLElement>('[role="group"][aria-label="Akashic record view"]')!;
+    const directory = byText<HTMLButtonElement>('[role="group"] button', 'User Directory');
+    const chronicles = byText<HTMLButtonElement>('[role="group"] button', 'Novel Chronicles');
+    expect(viewSwitcher).not.toBeNull();
+    expect(directory.type).toBe('button');
+    expect(directory.getAttribute('aria-pressed')).toBe('true');
+    expect(chronicles.getAttribute('aria-pressed')).toBe('false');
+    expect(directory.className).toContain('min-h-11');
+    expect(directory.className).toContain('focus-visible:outline');
+    expect(document.body.querySelector<HTMLInputElement>('[aria-label="Search users"]')?.className).toContain('min-h-11');
+
+    await click(chronicles);
+    expect(directory.getAttribute('aria-pressed')).toBe('false');
+    expect(chronicles.getAttribute('aria-pressed')).toBe('true');
+    expect(document.body.querySelector<HTMLInputElement>('[aria-label="Search stories"]')).not.toBeNull();
+    expect(byText<HTMLButtonElement>('button', 'Purge Matrix').getAttribute('aria-label')).toContain('Purge Matrix for');
+
+    await click(directory);
+    const selector = document.body.querySelector<HTMLElement>('[aria-label^="Premium Rank Override for"]')!;
+    expect(selector.getAttribute('role')).toBe('group');
+    expect(selector.querySelector<HTMLButtonElement>('button')?.getAttribute('aria-pressed')).not.toBeNull();
+    expect(selector.querySelector<HTMLButtonElement>('button')?.className).toContain('min-h-11');
   });
 });
 
@@ -560,9 +739,10 @@ describe('rank colour system', () => {
     expect(getAuraSelection(undefined, 3000)).toBe('rank:adept');
   });
 
-  it('paints a solid rank as text colour and a gradient rank as clipped background', () => {
+  it('paints rank text with an accessible foreground while preserving its rank visual data', () => {
     const scribe = getAuraTextStyle('rank:scribe', undefined, 300);
-    expect(scribe.style?.color).toBe('#2563EB');
+    expect(scribe.style?.color).not.toBe('#2563EB');
+    expect(auraTextContrastRatio(scribe.style?.color as string, CAVE_AURA_TEXT_SURFACE)).toBeGreaterThanOrEqual(MIN_AURA_TEXT_CONTRAST);
     expect(scribe.className).not.toContain('aura-gradient-text');
 
     const sage = getAuraTextStyle('rank:sage', undefined, 25000);
@@ -571,6 +751,59 @@ describe('rank colour system', () => {
 
     const master = getAuraTextStyle('rank:master', undefined, 50000);
     expect(master.className).toContain('aura-spectrum-text');
+  });
+
+  it('keeps every rendered Master spectrum midpoint above AA contrast', () => {
+    const rawMaster = resolveRankVisual('rank:master', 50000).visual;
+    expect(auraGradientTextContrastRatio(rawMaster.stops)).toBeLessThan(MIN_AURA_TEXT_CONTRAST);
+
+    const textStyle = getAuraTextStyle('rank:master', undefined, 50000);
+    const renderedStops = textStyle.style?.backgroundImage?.match(/#[0-9a-f]{6}/gi) ?? [];
+    expect(auraGradientTextContrastRatio(renderedStops)).toBeGreaterThanOrEqual(MIN_AURA_TEXT_CONTRAST);
+    expect(rawMaster.stops).toEqual(['#00FFFF', '#FF007F', '#FFD700', '#00FFFF']);
+  });
+
+  it('keeps all Aura text colours above AA contrast without rewriting stored custom colours', () => {
+    for (const color of RANKS.flatMap(rank => rank.visual.stops)) {
+      const accessibleColor = accessibleAuraTextColor(color);
+      expect(auraTextContrastRatio(accessibleColor)).toBeGreaterThanOrEqual(MIN_AURA_TEXT_CONTRAST);
+    }
+
+    const custom = getAuraTextStyle('#000000', undefined, 50000);
+    expect(custom.style?.color).not.toBe('#000000');
+    expect(auraTextContrastRatio(custom.style?.color as string)).toBeGreaterThanOrEqual(MIN_AURA_TEXT_CONTRAST);
+    expect(resolveRankVisual('#000000', 50000).visual.stops).toEqual(['#000000']);
+
+    const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
+    const silenced = getAuraTextStyle('rank:leader', [{
+      ...effect,
+      effectDef: { ...effect.effectDef, name: 'Ghostly Silence' },
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    }], 12000);
+    expect(silenced.className).toContain('text-neutral-400');
+    expect(silenced.className).not.toContain('opacity-60');
+
+    const cursed = getAuraGlowStyle('rank:leader', [{
+      ...effect,
+      effectDef: { ...effect.effectDef, name: 'Curse of the Cursed Tome' },
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    }], 12000);
+    expect(cursed.className).toContain('motion-reduce:animate-none');
+  });
+
+  it('does not paint a future Aura override before its effect starts', () => {
+    const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
+    const futureSilence = {
+      ...effect,
+      effectDef: { ...effect.effectDef, name: 'Ghostly Silence' },
+      appliedAt: new Date(Date.now() + 60_000).toISOString(),
+      expiresAt: new Date(Date.now() + 120_000).toISOString(),
+    };
+
+    const textStyle = getAuraTextStyle('rank:leader', [futureSilence], 12000);
+    const glowStyle = getAuraGlowStyle('rank:leader', [futureSilence], 12000);
+    expect(textStyle.className).not.toContain('text-neutral-400');
+    expect(glowStyle.className).not.toContain('border-neutral-900');
   });
 
   it('lists every rank in Settings as name, colour and Qi, with no aura lore', async () => {
@@ -839,6 +1072,118 @@ describe('Home dynamic data and claim contract', () => {
   });
 });
 
+describe('Profile timed effects', () => {
+  it('schedules only meaningful effect boundaries and never creates a one-second interval', async () => {
+    const now = Date.UTC(2026, 8, 10, 12, 0, 5);
+    const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
+    const activeEffect = {
+      ...effect,
+      appliedAt: new Date(now - 60_000).toISOString(),
+      expiresAt: new Date(now + 10 * 60_000).toISOString(),
+    };
+    const futureEffect = {
+      ...effect,
+      appliedAt: new Date(now + 20_000).toISOString(),
+      expiresAt: new Date(now + 40_000).toISOString(),
+    };
+
+    expect(nextEffectRefreshDelay([], now, true)).toBeNull();
+    expect(nextEffectRefreshDelay([futureEffect], now)).toBe(20_000);
+    expect(nextEffectRefreshDelay([activeEffect], now, true)).toBe(55_000);
+
+    const interval = vi.spyOn(window, 'setInterval');
+    await renderCave({ state: 'new-cultivator' });
+    expect(interval).not.toHaveBeenCalled();
+  });
+
+  it('pauses effect refreshes while hidden and reschedules them when visible', async () => {
+    const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
+    const setTimeoutSpy = vi.spyOn(window, 'setTimeout');
+    const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout');
+    const originalVisibility = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+
+    try {
+      await renderCave({
+        adapter: {
+          profileOverride: {
+            activeStatusEffects: [{
+              ...effect,
+              appliedAt: new Date(Date.now() - 60_000).toISOString(),
+              expiresAt: new Date(Date.now() + 5 * 60_000).toISOString(),
+            }],
+          },
+        },
+      });
+      setTimeoutSpy.mockClear();
+      clearTimeoutSpy.mockClear();
+
+      Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+      await act(async () => {
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+      expect(clearTimeoutSpy).toHaveBeenCalled();
+
+      Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+      await act(async () => {
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+      expect(setTimeoutSpy).toHaveBeenCalled();
+    } finally {
+      if (originalVisibility) {
+        Object.defineProperty(document, 'visibilityState', originalVisibility);
+      } else {
+        delete (document as { visibilityState?: string }).visibilityState;
+      }
+    }
+  });
+
+  it('refreshes the Settings Aura preview at an effect boundary without minute polling', async () => {
+    const setTimeoutSpy = vi.spyOn(window, 'setTimeout');
+    const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
+    const now = Date.now();
+    const effectStart = now + 150_000;
+    await renderCave({
+      adapter: {
+        profileOverride: {
+          activeStatusEffects: [{
+            ...effect,
+            effectDef: { ...effect.effectDef, name: 'Ghostly Silence' },
+            appliedAt: new Date(effectStart).toISOString(),
+            expiresAt: new Date(now + 5 * 60_000).toISOString(),
+          }],
+        },
+      },
+    });
+    setTimeoutSpy.mockClear();
+
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
+
+    const preview = document.body.querySelector<HTMLElement>('[data-cave-aura-preview]')!;
+    expect(preview.className).not.toContain('text-neutral-400');
+    const expectedBoundaryDelay = effectStart - Date.now();
+    const positiveDelays = setTimeoutSpy.mock.calls
+      .map(([, delay]) => delay)
+      .filter((delay): delay is number => typeof delay === 'number' && delay > 0);
+    expect(positiveDelays).toEqual([expectedBoundaryDelay]);
+    expect(positiveDelays[0]).toBeGreaterThan(60_000);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(expectedBoundaryDelay + 1);
+    });
+    expect(preview.className).toContain('text-neutral-400');
+  });
+
+  it('does not install effect listeners when no time-sensitive effect is rendered', async () => {
+    const addWindowListener = vi.spyOn(window, 'addEventListener');
+    const addDocumentListener = vi.spyOn(document, 'addEventListener');
+
+    await renderCave({ state: 'new-cultivator' });
+
+    expect(addWindowListener.mock.calls.filter(([event]) => event === 'focus')).toHaveLength(0);
+    expect(addDocumentListener.mock.calls.filter(([event]) => event === 'visibilitychange')).toHaveLength(0);
+  });
+});
+
 
 describe('Claim reconciliation', () => {
   it('keeps uncertain claims blocked across navigation until the adapter reconciles', async () => {
@@ -886,6 +1231,25 @@ describe('Claim and existing profile edits', () => {
 });
 
 describe('Public view of the Cave', () => {
+  it('wraps unbroken public titles instead of widening a narrow Cave', async () => {
+    const title = 'A'.repeat(320);
+    await act(async () => {
+      root.render(
+        <UserProfilePublicPanel
+          kind="stories"
+          displayName={'Cultivator'.repeat(24)}
+          titles={[title]}
+        />,
+      );
+    });
+
+    const panel = container.querySelector('[data-cave-public-panel="stories"]')!;
+    const renderedTitle = panel.querySelector<HTMLElement>('[data-cave-public-title]')!;
+    expect(renderedTitle.textContent).toBe(title);
+    expect(panel.className).toContain('[overflow-wrap:anywhere]');
+    expect(renderedTitle.className).toContain('[overflow-wrap:anywhere]');
+  });
+
   const destinationLabels = async () => {
     await openSearch();
     const labels = Array.from(document.querySelectorAll('.workspace-search-results button')).map(button => (button.textContent ?? '').trim()).filter(label => ['Home', 'Stories', 'Relics', 'Exit'].includes(label));
@@ -1085,6 +1449,8 @@ describe('Public view of the Cave', () => {
     expect(container.querySelector('[data-cave-card="stats"]')?.textContent).toContain('Kept private');
     expect(container.querySelector<HTMLButtonElement>('[data-cave-card="highlights"]')!.disabled).toBe(true);
     expect(container.querySelector('[data-cave-card="highlights"]')?.textContent).toContain('Kept private');
+    expect(container.querySelector('[data-cave-card="stats"]')?.querySelectorAll('svg')).toHaveLength(1);
+    expect(container.querySelector('[data-cave-card="highlights"]')?.querySelectorAll('svg')).toHaveLength(1);
 
     await searchCaveDestination('Stories');
     expect(container.querySelector('[data-cave-public-empty]')?.textContent).toContain('private');

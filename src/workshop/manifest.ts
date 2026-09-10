@@ -54,6 +54,12 @@ export function getWorkshopVersionLabel(version: WorkshopEntry['version']) {
  */
 export const workshopEntries: WorkshopEntry[] = [
   {
+    id: 'light-novels-home', section: 'home', title: 'Light Novels Home',
+    description: 'The existing Light Novels homepage: Featured Ascension, Dao Insights and Immortal Hub, with shared Home, Library, Discover and Profile navigation.',
+    category: 'other', version: 'v1.0',
+    source: { repository: 'SENSEIDUKES/Light-Novels', path: 'src/components/LibraryScreen.tsx', lastCompared: '2026-09-09' },
+  },
+  {
     id: 'library-shell',
     section: 'home',
     title: 'Library Shell',

@@ -49,6 +49,7 @@ const StorySeedWorkspace = lazy(() =>
   import('./workshop/previews/story-seed/StorySeedWorkspace')
     .then(module => ({ default: module.StorySeedWorkspace })),
 );
+const LightNovelsHomeWorkspace = lazy(() => import('./workshop/previews/light-novels-home/LightNovelsHomeWorkspace').then(module => ({ default: module.LightNovelsHomeWorkspace })));
 const LibraryShellWorkspace = lazy(() =>
   import('./workshop/previews/library-shell/LibraryShellWorkspace')
     .then(module => ({ default: module.LibraryShellWorkspace })),
@@ -81,6 +82,7 @@ const previewRegistry: Record<string, ComponentType> = {
   'reader-chamber': ReaderChamberWorkspace,
   'relics-gallery': RelicsWorkspace,
   'story-seed': StorySeedWorkspace,
+  'light-novels-home': LightNovelsHomeWorkspace,
   'library-shell': LibraryShellWorkspace,
   'user-profile': UserProfileWorkspace,
 };

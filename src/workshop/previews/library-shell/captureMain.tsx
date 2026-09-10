@@ -17,6 +17,7 @@ async function mount() {
   // Separate documents preserve each source's CSS, portal target and media queries.
   const root = createRoot(document.getElementById('root')!);
   if (query.get('variant') === 'development') {
+    await import('../../../styles.css');
     if (source === 'main-library' && query.get('source') !== 'cultivator-cave') await import('../../../components/library-shell/development/header-theme.css');
     else await import('../../../styles.css');
     await import('./preview-environment.css');

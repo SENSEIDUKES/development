@@ -10,6 +10,7 @@ export type DaoResponse<T> = { ok: boolean; json: () => Promise<T> };
 export interface MainLibraryAdapter {
   currentScreen: string;
   setCurrentScreen: (screen: string) => void;
+  openLibrary?: () => void;
   activeStoryId: string | null;
   setActiveStoryId: (id: string | null) => void;
   syncStatus: string;

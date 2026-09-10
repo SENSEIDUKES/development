@@ -1,0 +1,130 @@
+[
+  {
+    "active": "Home",
+    "destination": "Home",
+    "headers": 1,
+    "navs": 1,
+    "overflow": false,
+    "width": 1440
+  },
+  {
+    "active": "Library",
+    "destination": "Library",
+    "headers": 1,
+    "navs": 1,
+    "overflow": false,
+    "width": 1440
+  },
+  {
+    "active": "Discover",
+    "destination": "Discover",
+    "headers": 1,
+    "navs": 1,
+    "overflow": false,
+    "width": 1440
+  },
+  {
+    "active": "Profile",
+    "destination": "Profile",
+    "headers": 1,
+    "navs": 1,
+    "overflow": false,
+    "width": 1440
+  },
+  {
+    "active": "Home",
+    "destination": "Home",
+    "headers": 1,
+    "navs": 1,
+    "overflow": false,
+    "width": 320
+  },
+  {
+    "active": "Library",
+    "destination": "Library",
+    "headers": 1,
+    "navs": 1,
+    "overflow": false,
+    "width": 320
+  },
+  {
+    "active": "Discover",
+    "destination": "Discover",
+    "headers": 1,
+    "navs": 1,
+    "overflow": false,
+    "width": 320
+  },
+  {
+    "active": "Profile",
+    "destination": "Profile",
+    "headers": 1,
+    "navs": 1,
+    "overflow": false,
+    "width": 320
+  },
+  {
+    "active": "Home",
+    "destination": "Home",
+    "headers": 1,
+    "navs": 1,
+    "overflow": false,
+    "width": 768
+  },
+  {
+    "active": "Library",
+    "destination": "Library",
+    "headers": 1,
+    "navs": 1,
+    "overflow": false,
+    "width": 768
+  },
+  {
+    "active": "Discover",
+    "destination": "Discover",
+    "headers": 1,
+    "navs": 1,
+    "overflow": false,
+    "width": 768
+  },
+  {
+    "active": "Profile",
+    "destination": "Profile",
+    "headers": 1,
+    "navs": 1,
+    "overflow": false,
+    "width": 768
+  },
+  {
+    "active": "Home",
+    "destination": "Home",
+    "headers": 1,
+    "navs": 1,
+    "overflow": false,
+    "width": 390
+  },
+  {
+    "active": "Library",
+    "destination": "Library",
+    "headers": 1,
+    "navs": 1,
+    "overflow": false,
+    "width": 390
+  },
+  {
+    "active": "Discover",
+    "destination": "Discover",
+    "headers": 1,
+    "navs": 1,
+    "overflow": false,
+    "width": 390
+  },
+  {
+    "active": "Profile",
+    "destination": "Profile",
+    "headers": 1,
+    "navs": 1,
+    "overflow": false,
+    "width": 390
+  }
+]

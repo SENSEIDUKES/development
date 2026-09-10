@@ -44,3 +44,5 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
 ## Workshop history
 
 - **2026-09-09:** Inspected Development and Light-Novels; extracted the existing homepage presentation into its own component and Workshop entry, connected the existing four global destinations, preserved local state across Profile navigation, and verified responsive shared chrome. No source application, backend, Alter Fate, or future media system changes.
+
+- **2026-09-09:** PR review: gated the Development collection fade-in class with `motion-safe:`. The locked Original Reference retains the source class under the repository reference-preservation rule.

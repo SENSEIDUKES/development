@@ -180,7 +180,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
       </LibraryPanel>
 
       {children}
-      <div className="space-y-6 animate-fadeIn">
+      <div className="space-y-6 motion-safe:animate-fadeIn">
             <div id="published-worlds-list" className="contents">
               {/* Filtering and Sorting Panels */}
               <LibraryPanel

@@ -86,6 +86,7 @@ export const recommendStoryTags = (
   const selected = new Set(selectedTags.map(normalizeStoryTagIdentity));
   const genreKey = Object.keys(GENRE_TAGS).find(key => normalize(key) === normalize(input.genre || ''));
   const genreTags = genreKey ? GENRE_TAGS[genreKey].slice(0, 2) : [];
+  const genreTagSet = new Set(genreTags);
   const cueScores = new Set(PREMISE_CUES.filter(rule => rule.match.test(premise)).flatMap(rule => rule.tags));
   const excludedCues = new Set(PREMISE_CUES.filter(rule => exclusions.some(text => rule.match.test(text))).flatMap(rule => rule.tags));
   const candidates = catalog.flatMap(({ entry, phrases }) => {
@@ -94,7 +95,7 @@ export const recommendStoryTags = (
     const matched = phrases.filter(phrase => containsPhrase(premise, phrase));
     const evidence = Math.max(0, ...matched.map(phrase => 12 + Math.min(phrase.split(' ').length, 4)));
     const score = Math.max(evidence, cueScores.has(entry.label) ? 10 : 0,
-      genreTags.includes(entry.label) ? 2 : 0);
+      genreTagSet.has(entry.label) ? 2 : 0);
     return score ? [{ entry, score, style: entry.styles.some(style => style === input.style) ? 1 : 0 }] : [];
   });
   const result: StoryTagMetadata[] = [];

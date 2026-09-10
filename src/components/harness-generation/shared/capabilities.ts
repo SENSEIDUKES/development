@@ -49,8 +49,10 @@ const categoryTokens = (event: HarnessSemanticEvent) => (event.category ?? '')
   .map(value => value.trim().replace(/[ _]+/g, '-'))
   .filter(Boolean);
 
-const hasCategory = (event: HarnessSemanticEvent, aliases: string[]) =>
-  categoryTokens(event).some(token => aliases.includes(token));
+const hasCategory = (event: HarnessSemanticEvent, aliases: string[]) => {
+  const aliasSet = new Set(aliases);
+  return categoryTokens(event).some(token => aliasSet.has(token));
+};
 
 const cleanSubjects = (event: HarnessSemanticEvent) => Array.from(new Set(
   (event.subjects ?? []).map(subject => subject.trim()).filter(Boolean),
@@ -79,6 +81,7 @@ export const resolveHarnessEntity = (
   const characters = [...state.canonicalRecords, ...additionalRecords].filter(record =>
     record.storyId === storyId && record.kind === 'character' && !record.supersededAt,
   );
+  const activeRecordIdSet = new Set(activeRecordIds);
   const aliasId = correctionAliases(state.corrections.filter(correction => correction.storyId === storyId)).get(label.trim().toLowerCase());
   const corrected = characters.find(record => record.id === aliasId);
   if (corrected) return { label, resolution: 'alias', resolvedRecordId: corrected.id, entityId: corrected.entityId };
@@ -89,7 +92,7 @@ export const resolveHarnessEntity = (
   const aliases = unique(characters.filter(record => record.aliases?.some(alias => alias.trim().toLowerCase() === label.trim().toLowerCase())));
   if (aliases.length === 1) return { label, resolution: 'alias', resolvedRecordId: aliases[0].id, entityId: aliases[0].entityId };
   if (aliases.length > 1) return { label, resolution: 'conflicted', candidateRecordIds: aliases.map(record => record.id) };
-  const active = unique(characters.filter(record => activeRecordIds.includes(record.id)));
+  const active = unique(characters.filter(record => activeRecordIdSet.has(record.id)));
   if (active.length === 1) return { label, resolution: 'active-context', resolvedRecordId: active[0].id, entityId: active[0].entityId };
   return { label, resolution: 'unresolved' };
 };

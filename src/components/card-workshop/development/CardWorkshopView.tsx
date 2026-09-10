@@ -141,7 +141,8 @@ export const CardWorkshopView: React.FC<CardWorkshopViewProps> = ({
   const categoryStyleOptions = useMemo(() => {
     const allowed = selectedCategory.systemPromptStyles;
     if (!allowed) return SYSTEM_PROMPT_STYLE_OPTIONS;
-    return SYSTEM_PROMPT_STYLE_OPTIONS.filter((option) => allowed.includes(option.value));
+    const allowedSet = new Set(allowed);
+    return SYSTEM_PROMPT_STYLE_OPTIONS.filter((option) => allowedSet.has(option.value));
   }, [selectedCategory]);
 
   const selectCategory = (categoryId: string) => {

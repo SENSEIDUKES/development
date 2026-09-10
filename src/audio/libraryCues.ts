@@ -317,8 +317,9 @@ export const getByAnyTag = (
 ): LibraryCue[] => {
   const needles = tags.map((t) => t.trim().toLowerCase()).filter(Boolean);
   if (needles.length === 0) return [];
+  const needleSet = new Set(needles);
   return getByCategory(loaded, category).filter((c) =>
-    c.metadata.soft_tags.some((t) => needles.includes(t.toLowerCase())),
+    c.metadata.soft_tags.some((t) => needleSet.has(t.toLowerCase())),
   );
 };
 

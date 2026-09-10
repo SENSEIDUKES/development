@@ -275,11 +275,14 @@ export function ReaderViewport({
     // targets ES2020, which has no `Array.prototype.at` typings.
     && activeStory.chapterGenerationBatch.chapterNumbers[activeStory.chapterGenerationBatch.chapterNumbers.length - 1] === selectedChapter.number;
   const resumableBatch = activeStory.chapterGenerationBatch;
-  const isResumingAtSelectedChapter = Boolean(
-    resumableBatch
+  const firstIncompleteResumableChapter = resumableBatch
     && (resumableBatch.status === 'paused' || resumableBatch.status === 'failed')
-    && resumableBatch.chapterNumbers.find(number => !resumableBatch.completedChapterNumbers.includes(number)) === selectedChapter.number,
-  );
+    ? (() => {
+      const completedChapterNumbers = new Set(resumableBatch.completedChapterNumbers);
+      return resumableBatch.chapterNumbers.find(number => !completedChapterNumbers.has(number));
+    })()
+    : undefined;
+  const isResumingAtSelectedChapter = firstIncompleteResumableChapter === selectedChapter.number;
   // Reveal cards resolve the same term index the inline highlighting uses, so
   // an entity named by an alias reaches its own card and colour.
   const codexHighlighter = React.useMemo(

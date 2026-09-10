@@ -22,9 +22,10 @@ export function UserProfileStoriesPanel({ profile, currentUser, stories }: UserP
   // `lib/storySeedFormat`; both read the signed-in account. Injected here.
   const { listStorySeeds, downloadStorySeed, downloadStorySeedCollection } = useUserProfileServices();
   const inactiveFlowIds = profile?.inactiveStories || [];
+  const inactiveFlowIdSet = new Set(inactiveFlowIds);
   const userStories = stories.filter(s => !s.deleted && (s.userId === currentUser?.uid || !s.userId));
-  const activeFlows = userStories.filter(s => !inactiveFlowIds.includes(s.id));
-  const restingFlows = userStories.filter(s => inactiveFlowIds.includes(s.id));
+  const activeFlows = userStories.filter(s => !inactiveFlowIdSet.has(s.id));
+  const restingFlows = userStories.filter(s => inactiveFlowIdSet.has(s.id));
   const [seeds, setSeeds] = useState<StorySeed[]>([]);
   const [isLoadingSeeds, setIsLoadingSeeds] = useState(false);
   const [seedError, setSeedError] = useState<string | null>(null);

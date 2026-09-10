@@ -110,7 +110,8 @@ export function selectNextScenePath(
   const tiedAtMax = SCENE_TYPES.filter(type => effectiveWeights[type] === maxWeight);
   const staleness = Math.max(...tiedAtMax.map(chaptersSinceLastUsed));
   const stalestTied = tiedAtMax.filter(type => chaptersSinceLastUsed(type) === staleness);
-  const type = tieBreakOrder.find(candidate => stalestTied.includes(candidate))!;
+  const stalestTiedSet = new Set(stalestTied);
+  const type = tieBreakOrder.find(candidate => stalestTiedSet.has(candidate))!;
 
   const reason = allBlocked
     ? `Repetition rules blocked every option — fell back to base ${fatePressure} weights (${tieBreakOrder.map(t => `${t}=${baseWeights[fatePressure][t]}`).join(", ")}).`

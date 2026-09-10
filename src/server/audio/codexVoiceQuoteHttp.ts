@@ -37,7 +37,7 @@ export interface CodexVoiceQuoteHttpDependencies {
  * Fields a client may never supply. Any of them means the caller is trying to
  * pick the audio instead of letting the server resolve it.
  */
-const FORBIDDEN_REQUEST_FIELDS = [
+const FORBIDDEN_REQUEST_FIELDS = new Set([
   'text',
   'quote',
   'voiceid',
@@ -50,7 +50,7 @@ const FORBIDDEN_REQUEST_FIELDS = [
   'base64',
   'mimetype',
   'url',
-];
+]);
 
 /** Character fields the endpoint reads. Everything else is ignored. */
 const CHARACTER_FIELDS = [
@@ -75,7 +75,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> => (
 const normalizedField = (field: string) => field.toLowerCase().replace(/[^a-z0-9]/gu, '');
 
 const findForbiddenField = (value: Record<string, unknown>): string | undefined => (
-  Object.keys(value).find(field => FORBIDDEN_REQUEST_FIELDS.includes(normalizedField(field)))
+  Object.keys(value).find(field => FORBIDDEN_REQUEST_FIELDS.has(normalizedField(field)))
 );
 
 const pickCharacter = (value: Record<string, unknown>): LivingStoryRecord => {

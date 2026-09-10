@@ -303,11 +303,6 @@ const speciesKeys = (record: LivingStoryRecord): string[] => {
   return keys.filter(Boolean);
 };
 
-const containsSpeciesName = (records: LivingStoryRecord[], speciesName: string): boolean => {
-  const key = canonicalLivingStoryEntityKey(speciesName);
-  return records.some(record => speciesKeys(record).includes(key));
-};
-
 /**
  * Converts Process Result creature records into application-owned Codex data.
  * The model supplies story-facing names and descriptions only; this boundary
@@ -319,11 +314,17 @@ export const normalizeCreatureCodexRecords = (
   const currentBestiary = input.currentBestiary.map(record => normalizeBestiaryRecord(record, "current"));
   const characterUpdates = input.characterUpdates.map(record => normalizePortraitRecord(record, "model"));
   const bestiaryUpdates = input.bestiaryUpdates.map(record => normalizeBestiaryRecord(record, "model"));
+  const knownSpeciesKeys = new Set(
+    [...currentBestiary, ...bestiaryUpdates].flatMap(speciesKeys),
+  );
 
   for (const character of characterUpdates) {
     const speciesName = stringField(character, "speciesName");
-    if (!speciesName || containsSpeciesName([...currentBestiary, ...bestiaryUpdates], speciesName)) continue;
+    if (!speciesName) continue;
+    const speciesKey = canonicalLivingStoryEntityKey(speciesName);
+    if (speciesKey && knownSpeciesKeys.has(speciesKey)) continue;
     bestiaryUpdates.push({ name: speciesName });
+    if (speciesKey) knownSpeciesKeys.add(speciesKey);
   }
 
   const bestiaryResult = reconcileLivingStoryRecords({

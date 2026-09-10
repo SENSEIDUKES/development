@@ -15,6 +15,7 @@ export function HarnessReaderSession({ state, storyId, onClose }: {
   const [read, setRead] = useState<number[]>([]);
   const [sessionPatch, setSessionPatch] = useState<Partial<StoryWorld>>({});
   const [memoryPatches, setMemoryPatches] = useState<Record<number, StoryMemory>>({});
+  const readSet = useMemo(() => new Set(read), [read]);
   const activeStory = { ...story, ...sessionPatch, memory: memoryPatches[selectedChapter] ?? chapterStory.memory, mcName: chapterStory.mcName, currentChapterNumber: selectedChapter };
   const updateStoryFields: UpdateStoryFields = async (id, updates) => {
     if (id !== storyId) return;
@@ -25,7 +26,7 @@ export function HarnessReaderSession({ state, storyId, onClose }: {
   };
   return <main className="mx-auto w-full min-w-0 max-w-6xl px-2 py-3 sm:px-4">
     <p className="mb-3 text-xs text-neutral-400">SEN preview. Reading settings last for this session; save story changes through Harness direction and corrections.</p>
-    <ReaderChamber chapters={story.arcs[0].chapters.map(chapter => ({ ...chapter, status: read.includes(chapter.number) ? 'read' : 'unread' }))}
+    <ReaderChamber chapters={story.arcs[0].chapters.map(chapter => ({ ...chapter, status: readSet.has(chapter.number) ? 'read' : 'unread' }))}
       currentPowerStage={chapterStory.memory?.currentPowerStage ?? 'Not yet established'}
       onGenerateChapter={async () => undefined} onGenerateNextFiveChapters={async () => undefined} isGenerating={false}
       selectedChapterNum={selectedChapter} setSelectedChapterNum={setSelectedChapter}

@@ -1,15 +1,27 @@
 /* LibraryTierBadge — the compact subscription-tier capsule.
-   Premium through material, lighting, and depth only: a champagne interior
-   with dark lettering, a layered gold / portal-blue / violet rim, a soft outer
-   halo, an inner surface highlight, and an occasional restrained sheen.
-   Reduced-motion users get the same lit surface with the sheen removed.
-   Self-contained so it can move into @seihouse/library-ui unchanged. */
+   Premium through material, lighting, and depth only: a cool translucent
+   glass pane with dark lettering, a layered gold / portal-blue / violet rim,
+   a soft outer halo, a specular top edge, and an occasional restrained sheen.
+   The pane is tinted glass rather than a solid fill — the plaque behind it is
+   blurred and shows through — and its alphas are chosen so the lettering keeps
+   AAA contrast even over pure black. Reduced-motion users get the same lit
+   surface with the sheen removed. Self-contained so it can move into
+   @seihouse/library-ui unchanged. */
 @layer components {
   :where(.library-tier-badge) {
-    --ltb-ivory-high: #fcf8ee;
-    --ltb-ivory: #f4ecd6;
-    --ltb-ivory-low: #e8dbb8;
-    --ltb-ink: #1c160a;
+    /* Tinted glass, not a milky fill: cool, lightly saturated, translucent.
+       A lit upper half, a refraction step where the curve turns over, a clearer
+       lower body that lets the plaque read through, and a thin bounce of light
+       at the bottom edge — the step and the bounce are what make it read as a
+       pane of glass rather than a painted fill. */
+    --ltb-glass-high: rgb(255 255 255 / 0.95);
+    --ltb-glass-crest: rgb(248 252 255 / 0.9);
+    --ltb-glass-mid: rgb(214 233 252 / 0.75);
+    --ltb-glass-low: rgb(206 228 250 / 0.74);
+    --ltb-glass-bounce: rgb(242 251 255 / 0.9);
+    /* The specular curve that sells a pane of glass rather than a flat fill. */
+    --ltb-glass-specular: rgb(255 255 255 / 0.35);
+    --ltb-ink: #10151d;
     --ltb-gold: #d4af37;
     --ltb-gold-light: #f1dc93;
     --ltb-portal: #04acff;
@@ -33,15 +45,27 @@
     min-height: 1.5rem;
     margin: 0;
     padding: 0.28rem 0.72rem;
-    border: 1px solid transparent;
+    border: 0;
     border-radius: 999px;
     overflow: hidden;
     isolation: isolate;
-    /* The interior paints over padding-box and the rim over border-box, so
-       the gradient rim reads as a true edge at any capsule size. */
+    /* Only the pane fills the capsule. The rim is a masked ring drawn on
+       ::before, so a translucent interior can never let the rim gradient wash
+       across the surface — it stays a lit edge at any capsule size. */
     background:
-      linear-gradient(180deg, var(--ltb-ivory-high) 0%, var(--ltb-ivory) 58%, var(--ltb-ivory-low) 100%) padding-box,
-      var(--ltb-rim) border-box;
+      radial-gradient(125% 95% at 50% -34%, var(--ltb-glass-specular) 0%, rgb(255 255 255 / 0) 62%),
+      linear-gradient(
+        176deg,
+        var(--ltb-glass-high) 0%,
+        var(--ltb-glass-crest) 45%,
+        /* the refraction step: light bends where the curve turns over */
+        var(--ltb-glass-mid) 49%,
+        var(--ltb-glass-low) 90%,
+        var(--ltb-glass-bounce) 100%
+      );
+    /* What sits behind the badge refracts through the pane. */
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    backdrop-filter: blur(12px) saturate(160%);
     color: var(--ltb-ink);
     font-family: var(--font-sans, "Rubik", ui-sans-serif, system-ui, sans-serif);
     font-size: 0.72rem;
@@ -53,15 +77,49 @@
     overflow-wrap: anywhere;
     vertical-align: middle;
     -webkit-font-smoothing: antialiased;
+    /* Lettering sits just under the glass surface. */
+    text-shadow: 0 1px 0 rgb(255 255 255 / 0.3);
     box-shadow:
-      /* inner surface highlight and a faint lower edge for depth */
-      inset 0 1px 0 rgb(255 255 255 / 0.85),
-      inset 0 -1px 0 rgb(118 92 38 / 0.16),
-      /* seat the capsule on the dark plaque */
+      /* specular top edge and the cool light that bounces off the underside */
+      inset 0 1px 0 rgb(255 255 255 / 0.92),
+      inset 0 -1px 1px rgb(255 255 255 / 0.35),
+      inset 0 -3px 6px rgb(28 48 78 / 0.07),
+      /* seat the pane on the dark plaque */
       0 1px 2px rgb(0 0 0 / 0.35),
       /* soft outer halo in gold with a cool portal fringe */
-      0 0 12px rgb(212 175 55 / 0.26),
-      0 0 24px rgb(4 172 255 / 0.1);
+      0 0 12px rgb(212 175 55 / 0.22),
+      0 0 24px rgb(4 172 255 / 0.12);
+  }
+
+  /* Without a backdrop filter the pane would read as flat tint over the
+     plaque, so it firms up just enough to stay a lit surface. */
+  @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    :where(.library-tier-badge) {
+      --ltb-glass-high: rgb(255 255 255 / 0.96);
+      --ltb-glass-mid: rgb(242 247 255 / 0.9);
+      --ltb-glass-low: rgb(223 233 246 / 0.86);
+    }
+  }
+
+  /* The rim: a 1px ring of the layered gradient, masked out of its own centre
+     so it hugs the edge like light caught on the rim of a glass. */
+  :where(.library-tier-badge)::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--ltb-rim);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
   }
 
   :where(.library-tier-badge__label) {
@@ -71,7 +129,7 @@
     max-width: 100%;
   }
 
-  /* An occasional restrained sheen: one soft sweep, then a long rest. */
+  /* An occasional restrained sheen: one soft specular sweep, then a long rest. */
   :where(.library-tier-badge)::after {
     content: "";
     position: absolute;
@@ -80,10 +138,10 @@
     pointer-events: none;
     background: linear-gradient(
       112deg,
-      transparent 36%,
-      rgb(255 255 255 / 0.55) 48%,
-      rgb(255 255 255 / 0.78) 52%,
-      transparent 64%
+      transparent 38%,
+      rgb(255 255 255 / 0.34) 48%,
+      rgb(255 255 255 / 0.6) 52%,
+      transparent 62%
     );
     transform: translateX(-130%);
     animation: library-tier-badge-sheen var(--ltb-sheen-period) ease-in-out infinite;

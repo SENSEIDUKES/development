@@ -10,12 +10,28 @@ import { auraTextContrastRatio } from './qi';
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const css = readFileSync(join(process.cwd(), 'src/components/user-profile/development/library-tier-badge.css'), 'utf8');
-const cssVariable = (name: string) => css.match(new RegExp(`${name}:\\s*(#[0-9a-f]{6})`, 'i'))?.[1];
+const cssVariable = (name: string) => css.match(new RegExp(`${name}:\\s*([^;]+);`, 'i'))?.[1].trim();
+
+/** The glass pane is translucent, so its rendered colour is the composite of
+    the declared stop over whatever sits behind the badge. */
+const compositeOver = (declaration: string, backdrop: string) => {
+  const translucent = declaration.match(/rgb\(\s*(\d+)\s+(\d+)\s+(\d+)\s*\/\s*([\d.]+)\s*\)/);
+  if (!translucent) return declaration;
+  const [red, green, blue, alpha] = translucent.slice(1).map(Number);
+  const behind = [1, 3, 5].map(offset => Number.parseInt(backdrop.slice(offset, offset + 2), 16));
+  const channel = (value: number, under: number) => Math.round(value * alpha + under * (1 - alpha));
+  return `#${[channel(red, behind[0]), channel(green, behind[1]), channel(blue, behind[2])]
+    .map(value => value.toString(16).padStart(2, '0'))
+    .join('')}`;
+};
 const block = (selector: string) => {
   const start = css.indexOf(selector);
   expect(start, `${selector} rule present`).toBeGreaterThan(-1);
   return css.slice(start, css.indexOf('}', start));
 };
+
+/** Every interior stop of the glass pane, brightest first. */
+const GLASS_STOPS = ['--ltb-glass-high', '--ltb-glass-crest', '--ltb-glass-mid', '--ltb-glass-low', '--ltb-glass-bounce'];
 
 let container: HTMLDivElement;
 let root: Root;
@@ -76,11 +92,46 @@ describe('LibraryTierBadge', () => {
     expect(block('[data-sheen="none"])::after')).toContain('display: none');
   });
 
-  it('keeps dark lettering on the champagne interior at AAA contrast', () => {
+  it('keeps dark lettering at AAA contrast through the glass, over any backdrop', () => {
     const ink = cssVariable('--ltb-ink')!;
-    for (const surface of ['--ltb-ivory-high', '--ltb-ivory', '--ltb-ivory-low']) {
-      expect(auraTextContrastRatio(ink, cssVariable(surface)!), surface).toBeGreaterThanOrEqual(7);
+    // Pure black is the worst case for a translucent pale pane: any lighter
+    // backdrop composites lighter still, so this bounds every real surface.
+    for (const backdrop of ['#000000', '#0d1420', '#1a2740']) {
+      for (const stop of GLASS_STOPS) {
+        const surface = compositeOver(cssVariable(stop)!, backdrop);
+        expect(auraTextContrastRatio(ink, surface), `${stop} over ${backdrop}`).toBeGreaterThanOrEqual(7);
+      }
     }
+  });
+
+  it('renders a translucent, cool-tinted pane rather than a milky fill', () => {
+    const alphas = GLASS_STOPS.map(stop => {
+      const value = cssVariable(stop)!;
+      expect(value, stop).toMatch(/^rgb\(/);
+      return Number(value.match(/\/\s*([\d.]+)\s*\)/)![1]);
+    });
+    // Translucent everywhere, and clearer through the body than at the lit
+    // top edge, so the pane refracts instead of reading as one painted tone.
+    expect(Math.max(...alphas)).toBeLessThan(1);
+    expect(Math.min(...alphas)).toBeLessThan(alphas[0]);
+    // Cool tint: the blue channel of each stop is never below the red channel.
+    for (const stop of GLASS_STOPS) {
+      const [red, , blue] = cssVariable(stop)!.match(/rgb\(\s*(\d+)\s+(\d+)\s+(\d+)/)!.slice(1).map(Number);
+      expect(blue, stop).toBeGreaterThanOrEqual(red);
+    }
+  });
+
+  it('refracts the plaque behind it, and firms up where no backdrop filter exists', () => {
+    const rule = block(':where(.library-tier-badge) {');
+    expect(rule).toContain('backdrop-filter: blur(');
+    expect(rule).toContain('-webkit-backdrop-filter: blur(');
+    expect(rule).toContain('saturate(');
+    const fallback = css.slice(css.indexOf('@supports not'));
+    expect(fallback).toContain('--ltb-glass-high');
+    const fallbackAlpha = Number(fallback.match(/--ltb-glass-high:[^;]*\/\s*([\d.]+)\s*\)/)![1]);
+    const defaultAlpha = Number(cssVariable('--ltb-glass-high')!.match(/\/\s*([\d.]+)\s*\)/)![1]);
+    expect(fallbackAlpha).toBeGreaterThan(defaultAlpha);
+    expect(fallbackAlpha).toBeLessThan(1);
   });
 
   it('uses the SEN sans typography with slightly widened tracking', () => {
@@ -101,8 +152,16 @@ describe('LibraryTierBadge', () => {
   it('builds the premium finish from material, lighting, and depth only', () => {
     const rule = block(':where(.library-tier-badge) {');
     expect(rule).toContain('border-radius: 999px');
-    expect(rule).toContain('padding-box');
-    expect(rule).toContain('border-box');
+    // The rim is a masked ring, so a translucent pane never lets the rim
+    // gradient wash across the capsule's surface.
+    const rim = block(':where(.library-tier-badge)::before');
+    expect(rim).toContain('background: var(--ltb-rim)');
+    expect(rim).toContain('mask-composite: exclude');
+    expect(rim).toContain('-webkit-mask-composite: xor');
+    const fill = rule.slice(rule.indexOf('\n    background:'));
+    expect(fill.slice(0, fill.indexOf(';'))).not.toMatch(/padding-box|border-box/);
+    // A specular curve over the pane reads as light on a lens.
+    expect(fill).toContain('radial-gradient');
     expect(rule).toContain('inset 0 1px 0 rgb(255 255 255');
     expect(rule).toMatch(/0 0 \d+px rgb\(212 175 55/);
     expect(rule).toMatch(/0 0 \d+px rgb\(4 172 255/);

@@ -36,7 +36,7 @@ function previewIds() {
 describe('WorkshopHome', () => {
   it('groups each existing preview exactly once and preserves direct links and release labels', () => {
     const groups = {
-      Home: ['library-shell', 'user-profile'],
+      Home: ['light-novels-home', 'library-shell', 'user-profile'],
       Library: ['story-seed'],
       SEN: ['chapter-generation-flow', 'harness-generation', 'chapter-generation-manifestation', 'character-voice', 'reader-codex', 'reader-chamber', 'card-workshop'],
       Shared: ['celestial-backdrop', 'idle-cultivation', 'relics-gallery'],

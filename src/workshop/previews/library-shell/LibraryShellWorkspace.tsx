@@ -27,7 +27,7 @@ export function LibraryShellWorkspace() {
   const query = new URLSearchParams(window.location.search);
   const initial = query.get('source') ?? '';
   const [source, setSource] = useState<HeaderConfiguration>(initial in configurations ? initial as HeaderConfiguration : 'main-library');
-  const [state, setState] = useState(() => (headerStates[source] as readonly string[]).includes(query.get('state') ?? '') ? query.get('state')! : headerStates[source][0]);
+  const [state, setState] = useState(() => (headerStates[source] as readonly string[]).includes(query.get('state') ?? '') ? query.get('state')! : (source === 'main-library' ? 'library' : headerStates[source][0]));
   const [device, setDevice] = useState<Device>((query.get('device') ?? '') in devices ? query.get('device') as Device : 'phone');
   const [safeArea, setSafeArea] = useState<SafeArea>('off');
   const [reducedMotion, setReducedMotion] = useState(false);

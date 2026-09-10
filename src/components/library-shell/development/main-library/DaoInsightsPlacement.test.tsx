@@ -7,6 +7,7 @@ import { MainLibraryHeader, type MainLibraryHeaderAdapter } from '../MainLibrary
 import { MainLibraryHomeInsights } from '../MainLibraryHomeInsights';
 import { MainLibraryPreview } from '../../../../workshop/previews/library-shell/MainLibraryPreview';
 
+vi.mock('@seihouse/library-ui', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/library-ui')>(), ParticleEffect: () => null }));
 vi.mock('../../../../audio/DevAudioPlayback', () => ({ useDevAudioPlayback: () => ({
   isPlaying: false, currentTrackId: null, stop: vi.fn(),
 }) }));
@@ -18,10 +19,12 @@ const copyText = vi.fn(async (_text: string) => {});
 beforeEach(() => {
   container = document.createElement('div'); document.body.append(container); root = createRoot(container);
   copyText.mockClear();
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
   vi.stubGlobal('matchMedia', (query: string) => ({ media: query, matches: false,
     addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn() }));
 });
-afterEach(() => { act(() => root.unmount()); container.remove(); document.body.innerHTML = ''; vi.unstubAllGlobals(); });
+afterEach(() => { act(() => root.unmount()); container.remove(); document.body.innerHTML = ''; vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 const render = async (node: React.ReactNode) => {
   await act(async () => root.render(<LibraryPresentationProvider>{node}</LibraryPresentationProvider>));
@@ -61,7 +64,7 @@ it('regression: renders Dao Insights in Home content, between the featured area 
   // Home content, not chrome.
   expect(insights.closest('header')).toBeNull();
   expect(insights.closest('main')).not.toBeNull();
-  const featured = container.querySelector('main .border-dashed')!;
+  const featured = container.querySelector('[data-light-novels-home] h2')!;
   const tabs = container.querySelector('main nav, main [role="tablist"]')
     ?? Array.from(container.querySelectorAll('main *')).find(element => element.textContent?.includes('My Library'))!;
   expect(featured.compareDocumentPosition(insights) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

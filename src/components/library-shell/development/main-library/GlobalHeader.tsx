@@ -19,7 +19,8 @@ export function GlobalHeader() {
   const home = () => { adapter.setCurrentScreen('home'); adapter.setActiveStoryId(null); };
   // Descriptions are the existing Command Hub guidance, retained verbatim.
   const items: HeaderSearchItem[] = [
-    { id: 'home', label: 'Library', description: 'Browse your accumulated scroll logs', icon: BookOpen, onAction: home },
+    { id: 'home', label: 'Home', description: 'Return to the Light Novels homepage', icon: BookOpen, onAction: home },
+    { id: 'library', label: 'Library', description: 'Browse your accumulated scroll logs', icon: BookOpen, onAction: adapter.openLibrary ?? home },
     { id: 'creator', label: 'Story Seed', description: 'Forge a new cosmic story seed', icon: Plus, onAction: () => adapter.setCurrentScreen('creator') },
     { id: 'sects', label: 'Sects', description: 'Earn rewards & shape worlds together', icon: Users, onAction: () => adapter.setCurrentScreen('sects') },
     { id: 'pricing', label: 'Tiers', description: 'Replenish your creative Qi', icon: Gem, onAction: () => adapter.setCurrentScreen('pricing') },

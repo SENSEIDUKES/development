@@ -4,14 +4,15 @@ import { LibraryCollectionStrip } from '../../../components/library-shell/refere
 import { MainLibraryAdapterContext, type MainLibraryAdapter } from '../../../components/library-shell/shared/MainLibraryAdapter';
 import { MainLibraryNavigation } from '../../../components/library-shell/development/MainLibraryNavigation';
 import type { LibraryLocation } from '../../../components/library-shell/development/libraryRoutes';
-import { libraryPreviewUrl, navigateLibraryPreview } from './libraryPreviewNavigation';
+import { LightNovelsHome } from '../../../components/light-novels-home/development/LightNovelsHome';
+import { LightNovelsHome as ReferenceHome } from '../../../components/light-novels-home/reference/LightNovelsHome';
+import { libraryPreviewUrl, navigateLibraryPreview, readLibraryPreviewLocation } from './libraryPreviewNavigation';
 
-export function MainLibraryPreview({ state, developmentHeader, developmentHomeContent, extraFeedback, developmentNavigation = false }: { state: string; developmentHeader?: (adapter: MainLibraryAdapter) => React.ReactNode; developmentHomeContent?: (adapter: MainLibraryAdapter) => React.ReactNode; extraFeedback?: string; developmentNavigation?: boolean }) {
-  const query = new URLSearchParams(window.location.search);
-  const initialScreen = state === 'profile' ? 'profile' : state === 'reader' ? 'reader' : state === 'sects' ? 'sects' : state === 'tiers' ? 'pricing' : 'home';
-  const [currentScreen, setCurrentScreen] = useState(developmentNavigation ? query.get('screen') ?? initialScreen : state === 'profile' ? 'profile' : 'home');
+export function MainLibraryPreview({ state, developmentHeader, developmentHomeContent, extraFeedback, developmentNavigation = false, homeReference = false, active = true }: { state: string; developmentHeader?: (adapter: MainLibraryAdapter) => React.ReactNode; developmentHomeContent?: (adapter: MainLibraryAdapter) => React.ReactNode; extraFeedback?: string; developmentNavigation?: boolean; homeReference?: boolean; active?: boolean }) {
+  const initialLocation = readLibraryPreviewLocation(state);
+  const [currentScreen, setCurrentScreen] = useState(developmentNavigation ? initialLocation.screen : state === 'profile' ? 'profile' : 'home');
   const [activeStoryId, setActiveStoryId] = useState<string | null>(state === 'active-story' ? 'mock-story' : null);
-  const [activeTab, chooseTab] = useState(developmentNavigation ? query.get('collection') ?? (state === 'library' ? 'my-library' : state === 'discover' ? 'challenges' : 'featured') : 'my-library');
+  const [activeTab, chooseTab] = useState<string>(developmentNavigation ? initialLocation.collection ?? 'featured' : 'my-library');
   const [destination, setDestination] = useState('');
   const mainRef = useRef<HTMLElement>(null);
   const navigate = (location: LibraryLocation) => {
@@ -27,14 +28,14 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
   useEffect(() => {
     if (!developmentNavigation) return;
     const onBack = () => {
-      const params = new URLSearchParams(window.location.search);
-      setCurrentScreen(params.get('screen') ?? 'home');
-      chooseTab(params.get('collection') ?? 'featured');
+      const location = readLibraryPreviewLocation(state);
+      setCurrentScreen(location.screen);
+      chooseTab(location.collection ?? 'featured');
     };
     window.addEventListener('popstate', onBack);
     return () => window.removeEventListener('popstate', onBack);
-  }, [developmentNavigation]);
-  useEffect(() => { if (developmentNavigation) mainRef.current?.focus(); }, [currentScreen, activeTab, developmentNavigation]);
+  }, [developmentNavigation, state]);
+  useEffect(() => { if (developmentNavigation) mainRef.current?.focus({ preventScroll: true }); }, [currentScreen, activeTab, developmentNavigation]);
   const requestDao = useCallback<MainLibraryAdapter['requestDao']>(async kind => {
     const category = kind === 'comedic' || kind === 'comforting' ? kind : 'inspirational';
     const quotes = {
@@ -52,17 +53,28 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
       if (developmentNavigation) navigate({ screen, ...(screen === 'home' ? { collection: 'featured' } : {}) });
       else { setCurrentScreen(screen); setDestination(screen); }
     },
+    openLibrary: () => navigate({ screen: 'home', collection: 'my-library' }),
     activeStoryId, setActiveStoryId, syncStatus: state === 'syncing' ? 'syncing' : state === 'offline' ? 'error' : 'idle', lastSavedTime: null,
     currentUser: state === 'guest' ? null : { email: 'sensei@example.test', displayName: 'Sensei' },
     userProfile: state === 'missing-profile' ? null : { displayName: state === 'long-name' ? 'Keeper of the Nine Celestial Libraries and the Unfinished Scrolls' : 'Sensei', premiumTier: 'immortal' },
     stories: [{ id: 'mock-story', mcName: 'Ye Chen', genre: 'Xianxia' }],
     setIsSettingsOpen: () => setDestination('Settings'), setIsCodexSheetOpen: () => setDestination('Living Codex'), setIsShortcutsOpen: () => setDestination('Shortcut Spells'), requestDao,
   };
+  const Home = homeReference ? ReferenceHome : LightNovelsHome;
+  const isHome = active && developmentNavigation && currentScreen === 'home' && activeTab === 'featured';
+  const collections = <LibraryCollectionStrip activeTab={activeTab} chooseTab={tab => developmentNavigation ? navigate({ screen: 'home', collection: tab as LibraryLocation['collection'] }) : chooseTab(tab)} syncStatus={adapter.syncStatus} libraryStories={state === 'guest' ? [] : adapter.stories} />;
   const content = <MainLibraryAdapterContext.Provider value={adapter}>
     <div className="min-h-dvh bg-[#050505] text-[#dfd8cf] font-serif overflow-x-hidden selection:bg-human/30 pb-safe">
       {developmentHeader ? developmentHeader(adapter) : <GlobalHeader />}
-      <main ref={mainRef} tabIndex={developmentNavigation ? -1 : undefined} className="relative z-10 w-full min-h-[calc(100dvh-140px)]">
+      <main ref={mainRef} tabIndex={developmentNavigation ? -1 : undefined} className="relative z-10 w-full outline-none min-h-[calc(100dvh-140px)]">
         <div className="px-4 py-8 max-w-7xl mx-auto w-full">
+          {developmentNavigation && <div hidden={!isHome}>
+            <Home active={isHome} worlds={[]} onCreateStory={() => navigate({ screen: 'creator' })} onOpenWorld={id => { setActiveStoryId(id); navigate({ screen: 'detail' }); }}>
+              {developmentHomeContent?.(adapter)}
+              {isHome && collections}
+            </Home>
+          </div>}
+          <div hidden={isHome}>
           <div className="mb-8 min-h-52 border border-dashed border-neutral-800 rounded-xl p-6 text-neutral-400 text-sm font-sans">
             Workshop content slot · Featured Ascension and library content are outside this header capture.
             <p className="mt-3" role="status">{destination ? `Workshop destination: ${destination}` : 'Local account and story fixtures. Shell actions stay in this preview.'}</p>
@@ -71,9 +83,10 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
           {extraFeedback && <p role="status" className="mb-4 text-sm text-portal">{extraFeedback}</p>}
           {/* Home content between the featured area and the collection tabs —
               where Dao Insights now lives, out of the top header. */}
-          {currentScreen === 'home' && developmentHomeContent?.(adapter)}
-          <LibraryCollectionStrip activeTab={activeTab} chooseTab={tab => developmentNavigation ? navigate({ screen: 'home', collection: tab as LibraryLocation['collection'] }) : chooseTab(tab)} syncStatus={adapter.syncStatus} libraryStories={state === 'guest' ? [] : adapter.stories} />
+          {!developmentNavigation && currentScreen === 'home' && developmentHomeContent?.(adapter)}
+          {!isHome && collections}
           <p className="font-sans text-xs text-neutral-400">Workshop collection destination: {activeTab}</p>
+          </div>
         </div>
       </main>
     </div>

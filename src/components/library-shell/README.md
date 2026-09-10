@@ -116,3 +116,7 @@ For an eventual approved change, identify the owning lane first. Main header/DAO
 ## 2026-09-09 production sheet viewport fix
 
 Fixed the shared Settings/Search sheet shifting half its width off-screen in production builds. CSS optimization lowered the mobile `translate: none` reset to `transform`, leaving the canonical dialog centering translation active. WorkspaceSheet now resets the original translation through responsive utilities, while desktop centering, dialog focus/scroll behavior and Settings state remain unchanged. Verify the production output with `node scripts/verifyWorkspaceSheet.browser.mjs` after `npm run build` and `npm run preview -- --port 4173`; dev-server-only testing does not catch this regression.
+
+## Standalone Home foundation — 2026-09-09
+
+The Library Shell Workshop entry now starts at Library (`state=library`). The new `?preview=light-novels-home` entry opens the existing Light-Novels homepage presentation, extracted from the verified source because this shell previously contained only a hero/content placeholder. Both use the existing responsive document and four-item navigation. Library and Discover retain the existing content-slot boundaries; Profile retains the real Cave preview. Home and Profile local state survive global navigation in the shared document. Header Search now distinguishes Home from Library. Programmatic content focus preserves the header's scroll position. See [Home ownership and transfer notes](../light-novels-home/README.md). Existing locked captures and their comparison dates are unchanged.

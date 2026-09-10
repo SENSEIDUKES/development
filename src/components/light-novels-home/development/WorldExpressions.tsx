@@ -33,19 +33,19 @@ export function WorldExpressions({ world, expansions }: { world: HomeWorld; expa
   if (!expansions.length) return null;
   return <section className="world-expressions" aria-labelledby={`${id}-title`}>
     <div className="space-y-2">
-      <p className="font-sc text-xs uppercase tracking-widest text-portal">One world · shared origins</p>
+      <p className="font-sc text-xs uppercase tracking-widest text-portal">SEN World · Connected Media</p>
       <h2 id={`${id}-title`} className="font-display text-2xl font-bold text-signal">Explore This World</h2>
       <p className="max-w-2xl font-sans text-sm leading-relaxed text-neutral-400">
         It begins with <strong className="text-neutral-200">{world.title}</strong>, the original novel.
-        {' '}The manga adapts its story; the game explores the same world.
+        {' '}The manga adapts its story; the duel game uses this world's characters, abilities, artifacts, and locations for battles.
       </p>
       <p className="font-sans text-xs text-neutral-400">Manga and game are concept previews.</p>
     </div>
     <p id={`${id}-hint`} className="world-expressions-hint">
-      Scroll to explore all expressions <ArrowRight size={14} aria-hidden="true" />
+      Scroll to explore all media <ArrowRight size={14} aria-hidden="true" />
     </p>
     <div className="world-expressions-lane" role="region" tabIndex={0}
-      aria-label={`Expressions of ${world.title}`} aria-describedby={`${id}-hint`}>
+      aria-label={`Connected media for ${world.title}`} aria-describedby={`${id}-hint`}>
       <ul className="world-expressions-list">
         <li>
           <LibraryCard padding="none" className="world-expression-card world-expression-original" contentClassName="h-full gap-0">
@@ -56,7 +56,7 @@ export function WorldExpressions({ world, expansions }: { world: HomeWorld; expa
             <div className="world-expression-body">
               <p className="world-expression-origin text-jade-accent">Original · the story begins here</p>
               <LibraryCardTitle as="h3">{world.title}</LibraryCardTitle>
-              <p className="world-expression-description">The original story of {world.mcName}. The source of the characters, places, and lore in every expansion.</p>
+              <p className="world-expression-description">The original story of {world.mcName}. The source of the characters, places, and lore across its connected media.</p>
               <span className="world-expression-current"><BookOpen size={14} aria-hidden="true" /> You’re viewing this novel</span>
             </div>
           </LibraryCard>

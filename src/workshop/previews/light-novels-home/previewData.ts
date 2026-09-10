@@ -31,7 +31,7 @@ export const featuredExpansions: readonly WorldExpansionPreview[] = [
   {
     medium: 'game',
     title: 'The Last Lotus · Echoes of Jade',
-    description: 'An exploration game concept set among the same mountain sects and forgotten ruins. Walk the paths beyond the novel.',
+    description: "A reusable duel battle game shell populated with this SEN World's characters, abilities, artifacts, and locations. Battles are separate from the novel's narrative.",
     imageUrl: '/manifest-backdrops/immortal-land-3.jpg',
   },
 ];

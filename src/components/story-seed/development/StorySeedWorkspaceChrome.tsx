@@ -11,7 +11,7 @@ import { HeaderActionButton, type HeaderAction } from '../../library-shell/devel
 import { WorkspaceNavigation, WorkspaceBottomControls, WorkspaceSidebar, useWorkspaceNavigation } from '../../library-shell/development/WorkspaceNavigation';
 import { WorkspaceSheet } from '../../library-shell/development/WorkspaceSheet';
 import { SENStorySeedIcon } from './SENStorySeedIcon';
-import { SENBankIcon, SENHelpIcon, SENManifestingIcon, SENSettingsIcon } from '../../sen-icons';
+import { SENBankIcon, SENExitIcon, SENHelpIcon, SENManifestingIcon, SENSettingsIcon } from '../../sen-icons';
 import './story-seed.css';
 
 interface StorySeedWorkspaceChromeProps {
@@ -146,7 +146,7 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
     { id: bank.id, label: bank.label, icon: <SENStorySeedIcon name="bank" size={20} aria-hidden="true" />, active: props.showStoryBank,
       onSelect: () => { setSettingsOpen(false); bank.onAction(); } },
     { id: settings.id, label: settings.label, icon: <SENSettingsIcon size={20} />, active: settingsOpen, onSelect: openSettings },
-    { id: 'back', label: 'Back', icon: <img src="/favicon.jpg" alt="Celestial Library" className="h-5 w-5 object-contain" />,
+    { id: 'back', label: 'Back', icon: <SENExitIcon size={20} aria-hidden="true" />,
       onSelect: () => { setSettingsOpen(false); navigation.closeDrawer(); props.onNavigateHome(); } },
   ]} />;
   const settingsSheet = <WorkspaceSheet open={settingsOpen} onOpenChange={setSettingsOpen} title="Story Seed settings" closeLabel="Close settings"

@@ -356,7 +356,11 @@ Integrated WorkspaceHeader through StorySeedWorkspaceChrome, one feature-owned s
 
 ## 2026-09-09 navigation polish
 
-Bottom navigation is Sections, Story Bank, Settings, Back. Back uses the Celestial Library emblem and the required `onNavigateHome` host callback. The Workshop supplies the existing `navigateLibraryPreview` adapter with the canonical Home destination (home/featured). On transfer, supply Light Novels' explicit Home router action to CreationModal and the standalone header/mobile adapters; do not supply history.back or a Workshop URL. Manifest remains in the page action row with unchanged eligibility and callbacks. Help remains in the top header with its unchanged icon. No state, draft or schema changes.
+Bottom navigation is Sections, Story Bank, Settings, Back. Back uses the official SEN Exit icon and the required `onNavigateHome` host callback. The Workshop supplies the existing `navigateLibraryPreview` adapter with the canonical Home destination (home/featured). On transfer, supply Light Novels' explicit Home router action to CreationModal and the standalone header/mobile adapters; do not supply history.back or a Workshop URL. Manifest remains in the page action row with unchanged eligibility and callbacks. Help remains in the top header with its unchanged icon. No state, draft or schema changes.
+
+## 2026-09-11 official exit correction
+
+Replaced the Story Seed mobile Back control's Celestial Library emblem with the canonical source-owned SEN Exit icon. Its explicit host `onNavigateHome` behavior, label, ordering, breakpoint, and navigation state remain unchanged. The locked reference replica and source-comparison date are unchanged.
 
 
 ## 2026-09-09 production sheet viewport fix

@@ -10,7 +10,7 @@ import type { UserProfileController } from '../shared/userProfileServices';
 import type { MockUserProfileServicesOptions } from '../../../workshop/previews/user-profile/mockUserProfileServices';
 import { effectStatement, UserProfileHome } from './UserProfileHome';
 import { buildPublicProfile, developmentPublicRecord, DEFAULT_PUBLIC_PROFILE_VISIBILITY } from './publicProfile';
-import { publicCavePath, resolveCaveRoute } from './caveNavigation';
+import { CAVE_DESTINATIONS, CAVE_PUBLIC_DESTINATIONS, publicCavePath, resolveCaveRoute } from './caveNavigation';
 import { publicCreatorWorlds, type CreatorWorld, type PublicCreator } from './creatorWorlds';
 import { previewPublicCreators } from '../../../workshop/previews/user-profile/publicCreatorData';
 import type { AppUser } from '../shared/types';
@@ -179,7 +179,7 @@ describe('Profile creator navigation', () => {
     for (const [label, destination] of [['Worlds', 'worlds'], ['Store', 'storefront']] as const) {
       const link = byText<HTMLAnchorElement>('[data-cave-identity-actions] a', label);
       expect(link.tabIndex).toBe(0);
-      expect(link.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+      expect(link.querySelector('[data-sen-navigation-icon]')?.getAttribute('aria-hidden')).toBe('true');
       expect(new URL(link.href).searchParams.get('cave')).toBe(publicCavePath(destination, controller().profile!.uid));
     }
     expect(container.querySelector('[data-cave-rank]')?.textContent).toBe('Leader');
@@ -1003,6 +1003,16 @@ describe('locked reference replica', () => {
 
 
 describe('Cave workspace shell', () => {
+  it('uses the supplied SEN icons for global and Cave navigation plus profile controls', async () => {
+    desktopViewport = true;
+    await renderCave();
+    expect(CAVE_DESTINATIONS.slice(0, 3).map(item => item.icon)).toEqual(['home', 'scroll', 'relic']);
+    expect(CAVE_PUBLIC_DESTINATIONS.map(item => item.icon)).toEqual(['home', 'scroll', 'relic']);
+    const icons = Array.from(container.querySelectorAll<HTMLElement>('[data-sen-navigation-icon]'))
+      .map(icon => icon.dataset.senNavigationIcon);
+    expect(icons).toEqual(expect.arrayContaining(['home', 'book', 'discovery', 'scroll', 'relic', 'energy', 'store']));
+  });
+
   it('keeps the decorative backdrop behind the interactive shell', async () => {
     await renderCave();
     const backdrop = container.querySelector('[data-cave-backdrop-layer]');

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+  <title>Journey</title>
+  <path fill-rule="evenodd" d="M3.5 5A2.75 2.75 0 0 0 .75 7.75C.75 9.5 3.5 12.75 3.5 12.75S6.25 9.5 6.25 7.75A2.75 2.75 0 0 0 3.5 5ZM4.7 7.65a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 1 1 2.4 0Z"/>
+  <path fill-rule="evenodd" d="M12 4a2.75 2.75 0 0 0-2.75 2.75C9.25 8.5 12 11.75 12 11.75S14.75 8.5 14.75 6.75A2.75 2.75 0 0 0 12 4ZM13.2 6.65a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 1 1 2.4 0Z"/>
+  <path fill-rule="evenodd" d="M20.5 8a2.75 2.75 0 0 0-2.75 2.75C17.75 12.5 20.5 15.75 20.5 15.75S23.25 12.5 23.25 10.75A2.75 2.75 0 0 0 20.5 8ZM21.7 10.65a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 1 1 2.4 0Z"/>
+  <path d="M3.5 14.5 9.5 19 12.25 13.5 20.5 18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

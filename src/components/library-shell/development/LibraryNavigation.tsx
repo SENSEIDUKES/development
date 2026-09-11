@@ -1,8 +1,9 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import { BookOpen, Compass, House, UserRound } from 'lucide-react';
+import { UserRound } from 'lucide-react';
 import { LibraryBottomNavigation, LibraryNavigationDrawerPanel, type LibraryNavigationDrawerSection } from '@seihouse/library-ui';
 import { activeLibraryDestination, LIBRARY_DESTINATIONS, libraryLocationKey, libraryNavigationMode, type LibraryLocation, type LibraryNavigationMode } from './libraryRoutes';
 import './library-navigation.css';
+import { SENNavigationIcon, type SENNavigationIconName } from './SENNavigationIcon';
 
 type SectionItem = LibraryNavigationDrawerSection['items'][number] & { onSelect: (id: string) => void };
 export interface LibrarySectionMenu {
@@ -19,7 +20,7 @@ export interface LibraryNavigationProps {
   children: ReactNode;
 }
 const Context = createContext<LibrarySectionMenu | null>(null);
-const icons = { home: House, library: BookOpen, discover: Compass, profile: UserRound };
+const icons = { home: 'home', library: 'book', discover: 'discovery' } as const satisfies Record<string, SENNavigationIconName>;
 
 /** Optional existing desktop rail; retains the page's own destinations. */
 export function LibrarySectionSidebar() {
@@ -43,8 +44,8 @@ function StandardNavigation({ location, onNavigate, children }: LibraryNavigatio
     {children}
     <LibraryBottomNavigation aria-label="Library global navigation" className="library-global-navigation" showLabels
       items={LIBRARY_DESTINATIONS.map(({ id, label, location: target }) => {
-        const Icon = icons[id];
-        return { id, label, icon: <Icon size={20} />, active: selected === id,
+        const icon = id === 'profile' ? <UserRound size={20} /> : <SENNavigationIcon name={icons[id]} size={20} />;
+        return { id, label, icon, active: selected === id,
           onSelect: () => { if (libraryLocationKey(location) !== libraryLocationKey(target)) onNavigate(target); } };
       })} />
   </div>;

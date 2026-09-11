@@ -132,7 +132,25 @@
   .workspace-header-context { max-width: min(30vw, max(44px, calc(100vw - 500px)), 340px); }
 }
 .workspace-header-public-view { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--color-sen-signal); font-size: 12px; white-space: nowrap; }
-.workspace-help-emblem { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border: 1.5px solid currentColor; border-radius: 50%; font-size: 14px; font-weight: 700; }
+/* The supplied official SVGs use currentColor. Masks retain that behavior when
+   served as static assets, unlike an <img> which paints in its own document. */
+.workspace-header-utility-icon {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  background-color: currentColor;
+  -webkit-mask: center / contain no-repeat;
+  mask: center / contain no-repeat;
+}
+.workspace-help-emblem {
+  -webkit-mask-image: url('/icons/header/SENHelp.svg');
+  mask-image: url('/icons/header/SENHelp.svg');
+}
+.workspace-search-emblem {
+  -webkit-mask-image: url('/icons/header/SENSearch.svg');
+  mask-image: url('/icons/header/SENSearch.svg');
+}
 .workspace-header-toolbar {
   padding-block: 4px !important;
   padding-inline: max(16px, var(--sh-safe-left, env(safe-area-inset-left))) max(16px, var(--sh-safe-right, env(safe-area-inset-right))) !important;

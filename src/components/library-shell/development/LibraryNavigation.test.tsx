@@ -41,6 +41,9 @@ it('uses ordered global destinations, preserves host routes and updates selectio
   const page = (location: LibraryLocation) => <MainLibraryNavigation location={location} onNavigate={navigate}><main>Existing content</main></MainLibraryNavigation>;
   await render(page({ screen: 'profile', cave: '/settings' }));
   expect(Array.from(globalNav().querySelectorAll('button')).map(button => button.textContent)).toEqual(['Home', 'Library', 'Discover', 'Profile']);
+  expect(globalNav().querySelector('[data-sen-navigation-icon="home"]')).not.toBeNull();
+  expect(globalNav().querySelector('[data-sen-navigation-icon="book"]')).not.toBeNull();
+  expect(globalNav().querySelector('[data-sen-navigation-icon="discovery"]')).not.toBeNull();
   expect(globalNav().querySelector('[aria-current="page"]')?.textContent).toBe('Profile');
   for (const [label, target] of [
     ['Home', { screen: 'home', collection: 'featured' }],

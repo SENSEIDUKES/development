@@ -3,15 +3,12 @@ import type { CaveAccountControls } from './caveAccountControls';
 import { WorkspaceHeader } from '../../library-shell/development/WorkspaceHeader';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  BookOpen,
   Eye,
   Flame,
-  Gem,
   Globe,
   Orbit,
   Shield,
   Sparkles,
-  Store,
 } from 'lucide-react';
 import {
   LibraryButton,
@@ -64,6 +61,7 @@ import {
 import { LibraryNavigation, LibrarySectionSidebar } from '../../library-shell/development/LibraryNavigation';
 import type { LibraryLocation } from '../../library-shell/development/libraryRoutes';
 import { WorkspaceShell } from '../../library-shell/development/WorkspaceShell';
+import { SENNavigationIcon } from '../../library-shell/development/SENNavigationIcon';
 
 interface UserProfileProps {
   currentUser: AppUser | null;
@@ -164,8 +162,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const navigationItems = useMemo(() => {
     if (isPublicView) {
       return [
-        ...CAVE_PUBLIC_DESTINATIONS.map(({ id, label, icon: Icon }) => ({
-          id, label, icon: <Icon size={20} />, active: route.destination === id,
+        ...CAVE_PUBLIC_DESTINATIONS.map(({ id, label, icon }) => ({
+          id, label, icon: <SENNavigationIcon name={icon} size={20} />, active: route.destination === id,
           onSelect: () => navigate(publicCavePath(id, route.creatorId)),
         })),
         // Exit leaves the public view and remains an action in Search and the desktop rail.
@@ -173,8 +171,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           onSelect: exitPublicView },
       ];
     }
-    return CAVE_DESTINATIONS.filter(item => item.id !== 'settings').map(({ id, label, icon: Icon }) => ({
-      id, label, icon: <Icon size={20} />, active: route.destination === id,
+    return CAVE_DESTINATIONS.filter(item => item.id !== 'settings').map(({ id, label, icon }) => ({
+      id, label, icon: <SENNavigationIcon name={icon} size={20} />, active: route.destination === id,
       onSelect: () => navigate(`/${id}`),
     }));
   }, [isPublicView, route.destination, route.creatorId, navigate, exitPublicView]);
@@ -312,20 +310,20 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
       case 'storefront':
         return publicCreator ? (
           <UserProfileCaveDestination id={view} title={view === 'worlds' ? 'Worlds' : 'Store'}
-            subtitle={viewedName} icon={view === 'worlds' ? <BookOpen size={18} /> : <Store size={18} />}
+            subtitle={viewedName} icon={<SENNavigationIcon name={view === 'worlds' ? 'discovery' : 'store'} size={18} />}
             onBack={returnPublicHome} backLabel={`Return to ${viewedName}’s profile`}>
             <UserProfileCreatorPanel key={`${creatorId}-${view}`} creator={publicCreator} kind={view} />
           </UserProfileCaveDestination>
         ) : null;
       case 'stories':
         return (
-          <UserProfileCaveDestination id="public-stories" title="Stories" subtitle={`Published by ${viewedName}`} icon={<BookOpen size={18} />} onBack={returnPublicHome} backLabel="Return to public Home">
+          <UserProfileCaveDestination id="public-stories" title="Stories" subtitle={`Published by ${viewedName}`} icon={<SENNavigationIcon name="scroll" size={18} />} onBack={returnPublicHome} backLabel="Return to public Home">
             <UserProfilePublicPanel kind="stories" displayName={viewedName} titles={publicProfile?.storyTitles ?? null} />
           </UserProfileCaveDestination>
         );
       case 'relics':
         return (
-          <UserProfileCaveDestination id="public-relics" title="Relics" subtitle={`Published by ${viewedName}`} icon={<Gem size={18} />} onBack={returnPublicHome} backLabel="Return to public Home">
+          <UserProfileCaveDestination id="public-relics" title="Relics" subtitle={`Published by ${viewedName}`} icon={<SENNavigationIcon name="relic" size={18} />} onBack={returnPublicHome} backLabel="Return to public Home">
             <UserProfilePublicPanel kind="relics" displayName={viewedName} titles={publicProfile?.relicTitles ?? null} />
           </UserProfileCaveDestination>
         );
@@ -383,13 +381,13 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         </UserProfileCaveDestination>;
       case 'stories':
         return (
-          <UserProfileCaveDestination id="stories" title="Stories" subtitle="Seeds and Manifested Stories" icon={<BookOpen size={18} />} onBack={returnHome}>
+          <UserProfileCaveDestination id="stories" title="Stories" subtitle="Seeds and Manifested Stories" icon={<SENNavigationIcon name="scroll" size={18} />} onBack={returnHome}>
             <UserProfileStoriesPanel profile={profile} currentUser={currentUser} stories={stories} />
           </UserProfileCaveDestination>
         );
       case 'relics':
         return (
-          <UserProfileCaveDestination id="relics" title="Relics" subtitle="Inventory, attunement, and the Offering Hall" icon={<Gem size={18} />} onBack={returnHome}>
+          <UserProfileCaveDestination id="relics" title="Relics" subtitle="Inventory, attunement, and the Offering Hall" icon={<SENNavigationIcon name="relic" size={18} />} onBack={returnHome}>
             <UserProfileInventoryPanel profile={profile} handleAttuneArtifact={handleAttuneArtifact} />
           </UserProfileCaveDestination>
         );

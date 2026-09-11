@@ -10,11 +10,11 @@ import {
   ScrollText,
   Sparkle,
   SquarePen,
-  Vault,
   type LucideIcon,
 } from 'lucide-react';
 import type { StorySeedRecord } from '../shared/storySeedRepository';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '../../../presentation';
+import { SENStorySeedIcon } from './SENStorySeedIcon';
 
 /**
  * Story Bank — the permanent home for every saved Story Seed and its latest
@@ -232,7 +232,7 @@ export const StoryBank = ({
               aria-hidden="true"
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgba(205,178,113,0.38)] bg-[radial-gradient(circle_at_32%_28%,rgba(205,178,113,0.14),rgba(11,14,30,0.55)_68%)] text-[#CDB271] shadow-[0_0_16px_rgba(205,178,113,0.12),inset_0_0_10px_rgba(205,178,113,0.08)]"
             >
-              <Vault size={19} className="drop-shadow-[0_0_6px_rgba(205,178,113,0.35)]" />
+              <SENStorySeedIcon name="bank" size={19} className="drop-shadow-[0_0_6px_rgba(205,178,113,0.35)]" />
             </span>
             Story Bank
           </h2>
@@ -297,7 +297,7 @@ export const StoryBank = ({
               aria-hidden="true"
               className="mx-auto flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(205,178,113,0.38)] bg-[radial-gradient(circle_at_32%_28%,rgba(205,178,113,0.14),rgba(11,14,30,0.55)_68%)] text-[#CDB271]"
             >
-              <Vault size={19} />
+              <SENStorySeedIcon name="bank" size={19} />
             </span>
             <p className="mt-4 font-serif text-[15px] leading-relaxed text-[#B0A99B]">
               No saved seeds yet. Manifest or import one to keep it here.

@@ -1,11 +1,12 @@
 import { useCallback, useSyncExternalStore } from 'react';
-import { BookOpen, Gem, House, LogOut, Settings } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
+import type { SENNavigationIconName } from '../../library-shell/development/SENNavigationIcon';
 
 /** Cave-owned routes. Query transport coexists with Workshop and host URLs. */
 export const CAVE_DESTINATIONS = [
-  { id: 'home', label: 'Home', icon: House },
-  { id: 'stories', label: 'Stories', icon: BookOpen },
-  { id: 'relics', label: 'Relics', icon: Gem },
+  { id: 'home', label: 'Home', icon: 'home' satisfies SENNavigationIconName },
+  { id: 'stories', label: 'Stories', icon: 'scroll' satisfies SENNavigationIconName },
+  { id: 'relics', label: 'Relics', icon: 'relic' satisfies SENNavigationIconName },
   { id: 'settings', label: 'Settings', icon: Settings },
 ] as const;
 export type CaveDestination = typeof CAVE_DESTINATIONS[number]['id'];
@@ -17,9 +18,9 @@ export type CaveDestination = typeof CAVE_DESTINATIONS[number]['id'];
  * own; the workspace decides where leaving lands.
  */
 export const CAVE_PUBLIC_DESTINATIONS = [
-  { id: 'home', label: 'Home', icon: House },
-  { id: 'stories', label: 'Stories', icon: BookOpen },
-  { id: 'relics', label: 'Relics', icon: Gem },
+  { id: 'home', label: 'Home', icon: 'home' satisfies SENNavigationIconName },
+  { id: 'stories', label: 'Stories', icon: 'scroll' satisfies SENNavigationIconName },
+  { id: 'relics', label: 'Relics', icon: 'relic' satisfies SENNavigationIconName },
 ] as const;
 export type CavePublicDestination = typeof CAVE_PUBLIC_DESTINATIONS[number]['id'];
 export const CAVE_EXIT_ICON = LogOut;

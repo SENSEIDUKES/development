@@ -1,0 +1,9 @@
+.sen-navigation-icon {
+  display: inline-block;
+  flex: none;
+  background-color: currentColor;
+  -webkit-mask: center / contain no-repeat;
+  mask: center / contain no-repeat;
+  -webkit-mask-image: var(--sen-navigation-icon-mask);
+  mask-image: var(--sen-navigation-icon-mask);
+}

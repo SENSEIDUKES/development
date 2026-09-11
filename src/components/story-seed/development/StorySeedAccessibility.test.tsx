@@ -22,11 +22,13 @@ import {
 import { BlueprintReview } from './BlueprintReview';
 import CreationModal from './CreationModal';
 import { StoryBank } from './StoryBank';
+import { StorySeedSelector } from './StorySeedSelector';
 import { StorySeedWorkspaceChrome } from './StorySeedWorkspaceChrome';
 import { StorySeedHelpMenu } from './StorySeedHelpMenu';
 import { StorySeedSettings } from './StorySeedSettings';
 import { useStoryBankRecords } from './useStoryBankRecords';
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
+import { FactionsWorkspace } from './workspaces/FactionsWorkspace';
 import { OriginGenrePicker } from './workspaces/origin/OriginGenrePicker';
 import { OriginPremiseAndTags } from './workspaces/origin/OriginPremiseAndTags';
 import { OriginStyleSelector } from './workspaces/origin/OriginStyleSelector';
@@ -371,6 +373,41 @@ describe('Story Seed keyboard and mobile navigation', () => {
     act(() => radios[0].dispatchEvent(keyboardEvent('ArrowRight')));
     expect(document.activeElement).toBe(radios[1]);
     expect(settingsUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the supplied official marks across Story Seed navigation, styles, factions, and bank', () => {
+    const seed = createEmptyStorySeedInput();
+    seed.world.optional.worldFoundations.factions = [{
+      id: 'faction-1', name: 'Azure Hall', aliases: [], role: '', powerLevel: '', alignment: '', connectionToMC: '', description: '',
+    }];
+    act(() => root.render(
+      <LibraryPresentationProvider>
+        <StorySeedSelector seed={seed} activeSection="arc" onSelect={vi.fn()} />
+        <OriginStyleSelector selectedStyle="chinese" onSelect={vi.fn()} />
+        <FactionsWorkspace seed={seed} updateSeed={vi.fn()} />
+        <StoryBank
+          seeds={[]}
+          isLoading={false}
+          manifestedSeedIds={new Set()}
+          isGenerating={false}
+          onToggleImport={vi.fn()}
+          importPanel={null}
+          onExportAll={vi.fn()}
+          onEditSeed={vi.fn()}
+          onOpenBlueprint={vi.fn()}
+          onUseSeed={vi.fn()}
+          onExportSeed={vi.fn()}
+          onManifest={vi.fn()}
+        />
+      </LibraryPresentationProvider>,
+    ));
+
+    const names = Array.from(container.querySelectorAll<HTMLElement>('[data-sen-story-seed-icon]'))
+      .map(icon => icon.dataset.senStorySeedIcon);
+    expect(names).toEqual(expect.arrayContaining([
+      'ability', 'ally-faction', 'arc', 'bank', 'enemy-faction', 'power-system', 'scroll',
+      'style-chinese', 'style-japanese', 'style-korean', 'world-identity',
+    ]));
   });
 
   it('traps Help focus and returns it to the control that opened the dialog', () => {

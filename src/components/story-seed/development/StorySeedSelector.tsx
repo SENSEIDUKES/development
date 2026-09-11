@@ -10,6 +10,7 @@ import {
   type SeedSection,
   type SeedSectionId,
 } from './seedSections';
+import { SENStorySeedIcon } from './SENStorySeedIcon';
 
 const familyAccent = (family: SeedFamily): LibraryNavigationDrawerAccent =>
   family === 'story' ? 'portal' : 'gold';
@@ -69,20 +70,24 @@ export function buildStorySeedDrawerSections(
     // Explicit class names (never template-built) so Tailwind picks them up.
     const accentText = family === 'story' ? 'text-portal' : 'text-gold-accent';
     const FamilyIcon = FAMILY_ICONS[family];
+    const familyIcon = typeof FamilyIcon === 'string'
+      ? <SENStorySeedIcon name={FamilyIcon} size={14} aria-hidden="true" className={accentText} />
+      : <FamilyIcon size={14} aria-hidden="true" className={accentText} />;
     const items: LibraryNavigationDrawerItem[] = FAMILY_SECTIONS[family].map(section => {
       const active = activeSection === section.id;
       const filled = section.isFilled(seed);
-      const Icon = section.icon;
+      const icon = typeof section.icon === 'string'
+        ? <SENStorySeedIcon name={section.icon} size={16} aria-hidden="true"
+            className={active ? accentText : 'text-neutral-400 group-hover:text-neutral-300'} />
+        : (() => {
+          const SectionIcon = section.icon;
+          return <SectionIcon size={16} aria-hidden="true"
+            className={active ? accentText : 'text-neutral-400 group-hover:text-neutral-300'} />;
+        })();
       return {
         id: section.id,
         label: section.label,
-        icon: (
-          <Icon
-            size={16}
-            aria-hidden="true"
-            className={active ? accentText : 'text-neutral-400 group-hover:text-neutral-300'}
-          />
-        ),
+        icon,
         active,
         accent,
         required: section.required,
@@ -94,7 +99,7 @@ export function buildStorySeedDrawerSections(
       id: family,
       label: SEED_FAMILIES[family].label,
       tagline: SEED_FAMILIES[family].tagline,
-      icon: <FamilyIcon size={14} aria-hidden="true" className={accentText} />,
+      icon: familyIcon,
       items,
       footer: (
         <p className="font-serif text-[11px] leading-relaxed text-neutral-400">

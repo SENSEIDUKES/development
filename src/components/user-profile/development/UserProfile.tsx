@@ -11,6 +11,7 @@ import {
   Orbit,
   Shield,
   Sparkles,
+  Store,
 } from 'lucide-react';
 import {
   LibraryButton,
@@ -39,6 +40,8 @@ import { UserProfileSettingsPanel } from './UserProfileSettingsPanel';
 import { UserProfileStatusEffectsPanel } from './UserProfileStatusEffectsPanel';
 import { UserProfileStoriesPanel } from './UserProfileStoriesPanel';
 import { UserProfilePublicPanel } from './UserProfilePublicPanel';
+import { UserProfileCreatorPanel } from './UserProfileCreatorPanel';
+import { publicCreatorWorlds, type PublicCreator } from './creatorWorlds';
 import {
   EMPTY_ACTIVE_STATUS_EFFECTS,
   isEffectActive,
@@ -69,6 +72,8 @@ interface UserProfileProps {
   onNavigateHome: () => void;
   onNavigateLibrary: (location: LibraryLocation) => void;
   accountControls?: CaveAccountControls;
+  /** Host-supplied public records, keyed by the viewed creator, never the viewer. */
+  publicCreators?: readonly PublicCreator[];
 }
 
 /**
@@ -84,7 +89,7 @@ interface UserProfileProps {
  * Boost, and Settings becomes Exit. Public routes render only from the built
  * public presentation, so no private panel is mounted behind a public URL.
  */
-export default function UserProfile({ currentUser, stories, onLogout, onNavigateHome, onNavigateLibrary, accountControls }: UserProfileProps) {
+export default function UserProfile({ currentUser, stories, onLogout, onNavigateHome, onNavigateLibrary, accountControls, publicCreators = [] }: UserProfileProps) {
   // Production calls `useUserProfile(...)` and reads the Firebase local-only flag
   // directly. Both arrive through the injected services port here, so this file
   // carries no Firebase, PostgreSQL, or generation dependency of its own.
@@ -161,7 +166,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
       return [
         ...CAVE_PUBLIC_DESTINATIONS.map(({ id, label, icon: Icon }) => ({
           id, label, icon: <Icon size={20} />, active: route.destination === id,
-          onSelect: () => navigate(publicCavePath(id)),
+          onSelect: () => navigate(publicCavePath(id, route.creatorId)),
         })),
         // Exit leaves the public view and remains an action in Search and the desktop rail.
         { id: 'exit', label: 'Exit', icon: <CAVE_EXIT_ICON size={20} />, active: false,
@@ -172,7 +177,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
       id, label, icon: <Icon size={20} />, active: route.destination === id,
       onSelect: () => navigate(`/${id}`),
     }));
-  }, [isPublicView, route.destination, navigate, exitPublicView]);
+  }, [isPublicView, route.destination, route.creatorId, navigate, exitPublicView]);
   const navigationDefinition = useMemo(() => ({
     label: isPublicView ? 'Public profile navigation' : 'Cultivator Cave navigation',
     sections: [{ id: 'cave', items: navigationItems }],
@@ -188,12 +193,23 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const [publicVisibility, setPublicVisibility] = useState<PublicProfileVisibility>(
     DEFAULT_PUBLIC_PROFILE_VISIBILITY,
   );
-  // The viewed cultivator is the signed-in one previewing their own public
-  // view, so the record is built from this profile and these stories. A host
-  // showing someone else's profile passes that cultivator's record instead.
+  const creatorId = route.creatorId ?? profile?.uid;
+  const suppliedCreator = publicCreators.find(creator => creator.profile.uid === creatorId);
+  const publicCreator = profile && profile.uid === creatorId
+    ? { profile, worlds: suppliedCreator?.worlds ?? [] }
+    : suppliedCreator;
+  const viewedProfile = publicCreator?.profile;
   const publicProfile = useMemo(
-    () => (profile ? buildPublicProfile(developmentPublicRecord(profile, stories), publicVisibility) : undefined),
-    [profile, stories, publicVisibility],
+    () => {
+      if (!viewedProfile) return undefined;
+      // Explicit creator routes consume only published worlds from their public input.
+      const viewedStories = route.creatorId && publicCreator
+        ? publicCreatorWorlds(viewedProfile.uid, publicCreator.worlds).map(world => ({ ...world, userId: viewedProfile.uid }))
+        : stories;
+      return buildPublicProfile(developmentPublicRecord(viewedProfile, viewedStories),
+        viewedProfile.uid === profile?.uid ? publicVisibility : DEFAULT_PUBLIC_PROFILE_VISIBILITY);
+    },
+    [viewedProfile, publicCreator, route.creatorId, profile?.uid, stories, publicVisibility],
   );
   // Boost is a local endorsement only: no Qi, reward, ranking, or economy.
   // Count and pressed state are one value so the updater stays pure — nesting
@@ -242,11 +258,11 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   }, [route.path, setShowPortraitModal, pendingLanguageChange, revertLanguageChange]);
 
   useEffect(() => {
-    if (focusedPath.current !== route.path && !isSignedOut && !spiritLinkGateMounted && !showPortraitModal && !pendingLanguageChange) {
+    if (focusedPath.current !== route.path && (isPublicView || (!isSignedOut && !spiritLinkGateMounted)) && !showPortraitModal && !pendingLanguageChange) {
       mainRef.current?.querySelector<HTMLElement>('h2')?.focus();
       focusedPath.current = route.path;
     }
-  }, [route.path, isSignedOut, spiritLinkGateMounted, showPortraitModal, pendingLanguageChange]);
+  }, [route.path, isPublicView, isSignedOut, spiritLinkGateMounted, showPortraitModal, pendingLanguageChange]);
 
   // Keep the recovered OAuth gate mounted long enough to complete its existing
   // post-link dissolve before revealing the linked Cultivator Cave.
@@ -268,7 +284,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
       ? `/home/${destination}` : destination === 'switchboard' ? '/settings/switchboard' : `/${destination}`);
   }, [navigate]);
   const returnHome = useCallback(() => navigate('/home'), [navigate]);
-  const returnPublicHome = useCallback(() => navigate(publicCavePath('home')), [navigate]);
+  const returnPublicHome = useCallback(() => navigate(publicCavePath('home', route.creatorId)), [navigate, route.creatorId]);
 
   const profileEffects = profile?.activeStatusEffects ?? EMPTY_ACTIVE_STATUS_EFFECTS;
   // Aura overrides need exact start/end updates anywhere they are painted;
@@ -283,10 +299,24 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     isEffectActive(effect, effectsNow),
   );
 
-  const viewedName = profile?.displayName?.trim() || 'This cultivator';
+  const viewedName = viewedProfile?.displayName?.trim() || 'This cultivator';
 
   const renderPublicView = () => {
+    if (route.creatorId && !publicCreator) return (
+      <UserProfileCaveDestination id="unavailable" title="Creator unavailable" onBack={returnHome} backLabel="Return to profile">
+        <p className="text-neutral-400">This creator’s public profile is not available.</p>
+      </UserProfileCaveDestination>
+    );
     switch (view) {
+      case 'worlds':
+      case 'storefront':
+        return publicCreator ? (
+          <UserProfileCaveDestination id={view} title={view === 'worlds' ? 'Worlds' : 'Store'}
+            subtitle={viewedName} icon={view === 'worlds' ? <BookOpen size={18} /> : <Store size={18} />}
+            onBack={returnPublicHome} backLabel={`Return to ${viewedName}’s profile`}>
+            <UserProfileCreatorPanel key={`${creatorId}-${view}`} creator={publicCreator} kind={view} />
+          </UserProfileCaveDestination>
+        ) : null;
       case 'stories':
         return (
           <UserProfileCaveDestination id="public-stories" title="Stories" subtitle={`Published by ${viewedName}`} icon={<BookOpen size={18} />} onBack={returnPublicHome} backLabel="Return to public Home">
@@ -300,7 +330,9 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           </UserProfileCaveDestination>
         );
       case 'home':
-        return <UserProfileHome controller={controller} now={effectsNow} mode="public" publicProfile={publicProfile} boost={boost} />;
+        return <UserProfileHome controller={{ ...controller, profile: viewedProfile ?? null,
+          formData: { ...controller.formData, avatarUrl: viewedProfile?.avatarUrl ?? '' } }}
+          now={effectsNow} mode="public" publicProfile={publicProfile} boost={boost} />;
       default:
         return (
           <UserProfileCaveDestination id="unavailable" title="Page unavailable" backLabel="Return to public Home" onBack={returnPublicHome}>
@@ -311,8 +343,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   };
 
   const renderView = () => {
-    if (isSignedOut) return null;
     if (isPublicView) return renderPublicView();
+    if (isSignedOut) return null;
     switch (view) {
       case 'inbox':
       case 'store':
@@ -410,7 +442,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           </UserProfileCaveDestination>
         );
       default:
-        return <UserProfileHome controller={controller} now={effectsNow} onOpenRelics={() => navigate('/relics')}
+        return <UserProfileHome controller={controller} publicProfile={publicProfile} now={effectsNow} onOpenRelics={() => navigate('/relics')}
           onOpenSettings={() => navigate('/settings')} accountControls={{
           ...accountControls,
           onOpenInbox: accountControls?.onOpenInbox ?? (() => navigate('/home/inbox')),
@@ -419,7 +451,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     }
   };
 
-  const caveSidebarMounted = !isSignedOut && !spiritLinkGateMounted;
+  const caveSidebarMounted = isPublicView || (!isSignedOut && !spiritLinkGateMounted);
   return (
     <LibraryNavigation location={{ screen: 'profile', cave: route.path }} onNavigate={target => {
       if (target.screen === 'profile') navigate(target.cave ?? '/home');
@@ -477,7 +509,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         </div>
       </WorkspaceShell>
 
-      {isSignedOut || spiritLinkGateMounted ? (
+      {!isPublicView && (isSignedOut || spiritLinkGateMounted) ? (
         <StoryAuthGate
           linked={Boolean(currentUser)}
           context="spirit-link"

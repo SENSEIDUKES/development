@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { chromium, type Browser, type Page } from 'playwright';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-/* Real-layout coverage for the LibraryTierBadge inside the Cave rank row.
+/* Real-layout coverage for the LibraryTierBadge inside the Cave identity group.
    Runs the two plain stylesheets in Chromium without the Vite server. Set
    PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH when Playwright's bundled browser is not
    installed; the suite reports itself skipped when no browser can launch. */
@@ -17,12 +17,12 @@ const LABELS = [
   'Unbrokentiernamewithoutanyspacesatallwhatsoever',
 ];
 
-const markup = (label: string, plaque = '#05070c') => `<!doctype html><html><head><meta name="viewport" content="width=device-width">
+const markup = (label: string, plaque = '#05070c', name = 'Kept Reading') => `<!doctype html><html><head><meta name="viewport" content="width=device-width">
 <style>${read('library-tier-badge.css')}</style>
 <style>${read('userProfile.css')}</style>
 <style>html, body { margin: 0; background: ${plaque}; } .plaque { box-sizing: border-box; padding: 1rem; }</style>
-</head><body><div class="plaque"><div class="cave-home-rank-row" data-cave-rank-row>
-<p data-cave-rank style="margin:0;font:1rem serif;color:#eee">Leader</p>
+</head><body><div class="plaque"><div class="cave-home-identity-group" data-cave-identity-group>
+<h2 class="cave-home-username" style="margin:0;font:1.5rem serif;color:#eee">${name}</h2>
 <span class="library-tier-badge cave-tier-badge" data-slot="library-tier-badge" data-sheen="occasional" aria-label="Subscription tier: ${label}">
 <span class="library-tier-badge__label">${label}</span></span>
 </div></div></body></html>`;
@@ -49,8 +49,8 @@ afterAll(async () => {
 
 const geometry = () => page.evaluate(() => {
   const plaque = document.querySelector('.plaque')!.getBoundingClientRect();
-  const row = document.querySelector('[data-cave-rank-row]')!.getBoundingClientRect();
-  const rank = document.querySelector('[data-cave-rank]')!.getBoundingClientRect();
+  const row = document.querySelector('[data-cave-identity-group]')!.getBoundingClientRect();
+  const rank = document.querySelector('h2')!.getBoundingClientRect();
   const badge = document.querySelector('[data-slot="library-tier-badge"]') as HTMLElement;
   const rect = badge.getBoundingClientRect();
   const style = getComputedStyle(badge);
@@ -59,8 +59,8 @@ const geometry = () => page.evaluate(() => {
     overflow: document.documentElement.scrollWidth > innerWidth,
     plaque: { left: plaque.left, right: plaque.right, width: plaque.width },
     row: { left: row.left, right: row.right },
-    rank: { left: rank.left, right: rank.right, width: rank.width },
-    badge: { left: rect.left, right: rect.right, width: rect.width, height: rect.height },
+    rank: { left: rank.left, right: rank.right, width: rank.width, top: rank.top, bottom: rank.bottom, centerY: rank.top + rank.height / 2 },
+    badge: { left: rect.left, right: rect.right, width: rect.width, height: rect.height, top: rect.top, centerY: rect.top + rect.height / 2 },
     radius: style.borderRadius,
     letterSpacing: style.letterSpacing,
     sheenAnimation: sheen.animationName,
@@ -75,7 +75,7 @@ const geometry = () => page.evaluate(() => {
 });
 
 describe('LibraryTierBadge in the browser', () => {
-  it.each([320, 360, 390, 768])('keeps every tier name inside the rank row at %ipx', async width => {
+  it.each([320, 360, 390, 768])('keeps every tier name inside the identity group at %ipx', async width => {
     if (!browser) return;
     await page.setViewportSize({ width, height: 800 });
     for (const label of LABELS) {
@@ -86,16 +86,28 @@ describe('LibraryTierBadge in the browser', () => {
       expect(shape.badge.left, detail).toBeGreaterThanOrEqual(shape.row.left - 0.5);
       expect(shape.badge.right, detail).toBeLessThanOrEqual(shape.row.right + 0.5);
       expect(shape.badge.width, detail).toBeLessThanOrEqual(shape.plaque.width);
-      expect(shape.badge.height, detail).toBeGreaterThanOrEqual(24);
+      expect(shape.badge.height, detail).toBeGreaterThanOrEqual(17.99);
       expect(shape.radius, detail).toBe('999px');
       expect(shape.rank.width, detail).toBeGreaterThan(0);
-      if (width >= 380) {
-        // The rank stays centred in its own column; the badge never shifts it.
-        const rowCentre = (shape.row.left + shape.row.right) / 2;
-        const rankCentre = (shape.rank.left + shape.rank.right) / 2;
-        expect(Math.abs(rankCentre - rowCentre), detail).toBeLessThanOrEqual(1);
-      }
+      // The Dao name remains at the card center regardless of tier width.
+      const groupCenter = (shape.row.left + shape.row.right) / 2;
+      const pairCenter = (shape.rank.left + shape.rank.right) / 2;
+      expect(Math.abs(pairCenter - groupCenter), detail).toBeLessThanOrEqual(1);
     }
+  });
+
+  it.each([320, 390, 768])('keeps short and long Dao names centered in the stacked fallback at %ipx', async width => {
+    if (!browser) return;
+    await page.setViewportSize({ width, height: 800 });
+    await page.setContent(markup('Inner Sect'));
+    const short = await geometry();
+    expect(Math.abs((short.rank.left + short.rank.right) / 2 - width / 2)).toBeLessThan(1);
+    expect(short.badge.height).toBeCloseTo(18, 0);
+    await page.setContent(markup('Inner Sect', '#05070c', 'A Very Long Cultivator Name Across the Celestial Library '.repeat(2)));
+    const long = await geometry();
+    expect(long.overflow).toBe(false);
+    expect(long.badge.top).toBeGreaterThanOrEqual(long.rank.bottom);
+    expect(Math.abs((long.badge.left + long.badge.right) / 2 - width / 2)).toBeLessThan(1);
   });
 
   it('plays the occasional sheen, and drops it for reduced motion while keeping the finish', async () => {

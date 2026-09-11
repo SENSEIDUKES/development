@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Bookmark, Check, CircleHelp, List, Settings, Sparkles, Sprout, Vault } from 'lucide-react';
+import { Bookmark, Check, CircleHelp, List, Settings, Sparkles, Vault } from 'lucide-react';
 import type { StorySeedInput } from '../shared/storySeedSchema';
 import type { SeedUpdate } from './seedState';
 import type { SeedSectionId } from './seedSections';
@@ -10,6 +10,7 @@ import { WorkspaceShell } from '../../library-shell/development/WorkspaceShell';
 import { HeaderActionButton, type HeaderAction } from '../../library-shell/development/WorkspaceHeaderActions';
 import { WorkspaceNavigation, WorkspaceBottomControls, WorkspaceSidebar, useWorkspaceNavigation } from '../../library-shell/development/WorkspaceNavigation';
 import { WorkspaceSheet } from '../../library-shell/development/WorkspaceSheet';
+import { SENStorySeedIcon } from './SENStorySeedIcon';
 import './story-seed.css';
 
 interface StorySeedWorkspaceChromeProps {
@@ -66,7 +67,7 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
         label: 'Workspace',
         icon: <Settings size={14} aria-hidden="true" className="text-neutral-400" />,
         items: [
-          { id: 'story-bank', label: 'Story Bank', icon: <Vault size={16} aria-hidden="true" className="text-neutral-400" />,
+          { id: 'story-bank', label: 'Story Bank', icon: <SENStorySeedIcon name="bank" size={16} aria-hidden="true" className="text-neutral-400" />,
             active: showStoryBank, onSelect: onToggleStoryBank },
           { id: 'settings', label: 'Settings', icon: <Settings size={16} aria-hidden="true" className="text-neutral-400" />,
             onSelect: openSettings },
@@ -141,7 +142,7 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
   const bottomControls = <WorkspaceBottomControls label="Story Seed navigation" items={[
     { id: 'sections', label: 'Sections', icon: <List size={20} />, active: navigation.drawerOpen,
       onSelect: () => { setSettingsOpen(false); navigation.openDrawer(); } },
-    { id: bank.id, label: bank.label, icon: <Sprout size={20} />, active: props.showStoryBank,
+    { id: bank.id, label: bank.label, icon: <SENStorySeedIcon name="bank" size={20} aria-hidden="true" />, active: props.showStoryBank,
       onSelect: () => { setSettingsOpen(false); bank.onAction(); } },
     { id: settings.id, label: settings.label, icon: <Settings size={20} />, active: settingsOpen, onSelect: openSettings },
     { id: 'back', label: 'Back', icon: <img src="/favicon.jpg" alt="Celestial Library" className="h-5 w-5 object-contain" />,

@@ -1,12 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   ChevronRight,
-  BookOpen,
   Mail,
-  Zap,
-  Gem,
   Settings,
-  Store,
   Flame,
   Image as ImageIcon,
   Orbit,
@@ -39,6 +35,7 @@ import {
   rankBackground,
 } from "./qi";
 import { isEffectActive } from './timedEffects';
+import { SENNavigationIcon } from '../../library-shell/development/SENNavigationIcon';
 
 export { isEffectActive } from './timedEffects';
 
@@ -132,14 +129,13 @@ export function UserProfileHome({
   const { navigate } = useCaveRoute();
   const creatorLinks = profile?.uid ? (['worlds', 'storefront'] as const).map(destination => {
     const path = publicCavePath(destination, profile.uid);
-    const Icon = destination === 'worlds' ? BookOpen : Store;
     return <a key={destination} href={caveHref(path)}
       className={`cave-account-emblem cave-creator-link cave-creator-link--${destination}`}
       onClick={event => {
         if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
         event.preventDefault(); navigate(path);
       }}>
-      <Icon size={24} aria-hidden="true" />
+      <SENNavigationIcon name={destination === 'worlds' ? 'discovery' : 'store'} size={24} />
       <span>{destination === 'worlds' ? 'Worlds' : 'Store'}</span>
     </a>;
   }) : null;
@@ -421,7 +417,7 @@ export function UserProfileHome({
               {creatorLinks}
               {!isPublic && (
               <div className="cave-account-emblem" title="Energy is used to generate content" data-cave-energy>
-                <Zap size={24} aria-hidden="true" />
+                <SENNavigationIcon name="energy" size={24} />
                 <span>Energy</span>
               </div>
               )}
@@ -694,7 +690,7 @@ export function UserProfileHome({
             data-cave-card="relics"
           >
             <span className="cave-home-pillar-art" aria-hidden="true">
-              <Gem size={30} />
+              <SENNavigationIcon name="relic" size={30} />
             </span>
             <span className="min-w-0">
               <span className="block font-display text-lg">Relics</span>
@@ -710,7 +706,9 @@ export function UserProfileHome({
       )}
       {!isPublic && (
         <div className="mt-3 grid grid-cols-2 gap-3" data-cave-account-actions>
-          <LibraryButton fullWidth variant="secondary" icon={Store} onClick={accountControls?.onOpenStore} disabled={!accountControls?.onOpenStore}>Store</LibraryButton>
+          <LibraryButton fullWidth variant="secondary" onClick={accountControls?.onOpenStore} disabled={!accountControls?.onOpenStore}>
+            <SENNavigationIcon name="store" size={20} /><span>Store</span>
+          </LibraryButton>
           <LibraryButton fullWidth variant="secondary" icon={Settings} onClick={onOpenSettings} disabled={!onOpenSettings}>Settings</LibraryButton>
         </div>
       )}

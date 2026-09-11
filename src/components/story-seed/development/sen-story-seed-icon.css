@@ -1,0 +1,7 @@
+.sen-story-seed-icon {
+  display: inline-block;
+  flex: none;
+  background-color: currentColor;
+  -webkit-mask: var(--sen-story-seed-icon-mask) center / contain no-repeat;
+  mask: var(--sen-story-seed-icon-mask) center / contain no-repeat;
+}

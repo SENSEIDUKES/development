@@ -4,7 +4,7 @@
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **Replica created:** 2026-08-01
-- **Last Workshop update:** 2026-09-09
+- **Last Workshop update:** 2026-09-11
 - **Last source comparison:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and ready for production transfer
 
@@ -211,6 +211,8 @@ harness:
   render without loading-boundary, console, or page errors.
 
 ## Concise Workshop history
+
+- **2026-09-11:** Replaced Story Seed's matching navigation, workspace, style, faction, and Story Bank marks with the supplied official SEN Story Seed SVG set. The existing section model remains the single source for desktop rail and mobile drawer icons; style selection, Story Bank actions, seed state, saving, Help, Blueprint generation, and locked reference replica remain unchanged.
 
 - **2026-09-09 regression fix:** Removed the second header. The shared action toolbar that sat directly beneath the top header is gone; Save Draft, Manifest and the small save/generation status are now a compact page-owned action row at the top of Story Seed's content, above the form. It is ordinary content — no banner landmark, no sticky row, no surface of its own. Every callback, eligibility rule, disabled reason, loading indicator and saved feedback is unchanged. Settings and Story Bank moved into Story Seed's own navigation (the desktop rail, the section drawer, the bottom controls and Search); Help keeps the header's `?` control.
 

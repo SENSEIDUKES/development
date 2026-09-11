@@ -1,6 +1,5 @@
 import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Search } from 'lucide-react';
 import { NarrativeButton, NarrativeTextBox } from '../../../presentation';
 import { WorkspaceSheet } from './WorkspaceSheet';
 import { type HeaderAction } from './WorkspaceHeaderActions';
@@ -19,7 +18,9 @@ export interface HeaderSearchItem extends HeaderAction {
  * Neither is ever folded into an overflow menu: they are the header's only two
  * utilities, and each keeps its own 44px target on the narrowest phone. The
  * badge gives up horizontal space instead — its title wraps rather than
- * ellipsizing — so full titles stay readable beside both controls.
+ * ellipsizing — so full titles stay readable beside both controls. Their
+ * official SEN artwork is applied as a CSS mask so it follows the active
+ * Library foreground color.
  */
 export function WorkspaceHeaderUtilities({ items, help }: {
   items: readonly HeaderSearchItem[];
@@ -42,11 +43,12 @@ export function WorkspaceHeaderUtilities({ items, help }: {
       aria-haspopup="dialog" aria-expanded={help ? help.expanded : experience === 'help'}
       onPointerEnter={help?.onIntent} onFocus={help?.onIntent} disabled={help?.disabled}
       onClick={() => help ? help.onAction() : setExperience('help')}>
-      <span aria-hidden="true" className="workspace-help-emblem">?</span>
+      <span aria-hidden="true" className="workspace-header-utility-icon workspace-help-emblem" />
     </NarrativeButton>
-    <NarrativeButton ref={searchRef} variant="ghost" icon={Search} aria-label="Search" title="Search"
+    <NarrativeButton ref={searchRef} variant="ghost" aria-label="Search" title="Search"
       className="workspace-search-trigger" aria-haspopup="dialog" aria-expanded={experience === 'search'}
       onClick={openSearch}>
+      <span aria-hidden="true" className="workspace-header-utility-icon workspace-search-emblem" />
       <span className="workspace-search-label">Search</span>
     </NarrativeButton>
     </div>

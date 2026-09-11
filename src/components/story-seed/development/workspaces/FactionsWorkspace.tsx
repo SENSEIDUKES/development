@@ -4,6 +4,7 @@ import { getSeedSection } from '../seedSections';
 import { setFactions, worldFoundations, type UpdateSeed } from '../seedState';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '../../../../presentation';
 import { WorkspaceShell } from './WorkspaceShell';
+import { SENStorySeedIcon } from '../SENStorySeedIcon';
 
 interface FactionsWorkspaceProps {
   seed: StorySeedInput;
@@ -30,7 +31,11 @@ export const FactionsWorkspace = ({ seed, updateSeed }: FactionsWorkspaceProps) 
       {factions.map((faction, index) => (
         <div key={faction.id} className="glass-panel relative space-y-3 p-4">
           <div className="mb-2 flex items-center justify-between">
-            <h4 className="font-sc text-xs font-bold uppercase tracking-widest text-signal">Faction {index + 1}</h4>
+            <h4 className="flex items-center gap-2 font-sc text-xs font-bold uppercase tracking-widest text-signal">
+              <SENStorySeedIcon name="ally-faction" size={15} aria-hidden="true" />
+              Faction {index + 1}
+              <SENStorySeedIcon name="enemy-faction" size={15} aria-hidden="true" className="text-human/80" />
+            </h4>
             <button
               type="button"
               onClick={() => updateSeed(setFactions(factions.filter((_, i) => i !== index)))}

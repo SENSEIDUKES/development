@@ -4,7 +4,7 @@
 - **Source locations:** Light-Novels `src/components/GlobalHeader.tsx` (`GlobalHeader`), `src/components/DaoInsights.tsx` (`DaoInsights`), and the collection navigation in `src/components/LibraryScreen.tsx` (`LibraryScreen`). Development `src/components/story-seed/development/CreationModal.tsx` (`CreationModal`), `StorySeedHeader.tsx`, `StorySeedSelector.tsx`, `StorySeedMobileNavigation.tsx`, and `StorySeedSettings.tsx`.
 - **Workshop preview:** `?preview=library-shell`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-09
+- **Last Workshop update:** 2026-09-11
 - **Last source comparison:** 2026-09-08
 - **Replica status:** under refinement; locked captures plus Development workspaces on the canonical `SEIAppHeader` and `SEIAppShell`.
 
@@ -12,9 +12,9 @@
 
 Development now uses Logo — existing Library Header Badge — optional contextual item — Help — Search. The public Cave supplies Public View; Dao Insights is Home content rather than a header item. Help reuses the original Library Help menu and Search finds host destinations/actions. Help and Search are two separate controls at every width, each keeping its own 44px target; neither is ever folded into a "…" menu. Pages that still supply header commands keep the shared toolbar below the top row; Story Seed no longer does — it owns its Save Draft, Manifest and status row inside its own content. See [the header contract](../../../docs/library-header-family.md) and its focused Header slot states preview.
 
-## Bottom navigation update — 2026-09-09
+## Bottom navigation update — 2026-09-11
 
-`LibraryNavigation` now owns Home — Library — Discover — Profile, active-route matching, content clearance and safe-area spacing. The global Section control and drawer were removed on 2026-09-09 at user request; page destinations remain in top Search. Page definitions still supply the Cave’s existing desktop rail. `MainLibraryNavigation` adapts the existing LibraryScreen collections and routes. Story Seed keeps its current navigation, including Sections; Reader/Reader Codex are immersive exclusions. No page content, cards or internal controls were redesigned. [Contracts, route mappings and transfer details](../../../docs/library-navigation.md).
+`LibraryNavigation` now owns Home — Library — Discover — Profile, active-route matching, content clearance and safe-area spacing. Its active Development scrubber uses the supplied official SEN Home, Book, and Discovery icons for the first three destinations; Profile retains its existing user icon because no replacement was supplied. The global Section control and drawer were removed on 2026-09-09 at user request; page destinations remain in top Search. Page definitions still supply the Cave’s existing desktop rail. `MainLibraryNavigation` adapts the existing LibraryScreen collections and routes. Story Seed keeps its current navigation, including Sections; Reader/Reader Codex are immersive exclusions. No page content, cards or internal controls were redesigned. [Contracts, route mappings and transfer details](../../../docs/library-navigation.md).
 
 ## Capture boundary
 
@@ -92,6 +92,12 @@ Nothing in this PR is transferred back automatically. Light-Novels and locked re
 For an eventual approved change, identify the owning lane first. Main header/DAO changes would target Light-Novels `src/components/GlobalHeader.tsx`, `src/components/DaoInsights.tsx`, relevant `src/index.css` rules, and only if needed the collection fragment in `src/components/LibraryScreen.tsx`. Story Seed changes would target its existing development header, selector, mobile navigation, settings, `CreationModal` integration, and `story-seed.css`, then ship through the established SEN package and Library host presentation adapter. Shared visual primitives would be changed in UI, published/packed first, then consumed by the hosts. Do not copy the frame HTML, Workshop wrappers, mock context, fixture data, content slots, or capture manifest into a production application.
 
 ## Workshop history
+
+- **2026-09-11:** Added locally served official SEN navigation artwork to the
+  active Development shell. Home, Library, and Discover now use the supplied
+  SEN Home, Book, and Discovery marks in the global scrubber; the shared icon
+  adapter preserves each consumer's foreground color. Locked captures and
+  source-comparison dates are unchanged.
 
 - **2026-09-09:** Regression fixes across four connected surfaces. Restored the Cultivator Cave's Relics destination as a full-width card between the Daily Dao Pillar and Store/Settings, opening the existing `/relics` route and its one inventory panel. Removed Story Seed's second header/action toolbar: Save Draft, Manifest and the small save/generation status are a compact page-owned action row above the form, while Settings, Story Bank and Help stay in Story Seed's own navigation. Restored Help and Search as separate, individually visible top-header controls at every width, keeping the recent badge-legibility fix and the badge's shape, glow, border, colors and height. Moved Dao Insights out of the header into Home content, beneath the featured area and above the collection tabs, with its quotes, rotation, filtering, modal, clipboard, provider check and fallback unchanged. Full titles stay readable at 320, 375, 390, 430 and desktop widths. Locked captures and source-comparison dates are unchanged.
 

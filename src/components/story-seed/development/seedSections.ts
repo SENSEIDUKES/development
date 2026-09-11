@@ -1,18 +1,13 @@
 import {
-  BookOpen,
   Feather,
   Globe,
-  Landmark,
-  Route,
-  Shield,
-  Sparkles,
   Users,
-  Zap,
   type LucideIcon,
 } from 'lucide-react';
 import type { StorySeedInput } from '../shared/storySeedSchema';
 import { normalizeStoryStyle } from '../shared/storyStyle';
 import { plotAndTropeSettings, storyRequired, worldFoundations, worldIdentity } from './seedState';
+import type { StorySeedIconName } from './SENStorySeedIcon';
 
 /**
  * The visible navigation hierarchy and its canonical Story Seed ownership.
@@ -35,7 +30,7 @@ export interface SeedSection {
   id: SeedSectionId;
   family: SeedFamily;
   label: string;
-  icon: LucideIcon;
+  icon: StorySeedIconName | LucideIcon;
   /** Whether the visible section must be completed before generation. */
   required?: boolean;
   tagline: string;
@@ -67,7 +62,7 @@ export const SEED_SECTIONS: SeedSection[] = [
     id: 'arc',
     family: 'story',
     label: 'ARC',
-    icon: Route,
+    icon: 'arc',
     tagline: 'The forces that shape the journey and the destination it ultimately reaches.',
     isFilled: seed => {
       const settings = plotAndTropeSettings(seed);
@@ -83,7 +78,7 @@ export const SEED_SECTIONS: SeedSection[] = [
     id: 'world-identity',
     family: 'world',
     label: 'World Identity',
-    icon: Landmark,
+    icon: 'world-identity',
     tagline: 'World type, society, and the place the story opens in.',
     isFilled: seed => {
       const identity = worldIdentity(seed);
@@ -108,7 +103,7 @@ export const SEED_SECTIONS: SeedSection[] = [
     id: 'factions',
     family: 'world',
     label: 'Factions',
-    icon: Shield,
+    icon: 'ally-faction',
     tagline: 'Sects, guilds, and powers that already shape the world.',
     isFilled: seed => (worldFoundations(seed).factions || []).some(faction => hasText(faction.name)),
   },
@@ -116,7 +111,7 @@ export const SEED_SECTIONS: SeedSection[] = [
     id: 'abilities',
     family: 'world',
     label: 'Abilities',
-    icon: Sparkles,
+    icon: 'ability',
     tagline: "The main character's starting power and the path only they can walk.",
     isFilled: seed => {
       const abilities = worldFoundations(seed).abilities || {};
@@ -127,7 +122,7 @@ export const SEED_SECTIONS: SeedSection[] = [
     id: 'power-system',
     family: 'world',
     label: 'Power System',
-    icon: Zap,
+    icon: 'power-system',
     tagline: "The style and rank ladder of the world's power system.",
     isFilled: seed => {
       const powerSystem = worldFoundations(seed).powerSystem || {};
@@ -184,7 +179,7 @@ export const haveSameSeedSectionState = (
   section => section.isFilled(previous) === section.isFilled(next),
 );
 
-export const FAMILY_ICONS: Record<SeedFamily, LucideIcon> = {
-  story: BookOpen,
+export const FAMILY_ICONS: Record<SeedFamily, StorySeedIconName | LucideIcon> = {
+  story: 'scroll',
   world: Globe,
 };

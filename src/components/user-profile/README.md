@@ -8,7 +8,7 @@
   `src/hooks/useUserProfile.ts`
 - **Workshop preview:** `?preview=user-profile`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-10
+- **Last Workshop update:** 2026-09-11
 - **Last source comparison:** 2026-09-10
 - **Replica status:** under refinement
 
@@ -17,6 +17,14 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 `main` at commit `4a3dd02`.
 
 ## Workshop history
+
+- **2026-09-11 SEN navigation icons:** Replaced the active Cave navigation and
+  profile control artwork with the supplied official SEN Home, Scroll, Relic,
+  Discovery/World, Energy, and Store marks. The global Library scrubber now uses
+  the SEN Book mark for Library. Routes, selected states, account-control
+  callbacks, accessible labels, touch targets, desktop rail, and locked reference
+  remain unchanged; Settings, Inbox, Profile, and Exit retain their existing
+  icons because no replacements were supplied.
 
 - **2026-09-10 Dao-name centering correction:** The Dao name now stays centered on
   the card independently of subscription-marker width. A ResizeObserver measures the

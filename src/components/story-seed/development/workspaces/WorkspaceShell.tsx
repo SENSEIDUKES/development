@@ -1,6 +1,7 @@
 import React from 'react';
 import { Check, Sparkle, Sparkles } from 'lucide-react';
 import { SEED_FAMILIES, type SeedSection } from '../seedSections';
+import { SENStorySeedIcon } from '../SENStorySeedIcon';
 
 /**
  * Shared field styling for the finalized workspaces — the glass field system
@@ -35,7 +36,13 @@ export const WorkspaceShell = ({
   children: React.ReactNode;
 }) => {
   const family = SEED_FAMILIES[section.family];
-  const Icon = section.icon;
+  const iconClassName = 'drop-shadow-[0_0_6px_rgba(205,178,113,0.35)]';
+  const sectionIcon = typeof section.icon === 'string'
+    ? <SENStorySeedIcon name={section.icon} size={19} className={iconClassName} />
+    : (() => {
+      const SectionIcon = section.icon;
+      return <SectionIcon size={19} className={iconClassName} />;
+    })();
   return (
     <section aria-labelledby={`seed-workspace-${section.id}-title`} className="seed-workspace-shell max-w-3xl">
       <p className="font-sc text-[11px] font-bold uppercase tracking-[0.34em] text-neutral-400">
@@ -54,7 +61,7 @@ export const WorkspaceShell = ({
             aria-hidden="true"
             className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[rgba(205,178,113,0.38)] bg-[radial-gradient(circle_at_32%_28%,rgba(205,178,113,0.14),rgba(11,14,30,0.55)_68%)] shadow-[0_0_16px_rgba(205,178,113,0.12),inset_0_0_10px_rgba(205,178,113,0.08)] ${familyAccentText(section)}`}
           >
-            <Icon size={19} className="drop-shadow-[0_0_6px_rgba(205,178,113,0.35)]" />
+            {sectionIcon}
           </span>
           {section.label}
         </h2>

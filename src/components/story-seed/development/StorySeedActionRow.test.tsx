@@ -146,7 +146,7 @@ it('returns through the host Home callback with the Celestial Library emblem', a
   expect(back.querySelector('img')?.getAttribute('src')).toBe('/favicon.jpg');
   expect(back.querySelector('img')?.getAttribute('alt')).toBe('Celestial Library');
   expect(nav.querySelector('.lucide-circle-help')).toBeNull();
-  expect(container.querySelector('header .workspace-help-emblem')?.textContent).toBe('?');
+  expect(container.querySelector('header .workspace-help-emblem')).not.toBeNull();
   await click(back);
   expect(onNavigateHome).toHaveBeenCalledTimes(1);
   expect(historyBack).not.toHaveBeenCalled();

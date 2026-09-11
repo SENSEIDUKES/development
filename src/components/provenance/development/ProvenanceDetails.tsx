@@ -57,8 +57,6 @@ export interface ProvenanceDetailsProps {
 }
 
 export function ProvenanceDetails({ record, className = '' }: ProvenanceDetailsProps) {
-  const hasUser = Boolean(record.userId);
-
   return (
     <section
       className={`provenance-details ${className}`.trim()}
@@ -67,12 +65,8 @@ export function ProvenanceDetails({ record, className = '' }: ProvenanceDetailsP
       <div className="provenance-details-heading">
         <span className="provenance-details-mark" aria-hidden="true">Ⓢ</span>
         <div>
-          <h3>Generated through SEIHouse</h3>
-          <p>
-            {hasUser
-              ? 'SEIHouse recorded this asset for this user at this time.'
-              : 'SEIHouse recorded this asset at this time. No user record is attached to this local entry.'}
-          </p>
+          <h3>SEIHouse Provenance</h3>
+          <p>SEIHouse recorded this asset for this user.</p>
         </div>
       </div>
 

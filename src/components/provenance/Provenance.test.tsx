@@ -65,7 +65,8 @@ describe('createProvenanceRecord', () => {
 describe('ProvenanceDetails', () => {
   it('makes the SEIHouse recording claim primary and presents all available evidence', () => {
     act(() => root.render(<ProvenanceDetails record={completeRecord} />));
-    expect(container.textContent).toContain('SEIHouse recorded this asset for this user at this time.');
+    expect(container.textContent).toContain('ⓈSEIHouse Provenance');
+    expect(container.textContent).toContain('SEIHouse recorded this asset for this user.');
     const times = container.querySelectorAll('time');
     expect(times).toHaveLength(2);
     expect(times[0].getAttribute('datetime')).toBe(completeRecord.recordedAt);
@@ -76,14 +77,15 @@ describe('ProvenanceDetails', () => {
     expect(container.textContent).toContain('Cryptographic verification is not connected.');
   });
 
-  it('does not imply an exact generation time or user relationship when neither is known', () => {
+  it('keeps optional evidence and generation time absent without changing the universal heading', () => {
     const record = createProvenanceRecord({
       contentType: 'video',
       provenanceId: 'prov_video_unknown',
       recordedAt: '2026-09-11T13:00:00.000Z',
     });
     act(() => root.render(<ProvenanceDetails record={record} />));
-    expect(container.textContent).toContain('No user record is attached');
+    expect(container.textContent).toContain('ⓈSEIHouse Provenance');
+    expect(container.textContent).toContain('SEIHouse recorded this asset for this user.');
     expect([...container.querySelectorAll('dt')].map(term => term.textContent)).not.toContain('Generated');
     expect(container.querySelectorAll('time')).toHaveLength(1);
     expect(container.textContent?.match(/Not provided/g)?.length).toBeGreaterThanOrEqual(6);
@@ -95,16 +97,16 @@ describe('ProvenanceBadge', () => {
     await act(async () => root.render(<ProvenanceBadge record={completeRecord} />));
     const trigger = container.querySelector<HTMLButtonElement>('button[aria-label="View SEIHouse provenance for this cover"]');
     expect(trigger).not.toBeNull();
-    expect(document.body.textContent).not.toContain('Generated through SEIHouse');
+    expect(document.body.textContent).not.toContain('SEIHouse Provenance');
 
     await act(async () => trigger!.click());
 
-    expect(document.body.textContent).toContain('Generated through SEIHouse');
+    expect(document.body.textContent).toContain('SEIHouse Provenance');
     expect(document.body.textContent).toContain(completeRecord.provenanceId);
 
     await act(async () => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     });
-    expect(document.body.textContent).not.toContain('Generated through SEIHouse');
+    expect(document.body.textContent).not.toContain('SEIHouse Provenance');
   });
 });

@@ -200,3 +200,7 @@ No stores, auth, Firebase, or generation callbacks. Operation logic stays in the
 ### 2026-09-06 — Library UI ownership migration
 
 Reusable presentation now comes from the canonical Library UI package. Portable SEN surfaces resolve presentation through the host provider; the first-party Workshop supplies LibraryPresentationProvider. Domain, generation, persistence, media, and locked reference sources are unchanged.
+
+### 2026-09-10 — LibraryScrubber extraction and UI transfer
+
+Last Workshop update: 2026-09-10. Lifecycle: reusable UI source transferred; Workshop snapshot retained pending packaged-artifact adoption. Extracted LibraryScrubber with all three travelers, trails and destination families into UI/packages/seihouse-library-ui/src/ui/library-scrubber. LoadingVeilCard now uses LibraryScrubber; JourneyScrubber is only a compatibility export. UI owns future presentation changes. This folder retains the matching source so the existing vendored UI artifact remains valid; synchronize from UI until adopting a published artifact, then replace the local import with @seihouse/library-ui. Caller progress normalization and generation ownership are unchanged. Source comparison and locked reference dates are unchanged.

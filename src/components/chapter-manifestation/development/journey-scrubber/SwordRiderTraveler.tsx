@@ -1,6 +1,9 @@
-import React from 'react';
-import { motion, useReducedMotion } from 'motion/react';
-import type { TravelerRenderProps } from './travelers';
+"use client";
+
+import React from "react";
+import { motion } from "motion/react";
+import { useScrubberReducedMotion as useReducedMotion } from "./useScrubberReducedMotion";
+import type { TravelerRenderProps } from "./travelers";
 
 /**
  * Sword Rider Traveler — a tiny cultivator standing on a flying sword,
@@ -31,6 +34,7 @@ export default function SwordRiderTraveler({
 
   return (
     <motion.g
+      initial={false}
       animate={
         flourishing
           ? { y: [0, -6, 0], rotate: [0, -4, 0] }
@@ -40,46 +44,58 @@ export default function SwordRiderTraveler({
       }
       transition={
         flourishing
-          ? { duration: 0.9, times: [0, 0.45, 1], ease: 'easeOut' }
+          ? { duration: 0.9, times: [0, 0.45, 1], ease: "easeOut" }
           : gliding
-            ? { duration: 1.8, repeat: Infinity, ease: 'easeInOut' }
+            ? { duration: 1.8, repeat: Infinity, ease: "easeInOut" }
             : { duration: 0.2 }
       }
     >
       {/* Ground glow — hover shimmer beneath the blade */}
       <motion.ellipse
-        cx="0" cy="1.5" rx="11" ry="2.2"
-        fill={accent} filter={`url(#${filterId})`}
+        initial={false}
+        cx="0"
+        cy="1.5"
+        rx="11"
+        ry="2.2"
+        fill={accent}
+        filter={`url(#${filterId})`}
         animate={reduceMotion ? { opacity: 0.22 } : { opacity: [0.14, 0.26, 0.14] }}
-        transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
       />
 
       {/* Flying sword — slim blade with a soft trail edge */}
       <g filter={`url(#${filterId})`}>
-        <path
-          d="M -13 -2.5 L 10 -4.2 L 14.5 -3 L 10 -1.8 L -13 -1 Z"
-          fill={accent}
+        <path d="M -13 -2.5 L 10 -4.2 L 14.5 -3 L 10 -1.8 L -13 -1 Z" fill={accent} />
+        <line
+          x1="-16"
+          y1="-1.8"
+          x2="-12"
+          y2="-1.9"
+          stroke={accentSoft}
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          opacity="0.7"
         />
-        <line x1="-16" y1="-1.8" x2="-12" y2="-1.9" stroke={accentSoft} strokeWidth="1.2" strokeLinecap="round" opacity="0.7" />
       </g>
 
       {/* Qi scarf — flutters behind while gliding, flicks on arrival */}
       <motion.path
+        initial={false}
         d="M -3 -22 C -9 -24 -13 -20 -18 -23"
-        stroke={accentSoft} strokeWidth="1.6" fill="none" strokeLinecap="round" opacity="0.8"
+        stroke={accentSoft}
+        strokeWidth="1.6"
+        fill="none"
+        strokeLinecap="round"
+        opacity="0.8"
         animate={
-          flourishing
-            ? { rotate: [0, -14, 0] }
-            : gliding
-              ? { rotate: [-7, 7, -7] }
-              : { rotate: 0 }
+          flourishing ? { rotate: [0, -14, 0] } : gliding ? { rotate: [-7, 7, -7] } : { rotate: 0 }
         }
         transition={
           flourishing
-            ? { duration: 0.9, times: [0, 0.45, 1], ease: 'easeOut' }
-            : { duration: 1.1, repeat: Infinity, ease: 'easeInOut' }
+            ? { duration: 0.9, times: [0, 0.45, 1], ease: "easeOut" }
+            : { duration: 1.1, repeat: Infinity, ease: "easeInOut" }
         }
-        style={{ transformBox: 'fill-box', transformOrigin: 'right center' }}
+        style={{ transformBox: "fill-box", transformOrigin: "right center" }}
       />
 
       {/* Standing figure — one robe silhouette, upright and calm */}
@@ -91,7 +107,15 @@ export default function SwordRiderTraveler({
         <circle cx="-0.5" cy="-30.5" r="4.2" fill={accent} />
         <circle cx="0.9" cy="-30.5" r="1.4" fill={accentSoft} />
         {/* Resting arm extended slightly forward for balance */}
-        <line x1="3" y1="-19" x2="8.5" y2="-16" stroke={accentSoft} strokeWidth="1.8" strokeLinecap="round" />
+        <line
+          x1="3"
+          y1="-19"
+          x2="8.5"
+          y2="-16"
+          stroke={accentSoft}
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
       </g>
     </motion.g>
   );

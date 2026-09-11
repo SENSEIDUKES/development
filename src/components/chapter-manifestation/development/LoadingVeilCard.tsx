@@ -4,7 +4,7 @@ import { Sparkles } from 'lucide-react';
 import type { LoadingTaskCard } from '../shared/taskCard';
 import NarrativeManifestationZone from './NarrativeManifestationZone';
 import MediaManifestationZone from './MediaManifestationZone';
-import JourneyScrubber from './journey-scrubber/JourneyScrubber';
+import { LibraryScrubber } from './journey-scrubber/LibraryScrubber';
 
 /**
  * Celestial field — a quiet scatter of fixed star points behind the agent
@@ -258,7 +258,7 @@ export default function LoadingVeilCard({ task, backdrop, emblemClassName, trave
           Progress arrives as the task card's 0–100 value, normalized here
           to the scrubber's 0–1 contract; null keeps the indeterminate drift. */}
       <div className="relative z-10 flex-none px-6 pt-3">
-        <JourneyScrubber
+        <LibraryScrubber
           progress={normalizedProgress}
           travelerId={travelerId}
           trailStyle={trailStyle}

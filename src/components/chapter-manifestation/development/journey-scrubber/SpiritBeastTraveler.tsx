@@ -1,6 +1,9 @@
-import React from 'react';
-import { motion, useReducedMotion } from 'motion/react';
-import type { TravelerRenderProps } from './travelers';
+"use client";
+
+import React from "react";
+import { motion } from "motion/react";
+import { useScrubberReducedMotion as useReducedMotion } from "./useScrubberReducedMotion";
+import type { TravelerRenderProps } from "./travelers";
 
 /**
  * Spirit Beast Traveler — a small celestial fox trotting the qi path beside
@@ -30,33 +33,35 @@ export default function SpiritBeastTraveler({
 
   return (
     <motion.g
-      animate={
-        celebrating
-          ? { y: [0, -6, 0] }
-          : trotting
-            ? { y: [0, -2.6, 0] }
-            : { y: 0 }
-      }
+      initial={false}
+      animate={celebrating ? { y: [0, -6, 0] } : trotting ? { y: [0, -2.6, 0] } : { y: 0 }}
       transition={
         celebrating
-          ? { duration: 0.6, times: [0, 0.4, 1], ease: 'easeOut' }
+          ? { duration: 0.6, times: [0, 0.4, 1], ease: "easeOut" }
           : trotting
-            ? { duration: 0.72, repeat: Infinity, ease: 'easeInOut' }
+            ? { duration: 0.72, repeat: Infinity, ease: "easeInOut" }
             : { duration: 0.2 }
       }
     >
       {/* Ground glow */}
       <motion.ellipse
-        cx="0" cy="1.5" rx="11" ry="2.2"
-        fill={accent} filter={`url(#${filterId})`}
+        initial={false}
+        cx="0"
+        cy="1.5"
+        rx="11"
+        ry="2.2"
+        fill={accent}
+        filter={`url(#${filterId})`}
         animate={reduceMotion ? { opacity: 0.22 } : { opacity: [0.15, 0.27, 0.15] }}
-        transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
       />
 
       {/* Bushy tail — waves while trotting, wags on arrival */}
       <motion.path
+        initial={false}
         d="M -7 -8 C -13 -10 -16 -16 -14 -22 C -11 -19 -8 -16 -6.5 -13 Z"
-        fill={accentSoft} opacity="0.9"
+        fill={accentSoft}
+        opacity="0.9"
         animate={
           celebrating
             ? { rotate: [-10, 10, -10] }
@@ -66,26 +71,38 @@ export default function SpiritBeastTraveler({
         }
         transition={
           celebrating
-            ? { duration: 0.6, repeat: 2, ease: 'easeInOut' }
-            : { duration: 0.72, repeat: Infinity, ease: 'easeInOut' }
+            ? { duration: 0.6, repeat: 2, ease: "easeInOut" }
+            : { duration: 0.72, repeat: Infinity, ease: "easeInOut" }
         }
-        style={{ transformBox: 'fill-box', transformOrigin: 'right bottom' }}
+        style={{ transformBox: "fill-box", transformOrigin: "right bottom" }}
       />
 
       {/* Hind + front paws — a soft alternating trot */}
       <motion.line
-        x1="-4" y1="-7" x2="-5" y2="-0.5"
-        stroke={accent} strokeWidth="2.2" strokeLinecap="round"
+        initial={false}
+        x1="-4"
+        y1="-7"
+        x2="-5"
+        y2="-0.5"
+        stroke={accent}
+        strokeWidth="2.2"
+        strokeLinecap="round"
         animate={trotting ? { rotate: [14, -14, 14] } : { rotate: 0 }}
-        transition={{ duration: 0.72, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ transformBox: 'fill-box', transformOrigin: '50% 0%' }}
+        transition={{ duration: 0.72, repeat: Infinity, ease: "easeInOut" }}
+        style={{ transformBox: "fill-box", transformOrigin: "50% 0%" }}
       />
       <motion.line
-        x1="4" y1="-7" x2="5" y2="-0.5"
-        stroke={accentSoft} strokeWidth="2.2" strokeLinecap="round"
+        initial={false}
+        x1="4"
+        y1="-7"
+        x2="5"
+        y2="-0.5"
+        stroke={accentSoft}
+        strokeWidth="2.2"
+        strokeLinecap="round"
         animate={trotting ? { rotate: [-14, 14, -14] } : { rotate: 0 }}
-        transition={{ duration: 0.72, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ transformBox: 'fill-box', transformOrigin: '50% 0%' }}
+        transition={{ duration: 0.72, repeat: Infinity, ease: "easeInOut" }}
+        style={{ transformBox: "fill-box", transformOrigin: "50% 0%" }}
       />
 
       {/* Body + head — one silhouette mass with the glow */}

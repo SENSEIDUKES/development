@@ -14,7 +14,6 @@ import {
   ScrollText,
   Tag,
   Target,
-  UserRound,
   Wand2,
   Zap,
 } from 'lucide-react';
@@ -33,6 +32,7 @@ import {
   MetadataChip,
 } from './BlueprintDossierPrimitives';
 import { formatBlueprintDate } from './createBlueprintMarkdown';
+import { SENProfileIcon } from '../../../library-shell/development/SENGlobalIcon';
 
 interface BlueprintHeaderSectionProps {
   blueprintVersion?: WorldBlueprint['blueprintVersion'];
@@ -79,7 +79,7 @@ export const BlueprintHeaderSection = memo(({
     </div>
 
     <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-      {creator && <MetadataChip icon={UserRound}>Creator: {creator}</MetadataChip>}
+      {creator && <MetadataChip icon={SENProfileIcon}>Creator: {creator}</MetadataChip>}
       {status && <MetadataChip icon={Info}>Status: {status}</MetadataChip>}
       {createdAt && <MetadataChip icon={CalendarDays}>Created: {formatBlueprintDate(createdAt)}</MetadataChip>}
       {updatedAt && <MetadataChip icon={CalendarDays}>Updated: {formatBlueprintDate(updatedAt)}</MetadataChip>}
@@ -188,7 +188,7 @@ export const BlueprintMainCharacterSection = memo(({
   <LibraryPanel as="section" aria-labelledby="blueprint-main-character-heading" padding="md">
     <BlueprintSectionHeading
       id="blueprint-main-character-heading"
-      icon={UserRound}
+      icon={SENProfileIcon}
       title="Main Character"
       tagline="The protagonist this blueprint builds around."
     />
@@ -199,7 +199,7 @@ export const BlueprintMainCharacterSection = memo(({
           id="blueprint-mc-name"
           label="Name"
           rightElement={<EditableChip />}
-          icon={UserRound}
+          icon={SENProfileIcon}
           value={mainCharacter.name}
           onChange={name => onUpdateMainCharacter({ name })}
           placeholder="Main character name"

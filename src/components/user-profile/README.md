@@ -23,8 +23,12 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
   Discovery/World, Energy, and Store marks. The global Library scrubber now uses
   the SEN Book mark for Library. Routes, selected states, account-control
   callbacks, accessible labels, touch targets, desktop rail, and locked reference
-  remain unchanged; Settings, Inbox, Profile, and Exit retain their existing
-  icons because no replacements were supplied.
+  remain unchanged.
+- **2026-09-11 global profile icons:** Replaced active Settings, Exit, and
+  Profile fallback marks with the supplied global SEN artwork in the Cave,
+  account controls, and Library scrubber. The supplied female profile mark is
+  available to the shared adapter, but no persisted gender/presentation field
+  exists in this feature to select it without inventing profile data.
 
 - **2026-09-10 Dao-name centering correction:** The Dao name now stays centered on
   the card independently of subscription-marker width. A ResizeObserver measures the

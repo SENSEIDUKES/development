@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowLeft, History, Lock, SlidersHorizontal as Sliders, Volume2, Zap } from 'lucide-react';
+import { ArrowLeft, History, Lock, Volume2, Zap } from 'lucide-react';
 import { ReaderChapter } from '../shared/types';
+import { SENSettingsIcon } from '../../library-shell/development/SENGlobalIcon';
 
 interface ReaderHeaderProps {
   arcTitle: string;
@@ -170,7 +171,7 @@ export function ReaderHeader({
           title="Reader Settings"
           aria-label="Reader Settings"
         >
-          <Sliders size={14} />
+          <SENSettingsIcon size={14} />
         </button>
 
         <QuickActionMenu

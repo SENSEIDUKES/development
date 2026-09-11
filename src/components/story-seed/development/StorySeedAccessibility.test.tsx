@@ -405,8 +405,8 @@ describe('Story Seed keyboard and mobile navigation', () => {
     const names = Array.from(container.querySelectorAll<HTMLElement>('[data-sen-story-seed-icon]'))
       .map(icon => icon.dataset.senStorySeedIcon);
     expect(names).toEqual(expect.arrayContaining([
-      'ability', 'ally-faction', 'arc', 'bank', 'enemy-faction', 'power-system', 'scroll',
-      'style-chinese', 'style-japanese', 'style-korean', 'world-identity',
+      'ability', 'ally-faction', 'arc', 'bank', 'characters', 'enemy-faction', 'power-system', 'scroll',
+      'style-chinese', 'style-japanese', 'style-korean', 'world', 'world-identity',
     ]));
   });
 

@@ -6,12 +6,14 @@ export type StorySeedIconName =
   | 'ally-faction'
   | 'arc'
   | 'bank'
+  | 'characters'
   | 'enemy-faction'
   | 'power-system'
   | 'scroll'
   | 'style-chinese'
   | 'style-japanese'
   | 'style-korean'
+  | 'world'
   | 'world-identity';
 
 const STORY_SEED_ICON_MASKS: Record<StorySeedIconName, string> = {
@@ -19,12 +21,14 @@ const STORY_SEED_ICON_MASKS: Record<StorySeedIconName, string> = {
   'ally-faction': '/icons/story-seed/SENAllyFaction.svg',
   arc: '/icons/story-seed/SENArc.svg',
   bank: '/icons/story-seed/SENBank.svg',
+  characters: '/icons/story-seed/SENCharacters.svg',
   'enemy-faction': '/icons/story-seed/SENEnemyFaction.svg',
   'power-system': '/icons/story-seed/SENPowerSystem.svg',
   scroll: '/icons/story-seed/SENScroll.svg',
   'style-chinese': '/icons/story-seed/SENStyleChinese.svg',
   'style-japanese': '/icons/story-seed/SENStyleJapanese.svg',
   'style-korean': '/icons/story-seed/SENStyleKorean.svg',
+  world: '/icons/user-profile/SENDiscovery.svg',
   'world-identity': '/icons/story-seed/SENWorldIdentity.svg',
 };
 

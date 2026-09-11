@@ -2,13 +2,11 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   ChevronRight,
   Mail,
-  Settings,
   Flame,
   Image as ImageIcon,
   Orbit,
   Sigma,
   Sparkles,
-  User as UserIcon,
 } from "lucide-react";
 import { LibraryButton, LibraryElementalTitle, LibraryPanel } from "@seihouse/library-ui";
 import {
@@ -36,6 +34,7 @@ import {
 } from "./qi";
 import { isEffectActive } from './timedEffects';
 import { SENNavigationIcon } from '../../library-shell/development/SENNavigationIcon';
+import { SENProfileIcon, SENSettingsIcon } from '../../library-shell/development/SENGlobalIcon';
 
 export { isEffectActive } from './timedEffects';
 
@@ -354,7 +353,7 @@ export function UserProfileHome({
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <UserIcon
+                  <SENProfileIcon
                     size={56}
                     aria-hidden="true"
                     className="text-neutral-700"
@@ -709,7 +708,7 @@ export function UserProfileHome({
           <LibraryButton fullWidth variant="secondary" onClick={accountControls?.onOpenStore} disabled={!accountControls?.onOpenStore}>
             <SENNavigationIcon name="store" size={20} /><span>Store</span>
           </LibraryButton>
-          <LibraryButton fullWidth variant="secondary" icon={Settings} onClick={onOpenSettings} disabled={!onOpenSettings}>Settings</LibraryButton>
+          <LibraryButton fullWidth variant="secondary" icon={SENSettingsIcon} onClick={onOpenSettings} disabled={!onOpenSettings}>Settings</LibraryButton>
         </div>
       )}
       <SEIDialog

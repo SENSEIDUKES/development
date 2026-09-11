@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <title>Exit</title>
+  <path d="M15.5 6.25V4a1 1 0 0 0-1-1h-11a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-2.25" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path transform="translate(1.05 2.4) scale(.88 .8)" d="M15.65 7.65C15.42 7.48 15.2 7.6 15.32 7.9C15.8 9.05 16.22 10.12 15.87 10.53C15.46 11.02 11.28 10.89 8.17 10.55C7.93 10.52 7.83 10.68 7.99 10.86L9 12L7.99 13.14C7.83 13.32 7.93 13.48 8.17 13.45C11.28 13.11 15.46 12.98 15.87 13.47C16.22 13.88 15.8 14.95 15.32 16.1C15.2 16.4 15.42 16.52 15.65 16.35L21.76 12.56Q22.55 12 21.76 11.44Z" fill="currentColor"/>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <title>Profile</title>
+  <path d="M8.6 8.2v1.45a3.4 3.4 0 0 0 6.8 0V8.2M12 13.05c-4.78 0-8.65 3.4-8.65 7.6 0 .22.18.4.4.4h16.5c.22 0 .4-.18.4-.4 0-4.2-3.87-7.6-8.65-7.6Z" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M7.7 8.45V5.25c0-.7.55-1.25 1.25-1.25h1.45V2.7c0-.4.3-.7.7-.7h1.8c.4 0 .7.3.7.7V4h1.45c.7 0 1.25.55 1.25 1.25v3.2ZM7.7 6.4H3.25c-.3 0-.55.25-.55.55v.6c0 .3.25.55.55.55H7.7ZM16.3 6.4h4.45c.3 0 .55.25.55.55v.6c0 .3-.25.55-.55.55H16.3Z" fill="currentColor"/>
+  <path d="m8.35 13.85 7.1 7.05M15.65 13.85 12 17.48" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

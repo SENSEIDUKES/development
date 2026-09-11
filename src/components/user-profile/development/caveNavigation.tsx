@@ -1,13 +1,13 @@
 import { useCallback, useSyncExternalStore } from 'react';
-import { LogOut, Settings } from 'lucide-react';
 import type { SENNavigationIconName } from '../../library-shell/development/SENNavigationIcon';
+import { SENExitIcon, SENSettingsIcon } from '../../library-shell/development/SENGlobalIcon';
 
 /** Cave-owned routes. Query transport coexists with Workshop and host URLs. */
 export const CAVE_DESTINATIONS = [
   { id: 'home', label: 'Home', icon: 'home' satisfies SENNavigationIconName },
   { id: 'stories', label: 'Stories', icon: 'scroll' satisfies SENNavigationIconName },
   { id: 'relics', label: 'Relics', icon: 'relic' satisfies SENNavigationIconName },
-  { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'settings', label: 'Settings', icon: SENSettingsIcon },
 ] as const;
 export type CaveDestination = typeof CAVE_DESTINATIONS[number]['id'];
 
@@ -23,7 +23,7 @@ export const CAVE_PUBLIC_DESTINATIONS = [
   { id: 'relics', label: 'Relics', icon: 'relic' satisfies SENNavigationIconName },
 ] as const;
 export type CavePublicDestination = typeof CAVE_PUBLIC_DESTINATIONS[number]['id'];
-export const CAVE_EXIT_ICON = LogOut;
+export const CAVE_EXIT_ICON = SENExitIcon;
 
 /** Who the current path is rendered for. */
 export type CaveAudience = 'private' | 'public';

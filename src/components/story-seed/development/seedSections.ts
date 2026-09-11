@@ -1,7 +1,5 @@
 import {
   Feather,
-  Globe,
-  Users,
   type LucideIcon,
 } from 'lucide-react';
 import type { StorySeedInput } from '../shared/storySeedSchema';
@@ -91,7 +89,7 @@ export const SEED_SECTIONS: SeedSection[] = [
     id: 'characters',
     family: 'world',
     label: 'Characters',
-    icon: Users,
+    icon: 'characters',
     tagline: 'The main character and any cast you want defined before generation.',
     isFilled: seed => {
       const foundations = worldFoundations(seed);
@@ -181,5 +179,5 @@ export const haveSameSeedSectionState = (
 
 export const FAMILY_ICONS: Record<SeedFamily, StorySeedIconName | LucideIcon> = {
   story: 'scroll',
-  world: Globe,
+  world: 'world',
 };

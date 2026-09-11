@@ -44,6 +44,7 @@ it('uses ordered global destinations, preserves host routes and updates selectio
   expect(globalNav().querySelector('[data-sen-navigation-icon="home"]')).not.toBeNull();
   expect(globalNav().querySelector('[data-sen-navigation-icon="book"]')).not.toBeNull();
   expect(globalNav().querySelector('[data-sen-navigation-icon="discovery"]')).not.toBeNull();
+  expect(globalNav().querySelector('[data-sen-global-icon="profile"]')).not.toBeNull();
   expect(globalNav().querySelector('[aria-current="page"]')?.textContent).toBe('Profile');
   for (const [label, target] of [
     ['Home', { screen: 'home', collection: 'featured' }],

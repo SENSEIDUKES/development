@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Globe, Eye } from 'lucide-react';
+import { Globe, Eye } from 'lucide-react';
 import { LibraryPanel, LibraryCard, LibraryCardMedia, LibraryCardTitle, ManifestButton, ParticleEffect } from '@seihouse/library-ui';
 import { SEIBadge, SEIFilterChip, SEISelect, SEIEmptyState } from '@seihouse/ui';
 import type { LightNovelsHomeProps } from '../shared/homeContracts';
 import { ExpansionSeals, type WorldExpansionPreview } from './WorldExpressions';
+import { SENManifestingIcon } from '../../library-shell/development/SENGlobalIcon';
 import '../shared/home.css';
 const HERO_VIDEOS = [
   "https://video.seihouse.org/LIGHT%20NOVEL/LIGHT_NOVEL_INTRO.mp4",
@@ -171,7 +172,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
             <div className="pt-2 sm:pt-4 flex flex-wrap gap-4">
               <ManifestButton
                 aria-label="Carve New Destiny"
-                icon={Sparkles}
+                icon={SENManifestingIcon}
                 size="md"
                 onClick={() => onCreateStory()}
               >

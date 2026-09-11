@@ -15,6 +15,7 @@ import {
 import type { StorySeedRecord } from '../shared/storySeedRepository';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '../../../presentation';
 import { SENStorySeedIcon } from './SENStorySeedIcon';
+import { SENManifestingIcon } from '../../library-shell/development/SENGlobalIcon';
 
 /**
  * Story Bank — the permanent home for every saved Story Seed and its latest
@@ -157,6 +158,7 @@ const StoryBankCard = ({
           <ManifestButton
             size="sm"
             fullWidth
+            icon={SENManifestingIcon}
             className="shrink-0 sm:w-auto"
             onClick={() => onManifest(record)}
             disabled={!blueprint || isGenerating}

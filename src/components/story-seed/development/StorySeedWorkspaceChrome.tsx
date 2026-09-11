@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Bookmark, Check, CircleHelp, List, Sparkles, Vault } from 'lucide-react';
+import { Bookmark, Check, CircleHelp, List, Vault } from 'lucide-react';
 import type { StorySeedInput } from '../shared/storySeedSchema';
 import type { SeedUpdate } from './seedState';
 import type { SeedSectionId } from './seedSections';
@@ -11,7 +11,7 @@ import { HeaderActionButton, type HeaderAction } from '../../library-shell/devel
 import { WorkspaceNavigation, WorkspaceBottomControls, WorkspaceSidebar, useWorkspaceNavigation } from '../../library-shell/development/WorkspaceNavigation';
 import { WorkspaceSheet } from '../../library-shell/development/WorkspaceSheet';
 import { SENStorySeedIcon } from './SENStorySeedIcon';
-import { SENSettingsIcon } from '../../library-shell/development/SENGlobalIcon';
+import { SENManifestingIcon, SENSettingsIcon } from '../../library-shell/development/SENGlobalIcon';
 import './story-seed.css';
 
 interface StorySeedWorkspaceChromeProps {
@@ -95,7 +95,7 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
   const openSettings = () => { navigation.closeDrawer(); props.openSettings(); };
   const save: HeaderAction = { id: 'save', label: props.savedFeedback ? 'Saved' : 'Save Draft',
     icon: props.savedFeedback ? Check : Bookmark, disabled: props.isGenerating, onAction: props.onSaveDraft };
-  const manifest: HeaderAction = { id: 'manifest', label: props.manifestLabel, icon: Sparkles,
+  const manifest: HeaderAction = { id: 'manifest', label: props.manifestLabel, icon: SENManifestingIcon,
     disabled: !props.canManifest, loading: props.isGenerating, loadingIndicator: props.manifestIndicator,
     ariaLabel: props.manifestDisabledReason ? `${props.manifestLabel} — ${props.manifestDisabledReason}` : undefined,
     title: props.manifestDisabledReason, kind: 'creation', onAction: props.onManifest };

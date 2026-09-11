@@ -4,7 +4,6 @@ import {
   Mail,
   Flame,
   Image as ImageIcon,
-  Orbit,
   Sigma,
   Sparkles,
 } from "lucide-react";
@@ -34,7 +33,12 @@ import {
 } from "./qi";
 import { isEffectActive } from './timedEffects';
 import { SENNavigationIcon } from '../../library-shell/development/SENNavigationIcon';
-import { SENProfileIcon, SENSettingsIcon } from '../../library-shell/development/SENGlobalIcon';
+import {
+  SENProfileIcon,
+  SENQiIcon,
+  SENQiYinYangIcon,
+  SENSettingsIcon,
+} from '../../library-shell/development/SENGlobalIcon';
 
 export { isEffectActive } from './timedEffects';
 
@@ -549,7 +553,7 @@ export function UserProfileHome({
               onClick={() => openPanel("qi")}
               data-cave-card="qi-reserves"
             >
-              <Orbit aria-hidden="true" className="cave-home-glyph" />
+              <SENQiIcon aria-hidden="true" className="cave-home-glyph" />
               <span className="min-w-0 flex-1">
                 <span className="block font-display">Qi Reserves</span>
                 <span className="block text-xs text-neutral-400">
@@ -811,7 +815,10 @@ export function UserProfileHome({
             <dl className="mt-4 space-y-3">
               {reserves.map((reserve) => (
                 <div key={reserve.id} className="flex justify-between gap-4">
-                  <dt>{reserve.label}</dt>
+                  <dt className="flex items-center gap-2">
+                    <SENQiYinYangIcon size={18} aria-hidden="true" className="shrink-0 text-portal" />
+                    {reserve.label}
+                  </dt>
                   <dd>{formatQi(reserve.balance)}</dd>
                 </div>
               ))}

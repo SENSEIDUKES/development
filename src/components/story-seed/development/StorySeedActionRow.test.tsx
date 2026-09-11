@@ -72,6 +72,7 @@ it('regression: puts Save Draft, Manifest and the status in a page action row ab
   expect(row.querySelector('[role="status"]')?.textContent).toContain('All required Story inputs complete');
   expect(Array.from(row.querySelectorAll('button')).map(element => element.textContent?.trim()))
     .toEqual(['Save Draft', 'Manifest World Blueprint']);
+  expect(button('Manifest World Blueprint')?.querySelector('[data-sen-global-icon="manifesting"]')).not.toBeNull();
 });
 
 it('regression: Save Draft and Manifest still call the page callbacks', async () => {

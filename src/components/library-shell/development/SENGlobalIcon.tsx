@@ -4,8 +4,11 @@ import './sen-global-icon.css';
 
 const GLOBAL_ICON_ASSETS = {
   exit: '/icons/header/SENExit.svg',
+  manifesting: '/icons/header/SENManifesting.svg',
   profile: '/icons/header/SENProfile.svg',
   'profile-female': '/icons/header/SENProfileFemale.svg',
+  qi: '/icons/header/SENQi.svg',
+  'qi-yin-yang': '/icons/header/SENQiYinYang.svg',
   settings: '/icons/header/SENSettings.svg',
 } as const;
 
@@ -28,6 +31,9 @@ const asLucideIcon = (name: SENGlobalIconName): LucideIcon => (({ size = 24, cla
 
 /** Compatible icon adapters for Library primitives that accept Lucide icons. */
 export const SENExitIcon = asLucideIcon('exit');
+export const SENManifestingIcon = asLucideIcon('manifesting');
 export const SENProfileIcon = asLucideIcon('profile');
 export const SENProfileFemaleIcon = asLucideIcon('profile-female');
+export const SENQiIcon = asLucideIcon('qi');
+export const SENQiYinYangIcon = asLucideIcon('qi-yin-yang');
 export const SENSettingsIcon = asLucideIcon('settings');

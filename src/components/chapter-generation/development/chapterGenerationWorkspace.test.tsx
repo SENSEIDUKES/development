@@ -477,6 +477,7 @@ describe("five-chapter progress", () => {
     );
 
     expect(html).toContain("Manifest 5 Chapters");
+    expect(html).toContain('data-sen-global-icon="manifesting"');
     expect(html).toContain("Chapter 1");
     expect(html).toContain("Completed");
     expect(html).toContain("Chapter 2");

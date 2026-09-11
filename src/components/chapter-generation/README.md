@@ -4,7 +4,7 @@
 - **Source location:** `src/hooks/chapterPipeline/chapterBatch.ts`, `src/aiRouter.ts`, `src/server/routes/storyRouter.ts`, and the Story Seed, prompt, handoff, formatting, and context dependencies
 - **Workshop preview:** `?preview=chapter-generation-flow`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-26
+- **Last Workshop update:** 2026-09-11
 - **Last source comparison:** 2026-08-09
 - **Replica status:** Chapter Generation 1.0 recovery restores the proven one-chapter Plan → Manifest → Process boundary and opens its accepted result in the current Reader Chamber and Reader Codex
 
@@ -66,6 +66,10 @@ the complete batch.
 
 ## Workshop history
 
+- **2026-09-11:** Replaced generic play/layer marks on the one- and five-chapter
+  Manifest controls with the supplied SEN Manifesting mark. Run stages,
+  loading state, call counts, retry rules, and temporary-session behavior are
+  unchanged.
 - **2026-08-26:** Reconnected live generated chapter output to the packaged
   cards and Color Codes authorities. Manifest parsing now preserves badges,
   outcomes, row trends, and mechanical status screens; serialized accepted

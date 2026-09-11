@@ -212,6 +212,10 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-09-11:** Applied the supplied SEN Manifesting mark to Story Seed's
+  existing World Blueprint, Story, and Novel creation actions. Eligibility,
+  loading indicators, VERSA substitution, callbacks, and generation contracts
+  remain unchanged.
 - **2026-09-11:** Replaced Story Seed's matching navigation, workspace, style, faction, and Story Bank marks with the supplied official SEN Story Seed SVG set. The existing section model remains the single source for desktop rail and mobile drawer icons; style selection, Story Bank actions, seed state, saving, Help, Blueprint generation, and locked reference replica remain unchanged.
 - **2026-09-11:** Added the supplied SEN Characters mark to the Characters section and the supplied Discovery/World mark to the World family in the same section model. Global SEN Settings and Profile marks now render in Story Seed's existing settings and creator metadata controls; no generation or Blueprint data changed.
 

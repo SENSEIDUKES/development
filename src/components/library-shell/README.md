@@ -94,12 +94,12 @@ For an eventual approved change, identify the owning lane first. Main header/DAO
 ## Workshop history
 
 - **2026-09-11:** Extended the shared active Development icon adapter with
-  the supplied official SEN Profile, Settings, and Exit marks. Global Profile,
-  Cave account controls, Reader Settings, and Story Seed settings/creator
-  metadata now share those local assets without changing routes, actions, or
-  locked captures. The supplied female Profile mark is available to an
-  explicit future presentation choice; no gender was inferred from current
-  profile data.
+  the supplied official SEN Profile, Settings, Exit, Manifesting, Qi, and Qi
+  Yin-Yang marks. Global Profile, Cave account controls and reserve hierarchy,
+  Reader Settings, and active creation controls now share those local assets
+  without changing routes, actions, or locked captures. The supplied female
+  Profile mark is available to an explicit future presentation choice; no
+  gender was inferred from current profile data.
 
 - **2026-09-11:** Added locally served official SEN navigation artwork to the
   active Development shell. Home, Library, and Discover now use the supplied

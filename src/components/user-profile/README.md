@@ -18,6 +18,11 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-11 Qi hierarchy icons:** Replaced the Qi Reserves parent control's
+  generic orbit with the supplied SEN Qi mark and added the paired Yin-Yang
+  child mark to each unlocked special-reserve row. Balances, unlock rules,
+  Heavenly Qi separation, dialog behavior, and locked reference remain
+  unchanged.
 - **2026-09-11 SEN navigation icons:** Replaced the active Cave navigation and
   profile control artwork with the supplied official SEN Home, Scroll, Relic,
   Discovery/World, Energy, and Store marks. The global Library scrubber now uses

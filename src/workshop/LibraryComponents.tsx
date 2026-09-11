@@ -10,6 +10,7 @@ import {
   User,
 } from 'lucide-react';
 import { LibraryBottomNavigation, LibraryButton, LibraryCard, LibraryDragonCycleIcon, LibraryHeaderBadge, LibraryNavigationDrawer, LibraryNavigationDrawerPanel, LibraryPanel, LibrarySoundGlyph, LibraryTextArea, LibraryTextBox, ManifestButton, type LibraryNavigationDrawerSection } from '@seihouse/library-ui';
+import { SENManifestingIcon } from '../components/library-shell/development/SENGlobalIcon';
 
 /**
  * LibraryComponents — the home page's Library Components tab.
@@ -85,6 +86,7 @@ function ManifestPreview() {
   const [busy, setBusy] = useState(false);
   return (
     <ManifestButton
+      icon={SENManifestingIcon}
       loading={busy}
       onClick={() => {
         if (busy) return;

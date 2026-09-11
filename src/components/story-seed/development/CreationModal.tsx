@@ -62,6 +62,7 @@ import { PowerSystemWorkspace } from './workspaces/PowerSystemWorkspace';
 import { NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '../../../presentation';
 import { DeferredStorySeedView } from './DeferredStorySeedView';
 import { StorySeedWorkspaceChrome } from './StorySeedWorkspaceChrome';
+import { SENManifestingIcon } from '../../library-shell/development/SENGlobalIcon';
 import { useStoryBankRecords } from './useStoryBankRecords';
 import { downloadStorySeed, downloadStorySeedCollection } from '../shared/storySeedSerialization';
 
@@ -750,6 +751,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
 
               <ManifestButton
                 size="lg"
+                icon={SENManifestingIcon}
                 onClick={requestGenerateBlueprint}
                 disabled={!canGenerate}
                 loading={isGenerating}

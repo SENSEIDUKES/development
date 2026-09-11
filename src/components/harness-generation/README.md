@@ -16,12 +16,15 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-09-06 |
+| Last Workshop update | 2026-09-11 |
 | Last source comparison | 2026-08-29 — independent feature; current main Chapter Generation was inspected only as a product-requirements inventory |
 | Lifecycle status | Steered continuation with a derived SEN Reader adapter |
 
 ### History
 
+- **2026-09-11:** Applied the supplied SEN Manifesting mark to the Harness's
+  active creation controls. Checkpoint, provider, generation, and persistence
+  behavior remain unchanged.
 - **2026-09-06:** Addressed PR #175 review: scoped unsaved steering to the selected
   story, blocked steering at pending checkpoints, retained semantic details in
   protected chapter context, verified SEN quantity history, and isolated historical

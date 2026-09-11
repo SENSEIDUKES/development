@@ -380,6 +380,7 @@ describe('Cultivator Cave home', () => {
     for (const id of ['qi-reserves', 'dao-pillar', 'status-effects']) {
       expect(container.querySelector(`[data-cave-card="${id}"]`)).not.toBeNull();
     }
+    expect(open('qi-reserves').querySelector('[data-sen-global-icon="qi"]')).not.toBeNull();
     expect(open('dao-pillar').textContent).toContain('12 Day Streak');
     expect(open('status-effects').textContent).toContain('Active Effects · 2');
     expect(text()).not.toContain(profile.username);
@@ -425,6 +426,7 @@ describe('Cultivator Cave home', () => {
     expect(dialog?.textContent).toContain('Sect Qi620');
     expect(dialog?.textContent).toContain('Demonic Qi145');
     expect(dialog?.textContent).not.toContain('Heavenly Qi');
+    expect(dialog?.querySelectorAll('[data-sen-global-icon="qi-yin-yang"]')).toHaveLength(2);
     expect(window.location.search).not.toContain('cave=');
   });
 

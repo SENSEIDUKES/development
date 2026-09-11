@@ -17,7 +17,7 @@ export interface WorkshopSource {
 }
 
 /** Workshop navigation only; does not change package or implementation ownership. */
-export type WorkshopSection = 'home' | 'library' | 'sen' | 'shared' | 'library-components';
+export type WorkshopSection = 'home' | 'library' | 'sen' | 'shared' | 'library-components' | 'provenance';
 
 export type WorkshopEntry = {
   id: string;

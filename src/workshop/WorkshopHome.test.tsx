@@ -41,6 +41,7 @@ describe('WorkshopHome', () => {
       SEN: ['chapter-generation-flow', 'harness-generation', 'chapter-generation-manifestation', 'character-voice', 'reader-codex', 'reader-chamber', 'card-workshop'],
       Shared: ['celestial-backdrop', 'idle-cultivation', 'relics-gallery'],
       'Library Components': [],
+      Provenance: [],
     };
     expect(previewIds()).toEqual(groups.Home);
     const visited: Array<string | null> = [];
@@ -68,9 +69,9 @@ describe('WorkshopHome', () => {
     expect(previewIds()).toEqual(['story-seed']);
   });
 
-  it('connects all five tabs to uniquely labelled panels with one tab stop', () => {
+  it('connects all six tabs to uniquely labelled panels with one tab stop', () => {
     const tabs = container.querySelectorAll<HTMLButtonElement>('[role="tab"]');
-    expect([...tabs].map((element) => element.textContent)).toEqual(['Home', 'Library', 'SEN', 'Shared', 'Library Components']);
+    expect([...tabs].map((element) => element.textContent)).toEqual(['Home', 'Library', 'SEN', 'Shared', 'Library Components', 'Provenance']);
     for (const element of tabs) {
       select(element.textContent!);
       expect(container.querySelectorAll('[role="tab"][tabindex="0"]')).toHaveLength(1);
@@ -85,7 +86,7 @@ describe('WorkshopHome', () => {
 
   it('supports arrow wrapping, Home and End while moving focus with selection', () => {
     act(() => tab('Home').focus());
-    for (const [key, label] of [['ArrowLeft', 'Library Components'], ['ArrowRight', 'Home'], ['ArrowRight', 'Library'], ['End', 'Library Components'], ['Home', 'Home']]) {
+    for (const [key, label] of [['ArrowLeft', 'Provenance'], ['ArrowRight', 'Home'], ['ArrowRight', 'Library'], ['End', 'Provenance'], ['Home', 'Home']]) {
       act(() => document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })));
       expect(document.activeElement).toBe(tab(label));
       expect(tab(label).getAttribute('aria-selected')).toBe('true');

@@ -1,5 +1,8 @@
-import React from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+"use client";
+
+import React from "react";
+import { motion } from "motion/react";
+import { useScrubberReducedMotion as useReducedMotion } from "./useScrubberReducedMotion";
 
 /**
  * Destination registry — the third cosmetic slot of the Journey Scrubber:
@@ -63,11 +66,16 @@ const ArrivalRing: React.FC<{
   if (!arrived || reduceMotion) return null;
   return (
     <motion.circle
-      cx="0" cy={cy} r="9" fill="none"
-      stroke={destinationAccent} strokeWidth="1"
+      initial={false}
+      cx="0"
+      cy={cy}
+      r="9"
+      fill="none"
+      stroke={destinationAccent}
+      strokeWidth="1"
       animate={{ scale: [0.4, 1.7], opacity: [0.8, 0] }}
-      transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
-      style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+      transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
+      style={{ transformBox: "fill-box", transformOrigin: "center" }}
     />
   );
 };
@@ -88,8 +96,23 @@ const DestinationGround: React.FC<{
   softId: string;
 }> = ({ accent, accentSoft, arrived, glowId, softId }) => (
   <>
-    <ellipse cx="0" cy="1.5" rx="16" ry="3.4" fill={accent} opacity={arrived ? 0.32 : 0.16} filter={`url(#${softId})`} />
-    <circle cx="0" cy="0" r={arrived ? 2.2 : 1.8} fill={accentSoft} opacity={arrived ? 1 : 0.6} filter={`url(#${glowId})`} />
+    <ellipse
+      cx="0"
+      cy="1.5"
+      rx="16"
+      ry="3.4"
+      fill={accent}
+      opacity={arrived ? 0.32 : 0.16}
+      filter={`url(#${softId})`}
+    />
+    <circle
+      cx="0"
+      cy="0"
+      r={arrived ? 2.2 : 1.8}
+      fill={accentSoft}
+      opacity={arrived ? 1 : 0.6}
+      filter={`url(#${glowId})`}
+    />
   </>
 );
 
@@ -99,14 +122,28 @@ const DestinationGround: React.FC<{
  * original scrubber gate rendering exactly.
  */
 const DoorDestination: DestinationComponent = ({
-  arrived, accent, accentSoft, destinationAccent, glowId, softId,
+  arrived,
+  accent,
+  accentSoft,
+  destinationAccent,
+  glowId,
+  softId,
 }) => {
   const reduceMotion = useReducedMotion();
   return (
     <>
-      <DestinationGround accent={accent} accentSoft={accentSoft} arrived={arrived} glowId={glowId} softId={softId} />
+      <DestinationGround
+        accent={accent}
+        accentSoft={accentSoft}
+        arrived={arrived}
+        glowId={glowId}
+        softId={softId}
+      />
       <g
-        stroke={destinationAccent} strokeWidth="1.6" strokeLinecap="round" fill="none"
+        stroke={destinationAccent}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        fill="none"
         opacity={arrived ? 1 : 0.7}
         filter={arrived ? `url(#${glowId})` : undefined}
       >
@@ -115,7 +152,10 @@ const DoorDestination: DestinationComponent = ({
         <path d="M -8 -22 Q 0 -31 8 -22" />
       </g>
       <motion.circle
-        cx="0" cy="-13" r="3"
+        initial={false}
+        cx="0"
+        cy="-13"
+        r="3"
         fill={arrived ? accentSoft : destinationAccent}
         animate={
           reduceMotion
@@ -124,8 +164,8 @@ const DoorDestination: DestinationComponent = ({
               ? { opacity: [0.7, 1, 0.7], scale: [1, 1.25, 1] }
               : { opacity: [0.4, 0.7, 0.4] }
         }
-        transition={{ duration: arrived ? 1.4 : 3.4, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+        transition={{ duration: arrived ? 1.4 : 3.4, repeat: Infinity, ease: "easeInOut" }}
+        style={{ transformBox: "fill-box", transformOrigin: "center" }}
       />
       <ArrivalRing cy={-13} destinationAccent={destinationAccent} arrived={arrived} />
     </>
@@ -137,14 +177,28 @@ const DoorDestination: DestinationComponent = ({
  * a hanging lantern. For cultivators, scholars, warriors, sect members.
  */
 const SectDestination: DestinationComponent = ({
-  arrived, accent, accentSoft, destinationAccent, glowId, softId,
+  arrived,
+  accent,
+  accentSoft,
+  destinationAccent,
+  glowId,
+  softId,
 }) => {
   const reduceMotion = useReducedMotion();
   return (
     <>
-      <DestinationGround accent={accent} accentSoft={accentSoft} arrived={arrived} glowId={glowId} softId={softId} />
+      <DestinationGround
+        accent={accent}
+        accentSoft={accentSoft}
+        arrived={arrived}
+        glowId={glowId}
+        softId={softId}
+      />
       <g
-        stroke={destinationAccent} strokeWidth="1.6" strokeLinecap="round" fill="none"
+        stroke={destinationAccent}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        fill="none"
         opacity={arrived ? 1 : 0.7}
         filter={arrived ? `url(#${glowId})` : undefined}
       >
@@ -161,7 +215,10 @@ const SectDestination: DestinationComponent = ({
       </g>
       {/* Hanging lantern beneath the roof — glows warm on arrival */}
       <motion.circle
-        cx="0" cy="-14" r="2.6"
+        initial={false}
+        cx="0"
+        cy="-14"
+        r="2.6"
         fill={arrived ? accentSoft : destinationAccent}
         animate={
           reduceMotion
@@ -170,10 +227,18 @@ const SectDestination: DestinationComponent = ({
               ? { opacity: [0.7, 1, 0.7], scale: [1, 1.25, 1] }
               : { opacity: [0.4, 0.7, 0.4] }
         }
-        transition={{ duration: arrived ? 1.4 : 3.4, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+        transition={{ duration: arrived ? 1.4 : 3.4, repeat: Infinity, ease: "easeInOut" }}
+        style={{ transformBox: "fill-box", transformOrigin: "center" }}
       />
-      <line x1="0" y1="-19" x2="0" y2="-16.6" stroke={destinationAccent} strokeWidth="0.9" opacity={arrived ? 0.9 : 0.6} />
+      <line
+        x1="0"
+        y1="-19"
+        x2="0"
+        y2="-16.6"
+        stroke={destinationAccent}
+        strokeWidth="0.9"
+        opacity={arrived ? 0.9 : 0.6}
+      />
       <ArrivalRing cy={-14} destinationAccent={destinationAccent} arrived={arrived} />
     </>
   );
@@ -184,15 +249,29 @@ const SectDestination: DestinationComponent = ({
  * base. For beasts, spirit animals, monsters, creature travelers.
  */
 const CaveDestination: DestinationComponent = ({
-  arrived, accent, accentSoft, destinationAccent, glowId, softId,
+  arrived,
+  accent,
+  accentSoft,
+  destinationAccent,
+  glowId,
+  softId,
 }) => {
   const reduceMotion = useReducedMotion();
   return (
     <>
-      <DestinationGround accent={accent} accentSoft={accentSoft} arrived={arrived} glowId={glowId} softId={softId} />
+      <DestinationGround
+        accent={accent}
+        accentSoft={accentSoft}
+        arrived={arrived}
+        glowId={glowId}
+        softId={softId}
+      />
       {/* Rocky mouth — an irregular arch with a dark inner opening */}
       <g
-        stroke={destinationAccent} strokeWidth="1.6" strokeLinecap="round" fill="none"
+        stroke={destinationAccent}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        fill="none"
         opacity={arrived ? 1 : 0.7}
         filter={arrived ? `url(#${glowId})` : undefined}
       >
@@ -201,7 +280,10 @@ const CaveDestination: DestinationComponent = ({
       </g>
       {/* Inner glow — the den's heart, brightens on arrival */}
       <motion.circle
-        cx="0" cy="-6" r="2.8"
+        initial={false}
+        cx="0"
+        cy="-6"
+        r="2.8"
         fill={arrived ? accentSoft : destinationAccent}
         animate={
           reduceMotion
@@ -210,11 +292,15 @@ const CaveDestination: DestinationComponent = ({
               ? { opacity: [0.7, 1, 0.7], scale: [1, 1.25, 1] }
               : { opacity: [0.4, 0.7, 0.4] }
         }
-        transition={{ duration: arrived ? 1.4 : 3.4, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+        transition={{ duration: arrived ? 1.4 : 3.4, repeat: Infinity, ease: "easeInOut" }}
+        style={{ transformBox: "fill-box", transformOrigin: "center" }}
       />
       {/* Base crystals */}
-      <g fill={accentSoft} opacity={arrived ? 0.95 : 0.55} filter={arrived ? `url(#${glowId})` : undefined}>
+      <g
+        fill={accentSoft}
+        opacity={arrived ? 0.95 : 0.55}
+        filter={arrived ? `url(#${glowId})` : undefined}
+      >
         <path d="M -14 0 L -12.8 -5 L -11.6 0 Z" />
         <path d="M 12 0 L 13.4 -6.5 L 14.8 0 Z" />
       </g>
@@ -223,7 +309,7 @@ const CaveDestination: DestinationComponent = ({
   );
 };
 
-export const DEFAULT_DESTINATION_ID = 'door';
+export const DEFAULT_DESTINATION_ID = "door";
 
 const DESTINATIONS: Record<string, DestinationComponent> = {
   [DEFAULT_DESTINATION_ID]: DoorDestination,
@@ -238,17 +324,25 @@ const DESTINATIONS: Record<string, DestinationComponent> = {
  * without touching this map.
  */
 export const DEFAULT_DESTINATION_BY_TRAVELER: Record<string, string> = {
-  cultivator: 'sect',
-  'sword-rider': 'door',
-  'spirit-beast': 'cave',
+  cultivator: "sect",
+  "sword-rider": "door",
+  "spirit-beast": "cave",
 };
 
 /** A traveler's recommended destination family, falling back to `door`. */
 export function defaultDestinationFor(travelerId?: string): string {
-  return (travelerId && DEFAULT_DESTINATION_BY_TRAVELER[travelerId]) || DEFAULT_DESTINATION_ID;
+  return (
+    (travelerId &&
+      Object.hasOwn(DEFAULT_DESTINATION_BY_TRAVELER, travelerId) &&
+      DEFAULT_DESTINATION_BY_TRAVELER[travelerId]) ||
+    DEFAULT_DESTINATION_ID
+  );
 }
 
 /** Resolve a destination family id to its component, falling back to `door`. */
 export function resolveDestination(id?: string): DestinationComponent {
-  return (id && DESTINATIONS[id]) || DESTINATIONS[DEFAULT_DESTINATION_ID];
+  return (
+    (id && Object.hasOwn(DESTINATIONS, id) && DESTINATIONS[id]) ||
+    DESTINATIONS[DEFAULT_DESTINATION_ID]
+  );
 }

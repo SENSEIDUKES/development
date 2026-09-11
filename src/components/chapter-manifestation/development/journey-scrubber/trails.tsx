@@ -1,5 +1,8 @@
-import React from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+"use client";
+
+import React from "react";
+import { motion } from "motion/react";
+import { useScrubberReducedMotion as useReducedMotion } from "./useScrubberReducedMotion";
 
 /**
  * Trail preset registry — the cosmetic slot for the Journey Scrubber's
@@ -38,14 +41,14 @@ export interface TrailMarkerProps {
 export type TrailMarkerComponent = React.FC<TrailMarkerProps>;
 
 /** Shared dim tone for unlit markers, matching the resting path. */
-const UNLIT_STROKE = '#8b8b9e';
+const UNLIT_STROKE = "#8b8b9e";
 
 /** qi-glow (default) — the classic milestone dots, exactly the original rendering. */
 const QiGlowMarker: TrailMarkerComponent = ({ lit, accentSoft, glowId }) => (
   <circle
     r={lit ? 2 : 1.4}
-    fill={lit ? accentSoft : 'none'}
-    stroke={lit ? 'none' : UNLIT_STROKE}
+    fill={lit ? accentSoft : "none"}
+    stroke={lit ? "none" : UNLIT_STROKE}
     strokeWidth="0.8"
     opacity={lit ? 0.95 : 0.45}
     filter={lit ? `url(#${glowId})` : undefined}
@@ -57,26 +60,27 @@ const QiGlowMarker: TrailMarkerComponent = ({ lit, accentSoft, glowId }) => (
  * stars glow and twinkle on their own calm phase; unlit stars rest as
  * faint outlines.
  */
-const STAR_D =
-  'M 0 -3.7 L 1 -1 L 3.7 0 L 1 1 L 0 3.7 L -1 1 L -3.7 0 L -1 -1 Z';
+const STAR_D = "M 0 -3.7 L 1 -1 L 3.7 0 L 1 1 L 0 3.7 L -1 1 L -3.7 0 L -1 -1 Z";
 
 const StarlightMarker: TrailMarkerComponent = ({ lit, accentSoft, glowId, index }) => {
   const reduceMotion = useReducedMotion();
   return (
     <motion.path
+      initial={false}
       d={STAR_D}
-      fill={lit ? accentSoft : 'none'}
-      stroke={lit ? 'none' : UNLIT_STROKE}
+      fill={lit ? accentSoft : "none"}
+      stroke={lit ? "none" : UNLIT_STROKE}
       strokeWidth="0.7"
       filter={lit ? `url(#${glowId})` : undefined}
       animate={
-        lit
-          ? reduceMotion
-            ? { opacity: 0.85 }
-            : { opacity: [0.55, 1, 0.55] }
-          : { opacity: 0.5 }
+        lit ? (reduceMotion ? { opacity: 0.85 } : { opacity: [0.55, 1, 0.55] }) : { opacity: 0.5 }
       }
-      transition={{ duration: 2.4 + (index % 4) * 0.5, repeat: Infinity, ease: 'easeInOut', delay: index * 0.35 }}
+      transition={{
+        duration: 2.4 + (index % 4) * 0.5,
+        repeat: Infinity,
+        ease: "easeInOut",
+        delay: index * 0.35,
+      }}
     />
   );
 };
@@ -90,19 +94,16 @@ const ScrollMarker: TrailMarkerComponent = ({ lit, accentSoft, glowId, index }) 
   const reduceMotion = useReducedMotion();
   return (
     <motion.g
+      initial={false}
       fill="none"
       stroke={lit ? accentSoft : UNLIT_STROKE}
       strokeWidth="0.8"
       strokeLinecap="round"
       filter={lit ? `url(#${glowId})` : undefined}
       animate={
-        lit
-          ? reduceMotion
-            ? { opacity: 0.85 }
-            : { opacity: [0.65, 1, 0.65] }
-          : { opacity: 0.5 }
+        lit ? (reduceMotion ? { opacity: 0.85 } : { opacity: [0.65, 1, 0.65] }) : { opacity: 0.5 }
       }
-      transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut', delay: index * 0.45 }}
+      transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: index * 0.45 }}
     >
       {/* Parchment body */}
       <path d="M -2 -2.9 L 2 -2.9 L 2 2.9 L -2 2.9 Z" />
@@ -115,15 +116,15 @@ const ScrollMarker: TrailMarkerComponent = ({ lit, accentSoft, glowId, index }) 
   );
 };
 
-export const DEFAULT_TRAIL_ID = 'qi-glow';
+export const DEFAULT_TRAIL_ID = "qi-glow";
 
 const TRAILS: Record<string, TrailMarkerComponent> = {
   [DEFAULT_TRAIL_ID]: QiGlowMarker,
-  'starlight-trail': StarlightMarker,
-  'scroll-trail': ScrollMarker,
+  "starlight-trail": StarlightMarker,
+  "scroll-trail": ScrollMarker,
 };
 
 /** Resolve a trail preset id to its marker component, falling back to qi-glow. */
 export function resolveTrail(id?: string): TrailMarkerComponent {
-  return (id && TRAILS[id]) || TRAILS[DEFAULT_TRAIL_ID];
+  return (id && Object.hasOwn(TRAILS, id) && TRAILS[id]) || TRAILS[DEFAULT_TRAIL_ID];
 }

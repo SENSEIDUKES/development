@@ -1,7 +1,9 @@
-import type React from 'react';
-import CultivatorTraveler from './CultivatorTraveler';
-import SwordRiderTraveler from './SwordRiderTraveler';
-import SpiritBeastTraveler from './SpiritBeastTraveler';
+"use client";
+
+import type React from "react";
+import CultivatorTraveler from "./CultivatorTraveler";
+import SwordRiderTraveler from "./SwordRiderTraveler";
+import SpiritBeastTraveler from "./SpiritBeastTraveler";
 
 /**
  * Traveler registry — the swappable-skin seam of the Journey Scrubber.
@@ -40,15 +42,15 @@ export interface TravelerRenderProps {
 
 export type TravelerComponent = React.FC<TravelerRenderProps>;
 
-export const DEFAULT_TRAVELER_ID = 'cultivator';
+export const DEFAULT_TRAVELER_ID = "cultivator";
 
 const TRAVELERS: Record<string, TravelerComponent> = {
   [DEFAULT_TRAVELER_ID]: CultivatorTraveler,
-  'sword-rider': SwordRiderTraveler,
-  'spirit-beast': SpiritBeastTraveler,
+  "sword-rider": SwordRiderTraveler,
+  "spirit-beast": SpiritBeastTraveler,
 };
 
 /** Resolve a traveler id to its component, falling back to the cultivator. */
 export function resolveTraveler(id?: string): TravelerComponent {
-  return (id && TRAVELERS[id]) || TRAVELERS[DEFAULT_TRAVELER_ID];
+  return (id && Object.hasOwn(TRAVELERS, id) && TRAVELERS[id]) || TRAVELERS[DEFAULT_TRAVELER_ID];
 }

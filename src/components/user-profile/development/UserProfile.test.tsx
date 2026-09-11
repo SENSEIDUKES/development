@@ -1716,7 +1716,8 @@ describe('LibraryElementalTitle profile integration', () => {
     const row = container.querySelector('[data-cave-identity-group]')!;
     const badge = row.querySelector('[data-slot="library-tier-badge"]') as HTMLElement;
     expect(badge.classList.contains('cave-tier-badge')).toBe(true);
-    expect(row.previousElementSibling?.id).toBe('cave-cultivator-name');
+    expect(badge.previousElementSibling?.id).toBe('cave-cultivator-name');
+    expect(row.querySelectorAll('[data-cave-name]')).toHaveLength(1);
     expect(badge.textContent).toBe('Inner Sect');
     expect(badge.getAttribute('aria-label')).toBe('Subscription tier: Inner Sect');
     expect(badge.tagName).toBe('SPAN');

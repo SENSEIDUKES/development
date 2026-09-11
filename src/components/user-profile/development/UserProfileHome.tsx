@@ -412,6 +412,7 @@ export function UserProfileHome({
             <SEILoadingState size="sm" title="Loading profile" />
           ) : (
             <>
+              <div className="cave-home-identity-group" data-cave-identity-group>
               <LibraryElementalTitle
                 as="h2"
                 element={hasFireTitle ? "fire" : "none"}
@@ -419,20 +420,21 @@ export function UserProfileHome({
                 shadow={hasFireTitle ? "outlined" : "none"}
                 id="cave-cultivator-name"
                 tabIndex={-1}
-                className={`mx-auto w-fit font-display text-2xl leading-tight outline-none sm:text-3xl ${hasFireTitle ? "" : nameStyle.className || "text-neutral-100"}`}
+                className={`cave-home-username w-fit font-display text-2xl leading-tight outline-none sm:text-3xl ${hasFireTitle ? "" : nameStyle.className || "text-neutral-100"}`}
                 style={hasFireTitle ? undefined : nameStyle.style}
                 data-cave-name
               >
                 {profile?.displayName?.trim() || "Cultivator"}
               </LibraryElementalTitle>
               {profile && (
+                <LibraryTierBadge className="cave-tier-badge"
+                  aria-label={`Subscription tier: ${tiers[profile.premiumTier ?? "mortal"]}`}>
+                  {tiers[profile.premiumTier ?? "mortal"]}
+                </LibraryTierBadge>
+              )}
+              </div>
+              {profile && (
                 <>
-                  <div className="mt-3" data-cave-identity-group>
-                    <LibraryTierBadge className="cave-tier-badge"
-                      aria-label={`Subscription tier: ${tiers[profile.premiumTier ?? "mortal"]}`}>
-                      {tiers[profile.premiumTier ?? "mortal"]}
-                    </LibraryTierBadge>
-                  </div>
                   <button ref={progressRef} type="button" className="cave-progress-trigger mt-3"
                     aria-label="Show exact cultivation progress" aria-haspopup="dialog"
                     onClick={() => openPanel("progress")}>

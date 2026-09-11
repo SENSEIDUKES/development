@@ -38,10 +38,12 @@ async (page) => {
       const bio = card.querySelector('[data-cave-bio]');
       return { bar: { top: bar.top, bottom: bar.bottom, left: bar.left, right: bar.right },
         rank: { top: rank.top, left: rank.left }, next: { top: next.top, right: next.right },
-        badgeBottom: badge.bottom, bioTop: bio.getBoundingClientRect().top,
+        badgeBottom: badge.bottom, badgeTop: badge.top, badgeHeight: badge.height, name: { top: rect('[data-cave-name]').top, bottom: rect('[data-cave-name]').bottom }, bioTop: bio.getBoundingClientRect().top,
         bioHeight: bio.clientHeight, lineHeight: parseFloat(getComputedStyle(bio).lineHeight),
         targetHeight: rect('.cave-progress-trigger').height, text: card.textContent };
     });
+    check(layout.badgeTop < layout.name.bottom && layout.badgeBottom > layout.name.top, 'Tier marker beside standard username');
+    check(layout.badgeHeight <= 19, 'Tier marker at 75 percent size');
     check(layout.badgeBottom < layout.bar.top && layout.rank.top >= layout.bar.bottom, 'Identity and progression order');
     check(Math.abs(layout.rank.left - layout.bar.left) <= 5 && Math.abs(layout.next.right - layout.bar.right) <= 5, 'Rank endpoints');
     check(layout.bioTop > layout.rank.top && layout.targetHeight >= 43.99, 'Bio below ranks and accessible progress target');

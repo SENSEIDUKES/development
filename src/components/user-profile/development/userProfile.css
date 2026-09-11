@@ -138,9 +138,18 @@
 .cave-home-pillar:disabled { cursor: default; }
 .cave-home-pillar-art { display: grid; place-items: center; flex: 0 0 4rem; height: 6rem; border: 1px solid #7dd3ff80; border-radius: 45% 45% 10% 10%; font-size: 2rem; color: #7dd3ff; background: radial-gradient(ellipse, #04acff40, #040b12); box-shadow: 0 0 28px #04acff40, inset 0 0 18px #04acff30; }
 .cave-home-glyph { width: 1.8rem; height: 1.8rem; flex-shrink: 0; color: #7dd3ff; filter: drop-shadow(0 0 8px #04acff80); }
-/* The subscription badge is the LibraryTierBadge capsule; this class is only
-   the Home layout hook below the username. */
-.cave-tier-badge { flex-shrink: 0; }
+/* The subscription marker belongs to the name; intrinsic wrapping keeps long
+   names readable without reserving an empty column or shrinking the title. */
+.cave-home-identity-group { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: .45rem; row-gap: .35rem; }
+.cave-home-username { flex: 0 1 auto; min-width: 0; max-width: 100%; }
+.cave-home-identity-group > .cave-tier-badge {
+  flex: 0 0 auto;
+  min-height: 1.125rem;
+  padding: .21rem .54rem;
+  font-size: .54rem;
+  transform: translateY(-.15rem);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .92), inset 0 -1px 1px rgb(255 255 255 / .35), inset 0 -2px 4px rgb(28 48 78 / .07), 0 1px 2px rgb(0 0 0 / .25), 0 0 6px rgb(212 175 55 / .1), 0 0 10px rgb(4 172 255 / .05);
+}
 /* Local semantic rank bar: these track/indicator hooks belong to Home and do not
    depend on private DOM slots inside a package progress primitive. */
 .cave-home-progress { position: relative; height: .65rem; overflow: hidden; border-radius: 99px; background: #020408; outline: 1px solid #d4af3770; outline-offset: 2px; }

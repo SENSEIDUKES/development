@@ -18,6 +18,14 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-10 account marker:** Placed the tier badge beside the elemental username
+  in one centered, intrinsically wrapping group. The profile-specific badge is 75% of
+  its prior size, sits slightly above the name's center, and has a quieter outer halo.
+  The existing champagne/glass center and spectrum rim are unchanged. Long names move
+  the marker onto its own centered line without shrinking the username. The reusable
+  badge component and package sources remain unchanged. Verified short/long names and
+  tier labels in Chromium, plus the complete six-width profile interaction check.
+
 - **2026-09-10 identity progression and bio:** Moved the earned rank beneath the left
   edge of the cultivation bar and the next rank beneath the right edge, using the
   canonical rank colors (including the maximum-rank state). The username and tier badge
@@ -163,7 +171,7 @@ shared/       — the services port, domain types, and the unforked offering-wee
 | --- | --- |
 | `UserProfile.tsx` | The Cave workspace: shared header and navigation, persistent controller, four page destinations, portrait and language dialogs |
 | `UserProfileCaveDestination.tsx` | The frame every destination opens into (back control, title, heading focus) |
-| `LibraryTierBadge.tsx` / `library-tier-badge.css` | **The subscription-tier capsule** below the username — self-contained material, lighting, sheen and reduced-motion fallback, staged for extraction into `@seihouse/library-ui` |
+| `LibraryTierBadge.tsx` / `library-tier-badge.css` | **The subscription-tier capsule** beside the username — self-contained material, lighting, sheen and reduced-motion fallback, staged for extraction into `@seihouse/library-ui` |
 | `UserProfileStoriesPanel.tsx` | **Stories** — Manifested Stories and Story Seeds in one destination |
 | `UserProfileInventoryPanel.tsx` | **Relics** — inventory, soul attunement, the Offering Hall pouch, submitted history, and rewards |
 | `UserProfileDaoPillarPanel.tsx` | **Dao Pillar** — streak, cracked state and repair, milestones, daily refinement |

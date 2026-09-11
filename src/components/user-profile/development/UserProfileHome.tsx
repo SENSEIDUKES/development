@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ChevronRight,
   BookOpen,
@@ -95,25 +95,9 @@ export interface HomeBoostState {
 
 export type UserProfileHomeMode = "private" | "public";
 
-type HomePanel = "qi" | "effects" | "stats" | "highlights";
+type HomePanel = "qi" | "effects" | "stats" | "highlights" | "progress" | "bio";
 
-/**
- * The Cave home composition, in one of two modes.
- *
- * Both modes render the same portrait, the same centered display name, the
- * same subscription badge in its own slot beside the rank, and the same rank.
- * Only the three information areas below them differ:
- *
- * | Area        | Private                | Public     |
- * | ----------- | ---------------------- | ---------- |
- * | Under rank  | Cultivation progress   | Bio        |
- * | Left card   | Qi Reserves            | Stats      |
- * | Right card  | Active Effects         | Highlights |
- * | Action      | Daily Dao Pillar claim | Boost      |
- *
- * Public mode reads nothing but `publicProfile`, which is built for the viewed
- * cultivator; it never reaches into the signed-in controller's private state.
- */
+/** Profile identity reads the viewed controller and its existing bio presentation. */
 export function UserProfileHome({
   controller,
   now,
@@ -192,7 +176,13 @@ export function UserProfileHome({
   const activeRank = resolveRankVisual(auraSelection, auraXp);
   const hasAuraOverride = activeAuraOverride(effects, now) !== null;
   const hasFireTitle = activeRank.rank.id === 'leader' && activeRank.source === 'rank' && !hasAuraOverride;
-  const hasLightningRank = rank.id === 'leader' && !hasAuraOverride;
+  const nextRank = daoData.maxQi === null ? null : getRankForQi(daoData.maxQi);
+  const currentRankStyle = getAuraTextStyle(`rank:${rank.id}`, [], auraXp, now);
+  const nextRankStyle = nextRank ? getAuraTextStyle(`rank:${nextRank.id}`, [], daoData.maxQi!, now) : {};
+  const progressRef = useRef<HTMLButtonElement>(null);
+  const bioOpenerRef = useRef<HTMLButtonElement>(null);
+  const bioRef = useRef<HTMLParagraphElement>(null);
+  const [bioOverflows, setBioOverflows] = useState(false);
   const showsRankParticles = activeRank.rank.motes;
   const moteColors = activeRank.visual.stops;
   const reserves = (
@@ -250,8 +240,20 @@ export function UserProfileHome({
 
   const stats = publicProfile?.stats ?? null;
   const highlights = publicProfile?.highlights ?? null;
-  const bio = publicProfile?.bio ?? null;
+  const bio = publicProfile?.bio?.trim() || '';
+  useEffect(() => {
+    const element = bioRef.current;
+    if (!element) { setBioOverflows(false); return; }
+    const measure = () => setBioOverflows(element.scrollHeight > element.clientHeight + 1);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [bio]);
+  useEffect(() => { setPanel(null); }, [profile?.uid, bio]);
   const panelTitles: Record<HomePanel, string> = {
+    progress: "Cultivation progress",
+    bio: "Cultivator bio",
     qi: "Qi Reserves",
     effects: "Active Effects",
     stats: "Stats",
@@ -263,6 +265,8 @@ export function UserProfileHome({
   };
   const panelOpener = () => {
     const openers: Record<HomePanel, HTMLButtonElement | null> = {
+      progress: progressRef.current,
+      bio: bioOpenerRef.current,
       qi: reservesRef.current,
       effects: effectsRef.current,
       stats: statsRef.current,
@@ -408,9 +412,6 @@ export function UserProfileHome({
             <SEILoadingState size="sm" title="Loading profile" />
           ) : (
             <>
-              {/* The name owns the centre line by itself; the subscription badge
-                  sits in its own slot on the rank row below, so a long or short
-                  tier can never shift the name off centre. */}
               <LibraryElementalTitle
                 as="h2"
                 element={hasFireTitle ? "fire" : "none"}
@@ -426,73 +427,39 @@ export function UserProfileHome({
               </LibraryElementalTitle>
               {profile && (
                 <>
-                  <div className="cave-home-rank-row mt-2" data-cave-rank-row>
-                    <LibraryElementalTitle
-                      as="p"
-                      element={hasLightningRank ? "lightning" : "none"}
-                      intensity="subtle"
-                      shadow={hasLightningRank ? "outlined" : "none"}
-                      className="font-serif text-base text-neutral-200"
-                      data-cave-rank
-                    >
-                      {daoData.rank}
-                    </LibraryElementalTitle>
-                    <LibraryTierBadge
-                      className="cave-tier-badge"
-                      aria-label={`Subscription tier: ${tiers[profile.premiumTier ?? "mortal"]}`}
-                    >
+                  <div className="mt-3" data-cave-identity-group>
+                    <LibraryTierBadge className="cave-tier-badge"
+                      aria-label={`Subscription tier: ${tiers[profile.premiumTier ?? "mortal"]}`}>
                       {tiers[profile.premiumTier ?? "mortal"]}
                     </LibraryTierBadge>
                   </div>
-                  {isPublic ? (
-                    <p className="cave-home-bio mt-3" data-cave-bio>
-                      {bio === null
-                        ? "This cultivator keeps their bio private."
-                        : bio.trim() || "This cultivator has not written a bio yet."}
-                    </p>
-                  ) : (
-                    <>
-                      <div
-                        className="cave-home-progress mt-3"
-                        role="progressbar"
-                        aria-label={
-                          daoData.nextRank
-                            ? `Cultivation toward ${daoData.nextRank}`
-                            : "Maximum rank"
-                        }
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-valuenow={Math.round(daoData.progress)}
-                        aria-valuetext={`${formatQi(daoData.currentQi)} Qi${daoData.maxQi ? ` of ${formatQi(daoData.maxQi)}` : ", maximum rank"}`}
-                        style={
-                          {
-                            "--cave-rank-background": rankBackground(rank.visual),
-                            "--cave-progress": `${daoData.progress}%`,
-                          } as React.CSSProperties
-                        }
-                        data-cave-progress
-                      >
-                        <span
-                          aria-hidden="true"
-                          className="cave-home-progress-indicator"
-                        />
-                      </div>
-                      <p
-                        className="mt-1.5 font-mono text-base text-neutral-300"
-                        data-cave-qi
-                      >
-                        {formatQi(daoData.currentQi)}
-                        {daoData.maxQi !== null
-                          ? ` / ${formatQi(daoData.maxQi)} Qi`
-                          : " Qi"}
-                      </p>
-                      <p className="mt-0.5 font-sc text-[10px] uppercase tracking-widest text-neutral-400">
-                        {daoData.nextRank
-                          ? `Cultivation to ${daoData.nextRank}`
-                          : "Maximum rank"}
-                      </p>
-                    </>
-                  )}
+                  <button ref={progressRef} type="button" className="cave-progress-trigger mt-3"
+                    aria-label="Show exact cultivation progress" aria-haspopup="dialog"
+                    onClick={() => openPanel("progress")}>
+                    <span className="cave-home-progress" role="progressbar"
+                      aria-label={daoData.nextRank ? `Cultivation toward ${daoData.nextRank}` : "Maximum rank"}
+                      aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(daoData.progress)}
+                      aria-valuetext={`${formatQi(daoData.currentQi)} Qi${daoData.maxQi !== null ? ` of ${formatQi(daoData.maxQi)}` : ", maximum rank"}`}
+                      style={{ "--cave-rank-background": rankBackground(rank.visual),
+                        "--cave-progress": `${daoData.progress}%` } as React.CSSProperties}
+                      data-cave-progress>
+                      <span aria-hidden="true" className="cave-home-progress-indicator" />
+                    </span>
+                  </button>
+                  <div className="cave-home-rank-row" data-cave-rank-row>
+                    <p className={currentRankStyle.className} style={currentRankStyle.style}
+                      data-cave-rank>{daoData.rank}</p>
+                    {nextRank ? <p className={nextRankStyle.className} style={nextRankStyle.style}
+                      data-cave-next-rank>{nextRank.name}</p>
+                      : <p className="text-neutral-400" data-cave-next-rank>Maximum rank</p>}
+                  </div>
+                  {bio && <section className="mt-4" aria-label="Cultivator bio" data-cave-bio-section>
+                    <h3 className="cave-bio-label">CULTIVATOR BIO</h3>
+                    <p ref={bioRef} className="cave-home-bio mt-2" data-cave-bio>{bio}</p>
+                    {bioOverflows && <button ref={bioOpenerRef} type="button"
+                      className="cave-bio-reveal" aria-haspopup="dialog"
+                      onClick={() => openPanel("bio")}>Read full bio</button>}
+                  </section>}
                 </>
               )}
             </>
@@ -740,7 +707,9 @@ export function UserProfileHome({
             {panel ? panelTitles[panel] : panelTitles.qi}
           </SEIDialogTitle>
           <SEIDialogDescription className="sr-only">
-            {panel === "effects"
+            {panel === "progress" ? "Exact cultivation toward the next rank"
+              : panel === "bio" ? "Complete bio for this cultivator"
+              : panel === "effects"
               ? "Current effects and remaining duration"
               : panel === "stats"
                 ? "Public reading activity for this cultivator"
@@ -748,7 +717,13 @@ export function UserProfileHome({
                   ? "Media and moments this cultivator features"
                   : "Unlocked special Qi balances"}
           </SEIDialogDescription>
-          {panel === "effects" ? (
+          {panel === "progress" ? (
+            <p className="mt-4 font-mono" data-cave-qi>
+              {formatQi(daoData.currentQi)}{daoData.maxQi !== null ? ` / ${formatQi(daoData.maxQi)} Qi` : " Qi · Maximum rank"}
+            </p>
+          ) : panel === "bio" ? (
+            <p className="mt-4 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{bio}</p>
+          ) : panel === "effects" ? (
             effects.length ? (
               <ul className="mt-4 space-y-3">
                 {effects.map((effect) => (
@@ -823,6 +798,9 @@ export function UserProfileHome({
             </dl>
           ) : (
             <p className="mt-4">No special Qi reserves unlocked.</p>
+          )}
+          {(panel === "progress" || panel === "bio") && (
+            <LibraryButton className="mt-4" onClick={() => setPanel(null)}>Close</LibraryButton>
           )}
         </SEIDialogContent>
       </SEIDialog>

@@ -196,7 +196,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const creatorId = route.creatorId ?? profile?.uid;
   const suppliedCreator = publicCreators.find(creator => creator.profile.uid === creatorId);
   const publicCreator = profile && profile.uid === creatorId
-    ? { profile, worlds: publicVisibility.stories ? suppliedCreator?.worlds ?? [] : [] }
+    ? { profile, worlds: suppliedCreator?.worlds ?? [] }
     : suppliedCreator;
   const viewedProfile = publicCreator?.profile;
   const publicProfile = useMemo(
@@ -442,7 +442,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           </UserProfileCaveDestination>
         );
       default:
-        return <UserProfileHome controller={controller} now={effectsNow} onOpenRelics={() => navigate('/relics')}
+        return <UserProfileHome controller={controller} publicProfile={publicProfile} now={effectsNow} onOpenRelics={() => navigate('/relics')}
           onOpenSettings={() => navigate('/settings')} accountControls={{
           ...accountControls,
           onOpenInbox: accountControls?.onOpenInbox ?? (() => navigate('/home/inbox')),

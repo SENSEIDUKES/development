@@ -8,7 +8,8 @@ import ReferenceUserProfile from '../reference/UserProfile';
 import { UserProfileServicesProvider } from '../shared/userProfileServices';
 import type { UserProfileController } from '../shared/userProfileServices';
 import type { MockUserProfileServicesOptions } from '../../../workshop/previews/user-profile/mockUserProfileServices';
-import { effectStatement } from './UserProfileHome';
+import { effectStatement, UserProfileHome } from './UserProfileHome';
+import { buildPublicProfile, developmentPublicRecord, DEFAULT_PUBLIC_PROFILE_VISIBILITY } from './publicProfile';
 import { publicCavePath, resolveCaveRoute } from './caveNavigation';
 import { publicCreatorWorlds, type CreatorWorld, type PublicCreator } from './creatorWorlds';
 import { previewPublicCreators } from '../../../workshop/previews/user-profile/publicCreatorData';
@@ -181,8 +182,8 @@ describe('Profile creator navigation', () => {
       expect(link.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
       expect(new URL(link.href).searchParams.get('cave')).toBe(publicCavePath(destination, controller().profile!.uid));
     }
-    expect(container.querySelector('[data-cave-rank] .library-elemental-title__text')?.textContent).toBe('Leader');
-    expect(container.querySelector('[data-cave-qi]')?.textContent).toBe('13,480 / 25,000 Qi');
+    expect(container.querySelector('[data-cave-rank]')?.textContent).toBe('Leader');
+    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,480 Qi of 25,000');
     expect(container.querySelector('.cave-tier-badge')?.textContent).toBe('Inner Sect');
     expect(container.querySelector('.library-global-navigation')?.textContent).toContain('HomeLibraryDiscoverProfile');
   });
@@ -321,7 +322,7 @@ describe('Cultivator Cave home', () => {
     const accountControls = { energyBalance: 1234, inboxUnreadCount: 3, onOpenInbox: vi.fn(), onOpenStore: vi.fn(), onRedeemCode: vi.fn() };
     await renderCave({ accountControls });
     expect(container.querySelector('[data-cave-energy]')?.textContent).toBe('Energy');
-    expect(container.querySelector('[data-cave-qi]')?.textContent).toBe('13,480 / 25,000 Qi');
+    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,480 Qi of 25,000');
     expect(container.querySelector('[data-cave-unread]')).not.toBeNull();
     await click(container.querySelector('[aria-label="Inbox, 3 unread messages"]')!);
     expect(accountControls.onOpenInbox).toHaveBeenCalledTimes(1);
@@ -373,7 +374,7 @@ describe('Cultivator Cave home', () => {
     expect(container.querySelector('[data-cave-portrait] img')?.getAttribute('src')).toBe(profile.avatarUrl);
     expect(container.querySelector('#cave-cultivator-name')?.textContent).toContain(profile.displayName);
     expect(container.querySelector('[data-cave-rank]')?.textContent).toContain('Leader');
-    expect(container.querySelector('[data-cave-qi]')?.textContent).toBe('13,480 / 25,000 Qi');
+    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,480 Qi of 25,000');
     expect(container.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('11');
 
     for (const id of ['qi-reserves', 'dao-pillar', 'status-effects']) {
@@ -525,7 +526,7 @@ describe('Cultivator Cave destinations', () => {
     expect(container.querySelector('[role="status"]')?.textContent).toContain('Refinement complete today');
     await click(container.querySelector('[aria-label="Return to cave"]')!);
     expect(open('dao-pillar').textContent).toContain('13 Day Streak');
-    expect(container.querySelector('[data-cave-qi]')?.textContent).toBe('13,485 / 25,000 Qi');
+    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,485 Qi of 25,000');
   });
 
   it('offers repair when the pillar is cracked', async () => {
@@ -1138,8 +1139,8 @@ describe('Home dynamic data and claim contract', () => {
   });
   it.each([[0, 1234, 0], [undefined, 300, 300], [50000, 0, 50000]])('uses canonical cultivation %s with legacy %s', async (dao_xp, qi, expected) => {
     await renderCave({ adapter: { profileOverride: { dao_xp, qi, heavenly_qi: 99 } } });
-    expect(container.querySelector('[data-cave-qi]')?.textContent).toMatch(new RegExp(`^${expected.toLocaleString()}`));
-    expect(container.querySelector('[data-cave-rank] .library-elemental-title__text, [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(expected).name);
+    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toMatch(new RegExp(`^${expected.toLocaleString()}`));
+    expect(container.querySelector('[data-cave-rank], [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(expected).name);
     expect((container.querySelector('[data-cave-progress]') as HTMLElement).style.getPropertyValue('--cave-rank-background')).toBeTruthy();
     if (expected === 50000) expect(text()).toContain('Maximum rank');
   });
@@ -1184,7 +1185,7 @@ describe('Home dynamic data and claim contract', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(650); });
     await navigateTo('/home');
     expect(text()).toContain('Collected Today');
-    expect(container.querySelector('[data-cave-qi]')?.textContent).toBe('13,485 / 25,000 Qi');
+    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,485 Qi of 25,000');
     const pending = result.controller().dailyClaim!.claim();
     await act(async () => { await vi.advanceTimersByTimeAsync(650); await pending; });
     expect(result.controller().dailyClaim?.result?.outcome).toBe('already-collected');
@@ -1376,10 +1377,10 @@ describe('Claim and existing profile edits', () => {
   });
   it('updates the rank and bar together when collection crosses a threshold', async () => {
     await renderCave({ adapter: { profileOverride: { dao_xp: 99, qi: 99 } } });
-    expect(container.querySelector('[data-cave-rank] .library-elemental-title__text, [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(99).name);
+    expect(container.querySelector('[data-cave-rank], [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(99).name);
     await click(open('dao-pillar'));
     await act(async () => { await vi.advanceTimersByTimeAsync(650); });
-    expect(container.querySelector('[data-cave-rank] .library-elemental-title__text, [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(104).name);
+    expect(container.querySelector('[data-cave-rank], [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(104).name);
     expect((container.querySelector('[data-cave-progress]') as HTMLElement).style.getPropertyValue('--cave-rank-background')).toBe(rankBackground(getRankForQi(104).visual));
   });
 });
@@ -1436,12 +1437,12 @@ describe('Public view of the Cave', () => {
     // The identity is untouched: same portrait, name, badge, rank.
     expect(container.querySelector('[data-cave-portrait] img')?.getAttribute('src')).toBe(profile.avatarUrl);
     expect(container.querySelector('#cave-cultivator-name')?.textContent).toContain(profile.displayName);
-    expect(container.querySelector('[data-cave-rank-row] .cave-tier-badge')?.textContent).toBe('Inner Sect');
+    expect(container.querySelector('[data-cave-identity-group] .cave-tier-badge')?.textContent).toBe('Inner Sect');
     expect(container.querySelector('[data-cave-rank]')?.textContent).toContain('Leader');
 
     // The four private areas are replaced, not hidden alongside their public twin.
     expect(container.querySelector('[data-cave-bio]')?.textContent).toContain('quiet hours');
-    expect(container.querySelector('[data-cave-progress]')).toBeNull();
+    expect(container.querySelector('[data-cave-progress]')).not.toBeNull();
     expect(container.querySelector('[data-cave-qi]')).toBeNull();
     expect(container.querySelector('[data-cave-card="stats"]')).not.toBeNull();
     expect(container.querySelector('[data-cave-card="qi-reserves"]')).toBeNull();
@@ -1461,12 +1462,12 @@ describe('Public view of the Cave', () => {
     expect(container.textContent).not.toContain('View Public Profile');
     // The badge is never a sibling of the name inside the heading.
     expect(container.querySelector('#cave-cultivator-name .cave-tier-badge')).toBeNull();
-    expect(container.querySelector('[data-cave-rank-row] .cave-tier-badge')).not.toBeNull();
+    expect(container.querySelector('[data-cave-identity-group] .cave-tier-badge')).not.toBeNull();
 
     await enterPublicView();
     expect(container.querySelector('.workspace-header-context [role="status"]')?.textContent).toContain('Public View');
     expect(container.querySelector('#cave-cultivator-name .cave-tier-badge')).toBeNull();
-    expect(container.querySelector('[data-cave-rank-row] .cave-tier-badge')).not.toBeNull();
+    expect(container.querySelector('[data-cave-identity-group] .cave-tier-badge')).not.toBeNull();
   });
 
   it('keeps Cave destinations in Search and public Exit returns to the previous location', async () => {
@@ -1598,7 +1599,7 @@ describe('Public view of the Cave', () => {
 
     await click(byText('button', 'Preview Public View'));
     expect(cave()).toBe('/public/home');
-    expect(container.querySelector('[data-cave-bio]')?.textContent).toContain('keeps their bio private');
+    expect(container.querySelector('[data-cave-bio-section]')).toBeNull();
     expect(container.querySelector<HTMLButtonElement>('[data-cave-card="stats"]')!.disabled).toBe(true);
     expect(container.querySelector('[data-cave-card="stats"]')?.textContent).toContain('Kept private');
     expect(container.querySelector<HTMLButtonElement>('[data-cave-card="highlights"]')!.disabled).toBe(true);
@@ -1705,17 +1706,17 @@ describe('LibraryElementalTitle profile integration', () => {
     expect(name.getAttribute('data-element')).toBe('fire');
     expect(name.getAttribute('tabindex')).toBe('-1');
     expect(rank.tagName).toBe('P');
-    expect(rank.getAttribute('data-element')).toBe('lightning');
-    expect(rank.querySelector('.library-elemental-title__text')?.textContent).toBe('Leader');
+    expect(rank.classList.contains('aura-gradient-text')).toBe(true);
+    expect(rank.textContent).toBe('Leader');
     expect(container.querySelector('[aria-label="Subscription tier: Inner Sect"]')).not.toBeNull();
   });
 
-  it('renders the subscription tier as the LibraryTierBadge beneath the rank, from the same profile field', async () => {
+  it('keeps the LibraryTierBadge beside the username and above progression', async () => {
     await renderCave();
-    const row = container.querySelector('[data-cave-rank-row]')!;
+    const row = container.querySelector('[data-cave-identity-group]')!;
     const badge = row.querySelector('[data-slot="library-tier-badge"]') as HTMLElement;
     expect(badge.classList.contains('cave-tier-badge')).toBe(true);
-    expect(badge.previousElementSibling).toBe(row.querySelector('[data-cave-rank]'));
+    expect(row.previousElementSibling?.id).toBe('cave-cultivator-name');
     expect(badge.textContent).toBe('Inner Sect');
     expect(badge.getAttribute('aria-label')).toBe('Subscription tier: Inner Sect');
     expect(badge.tagName).toBe('SPAN');
@@ -1723,7 +1724,7 @@ describe('LibraryElementalTitle profile integration', () => {
     expect(badge.getAttribute('tabindex')).toBeNull();
     expect(row.querySelectorAll('[data-slot="library-tier-badge"]')).toHaveLength(1);
     // The rank treatment, name, and progress bar around it are untouched.
-    expect(row.querySelector('[data-cave-rank]')?.getAttribute('data-element')).toBe('lightning');
+    expect(row.querySelector('[data-cave-rank]')).toBeNull();
     expect(container.querySelector('[data-cave-name]')?.textContent).toContain(getPreviewScenario('developed-cultivator').profile!.displayName);
     expect(container.querySelector('[data-cave-progress]')).not.toBeNull();
   });
@@ -1735,7 +1736,7 @@ describe('LibraryElementalTitle profile integration', () => {
     ['immortal', 'Immortal'],
   ] as const)('labels the %s tier from the profile as %s', async (premiumTier, label) => {
     await renderCave({ adapter: { profileOverride: { premiumTier } } });
-    const badge = container.querySelector('[data-cave-rank-row] [data-slot="library-tier-badge"]')!;
+    const badge = container.querySelector('[data-cave-identity-group] [data-slot="library-tier-badge"]')!;
     expect(badge.textContent).toBe(label);
     expect(badge.getAttribute('aria-label')).toBe(`Subscription tier: ${label}`);
   });
@@ -1765,7 +1766,7 @@ describe('elemental aura overrides', () => {
       expiresAt: new Date(Date.now() + 60_000).toISOString(),
     }] } } });
     expect(container.querySelector('[data-cave-name]')?.getAttribute('data-element')).toBe('none');
-    expect(container.querySelector('[data-cave-rank]')?.getAttribute('data-element')).toBe('none');
+    expect(container.querySelector('[data-cave-rank]')?.classList.contains('aura-gradient-text')).toBe(true);
     expect(container.querySelector('[data-cave-name] .library-elemental-title__particles')).toBeNull();
   });
 });
@@ -1782,4 +1783,86 @@ it('uses the supplied profile clock consistently at aura expiry', () => {
   expect(activeAuraOverride(effects, clock + 1000)).toBeNull();
   expect(getAuraTextStyle('rank:leader', effects, 12000, clock + 1000).className).not.toContain('text-neutral-400');
   expect(getAuraGlowStyle('rank:leader', effects, 12000, clock + 1000).className).not.toContain('shadow-none');
+});
+
+describe('identity rank progression and cultivator bio', () => {
+  it.each(RANKS)('shows canonical endpoints and colors for $name', async rank => {
+    await renderCave({ adapter: { profileOverride: { dao_xp: rank.unlockedAt, qi: 999999, sect_qi: 765432 } } });
+    const current = container.querySelector<HTMLElement>('[data-cave-rank]')!;
+    const next = RANKS[RANKS.indexOf(rank) + 1];
+    expect(current.textContent).toBe(rank.name);
+    expect(container.querySelector('[data-cave-next-rank]')?.textContent).toBe(next?.name ?? 'Maximum rank');
+    const expected = getAuraTextStyle(`rank:${rank.id}`, [], rank.unlockedAt);
+    expect(current.className).toBe(expected.className);
+    const expectedPaint = document.createElement('p');
+    Object.assign(expectedPaint.style, expected.style);
+    expect(current.style.cssText).toBe(expectedPaint.style.cssText);
+    if (next) {
+      expectedPaint.style.cssText = '';
+      Object.assign(expectedPaint.style, getAuraTextStyle(`rank:${next.id}`, [], next.unlockedAt).style);
+      expect(container.querySelector<HTMLElement>('[data-cave-next-rank]')!.style.cssText).toBe(expectedPaint.style.cssText);
+    }
+    const identity = container.querySelector('[data-cave-identity]')!;
+    expect(identity.textContent).not.toContain('Qi Reserves');
+    expect(identity.textContent).not.toContain('765,432');
+    expect(identity.querySelector('[data-cave-qi]')).toBeNull();
+  });
+
+  it('reveals exact cultivation in the existing dismissible dialog', async () => {
+    await renderCave({ adapter: { profileOverride: { dao_xp: 13480, qi: 987654, sect_qi: 54321 } } });
+    const trigger = container.querySelector<HTMLButtonElement>('.cave-progress-trigger')!;
+    expect(trigger.tagName).toBe('BUTTON');
+    expect(trigger.disabled).toBe(false);
+    expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(document.querySelector('[data-cave-qi]')).toBeNull();
+    await click(trigger);
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain('13,480 / 25,000 Qi');
+    expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('98');
+    const close = byText('button', 'Close');
+    expect(close).not.toBeNull();
+    await click(close);
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('uses the viewed creator bio instead of the signed-in creator', async () => {
+    const creators = previewPublicCreators(getPreviewScenario('developed-cultivator').profile!);
+    const other = creators.find(creator => creator.profile.uid !== 'workshop-cultivator')!;
+    other.profile = { ...other.profile, dao_xp: 300 };
+    await renderCave({ publicCreators: creators });
+    await navigateTo(publicCavePath('home', other.profile.uid));
+    expect(container.querySelector('[data-cave-bio]')?.textContent).toBe(developmentPublicRecord(other.profile, []).bio);
+    expect(container.querySelector('[data-cave-bio]')?.textContent).toContain('Scribe of');
+    expect(container.querySelector('[data-cave-bio]')?.textContent).not.toContain('Leader of');
+  });
+
+  it.each(['', '   '])('hides the whole section for an empty bio %j', async bio => {
+    const result = await renderCave();
+    const controller = result.controller();
+    const presentation = buildPublicProfile({ ...developmentPublicRecord(controller.profile!, []), bio }, DEFAULT_PUBLIC_PROFILE_VISIBILITY);
+    await act(async () => root.render(<UserProfileHome controller={controller} now={Date.now()} publicProfile={presentation} />));
+    expect(container.querySelector('[data-cave-bio-section]')).toBeNull();
+    expect(container.textContent).not.toContain('CULTIVATOR BIO');
+  });
+
+  it('offers the complete long bio only when the measured text overflows', async () => {
+    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(120);
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(48);
+    await renderCave();
+    const bio = container.querySelector('[data-cave-bio]')!.textContent!;
+    expect(container.querySelector('.cave-bio-label')?.textContent).toBe('CULTIVATOR BIO');
+    await click(byText('button', 'Read full bio'));
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain(bio);
+  });
+
+  it('does not remove published Worlds when the Stories list is hidden', async () => {
+    const creators = previewPublicCreators(getPreviewScenario('developed-cultivator').profile!);
+    await renderCave({ publicCreators: creators });
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
+    await click(byText('[data-slot="disclosure-trigger"]', 'Public Profile'));
+    const labels = Array.from(document.querySelectorAll('[data-cave-visibility] label'));
+    const stories = labels.find(label => label.textContent?.includes('Stories'))!;
+    await click(stories.querySelector('input')!);
+    await navigateTo(publicCavePath('worlds', 'workshop-cultivator'));
+    expect(container.querySelectorAll('[data-cave-world]')).toHaveLength(2);
+  });
 });

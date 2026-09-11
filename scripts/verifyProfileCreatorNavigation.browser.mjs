@@ -28,6 +28,51 @@ async (page) => {
     check(geometry.items.every(item => Math.abs(item.width - geometry.items[0].width) < 1), `Balanced row at ${width}`);
     check(geometry.items.every(item => Math.abs(item.iconTop - geometry.items[0].iconTop) < 1), `Icon alignment at ${width}`);
     check(geometry.items.every(item => item.color === geometry.items[0].color && item.iconColor === item.color), `Consistent action colors at ${width}`);
+    const progress = page.getByRole('button', { name: 'Show exact cultivation progress', exact: true });
+    const layout = await page.locator('[data-cave-identity]').evaluate(card => {
+      const rect = selector => card.querySelector(selector).getBoundingClientRect();
+      const bar = rect('[data-cave-progress]');
+      const rank = rect('[data-cave-rank]');
+      const next = rect('[data-cave-next-rank]');
+      const badge = rect('[data-slot="library-tier-badge"]');
+      const bio = card.querySelector('[data-cave-bio]');
+      return { bar: { top: bar.top, bottom: bar.bottom, left: bar.left, right: bar.right },
+        rank: { top: rank.top, left: rank.left }, next: { top: next.top, right: next.right },
+        badgeBottom: badge.bottom, bioTop: bio.getBoundingClientRect().top,
+        bioHeight: bio.clientHeight, lineHeight: parseFloat(getComputedStyle(bio).lineHeight),
+        targetHeight: rect('.cave-progress-trigger').height, text: card.textContent };
+    });
+    check(layout.badgeBottom < layout.bar.top && layout.rank.top >= layout.bar.bottom, 'Identity and progression order');
+    check(Math.abs(layout.rank.left - layout.bar.left) <= 5 && Math.abs(layout.next.right - layout.bar.right) <= 5, 'Rank endpoints');
+    check(layout.bioTop > layout.rank.top && layout.targetHeight >= 43.99, 'Bio below ranks and accessible progress target');
+    check(!/13,480|Qi Reserves/.test(layout.text), 'No permanent numeric progress or reserves in identity');
+    if (width < 640) check(layout.bioHeight <= layout.lineHeight * 2 + 1, 'Bio limited to two mobile lines');
+    await progress.focus();
+    check(await progress.evaluate(el => getComputedStyle(el).outlineStyle === 'solid'), 'Progress visible focus');
+    await progress.press('Enter');
+    const dialog = page.getByRole('dialog');
+    await dialog.waitFor();
+    check((await dialog.innerText()).includes('13,480 / 25,000 Qi'), 'Exact cultivation disclosure');
+    await page.keyboard.press('Escape');
+    await dialog.waitFor({ state: 'hidden' });
+    check(await progress.evaluate(el => el === document.activeElement), 'Progress focus restored');
+    await progress.press('Space');
+    await dialog.waitFor();
+    await dialog.getByRole('button', { name: 'Close', exact: true }).click();
+    await dialog.waitFor({ state: 'hidden' });
+    await progress.click();
+    await dialog.waitFor();
+    await page.keyboard.press('Escape');
+    await dialog.waitFor({ state: 'hidden' });
+    const revealBio = page.getByRole('button', { name: 'Read full bio', exact: true });
+    if (width < 640) {
+      await revealBio.press('Enter');
+      await dialog.waitFor();
+      check((await dialog.innerText()).includes(await page.locator('[data-cave-bio]').textContent()), 'Complete bio disclosure');
+      await page.keyboard.press('Escape');
+      await dialog.waitFor({ state: 'hidden' });
+      check(await revealBio.evaluate(el => el === document.activeElement), 'Bio focus restored');
+    }
     await page.getByRole('button', { name: 'Inbox, 2 unread messages', exact: true }).focus();
     await page.keyboard.press('Tab');
     check(await link('Worlds').evaluate(el => el === document.activeElement), 'Inbox to Worlds keyboard order');

@@ -18,6 +18,23 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-10 identity progression and bio:** Moved the earned rank beneath the left
+  edge of the cultivation bar and the next rank beneath the right edge, using the
+  canonical rank colors (including the maximum-rank state). The username and tier badge
+  remain centered above the bar. Exact cultivation is disclosed through the existing
+  dialog with a Close action, Escape dismissal, and focus return; it is not a permanent
+  number and never uses Qi Reserves. Both Home views reuse their viewed creator's existing
+  public-profile bio presentation with an understated CULTIVATOR BIO label, a two-line
+  mobile clamp, and a measured-overflow full-bio dialog. Missing/private bios omit the
+  whole section. The existing developmentPublicRecord bio is a local preview stand-in;
+  no persisted bio field or backend was introduced. A host must supply its actual bio
+  through the existing public-profile presentation when transferring this component.
+  Also separated independent public-world publication from the Stories-list visibility
+  switch in response to PR #203 review. Reference and package sources remain untouched.
+  Validation: profile/badge tests, TypeScript/app/API build, package boundary and artifact
+  checks, and local Chromium at 320/360/390/768/1024/1440px including Enter, Space, click,
+  Close, Escape, focus return, endpoint alignment, and two-line bio disclosure.
+
 - **2026-09-10 main refresh:** Updated the checkout and carried the local action-row work onto current main
   (`bddf245`), preserving the glass LibraryTierBadge, LibraryElementalTitle, and profile
   accessibility fixes. Energy now shows only its icon and label; no current balance or
@@ -146,7 +163,7 @@ shared/       — the services port, domain types, and the unforked offering-wee
 | --- | --- |
 | `UserProfile.tsx` | The Cave workspace: shared header and navigation, persistent controller, four page destinations, portrait and language dialogs |
 | `UserProfileCaveDestination.tsx` | The frame every destination opens into (back control, title, heading focus) |
-| `LibraryTierBadge.tsx` / `library-tier-badge.css` | **The subscription-tier capsule** on the rank row — self-contained material, lighting, sheen and reduced-motion fallback, staged for extraction into `@seihouse/library-ui` |
+| `LibraryTierBadge.tsx` / `library-tier-badge.css` | **The subscription-tier capsule** below the username — self-contained material, lighting, sheen and reduced-motion fallback, staged for extraction into `@seihouse/library-ui` |
 | `UserProfileStoriesPanel.tsx` | **Stories** — Manifested Stories and Story Seeds in one destination |
 | `UserProfileInventoryPanel.tsx` | **Relics** — inventory, soul attunement, the Offering Hall pouch, submitted history, and rewards |
 | `UserProfileDaoPillarPanel.tsx` | **Dao Pillar** — streak, cracked state and repair, milestones, daily refinement |
@@ -175,10 +192,10 @@ The Cave home shows, top to bottom on a phone and side by side from the `md` bre
   Settings gear;
 - the central cultivator portrait inside a gold ring, wearing the aura glow and the rank-gated
   mote layer from production, flanked by two decorative calligraphy plaques;
-- the compact identity plaque — the centered display name on its own line, then a rank row
-  carrying the current rank with the subscription badge in a dedicated slot beside it, the
-  rank-coloured cultivation bar, current Qi versus the next threshold, and "Cultivation to [next
-  rank]";
+- the compact identity plaque — centered display name and subscription badge, an interactive
+  rank-colored cultivation bar, current and next rank beneath its endpoints, and the existing
+  bio below an understated CULTIVATOR BIO label. Exact progress and overflowing mobile bios
+  open dismissible dialogs; Qi Reserves remains a separate Home control;
 - two equal-width Home controls for **Qi Reserves** and **Active Effects**, followed by the full-width
   directly claimable **Daily Dao Pillar**;
 - four permanent destinations: **Stories**, **Relics**, **Dao Pillar**, and **Active Status Effects**.

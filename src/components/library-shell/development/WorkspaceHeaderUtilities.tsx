@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { NarrativeButton, NarrativeTextBox } from '../../../presentation';
 import { WorkspaceSheet } from './WorkspaceSheet';
 import { type HeaderAction } from './WorkspaceHeaderActions';
+import { SENHelpIcon, SENSearchIcon } from '../../sen-icons';
 
 const LibraryHelpMenu = lazy(() => import('../../story-seed/development/StorySeedHelpMenu')
   .then(module => ({ default: module.LibraryHelpMenu })));
@@ -43,12 +44,12 @@ export function WorkspaceHeaderUtilities({ items, help }: {
       aria-haspopup="dialog" aria-expanded={help ? help.expanded : experience === 'help'}
       onPointerEnter={help?.onIntent} onFocus={help?.onIntent} disabled={help?.disabled}
       onClick={() => help ? help.onAction() : setExperience('help')}>
-      <span aria-hidden="true" className="workspace-header-utility-icon workspace-help-emblem" />
+      <SENHelpIcon aria-hidden="true" size={24} className="workspace-header-utility-icon workspace-help-emblem" />
     </NarrativeButton>
     <NarrativeButton ref={searchRef} variant="ghost" aria-label="Search" title="Search"
       className="workspace-search-trigger" aria-haspopup="dialog" aria-expanded={experience === 'search'}
       onClick={openSearch}>
-      <span aria-hidden="true" className="workspace-header-utility-icon workspace-search-emblem" />
+      <SENSearchIcon aria-hidden="true" size={24} className="workspace-header-utility-icon workspace-search-emblem" />
       <span className="workspace-search-label">Search</span>
     </NarrativeButton>
     </div>

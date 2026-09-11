@@ -9,7 +9,8 @@ import {
   type ReactNode,
   type SetStateAction,
 } from 'react';
-import { ChevronDown, Feather, Search, Sparkles, Tag, Wand2, X } from 'lucide-react';
+import { ChevronDown, Feather, Sparkles, Tag, Wand2, X } from 'lucide-react';
+import { SENSearchIcon } from '../../../../sen-icons';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   STORY_PREMISE_MAX_LENGTH,
@@ -310,7 +311,7 @@ const OriginTagEditor = memo(({
 
         <div className="border-t border-neutral-800/80 pt-4">
           <div className="mb-3 w-full sm:max-w-xs">
-            <LibraryTextBox id="celestial-tag-search-input" size="compact" icon={Search} value={tagSearch} onChange={setTagSearch} placeholder="Search tags, aliases, families..." aria-label="Search story tags" />
+            <LibraryTextBox id="celestial-tag-search-input" size="compact" icon={SENSearchIcon} value={tagSearch} onChange={setTagSearch} placeholder="Search tags, aliases, families..." aria-label="Search story tags" />
           </div>
           {isTagSearchActive ? (
             <>

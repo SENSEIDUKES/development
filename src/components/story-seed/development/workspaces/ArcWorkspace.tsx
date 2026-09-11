@@ -1,4 +1,5 @@
 import { Compass, Hourglass, ShieldAlert, Sparkles, Swords, Target } from 'lucide-react';
+import { SENArcIcon } from '../../../sen-icons';
 import type {
   StorySeedInput,
   StorySeedStorySauceLevel,
@@ -170,7 +171,7 @@ export const ArcWorkspace = ({ seed, updateSeed }: ArcWorkspaceProps) => {
       <LibraryTextArea
         id="desired-plot-direction-input"
         label="Story Direction"
-        icon={Compass}
+        icon={SENArcIcon}
         maxLength={1500}
         helpText="Extra direction for the journey — must-have elements, things to avoid, pacing, or plot emphasis."
         value={seed.story.optional.additionalStoryDirection || ''}

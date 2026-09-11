@@ -212,6 +212,8 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-09-11:** Reused the canonical SEN marks in exact matching Story Seed fields and Blueprint sections, including Characters, ARC, World Identity, Abilities, Power System, Story Bank, Help, and Search. Origin intentionally retains its existing quill, and non-equivalent Blueprint/document controls remain unchanged.
+
 - **2026-09-11:** Applied the supplied SEN Manifesting mark to Story Seed's
   existing World Blueprint, Story, and Novel creation actions. Eligibility,
   loading indicators, VERSA substitution, callbacks, and generation contracts

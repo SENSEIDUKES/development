@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Bookmark, Check, CircleHelp, List, Vault } from 'lucide-react';
+import { Bookmark, Check, List } from 'lucide-react';
 import type { StorySeedInput } from '../shared/storySeedSchema';
 import type { SeedUpdate } from './seedState';
 import type { SeedSectionId } from './seedSections';
@@ -11,7 +11,7 @@ import { HeaderActionButton, type HeaderAction } from '../../library-shell/devel
 import { WorkspaceNavigation, WorkspaceBottomControls, WorkspaceSidebar, useWorkspaceNavigation } from '../../library-shell/development/WorkspaceNavigation';
 import { WorkspaceSheet } from '../../library-shell/development/WorkspaceSheet';
 import { SENStorySeedIcon } from './SENStorySeedIcon';
-import { SENManifestingIcon, SENSettingsIcon } from '../../library-shell/development/SENGlobalIcon';
+import { SENBankIcon, SENHelpIcon, SENManifestingIcon, SENSettingsIcon } from '../../sen-icons';
 import './story-seed.css';
 
 interface StorySeedWorkspaceChromeProps {
@@ -101,9 +101,9 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
     title: props.manifestDisabledReason, kind: 'creation', onAction: props.onManifest };
   const settings: HeaderAction = { id: 'settings', label: 'Settings', icon: SENSettingsIcon,
     expanded: settingsOpen, hasPopup: 'dialog', onAction: openSettings };
-  const bank: HeaderAction = { id: 'story-bank', label: 'Story Bank', icon: Vault, pressed: props.showStoryBank,
+  const bank: HeaderAction = { id: 'story-bank', label: 'Story Bank', icon: SENBankIcon, pressed: props.showStoryBank,
     onIntent: props.onStoryBankIntent ?? props.onSecondaryIntent, onAction: props.onToggleStoryBank };
-  const help: HeaderAction = { id: 'help', label: 'Help', icon: CircleHelp,
+  const help: HeaderAction = { id: 'help', label: 'Help', icon: SENHelpIcon,
     expanded: props.helpOpen, hasPopup: 'dialog',
     onIntent: props.onHelpIntent ?? props.onSecondaryIntent, onAction: props.onOpenHelp };
   // Save Draft and Manifest belong to the page, not to a second header. The

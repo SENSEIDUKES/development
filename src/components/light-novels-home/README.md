@@ -58,6 +58,8 @@ The build, focused navigation/header/profile/Workshop tests, package boundary ch
 
 ## Workshop history
 
+- **2026-09-11:** Reused the source-owned SEN Discovery mark for the empty Worlds collection state. Collection behavior, responsive layout, and the locked reference remain unchanged.
+
 - **2026-09-11:** Replaced the generic sparkle on the existing Carve New
   Destiny creation action with the supplied SEN Manifesting mark. Its route,
   media behavior, responsive layout, and locked reference remain unchanged.

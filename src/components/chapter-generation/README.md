@@ -66,6 +66,8 @@ the complete batch.
 
 ## Workshop history
 
+- **2026-09-11:** Reused the source-owned SEN World Identity mark for the World and Narration Rules review card. Generation inputs and pipeline behavior remain unchanged.
+
 - **2026-09-11:** Replaced generic play/layer marks on the one- and five-chapter
   Manifest controls with the supplied SEN Manifesting mark. Run stages,
   loading state, call counts, retry rules, and temporary-session behavior are

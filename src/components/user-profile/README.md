@@ -18,6 +18,8 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-11 source icon reuse:** Reused the canonical SEN Scroll, Discovery, Store, and Search marks in matching story, public-world, storefront, and admin-search states outside the Cave navigation. Reading actions, language controls, artifact-specific imagery, and other non-equivalent icons remain unchanged.
+
 - **2026-09-11 Qi hierarchy icons:** Replaced the Qi Reserves parent control's
   generic orbit with the supplied SEN Qi mark and added the paired Yin-Yang
   child mark to each unlocked special-reserve row. Balances, unlock rules,

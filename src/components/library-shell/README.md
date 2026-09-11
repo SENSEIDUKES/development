@@ -93,6 +93,8 @@ For an eventual approved change, identify the owning lane first. Main header/DAO
 
 ## Workshop history
 
+- **2026-09-11:** Consolidated every supplied SEN SVG and its `currentColor` renderer under `src/components/sen-icons`, replacing public-path masks with source imports. Shared Help and Search now consume the same named adapters as navigation, profile, creation, and Qi surfaces; compatibility exports keep established Development imports stable.
+
 - **2026-09-11:** Extended the shared active Development icon adapter with
   the supplied official SEN Profile, Settings, Exit, Manifesting, Qi, and Qi
   Yin-Yang marks. Global Profile, Cave account controls and reserve hierarchy,

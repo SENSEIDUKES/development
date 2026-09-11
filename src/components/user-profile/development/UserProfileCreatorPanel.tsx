@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { BookOpen, Download, Store } from 'lucide-react';
+import { Download } from 'lucide-react';
+import { SENDiscoveryIcon, SENStoreIcon } from '../../sen-icons';
 import { LibraryButton, LibraryPanel } from '@seihouse/library-ui';
 import { SEIEmptyState, SEIInlineAlert } from '@seihouse/ui';
 import { useUserProfileServices } from '../shared/userProfileServices';
@@ -17,7 +18,7 @@ export function UserProfileCreatorPanel({ creator, kind }: {
 
   if (kind === 'storefront') return (
     <LibraryPanel padding="md" className="cave-creator-empty" data-cave-storefront={creator.profile.uid}>
-      <SEIEmptyState icon={Store} titleAs="h3" title={`${name}’s Store`}
+      <SEIEmptyState icon={SENStoreIcon} titleAs="h3" title={`${name}’s Store`}
         description="A place for this creator’s shared skills, tools, templates, music packs, and other reusable creations." />
       <p className="mt-4 text-sm text-neutral-300">The pavilion is being prepared. No items are available yet.</p>
     </LibraryPanel>
@@ -27,7 +28,7 @@ export function UserProfileCreatorPanel({ creator, kind }: {
     {error && <SEIInlineAlert tone="danger" role="alert" className="mb-4">{error}</SEIInlineAlert>}
     {worlds.length === 0 ? (
       <LibraryPanel padding="md" className="cave-creator-empty">
-        <SEIEmptyState icon={BookOpen} titleAs="h3" title="No public worlds yet"
+        <SEIEmptyState icon={SENDiscoveryIcon} titleAs="h3" title="No public worlds yet"
           description={`${name} has not shared any public worlds yet. Published worlds and their shared Story Seeds will appear here.`} />
       </LibraryPanel>
     ) : (

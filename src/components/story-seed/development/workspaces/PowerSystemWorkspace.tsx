@@ -1,4 +1,5 @@
-import { Flame, Layers } from 'lucide-react';
+import { Layers } from 'lucide-react';
+import { SENPowerSystemIcon } from '../../../sen-icons';
 import type { StorySeedInput } from '../../shared/storySeedSchema';
 import { getSeedSection } from '../seedSections';
 import { patchPowerSystem, worldFoundations, type UpdateSeed } from '../seedState';
@@ -21,7 +22,7 @@ export const PowerSystemWorkspace = ({ seed, updateSeed }: PowerSystemWorkspaceP
         <LibraryTextBox
           id="a11y-control-kytc0oh"
           label="Power Style"
-          icon={Flame}
+          icon={SENPowerSystemIcon}
           value={powerSystem.flavor || ''}
           onChange={(val) => updateSeed(patchPowerSystem({ flavor: val }))}
           placeholder="e.g., Martial arts, Daoist, Demonic, Sword..."

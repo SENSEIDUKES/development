@@ -6,13 +6,13 @@ import {
   Compass,
   Feather,
   FileJson,
-  Globe,
   Layers,
   ListChecks,
   PenLine,
   ScrollText,
   Shield,
 } from "lucide-react";
+import { SENWorldIdentityIcon } from '../../sen-icons';
 import { useRef, useState, type ReactNode } from "react";
 import { getChapterWritingStyleInstruction } from "../shared/lib/chapterWritingStyle";
 import type { SceneAnchors, SceneType } from "../shared/lib/sceneRhythm";
@@ -196,7 +196,7 @@ function PermanentStoryRules({ packet }: { packet: ChapterPacket }) {
             </WorkspaceCard>
           </div>
 
-          <WorkspaceCard icon={<Globe size={13} />} title="World & Narration Rules">
+          <WorkspaceCard icon={<SENWorldIdentityIcon size={13} />} title="World & Narration Rules">
             <Field label="Power System">{constitution.powerSystem}</Field>
             {constitution.worldRules.length > 0 ? (
               <ul className="flex flex-col gap-1.5">

@@ -1,5 +1,6 @@
 import { memo, type Dispatch, type SetStateAction } from 'react';
-import { GitBranch, HelpCircle, Shield, Users } from 'lucide-react';
+import { GitBranch, HelpCircle, Shield } from 'lucide-react';
+import { SENCharactersIcon } from '../../../sen-icons';
 import type { WorldBlueprint } from '../../shared/types';
 import { NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea } from '../../../../presentation';
 import { BlueprintSectionHeading, EditableChip } from './BlueprintDossierPrimitives';
@@ -23,7 +24,7 @@ export const BlueprintCollectionSections = memo(({
     <LibraryPanel as="section" aria-labelledby="blueprint-side-characters-heading" padding="md">
       <BlueprintSectionHeading
         id="blueprint-side-characters-heading"
-        icon={Users}
+        icon={SENCharactersIcon}
         title="Side Characters"
         tagline="Cast members the story can draw on — one per line."
       />
@@ -33,7 +34,7 @@ export const BlueprintCollectionSections = memo(({
           id="blueprint-side-characters"
           label="Side Characters (One per line)"
           rightElement={<EditableChip />}
-          icon={Users}
+          icon={SENCharactersIcon}
           value={initialCharacters?.join('\n') || ''}
           onChange={value => setBlueprint(current => ({ ...current, initialCharacters: value.split('\n') }))}
           rows={6}

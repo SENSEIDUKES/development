@@ -49,7 +49,8 @@ afterEach(() => {
 
 describe('createProvenanceRecord', () => {
   it('preserves supplied future evidence while keeping recordedAt distinct from generatedAt', () => {
-    expect(createProvenanceRecord(completeRecord)).toEqual(completeRecord);
+    const { status: _status, ...input } = completeRecord;
+    expect(createProvenanceRecord(input)).toEqual(completeRecord);
   });
 
   it('creates only local defaults for the required record fields', () => {
@@ -59,6 +60,15 @@ describe('createProvenanceRecord', () => {
     expect(record.status).toBe('recorded');
     expect(record.generatedAt).toBeUndefined();
     expect(record.parentAssetId).toBeUndefined();
+  });
+
+  it('cannot elevate a locally created record to verified', () => {
+    const untrustedInput = {
+      contentType: 'image',
+      status: 'verified',
+    } as unknown as Parameters<typeof createProvenanceRecord>[0];
+
+    expect(createProvenanceRecord(untrustedInput).status).toBe('recorded');
   });
 });
 

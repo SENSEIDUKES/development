@@ -40,4 +40,4 @@ export type ProvenanceRecord = {
 };
 
 export type CreateProvenanceRecordInput = Pick<ProvenanceRecord, 'contentType'>
-  & Partial<Omit<ProvenanceRecord, 'contentType'>>;
+  & Partial<Omit<ProvenanceRecord, 'contentType' | 'status'>>;

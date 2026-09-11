@@ -18,6 +18,6 @@ export function createProvenanceRecord(input: CreateProvenanceRecordInput): Prov
     ...input,
     provenanceId: input.provenanceId ?? createLocalId(),
     recordedAt: input.recordedAt ?? new Date().toISOString(),
-    status: input.status ?? 'recorded',
+    status: 'recorded',
   };
 }

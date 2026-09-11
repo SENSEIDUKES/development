@@ -183,6 +183,25 @@ export function UserProfileHome({
   const bioOpenerRef = useRef<HTMLButtonElement>(null);
   const bioRef = useRef<HTMLParagraphElement>(null);
   const [bioOverflows, setBioOverflows] = useState(false);
+  const identityRef = useRef<HTMLDivElement>(null);
+  const [markerLayout, setMarkerLayout] = useState({ nameWidth: 0, inline: false });
+  useEffect(() => {
+    const group = identityRef.current;
+    const name = group?.querySelector<HTMLElement>('[data-cave-name]');
+    const badge = group?.querySelector<HTMLElement>('.cave-tier-badge');
+    if (!group || !name || !badge) return;
+    const measure = () => {
+      const nameWidth = name.getBoundingClientRect().width;
+      const gap = parseFloat(getComputedStyle(group).columnGap) || 0;
+      const inline = nameWidth + 2 * (badge.getBoundingClientRect().width + gap) <= group.clientWidth;
+      setMarkerLayout(previous => previous.nameWidth === nameWidth && previous.inline === inline
+        ? previous : { nameWidth, inline });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    [group, name, badge].forEach(element => observer.observe(element));
+    return () => observer.disconnect();
+  }, [profile?.displayName, profile?.premiumTier, isLoading]);
   const showsRankParticles = activeRank.rank.motes;
   const moteColors = activeRank.visual.stops;
   const reserves = (
@@ -412,7 +431,9 @@ export function UserProfileHome({
             <SEILoadingState size="sm" title="Loading profile" />
           ) : (
             <>
-              <div className="cave-home-identity-group" data-cave-identity-group>
+              <div ref={identityRef} className="cave-home-identity-group" data-cave-identity-group
+                data-marker-inline={markerLayout.inline}
+                style={{ "--cave-name-width": `${markerLayout.nameWidth}px` } as React.CSSProperties}>
               <LibraryElementalTitle
                 as="h2"
                 element={hasFireTitle ? "fire" : "none"}

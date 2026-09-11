@@ -1,6 +1,8 @@
 // Run on the developed user-profile preview with playwright-cli run-code --filename=<this file>.
 // Local fixtures only; public content delivery and seed downloads are host adapter boundaries.
 async (page) => {
+  page.setDefaultTimeout(10000);
+  await page.bringToFront();
   const check = (value, message) => { if (!value) throw new Error(message); };
   const link = name => page.getByRole('link', { name, exact: true });
   const base = 'http://127.0.0.1:5173/?preview=user-profile';
@@ -11,6 +13,8 @@ async (page) => {
   check(await page.locator('[data-cave-name][data-element="fire"]').count() === 1, 'Current elemental title');
   for (const width of [320, 360, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(100);
     const geometry = await page.locator('[data-cave-identity-actions]').evaluate(row => {
       const items = [...row.children].map(el => {
         const box = el.getBoundingClientRect();
@@ -38,11 +42,11 @@ async (page) => {
       const bio = card.querySelector('[data-cave-bio]');
       return { bar: { top: bar.top, bottom: bar.bottom, left: bar.left, right: bar.right },
         rank: { top: rank.top, left: rank.left }, next: { top: next.top, right: next.right },
-        badgeBottom: badge.bottom, badgeTop: badge.top, badgeHeight: badge.height, name: { top: rect('[data-cave-name]').top, bottom: rect('[data-cave-name]').bottom }, bioTop: bio.getBoundingClientRect().top,
+        badgeBottom: badge.bottom, badgeTop: badge.top, badgeHeight: badge.height, cardCenter: card.getBoundingClientRect().left + card.getBoundingClientRect().width / 2, name: { top: rect('[data-cave-name]').top, bottom: rect('[data-cave-name]').bottom, center: rect('[data-cave-name]').left + rect('[data-cave-name]').width / 2 }, bioTop: bio.getBoundingClientRect().top,
         bioHeight: bio.clientHeight, lineHeight: parseFloat(getComputedStyle(bio).lineHeight),
         targetHeight: rect('.cave-progress-trigger').height, text: card.textContent };
     });
-    check(layout.badgeTop < layout.name.bottom && layout.badgeBottom > layout.name.top, 'Tier marker beside standard username');
+    check(Math.abs(layout.name.center - layout.cardCenter) <= 1, 'Dao name independently centered');
     check(layout.badgeHeight <= 19, 'Tier marker at 75 percent size');
     check(layout.badgeBottom < layout.bar.top && layout.rank.top >= layout.bar.bottom, 'Identity and progression order');
     check(Math.abs(layout.rank.left - layout.bar.left) <= 5 && Math.abs(layout.next.right - layout.bar.right) <= 5, 'Rank endpoints');
@@ -85,6 +89,34 @@ async (page) => {
     if ([320, 390, 1440].includes(width)) {
       await page.locator('[data-cave-identity]').screenshot({ path: `output/playwright/profile-actions-${width}.png` });
     }
+    const heading = page.locator('[data-cave-name]');
+    const original = await heading.innerHTML();
+    for (const name of ['Dao', 'A Very Long Cultivator Name Across the Celestial Library', 'UnbrokenCultivatorName'.repeat(5)]) {
+      await heading.evaluate((element, value) => { element.textContent = value; }, name);
+      await page.waitForFunction(() => {
+        const group = document.querySelector('[data-cave-identity-group]');
+        const name = group.querySelector('[data-cave-name]');
+        const badge = group.querySelector('.cave-tier-badge');
+        const nameWidth = name.getBoundingClientRect().width;
+        const expectedInline = nameWidth + 2 * (badge.getBoundingClientRect().width + parseFloat(getComputedStyle(group).columnGap)) <= group.clientWidth;
+        return Math.abs(parseFloat(group.style.getPropertyValue('--cave-name-width')) - nameWidth) < .1
+          && (group.dataset.markerInline === 'true') === expectedInline;
+      }, undefined, { timeout: 10000, polling: 50 });
+      const fit = await page.locator('[data-cave-identity-group]').evaluate(group => {
+        const name = group.querySelector('[data-cave-name]').getBoundingClientRect();
+        const badge = group.querySelector('.cave-tier-badge').getBoundingClientRect();
+        const card = group.closest('[data-cave-identity]').getBoundingClientRect();
+        return { nameCenter: name.left + name.width / 2, cardCenter: card.left + card.width / 2,
+          inline: group.dataset.markerInline === 'true', nameRight: name.right, nameBottom: name.bottom,
+          badgeLeft: badge.left, badgeRight: badge.right, badgeTop: badge.top, cardRight: card.right };
+      });
+      check(Math.abs(fit.nameCenter - fit.cardCenter) <= 1, `Independent name center for ${name} at ${width}`);
+      check(fit.badgeRight <= fit.cardRight, 'Marker stays inside card');
+      if (name === 'Dao') check(fit.inline && fit.badgeLeft > fit.nameRight, 'Short name gets inline marker');
+      else check(!fit.inline && fit.badgeTop >= fit.nameBottom, 'Long name stacks marker');
+    }
+    await heading.evaluate((element, html) => { element.innerHTML = html; }, original);
+    await page.waitForTimeout(100);
     results.push({ width, ...geometry });
   }
   await page.setViewportSize({ width: 390, height: 844 });

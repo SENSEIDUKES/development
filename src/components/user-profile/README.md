@@ -18,6 +18,13 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-10 Dao-name centering correction:** The Dao name now stays centered on
+  the card independently of subscription-marker width. A ResizeObserver measures the
+  name, badge, and available row width; the small marker sits to the right only when
+  there is enough space without shifting the name, otherwise it centers below. The
+  existing marker finish and scale remain unchanged. Browser checks assert the name's
+  card-center alignment for standard, short, long, and unbroken names at all six widths.
+
 - **2026-09-10 account marker:** Placed the tier badge beside the elemental username
   in one centered, intrinsically wrapping group. The profile-specific badge is 75% of
   its prior size, sits slightly above the name's center, and has a quieter outer halo.

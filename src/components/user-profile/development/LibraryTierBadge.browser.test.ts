@@ -89,21 +89,19 @@ describe('LibraryTierBadge in the browser', () => {
       expect(shape.badge.height, detail).toBeGreaterThanOrEqual(17.99);
       expect(shape.radius, detail).toBe('999px');
       expect(shape.rank.width, detail).toBeGreaterThan(0);
-      // The name and marker center together; when wrapped, each line centers.
+      // The Dao name remains at the card center regardless of tier width.
       const groupCenter = (shape.row.left + shape.row.right) / 2;
-      const pairCenter = (Math.min(shape.rank.left, shape.badge.left) + Math.max(shape.rank.right, shape.badge.right)) / 2;
+      const pairCenter = (shape.rank.left + shape.rank.right) / 2;
       expect(Math.abs(pairCenter - groupCenter), detail).toBeLessThanOrEqual(1);
     }
   });
 
-  it.each([320, 390, 768])('places the compact marker beside the name, wrapping only for long names at %ipx', async width => {
+  it.each([320, 390, 768])('keeps short and long Dao names centered in the stacked fallback at %ipx', async width => {
     if (!browser) return;
     await page.setViewportSize({ width, height: 800 });
     await page.setContent(markup('Inner Sect'));
     const short = await geometry();
-    expect(short.badge.left).toBeGreaterThan(short.rank.right);
-    expect(short.badge.centerY).toBeLessThan(short.rank.centerY);
-    expect(short.badge.top).toBeLessThan(short.rank.bottom);
+    expect(Math.abs((short.rank.left + short.rank.right) / 2 - width / 2)).toBeLessThan(1);
     expect(short.badge.height).toBeCloseTo(18, 0);
     await page.setContent(markup('Inner Sect', '#05070c', 'A Very Long Cultivator Name Across the Celestial Library '.repeat(2)));
     const long = await geometry();

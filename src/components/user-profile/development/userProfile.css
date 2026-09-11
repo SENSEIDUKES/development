@@ -138,12 +138,14 @@
 .cave-home-pillar:disabled { cursor: default; }
 .cave-home-pillar-art { display: grid; place-items: center; flex: 0 0 4rem; height: 6rem; border: 1px solid #7dd3ff80; border-radius: 45% 45% 10% 10%; font-size: 2rem; color: #7dd3ff; background: radial-gradient(ellipse, #04acff40, #040b12); box-shadow: 0 0 28px #04acff40, inset 0 0 18px #04acff30; }
 .cave-home-glyph { width: 1.8rem; height: 1.8rem; flex-shrink: 0; color: #7dd3ff; filter: drop-shadow(0 0 8px #04acff80); }
-/* The subscription marker belongs to the name; intrinsic wrapping keeps long
-   names readable without reserving an empty column or shrinking the title. */
-.cave-home-identity-group { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; column-gap: .45rem; row-gap: .35rem; }
+/* The Dao name owns the card center. The marker uses only spare space to its
+   right; measured fit moves it below without changing the name's position. */
+.cave-home-identity-group { position: relative; display: flex; flex-direction: column; align-items: center; column-gap: .45rem; row-gap: .35rem; }
 .cave-home-username { flex: 0 1 auto; min-width: 0; max-width: 100%; }
+.cave-home-identity-group[data-marker-inline="true"] > .cave-tier-badge { position: absolute; left: calc(50% + var(--cave-name-width) / 2 + .45rem); top: 50%; transform: translateY(calc(-50% - .15rem)); }
 .cave-home-identity-group > .cave-tier-badge {
   flex: 0 0 auto;
+  width: max-content;
   min-height: 1.125rem;
   padding: .21rem .54rem;
   font-size: .54rem;

@@ -12,6 +12,10 @@ import {
   freezeHarnessSkillLoadout,
   resolveHarnessSkill,
 } from './skills';
+import {
+  includeBundledHarnessSkills,
+  SEN_NOVEL_AUTHOR_SKILL,
+} from './authorSkill';
 import { cloneHarnessValue, defaultHarnessRuntime, stableHarnessId, type HarnessRuntime } from './ids';
 import {
   acceptHarnessModelResponse,
@@ -113,7 +117,7 @@ export class HarnessGenerationController {
     this.runtime = options.runtime ?? defaultHarnessRuntime;
     this.eventPreserver = options.preserveEvents ?? preserveSemanticEvents;
     this.capabilityRegistry = options.capabilityRegistry ?? new HarnessCapabilityRegistry();
-    this.skillCatalog = createHarnessSkillCatalog(options.installedSkills ?? []);
+    this.skillCatalog = createHarnessSkillCatalog(includeBundledHarnessSkills(options.installedSkills ?? []));
   }
 
   subscribe(listener: WorkspaceListener): () => void {
@@ -214,6 +218,17 @@ export class HarnessGenerationController {
       batch.updatedAt = this.runtime.now();
       changed = true;
     }
+    for (const story of recovered.stories) {
+      if (story.skillLoadout?.author) continue;
+      story.skillLoadout = {
+        ...(story.skillLoadout ?? {}),
+        author: {
+          id: SEN_NOVEL_AUTHOR_SKILL.id,
+          version: SEN_NOVEL_AUTHOR_SKILL.version,
+        },
+      };
+      changed = true;
+    }
     if (changed) await this.repository.save(recovered);
     this.state = recovered;
     this.hydrated = true;
@@ -224,6 +239,12 @@ export class HarnessGenerationController {
   async createStory(input: StoryFoundationInput): Promise<HarnessStory> {
     this.assertHydrated();
     const created = createHarnessStory(this.state, input, this.runtime);
+    created.story.skillLoadout = {
+      author: {
+        id: SEN_NOVEL_AUTHOR_SKILL.id,
+        version: SEN_NOVEL_AUTHOR_SKILL.version,
+      },
+    };
     await this.persist(created.state);
     return cloneHarnessValue(created.story);
   }
@@ -267,6 +288,7 @@ export class HarnessGenerationController {
     }
     const loadout = { ...(story.skillLoadout ?? {}) };
     if (!reference) {
+      if (slot === 'author') throw new Error('Choose an installed Author skill before changing this slot.');
       delete loadout[slot];
     } else {
       const manifest = resolveHarnessSkill(this.skillCatalog, reference);

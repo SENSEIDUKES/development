@@ -17,11 +17,15 @@ existing Chapter Generation feature.
 | --- | --- |
 | Replica creation date | 2026-08-29 |
 | Last Workshop update | 2026-09-12 |
-| Last source comparison | 2026-08-29 — independent feature; current main Chapter Generation was inspected only as a product-requirements inventory |
+| Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Steered continuation with a derived SEN Reader adapter |
 
 ### History
 
+- **2026-09-12:** Promoted the source SEN light-novel author direction from a
+  hidden generic server prompt into the bundled, visible, replaceable **Author**
+  skill. Existing and new local Harness stories equip its exact version, the
+  provider receives it first, and the skill card exposes its actual instructions.
 - **2026-09-12:** Added the missing installable-skill layer: six visible per-story
   slots, host-injected versioned manifests, durable loadout references, frozen
   request snapshots, generation-instruction delivery, missing-install protection,
@@ -125,8 +129,11 @@ paragraph order. Mechanical rows and status stats use the same preserved value.
 
 Installable skills are not the deterministic capability handlers above. Capability
 handlers are permanent internal machinery that interprets committed evidence. Skills
-are optional, host-installed packages that an author equips into one of six per-story
-slots: Pacing, Continuity, Style, Accessibility, Translation, or Media.
+are versioned packages equipped into one of seven per-story slots: Author, Pacing,
+Continuity, Style, Accessibility, Translation, or Media. The bundled SEN Novel Author
+is a normal, replaceable generation skill, not hidden creative Harness behavior. It is
+equipped for new and previously saved local stories, and its exact instructions are
+the first creative direction sent to the provider.
 
 The host supplies validated `HarnessSkillManifest` records. The Harness persists an
 exact `id` and `version` reference in the story, freezes the full equipped manifests

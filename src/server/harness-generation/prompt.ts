@@ -80,13 +80,24 @@ const presentFoundation = (request: HarnessGenerationRequest) => {
  */
 export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) => {
   const equippedSkills = request.context.skillLoadout?.skills ?? [];
-  const generationSkills = equippedSkills.filter(skill => skill.applications.includes('generation'));
+  const authorSkill = equippedSkills.find(skill => (
+    skill.slot === 'author'
+    && skill.applications.includes('generation')
+    && skill.instructions?.trim()
+  ));
+  if (!authorSkill) throw new Error('Harness Generation requires an equipped Author skill.');
+  const generationSkills = equippedSkills.filter(skill => (
+    skill.slot !== 'author'
+    && skill.applications.includes('generation')
+  ));
   const systemInstruction = [
-    'You are an expert novelist writing the next complete chapter of an ongoing novel.',
-    'The chapter prose is the primary deliverable. Write vivid, coherent, scene-driven prose that respects the supplied canon and prior chapter evidence.',
+    `ACTIVE AUTHOR SKILL — ${authorSkill.name} v${authorSkill.version}`,
+    authorSkill.instructions,
+    'HARNESS RESPONSE AND EVIDENCE CONTRACT',
+    'Write the next complete chapter of the ongoing story. The chapter prose is the primary deliverable. Respect the supplied Foundation, author direction, canon, and prior chapter evidence.',
     'Distinguish established facts, future plans, and explicit author changes. Explicit author corrections override conflicting earlier evidence; corrections are ordered newest first, and the newest applicable change wins. Preserve unrelated established facts.',
     'The active Foundation revision supplies current author instructions. The frozen Story Seed and Blueprint are source evidence: explicit Seed values take precedence over conflicting generated Blueprint elaboration, and active Foundation edits take precedence over the frozen source. Do not treat source metadata as story instructions.',
-    'Future direction, a first arc promise, unresolved threads, mysteries, character ambitions, and a destined ending are plans, not events that have already happened or a checklist for this chapter. An arc promise spans an arc, not one chapter. Advance it at a natural pace; do not compress the arc into this chapter merely to fulfill the promise. Earn payoffs through established development and pacing; an explicit author change may alter that timetable. Mystery knowledge is not automatically known by characters.',
+    'Future direction, a first arc promise, unresolved threads, mysteries, character ambitions, and a destined ending are plans, not events that have already happened or a checklist for this chapter. An arc promise spans an arc, not one chapter. Mystery knowledge is not automatically known by characters.',
     'Opening setup applies at the beginning of the story. For continuation, continue from the latest committed chapter supplied, respecting the actual story head. Committed developments can evolve the starting Foundation state; do not reset that progress unless an explicit author change requires it. Do not restart at the opening or invent missing chapter events. Unresolved or conflicted derived records are uncertain interpretations, not established facts. The deterministic handoff is an evidence reminder, not an assignment to resolve every item.',
     'The context coverage report explains omissions. Its labels are an inventory, not additional canonical evidence. Missing context is unavailable evidence, not proof that an event never happened. Its token count is a selection estimate, not provider usage or the total formatted prompt size.',
     'Semantic events are interpretations of the prose. When evidenceVerified is false, do not adopt their unsupported fact values as canon; use the actual prose and explicit author changes. A verified quote confirms provenance, not every semantic inference.',
@@ -94,9 +105,8 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
     HARNESS_MEMORY_INSTRUCTIONS,
     'An event description may be brief. Do not invent ids, chapter numbers, ordering, persistence records, Codex records, cards, System Prompt payloads, Color Codes, Reader blocks, continuation tokens, provider metadata, or application schemas.',
     'Do not let event formatting displace the chapter itself. If uncertain about an event, omit it rather than fabricating precise mechanics.',
-    'Prepare only the context needed for this chapter, write it, and preserve its meaningful developments. No routine literary review, repeated critique, or mandatory full-novel plan is required.',
     'AUTHOR AUTHORITY: Apply persistent steering in order. The newest direction wins where directions conflict; unrelated earlier directions still apply. Future steering changes what happens next, not what already happened. Retain consequences of prior events unless a direction explicitly uses revise-history. Author corrections override the targeted interpretations.',
-    'ACTIVE HARNESS SKILLS are reusable capabilities deliberately equipped by the author. Apply only their supplied generation instructions. They refine execution but never override explicit author corrections, current steering, established canon, or the latest committed chapter.',
+    'ACTIVE HARNESS SKILLS are reusable capabilities deliberately equipped by the author. The Author skill defines the writing approach; other generation skills refine execution. Skills never override explicit author corrections, current steering, established canon, or the latest committed chapter.',
     'The Foundation, Blueprint, intendedDirection and any old plan are proposals wherever they concern future events. Adapt them to steering and committed developments. Never restore a planned enemy after the author makes them an ally. Past hostility may still have consequences without forcing renewed enmity.',
     'Preserve compact memory for relationships, decisions, unresolved consequences, clues and exact mechanical changes in the supported buckets. Later chapter evidence updates current state; older evidence explains history. Unresolved or conflicted interpretations are not established facts. Introduce speaking characters in the characters bucket and include current balances in the appropriate owner bucket when prose changes them.',
   ].join('\n\n');

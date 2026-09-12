@@ -24,6 +24,7 @@ import { findFoundationRevision, findStory } from '../shared/foundation';
 import { buildCanonicalStoryView } from '../shared/canonicalState';
 import { DEFAULT_HARNESS_CONTEXT_POLICY } from '../shared/context';
 import { HARNESS_SKILL_SLOTS, harnessSkillKey } from '../shared/skills';
+import { includeBundledHarnessSkills } from '../shared/authorSkill';
 import { HarnessReaderSession } from './HarnessReaderSession';
 import { HarnessGenerationHttpClient } from '../shared/httpClient';
 import {
@@ -380,7 +381,7 @@ function SkillLoadoutPanel({
             <h2 id="harness-skills-title" className="font-display text-xl text-white">Harness skill slots</h2>
           </div>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-400">
-            The core Harness stays on. These slots add installed capabilities to this story, and the exact equipped versions are frozen into each chapter attempt.
+            The Author skill tells the model how to write. Every slot is an installed capability, and the exact equipped versions are frozen into each chapter attempt.
           </p>
         </div>
         <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-cyan-100">
@@ -427,7 +428,7 @@ function SkillLoadoutPanel({
                 }}
                 className="mt-1 min-h-11 w-full rounded-lg border border-white/15 bg-black/35 px-3 text-sm text-neutral-100 outline-none focus:border-cyan-300/60"
               >
-                <option value="">No skill equipped</option>
+                {slot.id !== 'author' && <option value="">No skill equipped</option>}
                 {missing && <option value={selectedKey}>{selectedKey} · unavailable</option>}
                 {compatible.map(skill => <option key={harnessSkillKey(skill)} value={harnessSkillKey(skill)}>{skill.name} · v{skill.version}</option>)}
               </select>
@@ -437,6 +438,12 @@ function SkillLoadoutPanel({
                   <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.12em] text-neutral-500">{applications}</p>
                   {selected.assetCount !== undefined && <p className="mt-1 text-[11px] text-neutral-500">{selected.assetCount} packaged assets</p>}
                   {selected.runtimeLabel && <p className="mt-1 text-[11px] text-neutral-500">Runtime: {selected.runtimeLabel}</p>}
+                  {selected.instructions && (
+                    <details className="mt-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+                      <summary className="cursor-pointer text-[11px] font-medium text-cyan-100">View skill instructions</summary>
+                      <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words font-sans text-xs leading-relaxed text-neutral-300">{selected.instructions}</pre>
+                    </details>
+                  )}
                 </div>
               ) : compatible.length === 0 && !missing ? (
                 <p className="mt-3 text-[11px] text-neutral-500">No installed skill is available for this slot.</p>
@@ -681,6 +688,10 @@ export function HarnessGenerationWorkspace({
   storySeedSource,
   installedSkills = EMPTY_INSTALLED_SKILLS,
 }: HarnessGenerationWorkspaceProps) {
+  const availableSkills = useMemo(
+    () => includeBundledHarnessSkills(installedSkills),
+    [installedSkills],
+  );
   const repository = useMemo(
     () => injectedRepository ?? new IndexedDbHarnessGenerationRepository(),
     [injectedRepository],
@@ -690,8 +701,8 @@ export function HarnessGenerationWorkspace({
     [injectedAdapter],
   );
   const controller = useMemo(
-    () => new HarnessGenerationController({ repository, modelAdapter, installedSkills }),
-    [repository, modelAdapter, installedSkills],
+    () => new HarnessGenerationController({ repository, modelAdapter, installedSkills: availableSkills }),
+    [repository, modelAdapter, availableSkills],
   );
   const [state, setState] = useState<HarnessWorkspaceState>();
   const [serverInfo, setServerInfo] = useState<HarnessGenerationServerInfo>();
@@ -990,7 +1001,7 @@ export function HarnessGenerationWorkspace({
             {selectedStory && (
               <SkillLoadoutPanel
                 story={selectedStory}
-                installedSkills={installedSkills}
+                installedSkills={availableSkills}
                 busy={busy}
                 onChange={setSkillSlot}
               />

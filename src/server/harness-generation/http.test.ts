@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { HarnessGenerationRequest } from '../../components/harness-generation/shared/types';
 import { handleHarnessGenerationHttp } from './http';
 import type { HarnessTextGenerationRequest } from './provider';
+import { SEN_NOVEL_AUTHOR_SKILL } from '../../components/harness-generation/shared/authorSkill';
 
 const request = (): HarnessGenerationRequest => ({
   storyId: 'hst_test',
@@ -30,6 +31,10 @@ const request = (): HarnessGenerationRequest => ({
     chapterNumber: 1,
     createdAt: '2026-08-29T00:00:00.000Z',
     committedChapters: [],
+    skillLoadout: {
+      capturedAt: '2026-09-12T00:00:00.000Z',
+      skills: [SEN_NOVEL_AUTHOR_SKILL],
+    },
   },
 });
 
@@ -95,6 +100,7 @@ describe('Harness Generation HTTP boundary', () => {
     skilled.context.skillLoadout = {
       capturedAt: '2026-09-12T00:00:00.000Z',
       skills: [
+        SEN_NOVEL_AUTHOR_SKILL,
         { id: 'seihouse.pacing', version: '1.0.0', name: 'Patient Siege', description: 'Pacing.', slot: 'pacing', applications: ['generation'], instructions: 'Do not resolve the siege in this chapter.' },
         { id: 'seihouse.music', version: '1.0.0', name: 'Night Soundscape', description: 'Music.', slot: 'media', applications: ['media-runtime'], runtimeLabel: 'SAP' },
       ],
@@ -109,6 +115,23 @@ describe('Harness Generation HTTP boundary', () => {
     expect(input.userPrompt).toContain('Night Soundscape');
     expect(input.userPrompt).toContain('must not change chapter prose');
     expect(input.systemInstruction).toContain('ACTIVE HARNESS SKILLS');
+    expect(input.systemInstruction).toMatch(/^ACTIVE AUTHOR SKILL — SEN Novel Author v1\.0\.0/);
+    expect(input.systemInstruction).toContain('elite fantasy web-novel author specializing in light novels');
+    expect(input.systemInstruction).not.toContain('You are an expert novelist');
+    expect(input.userPrompt).not.toContain(SEN_NOVEL_AUTHOR_SKILL.instructions);
+  });
+
+  it('rejects a chapter request without an equipped Author skill before calling the provider', async () => {
+    const generate = vi.fn();
+    const authorless = request();
+    authorless.context.skillLoadout = { capturedAt: '2026-09-12T00:00:00.000Z', skills: [] };
+    const result = await handleHarnessGenerationHttp(
+      { method: 'POST', body: authorless },
+      { environment, providerFactory: () => ({ provider: 'gemini', model: authorless.model, generate }) },
+    );
+    expect(result.status).toBe(400);
+    expect(result.body).toMatchObject({ error: expect.stringContaining('Author skill') });
+    expect(generate).not.toHaveBeenCalled();
   });
 
   it('rejects an invalid Foundation before a provider call', async () => {

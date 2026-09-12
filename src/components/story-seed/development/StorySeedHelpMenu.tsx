@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ChevronRight, CircleHelp, Pause, Play, Search, X } from 'lucide-react';
+import { ChevronRight, Pause, Play, X } from 'lucide-react';
 import { cn } from '@seihouse/ui';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel } from '../../../presentation';
 import { useDevAudioPlayback } from '../../../audio/DevAudioPlayback';
+import { SENHelpIcon, SENSearchIcon } from '../../sen-icons';
 import {
   DEFAULT_HELP_LANGUAGE,
   STORY_SEED_HELP_ITEMS,
@@ -343,7 +344,7 @@ export const LibraryHelpMenu = ({
               </div>
 
               <div className="relative mx-4 mt-4 sm:mx-6">
-                <Search size={15} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#CDB271]/65" />
+                <SENSearchIcon size={15} aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#CDB271]/65" />
                 <input
                   type="search"
                   value={query}
@@ -445,7 +446,7 @@ export const LibraryHelpMenu = ({
                       renderCard(activeItem)
                     ) : (
                       <div className="flex h-full min-h-40 flex-col items-center justify-center gap-2.5 rounded-xl border border-dashed border-neutral-800/90 px-6 text-center">
-                        <CircleHelp size={18} aria-hidden="true" className="text-[#CDB271]/60" />
+                        <SENHelpIcon size={18} aria-hidden="true" className="text-[#CDB271]/60" />
                         <p className="font-sans text-xs leading-relaxed text-neutral-400">
                           Hover over a topic to reveal its guidance.
                         </p>

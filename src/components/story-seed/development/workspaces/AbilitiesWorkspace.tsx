@@ -1,4 +1,5 @@
-import { Route, Zap } from 'lucide-react';
+import { Route } from 'lucide-react';
+import { SENAbilityIcon } from '../../../sen-icons';
 import type { StorySeedInput } from '../../shared/storySeedSchema';
 import { getSeedSection } from '../seedSections';
 import { patchAbilities, worldFoundations, type UpdateSeed } from '../seedState';
@@ -21,7 +22,7 @@ export const AbilitiesWorkspace = ({ seed, updateSeed }: AbilitiesWorkspaceProps
         <LibraryTextBox
           id="a11y-control-itgsjgw"
           label="Starting Ability"
-          icon={Zap}
+          icon={SENAbilityIcon}
           value={abilities.startingPowerConcept || ''}
           onChange={(val) => updateSeed(patchAbilities({ startingPowerConcept: val }))}
           placeholder="e.g., Qi Condensation Tier 1, Feng Shui Level 1..."

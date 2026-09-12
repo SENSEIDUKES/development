@@ -11,10 +11,9 @@ import {
   Play,
   Plus,
   RefreshCcw,
-  Sparkles,
-  WandSparkles,
 } from 'lucide-react';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox, CreationButton as ManifestButton } from '../../../presentation';
+import { SENManifestingIcon } from '../../library-shell/development/SENGlobalIcon';
 import {
   HarnessGenerationController,
   exportHarnessStory,
@@ -214,7 +213,7 @@ function FoundationEditor({
           type="button"
           onClick={onSubmit}
           loading={busy}
-          icon={story ? CheckCircle2 : Sparkles}
+          icon={story ? CheckCircle2 : SENManifestingIcon}
         >
           {story ? 'Save Foundation Revision' : 'Create Harness Story'}
         </ManifestButton>
@@ -281,7 +280,7 @@ function StorySeedStart({
               </div>
               <p className="mt-3 line-clamp-3 text-xs leading-relaxed text-neutral-400">{option.foundation.premise}</p>
               <div className="mt-4">
-                <ManifestButton type="button" onClick={() => onSelect(option)} disabled={busy}>
+                <ManifestButton type="button" icon={SENManifestingIcon} onClick={() => onSelect(option)} disabled={busy}>
                   Start with Harness
                 </ManifestButton>
               </div>
@@ -926,7 +925,7 @@ export function HarnessGenerationWorkspace({
                 <div className="mt-5">
                   <ManifestButton
                     type="button"
-                    icon={WandSparkles}
+                    icon={SENManifestingIcon}
                     onClick={generate}
                     disabled={!generationAvailable}
                     loading={busy}

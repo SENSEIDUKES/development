@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BookOpen, Download, Sprout } from 'lucide-react';
+import { SENStoriesIcon } from '../../sen-icons';
 import { LibraryButton, LibraryPanel } from '@seihouse/library-ui';
 import { SEIEmptyState, SEIInlineAlert, SEILoadingState } from '@seihouse/ui';
 import type { AppUser, Story, StorySeed, UserProfile as UserProfileType } from '../shared/types';
@@ -94,7 +95,7 @@ export function UserProfileStoriesPanel({ profile, currentUser, stories }: UserP
             id="cave-manifested-stories"
             className="flex items-center gap-2 font-sc text-[11px] font-bold uppercase tracking-widest text-[#7dd3ff]"
           >
-            <BookOpen size={14} aria-hidden="true" />
+            <SENStoriesIcon size={14} aria-hidden="true" />
             Manifested Stories
           </h3>
           <span className="rounded-full bg-[#04ACFF]/10 px-2 py-0.5 font-mono text-[10px] font-bold text-[#7dd3ff]">
@@ -104,7 +105,7 @@ export function UserProfileStoriesPanel({ profile, currentUser, stories }: UserP
 
         {activeFlows.length === 0 ? (
           <SEIEmptyState
-            icon={BookOpen}
+            icon={SENStoriesIcon}
             size="sm"
             titleAs="p"
             title="No realms manifested yet"

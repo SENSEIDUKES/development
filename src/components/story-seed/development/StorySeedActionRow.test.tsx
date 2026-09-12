@@ -72,6 +72,7 @@ it('regression: puts Save Draft, Manifest and the status in a page action row ab
   expect(row.querySelector('[role="status"]')?.textContent).toContain('All required Story inputs complete');
   expect(Array.from(row.querySelectorAll('button')).map(element => element.textContent?.trim()))
     .toEqual(['Save Draft', 'Manifest World Blueprint']);
+  expect(button('Manifest World Blueprint')?.querySelector('[data-sen-global-icon="manifesting"]')).not.toBeNull();
 });
 
 it('regression: Save Draft and Manifest still call the page callbacks', async () => {
@@ -137,14 +138,15 @@ it('keeps Save Draft available while the Story Bank replaces the form, without o
 });
 
 
-it('returns through the host Home callback with the Celestial Library emblem', async () => {
+it('returns through the host Home callback with the official SEN Exit icon', async () => {
   const onNavigateHome = vi.fn();
   const historyBack = vi.spyOn(window.history, 'back');
   await render({ onNavigateHome });
   const nav = container.querySelector('nav[aria-label="Story Seed navigation"]')!;
   const back = Array.from(nav.querySelectorAll('button')).find(item => item.textContent === 'Back')!;
-  expect(back.querySelector('img')?.getAttribute('src')).toBe('/favicon.jpg');
-  expect(back.querySelector('img')?.getAttribute('alt')).toBe('Celestial Library');
+  expect(back.querySelector('[data-sen-global-icon="exit"]')).not.toBeNull();
+  expect(back.querySelector('[data-sen-icon="header-exit"]')).not.toBeNull();
+  expect(back.querySelector('img')).toBeNull();
   expect(nav.querySelector('.lucide-circle-help')).toBeNull();
   expect(container.querySelector('header .workspace-help-emblem')).not.toBeNull();
   await click(back);

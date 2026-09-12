@@ -1,9 +1,9 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import { UserRound } from 'lucide-react';
 import { LibraryBottomNavigation, LibraryNavigationDrawerPanel, type LibraryNavigationDrawerSection } from '@seihouse/library-ui';
 import { activeLibraryDestination, LIBRARY_DESTINATIONS, libraryLocationKey, libraryNavigationMode, type LibraryLocation, type LibraryNavigationMode } from './libraryRoutes';
 import './library-navigation.css';
 import { SENNavigationIcon, type SENNavigationIconName } from './SENNavigationIcon';
+import { SENProfileIcon } from './SENGlobalIcon';
 
 type SectionItem = LibraryNavigationDrawerSection['items'][number] & { onSelect: (id: string) => void };
 export interface LibrarySectionMenu {
@@ -44,7 +44,7 @@ function StandardNavigation({ location, onNavigate, children }: LibraryNavigatio
     {children}
     <LibraryBottomNavigation aria-label="Library global navigation" className="library-global-navigation" showLabels
       items={LIBRARY_DESTINATIONS.map(({ id, label, location: target }) => {
-        const icon = id === 'profile' ? <UserRound size={20} /> : <SENNavigationIcon name={icons[id]} size={20} />;
+        const icon = id === 'profile' ? <SENProfileIcon size={20} /> : <SENNavigationIcon name={icons[id]} size={20} />;
         return { id, label, icon, active: selected === id,
           onSelect: () => { if (libraryLocationKey(location) !== libraryLocationKey(target)) onNavigate(target); } };
       })} />

@@ -2,13 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   ChevronRight,
   Mail,
-  Settings,
   Flame,
   Image as ImageIcon,
-  Orbit,
   Sigma,
   Sparkles,
-  User as UserIcon,
 } from "lucide-react";
 import { LibraryButton, LibraryElementalTitle, LibraryPanel } from "@seihouse/library-ui";
 import {
@@ -36,6 +33,12 @@ import {
 } from "./qi";
 import { isEffectActive } from './timedEffects';
 import { SENNavigationIcon } from '../../library-shell/development/SENNavigationIcon';
+import {
+  SENProfileIcon,
+  SENQiIcon,
+  SENQiYinYangIcon,
+  SENSettingsIcon,
+} from '../../library-shell/development/SENGlobalIcon';
 
 export { isEffectActive } from './timedEffects';
 
@@ -354,7 +357,7 @@ export function UserProfileHome({
                     referrerPolicy="no-referrer"
                   />
                 ) : (
-                  <UserIcon
+                  <SENProfileIcon
                     size={56}
                     aria-hidden="true"
                     className="text-neutral-700"
@@ -550,7 +553,7 @@ export function UserProfileHome({
               onClick={() => openPanel("qi")}
               data-cave-card="qi-reserves"
             >
-              <Orbit aria-hidden="true" className="cave-home-glyph" />
+              <SENQiIcon aria-hidden="true" className="cave-home-glyph" />
               <span className="min-w-0 flex-1">
                 <span className="block font-display">Qi Reserves</span>
                 <span className="block text-xs text-neutral-400">
@@ -709,7 +712,7 @@ export function UserProfileHome({
           <LibraryButton fullWidth variant="secondary" onClick={accountControls?.onOpenStore} disabled={!accountControls?.onOpenStore}>
             <SENNavigationIcon name="store" size={20} /><span>Store</span>
           </LibraryButton>
-          <LibraryButton fullWidth variant="secondary" icon={Settings} onClick={onOpenSettings} disabled={!onOpenSettings}>Settings</LibraryButton>
+          <LibraryButton fullWidth variant="secondary" icon={SENSettingsIcon} onClick={onOpenSettings} disabled={!onOpenSettings}>Settings</LibraryButton>
         </div>
       )}
       <SEIDialog
@@ -812,7 +815,10 @@ export function UserProfileHome({
             <dl className="mt-4 space-y-3">
               {reserves.map((reserve) => (
                 <div key={reserve.id} className="flex justify-between gap-4">
-                  <dt>{reserve.label}</dt>
+                  <dt className="flex items-center gap-2">
+                    <SENQiYinYangIcon size={18} aria-hidden="true" className="shrink-0 text-portal" />
+                    {reserve.label}
+                  </dt>
                   <dd>{formatQi(reserve.balance)}</dd>
                 </div>
               ))}

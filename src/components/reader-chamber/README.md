@@ -4,11 +4,13 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `f89cb41`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-08-26
+- **Last Workshop update:** 2026-09-11
 - **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
 ## Workshop history
+
+- **2026-09-11:** Reused the source-owned SEN Settings mark in both Reader Settings entry and panel heading. Settings behavior, controls, and the locked reference remain unchanged.
 
 - **2026-08-26:** Reconnected generated chapters through the public SEN card
   and Color Codes entries. `ReaderViewport` now takes `SystemBlock`,

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { BookOpen } from 'lucide-react';
+import { SENStoryIcon } from '../../../sen-icons';
 import type { StorySeedInput } from '../../shared/storySeedSchema';
 import { normalizeStoryStyle } from '../../shared/storyStyle';
 import { getSeedSection } from '../seedSections';
@@ -49,7 +49,7 @@ export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
     <LibraryTextBox
       id="origin-story-title-input"
       label="Story Title"
-      icon={BookOpen}
+      icon={SENStoryIcon}
       helpText="Optional — the Library will generate a title if you leave this blank."
       value={identity.title || ''}
       onChange={updateTitle}

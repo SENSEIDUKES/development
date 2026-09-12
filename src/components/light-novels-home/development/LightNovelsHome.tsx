@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Globe, Eye } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { LibraryPanel, LibraryCard, LibraryCardMedia, LibraryCardTitle, ManifestButton, ParticleEffect } from '@seihouse/library-ui';
 import { SEIBadge, SEIFilterChip, SEISelect, SEIEmptyState } from '@seihouse/ui';
 import type { LightNovelsHomeProps } from '../shared/homeContracts';
 import { ExpansionSeals, type WorldExpansionPreview } from './WorldExpressions';
+import { SENDiscoveryIcon, SENManifestingIcon } from '../../sen-icons';
 import '../shared/home.css';
 const HERO_VIDEOS = [
   "https://video.seihouse.org/LIGHT%20NOVEL/LIGHT_NOVEL_INTRO.mp4",
@@ -171,7 +172,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
             <div className="pt-2 sm:pt-4 flex flex-wrap gap-4">
               <ManifestButton
                 aria-label="Carve New Destiny"
-                icon={Sparkles}
+                icon={SENManifestingIcon}
                 size="md"
                 onClick={() => onCreateStory()}
               >
@@ -239,7 +240,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
               {filteredAndSortedWorlds.length === 0 ? (
                 <LibraryPanel className="max-w-lg mx-auto">
                   <SEIEmptyState
-                    icon={Globe}
+                    icon={SENDiscoveryIcon}
                     titleAs="h4"
                     title="Awaiting Manifestations"
                     description="Curated worlds will return after their chapters are published to the current library format."

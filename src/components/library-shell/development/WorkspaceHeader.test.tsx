@@ -78,6 +78,8 @@ it.each(TEST_WIDTHS)('regression: keeps Help and Search separate at %ipx with a 
   expect(button('Help')).not.toBe(button('Search'));
   expect(button('Help').querySelector('.workspace-help-emblem')).not.toBeNull();
   expect(button('Search').querySelector('.workspace-search-emblem')).not.toBeNull();
+  expect(button('Help').querySelector('[data-sen-icon="header-help"]')).not.toBeNull();
+  expect(button('Search').querySelector('[data-sen-icon="header-search"]')).not.toBeNull();
   // Each keeps its own touch target rather than sharing one trigger.
   for (const control of [button('Help'), button('Search')]) expect(control.className).toContain('min-h-11');
   // Full titles stay whole: no ellipsis, no truncation of the badge plaque.
@@ -107,8 +109,7 @@ it('regression: keeps the badge legibility rules that let long titles wrap inste
   // Help and Search hold their own 44px targets; the pair never shrinks.
   expect(css).toContain('.workspace-header-utilities > :is(button, [role="button"]) { min-width: 44px; min-height: 44px; }');
   expect(css).not.toContain('workspace-header-utilities .header-overflow');
-  expect(css).toContain("url('/icons/header/SENHelp.svg')");
-  expect(css).toContain("url('/icons/header/SENSearch.svg')");
+  expect(css).not.toContain("/icons/header/");
 });
 
 it('reuses Library Help topics and original guidance, closes with Escape and returns focus', async () => {

@@ -5,19 +5,16 @@ import {
   Feather,
   FileText,
   Flag,
-  Globe,
   Hourglass,
   Info,
   Landmark,
   MapPin,
-  Route,
   ScrollText,
   Tag,
   Target,
-  UserRound,
   Wand2,
-  Zap,
 } from 'lucide-react';
+import { SENArcIcon, SENPowerSystemIcon, SENWorldIdentityIcon } from '../../../sen-icons';
 import type { WorldBlueprint, WorldBlueprintMainCharacter } from '../../shared/types';
 import {
   STORY_PREMISE_MAX_LENGTH,
@@ -33,6 +30,7 @@ import {
   MetadataChip,
 } from './BlueprintDossierPrimitives';
 import { formatBlueprintDate } from './createBlueprintMarkdown';
+import { SENProfileIcon } from '../../../library-shell/development/SENGlobalIcon';
 
 interface BlueprintHeaderSectionProps {
   blueprintVersion?: WorldBlueprint['blueprintVersion'];
@@ -79,7 +77,7 @@ export const BlueprintHeaderSection = memo(({
     </div>
 
     <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-      {creator && <MetadataChip icon={UserRound}>Creator: {creator}</MetadataChip>}
+      {creator && <MetadataChip icon={SENProfileIcon}>Creator: {creator}</MetadataChip>}
       {status && <MetadataChip icon={Info}>Status: {status}</MetadataChip>}
       {createdAt && <MetadataChip icon={CalendarDays}>Created: {formatBlueprintDate(createdAt)}</MetadataChip>}
       {updatedAt && <MetadataChip icon={CalendarDays}>Updated: {formatBlueprintDate(updatedAt)}</MetadataChip>}
@@ -188,7 +186,7 @@ export const BlueprintMainCharacterSection = memo(({
   <LibraryPanel as="section" aria-labelledby="blueprint-main-character-heading" padding="md">
     <BlueprintSectionHeading
       id="blueprint-main-character-heading"
-      icon={UserRound}
+      icon={SENProfileIcon}
       title="Main Character"
       tagline="The protagonist this blueprint builds around."
     />
@@ -199,7 +197,7 @@ export const BlueprintMainCharacterSection = memo(({
           id="blueprint-mc-name"
           label="Name"
           rightElement={<EditableChip />}
-          icon={UserRound}
+          icon={SENProfileIcon}
           value={mainCharacter.name}
           onChange={name => onUpdateMainCharacter({ name })}
           placeholder="Main character name"
@@ -269,7 +267,7 @@ export const BlueprintWorldSettingSection = memo(({
   <LibraryPanel as="section" aria-labelledby="blueprint-world-setting-heading" padding="md">
     <BlueprintSectionHeading
       id="blueprint-world-setting-heading"
-      icon={Globe}
+      icon={SENWorldIdentityIcon}
       title="World Setting"
       tagline="The universe, its opening stage, and the rules that govern it."
     />
@@ -280,7 +278,7 @@ export const BlueprintWorldSettingSection = memo(({
           id="blueprint-world-overview"
           label="World Overview"
           rightElement={<EditableChip />}
-          icon={Globe}
+          icon={SENWorldIdentityIcon}
           value={worldOverview || ''}
           onChange={value => setBlueprint(current => ({ ...current, worldOverview: value }))}
           rows={7}
@@ -317,7 +315,7 @@ export const BlueprintWorldSettingSection = memo(({
         id="blueprint-power-outline"
         label="Power System Outline"
         rightElement={<EditableChip />}
-        icon={Zap}
+        icon={SENPowerSystemIcon}
         value={powerSystemOutline || ''}
         onChange={value => setBlueprint(current => ({ ...current, powerSystemOutline: value }))}
         rows={4}
@@ -352,7 +350,7 @@ export const BlueprintDirectionSection = memo(({
   <LibraryPanel as="section" aria-labelledby="blueprint-direction-heading" padding="md">
     <BlueprintSectionHeading
       id="blueprint-direction-heading"
-      icon={Route}
+      icon={SENArcIcon}
       title="Overall Story Direction"
       tagline="The generated path from the opening promise to the destined ending."
     />

@@ -18,6 +18,7 @@ import { AGENTS, useAppStore } from '../shared/stubs';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '../../../presentation';
 import { patchStoryRequired, patchWorldIdentity, type UpdateSeed } from './seedState';
 import { BlueprintCollectionSections } from './blueprint/BlueprintCollectionSections';
+import { SENManifestingIcon } from '../../library-shell/development/SENGlobalIcon';
 import {
   BlueprintDirectionSection,
   BlueprintHeaderSection,
@@ -253,6 +254,7 @@ export const BlueprintReview = ({
               <ManifestButton
                 size="lg"
                 fullWidth
+                icon={SENManifestingIcon}
                 className="sm:w-auto"
                 onClick={onStartStory}
                 loading={isGenerating}

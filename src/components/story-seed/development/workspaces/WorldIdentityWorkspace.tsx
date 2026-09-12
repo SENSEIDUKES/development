@@ -1,4 +1,5 @@
-import { Globe, Landmark, MapPin } from 'lucide-react';
+import { Landmark, MapPin } from 'lucide-react';
+import { SENWorldIdentityIcon } from '../../../sen-icons';
 import type { StorySeedInput } from '../../shared/storySeedSchema';
 import { getSeedSection } from '../seedSections';
 import { patchWorldIdentity, worldIdentity, type UpdateSeed } from '../seedState';
@@ -21,7 +22,7 @@ export const WorldIdentityWorkspace = ({ seed, updateSeed }: WorldIdentityWorksp
         <LibraryTextBox
           id="world-type-input"
           label="World Type"
-          icon={Globe}
+          icon={SENWorldIdentityIcon}
           value={identity.worldType || ''}
           onChange={(val) => updateSeed(patchWorldIdentity({ worldType: val }))}
           placeholder="e.g., Ancient sect world, tower system..."

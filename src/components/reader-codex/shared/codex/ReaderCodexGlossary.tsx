@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BookMarked, RefreshCcw, Sparkles, Search, ShieldAlert } from 'lucide-react';
+import { BookMarked, RefreshCcw, Sparkles, ShieldAlert } from 'lucide-react';
+import { SENSearchIcon } from '../../../sen-icons';
 import { StoryMemory, StoryArc, MultiModelRouting } from '../types';
 import { extractWorkshopGlossaryTerms } from '../codexCompatibility';
 
@@ -144,7 +145,7 @@ export function ReaderCodexGlossary({ memory, arcs, mcName, routingConfig }: Rea
       )}
 
       <div className="relative">
-        <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-600" />
+        <SENSearchIcon size={16} className="absolute left-3 top-2.5 text-neutral-600" />
         <input
           type="text"
           value={glossarySearch}

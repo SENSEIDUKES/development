@@ -11,8 +11,6 @@ import {
   FileUp,
   FlaskConical,
   LoaderCircle,
-  Layers3,
-  Play,
   RotateCcw,
   ScrollText,
   Sigma,
@@ -35,6 +33,7 @@ import type {
   ManifestChapterResponse,
   SafeChapterGenerationFailure,
 } from "../shared/liveChapterGeneration";
+import { SENManifestingIcon } from "../../library-shell/development/SENGlobalIcon";
 import {
   createFiveChapterBatchState,
   errorResponseToBatchFailure,
@@ -374,7 +373,7 @@ export function BatchProgress({
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-3 sm:px-4">
         <div>
           <h3 id="batch-progress-title" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-white/80">
-            <Layers3 size={13} className="text-violet-200/75" /> Manifest 5 Chapters
+            <SENManifestingIcon size={13} className="text-violet-200/75" /> Manifest 5 Chapters
           </h3>
           <p className="mt-1 text-[10px] text-white/40">
             Five isolated chapter-sized requests · final processed state hands off sequentially.
@@ -913,7 +912,7 @@ export function ChapterGenerationTestFlow() {
             >
               {generating
                 ? <><LoaderCircle size={15} className="animate-spin" /> {batch ? "Manifesting Batch…" : "Manifesting Chapter…"}</>
-                : <><Play size={14} /> Manifest Chapter</>}
+                : <><SENManifestingIcon size={14} /> Manifest Chapter</>}
             </button>
             <button
               type="button"
@@ -930,7 +929,7 @@ export function ChapterGenerationTestFlow() {
             >
               {generating && batch
                 ? <><LoaderCircle size={15} className="animate-spin" /> Manifesting 5 Chapters…</>
-                : <><Layers3 size={14} /> Manifest 5 Chapters</>}
+                : <><SENManifestingIcon size={14} /> Manifest 5 Chapters</>}
             </button>
             <p className="text-[10px] leading-relaxed text-white/35">
               Per chapter: 3 normal calls, or 5 with repair. Five healthy chapters: 15 calls. Nothing is saved.

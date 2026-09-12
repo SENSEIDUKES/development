@@ -14,7 +14,7 @@ Development now uses Logo — existing Library Header Badge — optional context
 
 ## Bottom navigation update — 2026-09-11
 
-`LibraryNavigation` now owns Home — Library — Discover — Profile, active-route matching, content clearance and safe-area spacing. Its active Development scrubber uses the supplied official SEN Home, Book, and Discovery icons for the first three destinations; Profile retains its existing user icon because no replacement was supplied. The global Section control and drawer were removed on 2026-09-09 at user request; page destinations remain in top Search. Page definitions still supply the Cave’s existing desktop rail. `MainLibraryNavigation` adapts the existing LibraryScreen collections and routes. Story Seed keeps its current navigation, including Sections; Reader/Reader Codex are immersive exclusions. No page content, cards or internal controls were redesigned. [Contracts, route mappings and transfer details](../../../docs/library-navigation.md).
+`LibraryNavigation` now owns Home — Library — Discover — Profile, active-route matching, content clearance and safe-area spacing. Its active Development scrubber uses the supplied official SEN Home, Book, Discovery, and Profile icons. The shared navigation/header layer also supplies the official Settings and Exit marks to active consumer controls. The global Section control and drawer were removed on 2026-09-09 at user request; page destinations remain in top Search. Page definitions still supply the Cave’s existing desktop rail. `MainLibraryNavigation` adapts the existing LibraryScreen collections and routes. Story Seed keeps its current navigation, including Sections; Reader/Reader Codex are immersive exclusions. No page content, cards or internal controls were redesigned. [Contracts, route mappings and transfer details](../../../docs/library-navigation.md).
 
 ## Capture boundary
 
@@ -92,6 +92,16 @@ Nothing in this PR is transferred back automatically. Light-Novels and locked re
 For an eventual approved change, identify the owning lane first. Main header/DAO changes would target Light-Novels `src/components/GlobalHeader.tsx`, `src/components/DaoInsights.tsx`, relevant `src/index.css` rules, and only if needed the collection fragment in `src/components/LibraryScreen.tsx`. Story Seed changes would target its existing development header, selector, mobile navigation, settings, `CreationModal` integration, and `story-seed.css`, then ship through the established SEN package and Library host presentation adapter. Shared visual primitives would be changed in UI, published/packed first, then consumed by the hosts. Do not copy the frame HTML, Workshop wrappers, mock context, fixture data, content slots, or capture manifest into a production application.
 
 ## Workshop history
+
+- **2026-09-11:** Consolidated every supplied SEN SVG and its `currentColor` renderer under `src/components/sen-icons`, replacing public-path masks with source imports. Shared Help and Search now consume the same named adapters as navigation, profile, creation, and Qi surfaces; compatibility exports keep established Development imports stable.
+
+- **2026-09-11:** Extended the shared active Development icon adapter with
+  the supplied official SEN Profile, Settings, Exit, Manifesting, Qi, and Qi
+  Yin-Yang marks. Global Profile, Cave account controls and reserve hierarchy,
+  Reader Settings, and active creation controls now share those local assets
+  without changing routes, actions, or locked captures. The supplied female
+  Profile mark is available to an explicit future presentation choice; no
+  gender was inferred from current profile data.
 
 - **2026-09-11:** Added locally served official SEN navigation artwork to the
   active Development shell. Home, Library, and Discover now use the supplied

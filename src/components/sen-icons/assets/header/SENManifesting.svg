@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <title>Manifesting</title>
+  <g stroke="currentColor" stroke-width=".7" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10.3"/>
+    <circle cx="12" cy="12" r="8.8"/>
+    <path d="M12 1.7v1.5M12 20.8v1.5M1.7 12h1.5M20.8 12h1.5M4.717 4.717l1.061 1.061M18.222 18.222l1.061 1.061M4.717 19.283l1.061-1.061M18.222 5.778l1.061-1.061"/>
+    <path d="M12 5.8 17.369 15.1H6.631ZM12 18.2 6.631 8.9h10.738Z"/>
+    <circle cx="12" cy="12" r="1.85"/>
+    <circle cx="17.9" cy="12" r=".65"/>
+    <circle cx="14.95" cy="6.89" r=".65"/>
+    <circle cx="9.05" cy="6.89" r=".65"/>
+    <circle cx="6.1" cy="12" r=".65"/>
+    <circle cx="9.05" cy="17.11" r=".65"/>
+    <circle cx="14.95" cy="17.11" r=".65"/>
+  </g>
+</svg>

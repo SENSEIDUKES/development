@@ -2,14 +2,11 @@ import { useState, type ComponentType } from 'react';
 import {
   Feather,
   Globe,
-  Layers,
   List,
-  Scroll,
-  Settings,
   Sparkles,
-  User,
 } from 'lucide-react';
 import { LibraryBottomNavigation, LibraryButton, LibraryCard, LibraryDragonCycleIcon, LibraryHeaderBadge, LibraryNavigationDrawer, LibraryNavigationDrawerPanel, LibraryPanel, LibrarySoundGlyph, LibraryTextArea, LibraryTextBox, ManifestButton, type LibraryNavigationDrawerSection } from '@seihouse/library-ui';
+import { SENArcIcon, SENManifestingIcon, SENPowerSystemIcon, SENProfileIcon, SENSettingsIcon } from '../components/sen-icons';
 
 /**
  * LibraryComponents — the home page's Library Components tab.
@@ -85,6 +82,7 @@ function ManifestPreview() {
   const [busy, setBusy] = useState(false);
   return (
     <ManifestButton
+      icon={SENManifestingIcon}
       loading={busy}
       onClick={() => {
         if (busy) return;
@@ -152,7 +150,7 @@ function NavigationDrawerPreview() {
       tagline: 'The seed and its direction',
       items: [
         { id: 'origin', label: 'Origin', icon: <Feather size={15} />, active: active === 'origin', onSelect: setActive },
-        { id: 'arc', label: 'ARC', icon: <Scroll size={15} />, accent: 'portal', active: active === 'arc', onSelect: setActive },
+        { id: 'arc', label: 'ARC', icon: <SENArcIcon size={15} />, accent: 'portal', active: active === 'arc', onSelect: setActive },
       ],
     },
     {
@@ -160,7 +158,7 @@ function NavigationDrawerPreview() {
       label: 'World',
       items: [
         { id: 'geography', label: 'Geography', icon: <Globe size={15} />, active: active === 'geography', onSelect: setActive },
-        { id: 'power', label: 'Power System', icon: <Layers size={15} />, active: active === 'power', onSelect: setActive },
+        { id: 'power', label: 'Power System', icon: <SENPowerSystemIcon size={15} />, active: active === 'power', onSelect: setActive },
       ],
     },
   ];
@@ -195,8 +193,8 @@ function BottomNavigationPreview() {
         aria-label="Library page navigation preview"
         items={[
           { id: 'sections', label: 'Sections', icon: <List size={20} />, active: active === 'sections', onSelect: setActive },
-          { id: 'settings', label: 'Settings', icon: <Settings size={20} />, active: active === 'settings', onSelect: setActive },
-          { id: 'profile', label: 'Profile', icon: <User size={20} />, active: active === 'profile', onSelect: setActive },
+          { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={20} />, active: active === 'settings', onSelect: setActive },
+          { id: 'profile', label: 'Profile', icon: <SENProfileIcon size={20} />, active: active === 'profile', onSelect: setActive },
         ]}
       />
     </div>

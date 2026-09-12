@@ -1,7 +1,8 @@
-import { BookOpen, Cloud, Gem, Keyboard, Plus, Scroll, ScrollText, Sliders, Users, PenTool, Sword } from 'lucide-react';
+import { BookOpen, Gem, Keyboard, Plus, Scroll, ScrollText, Sliders, Users, PenTool, Sword } from 'lucide-react';
 import { useMainLibraryAdapter } from '../../shared/MainLibraryAdapter';
 import { WorkspaceHeader } from '../WorkspaceHeader';
 import type { HeaderSearchItem } from '../WorkspaceHeaderUtilities';
+import { SENProfileIcon } from '../SENGlobalIcon';
 import './main-library-header.css';
 
 /**
@@ -24,7 +25,7 @@ export function GlobalHeader() {
     { id: 'creator', label: 'Story Seed', description: 'Forge a new cosmic story seed', icon: Plus, onAction: () => adapter.setCurrentScreen('creator') },
     { id: 'sects', label: 'Sects', description: 'Earn rewards & shape worlds together', icon: Users, onAction: () => adapter.setCurrentScreen('sects') },
     { id: 'pricing', label: 'Tiers', description: 'Replenish your creative Qi', icon: Gem, onAction: () => adapter.setCurrentScreen('pricing') },
-    { id: 'profile', label: 'Celestial Profile', description: 'Manage spirit link settings', icon: Cloud,
+    { id: 'profile', label: 'Celestial Profile', description: 'Manage spirit link settings', icon: SENProfileIcon,
       title: adapter.currentUser?.email ? `Spirit Linked: ${adapter.currentUser.email}` : 'Open Celestial Tools',
       onAction: () => adapter.setCurrentScreen('profile') },
     ...(activeStory ? [

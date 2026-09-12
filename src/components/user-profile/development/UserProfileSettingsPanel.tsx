@@ -11,14 +11,12 @@ import {
   Gift,
   Globe,
   Keyboard,
-  LogOut,
   Mountain,
   RefreshCw,
   Shield,
   Sliders,
   Sparkles,
   Upload,
-  User as UserIcon,
 } from 'lucide-react';
 import { LibraryButton, LibraryTextBox } from '@seihouse/library-ui';
 import {
@@ -54,6 +52,7 @@ import {
   handleProfileRadioGroupKeyDown,
   profileRadioTabIndex,
 } from './radioGroupKeyboard';
+import { SENExitIcon, SENProfileIcon } from '../../library-shell/development/SENGlobalIcon';
 
 /** The persisted language option values, exactly as production stores them. */
 const LANGUAGE_OPTIONS = [
@@ -223,7 +222,7 @@ export function UserProfileSettingsPanel({
     <div className="text-neutral-300" data-cave-settings>
           <SEIDisclosureGroup type="multiple" defaultValue={['identity']}>
             {/* ---- Identity & Aura ------------------------------------------ */}
-            <SEIDisclosure value="identity" heading="Identity & Celestial Aura" icon={UserIcon} supportingText="Dao name, display name, and the aura your name carries.">
+            <SEIDisclosure value="identity" heading="Identity & Celestial Aura" icon={SENProfileIcon} supportingText="Dao name, display name, and the aura your name carries.">
               <div className="space-y-4 pt-1">
                 <div className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center">
                   <p className="font-sc text-[9px] uppercase tracking-widest text-neutral-400">Preview</p>
@@ -429,7 +428,7 @@ export function UserProfileSettingsPanel({
                   {formData.avatarUrl || profile?.avatarUrl ? (
                     <img src={formData.avatarUrl || profile?.avatarUrl} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
                   ) : (
-                    <span className="flex h-full w-full items-center justify-center text-neutral-600"><UserIcon size={24} aria-hidden="true" /></span>
+                    <span className="flex h-full w-full items-center justify-center text-neutral-600"><SENProfileIcon size={24} aria-hidden="true" /></span>
                   )}
                 </div>
                 <div className="min-w-0 flex-1 space-y-2">
@@ -620,10 +619,10 @@ export function UserProfileSettingsPanel({
             ) : null}
 
             {/* ---- Account --------------------------------------------------- */}
-            <SEIDisclosure value="account" heading="Account" icon={LogOut} supportingText={currentUser?.email ? `Linked as ${currentUser.email}` : 'Linked spirit'}>
+            <SEIDisclosure value="account" heading="Account" icon={SENExitIcon} supportingText={currentUser?.email ? `Linked as ${currentUser.email}` : 'Linked spirit'}>
               <LibraryButton variant="secondary" fullWidth icon={Gift} onClick={onRedeemCode}>Redeem Code</LibraryButton>
               <div className="pt-1">
-                <LibraryButton variant="danger" fullWidth icon={LogOut} onClick={onLogout}>
+                <LibraryButton variant="danger" fullWidth icon={SENExitIcon} onClick={onLogout}>
                   Sever Link
                 </LibraryButton>
               </div>

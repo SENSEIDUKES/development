@@ -18,13 +18,24 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-11 source icon reuse:** Reused the canonical SEN Scroll, Discovery, Store, and Search marks in matching story, public-world, storefront, and admin-search states outside the Cave navigation. Reading actions, language controls, artifact-specific imagery, and other non-equivalent icons remain unchanged.
+
+- **2026-09-11 Qi hierarchy icons:** Replaced the Qi Reserves parent control's
+  generic orbit with the supplied SEN Qi mark and added the paired Yin-Yang
+  child mark to each unlocked special-reserve row. Balances, unlock rules,
+  Heavenly Qi separation, dialog behavior, and locked reference remain
+  unchanged.
 - **2026-09-11 SEN navigation icons:** Replaced the active Cave navigation and
   profile control artwork with the supplied official SEN Home, Scroll, Relic,
   Discovery/World, Energy, and Store marks. The global Library scrubber now uses
   the SEN Book mark for Library. Routes, selected states, account-control
   callbacks, accessible labels, touch targets, desktop rail, and locked reference
-  remain unchanged; Settings, Inbox, Profile, and Exit retain their existing
-  icons because no replacements were supplied.
+  remain unchanged.
+- **2026-09-11 global profile icons:** Replaced active Settings, Exit, and
+  Profile fallback marks with the supplied global SEN artwork in the Cave,
+  account controls, and Library scrubber. The supplied female profile mark is
+  available to the shared adapter, but no persisted gender/presentation field
+  exists in this feature to select it without inventing profile data.
 
 - **2026-09-10 Dao-name centering correction:** The Dao name now stays centered on
   the card independently of subscription-marker width. A ResizeObserver measures the

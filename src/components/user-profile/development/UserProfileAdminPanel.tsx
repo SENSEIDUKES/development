@@ -1,6 +1,7 @@
 import React from 'react';
 import { AdminStoryRow, UserProfile as UserProfileType } from '../shared/types';
-import { Shield, RefreshCw, Search, Flame } from 'lucide-react';
+import { Shield, RefreshCw, Flame } from 'lucide-react';
+import { SENSearchIcon } from '../../sen-icons';
 
 interface UserProfileAdminPanelProps {
   profile: UserProfileType | null;
@@ -125,7 +126,7 @@ export function UserProfileAdminPanel({
 
       {/* Search input */}
       <div className="relative">
-        <Search aria-hidden="true" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" />
+        <SENSearchIcon aria-hidden="true" size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500" />
         <input
           type="text"
           aria-label={adminTab === 'users' ? 'Search users' : 'Search stories'}

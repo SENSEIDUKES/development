@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import '../shared/reader-codex.css';
 import {
-  Users, Network, Zap, Sword,
+  Network, Zap, Sword,
   MapPin, ShieldAlert,
   Compass,
   BookMarked, BookOpen, Activity, History
 } from 'lucide-react';
+import { SENCharactersIcon } from '../../sen-icons';
 import { generateId, vibrate } from '../shared/codexCompatibility';
 import { StoryMemory, Character, CreatureSpecies, StoryArc, StoryWorld, MultiModelRouting, UpdateStoryFields } from '../shared/types';
 import {
@@ -459,7 +460,7 @@ export default function ReaderCodex({
              tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => { vibrate('softTap'); setActivePage('portraits'); }}
             className={codexTabClass(activePage === 'portraits', 'neutral')}
           >
-            <Users size={14} className={activePage === 'portraits' ? 'text-human' : ''} />
+            <SENCharactersIcon size={14} className={activePage === 'portraits' ? 'text-human' : ''} />
             <span>Portraits</span>
           </button>
 

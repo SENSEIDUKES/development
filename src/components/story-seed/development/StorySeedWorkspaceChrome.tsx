@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Bookmark, Check, CircleHelp, List, Settings, Sparkles, Vault } from 'lucide-react';
+import { Bookmark, Check, List } from 'lucide-react';
 import type { StorySeedInput } from '../shared/storySeedSchema';
 import type { SeedUpdate } from './seedState';
 import type { SeedSectionId } from './seedSections';
@@ -11,6 +11,7 @@ import { HeaderActionButton, type HeaderAction } from '../../library-shell/devel
 import { WorkspaceNavigation, WorkspaceBottomControls, WorkspaceSidebar, useWorkspaceNavigation } from '../../library-shell/development/WorkspaceNavigation';
 import { WorkspaceSheet } from '../../library-shell/development/WorkspaceSheet';
 import { SENStorySeedIcon } from './SENStorySeedIcon';
+import { SENBankIcon, SENExitIcon, SENHelpIcon, SENManifestingIcon, SENSettingsIcon } from '../../sen-icons';
 import './story-seed.css';
 
 interface StorySeedWorkspaceChromeProps {
@@ -65,11 +66,11 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
       {
         id: 'workspace',
         label: 'Workspace',
-        icon: <Settings size={14} aria-hidden="true" className="text-neutral-400" />,
+        icon: <SENSettingsIcon size={14} aria-hidden="true" className="text-neutral-400" />,
         items: [
           { id: 'story-bank', label: 'Story Bank', icon: <SENStorySeedIcon name="bank" size={16} aria-hidden="true" className="text-neutral-400" />,
             active: showStoryBank, onSelect: onToggleStoryBank },
-          { id: 'settings', label: 'Settings', icon: <Settings size={16} aria-hidden="true" className="text-neutral-400" />,
+          { id: 'settings', label: 'Settings', icon: <SENSettingsIcon size={16} aria-hidden="true" className="text-neutral-400" />,
             onSelect: openSettings },
         ],
       },
@@ -94,15 +95,15 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
   const openSettings = () => { navigation.closeDrawer(); props.openSettings(); };
   const save: HeaderAction = { id: 'save', label: props.savedFeedback ? 'Saved' : 'Save Draft',
     icon: props.savedFeedback ? Check : Bookmark, disabled: props.isGenerating, onAction: props.onSaveDraft };
-  const manifest: HeaderAction = { id: 'manifest', label: props.manifestLabel, icon: Sparkles,
+  const manifest: HeaderAction = { id: 'manifest', label: props.manifestLabel, icon: SENManifestingIcon,
     disabled: !props.canManifest, loading: props.isGenerating, loadingIndicator: props.manifestIndicator,
     ariaLabel: props.manifestDisabledReason ? `${props.manifestLabel} — ${props.manifestDisabledReason}` : undefined,
     title: props.manifestDisabledReason, kind: 'creation', onAction: props.onManifest };
-  const settings: HeaderAction = { id: 'settings', label: 'Settings', icon: Settings,
+  const settings: HeaderAction = { id: 'settings', label: 'Settings', icon: SENSettingsIcon,
     expanded: settingsOpen, hasPopup: 'dialog', onAction: openSettings };
-  const bank: HeaderAction = { id: 'story-bank', label: 'Story Bank', icon: Vault, pressed: props.showStoryBank,
+  const bank: HeaderAction = { id: 'story-bank', label: 'Story Bank', icon: SENBankIcon, pressed: props.showStoryBank,
     onIntent: props.onStoryBankIntent ?? props.onSecondaryIntent, onAction: props.onToggleStoryBank };
-  const help: HeaderAction = { id: 'help', label: 'Help', icon: CircleHelp,
+  const help: HeaderAction = { id: 'help', label: 'Help', icon: SENHelpIcon,
     expanded: props.helpOpen, hasPopup: 'dialog',
     onIntent: props.onHelpIntent ?? props.onSecondaryIntent, onAction: props.onOpenHelp };
   // Save Draft and Manifest belong to the page, not to a second header. The
@@ -144,8 +145,8 @@ function StorySeedChromeContent(props: StorySeedChromeContentProps) {
       onSelect: () => { setSettingsOpen(false); navigation.openDrawer(); } },
     { id: bank.id, label: bank.label, icon: <SENStorySeedIcon name="bank" size={20} aria-hidden="true" />, active: props.showStoryBank,
       onSelect: () => { setSettingsOpen(false); bank.onAction(); } },
-    { id: settings.id, label: settings.label, icon: <Settings size={20} />, active: settingsOpen, onSelect: openSettings },
-    { id: 'back', label: 'Back', icon: <img src="/favicon.jpg" alt="Celestial Library" className="h-5 w-5 object-contain" />,
+    { id: settings.id, label: settings.label, icon: <SENSettingsIcon size={20} />, active: settingsOpen, onSelect: openSettings },
+    { id: 'back', label: 'Back', icon: <SENExitIcon size={20} aria-hidden="true" />,
       onSelect: () => { setSettingsOpen(false); navigation.closeDrawer(); props.onNavigateHome(); } },
   ]} />;
   const settingsSheet = <WorkspaceSheet open={settingsOpen} onOpenChange={setSettingsOpen} title="Story Seed settings" closeLabel="Close settings"

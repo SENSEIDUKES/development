@@ -6,7 +6,7 @@
 - **Workshop preview:** `?preview=light-novels-home`
 - **Responsive Home:** `/library-shell.html?variant=development&source=main-library&screen=home&collection=featured`
 - **Replica created:** 2026-09-09
-- **Last Workshop update:** 2026-09-09
+- **Last Workshop update:** 2026-09-11
 - **Last source comparison:** 2026-09-09
 - **Replica status:** under refinement — multimedia presentation skeleton in the existing Home/detail flow
 
@@ -57,6 +57,12 @@ See `artifacts/standalone-home/` for local production browser evidence and the t
 The build, focused navigation/header/profile/Workshop tests, package boundary checks, and existing locked-capture guard pass. No full production Library/Discover body or production account/backend behavior is claimed as covered.
 
 ## Workshop history
+
+- **2026-09-11:** Reused the source-owned SEN Discovery mark for the empty Worlds collection state. Collection behavior, responsive layout, and the locked reference remain unchanged.
+
+- **2026-09-11:** Replaced the generic sparkle on the existing Carve New
+  Destiny creation action with the supplied SEN Manifesting mark. Its route,
+  media behavior, responsive layout, and locked reference remain unchanged.
 
 - **2026-09-09:** Inspected Development and Light-Novels; extracted the existing homepage presentation into its own component and Workshop entry, connected the existing four global destinations, preserved local state across Profile navigation, and verified responsive shared chrome. No source application, backend, Alter Fate, or future media system changes.
 

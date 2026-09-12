@@ -1,5 +1,4 @@
 import {
-  BookOpen,
   HeartCrack,
   Scale,
   Shield,
@@ -8,6 +7,7 @@ import {
   Star,
   User,
 } from 'lucide-react';
+import { SENCharactersIcon } from '../../../sen-icons';
 import type { StorySeedCharacter, StorySeedInput } from '../../shared/storySeedSchema';
 import { normalizeCodexAliases, parseCodexAliases } from '../../shared/codexContext';
 import { getSeedSection } from '../seedSections';
@@ -105,7 +105,7 @@ export const CharactersWorkspace = ({ seed, updateSeed }: CharactersWorkspacePro
         <LibraryTextArea
           id="mc-bio-input"
           label="Main Character Biography & Backstory"
-          icon={BookOpen}
+          icon={SENCharactersIcon}
           maxLength={2000}
           helpText="Describe their backstory, personality quirks, hidden talents, major flaws, or specific fated ties. High-density characterization forces a highly customized narrative."
           value={mainCharacter.bio || ''}

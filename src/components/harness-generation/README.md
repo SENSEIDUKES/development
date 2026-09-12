@@ -16,12 +16,17 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-09-11 |
+| Last Workshop update | 2026-09-12 |
 | Last source comparison | 2026-08-29 — independent feature; current main Chapter Generation was inspected only as a product-requirements inventory |
 | Lifecycle status | Steered continuation with a derived SEN Reader adapter |
 
 ### History
 
+- **2026-09-12:** Added the missing installable-skill layer: six visible per-story
+  slots, host-injected versioned manifests, durable loadout references, frozen
+  request snapshots, generation-instruction delivery, missing-install protection,
+  and Workshop-only sample manifests. These skills are explicitly separate from
+  the always-on deterministic capability registry.
 - **2026-09-11:** Applied the supplied SEN Manifesting mark to the Harness's
   active creation controls. Checkpoint, provider, generation, and persistence
   behavior remain unchanged.
@@ -115,6 +120,25 @@ Reader contracts. Unknown relationships, speakers and unsupported effects remain
 unknown. Exact, uniquely anchored speech receives the known speaker's role;
 host-supplied cast identity establishes the main character without guessing from
 paragraph order. Mechanical rows and status stats use the same preserved value.
+
+## Installable skill boundary
+
+Installable skills are not the deterministic capability handlers above. Capability
+handlers are permanent internal machinery that interprets committed evidence. Skills
+are optional, host-installed packages that an author equips into one of six per-story
+slots: Pacing, Continuity, Style, Accessibility, Translation, or Media.
+
+The host supplies validated `HarnessSkillManifest` records. The Harness persists an
+exact `id` and `version` reference in the story, freezes the full equipped manifests
+into every attempt, and refuses to generate if a referenced version is unavailable.
+Only manifests declaring the `generation` application may add model instructions.
+Reader, post-commit, and media-runtime applications remain recorded for their owning
+host runtime and are explicitly prevented from altering prose through this call.
+
+The Workshop's sample manifests are preview data only. Package downloading, signature
+verification, entitlements, asset installation, and media execution belong to a future
+host skill-library/runtime integration; the portable Harness contract does not fake
+those operations.
 
 ## Steering and continuation
 

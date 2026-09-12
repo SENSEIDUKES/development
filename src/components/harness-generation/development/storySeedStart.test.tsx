@@ -3,7 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InMemoryHarnessGenerationRepository } from '../shared/repository';
-import type { HarnessGenerationModelAdapter, HarnessStorySeedSource } from '../shared/types';
+import type { HarnessGenerationModelAdapter, HarnessSkillManifest, HarnessStorySeedSource } from '../shared/types';
 import { HarnessGenerationWorkspace } from './HarnessGenerationWorkspace';
 import { HarnessGenerationController } from '../shared/controller';
 
@@ -41,6 +41,12 @@ const storySeedSource: HarnessStorySeedSource = {
     },
   }],
 };
+
+const installedSkills: HarnessSkillManifest[] = [{
+  id: 'seihouse.long-range-pacing', version: '1.0.0', name: 'Long-Range Pacing',
+  description: 'Spaces major story events across chapters.', slot: 'pacing', applications: ['generation'],
+  instructions: 'Earn major events across several chapters.',
+}];
 
 let container: HTMLDivElement;
 let root: Root;
@@ -102,5 +108,21 @@ describe('Harness Story Seed entry', () => {
     const foundation = repository.snapshot().foundations[0];
     expect(foundation.input.sourceSnapshot?.sourceId).toBe('seed-1');
     expect(foundation.input.premise).toContain('archivist');
+  });
+
+  it('shows understandable per-story slots and the actual equipped state', async () => {
+    const repository = new InMemoryHarnessGenerationRepository();
+    const setup = new HarnessGenerationController({ repository, modelAdapter, installedSkills });
+    await setup.hydrate();
+    const story = await setup.createStory({ title: 'Slow Fire', premise: 'A rebellion begins with one missing ledger.' });
+    await setup.setSkillSlot(story.id, 'pacing', { id: installedSkills[0].id, version: installedSkills[0].version });
+
+    await act(async () => root.render(<HarnessGenerationWorkspace repository={repository} modelAdapter={modelAdapter} installedSkills={installedSkills} />));
+
+    expect(container.textContent).toContain('Harness skill slots');
+    expect(container.textContent).toContain('1/6 equipped');
+    expect(container.textContent).toContain('PacingEquipped');
+    expect(container.textContent).toContain('MediaEmpty');
+    expect(container.querySelector<HTMLSelectElement>('#harness-skill-pacing')?.value).toBe('seihouse.long-range-pacing@1.0.0');
   });
 });

@@ -35,5 +35,14 @@ export {
   type AppendHarnessCorrectionInput,
 } from '../../components/harness-generation/shared/canonicalState';
 export { DEFAULT_HARNESS_CONTEXT_POLICY } from '../../components/harness-generation/shared/context';
+export {
+  HARNESS_SKILL_SLOTS,
+  createHarnessSkillCatalog,
+  freezeHarnessSkillLoadout,
+  harnessSkillKey,
+  resolveHarnessSkill,
+  validateHarnessSkillManifest,
+  type HarnessSkillSlotDefinition,
+} from '../../components/harness-generation/shared/skills';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../components/harness-generation/shared/types';

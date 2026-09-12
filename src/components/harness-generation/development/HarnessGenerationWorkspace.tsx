@@ -7,9 +7,11 @@ import {
   FileText,
   ListTree,
   LoaderCircle,
+  Music2,
   Pause,
   Play,
   Plus,
+  Puzzle,
   RefreshCcw,
 } from 'lucide-react';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox, CreationButton as ManifestButton } from '../../../presentation';
@@ -21,6 +23,7 @@ import {
 import { findFoundationRevision, findStory } from '../shared/foundation';
 import { buildCanonicalStoryView } from '../shared/canonicalState';
 import { DEFAULT_HARNESS_CONTEXT_POLICY } from '../shared/context';
+import { HARNESS_SKILL_SLOTS, harnessSkillKey } from '../shared/skills';
 import { HarnessReaderSession } from './HarnessReaderSession';
 import { HarnessGenerationHttpClient } from '../shared/httpClient';
 import {
@@ -34,6 +37,9 @@ import type {
   HarnessCorrectionKind,
   HarnessSemanticEvent,
   HarnessStory,
+  HarnessSkillManifest,
+  HarnessSkillReference,
+  HarnessSkillSlotId,
   HarnessStorySeedOption,
   HarnessStorySeedSource,
   HarnessWorkspaceState,
@@ -46,9 +52,12 @@ export interface HarnessGenerationWorkspaceProps {
   modelAdapter?: HarnessGenerationModelAdapter;
   /** Optional host bridge that supplies saved Story Seeds as frozen inputs. */
   storySeedSource?: HarnessStorySeedSource;
+  /** Host-owned inventory. Passing a manifest means that exact skill version is installed and available to equip. */
+  installedSkills?: HarnessSkillManifest[];
 }
 
 const emptyFoundation = (): StoryFoundationInput => ({ premise: '' });
+const EMPTY_INSTALLED_SKILLS: HarnessSkillManifest[] = [];
 
 const stageLabel: Record<HarnessGenerationAttempt['stage'], string> = {
   request_started: 'Request started',
@@ -346,6 +355,100 @@ function AttemptStatus({
   );
 }
 
+function SkillLoadoutPanel({
+  story,
+  installedSkills,
+  busy,
+  onChange,
+}: {
+  story: HarnessStory;
+  installedSkills: HarnessSkillManifest[];
+  busy: boolean;
+  onChange: (slot: HarnessSkillSlotId, reference?: HarnessSkillReference) => void;
+}) {
+  const installedByKey = new Map(installedSkills.map(skill => [harnessSkillKey(skill), skill]));
+  const equippedCount = Object.keys(story.skillLoadout ?? {}).length;
+  const missingCount = Object.values(story.skillLoadout ?? {})
+    .filter(reference => reference && !installedByKey.has(harnessSkillKey(reference))).length;
+
+  return (
+    <LibraryPanel as="section" padding="md" aria-labelledby="harness-skills-title">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <Puzzle size={18} className="text-cyan-200" aria-hidden="true" />
+            <h2 id="harness-skills-title" className="font-display text-xl text-white">Harness skill slots</h2>
+          </div>
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-400">
+            The core Harness stays on. These slots add installed capabilities to this story, and the exact equipped versions are frozen into each chapter attempt.
+          </p>
+        </div>
+        <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-cyan-100">
+          {equippedCount}/{HARNESS_SKILL_SLOTS.length} equipped
+        </span>
+      </div>
+
+      {missingCount > 0 && (
+        <p role="alert" className="mt-4 rounded-xl border border-human/30 bg-human-brand/10 p-3 text-sm text-human">
+          {missingCount} equipped {missingCount === 1 ? 'skill is' : 'skills are'} unavailable in this host. Reinstall or empty the affected slot before generation.
+        </p>
+      )}
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {HARNESS_SKILL_SLOTS.map(slot => {
+          const reference = story.skillLoadout?.[slot.id];
+          const selectedKey = reference ? harnessSkillKey(reference) : '';
+          const selected = reference ? installedByKey.get(selectedKey) : undefined;
+          const compatible = installedSkills.filter(skill => skill.slot === slot.id);
+          const missing = Boolean(reference && !selected);
+          const applications = selected?.applications.map(value => value.replace(/-/g, ' ')).join(' · ');
+          return (
+            <article key={slot.id} className={`rounded-xl border p-4 ${selected ? 'border-cyan-300/30 bg-cyan-400/[0.07]' : missing ? 'border-human/30 bg-human-brand/[0.06]' : 'border-white/10 bg-black/20'}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  {slot.id === 'media'
+                    ? <Music2 size={17} className="shrink-0 text-gold-accent" aria-hidden="true" />
+                    : <Puzzle size={16} className="shrink-0 text-cyan-200/75" aria-hidden="true" />}
+                  <h3 className="text-sm font-semibold text-white">{slot.label}</h3>
+                </div>
+                <span className={`shrink-0 font-mono text-[9px] uppercase tracking-[0.12em] ${selected ? 'text-cyan-100' : missing ? 'text-human' : 'text-neutral-500'}`}>
+                  {selected ? 'Equipped' : missing ? 'Missing' : 'Empty'}
+                </span>
+              </div>
+              <p className="mt-2 min-h-10 text-xs leading-relaxed text-neutral-500">{slot.description}</p>
+              <label className="mt-3 block text-[10px] uppercase tracking-[0.14em] text-neutral-500" htmlFor={`harness-skill-${slot.id}`}>Installed skill</label>
+              <select
+                id={`harness-skill-${slot.id}`}
+                value={selectedKey}
+                disabled={busy}
+                onChange={event => {
+                  const manifest = installedByKey.get(event.target.value);
+                  onChange(slot.id, manifest ? { id: manifest.id, version: manifest.version } : undefined);
+                }}
+                className="mt-1 min-h-11 w-full rounded-lg border border-white/15 bg-black/35 px-3 text-sm text-neutral-100 outline-none focus:border-cyan-300/60"
+              >
+                <option value="">No skill equipped</option>
+                {missing && <option value={selectedKey}>{selectedKey} · unavailable</option>}
+                {compatible.map(skill => <option key={harnessSkillKey(skill)} value={harnessSkillKey(skill)}>{skill.name} · v{skill.version}</option>)}
+              </select>
+              {selected ? (
+                <div className="mt-3 border-t border-white/10 pt-3">
+                  <p className="text-xs leading-relaxed text-neutral-300">{selected.description}</p>
+                  <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.12em] text-neutral-500">{applications}</p>
+                  {selected.assetCount !== undefined && <p className="mt-1 text-[11px] text-neutral-500">{selected.assetCount} packaged assets</p>}
+                  {selected.runtimeLabel && <p className="mt-1 text-[11px] text-neutral-500">Runtime: {selected.runtimeLabel}</p>}
+                </div>
+              ) : compatible.length === 0 && !missing ? (
+                <p className="mt-3 text-[11px] text-neutral-500">No installed skill is available for this slot.</p>
+              ) : null}
+            </article>
+          );
+        })}
+      </div>
+    </LibraryPanel>
+  );
+}
+
 function SemanticEventList({ events }: { events: HarnessSemanticEvent[] }) {
   if (!events.length) return <p className="text-sm text-neutral-400">No semantic events were supplied for committed chapters.</p>;
   return (
@@ -576,6 +679,7 @@ export function HarnessGenerationWorkspace({
   repository: injectedRepository,
   modelAdapter: injectedAdapter,
   storySeedSource,
+  installedSkills = EMPTY_INSTALLED_SKILLS,
 }: HarnessGenerationWorkspaceProps) {
   const repository = useMemo(
     () => injectedRepository ?? new IndexedDbHarnessGenerationRepository(),
@@ -586,8 +690,8 @@ export function HarnessGenerationWorkspace({
     [injectedAdapter],
   );
   const controller = useMemo(
-    () => new HarnessGenerationController({ repository, modelAdapter }),
-    [repository, modelAdapter],
+    () => new HarnessGenerationController({ repository, modelAdapter, installedSkills }),
+    [repository, modelAdapter, installedSkills],
   );
   const [state, setState] = useState<HarnessWorkspaceState>();
   const [serverInfo, setServerInfo] = useState<HarnessGenerationServerInfo>();
@@ -718,6 +822,10 @@ export function HarnessGenerationWorkspace({
       return;
     }
     void run(() => controller.generateNextChapter(selectedStory.id, model));
+  };
+  const setSkillSlot = (slot: HarnessSkillSlotId, reference?: HarnessSkillReference) => {
+    if (!selectedStory) return;
+    void run(() => controller.setSkillSlot(selectedStory.id, slot, reference));
   };
 
   const retryStage = () => {
@@ -877,6 +985,15 @@ export function HarnessGenerationWorkspace({
                   onSubmit={saveFoundation}
                 />
               </>
+            )}
+
+            {selectedStory && (
+              <SkillLoadoutPanel
+                story={selectedStory}
+                installedSkills={installedSkills}
+                busy={busy}
+                onChange={setSkillSlot}
+              />
             )}
 
             {selectedStory && (

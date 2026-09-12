@@ -258,7 +258,7 @@ export class HarnessGenerationController {
     reference?: HarnessSkillReference,
   ): Promise<HarnessStory> {
     this.assertHydrated();
-    if (this.generating) throw new Error('Pause after the active chapter before changing skills.');
+    if (this.generating) throw new Error('Wait for the active Harness update before changing skills.');
     const candidate = cloneHarnessValue(this.state);
     const story = findStory(candidate, storyId);
     if (!story) throw new Error('Open a Harness story before changing its skills.');
@@ -276,8 +276,13 @@ export class HarnessGenerationController {
     }
     story.skillLoadout = loadout;
     story.updatedAt = this.runtime.now();
-    await this.persist(candidate);
-    return cloneHarnessValue(story);
+    this.generating = true;
+    try {
+      await this.persist(candidate);
+      return cloneHarnessValue(story);
+    } finally {
+      this.generating = false;
+    }
   }
 
   async addCorrection(storyId: string, input: AppendHarnessCorrectionInput) {

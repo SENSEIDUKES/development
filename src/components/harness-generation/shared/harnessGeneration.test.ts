@@ -146,6 +146,41 @@ describe('Harness Generation Phase 2 novel core', () => {
     });
   });
 
+  it('serializes a pending skill save before a generation checkpoint can begin', async () => {
+    const repository = new InMemoryHarnessGenerationRepository();
+    const provider = adapter(response(JSON.stringify({ prose: 'The city waited beyond the river.' })));
+    const installedSkills: HarnessSkillManifest[] = [{
+      id: 'seihouse.long-range-pacing', version: '1.0.0', name: 'Long-Range Pacing',
+      description: 'Spaces major events across chapters.', slot: 'pacing', applications: ['generation'],
+      instructions: 'Keep the city distant for now.',
+    }];
+    const controller = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime(), installedSkills });
+    await controller.hydrate();
+    const story = await createStory(controller);
+    const save = repository.save.bind(repository);
+    let releaseSkillSave: (() => void) | undefined;
+    let skillSaveStarted: (() => void) | undefined;
+    const skillSaveStartedPromise = new Promise<void>(resolve => { skillSaveStarted = resolve; });
+    vi.spyOn(repository, 'save').mockImplementation(async state => {
+      if (state.stories[0]?.skillLoadout?.pacing && releaseSkillSave === undefined) {
+        skillSaveStarted?.();
+        await new Promise<void>(resolve => { releaseSkillSave = resolve; });
+      }
+      await save(state);
+    });
+
+    const equipping = controller.setSkillSlot(story.id, 'pacing', { id: installedSkills[0].id, version: installedSkills[0].version });
+    await skillSaveStartedPromise;
+    await expect(controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite'))
+      .rejects.toThrow('already running');
+    expect(provider.generate).not.toHaveBeenCalled();
+
+    releaseSkillSave?.();
+    await equipping;
+    await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
+    expect(controller.snapshot().chapters).toHaveLength(1);
+  });
+
   it('preserves valid semantic events, including a description-only and unknown-category event', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const provider = adapter(response(JSON.stringify({

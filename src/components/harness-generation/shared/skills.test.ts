@@ -25,6 +25,14 @@ describe('Harness installed skills', () => {
       .toThrow('must include model instructions');
   });
 
+  it('rejects unsupported application identifiers instead of treating them as a harmless runtime skill', () => {
+    expect(() => validateHarnessSkillManifest({
+      ...pacingSkill(),
+      applications: ['generation '] as unknown as HarnessSkillManifest['applications'],
+      instructions: undefined,
+    })).toThrow('unsupported application');
+  });
+
   it('freezes exact equipped versions in stable slot order', () => {
     const skill = pacingSkill();
     const catalog = createHarnessSkillCatalog([skill]);

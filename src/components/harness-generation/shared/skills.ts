@@ -1,6 +1,7 @@
 import { cloneHarnessValue } from './ids';
 import type {
   HarnessSkillLoadoutSnapshot,
+  HarnessSkillApplication,
   HarnessSkillManifest,
   HarnessSkillReference,
   HarnessSkillSlotId,
@@ -22,6 +23,13 @@ export const HARNESS_SKILL_SLOTS: readonly HarnessSkillSlotDefinition[] = [
   { id: 'media', label: 'Media', description: 'Connects music, sound, imagery, and other story media packs.' },
 ] as const;
 
+const HARNESS_SKILL_APPLICATIONS: readonly HarnessSkillApplication[] = [
+  'generation',
+  'post-commit',
+  'reader',
+  'media-runtime',
+];
+
 export const harnessSkillKey = (reference: HarnessSkillReference) => `${reference.id}@${reference.version}`;
 
 const nonEmpty = (value: string, label: string) => {
@@ -36,7 +44,12 @@ export const validateHarnessSkillManifest = (manifest: HarnessSkillManifest): Ha
   if (!HARNESS_SKILL_SLOTS.some(slot => slot.id === manifest.slot)) {
     throw new Error(`Harness skill ${manifest.name} uses an unsupported slot.`);
   }
-  if (!manifest.applications.length) throw new Error(`Harness skill ${manifest.name} must declare at least one application.`);
+  if (!Array.isArray(manifest.applications) || !manifest.applications.length) {
+    throw new Error(`Harness skill ${manifest.name} must declare at least one application.`);
+  }
+  if (manifest.applications.some(application => !HARNESS_SKILL_APPLICATIONS.includes(application))) {
+    throw new Error(`Harness skill ${manifest.name} declares an unsupported application.`);
+  }
   if (manifest.applications.includes('generation') && !manifest.instructions?.trim()) {
     throw new Error(`Generation skill ${manifest.name} must include model instructions.`);
   }

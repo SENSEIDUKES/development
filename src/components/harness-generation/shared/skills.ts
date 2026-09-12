@@ -15,6 +15,7 @@ export interface HarnessSkillSlotDefinition {
 }
 
 export const HARNESS_SKILL_SLOTS: readonly HarnessSkillSlotDefinition[] = [
+  { id: 'author', label: 'Author', description: 'Defines how the writing model approaches and writes the chapter.' },
   { id: 'pacing', label: 'Pacing', description: 'Controls event spacing, arc pressure, and payoff timing.' },
   { id: 'continuity', label: 'Continuity', description: 'Adds specialized canon and long-range consistency guidance.' },
   { id: 'style', label: 'Style', description: 'Shapes prose tradition, voice, rhythm, and presentation.' },
@@ -89,5 +90,8 @@ export const freezeHarnessSkillLoadout = (
     }
     return [cloneHarnessValue(manifest)];
   });
+  if (!skills.some(skill => skill.slot === 'author' && skill.applications.includes('generation'))) {
+    throw new Error('Equip an installed Author skill before generating a chapter.');
+  }
   return { skills, capturedAt };
 };

@@ -128,7 +128,11 @@ export const handleHarnessGenerationHttp = async (
         headers: { 'Cache-Control': 'no-store' },
       };
     }
-    if (message.includes('Choose a configured') || message.includes('is not configured for Harness Generation')) {
+    if (
+      message.includes('Choose a configured')
+      || message.includes('is not configured for Harness Generation')
+      || message.includes('requires an equipped Author skill')
+    ) {
       return requestError(message);
     }
     if (error instanceof HarnessGenerationExecutionError) {

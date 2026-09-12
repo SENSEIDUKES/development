@@ -44,5 +44,9 @@ export {
   validateHarnessSkillManifest,
   type HarnessSkillSlotDefinition,
 } from '../../components/harness-generation/shared/skills';
+export {
+  includeBundledHarnessSkills,
+  SEN_NOVEL_AUTHOR_SKILL,
+} from '../../components/harness-generation/shared/authorSkill';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../components/harness-generation/shared/types';

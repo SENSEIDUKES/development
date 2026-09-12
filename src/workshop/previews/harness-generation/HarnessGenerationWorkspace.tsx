@@ -3,6 +3,7 @@ import { HarnessGenerationReference } from '../../../components/harness-generati
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { createWorkshopStorySeedSource } from './storySeedHandoff';
+import { WORKSHOP_HARNESS_SKILLS } from './skillCatalog';
 
 const storySeedSource = createWorkshopStorySeedSource();
 
@@ -13,7 +14,7 @@ export function HarnessGenerationWorkspace() {
       entry={entry}
       allowCompare={false}
       renderReference={() => <HarnessGenerationReference />}
-      renderDevelopment={() => <HarnessGenerationSurface storySeedSource={storySeedSource} />}
+      renderDevelopment={() => <HarnessGenerationSurface storySeedSource={storySeedSource} installedSkills={WORKSHOP_HARNESS_SKILLS} />}
     />
   );
 }

@@ -79,6 +79,8 @@ const presentFoundation = (request: HarnessGenerationRequest) => {
  * Numbering authority, Reader structures, and presentation contracts stay external.
  */
 export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) => {
+  const equippedSkills = request.context.skillLoadout?.skills ?? [];
+  const generationSkills = equippedSkills.filter(skill => skill.applications.includes('generation'));
   const systemInstruction = [
     'You are an expert novelist writing the next complete chapter of an ongoing novel.',
     'The chapter prose is the primary deliverable. Write vivid, coherent, scene-driven prose that respects the supplied canon and prior chapter evidence.',
@@ -94,6 +96,7 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
     'Do not let event formatting displace the chapter itself. If uncertain about an event, omit it rather than fabricating precise mechanics.',
     'Prepare only the context needed for this chapter, write it, and preserve its meaningful developments. No routine literary review, repeated critique, or mandatory full-novel plan is required.',
     'AUTHOR AUTHORITY: Apply persistent steering in order. The newest direction wins where directions conflict; unrelated earlier directions still apply. Future steering changes what happens next, not what already happened. Retain consequences of prior events unless a direction explicitly uses revise-history. Author corrections override the targeted interpretations.',
+    'ACTIVE HARNESS SKILLS are reusable capabilities deliberately equipped by the author. Apply only their supplied generation instructions. They refine execution but never override explicit author corrections, current steering, established canon, or the latest committed chapter.',
     'The Foundation, Blueprint, intendedDirection and any old plan are proposals wherever they concern future events. Adapt them to steering and committed developments. Never restore a planned enemy after the author makes them an ally. Past hostility may still have consequences without forcing renewed enmity.',
     'Preserve compact memory for relationships, decisions, unresolved consequences, clues and exact mechanical changes in the supported buckets. Later chapter evidence updates current state; older evidence explains history. Unresolved or conflicted interpretations are not established facts. Introduce speaking characters in the characters bucket and include current balances in the appropriate owner bucket when prose changes them.',
   ].join('\n\n');
@@ -101,6 +104,21 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
   const userPrompt = [
     'AUTHOR STORY FOUNDATION',
     JSON.stringify(presentFoundation(request), null, 2),
+    'ACTIVE HARNESS SKILLS (exact versions frozen for this attempt)',
+    JSON.stringify({
+      capturedAt: request.context.skillLoadout?.capturedAt,
+      generationSkills: generationSkills.map(skill => ({
+        id: skill.id,
+        version: skill.version,
+        name: skill.name,
+        slot: skill.slot,
+        instructions: skill.instructions,
+      })),
+      nonGenerationSkills: equippedSkills
+        .filter(skill => !skill.applications.includes('generation'))
+        .map(skill => ({ id: skill.id, version: skill.version, name: skill.name, slot: skill.slot, applications: skill.applications })),
+      note: 'Non-generation skills are recorded for the host runtime and must not change chapter prose in this call.',
+    }, null, 2),
     'EXPLICIT AUTHOR CHANGES (newest first; targets are historical evidence being changed)',
     JSON.stringify(request.context.canonicalContext?.corrections ?? [], null, 2),
     'COMMITTED STORY EVIDENCE',

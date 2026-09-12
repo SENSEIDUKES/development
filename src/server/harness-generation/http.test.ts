@@ -86,6 +86,31 @@ describe('Harness Generation HTTP boundary', () => {
     });
   });
 
+  it('sends only equipped generation-skill instructions to the writing model', async () => {
+    const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({
+      rawProviderResponse: JSON.stringify({ prose: 'The siege remained beyond the hills.' }),
+      providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-12', usage: { source: 'unavailable' as const } },
+    }));
+    const skilled = request();
+    skilled.context.skillLoadout = {
+      capturedAt: '2026-09-12T00:00:00.000Z',
+      skills: [
+        { id: 'seihouse.pacing', version: '1.0.0', name: 'Patient Siege', description: 'Pacing.', slot: 'pacing', applications: ['generation'], instructions: 'Do not resolve the siege in this chapter.' },
+        { id: 'seihouse.music', version: '1.0.0', name: 'Night Soundscape', description: 'Music.', slot: 'media', applications: ['media-runtime'], runtimeLabel: 'SAP' },
+      ],
+    };
+    const result = await handleHarnessGenerationHttp(
+      { method: 'POST', body: skilled },
+      { environment, providerFactory: () => ({ provider: 'gemini', model: skilled.model, generate }) },
+    );
+    expect(result.status).toBe(200);
+    const input = generate.mock.calls[0][0] as HarnessTextGenerationRequest;
+    expect(input.userPrompt).toContain('Do not resolve the siege in this chapter.');
+    expect(input.userPrompt).toContain('Night Soundscape');
+    expect(input.userPrompt).toContain('must not change chapter prose');
+    expect(input.systemInstruction).toContain('ACTIVE HARNESS SKILLS');
+  });
+
   it('rejects an invalid Foundation before a provider call', async () => {
     const invalid = request();
     invalid.foundation.input.premise = ' ';

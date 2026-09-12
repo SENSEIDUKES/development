@@ -10,6 +10,7 @@ import type {
   HarnessGenerationModelAdapter,
   HarnessGenerationRequest,
   HarnessGenerationResponse,
+  HarnessSkillManifest,
 } from './types';
 
 const runtime = (): HarnessRuntime => {
@@ -122,6 +123,27 @@ describe('Harness Generation Phase 2 novel core', () => {
     const frozenSeed = request.foundation.input.sourceSnapshot?.seed as { story: { required: { premise: string } } };
     expect(frozenSeed.story.required.premise).toBe('Original seed premise.');
     expect(request.context.foundationRevision.input.sourceSnapshot?.sourceId).toBe('seed-1');
+  });
+
+  it('persists a per-story skill loadout and freezes its exact instructions into the generation request', async () => {
+    const repository = new InMemoryHarnessGenerationRepository();
+    const provider = adapter(response(JSON.stringify({ prose: 'The siege remained distant while the city learned to breathe.' })));
+    const installedSkills: HarnessSkillManifest[] = [{
+      id: 'seihouse.long-range-pacing', version: '1.0.0', name: 'Long-Range Pacing',
+      description: 'Spaces major events across chapters.', slot: 'pacing', applications: ['generation'],
+      instructions: 'Do not collapse the siege into one chapter.',
+    }];
+    const controller = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime(), installedSkills });
+    await controller.hydrate();
+    const story = await createStory(controller);
+    await controller.setSkillSlot(story.id, 'pacing', { id: installedSkills[0].id, version: installedSkills[0].version });
+    await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
+
+    const request = provider.generate.mock.calls[0][0] as HarnessGenerationRequest;
+    expect(repository.snapshot().stories[0].skillLoadout?.pacing).toEqual({ id: 'seihouse.long-range-pacing', version: '1.0.0' });
+    expect(request.context.skillLoadout?.skills[0]).toMatchObject({
+      name: 'Long-Range Pacing', slot: 'pacing', instructions: 'Do not collapse the siege into one chapter.',
+    });
   });
 
   it('preserves valid semantic events, including a description-only and unknown-category event', async () => {

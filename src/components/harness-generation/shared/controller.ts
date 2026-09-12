@@ -7,6 +7,11 @@ import {
 import { compileHarnessContext } from './context';
 import { appendHarnessCorrection, type AppendHarnessCorrectionInput } from './canonicalState';
 import { HarnessCapabilityRegistry } from './capabilities';
+import {
+  createHarnessSkillCatalog,
+  freezeHarnessSkillLoadout,
+  resolveHarnessSkill,
+} from './skills';
 import { cloneHarnessValue, defaultHarnessRuntime, stableHarnessId, type HarnessRuntime } from './ids';
 import {
   acceptHarnessModelResponse,
@@ -34,6 +39,9 @@ import type {
   HarnessWorkspaceState,
   StoryFoundationInput,
   HarnessMemoryRecovery,
+  HarnessSkillManifest,
+  HarnessSkillReference,
+  HarnessSkillSlotId,
 } from './types';
 
 export type HarnessEventPreserver = (
@@ -48,6 +56,8 @@ export interface HarnessGenerationControllerOptions {
   runtime?: HarnessRuntime;
   preserveEvents?: HarnessEventPreserver;
   capabilityRegistry?: HarnessCapabilityRegistry;
+  /** Host-owned installed skills. The Harness stores only per-story references and frozen request copies. */
+  installedSkills?: HarnessSkillManifest[];
 }
 
 type WorkspaceListener = (state: HarnessWorkspaceState) => void;
@@ -91,6 +101,7 @@ export class HarnessGenerationController {
   private readonly runtime: HarnessRuntime;
   private readonly eventPreserver: HarnessEventPreserver;
   private readonly capabilityRegistry: HarnessCapabilityRegistry;
+  private readonly skillCatalog: ReadonlyMap<string, HarnessSkillManifest>;
   private readonly listeners = new Set<WorkspaceListener>();
   private state = createEmptyHarnessWorkspaceState();
   private hydrated = false;
@@ -102,6 +113,7 @@ export class HarnessGenerationController {
     this.runtime = options.runtime ?? defaultHarnessRuntime;
     this.eventPreserver = options.preserveEvents ?? preserveSemanticEvents;
     this.capabilityRegistry = options.capabilityRegistry ?? new HarnessCapabilityRegistry();
+    this.skillCatalog = createHarnessSkillCatalog(options.installedSkills ?? []);
   }
 
   subscribe(listener: WorkspaceListener): () => void {
@@ -240,6 +252,34 @@ export class HarnessGenerationController {
     return cloneHarnessValue(story);
   }
 
+  async setSkillSlot(
+    storyId: string,
+    slot: HarnessSkillSlotId,
+    reference?: HarnessSkillReference,
+  ): Promise<HarnessStory> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Pause after the active chapter before changing skills.');
+    const candidate = cloneHarnessValue(this.state);
+    const story = findStory(candidate, storyId);
+    if (!story) throw new Error('Open a Harness story before changing its skills.');
+    if (activeAttemptForStory(candidate, storyId)) {
+      throw new Error('Finish or explicitly retry the current chapter checkpoint before changing skills.');
+    }
+    const loadout = { ...(story.skillLoadout ?? {}) };
+    if (!reference) {
+      delete loadout[slot];
+    } else {
+      const manifest = resolveHarnessSkill(this.skillCatalog, reference);
+      if (!manifest) throw new Error('That Harness skill is not installed in this host.');
+      if (manifest.slot !== slot) throw new Error(`${manifest.name} cannot be equipped in that slot.`);
+      loadout[slot] = cloneHarnessValue(reference);
+    }
+    story.skillLoadout = loadout;
+    story.updatedAt = this.runtime.now();
+    await this.persist(candidate);
+    return cloneHarnessValue(story);
+  }
+
   async addCorrection(storyId: string, input: AppendHarnessCorrectionInput) {
     this.assertHydrated();
     if (!findStory(this.state, storyId)) throw new Error('Open a Harness story before adding a correction.');
@@ -317,8 +357,11 @@ export class HarnessGenerationController {
     if (!foundation) throw new Error('The active Story Foundation revision is missing. Restore a local export before continuing.');
 
     const attemptId = this.runtime.createId('hga');
-    const contextSnapshot = compileHarnessContext(this.state, story, foundation, attemptId, this.runtime);
     const startedAt = this.runtime.now();
+    const contextSnapshot = {
+      ...compileHarnessContext(this.state, story, foundation, attemptId, this.runtime),
+      skillLoadout: freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt),
+    };
     const attempt: HarnessGenerationAttempt = {
       id: attemptId,
       storyId,

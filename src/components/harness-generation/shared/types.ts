@@ -78,6 +78,46 @@ export interface HarnessStory {
   contextPolicy?: HarnessContextSelectionPolicy;
   /** Append-only author directions, independent of the frozen opening outline. */
   steering?: HarnessSteering[];
+  /** Per-story references to host-installed skills. The full manifests are frozen per request. */
+  skillLoadout?: Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>;
+}
+
+export type HarnessSkillSlotId =
+  | 'pacing'
+  | 'continuity'
+  | 'style'
+  | 'accessibility'
+  | 'translation'
+  | 'media';
+
+export type HarnessSkillApplication =
+  | 'generation'
+  | 'post-commit'
+  | 'reader'
+  | 'media-runtime';
+
+export interface HarnessSkillReference {
+  id: string;
+  version: string;
+}
+
+/** A provider-neutral manifest supplied by the host's installed-skill library. */
+export interface HarnessSkillManifest extends HarnessSkillReference {
+  name: string;
+  description: string;
+  slot: HarnessSkillSlotId;
+  applications: HarnessSkillApplication[];
+  /** Trusted, author-installed directions included only when generation is declared. */
+  instructions?: string;
+  author?: string;
+  assetCount?: number;
+  runtimeLabel?: string;
+}
+
+/** Exact installed manifests frozen before a provider request leaves the browser. */
+export interface HarnessSkillLoadoutSnapshot {
+  skills: HarnessSkillManifest[];
+  capturedAt: string;
 }
 
 export interface HarnessSteering {
@@ -230,6 +270,8 @@ export interface HarnessContextSnapshot {
   developments?: Array<{ chapterNumber: number; sourceId: string; description: string; evidence?: string; evidenceVerified?: boolean; details?: HarnessEventDetails }>;
   lookups?: Array<{ chapterNumber: number; sourceId: string; excerpt: string }>;
   mechanicalContinuity?: ReturnType<typeof import('./mechanicalContinuity').buildHarnessMechanicalContinuity>;
+  /** Frozen skill versions prevent an installed skill update from changing an in-flight attempt. */
+  skillLoadout?: HarnessSkillLoadoutSnapshot;
 }
 
 export interface HarnessChapter {

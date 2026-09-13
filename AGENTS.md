@@ -21,6 +21,19 @@ For tasks that rebuild a real product system rather than only refining a visual 
 
 That policy permits real frontend, backend, persistence, schema, and integration work inside development. For those tasks, it overrides the visual-only, mock-only, and no-backend restrictions in this file. All unrelated Workshop organization and quality rules still apply where relevant.
 
+### Harness Generation vocabulary
+
+Before reading, modifying, or discussing anything under
+`src/components/harness-generation/` or `src/server/harness-generation/`,
+read [`src/components/harness-generation/ARCHITECTURE_VOCABULARY.md`](./src/components/harness-generation/ARCHITECTURE_VOCABULARY.md)
+first. It is the single authoritative definition of HARNESS, CAPA, CAPA
+Schema, CAPA Skill, CAPA Prompt, Story Information, Story Information
+Packet, Immediate Chapter Request, Generation Model Call, and Generated
+Chapter, and it documents where current code already matches or diverges
+from that vocabulary. Use those terms as defined there; do not invent
+parallel terminology, schemas, assemblers, or context systems for a
+concept it already defines.
+
 ## Required skills
 
 Before beginning any implementation, download, install or otherwise make available, and read all required skills for this repository.

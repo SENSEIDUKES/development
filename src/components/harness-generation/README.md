@@ -16,12 +16,16 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-09-12 |
+| Last Workshop update | 2026-09-13 |
 | Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Steered continuation with a derived SEN Reader adapter |
 
 ### History
 
+- **2026-09-13:** Replaced the inherited placeholder author wording with the
+  founder-approved **Author Skill V1**: a focused Mission, Boundaries,
+  Philosophy, Reference shelf, and Remember statement. Style, pacing,
+  continuity, media, and Harness mechanics remain outside the skill.
 - **2026-09-12:** Promoted the source SEN light-novel author direction from a
   hidden generic server prompt into the bundled, visible, replaceable **Author**
   skill. Existing and new local Harness stories equip its exact version, the

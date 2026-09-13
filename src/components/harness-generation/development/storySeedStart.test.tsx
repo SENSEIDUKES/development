@@ -124,7 +124,7 @@ describe('Harness Story Seed entry', () => {
     expect(container.textContent).toContain('AuthorEquipped');
     expect(container.textContent).toContain('SEN Novel Author');
     expect(container.textContent).toContain('View skill instructions');
-    expect(container.textContent).toContain('elite fantasy web-novel author specializing in light novels');
+    expect(container.textContent).toContain('elite Eastern fantasy web-novel author specializing in Asian light novels');
     expect(container.textContent).toContain('PacingEquipped');
     expect(container.textContent).toContain('MediaEmpty');
     expect(container.querySelector<HTMLSelectElement>('#harness-skill-pacing')?.value).toBe('seihouse.long-range-pacing@1.0.0');

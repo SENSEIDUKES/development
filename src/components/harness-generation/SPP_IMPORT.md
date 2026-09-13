@@ -64,3 +64,8 @@ The live baseline initially exposed Gemini `INVALID_ARGUMENT` from repeating all
 detail variants in every response-schema bucket. Keeping character/speech details with
 characters and mechanics with other evidence categories made both real calls succeed.
 The JSON story contract, evidence validation and commit guards remain in place.
+
+The browser test also uploaded the supplied package, previewed and installed its text,
+equipped Style, and generated a third real Gemini chapter through the UI. Chapter 1
+committed; reload restored the chapter, next chapter number and equipped skill. Import
+was disabled during generation. A 390 px viewport check found no document overflow.

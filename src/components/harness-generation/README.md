@@ -129,6 +129,9 @@ paragraph order. Mechanical rows and status stats use the same preserved value.
 
 ## Installable skill boundary
 
+Development's complete SPP import flow and validation evidence are documented in
+[SPP_IMPORT.md](./SPP_IMPORT.md).
+
 Installable skills are not the deterministic capability handlers above. Capability
 handlers are permanent internal machinery that interprets committed evidence. Skills
 are optional, host-installed packages that an author equips into one of six per-story

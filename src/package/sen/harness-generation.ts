@@ -36,15 +36,18 @@ export {
 } from '../../components/harness-generation/shared/canonicalState';
 export { DEFAULT_HARNESS_CONTEXT_POLICY } from '../../components/harness-generation/shared/context';
 export {
-  HARNESS_SKILL_SLOTS,
+  CAPA_SCHEMA,
+  CAPA_PROMPT_TOKEN_LIMIT,
   HARNESS_SKILL_INSTRUCTION_LIMIT,
+  assembleCapaPrompt,
   createHarnessSkillCatalog,
   freezeHarnessSkillLoadout,
   harnessSkillKey,
   resolveHarnessSkill,
   validateHarnessSkillManifest,
-  type HarnessSkillSlotDefinition,
+  type CapaSlotDefinition,
 } from '../../components/harness-generation/shared/skills';
+export { buildImmediateChapterRequest } from '../../components/harness-generation/shared/immediateChapterRequest';
 export {
   includeBundledHarnessSkills,
   SEN_NOVEL_AUTHOR_SKILL,

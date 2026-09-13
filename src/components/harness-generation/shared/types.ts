@@ -117,10 +117,47 @@ export interface HarnessSkillManifest extends HarnessSkillReference {
   source?: { packageId: string; packageVersion: string; path: string; sha256: string };
 }
 
-/** Exact installed manifests frozen before a provider request leaves the browser. */
+/** Exact installed manifests frozen in CAPA Schema order before CAPA assembly. */
 export interface HarnessSkillLoadoutSnapshot {
   skills: HarnessSkillManifest[];
   capturedAt: string;
+}
+
+/** One equipped CAPA Skill recorded in the CAPA Prompt. Its instructions live only in `CapaPrompt.text`. */
+export interface CapaPromptSkill {
+  id: string;
+  version: string;
+  name: string;
+  slot: HarnessSkillSlotId;
+  applications: HarnessSkillApplication[];
+  /** Whether this skill's instructions are part of the assembled text. */
+  authoring: boolean;
+  source?: HarnessSkillManifest['source'];
+}
+
+/**
+ * CAPA Prompt: every active generation skill, including Author, assembled once
+ * in CAPA Schema order. It is the model's complete authoring instruction and
+ * never carries story information.
+ */
+export interface CapaPrompt {
+  capturedAt: string;
+  skills: CapaPromptSkill[];
+  text: string;
+  estimatedTokens: number;
+}
+
+/**
+ * Immediate Chapter Request: the HARNESS-owned instruction for the one chapter
+ * being generated now. Persistent steering history stays in the Story
+ * Information Packet; this names what this attempt must do.
+ */
+export interface ImmediateChapterRequest {
+  chapterNumber: number;
+  /** True when a committed chapter precedes this one; false for the story opening. */
+  continuation: boolean;
+  /** The latest persistent direction the model must make concrete progress on, if any. */
+  assignment?: string;
 }
 
 export interface HarnessSteering {
@@ -254,7 +291,12 @@ export interface HarnessContextChapter {
   >>;
 }
 
-export interface HarnessContextSnapshot {
+/**
+ * Story Information Packet: the story information selected, weighted,
+ * organized, and frozen by the HARNESS for one generation attempt. It contains
+ * story data only; CAPA skill instructions never enter it.
+ */
+export interface StoryInformationPacket {
   id: string;
   storyId: string;
   attemptId: string;
@@ -273,8 +315,6 @@ export interface HarnessContextSnapshot {
   developments?: Array<{ chapterNumber: number; sourceId: string; description: string; evidence?: string; evidenceVerified?: boolean; details?: HarnessEventDetails }>;
   lookups?: Array<{ chapterNumber: number; sourceId: string; excerpt: string }>;
   mechanicalContinuity?: ReturnType<typeof import('./mechanicalContinuity').buildHarnessMechanicalContinuity>;
-  /** Frozen skill versions prevent an installed skill update from changing an in-flight attempt. */
-  skillLoadout?: HarnessSkillLoadoutSnapshot;
 }
 
 export interface HarnessChapter {
@@ -315,7 +355,11 @@ export interface HarnessGenerationAttempt {
   storyId: string;
   foundationRevisionId: string;
   foundationSnapshot: StoryFoundationRevision;
-  contextSnapshot: HarnessContextSnapshot;
+  /** The frozen CAPA Prompt: an installed skill update cannot change an in-flight attempt. */
+  capaPrompt: CapaPrompt;
+  /** The frozen Story Information Packet for this attempt. */
+  contextSnapshot: StoryInformationPacket;
+  immediateChapterRequest: ImmediateChapterRequest;
   model: string;
   chapterNumber: number;
   stage: HarnessAttemptStage;
@@ -501,7 +545,6 @@ export interface HarnessContextSelectionPolicy {
 }
 
 export type HarnessContextSourceKind =
-  | 'skill'
   | 'foundation'
   | 'correction'
   | 'chapter-prose'
@@ -603,13 +646,18 @@ export interface HarnessGenerationServerInfo {
   defaultModel: string;
 }
 
+/**
+ * Generation Model Call input. The HARNESS prepares the CAPA Prompt (how the
+ * model authors) and the Story Information Packet plus Immediate Chapter
+ * Request (what it authors) separately, then combines them in one provider call.
+ */
 export interface HarnessGenerationRequest {
   storyId: string;
   attemptId: string;
-  chapterNumber: number;
   model: string;
-  foundation: StoryFoundationRevision;
-  context: HarnessContextSnapshot;
+  capaPrompt: CapaPrompt;
+  storyInformation: StoryInformationPacket;
+  immediateChapterRequest: ImmediateChapterRequest;
 }
 
 export interface HarnessGenerationResponse {

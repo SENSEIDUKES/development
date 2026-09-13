@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { appendHarnessCorrection, buildCanonicalStoryView } from './canonicalState';
-import { compileHarnessContext } from './context';
+import { compileStoryInformationPacket } from './context';
 import { HarnessGenerationController } from './controller';
 import { InMemoryHarnessGenerationRepository } from './repository';
 import type { HarnessGenerationRequest, HarnessGenerationResponse } from './types';
@@ -49,12 +49,12 @@ describe('Current thread state and continuation', () => {
     expect(view.currentThreads.map(thread => thread.facts.state)).toEqual(['resolved']);
     expect(state.events).toEqual(beforeReplay.events);
     expect(state.chapters).toEqual(beforeReplay.chapters);
-    const context = compileHarnessContext(state, state.stories[0], state.foundations[0], 'next');
+    const context = compileStoryInformationPacket(state, state.stories[0], state.foundations[0], 'next');
     expect(context.canonicalContext!.records.filter(record => record.kind === 'plot-thread').map(record => record.facts.state)).toEqual(['resolved']);
     expect(context.canonicalContext!.handoff).toEqual([]);
     expect(context.selectionAudit!.omitted.some(item => item.reason.startsWith('Historical or unsupported thread state'))).toBe(true);
     await reloaded.generateNextChapter(story.id, 'fixture');
-    expect(generate.mock.calls[2][0].context.canonicalContext!.handoff).toEqual([]);
+    expect(generate.mock.calls[2][0].storyInformation.canonicalContext!.handoff).toEqual([]);
     // A later, evidenced reopening is legitimate; closure is not permanent deletion.
     expect(buildCanonicalStoryView(reloaded.snapshot(), story.id).currentThreads[0].facts.state).toBe('open');
   });
@@ -67,7 +67,7 @@ describe('Current thread state and continuation', () => {
     const view = buildCanonicalStoryView(state, story.id);
     expect(view.threads.some(record => record.confidence === 'unresolved')).toBe(true);
     expect(view.currentThreads.map(record => record.facts.state)).toEqual(['open']);
-    const context = compileHarnessContext(state, state.stories[0], state.foundations[0], 'next');
+    const context = compileStoryInformationPacket(state, state.stories[0], state.foundations[0], 'next');
     expect(context.canonicalContext!.handoff.map(item => item.description)).toEqual(['Opening the gate remains unresolved.']);
   });
 

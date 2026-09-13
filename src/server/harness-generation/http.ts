@@ -41,30 +41,40 @@ const requestError = (message: string): HarnessGenerationHttpResponse => ({
   headers: { 'Cache-Control': 'no-store' },
 });
 
+const requireFoundation = (foundation: unknown) => {
+  if (!isRecord(foundation) || !isRecord(foundation.input)) {
+    throw new Error('Harness Generation needs a frozen Story Foundation revision.');
+  }
+  if (typeof foundation.input.premise !== 'string' || !foundation.input.premise.trim()) {
+    throw new Error('A Story Foundation premise is required.');
+  }
+};
+
 const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRecoveryRequest => {
   const parsed = typeof body === 'string' ? JSON.parse(body) : body;
   if (!isRecord(parsed)) throw new Error('The Harness Generation request must be a JSON object.');
-  if (!isRecord(parsed.foundation) || !isRecord(parsed.foundation.input)) {
-    throw new Error('Harness Generation needs a frozen Story Foundation revision.');
-  }
-  if (typeof parsed.foundation.input.premise !== 'string' || !parsed.foundation.input.premise.trim()) {
-    throw new Error('A Story Foundation premise is required.');
-  }
   if (parsed.operation === 'recover-memory') {
+    requireFoundation(parsed.foundation);
     if (![parsed.storyId, parsed.chapterId, parsed.model, parsed.prose].every(value => typeof value === 'string' && value.trim())) {
       throw new Error('Memory recovery requires a story, saved chapter prose, chapter identity, and configured model.');
     }
     return parsed as unknown as HarnessMemoryRecoveryRequest;
   }
   if (parsed.operation !== undefined) throw new Error('Unknown Harness Generation operation.');
-  if (!isRecord(parsed.context) || !Array.isArray(parsed.context.committedChapters)) {
-    throw new Error('Harness Generation needs an auditable context snapshot.');
+  // The Generation Model Call carries two separated inputs plus the immediate request.
+  if (!isRecord(parsed.capaPrompt) || typeof parsed.capaPrompt.text !== 'string' || !parsed.capaPrompt.text.trim()) {
+    throw new Error('Harness Generation requires an assembled CAPA Prompt.');
   }
+  if (!isRecord(parsed.storyInformation) || !Array.isArray(parsed.storyInformation.committedChapters)) {
+    throw new Error('Harness Generation needs an auditable Story Information Packet.');
+  }
+  requireFoundation(parsed.storyInformation.foundationRevision);
   if (typeof parsed.storyId !== 'string' || typeof parsed.attemptId !== 'string') {
     throw new Error('Harness Generation needs story and attempt identities.');
   }
-  if (!Number.isInteger(parsed.chapterNumber) || Number(parsed.chapterNumber) < 1) {
-    throw new Error('Harness Generation needs a valid harness-owned chapter number.');
+  const immediate = parsed.immediateChapterRequest;
+  if (!isRecord(immediate) || !Number.isInteger(immediate.chapterNumber) || Number(immediate.chapterNumber) < 1) {
+    throw new Error('Harness Generation needs an Immediate Chapter Request with a valid harness-owned chapter number.');
   }
   if (typeof parsed.model !== 'string') throw new Error('Choose a configured Harness Generation model.');
   return parsed as unknown as HarnessGenerationRequest;
@@ -131,7 +141,7 @@ export const handleHarnessGenerationHttp = async (
     if (
       message.includes('Choose a configured')
       || message.includes('is not configured for Harness Generation')
-      || message.includes('requires an equipped Author skill')
+      || message.includes('requires an assembled CAPA Prompt')
     ) {
       return requestError(message);
     }

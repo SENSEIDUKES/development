@@ -6,15 +6,13 @@ must use these definitions and this vocabulary as written. Do not duplicate,
 paraphrase, or reinterpret them elsewhere — link back to this file instead.
 
 **Read this file before modifying any Harness Generation code, prompt
-assembly, skill/slot system, or context compilation.** If a name used
-elsewhere in the codebase does not match a term below, treat the mismatch
-as a known naming/structural gap (see "Current mapping and mismatches"),
-not as license to invent a new parallel term.
+assembly, skill/slot system, or context compilation.** Every concept below
+has one implementation owner (see "Implementation owners"); route changes
+through that owner rather than inventing a parallel term or structure.
 
-This file defines vocabulary and documents where current code stands
-relative to it. It does not itself change generation behavior, add the Arc
-system, rename persisted contracts, or introduce new architecture — see
-[README.md](./README.md) for the feature's actual behavior and history.
+This file defines the vocabulary and names the single implementation owner
+of each concept. See [README.md](./README.md) for the feature's behavior and
+history.
 
 ## Core definitions
 
@@ -60,34 +58,40 @@ system, rename persisted contracts, or introduce new architecture — see
    implementation owner. Do not create parallel terminology, schemas,
    assemblers, or context systems for a concept already defined here.
 
-## Current mapping and mismatches
+## Implementation owners
 
-This section is a snapshot of how existing repository names line up with
-the vocabulary above, as of this writing. It is descriptive, not a
-refactor plan — no code changes were made to close these gaps as part of
-establishing this vocabulary.
+Each concept has exactly one implementation owner. New code must go through
+the owner listed here, never a parallel structure.
 
-| Vocabulary term | Closest existing name(s) | Status |
+| Vocabulary term | Implementation owner | Notes |
 | --- | --- | --- |
-| HARNESS | `shared/controller.ts`, `shared/repository.ts`, `shared/context.ts`, `src/server/harness-generation/execute.ts` | Aligned — this is the owning code. |
-| CAPA Schema | `HARNESS_SKILL_SLOTS` in `shared/skills.ts` | **Partial.** This array does define slot id, order, and responsibility, which is what a CAPA Schema is, but it is not named or documented as the authoritative schema, and it is called a "slot"/"skill" system rather than CAPA. |
-| CAPA Skill | `HarnessSkillManifest` in `shared/types.ts` | **Partial.** Structurally a CAPA Skill (versioned, replaceable, one slot), but not named as one. |
-| CAPA Prompt | *(no dedicated artifact)* | **Mismatch.** There is no single assembled "CAPA Prompt" value. Skill instructions are interleaved directly into `systemInstruction` alongside Harness response/evidence-contract text in `src/server/harness-generation/prompt.ts` (`buildHarnessGenerationPrompt`), and the same skill instructions are serialized a second time into the `userPrompt` JSON under `"ACTIVE HARNESS SKILLS"`. CAPA skills are not assembled once, in schema order, as an independent value before the Harness combines them with story content. |
-| Story Information | `HarnessWorkspaceState` (chapters, events, corrections, canonical records) plus `HarnessStory` plus `StoryFoundationRevision` in `shared/types.ts` | Aligned — this is the durable story state the Harness owns. |
-| Story Information Packet | `HarnessContextSnapshot`, produced by `compileHarnessContext` in `shared/context.ts` | **Mismatch.** `HarnessContextSnapshot` carries an optional `skillLoadout: HarnessSkillLoadoutSnapshot`, and `HarnessSkillLoadoutSnapshot.skills` includes each skill's `instructions` string — i.e. CAPA skill instructions currently live inside the same snapshot that is meant to be pure Story Information (rule 4). The rest of `HarnessContextSnapshot` (foundation revision, committed chapters, corrections, canonical context, developments, lookups, mechanical continuity, selection audit) is correctly Story-Information-shaped. |
-| Immediate Chapter Request | *(no dedicated type)* | **Mismatch.** There is no distinct "Immediate Chapter Request" value. The nearest equivalent is the last entry of `HarnessStory.steering` / `HarnessContextSnapshot.steering`, folded into the `"AUTHOR DIRECTION FOR THE NEXT CHAPTER"` section of `userPrompt` alongside all other steering history, plus the ambient `chapterNumber` field. It is not modeled or passed as its own concept. |
-| Generation Model Call | `HarnessGenerationRequest` (`shared/types.ts`) consumed by `buildHarnessGenerationPrompt` (`src/server/harness-generation/prompt.ts`) and `HarnessGenerationModelAdapter` (`src/server/harness-generation/provider.ts`) | **Mismatch.** `HarnessGenerationRequest` bundles `foundation` and `context` into one object, and `buildHarnessGenerationPrompt` derives both the "authoring instructions" and "generation content" from it inline in a single function, rather than accepting an already-assembled CAPA Prompt and an already-assembled Story Information Packet as the two separate inputs rule 1 requires. |
-| Generated Chapter | `HarnessGenerationResponse.rawProviderResponse`, processed by `shared/responseAcceptance.ts` and committed by `shared/controller.ts` / `shared/repository.ts` | Aligned. |
-| *(capability handlers, separate concept)* | `HarnessCapabilityRegistry` in `shared/capabilities.ts` | Not a CAPA concern. These are permanent, deterministic post-commit handlers that interpret already-committed semantic events; they are correctly documented in README.md as distinct from installable skills and require no renaming here. |
+| HARNESS | `shared/controller.ts` (`HarnessGenerationController`), with `shared/repository.ts`, `shared/context.ts`, `shared/responseAcceptance.ts`, `shared/capabilities.ts`, and `src/server/harness-generation/execute.ts` | `generateNextChapter` prepares the CAPA Prompt, the Story Information Packet, and the Immediate Chapter Request separately, freezes all three on the attempt, makes one provider call, and owns checkpoints and commits. |
+| CAPA Schema | `CAPA_SCHEMA` in `shared/skills.ts` | The single ordered slot registry (Author, Pacing, Continuity, Style, Accessibility, Translation, Media) with each slot's responsibility. Loadout freezing and CAPA assembly both iterate it, so its order is the assembled order. |
+| CAPA Skill | `HarnessSkillManifest` in `shared/types.ts` | A versioned, replaceable manifest occupying one CAPA Schema slot. Only manifests declaring the `generation` application contribute authoring text. |
+| CAPA Prompt | `assembleCapaPrompt` in `shared/skills.ts`, producing `CapaPrompt` (`shared/types.ts`) | Every active generation skill, Author first, once each, in schema order, assembled into one `text`. Non-generation skills are listed in its `skills` inventory (`authoring: false`) but contribute no text. Frozen on `HarnessGenerationAttempt.capaPrompt`. Has its own soft budget (`CAPA_PROMPT_TOKEN_LIMIT`); never spends the packet's. |
+| Story Information | `HarnessWorkspaceState` plus `HarnessStory` and `StoryFoundationRevision` (`shared/types.ts`), persisted by `shared/repository.ts` | The complete durable story and world state, including persistent steering history. |
+| Story Information Packet | `compileStoryInformationPacket` in `shared/context.ts`, producing `StoryInformationPacket` (`shared/types.ts`) | Story data only: Foundation revision, story head, committed chapters, corrections, canonical records, developments, lookups, mechanical continuity, persistent steering, and the selection audit. It has no skill field and carries no skill instructions. Frozen on `HarnessGenerationAttempt.contextSnapshot` (the persisted field name predates the vocabulary; it holds the packet). |
+| Immediate Chapter Request | `buildImmediateChapterRequest` in `shared/immediateChapterRequest.ts`, producing `ImmediateChapterRequest` (`shared/types.ts`) | Chapter number, opening/continuation, and the assignment to act on now (the latest persistent direction). Distinct from the packet's full steering history. Frozen on `HarnessGenerationAttempt.immediateChapterRequest`. |
+| Generation Model Call | `HarnessGenerationRequest` (`shared/types.ts`) → `buildHarnessGenerationPrompt` (`src/server/harness-generation/prompt.ts`) → `HarnessTextModelProvider` (`src/server/harness-generation/provider.ts`) | The request carries `capaPrompt`, `storyInformation`, and `immediateChapterRequest` as separate fields. The prompt builder sends `capaPrompt.text` followed by the distinct `HARNESS_RESPONSE_CONTRACT` as the system instruction, and the presented packet followed by the presented immediate request as the generation content. One Gemini call. |
+| Generated Chapter | `HarnessGenerationResponse.rawProviderResponse`, processed by `shared/responseAcceptance.ts` and committed by `shared/controller.ts` / `shared/repository.ts` | Validated, checkpointed, memory-processed, and committed by the HARNESS. |
+| *(capability handlers, separate concept)* | `HarnessCapabilityRegistry` in `shared/capabilities.ts` | Not a CAPA concern: permanent, deterministic post-commit handlers that interpret already-committed semantic events. |
 
-The clearest concrete gap: **`HarnessContextSnapshot` is not yet a clean
-Story Information Packet** because it carries `skillLoadout` (CAPA data,
-including live skill instructions) inside it, and there is no separate,
-independently assembled CAPA Prompt value — skill instructions are instead
-woven directly into prompt-string construction in `prompt.ts`. Any future
-change that wants to honor rule 1 and rule 4 will need to address that
-before adding new Harness Generation behavior, but doing so is out of scope
-for this document.
+## Former structure (corrected record)
+
+Before the separation was implemented, the repository did not have one
+independent CAPA Prompt. CAPA instructions were **split across prompt
+locations**: the Author skill's instructions were written into the system
+instruction, while every other generation skill's instructions were
+serialized into a JSON block inside the user prompt alongside story
+evidence. No skill's instructions were sent twice — an earlier draft of this
+document said so, and that statement was inaccurate. The real problems were
+that the same authoring instruction set was assembled in two places, and
+that the frozen skill loadout (including live instruction text) was **stored
+inside the context snapshot** — the object meant to be pure Story
+Information — instead of existing as its own frozen CAPA Prompt. The current
+chapter's assignment was also derived inline from steering history rather
+than represented as an Immediate Chapter Request. Those structures have been
+replaced directly; there are no compatibility aliases for them.
 
 ## Naming going forward
 
@@ -98,7 +102,7 @@ for this document.
   implementation hasn't been renamed to match yet.
 - Do not introduce a second schema, assembler, or context-selection system
   under a different name for a concept already defined here (rule 7).
-- If a change would rename a persisted contract (e.g. `HarnessSkillManifest`,
-  `HarnessContextSnapshot`) to close one of the mismatches above, that is a
-  deliberate migration decision, not an incidental rename — call it out
+- Persisted field names (for example `HarnessGenerationAttempt.contextSnapshot`,
+  which holds the Story Information Packet) are storage contracts. Renaming one
+  is a deliberate migration decision, not an incidental rename — call it out
   explicitly and confirm scope before doing it.

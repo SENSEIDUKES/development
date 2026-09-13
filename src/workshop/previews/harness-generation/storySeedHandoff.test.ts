@@ -102,10 +102,10 @@ describe('Story Seed to Harness handoff', () => {
     await reloaded.hydrate();
     await reloaded.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
 
-    expect(requests[1].foundation.revision).toBe(2);
-    expect(requests[1].foundation.input.sourceSnapshot).toEqual(input.sourceSnapshot);
-    expect(requests[1].context.foundationRevision).toEqual(requests[1].foundation);
-    expect(requests[1].context.committedChapters[0].prose).toBe('Mara waits at the sealed harbor gate.');
+    expect(requests[1].storyInformation.foundationRevision.revision).toBe(2);
+    expect(requests[1].storyInformation.foundationRevision.input.sourceSnapshot).toEqual(input.sourceSnapshot);
+    expect(requests[1].storyInformation.committedChapters[0].prose).toBe('Mara waits at the sealed harbor gate.');
+    expect(requests[1].immediateChapterRequest).toEqual({ chapterNumber: 2, continuation: true });
     const { userPrompt, systemInstruction } = provider.mock.calls[1][0];
     expect(userPrompt).toContain('Remain at the gate; do not finish the tournament arc yet.');
     expect(userPrompt).toContain('Keep the strange premise believable.');
@@ -119,6 +119,6 @@ describe('Story Seed to Harness handoff', () => {
     expect(systemInstruction).toContain('An arc promise spans an arc, not one chapter.');
     expect(systemInstruction).toContain('newest applicable change wins');
     expect(systemInstruction).toContain('active Foundation edits take precedence');
-    expect(reloaded.snapshot().attempts[1].contextSnapshot).toEqual(requests[1].context);
+    expect(reloaded.snapshot().attempts[1].contextSnapshot).toEqual(requests[1].storyInformation);
   });
 });

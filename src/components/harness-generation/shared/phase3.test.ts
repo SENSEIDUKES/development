@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessCapabilityRegistry, resolveHarnessEntity, type HarnessCapabilityHandler } from './capabilities';
 import { appendHarnessCorrection, buildCanonicalStoryView } from './canonicalState';
-import { compileHarnessContext } from './context';
+import { compileStoryInformationPacket } from './context';
 import { HarnessGenerationController } from './controller';
 import type { HarnessRuntime } from './ids';
 import {
@@ -242,7 +242,7 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     expect(corrected.corrections).toHaveLength(1);
     expect(corrected.canonicalRecords.find(item => item.id === record.id)?.supersededByCorrectionId).toBe(corrected.corrections[0].id);
     const foundation = corrected.foundations[0];
-    const context = compileHarnessContext(corrected, corrected.stories[0], foundation, 'next', runtime());
+    const context = compileStoryInformationPacket(corrected, corrected.stories[0], foundation, 'next', runtime());
     expect(context.canonicalContext?.corrections).toHaveLength(1);
     expect(context.selectionAudit?.included.some(item => item.sourceKind === 'correction')).toBe(true);
     expect(context.selectionAudit?.included.every(item => item.reason.length > 0)).toBe(true);

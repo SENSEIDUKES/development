@@ -23,7 +23,7 @@ import {
 import { findFoundationRevision, findStory } from '../shared/foundation';
 import { buildCanonicalStoryView } from '../shared/canonicalState';
 import { DEFAULT_HARNESS_CONTEXT_POLICY } from '../shared/context';
-import { HARNESS_SKILL_SLOTS, harnessSkillKey } from '../shared/skills';
+import { CAPA_SCHEMA, harnessSkillKey } from '../shared/skills';
 import { includeBundledHarnessSkills } from '../shared/authorSkill';
 import { HarnessReaderSession } from './HarnessReaderSession';
 import { HarnessGenerationHttpClient } from '../shared/httpClient';
@@ -380,14 +380,14 @@ function SkillLoadoutPanel({
         <div>
           <div className="flex items-center gap-2">
             <Puzzle size={18} className="text-cyan-200" aria-hidden="true" />
-            <h2 id="harness-skills-title" className="font-display text-xl text-white">Harness skill slots</h2>
+            <h2 id="harness-skills-title" className="font-display text-xl text-white">CAPA skill slots</h2>
           </div>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-400">
-            The Author skill tells the model how to write. Every slot is an installed capability, and the exact equipped versions are frozen into each chapter attempt.
+            The Author skill tells the model how to write. Equipped generation skills are assembled once, in schema order, into the CAPA Prompt frozen with each chapter attempt.
           </p>
         </div>
         <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-cyan-100">
-          {equippedCount}/{HARNESS_SKILL_SLOTS.length} equipped
+          {equippedCount}/{CAPA_SCHEMA.length} equipped
         </span>
       </div>
 
@@ -398,7 +398,7 @@ function SkillLoadoutPanel({
       )}
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {HARNESS_SKILL_SLOTS.map(slot => {
+        {CAPA_SCHEMA.map(slot => {
           const reference = story.skillLoadout?.[slot.id];
           const selectedKey = reference ? harnessSkillKey(reference) : '';
           const selected = reference ? installedByKey.get(selectedKey) : undefined;
@@ -516,8 +516,16 @@ function Diagnostics({ attempt }: { attempt?: HarnessGenerationAttempt }) {
         </div>
       ) : null}
       <details className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3">
-        <summary className="cursor-pointer text-xs font-medium text-neutral-200">Frozen context snapshot</summary>
+        <summary className="cursor-pointer text-xs font-medium text-neutral-200">Frozen CAPA Prompt</summary>
+        <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-relaxed text-neutral-400">{attempt.capaPrompt.text}</pre>
+      </details>
+      <details className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
+        <summary className="cursor-pointer text-xs font-medium text-neutral-200">Frozen Story Information Packet</summary>
         <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-relaxed text-neutral-400">{JSON.stringify(attempt.contextSnapshot, null, 2)}</pre>
+      </details>
+      <details className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
+        <summary className="cursor-pointer text-xs font-medium text-neutral-200">Immediate Chapter Request</summary>
+        <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-relaxed text-neutral-400">{JSON.stringify(attempt.immediateChapterRequest, null, 2)}</pre>
       </details>
       {attempt.rawProviderResponse && (
         <details className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">

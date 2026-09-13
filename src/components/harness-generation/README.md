@@ -30,6 +30,16 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-09-13:** Implemented the canonical CAPA / Story Information separation.
+  `CAPA_SCHEMA` is the single ordered slot registry; `assembleCapaPrompt` builds
+  every active generation skill, Author included, into one CAPA Prompt in schema
+  order; `compileStoryInformationPacket` produces a packet with no skill
+  instructions; `buildImmediateChapterRequest` separates the current chapter's
+  instruction from persistent steering. The Generation Model Call now receives
+  the CAPA Prompt as its authoring instruction and the packet plus immediate
+  request as its generation content, with the Harness response contract kept as
+  a distinct block. One Gemini call, context selection, checkpoints, memory
+  processing, and commits are unchanged.
 - **2026-09-13:** Established the canonical architecture vocabulary in
   [ARCHITECTURE_VOCABULARY.md](./ARCHITECTURE_VOCABULARY.md) (HARNESS, CAPA,
   CAPA Schema, CAPA Skill, CAPA Prompt, Story Information, Story Information
@@ -151,25 +161,29 @@ unknown. Exact, uniquely anchored speech receives the known speaker's role;
 host-supplied cast identity establishes the main character without guessing from
 paragraph order. Mechanical rows and status stats use the same preserved value.
 
-## Installable skill boundary
+## CAPA boundary
 
 Development's complete SPP import flow and validation evidence are documented in
-[SPP_IMPORT.md](./SPP_IMPORT.md).
+[SPP_IMPORT.md](./SPP_IMPORT.md). Terms are defined in
+[ARCHITECTURE_VOCABULARY.md](./ARCHITECTURE_VOCABULARY.md).
 
-Installable skills are not the deterministic capability handlers above. Capability
-handlers are permanent internal machinery that interprets committed evidence. Skills
-are versioned packages equipped into one of seven per-story slots: Author, Pacing,
-Continuity, Style, Accessibility, Translation, or Media. The bundled SEN Novel Author
-is a normal, replaceable generation skill, not hidden creative Harness behavior. It is
-equipped for new and previously saved local stories, and its exact instructions are
-the first creative direction sent to the provider.
+CAPA Skills are not the deterministic capability handlers above. Capability handlers
+are permanent internal machinery that interprets committed evidence. CAPA Skills are
+versioned packages equipped into one of the seven CAPA Schema slots (`CAPA_SCHEMA` in
+`shared/skills.ts`): Author, Pacing, Continuity, Style, Accessibility, Translation, or
+Media. The bundled SEN Novel Author is a normal, replaceable generation skill, not
+hidden creative Harness behavior. It is equipped for new and previously saved local
+stories.
 
 The host supplies validated `HarnessSkillManifest` records. The Harness persists an
-exact `id` and `version` reference in the story, freezes the full equipped manifests
-into every attempt, and refuses to generate if a referenced version is unavailable.
-Only manifests declaring the `generation` application may add model instructions.
-Reader, post-commit, and media-runtime applications remain recorded for their owning
-host runtime and are explicitly prevented from altering prose through this call.
+exact `id` and `version` reference in the story and refuses to generate if a
+referenced version is unavailable. For each attempt it freezes the equipped manifests
+in schema order and assembles every generation skill, Author first, once, into one
+CAPA Prompt (`assembleCapaPrompt`). That CAPA Prompt is frozen on the attempt and is
+the model's complete authoring instruction; it never enters the Story Information
+Packet. Only manifests declaring the `generation` application contribute text.
+Reader, post-commit, and media-runtime skills are recorded in the frozen CAPA Prompt's
+skill inventory for their owning host runtime and send nothing to the writing model.
 
 The Workshop's sample manifests are preview data only. Package downloading, signature
 verification, entitlements, asset installation, and media execution belong to a future
@@ -201,15 +215,22 @@ and edits are session-local; durable story changes belong to Harness steering an
 corrections. Fully malformed optional output still requires usable source evidence;
 replay does not invent missing facts or call the model again.
 
-## Request context and inspection
+## Generation Model Call and inspection
 
-The attempt's **Frozen context snapshot** and **Included / Omitted** lists show
-the exact selected Foundation revision, source Seed and optional Blueprint,
-corrections (with target evidence), retained chapters, and selection reasons.
-The provider prompt separately labels author instructions, established
-Foundation, future plans, explicit author changes, committed evidence, frozen
-source, and coverage/omissions. The coverage section states whether the actual
-last committed chapter was included.
+Each attempt freezes the three HARNESS-prepared inputs and shows them separately:
+the **Frozen CAPA Prompt**, the **Frozen Story Information Packet** (with its
+**Included / Omitted** lists), and the **Immediate Chapter Request**. The packet
+shows the exact selected Foundation revision, source Seed and optional Blueprint,
+corrections (with target evidence), retained chapters, persistent steering, and
+selection reasons; it contains no skill instructions.
+
+`buildHarnessGenerationPrompt` combines them into one provider call: the system
+instruction is the CAPA Prompt followed by the distinct Harness response and
+evidence contract; the generation content is the packet (Foundation, explicit
+author changes, committed evidence, frozen source, coverage/omissions, persistent
+author direction, mechanical continuity) followed by the Immediate Chapter Request
+(chapter number, opening or continuation, and the assignment to act on now). The
+coverage section states whether the actual last committed chapter was included.
 
 Selection protects steering, Foundation, corrections with their target evidence,
 quantified observations, and the latest committed chapter. These mandatory inputs

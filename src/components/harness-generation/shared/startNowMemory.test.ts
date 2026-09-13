@@ -3,7 +3,7 @@ import fixture from './fixtures/startNowMemory.json';
 import { HarnessGenerationController } from './controller';
 import { InMemoryHarnessGenerationRepository } from './repository';
 import { buildCanonicalStoryView } from './canonicalState';
-import { compileHarnessContext } from './context';
+import { compileStoryInformationPacket } from './context';
 import type { HarnessGenerationResponse } from './types';
 
 const response = (value: unknown): HarnessGenerationResponse => ({
@@ -44,7 +44,7 @@ describe('Start Now captured prose and memory regression', () => {
       // The captured model put a character in one thread's subject slot. Retain
       // that as a visible gap instead of claiming exhaustive understanding.
       expect(saved.attempts[0].postCommitProcessing).toBe('warnings');
-      const context = compileHarnessContext(saved, saved.stories[0], saved.foundations[0], 'next');
+      const context = compileStoryInformationPacket(saved, saved.stories[0], saved.foundations[0], 'next');
       expect(context.canonicalContext!.records.some(record => record.facts.timeLimit === 'forty-eight hours')).toBe(true);
       expect(context.committedChapters[0].events.some(event => event.evidenceVerified)).toBe(true);
       if (recover) expect(context.committedChapters[0].events.slice(0, 4).every(event => event.evidenceVerified === false)).toBe(true);

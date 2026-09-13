@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { LibraryButton, LibraryPanel } from '@seihouse/library-ui';
-import { HARNESS_SKILL_SLOTS, type HarnessSkillManifest, type HarnessSkillSlotId } from '@seihouse/sen/harness-generation';
+import { CAPA_SCHEMA, type HarnessSkillManifest, type HarnessSkillSlotId } from '@seihouse/sen/harness-generation';
 import type { PackContent } from 'seihouse-productions-package';
 import { createHarnessSppSkill, inspectHarnessSpp, readHarnessSppText } from './sppSkills';
 
@@ -52,7 +52,7 @@ export function SppSkillImport({ busy, onInstall }: { busy: boolean; onInstall: 
         <pre aria-label="Selected instruction contents" className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-black/20 p-3 text-xs text-neutral-300">{preview}</pre>
         <label className="block text-sm text-neutral-300" htmlFor="harness-spp-slot">Install for skill slot</label>
         <select id="harness-spp-slot" value={slot} disabled={disabled} onChange={event => setSlot(event.target.value as HarnessSkillSlotId)} className="min-h-11 w-full rounded-lg bg-neutral-900 px-3 text-sm text-white">
-          {HARNESS_SKILL_SLOTS.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+          {CAPA_SCHEMA.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
         </select>
         <LibraryButton type="button" disabled={disabled} onClick={() => {
           setMessage('');

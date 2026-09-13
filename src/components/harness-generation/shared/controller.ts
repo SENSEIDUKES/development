@@ -4,10 +4,12 @@ import {
   findStory,
   reviseStoryFoundation,
 } from './foundation';
-import { compileHarnessContext } from './context';
+import { compileStoryInformationPacket } from './context';
+import { buildImmediateChapterRequest } from './immediateChapterRequest';
 import { appendHarnessCorrection, type AppendHarnessCorrectionInput } from './canonicalState';
 import { HarnessCapabilityRegistry } from './capabilities';
 import {
+  assembleCapaPrompt,
   createHarnessSkillCatalog,
   freezeHarnessSkillLoadout,
   resolveHarnessSkill,
@@ -390,14 +392,20 @@ export class HarnessGenerationController {
 
     const attemptId = this.runtime.createId('hga');
     const startedAt = this.runtime.now();
-    const skillLoadout = freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt);
-    const contextSnapshot = compileHarnessContext(this.state, story, foundation, attemptId, this.runtime, skillLoadout);
+    // The HARNESS prepares the two Generation Model Call inputs separately:
+    // the CAPA Prompt (how the model authors) and the Story Information
+    // Packet (what it authors), plus the Immediate Chapter Request.
+    const capaPrompt = assembleCapaPrompt(freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt));
+    const contextSnapshot = compileStoryInformationPacket(this.state, story, foundation, attemptId, this.runtime);
+    const immediateChapterRequest = buildImmediateChapterRequest(story);
     const attempt: HarnessGenerationAttempt = {
       id: attemptId,
       storyId,
       foundationRevisionId: foundation.id,
       foundationSnapshot: cloneHarnessValue(foundation),
+      capaPrompt,
       contextSnapshot,
+      immediateChapterRequest,
       model: model.trim(),
       chapterNumber: story.head.nextChapterNumber,
       stage: 'request_started',
@@ -423,10 +431,10 @@ export class HarnessGenerationController {
         response = await this.modelAdapter.generate({
           storyId,
           attemptId,
-          chapterNumber: attempt.chapterNumber,
           model: attempt.model,
-          foundation: attempt.foundationSnapshot,
-          context: attempt.contextSnapshot,
+          capaPrompt: attempt.capaPrompt,
+          storyInformation: attempt.contextSnapshot,
+          immediateChapterRequest: attempt.immediateChapterRequest,
         });
       } catch (error) {
         return await this.appendFailure(attemptId, {

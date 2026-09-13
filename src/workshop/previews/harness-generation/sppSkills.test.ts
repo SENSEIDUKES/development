@@ -31,9 +31,9 @@ describe('SPP intake through Harness skills', () => {
           providerFactory: () => ({ provider: 'gemini', model: request.model, generate: async prompt => {
             calls++;
             expect(prompt.systemInstruction).toContain(text.trim());
-            expect(prompt.userPrompt).toContain(path);
-            expect(prompt.userPrompt).toContain(content.manifest.id);
-            expect(request.context.selectionAudit?.included.some(item => item.sourceKind === 'skill')).toBe(true);
+            expect(prompt.userPrompt).not.toContain(text.trim());
+            expect(request.capaPrompt.skills[0].source).toMatchObject({ packageId: content.manifest.id, path });
+            expect(JSON.stringify(request.storyInformation)).not.toContain(content.manifest.id);
             return { rawProviderResponse: JSON.stringify({ prose: 'The courier caught the falling jade token before it struck the rain-soaked steps.' }),
               providerReceipt: { provider: 'gemini', model: request.model, generatedAt: new Date().toISOString(), durationMs: 1, usage: { source: 'unavailable' } } };
           } }),
@@ -48,7 +48,7 @@ describe('SPP intake through Harness skills', () => {
     await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
     expect(calls).toBe(1);
     expect(repository.snapshot().chapters).toHaveLength(1);
-    expect(repository.snapshot().attempts[0].contextSnapshot.skillLoadout?.skills[0].source).toEqual(skill.source);
+    expect(repository.snapshot().attempts[0].capaPrompt.skills[0].source).toEqual(skill.source);
   });
 
   it('handles a generic author-instructions path without package-name or package-type behavior', async () => {
@@ -102,7 +102,7 @@ describe('SPP intake through Harness skills', () => {
     const second = { ...long, id: 'another', slot: 'pacing' as const };
     controller.setInstalledSkills([long, second]);
     await controller.setSkillSlot(story.id, 'pacing', second);
-    await expect(controller.generateNextChapter(story.id, 'fixture')).rejects.toThrow('context budget');
+    await expect(controller.generateNextChapter(story.id, 'fixture')).rejects.toThrow('CAPA Prompt budget');
     expect(controller.snapshot().attempts).toHaveLength(0);
   });
 });

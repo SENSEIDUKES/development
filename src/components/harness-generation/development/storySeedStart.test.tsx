@@ -119,7 +119,7 @@ describe('Harness Story Seed entry', () => {
 
     await act(async () => root.render(<HarnessGenerationWorkspace repository={repository} modelAdapter={modelAdapter} installedSkills={installedSkills} />));
 
-    expect(container.textContent).toContain('Harness skill slots');
+    expect(container.textContent).toContain('CAPA skill slots');
     expect(container.textContent).toContain('2/7 equipped');
     expect(container.textContent).toContain('AuthorEquipped');
     expect(container.textContent).toContain('SEN Novel Author');

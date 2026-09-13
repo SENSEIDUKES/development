@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compileHarnessContext } from './context';
+import { compileStoryInformationPacket } from './context';
 import { createHarnessStory } from './foundation';
 import { createEmptyHarnessWorkspaceState } from './repository';
 import { appendHarnessCorrection } from './canonicalState';
@@ -36,11 +36,11 @@ const fixture = () => {
 describe('Harness context priorities', () => {
   it('reserves correction and latest prose before older chapters or derived records', () => {
     const { state, story, foundation, correction } = fixture();
-    const full = compileHarnessContext(state, story, foundation, 'full');
+    const full = compileStoryInformationPacket(state, story, foundation, 'full');
     const cost = (id: string) => full.selectionAudit!.included.find(item => item.sourceRecordIds[0] === id)!.estimatedTokens;
     story.contextPolicy = { recentChapterCount: 3, includeMinorEvents: false,
       maxEstimatedTokens: cost(foundation.id) + cost(correction.id) + cost('chapter-4') };
-    const context = compileHarnessContext(state, story, foundation, 'tight');
+    const context = compileStoryInformationPacket(state, story, foundation, 'tight');
     expect(context.canonicalContext!.corrections[0]).toMatchObject({
       id: correction.id, targetEvidence: [{ id: 'wrong', evidence: 'Mara has blue eyes.' }],
     });
@@ -54,16 +54,16 @@ describe('Harness context priorities', () => {
   it('preserves all corrections and immediate continuation even beyond the soft budget', () => {
     const { state, story, foundation, correction } = fixture();
     state.corrections.push({ ...correction, id: 'newer', reason: 'The latest author instruction.' });
-    const full = compileHarnessContext(state, story, foundation, 'full');
+    const full = compileStoryInformationPacket(state, story, foundation, 'full');
     expect(full.canonicalContext!.corrections.map(item => item.id)).toEqual(['newer', correction.id]);
     story.contextPolicy = { recentChapterCount: 3, includeMinorEvents: false,
       maxEstimatedTokens: full.selectionAudit!.included.slice(0, 2).reduce((sum, item) => sum + item.estimatedTokens, 0) };
-    const tight = compileHarnessContext(state, story, foundation, 'tight');
+    const tight = compileStoryInformationPacket(state, story, foundation, 'tight');
     expect(tight.canonicalContext!.corrections.map(item => item.id)).toEqual(['newer', correction.id]);
     expect(tight.committedChapters.map(chapter => chapter.chapterNumber)).toEqual([4]);
     expect(tight.selectionAudit!.included.find(item => item.sourceRecordIds[0] === correction.id)!.reason).toContain('Protected author correction');
     story.contextPolicy.maxEstimatedTokens = 1;
-    const tiny = compileHarnessContext(state, story, foundation, 'tiny');
+    const tiny = compileStoryInformationPacket(state, story, foundation, 'tiny');
     expect(tiny.foundationRevision).toEqual(foundation);
     expect(tiny.selectionAudit!.included[0].reason).toContain('exceeds the soft selection budget');
     expect(tiny.selectionAudit!.omitted.every(item => item.reason.length > 0)).toBe(true);
@@ -78,7 +78,7 @@ describe('Harness context priorities', () => {
       kind: 'resolve-entity', reason: 'Captain refers to Mara.', referenceLabel: 'Captain',
       acceptedAlias: 'Captain', resolvedRecordId: 'wrong',
     });
-    const context = compileHarnessContext(corrected.state, story, foundation, 'alias');
+    const context = compileStoryInformationPacket(corrected.state, story, foundation, 'alias');
     expect(context.canonicalContext!.corrections[0]).toMatchObject({
       acceptedAlias: 'Captain', resolvedRecordId: 'wrong', resolvedEntity: { label: 'Mara' },
     });
@@ -92,7 +92,7 @@ describe('Harness context priorities', () => {
     state.chapters[3].prose = 'Latest continuation scene. '.repeat(400);
     story.contextPolicy = { recentChapterCount: 3, includeMinorEvents: false, maxEstimatedTokens: 500 };
     const snapshot = structuredClone(state);
-    const context = compileHarnessContext(state, story, foundation, 'tight-current');
+    const context = compileStoryInformationPacket(state, story, foundation, 'tight-current');
     expect(context.canonicalContext!.corrections[0].id).toBe('large-current');
     expect(context.committedChapters.map(chapter => chapter.chapterNumber)).toEqual([4]);
     expect(context.committedChapters[0].prose).toBe(state.chapters[3].prose);
@@ -104,7 +104,7 @@ describe('Harness context priorities', () => {
   it('stops context preparation if the committed story head points to a missing chapter', () => {
     const { state, story, foundation } = fixture();
     state.chapters = state.chapters.filter(chapter => chapter.id !== story.head.lastCommittedChapterId);
-    expect(() => compileHarnessContext(state, story, foundation, 'missing'))
+    expect(() => compileStoryInformationPacket(state, story, foundation, 'missing'))
       .toThrow('latest committed chapter is missing');
   });
 });

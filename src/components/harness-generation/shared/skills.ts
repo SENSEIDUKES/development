@@ -1,5 +1,6 @@
 import { cloneHarnessValue } from './ids';
 import type {
+  CapaPrompt,
   HarnessSkillLoadoutSnapshot,
   HarnessSkillApplication,
   HarnessSkillManifest,
@@ -8,13 +9,19 @@ import type {
   HarnessStory,
 } from './types';
 
-export interface HarnessSkillSlotDefinition {
+export interface CapaSlotDefinition {
   id: HarnessSkillSlotId;
   label: string;
   description: string;
 }
 
-export const HARNESS_SKILL_SLOTS: readonly HarnessSkillSlotDefinition[] = [
+/**
+ * The CAPA Schema: the single authoritative definition of every CAPA skill
+ * slot, its order, and its responsibility. Loadout freezing and CAPA Prompt
+ * assembly both iterate this array, so its order is the assembled order.
+ * See ARCHITECTURE_VOCABULARY.md.
+ */
+export const CAPA_SCHEMA: readonly CapaSlotDefinition[] = [
   { id: 'author', label: 'Author', description: 'Defines how the writing model approaches and writes the chapter.' },
   { id: 'pacing', label: 'Pacing', description: 'Controls event spacing, arc pressure, and payoff timing.' },
   { id: 'continuity', label: 'Continuity', description: 'Adds specialized canon and long-range consistency guidance.' },
@@ -43,7 +50,7 @@ export const validateHarnessSkillManifest = (manifest: HarnessSkillManifest): Ha
   nonEmpty(manifest.version, 'version');
   nonEmpty(manifest.name, 'name');
   nonEmpty(manifest.description, 'description');
-  if (!HARNESS_SKILL_SLOTS.some(slot => slot.id === manifest.slot)) {
+  if (!CAPA_SCHEMA.some(slot => slot.id === manifest.slot)) {
     throw new Error(`Harness skill ${manifest.name} uses an unsupported slot.`);
   }
   if (!Array.isArray(manifest.applications) || !manifest.applications.length) {
@@ -82,7 +89,7 @@ export const freezeHarnessSkillLoadout = (
   catalog: ReadonlyMap<string, HarnessSkillManifest>,
   capturedAt: string,
 ): HarnessSkillLoadoutSnapshot => {
-  const skills = HARNESS_SKILL_SLOTS.flatMap(slot => {
+  const skills = CAPA_SCHEMA.flatMap(slot => {
     const reference = story.skillLoadout?.[slot.id];
     if (!reference) return [];
     const manifest = resolveHarnessSkill(catalog, reference);
@@ -98,4 +105,49 @@ export const freezeHarnessSkillLoadout = (
     throw new Error('Equip an installed Author skill before generating a chapter.');
   }
   return { skills, capturedAt };
+};
+
+/**
+ * A soft ceiling on the assembled authoring instruction. Story Information has
+ * its own selection budget; CAPA never spends it.
+ */
+export const CAPA_PROMPT_TOKEN_LIMIT = 6_000;
+
+const slotLabel = (slot: HarnessSkillSlotId) => CAPA_SCHEMA.find(definition => definition.id === slot)!.label;
+
+const isAuthoringSkill = (skill: HarnessSkillManifest) =>
+  skill.applications.includes('generation') && Boolean(skill.instructions?.trim());
+
+/**
+ * Assembles the CAPA Prompt: every equipped generation skill, Author first,
+ * once each, in CAPA Schema order. Non-generation skills are recorded for
+ * their host runtime but contribute no authoring text.
+ */
+export const assembleCapaPrompt = (loadout: HarnessSkillLoadoutSnapshot): CapaPrompt => {
+  const ordered = CAPA_SCHEMA.flatMap(slot => loadout.skills.filter(skill => skill.slot === slot.id));
+  const author = ordered.find(skill => skill.slot === 'author' && isAuthoringSkill(skill));
+  if (!author) throw new Error('Harness Generation requires an equipped Author skill.');
+  const sections = ordered.filter(isAuthoringSkill).map(skill => [
+    `CAPA SKILL [${slotLabel(skill.slot)}] — ${skill.name} v${skill.version}`,
+    skill.instructions!.trim(),
+  ].join('\n'));
+  const text = sections.join('\n\n');
+  const estimatedTokens = Math.max(1, Math.ceil(text.length / 4));
+  if (estimatedTokens > CAPA_PROMPT_TOKEN_LIMIT) {
+    throw new Error('Equipped skills exceed the CAPA Prompt budget. Empty a skill slot or install shorter instructions.');
+  }
+  return {
+    capturedAt: loadout.capturedAt,
+    skills: ordered.map(skill => ({
+      id: skill.id,
+      version: skill.version,
+      name: skill.name,
+      slot: skill.slot,
+      applications: [...skill.applications],
+      authoring: isAuthoringSkill(skill),
+      ...(skill.source ? { source: cloneHarnessValue(skill.source) } : {}),
+    })),
+    text,
+    estimatedTokens,
+  };
 };

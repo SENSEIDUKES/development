@@ -83,6 +83,7 @@ export interface HarnessStory {
 }
 
 export type HarnessSkillSlotId =
+  | 'author'
   | 'pacing'
   | 'continuity'
   | 'style'

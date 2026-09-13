@@ -96,6 +96,10 @@ describe('Harness Generation Phase 2 novel core', () => {
     });
     expect(state.chapters[0].id).not.toBe('model-story-id');
     expect(state.stories[0].head.nextChapterNumber).toBe(2);
+    expect(state.stories[0].skillLoadout?.author).toEqual({
+      id: 'seihouse.sen-novel-author',
+      version: '1.0.0',
+    });
     expect(state.attempts[0].warnings.some(warning => warning.code === 'ignored_model_identity')).toBe(true);
     expect(provider.generate).toHaveBeenCalledTimes(1);
     expect(provider.generate.mock.calls[0][0].foundation.input.premise).toContain('courier');
@@ -125,23 +129,54 @@ describe('Harness Generation Phase 2 novel core', () => {
     expect(request.context.foundationRevision.input.sourceSnapshot?.sourceId).toBe('seed-1');
   });
 
+  it('equips the bundled Author skill when an older saved story is hydrated', async () => {
+    const repository = new InMemoryHarnessGenerationRepository();
+    const provider = adapter(response(JSON.stringify({ prose: 'Unused.' })));
+    const first = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime() });
+    await first.hydrate();
+    await createStory(first);
+    const legacyState = repository.snapshot();
+    legacyState.stories[0].skillLoadout = undefined;
+    await repository.save(legacyState);
+
+    const reloaded = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime() });
+    await reloaded.hydrate();
+
+    expect(reloaded.snapshot().stories[0].skillLoadout?.author).toEqual({
+      id: 'seihouse.sen-novel-author',
+      version: '1.0.0',
+    });
+  });
+
   it('persists a per-story skill loadout and freezes its exact instructions into the generation request', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const provider = adapter(response(JSON.stringify({ prose: 'The siege remained distant while the city learned to breathe.' })));
-    const installedSkills: HarnessSkillManifest[] = [{
-      id: 'seihouse.long-range-pacing', version: '1.0.0', name: 'Long-Range Pacing',
-      description: 'Spaces major events across chapters.', slot: 'pacing', applications: ['generation'],
-      instructions: 'Do not collapse the siege into one chapter.',
-    }];
+    const installedSkills: HarnessSkillManifest[] = [
+      {
+        id: 'community.cozy-author', version: '1.0.0', name: 'Cozy Fantasy Author',
+        description: 'Writes intimate, low-stakes fantasy chapters.', slot: 'author', applications: ['generation'],
+        instructions: 'Write with warmth, restraint, and close attention to daily life.',
+      },
+      {
+        id: 'seihouse.long-range-pacing', version: '1.0.0', name: 'Long-Range Pacing',
+        description: 'Spaces major events across chapters.', slot: 'pacing', applications: ['generation'],
+        instructions: 'Do not collapse the siege into one chapter.',
+      },
+    ];
     const controller = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime(), installedSkills });
     await controller.hydrate();
     const story = await createStory(controller);
-    await controller.setSkillSlot(story.id, 'pacing', { id: installedSkills[0].id, version: installedSkills[0].version });
+    await controller.setSkillSlot(story.id, 'author', { id: installedSkills[0].id, version: installedSkills[0].version });
+    await controller.setSkillSlot(story.id, 'pacing', { id: installedSkills[1].id, version: installedSkills[1].version });
     await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
 
     const request = provider.generate.mock.calls[0][0] as HarnessGenerationRequest;
     expect(repository.snapshot().stories[0].skillLoadout?.pacing).toEqual({ id: 'seihouse.long-range-pacing', version: '1.0.0' });
+    expect(repository.snapshot().stories[0].skillLoadout?.author).toEqual({ id: 'community.cozy-author', version: '1.0.0' });
     expect(request.context.skillLoadout?.skills[0]).toMatchObject({
+      name: 'Cozy Fantasy Author', slot: 'author', instructions: 'Write with warmth, restraint, and close attention to daily life.',
+    });
+    expect(request.context.skillLoadout?.skills.find(skill => skill.slot === 'pacing')).toMatchObject({
       name: 'Long-Range Pacing', slot: 'pacing', instructions: 'Do not collapse the siege into one chapter.',
     });
   });

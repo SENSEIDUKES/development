@@ -1,7 +1,11 @@
-import type { HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import {
+  SEN_NOVEL_AUTHOR_SKILL,
+  type HarnessSkillManifest,
+} from '@seihouse/sen/harness-generation';
 
 /** Workshop-only installed inventory used to inspect the real portable loadout UI. */
 export const WORKSHOP_HARNESS_SKILLS: HarnessSkillManifest[] = [
+  SEN_NOVEL_AUTHOR_SKILL,
   {
     id: 'workshop.long-range-pacing',
     version: '0.1.0',

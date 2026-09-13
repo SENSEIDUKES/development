@@ -17,7 +17,7 @@ existing Chapter Generation feature.
 | --- | --- |
 | Replica creation date | 2026-08-29 |
 | Last Workshop update | 2026-09-13 |
-| Last source comparison | 2026-08-29 — independent feature; current main Chapter Generation was inspected only as a product-requirements inventory |
+| Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Steered continuation with a derived SEN Reader adapter |
 
 ### History
@@ -28,6 +28,14 @@ existing Chapter Generation feature.
   package provenance. Reduced repeated nested provider schema variants after a live
   baseline request exposed Gemini schema rejection; story acceptance stays unchanged.
 
+- **2026-09-13:** Replaced the inherited placeholder author wording with the
+  founder-approved **Author Skill V1**: a focused Mission, Boundaries,
+  Philosophy, Reference shelf, and Remember statement. Style, pacing,
+  continuity, media, and Harness mechanics remain outside the skill.
+- **2026-09-12:** Promoted the source SEN light-novel author direction from a
+  hidden generic server prompt into the bundled, visible, replaceable **Author**
+  skill. Existing and new local Harness stories equip its exact version, the
+  provider receives it first, and the skill card exposes its actual instructions.
 - **2026-09-12:** Added the missing installable-skill layer: six visible per-story
   slots, host-injected versioned manifests, durable loadout references, frozen
   request snapshots, generation-instruction delivery, missing-install protection,
@@ -134,8 +142,11 @@ Development's complete SPP import flow and validation evidence are documented in
 
 Installable skills are not the deterministic capability handlers above. Capability
 handlers are permanent internal machinery that interprets committed evidence. Skills
-are optional, host-installed packages that an author equips into one of six per-story
-slots: Pacing, Continuity, Style, Accessibility, Translation, or Media.
+are versioned packages equipped into one of seven per-story slots: Author, Pacing,
+Continuity, Style, Accessibility, Translation, or Media. The bundled SEN Novel Author
+is a normal, replaceable generation skill, not hidden creative Harness behavior. It is
+equipped for new and previously saved local stories, and its exact instructions are
+the first creative direction sent to the provider.
 
 The host supplies validated `HarnessSkillManifest` records. The Harness persists an
 exact `id` and `version` reference in the story, freezes the full equipped manifests

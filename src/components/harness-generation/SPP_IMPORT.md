@@ -13,8 +13,11 @@ The Development host follows the official adapter's `SPP_AGENT_SETUP.md`:
 Package ID, version, selected path and SHA-256 remain in `skill.source`, including the
 saved attempt and model request. The host's skill ID identifies the package/path/slot
 combination; it never replaces the original package ID. Importing does not equip a skill.
-Package text remains in the existing user-context skill section, subject to the existing
-author/canon hierarchy. Package names and categories never trigger behavior.
+Package text follows the chosen slot's existing instruction path, subject to the existing
+author/canon hierarchy. Explicitly equipping the Author slot uses the established author
+system-instruction section; other generation skills use the user-context skill section.
+Intake itself never promotes text to instructions. Package names and categories never
+trigger behavior.
 
 The host retains selected skill text, not the whole archive. Reload restores the installed
 inventory and per-story equipped references; reupload to inspect the full package again.
@@ -54,11 +57,14 @@ duplicate/version handling, storage failure and context budgeting.
 `sppGeneration.live.test.ts` is an explicit opt-in test using `HARNESS_SPP_ENV` for an
 existing environment file and optional `HARNESS_SPP_OUTPUT` for local evidence. It ran
 two real `google/gemini-3.1-flash-lite` chapters with the same Foundation and temperature
-0, baseline and equipped. Both committed. The equipped request preserved the selected
-instructions and source; reported input tokens were 2,527 baseline and 3,619 equipped.
-The equipped opening was more immediate and advanced toward shelter while leaving the
-invitation unresolved and avoiding a forced breakthrough. This is qualitative evidence
-consistent with the skill, not a guarantee of stylistic compliance across generations.
+0 after merging the new Author slot: bundled-author baseline and imported-author equipped.
+Both committed. The equipped request replaced the bundled author's text with the selected
+file in the existing author instruction section and retained package provenance. Reported
+input tokens were 2,957 baseline and 3,371 equipped. The imported-author chapter uses an
+immediate storm opening, leaves the invitation unresolved and avoids a forced breakthrough.
+Since the bundled and imported skills share similar author direction, output comparison
+alone does not isolate stylistic causality. The captured provider request proves the
+imported instructions were used; the prose supplies qualitative compliance evidence.
 
 The live baseline initially exposed Gemini `INVALID_ARGUMENT` from repeating all nested
 detail variants in every response-schema bucket. Keeping character/speech details with
@@ -66,6 +72,9 @@ characters and mechanics with other evidence categories made both real calls suc
 The JSON story contract, evidence validation and commit guards remain in place.
 
 The browser test also uploaded the supplied package, previewed and installed its text,
-equipped Style, and generated a third real Gemini chapter through the UI. Chapter 1
-committed; reload restored the chapter, next chapter number and equipped skill. Import
-was disabled during generation. A 390 px viewport check found no document overflow.
+and generated real Gemini prose through the UI. After the Author-slot merge, it installed
+the file for Author, explicitly replaced the bundled author, emptied Style and committed
+Chapter 2 with only the imported Author equipped. Reload restored the chapter, next
+chapter number and equipped skill. Import was disabled during generation. A 390 px
+viewport check found no document overflow. Optional memory-interpretation warnings
+remain separately visible in the existing diagnostics; these do not invalidate committed prose.

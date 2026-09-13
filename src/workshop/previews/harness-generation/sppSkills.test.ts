@@ -18,7 +18,7 @@ describe('SPP intake through Harness skills', () => {
     const content = await inspectHarnessSpp(authorBytes());
     const path = content.manifest.files[0].path;
     const text = readHarnessSppText(content, path);
-    const skill = createHarnessSppSkill(content, path, 'style');
+    const skill = createHarnessSppSkill(content, path, 'author');
     const saved = storage();
     saveHarnessSppSkill(saved, [], skill);
     const repository = new InMemoryHarnessGenerationRepository();
@@ -30,10 +30,9 @@ describe('SPP intake through Harness skills', () => {
           environment: { GEMINI_API_KEY: 'fixture-key' },
           providerFactory: () => ({ provider: 'gemini', model: request.model, generate: async prompt => {
             calls++;
-            expect(prompt.userPrompt).toContain(JSON.stringify(text.trim()).slice(1, -1));
+            expect(prompt.systemInstruction).toContain(text.trim());
             expect(prompt.userPrompt).toContain(path);
             expect(prompt.userPrompt).toContain(content.manifest.id);
-            expect(prompt.systemInstruction).not.toContain(text.trim());
             expect(request.context.selectionAudit?.included.some(item => item.sourceKind === 'skill')).toBe(true);
             return { rawProviderResponse: JSON.stringify({ prose: 'The courier caught the falling jade token before it struck the rain-soaked steps.' }),
               providerReceipt: { provider: 'gemini', model: request.model, generatedAt: new Date().toISOString(), durationMs: 1, usage: { source: 'unavailable' } } };
@@ -45,7 +44,7 @@ describe('SPP intake through Harness skills', () => {
     } });
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'A courier arrives at a mountain school with a damaged invitation.' });
-    await controller.setSkillSlot(story.id, 'style', skill);
+    await controller.setSkillSlot(story.id, 'author', skill);
     await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
     expect(calls).toBe(1);
     expect(repository.snapshot().chapters).toHaveLength(1);

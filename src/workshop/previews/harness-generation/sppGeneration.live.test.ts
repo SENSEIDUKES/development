@@ -14,15 +14,16 @@ it.runIf(Boolean(process.env.HARNESS_SPP_ENV))('generates real baseline and equi
   const configured = parseEnv(readFileSync(process.env.HARNESS_SPP_ENV!, 'utf8'));
   const environment = { GEMINI_API_KEY: configured.GEMINI_API_KEY, HARNESS_GENERATION_TEMPERATURE: '0', HARNESS_GENERATION_MAX_OUTPUT_TOKENS: '8192' };
   const content = await inspectHarnessSpp(new Uint8Array(readFileSync(new URL('./fixtures/SEN-AUTHOR.spp', import.meta.url))));
-  const skill = createHarnessSppSkill(content, content.manifest.files[0].path, 'style');
+  const skill = createHarnessSppSkill(content, content.manifest.files[0].path, 'author');
   for (const equipped of [false, true]) {
     const repository = new InMemoryHarnessGenerationRepository();
     const controller = new HarnessGenerationController({ repository, installedSkills: [skill], modelAdapter: {
       getServerInfo: async () => { throw new Error('Not needed'); },
       generate: async request => {
         const prompt = buildHarnessGenerationPrompt(request);
-        expect(request.context.skillLoadout?.skills.length).toBe(equipped ? 1 : 0);
+        expect(request.context.skillLoadout?.skills.length).toBe(1);
         if (equipped) expect(request.context.skillLoadout?.skills[0].instructions).toBe(skill.instructions);
+        if (equipped) expect(prompt.systemInstruction).toContain(skill.instructions);
         let diagnostic = '';
         const result = await handleHarnessGenerationHttp({ method: 'POST', body: JSON.stringify(request) }, { environment,
           onError: error => { diagnostic = String(error).replaceAll(environment.GEMINI_API_KEY ?? 'NO_KEY', '[redacted]'); },
@@ -38,7 +39,7 @@ it.runIf(Boolean(process.env.HARNESS_SPP_ENV))('generates real baseline and equi
     } });
     await controller.hydrate();
     const story = await controller.createStory({ title: 'The Rain Gate', premise: 'Lin, a young courier, reaches a remote mountain school during a rainstorm. Her invitation is damaged. She must persuade the gatekeeper to let her wait inside until morning.', permanentInstructions: 'Write a complete chapter of about 700 words. Keep the damaged invitation unresolved at the end; Lin may obtain shelter but no breakthrough, combat, or major revelation occurs.' });
-    if (equipped) await controller.setSkillSlot(story.id, 'style', skill);
+    if (equipped) await controller.setSkillSlot(story.id, 'author', skill);
     await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
     const state = repository.snapshot();
     expect(state.chapters, JSON.stringify(state.attempts[0].failure)).toHaveLength(1);

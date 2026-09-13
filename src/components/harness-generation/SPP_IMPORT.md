@@ -1,5 +1,9 @@
 # SPP import in the Development Harness
 
+> Skill/slot terms here (CAPA Skill, CAPA Schema) are defined once in
+> [ARCHITECTURE_VOCABULARY.md](./ARCHITECTURE_VOCABULARY.md); this file
+> does not redefine them.
+
 The Development host follows the official adapter's `SPP_AGENT_SETUP.md`:
 
 1. **Import SPP skill** accepts a file and calls `intakePack` from the pinned official package.

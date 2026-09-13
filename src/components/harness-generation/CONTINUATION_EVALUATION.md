@@ -1,5 +1,9 @@
 # Steered continuation evaluation — 2026-09-06
 
+> Terms like HARNESS, Story Information, and context selection are defined
+> once in [ARCHITECTURE_VOCABULARY.md](./ARCHITECTURE_VOCABULARY.md); this
+> file does not redefine them.
+
 The ordinary Harness cycle still uses one writing call per chapter. This work adds
 persistent author direction, compact evidence and mechanical continuity, bounded
 lookup, and repair from saved responses. It does not add a literary-review loop.

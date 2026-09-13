@@ -1,5 +1,13 @@
 # Harness Generation
 
+> **Before changing Harness Generation behavior:** read
+> [ARCHITECTURE_VOCABULARY.md](./ARCHITECTURE_VOCABULARY.md) first. It is
+> the single authoritative source for HARNESS, CAPA, CAPA Schema, CAPA
+> Skill, CAPA Prompt, Story Information, Story Information Packet,
+> Immediate Chapter Request, Generation Model Call, and Generated Chapter.
+> Use those terms and definitions; do not redefine or reinterpret them in
+> this file or elsewhere.
+
 ## Purpose
 
 Harness Generation is an independent, checkpoint-first novel core. It gives an
@@ -22,6 +30,14 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-09-13:** Established the canonical architecture vocabulary in
+  [ARCHITECTURE_VOCABULARY.md](./ARCHITECTURE_VOCABULARY.md) (HARNESS, CAPA,
+  CAPA Schema, CAPA Skill, CAPA Prompt, Story Information, Story Information
+  Packet, Immediate Chapter Request, Generation Model Call, Generated
+  Chapter) and mapped existing names onto it, including the mismatches
+  between it and `HarnessContextSnapshot`, the installable-skill system,
+  and `buildHarnessGenerationPrompt`. No generation behavior, persisted
+  contracts, or the Arc system changed.
 - **2026-09-13:** Connected official SPP intake in the Development host to the existing
   installed-skill inventory, story slots, audited context and generation prompt.
   Added validated file inspection, explicit text selection, local installation and

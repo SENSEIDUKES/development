@@ -36,6 +36,7 @@
     "react": "latest",
     "react-dom": "latest",
     "react-focus-lock": "^2.13.7",
+    "seihouse-productions-package": "file:vendor/seihouse-productions-package-0.1.0.tgz",
     "typescript": "latest",
     "vite": "latest"
   },

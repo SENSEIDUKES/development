@@ -42,7 +42,9 @@ describe('Steered continuation and SEN boundaries', () => {
     await controller.generateNextChapter(story.id, 'fixture');
     const before = controller.snapshot();
     const schema = buildHarnessGenerationPrompt(request!).responseJsonSchema;
-    expect(schema.properties.memory.properties.progression.items.properties.details.properties.mechanics.required).toContain('value');
+    expect(schema.properties.memory.properties.progression.items.properties.details.properties.mechanics?.required).toContain('value');
+    expect(schema.properties.memory.properties.progression.items.properties.details.properties).not.toHaveProperty('character');
+    expect(schema.properties.memory.properties.characters.items.properties.details.properties).toHaveProperty('speech');
     expect(createHarnessSenStory(before, story.id).memory?.characters).toHaveLength(2);
     await controller.recoverChapterMemory(before.chapters[0].id, 'fixture');
     await controller.replayStory(story.id);

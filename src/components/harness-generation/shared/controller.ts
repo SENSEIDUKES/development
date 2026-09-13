@@ -101,7 +101,7 @@ export class HarnessGenerationController {
   private readonly runtime: HarnessRuntime;
   private readonly eventPreserver: HarnessEventPreserver;
   private readonly capabilityRegistry: HarnessCapabilityRegistry;
-  private readonly skillCatalog: ReadonlyMap<string, HarnessSkillManifest>;
+  private skillCatalog: ReadonlyMap<string, HarnessSkillManifest>;
   private readonly listeners = new Set<WorkspaceListener>();
   private state = createEmptyHarnessWorkspaceState();
   private hydrated = false;
@@ -120,6 +120,11 @@ export class HarnessGenerationController {
     this.listeners.add(listener);
     listener(this.snapshot());
     return () => this.listeners.delete(listener);
+  }
+
+  /** Host inventory updates never replace the controller or an in-flight frozen request. */
+  setInstalledSkills(manifests: HarnessSkillManifest[]): void {
+    this.skillCatalog = createHarnessSkillCatalog(manifests);
   }
 
   snapshot(): HarnessWorkspaceState {
@@ -363,10 +368,8 @@ export class HarnessGenerationController {
 
     const attemptId = this.runtime.createId('hga');
     const startedAt = this.runtime.now();
-    const contextSnapshot = {
-      ...compileHarnessContext(this.state, story, foundation, attemptId, this.runtime),
-      skillLoadout: freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt),
-    };
+    const skillLoadout = freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt);
+    const contextSnapshot = compileHarnessContext(this.state, story, foundation, attemptId, this.runtime, skillLoadout);
     const attempt: HarnessGenerationAttempt = {
       id: attemptId,
       storyId,

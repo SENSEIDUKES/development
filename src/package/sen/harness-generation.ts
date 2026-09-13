@@ -37,6 +37,7 @@ export {
 export { DEFAULT_HARNESS_CONTEXT_POLICY } from '../../components/harness-generation/shared/context';
 export {
   HARNESS_SKILL_SLOTS,
+  HARNESS_SKILL_INSTRUCTION_LIMIT,
   createHarnessSkillCatalog,
   freezeHarnessSkillLoadout,
   harnessSkillKey,

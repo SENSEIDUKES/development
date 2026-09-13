@@ -112,6 +112,8 @@ export interface HarnessSkillManifest extends HarnessSkillReference {
   author?: string;
   assetCount?: number;
   runtimeLabel?: string;
+  /** Original container identity and selected file; metadata is not model instruction text. */
+  source?: { packageId: string; packageVersion: string; path: string; sha256: string };
 }
 
 /** Exact installed manifests frozen before a provider request leaves the browser. */
@@ -498,6 +500,7 @@ export interface HarnessContextSelectionPolicy {
 }
 
 export type HarnessContextSourceKind =
+  | 'skill'
   | 'foundation'
   | 'correction'
   | 'chapter-prose'

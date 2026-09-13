@@ -11,6 +11,16 @@ The universal UI tarball is built from the merged UI PR [#60](https://github.com
 
 No registry publication or repository visibility change is required.
 
+## SPP intake adapter
+
+`seihouse-productions-package-0.1.0.tgz` is built from the official standalone
+`SENSEIDUKES/seihouse-productions-package` source at
+`350e3c0aa55bd853767e685a45551b9f8b20fc24` using `npm exec -- tsup` and `npm pack`.
+The package lock pins the tarball integrity. Its included `SPP_AGENT_SETUP.md`
+governs intake: validate first, select manifest files explicitly, then pass decoded
+content into the host's existing model context. SPP is a Development host dependency;
+the portable SEN Harness only receives ordinary skill manifests and has no SPP dependency.
+
 To reproduce an artifact, check out its recorded UI commit (the per-artifact commit when present, otherwise the shared source commit), install with its frozen pnpm lockfile, and build and pack that package from UI. Run each pack at its own recorded commit:
 
 ```sh

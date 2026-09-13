@@ -16,11 +16,17 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-09-12 |
+| Last Workshop update | 2026-09-13 |
 | Last source comparison | 2026-08-29 — independent feature; current main Chapter Generation was inspected only as a product-requirements inventory |
 | Lifecycle status | Steered continuation with a derived SEN Reader adapter |
 
 ### History
+
+- **2026-09-13:** Connected official SPP intake in the Development host to the existing
+  installed-skill inventory, story slots, audited context and generation prompt.
+  Added validated file inspection, explicit text selection, local installation and
+  package provenance. Reduced repeated nested provider schema variants after a live
+  baseline request exposed Gemini schema rejection; story acceptance stays unchanged.
 
 - **2026-09-12:** Added the missing installable-skill layer: six visible per-story
   slots, host-injected versioned manifests, durable loadout references, frozen

@@ -10,6 +10,7 @@ import type {
   HarnessContextSelectionPolicy,
   HarnessContextSnapshot,
   HarnessStory,
+  HarnessSkillLoadoutSnapshot,
   HarnessWorkspaceState,
   StoryFoundationRevision,
 } from './types';
@@ -74,11 +75,21 @@ export const compileHarnessContext = (
   foundationRevision: StoryFoundationRevision,
   attemptId: string,
   runtime: HarnessRuntime = defaultHarnessRuntime,
+  skillLoadout?: HarnessSkillLoadoutSnapshot,
 ): HarnessContextSnapshot => {
   const policy = cloneHarnessValue(story.contextPolicy ?? DEFAULT_HARNESS_CONTEXT_POLICY);
   const included: HarnessContextAuditItem[] = [];
   const omitted: HarnessContextAuditItem[] = [];
   let remaining = policy.maxEstimatedTokens;
+  if (skillLoadout?.skills.length) {
+    const item = auditItem(`ctx-skills-${attemptId}`, 'skill', skillLoadout.skills.map(skill => skill.id),
+      'Equipped skills', 'Exact installed skill versions; counted before selecting optional history.', skillLoadout);
+    if (item.estimatedTokens > Math.min(6_000, policy.maxEstimatedTokens)) {
+      throw new Error('Equipped skills exceed the Harness context budget. Empty a skill slot or install shorter instructions.');
+    }
+    included.push(item);
+    remaining -= item.estimatedTokens;
+  }
 
   // Never silently discard author authority, even under an unusually small budget.
   const steering = cloneHarnessValue(story.steering ?? []);
@@ -259,6 +270,7 @@ export const compileHarnessContext = (
     lookups,
     mechanicalContinuity,
     contextVersion: 2,
+    ...(skillLoadout ? { skillLoadout: cloneHarnessValue(skillLoadout) } : {}),
     selectionPolicy: policy,
     canonicalContext: { corrections: cloneHarnessValue(selectedCorrections), records: cloneHarnessValue(selectedRecords), handoff },
     selectionAudit: { included, omitted, totalEstimatedTokens: included.reduce((sum, item) => sum + item.estimatedTokens, 0) },

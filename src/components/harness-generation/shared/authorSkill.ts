@@ -9,7 +9,7 @@ export const SEN_NOVEL_AUTHOR_SKILL: HarnessSkillManifest = {
   id: 'seihouse.sen-novel-author',
   version: '1.0.0',
   name: 'SEN Novel Author',
-  description: 'Writes immersive, emotionally impactful light-novel chapters with genre-sensitive control over cultivation intensity.',
+  description: 'Writes engaging, immersive chapters in the tradition of Asian serialized web novels.',
   slot: 'author',
   applications: ['generation'],
   instructions: SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS,

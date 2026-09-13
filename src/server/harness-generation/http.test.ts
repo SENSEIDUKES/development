@@ -116,7 +116,10 @@ describe('Harness Generation HTTP boundary', () => {
     expect(input.userPrompt).toContain('must not change chapter prose');
     expect(input.systemInstruction).toContain('ACTIVE HARNESS SKILLS');
     expect(input.systemInstruction).toMatch(/^ACTIVE AUTHOR SKILL — SEN Novel Author v1\.0\.0/);
-    expect(input.systemInstruction).toContain('elite fantasy web-novel author specializing in light novels');
+    expect(input.systemInstruction).toContain('elite Eastern fantasy web-novel author specializing in Asian light novels');
+    expect(input.systemInstruction).toContain('prioritize entertainment over fake deep literary prose');
+    expect(input.systemInstruction).not.toContain('Reading/archive');
+    expect(input.systemInstruction).not.toContain('chants/formulas');
     expect(input.systemInstruction).not.toContain('You are an expert novelist');
     expect(input.userPrompt).not.toContain(SEN_NOVEL_AUTHOR_SKILL.instructions);
   });

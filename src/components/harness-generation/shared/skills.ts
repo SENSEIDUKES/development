@@ -32,6 +32,7 @@ const HARNESS_SKILL_APPLICATIONS: readonly HarnessSkillApplication[] = [
 ];
 
 export const harnessSkillKey = (reference: HarnessSkillReference) => `${reference.id}@${reference.version}`;
+export const HARNESS_SKILL_INSTRUCTION_LIMIT = 16_000;
 
 const nonEmpty = (value: string, label: string) => {
   if (!value.trim()) throw new Error(`Harness skill ${label} cannot be empty.`);
@@ -53,6 +54,9 @@ export const validateHarnessSkillManifest = (manifest: HarnessSkillManifest): Ha
   }
   if (manifest.applications.includes('generation') && !manifest.instructions?.trim()) {
     throw new Error(`Generation skill ${manifest.name} must include model instructions.`);
+  }
+  if ((manifest.instructions?.length ?? 0) > HARNESS_SKILL_INSTRUCTION_LIMIT) {
+    throw new Error(`Harness skill instructions exceed ${HARNESS_SKILL_INSTRUCTION_LIMIT} characters.`);
   }
   return cloneHarnessValue({ ...manifest, instructions: manifest.instructions?.trim() });
 };

@@ -22,6 +22,12 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-09-13:** Connected official SPP intake in the Development host to the existing
+  installed-skill inventory, story slots, audited context and generation prompt.
+  Added validated file inspection, explicit text selection, local installation and
+  package provenance. Reduced repeated nested provider schema variants after a live
+  baseline request exposed Gemini schema rejection; story acceptance stays unchanged.
+
 - **2026-09-13:** Replaced the inherited placeholder author wording with the
   founder-approved **Author Skill V1**: a focused Mission, Boundaries,
   Philosophy, Reference shelf, and Remember statement. Style, pacing,
@@ -130,6 +136,9 @@ host-supplied cast identity establishes the main character without guessing from
 paragraph order. Mechanical rows and status stats use the same preserved value.
 
 ## Installable skill boundary
+
+Development's complete SPP import flow and validation evidence are documented in
+[SPP_IMPORT.md](./SPP_IMPORT.md).
 
 Installable skills are not the deterministic capability handlers above. Capability
 handlers are permanent internal machinery that interprets committed evidence. Skills

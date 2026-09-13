@@ -30,7 +30,14 @@ const bucketDescriptions: Record<keyof typeof HARNESS_MEMORY_CATEGORIES, string>
 };
 const memorySchema = { type: 'object', properties: Object.fromEntries(Object.keys(HARNESS_MEMORY_CATEGORIES).map(bucket => [bucket, {
   type: 'array', description: bucketDescriptions[bucket as keyof typeof HARNESS_MEMORY_CATEGORIES],
-  items: { type: 'object', properties: { ...memoryEntryProperties, subjects: {
+  // Repeating every nested detail variant in all 13 buckets exceeds Gemini's
+  // schema complexity limit. Keep identity/speech with characters and mechanics
+  // with the other evidence categories; the accepted story contract is unchanged.
+  items: { type: 'object', properties: { ...memoryEntryProperties,
+    details: { type: 'object', properties: bucket === 'characters'
+      ? { character: memoryEntryProperties.details.properties.character, speech: memoryEntryProperties.details.properties.speech }
+      : { mechanics: memoryEntryProperties.details.properties.mechanics } },
+    subjects: {
     type: 'array', minItems: bucket === 'relationships' ? 2 : 1, ...(bucket === 'relationships' ? {} : { maxItems: 1 }),
     items: { type: 'object', properties: { name: { type: 'string' }, kind: { type: 'string', enum: ['character', 'location-world', 'faction', 'artifact', 'plot-thread', 'mystery', 'timeline-event'] } }, required: ['name', 'kind'] },
   } },
@@ -117,12 +124,14 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
     'ACTIVE HARNESS SKILLS (exact versions frozen for this attempt)',
     JSON.stringify({
       capturedAt: request.context.skillLoadout?.capturedAt,
+      authorSkill: { id: authorSkill.id, version: authorSkill.version, name: authorSkill.name, source: authorSkill.source },
       generationSkills: generationSkills.map(skill => ({
         id: skill.id,
         version: skill.version,
         name: skill.name,
         slot: skill.slot,
         instructions: skill.instructions,
+        source: skill.source,
       })),
       nonGenerationSkills: equippedSkills
         .filter(skill => !skill.applications.includes('generation'))

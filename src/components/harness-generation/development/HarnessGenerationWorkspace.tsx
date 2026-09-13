@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   BookOpen,
   CheckCircle2,
@@ -55,6 +55,8 @@ export interface HarnessGenerationWorkspaceProps {
   storySeedSource?: HarnessStorySeedSource;
   /** Host-owned inventory. Passing a manifest means that exact skill version is installed and available to equip. */
   installedSkills?: HarnessSkillManifest[];
+  /** Host-owned package intake, shown alongside the existing skill slots. */
+  renderSkillImport?: (busy: boolean) => ReactNode;
 }
 
 const emptyFoundation = (): StoryFoundationInput => ({ premise: '' });
@@ -687,6 +689,7 @@ export function HarnessGenerationWorkspace({
   modelAdapter: injectedAdapter,
   storySeedSource,
   installedSkills = EMPTY_INSTALLED_SKILLS,
+  renderSkillImport,
 }: HarnessGenerationWorkspaceProps) {
   const availableSkills = useMemo(
     () => includeBundledHarnessSkills(installedSkills),
@@ -701,9 +704,10 @@ export function HarnessGenerationWorkspace({
     [injectedAdapter],
   );
   const controller = useMemo(
-    () => new HarnessGenerationController({ repository, modelAdapter, installedSkills: availableSkills }),
-    [repository, modelAdapter, availableSkills],
+    () => new HarnessGenerationController({ repository, modelAdapter }),
+    [repository, modelAdapter],
   );
+  useEffect(() => controller.setInstalledSkills(installedSkills), [controller, installedSkills]);
   const [state, setState] = useState<HarnessWorkspaceState>();
   const [serverInfo, setServerInfo] = useState<HarnessGenerationServerInfo>();
   const [selectedStoryId, setSelectedStoryId] = useState<string>();
@@ -998,6 +1002,7 @@ export function HarnessGenerationWorkspace({
               </>
             )}
 
+            {renderSkillImport?.(busy)}
             {selectedStory && (
               <SkillLoadoutPanel
                 story={selectedStory}

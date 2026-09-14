@@ -521,7 +521,7 @@ function Diagnostics({ attempt }: { attempt?: HarnessGenerationAttempt }) {
       </details>
       <details className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
         <summary className="cursor-pointer text-xs font-medium text-neutral-200">Frozen Story Information Packet</summary>
-        <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-relaxed text-neutral-400">{JSON.stringify(attempt.contextSnapshot, null, 2)}</pre>
+        <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-relaxed text-neutral-400">{JSON.stringify(attempt.storyInformation, null, 2)}</pre>
       </details>
       <details className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
         <summary className="cursor-pointer text-xs font-medium text-neutral-200">Immediate Chapter Request</summary>
@@ -665,9 +665,9 @@ function HarnessInspection({
           <label className="flex items-end gap-2 pb-2 text-xs text-neutral-400"><input type="checkbox" checked={includeMinor} onChange={event => setIncludeMinor(event.target.checked)} /> Include minor events</label>
         </div>
         <div className="mt-3"><LibraryButton type="button" size="sm" onClick={() => onPolicy(Number(recentCount), Number(tokenBudget), includeMinor)} disabled={busy}>Save visible policy</LibraryButton></div>
-        {attempt?.contextSnapshot.selectionAudit && <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <div><p className="font-mono text-[10px] uppercase text-cyan-200/60">Included</p><ul className="mt-2 space-y-1 text-xs text-neutral-400">{attempt.contextSnapshot.selectionAudit.included.map(item => <li key={item.id}>{item.label} · {item.estimatedTokens} tokens · {item.reason}</li>)}</ul></div>
-          <div><p className="font-mono text-[10px] uppercase text-neutral-500">Omitted</p><ul className="mt-2 space-y-1 text-xs text-neutral-500">{attempt.contextSnapshot.selectionAudit.omitted.map(item => <li key={item.id}>{item.label} · {item.reason}</li>)}</ul></div>
+        {attempt?.storyInformation.selectionAudit && <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div><p className="font-mono text-[10px] uppercase text-cyan-200/60">Included</p><ul className="mt-2 space-y-1 text-xs text-neutral-400">{attempt.storyInformation.selectionAudit.included.map(item => <li key={item.id}>{item.label} · {item.estimatedTokens} tokens · {item.reason}</li>)}</ul></div>
+          <div><p className="font-mono text-[10px] uppercase text-neutral-500">Omitted</p><ul className="mt-2 space-y-1 text-xs text-neutral-500">{attempt.storyInformation.selectionAudit.omitted.map(item => <li key={item.id}>{item.label} · {item.reason}</li>)}</ul></div>
         </div>}
       </details>
 

@@ -10,7 +10,7 @@ const fixture = () => {
   for (let chapterNumber = 1; chapterNumber <= 4; chapterNumber += 1) {
     state.chapters.push({
       id: `chapter-${chapterNumber}`, storyId: story.id, attemptId: `attempt-${chapterNumber}`,
-      foundationRevisionId: foundation.id, contextSnapshotId: `context-${chapterNumber}`,
+      foundationRevisionId: foundation.id, storyInformationPacketId: `context-${chapterNumber}`,
       chapterNumber, title: `Chapter ${chapterNumber}`, titleSource: 'model',
       prose: `Scene ${chapterNumber}. ` + 'The tide rises. '.repeat(80), eventIds: [],
       responseMode: 'json', createdAt: 'a', committedAt: 'b',

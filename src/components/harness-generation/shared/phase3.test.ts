@@ -7,14 +7,15 @@ import type { HarnessRuntime } from './ids';
 import {
   createEmptyHarnessWorkspaceState,
   InMemoryHarnessGenerationRepository,
-  migrateHarnessWorkspaceState,
+  readHarnessWorkspaceState,
 } from './repository';
-import type {
-  HarnessGenerationModelAdapter,
-  HarnessGenerationRequest,
-  HarnessGenerationResponse,
-  HarnessSemanticEvent,
-  HarnessWorkspaceState,
+import {
+  HARNESS_GENERATION_SCHEMA_VERSION,
+  type HarnessGenerationModelAdapter,
+  type HarnessGenerationRequest,
+  type HarnessGenerationResponse,
+  type HarnessSemanticEvent,
+  type HarnessWorkspaceState,
 } from './types';
 
 const runtime = (): HarnessRuntime => {
@@ -54,26 +55,39 @@ const semanticEvent = (overrides: Partial<HarnessSemanticEvent> = {}): HarnessSe
 });
 
 describe('Harness Generation Phase 3 deterministic story harness', () => {
-  it('migrates Phase 2 state losslessly, including interrupted and accepted-not-durable attempts', () => {
-    const legacy = {
-      schemaVersion: 1,
-      stories: [{ id: 'story', title: 'Preserved', createdAt: 'a', updatedAt: 'a', activeFoundationRevisionId: 'foundation', foundationRevisionIds: ['foundation'], head: { nextChapterNumber: 2, lastCommittedChapterId: 'chapter' } }],
-      foundations: [{ id: 'foundation', storyId: 'story', revision: 1, createdAt: 'a', input: { premise: 'Keep this premise.' } }],
-      chapters: [{ id: 'chapter', storyId: 'story', attemptId: 'committed', foundationRevisionId: 'foundation', contextSnapshotId: 'context', chapterNumber: 1, title: 'One', titleSource: 'model', prose: 'Exact accepted prose.', eventIds: ['event'], responseMode: 'json', createdAt: 'a', committedAt: 'b' }],
+  it('resets storage at an old schema version to an empty workspace instead of migrating it', () => {
+    // Shaped like a saved workspace from before the CAPA / Story Information
+    // separation: an older schemaVersion, and attempts still keyed by the old
+    // `contextSnapshot` field with no `capaPrompt` or `immediateChapterRequest`.
+    const old = {
+      schemaVersion: HARNESS_GENERATION_SCHEMA_VERSION - 1,
+      stories: [{ id: 'story', title: 'Old', createdAt: 'a', updatedAt: 'a', activeFoundationRevisionId: 'foundation', foundationRevisionIds: ['foundation'], head: { nextChapterNumber: 2, lastCommittedChapterId: 'chapter' } }],
+      foundations: [{ id: 'foundation', storyId: 'story', revision: 1, createdAt: 'a', input: { premise: 'Old premise.' } }],
+      chapters: [{ id: 'chapter', storyId: 'story', attemptId: 'committed', foundationRevisionId: 'foundation', contextSnapshotId: 'context', chapterNumber: 1, title: 'One', titleSource: 'model', prose: 'Old prose.', eventIds: ['event'], responseMode: 'json', createdAt: 'a', committedAt: 'b' }],
       events: [{ ...semanticEvent(), id: 'event', storyId: 'story', attemptId: 'committed', chapterId: 'chapter' }],
       attempts: [
-        { id: 'committed', storyId: 'story', foundationRevisionId: 'foundation', foundationSnapshot: { id: 'foundation', storyId: 'story', revision: 1, createdAt: 'a', input: { premise: 'Keep this premise.' } }, contextSnapshot: { id: 'context', storyId: 'story', attemptId: 'committed', foundationRevision: { id: 'foundation', storyId: 'story', revision: 1, createdAt: 'a', input: { premise: 'Keep this premise.' } }, storyHead: { nextChapterNumber: 1 }, chapterNumber: 1, createdAt: 'a', committedChapters: [] }, model: 'gemini-test', chapterNumber: 1, stage: 'committed', startedAt: 'a', rawProviderResponse: '{"prose":"Exact accepted prose."}', acceptedDraft: { prose: 'Exact accepted prose.', title: 'One', titleSource: 'model', responseMode: 'json' }, warnings: [] },
-        { id: 'interrupted', storyId: 'story', foundationRevisionId: 'foundation', foundationSnapshot: { id: 'foundation', storyId: 'story', revision: 1, createdAt: 'a', input: { premise: 'Keep this premise.' } }, contextSnapshot: { id: 'ctx2', storyId: 'story', attemptId: 'interrupted', foundationRevision: { id: 'foundation', storyId: 'story', revision: 1, createdAt: 'a', input: { premise: 'Keep this premise.' } }, storyHead: { nextChapterNumber: 2 }, chapterNumber: 2, createdAt: 'a', committedChapters: [] }, model: 'gemini-test', chapterNumber: 2, stage: 'request_started', startedAt: 'a', warnings: [] },
-        { id: 'not_durable', storyId: 'story', foundationRevisionId: 'foundation', foundationSnapshot: { id: 'foundation', storyId: 'story', revision: 1, createdAt: 'a', input: { premise: 'Keep this premise.' } }, contextSnapshot: { id: 'ctx3', storyId: 'story', attemptId: 'not_durable', foundationRevision: { id: 'foundation', storyId: 'story', revision: 1, createdAt: 'a', input: { premise: 'Keep this premise.' } }, storyHead: { nextChapterNumber: 2 }, chapterNumber: 2, createdAt: 'a', committedChapters: [] }, model: 'gemini-test', chapterNumber: 2, stage: 'accepted_not_durable', startedAt: 'a', rawProviderResponse: 'raw', acceptedDraft: { prose: 'Accepted but not durable.', title: 'Two', titleSource: 'model', responseMode: 'json' }, recoveryStage: 'committed', warnings: [] },
+        { id: 'committed', storyId: 'story', foundationRevisionId: 'foundation', foundationSnapshot: { id: 'foundation', storyId: 'story', revision: 1, createdAt: 'a', input: { premise: 'Old premise.' } }, contextSnapshot: { id: 'context', storyId: 'story', attemptId: 'committed', foundationRevision: { id: 'foundation', storyId: 'story', revision: 1, createdAt: 'a', input: { premise: 'Old premise.' } }, storyHead: { nextChapterNumber: 1 }, chapterNumber: 1, createdAt: 'a', committedChapters: [] }, model: 'gemini-test', chapterNumber: 1, stage: 'committed', startedAt: 'a', rawProviderResponse: '{"prose":"Old prose."}', acceptedDraft: { prose: 'Old prose.', title: 'One', titleSource: 'model', responseMode: 'json' }, warnings: [] },
       ],
+      capabilityReceipts: [], canonicalRecords: [], projections: [], corrections: [], batches: [],
     };
-    const migrated = migrateHarnessWorkspaceState(legacy);
-    expect(migrated.schemaVersion).toBe(2);
-    expect(migrated.chapters[0].prose).toBe('Exact accepted prose.');
-    expect(migrated.attempts.map(attempt => attempt.stage)).toEqual(['committed', 'request_started', 'accepted_not_durable']);
-    expect(migrated.attempts[2].acceptedDraft?.prose).toBe('Accepted but not durable.');
-    expect(migrated.events[0].description).toBe('A meaningful change occurs.');
-    expect(migrated.capabilityReceipts[0]).toMatchObject({ status: 'unresolved', capabilityVersion: 'phase-2-unprocessed' });
+    const reset = readHarnessWorkspaceState(old);
+    expect(reset).toEqual(createEmptyHarnessWorkspaceState());
+    expect(reset.schemaVersion).toBe(HARNESS_GENERATION_SCHEMA_VERSION);
+
+    // A repository seeded with that same old-version snapshot starts clean; it
+    // never migrates the saved story, chapter, or attempt into the new shape.
+    const repository = new InMemoryHarnessGenerationRepository(old as unknown as HarnessWorkspaceState);
+    expect(repository.snapshot()).toEqual(createEmptyHarnessWorkspaceState());
+  });
+
+  it('rejects a malformed value the same way, and leaves current-version storage untouched', () => {
+    expect(readHarnessWorkspaceState(null)).toEqual(createEmptyHarnessWorkspaceState());
+    expect(readHarnessWorkspaceState('not an object')).toEqual(createEmptyHarnessWorkspaceState());
+    expect(readHarnessWorkspaceState({ schemaVersion: HARNESS_GENERATION_SCHEMA_VERSION })).toEqual(createEmptyHarnessWorkspaceState());
+
+    const current = createEmptyHarnessWorkspaceState();
+    current.stories.push({ id: 'story', title: 'Kept', createdAt: 'a', updatedAt: 'a', activeFoundationRevisionId: 'foundation', foundationRevisionIds: ['foundation'], head: { nextChapterNumber: 1 } });
+    expect(readHarnessWorkspaceState(current)).toEqual(current);
   });
 
   it('routes every capability family, supports multiple handlers, and preserves an unknown fallback', () => {
@@ -120,7 +134,7 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
   it('builds distinct relationship, thread, and mystery history without allowing uncommitted records into canonical state', () => {
     const state = createEmptyHarnessWorkspaceState();
     state.stories.push({ id: 'story_fixture', title: 'Story', createdAt: 'a', updatedAt: 'a', activeFoundationRevisionId: 'f', foundationRevisionIds: ['f'], head: { nextChapterNumber: 2 } });
-    state.chapters.push({ id: 'chapter_fixture', storyId: 'story_fixture', attemptId: 'a', foundationRevisionId: 'f', contextSnapshotId: 'c', chapterNumber: 1, title: 'One', titleSource: 'model', prose: 'Prose.', eventIds: [], responseMode: 'json', createdAt: 'a', committedAt: 'b' });
+    state.chapters.push({ id: 'chapter_fixture', storyId: 'story_fixture', attemptId: 'a', foundationRevisionId: 'f', storyInformationPacketId: 'c', chapterNumber: 1, title: 'One', titleSource: 'model', prose: 'Prose.', eventIds: [], responseMode: 'json', createdAt: 'a', committedAt: 'b' });
     const registry = new HarnessCapabilityRegistry();
     const events = [
       semanticEvent({ id: 'rel1', category: 'relationship', subjects: ['Mara', 'Iven'], description: 'Mara distrusts Iven.' }),

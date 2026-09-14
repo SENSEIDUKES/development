@@ -119,6 +119,6 @@ describe('Story Seed to Harness handoff', () => {
     expect(systemInstruction).toContain('An arc promise spans an arc, not one chapter.');
     expect(systemInstruction).toContain('newest applicable change wins');
     expect(systemInstruction).toContain('active Foundation edits take precedence');
-    expect(reloaded.snapshot().attempts[1].contextSnapshot).toEqual(requests[1].storyInformation);
+    expect(reloaded.snapshot().attempts[1].storyInformation).toEqual(requests[1].storyInformation);
   });
 });

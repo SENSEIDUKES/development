@@ -1,4 +1,4 @@
-import { cloneHarnessValue, stableHarnessId } from './ids';
+import { cloneHarnessValue } from './ids';
 import {
   HARNESS_GENERATION_SCHEMA_VERSION,
   type HarnessWorkspaceState,
@@ -27,62 +27,32 @@ export interface HarnessGenerationRepository {
   save(state: HarnessWorkspaceState): Promise<void>;
 }
 
-type LegacyWorkspaceState = Omit<HarnessWorkspaceState,
-  'schemaVersion' | 'capabilityReceipts' | 'canonicalRecords' | 'projections' | 'corrections' | 'batches'
-> & { schemaVersion: 1 };
-
-export const migrateHarnessWorkspaceState = (value: unknown): HarnessWorkspaceState => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new Error('Harness Generation storage is unreadable. Restore a local export or clear this feature’s local data.');
-  }
+const isCurrentHarnessWorkspaceState = (value: unknown): value is HarnessWorkspaceState => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const candidate = value as Partial<HarnessWorkspaceState> & { schemaVersion?: number };
-  if (
-    ![1, HARNESS_GENERATION_SCHEMA_VERSION].includes(candidate.schemaVersion ?? -1)
-    || !Array.isArray(candidate.stories)
-    || !Array.isArray(candidate.foundations)
-    || !Array.isArray(candidate.attempts)
-    || !Array.isArray(candidate.chapters)
-    || !Array.isArray(candidate.events)
-  ) {
-    throw new Error('Harness Generation storage has an unsupported version or shape. Restore a local export before continuing.');
-  }
-  if (candidate.schemaVersion === HARNESS_GENERATION_SCHEMA_VERSION) {
-    if (
-      !Array.isArray(candidate.capabilityReceipts)
-      || !Array.isArray(candidate.canonicalRecords)
-      || !Array.isArray(candidate.projections)
-      || !Array.isArray(candidate.corrections)
-      || !Array.isArray(candidate.batches)
-    ) throw new Error('Harness Generation storage has an unsupported Phase 3 shape. Restore a local export before continuing.');
-    return cloneHarnessValue(candidate as HarnessWorkspaceState);
-  }
-
-  const legacy = cloneHarnessValue(candidate as unknown as LegacyWorkspaceState);
-  const migratedAt = new Date().toISOString();
-  return {
-    ...legacy,
-    schemaVersion: HARNESS_GENERATION_SCHEMA_VERSION,
-    capabilityReceipts: legacy.events.map(event => ({
-      id: stableHarnessId('hcr', event.id, 'legacy-unresolved'),
-      storyId: event.storyId,
-      chapterId: event.chapterId,
-      sourceEventId: event.id,
-      capabilityId: 'general-narrative-event',
-      capabilityVersion: 'phase-2-unprocessed',
-      status: 'unresolved',
-      canonicalRecordIds: [],
-      projectionIntentIds: [],
-      warnings: ['This Phase 2 event remains preserved and awaits deterministic replay.'],
-      unresolvedReferences: [],
-      processedAt: migratedAt,
-      replayCount: 0,
-    })),
-    canonicalRecords: [],
-    projections: [],
-    corrections: [],
-    batches: [],
-  };
+  return candidate.schemaVersion === HARNESS_GENERATION_SCHEMA_VERSION
+    && Array.isArray(candidate.stories)
+    && Array.isArray(candidate.foundations)
+    && Array.isArray(candidate.attempts)
+    && Array.isArray(candidate.chapters)
+    && Array.isArray(candidate.events)
+    && Array.isArray(candidate.capabilityReceipts)
+    && Array.isArray(candidate.canonicalRecords)
+    && Array.isArray(candidate.projections)
+    && Array.isArray(candidate.corrections)
+    && Array.isArray(candidate.batches);
 };
+
+/**
+ * Reads saved Harness Generation storage. This is a development system:
+ * storage at any version other than `HARNESS_GENERATION_SCHEMA_VERSION`, or
+ * with an unrecognized shape, is reset to an empty workspace rather than
+ * migrated. Every structural change to a persisted attempt, chapter, or
+ * workspace field must bump that constant so stale local data is cleared
+ * instead of silently accepted.
+ */
+export const readHarnessWorkspaceState = (value: unknown): HarnessWorkspaceState =>
+  isCurrentHarnessWorkspaceState(value) ? cloneHarnessValue(value) : createEmptyHarnessWorkspaceState();
 
 const requestResult = <T,>(request: IDBRequest<T>): Promise<T> => new Promise((resolve, reject) => {
   request.onsuccess = () => resolve(request.result);
@@ -122,11 +92,13 @@ export class IndexedDbHarnessGenerationRepository implements HarnessGenerationRe
     const stored = await requestResult(transaction.objectStore(STORE_NAME).get(WORKSPACE_KEY));
     await transactionDone(transaction);
     if (stored === undefined) return createEmptyHarnessWorkspaceState();
-    const migrated = migrateHarnessWorkspaceState(stored);
+    const current = readHarnessWorkspaceState(stored);
     if ((stored as { schemaVersion?: number }).schemaVersion !== HARNESS_GENERATION_SCHEMA_VERSION) {
-      await this.save(migrated);
+      // Stale-version or malformed storage was reset above; persist the
+      // reset so a later load sees the current empty workspace directly.
+      await this.save(current);
     }
-    return migrated;
+    return current;
   }
 
   async save(state: HarnessWorkspaceState): Promise<void> {
@@ -142,8 +114,8 @@ export class InMemoryHarnessGenerationRepository implements HarnessGenerationRep
   private state: HarnessWorkspaceState;
   private pendingFailures: Error[] = [];
 
-  constructor(initial: HarnessWorkspaceState | LegacyWorkspaceState = createEmptyHarnessWorkspaceState()) {
-    this.state = migrateHarnessWorkspaceState(initial);
+  constructor(initial: HarnessWorkspaceState = createEmptyHarnessWorkspaceState()) {
+    this.state = readHarnessWorkspaceState(initial);
   }
 
   failNextSave(error = new Error('Simulated Harness Generation persistence failure.')) {

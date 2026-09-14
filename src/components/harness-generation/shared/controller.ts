@@ -396,7 +396,7 @@ export class HarnessGenerationController {
     // the CAPA Prompt (how the model authors) and the Story Information
     // Packet (what it authors), plus the Immediate Chapter Request.
     const capaPrompt = assembleCapaPrompt(freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt));
-    const contextSnapshot = compileStoryInformationPacket(this.state, story, foundation, attemptId, this.runtime);
+    const storyInformation = compileStoryInformationPacket(this.state, story, foundation, attemptId, this.runtime);
     const immediateChapterRequest = buildImmediateChapterRequest(story);
     const attempt: HarnessGenerationAttempt = {
       id: attemptId,
@@ -404,7 +404,7 @@ export class HarnessGenerationController {
       foundationRevisionId: foundation.id,
       foundationSnapshot: cloneHarnessValue(foundation),
       capaPrompt,
-      contextSnapshot,
+      storyInformation,
       immediateChapterRequest,
       model: model.trim(),
       chapterNumber: story.head.nextChapterNumber,
@@ -433,7 +433,7 @@ export class HarnessGenerationController {
           attemptId,
           model: attempt.model,
           capaPrompt: attempt.capaPrompt,
-          storyInformation: attempt.contextSnapshot,
+          storyInformation: attempt.storyInformation,
           immediateChapterRequest: attempt.immediateChapterRequest,
         });
       } catch (error) {
@@ -590,7 +590,7 @@ export class HarnessGenerationController {
       storyId: commitAttempt.storyId,
       attemptId: commitAttempt.id,
       foundationRevisionId: commitAttempt.foundationRevisionId,
-      contextSnapshotId: commitAttempt.contextSnapshot.id,
+      storyInformationPacketId: commitAttempt.storyInformation.id,
       chapterNumber: commitAttempt.chapterNumber,
       title: acceptedDraft.title,
       titleSource: acceptedDraft.titleSource,

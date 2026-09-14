@@ -70,7 +70,7 @@ the owner listed here, never a parallel structure.
 | CAPA Skill | `HarnessSkillManifest` in `shared/types.ts` | A versioned, replaceable manifest occupying one CAPA Schema slot. Only manifests declaring the `generation` application contribute authoring text. |
 | CAPA Prompt | `assembleCapaPrompt` in `shared/skills.ts`, producing `CapaPrompt` (`shared/types.ts`) | Every active generation skill, Author first, once each, in schema order, assembled into one `text`. Non-generation skills are listed in its `skills` inventory (`authoring: false`) but contribute no text. Frozen on `HarnessGenerationAttempt.capaPrompt`. Has its own soft budget (`CAPA_PROMPT_TOKEN_LIMIT`); never spends the packet's. |
 | Story Information | `HarnessWorkspaceState` plus `HarnessStory` and `StoryFoundationRevision` (`shared/types.ts`), persisted by `shared/repository.ts` | The complete durable story and world state, including persistent steering history. |
-| Story Information Packet | `compileStoryInformationPacket` in `shared/context.ts`, producing `StoryInformationPacket` (`shared/types.ts`) | Story data only: Foundation revision, story head, committed chapters, corrections, canonical records, developments, lookups, mechanical continuity, persistent steering, and the selection audit. It has no skill field and carries no skill instructions. Frozen on `HarnessGenerationAttempt.contextSnapshot` (the persisted field name predates the vocabulary; it holds the packet). |
+| Story Information Packet | `compileStoryInformationPacket` in `shared/context.ts`, producing `StoryInformationPacket` (`shared/types.ts`) | Story data only: Foundation revision, story head, committed chapters, corrections, canonical records, developments, lookups, mechanical continuity, persistent steering, and the selection audit. It has no skill field and carries no skill instructions. Frozen on `HarnessGenerationAttempt.storyInformation`. |
 | Immediate Chapter Request | `buildImmediateChapterRequest` in `shared/immediateChapterRequest.ts`, producing `ImmediateChapterRequest` (`shared/types.ts`) | Chapter number, opening/continuation, and the assignment to act on now (the latest persistent direction). Distinct from the packet's full steering history. Frozen on `HarnessGenerationAttempt.immediateChapterRequest`. |
 | Generation Model Call | `HarnessGenerationRequest` (`shared/types.ts`) → `buildHarnessGenerationPrompt` (`src/server/harness-generation/prompt.ts`) → `HarnessTextModelProvider` (`src/server/harness-generation/provider.ts`) | The request carries `capaPrompt`, `storyInformation`, and `immediateChapterRequest` as separate fields. The prompt builder sends `capaPrompt.text` followed by the distinct `HARNESS_RESPONSE_CONTRACT` as the system instruction, and the presented packet followed by the presented immediate request as the generation content. One Gemini call. |
 | Generated Chapter | `HarnessGenerationResponse.rawProviderResponse`, processed by `shared/responseAcceptance.ts` and committed by `shared/controller.ts` / `shared/repository.ts` | Validated, checkpointed, memory-processed, and committed by the HARNESS. |
@@ -102,7 +102,10 @@ replaced directly; there are no compatibility aliases for them.
   implementation hasn't been renamed to match yet.
 - Do not introduce a second schema, assembler, or context-selection system
   under a different name for a concept already defined here (rule 7).
-- Persisted field names (for example `HarnessGenerationAttempt.contextSnapshot`,
-  which holds the Story Information Packet) are storage contracts. Renaming one
-  is a deliberate migration decision, not an incidental rename — call it out
-  explicitly and confirm scope before doing it.
+- This is a development system: persisted field names are not storage
+  contracts to preserve. Any change to `HarnessWorkspaceState` or its nested
+  attempt/chapter shapes must bump `HARNESS_GENERATION_SCHEMA_VERSION`
+  (`shared/types.ts`) so stale local data is reset rather than silently
+  accepted or migrated — see `readHarnessWorkspaceState` in
+  `shared/repository.ts`. Never add a compatibility alias, dual read, or
+  migration path for a renamed field.

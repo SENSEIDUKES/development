@@ -404,7 +404,7 @@ describe('Harness Generation Phase 2 novel core', () => {
       foundationRevisionId: foundation.id,
       foundationSnapshot: foundation,
       capaPrompt: assembleCapaPrompt({ capturedAt: firstRuntime.now(), skills: [SEN_NOVEL_AUTHOR_SKILL] }),
-      contextSnapshot: context,
+      storyInformation: context,
       immediateChapterRequest: { chapterNumber: 1, continuation: false },
       model: 'google/gemini-3.1-flash-lite',
       chapterNumber: 1,

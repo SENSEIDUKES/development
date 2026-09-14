@@ -30,6 +30,15 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-09-14:** Removed the compatibility leftovers from the CAPA / Story
+  Information separation. The frozen Story Information Packet now lives on
+  `HarnessGenerationAttempt.storyInformation` (was `contextSnapshot`) and
+  `HarnessChapter.storyInformationPacketId` (was `contextSnapshotId`), with
+  no alias. `HARNESS_GENERATION_SCHEMA_VERSION` moved to 3; saved local
+  storage at any other version is reset to an empty workspace, never
+  migrated (`readHarnessWorkspaceState` replaces `migrateHarnessWorkspaceState`,
+  which used to carry Phase 2 data forward). This repository does not
+  preserve backward compatibility for persisted shapes.
 - **2026-09-13:** Implemented the canonical CAPA / Story Information separation.
   `CAPA_SCHEMA` is the single ordered slot registry; `assembleCapaPrompt` builds
   every active generation skill, Author included, into one CAPA Prompt in schema

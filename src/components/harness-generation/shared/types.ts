@@ -1,7 +1,8 @@
-/** Independent Harness Generation contracts. Phase 3 adds deterministic,
- * replayable story understanding without changing the Phase 2 model reply. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 2 as const;
-export const HARNESS_GENERATION_PHASE_2_SCHEMA_VERSION = 1 as const;
+/** Independent Harness Generation contracts. Bump this on any change to a
+ * persisted shape (attempt, chapter, or workspace state fields). This is a
+ * development system: storage at any other version is reset, never
+ * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 3 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -322,7 +323,7 @@ export interface HarnessChapter {
   storyId: string;
   attemptId: string;
   foundationRevisionId: string;
-  contextSnapshotId: string;
+  storyInformationPacketId: string;
   chapterNumber: number;
   title: string;
   titleSource: 'model' | 'harness-fallback';
@@ -358,7 +359,7 @@ export interface HarnessGenerationAttempt {
   /** The frozen CAPA Prompt: an installed skill update cannot change an in-flight attempt. */
   capaPrompt: CapaPrompt;
   /** The frozen Story Information Packet for this attempt. */
-  contextSnapshot: StoryInformationPacket;
+  storyInformation: StoryInformationPacket;
   immediateChapterRequest: ImmediateChapterRequest;
   model: string;
   chapterNumber: number;

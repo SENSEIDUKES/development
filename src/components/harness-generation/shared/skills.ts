@@ -113,6 +113,21 @@ export const freezeHarnessSkillLoadout = (
  */
 export const CAPA_PROMPT_TOKEN_LIMIT = 6_000;
 
+/**
+ * Permanent HARNESS authority appended after the replaceable CAPA Skills.
+ * This is deliberately not a CAPA Skill: authors can inspect it, but no
+ * installed package can replace, remove, or reorder it.
+ */
+export const HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS = [
+  'HARNESS OFFICIAL OUTPUT REQUIREMENTS',
+  'The equipped Accessibility and Translation instructions are mandatory for all reader-facing chapter content.',
+  'Apply them consistently to prose, dialogue, narration, reader-visible System Panels, Manifestation text, captions, and other text intended to be experienced by the reader. Do not weaken or selectively ignore them to preserve another prose preference. When necessary, Style must operate within their reader-facing requirements.',
+  'Accessibility and Translation do not apply to machine-facing output.',
+  'Keep all structured field names, IDs, enum values, triggers, technical metadata, internal tags, routing instructions, media-generation prompts, asset-search descriptions, audio directions, World Cue instructions, and backend effect payloads in canonical English and in the exact required structure.',
+  'When an output object contains both reader-facing and machine-facing information, apply Accessibility and Translation only to the reader-facing fields. Preserve the machine-facing fields in canonical English.',
+  'These requirements change how reader-facing content is communicated. They must not change established facts, character intent, plot events, emotional meaning, canonical terminology, or the technical meaning of any media effect.',
+].join('\n\n');
+
 const slotLabel = (slot: HarnessSkillSlotId) => CAPA_SCHEMA.find(definition => definition.id === slot)!.label;
 
 const isAuthoringSkill = (skill: HarnessSkillManifest) =>
@@ -131,7 +146,7 @@ export const assembleCapaPrompt = (loadout: HarnessSkillLoadoutSnapshot): CapaPr
     `CAPA SKILL [${slotLabel(skill.slot)}] — ${skill.name} v${skill.version}`,
     skill.instructions!.trim(),
   ].join('\n'));
-  const text = sections.join('\n\n');
+  const text = [...sections, HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS].join('\n\n');
   const estimatedTokens = Math.max(1, Math.ceil(text.length / 4));
   if (estimatedTokens > CAPA_PROMPT_TOKEN_LIMIT) {
     throw new Error('Equipped skills exceed the CAPA Prompt budget. Empty a skill slot or install shorter instructions.');

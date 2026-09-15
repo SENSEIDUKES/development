@@ -23,7 +23,11 @@ import {
 import { findFoundationRevision, findStory } from '../shared/foundation';
 import { buildCanonicalStoryView } from '../shared/canonicalState';
 import { DEFAULT_HARNESS_CONTEXT_POLICY } from '../shared/context';
-import { CAPA_SCHEMA, harnessSkillKey } from '../shared/skills';
+import {
+  CAPA_SCHEMA,
+  HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS,
+  harnessSkillKey,
+} from '../shared/skills';
 import { includeBundledHarnessSkills } from '../shared/authorSkill';
 import { HarnessReaderSession } from './HarnessReaderSession';
 import { HarnessGenerationHttpClient } from '../shared/httpClient';
@@ -387,7 +391,7 @@ function SkillLoadoutPanel({
           </p>
         </div>
         <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-cyan-100">
-          {equippedCount}/{CAPA_SCHEMA.length} equipped
+          {equippedCount}/{CAPA_SCHEMA.length} equipped · 1 locked
         </span>
       </div>
 
@@ -453,6 +457,27 @@ function SkillLoadoutPanel({
             </article>
           );
         })}
+        <article className="rounded-xl border border-gold-accent/30 bg-gold-accent/[0.07] p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <FileText size={17} className="shrink-0 text-gold-accent" aria-hidden="true" />
+              <h3 className="text-sm font-semibold text-white">Official Requirements</h3>
+            </div>
+            <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.12em] text-gold-accent">
+              Locked
+            </span>
+          </div>
+          <p className="mt-2 min-h-10 text-xs leading-relaxed text-neutral-400">
+            Permanent HARNESS rules applied after every equipped CAPA Skill.
+          </p>
+          <p className="mt-3 font-mono text-[9px] uppercase tracking-[0.12em] text-neutral-500">
+            Always active · not replaceable
+          </p>
+          <details className="mt-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+            <summary className="cursor-pointer text-[11px] font-medium text-gold-accent">View official requirements</summary>
+            <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words font-sans text-xs leading-relaxed text-neutral-300">{HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS}</pre>
+          </details>
+        </article>
       </div>
     </LibraryPanel>
   );

@@ -65,6 +65,12 @@ existing Chapter Generation feature.
   request as its generation content, with the Harness response contract kept as
   a distinct block. One Gemini call, context selection, checkpoints, memory
   processing, and commits are unchanged.
+- **2026-09-15:** Added permanent HARNESS Official Output Requirements after the
+  replaceable CAPA Skills. They make equipped Translation and Accessibility
+  instructions mandatory for reader-facing content while keeping machine-facing
+  media and effect payloads in canonical English. Development displays the fixed
+  section as a locked slot-shaped card after Media so it can be inspected without
+  pretending it is an installable or replaceable CAPA Skill.
 - **2026-09-13:** Established the canonical architecture vocabulary in
   [ARCHITECTURE_VOCABULARY.md](./ARCHITECTURE_VOCABULARY.md) (HARNESS, CAPA,
   CAPA Schema, CAPA Skill, CAPA Prompt, Story Information, Story Information
@@ -208,7 +214,9 @@ The host supplies validated `HarnessSkillManifest` records. The Harness persists
 exact `id` and `version` reference in the story and refuses to generate if a
 referenced version is unavailable. For each attempt it freezes the equipped manifests
 in schema order and assembles every generation skill, Author first, once, into one
-CAPA Prompt (`assembleCapaPrompt`). That CAPA Prompt is frozen on the attempt and is
+CAPA Prompt (`assembleCapaPrompt`). The permanent HARNESS Official Output Requirements
+follow the skills and are shown as a locked inspection card in Development; they are
+not an eighth CAPA Skill and cannot be equipped, removed, or reordered. That CAPA Prompt is frozen on the attempt and is
 the model's complete authoring instruction; it never enters the Story Information
 Packet. Only manifests declaring the `generation` application contribute text.
 Reader, post-commit, and media-runtime skills are recorded in the frozen CAPA Prompt's

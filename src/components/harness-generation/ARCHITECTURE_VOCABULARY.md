@@ -27,8 +27,9 @@ history.
   slots, their order, and each slot's responsibility.
 - **CAPA Skill** — A versioned, replaceable instruction module occupying one
   CAPA slot.
-- **CAPA Prompt** — The complete prompt produced by assembling the active
-  CAPA skills in schema order.
+- **CAPA Prompt** — The complete authoring prompt produced by assembling the
+  active CAPA skills in schema order, followed by the permanent HARNESS
+  Official Output Requirements.
 - **Story Information** — The complete story and world information owned by
   the HARNESS.
 - **Story Information Packet** — The story information selected, weighted,
@@ -68,7 +69,7 @@ the owner listed here, never a parallel structure.
 | HARNESS | `shared/controller.ts` (`HarnessGenerationController`), with `shared/repository.ts`, `shared/context.ts`, `shared/responseAcceptance.ts`, `shared/capabilities.ts`, and `src/server/harness-generation/execute.ts` | `generateNextChapter` prepares the CAPA Prompt, the Story Information Packet, and the Immediate Chapter Request separately, freezes all three on the attempt, makes one provider call, and owns checkpoints and commits. |
 | CAPA Schema | `CAPA_SCHEMA` in `shared/skills.ts` | The single ordered slot registry (Author, Pacing, Continuity, Style, Accessibility, Translation, Media) with each slot's responsibility. Loadout freezing and CAPA assembly both iterate it, so its order is the assembled order. |
 | CAPA Skill | `HarnessSkillManifest` in `shared/types.ts` | A versioned, replaceable manifest occupying one CAPA Schema slot. Only manifests declaring the `generation` application contribute authoring text. |
-| CAPA Prompt | `assembleCapaPrompt` in `shared/skills.ts`, producing `CapaPrompt` (`shared/types.ts`) | Every active generation skill, Author first, once each, in schema order, assembled into one `text`. Non-generation skills are listed in its `skills` inventory (`authoring: false`) but contribute no text. Frozen on `HarnessGenerationAttempt.capaPrompt`. Has its own soft budget (`CAPA_PROMPT_TOKEN_LIMIT`); never spends the packet's. |
+| CAPA Prompt | `assembleCapaPrompt` in `shared/skills.ts`, producing `CapaPrompt` (`shared/types.ts`) | Every active generation skill, Author first, once each, in schema order, followed by the permanent `HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS`, assembled into one `text`. The official requirements are visible in Development but are not a replaceable CAPA Skill and never enter the skill inventory. Non-generation skills are listed in that inventory (`authoring: false`) but contribute no text. Frozen on `HarnessGenerationAttempt.capaPrompt`. Has its own soft budget (`CAPA_PROMPT_TOKEN_LIMIT`); never spends the packet's. |
 | Story Information | `HarnessWorkspaceState` plus `HarnessStory` and `StoryFoundationRevision` (`shared/types.ts`), persisted by `shared/repository.ts` | The complete durable story and world state, including persistent steering history. |
 | Story Information Packet | `compileStoryInformationPacket` in `shared/context.ts`, producing `StoryInformationPacket` (`shared/types.ts`) | Story data only: Foundation revision, story head, committed chapters, corrections, canonical records, developments, lookups, mechanical continuity, persistent steering, and the selection audit. It has no skill field and carries no skill instructions. Frozen on `HarnessGenerationAttempt.storyInformation`. |
 | Immediate Chapter Request | `buildImmediateChapterRequest` in `shared/immediateChapterRequest.ts`, producing `ImmediateChapterRequest` (`shared/types.ts`) | Chapter number, opening/continuation, and the assignment to act on now (the latest persistent direction). Distinct from the packet's full steering history. Frozen on `HarnessGenerationAttempt.immediateChapterRequest`. |

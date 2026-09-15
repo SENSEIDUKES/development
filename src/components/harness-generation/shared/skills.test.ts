@@ -4,6 +4,7 @@ import { defaultHarnessRuntime } from './ids';
 import { createEmptyHarnessWorkspaceState } from './repository';
 import {
   CAPA_SCHEMA,
+  HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS,
   assembleCapaPrompt,
   createHarnessSkillCatalog,
   freezeHarnessSkillLoadout,
@@ -91,6 +92,10 @@ describe('Harness installed skills', () => {
     expect(headers).toEqual(['CAPA SKILL [Author]', 'CAPA SKILL [Pacing]', 'CAPA SKILL [Style]']);
     expect(capa.text.split(SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS.trim())).toHaveLength(2);
     expect(capa.text).not.toContain('Night Soundscape');
+    expect(capa.text.endsWith(HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS)).toBe(true);
+    expect(capa.text.split('HARNESS OFFICIAL OUTPUT REQUIREMENTS')).toHaveLength(2);
+    expect(capa.text.indexOf('CAPA SKILL [Style]')).toBeLessThan(capa.text.indexOf('HARNESS OFFICIAL OUTPUT REQUIREMENTS'));
+    expect(capa.skills).toHaveLength(4);
     expect(capa.estimatedTokens).toBeGreaterThan(0);
   });
 

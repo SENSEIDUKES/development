@@ -140,6 +140,70 @@ describe('HARNESS canonical structured chapter and media path', () => {
     expect(JSON.stringify(accepted.draft)).not.toMatch(/MODEL_TRACK|untrusted|asset:\/\//);
   });
 
+  it('retains System Panel prose but omits incomplete panels from accepted Reader blocks', () => {
+    const accepted = acceptHarnessModelResponse(JSON.stringify({
+      blocks: [
+        {
+          type: 'paragraph',
+          text: 'The incomplete breakthrough remains readable.',
+          system: { kind: 'system_prompt', title: 'Breakthrough' },
+        },
+        {
+          type: 'paragraph',
+          text: 'The incomplete mechanical display remains readable.',
+          system: {
+            kind: 'system_prompt', title: 'Status', promptType: 'progression', presentation: 'mechanical',
+          },
+        },
+        {
+          type: 'paragraph',
+          text: 'The incomplete notice remains readable.',
+          system: {
+            kind: 'system_prompt', title: 'Notice', promptType: 'warning', presentation: 'world_notice',
+            worldNotice: { entries: [] },
+          },
+        },
+        {
+          type: 'paragraph',
+          text: 'The incomplete fate result remains readable.',
+          system: { kind: 'fate_system_prompt', title: 'Fate Settles' },
+        },
+        {
+          type: 'paragraph',
+          text: 'The complete narrative panel remains structured.',
+          system: {
+            kind: 'system_prompt', title: 'Scan', promptType: 'friendly_scan', presentation: 'narrative',
+          },
+        },
+        {
+          type: 'paragraph',
+          text: 'The complete fate panel remains structured.',
+          system: {
+            kind: 'fate_system_prompt', title: 'Fate Settles',
+            fateResult: {
+              outcome: 'FATE SCARRED', timelineScar: 'The oath leaves a scar.', permanentCosts: ['Lost trust'],
+            },
+          },
+        },
+      ],
+    }), 3);
+
+    expect(accepted.accepted).toBe(true);
+    if (!accepted.accepted) throw new Error(accepted.reason);
+    expect(accepted.draft.prose).toContain('The incomplete mechanical display remains readable.');
+    expect(accepted.draft.blocks?.slice(0, 4).every(block => !block.system)).toBe(true);
+    expect(accepted.draft.blocks?.[4].system).toMatchObject({
+      kind: 'system_prompt', promptType: 'friendly_scan', presentation: 'narrative',
+    });
+    expect(accepted.draft.blocks?.[5].system).toMatchObject({
+      kind: 'fate_system_prompt', fateResult: { outcome: 'FATE SCARRED' },
+    });
+    expect(accepted.warnings).toContainEqual(expect.objectContaining({
+      code: 'optional_chapter_structure_omitted',
+      message: expect.stringContaining('incomplete System Panel'),
+    }));
+  });
+
   it('commits, reloads, and adapts canonical blocks and resolved media without replacing authored System Panels', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const raw = JSON.stringify(mediaChapter());

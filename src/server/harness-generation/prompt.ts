@@ -126,14 +126,20 @@ const chapterBlockSchema = {
           abilities: { type: 'array', items: { type: 'object', properties: {
             name: { type: 'string' }, detail: { type: 'string' },
           }, required: ['name'] } },
-        } },
+        }, anyOf: [
+          { required: ['level'] },
+          { required: ['bars'] },
+          { required: ['stats'] },
+          { required: ['effects'] },
+          { required: ['abilities'] },
+        ] },
         worldNotice: { type: 'object', properties: {
           entries: { type: 'array', items: { type: 'object', properties: {
             title: { type: 'string' }, body: { type: 'string' },
             details: { type: 'array', items: { type: 'object', properties: {
               label: { type: 'string' }, value: { type: 'string' },
             }, required: ['label', 'value'] } },
-          }, required: ['title'] } },
+          }, required: ['title'] }, minItems: 1 },
         }, required: ['entries'] },
         fateResult: { type: 'object', properties: {
           outcome: { type: 'string', enum: ['FATE AVERTED', 'FATE SCARRED', 'DOOM MANIFESTED'] },
@@ -142,6 +148,33 @@ const chapterBlockSchema = {
         }, required: ['outcome', 'timelineScar', 'permanentCosts'] },
       },
       required: ['kind', 'title'],
+      anyOf: [
+        {
+          properties: { kind: { type: 'string', enum: ['fate_system_prompt'] } },
+          required: ['kind', 'title', 'fateResult'],
+        },
+        {
+          properties: {
+            kind: { type: 'string', enum: ['system_prompt'] },
+            presentation: { type: 'string', enum: ['narrative'] },
+          },
+          required: ['kind', 'title', 'promptType', 'presentation'],
+        },
+        {
+          properties: {
+            kind: { type: 'string', enum: ['system_prompt'] },
+            presentation: { type: 'string', enum: ['mechanical'] },
+          },
+          required: ['kind', 'title', 'promptType', 'presentation', 'status'],
+        },
+        {
+          properties: {
+            kind: { type: 'string', enum: ['system_prompt'] },
+            presentation: { type: 'string', enum: ['world_notice'] },
+          },
+          required: ['kind', 'title', 'promptType', 'presentation', 'worldNotice'],
+        },
+      ],
     },
   },
   required: ['type', 'text'],
@@ -202,7 +235,7 @@ export const HARNESS_RESPONSE_CONTRACT = [
   'Semantic events are interpretations of the prose. When evidenceVerified is false, do not adopt their unsupported fact values as canon; use the actual prose and explicit author changes. A verified quote confirms provenance, not every semantic inference.',
   'Return one JSON object only. Its blocks array is the sole chapter body; do not also return a competing prose field. title and plan are optional. memory and arcCompletion remain required. The HARNESS derives clean readable prose by joining accepted block text in order.',
   'Each blocks item may contain only type, text, metadata, and system. type must be paragraph or dialogue and text must be nonempty. metadata may contain only sceneType, environment, atmosphereCategory, atmosphereTags, theme, motion, emotion, intensity, tension, danger, mysticism, audioSignature, speakerName, mode, speakerRole, entities, music, beastEvent, and audioMoments. Dialogue metadata uses speakerName, mode dialogue, and speakerRole. entities items use name, type (character, artifact, location, creature, or faction), and mention (reveal or reference). music may contain mood, region (chinese, japanese, or western), and intensity. beastEvent uses the existing type and profile fields. atmosphereCategory, when supplied, is wind, crowd, waves, rain, combat, or noise.',
-  'A supported System Panel is a block system object with kind system_prompt or fate_system_prompt, title, and the existing optional promptType, presentation, flavor, rows, rarity, badge, changes, status, worldNotice, and fateResult fields. Regular presentations are narrative, mechanical, or world_notice. System Panel text remains the readable and narrated text; structured fields do not replace it.',
+  'A supported System Panel is a block system object with kind system_prompt or fate_system_prompt and title. Every regular system_prompt also requires a supported promptType and presentation. A mechanical presentation requires a nonempty status object; a world_notice presentation requires worldNotice with at least one readable entry; a fate_system_prompt requires fateResult. Regular presentations are narrative, mechanical, or world_notice. flavor, rows, rarity, badge, and changes remain optional where supported. Omit system entirely when you cannot supply a complete supported System Panel. System Panel text remains the readable and narrated text; structured fields do not replace it.',
   'A World Cue proposal may appear only in metadata.audioMoments as semantic intent with triggerPhrase, occurrenceIndex, sourceCategory, variation, semanticTags, and optional relatedEntity name/type. Do not supply blockId; the HARNESS attaches its accepted block identity. World Cue proposals are validated and resolved through the approved Library Cue catalog before persistence.',
   'This response contract declares supported output shape only. It does not decide whether or when a System Panel, manifestation marker, music cue, atmosphere, World Cue, or beast event belongs in the chapter. Those creative decisions belong to equipped CAPA skills. Optional structures may be omitted.',
   HARNESS_MEMORY_INSTRUCTIONS,

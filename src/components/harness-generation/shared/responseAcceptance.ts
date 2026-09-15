@@ -1,6 +1,6 @@
 import { chapterTitleFallback, defaultHarnessRuntime, stableHarnessId, type HarnessRuntime } from './ids';
 import { acceptChapterMedia } from '../../chapter-generation/shared/acceptedChapterMedia';
-import { normalizeManifestResponse } from '../../chapter-generation/shared/manifestNormalizer';
+import { isCompleteSystemEvent, normalizeManifestResponse } from '../../chapter-generation/shared/manifestNormalizer';
 import { HARNESS_MEMORY_CATEGORIES } from './types';
 import type {
   HarnessAcceptedChapterDraft,
@@ -167,7 +167,16 @@ const acceptedStructuredChapter = (
   if (parsed.blocks === undefined) return undefined;
   try {
     const normalized = normalizeManifestResponse(JSON.stringify({ blocks: parsed.blocks }), chapterNumber);
-    const media = acceptChapterMedia(normalized.blocks);
+    const blocks = normalized.blocks.map(block => {
+      if (!block.system || isCompleteSystemEvent(block.system)) return block;
+      warnings.push({
+        code: 'optional_chapter_structure_omitted',
+        message: 'Removed an incomplete System Panel while retaining its readable block text.',
+      });
+      const { system: _system, ...proseBlock } = block;
+      return proseBlock;
+    });
+    const media = acceptChapterMedia(blocks);
     for (const warning of normalized.diagnostics.warnings) {
       warnings.push({
         code: warning.code === 'optional-field-removed'

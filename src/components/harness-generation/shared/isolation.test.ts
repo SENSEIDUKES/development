@@ -33,7 +33,9 @@ describe('Harness Generation isolation boundary', () => {
             /(?:types|responseAcceptance)\.ts$/.test(file),
             `Unexpected Chapter Generation edge: ${file}`,
           ).toBe(true);
-          expect(specifier).toContain('chapter-generation/shared/');
+          expect(specifier).toMatch(
+            /chapter-generation\/shared\/(?:types|manifestNormalizer|acceptedChapterMedia)$/,
+          );
         }
         for (const denied of forbidden) {
           expect(

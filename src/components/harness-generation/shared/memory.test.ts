@@ -66,6 +66,34 @@ describe('Useful, evidenced chapter memory', () => {
     expect(reloaded.snapshot().attempts[0].postCommitProcessing).toBe('complete');
   });
 
+  it('keeps a semantic canonical match as one record when replay assigns it a new generated id', async () => {
+    const { controller, repository, modelAdapter, story } = await setup(true);
+    const state = controller.snapshot();
+    const source = state.canonicalRecords.find(record => record.sourceEventId)!;
+    const receipt = state.capabilityReceipts.find(item => item.sourceEventId === source.sourceEventId)!;
+    state.canonicalRecords = state.canonicalRecords.filter(record => record.id !== source.id);
+    state.canonicalRecords.push({
+      ...source,
+      id: 'semantic-fallback',
+      supersededAt: '2026-09-05T12:01:00Z',
+      supersededByCorrectionId: 'hcorrection-1',
+    });
+    receipt.canonicalRecordIds = receipt.canonicalRecordIds.map(id => id === source.id ? 'semantic-fallback' : id);
+    await repository.save(state);
+
+    const reloaded = new HarnessGenerationController({ repository, modelAdapter });
+    await reloaded.hydrate();
+    await reloaded.replayStory(story.id);
+
+    const matching = reloaded.snapshot().canonicalRecords.filter(record =>
+      record.storyId === source.storyId && record.sourceEventId === source.sourceEventId
+      && record.capabilityId === source.capabilityId && record.kind === source.kind && record.label === source.label,
+    );
+    expect(matching.map(record => record.id)).toEqual(['semantic-fallback']);
+    expect(reloaded.snapshot().capabilityReceipts.find(item => item.id === receipt.id)?.canonicalRecordIds)
+      .toContain('semantic-fallback');
+  });
+
   it('reports partially malformed subject and fact fields instead of claiming complete interpretation', async () => {
     const { controller, recoverMemory, chapter } = await setup();
     recoverMemory.mockImplementationOnce(async () => reply({ memory: { characters: [{

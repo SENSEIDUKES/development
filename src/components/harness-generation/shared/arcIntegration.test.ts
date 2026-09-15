@@ -38,6 +38,32 @@ describe('HARNESS canonical arc integration', () => {
     expect(run.repository.snapshot().stories.find(item => item.id === story.id)?.arcPlans).toHaveLength(1);
   });
 
+  it('requires an explicit retry after an interrupted Arc planning request', async () => {
+    const run = await setup();
+    const story = await run.controller.createStory({ premise: 'An archivist reunites a divided kingdom.' });
+    const state = run.controller.snapshot();
+    const foundation = state.foundations.find(item => item.id === story.activeFoundationRevisionId)!;
+    state.arcPlanOperations.push({
+      id: 'harc-interrupted', storyId: story.id, foundationRevisionId: foundation.id,
+      startedAt: '2026-09-15T00:00:00Z', status: 'request_started',
+      request: { operation: 'plan-arc', storyId: story.id, model: 'fixture', storyInformation: {} as never },
+    });
+    await run.repository.save(state);
+    const reloaded = new HarnessGenerationController({ repository: run.repository, modelAdapter: {
+      getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
+      generate: async () => response({ prose: 'unused' }),
+      arcOperation: run.arcOperation,
+    } });
+    await reloaded.hydrate();
+
+    await expect(reloaded.generateNextChapter(story.id, 'fixture')).rejects.toThrow('Explicitly retry Arc planning');
+    expect(run.arcOperation).not.toHaveBeenCalled();
+
+    await reloaded.retryArcPlan(story.id, 'fixture');
+    expect(run.arcOperation).toHaveBeenCalledTimes(1);
+    expect(reloaded.snapshot().stories.find(item => item.id === story.id)?.arcPlans).toHaveLength(1);
+  });
+
   it('fails an overdue chapter before commit when completion evidence is absent, leaving the head unchanged', async () => {
     const run = await setup();
     run.setOutput({ prose: 'She saw the invader and fled.', arcCompletion: { goalId: plan.goals[0].id, completed: false, evidence: '' } });

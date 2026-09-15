@@ -2,7 +2,7 @@
  * persisted shape (attempt, chapter, or workspace state fields). This is a
  * development system: storage at any other version is reset, never
  * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 4 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 5 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -620,6 +620,7 @@ export interface HarnessWorkspaceState {
   projections: HarnessProjectionRecord[];
   corrections: HarnessAuthorCorrection[];
   batches: HarnessBatchRun[];
+  arcPlanOperations: HarnessArcPlanOperation[];
   memoryRecoveries?: HarnessMemoryRecovery[];
 }
 
@@ -685,4 +686,17 @@ export interface HarnessArcRequest {
   model: string;
   storyInformation: StoryInformationPacket;
   instruction?: string;
+}
+
+/** Durable checkpoint for the required Arc planner provider operation. */
+export interface HarnessArcPlanOperation {
+  id: string;
+  storyId: string;
+  foundationRevisionId: string;
+  request: HarnessArcRequest;
+  startedAt: string;
+  status: 'request_started' | 'provider_outcome_unknown' | 'raw_received' | 'completed' | 'abandoned' | 'failed';
+  rawProviderResponse?: string;
+  providerReceipt?: HarnessProviderReceipt;
+  failure?: string;
 }

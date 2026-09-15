@@ -48,9 +48,6 @@ import type {
 } from '../shared/types';
 
 export interface HarnessGenerationWorkspaceProps {
-  initialStoryId?: string;
-  /** Same host capacity check for a separate story or alternate world. */
-  authorizeWorld?: () => Promise<void>;
   /** Injection points keep the live UI testable without a provider or browser database. */
   repository?: HarnessGenerationRepository;
   modelAdapter?: HarnessGenerationModelAdapter;
@@ -696,13 +693,11 @@ function HarnessInspection({
 }
 
 export function HarnessGenerationWorkspace({
-  initialStoryId,
   repository: injectedRepository,
   modelAdapter: injectedAdapter,
   storySeedSource,
   installedSkills = EMPTY_INSTALLED_SKILLS,
   renderSkillImport,
-  authorizeWorld = async () => undefined,
 }: HarnessGenerationWorkspaceProps) {
   const availableSkills = useMemo(
     () => includeBundledHarnessSkills(installedSkills),
@@ -723,7 +718,7 @@ export function HarnessGenerationWorkspace({
   useEffect(() => controller.setInstalledSkills(installedSkills), [controller, installedSkills]);
   const [state, setState] = useState<HarnessWorkspaceState>();
   const [serverInfo, setServerInfo] = useState<HarnessGenerationServerInfo>();
-  const [selectedStoryId, setSelectedStoryId] = useState<string | undefined>(initialStoryId);
+  const [selectedStoryId, setSelectedStoryId] = useState<string>();
   const [foundationForm, setFoundationForm] = useState<StoryFoundationInput>(emptyFoundation);
   const [model, setModel] = useState('');
   const [batchCount, setBatchCount] = useState('');
@@ -825,7 +820,6 @@ export function HarnessGenerationWorkspace({
         if (selectedStory) {
           await controller.saveFoundationRevision(selectedStory.id, foundationForm);
         } else {
-          await authorizeWorld();
           const created = await controller.createStory(foundationForm);
           setSelectedStoryId(created.id);
         }
@@ -839,7 +833,6 @@ export function HarnessGenerationWorkspace({
 
   const startFromStorySeed = (option: HarnessStorySeedOption) => {
     void run(async () => {
-      await authorizeWorld();
       const created = await controller.createStory(option.foundation);
       setSelectedStoryId(created.id);
       setManualStart(false);
@@ -908,7 +901,7 @@ export function HarnessGenerationWorkspace({
   const generationAvailable = Boolean(selectedStory && serverInfo?.configured && model && !busy);
 
   if (reading && state && selectedStory) return <HarnessReaderSession key={selectedStory.id} state={state} storyId={selectedStory.id}
-    controller={controller} model={model} onBranch={setSelectedStoryId} authorizeWorld={authorizeWorld} onClose={() => setReading(false)} />;
+    controller={controller} onClose={() => setReading(false)} />;
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-generation-workspace">

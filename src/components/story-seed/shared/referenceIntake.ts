@@ -81,7 +81,6 @@ export interface IntakeData {
   uniquePath?: string;
 
   // 5. Plot & Trope Control
-  longTermGoal?: string;
   firstMajorConflict?: string;
   mainAntagonistPressure?: string;
   romanceLevel?: string;
@@ -143,7 +142,6 @@ const INTAKE_STRING_FIELDS = [
   'powerPace',
   'knownRanks',
   'uniquePath',
-  'longTermGoal',
   'firstMajorConflict',
   'mainAntagonistPressure',
   'romanceLevel',

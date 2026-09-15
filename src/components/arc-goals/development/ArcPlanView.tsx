@@ -10,7 +10,7 @@ export function ArcPlanView({ plan, activeGoalId, generatedThrough = 0, onEdit }
   const save = async () => {
     if (!draft || !onEdit) return;
     setSaving(true); setError('');
-    try { await onEdit(editArcPlan(plan, draft, generatedThrough, activeGoalId)); setDraft(undefined); }
+    try { await onEdit(editArcPlan(plan, draft)); setDraft(undefined); }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'The arc plan could not be saved.'); }
     finally { setSaving(false); }
   };
@@ -26,8 +26,7 @@ export function ArcPlanView({ plan, activeGoalId, generatedThrough = 0, onEdit }
     {draft && <div className="mt-3 space-y-3">
       {generatedThrough > 0 && <p className="text-amber-200">Changing the active plan may create unexpected pacing or continuity consequences. Generated chapters remain historical canon.</p>}
       {draft.goals.map((goal, index) => {
-        const locked = goal.id !== activeGoalId && arcGoalSegments(plan).find(segment => segment.id === goal.id)!.endChapter <= generatedThrough;
-        return <fieldset key={goal.id} disabled={saving || locked} className="grid min-w-0 gap-2 rounded border border-neutral-800 p-2">
+        return <fieldset key={goal.id} disabled={saving} className="grid min-w-0 gap-2 rounded border border-neutral-800 p-2">
           <label>Goal {index + 1}<input className="block min-h-11 w-full bg-neutral-950 p-2" value={goal.text} onChange={event => setDraft({ ...draft, goals: draft.goals.map(item => item.id === goal.id ? { ...item, text: event.target.value } : item) })} /></label>
           <label>Chapters<input type="number" min={1} max={ARC_LENGTH} className="ml-2 min-h-11 w-20 bg-neutral-950 p-2" value={goal.chapters} onChange={event => setDraft({ ...draft, goals: draft.goals.map(item => item.id === goal.id ? { ...item, chapters: Number(event.target.value) } : item) })} /></label>
           {index > 0 && <button className="min-h-11 underline" onClick={() => { const goals = [...draft.goals]; [goals[index - 1], goals[index]] = [goals[index], goals[index - 1]]; setDraft({ ...draft, goals }); }}>Move goal {index + 1} earlier</button>}

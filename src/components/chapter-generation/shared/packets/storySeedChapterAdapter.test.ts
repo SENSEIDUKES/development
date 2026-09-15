@@ -21,7 +21,6 @@ const seed = (): StorySeedInput => ({
         faceSlap: "low",
         plotArmor: "medium",
         recognition: "medium",
-        longTermGoal: "Prevent the celestial regent from opening the dead gate.",
         firstMajorConflict: "Survive the succession hearing without revealing the remembered timelines.",
         mainAntagonistPressure: "The regent controls the tribunal.",
       },

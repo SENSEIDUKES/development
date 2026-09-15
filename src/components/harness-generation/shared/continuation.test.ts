@@ -9,6 +9,11 @@ import { buildHarnessMechanicalContinuity } from './mechanicalContinuity';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 import type { HarnessGenerationModelAdapter, HarnessGenerationRequest } from './types';
 
+const arcOperation = async (request: { storyInformation: { chapterNumber: number } }) => ({
+  rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
+  providerReceipt: { provider: 'fixture' as const, model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } },
+});
+
 describe('Steered continuation and SEN boundaries', () => {
   it('projects typed memory and keeps recovered mechanical details distinct from writer events', async () => {
     const prose = 'Mara has 16 sparks. Captain Iven says, "Stay together." Mara spends her sparks and has 0 sparks. The bell has 3 charges.';
@@ -20,6 +25,7 @@ describe('Steered continuation and SEN boundaries', () => {
       providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } } });
     const modelAdapter: HarnessGenerationModelAdapter = {
       getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
+      arcOperation,
       generate: async input => {
         writes++; request = input;
         return response({ prose, memory: {
@@ -73,6 +79,7 @@ describe('Steered continuation and SEN boundaries', () => {
     }
     const provider: HarnessGenerationModelAdapter = {
       getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
+      arcOperation,
       generate: async request => {
         requests.push(request);
         const n = request.immediateChapterRequest.chapterNumber;
@@ -185,6 +192,7 @@ describe('Steered continuation and SEN boundaries', () => {
     let calls = 0;
     const modelAdapter: HarnessGenerationModelAdapter = {
       getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
+      arcOperation,
       generate: async () => {
         calls++;
         return { rawProviderResponse: JSON.stringify({ prose: 'Mara has 0 sparks. Iven has 13 sparks.', events: [

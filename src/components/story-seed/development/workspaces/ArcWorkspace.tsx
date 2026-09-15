@@ -1,5 +1,5 @@
 import { ArcPlanView } from '../../../arc-goals/development/ArcPlanView';
-import { Compass, Hourglass, ShieldAlert, Sparkles, Swords, Target } from 'lucide-react';
+import { Compass, Hourglass, ShieldAlert, Sparkles, Swords } from 'lucide-react';
 import { SENArcIcon } from '../../../sen-icons';
 import type {
   StorySeedInput,
@@ -185,14 +185,6 @@ export const ArcWorkspace = ({ seed, updateSeed }: ArcWorkspaceProps) => {
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <LibraryTextBox
-          id="a11y-control-jolpc3b"
-          label="Legacy Story Direction"
-          icon={Target}
-          value={settings.longTermGoal || ''}
-          onChange={(value) => updateSeed(patchPlotAndTropeSettings({ longTermGoal: value }))}
-          placeholder="e.g., Shatter the heavens..."
-        />
         <LibraryTextBox
           id="a11y-control-6a6tmbf"
           label="First Major Conflict"

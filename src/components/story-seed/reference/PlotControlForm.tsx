@@ -42,10 +42,6 @@ export const PlotControlForm = ({ intake, updateIntake, activeSection, setActive
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block font-sc text-xs text-neutral-400 uppercase tracking-widest mb-2" htmlFor="a11y-control-jolpc3b">Long-term Goal</label>
-          <input type="text" value={intake.longTermGoal || ''} onChange={(e) => updateIntake('longTermGoal', e.target.value)} placeholder="e.g., Shatter the heavens..." className="w-full bg-neutral-950 border border-neutral-800 text-signal text-sm rounded px-3 py-2" id="a11y-control-jolpc3b" />
-        </div>
-        <div>
           <label className="block font-sc text-xs text-neutral-400 uppercase tracking-widest mb-2" htmlFor="a11y-control-6a6tmbf">First Major Conflict</label>
           <input type="text" value={intake.firstMajorConflict || ''} onChange={(e) => updateIntake('firstMajorConflict', e.target.value)} placeholder="e.g., Sect tournament, survival trial..." className="w-full bg-neutral-950 border border-neutral-800 text-signal text-sm rounded px-3 py-2" id="a11y-control-6a6tmbf" />
         </div>

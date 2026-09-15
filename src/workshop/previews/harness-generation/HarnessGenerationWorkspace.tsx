@@ -24,8 +24,7 @@ export function HarnessGenerationWorkspace() {
       entry={entry}
       allowCompare={false}
       renderReference={() => <HarnessGenerationReference />}
-      renderDevelopment={() => <HarnessGenerationSurface initialStoryId={new URLSearchParams(window.location.search).get('story') ?? undefined}
-        storySeedSource={storySeedSource} installedSkills={installedSkills}
+      renderDevelopment={() => <HarnessGenerationSurface storySeedSource={storySeedSource} installedSkills={installedSkills}
         renderSkillImport={busy => <>
           {storageError && <p role="alert">{storageError}</p>}
           <SppSkillImport busy={busy} onInstall={skill => {

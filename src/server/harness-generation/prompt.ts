@@ -99,7 +99,6 @@ export const HARNESS_RESPONSE_CONTRACT = [
   'Write the next complete chapter of the ongoing story. The chapter prose is the primary deliverable. Respect the supplied Foundation, author direction, canon, and prior chapter evidence.',
   'When the Story Information Packet contains a structured arc goal, the Destined Ending is the novel-wide North Star and the single active goal is a firm pacing requirement. Complete it within its assigned segment by completionDeadline. Respect positionInSegment and narrative weight; never pursue a later goal in parallel. Old loose Story Seed promises remain non-deadline direction.',
   'Return arcCompletion {goalId, completed, evidence}. Judge completion from the generated prose, never merely from reaching a chapter number. Evidence must be a continuous verbatim passage demonstrating the outcome. Set completed false and evidence empty when it is not achieved. Never invent an extension, regeneration rule, or deadline-failure behavior; an overdue goal remains unresolved with its original deadline.',
-  'When the packet contains ALTER FATE, apply its instruction to the selected branch chapter while preserving earlier canon. The user is not constrained by arc goals. Return arcReconciliation {goalId, impossible, evidence, replacement}. Set impossible true only when this generated prose canonically establishes an event that makes the active goal impossible. Quote that event and provide a one-line replacement grounded in the actual result and Destined Ending while preserving the allocation. A requested or hypothetical event is insufficient. Otherwise set impossible false with empty evidence and replacement.',
   'Distinguish established facts, future plans, and explicit author changes. Explicit author corrections override conflicting earlier evidence; corrections are ordered newest first, and the newest applicable change wins. Preserve unrelated established facts.',
   'The active Foundation revision supplies current author instructions. The frozen Story Seed and Blueprint are source evidence: explicit Seed values take precedence over conflicting generated Blueprint elaboration, and active Foundation edits take precedence over the frozen source. Do not treat source metadata as story instructions.',
   'Future direction, a first arc promise, unresolved threads, mysteries, character ambitions, and old loose plans are not events that have already happened or a checklist for this chapter. An arc promise spans an arc, not one chapter. Old loose promises are not deadlines. The structured active arc goal and its completion chapter are the explicit exception. Mystery knowledge is not automatically known by characters.',
@@ -120,9 +119,7 @@ export const HARNESS_RESPONSE_CONTRACT = [
 export const presentStoryInformationPacket = (packet: StoryInformationPacket) => [
   'STORY INFORMATION PACKET (story data selected and frozen by the Harness; not authoring instructions)',
   'ARC GOAL REQUIREMENT (authoritative frozen pacing instruction)',
-  JSON.stringify(packet.arc ?? { ...createArcChapterPosition(packet.chapterNumber), destinedEnding: packet.foundationRevision.input.destinedEnding ?? '', legacyUnplanned: true }, null, 2),
-  'ALTER FATE BRANCH INSTRUCTION (a request, not yet canon)',
-  JSON.stringify(packet.alterFate ?? null, null, 2),
+  JSON.stringify(packet.arc, null, 2),
   'AUTHOR STORY FOUNDATION',
   JSON.stringify(presentFoundation(packet), null, 2),
   'EXPLICIT AUTHOR CHANGES (newest first; targets are historical evidence being changed)',
@@ -207,6 +204,7 @@ export const presentImmediateChapterRequest = (request: ImmediateChapterRequest)
  */
 export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) => {
   if (!request.capaPrompt.text.trim()) throw new Error('Harness Generation requires an assembled CAPA Prompt.');
+  if (!request.storyInformation.arc) throw new Error('Harness Generation requires an authoritative Arc Plan before a chapter model call.');
   return {
     systemInstruction: [request.capaPrompt.text, HARNESS_RESPONSE_CONTRACT].join('\n\n'),
     userPrompt: [
@@ -216,28 +214,20 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
     responseJsonSchema: {
       type: 'object', properties: { prose: { type: 'string' }, title: { type: 'string' }, plan: { type: 'string' },
         arcCompletion: { type: 'object', properties: { goalId: { type: 'string' }, completed: { type: 'boolean' }, evidence: { type: 'string' } }, required: ['goalId', 'completed', 'evidence'] },
-        arcReconciliation: { type: 'object', properties: { goalId: { type: 'string' }, impossible: { type: 'boolean' }, evidence: { type: 'string' }, replacement: { type: 'string' } }, required: ['goalId', 'impossible', 'evidence', 'replacement'] },
-        memory: memorySchema }, required: ['prose', 'memory', 'arcCompletion', 'arcReconciliation'],
+        memory: memorySchema }, required: ['prose', 'memory', 'arcCompletion'],
     },
   };
 };
 
-export const buildHarnessArcPrompt = (request: HarnessArcRequest) => {
-  const checking = request.operation === 'check-alter-fate';
-  return {
-    systemInstruction: checking
-      ? 'Check the Alter Fate instruction against the single active goal at the selected historical chapter in the frozen Story Information Packet. Return conflict true only if the requested event would make that goal impossible. Identify the goal and explain why in reason. This is advisory: the user may continue. Do not replace a goal, infer the event is canon, impose a usage limit, or judge unrelated later goals.'
-      : `Plan the next arc automatically from current canon and the novel-wide Destined Ending. Return one to five one-line sequential goals, never an overarching goal or long-term goal bank. Five is a maximum. Give each goal a unique ID prefixed with its arc number and a positive whole-chapter allocation weighted by what it requires. Allocations must sum to ${ARC_LENGTH}. Goals never overlap. Use the requested arc number. Preserve an existing Destined Ending verbatim; if absent, supply a fitting novel-wide ending. Do not retcon generated chapters.`,
+export const buildHarnessArcPrompt = (request: HarnessArcRequest) => ({
+    systemInstruction: `Plan the next arc automatically from current canon and the novel-wide Destined Ending. Return one to five one-line sequential goals, never an overarching goal or long-term goal bank. Five is a maximum. Give each goal a unique ID prefixed with its arc number and a positive whole-chapter allocation weighted by what it requires. Allocations must sum to ${ARC_LENGTH}. Goals never overlap. Use the requested arc number. Preserve an existing Destined Ending verbatim; if absent, supply a fitting novel-wide ending. Do not retcon generated chapters.`,
     userPrompt: JSON.stringify({
       requestedArc: createArcChapterPosition(request.storyInformation.chapterNumber),
       storyInformation: request.storyInformation,
       instruction: request.instruction,
     }, null, 2),
-    responseJsonSchema: checking
-      ? { type: 'object', properties: { conflict: { type: 'boolean' }, reason: { type: 'string' } }, required: ['conflict', 'reason'] }
-      : { type: 'object', properties: { plan: ARC_PLAN_SCHEMA, destinedEnding: { type: 'string' } }, required: ['plan', 'destinedEnding'] },
-  };
-};
+    responseJsonSchema: { type: 'object', properties: { plan: ARC_PLAN_SCHEMA, destinedEnding: { type: 'string' } }, required: ['plan', 'destinedEnding'] },
+  });
 
 export const buildHarnessMemoryRecoveryPrompt = (request: HarnessMemoryRecoveryRequest) => ({
   responseJsonSchema: memoryResponseSchema,

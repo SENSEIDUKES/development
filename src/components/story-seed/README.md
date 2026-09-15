@@ -18,7 +18,7 @@ Story Seed is one creation flow with these visible destinations:
 
 - **Origin** owns Story Title, Style, Core Premise / Secret Catalyst, Genre,
   and Story Tags.
-- **ARC** owns story-sauce controls, story direction, long-term goal, first
+- **ARC** owns story-sauce controls, story direction, first
   major conflict, main opposition, Destined Ending, and Make It Work.
 - **World** owns World Identity, Characters, Factions, Abilities, and Power
   System.
@@ -212,7 +212,7 @@ harness:
 
 ## Concise Workshop history
 
-- **2026-09-13:** Added the centralized weighted Arc 1 plan in ARC, compatible seed/Blueprint persistence and export, and the DEV start handoff to HARNESS.
+- **2026-09-15:** Added the centralized weighted Arc 1 plan in ARC and the DEV start handoff to HARNESS. Story Seed now resets stale development records for its current schema instead of retaining removed long-term-goal data.
 
 - **2026-09-11:** Reused the canonical SEN marks in exact matching Story Seed fields and Blueprint sections, including Characters, ARC, World Identity, Abilities, Power System, Story Bank, Help, and Search. Origin intentionally retains its existing quill, and non-equivalent Blueprint/document controls remain unchanged.
 

@@ -36,6 +36,7 @@ const setup = async (rich = false) => {
   const modelAdapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
     generate, recoverMemory,
+    arcOperation: async request => reply({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
   };
   const controller = new HarnessGenerationController({ repository, modelAdapter });
   await controller.hydrate();

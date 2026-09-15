@@ -2,7 +2,7 @@
  * persisted shape (attempt, chapter, or workspace state fields). This is a
  * development system: storage at any other version is reset, never
  * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 3 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 4 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -73,7 +73,6 @@ export interface HarnessStoryHead {
 export interface HarnessStory {
   arcPlans?: import('../../arc-goals/shared/arcGoals').ArcPlanRevision[];
   goalCompletions?: import('../../arc-goals/shared/arcGoals').ArcGoalCompletion[];
-  branch?: { sourceStoryId: string; chapterNumber: number; instruction: string; reconciled?: boolean };
   id: string;
   title: string;
   createdAt: string;
@@ -268,8 +267,7 @@ export interface HarnessWarning {
     | 'projection_unresolved'
     | 'post_commit_processing_pending'
     | 'batch_paused'
-    | 'arc_plan_pending'
-    | 'arc_reconciliation_unconfirmed';
+    | 'arc_plan_pending';
   message: string;
 }
 
@@ -306,7 +304,6 @@ export interface HarnessContextChapter {
  */
 export interface StoryInformationPacket {
   arc?: import('../../arc-goals/shared/arcGoals').ArcGenerationContext;
-  alterFate?: HarnessStory['branch'];
   id: string;
   storyId: string;
   attemptId: string;
@@ -683,7 +680,7 @@ export interface HarnessGenerationModelAdapter {
 }
 
 export interface HarnessArcRequest {
-  operation: 'plan-arc' | 'check-alter-fate';
+  operation: 'plan-arc';
   storyId: string;
   model: string;
   storyInformation: StoryInformationPacket;

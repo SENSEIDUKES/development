@@ -16,7 +16,7 @@ export interface ArcGoal { id: string; text: string; chapters: number }
 export interface ArcPlan { arcNumber: number; goals: ArcGoal[] }
 export interface ArcGoalSegment extends ArcGoal { startChapter: number; endChapter: number }
 export interface ArcGoalCompletion { arcNumber?: number; goalText?: string; goalId: string; chapterNumber: number; evidence: string }
-export interface ArcPlanRevision { plan: ArcPlan; effectiveChapter: number; reason: 'initial' | 'edit' | 'alter-fate' }
+export interface ArcPlanRevision { plan: ArcPlan; effectiveChapter: number; reason: 'initial' | 'edit' }
 export interface ArcGenerationContext extends ArcChapterPosition {
   destinedEnding: string;
   plan: ArcPlan;
@@ -66,19 +66,10 @@ export function arcGenerationContext(plan: ArcPlan, chapter: number, destinedEnd
     completionDeadline: activeGoal.endChapter, positionInSegment: chapter - activeGoal.startChapter + 1,
     completionConfirmed: arcGoalCompleted(plan, activeGoal, completions, chapter) };
 }
-/** Generated chapters retain their allocation owner; changed wording lives in a new revision. */
-export function editArcPlan(previous: ArcPlan, proposed: ArcPlan, generatedThrough: number, activeGoalId?: string): ArcPlan {
+/** The HARNESS stores an edit as a future revision; earlier frozen packets remain unchanged. */
+export function editArcPlan(previous: ArcPlan, proposed: ArcPlan): ArcPlan {
   const next = validateArcPlan(proposed);
   if (next.arcNumber !== previous.arcNumber) throw new Error('Editing cannot move goals to another arc.');
-  const oldSegments = arcGoalSegments(previous), newSegments = arcGoalSegments(next);
-  for (const old of oldSegments) {
-    if (old.startChapter > generatedThrough) continue;
-    const replacement = newSegments.find(goal => goal.id === old.id);
-    if (!replacement || replacement.startChapter !== old.startChapter || replacement.endChapter < Math.min(old.endChapter, generatedThrough)
-      || (old.endChapter <= generatedThrough && (replacement.endChapter !== old.endChapter || (old.id !== activeGoalId && replacement.text !== old.text)))) {
-      throw new Error('Already-generated chapters cannot be reallocated or completed historical goals edited.');
-    }
-  }
   return next;
 }
 export function confirmArcGoal(context: ArcGenerationContext, chapterNumber: number, prose: string, value: unknown): ArcGoalCompletion | undefined {
@@ -86,11 +77,4 @@ export function confirmArcGoal(context: ArcGenerationContext, chapterNumber: num
   if (!result || result.goalId !== context.activeGoal.id || result.completed !== true || (typeof result.evidence !== 'string' || !result.evidence.trim())
     || !prose.includes(result.evidence) || chapterNumber < context.activeGoal.startChapter) return undefined;
   return { arcNumber: context.plan.arcNumber, goalId: result.goalId, goalText: context.activeGoal.text, chapterNumber, evidence: result.evidence };
-}
-export function reconcileArcGoal(plan: ArcPlan, context: ArcGenerationContext, chapter: number, prose: string, value: unknown): ArcPlan | undefined {
-  const result = value as { goalId?: string; impossible?: boolean; evidence?: string; replacement?: string } | undefined;
-  if (!result || result.impossible !== true || result.goalId !== context.activeGoal.id || (typeof result.evidence !== 'string' || !result.evidence.trim())
-    || !prose.includes(result.evidence) || (typeof result.replacement !== 'string' || !result.replacement.trim() || /[\r\n]/.test(result.replacement))) return undefined;
-  if (chapter < context.activeGoal.startChapter) return undefined;
-  return validateArcPlan({ ...plan, goals: plan.goals.map(goal => goal.id === result.goalId ? { ...goal, text: result.replacement! } : goal) });
 }

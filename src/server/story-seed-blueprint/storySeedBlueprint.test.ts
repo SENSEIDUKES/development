@@ -32,7 +32,6 @@ const canonicalSeed = (): StorySeedInput => ({
         faceSlap: "low",
         plotArmor: "medium",
         recognition: "high",
-        longTermGoal: "Sever the dead heaven from the imperial oath network.",
         firstMajorConflict: "Survive the succession hearing without exposing the remembered timelines.",
         mainAntagonistPressure: "The regent owns every witness except one.",
       },

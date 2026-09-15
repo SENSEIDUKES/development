@@ -45,6 +45,7 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'gemini-test', label: 'Gemini test' }], defaultModel: 'gemini-test' }),
     generate,
+    arcOperation: async request => response({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
   };
   return { value, generate };
 };
@@ -294,11 +295,12 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     });
     const modelAdapter: HarnessGenerationModelAdapter = {
       getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'gemini-test', label: 'Gemini' }], defaultModel: 'gemini-test' }),
+      arcOperation: async request => response({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
       generate,
     };
     const controller = new HarnessGenerationController({ repository, modelAdapter, runtime: runtime() });
     await controller.hydrate();
-    const story = await controller.createStory({ premise: 'A convoy follows the last star.' });
+    const story = await controller.createStory({ premise: 'A convoy follows the last star.', destinedEnding: 'Bring the convoy safely home.', initialArcPlan: { arcNumber: 1, goals: [{ id: 'arc-1-convoy', text: 'Carry the convoy safely home.', chapters: 100 }] } });
     const running = controller.startBatch(story.id, 'gemini-test', 3);
     for (let index = 0; index < 30 && generate.mock.calls.length < 2; index += 1) await Promise.resolve();
     const batchId = controller.snapshot().batches[0].id;

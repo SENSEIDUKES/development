@@ -68,7 +68,6 @@ const completeSeed = (): StorySeedInput => ({
         faceSlap: 'low',
         plotArmor: 'high',
         recognition: 'medium',
-        longTermGoal: 'Break the assassination cycle',
         firstMajorConflict: 'The sect tournament',
         mainAntagonistPressure: 'The celestial court',
       },
@@ -462,7 +461,7 @@ describe('Story Seed creator/story/world contract', () => {
   it('serializes only creator/story/world and round-trips portable files', () => {
     const seed = completeSeed();
     const exported = createStorySeedExport(seed);
-    expect(exported).toMatchObject({ format: 'seihouse-story-seed', version: 3 });
+    expect(exported).toMatchObject({ format: 'seihouse-story-seed', version: 4 });
     expect(Object.keys(exported.seed).sort()).toEqual(['creator', 'story', 'world']);
     expect(exported.seed).not.toHaveProperty('intake');
     expect(exported.seed).not.toHaveProperty('blueprint');
@@ -528,7 +527,6 @@ describe('Story Seed creator/story/world contract', () => {
         storyTags: ['death flags'],
         desiredPlotDirection: 'Escalating court intrigue.',
         makeItWorkInstruction: 'Never erase the cost of changing fate.',
-        longTermGoal: 'Break the assassination cycle',
         worldType: 'Ancient sect world',
         startingPowerConcept: 'Qi Condensation',
         powerFlavor: 'Daoist martial arts',
@@ -556,7 +554,6 @@ describe('Story Seed creator/story/world contract', () => {
     expect(migrated.story.optional.makeItWorkInstruction)
       .toBe('Never erase the cost of changing fate.');
     expect(migrated.story.optional.plotAndTropeSettings).toEqual({
-      longTermGoal: 'Break the assassination cycle',
       faceSlap: 'medium',
       plotArmor: 'medium',
       recognition: 'medium',
@@ -619,7 +616,7 @@ describe('Story Seed creator/story/world contract', () => {
 
     // Account metadata lives on the record, never inside creator/story/world.
     expect(Object.keys(created.seed).sort()).toEqual(['creator', 'story', 'world']);
-    expect(created).toMatchObject({ id: expect.any(String), userId: 'creator-1', schemaVersion: 3 });
+    expect(created).toMatchObject({ id: expect.any(String), userId: 'creator-1', schemaVersion: 4 });
 
     const changed: StorySeedInput = {
       ...seed,
@@ -675,6 +672,12 @@ describe('Story Seed creator/story/world contract', () => {
 
     const [reloaded] = await listStorySeeds('creator-1');
     expect(reloaded.blueprint).toBeUndefined();
+  });
+
+  it('resets stale Story Seed schema records instead of reading the removed long-term goal shape', async () => {
+    const created = await createStorySeed('creator-1', completeSeed());
+    resetStorySeedRepository([{ ...created, schemaVersion: 3 } as unknown as StorySeedRecord]);
+    expect(await listStorySeeds('creator-1')).toEqual([]);
   });
 
   it('restores the Workshop repository after an injected preview adapter', async () => {

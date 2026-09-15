@@ -260,7 +260,6 @@ export const compileStoryInformationPacket = (
     createdAt: runtime.now(),
     committedChapters,
     arc: harnessArcContext(story, foundationRevision.input, story.head.nextChapterNumber),
-    alterFate: story.branch && !story.branch.reconciled ? cloneHarnessValue(story.branch) : undefined,
     steering,
     developments,
     lookups,

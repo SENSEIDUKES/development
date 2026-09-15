@@ -41,7 +41,7 @@ import { normalizeStoryStyle, type StoryStyle } from './storyStyle';
  * incompatibly, so stale records are rejected instead of silently read as
  * empty. Version 3 is the Creator / Story / World hierarchy above.
  */
-export const STORY_SEED_SCHEMA_VERSION = 3 as const;
+export const STORY_SEED_SCHEMA_VERSION = 4 as const;
 export const WORLD_BLUEPRINT_VERSION = 'v1.0' as const;
 export const STORY_PREMISE_MAX_LENGTH = 3_000;
 export const STORY_TAG_LIMIT = 12;
@@ -80,7 +80,6 @@ export interface StorySeedPlotAndTropeSettings {
   faceSlap?: StorySeedStorySauceLevel;
   plotArmor?: StorySeedStorySauceLevel;
   recognition?: StorySeedStorySauceLevel;
-  longTermGoal?: string;
   firstMajorConflict?: string;
   mainAntagonistPressure?: string;
 }
@@ -252,7 +251,7 @@ const normalizeSurvivalPressure = (value: unknown): StorySeedSurvivalPressure =>
   return normalized === 'heaven' || normalized === 'mortal' ? normalized : 'immortal';
 };
 
-const PLOT_AND_TROPE_FIELDS = ['longTermGoal', 'firstMajorConflict', 'mainAntagonistPressure'] as const;
+const PLOT_AND_TROPE_FIELDS = ['firstMajorConflict', 'mainAntagonistPressure'] as const;
 const WORLD_IDENTITY_FIELDS = ['title', 'worldType', 'societyStructure', 'startingLocation'] as const;
 const MAIN_CHARACTER_FIELDS = [
   'name', 'startingIdentity', 'personality', 'mainFlaw',

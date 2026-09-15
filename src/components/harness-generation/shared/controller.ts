@@ -1,5 +1,5 @@
-import { activeArcGoal, createArcChapterPosition, editArcPlan, validateArcPlan, type ArcPlan } from '../../arc-goals/shared/arcGoals';
-import { commitHarnessArc, forkHarnessStory, needsArcPlan, readArcReply } from './arcState';
+import { createArcChapterPosition, editArcPlan, validateArcPlan, type ArcPlan } from '../../arc-goals/shared/arcGoals';
+import { arcDeadlineFailure, commitHarnessArc, needsArcPlan, readArcReply } from './arcState';
 import {
   createHarnessStory,
   findFoundationRevision,
@@ -349,7 +349,8 @@ export class HarnessGenerationController {
     const story = findStory(this.state, storyId)!;
     const foundation = findFoundationRevision(this.state, story.activeFoundationRevisionId)!;
     const planNeeded = needsArcPlan(story);
-    if (!this.modelAdapter.arcOperation || (!planNeeded && foundation.input.destinedEnding)) return;
+    if (!this.modelAdapter.arcOperation) throw new Error('This Harness adapter cannot create the authoritative Arc Plan required before chapter generation.');
+    if (!planNeeded && foundation.input.destinedEnding) return;
     const storyInformation = compileStoryInformationPacket(this.state, story, foundation, this.runtime.createId('hplan'), this.runtime);
     const response = await this.modelAdapter.arcOperation({ operation: 'plan-arc', storyId, model, storyInformation });
     const reply = readArcReply(response.rawProviderResponse);
@@ -371,35 +372,9 @@ export class HarnessGenerationController {
     const story = findStory(candidate, storyId);
     const previous = story?.arcPlans?.at(-1)?.plan;
     if (!story || !previous) throw new Error('This story has no generated arc plan yet.');
-    const active = activeArcGoal(previous, story.head.nextChapterNumber, story.goalCompletions);
-    const plan = editArcPlan(previous, proposed, story.head.nextChapterNumber - 1, active.id);
+    const plan = editArcPlan(previous, proposed);
     story.arcPlans!.push({ plan, effectiveChapter: story.head.nextChapterNumber, reason: 'edit' });
     await this.persist(candidate);
-  }
-
-  async checkAlterFate(storyId: string, chapterNumber: number, instruction: string, model: string) {
-    this.assertHydrated();
-    if (!this.modelAdapter.arcOperation) throw new Error('This host has no Alter Fate goal review provider.');
-    const fork = forkHarnessStory(this.state, storyId, chapterNumber, instruction, this.runtime);
-    const foundation = findFoundationRevision(fork.state, fork.story.activeFoundationRevisionId)!;
-    const storyInformation = compileStoryInformationPacket(fork.state, fork.story, foundation, this.runtime.createId('hcheck'), this.runtime);
-    const response = await this.modelAdapter.arcOperation({ operation: 'check-alter-fate', storyId, model, storyInformation, instruction });
-    const reply = readArcReply(response.rawProviderResponse);
-    if (typeof reply.conflict !== 'boolean' || typeof reply.reason !== 'string') throw new Error('The goal conflict review was incomplete.');
-    return { conflict: reply.conflict, reason: reply.reason, goal: storyInformation.arc?.activeGoal.text };
-  }
-
-  /** Capacity authorization belongs to the host, shared with creating separate worlds. */
-  async alterFate(storyId: string, chapterNumber: number, instruction: string, authorizeWorld: () => Promise<void>) {
-    this.assertHydrated();
-    if (this.generating || activeAttemptForStory(this.state, storyId)) throw new Error('Finish the current chapter checkpoint before branching.');
-    this.generating = true;
-    try {
-      const fork = forkHarnessStory(this.state, storyId, chapterNumber, instruction, this.runtime);
-      await authorizeWorld();
-      await this.persist(fork.state);
-      return cloneHarnessValue(fork.story);
-    } finally { this.generating = false; }
   }
 
   private appendFailure(
@@ -448,8 +423,11 @@ export class HarnessGenerationController {
     }
     const foundation = findFoundationRevision(this.state, story.activeFoundationRevisionId);
     if (!foundation) throw new Error('The active Story Foundation revision is missing. Restore a local export before continuing.');
+    if (!this.modelAdapter.arcOperation) {
+      throw new Error('This Harness adapter cannot create the authoritative Arc Plan required before chapter generation.');
+    }
 
-    if (this.modelAdapter.arcOperation && (needsArcPlan(story) || !foundation.input.destinedEnding)) {
+    if (needsArcPlan(story) || !foundation.input.destinedEnding) {
       this.generating = true;
       try { await this.prepareArcPlan(storyId, model); }
       finally { this.generating = false; }
@@ -635,6 +613,10 @@ export class HarnessGenerationController {
         attemptId,
         'The pending chapter identity already exists in this story. Restore a local export before continuing.',
       );
+    }
+    const deadlineFailure = arcDeadlineFailure(attempt);
+    if (deadlineFailure) {
+      return this.appendFailure(attemptId, { stage: 'response', message: deadlineFailure });
     }
 
     const committedAt = this.runtime.now();

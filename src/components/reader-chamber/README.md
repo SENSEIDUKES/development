@@ -10,7 +10,7 @@
 
 ## Workshop history
 
-- **2026-09-13:** Reused the neutral SEN arc-position type; HARNESS host now connects historical Alter Fate without changing the existing panel contract.
+- **2026-09-15:** Reused the neutral SEN arc-position type. Alter Fate presentation retains its existing Workshop contract; Arc Goal routing is not part of it.
 
 - **2026-09-11:** Reused the source-owned SEN Settings mark in both Reader Settings entry and panel heading. Settings behavior, controls, and the locked reference remain unchanged.
 

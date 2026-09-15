@@ -14,6 +14,18 @@
 
 import { generateId } from './id';
 import type { WorldBlueprint } from './types';
+import type {} from './storySeedSchema';
+
+/**
+ * The locked Library Shell replica still reads this retired field. This is
+ * type-only reference intake support: Story Seed normalization and all active
+ * generation adapters omit it.
+ */
+declare module './storySeedSchema' {
+  interface StorySeedPlotAndTropeSettings {
+    longTermGoal?: string;
+  }
+}
 
 export interface IntakeCharacter {
   id: string;
@@ -81,6 +93,8 @@ export interface IntakeData {
   uniquePath?: string;
 
   // 5. Plot & Trope Control
+  /** Locked Reference-only field. Active Story Seed normalization discards it. */
+  longTermGoal?: string;
   firstMajorConflict?: string;
   mainAntagonistPressure?: string;
   romanceLevel?: string;

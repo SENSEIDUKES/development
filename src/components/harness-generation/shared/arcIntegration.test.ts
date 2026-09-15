@@ -75,6 +75,37 @@ describe('HARNESS canonical arc integration', () => {
     expect(failed.attempts[0].failure?.message).toContain('completion deadline');
   });
 
+  it('blocks an uncompleted active goal when an edited allocation moves its deadline into the past', async () => {
+    const run = await setup();
+    const editablePlan: ArcPlan = {
+      arcNumber: 1,
+      goals: [
+        { id: 'edited-first', text: 'Secure the invader’s trust.', chapters: 3 },
+        { id: 'edited-second', text: 'Defeat the invader.', chapters: 97 },
+      ],
+    };
+    const story = await run.controller.createStory({
+      premise: 'A courier confronts an invader.', destinedEnding: 'Unite the kingdoms.', initialArcPlan: editablePlan,
+    });
+    run.setOutput({ prose: 'She watched the invader from the gate.' });
+    await run.controller.generateNextChapter(story.id, 'fixture');
+    await run.controller.generateNextChapter(story.id, 'fixture');
+
+    await run.controller.editArcGoals(story.id, {
+      ...editablePlan,
+      goals: [
+        { ...editablePlan.goals[0], chapters: 1 },
+        { ...editablePlan.goals[1], chapters: 99 },
+      ],
+    });
+    await run.controller.generateNextChapter(story.id, 'fixture');
+
+    const failed = run.controller.snapshot();
+    expect(failed.stories.find(item => item.id === story.id)?.head.nextChapterNumber).toBe(3);
+    expect(failed.chapters.filter(chapter => chapter.storyId === story.id)).toHaveLength(2);
+    expect(failed.attempts.at(-1)?.failure?.message).toContain('completion deadline');
+  });
+
   it('freezes the authoritative goal context and persists evidenced completion', async () => {
     const run = await setup();
     await run.controller.generateNextChapter(run.story.id, 'fixture');

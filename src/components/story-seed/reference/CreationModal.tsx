@@ -69,6 +69,7 @@ const createDefaultIntake = (): IntakeData => ({
   powerPace: '',
   knownRanks: '',
   uniquePath: '',
+  longTermGoal: '',
   firstMajorConflict: '',
   mainAntagonistPressure: '',
   romanceLevel: '',

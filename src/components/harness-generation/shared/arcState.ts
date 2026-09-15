@@ -16,7 +16,7 @@ export function readArcReply(raw: string): Record<string, unknown> {
 export function arcDeadlineFailure(attempt: HarnessGenerationAttempt): string | undefined {
   const context = attempt.storyInformation.arc;
   if (!context || !attempt.acceptedDraft) return 'The frozen Story Information Packet has no authoritative Arc Plan.';
-  if (attempt.chapterNumber !== context.completionDeadline) return undefined;
+  if (attempt.chapterNumber < context.completionDeadline) return undefined;
   const completion = confirmArcGoal(context, attempt.chapterNumber, attempt.acceptedDraft.prose,
     readArcReply(attempt.rawProviderResponse ?? '').arcCompletion);
   return completion ? undefined : `Chapter ${attempt.chapterNumber} is the completion deadline for “${context.activeGoal.text}”. The chapter cannot commit until the model reports completion with verbatim evidence from its prose.`;

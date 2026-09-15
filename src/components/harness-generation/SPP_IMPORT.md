@@ -11,15 +11,16 @@ The Development host follows the official adapter's `SPP_AGENT_SETUP.md`:
 3. The author selects a Markdown/plain-text file, previews its UTF-8 text, and chooses a skill slot.
 4. **Install selected instructions** saves an ordinary `HarnessSkillManifest` in the browser's host inventory.
 5. Equipping it uses the existing `setSkillSlot` story operation and IndexedDB story persistence.
-6. Generation freezes that exact manifest in the context snapshot. The existing HTTP client,
-   server handler, `buildHarnessGenerationPrompt`, and Gemini provider receive its instructions.
+6. Generation freezes that exact manifest into the attempt's CAPA Prompt, assembled in CAPA
+   Schema order. The existing HTTP client, server handler, `buildHarnessGenerationPrompt`, and
+   Gemini provider receive its instructions there, never inside the Story Information Packet.
 
 Package ID, version, selected path and SHA-256 remain in `skill.source`, including the
 saved attempt and model request. The host's skill ID identifies the package/path/slot
 combination; it never replaces the original package ID. Importing does not equip a skill.
-Package text follows the chosen slot's existing instruction path, subject to the existing
-author/canon hierarchy. Explicitly equipping the Author slot uses the established author
-system-instruction section; other generation skills use the user-context skill section.
+Package text follows the chosen slot's position in the CAPA Schema, subject to the existing
+author/canon hierarchy. Every generation slot, Author included, is assembled once into the
+same CAPA Prompt; the slot only determines its order.
 Intake itself never promotes text to instructions. Package names and categories never
 trigger behavior.
 
@@ -36,8 +37,8 @@ is rejected; create a new version while retaining the SPP package ID.
   Binary files remain visible in the manifest and cannot be installed as text.
 - Strict UTF-8, nonempty text, no NUL bytes, 16,000 characters per skill; no truncation.
 - At most 64 imported skills in this browser. Storage errors are shown before installation succeeds.
-- Equipped loadouts may use at most 6,000 estimated tokens or the story's smaller context
-  budget. They are audited and reserved before optional story history is selected.
+- The assembled CAPA Prompt may use at most 6,000 estimated tokens. That ceiling is
+  enforced during CAPA assembly and never spends the Story Information Packet's budget.
 
 SPP parsing is host-only under `src/workshop/previews/harness-generation/` and is not
 shipped in portable SEN. A consuming host may implement its own importer and provide

@@ -2,8 +2,10 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationWorkspace } from '../development/HarnessGenerationWorkspace';
-import { compileHarnessContext } from './context';
+import { SEN_NOVEL_AUTHOR_SKILL } from './authorSkill';
+import { compileStoryInformationPacket } from './context';
 import { HarnessGenerationController } from './controller';
+import { assembleCapaPrompt } from './skills';
 import type { HarnessRuntime } from './ids';
 import { InMemoryHarnessGenerationRepository } from './repository';
 import type {
@@ -102,7 +104,7 @@ describe('Harness Generation Phase 2 novel core', () => {
     });
     expect(state.attempts[0].warnings.some(warning => warning.code === 'ignored_model_identity')).toBe(true);
     expect(provider.generate).toHaveBeenCalledTimes(1);
-    expect(provider.generate.mock.calls[0][0].foundation.input.premise).toContain('courier');
+    expect(provider.generate.mock.calls[0][0].storyInformation.foundationRevision.input.premise).toContain('courier');
   });
 
   it('freezes an injected Story Seed snapshot inside the Harness-owned Foundation and generation context', async () => {
@@ -124,9 +126,9 @@ describe('Harness Generation Phase 2 novel core', () => {
     await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
 
     const request = provider.generate.mock.calls[0][0] as HarnessGenerationRequest;
-    const frozenSeed = request.foundation.input.sourceSnapshot?.seed as { story: { required: { premise: string } } };
+    const frozenSeed = request.storyInformation.foundationRevision.input.sourceSnapshot?.seed as { story: { required: { premise: string } } };
     expect(frozenSeed.story.required.premise).toBe('Original seed premise.');
-    expect(request.context.foundationRevision.input.sourceSnapshot?.sourceId).toBe('seed-1');
+    expect(request.storyInformation.foundationRevision.input.sourceSnapshot?.sourceId).toBe('seed-1');
   });
 
   it('equips the bundled Author skill when an older saved story is hydrated', async () => {
@@ -173,12 +175,16 @@ describe('Harness Generation Phase 2 novel core', () => {
     const request = provider.generate.mock.calls[0][0] as HarnessGenerationRequest;
     expect(repository.snapshot().stories[0].skillLoadout?.pacing).toEqual({ id: 'seihouse.long-range-pacing', version: '1.0.0' });
     expect(repository.snapshot().stories[0].skillLoadout?.author).toEqual({ id: 'community.cozy-author', version: '1.0.0' });
-    expect(request.context.skillLoadout?.skills[0]).toMatchObject({
-      name: 'Cozy Fantasy Author', slot: 'author', instructions: 'Write with warmth, restraint, and close attention to daily life.',
-    });
-    expect(request.context.skillLoadout?.skills.find(skill => skill.slot === 'pacing')).toMatchObject({
-      name: 'Long-Range Pacing', slot: 'pacing', instructions: 'Do not collapse the siege into one chapter.',
-    });
+    expect(request.capaPrompt.skills.map(skill => [skill.slot, skill.name, skill.authoring])).toEqual([
+      ['author', 'Cozy Fantasy Author', true], ['pacing', 'Long-Range Pacing', true],
+    ]);
+    expect(request.capaPrompt.text).toBe([
+      'CAPA SKILL [Author] — Cozy Fantasy Author v1.0.0\nWrite with warmth, restraint, and close attention to daily life.',
+      'CAPA SKILL [Pacing] — Long-Range Pacing v1.0.0\nDo not collapse the siege into one chapter.',
+    ].join('\n\n'));
+    expect(JSON.stringify(request.storyInformation)).not.toContain('Write with warmth');
+    expect(JSON.stringify(request.storyInformation)).not.toContain('skillLoadout');
+    expect(repository.snapshot().attempts[0].capaPrompt).toEqual(request.capaPrompt);
   });
 
   it('serializes a pending skill save before a generation checkpoint can begin', async () => {
@@ -373,9 +379,9 @@ describe('Harness Generation Phase 2 novel core', () => {
     await reloaded.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
 
     const chapterTwoRequest = provider.generate.mock.calls[1][0] as HarnessGenerationRequest;
-    expect(chapterTwoRequest.chapterNumber).toBe(2);
-    expect(chapterTwoRequest.context.committedChapters).toHaveLength(1);
-    expect(chapterTwoRequest.context.committedChapters[0]).toMatchObject({
+    expect(chapterTwoRequest.immediateChapterRequest).toEqual({ chapterNumber: 2, continuation: true });
+    expect(chapterTwoRequest.storyInformation.committedChapters).toHaveLength(1);
+    expect(chapterTwoRequest.storyInformation.committedChapters[0]).toMatchObject({
       prose: expect.stringContaining('floodwall'),
       events: [expect.objectContaining({ description: expect.stringContaining('sealed door') })],
     });
@@ -391,13 +397,15 @@ describe('Harness Generation Phase 2 novel core', () => {
     const story = await createStory(firstController);
     const interruptedState = repository.snapshot();
     const foundation = interruptedState.foundations[0];
-    const context = compileHarnessContext(interruptedState, interruptedState.stories[0], foundation, 'hga_interrupted', firstRuntime);
+    const context = compileStoryInformationPacket(interruptedState, interruptedState.stories[0], foundation, 'hga_interrupted', firstRuntime);
     interruptedState.attempts.push({
       id: 'hga_interrupted',
       storyId: story.id,
       foundationRevisionId: foundation.id,
       foundationSnapshot: foundation,
-      contextSnapshot: context,
+      capaPrompt: assembleCapaPrompt({ capturedAt: firstRuntime.now(), skills: [SEN_NOVEL_AUTHOR_SKILL] }),
+      storyInformation: context,
+      immediateChapterRequest: { chapterNumber: 1, continuation: false },
       model: 'google/gemini-3.1-flash-lite',
       chapterNumber: 1,
       stage: 'request_started',

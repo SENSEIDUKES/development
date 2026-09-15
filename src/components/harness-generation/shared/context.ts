@@ -8,11 +8,10 @@ import type {
   HarnessContextAuditItem,
   HarnessContextChapter,
   HarnessContextSelectionPolicy,
-  HarnessContextSnapshot,
   HarnessStory,
-  HarnessSkillLoadoutSnapshot,
   HarnessWorkspaceState,
   StoryFoundationRevision,
+  StoryInformationPacket,
 } from './types';
 
 export const DEFAULT_HARNESS_CONTEXT_POLICY: HarnessContextSelectionPolicy = {
@@ -68,28 +67,22 @@ const auditItem = (
   value: unknown,
 ): HarnessContextAuditItem => ({ id, sourceKind, sourceRecordIds, label, reason, estimatedTokens: estimateTokens(value) });
 
-/** Selects only persisted evidence and records every inclusion and omission. */
-export const compileHarnessContext = (
+/**
+ * Compiles the Story Information Packet: only persisted story evidence,
+ * selected and weighted by the HARNESS, with every inclusion and omission
+ * recorded. CAPA skills are assembled separately and never enter this packet.
+ */
+export const compileStoryInformationPacket = (
   state: HarnessWorkspaceState,
   story: HarnessStory,
   foundationRevision: StoryFoundationRevision,
   attemptId: string,
   runtime: HarnessRuntime = defaultHarnessRuntime,
-  skillLoadout?: HarnessSkillLoadoutSnapshot,
-): HarnessContextSnapshot => {
+): StoryInformationPacket => {
   const policy = cloneHarnessValue(story.contextPolicy ?? DEFAULT_HARNESS_CONTEXT_POLICY);
   const included: HarnessContextAuditItem[] = [];
   const omitted: HarnessContextAuditItem[] = [];
   let remaining = policy.maxEstimatedTokens;
-  if (skillLoadout?.skills.length) {
-    const item = auditItem(`ctx-skills-${attemptId}`, 'skill', skillLoadout.skills.map(skill => skill.id),
-      'Equipped skills', 'Exact installed skill versions; counted before selecting optional history.', skillLoadout);
-    if (item.estimatedTokens > Math.min(6_000, policy.maxEstimatedTokens)) {
-      throw new Error('Equipped skills exceed the Harness context budget. Empty a skill slot or install shorter instructions.');
-    }
-    included.push(item);
-    remaining -= item.estimatedTokens;
-  }
 
   // Never silently discard author authority, even under an unusually small budget.
   const steering = cloneHarnessValue(story.steering ?? []);
@@ -171,7 +164,7 @@ export const compileHarnessContext = (
   // Allocate newest first, but read the retained prose in narrative order.
   committedChapters.sort((left, right) => left.chapterNumber - right.chapterNumber);
 
-  const developments: NonNullable<HarnessContextSnapshot['developments']> = [];
+  const developments: NonNullable<StoryInformationPacket['developments']> = [];
   // Reserve half the remaining budget for compact developments, after recent prose.
   // Latest subject/category observations come first; older consequences stay searchable.
   let memoryBudget = Math.max(0, Math.floor(remaining / 2));
@@ -202,7 +195,7 @@ export const compileHarnessContext = (
   // At most three excerpts, matched against explicit names/direction, not another model loop.
   const terms = Array.from(new Set((steering.slice(-1)[0]?.direction ?? '').toLowerCase().match(/[\p{L}\p{N}]{4,}/gu) ?? []))
     .filter(term => !['with', 'that', 'this', 'from', 'have', 'into', 'should', 'chapter', 'story'].includes(term));
-  const lookups: NonNullable<HarnessContextSnapshot['lookups']> = [];
+  const lookups: NonNullable<StoryInformationPacket['lookups']> = [];
   const candidates = allChapters.filter(chapter => !recentIds.has(chapter.id)).map(chapter => {
     const haystack = terms.length ? chapter.prose.toLowerCase() : '';
     return { chapter, haystack, score: terms.filter(term => haystack.includes(term)).length };
@@ -270,7 +263,6 @@ export const compileHarnessContext = (
     lookups,
     mechanicalContinuity,
     contextVersion: 2,
-    ...(skillLoadout ? { skillLoadout: cloneHarnessValue(skillLoadout) } : {}),
     selectionPolicy: policy,
     canonicalContext: { corrections: cloneHarnessValue(selectedCorrections), records: cloneHarnessValue(selectedRecords), handoff },
     selectionAudit: { included, omitted, totalEstimatedTokens: included.reduce((sum, item) => sum + item.estimatedTokens, 0) },

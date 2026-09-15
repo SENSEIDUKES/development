@@ -21,9 +21,9 @@ it.runIf(Boolean(process.env.HARNESS_SPP_ENV))('generates real baseline and equi
       getServerInfo: async () => { throw new Error('Not needed'); },
       generate: async request => {
         const prompt = buildHarnessGenerationPrompt(request);
-        expect(request.context.skillLoadout?.skills.length).toBe(1);
-        if (equipped) expect(request.context.skillLoadout?.skills[0].instructions).toBe(skill.instructions);
-        if (equipped) expect(prompt.systemInstruction).toContain(skill.instructions);
+        expect(request.capaPrompt.skills.length).toBe(1);
+        if (equipped) expect(request.capaPrompt.text).toContain(skill.instructions!);
+        if (equipped) expect(prompt.systemInstruction).toContain(skill.instructions!);
         let diagnostic = '';
         const result = await handleHarnessGenerationHttp({ method: 'POST', body: JSON.stringify(request) }, { environment,
           onError: error => { diagnostic = String(error).replaceAll(environment.GEMINI_API_KEY ?? 'NO_KEY', '[redacted]'); },

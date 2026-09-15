@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController } from './controller';
 import { InMemoryHarnessGenerationRepository } from './repository';
 import { createHarnessSenStory } from './senAdapter';
-import { compileHarnessContext } from './context';
+import { compileStoryInformationPacket } from './context';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 import { appendHarnessCorrection } from './canonicalState';
 import { normalizeStoryFoundationInput } from './foundation';
@@ -50,13 +50,13 @@ describe('Steering review regressions', () => {
     await controller.generateNextChapter(story.id, 'fixture');
     const state = controller.snapshot();
     expect(state.canonicalRecords.filter(record => record.kind === 'character').map(record => record.label)).toContain('Mara');
-    const context = compileHarnessContext(state, { ...state.stories[0],
+    const context = compileStoryInformationPacket(state, { ...state.stories[0],
       contextPolicy: { maxEstimatedTokens: 1, recentChapterCount: 3, includeMinorEvents: false } }, state.foundations[0], 'tiny');
     expect(context.developments).toEqual([]);
     expect(context.committedChapters[0].events[0].details).toEqual(state.events[0].details);
-    const prompt = buildHarnessGenerationPrompt({ ...state.attempts[0].contextSnapshot, storyId: story.id,
-      attemptId: 'tiny', chapterNumber: 2, model: 'fixture', foundation: state.foundations[0],
-      context: { ...context, skillLoadout: state.attempts[0].contextSnapshot.skillLoadout } });
+    const prompt = buildHarnessGenerationPrompt({ storyId: story.id, attemptId: 'tiny', model: 'fixture',
+      capaPrompt: state.attempts[0].capaPrompt, storyInformation: context,
+      immediateChapterRequest: { chapterNumber: 2, continuation: true } });
     const evidence = JSON.parse(prompt.userPrompt.split('COMMITTED STORY EVIDENCE\n')[1].split('\nFROZEN STORY SEED')[0]);
     expect(evidence.priorChapters[0].semanticEvents[0].details).toMatchObject({
       speech: { speaker: 'Iven', quote: '"Stay together."' }, mechanics: { value: '16' },

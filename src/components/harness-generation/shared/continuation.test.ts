@@ -3,7 +3,7 @@ import { HarnessGenerationController } from './controller';
 import { HarnessCapabilityRegistry, resolveHarnessEntity, type HarnessCapabilityContext } from './capabilities';
 import { InMemoryHarnessGenerationRepository } from './repository';
 import { createHarnessSenStory } from './senAdapter';
-import { compileHarnessContext } from './context';
+import { compileStoryInformationPacket } from './context';
 import { preserveSemanticEvents } from './responseAcceptance';
 import { buildHarnessMechanicalContinuity } from './mechanicalContinuity';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
@@ -75,7 +75,7 @@ describe('Steered continuation and SEN boundaries', () => {
       getServerInfo: async () => ({ configured: true, provider: 'gemini', defaultModel: 'fixture', models: [] }),
       generate: async request => {
         requests.push(request);
-        const n = request.chapterNumber;
+        const n = request.immediateChapterRequest.chapterNumber;
         const relationship = n === 1 ? 'Enemy' : 'Ally';
         return { rawProviderResponse: JSON.stringify({
           prose: `Mara meets Iven. Iven is her ${relationship}. "We remember the burned bridge." Iven speaks as captain. Mara has ${n} sparks.`,
@@ -115,16 +115,16 @@ describe('Steered continuation and SEN boundaries', () => {
       }
     }
     for (const request of requests) {
-      if (request.chapterNumber > 1) expect(request.context.steering?.[0].direction).toContain('ally');
-      if (request.chapterNumber > 10) expect(request.context.steering?.[1].direction).toContain('mercy');
-      if (request.chapterNumber > 20) expect(request.context.steering?.[2].mode).toBe('revise-history');
+      if (request.immediateChapterRequest.chapterNumber > 1) expect(request.storyInformation.steering?.[0].direction).toContain('ally');
+      if (request.immediateChapterRequest.chapterNumber > 10) expect(request.storyInformation.steering?.[1].direction).toContain('mercy');
+      if (request.immediateChapterRequest.chapterNumber > 20) expect(request.storyInformation.steering?.[2].mode).toBe('revise-history');
     }
     const state = controller.snapshot();
     expect(state.chapters).toHaveLength(50);
-    expect(requests[49].context.committedChapters.map(chapter => chapter.chapterNumber)).toEqual([47, 48, 49]);
-    expect(requests[49].context.developments?.some(event => event.chapterNumber < 47)).toBe(true);
-    expect(requests[7].context.developments?.some(event => event.chapterNumber === 7)).toBe(true);
-    expect(requests[49].context.steering).toHaveLength(4);
+    expect(requests[49].storyInformation.committedChapters.map(chapter => chapter.chapterNumber)).toEqual([47, 48, 49]);
+    expect(requests[49].storyInformation.developments?.some(event => event.chapterNumber < 47)).toBe(true);
+    expect(requests[7].storyInformation.developments?.some(event => event.chapterNumber === 7)).toBe(true);
+    expect(requests[49].storyInformation.steering).toHaveLength(4);
     const prompt = buildHarnessGenerationPrompt(requests[49]);
     expect(prompt.systemInstruction).toContain('newest direction wins');
     expect(prompt.userPrompt).toContain('Make Iven an ally');
@@ -146,7 +146,7 @@ describe('Steered continuation and SEN boundaries', () => {
     expect(createHarnessSenStory(state, story.id, 1).memory?.characters?.find(character => character.name === 'Iven')?.relationshipToMC).toBe('Enemy');
     expect(state.chapters[0].prose).toContain('Enemy');
     const currentStory = state.stories[0];
-    const tiny = compileHarnessContext(state, { ...currentStory, contextPolicy: { recentChapterCount: 3, maxEstimatedTokens: 1, includeMinorEvents: false } }, state.foundations[0], 'tiny');
+    const tiny = compileStoryInformationPacket(state, { ...currentStory, contextPolicy: { recentChapterCount: 3, maxEstimatedTokens: 1, includeMinorEvents: false } }, state.foundations[0], 'tiny');
     expect(tiny.steering).toHaveLength(4);
     expect(tiny.selectionAudit?.omitted.some(item => item.sourceRecordIds.includes(currentStory.steering![0].id))).toBe(false);
   }, 60_000);

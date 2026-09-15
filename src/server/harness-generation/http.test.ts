@@ -3,39 +3,33 @@ import type { HarnessGenerationRequest } from '../../components/harness-generati
 import { handleHarnessGenerationHttp } from './http';
 import type { HarnessTextGenerationRequest } from './provider';
 import { SEN_NOVEL_AUTHOR_SKILL } from '../../components/harness-generation/shared/authorSkill';
+import { assembleCapaPrompt } from '../../components/harness-generation/shared/skills';
+import { HARNESS_RESPONSE_CONTRACT } from './prompt';
+
+const foundation = () => ({
+  id: 'hfr_test',
+  storyId: 'hst_test',
+  revision: 1,
+  createdAt: '2026-08-29T00:00:00.000Z',
+  input: { premise: 'A cartographer returns to a city that has moved overnight.' },
+});
 
 const request = (): HarnessGenerationRequest => ({
   storyId: 'hst_test',
   attemptId: 'hga_test',
-  chapterNumber: 1,
   model: 'google/gemini-3.1-flash-lite',
-  foundation: {
-    id: 'hfr_test',
-    storyId: 'hst_test',
-    revision: 1,
-    createdAt: '2026-08-29T00:00:00.000Z',
-    input: { premise: 'A cartographer returns to a city that has moved overnight.' },
-  },
-  context: {
+  capaPrompt: assembleCapaPrompt({ capturedAt: '2026-09-12T00:00:00.000Z', skills: [SEN_NOVEL_AUTHOR_SKILL] }),
+  storyInformation: {
     id: 'hctx_test',
     storyId: 'hst_test',
     attemptId: 'hga_test',
-    foundationRevision: {
-      id: 'hfr_test',
-      storyId: 'hst_test',
-      revision: 1,
-      createdAt: '2026-08-29T00:00:00.000Z',
-      input: { premise: 'A cartographer returns to a city that has moved overnight.' },
-    },
+    foundationRevision: foundation(),
     storyHead: { nextChapterNumber: 1 },
     chapterNumber: 1,
     createdAt: '2026-08-29T00:00:00.000Z',
     committedChapters: [],
-    skillLoadout: {
-      capturedAt: '2026-09-12T00:00:00.000Z',
-      skills: [SEN_NOVEL_AUTHOR_SKILL],
-    },
   },
+  immediateChapterRequest: { chapterNumber: 1, continuation: false },
 });
 
 const environment = { GEMINI_API_KEY: 'test-key' };
@@ -45,10 +39,10 @@ describe('Harness Generation HTTP boundary', () => {
     const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({ rawProviderResponse: '{"memory":{}}',
       providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-05', usage: { source: 'unavailable' as const } } }));
     const original = request();
-    original.foundation.input.intendedDirection = 'Future plan must not become an extracted fact.';
+    const revision = { ...foundation(), input: { ...foundation().input, intendedDirection: 'Future plan must not become an extracted fact.' } };
     const result = await handleHarnessGenerationHttp({ method: 'POST', body: JSON.stringify({
       operation: 'recover-memory', storyId: original.storyId, chapterId: 'saved', model: original.model,
-      prose: 'Aria warned that the core would collapse in six hours.', foundation: original.foundation,
+      prose: 'Aria warned that the core would collapse in six hours.', foundation: revision,
     }) }, { environment, providerFactory: () => ({ provider: 'gemini', model: original.model, generate }) });
     expect(result.status).toBe(200);
     expect(generate).toHaveBeenCalledOnce();
@@ -91,55 +85,62 @@ describe('Harness Generation HTTP boundary', () => {
     });
   });
 
-  it('sends only equipped generation-skill instructions to the writing model', async () => {
+  it('sends the CAPA Prompt once as authoring instruction, separated from the Harness contract and story content', async () => {
     const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({
       rawProviderResponse: JSON.stringify({ prose: 'The siege remained beyond the hills.' }),
       providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-12', usage: { source: 'unavailable' as const } },
     }));
     const skilled = request();
-    skilled.context.skillLoadout = {
+    skilled.capaPrompt = assembleCapaPrompt({
       capturedAt: '2026-09-12T00:00:00.000Z',
       skills: [
-        SEN_NOVEL_AUTHOR_SKILL,
         { id: 'seihouse.pacing', version: '1.0.0', name: 'Patient Siege', description: 'Pacing.', slot: 'pacing', applications: ['generation'], instructions: 'Do not resolve the siege in this chapter.' },
+        SEN_NOVEL_AUTHOR_SKILL,
         { id: 'seihouse.music', version: '1.0.0', name: 'Night Soundscape', description: 'Music.', slot: 'media', applications: ['media-runtime'], runtimeLabel: 'SAP' },
       ],
-    };
+    });
+    skilled.storyInformation.steering = [{ id: 'dir-1', direction: 'Bring the envoy to the gate.', mode: 'future', effectiveChapter: 1, createdAt: '2026-09-12T00:00:00.000Z' }];
+    skilled.immediateChapterRequest = { chapterNumber: 1, continuation: false, assignment: 'Bring the envoy to the gate.' };
     const result = await handleHarnessGenerationHttp(
       { method: 'POST', body: skilled },
       { environment, providerFactory: () => ({ provider: 'gemini', model: skilled.model, generate }) },
     );
     expect(result.status).toBe(200);
     const input = generate.mock.calls[0][0] as HarnessTextGenerationRequest;
-    expect(input.userPrompt).toContain('Do not resolve the siege in this chapter.');
-    expect(input.userPrompt).toContain('Night Soundscape');
-    expect(input.userPrompt).toContain('must not change chapter prose');
-    expect(input.systemInstruction).toContain('ACTIVE HARNESS SKILLS');
-    expect(input.systemInstruction).toMatch(/^ACTIVE AUTHOR SKILL — SEN Novel Author v1\.0\.0/);
+    // Authoring instruction: CAPA Prompt first, in schema order (Author before Pacing), then the Harness contract.
+    expect(input.systemInstruction).toBe(`${skilled.capaPrompt.text}\n\n${HARNESS_RESPONSE_CONTRACT}`);
+    expect(input.systemInstruction).toMatch(/^CAPA SKILL \[Author\] — SEN Novel Author v1\.0\.0\n/);
+    expect(input.systemInstruction.indexOf('CAPA SKILL [Author]')).toBeLessThan(input.systemInstruction.indexOf('CAPA SKILL [Pacing]'));
     expect(input.systemInstruction).toContain('elite Eastern fantasy web-novel author specializing in Asian light novels');
-    expect(input.systemInstruction).toContain('prioritize entertainment over fake deep literary prose');
-    expect(input.systemInstruction).not.toContain('Reading/archive');
-    expect(input.systemInstruction).not.toContain('chants/formulas');
-    expect(input.systemInstruction).not.toContain('You are an expert novelist');
+    expect(input.systemInstruction.split('Do not resolve the siege in this chapter.')).toHaveLength(2);
+    expect(input.systemInstruction).not.toContain('Night Soundscape');
+    // Generation content: story information plus the immediate request, with no skill instructions.
+    expect(input.userPrompt).toMatch(/^STORY INFORMATION PACKET/);
+    expect(input.userPrompt).toContain('PERSISTENT AUTHOR DIRECTION');
+    expect(input.userPrompt).toContain('FUTURE DIRECTION (effective Chapter 1): Bring the envoy to the gate.');
+    expect(input.userPrompt.indexOf('PERSISTENT AUTHOR DIRECTION')).toBeLessThan(input.userPrompt.indexOf('IMMEDIATE CHAPTER REQUEST'));
+    expect(input.userPrompt).toContain('NEXT CHAPTER ASSIGNMENT: Bring the envoy to the gate.');
+    expect(input.userPrompt).not.toContain('Do not resolve the siege in this chapter.');
     expect(input.userPrompt).not.toContain(SEN_NOVEL_AUTHOR_SKILL.instructions);
+    expect(input.userPrompt).not.toContain('Night Soundscape');
   });
 
-  it('rejects a chapter request without an equipped Author skill before calling the provider', async () => {
+  it('rejects a chapter request without an assembled CAPA Prompt before calling the provider', async () => {
     const generate = vi.fn();
     const authorless = request();
-    authorless.context.skillLoadout = { capturedAt: '2026-09-12T00:00:00.000Z', skills: [] };
+    authorless.capaPrompt = { ...authorless.capaPrompt, text: ' ' };
     const result = await handleHarnessGenerationHttp(
       { method: 'POST', body: authorless },
       { environment, providerFactory: () => ({ provider: 'gemini', model: authorless.model, generate }) },
     );
     expect(result.status).toBe(400);
-    expect(result.body).toMatchObject({ error: expect.stringContaining('Author skill') });
+    expect(result.body).toMatchObject({ error: expect.stringContaining('CAPA Prompt') });
     expect(generate).not.toHaveBeenCalled();
   });
 
   it('rejects an invalid Foundation before a provider call', async () => {
     const invalid = request();
-    invalid.foundation.input.premise = ' ';
+    invalid.storyInformation.foundationRevision.input.premise = ' ';
     const result = await handleHarnessGenerationHttp({ method: 'POST', body: invalid }, { environment });
     expect(result).toMatchObject({ status: 400, body: { error: expect.stringContaining('premise') } });
   });

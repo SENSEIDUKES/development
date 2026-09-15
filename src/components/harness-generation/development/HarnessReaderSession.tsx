@@ -3,10 +3,11 @@ import { ReaderChamber } from '@seihouse/sen/reader-chamber';
 import type { StoryMemory, StoryWorld, UpdateStoryFields } from '@seihouse/sen/reader-chamber';
 import { CodexSheetOverlay } from '@seihouse/sen/reader-codex';
 import { createHarnessSenStory } from '../shared/senAdapter';
+import type { HarnessGenerationController } from '../shared/controller';
 import type { HarnessWorkspaceState } from '../shared/types';
 
-export function HarnessReaderSession({ state, storyId, onClose }: {
-  state: HarnessWorkspaceState; storyId: string; onClose: () => void;
+export function HarnessReaderSession({ state, storyId, onClose, controller }: {
+  state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
 }) {
   const [selectedChapter, setSelectedChapter] = useState(1);
   const [codexOpen, setCodexOpen] = useState(false);
@@ -26,14 +27,15 @@ export function HarnessReaderSession({ state, storyId, onClose }: {
   };
   return <main className="mx-auto w-full min-w-0 max-w-6xl px-2 py-3 sm:px-4">
     <p className="mb-3 text-xs text-neutral-400">SEN preview. Reading settings last for this session; save story changes through Harness direction and corrections.</p>
-    <ReaderChamber chapters={story.arcs[0].chapters.map(chapter => ({ ...chapter, status: readSet.has(chapter.number) ? 'read' : 'unread' }))}
+    <ReaderChamber chapters={story.arcs.flatMap(arc => arc.chapters).map(chapter => ({ ...chapter, status: readSet.has(chapter.number) ? 'read' : 'unread' }))}
       currentPowerStage={chapterStory.memory?.currentPowerStage ?? 'Not yet established'}
       onGenerateChapter={async () => undefined} onGenerateNextFiveChapters={async () => undefined} isGenerating={false}
       selectedChapterNum={selectedChapter} setSelectedChapterNum={setSelectedChapter}
       onToggleRead={number => setRead(current => current.includes(number) ? current.filter(value => value !== number) : [...current, number])}
       arcTitle={story.title} onBack={onClose} onSwitchTab={tab => { if (tab === 'codex') setCodexOpen(true); }}
       activeStory={activeStory} updateStoryFields={updateStoryFields} />
-    <CodexSheetOverlay isOpen={codexOpen} onClose={() => setCodexOpen(false)} activeStory={{ ...chapterStory, ...sessionPatch, memory: activeStory.memory }}
+    <CodexSheetOverlay isOpen={codexOpen} onClose={() => setCodexOpen(false)} activeStory={{ ...chapterStory, ...sessionPatch, arcs: story.arcs, memory: activeStory.memory }}
+      onEditArcPlan={plan => controller.editArcGoals(storyId, plan)} generatedThrough={state.stories.find(item => item.id === storyId)!.head.nextChapterNumber - 1}
       onUpdateMemory={memory => setMemoryPatches(current => ({ ...current, [selectedChapter]: memory }))} updateStoryFields={updateStoryFields}
       onJumpToChapter={number => { setSelectedChapter(number); setCodexOpen(false); }} />
   </main>;

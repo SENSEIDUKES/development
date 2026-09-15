@@ -17,6 +17,7 @@ describe('Start Now captured prose and memory regression', () => {
       const repository = new InMemoryHarnessGenerationRepository();
       const controller = new HarnessGenerationController({ repository, modelAdapter: {
         getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
+        arcOperation: async request => response({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
         generate: async () => response({ prose: fixture.prose, ...(recover ? { events: fixture.originalEvents } : fixture.memoryReply) }),
         recoverMemory: async () => response(fixture.memoryReply),
       } });

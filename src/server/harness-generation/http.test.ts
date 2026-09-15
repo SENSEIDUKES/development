@@ -5,6 +5,7 @@ import type { HarnessTextGenerationRequest } from './provider';
 import { SEN_NOVEL_AUTHOR_SKILL } from '../../components/harness-generation/shared/authorSkill';
 import { assembleCapaPrompt } from '../../components/harness-generation/shared/skills';
 import { HARNESS_RESPONSE_CONTRACT } from './prompt';
+import { arcGenerationContext } from '../../components/arc-goals/shared/arcGoals';
 
 const foundation = () => ({
   id: 'hfr_test',
@@ -28,6 +29,7 @@ const request = (): HarnessGenerationRequest => ({
     chapterNumber: 1,
     createdAt: '2026-08-29T00:00:00.000Z',
     committedChapters: [],
+    arc: arcGenerationContext({ arcNumber: 1, goals: [{ id: 'arc-1-opening', text: 'Reach the moved city.', chapters: 100 }] }, 1, 'Restore the city.'),
   },
   immediateChapterRequest: { chapterNumber: 1, continuation: false },
 });
@@ -35,6 +37,18 @@ const request = (): HarnessGenerationRequest => ({
 const environment = { GEMINI_API_KEY: 'test-key' };
 
 describe('Harness Generation HTTP boundary', () => {
+  it('routes automatic Arc planning through the provider with its own structured schema', async () => {
+    const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({ rawProviderResponse: '{}',
+      providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-13', usage: { source: 'unavailable' as const } } }));
+    const original = request();
+    const result = await handleHarnessGenerationHttp({ method: 'POST', body: { ...original, operation: 'plan-arc' } },
+      { environment, providerFactory: () => ({ provider: 'gemini', model: original.model, generate }) });
+    expect(result.status).toBe(200);
+    expect(generate).toHaveBeenCalledOnce();
+    const schema = generate.mock.calls[0][0].responseJsonSchema as { properties: Record<string, unknown> };
+    expect(schema.properties).toHaveProperty('plan');
+    expect(schema.properties).not.toHaveProperty('prose');
+  });
   it('serializes recovery as evidence extraction, with no chapter-generation response schema', async () => {
     const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({ rawProviderResponse: '{"memory":{}}',
       providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-05', usage: { source: 'unavailable' as const } } }));
@@ -135,6 +149,18 @@ describe('Harness Generation HTTP boundary', () => {
     );
     expect(result.status).toBe(400);
     expect(result.body).toMatchObject({ error: expect.stringContaining('CAPA Prompt') });
+    expect(generate).not.toHaveBeenCalled();
+  });
+
+  it('rejects a chapter request without the canonical Arc Plan before calling the provider', async () => {
+    const generate = vi.fn();
+    const unplanned = request();
+    delete unplanned.storyInformation.arc;
+    const result = await handleHarnessGenerationHttp(
+      { method: 'POST', body: unplanned },
+      { environment, providerFactory: () => ({ provider: 'gemini', model: unplanned.model, generate }) },
+    );
+    expect(result).toMatchObject({ status: 400, body: { error: expect.stringContaining('Arc Plan') } });
     expect(generate).not.toHaveBeenCalled();
   });
 

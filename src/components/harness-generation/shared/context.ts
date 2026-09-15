@@ -1,3 +1,4 @@
+import { harnessArcContext } from './arcState';
 import { buildCanonicalStoryView } from './canonicalState';
 import { buildHarnessMechanicalContinuity } from './mechanicalContinuity';
 import { verifyHarnessEventEvidence } from './responseAcceptance';
@@ -258,6 +259,7 @@ export const compileStoryInformationPacket = (
     chapterNumber: story.head.nextChapterNumber,
     createdAt: runtime.now(),
     committedChapters,
+    arc: harnessArcContext(story, foundationRevision.input, story.head.nextChapterNumber),
     steering,
     developments,
     lookups,

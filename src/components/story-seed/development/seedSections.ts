@@ -66,7 +66,6 @@ export const SEED_SECTIONS: SeedSection[] = [
       const settings = plotAndTropeSettings(seed);
       return hasText(seed.story.optional.additionalStoryDirection)
         || hasText(seed.story.optional.makeItWorkInstruction)
-        || hasText(settings.longTermGoal)
         || hasText(settings.firstMajorConflict)
         || hasText(settings.mainAntagonistPressure)
         || hasText(worldFoundations(seed).destinedEnding);

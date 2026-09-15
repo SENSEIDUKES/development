@@ -4,6 +4,7 @@ import type {
   HarnessGenerationResponse,
   HarnessGenerationServerInfo,
   HarnessMemoryRecoveryRequest,
+  HarnessArcRequest,
 } from './types';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -48,11 +49,13 @@ export class HarnessGenerationHttpClient implements HarnessGenerationModelAdapte
     return this.post(request);
   }
 
+  async arcOperation(request: HarnessArcRequest): Promise<HarnessGenerationResponse> { return this.post(request); }
+
   async recoverMemory(request: HarnessMemoryRecoveryRequest): Promise<HarnessGenerationResponse> {
     return this.post(request);
   }
 
-  private async post(request: HarnessGenerationRequest | HarnessMemoryRecoveryRequest): Promise<HarnessGenerationResponse> {
+  private async post(request: HarnessGenerationRequest | HarnessMemoryRecoveryRequest | HarnessArcRequest): Promise<HarnessGenerationResponse> {
     const response = await fetch(this.endpoint, {
       method: 'POST',
       headers: {

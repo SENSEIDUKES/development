@@ -1,3 +1,5 @@
+import { createArcChapterPosition, editArcPlan, validateArcPlan, type ArcPlan } from '../../arc-goals/shared/arcGoals';
+import { arcDeadlineFailure, commitHarnessArc, needsArcPlan, readArcReply } from './arcState';
 import {
   createHarnessStory,
   findFoundationRevision,
@@ -34,6 +36,7 @@ import {
 import type {
   HarnessAttemptFailure,
   HarnessAttemptStage,
+  HarnessArcPlanOperation,
   HarnessGenerationAttempt,
   HarnessGenerationModelAdapter,
   HarnessBatchRun,
@@ -211,6 +214,12 @@ export class HarnessGenerationController {
       }]);
       changed = true;
     }
+    for (const operation of recovered.arcPlanOperations) {
+      if (operation.status !== 'request_started') continue;
+      operation.status = 'provider_outcome_unknown';
+      operation.failure = 'The browser closed after Arc planning started. The provider outcome is unknown; explicitly retry planning before generating a chapter.';
+      changed = true;
+    }
     for (const batch of recovered.batches) {
       if (batch.status !== 'running' && batch.status !== 'pause_requested') continue;
       const activeAttempt = batch.currentAttemptId
@@ -343,6 +352,103 @@ export class HarnessGenerationController {
     return cloneHarnessValue(steering);
   }
 
+  private async prepareArcPlan(storyId: string, model: string) {
+    const story = findStory(this.state, storyId)!;
+    const foundation = findFoundationRevision(this.state, story.activeFoundationRevisionId)!;
+    const planNeeded = needsArcPlan(story);
+    if (!this.modelAdapter.arcOperation) throw new Error('This Harness adapter cannot create the authoritative Arc Plan required before chapter generation.');
+    if (!planNeeded && foundation.input.destinedEnding) return;
+    const pending = this.state.arcPlanOperations.filter(operation => operation.storyId === storyId
+      && ['request_started', 'provider_outcome_unknown', 'raw_received', 'failed'].includes(operation.status)).at(-1);
+    if (pending?.status === 'raw_received') return this.applyArcPlanOperation(pending.id);
+    if (pending) throw new Error('The previous Arc planning provider outcome is unknown. Explicitly retry Arc planning before generating a chapter.');
+
+    const startedAt = this.runtime.now();
+    const storyInformation = compileStoryInformationPacket(this.state, story, foundation, this.runtime.createId('hplan'), this.runtime);
+    const operation: HarnessArcPlanOperation = {
+      id: this.runtime.createId('harc'), storyId, foundationRevisionId: foundation.id, startedAt,
+      status: 'request_started', request: { operation: 'plan-arc', storyId, model, storyInformation },
+    };
+    const started = cloneHarnessValue(this.state);
+    started.arcPlanOperations.push(operation);
+    await this.persist(started);
+    let response;
+    try { response = await this.modelAdapter.arcOperation(operation.request); }
+    catch (error) {
+      const failed = cloneHarnessValue(this.state);
+      const saved = failed.arcPlanOperations.find(item => item.id === operation.id)!;
+      saved.status = 'failed';
+      saved.failure = errorMessage(error, 'The Arc planner could not complete the required plan.');
+      await this.persist(failed);
+      throw error;
+    }
+    const received = cloneHarnessValue(this.state);
+    const saved = received.arcPlanOperations.find(item => item.id === operation.id)!;
+    saved.status = 'raw_received';
+    saved.rawProviderResponse = response.rawProviderResponse;
+    saved.providerReceipt = response.providerReceipt;
+    saved.failure = undefined;
+    await this.persist(received);
+    return this.applyArcPlanOperation(operation.id);
+  }
+
+  private async applyArcPlanOperation(operationId: string) {
+    const operation = this.state.arcPlanOperations.find(item => item.id === operationId);
+    if (!operation?.rawProviderResponse) throw new Error('The saved Arc planning response is unavailable. Explicitly retry Arc planning.');
+    const story = findStory(this.state, operation.storyId)!;
+    const foundation = findFoundationRevision(this.state, operation.foundationRevisionId)!;
+    try {
+      const reply = readArcReply(operation.rawProviderResponse);
+      const plan = needsArcPlan(story) ? validateArcPlan(reply.plan) : undefined;
+      if (plan && plan.arcNumber !== createArcChapterPosition(story.head.nextChapterNumber).arcNumber) throw new Error('The generated plan targets the wrong arc.');
+      if (!foundation.input.destinedEnding?.trim() && (typeof reply.destinedEnding !== 'string' || !reply.destinedEnding.trim())) throw new Error('The arc planner must supply the novel Destined Ending.');
+      let candidate = cloneHarnessValue(this.state);
+      const target = findStory(candidate, operation.storyId)!;
+      if (plan) target.arcPlans = [...(target.arcPlans ?? []), { plan, effectiveChapter: story.head.nextChapterNumber, reason: 'initial' }];
+      const saved = candidate.arcPlanOperations.find(item => item.id === operationId)!;
+      saved.status = 'completed';
+      saved.failure = undefined;
+      if (!foundation.input.destinedEnding && typeof reply.destinedEnding === 'string') {
+        candidate = reviseStoryFoundation(candidate, operation.storyId, { ...foundation.input, destinedEnding: reply.destinedEnding }, this.runtime).state;
+      }
+      await this.persist(candidate);
+    } catch (error) {
+      const failed = cloneHarnessValue(this.state);
+      const saved = failed.arcPlanOperations.find(item => item.id === operationId)!;
+      saved.status = 'failed';
+      saved.failure = errorMessage(error, 'The saved Arc plan could not be applied.');
+      await this.persist(failed);
+      throw error;
+    }
+  }
+
+  async retryArcPlan(storyId: string, model: string): Promise<HarnessWorkspaceState> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the active Harness operation to finish.');
+    const candidate = cloneHarnessValue(this.state);
+    const operation = candidate.arcPlanOperations.filter(item => item.storyId === storyId
+      && ['provider_outcome_unknown', 'failed'].includes(item.status)).at(-1);
+    if (!operation) throw new Error('This story has no failed or unknown Arc planning request to retry.');
+    operation.status = 'abandoned';
+    await this.persist(candidate);
+    this.generating = true;
+    try { await this.prepareArcPlan(storyId, model); }
+    finally { this.generating = false; }
+    return this.snapshot();
+  }
+
+  async editArcGoals(storyId: string, proposed: ArcPlan) {
+    this.assertHydrated();
+    if (this.generating || activeAttemptForStory(this.state, storyId)) throw new Error('Finish the current chapter checkpoint before editing goals.');
+    const candidate = cloneHarnessValue(this.state);
+    const story = findStory(candidate, storyId);
+    const previous = story?.arcPlans?.at(-1)?.plan;
+    if (!story || !previous) throw new Error('This story has no generated arc plan yet.');
+    const plan = editArcPlan(previous, proposed);
+    story.arcPlans!.push({ plan, effectiveChapter: story.head.nextChapterNumber, reason: 'edit' });
+    await this.persist(candidate);
+  }
+
   private appendFailure(
     attemptId: string,
     failure: HarnessAttemptFailure,
@@ -381,7 +487,7 @@ export class HarnessGenerationController {
     this.assertHydrated();
     if (this.generating) throw new Error('A Harness chapter request is already running.');
     if (!model.trim()) throw new Error('Choose a configured Harness model before generating a chapter.');
-    const story = findStory(this.state, storyId);
+    let story = findStory(this.state, storyId);
     if (!story) throw new Error('Open a Harness story before generating a chapter.');
     const activeAttempt = activeAttemptForStory(this.state, storyId);
     if (activeAttempt) {
@@ -389,7 +495,16 @@ export class HarnessGenerationController {
     }
     const foundation = findFoundationRevision(this.state, story.activeFoundationRevisionId);
     if (!foundation) throw new Error('The active Story Foundation revision is missing. Restore a local export before continuing.');
+    if (!this.modelAdapter.arcOperation) {
+      throw new Error('This Harness adapter cannot create the authoritative Arc Plan required before chapter generation.');
+    }
 
+    if (needsArcPlan(story) || !foundation.input.destinedEnding) {
+      this.generating = true;
+      try { await this.prepareArcPlan(storyId, model); }
+      finally { this.generating = false; }
+      return this.generateNextChapter(storyId, model, batchId);
+    }
     const attemptId = this.runtime.createId('hga');
     const startedAt = this.runtime.now();
     // The HARNESS prepares the two Generation Model Call inputs separately:
@@ -571,6 +686,10 @@ export class HarnessGenerationController {
         'The pending chapter identity already exists in this story. Restore a local export before continuing.',
       );
     }
+    const deadlineFailure = arcDeadlineFailure(attempt);
+    if (deadlineFailure) {
+      return this.appendFailure(attemptId, { stage: 'response', message: deadlineFailure });
+    }
 
     const committedAt = this.runtime.now();
     const candidate = cloneHarnessValue(base);
@@ -608,6 +727,7 @@ export class HarnessGenerationController {
       lastCommittedChapterId: chapter.id,
       lastCommittedAt: committedAt,
     };
+    commitHarnessArc(commitStory, commitAttempt);
     commitStory.updatedAt = committedAt;
     commitAttempt.stage = 'committed';
     commitAttempt.committedAt = committedAt;
@@ -624,6 +744,14 @@ export class HarnessGenerationController {
       return this.snapshot();
     }
     await this.replayStory(commitAttempt.storyId, chapterId);
+    if (createArcChapterPosition(commitAttempt.chapterNumber + 1).chapterInArc === 1) {
+      try { await this.prepareArcPlan(commitAttempt.storyId, commitAttempt.model); }
+      catch (error) {
+        const pending = cloneHarnessValue(this.state);
+        addWarnings(attemptById(pending, attemptId), [{ code: 'arc_plan_pending', message: errorMessage(error, 'The next arc plan could not be prepared. The committed chapter is safe.') }]);
+        await this.persist(pending);
+      }
+    }
     return this.snapshot();
   }
 
@@ -787,13 +915,21 @@ export class HarnessGenerationController {
       else items.push(next);
     };
     const upsertCanonical = (next: HarnessWorkspaceState['canonicalRecords'][number]) => {
-      const existing = candidate.canonicalRecords.find(record => record.id === next.id);
-      upsert(candidate.canonicalRecords, existing?.supersededByCorrectionId ? {
+      const existing = candidate.canonicalRecords.find(record => record.id === next.id)
+        ?? candidate.canonicalRecords.find(record => record.storyId === next.storyId && record.sourceEventId === next.sourceEventId
+          && !!next.sourceEventId && record.capabilityId === next.capabilityId && record.kind === next.kind
+          && record.label === next.label && !!record.supersededByCorrectionId);
+      const resolved = existing ? {
         ...next,
-        supersededAt: existing.supersededAt,
-        supersededByCorrectionId: existing.supersededByCorrectionId,
-        supersededByRecordId: existing.supersededByRecordId,
-      } : next);
+        id: existing.id,
+        ...(existing.supersededByCorrectionId ? {
+          supersededAt: existing.supersededAt,
+          supersededByCorrectionId: existing.supersededByCorrectionId,
+          supersededByRecordId: existing.supersededByRecordId,
+        } : {}),
+      } : next;
+      upsert(candidate.canonicalRecords, resolved);
+      return resolved.id;
     };
     const events = candidate.events.filter(event => event.chapterId && committedChapterIds.has(event.chapterId));
     for (const sourceEvent of events) {
@@ -822,7 +958,9 @@ export class HarnessGenerationController {
         }
         for (const result of results) {
           upsert(candidate.capabilityReceipts, result.receipt);
-          for (const record of result.records) upsertCanonical(record);
+          const canonicalRecordIds = new Map<string, string>();
+          for (const record of result.records) canonicalRecordIds.set(record.id, upsertCanonical(record));
+          result.receipt.canonicalRecordIds = result.receipt.canonicalRecordIds.map(id => canonicalRecordIds.get(id) ?? id);
           for (const projection of result.projections) upsert(candidate.projections, projection);
           for (const legacy of candidate.capabilityReceipts) {
             if (legacy.sourceEventId === event.id && legacy.capabilityVersion === 'phase-2-unprocessed') {

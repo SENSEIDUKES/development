@@ -119,10 +119,10 @@ export const importLegacyStorySeed = (value: unknown): StorySeedInput => {
       optional: {
         plotAndTropeSettings: {
           ...pick(record(storyOptional.plotAndTropeSettings), [
-            'longTermGoal', 'firstMajorConflict', 'mainAntagonistPressure',
+            'firstMajorConflict', 'mainAntagonistPressure',
           ]),
-          ...pick(storyOptional, ['longTermGoal', 'firstMajorConflict', 'mainAntagonistPressure']),
-          ...pick(intake, ['longTermGoal', 'firstMajorConflict', 'mainAntagonistPressure']),
+          ...pick(storyOptional, ['firstMajorConflict', 'mainAntagonistPressure']),
+          ...pick(intake, ['firstMajorConflict', 'mainAntagonistPressure']),
         },
         additionalStoryDirection: mergeDirection(
           storyOptional.additionalStoryDirection,

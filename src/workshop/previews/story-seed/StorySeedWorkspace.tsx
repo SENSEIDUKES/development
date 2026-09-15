@@ -1,3 +1,5 @@
+import { startWorkshopHarnessStory } from '../harness-generation/storySeedHandoff';
+import type { InitialStoryGenerationPayload } from '@seihouse/sen/story-seed';
 import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigation';
 import { LIBRARY_DESTINATIONS } from '../../../components/library-shell/development/libraryRoutes';
 import { lazy, useCallback, useEffect, useRef, useState } from 'react';
@@ -22,6 +24,7 @@ import {
 import { workshopEntries } from '../../manifest';
 import {
   createMockBlueprint,
+  createFilledStorySeedInput,
   createReferenceSavedSeeds,
   createStoryBankRecords,
   MOCK_USER_ID,
@@ -437,7 +440,7 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
       activeBlueprintRequestRef.current = controller;
       setBlueprintGenerating(true);
       try {
-        if (localGeneration) { await wait(300); return createMockBlueprint(); }
+        if (localGeneration) { await wait(300); return { ...createMockBlueprint(), arcPlan: payload.storySeed.story.optional.arcPlan ?? createFilledStorySeedInput().story.optional.arcPlan }; }
         return await requestWorldBlueprint(payload, blueprintAccessToken, controller.signal);
       } finally {
         if (activeBlueprintRequestRef.current === controller) {
@@ -446,7 +449,10 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
         }
       }
     },
-    onStartStory: async () => undefined,
+    onStartStory: async (payload: InitialStoryGenerationPayload) => {
+      const story = await startWorkshopHarnessStory(payload);
+      window.location.assign('?preview=harness-generation&story=' + encodeURIComponent(story.id));
+    },
   };
 
   const buttonBase =

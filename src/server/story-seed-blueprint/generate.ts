@@ -1,3 +1,4 @@
+import { ARC_PLAN_SCHEMA, validateArcPlan } from '../../components/arc-goals/shared/arcGoals';
 import { GoogleGenAI } from "@google/genai";
 import {
   buildBlueprintGenerationPayload,
@@ -31,6 +32,7 @@ export const WORLD_BLUEPRINT_RESPONSE_SCHEMA = {
     "initialCharacters",
     "majorMysteries",
     "firstArcPromise",
+    "arcPlan",
     "tropeRules",
     "styleBible",
     "destinedEnding",
@@ -60,6 +62,7 @@ export const WORLD_BLUEPRINT_RESPONSE_SCHEMA = {
     majorFactions: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
     initialCharacters: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
     majorMysteries: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
+    arcPlan: ARC_PLAN_SCHEMA,
     firstArcPromise: { type: "string", minLength: 1 },
     tropeRules: { type: "string", minLength: 1 },
     styleBible: { type: "string", minLength: 1 },
@@ -177,6 +180,7 @@ export const generateWorldBlueprint = async (
   });
   const blueprint = finalizeGeneratedWorldBlueprint(generated, storySeed);
   assertCompleteGeneratedBlueprint(blueprint);
+  if (!blueprint.arcPlan || validateArcPlan(blueprint.arcPlan).arcNumber !== 1) throw new Error('The generated Blueprint needs a valid Arc 1 plan.');
 
   // This is the exact downstream gate used by the Chapter Generation upload
   // flow. Returning only its normalized artifact proves there is no fixture

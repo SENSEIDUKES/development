@@ -4,11 +4,13 @@
 - **Source location:** `src/components/ReaderCodex.tsx`, `src/components/CodexSheetOverlay.tsx`, and `src/components/CodexHovercard.tsx` (verified against `origin/main` @ `66643f6`)
 - **Workshop preview:** `?preview=reader-codex`
 - **Replica created:** 2026-08-11
-- **Last Workshop update:** 2026-09-11
+- **Last Workshop update:** 2026-09-13
 - **Last source comparison:** 2026-08-18
 - **Replica status:** under refinement
 
 ## Workshop history
+
+- **2026-09-13:** Added the quiet arc-goal inspector and host-owned editing callback beside chapter recaps.
 
 - **2026-09-11:** Reused the source-owned SEN Characters mark for the Living Codex Portraits destination and the SEN Search mark in Glossary search. Character data, Codex navigation, filtering, and the locked reference remain unchanged.
 

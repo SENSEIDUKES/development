@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { SENCharactersIcon } from '../../sen-icons';
 import { generateId, vibrate } from '../shared/codexCompatibility';
+import { ArcPlanView } from '../../arc-goals/development/ArcPlanView';
+import type { ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { StoryMemory, Character, CreatureSpecies, StoryArc, StoryWorld, MultiModelRouting, UpdateStoryFields } from '../shared/types';
 import {
   CodexProvider,
@@ -36,6 +38,8 @@ import { stripLegacyCodexContextFields } from '../shared/codexContext';
 interface ReaderCodexProps {
   memory: StoryMemory;
   arcs: StoryArc[];
+  onEditArcPlan?: (plan: ArcPlan) => Promise<void>;
+  generatedThrough?: number;
   onUpdateMemory: (updatedMemory: StoryMemory) => void;
   mcName: string;
   onJumpToChapter?: (chapterNumber: number) => void;
@@ -222,6 +226,8 @@ const normalizeSparseMemory = (rawMemory: StoryMemory): NormalizedStoryMemory =>
 export default function ReaderCodex({
   memory: rawMemory = {} as StoryMemory,
   arcs = [],
+  onEditArcPlan,
+  generatedThrough,
   onUpdateMemory,
   mcName = 'Main Character',
   onJumpToChapter,
@@ -643,6 +649,8 @@ export default function ReaderCodex({
           </div>
         )}
 
+
+
         {/* PAGE 1: PORTRAITS (Human and non-human individuals, locations, timeline recaps, factions) */}
         {activePage === 'portraits' && (
           <div className="space-y-8 pb-8">
@@ -674,6 +682,13 @@ export default function ReaderCodex({
             </div>
 
             <div className="border-t border-neutral-900 pt-6">
+            <div>
+              {arcs.filter(arc => arc.goalContext).map(arc => <ArcPlanView key={arc.goalContext!.plan.arcNumber}
+                plan={arc.goalContext!.plan} activeGoalId={arc.goalContext!.activeGoal.id}
+                generatedThrough={generatedThrough ?? Math.max(0, ...arcs.flatMap(item => item.chapters.map(chapter => chapter.number)))}
+                onEdit={onEditArcPlan} />)}
+
+            </div>
               <h4 className="text-[11px] text-human tracking-widest font-sc font-bold uppercase mb-4 px-2">Visual Story Recaps</h4>
               <ReaderCodexTimeline
                 flatChapters={flatChapters}

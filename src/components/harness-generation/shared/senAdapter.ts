@@ -1,3 +1,5 @@
+import { createArcChapterPosition } from '../../arc-goals/shared/arcGoals';
+import { harnessArcContext } from './arcState';
 import type { Character, StoryBlock, StoryMemory, StoryWorld } from '../../reader-chamber/shared/types';
 import { buildCanonicalStoryView } from './canonicalState';
 import { stableHarnessId } from './ids';
@@ -168,7 +170,13 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
   });
   return { resolve, story: { id: story.id, title: story.title, genre: foundation?.input.genre ?? '', mcName,
     customPremise: foundation?.input.premise ?? '', createdAt: story.createdAt, updatedAt: story.updatedAt,
-    memory, arcs: [{ title: story.title, chapters: readerChapters, isCompleted: false }],
+    memory, arcs: Array.from(new Set([...readerChapters.map(chapter => createArcChapterPosition(chapter.number).arcNumber), ...((story.arcPlans?.at(-1)?.plan && !historical) ? [story.arcPlans.at(-1)!.plan.arcNumber] : [])])).map(arcNumber => {
+      const arcChapters = readerChapters.filter(chapter => createArcChapterPosition(chapter.number).arcNumber === arcNumber);
+      const position = historical ? Math.min(throughChapter, arcChapters.at(-1)?.number ?? throughChapter) : story.head.nextChapterNumber;
+      const goalContext = harnessArcContext(story, foundation?.input ?? { premise: '' }, position);
+      return { title: 'Arc ' + arcNumber, chapters: arcChapters, isCompleted: false,
+        goalContext: goalContext?.plan.arcNumber === arcNumber ? goalContext : undefined };
+    }),
     currentChapterNumber: chapters.at(-1)?.chapterNumber ?? 1 } };
 };
 

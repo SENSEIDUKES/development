@@ -4,7 +4,7 @@
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **Replica created:** 2026-08-01
-- **Last Workshop update:** 2026-09-11
+- **Last Workshop update:** 2026-09-13
 - **Last source comparison:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and ready for production transfer
 
@@ -18,7 +18,7 @@ Story Seed is one creation flow with these visible destinations:
 
 - **Origin** owns Story Title, Style, Core Premise / Secret Catalyst, Genre,
   and Story Tags.
-- **ARC** owns story-sauce controls, story direction, long-term goal, first
+- **ARC** owns story-sauce controls, story direction, first
   major conflict, main opposition, Destined Ending, and Make It Work.
 - **World** owns World Identity, Characters, Factions, Abilities, and Power
   System.
@@ -211,6 +211,8 @@ harness:
   render without loading-boundary, console, or page errors.
 
 ## Concise Workshop history
+
+- **2026-09-15:** Added the centralized weighted Arc 1 plan in ARC and the DEV start handoff to HARNESS. Story Seed now resets stale development records for its current schema instead of retaining removed long-term-goal data.
 
 - **2026-09-11:** Reused the canonical SEN marks in exact matching Story Seed fields and Blueprint sections, including Characters, ARC, World Identity, Abilities, Power System, Story Bank, Help, and Search. Origin intentionally retains its existing quill, and non-equivalent Blueprint/document controls remain unchanged.
 

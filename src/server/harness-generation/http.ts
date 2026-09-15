@@ -1,4 +1,5 @@
 import type {
+  HarnessArcRequest,
   HarnessGenerationRequest,
   HarnessGenerationResponse,
   HarnessMemoryRecoveryRequest,
@@ -50,7 +51,7 @@ const requireFoundation = (foundation: unknown) => {
   }
 };
 
-const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRecoveryRequest => {
+const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRecoveryRequest | HarnessArcRequest => {
   const parsed = typeof body === 'string' ? JSON.parse(body) : body;
   if (!isRecord(parsed)) throw new Error('The Harness Generation request must be a JSON object.');
   if (parsed.operation === 'recover-memory') {
@@ -60,13 +61,21 @@ const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRe
     }
     return parsed as unknown as HarnessMemoryRecoveryRequest;
   }
+  if (parsed.operation === 'plan-arc') {
+    if (!isRecord(parsed.storyInformation) || !Array.isArray(parsed.storyInformation.committedChapters)
+      || !isRecord(parsed.storyInformation.storyHead) || !Number.isInteger(parsed.storyInformation.chapterNumber)
+      || Number(parsed.storyInformation.chapterNumber) < 1 || typeof parsed.model !== 'string'
+      || typeof parsed.storyId !== 'string') throw new Error('Arc operations require a frozen Story Information Packet.');
+    requireFoundation(parsed.storyInformation.foundationRevision);
+    return parsed as unknown as HarnessArcRequest;
+  }
   if (parsed.operation !== undefined) throw new Error('Unknown Harness Generation operation.');
   // The Generation Model Call carries two separated inputs plus the immediate request.
   if (!isRecord(parsed.capaPrompt) || typeof parsed.capaPrompt.text !== 'string' || !parsed.capaPrompt.text.trim()) {
     throw new Error('Harness Generation requires an assembled CAPA Prompt.');
   }
-  if (!isRecord(parsed.storyInformation) || !Array.isArray(parsed.storyInformation.committedChapters)) {
-    throw new Error('Harness Generation needs an auditable Story Information Packet.');
+  if (!isRecord(parsed.storyInformation) || !Array.isArray(parsed.storyInformation.committedChapters) || !isRecord(parsed.storyInformation.arc)) {
+    throw new Error('Harness Generation needs an auditable Story Information Packet with an authoritative Arc Plan.');
   }
   requireFoundation(parsed.storyInformation.foundationRevision);
   if (typeof parsed.storyId !== 'string' || typeof parsed.attemptId !== 'string') {
@@ -112,7 +121,7 @@ export const handleHarnessGenerationHttp = async (
     };
   }
 
-  let parsed: HarnessGenerationRequest | HarnessMemoryRecoveryRequest;
+  let parsed: HarnessGenerationRequest | HarnessMemoryRecoveryRequest | HarnessArcRequest;
   try {
     parsed = parseRequest(request.body);
   } catch (error) {

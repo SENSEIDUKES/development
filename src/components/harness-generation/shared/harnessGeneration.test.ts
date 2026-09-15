@@ -55,6 +55,7 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
       defaultModel: 'google/gemini-3.1-flash-lite',
     }),
     generate,
+    arcOperation: async request => response(JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' })),
   };
   return { value, generate };
 };
@@ -87,7 +88,7 @@ describe('Harness Generation Phase 2 novel core', () => {
     await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
 
     const state = controller.snapshot();
-    expect(state.foundations).toHaveLength(1);
+    expect(state.foundations).toHaveLength(2);
     expect(state.chapters).toHaveLength(1);
     expect(state.chapters[0]).toMatchObject({
       storyId: story.id,

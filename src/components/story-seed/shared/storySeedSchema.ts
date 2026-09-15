@@ -23,6 +23,7 @@
  * belongs to the locked `reference/` replica (see `referenceIntake.ts`).
  */
 
+import { validateArcPlan, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import type {
   WorldBlueprint,
   WorldBlueprintMainCharacter,
@@ -40,7 +41,7 @@ import { normalizeStoryStyle, type StoryStyle } from './storyStyle';
  * incompatibly, so stale records are rejected instead of silently read as
  * empty. Version 3 is the Creator / Story / World hierarchy above.
  */
-export const STORY_SEED_SCHEMA_VERSION = 3 as const;
+export const STORY_SEED_SCHEMA_VERSION = 4 as const;
 export const WORLD_BLUEPRINT_VERSION = 'v1.0' as const;
 export const STORY_PREMISE_MAX_LENGTH = 3_000;
 export const STORY_TAG_LIMIT = 12;
@@ -79,12 +80,12 @@ export interface StorySeedPlotAndTropeSettings {
   faceSlap?: StorySeedStorySauceLevel;
   plotArmor?: StorySeedStorySauceLevel;
   recognition?: StorySeedStorySauceLevel;
-  longTermGoal?: string;
   firstMajorConflict?: string;
   mainAntagonistPressure?: string;
 }
 
 export interface StorySeedStoryOptional {
+  arcPlan?: ArcPlan;
   /** Story metadata only; this does not request explicit generated content. */
   intendedForMatureAudiences: boolean;
   fateSurvival: StorySeedFateSurvivalSettings;
@@ -250,7 +251,7 @@ const normalizeSurvivalPressure = (value: unknown): StorySeedSurvivalPressure =>
   return normalized === 'heaven' || normalized === 'mortal' ? normalized : 'immortal';
 };
 
-const PLOT_AND_TROPE_FIELDS = ['longTermGoal', 'firstMajorConflict', 'mainAntagonistPressure'] as const;
+const PLOT_AND_TROPE_FIELDS = ['firstMajorConflict', 'mainAntagonistPressure'] as const;
 const WORLD_IDENTITY_FIELDS = ['title', 'worldType', 'societyStructure', 'startingLocation'] as const;
 const MAIN_CHARACTER_FIELDS = [
   'name', 'startingIdentity', 'personality', 'mainFlaw',
@@ -302,6 +303,7 @@ const normalizeStoryOptional = (value: unknown): StorySeedStoryOptional => {
       recognition: normalizeStorySauceLevel(plotAndTropeSettings.recognition),
     },
   };
+  if (source.arcPlan !== undefined) normalized.arcPlan = validateArcPlan(source.arcPlan);
   const additionalStoryDirection = text(source.additionalStoryDirection);
   if (additionalStoryDirection) normalized.additionalStoryDirection = additionalStoryDirection;
   const makeItWorkInstruction = text(source.makeItWorkInstruction);
@@ -563,6 +565,7 @@ export const createBlueprintDraftFromSeed = (
     majorFactions: (worldFoundations.factions || []).map(faction => faction.name),
     initialCharacters: (worldFoundations.additionalCharacters || []).map(character => character.name),
     majorMysteries: [],
+    arcPlan: seed.story.optional.arcPlan,
     firstArcPromise: seed.story.optional.plotAndTropeSettings.firstMajorConflict || '',
     tropeRules: '',
     styleBible: '',
@@ -657,6 +660,7 @@ export const normalizeWorldBlueprint = (
     majorMysteries: Array.isArray(source.majorMysteries)
       ? stringList(source.majorMysteries)
       : fallback.majorMysteries,
+    arcPlan: normalizedSeed.story.optional.arcPlan ?? (source.arcPlan ? validateArcPlan(source.arcPlan) : fallback.arcPlan),
     firstArcPromise: read('firstArcPromise', fallback.firstArcPromise),
     tropeRules: read('tropeRules', fallback.tropeRules),
     styleBible: read('styleBible', fallback.styleBible),

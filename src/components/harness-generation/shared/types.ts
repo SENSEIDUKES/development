@@ -2,7 +2,7 @@
  * persisted shape (attempt, chapter, or workspace state fields). This is a
  * development system: storage at any other version is reset, never
  * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 3 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 5 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -21,6 +21,8 @@ export interface HarnessStorySeedSnapshot {
 }
 
 export interface StoryFoundationInput {
+  destinedEnding?: string;
+  initialArcPlan?: import('../../arc-goals/shared/arcGoals').ArcPlan;
   title?: string;
   /** The only author field required to start a Harness story. */
   premise: string;
@@ -69,6 +71,8 @@ export interface HarnessStoryHead {
 }
 
 export interface HarnessStory {
+  arcPlans?: import('../../arc-goals/shared/arcGoals').ArcPlanRevision[];
+  goalCompletions?: import('../../arc-goals/shared/arcGoals').ArcGoalCompletion[];
   id: string;
   title: string;
   createdAt: string;
@@ -262,7 +266,8 @@ export interface HarnessWarning {
     | 'projection_failed'
     | 'projection_unresolved'
     | 'post_commit_processing_pending'
-    | 'batch_paused';
+    | 'batch_paused'
+    | 'arc_plan_pending';
   message: string;
 }
 
@@ -298,6 +303,7 @@ export interface HarnessContextChapter {
  * story data only; CAPA skill instructions never enter it.
  */
 export interface StoryInformationPacket {
+  arc?: import('../../arc-goals/shared/arcGoals').ArcGenerationContext;
   id: string;
   storyId: string;
   attemptId: string;
@@ -614,6 +620,7 @@ export interface HarnessWorkspaceState {
   projections: HarnessProjectionRecord[];
   corrections: HarnessAuthorCorrection[];
   batches: HarnessBatchRun[];
+  arcPlanOperations: HarnessArcPlanOperation[];
   memoryRecoveries?: HarnessMemoryRecovery[];
 }
 
@@ -669,5 +676,27 @@ export interface HarnessGenerationResponse {
 export interface HarnessGenerationModelAdapter {
   getServerInfo(): Promise<HarnessGenerationServerInfo>;
   generate(request: HarnessGenerationRequest): Promise<HarnessGenerationResponse>;
+  arcOperation?(request: HarnessArcRequest): Promise<HarnessGenerationResponse>;
   recoverMemory?(request: HarnessMemoryRecoveryRequest): Promise<HarnessGenerationResponse>;
+}
+
+export interface HarnessArcRequest {
+  operation: 'plan-arc';
+  storyId: string;
+  model: string;
+  storyInformation: StoryInformationPacket;
+  instruction?: string;
+}
+
+/** Durable checkpoint for the required Arc planner provider operation. */
+export interface HarnessArcPlanOperation {
+  id: string;
+  storyId: string;
+  foundationRevisionId: string;
+  request: HarnessArcRequest;
+  startedAt: string;
+  status: 'request_started' | 'provider_outcome_unknown' | 'raw_received' | 'completed' | 'abandoned' | 'failed';
+  rawProviderResponse?: string;
+  providerReceipt?: HarnessProviderReceipt;
+  failure?: string;
 }

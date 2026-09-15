@@ -25,6 +25,7 @@ describe('SPP intake through Harness skills', () => {
     let calls = 0;
     const controller = new HarnessGenerationController({ repository, installedSkills: loadHarnessSppSkills(saved), modelAdapter: {
       getServerInfo: async () => { throw new Error('Not used'); },
+      arcOperation: async request => ({ rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: new Date().toISOString(), usage: { source: 'unavailable' } } }),
       generate: async request => {
         const response = await handleHarnessGenerationHttp({ method: 'POST', body: JSON.stringify(request) }, {
           environment: { GEMINI_API_KEY: 'fixture-key' },
@@ -91,6 +92,7 @@ describe('SPP intake through Harness skills', () => {
     const skill = createHarnessSppSkill(content, content.manifest.files[0].path, 'style');
     const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), modelAdapter: {
       getServerInfo: async () => { throw new Error('Not used'); },
+      arcOperation: async request => ({ rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: new Date().toISOString(), usage: { source: 'unavailable' } } }),
       generate: async () => { throw new Error('Provider must not be called'); },
     } });
     await controller.hydrate();

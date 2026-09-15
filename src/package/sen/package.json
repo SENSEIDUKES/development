@@ -58,6 +58,10 @@
     "./presentation": {
       "types": "./dist/types/package/sen/presentation.d.ts",
       "import": "./dist/presentation.js"
+    },
+    "./arc-goals": {
+      "types": "./dist/types/package/sen/arc-goals.d.ts",
+      "import": "./dist/arc-goals.js"
     }
   },
   "peerDependencies": {

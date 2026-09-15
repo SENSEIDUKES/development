@@ -782,6 +782,8 @@ export function HarnessGenerationWorkspace({
   const chapters = state && selectedStory ? storyChapters(state, selectedStory.id) : [];
   const events = state && selectedStory ? storyEvents(state, selectedStory.id) : [];
   const attempt = state && selectedStory ? latestAttemptForStory(state, selectedStory.id) : undefined;
+  const arcPlanOperation = state && selectedStory ? state.arcPlanOperations
+    .filter(operation => operation.storyId === selectedStory.id && ['provider_outcome_unknown', 'failed'].includes(operation.status)).at(-1) : undefined;
   const batch = state && selectedStory ? state.batches
     .filter(entry => entry.storyId === selectedStory.id)
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0] : undefined;
@@ -860,6 +862,7 @@ export function HarnessGenerationWorkspace({
     if (!attempt) return;
     void run(() => controller.retryModelRequest(attempt.id));
   };
+  const retryArcPlan = () => selectedStory && void run(() => controller.retryArcPlan(selectedStory.id, model));
 
   const replay = () => selectedStory && void run(() => controller.replayStory(selectedStory.id));
   const savePolicy = (recentChapterCount: number, maxEstimatedTokens: number, includeMinorEvents: boolean) => {
@@ -900,7 +903,8 @@ export function HarnessGenerationWorkspace({
 
   const generationAvailable = Boolean(selectedStory && serverInfo?.configured && model && !busy);
 
-  if (reading && state && selectedStory) return <HarnessReaderSession key={selectedStory.id} state={state} storyId={selectedStory.id} onClose={() => setReading(false)} />;
+  if (reading && state && selectedStory) return <HarnessReaderSession key={selectedStory.id} state={state} storyId={selectedStory.id}
+    controller={controller} onClose={() => setReading(false)} />;
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-generation-workspace">
@@ -977,6 +981,15 @@ export function HarnessGenerationWorkspace({
               </div>
             </LibraryPanel>
             {selectedStory && <AttemptStatus attempt={attempt} busy={busy} onRetryStage={retryStage} onRetryModel={retryModel} />}
+            {arcPlanOperation && (
+              <LibraryPanel variant="callout" padding="sm" aria-live="polite">
+                <p className="text-sm font-medium text-white">Arc planning needs an explicit retry</p>
+                <p className="mt-1 text-xs leading-relaxed text-neutral-400">{arcPlanOperation.failure ?? 'The previous Arc planning provider outcome is unknown.'}</p>
+                <LibraryButton type="button" size="sm" variant="secondary" icon={RefreshCcw} className="mt-3" onClick={retryArcPlan} loading={busy}>
+                  Explicitly retry Arc planning
+                </LibraryButton>
+              </LibraryPanel>
+            )}
           </aside>
 
           <div className="min-w-0 space-y-5">

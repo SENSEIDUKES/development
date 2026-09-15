@@ -83,7 +83,11 @@ const readRecords = (): StorySeedRecord[] => {
     if (!Array.isArray(parsed)) throw new Error('Stored Story Seed data is not a collection.');
     const normalizedRecords = parsed.map(normalizeRecord);
     if (normalizedRecords.some(seed => seed === null)) {
-      throw new Error('Stored Story Seed data contains an invalid record.');
+      // Development persistence has no migration path. A structural/schema
+      // mismatch clears the stale local collection rather than retaining a
+      // partly readable old Story Seed shape.
+      writeRecords([]);
+      return [];
     }
     const records = normalizedRecords.filter((seed): seed is StorySeedRecord => seed !== null);
     memoryRecords = records;

@@ -1,3 +1,4 @@
+import { validateArcPlan } from '../../arc-goals/shared/arcGoals';
 import { cloneHarnessValue, defaultHarnessRuntime, emptyStoryHead, stableHarnessId, type HarnessRuntime } from './ids';
 import type {
   HarnessStory,
@@ -28,6 +29,7 @@ const optionalFoundationKeys = [
   'characters',
   'worldFacts',
   'intendedDirection',
+  'destinedEnding',
 ] as const;
 
 export const normalizeStoryFoundationInput = (input: StoryFoundationInput): StoryFoundationInput => {
@@ -35,6 +37,10 @@ export const normalizeStoryFoundationInput = (input: StoryFoundationInput): Stor
   if (!premise) throw new Error('A Story Foundation needs a premise before a chapter can be generated.');
 
   const normalized: StoryFoundationInput = { premise };
+  if (input.initialArcPlan) {
+    normalized.initialArcPlan = validateArcPlan(input.initialArcPlan);
+    if (normalized.initialArcPlan.arcNumber !== 1) throw new Error('Story Seed supplies Arc 1.');
+  }
   for (const key of optionalFoundationKeys) {
     const value = input[key]?.trim();
     if (value) normalized[key] = value;
@@ -101,6 +107,8 @@ export const createHarnessStory = (
     activeFoundationRevisionId: foundation.id,
     foundationRevisionIds: [foundation.id],
     head: emptyStoryHead(),
+    arcPlans: normalizedInput.initialArcPlan ? [{ plan: normalizedInput.initialArcPlan, effectiveChapter: 1, reason: 'initial' }] : [],
+    goalCompletions: [],
   };
   return {
     state: {

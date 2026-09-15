@@ -36,6 +36,7 @@ const setup = async (rich = false) => {
   const modelAdapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
     generate, recoverMemory,
+    arcOperation: async request => reply({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
   };
   const controller = new HarnessGenerationController({ repository, modelAdapter });
   await controller.hydrate();
@@ -63,6 +64,34 @@ describe('Useful, evidenced chapter memory', () => {
     expect(reloaded.snapshot().capabilityReceipts.find(receipt => receipt.id === 'old-fallback-receipt')?.status).toBe('superseded');
     expect(buildCanonicalStoryView(reloaded.snapshot(), story.id).records.some(record => record.id === 'old-fallback')).toBe(false);
     expect(reloaded.snapshot().attempts[0].postCommitProcessing).toBe('complete');
+  });
+
+  it('keeps a semantic canonical match as one record when replay assigns it a new generated id', async () => {
+    const { controller, repository, modelAdapter, story } = await setup(true);
+    const state = controller.snapshot();
+    const source = state.canonicalRecords.find(record => record.sourceEventId)!;
+    const receipt = state.capabilityReceipts.find(item => item.sourceEventId === source.sourceEventId)!;
+    state.canonicalRecords = state.canonicalRecords.filter(record => record.id !== source.id);
+    state.canonicalRecords.push({
+      ...source,
+      id: 'semantic-fallback',
+      supersededAt: '2026-09-05T12:01:00Z',
+      supersededByCorrectionId: 'hcorrection-1',
+    });
+    receipt.canonicalRecordIds = receipt.canonicalRecordIds.map(id => id === source.id ? 'semantic-fallback' : id);
+    await repository.save(state);
+
+    const reloaded = new HarnessGenerationController({ repository, modelAdapter });
+    await reloaded.hydrate();
+    await reloaded.replayStory(story.id);
+
+    const matching = reloaded.snapshot().canonicalRecords.filter(record =>
+      record.storyId === source.storyId && record.sourceEventId === source.sourceEventId
+      && record.capabilityId === source.capabilityId && record.kind === source.kind && record.label === source.label,
+    );
+    expect(matching.map(record => record.id)).toEqual(['semantic-fallback']);
+    expect(reloaded.snapshot().capabilityReceipts.find(item => item.id === receipt.id)?.canonicalRecordIds)
+      .toContain('semantic-fallback');
   });
 
   it('reports partially malformed subject and fact fields instead of claiming complete interpretation', async () => {

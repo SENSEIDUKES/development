@@ -5,7 +5,7 @@ import { HarnessGenerationWorkspace } from '../development/HarnessGenerationWork
 import { SEN_NOVEL_AUTHOR_SKILL } from './authorSkill';
 import { compileStoryInformationPacket } from './context';
 import { HarnessGenerationController } from './controller';
-import { assembleCapaPrompt } from './skills';
+import { HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS, assembleCapaPrompt } from './skills';
 import type { HarnessRuntime } from './ids';
 import { InMemoryHarnessGenerationRepository } from './repository';
 import type {
@@ -182,6 +182,7 @@ describe('Harness Generation Phase 2 novel core', () => {
     expect(request.capaPrompt.text).toBe([
       'CAPA SKILL [Author] — Cozy Fantasy Author v1.0.0\nWrite with warmth, restraint, and close attention to daily life.',
       'CAPA SKILL [Pacing] — Long-Range Pacing v1.0.0\nDo not collapse the siege into one chapter.',
+      HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS,
     ].join('\n\n'));
     expect(JSON.stringify(request.storyInformation)).not.toContain('Write with warmth');
     expect(JSON.stringify(request.storyInformation)).not.toContain('skillLoadout');

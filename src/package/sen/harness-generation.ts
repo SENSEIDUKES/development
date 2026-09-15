@@ -38,6 +38,7 @@ export { DEFAULT_HARNESS_CONTEXT_POLICY } from '../../components/harness-generat
 export {
   CAPA_SCHEMA,
   CAPA_PROMPT_TOKEN_LIMIT,
+  HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS,
   HARNESS_SKILL_INSTRUCTION_LIMIT,
   assembleCapaPrompt,
   createHarnessSkillCatalog,

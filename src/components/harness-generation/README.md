@@ -13,8 +13,8 @@
 Harness Generation is an independent, checkpoint-first novel core. It gives an
 author a frozen Foundation copied from a saved Story Seed, asks a provider for one complete
 chapter, preserves raw output before interpreting it, accepts usable prose
-without requiring rich application structures, and carries committed prose and
-semantic-event evidence into the next chapter.
+through canonical SEN chapter blocks, and carries committed prose, optional
+accepted media metadata, and semantic-event evidence into the next chapter.
 
 It is not a replacement, wrapper, import path, or compatibility layer for the
 existing Chapter Generation feature.
@@ -30,6 +30,15 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-09-15:** Restored HARNESS Generated Chapters to the canonical SEN
+  `StoryBlock` and media pathway. Response acceptance now normalizes optional
+  dialogue, manifestation, music, atmosphere, beast-event, System Panel, and
+  World Cue structures through the existing Chapter Generation and Library Cue
+  validators; derives the one readable prose result from accepted block text;
+  persists accepted blocks and application-resolved cues at every chapter
+  checkpoint; and passes them intact into Reader Chamber. Schema version 6
+  intentionally resets stale Development data. Author Skill V1 and the empty
+  Media slot are unchanged.
 - **2026-09-15:** Integrated the neutral SEN Arc Goals authority with the
   current CAPA Prompt / Story Information Packet generation boundary. Arc
   requirements remain Harness mechanics and do not modify Author Skill V1.
@@ -143,8 +152,10 @@ existing Chapter Generation feature.
 The portable package entry is `@seihouse/sen/harness-generation`. It may use
 generic SEN UI primitives and accept a neutral, host-injected Story Seed source,
   but it never imports Story Seed internals. The Workshop preview owns the only
-Story Seed-to-Foundation adapter. Legacy Chapter Generation remains independent.
-`shared/senAdapter.ts` is the only direct Reader contract edge, and
+Story Seed-to-Foundation adapter. HARNESS reuses Chapter Generation's public
+SEN block normalization and accepted-media contracts, but not its legacy
+generation cycle, prompts, planning, processing, or persistence.
+`shared/senAdapter.ts` remains the direct Reader contract edge, and
 `development/HarnessReaderSession.tsx` composes the existing packaged Reader and
 Codex. Neither component owns a second persistence path. SEN stays provider-neutral.
 
@@ -152,11 +163,13 @@ Codex. Neither component owns a second persistence path. SEN stays provider-neut
 
 1. Persist `request_started` before a provider request.
 2. Persist the raw provider response immediately after it returns.
-3. Persist accepted prose before optional event preservation.
+3. Normalize canonical SEN blocks, derive the one readable prose value from
+   their ordered text, resolve approved Library Cues, and persist that accepted
+   chapter draft before optional event preservation.
 4. Preserve valid event descriptions independently; malformed optional events
    become diagnostics.
-5. Atomically append a chapter, committed events, attempt receipt, and updated
-   story head.
+5. Atomically append a chapter with its accepted blocks and resolved media,
+   committed events, attempt receipt, and updated story head.
 
 Only a committed chapter enters the next context snapshot. If storage fails,
 the controller retains the completed local checkpoint, blocks continuation,

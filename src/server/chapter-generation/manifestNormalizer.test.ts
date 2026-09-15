@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   MINIMUM_CHAPTER_WORD_COUNT,
   normalizeManifestResponse,
-} from "./manifestNormalizer";
+} from "../../components/chapter-generation/shared/manifestNormalizer";
 
 const ndjson = (...blocks: Array<Record<string, unknown> | string>) => [
   "---CHAPTER_BLOCKS---",

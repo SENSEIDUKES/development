@@ -2,7 +2,7 @@ import { createArcChapterPosition } from '../../arc-goals/shared/arcGoals';
 import { harnessArcContext } from './arcState';
 import type { Character, StoryBlock, StoryMemory, StoryWorld } from '../../reader-chamber/shared/types';
 import { buildCanonicalStoryView } from './canonicalState';
-import { stableHarnessId } from './ids';
+import { cloneHarnessValue, stableHarnessId } from './ids';
 import { buildHarnessMechanicalContinuity } from './mechanicalContinuity';
 import { verifyHarnessEventEvidence } from './responseAcceptance';
 import type { HarnessCanonicalRecord, HarnessWorkspaceState } from './types';
@@ -120,6 +120,21 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
   memory.memoryWarnings = [...ambiguous].map(name => `Ambiguous character identity: ${name}. Speech attribution is withheld.`);
 
   const readerChapters = (includeChapters ? chapters : []).map(chapter => {
+    if (chapter.blocks?.length) {
+      return {
+        persistenceId: chapter.id,
+        number: chapter.chapterNumber,
+        title: chapter.title,
+        premise: '',
+        status: 'unread' as const,
+        hasContent: true,
+        generatedContent: chapter.prose,
+        blocks: cloneHarnessValue(chapter.blocks) as StoryBlock[],
+        ...(chapter.audioMoments?.length
+          ? { audioMoments: cloneHarnessValue(chapter.audioMoments) }
+          : {}),
+      };
+    }
     // Resolve roles as of this chapter, so later changes do not rewrite dialogue attribution.
     const chapterView = historical && chapter.chapterNumber === chapters.at(-1)?.chapterNumber ? { story: { mcName }, resolve }
       : buildHarnessSenStory(state, storyId, chapter.chapterNumber, false);

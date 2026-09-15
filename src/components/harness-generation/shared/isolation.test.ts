@@ -5,7 +5,6 @@ import { describe, expect, it } from 'vitest';
 const featureRoot = join(process.cwd(), 'src', 'components', 'harness-generation');
 const packageEntry = join(process.cwd(), 'src', 'package', 'sen', 'harness-generation.ts');
 const forbidden = [
-  'chapter-generation',
   'story-seed',
   'cards',
   'system-prompt',
@@ -14,7 +13,7 @@ const forbidden = [
 const sourceFiles = (directory: string): string[] => readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
   const path = join(directory, entry.name);
   if (entry.isDirectory()) return sourceFiles(path);
-  return /\.(?:ts|tsx)$/.test(entry.name) && !entry.name.endsWith('.test.ts')
+  return /\.(?:ts|tsx)$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name)
     ? [path]
     : [];
 });
@@ -23,11 +22,20 @@ const importsOf = (file: string) => [...readFileSync(file, 'utf8').matchAll(/\bf
   .map(match => match[1]);
 
 describe('Harness Generation isolation boundary', () => {
-  it('keeps legacy generation and Story Seed outside the Harness; SEN enters only through the adapter and Reader session', () => {
+  it('reuses only the canonical SEN chapter contracts while keeping the legacy generation cycle and Story Seed outside the Harness', () => {
     for (const file of [...sourceFiles(featureRoot), packageEntry]) {
       for (const specifier of importsOf(file)) {
         if (/reader-chamber|reader-codex/.test(specifier)) {
           expect(/(?:senAdapter\.ts|HarnessReaderSession\.tsx)$/.test(file), `Unexpected SEN edge: ${file}`).toBe(true);
+        }
+        if (/chapter-generation/.test(specifier)) {
+          expect(
+            /(?:types|responseAcceptance)\.ts$/.test(file),
+            `Unexpected Chapter Generation edge: ${file}`,
+          ).toBe(true);
+          expect(specifier).toMatch(
+            /chapter-generation\/shared\/(?:types|manifestNormalizer|acceptedChapterMedia)$/,
+          );
         }
         for (const denied of forbidden) {
           expect(

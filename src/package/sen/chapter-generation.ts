@@ -36,6 +36,8 @@ export {
 
 export * from '../../components/chapter-generation/shared/batch/chapterBatch';
 export * from '../../components/chapter-generation/shared/liveChapterGeneration';
+export * from '../../components/chapter-generation/shared/acceptedChapterMedia';
+export * from '../../components/chapter-generation/shared/manifestNormalizer';
 export * from '../../components/chapter-generation/shared/packets';
 export * from '../../components/chapter-generation/shared/pipeline/assembleChapterPacket';
 export * from '../../components/chapter-generation/shared/pipeline/chapterEffectRules';

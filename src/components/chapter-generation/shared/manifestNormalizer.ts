@@ -4,20 +4,21 @@ import {
   type ChapterManifestDiagnostics,
   type ChapterManifestWarning,
   type FateResultData,
+  type RegularSystemEvent,
   type StoryBlock,
   type StoryBlockMetadata,
   type SystemEvent,
   type SystemPromptPresentation,
   type WorldNoticeData,
-} from "../../components/chapter-generation/shared/types";
+} from "./types";
 import {
   normalizeSystemPromptChanges,
   normalizeSystemStatusScreen,
-} from "../../components/reader-chamber/shared/systemPromptPresentation";
+} from "../../reader-chamber/shared/systemPromptPresentation";
 import {
   validateWorldCueIntent,
   type WorldCueIntent,
-} from "../../audio/inlineAudio";
+} from "../../../audio/inlineAudio";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -754,6 +755,24 @@ const parseSystemEvent = (
     ...(worldNotice ? { worldNotice } : {}),
     ...(status ? { status } : {}),
   };
+};
+
+/**
+ * A System Panel reaches the Reader only when it satisfies the current SEN
+ * presentation contract. Callers may discard an incomplete panel while still
+ * retaining its block text as readable chapter prose.
+ */
+export const isCompleteSystemEvent = (system: SystemEvent): boolean => {
+  if (system.kind === "fate_system_prompt") return Boolean(system.fateResult);
+  const regular = system as RegularSystemEvent;
+  if (!regular.promptType || !regular.presentation) return false;
+  if (regular.presentation === "mechanical") {
+    return Boolean(regular.status && Object.keys(regular.status).length > 0);
+  }
+  if (regular.presentation === "world_notice") {
+    return Array.isArray(regular.worldNotice?.entries) && regular.worldNotice.entries.length > 0;
+  }
+  return true;
 };
 
 const normalizedBlockId = (

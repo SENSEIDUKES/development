@@ -128,6 +128,24 @@ describe('Harness Generation HTTP boundary', () => {
     expect(input.systemInstruction).toContain('elite Eastern fantasy web-novel author specializing in Asian light novels');
     expect(input.systemInstruction.split('Do not resolve the siege in this chapter.')).toHaveLength(2);
     expect(input.systemInstruction).not.toContain('Night Soundscape');
+    expect(input.systemInstruction).toContain('blocks array is the sole chapter body');
+    expect(input.systemInstruction).toContain('does not decide whether or when a System Panel');
+    expect(input.systemInstruction).not.toContain('Do not invent ids, chapter numbers, ordering, persistence records, Codex records, cards, System Prompt payloads');
+    const chapterSchema = input.responseJsonSchema as { properties: Record<string, unknown>; required: string[] };
+    expect(chapterSchema.required).toContain('blocks');
+    expect(chapterSchema.required).not.toContain('prose');
+    const blockSchema = (chapterSchema.properties.blocks as {
+      items: { properties: { system: { anyOf: Array<{ required: string[]; properties: Record<string, unknown> }> } } };
+    }).items;
+    const systemSchema = blockSchema.properties.system;
+    expect(systemSchema.anyOf).toEqual(expect.arrayContaining([
+      expect.objectContaining({ required: ['kind', 'title', 'fateResult'] }),
+      expect.objectContaining({ required: ['kind', 'title', 'promptType', 'presentation'] }),
+      expect.objectContaining({ required: ['kind', 'title', 'promptType', 'presentation', 'status'] }),
+      expect.objectContaining({ required: ['kind', 'title', 'promptType', 'presentation', 'worldNotice'] }),
+    ]));
+    expect(input.systemInstruction).toContain('Every regular system_prompt also requires a supported promptType and presentation.');
+    expect(input.systemInstruction).toContain('A mechanical presentation requires a nonempty status object');
     // Generation content: story information plus the immediate request, with no skill instructions.
     expect(input.userPrompt).toMatch(/^STORY INFORMATION PACKET/);
     expect(input.userPrompt).toContain('PERSISTENT AUTHOR DIRECTION');

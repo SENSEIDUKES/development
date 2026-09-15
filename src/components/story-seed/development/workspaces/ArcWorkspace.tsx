@@ -1,3 +1,4 @@
+import { ArcPlanView } from '../../../arc-goals/development/ArcPlanView';
 import { Compass, Hourglass, ShieldAlert, Sparkles, Swords, Target } from 'lucide-react';
 import { SENArcIcon } from '../../../sen-icons';
 import type {
@@ -95,6 +96,9 @@ export const ArcWorkspace = ({ seed, updateSeed }: ArcWorkspaceProps) => {
 
   return (
     <WorkspaceShell section={section} complete={section.isFilled(seed)}>
+      {seed.story.optional.arcPlan
+        ? <ArcPlanView plan={seed.story.optional.arcPlan} onEdit={arcPlan => updateSeed(current => ({ ...current, story: { ...current.story, optional: { ...current.story.optional, arcPlan } } }))} />
+        : <p className="text-sm text-neutral-400">AI will create one to five sequential goals for the first 100-chapter arc when your story is prepared. You can proceed automatically or inspect and adjust the plan here.</p>}
       <section className="glass-panel p-4 sm:p-5" aria-labelledby="arc-story-sauce-title">
         <div className="mb-4">
           <h3
@@ -183,7 +187,7 @@ export const ArcWorkspace = ({ seed, updateSeed }: ArcWorkspaceProps) => {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <LibraryTextBox
           id="a11y-control-jolpc3b"
-          label="Long-term Goal"
+          label="Legacy Story Direction"
           icon={Target}
           value={settings.longTermGoal || ''}
           onChange={(value) => updateSeed(patchPlotAndTropeSettings({ longTermGoal: value }))}
@@ -215,7 +219,7 @@ export const ArcWorkspace = ({ seed, updateSeed }: ArcWorkspaceProps) => {
         label="Destined Ending"
         icon={Hourglass}
         maxLength={1500}
-        helpText="The intended final destination of this story or arc. If left blank, the Library recommends a fitting ending from your Origin and ARC direction. You can alter this outcome later."
+        helpText="The true long-term destination of this novel. If left blank, the Library recommends a fitting ending from your Origin and ARC direction. You can alter this outcome later."
         value={worldFoundations(seed).destinedEnding || ''}
         onChange={(value) => updateSeed(patchWorldFoundations({ destinedEnding: value }))}
         rows={3}

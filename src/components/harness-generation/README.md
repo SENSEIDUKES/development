@@ -24,12 +24,19 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-09-13 |
+| Last Workshop update | 2026-09-15 |
 | Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Steered continuation with a derived SEN Reader adapter |
 
 ### History
 
+- **2026-09-15:** Integrated the neutral SEN Arc Goals authority with the
+  current CAPA Prompt / Story Information Packet generation boundary. Arc
+  requirements remain Harness mechanics and do not modify Author Skill V1.
+- **2026-09-13:** Added durable plan revisions, frozen pacing context,
+  evidence-confirmed progression, automatic boundary planning, Codex edits,
+  and historical Alter Fate worlds. See
+  [ownership and integration boundaries](../arc-goals/README.md).
 - **2026-09-14:** Removed the compatibility leftovers from the CAPA / Story
   Information separation. The frozen Story Information Packet now lives on
   `HarnessGenerationAttempt.storyInformation` (was `contextSnapshot`) and

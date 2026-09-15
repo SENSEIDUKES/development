@@ -1,3 +1,5 @@
+import { createArcChapterPosition } from '../../../arc-goals/shared/arcGoals';
+export { createArcChapterPosition } from '../../../arc-goals/shared/arcGoals';
 /**
  * Living Story State — story-owned data that changes as chapters are written.
  * Permanent world rules and Story Seed settings intentionally live in the
@@ -78,26 +80,6 @@ export interface LivingStoryState {
 }
 
 /** Formats the internal arc-local position used by packet assembly. */
-export function createArcChapterPosition(
-  chapterNumber: number,
-  chaptersInArc: number = 100,
-): ArcChapterPosition {
-  if (!Number.isInteger(chapterNumber) || chapterNumber < 1) {
-    throw new Error("chapterNumber must be a positive integer.");
-  }
-  if (!Number.isInteger(chaptersInArc) || chaptersInArc < 1) {
-    throw new Error("chaptersInArc must be a positive integer.");
-  }
-
-  const arcNumber = Math.floor((chapterNumber - 1) / chaptersInArc) + 1;
-  const chapterInArc = ((chapterNumber - 1) % chaptersInArc) + 1;
-  return {
-    arcNumber,
-    chapterInArc,
-    chaptersInArc,
-    display: `Arc ${arcNumber} — Chapter ${chapterInArc}/${chaptersInArc}`,
-  };
-}
 
 export interface LivingStoryStateOptions {
   recentSceneTypes?: SceneType[];

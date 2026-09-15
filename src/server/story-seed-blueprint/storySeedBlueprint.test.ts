@@ -121,6 +121,7 @@ const generatedBlueprint = (): Record<string, unknown> => ({
     "Regent Zhao — the architect of the hearing",
   ],
   majorMysteries: ["Who taught the dead heaven to remember broken oaths?"],
+  arcPlan: { arcNumber: 1, goals: [{ id: "arc-1-hearing", text: "Survive the hearing.", chapters: 70 }, { id: "arc-1-oath", text: "Investigate the oath network.", chapters: 30 }] },
   firstArcPromise: "A different first conflict.",
   tropeRules: "Foreknowledge creates costly choices rather than automatic victories.",
   styleBible: "Restrained court tension, exact ritual detail, and sudden spectacle.",

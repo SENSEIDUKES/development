@@ -1,3 +1,4 @@
+import { ARC_LENGTH } from '../../components/arc-goals/shared/arcGoals';
 import type { StorySeedInput } from "../../components/story-seed/shared/storySeedSchema";
 
 export const WORLD_BLUEPRINT_SYSTEM_PROMPT = `You are an elite light-novel creative director and world architect. Build a detailed World Blueprint that can serve as the canon bible for serialized chapter generation.
@@ -19,7 +20,7 @@ Completion rules:
 - Establish the world overview, opening location, society, and a usable power-system outline.
 - Complete the main character's name, age, appearance, personality, and background profile when missing.
 - Include the creator's named characters and factions, then add only useful supporting entries.
-- Establish major mysteries, the first-arc promise, trope rules, a practical style bible, unresolved opening threads, a Destined Ending, and a realistic estimated arc count.
+- Generate arcPlan for arcNumber 1: one to five one-line sequential goals (five is the maximum, not a requirement), unique IDs prefixed arc-1, positive integer chapters allocations totaling exactly ${ARC_LENGTH}. Weight allocations by the actual narrative work required; they may be unequal. No overlapping goals, overarching arc goal, or long-term goal bank. The Destined Ending is the novel-wide North Star. Preserve an author-supplied arcPlan.\n- Establish major mysteries, the first-arc promise, trope rules, a practical style bible, unresolved opening threads, a Destined Ending, and a realistic estimated arc count.
 - The style bible must translate genre, style, tags, maturity metadata, and story direction into actionable prose, pacing, viewpoint, dialogue, and thematic guidance.
 - The trope rules must explicitly account for face-slap, plot-armor, recognition, Fate Survival, and Make It Work settings without exposing app-control language as ordinary narration.
 - mcProfile must match mainCharacter.backgroundProfile for compatibility.

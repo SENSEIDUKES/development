@@ -5,6 +5,8 @@ import ReaderCodex from './ReaderCodex';
 import type { StoryMemory, StoryWorld, UpdateStoryFields } from '../shared/types';
 
 export interface CodexSheetOverlayProps {
+  onEditArcPlan?: (plan: import('../../arc-goals/shared/arcGoals').ArcPlan) => Promise<void>;
+  generatedThrough?: number;
   isOpen: boolean;
   onClose: () => void;
   activeStory: StoryWorld;
@@ -15,6 +17,8 @@ export interface CodexSheetOverlayProps {
 
 export const CodexSheetOverlay: React.FC<CodexSheetOverlayProps> = ({
   isOpen,
+  onEditArcPlan,
+  generatedThrough,
   onClose,
   activeStory,
   onUpdateMemory,
@@ -84,6 +88,8 @@ export const CodexSheetOverlay: React.FC<CodexSheetOverlayProps> = ({
                 <ReaderCodex
                   memory={activeStory.memory ?? ({} as StoryMemory)}
                   arcs={Array.isArray(activeStory.arcs) ? activeStory.arcs : []}
+                  onEditArcPlan={onEditArcPlan}
+                  generatedThrough={generatedThrough}
                   onUpdateMemory={onUpdateMemory}
                   mcName={activeStory.mcName || 'Main Character'}
                   onJumpToChapter={(chapterNumber) => {

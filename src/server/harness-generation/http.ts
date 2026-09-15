@@ -1,4 +1,5 @@
 import type {
+  HarnessArcRequest,
   HarnessGenerationRequest,
   HarnessGenerationResponse,
   HarnessMemoryRecoveryRequest,
@@ -50,7 +51,7 @@ const requireFoundation = (foundation: unknown) => {
   }
 };
 
-const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRecoveryRequest => {
+const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRecoveryRequest | HarnessArcRequest => {
   const parsed = typeof body === 'string' ? JSON.parse(body) : body;
   if (!isRecord(parsed)) throw new Error('The Harness Generation request must be a JSON object.');
   if (parsed.operation === 'recover-memory') {
@@ -59,6 +60,17 @@ const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRe
       throw new Error('Memory recovery requires a story, saved chapter prose, chapter identity, and configured model.');
     }
     return parsed as unknown as HarnessMemoryRecoveryRequest;
+  }
+  if (parsed.operation === 'plan-arc' || parsed.operation === 'check-alter-fate') {
+    if (!isRecord(parsed.storyInformation) || !Array.isArray(parsed.storyInformation.committedChapters)
+      || !isRecord(parsed.storyInformation.storyHead) || !Number.isInteger(parsed.storyInformation.chapterNumber)
+      || Number(parsed.storyInformation.chapterNumber) < 1 || typeof parsed.model !== 'string'
+      || typeof parsed.storyId !== 'string') throw new Error('Arc operations require a frozen Story Information Packet.');
+    requireFoundation(parsed.storyInformation.foundationRevision);
+    if (parsed.operation === 'check-alter-fate' && (typeof parsed.instruction !== 'string' || !parsed.instruction.trim())) {
+      throw new Error('Describe the Alter Fate instruction.');
+    }
+    return parsed as unknown as HarnessArcRequest;
   }
   if (parsed.operation !== undefined) throw new Error('Unknown Harness Generation operation.');
   // The Generation Model Call carries two separated inputs plus the immediate request.
@@ -112,7 +124,7 @@ export const handleHarnessGenerationHttp = async (
     };
   }
 
-  let parsed: HarnessGenerationRequest | HarnessMemoryRecoveryRequest;
+  let parsed: HarnessGenerationRequest | HarnessMemoryRecoveryRequest | HarnessArcRequest;
   try {
     parsed = parseRequest(request.body);
   } catch (error) {

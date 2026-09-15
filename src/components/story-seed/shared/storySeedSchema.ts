@@ -23,6 +23,7 @@
  * belongs to the locked `reference/` replica (see `referenceIntake.ts`).
  */
 
+import { validateArcPlan, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import type {
   WorldBlueprint,
   WorldBlueprintMainCharacter,
@@ -85,6 +86,7 @@ export interface StorySeedPlotAndTropeSettings {
 }
 
 export interface StorySeedStoryOptional {
+  arcPlan?: ArcPlan;
   /** Story metadata only; this does not request explicit generated content. */
   intendedForMatureAudiences: boolean;
   fateSurvival: StorySeedFateSurvivalSettings;
@@ -302,6 +304,7 @@ const normalizeStoryOptional = (value: unknown): StorySeedStoryOptional => {
       recognition: normalizeStorySauceLevel(plotAndTropeSettings.recognition),
     },
   };
+  if (source.arcPlan !== undefined) normalized.arcPlan = validateArcPlan(source.arcPlan);
   const additionalStoryDirection = text(source.additionalStoryDirection);
   if (additionalStoryDirection) normalized.additionalStoryDirection = additionalStoryDirection;
   const makeItWorkInstruction = text(source.makeItWorkInstruction);
@@ -563,6 +566,7 @@ export const createBlueprintDraftFromSeed = (
     majorFactions: (worldFoundations.factions || []).map(faction => faction.name),
     initialCharacters: (worldFoundations.additionalCharacters || []).map(character => character.name),
     majorMysteries: [],
+    arcPlan: seed.story.optional.arcPlan,
     firstArcPromise: seed.story.optional.plotAndTropeSettings.firstMajorConflict || '',
     tropeRules: '',
     styleBible: '',
@@ -657,6 +661,7 @@ export const normalizeWorldBlueprint = (
     majorMysteries: Array.isArray(source.majorMysteries)
       ? stringList(source.majorMysteries)
       : fallback.majorMysteries,
+    arcPlan: normalizedSeed.story.optional.arcPlan ?? (source.arcPlan ? validateArcPlan(source.arcPlan) : fallback.arcPlan),
     firstArcPromise: read('firstArcPromise', fallback.firstArcPromise),
     tropeRules: read('tropeRules', fallback.tropeRules),
     styleBible: read('styleBible', fallback.styleBible),

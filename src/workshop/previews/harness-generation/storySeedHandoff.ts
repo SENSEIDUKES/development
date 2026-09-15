@@ -1,3 +1,6 @@
+import { HarnessGenerationController, IndexedDbHarnessGenerationRepository, HarnessGenerationHttpClient } from '@seihouse/sen/harness-generation';
+import type { InitialStoryGenerationPayload } from '@seihouse/sen/story-seed';
+import { STORY_SEED_SCHEMA_VERSION } from '@seihouse/sen/story-seed';
 import type {
   HarnessStorySeedOption,
   HarnessStorySeedSource,
@@ -42,6 +45,8 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
   return {
     title: identity.title || blueprint?.title || record.title,
     premise: required.premise,
+    destinedEnding: world.destinedEnding || blueprint?.destinedEnding,
+    initialArcPlan: optional.arcPlan || blueprint?.arcPlan,
     identities: [
       ...((world.mainCharacter?.name || blueprint?.mainCharacter?.name) ? [{
         name: world.mainCharacter?.name || blueprint!.mainCharacter!.name,
@@ -125,3 +130,15 @@ export const createWorkshopStorySeedSource = (): HarnessStorySeedSource => ({
     }));
   },
 });
+
+
+export async function startWorkshopHarnessStory(payload: InitialStoryGenerationPayload) {
+  const controller = new HarnessGenerationController({ repository: new IndexedDbHarnessGenerationRepository(), modelAdapter: new HarnessGenerationHttpClient() });
+  await controller.hydrate();
+  const foundation = createHarnessFoundationFromStorySeed({
+    id: payload.administrative.sourceSeedId, userId: payload.administrative.creatorId,
+    createdAt: payload.administrative.createdAt, updatedAt: payload.administrative.updatedAt,
+    schemaVersion: STORY_SEED_SCHEMA_VERSION, title: payload.blueprint.title, seed: payload.storySeed, blueprint: payload.blueprint,
+  });
+  return controller.createStory(foundation);
+}

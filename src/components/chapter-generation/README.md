@@ -4,7 +4,7 @@
 - **Source location:** `src/hooks/chapterPipeline/chapterBatch.ts`, `src/aiRouter.ts`, `src/server/routes/storyRouter.ts`, and the Story Seed, prompt, handoff, formatting, and context dependencies
 - **Workshop preview:** `?preview=chapter-generation-flow`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-09-11
+- **Last Workshop update:** 2026-09-13
 - **Last source comparison:** 2026-08-09
 - **Replica status:** Chapter Generation 1.0 recovery restores the proven one-chapter Plan → Manifest → Process boundary and opens its accepted result in the current Reader Chamber and Reader Codex
 
@@ -65,6 +65,8 @@ cannot reveal later completed chapters even though Reader navigation still retai
 the complete batch.
 
 ## Workshop history
+
+- **2026-09-13:** Replaced the local configurable arc calculator and position interface with neutral SEN exports; every arc is exactly 100 chapters.
 
 - **2026-09-11:** Reused the source-owned SEN World Identity mark for the World and Narration Rules review card. Generation inputs and pipeline behavior remain unchanged.
 

@@ -26,6 +26,7 @@ export interface WorldBlueprintMainCharacter {
 
 /** Generated blueprint output. Produced from a Story Seed; never stored inside one. */
 export interface WorldBlueprint {
+  arcPlan?: import('../../arc-goals/shared/arcGoals').ArcPlan;
   /** Additive artifact metadata. Older Blueprints safely default to `v1.0`. */
   blueprintVersion?: string;
   creator?: string;

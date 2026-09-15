@@ -21,6 +21,8 @@ export interface HarnessStorySeedSnapshot {
 }
 
 export interface StoryFoundationInput {
+  destinedEnding?: string;
+  initialArcPlan?: import('../../arc-goals/shared/arcGoals').ArcPlan;
   title?: string;
   /** The only author field required to start a Harness story. */
   premise: string;
@@ -69,6 +71,9 @@ export interface HarnessStoryHead {
 }
 
 export interface HarnessStory {
+  arcPlans?: import('../../arc-goals/shared/arcGoals').ArcPlanRevision[];
+  goalCompletions?: import('../../arc-goals/shared/arcGoals').ArcGoalCompletion[];
+  branch?: { sourceStoryId: string; chapterNumber: number; instruction: string; reconciled?: boolean };
   id: string;
   title: string;
   createdAt: string;
@@ -262,7 +267,9 @@ export interface HarnessWarning {
     | 'projection_failed'
     | 'projection_unresolved'
     | 'post_commit_processing_pending'
-    | 'batch_paused';
+    | 'batch_paused'
+    | 'arc_plan_pending'
+    | 'arc_reconciliation_unconfirmed';
   message: string;
 }
 
@@ -298,6 +305,8 @@ export interface HarnessContextChapter {
  * story data only; CAPA skill instructions never enter it.
  */
 export interface StoryInformationPacket {
+  arc?: import('../../arc-goals/shared/arcGoals').ArcGenerationContext;
+  alterFate?: HarnessStory['branch'];
   id: string;
   storyId: string;
   attemptId: string;
@@ -669,5 +678,14 @@ export interface HarnessGenerationResponse {
 export interface HarnessGenerationModelAdapter {
   getServerInfo(): Promise<HarnessGenerationServerInfo>;
   generate(request: HarnessGenerationRequest): Promise<HarnessGenerationResponse>;
+  arcOperation?(request: HarnessArcRequest): Promise<HarnessGenerationResponse>;
   recoverMemory?(request: HarnessMemoryRecoveryRequest): Promise<HarnessGenerationResponse>;
+}
+
+export interface HarnessArcRequest {
+  operation: 'plan-arc' | 'check-alter-fate';
+  storyId: string;
+  model: string;
+  storyInformation: StoryInformationPacket;
+  instruction?: string;
 }

@@ -17,17 +17,7 @@ export type ChapterInstructionOwnerId =
   | ChapterGenerationPackageId
   | "chapterPlan";
 
-/**
- * Internal arc-local chapter position. The current Workshop stories use a
- * 100-chapter arc unless a future story contract supplies a different size.
- */
-export interface ArcChapterPosition {
-  arcNumber: number;
-  chapterInArc: number;
-  chaptersInArc: number;
-  /** Example: "Arc 1 — Chapter 1/100". */
-  display: string;
-}
+export type { ArcChapterPosition } from '../../../arc-goals/shared/arcGoals';
 
 /** Traceability for one existing generation input or instruction. */
 export interface ChapterInstructionTrace {

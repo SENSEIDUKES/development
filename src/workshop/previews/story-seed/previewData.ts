@@ -191,6 +191,7 @@ export const createFilledStorySeedInput = (): StorySeedInput => ({
         firstMajorConflict: 'Sect tournament that reveals the first assassination attempt',
         mainAntagonistPressure: "The celestial court's fate auditors",
       },
+      arcPlan: { arcNumber: 1, goals: [{ id: 'arc-1-rank', text: 'Reach Foundation rank.', chapters: 65 }, { id: 'arc-1-prince', text: 'Protect the prince from the assassination plot.', chapters: 35 }] },
       additionalStoryDirection: 'Slow sect building with escalating court intrigue.',
       makeItWorkInstruction: 'The weakest bloodline is secretly the only one heaven fears.',
     },

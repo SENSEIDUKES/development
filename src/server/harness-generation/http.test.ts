@@ -35,6 +35,18 @@ const request = (): HarnessGenerationRequest => ({
 const environment = { GEMINI_API_KEY: 'test-key' };
 
 describe('Harness Generation HTTP boundary', () => {
+  it.each(['plan-arc', 'check-alter-fate'] as const)('routes %s through the existing provider with its own structured schema', async operation => {
+    const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({ rawProviderResponse: '{}',
+      providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-13', usage: { source: 'unavailable' as const } } }));
+    const original = request();
+    const result = await handleHarnessGenerationHttp({ method: 'POST', body: { ...original, operation, instruction: 'The captain dies before the rescue.' } },
+      { environment, providerFactory: () => ({ provider: 'gemini', model: original.model, generate }) });
+    expect(result.status).toBe(200);
+    expect(generate).toHaveBeenCalledOnce();
+    const schema = generate.mock.calls[0][0].responseJsonSchema as { properties: Record<string, unknown> };
+    expect(schema.properties).toHaveProperty(operation === 'plan-arc' ? 'plan' : 'conflict');
+    expect(schema.properties).not.toHaveProperty('prose');
+  });
   it('serializes recovery as evidence extraction, with no chapter-generation response schema', async () => {
     const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({ rawProviderResponse: '{"memory":{}}',
       providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-05', usage: { source: 'unavailable' as const } } }));

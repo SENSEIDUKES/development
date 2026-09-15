@@ -414,6 +414,10 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
         creator: currentUser?.displayName,
         preserveSourceMetadata: false,
       });
+      if (bp.arcPlan && !seedInput.story.optional.arcPlan) {
+        seedInput.story.optional.arcPlan = bp.arcPlan;
+        setSeed(seedInput);
+      }
       setBlueprint(bp);
       setStage('blueprint');
       try {
@@ -705,7 +709,8 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
             >
-              <ActiveWorkspace seed={seed} updateSeed={updateSeed} />
+              <ActiveWorkspace seed={activeSection === 'arc' && !seed.story.optional.arcPlan && blueprint?.arcPlan
+                ? { ...seed, story: { ...seed.story, optional: { ...seed.story.optional, arcPlan: blueprint.arcPlan } } } : seed} updateSeed={updateSeed} />
             </motion.div>
           </div>
 

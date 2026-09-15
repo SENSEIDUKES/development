@@ -258,12 +258,7 @@ export interface ChapterDiagnostics {
   /** Disposable generation observability carried into a generated Reader session. */
   generationUsage?: ReaderChapterGenerationUsage;
   /** Original generated arc position, retained without changing Reader navigation. */
-  generationPosition?: {
-    arcNumber: number;
-    chapterInArc: number;
-    chaptersInArc: number;
-    display: string;
-  };
+  generationPosition?: import('../../arc-goals/shared/arcGoals').ArcChapterPosition;
   repairApplied?: boolean;
   /** Exact processed power state after this chapter, when DEV produced one. */
   codexPowerStage?: string;
@@ -306,6 +301,7 @@ export interface ReaderChapter
 export type Chapter = ReaderChapter;
 
 export interface StoryArc {
+  goalContext?: import('../../arc-goals/shared/arcGoals').ArcGenerationContext;
   persistenceId?: string;
   title: string;
   chapters: Chapter[];

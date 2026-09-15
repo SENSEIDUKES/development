@@ -31,5 +31,8 @@
  */
 export * from './presentation';
 
+/** The SEN language registry — one contract for every language-aware surface. */
+export * from '../../lib/language';
+
 /** The package surface version, bumped with the published package. */
 export const SEN_PACKAGE_VERSION = '0.4.0';

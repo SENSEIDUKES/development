@@ -1,4 +1,16 @@
-export const STORY_ADMINISTRATIVE_SCHEMA_VERSION = 1 as const;
+import {
+  DEFAULT_SEN_LANGUAGE_CODE,
+  isSenLanguageCode,
+  type SenLanguageCode,
+} from '../../../lib/language';
+
+/**
+ * Bump on any change to the administrative shape. This is a development
+ * system: stale saved metadata is rejected by validation and recreated, never
+ * migrated. Version 2 removed `currentLanguage` — reader display language is
+ * an account/reader concern and never part of permanent story identity.
+ */
+export const STORY_ADMINISTRATIVE_SCHEMA_VERSION = 2 as const;
 export const INITIAL_STORY_CONTENT_VERSION = 1 as const;
 
 export type StoryStatus = 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'ARCHIVED' | 'DELETED';
@@ -18,8 +30,8 @@ export interface StoryAdministrativeMetadata {
   generationStatus: StoryGenerationStatus;
   visibility: StoryVisibility;
   publishingState: StoryPublishingState;
-  originalLanguage: string;
-  currentLanguage: string;
+  /** Permanent story identity: the language this story is authored in. */
+  originalLanguage: SenLanguageCode;
   sourceSeedId: string;
   currentChapterId: string | null;
   coverAssetId: string | null;
@@ -29,8 +41,8 @@ export interface CreateStoryAdministrativeMetadataInput {
   storyId: string;
   creatorId: string;
   sourceSeedId: string;
-  originalLanguage: string;
-  currentLanguage?: string;
+  /** Resolved by Story Seed before the story starts; English when unsupplied. */
+  originalLanguage?: SenLanguageCode;
   now?: string;
 }
 
@@ -62,12 +74,11 @@ export const validateStoryAdministrativeMetadata = (
     'creatorId',
     'createdAt',
     'updatedAt',
-    'originalLanguage',
-    'currentLanguage',
     'sourceSeedId',
   ] as const) {
     if (!nonEmptyString(value[field])) errors.push(`${field} is required.`);
   }
+  if (!isSenLanguageCode(value.originalLanguage)) errors.push('originalLanguage must be a supported SEN language code.');
   if (value.schemaVersion !== STORY_ADMINISTRATIVE_SCHEMA_VERSION) errors.push('schemaVersion is unsupported.');
   if (typeof value.contentVersion !== 'number' || !Number.isInteger(value.contentVersion) || value.contentVersion < 1) {
     errors.push('contentVersion must be a positive integer.');
@@ -103,8 +114,7 @@ export const createStoryAdministrativeMetadata = (
     generationStatus: 'QUEUED',
     visibility: 'PRIVATE',
     publishingState: 'UNPUBLISHED',
-    originalLanguage: input.originalLanguage,
-    currentLanguage: input.currentLanguage || input.originalLanguage,
+    originalLanguage: input.originalLanguage ?? DEFAULT_SEN_LANGUAGE_CODE,
     sourceSeedId: input.sourceSeedId,
     currentChapterId: null,
     coverAssetId: null,

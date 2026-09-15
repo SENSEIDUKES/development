@@ -1,11 +1,12 @@
 import type { ResolvedAudioMoment } from '../../../audio/inlineAudio';
+import type { SenLanguageCode } from '../../../lib/language';
 import type { StoryBlock } from '../../chapter-generation/shared/types';
 
 /** Independent Harness Generation contracts. Bump this on any change to a
  * persisted shape (attempt, chapter, or workspace state fields). This is a
  * development system: storage at any other version is reset, never
  * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 6 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 7 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -78,6 +79,12 @@ export interface HarnessStory {
   goalCompletions?: import('../../arc-goals/shared/arcGoals').ArcGoalCompletion[];
   id: string;
   title: string;
+  /**
+   * Permanent story identity, assigned once at creation from the Story Seed.
+   * Chapters are authored in this language. A Foundation revision can never
+   * change it, and no reader preference is stored here.
+   */
+  originalLanguage: SenLanguageCode;
   createdAt: string;
   updatedAt: string;
   activeFoundationRevisionId: string;
@@ -320,6 +327,8 @@ export interface StoryInformationPacket {
   attemptId: string;
   foundationRevision: StoryFoundationRevision;
   storyHead: HarnessStoryHead;
+  /** The story's permanent authoring language, carried as explicit story information. */
+  originalLanguage: SenLanguageCode;
   chapterNumber: number;
   createdAt: string;
   committedChapters: HarnessContextChapter[];

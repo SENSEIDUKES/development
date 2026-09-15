@@ -140,5 +140,7 @@ export async function startWorkshopHarnessStory(payload: InitialStoryGenerationP
     createdAt: payload.administrative.createdAt, updatedAt: payload.administrative.updatedAt,
     schemaVersion: STORY_SEED_SCHEMA_VERSION, title: payload.blueprint.title, seed: payload.storySeed, blueprint: payload.blueprint,
   });
-  return controller.createStory(foundation);
+  // Original Language is story identity, so it crosses the boundary as its own
+  // argument rather than hiding inside the neutral Foundation.
+  return controller.createStory(foundation, payload.administrative.originalLanguage);
 }

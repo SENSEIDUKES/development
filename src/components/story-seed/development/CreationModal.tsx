@@ -42,6 +42,7 @@ import {
   type StorySeedInput,
 } from '../shared/storySeedSchema';
 import { createStoryAdministrativeMetadata } from '../shared/storyAdministrativeMetadata';
+import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import StoryAuthGate, { STORY_AUTH_DISSOLVE_MS } from './StoryAuthGate';
 
 // Creation workspace
@@ -73,6 +74,12 @@ export interface CreationModalProps {
   onGenerateBlueprint: (payload: BlueprintGenerationPayload) => Promise<WorldBlueprint>;
   isGenerating: boolean;
   error: string | null;
+  /**
+   * The host account's default reading language, used only to initialize the
+   * Original Language selector. Story Seed resolves and saves a concrete code,
+   * so a later account change never reaches an already-created story.
+   */
+  accountDefaultLanguage?: SenLanguageCode;
 }
 
 /** Existing one-story generation default; Chapter Generation Pass 1 does not use it. */
@@ -148,7 +155,7 @@ const selectCreationModalStore = (state: MockAppStore): CreationModalStoreSlice 
   };
 };
 
-export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error }: CreationModalProps) {
+export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage }: CreationModalProps) {
   const storeIsGenerating = useAppStore(selectIsGenerating);
   const {
     activeAgentId,
@@ -179,6 +186,11 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     reload: reloadSavedSeeds,
   } = useStoryBankRecords(seedOwnerId, storyBankRequestedOwnerId === seedOwnerId);
   const [seedError, setSeedError] = useState<string | null>(null);
+  // Story identity, not creative seed content: the account default only seeds
+  // the initial choice, and the resolved code is frozen onto the story.
+  const [originalLanguage, setOriginalLanguage] = useState<SenLanguageCode>(
+    accountDefaultLanguage ?? DEFAULT_SEN_LANGUAGE_CODE,
+  );
   const [authDissolving, setAuthDissolving] = useState(false);
   const wasAuthRef = useRef(false);
   const previousSeedOwnerIdRef = useRef<string | null>(seedOwnerId);
@@ -487,7 +499,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       storyId: `story-${generateUUID()}`,
       creatorId: currentUser?.uid || LOCAL_WORKSHOP_STORY_SEED_OWNER_ID,
       sourceSeedId,
-      originalLanguage: 'en',
+      originalLanguage,
     });
     setSeedError(null);
     try {
@@ -627,6 +639,8 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
             onStartStory={requestStartStory}
             onExportSeed={requestExportCurrentSeed}
             isGenerating={isGenerating}
+            originalLanguage={originalLanguage}
+            onOriginalLanguageChange={setOriginalLanguage}
           />
         </DeferredStorySeedView>
       </>

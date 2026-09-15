@@ -16,7 +16,8 @@ import { ReaderFateAlerts } from './ReaderFateAlerts';
 import { SystemColorLegend } from './SystemColorLegend';
 import { anchorAttributes } from '../shared/cinematicScroll/anchors';
 import { ContextInspector } from './ContextInspector';
-import { getReaderTypography, getReadingDirection } from '../shared/readerTypography';
+import { getReaderTypography } from '../shared/readerTypography';
+import { getSenTextDirection } from '../../../lib/language';
 import { createCodexHighlighter, splitByCodexTerms } from '../../reader-codex/shared/codexHighlighting';
 import { InlineAudioText } from './InlineAudio';
 import type { ResolvedAudioMoment } from '../../../audio/inlineAudio';
@@ -549,7 +550,7 @@ export function ReaderViewport({
                       : "font-mono"
                 } reader-prose w-full mx-auto select-text`}
                 lang={readingLanguage}
-                dir={getReadingDirection(readingLanguage)}
+                dir={getSenTextDirection(readingLanguage)}
                 style={readerProseStyle}
               >
                 {activeTranslationContent

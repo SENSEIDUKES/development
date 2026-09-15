@@ -62,6 +62,17 @@ describe('Story Seed to Harness handoff', () => {
     expect(foundation.characters).toContain('Additional profile detail');
   });
 
+  it('keeps Original Language out of the neutral Foundation the boundary produces', () => {
+    const foundation = createHarnessFoundationFromStorySeed(createMockStorySeedRecord());
+
+    // Story identity crosses the boundary as its own argument, never hidden in
+    // Foundation content, creative seed text, or permanent author instructions.
+    expect(JSON.stringify({
+      ...foundation,
+      sourceSnapshot: undefined,
+    })).not.toContain('originalLanguage');
+  });
+
   it('carries the frozen source, latest revision, corrections, and continuation through reload and serialized HTTP to the provider', async () => {
     const record = createMockStorySeedRecord();
     record.seed.story.optional.makeItWorkInstruction = 'Keep the strange premise believable.';

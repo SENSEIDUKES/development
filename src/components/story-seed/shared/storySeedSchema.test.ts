@@ -709,20 +709,75 @@ describe('Story Seed creator/story/world contract', () => {
       creatorId: 'creator-1',
       createdAt: '2026-08-01T00:00:00.000Z',
       updatedAt: '2026-08-01T00:00:00.000Z',
-      schemaVersion: 1,
+      schemaVersion: 2,
       contentVersion: 1,
       storyStatus: 'DRAFT',
       generationStatus: 'QUEUED',
       visibility: 'PRIVATE',
       publishingState: 'UNPUBLISHED',
       originalLanguage: 'en',
-      currentLanguage: 'en',
       sourceSeedId: 'seed-1',
       currentChapterId: null,
       coverAssetId: null,
     });
     expect(validateStoryAdministrativeMetadata(metadata)).toEqual({ valid: true, errors: [] });
     expect(completeSeed()).not.toHaveProperty('administrative');
+  });
+
+  it('records the selected Original Language instead of hardcoding English', () => {
+    const metadata = createStoryAdministrativeMetadata({
+      storyId: 'story-1',
+      creatorId: 'creator-1',
+      sourceSeedId: 'seed-1',
+      originalLanguage: 'ja',
+    });
+
+    expect(metadata.originalLanguage).toBe('ja');
+    expect(validateStoryAdministrativeMetadata(metadata)).toEqual({ valid: true, errors: [] });
+    // Reader display language is not story identity and has no field here.
+    expect(metadata).not.toHaveProperty('currentLanguage');
+  });
+
+  it('resolves a concrete English value when Story Seed supplies no language', () => {
+    const metadata = createStoryAdministrativeMetadata({
+      storyId: 'story-1',
+      creatorId: 'creator-1',
+      sourceSeedId: 'seed-1',
+    });
+
+    expect(metadata.originalLanguage).toBe('en');
+  });
+
+  it('rejects administrative metadata carrying an unsupported or stale language value', () => {
+    const stale = { ...administrative(), originalLanguage: 'English' };
+    const result = validateStoryAdministrativeMetadata(stale);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.join(' ')).toContain('originalLanguage');
+  });
+
+  it('rejects administrative metadata saved at an earlier schema version', () => {
+    const stale = { ...administrative(), schemaVersion: 1 };
+
+    expect(validateStoryAdministrativeMetadata(stale).valid).toBe(false);
+  });
+
+  it('carries the resolved Original Language through the story-start payload', () => {
+    const payload = buildInitialStoryGenerationPayload(
+      completeSeed(),
+      createStoryAdministrativeMetadata({
+        storyId: 'story-1',
+        creatorId: 'creator-1',
+        sourceSeedId: 'seed-1',
+        originalLanguage: 'ko',
+      }),
+      blueprint,
+      10,
+    );
+
+    expect(payload.administrative.originalLanguage).toBe('ko');
+    // Original Language is system-owned; it never enters creative seed content.
+    expect(JSON.stringify(payload.storySeed)).not.toContain('originalLanguage');
   });
 
   it('hands generation payload builders the canonical structure', () => {

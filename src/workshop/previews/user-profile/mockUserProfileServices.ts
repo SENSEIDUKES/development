@@ -29,6 +29,7 @@
 
 import type React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import type {
   DaoRankData,
   DaoClaimResult,
@@ -215,8 +216,8 @@ export function createMockUserProfileServices({
       if (countdown <= 0) {
         setFormData(previous => ({
           ...previous,
-          preferredLanguage: pendingLanguageChange.prevPreferred,
-          defaultTranslationLanguage: pendingLanguageChange.prevTranslation,
+          interfaceLanguage: pendingLanguageChange.previousInterfaceLanguage,
+          defaultReadingLanguage: pendingLanguageChange.previousReadingLanguage,
         }));
         setPendingLanguageChange(null);
         return;
@@ -260,7 +261,7 @@ export function createMockUserProfileServices({
     );
 
     const performSave = useCallback(
-      async (preferredLanguage: string, defaultTranslationLanguage: string) => {
+      async (interfaceLanguage: SenLanguageCode, defaultReadingLanguage: SenLanguageCode) => {
         if (!profile) return;
         const epoch = accountEpoch.current;
         // Apply only edits made in this form. An in-flight daily claim may
@@ -276,8 +277,8 @@ export function createMockUserProfileServices({
           commitProfile({
             ...profileRef.current,
             ...changes,
-            preferredLanguage,
-            defaultTranslationLanguage,
+            interfaceLanguage,
+            defaultReadingLanguage,
             updatedAt: new Date().toISOString(),
           } as UserProfile);
           setIsEditing(false);
@@ -291,45 +292,45 @@ export function createMockUserProfileServices({
     const handleSave = useCallback(async () => {
       if (!currentUser || !profile) return;
       const isLangChanged =
-        formData.preferredLanguage !== profile.preferredLanguage
-        || formData.defaultTranslationLanguage !== profile.defaultTranslationLanguage;
+        formData.interfaceLanguage !== profile.interfaceLanguage
+        || formData.defaultReadingLanguage !== profile.defaultReadingLanguage;
 
       if (isLangChanged && !pendingLanguageChange) {
         setPendingLanguageChange({
-          preferred: formData.preferredLanguage || 'English',
-          translation: formData.defaultTranslationLanguage || 'English',
-          prevPreferred: profile.preferredLanguage || 'English',
-          prevTranslation: profile.defaultTranslationLanguage || 'English',
+          interfaceLanguage: formData.interfaceLanguage || DEFAULT_SEN_LANGUAGE_CODE,
+          readingLanguage: formData.defaultReadingLanguage || DEFAULT_SEN_LANGUAGE_CODE,
+          previousInterfaceLanguage: profile.interfaceLanguage || DEFAULT_SEN_LANGUAGE_CODE,
+          previousReadingLanguage: profile.defaultReadingLanguage || DEFAULT_SEN_LANGUAGE_CODE,
         });
         setCountdown(30);
         return;
       }
       await performSave(
-        formData.preferredLanguage || 'English',
-        formData.defaultTranslationLanguage || 'English',
+        formData.interfaceLanguage || DEFAULT_SEN_LANGUAGE_CODE,
+        formData.defaultReadingLanguage || DEFAULT_SEN_LANGUAGE_CODE,
       );
     }, [currentUser, formData, pendingLanguageChange, performSave, profile]);
 
     const handleLanguageChangeDirect = useCallback(
-      (name: 'preferredLanguage' | 'defaultTranslationLanguage', value: string) => {
+      (name: 'interfaceLanguage' | 'defaultReadingLanguage', value: SenLanguageCode) => {
         if (!profile) return;
-        const nextPreferred =
-          name === 'preferredLanguage'
+        const nextInterfaceLanguage =
+          name === 'interfaceLanguage'
             ? value
-            : formData.preferredLanguage || profile.preferredLanguage || 'English';
-        const nextTranslation =
-          name === 'defaultTranslationLanguage'
+            : formData.interfaceLanguage || profile.interfaceLanguage || DEFAULT_SEN_LANGUAGE_CODE;
+        const nextReadingLanguage =
+          name === 'defaultReadingLanguage'
             ? value
-            : formData.defaultTranslationLanguage || profile.defaultTranslationLanguage || 'English';
+            : formData.defaultReadingLanguage || profile.defaultReadingLanguage || DEFAULT_SEN_LANGUAGE_CODE;
 
         setFormData(previous => ({ ...previous, [name]: value }));
 
         if (!pendingLanguageChange) {
           setPendingLanguageChange({
-            preferred: nextPreferred,
-            translation: nextTranslation,
-            prevPreferred: profile.preferredLanguage || 'English',
-            prevTranslation: profile.defaultTranslationLanguage || 'English',
+            interfaceLanguage: nextInterfaceLanguage,
+            readingLanguage: nextReadingLanguage,
+            previousInterfaceLanguage: profile.interfaceLanguage || DEFAULT_SEN_LANGUAGE_CODE,
+            previousReadingLanguage: profile.defaultReadingLanguage || DEFAULT_SEN_LANGUAGE_CODE,
           });
           setCountdown(30);
         }
@@ -341,15 +342,15 @@ export function createMockUserProfileServices({
       if (!pendingLanguageChange) return;
       const pending = pendingLanguageChange;
       setPendingLanguageChange(null);
-      void performSave(pending.preferred, pending.translation);
+      void performSave(pending.interfaceLanguage, pending.readingLanguage);
     }, [pendingLanguageChange, performSave]);
 
     const revertLanguageChange = useCallback(() => {
       if (!pendingLanguageChange) return;
       setFormData(previous => ({
         ...previous,
-        preferredLanguage: pendingLanguageChange.prevPreferred,
-        defaultTranslationLanguage: pendingLanguageChange.prevTranslation,
+        interfaceLanguage: pendingLanguageChange.previousInterfaceLanguage,
+        defaultReadingLanguage: pendingLanguageChange.previousReadingLanguage,
       }));
       setPendingLanguageChange(null);
     }, [pendingLanguageChange]);

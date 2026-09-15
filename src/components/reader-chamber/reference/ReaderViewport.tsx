@@ -12,7 +12,8 @@ import { SystemColorLegend } from './SystemColorLegend';
 import { ManifestationImage } from './ManifestationImage';
 import { anchorAttributes } from '../shared/cinematicScroll/anchors';
 import { ContextInspector } from './ContextInspector';
-import { getReaderTypography, getReadingDirection } from '../shared/readerTypography';
+import { getReaderTypography } from '../shared/readerTypography';
+import { getSenTextDirection } from '../../../lib/language';
 import { isManifestationEligible } from '../shared/manifestationEligibility';
 import { createCodexHighlighter } from '../../reader-codex/shared/codexHighlighting';
 
@@ -521,7 +522,7 @@ export function ReaderViewport({
                       : "font-mono"
                 } reader-prose w-full mx-auto select-text`}
                 lang={readingLanguage}
-                dir={getReadingDirection(readingLanguage)}
+                dir={getSenTextDirection(readingLanguage)}
                 style={readerProseStyle}
               >
                 {activeTranslationContent

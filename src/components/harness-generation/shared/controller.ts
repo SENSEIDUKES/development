@@ -1,4 +1,5 @@
 import { createArcChapterPosition, editArcPlan, validateArcPlan, type ArcPlan } from '../../arc-goals/shared/arcGoals';
+import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import { arcDeadlineFailure, commitHarnessArc, needsArcPlan, readArcReply } from './arcState';
 import {
   createHarnessStory,
@@ -252,9 +253,12 @@ export class HarnessGenerationController {
     return this.snapshot();
   }
 
-  async createStory(input: StoryFoundationInput): Promise<HarnessStory> {
+  async createStory(
+    input: StoryFoundationInput,
+    originalLanguage: SenLanguageCode = DEFAULT_SEN_LANGUAGE_CODE,
+  ): Promise<HarnessStory> {
     this.assertHydrated();
-    const created = createHarnessStory(this.state, input, this.runtime);
+    const created = createHarnessStory(this.state, input, originalLanguage, this.runtime);
     created.story.skillLoadout = {
       author: {
         id: SEN_NOVEL_AUTHOR_SKILL.id,

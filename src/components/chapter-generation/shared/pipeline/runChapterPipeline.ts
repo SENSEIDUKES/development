@@ -1,7 +1,7 @@
 import { estimateTokens } from "../lib/helpers";
-import { resolveChapterAudioMoments } from "../../../../audio/inlineAudio";
 import type { GenerationStage } from "../stageTypes";
 import type { ChapterContent } from "../types";
+import { acceptChapterMedia } from "../acceptedChapterMedia";
 import type {
   ChapterGenerationModelCalls,
   ChapterModelCallKind,
@@ -66,21 +66,11 @@ export function buildChapterPipelineRun(
   const chapterForOutput = repairedChapter ?? manifestedChapter;
   const acceptedChapter: ChapterContent = { ...chapterForOutput };
   delete acceptedChapter.audioMoments;
-  const acceptedBlocks = acceptedChapter.blocks ?? [];
-  const audioMoments = resolveChapterAudioMoments(acceptedBlocks).audioMoments;
-  if (acceptedChapter.blocks) {
-    acceptedChapter.blocks = acceptedBlocks.map(block => {
-      if (!block.metadata?.audioMoments) return block;
-      const { audioMoments: _modelProposal, ...metadata } = block.metadata;
-      return {
-        ...block,
-        ...(Object.keys(metadata).length > 0 ? { metadata } : { metadata: undefined }),
-      };
-    });
-  }
+  const acceptedMedia = acceptChapterMedia(acceptedChapter.blocks ?? []);
+  if (acceptedChapter.blocks) acceptedChapter.blocks = acceptedMedia.blocks;
   const finalOutput: ChapterContent = {
     ...acceptedChapter,
-    ...(audioMoments.length > 0 ? { audioMoments } : {}),
+    ...(acceptedMedia.audioMoments.length > 0 ? { audioMoments: acceptedMedia.audioMoments } : {}),
     contextManifest: chapterPacket.contextManifest,
     contract: chapterPacket.chapterMission.contract,
     handoff: processingResult.nextChapterHandoff,

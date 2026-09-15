@@ -9,15 +9,15 @@ import {
   type SystemEvent,
   type SystemPromptPresentation,
   type WorldNoticeData,
-} from "../../components/chapter-generation/shared/types";
+} from "./types";
 import {
   normalizeSystemPromptChanges,
   normalizeSystemStatusScreen,
-} from "../../components/reader-chamber/shared/systemPromptPresentation";
+} from "../../reader-chamber/shared/systemPromptPresentation";
 import {
   validateWorldCueIntent,
   type WorldCueIntent,
-} from "../../audio/inlineAudio";
+} from "../../../audio/inlineAudio";
 
 type JsonRecord = Record<string, unknown>;
 

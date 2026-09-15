@@ -128,6 +128,12 @@ describe('Harness Generation HTTP boundary', () => {
     expect(input.systemInstruction).toContain('elite Eastern fantasy web-novel author specializing in Asian light novels');
     expect(input.systemInstruction.split('Do not resolve the siege in this chapter.')).toHaveLength(2);
     expect(input.systemInstruction).not.toContain('Night Soundscape');
+    expect(input.systemInstruction).toContain('blocks array is the sole chapter body');
+    expect(input.systemInstruction).toContain('does not decide whether or when a System Panel');
+    expect(input.systemInstruction).not.toContain('Do not invent ids, chapter numbers, ordering, persistence records, Codex records, cards, System Prompt payloads');
+    const chapterSchema = input.responseJsonSchema as { properties: Record<string, unknown>; required: string[] };
+    expect(chapterSchema.required).toContain('blocks');
+    expect(chapterSchema.required).not.toContain('prose');
     // Generation content: story information plus the immediate request, with no skill instructions.
     expect(input.userPrompt).toMatch(/^STORY INFORMATION PACKET/);
     expect(input.userPrompt).toContain('PERSISTENT AUTHOR DIRECTION');

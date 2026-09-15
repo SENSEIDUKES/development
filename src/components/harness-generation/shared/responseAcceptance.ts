@@ -1,4 +1,6 @@
 import { chapterTitleFallback, defaultHarnessRuntime, stableHarnessId, type HarnessRuntime } from './ids';
+import { acceptChapterMedia } from '../../chapter-generation/shared/acceptedChapterMedia';
+import { normalizeManifestResponse } from '../../chapter-generation/shared/manifestNormalizer';
 import { HARNESS_MEMORY_CATEGORIES } from './types';
 import type {
   HarnessAcceptedChapterDraft,
@@ -157,6 +159,49 @@ const memoryEvents = (parsed: Record<string, unknown>): unknown[] => {
   return result;
 };
 
+const acceptedStructuredChapter = (
+  parsed: Record<string, unknown>,
+  chapterNumber: number,
+  warnings: HarnessWarning[],
+): Pick<HarnessAcceptedChapterDraft, 'prose' | 'blocks' | 'audioMoments'> | undefined => {
+  if (parsed.blocks === undefined) return undefined;
+  try {
+    const normalized = normalizeManifestResponse(JSON.stringify({ blocks: parsed.blocks }), chapterNumber);
+    const media = acceptChapterMedia(normalized.blocks);
+    for (const warning of normalized.diagnostics.warnings) {
+      warnings.push({
+        code: warning.code === 'optional-field-removed'
+          ? 'optional_chapter_structure_omitted'
+          : 'chapter_block_normalized',
+        message: warning.message,
+      });
+    }
+    for (const issue of media.issues) {
+      warnings.push({
+        code: 'optional_chapter_structure_omitted',
+        message: `Removed an unresolved optional World Cue: ${issue.message}`,
+      });
+    }
+    if (nonEmptyString(parsed.prose)) {
+      warnings.push({
+        code: 'competing_prose_ignored',
+        message: 'The harness ignored a separate prose field because accepted chapter blocks are the authoritative chapter body.',
+      });
+    }
+    return {
+      prose: normalized.generatedContent,
+      blocks: media.blocks,
+      ...(media.audioMoments.length > 0 ? { audioMoments: media.audioMoments } : {}),
+    };
+  } catch (error) {
+    warnings.push({
+      code: 'optional_chapter_structure_omitted',
+      message: `The structured chapter body could not be accepted; readable prose recovery remains available (${error instanceof Error ? error.message : 'invalid blocks'}).`,
+    });
+    return undefined;
+  }
+};
+
 export const verifyHarnessEventEvidence = (event: HarnessSemanticEvent, prose: string): HarnessSemanticEvent => {
   const normalize = (value: string) => value.replace(/\s+/g, ' ').trim();
   const quote = event.evidence ? normalize(event.evidence) : '';
@@ -174,7 +219,8 @@ export const acceptHarnessModelResponse = (raw: string, chapterNumber: number): 
   const parsed = parseJsonObject(raw);
   if (parsed) {
     appendIgnoredIdentityWarning(parsed, warnings);
-    const prose = nonEmptyString(parsed.prose);
+    const structured = acceptedStructuredChapter(parsed, chapterNumber, warnings);
+    const prose = structured?.prose ?? nonEmptyString(parsed.prose);
     if (!prose || looksLikeRefusal(prose)) {
       return {
         accepted: false,
@@ -194,6 +240,8 @@ export const acceptHarnessModelResponse = (raw: string, chapterNumber: number): 
       accepted: true,
       draft: {
         prose,
+        ...(structured?.blocks ? { blocks: structured.blocks } : {}),
+        ...(structured?.audioMoments ? { audioMoments: structured.audioMoments } : {}),
         title: title ?? chapterTitleFallback(chapterNumber),
         titleSource: title ? 'model' : 'harness-fallback',
         ...(plan ? { plan } : {}),

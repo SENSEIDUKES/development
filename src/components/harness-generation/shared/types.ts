@@ -1,8 +1,11 @@
+import type { ResolvedAudioMoment } from '../../../audio/inlineAudio';
+import type { StoryBlock } from '../../chapter-generation/shared/types';
+
 /** Independent Harness Generation contracts. Bump this on any change to a
  * persisted shape (attempt, chapter, or workspace state fields). This is a
  * development system: storage at any other version is reset, never
  * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 5 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 6 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -187,7 +190,10 @@ export type HarnessModelPlan = string | {
 
 /** The intentionally small transport shape requested from the provider. */
 export interface HarnessModelChapterReply {
-  prose: string;
+  /** Untrusted provider blocks are normalized into canonical SEN StoryBlocks. */
+  blocks?: unknown[];
+  /** Recovery-only provider deviation; the current response contract requests blocks. */
+  prose?: string;
   title?: string;
   plan?: HarnessModelPlan;
   memory?: Partial<Record<keyof typeof HARNESS_MEMORY_CATEGORIES, Array<{
@@ -212,6 +218,8 @@ export interface HarnessModelChapterReply {
 
 export interface HarnessAcceptedChapterDraft {
   prose: string;
+  blocks?: StoryBlock[];
+  audioMoments?: ResolvedAudioMoment[];
   title: string;
   titleSource: 'model' | 'harness-fallback';
   plan?: HarnessModelPlan;
@@ -257,6 +265,9 @@ export interface HarnessWarning {
     | 'ignored_model_identity'
     | 'optional_event_rejected'
     | 'optional_event_field_omitted'
+    | 'chapter_block_normalized'
+    | 'optional_chapter_structure_omitted'
+    | 'competing_prose_ignored'
     | 'provider_outcome_unknown'
     | 'persistence_retry_required'
     | 'event_preservation_retry_required'
@@ -334,6 +345,10 @@ export interface HarnessChapter {
   title: string;
   titleSource: 'model' | 'harness-fallback';
   prose: string;
+  /** Canonical accepted SEN blocks; prose above is derived from their text. */
+  blocks?: StoryBlock[];
+  /** Application-resolved media records only; model proposals never persist here. */
+  audioMoments?: ResolvedAudioMoment[];
   plan?: HarnessModelPlan;
   eventIds: string[];
   responseMode: 'json' | 'plain-prose-recovery';

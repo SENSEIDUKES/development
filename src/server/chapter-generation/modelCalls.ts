@@ -49,7 +49,7 @@ import {
   type ChapterContent,
 } from "../../components/chapter-generation/shared/types";
 import type { ChapterTextModelProvider } from "./provider";
-import { parseModelWorldCueIntents } from "./manifestNormalizer";
+import { parseModelWorldCueIntents } from "../../components/chapter-generation/shared/manifestNormalizer";
 import { assignCharacterVoices } from "../audio/characterVoiceAssignments";
 
 const EFFECT_KINDS: ChapterEffectKind[] = [

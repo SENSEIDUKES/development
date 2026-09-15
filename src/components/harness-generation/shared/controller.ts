@@ -714,6 +714,8 @@ export class HarnessGenerationController {
       title: acceptedDraft.title,
       titleSource: acceptedDraft.titleSource,
       prose: acceptedDraft.prose,
+      ...(acceptedDraft.blocks ? { blocks: cloneHarnessValue(acceptedDraft.blocks) } : {}),
+      ...(acceptedDraft.audioMoments ? { audioMoments: cloneHarnessValue(acceptedDraft.audioMoments) } : {}),
       ...(acceptedDraft.plan ? { plan: acceptedDraft.plan } : {}),
       eventIds: committedEvents.map(event => event.id),
       responseMode: acceptedDraft.responseMode,

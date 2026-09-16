@@ -70,6 +70,16 @@ export interface HarnessGenerationWorkspaceProps {
   installedSkills?: HarnessSkillManifest[];
   /** Host-owned package intake, shown alongside the existing skill slots. */
   renderSkillImport?: (busy: boolean) => ReactNode;
+  /**
+   * The same host-owned intake, opened from one CAPA slot. The slot is the
+   * locked destination, and `equip` equips the installed skill for the open
+   * story so the author never installs globally and returns to equip.
+   */
+  renderSlotSkillImport?: (
+    slot: HarnessSkillSlotId,
+    busy: boolean,
+    equip: (skill: HarnessSkillManifest) => Promise<void>,
+  ) => ReactNode;
   /** Host-owned runtime catalog. Media Packs are never merged into installedSkills. */
   registeredMediaPacks?: MediaPack[];
   /** Current account/reward truth supplied by the host; HARNESS never persists it. */
@@ -384,11 +394,15 @@ function SkillLoadoutPanel({
   installedSkills,
   busy,
   onChange,
+  renderSlotSkillImport,
+  onInstalled,
 }: {
   story: HarnessStory;
   installedSkills: HarnessSkillManifest[];
   busy: boolean;
   onChange: (slot: HarnessSkillSlotId, reference?: HarnessSkillReference) => void;
+  renderSlotSkillImport?: HarnessGenerationWorkspaceProps['renderSlotSkillImport'];
+  onInstalled?: (slot: HarnessSkillSlotId, skill: HarnessSkillManifest) => Promise<void>;
 }) {
   const installedByKey = new Map(installedSkills.map(skill => [harnessSkillKey(skill), skill]));
   const equippedCount = Object.keys(story.skillLoadout ?? {}).length;
@@ -488,6 +502,16 @@ function SkillLoadoutPanel({
               ) : compatible.length === 0 && !missing ? (
                 <p className="mt-3 text-[11px] text-neutral-500">No installed skill is available for this slot.</p>
               ) : null}
+              {/* Direct intake: the package is validated against this slot and
+                  equipped here, without a separate global install step. */}
+              {renderSlotSkillImport && onInstalled && (
+                <details className="mt-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+                  <summary className="cursor-pointer text-[11px] font-medium text-cyan-100">Upload SPP to {slot.label}</summary>
+                  <div className="mt-3">
+                    {renderSlotSkillImport(slot.id, busy, skill => onInstalled(slot.id, skill))}
+                  </div>
+                </details>
+              )}
             </article>
           );
         })}
@@ -899,6 +923,7 @@ export function HarnessGenerationWorkspace({
   storySeedSource,
   installedSkills = EMPTY_INSTALLED_SKILLS,
   renderSkillImport,
+  renderSlotSkillImport,
   registeredMediaPacks = EMPTY_MEDIA_PACKS,
   mediaPackEntitlements = EMPTY_MEDIA_ENTITLEMENTS,
   onGrantDevelopmentMediaReward,
@@ -1057,6 +1082,22 @@ export function HarnessGenerationWorkspace({
   const setSkillSlot = (slot: HarnessSkillSlotId, reference?: HarnessSkillReference) => {
     if (!selectedStory) return;
     void run(() => controller.setSkillSlot(selectedStory.id, slot, reference));
+  };
+  /**
+   * Equips a skill the host has just installed from its slot. The catalog is
+   * refreshed first so the new manifest resolves in the same interaction, and
+   * the error is rethrown so the slot's importer reports it.
+   */
+  const equipInstalledSkill = async (slot: HarnessSkillSlotId, skill: HarnessSkillManifest) => {
+    if (!selectedStory) throw new Error('Open a Harness story before equipping a skill.');
+    setBusy(true);
+    setMessage(undefined);
+    try {
+      controller.setInstalledSkills([...installedSkills.filter(item => harnessSkillKey(item) !== harnessSkillKey(skill)), skill]);
+      await controller.setSkillSlot(selectedStory.id, slot, { id: skill.id, version: skill.version });
+    } finally {
+      setBusy(false);
+    }
   };
   const setMediaLoadoutSlot = (slot: StoryMediaLoadoutSlot, reference?: MediaPackReference) => {
     if (!selectedStory) return;
@@ -1244,6 +1285,8 @@ export function HarnessGenerationWorkspace({
                 installedSkills={availableSkills}
                 busy={busy}
                 onChange={setSkillSlot}
+                renderSlotSkillImport={renderSlotSkillImport}
+                onInstalled={equipInstalledSkill}
               />
             )}
 

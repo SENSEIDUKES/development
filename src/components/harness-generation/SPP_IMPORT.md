@@ -8,16 +8,20 @@ The Development host follows the official adapter's `SPP_AGENT_SETUP.md`:
 
 1. **Import SPP skill** accepts a file and calls `intakePack` from the pinned official package.
 2. Only a non-null validated `content` exposes manifest files and original asset bytes.
-3. The author selects a Markdown/plain-text file, previews its UTF-8 text, and chooses a skill slot.
+3. The author selects a Markdown, plain-text, or Word (`.docx`) file, previews its text, and
+   chooses a skill slot. A Word document contributes its extracted document text only.
 4. **Install selected instructions** saves an ordinary `HarnessSkillManifest` in the browser's host inventory.
 5. Equipping it uses the existing `setSkillSlot` story operation and IndexedDB story persistence.
-6. Generation freezes that exact manifest into the attempt's CAPA Prompt, assembled in CAPA
+6. The same flow opens from a CAPA skill slot, which locks the destination and equips the
+   installed skill for the open story in one step.
+7. Generation freezes that exact manifest into the attempt's CAPA Prompt, assembled in CAPA
    Schema order. The existing HTTP client, server handler, `buildHarnessGenerationPrompt`, and
    Gemini provider receive its instructions there, never inside the Story Information Packet.
 
 Package ID, version, selected path and SHA-256 remain in `skill.source`, including the
 saved attempt and model request. The host's skill ID identifies the package/path/slot
-combination; it never replaces the original package ID. Importing does not equip a skill.
+combination; it never replaces the original package ID. Importing from **Import SPP skill** does
+not equip a skill; importing from a CAPA slot equips what it installs, for that slot only.
 Package text follows the chosen slot's position in the CAPA Schema, subject to the existing
 author/canon hierarchy. Every generation slot, Author included, is assembled once into the
 same CAPA Prompt; the slot only determines its order.
@@ -28,6 +32,23 @@ The host retains selected skill text, not the whole archive. Reload restores the
 inventory and per-story equipped references; reupload to inspect the full package again.
 Reinstalling identical content is idempotent. Changed content under an installed version
 is rejected; create a new version while retaining the SPP package ID.
+
+## Installing from a CAPA slot
+
+Every CAPA slot — Author, Pacing, Continuity, Style, Accessibility and Translation — opens the
+same importer with its own slot as the locked destination. There is no second importer and no
+slot-specific intake path: the flow validates, installs, and then equips through the existing
+`setSkillSlot` story operation.
+
+A package may declare the slot it belongs to in the namespaced manifest extension
+`seihouse.capa` (`{ "slot": "author" }`). When it does, installing it into any other slot is
+rejected, from either entry point. A package that declares none is installed into the slot the
+host selected; a slot is never inferred from a package, publisher, or file name. Translation
+uploads keep the existing target-language, glossary and story-language requirements — an
+incompatible Translation skill is rejected when the slot tries to equip it.
+
+The installed-skill selector stays on every slot, so already installed skills can still be
+switched without reuploading.
 
 ## Translation skills
 
@@ -80,8 +101,15 @@ selected skill text and validated resource are retained on reload; the archive i
 
 - 8 MiB archive, 16 MiB expanded content, 4 MiB per entry, 128 entries; the adapter's
   remaining integrity, path, manifest and compression guards remain active.
-- Only explicit `text/plain` and `text/markdown` selection supports generation instructions.
-  Binary files remain visible in the manifest and cannot be installed as text.
+- Only explicit `text/plain`, `text/markdown` and Word (`.docx`) selection supports generation
+  instructions. Other binary files remain visible in the manifest and cannot be installed as text.
+- A Word document is recognized by content, never by file name: a ZIP whose entries include
+  `word/document.xml`. Its readable text is extracted from that part, preserving headings,
+  paragraphs and list items in reading order, and only that text is retained, installed, and
+  assembled. The archive bytes never reach a skill manifest or the CAPA Prompt. Archives that
+  are malformed, missing that part, not UTF-8, or empty of text are rejected with a message.
+- The importer preselects an instruction file only when a package carries exactly one. Several
+  eligible files always wait for an explicit choice; no file name is special.
 - Strict UTF-8, nonempty text, no NUL bytes, 16,000 characters per skill; no truncation.
 - A glossary resource must be `application/json`, at most 2 MiB, and at most 5,000 entries.
 - At most 64 imported skills in this browser. Storage errors are shown before installation succeeds.
@@ -92,6 +120,20 @@ SPP parsing is host-only under `src/workshop/previews/harness-generation/` and i
 shipped in portable SEN. A consuming host may implement its own importer and provide
 the same `installedSkills` and `renderSkillImport` props. Inventory changes preserve
 the controller and all in-flight attempt snapshots.
+
+## Verification on 2026-09-16
+
+`sppDocxSkills.test.ts` builds SPP packages carrying Word instructions and proves the extracted
+document text becomes the skill's instructions, that headings, list items and paragraphs keep
+their reading order, that no archive bytes reach the manifest or the assembled CAPA Prompt, and
+that empty, malformed, part-less and non-UTF-8 archives are each rejected with their own message.
+It also covers Markdown and plain-text packages, a package whose Word file is recorded only as
+`application/octet-stream`, explicit selection among several eligible files, the declared-slot
+mismatch, and reload of an installed Word skill.
+
+`sppSlotUpload.test.tsx` renders the Development workspace and proves every CAPA slot exposes its
+own SPP upload, that a matching package installs and equips through its slot in one flow, and
+that a package declaring another slot is rejected and leaves that slot empty.
 
 ## Verification on 2026-09-13
 

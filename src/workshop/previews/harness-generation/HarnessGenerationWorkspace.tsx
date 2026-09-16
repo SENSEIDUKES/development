@@ -22,6 +22,11 @@ export function HarnessGenerationWorkspace() {
   const [storageError, setStorageError] = useState(saved.error);
   const installedSkills = useMemo(() => [...WORKSHOP_HARNESS_SKILLS, ...importedSkills], [importedSkills]);
   const entry = workshopEntries.find(item => item.id === 'harness-generation')!;
+  /** The host owns the browser inventory; both import entry points save through it. */
+  const install = (skill: HarnessSkillManifest) => {
+    setImportedSkills(saveHarnessSppSkill(localStorage, importedSkills, skill));
+    setStorageError('');
+  };
   return (
     <FeatureWorkspace
       entry={entry}
@@ -43,11 +48,14 @@ export function HarnessGenerationWorkspace() {
         }}
         renderSkillImport={busy => <>
           {storageError && <p role="alert">{storageError}</p>}
-          <SppSkillImport busy={busy} onInstall={skill => {
-            setImportedSkills(saveHarnessSppSkill(localStorage, importedSkills, skill));
-            setStorageError('');
+          <SppSkillImport busy={busy} onInstall={install} />
+        </>}
+        renderSlotSkillImport={(slot, busy, equip) => (
+          <SppSkillImport busy={busy} destinationSlot={slot} onInstall={async skill => {
+            install(skill);
+            await equip(skill);
           }} />
-        </>} />}
+        )} />}
     />
   );
 }

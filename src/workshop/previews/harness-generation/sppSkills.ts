@@ -1,6 +1,7 @@
 import { intakePack, type PackContent, type PackInput } from 'seihouse-productions-package';
-import { createHarnessSkillCatalog, HARNESS_SKILL_INSTRUCTION_LIMIT, validateHarnessSkillManifest, validateTranslationGlossaryResource, harnessSkillKey, type HarnessSkillApplication, type HarnessSkillManifest, type HarnessSkillSlotId, type HarnessTranslationGlossaryResource } from '@seihouse/sen/harness-generation';
+import { CAPA_SCHEMA, createHarnessSkillCatalog, HARNESS_SKILL_INSTRUCTION_LIMIT, validateHarnessSkillManifest, validateTranslationGlossaryResource, harnessSkillKey, type HarnessSkillApplication, type HarnessSkillManifest, type HarnessSkillSlotId, type HarnessTranslationGlossaryResource } from '@seihouse/sen/harness-generation';
 import type { SenLanguageCode } from '@seihouse/sen';
+import { extractDocxInstructionText, isDocxInstructionFile } from './docxInstructions';
 
 export const SPP_SKILL_TEXT_LIMIT = HARNESS_SKILL_INSTRUCTION_LIMIT;
 export const SPP_GLOSSARY_BYTE_LIMIT = 2 * 1024 * 1024;
@@ -20,18 +21,77 @@ export async function inspectHarnessSpp(input: PackInput): Promise<PackContent> 
   return result.content;
 }
 
+/** Namespaced manifest extension a package uses to declare its CAPA slot. */
+export const SPP_CAPA_EXTENSION = 'seihouse.capa';
+
+/** Media types that carry instruction text directly. */
+const SPP_TEXT_MEDIA_TYPES = ['text/plain', 'text/markdown'];
+
+/**
+ * Whether this validated package entry can supply generation instructions:
+ * plain text, Markdown, or a Word document whose readable text is extracted.
+ * File names decide nothing.
+ */
+export const isHarnessSppInstructionFile = (mediaType: string, bytes: Uint8Array) =>
+  SPP_TEXT_MEDIA_TYPES.includes(mediaType) || isDocxInstructionFile(mediaType, bytes);
+
+/**
+ * Every entry of this validated package that could be installed as
+ * instructions. The host still selects one explicitly; nothing is guessed.
+ */
+export function harnessSppInstructionFiles(content: PackContent) {
+  return content.manifest.files.filter(file => {
+    const bytes = content.assets.get(file.path);
+    return Boolean(bytes) && isHarnessSppInstructionFile(file.mediaType, bytes!);
+  });
+}
+
+/**
+ * The only path the importer may preselect: the single eligible instruction
+ * file. When a package carries several, the host must choose one.
+ */
+export function defaultHarnessSppInstructionPath(content: PackContent): string {
+  const files = harnessSppInstructionFiles(content);
+  return files.length === 1 ? files[0].path : '';
+}
+
 export function readHarnessSppText(content: PackContent, path: string): string {
   const record = content.manifest.files.find(file => file.path === path);
   const bytes = content.assets.get(path);
   if (!record || !bytes) throw new Error('Select a file from this validated package.');
-  if (!['text/plain', 'text/markdown'].includes(record.mediaType)) {
-    throw new Error('Only plain text and Markdown files can be installed as generation instructions.');
+  const docx = isDocxInstructionFile(record.mediaType, bytes);
+  if (!docx && !SPP_TEXT_MEDIA_TYPES.includes(record.mediaType)) {
+    throw new Error('Only plain text, Markdown and Word (.docx) files can be installed as generation instructions.');
   }
-  if (bytes.length > SPP_SKILL_TEXT_LIMIT * 4) throw new Error('This instruction file exceeds the Harness skill text limit.');
-  const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  if (!docx && bytes.length > SPP_SKILL_TEXT_LIMIT * 4) throw new Error('This instruction file exceeds the Harness skill text limit.');
+  // A Word document contributes its extracted text only; its archive bytes are
+  // never retained, installed, or assembled into the CAPA Prompt.
+  let text: string;
+  if (docx) {
+    text = extractDocxInstructionText(bytes);
+  } else {
+    try {
+      text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    } catch {
+      throw new Error('Instructions must contain readable, nonempty UTF-8 text.');
+    }
+  }
   if (text.length > SPP_SKILL_TEXT_LIMIT) throw new Error(`Select a shorter instruction file (maximum ${SPP_SKILL_TEXT_LIMIT.toLocaleString()} characters).`);
   if (!text.trim() || text.includes('\0')) throw new Error('Instructions must contain readable, nonempty UTF-8 text.');
   return text;
+}
+
+/**
+ * The CAPA slot a package declares for itself, read only from its namespaced
+ * manifest extension. A package name, publisher, or file name never decides a
+ * slot; a package that declares none is installed into the slot the host chose.
+ */
+export function declaredHarnessSppSlot(content: PackContent): HarnessSkillSlotId | undefined {
+  const declared = (content.manifest.extensions?.[SPP_CAPA_EXTENSION] as { slot?: unknown } | undefined)?.slot;
+  if (declared === undefined || declared === null) return undefined;
+  const slot = CAPA_SCHEMA.find(definition => definition.id === declared);
+  if (!slot) throw new Error(`This package declares the unsupported CAPA slot “${String(declared)}”.`);
+  return slot.id;
 }
 
 /**
@@ -63,6 +123,9 @@ export function readHarnessSppGlossary(
   return { ...resource, source: { path, sha256: record.sha256 } };
 }
 
+const capaSlotLabel = (slot: HarnessSkillSlotId) =>
+  CAPA_SCHEMA.find(definition => definition.id === slot)?.label ?? slot;
+
 export interface HarnessSppTranslationSelection {
   /** Explicitly chosen by the host; never inferred from names or contents. */
   targetLanguage: SenLanguageCode;
@@ -83,6 +146,12 @@ export function createHarnessSppSkill(
 ): HarnessSkillManifest {
   const instructions = readHarnessSppText(content, path);
   const { manifest } = content;
+  // A package that declares a CAPA slot may only be installed into that slot,
+  // whichever entry point the host used.
+  const declaredSlot = declaredHarnessSppSlot(content);
+  if (declaredSlot && declaredSlot !== slot) {
+    throw new Error(`${manifest.name.trim()} declares the ${capaSlotLabel(declaredSlot)} CAPA slot and cannot be installed into the ${capaSlotLabel(slot)} slot.`);
+  }
   const record = manifest.files.find(file => file.path === path)!;
   if (slot === 'translation' && !translationSelection) {
     throw new Error('Choose the target language before installing a Translation skill.');

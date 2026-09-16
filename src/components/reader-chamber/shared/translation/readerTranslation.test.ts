@@ -547,6 +547,22 @@ describe('the translation controller', () => {
 });
 
 describe('the browser translation cache', () => {
+  it('removes a stored collection when every record fails current-schema validation', () => {
+    const values = new Map([['translations', JSON.stringify({ stale: { schemaVersion: 1 } })]]);
+    let removals = 0;
+    const repository = new WebReaderTranslationRepository({
+      getItem: key => values.get(key) ?? null,
+      setItem: (key, value) => { values.set(key, value); },
+      removeItem: key => { removals += 1; values.delete(key); },
+    }, 'translations');
+
+    expect(repository.read('story', 1, 'ko', {
+      id: 'skill', version: '1.0.0', contentDigest: 'digest',
+    })).toBeNull();
+    expect(removals).toBe(1);
+    expect(values.has('translations')).toBe(false);
+  });
+
   it('keeps a bounded set of the newest skill-specific translations', () => {
     const values = new Map<string, string>();
     const repository = new WebReaderTranslationRepository({

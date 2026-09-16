@@ -116,6 +116,14 @@ export class WebReaderTranslationRepository implements ReaderTranslationReposito
 
   private save(records: Record<string, DerivedChapterTranslation>): void {
     let entries = Object.entries(records);
+    if (!entries.length) {
+      try {
+        this.storage?.removeItem(this.storageKey);
+      } catch {
+        // The cache is advisory; repeated validation is the only cost.
+      }
+      return;
+    }
     if (entries.length > MAX_CACHED_TRANSLATIONS) {
       entries = entries.slice(entries.length - MAX_CACHED_TRANSLATIONS);
     }

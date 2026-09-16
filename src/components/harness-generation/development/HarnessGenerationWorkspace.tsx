@@ -15,8 +15,10 @@ import {
   Volume2,
 } from 'lucide-react';
 import {
+  isMediaPackEntitlementActive,
   mediaPackKey,
   type MediaPack,
+  type MediaPackEntitlement,
   type MediaPackReference,
   type StoryMediaLoadoutSlot,
 } from '../../../audio/mediaPacks';
@@ -70,13 +72,16 @@ export interface HarnessGenerationWorkspaceProps {
   renderSkillImport?: (busy: boolean) => ReactNode;
   /** Host-owned runtime catalog. Media Packs are never merged into installedSkills. */
   registeredMediaPacks?: MediaPack[];
-  /** Development-only reward boundary for exercising unlocks without inventing an economy. */
-  allowDevelopmentMediaRewards?: boolean;
+  /** Current account/reward truth supplied by the host; HARNESS never persists it. */
+  mediaPackEntitlements?: MediaPackEntitlement[];
+  /** Optional Development adapter. Its host callback owns the simulated reward state. */
+  onGrantDevelopmentMediaReward?: (reference: MediaPackReference) => void | Promise<void>;
 }
 
 const emptyFoundation = (): StoryFoundationInput => ({ premise: '' });
 const EMPTY_INSTALLED_SKILLS: HarnessSkillManifest[] = [];
 const EMPTY_MEDIA_PACKS: MediaPack[] = [];
+const EMPTY_MEDIA_ENTITLEMENTS: MediaPackEntitlement[] = [];
 
 const stageLabel: Record<HarnessGenerationAttempt['stage'], string> = {
   request_started: 'Request started',
@@ -517,24 +522,26 @@ function MediaLoadoutPanel({
   packs,
   entitlements,
   busy,
-  allowDevelopmentRewards,
   onGrant,
   onChange,
 }: {
   story: HarnessStory;
   packs: MediaPack[];
-  entitlements: HarnessWorkspaceState['mediaPackEntitlements'];
+  entitlements: MediaPackEntitlement[];
   busy: boolean;
-  allowDevelopmentRewards: boolean;
-  onGrant: (reference: MediaPackReference) => void;
+  onGrant?: (reference: MediaPackReference) => void;
   onChange: (slot: StoryMediaLoadoutSlot, reference?: MediaPackReference) => void;
 }) {
-  const entitled = new Set(entitlements.map(item => mediaPackKey(item.pack)));
+  const checkedAt = new Date().toISOString();
+  const entitled = new Set(entitlements
+    .filter(item => isMediaPackEntitlementActive(item, checkedAt))
+    .map(item => mediaPackKey(item.pack)));
   const slots: Array<{ id: StoryMediaLoadoutSlot; type: MediaPack['type']; label: string }> = [
     { id: 'soundscapes', type: 'soundscape', label: 'Soundscapes' },
     { id: 'soundCues', type: 'sound-cue', label: 'Sound Cues' },
   ];
   const equipped = new Set(Object.values(story.mediaLoadout ?? {}).filter(Boolean).map(reference => mediaPackKey(reference!)));
+  const activeEquipped = new Set([...equipped].filter(key => entitled.has(key)));
   return (
     <LibraryPanel as="section" padding="md" aria-labelledby="harness-media-loadout-title">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -548,7 +555,7 @@ function MediaLoadoutPanel({
           </p>
         </div>
         <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-emerald-100">
-          {equipped.size}/2 equipped
+          {activeEquipped.size}/2 equipped
         </span>
       </div>
 
@@ -557,11 +564,12 @@ function MediaLoadoutPanel({
           const slotPacks = packs.filter(pack => pack.type === slot.type);
           const reference = story.mediaLoadout?.[slot.id];
           const selectedKey = reference ? mediaPackKey(reference) : '';
+          const slotState = reference ? (entitled.has(selectedKey) ? 'Equipped' : 'Locked') : 'Empty';
           return (
             <article key={slot.id} className="rounded-xl border border-emerald-300/20 bg-emerald-400/[0.04] p-4">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-white">{slot.label}</h3>
-                <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-emerald-100">{reference ? 'Equipped' : 'Empty'}</span>
+                <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-emerald-100">{slotState}</span>
               </div>
               <label className="mt-3 block text-[10px] uppercase tracking-[0.14em] text-neutral-500" htmlFor={`harness-media-${slot.id}`}>Available pack</label>
               <select
@@ -589,7 +597,7 @@ function MediaLoadoutPanel({
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {packs.map(pack => {
           const key = mediaPackKey(pack);
-          const state = equipped.has(key) ? 'Equipped' : entitled.has(key) ? 'Available' : 'Locked';
+          const state = equipped.has(key) && entitled.has(key) ? 'Equipped' : entitled.has(key) ? 'Available' : 'Locked';
           return (
             <article key={key} className={`rounded-xl border p-4 ${state === 'Equipped' ? 'border-emerald-300/35 bg-emerald-400/[0.08]' : state === 'Available' ? 'border-cyan-300/20 bg-cyan-400/[0.05]' : 'border-white/10 bg-black/20'}`}>
               <div className="flex items-start justify-between gap-3">
@@ -601,7 +609,7 @@ function MediaLoadoutPanel({
               </div>
               <p className="mt-3 text-xs leading-relaxed text-neutral-400">{pack.description}</p>
               <p className="mt-2 text-[11px] text-neutral-500">{pack.entries.length} validated catalog {pack.entries.length === 1 ? 'entry' : 'entries'}</p>
-              {state === 'Locked' && allowDevelopmentRewards && (
+              {state === 'Locked' && onGrant && (
                 <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} onClick={() => onGrant({ id: pack.id, version: pack.version })}>
                   Grant test reward
                 </LibraryButton>
@@ -861,7 +869,8 @@ export function HarnessGenerationWorkspace({
   installedSkills = EMPTY_INSTALLED_SKILLS,
   renderSkillImport,
   registeredMediaPacks = EMPTY_MEDIA_PACKS,
-  allowDevelopmentMediaRewards = false,
+  mediaPackEntitlements = EMPTY_MEDIA_ENTITLEMENTS,
+  onGrantDevelopmentMediaReward,
 }: HarnessGenerationWorkspaceProps) {
   const availableSkills = useMemo(
     () => includeBundledHarnessSkills(installedSkills),
@@ -876,11 +885,12 @@ export function HarnessGenerationWorkspace({
     [injectedAdapter],
   );
   const controller = useMemo(
-    () => new HarnessGenerationController({ repository, modelAdapter, registeredMediaPacks }),
+    () => new HarnessGenerationController({ repository, modelAdapter, registeredMediaPacks, mediaPackEntitlements }),
     [repository, modelAdapter],
   );
   useEffect(() => controller.setInstalledSkills(installedSkills), [controller, installedSkills]);
   useEffect(() => controller.setRegisteredMediaPacks(registeredMediaPacks), [controller, registeredMediaPacks]);
+  useEffect(() => controller.setMediaPackEntitlements(mediaPackEntitlements), [controller, mediaPackEntitlements]);
   const [state, setState] = useState<HarnessWorkspaceState>();
   const [serverInfo, setServerInfo] = useState<HarnessGenerationServerInfo>();
   const [selectedStoryId, setSelectedStoryId] = useState<string>();
@@ -1022,10 +1032,8 @@ export function HarnessGenerationWorkspace({
     void run(() => controller.setMediaLoadoutSlot(selectedStory.id, slot, reference));
   };
   const grantDevelopmentMediaReward = (reference: MediaPackReference) => {
-    void run(() => controller.grantMediaPackEntitlement(reference, {
-      kind: 'development-test-reward',
-      id: `development:${mediaPackKey(reference)}`,
-    }));
+    if (!onGrantDevelopmentMediaReward) return;
+    void run(() => Promise.resolve(onGrantDevelopmentMediaReward(reference)));
   };
 
   const retryStage = () => {
@@ -1212,10 +1220,9 @@ export function HarnessGenerationWorkspace({
               <MediaLoadoutPanel
                 story={selectedStory}
                 packs={registeredMediaPacks}
-                entitlements={state.mediaPackEntitlements}
+                entitlements={mediaPackEntitlements}
                 busy={busy}
-                allowDevelopmentRewards={allowDevelopmentMediaRewards}
-                onGrant={grantDevelopmentMediaReward}
+                onGrant={onGrantDevelopmentMediaReward ? grantDevelopmentMediaReward : undefined}
                 onChange={setMediaLoadoutSlot}
               />
             )}

@@ -4,6 +4,7 @@ import {
   createAuthorizedMediaCatalog,
   createRegisteredMediaPackCatalog,
   freezeMediaLoadout,
+  isMediaPackEntitlementActive,
   mediaPackKey,
   recordFrozenMediaLoadout,
   resolveRegisteredMediaPack,
@@ -85,6 +86,8 @@ export interface HarnessGenerationControllerOptions {
   installedSkills?: HarnessSkillManifest[];
   /** Host-owned registered runtime resources. They never enter CAPA or provider requests. */
   registeredMediaPacks?: MediaPack[];
+  /** Current host-account entitlements. HARNESS consumes but never persists or grants them. */
+  mediaPackEntitlements?: MediaPackEntitlement[];
 }
 
 type WorkspaceListener = (state: HarnessWorkspaceState) => void;
@@ -130,6 +133,7 @@ export class HarnessGenerationController {
   private readonly capabilityRegistry: HarnessCapabilityRegistry;
   private skillCatalog: ReadonlyMap<string, HarnessSkillManifest>;
   private mediaPackCatalog: ReadonlyMap<string, MediaPack>;
+  private mediaPackEntitlements: MediaPackEntitlement[];
   private readonly listeners = new Set<WorkspaceListener>();
   private state = createEmptyHarnessWorkspaceState();
   private hydrated = false;
@@ -143,6 +147,7 @@ export class HarnessGenerationController {
     this.capabilityRegistry = options.capabilityRegistry ?? new HarnessCapabilityRegistry();
     this.skillCatalog = createHarnessSkillCatalog(includeBundledHarnessSkills(options.installedSkills ?? []));
     this.mediaPackCatalog = createRegisteredMediaPackCatalog(options.registeredMediaPacks ?? []);
+    this.mediaPackEntitlements = cloneHarnessValue(options.mediaPackEntitlements ?? []);
   }
 
   subscribe(listener: WorkspaceListener): () => void {
@@ -159,6 +164,11 @@ export class HarnessGenerationController {
   /** Registered Media Packs are a host runtime inventory, never a CAPA skill inventory. */
   setRegisteredMediaPacks(packs: MediaPack[]): void {
     this.mediaPackCatalog = createRegisteredMediaPackCatalog(packs);
+  }
+
+  /** Account/reward updates remain host-owned and do not mutate HARNESS workspace state. */
+  setMediaPackEntitlements(entitlements: MediaPackEntitlement[]): void {
+    this.mediaPackEntitlements = cloneHarnessValue(entitlements);
   }
 
   snapshot(): HarnessWorkspaceState {
@@ -357,28 +367,6 @@ export class HarnessGenerationController {
     }
   }
 
-  /** Reward boundary. A grant makes a registered pack available but never equips it. */
-  async grantMediaPackEntitlement(
-    reference: MediaPackReference,
-    grant: MediaPackEntitlement['grant'],
-  ): Promise<MediaPackEntitlement> {
-    this.assertHydrated();
-    const pack = resolveRegisteredMediaPack(this.mediaPackCatalog, reference);
-    if (!pack) throw new Error('Only a registered Media Pack can be unlocked.');
-    if (!grant.id.trim()) throw new Error('A reward grant needs a stable identity.');
-    const existing = this.state.mediaPackEntitlements.find(item => mediaPackKey(item.pack) === mediaPackKey(reference));
-    if (existing) return cloneHarnessValue(existing);
-    const candidate = cloneHarnessValue(this.state);
-    const entitlement: MediaPackEntitlement = {
-      pack: { id: pack.id, version: pack.version },
-      unlockedAt: this.runtime.now(),
-      grant: { kind: grant.kind, id: grant.id.trim() },
-    };
-    candidate.mediaPackEntitlements.push(entitlement);
-    await this.persist(candidate);
-    return cloneHarnessValue(entitlement);
-  }
-
   async setMediaLoadoutSlot(
     storyId: string,
     slot: StoryMediaLoadoutSlot,
@@ -398,7 +386,11 @@ export class HarnessGenerationController {
     } else {
       const pack = resolveRegisteredMediaPack(this.mediaPackCatalog, reference);
       if (!pack) throw new Error('Only a registered Media Pack can be equipped.');
-      const entitled = candidate.mediaPackEntitlements.some(item => mediaPackKey(item.pack) === mediaPackKey(reference));
+      const checkedAt = this.runtime.now();
+      const entitled = this.mediaPackEntitlements.some(item => (
+        mediaPackKey(item.pack) === mediaPackKey(reference)
+        && isMediaPackEntitlementActive(item, checkedAt)
+      ));
       if (!entitled) throw new Error('Unlock this Media Pack before equipping it.');
       const expectedType = slot === 'soundscapes' ? 'soundscape' : 'sound-cue';
       if (pack.type !== expectedType) throw new Error(`${pack.displayName} cannot be equipped in the ${slot === 'soundscapes' ? 'Soundscapes' : 'Sound Cues'} slot.`);
@@ -615,7 +607,7 @@ export class HarnessGenerationController {
       ? cloneHarnessValue(reusedMediaLoadout)
       : freezeMediaLoadout({
         loadout: story.mediaLoadout,
-        entitlements: this.state.mediaPackEntitlements,
+        entitlements: this.mediaPackEntitlements,
         registered: this.mediaPackCatalog,
         capturedAt: startedAt,
       });

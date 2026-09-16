@@ -43,6 +43,7 @@ export function acceptChapterMedia(
     const resolved = resolveAuthorizedSoundscape({
       blockId: block.id,
       ...(mood ? { mood } : {}),
+      ...(block.metadata?.music?.region ? { region: block.metadata.music.region } : {}),
       semanticTags,
     }, catalog);
     return resolved ? [resolved] : [];

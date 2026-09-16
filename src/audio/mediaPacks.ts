@@ -57,10 +57,8 @@ export interface StoryMediaLoadout {
 export interface MediaPackEntitlement {
   pack: MediaPackReference;
   unlockedAt: string;
-  grant: {
-    kind: 'reward' | 'development-test-reward';
-    id: string;
-  };
+  /** Host-account validity boundary. Omit only for a permanent entitlement. */
+  expiresAt?: string;
 }
 
 /** Full validated catalogs are frozen locally so retries cannot drift to a newer pack version. */
@@ -252,6 +250,22 @@ export function validateMediaPack(value: unknown): MediaPack {
 
 export const mediaPackKey = (value: MediaPackReference) => `${value.id}@${value.version}`;
 
+/** HARNESS consumes this host-owned decision but never persists or mutates it. */
+export function isMediaPackEntitlementActive(entitlement: MediaPackEntitlement, at: string): boolean {
+  const instant = Date.parse(at);
+  const unlockedAt = Date.parse(entitlement.unlockedAt);
+  if (
+    !PACK_ID.test(entitlement.pack.id)
+    || !VERSION.test(entitlement.pack.version)
+    || !Number.isFinite(instant)
+    || !Number.isFinite(unlockedAt)
+    || unlockedAt > instant
+  ) return false;
+  if (entitlement.expiresAt === undefined) return true;
+  const expiresAt = Date.parse(entitlement.expiresAt);
+  return Number.isFinite(expiresAt) && instant < expiresAt;
+}
+
 export function createRegisteredMediaPackCatalog(values: readonly unknown[]): ReadonlyMap<string, MediaPack> {
   const packs = values.map(validateMediaPack);
   const catalog = new Map<string, MediaPack>();
@@ -307,7 +321,9 @@ export function freezeMediaLoadout(input: {
   registered: ReadonlyMap<string, MediaPack>;
   capturedAt: string;
 }): FrozenMediaLoadout {
-  const entitled = new Set(input.entitlements.map(entitlement => mediaPackKey(entitlement.pack)));
+  const entitled = new Set(input.entitlements
+    .filter(entitlement => isMediaPackEntitlementActive(entitlement, input.capturedAt))
+    .map(entitlement => mediaPackKey(entitlement.pack)));
   const snapshot: FrozenMediaLoadout = { capturedAt: input.capturedAt };
   const soundscapes = input.loadout?.soundscapes && resolveRegisteredMediaPack(input.registered, input.loadout.soundscapes);
   if (soundscapes?.type === 'soundscape' && entitled.has(mediaPackKey(soundscapes))) {

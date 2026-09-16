@@ -19,6 +19,7 @@ import {
   validateWorldCueIntent,
   type WorldCueIntent,
 } from "../../../audio/inlineAudio";
+import { isSoundscapeRegion } from "../../../audio/soundscapes";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -275,9 +276,7 @@ const parseMusic = (
     return undefined;
   }
   const region = optionalStringField(value, "region", context, "metadata.music.region");
-  const validRegion = region && ["chinese", "japanese", "western"].includes(region)
-    ? region as NonNullable<StoryBlockMetadata["music"]>["region"]
-    : undefined;
+  const validRegion = isSoundscapeRegion(region) ? region : undefined;
   if (region && !validRegion) {
     warning(context, "optional-field-removed", "Removed unsupported optional metadata.music.region.", "metadata.music.region");
   }

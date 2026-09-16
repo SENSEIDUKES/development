@@ -12,15 +12,18 @@ The implementation keeps five independent owners:
 2. Generated chapter blocks carry semantic soundscape and Sound Cue intent only.
 3. The host registers validated `SoundscapePack` and `SoundCuePack` data in a
    Media Pack inventory that is never merged with the skill inventory.
-4. `mediaPackEntitlements` records reward-granted user availability.
+4. The host account/reward system supplies current user entitlements, including
+   optional expiration; HARNESS never grants or persists them.
 5. Each `HarnessStory.mediaLoadout` independently equips an optional Soundscape
    Pack and optional Sound Cue Pack.
 
-The host-owned pack inventory enters `HarnessGenerationController` separately
-from `installedSkills`. A reward grant makes a registered pack available and
-does not equip it. Equipment requires the exact registered and entitled pack
-ID/version, enforces the slot's pack type, and is checked again when the
-attempt snapshot is frozen.
+The host-owned pack inventory and current entitlement snapshot enter
+`HarnessGenerationController` separately from `installedSkills`. A host reward
+grant makes a registered pack available and does not equip it. Equipment
+requires the exact registered and currently active pack ID/version, enforces
+the slot's pack type, and is checked again—including expiration—when the
+attempt snapshot is frozen. No account identity, reward grant, or entitlement
+ledger is stored in the HARNESS workspace.
 
 ## Pack validation
 
@@ -57,8 +60,10 @@ After response normalization, `acceptChapterMedia` receives one authorized
 catalog built from the base catalogs plus the matching equipped pack in each
 slot. The existing World Cue resolver receives that Cue catalog as input.
 Soundscape selection uses the existing `SceneAudioTrack` contract, exact mood
-gating, tag ranking, and stable identity tie-breaking. The model never supplies
-or selects a pack, URL, filename, catalog row, or R2 object.
+gating, semantic cultural-region compatibility, tag ranking, and stable
+identity tie-breaking. An exact regional track outranks a neutral base track;
+an explicitly mismatched or unrequested regional track is excluded. The model
+never supplies or selects a pack, URL, filename, catalog row, or R2 object.
 
 Committed chapters persist only normalized blocks and resolved application
 media. Pack-resolved Cue records and resolved Soundscapes retain public playback
@@ -71,10 +76,11 @@ second media element, and leave prose readable when playback is unavailable.
 ## Development fixtures
 
 `mediaPackFixtures.ts` contains one tiny Soundscape Pack and one tiny Sound Cue
-Pack for Development verification only. The **Grant test reward** action is an
-adapter over the entitlement boundary; it is not a reward economy, schedule,
+Pack for Development verification only. The **Grant test reward** action is a
+Workshop-owned adapter that supplies a temporary one-hour entitlement to
+HARNESS; it is not persisted by HARNESS and is not a reward economy, schedule,
 currency, marketplace, or product pack.
 
-Changing the persisted attempt, chapter, story, or workspace shapes bumped
+Changing the persisted attempt, chapter, and story shapes bumped
 `HARNESS_GENERATION_SCHEMA_VERSION` to 11. Stale local Development data resets;
 there is no compatibility migration.

@@ -31,13 +31,16 @@ existing Chapter Generation feature.
 ### History
 
 - **2026-09-16:** Added the separate Media Loadout and runtime catalog path.
-  Registered Media Packs, reward-granted entitlements, and two independent
-  story equipment slots remain distinct from CAPA. Attempt snapshots freeze
+  Registered Media Packs, host-account reward entitlements, and two independent
+  story equipment slots remain distinct from CAPA and from each other. HARNESS
+  consumes current entitlement snapshots without granting or persisting them,
+  and rechecks optional expiration before equipment and resolution. Attempt snapshots freeze
   exact pack/version/source/digest catalogs outside every provider request;
   the existing Cue resolver and the canonical soundscape track contract resolve
   only authorized entries after generation. Chapters persist resolved media and
   provenance through reload, replay, later reward/equipment changes, Reader
-  adaptation, and user-controlled shared-player playback. Schema version 11
+  adaptation, and user-controlled shared-player playback. Semantic music region
+  participates in deterministic matching without exposing catalogs. Schema version 11
   resets stale Development data. See [MEDIA_LOADOUT.md](./MEDIA_LOADOUT.md).
 - **2026-09-16:** Removed Media from CAPA. The schema now has exactly six
   ordered writing slots: Author, Pacing, Continuity, Style, Accessibility, and
@@ -255,7 +258,7 @@ canonical English.
 The Workshop's sample skill manifests remain preview data only. Media Packs use
 the separate inventory and runtime boundary documented in
 [MEDIA_LOADOUT.md](./MEDIA_LOADOUT.md). Development includes only two tiny test
-catalog fixtures and a test reward grant adapter; it does not define product
+catalog fixtures and a Workshop-owned temporary test reward adapter; it does not define product
 packs, marketplace behavior, currency, scheduling, or a reward economy.
 
 ## Steering and continuation

@@ -47,10 +47,12 @@ retired standalone world presentation and its parallel audio adapter remain
 removed.
 
 Media Packs add validated candidates to these same catalog and playback
-boundaries. Registration, reward entitlement, and per-story equipment are
-separate states. Pack URLs never enter generation prompts; only semantic intent
-does. The Reader consumes committed resolved records, so later unlock or
-equipment changes cannot rewrite a chapter's audio.
+boundaries. Registration, host-account reward entitlement, and per-story
+equipment are separate states; HARNESS consumes current entitlement snapshots
+but does not grant or persist them. Pack URLs never enter generation prompts;
+only semantic intent—including optional cultural region—does. The Reader
+consumes committed resolved records, so later unlock, expiration, or equipment
+changes cannot rewrite a chapter's audio.
 
 ## Server boundary
 

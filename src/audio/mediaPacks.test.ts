@@ -8,12 +8,13 @@ import {
   validateMediaPack,
   type MediaPack,
 } from './mediaPacks';
+import { resolveSoundscapeTrack, type SceneAudioTrack } from './soundscapes';
 
 const soundscape = (overrides: Record<string, unknown> = {}) => ({
   id: 'test.storm-soundscapes', version: '1.0.0', type: 'soundscape',
   displayName: 'Storm Soundscapes', description: 'Test-only tracks.',
   source: { path: 'catalogs/storm.json', digest: 'a'.repeat(64) },
-  entries: [{ id: 'TEST_STORM', mood: 'storm-path', moods: ['storm-path'], tags: ['rain'], url: 'https://fixtures.r2.dev/storm.mp3', isPremium: false }],
+  entries: [{ id: 'TEST_STORM', mood: 'storm-path', moods: ['storm-path'], tags: ['rain'], region: 'chinese', url: 'https://fixtures.r2.dev/storm.mp3', isPremium: false }],
   ...overrides,
 });
 
@@ -55,6 +56,10 @@ describe('Media Pack contracts', () => {
     expect(() => validateMediaPack(soundscape({ entries: [{ ...soundscape().entries[0], url: 'https://fixtures.r2.dev/storm.exe' }] }))).toThrow('HTTPS');
     expect(() => validateMediaPack(soundscape({ entries: [{ ...soundscape().entries[0], url: 'https://127.0.0.1/storm.mp3' }] }))).toThrow('HTTPS');
     expect(() => validateMediaPack(soundscape({ entries: [{ ...soundscape().entries[0], url: 'https://localhost/storm.mp3' }] }))).toThrow('HTTPS');
+    expect(() => validateMediaPack(soundscape({ entries: [{ ...soundscape().entries[0], region: 'unsupported' }] }))).toThrow('region');
+    expect(validateMediaPack(soundscape({ entries: [{ ...soundscape().entries[0], region: 'korean' }] }))).toMatchObject({
+      entries: [{ region: 'korean' }],
+    });
   });
 
   it('freezes only independently equipped, registered and entitled slots', () => {
@@ -62,7 +67,7 @@ describe('Media Pack contracts', () => {
     const registered = createRegisteredMediaPackCatalog(packs);
     const frozen = freezeMediaLoadout({
       loadout: { soundscapes: packs[0], soundCues: packs[1] },
-      entitlements: [{ pack: packs[0], unlockedAt: '2026-09-16T00:00:00.000Z', grant: { kind: 'reward', id: 'reward-1' } }],
+      entitlements: [{ pack: packs[0], unlockedAt: '2026-09-16T00:00:00.000Z', expiresAt: '2026-09-16T01:00:00.000Z' }],
       registered,
       capturedAt: '2026-09-16T00:00:01.000Z',
     });
@@ -71,19 +76,39 @@ describe('Media Pack contracts', () => {
 
     const wrongType = freezeMediaLoadout({
       loadout: { soundCues: packs[0] },
-      entitlements: [{ pack: packs[0], unlockedAt: 'now', grant: { kind: 'reward', id: 'reward-1' } }],
+      entitlements: [{ pack: packs[0], unlockedAt: '2026-09-16T00:00:00.000Z' }],
       registered,
-      capturedAt: 'now',
+      capturedAt: '2026-09-16T00:00:01.000Z',
     });
     expect(wrongType.soundCues).toBeUndefined();
+
+    const expired = freezeMediaLoadout({
+      loadout: { soundscapes: packs[0] },
+      entitlements: [{ pack: packs[0], unlockedAt: '2026-09-16T00:00:00.000Z', expiresAt: '2026-09-16T00:00:01.000Z' }],
+      registered,
+      capturedAt: '2026-09-16T00:00:01.000Z',
+    });
+    expect(expired.soundscapes).toBeUndefined();
   });
 
   it('adds only the equipped pack to the base catalog and keeps deterministic selection', () => {
     const pack = validateMediaPack(soundscape()) as Extract<MediaPack, { type: 'soundscape' }>;
     const catalog = createAuthorizedMediaCatalog({ capturedAt: 'now', soundscapes: pack });
-    const resolved = resolveAuthorizedSoundscape({ blockId: 'b1', mood: 'storm-path', semanticTags: ['rain'] }, catalog);
+    const resolved = resolveAuthorizedSoundscape({ blockId: 'b1', mood: 'storm-path', region: 'chinese', semanticTags: ['rain'] }, catalog);
     expect(resolved?.resource.track.id).toBe('TEST_STORM');
     expect(resolved?.resource.provenance).toMatchObject({ kind: 'media-pack', id: pack.id, version: pack.version });
     expect(createAuthorizedMediaCatalog().soundscapes.some(item => item.track.id === 'TEST_STORM')).toBe(false);
+  });
+
+  it('uses semantic cultural region to reject mismatches and prefer an exact match over a neutral fallback', () => {
+    const base = { mood: 'journey', moods: ['journey'], tags: ['road'], isPremium: false };
+    const catalog: SceneAudioTrack[] = [
+      { ...base, id: 'A_JAPANESE', region: 'japanese', url: 'https://fixtures.r2.dev/japanese.mp3' },
+      { ...base, id: 'B_NEUTRAL', url: 'https://fixtures.r2.dev/neutral.mp3' },
+      { ...base, id: 'Z_CHINESE', region: 'chinese', url: 'https://fixtures.r2.dev/chinese.mp3' },
+    ];
+    expect(resolveSoundscapeTrack({ blockId: 'b1', mood: 'journey', region: 'chinese', semanticTags: ['road'] }, catalog)?.id).toBe('Z_CHINESE');
+    expect(resolveSoundscapeTrack({ blockId: 'b1', mood: 'journey', region: 'korean', semanticTags: ['road'] }, catalog)?.id).toBe('B_NEUTRAL');
+    expect(resolveSoundscapeTrack({ blockId: 'b1', mood: 'journey', semanticTags: ['road'] }, catalog)?.id).toBe('B_NEUTRAL');
   });
 });

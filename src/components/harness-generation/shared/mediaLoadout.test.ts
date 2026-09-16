@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { resolvePlayableAudioMoment } from '../../../audio/inlineAudio';
-import { validateMediaPack, type MediaPack } from '../../../audio/mediaPacks';
+import { validateMediaPack, type MediaPack, type MediaPackEntitlement } from '../../../audio/mediaPacks';
 import { HarnessGenerationController } from './controller';
 import type { HarnessRuntime } from './ids';
 import { InMemoryHarnessGenerationRepository } from './repository';
@@ -33,7 +33,7 @@ const chapterReply = () => response({
     type: 'paragraph',
     text: 'Rain crossed the mountain pass as the clockwork beast roared across the stones.',
     metadata: {
-      music: { mood: 'storm-path', intensity: 0.6 },
+      music: { mood: 'storm-path', region: 'korean', intensity: 0.6 },
       environment: ['mountain-pass', 'rain'],
       atmosphereCategory: 'rain',
       atmosphereTags: ['thunder'],
@@ -51,7 +51,7 @@ const soundscapePack = (version = '1.0.0', url = 'https://fixtures.r2.dev/storm-
   id: 'test.story-soundscapes', version, type: 'soundscape',
   displayName: `Story Soundscapes ${version}`, description: 'Test-only soundscapes.',
   source: { path: `catalogs/soundscapes-${version}.json`, digest: (version === '1.0.0' ? '1' : '2').repeat(64) },
-  entries: [{ id: 'TEST_STORM_PATH', mood: 'storm-path', moods: ['storm-path'], tags: ['rain', 'mountain-pass', 'thunder'], url, isPremium: false }],
+  entries: [{ id: 'TEST_STORM_PATH', mood: 'storm-path', moods: ['storm-path'], tags: ['rain', 'mountain-pass', 'thunder'], region: 'korean', url, isPremium: false }],
 });
 
 const soundCuePack = (): MediaPack => validateMediaPack({
@@ -63,6 +63,12 @@ const soundCuePack = (): MediaPack => validateMediaPack({
     public_url: 'https://fixtures.r2.dev/clockwork-roar.mp3',
     metadata: { main_category: 'beasts', broad_variation: 'roar', soft_tags: ['clockwork', 'metallic'], description: 'Test roar.', confidence_score: 1 },
   }],
+});
+
+const entitlement = (pack: MediaPack, expiresAt?: string): MediaPackEntitlement => ({
+  pack: { id: pack.id, version: pack.version },
+  unlockedAt: '2026-09-16T11:00:00.000Z',
+  ...(expiresAt ? { expiresAt } : {}),
 });
 
 const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
@@ -98,16 +104,19 @@ describe('HARNESS Media Loadout runtime integration', () => {
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'A courier crosses a storm-broken mountain pass.' });
 
+    controller.setMediaPackEntitlements([entitlement(soundscapes, '2026-09-16T11:30:00.000Z')]);
     await expect(controller.setMediaLoadoutSlot(story.id, 'soundscapes', soundscapes)).rejects.toThrow('Unlock');
     await expect(controller.setMediaLoadoutSlot(story.id, 'soundCues', { id: 'missing', version: '1.0.0' })).rejects.toThrow('registered');
 
-    await controller.grantMediaPackEntitlement(soundscapes, { kind: 'development-test-reward', id: 'reward-soundscapes' });
+    controller.setMediaPackEntitlements([entitlement(soundscapes)]);
+    expect('mediaPackEntitlements' in controller.snapshot()).toBe(false);
+    expect(JSON.stringify(await repository.load())).not.toContain('mediaPackEntitlements');
     expect(controller.snapshot().stories[0].mediaLoadout).toBeUndefined();
     await controller.setMediaLoadoutSlot(story.id, 'soundscapes', soundscapes);
     expect(controller.snapshot().stories[0].mediaLoadout).toEqual({ soundscapes: { id: soundscapes.id, version: soundscapes.version } });
     await expect(controller.setMediaLoadoutSlot(story.id, 'soundCues', soundscapes)).rejects.toThrow('Sound Cues');
 
-    await controller.grantMediaPackEntitlement(soundCues, { kind: 'reward', id: 'reward-cues' });
+    controller.setMediaPackEntitlements([entitlement(soundscapes), entitlement(soundCues)]);
     expect(controller.snapshot().stories[0].mediaLoadout?.soundCues).toBeUndefined();
     await controller.setMediaLoadoutSlot(story.id, 'soundCues', soundCues);
     expect(controller.snapshot().stories[0].mediaLoadout).toEqual({
@@ -128,7 +137,8 @@ describe('HARNESS Media Loadout runtime integration', () => {
 
     const committed = controller.snapshot().chapters[0];
     expect(committed.soundscapes?.[0]).toMatchObject({
-      resource: { track: { id: 'TEST_STORM_PATH' }, provenance: { kind: 'media-pack', id: soundscapes.id, version: '1.0.0' } },
+      intent: { region: 'korean' },
+      resource: { track: { id: 'TEST_STORM_PATH', region: 'korean' }, provenance: { kind: 'media-pack', id: soundscapes.id, version: '1.0.0' } },
     });
     expect(committed.audioMoments?.[0]).toMatchObject({
       cue: { publicUrl: 'https://fixtures.r2.dev/clockwork-roar.mp3', provenance: { kind: 'media-pack', id: soundCues.id } },
@@ -139,6 +149,7 @@ describe('HARNESS Media Loadout runtime integration', () => {
     });
 
     const committedBeforeChanges = JSON.stringify(committed);
+    controller.setMediaPackEntitlements([]);
     await controller.setMediaLoadoutSlot(story.id, 'soundscapes');
     await controller.setMediaLoadoutSlot(story.id, 'soundCues');
     await controller.replayStory(story.id, committed.id);
@@ -168,17 +179,17 @@ describe('HARNESS Media Loadout runtime integration', () => {
     const provider = adapter(new Error('Provider unavailable.'), chapterReply());
     const controller = new HarnessGenerationController({
       repository, modelAdapter: provider.value, runtime: runtime(), registeredMediaPacks: [v1, v2],
+      mediaPackEntitlements: [entitlement(v1)],
     });
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'A courier crosses a storm-broken mountain pass.' });
-    await controller.grantMediaPackEntitlement(v1, { kind: 'reward', id: 'v1-reward' });
     await controller.setMediaLoadoutSlot(story.id, 'soundscapes', v1);
     await controller.generateNextChapter(story.id, 'fixture');
     const failed = controller.snapshot().attempts[0];
     expect(failed.stage).toBe('generation_failed');
     expect(failed.mediaLoadout.soundscapes?.version).toBe('1.0.0');
 
-    await controller.grantMediaPackEntitlement(v2, { kind: 'reward', id: 'v2-reward' });
+    controller.setMediaPackEntitlements([entitlement(v1), entitlement(v2)]);
     await controller.setMediaLoadoutSlot(story.id, 'soundscapes', v2);
     await controller.retryModelRequest(failed.id);
 
@@ -186,5 +197,29 @@ describe('HARNESS Media Loadout runtime integration', () => {
     expect(state.attempts[1].mediaLoadout.soundscapes?.version).toBe('1.0.0');
     expect(state.chapters[0].mediaLoadout.soundscapes?.version).toBe('1.0.0');
     expect(state.chapters[0].soundscapes?.[0].resource.track.url).toBe('https://fixtures.r2.dev/storm-v1.mp3');
+  });
+
+  it('rechecks host entitlement expiration when freezing an attempt without rewriting story equipment', async () => {
+    const pack = soundscapePack();
+    const repository = new InMemoryHarnessGenerationRepository();
+    const controller = new HarnessGenerationController({
+      repository,
+      modelAdapter: adapter(chapterReply()).value,
+      runtime: runtime(),
+      registeredMediaPacks: [pack],
+      mediaPackEntitlements: [entitlement(pack)],
+    });
+    await controller.hydrate();
+    const story = await controller.createStory({ premise: 'A courier crosses a storm-broken mountain pass.' });
+    await controller.setMediaLoadoutSlot(story.id, 'soundscapes', pack);
+    controller.setMediaPackEntitlements([entitlement(pack, '2026-09-16T11:30:00.000Z')]);
+
+    await controller.generateNextChapter(story.id, 'fixture');
+    const state = controller.snapshot();
+    expect(state.stories[0].mediaLoadout?.soundscapes).toEqual({ id: pack.id, version: pack.version });
+    expect(state.attempts[0].mediaLoadout.soundscapes).toBeUndefined();
+    expect(state.chapters[0].mediaLoadout.soundscapes).toBeUndefined();
+    expect(state.chapters[0].soundscapes).toBeUndefined();
+    expect(JSON.stringify(await repository.load())).not.toContain('mediaPackEntitlements');
   });
 });

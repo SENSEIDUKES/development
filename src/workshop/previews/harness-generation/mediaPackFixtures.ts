@@ -14,6 +14,7 @@ export const WORKSHOP_MEDIA_PACKS: MediaPack[] = [
       mood: 'storm-path',
       moods: ['storm-path', 'tension'],
       tags: ['rain', 'mountain-pass', 'thunder'],
+      region: 'chinese',
       url: 'https://fixtures-media.r2.dev/soundscapes/storm-path.mp3',
       isPremium: false,
     }],

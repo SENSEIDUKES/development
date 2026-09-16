@@ -18,6 +18,7 @@ import {
   isProviderVoiceField,
   normalizeCreatureCodexRecords,
 } from "../../components/chapter-generation/shared/packets/creatureCodex";
+import { isSoundscapeRegion, type SoundscapeRegion } from "../../audio/soundscapes";
 import type {
   AsyncChapterGenerationModelCalls,
   ChapterEffectKind,
@@ -490,12 +491,12 @@ const parseBlockMetadata = (
     : (() => {
         const item = requiredRecord(metadata.music, `${label}.music`);
         const region = optionalValidatedString(item.region, `${label}.music.region`);
-        if (region && !["chinese", "japanese", "western"].includes(region)) {
+        if (region && !isSoundscapeRegion(region)) {
           throw new Error(`${label}.music.region is unsupported.`);
         }
         return {
           mood: requiredString(item.mood, `${label}.music.mood`),
-          ...(region ? { region: region as "chinese" | "japanese" | "western" } : {}),
+          ...(region ? { region: region as SoundscapeRegion } : {}),
           ...(optionalFiniteNumber(item.intensity, `${label}.music.intensity`) !== undefined
             ? { intensity: optionalFiniteNumber(item.intensity, `${label}.music.intensity`) }
             : {}),

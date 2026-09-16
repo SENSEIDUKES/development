@@ -8,6 +8,7 @@
  */
 
 import type { ResolvedAudioMoment, WorldCueIntent } from "../../../audio/inlineAudio";
+import type { SoundscapeRegion } from "../../../audio/soundscapes";
 
 export interface BeastSonicProfile {
   size?: "tiny" | "small" | "medium" | "large" | "giant" | "colossal";
@@ -94,7 +95,7 @@ export interface StoryBlockMetadata {
   }[];
   music?: {
     mood: string;
-    region?: "chinese" | "japanese" | "western";
+    region?: SoundscapeRegion;
     intensity?: number;
     customUrl?: string;
     trackId?: string;

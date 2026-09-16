@@ -2,7 +2,6 @@ import type { ResolvedAudioMoment } from '../../../audio/inlineAudio';
 import type {
   FrozenMediaLoadout,
   FrozenMediaLoadoutRecord,
-  MediaPackEntitlement,
   ResolvedSoundscape,
   StoryMediaLoadout,
 } from '../../../audio/mediaPacks';
@@ -716,8 +715,6 @@ export interface HarnessWorkspaceState {
   batches: HarnessBatchRun[];
   arcPlanOperations: HarnessArcPlanOperation[];
   memoryRecoveries?: HarnessMemoryRecovery[];
-  /** Reward-granted availability. Registered application packs remain host-owned. */
-  mediaPackEntitlements: MediaPackEntitlement[];
 }
 
 export interface HarnessMemoryRecoveryRequest {

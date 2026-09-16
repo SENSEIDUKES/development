@@ -228,6 +228,7 @@ describe('HARNESS canonical structured chapter and media path', () => {
     ].join('\n\n'));
     expect(committed.chapters[0].blocks?.map(block => block.id)).toEqual(['c1-p1', 'c1-p2', 'c1-p3']);
     expect(committed.chapters[0].blocks?.[0].metadata).toMatchObject({
+      mode: 'narration',
       atmosphereCategory: 'rain',
       atmosphereTags: ['courtyard', 'steady-rain'],
       music: { mood: 'tension', region: 'chinese', intensity: 0.7 },
@@ -235,6 +236,11 @@ describe('HARNESS canonical structured chapter and media path', () => {
       beastEvent: { type: 'reveal', profile: { signatureSound: 'growl' } },
     });
     expect(committed.chapters[0].blocks?.[0].metadata?.audioMoments).toBeUndefined();
+    expect(committed.chapters[0].blocks?.[1].metadata).toMatchObject({
+      mode: 'dialogue',
+      speakerName: 'Mara',
+      speakerRole: 'main_character',
+    });
     expect(JSON.stringify(committed.chapters[0])).not.toMatch(/MODEL_TRACK|untrusted|model-voice/);
     expect(committed.chapters[0].audioMoments).toEqual([
       expect.objectContaining({
@@ -254,6 +260,11 @@ describe('HARNESS canonical structured chapter and media path', () => {
     expect(readerChapter.blocks?.filter(block => Boolean(block.system))).toHaveLength(1);
     expect(readerChapter.blocks?.find(block => block.system)?.system?.title).toBe('Breakthrough Achieved');
     expect(readerChapter.blocks?.[0].metadata?.entities).toEqual([{ name: 'Mara', type: 'character', mention: 'reveal' }]);
+    expect(readerChapter.blocks?.[1].metadata).toMatchObject({
+      mode: 'dialogue',
+      speakerName: 'Mara',
+      speakerRole: 'main_character',
+    });
 
     const systemMarkup = renderToStaticMarkup(createElement(SystemBlock, {
       content: readerChapter.blocks!.find(block => block.system)!.text,

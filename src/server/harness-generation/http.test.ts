@@ -111,7 +111,6 @@ describe('Harness Generation HTTP boundary', () => {
       skills: [
         { id: 'seihouse.pacing', version: '1.0.0', name: 'Patient Siege', description: 'Pacing.', slot: 'pacing', applications: ['generation'], instructions: 'Do not resolve the siege in this chapter.' },
         SEN_NOVEL_AUTHOR_SKILL,
-        { id: 'seihouse.music', version: '1.0.0', name: 'Night Soundscape', description: 'Music.', slot: 'media', applications: ['media-runtime'], runtimeLabel: 'SAP' },
       ],
     });
     skilled.storyInformation.steering = [{ id: 'dir-1', direction: 'Bring the envoy to the gate.', mode: 'future', effectiveChapter: 1, createdAt: '2026-09-12T00:00:00.000Z' }];
@@ -128,9 +127,13 @@ describe('Harness Generation HTTP boundary', () => {
     expect(input.systemInstruction.indexOf('CAPA SKILL [Author]')).toBeLessThan(input.systemInstruction.indexOf('CAPA SKILL [Pacing]'));
     expect(input.systemInstruction).toContain('elite Eastern fantasy web-novel author specializing in Asian light novels');
     expect(input.systemInstruction.split('Do not resolve the siege in this chapter.')).toHaveLength(2);
-    expect(input.systemInstruction).not.toContain('Night Soundscape');
     expect(input.systemInstruction).toContain('blocks array is the sole chapter body');
-    expect(input.systemInstruction).toContain('does not decide whether or when a System Panel');
+    expect(input.systemInstruction).toContain('speaker metadata for dialogue or narration');
+    expect(input.systemInstruction).toContain('audioMoments for World Cue or Sound Cue intent');
+    expect(input.systemInstruction).toContain('system for complete System Panels');
+    expect(input.systemInstruction.split('HARNESS RESPONSE AND EVIDENCE CONTRACT')).toHaveLength(2);
+    expect(skilled.capaPrompt.text).not.toContain('HARNESS RESPONSE AND EVIDENCE CONTRACT');
+    expect(skilled.capaPrompt.text).not.toMatch(/R2|track list|Library Cue catalog/i);
     expect(input.systemInstruction).not.toContain('Do not invent ids, chapter numbers, ordering, persistence records, Codex records, cards, System Prompt payloads');
     const chapterSchema = input.responseJsonSchema as { properties: Record<string, unknown>; required: string[] };
     expect(chapterSchema.required).toContain('blocks');
@@ -155,7 +158,6 @@ describe('Harness Generation HTTP boundary', () => {
     expect(input.userPrompt).toContain('NEXT CHAPTER ASSIGNMENT: Bring the envoy to the gate.');
     expect(input.userPrompt).not.toContain('Do not resolve the siege in this chapter.');
     expect(input.userPrompt).not.toContain(SEN_NOVEL_AUTHOR_SKILL.instructions);
-    expect(input.userPrompt).not.toContain('Night Soundscape');
   });
 
   it('rejects a chapter request without an assembled CAPA Prompt before calling the provider', async () => {

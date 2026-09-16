@@ -17,17 +17,6 @@ export const WORKSHOP_HARNESS_SKILLS: HarnessSkillManifest[] = [
     author: 'SEIHouse Workshop',
   },
   {
-    id: 'workshop.soundscape-contract',
-    version: '0.1.0',
-    name: 'Soundscape Contract Preview',
-    description: 'Demonstrates how a downloaded music or sound pack occupies the Media slot without changing prose.',
-    slot: 'media',
-    applications: ['media-runtime', 'reader'],
-    assetCount: 0,
-    runtimeLabel: 'Host media runtime required',
-    author: 'SEIHouse Workshop',
-  },
-  {
     id: 'workshop.dyslexic-readability',
     version: '0.1.0',
     name: 'Dyslexic Readability Preview',

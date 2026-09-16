@@ -13,6 +13,7 @@ import { buildImmediateChapterRequest } from './immediateChapterRequest';
 import { appendHarnessCorrection, type AppendHarnessCorrectionInput } from './canonicalState';
 import { HarnessCapabilityRegistry } from './capabilities';
 import {
+  CAPA_SCHEMA,
   assembleCapaPrompt,
   createHarnessSkillCatalog,
   freezeHarnessSkillLoadout,
@@ -301,6 +302,9 @@ export class HarnessGenerationController {
   ): Promise<HarnessStory> {
     this.assertHydrated();
     if (this.generating) throw new Error('Wait for the active Harness update before changing skills.');
+    if (!CAPA_SCHEMA.some(definition => definition.id === slot)) {
+      throw new Error(`${slot} is not a supported CAPA skill slot.`);
+    }
     const candidate = cloneHarnessValue(this.state);
     const story = findStory(candidate, storyId);
     if (!story) throw new Error('Open a Harness story before changing its skills.');

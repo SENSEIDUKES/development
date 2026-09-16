@@ -6,7 +6,7 @@ import type { StoryBlock } from '../../chapter-generation/shared/types';
  * persisted shape (attempt, chapter, or workspace state fields). This is a
  * development system: storage at any other version is reset, never
  * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 9 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 10 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -105,14 +105,12 @@ export type HarnessSkillSlotId =
   | 'continuity'
   | 'style'
   | 'accessibility'
-  | 'translation'
-  | 'media';
+  | 'translation';
 
 export type HarnessSkillApplication =
   | 'generation'
   | 'post-commit'
-  | 'reader'
-  | 'media-runtime';
+  | 'reader';
 
 export interface HarnessSkillReference {
   id: string;

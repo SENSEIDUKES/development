@@ -30,6 +30,16 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-09-16:** Removed Media from CAPA. The schema now has exactly six
+  ordered writing slots: Author, Pacing, Continuity, Style, Accessibility, and
+  Translation. Media skills can no longer be installed, equipped, assembled,
+  or frozen; stale Development workspace and SPP inventory data reset through
+  schema version 10 and the v3 inventory key. The permanent HARNESS response
+  contract now owns the compact semantic handoff for System Panels,
+  manifestations, dialogue/narration, soundscape and cue intent, and creature
+  events. Existing normalization, catalog resolution, persistence, recovery,
+  and Reader playback remain unchanged. No Media Loadout or Media Pack was
+  created.
 - **2026-09-16:** Made Translation glossary normalization deterministic, rejected canonical/alias collisions, matched only story-facing text and chapter directions, froze selected resource provenance, and separated imported Translation selections by language and glossary identity. Schema version 9 intentionally resets stale Development data.
 - **2026-09-15:** Restored HARNESS Generated Chapters to the canonical SEN
   `StoryBlock` and media pathway. Response acceptance now normalizes optional
@@ -38,8 +48,8 @@ existing Chapter Generation feature.
   validators; derives the one readable prose result from accepted block text;
   persists accepted blocks and application-resolved cues at every chapter
   checkpoint; and passes them intact into Reader Chamber. Schema version 6
-  intentionally resets stale Development data. Author Skill V1 and the empty
-  Media slot are unchanged.
+  intentionally resets stale Development data. Author Skill V1 is unchanged;
+  the structured pathway is independent of CAPA loadout slots.
 - **2026-09-15:** Integrated the neutral SEN Arc Goals authority with the
   current CAPA Prompt / Story Information Packet generation boundary. Arc
   requirements remain Harness mechanics and do not modify Author Skill V1.
@@ -70,7 +80,7 @@ existing Chapter Generation feature.
   replaceable CAPA Skills. They make equipped Translation and Accessibility
   instructions mandatory for reader-facing content while keeping machine-facing
   media and effect payloads in canonical English. Development displays the fixed
-  section as a locked slot-shaped card after Media so it can be inspected without
+  section as a locked slot-shaped card after the six CAPA slots so it can be inspected without
   pretending it is an installable or replaceable CAPA Skill.
 - **2026-09-13:** Established the canonical architecture vocabulary in
   [ARCHITECTURE_VOCABULARY.md](./ARCHITECTURE_VOCABULARY.md) (HARNESS, CAPA,
@@ -89,7 +99,7 @@ existing Chapter Generation feature.
 - **2026-09-13:** Replaced the inherited placeholder author wording with the
   founder-approved **Author Skill V1**: a focused Mission, Boundaries,
   Philosophy, Reference shelf, and Remember statement. Style, pacing,
-  continuity, media, and Harness mechanics remain outside the skill.
+  continuity, structured-output behavior, and Harness mechanics remain outside the skill.
 - **2026-09-12:** Promoted the source SEN light-novel author direction from a
   hidden generic server prompt into the bundled, visible, replaceable **Author**
   skill. Existing and new local Harness stories equip its exact version, the
@@ -205,9 +215,9 @@ Development's complete SPP import flow and validation evidence are documented in
 
 CAPA Skills are not the deterministic capability handlers above. Capability handlers
 are permanent internal machinery that interprets committed evidence. CAPA Skills are
-versioned packages equipped into one of the seven CAPA Schema slots (`CAPA_SCHEMA` in
-`shared/skills.ts`): Author, Pacing, Continuity, Style, Accessibility, Translation, or
-Media. The bundled SEN Novel Author is a normal, replaceable generation skill, not
+versioned packages equipped into one of the six CAPA Schema slots (`CAPA_SCHEMA` in
+`shared/skills.ts`): Author, Pacing, Continuity, Style, Accessibility, or Translation.
+Media is not a CAPA Skill or slot. The bundled SEN Novel Author is a normal, replaceable generation skill, not
 hidden creative Harness behavior. It is equipped for new and previously saved local
 stories.
 
@@ -217,16 +227,26 @@ referenced version is unavailable. For each attempt it freezes the equipped mani
 in schema order and assembles every generation skill, Author first, once, into one
 CAPA Prompt (`assembleCapaPrompt`). The permanent HARNESS Official Output Requirements
 follow the skills and are shown as a locked inspection card in Development; they are
-not an eighth CAPA Skill and cannot be equipped, removed, or reordered. That CAPA Prompt is frozen on the attempt and is
+not a seventh CAPA Skill and cannot be equipped, removed, or reordered. That CAPA Prompt is frozen on the attempt and is
 the model's complete authoring instruction; it never enters the Story Information
 Packet. Only manifests declaring the `generation` application contribute text.
-Reader, post-commit, and media-runtime skills are recorded in the frozen CAPA Prompt's
+Reader and post-commit applications may be recorded in the frozen CAPA Prompt's
 skill inventory for their owning host runtime and send nothing to the writing model.
 
+The separate permanent `HARNESS_RESPONSE_CONTRACT` describes supported semantic
+chapter signals and the application-owned handoff for System Panels,
+manifestation triggers, dialogue/narration metadata, soundscape intent, World
+Cue and Sound Cue intent, and creature events. It is fixed HARNESS
+infrastructure, never an installable skill or loadout slot. It contains no
+asset catalog, R2 path, filename, track list, unlocked-resource list, or pack
+contents. HARNESS retains validation, generated IDs, ordering, persistence,
+resolution handoff, and checkpoint recovery; machine-facing fields remain
+canonical English.
+
 The Workshop's sample manifests are preview data only. Package downloading, signature
-verification, entitlements, asset installation, and media execution belong to a future
-host skill-library/runtime integration; the portable Harness contract does not fake
-those operations.
+verification, entitlements, asset installation, and media execution belong to future
+Media Loadout work; this phase does not create Media Packs, slots, rewards,
+unlocks, or runtime behavior.
 
 ## Steering and continuation
 

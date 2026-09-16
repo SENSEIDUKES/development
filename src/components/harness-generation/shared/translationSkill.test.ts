@@ -75,7 +75,7 @@ describe('Translation skill contract', () => {
   });
 
   it('forbids Translation metadata on every other CAPA slot', () => {
-    for (const slot of ['author', 'pacing', 'continuity', 'style', 'accessibility', 'media'] as const) {
+    for (const slot of ['author', 'pacing', 'continuity', 'style', 'accessibility'] as const) {
       expect(() => validateHarnessSkillManifest(translationSkill({
         id: `test.${slot}`, slot, translation: { targetLanguage: 'ja' },
       }))).toThrow('cannot declare Translation metadata');

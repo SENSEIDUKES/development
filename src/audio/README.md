@@ -1,8 +1,8 @@
 # Audio domain
 
 - **Created:** 2026-08-19
-- **Last updated:** 2026-08-20
-- **Replica status:** Worldcue Phase 3 active; Character voice belongs solely to the Reader Codex signature quote
+- **Last updated:** 2026-09-16
+- **Replica status:** Media Loadout runtime active; Character voice belongs solely to the Reader Codex signature quote
 
 ## What lives here
 
@@ -17,6 +17,11 @@
   annotation contract, exact-placement utilities, and deterministic
   catalog-backed Worldcue resolver. It carries no voice path: chapter prose is
   never annotated with Character speech.
+- `soundscapes.ts` — the built-in SEN soundscape catalog, its existing track
+  contract, validation, and deterministic semantic-intent resolver.
+- `mediaPacks.ts` — data-only Soundscape/Sound Cue Pack validation, registered
+  catalog assembly, frozen-loadout provenance, and authorized post-generation
+  catalog expansion. It contains no CAPA or provider request path.
 - `index.ts` — the client-safe barrel for the audio surface.
 
 The voice catalog data and provider-aware logic live in
@@ -40,6 +45,12 @@ annotations. The Development Reader Chamber consumes those persisted
 annotations in both generated sessions and controlled Workshop examples. The
 retired standalone world presentation and its parallel audio adapter remain
 removed.
+
+Media Packs add validated candidates to these same catalog and playback
+boundaries. Registration, reward entitlement, and per-story equipment are
+separate states. Pack URLs never enter generation prompts; only semantic intent
+does. The Reader consumes committed resolved records, so later unlock or
+equipment changes cannot rewrite a chapter's audio.
 
 ## Server boundary
 
@@ -72,7 +83,7 @@ Each category belongs to exactly one subsystem:
 | `artifacts`   | Inline audible-event annotations                            | Phase 3 Reader      |
 | `locations`   | Inline audible-event annotations                            | Phase 3 Reader      |
 | `factions`    | Inline audible-event annotations                            | Phase 3 Reader      |
-| `atmosphere`  | Scene audio — `StoryCuePayload.atmosphereCategory`, `trackLibrary.ts` | Not consumed here   |
+| `atmosphere`  | Scene audio — `StoryCuePayload.atmosphereCategory`, `soundscapes.ts` | Not consumed here   |
 | `system`      | System Panels — `SystemBlock.tsx`                            | Not consumed here   |
 
 The loader preserves every input row in `LibraryCuesLoadResult.rawEntries`

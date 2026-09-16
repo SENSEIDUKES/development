@@ -10,7 +10,7 @@
  *     Phase 3 inline Worldcue system after model-safe intent validation.
  *   - atmosphere — owned by scene audio (the `atmosphereCategory` field on
  *     `StoryCuePayload` / `StoryBlock.metadata` and the `TRACK_LIBRARY` in
- *     `src/components/reader-chamber/shared/trackLibrary.ts`).
+ *     `src/audio/soundscapes.ts`).
  *   - system — owned by System Panels (`SystemBlock.tsx`).
  *
  * Free-form fields (`broad_variation`, `soft_tags`, `description`,

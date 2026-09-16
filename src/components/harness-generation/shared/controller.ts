@@ -1,5 +1,18 @@
 import { createArcChapterPosition, editArcPlan, validateArcPlan, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
+import {
+  createAuthorizedMediaCatalog,
+  createRegisteredMediaPackCatalog,
+  freezeMediaLoadout,
+  mediaPackKey,
+  recordFrozenMediaLoadout,
+  resolveRegisteredMediaPack,
+  type FrozenMediaLoadout,
+  type MediaPack,
+  type MediaPackEntitlement,
+  type MediaPackReference,
+  type StoryMediaLoadoutSlot,
+} from '../../../audio/mediaPacks';
 import { arcDeadlineFailure, commitHarnessArc, needsArcPlan, readArcReply } from './arcState';
 import {
   createHarnessStory,
@@ -70,6 +83,8 @@ export interface HarnessGenerationControllerOptions {
   capabilityRegistry?: HarnessCapabilityRegistry;
   /** Host-owned installed skills. The Harness stores only per-story references and frozen request copies. */
   installedSkills?: HarnessSkillManifest[];
+  /** Host-owned registered runtime resources. They never enter CAPA or provider requests. */
+  registeredMediaPacks?: MediaPack[];
 }
 
 type WorkspaceListener = (state: HarnessWorkspaceState) => void;
@@ -114,6 +129,7 @@ export class HarnessGenerationController {
   private readonly eventPreserver: HarnessEventPreserver;
   private readonly capabilityRegistry: HarnessCapabilityRegistry;
   private skillCatalog: ReadonlyMap<string, HarnessSkillManifest>;
+  private mediaPackCatalog: ReadonlyMap<string, MediaPack>;
   private readonly listeners = new Set<WorkspaceListener>();
   private state = createEmptyHarnessWorkspaceState();
   private hydrated = false;
@@ -126,6 +142,7 @@ export class HarnessGenerationController {
     this.eventPreserver = options.preserveEvents ?? preserveSemanticEvents;
     this.capabilityRegistry = options.capabilityRegistry ?? new HarnessCapabilityRegistry();
     this.skillCatalog = createHarnessSkillCatalog(includeBundledHarnessSkills(options.installedSkills ?? []));
+    this.mediaPackCatalog = createRegisteredMediaPackCatalog(options.registeredMediaPacks ?? []);
   }
 
   subscribe(listener: WorkspaceListener): () => void {
@@ -137,6 +154,11 @@ export class HarnessGenerationController {
   /** Host inventory updates never replace the controller or an in-flight frozen request. */
   setInstalledSkills(manifests: HarnessSkillManifest[]): void {
     this.skillCatalog = createHarnessSkillCatalog(includeBundledHarnessSkills(manifests));
+  }
+
+  /** Registered Media Packs are a host runtime inventory, never a CAPA skill inventory. */
+  setRegisteredMediaPacks(packs: MediaPack[]): void {
+    this.mediaPackCatalog = createRegisteredMediaPackCatalog(packs);
   }
 
   snapshot(): HarnessWorkspaceState {
@@ -335,6 +357,59 @@ export class HarnessGenerationController {
     }
   }
 
+  /** Reward boundary. A grant makes a registered pack available but never equips it. */
+  async grantMediaPackEntitlement(
+    reference: MediaPackReference,
+    grant: MediaPackEntitlement['grant'],
+  ): Promise<MediaPackEntitlement> {
+    this.assertHydrated();
+    const pack = resolveRegisteredMediaPack(this.mediaPackCatalog, reference);
+    if (!pack) throw new Error('Only a registered Media Pack can be unlocked.');
+    if (!grant.id.trim()) throw new Error('A reward grant needs a stable identity.');
+    const existing = this.state.mediaPackEntitlements.find(item => mediaPackKey(item.pack) === mediaPackKey(reference));
+    if (existing) return cloneHarnessValue(existing);
+    const candidate = cloneHarnessValue(this.state);
+    const entitlement: MediaPackEntitlement = {
+      pack: { id: pack.id, version: pack.version },
+      unlockedAt: this.runtime.now(),
+      grant: { kind: grant.kind, id: grant.id.trim() },
+    };
+    candidate.mediaPackEntitlements.push(entitlement);
+    await this.persist(candidate);
+    return cloneHarnessValue(entitlement);
+  }
+
+  async setMediaLoadoutSlot(
+    storyId: string,
+    slot: StoryMediaLoadoutSlot,
+    reference?: MediaPackReference,
+  ): Promise<HarnessStory> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the active Harness update before changing the Media Loadout.');
+    const candidate = cloneHarnessValue(this.state);
+    const story = findStory(candidate, storyId);
+    if (!story) throw new Error('Open a Harness story before changing its Media Loadout.');
+    if (activeAttemptForStory(candidate, storyId)) {
+      throw new Error('Finish or explicitly retry the current chapter checkpoint before changing the Media Loadout.');
+    }
+    const loadout = { ...(story.mediaLoadout ?? {}) };
+    if (!reference) {
+      delete loadout[slot];
+    } else {
+      const pack = resolveRegisteredMediaPack(this.mediaPackCatalog, reference);
+      if (!pack) throw new Error('Only a registered Media Pack can be equipped.');
+      const entitled = candidate.mediaPackEntitlements.some(item => mediaPackKey(item.pack) === mediaPackKey(reference));
+      if (!entitled) throw new Error('Unlock this Media Pack before equipping it.');
+      const expectedType = slot === 'soundscapes' ? 'soundscape' : 'sound-cue';
+      if (pack.type !== expectedType) throw new Error(`${pack.displayName} cannot be equipped in the ${slot === 'soundscapes' ? 'Soundscapes' : 'Sound Cues'} slot.`);
+      loadout[slot] = { id: pack.id, version: pack.version };
+    }
+    story.mediaLoadout = loadout;
+    story.updatedAt = this.runtime.now();
+    await this.persist(candidate);
+    return cloneHarnessValue(story);
+  }
+
   async addCorrection(storyId: string, input: AppendHarnessCorrectionInput) {
     this.assertHydrated();
     if (!findStory(this.state, storyId)) throw new Error('Open a Harness story before adding a correction.');
@@ -495,7 +570,12 @@ export class HarnessGenerationController {
     return this.snapshot();
   }
 
-  async generateNextChapter(storyId: string, model: string, batchId?: string): Promise<HarnessWorkspaceState> {
+  async generateNextChapter(
+    storyId: string,
+    model: string,
+    batchId?: string,
+    reusedMediaLoadout?: FrozenMediaLoadout,
+  ): Promise<HarnessWorkspaceState> {
     this.assertHydrated();
     if (this.generating) throw new Error('A Harness chapter request is already running.');
     if (!model.trim()) throw new Error('Choose a configured Harness model before generating a chapter.');
@@ -515,7 +595,7 @@ export class HarnessGenerationController {
       this.generating = true;
       try { await this.prepareArcPlan(storyId, model); }
       finally { this.generating = false; }
-      return this.generateNextChapter(storyId, model, batchId);
+      return this.generateNextChapter(storyId, model, batchId, reusedMediaLoadout);
     }
     const attemptId = this.runtime.createId('hga');
     const startedAt = this.runtime.now();
@@ -531,12 +611,21 @@ export class HarnessGenerationController {
       freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt),
       { storyInformation, immediateChapterRequest },
     );
+    const mediaLoadout = reusedMediaLoadout
+      ? cloneHarnessValue(reusedMediaLoadout)
+      : freezeMediaLoadout({
+        loadout: story.mediaLoadout,
+        entitlements: this.state.mediaPackEntitlements,
+        registered: this.mediaPackCatalog,
+        capturedAt: startedAt,
+      });
     const attempt: HarnessGenerationAttempt = {
       id: attemptId,
       storyId,
       foundationRevisionId: foundation.id,
       foundationSnapshot: cloneHarnessValue(foundation),
       capaPrompt,
+      mediaLoadout,
       storyInformation,
       immediateChapterRequest,
       model: model.trim(),
@@ -600,7 +689,11 @@ export class HarnessGenerationController {
         message: 'The raw provider response checkpoint is empty, so chapter prose cannot be accepted.',
       });
     }
-    const acceptance = acceptHarnessModelResponse(raw, attempt.chapterNumber);
+    const acceptance = acceptHarnessModelResponse(
+      raw,
+      attempt.chapterNumber,
+      createAuthorizedMediaCatalog(attempt.mediaLoadout),
+    );
     if (!acceptance.accepted) {
       return this.appendFailure(attemptId, {
         stage: 'response',
@@ -624,7 +717,11 @@ export class HarnessGenerationController {
   private rawEventsForAttempt(attempt: HarnessGenerationAttempt): unknown[] {
     const raw = attempt.rawProviderResponse;
     if (!raw) return [];
-    const acceptance = acceptHarnessModelResponse(raw, attempt.chapterNumber);
+    const acceptance = acceptHarnessModelResponse(
+      raw,
+      attempt.chapterNumber,
+      createAuthorizedMediaCatalog(attempt.mediaLoadout),
+    );
     return acceptance.accepted ? acceptance.rawEvents : [];
   }
 
@@ -734,6 +831,8 @@ export class HarnessGenerationController {
       prose: acceptedDraft.prose,
       ...(acceptedDraft.blocks ? { blocks: cloneHarnessValue(acceptedDraft.blocks) } : {}),
       ...(acceptedDraft.audioMoments ? { audioMoments: cloneHarnessValue(acceptedDraft.audioMoments) } : {}),
+      ...(acceptedDraft.soundscapes ? { soundscapes: cloneHarnessValue(acceptedDraft.soundscapes) } : {}),
+      mediaLoadout: recordFrozenMediaLoadout(commitAttempt.mediaLoadout),
       ...(acceptedDraft.plan ? { plan: acceptedDraft.plan } : {}),
       eventIds: committedEvents.map(event => event.id),
       responseMode: acceptedDraft.responseMode,
@@ -1088,7 +1187,12 @@ export class HarnessGenerationController {
     abandonedAttempt.recoveryStage = undefined;
     abandonedAttempt.failure = undefined;
     await this.persist(abandoned);
-    return this.generateNextChapter(attempt.storyId, attempt.model, attempt.batchId);
+    return this.generateNextChapter(
+      attempt.storyId,
+      attempt.model,
+      attempt.batchId,
+      attempt.mediaLoadout,
+    );
   }
 
   private emptyBatchUsage(): HarnessBatchUsageAggregate {

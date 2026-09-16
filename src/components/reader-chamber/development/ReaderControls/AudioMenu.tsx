@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { Volume2, VolumeX } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Play, Square, Volume2, VolumeX } from 'lucide-react';
 import { useAudioMix } from '../../shared/stubs';
 import { AudioChannelId } from '../../shared/stubs';
 import { TRACK_LIBRARY } from '../../shared/trackLibrary';
 import { vibrate } from '../../shared/stubs';
+import { useDevAudioPlayback } from '../../../../audio/DevAudioPlayback';
+import type { ResolvedSoundscape } from '../../../../audio/mediaPacks';
 
-const SCORE_GROUPS = TRACK_LIBRARY.reduce<Record<string, typeof TRACK_LIBRARY>>((groups, track) => {
+const groupTracks = (tracks: typeof TRACK_LIBRARY) => tracks.reduce<Record<string, typeof TRACK_LIBRARY>>((groups, track) => {
   const folder = track.url.split('/AUDIO/')[1]?.split('/')[0] || 'OTHER';
   (groups[folder] = groups[folder] || []).push(track);
   return groups;
@@ -87,8 +89,21 @@ function ChannelRow({
  * switch and volume. Turning Master Audio off silences everything but never
  * changes the individual settings underneath.
  */
-export function AudioMenu({ idSuffix = 'desktop' }: { idSuffix?: string }) {
+export function AudioMenu({
+  idSuffix = 'desktop',
+  soundscapes = [],
+}: {
+  idSuffix?: string;
+  soundscapes?: ResolvedSoundscape[];
+}) {
   const { mix, setChannel } = useAudioMix();
+  const playback = useDevAudioPlayback();
+  const tracks = useMemo(() => {
+    const byId = new Map(TRACK_LIBRARY.map(track => [track.id, track]));
+    soundscapes.forEach(soundscape => byId.set(soundscape.resource.track.id, soundscape.resource.track));
+    return [...byId.values()];
+  }, [soundscapes]);
+  const scoreGroups = useMemo(() => groupTracks(tracks), [tracks]);
 
   // The pinned music track lives with the playback engine (it is a "what to
   // play" choice, not a level); sync over the existing control/state events.
@@ -108,6 +123,19 @@ export function AudioMenu({ idSuffix = 'desktop' }: { idSuffix?: string }) {
   const handleTrackChange = (id: string) => {
     setBgmTrackId(id);
     window.dispatchEvent(new CustomEvent('seihouse-audio-control', { detail: { bgmTrackId: id } }));
+  };
+
+  const selectedTrack = bgmTrackId === 'auto'
+    ? soundscapes[0]?.resource.track
+    : tracks.find(track => track.id === bgmTrackId);
+  const playSelectedSoundscape = () => {
+    if (!selectedTrack) return;
+    playback.replace({
+      id: `reader-soundscape:${selectedTrack.id}`,
+      source: selectedTrack.url,
+      title: formatTrackName(selectedTrack.id),
+      artist: 'SEN Soundscape',
+    });
   };
 
   const toggle = (channel: AudioChannelId) => (enabled: boolean) => {
@@ -191,7 +219,7 @@ export function AudioMenu({ idSuffix = 'desktop' }: { idSuffix?: string }) {
               className="mt-1 w-full rounded border border-neutral-850 bg-void p-1 text-[10px] text-neutral-300 focus:border-portal focus:outline-none disabled:opacity-40"
             >
               <option value="auto">Automatic (follows the story)</option>
-              {Object.entries(SCORE_GROUPS).map(([group, tracks]) => (
+              {Object.entries(scoreGroups).map(([group, tracks]) => (
                 <optgroup key={group} label={group.charAt(0) + group.slice(1).toLowerCase()}>
                   {tracks.map(track => (
                     <option key={track.id} value={track.id}>{formatTrackName(track.id)}</option>
@@ -200,6 +228,32 @@ export function AudioMenu({ idSuffix = 'desktop' }: { idSuffix?: string }) {
               ))}
             </select>
           </label>
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={playSelectedSoundscape}
+              disabled={!selectedTrack || !mix.master.enabled || !mix.music.enabled}
+              className="inline-flex min-h-8 items-center gap-1.5 rounded border border-portal/30 bg-portal/10 px-2 text-[9px] font-medium text-portal disabled:opacity-40"
+            >
+              <Play size={11} aria-hidden="true" />
+              Play soundscape
+            </button>
+            <button
+              type="button"
+              onClick={() => playback.stop()}
+              disabled={!playback.currentTrackId?.startsWith('reader-soundscape:')}
+              className="inline-flex min-h-8 items-center gap-1.5 rounded border border-neutral-800 px-2 text-[9px] text-neutral-400 disabled:opacity-40"
+            >
+              <Square size={10} aria-hidden="true" />
+              Stop
+            </button>
+          </div>
+          {bgmTrackId === 'auto' && !selectedTrack && (
+            <p className="mt-2 text-[9px] leading-relaxed text-neutral-500">This chapter has no resolved soundscape. Reading remains available without audio.</p>
+          )}
+          {playback.hasError && playback.currentTrackId?.startsWith('reader-soundscape:') && (
+            <p role="status" className="mt-2 text-[9px] leading-relaxed text-human">Soundscape unavailable. The chapter remains readable.</p>
+          )}
         </ChannelRow>
 
         <ChannelRow

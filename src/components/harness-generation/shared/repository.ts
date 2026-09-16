@@ -21,6 +21,7 @@ export const createEmptyHarnessWorkspaceState = (): HarnessWorkspaceState => ({
   corrections: [],
   batches: [],
   arcPlanOperations: [],
+  mediaPackEntitlements: [],
 });
 
 export interface HarnessGenerationRepository {
@@ -42,7 +43,8 @@ const isCurrentHarnessWorkspaceState = (value: unknown): value is HarnessWorkspa
     && Array.isArray(candidate.projections)
     && Array.isArray(candidate.corrections)
     && Array.isArray(candidate.batches)
-    && Array.isArray(candidate.arcPlanOperations);
+    && Array.isArray(candidate.arcPlanOperations)
+    && Array.isArray(candidate.mediaPackEntitlements);
 };
 
 /**

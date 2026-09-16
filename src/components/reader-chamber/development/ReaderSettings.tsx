@@ -435,10 +435,18 @@ function ChapterSection({
 }
 
 /** All audio controls in one place: mix, voices, playback, and export. */
-function AudioSection({ audio, onExportText }: { audio: AudioSettings; onExportText: () => void }) {
+function AudioSection({
+  audio,
+  onExportText,
+  selectedChapter,
+}: {
+  audio: AudioSettings;
+  onExportText: () => void;
+  selectedChapter: ReaderChapter;
+}) {
   return (
     <div className="space-y-5">
-      <AudioMenu idSuffix="reader-settings" />
+      <AudioMenu idSuffix="reader-settings" soundscapes={selectedChapter.soundscapes} />
 
       <PreferenceGroup
         label="Voice Matrix Signature"
@@ -727,7 +735,7 @@ export const ReaderSettings: React.FC<ReaderSettingsProps> = ({
           <div className="grid items-start gap-4 lg:grid-cols-2">
             <section id="reader-settings-audio" className="space-y-4 rounded-xl border border-neutral-800 bg-[#070a0d]/80 p-4 shadow-[0_12px_40px_rgba(0,0,0,0.2)] sm:p-5">
               <SettingsSectionLabel icon={<Volume2 size={14} />} label="Audio" />
-              <AudioSection audio={audio} onExportText={onExportText} />
+              <AudioSection audio={audio} onExportText={onExportText} selectedChapter={selectedChapter} />
             </section>
 
             <section className="space-y-4 rounded-xl border border-neutral-800 bg-[#070a0d]/80 p-4 shadow-[0_12px_40px_rgba(0,0,0,0.2)] sm:p-5">

@@ -12,7 +12,14 @@ import {
   Plus,
   Puzzle,
   RefreshCcw,
+  Volume2,
 } from 'lucide-react';
+import {
+  mediaPackKey,
+  type MediaPack,
+  type MediaPackReference,
+  type StoryMediaLoadoutSlot,
+} from '../../../audio/mediaPacks';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox, CreationButton as ManifestButton } from '../../../presentation';
 import { SENManifestingIcon } from '../../library-shell/development/SENGlobalIcon';
 import {
@@ -61,10 +68,15 @@ export interface HarnessGenerationWorkspaceProps {
   installedSkills?: HarnessSkillManifest[];
   /** Host-owned package intake, shown alongside the existing skill slots. */
   renderSkillImport?: (busy: boolean) => ReactNode;
+  /** Host-owned runtime catalog. Media Packs are never merged into installedSkills. */
+  registeredMediaPacks?: MediaPack[];
+  /** Development-only reward boundary for exercising unlocks without inventing an economy. */
+  allowDevelopmentMediaRewards?: boolean;
 }
 
 const emptyFoundation = (): StoryFoundationInput => ({ premise: '' });
 const EMPTY_INSTALLED_SKILLS: HarnessSkillManifest[] = [];
+const EMPTY_MEDIA_PACKS: MediaPack[] = [];
 
 const stageLabel: Record<HarnessGenerationAttempt['stage'], string> = {
   request_started: 'Request started',
@@ -500,6 +512,109 @@ function SkillLoadoutPanel({
   );
 }
 
+function MediaLoadoutPanel({
+  story,
+  packs,
+  entitlements,
+  busy,
+  allowDevelopmentRewards,
+  onGrant,
+  onChange,
+}: {
+  story: HarnessStory;
+  packs: MediaPack[];
+  entitlements: HarnessWorkspaceState['mediaPackEntitlements'];
+  busy: boolean;
+  allowDevelopmentRewards: boolean;
+  onGrant: (reference: MediaPackReference) => void;
+  onChange: (slot: StoryMediaLoadoutSlot, reference?: MediaPackReference) => void;
+}) {
+  const entitled = new Set(entitlements.map(item => mediaPackKey(item.pack)));
+  const slots: Array<{ id: StoryMediaLoadoutSlot; type: MediaPack['type']; label: string }> = [
+    { id: 'soundscapes', type: 'soundscape', label: 'Soundscapes' },
+    { id: 'soundCues', type: 'sound-cue', label: 'Sound Cues' },
+  ];
+  const equipped = new Set(Object.values(story.mediaLoadout ?? {}).filter(Boolean).map(reference => mediaPackKey(reference!)));
+  return (
+    <LibraryPanel as="section" padding="md" aria-labelledby="harness-media-loadout-title">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <Volume2 size={18} className="text-emerald-200" aria-hidden="true" />
+            <h2 id="harness-media-loadout-title" className="font-display text-xl text-white">Media Loadout</h2>
+          </div>
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-400">
+            Reward unlocks make registered packs available. Equipping is a separate story choice, and only expands deterministic runtime resolution after generation. Nothing here enters CAPA or the model request.
+          </p>
+        </div>
+        <span className="rounded-full border border-emerald-300/20 bg-emerald-400/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-emerald-100">
+          {equipped.size}/2 equipped
+        </span>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        {slots.map(slot => {
+          const slotPacks = packs.filter(pack => pack.type === slot.type);
+          const reference = story.mediaLoadout?.[slot.id];
+          const selectedKey = reference ? mediaPackKey(reference) : '';
+          return (
+            <article key={slot.id} className="rounded-xl border border-emerald-300/20 bg-emerald-400/[0.04] p-4">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-white">{slot.label}</h3>
+                <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-emerald-100">{reference ? 'Equipped' : 'Empty'}</span>
+              </div>
+              <label className="mt-3 block text-[10px] uppercase tracking-[0.14em] text-neutral-500" htmlFor={`harness-media-${slot.id}`}>Available pack</label>
+              <select
+                id={`harness-media-${slot.id}`}
+                value={selectedKey}
+                disabled={busy}
+                onChange={event => {
+                  const pack = slotPacks.find(item => mediaPackKey(item) === event.target.value);
+                  onChange(slot.id, pack ? { id: pack.id, version: pack.version } : undefined);
+                }}
+                className="mt-1 min-h-11 w-full rounded-lg border border-white/15 bg-black/35 px-3 text-sm text-neutral-100 outline-none focus:border-emerald-300/60"
+              >
+                <option value="">No pack equipped</option>
+                {slotPacks.map(pack => (
+                  <option key={mediaPackKey(pack)} value={mediaPackKey(pack)} disabled={!entitled.has(mediaPackKey(pack))}>
+                    {pack.displayName} · v{pack.version}{entitled.has(mediaPackKey(pack)) ? '' : ' · locked'}
+                  </option>
+                ))}
+              </select>
+            </article>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {packs.map(pack => {
+          const key = mediaPackKey(pack);
+          const state = equipped.has(key) ? 'Equipped' : entitled.has(key) ? 'Available' : 'Locked';
+          return (
+            <article key={key} className={`rounded-xl border p-4 ${state === 'Equipped' ? 'border-emerald-300/35 bg-emerald-400/[0.08]' : state === 'Available' ? 'border-cyan-300/20 bg-cyan-400/[0.05]' : 'border-white/10 bg-black/20'}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-white">{pack.displayName}</h3>
+                  <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.12em] text-neutral-500">{pack.type === 'soundscape' ? 'Soundscape Pack' : 'Sound Cue Pack'} · v{pack.version}</p>
+                </div>
+                <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-neutral-300">{state}</span>
+              </div>
+              <p className="mt-3 text-xs leading-relaxed text-neutral-400">{pack.description}</p>
+              <p className="mt-2 text-[11px] text-neutral-500">{pack.entries.length} validated catalog {pack.entries.length === 1 ? 'entry' : 'entries'}</p>
+              {state === 'Locked' && allowDevelopmentRewards && (
+                <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} onClick={() => onGrant({ id: pack.id, version: pack.version })}>
+                  Grant test reward
+                </LibraryButton>
+              )}
+            </article>
+          );
+        })}
+      </div>
+      {packs.length === 0 && <p className="mt-4 text-sm text-neutral-500">No registered Media Packs are available. The built-in catalogs remain active.</p>}
+    </LibraryPanel>
+  );
+}
+
 function SemanticEventList({ events }: { events: HarnessSemanticEvent[] }) {
   if (!events.length) return <p className="text-sm text-neutral-400">No semantic events were supplied for committed chapters.</p>;
   return (
@@ -560,6 +675,11 @@ function Diagnostics({ attempt }: { attempt?: HarnessGenerationAttempt }) {
       <details className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3">
         <summary className="cursor-pointer text-xs font-medium text-neutral-200">Frozen CAPA Prompt</summary>
         <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-relaxed text-neutral-400">{attempt.capaPrompt.text}</pre>
+      </details>
+      <details className="mt-3 rounded-xl border border-emerald-300/15 bg-emerald-400/[0.03] p-3">
+        <summary className="cursor-pointer text-xs font-medium text-emerald-100">Frozen Media Loadout · runtime only</summary>
+        <p className="mt-2 text-[11px] leading-relaxed text-neutral-500">This catalog snapshot is stored beside the attempt. It is absent from the CAPA Prompt, Story Information Packet, and provider request.</p>
+        <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-relaxed text-neutral-400">{JSON.stringify(attempt.mediaLoadout, null, 2)}</pre>
       </details>
       <details className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
         <summary className="cursor-pointer text-xs font-medium text-neutral-200">Frozen Story Information Packet</summary>
@@ -740,6 +860,8 @@ export function HarnessGenerationWorkspace({
   storySeedSource,
   installedSkills = EMPTY_INSTALLED_SKILLS,
   renderSkillImport,
+  registeredMediaPacks = EMPTY_MEDIA_PACKS,
+  allowDevelopmentMediaRewards = false,
 }: HarnessGenerationWorkspaceProps) {
   const availableSkills = useMemo(
     () => includeBundledHarnessSkills(installedSkills),
@@ -754,10 +876,11 @@ export function HarnessGenerationWorkspace({
     [injectedAdapter],
   );
   const controller = useMemo(
-    () => new HarnessGenerationController({ repository, modelAdapter }),
+    () => new HarnessGenerationController({ repository, modelAdapter, registeredMediaPacks }),
     [repository, modelAdapter],
   );
   useEffect(() => controller.setInstalledSkills(installedSkills), [controller, installedSkills]);
+  useEffect(() => controller.setRegisteredMediaPacks(registeredMediaPacks), [controller, registeredMediaPacks]);
   const [state, setState] = useState<HarnessWorkspaceState>();
   const [serverInfo, setServerInfo] = useState<HarnessGenerationServerInfo>();
   const [selectedStoryId, setSelectedStoryId] = useState<string>();
@@ -894,6 +1017,16 @@ export function HarnessGenerationWorkspace({
     if (!selectedStory) return;
     void run(() => controller.setSkillSlot(selectedStory.id, slot, reference));
   };
+  const setMediaLoadoutSlot = (slot: StoryMediaLoadoutSlot, reference?: MediaPackReference) => {
+    if (!selectedStory) return;
+    void run(() => controller.setMediaLoadoutSlot(selectedStory.id, slot, reference));
+  };
+  const grantDevelopmentMediaReward = (reference: MediaPackReference) => {
+    void run(() => controller.grantMediaPackEntitlement(reference, {
+      kind: 'development-test-reward',
+      id: `development:${mediaPackKey(reference)}`,
+    }));
+  };
 
   const retryStage = () => {
     if (!attempt) return;
@@ -952,7 +1085,7 @@ export function HarnessGenerationWorkspace({
     <main className="mx-auto max-w-7xl px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-generation-workspace">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-cyan-200/55">Deterministic story harness · Phase 3</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-cyan-200/55">Deterministic story harness · Phases 3–4</p>
           <h1 className="mt-2 font-display text-3xl text-white sm:text-4xl">Harness Generation</h1>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-400">
             One model call writes each chapter. Deterministic capabilities preserve canon, continuity, provenance, and recoverable projections around the committed prose.
@@ -1072,6 +1205,18 @@ export function HarnessGenerationWorkspace({
                 installedSkills={availableSkills}
                 busy={busy}
                 onChange={setSkillSlot}
+              />
+            )}
+
+            {selectedStory && (
+              <MediaLoadoutPanel
+                story={selectedStory}
+                packs={registeredMediaPacks}
+                entitlements={state.mediaPackEntitlements}
+                busy={busy}
+                allowDevelopmentRewards={allowDevelopmentMediaRewards}
+                onGrant={grantDevelopmentMediaReward}
+                onChange={setMediaLoadoutSlot}
               />
             )}
 

@@ -30,6 +30,15 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-09-16:** Added the separate Media Loadout and runtime catalog path.
+  Registered Media Packs, reward-granted entitlements, and two independent
+  story equipment slots remain distinct from CAPA. Attempt snapshots freeze
+  exact pack/version/source/digest catalogs outside every provider request;
+  the existing Cue resolver and the canonical soundscape track contract resolve
+  only authorized entries after generation. Chapters persist resolved media and
+  provenance through reload, replay, later reward/equipment changes, Reader
+  adaptation, and user-controlled shared-player playback. Schema version 11
+  resets stale Development data. See [MEDIA_LOADOUT.md](./MEDIA_LOADOUT.md).
 - **2026-09-16:** Removed Media from CAPA. The schema now has exactly six
   ordered writing slots: Author, Pacing, Continuity, Style, Accessibility, and
   Translation. Media skills can no longer be installed, equipped, assembled,
@@ -38,8 +47,8 @@ existing Chapter Generation feature.
   contract now owns the compact semantic handoff for System Panels,
   manifestations, dialogue/narration, soundscape and cue intent, and creature
   events. Existing normalization, catalog resolution, persistence, recovery,
-  and Reader playback remain unchanged. No Media Loadout or Media Pack was
-  created.
+  and Reader playback remained unchanged in that Phase 0 change; the later
+  runtime implementation is documented separately above.
 - **2026-09-16:** Made Translation glossary normalization deterministic, rejected canonical/alias collisions, matched only story-facing text and chapter directions, froze selected resource provenance, and separated imported Translation selections by language and glossary identity. Schema version 9 intentionally resets stale Development data.
 - **2026-09-15:** Restored HARNESS Generated Chapters to the canonical SEN
   `StoryBlock` and media pathway. Response acceptance now normalizes optional
@@ -243,10 +252,11 @@ contents. HARNESS retains validation, generated IDs, ordering, persistence,
 resolution handoff, and checkpoint recovery; machine-facing fields remain
 canonical English.
 
-The Workshop's sample manifests are preview data only. Package downloading, signature
-verification, entitlements, asset installation, and media execution belong to future
-Media Loadout work; this phase does not create Media Packs, slots, rewards,
-unlocks, or runtime behavior.
+The Workshop's sample skill manifests remain preview data only. Media Packs use
+the separate inventory and runtime boundary documented in
+[MEDIA_LOADOUT.md](./MEDIA_LOADOUT.md). Development includes only two tiny test
+catalog fixtures and a test reward grant adapter; it does not define product
+packs, marketplace behavior, currency, scheduling, or a reward economy.
 
 ## Steering and continuation
 

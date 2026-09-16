@@ -6,6 +6,11 @@ import {
   type LibraryCuesLoadResult,
 } from './libraryCues';
 import { extractReaderVisibleAudioText } from './readerVisibleText';
+import {
+  isMediaResourceProvenance,
+  isPublicHttpsMediaUrl,
+  type MediaResourceProvenance,
+} from './mediaPacks';
 
 export const INLINE_AUDIO_CUE_CATEGORIES = [
   'beasts',
@@ -68,6 +73,8 @@ export interface ResolvedWorldCueMoment {
   relatedEntity?: RelatedWorldCueEntity;
   cue: {
     publicUrl: string;
+    /** Frozen application-owned catalog provenance; Media Pack resources remain playable after later loadout changes. */
+    provenance?: MediaResourceProvenance;
   };
 }
 
@@ -699,6 +706,39 @@ export function resolveResolvedAudioMomentCue(
     || typeof moment.cue.publicUrl !== 'string'
   ) {
     return { ok: false, reason: 'invalid-moment', message: 'This World Cue annotation is invalid.' };
+  }
+  if (moment.cue.provenance?.kind === 'media-pack') {
+    if (
+      !isMediaResourceProvenance(moment.cue.provenance)
+      || moment.cue.provenance.type !== 'sound-cue'
+      || !isPublicHttpsMediaUrl(moment.cue.publicUrl)
+      || !INLINE_CATEGORY_SET.has(moment.sourceCategory)
+    ) {
+      return { ok: false, reason: 'invalid-moment', message: 'This Media Pack World Cue annotation is invalid.' };
+    }
+    if (!isEligibleWorldCueTriggerPhrase(
+      moment.triggerPhrase,
+      moment.sourceCategory,
+      moment.variation,
+      moment.relatedEntity,
+    )) {
+      return { ok: false, reason: 'invalid-moment', message: 'This World Cue action placement is invalid.' };
+    }
+    return {
+      ok: true,
+      cue: {
+        file_path: moment.cue.provenance.source.path,
+        public_url: moment.cue.publicUrl,
+        category: moment.sourceCategory,
+        metadata: {
+          main_category: moment.sourceCategory,
+          broad_variation: moment.variation,
+          soft_tags: [...moment.semanticTags],
+          description: 'Frozen application-resolved Media Pack Sound Cue.',
+          confidence_score: 1,
+        },
+      },
+    };
   }
   const cue = getByUrl(loaded, moment.cue.publicUrl);
   if (!cue) {

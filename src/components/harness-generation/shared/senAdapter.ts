@@ -133,6 +133,9 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
         ...(chapter.audioMoments?.length
           ? { audioMoments: cloneHarnessValue(chapter.audioMoments) }
           : {}),
+        ...(chapter.soundscapes?.length
+          ? { soundscapes: cloneHarnessValue(chapter.soundscapes) }
+          : {}),
       };
     }
     // Resolve roles as of this chapter, so later changes do not rewrite dialogue attribution.

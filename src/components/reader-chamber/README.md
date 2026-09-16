@@ -10,6 +10,10 @@
 
 ## Workshop history
 
+- **2026-09-16:** Connected committed HARNESS Soundscapes and pack-resolved
+  Sound Cues to Reader through the existing shared playback boundary. The
+  Audio Menu exposes the chapter's resolved soundscape without autoplay, and
+  failed optional audio leaves canonical chapter prose readable.
 - **2026-09-16:** Corrected Reader translation ordering, account-default initialization, deterministic skill selection, complete skill/cache identities, glossary provenance, source-cue suppression, and safe Original fallback behavior.
 - **2026-09-15:** Reused the neutral SEN arc-position type. Alter Fate presentation retains its existing Workshop contract; Arc Goal routing is not part of it.
 

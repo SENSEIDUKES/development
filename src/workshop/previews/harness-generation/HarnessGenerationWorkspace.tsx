@@ -7,6 +7,7 @@ import { createWorkshopStorySeedSource } from './storySeedHandoff';
 import { WORKSHOP_HARNESS_SKILLS } from './skillCatalog';
 import { SppSkillImport } from './SppSkillImport';
 import { loadHarnessSppSkills, saveHarnessSppSkill } from './sppSkills';
+import { WORKSHOP_MEDIA_PACKS } from './mediaPackFixtures';
 
 const storySeedSource = createWorkshopStorySeedSource();
 
@@ -25,6 +26,7 @@ export function HarnessGenerationWorkspace() {
       allowCompare={false}
       renderReference={() => <HarnessGenerationReference />}
       renderDevelopment={() => <HarnessGenerationSurface storySeedSource={storySeedSource} installedSkills={installedSkills}
+        registeredMediaPacks={WORKSHOP_MEDIA_PACKS} allowDevelopmentMediaRewards
         renderSkillImport={busy => <>
           {storageError && <p role="alert">{storageError}</p>}
           <SppSkillImport busy={busy} onInstall={skill => {

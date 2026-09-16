@@ -13,6 +13,7 @@ import type {
   StoryBlockMetadata as ChapterStoryBlockMetadata,
 } from "../../chapter-generation/shared/types";
 import type { ResolvedAudioMoment } from "../../../audio/inlineAudio";
+import type { ResolvedSoundscape } from "../../../audio/mediaPacks";
 
 export interface FateResultData {
   outcome: "FATE AVERTED" | "FATE SCARRED" | "DOOM MANIFESTED";
@@ -238,6 +239,8 @@ export interface ChapterProse {
   blocks?: StoryBlock[];
   /** Validated, block-scoped Worldcues and dialogue artifacts. */
   audioMoments?: ResolvedAudioMoment[];
+  /** Frozen, application-resolved chapter soundscapes. */
+  soundscapes?: ResolvedSoundscape[];
   statsChangeMessage?: string;
   cuePayload?: StoryCuePayload;
 }

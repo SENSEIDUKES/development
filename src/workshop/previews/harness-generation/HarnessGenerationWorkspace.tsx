@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { HarnessGenerationWorkspace as HarnessGenerationSurface, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { mediaPackKey, type MediaPackEntitlement, type MediaPackReference } from '@seihouse/sen/audio';
 import { HarnessGenerationReference } from '../../../components/harness-generation/reference/HarnessGenerationReference';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
@@ -7,6 +8,7 @@ import { createWorkshopStorySeedSource } from './storySeedHandoff';
 import { WORKSHOP_HARNESS_SKILLS } from './skillCatalog';
 import { SppSkillImport } from './SppSkillImport';
 import { loadHarnessSppSkills, saveHarnessSppSkill } from './sppSkills';
+import { WORKSHOP_MEDIA_PACKS } from './mediaPackFixtures';
 
 const storySeedSource = createWorkshopStorySeedSource();
 
@@ -16,6 +18,7 @@ export function HarnessGenerationWorkspace() {
     catch { return { skills: [] as HarnessSkillManifest[], error: 'Saved SPP skills could not be loaded. Reimport the packages to restore their skills.' }; }
   });
   const [importedSkills, setImportedSkills] = useState(saved.skills);
+  const [mediaPackEntitlements, setMediaPackEntitlements] = useState<MediaPackEntitlement[]>([]);
   const [storageError, setStorageError] = useState(saved.error);
   const installedSkills = useMemo(() => [...WORKSHOP_HARNESS_SKILLS, ...importedSkills], [importedSkills]);
   const entry = workshopEntries.find(item => item.id === 'harness-generation')!;
@@ -25,6 +28,19 @@ export function HarnessGenerationWorkspace() {
       allowCompare={false}
       renderReference={() => <HarnessGenerationReference />}
       renderDevelopment={() => <HarnessGenerationSurface storySeedSource={storySeedSource} installedSkills={installedSkills}
+        registeredMediaPacks={WORKSHOP_MEDIA_PACKS} mediaPackEntitlements={mediaPackEntitlements}
+        onGrantDevelopmentMediaReward={(reference: MediaPackReference) => {
+          const unlockedAt = new Date();
+          const entitlement: MediaPackEntitlement = {
+            pack: { id: reference.id, version: reference.version },
+            unlockedAt: unlockedAt.toISOString(),
+            expiresAt: new Date(unlockedAt.getTime() + 60 * 60 * 1_000).toISOString(),
+          };
+          setMediaPackEntitlements(current => [
+            ...current.filter(item => mediaPackKey(item.pack) !== mediaPackKey(reference)),
+            entitlement,
+          ]);
+        }}
         renderSkillImport={busy => <>
           {storageError && <p role="alert">{storageError}</p>}
           <SppSkillImport busy={busy} onInstall={skill => {

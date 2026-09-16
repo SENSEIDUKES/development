@@ -1,5 +1,6 @@
 import { chapterTitleFallback, defaultHarnessRuntime, stableHarnessId, type HarnessRuntime } from './ids';
 import { acceptChapterMedia } from '../../chapter-generation/shared/acceptedChapterMedia';
+import type { AuthorizedMediaCatalog } from '../../../audio/mediaPacks';
 import { isCompleteSystemEvent, normalizeManifestResponse } from '../../chapter-generation/shared/manifestNormalizer';
 import { HARNESS_MEMORY_CATEGORIES } from './types';
 import type {
@@ -163,7 +164,8 @@ const acceptedStructuredChapter = (
   parsed: Record<string, unknown>,
   chapterNumber: number,
   warnings: HarnessWarning[],
-): Pick<HarnessAcceptedChapterDraft, 'prose' | 'blocks' | 'audioMoments'> | undefined => {
+  mediaCatalog?: AuthorizedMediaCatalog,
+): Pick<HarnessAcceptedChapterDraft, 'prose' | 'blocks' | 'audioMoments' | 'soundscapes'> | undefined => {
   if (parsed.blocks === undefined) return undefined;
   try {
     const normalized = normalizeManifestResponse(JSON.stringify({ blocks: parsed.blocks }), chapterNumber);
@@ -176,7 +178,7 @@ const acceptedStructuredChapter = (
       const { system: _system, ...proseBlock } = block;
       return proseBlock;
     });
-    const media = acceptChapterMedia(blocks);
+    const media = acceptChapterMedia(blocks, mediaCatalog);
     for (const warning of normalized.diagnostics.warnings) {
       warnings.push({
         code: warning.code === 'optional-field-removed'
@@ -201,6 +203,7 @@ const acceptedStructuredChapter = (
       prose: normalized.generatedContent,
       blocks: media.blocks,
       ...(media.audioMoments.length > 0 ? { audioMoments: media.audioMoments } : {}),
+      ...(media.soundscapes.length > 0 ? { soundscapes: media.soundscapes } : {}),
     };
   } catch (error) {
     warnings.push({
@@ -223,12 +226,16 @@ export const verifyHarnessEventEvidence = (event: HarnessSemanticEvent, prose: s
   return { ...event, evidenceVerified: Boolean(quote && normalize(prose).includes(quote) && factsSupported) };
 };
 
-export const acceptHarnessModelResponse = (raw: string, chapterNumber: number): ParsedResponse => {
+export const acceptHarnessModelResponse = (
+  raw: string,
+  chapterNumber: number,
+  mediaCatalog?: AuthorizedMediaCatalog,
+): ParsedResponse => {
   const warnings: HarnessWarning[] = [];
   const parsed = parseJsonObject(raw);
   if (parsed) {
     appendIgnoredIdentityWarning(parsed, warnings);
-    const structured = acceptedStructuredChapter(parsed, chapterNumber, warnings);
+    const structured = acceptedStructuredChapter(parsed, chapterNumber, warnings, mediaCatalog);
     const prose = structured?.prose ?? nonEmptyString(parsed.prose);
     if (!prose || looksLikeRefusal(prose)) {
       return {
@@ -251,6 +258,7 @@ export const acceptHarnessModelResponse = (raw: string, chapterNumber: number): 
         prose,
         ...(structured?.blocks ? { blocks: structured.blocks } : {}),
         ...(structured?.audioMoments ? { audioMoments: structured.audioMoments } : {}),
+        ...(structured?.soundscapes ? { soundscapes: structured.soundscapes } : {}),
         title: title ?? chapterTitleFallback(chapterNumber),
         titleSource: title ? 'model' : 'harness-fallback',
         ...(plan ? { plan } : {}),

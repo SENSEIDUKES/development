@@ -1,4 +1,10 @@
 import type { ResolvedAudioMoment } from '../../../audio/inlineAudio';
+import type {
+  FrozenMediaLoadout,
+  FrozenMediaLoadoutRecord,
+  ResolvedSoundscape,
+  StoryMediaLoadout,
+} from '../../../audio/mediaPacks';
 import type { SenLanguageCode } from '../../../lib/language';
 import type { StoryBlock } from '../../chapter-generation/shared/types';
 
@@ -6,7 +12,7 @@ import type { StoryBlock } from '../../chapter-generation/shared/types';
  * persisted shape (attempt, chapter, or workspace state fields). This is a
  * development system: storage at any other version is reset, never
  * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 10 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 11 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -97,6 +103,8 @@ export interface HarnessStory {
   steering?: HarnessSteering[];
   /** Per-story references to host-installed skills. The full manifests are frozen per request. */
   skillLoadout?: Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>;
+  /** Entitled Media Packs equipped for this story. Separate from CAPA skills. */
+  mediaLoadout?: StoryMediaLoadout;
 }
 
 export type HarnessSkillSlotId =
@@ -281,6 +289,7 @@ export interface HarnessAcceptedChapterDraft {
   prose: string;
   blocks?: StoryBlock[];
   audioMoments?: ResolvedAudioMoment[];
+  soundscapes?: ResolvedSoundscape[];
   title: string;
   titleSource: 'model' | 'harness-fallback';
   plan?: HarnessModelPlan;
@@ -412,6 +421,10 @@ export interface HarnessChapter {
   blocks?: StoryBlock[];
   /** Application-resolved media records only; model proposals never persist here. */
   audioMoments?: ResolvedAudioMoment[];
+  /** Application-resolved soundscapes; later loadout changes cannot rewrite them. */
+  soundscapes?: ResolvedSoundscape[];
+  /** Pack/version provenance of the frozen catalog that produced this media. */
+  mediaLoadout: FrozenMediaLoadoutRecord;
   plan?: HarnessModelPlan;
   eventIds: string[];
   responseMode: 'json' | 'plain-prose-recovery';
@@ -442,6 +455,8 @@ export interface HarnessGenerationAttempt {
   foundationSnapshot: StoryFoundationRevision;
   /** The frozen CAPA Prompt: an installed skill update cannot change an in-flight attempt. */
   capaPrompt: CapaPrompt;
+  /** Frozen runtime resources. Never serialized into the Generation Model Call. */
+  mediaLoadout: FrozenMediaLoadout;
   /** The frozen Story Information Packet for this attempt. */
   storyInformation: StoryInformationPacket;
   immediateChapterRequest: ImmediateChapterRequest;

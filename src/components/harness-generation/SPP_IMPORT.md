@@ -52,7 +52,10 @@ CAPA system reads:
 No other CAPA slot may declare Translation metadata; validation rejects it.
 
 Media is not a CAPA slot. SPP text cannot be installed, equipped, assembled, or
-frozen as a Media skill; Media Packs and a Media Loadout are outside this phase.
+frozen as a Media skill. The later Media Pack host adapter reads an explicitly
+selected validated JSON catalog into a separate inventory; see
+[MEDIA_LOADOUT.md](./MEDIA_LOADOUT.md). It never promotes Media Pack data to
+instructions.
 
 Equipping is decided by `HarnessStory.originalLanguage`. Only a Translation skill whose
 target language equals the story's Original Language may be equipped, the Development

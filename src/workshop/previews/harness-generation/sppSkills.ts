@@ -1,8 +1,11 @@
 import { intakePack, type PackContent, type PackInput } from 'seihouse-productions-package';
-import { createHarnessSkillCatalog, HARNESS_SKILL_INSTRUCTION_LIMIT, validateHarnessSkillManifest, harnessSkillKey, type HarnessSkillManifest, type HarnessSkillSlotId } from '@seihouse/sen/harness-generation';
+import { createHarnessSkillCatalog, HARNESS_SKILL_INSTRUCTION_LIMIT, validateHarnessSkillManifest, validateTranslationGlossaryResource, harnessSkillKey, type HarnessSkillManifest, type HarnessSkillSlotId, type HarnessTranslationGlossaryResource } from '@seihouse/sen/harness-generation';
+import type { SenLanguageCode } from '@seihouse/sen';
 
 export const SPP_SKILL_TEXT_LIMIT = HARNESS_SKILL_INSTRUCTION_LIMIT;
-export const SPP_SKILL_STORAGE_KEY = 'seihouse.harness.imported-skills.v1';
+export const SPP_GLOSSARY_BYTE_LIMIT = 2 * 1024 * 1024;
+/** Bumped with the Translation contract so stale saved skills reset, not migrate. */
+export const SPP_SKILL_STORAGE_KEY = 'seihouse.harness.imported-skills.v2';
 
 /** Intake validates all assets before the host can select any instruction text. */
 export async function inspectHarnessSpp(input: PackInput): Promise<PackContent> {
@@ -31,10 +34,61 @@ export function readHarnessSppText(content: PackContent, path: string): string {
   return text;
 }
 
-export function createHarnessSppSkill(content: PackContent, path: string, slot: HarnessSkillSlotId): HarnessSkillManifest {
+/**
+ * Reads an explicitly selected JSON glossary from the validated package and
+ * validates it against the language the host chose. No filename is special and
+ * nothing is auto-selected.
+ */
+export function readHarnessSppGlossary(
+  content: PackContent,
+  path: string,
+  targetLanguage: SenLanguageCode,
+): HarnessTranslationGlossaryResource {
+  const record = content.manifest.files.find(file => file.path === path);
+  const bytes = content.assets.get(path);
+  if (!record || !bytes) throw new Error('Select a glossary file from this validated package.');
+  if (record.mediaType !== 'application/json') {
+    throw new Error('Only JSON files can be installed as a Translation glossary resource.');
+  }
+  if (bytes.length > SPP_GLOSSARY_BYTE_LIMIT) {
+    throw new Error(`Select a smaller glossary file (maximum ${(SPP_GLOSSARY_BYTE_LIMIT / 1024).toLocaleString()} KiB).`);
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+  } catch {
+    throw new Error('The selected glossary file is not readable UTF-8 JSON.');
+  }
+  const resource = validateTranslationGlossaryResource(parsed, targetLanguage);
+  return { ...resource, source: { path, sha256: record.sha256 } };
+}
+
+export interface HarnessSppTranslationSelection {
+  /** Explicitly chosen by the host; never inferred from names or contents. */
+  targetLanguage: SenLanguageCode;
+  glossaryPath?: string;
+}
+
+export function createHarnessSppSkill(
+  content: PackContent,
+  path: string,
+  slot: HarnessSkillSlotId,
+  translationSelection?: HarnessSppTranslationSelection,
+): HarnessSkillManifest {
   const instructions = readHarnessSppText(content, path);
   const { manifest } = content;
   const record = manifest.files.find(file => file.path === path)!;
+  if (slot === 'translation' && !translationSelection) {
+    throw new Error('Choose the target language before installing a Translation skill.');
+  }
+  const translation = slot === 'translation' && translationSelection
+    ? {
+      targetLanguage: translationSelection.targetLanguage,
+      ...(translationSelection.glossaryPath
+        ? { glossary: readHarnessSppGlossary(content, translationSelection.glossaryPath, translationSelection.targetLanguage) }
+        : {}),
+    }
+    : undefined;
   return validateHarnessSkillManifest({
     id: `spp:${encodeURIComponent(manifest.id)}:${encodeURIComponent(path)}:${slot}`,
     version: manifest.version,
@@ -44,7 +98,8 @@ export function createHarnessSppSkill(content: PackContent, path: string, slot: 
     slot,
     applications: ['generation'],
     instructions,
-    assetCount: 1,
+    ...(translation ? { translation } : {}),
+    assetCount: translation?.glossary ? 2 : 1,
     source: { packageId: manifest.id, packageVersion: manifest.version, path, sha256: record.sha256 },
   });
 }

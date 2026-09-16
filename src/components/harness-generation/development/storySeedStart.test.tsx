@@ -28,6 +28,7 @@ const storySeedSource: HarnessStorySeedSource = {
     title: 'The Drowned Archive',
     updatedAt: '2026-09-03T12:00:00.000Z',
     hasBlueprint: true,
+    originalLanguage: 'en',
     foundation: {
       title: 'The Drowned Archive',
       premise: 'An archivist returns to a city that erased her name.',

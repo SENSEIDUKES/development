@@ -126,6 +126,8 @@ export const createWorkshopStorySeedSource = (): HarnessStorySeedSource => ({
       title: record.title,
       updatedAt: record.updatedAt,
       hasBlueprint: Boolean(record.blueprint),
+      // Each option carries its own seed's language, never the last one opened.
+      originalLanguage: record.originalLanguage,
       foundation: createHarnessFoundationFromStorySeed(record),
     }));
   },
@@ -138,7 +140,9 @@ export async function startWorkshopHarnessStory(payload: InitialStoryGenerationP
   const foundation = createHarnessFoundationFromStorySeed({
     id: payload.administrative.sourceSeedId, userId: payload.administrative.creatorId,
     createdAt: payload.administrative.createdAt, updatedAt: payload.administrative.updatedAt,
-    schemaVersion: STORY_SEED_SCHEMA_VERSION, title: payload.blueprint.title, seed: payload.storySeed, blueprint: payload.blueprint,
+    schemaVersion: STORY_SEED_SCHEMA_VERSION, title: payload.blueprint.title,
+    originalLanguage: payload.administrative.originalLanguage,
+    seed: payload.storySeed, blueprint: payload.blueprint,
   });
   // Original Language is story identity, so it crosses the boundary as its own
   // argument rather than hiding inside the neutral Foundation.

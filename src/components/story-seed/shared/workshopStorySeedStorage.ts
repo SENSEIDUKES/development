@@ -8,6 +8,7 @@
  * `setStorySeedRepository`. No other Story Seed module may import this file.
  */
 
+import { DEFAULT_SEN_LANGUAGE_CODE, normalizeSenLanguageCode, type SenLanguageCode } from '../../../lib/language';
 import { generateUUID } from './id';
 import {
   STORY_SEED_SCHEMA_VERSION,
@@ -18,7 +19,7 @@ import {
 import type { WorldBlueprint } from './types';
 import type { StorySeedRecord, StorySeedRepository } from './storySeedRepository';
 
-const STORAGE_KEY = 'seihouse-workshop-story-seeds-v3';
+const STORAGE_KEY = 'seihouse-workshop-story-seeds-v4';
 let memoryRecords: StorySeedRecord[] = [];
 
 const storage = (): Storage | null =>
@@ -56,6 +57,7 @@ const normalizeRecord = (value: unknown): StorySeedRecord | null => {
         : seedTitle(seed),
       createdAt: source.createdAt,
       updatedAt: source.updatedAt,
+      originalLanguage: normalizeSenLanguageCode(source.originalLanguage),
       seed,
       ...(blueprint ? { blueprint } : {}),
     };
@@ -118,6 +120,7 @@ const buildRecord = (
   userId: string,
   id: string,
   input: StorySeedInput,
+  originalLanguage: SenLanguageCode,
   createdAt = new Date().toISOString(),
   blueprint?: WorldBlueprint,
 ): StorySeedRecord => {
@@ -130,14 +133,15 @@ const buildRecord = (
     title: seedTitle(seed),
     createdAt,
     updatedAt: new Date().toISOString(),
+    originalLanguage,
     seed,
     ...(blueprint ? { blueprint: normalizeWorldBlueprint(blueprint, seed) } : {}),
   };
 };
 
 export const workshopStorySeedStorage: StorySeedRepository = {
-  async create(userId, input, blueprint) {
-    const record = buildRecord(userId, `seed-${generateUUID()}`, input, undefined, blueprint);
+  async create(userId, input, blueprint, originalLanguage) {
+    const record = buildRecord(userId, `seed-${generateUUID()}`, input, originalLanguage, undefined, blueprint);
     saveRecords(
       [record, ...readRecords()],
       'The Story Seed could not be saved. Free browser storage space and try again.',
@@ -145,12 +149,13 @@ export const workshopStorySeedStorage: StorySeedRepository = {
     return record;
   },
 
-  async update(userId, existing, input, blueprint) {
+  async update(userId, existing, input, blueprint, originalLanguage) {
     if (existing.userId !== userId) throw new Error('Cannot update a story seed owned by another account.');
     const record = buildRecord(
       userId,
       existing.id,
       input,
+      originalLanguage,
       existing.createdAt,
       blueprint === undefined ? existing.blueprint : blueprint,
     );
@@ -170,10 +175,13 @@ export const workshopStorySeedStorage: StorySeedRepository = {
 
   async importMany(userId, artifacts) {
     if (artifacts.length > 500) throw new Error('A seed import can contain at most 500 seeds at a time.');
+    // Portable artifacts carry creative content only, so an imported seed
+    // resolves to the explicit English fallback until its author chooses.
     const imported = artifacts.map(artifact => buildRecord(
       userId,
       `seed-${generateUUID()}`,
       artifact.seed,
+      DEFAULT_SEN_LANGUAGE_CODE,
       undefined,
       artifact.blueprint,
     ));

@@ -278,15 +278,16 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
 
   const persistSeed = async (
     payload: StorySeedInput,
-    blueprintArtifact?: WorldBlueprint,
+    blueprintArtifact: WorldBlueprint | undefined,
+    language: SenLanguageCode,
   ): Promise<StorySeedRecord | null> => {
     if (!seedOwnerId) throw new Error('Sign in to save this story seed to your account.');
     const ownerAtStart = seedOwnerId;
     const activeRecord = currentSeedRef.current;
     const requestId = ++persistRequestIdRef.current;
     const saved = activeRecord && activeRecord.userId === ownerAtStart
-      ? await updateStorySeed(ownerAtStart, activeRecord, payload, blueprintArtifact)
-      : await createStorySeed(seedOwnerId, payload, blueprintArtifact);
+      ? await updateStorySeed(ownerAtStart, activeRecord, payload, blueprintArtifact, language)
+      : await createStorySeed(seedOwnerId, payload, blueprintArtifact, language);
     const currentRecord = currentSeedRef.current;
     const stillActive = requestId === persistRequestIdRef.current
       && seedOwnerIdRef.current === ownerAtStart
@@ -323,7 +324,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       const blueprintArtifact = blueprint
         ? normalizeWorldBlueprint(blueprint, seedInput, { creator: currentUser?.displayName })
         : undefined;
-      const saved = await persistSeed(seedInput, blueprintArtifact);
+      const saved = await persistSeed(seedInput, blueprintArtifact, originalLanguage);
       if (!saved) return;
       setSeedError(null);
       setSavedFeedback(true);
@@ -371,6 +372,9 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     const selected = normalizeStorySeedInput(record.seed);
     setActiveSeed(record);
     setSeed(selected);
+    // Each seed restores its own Original Language; the previously opened
+    // seed's choice must never carry over into this one.
+    setOriginalLanguage(record.originalLanguage);
     setBlueprint(record.blueprint
       ? normalizeWorldBlueprint(record.blueprint, selected, blueprintContextForRecord(record))
       : createBlueprintDraftFromSeed(selected, { creator: currentUser?.displayName }));
@@ -433,7 +437,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       setBlueprint(bp);
       setStage('blueprint');
       try {
-        await persistSeed(seedInput, bp);
+        await persistSeed(seedInput, bp, originalLanguage);
         setSeedError(null);
       } catch (seedSaveError) {
         console.error('Failed to save generated story seed:', seedSaveError);
@@ -455,6 +459,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     seedInput: StorySeedInput,
     blueprintArtifact: WorldBlueprint,
     record: StorySeedRecord | null,
+    language: SenLanguageCode,
   ) => {
     const validation = validateStorySeedInput(seedInput);
     if (!validation.valid) {
@@ -483,7 +488,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
 
     let savedSeed: StorySeedRecord | null;
     try {
-      savedSeed = await persistSeed(seedInput, cleanBlueprint);
+      savedSeed = await persistSeed(seedInput, cleanBlueprint, language);
       if (!LOCAL_ONLY_MODE && !savedSeed) {
         setSeedError('The story was not started because its source seed could not be saved to your account.');
         return;
@@ -499,7 +504,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       storyId: `story-${generateUUID()}`,
       creatorId: currentUser?.uid || LOCAL_WORKSHOP_STORY_SEED_OWNER_ID,
       sourceSeedId,
-      originalLanguage,
+      originalLanguage: language,
     });
     setSeedError(null);
     try {
@@ -519,7 +524,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     if (isGenerating || selectIsGenerating(useAppStore.getState())) return;
     if (!blueprint) return;
     const seedInput = applyInferredStoryTags(normalizeStorySeedInput(seed));
-    await startStoryFromSeed(seedInput, blueprint, currentSeed);
+    await startStoryFromSeed(seedInput, blueprint, currentSeed, originalLanguage);
   };
 
   /**
@@ -541,7 +546,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       setSeedError(validation.errors.join(' '));
       return;
     }
-    await startStoryFromSeed(seedInput, record.blueprint, record);
+    await startStoryFromSeed(seedInput, record.blueprint, record, record.originalLanguage);
   };
 
   const handleExportCurrentSeed = () => {
@@ -560,7 +565,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       console.error('Failed to export story seed:', downloadError);
       setSeedError('The seed could not be exported. Please try again.');
     });
-    void persistSeed(payload, blueprintArtifact).catch(seedSaveError => {
+    void persistSeed(payload, blueprintArtifact, originalLanguage).catch(seedSaveError => {
       console.error('Failed to save seed while exporting:', seedSaveError);
       setSeedError('The seed was exported, but its account copy could not be saved.');
     });

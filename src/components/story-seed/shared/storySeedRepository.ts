@@ -9,6 +9,7 @@
  * without the Story Seed domain structure changing again.
  */
 
+import type { SenLanguageCode } from '../../../lib/language';
 import {
   STORY_SEED_SCHEMA_VERSION,
   type StorySeedInput,
@@ -34,6 +35,11 @@ export interface StorySeedRecord {
   title: string;
   createdAt: string;
   updatedAt: string;
+  /**
+   * The Original Language chosen for this seed. Saved per record so reopening
+   * one seed can never inherit the language of the seed opened before it.
+   */
+  originalLanguage: SenLanguageCode;
   seed: StorySeedInput;
   blueprint?: WorldBlueprint;
 }
@@ -45,8 +51,8 @@ export interface StorySeedArtifact {
 }
 
 export interface StorySeedRepository {
-  create(userId: string, input: StorySeedInput, blueprint?: WorldBlueprint): Promise<StorySeedRecord>;
-  update(userId: string, existing: StorySeedRecord, input: StorySeedInput, blueprint?: WorldBlueprint): Promise<StorySeedRecord>;
+  create(userId: string, input: StorySeedInput, blueprint: WorldBlueprint | undefined, originalLanguage: SenLanguageCode): Promise<StorySeedRecord>;
+  update(userId: string, existing: StorySeedRecord, input: StorySeedInput, blueprint: WorldBlueprint | undefined, originalLanguage: SenLanguageCode): Promise<StorySeedRecord>;
   list(userId: string): Promise<StorySeedRecord[]>;
   importMany(userId: string, artifacts: StorySeedArtifact[]): Promise<StorySeedRecord[]>;
 }
@@ -65,15 +71,17 @@ export const listWorkshopStorySeeds = (userId: string): Promise<StorySeedRecord[
 export const createStorySeed = (
   userId: string,
   input: StorySeedInput,
-  blueprint?: WorldBlueprint,
-): Promise<StorySeedRecord> => repository.create(userId, input, blueprint);
+  blueprint: WorldBlueprint | undefined,
+  originalLanguage: SenLanguageCode,
+): Promise<StorySeedRecord> => repository.create(userId, input, blueprint, originalLanguage);
 
 export const updateStorySeed = (
   userId: string,
   existing: StorySeedRecord,
   input: StorySeedInput,
-  blueprint?: WorldBlueprint,
-): Promise<StorySeedRecord> => repository.update(userId, existing, input, blueprint);
+  blueprint: WorldBlueprint | undefined,
+  originalLanguage: SenLanguageCode,
+): Promise<StorySeedRecord> => repository.update(userId, existing, input, blueprint, originalLanguage);
 
 export const listStorySeeds = (userId: string): Promise<StorySeedRecord[]> => repository.list(userId);
 

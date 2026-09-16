@@ -1,12 +1,24 @@
 import { cloneHarnessValue } from './ids';
+import {
+  buildSelectedTranslationGlossary,
+  isTranslationSkillCompatible,
+  presentSelectedTranslationGlossary,
+  translationCompatibilityError,
+  translationMatchSource,
+  translationTargetLanguage,
+  validateTranslationSkillMetadata,
+} from './translationSkill';
 import type {
   CapaPrompt,
+  HarnessSelectedTranslationGlossary,
   HarnessSkillLoadoutSnapshot,
   HarnessSkillApplication,
   HarnessSkillManifest,
   HarnessSkillReference,
   HarnessSkillSlotId,
   HarnessStory,
+  ImmediateChapterRequest,
+  StoryInformationPacket,
 } from './types';
 
 export interface CapaSlotDefinition {
@@ -65,6 +77,15 @@ export const validateHarnessSkillManifest = (manifest: HarnessSkillManifest): Ha
   if ((manifest.instructions?.length ?? 0) > HARNESS_SKILL_INSTRUCTION_LIMIT) {
     throw new Error(`Harness skill instructions exceed ${HARNESS_SKILL_INSTRUCTION_LIMIT} characters.`);
   }
+  // Translation metadata is structural and slot-exclusive: a Translation skill
+  // must declare exactly one target language, and no other slot may declare one.
+  if (manifest.slot === 'translation') {
+    const translation = validateTranslationSkillMetadata(manifest.translation, manifest.name);
+    return cloneHarnessValue({ ...manifest, instructions: manifest.instructions?.trim(), translation });
+  }
+  if (manifest.translation !== undefined) {
+    throw new Error(`Harness skill ${manifest.name} occupies the ${manifest.slot} slot and cannot declare Translation metadata.`);
+  }
   return cloneHarnessValue({ ...manifest, instructions: manifest.instructions?.trim() });
 };
 
@@ -98,6 +119,11 @@ export const freezeHarnessSkillLoadout = (
     }
     if (manifest.slot !== slot.id) {
       throw new Error(`${manifest.name} cannot run from the ${slot.label} slot.`);
+    }
+    // Compatibility is rechecked at every freeze, so a story whose equipped
+    // Translation skill no longer matches its Original Language cannot generate.
+    if (slot.id === 'translation' && !isTranslationSkillCompatible(manifest, story.originalLanguage)) {
+      throw new Error(translationCompatibilityError(manifest, story.originalLanguage));
     }
     return [cloneHarnessValue(manifest)];
   });
@@ -138,18 +164,40 @@ const isAuthoringSkill = (skill: HarnessSkillManifest) =>
  * once each, in CAPA Schema order. Non-generation skills are recorded for
  * their host runtime but contribute no authoring text.
  */
-export const assembleCapaPrompt = (loadout: HarnessSkillLoadoutSnapshot): CapaPrompt => {
+export const assembleCapaPrompt = (
+  loadout: HarnessSkillLoadoutSnapshot,
+  generationInputs?: {
+    storyInformation: StoryInformationPacket;
+    immediateChapterRequest: ImmediateChapterRequest;
+  },
+): CapaPrompt => {
   const ordered = CAPA_SCHEMA.flatMap(slot => loadout.skills.filter(skill => skill.slot === slot.id));
   const author = ordered.find(skill => skill.slot === 'author' && isAuthoringSkill(skill));
   if (!author) throw new Error('Harness Generation requires an equipped Author skill.');
+
+  // The glossary is selected against the already-frozen generation inputs, so
+  // the reference below is exactly what this attempt replays with.
+  const translationSkill = ordered.find(skill => skill.slot === 'translation' && isAuthoringSkill(skill));
+  const translationGlossary: HarnessSelectedTranslationGlossary | undefined =
+    translationSkill && generationInputs
+      ? buildSelectedTranslationGlossary(translationSkill, translationMatchSource(
+          generationInputs.storyInformation,
+          generationInputs.immediateChapterRequest,
+        ))
+      : undefined;
+
   const sections = ordered.filter(isAuthoringSkill).map(skill => [
     `CAPA SKILL [${slotLabel(skill.slot)}] — ${skill.name} v${skill.version}`,
     skill.instructions!.trim(),
+    // The selected reference belongs to the Translation section, not its own.
+    ...(skill === translationSkill && translationGlossary
+      ? [presentSelectedTranslationGlossary(translationGlossary)]
+      : []),
   ].join('\n'));
   const text = [...sections, HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS].join('\n\n');
   const estimatedTokens = Math.max(1, Math.ceil(text.length / 4));
   if (estimatedTokens > CAPA_PROMPT_TOKEN_LIMIT) {
-    throw new Error('Equipped skills exceed the CAPA Prompt budget. Empty a skill slot or install shorter instructions.');
+    throw new Error('Equipped skills exceed the CAPA Prompt budget. Empty a skill slot, install shorter instructions, or narrow the Translation glossary.');
   }
   return {
     capturedAt: loadout.capturedAt,
@@ -160,9 +208,11 @@ export const assembleCapaPrompt = (loadout: HarnessSkillLoadoutSnapshot): CapaPr
       slot: skill.slot,
       applications: [...skill.applications],
       authoring: isAuthoringSkill(skill),
+      ...(translationTargetLanguage(skill) ? { targetLanguage: translationTargetLanguage(skill) } : {}),
       ...(skill.source ? { source: cloneHarnessValue(skill.source) } : {}),
     })),
     text,
     estimatedTokens,
+    ...(translationGlossary ? { translationGlossary: cloneHarnessValue(translationGlossary) } : {}),
   };
 };

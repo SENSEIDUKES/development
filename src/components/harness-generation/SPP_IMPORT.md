@@ -29,6 +29,37 @@ inventory and per-story equipped references; reupload to inspect the full packag
 Reinstalling identical content is idempotent. Changed content under an installed version
 is rejected; create a new version while retaining the SPP package ID.
 
+## Translation skills
+
+A skill installed for the Translation slot carries structural metadata the rest of the
+CAPA system reads:
+
+1. **One target language**, chosen explicitly in the importer from the SEN language
+   registry. It is never inferred from the package name, publisher, file name, or
+   instruction text, and a Translation skill must declare exactly one.
+2. **An optional JSON glossary resource**, also selected explicitly. No filename is
+   special and nothing is auto-selected. It is validated before installation and
+   rejected for malformed data, unsupported language codes, duplicate canonical terms,
+   missing required values, or a resource declaring a different target language.
+3. **Provenance** for both files: the instruction file's package ID, version, path and
+   SHA-256 in `skill.source`, and the glossary's own path and SHA-256 in
+   `skill.translation.glossary.source`.
+
+No other CAPA slot may declare Translation metadata; validation rejects it.
+
+Equipping is decided by `HarnessStory.originalLanguage`. Only a Translation skill whose
+target language equals the story's Original Language may be equipped, the Development
+slot list shows each installed skill's language, and compatibility is rechecked when the
+loadout is frozen for every generation attempt. A story may leave the slot empty.
+
+The glossary never enters a prompt whole. At assembly the HARNESS matches canonical terms
+and aliases against the already-frozen Story Information Packet and Immediate Chapter
+Request, prefers complete phrase matches over partial substring matches, and appends only
+the selected entries inside that skill's Translation section, counted against the CAPA
+Prompt budget. The exact selection is frozen on the attempt as
+`capaPrompt.translationGlossary`, so retry and replay reuse the same reference. Only the
+selected skill text and validated resource are retained on reload; the archive is not.
+
 ## Limits and errors
 
 - 8 MiB archive, 16 MiB expanded content, 4 MiB per entry, 128 entries; the adapter's
@@ -36,6 +67,7 @@ is rejected; create a new version while retaining the SPP package ID.
 - Only explicit `text/plain` and `text/markdown` selection supports generation instructions.
   Binary files remain visible in the manifest and cannot be installed as text.
 - Strict UTF-8, nonempty text, no NUL bytes, 16,000 characters per skill; no truncation.
+- A glossary resource must be `application/json`, at most 2 MiB, and at most 5,000 entries.
 - At most 64 imported skills in this browser. Storage errors are shown before installation succeeds.
 - The assembled CAPA Prompt may use at most 6,000 estimated tokens. That ceiling is
   enforced during CAPA assembly and never spends the Story Information Packet's budget.

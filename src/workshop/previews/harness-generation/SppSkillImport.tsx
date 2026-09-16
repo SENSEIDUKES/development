@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { LibraryButton, LibraryPanel } from '@seihouse/library-ui';
 import { CAPA_SCHEMA, type HarnessSkillManifest, type HarnessSkillSlotId } from '@seihouse/sen/harness-generation';
+import { DEFAULT_SEN_LANGUAGE_CODE, SEN_LANGUAGES, type SenLanguageCode } from '@seihouse/sen';
 import type { PackContent } from 'seihouse-productions-package';
 import { createHarnessSppSkill, inspectHarnessSpp, readHarnessSppText } from './sppSkills';
 
@@ -9,13 +10,19 @@ export function SppSkillImport({ busy, onInstall }: { busy: boolean; onInstall: 
   const [path, setPath] = useState('');
   const [preview, setPreview] = useState('');
   const [slot, setSlot] = useState<HarnessSkillSlotId>('style');
+  const [targetLanguage, setTargetLanguage] = useState<SenLanguageCode>(DEFAULT_SEN_LANGUAGE_CODE);
+  const [glossaryPath, setGlossaryPath] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const disabled = busy || loading;
+  const jsonFiles = useMemo(
+    () => content?.manifest.files.filter(file => file.mediaType === 'application/json') ?? [],
+    [content],
+  );
 
   async function upload(file: File) {
-    setLoading(true); setContent(undefined); setPath(''); setPreview(''); setError(''); setMessage('');
+    setLoading(true); setContent(undefined); setPath(''); setPreview(''); setGlossaryPath(''); setError(''); setMessage('');
     try { setContent(await inspectHarnessSpp(file)); }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'The package could not be read.'); }
     finally { setLoading(false); }
@@ -51,12 +58,40 @@ export function SppSkillImport({ busy, onInstall }: { busy: boolean; onInstall: 
       {preview && <>
         <pre aria-label="Selected instruction contents" className="max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-black/20 p-3 text-xs text-neutral-300">{preview}</pre>
         <label className="block text-sm text-neutral-300" htmlFor="harness-spp-slot">Install for skill slot</label>
-        <select id="harness-spp-slot" value={slot} disabled={disabled} onChange={event => setSlot(event.target.value as HarnessSkillSlotId)} className="min-h-11 w-full rounded-lg bg-neutral-900 px-3 text-sm text-white">
+        <select id="harness-spp-slot" value={slot} disabled={disabled} onChange={event => {
+          setSlot(event.target.value as HarnessSkillSlotId); setError(''); setMessage('');
+        }} className="min-h-11 w-full rounded-lg bg-neutral-900 px-3 text-sm text-white">
           {CAPA_SCHEMA.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
         </select>
+
+        {/* A Translation skill declares its language explicitly. Nothing is
+            inferred from the package, file name, or instruction text. */}
+        {slot === 'translation' && <>
+          <label className="block text-sm text-neutral-300" htmlFor="harness-spp-language">Target language (required)</label>
+          <select id="harness-spp-language" value={targetLanguage} disabled={disabled}
+            onChange={event => { setTargetLanguage(event.target.value as SenLanguageCode); setError(''); setMessage(''); }}
+            className="min-h-11 w-full rounded-lg bg-neutral-900 px-3 text-sm text-white">
+            {SEN_LANGUAGES.map(language => <option key={language.code} value={language.code}>{language.label}</option>)}
+          </select>
+          <label className="block text-sm text-neutral-300" htmlFor="harness-spp-glossary">Glossary resource (optional)</label>
+          <select id="harness-spp-glossary" value={glossaryPath} disabled={disabled}
+            onChange={event => { setGlossaryPath(event.target.value); setError(''); setMessage(''); }}
+            className="min-h-11 w-full rounded-lg bg-neutral-900 px-3 text-sm text-white">
+            <option value="">No glossary resource</option>
+            {jsonFiles.map(file => <option key={file.path} value={file.path}>{file.path}</option>)}
+          </select>
+          <p className="text-xs text-neutral-500">The glossary is validated before installation and stays a reference resource. Only entries a chapter actually uses are added to its Translation instructions.</p>
+        </>}
+
         <LibraryButton type="button" disabled={disabled} onClick={() => {
           setMessage('');
-          try { onInstall(createHarnessSppSkill(content, path, slot)); setError(''); setMessage('Installed. Choose this skill in the story’s matching slot to activate it.'); }
+          try {
+            onInstall(createHarnessSppSkill(content, path, slot, slot === 'translation'
+              ? { targetLanguage, ...(glossaryPath ? { glossaryPath } : {}) }
+              : undefined));
+            setError('');
+            setMessage('Installed. Choose this skill in the story’s matching slot to activate it.');
+          }
           catch (cause) { setError(cause instanceof Error ? cause.message : 'The skill could not be saved.'); }
         }}>Install selected instructions</LibraryButton>
       </>}

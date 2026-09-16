@@ -6,7 +6,7 @@ import type { StoryBlock } from '../../chapter-generation/shared/types';
  * persisted shape (attempt, chapter, or workspace state fields). This is a
  * development system: storage at any other version is reset, never
  * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 7 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 8 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -51,6 +51,8 @@ export interface HarnessStorySeedOption {
   title: string;
   updatedAt: string;
   hasBlueprint: boolean;
+  /** The seed's own Original Language, frozen onto the story it starts. */
+  originalLanguage: SenLanguageCode;
   foundation: StoryFoundationInput;
 }
 
@@ -117,6 +119,39 @@ export interface HarnessSkillReference {
   version: string;
 }
 
+/** One canonical term and the rendering an equipped Translation skill requires. */
+export interface HarnessTranslationGlossaryEntry {
+  /** The canonical (English) term, matched against frozen story information. */
+  term: string;
+  aliases?: string[];
+  /** How the term must read in the skill's target language. */
+  translation: string;
+  note?: string;
+}
+
+/**
+ * A language-specific glossary installed alongside a Translation skill. It is
+ * a reference resource, never prompt text: only the entries a chapter actually
+ * touches are selected into the CAPA Prompt.
+ */
+export interface HarnessTranslationGlossaryResource {
+  /** Must equal the skill's declared target language. */
+  targetLanguage: SenLanguageCode;
+  entries: HarnessTranslationGlossaryEntry[];
+  /** Provenance of the selected resource file inside its package. */
+  source?: { path: string; sha256: string };
+}
+
+/**
+ * Structural Translation metadata. The target language is declared, never
+ * inferred from a skill's name, filename, instructions, or package title.
+ */
+export interface HarnessTranslationSkillMetadata {
+  /** Exactly one supported target language. */
+  targetLanguage: SenLanguageCode;
+  glossary?: HarnessTranslationGlossaryResource;
+}
+
 /** A provider-neutral manifest supplied by the host's installed-skill library. */
 export interface HarnessSkillManifest extends HarnessSkillReference {
   name: string;
@@ -125,6 +160,8 @@ export interface HarnessSkillManifest extends HarnessSkillReference {
   applications: HarnessSkillApplication[];
   /** Trusted, author-installed directions included only when generation is declared. */
   instructions?: string;
+  /** Required by a `translation` slot skill; forbidden on every other slot. */
+  translation?: HarnessTranslationSkillMetadata;
   author?: string;
   assetCount?: number;
   runtimeLabel?: string;
@@ -147,6 +184,8 @@ export interface CapaPromptSkill {
   applications: HarnessSkillApplication[];
   /** Whether this skill's instructions are part of the assembled text. */
   authoring: boolean;
+  /** Declared by a Translation skill; retained as frozen provenance. */
+  targetLanguage?: SenLanguageCode;
   source?: HarnessSkillManifest['source'];
 }
 
@@ -160,6 +199,21 @@ export interface CapaPrompt {
   skills: CapaPromptSkill[];
   text: string;
   estimatedTokens: number;
+  /**
+   * The exact glossary entries selected for this attempt. Frozen so a retry or
+   * replay reuses the same reference instead of reselecting against new state.
+   */
+  translationGlossary?: HarnessSelectedTranslationGlossary;
+}
+
+/** The selected, already-rendered glossary reference for one attempt. */
+export interface HarnessSelectedTranslationGlossary {
+  skillId: string;
+  skillVersion: string;
+  targetLanguage: SenLanguageCode;
+  entries: HarnessTranslationGlossaryEntry[];
+  /** How many entries the installed resource held before selection. */
+  availableEntryCount: number;
 }
 
 /**

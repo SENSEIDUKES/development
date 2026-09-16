@@ -73,6 +73,29 @@ describe('SPP Translation skill import', () => {
     expect(skill.translation).toEqual({ targetLanguage: 'ko' });
   });
 
+  it('records which jobs the language package may do, explicitly', async () => {
+    const content = await translationPack(validGlossary);
+
+    // Reader translation needs the `reader` application; without it a reader
+    // asking for this language gets the original chapter instead.
+    expect(createHarnessSppSkill(content, 'assets/instructions.md', 'translation', {
+      targetLanguage: 'ja', applications: ['generation', 'reader'],
+    }).applications).toEqual(['generation', 'reader']);
+
+    expect(createHarnessSppSkill(content, 'assets/instructions.md', 'translation', {
+      targetLanguage: 'ja', applications: ['reader'],
+    }).applications).toEqual(['reader']);
+
+    // Unchosen defaults to generation only, and choosing nothing is refused.
+    expect(createHarnessSppSkill(content, 'assets/instructions.md', 'translation', {
+      targetLanguage: 'ja',
+    }).applications).toEqual(['generation']);
+
+    expect(() => createHarnessSppSkill(content, 'assets/instructions.md', 'translation', {
+      targetLanguage: 'ja', applications: [],
+    })).toThrow('Choose where this Translation skill may be used');
+  });
+
   it('requires an explicit language and never infers one from the package', async () => {
     const content = await translationPack(validGlossary);
 

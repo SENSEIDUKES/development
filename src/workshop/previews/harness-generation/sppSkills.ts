@@ -1,5 +1,5 @@
 import { intakePack, type PackContent, type PackInput } from 'seihouse-productions-package';
-import { createHarnessSkillCatalog, HARNESS_SKILL_INSTRUCTION_LIMIT, validateHarnessSkillManifest, validateTranslationGlossaryResource, harnessSkillKey, type HarnessSkillManifest, type HarnessSkillSlotId, type HarnessTranslationGlossaryResource } from '@seihouse/sen/harness-generation';
+import { createHarnessSkillCatalog, HARNESS_SKILL_INSTRUCTION_LIMIT, validateHarnessSkillManifest, validateTranslationGlossaryResource, harnessSkillKey, type HarnessSkillApplication, type HarnessSkillManifest, type HarnessSkillSlotId, type HarnessTranslationGlossaryResource } from '@seihouse/sen/harness-generation';
 import type { SenLanguageCode } from '@seihouse/sen';
 
 export const SPP_SKILL_TEXT_LIMIT = HARNESS_SKILL_INSTRUCTION_LIMIT;
@@ -66,6 +66,12 @@ export function readHarnessSppGlossary(
 export interface HarnessSppTranslationSelection {
   /** Explicitly chosen by the host; never inferred from names or contents. */
   targetLanguage: SenLanguageCode;
+  /**
+   * Where this language package may be used: canonical generation, Reader
+   * translation, or both. Also explicit — a package's name, file, or wording
+   * never decides whether a reader may translate with it.
+   */
+  applications?: HarnessSkillApplication[];
   glossaryPath?: string;
 }
 
@@ -80,6 +86,13 @@ export function createHarnessSppSkill(
   const record = manifest.files.find(file => file.path === path)!;
   if (slot === 'translation' && !translationSelection) {
     throw new Error('Choose the target language before installing a Translation skill.');
+  }
+  // A Translation skill says which jobs it may do; anything else is generation.
+  const applications: HarnessSkillApplication[] = slot === 'translation'
+    ? [...new Set<HarnessSkillApplication>(translationSelection?.applications ?? ['generation'])]
+    : ['generation'];
+  if (!applications.length) {
+    throw new Error('Choose where this Translation skill may be used before installing it.');
   }
   const translation = slot === 'translation' && translationSelection
     ? {
@@ -96,7 +109,7 @@ export function createHarnessSppSkill(
     description: manifest.description || `Instructions from ${manifest.name.trim()}`,
     author: manifest.publisher,
     slot,
-    applications: ['generation'],
+    applications,
     instructions,
     ...(translation ? { translation } : {}),
     assetCount: translation?.glossary ? 2 : 1,

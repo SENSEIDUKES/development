@@ -42,7 +42,11 @@ import {
   type StorySeedInput,
 } from '../shared/storySeedSchema';
 import { createStoryAdministrativeMetadata } from '../shared/storyAdministrativeMetadata';
-import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
+import {
+  DEFAULT_SEN_LANGUAGE_CODE,
+  normalizeSenLanguageCode,
+  type SenLanguageCode,
+} from '../../../lib/language';
 import StoryAuthGate, { STORY_AUTH_DISSOLVE_MS } from './StoryAuthGate';
 
 // Creation workspace
@@ -188,9 +192,19 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   const [seedError, setSeedError] = useState<string | null>(null);
   // Story identity, not creative seed content: the account default only seeds
   // the initial choice, and the resolved code is frozen onto the story.
-  const [originalLanguage, setOriginalLanguage] = useState<SenLanguageCode>(
-    accountDefaultLanguage ?? DEFAULT_SEN_LANGUAGE_CODE,
-  );
+  const accountLanguage = accountDefaultLanguage ?? DEFAULT_SEN_LANGUAGE_CODE;
+  const [originalLanguage, setOriginalLanguage] = useState<SenLanguageCode>(accountLanguage);
+  /**
+   * True once this workspace's language belongs to something concrete — the
+   * author picked one, or a banked/imported seed supplied its own. Until then
+   * a genuinely new seed keeps following the active account's default, which
+   * can arrive after mount or change when the account does.
+   */
+  const languageResolvedRef = useRef(false);
+  const resolveOriginalLanguage = useCallback((code: SenLanguageCode) => {
+    languageResolvedRef.current = true;
+    setOriginalLanguage(code);
+  }, []);
   const [authDissolving, setAuthDissolving] = useState(false);
   const wasAuthRef = useRef(false);
   const previousSeedOwnerIdRef = useRef<string | null>(seedOwnerId);
@@ -229,11 +243,25 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       setSeed(createEmptyStorySeedInput());
       setBlueprint(null);
       setSeedError(null);
+      // The new account's own default decides this workspace's language; the
+      // previous account's selection must not survive the switch.
+      languageResolvedRef.current = false;
     }
     if (!seedOwnerId) {
       setActiveSeed(null);
     }
   }, [seedOwnerId, setActiveSeed]);
+
+  /**
+   * A genuinely new seed follows the active account's Default Reading Language.
+   * It applies when the account default resolves after mount and when the
+   * account changes, and stops as soon as this workspace has a language of its
+   * own — an author's pick, or a banked or imported seed's saved choice.
+   */
+  useEffect(() => {
+    if (languageResolvedRef.current) return;
+    setOriginalLanguage(accountLanguage);
+  }, [accountLanguage, seedOwnerId]);
 
   // Always a functional update, so rapid successive edits (e.g. toggling two
   // tags in one task) can never lose a write to a stale render closure.
@@ -352,6 +380,10 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     const selectedArtifact = imported[0] || artifacts[0];
     const selected = normalizeStorySeedInput(selectedArtifact.seed);
     setSeed(selected);
+    // An imported artifact keeps the Original Language its file recorded; the
+    // repository has already applied the English fallback where it had none.
+    resolveOriginalLanguage(imported[0]?.originalLanguage
+      ?? normalizeSenLanguageCode(selectedArtifact.originalLanguage, DEFAULT_SEN_LANGUAGE_CODE));
     setBlueprint(selectedArtifact.blueprint
       ? normalizeWorldBlueprint(
           selectedArtifact.blueprint,
@@ -374,7 +406,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     setSeed(selected);
     // Each seed restores its own Original Language; the previously opened
     // seed's choice must never carry over into this one.
-    setOriginalLanguage(record.originalLanguage);
+    resolveOriginalLanguage(record.originalLanguage);
     setBlueprint(record.blueprint
       ? normalizeWorldBlueprint(record.blueprint, selected, blueprintContextForRecord(record))
       : createBlueprintDraftFromSeed(selected, { creator: currentUser?.displayName }));
@@ -561,7 +593,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     // Start sharing immediately so iOS Safari retains the user gesture needed
     // to present Save to Files. Persistence can finish independently.
     setSeedError(null);
-    void downloadStorySeed(payload, blueprintArtifact).catch(downloadError => {
+    void downloadStorySeed(payload, blueprintArtifact, originalLanguage).catch(downloadError => {
       console.error('Failed to export story seed:', downloadError);
       setSeedError('The seed could not be exported. Please try again.');
     });
@@ -575,7 +607,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     const blueprintArtifact = record.blueprint
       ? normalizeWorldBlueprint(record.blueprint, record.seed, blueprintContextForRecord(record))
       : undefined;
-    void downloadStorySeed(record.seed, blueprintArtifact).catch(downloadError => {
+    void downloadStorySeed(record.seed, blueprintArtifact, record.originalLanguage).catch(downloadError => {
       console.error('Failed to export saved story seed:', downloadError);
       setSeedError('The seed could not be exported. Please try again.');
     });
@@ -584,6 +616,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   const handleExportAllSeeds = () => {
     void downloadStorySeedCollection(savedSeeds.map(record => ({
       seed: record.seed,
+      originalLanguage: record.originalLanguage,
       ...(record.blueprint ? {
         blueprint: normalizeWorldBlueprint(
           record.blueprint,
@@ -645,7 +678,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
             onExportSeed={requestExportCurrentSeed}
             isGenerating={isGenerating}
             originalLanguage={originalLanguage}
-            onOriginalLanguageChange={setOriginalLanguage}
+            onOriginalLanguageChange={resolveOriginalLanguage}
           />
         </DeferredStorySeedView>
       </>

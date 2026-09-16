@@ -123,7 +123,11 @@ describe('Reader Codex and System routing', () => {
           setBookmarkNoteText={vi.fn()}
           handleRemoveBookmark={vi.fn()}
           handleSaveBookmark={vi.fn()}
-          activeTranslationContent={null}
+          displayBlocks={chapter.blocks}
+          displayTitle={chapter.title}
+          displayLanguage="en"
+          isShowingTranslation={false}
+          translationNotice={null}
           renderHighlightedText={(text) => text}
           getFocusClass={() => ''}
           navigatePrev={vi.fn()}

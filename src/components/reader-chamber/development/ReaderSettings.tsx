@@ -5,6 +5,7 @@ import {
   Check,
   ChevronDown,
   Eye,
+  Globe,
   ListOrdered,
   Palette,
   Play,
@@ -20,6 +21,10 @@ import { getReaderTypography } from '../shared/readerTypography';
 import { AudioMenu } from './ReaderControls/AudioMenu';
 import { AudioSettings, ImmersionPreferences } from './ReaderControls/types';
 import { SENSettingsIcon } from '../../sen-icons';
+import {
+  ReadingLanguageSection,
+  type ReadingLanguageSectionProps,
+} from './ReadingLanguageSection';
 
 const FONT_OPTIONS = [
   { value: 'serif', label: 'Literata (Serif)' },
@@ -643,6 +648,8 @@ interface ReaderSettingsProps {
   selectedChapterNum: number;
   onSelectChapter: (num: number) => void;
   onToggleRead: (chapterNumber: number) => void;
+  /** The per-story reading-language control; omitted where a host supplies none. */
+  readingLanguage?: ReadingLanguageSectionProps;
   /** Called when the panel's open animation completes (anchor scrolling hook). */
   onReveal?: () => void;
 }
@@ -667,6 +674,7 @@ export const ReaderSettings: React.FC<ReaderSettingsProps> = ({
   selectedChapterNum,
   onSelectChapter,
   onToggleRead,
+  readingLanguage,
   onReveal,
 }) => {
   return (
@@ -697,6 +705,13 @@ export const ReaderSettings: React.FC<ReaderSettingsProps> = ({
               onToggleRead={onToggleRead}
             />
           </section>
+
+          {readingLanguage && (
+            <section className="space-y-4 rounded-xl border border-neutral-800 bg-[#070a0d]/80 p-4 shadow-[0_12px_40px_rgba(0,0,0,0.2)] sm:p-5">
+              <SettingsSectionLabel icon={<Globe size={14} />} label="Reading Language" />
+              <ReadingLanguageSection {...readingLanguage} />
+            </section>
+          )}
 
           <section className="space-y-4">
             <SettingsSectionLabel icon={<BookOpen size={14} />} label="Reader" />

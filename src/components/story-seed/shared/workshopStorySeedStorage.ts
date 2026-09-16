@@ -175,13 +175,13 @@ export const workshopStorySeedStorage: StorySeedRepository = {
 
   async importMany(userId, artifacts) {
     if (artifacts.length > 500) throw new Error('A seed import can contain at most 500 seeds at a time.');
-    // Portable artifacts carry creative content only, so an imported seed
-    // resolves to the explicit English fallback until its author chooses.
+    // A portable artifact carries its own administrative Original Language.
+    // English is the explicit fallback only for a file that recorded none.
     const imported = artifacts.map(artifact => buildRecord(
       userId,
       `seed-${generateUUID()}`,
       artifact.seed,
-      DEFAULT_SEN_LANGUAGE_CODE,
+      normalizeSenLanguageCode(artifact.originalLanguage, DEFAULT_SEN_LANGUAGE_CODE),
       undefined,
       artifact.blueprint,
     ));

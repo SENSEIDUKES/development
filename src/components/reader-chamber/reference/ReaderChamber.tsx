@@ -270,13 +270,7 @@ export default function ReaderChamber({
         textToTranslate = selectedChapter.blocks.map(b => b.text).join('\n\n');
       }
       if (!textToTranslate) return;
-      
-      if (selectedChapter.translations?.[preferredLang]) {
-        setActiveTranslationContent(
-          selectedChapter.translations[preferredLang].content,
-        );
-        return;
-      }
+
       const result = await translateChapter(
         activeStory.id,
         selectedChapter.number,
@@ -293,7 +287,6 @@ export default function ReaderChamber({
     selectedChapter.number,
     selectedChapter.generatedContent,
     selectedChapter.blocks,
-    selectedChapter.translations,
     activeStory.id,
     translateChapter
   ]);

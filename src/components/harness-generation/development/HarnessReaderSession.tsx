@@ -4,10 +4,12 @@ import type { StoryMemory, StoryWorld, UpdateStoryFields } from '@seihouse/sen/r
 import { CodexSheetOverlay } from '@seihouse/sen/reader-codex';
 import { createHarnessSenStory } from '../shared/senAdapter';
 import type { HarnessGenerationController } from '../shared/controller';
-import type { HarnessWorkspaceState } from '../shared/types';
+import type { HarnessSkillManifest, HarnessWorkspaceState } from '../shared/types';
 
-export function HarnessReaderSession({ state, storyId, onClose, controller }: {
+export function HarnessReaderSession({ state, storyId, onClose, controller, installedSkills }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
+  /** Host inventory; the Reader resolves its own `reader` Translation skill from it. */
+  installedSkills?: HarnessSkillManifest[];
 }) {
   const [selectedChapter, setSelectedChapter] = useState(1);
   const [codexOpen, setCodexOpen] = useState(false);
@@ -33,7 +35,7 @@ export function HarnessReaderSession({ state, storyId, onClose, controller }: {
       selectedChapterNum={selectedChapter} setSelectedChapterNum={setSelectedChapter}
       onToggleRead={number => setRead(current => current.includes(number) ? current.filter(value => value !== number) : [...current, number])}
       arcTitle={story.title} onBack={onClose} onSwitchTab={tab => { if (tab === 'codex') setCodexOpen(true); }}
-      activeStory={activeStory} updateStoryFields={updateStoryFields} />
+      activeStory={activeStory} updateStoryFields={updateStoryFields} installedSkills={installedSkills} />
     <CodexSheetOverlay isOpen={codexOpen} onClose={() => setCodexOpen(false)} activeStory={{ ...chapterStory, ...sessionPatch, arcs: story.arcs, memory: activeStory.memory }}
       onEditArcPlan={plan => controller.editArcGoals(storyId, plan)} generatedThrough={state.stories.find(item => item.id === storyId)!.head.nextChapterNumber - 1}
       onUpdateMemory={memory => setMemoryPatches(current => ({ ...current, [selectedChapter]: memory }))} updateStoryFields={updateStoryFields}

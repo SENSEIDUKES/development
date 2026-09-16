@@ -216,13 +216,6 @@ export interface ChapterScaffold {
   versionId?: string;
   branchAnchor?: string;
   summary?: string;
-  translations?: {
-    [langCode: string]: {
-      title: string;
-      content: string;
-      translatedAt: number;
-    };
-  };
   hasContinuityFaults?: boolean;
   continuityWarnings?: string[];
   continuitySoftNotes?: string[];
@@ -323,6 +316,11 @@ export interface ChapterGenerationBatch {
 }
 
 export interface ReaderPreferences {
+  /**
+   * This story's reading-language choice. A reversible display preference
+   * owned by the reader; story canon stays in `StoryWorld.originalLanguage`.
+   */
+  readingLanguage?: import('./readerLanguage').ReaderLanguageChoice;
   fontSize: "xs" | "sm" | "base" | "lg" | "xl";
   fontFamily: "serif" | "sans" | "mono";
   lineHeight: "snug" | "normal" | "relaxed" | "loose";
@@ -635,6 +633,11 @@ export interface StoryWorld {
   genre: string;
   mcName: string;
   customPremise: string;
+  /**
+   * Permanent story identity: the language every canonical chapter is written
+   * in. Reader translation derives from it and never replaces it.
+   */
+  originalLanguage?: import('../../../lib/language').SenLanguageCode;
   createdAt: string;
   updatedAt: string;
   memory?: StoryMemory;

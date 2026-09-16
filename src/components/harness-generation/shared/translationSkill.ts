@@ -133,9 +133,21 @@ export const translationCompatibilityError = (
 const WORD_CHARACTER = /[\p{L}\p{N}]/u;
 
 /**
+ * Scripts written without spaces between words. A word-boundary test is
+ * meaningless in them — every neighbouring character is a word character — so
+ * only these may fall back to loose substring matching.
+ */
+const UNSEGMENTED_SCRIPT = new RegExp(
+  '[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}'
+  + '\\p{Script=Thai}\\p{Script=Lao}\\p{Script=Khmer}'
+  + '\\p{Script=Myanmar}\\p{Script=Tibetan}]',
+  'u',
+);
+
+/**
  * A complete-phrase match: the phrase appears without adjoining word
- * characters. Scripts written without word separators cannot satisfy this, so
- * they are picked up by the looser pass below and ranked after phrase matches.
+ * characters, so the glossary term "Qi" matches "his Qi surged" but never the
+ * "qi" inside "equipped".
  */
 const matchesPhrase = (haystack: string, needle: string): boolean => {
   for (let index = haystack.indexOf(needle); index >= 0; index = haystack.indexOf(needle, index + 1)) {
@@ -158,8 +170,9 @@ export const translationMatchSource = (
 /**
  * Selects only the glossary entries the frozen Story Information Packet and
  * Immediate Chapter Request actually reference. Complete phrase matches are
- * preferred over partial substring matches; the full resource never travels
- * into the prompt.
+ * preferred over partial substring matches, and the loose substring pass is
+ * available only to terms written in an unsegmented script, where a boundary
+ * test cannot apply. The full resource never travels into the prompt.
  */
 export const selectTranslationGlossaryEntries = (
   resource: HarnessTranslationGlossaryResource,
@@ -171,7 +184,8 @@ export const selectTranslationGlossaryEntries = (
   for (const entry of resource.entries) {
     const candidates = [entry.term, ...(entry.aliases ?? [])].map(value => value.toLocaleLowerCase());
     if (candidates.some(candidate => matchesPhrase(matchSource, candidate))) phrase.push(entry);
-    else if (candidates.some(candidate => matchSource.includes(candidate))) substring.push(entry);
+    else if (candidates.some(candidate =>
+      UNSEGMENTED_SCRIPT.test(candidate) && matchSource.includes(candidate))) substring.push(entry);
   }
 
   return [...phrase, ...substring];

@@ -44,10 +44,16 @@ export interface StorySeedRecord {
   blueprint?: WorldBlueprint;
 }
 
-/** Portable or imported creative artifacts before account metadata is added. */
+/**
+ * Portable or imported artifacts before account metadata is added. The seed
+ * and its Blueprint are creative content; `originalLanguage` travels beside
+ * them as administrative metadata so an exported seed keeps the language its
+ * author chose instead of being retyped after every import.
+ */
 export interface StorySeedArtifact {
   seed: StorySeedInput;
   blueprint?: WorldBlueprint;
+  originalLanguage?: SenLanguageCode;
 }
 
 export interface StorySeedRepository {

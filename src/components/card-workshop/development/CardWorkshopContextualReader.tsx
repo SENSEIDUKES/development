@@ -414,7 +414,11 @@ export function CardWorkshopContextualReader({
           setBookmarkNoteText={setBookmarkNoteText}
           handleRemoveBookmark={() => undefined}
           handleSaveBookmark={handleSaveBookmark}
-          activeTranslationContent={null}
+          displayBlocks={fixture.chapter.blocks}
+          displayTitle={fixture.chapter.title}
+          displayLanguage="en"
+          isShowingTranslation={false}
+          translationNotice={null}
           renderHighlightedText={renderHighlightedText}
           getFocusClass={() => ''}
           navigatePrev={() => undefined}

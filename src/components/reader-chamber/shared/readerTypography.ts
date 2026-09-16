@@ -57,4 +57,3 @@ export function getReaderTypography(preferences?: Partial<ReaderPreferences> | n
     textAlignment: prefs.textAlignment === 'justify' ? 'justify' : DEFAULT_READER_TYPOGRAPHY.textAlignment,
   };
 }
-

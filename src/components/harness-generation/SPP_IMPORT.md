@@ -37,11 +37,15 @@ CAPA system reads:
 1. **One target language**, chosen explicitly in the importer from the SEN language
    registry. It is never inferred from the package name, publisher, file name, or
    instruction text, and a Translation skill must declare exactly one.
-2. **An optional JSON glossary resource**, also selected explicitly. No filename is
+2. **Which jobs it may do**, also chosen explicitly: `generation` writes canonical
+   chapters in that language, `reader` translates an existing chapter into it for a
+   reader, and a package may declare both. A skill that does not declare `reader` is
+   never used for Reader translation, whatever its name says.
+3. **An optional JSON glossary resource**, also selected explicitly. No filename is
    special and nothing is auto-selected. It is validated before installation and
    rejected for malformed data, unsupported language codes, duplicate canonical terms,
    missing required values, or a resource declaring a different target language.
-3. **Provenance** for both files: the instruction file's package ID, version, path and
+4. **Provenance** for both files: the instruction file's package ID, version, path and
    SHA-256 in `skill.source`, and the glossary's own path and SHA-256 in
    `skill.translation.glossary.source`.
 
@@ -51,6 +55,12 @@ Equipping is decided by `HarnessStory.originalLanguage`. Only a Translation skil
 target language equals the story's Original Language may be equipped, the Development
 slot list shows each installed skill's language, and compatibility is rechecked when the
 loadout is frozen for every generation attempt. A story may leave the slot empty.
+
+The equipped skill governs canonical generation only. Reader translation is a separate,
+reversible reading layer that resolves its own skill by the reader's requested target
+language plus the `reader` application — the story's equipped generation skill is never
+borrowed for it, and there is no generic or English fallback. See
+[reader-chamber/READER_TRANSLATION.md](../reader-chamber/READER_TRANSLATION.md).
 
 The glossary never enters a prompt whole. At assembly the HARNESS matches canonical terms
 and aliases against the already-frozen Story Information Packet and Immediate Chapter

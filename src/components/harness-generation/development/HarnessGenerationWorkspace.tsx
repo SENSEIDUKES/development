@@ -949,7 +949,7 @@ export function HarnessGenerationWorkspace({
   const generationAvailable = Boolean(selectedStory && serverInfo?.configured && model && !busy);
 
   if (reading && state && selectedStory) return <HarnessReaderSession key={selectedStory.id} state={state} storyId={selectedStory.id}
-    controller={controller} onClose={() => setReading(false)} />;
+    controller={controller} installedSkills={availableSkills} onClose={() => setReading(false)} />;
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-generation-workspace">

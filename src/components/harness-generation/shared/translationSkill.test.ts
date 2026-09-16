@@ -154,12 +154,28 @@ describe('glossary selection against the frozen generation inputs', () => {
     expect(selectTranslationGlossaryEntries(resource, source).map(entry => entry.term)).toEqual(['Qi']);
   });
 
-  it('prefers complete phrase matches over partial substring matches', () => {
-    // "Qi" appears only inside "Qigong"; "Dantian" appears as a whole phrase.
-    const source = translationMatchSource(packet('Qigong drills open the Dantian.'), request());
+  it('never matches a Latin term inside an unrelated word', () => {
+    // "qi" is a substring of "equipped" and "Qigong"; neither is the term.
+    const source = translationMatchSource(
+      packet('Qigong drills open the Dantian once the courier is equipped.'),
+      request(),
+    );
     const selected = selectTranslationGlossaryEntries(resource, source);
 
-    expect(selected.map(entry => entry.term)).toEqual(['Dantian', 'Qi']);
+    expect(selected.map(entry => entry.term)).toEqual(['Dantian']);
+  });
+
+  it('still matches a term written in a script without word separators', () => {
+    // Japanese runs together, so a boundary test can never succeed there; the
+    // loose pass exists for exactly this case and ranks after phrase matches.
+    const unsegmented = validateTranslationGlossaryResource(glossary([
+      { term: 'Heavenly Tribulation', aliases: ['天劫'], translation: '天劫' },
+      { term: 'Dantian', translation: '丹田' },
+    ]), 'ja');
+    const source = translationMatchSource(packet('丹田を鍛えれば天劫が訪れる。'), request());
+
+    expect(selectTranslationGlossaryEntries(unsegmented, source).map(entry => entry.term))
+      .toEqual(['Heavenly Tribulation']);
   });
 
   it('selects nothing when the chapter never touches the glossary', () => {

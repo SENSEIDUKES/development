@@ -115,6 +115,21 @@ describe('reopening a saved seed restores that seed’s own language', () => {
     return onStartStory;
   };
 
+  const renderWithAccountDefault = (accountDefaultLanguage?: SenLanguageCode) => {
+    act(() => root.render(
+      <LibraryPresentationProvider>
+        <CreationModal
+          onNavigateHome={vi.fn()}
+          onStartStory={vi.fn()}
+          onGenerateBlueprint={vi.fn()}
+          isGenerating={false}
+          error={null}
+          {...(accountDefaultLanguage ? { accountDefaultLanguage } : {})}
+        />
+      </LibraryPresentationProvider>,
+    ));
+  };
+
   const openBank = async () => {
     await act(async () => { buttonNamed('Story Bank')!.click(); });
     await act(async () => { await new Promise(resolve => setTimeout(resolve, 200)); });
@@ -167,5 +182,48 @@ describe('reopening a saved seed restores that seed’s own language', () => {
 
     expect(onStartStory).toHaveBeenCalledTimes(1);
     expect(onStartStory.mock.calls[0][0].administrative.originalLanguage).toBe('ko');
+  });
+
+  // The Original Language selector itself lives on the Blueprint stage, so a
+  // brand-new seed is observed where its language first becomes durable: the
+  // draft the intake workspace saves.
+  const saveDraft = async () => {
+    await act(async () => { buttonNamed('Save Draft')!.click(); });
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 200)); });
+  };
+
+  it('starts a new seed on the active account’s Default Reading Language', async () => {
+    resetStorySeedRepository();
+    renderWithAccountDefault('vi');
+
+    await saveDraft();
+
+    const saved = await listStorySeeds(LOCAL_WORKSHOP_STORY_SEED_OWNER_ID);
+    expect(saved.map(record => record.originalLanguage)).toEqual(['vi']);
+  });
+
+  it('adopts an account default that only resolves after the workspace mounts', async () => {
+    resetStorySeedRepository();
+    // The host's profile lands a render later; a new seed must follow it
+    // rather than keeping the English fallback it mounted with.
+    renderWithAccountDefault(undefined);
+    renderWithAccountDefault('th');
+
+    await saveDraft();
+
+    const saved = await listStorySeeds(LOCAL_WORKSHOP_STORY_SEED_OWNER_ID);
+    expect(saved.map(record => record.originalLanguage)).toEqual(['th']);
+  });
+
+  it('never lets a later account default overwrite a banked seed’s own language', async () => {
+    twoSavedSeeds('ja', 'ko');
+    renderWithAccountDefault('en');
+
+    await openBank();
+    await openBlueprintFor(0);
+    expect(languageSelect()?.value).toBe('ja');
+
+    renderWithAccountDefault('ms');
+    expect(languageSelect()?.value).toBe('ja');
   });
 });

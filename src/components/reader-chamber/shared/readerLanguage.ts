@@ -25,8 +25,8 @@ export interface ReaderLanguageChoice {
   language?: SenLanguageCode;
 }
 
-/** A story with no saved choice reads in its own Original Language. */
-export const DEFAULT_READER_LANGUAGE_CHOICE: ReaderLanguageChoice = { mode: 'original' };
+/** A story with no saved choice begins with the account's reading default. */
+export const DEFAULT_READER_LANGUAGE_CHOICE: ReaderLanguageChoice = { mode: 'account' };
 
 export interface ReaderAccountLanguages {
   defaultReadingLanguage?: unknown;
@@ -46,11 +46,11 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 /**
  * Reads an untrusted saved choice. A `specific` choice without a supported
- * code is not a usable override, so it falls back to Original rather than to
- * an arbitrary language.
+ * code is not a usable override, so it falls back to the account default.
  */
 export const normalizeReaderLanguageChoice = (value: unknown): ReaderLanguageChoice => {
   if (!isRecord(value)) return DEFAULT_READER_LANGUAGE_CHOICE;
+  if (value.mode === 'original') return { mode: 'original' };
   if (value.mode === 'account') return { mode: 'account' };
   if (value.mode === 'specific' && isSenLanguageCode(value.language)) {
     return { mode: 'specific', language: value.language };

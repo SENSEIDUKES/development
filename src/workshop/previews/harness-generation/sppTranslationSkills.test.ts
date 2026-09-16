@@ -116,7 +116,7 @@ describe('SPP Translation skill import', () => {
       targetLanguage: 'ja',
       entries: [{ term: 'Qi', translation: '気' }, { term: 'qi', translation: '氣' }],
     });
-    expect(() => readHarnessSppGlossary(duplicates, 'assets/glossary.json', 'ja')).toThrow('more than once');
+    expect(() => readHarnessSppGlossary(duplicates, 'assets/glossary.json', 'ja')).toThrow('collides');
 
     const missingValue = await translationPack({ targetLanguage: 'ja', entries: [{ term: 'Qi' }] });
     expect(() => readHarnessSppGlossary(missingValue, 'assets/glossary.json', 'ja')).toThrow('translation is required');
@@ -165,6 +165,23 @@ describe('SPP Translation skill import', () => {
     expect(reloaded.translation?.glossary?.entries).toHaveLength(2);
     // Only the selected text and resource are retained, never the archive.
     expect(JSON.stringify(reloaded)).not.toContain('cover.bin');
+  });
+
+  it('stores distinct Translation selections from the same package without identity collisions', async () => {
+    const content = await translationPack(validGlossary);
+    const japanese = createHarnessSppSkill(content, 'assets/instructions.md', 'translation', {
+      targetLanguage: 'ja', glossaryPath: 'assets/glossary.json',
+    });
+    const korean = createHarnessSppSkill(content, 'assets/instructions.md', 'translation', {
+      targetLanguage: 'ko',
+    });
+    const saved = storage();
+
+    const installed = saveHarnessSppSkill(saved, [], japanese);
+    saveHarnessSppSkill(saved, installed, korean);
+
+    expect(loadHarnessSppSkills(saved).map(skill => skill.id)).toEqual([japanese.id, korean.id]);
+    expect(japanese.id).not.toBe(korean.id);
   });
 
   it('keeps Translation metadata off other slots at import time', async () => {

@@ -5,13 +5,17 @@ import type { ReaderChapter, StoryBlock } from '../types';
 import { READER_TRANSLATION_SCHEMA_VERSION, type DerivedChapterTranslation } from './contract';
 import { ReaderTranslationController } from './controller';
 import type { ReaderTranslationProvider } from './provider';
-import { InMemoryReaderTranslationRepository } from './repository';
+import {
+  InMemoryReaderTranslationRepository,
+  MAX_CACHED_TRANSLATIONS,
+  WebReaderTranslationRepository,
+} from './repository';
 import {
   buildReaderFacingChapter,
   mergeReaderTranslation,
   readerFacingContentHash,
 } from './readerFacing';
-import { resolveReaderTranslationSkill } from './skill';
+import { readerTranslationSkillContentDigest, resolveReaderTranslationSkill } from './skill';
 import { validateReaderTranslationResponse } from './validate';
 
 /**
@@ -27,6 +31,7 @@ const testReaderSkill = (overrides: Partial<HarnessSkillManifest> = {}): Harness
     slot: 'translation',
     applications: ['reader'],
     instructions: 'Render reader-facing values in the declared target language.',
+    source: { packageId: 'test-package', packageVersion: '1.0.0', path: 'reader.md', sha256: 'digest-ko-v1' },
     translation: { targetLanguage: 'ko' },
     ...overrides,
   } as HarnessSkillManifest);
@@ -297,6 +302,25 @@ describe('resolving which skill may translate for a reader', () => {
     expect(resolution.ok).toBe(false);
     expect(resolution.ok === false && resolution.message).toContain('Korean');
   });
+
+  it('uses the newest installed version of one compatible skill identity', () => {
+    const oldSkill = testReaderSkill({ version: '1.9.0' });
+    const newest = testReaderSkill({ version: '1.10.0' });
+
+    expect(resolveReaderTranslationSkill([oldSkill, newest], 'ko'))
+      .toEqual({ ok: true, skill: newest });
+  });
+
+  it('reports ambiguity across different compatible skill identities unless one is explicitly selected', () => {
+    const first = testReaderSkill({ id: 'test.reader.translation.ko.first' });
+    const second = testReaderSkill({ id: 'test.reader.translation.ko.second' });
+    const ambiguous = resolveReaderTranslationSkill([first, second], 'ko');
+
+    expect(ambiguous.ok).toBe(false);
+    expect(ambiguous.ok === false && ambiguous.message).toContain('Choose one explicitly');
+    expect(resolveReaderTranslationSkill([first, second], 'ko', { id: second.id }))
+      .toEqual({ ok: true, skill: second });
+  });
 });
 
 describe('the translation controller', () => {
@@ -333,7 +357,12 @@ describe('the translation controller', () => {
     });
 
     expect(outcome.status).toBe('ready');
-    const saved = repository.read('story-1', 1, 'ko') as DerivedChapterTranslation;
+    const skill = testReaderSkill();
+    const saved = repository.read('story-1', 1, 'ko', {
+      id: skill.id,
+      version: skill.version,
+      contentDigest: readerTranslationSkillContentDigest(skill),
+    }) as DerivedChapterTranslation;
     expect(saved).toMatchObject({
       schemaVersion: READER_TRANSLATION_SCHEMA_VERSION,
       storyId: 'story-1',
@@ -343,6 +372,7 @@ describe('the translation controller', () => {
       targetLanguage: 'ko',
       skillId: 'test.reader.translation.ko',
       skillVersion: '1.0.0',
+      skillContentDigest: 'digest-ko-v1',
       title: '닫힌 문',
       status: 'ready',
       receipt: { provider: 'fixture', model: 'fixture' },
@@ -403,7 +433,10 @@ describe('the translation controller', () => {
     });
     expect(providerFailure).toEqual({ status: 'failed', message: 'Provider unavailable.' });
     // Nothing invalid is cached, so a later attempt starts clean.
-    expect(repository.read('story-1', 1, 'ko')).toBeNull();
+    const skill = testReaderSkill();
+    expect(repository.read('story-1', 1, 'ko', {
+      id: skill.id, version: skill.version, contentDigest: readerTranslationSkillContentDigest(skill),
+    })).toBeNull();
 
     const invalid = buildController({
       provider: stubProvider(() => JSON.stringify({ title: '닫힌 문', blocks: [] })),
@@ -413,14 +446,16 @@ describe('the translation controller', () => {
       story: japaneseStory, chapter: chapter(), targetLanguage: 'ko',
     });
     expect(responseFailure.status).toBe('failed');
-    expect(repository.read('story-1', 1, 'ko')).toBeNull();
+    expect(repository.read('story-1', 1, 'ko', {
+      id: skill.id, version: skill.version, contentDigest: readerTranslationSkillContentDigest(skill),
+    })).toBeNull();
   });
 
   it('freezes only the glossary entries this chapter references', async () => {
     const frozen: unknown[] = [];
     const provider: ReaderTranslationProvider = {
       async translate(request) {
-        frozen.push(request.glossary);
+        frozen.push({ entries: request.glossary, source: request.glossarySource });
         return {
           rawProviderResponse: faithfulReply(request.source),
           receipt: { provider: 'fixture', model: 'fixture', generatedAt: '2026-09-15T00:00:00.000Z' },
@@ -434,6 +469,7 @@ describe('the translation controller', () => {
           targetLanguage: 'ko',
           glossary: {
             targetLanguage: 'ko',
+            source: { path: 'assets/glossary.json', sha256: 'glossary-digest' },
             entries: [
               { term: 'Qi Condensation', translation: '기 응축' },
               { term: 'Heavenly Tribulation', translation: '천겁' },
@@ -445,7 +481,105 @@ describe('the translation controller', () => {
 
     await controller.translate({ story: japaneseStory, chapter: chapter(), targetLanguage: 'ko' });
 
+    expect(frozen[0]).toEqual({
+      entries: [{ term: 'Qi Condensation', translation: '기 응축' }],
+      source: { path: 'assets/glossary.json', sha256: 'glossary-digest' },
+    });
+  });
+
+  it('never selects glossary entries from block IDs or JSON field names', async () => {
+    const frozen: unknown[] = [];
+    const controller = buildController({
+      provider: {
+        async translate(request) {
+          frozen.push(request.glossary);
+          return {
+            rawProviderResponse: faithfulReply(request.source),
+            receipt: { provider: 'fixture', model: 'fixture', generatedAt: '2026-09-15T00:00:00.000Z' },
+          };
+        },
+      },
+      skills: [testReaderSkill({
+        translation: {
+          targetLanguage: 'ko',
+          glossary: {
+            targetLanguage: 'ko',
+            entries: [
+              { term: 'block-1', translation: 'wrong' },
+              { term: 'system', translation: 'wrong' },
+              { term: 'Qi Condensation', translation: '기 응축' },
+            ],
+          },
+        },
+      })],
+    });
+
+    await controller.translate({ story: japaneseStory, chapter: chapter(), targetLanguage: 'ko' });
     expect(frozen[0]).toEqual([{ term: 'Qi Condensation', translation: '기 응축' }]);
+  });
+
+  it('separates cache and in-flight work by skill id, version, and content digest', async () => {
+    const repository = new InMemoryReaderTranslationRepository();
+    let release: (() => void) | undefined;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const provider = stubProvider(async source => {
+      await gate;
+      return faithfulReply(source);
+    });
+    const first = testReaderSkill({ source: { packageId: 'test', packageVersion: '1', path: 'reader.md', sha256: 'digest-a' } });
+    const second = testReaderSkill({ source: { packageId: 'test', packageVersion: '1', path: 'reader.md', sha256: 'digest-b' } });
+    const controller = buildController({ provider, repository, skills: [first] });
+
+    const firstRequest = controller.translate({ story: japaneseStory, chapter: chapter(), targetLanguage: 'ko' });
+    controller.setInstalledSkills([second]);
+    const secondRequest = controller.translate({ story: japaneseStory, chapter: chapter(), targetLanguage: 'ko' });
+    release?.();
+    await Promise.all([firstRequest, secondRequest]);
+
+    expect(provider.calls).toBe(2);
+    expect(repository.read('story-1', 1, 'ko', {
+      id: first.id, version: first.version, contentDigest: 'digest-a',
+    })).not.toBeNull();
+    expect(repository.read('story-1', 1, 'ko', {
+      id: second.id, version: second.version, contentDigest: 'digest-b',
+    })).not.toBeNull();
+  });
+});
+
+describe('the browser translation cache', () => {
+  it('keeps a bounded set of the newest skill-specific translations', () => {
+    const values = new Map<string, string>();
+    const repository = new WebReaderTranslationRepository({
+      getItem: key => values.get(key) ?? null,
+      setItem: (key, value) => { values.set(key, value); },
+      removeItem: key => { values.delete(key); },
+    });
+    for (let chapterNumber = 1; chapterNumber <= MAX_CACHED_TRANSLATIONS + 3; chapterNumber += 1) {
+      repository.write({
+        schemaVersion: READER_TRANSLATION_SCHEMA_VERSION,
+        storyId: 'story-cache',
+        chapterNumber,
+        sourceLanguage: 'ja',
+        targetLanguage: 'ko',
+        sourceContentHash: `source-${chapterNumber}`,
+        skillId: 'test.reader.translation.ko',
+        skillVersion: '1.0.0',
+        skillContentDigest: 'digest-ko-v1',
+        title: `Chapter ${chapterNumber}`,
+        blocks: [{ id: `block-${chapterNumber}`, text: 'Translated.' }],
+        receipt: { provider: 'fixture', model: 'fixture', generatedAt: '2026-09-16T00:00:00.000Z' },
+        status: 'ready',
+      });
+    }
+
+    const stored = JSON.parse(values.values().next().value ?? '{}') as Record<string, unknown>;
+    expect(Object.keys(stored)).toHaveLength(MAX_CACHED_TRANSLATIONS);
+    expect(repository.read('story-cache', MAX_CACHED_TRANSLATIONS + 3, 'ko', {
+      id: 'test.reader.translation.ko', version: '1.0.0', contentDigest: 'digest-ko-v1',
+    })).not.toBeNull();
+    expect(repository.read('story-cache', 1, 'ko', {
+      id: 'test.reader.translation.ko', version: '1.0.0', contentDigest: 'digest-ko-v1',
+    })).toBeNull();
   });
 });
 

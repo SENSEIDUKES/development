@@ -40,7 +40,7 @@ const optionalText = (value: unknown, label: string): string | undefined => {
   return requiredText(value, label);
 };
 
-const canonicalKey = (term: string) => term.trim().toLocaleLowerCase();
+const canonicalKey = (term: string) => term.trim().toLowerCase();
 
 /**
  * Validates an untrusted glossary resource. `expectedLanguage` is the language
@@ -72,7 +72,7 @@ export const validateTranslationGlossaryResource = (
     const translation = requiredText(raw.translation, `entry ${index + 1} translation`);
     const key = canonicalKey(term);
     const duplicate = seen.get(key);
-    if (duplicate) throw new Error(`Translation glossary lists the canonical term "${duplicate}" more than once.`);
+    if (duplicate) throw new Error(`Translation glossary term or alias "${term}" collides with "${duplicate}" after normalization.`);
     seen.set(key, term);
 
     let aliases: string[] | undefined;
@@ -80,7 +80,16 @@ export const validateTranslationGlossaryResource = (
       if (!Array.isArray(raw.aliases)) throw new Error(`Translation glossary entry "${term}" has invalid aliases.`);
       const cleaned = raw.aliases.map((alias, aliasIndex) =>
         requiredText(alias, `entry "${term}" alias ${aliasIndex + 1}`));
-      if (cleaned.length) aliases = [...new Set(cleaned)];
+      const uniqueAliases = [...new Map(cleaned.map(alias => [canonicalKey(alias), alias])).values()];
+      for (const alias of uniqueAliases) {
+        const aliasKey = canonicalKey(alias);
+        const aliasDuplicate = seen.get(aliasKey);
+        if (aliasDuplicate) {
+          throw new Error(`Translation glossary term or alias "${alias}" collides with "${aliasDuplicate}" after normalization.`);
+        }
+        seen.set(aliasKey, alias);
+      }
+      if (uniqueAliases.length) aliases = uniqueAliases;
     }
 
     const note = optionalText(raw.note, `entry "${term}" note`);
@@ -162,10 +171,41 @@ const matchesPhrase = (haystack: string, needle: string): boolean => {
 export const translationMatchSource = (
   storyInformation: StoryInformationPacket,
   immediateChapterRequest: ImmediateChapterRequest,
-): string => [
-  JSON.stringify(storyInformation),
-  JSON.stringify(immediateChapterRequest),
-].join('\n').toLocaleLowerCase();
+): string => {
+  const foundation = storyInformation.foundationRevision.input;
+  const text = [
+    foundation.title,
+    foundation.premise,
+    foundation.permanentInstructions,
+    foundation.toneStyle,
+    foundation.genre,
+    foundation.openingSituation,
+    foundation.declaredCanon,
+    foundation.characters,
+    foundation.worldFacts,
+    foundation.intendedDirection,
+    foundation.destinedEnding,
+    ...(foundation.cast ?? []).flatMap(member => [member.name, member.role, member.relationshipToMC]),
+    ...(foundation.identities ?? []).flatMap(identity => [identity.name, ...(identity.aliases ?? []), identity.evidence]),
+    ...storyInformation.committedChapters.flatMap(chapter => [
+      chapter.title,
+      chapter.prose,
+      ...chapter.events.flatMap(event => [
+        event.description,
+        event.evidence,
+        ...(event.subjects ?? []),
+        ...Object.values(event.facts ?? {}),
+      ]),
+    ]),
+    ...(storyInformation.steering ?? []).map(direction => direction.direction),
+    ...(storyInformation.developments ?? []).flatMap(development => [development.description, development.evidence]),
+    ...(storyInformation.lookups ?? []).map(lookup => lookup.excerpt),
+    immediateChapterRequest.assignment,
+  ];
+  return text.filter((value): value is string => typeof value === 'string' && Boolean(value.trim()))
+    .join('\n')
+    .toLowerCase();
+};
 
 /**
  * Selects only the glossary entries the frozen Story Information Packet and
@@ -182,7 +222,7 @@ export const selectTranslationGlossaryEntries = (
   const substring: HarnessTranslationGlossaryEntry[] = [];
 
   for (const entry of resource.entries) {
-    const candidates = [entry.term, ...(entry.aliases ?? [])].map(value => value.toLocaleLowerCase());
+    const candidates = [entry.term, ...(entry.aliases ?? [])].map(value => value.toLowerCase());
     if (candidates.some(candidate => matchesPhrase(matchSource, candidate))) phrase.push(entry);
     else if (candidates.some(candidate =>
       UNSEGMENTED_SCRIPT.test(candidate) && matchSource.includes(candidate))) substring.push(entry);
@@ -203,6 +243,7 @@ export const buildSelectedTranslationGlossary = (
     skillId: skill.id,
     skillVersion: skill.version,
     targetLanguage: resource.targetLanguage,
+    ...(resource.source ? { source: { ...resource.source } } : {}),
     entries,
     availableEntryCount: resource.entries.length,
   };

@@ -19,12 +19,17 @@ import {
   readerTranslationKey,
   type DerivedChapterTranslation,
   type ReaderTranslationGlossaryEntry,
+  type ReaderTranslationGlossarySource,
   type ReaderTranslationRequest,
 } from './contract';
 import { buildReaderFacingChapter, readerFacingContentHash } from './readerFacing';
 import type { ReaderTranslationProvider } from './provider';
 import type { ReaderTranslationRepository } from './repository';
-import { resolveReaderTranslationSkill } from './skill';
+import {
+  readerTranslationSkillContentDigest,
+  resolveReaderTranslationSkill,
+  type ReaderTranslationSkillSelection,
+} from './skill';
 import { validateReaderTranslationResponse } from './validate';
 
 export type ReaderTranslationOutcome =
@@ -55,11 +60,28 @@ export interface ReaderTranslationControllerOptions {
 const selectGlossary = (
   skill: HarnessSkillManifest,
   matchSource: string,
-): ReaderTranslationGlossaryEntry[] | undefined => {
+): { entries: ReaderTranslationGlossaryEntry[]; source?: ReaderTranslationGlossarySource } | undefined => {
   const resource = skill.translation?.glossary;
   if (!resource) return undefined;
   const entries = selectTranslationGlossaryEntries(resource, matchSource);
-  return entries.length ? entries : undefined;
+  return entries.length ? {
+    entries,
+    ...(resource.source ? { source: { ...resource.source } } : {}),
+  } : undefined;
+};
+
+const readerFacingGlossaryMatchSource = (source: ReturnType<typeof buildReaderFacingChapter>): string => {
+  const values: string[] = [source.title];
+  const collectValues = (value: unknown): void => {
+    if (typeof value === 'string') values.push(value);
+    else if (Array.isArray(value)) value.forEach(collectValues);
+    else if (value && typeof value === 'object') Object.values(value).forEach(collectValues);
+  };
+  for (const block of source.blocks) {
+    if (block.text) values.push(block.text);
+    if (block.system) collectValues(block.system);
+  }
+  return values.join('\n').toLowerCase();
 };
 
 export class ReaderTranslationController {
@@ -85,35 +107,39 @@ export class ReaderTranslationController {
     story: ReaderTranslationStory;
     chapter: ReaderChapter;
     targetLanguage: SenLanguageCode;
+    skillSelection?: ReaderTranslationSkillSelection;
   }): Promise<ReaderTranslationOutcome> {
-    const { story, chapter, targetLanguage } = input;
+    const { story, chapter, targetLanguage, skillSelection } = input;
     // The canonical chapter is already in this language: show it immediately.
     if (targetLanguage === story.originalLanguage) return { status: 'original' };
 
-    const resolution = resolveReaderTranslationSkill(this.installedSkills, targetLanguage);
+    const resolution = resolveReaderTranslationSkill(this.installedSkills, targetLanguage, skillSelection);
     if (!resolution.ok) return { status: 'unavailable', message: resolution.message };
     const skill = resolution.skill;
+    const skillContentDigest = readerTranslationSkillContentDigest(skill);
+    const skillIdentity = { id: skill.id, version: skill.version, contentDigest: skillContentDigest };
 
     const source = buildReaderFacingChapter(chapter);
     if (!source.blocks.length) return { status: 'original' };
     const sourceContentHash = readerFacingContentHash(source);
 
-    const cached = this.repository.read(story.id, chapter.number, targetLanguage);
+    const cached = this.repository.read(story.id, chapter.number, targetLanguage, skillIdentity);
     if (cached && isReaderTranslationFresh(cached, {
       sourceContentHash,
       skillId: skill.id,
       skillVersion: skill.version,
+      skillContentDigest,
     })) {
       return { status: 'ready', translation: cached };
     }
 
     // The canonical chapter or the skill has moved on; the stale entry is
     // regenerated rather than shown.
-    const key = `${readerTranslationKey(story.id, chapter.number, targetLanguage)}::${sourceContentHash}::${skill.version}`;
+    const key = `${readerTranslationKey(story.id, chapter.number, targetLanguage, skillIdentity)}::${sourceContentHash}`;
     const existing = this.inFlight.get(key);
     if (existing) return existing;
 
-    const work = this.generate({ story, chapter, targetLanguage, skill, source, sourceContentHash })
+    const work = this.generate({ story, chapter, targetLanguage, skill, skillContentDigest, source, sourceContentHash })
       .finally(() => { this.inFlight.delete(key); });
     this.inFlight.set(key, work);
     return work;
@@ -124,11 +150,12 @@ export class ReaderTranslationController {
     chapter: ReaderChapter;
     targetLanguage: SenLanguageCode;
     skill: HarnessSkillManifest;
+    skillContentDigest: string;
     source: ReturnType<typeof buildReaderFacingChapter>;
     sourceContentHash: string;
   }): Promise<ReaderTranslationOutcome> {
-    const { story, chapter, targetLanguage, skill, source, sourceContentHash } = input;
-    const glossary = selectGlossary(skill, JSON.stringify(source).toLocaleLowerCase());
+    const { story, chapter, targetLanguage, skill, skillContentDigest, source, sourceContentHash } = input;
+    const glossary = selectGlossary(skill, readerFacingGlossaryMatchSource(source));
 
     // Frozen before the provider is called, so a retry replays this input.
     const request: ReaderTranslationRequest = {
@@ -139,9 +166,12 @@ export class ReaderTranslationController {
       sourceLanguage: story.originalLanguage,
       targetLanguage,
       sourceContentHash,
-      skill: { id: skill.id, version: skill.version, targetLanguage },
+      skill: { id: skill.id, version: skill.version, contentDigest: skillContentDigest, targetLanguage },
       instructions: skill.instructions ?? '',
-      ...(glossary ? { glossary } : {}),
+      ...(glossary ? {
+        glossary: glossary.entries,
+        ...(glossary.source ? { glossarySource: glossary.source } : {}),
+      } : {}),
       source,
       frozenAt: this.now().toISOString(),
     };
@@ -159,6 +189,7 @@ export class ReaderTranslationController {
         sourceContentHash: request.sourceContentHash,
         skillId: skill.id,
         skillVersion: skill.version,
+        skillContentDigest,
         title: validated.title,
         blocks: validated.blocks,
         receipt: reply.receipt,

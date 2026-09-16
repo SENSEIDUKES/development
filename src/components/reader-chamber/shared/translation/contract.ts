@@ -21,7 +21,7 @@ import type { SenLanguageCode } from '../../../../lib/language';
  * migration path: a stored translation at another version is discarded and
  * regenerated, never read.
  */
-export const READER_TRANSLATION_SCHEMA_VERSION = 1 as const;
+export const READER_TRANSLATION_SCHEMA_VERSION = 2 as const;
 
 export interface ReaderFacingLabelledValue {
   label: string;
@@ -81,7 +81,13 @@ export interface ReaderFacingChapter {
 export interface ReaderTranslationSkillReference {
   id: string;
   version: string;
+  contentDigest: string;
   targetLanguage: SenLanguageCode;
+}
+
+export interface ReaderTranslationGlossarySource {
+  path: string;
+  sha256: string;
 }
 
 /** One glossary entry selected for this chapter, frozen onto the request. */
@@ -110,6 +116,8 @@ export interface ReaderTranslationRequest {
   /** The skill's own generation instructions for this language. */
   instructions: string;
   glossary?: ReaderTranslationGlossaryEntry[];
+  /** Provenance of the installed glossary resource that produced the selection. */
+  glossarySource?: ReaderTranslationGlossarySource;
   source: ReaderFacingChapter;
   frozenAt: string;
 }
@@ -137,6 +145,7 @@ export interface DerivedChapterTranslation {
   sourceContentHash: string;
   skillId: string;
   skillVersion: string;
+  skillContentDigest: string;
   title: string;
   /** Reader-facing values mapped to their canonical block IDs. */
   blocks: ReaderFacingBlock[];
@@ -150,7 +159,10 @@ export const readerTranslationKey = (
   storyId: string,
   chapterNumber: number,
   targetLanguage: SenLanguageCode,
-): string => `${storyId}::${chapterNumber}::${targetLanguage}`;
+  skill: Pick<ReaderTranslationSkillReference, 'id' | 'version' | 'contentDigest'>,
+): string => [storyId, chapterNumber, targetLanguage, skill.id, skill.version, skill.contentDigest]
+  .map(value => encodeURIComponent(String(value)))
+  .join('::');
 
 /**
  * A cached translation may only be reused while it still describes the
@@ -159,10 +171,11 @@ export const readerTranslationKey = (
  */
 export const isReaderTranslationFresh = (
   translation: DerivedChapterTranslation,
-  against: { sourceContentHash: string; skillId: string; skillVersion: string },
+  against: { sourceContentHash: string; skillId: string; skillVersion: string; skillContentDigest: string },
 ): boolean =>
   translation.schemaVersion === READER_TRANSLATION_SCHEMA_VERSION
   && translation.status === 'ready'
   && translation.sourceContentHash === against.sourceContentHash
   && translation.skillId === against.skillId
-  && translation.skillVersion === against.skillVersion;
+  && translation.skillVersion === against.skillVersion
+  && translation.skillContentDigest === against.skillContentDigest;

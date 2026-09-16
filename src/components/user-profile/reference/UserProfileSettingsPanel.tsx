@@ -138,9 +138,10 @@ export function UserProfileSettingsPanel({
               <div className="relative shrink-0">
                 <select
                   name="interfaceLanguage"
+                  aria-label="Preferred Language"
                   value={formData.interfaceLanguage || profile?.interfaceLanguage || DEFAULT_SEN_LANGUAGE_CODE}
                   onChange={(e) => handleLanguageChangeDirect('interfaceLanguage', normalizeSenLanguageCode(e.target.value))}
-                  className="bg-black border border-neutral-800 hover:border-portal/50 rounded pl-2 pr-6 py-1.5 text-[11px] text-signal focus:border-portal outline-none font-sans cursor-pointer transition-all appearance-none w-24 sm:w-32 text-ellipsis overflow-hidden"
+                  className="bg-black border border-neutral-800 hover:border-portal/50 rounded pl-2 pr-6 py-1.5 text-base sm:text-[11px] text-signal focus:border-portal outline-none font-sans cursor-pointer transition-all appearance-none w-24 sm:w-32 text-ellipsis overflow-hidden"
                 >
                   {SEN_LANGUAGES.map(language => (
                     <option key={language.code} value={language.code}>{language.label}</option>
@@ -161,9 +162,10 @@ export function UserProfileSettingsPanel({
               <div className="relative shrink-0">
                 <select
                   name="defaultReadingLanguage"
+                  aria-label="Translation Default"
                   value={formData.defaultReadingLanguage || profile?.defaultReadingLanguage || DEFAULT_SEN_LANGUAGE_CODE}
                   onChange={(e) => handleLanguageChangeDirect('defaultReadingLanguage', normalizeSenLanguageCode(e.target.value))}
-                  className="bg-black border border-neutral-800 hover:border-human/50 rounded pl-2 pr-6 py-1.5 text-[11px] text-signal focus:border-human outline-none font-sans cursor-pointer transition-all appearance-none w-24 sm:w-32 text-ellipsis overflow-hidden"
+                  className="bg-black border border-neutral-800 hover:border-human/50 rounded pl-2 pr-6 py-1.5 text-base sm:text-[11px] text-signal focus:border-human outline-none font-sans cursor-pointer transition-all appearance-none w-24 sm:w-32 text-ellipsis overflow-hidden"
                 >
                   {SEN_LANGUAGES.map(language => (
                     <option key={language.code} value={language.code}>{language.label}</option>

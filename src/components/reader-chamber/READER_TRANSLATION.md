@@ -9,7 +9,7 @@ Reader translation is a **derived reading layer**. It never changes a story.
 | What it produces       | The chapter itself                               | A display overlay over that chapter             |
 | Language               | `HarnessStory.originalLanguage`, permanent       | Whatever a reader currently asks for            |
 | Which skill            | The story's equipped Translation slot            | A skill declaring the target language **and** the `reader` application |
-| Where it is stored     | Chapter blocks, memory, media — story canon      | A cache keyed by chapter, language, source hash and skill version |
+| Where it is stored     | Chapter blocks, memory, media — story canon      | A cache keyed by chapter, language, source hash, skill ID, version and content digest |
 | If it fails            | No chapter is committed                          | The original chapter stays on screen            |
 | Reversible             | No                                               | Yes — switching back is a render change         |
 
@@ -24,6 +24,11 @@ Per story, a reader picks one of three:
 - **Original** — the story's own language. Shown immediately; no request is made.
 - **Account Default** — Default Reading Language → Interface Language → English.
 - **Specific Language** — one supported language, for this story only.
+
+A story with no saved Reader choice starts on Account Default. If that resolves
+to the story's Original Language, the original is shown immediately. If no
+compatible Reader Translation skill is available, the original remains readable
+and the Reader explains why the requested translation was not applied.
 
 Changing the account default moves only the stories left on Account Default.
 The choice lives in `ReaderPreferences.readingLanguage`, a reader preference, not
@@ -63,18 +68,19 @@ translation; the original chapter keeps every one of them.
 ## The flow
 
 `ReaderTranslationController` owns the lifecycle: resolve the skill, freeze the
-request (source chapter, target language, skill reference, selected glossary
-entries), reuse or regenerate the cache, deduplicate concurrent asks, validate,
-and save. React calls no model: the controller hands the frozen request to a
+request (source chapter, target language, complete skill identity, and the exact
+selected glossary entries with resource path/digest provenance), reuse or
+regenerate the cache, deduplicate concurrent asks, validate, and save. React calls no model: the controller hands the frozen request to a
 provider port, whose Development adapter posts to `/api/reader-translation`,
 which holds the provider key.
 
-A cached translation is reused only while its `sourceContentHash` and
-`skillVersion` still match. Either moving on makes it stale, and stale means
-regenerate — never show.
+A cached translation is reused only while its `sourceContentHash`, skill ID,
+`skillVersion`, and skill content digest still match. Multiple installed versions
+of one skill resolve to the newest. Different compatible skill identities are an
+explicit ambiguity and are never selected by inventory order.
 
 Development persistence has no migration path. `READER_TRANSLATION_SCHEMA_VERSION`
-guards the cache under `seihouse.reader.translations.v1`; anything the current
+guards the cache under `seihouse.reader.translations.v2`; anything the current
 schema cannot read is discarded.
 
 ## Language packages

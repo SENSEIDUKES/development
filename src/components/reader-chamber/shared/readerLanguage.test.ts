@@ -64,10 +64,20 @@ describe('an account default change only moves stories that follow it', () => {
 });
 
 describe('reading an untrusted saved choice', () => {
-  it('defaults an unsaved or unreadable choice to Original', () => {
+  it('defaults an unsaved or unreadable choice to Account Default', () => {
     expect(normalizeReaderLanguageChoice(undefined)).toEqual(DEFAULT_READER_LANGUAGE_CHOICE);
     expect(normalizeReaderLanguageChoice('ja')).toEqual(DEFAULT_READER_LANGUAGE_CHOICE);
     expect(normalizeReaderLanguageChoice({ mode: 'nonsense' })).toEqual(DEFAULT_READER_LANGUAGE_CHOICE);
+  });
+
+  it('applies the account default initially without changing story canon', () => {
+    const resolved = resolveReaderLanguage(normalizeReaderLanguageChoice(undefined), {
+      originalLanguage: 'ja',
+      account: { defaultReadingLanguage: 'ko' },
+    });
+
+    expect(resolved).toEqual({ language: 'ko', mode: 'account', translationRequired: true });
+    expect(story.originalLanguage).toBe('ja');
   });
 
   it('refuses a specific override that names an unsupported language', () => {

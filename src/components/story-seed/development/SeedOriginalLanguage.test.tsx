@@ -188,7 +188,7 @@ describe('reopening a saved seed restores that seed’s own language', () => {
   // brand-new seed is observed where its language first becomes durable: the
   // draft the intake workspace saves.
   const saveDraft = async () => {
-    await act(async () => { buttonNamed('Save Draft')!.click(); });
+    await act(async () => { (buttonNamed('Save Draft') ?? buttonNamed('Saved'))!.click(); });
     await act(async () => { await new Promise(resolve => setTimeout(resolve, 200)); });
   };
 
@@ -213,6 +213,19 @@ describe('reopening a saved seed restores that seed’s own language', () => {
 
     const saved = await listStorySeeds(LOCAL_WORKSHOP_STORY_SEED_OWNER_ID);
     expect(saved.map(record => record.originalLanguage)).toEqual(['th']);
+  });
+
+  it('freezes the resolved language on first save before later account-default changes', async () => {
+    resetStorySeedRepository();
+    renderWithAccountDefault('th');
+    await saveDraft();
+
+    renderWithAccountDefault('ms');
+    await saveDraft();
+
+    const saved = await listStorySeeds(LOCAL_WORKSHOP_STORY_SEED_OWNER_ID);
+    expect(saved).toHaveLength(1);
+    expect(saved[0].originalLanguage).toBe('th');
   });
 
   it('never lets a later account default overwrite a banked seed’s own language', async () => {

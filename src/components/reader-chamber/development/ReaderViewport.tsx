@@ -349,7 +349,7 @@ export function ReaderViewport({
     return map;
   }, [activeBookmarks, selectedChapter.number]);
   React.useEffect(() => {
-    if (!selectedChapter?.blocks || !activeStory) return;
+    if (isShowingTranslation || !selectedChapter?.blocks || !activeStory) return;
     let hasChanges = false;
     const newAssignments: Record<string, string> = {};
     let lastUsedUrl = "";
@@ -394,7 +394,7 @@ export function ReaderViewport({
         },
       }));
     }
-  }, [selectedChapter?.blocks, activeStory, codexHighlighter, updateStory]);
+  }, [selectedChapter?.blocks, activeStory, codexHighlighter, updateStory, isShowingTranslation]);
 
   return (
     // Vertical scrolling is owned by the document — this container only lays
@@ -422,7 +422,7 @@ export function ReaderViewport({
           className="w-full max-w-5xl mx-auto mb-6 flex items-center gap-3 rounded-lg border border-portal/25 bg-black/40 px-4 py-3 text-xs font-sans text-signal/80"
           role="status"
         >
-          {isTranslating && <Loader2 className="animate-spin text-portal shrink-0" size={14} />}
+          {isTranslating && <Loader2 className="animate-spin motion-reduce:animate-none text-portal shrink-0" size={14} />}
           <span>
             {isTranslating ? 'Preparing this chapter in your reading language…' : translationNotice}
           </span>
@@ -601,7 +601,7 @@ export function ReaderViewport({
                           : collectBlockAutoCues(sfxList, block);
                         if (!cleanText && !hasStructuredVisual) return null;
 
-                        const visualCodexTerm = block.metadata?.entities
+                        const visualCodexTerm = !isShowingTranslation ? block.metadata?.entities
                           ?.filter(entity => entity.mention === 'reveal')
                           .map(entity => codexHighlighter.resolve(entity.name))
                           .find(matched => Boolean(
@@ -611,7 +611,7 @@ export function ReaderViewport({
                               || matched.type === 'artifact'
                               || matched.type === 'location'
                             )
-                          ));
+                          )) : undefined;
                         const isSenMode = readerMode === "sen";
                         const currentParaIdx = currentNarratedBlockIndex;
                         const isPlayerPlaying = isPlayingText || isPausedText;
@@ -642,19 +642,21 @@ export function ReaderViewport({
                                 content={cleanText}
                                 system={block.system}
                                 renderProse={renderSystemProse}
-                                data-cue-type="narrative.metadata.signature"
+                                data-cue-type={isShowingTranslation ? undefined : 'narrative.metadata.signature'}
                                 data-cue-id={
                                   block.id ||
                                   `system-line-${selectedChapter.number}-${index}`
                                 }
                                 data-cue-metadata={
-                                  block.metadata
+                                  !isShowingTranslation && block.metadata
                                     ? JSON.stringify(block.metadata)
                                     : undefined
                                 }
-                                data-cue-once="true"
+                                data-cue-once={isShowingTranslation ? undefined : 'true'}
                                 {...anchorAttributes(selectedChapter.number, index, block.id, cleanText)}
-                                className={`narrative-trigger ${block.metadata ? "metadata-block" : ""}`}
+                                className={!isShowingTranslation
+                                  ? `narrative-trigger ${block.metadata ? 'metadata-block' : ''}`
+                                  : undefined}
                               />
                             </React.Fragment>
                           );
@@ -679,7 +681,7 @@ export function ReaderViewport({
                               id={`para-${index}`}
                               {...anchorAttributes(selectedChapter.number, index, block.id, cleanText)}
                             data-cue-type={
-                              block.metadata
+                              !isShowingTranslation && block.metadata
                                 ? "narrative.metadata.signature"
                                 : undefined
                             }
@@ -688,12 +690,12 @@ export function ReaderViewport({
                               `para-${selectedChapter.number}-${index}`
                             }
                             data-cue-metadata={
-                              block.metadata
+                              !isShowingTranslation && block.metadata
                                 ? JSON.stringify(block.metadata)
                                 : undefined
                             }
-                            data-cue-once="true"
-                            className={`relative group paragraph-block transition-colors duration-200 ${existingBookmark ? "custom-bookmark-bg" : ""} ${block.metadata ? "narrative-trigger metadata-block" : ""}`}
+                            data-cue-once={isShowingTranslation ? undefined : 'true'}
+                            className={`relative group paragraph-block transition-colors duration-200 ${existingBookmark ? "custom-bookmark-bg" : ""} ${!isShowingTranslation && block.metadata ? "narrative-trigger metadata-block" : ""}`}
                           >
                             {autoCueList.map((sfx, i) => (
                               <span

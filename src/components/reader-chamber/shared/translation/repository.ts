@@ -12,12 +12,21 @@ import {
   READER_TRANSLATION_SCHEMA_VERSION,
   readerTranslationKey,
   type DerivedChapterTranslation,
+  type ReaderTranslationSkillReference,
 } from './contract';
 
-export const READER_TRANSLATION_STORAGE_KEY = 'seihouse.reader.translations.v1';
+export const READER_TRANSLATION_STORAGE_KEY = 'seihouse.reader.translations.v2';
+export const MAX_CACHED_TRANSLATIONS = 24;
+
+type CacheSkillIdentity = Pick<ReaderTranslationSkillReference, 'id' | 'version' | 'contentDigest'>;
 
 export interface ReaderTranslationRepository {
-  read(storyId: string, chapterNumber: number, targetLanguage: SenLanguageCode): DerivedChapterTranslation | null;
+  read(
+    storyId: string,
+    chapterNumber: number,
+    targetLanguage: SenLanguageCode,
+    skill: CacheSkillIdentity,
+  ): DerivedChapterTranslation | null;
   write(translation: DerivedChapterTranslation): void;
   clear(): void;
 }
@@ -32,18 +41,25 @@ const isStoredTranslation = (value: unknown): value is DerivedChapterTranslation
   && typeof value.storyId === 'string'
   && typeof value.targetLanguage === 'string'
   && typeof value.sourceContentHash === 'string'
+  && typeof value.skillId === 'string'
+  && typeof value.skillVersion === 'string'
+  && typeof value.skillContentDigest === 'string'
   && Array.isArray(value.blocks);
 
 export class InMemoryReaderTranslationRepository implements ReaderTranslationRepository {
   private readonly records = new Map<string, DerivedChapterTranslation>();
 
-  read(storyId: string, chapterNumber: number, targetLanguage: SenLanguageCode) {
-    return this.records.get(readerTranslationKey(storyId, chapterNumber, targetLanguage)) ?? null;
+  read(storyId: string, chapterNumber: number, targetLanguage: SenLanguageCode, skill: CacheSkillIdentity) {
+    return this.records.get(readerTranslationKey(storyId, chapterNumber, targetLanguage, skill)) ?? null;
   }
 
   write(translation: DerivedChapterTranslation) {
     this.records.set(
-      readerTranslationKey(translation.storyId, translation.chapterNumber, translation.targetLanguage),
+      readerTranslationKey(translation.storyId, translation.chapterNumber, translation.targetLanguage, {
+        id: translation.skillId,
+        version: translation.skillVersion,
+        contentDigest: translation.skillContentDigest,
+      }),
       translation,
     );
   }
@@ -99,20 +115,32 @@ export class WebReaderTranslationRepository implements ReaderTranslationReposito
   }
 
   private save(records: Record<string, DerivedChapterTranslation>): void {
-    try {
-      this.storage?.setItem(this.storageKey, JSON.stringify(records));
-    } catch {
-      // A full or blocked store only costs the cache.
+    let entries = Object.entries(records);
+    if (entries.length > MAX_CACHED_TRANSLATIONS) {
+      entries = entries.slice(entries.length - MAX_CACHED_TRANSLATIONS);
+    }
+    while (entries.length) {
+      try {
+        this.storage?.setItem(this.storageKey, JSON.stringify(Object.fromEntries(entries)));
+        return;
+      } catch {
+        // A full store costs the oldest entries, not the newest translation.
+        entries = entries.slice(Math.max(1, Math.ceil(entries.length / 2)));
+      }
     }
   }
 
-  read(storyId: string, chapterNumber: number, targetLanguage: SenLanguageCode) {
-    return this.load()[readerTranslationKey(storyId, chapterNumber, targetLanguage)] ?? null;
+  read(storyId: string, chapterNumber: number, targetLanguage: SenLanguageCode, skill: CacheSkillIdentity) {
+    return this.load()[readerTranslationKey(storyId, chapterNumber, targetLanguage, skill)] ?? null;
   }
 
   write(translation: DerivedChapterTranslation) {
     const records = this.load();
-    records[readerTranslationKey(translation.storyId, translation.chapterNumber, translation.targetLanguage)] = translation;
+    records[readerTranslationKey(translation.storyId, translation.chapterNumber, translation.targetLanguage, {
+      id: translation.skillId,
+      version: translation.skillVersion,
+      contentDigest: translation.skillContentDigest,
+    })] = translation;
     this.save(records);
   }
 

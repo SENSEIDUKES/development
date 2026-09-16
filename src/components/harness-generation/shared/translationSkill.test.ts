@@ -113,7 +113,19 @@ describe('Translation glossary validation', () => {
     expect(() => validateTranslationGlossaryResource(glossary([
       { term: 'Qi', translation: '気' },
       { term: 'qi', translation: '氣' },
-    ]), 'ja')).toThrow('more than once');
+    ]), 'ja')).toThrow('collides');
+  });
+
+  it('rejects normalized collisions across canonical terms and aliases', () => {
+    expect(() => validateTranslationGlossaryResource(glossary([
+      { term: 'Qi', aliases: ['Spiritual Energy'], translation: '気' },
+      { term: ' spiritual energy ', translation: '霊力' },
+    ]), 'ja')).toThrow('collides');
+
+    expect(() => validateTranslationGlossaryResource(glossary([
+      { term: 'Qi', aliases: ['energy'], translation: '気' },
+      { term: 'Dantian', aliases: ['ENERGY'], translation: '丹田' },
+    ]), 'ja')).toThrow('collides');
   });
 
   it('rejects malformed entries and missing required values', () => {
@@ -183,6 +195,19 @@ describe('glossary selection against the frozen generation inputs', () => {
 
     expect(selectTranslationGlossaryEntries(resource, source)).toEqual([]);
   });
+
+  it('never matches machine-facing packet keys or identifiers', () => {
+    const machineTerms = validateTranslationGlossaryResource(glossary([
+      { term: 'storyId', translation: 'wrong' },
+      { term: 'hctx_test', translation: 'wrong' },
+      { term: 'chapterNumber', translation: 'wrong' },
+    ]), 'ja');
+
+    expect(selectTranslationGlossaryEntries(
+      machineTerms,
+      translationMatchSource(packet('Two farmers argue about a fence.'), request()),
+    )).toEqual([]);
+  });
 });
 
 describe('CAPA Prompt delivery', () => {
@@ -194,10 +219,10 @@ describe('CAPA Prompt delivery', () => {
   const withGlossary = translationSkill({
     translation: {
       targetLanguage: 'ja',
-      glossary: validateTranslationGlossaryResource(glossary([
+      glossary: validateTranslationGlossaryResource({ ...glossary([
         { term: 'Qi', translation: '気' },
         { term: 'Heavenly Tribulation', translation: '天劫' },
-      ]), 'ja'),
+      ]), source: { path: 'assets/glossary.json', sha256: 'glossary-digest' } }, 'ja'),
     },
   });
 
@@ -227,6 +252,7 @@ describe('CAPA Prompt delivery', () => {
     expect(prompt.text).not.toContain('天劫');
     expect(prompt.translationGlossary?.entries.map(entry => entry.term)).toEqual(['Qi']);
     expect(prompt.translationGlossary?.availableEntryCount).toBe(2);
+    expect(prompt.translationGlossary?.source).toEqual({ path: 'assets/glossary.json', sha256: 'glossary-digest' });
   });
 
   it('counts the selected reference toward the CAPA Prompt budget', () => {

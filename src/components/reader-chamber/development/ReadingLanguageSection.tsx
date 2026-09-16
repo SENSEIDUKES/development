@@ -16,6 +16,8 @@ export interface ReadingLanguageSectionProps {
   accountLanguage: SenLanguageCode;
   /** The language actually on screen right now. */
   resolvedLanguage: SenLanguageCode;
+  /** The language requested for the current reading view. */
+  requestedLanguage: SenLanguageCode;
   /** Set when the requested language could not be shown. */
   notice?: string | null;
   isTranslating?: boolean;
@@ -41,6 +43,7 @@ export const ReadingLanguageSection: React.FC<ReadingLanguageSectionProps> = ({
   originalLanguage,
   accountLanguage,
   resolvedLanguage,
+  requestedLanguage,
   notice,
   isTranslating,
 }) => {
@@ -97,7 +100,7 @@ export const ReadingLanguageSection: React.FC<ReadingLanguageSectionProps> = ({
               mode: 'specific',
               language: normalizeSenLanguageCode(event.target.value, specificLanguage),
             })}
-            className="min-h-11 w-full rounded-lg border border-neutral-800 bg-black/40 px-3 text-sm font-normal normal-case tracking-normal text-signal outline-none focus:border-portal/60"
+            className="min-h-11 w-full rounded-lg border border-neutral-800 bg-black/40 px-3 text-base font-normal normal-case tracking-normal text-signal outline-none focus:border-portal/60 sm:text-sm"
           >
             {SEN_LANGUAGES.map(language => (
               <option key={language.code} value={language.code}>{language.label}</option>
@@ -108,7 +111,7 @@ export const ReadingLanguageSection: React.FC<ReadingLanguageSectionProps> = ({
 
       <p className="text-[11px] leading-relaxed text-neutral-500" data-reading-language={resolvedLanguage}>
         {isTranslating
-          ? `Preparing ${getSenLanguageLabel(resolvedLanguage)}…`
+          ? `Preparing ${getSenLanguageLabel(requestedLanguage)}…`
           : notice
             ? notice
             : resolvedLanguage === originalLanguage

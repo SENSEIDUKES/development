@@ -321,6 +321,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       && seedOwnerIdRef.current === ownerAtStart
       && (activeRecord ? currentRecord?.id === activeRecord.id : currentRecord === null);
     rememberSeed(saved, stillActive);
+    if (stillActive) resolveOriginalLanguage(saved.originalLanguage);
     if (saved.blueprint && stillActive) {
       // Persistence can be remote. Merge only trusted record metadata into
       // the latest state so edits made while this request was in flight are

@@ -1025,6 +1025,7 @@ export default function ReaderChamber({
               originalLanguage: storyOriginalLanguage,
               accountLanguage: accountReadingLanguage,
               resolvedLanguage: displayLanguage,
+              requestedLanguage: preferredLang,
               notice: chapterTranslation.status === 'unavailable' || chapterTranslation.status === 'failed'
                 ? translationError
                 : null,

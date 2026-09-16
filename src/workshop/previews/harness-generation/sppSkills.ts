@@ -103,7 +103,9 @@ export function createHarnessSppSkill(
     }
     : undefined;
   return validateHarnessSkillManifest({
-    id: `spp:${encodeURIComponent(manifest.id)}:${encodeURIComponent(path)}:${slot}`,
+    id: `spp:${encodeURIComponent(manifest.id)}:${encodeURIComponent(path)}:${slot}${translationSelection
+      ? `:${translationSelection.targetLanguage}:${encodeURIComponent(translationSelection.glossaryPath ?? 'no-glossary')}`
+      : ''}`,
     version: manifest.version,
     name: `${manifest.name.trim()} · ${path.split('/').pop()}`,
     description: manifest.description || `Instructions from ${manifest.name.trim()}`,

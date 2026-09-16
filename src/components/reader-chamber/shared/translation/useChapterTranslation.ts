@@ -17,6 +17,7 @@ import {
 } from './controller';
 import { ReaderTranslationHttpProvider } from './provider';
 import { WebReaderTranslationRepository } from './repository';
+import { readerTranslationSkillContentDigest } from './skill';
 
 export type ChapterTranslationStatus =
   | 'original'
@@ -87,16 +88,16 @@ export function useChapterTranslation({
     [chapter.blocks, chapter.title],
   );
   const skillSignature = useMemo(
-    () => skills.map(skill => `${skill.id}@${skill.version}`).join(','),
+    () => skills.map(skill => `${skill.id}@${skill.version}#${readerTranslationSkillContentDigest(skill)}`).join(','),
     [skills],
   );
 
   useEffect(() => {
+    const request = ++requestRef.current;
     if (targetLanguage === story.originalLanguage) {
       setState(ORIGINAL);
       return;
     }
-    const request = ++requestRef.current;
     setState(current => (
       current.status === 'translating' ? current : { status: 'translating', translation: null, message: null }
     ));

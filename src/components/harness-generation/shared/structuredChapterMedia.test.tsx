@@ -9,6 +9,7 @@ import { HarnessGenerationController } from './controller';
 import { acceptHarnessModelResponse } from './responseAcceptance';
 import { InMemoryHarnessGenerationRepository } from './repository';
 import { createHarnessSenStory } from './senAdapter';
+import { HARNESS_GENERATION_SCHEMA_VERSION } from './types';
 import type {
   HarnessGenerationModelAdapter,
   HarnessGenerationRequest,
@@ -218,7 +219,7 @@ describe('HARNESS canonical structured chapter and media path', () => {
 
     await controller.generateNextChapter(story.id, 'fixture');
     const committed = controller.snapshot();
-    expect(committed.schemaVersion).toBe(8);
+    expect(committed.schemaVersion).toBe(HARNESS_GENERATION_SCHEMA_VERSION);
     expect(committed.attempts[0].rawProviderResponse).toBe(raw);
     expect(committed.chapters[0].prose).toBe([
       'Mara held her ground as the fox growled once.',

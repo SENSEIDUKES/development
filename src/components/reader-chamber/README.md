@@ -4,12 +4,13 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `f89cb41`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-09-13
+- **Last Workshop update:** 2026-09-16
 - **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-09-16:** Corrected Reader translation ordering, account-default initialization, deterministic skill selection, complete skill/cache identities, glossary provenance, source-cue suppression, and safe Original fallback behavior.
 - **2026-09-15:** Reused the neutral SEN arc-position type. Alter Fate presentation retains its existing Workshop contract; Arc Goal routing is not part of it.
 
 - **2026-09-11:** Reused the source-owned SEN Settings mark in both Reader Settings entry and panel heading. Settings behavior, controls, and the locked reference remain unchanged.

@@ -266,6 +266,9 @@ describe('rendering canonical and translated chapters through the same Reader', 
 
     // Those positions no longer exist after translation, so nothing is anchored.
     expect(worldCueAnchors()).toEqual([]);
+    expect(container.querySelectorAll('[data-cue-type="narrative.metadata.signature"]')).toHaveLength(0);
+    expect(container.querySelectorAll('[data-cue-metadata]')).toHaveLength(0);
+    expect(container.querySelectorAll('.metadata-block')).toHaveLength(0);
     expect(visibleText()).toContain('[ko] The courier drew the Ashen Sword on the mountain stair.');
   });
 

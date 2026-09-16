@@ -6,7 +6,7 @@ import type { StoryBlock } from '../../chapter-generation/shared/types';
  * persisted shape (attempt, chapter, or workspace state fields). This is a
  * development system: storage at any other version is reset, never
  * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 8 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 9 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -211,6 +211,8 @@ export interface HarnessSelectedTranslationGlossary {
   skillId: string;
   skillVersion: string;
   targetLanguage: SenLanguageCode;
+  /** Exact installed resource that produced this attempt's selected entries. */
+  source?: HarnessTranslationGlossaryResource['source'];
   entries: HarnessTranslationGlossaryEntry[];
   /** How many entries the installed resource held before selection. */
   availableEntryCount: number;

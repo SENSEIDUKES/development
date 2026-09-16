@@ -19,8 +19,9 @@ const japaneseSkill = (): HarnessSkillManifest => validateHarnessSkillManifest({
   source: { packageId: 'pkg-ja', packageVersion: '2.1.0', path: 'assets/ja.md', sha256: 'digest-ja' },
   translation: {
     targetLanguage: 'ja',
-    glossary: validateTranslationGlossaryResource({
-      targetLanguage: 'ja',
+      glossary: validateTranslationGlossaryResource({
+        targetLanguage: 'ja',
+        source: { path: 'assets/glossary.json', sha256: 'glossary-digest-ja' },
       entries: [
         { term: 'Qi', translation: '気' },
         { term: 'Jade Slip', translation: '玉簡' },
@@ -100,6 +101,7 @@ describe('Translation skill through a real generation attempt', () => {
     });
     expect(attempt.capaPrompt.translationGlossary).toMatchObject({
       skillId: skill.id, skillVersion: '2.1.0', targetLanguage: 'ja', availableEntryCount: 3,
+      source: { path: 'assets/glossary.json', sha256: 'glossary-digest-ja' },
     });
     expect(attempt.capaPrompt.translationGlossary?.entries.map(entry => entry.term)).toEqual(['Qi', 'Jade Slip']);
   });

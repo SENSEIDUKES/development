@@ -40,14 +40,12 @@ export const CAPA_SCHEMA: readonly CapaSlotDefinition[] = [
   { id: 'style', label: 'Style', description: 'Shapes prose tradition, voice, rhythm, and presentation.' },
   { id: 'accessibility', label: 'Accessibility', description: 'Adapts reading and generation for specific access needs.' },
   { id: 'translation', label: 'Translation', description: 'Adds language and cultural-translation capability.' },
-  { id: 'media', label: 'Media', description: 'Connects music, sound, imagery, and other story media packs.' },
 ] as const;
 
 const HARNESS_SKILL_APPLICATIONS: readonly HarnessSkillApplication[] = [
   'generation',
   'post-commit',
   'reader',
-  'media-runtime',
 ];
 
 export const harnessSkillKey = (reference: HarnessSkillReference) => `${reference.id}@${reference.version}`;
@@ -110,6 +108,11 @@ export const freezeHarnessSkillLoadout = (
   catalog: ReadonlyMap<string, HarnessSkillManifest>,
   capturedAt: string,
 ): HarnessSkillLoadoutSnapshot => {
+  const unsupportedSlot = Object.keys(story.skillLoadout ?? {})
+    .find(slot => !CAPA_SCHEMA.some(definition => definition.id === slot));
+  if (unsupportedSlot) {
+    throw new Error(`${unsupportedSlot} is not a supported CAPA skill slot.`);
+  }
   const skills = CAPA_SCHEMA.flatMap(slot => {
     const reference = story.skillLoadout?.[slot.id];
     if (!reference) return [];
@@ -171,6 +174,10 @@ export const assembleCapaPrompt = (
     immediateChapterRequest: ImmediateChapterRequest;
   },
 ): CapaPrompt => {
+  const unsupportedSkill = loadout.skills.find(skill => !CAPA_SCHEMA.some(slot => slot.id === skill.slot));
+  if (unsupportedSkill) {
+    throw new Error(`${unsupportedSkill.slot} is not a supported CAPA skill slot.`);
+  }
   const ordered = CAPA_SCHEMA.flatMap(slot => loadout.skills.filter(skill => skill.slot === slot.id));
   const author = ordered.find(skill => skill.slot === 'author' && isAuthoringSkill(skill));
   if (!author) throw new Error('Harness Generation requires an equipped Author skill.');

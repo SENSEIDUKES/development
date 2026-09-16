@@ -7,7 +7,6 @@ import {
   FileText,
   ListTree,
   LoaderCircle,
-  Music2,
   Pause,
   Play,
   Plus,
@@ -422,9 +421,7 @@ function SkillLoadoutPanel({
             <article key={slot.id} className={`rounded-xl border p-4 ${selected ? 'border-cyan-300/30 bg-cyan-400/[0.07]' : missing ? 'border-human/30 bg-human-brand/[0.06]' : 'border-white/10 bg-black/20'}`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-2">
-                  {slot.id === 'media'
-                    ? <Music2 size={17} className="shrink-0 text-gold-accent" aria-hidden="true" />
-                    : <Puzzle size={16} className="shrink-0 text-cyan-200/75" aria-hidden="true" />}
+                  <Puzzle size={16} className="shrink-0 text-cyan-200/75" aria-hidden="true" />
                   <h3 className="text-sm font-semibold text-white">{slot.label}</h3>
                 </div>
                 <span className={`shrink-0 font-mono text-[9px] uppercase tracking-[0.12em] ${selected ? 'text-cyan-100' : missing ? 'text-human' : 'text-neutral-500'}`}>

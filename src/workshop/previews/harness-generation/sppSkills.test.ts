@@ -5,7 +5,7 @@ import { HarnessGenerationController } from '../../../components/harness-generat
 import { InMemoryHarnessGenerationRepository } from '../../../components/harness-generation/shared/repository';
 import type { HarnessGenerationResponse } from '../../../components/harness-generation/shared/types';
 import { handleHarnessGenerationHttp } from '../../../server/harness-generation/http';
-import { createHarnessSppSkill, inspectHarnessSpp, loadHarnessSppSkills, readHarnessSppText, saveHarnessSppSkill } from './sppSkills';
+import { createHarnessSppSkill, inspectHarnessSpp, loadHarnessSppSkills, readHarnessSppText, saveHarnessSppSkill, SPP_SKILL_STORAGE_KEY } from './sppSkills';
 
 const authorBytes = () => new Uint8Array(readFileSync(new URL('./fixtures/SEN-AUTHOR.spp', import.meta.url)));
 const storage = () => {
@@ -13,7 +13,27 @@ const storage = () => {
   return { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
 };
 
+const rejectedStaleMediaSkill = {
+  id: 'spp:stale:media',
+  version: '1.0.0',
+  name: 'Stale Media',
+  description: 'Old local data.',
+  slot: 'media',
+  applications: ['generation'],
+  instructions: 'Old instructions.',
+};
+
 describe('SPP intake through Harness skills', () => {
+  it('ignores the stale pre-separation inventory instead of migrating Media-era saved skills', () => {
+    const stale = {
+      getItem: (key: string) => key === 'seihouse.harness.imported-skills.v2'
+        ? JSON.stringify([rejectedStaleMediaSkill])
+        : null,
+    };
+    expect(SPP_SKILL_STORAGE_KEY).toBe('seihouse.harness.imported-skills.v3');
+    expect(loadHarnessSppSkills(stale)).toEqual([]);
+  });
+
   it('passes the real author package through saved inventory, story slot, HTTP request and provider prompt into a committed chapter', async () => {
     const content = await inspectHarnessSpp(authorBytes());
     const path = content.manifest.files[0].path;
@@ -59,6 +79,11 @@ describe('SPP intake through Harness skills', () => {
     ] });
     const content = await inspectHarnessSpp(new Blob([new Uint8Array(input)]));
     expect(createHarnessSppSkill(content, 'assets/author-instructions.md', 'accessibility')).toMatchObject({ slot: 'accessibility', instructions: 'Use short sentences.' });
+    expect(() => createHarnessSppSkill(
+      content,
+      'assets/author-instructions.md',
+      'media' as Parameters<typeof createHarnessSppSkill>[2],
+    )).toThrow('unsupported slot');
     expect(() => readHarnessSppText(content, 'assets/image.bin')).toThrow('Only plain text');
     expect(() => readHarnessSppText(content, 'missing.md')).toThrow('Select a file');
   });

@@ -218,7 +218,7 @@ describe('HARNESS canonical structured chapter and media path', () => {
 
     await controller.generateNextChapter(story.id, 'fixture');
     const committed = controller.snapshot();
-    expect(committed.schemaVersion).toBe(6);
+    expect(committed.schemaVersion).toBe(8);
     expect(committed.attempts[0].rawProviderResponse).toBe(raw);
     expect(committed.chapters[0].prose).toBe([
       'Mara held her ground as the fox growled once.',

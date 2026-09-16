@@ -1,5 +1,11 @@
 import { CloudOff, RefreshCw, Cloud, Globe, Sliders, AlertTriangle, BookOpen } from 'lucide-react';
 import {
+  DEFAULT_SEN_LANGUAGE_CODE,
+  SEN_LANGUAGES,
+  normalizeSenLanguageCode,
+  type SenLanguageCode,
+} from '../../../lib/language';
+import {
   ChapterWritingStyle,
   UserProfile as UserProfileType,
 } from '../shared/types';
@@ -14,7 +20,7 @@ interface UserProfileSettingsPanelProps {
   lastSavedTime: Date | null;
   formData: Partial<UserProfileType>;
   profile: UserProfileType | null;
-  handleLanguageChangeDirect: (name: 'preferredLanguage' | 'defaultTranslationLanguage', value: string) => void;
+  handleLanguageChangeDirect: (name: 'interfaceLanguage' | 'defaultReadingLanguage', value: SenLanguageCode) => void;
   handleDefaultChapterWritingStyleChange: (value: ChapterWritingStyle) => Promise<void>;
   isSavingChapterWritingStyle: boolean;
 }
@@ -130,23 +136,15 @@ export function UserProfileSettingsPanel({
                 </div>
               </div>
               <div className="relative shrink-0">
-                <select 
-                  name="preferredLanguage" 
-                  value={formData.preferredLanguage || profile?.preferredLanguage || 'English'} 
-                  onChange={(e) => handleLanguageChangeDirect('preferredLanguage', e.target.value)}
+                <select
+                  name="interfaceLanguage"
+                  value={formData.interfaceLanguage || profile?.interfaceLanguage || DEFAULT_SEN_LANGUAGE_CODE}
+                  onChange={(e) => handleLanguageChangeDirect('interfaceLanguage', normalizeSenLanguageCode(e.target.value))}
                   className="bg-black border border-neutral-800 hover:border-portal/50 rounded pl-2 pr-6 py-1.5 text-[11px] text-signal focus:border-portal outline-none font-sans cursor-pointer transition-all appearance-none w-24 sm:w-32 text-ellipsis overflow-hidden"
                 >
-                  <option value="English">English</option>
-                  <option value="Spanish">Spanish</option>
-                  <option value="Simplified Chinese (简体中文)">Simplified Chinese (简体中文)</option>
-                  <option value="Traditional Chinese (繁體中文)">Traditional Chinese (繁體中文)</option>
-                  <option value="Japanese (日本語)">Japanese (日本語)</option>
-                  <option value="Korean (한국어)">Korean (한국어)</option>
-                  <option value="Vietnamese (Tiếng Việt)">Vietnamese (Tiếng Việt)</option>
-                  <option value="Indonesian (Bahasa Indonesia)">Indonesian (Bahasa Indonesia)</option>
-                  <option value="Thai (ภาษาไทย)">Thai (ภาษาไทย)</option>
-                  <option value="Tagalog (Filipino)">Tagalog (Filipino)</option>
-                  <option value="Malay (Bahasa Melayu)">Malay (Bahasa Melayu)</option>
+                  {SEN_LANGUAGES.map(language => (
+                    <option key={language.code} value={language.code}>{language.label}</option>
+                  ))}
                 </select>
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500 text-[9px]">▼</div>
               </div>
@@ -161,23 +159,15 @@ export function UserProfileSettingsPanel({
                 </div>
               </div>
               <div className="relative shrink-0">
-                <select 
-                  name="defaultTranslationLanguage" 
-                  value={formData.defaultTranslationLanguage || profile?.defaultTranslationLanguage || 'English'} 
-                  onChange={(e) => handleLanguageChangeDirect('defaultTranslationLanguage', e.target.value)}
+                <select
+                  name="defaultReadingLanguage"
+                  value={formData.defaultReadingLanguage || profile?.defaultReadingLanguage || DEFAULT_SEN_LANGUAGE_CODE}
+                  onChange={(e) => handleLanguageChangeDirect('defaultReadingLanguage', normalizeSenLanguageCode(e.target.value))}
                   className="bg-black border border-neutral-800 hover:border-human/50 rounded pl-2 pr-6 py-1.5 text-[11px] text-signal focus:border-human outline-none font-sans cursor-pointer transition-all appearance-none w-24 sm:w-32 text-ellipsis overflow-hidden"
                 >
-                  <option value="English">English</option>
-                  <option value="Spanish">Spanish</option>
-                  <option value="Simplified Chinese (简体中文)">Simplified Chinese (简体中文)</option>
-                  <option value="Traditional Chinese (繁體中文)">Traditional Chinese (繁體中文)</option>
-                  <option value="Japanese (日本語)">Japanese (日本語)</option>
-                  <option value="Korean (한국어)">Korean (한국어)</option>
-                  <option value="Vietnamese (Tiếng Việt)">Vietnamese (Tiếng Việt)</option>
-                  <option value="Indonesian (Bahasa Indonesia)">Indonesian (Bahasa Indonesia)</option>
-                  <option value="Thai (ภาษาไทย)">Thai (ภาษาไทย)</option>
-                  <option value="Tagalog (Filipino)">Tagalog (Filipino)</option>
-                  <option value="Malay (Bahasa Melayu)">Malay (Bahasa Melayu)</option>
+                  {SEN_LANGUAGES.map(language => (
+                    <option key={language.code} value={language.code}>{language.label}</option>
+                  ))}
                 </select>
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500 text-[9px]">▼</div>
               </div>

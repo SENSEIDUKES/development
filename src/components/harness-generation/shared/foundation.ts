@@ -1,4 +1,5 @@
 import { validateArcPlan } from '../../arc-goals/shared/arcGoals';
+import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import { cloneHarnessValue, defaultHarnessRuntime, emptyStoryHead, stableHarnessId, type HarnessRuntime } from './ids';
 import type {
   HarnessStory,
@@ -87,6 +88,7 @@ export const findStory = (state: HarnessWorkspaceState, storyId: string): Harnes
 export const createHarnessStory = (
   state: HarnessWorkspaceState,
   input: StoryFoundationInput,
+  originalLanguage: SenLanguageCode = DEFAULT_SEN_LANGUAGE_CODE,
   runtime: HarnessRuntime = defaultHarnessRuntime,
 ): { state: HarnessWorkspaceState; story: HarnessStory; foundation: StoryFoundationRevision } => {
   const normalizedInput = normalizeStoryFoundationInput(input);
@@ -102,6 +104,7 @@ export const createHarnessStory = (
   const story: HarnessStory = {
     id: storyId,
     title: titleFromFoundation(normalizedInput),
+    originalLanguage,
     createdAt,
     updatedAt: createdAt,
     activeFoundationRevisionId: foundation.id,
@@ -139,6 +142,8 @@ export const reviseStoryFoundation = (
     createdAt,
     input: normalizedInput,
   };
+  // A revision replaces Foundation content only. `originalLanguage` is story
+  // identity and carries over untouched; no Foundation field can express it.
   const revisedStory: HarnessStory = {
     ...story,
     title: titleFromFoundation(normalizedInput),

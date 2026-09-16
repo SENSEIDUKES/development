@@ -1,4 +1,5 @@
 import { createArcChapterPosition, editArcPlan, validateArcPlan, type ArcPlan } from '../../arc-goals/shared/arcGoals';
+import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import { arcDeadlineFailure, commitHarnessArc, needsArcPlan, readArcReply } from './arcState';
 import {
   createHarnessStory,
@@ -7,6 +8,7 @@ import {
   reviseStoryFoundation,
 } from './foundation';
 import { compileStoryInformationPacket } from './context';
+import { isTranslationSkillCompatible, translationCompatibilityError } from './translationSkill';
 import { buildImmediateChapterRequest } from './immediateChapterRequest';
 import { appendHarnessCorrection, type AppendHarnessCorrectionInput } from './canonicalState';
 import { HarnessCapabilityRegistry } from './capabilities';
@@ -252,9 +254,12 @@ export class HarnessGenerationController {
     return this.snapshot();
   }
 
-  async createStory(input: StoryFoundationInput): Promise<HarnessStory> {
+  async createStory(
+    input: StoryFoundationInput,
+    originalLanguage: SenLanguageCode = DEFAULT_SEN_LANGUAGE_CODE,
+  ): Promise<HarnessStory> {
     this.assertHydrated();
-    const created = createHarnessStory(this.state, input, this.runtime);
+    const created = createHarnessStory(this.state, input, originalLanguage, this.runtime);
     created.story.skillLoadout = {
       author: {
         id: SEN_NOVEL_AUTHOR_SKILL.id,
@@ -310,6 +315,9 @@ export class HarnessGenerationController {
       const manifest = resolveHarnessSkill(this.skillCatalog, reference);
       if (!manifest) throw new Error('That Harness skill is not installed in this host.');
       if (manifest.slot !== slot) throw new Error(`${manifest.name} cannot be equipped in that slot.`);
+      if (slot === 'translation' && !isTranslationSkillCompatible(manifest, story.originalLanguage)) {
+        throw new Error(translationCompatibilityError(manifest, story.originalLanguage));
+      }
       loadout[slot] = cloneHarnessValue(reference);
     }
     story.skillLoadout = loadout;
@@ -510,9 +518,15 @@ export class HarnessGenerationController {
     // The HARNESS prepares the two Generation Model Call inputs separately:
     // the CAPA Prompt (how the model authors) and the Story Information
     // Packet (what it authors), plus the Immediate Chapter Request.
-    const capaPrompt = assembleCapaPrompt(freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt));
+    // Story Information and the Immediate Chapter Request are frozen first so
+    // an equipped Translation glossary is selected against exactly the inputs
+    // this attempt sends, and replays with them.
     const storyInformation = compileStoryInformationPacket(this.state, story, foundation, attemptId, this.runtime);
     const immediateChapterRequest = buildImmediateChapterRequest(story);
+    const capaPrompt = assembleCapaPrompt(
+      freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt),
+      { storyInformation, immediateChapterRequest },
+    );
     const attempt: HarnessGenerationAttempt = {
       id: attemptId,
       storyId,

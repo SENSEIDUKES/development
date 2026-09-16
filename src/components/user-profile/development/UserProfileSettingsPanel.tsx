@@ -26,6 +26,11 @@ import {
   SEISelect,
   SEISwitch,
 } from '@seihouse/ui';
+import {
+  DEFAULT_SEN_LANGUAGE_CODE,
+  SEN_LANGUAGES,
+  normalizeSenLanguageCode,
+} from '../../../lib/language';
 import type { AppUser, ChapterWritingStyle, Story } from '../shared/types';
 import { useUserProfileServices, type UserProfileController } from '../shared/userProfileServices';
 import { CHAPTER_WRITING_STYLE_OPTIONS, normalizeChapterWritingStyle } from './chapterWritingStyle';
@@ -53,21 +58,6 @@ import {
   profileRadioTabIndex,
 } from './radioGroupKeyboard';
 import { SENExitIcon, SENProfileIcon } from '../../library-shell/development/SENGlobalIcon';
-
-/** The persisted language option values, exactly as production stores them. */
-const LANGUAGE_OPTIONS = [
-  'English',
-  'Spanish',
-  'Simplified Chinese (简体中文)',
-  'Traditional Chinese (繁體中文)',
-  'Japanese (日本語)',
-  'Korean (한국어)',
-  'Vietnamese (Tiếng Việt)',
-  'Indonesian (Bahasa Indonesia)',
-  'Thai (ภาษาไทย)',
-  'Tagalog (Filipino)',
-  'Malay (Bahasa Melayu)',
-] as const;
 
 const IDENTITY_FIELDS = ['username', 'displayName', 'displayNameColor'] as const;
 
@@ -477,32 +467,32 @@ export function UserProfileSettingsPanel({
             </SEIDisclosure>
 
             {/* ---- Language -------------------------------------------------- */}
-            <SEIDisclosure value="language" heading="Language" icon={Globe} supportingText="Interface dialect and automatic translation.">
+            <SEIDisclosure value="language" heading="Language" icon={Globe} supportingText="Interface language and default reading language.">
               <div className="space-y-3 pt-1">
-                <SEIField label="Preferred Language" htmlFor="cave-preferred-language" helperText="Active UI dialect" size="compact">
+                <SEIField label="Interface Language" htmlFor="cave-interface-language" helperText="Language of the application itself" size="compact">
                   <SEISelect
-                    id="cave-preferred-language"
-                    name="preferredLanguage"
+                    id="cave-interface-language"
+                    name="interfaceLanguage"
                     size="compact"
                     className="!h-11 sm:!h-11"
                     disabled={!profile}
-                    value={formData.preferredLanguage || profile?.preferredLanguage || 'English'}
-                    onChange={event => handleLanguageChangeDirect('preferredLanguage', event.target.value)}
+                    value={formData.interfaceLanguage || profile?.interfaceLanguage || DEFAULT_SEN_LANGUAGE_CODE}
+                    onChange={event => handleLanguageChangeDirect('interfaceLanguage', normalizeSenLanguageCode(event.target.value))}
                   >
-                    {LANGUAGE_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}
+                    {SEN_LANGUAGES.map(language => <option key={language.code} value={language.code}>{language.label}</option>)}
                   </SEISelect>
                 </SEIField>
-                <SEIField label="Translation Default" htmlFor="cave-translation-language" helperText="Automatic translation" size="compact">
+                <SEIField label="Default Reading Language" htmlFor="cave-reading-language" helperText="Language stories are read in by default" size="compact">
                   <SEISelect
-                    id="cave-translation-language"
-                    name="defaultTranslationLanguage"
+                    id="cave-reading-language"
+                    name="defaultReadingLanguage"
                     size="compact"
                     className="!h-11 sm:!h-11"
                     disabled={!profile}
-                    value={formData.defaultTranslationLanguage || profile?.defaultTranslationLanguage || 'English'}
-                    onChange={event => handleLanguageChangeDirect('defaultTranslationLanguage', event.target.value)}
+                    value={formData.defaultReadingLanguage || profile?.defaultReadingLanguage || DEFAULT_SEN_LANGUAGE_CODE}
+                    onChange={event => handleLanguageChangeDirect('defaultReadingLanguage', normalizeSenLanguageCode(event.target.value))}
                   >
-                    {LANGUAGE_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}
+                    {SEN_LANGUAGES.map(language => <option key={language.code} value={language.code}>{language.label}</option>)}
                   </SEISelect>
                 </SEIField>
                 <p className="font-sans text-[10px] text-neutral-400">

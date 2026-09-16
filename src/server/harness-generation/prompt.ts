@@ -250,6 +250,8 @@ export const HARNESS_RESPONSE_CONTRACT = [
 /** Presents the Story Information Packet as generation content. Source IDs identify evidence, never model-owned output. */
 export const presentStoryInformationPacket = (packet: StoryInformationPacket) => [
   'STORY INFORMATION PACKET (story data selected and frozen by the Harness; not authoring instructions)',
+  'STORY ORIGINAL LANGUAGE (permanent story identity)',
+  JSON.stringify({ originalLanguage: packet.originalLanguage }, null, 2),
   'ARC GOAL REQUIREMENT (authoritative frozen pacing instruction)',
   JSON.stringify(packet.arc, null, 2),
   'AUTHOR STORY FOUNDATION',

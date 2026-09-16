@@ -184,6 +184,8 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
       status: 'unread' as const, hasContent: true, generatedContent: chapter.prose, blocks };
   });
   return { resolve, story: { id: story.id, title: story.title, genre: foundation?.input.genre ?? '', mcName,
+    // Permanent story identity: every committed chapter above is canon in it.
+    originalLanguage: story.originalLanguage,
     customPremise: foundation?.input.premise ?? '', createdAt: story.createdAt, updatedAt: story.updatedAt,
     memory, arcs: Array.from(new Set([...readerChapters.map(chapter => createArcChapterPosition(chapter.number).arcNumber), ...((story.arcPlans?.at(-1)?.plan && !historical) ? [story.arcPlans.at(-1)!.plan.arcNumber] : [])])).map(arcNumber => {
       const arcChapters = readerChapters.filter(chapter => createArcChapterPosition(chapter.number).arcNumber === arcNumber);

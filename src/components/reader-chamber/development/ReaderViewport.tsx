@@ -8,7 +8,7 @@ import {
   SystemBlock,
 } from '@seihouse/sen/cards';
 import { SYSTEM_COLORS_LEGEND } from '@seihouse/sen/color-codes';
-import { ReaderChapter, StoryWorld, Bookmark } from '../shared/types';
+import { ReaderChapter, StoryBlock, StoryWorld, Bookmark } from '../shared/types';
 import { extractSFXCues } from '../shared/readerPlayback';
 import { collectBlockAutoCues } from '../shared/autoCuePolicy';
 import { useAppStore } from '../shared/stubs';
@@ -16,7 +16,8 @@ import { ReaderFateAlerts } from './ReaderFateAlerts';
 import { SystemColorLegend } from './SystemColorLegend';
 import { anchorAttributes } from '../shared/cinematicScroll/anchors';
 import { ContextInspector } from './ContextInspector';
-import { getReaderTypography, getReadingDirection } from '../shared/readerTypography';
+import { getReaderTypography } from '../shared/readerTypography';
+import { getSenTextDirection, type SenLanguageCode } from '../../../lib/language';
 import { createCodexHighlighter, splitByCodexTerms } from '../../reader-codex/shared/codexHighlighting';
 import { InlineAudioText } from './InlineAudio';
 import type { ResolvedAudioMoment } from '../../../audio/inlineAudio';
@@ -57,7 +58,15 @@ interface ReaderViewportProps {
   handleRemoveBookmark: (chapterNum: number, paraIdx: number) => void;
   handleSaveBookmark: (paraIdx: number, excerpt: string, noteText: string) => void;
   
-  activeTranslationContent: string | null;
+  /** Canonical blocks, or canonical blocks with a translated overlay merged in. */
+  displayBlocks: StoryBlock[] | undefined;
+  displayTitle: string;
+  /** The language actually rendered — original or translated, never assumed. */
+  displayLanguage: SenLanguageCode;
+  /** True while a derived translation is on screen instead of canon. */
+  isShowingTranslation: boolean;
+  /** Why a requested language is not on screen, when it is not. */
+  translationNotice: string | null;
   renderHighlightedText: (text: string, paragraphIndex: number) => React.ReactNode;
   getFocusClass: (paraIdx: number) => string;
   
@@ -113,7 +122,11 @@ export function ReaderViewport({
   setBookmarkNoteText,
   handleRemoveBookmark,
   handleSaveBookmark,
-  activeTranslationContent,
+  displayBlocks,
+  displayTitle,
+  displayLanguage,
+  isShowingTranslation,
+  translationNotice,
   renderHighlightedText,
   getFocusClass,
   navigatePrev,
@@ -132,9 +145,14 @@ export function ReaderViewport({
   hasSystemBlocks,
   chapters,
 }: ReaderViewportProps) {
-  const readingLanguage = activeTranslationContent ? preferredLang : 'en';
+  const readingLanguage = displayLanguage;
   const typography = getReaderTypography(currentPrefs);
-  const chapterAudioMoments: readonly ResolvedAudioMoment[] = selectedChapter.audioMoments ?? [];
+  // World Cues are anchored to exact phrase positions in the source language.
+  // Those positions do not survive translation, so they are not applied to
+  // translated text; the original chapter keeps every one of them.
+  const chapterAudioMoments: readonly ResolvedAudioMoment[] = isShowingTranslation
+    ? []
+    : selectedChapter.audioMoments ?? [];
   const renderProseText = (text: string, paragraphIndex: number, blockId?: string) => {
     const blockAudioMoments = blockId
       ? chapterAudioMoments.filter(moment => moment.blockId === blockId)
@@ -397,14 +415,20 @@ export function ReaderViewport({
       onClick={handleTextClick}
     >
       <article>
-      {isTranslating ? (
-        <div className="flex flex-col items-center justify-center h-full py-32 space-y-4">
-          <Loader2 className="animate-spin text-portal w-10 h-10" />
-          <p className="text-signal font-serif italic text-lg opacity-80 mt-4">
-            Translating the Heavenly Dao...
-          </p>
+      {/* Translation is a derived layer: the canonical chapter stays readable
+          while one is being prepared, and whenever one cannot be produced. */}
+      {(isTranslating || translationNotice) && (
+        <div
+          className="w-full max-w-5xl mx-auto mb-6 flex items-center gap-3 rounded-lg border border-portal/25 bg-black/40 px-4 py-3 text-xs font-sans text-signal/80"
+          role="status"
+        >
+          {isTranslating && <Loader2 className="animate-spin text-portal shrink-0" size={14} />}
+          <span>
+            {isTranslating ? 'Preparing this chapter in your reading language…' : translationNotice}
+          </span>
         </div>
-      ) : selectedChapter.generatedContent || (selectedChapter.blocks && selectedChapter.blocks.length > 0) ? (
+      )}
+      {selectedChapter.generatedContent || (displayBlocks && displayBlocks.length > 0) ? (
         <>
           <AnimatePresence mode="wait">
             <motion.div
@@ -523,8 +547,12 @@ export function ReaderViewport({
                 <span className={`font-sc font-semibold text-[10px] tracking-[0.25em] uppercase opacity-70 ${getThemeTextClass(currentPrefs.themeOverride || "void")}`}>
                   {activeStory.title} • Chapter {selectedChapter.number}
                 </span>
-                <h1 className="font-display font-medium text-2xl sm:text-3xl text-signal mt-2 max-w-2xl mx-auto leading-snug">
-                  {selectedChapter.title}
+                <h1
+                  className="font-display font-medium text-2xl sm:text-3xl text-signal mt-2 max-w-2xl mx-auto leading-snug"
+                  lang={readingLanguage}
+                  dir={getSenTextDirection(readingLanguage)}
+                >
+                  {displayTitle}
                 </h1>
 
                 {renderChapterDivider()}
@@ -549,66 +577,15 @@ export function ReaderViewport({
                       : "font-mono"
                 } reader-prose w-full mx-auto select-text`}
                 lang={readingLanguage}
-                dir={getReadingDirection(readingLanguage)}
+                dir={getSenTextDirection(readingLanguage)}
                 style={readerProseStyle}
               >
-                {activeTranslationContent
-                  ? activeTranslationContent
-                      .split("\n\n")
-                      .map((paragraph, index) => {
-                        if (!paragraph.trim()) return null;
-                        const { cleanText, sfxList } =
-                          extractSFXCues(paragraph);
-                        const autoCueList = collectBlockAutoCues(sfxList);
-                        if (!cleanText) return null;
-                        const isSystemLine =
-                          cleanText.startsWith("[") &&
-                          cleanText.endsWith("]");
-                        if (isSystemLine) {
-                          return (
-                            <SystemBlock
-                              key={index}
-                              id={`para-${index}`}
-                              {...anchorAttributes(selectedChapter.number, index, undefined, cleanText)}
-                              content={cleanText}
-                              renderProse={renderSystemProse}
-                            />
-                          );
-                        }
-
-                        return (
-                          <div
-                            key={index}
-                            id={`para-${index}`}
-                            {...anchorAttributes(selectedChapter.number, index, undefined, cleanText)}
-                            className="group relative transition-all duration-300 border border-transparent rounded-lg p-2.5 -mx-2.5"
-                          >
-                            <div className="flex items-start">
-                              <div className="flex-1 min-w-0">
-                                {autoCueList.map((sfx, i) => (
-                                  <span
-                                    key={`sfx-${index}-${i}`}
-                                    className="narrative-trigger hidden"
-                                    aria-hidden="true"
-                                    data-cue-type="narrative.fx.play"
-                                    data-cue-id={`sfx-trans-${selectedChapter.number}-${index}-${i}`}
-                                    data-cue-block-index={index}
-                                    data-cue-value={sfx}
-                                    data-cue-once="true"
-                                  />
-                                ))}
-                                <div
-                                  className={`reader-paragraph ${getFocusClass(index)}`}
-                                >
-                                  {renderProseText(cleanText, index)}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })
-                  : selectedChapter.blocks
-                    ? selectedChapter.blocks.map((block, index) => {
+                {/* One block path for canon and translation alike: a
+                    translated chapter is the same canonical blocks with their
+                    reader-facing values swapped in, so every Reader block
+                    component, ID, and position is identical either way. */}
+                {displayBlocks
+                    ? displayBlocks.map((block, index) => {
                         const hasStructuredVisual = !!block.system;
                         if (!(block.text || '').trim() && !hasStructuredVisual) return null;
                         const { cleanText, sfxList } = extractSFXCues(
@@ -616,8 +593,12 @@ export function ReaderViewport({
                         );
                         // High-confidence [SFX] tags plus structured System
                         // events; footsteps, beasts, and environment
-                        // Foley never render a trigger span at all.
-                        const autoCueList = collectBlockAutoCues(sfxList, block);
+                        // Foley never render a trigger span at all. Tags are
+                        // written into source-language prose, so a translated
+                        // block carries none of them.
+                        const autoCueList = isShowingTranslation
+                          ? []
+                          : collectBlockAutoCues(sfxList, block);
                         if (!cleanText && !hasStructuredVisual) return null;
 
                         const visualCodexTerm = block.metadata?.entities

@@ -104,6 +104,7 @@ const sampleRecord = (id = 'seed-1'): StorySeedRecord => {
     id,
     userId: 'creator-1',
     title: 'Fallen Sect',
+    originalLanguage: 'en',
     createdAt: '2026-08-18T00:00:00.000Z',
     updatedAt: '2026-08-18T00:00:00.000Z',
     seed,
@@ -464,6 +465,8 @@ describe('Story Seed keyboard and mobile navigation', () => {
         onStartStory={vi.fn()}
         onExportSeed={vi.fn()}
         isGenerating
+        originalLanguage="en"
+        onOriginalLanguageChange={vi.fn()}
       />}</LibraryPresentationProvider>,
     ));
 

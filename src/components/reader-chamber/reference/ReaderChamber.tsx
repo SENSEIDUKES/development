@@ -1,4 +1,5 @@
 import { generateId } from '../shared/id';
+import { resolveReadingLanguageCode } from '../../../lib/language';
 import React, { useRef, useState, useEffect, useMemo } from "react";
 import {
   ShieldAlert,
@@ -143,37 +144,17 @@ export default function ReaderChamber({
     useChapterTranslation();
   const userProfile = useAppStore((state) => state.userProfile);
 
-  const getLocaleFromLanguageName = (lang: string | undefined): string => {
-    if (!lang) return "en";
-    const normalized = lang.toLowerCase();
-    if (normalized.includes("spanish")) return "es";
-    if (normalized.includes("simplified chinese") || normalized.includes("简体中文") || normalized.includes("chinese") && !normalized.includes("traditional")) return "zh-CN";
-    if (normalized.includes("traditional chinese") || normalized.includes("繁體中文")) return "zh-TW";
-    if (normalized.includes("japanese") || normalized.includes("日本語")) return "ja";
-    if (normalized.includes("french")) return "fr";
-    if (normalized.includes("portuguese")) return "pt-BR";
-    if (normalized.includes("german")) return "de";
-    if (normalized.includes("italian")) return "it";
-    if (normalized.includes("korean") || normalized.includes("한국어")) return "ko";
-    if (normalized.includes("russian")) return "ru";
-    if (normalized.includes("vietnamese") || normalized.includes("tiếng việt")) return "vi";
-    if (normalized.includes("indonesian") || normalized.includes("bahasa indonesia")) return "id";
-    if (normalized.includes("thai") || normalized.includes("ภาษาไทย")) return "th";
-    if (normalized.includes("tagalog") || normalized.includes("filipino")) return "tl";
-    if (normalized.includes("malay") || normalized.includes("bahasa melayu")) return "ms";
-    if (normalized.includes("arabic")) return "ar";
-    if (normalized.includes("hindi")) return "hi";
-    return "en";
-  };
-
-  const [preferredLang, setPreferredLang] = useState(() => {
-    return getLocaleFromLanguageName(userProfile?.defaultTranslationLanguage || userProfile?.preferredLanguage);
-  });
+  const [preferredLang, setPreferredLang] = useState(() => resolveReadingLanguageCode({
+    defaultReadingLanguage: userProfile?.defaultReadingLanguage,
+    interfaceLanguage: userProfile?.interfaceLanguage,
+  }));
 
   useEffect(() => {
-    const langCode = getLocaleFromLanguageName(userProfile?.defaultTranslationLanguage || userProfile?.preferredLanguage);
-    setPreferredLang(langCode);
-  }, [userProfile?.defaultTranslationLanguage, userProfile?.preferredLanguage]);
+    setPreferredLang(resolveReadingLanguageCode({
+      defaultReadingLanguage: userProfile?.defaultReadingLanguage,
+      interfaceLanguage: userProfile?.interfaceLanguage,
+    }));
+  }, [userProfile?.defaultReadingLanguage, userProfile?.interfaceLanguage]);
 
   const [activeTranslationContent, setActiveTranslationContent] = useState<
     string | null
@@ -289,13 +270,7 @@ export default function ReaderChamber({
         textToTranslate = selectedChapter.blocks.map(b => b.text).join('\n\n');
       }
       if (!textToTranslate) return;
-      
-      if (selectedChapter.translations?.[preferredLang]) {
-        setActiveTranslationContent(
-          selectedChapter.translations[preferredLang].content,
-        );
-        return;
-      }
+
       const result = await translateChapter(
         activeStory.id,
         selectedChapter.number,
@@ -312,7 +287,6 @@ export default function ReaderChamber({
     selectedChapter.number,
     selectedChapter.generatedContent,
     selectedChapter.blocks,
-    selectedChapter.translations,
     activeStory.id,
     translateChapter
   ]);

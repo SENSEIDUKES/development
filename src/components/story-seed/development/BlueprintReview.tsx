@@ -27,6 +27,11 @@ import {
   BlueprintWorldSettingSection,
 } from './blueprint/BlueprintReviewSections';
 import { createBlueprintMarkdown } from './blueprint/createBlueprintMarkdown';
+import {
+  SEN_LANGUAGES,
+  normalizeSenLanguageCode,
+  type SenLanguageCode,
+} from '../../../lib/language';
 
 interface BlueprintReviewProps {
   blueprint: WorldBlueprint;
@@ -37,6 +42,9 @@ interface BlueprintReviewProps {
   onStartStory: () => void;
   onExportSeed: () => void;
   isGenerating: boolean;
+  /** Permanent story identity, chosen before the story is manifested. */
+  originalLanguage: SenLanguageCode;
+  onOriginalLanguageChange: (language: SenLanguageCode) => void;
 }
 
 export const BlueprintReview = ({
@@ -48,6 +56,8 @@ export const BlueprintReview = ({
   onStartStory,
   onExportSeed,
   isGenerating,
+  originalLanguage,
+  onOriginalLanguageChange,
 }: BlueprintReviewProps) => {
   const activeAgentId = useAppStore(state => state.activeAgentId);
   const [copied, setCopied] = useState(false);
@@ -250,7 +260,32 @@ export const BlueprintReview = ({
               Refine Details
             </LibraryButton>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-end">
+              {/* Original Language is permanent story identity: it is chosen
+                  once here and frozen onto the story when it manifests. */}
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="story-original-language"
+                  className="font-sc text-[10px] font-bold uppercase tracking-[0.18em] text-neutral-400"
+                >
+                  Original Language
+                </label>
+                <select
+                  id="story-original-language"
+                  value={originalLanguage}
+                  disabled={isGenerating}
+                  onChange={event => onOriginalLanguageChange(normalizeSenLanguageCode(event.target.value))}
+                  className="h-11 min-w-44 rounded border border-neutral-800 bg-black px-2 font-sans text-[11px] text-signal outline-none transition-all hover:border-portal/50 focus:border-portal disabled:opacity-50"
+                >
+                  {SEN_LANGUAGES.map(language => (
+                    <option key={language.code} value={language.code}>{language.label}</option>
+                  ))}
+                </select>
+                <p className="max-w-44 font-sans text-[10px] leading-snug text-neutral-500">
+                  The language this story is written in. It cannot be changed later.
+                </p>
+              </div>
+
               <ManifestButton
                 size="lg"
                 fullWidth

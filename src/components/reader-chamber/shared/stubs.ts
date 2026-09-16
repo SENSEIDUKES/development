@@ -18,6 +18,7 @@
  */
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import type { SenLanguageCode } from '../../../lib/language';
 import type {
   ReaderChapter,
   ReaderCodexStoryPatchUpdater,
@@ -51,8 +52,8 @@ export interface AudioMixState {
 }
 
 export interface MockUserProfile {
-  preferredLanguage?: string;
-  defaultTranslationLanguage?: string;
+  interfaceLanguage?: SenLanguageCode;
+  defaultReadingLanguage?: SenLanguageCode;
 }
 
 export type CinematicScrollStateName = 'idle' | 'following' | 'yielded';

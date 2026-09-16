@@ -583,7 +583,7 @@ describe('Story Seed creator/story/world contract', () => {
         optional: { intendedForMatureAudiences: true, fateSurvival: { enabled: false, visibility: 'partial', pressure: 'immortal' }, plotAndTropeSettings: {} },
       },
     };
-    const saved = await createStorySeed('creator-1', draft);
+    const saved = await createStorySeed('creator-1', draft, undefined, 'en');
     expect(saved.seed.story.required).toEqual({
       storyTags: [], premise: 'Only the premise so far.', genre: '', style: '',
     });
@@ -603,7 +603,7 @@ describe('Story Seed creator/story/world contract', () => {
 
   it('saves, loads, and updates an account-owned record without touching the seed families', async () => {
     const seed = completeSeed();
-    const created = await createStorySeed('creator-1', seed);
+    const created = await createStorySeed('creator-1', seed, undefined, 'en');
     expect(await listStorySeeds('creator-1')).toEqual([created]);
     expect(created.seed.story.optional.plotAndTropeSettings).toMatchObject({
       faceSlap: 'low',
@@ -622,16 +622,16 @@ describe('Story Seed creator/story/world contract', () => {
       ...seed,
       story: { ...seed.story, required: { ...seed.story.required, premise: 'The updated required premise.' } },
     };
-    const updated = await updateStorySeed('creator-1', created, changed);
+    const updated = await updateStorySeed('creator-1', created, changed, undefined, 'en');
     expect((await listStorySeeds('creator-1'))[0].seed.story.required.premise)
       .toBe('The updated required premise.');
-    await expect(updateStorySeed('creator-2', updated, changed)).rejects.toThrow('another account');
+    await expect(updateStorySeed('creator-2', updated, changed, undefined, 'en')).rejects.toThrow('another account');
   });
 
   it('round-trips an edited Blueprint as an optional sibling artifact', async () => {
     const seed = completeSeed();
     const generated = normalizeWorldBlueprint(blueprint, seed, { creator: 'SENSEI' });
-    const created = await createStorySeed('creator-1', seed, generated);
+    const created = await createStorySeed('creator-1', seed, generated, 'en');
 
     expect(created.seed).not.toHaveProperty('blueprint');
     expect((await listStorySeeds('creator-1'))[0].blueprint).toEqual(generated);
@@ -645,26 +645,26 @@ describe('Story Seed creator/story/world contract', () => {
         appearance: 'Silver eyes, weathered sect robes, and a broken jade ring.',
       },
     };
-    const updated = await updateStorySeed('creator-1', created, seed, edited);
+    const updated = await updateStorySeed('creator-1', created, seed, edited, 'en');
     expect((await listStorySeeds('creator-1'))[0].blueprint).toMatchObject({
       logline: 'The creator-approved overall direction.',
       mainCharacter: { age: '19', appearance: 'Silver eyes, weathered sect robes, and a broken jade ring.' },
     });
 
-    await updateStorySeed('creator-1', updated, seed);
+    await updateStorySeed('creator-1', updated, seed, undefined, 'en');
     expect((await listStorySeeds('creator-1'))[0].blueprint).toMatchObject({
       logline: 'The creator-approved overall direction.',
       mainCharacter: { age: '19', appearance: 'Silver eyes, weathered sect robes, and a broken jade ring.' },
     });
 
-    const oldRecord = await createStorySeed('creator-1', seed);
+    const oldRecord = await createStorySeed('creator-1', seed, undefined, 'en');
     expect(oldRecord.blueprint).toBeUndefined();
     expect(() => normalizeWorldBlueprint(oldRecord.blueprint, oldRecord.seed)).not.toThrow();
     expect(createBlueprintDraftFromSeed(oldRecord.seed).blueprintVersion).toBe('v1.0');
   });
 
   it('omits malformed saved Blueprint siblings instead of fabricating an artifact', async () => {
-    const created = await createStorySeed('creator-1', completeSeed());
+    const created = await createStorySeed('creator-1', completeSeed(), undefined, 'en');
     resetStorySeedRepository([{
       ...created,
       blueprint: null,
@@ -675,7 +675,7 @@ describe('Story Seed creator/story/world contract', () => {
   });
 
   it('resets stale Story Seed schema records instead of reading the removed long-term goal shape', async () => {
-    const created = await createStorySeed('creator-1', completeSeed());
+    const created = await createStorySeed('creator-1', completeSeed(), undefined, 'en');
     resetStorySeedRepository([{ ...created, schemaVersion: 3 } as unknown as StorySeedRecord]);
     expect(await listStorySeeds('creator-1')).toEqual([]);
   });
@@ -691,7 +691,7 @@ describe('Story Seed creator/story/world contract', () => {
     expect(await listStorySeeds('creator-1')).toEqual([]);
 
     resetStorySeedRepository();
-    const restored = await createStorySeed('creator-1', completeSeed());
+    const restored = await createStorySeed('creator-1', completeSeed(), undefined, 'en');
     expect((await listStorySeeds('creator-1')).map(record => record.id)).toEqual([restored.id]);
   });
 
@@ -709,20 +709,75 @@ describe('Story Seed creator/story/world contract', () => {
       creatorId: 'creator-1',
       createdAt: '2026-08-01T00:00:00.000Z',
       updatedAt: '2026-08-01T00:00:00.000Z',
-      schemaVersion: 1,
+      schemaVersion: 2,
       contentVersion: 1,
       storyStatus: 'DRAFT',
       generationStatus: 'QUEUED',
       visibility: 'PRIVATE',
       publishingState: 'UNPUBLISHED',
       originalLanguage: 'en',
-      currentLanguage: 'en',
       sourceSeedId: 'seed-1',
       currentChapterId: null,
       coverAssetId: null,
     });
     expect(validateStoryAdministrativeMetadata(metadata)).toEqual({ valid: true, errors: [] });
     expect(completeSeed()).not.toHaveProperty('administrative');
+  });
+
+  it('records the selected Original Language instead of hardcoding English', () => {
+    const metadata = createStoryAdministrativeMetadata({
+      storyId: 'story-1',
+      creatorId: 'creator-1',
+      sourceSeedId: 'seed-1',
+      originalLanguage: 'ja',
+    });
+
+    expect(metadata.originalLanguage).toBe('ja');
+    expect(validateStoryAdministrativeMetadata(metadata)).toEqual({ valid: true, errors: [] });
+    // Reader display language is not story identity and has no field here.
+    expect(metadata).not.toHaveProperty('currentLanguage');
+  });
+
+  it('resolves a concrete English value when Story Seed supplies no language', () => {
+    const metadata = createStoryAdministrativeMetadata({
+      storyId: 'story-1',
+      creatorId: 'creator-1',
+      sourceSeedId: 'seed-1',
+    });
+
+    expect(metadata.originalLanguage).toBe('en');
+  });
+
+  it('rejects administrative metadata carrying an unsupported or stale language value', () => {
+    const stale = { ...administrative(), originalLanguage: 'English' };
+    const result = validateStoryAdministrativeMetadata(stale);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors.join(' ')).toContain('originalLanguage');
+  });
+
+  it('rejects administrative metadata saved at an earlier schema version', () => {
+    const stale = { ...administrative(), schemaVersion: 1 };
+
+    expect(validateStoryAdministrativeMetadata(stale).valid).toBe(false);
+  });
+
+  it('carries the resolved Original Language through the story-start payload', () => {
+    const payload = buildInitialStoryGenerationPayload(
+      completeSeed(),
+      createStoryAdministrativeMetadata({
+        storyId: 'story-1',
+        creatorId: 'creator-1',
+        sourceSeedId: 'seed-1',
+        originalLanguage: 'ko',
+      }),
+      blueprint,
+      10,
+    );
+
+    expect(payload.administrative.originalLanguage).toBe('ko');
+    // Original Language is system-owned; it never enters creative seed content.
+    expect(JSON.stringify(payload.storySeed)).not.toContain('originalLanguage');
   });
 
   it('hands generation payload builders the canonical structure', () => {

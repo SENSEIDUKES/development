@@ -254,6 +254,7 @@ export const createMockStorySeedRecord = (overrides: Partial<StorySeedRecord> = 
     title: seed.world.optional.worldIdentity.title || 'Ashes of the Ninth Meridian',
     createdAt: now,
     updatedAt: now,
+    originalLanguage: 'en',
     seed,
     blueprint: normalizeWorldBlueprint(createMockBlueprint(), seed, { creator: 'Workshop Creator', status: 'Reviewed' }),
     ...overrides,

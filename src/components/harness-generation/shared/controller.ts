@@ -398,8 +398,13 @@ export class HarnessGenerationController {
     }
     story.mediaLoadout = loadout;
     story.updatedAt = this.runtime.now();
-    await this.persist(candidate);
-    return cloneHarnessValue(story);
+    this.generating = true;
+    try {
+      await this.persist(candidate);
+      return cloneHarnessValue(story);
+    } finally {
+      this.generating = false;
+    }
   }
 
   async addCorrection(storyId: string, input: AppendHarnessCorrectionInput) {
@@ -566,6 +571,15 @@ export class HarnessGenerationController {
     storyId: string,
     model: string,
     batchId?: string,
+  ): Promise<HarnessWorkspaceState> {
+    return this.generateNextChapterInternal(storyId, model, batchId);
+  }
+
+  /** Frozen Media Loadout reuse is reachable only from the explicit retry path. */
+  private async generateNextChapterInternal(
+    storyId: string,
+    model: string,
+    batchId?: string,
     reusedMediaLoadout?: FrozenMediaLoadout,
   ): Promise<HarnessWorkspaceState> {
     this.assertHydrated();
@@ -587,7 +601,7 @@ export class HarnessGenerationController {
       this.generating = true;
       try { await this.prepareArcPlan(storyId, model); }
       finally { this.generating = false; }
-      return this.generateNextChapter(storyId, model, batchId, reusedMediaLoadout);
+      return this.generateNextChapterInternal(storyId, model, batchId, reusedMediaLoadout);
     }
     const attemptId = this.runtime.createId('hga');
     const startedAt = this.runtime.now();
@@ -1179,7 +1193,7 @@ export class HarnessGenerationController {
     abandonedAttempt.recoveryStage = undefined;
     abandonedAttempt.failure = undefined;
     await this.persist(abandoned);
-    return this.generateNextChapter(
+    return this.generateNextChapterInternal(
       attempt.storyId,
       attempt.model,
       attempt.batchId,

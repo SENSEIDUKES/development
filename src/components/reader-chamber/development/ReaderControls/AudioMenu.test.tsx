@@ -6,7 +6,17 @@ import type { ResolvedSoundscape } from '../../../../audio/mediaPacks';
 import { AudioMenu } from './AudioMenu';
 
 const playback = vi.hoisted(() => ({
-  replace: vi.fn(), stop: vi.fn(), currentTrackId: null as string | null, hasError: false,
+  replace: vi.fn(), stop: vi.fn(), setVolume: vi.fn(), currentTrackId: null as string | null, hasError: false, volume: 0.75,
+}));
+
+const audioMix = vi.hoisted(() => ({
+  mix: {
+    master: { enabled: true, volume: 1 },
+    music: { enabled: true, volume: 1 },
+    atmosphere: { enabled: true, volume: 1 },
+    cues: { enabled: true, volume: 1 },
+  },
+  setChannel: vi.fn(),
 }));
 
 vi.mock('../../../../audio/DevAudioPlayback', () => ({
@@ -14,15 +24,7 @@ vi.mock('../../../../audio/DevAudioPlayback', () => ({
 }));
 
 vi.mock('../../shared/stubs', () => ({
-  useAudioMix: () => ({
-    mix: {
-      master: { enabled: true, volume: 1 },
-      music: { enabled: true, volume: 1 },
-      atmosphere: { enabled: true, volume: 1 },
-      cues: { enabled: true, volume: 1 },
-    },
-    setChannel: vi.fn(),
-  }),
+  useAudioMix: () => audioMix,
   vibrate: vi.fn(),
 }));
 
@@ -48,7 +50,10 @@ describe('Reader Audio Menu resolved soundscapes', () => {
   beforeEach(() => {
     playback.replace.mockReset();
     playback.stop.mockReset();
+    playback.setVolume.mockReset();
     playback.currentTrackId = null;
+    audioMix.mix.master = { enabled: true, volume: 1 };
+    audioMix.mix.music = { enabled: true, volume: 1 };
     localStorage.clear();
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -72,5 +77,34 @@ describe('Reader Audio Menu resolved soundscapes', () => {
       title: 'Pack Track',
       artist: 'SEN Soundscape',
     });
+    expect(playback.setVolume).toHaveBeenCalledWith(1);
+  });
+
+  it('resets missing pinned tracks to automatic selection', () => {
+    localStorage.setItem('seihouse-bgm-track', 'REMOVED_PACK_TRACK');
+    act(() => root.render(<AudioMenu soundscapes={[]} />));
+    expect(container.querySelector('select')?.value).toBe('auto');
+  });
+
+  it('keeps active Reader soundscape volume synchronized with the master and music mix', () => {
+    act(() => root.render(<AudioMenu soundscapes={[resolved]} />));
+    const play = [...container.querySelectorAll('button')].find(button => button.textContent?.includes('Play soundscape'));
+    act(() => play!.click());
+    playback.currentTrackId = 'reader-soundscape:PACK_TRACK';
+    act(() => root.render(<AudioMenu soundscapes={[resolved]} />));
+    expect(playback.setVolume).toHaveBeenLastCalledWith(1);
+
+    audioMix.mix.master = { enabled: true, volume: 0.5 };
+    audioMix.mix.music = { enabled: true, volume: 0.4 };
+    act(() => root.render(<AudioMenu soundscapes={[resolved]} />));
+    expect(playback.setVolume).toHaveBeenLastCalledWith(0.2);
+
+    audioMix.mix.music = { enabled: false, volume: 0.4 };
+    act(() => root.render(<AudioMenu soundscapes={[resolved]} />));
+    expect(playback.setVolume).toHaveBeenLastCalledWith(0);
+
+    playback.currentTrackId = 'character-voice:line-1';
+    act(() => root.render(<AudioMenu soundscapes={[resolved]} />));
+    expect(playback.setVolume).toHaveBeenLastCalledWith(0.75);
   });
 });

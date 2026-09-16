@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Play, Square, Volume2, VolumeX } from 'lucide-react';
 import { useAudioMix } from '../../shared/stubs';
 import { AudioChannelId } from '../../shared/stubs';
@@ -98,6 +98,7 @@ export function AudioMenu({
 }) {
   const { mix, setChannel } = useAudioMix();
   const playback = useDevAudioPlayback();
+  const volumeBeforeSoundscape = useRef<number | null>(null);
   const tracks = useMemo(() => {
     const byId = new Map(TRACK_LIBRARY.map(track => [track.id, track]));
     soundscapes.forEach(soundscape => byId.set(soundscape.resource.track.id, soundscape.resource.track));
@@ -128,8 +129,26 @@ export function AudioMenu({
   const selectedTrack = bgmTrackId === 'auto'
     ? soundscapes[0]?.resource.track
     : tracks.find(track => track.id === bgmTrackId);
+  useEffect(() => {
+    if (bgmTrackId !== 'auto' && !selectedTrack) handleTrackChange('auto');
+  }, [bgmTrackId, selectedTrack]);
+
+  const soundscapeVolume = mix.master.enabled && mix.music.enabled
+    ? mix.master.volume * mix.music.volume
+    : 0;
+  useEffect(() => {
+    if (playback.currentTrackId?.startsWith('reader-soundscape:')) {
+      playback.setVolume(soundscapeVolume);
+    } else if (volumeBeforeSoundscape.current !== null) {
+      playback.setVolume(volumeBeforeSoundscape.current);
+      volumeBeforeSoundscape.current = null;
+    }
+  }, [playback.currentTrackId, playback.setVolume, soundscapeVolume]);
+
   const playSelectedSoundscape = () => {
     if (!selectedTrack) return;
+    volumeBeforeSoundscape.current ??= playback.volume;
+    playback.setVolume(soundscapeVolume);
     playback.replace({
       id: `reader-soundscape:${selectedTrack.id}`,
       source: selectedTrack.url,

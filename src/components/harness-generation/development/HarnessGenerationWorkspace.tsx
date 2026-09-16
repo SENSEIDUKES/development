@@ -532,7 +532,27 @@ function MediaLoadoutPanel({
   onGrant?: (reference: MediaPackReference) => void;
   onChange: (slot: StoryMediaLoadoutSlot, reference?: MediaPackReference) => void;
 }) {
-  const checkedAt = new Date().toISOString();
+  const [entitlementClock, setEntitlementClock] = useState(() => Date.now());
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    let cancelled = false;
+    const scheduleNextExpiration = () => {
+      const now = Date.now();
+      setEntitlementClock(now);
+      const nearestExpiration = entitlements
+        .map(item => item.expiresAt ? Date.parse(item.expiresAt) : Number.NaN)
+        .filter(expiresAt => Number.isFinite(expiresAt) && expiresAt > now)
+        .sort((left, right) => left - right)[0];
+      if (nearestExpiration === undefined || cancelled) return;
+      timeout = setTimeout(scheduleNextExpiration, Math.min(nearestExpiration - now + 1, 2_147_483_647));
+    };
+    scheduleNextExpiration();
+    return () => {
+      cancelled = true;
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [entitlements]);
+  const checkedAt = new Date(entitlementClock).toISOString();
   const entitled = new Set(entitlements
     .filter(item => isMediaPackEntitlementActive(item, checkedAt))
     .map(item => mediaPackKey(item.pack)));
@@ -540,8 +560,13 @@ function MediaLoadoutPanel({
     { id: 'soundscapes', type: 'soundscape', label: 'Soundscapes' },
     { id: 'soundCues', type: 'sound-cue', label: 'Sound Cues' },
   ];
-  const equipped = new Set(Object.values(story.mediaLoadout ?? {}).filter(Boolean).map(reference => mediaPackKey(reference!)));
-  const activeEquipped = new Set([...equipped].filter(key => entitled.has(key)));
+  const validEquipped = new Set(slots.flatMap(slot => {
+    const reference = story.mediaLoadout?.[slot.id];
+    if (!reference) return [];
+    const key = mediaPackKey(reference);
+    return packs.some(pack => pack.type === slot.type && mediaPackKey(pack) === key) ? [key] : [];
+  }));
+  const activeEquipped = new Set([...validEquipped].filter(key => entitled.has(key)));
   return (
     <LibraryPanel as="section" padding="md" aria-labelledby="harness-media-loadout-title">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -564,7 +589,10 @@ function MediaLoadoutPanel({
           const slotPacks = packs.filter(pack => pack.type === slot.type);
           const reference = story.mediaLoadout?.[slot.id];
           const selectedKey = reference ? mediaPackKey(reference) : '';
-          const slotState = reference ? (entitled.has(selectedKey) ? 'Equipped' : 'Locked') : 'Empty';
+          const registeredForSlot = slotPacks.some(pack => mediaPackKey(pack) === selectedKey);
+          const slotState = reference
+            ? !registeredForSlot ? 'Missing' : entitled.has(selectedKey) ? 'Equipped' : 'Locked'
+            : 'Empty';
           return (
             <article key={slot.id} className="rounded-xl border border-emerald-300/20 bg-emerald-400/[0.04] p-4">
               <div className="flex items-center justify-between gap-3">
@@ -583,6 +611,9 @@ function MediaLoadoutPanel({
                 className="mt-1 min-h-11 w-full rounded-lg border border-white/15 bg-black/35 px-3 text-sm text-neutral-100 outline-none focus:border-emerald-300/60"
               >
                 <option value="">No pack equipped</option>
+                {reference && !registeredForSlot && (
+                  <option value={selectedKey} disabled>Unavailable pack · {reference.id} · v{reference.version}</option>
+                )}
                 {slotPacks.map(pack => (
                   <option key={mediaPackKey(pack)} value={mediaPackKey(pack)} disabled={!entitled.has(mediaPackKey(pack))}>
                     {pack.displayName} · v{pack.version}{entitled.has(mediaPackKey(pack)) ? '' : ' · locked'}
@@ -597,7 +628,7 @@ function MediaLoadoutPanel({
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {packs.map(pack => {
           const key = mediaPackKey(pack);
-          const state = equipped.has(key) && entitled.has(key) ? 'Equipped' : entitled.has(key) ? 'Available' : 'Locked';
+          const state = validEquipped.has(key) && entitled.has(key) ? 'Equipped' : entitled.has(key) ? 'Available' : 'Locked';
           return (
             <article key={key} className={`rounded-xl border p-4 ${state === 'Equipped' ? 'border-emerald-300/35 bg-emerald-400/[0.08]' : state === 'Available' ? 'border-cyan-300/20 bg-cyan-400/[0.05]' : 'border-white/10 bg-black/20'}`}>
               <div className="flex items-start justify-between gap-3">

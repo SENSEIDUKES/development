@@ -56,6 +56,16 @@ describe('Media Pack contracts', () => {
     expect(() => validateMediaPack(soundscape({ entries: [{ ...soundscape().entries[0], url: 'https://fixtures.r2.dev/storm.exe' }] }))).toThrow('HTTPS');
     expect(() => validateMediaPack(soundscape({ entries: [{ ...soundscape().entries[0], url: 'https://127.0.0.1/storm.mp3' }] }))).toThrow('HTTPS');
     expect(() => validateMediaPack(soundscape({ entries: [{ ...soundscape().entries[0], url: 'https://localhost/storm.mp3' }] }))).toThrow('HTTPS');
+    expect(() => validateMediaPack(soundscape({ entries: [{ ...soundscape().entries[0], url: 'https://localhost./storm.mp3' }] }))).toThrow('HTTPS');
+    expect(() => validateMediaPack(soundscape({ entries: [{ ...soundscape().entries[0], url: 'https://192.168.1.2/storm.mp3' }] }))).toThrow('HTTPS');
+    expect(() => validateMediaPack(soundscape({ entries: [{ ...soundscape().entries[0], url: 'https://[::1]/storm.mp3' }] }))).toThrow('HTTPS');
+    expect(() => validateMediaPack(soundscape({ entries: [{ ...soundscape().entries[0], url: 'https://[fc00::1]/storm.mp3' }] }))).toThrow('HTTPS');
+    expect(validateMediaPack(soundscape({ entries: [{ ...soundscape().entries[0], url: 'https://8.8.8.8/storm.mp3' }] }))).toMatchObject({
+      entries: [{ url: 'https://8.8.8.8/storm.mp3' }],
+    });
+    expect(validateMediaPack(soundscape({ entries: [{ ...soundscape().entries[0], url: 'https://[2606:4700:4700::1111]/storm.mp3' }] }))).toMatchObject({
+      entries: [{ url: 'https://[2606:4700:4700::1111]/storm.mp3' }],
+    });
     expect(() => validateMediaPack(soundscape({ entries: [{ ...soundscape().entries[0], region: 'unsupported' }] }))).toThrow('region');
     expect(validateMediaPack(soundscape({ entries: [{ ...soundscape().entries[0], region: 'korean' }] }))).toMatchObject({
       entries: [{ region: 'korean' }],

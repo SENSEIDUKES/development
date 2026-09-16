@@ -91,7 +91,8 @@ export function validateSceneAudioCatalog(value: unknown): SceneAudioTrack[] {
   return tracks;
 }
 
-const normalized = (value: string) => value.trim().toLocaleLowerCase();
+const normalized = (value: string) => value.trim().toLowerCase();
+const compareCodePoints = (left: string, right: string) => left < right ? -1 : left > right ? 1 : 0;
 
 /**
  * Resolve semantic soundscape intent against the catalog supplied by the host.
@@ -123,8 +124,8 @@ export function resolveSoundscapeTrack(
   };
   return [...candidates].sort((left, right) => (
     score(right) - score(left)
-    || left.id.localeCompare(right.id)
-    || left.url.localeCompare(right.url)
+    || compareCodePoints(left.id, right.id)
+    || compareCodePoints(left.url, right.url)
   ))[0] ?? null;
 }
 

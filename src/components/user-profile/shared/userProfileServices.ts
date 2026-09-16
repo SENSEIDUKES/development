@@ -24,6 +24,7 @@
  */
 
 import React, { createContext, createElement, useContext } from 'react';
+import type { SenLanguageCode } from '../../../lib/language';
 import type {
   AccountRole,
   ActiveStatusEffect,
@@ -121,17 +122,17 @@ export interface UserProfileController {
 
   // Language safeguard
   pendingLanguageChange: {
-    preferred: string;
-    translation: string;
-    prevPreferred: string;
-    prevTranslation: string;
+    interfaceLanguage: SenLanguageCode;
+    readingLanguage: SenLanguageCode;
+    previousInterfaceLanguage: SenLanguageCode;
+    previousReadingLanguage: SenLanguageCode;
   } | null;
   countdown: number;
   confirmLanguageChange: () => void;
   revertLanguageChange: () => void;
   handleLanguageChangeDirect: (
-    name: 'preferredLanguage' | 'defaultTranslationLanguage',
-    value: string,
+    name: 'interfaceLanguage' | 'defaultReadingLanguage',
+    value: SenLanguageCode,
   ) => Promise<void> | void;
 
   // Chapter writing style default

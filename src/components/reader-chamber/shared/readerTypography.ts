@@ -57,9 +57,3 @@ export function getReaderTypography(preferences?: Partial<ReaderPreferences> | n
     textAlignment: prefs.textAlignment === 'justify' ? 'justify' : DEFAULT_READER_TYPOGRAPHY.textAlignment,
   };
 }
-
-const RTL_LANGUAGES = new Set(['ar', 'arc', 'dv', 'fa', 'ha', 'he', 'ku', 'ps', 'sd', 'ug', 'ur', 'yi']);
-
-export function getReadingDirection(language: string): 'ltr' | 'rtl' {
-  return RTL_LANGUAGES.has(language.toLowerCase().split('-')[0]) ? 'rtl' : 'ltr';
-}

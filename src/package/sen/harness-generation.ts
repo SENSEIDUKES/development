@@ -48,6 +48,18 @@ export {
   validateHarnessSkillManifest,
   type CapaSlotDefinition,
 } from '../../components/harness-generation/shared/skills';
+export {
+  TRANSLATION_GLOSSARY_ENTRY_LIMIT,
+  buildSelectedTranslationGlossary,
+  isTranslationSkillCompatible,
+  presentSelectedTranslationGlossary,
+  selectTranslationGlossaryEntries,
+  translationCompatibilityError,
+  translationMatchSource,
+  translationTargetLanguage,
+  validateTranslationGlossaryResource,
+  validateTranslationSkillMetadata,
+} from '../../components/harness-generation/shared/translationSkill';
 export { buildImmediateChapterRequest } from '../../components/harness-generation/shared/immediateChapterRequest';
 export {
   includeBundledHarnessSkills,

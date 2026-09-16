@@ -723,8 +723,8 @@ describe('Cultivator Cave settings', () => {
 
     await click(close);
     await click(byText('[data-slot="disclosure-trigger"]', 'Language'));
-    expect(document.body.querySelector<HTMLSelectElement>('#cave-preferred-language')?.className).toContain('!h-11');
-    expect(document.body.querySelector<HTMLSelectElement>('#cave-translation-language')?.className).toContain('!h-11');
+    expect(document.body.querySelector<HTMLSelectElement>('#cave-interface-language')?.className).toContain('!h-11');
+    expect(document.body.querySelector<HTMLSelectElement>('#cave-reading-language')?.className).toContain('!h-11');
   });
 
   it('edits identity through the panel and saves it to the profile', async () => {
@@ -748,15 +748,15 @@ describe('Cultivator Cave settings', () => {
     await renderCave();
     await click(byText('[data-cave-account-actions] button', 'Settings'));
     await click(byText('[data-slot="disclosure-trigger"]', 'Language'));
-    const select = document.body.querySelector<HTMLSelectElement>('#cave-preferred-language')!;
+    const select = document.body.querySelector<HTMLSelectElement>('#cave-interface-language')!;
     await act(async () => {
-      select.value = 'Spanish';
+      select.value = 'es';
       select.dispatchEvent(new Event('change', { bubbles: true }));
     });
     expect(document.body.querySelector('[data-cave-language-confirm]')?.textContent).toContain('Confirm Language Change');
     await click(byText('button', 'No, Revert Back'));
     expect(document.body.querySelector('[data-cave-language-confirm]')).toBeNull();
-    expect(select.value).toBe('English');
+    expect(select.value).toBe('en');
   });
 
   it('exposes the Akashic Switchboard to an owner and opens it as a destination', async () => {
@@ -1120,9 +1120,9 @@ describe('Cave overlays and history', () => {
   it('reverts an unanswered language change when history leaves Settings', async () => {
     await renderCave();
     await click(byText('[data-cave-account-actions] button', 'Settings'));
-    const select = document.body.querySelector<HTMLSelectElement>('#cave-preferred-language')!;
+    const select = document.body.querySelector<HTMLSelectElement>('#cave-interface-language')!;
     await act(async () => {
-      select.value = 'Spanish';
+      select.value = 'es';
       select.dispatchEvent(new Event('change', { bubbles: true }));
     });
     expect(document.body.querySelector('[data-cave-language-confirm]')).not.toBeNull();
@@ -1133,7 +1133,7 @@ describe('Cave overlays and history', () => {
     });
     expect(document.body.querySelector('[data-cave-language-confirm]')).toBeNull();
     await click(byText('[data-cave-account-actions] button', 'Settings'));
-    expect(document.body.querySelector<HTMLSelectElement>('#cave-preferred-language')?.value).toBe('English');
+    expect(document.body.querySelector<HTMLSelectElement>('#cave-interface-language')?.value).toBe('en');
   });
 });
 

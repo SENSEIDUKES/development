@@ -256,6 +256,7 @@ export const compileStoryInformationPacket = (
     attemptId,
     foundationRevision: cloneHarnessValue(foundationRevision),
     storyHead: cloneHarnessValue(story.head),
+    originalLanguage: story.originalLanguage,
     chapterNumber: story.head.nextChapterNumber,
     createdAt: runtime.now(),
     committedChapters,

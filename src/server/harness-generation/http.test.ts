@@ -26,6 +26,7 @@ const request = (): HarnessGenerationRequest => ({
     attemptId: 'hga_test',
     foundationRevision: foundation(),
     storyHead: { nextChapterNumber: 1 },
+    originalLanguage: 'en',
     chapterNumber: 1,
     createdAt: '2026-08-29T00:00:00.000Z',
     committedChapters: [],

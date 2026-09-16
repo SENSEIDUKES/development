@@ -24,12 +24,13 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-09-15 |
+| Last Workshop update | 2026-09-16 |
 | Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Steered continuation with a derived SEN Reader adapter |
 
 ### History
 
+- **2026-09-16:** Made Translation glossary normalization deterministic, rejected canonical/alias collisions, matched only story-facing text and chapter directions, froze selected resource provenance, and separated imported Translation selections by language and glossary identity. Schema version 9 intentionally resets stale Development data.
 - **2026-09-15:** Restored HARNESS Generated Chapters to the canonical SEN
   `StoryBlock` and media pathway. Response acceptance now normalizes optional
   dialogue, manifestation, music, atmosphere, beast-event, System Panel, and

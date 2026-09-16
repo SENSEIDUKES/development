@@ -5,6 +5,7 @@ generated/chapter-generation-api
 generated/harness-generation-api
 generated/story-seed-blueprint-api
 generated/codex-voice-api
+generated/reader-translation-api
 *.tsbuildinfo
 vite-preview.log
 vite-preview-error.log

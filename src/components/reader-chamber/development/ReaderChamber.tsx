@@ -1,4 +1,17 @@
 import { generateId } from '../shared/id';
+import {
+  normalizeSenLanguageCode,
+  resolveReadingLanguageCode,
+  type SenLanguageCode,
+} from '../../../lib/language';
+import {
+  normalizeReaderLanguageChoice,
+  resolveReaderLanguage,
+  type ReaderLanguageChoice,
+} from '../shared/readerLanguage';
+import { mergeReaderTranslation } from '../shared/translation/readerFacing';
+import { useChapterTranslation } from '../shared/translation/useChapterTranslation';
+import type { HarnessSkillManifest } from '../../harness-generation/shared/types';
 import React, { useRef, useState, useEffect, useMemo } from "react";
 import {
   ShieldAlert,
@@ -13,7 +26,6 @@ import {
 } from "../shared/types";
 import { motion, AnimatePresence } from "motion/react";
 import { ParticleSystem } from "./ParticleSystem";
-import { useChapterTranslation } from "../shared/stubs";
 import { useAppStore } from "../shared/stubs";
 import { selectIsGenerating } from "../shared/stubs";
 import { LOCAL_ONLY_MODE } from "../shared/stubs";
@@ -52,6 +64,11 @@ interface ReaderChamberProps {
   onSwitchTab?: (tab: "reader" | "codex" | "memory") => void;
   activeStory: StoryWorld;
   updateStoryFields: UpdateStoryFields;
+  /**
+   * Host-installed skills. The Reader resolves its own Translation skill from
+   * this list and never reads a host inventory directly.
+   */
+  installedSkills?: HarnessSkillManifest[];
   handleAlterFate?: (
     chapterNumber: number,
     direction: string,
@@ -113,6 +130,7 @@ export default function ReaderChamber({
   onSwitchTab,
   activeStory,
   updateStoryFields,
+  installedSkills,
   handleAlterFate,
   handleSealChapter,
   handleCheckConsistency,
@@ -173,47 +191,61 @@ export default function ReaderChamber({
   const highlightRegex = codexHighlighter.regex;
 
 
-  // --- Translation States ---
+  // --- Reading language and the derived translation layer ---
   const maxChapterNum = chapters.length > 0 ? Math.max(...chapters.map(c => c.number)) : 0;
-  const { translateChapter, isTranslating, translationError } =
-    useChapterTranslation();
   const userProfile = useAppStore((state) => state.userProfile);
 
-  const getLocaleFromLanguageName = (lang: string | undefined): string => {
-    if (!lang) return "en";
-    const normalized = lang.toLowerCase();
-    if (normalized.includes("spanish")) return "es";
-    if (normalized.includes("simplified chinese") || normalized.includes("简体中文") || normalized.includes("chinese") && !normalized.includes("traditional")) return "zh-CN";
-    if (normalized.includes("traditional chinese") || normalized.includes("繁體中文")) return "zh-TW";
-    if (normalized.includes("japanese") || normalized.includes("日本語")) return "ja";
-    if (normalized.includes("french")) return "fr";
-    if (normalized.includes("portuguese")) return "pt-BR";
-    if (normalized.includes("german")) return "de";
-    if (normalized.includes("italian")) return "it";
-    if (normalized.includes("korean") || normalized.includes("한국어")) return "ko";
-    if (normalized.includes("russian")) return "ru";
-    if (normalized.includes("vietnamese") || normalized.includes("tiếng việt")) return "vi";
-    if (normalized.includes("indonesian") || normalized.includes("bahasa indonesia")) return "id";
-    if (normalized.includes("thai") || normalized.includes("ภาษาไทย")) return "th";
-    if (normalized.includes("tagalog") || normalized.includes("filipino")) return "tl";
-    if (normalized.includes("malay") || normalized.includes("bahasa melayu")) return "ms";
-    if (normalized.includes("arabic")) return "ar";
-    if (normalized.includes("hindi")) return "hi";
-    return "en";
+  /**
+   * The story's permanent Original Language. Canon is always in this language;
+   * everything below is a reversible display layer over it.
+   */
+  const storyOriginalLanguage = normalizeSenLanguageCode(activeStory.originalLanguage);
+
+  /**
+   * The reader's per-story choice: Original, Account Default, or one specific
+   * language. Only Account Default follows the account, so changing the
+   * account default leaves an Original or overridden story exactly as it was.
+   */
+  const readingLanguageChoice = normalizeReaderLanguageChoice(
+    activeStory.readerPreferences?.readingLanguage,
+  );
+  const account = {
+    defaultReadingLanguage: userProfile?.defaultReadingLanguage,
+    interfaceLanguage: userProfile?.interfaceLanguage,
   };
-
-  const [preferredLang, setPreferredLang] = useState(() => {
-    return getLocaleFromLanguageName(userProfile?.defaultTranslationLanguage || userProfile?.preferredLanguage);
+  const accountReadingLanguage: SenLanguageCode = resolveReadingLanguageCode(account);
+  const resolvedReading = resolveReaderLanguage(readingLanguageChoice, {
+    originalLanguage: storyOriginalLanguage,
+    account,
   });
+  const preferredLang = resolvedReading.language;
 
-  useEffect(() => {
-    const langCode = getLocaleFromLanguageName(userProfile?.defaultTranslationLanguage || userProfile?.preferredLanguage);
-    setPreferredLang(langCode);
-  }, [userProfile?.defaultTranslationLanguage, userProfile?.preferredLanguage]);
+  const chapterTranslation = useChapterTranslation({
+    story: { id: activeStory.id, originalLanguage: storyOriginalLanguage },
+    chapter: selectedChapter,
+    targetLanguage: preferredLang,
+    installedSkills,
+  });
+  const isTranslating = chapterTranslation.status === 'translating';
+  const translationError = chapterTranslation.message;
+  const activeTranslation = chapterTranslation.status === 'ready'
+    ? chapterTranslation.translation
+    : null;
 
-  const [activeTranslationContent, setActiveTranslationContent] = useState<
-    string | null
-  >(null);
+  /**
+   * Canonical blocks with the reader-facing overlay applied for display only.
+   * The stored chapter is never written back, so switching to Original is a
+   * pure render change.
+   */
+  const displayBlocks = useMemo(() => (
+    activeTranslation
+      ? mergeReaderTranslation(selectedChapter.blocks ?? [], activeTranslation.blocks)
+      : selectedChapter.blocks
+  ), [activeTranslation, selectedChapter.blocks]);
+  const displayTitle = activeTranslation?.title ?? selectedChapter.title;
+  // The language actually on screen — never inferred from whether a
+  // translation happens to exist, and never assumed to be English.
+  const displayLanguage = activeTranslation ? activeTranslation.targetLanguage : storyOriginalLanguage;
 
   const {
     isPlayingText,
@@ -238,7 +270,12 @@ export default function ReaderChamber({
     currentNarratedBlockIndex
   } = useReaderPlayback({
     selectedChapter,
-    activeTranslationContent,
+    // Narration speaks what is displayed. Block identity survives translation,
+    // so block-level alignment stays valid; phrase-anchored cues do not and
+    // are suppressed in the viewport.
+    activeTranslationContent: activeTranslation
+      ? displayBlocks?.map(block => block.text).filter(Boolean).join('\n\n') ?? null
+      : null,
   });
 
   // The single cinematic scroll controller. It listens to narration events,
@@ -313,46 +350,6 @@ export default function ReaderChamber({
   );
   const activeAgentId = useAppStore((state) => state.activeAgentId);
 
-  useEffect(() => {
-    if (preferredLang === "en") {
-      setActiveTranslationContent(null);
-      return;
-    }
-
-    const doTranslation = async () => {
-      let textToTranslate = selectedChapter.generatedContent || "";
-      if (!textToTranslate && selectedChapter.blocks) {
-        textToTranslate = selectedChapter.blocks.map(b => b.text).join('\n\n');
-      }
-      if (!textToTranslate) return;
-      
-      if (selectedChapter.translations?.[preferredLang]) {
-        setActiveTranslationContent(
-          selectedChapter.translations[preferredLang].content,
-        );
-        return;
-      }
-      const result = await translateChapter(
-        activeStory.id,
-        selectedChapter.number,
-        textToTranslate,
-        preferredLang,
-      );
-      if (result) {
-        setActiveTranslationContent(result);
-      }
-    };
-    doTranslation();
-  }, [
-    preferredLang,
-    selectedChapter.number,
-    selectedChapter.generatedContent,
-    selectedChapter.blocks,
-    selectedChapter.translations,
-    activeStory.id,
-    translateChapter
-  ]);
-
   // --- Theme & Reader Typography Customizer States ---
   const [showReaderSettings, setShowReaderSettings] = useState(false);
 
@@ -387,6 +384,15 @@ export default function ReaderChamber({
         [key]: value,
       },
     }));
+  };
+
+  /**
+   * Saves the reading-language choice for this story alone. It is a reader
+   * preference: no canonical field, no chapter, and no memory is touched, and
+   * the reading position is untouched because only rendering changes.
+   */
+  const handleReadingLanguageChange = (choice: ReaderLanguageChoice) => {
+    handleUpdatePreference('readingLanguage', choice);
   };
 
   const handleResetTypography = () => {
@@ -1013,6 +1019,18 @@ export default function ReaderChamber({
           <ReaderSettings
             currentPrefs={currentPrefs}
             handleUpdatePreference={handleUpdatePreference}
+            readingLanguage={{
+              choice: readingLanguageChoice,
+              onChange: handleReadingLanguageChange,
+              originalLanguage: storyOriginalLanguage,
+              accountLanguage: accountReadingLanguage,
+              resolvedLanguage: displayLanguage,
+              requestedLanguage: preferredLang,
+              notice: chapterTranslation.status === 'unavailable' || chapterTranslation.status === 'failed'
+                ? translationError
+                : null,
+              isTranslating,
+            }}
             onResetTypography={handleResetTypography}
             showLegend={showLegend}
             onToggleLegend={() => {
@@ -1087,7 +1105,15 @@ export default function ReaderChamber({
         handleRemoveBookmark={handleRemoveBookmark}
         handleSaveBookmark={handleSaveBookmark}
         
-        activeTranslationContent={activeTranslationContent}
+        displayBlocks={displayBlocks}
+        displayTitle={displayTitle}
+        displayLanguage={displayLanguage}
+        isShowingTranslation={Boolean(activeTranslation)}
+        translationNotice={
+          chapterTranslation.status === 'unavailable' || chapterTranslation.status === 'failed'
+            ? translationError
+            : null
+        }
         renderHighlightedText={renderHighlightedText}
         getFocusClass={getFocusClass}
         

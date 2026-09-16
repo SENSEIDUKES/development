@@ -6,9 +6,15 @@
  * extra portrait-delivery/media-descriptor fields that only matter to the
  * services layer; they are intentionally omitted here so the Workshop replica
  * cannot grow a dependency on production media contracts. Field names and
- * literal unions are preserved verbatim — they are persisted values and API
- * compatibility strings, not developer-facing names.
+ * literal unions are otherwise preserved verbatim — they are persisted values
+ * and API compatibility strings, not developer-facing names.
+ *
+ * The language fields are the deliberate exception: `interfaceLanguage` and
+ * `defaultReadingLanguage` carry SEN language codes rather than production's
+ * display-name strings, and this development repository stores no aliases for
+ * the names they replaced.
  */
+import type { SenLanguageCode } from '../../../lib/language';
 
 export interface StatusEffectDef {
   name: string;
@@ -102,8 +108,10 @@ export interface UserProfile {
   displayNameColor?: string;
   avatarUrl: string;
   activePortraitId?: string;
-  preferredLanguage: string;
-  defaultTranslationLanguage: string;
+  /** The account's UI language. Distinct from the reading language. */
+  interfaceLanguage: SenLanguageCode;
+  /** The language Reader Chamber displays by default; never story canon. */
+  defaultReadingLanguage: SenLanguageCode;
   /** Default copied onto newly created stories; existing stories keep their saved value. */
   defaultChapterWritingStyle?: ChapterWritingStyle;
   savedStoryCount: number;

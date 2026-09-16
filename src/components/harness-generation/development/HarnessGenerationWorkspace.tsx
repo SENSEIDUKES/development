@@ -28,6 +28,7 @@ import {
   HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS,
   harnessSkillKey,
 } from '../shared/skills';
+import { isTranslationSkillCompatible, translationTargetLanguage } from '../shared/translationSkill';
 import { includeBundledHarnessSkills } from '../shared/authorSkill';
 import { HarnessReaderSession } from './HarnessReaderSession';
 import { HarnessGenerationHttpClient } from '../shared/httpClient';
@@ -406,7 +407,15 @@ function SkillLoadoutPanel({
           const reference = story.skillLoadout?.[slot.id];
           const selectedKey = reference ? harnessSkillKey(reference) : '';
           const selected = reference ? installedByKey.get(selectedKey) : undefined;
-          const compatible = installedSkills.filter(skill => skill.slot === slot.id);
+          const slotSkills = installedSkills.filter(skill => skill.slot === slot.id);
+          // Translation skills stay visible with their declared language so an
+          // incompatible one is explained rather than silently hidden.
+          const compatible = slot.id === 'translation'
+            ? slotSkills.filter(skill => isTranslationSkillCompatible(skill, story.originalLanguage))
+            : slotSkills;
+          const incompatible = slot.id === 'translation'
+            ? slotSkills.filter(skill => !isTranslationSkillCompatible(skill, story.originalLanguage))
+            : [];
           const missing = Boolean(reference && !selected);
           const applications = selected?.applications.map(value => value.replace(/-/g, ' ')).join(' · ');
           return (
@@ -436,8 +445,19 @@ function SkillLoadoutPanel({
               >
                 {slot.id !== 'author' && <option value="">No skill equipped</option>}
                 {missing && <option value={selectedKey}>{selectedKey} · unavailable</option>}
-                {compatible.map(skill => <option key={harnessSkillKey(skill)} value={harnessSkillKey(skill)}>{skill.name} · v{skill.version}</option>)}
+                {compatible.map(skill => <option key={harnessSkillKey(skill)} value={harnessSkillKey(skill)}>
+                  {skill.name} · v{skill.version}{slot.id === 'translation' ? ` · ${translationTargetLanguage(skill)}` : ''}
+                </option>)}
+                {incompatible.map(skill => <option key={harnessSkillKey(skill)} value={harnessSkillKey(skill)} disabled>
+                  {skill.name} · v{skill.version} · {translationTargetLanguage(skill)} · not this story’s language
+                </option>)}
               </select>
+              {slot.id === 'translation' && (
+                <p className="mt-2 text-[11px] text-neutral-500">
+                  This story’s Original Language is <span className="font-mono text-neutral-300">{story.originalLanguage}</span>.
+                  {incompatible.length > 0 && ` ${incompatible.length} installed Translation ${incompatible.length === 1 ? 'skill targets' : 'skills target'} another language and cannot be equipped here.`}
+                </p>
+              )}
               {selected ? (
                 <div className="mt-3 border-t border-white/10 pt-3">
                   <p className="text-xs leading-relaxed text-neutral-300">{selected.description}</p>
@@ -860,7 +880,7 @@ export function HarnessGenerationWorkspace({
 
   const startFromStorySeed = (option: HarnessStorySeedOption) => {
     void run(async () => {
-      const created = await controller.createStory(option.foundation);
+      const created = await controller.createStory(option.foundation, option.originalLanguage);
       setSelectedStoryId(created.id);
       setManualStart(false);
     });
@@ -929,7 +949,7 @@ export function HarnessGenerationWorkspace({
   const generationAvailable = Boolean(selectedStory && serverInfo?.configured && model && !busy);
 
   if (reading && state && selectedStory) return <HarnessReaderSession key={selectedStory.id} state={state} storyId={selectedStory.id}
-    controller={controller} onClose={() => setReading(false)} />;
+    controller={controller} installedSkills={availableSkills} onClose={() => setReading(false)} />;
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-generation-workspace">

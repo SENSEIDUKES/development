@@ -7,6 +7,7 @@ import { handleChapterGenerationHttp } from './src/server/chapter-generation/htt
 import type { ChapterGenerationStreamEvent } from './src/components/chapter-generation/shared/liveChapterGeneration';
 import { handleHarnessGenerationHttp } from './src/server/harness-generation/http';
 import { handleStorySeedBlueprintHttp } from './src/server/story-seed-blueprint/http';
+import { handleReaderTranslationHttp } from './src/server/reader-translation/http';
 import { handleCodexVoiceQuoteHttp } from './src/server/audio/codexVoiceQuoteHttp';
 import { createConfiguredCodexVoiceQuoteService } from './src/server/audio/codexVoiceQuote';
 import {
@@ -63,6 +64,11 @@ const generationApis = (
     limit: 8,
     windowMs: 60 * 60 * 1_000,
   });
+  const guardReaderTranslation = createPublicGenerationGuard({
+    key: 'reader-translation',
+    limit: 12,
+    windowMs: 30 * 60 * 1_000,
+  });
   // One shared service instance so concurrent Codex taps on the same
   // signature quote collapse into a single provider call.
   const codexVoiceQuoteService = (() => {
@@ -87,6 +93,7 @@ const generationApis = (
         && pathname !== '/api/harness-generation'
         && pathname !== '/api/generate-blueprint'
         && pathname !== '/api/codex-voice-quote'
+        && pathname !== '/api/reader-translation'
       ) {
         next();
         return;
@@ -100,6 +107,8 @@ const generationApis = (
               ? guardHarnessGeneration(request)
             : pathname === '/api/codex-voice-quote'
               ? guardCodexVoiceQuote(request)
+            : pathname === '/api/reader-translation'
+              ? guardReaderTranslation(request)
               : { allowed: true };
         if (!admission.allowed) {
           writeJson(response, admission.status ?? 403, {
@@ -131,6 +140,17 @@ const generationApis = (
               environment,
               service: codexVoiceQuoteService,
               onError: error => console.error('[codex-voice]', error),
+            },
+          );
+          writeJson(response, result.status, result.body, result.headers);
+          return;
+        }
+        if (pathname === '/api/reader-translation') {
+          const result = await handleReaderTranslationHttp(
+            { method: request.method, body, headers: request.headers },
+            {
+              environment,
+              onError: error => console.error('[reader-translation]', error),
             },
           );
           writeJson(response, result.status, result.body, result.headers);

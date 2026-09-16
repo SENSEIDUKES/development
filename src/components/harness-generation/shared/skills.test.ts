@@ -51,7 +51,7 @@ describe('Harness installed skills', () => {
   it('freezes exact equipped versions in stable slot order', () => {
     const skill = pacingSkill();
     const catalog = createHarnessSkillCatalog([SEN_NOVEL_AUTHOR_SKILL, skill]);
-    const { story } = createHarnessStory(createEmptyHarnessWorkspaceState(), { premise: 'A patient rebellion begins.' }, defaultHarnessRuntime);
+    const { story } = createHarnessStory(createEmptyHarnessWorkspaceState(), { premise: 'A patient rebellion begins.' }, 'en', defaultHarnessRuntime);
     story.skillLoadout = {
       author: { id: SEN_NOVEL_AUTHOR_SKILL.id, version: SEN_NOVEL_AUTHOR_SKILL.version },
       pacing: { id: skill.id, version: skill.version },
@@ -69,13 +69,13 @@ describe('Harness installed skills', () => {
   });
 
   it('requires an Author skill before a generation request can be frozen', () => {
-    const { story } = createHarnessStory(createEmptyHarnessWorkspaceState(), { premise: 'A patient rebellion begins.' }, defaultHarnessRuntime);
+    const { story } = createHarnessStory(createEmptyHarnessWorkspaceState(), { premise: 'A patient rebellion begins.' }, 'en', defaultHarnessRuntime);
     expect(() => freezeHarnessSkillLoadout(story, createHarnessSkillCatalog([]), '2026-09-12T12:00:00.000Z'))
       .toThrow('Author skill');
   });
 
   it('refuses to silently drop a referenced skill that is no longer installed', () => {
-    const { story } = createHarnessStory(createEmptyHarnessWorkspaceState(), { premise: 'A patient rebellion begins.' }, defaultHarnessRuntime);
+    const { story } = createHarnessStory(createEmptyHarnessWorkspaceState(), { premise: 'A patient rebellion begins.' }, 'en', defaultHarnessRuntime);
     story.skillLoadout = { media: { id: 'seihouse.soundscape', version: '2.0.0' } };
     expect(() => freezeHarnessSkillLoadout(story, createHarnessSkillCatalog([]), '2026-09-12T12:00:00.000Z'))
       .toThrow('is equipped but is not installed');

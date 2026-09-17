@@ -539,12 +539,12 @@ function MediaLoadoutPanel({
     const scheduleNextExpiration = () => {
       const now = Date.now();
       setEntitlementClock(now);
-      const nearestExpiration = entitlements
-        .map(item => item.expiresAt ? Date.parse(item.expiresAt) : Number.NaN)
-        .filter(expiresAt => Number.isFinite(expiresAt) && expiresAt > now)
+      const nearestBoundary = entitlements
+        .flatMap(item => [Date.parse(item.unlockedAt), item.expiresAt ? Date.parse(item.expiresAt) : Number.NaN])
+        .filter(boundary => Number.isFinite(boundary) && boundary > now)
         .sort((left, right) => left - right)[0];
-      if (nearestExpiration === undefined || cancelled) return;
-      timeout = setTimeout(scheduleNextExpiration, Math.min(nearestExpiration - now + 1, 2_147_483_647));
+      if (nearestBoundary === undefined || cancelled) return;
+      timeout = setTimeout(scheduleNextExpiration, Math.min(nearestBoundary - now + 1, 2_147_483_647));
     };
     scheduleNextExpiration();
     return () => {

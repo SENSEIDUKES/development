@@ -35,16 +35,29 @@ const response = (reply: unknown, source: 'reported' | 'estimated' | 'unavailabl
   },
 });
 
+/**
+ * Chapter replies carry prose only. A fixture's `events` are served by the
+ * separate memory extraction call for the chapter whose prose they belong to.
+ */
 const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
+  const memoryByProse = new Map<string, unknown[]>();
   const generate = vi.fn(async (_request: HarnessGenerationRequest) => {
     const next = outputs.shift();
     if (!next) throw new Error('No provider fixture remains.');
     if (next instanceof Error) throw next;
+    try {
+      const parsed = JSON.parse(next.rawProviderResponse) as { prose?: string; events?: unknown[] };
+      if (parsed.events && parsed.prose) {
+        memoryByProse.set(parsed.prose, parsed.events);
+        return { ...next, rawProviderResponse: JSON.stringify({ ...parsed, events: undefined }) };
+      }
+    } catch { /* plain prose fixtures pass through */ }
     return next;
   });
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [{ id: 'gemini-test', label: 'Gemini test' }], defaultModel: 'gemini-test' }),
     generate,
+    recoverMemory: async request => response({ events: memoryByProse.get(request.prose) ?? [] }),
     arcOperation: async request => response({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
   };
   return { value, generate };

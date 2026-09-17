@@ -257,36 +257,10 @@ export type HarnessModelPlan = string | {
   beats?: string[];
 };
 
-/** The intentionally small transport shape requested from the provider. */
-export interface HarnessModelChapterReply {
-  /** Untrusted provider blocks are normalized into canonical SEN StoryBlocks. */
-  blocks?: unknown[];
-  /** Recovery-only provider deviation; the current response contract requests blocks. */
-  prose?: string;
-  title?: string;
-  plan?: HarnessModelPlan;
-  memory?: Partial<Record<keyof typeof HARNESS_MEMORY_CATEGORIES, Array<{
-    description: string;
-    subjects: Array<{ name: string; kind: HarnessCanonicalKind }>;
-    significance?: 'minor' | 'major';
-    evidence: string;
-    details?: HarnessEventDetails;
-    facts?: Record<string, string>;
-  }>>>;
-  events?: Array<{
-    description: string;
-    category?: string;
-    subjects?: string[];
-    significance?: 'minor' | 'major';
-    evidence?: string;
-    requestedEffects?: string[];
-    details?: HarnessEventDetails;
-    facts?: Record<string, string>;
-  }>;
-}
-
 export interface HarnessAcceptedChapterDraft {
+  /** Authoritative readable chapter; accepted independently of every optional signal. */
   prose: string;
+  /** HARNESS-built SEN blocks carrying only accepted, anchor-matched signals. */
   blocks?: StoryBlock[];
   audioMoments?: ResolvedAudioMoment[];
   soundscapes?: ResolvedSoundscape[];
@@ -416,8 +390,9 @@ export interface HarnessChapter {
   chapterNumber: number;
   title: string;
   titleSource: 'model' | 'harness-fallback';
+  /** The authoritative chapter result: the accepted model prose with normalized paragraph breaks. */
   prose: string;
-  /** Canonical accepted SEN blocks; prose above is derived from their text. */
+  /** Canonical SEN blocks the HARNESS split from the prose and annotated from accepted signals. */
   blocks?: StoryBlock[];
   /** Application-resolved media records only; model proposals never persist here. */
   audioMoments?: ResolvedAudioMoment[];

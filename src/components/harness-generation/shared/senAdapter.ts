@@ -120,7 +120,36 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
   memory.memoryWarnings = [...ambiguous].map(name => `Ambiguous character identity: ${name}. Speech attribution is withheld.`);
 
   const readerChapters = (includeChapters ? chapters : []).map(chapter => {
+    // Resolve roles as of this chapter, so later changes do not rewrite dialogue attribution.
+    const chapterView = historical && chapter.chapterNumber === chapters.at(-1)?.chapterNumber ? { story: { mcName }, resolve }
+      : buildHarnessSenStory(state, storyId, chapter.chapterNumber, false);
+    const events = state.events.filter(event => event.storyId === storyId && event.chapterId === chapter.id);
+    const speakerMetadata = (character: Character): StoryBlock['metadata'] => ({
+      mode: 'dialogue', speakerName: character.name, speakerRole: character.name === chapterView.story.mcName ? 'main_character' : character.role,
+      entities: [{ name: character.name, type: 'character', mention: 'reference' }],
+    });
+    // A System Panel is reader-visible only when the chapter itself established
+    // one through a System Panel signal. Extracted memory is Codex evidence, not
+    // a panel: its mechanical facts reach the reader through story memory and
+    // character abilities below, never as an invented card in the prose.
     if (chapter.blocks?.length) {
+      // HARNESS-built blocks are the Reader chapter. Extracted memory only adds
+      // what the writer's signals left out: exact, uniquely anchored speech
+      // receives its known speaker.
+      const blocks = (cloneHarnessValue(chapter.blocks) as StoryBlock[]).map(block => {
+        if (block.system || block.metadata?.speakerName) return block;
+        for (const event of events) {
+          const speech = event.details?.speech;
+          if (!speech) continue;
+          const character = chapterView.resolve(speech.speaker);
+          const start = block.text.indexOf(speech.quote);
+          if (!character || start < 0 || block.text.indexOf(speech.quote, start + 1) >= 0) continue;
+          const derived = speakerMetadata(character)!;
+          return { ...block, type: 'dialogue', metadata: { ...block.metadata, ...derived,
+            entities: [...(block.metadata?.entities ?? []).filter(entity => entity.name !== character.name || entity.type !== 'character'), ...derived.entities!] } };
+        }
+        return block;
+      });
       return {
         persistenceId: chapter.id,
         number: chapter.chapterNumber,
@@ -129,7 +158,7 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
         status: 'unread' as const,
         hasContent: true,
         generatedContent: chapter.prose,
-        blocks: cloneHarnessValue(chapter.blocks) as StoryBlock[],
+        blocks,
         ...(chapter.audioMoments?.length
           ? { audioMoments: cloneHarnessValue(chapter.audioMoments) }
           : {}),
@@ -138,10 +167,6 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
           : {}),
       };
     }
-    // Resolve roles as of this chapter, so later changes do not rewrite dialogue attribution.
-    const chapterView = historical && chapter.chapterNumber === chapters.at(-1)?.chapterNumber ? { story: { mcName }, resolve }
-      : buildHarnessSenStory(state, storyId, chapter.chapterNumber, false);
-    const events = state.events.filter(event => event.storyId === storyId && event.chapterId === chapter.id);
     const spans: Array<{ start: number; end: number; character: Character }> = [];
     for (const event of events) {
       const speech = event.details?.speech;
@@ -158,8 +183,7 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
     const addProse = (text: string, start: number, character?: Character) => {
       if (!text) return;
       blocks.push({ id: stableHarnessId('hblock', chapter.id, start), type: character ? 'dialogue' : 'narration', text,
-        ...(character ? { metadata: { mode: 'dialogue', speakerName: character.name, speakerRole: character.name === chapterView.story.mcName ? 'main_character' : character.role,
-          entities: [{ name: character.name, type: 'character', mention: 'reference' }] } } : {}) });
+        ...(character ? { metadata: speakerMetadata(character) } : {}) });
     };
     let offset = 0;
     for (const span of spans) {
@@ -168,21 +192,6 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
       offset = span.end;
     }
     addProse(chapter.prose.slice(offset), offset);
-    for (const event of events) {
-      // Use successful canonical outputs only; replay makes failed enhancements appear.
-      const supported = records.filter(record => record.sourceEventId === event.id && record.confidence === 'resolved');
-      if (!supported.length) continue;
-      const mechanical = supported.find(record => ['progression', 'artifact', 'location-world'].includes(record.kind) && stringFact(record, 'value') !== undefined);
-      const value = mechanical && [stringFact(mechanical, 'value'), stringFact(mechanical, 'unit')].filter(Boolean).join(' ');
-      blocks.push({ id: stableHarnessId('hblock', chapter.id, event.id), type: 'system', text: event.description,
-        system: mechanical ? {
-          kind: 'system_prompt', presentation: 'mechanical', promptType: 'progression',
-          title: `${stringFact(mechanical, 'subject')}: ${stringFact(mechanical, 'name')}`,
-          rows: [{ label: stringFact(mechanical, 'name')!, value: value! }],
-          status: { stats: [{ label: stringFact(mechanical, 'name')!, value: value! }] },
-        } : { kind: 'system_prompt', presentation: 'narrative', promptType: 'codex_update', title: 'Story development' },
-      });
-    }
     return { persistenceId: chapter.id, number: chapter.chapterNumber, title: chapter.title, premise: '',
       status: 'unread' as const, hasContent: true, generatedContent: chapter.prose, blocks };
   });

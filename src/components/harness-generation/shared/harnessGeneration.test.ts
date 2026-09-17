@@ -40,13 +40,23 @@ const response = (
   },
 });
 
+/** Chapter replies carry prose only; `memory` fixtures feed the separate extraction call for that chapter's prose. */
 const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
+  const memoryByProse = new Map<string, unknown>();
   const generate = vi.fn(async (_request: HarnessGenerationRequest) => {
     const output = outputs.shift();
     if (!output) throw new Error('No test provider response remains.');
     if (output instanceof Error) throw output;
+    try {
+      const parsed = JSON.parse(output.rawProviderResponse) as { prose?: string; memory?: unknown };
+      if (parsed.memory !== undefined && parsed.prose) {
+        memoryByProse.set(parsed.prose, parsed.memory);
+        return { ...output, rawProviderResponse: JSON.stringify({ ...parsed, memory: undefined }) };
+      }
+    } catch { /* plain prose fixtures pass through */ }
     return output;
   });
+  const recoverMemory = vi.fn(async (request: { prose: string }) => response(JSON.stringify(memoryByProse.get(request.prose) ?? { events: [] })));
   const value: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({
       provider: 'gemini',
@@ -55,9 +65,10 @@ const adapter = (...outputs: Array<HarnessGenerationResponse | Error>) => {
       defaultModel: 'google/gemini-3.1-flash-lite',
     }),
     generate,
+    recoverMemory,
     arcOperation: async request => response(JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' })),
   };
-  return { value, generate };
+  return { value, generate, recoverMemory };
 };
 
 const createStory = async (
@@ -224,14 +235,14 @@ describe('Harness Generation Phase 2 novel core', () => {
     expect(controller.snapshot().chapters).toHaveLength(1);
   });
 
-  it('preserves valid semantic events, including a description-only and unknown-category event', async () => {
+  it('extracts semantic events through the separate memory process after the chapter commits', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const provider = adapter(response(JSON.stringify({
       prose: 'Arin found the first dry stair beneath the flood line.',
-      events: [
+      memory: { events: [
         { description: 'Arin finds a dry stair under the flood line.' },
         { description: 'The city bell changes its rhythm.', category: 'unfamiliar-signal', subjects: ['city bell'] },
-      ],
+      ] },
     })));
     const controller = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime() });
     await controller.hydrate();
@@ -239,6 +250,15 @@ describe('Harness Generation Phase 2 novel core', () => {
     await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
 
     const state = controller.snapshot();
+    // The chapter-writing call carried no memory; extraction read the committed prose.
+    expect(provider.generate).toHaveBeenCalledTimes(1);
+    expect(provider.recoverMemory).toHaveBeenCalledTimes(1);
+    expect(provider.recoverMemory.mock.calls[0][0].prose).toBe('Arin found the first dry stair beneath the flood line.');
+    expect(state.attempts[0]).toMatchObject({ stage: 'committed', preservedEvents: [] });
+    expect(state.memoryRecoveries?.[0]).toMatchObject({ status: 'applied', chapterId: state.chapters[0].id });
+    expect(state.chapters[0].eventIds).toHaveLength(2);
+    // Description-only events stay unverified, so interpretation is honestly incomplete.
+    expect(state.attempts[0].postCommitProcessing).toBe('warnings');
     expect(state.events).toHaveLength(2);
     expect(state.events[0]).toMatchObject({
       capability: 'general-narrative-event',
@@ -247,15 +267,15 @@ describe('Harness Generation Phase 2 novel core', () => {
     expect(state.events[1]).toMatchObject({ category: 'unfamiliar-signal', subjects: ['city bell'] });
   });
 
-  it('keeps prose when malformed optional events are rejected', async () => {
+  it('keeps the committed chapter when the separate memory extraction returns malformed events', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const provider = adapter(response(JSON.stringify({
       prose: 'The river lantern went dark just as Jun reached the quay.',
-      events: [
+      memory: { events: [
         { description: 'Jun reaches the quay.', category: 'location' },
         { category: 'missing-description' },
         42,
-      ],
+      ] },
     })));
     const controller = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime() });
     await controller.hydrate();
@@ -264,9 +284,49 @@ describe('Harness Generation Phase 2 novel core', () => {
 
     const state = controller.snapshot();
     expect(state.chapters).toHaveLength(1);
-    expect(state.events).toHaveLength(1);
-    expect(state.attempts[0].rejectedEvents).toHaveLength(2);
-    expect(state.attempts[0].warnings.some(warning => warning.code === 'optional_event_rejected')).toBe(true);
+    expect(state.stories[0].head.nextChapterNumber).toBe(2);
+    expect(state.attempts[0].stage).toBe('committed');
+    expect(state.events).toHaveLength(0);
+    expect(state.memoryRecoveries?.[0]).toMatchObject({ status: 'failed', rawProviderResponse: expect.stringContaining('missing-description') });
+    expect(state.attempts[0].warnings.some(warning => warning.code === 'capability_unresolved' && warning.message.includes('Automatic memory extraction'))).toBe(true);
+  });
+
+  it('completes post-commit processing when the separate extraction reports no new memory', async () => {
+    const repository = new InMemoryHarnessGenerationRepository();
+    const provider = adapter(response(JSON.stringify({
+      prose: 'The ferry crossed the strait without incident, and no one spoke.',
+      memory: { memory: { characters: [], threads: [], timeline: [] } },
+    })));
+    const controller = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime() });
+    await controller.hydrate();
+    const story = await createStory(controller);
+    await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
+
+    const state = controller.snapshot();
+    // A chapter may legitimately establish no new memory; that is a complete
+    // answer, not an incomplete interpretation to retry.
+    expect(state.chapters).toHaveLength(1);
+    expect(state.events).toHaveLength(0);
+    expect(state.memoryRecoveries?.[0]).toMatchObject({ status: 'applied', eventIds: [], warnings: [] });
+    expect(state.attempts[0]).toMatchObject({ stage: 'committed', postCommitProcessing: 'complete' });
+    expect(state.attempts[0].warnings.some(warning => warning.code === 'capability_unresolved')).toBe(false);
+    expect(provider.recoverMemory).toHaveBeenCalledTimes(1);
+  });
+
+  it('commits a chapter without any memory call when the host adapter has no extraction', async () => {
+    const repository = new InMemoryHarnessGenerationRepository();
+    const provider = adapter(response(JSON.stringify({ prose: 'The ferry left without its lantern.' })));
+    const { recoverMemory: _unused, ...modelAdapter } = provider.value;
+    const controller = new HarnessGenerationController({ repository, modelAdapter, runtime: runtime() });
+    await controller.hydrate();
+    const story = await createStory(controller);
+    await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
+
+    const state = controller.snapshot();
+    expect(state.chapters[0].prose).toBe('The ferry left without its lantern.');
+    expect(state.attempts[0]).toMatchObject({ stage: 'committed', postCommitProcessing: 'warnings' });
+    expect(state.memoryRecoveries ?? []).toHaveLength(0);
+    expect(provider.recoverMemory).not.toHaveBeenCalled();
   });
 
   it('uses plain-prose recovery when invalid JSON still contains readable chapter prose', async () => {
@@ -298,11 +358,11 @@ describe('Harness Generation Phase 2 novel core', () => {
     });
   });
 
-  it('commits prose through an optional event-preservation failure, then replays events without another provider call', async () => {
+  it('commits prose through an optional event-preservation failure, then extracts memory without another chapter call', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const provider = adapter(response(JSON.stringify({
       prose: 'Mae left the lantern burning for the person who had not returned.',
-      events: [{ description: 'Mae leaves a lantern burning.' }],
+      memory: { events: [{ description: 'Mae leaves a lantern burning.' }] },
     })));
     const controller = new HarnessGenerationController({
       repository,
@@ -320,7 +380,8 @@ describe('Harness Generation Phase 2 novel core', () => {
       acceptedDraft: { prose: expect.stringContaining('lantern') },
     });
     expect(controller.snapshot().chapters).toHaveLength(1);
-    expect(controller.snapshot().events).toHaveLength(0);
+    expect(controller.snapshot().events).toHaveLength(1);
+    expect(controller.snapshot().events[0].recoveryId).toBeDefined();
 
     const reloaded = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime() });
     await reloaded.hydrate();
@@ -365,7 +426,7 @@ describe('Harness Generation Phase 2 novel core', () => {
       response(JSON.stringify({
         title: 'A Door in the Floodwall',
         prose: 'Nera found the door behind the floodwall at first light.',
-        events: [{ description: 'Nera discovers a sealed door behind the floodwall.', category: 'mystery' }],
+        memory: { events: [{ description: 'Nera discovers a sealed door behind the floodwall.', category: 'mystery' }] },
       })),
       response(JSON.stringify({
         prose: 'The sealed door opened only when Nera spoke the name she had lost.',

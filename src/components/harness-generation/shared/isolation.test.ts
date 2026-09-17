@@ -29,8 +29,10 @@ describe('Harness Generation isolation boundary', () => {
           expect(/(?:senAdapter\.ts|HarnessReaderSession\.tsx)$/.test(file), `Unexpected SEN edge: ${file}`).toBe(true);
         }
         if (/chapter-generation/.test(specifier)) {
+          // chapterSignals converts accepted signals into the canonical SEN
+          // block contract; it reuses the shared types only.
           expect(
-            /(?:types|responseAcceptance)\.ts$/.test(file),
+            /(?:types|responseAcceptance|chapterSignals)\.ts$/.test(file),
             `Unexpected Chapter Generation edge: ${file}`,
           ).toBe(true);
           expect(specifier).toMatch(

@@ -18,7 +18,8 @@ const setup = async () => {
       rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
       providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: runtime.now(), usage: { source: 'unavailable' } },
     }),
-    generate: async () => ({ rawProviderResponse: JSON.stringify({ prose, events: [
+    generate: async () => ({ rawProviderResponse: JSON.stringify({ prose }), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: runtime.now(), usage: { source: 'unavailable' } } }),
+    recoverMemory: async () => ({ rawProviderResponse: JSON.stringify({ events: [
       { description: 'Iven speaks while Mara checks her sparks.', category: 'character', subjects: ['Iven'], evidence: prose,
         details: { character: { name: 'Iven', role: 'Captain' }, speech: { speaker: 'Iven', quote: '"Stay together."' },
           mechanics: { subject: 'Mara', name: 'Sparks', value: '16', unit: 'sparks' } } },

@@ -1,5 +1,17 @@
 import { ARC_LENGTH, ARC_PLAN_SCHEMA, createArcChapterPosition } from '../../components/arc-goals/shared/arcGoals';
-import { SOUNDSCAPE_REGIONS } from '../../audio/soundscapes';
+import {
+  HARNESS_CREATURE_EVENT_TYPES,
+  HARNESS_CREATURE_SIZES,
+  HARNESS_DIALOGUE_DELIVERIES,
+  HARNESS_FATE_OUTCOMES,
+  HARNESS_MANIFESTATION_MENTIONS,
+  HARNESS_MANIFESTATION_TYPES,
+  HARNESS_SOUND_CUE_CATEGORIES,
+  HARNESS_SOUND_CUE_ENTITY_TYPES,
+  HARNESS_SOUNDSCAPE_REGIONS,
+  HARNESS_SYSTEM_PANEL_MEANINGS,
+  HARNESS_SYSTEM_PANEL_PRESENTATIONS,
+} from '../../components/harness-generation/shared/chapterSignals';
 import type {
   HarnessArcRequest,
   HarnessGenerationRequest,
@@ -53,133 +65,65 @@ const memorySchema = { type: 'object', properties: Object.fromEntries(Object.key
 }])), required: Object.keys(HARNESS_MEMORY_CATEGORIES) };
 const memoryResponseSchema = { type: 'object', properties: { memory: memorySchema }, required: ['memory'] };
 
-const stringArraySchema = { type: 'array', items: { type: 'string' } };
-const chapterBlockSchema = {
+const text = { type: 'string' };
+const anchoredText = { type: 'string', description: 'An exact, distinctive passage copied verbatim from the prose.' };
+const tagList = { type: 'array', items: text, description: 'Short canonical-English semantic tags.' };
+const labelValueEntry = { type: 'object', properties: { label: text, value: text }, required: ['label', 'value'] };
+
+/**
+ * The compact semantic chapter contract requested from the provider. It is
+ * deliberately shallow: prose is the chapter, every signal family is a flat
+ * list of small objects keyed by an exact prose anchor, and no family repeats
+ * another's definition. Final SEN blocks, System Panel presentations, media
+ * assets, IDs, and memory are HARNESS work and never appear here.
+ */
+export const HARNESS_CHAPTER_RESPONSE_SCHEMA = {
   type: 'object',
   properties: {
-    type: { type: 'string', enum: ['paragraph', 'dialogue'] },
-    text: { type: 'string' },
-    metadata: {
+    title: text,
+    plan: { type: 'string', description: 'Optional one-paragraph continuation plan for the next chapter.' },
+    prose: { type: 'string', description: 'The complete chapter prose. Paragraphs are separated by blank lines. This is the only chapter body.' },
+    arcCompletion: {
       type: 'object',
-      properties: {
-        sceneType: { type: 'string' }, environment: stringArraySchema,
-        atmosphereCategory: { type: 'string', enum: ['wind', 'crowd', 'waves', 'rain', 'combat', 'noise'] },
-        atmosphereTags: stringArraySchema, theme: { anyOf: [{ type: 'string' }, stringArraySchema] }, motion: { type: 'string' },
-        emotion: { type: 'string' }, intensity: { type: 'number' }, tension: { type: 'number' },
-        danger: { type: 'number' }, mysticism: { type: 'number' }, audioSignature: { type: 'string' },
-        speakerName: { type: 'string' }, mode: { type: 'string' }, speakerRole: { type: 'string' },
-        entities: { type: 'array', items: { type: 'object', properties: {
-          name: { type: 'string' }, type: { type: 'string', enum: ['character', 'artifact', 'location', 'creature', 'faction'] },
-          mention: { type: 'string', enum: ['reveal', 'reference'] },
-        }, required: ['name', 'type', 'mention'] } },
-        music: { type: 'object', properties: {
-          mood: { type: 'string' }, region: { type: 'string', enum: [...SOUNDSCAPE_REGIONS] }, intensity: { type: 'number' },
-        }, required: ['mood'] },
-        beastEvent: { type: 'object', properties: {
-          type: { type: 'string', enum: ['reveal', 'power-up', 'technique', 'injury', 'turning-point', 'death', 'breakthrough'] },
-          profile: { type: 'object', properties: {
-            size: { type: 'string', enum: ['tiny', 'small', 'medium', 'large', 'giant', 'colossal'] },
-            bodyType: { type: 'string' }, element: { type: 'string' }, movement: { type: 'string' },
-            intelligence: { type: 'string' }, threatTier: { type: 'string' }, signatureSound: { type: 'string' },
-          } },
-        }, required: ['type', 'profile'] },
-        audioMoments: { type: 'array', items: { type: 'object', properties: {
-          triggerPhrase: { type: 'string' }, occurrenceIndex: { type: 'number' },
-          sourceCategory: { type: 'string', enum: ['beasts', 'weapons', 'artifacts', 'locations', 'factions'] },
-          variation: { type: 'string' }, semanticTags: stringArraySchema,
-          relatedEntity: { type: 'object', properties: {
-            name: { type: 'string' }, type: { type: 'string', enum: ['character', 'artifact', 'location', 'creature', 'faction'] },
-          }, required: ['name'] },
-        }, required: ['triggerPhrase', 'sourceCategory', 'variation', 'semanticTags'] } },
-      },
+      properties: { goalId: text, completed: { type: 'boolean' }, evidence: text },
+      required: ['goalId', 'completed', 'evidence'],
     },
-    system: {
-      type: 'object',
-      properties: {
-        kind: { type: 'string', enum: ['system_prompt', 'fate_system_prompt'] }, title: { type: 'string' },
-        promptType: { type: 'string', enum: [
-          'neutral', 'codex_update', 'friendly_scan', 'enemy_scan', 'warning', 'critical_danger',
-          'progression', 'breakthrough', 'reward', 'romance', 'karmic_bond', 'mystery', 'fate_event',
-          'corruption', 'death_event', 'quest_update', 'choice_consequence', 'system_error',
-        ] }, presentation: { type: 'string', enum: ['narrative', 'mechanical', 'world_notice'] },
-        flavor: { type: 'string' }, rarity: { type: 'string' },
-        rows: { type: 'array', items: { type: 'object', properties: {
-          label: { type: 'string' }, value: { type: 'string' }, trend: { type: 'string', enum: ['up', 'down'] },
-        }, required: ['label', 'value'] } },
-        badge: { type: 'object', properties: { label: { type: 'string' }, value: { type: 'string' } }, required: ['label', 'value'] },
-        changes: { type: 'array', items: { type: 'object', properties: {
-          direction: { type: 'string', enum: ['gain', 'loss'] }, label: { type: 'string' },
-          tone: { type: 'string', enum: ['positive', 'uncertain', 'warning', 'negative'] },
-        }, required: ['direction', 'label'] } },
-        status: { type: 'object', properties: {
-          level: { type: 'string' },
-          bars: { type: 'array', items: { type: 'object', properties: {
-            label: { type: 'string' }, value: { type: 'number' }, max: { type: 'number' }, display: { type: 'string' },
-            tone: { type: 'string', enum: ['health', 'spirit', 'progress'] },
-          }, required: ['label', 'value', 'max', 'tone'] } },
-          stats: { type: 'array', items: { type: 'object', properties: {
-            label: { type: 'string' }, value: { type: 'string' }, delta: { type: 'number' },
-          }, required: ['label', 'value'] } },
-          effects: { type: 'array', items: { type: 'object', properties: {
-            name: { type: 'string' }, detail: { type: 'string' }, value: { type: 'string' },
-            tone: { type: 'string', enum: ['positive', 'negative'] },
-          }, required: ['name'] } },
-          abilities: { type: 'array', items: { type: 'object', properties: {
-            name: { type: 'string' }, detail: { type: 'string' },
-          }, required: ['name'] } },
-        }, anyOf: [
-          { required: ['level'] },
-          { required: ['bars'] },
-          { required: ['stats'] },
-          { required: ['effects'] },
-          { required: ['abilities'] },
-        ] },
-        worldNotice: { type: 'object', properties: {
-          entries: { type: 'array', items: { type: 'object', properties: {
-            title: { type: 'string' }, body: { type: 'string' },
-            details: { type: 'array', items: { type: 'object', properties: {
-              label: { type: 'string' }, value: { type: 'string' },
-            }, required: ['label', 'value'] } },
-          }, required: ['title'] }, minItems: 1 },
-        }, required: ['entries'] },
-        fateResult: { type: 'object', properties: {
-          outcome: { type: 'string', enum: ['FATE AVERTED', 'FATE SCARRED', 'DOOM MANIFESTED'] },
-          timelineScar: { type: 'string' }, permanentCosts: stringArraySchema,
-          newStoryState: { type: 'string' }, newActiveStats: stringArraySchema, genreShift: { type: 'string' },
-        }, required: ['outcome', 'timelineScar', 'permanentCosts'] },
-      },
-      required: ['kind', 'title'],
-      anyOf: [
-        {
-          properties: { kind: { type: 'string', enum: ['fate_system_prompt'] } },
-          required: ['kind', 'title', 'fateResult'],
-        },
-        {
-          properties: {
-            kind: { type: 'string', enum: ['system_prompt'] },
-            presentation: { type: 'string', enum: ['narrative'] },
-          },
-          required: ['kind', 'title', 'promptType', 'presentation'],
-        },
-        {
-          properties: {
-            kind: { type: 'string', enum: ['system_prompt'] },
-            presentation: { type: 'string', enum: ['mechanical'] },
-          },
-          required: ['kind', 'title', 'promptType', 'presentation', 'status'],
-        },
-        {
-          properties: {
-            kind: { type: 'string', enum: ['system_prompt'] },
-            presentation: { type: 'string', enum: ['world_notice'] },
-          },
-          required: ['kind', 'title', 'promptType', 'presentation', 'worldNotice'],
-        },
-      ],
-    },
+    dialogue: { type: 'array', items: { type: 'object', properties: {
+      anchorText: anchoredText, speaker: text, delivery: { type: 'string', enum: [...HARNESS_DIALOGUE_DELIVERIES] },
+    }, required: ['anchorText', 'speaker'] } },
+    manifestations: { type: 'array', items: { type: 'object', properties: {
+      anchorText: anchoredText, name: text,
+      type: { type: 'string', enum: [...HARNESS_MANIFESTATION_TYPES] },
+      mention: { type: 'string', enum: [...HARNESS_MANIFESTATION_MENTIONS] },
+    }, required: ['anchorText', 'name', 'type', 'mention'] } },
+    systemPanels: { type: 'array', items: { type: 'object', properties: {
+      anchorText: { type: 'string', description: 'The exact readable System Panel text copied from the prose.' },
+      presentation: { type: 'string', enum: [...HARNESS_SYSTEM_PANEL_PRESENTATIONS] },
+      meaning: { type: 'string', enum: [...HARNESS_SYSTEM_PANEL_MEANINGS] },
+      title: text, body: text,
+      entries: { type: 'array', items: labelValueEntry },
+      outcome: { type: 'string', enum: [...HARNESS_FATE_OUTCOMES], description: 'Fate presentation only.' },
+    }, required: ['anchorText', 'presentation', 'title'] } },
+    soundscapes: { type: 'array', items: { type: 'object', properties: {
+      anchorText: anchoredText, mood: text,
+      region: { type: 'string', enum: [...HARNESS_SOUNDSCAPE_REGIONS] },
+      tags: tagList, intensity: { type: 'number' },
+    }, required: ['anchorText', 'mood'] } },
+    soundCues: { type: 'array', items: { type: 'object', properties: {
+      anchorText: { type: 'string', description: 'The exact audible action phrase from the prose, never an entity name.' },
+      category: { type: 'string', enum: [...HARNESS_SOUND_CUE_CATEGORIES] },
+      variation: text, tags: tagList, entityName: text,
+      entityType: { type: 'string', enum: [...HARNESS_SOUND_CUE_ENTITY_TYPES] },
+    }, required: ['anchorText', 'category', 'variation'] } },
+    creatureEvents: { type: 'array', items: { type: 'object', properties: {
+      anchorText: anchoredText,
+      type: { type: 'string', enum: [...HARNESS_CREATURE_EVENT_TYPES] },
+      name: text, size: { type: 'string', enum: [...HARNESS_CREATURE_SIZES] },
+      bodyType: text, element: text, movement: text, intelligence: text, threatTier: text, signatureSound: text,
+    }, required: ['anchorText', 'type'] } },
   },
-  required: ['type', 'text'],
-};
+  required: ['prose', 'arcCompletion'],
+} as const;
 
 export const HARNESS_MEMORY_INSTRUCTIONS = [
   'Each memory entry may include details with character {name, role, relationshipToMC, isMainCharacter}, speech {speaker, quote}, or mechanics {subject, name, value, unit}. Include only information supported by its evidence and the chapter. Keep speaker role separate from relationship. Use the exact unique speech substring and an established named speaker. Mechanical values are exact absolute observations, including zero, never inferred deltas. The subject names the actual owner, which may be a character or an item. Put semantic objects inside details; do not emit application cards or IDs.',
@@ -234,18 +178,17 @@ export const HARNESS_RESPONSE_CONTRACT = [
   'Opening setup applies at the beginning of the story. For continuation, continue from the latest committed chapter supplied, respecting the actual story head. Committed developments can evolve the starting Foundation state; do not reset that progress unless an explicit author change requires it. Do not restart at the opening or invent missing chapter events. Unresolved or conflicted derived records are uncertain interpretations, not established facts. The deterministic handoff is an evidence reminder, not an assignment to resolve every item.',
   'The context coverage report explains omissions. Its labels are an inventory, not additional canonical evidence. Missing context is unavailable evidence, not proof that an event never happened. Its token count is a selection estimate, not provider usage or the total formatted prompt size.',
   'Semantic events are interpretations of the prose. When evidenceVerified is false, do not adopt their unsupported fact values as canon; use the actual prose and explicit author changes. A verified quote confirms provenance, not every semantic inference.',
-  'Return one JSON object only. Its blocks array is the sole chapter body; do not also return a competing prose field. title and plan are optional. memory and arcCompletion remain required. The HARNESS derives clean readable prose by joining accepted block text in order.',
-  'Each blocks item may contain only type, text, metadata, and system. type must be paragraph or dialogue and text must be nonempty. metadata may contain only sceneType, environment, atmosphereCategory, atmosphereTags, theme, motion, emotion, intensity, tension, danger, mysticism, audioSignature, speakerName, mode, speakerRole, entities, music, beastEvent, and audioMoments. Dialogue metadata uses speakerName, mode dialogue, and speakerRole. entities items use name, type (character, artifact, location, creature, or faction), and mention (reveal or reference). music may contain mood, region (chinese, japanese, korean, or western), and intensity. beastEvent uses the existing type and profile fields. atmosphereCategory, when supplied, is wind, crowd, waves, rain, combat, or noise.',
-  'A supported System Panel is a block system object with kind system_prompt or fate_system_prompt and title. Every regular system_prompt also requires a supported promptType and presentation. A mechanical presentation requires a nonempty status object; a world_notice presentation requires worldNotice with at least one readable entry; a fate_system_prompt requires fateResult. Regular presentations are narrative, mechanical, or world_notice. flavor, rows, rarity, badge, and changes remain optional where supported. Omit system entirely when you cannot supply a complete supported System Panel. System Panel text remains the readable and narrated text; structured fields do not replace it.',
-  'A World Cue or Sound Cue proposal may appear only in metadata.audioMoments as semantic intent with triggerPhrase, occurrenceIndex, sourceCategory, variation, semanticTags, and optional relatedEntity name/type. Do not supply blockId; the HARNESS attaches its accepted block identity. Cue proposals are validated and resolved through the approved Library Cue catalog before persistence.',
-  'When the chapter itself establishes a supported semantic signal, encode it on the relevant block: speaker metadata for dialogue or narration; entities with mention reveal for manifestation triggers; music and atmosphere fields for soundscape intent; audioMoments for World Cue or Sound Cue intent; beastEvent for creature events; and system for complete System Panels. These fields describe semantic intent only. Omit signals the prose does not support.',
-  HARNESS_MEMORY_INSTRUCTIONS,
-  'An event description may be brief. Return only supported chapter blocks and memory data. Do not invent block IDs, story/chapter/run/event identities, asset IDs, URLs, URIs, filenames, file paths, catalog records or selectors, provider identifiers, voice IDs or keys, persistence records, continuation tokens, Color Codes, or unsupported application fields. The HARNESS owns IDs, ordering, normalization, validation, catalog resolution, persistence, and commits.',
-  'Do not let event formatting displace the chapter itself. If uncertain about an event, omit it rather than fabricating precise mechanics.',
+  'Return one JSON object only. prose is the complete chapter and its sole body: readable paragraphs separated by blank lines, including the readable text of any System Panel exactly where the reader meets it. title and plan are optional. arcCompletion is required. Do not return chapter blocks, memory, or any other chapter body.',
+  'Optional signal families describe semantic intent the prose itself establishes: dialogue, manifestations, systemPanels, soundscapes, soundCues, and creatureEvents. Each is a flat list. Every signal carries anchorText: one exact, distinctive passage copied verbatim from prose, with the same characters, punctuation, and quotation marks. The HARNESS matches anchors to its own paragraph blocks, validates each signal on its own, and drops any signal whose anchor is absent. A dropped signal never removes prose. Omit signals the prose does not support; omit whole families with nothing to report.',
+  'dialogue: one signal per spoken passage that needs attribution, with anchorText the exact quoted words, speaker the established character name, and optional delivery. The HARNESS assigns speaker roles from the cast. manifestations: entities the reader should meet, with name, type (character, artifact, location, creature, or faction) and mention (reveal for a first meaningful appearance, reference otherwise).',
+  'systemPanels: one per readable System Panel in the prose. anchorText is the exact readable panel text. presentation is narrative, mechanical, world_notice, or fate. Supply title, optional meaning (the semantic color family), optional body, and optional entries as simple label/value pairs: mechanical presentations need entries for their stats; a fate presentation needs outcome (FATE AVERTED, FATE SCARRED, or DOOM MANIFESTED), body as the timeline scar, and entries as permanent costs. The HARNESS constructs the complete mechanical, narrative, World Notice, or Fate presentation afterward.',
+  'soundscapes: the mood of a scene, with optional region (chinese, japanese, korean, or western), tags, and intensity. soundCues: a deliberate audible action, with anchorText the exact audible action phrase (never an entity name), category (beasts, weapons, artifacts, locations, or factions), variation such as growl, roar, unsheathe, or activation, optional tags, and optional entityName/entityType. creatureEvents: type (reveal, power-up, technique, injury, turning-point, death, or breakthrough) with optional name, size, bodyType, element, movement, intelligence, threatTier, and signatureSound.',
+  'Signals are machine-facing and stay in canonical English; prose, titles, panel text, bodies, and entries are reader-facing. Do not invent block IDs, story/chapter/run/event identities, asset IDs, URLs, URIs, filenames, file paths, catalog records or selectors, provider identifiers, voice IDs or keys, persistence records, continuation tokens, Color Codes, or unsupported application fields. The HARNESS owns IDs, ordering, normalization, validation, catalog resolution, persistence, memory extraction, and commits.',
+  'Do not let signal formatting displace the chapter itself. If uncertain about a signal, omit it rather than fabricating precise mechanics.',
   'AUTHOR AUTHORITY: Apply persistent steering in order. The newest direction wins where directions conflict; unrelated earlier directions still apply. Future steering changes what happens next, not what already happened. Retain consequences of prior events unless a direction explicitly uses revise-history. Author corrections override the targeted interpretations.',
   'CAPA skills are reusable authoring capabilities deliberately equipped by the author. The Author skill defines the writing approach; other CAPA skills refine execution. Skills never override explicit author corrections, current steering, established canon, or the latest committed chapter.',
   'The Foundation, Blueprint, intendedDirection and any old loose plan are proposals wherever they concern future events. The structured active arc goal is a firm requirement. Adapt all direction to steering and committed developments. Never restore a planned enemy after the author makes them an ally. Past hostility may still have consequences without forcing renewed enmity.',
-  'Preserve compact memory for relationships, decisions, unresolved consequences, clues and exact mechanical changes in the supported buckets. Later chapter evidence updates current state; older evidence explains history. Unresolved or conflicted interpretations are not established facts. Introduce speaking characters in the characters bucket and include current balances in the appropriate owner bucket when prose changes them.',
+  'Carry relationships, decisions, unresolved consequences, clues and exact mechanical changes forward in the prose itself; state current balances in the prose when they change. Later chapter evidence updates current state; older evidence explains history. Unresolved or conflicted interpretations are not established facts.',
 ].join('\n\n');
 
 /** Presents the Story Information Packet as generation content. Source IDs identify evidence, never model-owned output. */
@@ -346,13 +289,7 @@ export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) 
       presentStoryInformationPacket(request.storyInformation),
       presentImmediateChapterRequest(request.immediateChapterRequest),
     ].join('\n\n'),
-    responseJsonSchema: {
-      type: 'object', properties: {
-        blocks: { type: 'array', items: chapterBlockSchema },
-        title: { type: 'string' }, plan: { type: 'string' },
-        arcCompletion: { type: 'object', properties: { goalId: { type: 'string' }, completed: { type: 'boolean' }, evidence: { type: 'string' } }, required: ['goalId', 'completed', 'evidence'] },
-        memory: memorySchema }, required: ['blocks', 'memory', 'arcCompletion'],
-    },
+    responseJsonSchema: HARNESS_CHAPTER_RESPONSE_SCHEMA,
   };
 };
 

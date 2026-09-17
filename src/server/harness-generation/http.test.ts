@@ -127,29 +127,22 @@ describe('Harness Generation HTTP boundary', () => {
     expect(input.systemInstruction.indexOf('CAPA SKILL [Author]')).toBeLessThan(input.systemInstruction.indexOf('CAPA SKILL [Pacing]'));
     expect(input.systemInstruction).toContain('elite Eastern fantasy web-novel author specializing in Asian light novels');
     expect(input.systemInstruction.split('Do not resolve the siege in this chapter.')).toHaveLength(2);
-    expect(input.systemInstruction).toContain('blocks array is the sole chapter body');
-    expect(input.systemInstruction).toContain('speaker metadata for dialogue or narration');
-    expect(input.systemInstruction).toContain('audioMoments for World Cue or Sound Cue intent');
-    expect(input.systemInstruction).toContain('system for complete System Panels');
+    expect(input.systemInstruction).toContain('prose is the complete chapter and its sole body');
+    expect(input.systemInstruction).toContain('Every signal carries anchorText');
+    expect(input.systemInstruction).toContain('The HARNESS assigns speaker roles from the cast.');
+    expect(input.systemInstruction).toContain('The HARNESS constructs the complete mechanical, narrative, World Notice, or Fate presentation afterward.');
+    expect(input.systemInstruction).not.toContain('memory object');
+    expect(input.systemInstruction).not.toContain('blocks array');
     expect(input.systemInstruction.split('HARNESS RESPONSE AND EVIDENCE CONTRACT')).toHaveLength(2);
     expect(skilled.capaPrompt.text).not.toContain('HARNESS RESPONSE AND EVIDENCE CONTRACT');
     expect(skilled.capaPrompt.text).not.toMatch(/R2|track list|Library Cue catalog/i);
-    expect(input.systemInstruction).not.toContain('Do not invent ids, chapter numbers, ordering, persistence records, Codex records, cards, System Prompt payloads');
+    // The provider schema is the compact semantic contract, never the SEN block, memory, or presentation contracts.
     const chapterSchema = input.responseJsonSchema as { properties: Record<string, unknown>; required: string[] };
-    expect(chapterSchema.required).toContain('blocks');
-    expect(chapterSchema.required).not.toContain('prose');
-    const blockSchema = (chapterSchema.properties.blocks as {
-      items: { properties: { system: { anyOf: Array<{ required: string[]; properties: Record<string, unknown> }> } } };
-    }).items;
-    const systemSchema = blockSchema.properties.system;
-    expect(systemSchema.anyOf).toEqual(expect.arrayContaining([
-      expect.objectContaining({ required: ['kind', 'title', 'fateResult'] }),
-      expect.objectContaining({ required: ['kind', 'title', 'promptType', 'presentation'] }),
-      expect.objectContaining({ required: ['kind', 'title', 'promptType', 'presentation', 'status'] }),
-      expect.objectContaining({ required: ['kind', 'title', 'promptType', 'presentation', 'worldNotice'] }),
-    ]));
-    expect(input.systemInstruction).toContain('Every regular system_prompt also requires a supported promptType and presentation.');
-    expect(input.systemInstruction).toContain('A mechanical presentation requires a nonempty status object');
+    expect(chapterSchema.required).toEqual(['prose', 'arcCompletion']);
+    expect(Object.keys(chapterSchema.properties)).not.toContain('blocks');
+    expect(Object.keys(chapterSchema.properties)).not.toContain('memory');
+    expect(JSON.stringify(chapterSchema)).not.toContain('anyOf');
+    expect(JSON.stringify(chapterSchema)).not.toContain('fateResult');
     // Generation content: story information plus the immediate request, with no skill instructions.
     expect(input.userPrompt).toMatch(/^STORY INFORMATION PACKET/);
     expect(input.userPrompt).toContain('PERSISTENT AUTHOR DIRECTION');

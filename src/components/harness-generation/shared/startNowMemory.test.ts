@@ -12,14 +12,18 @@ const response = (value: unknown): HarnessGenerationResponse => ({
 });
 
 describe('Start Now captured prose and memory regression', () => {
-  it('uses the same grouped memory contract during generation and recovery, with exact saved chapter evidence', async () => {
+  it('uses the grouped memory contract in the separate extraction call, with exact saved chapter evidence', async () => {
     for (const recover of [false, true]) {
       const repository = new InMemoryHarnessGenerationRepository();
+      // The chapter call returns prose only. The first (automatic) extraction
+      // returns either the captured grouped memory or the four original generic
+      // summaries; an explicit recovery then reads the same saved prose again.
+      let extractions = 0;
       const controller = new HarnessGenerationController({ repository, modelAdapter: {
         getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
         arcOperation: async request => response({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),
-        generate: async () => response({ prose: fixture.prose, ...(recover ? { events: fixture.originalEvents } : fixture.memoryReply) }),
-        recoverMemory: async () => response(fixture.memoryReply),
+        generate: async () => response({ prose: fixture.prose }),
+        recoverMemory: async () => response(recover && extractions++ === 0 ? { events: fixture.originalEvents } : fixture.memoryReply),
       } });
       await controller.hydrate();
       const story = await controller.createStory({ premise: fixture.premise, characters: fixture.characters,

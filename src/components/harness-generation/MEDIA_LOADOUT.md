@@ -9,7 +9,7 @@ HARNESS vocabulary remains defined in
 The implementation keeps five independent owners:
 
 1. CAPA Loadout stores writing-skill references and assembles the CAPA Prompt.
-2. Generated chapter blocks carry semantic soundscape and Sound Cue intent only.
+2. The Generated Chapter carries semantic `soundscapes` and `soundCues` signals only, each anchored to exact prose; HARNESS places them on its own SEN blocks.
 3. The host registers validated `SoundscapePack` and `SoundCuePack` data in a
    Media Pack inventory that is never merged with the skill inventory.
 4. The host account/reward system supplies current user entitlements, including
@@ -56,9 +56,9 @@ snapshot lives on `HarnessGenerationAttempt.mediaLoadout`; it is absent from
 provider prompt. It consumes no CAPA budget. Explicit model retry reuses the
 original snapshot, and deterministic replay reads the committed chapter.
 
-After response normalization, `acceptChapterMedia` receives one authorized
-catalog built from the base catalogs plus the matching equipped pack in each
-slot. The existing World Cue resolver receives that Cue catalog as input.
+After the HARNESS has split the prose into SEN blocks and matched the accepted
+signals to their anchors, `acceptChapterMedia` receives one authorized catalog
+built from the base catalogs plus the matching equipped pack in each slot. The existing World Cue resolver receives that Cue catalog as input.
 Soundscape selection uses the existing `SceneAudioTrack` contract, exact mood
 gating, semantic cultural-region compatibility, tag ranking, and stable
 identity tie-breaking. An exact regional track outranks a neutral base track;

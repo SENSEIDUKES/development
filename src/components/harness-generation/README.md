@@ -24,12 +24,29 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-09-16 |
+| Last Workshop update | 2026-09-17 |
 | Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Steered continuation with a derived SEN Reader adapter |
 
 ### History
 
+- **2026-09-17:** Repaired the Generation Model Call response contract. A real
+  Gemini chapter request was failing with `400 INVALID_ARGUMENT` while the
+  provider compiled the previous response schema (nested SEN blocks with
+  conditional System Panel variants plus the full thirteen-category memory
+  contract), before any prose was generated. The provider now returns required
+  prose, optional title and continuation plan, arc completion, and six shallow
+  semantic signal families (`dialogue`, `manifestations`, `systemPanels`,
+  `soundscapes`, `soundCues`, `creatureEvents`), each item keyed by an exact
+  prose `anchorText`. `shared/chapterSignals.ts` owns that contract; the HARNESS
+  splits prose into canonical SEN blocks, matches anchors, validates each signal
+  on its own, builds the detailed System Panel, dialogue, manifestation, creature,
+  and media structures, resolves soundscapes and Sound Cues through the frozen
+  Media Loadout, and assigns every ID and persistence field. Chapter memory left
+  the chapter-writing call entirely: after a chapter commits, the existing
+  separate extraction runs automatically through the host adapter, and its
+  outcome never changes the committed chapter. Persisted shapes did not change,
+  so the schema version stays at 11.
 - **2026-09-16:** Accepted Word (`.docx`) SPP instruction files, installing only
   their extracted document text, and added a direct SPP upload to every CAPA skill
   slot that locks the destination, validates the package against it, and equips
@@ -197,13 +214,18 @@ Codex. Neither component owns a second persistence path. SEN stays provider-neut
 
 1. Persist `request_started` before a provider request.
 2. Persist the raw provider response immediately after it returns.
-3. Normalize canonical SEN blocks, derive the one readable prose value from
-   their ordered text, resolve approved Library Cues, and persist that accepted
-   chapter draft before optional event preservation.
-4. Preserve valid event descriptions independently; malformed optional events
-   become diagnostics.
+3. Accept the prose as the authoritative chapter, split it into canonical SEN
+   blocks, match every semantic signal to its exact prose anchor, validate each
+   signal independently, build the detailed SEN structures, resolve approved
+   media through the frozen Media Loadout, and persist that accepted chapter
+   draft. A malformed or unanchored signal becomes a warning, never lost prose.
+4. Persist the (now always empty) writer-lane event checkpoint so the existing
+   retry and replay stages remain unchanged.
 5. Atomically append a chapter with its accepted blocks and resolved media,
-   committed events, attempt receipt, and updated story head.
+   attempt receipt, and updated story head.
+6. Run the separate memory extraction on the committed prose when the host
+   adapter supports it; its failure leaves the chapter committed and retryable
+   from the inspection panel.
 
 Only a committed chapter enters the next context snapshot. If storage fails,
 the controller retains the completed local checkpoint, blocks continuation,
@@ -283,10 +305,12 @@ excerpts may be looked up using the latest direction or missing event coverage.
 The audit records omissions. Author authority and mechanical observations may
 exceed an artificially small budget rather than disappearing silently.
 
-`replayStory(id, chapterId)` repairs a selected chapter from its saved raw response,
-including partially dropped events. Stable event identities make repeated repair
-idempotent; older repairs do not become the latest story state merely because they
-ran later. The Reader preview derives chapter-scoped memory. Its reading settings
+`replayStory(id, chapterId)` reprocesses a selected chapter's committed events
+through the deterministic capabilities without a model call. Stable event
+identities make repeated repair idempotent; older repairs do not become the latest
+story state merely because they ran later. Dropped or incomplete memory is repaired
+by re-running the separate extraction, which reuses a saved raw extraction before
+requesting a new one. The Reader preview derives chapter-scoped memory. Its reading settings
 and edits are session-local; durable story changes belong to Harness steering and
 corrections. Fully malformed optional output still requires usable source evidence;
 replay does not invent missing facts or call the model again.
@@ -326,9 +350,11 @@ established events. Existing saved snapshots remain readable without migration.
 
 ## Chapter memory and recovery
 
-The provider returns categorized memory alongside prose in the original chapter
-call. Typed subjects distinguish a character's progression from a dungeon or
-module's state. Deterministic routing covers characters, decisions, relationships,
+The chapter-writing call returns no memory. After a chapter commits, the
+separate extraction call reads the exact saved prose and returns the categorized
+memory contract; the HARNESS runs it automatically when the host adapter
+supports extraction and leaves the explicit recovery control for retries. Typed
+subjects distinguish a character's progression from a dungeon or module's state. Deterministic routing covers characters, decisions, relationships,
 locations, factions, deadlines, timeline, progression, open threads, mysteries,
 clues, revelations, and artifacts. Foundation names and declared aliases establish
 stable identity references; repeated chapter evidence retains separate provenance.
@@ -342,7 +368,8 @@ interpretation incomplete and prevent unsupported projections becoming ready.
 
 The existing inspection panel separates **prose saved** from **memory interpretation
 incomplete**. **Recover memory from saved prose** makes an explicit extraction call
-through the configured host adapter. It reads the exact saved chapter and identity
+through the configured host adapter, the same call the HARNESS makes automatically
+after a commit. It reads the exact saved chapter and identity
 references, checkpoints raw output before interpretation, and appends evidence
 without changing prose, the original provider reply, or story order. Failed local
 writes retry the received extraction; deterministic **Replay** makes no model call.
@@ -355,7 +382,7 @@ collapse threat, the conditional end-of-week seizure, F-Tier prototype difficult
 0.04% initial energy, and Xie Jin's risky bypass decision. A live extraction of
 the saved chapter produced nine events while preserving all prose and the original
 four summaries. A mistyped thread remains visibly unresolved. The deterministic
-fixture checks both generation and recovery; the optional live test runs only when
+fixture checks both the automatic post-commit extraction and an explicit recovery; the optional live test runs only when
 `HARNESS_MEMORY_EXPORT` and `HARNESS_MEMORY_ENV` point to an author export and a
 server environment file. `HARNESS_MEMORY_OUTPUT` optionally writes inspection
 artifacts. `HARNESS_MEMORY_REPLAY=1` reprocesses saved extraction without a model call.

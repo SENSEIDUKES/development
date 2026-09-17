@@ -2,6 +2,12 @@ import { chapterTitleFallback, defaultHarnessRuntime, stableHarnessId, type Harn
 import { acceptChapterMedia } from '../../chapter-generation/shared/acceptedChapterMedia';
 import type { AuthorizedMediaCatalog } from '../../../audio/mediaPacks';
 import { isCompleteSystemEvent, normalizeManifestResponse } from '../../chapter-generation/shared/manifestNormalizer';
+import {
+  applyHarnessChapterSignals,
+  readHarnessChapterSignals,
+  splitHarnessProseParagraphs,
+  type HarnessCastMember,
+} from './chapterSignals';
 import { HARNESS_MEMORY_CATEGORIES } from './types';
 import type {
   HarnessAcceptedChapterDraft,
@@ -16,6 +22,7 @@ import type {
 type ParsedResponse = {
   accepted: true;
   draft: HarnessAcceptedChapterDraft;
+  /** Chapter memory comes from the separate extraction call; the chapter reply carries none. */
   rawEvents: unknown[];
   warnings: HarnessWarning[];
 } | {
@@ -127,18 +134,6 @@ const parsePlan = (value: unknown, warnings: HarnessWarning[]): HarnessModelPlan
   return undefined;
 };
 
-const parseRawEvents = (value: unknown, warnings: HarnessWarning[]): unknown[] => {
-  if (value === undefined || value === null) return [];
-  if (Array.isArray(value)) return value;
-  const description = nonEmptyString(value);
-  if (description) return [description];
-  warnings.push({
-    code: 'invalid_events_omitted',
-    message: 'The optional event collection was not an event list and was omitted.',
-  });
-  return [];
-};
-
 export const readHarnessMemoryEvents = (raw: string): unknown[] => {
   const parsed = parseJsonObject(raw);
   const events = parsed ? memoryEvents(parsed) : [];
@@ -160,15 +155,32 @@ const memoryEvents = (parsed: Record<string, unknown>): unknown[] => {
   return result;
 };
 
-const acceptedStructuredChapter = (
+export interface HarnessResponseAcceptanceOptions {
+  /** The equipped Media Loadout catalog used to resolve soundscapes and Sound Cues. */
+  mediaCatalog?: AuthorizedMediaCatalog;
+  /** Foundation cast; HARNESS assigns dialogue speaker roles from it. */
+  cast?: readonly HarnessCastMember[];
+}
+
+/**
+ * Prose is the authoritative chapter. The HARNESS splits it into canonical
+ * SEN blocks, matches every accepted signal to its exact prose anchor, builds
+ * the detailed SEN structures, and resolves media through the equipped Media
+ * Loadout. Any failure here removes optional structure, never readable prose.
+ */
+const acceptedProseChapter = (
   parsed: Record<string, unknown>,
+  prose: string,
   chapterNumber: number,
   warnings: HarnessWarning[],
-  mediaCatalog?: AuthorizedMediaCatalog,
-): Pick<HarnessAcceptedChapterDraft, 'prose' | 'blocks' | 'audioMoments' | 'soundscapes'> | undefined => {
-  if (parsed.blocks === undefined) return undefined;
+  options: HarnessResponseAcceptanceOptions,
+): Pick<HarnessAcceptedChapterDraft, 'blocks' | 'audioMoments' | 'soundscapes'> | undefined => {
+  const signals = readHarnessChapterSignals(parsed);
+  warnings.push(...signals.warnings);
   try {
-    const normalized = normalizeManifestResponse(JSON.stringify({ blocks: parsed.blocks }), chapterNumber);
+    const applied = applyHarnessChapterSignals(splitHarnessProseParagraphs(prose), signals.signals, options.cast ?? []);
+    warnings.push(...applied.warnings);
+    const normalized = normalizeManifestResponse(JSON.stringify({ blocks: applied.blocks }), chapterNumber);
     const blocks = normalized.blocks.map(block => {
       if (!block.system || isCompleteSystemEvent(block.system)) return block;
       warnings.push({
@@ -178,8 +190,9 @@ const acceptedStructuredChapter = (
       const { system: _system, ...proseBlock } = block;
       return proseBlock;
     });
-    const media = acceptChapterMedia(blocks, mediaCatalog);
+    const media = acceptChapterMedia(blocks, options.mediaCatalog);
     for (const warning of normalized.diagnostics.warnings) {
+      if (warning.code === 'under-minimum-word-count') continue;
       warnings.push({
         code: warning.code === 'optional-field-removed'
           ? 'optional_chapter_structure_omitted'
@@ -190,17 +203,10 @@ const acceptedStructuredChapter = (
     for (const issue of media.issues) {
       warnings.push({
         code: 'optional_chapter_structure_omitted',
-        message: `Removed an unresolved optional World Cue: ${issue.message}`,
-      });
-    }
-    if (nonEmptyString(parsed.prose)) {
-      warnings.push({
-        code: 'competing_prose_ignored',
-        message: 'The harness ignored a separate prose field because accepted chapter blocks are the authoritative chapter body.',
+        message: `Removed an unresolved optional Sound Cue: ${issue.message}`,
       });
     }
     return {
-      prose: normalized.generatedContent,
       blocks: media.blocks,
       ...(media.audioMoments.length > 0 ? { audioMoments: media.audioMoments } : {}),
       ...(media.soundscapes.length > 0 ? { soundscapes: media.soundscapes } : {}),
@@ -208,7 +214,7 @@ const acceptedStructuredChapter = (
   } catch (error) {
     warnings.push({
       code: 'optional_chapter_structure_omitted',
-      message: `The structured chapter body could not be accepted; readable prose recovery remains available (${error instanceof Error ? error.message : 'invalid blocks'}).`,
+      message: `The chapter signals could not be applied; the readable prose is kept without optional structure (${error instanceof Error ? error.message : 'invalid signals'}).`,
     });
     return undefined;
   }
@@ -229,14 +235,15 @@ export const verifyHarnessEventEvidence = (event: HarnessSemanticEvent, prose: s
 export const acceptHarnessModelResponse = (
   raw: string,
   chapterNumber: number,
-  mediaCatalog?: AuthorizedMediaCatalog,
+  options: HarnessResponseAcceptanceOptions = {},
 ): ParsedResponse => {
   const warnings: HarnessWarning[] = [];
   const parsed = parseJsonObject(raw);
   if (parsed) {
     appendIgnoredIdentityWarning(parsed, warnings);
-    const structured = acceptedStructuredChapter(parsed, chapterNumber, warnings, mediaCatalog);
-    const prose = structured?.prose ?? nonEmptyString(parsed.prose);
+    // The model prose is the authoritative chapter; the HARNESS keeps it as
+    // written and derives its own paragraph blocks from it.
+    const prose = nonEmptyString(parsed.prose);
     if (!prose || looksLikeRefusal(prose)) {
       return {
         accepted: false,
@@ -244,6 +251,13 @@ export const acceptHarnessModelResponse = (
         warnings,
       };
     }
+    if (parsed.blocks !== undefined) {
+      warnings.push({
+        code: 'competing_prose_ignored',
+        message: 'The harness ignored a blocks field because prose is the authoritative chapter body.',
+      });
+    }
+    const structured = acceptedProseChapter(parsed, prose, chapterNumber, warnings, options);
     const title = nonEmptyString(parsed.title);
     if (!title) {
       warnings.push({
@@ -264,7 +278,7 @@ export const acceptHarnessModelResponse = (
         ...(plan ? { plan } : {}),
         responseMode: 'json',
       },
-      rawEvents: parsed.memory !== undefined ? memoryEvents(parsed) : parseRawEvents(parsed.events, warnings),
+      rawEvents: [],
       warnings,
     };
   }

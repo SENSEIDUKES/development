@@ -5,25 +5,35 @@ import { HarnessGenerationController } from './controller';
 import { InMemoryHarnessGenerationRepository } from './repository';
 import type { HarnessGenerationRequest, HarnessGenerationResponse } from './types';
 
-const chapterReply = (state: 'open' | 'resolved', supported = true): HarnessGenerationResponse => {
+interface ChapterFixture { chapter: HarnessGenerationResponse; memory: HarnessGenerationResponse }
+
+/** Prose comes from the chapter call; thread memory from the separate extraction call. */
+const chapterReply = (state: 'open' | 'resolved', supported = true): ChapterFixture => {
   const prose = state === 'open' ? 'The gate remained sealed. Opening it remained their task.'
     : 'They opened the gate. Their task was resolved.';
-  return { rawProviderResponse: JSON.stringify({ prose, title: 'The gate', memory: { threads: [{
-    description: state === 'open' ? 'Opening the gate remains unresolved.' : 'The gate task is resolved.',
-    subjects: [{ name: 'Open the gate', kind: 'plot-thread' }], significance: 'major',
-    evidence: supported ? prose : 'This passage does not exist.', facts: { state },
-  }] } }), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: '2026-09-06', usage: { source: 'unavailable' } } };
+  const receipt = { provider: 'fixture', model: 'fixture', generatedAt: '2026-09-06', usage: { source: 'unavailable' as const } };
+  return {
+    chapter: { rawProviderResponse: JSON.stringify({ prose, title: 'The gate' }), providerReceipt: receipt },
+    memory: { rawProviderResponse: JSON.stringify({ memory: { threads: [{
+      description: state === 'open' ? 'Opening the gate remains unresolved.' : 'The gate task is resolved.',
+      subjects: [{ name: 'Open the gate', kind: 'plot-thread' }], significance: 'major',
+      evidence: supported ? prose : 'This passage does not exist.', facts: { state },
+    }] } }), providerReceipt: receipt },
+  };
 };
 
-const setup = async (...replies: HarnessGenerationResponse[]) => {
+const setup = async (...replies: ChapterFixture[]) => {
   let tick = 0;
   const repository = new InMemoryHarnessGenerationRepository();
+  const memories: HarnessGenerationResponse[] = [];
   const generate = vi.fn(async (_request: HarnessGenerationRequest) => {
     const reply = replies.shift();
     if (!reply) throw new Error('Unexpected model call.');
-    return reply;
+    memories.push(reply.memory);
+    return reply.chapter;
   });
   const modelAdapter = { generate,
+    recoverMemory: async () => memories.shift()!,
     getServerInfo: async () => ({ provider: 'gemini' as const, configured: true, models: [], defaultModel: 'fixture' }),
     arcOperation: async (request: { storyInformation: { chapterNumber: number } }) => ({ rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }), providerReceipt: { provider: 'fixture' as const, model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } } }),
   };

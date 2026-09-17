@@ -30,9 +30,12 @@ const reply = (body: unknown): HarnessGenerationResponse => ({
 });
 const setup = async (rich = false) => {
   const repository = new InMemoryHarnessGenerationRepository();
-  const generate = vi.fn(async () => reply({ title: 'Synthetic memory fixture', prose,
-    events: rich ? events : ['A stranger arrives.', 'Danger grows.', 'A choice is made.', 'The journey begins.'] }));
+  // The chapter call returns prose only. The automatic post-commit extraction
+  // returns either evidenced events or four generic summaries; later explicit
+  // recoveries return the evidenced events unless a test overrides one call.
+  const generate = vi.fn(async () => reply({ title: 'Synthetic memory fixture', prose }));
   const recoverMemory = vi.fn(async (_request: HarnessMemoryRecoveryRequest) => reply({ events }));
+  if (!rich) recoverMemory.mockImplementationOnce(async () => reply({ events: ['A stranger arrives.', 'Danger grows.', 'A choice is made.', 'The journey begins.'] }));
   const modelAdapter: HarnessGenerationModelAdapter = {
     getServerInfo: async () => ({ provider: 'gemini', configured: true, models: [], defaultModel: 'fixture' }),
     generate, recoverMemory,
@@ -103,7 +106,7 @@ describe('Useful, evidenced chapter memory', () => {
     }] } }));
     await controller.recoverChapterMemory(chapter.id, 'fixture');
     expect(controller.snapshot().attempts[0].postCommitProcessing).toBe('warnings');
-    expect(controller.snapshot().memoryRecoveries![0].warnings).toHaveLength(2);
+    expect(controller.snapshot().memoryRecoveries!.at(-1)!.warnings).toHaveLength(2);
   });
 
   it('routes consequential memory and preserves Foundation identity across repeated mentions and aliases', async () => {
@@ -128,7 +131,8 @@ describe('Useful, evidenced chapter memory', () => {
 
   it('labels generic summaries as incomplete and recovers from persisted prose without another chapter call', async () => {
     const { controller, repository, modelAdapter, generate, recoverMemory, story, chapter } = await setup();
-    expect(controller.snapshot().attempts[0]).toMatchObject({ stage: 'committed', postCommitProcessing: 'warnings' });
+    expect(controller.snapshot().attempts[0]).toMatchObject({ stage: 'committed', postCommitProcessing: 'warnings', preservedEvents: [] });
+    expect(JSON.stringify(generate.mock.results[0])).not.toContain('events');
     const before = controller.snapshot();
     const reloaded = new HarnessGenerationController({ repository, modelAdapter });
     await reloaded.hydrate();
@@ -170,9 +174,10 @@ describe('Useful, evidenced chapter memory', () => {
     });
     await expect(controller.recoverChapterMemory(chapter.id, 'fixture')).rejects.toThrow('Derived memory write failed');
     expect(controller.snapshot().events).toHaveLength(4);
-    expect(controller.snapshot().memoryRecoveries![0].status).toBe('raw_received');
+    expect(controller.snapshot().memoryRecoveries!.at(-1)!.status).toBe('raw_received');
     await controller.recoverChapterMemory(chapter.id, 'fixture');
-    expect(recoverMemory).toHaveBeenCalledTimes(1);
+    // One automatic extraction after commit, one explicit request; the retry reused the saved raw extraction.
+    expect(recoverMemory).toHaveBeenCalledTimes(2);
     expect(controller.snapshot().chapters[0].prose).toBe(prose);
     expect(controller.snapshot().memoryRecoveries![0].status).toBe('applied');
   });
@@ -181,9 +186,9 @@ describe('Useful, evidenced chapter memory', () => {
     const { controller, recoverMemory, chapter } = await setup();
     recoverMemory.mockImplementationOnce(async () => reply({ prose: 'Attempted rewrite.' }));
     await expect(controller.recoverChapterMemory(chapter.id, 'fixture')).rejects.toThrow('no event list');
-    expect(controller.snapshot().memoryRecoveries![0]).toMatchObject({ status: 'failed', rawProviderResponse: expect.stringContaining('Attempted rewrite') });
+    expect(controller.snapshot().memoryRecoveries!.at(-1)).toMatchObject({ status: 'failed', rawProviderResponse: expect.stringContaining('Attempted rewrite') });
     await controller.recoverChapterMemory(chapter.id, 'fixture');
     expect(controller.snapshot().chapters[0].prose).toBe(prose);
-    expect(recoverMemory).toHaveBeenCalledTimes(2);
+    expect(recoverMemory).toHaveBeenCalledTimes(3);
   });
 });

@@ -680,9 +680,34 @@ export class HarnessGenerationController {
       rawAttempt.failure = undefined;
       if (!await this.persistCheckpoint(rawReceived, attemptId, 'raw_received')) return this.snapshot();
 
-      return await this.acceptRawResponse(attemptId);
+      await this.acceptRawResponse(attemptId);
     } finally {
       this.generating = false;
+    }
+    return this.extractCommittedChapterMemory(attemptId);
+  }
+
+  /**
+   * Story memory is never part of the chapter-writing call. After a chapter
+   * commits, the existing separate extraction reads the saved prose through
+   * the host adapter. Its outcome never changes the committed chapter; an
+   * explicit "Recover memory from saved prose" retries it.
+   */
+  private async extractCommittedChapterMemory(attemptId: string): Promise<HarnessWorkspaceState> {
+    const attempt = this.state.attempts.find(candidate => candidate.id === attemptId);
+    const chapterId = attempt?.committedChapterId;
+    if (!attempt || attempt.stage !== 'committed' || !chapterId || !this.modelAdapter.recoverMemory) return this.snapshot();
+    if (this.state.memoryRecoveries?.some(recovery => recovery.chapterId === chapterId && recovery.status === 'applied')) return this.snapshot();
+    try {
+      return await this.recoverChapterMemory(chapterId, attempt.model);
+    } catch (error) {
+      const candidate = cloneHarnessValue(this.state);
+      addWarnings(attemptById(candidate, attemptId), [{
+        code: 'capability_unresolved',
+        message: `Automatic memory extraction did not complete (${errorMessage(error, 'unknown error')}). The chapter is committed; recover memory from saved prose to retry.`,
+      }]);
+      try { await this.persist(candidate); } catch { this.state = candidate; this.notify(); }
+      return this.snapshot();
     }
   }
 
@@ -695,11 +720,13 @@ export class HarnessGenerationController {
         message: 'The raw provider response checkpoint is empty, so chapter prose cannot be accepted.',
       });
     }
-    const acceptance = acceptHarnessModelResponse(
-      raw,
-      attempt.chapterNumber,
-      createAuthorizedMediaCatalog(attempt.mediaLoadout),
-    );
+    // Prose is accepted on its own; signals are matched to it, converted into
+    // SEN structures, and resolved through the frozen Media Loadout. Speaker
+    // roles come from the frozen Foundation cast, never from the provider.
+    const acceptance = acceptHarnessModelResponse(raw, attempt.chapterNumber, {
+      mediaCatalog: createAuthorizedMediaCatalog(attempt.mediaLoadout),
+      cast: attempt.foundationSnapshot.input.cast ?? [],
+    });
     if (!acceptance.accepted) {
       return this.appendFailure(attemptId, {
         stage: 'response',
@@ -720,17 +747,6 @@ export class HarnessGenerationController {
     return this.preserveAttemptEvents(attemptId, acceptance.rawEvents);
   }
 
-  private rawEventsForAttempt(attempt: HarnessGenerationAttempt): unknown[] {
-    const raw = attempt.rawProviderResponse;
-    if (!raw) return [];
-    const acceptance = acceptHarnessModelResponse(
-      raw,
-      attempt.chapterNumber,
-      createAuthorizedMediaCatalog(attempt.mediaLoadout),
-    );
-    return acceptance.accepted ? acceptance.rawEvents : [];
-  }
-
   private async preserveAttemptEvents(
     attemptId: string,
     providedRawEvents?: unknown[],
@@ -742,7 +758,9 @@ export class HarnessGenerationController {
         message: 'The prose checkpoint is missing, so semantic events cannot be preserved safely.',
       });
     }
-    const rawEvents = providedRawEvents ?? this.rawEventsForAttempt(attempt);
+    // The chapter reply carries no memory: story memory is extracted by the
+    // separate post-commit process, so the writer lane preserves nothing here.
+    const rawEvents = providedRawEvents ?? [];
     let preserved: SemanticEventPreservationResult;
     try {
       preserved = this.eventPreserver(rawEvents, {
@@ -994,46 +1012,6 @@ export class HarnessGenerationController {
     );
     const committedChapterIds = new Set(committedChapters.map(chapter => chapter.id));
 
-    // A Phase 2/custom preservation failure may have committed prose with no events.
-    // Recover those events from the raw checkpoint before processing capabilities.
-    for (const chapter of committedChapters) {
-      const attempt = candidate.attempts.find(entry => entry.id === chapter.attemptId);
-      if (!attempt || !attempt.rawProviderResponse) continue;
-      const rawEvents = this.rawEventsForAttempt(attempt);
-      if (!rawEvents.length) continue;
-      try {
-        const preserved = this.eventPreserver(rawEvents, {
-          storyId,
-          attemptId: attempt.id,
-          chapterNumber: chapter.chapterNumber,
-          createdAt: attempt.eventsPreservedAt ?? attempt.proseAcceptedAt ?? attempt.startedAt,
-          prose: chapter.prose,
-        }, this.runtime);
-        const reusedIds = new Set<string>();
-        const recoveredEvents = preserved.events.map(event => {
-          const existing = candidate.events.find(previous => previous.id === event.id)
-            ?? candidate.events.find(previous => previous.chapterId === chapter.id && !previous.recoveryId && !reusedIds.has(previous.id)
-              && previous.description === event.description && !preserved.events.some(item => item.id === previous.id));
-          if (existing) reusedIds.add(existing.id);
-          return { ...event, id: existing?.id ?? event.id, chapterId: chapter.id };
-        });
-        chapter.eventIds = Array.from(new Set([...chapter.eventIds, ...recoveredEvents.map(event => event.id)]));
-        for (const event of recoveredEvents) {
-          const index = candidate.events.findIndex(existing => existing.id === event.id);
-          if (index < 0) candidate.events.push(event);
-          else candidate.events[index] = event;
-        }
-        attempt.preservedEvents = preserved.events;
-        attempt.rejectedEvents = preserved.rejected;
-        addWarnings(attempt, preserved.warnings);
-      } catch (error) {
-        addWarnings(attempt, [{
-          code: 'post_commit_processing_pending',
-          message: `Committed prose is safe, but semantic events still need replay: ${errorMessage(error, 'event recovery failed')}`,
-        }]);
-      }
-    }
-
     const upsert = <T extends { id: string }>(items: T[], next: T) => {
       const index = items.findIndex(item => item.id === next.id);
       if (index >= 0) items[index] = next;
@@ -1159,6 +1137,11 @@ export class HarnessGenerationController {
   }
 
   async retryAppropriateStage(attemptId: string): Promise<HarnessWorkspaceState> {
+    await this.retryAppropriateStageInternal(attemptId);
+    return this.extractCommittedChapterMemory(attemptId);
+  }
+
+  private async retryAppropriateStageInternal(attemptId: string): Promise<HarnessWorkspaceState> {
     this.assertHydrated();
     const attempt = attemptById(this.state, attemptId);
     if (attempt.stage === 'raw_received') return this.acceptRawResponse(attemptId);

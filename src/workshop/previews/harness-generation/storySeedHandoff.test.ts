@@ -79,8 +79,7 @@ describe('Story Seed to Harness handoff', () => {
     const input = createHarnessFoundationFromStorySeed(record);
     const repository = new InMemoryHarnessGenerationRepository();
     const response: HarnessGenerationResponse = {
-      rawProviderResponse: JSON.stringify({ prose: 'Mara waits at the sealed harbor gate.',
-        events: [{ description: 'Mara has blue eyes.', category: 'character', subjects: ['Mara'] }] }),
+      rawProviderResponse: JSON.stringify({ prose: 'Mara waits at the sealed harbor gate.' }),
       providerReceipt: { provider: 'gemini', model: 'google/gemini-3.1-flash-lite',
         generatedAt: '2026-09-05T12:00:00.000Z', usage: { source: 'unavailable' } },
     };
@@ -89,6 +88,8 @@ describe('Story Seed to Harness handoff', () => {
     const adapter = {
       getServerInfo: async () => ({ provider: 'gemini' as const, configured: true, models: [], defaultModel: 'google/gemini-3.1-flash-lite' }),
       arcOperation: async (request: { storyInformation: { chapterNumber: number } }) => ({ rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }), providerReceipt: { provider: 'gemini' as const, model: 'google/gemini-3.1-flash-lite', generatedAt: '2026-09-05T12:00:00.000Z', usage: { source: 'unavailable' as const } } }),
+      recoverMemory: async () => ({ rawProviderResponse: JSON.stringify({ events: [{ description: 'Mara has blue eyes.', category: 'character', subjects: ['Mara'] }] }),
+        providerReceipt: { provider: 'gemini' as const, model: 'google/gemini-3.1-flash-lite', generatedAt: '2026-09-05T12:00:00.000Z', usage: { source: 'unavailable' as const } } }),
       generate: async (request: HarnessGenerationRequest) => {
         requests.push(structuredClone(request));
         const result = await handleHarnessGenerationHttp({ method: 'POST', body: JSON.stringify(request) }, {

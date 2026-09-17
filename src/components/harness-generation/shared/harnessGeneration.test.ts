@@ -257,6 +257,8 @@ describe('Harness Generation Phase 2 novel core', () => {
     expect(state.attempts[0]).toMatchObject({ stage: 'committed', preservedEvents: [] });
     expect(state.memoryRecoveries?.[0]).toMatchObject({ status: 'applied', chapterId: state.chapters[0].id });
     expect(state.chapters[0].eventIds).toHaveLength(2);
+    // Description-only events stay unverified, so interpretation is honestly incomplete.
+    expect(state.attempts[0].postCommitProcessing).toBe('warnings');
     expect(state.events).toHaveLength(2);
     expect(state.events[0]).toMatchObject({
       capability: 'general-narrative-event',

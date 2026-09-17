@@ -147,6 +147,8 @@ describe('Useful, evidenced chapter memory', () => {
     expect(buildCanonicalStoryView(after, story.id).timeline[0].facts.deadline).toBe('six hours');
     expect(generate).toHaveBeenCalledTimes(1);
     expect(after.attempts[0].postCommitProcessing).toBe('complete');
+    expect(before.attempts[0].warnings.some(warning => warning.code === 'capability_unresolved')).toBe(true);
+    expect(after.attempts[0].warnings.some(warning => warning.code === 'capability_unresolved')).toBe(false);
     await reloaded.recoverChapterMemory(chapter.id, 'fixture');
     expect(reloaded.snapshot().events).toHaveLength(after.events.length);
     expect(reloaded.snapshot().chapters[0].prose).toBe(prose);

@@ -1107,6 +1107,11 @@ export class HarnessGenerationController {
         : !receipts.length || receipts.some(receipt => receipt.status === 'unresolved')
           || (recoveredMemory ? Boolean(recoveredMemory.warnings?.length)
             : Boolean(attempt.rejectedEvents?.length) || attempt.warnings.some(warning => ['optional_event_field_omitted', 'invalid_events_omitted'].includes(warning.code))) ? 'warnings' : 'complete';
+      // Memory extraction completes after the commit; stale incompleteness
+      // warnings from the earlier pass must not outlive a complete result.
+      if (attempt.postCommitProcessing === 'complete') {
+        attempt.warnings = attempt.warnings.filter(warning => !['capability_unresolved', 'capability_failed'].includes(warning.code));
+      }
       if (attempt.postCommitProcessing === 'failed') addWarnings(attempt, [{
         code: 'capability_failed',
         message: 'One or more deterministic capabilities failed. The chapter remains committed and can be replayed.',

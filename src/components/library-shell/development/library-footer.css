@@ -1,0 +1,306 @@
+/* Library Shell owns the platform footer, as it owns the header and bottom
+   navigation. Colors reuse the Celestial Library tokens and the LibraryPanel
+   glass recipe: steel-blue borders, portal and antique-gold edge light, cream
+   serif identity text. Page clearance above the global strip stays with
+   library-navigation.css. */
+.library-footer {
+  --library-footer-cream: #efe6d3;
+  --library-footer-muted: rgba(223, 216, 207, 0.72);
+  --library-footer-border: rgba(190, 216, 255, 0.26);
+  --library-footer-gold: var(--color-sen-gold-accent, #d4af37);
+  --library-footer-portal: var(--color-sen-portal, #04acff);
+  position: relative;
+  isolation: isolate;
+  margin-top: 1.5rem;
+  padding: 1.25rem 1rem 0.75rem;
+  color: var(--library-footer-cream);
+  font-family: var(--font-sen-serif, var(--font-serif, "Noto Serif", serif));
+}
+/* Atmospheric ground: a faint portal/gold bloom behind the identity and a
+   hairline divider that lets the ink page continue underneath. */
+.library-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 45% at 50% 0%, rgba(4, 172, 255, 0.08), transparent 70%),
+    radial-gradient(45% 35% at 50% 100%, rgba(212, 175, 55, 0.05), transparent 70%);
+}
+.library-footer-inner {
+  display: grid;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 42rem;
+  margin-inline: auto;
+}
+
+/* Identity */
+.library-footer-identity {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+.library-footer-seal {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 26rem;
+  margin-bottom: 0.25rem;
+}
+.library-footer-hairline {
+  flex: 1 1 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.55) 55%, rgba(212, 175, 55, 0.9));
+}
+.library-footer-hairline:last-child {
+  background: linear-gradient(270deg, transparent, rgba(212, 175, 55, 0.55) 55%, rgba(212, 175, 55, 0.9));
+}
+.library-footer-emblem {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  object-fit: cover;
+  object-position: center;
+  box-shadow:
+    0 0 0 1px rgba(212, 175, 55, 0.55),
+    0 0 18px rgba(4, 172, 255, 0.18),
+    0 0 28px rgba(212, 175, 55, 0.14);
+}
+.library-footer-mark {
+  margin: 0;
+  font-family: var(--font-sen-display, var(--font-display, "Alegreya", serif));
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: 0.45em;
+  /* Visually center a letter-spaced word; the trailing space is part of the last glyph. */
+  padding-left: 0.45em;
+  color: var(--library-footer-cream);
+  text-shadow: 0 0 22px rgba(4, 172, 255, 0.16);
+}
+.library-footer-statement {
+  margin: 0;
+  max-width: 30rem;
+  font-family: var(--font-sen-sc, var(--font-sc, "Alegreya SC", serif));
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.7;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--library-footer-muted);
+}
+
+/* Controls */
+.library-footer-controls {
+  display: grid;
+  gap: 0.875rem;
+}
+.library-footer-social {
+  border-radius: 9999px;
+}
+.library-footer-social-list {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0.375rem 0.5rem;
+  list-style: none;
+}
+.library-footer-link,
+.library-footer-legal-link,
+.library-footer-language {
+  font-family: var(--font-sen-serif, var(--font-serif, "Noto Serif", serif));
+}
+.library-footer-social-link,
+.library-footer-link,
+.library-footer-legal-link,
+.library-footer-language {
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 200ms ease-out, background-color 200ms ease-out, border-color 200ms ease-out, box-shadow 200ms ease-out;
+}
+.library-footer-social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--library-footer-cream);
+}
+.library-footer-social-link:hover {
+  color: var(--library-footer-portal);
+  background: rgba(255, 255, 255, 0.04);
+}
+.library-footer-menus {
+  border-radius: 1.35rem;
+}
+.library-footer-disclosures {
+  padding-inline: 1.25rem;
+}
+.library-footer-disclosure {
+  border-bottom-color: rgba(190, 216, 255, 0.16);
+}
+.library-footer-disclosure-trigger [data-slot="disclosure-heading"] {
+  font-family: var(--font-sen-display, var(--font-display, "Alegreya", serif));
+  font-size: 1.25rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--library-footer-cream);
+}
+.library-footer-disclosure-trigger [data-slot="disclosure-chevron"] {
+  color: var(--library-footer-gold);
+}
+.library-footer-disclosure-trigger:hover [data-slot="disclosure-heading"] {
+  color: var(--library-footer-portal);
+}
+.library-footer-links {
+  display: grid;
+  gap: 0.125rem;
+  margin: 0;
+  padding: 0 0 0.25rem;
+  list-style: none;
+}
+.library-footer-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.375rem 0.625rem;
+  border: 0;
+  border-radius: 0.625rem;
+  background: transparent;
+  font-size: 0.9375rem;
+  text-align: left;
+  color: rgba(223, 216, 207, 0.86);
+}
+.library-footer-link:hover {
+  color: var(--library-footer-portal);
+  background: rgba(255, 255, 255, 0.04);
+}
+.library-footer-link:disabled,
+.library-footer-link[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.library-footer-language-row {
+  display: flex;
+  justify-content: center;
+}
+.library-footer-language {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 1.25rem;
+  border: 1px solid var(--library-footer-border);
+  border-radius: 9999px;
+  background-image: linear-gradient(168deg, rgba(205, 225, 255, 0.09), rgba(255, 255, 255, 0.02) 40%, rgba(3, 6, 12, 0.14));
+  background-color: rgba(8, 12, 20, 0.7);
+  color: var(--library-footer-cream);
+  font-size: 1rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 2px 10px rgba(0, 0, 0, 0.45),
+    0 0 26px rgba(4, 172, 255, 0.1),
+    0 0 44px rgba(212, 175, 55, 0.05);
+}
+.library-footer-language:hover {
+  border-color: rgba(4, 172, 255, 0.6);
+  color: var(--library-footer-portal);
+}
+.library-footer-language-chevron {
+  color: var(--library-footer-gold);
+}
+
+/* Legal */
+.library-footer-legal {
+  display: grid;
+  justify-items: center;
+  gap: 0.125rem;
+  text-align: center;
+}
+.library-footer-copyright {
+  margin: 0;
+  font-size: 0.875rem;
+  color: rgba(223, 216, 207, 0.8);
+}
+.library-footer-legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.library-footer-legal-links li {
+  display: flex;
+  align-items: center;
+}
+.library-footer-legal-links li + li::before {
+  content: "|";
+  padding-inline: 0.5rem;
+  color: rgba(212, 175, 55, 0.45);
+}
+.library-footer-legal-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.25rem 0.375rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  font-size: 0.875rem;
+  color: rgba(223, 216, 207, 0.72);
+}
+.library-footer-legal-link:hover {
+  color: var(--library-footer-portal);
+}
+
+/* Focus: the same portal ring the Library buttons use. Accordion triggers span
+   the panel, so their ring sits just inside the glass edge. */
+.library-footer :is(a, button):focus-visible {
+  outline: 2px solid var(--library-footer-portal);
+  outline-offset: 2px;
+}
+.library-footer-disclosure-trigger:focus-visible {
+  outline-offset: -2px;
+  border-radius: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .library-footer {
+    margin-top: 2rem;
+    padding: 1.75rem 1.5rem 1rem;
+  }
+  .library-footer-inner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    align-items: center;
+    column-gap: 2.5rem;
+    max-width: 64rem;
+  }
+  .library-footer-legal {
+    grid-column: 1 / -1;
+    grid-auto-flow: column;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+  .library-footer-mark {
+    font-size: 2.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .library-footer * {
+    transition: none !important;
+  }
+}

@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { GlobalHeader } from '../../../components/library-shell/reference/main-library/GlobalHeader';
 import { LibraryCollectionStrip } from '../../../components/library-shell/reference/main-library/LibraryCollectionStrip';
 import { MainLibraryAdapterContext, type MainLibraryAdapter } from '../../../components/library-shell/shared/MainLibraryAdapter';
 import { MainLibraryNavigation } from '../../../components/library-shell/development/MainLibraryNavigation';
+import { MainLibraryFooter } from '../../../components/library-shell/development/MainLibraryFooter';
 import type { LibraryLocation } from '../../../components/library-shell/development/libraryRoutes';
 import { LightNovelsHome } from '../../../components/light-novels-home/development/LightNovelsHome';
 import { LightNovelsHome as ReferenceHome } from '../../../components/light-novels-home/reference/LightNovelsHome';
@@ -12,12 +14,22 @@ import { WorldExpressions } from '../../../components/light-novels-home/developm
 import { featuredNovel, featuredExpansions, homePreviewWorlds, homePreviewExpansions } from '../light-novels-home/previewData';
 import { libraryPreviewUrl, navigateLibraryPreview, readLibraryPreviewLocation } from './libraryPreviewNavigation';
 
+// The footer's Support menu opens the same Library Help the header utilities use.
+const LibraryHelpMenu = lazy(() => import('../../../components/story-seed/development/StorySeedHelpMenu')
+  .then(module => ({ default: module.LibraryHelpMenu })));
+// Social channels and legal pages are host configuration. The Workshop has no
+// published URLs for them, so these fixtures report the destination locally
+// instead of inventing links.
+const PREVIEW_SOCIAL_NETWORKS = ['discord', 'tiktok', 'instagram', 'youtube', 'x'] as const;
+const PREVIEW_LEGAL = [{ id: 'terms', label: 'Terms' }, { id: 'privacy', label: 'Privacy' }, { id: 'cookies', label: 'Cookies' }] as const;
+
 export function MainLibraryPreview({ state, developmentHeader, developmentHomeContent, extraFeedback, developmentNavigation = false, homeReference = false, active = true }: { state: string; developmentHeader?: (adapter: MainLibraryAdapter) => React.ReactNode; developmentHomeContent?: (adapter: MainLibraryAdapter) => React.ReactNode; extraFeedback?: string; developmentNavigation?: boolean; homeReference?: boolean; active?: boolean }) {
   const initialLocation = readLibraryPreviewLocation(state);
   const [currentScreen, setCurrentScreen] = useState(developmentNavigation ? initialLocation.screen : state === 'profile' ? 'profile' : 'home');
   const [activeStoryId, setActiveStoryId] = useState<string | null>(developmentNavigation && initialLocation.screen === 'detail' ? featuredNovel.id : state === 'active-story' ? 'mock-story' : null);
   const [activeTab, chooseTab] = useState<string>(developmentNavigation ? initialLocation.collection ?? 'featured' : 'my-library');
   const [destination, setDestination] = useState('');
+  const [helpOpen, setHelpOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
   const worldOpenerRef = useRef<HTMLElement | null>(null);
   const previousScreenRef = useRef(currentScreen);
@@ -74,7 +86,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
     openLibrary: () => navigate({ screen: 'home', collection: 'my-library' }),
     activeStoryId, setActiveStoryId, syncStatus: state === 'syncing' ? 'syncing' : state === 'offline' ? 'error' : 'idle', lastSavedTime: null,
     currentUser: state === 'guest' ? null : { email: 'sensei@example.test', displayName: 'Sensei' },
-    userProfile: state === 'missing-profile' ? null : { displayName: state === 'long-name' ? 'Keeper of the Nine Celestial Libraries and the Unfinished Scrolls' : 'Sensei', premiumTier: 'immortal' },
+    userProfile: state === 'missing-profile' ? null : { displayName: state === 'long-name' ? 'Keeper of the Nine Celestial Libraries and the Unfinished Scrolls' : 'Sensei', premiumTier: 'immortal', interfaceLanguage: 'en' },
     stories: [{ id: 'mock-story', mcName: 'Ye Chen', genre: 'Xianxia' }, ...(developmentNavigation ? [featuredNovel] : [])],
     setIsSettingsOpen: () => setDestination('Settings'), setIsCodexSheetOpen: () => setDestination('Living Codex'), setIsShortcutsOpen: () => setDestination('Shortcut Spells'), requestDao,
   };
@@ -115,7 +127,17 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
           <p className="font-sans text-xs text-neutral-400">Workshop collection destination: {activeTab}</p>
           </div>
         </div>
+        {developmentNavigation && <>
+          <MainLibraryFooter adapter={adapter} location={{ screen: currentScreen, collection: activeTab as LibraryLocation['collection'] }}
+            onNavigate={navigate} onOpenHelp={() => setHelpOpen(true)}
+            social={PREVIEW_SOCIAL_NETWORKS.map(network => ({ network, onSelect: () => setDestination(`${network} channel`) }))}
+            legal={PREVIEW_LEGAL.map(item => ({ ...item, onSelect: () => setDestination(item.label) }))} />
+          {isHome && destination && <p role="status" className="pb-2 text-center font-sans text-xs text-neutral-500">Workshop destination: {destination}</p>}
+        </>}
       </main>
+      {helpOpen && createPortal(<Suspense fallback={<span role="status">Loading Help…</span>}>
+        <LibraryHelpMenu open onClose={() => setHelpOpen(false)} />
+      </Suspense>, document.body)}
     </div>
   </MainLibraryAdapterContext.Provider>;
   return developmentNavigation ? <MainLibraryNavigation location={{ screen: currentScreen, collection: activeTab as LibraryLocation['collection'] }} onNavigate={navigate}>{content}</MainLibraryNavigation> : content;

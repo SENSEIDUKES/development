@@ -128,26 +128,14 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
       mode: 'dialogue', speakerName: character.name, speakerRole: character.name === chapterView.story.mcName ? 'main_character' : character.role,
       entities: [{ name: character.name, type: 'character', mention: 'reference' }],
     });
-    // Memory-derived System cards: successful canonical outputs only; replay makes failed enhancements appear.
-    const derivedSystemBlocks = (): StoryBlock[] => events.flatMap(event => {
-      const supported = records.filter(record => record.sourceEventId === event.id && record.confidence === 'resolved');
-      if (!supported.length) return [];
-      const mechanical = supported.find(record => ['progression', 'artifact', 'location-world'].includes(record.kind) && stringFact(record, 'value') !== undefined);
-      const value = mechanical && [stringFact(mechanical, 'value'), stringFact(mechanical, 'unit')].filter(Boolean).join(' ');
-      return [{ id: stableHarnessId('hblock', chapter.id, event.id), type: 'system', text: event.description,
-        system: mechanical ? {
-          kind: 'system_prompt', presentation: 'mechanical', promptType: 'progression',
-          title: `${stringFact(mechanical, 'subject')}: ${stringFact(mechanical, 'name')}`,
-          rows: [{ label: stringFact(mechanical, 'name')!, value: value! }],
-          status: { stats: [{ label: stringFact(mechanical, 'name')!, value: value! }] },
-        } : { kind: 'system_prompt', presentation: 'narrative', promptType: 'codex_update', title: 'Story development' },
-      }];
-    });
+    // A System Panel is reader-visible only when the chapter itself established
+    // one through a System Panel signal. Extracted memory is Codex evidence, not
+    // a panel: its mechanical facts reach the reader through story memory and
+    // character abilities below, never as an invented card in the prose.
     if (chapter.blocks?.length) {
       // HARNESS-built blocks are the Reader chapter. Extracted memory only adds
       // what the writer's signals left out: exact, uniquely anchored speech
-      // receives its known speaker, and derived System cards appear only when
-      // the chapter carries no authored System Panel.
+      // receives its known speaker.
       const blocks = (cloneHarnessValue(chapter.blocks) as StoryBlock[]).map(block => {
         if (block.system || block.metadata?.speakerName) return block;
         for (const event of events) {
@@ -162,7 +150,6 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
         }
         return block;
       });
-      if (!chapter.blocks.some(block => block.system)) blocks.push(...derivedSystemBlocks());
       return {
         persistenceId: chapter.id,
         number: chapter.chapterNumber,
@@ -205,7 +192,6 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
       offset = span.end;
     }
     addProse(chapter.prose.slice(offset), offset);
-    blocks.push(...derivedSystemBlocks());
     return { persistenceId: chapter.id, number: chapter.chapterNumber, title: chapter.title, premise: '',
       status: 'unread' as const, hasContent: true, generatedContent: chapter.prose, blocks };
   });

@@ -42,7 +42,10 @@ existing Chapter Generation feature.
   splits prose into canonical SEN blocks, matches anchors, validates each signal
   on its own, builds the detailed System Panel, dialogue, manifestation, creature,
   and media structures, resolves soundscapes and Sound Cues through the frozen
-  Media Loadout, and assigns every ID and persistence field. Chapter memory left
+  Media Loadout, and assigns every ID and persistence field. An anchor must name
+  one place in the chapter: a phrase found in more than one block, or more than
+  once inside its block where the signal lands at an offset, is dropped rather
+  than attached to the wrong sentence. Chapter memory left
   the chapter-writing call entirely: after a chapter commits, the existing
   separate extraction runs automatically through the host adapter, and its
   outcome never changes the committed chapter. Persisted shapes did not change,
@@ -241,7 +244,9 @@ supersede its prior output without regenerating or rewriting prose.
 
 Internal projections remain semantic intents. The SEN adapter translates supported
 canonical character, location, faction, artifact and mechanical facts to existing
-Reader contracts. Unknown relationships, speakers and unsupported effects remain
+Reader contracts as story memory, world rules and character abilities. It never
+turns extracted memory into a reader-visible System Panel: a panel exists only
+where the chapter itself established one through a System Panel signal. Unknown relationships, speakers and unsupported effects remain
 unknown. Exact, uniquely anchored speech receives the known speaker's role;
 host-supplied cast identity establishes the main character without guessing from
 paragraph order. Mechanical rows and status stats use the same preserved value.

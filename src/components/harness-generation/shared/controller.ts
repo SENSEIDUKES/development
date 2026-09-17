@@ -947,7 +947,10 @@ export class HarnessGenerationController {
         storyId: chapter.storyId, attemptId: chapter.attemptId, chapterNumber: chapter.chapterNumber,
         createdAt: recovery.startedAt, prose: chapter.prose, eventNamespace: recoveryId,
       }, this.runtime);
-      if (preserved.rejected.length || !preserved.events.length) {
+      // A readable extraction that found no developments applies normally: a
+      // chapter may legitimately establish no new memory. Only unreadable
+      // entries fail, leaving the raw extraction saved for inspection.
+      if (preserved.rejected.length) {
         candidate = cloneHarnessValue(this.state);
         const invalid = candidate.memoryRecoveries!.find(entry => entry.id === recoveryId)!;
         invalid.status = 'failed';
@@ -1102,9 +1105,13 @@ export class HarnessGenerationController {
       const receipts = candidate.capabilityReceipts.filter(receipt =>
         memoryEventIdSet.has(receipt.sourceEventId) && receipt.status !== 'superseded',
       );
+      // An applied extraction that reported no developments is a complete
+      // answer, not missing interpretation: nothing was left uninterpreted.
+      const emptyExtractionComplete = Boolean(recoveredMemory)
+        && !recoveredMemory!.eventIds?.length && !recoveredMemory!.warnings?.length;
       attempt.postCommitProcessing = receipts.some(receipt => receipt.status === 'failed')
         ? 'failed'
-        : !receipts.length || receipts.some(receipt => receipt.status === 'unresolved')
+        : (!receipts.length && !emptyExtractionComplete) || receipts.some(receipt => receipt.status === 'unresolved')
           || (recoveredMemory ? Boolean(recoveredMemory.warnings?.length)
             : Boolean(attempt.rejectedEvents?.length) || attempt.warnings.some(warning => ['optional_event_field_omitted', 'invalid_events_omitted'].includes(warning.code))) ? 'warnings' : 'complete';
       // Memory extraction completes after the commit; stale incompleteness

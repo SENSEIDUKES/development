@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController } from './controller';
 import { InMemoryHarnessGenerationRepository } from './repository';
 import { buildCanonicalStoryView } from './canonicalState';
+import { createHarnessSenStory } from './senAdapter';
 import { resolveHarnessEntity } from './capabilities';
 import type { HarnessGenerationModelAdapter, HarnessGenerationResponse, HarnessMemoryRecoveryRequest } from './types';
 
@@ -152,6 +153,18 @@ describe('Useful, evidenced chapter memory', () => {
     await reloaded.recoverChapterMemory(chapter.id, 'fixture');
     expect(reloaded.snapshot().events).toHaveLength(after.events.length);
     expect(reloaded.snapshot().chapters[0].prose).toBe(prose);
+  });
+
+  it('keeps extracted memory out of the Reader instead of inventing a System Panel', async () => {
+    const { controller, story } = await setup(true);
+    const state = controller.snapshot();
+    // Memory interpreted successfully: the records exist and are resolved.
+    expect(buildCanonicalStoryView(state, story.id).records.length).toBeGreaterThan(0);
+    // The chapter carried no System Panel signal, so the reader sees prose only.
+    const chapter = createHarnessSenStory(state, story.id).arcs[0].chapters[0];
+    expect(chapter.blocks?.some(block => block.system)).toBe(false);
+    expect(chapter.blocks?.map(block => block.text).join('\n\n')).toBe(state.chapters[0].prose);
+    expect(chapter.generatedContent).toBe(state.chapters[0].prose);
   });
 
   it('keeps unsupported evidence unresolved and prevents ready projections', async () => {

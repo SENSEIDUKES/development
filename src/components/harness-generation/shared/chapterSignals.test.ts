@@ -100,6 +100,49 @@ describe('HARNESS compact chapter signals', () => {
     expect(applied.warnings).toEqual([expect.objectContaining({ message: expect.stringContaining('"Never written" is not in the chapter prose') })]);
   });
 
+  it('rejects an anchor found in more than one block instead of annotating the first', () => {
+    const repeated = [
+      'Rain struck the roof. Rain struck the roof again, harder.',
+      'Lin counted the beats. Rain struck the roof a third time.',
+    ].join('\n\n');
+    const accepted = acceptHarnessModelResponse(JSON.stringify({
+      prose: repeated,
+      dialogue: [{ anchorText: 'Rain struck the roof', speaker: 'Lin' }],
+      manifestations: [{ anchorText: 'Rain struck the roof', name: 'Lin', type: 'character', mention: 'reveal' }],
+      soundCues: [{ anchorText: 'Rain struck the roof', category: 'locations', variation: 'rumble' }],
+    }), 2);
+
+    expect(accepted.accepted).toBe(true);
+    if (!accepted.accepted) throw new Error(accepted.reason);
+    expect(accepted.draft.prose).toBe(repeated);
+    expect(accepted.draft.blocks).toEqual([
+      { id: 'c2-p1', type: 'paragraph', text: 'Rain struck the roof. Rain struck the roof again, harder.' },
+      { id: 'c2-p2', type: 'paragraph', text: 'Lin counted the beats. Rain struck the roof a third time.' },
+    ]);
+    expect(accepted.draft.audioMoments).toBeUndefined();
+    expect(accepted.warnings.filter(warning => warning.message.includes('occurs more than once'))).toHaveLength(3);
+  });
+
+  it('keeps a block-scoped signal whose anchor repeats inside one block and drops the ones placed at an offset', () => {
+    const repeated = ['Lin listened as the gate creaked, and then the gate creaked once more.', 'She stepped through.'].join('\n\n');
+    const accepted = acceptHarnessModelResponse(JSON.stringify({
+      prose: repeated,
+      soundscapes: [{ anchorText: 'the gate creaked', mood: 'tension', tags: ['courtyard'] }],
+      soundCues: [{ anchorText: 'the gate creaked', category: 'artifacts', variation: 'creak' }],
+      systemPanels: [{ anchorText: 'the gate creaked', presentation: 'narrative', title: 'Gate' }],
+    }), 2);
+
+    expect(accepted.accepted).toBe(true);
+    if (!accepted.accepted) throw new Error(accepted.reason);
+    // The soundscape colors the whole block, so a repeated phrase is unambiguous.
+    expect(accepted.draft.blocks?.[0].metadata).toMatchObject({ music: { mood: 'tension' }, atmosphereTags: ['courtyard'] });
+    // The cue and the panel both land at an offset, so neither can be placed.
+    expect(accepted.draft.blocks).toHaveLength(2);
+    expect(accepted.draft.blocks?.some(block => block.system)).toBe(false);
+    expect(accepted.draft.audioMoments).toBeUndefined();
+    expect(accepted.warnings.filter(warning => warning.message.includes('occurs more than once'))).toHaveLength(2);
+  });
+
   it('builds every System Panel presentation family inside HARNESS', () => {
     expect(buildHarnessSystemPanel({ anchorText: 'a', presentation: 'narrative', title: 'Scan', meaning: 'friendly_scan', body: 'A friend approaches.' })).toEqual({
       kind: 'system_prompt', presentation: 'narrative', promptType: 'friendly_scan', title: 'Scan', flavor: 'A friend approaches.',

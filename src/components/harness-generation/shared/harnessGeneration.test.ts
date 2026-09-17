@@ -291,6 +291,28 @@ describe('Harness Generation Phase 2 novel core', () => {
     expect(state.attempts[0].warnings.some(warning => warning.code === 'capability_unresolved' && warning.message.includes('Automatic memory extraction'))).toBe(true);
   });
 
+  it('completes post-commit processing when the separate extraction reports no new memory', async () => {
+    const repository = new InMemoryHarnessGenerationRepository();
+    const provider = adapter(response(JSON.stringify({
+      prose: 'The ferry crossed the strait without incident, and no one spoke.',
+      memory: { memory: { characters: [], threads: [], timeline: [] } },
+    })));
+    const controller = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime() });
+    await controller.hydrate();
+    const story = await createStory(controller);
+    await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
+
+    const state = controller.snapshot();
+    // A chapter may legitimately establish no new memory; that is a complete
+    // answer, not an incomplete interpretation to retry.
+    expect(state.chapters).toHaveLength(1);
+    expect(state.events).toHaveLength(0);
+    expect(state.memoryRecoveries?.[0]).toMatchObject({ status: 'applied', eventIds: [], warnings: [] });
+    expect(state.attempts[0]).toMatchObject({ stage: 'committed', postCommitProcessing: 'complete' });
+    expect(state.attempts[0].warnings.some(warning => warning.code === 'capability_unresolved')).toBe(false);
+    expect(provider.recoverMemory).toHaveBeenCalledTimes(1);
+  });
+
   it('commits a chapter without any memory call when the host adapter has no extraction', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const provider = adapter(response(JSON.stringify({ prose: 'The ferry left without its lantern.' })));

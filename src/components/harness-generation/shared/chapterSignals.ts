@@ -251,12 +251,45 @@ interface CandidateBlock {
   system?: SystemEvent;
 }
 
-const findAnchor = (blocks: CandidateBlock[], anchorText: string): number =>
-  blocks.findIndex(block => block.text.includes(anchorText));
+const excerpt = (value: string) => `${value.slice(0, 60)}${value.length > 60 ? '…' : ''}`;
 
-const anchorWarning = (family: HarnessSignalFamily, anchorText: string): HarnessWarning => ({
+type AnchorResolution = { ok: true; index: number } | { ok: false; reason: 'missing' | 'ambiguous' };
+
+/**
+ * An anchor must identify exactly one place in the chapter. A phrase found in
+ * more than one block — or, when the signal's position inside its block decides
+ * where the effect lands, more than once within that block — is ambiguous, and
+ * the HARNESS drops the signal rather than silently annotating the wrong
+ * sentence. `positional` is true for the families whose placement is an offset
+ * in the prose: a System Panel splits its block at the anchor, and a Sound Cue
+ * plays at the anchor's occurrence.
+ */
+const resolveAnchor = (
+  blocks: readonly CandidateBlock[],
+  anchorText: string,
+  positional: boolean,
+): AnchorResolution => {
+  const matches: number[] = [];
+  blocks.forEach((block, index) => { if (block.text.includes(anchorText)) matches.push(index); });
+  if (!matches.length) return { ok: false, reason: 'missing' };
+  if (matches.length > 1) return { ok: false, reason: 'ambiguous' };
+  const [index] = matches;
+  const text = blocks[index].text;
+  if (positional && text.indexOf(anchorText) !== text.lastIndexOf(anchorText)) {
+    return { ok: false, reason: 'ambiguous' };
+  }
+  return { ok: true, index };
+};
+
+const anchorWarning = (
+  family: HarnessSignalFamily,
+  anchorText: string,
+  reason: 'missing' | 'ambiguous',
+): HarnessWarning => ({
   code: 'optional_chapter_structure_omitted',
-  message: `Omitted a ${familyLabel[family]} signal whose anchor "${anchorText.slice(0, 60)}${anchorText.length > 60 ? '…' : ''}" is not in the chapter prose.`,
+  message: reason === 'missing'
+    ? `Omitted a ${familyLabel[family]} signal whose anchor "${excerpt(anchorText)}" is not in the chapter prose.`
+    : `Omitted a ${familyLabel[family]} signal whose anchor "${excerpt(anchorText)}" occurs more than once, so the place it marks is ambiguous.`,
 });
 
 const metadataOf = (block: CandidateBlock) => (block.metadata ??= {});
@@ -332,25 +365,25 @@ export const applyHarnessChapterSignals = (
   const blocks: CandidateBlock[] = paragraphs.map(text => ({ text }));
 
   for (const signal of signals.systemPanels) {
-    const index = findAnchor(blocks, signal.anchorText);
-    if (index < 0) { warnings.push(anchorWarning('systemPanels', signal.anchorText)); continue; }
-    const block = blocks[index];
+    const anchor = resolveAnchor(blocks, signal.anchorText, true);
+    if (!anchor.ok) { warnings.push(anchorWarning('systemPanels', signal.anchorText, anchor.reason)); continue; }
+    const block = blocks[anchor.index];
     if (block.system) {
-      warnings.push({ code: 'optional_chapter_structure_omitted', message: `Omitted a second System Panel anchored on "${signal.anchorText.slice(0, 60)}"; a block carries one panel.` });
+      warnings.push({ code: 'optional_chapter_structure_omitted', message: `Omitted a second System Panel anchored on "${excerpt(signal.anchorText)}"; a block carries one panel.` });
       continue;
     }
     const start = block.text.indexOf(signal.anchorText);
     const before = block.text.slice(0, start).trim();
     const after = block.text.slice(start + signal.anchorText.length).trim();
     const panel: CandidateBlock = { text: signal.anchorText, system: buildHarnessSystemPanel(signal) };
-    blocks.splice(index, 1, ...[before ? { text: before } : undefined, panel, after ? { text: after } : undefined]
+    blocks.splice(anchor.index, 1, ...[before ? { text: before } : undefined, panel, after ? { text: after } : undefined]
       .filter((candidate): candidate is CandidateBlock => Boolean(candidate)));
   }
 
   for (const signal of signals.dialogue) {
-    const index = findAnchor(blocks, signal.anchorText);
-    if (index < 0) { warnings.push(anchorWarning('dialogue', signal.anchorText)); continue; }
-    const block = blocks[index];
+    const anchor = resolveAnchor(blocks, signal.anchorText, false);
+    if (!anchor.ok) { warnings.push(anchorWarning('dialogue', signal.anchorText, anchor.reason)); continue; }
+    const block = blocks[anchor.index];
     if (block.system) continue;
     const metadata = metadataOf(block);
     if (!block.type) {
@@ -364,19 +397,19 @@ export const applyHarnessChapterSignals = (
   }
 
   for (const signal of signals.manifestations) {
-    const index = findAnchor(blocks, signal.anchorText);
-    if (index < 0) { warnings.push(anchorWarning('manifestations', signal.anchorText)); continue; }
-    const metadata = metadataOf(blocks[index]);
+    const anchor = resolveAnchor(blocks, signal.anchorText, false);
+    if (!anchor.ok) { warnings.push(anchorWarning('manifestations', signal.anchorText, anchor.reason)); continue; }
+    const metadata = metadataOf(blocks[anchor.index]);
     metadata.entities = [...(metadata.entities ?? []).filter(entity => entity.name !== signal.name || entity.type !== signal.type),
       { name: signal.name, type: signal.type, mention: signal.mention }];
   }
 
   for (const signal of signals.creatureEvents) {
-    const index = findAnchor(blocks, signal.anchorText);
-    if (index < 0) { warnings.push(anchorWarning('creatureEvents', signal.anchorText)); continue; }
-    const metadata = metadataOf(blocks[index]);
+    const anchor = resolveAnchor(blocks, signal.anchorText, false);
+    if (!anchor.ok) { warnings.push(anchorWarning('creatureEvents', signal.anchorText, anchor.reason)); continue; }
+    const metadata = metadataOf(blocks[anchor.index]);
     if (metadata.beastEvent) {
-      warnings.push({ code: 'optional_chapter_structure_omitted', message: `Omitted a second creature event anchored on "${signal.anchorText.slice(0, 60)}"; a block carries one.` });
+      warnings.push({ code: 'optional_chapter_structure_omitted', message: `Omitted a second creature event anchored on "${excerpt(signal.anchorText)}"; a block carries one.` });
       continue;
     }
     const { anchorText: _anchor, type, name, ...profile } = signal;
@@ -387,11 +420,11 @@ export const applyHarnessChapterSignals = (
   }
 
   for (const signal of signals.soundscapes) {
-    const index = findAnchor(blocks, signal.anchorText);
-    if (index < 0) { warnings.push(anchorWarning('soundscapes', signal.anchorText)); continue; }
-    const metadata = metadataOf(blocks[index]);
+    const anchor = resolveAnchor(blocks, signal.anchorText, false);
+    if (!anchor.ok) { warnings.push(anchorWarning('soundscapes', signal.anchorText, anchor.reason)); continue; }
+    const metadata = metadataOf(blocks[anchor.index]);
     if (metadata.music) {
-      warnings.push({ code: 'optional_chapter_structure_omitted', message: `Omitted a second soundscape anchored on "${signal.anchorText.slice(0, 60)}"; a block carries one.` });
+      warnings.push({ code: 'optional_chapter_structure_omitted', message: `Omitted a second soundscape anchored on "${excerpt(signal.anchorText)}"; a block carries one.` });
       continue;
     }
     metadata.music = { mood: signal.mood, ...(signal.region ? { region: signal.region } : {}), ...(signal.intensity === undefined ? {} : { intensity: signal.intensity }) };
@@ -401,9 +434,11 @@ export const applyHarnessChapterSignals = (
   }
 
   for (const signal of signals.soundCues) {
-    const index = findAnchor(blocks, signal.anchorText);
-    if (index < 0) { warnings.push(anchorWarning('soundCues', signal.anchorText)); continue; }
-    const metadata = metadataOf(blocks[index]);
+    // The cue plays at this exact phrase, so occurrence 0 is only correct when
+    // the anchor occurs exactly once in exactly one block.
+    const anchor = resolveAnchor(blocks, signal.anchorText, true);
+    if (!anchor.ok) { warnings.push(anchorWarning('soundCues', signal.anchorText, anchor.reason)); continue; }
+    const metadata = metadataOf(blocks[anchor.index]);
     metadata.audioMoments = [...(metadata.audioMoments ?? []), {
       triggerPhrase: signal.anchorText, occurrenceIndex: 0, sourceCategory: signal.category, variation: signal.variation,
       semanticTags: signal.tags ?? [],

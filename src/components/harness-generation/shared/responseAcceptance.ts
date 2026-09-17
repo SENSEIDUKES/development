@@ -134,17 +134,23 @@ const parsePlan = (value: unknown, warnings: HarnessWarning[]): HarnessModelPlan
   return undefined;
 };
 
+/**
+ * Reads a memory extraction reply. A readable extraction that reports no
+ * developments is a legitimate result — a chapter can establish no new memory —
+ * so it returns an empty list. Only a reply carrying no extraction at all
+ * (neither the grouped memory object nor an event list) is unreadable.
+ */
 export const readHarnessMemoryEvents = (raw: string): unknown[] => {
   const parsed = parseJsonObject(raw);
-  const events = parsed ? memoryEvents(parsed) : [];
-  if (!events.length) {
+  const extraction = parsed ? memoryExtraction(parsed) : undefined;
+  if (!extraction) {
     throw new Error('Memory recovery returned no event list. Saved prose is unchanged.');
   }
-  return events;
+  return extraction;
 };
 
-const memoryEvents = (parsed: Record<string, unknown>): unknown[] => {
-  if (!isRecord(parsed.memory)) return Array.isArray(parsed.events) ? parsed.events : [];
+const memoryExtraction = (parsed: Record<string, unknown>): unknown[] | undefined => {
+  if (!isRecord(parsed.memory)) return Array.isArray(parsed.events) ? parsed.events : undefined;
   const result: unknown[] = [];
   for (const [bucket, category] of Object.entries(HARNESS_MEMORY_CATEGORIES)) {
     const entries = parsed.memory[bucket];

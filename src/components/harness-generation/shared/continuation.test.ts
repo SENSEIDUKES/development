@@ -151,10 +151,11 @@ describe('Steered continuation and SEN boundaries', () => {
     expect(resolveHarnessEntity('Iven', state, story.id).resolution).toBe('exact');
     const chapter = sen.arcs[0].chapters[49];
     expect(chapter.blocks?.find(block => block.type === 'dialogue')?.metadata).toMatchObject({ speakerName: 'Iven', speakerRole: 'Captain', mode: 'dialogue' });
-    expect(chapter.blocks?.filter(block => !block.system).map(block => block.text).join('')).toBe(state.chapters[49].prose);
-    const system = chapter.blocks?.find(block => block.system && 'presentation' in block.system && block.system.presentation === 'mechanical')?.system;
-    expect(system && 'status' in system ? system.status?.stats : undefined).toEqual([{ label: 'Sparks', value: '50 sparks' }]);
-    expect(system?.rows).toEqual([{ label: 'Sparks', value: '50 sparks' }]);
+    expect(chapter.blocks?.map(block => block.text).join('')).toBe(state.chapters[49].prose);
+    // Extracted memory is Codex evidence, never a reader-visible panel: these
+    // chapters carried no System Panel signal, so the Reader shows only prose.
+    expect(chapter.blocks?.some(block => block.system)).toBe(false);
+    expect(sen.memory?.worldRules).toContain('Mara: Sparks: 50 sparks');
     expect(sen.memory?.characters?.find(character => character.name === 'Mara')?.abilities).toEqual([
       expect.objectContaining({ name: 'Sparks', description: '50 sparks' }),
     ]);

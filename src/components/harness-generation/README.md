@@ -30,6 +30,11 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-09-16:** Accepted Word (`.docx`) SPP instruction files, installing only
+  their extracted document text, and added a direct SPP upload to every CAPA skill
+  slot that locks the destination, validates the package against it, and equips
+  the installed skill for the open story in one flow. See
+  [SPP_IMPORT.md](./SPP_IMPORT.md).
 - **2026-09-16:** Added the separate Media Loadout and runtime catalog path.
   Registered Media Packs, host-account reward entitlements, and two independent
   story equipment slots remain distinct from CAPA and from each other. HARNESS

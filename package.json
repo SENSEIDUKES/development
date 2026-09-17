@@ -31,6 +31,7 @@
     "@seihouse/library-ui": "file:vendor/seihouse-library-ui-0.4.0.tgz",
     "@seihouse/ui": "file:vendor/seihouse-ui-0.4.0.tgz",
     "@vitejs/plugin-react": "latest",
+    "fflate": "^0.8.3",
     "lucide-react": "^1.27.0",
     "motion": "^12.43.0",
     "react": "latest",

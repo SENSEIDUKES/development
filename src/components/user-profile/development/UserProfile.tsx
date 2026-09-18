@@ -225,16 +225,6 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const isSignedOut = !currentUser && !localOnlyMode;
   const isPrivileged = profile?.role === 'owner' || profile?.role === 'admin';
 
-  // Public Exit remains available through the existing action slot.
-  const headerActions = useMemo(() => {
-    if (isPublicView) {
-      return [{ id: 'exit-public-view', label: 'Exit', icon: CAVE_EXIT_ICON,
-        title: 'Leave the public view and return to your Cave', onAction: exitPublicView }];
-    }
-    // Private preview already lives alongside its visibility controls in Settings.
-    return [];
-  }, [isPublicView, exitPublicView]);
-
   // The Akashic Switchboard is a destination here; the controller still owns
   // when its registries are fetched, keyed off this flag exactly as in production.
   useEffect(() => {
@@ -487,11 +477,12 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         header={<WorkspaceHeader title="Profile" landmark="none"
           emblem={{ src: '/favicon.jpg', alt: 'SEN' }}
           home={{ href: '/', label: 'Return to Library', onNavigate: onNavigateHome }}
-          contextualItem={isPublicView ? <p role="status" className="workspace-header-public-view" title="Public View">
+          contextualItem={isPublicView ? <button type="button" onClick={exitPublicView}
+            aria-label="Exit public view" title="Exit public view"
+            className="workspace-header-public-view min-h-11 min-w-11 justify-center rounded-full cursor-pointer hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd3ff]">
             <Eye size={20} aria-hidden="true" /><span>Public View</span>
-          </p> : undefined}
-          searchItems={navigationItems.filter(item => item.id !== 'exit').map(item => ({ id: item.id, label: item.label, pressed: item.active, onAction: item.onSelect }))}
-          secondaryActions={headerActions}
+          </button> : undefined}
+          searchItems={navigationItems.map(item => ({ id: item.id, label: item.label, pressed: item.active, onAction: item.onSelect }))}
         />}
       >
         <div className="cave-workspace-body mx-auto w-full max-w-7xl px-4 pb-12 pt-3 sm:px-6 sm:pt-5">

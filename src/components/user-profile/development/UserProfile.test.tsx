@@ -1535,7 +1535,7 @@ describe('Public view of the Cave', () => {
     expect(text()).not.toContain(profile.username);
   });
 
-  it('shows a Public View indicator and centres the name in both modes', async () => {
+  it('uses the header eye to exit public view without an extra toolbar', async () => {
     await renderCave();
     expect(container.querySelector('.workspace-header-status')).toBeNull();
     expect(container.querySelector('.workspace-header-toolbar')).toBeNull();
@@ -1545,9 +1545,14 @@ describe('Public view of the Cave', () => {
     expect(container.querySelector('[data-cave-identity-group] .cave-tier-badge')).not.toBeNull();
 
     await enterPublicView();
-    expect(container.querySelector('.workspace-header-context [role="status"]')?.textContent).toContain('Public View');
+    const eye = container.querySelector<HTMLButtonElement>('.workspace-header-context [aria-label="Exit public view"]')!;
+    expect(eye.textContent).toContain('Public View');
+    expect(container.querySelector('.workspace-header-toolbar')).toBeNull();
     expect(container.querySelector('#cave-cultivator-name .cave-tier-badge')).toBeNull();
     expect(container.querySelector('[data-cave-identity-group] .cave-tier-badge')).not.toBeNull();
+    await click(eye);
+    expect(cave()).toBe('/settings');
+    expect(container.querySelector('[aria-label="Exit public view"]')).toBeNull();
   });
 
   it('keeps Cave destinations in Search and public Exit returns to the previous location', async () => {
@@ -1570,7 +1575,7 @@ describe('Public view of the Cave', () => {
     history.replaceState(null, '', '/?preview=user-profile&cave=/public/home');
     await renderCave();
     expect(container.querySelector('[data-cave-home-mode]')?.getAttribute('data-cave-home-mode')).toBe('public');
-    await searchCaveDestination('Exit');
+    await click(container.querySelector('[aria-label="Exit public view"]')!);
     expect(cave()).toBe('/home');
     expect(container.querySelector('[data-cave-card="dao-pillar"]')).not.toBeNull();
   });

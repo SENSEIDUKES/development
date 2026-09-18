@@ -137,7 +137,7 @@ export interface DaoPillarHttpError {
 
 const formatWhole = (value: number) => value.toLocaleString('en-US');
 
-/** "100 Qi", "1,000 Qi", or "100 Qi + Relic" for a mixed day. */
+/** "100 Qi", "500 Qi", or "100 Qi + Relic" for a mixed day. */
 export function describeRewards(entries: readonly RewardEntry[]): string {
   return entries.map(entry => {
     switch (entry.type) {

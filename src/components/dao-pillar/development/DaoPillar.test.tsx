@@ -56,7 +56,7 @@ describe('Dao Pillar view', () => {
       'available', ...Array(17).fill('locked'),
     ]);
     expect(tile(7).dataset.milestone).toBe('true');
-    expect(tile(7).textContent).toContain('1,000 Qi');
+    expect(tile(7).textContent).toContain('500 Qi');
     expect(tile(13).textContent).toContain('100 Qi');
     expect(tile(13).textContent).toContain('Collect');
     expect(tile(14).disabled).toBe(true);
@@ -94,7 +94,7 @@ describe('Dao Pillar view', () => {
     await click(tile(7));
     const dialog = document.body.querySelector('[role="dialog"]');
     expect(dialog?.textContent).toContain('Day 7 collected');
-    expect(dialog?.textContent).toContain('1,000 Qi · Milestone');
+    expect(dialog?.textContent).toContain('500 Qi · Milestone');
     const claimedAt = latest.snapshot!.tiles[6].claimedAt!;
     expect(dialog?.querySelector('time')?.getAttribute('datetime')).toBe(claimedAt);
     expect(dialog?.textContent).toContain(new Date(claimedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }));
@@ -151,6 +151,6 @@ describe('Dao Pillar view', () => {
     await act(async () => { await latest.claim(); });
     expect(daoPillarCardLabels(latest)).toEqual({ streakLabel: '3 Day Streak', daoPillarLabel: 'Collected today · +100 Qi' });
     await render({ client: createLocalDaoPillarClient({ uid: 'u2', todayIsDay: 14 }) });
-    expect(daoPillarCardLabels(latest).daoPillarLabel).toBe('Day 14 · 1,000 Qi ready to collect');
+    expect(daoPillarCardLabels(latest).daoPillarLabel).toBe('Day 14 · 500 Qi ready to collect');
   });
 });

@@ -20,7 +20,7 @@ export const DELIVERABLE_REWARD_TYPES: readonly RewardType[] = ['qi'];
 
 /**
  * BETA TEST — the first theme: a 30-day cultivation trial. 100 Qi a day,
- * 1,000 Qi on days 7, 14, 21 and 28.
+ * 500 Qi on days 7, 14, 21 and 28.
  */
 export const BETA_TEST_THEME: DaoPillarTheme = {
   id: 'beta-test',
@@ -33,7 +33,7 @@ export const BETA_TEST_THEME: DaoPillarTheme = {
   rewards: {
     everyDay: [{ type: 'qi', amount: 100 }],
     milestoneDays: [7, 14, 21, 28],
-    milestone: [{ type: 'qi', amount: 1_000 }],
+    milestone: [{ type: 'qi', amount: 500 }],
   },
   visual: {
     bannerSrc: '/dao-pillar/beta-test-banner.jpg',

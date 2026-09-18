@@ -23,7 +23,7 @@ const STATES: { id: DaoPillarPreviewState; label: string; description: string }[
   { id: 'mid-cycle', label: 'Day 13, mid-cycle', description: 'Twelve days behind, two of them missed, today open to collect. The reference layout.' },
   { id: 'fresh-start', label: 'Day 1', description: 'The first day of a new cycle: nothing collected yet, everything ahead locked.' },
   { id: 'collected-today', label: 'Collected today', description: 'Today already collected; the tile shows its check and tapping it shows when.' },
-  { id: 'milestone-today', label: 'Milestone day', description: 'Day 14 open: the 1,000 Qi milestone with its stronger emphasis.' },
+  { id: 'milestone-today', label: 'Milestone day', description: 'Day 14 open: the 500 Qi milestone with its stronger emphasis.' },
   { id: 'before-start', label: 'Before the start', description: 'The theme has not begun; every tile is locked and the footer says when it opens.' },
   { id: 'cycle-complete', label: 'Cycle complete', description: 'Thirty days behind us; the calendar is read-only history.' },
   { id: 'claim-failed', label: 'Claim failure', description: 'The server refuses the collection; the tile stays open to retry and nothing is deposited.' },

@@ -1335,7 +1335,7 @@ describe('Home dynamic data and claim contract', () => {
     expect(daoTile(13).dataset.state).toBe('collected');
     expect(container.querySelectorAll('.dao-tile[data-state="available"]')).toHaveLength(0);
     expect(result.controller().profile?.dao_xp).toBe(13580);
-    expect(await result.daoPillarClient!.repository.getQiBalance('workshop-cultivator')).toBe(2200);
+    expect(await result.daoPillarClient!.repository.getQiBalance('workshop-cultivator')).toBe(1700);
   });
   it('does not mirror Qi for a refused claim and leaves the tile open to retry', async () => {
     const result = await renderCave({ daoPillar: { mode: 'claim-failed' } });
@@ -1356,7 +1356,7 @@ describe('Home dynamic data and claim contract', () => {
     expect(daoTile(13).dataset.state).toBe('collected');
     expect(daoTileStates().filter(state => state === 'collected')).toHaveLength(13);
     // The server deposited once; this surface saw no receipt, so the profile waits for its next refresh.
-    expect(await result.daoPillarClient!.repository.getQiBalance('workshop-cultivator')).toBe(2200);
+    expect(await result.daoPillarClient!.repository.getQiBalance('workshop-cultivator')).toBe(1700);
     expect(result.controller().profile?.dao_xp).toBe(13480);
     await navigateTo('/home');
     expect(open('dao-pillar').textContent).toContain('Collected today · +100 Qi');
@@ -1374,16 +1374,16 @@ describe('Home dynamic data and claim contract', () => {
   });
   it('awards the milestone reward on a milestone day', async () => {
     const result = await renderCave({ daoPillar: { todayIsDay: 14, collectedDays: [...TWELVE_DAYS, 13] } });
-    expect(open('dao-pillar').textContent).toContain('Day 14 · 1,000 Qi ready to collect');
+    expect(open('dao-pillar').textContent).toContain('Day 14 · 500 Qi ready to collect');
     await click(open('dao-pillar'));
     expect(daoTile(14).dataset.milestone).toBe('true');
     await click(daoTile(14));
     await settle();
-    expect(container.querySelector('[data-dao-live]')?.textContent).toBe('Day 14 collected: +1,000 Qi.');
-    expect(result.controller().profile?.dao_xp).toBe(14480);
+    expect(container.querySelector('[data-dao-live]')?.textContent).toBe('Day 14 collected: +500 Qi.');
+    expect(result.controller().profile?.dao_xp).toBe(13980);
     await navigateTo('/home');
     expect(open('dao-pillar').textContent).toContain('14 Day Streak');
-    expect(open('dao-pillar').textContent).toContain('Collected today · +1,000 Qi');
+    expect(open('dao-pillar').textContent).toContain('Collected today · +500 Qi');
   });
   it('shows the card as not connected when no calendar client is mounted', async () => {
     await renderCave({ daoPillar: null });
@@ -1516,7 +1516,7 @@ describe('Claim reconciliation', () => {
     await navigateTo('/home/dao-pillar');
     expect(daoTileStates().filter(state => state === 'collected')).toHaveLength(13);
     expect(container.querySelectorAll('.dao-tile[data-state="available"]')).toHaveLength(0);
-    expect(await result.daoPillarClient!.repository.getQiBalance('workshop-cultivator')).toBe(2200);
+    expect(await result.daoPillarClient!.repository.getQiBalance('workshop-cultivator')).toBe(1700);
   });
   it('protects the existing repair callback against same-turn duplicate charges', async () => {
     const result = await renderCave({ state: 'owner-admin' });

@@ -39,7 +39,7 @@ export function describeDaoPillarContract(name: string, createFixture: () => Pro
       ]);
       expect(snapshot.tiles[12]).toMatchObject({ day: 13, scheduledDate: '2026-09-18', rewards: [{ type: 'qi', amount: 100 }], milestone: false, claimedAt: null });
       expect(snapshot.tiles.filter(tile => tile.milestone).map(tile => tile.day)).toEqual([7, 14, 21, 28]);
-      expect(snapshot.tiles[6].rewards).toEqual([{ type: 'qi', amount: 1_000 }]);
+      expect(snapshot.tiles[6].rewards).toEqual([{ type: 'qi', amount: 500 }]);
       expect(snapshot.tiles[0].scheduledDate).toBe('2026-09-06');
       expect(snapshot.tiles[29].scheduledDate).toBe('2026-10-05');
       expect(snapshot.streak).toEqual({ current: 0, totalCollected: 0 });
@@ -105,17 +105,17 @@ export function describeDaoPillarContract(name: string, createFixture: () => Pro
     it('awards the milestone reward on days 7, 14, 21 and 28', async () => {
       const { repository, qi } = await createFixture();
       const day14 = await serviceAt(repository, '2026-09-19T15:00:00Z').claimToday(cultivator());
-      expect(day14.claim).toMatchObject({ day: 14, rewards: [{ type: 'qi', amount: 1_000 }] });
-      expect(day14.claim.delivered[0]).toMatchObject({ type: 'qi', amount: 1_000, balanceAfter: 1_000 });
+      expect(day14.claim).toMatchObject({ day: 14, rewards: [{ type: 'qi', amount: 500 }] });
+      expect(day14.claim.delivered[0]).toMatchObject({ type: 'qi', amount: 500, balanceAfter: 500 });
       expect(day14.snapshot.tiles[13]).toMatchObject({ milestone: true, state: 'collected' });
       const day28 = await serviceAt(repository, '2026-10-03T15:00:00Z').claimToday(cultivator());
-      expect(day28.claim.delivered[0]).toMatchObject({ amount: 1_000, balanceAfter: 2_000 });
+      expect(day28.claim.delivered[0]).toMatchObject({ amount: 500, balanceAfter: 1_000 });
       const day15 = await serviceAt(repository, '2026-09-20T15:00:00Z').claimToday(cultivator());
-      expect(day15.claim.delivered[0]).toMatchObject({ amount: 100, balanceAfter: 2_100 });
-      expect((await qi.getAccount('dev-user'))?.balance).toBe(2_100);
+      expect(day15.claim.delivered[0]).toMatchObject({ amount: 100, balanceAfter: 1_100 });
+      expect((await qi.getAccount('dev-user'))?.balance).toBe(1_100);
       const history = await qi.listTransactions('dev-user', 10);
-      expect(history.map(entry => entry.amount)).toEqual([100, 1_000, 1_000]);
-      expect(history.map(entry => entry.balanceAfter)).toEqual([2_100, 2_000, 1_000]);
+      expect(history.map(entry => entry.amount)).toEqual([100, 500, 500]);
+      expect(history.map(entry => entry.balanceAfter)).toEqual([1_100, 1_000, 500]);
     });
 
     it('builds the streak from consecutive scheduled dates and lets an open day count from yesterday', async () => {

@@ -38,7 +38,7 @@ describe('Dao Pillar themes', () => {
     const schedule = buildRewardSchedule(validateDaoPillarTheme(BETA_TEST_THEME));
     expect(schedule).toHaveLength(30);
     expect(schedule.filter(day => day.milestone).map(day => day.day)).toEqual([7, 14, 21, 28]);
-    expect(schedule.filter(day => day.milestone).every(day => day.rewards[0].type === 'qi' && day.rewards[0].amount === 1_000)).toBe(true);
+    expect(schedule.filter(day => day.milestone).every(day => day.rewards[0].type === 'qi' && day.rewards[0].amount === 500)).toBe(true);
     expect(schedule.filter(day => !day.milestone).every(day => day.rewards[0].type === 'qi' && day.rewards[0].amount === 100)).toBe(true);
   });
 

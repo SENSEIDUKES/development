@@ -1,0 +1,61 @@
+/* Energy — the quiet meter behind SEN generation.
+   One glyph, one number. These pieces sit inside other surfaces (a profile
+   emblem, an action button, a notice) and must never compete with them, so
+   they are text-sized, inherit their surroundings, and use one accent. */
+@layer components {
+  :where(.energy-amount) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  :where(.energy-amount .energy-glyph) {
+    color: #f1dc93;
+    font-size: 0.9em;
+    line-height: 1;
+  }
+  :where(.energy-amount[data-energy-size='sm']) { font-size: 0.75rem; }
+  :where(.energy-amount[data-energy-size='md']) { font-size: 1rem; }
+  :where(.energy-amount[data-energy-size='lg']) { font-size: 1.75rem; font-weight: 600; }
+  :where(.energy-amount[data-energy-state='loading']),
+  :where(.energy-amount[data-energy-state='unavailable']) { color: rgb(229 229 229 / 0.55); }
+
+  :where(.energy-action-cost) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2em;
+    padding: 0.05em 0.45em;
+    border-radius: 999px;
+    border: 1px solid rgb(241 220 147 / 0.35);
+    background: rgb(241 220 147 / 0.08);
+    color: #f1dc93;
+    font-size: 0.72em;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  :where(.energy-panel-balance) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+  }
+  :where(.energy-panel-list) { display: grid; gap: 0.35rem; }
+  :where(.energy-panel-row) {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+  }
+  :where(.energy-panel-row-meta) { color: rgb(229 229 229 / 0.55); font-size: 0.75rem; }
+  :where(.energy-panel-dev) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}

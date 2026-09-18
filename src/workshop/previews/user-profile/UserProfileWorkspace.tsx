@@ -13,6 +13,8 @@ import { workshopEntries } from '../../manifest';
 import DevelopmentUserProfile from '../../../components/user-profile/development/UserProfile';
 import ReferenceUserProfile from '../../../components/user-profile/reference/UserProfile';
 import { UserProfileServicesProvider } from '../../../components/user-profile/shared/userProfileServices';
+import { EnergyClientProvider, createHttpEnergyClient } from '../../../components/energy/shared/energyClient';
+import { developmentEnergyToken } from '../../../server/energy/authentication';
 import type { AppUser } from '../../../components/user-profile/shared/types';
 import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigation';
 import { createMockUserProfileServices } from './mockUserProfileServices';
@@ -61,6 +63,13 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
   );
 
   const currentUser = scenario.currentUser ?? linkedAccount;
+  // Energy is never mocked: the Development pane reads the real server-owned
+  // ledger behind `/api/energy`, identified as the scenario's account.
+  const currentUid = currentUser?.uid ?? null;
+  const energyClient = useMemo(
+    () => createHttpEnergyClient({ token: () => (currentUid ? developmentEnergyToken(currentUid) : null) }),
+    [currentUid],
+  );
 
   const renderPane = (Component: typeof DevelopmentUserProfile, pane: string) => (
     // Remounting on scenario change throws away the mock's in-memory account
@@ -68,11 +77,11 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
     // inheriting edits made in the previous one.
     <div key={`${pane}-${previewState}-${currentUser?.uid ?? 'anonymous'}`} className="pb-16">
       <UserProfileServicesProvider services={services}>
+        <EnergyClientProvider client={pane === 'development' ? energyClient : null}>
         <Component
           currentUser={currentUser}
           stories={scenario.stories}
           {...(pane === 'development' ? { publicCreators: previewPublicCreators(scenario.profile), accountControls: {
-            energyBalance: currentUser ? 120 : null,
             inboxUnreadCount: currentUser ? 2 : 0,
           } } : {})}
           onLogout={() => {
@@ -83,6 +92,7 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
           onNavigateHome={() => logExcludedAction('Navigate to Library home (production router)')}
           onNavigateLibrary={navigateLibraryPreview}
         />
+        </EnergyClientProvider>
       </UserProfileServicesProvider>
 
       <section className="mx-auto mt-8 max-w-4xl px-4 sm:px-8">

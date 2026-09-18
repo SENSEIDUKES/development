@@ -19,6 +19,8 @@ import type { UserProfileController } from "../shared/userProfileServices";
 import type { ActiveStatusEffect, PremiumTier } from "../shared/types";
 import type { PublicProfilePresentation } from "./publicProfile";
 import type { CaveAccountControls } from "./caveAccountControls";
+import { EnergyBalanceIndicator } from "../../energy/development/EnergyBalanceIndicator";
+import type { EnergyAccountState } from "../../energy/shared/useEnergyAccount";
 import { LibraryTierBadge } from "./LibraryTierBadge";
 import { caveHref, publicCavePath, useCaveRoute } from './caveNavigation';
 import {
@@ -105,6 +107,7 @@ export function UserProfileHome({
   publicProfile,
   boost,
   accountControls,
+  energy,
   onOpenRelics,
   onOpenSettings,
 }: {
@@ -115,6 +118,8 @@ export function UserProfileHome({
   publicProfile?: PublicProfilePresentation;
   boost?: HomeBoostState;
   accountControls?: CaveAccountControls;
+  /** The shared Energy account state and where the emblem leads; absent when Energy is not connected. */
+  energy?: { account: EnergyAccountState; onOpen: () => void };
   /** Opens the Cave's existing `/relics` route and its inventory panel. */
   onOpenRelics?: () => void;
   onOpenSettings?: () => void;
@@ -415,10 +420,14 @@ export function UserProfileHome({
               )}
               {creatorLinks}
               {!isPublic && (
-              <div className="cave-account-emblem" title="Energy is used to generate content" data-cave-energy>
+              <button type="button" className="cave-account-emblem" title="Energy powers generation throughout SEN" data-cave-energy
+                data-cave-energy-status={energy?.account.status ?? 'unavailable'}
+                onClick={energy?.onOpen} disabled={!energy}
+                aria-label={energy?.account.snapshot ? `Energy, ${energy.account.snapshot.available} available` : 'Energy'}>
                 <SENNavigationIcon name="energy" size={24} />
                 <span>Energy</span>
-              </div>
+                {energy ? <EnergyBalanceIndicator account={energy.account} size="sm" /> : null}
+              </button>
               )}
             </div>
           )}

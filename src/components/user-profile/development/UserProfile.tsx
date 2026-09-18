@@ -62,6 +62,8 @@ import { LibraryNavigation, LibrarySectionSidebar } from '../../library-shell/de
 import type { LibraryLocation } from '../../library-shell/development/libraryRoutes';
 import { WorkspaceShell } from '../../library-shell/development/WorkspaceShell';
 import { SENNavigationIcon } from '../../library-shell/development/SENNavigationIcon';
+import { EnergyPanel } from '../../energy/development/EnergyPanel';
+import { useEnergyAccount } from '../../energy/shared/useEnergyAccount';
 
 interface UserProfileProps {
   currentUser: AppUser | null;
@@ -224,6 +226,11 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const environment = getCaveEnvironment(environmentId);
   const isSignedOut = !currentUser && !localOnlyMode;
   const isPrivileged = profile?.role === 'owner' || profile?.role === 'admin';
+  // Energy is server truth read through the host-mounted Energy client. The
+  // Cave keeps no balance of its own; without a client the emblem stays a label.
+  const energyAccount = useEnergyAccount({ enabled: Boolean(currentUser) && !isPublicView });
+  const energy = energyAccount.status === 'unavailable' ? undefined
+    : { account: energyAccount, onOpen: () => navigate('/home/energy') };
 
   // The Akashic Switchboard is a destination here; the controller still owns
   // when its registries are fetched, keyed off this flag exactly as in production.
@@ -344,6 +351,12 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
             <p className="text-neutral-400">{view === 'inbox' ? 'Inbox is not connected in this preview.' : view === 'store' ? 'The Store is not available yet.' : 'Code redemption is not connected in this preview.'}</p>
           </UserProfileCaveDestination>
         );
+      case 'energy':
+        return (
+          <UserProfileCaveDestination id="energy" title="Energy" subtitle="Powers generation throughout SEN" icon={<SENNavigationIcon name="energy" size={18} />} onBack={returnHome}>
+            <EnergyPanel account={energyAccount} />
+          </UserProfileCaveDestination>
+        );
       case 'settings':
         return (
           <UserProfileCaveDestination id="settings" title="Settings" onBack={returnHome}>
@@ -431,7 +444,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         );
       default:
         return <UserProfileHome controller={controller} publicProfile={publicProfile} now={effectsNow} onOpenRelics={() => navigate('/relics')}
-          onOpenSettings={() => navigate('/settings')} accountControls={{
+          onOpenSettings={() => navigate('/settings')} energy={energy} accountControls={{
           ...accountControls,
           onOpenInbox: accountControls?.onOpenInbox ?? (() => navigate('/home/inbox')),
           onOpenStore: accountControls?.onOpenStore ?? (() => navigate('/home/store')),

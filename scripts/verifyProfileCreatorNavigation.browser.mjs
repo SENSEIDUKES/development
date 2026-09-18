@@ -26,7 +26,8 @@ async (page) => {
       });
       return { items, pageOverflow: document.documentElement.scrollWidth > innerWidth + 1 };
     });
-    check(geometry.items.map(item => item.text).join('|') === 'Inbox|Worlds|Store|Energy', 'Action order');
+    // The Energy emblem carries its live server balance (⚡ n) after the label.
+    check(geometry.items.map(item => item.text.replace(/⚡.*$/u, '')).join('|') === 'Inbox|Worlds|Store|Energy', 'Action order');
     check(!geometry.pageOverflow && geometry.items.every(item => !item.overflow), `Overflow at ${width}`);
     check(geometry.items.every(item => item.width >= 44 && item.height >= 44), `Touch targets at ${width}`);
     check(geometry.items.every(item => Math.abs(item.width - geometry.items[0].width) < 1), `Balanced row at ${width}`);

@@ -228,4 +228,17 @@ export const workshopEntries: WorkshopEntry[] = [
       lastCompared: '2026-09-08',
     },
   },
+  {
+    id: 'energy',
+    section: 'shared',
+    title: 'Energy',
+    description: 'The shared, server-owned Energy meter behind SEN generation: balance indicator, action-cost indicator, deduction notice, insufficient-Energy state, and the Energy panel the profile opens. Development test prices only; no generation flow spends Energy yet.',
+    category: 'other',
+    version: 'v1.0',
+    source: {
+      repository: 'SENSEIDUKES/development',
+      path: 'src/components/energy/; src/server/energy/',
+      lastCompared: '2026-09-18',
+    },
+  },
 ];

@@ -74,7 +74,7 @@ As of 2026-09-09, the header groups existing previews by their Workshop role:
 - **Home:** Library Shell and User Profile.
 - **Library:** Story Seed only.
 - **SEN:** Reader Chamber, Reader Codex, Character Voice, Card Workshop, Chapter Generation, Harness Generation, and Chapter Generation Manifestation.
-- **Shared:** Celestial Particle Backdrop, Closed-Door Cultivation, and Relics Gallery.
+- **Shared:** Celestial Particle Backdrop, Closed-Door Cultivation, Relics Gallery, and Energy.
 - **Library Components:** the existing live primitive inventory.
 
 Each manifest entry has one required `section`. This is navigation metadata, independent of package ownership, release version, and category. Canonical implementations and direct `?preview=<id>` URLs stay in place. The header wraps on narrow screens and supports Left/Right arrows, Home/End, and Tab into the labelled active panel.

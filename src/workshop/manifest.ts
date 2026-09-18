@@ -229,6 +229,19 @@ export const workshopEntries: WorkshopEntry[] = [
     },
   },
   {
+    id: 'dao-pillar',
+    section: 'home',
+    title: 'Daily Dao Pillar',
+    description: 'The Cultivator Cave’s 30-day reward calendar: one Library-controlled active theme (Beta Test first) over a five-by-six grid of scheduled days, collected / available today / locked / missed states, milestone days, and a server-validated one-claim-per-day collection that deposits Qi through the server ledger. Previewed against an in-process calendar; the User Profile preview runs it against /api/dao-pillar.',
+    category: 'other',
+    version: 'v1.0',
+    source: {
+      repository: 'SENSEIDUKES/development',
+      path: 'src/components/dao-pillar/; src/server/dao-pillar/; src/server/qi/',
+      lastCompared: '2026-09-18',
+    },
+  },
+  {
     id: 'energy',
     section: 'shared',
     title: 'Energy',

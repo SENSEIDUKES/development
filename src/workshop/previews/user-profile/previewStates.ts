@@ -26,9 +26,9 @@ export interface UserProfilePreviewStateOption {
 }
 
 export const USER_PROFILE_PREVIEW_STATES: readonly UserProfilePreviewStateOption[] = [
-  { id: 'claim-failed', label: 'Claim failure', description: 'A claim rejects without changing cultivation; retry remains available.' },
-  { id: 'claim-unresolved', label: 'Uncertain claim', description: 'Collection stays blocked until claim status is checked; no reward is committed in this simulation.' },
-  { id: 'collected-today', label: 'Collected today', description: 'Existing daily claim and streak are preserved.' },
+  { id: 'claim-failed', label: 'Claim failure', description: 'The Dao Pillar server rejects today’s collection; nothing is deposited and the tile stays available to retry.' },
+  { id: 'claim-unresolved', label: 'Uncertain claim', description: 'The collection lands on the server but the answer is lost; the calendar re-reads server truth and shows the day collected once, never twice.' },
+  { id: 'collected-today', label: 'Collected today', description: 'A twelve-day run plus today already collected on the Dao Pillar calendar; the card and calendar show it without awarding again.' },
   { id: 'home-edge-cases', label: 'Home edge cases', description: 'Long display name, maximum rank, an unlocked empty reserve, and an effect expiring after fifteen seconds.' },
   {
     id: 'signed-out',

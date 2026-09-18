@@ -15,6 +15,8 @@ import ReferenceUserProfile from '../../../components/user-profile/reference/Use
 import { UserProfileServicesProvider } from '../../../components/user-profile/shared/userProfileServices';
 import { EnergyClientProvider, createHttpEnergyClient } from '../../../components/energy/shared/energyClient';
 import { developmentEnergyToken } from '../../../server/energy/authentication';
+import { DaoPillarClientProvider, createHttpDaoPillarClient } from '../../../components/dao-pillar/shared/daoPillarClient';
+import { createLocalDaoPillarClient } from '../dao-pillar/localDaoPillarClient';
 import type { AppUser } from '../../../components/user-profile/shared/types';
 import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigation';
 import { createMockUserProfileServices } from './mockUserProfileServices';
@@ -71,6 +73,17 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
     [currentUid],
   );
 
+  // The Daily Dao Pillar reads the real server-owned calendar behind
+  // `/api/dao-pillar` for the same account. The three claim scenarios stand
+  // in an in-process calendar instead so their outcomes are reproducible.
+  const daoPillarClient = useMemo(() => {
+    if (!currentUid) return createHttpDaoPillarClient({ token: () => null });
+    if (previewState === 'claim-failed') return createLocalDaoPillarClient({ uid: currentUid, mode: 'claim-failed', collectedDays: [9, 10, 11, 12] });
+    if (previewState === 'claim-unresolved') return createLocalDaoPillarClient({ uid: currentUid, mode: 'claim-unresolved', collectedDays: [9, 10, 11, 12] });
+    if (previewState === 'collected-today') return createLocalDaoPillarClient({ uid: currentUid, collectedDays: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], collectedToday: true });
+    return createHttpDaoPillarClient({ token: () => developmentEnergyToken(currentUid) });
+  }, [currentUid, previewState]);
+
   const renderPane = (Component: typeof DevelopmentUserProfile, pane: string) => (
     // Remounting on scenario change throws away the mock's in-memory account
     // state, so each scenario starts from its own snapshot rather than
@@ -78,6 +91,7 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
     <div key={`${pane}-${previewState}-${currentUser?.uid ?? 'anonymous'}`} className="pb-16">
       <UserProfileServicesProvider services={services}>
         <EnergyClientProvider client={pane === 'development' ? energyClient : null}>
+        <DaoPillarClientProvider client={pane === 'development' ? daoPillarClient : null}>
         <Component
           currentUser={currentUser}
           stories={scenario.stories}
@@ -92,6 +106,7 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
           onNavigateHome={() => logExcludedAction('Navigate to Library home (production router)')}
           onNavigateLibrary={navigateLibraryPreview}
         />
+        </DaoPillarClientProvider>
         </EnergyClientProvider>
       </UserProfileServicesProvider>
 

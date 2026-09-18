@@ -19,6 +19,10 @@ import { EnergyService } from './src/server/energy/service';
 import { InMemoryEnergyRepository } from './src/server/energy/inMemoryEnergyRepository';
 import { createEnergyPrincipalResolver } from './src/server/energy/authentication';
 import { developmentRepositoryIdentityMode, resolveEnergyConfig } from './src/server/energy/config';
+import { handleDaoPillarHttp } from './src/server/dao-pillar/http';
+import { DaoPillarService } from './src/server/dao-pillar/service';
+import { InMemoryDaoPillarRepository } from './src/server/dao-pillar/inMemoryDaoPillarRepository';
+import { resolveDaoPillarConfig } from './src/server/dao-pillar/config';
 
 const MAX_GENERATION_REQUEST_BYTES = 2 * 1024 * 1024;
 
@@ -93,6 +97,10 @@ const generationApis = (
   const resolveEnergyPrincipal = energyIdentityMode === 'development'
     ? createEnergyPrincipalResolver({ mode: 'development' })
     : null;
+  // One server-owned Dao Pillar calendar for the life of the dev server, on the
+  // same identity mode as Energy. Which day is open, and what it awards, is
+  // decided here; the Workshop only asks to claim "today".
+  const daoPillarService = new DaoPillarService(new InMemoryDaoPillarRepository(), resolveDaoPillarConfig(environment, energyIdentityMode));
   const configure = (server: { middlewares: { use: (handler: (
     request: IncomingMessage,
     response: ServerResponse,
@@ -110,6 +118,24 @@ const generationApis = (
           const result = await handleEnergyHttp(
             { method: request.method, body, headers: request.headers },
             { service: energyService, resolvePrincipal: resolveEnergyPrincipal, onError: error => console.error('[energy]', error) },
+          );
+          writeJson(response, result.status, result.body, result.headers);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Invalid request.';
+          writeJson(response, message.includes('2 MB') ? 413 : 400, { error: message, code: 'invalid_request' });
+        }
+        return;
+      }
+      if (pathname === '/api/dao-pillar') {
+        try {
+          if (!resolveEnergyPrincipal) {
+            writeJson(response, 503, { error: 'Dao Pillar production identity requires a token verifier; none is wired in this Development server.', code: 'unavailable' }, { 'Cache-Control': 'no-store' });
+            return;
+          }
+          const body = request.method?.toUpperCase() === 'POST' ? await readJsonBody(request) : undefined;
+          const result = await handleDaoPillarHttp(
+            { method: request.method, body, headers: request.headers },
+            { service: daoPillarService, resolvePrincipal: resolveEnergyPrincipal, onError: error => console.error('[dao-pillar]', error) },
           );
           writeJson(response, result.status, result.body, result.headers);
         } catch (error) {

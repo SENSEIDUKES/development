@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/buildChapterGenerationApi.mjs && node scripts/buildHarnessGenerationApi.mjs && node scripts/buildStorySeedBlueprintApi.mjs && node scripts/buildCodexVoiceApi.mjs && node scripts/buildReaderTranslationApi.mjs && node scripts/buildEnergyApi.mjs",
+    "build": "tsc -b && vite build && node scripts/buildChapterGenerationApi.mjs && node scripts/buildHarnessGenerationApi.mjs && node scripts/buildStorySeedBlueprintApi.mjs && node scripts/buildCodexVoiceApi.mjs && node scripts/buildReaderTranslationApi.mjs && node scripts/buildEnergyApi.mjs && node scripts/buildDaoPillarApi.mjs",
     "preview": "vite preview",
     "build:package": "npm run build:package:sen && npm run build:package:library",
     "build:package:sen": "vite build --config vite.package.config.ts && tsc -p tsconfig.package.json && node scripts/finalizePackage.mjs sen",
@@ -24,7 +24,8 @@
     "test:energy": "vitest run src/server/energy src/components/energy",
     "test:audio-catalog": "vitest run src/server/audio src/audio/libraryCues.test.ts",
     "test:codex-voice": "vitest run src/server/audio src/components/reader-codex/shared/hooks",
-    "test:inline-audio": "vitest run src/audio src/components/reader-chamber/development/InlineAudio.test.tsx src/components/reader-chamber/development/InlineAudio.styles.test.ts"
+    "test:inline-audio": "vitest run src/audio src/components/reader-chamber/development/InlineAudio.test.tsx src/components/reader-chamber/development/InlineAudio.styles.test.ts",
+    "test:dao-pillar": "vitest run src/server/dao-pillar src/server/qi src/components/dao-pillar"
   },
   "dependencies": {
     "@google/genai": "^2.16.0",

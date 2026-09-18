@@ -30,7 +30,6 @@ import {
 } from './caveEnvironment';
 import { UserProfileCaveDestination, type CaveDestinationId } from './UserProfileCaveDestination';
 import { UserProfileAdminPanel } from './UserProfileAdminPanel';
-import { UserProfileDaoPillarPanel } from './UserProfileDaoPillarPanel';
 import { UserProfileInventoryPanel } from './UserProfileInventoryPanel';
 import { UserProfilePortraitModal } from './UserProfilePortraitModal';
 import { UserProfileSettingsPanel } from './UserProfileSettingsPanel';
@@ -64,6 +63,9 @@ import { WorkspaceShell } from '../../library-shell/development/WorkspaceShell';
 import { SENNavigationIcon } from '../../library-shell/development/SENNavigationIcon';
 import { EnergyPanel } from '../../energy/development/EnergyPanel';
 import { useEnergyAccount } from '../../energy/shared/useEnergyAccount';
+import { DaoPillarView } from '../../dao-pillar/development/DaoPillarView';
+import { useDaoPillarCalendar } from '../../dao-pillar/shared/useDaoPillarCalendar';
+import { qiAmountOf } from '../../dao-pillar/shared/daoPillarContracts';
 
 interface UserProfileProps {
   currentUser: AppUser | null;
@@ -116,12 +118,6 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     confirmLanguageChange,
     revertLanguageChange,
     handleAttuneArtifact,
-    currentStreak,
-    isCracked,
-    daysTo3,
-    daysTo10,
-    handleRepairPillar,
-    handleCheckIn,
     daoData,
     equippedArtifact,
     showPortraitModal,
@@ -231,6 +227,19 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const energyAccount = useEnergyAccount({ enabled: Boolean(currentUser) && !isPublicView });
   const energy = energyAccount.status === 'unavailable' ? undefined
     : { account: energyAccount, onOpen: () => navigate('/home/energy') };
+  // The Daily Dao Pillar is server truth read through the host-mounted
+  // calendar client. A delivered claim is mirrored onto the held profile so
+  // rank and balance move at once; the calendar itself never moves a balance.
+  const applyQiDeposit = controller.applyQiDeposit;
+  const daoPillar = useDaoPillarCalendar({
+    enabled: Boolean(currentUser) && !isPublicView,
+    onRewardDelivered: delivered => {
+      const amount = qiAmountOf(delivered);
+      if (amount <= 0) return;
+      const qi = delivered.find(entry => entry.type === 'qi');
+      applyQiDeposit?.({ amount, source: 'dao-pillar', balanceAfter: qi?.balanceAfter, transactionId: qi?.transactionId });
+    },
+  });
 
   // The Akashic Switchboard is a destination here; the controller still owns
   // when its registries are fetched, keyed off this flag exactly as in production.
@@ -396,17 +405,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         );
       case 'dao-pillar':
         return (
-          <UserProfileCaveDestination id="dao-pillar" title="Dao Pillar" subtitle="Daily refinement and the streak it builds" icon={<Flame size={18} />} onBack={returnHome}>
-            <UserProfileDaoPillarPanel
-              dailyClaim={controller.dailyClaim}
-              profile={profile}
-              currentStreak={currentStreak}
-              isCracked={isCracked}
-              daysTo3={daysTo3}
-              daysTo10={daysTo10}
-              handleRepairPillar={handleRepairPillar}
-              handleCheckIn={handleCheckIn}
-            />
+          <UserProfileCaveDestination id="dao-pillar" title="Dao Pillar" subtitle="SEN Celestial Library" icon={<Flame size={18} />} onBack={returnHome}>
+            <DaoPillarView calendar={daoPillar} />
           </UserProfileCaveDestination>
         );
       case 'status-effects':
@@ -444,7 +444,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         );
       default:
         return <UserProfileHome controller={controller} publicProfile={publicProfile} now={effectsNow} onOpenRelics={() => navigate('/relics')}
-          onOpenSettings={() => navigate('/settings')} energy={energy} accountControls={{
+          onOpenSettings={() => navigate('/settings')} energy={energy} daoPillar={daoPillar} onOpenDaoPillar={() => navigate('/home/dao-pillar')} accountControls={{
           ...accountControls,
           onOpenInbox: accountControls?.onOpenInbox ?? (() => navigate('/home/inbox')),
           onOpenStore: accountControls?.onOpenStore ?? (() => navigate('/home/store')),

@@ -17,6 +17,8 @@ import { previewPublicCreators } from '../../../workshop/previews/user-profile/p
 import type { AppUser } from '../shared/types';
 import { EnergyClientProvider, type EnergyClient } from '../../energy/shared/energyClient';
 import { createLocalEnergyClient } from '../../../workshop/previews/energy/localEnergyClient';
+import { DaoPillarClientProvider, type DaoPillarClient } from '../../dao-pillar/shared/daoPillarClient';
+import { createLocalDaoPillarClient, type LocalDaoPillarClientOptions } from '../../../workshop/previews/dao-pillar/localDaoPillarClient';
 import { createMockUserProfileServices } from '../../../workshop/previews/user-profile/mockUserProfileServices';
 import { getPreviewScenario } from '../../../workshop/previews/user-profile/previewData';
 import type { UserProfilePreviewState } from '../../../workshop/previews/user-profile/previewStates';
@@ -100,7 +102,11 @@ interface RenderOptions {
   Component?: typeof UserProfile;
   adapter?: Partial<MockUserProfileServicesOptions>;
   energyClient?: EnergyClient | null;
+  /** The Daily Dao Pillar calendar; defaults to a twelve-day run with today open. */
+  daoPillar?: Partial<LocalDaoPillarClientOptions> | null;
 }
+
+const TWELVE_DAYS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
 describe('Home portrait access and generation progress', () => {
   it.each(['new-cultivator', 'developed-cultivator'] as const)('opens the existing builder directly from %s Home', async state => {
@@ -137,8 +143,16 @@ describe('Home portrait access and generation progress', () => {
   });
 });
 
-async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), onNavigateHome = vi.fn(), Component = UserProfile, adapter = {}, accountControls, publicCreators, energyClient = null }: RenderOptions = {}) {
+async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), onNavigateHome = vi.fn(), Component = UserProfile, adapter = {}, accountControls, publicCreators, energyClient = null, daoPillar = {} }: RenderOptions = {}) {
   const scenario = getPreviewScenario(state);
+  // The calendar is server truth: the developed cultivator's twelve-day streak
+  // is twelve collected scheduled days, and a new cultivator has none.
+  const daoPillarClient: (DaoPillarClient & { repository: { getQiBalance(uid: string): Promise<number> } }) | null = daoPillar === null ? null
+    : createLocalDaoPillarClient({
+        uid: scenario.currentUser?.uid ?? 'workshop-cultivator',
+        collectedDays: state === 'new-cultivator' ? [] : TWELVE_DAYS,
+        ...daoPillar,
+      });
   const logExcludedAction = vi.fn();
   const onSignIn = vi.fn<(account: AppUser) => void>();
   const services = createMockUserProfileServices({ state, logExcludedAction, onSignIn, ...adapter });
@@ -149,6 +163,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
     root.render(
       <UserProfileServicesProvider services={services}>
         <EnergyClientProvider client={energyClient}>
+        <DaoPillarClientProvider client={daoPillarClient}>
         <Component
           currentUser={scenario.currentUser}
           stories={scenario.stories}
@@ -158,6 +173,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
           onNavigateHome={onNavigateHome}
           onNavigateLibrary={vi.fn()}
         />
+        </DaoPillarClientProvider>
         </EnergyClientProvider>
       </UserProfileServicesProvider>,
     );
@@ -166,7 +182,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
   await act(async () => {
     await vi.advanceTimersByTimeAsync(600);
   });
-  return { logExcludedAction, onSignIn, services, controller: () => controller };
+  return { logExcludedAction, onSignIn, services, controller: () => controller, daoPillarClient };
 }
 
 const text = () => document.body.textContent ?? '';
@@ -198,6 +214,10 @@ const press = async (element: Element, key: string) => {
 };
 
 const open = (id: string) => id === 'stories' || id === 'relics' ? byText<HTMLElement>('nav button', id === 'stories' ? 'Stories' : 'Relics') : byText<HTMLElement>(`[data-cave-card="${id}"]`, '');
+const daoTile = (day: number) => container.querySelector<HTMLButtonElement>(`.dao-tile[data-day="${day}"]`)!;
+const daoTileStates = () => Array.from(container.querySelectorAll<HTMLButtonElement>('.dao-tile')).map(tile => tile.dataset.state);
+/** Lets the calendar's in-process claim and its re-read settle. */
+const settle = async () => { await act(async () => { await vi.advanceTimersByTimeAsync(50); }); };
 const openSearch = async () => {
   if (!document.querySelector('.workspace-search-results')) {
     await click(document.querySelector('[aria-label="Search"]')!);
@@ -603,26 +623,34 @@ describe('Cultivator Cave destinations', () => {
     expect(byText('[role="tab"]', 'History').textContent).toContain('(6)');
   });
 
-  it('opens the Dao Pillar and refines the daily streak', async () => {
-    await renderCave();
-    await navigateTo('/home/dao-pillar');
-    expect(container.querySelector('#cave-dao-pillar-streak')?.textContent).toBe('12 Days');
-    await click(byText('button', 'Refine Daily Dao'));
-    await act(async () => { await vi.advanceTimersByTimeAsync(650); });
-    expect(container.querySelector('#cave-dao-pillar-streak')?.textContent).toBe('13 Days');
-    expect(container.querySelector('[role="status"]')?.textContent).toContain('Refinement complete today');
+  it('opens the Dao Pillar calendar from the card and collects today on the open tile', async () => {
+    const result = await renderCave();
+    expect(open('dao-pillar').textContent).toContain('12 Day Streak');
+    expect(open('dao-pillar').textContent).toContain('Day 13 · 100 Qi ready to collect');
+    await click(open('dao-pillar'));
+    expect(new URLSearchParams(location.search).get('cave')).toBe('/home/dao-pillar');
+    expect(container.querySelector('[data-cave-destination="dao-pillar"] h2')?.textContent).toBe('Dao Pillar');
+    expect(container.querySelector('.dao-banner-name')?.textContent).toBe('Beta Test');
+    expect(daoTileStates()).toEqual([...Array(12).fill('collected'), 'available', ...Array(17).fill('locked')]);
+    await click(daoTile(13));
+    await settle();
+    expect(daoTile(13).dataset.state).toBe('collected');
+    expect(container.querySelector('[data-dao-live]')?.textContent).toBe('Day 13 collected: +100 Qi.');
+    expect(container.querySelector('.dao-streak')?.textContent).toContain('13 day streak');
     await click(container.querySelector('[aria-label="Return to cave"]')!);
     expect(open('dao-pillar').textContent).toContain('13 Day Streak');
-    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,485 Qi of 25,000');
+    expect(open('dao-pillar').textContent).toContain('Collected today · +100 Qi');
+    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,580 Qi of 25,000');
+    expect(result.controller().profile?.dao_xp).toBe(13580);
+    expect(result.controller().profile?.heavenly_qi).toBe(13580);
   });
 
-  it('offers repair when the pillar is cracked', async () => {
-    await renderCave({ state: 'owner-admin' });
-    await navigateTo('/home/dao-pillar');
-    expect(container.querySelector('[data-cracked="true"]')).not.toBeNull();
-    await click(byText('button', 'Repair Pillar (50 Qi)'));
-    expect(container.querySelector('[data-cracked="true"]')).toBeNull();
-    expect(byText('button', 'Refine Daily Dao')).toBeTruthy();
+  it('shows a fresh calendar to a new cultivator', async () => {
+    await renderCave({ state: 'new-cultivator' });
+    expect(open('dao-pillar').textContent).toContain('0 Day Streak');
+    await click(open('dao-pillar'));
+    expect(daoTileStates().filter(state => state === 'collected')).toHaveLength(0);
+    expect(daoTile(13).dataset.state).toBe('available');
   });
 
   it('lists active status effects and shows an empty state for a new cultivator', async () => {
@@ -793,10 +821,7 @@ describe('Cultivator Cave settings', () => {
     expect(auraTextContrastRatio('#9ca3af')).toBeGreaterThanOrEqual(MIN_AURA_TEXT_CONTRAST);
     expect(auraTextContrastRatio('#ff3333')).toBeGreaterThanOrEqual(MIN_AURA_TEXT_CONTRAST);
 
-    await renderCave({ adapter: { profileOverride: { daoPillarCracked: true } } });
-    await navigateTo('/home/dao-pillar');
-    expect(document.body.querySelector('#cave-dao-pillar-streak')?.className).not.toContain('/60');
-    await navigateTo('/home');
+    await renderCave();
     await click(byText('[data-cave-account-actions] button', 'Settings'));
     await click(byText('[data-slot="disclosure-trigger"]', 'Harmony & Sync'));
     expect(document.body.querySelector('[aria-label^="Harmony:"] [aria-live="polite"]')?.className).not.toContain('opacity-');
@@ -1297,56 +1322,74 @@ describe('Home dynamic data and claim contract', () => {
     const now = Date.now();
     expect(effectStatement({ ...effect, expiresAt: new Date(now + 7 * 86400000).toISOString(), effectDef: { ...effect.effectDef, qiMultiplier: undefined, sectQiMultiplier: 1.1 } }, now)).toBe('+10% Sect Qi · 7 days');
   });
-  it('claims once across repeated taps and route changes, with rank progress updated', async () => {
+  it('claims once across rapid taps and route changes, with rank progress updated', async () => {
     const result = await renderCave();
     await click(open('dao-pillar'));
-    expect((open('dao-pillar') as HTMLButtonElement).disabled).toBe(true);
-    await navigateTo('/home/dao-pillar');
-    let repeat;
-    await act(async () => { repeat = await result.controller().dailyClaim!.claim(); });
-    expect(repeat).toMatchObject({ outcome: 'blocked' });
-    await act(async () => { await vi.advanceTimersByTimeAsync(650); });
+    await act(async () => { daoTile(13).click(); daoTile(13).click(); daoTile(13).click(); });
+    await settle();
+    expect(daoTileStates().filter(state => state === 'collected')).toHaveLength(13);
     await navigateTo('/home');
-    expect(text()).toContain('Collected Today');
-    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,485 Qi of 25,000');
-    const pending = result.controller().dailyClaim!.claim();
-    await act(async () => { await vi.advanceTimersByTimeAsync(650); await pending; });
-    expect(result.controller().dailyClaim?.result?.outcome).toBe('already-collected');
-    expect(result.controller().profile?.dao_xp).toBe(13485);
+    expect(open('dao-pillar').textContent).toContain('Collected today · +100 Qi');
+    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,580 Qi of 25,000');
+    await navigateTo('/home/dao-pillar');
+    expect(daoTile(13).dataset.state).toBe('collected');
+    expect(container.querySelectorAll('.dao-tile[data-state="available"]')).toHaveLength(0);
+    expect(result.controller().profile?.dao_xp).toBe(13580);
+    expect(await result.daoPillarClient!.repository.getQiBalance('workshop-cultivator')).toBe(1700);
   });
-  it.each(['failed', 'unresolved'] as const)('does not award Qi for a %s claim', async claimMode => {
-    const result = await renderCave({ adapter: { claimMode } });
+  it('does not mirror Qi for a refused claim and leaves the tile open to retry', async () => {
+    const result = await renderCave({ daoPillar: { mode: 'claim-failed' } });
     await click(open('dao-pillar'));
-    await act(async () => { await vi.advanceTimersByTimeAsync(650); });
+    await click(daoTile(13));
+    await settle();
+    expect(daoTile(13).dataset.state).toBe('available');
+    expect(container.querySelector('[data-dao-live]')?.textContent).toContain('unavailable right now');
     expect(result.controller().profile?.dao_xp).toBe(13480);
-    expect(result.controller().dailyClaim?.result?.outcome).toBe(claimMode);
-    expect((open('dao-pillar') as HTMLButtonElement).disabled).toBe(claimMode === 'unresolved');
+    await navigateTo('/home');
+    expect(open('dao-pillar').textContent).toContain('Day 13 · 100 Qi ready to collect');
+  });
+  it('re-reads server truth when a claim answer is lost, never awarding twice', async () => {
+    const result = await renderCave({ daoPillar: { mode: 'claim-unresolved' } });
+    await click(open('dao-pillar'));
+    await click(daoTile(13));
+    await settle();
+    expect(daoTile(13).dataset.state).toBe('collected');
+    expect(daoTileStates().filter(state => state === 'collected')).toHaveLength(13);
+    // The server deposited once; this surface saw no receipt, so the profile waits for its next refresh.
+    expect(await result.daoPillarClient!.repository.getQiBalance('workshop-cultivator')).toBe(1700);
+    expect(result.controller().profile?.dao_xp).toBe(13480);
+    await navigateTo('/home');
+    expect(open('dao-pillar').textContent).toContain('Collected today · +100 Qi');
   });
   it('preserves collected state without awarding again', async () => {
-    await renderCave({ adapter: { profileOverride: { lastReadDate: new Date().toISOString().split('T')[0] } } });
-    expect(open('dao-pillar').textContent).toContain('Collected Today');
-    expect((open('dao-pillar') as HTMLButtonElement).disabled).toBe(true);
-  });
-  it.each([[2, 25], [9, 105], [0, 5]])('preserves streak %s milestone award of %s', async (streak, reward) => {
-    const result = await renderCave({ adapter: { profileOverride: { daoPillarStreak: streak, lastReadDate: new Date(Date.now() - 86400000).toISOString().split('T')[0] } } });
+    const result = await renderCave({ daoPillar: { collectedToday: true } });
+    expect(open('dao-pillar').textContent).toContain('Collected today · +100 Qi');
+    expect(open('dao-pillar').textContent).toContain('13 Day Streak');
     await click(open('dao-pillar'));
-    await act(async () => { await vi.advanceTimersByTimeAsync(650); });
-    expect(result.controller().profile?.dao_xp).toBe(13480 + reward);
-    expect(result.controller().currentStreak).toBe(streak + 1);
+    expect(container.querySelectorAll('.dao-tile[data-state="available"]')).toHaveLength(0);
+    await click(daoTile(13));
+    expect(document.body.querySelector('[role="dialog"]')?.textContent).toContain('Day 13 collected');
+    expect(document.body.querySelector('[role="dialog"] time')?.getAttribute('datetime')).toBeTruthy();
+    expect(result.controller().profile?.dao_xp).toBe(13480);
   });
-  it.each([10, 100])('repairs inline only with sufficient balance %s', async heavenly_qi => {
-    const result = await renderCave({ adapter: { profileOverride: { daoPillarCracked: true, heavenly_qi } } });
-    expect((open('dao-pillar') as HTMLButtonElement).disabled).toBe(true);
-    await click(byText('button', 'Repair Pillar · 50 Qi'));
-    expect(result.controller().isCracked).toBe(heavenly_qi < 50);
-    expect(result.controller().profile?.heavenly_qi).toBe(heavenly_qi < 50 ? heavenly_qi : heavenly_qi - 50);
-    expect(window.location.search).not.toContain('cave=');
+  it('awards the milestone reward on a milestone day', async () => {
+    const result = await renderCave({ daoPillar: { todayIsDay: 14, collectedDays: [...TWELVE_DAYS, 13] } });
+    expect(open('dao-pillar').textContent).toContain('Day 14 · 500 Qi ready to collect');
+    await click(open('dao-pillar'));
+    expect(daoTile(14).dataset.milestone).toBe('true');
+    await click(daoTile(14));
+    await settle();
+    expect(container.querySelector('[data-dao-live]')?.textContent).toBe('Day 14 collected: +500 Qi.');
+    expect(result.controller().profile?.dao_xp).toBe(13980);
+    await navigateTo('/home');
+    expect(open('dao-pillar').textContent).toContain('14 Day Streak');
+    expect(open('dao-pillar').textContent).toContain('Collected today · +500 Qi');
   });
-  it('announces a repair failure and leaves the Pillar cracked', async () => {
-    const result = await renderCave({ state: 'owner-admin', adapter: { repairMode: 'failed' } });
-    await click(byText('button', 'Repair Pillar · 50 Qi'));
-    expect(text()).toContain('Repair failed. Please try again.');
-    expect(result.controller().isCracked).toBe(true);
+  it('shows the card as not connected when no calendar client is mounted', async () => {
+    await renderCave({ daoPillar: null });
+    expect(open('dao-pillar').textContent).toContain('Dao Pillar not connected');
+    await click(open('dao-pillar'));
+    expect(text()).toContain('The Dao Pillar is not connected here');
   });
 });
 
@@ -1464,17 +1507,16 @@ describe('Profile timed effects', () => {
 
 
 describe('Claim reconciliation', () => {
-  it('keeps uncertain claims blocked across navigation until the adapter reconciles', async () => {
-    const result = await renderCave({ adapter: { claimMode: 'unresolved' } });
+  it('keeps a lost claim answer honest across navigation until the calendar is re-read', async () => {
+    const result = await renderCave({ daoPillar: { mode: 'claim-unresolved' } });
     await click(open('dao-pillar'));
-    await act(async () => { await vi.advanceTimersByTimeAsync(650); });
+    await click(daoTile(13));
+    await settle();
     await navigateTo('/stories');
-    await navigateTo('/home');
-    expect((open('dao-pillar') as HTMLButtonElement).disabled).toBe(true);
-    await click(byText('button', 'Check collection status'));
-    expect(result.controller().dailyClaim?.result?.outcome).toBe('failed');
-    expect((open('dao-pillar') as HTMLButtonElement).disabled).toBe(false);
-    expect(result.controller().profile?.dao_xp).toBe(13480);
+    await navigateTo('/home/dao-pillar');
+    expect(daoTileStates().filter(state => state === 'collected')).toHaveLength(13);
+    expect(container.querySelectorAll('.dao-tile[data-state="available"]')).toHaveLength(0);
+    expect(await result.daoPillarClient!.repository.getQiBalance('workshop-cultivator')).toBe(1700);
   });
   it('protects the existing repair callback against same-turn duplicate charges', async () => {
     const result = await renderCave({ state: 'owner-admin' });
@@ -1486,25 +1528,27 @@ describe('Claim reconciliation', () => {
 
 
 describe('Claim and existing profile edits', () => {
-  it('preserves the award and daily key when an overlapping profile save finishes', async () => {
+  it('preserves the mirrored award when an overlapping profile save finishes', async () => {
     const result = await renderCave();
     await click(open('dao-pillar'));
     await act(async () => { result.controller().setFormData(previous => ({ ...previous, displayName: 'Updated Display Name' })); });
     let save: Promise<void> | void;
     await act(async () => { save = result.controller().handleSave(); });
+    await click(daoTile(13));
+    await settle();
     await act(async () => { await vi.advanceTimersByTimeAsync(650); await save; });
     expect(result.controller().profile?.displayName).toBe('Updated Display Name');
-    expect(result.controller().profile?.dao_xp).toBe(13485);
-    expect(result.controller().profile?.lastReadDate).toBe(new Date().toISOString().split('T')[0]);
-    expect((open('dao-pillar') as HTMLButtonElement).disabled).toBe(true);
+    expect(result.controller().profile?.dao_xp).toBe(13580);
   });
   it('updates the rank and bar together when collection crosses a threshold', async () => {
     await renderCave({ adapter: { profileOverride: { dao_xp: 99, qi: 99 } } });
     expect(container.querySelector('[data-cave-rank], [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(99).name);
     await click(open('dao-pillar'));
-    await act(async () => { await vi.advanceTimersByTimeAsync(650); });
-    expect(container.querySelector('[data-cave-rank], [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(104).name);
-    expect((container.querySelector('[data-cave-progress]') as HTMLElement).style.getPropertyValue('--cave-rank-background')).toBe(rankBackground(getRankForQi(104).visual));
+    await click(daoTile(13));
+    await settle();
+    await navigateTo('/home');
+    expect(container.querySelector('[data-cave-rank], [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(199).name);
+    expect((container.querySelector('[data-cave-progress]') as HTMLElement).style.getPropertyValue('--cave-rank-background')).toBe(rankBackground(getRankForQi(199).visual));
   });
 });
 

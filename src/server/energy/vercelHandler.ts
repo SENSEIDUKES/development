@@ -19,11 +19,16 @@ interface ResponseLike {
 }
 
 /**
- * The deployed Development ledger. This repository has no database connection
- * of its own, so one in-memory ledger lives for the life of the serverless
- * instance: balances survive between requests on the same instance and start
- * over when Vercel recycles it. Light-Novels swaps in `PostgresEnergyRepository`
- * over its Data Connect Postgres instance and passes `production` here.
+ * The deployed Development ledger. DEV has no database connection of its own,
+ * so it runs the in-memory implementation for previewing: one ledger lives for
+ * the life of the serverless instance, and balances reset when Vercel recycles
+ * it.
+ *
+ * A durable deployment swaps in an `EnergyRepository` backed by a real store —
+ * `PostgresEnergyRepository` is the current reference implementation — and
+ * passes `production` with the host's own token verifier. Which host that is,
+ * and which adapter it uses, is decided during production-repository
+ * reconstruction; nothing here is wired to a production database.
  */
 const identityMode = developmentRepositoryIdentityMode(process.env);
 const service = new EnergyService(new InMemoryEnergyRepository(), resolveEnergyConfig(process.env, identityMode));

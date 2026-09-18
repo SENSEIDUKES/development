@@ -14,6 +14,7 @@ export * from './types';
 export {
   ENERGY_ACTION_IDS,
   ENERGY_PRICE_CATALOG,
+  energyActionLabel,
   EnergyPriceUnavailableError,
   getEnergyPriceEntry,
   isEnergyActionId,

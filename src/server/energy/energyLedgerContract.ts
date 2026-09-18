@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { ENERGY_PRICE_CATALOG, resolveEnergyPrice } from '../../components/energy/shared/energyContracts';
+import {
+  ENERGY_PRICE_CATALOG,
+  resolveEnergyPrice,
+  type EnergyActionId,
+} from '../../components/energy/shared/energyContracts';
 import type { ResolvedEnergyConfig } from './config';
 import { EnergyValidationError, InsufficientEnergyError, type EnergyRepository } from './repository';
 import { EnergyAuthorizationError, EnergyService } from './service';
@@ -32,6 +36,27 @@ export const replayLedger = (transactions: EnergyTransaction[]) => {
     expect({ balance, held }).toEqual({ balance: transaction.balanceAfter, held: transaction.heldAfter });
   }
   return { balance, held };
+};
+
+/**
+ * Rewrites one catalog price for the duration of `body`, the way an
+ * experimental reprice or an action being taken off the price list would, then
+ * restores it. Energy prices are deliberately unstable, so the ledger has to
+ * survive this happening between a reservation and its settlement.
+ */
+export const withCatalogPrice = async <T>(
+  actionId: EnergyActionId,
+  price: number | null,
+  body: () => Promise<T>,
+): Promise<T> => {
+  const entry = ENERGY_PRICE_CATALOG.find(candidate => candidate.actionId === actionId) as { price: number | null };
+  const original = entry.price;
+  entry.price = price;
+  try {
+    return await body();
+  } finally {
+    entry.price = original;
+  }
 };
 
 /**
@@ -191,6 +216,64 @@ export function describeEnergyLedgerContract(
       expect(snapshot.activity).toHaveLength(1);
       expect(await service.findReservation(principal, 'img')).toBeNull();
       await expect(service.settle(principal, { reservationId: reservation.id })).rejects.toThrow(/not found/);
+    });
+
+    it('settles a reservation whose action was unpriced after it was taken', async () => {
+      const { service, principal } = await setup();
+      const { reservation } = await service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'img-1' });
+      const settled = await withCatalogPrice('image.generate', null, async () => {
+        // The action can no longer be reserved at all, yet the hold must clear.
+        await expect(service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'img-2' })).rejects.toThrow(/no price yet/);
+        return service.settle(principal, { reservationId: reservation.id });
+      });
+      expect(settled.transaction).toMatchObject({ kind: 'charge', amount: 3, description: 'Image generated' });
+      expect(await service.getBalance(principal)).toEqual({ balance: 497, held: 0, available: 497 });
+    });
+
+    it('releases a reservation whose action was unpriced after it was taken', async () => {
+      const { service, principal } = await setup();
+      const { reservation } = await service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'img-1' });
+      const released = await withCatalogPrice('image.generate', null, () =>
+        service.release(principal, { reservationId: reservation.id, reason: 'provider failure' }));
+      expect(released.transaction).toMatchObject({ kind: 'release', amount: 3, description: 'Image not generated — Energy returned' });
+      expect(await service.getBalance(principal)).toEqual({ balance: 500, held: 0, available: 500 });
+    });
+
+    it('charges the amount reserved at the time, not the catalog price at settlement', async () => {
+      const { service, principal } = await setup();
+      const cheap = await service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'before' });
+      expect(cheap.reservation.amount).toBe(3);
+      expect(cheap.reservation.metadata).toMatchObject({ pricing: { unitPrice: 3, quantity: 1 } });
+      await withCatalogPrice('image.generate', 50, async () => {
+        // A reservation taken after the change pays the new price...
+        const dear = await service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'after' });
+        expect(dear.reservation.amount).toBe(50);
+        // ...while the earlier one still settles at the price it was taken at.
+        const settled = await service.settle(principal, { reservationId: cheap.reservation.id });
+        expect(settled.transaction.amount).toBe(3);
+        const returned = await service.release(principal, { reservationId: dear.reservation.id });
+        expect(returned.transaction.amount).toBe(50);
+      });
+      expect(await service.getBalance(principal)).toEqual({ balance: 497, held: 0, available: 497 });
+    });
+
+    it('still refuses to charge or release twice once the price has changed', async () => {
+      const { service, principal } = await setup();
+      const charged = await service.reserve(principal, { actionId: 'chapter.generate', idempotencyKey: 'ch-1' });
+      const returned = await service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'img-1' });
+      await withCatalogPrice('chapter.generate', null, () => withCatalogPrice('image.generate', 99, async () => {
+        await service.settle(principal, { reservationId: charged.reservation.id });
+        expect((await service.settle(principal, { reservationId: charged.reservation.id })).replayed).toBe(true);
+        await service.release(principal, { reservationId: returned.reservation.id });
+        expect((await service.release(principal, { reservationId: returned.reservation.id })).replayed).toBe(true);
+        await expect(service.release(principal, { reservationId: charged.reservation.id })).rejects.toThrow(/already charged/);
+        await expect(service.settle(principal, { reservationId: returned.reservation.id })).rejects.toThrow(/already released/);
+      }));
+      const history = await service.listTransactions(principal);
+      expect(history.filter(entry => entry.kind === 'charge')).toHaveLength(1);
+      expect(history.filter(entry => entry.kind === 'release')).toHaveLength(1);
+      expect(await service.getBalance(principal)).toEqual({ balance: 499, held: 0, available: 499 });
+      expect(replayLedger(history)).toEqual({ balance: 499, held: 0 });
     });
 
     it('scopes reservations to their owner', async () => {

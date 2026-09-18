@@ -1,6 +1,7 @@
 import {
   ENERGY_ACTIVITY_LIMIT,
   ENERGY_PRICE_CATALOG,
+  energyActionLabel,
   isEnergyActionId,
   resolveEnergyPrice,
   type EnergyAccountSnapshot,
@@ -204,6 +205,11 @@ export class EnergyService {
   /**
    * Step 1 + 2 of the generation boundary: resolve the configured price and
    * hold it. Throws `InsufficientEnergyError` before any provider work starts.
+   *
+   * **This is the only moment a price is read.** The amount it resolves is
+   * written onto the reservation and stays authoritative: settling or
+   * releasing later never consults the catalog again, so repricing or
+   * unpricing an action cannot change, or strand, Energy already held.
    */
   async reserve(principal: EnergyPrincipal, input: EnergyReserveInput): Promise<EnergyReservationResult> {
     const quote = this.getPrice(input.actionId);
@@ -217,17 +223,24 @@ export class EnergyService {
       amount: quote.price * quantity,
       idempotencyKey: input.idempotencyKey,
       description: `${quote.label} reserved`,
-      metadata: input.metadata,
+      // The price that actually applied, kept so the ledger line stays
+      // readable after the catalog moves on.
+      metadata: { ...(input.metadata ?? {}), pricing: { unitPrice: quote.price, quantity } },
     });
   }
 
-  /** Step 4: charge the held Energy once the generated result is stored. Idempotent per reservation. */
+  /**
+   * Step 4: charge the held Energy once the generated result is stored.
+   * Idempotent per reservation. Charges the reservation's stored amount and
+   * only *names* the action, so an action that has since been repriced or
+   * unpriced still settles.
+   */
   async settle(principal: EnergyPrincipal, input: EnergySettleInput): Promise<EnergyReservationResult> {
     const reservation = await this.ownedReservation(principal, input.reservationId);
     return this.repository.settleReservation({
       uid: principal.uid,
       reservationId: reservation.id,
-      description: `${this.getPrice(reservation.actionId).label} generated`,
+      description: `${energyActionLabel(reservation.actionId)} generated`,
       metadata: {
         ...(input.metadata ?? {}),
         ...(input.providerCost ? { providerCost: { ...input.providerCost } } : {}),
@@ -235,13 +248,17 @@ export class EnergyService {
     });
   }
 
-  /** Step 5: give the hold back after any failure. Idempotent per reservation. */
+  /**
+   * Step 5: give the hold back after any failure. Idempotent per reservation.
+   * Returns the reservation's stored amount, and likewise never re-prices, so
+   * a failure cannot strand Energy behind a catalog edit.
+   */
   async release(principal: EnergyPrincipal, input: EnergyReleaseInput): Promise<EnergyReservationResult> {
     const reservation = await this.ownedReservation(principal, input.reservationId);
     return this.repository.releaseReservation({
       uid: principal.uid,
       reservationId: reservation.id,
-      description: `${this.getPrice(reservation.actionId).label} not generated — Energy returned`,
+      description: `${energyActionLabel(reservation.actionId)} not generated — Energy returned`,
       metadata: { ...(input.metadata ?? {}), ...(input.reason ? { reason: input.reason } : {}) },
     });
   }

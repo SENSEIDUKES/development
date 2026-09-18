@@ -53,7 +53,15 @@ plain label and no request is made. The public view never mounts it. The former
 
 ## Transfer
 
-Copy `src/components/energy/` whole, mount `EnergyClientProvider` with
-`createHttpEnergyClient({ token: () => currentUser.getIdToken() })` at the app shell, and serve
-`/api/energy` from `src/server/energy` over the host's Postgres (see the server README). The
-Workshop-only `src/workshop/previews/energy/` stays behind.
+These surfaces are portable: copy `src/components/energy/` whole, mount `EnergyClientProvider`
+with a client built from the host's own token (`createHttpEnergyClient({ token: … })`) at the app
+shell, and serve `/api/energy` from `src/server/energy`. The Workshop-only
+`src/workshop/previews/energy/` stays behind.
+
+What the host serves that route over is **not settled**. `EnergyRepository` is the storage
+boundary; `PostgresEnergyRepository` and the SQL migration are the current durable reference
+implementation; DEV itself runs the in-memory implementation for previewing, so balances reset
+when the process or Vercel instance changes. The durable adapter and the host repository will be
+chosen during production-repository reconstruction — see
+[the server README](../../server/energy/README.md). Nothing here has been wired to or verified
+against a production deployment.

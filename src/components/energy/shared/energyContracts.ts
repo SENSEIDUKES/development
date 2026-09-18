@@ -79,6 +79,20 @@ export const resolveEnergyPrice = (actionId: EnergyActionId): EnergyPriceQuote =
   return { actionId, label: entry.label, price: entry.price };
 };
 
+/**
+ * The permanent user-facing name of an action, resolved independently of its
+ * current price.
+ *
+ * Prices are deliberately experimental: an action can be repriced or unpriced
+ * at any time, and a reservation taken while it was priced must still be able
+ * to settle or release afterwards. Anything that only needs to *name* an
+ * action — a ledger description, a receipt — uses this instead of
+ * `resolveEnergyPrice`, so a catalog edit can never strand held Energy. Falls
+ * back to the action id if the catalog no longer carries a row for it.
+ */
+export const energyActionLabel = (actionId: EnergyActionId): string =>
+  ENERGY_PRICE_CATALOG.find(candidate => candidate.actionId === actionId)?.label ?? actionId;
+
 /** Catalog rows that carry a price, in catalog order — what a UI lists as examples. */
 export const pricedEnergyActions = (): EnergyPriceQuote[] => ENERGY_PRICE_CATALOG
   .filter((entry): entry is EnergyPriceEntry & { price: number } => entry.price !== null)

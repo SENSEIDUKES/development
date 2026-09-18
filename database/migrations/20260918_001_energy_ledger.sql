@@ -1,5 +1,10 @@
 -- Energy ledger foundation.
--- Prerequisite: the existing Data Connect/Postgres `user_account` table.
+--
+-- The current durable reference implementation of the `EnergyRepository`
+-- boundary. It assumes the host supplies a `user_account` table keyed by uid.
+-- Which repository and which store finally run this is decided during
+-- production-repository reconstruction; it is not applied to any production
+-- database by this change.
 --
 -- Energy is the meter every SEN generation feature will draw from. The
 -- database owns the truth: balances only move through the ledger functions

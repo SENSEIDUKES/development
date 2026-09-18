@@ -34,9 +34,10 @@ const cloneJson = <T>(value: T): T => structuredClone(value);
 const keyOf = (uid: string, idempotencyKey: string) => `${uid}\u0000${idempotencyKey}`;
 
 /**
- * Deterministic reference adapter. It is the ledger behind the Workshop dev
- * server and the unit tests; it is not durable across processes. The Postgres
- * migration is the durable implementation of the same rules.
+ * Deterministic implementation used for previewing and tests. It is the ledger
+ * behind DEV's own server, so balances reset when the process changes; it is
+ * not durable storage. The Postgres migration is the current durable reference
+ * implementation of the same rules.
  */
 export class InMemoryEnergyRepository implements EnergyRepository {
   private readonly accounts = new Map<string, EnergyAccountRecord>();
@@ -261,4 +262,3 @@ export class InMemoryEnergyRepository implements EnergyRepository {
     }
   }
 }
-

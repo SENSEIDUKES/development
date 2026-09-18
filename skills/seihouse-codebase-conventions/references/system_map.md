@@ -3,21 +3,21 @@
 This map describes product responsibilities. Repository names and folder locations may
 change. Always verify the current implementation.
 
-## Naming Authority
+## Authority and package ownership
 
-For shared production concepts, the main `Light-Novels` repository is the naming source
-of truth. The `development` repository mirrors approved production names where the same
-component exists, while retaining Workshop-specific `reference/`, `development/`,
-preview, simulator, and manifest structure.
+Read the [skill entrypoint](../SKILL.md) for source authority, compatibility, and
+package boundaries, and [current package documentation](../../../src/package/README.md)
+for the maintained implementation contract. Production governs existing integrated
+contracts; DEV governs approved reconstruction until transfer. Verify every path and
+export independently. Report conflicts with this map and resolve them deliberately.
 
-Current developer-facing terminology includes `ReaderCodex`, `CreationModal`,
-`StorySteeringModal`, `ClosedDoorCultivationModal`, `ParticleEffect`,
-`ManifestationImage`, and `profilePicture`.
+## SEN and Library
 
-Developer-facing names are not the same as persisted compatibility identifiers. Values
-such as `CELESTIAL_PORTRAIT`, legacy API route strings, navigation-state values, and
-schema-level historical type names may remain intentionally unchanged. Verify the
-contract before renaming them.
+SEN is the portable expanded-narrative engine. Library is SEIHouse's first-party host
+application. Library may depend on SEN; SEN must never depend on Library.
+Reader Chamber is a reading surface within SEN, not the entire engine. AI generation
+is an optional content source. Library branding, cultivation, economy, hub behavior,
+services, and infrastructure belong to the host.
 
 ## SEIHouse
 
@@ -50,7 +50,9 @@ represent.
 
 ## Story Generation
 
-Generation produces chapters and supporting structured outputs. It is a source of
+Before inspecting generation implementation, read the authoritative
+[HARNESS vocabulary](../../../src/components/harness-generation/ARCHITECTURE_VOCABULARY.md)
+when applicable. Generation produces chapters and supporting structured outputs. It is a source of
 chapter content, not the permanent owner of the entire reading experience.
 
 Potential responsibilities include prompt/context assembly, model/provider
@@ -63,8 +65,7 @@ Rendered chapter text alone does not prove generation completed successfully.
 
 ## Reader Chamber
 
-Reader Chamber is the user-facing reading experience and internally the SEN experience
-engine. It composes story content with chapter rendering, navigation, name/system
+Reader Chamber is the user-facing reading experience within SEN. It composes story content with chapter rendering, navigation, name/system
 highlighting, immersive effects, manifestations, narration/TTS, music, sound cues,
 reading preferences, and progress/resume behavior.
 
@@ -136,9 +137,11 @@ the result; they should not independently decide or persist rewards.
 
 ## Workshop and Themes
 
-The `development` repository is the isolated visual-development Workshop. A feature has
-one canonical folder with a locked `reference/` copy, an active `development/` copy,
-optional shared code, one workspace preview, and one manifest entry.
+The `development` repository supports faithful visual replicas and approved real system
+reconstruction. Select the mode using [Workshop Replica](../../workshop-replica/SKILL.md).
+Faithful replicas keep one feature folder, locked reference, active development copy,
+optional shared code, one workspace preview, and one manifest entry. Reconstruction
+follows [DEVELOPMENT_RECONSTRUCTION.md](../../../DEVELOPMENT_RECONSTRUCTION.md).
 
 Workshop controls Reader/Reader Codex presentation and theme packages. Themes should
 use shared tokens, primitives, and package contracts rather than scattered one-off
@@ -149,17 +152,16 @@ file in the named source repository. Production renames require synchronized Wor
 imports, filenames, feature READMEs, manifests, and transfer notes without silently
 changing visual behavior.
 
-## SAP and Audio
+## Audio ownership
 
-The shared audio player/orchestration layer owns coordinated playback for narration,
+Inspect the current audio package documentation and feature owners for coordinated playback of narration,
 World Card clips, music/scene scoring, ambient loops, and discrete sound cues. Avoid
 competing audio lifecycles inside individual components. Respect user controls, autoplay
 restrictions, persistence, interruption, and mobile/lock-screen behavior where
 supported.
 
-## SEN Hub and Future Media
+## Library Hub and Future Media
 
-The Hub is the eventual discovery/community and cross-media entry layer. Reader Chamber
-remains the SEN experience engine. Shared story architecture should allow one Library
+The Hub is the eventual discovery/community and cross-media entry layer. Library owns its hub experience; SEN supplies reusable narrative capabilities. Shared story architecture should allow one Library
 entry to lead to multiple media expressions without each medium reinventing story
 identity, world ownership, canon, or permissions.

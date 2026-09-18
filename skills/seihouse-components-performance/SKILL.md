@@ -1,5 +1,5 @@
 ---
-name: SEIHouse Components Performance
+name: seihouse-components-performance
 description: Audit and optimize the performance, resilience, loading behavior, and device adaptability of a specified component while preserving its intended design and functionality.
 ---
 
@@ -79,7 +79,7 @@ At minimum, consider:
 - Re-entry, remounting, or reopening behavior
 - Reduced-motion behavior when animation is involved
 - Cleanup after leaving or hiding the component
-- Whether the optimized component still integrates correctly with the Library
+- Whether the optimized component still integrates correctly with its owning SEN or Library surface
 
 Run only relevant validation. Do not perform a broad repository review unless necessary.
 
@@ -93,7 +93,7 @@ Run only relevant validation. Do not perform a broad repository review unless ne
 - Do not perform unrelated cleanup.
 - Do not narrate lengthy internal reasoning.
 
-If significant layout problems are discovered, flag them separately for `SEIHouse Layout Optimization` rather than expanding the task.
+If significant layout problems are discovered, flag them separately for [SEIHouse Layout Optimization](../seihouse-layout-optimization/SKILL.md) rather than expanding the task.
 
 ## Completion Report
 

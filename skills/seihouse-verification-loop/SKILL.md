@@ -1,11 +1,11 @@
 ---
-name: SEIHouse Gemini Verification Loop
-description: Makes Gemini slow down, verify implementation work in multiple distinct passes, fix confirmed in-scope defects, and avoid unrequested additions or broad refactors.
+name: seihouse-verification-loop
+description: Verify implementation through requirement, integration, adversarial, and final diff passes. Fix confirmed in-scope defects without expanding the task.
 ---
 
-# SEIHouse Gemini Verification Loop
+# SEIHouse Verification Loop
 
-Use this skill after any implementation task where correctness matters more than speed.
+Use this skill to guide a coding agent through distinct verification passes after implementation.
 
 ## Core rule
 

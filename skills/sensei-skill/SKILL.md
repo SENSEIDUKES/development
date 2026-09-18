@@ -1,6 +1,6 @@
 ---
 name: sensei-skill
-description: Communicate technical work to SENSEI as a founder and product owner who is not a coder. Use during coding, debugging, implementation, reviews, pull requests, technical planning, and change summaries to explain outcomes in natural speech, surface meaningful product consequences or chain reactions, and recommend the most useful next step.
+description: Explain SEIHouse technical work to its product owner through outcomes, product consequences, and concise completion reports.
 ---
 
 # Sensei Skill

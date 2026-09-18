@@ -1,6 +1,6 @@
 ---
-name: SEIHouse Layout Optimization
-description: Audit and optimize a specified component so its composition, hierarchy, usability, and visual quality remain intentional across mobile, tablet, laptop, desktop, portrait, landscape, narrow, wide, and short-height viewports.
+name: seihouse-layout-optimization
+description: Audit and repair responsive composition, hierarchy, and usability of a specified UI surface across viewport sizes and content states.
 ---
 
 # SEIHouse Layout Optimization
@@ -117,7 +117,7 @@ Confirm the layout remains intentional during:
 - Do not perform unrelated redesign or cleanup.
 - Do not narrate lengthy internal reasoning.
 
-If significant runtime or loading problems are discovered, flag them separately for `SEIHouse Components Performance` rather than expanding the task.
+If significant runtime or loading problems are discovered, flag them separately for [SEIHouse Components Performance](../seihouse-components-performance/SKILL.md) rather than expanding the task.
 
 ## Validation
 

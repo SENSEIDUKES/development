@@ -11,7 +11,7 @@
  * twelve-glyph emoji name through as thirty-something units, and would cut a
  * surrogate pair in half when clamping.
  *
- * The username (Dao Name) is a separate, private identifier. It has no such
+ * The username is a separate, private identifier. It has no such
  * limit, and nothing here may be applied to it.
  */
 

@@ -1,7 +1,7 @@
 /*
  * Cultivator Cave styles.
  *
- * The Celestial Aura block is the only part of the rank colour system that
+ * The Cultivator Aura block is the only part of the rank colour system that
  * cannot be expressed as data: clipping a gradient through text, and the
  * spectrum drift. The colours themselves arrive inline from `rankBackground`
  * in `rankVisuals.ts`, so these two classes are rank-agnostic and no rank
@@ -9,7 +9,7 @@
  * `SENSEIDUKES/Light-Novels` `src/index.css`.
  *
  * Everything below the aura block is the Cave's own ornament: the gold title
- * presence, the ornamental rules and vertical calligraphy plaques, and the
+ * presence, the ornamental rules and the
  * portrait ring. Kept beside the component per the Workshop's component-scoped
  * styling rule. Every other class the Cave uses is a Tailwind utility or a
  * canonical Library UI component style.
@@ -39,6 +39,21 @@
 
 /* ---- Cave ornament -------------------------------------------------- */
 
+/* Keep the aura ladder out of the identity form until it is requested. */
+.cave-aura-picker { border: 1px solid rgba(212, 175, 55, .25); border-radius: .85rem; background: rgba(8, 17, 27, .5); }
+.cave-aura-summary { display: flex; align-items: center; gap: .85rem; min-height: 64px; padding: .75rem 1rem; cursor: pointer; list-style: none; border-radius: inherit; }
+.cave-aura-summary::-webkit-details-marker { display: none; }
+.cave-aura-summary:hover { background: rgba(212, 175, 55, .05); }
+.cave-aura-summary:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 3px; }
+.cave-aura-swatch { width: 1.75rem; height: 1.75rem; flex-shrink: 0; border-radius: 50%; border: 1px solid rgba(255,255,255,.2); }
+.cave-aura-summary-text { display: grid; gap: .2rem; flex: 1; min-width: 0; }
+.cave-aura-summary-text > :first-child { font-size: .7rem; letter-spacing: .08em; color: #d6bd77; }
+.cave-aura-summary-text > :last-child { font-size: .85rem; color: #e4e8ec; overflow-wrap: anywhere; }
+.cave-aura-summary-action { font-size: .75rem; color: #b3bfc9; }
+.cave-aura-chevron { flex-shrink: 0; color: #d6bd77; }
+.cave-aura-picker[open] .cave-aura-chevron { transform: rotate(180deg); }
+.cave-aura-options { padding: .85rem; border-top: 1px solid rgba(212,175,55,.15); }
+
 /* Ivory-to-gold title presence, the same reading as the Library header plaque. */
 .cave-title {
   background: linear-gradient(180deg, #fbf3dc 0%, #e9cf8a 55%, #c9a24a 100%);
@@ -65,23 +80,6 @@
   transform: translate(-50%, -50%) rotate(45deg);
   background: #d4af37;
   box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
-}
-
-/* Vertical calligraphy plaques that flank the portrait. Decorative only. */
-.cave-plaque {
-  writing-mode: vertical-rl;
-  text-orientation: upright;
-  font-family: var(--font-serif, serif);
-  font-size: 0.95rem;
-  letter-spacing: 0.55em;
-  color: rgba(216, 226, 244, 0.42);
-  text-shadow: 0 0 12px rgba(4, 172, 255, 0.35);
-  padding: 0.9rem 0.45rem;
-  border: 1px solid rgba(212, 175, 55, 0.22);
-  border-radius: 0.35rem;
-  background: linear-gradient(180deg, rgba(8, 14, 28, 0.55), rgba(3, 6, 12, 0.35));
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 /* Gold ring around the portrait: a conic band, brightest at the top. */

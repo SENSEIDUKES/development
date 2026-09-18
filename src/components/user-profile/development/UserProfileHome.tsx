@@ -301,19 +301,6 @@ export function UserProfileHome({
     >
       <section aria-labelledby="cave-cultivator-name" className="relative">
         <div className="relative z-10 mx-auto mt-2 flex items-center justify-center">
-          <span
-            aria-hidden="true"
-            className="cave-plaque absolute left-0 top-1/2 hidden -translate-y-1/2 min-[380px]:block md:-left-2"
-          >
-            守心见道
-          </span>
-          <span
-            aria-hidden="true"
-            className="cave-plaque absolute right-0 top-1/2 hidden -translate-y-1/2 min-[380px]:block md:-right-2"
-          >
-            静修成空
-          </span>
-
           <div className="relative aspect-square w-[min(58vw,15rem)] md:w-56 lg:w-60">
             <div
               aria-hidden="true"
@@ -344,6 +331,15 @@ export function UserProfileHome({
               style={auraGlow.style}
               data-cave-portrait
             >
+              {!isPublic && (
+                <button
+                  type="button"
+                  aria-label={formData.avatarUrl || profile?.avatarUrl ? 'Change cultivator portrait' : 'Add cultivator portrait'}
+                  aria-haspopup="dialog"
+                  onClick={() => controller.setShowPortraitModal(true)}
+                  className="absolute inset-0 z-10 cursor-pointer rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7dd3ff]"
+                />
+              )}
               <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#04070f]">
                 {formData.avatarUrl || profile?.avatarUrl ? (
                   <img

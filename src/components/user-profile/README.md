@@ -8,7 +8,7 @@
   `src/hooks/useUserProfile.ts`
 - **Workshop preview:** `?preview=user-profile`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-11
+- **Last Workshop update:** 2026-09-18
 - **Last source comparison:** 2026-09-10
 - **Replica status:** under refinement
 
@@ -17,6 +17,20 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 `main` at commit `4a3dd02`.
 
 ## Workshop history
+
+- **2026-09-18 public-view exit:** The header eye now exits public view directly, returning to the prior private page or Home for direct public links. Removed the redundant action toolbar; Search and desktop navigation retain their existing Exit action.
+
+- **2026-09-18 portrait surroundings:** Removed the two decorative calligraphy banners beside the Home portrait and their unused styling.
+
+- **2026-09-18 Settings categories:** Consolidated every section under Customization, Accessibility, Account, or Advanced using shared accessible tabs. Moved the locked Username to Account and keyboard shortcuts to Accessibility. Panels retain unsaved edits and disclosure state when switching categories; admin controls remain role-gated.
+
+- **2026-09-18 account identity:** Settings presents Username as a locked account detail and labels the editable display name as Dao Name. Username is excluded from identity edit/discard tracking; its separate change process is not implemented here. Stored field names and account-creation contracts remain unchanged.
+
+- **2026-09-18 Cultivator Aura:** Renamed the Development Settings section and collapsed its rank chooser behind a compact selected-aura summary. The full rank ladder and custom spectrum remain available on expansion, with existing unlocks, preview, save, and discard behavior preserved.
+
+- **2026-09-18 Portrait Builder styling:** Matched the existing Cave's slate surfaces, gold framing, and Library buttons. Added a circular profile preview beside the reference-image and appearance fields, a responsive single-column mobile layout, and a consistent action footer across generation and acceptance. Upload, generation, and apply remain owned by the existing controller; no production or locked-reference changes.
+
+- **2026-09-18 portrait access and progress:** The private Home portrait slot opens the existing Portrait Builder by tap or keyboard, with Add/Change accessible labels. Public portraits remain read-only and the Settings shortcut remains available. Generation displays all six progress labels, with a safe completion fallback for unexpected step values. Locked reference unchanged.
 
 - **2026-09-11 source icon reuse:** Reused the canonical SEN Scroll, Discovery, Store, and Search marks in matching story, public-world, storefront, and admin-search states outside the Cave navigation. Reading actions, language controls, artifact-specific imagery, and other non-equivalent icons remain unchanged.
 
@@ -210,7 +224,7 @@ shared/       — the services port, domain types, and the unforked offering-wee
 | `displayName.ts` | The twelve visible-character display-name rule (grapheme counting and clamping) |
 | `caveEnvironment.ts` | The five stock cave environments, the destination tile art, the emblem, the motto, and the stage helper |
 | `rankVisuals.ts` | **The canonical rank colour system** — the ten ranks, their Qi thresholds, and each rank's colour identity as data, with the renderers every surface consumes |
-| `qi.ts` | Rank progression maths and the Celestial Aura style helpers, derived from `rankVisuals.ts` |
+| `qi.ts` | Rank progression maths and the Cultivator Aura style helpers, derived from `rankVisuals.ts` |
 | `chapterWritingStyle.ts` | Unchanged presentation values from production |
 | `userProfile.css` | The two rank-agnostic aura text classes plus the Cave ornament (title presence, rules, plaques, portrait ring) and the identity rank row, bio, and Boost styles |
 
@@ -225,7 +239,7 @@ The Cave home shows, top to bottom on a phone and side by side from the `md` bre
 - the cave header — the Library sacred-tree glyph, the gold "Cultivator Cave" title, and the
   Settings gear;
 - the central cultivator portrait inside a gold ring, wearing the aura glow and the rank-gated
-  mote layer from production, flanked by two decorative calligraphy plaques;
+  mote layer from production;
 - the compact identity plaque — centered display name and subscription badge, an interactive
   rank-colored cultivation bar, current and next rank beneath its endpoints, and the existing
   bio below an understated CULTIVATOR BIO label. Exact progress and overflowing mobile bios
@@ -238,13 +252,16 @@ Every destination opens in place, over the same backdrop, with a "Return to cave
 focus moved to its heading. The Akashic Switchboard is a fifth destination reachable only from
 Settings, and only for owner and admin accounts.
 
-The **Settings** drawer opens from the gear and holds every remaining control in collapsible
-sections: Identity & Celestial Aura (Dao name, display name, the rank picker, the Custom
-Spectrum, Guard Changes / Discard), Cultivator Portrait (opens the Divine Mirror), Cave
-Environment (five stock backdrops and the ambient motes toggle), Language (both selectors with
-the 30-second confirmation), Writing Preferences (default chapter writing style), Harmony & Sync,
-Backup, Import & Export (Import Scroll, Backup All), Advanced Tools (Aether Router, Shortcuts),
-Authorized Controls (owner/admin only), and Account (Sever Link).
+The **Settings** page groups its existing collapsible sections under four parent tabs:
+
+- **Customization:** Dao Name and Cultivator Aura, Cultivator Portrait, Cave Environment.
+- **Accessibility:** Language, Writing Preferences, Keyboard Shortcuts.
+- **Account:** locked Username, linked account, Redeem Code, Sever Link, Public Profile visibility, Harmony & Sync, and Backup, Import & Export.
+- **Advanced:** library model routing through Aether Router and owner/admin-only Authorized Controls.
+
+The shared tab bar supports keyboard navigation and horizontal scrolling on small screens.
+Switching categories retains unsaved edits and expanded sections. Existing save, language
+confirmation, account, synchronization, and permission behavior stays with its current owner.
 
 ### The rank colour system
 

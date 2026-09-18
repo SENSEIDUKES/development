@@ -3,6 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UserProfile from './UserProfile';
+import { UserProfilePortraitModal } from './UserProfilePortraitModal';
 import { UserProfilePublicPanel } from './UserProfilePublicPanel';
 import ReferenceUserProfile from '../reference/UserProfile';
 import { UserProfileServicesProvider } from '../shared/userProfileServices';
@@ -98,6 +99,41 @@ interface RenderOptions {
   adapter?: Partial<MockUserProfileServicesOptions>;
 }
 
+describe('Home portrait access and generation progress', () => {
+  it.each(['new-cultivator', 'developed-cultivator'] as const)('opens the existing builder directly from %s Home', async state => {
+    const { controller } = await renderCave({ state });
+    const portrait = container.querySelector<HTMLButtonElement>('[data-cave-portrait] button')!;
+    expect(portrait.getAttribute('aria-label')).toBe(state === 'new-cultivator' ? 'Add cultivator portrait' : 'Change cultivator portrait');
+    await click(portrait);
+    expect(controller().showPortraitModal).toBe(true);
+    expect(document.body.querySelector('[role="dialog"]')?.textContent).toContain('Cultivator Portrait Builder');
+    expect(new URL(window.location.href).searchParams.get('cave')).not.toBe('/settings');
+  });
+
+  it('keeps public portraits read-only', async () => {
+    await renderCave();
+    await navigateTo('/public/home');
+    expect(container.querySelector('[data-cave-portrait]')).not.toBeNull();
+    expect(container.querySelector('[data-cave-portrait] button')).toBeNull();
+  });
+
+  it('renders every generation step and safely handles unexpected steps', async () => {
+    const { controller } = await renderCave();
+    const props = controller();
+    for (const generationStep of [0, 1, 2, 3, 4, 5, 6, -1]) {
+      await act(async () => {
+        root.render(<UserProfilePortraitModal {...props} showPortraitModal isGeneratingPortrait
+          generatedPortraitUrl="" generationStep={generationStep} />);
+      });
+      const status = document.body.querySelector('[role="status"]')?.textContent;
+      expect(status).toMatch(/^Manifesting .+\.\.\.$/);
+      expect(status).not.toContain('undefined');
+      if (generationStep === 4) expect(status).toBe('Manifesting Finishing Touches...');
+      if (generationStep >= 5 || generationStep < 0) expect(status).toBe('Manifesting Completing...');
+    }
+  });
+});
+
 async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), onNavigateHome = vi.fn(), Component = UserProfile, adapter = {}, accountControls, publicCreators }: RenderOptions = {}) {
   const scenario = getPreviewScenario(state);
   const logExcludedAction = vi.fn();
@@ -139,6 +175,12 @@ const byText = <T extends HTMLElement>(selector: string, needle: string): T => {
 };
 
 const click = async (element: Element) => {
+  const settingsPanel = element.closest('[data-cave-settings] [role="tabpanel"]');
+  if (settingsPanel?.hasAttribute('hidden')) {
+    const tab = document.getElementById(settingsPanel.getAttribute('aria-labelledby')!);
+    if (!tab) throw new Error('Settings panel has no parent tab');
+    await act(async () => tab.click());
+  }
   await act(async () => {
     (element as HTMLElement).click();
   });
@@ -561,6 +603,26 @@ describe('Cultivator Cave destinations', () => {
 });
 
 describe('Cultivator Cave settings', () => {
+  it('groups settings under parent tabs and retains unsaved identity edits between tabs', async () => {
+    const { controller } = await renderCave();
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
+    const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('[aria-label="Settings categories"] [role="tab"]'));
+    expect(tabs.map(tab => tab.textContent)).toEqual(['Customization', 'Accessibility', 'Account', 'Advanced']);
+    const visibleHeadings = () => Array.from(document.querySelectorAll('[data-cave-settings] [role="tabpanel"]:not([hidden]) [data-slot="disclosure-heading"]')).map(node => node.textContent);
+    expect(visibleHeadings()).toEqual(['Identity & Cultivator Aura', 'Cultivator Portrait', 'Cave Environment']);
+    await act(async () => controller().setFormData(previous => ({ ...previous, displayName: 'Cloud Reader' })));
+    await click(tabs[1]);
+    expect(visibleHeadings()).toEqual(['Language', 'Writing Preferences', 'Keyboard Shortcuts']);
+    await click(tabs[2]);
+    expect(visibleHeadings()).toEqual(['Account', 'Public Profile', 'Harmony & Sync', 'Backup, Import & Export']);
+    expect(document.querySelector('[data-cave-username]')?.closest('[role="tabpanel"]')?.hasAttribute('hidden')).toBe(false);
+    await click(tabs[3]);
+    expect(visibleHeadings()).toEqual(['Advanced Tools']);
+    await click(tabs[0]);
+    expect(document.querySelector<HTMLInputElement>('#cave-display-name')?.value).toBe('Cloud Reader');
+    expect(byText<HTMLButtonElement>('button', 'Guard Changes').disabled).toBe(false);
+  });
+
   it('opens a Settings page holding every existing setting section', async () => {
     const onLogout = vi.fn();
     await renderCave({ onLogout });
@@ -571,16 +633,17 @@ describe('Cultivator Cave settings', () => {
       element => element.textContent,
     );
     expect(headings).toEqual([
-      'Identity & Celestial Aura',
-      'Public Profile',
+      'Identity & Cultivator Aura',
       'Cultivator Portrait',
       'Cave Environment',
       'Language',
       'Writing Preferences',
+      'Keyboard Shortcuts',
+      'Account',
+      'Public Profile',
       'Harmony & Sync',
       'Backup, Import & Export',
       'Advanced Tools',
-      'Account',
     ]);
     expect(panel()!.querySelectorAll('[role="radiogroup"][aria-label="Cave environment"] [role="radio"]')).toHaveLength(
       CAVE_ENVIRONMENTS.length,
@@ -608,7 +671,8 @@ describe('Cultivator Cave settings', () => {
     )!;
     const enabled = (label: string) => radios(label).filter(radio => !radio.disabled);
 
-    const auraLabel = 'Celestial Aura rank';
+    if (!document.body.querySelector<HTMLDetailsElement>('.cave-aura-picker')?.open) await click(document.body.querySelector('summary.cave-aura-summary')!);
+    const auraLabel = 'Cultivator Aura rank';
     expect(enabled(auraLabel).filter(radio => radio.tabIndex === 0)).toHaveLength(1);
     expect(selected(auraLabel).textContent).toContain('Leader');
 
@@ -648,9 +712,10 @@ describe('Cultivator Cave settings', () => {
     });
     await click(byText('[data-cave-account-actions] button', 'Settings'));
 
+    if (!document.body.querySelector<HTMLDetailsElement>('.cave-aura-picker')?.open) await click(document.body.querySelector('summary.cave-aura-summary')!);
     const auraRows = Array.from(
       document.body.querySelectorAll<HTMLButtonElement>(
-        '[role="radiogroup"][aria-label="Celestial Aura rank"] [role="radio"]',
+        '[role="radiogroup"][aria-label="Cultivator Aura rank"] [role="radio"]',
       ),
     );
     const selectedLocked = auraRows.find(row => row.getAttribute('aria-checked') === 'true')!;
@@ -675,6 +740,7 @@ describe('Cultivator Cave settings', () => {
     });
     await click(byText('[data-cave-account-actions] button', 'Settings'));
 
+    if (!document.body.querySelector<HTMLDetailsElement>('.cave-aura-picker')?.open) await click(document.body.querySelector('summary.cave-aura-summary')!);
     const spectrum = document.body.querySelector<HTMLButtonElement>('[aria-label="Custom spectrum"]')!;
     expect(spectrum.disabled).toBe(false);
     expect(spectrum.getAttribute('aria-pressed')).toBe('true');
@@ -697,11 +763,11 @@ describe('Cultivator Cave settings', () => {
     await renderCave();
     await click(byText('[data-cave-account-actions] button', 'Settings'));
 
-    const username = document.body.querySelector<HTMLInputElement>('#cave-username')!;
     const displayName = document.body.querySelector<HTMLInputElement>('#cave-display-name')!;
-    const auraRows = Array.from(document.body.querySelectorAll<HTMLButtonElement>('[aria-label="Celestial Aura rank"] [role="radio"]'));
+    if (!document.body.querySelector<HTMLDetailsElement>('.cave-aura-picker')?.open) await click(document.body.querySelector('summary.cave-aura-summary')!);
+    const auraRows = Array.from(document.body.querySelectorAll<HTMLButtonElement>('[aria-label="Cultivator Aura rank"] [role="radio"]'));
+    if (!document.body.querySelector<HTMLDetailsElement>('.cave-aura-picker')?.open) await click(document.body.querySelector('summary.cave-aura-summary')!);
     const spectrum = document.body.querySelector<HTMLButtonElement>('[aria-label="Custom spectrum"]')!;
-    expect(username.className).toContain('!min-h-11');
     expect(displayName.className).toContain('!min-h-11');
     expect(auraRows.every(row => row.className.includes('min-h-11'))).toBe(true);
     expect(spectrum.className).toContain('h-11');
@@ -966,8 +1032,9 @@ describe('rank colour system', () => {
   it('lists every rank in Settings as name, colour and Qi, with no aura lore', async () => {
     await renderCave();
     await click(byText('[data-cave-account-actions] button', 'Settings'));
+    if (!document.body.querySelector<HTMLDetailsElement>('.cave-aura-picker')?.open) await click(document.body.querySelector('summary.cave-aura-summary')!);
     const rows = Array.from(
-      document.body.querySelectorAll('[role="radiogroup"][aria-label="Celestial Aura rank"] [role="radio"]'),
+      document.body.querySelectorAll('[role="radiogroup"][aria-label="Cultivator Aura rank"] [role="radio"]'),
     );
     expect(rows).toHaveLength(RANKS.length);
     expect(rows[0].textContent).toBe('Reader0 Qi');
@@ -990,6 +1057,7 @@ describe('rank colour system', () => {
     await click(byText('[data-cave-account-actions] button', 'Settings'));
     expect(document.body.textContent).toContain('Requires Master (50,000 Qi)');
 
+    if (!document.body.querySelector<HTMLDetailsElement>('.cave-aura-picker')?.open) await click(document.body.querySelector('summary.cave-aura-summary')!);
     const spectrum = document.body.querySelector<HTMLButtonElement>('[aria-label="Custom spectrum"]')!;
     expect(spectrum.disabled).toBe(true);
   });
@@ -1467,7 +1535,7 @@ describe('Public view of the Cave', () => {
     expect(text()).not.toContain(profile.username);
   });
 
-  it('shows a Public View indicator and centres the name in both modes', async () => {
+  it('uses the header eye to exit public view without an extra toolbar', async () => {
     await renderCave();
     expect(container.querySelector('.workspace-header-status')).toBeNull();
     expect(container.querySelector('.workspace-header-toolbar')).toBeNull();
@@ -1477,9 +1545,14 @@ describe('Public view of the Cave', () => {
     expect(container.querySelector('[data-cave-identity-group] .cave-tier-badge')).not.toBeNull();
 
     await enterPublicView();
-    expect(container.querySelector('.workspace-header-context [role="status"]')?.textContent).toContain('Public View');
+    const eye = container.querySelector<HTMLButtonElement>('.workspace-header-context [aria-label="Exit public view"]')!;
+    expect(eye.textContent).toContain('Public View');
+    expect(container.querySelector('.workspace-header-toolbar')).toBeNull();
     expect(container.querySelector('#cave-cultivator-name .cave-tier-badge')).toBeNull();
     expect(container.querySelector('[data-cave-identity-group] .cave-tier-badge')).not.toBeNull();
+    await click(eye);
+    expect(cave()).toBe('/settings');
+    expect(container.querySelector('[aria-label="Exit public view"]')).toBeNull();
   });
 
   it('keeps Cave destinations in Search and public Exit returns to the previous location', async () => {
@@ -1502,7 +1575,7 @@ describe('Public view of the Cave', () => {
     history.replaceState(null, '', '/?preview=user-profile&cave=/public/home');
     await renderCave();
     expect(container.querySelector('[data-cave-home-mode]')?.getAttribute('data-cave-home-mode')).toBe('public');
-    await searchCaveDestination('Exit');
+    await click(container.querySelector('[aria-label="Exit public view"]')!);
     expect(cave()).toBe('/home');
     expect(container.querySelector('[data-cave-card="dao-pillar"]')).not.toBeNull();
   });
@@ -1664,14 +1737,15 @@ describe('Display name limit', () => {
     expect(name.value).toBe('A Name Far B');
     expect(document.body.querySelector('[data-cave-display-name-count]')?.textContent).toBe('12/12');
 
-    const username = await type('#cave-username', 'a_very_long_private_dao_name_kept_whole');
-    expect(username.value).toBe('a_very_long_private_dao_name_kept_whole');
+    expect(document.body.querySelector('input#cave-username')).toBeNull();
+    expect(document.body.querySelector('[data-cave-username]')?.textContent).toContain('Locked');
+    expect(document.body.querySelector('label[for="cave-display-name"]')?.textContent).toContain('Dao Name');
   });
 
   it('blocks saving a longer name stored before the limit existed', async () => {
-    await renderCave({ state: 'home-edge-cases' });
+    const { controller } = await renderCave({ state: 'home-edge-cases' });
     await click(byText('[data-cave-account-actions] button', 'Settings'));
-    expect(text()).toContain('Display names are limited to 12 characters.');
+    expect(text()).toContain('Dao Names are limited to 12 characters.');
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
     const type = async (selector: string, value: string) => {
       const input = document.body.querySelector<HTMLInputElement>(selector)!;
@@ -1684,12 +1758,12 @@ describe('Display name limit', () => {
     // Dirty the form without touching the display name, so a disabled save
     // proves the cap rather than merely proving nothing was edited. Typing in
     // the name field would clamp it and remove the very state under test.
-    await type('#cave-username', 'edge_case_dao_name');
-    expect(text()).toContain('Display names are limited to 12 characters.');
+    await act(async () => controller().setFormData(previous => ({ ...previous, displayNameColor: 'rank:reader' })));
+    expect(text()).toContain('Dao Names are limited to 12 characters.');
     expect(byText<HTMLButtonElement>('button', 'Guard Changes').disabled).toBe(true);
 
     await type('#cave-display-name', 'Edge Reader');
-    expect(text()).not.toContain('Display names are limited to 12 characters.');
+    expect(text()).not.toContain('Dao Names are limited to 12 characters.');
     expect(byText<HTMLButtonElement>('button', 'Guard Changes').disabled).toBe(false);
   });
 });

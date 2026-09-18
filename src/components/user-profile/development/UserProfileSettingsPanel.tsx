@@ -6,11 +6,13 @@ import {
   Camera,
   Cloud,
   CloudOff,
+  ChevronDown,
   Download,
   Eye,
   Gift,
   Globe,
   Keyboard,
+  LockKeyhole,
   Mountain,
   RefreshCw,
   Shield,
@@ -22,6 +24,10 @@ import { LibraryButton, LibraryTextBox } from '@seihouse/library-ui';
 import {
   SEIDisclosure,
   SEIDisclosureGroup,
+  SEITabs,
+  SEITabsList,
+  SEITabsTrigger,
+  SEITabsPanel,
   SEIField,
   SEISelect,
   SEISwitch,
@@ -59,7 +65,7 @@ import {
 } from './radioGroupKeyboard';
 import { SENExitIcon, SENProfileIcon } from '../../library-shell/development/SENGlobalIcon';
 
-const IDENTITY_FIELDS = ['username', 'displayName', 'displayNameColor'] as const;
+const IDENTITY_FIELDS = ['displayName', 'displayNameColor'] as const;
 
 interface UserProfileSettingsPanelProps {
   controller: UserProfileController;
@@ -80,7 +86,7 @@ interface UserProfileSettingsPanelProps {
 
 /**
  * The Settings page content: every profile control that is not one of
- * the three Cave navigation destinations lives here — identity and Celestial Aura editing,
+ * the three Cave navigation destinations lives here — identity and Cultivator Aura editing,
  * portrait controls, the cave environment, language, writing preferences,
  * Harmony sync, backup and import, the advanced tools, Sever Link, and the
  * authorized Akashic Switchboard entry.
@@ -136,6 +142,7 @@ export function UserProfileSettingsPanel({
   const isMaster = currentXp >= MASTER_RANK.unlockedAt;
   const selectedAura = formData.displayNameColor ?? profile?.displayNameColor;
   const auraSelection = getAuraSelection(selectedAura, currentXp);
+  const selectedAuraVisual = resolveRankVisual(auraSelection, currentXp);
   // A legacy saved rank can be above the current Qi threshold. A disabled
   // checked radio is not a keyboard tab stop, so only an enabled selection
   // may claim the group's roving tab position.
@@ -169,7 +176,6 @@ export function UserProfileSettingsPanel({
   const discardIdentity = () => {
     setFormData(previous => ({
       ...previous,
-      username: profile?.username,
       displayName: profile?.displayName,
       displayNameColor: profile?.displayNameColor,
     }));
@@ -210,9 +216,17 @@ export function UserProfileSettingsPanel({
 
   return (
     <div className="text-neutral-300" data-cave-settings>
+      <SEITabs defaultValue="customization" variant="pill">
+        <SEITabsList aria-label="Settings categories" className="max-w-full">
+          <SEITabsTrigger value="customization" className="min-h-11 flex-1">Customization</SEITabsTrigger>
+          <SEITabsTrigger value="accessibility" className="min-h-11 flex-1">Accessibility</SEITabsTrigger>
+          <SEITabsTrigger value="account" className="min-h-11 flex-1">Account</SEITabsTrigger>
+          <SEITabsTrigger value="advanced" className="min-h-11 flex-1">Advanced</SEITabsTrigger>
+        </SEITabsList>
+        <SEITabsPanel value="customization" keepMounted className="pt-4">
           <SEIDisclosureGroup type="multiple" defaultValue={['identity']}>
             {/* ---- Identity & Aura ------------------------------------------ */}
-            <SEIDisclosure value="identity" heading="Identity & Celestial Aura" icon={SENProfileIcon} supportingText="Dao name, display name, and the aura your name carries.">
+            <SEIDisclosure value="identity" heading="Identity & Cultivator Aura" icon={SENProfileIcon} supportingText="Your editable Dao Name and the aura it carries.">
               <div className="space-y-4 pt-1">
                 <div className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center">
                   <p className="font-sc text-[9px] uppercase tracking-widest text-neutral-400">Preview</p>
@@ -224,18 +238,8 @@ export function UserProfileSettingsPanel({
                 </div>
 
                 <LibraryTextBox
-                  id="cave-username"
-                  label="Username (Dao Name)"
-                  value={formData.username || ''}
-                  onChange={value => setFormData(previous => ({ ...previous, username: value }))}
-                  placeholder="Enter Dao Name"
-                  size="compact"
-                  disabled={!profile}
-                  className="!min-h-11"
-                />
-                <LibraryTextBox
                   id="cave-display-name"
-                  label="Display Name"
+                  label="Dao Name"
                   value={displayNameValue}
                   onChange={value => setFormData(previous => ({ ...previous, displayName: clampDisplayName(value) }))}
                   placeholder="Your identity…"
@@ -252,19 +256,24 @@ export function UserProfileSettingsPanel({
                     </span>
                   }
                   error={displayNameOverBy > 0
-                    ? `Display names are limited to ${DISPLAY_NAME_MAX_VISIBLE} characters. Remove ${displayNameOverBy}.`
+                    ? `Dao Names are limited to ${DISPLAY_NAME_MAX_VISIBLE} characters. Remove ${displayNameOverBy}.`
                     : undefined}
                 />
 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="flex items-center gap-1.5 font-sc text-[10px] font-bold uppercase tracking-wider text-neutral-400">
-                      <Sparkles size={11} aria-hidden="true" className="text-[#7dd3ff]" /> Celestial Aura
-                    </p>
-                    <p className="font-mono text-[9px] text-neutral-400">Current XP: {currentXp.toLocaleString()} Qi</p>
-                  </div>
+                <details className="cave-aura-picker">
+                  <summary className="cave-aura-summary">
+                    <span aria-hidden="true" className="cave-aura-swatch" style={getAuraSwatchStyle(selectedAuraVisual.visual)} />
+                    <span className="cave-aura-summary-text">
+                      <span className="font-sc">Cultivator Aura</span>
+                      <span>{isCustomSelected ? 'Custom Spectrum' : selectedAuraVisual.rank.name}</span>
+                    </span>
+                    <span className="cave-aura-summary-action">Change</span>
+                    <ChevronDown size={16} aria-hidden="true" className="cave-aura-chevron" />
+                  </summary>
+                  <div className="cave-aura-options space-y-3">
+                    <p className="text-xs text-neutral-400">Choose the aura your name carries. <span className="whitespace-nowrap">{currentXp.toLocaleString()} Qi earned</span></p>
                   {/* One row per rank: the name, its colour, and the Qi it costs. */}
-                  <div role="radiogroup" aria-label="Celestial Aura rank" className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
+                  <div role="radiogroup" aria-label="Cultivator Aura rank" className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
                     {RANKS.map((rank, index) => {
                       const token = rankToken(rank);
                       const isUnlocked = currentXp >= rank.unlockedAt;
@@ -353,7 +362,8 @@ export function UserProfileSettingsPanel({
                       </p>
                     </div>
                   </div>
-                </div>
+                  </div>
+                </details>
 
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <LibraryButton
@@ -369,45 +379,6 @@ export function UserProfileSettingsPanel({
                     Discard
                   </LibraryButton>
                 </div>
-              </div>
-            </SEIDisclosure>
-
-            {/* ---- Public profile -------------------------------------------- */}
-            <SEIDisclosure value="public-profile" heading="Public Profile" icon={Eye} supportingText="What other cultivators see, and the way in.">
-              <div className="space-y-4 pt-1">
-                <p className="font-sans text-[11px] leading-relaxed text-neutral-400">
-                  Your public Cave shows your portrait, display name, subscription and rank. Choose what
-                  else it carries. Your username stays private and appears on neither Home view.
-                </p>
-                <div className="space-y-3" data-cave-visibility>
-                  {PUBLIC_PROFILE_VISIBILITY_FIELDS.map(field => (
-                    <div key={field.id}>
-                      <SEISwitch
-                        size="compact"
-                        className="!min-h-11 sm:!min-h-11"
-                        aria-describedby={`cave-visibility-${field.id}-description`}
-                        isSelected={publicVisibility[field.id]}
-                        onChange={isSelected =>
-                          onPublicVisibilityChange({ ...publicVisibility, [field.id]: isSelected })}
-                      >
-                        {field.label}
-                      </SEISwitch>
-                      <p
-                        id={`cave-visibility-${field.id}-description`}
-                        className="mt-0.5 pl-1 font-sans text-[10px] text-neutral-400"
-                      >
-                        {field.description}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-                <LibraryButton variant="secondary" size="sm" icon={Eye} disabled={!profile} onClick={onPreviewPublicView} className="!min-h-11">
-                  Preview Public View
-                </LibraryButton>
-                <p className="font-sans text-[10px] italic text-neutral-400">
-                  This selection is held for the current session only. Persisting it is a production
-                  decision, not a Workshop one.
-                </p>
               </div>
             </SEIDisclosure>
 
@@ -466,6 +437,10 @@ export function UserProfileSettingsPanel({
               </div>
             </SEIDisclosure>
 
+          </SEIDisclosureGroup>
+        </SEITabsPanel>
+        <SEITabsPanel value="accessibility" keepMounted className="pt-4">
+          <SEIDisclosureGroup type="multiple" defaultValue={['language']}>
             {/* ---- Language -------------------------------------------------- */}
             <SEIDisclosure value="language" heading="Language" icon={Globe} supportingText="Interface language and default reading language.">
               <div className="space-y-3 pt-1">
@@ -518,6 +493,69 @@ export function UserProfileSettingsPanel({
                     {CHAPTER_WRITING_STYLE_OPTIONS.map(style => <option key={style} value={style}>{style}</option>)}
                   </SEISelect>
                 </SEIField>
+              </div>
+            </SEIDisclosure>
+
+            <SEIDisclosure value="shortcuts" heading="Keyboard Shortcuts" icon={Keyboard} supportingText="Keyboard controls and navigation help.">
+              <LibraryButton variant="secondary" fullWidth icon={Keyboard} onClick={() => setIsShortcutsOpen(true)}>Shortcuts</LibraryButton>
+            </SEIDisclosure>
+          </SEIDisclosureGroup>
+        </SEITabsPanel>
+        <SEITabsPanel value="account" keepMounted className="pt-4">
+          <SEIDisclosureGroup type="multiple" defaultValue={['account']}>
+            {/* ---- Account --------------------------------------------------- */}
+            <SEIDisclosure value="account" heading="Account" icon={SENExitIcon} supportingText={currentUser?.email ? `Linked as ${currentUser.email}` : 'Linked spirit'}>
+                <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3" data-cave-username>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs text-neutral-400">Username</p>
+                    <span className="flex items-center gap-1.5 text-xs text-neutral-400"><LockKeyhole size={12} aria-hidden="true" /> Locked</span>
+                  </div>
+                  <p className="mt-1 break-all text-sm text-neutral-200">{profile?.username || 'Not available'}</p>
+                  <p className="mt-2 text-xs leading-relaxed text-neutral-400">Set at account creation. Changing your username requires a separate account process.</p>
+                </div>
+              <LibraryButton variant="secondary" fullWidth icon={Gift} onClick={onRedeemCode}>Redeem Code</LibraryButton>
+              <div className="pt-1">
+                <LibraryButton variant="danger" fullWidth icon={SENExitIcon} onClick={onLogout}>
+                  Sever Link
+                </LibraryButton>
+              </div>
+            </SEIDisclosure>
+            {/* ---- Public profile -------------------------------------------- */}
+            <SEIDisclosure value="public-profile" heading="Public Profile" icon={Eye} supportingText="What other cultivators see, and the way in.">
+              <div className="space-y-4 pt-1">
+                <p className="font-sans text-[11px] leading-relaxed text-neutral-400">
+                  Your public Cave shows your portrait, display name, subscription and rank. Choose what
+                  else it carries. Your username stays private and appears on neither Home view.
+                </p>
+                <div className="space-y-3" data-cave-visibility>
+                  {PUBLIC_PROFILE_VISIBILITY_FIELDS.map(field => (
+                    <div key={field.id}>
+                      <SEISwitch
+                        size="compact"
+                        className="!min-h-11 sm:!min-h-11"
+                        aria-describedby={`cave-visibility-${field.id}-description`}
+                        isSelected={publicVisibility[field.id]}
+                        onChange={isSelected =>
+                          onPublicVisibilityChange({ ...publicVisibility, [field.id]: isSelected })}
+                      >
+                        {field.label}
+                      </SEISwitch>
+                      <p
+                        id={`cave-visibility-${field.id}-description`}
+                        className="mt-0.5 pl-1 font-sans text-[10px] text-neutral-400"
+                      >
+                        {field.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <LibraryButton variant="secondary" size="sm" icon={Eye} disabled={!profile} onClick={onPreviewPublicView} className="!min-h-11">
+                  Preview Public View
+                </LibraryButton>
+                <p className="font-sans text-[10px] italic text-neutral-400">
+                  This selection is held for the current session only. Persisting it is a production
+                  decision, not a Workshop one.
+                </p>
               </div>
             </SEIDisclosure>
 
@@ -580,8 +618,12 @@ export function UserProfileSettingsPanel({
               </div>
             </SEIDisclosure>
 
+          </SEIDisclosureGroup>
+        </SEITabsPanel>
+        <SEITabsPanel value="advanced" keepMounted className="pt-4">
+          <SEIDisclosureGroup type="multiple" defaultValue={['advanced']}>
             {/* ---- Advanced tools ------------------------------------------- */}
-            <SEIDisclosure value="advanced" heading="Advanced Tools" icon={Sliders} supportingText="Model presets, routing overrides, and shortcuts.">
+            <SEIDisclosure value="advanced" heading="Advanced Tools" icon={Sliders} supportingText="Model presets and routing overrides.">
               <div className="space-y-3 pt-1">
                 <p className="font-sans text-[10px] text-neutral-400">
                   Configure custom model presets, routing overrides, or API credential endpoints.
@@ -590,9 +632,7 @@ export function UserProfileSettingsPanel({
                   <LibraryButton variant="secondary" fullWidth icon={Sliders} title="Aether Router" onClick={() => setIsSettingsOpen(true)}>
                     Aether Router
                   </LibraryButton>
-                  <LibraryButton variant="secondary" fullWidth icon={Keyboard} title="Shortcuts Manual (or press ? key)" onClick={() => setIsShortcutsOpen(true)}>
-                    Shortcuts
-                  </LibraryButton>
+
                 </div>
               </div>
             </SEIDisclosure>
@@ -608,16 +648,9 @@ export function UserProfileSettingsPanel({
               </SEIDisclosure>
             ) : null}
 
-            {/* ---- Account --------------------------------------------------- */}
-            <SEIDisclosure value="account" heading="Account" icon={SENExitIcon} supportingText={currentUser?.email ? `Linked as ${currentUser.email}` : 'Linked spirit'}>
-              <LibraryButton variant="secondary" fullWidth icon={Gift} onClick={onRedeemCode}>Redeem Code</LibraryButton>
-              <div className="pt-1">
-                <LibraryButton variant="danger" fullWidth icon={SENExitIcon} onClick={onLogout}>
-                  Sever Link
-                </LibraryButton>
-              </div>
-            </SEIDisclosure>
           </SEIDisclosureGroup>
+        </SEITabsPanel>
+      </SEITabs>
     </div>
   );
 }

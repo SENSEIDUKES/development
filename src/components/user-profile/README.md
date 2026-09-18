@@ -18,6 +18,8 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-18 portrait surroundings:** Removed the two decorative calligraphy banners beside the Home portrait and their unused styling.
+
 - **2026-09-18 Settings categories:** Consolidated every section under Customization, Accessibility, Account, or Advanced using shared accessible tabs. Moved the locked Username to Account and keyboard shortcuts to Accessibility. Panels retain unsaved edits and disclosure state when switching categories; admin controls remain role-gated.
 
 - **2026-09-18 account identity:** Settings presents Username as a locked account detail and labels the editable display name as Dao Name. Username is excluded from identity edit/discard tracking; its separate change process is not implemented here. Stored field names and account-creation contracts remain unchanged.

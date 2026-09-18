@@ -9,7 +9,7 @@
  * `SENSEIDUKES/Light-Novels` `src/index.css`.
  *
  * Everything below the aura block is the Cave's own ornament: the gold title
- * presence, the ornamental rules and vertical calligraphy plaques, and the
+ * presence, the ornamental rules and the
  * portrait ring. Kept beside the component per the Workshop's component-scoped
  * styling rule. Every other class the Cave uses is a Tailwind utility or a
  * canonical Library UI component style.
@@ -80,23 +80,6 @@
   transform: translate(-50%, -50%) rotate(45deg);
   background: #d4af37;
   box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
-}
-
-/* Vertical calligraphy plaques that flank the portrait. Decorative only. */
-.cave-plaque {
-  writing-mode: vertical-rl;
-  text-orientation: upright;
-  font-family: var(--font-serif, serif);
-  font-size: 0.95rem;
-  letter-spacing: 0.55em;
-  color: rgba(216, 226, 244, 0.42);
-  text-shadow: 0 0 12px rgba(4, 172, 255, 0.35);
-  padding: 0.9rem 0.45rem;
-  border: 1px solid rgba(212, 175, 55, 0.22);
-  border-radius: 0.35rem;
-  background: linear-gradient(180deg, rgba(8, 14, 28, 0.55), rgba(3, 6, 12, 0.35));
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 /* Gold ring around the portrait: a conic band, brightest at the top. */

@@ -218,10 +218,10 @@ export function UserProfileSettingsPanel({
     <div className="text-neutral-300" data-cave-settings>
       <SEITabs defaultValue="customization" variant="pill">
         <SEITabsList aria-label="Settings categories" className="max-w-full">
-          <SEITabsTrigger value="customization" className="min-h-11">Customization</SEITabsTrigger>
-          <SEITabsTrigger value="accessibility" className="min-h-11">Accessibility</SEITabsTrigger>
-          <SEITabsTrigger value="account" className="min-h-11">Account</SEITabsTrigger>
-          <SEITabsTrigger value="advanced" className="min-h-11">Advanced</SEITabsTrigger>
+          <SEITabsTrigger value="customization" className="min-h-11 flex-1">Customization</SEITabsTrigger>
+          <SEITabsTrigger value="accessibility" className="min-h-11 flex-1">Accessibility</SEITabsTrigger>
+          <SEITabsTrigger value="account" className="min-h-11 flex-1">Account</SEITabsTrigger>
+          <SEITabsTrigger value="advanced" className="min-h-11 flex-1">Advanced</SEITabsTrigger>
         </SEITabsList>
         <SEITabsPanel value="customization" keepMounted className="pt-4">
           <SEIDisclosureGroup type="multiple" defaultValue={['identity']}>

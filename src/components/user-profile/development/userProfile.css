@@ -1,7 +1,7 @@
 /*
  * Cultivator Cave styles.
  *
- * The Celestial Aura block is the only part of the rank colour system that
+ * The Cultivator Aura block is the only part of the rank colour system that
  * cannot be expressed as data: clipping a gradient through text, and the
  * spectrum drift. The colours themselves arrive inline from `rankBackground`
  * in `rankVisuals.ts`, so these two classes are rank-agnostic and no rank
@@ -38,6 +38,21 @@
 }
 
 /* ---- Cave ornament -------------------------------------------------- */
+
+/* Keep the aura ladder out of the identity form until it is requested. */
+.cave-aura-picker { border: 1px solid rgba(212, 175, 55, .25); border-radius: .85rem; background: rgba(8, 17, 27, .5); }
+.cave-aura-summary { display: flex; align-items: center; gap: .85rem; min-height: 64px; padding: .75rem 1rem; cursor: pointer; list-style: none; border-radius: inherit; }
+.cave-aura-summary::-webkit-details-marker { display: none; }
+.cave-aura-summary:hover { background: rgba(212, 175, 55, .05); }
+.cave-aura-summary:focus-visible { outline: 2px solid #7dd3ff; outline-offset: 3px; }
+.cave-aura-swatch { width: 1.75rem; height: 1.75rem; flex-shrink: 0; border-radius: 50%; border: 1px solid rgba(255,255,255,.2); }
+.cave-aura-summary-text { display: grid; gap: .2rem; flex: 1; min-width: 0; }
+.cave-aura-summary-text > :first-child { font-size: .7rem; letter-spacing: .08em; color: #d6bd77; }
+.cave-aura-summary-text > :last-child { font-size: .85rem; color: #e4e8ec; overflow-wrap: anywhere; }
+.cave-aura-summary-action { font-size: .75rem; color: #b3bfc9; }
+.cave-aura-chevron { flex-shrink: 0; color: #d6bd77; }
+.cave-aura-picker[open] .cave-aura-chevron { transform: rotate(180deg); }
+.cave-aura-options { padding: .85rem; border-top: 1px solid rgba(212,175,55,.15); }
 
 /* Ivory-to-gold title presence, the same reading as the Library header plaque. */
 .cave-title {

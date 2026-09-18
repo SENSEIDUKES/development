@@ -344,6 +344,15 @@ export function UserProfileHome({
               style={auraGlow.style}
               data-cave-portrait
             >
+              {!isPublic && (
+                <button
+                  type="button"
+                  aria-label={formData.avatarUrl || profile?.avatarUrl ? 'Change cultivator portrait' : 'Add cultivator portrait'}
+                  aria-haspopup="dialog"
+                  onClick={() => controller.setShowPortraitModal(true)}
+                  className="absolute inset-0 z-10 cursor-pointer rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#7dd3ff]"
+                />
+              )}
               <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#04070f]">
                 {formData.avatarUrl || profile?.avatarUrl ? (
                   <img

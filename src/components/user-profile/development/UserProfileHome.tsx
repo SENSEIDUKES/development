@@ -21,6 +21,9 @@ import type { PublicProfilePresentation } from "./publicProfile";
 import type { CaveAccountControls } from "./caveAccountControls";
 import { EnergyBalanceIndicator } from "../../energy/development/EnergyBalanceIndicator";
 import type { EnergyAccountState } from "../../energy/shared/useEnergyAccount";
+import type { DaoPillarCalendarState } from "../../dao-pillar/shared/useDaoPillarCalendar";
+import { describeRewards, type DaoPillarCalendarSnapshot } from "../../dao-pillar/shared/daoPillarContracts";
+import { formatScheduledDate } from "../../dao-pillar/development/daoPillarFormat";
 import { LibraryTierBadge } from "./LibraryTierBadge";
 import { caveHref, publicCavePath, useCaveRoute } from './caveNavigation';
 import {
@@ -52,6 +55,26 @@ const tiers: Record<PremiumTier, string> = {
   immortal: "Immortal",
 };
 const formatQi = (value: number) => value.toLocaleString();
+
+/** What the Home card says about the Dao Pillar, straight from the server snapshot. */
+export function daoPillarCardLabels(daoPillar?: DaoPillarCalendarState): { streakLabel: string; daoPillarLabel: string } {
+  const snapshot: DaoPillarCalendarSnapshot | null = daoPillar?.snapshot ?? null;
+  const streakLabel = snapshot
+    ? `${snapshot.streak.current} Day Streak`
+    : daoPillar?.status === "loading" ? "Streak loading…" : "Streak unavailable";
+  if (!daoPillar || daoPillar.status === "unavailable") return { streakLabel, daoPillarLabel: "Dao Pillar not connected" };
+  if (!snapshot) {
+    return { streakLabel, daoPillarLabel: daoPillar.status === "error" ? "Calendar unavailable · open to retry" : "Opening the calendar…" };
+  }
+  const { today } = snapshot;
+  if (today.phase === "before") return { streakLabel, daoPillarLabel: `${snapshot.theme.name} begins ${formatScheduledDate(snapshot.cycle.startsOn)}` };
+  if (today.phase === "after") return { streakLabel, daoPillarLabel: `${snapshot.theme.name} ended ${formatScheduledDate(snapshot.cycle.endsOn)}` };
+  if (today.status === "collected" && today.collected) {
+    return { streakLabel, daoPillarLabel: `Collected today · +${describeRewards(today.collected.delivered)}` };
+  }
+  const openTile = snapshot.tiles.find(tile => tile.day === today.day);
+  return { streakLabel, daoPillarLabel: `Day ${today.day} · ${openTile ? describeRewards(openTile.rewards) : "Reward"} ready to collect` };
+}
 export function effectStatement(effect: ActiveStatusEffect, now: number) {
   const modifiers = [
     [effect.effectDef.qiMultiplier, "Qi"],
@@ -108,6 +131,8 @@ export function UserProfileHome({
   boost,
   accountControls,
   energy,
+  daoPillar,
+  onOpenDaoPillar,
   onOpenRelics,
   onOpenSettings,
 }: {
@@ -120,19 +145,15 @@ export function UserProfileHome({
   accountControls?: CaveAccountControls;
   /** The shared Energy account state and where the emblem leads; absent when Energy is not connected. */
   energy?: { account: EnergyAccountState; onOpen: () => void };
+  /** The server-owned Daily Dao Pillar calendar; absent when the calendar is not connected. */
+  daoPillar?: DaoPillarCalendarState;
+  /** Opens the Cave's `/home/dao-pillar` destination holding the reward calendar. */
+  onOpenDaoPillar?: () => void;
   /** Opens the Cave's existing `/relics` route and its inventory panel. */
   onOpenRelics?: () => void;
   onOpenSettings?: () => void;
 }) {
-  const {
-    profile,
-    formData,
-    isLoading,
-    currentStreak,
-    isCracked,
-    dailyClaim,
-    handleRepairPillar,
-  } = controller;
+  const { profile, formData, isLoading } = controller;
   const isPublic = mode === "public";
   const { navigate } = useCaveRoute();
   const creatorLinks = profile?.uid ? (['worlds', 'storefront'] as const).map(destination => {
@@ -150,9 +171,6 @@ export function UserProfileHome({
   // The same inventory the Relics destination reads; counted, never copied.
   const relicCount = profile?.cosmicInventory?.length ?? 0;
   const [panel, setPanel] = useState<HomePanel | null>(null);
-  const [repairing, setRepairing] = useState(false);
-  const [repairError, setRepairError] = useState("");
-  const repairLock = useRef(false);
   const reservesRef = useRef<HTMLButtonElement>(null);
   const lastPanel = useRef<HomePanel>("qi");
   const effectsRef = useRef<HTMLButtonElement>(null);
@@ -220,46 +238,9 @@ export function UserProfileHome({
         ? controller.unlockedSpecialQi.includes(reserve.id)
         : reserve.balance > 0),
   );
-  const collected =
-    profile?.lastReadDate === new Date(now).toISOString().split("T")[0];
-  const unresolved = dailyClaim?.result?.outcome === "unresolved";
-  const blocked =
-    !profile ||
-    isLoading ||
-    !dailyClaim ||
-    dailyClaim.pending ||
-    unresolved ||
-    collected ||
-    isCracked ||
-    repairing;
-  const claimLabel =
-    !profile || isLoading
-      ? "Loading cultivation…"
-      : dailyClaim?.pending
-        ? "Collecting…"
-        : unresolved
-          ? "Confirming collection…"
-          : collected
-            ? "Collected Today"
-            : isCracked
-              ? "Pillar cracked"
-              : !dailyClaim
-                ? "Collection unavailable"
-                : "Collect today’s cultivation";
-  const repair = async () => {
-    if (repairLock.current) return;
-    repairLock.current = true;
-    setRepairing(true);
-    setRepairError("");
-    try {
-      await handleRepairPillar();
-    } catch {
-      setRepairError("Repair failed. Please try again.");
-    } finally {
-      repairLock.current = false;
-      setRepairing(false);
-    }
-  };
+  // Everything the card says about the Dao Pillar is the server's snapshot:
+  // streak, whether today is open or collected, and what was collected.
+  const { streakLabel, daoPillarLabel } = daoPillarCardLabels(daoPillar);
 
   const stats = publicProfile?.stats ?? null;
   const highlights = publicProfile?.highlights ?? null;
@@ -635,52 +616,25 @@ export function UserProfileHome({
             <button
               type="button"
               className="cave-home-pillar"
-              disabled={blocked}
-              aria-busy={dailyClaim?.pending}
-              onClick={() => {
-                void dailyClaim?.claim();
-              }}
+              disabled={!onOpenDaoPillar}
+              onClick={onOpenDaoPillar}
               data-cave-card="dao-pillar"
+              data-cave-dao-status={daoPillar?.status ?? "unavailable"}
+              data-cave-dao-today={daoPillar?.snapshot?.today.status}
+              aria-busy={daoPillar?.status === "loading" || undefined}
             >
               <span className="cave-home-pillar-art" aria-hidden="true">
                 道
               </span>
-              <span className="min-w-0">
+              <span className="min-w-0 flex-1">
                 <span className="block font-display text-lg">Daily Dao Pillar</span>
                 <span className="mt-1 block font-serif text-lg text-sky-300">
-                  {currentStreak} Day Streak
+                  {streakLabel}
                 </span>
-                <span className="mt-1 block text-sm">{claimLabel}</span>
+                <span className="mt-1 block text-sm">{daoPillarLabel}</span>
               </span>
+              <ChevronRight size={16} aria-hidden="true" className="shrink-0" />
             </button>
-            {isCracked && (
-              <LibraryButton
-                className="mt-2"
-                disabled={repairing || dailyClaim?.pending || unresolved}
-                onClick={() => {
-                  void repair();
-                }}
-              >
-                {repairing ? "Repairing…" : "Repair Pillar · 50 Qi"}
-              </LibraryButton>
-            )}
-            {unresolved && (
-              <LibraryButton
-                className="mt-2"
-                onClick={() => {
-                  void dailyClaim?.reconcile();
-                }}
-              >
-                Check collection status
-              </LibraryButton>
-            )}
-            <p
-              role="status"
-              aria-live="polite"
-              className="mt-1 text-sm text-neutral-300"
-            >
-              {repairError || dailyClaim?.result?.message}
-            </p>
           </>
         )}
       </div>

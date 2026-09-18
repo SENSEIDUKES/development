@@ -18,6 +18,8 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-18 Daily Dao Pillar calendar:** The Home card is now a link to `/home/dao-pillar`, which holds the new server-owned 30-day reward calendar (`src/components/dao-pillar`, `src/server/dao-pillar`): the active Beta Test theme banner over a five-by-six grid of scheduled days, collected / available today / locked / missed states, 1,000 Qi milestones on days 7, 14, 21 and 28, and a one-claim-per-day collection validated and deposited on the server. The card shows the server streak, whether today is open or collected, and the amount collected today. A delivered claim is mirrored onto the profile through the new optional `applyQiDeposit` controller member so rank and balance update without a reload. `UserProfileDaoPillarPanel.tsx` (refinement, cracked pillar, repair) was removed from the Cave; its legacy controller members stay on the contract for the locked reference page. Public views never mount the calendar.
+
 - **2026-09-18 Energy emblem:** The Home Energy emblem now reads the live server-owned balance through the shared Energy client (`src/components/energy`) and opens the new `/home/energy` Cave destination holding the Energy panel (balance, purpose, example costs, recent activity, development controls when the server exposes them). `accountControls.energyBalance` was removed: the Cave keeps no Energy number of its own, and without an `EnergyClientProvider` the emblem stays a plain label. Public views never mount it. Chapter generation and every other generation flow remain unconnected to Energy.
 
 - **2026-09-18 public-view exit:** The header eye now exits public view directly, returning to the prior private page or Home for direct public links. Removed the redundant action toolbar; Search and desktop navigation retain their existing Exit action.
@@ -216,7 +218,7 @@ shared/       — the services port, domain types, and the unforked offering-wee
 | `LibraryTierBadge.tsx` / `library-tier-badge.css` | **The subscription-tier capsule** beside the username — self-contained material, lighting, sheen and reduced-motion fallback, staged for extraction into `@seihouse/library-ui` |
 | `UserProfileStoriesPanel.tsx` | **Stories** — Manifested Stories and Story Seeds in one destination |
 | `UserProfileInventoryPanel.tsx` | **Relics** — inventory, soul attunement, the Offering Hall pouch, submitted history, and rewards |
-| `UserProfileDaoPillarPanel.tsx` | **Dao Pillar** — streak, cracked state and repair, milestones, daily refinement |
+| *(`src/components/dao-pillar/`)* | **Dao Pillar** — the server-owned 30-day reward calendar and its active theme banner, opened as the `/home/dao-pillar` destination |
 | `UserProfileStatusEffectsPanel.tsx` | **Active Status Effects** — one card per effect, with an empty state |
 | `UserProfileSettingsPanel.tsx` | The **Settings** page content |
 | `UserProfileAdminPanel.tsx` | The Akashic Switchboard, unchanged from production, opened as a destination |
@@ -230,9 +232,9 @@ shared/       — the services port, domain types, and the unforked offering-wee
 | `chapterWritingStyle.ts` | Unchanged presentation values from production |
 | `userProfile.css` | The two rank-agnostic aura text classes plus the Cave ornament (title presence, rules, plaques, portrait ring) and the identity rank row, bio, and Boost styles |
 
-`shared/` retains the domain types, offering-week helper, and service port. The port now includes
-optional special-Qi unlocks and the explicit daily-claim status used by both Cave Home and the
-existing Dao Pillar destination.
+`shared/` retains the domain types, offering-week helper, and service port. The port includes
+optional special-Qi unlocks, the legacy daily-claim status the locked reference still reads, and
+the optional `applyQiDeposit` mirror the Daily Dao Pillar calendar uses after a delivered claim.
 
 ## The Cultivator Cave
 
@@ -247,7 +249,7 @@ The Cave home shows, top to bottom on a phone and side by side from the `md` bre
   bio below an understated CULTIVATOR BIO label. Exact progress and overflowing mobile bios
   open dismissible dialogs; Qi Reserves remains a separate Home control;
 - two equal-width Home controls for **Qi Reserves** and **Active Effects**, followed by the full-width
-  directly claimable **Daily Dao Pillar**;
+  **Daily Dao Pillar** card — streak, today's status and amount — which opens the reward calendar;
 - four permanent destinations: **Stories**, **Relics**, **Dao Pillar**, and **Active Status Effects**.
 
 Every destination opens in place, over the same backdrop, with a "Return to cave" control and
@@ -400,13 +402,13 @@ is never transferred.
 | --- | --- |
 | Spirit Unlinked | No account, cloud mode on — lands directly on the cinematic OAuth page. Linking reveals the Cave. |
 | New cultivator | A freshly linked Reader: no portrait, no relics, no streak, no effects — every empty state. |
-| Developed cultivator | A Leader with a portrait, unlocked reserves, an attuned relic, two status effects, a 12-day Dao Pillar, relics awaiting offering, stories and seeds. |
+| Developed cultivator | A Leader with a portrait, unlocked reserves, an attuned relic, two status effects, relics awaiting offering, stories and seeds. The Dao Pillar reads the live `/api/dao-pillar` calendar for this account. |
 | Loading | The profile snapshot never resolves; the identity plaque shows its loading state. |
 | Error | Every asynchronous service rejects — page error band, admin failure, seed failure, portrait failure, offering failure. |
-| Owner / Admin | Owner role: the cracked pillar, and the Authorized Controls section opens the Akashic Switchboard. |
-| Claim failure | The Daily Dao Pillar reports a definitive failure, awards no Qi, and remains retryable. |
-| Claim unresolved | The Pillar stays blocked until its claim status is reconciled. |
-| Collected today | The Pillar starts in the confirmed collected state and cannot be activated again. |
+| Owner / Admin | Owner role: the Authorized Controls section opens the Akashic Switchboard. |
+| Claim failure | The Dao Pillar server refuses today's collection; nothing is deposited and the tile stays open to retry. |
+| Claim unresolved | The collection lands on the server but the answer is lost; the calendar re-reads server truth and shows the day collected once. |
+| Collected today | Twelve days plus today already collected; the card and calendar show it without awarding again. |
 | Home edge cases | Long display name, maximum rank, unlocked zero reserves, and an effect expiring after fifteen seconds. |
 
 Switching state remounts the pane, so each scenario starts from its own snapshot.
@@ -484,7 +486,7 @@ Once the Cave is approved, copy back from `development/`:
 
 - `UserProfile.tsx`, `UserProfileAdminPanel.tsx`, `UserProfileInventoryPanel.tsx`,
   `UserProfilePortraitModal.tsx`, `UserProfileSettingsPanel.tsx`, `UserProfileStoriesPanel.tsx`,
-  `UserProfileCaveDestination.tsx`, `UserProfileDaoPillarPanel.tsx`,
+  `UserProfileCaveDestination.tsx`,
   `UserProfileStatusEffectsPanel.tsx`, `UserProfileHome.tsx`, `UserProfilePublicPanel.tsx`,
   `caveNavigation.tsx`, `caveEnvironment.ts`, `publicProfile.ts`, `displayName.ts`
   → `src/components/` in Light-Novels.
@@ -586,7 +588,7 @@ and host history state:
 | Stories | `?preview=user-profile&cave=/stories` |
 | Relics | `?preview=user-profile&cave=/relics` |
 | Settings | `?preview=user-profile&cave=/settings` |
-| Existing Dao Pillar | `?preview=user-profile&cave=/home/dao-pillar` |
+| Dao Pillar calendar | `?preview=user-profile&cave=/home/dao-pillar` |
 | Existing status effects | `?preview=user-profile&cave=/home/status-effects` |
 | Existing authorized Switchboard | `?preview=user-profile&cave=/settings/switchboard` |
 
@@ -688,7 +690,7 @@ both, and only the information areas below them change:
 | Under the rank | Cultivation progress and Qi | The cultivator's bio |
 | Left card | Qi Reserves | Stats |
 | Right card | Active Effects | Highlights |
-| Action | Daily Dao Pillar claim | Boost |
+| Action | Daily Dao Pillar (opens the calendar) | Boost |
 | Fourth navigation item | Settings | Exit |
 
 The subscription badge moved out of the display-name heading into its own column on a new rank

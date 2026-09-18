@@ -71,7 +71,7 @@ The home screen is driven by [`src/workshop/manifest.ts`](./src/workshop/manifes
 
 As of 2026-09-09, the header groups existing previews by their Workshop role:
 
-- **Home:** Library Shell and User Profile.
+- **Home:** Library Shell, User Profile, and the Daily Dao Pillar.
 - **Library:** Story Seed only.
 - **SEN:** Reader Chamber, Reader Codex, Character Voice, Card Workshop, Chapter Generation, Harness Generation, and Chapter Generation Manifestation.
 - **Shared:** Celestial Particle Backdrop, Closed-Door Cultivation, Relics Gallery, and Energy.

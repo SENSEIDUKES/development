@@ -60,21 +60,27 @@ export async function verifyCaveHome(page) {
     check(!geometry.overflow && geometry.overlap && geometry.textClear && geometry.compact, `Home geometry at ${width}: ${JSON.stringify(geometry)}`);
   }
   await page.setViewportSize({ width: 390, height: 844 });
+  // The Daily Dao Pillar card opens the calendar; collection happens on the
+  // open tile, and the server decides the outcome.
   for (const scenario of ['Claim failure', 'Uncertain claim', 'Collected today']) {
     await choose(scenario);
-    if (scenario !== 'Collected today') await card('dao-pillar').click();
-    if (scenario === 'Claim failure') {
-      await page.getByText('Collection failed. Please try again.', { exact: true }).waitFor();
-      check(await card('dao-pillar').isEnabled(), 'failed claim must allow retry');
-    } else if (scenario === 'Uncertain claim') {
-      await button('Check collection status').waitFor();
-      check(await card('dao-pillar').isDisabled(), 'uncertain claim must block repeat collection');
-      await button('Check collection status').click();
-      await button('Check collection status').waitFor({ state: 'hidden' });
-      check(await card('dao-pillar').isEnabled(), 'reconciled unclaimed state must allow retry');
+    await card('dao-pillar').click();
+    await page.locator('[data-dao-pillar]').waitFor();
+    if (scenario === 'Collected today') {
+      check(await page.locator('.dao-tile[data-state="collected"]').count() === 13, 'collected today must show thirteen collected tiles');
+      check(await page.locator('.dao-tile[data-state="available"]').count() === 0, 'collected today must leave no open tile');
+      check((await page.locator('[data-dao-today-line]').innerText()).includes('Collected today'), 'collected today must say so');
     } else {
-      check(await card('dao-pillar').isDisabled(), 'already collected must stay disabled');
+      await page.locator('.dao-tile[data-state="available"]').click();
+      if (scenario === 'Claim failure') {
+        await page.getByText('The Dao Pillar is unavailable right now. Please try again shortly.', { exact: true }).waitFor();
+        check(await page.locator('.dao-tile[data-state="available"]').count() === 1, 'failed claim must leave the tile available to retry');
+      } else {
+        await page.locator('.dao-tile[data-state="collected"][data-day="13"]').waitFor();
+        check(await page.locator('.dao-tile[data-state="available"]').count() === 0, 'reconciled claim must show the day collected once');
+      }
     }
+    await page.locator('[aria-label="Return to cave"]').click();
   }
   await choose('Developed cultivator');
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -84,9 +90,15 @@ export async function verifyCaveHome(page) {
   });
   check(reducedMotion.transitionProperty === 'none', 'portrait aura transition must stop for reduced motion');
   await card('dao-pillar').press('Enter');
-  await page.getByRole('button', { name: /Daily Dao Pillar.*Collected Today/ }).waitFor();
-  check(await card('dao-pillar').isDisabled(), 'claim must disable Pillar');
-  check((await page.locator('[data-cave-qi]').innerText()).includes('13,485'), 'claim must update cultivation');
+  await page.locator('[data-dao-pillar]').waitFor();
+  const openTile = page.locator('.dao-tile[data-state="available"]');
+  if (await openTile.count()) {
+    await openTile.click();
+    await page.locator('[data-dao-live]').filter({ hasText: /collected/ }).waitFor();
+    check(await page.locator('.dao-tile[data-state="available"]').count() === 0, 'claim must close the open tile');
+  }
+  await page.locator('[aria-label="Return to cave"]').click();
+  await page.getByRole('button', { name: /Daily Dao Pillar.*Collected today/ }).waitFor();
   await page.emulateMedia({ reducedMotion: 'no-preference' });
 
   // ---- Public view ----------------------------------------------------

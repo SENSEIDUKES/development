@@ -37,6 +37,7 @@ import type {
   UserProfileController,
   UserProfileControllerProps,
   UserProfileServices,
+  QiDepositReceipt,
 } from '../../../components/user-profile/shared/userProfileServices';
 import type {
   AccountRole,
@@ -634,6 +635,23 @@ export function createMockUserProfileServices({
     }, []);
     const handleCheckIn = useCallback(async () => { await claim(); }, [claim]);
 
+    // ---- Server-recorded Qi (Daily Dao Pillar) ------------------------------
+    // The calendar server already deposited this; the mock only mirrors the
+    // amount onto the same cultivation fields production's profile refresh
+    // would reload, so rank and balance move without a page reload.
+    const applyQiDeposit = useCallback((deposit: QiDepositReceipt) => {
+      const profile = profileRef.current;
+      if (!profile || !Number.isFinite(deposit.amount) || deposit.amount <= 0) return;
+      const currentQiVal = profile.heavenly_qi !== undefined ? profile.heavenly_qi : (profile.qi || 0);
+      commitProfile({
+        ...profile,
+        qi: (profile.qi || 0) + deposit.amount,
+        dao_xp: (profile.dao_xp ?? profile.qi ?? 0) + deposit.amount,
+        heavenly_qi: currentQiVal + deposit.amount,
+        updatedAt: new Date().toISOString(),
+      });
+    }, [commitProfile]);
+
     // ---- Attunement (production behaviour, verbatim) -----------------------
     const handleAttuneArtifact = useCallback(
       async (artifactId: string) => {
@@ -808,6 +826,7 @@ export function createMockUserProfileServices({
       handleRepairPillar,
       handleCheckIn,
       dailyClaim: { pending: claimPending, result: claimResult, claim, reconcile },
+      applyQiDeposit,
       unlockedSpecialQi: unlockedSpecialQi ?? scenario.unlockedSpecialQi,
       handleAttuneArtifact,
 

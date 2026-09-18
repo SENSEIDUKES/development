@@ -1,0 +1,93 @@
+/* Daily Dao Pillar — the Celestial Library reward calendar.
+   Palette: dark navy ground, antique gold rules, ivory type, cyan cultivation. */
+
+.dao-pillar { --dao-navy: #03060c; --dao-navy-2: #0b1220; --dao-gold: #e2c46a; --dao-gold-deep: #d4af37; --dao-ivory: #eee4cc; --dao-accent: #7dd3ff; --dao-accent-deep: #04acff; display: flex; flex-direction: column; gap: 1.25rem; color: var(--dao-ivory); }
+
+/* ---- Active theme banner ------------------------------------------------ */
+.dao-banner { display: flex; flex-direction: column; gap: .6rem; }
+.dao-banner-frame { position: relative; overflow: hidden; min-height: 12.5rem; border: 1px solid color-mix(in srgb, var(--dao-gold-deep) 55%, transparent); border-radius: .75rem; background: var(--dao-navy-2); box-shadow: 0 0 0 1px #00000080, 0 12px 32px #00000088, inset 0 0 40px #04acff14; }
+.dao-banner-art { position: absolute; top: 0; bottom: 0; right: -14%; width: 132%; height: 100%; object-fit: cover; object-position: 100% 50%; }
+.dao-banner-veil { position: absolute; inset: 0; background: linear-gradient(90deg, #050b14f0 0%, #050b14c8 34%, #050b1438 58%, #050b1426 100%), linear-gradient(0deg, #050b14ee 0%, transparent 34%); }
+.dao-banner-copy { position: relative; padding: 1.1rem 1rem 0; max-width: 62%; }
+.dao-banner-name { margin: 0; font-family: var(--font-display, serif); font-size: clamp(1.7rem, 7.5vw, 2.4rem); line-height: 1; letter-spacing: .08em; text-transform: uppercase; color: var(--dao-ivory); text-shadow: 0 2px 12px #000000cc; }
+.dao-banner-tagline { margin: .45rem 0 0; font-family: var(--font-sc, serif); font-size: .74rem; letter-spacing: .16em; text-transform: uppercase; color: var(--dao-gold); }
+.dao-banner-dates { margin: .35rem 0 0; font-family: var(--font-serif, serif); font-size: .78rem; color: #d6dbe6; }
+.dao-banner-pillars { position: absolute; top: 1.1rem; right: .9rem; margin: 0; padding: 0; list-style: none; text-align: right; font-family: var(--font-sc, serif); font-size: .58rem; letter-spacing: .22em; text-transform: uppercase; color: var(--dao-ivory); text-shadow: 0 1px 6px #000000cc; }
+.dao-banner-pillars li + li { margin-top: .32rem; }
+.dao-banner-seal { position: absolute; right: .95rem; bottom: 2.35rem; display: grid; place-items: center; width: 1.55rem; height: 1.55rem; border: 1px solid #b0413e; border-radius: .2rem; font-family: var(--font-serif, serif); font-size: .85rem; color: #e06c6a; background: #7a1f1f66; }
+.dao-banner-motto { position: absolute; left: 0; right: 0; bottom: .6rem; margin: 0; padding: 0 .5rem; text-align: center; font-family: var(--font-sc, serif); font-size: .58rem; letter-spacing: .26em; text-transform: uppercase; color: var(--dao-gold); text-shadow: 0 1px 6px #000000cc; }
+.dao-banner-description { margin: 0; font-family: var(--font-serif, serif); font-size: .82rem; line-height: 1.55; color: #c6ccd8; }
+@media (min-width: 640px) {
+  .dao-banner-frame { min-height: 14rem; }
+  .dao-banner-art { right: 0; width: 100%; object-position: 72% 50%; }
+  .dao-banner-copy { padding: 1.5rem 1.4rem 0; max-width: 55%; }
+  .dao-banner-pillars { top: 1.6rem; right: 1.4rem; font-size: .66rem; }
+  .dao-banner-seal { right: 1.4rem; bottom: 2.6rem; }
+}
+
+/* ---- Daily rewards -------------------------------------------------------- */
+.dao-rewards { display: flex; flex-direction: column; gap: .85rem; }
+.dao-rewards-header { text-align: center; }
+.dao-rewards-title { position: relative; margin: 0; font-family: var(--font-display, serif); font-size: 1.25rem; letter-spacing: .2em; text-transform: uppercase; color: var(--dao-ivory); }
+.dao-rewards-title::before, .dao-rewards-title::after { content: ""; position: absolute; top: 50%; width: 14%; max-width: 4.5rem; height: 1px; background: linear-gradient(90deg, transparent, var(--dao-gold-deep)); }
+.dao-rewards-title::before { left: .25rem; }
+.dao-rewards-title::after { right: .25rem; transform: scaleX(-1); }
+.dao-rewards-subtitle { margin: .3rem 0 0; font-family: var(--font-sc, serif); font-size: .58rem; letter-spacing: .3em; text-transform: uppercase; color: #8b93a3; }
+
+.dao-calendar { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .45rem; }
+.dao-calendar-cell { min-width: 0; }
+@media (min-width: 640px) { .dao-calendar { gap: .75rem; } }
+
+.dao-tile { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: .15rem; width: 100%; min-height: 5.9rem; padding: .45rem .2rem .4rem; border: 1px solid color-mix(in srgb, var(--dao-gold-deep) 45%, transparent); border-radius: .8rem; background: linear-gradient(165deg, #101a2af0, #050b14f0); color: var(--dao-ivory); text-align: center; cursor: default; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+.dao-tile:focus-visible { outline: 2px solid var(--dao-accent); outline-offset: 3px; }
+.dao-tile-day { font-family: var(--font-serif, serif); font-size: .72rem; letter-spacing: .02em; line-height: 1; }
+.dao-tile-art { position: relative; display: grid; place-items: center; width: 2.4rem; height: 2.4rem; filter: drop-shadow(0 0 6px #04acff99); }
+.dao-tile-amount { font-family: var(--font-serif, serif); font-size: .7rem; line-height: 1; color: var(--dao-ivory); }
+.dao-tile-mark { position: absolute; top: 1.9rem; right: .22rem; display: grid; place-items: center; width: 1.05rem; height: 1.05rem; border-radius: 999px; background: #050b14e6; }
+@media (min-width: 640px) {
+  .dao-tile { min-height: 7.4rem; padding: .6rem .35rem .55rem; }
+  .dao-tile-day { font-size: .85rem; }
+  .dao-tile-amount { font-size: .82rem; }
+  .dao-tile-art { width: 2.8rem; height: 2.8rem; }
+  .dao-tile-mark { top: 2.3rem; right: .45rem; width: 1.2rem; height: 1.2rem; }
+}
+
+/* Collected: cyan check in a cyan ring. */
+.dao-tile[data-state="collected"] { cursor: pointer; }
+.dao-tile[data-state="collected"]:hover { border-color: var(--dao-gold); }
+.dao-tile[data-state="collected"] .dao-tile-mark { border: 1.5px solid var(--dao-accent); color: var(--dao-accent); box-shadow: 0 0 8px #04acff66; }
+
+/* Available today: cyan/gold glow and the Collect action. */
+.dao-tile[data-state="available"] { cursor: pointer; border-color: var(--dao-accent); box-shadow: 0 0 0 1px #7dd3ff55, 0 0 16px #04acff80, 0 0 34px #d4af3740; animation: dao-tile-breathe 2.8s ease-in-out infinite; }
+.dao-tile[data-state="available"]:hover:not(:disabled) { transform: translateY(-1px); }
+.dao-tile[data-state="available"]:disabled { opacity: .85; cursor: progress; }
+.dao-tile-collect { display: inline-block; margin-top: .1rem; padding: .18rem .5rem; border: 1px solid var(--dao-gold); border-radius: 999px; font-family: var(--font-sc, serif); font-size: .5rem; letter-spacing: .18em; text-transform: uppercase; color: var(--dao-gold); background: #d4af3714; }
+@media (min-width: 640px) { .dao-tile-collect { font-size: .6rem; padding: .22rem .7rem; } }
+@keyframes dao-tile-breathe { 0%, 100% { box-shadow: 0 0 0 1px #7dd3ff55, 0 0 16px #04acff80, 0 0 34px #d4af3740; } 50% { box-shadow: 0 0 0 1px #7dd3ff88, 0 0 22px #04acffaa, 0 0 44px #d4af3766; } }
+
+/* Locked (future) and missed (past): dimmed, no glow. */
+.dao-tile[data-state="locked"], .dao-tile[data-state="missed"] { opacity: .5; }
+.dao-tile[data-state="locked"] .dao-tile-art, .dao-tile[data-state="missed"] .dao-tile-art { filter: saturate(.7) drop-shadow(0 0 3px #04acff55); }
+.dao-tile[data-state="locked"] .dao-tile-mark { color: #b9c0cc; }
+.dao-tile[data-state="missed"] .dao-tile-mark { color: #c98686; border: 1px solid #c9868655; }
+.dao-tile[data-state="missed"] .dao-tile-amount { text-decoration: line-through; text-decoration-color: #c9868699; }
+
+/* Milestones: the flame sits in a gold ring with a wider glow; the amount turns gold. */
+.dao-tile[data-milestone="true"] .dao-tile-art::before { content: ""; position: absolute; inset: -.1rem; border-radius: 999px; border: 1px solid #e2c46aaa; box-shadow: 0 0 10px #d4af3766, inset 0 0 10px #d4af3733; }
+.dao-tile[data-milestone="true"] .dao-tile-art::after { content: ""; position: absolute; inset: -.55rem; border-radius: 999px; background: radial-gradient(circle, #04acff33 0%, transparent 70%); }
+.dao-tile[data-milestone="true"] .dao-tile-art { filter: drop-shadow(0 0 9px #04acffcc); }
+.dao-tile[data-milestone="true"] .dao-tile-amount { color: var(--dao-gold); font-weight: 700; }
+
+.dao-today { margin: .35rem 0 0; text-align: center; font-family: var(--font-display, serif); font-size: 1.05rem; color: var(--dao-ivory); }
+.dao-streak { margin: 0; text-align: center; font-family: var(--font-serif, serif); font-size: .78rem; color: #9aa3b5; }
+.dao-live { margin: 0; min-height: 1.2rem; text-align: center; font-family: var(--font-serif, serif); font-size: .8rem; color: #d6dbe6; }
+.dao-motto { margin: 0; text-align: center; font-family: var(--font-sc, serif); font-size: .56rem; letter-spacing: .3em; text-transform: uppercase; color: #8b93a3; }
+
+.dao-tile-detail { display: grid; gap: .75rem; margin: 0; font-family: var(--font-serif, serif); }
+.dao-tile-detail dt { font-family: var(--font-sc, serif); font-size: .62rem; letter-spacing: .18em; text-transform: uppercase; color: #8b93a3; }
+.dao-tile-detail dd { margin: .15rem 0 0; font-size: .95rem; color: #eee4cc; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dao-tile { transition: none; }
+  .dao-tile[data-state="available"] { animation: none; }
+}

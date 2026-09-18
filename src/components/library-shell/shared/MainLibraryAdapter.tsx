@@ -16,7 +16,8 @@ export interface MainLibraryAdapter {
   syncStatus: string;
   lastSavedTime: number | null;
   currentUser: { email: string; displayName?: string } | null;
-  userProfile: { displayName?: string; premiumTier: string } | null;
+  /** `interfaceLanguage` is the account's SEN language code; the footer reads it and the Cave setting owns it. */
+  userProfile: { displayName?: string; premiumTier: string; interfaceLanguage?: string } | null;
   stories: { id: string; mcName: string; genre: string }[];
   setIsSettingsOpen: (open: boolean) => void;
   setIsCodexSheetOpen: (open: boolean) => void;

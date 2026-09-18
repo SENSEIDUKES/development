@@ -4,7 +4,7 @@
 - **Source locations:** Light-Novels `src/components/GlobalHeader.tsx` (`GlobalHeader`), `src/components/DaoInsights.tsx` (`DaoInsights`), and the collection navigation in `src/components/LibraryScreen.tsx` (`LibraryScreen`). Development `src/components/story-seed/development/CreationModal.tsx` (`CreationModal`), `StorySeedHeader.tsx`, `StorySeedSelector.tsx`, `StorySeedMobileNavigation.tsx`, and `StorySeedSettings.tsx`.
 - **Workshop preview:** `?preview=library-shell`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-11
+- **Last Workshop update:** 2026-09-17
 - **Last source comparison:** 2026-09-08
 - **Replica status:** under refinement; locked captures plus Development workspaces on the canonical `SEIAppHeader` and `SEIAppShell`.
 
@@ -15,6 +15,12 @@ Development now uses Logo — existing Library Header Badge — optional context
 ## Bottom navigation update — 2026-09-11
 
 `LibraryNavigation` now owns Home — Library — Discover — Profile, active-route matching, content clearance and safe-area spacing. Its active Development scrubber uses the supplied official SEN Home, Book, Discovery, and Profile icons. The shared navigation/header layer also supplies the official Settings and Exit marks to active consumer controls. The global Section control and drawer were removed on 2026-09-09 at user request; page destinations remain in top Search. Page definitions still supply the Cave’s existing desktop rail. `MainLibraryNavigation` adapts the existing LibraryScreen collections and routes. Story Seed keeps its current navigation, including Sections; Reader/Reader Codex are immersive exclusions. No page content, cards or internal controls were redesigned. [Contracts, route mappings and transfer details](../../../docs/library-navigation.md).
+
+## Platform footer — 2026-09-17
+
+`LibraryFooter` is the Library Shell's platform footer, owned like the global header and bottom strip. It replaces the production two-line footer (statement plus the small ⓈSEN mark under a tall empty band) with a compact composition modelled on the supplied reference: the existing Celestial Library emblem between gold hairlines, the SEN wordmark in cream display serif, the unchanged statement "SEIHOUSE: A BETTER TIME CAPSULE AND TRANSLATOR OF ARTISTIC EXPRESSION", a glass social row (Discord, TikTok, Instagram, YouTube, X), three closed accordions (Explore, SEIHouse, Support), the account's language entry, and the legal row (© 2026 SEIHouse Productions LLC · Terms · Privacy · Cookies). No portal or domain button. Surfaces are `LibraryPanel` glass; the accordions are `SEIDisclosureGroup` in single mode, so every menu starts collapsed and only one opens at a time; the social glyphs follow `currentColor` and are decorative beside their named controls.
+
+The footer holds no routes or URLs. `MainLibraryFooter` adapts the existing Main Library destinations — the same ones header Search and the global strip use (Immortal Hub, My Library, Fate Survival, Sects, Tiers, Story Seed, Cultivator Cave, Seed Bank, Relics, Library Help, Shortcut Spells, Settings) — through the shared `onNavigate` callback, and returns nothing on immersive routes, matching the navigation exclusions. Social channels and legal pages are host configuration passed in by the shell; neither repository publishes those URLs yet, so the Workshop fixture reports the destination locally instead of inventing links, and an item with no destination is not rendered. The language pill shows the account's Interface Language from the SEN language registry and opens the Cave's existing Language setting, which owns the confirm/revert safeguard; it adds no second selector or save path. Page clearance above the global strip is unchanged (`library-navigation.css`). Verification: `output/playwright/library-footer/verify.mjs` against `npm run preview -- --port 4173` records 320/390/1440 layouts, 44px targets, keyboard single-open behavior, focus rings and strip clearance; the sandbox answers the Google Fonts `@import` with an empty sheet because it has no outbound network.
 
 ## Capture boundary
 
@@ -48,6 +54,7 @@ Additional states are exercised through the original controls: open/close Comman
 
 | Responsibility | Current owner and dependencies | Future sharing assessment |
 | --- | --- | --- |
+| Platform footer | `LibraryFooter` presentation and `MainLibraryFooter` destination adapter; identity, social row, closed menus, language entry, legal row | Library-owned chrome. Hosts supply social/legal configuration and the router callback; SEN never depends on it. |
 | Main Library identity and home entry | Light-Novels `GlobalHeader`; emblem, typography, press-and-hold Celestial glow, responsive title visibility | Branding and home routing remain Library-owned. A common identity container could eventually use existing Library UI primitives. |
 | Profile/cloud entry | `GlobalHeader` reads authentication and profile state from `useAppStore`; click routes to `profile` for linked users and guests | Account identity, tiers, and authentication belong to the host. Workspaces should receive host callbacks and display data rather than importing its store. |
 | Global Command Hub | `GlobalHeader`; local disclosure state, outside pointer/Escape dismissal, global screen navigation, optional active-tome commands | Global destinations, companion realms, tiers, and account summaries remain Main Library-specific. Do not turn these into workspace section navigation. |
@@ -89,9 +96,11 @@ See [validation evidence](../../../docs/library-shell-validation.md) for the che
 
 Nothing in this PR is transferred back automatically. Light-Novels and locked references are unchanged; active Development Story Seed and Cultivator Cave now consume the header family. The source components named above remain their production owners.
 
-For an eventual approved change, identify the owning lane first. Main header/DAO changes would target Light-Novels `src/components/GlobalHeader.tsx`, `src/components/DaoInsights.tsx`, relevant `src/index.css` rules, and only if needed the collection fragment in `src/components/LibraryScreen.tsx`. Story Seed changes would target its existing development header, selector, mobile navigation, settings, `CreationModal` integration, and `story-seed.css`, then ship through the established SEN package and Library host presentation adapter. Shared visual primitives would be changed in UI, published/packed first, then consumed by the hosts. Do not copy the frame HTML, Workshop wrappers, mock context, fixture data, content slots, or capture manifest into a production application.
+For an eventual approved change, identify the owning lane first. The footer would transfer `LibraryFooter.tsx`, `LibraryFooterSocialIcons.tsx`, `library-footer.css` and `MainLibraryFooter.tsx` to replace the footer block in Light-Novels `src/App.tsx`, with the host supplying its router callback, Help opener, social URLs and legal pages. Main header/DAO changes would target Light-Novels `src/components/GlobalHeader.tsx`, `src/components/DaoInsights.tsx`, relevant `src/index.css` rules, and only if needed the collection fragment in `src/components/LibraryScreen.tsx`. Story Seed changes would target its existing development header, selector, mobile navigation, settings, `CreationModal` integration, and `story-seed.css`, then ship through the established SEN package and Library host presentation adapter. Shared visual primitives would be changed in UI, published/packed first, then consumed by the hosts. Do not copy the frame HTML, Workshop wrappers, mock context, fixture data, content slots, or capture manifest into a production application.
 
 ## Workshop history
+
+- **2026-09-17:** Added the compact platform footer (`LibraryFooter`, `MainLibraryFooter`, `library-footer.css`) beneath Home content in the Development shell, keeping the SEN identity and statement, adding the visible social row, three closed single-open accordions over existing destinations, the account language entry that opens the Cave's Language setting, and the legal row. No portal button. Locked captures, header, bottom navigation and Home sections are unchanged.
 
 - **2026-09-11:** Consolidated every supplied SEN SVG and its `currentColor` renderer under `src/components/sen-icons`, replacing public-path masks with source imports. Shared Help and Search now consume the same named adapters as navigation, profile, creation, and Qi surfaces; compatibility exports keep established Development imports stable.
 

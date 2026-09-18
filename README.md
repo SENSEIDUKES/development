@@ -19,7 +19,7 @@ SEN is therefore never "a Library feature". The two ship as separate packages fr
 
 ## Production application boundary
 
-Files inside `SENSEIDUKES/Light-Novels` and every other production Light Novel application are **off-limits during Development repository work**. Agents may inspect those repositories only to understand or faithfully replicate an existing component.
+Files inside `SENSEIDUKES/Light-Novels` and every other production Light Novel application are **off-limits during Development repository work**. Agents may inspect those repositories to understand existing contracts, faithfully replicate a component, or reuse working infrastructure during approved reconstruction.
 
 Do not edit, create, delete, commit, push, or open a pull request that changes any Light Novel application from a Development task. Moving approved Development work back into a production application must be treated as a separate integration task and requires the user's explicit authorization.
 
@@ -27,15 +27,16 @@ Do not edit, create, delete, commit, push, or open a pull request that changes a
 
 Before making any changes, every coding agent is required to:
 
-1. Read [`AGENTS.md`](./AGENTS.md).
-2. Download, install or otherwise make available the **Sensei Skill**.
-3. Download and read the **Workshop Replica Skill** at [`skills/workshop-replica/SKILL.md`](./skills/workshop-replica/SKILL.md).
-4. Follow both skills throughout the task.
-5. State clearly before implementation if either required skill cannot be accessed.
+1. Read [AGENTS.md](./AGENTS.md).
+2. Read [Sensei Skill](./skills/sensei-skill/SKILL.md) and [SEIHouse Codebase Conventions](./skills/seihouse-codebase-conventions/SKILL.md).
+3. For imported surfaces or reconstructed systems, read [Workshop Replica](./skills/workshop-replica/SKILL.md) and select its faithful-replica or reconstruction mode.
+4. State clearly if a required skill cannot be accessed; do not invent a replacement.
 
-These skills are part of the Workshop development workflow and are not optional. Do not silently ignore them, substitute ad-hoc instructions for them, or begin implementation before reading them.
-
-The Sensei Skill provides the governing SEN/SEIHouse product and design guidance. The Workshop Replica Skill defines how real pages and components are copied into this repository, stripped of production dependencies, documented, dated, previewed, and later transferred back safely.
+The seven canonical skills are maintained directly in `skills/`, discovered through
+`.agents/skills.json`, and listed in [AGENTS.md](./AGENTS.md#required-skills).
+There are no mirrored installation copies. Sensei guides product-owner communication;
+Codebase Conventions governs ownership and compatibility; Workshop Replica defines the
+selected lifecycle, source authority, verification, and transfer boundaries.
 
 ## What belongs here
 
@@ -51,7 +52,9 @@ Examples include:
 - Manifestation screens and animations
 - small mobile-first interface experiments
 
-This is not a second version of the full app. It is a clean visual development space with mock content only.
+Faithful visual replicas use mock content and isolated previews. Approved major system
+reconstruction may include real frontend, backend, APIs, persistence, schemas, and
+integration under [DEVELOPMENT_RECONSTRUCTION.md](./DEVELOPMENT_RECONSTRUCTION.md).
 
 ## Run locally
 

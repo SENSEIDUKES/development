@@ -30,7 +30,9 @@ Before changing a function, type, schema, event, or component API:
 1. Find its callers and consumers.
 2. Identify stored data using the contract.
 3. Determine whether the change is additive, compatible, or breaking.
-4. Prefer additive/defaulted evolution when possible.
+4. Apply the [source authority and compatibility rules](../SKILL.md): preserve production
+   contracts through compatibility, migration, or deliberate replacement; avoid artificial
+   compatibility for development-only state unless its current contract requires it.
 5. Update consumers and tests together when a break is required.
 
 ## State Rules

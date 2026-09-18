@@ -4,7 +4,7 @@ Read this file before making changes.
 
 ## Purpose
 
-This repository is the **SEN Development space**: a centralized visual development and preview environment for SEN and Library components and the main `SENSEIDUKES/Light-Novels` application.
+This repository is the **SEN Development space**: a centralized development, reconstruction, and preview environment for SEN and Library components and the main `SENSEIDUKES/Light-Novels` application.
 
 ### SEN and Library are two products, not one
 
@@ -40,9 +40,9 @@ Before beginning any implementation, download, install or otherwise make availab
 
 Current required skills:
 
-- **Sensei Skill** — the governing SEN/SEIHouse product, design, restraint, and implementation guidance.
+- **Sensei Skill** — [`skills/sensei-skill/SKILL.md`](./skills/sensei-skill/SKILL.md), the product-owner communication and consequence-reporting guidance.
 - **SEIHouse Codebase Conventions** — [`skills/seihouse-codebase-conventions/SKILL.md`](./skills/seihouse-codebase-conventions/SKILL.md), the required repository-orientation and architectural-consistency layer. Use it to identify the existing SEIHouse system that owns a change, preserve current state and data contracts, and avoid duplicate components, stores, services, schemas, persistence paths, or media paths.
-- **Workshop Replica Skill** — [`skills/workshop-replica/SKILL.md`](./skills/workshop-replica/SKILL.md), used whenever a real page, screen, component, animation, or flow is brought into the Workshop.
+- **Workshop Replica Skill** — [`skills/workshop-replica/SKILL.md`](./skills/workshop-replica/SKILL.md), used for imported pages, screens, components, animations, flows, and approved system reconstruction.
 
 These skills are part of the repository workflow and are not optional. Do not silently proceed without them.
 
@@ -50,19 +50,19 @@ At the beginning of every task:
 
 1. Confirm that all required skills were downloaded or are available in the agent environment.
 2. Read the Sensei Skill and SEIHouse Codebase Conventions before changing code.
-3. Read the Workshop Replica Skill whenever the task brings a real page, screen, component, animation, or flow into this Workshop.
+3. Read the Workshop Replica Skill for imported surfaces and approved system reconstruction.
 4. State clearly if any required skill cannot be accessed.
 5. Do not invent a replacement version of a missing skill.
 
-The SEIHouse Codebase Conventions skill is mandatory for every implementation task. Even though this repository is a visual Workshop, agents must still locate and reuse the existing Workshop systems, component families, shared primitives, state patterns, and source-boundary conventions instead of creating parallel structures.
+The SEIHouse Codebase Conventions skill is mandatory for every implementation task. For both visual refinement and approved reconstruction, agents must locate and reuse the existing Workshop systems, component families, shared primitives, state patterns, and source-boundary conventions instead of creating parallel structures.
 
-When the user asks to bring a real page, screen, component, animation, or flow from another repository into this Workshop, the Workshop Replica Skill is mandatory. It covers faithful visual replication, local state simulation, production-boundary rules, portability, verification, and dated component history.
+When the user asks to bring a real page, screen, component, animation, or flow from another repository into this Workshop, the Workshop Replica Skill is mandatory. It selects faithful replication or approved reconstruction and defines the corresponding source authority, boundaries, verification, and documentation.
 
 ## Core rule
 
 Build workshop pieces so the finished component can be moved cleanly into `Light-Novels` or another SEN application.
 
-Do not turn this repository into a second full application. Use mock data and preview-only wrappers where necessary, but keep the actual component portable and separate from the workshop shell.
+For faithful replicas, use mock data and preview-only wrappers while keeping components portable and separate from the Workshop shell. Approved reconstruction follows `DEVELOPMENT_RECONSTRUCTION.md` and may include real system infrastructure.
 
 ## Organization
 
@@ -72,7 +72,7 @@ Do not turn this repository into a second full application. Use mock data and pr
 - `src/App.tsx` resolves `?preview=<id>` through a `previewRegistry` map — add one line per feature, never a new `if` block.
 - Reusable component logic lives in `src/components/<feature-name>/`, split into:
   - `reference/` — an untouched, locked replica of what exists in production. Never modified during normal Workshop tweaking.
-  - `development/` — the active Workshop version. Starts as a copy of `reference/`. This is the only folder agents change.
+  - `development/` — the active Workshop version. Starts as a copy of `reference/`. This is the active folder for visual refinements; reconstruction may also change the relevant shared, server, and integration owners.
   - `shared/` (when it applies) — logic genuinely identical between the two, such as shared utilities or components that have no fork yet.
 - `src/package/` holds the entry barrels for the two published packages —
   `src/package/sen/` for `@seihouse/sen` (the portable engine: surface
@@ -91,7 +91,8 @@ Do not turn this repository into a second full application. Use mock data and pr
   `src/package/library/*`.
 - Static visual assets belong in `public/` under a clearly named folder.
 - Keep component-specific styles close to the component when practical.
-- Portable agent skills live under `skills/`.
+- Portable agent skills have exactly one authoritative editable entrypoint at `skills/<skill-name>/SKILL.md`. `.agents/skills.json` discovers `../skills` relative to `.agents/`; do not mirror skill files under `.agents/skills/`.
+- The canonical set is [Sensei](skills/sensei-skill/SKILL.md), [Creative UI Translator](skills/creative-ui-translator/SKILL.md), [Components Performance](skills/seihouse-components-performance/SKILL.md), [Layout Optimization](skills/seihouse-layout-optimization/SKILL.md), [Verification Loop](skills/seihouse-verification-loop/SKILL.md), [Codebase Conventions](skills/seihouse-codebase-conventions/SKILL.md), and [Workshop Replica](skills/workshop-replica/SKILL.md).
 
 ### No "V2" folders, cards, or preview IDs
 
@@ -106,7 +107,9 @@ When adding a new experiment:
 5. Add one component README (at the feature folder root) containing source information, current dates, Workshop history, mock boundaries, and transfer instructions.
 6. Document any files that must be copied into the source application.
 
-### Lifecycle for an approved change
+### Lifecycle for an approved faithful-replica change
+
+For reconstructed systems, use Mode B in Workshop Replica and the reconstruction policy. Production governs existing integrated contracts; DEV governs the approved reconstructed design until separately authorized transfer.
 
 1. **Import** — copy production's current implementation into `reference/`.
 2. **Fork once** — `development/` starts as a copy of `reference/`.

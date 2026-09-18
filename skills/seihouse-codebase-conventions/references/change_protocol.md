@@ -66,11 +66,17 @@ Choose checks based on the change.
 
 ### Migration or schema
 
+Apply the [compatibility boundary](../SKILL.md) first. For production-persisted contracts
+or feature-required compatibility, verify:
+
 - old records still load;
 - new records use the new shape;
 - defaults are safe;
 - migration/backfill is bounded and repeatable;
 - rollback or partial-deployment behavior is understood.
+
+For approved development-only replacement, verify the new schema/storage boundary,
+intentional reset of obsolete state, and updated consumers instead of inventing migrations.
 
 ### Performance
 

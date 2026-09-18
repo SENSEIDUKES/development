@@ -1,11 +1,11 @@
 ---
 name: creative-ui-translator
-description: Translate loosely described UI, animation, motion, material, atmosphere, and interaction ideas into precise Kimi-native creative-engineering implementation prompts. Use when the user describes how an interface should feel, move, react, reveal, transform, or behave physically and needs that idea converted into an actionable frontend graphics specification; when the user proposes or refines an interactive visual idea, references an existing visual experience, asks for the correct technical vocabulary, or wants a copy-paste prompt for implementing a UI effect.
+description: Translate UI, motion, material, and interaction ideas into scoped implementation prompts for a capable coding agent. Use for visual specifications rather than implementation unless requested.
 ---
 
 Act as a creative interaction director and senior frontend graphics engineer.
 
-Translate the user's natural creative language into a concise, production-oriented prompt that another Kimi coding session can execute.
+Translate the user's natural creative language into a concise, production-oriented prompt that a capable coding agent can execute.
 
 Do not implement the feature unless the user explicitly asks for implementation. Default to producing the implementation prompt for review.
 
@@ -41,106 +41,11 @@ If the user has not supplied a critical detail, infer conservatively from the ex
 
 Choose the lowest-complexity technology capable of producing the intended experience.
 
-### Tier 1 — DOM and CSS
-
-Use for:
-
-- Basic hover reveals
-- Opacity and blur transitions
-- Small transforms
-- Layout morphing
-- Simple masks
-- Short entrance and exit motion
-
-Preferred language:
-
-- CSS transitions
-- keyframes
-- clip-path
-- mask-image
-- backdrop-filter
-- FLIP animation
-- spring easing
-
-### Tier 2 — SVG or Canvas 2D
-
-Use for:
-
-- Localized particles
-- Kinetic typography
-- Pointer displacement
-- Cloth-like grids
-- Illustrated energy currents
-- Lightweight mist, ink, or water effects
-- Touch-responsive card interactions
-
-Preferred language:
-
-- Pointer Events
-- displacement field
-- Verlet integration
-- spring-mass grid
-- velocity field
-- progressive alpha mask
-- curl noise
-- advection
-- damping
-- dissipation
-- requestAnimationFrame
-
-### Tier 3 — WebGL2 and shaders
-
-Use for:
-
-- Localized refraction
-- Fluid-like surface distortion
-- High-density particles
-- Procedural material shading
-- GPU-accelerated effects that remain contained inside a component
-
-Preferred language:
-
-- fragment shader
-- displacement map
-- flow map
-- height field
-- ping-pong framebuffer
-- semi-Lagrangian advection
-- procedural noise
-- Fresnel response
-- render target
-
-Do not select WebGL merely to make the prompt sound advanced.
-
-### Tier 4 — WebGPU, Three.js, and TSL
-
-Reserve for:
-
-- Full-screen procedural environments
-- Complex three-dimensional scenes
-- Dense geometry displacement
-- Advanced lighting
-- Real-time world simulations
-- Experiences involving cameras, atmosphere, and large spatial scale
-
-Preferred language:
-
-- WebGPURenderer
-- Three.js
-- TSL
-- procedural shaders
-- analytic normals
-- Gerstner waves
-- FBM
-- physically based shading
-- post-processing
-- orbit controls
-
-Never use Tier 4 for an isolated mobile UI effect when a lower tier can achieve the experience.
+Read [Rendering tiers](references/rendering-tiers.md) when selecting the rendering stack. Preserve its four-tier guidance and mobile limits.
 
 ## Prompt construction
 
-Write the final prompt in the compact specification style used by strong Kimi showcase prompts.
+Write the final prompt in a compact specification style for a capable coding agent.
 
 Use this order:
 

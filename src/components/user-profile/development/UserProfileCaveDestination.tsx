@@ -14,6 +14,7 @@ export type CaveDestinationId =
   | 'settings'
   | 'inbox'
   | 'store'
+  | 'energy'
   | 'redeem-code'
   | 'unavailable'
   | 'stories'

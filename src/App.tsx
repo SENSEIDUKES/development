@@ -58,6 +58,10 @@ const UserProfileWorkspace = lazy(() =>
   import('./workshop/previews/user-profile/UserProfileWorkspace')
     .then(module => ({ default: module.UserProfileWorkspace })),
 );
+const EnergyWorkspace = lazy(() =>
+  import('./workshop/previews/energy/EnergyWorkspace')
+    .then(module => ({ default: module.EnergyWorkspace })),
+);
 const AudioPlayerSmokeWorkspace = lazy(() =>
   import('./workshop/previews/audio-player-smoke/AudioPlayerSmokeWorkspace')
     .then(module => ({ default: module.AudioPlayerSmokeWorkspace })),
@@ -76,6 +80,7 @@ const previewRegistry: Record<string, ComponentType> = {
   'character-voice': CharacterVoiceWorkspace,
   'chapter-generation-flow': ChapterGenerationFlowWorkspace,
   'chapter-generation-manifestation': ChapterManifestationWorkspace,
+  'energy': EnergyWorkspace,
   'harness-generation': HarnessGenerationWorkspace,
   'idle-cultivation': ClosedDoorCultivationWorkspace,
   'reader-codex': ReaderCodexWorkspace,

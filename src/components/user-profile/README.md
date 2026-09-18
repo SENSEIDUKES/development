@@ -18,6 +18,8 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-18 Energy emblem:** The Home Energy emblem now reads the live server-owned balance through the shared Energy client (`src/components/energy`) and opens the new `/home/energy` Cave destination holding the Energy panel (balance, purpose, example costs, recent activity, development controls when the server exposes them). `accountControls.energyBalance` was removed: the Cave keeps no Energy number of its own, and without an `EnergyClientProvider` the emblem stays a plain label. Public views never mount it. Chapter generation and every other generation flow remain unconnected to Energy.
+
 - **2026-09-18 public-view exit:** The header eye now exits public view directly, returning to the prior private page or Home for direct public links. Removed the redundant action toolbar; Search and desktop navigation retain their existing Exit action.
 
 - **2026-09-18 portrait surroundings:** Removed the two decorative calligraphy banners beside the Home portrait and their unused styling.
@@ -781,7 +783,7 @@ profile needs a host-supplied record and its own authorization; this change adds
 
 ### Account entry integration — 2026-09-09
 
-`UserProfile.accountControls` accepts host-owned `energyBalance`, `inboxUnreadCount`,
+`UserProfile.accountControls` accepts host-owned `inboxUnreadCount`, (`energyBalance` was removed on 2026-09-18 in favour of the shared Energy client),
 `onOpenInbox`, `onOpenStore`, and `onRedeemCode`. Energy is generation currency, independent
 of Qi; missing Energy reads Unavailable, while zero remains zero. The development wrapper
 supplies sample 120 Energy and two unread messages. No account schema or persistence is added.

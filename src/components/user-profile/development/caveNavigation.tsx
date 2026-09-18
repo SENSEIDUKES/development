@@ -71,7 +71,7 @@ export function resolveCaveRoute(path: string) {
   const view = scoped && !creatorId ? 'unavailable' : creatorView ?? (!destination ? 'unavailable'
     : audience === 'public' ? (child ? 'unavailable' : destination)
     : !child ? destination
-    : destination === 'home' && (child === 'dao-pillar' || child === 'status-effects' || child === 'inbox' || child === 'store') ? child
+    : destination === 'home' && (child === 'dao-pillar' || child === 'status-effects' || child === 'inbox' || child === 'store' || child === 'energy') ? child
     : destination === 'settings' && (child === 'switchboard' || child === 'redeem-code') ? child
     : 'unavailable');
   return { path, audience, destination, child, view, creatorId };

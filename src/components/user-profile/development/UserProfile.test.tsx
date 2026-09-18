@@ -15,6 +15,8 @@ import { CAVE_DESTINATIONS, CAVE_PUBLIC_DESTINATIONS, publicCavePath, resolveCav
 import { publicCreatorWorlds, type CreatorWorld, type PublicCreator } from './creatorWorlds';
 import { previewPublicCreators } from '../../../workshop/previews/user-profile/publicCreatorData';
 import type { AppUser } from '../shared/types';
+import { EnergyClientProvider, type EnergyClient } from '../../energy/shared/energyClient';
+import { createLocalEnergyClient } from '../../../workshop/previews/energy/localEnergyClient';
 import { createMockUserProfileServices } from '../../../workshop/previews/user-profile/mockUserProfileServices';
 import { getPreviewScenario } from '../../../workshop/previews/user-profile/previewData';
 import type { UserProfilePreviewState } from '../../../workshop/previews/user-profile/previewStates';
@@ -97,6 +99,7 @@ interface RenderOptions {
   onNavigateHome?: () => void;
   Component?: typeof UserProfile;
   adapter?: Partial<MockUserProfileServicesOptions>;
+  energyClient?: EnergyClient | null;
 }
 
 describe('Home portrait access and generation progress', () => {
@@ -134,7 +137,7 @@ describe('Home portrait access and generation progress', () => {
   });
 });
 
-async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), onNavigateHome = vi.fn(), Component = UserProfile, adapter = {}, accountControls, publicCreators }: RenderOptions = {}) {
+async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), onNavigateHome = vi.fn(), Component = UserProfile, adapter = {}, accountControls, publicCreators, energyClient = null }: RenderOptions = {}) {
   const scenario = getPreviewScenario(state);
   const logExcludedAction = vi.fn();
   const onSignIn = vi.fn<(account: AppUser) => void>();
@@ -145,6 +148,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
   await act(async () => {
     root.render(
       <UserProfileServicesProvider services={services}>
+        <EnergyClientProvider client={energyClient}>
         <Component
           currentUser={scenario.currentUser}
           stories={scenario.stories}
@@ -154,6 +158,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
           onNavigateHome={onNavigateHome}
           onNavigateLibrary={vi.fn()}
         />
+        </EnergyClientProvider>
       </UserProfileServicesProvider>,
     );
   });
@@ -360,10 +365,11 @@ describe('Public creator world filtering', () => {
 });
 
 describe('Cultivator Cave home', () => {
-  it('wires host Inbox, Store and Redeem Code while hiding the Energy balance', async () => {
-    const accountControls = { energyBalance: 1234, inboxUnreadCount: 3, onOpenInbox: vi.fn(), onOpenStore: vi.fn(), onRedeemCode: vi.fn() };
+  it('wires host Inbox, Store and Redeem Code while keeping Energy label-only without an Energy client', async () => {
+    const accountControls = { inboxUnreadCount: 3, onOpenInbox: vi.fn(), onOpenStore: vi.fn(), onRedeemCode: vi.fn() };
     await renderCave({ accountControls });
     expect(container.querySelector('[data-cave-energy]')?.textContent).toBe('Energy');
+    expect(container.querySelector<HTMLButtonElement>('[data-cave-energy]')?.disabled).toBe(true);
     expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,480 Qi of 25,000');
     expect(container.querySelector('[data-cave-unread]')).not.toBeNull();
     await click(container.querySelector('[aria-label="Inbox, 3 unread messages"]')!);
@@ -378,8 +384,44 @@ describe('Cultivator Cave home', () => {
     expect(container.querySelector('.library-global-navigation')?.textContent).not.toContain('Settings');
   });
 
-  it('keeps Energy label-only at zero and routes unconnected entries with working returns', async () => {
-    await renderCave({ accountControls: { energyBalance: 0, inboxUnreadCount: 0 } });
+  it('shows the live server Energy balance and opens the Energy panel from the emblem', async () => {
+    const energyClient = createLocalEnergyClient({ uid: 'workshop-cultivator' });
+    const grant = vi.spyOn(energyClient, 'grantDevelopment');
+    await renderCave({ energyClient });
+    await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+    const emblem = container.querySelector<HTMLButtonElement>('[data-cave-energy]')!;
+    expect(emblem.getAttribute('aria-label')).toBe('Energy, 500 available');
+    expect(emblem.querySelector('[aria-label="Energy balance 500"]')).not.toBeNull();
+    await click(emblem);
+    expect(new URL(window.location.href).searchParams.get('cave')).toBe('/home/energy');
+    const panel = container.querySelector('[data-cave-destination="energy"]')!;
+    expect(panel.textContent).toContain('Energy powers generation throughout SEN');
+    expect(panel.querySelector('[data-energy-action="chapter.generate"]')?.textContent).toContain('1');
+    expect(panel.querySelector('[data-energy-action="image.generate"]')?.textContent).toContain('3');
+    expect(panel.querySelector('[data-energy-activity-kind="grant"]')?.textContent).toContain('Development starting Energy');
+    await click(byText('[data-energy-development-controls] button', 'Grant 100 Energy'));
+    await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+    expect(grant).toHaveBeenCalledOnce();
+    expect(panel.querySelector('[aria-label="Energy balance 600"]')).not.toBeNull();
+    await click(container.querySelector('[aria-label="Return to cave"]')!);
+    expect(container.querySelector('[data-cave-energy] [aria-label="Energy balance 600"]')).not.toBeNull();
+    await navigateTo('/public/home');
+    expect(container.querySelector('[data-cave-energy]')).toBeNull();
+    await navigateTo('/public/home/energy');
+    expect(container.querySelector('[data-cave-destination="unavailable"]')).not.toBeNull();
+  });
+
+  it('hides development Energy controls when the server exposes none', async () => {
+    await renderCave({ energyClient: createLocalEnergyClient({ uid: 'workshop-cultivator', developmentAccess: false }) });
+    await act(async () => { await vi.advanceTimersByTimeAsync(10); });
+    await click(container.querySelector('[data-cave-energy]')!);
+    const panel = container.querySelector('[data-cave-destination="energy"]')!;
+    expect(panel.querySelector('[aria-label="Energy balance 0"]')).not.toBeNull();
+    expect(panel.querySelector('[data-energy-development-controls]')).toBeNull();
+  });
+
+  it('keeps Energy label-only without a client and routes unconnected entries with working returns', async () => {
+    await renderCave({ accountControls: { inboxUnreadCount: 0 } });
     expect(container.querySelector('[data-cave-energy]')?.textContent).toBe('Energy');
     expect(container.querySelector('[data-cave-unread]')).toBeNull();
     await click(byText('button', 'Inbox'));
@@ -399,6 +441,7 @@ describe('Cultivator Cave home', () => {
   it('does not invent an unavailable Energy balance or expose account controls publicly', async () => {
     await renderCave();
     expect(container.querySelector('[data-cave-energy]')?.textContent).toBe('Energy');
+    expect(container.querySelector('[data-cave-energy]')?.getAttribute('data-cave-energy-status')).toBe('unavailable');
     await navigateTo('/public/home');
     expect(container.querySelector('[data-cave-account-controls]')).toBeNull();
     expect(container.querySelector('[data-cave-account-actions]')).toBeNull();

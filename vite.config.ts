@@ -14,6 +14,11 @@ import {
   createPublicGenerationGuard,
   type PublicGenerationGuardResult,
 } from './src/server/shared/publicGenerationGuard';
+import { handleEnergyHttp } from './src/server/energy/http';
+import { EnergyService } from './src/server/energy/service';
+import { InMemoryEnergyRepository } from './src/server/energy/inMemoryEnergyRepository';
+import { createEnergyPrincipalResolver } from './src/server/energy/authentication';
+import { developmentRepositoryIdentityMode, resolveEnergyConfig } from './src/server/energy/config';
 
 const MAX_GENERATION_REQUEST_BYTES = 2 * 1024 * 1024;
 
@@ -81,6 +86,13 @@ const generationApis = (
       return undefined;
     }
   })();
+  // One server-owned Energy ledger for the life of the dev server. Balances
+  // are never computed in the browser; the Workshop reads them from here.
+  const energyIdentityMode = developmentRepositoryIdentityMode(environment);
+  const energyService = new EnergyService(new InMemoryEnergyRepository(), resolveEnergyConfig(environment, energyIdentityMode));
+  const resolveEnergyPrincipal = energyIdentityMode === 'development'
+    ? createEnergyPrincipalResolver({ mode: 'development' })
+    : null;
   const configure = (server: { middlewares: { use: (handler: (
     request: IncomingMessage,
     response: ServerResponse,
@@ -88,6 +100,24 @@ const generationApis = (
   ) => void) => void } }) => {
     server.middlewares.use(async (request, response, next) => {
       const pathname = new URL(request.url ?? '/', 'http://development.local').pathname;
+      if (pathname === '/api/energy') {
+        try {
+          if (!resolveEnergyPrincipal) {
+            writeJson(response, 503, { error: 'Energy production identity requires a token verifier; none is wired in this Development server.', code: 'unavailable' }, { 'Cache-Control': 'no-store' });
+            return;
+          }
+          const body = request.method?.toUpperCase() === 'POST' ? await readJsonBody(request) : undefined;
+          const result = await handleEnergyHttp(
+            { method: request.method, body, headers: request.headers },
+            { service: energyService, resolvePrincipal: resolveEnergyPrincipal, onError: error => console.error('[energy]', error) },
+          );
+          writeJson(response, result.status, result.body, result.headers);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Invalid request.';
+          writeJson(response, message.includes('2 MB') ? 413 : 400, { error: message, code: 'invalid_request' });
+        }
+        return;
+      }
       if (
         pathname !== '/api/chapter-generation'
         && pathname !== '/api/harness-generation'

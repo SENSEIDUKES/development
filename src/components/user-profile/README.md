@@ -237,7 +237,7 @@ The Cave home shows, top to bottom on a phone and side by side from the `md` bre
 - the cave header — the Library sacred-tree glyph, the gold "Cultivator Cave" title, and the
   Settings gear;
 - the central cultivator portrait inside a gold ring, wearing the aura glow and the rank-gated
-  mote layer from production, flanked by two decorative calligraphy plaques;
+  mote layer from production;
 - the compact identity plaque — centered display name and subscription badge, an interactive
   rank-colored cultivation bar, current and next rank beneath its endpoints, and the existing
   bio below an understated CULTIVATOR BIO label. Exact progress and overflowing mobile bios

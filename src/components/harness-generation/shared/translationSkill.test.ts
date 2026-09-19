@@ -37,7 +37,7 @@ const packet = (premise: string): StoryInformationPacket => ({
 });
 
 const request = (assignment?: string): ImmediateChapterRequest =>
-  ({ chapterNumber: 1, continuation: false, ...(assignment ? { assignment } : {}) });
+  ({ chapterNumber: 1, continuation: false, chapterScale: { minWords: 1_800, maxWords: 2_500 }, ...(assignment ? { assignment } : {}) });
 
 describe('Translation skill contract', () => {
   it('requires exactly one supported target language', () => {

@@ -1212,6 +1212,11 @@ export function HarnessGenerationWorkspace({
                     <article key={chapter.id} className="rounded-2xl border border-white/10 bg-black/20 p-4 sm:p-5">
                       <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-cyan-200/55">Chapter {chapter.chapterNumber} · {chapter.responseMode === 'plain-prose-recovery' ? 'plain prose recovery' : 'structured response'}</p>
                       <h3 className="mt-2 font-display text-xl text-white">{chapter.title}</h3>
+                      {/* Chapter scale and structure stay visible: a short or unstructured chapter is kept and flagged, never discarded. */}
+                      <p className={`mt-1 font-mono text-[10px] uppercase tracking-[0.16em] ${chapter.metrics.meetsScaleTarget ? 'text-neutral-500' : 'text-amber-200/70'}`}>
+                        {chapter.metrics.wordCount.toLocaleString()} words · {chapter.metrics.paragraphCount.toLocaleString()} paragraphs · {chapter.blocks?.length.toLocaleString() ?? '0'} blocks
+                        {chapter.metrics.meetsScaleTarget ? '' : ' · below chapter-scale target'}
+                      </p>
                       <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} onClick={() => void run(() => controller.replayStory(selectedStory.id, chapter.id))}>Repair chapter enhancements</LibraryButton>
                       {chapter.plan && (
                         <details className="mt-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs text-neutral-300">

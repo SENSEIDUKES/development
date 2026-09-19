@@ -3,22 +3,23 @@ import {
   applyHarnessChapterSignals,
   buildHarnessSystemPanel,
   readHarnessChapterSignals,
-  splitHarnessProseParagraphs,
 } from './chapterSignals';
+import { splitHarnessProseParagraphs } from './chapterBody';
 import { acceptHarnessModelResponse } from './responseAcceptance';
 
-const prose = [
+const paragraphs = [
   'Rain crossed the courtyard as Mara held her ground and the fox growled once.',
   '“Not today,” Mara said.',
   'The gate creaked. [Qi rose to twelve.] She breathed out.',
   'A notice hung on the gate: The sect closes at dusk.',
-].join('\n\n');
+];
+const prose = paragraphs.join('\n\n');
 
 describe('HARNESS compact chapter signals', () => {
-  it('splits paragraphs at blank lines without rewriting the authoritative prose', () => {
+  it('builds one ordered block per model paragraph and derives prose from them', () => {
     expect(splitHarnessProseParagraphs('One.\r\n\r\n\r\nTwo. \n \nThree.')).toEqual(['One.', 'Two.', 'Three.']);
-    const accepted = acceptHarnessModelResponse(JSON.stringify({ prose: 'One. \n\nTwo.' }), 1);
-    expect(accepted.accepted && accepted.draft.prose).toBe('One. \n\nTwo.');
+    const accepted = acceptHarnessModelResponse(JSON.stringify({ paragraphs: ['One.', 'Two.'] }), 1);
+    expect(accepted.accepted && accepted.draft.prose).toBe('One.\n\nTwo.');
     expect(accepted.accepted && accepted.draft.blocks?.map(block => block.text)).toEqual(['One.', 'Two.']);
   });
 
@@ -69,7 +70,7 @@ describe('HARNESS compact chapter signals', () => {
       soundCues: [{ anchorText: 'the fox growled', category: 'beasts', variation: 'growl', tags: ['tiger'], entityName: 'Debt Fox', entityType: 'creature' }],
       creatureEvents: [{ anchorText: 'the fox growled', type: 'reveal', name: 'Debt Fox', size: 'large', bodyType: 'mammal', signatureSound: 'growl' }],
     });
-    const applied = applyHarnessChapterSignals(splitHarnessProseParagraphs(prose), signals, [{ name: 'Mara', role: 'Courier', isMainCharacter: true }]);
+    const applied = applyHarnessChapterSignals(paragraphs, signals, [{ name: 'Mara', role: 'Courier', isMainCharacter: true }]);
     expect(applied.blocks.map(block => block.text)).toEqual([
       'Rain crossed the courtyard as Mara held her ground and the fox growled once.',
       '“Not today,” Mara said.',
@@ -97,16 +98,16 @@ describe('HARNESS compact chapter signals', () => {
       kind: 'system_prompt', presentation: 'mechanical', promptType: 'breakthrough', title: 'Breakthrough Achieved',
       rows: [{ label: 'Qi', value: '12' }], status: { stats: [{ label: 'Qi', value: '12' }] },
     });
-    expect(applied.warnings).toEqual([expect.objectContaining({ message: expect.stringContaining('"Never written" is not in the chapter prose') })]);
+    expect(applied.warnings).toEqual([expect.objectContaining({ message: expect.stringContaining('"Never written" is not in this chapter\'s paragraphs') })]);
   });
 
   it('rejects an anchor found in more than one block instead of annotating the first', () => {
     const repeated = [
       'Rain struck the roof. Rain struck the roof again, harder.',
       'Lin counted the beats. Rain struck the roof a third time.',
-    ].join('\n\n');
+    ];
     const accepted = acceptHarnessModelResponse(JSON.stringify({
-      prose: repeated,
+      paragraphs: repeated,
       dialogue: [{ anchorText: 'Rain struck the roof', speaker: 'Lin' }],
       manifestations: [{ anchorText: 'Rain struck the roof', name: 'Lin', type: 'character', mention: 'reveal' }],
       soundCues: [{ anchorText: 'Rain struck the roof', category: 'locations', variation: 'rumble' }],
@@ -114,7 +115,7 @@ describe('HARNESS compact chapter signals', () => {
 
     expect(accepted.accepted).toBe(true);
     if (!accepted.accepted) throw new Error(accepted.reason);
-    expect(accepted.draft.prose).toBe(repeated);
+    expect(accepted.draft.prose).toBe(repeated.join('\n\n'));
     expect(accepted.draft.blocks).toEqual([
       { id: 'c2-p1', type: 'paragraph', text: 'Rain struck the roof. Rain struck the roof again, harder.' },
       { id: 'c2-p2', type: 'paragraph', text: 'Lin counted the beats. Rain struck the roof a third time.' },
@@ -124,9 +125,9 @@ describe('HARNESS compact chapter signals', () => {
   });
 
   it('keeps a block-scoped signal whose anchor repeats inside one block and drops the ones placed at an offset', () => {
-    const repeated = ['Lin listened as the gate creaked, and then the gate creaked once more.', 'She stepped through.'].join('\n\n');
+    const repeated = ['Lin listened as the gate creaked, and then the gate creaked once more.', 'She stepped through.'];
     const accepted = acceptHarnessModelResponse(JSON.stringify({
-      prose: repeated,
+      paragraphs: repeated,
       soundscapes: [{ anchorText: 'the gate creaked', mood: 'tension', tags: ['courtyard'] }],
       soundCues: [{ anchorText: 'the gate creaked', category: 'artifacts', variation: 'creak' }],
       systemPanels: [{ anchorText: 'the gate creaked', presentation: 'narrative', title: 'Gate' }],
@@ -159,7 +160,7 @@ describe('HARNESS compact chapter signals', () => {
 
   it('accepts usable prose even when every optional signal is malformed or a competing blocks field is present', () => {
     const accepted = acceptHarnessModelResponse(JSON.stringify({
-      prose, title: 'The Debt Fox',
+      paragraphs, title: 'The Debt Fox',
       blocks: [{ type: 'paragraph', text: 'A competing body.' }],
       dialogue: 'not a list', systemPanels: [{ anchorText: 'nowhere', presentation: 'mechanical', title: 'Ghost' }],
       soundCues: [{ anchorText: 'the fox', category: 'beasts', variation: 'growl' }],
@@ -176,8 +177,8 @@ describe('HARNESS compact chapter signals', () => {
     expect(JSON.stringify(accepted.draft)).not.toContain('A competing body');
   });
 
-  it('rejects a reply without prose instead of accepting signals alone', () => {
+  it('rejects a reply without a chapter body instead of accepting signals alone', () => {
     const result = acceptHarnessModelResponse(JSON.stringify({ title: 'Empty', dialogue: [{ anchorText: 'x', speaker: 'Mara' }] }), 1);
-    expect(result).toMatchObject({ accepted: false, reason: expect.stringContaining('usable chapter prose') });
+    expect(result).toMatchObject({ accepted: false, reason: expect.stringContaining('usable chapter body') });
   });
 });

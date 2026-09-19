@@ -26,7 +26,7 @@ const response = (value: unknown): HarnessGenerationResponse => ({
 
 /** Prose plus compact semantic intent; the resolved media below is HARNESS work. */
 const chapterReply = () => response({
-  prose: 'Rain crossed the mountain pass as the clockwork beast roared across the stones.',
+  paragraphs: ['Rain crossed the mountain pass as the clockwork beast roared across the stones.'],
   soundscapes: [{ anchorText: 'Rain crossed the mountain pass', mood: 'storm-path', region: 'korean', tags: ['mountain-pass', 'rain', 'thunder'], intensity: 0.6 }],
   soundCues: [{ anchorText: 'clockwork beast roared', category: 'beasts', variation: 'roar', tags: ['clockwork', 'metallic'] }],
   arcCompletion: { goalId: 'arc-1', completed: false, evidence: '' },

@@ -437,7 +437,7 @@ describe('Harness Generation Phase 2 novel core', () => {
     await reloaded.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
 
     const chapterTwoRequest = provider.generate.mock.calls[1][0] as HarnessGenerationRequest;
-    expect(chapterTwoRequest.immediateChapterRequest).toEqual({ chapterNumber: 2, continuation: true });
+    expect(chapterTwoRequest.immediateChapterRequest).toEqual({ chapterNumber: 2, continuation: true, chapterScale: { minWords: 1_800, maxWords: 2_500 } });
     expect(chapterTwoRequest.storyInformation.committedChapters).toHaveLength(1);
     expect(chapterTwoRequest.storyInformation.committedChapters[0]).toMatchObject({
       prose: expect.stringContaining('floodwall'),
@@ -464,7 +464,7 @@ describe('Harness Generation Phase 2 novel core', () => {
       capaPrompt: assembleCapaPrompt({ capturedAt: firstRuntime.now(), skills: [SEN_NOVEL_AUTHOR_SKILL] }),
       mediaLoadout: { capturedAt: firstRuntime.now(), soundscapes: [], soundCues: [] },
       storyInformation: context,
-      immediateChapterRequest: { chapterNumber: 1, continuation: false },
+      immediateChapterRequest: { chapterNumber: 1, continuation: false, chapterScale: { minWords: 1_800, maxWords: 2_500 } },
       model: 'google/gemini-3.1-flash-lite',
       chapterNumber: 1,
       stage: 'request_started',

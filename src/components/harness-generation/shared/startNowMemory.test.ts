@@ -36,7 +36,9 @@ describe('Start Now captured prose and memory regression', () => {
       if (recover) await controller.recoverChapterMemory(controller.snapshot().chapters[0].id, 'fixture');
       const saved = controller.snapshot();
       const view = buildCanonicalStoryView(saved, story.id);
-      expect(saved.chapters[0].prose).toBe(fixture.prose);
+      // Derived prose: the accepted paragraphs joined with blank lines, trailing
+      // paragraph whitespace removed. No paragraph's own text is rewritten.
+      expect(saved.chapters[0].prose).toBe(fixture.prose.split(/\n\s*\n/).map(paragraph => paragraph.trim()).filter(Boolean).join('\n\n'));
       expect(saved.stories[0].head.nextChapterNumber).toBe(2);
       expect(view.characters.filter(record => record.label === 'Aria').every(record => record.confidence === 'resolved')).toBe(true);
       expect(new Set(view.characters.filter(record => record.label === 'Aria').map(record => record.entityId)).size).toBe(1);

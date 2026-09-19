@@ -48,14 +48,17 @@ const memorySchema = { type: 'object', properties: Object.fromEntries(Object.key
 const memoryResponseSchema = { type: 'object', properties: { memory: memorySchema }, required: ['memory'] };
 
 const text = { type: 'string' };
-const anchoredText = { type: 'string', description: 'An exact, distinctive passage copied verbatim from the prose.' };
+const anchoredText = { type: 'string', description: 'An exact passage copied from this reply\'s paragraphs.' };
+/** Only needed when the anchor phrase repeats; the response contract explains the rule in full. */
+const occurrenceIndex = { type: 'integer', minimum: 0, description: 'Zero-based occurrence when anchorText repeats.' };
 const tagList = { type: 'array', items: text, description: 'Short canonical-English semantic tags.' };
 const labelValueEntry = { type: 'object', properties: { label: text, value: text }, required: ['label', 'value'] };
 
 /**
  * The compact semantic chapter contract requested from the provider. It is
- * deliberately shallow: prose is the chapter, every signal family is a flat
- * list of small objects keyed by an exact prose anchor, and no family repeats
+ * deliberately shallow: the paragraphs array is the chapter, every signal
+ * family is a flat list of small objects keyed by an exact prose anchor from
+ * that same array, and no family repeats
  * another's definition. Final SEN blocks, System Panel presentations, media
  * assets, IDs, and memory are HARNESS work and never appear here.
  */
@@ -64,22 +67,23 @@ export const HARNESS_CHAPTER_RESPONSE_SCHEMA = {
   properties: {
     title: text,
     plan: { type: 'string', description: 'Optional one-paragraph continuation plan for the next chapter.' },
-    prose: { type: 'string', description: 'The complete chapter prose. Paragraphs are separated by blank lines. This is the only chapter body.' },
+    paragraphs: { type: 'array', items: text, description: 'The complete chapter, one entry per prose paragraph, in reading order. This is the only chapter body.' },
     arcCompletion: {
       type: 'object',
       properties: { goalId: text, completed: { type: 'boolean' }, evidence: text },
       required: ['goalId', 'completed', 'evidence'],
     },
     dialogue: { type: 'array', items: { type: 'object', properties: {
-      anchorText: anchoredText, speaker: text, delivery: { type: 'string', enum: [...HARNESS_DIALOGUE_DELIVERIES] },
+      anchorText: anchoredText, occurrenceIndex, speaker: text, delivery: { type: 'string', enum: [...HARNESS_DIALOGUE_DELIVERIES] },
     }, required: ['anchorText', 'speaker'] } },
     manifestations: { type: 'array', items: { type: 'object', properties: {
-      anchorText: anchoredText, name: text,
+      anchorText: anchoredText, occurrenceIndex, name: text,
       type: { type: 'string', enum: [...HARNESS_MANIFESTATION_TYPES] },
       mention: { type: 'string', enum: [...HARNESS_MANIFESTATION_MENTIONS] },
     }, required: ['anchorText', 'name', 'type', 'mention'] } },
     systemPanels: { type: 'array', items: { type: 'object', properties: {
-      anchorText: { type: 'string', description: 'The exact readable System Panel text copied from the prose.' },
+      anchorText: { type: 'string', description: 'The exact readable System Panel text copied from a paragraph.' },
+      occurrenceIndex,
       presentation: { type: 'string', enum: [...HARNESS_SYSTEM_PANEL_PRESENTATIONS] },
       meaning: { type: 'string', enum: [...HARNESS_SYSTEM_PANEL_MEANINGS] },
       title: text, body: text,
@@ -87,24 +91,25 @@ export const HARNESS_CHAPTER_RESPONSE_SCHEMA = {
       outcome: { type: 'string', enum: [...HARNESS_FATE_OUTCOMES], description: 'Fate presentation only.' },
     }, required: ['anchorText', 'presentation', 'title'] } },
     soundscapes: { type: 'array', items: { type: 'object', properties: {
-      anchorText: anchoredText, mood: text,
+      anchorText: anchoredText, occurrenceIndex, mood: text,
       region: { type: 'string', enum: [...HARNESS_SOUNDSCAPE_REGIONS] },
       tags: tagList, intensity: { type: 'number' },
     }, required: ['anchorText', 'mood'] } },
     soundCues: { type: 'array', items: { type: 'object', properties: {
-      anchorText: { type: 'string', description: 'The exact audible action phrase from the prose, never an entity name.' },
+      anchorText: { type: 'string', description: 'The exact audible action phrase from a paragraph, never an entity name.' },
+      occurrenceIndex,
       category: { type: 'string', enum: [...HARNESS_SOUND_CUE_CATEGORIES] },
       variation: text, tags: tagList, entityName: text,
       entityType: { type: 'string', enum: [...HARNESS_SOUND_CUE_ENTITY_TYPES] },
     }, required: ['anchorText', 'category', 'variation'] } },
     creatureEvents: { type: 'array', items: { type: 'object', properties: {
-      anchorText: anchoredText,
+      anchorText: anchoredText, occurrenceIndex,
       type: { type: 'string', enum: [...HARNESS_CREATURE_EVENT_TYPES] },
       name: text, size: { type: 'string', enum: [...HARNESS_CREATURE_SIZES] },
       bodyType: text, element: text, movement: text, intelligence: text, threatTier: text, signatureSound: text,
     }, required: ['anchorText', 'type'] } },
   },
-  required: ['prose', 'arcCompletion'],
+  required: ['paragraphs', 'arcCompletion'],
 } as const;
 
 export const HARNESS_MEMORY_INSTRUCTIONS = [
@@ -160,9 +165,9 @@ export const HARNESS_RESPONSE_CONTRACT = [
   'Opening setup applies at the beginning of the story. For continuation, continue from the latest committed chapter supplied, respecting the actual story head. Committed developments can evolve the starting Foundation state; do not reset that progress unless an explicit author change requires it. Do not restart at the opening or invent missing chapter events. Unresolved or conflicted derived records are uncertain interpretations, not established facts. The deterministic handoff is an evidence reminder, not an assignment to resolve every item.',
   'The context coverage report explains omissions. Its labels are an inventory, not additional canonical evidence. Missing context is unavailable evidence, not proof that an event never happened. Its token count is a selection estimate, not provider usage or the total formatted prompt size.',
   'Semantic events are interpretations of the prose. When evidenceVerified is false, do not adopt their unsupported fact values as canon; use the actual prose and explicit author changes. A verified quote confirms provenance, not every semantic inference.',
-  'Return one JSON object only. prose is the complete chapter and its sole body: readable paragraphs separated by blank lines, including the readable text of any System Panel exactly where the reader meets it. title and plan are optional. arcCompletion is required. Do not return chapter blocks, memory, or any other chapter body.',
-  'Optional signal families describe semantic intent the prose itself establishes: dialogue, manifestations, systemPanels, soundscapes, soundCues, and creatureEvents. Each is a flat list. Every signal carries anchorText: one exact, distinctive passage copied verbatim from prose, with the same characters, punctuation, and quotation marks. The HARNESS matches anchors to its own paragraph blocks, validates each signal on its own, and drops any signal whose anchor is absent. A dropped signal never removes prose. Omit signals the prose does not support; omit whole families with nothing to report.',
-  'dialogue: one signal per spoken passage that needs attribution, with anchorText the exact quoted words, speaker the established character name, and optional delivery. The HARNESS assigns speaker roles from the cast. manifestations: entities the reader should meet, with name, type (character, artifact, location, creature, or faction) and mention (reveal for a first meaningful appearance, reference otherwise).',
+  'Return one JSON object only. paragraphs is the complete chapter and its sole body: an ordered array with one entry per prose paragraph, written as continuous readable prose, including the readable text of any System Panel as its own entry exactly where the reader meets it. Never put the whole chapter in one entry and never add blank-line markers or numbering. title and plan are optional. arcCompletion is required. Do not return prose, chapter blocks, memory, or any other chapter body.',
+  'Optional signal families describe semantic intent the chapter itself establishes: dialogue, manifestations, systemPanels, soundscapes, soundCues, and creatureEvents. Each is a flat list. Every signal carries anchorText: one exact, distinctive passage copied verbatim from an entry of the paragraphs array you are returning in this reply, with the same characters, punctuation, and quotation marks. Never copy an anchor from a prior chapter, from the Story Information Packet, or from any text outside this reply; such an anchor is dropped. When the same phrase appears more than once, add occurrenceIndex, a zero-based count over its occurrences in reading order, or the signal is dropped as ambiguous. The HARNESS matches anchors to its own paragraph blocks, validates each signal on its own, and drops any signal whose anchor is absent. A dropped signal never removes prose. Omit signals the chapter does not support; omit whole families with nothing to report.',
+  'dialogue: one signal per spoken passage that needs attribution, with anchorText the exact quoted words and nothing else, speaker the established character name, and optional delivery. The HARNESS turns that exact span into its own dialogue block, so narration included in the anchor would be read as speech; a paragraph holding several speakers needs one signal per spoken passage. The HARNESS assigns speaker roles from the cast. manifestations: entities the reader should meet, with name, type (character, artifact, location, creature, or faction) and mention (reveal for a first meaningful appearance, reference otherwise).',
   'systemPanels: one per readable System Panel in the prose. anchorText is the exact readable panel text. presentation is narrative, mechanical, world_notice, or fate. Supply title, optional meaning (the semantic color family), optional body, and optional entries as simple label/value pairs: mechanical presentations need entries for their stats; a fate presentation needs outcome (FATE AVERTED, FATE SCARRED, or DOOM MANIFESTED), body as the timeline scar, and entries as permanent costs. The HARNESS constructs the complete mechanical, narrative, World Notice, or Fate presentation afterward.',
   'soundscapes: the mood of a scene, with optional region (chinese, japanese, korean, or western), tags, and intensity. soundCues: a deliberate audible action, with anchorText the exact audible action phrase (never an entity name), category (beasts, weapons, artifacts, locations, or factions), variation such as growl, roar, unsheathe, or activation, optional tags, and optional entityName/entityType. creatureEvents: type (reveal, power-up, technique, injury, turning-point, death, or breakthrough) with optional name, size, bodyType, element, movement, intelligence, threatTier, and signatureSound.',
   'Signals are machine-facing and stay in canonical English; prose, titles, panel text, bodies, and entries are reader-facing. Do not invent block IDs, story/chapter/run/event identities, asset IDs, URLs, URIs, filenames, file paths, catalog records or selectors, provider identifiers, voice IDs or keys, persistence records, continuation tokens, Color Codes, or unsupported application fields. The HARNESS owns IDs, ordering, normalization, validation, catalog resolution, persistence, memory extraction, and commits.',
@@ -249,6 +254,10 @@ export const presentStoryInformationPacket = (packet: StoryInformationPacket) =>
 export const presentImmediateChapterRequest = (request: ImmediateChapterRequest) => [
   'IMMEDIATE CHAPTER REQUEST',
   `Write Chapter ${request.chapterNumber}${request.continuation ? ', continuing directly from the latest committed chapter above' : ', the opening chapter of this story'}.`,
+  [
+    `CHAPTER SCALE: ${request.chapterScale.minWords.toLocaleString()} to ${request.chapterScale.maxWords.toLocaleString()} words, written as many separate paragraph entries.`,
+    'This is the size of the chapter, not a summary length. Write the scene fully: let events happen on the page with description, dialogue, and consequence rather than reporting them. Your Pacing skill decides how this chapter uses that space; it does not change the size.',
+  ].join('\n'),
   request.assignment ? [
     `NEXT CHAPTER ASSIGNMENT: ${request.assignment}`,
     'Make concrete progress on that assignment in this chapter; if already fulfilled, develop its consequences without repeating the completed action. If characters have moved away, show a plausible transition or new consequence that brings the requested action into the story. Do not repeat an old ending or departure in place of the requested action. Earlier prose remains historical evidence unless explicitly revised above.',

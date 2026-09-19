@@ -7,7 +7,7 @@ import type { StoryBlock } from './chapter';
  * persisted shape (attempt, chapter, or workspace state fields). This is a
  * development system: storage at any other version is reset, never
  * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 13 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 14 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -241,6 +241,12 @@ export interface ImmediateChapterRequest {
   continuation: boolean;
   /** The latest persistent direction the model must make concrete progress on, if any. */
   assignment?: string;
+  /**
+   * The HARNESS-owned chapter-scale target for this attempt. It is mechanics,
+   * not a CAPA skill and not canonical Story Information: the Pacing skill
+   * decides how the chapter uses the space this range allows.
+   */
+  chapterScale: { minWords: number; maxWords: number };
 }
 
 export interface HarnessSteering {
@@ -263,9 +269,20 @@ export type HarnessModelPlan = string | {
   beats?: string[];
 };
 
+/** Derived chapter measurements. Persisted with every frozen attempt and committed chapter. */
+export interface HarnessChapterMetrics {
+  wordCount: number;
+  paragraphCount: number;
+  /** False when the chapter falls below the HARNESS chapter-scale target; the prose is still preserved. */
+  meetsScaleTarget: boolean;
+}
+
 export interface HarnessAcceptedChapterDraft {
-  /** Authoritative readable chapter; accepted independently of every optional signal. */
+  /** The authoritative model-authored chapter body, one entry per prose paragraph. */
+  paragraphs: string[];
+  /** Readable chapter derived by joining the accepted paragraphs with blank lines. */
   prose: string;
+  metrics: HarnessChapterMetrics;
   /** HARNESS-built SEN blocks carrying only accepted, anchor-matched signals. */
   blocks?: StoryBlock[];
   audioMoments?: ResolvedAudioMoment[];
@@ -316,6 +333,9 @@ export interface HarnessWarning {
     | 'optional_event_rejected'
     | 'optional_event_field_omitted'
     | 'chapter_block_normalized'
+    | 'chapter_structure_quality'
+    | 'chapter_scale_below_target'
+    | 'chapter_body_recovered'
     | 'optional_chapter_structure_omitted'
     | 'competing_prose_ignored'
     | 'provider_outcome_unknown'
@@ -406,9 +426,12 @@ export interface HarnessChapter {
   chapterNumber: number;
   title: string;
   titleSource: 'model' | 'harness-fallback';
-  /** The authoritative chapter result: the accepted model prose with normalized paragraph breaks. */
+  /** The authoritative chapter result: the accepted model paragraphs joined with blank lines. */
   prose: string;
-  /** Canonical SEN blocks the HARNESS split from the prose and annotated from accepted signals. */
+  /** The accepted model-authored paragraphs, preserved exactly and in order. */
+  paragraphs: string[];
+  metrics: HarnessChapterMetrics;
+  /** Canonical SEN blocks the HARNESS built from the paragraphs and annotated from accepted signals. */
   blocks?: StoryBlock[];
   /** Application-resolved media records only; model proposals never persist here. */
   audioMoments?: ResolvedAudioMoment[];

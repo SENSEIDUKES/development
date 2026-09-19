@@ -67,7 +67,7 @@ const adapter = (raw: string): HarnessGenerationModelAdapter => ({
 describe('HARNESS canonical structured chapter and media path', () => {
   it('drops malformed optional signals and model-owned asset fields without sacrificing the authoritative prose', () => {
     const accepted = acceptHarnessModelResponse(JSON.stringify({
-      prose: 'The clean chapter prose survives.',
+      paragraphs: ['The clean chapter prose survives.'],
       soundscapes: [{ anchorText: 'prose survives', mood: 7, trackId: 'MODEL_TRACK', customUrl: 'https://untrusted.example/model.mp3' }],
       manifestations: 'not-an-array',
       soundCues: [{ anchorText: 'prose survives', category: 'beasts', variation: 'asset://growl' }],
@@ -85,14 +85,14 @@ describe('HARNESS canonical structured chapter and media path', () => {
 
   it('retains System Panel prose but omits incomplete panels from accepted Reader blocks', () => {
     const accepted = acceptHarnessModelResponse(JSON.stringify({
-      prose: [
+      paragraphs: [
         'The incomplete breakthrough remains readable.',
         'The incomplete mechanical display remains readable.',
         'The incomplete notice remains readable.',
         'The incomplete fate result remains readable.',
         'The complete narrative panel remains structured.',
         'The complete fate panel remains structured.',
-      ].join('\n\n'),
+      ],
       systemPanels: [
         { anchorText: 'The incomplete breakthrough remains readable.', title: 'Breakthrough' },
         { anchorText: 'The incomplete mechanical display remains readable.', title: 'Status', presentation: 'mechanical', meaning: 'progression' },
@@ -211,9 +211,9 @@ describe('HARNESS canonical structured chapter and media path', () => {
     expect(cueMarkup).toContain('Play World Cue for the fox growled');
   });
 
-  it('keeps a prose-only chapter on the normal generation and Reader path', async () => {
+  it('keeps a body-only chapter on the normal generation and Reader path', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
-    const raw = JSON.stringify({ prose: 'Mara crossed the quiet courtyard.', arcCompletion: { goalId: 'arc-1-opening', completed: false, evidence: '' } });
+    const raw = JSON.stringify({ paragraphs: ['Mara crossed the quiet courtyard.'], arcCompletion: { goalId: 'arc-1-opening', completed: false, evidence: '' } });
     const controller = new HarnessGenerationController({ repository, media, modelAdapter: adapter(raw) });
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'Mara crosses a quiet city.', destinedEnding: 'Reach home.', initialArcPlan: { arcNumber: 1, goals: [{ id: 'arc-1-opening', text: 'Reach home.', chapters: 100 }] } });

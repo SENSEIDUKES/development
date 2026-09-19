@@ -849,6 +849,8 @@ export class HarnessGenerationController {
       title: acceptedDraft.title,
       titleSource: acceptedDraft.titleSource,
       prose: acceptedDraft.prose,
+      paragraphs: cloneHarnessValue(acceptedDraft.paragraphs),
+      metrics: cloneHarnessValue(acceptedDraft.metrics),
       ...(acceptedDraft.blocks ? { blocks: cloneHarnessValue(acceptedDraft.blocks) } : {}),
       ...(acceptedDraft.audioMoments ? { audioMoments: cloneHarnessValue(acceptedDraft.audioMoments) } : {}),
       ...(acceptedDraft.soundscapes ? { soundscapes: cloneHarnessValue(acceptedDraft.soundscapes) } : {}),

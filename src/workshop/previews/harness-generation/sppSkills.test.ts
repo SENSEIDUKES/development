@@ -24,13 +24,13 @@ const rejectedStaleMediaSkill = {
 };
 
 describe('SPP intake through Harness skills', () => {
-  it('ignores the stale pre-separation inventory instead of migrating Media-era saved skills', () => {
+  it('ignores stale Development inventory instead of migrating it', () => {
     const stale = {
-      getItem: (key: string) => key === 'seihouse.harness.imported-skills.v2'
+      getItem: (key: string) => key === 'seihouse.harness.imported-skills.v3'
         ? JSON.stringify([rejectedStaleMediaSkill])
         : null,
     };
-    expect(SPP_SKILL_STORAGE_KEY).toBe('seihouse.harness.imported-skills.v3');
+    expect(SPP_SKILL_STORAGE_KEY).toBe('seihouse.harness.imported-skills.v4');
     expect(loadHarnessSppSkills(stale)).toEqual([]);
   });
 

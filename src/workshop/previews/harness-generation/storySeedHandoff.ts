@@ -9,7 +9,13 @@ import type {
   StoryFoundationInput,
 } from '@seihouse/sen/harness-generation';
 import { getStoryStyleLabel, type StorySeedRecord } from '@seihouse/sen/story-seed';
+import type { HarnessSkillReference, HarnessSkillSlotId } from '@seihouse/sen/harness-generation';
 import { listWorkshopStorySeeds, LOCAL_WORKSHOP_STORY_SEED_OWNER_ID } from '../story-seed/storySeedStorage';
+import {
+  installOfficialCapaSkills,
+  OFFICIAL_CAPA_DEFAULT_REFERENCES,
+  OFFICIAL_STYLE_REFERENCES,
+} from './officialCapaSkills';
 
 const joinSections = (sections: Array<[string, unknown]>): string | undefined => {
   const present = sections.filter(([, value]) => {
@@ -115,6 +121,25 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
   };
 };
 
+type HarnessSkillLoadout = Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>;
+
+/** A deliberate Story Seed style change replaces only the Style slot. */
+export const updateOfficialCapaStyle = (
+  loadout: HarnessSkillLoadout,
+  style: StorySeedRecord['seed']['story']['required']['style'],
+): HarnessSkillLoadout => {
+  const { style: _previousStyle, ...unchangedSlots } = loadout;
+  return {
+    ...unchangedSlots,
+    ...(style ? { style: OFFICIAL_STYLE_REFERENCES[style] } : {}),
+  };
+};
+
+/** Official defaults for a newly created story. No unprovided slot is invented. */
+export const createOfficialCapaDefaultLoadout = (
+  style: StorySeedRecord['seed']['story']['required']['style'],
+): HarnessSkillLoadout => updateOfficialCapaStyle(OFFICIAL_CAPA_DEFAULT_REFERENCES, style);
+
 export const createWorkshopStorySeedSource = (): HarnessStorySeedSource => ({
   manageHref: '?preview=story-seed',
   async list(): Promise<HarnessStorySeedOption[]> {
@@ -126,6 +151,7 @@ export const createWorkshopStorySeedSource = (): HarnessStorySeedSource => ({
       hasBlueprint: Boolean(record.blueprint),
       // Each option carries its own seed's language, never the last one opened.
       originalLanguage: record.originalLanguage,
+      initialSkillLoadout: createOfficialCapaDefaultLoadout(record.seed.story.required.style),
       foundation: createHarnessFoundationFromStorySeed(record),
     }));
   },
@@ -133,7 +159,12 @@ export const createWorkshopStorySeedSource = (): HarnessStorySeedSource => ({
 
 
 export async function startWorkshopHarnessStory(payload: InitialStoryGenerationPayload) {
-  const controller = new HarnessGenerationController({ repository: new IndexedDbHarnessGenerationRepository(), modelAdapter: new HarnessGenerationHttpClient() });
+  const { installed } = await installOfficialCapaSkills(localStorage);
+  const controller = new HarnessGenerationController({
+    repository: new IndexedDbHarnessGenerationRepository(),
+    modelAdapter: new HarnessGenerationHttpClient(),
+    installedSkills: installed,
+  });
   await controller.hydrate();
   const foundation = createHarnessFoundationFromStorySeed({
     id: payload.administrative.sourceSeedId, userId: payload.administrative.creatorId,
@@ -144,5 +175,9 @@ export async function startWorkshopHarnessStory(payload: InitialStoryGenerationP
   });
   // Original Language is story identity, so it crosses the boundary as its own
   // argument rather than hiding inside the neutral Foundation.
-  return controller.createStory(foundation, payload.administrative.originalLanguage);
+  return controller.createStory(
+    foundation,
+    payload.administrative.originalLanguage,
+    createOfficialCapaDefaultLoadout(payload.storySeed.story.required.style),
+  );
 }

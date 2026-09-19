@@ -17,6 +17,22 @@ vi.mock('@seihouse/sen/harness-generation', () => ({
   HarnessGenerationHttpClient: class {},
 }));
 
+vi.mock('./officialCapaSkills', () => ({
+  installOfficialCapaSkills: async () => ({ installed: [], official: [] }),
+  OFFICIAL_CAPA_DEFAULT_REFERENCES: {
+    author: { id: 'official.author', version: '1.0.1' },
+    pacing: { id: 'official.pacing', version: '1.0.1' },
+    continuity: { id: 'official.continuity', version: '1.0.1' },
+  },
+  OFFICIAL_STYLE_REFERENCES: {
+    chinese: { id: 'official.style.chinese', version: '1.0.0' },
+    japanese: { id: 'official.style.japanese', version: '1.0.0' },
+    korean: { id: 'official.style.korean', version: '1.0.0' },
+  },
+}));
+
+vi.stubGlobal('localStorage', {});
+
 const { startWorkshopHarnessStory } = await import('./storySeedHandoff');
 
 const payloadWithLanguage = (originalLanguage: 'en' | 'ja') => {

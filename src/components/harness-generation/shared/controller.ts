@@ -253,15 +253,36 @@ export class HarnessGenerationController {
   async createStory(
     input: StoryFoundationInput,
     originalLanguage: SenLanguageCode = DEFAULT_SEN_LANGUAGE_CODE,
+    initialSkillLoadout?: Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>,
   ): Promise<HarnessStory> {
     this.assertHydrated();
     const created = createHarnessStory(this.state, input, originalLanguage, this.runtime);
-    created.story.skillLoadout = {
-      author: {
-        id: SEN_NOVEL_AUTHOR_SKILL.id,
-        version: SEN_NOVEL_AUTHOR_SKILL.version,
-      },
-    };
+    if (initialSkillLoadout) {
+      const unsupportedSlot = Object.keys(initialSkillLoadout)
+        .find(slot => !CAPA_SCHEMA.some(definition => definition.id === slot));
+      if (unsupportedSlot) throw new Error(`${unsupportedSlot} is not a supported CAPA skill slot.`);
+      const loadout: Partial<Record<HarnessSkillSlotId, HarnessSkillReference>> = {};
+      for (const slot of CAPA_SCHEMA) {
+        const reference = initialSkillLoadout[slot.id];
+        if (!reference) continue;
+        const manifest = resolveHarnessSkill(this.skillCatalog, reference);
+        if (!manifest) throw new Error(`${slot.label} skill ${reference.id}@${reference.version} is not installed in this host.`);
+        if (manifest.slot !== slot.id) throw new Error(`${manifest.name} cannot be equipped in the ${slot.label} slot.`);
+        if (slot.id === 'translation' && !isTranslationSkillCompatible(manifest, originalLanguage)) {
+          throw new Error(translationCompatibilityError(manifest, originalLanguage));
+        }
+        loadout[slot.id] = cloneHarnessValue(reference);
+      }
+      if (!loadout.author) throw new Error('Choose an installed Author skill before creating a Harness story.');
+      created.story.skillLoadout = loadout;
+    } else {
+      created.story.skillLoadout = {
+        author: {
+          id: SEN_NOVEL_AUTHOR_SKILL.id,
+          version: SEN_NOVEL_AUTHOR_SKILL.version,
+        },
+      };
+    }
     await this.persist(created.state);
     return cloneHarnessValue(created.story);
   }

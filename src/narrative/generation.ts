@@ -54,6 +54,8 @@ export interface HarnessStorySeedOption {
   hasBlueprint: boolean;
   /** The seed's own Original Language, frozen onto the story it starts. */
   originalLanguage: SenLanguageCode;
+  /** Host-resolved package identities to equip only when this story is created. */
+  initialSkillLoadout?: Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>;
   foundation: StoryFoundationInput;
 }
 
@@ -167,7 +169,16 @@ export interface HarnessSkillManifest extends HarnessSkillReference {
   assetCount?: number;
   runtimeLabel?: string;
   /** Original container identity and selected file; metadata is not model instruction text. */
-  source?: { packageId: string; packageVersion: string; path: string; sha256: string };
+  source?: {
+    packageId: string;
+    packageVersion: string;
+    path: string;
+    sha256: string;
+    /** Optional whole-container identity retained by hosts that keep the original SPP. */
+    archiveSha256?: string;
+    /** Exact package inventory retained as provenance; resource bytes never enter CAPA. */
+    resources?: Array<{ path: string; mediaType: string; sha256: string }>;
+  };
 }
 
 /** Exact installed manifests frozen in CAPA Schema order before CAPA assembly. */

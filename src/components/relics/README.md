@@ -4,11 +4,13 @@
 - **Source location:** `src/components/UserProfileInventoryPanel.tsx` (cards), `src/components/ModalsAndToasts.tsx` (the `unlockedArtifactAlert` reveal flow)
 - **Workshop preview:** `?preview=relics-gallery`
 - **Replica created:** 2026-07-29
-- **Last Workshop update:** 2026-08-25
+- **Last Workshop update:** 2026-09-19
 - **Last source comparison:** 2026-07-29
-- **Replica status:** under refinement
+- **Replica status:** Library presentation over one server-backed Relics domain projection
 
 ## Workshop history
+
+- **2026-09-19:** Made Relics a deliberate `@seihouse/library/relics` capability. The client reads one domain projection backed by the existing v3 server foundation; reveal acknowledgement is presentation state, not an award. Award/evaluation authority remains server-side, and the package exposes no client operation that can mint a Relic. Stateless celestial visuals now come from `@seihouse/library-ui@0.5.0`.
 
 - **2026-08-25:** Moved to the Library lane. The relic economy is SEIHouse product, not portable SEN behavior, so these surfaces now publish as `@seihouse/library/relics` instead of `@seihouse/sen/relics`. `development/RelicReveal` draws its motes through `@seihouse/sen/ui`, so Library links against the published engine instead of reaching into SEN source. Components, props, and presentation are unchanged.
 

@@ -1,9 +1,5 @@
-import type {
-  DaoPillarCalendarSnapshot,
-  DaoPillarClaimResponse,
-  DaoPillarHttpError,
-} from '../../components/dao-pillar/shared/daoPillarContracts';
-import type { EnergyPrincipalResolver } from '../energy/authentication';
+import { type DaoPillarCalendarSnapshot, type DaoPillarClaimResponse, type DaoPillarHttpError } from '@seihouse/library/dao-pillar';
+import type { PrincipalResolver } from '../identity/authentication';
 import { QiValidationError } from '../qi/qiLedger';
 import { DaoPillarNotAvailableError, DaoPillarUnsupportedRewardError, DaoPillarValidationError } from './repository';
 import type { DaoPillarService } from './service';
@@ -22,7 +18,7 @@ export interface DaoPillarHttpResponse {
 
 export interface DaoPillarHttpDependencies {
   service: DaoPillarService;
-  resolvePrincipal: EnergyPrincipalResolver;
+  resolvePrincipal: PrincipalResolver;
   onError?: (error: unknown) => void;
 }
 

@@ -18,7 +18,7 @@ import {
   isProviderVoiceField,
   normalizeCreatureCodexRecords,
 } from "../../components/chapter-generation/shared/packets/creatureCodex";
-import { isSoundscapeRegion, type SoundscapeRegion } from "../../audio/soundscapes";
+import { isSoundscapeRegion, type SoundscapeRegion } from '@seihouse/sen/audio';
 import type {
   AsyncChapterGenerationModelCalls,
   ChapterEffectKind,
@@ -35,22 +35,10 @@ import type {
   ChapterModelCallUsage,
   EstimatedStageInputTokenBreakdown,
 } from "../../components/chapter-generation/shared/pipeline/usage";
-import {
-  STORY_ENTITY_TYPES,
-  type ChapterHandoff,
-  type StoryBlock,
-  type StoryBlockMetadata,
-  type StoryEntityType,
-  type SystemEvent,
-  type SystemPromptBadge,
-  type SystemPromptChange,
-  type SystemPromptPresentation,
-  type SystemStatusScreen,
-  type WorldNoticeData,
-  type ChapterContent,
-} from "../../components/chapter-generation/shared/types";
+import { STORY_ENTITY_TYPES, type ChapterHandoff, type StoryBlock, type StoryBlockMetadata, type StoryEntityType, type SystemEvent, type SystemPromptBadge, type SystemPromptChange, type SystemPromptPresentation, type SystemStatusScreen, type WorldNoticeData } from '@seihouse/sen/generation';
+import { type ChapterContent } from '@seihouse/sen/contracts';
 import type { ChapterTextModelProvider } from "./provider";
-import { parseModelWorldCueIntents } from "../../components/chapter-generation/shared/manifestNormalizer";
+import { parseModelWorldCueIntents } from '@seihouse/sen/generation';
 import { assignCharacterVoices } from "../audio/characterVoiceAssignments";
 
 const EFFECT_KINDS: ChapterEffectKind[] = [

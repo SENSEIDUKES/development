@@ -1,11 +1,12 @@
 import { createArcChapterPosition } from '../../arc-goals/shared/arcGoals';
+import { applyHarnessReaderChanges } from './readerEdits';
 import { harnessArcContext } from './arcState';
-import type { Character, StoryBlock, StoryMemory, StoryWorld } from '../../reader-chamber/shared/types';
+import type { Character, StoryBlock, StoryMemory, StoryWorld } from '../../../narrative/story';
 import { buildCanonicalStoryView } from './canonicalState';
 import { cloneHarnessValue, stableHarnessId } from './ids';
 import { buildHarnessMechanicalContinuity } from './mechanicalContinuity';
 import { verifyHarnessEventEvidence } from './responseAcceptance';
-import type { HarnessCanonicalRecord, HarnessWorkspaceState } from './types';
+import type { HarnessCanonicalRecord, HarnessWorkspaceState } from '../../../narrative/generation';
 
 const stringFact = (record: HarnessCanonicalRecord, key: string) =>
   typeof record.facts[key] === 'string' ? record.facts[key] as string : undefined;
@@ -209,5 +210,8 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
     currentChapterNumber: chapters.at(-1)?.chapterNumber ?? 1 } };
 };
 
-export const createHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, throughChapter = Infinity): StoryWorld =>
-  buildHarnessSenStory(state, storyId, throughChapter, true).story;
+export const createHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, throughChapter = Infinity): StoryWorld => {
+  const story = buildHarnessSenStory(state, storyId, throughChapter, true).story;
+  const changes = state.corrections.filter(item => item.storyId === storyId && item.readerEdit && item.readerEdit.chapterNumber <= throughChapter).flatMap(item => item.readerEdit!.changes);
+  return applyHarnessReaderChanges(story, changes);
+};

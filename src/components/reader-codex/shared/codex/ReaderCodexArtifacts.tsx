@@ -2,16 +2,11 @@ import React, { useState } from 'react';
 import { Plus, Sword, RefreshCcw, Sparkles, Download, Lock, Compass, Settings2 } from 'lucide-react';
 import { Artifact, StoryWorld } from '../types';
 import { useCodex } from './CodexContext';
-import { useAppStore } from '../codexCompatibility';
-import { isHubStoryLockedForUser } from '../codexCompatibility';
+import { useReaderRuntime } from '../../../../narrative/readerRuntime';
 import { ReaderCodexImageGallery } from './ReaderCodexImageGallery';
 import { resolveEntityImageHistory } from './entityImageHistory';
-import { handleDownload } from '../codexCompatibility';
-import {
-  getColorCodeSurfaceStyle,
-  getColorCodeValue,
-  resolveArtifactColorCode,
-} from '../../../reader-chamber/shared/colorCodes';
+import { handleDownload } from '../downloadUtils';
+import { getColorCodeSurfaceStyle, getColorCodeValue, resolveArtifactColorCode } from '../../../../narrative/colorCodes';
 
 
 interface ReaderCodexArtifactsProps {
@@ -33,8 +28,8 @@ export function ReaderCodexArtifacts({
     openEntryContextEditor,
   } = useCodex();
 
-  const userProfile = useAppStore(state => state.userProfile);
-  const isFreeUserOnHubStory = isHubStoryLockedForUser(activeStory, userProfile);
+  const runtime = useReaderRuntime();
+  const manifestationRestricted = !runtime.canManifest(activeStory.id);
 
   const [showAddArtifactForm, setShowAddArtifactForm] = useState(false);
   const [newArtifact, setNewArtifact] = useState({
@@ -136,7 +131,7 @@ export function ReaderCodexArtifacts({
 
           <div className="flex justify-end space-x-2 pt-1">
             <button type="button"  tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => setShowAddArtifactForm(false)} className="text-neutral-500">Abort</button>
-            <button type="submit" className="bg-human text-signal px-4 py-1 rounded font-bold font-sc uppercase">Forge Relic</button>
+            <button type="submit" className="bg-human text-signal px-4 py-1 rounded font-bold font-sc uppercase">Forge Artifact</button>
           </div>
         </form>
       )}
@@ -154,7 +149,7 @@ export function ReaderCodexArtifacts({
             const currentChapter = activeStory.currentChapterNumber || 1;
             const hasAppeared = art.firstAppeared === undefined || art.firstAppeared <= currentChapter;
             const activePreview = previews[art.id];
-            const canGenerate = hasAppeared && (!hasImage || art.evolutionReady) && !isFreeUserOnHubStory;
+            const canGenerate = hasAppeared && (!hasImage || art.evolutionReady) && !manifestationRestricted;
             const displayedImage = activePreview ? activePreview.urls[activePreview.selectedIndex] : art.imageUrl;
             const isMythicOrTranscendent = art.tier === 'Primordial' || art.tier === 'Heaven';
             const tierColorCode = resolveArtifactColorCode(art);
@@ -201,7 +196,7 @@ export function ReaderCodexArtifacts({
                             handleDownload(displayedImage, `${art.name.toLowerCase().replace(/\s+/g, '_')}_relic.png`);
                           }}
                           className="absolute bottom-2 right-2 z-20 bg-black/85 hover:bg-portal hover:text-void border border-neutral-900 hover:border-portal text-neutral-300 p-1.5 rounded-md transition-all duration-200 opacity-0 group-hover:opacity-100 flex items-center gap-1 font-mono text-[8px] uppercase tracking-wider backdrop-blur cursor-pointer shadow-md"
-                          title="Download Relic Aura"
+                          title="Download Artifact Aura"
                         >
                           <Download size={10} />
                           <span>Get</span>
@@ -293,7 +288,7 @@ export function ReaderCodexArtifacts({
                               ? 'bg-portal border-portal text-void shadow-[0_0_10px_rgba(4,172,255,0.4)]'
                               : 'bg-void border-portal/15 text-portal hover:border-portal hover:bg-portal/5 hover:shadow-[0_0_8px_rgba(4,172,255,0.2)]'
                           }`}
-                          title={!hasAppeared ? "Unlock manifestation by encountering it in the story." : isFreeUserOnHubStory ? "Please Ascend to the Inner Sect to customize this original relic portrait." : !canGenerate ? "Progression required to awaken Relic." : ""}
+                          title={!hasAppeared ? "Unlock manifestation by encountering it in the story." : manifestationRestricted ? "Visual manifestation is unavailable for this story." : !canGenerate ? "Progression required to awaken Artifact." : ""}
                         >
                           {isGenerating ? (
                             <>
@@ -306,8 +301,8 @@ export function ReaderCodexArtifacts({
                               <span>
                                 {!hasAppeared
                                   ? 'Undiscovered'
-                                  : isFreeUserOnHubStory
-                                  ? (hasImage ? 'Relic Active' : 'Relic Locked (Free)')
+                                  : manifestationRestricted
+                                  ? (hasImage ? 'Artifact Active' : 'Artifact Locked')
                                   : art.evolutionReady
                                   ? 'Awaken Evolution'
                                   : hasImage

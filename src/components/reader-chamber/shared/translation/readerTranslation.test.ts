@@ -1,22 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
-import { validateHarnessSkillManifest } from '../../../harness-generation/shared/skills';
-import type { HarnessSkillManifest } from '../../../harness-generation/shared/types';
-import type { ReaderChapter, StoryBlock } from '../types';
-import { READER_TRANSLATION_SCHEMA_VERSION, type DerivedChapterTranslation } from './contract';
-import { ReaderTranslationController } from './controller';
-import type { ReaderTranslationProvider } from './provider';
-import {
-  InMemoryReaderTranslationRepository,
-  MAX_CACHED_TRANSLATIONS,
-  WebReaderTranslationRepository,
-} from './repository';
-import {
-  buildReaderFacingChapter,
-  mergeReaderTranslation,
-  readerFacingContentHash,
-} from './readerFacing';
-import { readerTranslationSkillContentDigest, resolveReaderTranslationSkill } from './skill';
-import { validateReaderTranslationResponse } from './validate';
+import { validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { type ReaderChapter, type StoryBlock } from '@seihouse/sen/contracts';
+import { READER_TRANSLATION_SCHEMA_VERSION, type DerivedChapterTranslation } from '@seihouse/sen/translation';
+import { ReaderTranslationController } from '@seihouse/sen/translation';
+import { type ReaderTranslationProvider } from '@seihouse/sen/translation';
+import { InMemoryReaderTranslationRepository } from './repository';
+import { MAX_CACHED_TRANSLATIONS } from '../../../../host/reader/translationStorage';
+import { WebReaderTranslationRepository } from '../../../../host/reader/translationStorage';
+import { buildReaderFacingChapter, mergeReaderTranslation, readerFacingContentHash } from '@seihouse/sen/translation';
+import { readerTranslationSkillContentDigest, resolveReaderTranslationSkill } from '@seihouse/sen/translation';
+import { validateReaderTranslationResponse } from '@seihouse/sen/translation';
 
 /**
  * Test-only manifests and fixtures. Nothing here is an installable product
@@ -569,7 +563,7 @@ describe('the browser translation cache', () => {
       getItem: key => values.get(key) ?? null,
       setItem: (key, value) => { values.set(key, value); },
       removeItem: key => { values.delete(key); },
-    });
+    }, 'translations');
     for (let chapterNumber = 1; chapterNumber <= MAX_CACHED_TRANSLATIONS + 3; chapterNumber += 1) {
       repository.write({
         schemaVersion: READER_TRANSLATION_SCHEMA_VERSION,

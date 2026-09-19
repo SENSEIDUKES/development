@@ -13,7 +13,7 @@
  * and asks to claim "today"; it never names a day, a date or an amount.
  */
 
-export const DAO_PILLAR_API_PATH = '/api/dao-pillar';
+export const DAO_PILLAR_API_PATH = '/api/library-economy?capability=dao-pillar';
 
 /**
  * One thing a scheduled day awards. `qi` is the only kind delivered today;

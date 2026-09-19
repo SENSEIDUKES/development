@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ARC_LENGTH, activeArcGoal, arcGenerationContext, arcGoalSegments, confirmArcGoal, createArcChapterPosition, editArcPlan, validateArcPlan, type ArcPlan } from './arcGoals';
+import { ARC_LENGTH, activeArcGoal, arcGenerationContext, arcGoalSegments, confirmArcGoal, createArcChapterPosition, editArcPlan, validateArcPlan, type ArcPlan } from '@seihouse/sen/arc-goals';
 import { createArcChapterPosition as legacyPosition } from '../../chapter-generation/shared/packets/livingStoryState';
 
 const plan: ArcPlan = { arcNumber: 1, goals: [

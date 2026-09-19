@@ -2,7 +2,7 @@ import type {
   IntakeData,
   StorySeed,
   WorldBlueprint,
-} from '../../../components/story-seed/shared/referenceIntake';
+} from '../../reference-support/story-seed/referenceIntake';
 import {
   STORY_SEED_SCHEMA_VERSION,
   createEmptyStorySeedInput,

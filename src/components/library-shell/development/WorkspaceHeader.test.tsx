@@ -4,12 +4,12 @@ import { join } from 'node:path';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { LibraryPresentationProvider } from '../../library-presentation/LibraryPresentationProvider';
-import { WorkspaceHeader } from './WorkspaceHeader';
+import { LibraryPresentationProvider } from '@seihouse/library/presentation';
+import { WorkspaceHeader } from '@seihouse/library/shell';
 import { MainLibraryHeader } from './MainLibraryHeader';
-import { STORY_SEED_HELP_ITEMS } from '../../story-seed/development/storySeedHelp';
+import { STORY_SEED_HELP_ITEMS } from '@seihouse/library/story-seed';
 
-vi.mock('../../../audio/DevAudioPlayback', () => ({ useDevAudioPlayback: () => ({
+vi.mock('../../../audio/playback', () => ({ useNarrativeAudio: () => ({
   isPlaying: false, currentTrackId: null, stop: vi.fn(),
 }) }));
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -115,7 +115,7 @@ it('regression: keeps the badge legibility rules that let long titles wrap inste
 it('reuses Library Help topics and original guidance, closes with Escape and returns focus', async () => {
   await render(<WorkspaceHeader title="Cultivator Cave" />);
   await click(button('Help'));
-  await act(async () => { await import('../../story-seed/development/StorySeedHelpMenu'); });
+  await act(async () => { await import('@seihouse/library/story-seed'); });
   await settle();
   const dialog = document.querySelector<HTMLElement>('[role="dialog"][aria-label="Library Help"]')!;
   expect(dialog).not.toBeNull();

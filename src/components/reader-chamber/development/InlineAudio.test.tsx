@@ -1,20 +1,14 @@
 // @vitest-environment jsdom
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import React, { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  DevAudioPlaybackProvider,
-  useDevAudioPlayback,
-  type DevAudioPlayback,
-  type DevAudioPlaybackEvent,
-} from '../../../audio/DevAudioPlayback';
-import {
-  getInlineCueTrackId,
-  type ResolvedAudioMoment,
-} from '../../../audio/inlineAudio';
+import { useNarrativeAudio, type NarrativeAudioPlayback, type NarrativeAudioPlaybackEvent } from '@seihouse/sen/audio';
+import { DevAudioPlaybackProvider } from '../../../audio/DevAudioPlayback';
+import { getInlineCueTrackId, type ResolvedAudioMoment } from '@seihouse/sen/audio';
 import { installAudioMediaStubs } from '../../../test-utils/renderWithDevAudio';
-import { InlineAudio, InlineAudioControl, InlineAudioText } from './InlineAudio';
+import { InlineAudio, InlineAudioControl, InlineAudioText } from '@seihouse/sen/reader-chamber';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -29,6 +23,7 @@ const beastMoment: ResolvedAudioMoment = {
   relatedEntity: { name: 'Vermilion Debt Fox', type: 'creature' },
   cue: {
     publicUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3',
+    provenance: { catalogId: 'test-cues', version: '1' },
   },
 };
 
@@ -43,20 +38,21 @@ const weaponMoment: ResolvedAudioMoment = {
   relatedEntity: { name: 'Ashen Sword', type: 'artifact' },
   cue: {
     publicUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_1.mp3',
+    provenance: { catalogId: 'test-cues', version: '1' },
   },
 };
 
 interface FakePlayback {
-  playback: DevAudioPlayback;
-  emit: (event: DevAudioPlaybackEvent) => void;
+  playback: NarrativeAudioPlayback;
+  emit: (event: NarrativeAudioPlaybackEvent) => void;
   unsubscribe: ReturnType<typeof vi.fn>;
 }
 
 function createFakePlayback(autoPlay = false): FakePlayback {
-  const listeners = new Set<(event: DevAudioPlaybackEvent) => void>();
+  const listeners = new Set<(event: NarrativeAudioPlaybackEvent) => void>();
   const unsubscribe = vi.fn();
-  const emit = (event: DevAudioPlaybackEvent) => listeners.forEach(listener => listener(event));
-  const playback: DevAudioPlayback = {
+  const emit = (event: NarrativeAudioPlaybackEvent) => listeners.forEach(listener => listener(event));
+  const playback: NarrativeAudioPlayback = {
     autoplayBlocked: false,
     currentSource: null,
     currentTrackId: null,
@@ -361,7 +357,7 @@ describe('InlineAudioControl', () => {
 });
 
 function PlaybackProbe() {
-  const playback = useDevAudioPlayback();
+  const playback = useNarrativeAudio();
   return <output data-testid="track-id">{playback.currentTrackId}</output>;
 }
 

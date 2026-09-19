@@ -1,16 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { qiAmountOf } from '../../components/dao-pillar/shared/daoPillarContracts';
+import { qiAmountOf } from '@seihouse/library/dao-pillar';
 import type { QiLedger } from '../qi/qiLedger';
 import { DaoPillarNotAvailableError, type DaoPillarRepository } from './repository';
 import { DaoPillarService } from './service';
 import { BETA_TEST_THEME, withCalendar } from './themes';
-import type { DaoPillarPrincipal, DaoPillarTheme } from './types';
+import type { LibraryPrincipal } from '../identity/types';
+import type { DaoPillarTheme } from './types';
 
 /** Day 1 on 2026-09-06 in New York makes 2026-09-18 the thirteenth day. */
 export const contractTheme: DaoPillarTheme = withCalendar(BETA_TEST_THEME, { startsOn: '2026-09-06', timeZone: 'America/New_York' });
 export const DAY_13 = '2026-09-18T15:00:00Z';
 
-export const cultivator = (uid = 'dev-user'): DaoPillarPrincipal => ({
+export const cultivator = (uid = 'dev-user'): LibraryPrincipal => ({
   uid, role: 'user', identity: 'development', developmentAccess: true,
 });
 

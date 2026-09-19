@@ -2,8 +2,8 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { LibraryPresentationProvider } from '../../library-presentation/LibraryPresentationProvider';
-import { LibraryFooter, LIBRARY_FOOTER_COPYRIGHT, LIBRARY_FOOTER_STATEMENT, type LibraryFooterProps } from './LibraryFooter';
+import { LibraryPresentationProvider } from '@seihouse/library/presentation';
+import { LibraryFooter, LIBRARY_FOOTER_COPYRIGHT, LIBRARY_FOOTER_STATEMENT, type LibraryFooterProps } from '@seihouse/library/shell';
 import { MainLibraryFooter } from './MainLibraryFooter';
 import type { MainLibraryAdapter } from '../shared/MainLibraryAdapter';
 import { MainLibraryHeader } from './MainLibraryHeader';

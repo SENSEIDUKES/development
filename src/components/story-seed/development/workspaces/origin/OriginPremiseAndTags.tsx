@@ -10,13 +10,10 @@ import {
   type SetStateAction,
 } from 'react';
 import { ChevronDown, Feather, Sparkles, Tag, Wand2, X } from 'lucide-react';
-import { SENSearchIcon } from '../../../../sen-icons';
+import { LibrarySearchIcon as SENSearchIcon } from '@seihouse/library-ui';
 import { AnimatePresence, motion } from 'motion/react';
-import {
-  STORY_PREMISE_MAX_LENGTH,
-  STORY_TAG_LIMIT,
-} from '../../../shared/storySeedSchema';
-import type { StoryStyle } from '../../../shared/storyStyle';
+import { STORY_PREMISE_MAX_LENGTH, STORY_TAG_LIMIT } from '@seihouse/sen/story-seed';
+import { type StoryStyle } from '@seihouse/sen/story-seed';
 import {
   CATEGORIZED_TAGS,
   CATEGORY_COLORS,
@@ -28,9 +25,9 @@ import {
   type StoryTagCategoryColor,
   type StoryTagMetadata,
 } from '../../constants';
-import { recommendStoryTags } from '../../../shared/storyTagInference';
+import { recommendStoryTags } from '@seihouse/sen/story-seed';
 import { updateStoryTags, type UpdateSeed } from '../../seedState';
-import { NarrativeDragonCycleIcon as LibraryDragonCycleIcon, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '../../../../../presentation';
+import { NarrativeDragonCycleIcon as LibraryDragonCycleIcon, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { workspaceCompactLabelClass } from '../WorkspaceShell';
 
 const TAG_LIMIT = STORY_TAG_LIMIT;

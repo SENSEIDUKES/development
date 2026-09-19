@@ -1,5 +1,5 @@
 import { arcGoalCompleted, arcGenerationContext, confirmArcGoal, createArcChapterPosition, type ArcPlan } from '../../arc-goals/shared/arcGoals';
-import type { HarnessGenerationAttempt, HarnessStory, StoryFoundationInput } from './types';
+import type { HarnessGenerationAttempt, HarnessStory, StoryFoundationInput } from '../../../narrative/generation';
 
 export function harnessArcContext(story: HarnessStory, foundation: StoryFoundationInput, chapter: number) {
   const revisions = (story.arcPlans ?? []).filter(revision => revision.effectiveChapter <= chapter);

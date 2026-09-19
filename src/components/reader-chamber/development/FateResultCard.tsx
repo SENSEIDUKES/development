@@ -1,15 +1,9 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { CircleAlert as AlertCircle, CircleCheck as CheckCircle, Flame } from 'lucide-react';
-import { FateResultData } from '../shared/types';
-import {
-  getColorCodeStyle,
-  getColorCodeSurfaceStyle,
-  getColorCodeValue,
-  resolveFateConsequenceDetailColorCode,
-  resolveFateResultColorCode,
-} from '../shared/colorCodes';
-import { normalizeFateResultData } from '../shared/systemPromptPresentation';
+import { FateResultData } from '../../../narrative/story';
+import { getColorCodeStyle, getColorCodeSurfaceStyle, getColorCodeValue, resolveFateConsequenceDetailColorCode, resolveFateResultColorCode } from '../../../narrative/colorCodes';
+import { normalizeFateResultData } from '../../../narrative/systemPromptPresentation';
 
 export interface FateResultCardProps extends React.HTMLAttributes<HTMLDivElement> {
   data: FateResultData;

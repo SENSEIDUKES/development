@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { LIBRARY_ASSETS } from '../../../host/media/libraryAssets';
 import { Lightbulb } from 'lucide-react';
-import {
-  STORY_SEED_HELP_ITEMS,
-  getLibraryHelpItems,
-  type StorySeedHelpItem,
-} from './storySeedHelp';
+import { STORY_SEED_HELP_ITEMS, getLibraryHelpItems, type StorySeedHelpItem } from '@seihouse/library/story-seed';
 
 const helpLinesBase = 'https://lines.seihouse.org/LIBRARY/Lines/SYSTEM/SYSTEM/HELP%20LINES';
 
@@ -25,7 +22,7 @@ const expectedLibraryTopics = [
   ['Seed Bank', 'The storage bank for a Readers Story Seeds and world blueprints', `${helpLinesBase}/Seed%20Bank%20-%20ENG.mp3`, ['story-seed', 'seed-bank']],
   ['World Blueprint', 'A World Blueprint is the final overview of a novel before it is manifested from the seed.', `${helpLinesBase}/World%20Blueprint%20-%20Eng.mp3`, ['story-seed', 'seed-bank']],
   ['Energy', 'Energy is the currency used for manifesting inside of the celestial library', `${helpLinesBase}/Energy%20-%20Eng.mp3`, ['library', 'story-seed']],
-  ['SEN', 'SEIHouse Expanded Novels, is a narrative engine designed by, and for the library', `${helpLinesBase}/SEN%20-%20ENG.mp3`, ['library']],
+  ['SEN', 'SEN is a portable expanded-narrative engine. Celestial Library is its first-party host; other authors bring their own content, branding, accounts, and storage.', undefined, ['library']],
   ['Celestial Library', 'The Celestial Library is home for Narration, illustration, Animation, video games and wandering scholars from around the universe.', `${helpLinesBase}/Celestial%20Library%20-%20Eng.mp3`, ['library']],
   ['Relics', 'Items lost by the Library that a cultivator can return for a reward', `${helpLinesBase}/Relics%20-%20Eng.mp3`, ['library', 'relics']],
   ['Pressure', 'Pressure is how much influence the Library exerts over a scholars story', `${helpLinesBase}/Pressure%20-%20eng.mp3`, ['story-seed', 'fate']],
@@ -46,10 +43,11 @@ describe('Library guidance topics', () => {
   it('keeps the exact Library topic copy, audio sources, and contexts', () => {
     expect(STORY_SEED_HELP_ITEMS.map(item => {
       const translation = item.translations.en;
-      return [item.label, translation?.line, translation?.audioUrl, item.contexts];
+      expect(translation?.audioUrl).toBeUndefined();
+      return [item.label, translation?.line, LIBRARY_ASSETS.helpAudio?.[item.id], item.contexts];
     })).toEqual(expectedLibraryTopics);
 
-    const audioUrls = STORY_SEED_HELP_ITEMS.map(item => item.translations.en?.audioUrl);
+    const audioUrls = STORY_SEED_HELP_ITEMS.map(item => LIBRARY_ASSETS.helpAudio?.[item.id]);
     expect(new Set(audioUrls).size).toBe(audioUrls.length);
   });
 

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { AGENTS } from '../../../lib/agents';
 import ReferenceAILoadingVeil from '../../../components/chapter-manifestation/reference/AILoadingVeil';
-import {
-  AILoadingVeil as DevelopmentAILoadingVeil,
-  defaultDestinationFor,
-} from '@seihouse/sen/manifestations';
+import { AILoadingVeil as DevelopmentAILoadingVeil } from '@seihouse/library/manifestations';
+import { defaultDestinationFor } from '@seihouse/library-ui';
 import {
   manifestationModeForOperation,
   type MediaRevealState,
@@ -521,6 +520,7 @@ function DevelopmentVeilCanvas({
         Background app content... (Testing minimize state visibility)
       </div>
       <DevelopmentAILoadingVeil
+        agent={sim.activeAgentId === 'scout' ? AGENTS.SCOUT : AGENTS.VERSA}
         isGenerating={sim.isGenerating}
         generationPhase={sim.phase}
         generationProgressMessage={sim.progressMessage}

@@ -1,13 +1,7 @@
 import { validateArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import { cloneHarnessValue, defaultHarnessRuntime, emptyStoryHead, stableHarnessId, type HarnessRuntime } from './ids';
-import type {
-  HarnessStory,
-  HarnessWorkspaceState,
-  StoryFoundationInput,
-  StoryFoundationRevision,
-  HarnessCanonicalRecord,
-} from './types';
+import type { HarnessStory, HarnessWorkspaceState, StoryFoundationInput, StoryFoundationRevision, HarnessCanonicalRecord } from '../../../narrative/generation';
 
 export const foundationIdentityRecords = (foundation: StoryFoundationRevision): HarnessCanonicalRecord[] =>
   (foundation.input.identities ?? []).map((identity, index) => ({

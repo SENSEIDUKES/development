@@ -4,12 +4,12 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Shield, MapPin, Swords, User } from 'lucide-react';
 import { Character, Faction, Artifact, Location } from '../shared/types';
-import type { StoryWorld } from '../../reader-chamber/shared/types';
+import type { StoryWorld } from '../../../narrative/story';
 import { CODEX_SPECTRAL_EDGE } from './codexHovercardStyles';
 import { NarrativeDragonCycleIcon as LibraryDragonCycleIcon } from '../../../presentation';
 import { CodexCardAmbience } from './CodexCardAmbience';
-import { getManifestBackdrop } from './codexManifestBackdrop';
-import { getColorCodeStyle } from '../../reader-chamber/shared/colorCodes';
+import { selectNarrativeBackdrop, useNarrativeArt } from '../../../presentation';
+import { getColorCodeStyle } from '../../../narrative/colorCodes';
 import { resolveCodexEntityAccent, resolveCodexEntityColorCode } from './codexEntityAccent';
 
 interface CodexHovercardProps {
@@ -170,7 +170,8 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, act
   const accent = resolveCodexEntityAccent(type, entry, activeStory?.mcName);
   // The story's assigned Manifest backdrop wins when present; otherwise the
   // stable pool pick, so the card always shows the same art for an entity.
-  const manifestBackdrop = activeStory?.assignedRevealBackdrops?.[entry.id] ?? getManifestBackdrop(entry.id);
+  const { backdrops } = useNarrativeArt();
+  const manifestBackdrop = activeStory?.assignedRevealBackdrops?.[entry.id] ?? selectNarrativeBackdrop(entry.id, backdrops);
 
   /** The entity-type icon inherits the shared Color Code. */
   const getIcon = () => {

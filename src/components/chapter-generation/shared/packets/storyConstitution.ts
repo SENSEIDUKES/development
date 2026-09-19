@@ -14,16 +14,10 @@ import {
 } from "../lib/chapterWritingStyle";
 import type { GlossaryGenerationResult } from "../lib/glossaryFormatter";
 import type { FatePressureTier } from "../lib/sceneRhythm";
-import type { ChapterWritingStyle } from "../types";
-import {
-  assertValidStorySeedInput,
-  STORY_SEED_SCHEMA_VERSION,
-  WORLD_BLUEPRINT_VERSION,
-  type StorySeedFateSurvivalSettings,
-  type StorySeedInput,
-} from "../../../story-seed/shared/storySeedSchema";
-import { normalizeStoryStyle, type StoryStyle } from "../../../story-seed/shared/storyStyle";
-import type { WorldBlueprint } from "../../../story-seed/shared/types";
+import { type ChapterWritingStyle } from '@seihouse/sen/generation';
+import { assertValidStorySeedInput, STORY_SEED_SCHEMA_VERSION, WORLD_BLUEPRINT_VERSION, type StorySeedFateSurvivalSettings, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { normalizeStoryStyle, type StoryStyle } from '@seihouse/sen/story-seed';
+import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 
 export type StoryConstitutionSource =
   | {

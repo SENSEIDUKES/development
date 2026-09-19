@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { inferStoryTags, recommendStoryTags } from './storyTagInference';
-import { STORY_TAG_CATALOG } from './storyTagCatalog';
+import { inferStoryTags, recommendStoryTags } from '@seihouse/sen/story-seed';
+import { STORY_TAG_CATALOG } from '@seihouse/sen/story-seed';
 
 const labels = (premise: string, genre = '') => recommendStoryTags({ premise, genre, style: 'chinese' }).map(tag => tag.label);
 

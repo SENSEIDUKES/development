@@ -1,18 +1,14 @@
 // @vitest-environment jsdom
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import React, { act, createRef } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type {
-  ReaderChapter,
-  ReaderPreferences,
-  StoryBlock,
-  StoryWorld,
-} from '../shared/types';
+import { type ReaderChapter, type ReaderPreferences, type StoryBlock, type StoryWorld } from '@seihouse/sen/contracts';
 import { resetMockState } from '../shared/stubs';
-import { getColorCodeValue } from '../shared/colorCodes';
-import { CodexCard } from './CodexCard';
-import { ReaderViewport } from './ReaderViewport';
+import { getColorCodeValue } from '@seihouse/sen/color-codes';
+import { CodexCard } from '@seihouse/sen/cards';
+import { ReaderViewport } from '@seihouse/sen/reader-chamber';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

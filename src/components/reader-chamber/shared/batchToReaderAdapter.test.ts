@@ -1,15 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createCompletedFiveChapterTestBatch } from "../../chapter-generation/shared/batch/chapterBatchTestFixture";
 import { buildBatchReviewMarkdown } from "../../chapter-generation/shared/reviewExports";
-import {
-  buildFiveChapterReaderExport,
-  convertBatchToReaderChapters,
-  createChapterScopedCodexStory,
-  createCompletedBatchReaderSession,
-  createCompletedSingleChapterReaderSession,
-  createReaderCodexSnapshots,
-  extractBatchStoryState,
-} from "./batchToReaderAdapter";
+import { buildFiveChapterReaderExport, convertBatchToReaderChapters, createChapterScopedCodexStory, createCompletedBatchReaderSession, createCompletedSingleChapterReaderSession, createReaderCodexSnapshots, extractBatchStoryState } from '../../chapter-generation/shared/batchToReaderAdapter';
 
 describe("batchToReaderAdapter", () => {
   it("adapts one accepted final output and processed Living Story State without manufacturing a batch", () => {

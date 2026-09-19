@@ -1,6 +1,6 @@
 import type { ReactNode, RefObject } from 'react';
 import { SEIDialog, SEIDialogContent, SEIDialogTitle } from '@seihouse/ui';
-import { NarrativeButton, NarrativePanel } from '../../../presentation';
+import { NarrativeButton, NarrativePanel } from '@seihouse/sen/presentation';
 import { X } from 'lucide-react';
 import './workspace-navigation.css';
 

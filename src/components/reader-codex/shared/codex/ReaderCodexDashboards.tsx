@@ -1,15 +1,7 @@
 import React, { useState } from 'react';
 import { Heart, Zap, Network, Sparkles } from 'lucide-react';
 import { StoryMemory, StoryWorld, Character } from '../types';
-import {
-  getColorCodeStyle,
-  getColorCodeSurfaceStyle,
-  getColorCodeValue,
-  resolveKarmaMetricColorCode,
-  resolvePowerStageColorCode,
-  resolveRelationshipAffinityColorCode,
-  POWER_STAGE_BREAKTHROUGH_COLOR_CODE,
-} from '../../../reader-chamber/shared/colorCodes';
+import { getColorCodeStyle, getColorCodeSurfaceStyle, getColorCodeValue, resolveKarmaMetricColorCode, resolvePowerStageColorCode, resolveRelationshipAffinityColorCode, POWER_STAGE_BREAKTHROUGH_COLOR_CODE } from '../../../../narrative/colorCodes';
 
 const AFFINITY_NEUTRAL_THRESHOLD = 20;
 

@@ -1,3 +1,4 @@
+import { loadLibraryCues } from '../../../host/media/libraryCatalog';
 import type {
   Bookmark,
   GeneratedImage,
@@ -5,10 +6,7 @@ import type {
   ReaderPreferences,
   StoryWorld,
 } from '@seihouse/sen/reader-chamber';
-import {
-  resolveChapterAudioMoments,
-  type WorldCueIntent,
-} from '../../../audio/inlineAudio';
+import { resolveChapterAudioMoments, type WorldCueIntent } from '@seihouse/sen/audio';
 export const MOCK_READER_FALLBACK_LABEL = 'Mock fallback · No generated batch supplied · Four-chapter preview story only';
 
 export const MOCK_STORY_ID = 'workshop-story-emberfall';
@@ -74,12 +72,12 @@ export const READER_WORLD_CUE_INTENTS = [
 const INLINE_AUDIO_MOMENTS = (() => {
   const resolution = resolveChapterAudioMoments(
     [{ id: INLINE_AUDIO_BLOCK_ID, text: INLINE_AUDIO_BLOCK_TEXT }],
-    READER_WORLD_CUE_INTENTS,
+    READER_WORLD_CUE_INTENTS, loadLibraryCues(),
   );
   if (resolution.issues.length > 0) {
     throw new Error(`Reader World Cue fixture failed validation: ${resolution.issues[0].message}`);
   }
-  return resolution.audioMoments;
+  return resolution.audioMoments.map(moment => ({ ...moment, cue: { ...moment.cue, provenance: { catalogId: 'library-default-cues', version: '1' } } }));
 })();
 
 const createCodexPreviewImage = (

@@ -1,4 +1,4 @@
-import type { ReaderTranslationRequest } from '../../components/reader-chamber/shared/translation/contract';
+import { type ReaderTranslationRequest } from '@seihouse/sen/translation';
 
 /**
  * The machine-facing contract restated to the model. The client validator is

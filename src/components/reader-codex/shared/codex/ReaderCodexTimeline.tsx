@@ -1,9 +1,6 @@
 import React from 'react';
-import { VirtualizedList } from '../../../reader-chamber/development/VirtualizedList';
-import {
-  getColorCodeSurfaceStyle,
-  POWER_STAGE_BREAKTHROUGH_COLOR_CODE,
-} from '../../../reader-chamber/shared/colorCodes';
+import { VirtualizedList } from '../../../../presentation/VirtualizedList';
+import { getColorCodeSurfaceStyle, POWER_STAGE_BREAKTHROUGH_COLOR_CODE } from '../../../../narrative/colorCodes';
 import { Chapter } from '../types';
 
 interface ReaderCodexTimelineProps {

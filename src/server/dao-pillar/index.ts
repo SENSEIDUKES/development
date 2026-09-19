@@ -15,7 +15,7 @@ export {
   DAO_PILLAR_API_PATH,
   describeRewards,
   qiAmountOf,
-} from '../../components/dao-pillar/shared/daoPillarContracts';
+} from '@seihouse/library/dao-pillar';
 export type {
   DaoPillarCalendarSnapshot,
   DaoPillarClaimResponse,
@@ -24,4 +24,4 @@ export type {
   DeliveredReward,
   RewardEntry,
   RewardType,
-} from '../../components/dao-pillar/shared/daoPillarContracts';
+} from '@seihouse/library/dao-pillar';

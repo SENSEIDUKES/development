@@ -5,7 +5,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CardWorkshopView } from './CardWorkshopView';
 import { createCardWorkshopContextualFixture } from './CardWorkshopContextualReader';
-import { getManifestBackdrop, SystemBlock } from '@seihouse/sen/cards';
+import { getManifestBackdrop } from '../../../host/reader/manifestBackdrops';
+import { SystemBlock } from '@seihouse/sen/cards';
 import { getReaderChamberSurfaceClass } from '@seihouse/sen/reader-chamber';
 import { CardWorkshopWorkspace } from '../../../workshop/previews/card-workshop/CardWorkshopWorkspace';
 import {

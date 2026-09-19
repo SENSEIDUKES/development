@@ -1,11 +1,9 @@
 // @vitest-environment jsdom
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  isPlayableCodexVoiceSource,
-  useCodexVoiceCards,
-} from './useCodexVoiceCards';
+import { isPlayableCodexVoiceSource, useCodexVoiceCards } from '@seihouse/sen/reader-codex';
 
 const playback = vi.hoisted(() => ({
   autoplayBlocked: false,
@@ -19,8 +17,8 @@ const playback = vi.hoisted(() => ({
 const YAN_SHI_ARTIFACT = 'data:audio/mpeg;base64,AAAA';
 const LI_MEI_ARTIFACT = 'data:audio/mpeg;base64,BBBB';
 
-vi.mock('../../../../audio/DevAudioPlayback', () => ({
-  useDevAudioPlayback: () => playback,
+vi.mock('../../../../audio/playback', () => ({
+  useNarrativeAudio: () => playback,
 }));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -85,15 +83,17 @@ afterEach(() => {
 });
 
 describe('isPlayableCodexVoiceSource', () => {
-  it('requires the server-produced audio data URI instead of a voice identity, URL, or legacy marker', () => {
+  it('accepts host-authorized audio resources but not voice identities or unsafe schemes', () => {
     expect(isPlayableCodexVoiceSource()).toBe(false);
     expect(isPlayableCodexVoiceSource('')).toBe(false);
     expect(isPlayableCodexVoiceSource('workshop-voice:Stand.')).toBe(false);
     expect(isPlayableCodexVoiceSource('ancient-master-female')).toBe(false);
     expect(isPlayableCodexVoiceSource('/generated/voice.mp3')).toBe(false);
-    expect(isPlayableCodexVoiceSource('https://audio.example/voice.mp3')).toBe(false);
-    expect(isPlayableCodexVoiceSource('https://api.elevenlabs.io/v1/audio/provider-voice-id')).toBe(false);
-    expect(isPlayableCodexVoiceSource('blob:https://reader.example/artifact')).toBe(false);
+    expect(isPlayableCodexVoiceSource('https://audio.example/voice.mp3')).toBe(true);
+    expect(isPlayableCodexVoiceSource('https://audio.example/stream?token=host-grant')).toBe(true);
+    expect(isPlayableCodexVoiceSource('blob:https://reader.example/artifact')).toBe(true);
+    expect(isPlayableCodexVoiceSource('javascript:alert(1)')).toBe(false);
+    expect(isPlayableCodexVoiceSource('https://127.0.0.1/private.mp3')).toBe(false);
     expect(isPlayableCodexVoiceSource('data:text/plain;base64,AAAA')).toBe(false);
     expect(isPlayableCodexVoiceSource(YAN_SHI_ARTIFACT)).toBe(true);
   });

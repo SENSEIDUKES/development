@@ -14,15 +14,11 @@ import {
   Target,
   Wand2,
 } from 'lucide-react';
-import { SENArcIcon, SENPowerSystemIcon, SENWorldIdentityIcon } from '../../../sen-icons';
-import type { WorldBlueprint, WorldBlueprintMainCharacter } from '../../shared/types';
-import {
-  STORY_PREMISE_MAX_LENGTH,
-  STORY_TAG_LIMIT,
-  type StorySeedStoryRequired,
-} from '../../shared/storySeedSchema';
-import { STORY_STYLE_OPTIONS, type StoryStyle } from '../../shared/storyStyle';
-import { NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '../../../../presentation';
+import { LibraryArcIcon as SENArcIcon, LibraryPowerSystemIcon as SENPowerSystemIcon, LibraryWorldIdentityIcon as SENWorldIdentityIcon } from '@seihouse/library-ui';
+import { type WorldBlueprint, type WorldBlueprintMainCharacter } from '@seihouse/sen/story-seed';
+import { STORY_PREMISE_MAX_LENGTH, STORY_TAG_LIMIT, type StorySeedStoryRequired } from '@seihouse/sen/story-seed';
+import { STORY_STYLE_OPTIONS, type StoryStyle } from '@seihouse/sen/story-seed';
+import { NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import {
   BlueprintSectionHeading,
   EditableChip,
@@ -30,7 +26,7 @@ import {
   MetadataChip,
 } from './BlueprintDossierPrimitives';
 import { formatBlueprintDate } from './createBlueprintMarkdown';
-import { SENProfileIcon } from '../../../library-shell/development/SENGlobalIcon';
+import { LibraryProfileIcon as SENProfileIcon } from '@seihouse/library-ui';
 
 interface BlueprintHeaderSectionProps {
   blueprintVersion?: WorldBlueprint['blueprintVersion'];

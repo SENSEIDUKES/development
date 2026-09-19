@@ -8,16 +8,11 @@
  * `setStorySeedRepository`. No other Story Seed module may import this file.
  */
 
-import { DEFAULT_SEN_LANGUAGE_CODE, normalizeSenLanguageCode, type SenLanguageCode } from '../../../lib/language';
-import { generateUUID } from './id';
-import {
-  STORY_SEED_SCHEMA_VERSION,
-  normalizeStorySeedInput,
-  normalizeWorldBlueprint,
-  type StorySeedInput,
-} from './storySeedSchema';
-import type { WorldBlueprint } from './types';
-import type { StorySeedRecord, StorySeedRepository } from './storySeedRepository';
+import { DEFAULT_SEN_LANGUAGE_CODE, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
+import { generateUUID } from '@seihouse/sen/story-seed';
+import { STORY_SEED_SCHEMA_VERSION, normalizeStorySeedInput, normalizeWorldBlueprint, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { type StorySeedRecord, type StorySeedRepository } from '@seihouse/sen/story-seed';
 
 const STORAGE_KEY = 'seihouse-workshop-story-seeds-v4';
 let memoryRecords: StorySeedRecord[] = [];

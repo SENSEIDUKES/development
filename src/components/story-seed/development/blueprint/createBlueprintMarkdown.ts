@@ -1,6 +1,6 @@
-import type { StorySeedStoryRequired } from '../../shared/storySeedSchema';
-import type { WorldBlueprint, WorldBlueprintMainCharacter } from '../../shared/types';
-import { getStoryStyleLabel } from '../../shared/storyStyle';
+import { type StorySeedStoryRequired } from '@seihouse/sen/story-seed';
+import { type WorldBlueprint, type WorldBlueprintMainCharacter } from '@seihouse/sen/story-seed';
+import { getStoryStyleLabel } from '@seihouse/sen/story-seed';
 
 export const formatBlueprintDate = (value: string): string => {
   const parsed = new Date(value);

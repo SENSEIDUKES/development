@@ -3,11 +3,11 @@
 The universal UI tarball is built from the merged UI PR [#60](https://github.com/SENSEIDUKES/UI/pull/60), commit `42961e48e78ee816f9c2801a37a7f66af8aa2ae2`:
 
 - `@seihouse/ui@0.4.0`: universal SEIHouse primitives and experience tokens, including the `SEIAppHeader` application chrome and the `SEIAppShell` scaffold.
-- `@seihouse/library-ui@0.4.0`: the Celestial Library component system, including `LibraryElementalTitle`, refreshed from merged [UI PR #65](https://github.com/SENSEIDUKES/UI/pull/65), source commit `1470501fa09156019eebb4f5e08179f8f9f2afde`. The per-artifact source fields override the shared baseline provenance.
+- `@seihouse/library-ui@0.5.0`: stateless Celestial Library presentation, including the transferred icon family, manifestation chamber/scenes/vessel, journey scrubber, Cave backdrop and particles. Built from coordinated [UI PR #68](https://github.com/SENSEIDUKES/UI/pull/68), source commit `04b8949bb11e956ce698277cf84bc94e2d904bf6`. Domain behavior remains in `@seihouse/library`.
 
 `ui-artifacts.json` records source provenance and SHA-512 integrity. The root manifest pins these files, and `package-lock.json` records their integrity. Run `npm ci` followed by `npm run check:ui-artifacts` to verify the installed dependency inputs.
 
-**Install with `npm ci`, never `npm install`, after refreshing these tarballs.** The file names and the `0.4.0` version stay the same across UI commits, so `npm install` over an existing `node_modules` reports "up to date" and leaves the previous build in place — which is why `vercel.json` pins the deploy install command to `npm ci`. `check:ui-artifacts` now compares each tarball against the installed copy in both directions — a changed or missing file, and a file left behind by an older build — and fails with that instruction if they diverge.
+Use `npm ci` after refreshing these tarballs. `check:ui-artifacts` compares each tarball against the installed copy in both directions and also checks lockfile integrity and recorded source provenance.
 
 No registry publication or repository visibility change is required.
 

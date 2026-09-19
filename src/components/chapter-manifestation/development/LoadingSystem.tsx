@@ -1,8 +1,8 @@
 import React from 'react';
 import { AnimatePresence } from 'motion/react';
-import type { LoadingTaskCard } from '../shared/taskCard';
+import type { LoadingTaskCard } from '../../../library/manifestations/taskCard';
 import LoadingVeilCard from './LoadingVeilCard';
-import CompactIndicator from '../shared/CompactIndicator';
+import CompactIndicator from './CompactIndicator';
 
 export type LoadingSystemMode = 'auto' | 'primary' | 'compact';
 

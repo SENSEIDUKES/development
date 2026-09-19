@@ -1,4 +1,4 @@
-import { SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS } from '../../../../lib/senLightNovelAuthorInstructions';
+import { SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS } from '@seihouse/sen/generation';
 
 /**
  * Verbatim port of the `chapter` section of `PROMPTS` from Light-Novels

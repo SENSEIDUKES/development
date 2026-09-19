@@ -1,7 +1,7 @@
 import React from 'react';
 import { AdminStoryRow, UserProfile as UserProfileType } from '../shared/types';
 import { Shield, RefreshCw, Flame } from 'lucide-react';
-import { SENSearchIcon } from '../../sen-icons';
+import { LibrarySearchIcon as SENSearchIcon } from '@seihouse/library-ui';
 
 interface UserProfileAdminPanelProps {
   profile: UserProfileType | null;

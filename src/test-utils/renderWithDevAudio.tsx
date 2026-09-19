@@ -1,9 +1,12 @@
 import type { ReactElement, ReactNode } from 'react';
+import { LibraryAssetsProvider } from '@seihouse/library/presentation';
+import { LIBRARY_ASSETS } from '../host/media/libraryAssets';
 import { DevAudioPlaybackProvider } from '../audio/DevAudioPlayback';
+import { ReaderPreviewRuntime } from '../workshop/ReaderPreviewRuntime';
 
 /**
  * Wraps a node in the shared {@link DevAudioPlaybackProvider} so tests that
- * render components consuming `useDevAudioPlayback` (or any other context
+ * render components consuming `useNarrativeAudio` (or any other context
  * rooted in the package's `AudioSessionProvider`) don't have to remember to
  * add the provider themselves.
  *
@@ -15,7 +18,7 @@ import { DevAudioPlaybackProvider } from '../audio/DevAudioPlayback';
  * wrapped in unrelated setup.
  */
 export function renderWithDevAudio(node: ReactNode): ReactElement {
-  return <DevAudioPlaybackProvider>{node}</DevAudioPlaybackProvider>;
+  return <DevAudioPlaybackProvider><ReaderPreviewRuntime><LibraryAssetsProvider value={LIBRARY_ASSETS}>{node}</LibraryAssetsProvider></ReaderPreviewRuntime></DevAudioPlaybackProvider>;
 }
 
 /**

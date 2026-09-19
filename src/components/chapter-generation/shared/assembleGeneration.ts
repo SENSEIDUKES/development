@@ -1,5 +1,6 @@
 /** Reference adapter for the shared four-stage Chapter Generation pipeline. */
-import type { ChapterContent, ChapterHandoff, StoryBlock } from "./types";
+import { type ChapterContent } from '@seihouse/sen/contracts';
+import { type ChapterHandoff, type StoryBlock } from '@seihouse/sen/generation';
 import type { MockChapterGenerationScenario } from "./fixtures/mockGenerationData";
 import { SCENARIOS } from "./fixtures/mockGenerationData";
 import { assembleChapterGenerationPacket } from "./packets";

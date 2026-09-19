@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { SEIDialog, SEIDialogContent, SEIDialogTitle, SEIDialogDescription } from '@seihouse/ui';
 import { Camera, Image as ImageIcon, RefreshCw, Sparkles, X } from 'lucide-react';
 import { LibraryButton } from '@seihouse/library-ui';
-import { SENProfileIcon } from '../../library-shell/development/SENGlobalIcon';
+import { LibraryProfileIcon as SENProfileIcon } from '@seihouse/library-ui';
 import './portraitBuilder.css';
 import { UserProfile } from '../shared/types';
 

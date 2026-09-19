@@ -1,19 +1,10 @@
 import { harnessArcContext } from './arcState';
+import { semanticReaderChanges } from './readerEdits';
 import { buildCanonicalStoryView } from './canonicalState';
 import { buildHarnessMechanicalContinuity } from './mechanicalContinuity';
 import { verifyHarnessEventEvidence } from './responseAcceptance';
 import { cloneHarnessValue, defaultHarnessRuntime, type HarnessRuntime } from './ids';
-import type {
-  HarnessCanonicalRecord,
-  HarnessCanonicalContext,
-  HarnessContextAuditItem,
-  HarnessContextChapter,
-  HarnessContextSelectionPolicy,
-  HarnessStory,
-  HarnessWorkspaceState,
-  StoryFoundationRevision,
-  StoryInformationPacket,
-} from './types';
+import type { HarnessCanonicalRecord, HarnessCanonicalContext, HarnessContextAuditItem, HarnessContextChapter, HarnessContextSelectionPolicy, HarnessStory, HarnessWorkspaceState, StoryFoundationRevision, StoryInformationPacket } from '../../../narrative/generation';
 
 export const DEFAULT_HARNESS_CONTEXT_POLICY: HarnessContextSelectionPolicy = {
   recentChapterCount: 3,
@@ -111,8 +102,12 @@ export const compileStoryInformationPacket = (
     return [{ id, kind, label, evidence, facts }];
   };
   for (const correction of corrections) {
+    const { readerEdit, ...canonicalCorrection } = correction;
+    const semanticEdits = readerEdit ? semanticReaderChanges(readerEdit.changes) : undefined;
+    if (readerEdit && !semanticEdits?.length) continue;
     const value = {
-      ...correction,
+      ...canonicalCorrection,
+      ...(readerEdit ? { readerEdit: { chapterNumber: readerEdit.chapterNumber, changes: semanticEdits! } } : {}),
       targetEvidence: correction.targetRecordIds.flatMap(referent),
       ...(correction.resolvedRecordId ? { resolvedEntity: referent(correction.resolvedRecordId)[0] } : {}),
     };

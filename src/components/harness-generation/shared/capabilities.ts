@@ -1,15 +1,5 @@
 import { stableHarnessId } from './ids';
-import type {
-  HarnessAuthorCorrection,
-  HarnessCanonicalRecord,
-  HarnessCapabilityId,
-  HarnessCapabilityReceipt,
-  HarnessEntityReference,
-  HarnessProjectionRecord,
-  HarnessSemanticEvent,
-  HarnessUnresolvedReference,
-  HarnessWorkspaceState,
-} from './types';
+import type { HarnessAuthorCorrection, HarnessCanonicalRecord, HarnessCapabilityId, HarnessCapabilityReceipt, HarnessEntityReference, HarnessProjectionRecord, HarnessSemanticEvent, HarnessUnresolvedReference, HarnessWorkspaceState } from '../../../narrative/generation';
 
 export const HARNESS_PROJECTOR_VERSION = '1.0.0';
 

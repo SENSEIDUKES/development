@@ -1,99 +1,50 @@
 # `@seihouse/library`
 
-SEIHouse's first-party host application surfaces, built on SEN.
+Celestial Library's client-safe product behavior, assembled on the portable
+SEN engine and the two UI packages. Library owns SEIHouse users, products,
+economy, community and business policy. Authentication enforcement, secrets,
+durable ledgers and concrete infrastructure stay in the host/backend.
 
-Library is the branded implementation of the SEN engine — not a second copy
-of it. Everything portable lives in [`@seihouse/sen`](https://github.com/SENSEIDUKES/development);
-this package carries only what is genuinely SEIHouse product: cultivation and
-Qi progression, the relic economy, and the Library-specific presentation
-layered over portable SEN systems.
+## Public entries
 
-**Library may depend on SEN. SEN never depends on Library.** The dependency
-runs one way, and `npm run check:package-boundaries` fails the build if it
-ever runs the other.
-
-## Entries
-
-| Import | Surface |
+| Import | Responsibility |
 | --- | --- |
-| `@seihouse/library` | Every Library surface, plus `LIBRARY_PACKAGE_VERSION` |
-| `@seihouse/library/presentation` | LibraryPresentationProvider supplies canonical Library UI to nested SEN features |
-| `@seihouse/library/cultivation` | Closed-Door Cultivation: the props-driven idle-Qi reward presentation and its claim ceremony |
-| `@seihouse/library/relics` | The relic economy: the relic card, its inspection modal, the claim reveal, and the relic model |
+| `@seihouse/library` | Common Library exports and version |
+| `./presentation` | Library-to-SEN presentation composition and host asset-location provider |
+| `./profile` | Cave/Profile behavior, public views, settings, admin host ports |
+| `./energy` | Client-safe Energy contracts, read projections and provider |
+| `./cultivation` | QI read projection, rank authority and cultivation surfaces |
+| `./dao-pillar` | Calendar/reward contracts and server-result-driven UI |
+| `./relics` | One Relics domain/read model, client projection and presentation |
+| `./shell` | Navigation, route models, header/footer and shell orchestration |
+| `./home` | Library Home, discovery and story-detail surfaces |
+| `./story-seed` | Authenticated Story Bank, Help and branded creation journey |
+| `./generation` | First-party HARNESS workspace composition |
+| `./media` | First-party catalog selection and entitlement contracts |
+| `./manifestations` | Celestial manifestation orchestration around Library UI visuals |
+| `./styles.css` | Library feature styles |
 
-## What belongs here, and what does not
+Profile consumes Energy and QI projections; it is not their authority. DAO
+Pillar requests today's claim without naming a reward amount. Relics clients
+can read earned records and redacted assignments but cannot award them. Every
+balance, reward, role and permission is host-authoritative.
 
-Library owns the parts of the product that only make sense inside SEIHouse's
-own application:
+`LibraryPresentationProvider` composes stateless `@seihouse/library-ui@0.5.0`
+visuals over SEN. Concrete CDN and public-directory locations are supplied as
+`LibraryAssets`; they are not embedded in the package.
 
-- cultivation, Qi, and realm progression;
-- the relic economy — reward tiers, claims, and artifact language;
-- Library hub behavior, branding, services, and infrastructure.
+## Dependencies and verification
 
-Reusable narrative systems — expanded reading behavior, structured chapter
-contracts, scoring, Color Codes, Codex behavior, cards, and the surfaces built
-on them — belong to `@seihouse/sen`, because another author or company must be
-able to install SEN and supply their own writing, branding, storage,
-authentication, and generation method. If a Library surface turns out to carry
-reusable behavior, the behavior moves to SEN and the Library skin stays here;
-it is never copied into both.
-
-## Peer dependencies
-
-`@seihouse/sen` is a peer dependency, not a bundled one: Library links against
-the published engine so a host application runs exactly one copy of SEN. React,
-Motion, and Lucide stay host-provided the same way.
-
-Library ships no stylesheet of its own. Load `@seihouse/library-ui/styles.css` once in the host Tailwind v4 entry; it includes universal UI styles. Keep `data-experience="sen"` and the Rubik, Noto Serif, Alegreya, and Alegreya SC fonts. Wrap first-party SEN surfaces in `LibraryPresentationProvider`. Relics imports Library UI particles directly.
-
-## Building
+Library consumes SEN only through `@seihouse/sen/*`. Its type build resolves
+SEN's emitted declarations, preventing a second engine copy. The packed smoke
+installs both tarballs plus UI peers in a fresh directory, bundles every public
+entry and type-checks Profile, Energy, QI, Relics and HARNESS host contracts.
 
 ```bash
-npm run build:package           # SEN then Library, in order
-npm run build:package:library   # bundle, emit types, verify
-npm run test:package            # boundary check + both packages, packed and smoke-tested
+npm run check:ownership
+npm run build:package:library
+npm run test:package
 ```
 
-Library type-checks against SEN's **published declarations**, not SEN source:
-`tsconfig.library.json` maps `@seihouse/sen/*` to SEN's emitted `.d.ts` files.
-Without that, `tsc` follows the import into `src/components/` and emits a
-second copy of the engine's types inside this package. It makes SEN's build a
-prerequisite, so `build:package:library` checks for it first and says so
-plainly if SEN has not been built.
-
-`test:package` packs the finished `dist/library/`, installs it into a fresh
-consumer **alongside the packed `@seihouse/sen` tarball**, type-checks the
-public contracts, and bundles every entry — so the Library → SEN link is
-verified through the published packages, not through repo source.
-
-## Using it from DEV
-
-DEV consumes the same entries it publishes. `@seihouse/library/*` is aliased
-to `src/package/library/*` in `tsconfig.json` and `vite.config.ts`, so a
-Workshop preview imports exactly what a consuming application will:
-
-```ts
-import { ClosedDoorCultivationModal } from '@seihouse/library/cultivation';
-import { RelicCard, RelicReveal } from '@seihouse/library/relics';
-```
-
-## History
-
-- **2026-09-06:** Library UI moves to `@seihouse/library-ui@0.4.0`. The first-party presentation provider composes it with the independent SEN narrative package. The older particle ownership below is historical and superseded.
-
-- **2026-08-25:** Renamed the package from `@Seihouse/Library` to
-  `@seihouse/library`. The npm registry rejects uppercase letters in new
-  package names, and the owner confirmed Library is intended for registry
-  publication, so the identifier follows npm's rule and matches
-  `@seihouse/sen`'s casing. Nothing about the package's contents, exports, or
-  behavior changed — only the identifier and the paths that name it.
-- **2026-08-25:** Pointed the package's type build at SEN's published
-  declarations, so Library no longer emits a duplicate copy of the engine's
-  types (its `dist/types/` now carries only Library's own surfaces), and added
-  the build-order guard that enforces it.
-- **2026-08-25:** Created the package when SEN and Library split into separate
-  lanes. Closed-Door Cultivation and the relic surfaces moved out of
-  `@seihouse/sen` (where they were published as `./closed-door-cultivation`
-  and `./relics`) into this first-party package; `RelicReveal` now imports the
-  shared particle canvas through `@seihouse/sen/ui` instead of reaching into
-  SEN source, so the two packages link the way a consumer's would.
+Workshop simulations, API handlers, identity verification, database adapters,
+provider access and production infrastructure are not published.

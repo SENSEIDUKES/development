@@ -1,4 +1,4 @@
-import type { EnergyActionId } from '../../components/energy/shared/energyContracts';
+import { type EnergyActionId } from '@seihouse/library/energy';
 import {
   assertEnergyAmount,
   assertIdempotencyKey,

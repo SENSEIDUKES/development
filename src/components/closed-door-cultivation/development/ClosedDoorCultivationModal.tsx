@@ -346,7 +346,8 @@ function QiFlight({ flight }: { flight: Flight }) {
 export interface ClosedDoorCultivationModalProps {
   qiEarned: number | null;
   onClose: () => void;
-  onClaim: (qi: number) => Promise<void>;
+  /** Host rechecks eligibility and amount atomically; displayed Qi is never a command input. */
+  onClaim: () => Promise<void>;
   targetElementId?: string; // e.g. 'celestial-library-emblem'
   /** Days the user has been in the Library; drives the progression line. */
   daysCultivating?: number;
@@ -523,7 +524,7 @@ export function ClosedDoorCultivationModal({ qiEarned, onClose, onClaim, targetE
 
     const claimStart = performance.now();
     try {
-      await onClaim(qiEarned);
+      await onClaim();
     } catch (e) {
       console.error("Failed to claim idle qi:", e);
       // The claim did not land (offline, timeout, server error): restore the

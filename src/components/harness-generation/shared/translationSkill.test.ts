@@ -1,24 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { SEN_NOVEL_AUTHOR_SKILL } from './authorSkill';
-import { HarnessGenerationController } from './controller';
-import { InMemoryHarnessGenerationRepository } from './repository';
-import {
-  assembleCapaPrompt,
-  createHarnessSkillCatalog,
-  freezeHarnessSkillLoadout,
-  validateHarnessSkillManifest,
-} from './skills';
-import {
-  selectTranslationGlossaryEntries,
-  translationMatchSource,
-  validateTranslationGlossaryResource,
-} from './translationSkill';
-import type {
-  HarnessGenerationResponse,
-  HarnessSkillManifest,
-  ImmediateChapterRequest,
-  StoryInformationPacket,
-} from './types';
+import { SEN_NOVEL_AUTHOR_SKILL } from '@seihouse/sen/harness-generation';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
+import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { assembleCapaPrompt, createHarnessSkillCatalog, freezeHarnessSkillLoadout, validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { selectTranslationGlossaryEntries, translationMatchSource, validateTranslationGlossaryResource } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationResponse, type HarnessSkillManifest, type ImmediateChapterRequest, type StoryInformationPacket } from '@seihouse/sen/harness-generation';
 
 /**
  * Test-only manifests and glossary fixtures. They are never installed as real

@@ -2,7 +2,7 @@
  * Verbatim port of Light-Novels `src/lib/chapterWritingStyle.ts` (verified
  * against `main`). Pure — no network/DB — safe to run in the Workshop.
  */
-import type { ChapterWritingStyle } from "../types";
+import { type ChapterWritingStyle } from '@seihouse/sen/generation';
 
 export const DEFAULT_CHAPTER_WRITING_STYLE: ChapterWritingStyle = "Standard";
 

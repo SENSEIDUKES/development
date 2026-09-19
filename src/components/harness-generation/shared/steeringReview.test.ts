@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { HarnessGenerationController } from './controller';
-import { InMemoryHarnessGenerationRepository } from './repository';
-import { createHarnessSenStory } from './senAdapter';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
+import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
 import { compileStoryInformationPacket } from './context';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 import { appendHarnessCorrection } from './canonicalState';
 import { normalizeStoryFoundationInput } from './foundation';
-import type { HarnessGenerationModelAdapter } from './types';
+import { type HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
 
 const setup = async () => {
   let tick = 0;

@@ -1,4 +1,4 @@
-import type { BlueprintGenerationPayload } from "../../components/story-seed/shared/storySeedSchema";
+import { type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
 import { hasValidBearerToken } from "../shared/bearerToken";
 import {
   resolveStorySeedBlueprintConfig,

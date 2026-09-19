@@ -1,6 +1,6 @@
-import { cloneJson } from './model';
+import { cloneJson } from '@seihouse/library/relics';
 import type { ApplyRelicEvaluationResult, RelicRepository } from './repository';
-import { RELIC_SCHEMA_VERSION, type JsonObject, type StoryRelicAssignment } from './types';
+import { RELIC_SCHEMA_VERSION, type JsonObject, type StoryRelicAssignment } from '@seihouse/library/relics';
 
 export interface RelicObservation {
   type: string;

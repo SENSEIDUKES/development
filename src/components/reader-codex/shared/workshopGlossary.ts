@@ -1,4 +1,4 @@
-import type { MultiModelRouting } from './types';
+import { type MultiModelRouting } from '@seihouse/sen/contracts';
 
 export interface WorkshopGlossaryInput {
   storyTitle: string;

@@ -1,12 +1,9 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { ChevronDown, Skull, TriangleAlert as AlertTriangle } from 'lucide-react';
-import type { SystemEvent, SystemStatusScreen } from '../shared/types';
-import { getColorCodeStyle, getSystemCompactClassification } from '../shared/colorCodes';
-import {
-  type SystemPromptRow,
-  type SystemPromptSurface,
-} from '../shared/systemPromptPresentation';
+import type { SystemEvent, SystemStatusScreen } from '../../../narrative/story';
+import { getColorCodeStyle, getSystemCompactClassification } from '../../../narrative/colorCodes';
+import { type SystemPromptRow, type SystemPromptSurface } from '../../../narrative/systemPromptPresentation';
 import { SystemOrbEmblem } from './SystemOrbEmblem';
 import { SystemStatusMeter, SystemStatusPanelPortal } from './SystemStatusPanel';
 

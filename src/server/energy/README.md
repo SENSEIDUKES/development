@@ -2,9 +2,10 @@
 
 Created: 2026-09-18
 
-The server-owned Energy system. The database owns balances; the browser can only read them
-and, in development, ask for a test grant or a reset. This is the first skeleton: no
-generation flow uses it yet, and nothing here is the final Energy economy or a payment path.
+The server-owned Energy system. The ledger owns balances; the browser can only
+read them and, in Development, ask for a test grant or reset. HARNESS may use
+it only through SEN's neutral usage-authorization port and a trusted Library
+host adapter. Nothing here selects final production storage or a payment path.
 
 ## Ownership
 
@@ -43,8 +44,9 @@ internal transaction metadata that no snapshot exposes.
 
 ## Identity and authorization
 
-`createEnergyPrincipalResolver` turns a request into the principal the ledger trusts. Bodies
-never name the user.
+The shared host resolver under `src/server/identity/` turns a request into the
+principal the ledger trusts. Energy does not own authentication, and request
+bodies never name the user.
 
 | Mode | Accepts | Development access |
 | --- | --- | --- |
@@ -56,14 +58,16 @@ Development access unlocks exactly two things: the initial grant
 `initial-grant:<uid>`) and the HTTP operations `development.grant` / `development.reset`. The
 service refuses both for any other principal with `EnergyAuthorizationError` (HTTP 403).
 
-Environment: `ENERGY_IDENTITY_MODE` (`development` | `production`),
+Environment: `LIBRARY_IDENTITY_MODE` (`development` | `production`),
 `ENERGY_DEVELOPMENT_INITIAL_GRANT`, `ENERGY_DEVELOPMENT_DEFAULT_GRANT` (100),
 `ENERGY_DEVELOPMENT_MAX_GRANT` (10000).
 
 ## HTTP boundary
 
-`handleEnergyHttp` serves `/api/energy` (`vite.config.ts` in the dev server, `api/energy.js`
-on Vercel via `scripts/buildEnergyApi.mjs`):
+`handleEnergyHttp` is routed through the consolidated
+`/api/library-economy?capability=energy` host boundary
+(`src/server/developmentApis.ts` in DEV and `api/library-economy.js` for the
+reference Vercel bundle):
 
 - `GET` → the caller's `EnergyAccountSnapshot`: balance, held, available, the catalog, recent
   activity, and `developmentControls` (or `null`).
@@ -96,9 +100,10 @@ The infrastructure that already works — Firebase Auth, Data Connect/Postgres, 
 deployment configuration, and the production-data contracts — remains available to reuse, and
 the reconstruction should reuse it rather than recreate it.
 
-## Generation integration boundary (future phases)
+## Generation integration boundary
 
-Every generation feature will follow the same six steps through `EnergyService`:
+`src/server/energy/narrativeUsage.ts` adapts SEN's neutral usage contract to
+`EnergyService`. A protected operation follows these steps:
 
 1. **Resolve the price** — `service.getPrice(actionId)`; unpriced actions throw before any work.
 2. **Confirm and reserve** — `service.reserve(principal, { actionId, idempotencyKey })`. Throws
@@ -107,13 +112,15 @@ Every generation feature will follow the same six steps through `EnergyService`:
    The amount it resolves is stored on the reservation and stays authoritative, so repricing an
    action — or taking it off the price list entirely — never changes what an in-flight
    reservation charges, and never strands Energy that is already held.
-3. **Run the generation flow** — provider calls, validation, as today.
-4. **Settle after success and storage** — `service.settle(principal, { reservationId, providerCost? })`
-   only once the chapter/image is durably stored. Charges the reservation's stored amount and
-   returns the charge for `EnergyDeductionNotice`; it does not require the action to still be
-   priced.
-5. **Release on any failure** — `service.release(principal, { reservationId, reason })` in the
-   error path, so the reserved amount returns. Likewise independent of the current price.
+3. **Checkpoint before the provider** — `narrativeOperation.ts` records the
+   reservation and operation phase before a potentially billable call.
+4. **Store before settlement** — the provider result is durably checkpointed,
+   then `service.settle(...)` charges the reservation's stored amount. A retry
+   can settle that result without calling the provider again.
+5. **Release only known-safe failures** — validation or provider failures known
+   not to have completed release the hold. An unknown provider outcome keeps
+   the reservation held and fails closed until a trusted recovery process
+   resolves it.
 6. **Idempotency** — the request carries one `idempotencyKey` per user intent. A system-caused
    retry reuses it: `reserve` replays the original reservation, `settle`/`release` replay their
    result, and nothing charges twice. A user-requested regeneration mints a new key and pays
@@ -129,4 +136,5 @@ error/success states. Do not scatter ledger calls through UI components.
 grant/reset, production users refused, reads reflect stored state, catalog prices, no
 over-reservation, release restores availability, one charge per settlement, idempotent settle
 and reserve, history consistent with balance), HTTP identity and authorization, migration
-constraints, and the boundary test that no generation path imports Energy.
+constraints, neutral usage-port adaptation, checkpoint-first provider execution,
+unknown-outcome recovery, and proof that SEN never imports Energy.

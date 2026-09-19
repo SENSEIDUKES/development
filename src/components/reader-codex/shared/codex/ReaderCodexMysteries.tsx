@@ -1,11 +1,7 @@
 import React from 'react';
 import { HelpCircle, Check } from 'lucide-react';
 import { StoryMemory } from '../types';
-import {
-  getColorCodeStyle,
-  getColorCodeSurfaceStyle,
-  resolvePlotThreadStatusColorCode,
-} from '../../../reader-chamber/shared/colorCodes';
+import { getColorCodeStyle, getColorCodeSurfaceStyle, resolvePlotThreadStatusColorCode } from '../../../../narrative/colorCodes';
 
 interface ReaderCodexMysteriesProps {
   memory: StoryMemory;

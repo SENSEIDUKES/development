@@ -1,15 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { resolvePlayableAudioMoment } from '../../../audio/inlineAudio';
-import { validateMediaPack, type MediaPack, type MediaPackEntitlement } from '../../../audio/mediaPacks';
-import { HarnessGenerationController } from './controller';
+import { resolvePlayableAudioMoment } from '@seihouse/sen/audio';
+import { createLibraryMediaPort, validateMediaPack, type MediaPack, type MediaPackEntitlement } from '@seihouse/library/media';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import type { HarnessRuntime } from './ids';
-import { InMemoryHarnessGenerationRepository } from './repository';
-import { createHarnessSenStory } from './senAdapter';
-import type {
-  HarnessGenerationModelAdapter,
-  HarnessGenerationRequest,
-  HarnessGenerationResponse,
-} from './types';
+import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 
 const runtime = (): HarnessRuntime => {
   let id = 0;
@@ -40,7 +36,7 @@ const soundscapePack = (version = '1.0.0', url = 'https://fixtures.r2.dev/storm-
   id: 'test.story-soundscapes', version, type: 'soundscape',
   displayName: `Story Soundscapes ${version}`, description: 'Test-only soundscapes.',
   source: { path: `catalogs/soundscapes-${version}.json`, digest: (version === '1.0.0' ? '1' : '2').repeat(64) },
-  entries: [{ id: 'TEST_STORM_PATH', mood: 'storm-path', moods: ['storm-path'], tags: ['rain', 'mountain-pass', 'thunder'], region: 'korean', url, isPremium: false }],
+  entries: [{ id: 'TEST_STORM_PATH', mood: 'storm-path', moods: ['storm-path'], tags: ['rain', 'mountain-pass', 'thunder'], region: 'korean', url }],
 });
 
 const soundCuePack = (): MediaPack => validateMediaPack({
@@ -88,26 +84,26 @@ describe('HARNESS Media Loadout runtime integration', () => {
       repository,
       modelAdapter: provider.value,
       runtime: runtime(),
-      registeredMediaPacks: [soundscapes, soundCues],
+      media: createLibraryMediaPort({ registered: [soundscapes, soundCues], entitlements: [] }),
     });
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'A courier crosses a storm-broken mountain pass.' });
 
-    controller.setMediaPackEntitlements([entitlement(soundscapes, '2026-09-16T11:30:00.000Z')]);
-    await expect(controller.setMediaLoadoutSlot(story.id, 'soundscapes', soundscapes)).rejects.toThrow('Unlock');
-    await expect(controller.setMediaLoadoutSlot(story.id, 'soundCues', { id: 'missing', version: '1.0.0' })).rejects.toThrow('registered');
+    controller.setMediaPort(createLibraryMediaPort({ registered: [soundscapes, soundCues], entitlements: [entitlement(soundscapes, '2026-09-16T11:30:00.000Z')] }));
+    await expect(controller.setMediaSelection(story.id, 'soundscapes', soundscapes)).rejects.toThrow('Unlock');
+    await expect(controller.setMediaSelection(story.id, 'soundCues', { id: 'missing', version: '1.0.0' })).rejects.toThrow('registered');
 
-    controller.setMediaPackEntitlements([entitlement(soundscapes)]);
+    controller.setMediaPort(createLibraryMediaPort({ registered: [soundscapes, soundCues], entitlements: [entitlement(soundscapes)] }));
     expect('mediaPackEntitlements' in controller.snapshot()).toBe(false);
     expect(JSON.stringify(await repository.load())).not.toContain('mediaPackEntitlements');
     expect(controller.snapshot().stories[0].mediaLoadout).toBeUndefined();
-    await controller.setMediaLoadoutSlot(story.id, 'soundscapes', soundscapes);
+    await controller.setMediaSelection(story.id, 'soundscapes', soundscapes);
     expect(controller.snapshot().stories[0].mediaLoadout).toEqual({ soundscapes: { id: soundscapes.id, version: soundscapes.version } });
-    await expect(controller.setMediaLoadoutSlot(story.id, 'soundCues', soundscapes)).rejects.toThrow('Sound Cues');
+    await expect(controller.setMediaSelection(story.id, 'soundCues', soundscapes)).rejects.toThrow('Sound Cues');
 
-    controller.setMediaPackEntitlements([entitlement(soundscapes), entitlement(soundCues)]);
+    controller.setMediaPort(createLibraryMediaPort({ registered: [soundscapes, soundCues], entitlements: [entitlement(soundscapes), entitlement(soundCues)] }));
     expect(controller.snapshot().stories[0].mediaLoadout?.soundCues).toBeUndefined();
-    await controller.setMediaLoadoutSlot(story.id, 'soundCues', soundCues);
+    await controller.setMediaSelection(story.id, 'soundCues', soundCues);
     expect(controller.snapshot().stories[0].mediaLoadout).toEqual({
       soundscapes: { id: soundscapes.id, version: soundscapes.version },
       soundCues: { id: soundCues.id, version: soundCues.version },
@@ -127,20 +123,20 @@ describe('HARNESS Media Loadout runtime integration', () => {
     const committed = controller.snapshot().chapters[0];
     expect(committed.soundscapes?.[0]).toMatchObject({
       intent: { region: 'korean' },
-      resource: { track: { id: 'TEST_STORM_PATH', region: 'korean' }, provenance: { kind: 'media-pack', id: soundscapes.id, version: '1.0.0' } },
+      resource: { track: { id: 'TEST_STORM_PATH', region: 'korean' }, provenance: { catalogId: soundscapes.id, version: '1.0.0' } },
     });
     expect(committed.audioMoments?.[0]).toMatchObject({
-      cue: { publicUrl: 'https://fixtures.r2.dev/clockwork-roar.mp3', provenance: { kind: 'media-pack', id: soundCues.id } },
+      cue: { publicUrl: 'https://fixtures.r2.dev/clockwork-roar.mp3', provenance: { catalogId: soundCues.id } },
     });
     expect(committed.mediaLoadout).toMatchObject({
-      soundscapes: { id: soundscapes.id, version: '1.0.0', source: soundscapes.source },
-      soundCues: { id: soundCues.id, version: '1.0.0', source: soundCues.source },
+      soundscapes: [{ provenance: { catalogId: soundscapes.id, version: '1.0.0', source: soundscapes.source } }],
+      soundCues: [{ provenance: { catalogId: soundCues.id, version: '1.0.0', source: soundCues.source } }],
     });
 
     const committedBeforeChanges = JSON.stringify(committed);
-    controller.setMediaPackEntitlements([]);
-    await controller.setMediaLoadoutSlot(story.id, 'soundscapes');
-    await controller.setMediaLoadoutSlot(story.id, 'soundCues');
+    controller.setMediaPort(createLibraryMediaPort({ registered: [soundscapes, soundCues], entitlements: [] }));
+    await controller.setMediaSelection(story.id, 'soundscapes');
+    await controller.setMediaSelection(story.id, 'soundCues');
     await controller.replayStory(story.id, committed.id);
     expect(JSON.stringify(controller.snapshot().chapters[0])).toBe(committedBeforeChanges);
 
@@ -167,24 +163,23 @@ describe('HARNESS Media Loadout runtime integration', () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const provider = adapter(new Error('Provider unavailable.'), chapterReply());
     const controller = new HarnessGenerationController({
-      repository, modelAdapter: provider.value, runtime: runtime(), registeredMediaPacks: [v1, v2],
-      mediaPackEntitlements: [entitlement(v1)],
+      repository, modelAdapter: provider.value, runtime: runtime(), media: createLibraryMediaPort({ registered: [v1, v2], entitlements: [entitlement(v1)] }),
     });
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'A courier crosses a storm-broken mountain pass.' });
-    await controller.setMediaLoadoutSlot(story.id, 'soundscapes', v1);
+    await controller.setMediaSelection(story.id, 'soundscapes', v1);
     await controller.generateNextChapter(story.id, 'fixture');
     const failed = controller.snapshot().attempts[0];
     expect(failed.stage).toBe('generation_failed');
-    expect(failed.mediaLoadout.soundscapes?.version).toBe('1.0.0');
+    expect(failed.mediaLoadout.soundscapes[0]?.provenance.version).toBe('1.0.0');
 
-    controller.setMediaPackEntitlements([entitlement(v1), entitlement(v2)]);
-    await controller.setMediaLoadoutSlot(story.id, 'soundscapes', v2);
+    controller.setMediaPort(createLibraryMediaPort({ registered: [v1, v2], entitlements: [entitlement(v1), entitlement(v2)] }));
+    await controller.setMediaSelection(story.id, 'soundscapes', v2);
     await controller.retryModelRequest(failed.id);
 
     const state = controller.snapshot();
-    expect(state.attempts[1].mediaLoadout.soundscapes?.version).toBe('1.0.0');
-    expect(state.chapters[0].mediaLoadout.soundscapes?.version).toBe('1.0.0');
+    expect(state.attempts[1].mediaLoadout.soundscapes[0]?.provenance.version).toBe('1.0.0');
+    expect(state.chapters[0].mediaLoadout.soundscapes[0]?.provenance.version).toBe('1.0.0');
     expect(state.chapters[0].soundscapes?.[0].resource.track.url).toBe('https://fixtures.r2.dev/storm-v1.mp3');
   });
 
@@ -195,19 +190,18 @@ describe('HARNESS Media Loadout runtime integration', () => {
       repository,
       modelAdapter: adapter(chapterReply()).value,
       runtime: runtime(),
-      registeredMediaPacks: [pack],
-      mediaPackEntitlements: [entitlement(pack)],
+      media: createLibraryMediaPort({ registered: [pack], entitlements: [entitlement(pack)] }),
     });
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'A courier crosses a storm-broken mountain pass.' });
-    await controller.setMediaLoadoutSlot(story.id, 'soundscapes', pack);
-    controller.setMediaPackEntitlements([entitlement(pack, '2026-09-16T11:30:00.000Z')]);
+    await controller.setMediaSelection(story.id, 'soundscapes', pack);
+    controller.setMediaPort(createLibraryMediaPort({ registered: [pack], entitlements: [entitlement(pack, '2026-09-16T11:30:00.000Z')] }));
 
     await controller.generateNextChapter(story.id, 'fixture');
     const state = controller.snapshot();
     expect(state.stories[0].mediaLoadout?.soundscapes).toEqual({ id: pack.id, version: pack.version });
-    expect(state.attempts[0].mediaLoadout.soundscapes).toBeUndefined();
-    expect(state.chapters[0].mediaLoadout.soundscapes).toBeUndefined();
+    expect(state.attempts[0].mediaLoadout.soundscapes).toEqual([]);
+    expect(state.chapters[0].mediaLoadout.soundscapes).toEqual([]);
     expect(state.chapters[0].soundscapes).toBeUndefined();
     expect(JSON.stringify(await repository.load())).not.toContain('mediaPackEntitlements');
   });

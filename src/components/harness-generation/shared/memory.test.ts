@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { HarnessGenerationController } from './controller';
-import { InMemoryHarnessGenerationRepository } from './repository';
-import { buildCanonicalStoryView } from './canonicalState';
-import { createHarnessSenStory } from './senAdapter';
-import { resolveHarnessEntity } from './capabilities';
-import type { HarnessGenerationModelAdapter, HarnessGenerationResponse, HarnessMemoryRecoveryRequest } from './types';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
+import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
+import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
+import { resolveHarnessEntity } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationModelAdapter, type HarnessGenerationResponse, type HarnessMemoryRecoveryRequest } from '@seihouse/sen/harness-generation';
 
 // Synthetic regression prose, not the user's saved Start Now chapter.
 const prose = [

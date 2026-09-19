@@ -1,4 +1,4 @@
-import type { DeliveredReward } from '../../components/dao-pillar/shared/daoPillarContracts';
+import { type DeliveredReward } from '@seihouse/library/dao-pillar';
 import { InMemoryQiLedger } from '../qi/inMemoryQiLedger';
 import {
   assertClaimDayCommand,

@@ -2,7 +2,7 @@ import { BookOpen, Gem, Keyboard, Plus, Scroll, ScrollText, Sliders, Users, PenT
 import { useMainLibraryAdapter } from '../../shared/MainLibraryAdapter';
 import { WorkspaceHeader } from '../WorkspaceHeader';
 import type { HeaderSearchItem } from '../WorkspaceHeaderUtilities';
-import { SENProfileIcon } from '../SENGlobalIcon';
+import { LibraryProfileIcon as SENProfileIcon } from '@seihouse/library-ui';
 import './main-library-header.css';
 
 /**

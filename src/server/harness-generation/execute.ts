@@ -1,9 +1,4 @@
-import type {
-  HarnessGenerationRequest,
-  HarnessGenerationResponse,
-  HarnessMemoryRecoveryRequest,
-  HarnessArcRequest,
-} from '../../components/harness-generation/shared/types';
+import { type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessMemoryRecoveryRequest, type HarnessArcRequest } from '@seihouse/sen/harness-generation';
 import {
   resolveConfiguredHarnessModel,
   type ResolvedHarnessGenerationConfig,

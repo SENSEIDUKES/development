@@ -1,5 +1,5 @@
 import { ChevronDown, ScanSearch } from "lucide-react";
-import type { ContextManifest } from "../shared/types";
+import type { ContextManifest } from '../../../narrative/story';
 
 interface ContextInspectorProps {
   manifest?: ContextManifest;

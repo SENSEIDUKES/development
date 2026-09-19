@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { getSenTextDirection, resolveReadingLanguageCode } from '../../../lib/language';
+import { getSenTextDirection, resolveReadingLanguageCode } from '@seihouse/sen/contracts';
 
 const readerChamberSources = ['development', 'reference'].map(fork => ({
   fork,

@@ -2,8 +2,8 @@ import { createContext, useContext, type ReactNode } from 'react';
 import { LibraryBottomNavigation, LibraryNavigationDrawerPanel, type LibraryNavigationDrawerSection } from '@seihouse/library-ui';
 import { activeLibraryDestination, LIBRARY_DESTINATIONS, libraryLocationKey, libraryNavigationMode, type LibraryLocation, type LibraryNavigationMode } from './libraryRoutes';
 import './library-navigation.css';
-import { SENNavigationIcon, type SENNavigationIconName } from './SENNavigationIcon';
-import { SENProfileIcon } from './SENGlobalIcon';
+import { LibraryNavigationIcon as SENNavigationIcon, type LibraryNavigationIconName as SENNavigationIconName } from '@seihouse/library-ui';
+import { LibraryProfileIcon as SENProfileIcon } from '@seihouse/library-ui';
 
 type SectionItem = LibraryNavigationDrawerSection['items'][number] & { onSelect: (id: string) => void };
 export interface LibrarySectionMenu {

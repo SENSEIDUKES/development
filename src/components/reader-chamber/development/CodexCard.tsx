@@ -5,19 +5,10 @@ import { NarrativeDragonCycleIcon as LibraryDragonCycleIcon } from '../../../pre
 import { isManifestationEligible } from '../shared/manifestationEligibility';
 import { CodexCardAmbience } from '../../reader-codex/development/CodexCardAmbience';
 import { resolveCodexEntityAccent, resolveCodexEntityColorCode } from '../../reader-codex/development/codexEntityAccent';
-import { MANIFEST_BACKDROPS, getManifestBackdrop } from '../../reader-codex/development/codexManifestBackdrop';
+import { selectNarrativeBackdrop, useNarrativeArt } from '../../../presentation';
 import './CodexCardInscription.css';
 import './CodexCardSeal.css';
 
-/**
- * The Manifest backdrop pool and its stable per-entity picker live in
- * `reader-codex/development/codexManifestBackdrop.ts` so the highlighted-term
- * hovercard renders the same real "IMMORTAL LAND" art without a reverse
- * import. The established CodexCard export names are preserved for
- * `ReaderViewport` and the Workshop previews.
- */
-export const FALLBACK_BACKDROPS = MANIFEST_BACKDROPS;
-export const getFallbackBackdrop = getManifestBackdrop;
 
 export interface CodexCardTerm {
   entry: {
@@ -144,11 +135,12 @@ export const CodexCard: React.FC<CodexCardProps> = React.memo(({
   onManifestReveal,
   className = '',
 }) => {
+  const { backdrops } = useNarrativeArt();
   const entry = revealTerm.entry;
   const revealImageUrl = entry && 'imageUrl' in entry ? entry.imageUrl : undefined;
   const revealImageAssetId = entry && 'imageAssetId' in entry ? entry.imageAssetId : undefined;
   const entryId = entry?.id || 'reveal-entity';
-  const assignedBackdrop = activeStory?.assignedRevealBackdrops?.[entryId] || getFallbackBackdrop(entryId);
+  const assignedBackdrop = activeStory?.assignedRevealBackdrops?.[entryId] || selectNarrativeBackdrop(entryId, backdrops);
   const colorCode = resolveCodexEntityColorCode(revealTerm.type, entry, activeStory?.mcName);
   const accent = resolveCodexEntityAccent(revealTerm.type, entry, activeStory?.mcName);
   // The inscription treatment sleeps until the card's own reveal fires, so

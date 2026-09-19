@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { BlueprintGenerationPayload } from './storySeedSchema';
-import { requestWorldBlueprint } from './blueprintGenerationClient';
+import { type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
+import { requestWorldBlueprint } from '../../../host/story-seed/blueprintGenerationClient';
 
 const payload: BlueprintGenerationPayload = {
   storySeed: {

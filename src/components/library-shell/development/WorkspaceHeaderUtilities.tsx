@@ -1,9 +1,9 @@
 import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { NarrativeButton, NarrativeTextBox } from '../../../presentation';
+import { NarrativeButton, NarrativeTextBox } from '@seihouse/sen/presentation';
 import { WorkspaceSheet } from './WorkspaceSheet';
 import { type HeaderAction } from './WorkspaceHeaderActions';
-import { SENHelpIcon, SENSearchIcon } from '../../sen-icons';
+import { LibraryHelpIcon as SENHelpIcon, LibrarySearchIcon as SENSearchIcon } from '@seihouse/library-ui';
 
 const LibraryHelpMenu = lazy(() => import('../../story-seed/development/StorySeedHelpMenu')
   .then(module => ({ default: module.LibraryHelpMenu })));

@@ -1,15 +1,17 @@
 // @vitest-environment jsdom
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { validateHarnessSkillManifest } from '../../../harness-generation/shared/skills';
-import type { HarnessSkillManifest } from '../../../harness-generation/shared/types';
-import type { SenLanguageCode } from '../../../../lib/language';
-import type { ReaderChapter } from '../types';
-import { ReaderTranslationController } from './controller';
-import type { ReaderTranslationProvider } from './provider';
+import { validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { type SenLanguageCode } from '@seihouse/sen/contracts';
+import { type ReaderChapter } from '@seihouse/sen/contracts';
+import { ReaderTranslationController } from '@seihouse/sen/translation';
+import { type ReaderTranslationProvider } from '@seihouse/sen/translation';
 import { InMemoryReaderTranslationRepository } from './repository';
-import { setReaderTranslationController, useChapterTranslation } from './useChapterTranslation';
+import { useChapterTranslation } from '@seihouse/sen/translation';
+import { ReaderTranslationRuntimeProvider } from '@seihouse/sen/translation';
 
 const chapter: ReaderChapter = {
   persistenceId: 'chapter-1',
@@ -40,6 +42,7 @@ interface Pending {
 
 let container: HTMLDivElement;
 let root: Root;
+let controller: ReaderTranslationController;
 let pending: Map<SenLanguageCode, Pending>;
 
 const View = ({ targetLanguage }: { targetLanguage: SenLanguageCode }) => {
@@ -63,23 +66,23 @@ const response = (language: SenLanguageCode) => ({
 beforeEach(() => {
   container = document.createElement('div');
   document.body.append(container);
-  root = createRoot(container);
+  const domRoot = createRoot(container);
+  root = { unmount: () => domRoot.unmount(), render: children => domRoot.render(<ReaderTranslationRuntimeProvider controller={controller}>{children}</ReaderTranslationRuntimeProvider>) };
   pending = new Map();
   const provider: ReaderTranslationProvider = {
     translate(request) {
       return new Promise(resolve => pending.set(request.targetLanguage, { resolve }));
     },
   };
-  setReaderTranslationController(new ReaderTranslationController({
+  controller = new ReaderTranslationController({
     repository: new InMemoryReaderTranslationRepository(),
     provider,
-  }));
+  });
 });
 
 afterEach(() => {
   act(() => root.unmount());
   container.remove();
-  setReaderTranslationController(null);
 });
 
 const status = () => container.querySelector('div')!;

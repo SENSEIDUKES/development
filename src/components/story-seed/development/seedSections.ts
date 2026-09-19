@@ -2,8 +2,8 @@ import {
   Feather,
   type LucideIcon,
 } from 'lucide-react';
-import type { StorySeedInput } from '../shared/storySeedSchema';
-import { normalizeStoryStyle } from '../shared/storyStyle';
+import { type StorySeedInput } from '@seihouse/sen/story-seed';
+import { normalizeStoryStyle } from '@seihouse/sen/story-seed';
 import { plotAndTropeSettings, storyRequired, worldFoundations, worldIdentity } from './seedState';
 import type { StorySeedIconName } from './SENStorySeedIcon';
 

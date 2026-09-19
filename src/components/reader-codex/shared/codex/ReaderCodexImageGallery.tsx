@@ -1,5 +1,5 @@
 import { useCodex } from './CodexContext';
-import { canonicalAssetId } from '../codexCompatibility';
+import { canonicalAssetId } from '../assetIdentity';
 import { useHistoricalMediaUrls } from '../hooks/useHistoricalMediaUrls';
 
 interface ReaderCodexImageGalleryProps {

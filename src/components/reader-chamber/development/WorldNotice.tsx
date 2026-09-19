@@ -1,9 +1,9 @@
 import React from 'react';
-import type { WorldNoticeData } from '../shared/types';
-import type { SystemColorMeaning } from '../shared/colorCodes';
-import { normalizeWorldNoticeData } from '../shared/systemPromptPresentation';
+import type { WorldNoticeData } from '../../../narrative/story';
+import type { SystemColorMeaning } from '../../../narrative/colorCodes';
+import { normalizeWorldNoticeData } from '../../../narrative/systemPromptPresentation';
 
-export { normalizeWorldNoticeData } from '../shared/systemPromptPresentation';
+export { normalizeWorldNoticeData } from '../../../narrative/systemPromptPresentation';
 
 export interface WorldNoticeProps {
   title: string;

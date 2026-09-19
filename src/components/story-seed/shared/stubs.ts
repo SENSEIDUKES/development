@@ -32,9 +32,9 @@
  */
 
 import { useCallback, useRef, useSyncExternalStore } from 'react';
-import { generateUUID } from './id';
-import { normalizeStorySeedPayload } from './referenceIntake';
-import type { IntakeData, StorySeed, StorySeedPayload } from './referenceIntake';
+import { generateUUID } from '@seihouse/sen/story-seed';
+import { normalizeStorySeedPayload } from '../../../workshop/reference-support/story-seed/referenceIntake';
+import type { IntakeData, StorySeed, StorySeedPayload } from '../../../workshop/reference-support/story-seed/referenceIntake';
 
 /**
  * Production reads this from `localStorage` once at module load and never
@@ -50,6 +50,8 @@ export let LOCAL_ONLY_MODE = true;
 
 export function setMockLocalOnlyMode(enabled: boolean) {
   LOCAL_ONLY_MODE = enabled;
+  state = { ...state };
+  emit();
 }
 
 // ─── Agents (VERSA profile only) ─────────────────────────────────────────────
@@ -116,6 +118,15 @@ let state: MockAppState = createInitialMockState();
 
 const emit = () => {
   listeners.forEach(listener => listener());
+};
+
+/** Stable external-store snapshot for the explicit Workshop host adapter. */
+export const storyCreationPreviewStore = {
+  getSnapshot: () => state,
+  subscribe(listener: Listener) {
+    listeners.add(listener);
+    return () => { listeners.delete(listener); };
+  },
 };
 
 export function setMockState(partial: Partial<MockAppState>) {

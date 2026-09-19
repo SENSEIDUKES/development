@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useReaderRuntime } from '../../../../narrative/readerRuntime';
+import { generateId } from '../../../../narrative/id';
 import type {
   Artifact,
   Character,
@@ -24,36 +26,6 @@ export interface CodexImagePreview {
 }
 
 type EvolvableEntry = Character | Location | Artifact | Faction;
-
-const xmlEscape = (value: string) => value.replace(/[&<>"']/g, (character) => ({
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&apos;',
-}[character] || character));
-
-const hashText = (value: string) => {
-  let hash = 2166136261;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
-};
-
-const makeWorkshopManifestation = (
-  id: string,
-  name: string,
-  type: CodexImageEntityType,
-  variant: number,
-): string => {
-  const hue = (hashText(`${id}:${type}`) + variant * 47) % 360;
-  const safeName = xmlEscape(name || 'Unknown Entry');
-  const safeType = xmlEscape(type.toUpperCase());
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="768" height="1024" viewBox="0 0 768 1024"><defs><radialGradient id="a" cx="50%" cy="35%" r="75%"><stop offset="0" stop-color="hsl(${hue} 76% 34%)"/><stop offset="0.55" stop-color="hsl(${(hue + 38) % 360} 60% 13%)"/><stop offset="1" stop-color="#050507"/></radialGradient><filter id="g"><feGaussianBlur stdDeviation="18"/></filter></defs><rect width="768" height="1024" fill="url(#a)"/><circle cx="384" cy="380" r="190" fill="none" stroke="hsla(${hue} 90% 72% / .35)" stroke-width="3"/><circle cx="384" cy="380" r="145" fill="hsla(${(hue + 45) % 360} 85% 70% / .08)" filter="url(#g)"/><path d="M190 770 Q384 530 578 770" fill="hsla(${hue} 35% 8% / .72)" stroke="hsla(${hue} 80% 70% / .2)"/><text x="384" y="850" text-anchor="middle" fill="#f4f4f5" font-family="serif" font-size="36" letter-spacing="3">${safeName}</text><text x="384" y="895" text-anchor="middle" fill="hsl(${hue} 75% 72%)" font-family="monospace" font-size="16" letter-spacing="7">${safeType} · FORM ${variant + 1}</text></svg>`;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-};
 
 const readCollection = (
   memory: StoryMemory,
@@ -113,10 +85,8 @@ const updateEntry = (
 };
 
 /**
- * API-compatible Workshop image-evolution hook. It preserves preview,
- * selection, save, discard, history, and revert behavior using deterministic
- * local SVG manifestations; no quota, auth, provider, Firebase, R2, or API
- * path is consulted.
+ * Portable image preview, selection, history and restoration.
+ * The optional host image port supplies content; SEN owns no generation provider.
  */
 export function useCodexImageEvolution(
   memory: StoryMemory,
@@ -125,9 +95,19 @@ export function useCodexImageEvolution(
   _routingConfig: MultiModelRouting | undefined,
   pushNotification: (message: string) => void,
 ) {
+  const runtime = useReaderRuntime();
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [previews, setPreviews] = useState<Record<string, CodexImagePreview>>({});
+  const requestEpoch = useRef(0);
+  const inFlight = useRef(false);
+  useEffect(() => {
+    setPreviews({});
+    setGeneratingId(null);
+    setGenerationError(null);
+    inFlight.current = false;
+    return () => { requestEpoch.current += 1; };
+  }, [activeStory.id]);
 
   const handleRevertImage = async (
     id: string,
@@ -157,7 +137,7 @@ export function useCodexImageEvolution(
       };
     });
     if (restored) pushNotification('Previous manifestation restored.');
-    else setGenerationError('That manifestation is no longer available in this Workshop story.');
+    else setGenerationError('That manifestation is no longer available in this story.');
   };
 
   const handleAwakenCardImage = async (
@@ -165,26 +145,32 @@ export function useCodexImageEvolution(
     type: CodexImageEntityType,
     entity: EvolvableEntry,
   ) => {
+    if (inFlight.current) return;
+    const epoch = requestEpoch.current;
+    inFlight.current = true;
     setGeneratingId(id);
     setGenerationError(null);
     try {
-      await Promise.resolve();
-      const prompt = `${type} manifestation for ${entity.name}: ${entity.description}`;
+      if (!runtime.manifestImages) throw new Error('The host has not enabled image manifestation.');
+      const result = await runtime.manifestImages({ storyId: activeStory.id, id, name: entity.name, description: entity.description, type });
+      if (requestEpoch.current !== epoch) return;
+      if (!result.urls.length) throw new Error('No images were returned.');
       setPreviews((current) => ({
         ...current,
         [id]: {
-          urls: [0, 1, 2].map((variant) => (
-            makeWorkshopManifestation(id, entity.name, type, variant)
-          )),
-          prompt,
+          urls: result.urls,
+          prompt: result.prompt,
           selectedIndex: 0,
           type,
         },
       }));
     } catch (error) {
-      setGenerationError(error instanceof Error ? error.message : 'Unable to form a local preview.');
+      if (requestEpoch.current === epoch) setGenerationError(error instanceof Error ? error.message : 'Unable to prepare an image.');
     } finally {
-      setGeneratingId(null);
+      if (requestEpoch.current === epoch) {
+        inFlight.current = false;
+        setGeneratingId(null);
+      }
     }
   };
 
@@ -193,7 +179,7 @@ export function useCodexImageEvolution(
     const selectedUrl = preview?.urls[preview.selectedIndex];
     if (!preview || !selectedUrl) return;
 
-    const historyId = `workshop-${id}-${activeStory.currentChapterNumber}-${preview.selectedIndex}`;
+    const historyId = generateId();
     const historyItem: GeneratedImage = {
       id: historyId,
       entityId: id,
@@ -227,7 +213,7 @@ export function useCodexImageEvolution(
     });
 
     if (!saved) {
-      setGenerationError('That Codex entry is no longer available in this Workshop story.');
+      setGenerationError('That Codex entry is no longer available in this story.');
       return;
     }
 

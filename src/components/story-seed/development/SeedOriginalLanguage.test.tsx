@@ -1,23 +1,18 @@
 // @vitest-environment jsdom
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import { type Root } from 'react-dom/client';
+import { createRoot } from '../../../test-utils/createStoryCreationRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SenLanguageCode } from '../../../lib/language';
-import {
-  LOCAL_WORKSHOP_STORY_SEED_OWNER_ID,
-  createStorySeed,
-  listStorySeeds,
-  resetStorySeedRepository,
-  updateStorySeed,
-} from '../shared/storySeedRepository';
-import { createEmptyStorySeedInput, type StorySeedInput } from '../shared/storySeedSchema';
+import { type SenLanguageCode } from '@seihouse/sen/contracts';
+import { LOCAL_WORKSHOP_STORY_SEED_OWNER_ID, createStorySeed, listStorySeeds, resetStorySeedRepository, updateStorySeed } from '../../../workshop/previews/story-seed/storySeedStorage';
+import { createEmptyStorySeedInput, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { resetMockState } from '../shared/stubs';
 import { createMockStorySeedRecord } from '../../../workshop/previews/story-seed/previewData';
-import CreationModal from './CreationModal';
+import { CreationModal } from '@seihouse/library/story-seed';
 
-vi.mock('../../../audio/DevAudioPlayback', () => ({
-  useDevAudioPlayback: () => ({
+vi.mock('../../../audio/playback', () => ({
+  useNarrativeAudio: () => ({
     currentSource: null, currentTrackId: null, isMuted: false, isPlaying: false, volume: 1,
     load: vi.fn(), pause: vi.fn(), play: vi.fn(), setVolume: vi.fn(), stop: vi.fn(),
     subscribeToTrackChange: vi.fn(() => () => undefined),

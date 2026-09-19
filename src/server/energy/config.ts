@@ -1,6 +1,6 @@
 export type EnergyEnvironment = Record<string, string | undefined>;
 
-export type EnergyIdentityMode = 'development' | 'production';
+import type { IdentityMode } from '../identity/types';
 
 export interface ResolvedEnergyConfig {
   /**
@@ -8,7 +8,7 @@ export interface ResolvedEnergyConfig {
    * the test grant and reset controls. `production` requires a verified
    * identity from the host and exposes no development control to anyone.
    */
-  identityMode: EnergyIdentityMode;
+  identityMode: IdentityMode;
   /** Energy a development user receives exactly once when their account is created. */
   developmentInitialGrant: number;
   /** The amount the development grant control applies when none is requested. */
@@ -30,7 +30,7 @@ const wholeNumber = (value: string | undefined, fallback: number, minimum: numbe
  */
 export function resolveEnergyConfig(
   environment: EnergyEnvironment,
-  identityMode: EnergyIdentityMode,
+  identityMode: IdentityMode,
 ): ResolvedEnergyConfig {
   return {
     identityMode,
@@ -45,5 +45,3 @@ export function resolveEnergyConfig(
  * The Workshop has no Firebase verifier, so it is `development` unless the
  * environment says otherwise. Production hosts pass `production` explicitly.
  */
-export const developmentRepositoryIdentityMode = (environment: EnergyEnvironment): EnergyIdentityMode =>
-  environment.ENERGY_IDENTITY_MODE?.trim().toLowerCase() === 'production' ? 'production' : 'development';

@@ -1,5 +1,5 @@
 import type { MainLibraryAdapter } from '../shared/MainLibraryAdapter';
-import { normalizeSenLanguageCode } from '../../../lib/language';
+import { normalizeSenLanguageCode } from '@seihouse/sen/contracts';
 import { LibraryFooter, type LibraryFooterAction, type LibraryFooterGroup, type LibraryFooterSocialLink } from './LibraryFooter';
 import { libraryNavigationMode, type LibraryLocation } from './libraryRoutes';
 

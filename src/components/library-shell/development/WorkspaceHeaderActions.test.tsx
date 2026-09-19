@@ -2,8 +2,8 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
-import { HeaderOverflow } from './WorkspaceHeaderActions';
-import { WorkspaceHeader } from './WorkspaceHeader';
+import { HeaderOverflow } from '@seihouse/library/shell';
+import { WorkspaceHeader } from '@seihouse/library/shell';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let container: HTMLDivElement;

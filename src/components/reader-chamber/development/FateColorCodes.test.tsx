@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
 import React, { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { FateResultData, StoryWorld, SystemEvent } from '../shared/types';
-import { getColorCodeValue, resolveFateConsequenceDetailColorCode } from '../shared/colorCodes';
-import { FateResultCard } from './FateResultCard';
-import { FateSurvivalExplanation } from './FateSurvivalExplanation';
-import { ReaderFateAlerts } from './ReaderFateAlerts';
-import { SystemBlock } from './SystemBlock';
+import { type FateResultData, type SystemEvent } from '@seihouse/sen/cards';
+import { type StoryWorld } from '@seihouse/sen/contracts';
+import { getColorCodeValue, resolveFateConsequenceDetailColorCode } from '@seihouse/sen/color-codes';
+import { FateResultCard } from '@seihouse/sen/cards';
+import { FateSurvivalExplanation } from '@seihouse/sen/reader-chamber';
+import { ReaderFateAlerts } from '@seihouse/sen/reader-chamber';
+import { SystemBlock } from '@seihouse/sen/cards';
 import { FateSurvivalExplanation as StorySeedFateSurvivalExplanation } from '../../story-seed/reference/FateSurvivalExplanation';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

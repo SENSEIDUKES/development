@@ -1,9 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import {
-  NarrativeNavigationDrawer, NarrativeNavigationDrawerPanel, NarrativeBottomNavigation,
-  type NarrativeNavigationDrawerProfile, type NarrativeNavigationDrawerSection,
-  type NarrativeBottomNavigationItem,
-} from '../../../presentation';
+import { NarrativeNavigationDrawer, NarrativeNavigationDrawerPanel, NarrativeBottomNavigation, type NarrativeNavigationDrawerProfile, type NarrativeNavigationDrawerSection, type NarrativeBottomNavigationItem } from '@seihouse/sen/presentation';
 
 export interface WorkspaceNavigationDefinition {
   label: string;

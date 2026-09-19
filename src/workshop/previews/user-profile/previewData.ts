@@ -11,16 +11,9 @@
  * and exercises both the Home layout and the blocked save in Settings.
  */
 
-import { getCurrentOfferingWeekId } from '../../../components/user-profile/shared/offeringWeek';
-import type {
-  AdminStoryRow,
-  AppUser,
-  CosmicArtifact,
-  Story,
-  StorySeed,
-  UserProfile,
-} from '../../../components/user-profile/shared/types';
-import type { SpecialQiId } from '../../../components/user-profile/shared/userProfileServices';
+import { getCurrentOfferingWeekId } from '@seihouse/library/profile';
+import { type AdminStoryRow, type AppUser, type CosmicArtifact, type Story, type StorySeed, type UserProfile } from '@seihouse/library/profile';
+import { type SpecialQiId } from '@seihouse/library/profile';
 import type { UserProfilePreviewState } from './previewStates';
 
 const CURRENT_WEEK = getCurrentOfferingWeekId();

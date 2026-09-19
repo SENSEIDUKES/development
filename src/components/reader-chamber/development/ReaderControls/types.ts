@@ -1,4 +1,4 @@
-import { ReaderChapter } from '../../shared/types';
+import { ReaderChapter } from '../../../../narrative/story';
 
 export interface ChapterNavigationState {
   selectedChapterNum: number;

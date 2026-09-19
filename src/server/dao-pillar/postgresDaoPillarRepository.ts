@@ -1,4 +1,4 @@
-import type { DeliveredReward, RewardEntry } from '../../components/dao-pillar/shared/daoPillarContracts';
+import { type DeliveredReward, type RewardEntry } from '@seihouse/library/dao-pillar';
 import type { JsonObject } from '../qi/qiLedger';
 import { translateQiSqlError, type QiSqlClient } from '../qi/postgresQiLedger';
 import {

@@ -1,4 +1,4 @@
-import type { StorySeedInput } from '../shared/storySeedSchema';
+import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import type { SeedUpdate } from './seedState';
 import { StorySeedWorkspaceChrome } from './StorySeedWorkspaceChrome';
 

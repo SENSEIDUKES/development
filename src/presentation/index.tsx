@@ -3,6 +3,7 @@ import * as UI from '@seihouse/ui';
 import * as D from './defaults';
 import type * as P from './contracts';
 export type * from './contracts';
+export * from './narrativeArt';
 
 /** Stable host presentation slots. The defaults use only universal SEIHouse UI. */
 export interface NarrativePresentation {

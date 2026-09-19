@@ -1,5 +1,5 @@
-import type { PublicCreator } from '../../../components/user-profile/development/creatorWorlds';
-import type { UserProfile } from '../../../components/user-profile/shared/types';
+import { type PublicCreator } from '@seihouse/library/profile';
+import { type UserProfile } from '@seihouse/library/profile';
 
 /** Explicit local publication fixtures. Never inferred from the private library. */
 export function previewPublicCreators(profile: UserProfile | null): PublicCreator[] {

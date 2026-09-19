@@ -4,11 +4,11 @@
  * exercised without a server. It is never transferred: a host mounts
  * `createHttpEnergyClient` against its real Energy API.
  */
-import type { EnergyClient } from '../../../components/energy/shared/energyClient';
+import { type EnergyClient } from '@seihouse/library/energy';
 import { resolveEnergyConfig, type EnergyEnvironment } from '../../../server/energy/config';
 import { InMemoryEnergyRepository } from '../../../server/energy/inMemoryEnergyRepository';
 import { EnergyService } from '../../../server/energy/service';
-import type { EnergyPrincipal } from '../../../server/energy/types';
+import type { LibraryPrincipal } from '../../../server/identity/types';
 
 export interface LocalEnergyClientOptions {
   uid: string;
@@ -21,7 +21,7 @@ export interface LocalEnergyClientOptions {
 
 export function createLocalEnergyClient({ uid, developmentAccess = true, environment = {}, service, delayMs = 0 }: LocalEnergyClientOptions): EnergyClient {
   const ledger = service ?? new EnergyService(new InMemoryEnergyRepository(), resolveEnergyConfig(environment, 'development'));
-  const principal: EnergyPrincipal = {
+  const principal: LibraryPrincipal = {
     uid,
     role: 'user',
     identity: developmentAccess ? 'development' : 'verified',

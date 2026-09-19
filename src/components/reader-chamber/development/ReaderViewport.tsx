@@ -4,21 +4,21 @@ import { LoaderCircle as Loader2, Plus, Trash2, Bookmark as BookmarkIcon, Lock, 
 import {
   CodexCard,
   CodexHovercard,
-  FALLBACK_BACKDROPS,
   SystemBlock,
 } from '@seihouse/sen/cards';
 import { SYSTEM_COLORS_LEGEND } from '@seihouse/sen/color-codes';
-import { ReaderChapter, StoryBlock, StoryWorld, Bookmark } from '../shared/types';
-import { extractSFXCues } from '../shared/readerPlayback';
+import { ReaderChapter, StoryBlock, StoryWorld, Bookmark } from '../../../narrative/story';
+import { extractReaderVisibleAudioText as extractSFXCues } from '../../../audio/readerVisibleText';
+import { useNarrativeArt } from '../../../presentation';
 import { collectBlockAutoCues } from '../shared/autoCuePolicy';
-import { useAppStore } from '../shared/stubs';
+import { useReaderStore } from '../../../narrative/readerRuntime';
 import { ReaderFateAlerts } from './ReaderFateAlerts';
 import { SystemColorLegend } from './SystemColorLegend';
 import { anchorAttributes } from '../shared/cinematicScroll/anchors';
 import { ContextInspector } from './ContextInspector';
 import { getReaderTypography } from '../shared/readerTypography';
 import { getSenTextDirection, type SenLanguageCode } from '../../../lib/language';
-import { createCodexHighlighter, splitByCodexTerms } from '../../reader-codex/shared/codexHighlighting';
+import { createCodexHighlighter, splitByCodexTerms } from '../../../narrative/codexHighlighting';
 import { InlineAudioText } from './InlineAudio';
 import type { ResolvedAudioMoment } from '../../../audio/inlineAudio';
 
@@ -40,7 +40,7 @@ interface ReaderViewportProps {
   
   codexTerms: any[];
   generatingRevealId: string | null;
-  handleManifestReveal: (entry: any, type: string) => void;
+  handleManifestReveal?: (entry: any, type: string) => void;
   
   readerMode: string;
   immersion: any;
@@ -287,7 +287,8 @@ export function ReaderViewport({
     maxInlineSize: `${typography.readingWidth}ch`,
     textAlign: typography.textAlignment,
   } as React.CSSProperties;
-  const { updateStory } = useAppStore();
+  const { updateStory } = useReaderStore();
+  const { backdrops } = useNarrativeArt();
   const isCompletedBatchEndpoint = activeStory.chapterGenerationBatch?.status === 'completed'
     // WORKSHOP: `.at(-1)` rewritten as index access — the Workshop tsconfig
     // targets ES2020, which has no `Array.prototype.at` typings.
@@ -369,11 +370,11 @@ export function ReaderViewport({
         if (matched && matched.entry) {
           const id = matched.entry.id;
           const currentAssign = existingAssignments[id] || newAssignments[id];
-          if (!currentAssign) {
-            let available = FALLBACK_BACKDROPS.filter(
+          if (!currentAssign && backdrops.length) {
+            let available = backdrops.filter(
               (url) => url !== lastUsedUrl
             );
-            if (available.length === 0) available = FALLBACK_BACKDROPS;
+            if (available.length === 0) available = [...backdrops];
             const picked =
               available[Math.floor(Math.random() * available.length)];
             newAssignments[id] = picked;

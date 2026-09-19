@@ -1,8 +1,4 @@
-import type {
-  StorySeedFateVisibility,
-  StorySeedInput,
-  StorySeedSurvivalPressure,
-} from '../shared/storySeedSchema';
+import { type StorySeedFateVisibility, type StorySeedInput, type StorySeedSurvivalPressure } from '@seihouse/sen/story-seed';
 import {
   patchFateSurvival,
   setIntendedForMatureAudiences,

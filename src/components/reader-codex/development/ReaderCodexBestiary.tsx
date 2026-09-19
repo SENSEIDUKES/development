@@ -1,11 +1,7 @@
 import { BookOpen, ShieldAlert, Sparkles, Users, Volume2 } from 'lucide-react';
 import type { Character, CreatureSpecies } from '../shared/types';
 import { resolveEntityImageHistory } from '../shared/codex/entityImageHistory';
-import {
-  getColorCodeSurfaceStyle,
-  resolveCharacterRelationshipColorCode,
-  resolveCreatureThreatColorCode,
-} from '../../reader-chamber/shared/colorCodes';
+import { getColorCodeSurfaceStyle, resolveCharacterRelationshipColorCode, resolveCreatureThreatColorCode } from '../../../narrative/colorCodes';
 
 interface ReaderCodexBestiaryProps {
   bestiary: CreatureSpecies[];

@@ -2,10 +2,10 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { InMemoryHarnessGenerationRepository } from '../shared/repository';
-import type { HarnessGenerationModelAdapter, HarnessSkillManifest, HarnessStorySeedSource } from '../shared/types';
-import { HarnessGenerationWorkspace } from './HarnessGenerationWorkspace';
-import { HarnessGenerationController } from '../shared/controller';
+import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { type HarnessGenerationModelAdapter, type HarnessSkillManifest, type HarnessStorySeedSource } from '@seihouse/sen/harness-generation';
+import { HarnessGenerationWorkspace } from '@seihouse/library/generation';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

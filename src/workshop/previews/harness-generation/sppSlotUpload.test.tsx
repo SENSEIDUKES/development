@@ -3,14 +3,9 @@ import { act, useMemo, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPack } from 'seihouse-productions-package';
-import {
-  CAPA_SCHEMA,
-  HarnessGenerationController,
-  HarnessGenerationWorkspace,
-  type HarnessGenerationModelAdapter,
-  type HarnessSkillManifest,
-} from '@seihouse/sen/harness-generation';
-import { InMemoryHarnessGenerationRepository } from '../../../components/harness-generation/shared/repository';
+import { CAPA_SCHEMA, HarnessGenerationController, type HarnessGenerationModelAdapter, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { HarnessGenerationWorkspace } from '@seihouse/library/generation';
+import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { SppSkillImport } from './SppSkillImport';
 import { DOCX_MEDIA_TYPE } from './docxInstructions';
 import { SPP_CAPA_EXTENSION } from './sppSkills';

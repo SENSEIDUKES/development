@@ -1,9 +1,9 @@
 import { useState, type ChangeEvent } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Layers, Upload, X } from 'lucide-react';
-import type { StorySeedArtifact } from '../shared/storySeedRepository';
-import { parseStorySeedJson } from '../shared/storySeedSerialization';
-import { NarrativeButton as LibraryButton, NarrativeTextArea as LibraryTextArea } from '../../../presentation';
+import { type StorySeedArtifact } from '@seihouse/sen/story-seed';
+import { parseStorySeedJson } from '@seihouse/sen/story-seed';
+import { NarrativeButton as LibraryButton, NarrativeTextArea as LibraryTextArea } from '@seihouse/sen/presentation';
 
 /**
  * Import Story Seed — the portable-JSON intake surface, living inside the

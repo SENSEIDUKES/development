@@ -1,5 +1,5 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
-import type { StorySeedArtifact } from "../../components/story-seed/shared/storySeedRepository";
+import { type StorySeedArtifact } from '@seihouse/sen/story-seed';
 import {
   assertChapterContinuation,
   type AuthenticatedChapterGenerationContinuation,

@@ -2,9 +2,9 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { Camera, Eye, MapPin, Sparkles, BookOpen, Clock, Calendar, ArrowRight, User, Download, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { StoryWorld, StoryMemory, Chapter, GeneratedImage } from '../types';
-import { handleDownload as utilHandleDownload } from '../codexCompatibility';
+import { handleDownload as utilHandleDownload } from '../downloadUtils';
 import { useHistoricalMediaUrls } from '../hooks/useHistoricalMediaUrls';
-import { canonicalAssetId, isSameAssetId } from '../codexCompatibility';
+import { canonicalAssetId, isSameAssetId } from '../assetIdentity';
 
 interface ReaderCodexCollageProps {
   activeStory: StoryWorld;

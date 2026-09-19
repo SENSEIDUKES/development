@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { StoryMemory } from './types';
-import {
-  collectCodexTerms,
-  createCodexHighlighter,
-  escapeRegExp,
-  splitByCodexTerms,
-} from './codexHighlighting';
+import { type StoryMemory } from '@seihouse/sen/contracts';
+import { collectCodexTerms, createCodexHighlighter, escapeRegExp, splitByCodexTerms } from '@seihouse/sen/reader-codex';
 
 function memory(overrides: Partial<StoryMemory> = {}): StoryMemory {
   return {

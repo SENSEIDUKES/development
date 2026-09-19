@@ -1,8 +1,9 @@
 /**
  * `@seihouse/sen/audio` — the client-safe audio surface.
  *
- * Library cues and the inline audio model the Reader surfaces read from.
- * Voice catalog data with provider IDs stays on the server boundary and is
- * never part of this package.
+ * Portable cue intent, resolved-media, soundscape, and playback contracts used
+ * by Reader surfaces. First-party catalogs, entitlements, concrete URLs, and
+ * provider voice records remain outside this package.
  */
 export * from '../../audio';
+export { extractReaderVisibleAudioText } from '../../audio/readerVisibleText';

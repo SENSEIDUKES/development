@@ -3,14 +3,7 @@ import { act, createRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
-import {
-  NarrativeButton,
-  NarrativeCard,
-  NarrativePresentationProvider,
-  NarrativeTextBox,
-  AmbientEffect,
-  NarrativeDragonCycleIcon,
-} from './index';
+import { NarrativeButton, NarrativeCard, NarrativePresentationProvider, NarrativeTextBox, AmbientEffect, NarrativeDragonCycleIcon } from '@seihouse/sen/presentation';
 
 (
   globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }

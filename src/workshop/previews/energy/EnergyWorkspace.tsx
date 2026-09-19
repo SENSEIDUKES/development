@@ -10,16 +10,9 @@ import { useMemo, useState } from 'react';
 import { SEIToastProvider, useSEIToast } from '@seihouse/ui';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
-import type { EnergyClient } from '../../../components/energy/shared/energyClient';
-import { useEnergyAccount } from '../../../components/energy/shared/useEnergyAccount';
-import {
-  EnergyActionCost,
-  EnergyBalanceIndicator,
-  EnergyDeductionNotice,
-  EnergyInsufficientState,
-  EnergyPanel,
-  energyDeductionToast,
-} from '../../../components/energy/development';
+import { type EnergyClient } from '@seihouse/library/energy';
+import { useEnergyAccount } from '@seihouse/library/energy';
+import { EnergyActionCost, EnergyBalanceIndicator, EnergyDeductionNotice, EnergyInsufficientState, EnergyPanel, energyDeductionToast } from '@seihouse/library/energy';
 import { createLocalEnergyClient } from './localEnergyClient';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'energy')!;

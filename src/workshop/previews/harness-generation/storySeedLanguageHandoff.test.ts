@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { StoryFoundationInput } from '../../../components/harness-generation/shared/types';
-import { buildInitialStoryGenerationPayload } from '../../../components/story-seed/shared/storySeedSchema';
-import { createStoryAdministrativeMetadata } from '../../../components/story-seed/shared/storyAdministrativeMetadata';
+import { type StoryFoundationInput } from '@seihouse/sen/harness-generation';
+import { buildInitialStoryGenerationPayload } from '@seihouse/sen/story-seed';
+import { createStoryAdministrativeMetadata } from '@seihouse/sen/story-seed';
 import { createMockStorySeedRecord } from '../story-seed/previewData';
 
 const createStory = vi.fn(async (_input: StoryFoundationInput, _originalLanguage?: string) => ({ id: 'hst_new' }));

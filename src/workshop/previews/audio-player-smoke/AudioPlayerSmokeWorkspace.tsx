@@ -1,5 +1,5 @@
 import { Pause, Play, Square, Volume2, VolumeX } from 'lucide-react';
-import { useDevAudioPlayback } from '../../../audio/DevAudioPlayback';
+import { useNarrativeAudio } from '@seihouse/sen/audio';
 
 const SMOKE_TRACK = {
   id: 'development-audio-smoke',
@@ -11,7 +11,7 @@ const SMOKE_TRACK = {
 };
 
 export function AudioPlayerSmokeWorkspace() {
-  const audio = useDevAudioPlayback();
+  const audio = useNarrativeAudio();
   const isLoaded = audio.currentTrackId === SMOKE_TRACK.id;
 
   return (

@@ -1,6 +1,6 @@
 {
   "name": "@seihouse/sen",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "SEIHouse Expanded Novels: an embeddable expanded-narrative engine — expanded reading behavior, structured chapter contracts, Color Codes, Codex behavior, cards, and the narrative surfaces built on them.",
   "type": "module",
   "sideEffects": [
@@ -42,17 +42,9 @@
       "types": "./dist/types/package/sen/story-seed.d.ts",
       "import": "./dist/story-seed.js"
     },
-    "./chapter-generation": {
-      "types": "./dist/types/package/sen/chapter-generation.d.ts",
-      "import": "./dist/chapter-generation.js"
-    },
     "./harness-generation": {
       "types": "./dist/types/package/sen/harness-generation.d.ts",
       "import": "./dist/harness-generation.js"
-    },
-    "./codex-cards": {
-      "types": "./dist/types/package/sen/codex-cards.d.ts",
-      "import": "./dist/codex-cards.js"
     },
     "./styles.css": "./dist/sen.css",
     "./presentation": {
@@ -62,10 +54,25 @@
     "./arc-goals": {
       "types": "./dist/types/package/sen/arc-goals.d.ts",
       "import": "./dist/arc-goals.js"
+    },
+    "./contracts": {
+      "types": "./dist/types/package/sen/contracts.d.ts",
+      "import": "./dist/contracts.js"
+    },
+    "./generation": {
+      "types": "./dist/types/package/sen/generation.d.ts",
+      "import": "./dist/generation.js"
+    },
+    "./reader-runtime": {
+      "types": "./dist/types/package/sen/reader-runtime.d.ts",
+      "import": "./dist/reader-runtime.js"
+    },
+    "./translation": {
+      "types": "./dist/types/package/sen/translation.d.ts",
+      "import": "./dist/translation.js"
     }
   },
   "peerDependencies": {
-    "@seihouse/audio-player": "*",
     "lucide-react": ">=1",
     "motion": ">=12",
     "react": "^19.0.0",

@@ -1,8 +1,9 @@
 {
   "name": "@seihouse/library",
-  "version": "0.2.0",
-  "description": "SEIHouse's first-party host application surfaces built on SEN: cultivation and Qi progression, and the relic economy.",
+  "version": "0.3.0",
+  "description": "Celestial Library product capabilities: accounts, Profile, Energy, cultivation, rewards, Relics, navigation and story creation.",
   "type": "module",
+  "sideEffects": ["**/*.css"],
   "files": [
     "dist"
   ],
@@ -22,14 +23,56 @@
     "./presentation": {
       "types": "./dist/types/package/library/presentation.d.ts",
       "import": "./dist/presentation.js"
-    }
+    },
+    "./profile": {
+      "types": "./dist/types/package/library/profile.d.ts",
+      "import": "./dist/profile.js"
+    },
+    "./energy": {
+      "types": "./dist/types/package/library/energy.d.ts",
+      "import": "./dist/energy.js"
+    },
+    "./dao-pillar": {
+      "types": "./dist/types/package/library/dao-pillar.d.ts",
+      "import": "./dist/dao-pillar.js"
+    },
+    "./shell": {
+      "types": "./dist/types/package/library/shell.d.ts",
+      "import": "./dist/shell.js"
+    },
+    "./home": {
+      "types": "./dist/types/package/library/home.d.ts",
+      "import": "./dist/home.js"
+    },
+    "./media": {
+      "types": "./dist/types/package/library/media.d.ts",
+      "import": "./dist/media.js"
+    },
+    "./generation": {
+      "types": "./dist/types/package/library/generation.d.ts",
+      "import": "./dist/generation.js"
+    },
+    "./story-seed": {
+      "types": "./dist/types/package/library/story-seed.d.ts",
+      "import": "./dist/story-seed.js"
+    },
+    "./manifestations": {
+      "types": "./dist/types/package/library/manifestations.d.ts",
+      "import": "./dist/manifestations.js"
+    },
+    "./styles.css": "./dist/library.css"
   },
   "peerDependencies": {
-    "@seihouse/sen": ">=0.4.0",
+    "@seihouse/sen": ">=0.5.0",
     "lucide-react": ">=1",
     "motion": ">=12",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@seihouse/library-ui": "0.4.0"
+    "react-focus-lock": "^2.13.7",
+    "@seihouse/library-ui": "0.5.0",
+    "@seihouse/ui": "0.4.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4.3.3"
   }
 }

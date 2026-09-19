@@ -3,7 +3,8 @@ import { assembleChapterGeneration } from "../assembleGeneration";
 import { assembleChapterGenerationDev } from "../assembleGenerationDev";
 import { ESTABLISHED_SCENARIO } from "../fixtures/mockGenerationData";
 import { assembleChapterGenerationPacket } from "../packets";
-import type { ChapterContent, ChapterHandoff } from "../types";
+import { type ChapterContent } from '@seihouse/sen/contracts';
+import { type ChapterHandoff } from '@seihouse/sen/generation';
 import { assembleChapterPacket } from "./assembleChapterPacket";
 import { runChapterPipeline } from "./runChapterPipeline";
 import type {
@@ -345,7 +346,7 @@ describe("four-stage Chapter Generation pipeline", () => {
       expect.objectContaining({
         blockId: "c6-p1",
         triggerPhrase: "sect gong sounded once",
-        cue: { publicUrl: expect.stringContaining("/Locations/Signatures/") },
+        cue: expect.objectContaining({ publicUrl: expect.stringContaining("/Locations/Signatures/") }),
       }),
     ]);
     expect(JSON.stringify(run.finalOutput.audioMoments)).not.toContain("Ashen Sword");

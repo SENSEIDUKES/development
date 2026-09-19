@@ -8,17 +8,13 @@ import {
   type SetStateAction,
 } from 'react';
 import { ArrowLeft, ArrowRight, Check, Copy, Download } from 'lucide-react';
-import type { WorldBlueprint, WorldBlueprintMainCharacter } from '../shared/types';
-import {
-  STORY_TAG_LIMIT,
-  type StorySeedInput,
-  type StorySeedStoryRequired,
-} from '../shared/storySeedSchema';
-import { AGENTS, useAppStore } from '../shared/stubs';
-import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '../../../presentation';
+import { type WorldBlueprint, type WorldBlueprintMainCharacter } from '@seihouse/sen/story-seed';
+import { STORY_TAG_LIMIT, type StorySeedInput, type StorySeedStoryRequired } from '@seihouse/sen/story-seed';
+import { useStoryCreationRuntime, useStoryCreationStore } from '../../../library/story-seed/runtime';
+import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
 import { patchStoryRequired, patchWorldIdentity, type UpdateSeed } from './seedState';
 import { BlueprintCollectionSections } from './blueprint/BlueprintCollectionSections';
-import { SENManifestingIcon } from '../../library-shell/development/SENGlobalIcon';
+import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import {
   BlueprintDirectionSection,
   BlueprintHeaderSection,
@@ -27,11 +23,7 @@ import {
   BlueprintWorldSettingSection,
 } from './blueprint/BlueprintReviewSections';
 import { createBlueprintMarkdown } from './blueprint/createBlueprintMarkdown';
-import {
-  SEN_LANGUAGES,
-  normalizeSenLanguageCode,
-  type SenLanguageCode,
-} from '../../../lib/language';
+import { SEN_LANGUAGES, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
 
 interface BlueprintReviewProps {
   blueprint: WorldBlueprint;
@@ -59,7 +51,8 @@ export const BlueprintReview = ({
   originalLanguage,
   onOriginalLanguageChange,
 }: BlueprintReviewProps) => {
-  const activeAgentId = useAppStore(state => state.activeAgentId);
+  const runtime = useStoryCreationRuntime();
+  const activeAgentId = useStoryCreationStore(state => state.activeAgentId);
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState<string | null>(null);
   const [tagLimitError, setTagLimitError] = useState<string | null>(null);
@@ -294,7 +287,7 @@ export const BlueprintReview = ({
                 onClick={onStartStory}
                 loading={isGenerating}
                 loadingIndicator={activeAgentId === 'versa' ? (
-                  <img src={AGENTS.VERSA.logoUrl} className="size-5 animate-pulse object-contain" alt="" aria-hidden="true" />
+                  <img src={runtime.authorMarkUrl} className="size-5 animate-pulse object-contain" alt="" aria-hidden="true" />
                 ) : undefined}
                 iconRight={!isGenerating ? <ArrowRight size={16} /> : undefined}
               >

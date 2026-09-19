@@ -8,7 +8,7 @@ interface LocationProfileProps {
   hasAppeared: boolean;
   canGenerate: boolean;
   isGenerating: boolean;
-  isFreeUserOnHubStory: boolean;
+  manifestationRestricted: boolean;
   handleAwakenCardImage: (id: string, type: "location", obj: any) => void;
   setSelectedNodeChar: (c: any) => void;
 }
@@ -19,7 +19,7 @@ export const LocationProfile: React.FC<LocationProfileProps> = ({
   hasAppeared,
   canGenerate,
   isGenerating,
-  isFreeUserOnHubStory,
+  manifestationRestricted,
   handleAwakenCardImage,
   setSelectedNodeChar
 }) => {
@@ -55,7 +55,7 @@ export const LocationProfile: React.FC<LocationProfileProps> = ({
             className={`p-1 rounded flex items-center justify-center transition-all ${
               !hasAppeared
                 ? 'text-neutral-700 bg-black/50 cursor-not-allowed'
-                : isFreeUserOnHubStory
+                : manifestationRestricted
                 ? 'text-neutral-600 bg-neutral-900 cursor-not-allowed border border-neutral-800'
                 : isGenerating
                 ? 'text-portal bg-portal/10 border border-portal/30 cursor-wait'
@@ -68,7 +68,7 @@ export const LocationProfile: React.FC<LocationProfileProps> = ({
             disabled={!canGenerate || isGenerating}
             title={
               !hasAppeared ? "Must encounter in story first" :
-              isFreeUserOnHubStory ? "Visual manifestation locked for mortal users in demo hub. Register or use own keys to manifest visuals." :
+              manifestationRestricted ? "Visual manifestation is unavailable for this story." :
               loc.evolutionReady && hasImage ? "Evolution milestone reached! Regenerate to reveal new visual stage." :
               canGenerate && hasImage ? "Regenerate visual representation." :
               canGenerate ? "Manifest Visual Aura" :

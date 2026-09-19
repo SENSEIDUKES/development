@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { DaoPillarCalendarSnapshot, DaoPillarClaimResponse } from '../../components/dao-pillar/shared/daoPillarContracts';
-import { createEnergyPrincipalResolver, developmentEnergyToken } from '../energy/authentication';
+import { type DaoPillarCalendarSnapshot, type DaoPillarClaimResponse } from '@seihouse/library/dao-pillar';
+import { createPrincipalResolver, developmentIdentityToken } from '../identity/authentication';
 import { contractTheme, DAY_13 } from './daoPillarContract';
 import { handleDaoPillarHttp } from './http';
 import { InMemoryDaoPillarRepository } from './inMemoryDaoPillarRepository';
@@ -9,8 +9,8 @@ import { DaoPillarService } from './service';
 const setup = (instant = DAY_13) => {
   const repository = new InMemoryDaoPillarRepository();
   const service = new DaoPillarService(repository, { identityMode: 'development', activeTheme: contractTheme }, { now: () => new Date(instant) });
-  const resolvePrincipal = createEnergyPrincipalResolver({ mode: 'development' });
-  const call = (method: string, body?: unknown, token: string | null = developmentEnergyToken('workshop-cultivator')) =>
+  const resolvePrincipal = createPrincipalResolver({ mode: 'development' });
+  const call = (method: string, body?: unknown, token: string | null = developmentIdentityToken('workshop-cultivator')) =>
     handleDaoPillarHttp(
       { method, body, headers: token ? { authorization: `Bearer ${token}` } : {} },
       { service, resolvePrincipal, onError: () => {} },

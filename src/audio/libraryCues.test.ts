@@ -1,17 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  getByAnyTag,
-  getByCategory,
-  getByTag,
-  getByUrl,
-  getByVariation,
-  getCategories,
-  LIBRARY_CUE_CATEGORIES,
-  loadLibraryCues,
-  parseLibraryCues,
-  type LibraryCue,
-  type LibraryCuesLoadResult,
-} from './libraryCues';
+import { getByAnyTag, getByCategory, getByTag, getByUrl, getByVariation, getCategories, AUDIO_CUE_CATEGORIES, parseAudioCues, type AudioCue, type AudioCuesLoadResult } from '@seihouse/sen/audio';
+import { loadLibraryCues } from '../host/media/libraryCatalog';
 
 const makeValidCue = (overrides: Partial<{
   file_path: string;
@@ -58,17 +47,17 @@ describe('libraryCues loader', () => {
   });
 
   it('throws a validation error when the root is not an array', () => {
-    expect(() => parseLibraryCues({ not: 'an array' })).toThrow();
+    expect(() => parseAudioCues({ not: 'an array' })).toThrow();
   });
 
   it('normalizes main_category to a closed set of seven values', () => {
     const loaded = loadLibraryCues();
     const categories = getCategories(loaded);
     for (const c of categories) {
-      expect(LIBRARY_CUE_CATEGORIES).toContain(c);
+      expect(AUDIO_CUE_CATEGORIES).toContain(c);
     }
     // Every known category is recognized.
-    expect(LIBRARY_CUE_CATEGORIES.length).toBe(7);
+    expect(AUDIO_CUE_CATEGORIES.length).toBe(7);
   });
 
   it('surfaces malformed entries while preserving every raw input', () => {
@@ -85,7 +74,7 @@ describe('libraryCues loader', () => {
         // Missing metadata — surfaces as malformed_entry.
       },
     ];
-    const loaded = parseLibraryCues(input);
+    const loaded = parseAudioCues(input);
 
     // All three inputs preserved verbatim, in order.
     expect(loaded.rawEntries).toEqual(input);
@@ -110,7 +99,7 @@ describe('libraryCues loader', () => {
         main_category: 'gibberish-category',
       }),
     ];
-    const loaded = parseLibraryCues(input);
+    const loaded = parseAudioCues(input);
 
     // Both raw inputs preserved.
     expect(loaded.rawEntries).toEqual(input);
@@ -136,7 +125,7 @@ describe('libraryCues loader', () => {
         confidence_score: -0.1,
       }),
     ];
-    const loaded = parseLibraryCues(input);
+    const loaded = parseAudioCues(input);
 
     expect(loaded.rawEntries).toEqual(input);
     expect(loaded.cues.length).toBe(0);
@@ -154,7 +143,7 @@ describe('libraryCues loader', () => {
         main_category: 'factions',
       }),
     ];
-    const loaded = parseLibraryCues(input);
+    const loaded = parseAudioCues(input);
 
     // Both raw entries preserved.
     expect(loaded.rawEntries).toEqual(input);
@@ -183,7 +172,7 @@ describe('libraryCues URL validation', () => {
     ['data url', 'data:audio/mp3;base64,xyz'],
     ['file url', 'file:///etc/passwd'],
   ])('rejects %s as invalid_url', (_label, url) => {
-    const loaded = parseLibraryCues([
+    const loaded = parseAudioCues([
       makeValidCue({ file_path: 'DEFAULT/Bad/BadUrl.mp3', public_url: url }),
     ]);
     expect(loaded.cues.length).toBe(0);
@@ -193,7 +182,7 @@ describe('libraryCues URL validation', () => {
   });
 
   it('accepts a valid http URL with a port and path', () => {
-    const loaded = parseLibraryCues([
+    const loaded = parseAudioCues([
       makeValidCue({
         file_path: 'DEFAULT/Weapons/Magic/Fire_Magic_1.mp3',
         public_url: 'https://celestialaudio.seihouse.org:8443/path/to/cue.mp3',
@@ -207,7 +196,7 @@ describe('libraryCues URL validation', () => {
 describe('libraryCues lookups', () => {
   it('looks up by URL', () => {
     const loaded = loadLibraryCues();
-    const anyCue = loaded.cues[0] as LibraryCue;
+    const anyCue = loaded.cues[0] as AudioCue;
     const found = getByUrl(loaded, anyCue.public_url);
     expect(found?.public_url).toBe(anyCue.public_url);
   });
@@ -222,7 +211,7 @@ describe('libraryCues lookups', () => {
     // The catalog covers the five future-inline-audio categories plus the two
     // reserved-by-other-systems categories. This test does not assert exact
     // counts so future additions do not break the test.
-    for (const category of LIBRARY_CUE_CATEGORIES) {
+    for (const category of AUDIO_CUE_CATEGORIES) {
       const cues = getByCategory(loaded, category);
       // A category may legitimately be empty after a future purge, but in the
       // current catalog it must contain something for at least the active
@@ -244,7 +233,7 @@ describe('libraryCues lookups', () => {
 
   it('looks up by variation within a category', () => {
     const loaded = loadLibraryCues();
-    const anyCue = loaded.cues[0] as LibraryCue;
+    const anyCue = loaded.cues[0] as AudioCue;
     const results = getByVariation(loaded, anyCue.category, anyCue.metadata.broad_variation);
     expect(results.length).toBeGreaterThan(0);
     expect(
@@ -260,7 +249,7 @@ describe('libraryCues lookups', () => {
     const loaded = loadLibraryCues();
     const withTag = loaded.cues.find((c) => c.metadata.soft_tags.length > 0);
     expect(withTag).toBeDefined();
-    const tag = (withTag as LibraryCue).metadata.soft_tags[0];
+    const tag = (withTag as AudioCue).metadata.soft_tags[0];
     const results = getByTag(loaded, withTag!.category, tag.toUpperCase());
     expect(results.length).toBeGreaterThan(0);
     expect(
@@ -272,7 +261,7 @@ describe('libraryCues lookups', () => {
 
   it('looks up by any-of-tags within a category', () => {
     const loaded = loadLibraryCues();
-    const anyCue = loaded.cues[0] as LibraryCue;
+    const anyCue = loaded.cues[0] as AudioCue;
     const tag = anyCue.metadata.soft_tags[0] ?? 'any-tag';
     const results = getByAnyTag(loaded, anyCue.category, [tag, 'no-such-tag']);
     expect(results.length).toBeGreaterThan(0);
@@ -280,7 +269,7 @@ describe('libraryCues lookups', () => {
   });
 
   it('returns an empty list for an empty tag query', () => {
-    const loaded: LibraryCuesLoadResult = loadLibraryCues();
+    const loaded: AudioCuesLoadResult = loadLibraryCues();
     expect(getByAnyTag(loaded, 'weapons', [])).toEqual([]);
   });
 });

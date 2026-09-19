@@ -1,4 +1,4 @@
-import type { HarnessStoryHead } from './types';
+import type { HarnessStoryHead } from '../../../narrative/generation';
 
 export interface HarnessRuntime {
   now(): string;

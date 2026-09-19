@@ -1,23 +1,27 @@
 // @vitest-environment jsdom
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../test-utils/createLibraryRoot';
+import { LIBRARY_ASSETS } from '../../../host/media/libraryAssets';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UserProfile from './UserProfile';
 import { UserProfilePortraitModal } from './UserProfilePortraitModal';
 import { UserProfilePublicPanel } from './UserProfilePublicPanel';
 import ReferenceUserProfile from '../reference/UserProfile';
-import { UserProfileServicesProvider } from '../shared/userProfileServices';
-import type { UserProfileController } from '../shared/userProfileServices';
+import { UserProfileServicesProvider } from '@seihouse/library/profile';
+import { type UserProfileController } from '@seihouse/library/profile';
 import type { MockUserProfileServicesOptions } from '../../../workshop/previews/user-profile/mockUserProfileServices';
 import { effectStatement, UserProfileHome } from './UserProfileHome';
 import { buildPublicProfile, developmentPublicRecord, DEFAULT_PUBLIC_PROFILE_VISIBILITY } from './publicProfile';
 import { CAVE_DESTINATIONS, CAVE_PUBLIC_DESTINATIONS, publicCavePath, resolveCaveRoute } from './caveNavigation';
 import { publicCreatorWorlds, type CreatorWorld, type PublicCreator } from './creatorWorlds';
 import { previewPublicCreators } from '../../../workshop/previews/user-profile/publicCreatorData';
-import type { AppUser } from '../shared/types';
-import { EnergyClientProvider, type EnergyClient } from '../../energy/shared/energyClient';
+import { type AppUser } from '@seihouse/library/profile';
+import { EnergyClientProvider, type EnergyClient } from '@seihouse/library/energy';
 import { createLocalEnergyClient } from '../../../workshop/previews/energy/localEnergyClient';
-import { DaoPillarClientProvider, type DaoPillarClient } from '../../dao-pillar/shared/daoPillarClient';
+import { DaoPillarClientProvider } from '@seihouse/library/dao-pillar';
+import { QiClientProvider, type QiClient } from '@seihouse/library/cultivation';
+import { InMemoryQiLedger } from '../../../server/qi/inMemoryQiLedger';
 import { createLocalDaoPillarClient, type LocalDaoPillarClientOptions } from '../../../workshop/previews/dao-pillar/localDaoPillarClient';
 import { createMockUserProfileServices } from '../../../workshop/previews/user-profile/mockUserProfileServices';
 import { getPreviewScenario } from '../../../workshop/previews/user-profile/previewData';
@@ -29,22 +33,7 @@ import {
   countVisibleCharacters,
   isDisplayNameWithinLimit,
 } from './displayName';
-import {
-  MASTER_RANK,
-  RANKS,
-  CAVE_AURA_TEXT_SURFACE,
-  MIN_AURA_TEXT_CONTRAST,
-  accessibleAuraTextColor,
-  auraGradientTextContrastRatio,
-  auraTextContrastRatio,
-  getAuraSelection,
-  getAuraGlowStyle,
-  getAuraTextStyle,
-  activeAuraOverride,
-  getRankForQi,
-  rankBackground,
-  resolveRankVisual,
-} from './qi';
+import { MASTER_RANK, RANKS, CAVE_AURA_TEXT_SURFACE, MIN_AURA_TEXT_CONTRAST, accessibleAuraTextColor, auraGradientTextContrastRatio, auraTextContrastRatio, getAuraSelection, getAuraGlowStyle, getAuraTextStyle, activeAuraOverride, getRankForQi, rankBackground, resolveRankVisual } from '@seihouse/library/cultivation';
 import { nextEffectRefreshDelay } from './timedEffects';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -94,6 +83,8 @@ afterEach(() => {
 });
 
 interface RenderOptions {
+  /** Explicit backend fixture balance; never a value the Profile can update. */
+  qiBalance?: number;
   publicCreators?: readonly PublicCreator[];
   accountControls?: import('./caveAccountControls').CaveAccountControls;
   state?: UserProfilePreviewState;
@@ -143,16 +134,23 @@ describe('Home portrait access and generation progress', () => {
   });
 });
 
-async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), onNavigateHome = vi.fn(), Component = UserProfile, adapter = {}, accountControls, publicCreators, energyClient = null, daoPillar = {} }: RenderOptions = {}) {
+async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), onNavigateHome = vi.fn(), Component = UserProfile, adapter = {}, accountControls, publicCreators, energyClient = null, daoPillar = {}, qiBalance }: RenderOptions = {}) {
   const scenario = getPreviewScenario(state);
   // The calendar is server truth: the developed cultivator's twelve-day streak
   // is twelve collected scheduled days, and a new cultivator has none.
-  const daoPillarClient: (DaoPillarClient & { repository: { getQiBalance(uid: string): Promise<number> } }) | null = daoPillar === null ? null
+  const daoPillarClient = daoPillar === null ? null
     : createLocalDaoPillarClient({
         uid: scenario.currentUser?.uid ?? 'workshop-cultivator',
-        collectedDays: state === 'new-cultivator' ? [] : TWELVE_DAYS,
+        collectedDays: state === 'new-cultivator' || (qiBalance !== undefined && qiBalance < 1600) ? [] : TWELVE_DAYS,
         ...daoPillar,
       });
+  await daoPillarClient?.ready;
+  const ledger = daoPillarClient?.repository.qi ?? new InMemoryQiLedger();
+  const uid = scenario.currentUser?.uid ?? 'workshop-cultivator';
+  const initialBalance = qiBalance ?? scenario.profile?.dao_xp ?? 0;
+  const existing = (await ledger.getAccount(uid))?.balance ?? 0;
+  if (initialBalance > existing) await ledger.deposit({ uid, amount: initialBalance - existing, idempotencyKey: 'fixture-initial', source: 'test-fixture', description: 'Explicit test account' });
+  const qiClient: QiClient = { async getSnapshot() { return { uid, balance: (await ledger.getAccount(uid))?.balance ?? 0, transactions: await ledger.listTransactions(uid, 100) }; } };
   const logExcludedAction = vi.fn();
   const onSignIn = vi.fn<(account: AppUser) => void>();
   const services = createMockUserProfileServices({ state, logExcludedAction, onSignIn, ...adapter });
@@ -164,6 +162,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
       <UserProfileServicesProvider services={services}>
         <EnergyClientProvider client={energyClient}>
         <DaoPillarClientProvider client={daoPillarClient}>
+        <QiClientProvider client={qiClient}>
         <Component
           currentUser={scenario.currentUser}
           stories={scenario.stories}
@@ -173,6 +172,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
           onNavigateHome={onNavigateHome}
           onNavigateLibrary={vi.fn()}
         />
+        </QiClientProvider>
         </DaoPillarClientProvider>
         </EnergyClientProvider>
       </UserProfileServicesProvider>,
@@ -182,7 +182,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
   await act(async () => {
     await vi.advanceTimersByTimeAsync(600);
   });
-  return { logExcludedAction, onSignIn, services, controller: () => controller, daoPillarClient };
+  return { logExcludedAction, onSignIn, services, controller: () => controller, daoPillarClient, ledger };
 }
 
 const text = () => document.body.textContent ?? '';
@@ -475,7 +475,7 @@ describe('Cultivator Cave home', () => {
     const scenario = getPreviewScenario('developed-cultivator');
     const profile = scenario.profile!;
 
-    expect(container.querySelector('[data-cave-backdrop]')?.getAttribute('src')).toBe(CAVE_ENVIRONMENTS[0].src);
+    expect(container.querySelector('[data-cave-backdrop]')?.getAttribute('src')).toBe(LIBRARY_ASSETS.caveImages![CAVE_ENVIRONMENTS[0].id]);
     expect(container.querySelector('[data-cave-portrait] img')?.getAttribute('src')).toBe(profile.avatarUrl);
     expect(container.querySelector('#cave-cultivator-name')?.textContent).toContain(profile.displayName);
     expect(container.querySelector('[data-cave-rank]')?.textContent).toContain('Leader');
@@ -641,8 +641,8 @@ describe('Cultivator Cave destinations', () => {
     expect(open('dao-pillar').textContent).toContain('13 Day Streak');
     expect(open('dao-pillar').textContent).toContain('Collected today · +100 Qi');
     expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,580 Qi of 25,000');
-    expect(result.controller().profile?.dao_xp).toBe(13580);
-    expect(result.controller().profile?.heavenly_qi).toBe(13580);
+    expect(result.controller().profile?.dao_xp).toBe(13480);
+    expect(result.controller().profile?.heavenly_qi).toBe(13480);
   });
 
   it('shows a fresh calendar to a new cultivator', async () => {
@@ -773,6 +773,7 @@ describe('Cultivator Cave settings', () => {
 
   it('keeps an enabled Aura tab stop when a legacy selected rank is now locked', async () => {
     await renderCave({
+      qiBalance: 0,
       adapter: {
         profileOverride: {
           dao_xp: 0,
@@ -801,6 +802,7 @@ describe('Cultivator Cave settings', () => {
 
   it('announces the selected Custom Spectrum without changing its picker behavior', async () => {
     await renderCave({
+      qiBalance: 50_000,
       adapter: {
         profileOverride: {
           dao_xp: 50_000,
@@ -1285,8 +1287,8 @@ describe('Home dynamic data and claim contract', () => {
     expect(container.querySelector('h2')?.textContent).toContain(expected);
     expect(container.innerHTML).not.toContain('private-handle');
   });
-  it.each([[0, 1234, 0], [undefined, 300, 300], [50000, 0, 50000]])('uses canonical cultivation %s with legacy %s', async (dao_xp, qi, expected) => {
-    await renderCave({ adapter: { profileOverride: { dao_xp, qi, heavenly_qi: 99 } } });
+  it.each([0, 300, 50000])('uses ledger balance %s despite conflicting profile fields', async expected => {
+    await renderCave({ qiBalance: expected, adapter: { profileOverride: { dao_xp: 99999, qi: 98765, heavenly_qi: 99 } } });
     expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toMatch(new RegExp(`^${expected.toLocaleString()}`));
     expect(container.querySelector('[data-cave-rank], [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(expected).name);
     expect((container.querySelector('[data-cave-progress]') as HTMLElement).style.getPropertyValue('--cave-rank-background')).toBeTruthy();
@@ -1334,8 +1336,8 @@ describe('Home dynamic data and claim contract', () => {
     await navigateTo('/home/dao-pillar');
     expect(daoTile(13).dataset.state).toBe('collected');
     expect(container.querySelectorAll('.dao-tile[data-state="available"]')).toHaveLength(0);
-    expect(result.controller().profile?.dao_xp).toBe(13580);
-    expect(await result.daoPillarClient!.repository.getQiBalance('workshop-cultivator')).toBe(1700);
+    expect(result.controller().profile?.dao_xp).toBe(13480);
+    expect(await result.daoPillarClient!.repository.getQiBalance('workshop-cultivator')).toBe(13580);
   });
   it('does not mirror Qi for a refused claim and leaves the tile open to retry', async () => {
     const result = await renderCave({ daoPillar: { mode: 'claim-failed' } });
@@ -1355,8 +1357,8 @@ describe('Home dynamic data and claim contract', () => {
     await settle();
     expect(daoTile(13).dataset.state).toBe('collected');
     expect(daoTileStates().filter(state => state === 'collected')).toHaveLength(13);
-    // The server deposited once; this surface saw no receipt, so the profile waits for its next refresh.
-    expect(await result.daoPillarClient!.repository.getQiBalance('workshop-cultivator')).toBe(1700);
+    // Recovery refreshes the same ledger; the host profile record is not a balance mirror.
+    expect(await result.daoPillarClient!.repository.getQiBalance('workshop-cultivator')).toBe(13580);
     expect(result.controller().profile?.dao_xp).toBe(13480);
     await navigateTo('/home');
     expect(open('dao-pillar').textContent).toContain('Collected today · +100 Qi');
@@ -1380,7 +1382,7 @@ describe('Home dynamic data and claim contract', () => {
     await click(daoTile(14));
     await settle();
     expect(container.querySelector('[data-dao-live]')?.textContent).toBe('Day 14 collected: +500 Qi.');
-    expect(result.controller().profile?.dao_xp).toBe(13980);
+    expect(result.controller().profile?.dao_xp).toBe(13480);
     await navigateTo('/home');
     expect(open('dao-pillar').textContent).toContain('14 Day Streak');
     expect(open('dao-pillar').textContent).toContain('Collected today · +500 Qi');
@@ -1516,7 +1518,7 @@ describe('Claim reconciliation', () => {
     await navigateTo('/home/dao-pillar');
     expect(daoTileStates().filter(state => state === 'collected')).toHaveLength(13);
     expect(container.querySelectorAll('.dao-tile[data-state="available"]')).toHaveLength(0);
-    expect(await result.daoPillarClient!.repository.getQiBalance('workshop-cultivator')).toBe(1700);
+    expect(await result.daoPillarClient!.repository.getQiBalance('workshop-cultivator')).toBe(13580);
   });
   it('protects the existing repair callback against same-turn duplicate charges', async () => {
     const result = await renderCave({ state: 'owner-admin' });
@@ -1528,7 +1530,7 @@ describe('Claim reconciliation', () => {
 
 
 describe('Claim and existing profile edits', () => {
-  it('preserves the mirrored award when an overlapping profile save finishes', async () => {
+  it('keeps the ledger award independent of an overlapping profile save', async () => {
     const result = await renderCave();
     await click(open('dao-pillar'));
     await act(async () => { result.controller().setFormData(previous => ({ ...previous, displayName: 'Updated Display Name' })); });
@@ -1538,10 +1540,10 @@ describe('Claim and existing profile edits', () => {
     await settle();
     await act(async () => { await vi.advanceTimersByTimeAsync(650); await save; });
     expect(result.controller().profile?.displayName).toBe('Updated Display Name');
-    expect(result.controller().profile?.dao_xp).toBe(13580);
+    expect(result.controller().profile?.dao_xp).toBe(13480);
   });
   it('updates the rank and bar together when collection crosses a threshold', async () => {
-    await renderCave({ adapter: { profileOverride: { dao_xp: 99, qi: 99 } } });
+    await renderCave({ qiBalance: 99, adapter: { profileOverride: { dao_xp: 99, qi: 99 } } });
     expect(container.querySelector('[data-cave-rank], [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(99).name);
     await click(open('dao-pillar'));
     await click(daoTile(13));
@@ -1961,7 +1963,7 @@ it('uses the supplied profile clock consistently at aura expiry', () => {
 
 describe('identity rank progression and cultivator bio', () => {
   it.each(RANKS)('shows canonical endpoints and colors for $name', async rank => {
-    await renderCave({ adapter: { profileOverride: { dao_xp: rank.unlockedAt, qi: 999999, sect_qi: 765432 } } });
+    await renderCave({ qiBalance: rank.unlockedAt, adapter: { profileOverride: { dao_xp: rank.unlockedAt, qi: 999999, sect_qi: 765432 } } });
     const current = container.querySelector<HTMLElement>('[data-cave-rank]')!;
     const next = RANKS[RANKS.indexOf(rank) + 1];
     expect(current.textContent).toBe(rank.name);

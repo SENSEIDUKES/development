@@ -7,7 +7,7 @@
  * objects for display and leaves the stored chapter untouched.
  */
 
-import type { ReaderChapter, StoryBlock, SystemEvent } from '../types';
+import type { ReaderChapter, StoryBlock, SystemEvent } from '../../../../narrative/story';
 import type {
   ReaderFacingBlock,
   ReaderFacingChapter,

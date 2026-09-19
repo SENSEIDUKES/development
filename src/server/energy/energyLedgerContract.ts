@@ -1,13 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import {
-  ENERGY_PRICE_CATALOG,
-  resolveEnergyPrice,
-  type EnergyActionId,
-} from '../../components/energy/shared/energyContracts';
+import { ENERGY_PRICE_CATALOG, resolveEnergyPrice, type EnergyActionId } from '@seihouse/library/energy';
 import type { ResolvedEnergyConfig } from './config';
 import { EnergyValidationError, InsufficientEnergyError, type EnergyRepository } from './repository';
 import { EnergyAuthorizationError, EnergyService } from './service';
-import type { EnergyPrincipal, EnergyTransaction } from './types';
+import type { LibraryPrincipal } from '../identity/types';
+import type { EnergyTransaction } from './types';
 
 export const testConfig: ResolvedEnergyConfig = {
   identityMode: 'development',
@@ -16,11 +13,11 @@ export const testConfig: ResolvedEnergyConfig = {
   developmentMaxGrant: 10_000,
 };
 
-export const developer = (uid = 'dev-user'): EnergyPrincipal => ({
+export const developer = (uid = 'dev-user'): LibraryPrincipal => ({
   uid, role: 'user', identity: 'development', developmentAccess: true,
 });
 
-export const productionUser = (uid = 'prod-user'): EnergyPrincipal => ({
+export const productionUser = (uid = 'prod-user'): LibraryPrincipal => ({
   uid, role: 'user', identity: 'verified', developmentAccess: false,
 });
 

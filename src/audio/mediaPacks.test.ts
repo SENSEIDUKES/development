@@ -1,20 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import {
-  createAuthorizedMediaCatalog,
-  createRegisteredMediaPackCatalog,
-  freezeMediaLoadout,
-  mediaPackKey,
-  resolveAuthorizedSoundscape,
-  validateMediaPack,
-  type MediaPack,
-} from './mediaPacks';
-import { resolveSoundscapeTrack, type SceneAudioTrack } from './soundscapes';
+import { createAuthorizedMediaCatalog, createRegisteredMediaPackCatalog, freezeMediaLoadout, mediaPackKey, validateMediaPack, type MediaPack } from '@seihouse/library/media';
+import { resolveAuthorizedSoundscape } from '@seihouse/sen/audio';
+import { resolveSoundscapeTrack, type SceneAudioTrack } from '@seihouse/sen/audio';
 
 const soundscape = (overrides: Record<string, unknown> = {}) => ({
   id: 'test.storm-soundscapes', version: '1.0.0', type: 'soundscape',
   displayName: 'Storm Soundscapes', description: 'Test-only tracks.',
   source: { path: 'catalogs/storm.json', digest: 'a'.repeat(64) },
-  entries: [{ id: 'TEST_STORM', mood: 'storm-path', moods: ['storm-path'], tags: ['rain'], region: 'chinese', url: 'https://fixtures.r2.dev/storm.mp3', isPremium: false }],
+  entries: [{ id: 'TEST_STORM', mood: 'storm-path', moods: ['storm-path'], tags: ['rain'], region: 'chinese', url: 'https://fixtures.r2.dev/storm.mp3' }],
   ...overrides,
 });
 
@@ -106,12 +99,12 @@ describe('Media Pack contracts', () => {
     const catalog = createAuthorizedMediaCatalog({ capturedAt: 'now', soundscapes: pack });
     const resolved = resolveAuthorizedSoundscape({ blockId: 'b1', mood: 'storm-path', region: 'chinese', semanticTags: ['rain'] }, catalog);
     expect(resolved?.resource.track.id).toBe('TEST_STORM');
-    expect(resolved?.resource.provenance).toMatchObject({ kind: 'media-pack', id: pack.id, version: pack.version });
+    expect(resolved?.resource.provenance).toMatchObject({ catalogId: pack.id, version: pack.version });
     expect(createAuthorizedMediaCatalog().soundscapes.some(item => item.track.id === 'TEST_STORM')).toBe(false);
   });
 
   it('uses semantic cultural region to reject mismatches and prefer an exact match over a neutral fallback', () => {
-    const base = { mood: 'journey', moods: ['journey'], tags: ['road'], isPremium: false };
+    const base = { mood: 'journey', moods: ['journey'], tags: ['road'] };
     const catalog: SceneAudioTrack[] = [
       { ...base, id: 'A_JAPANESE', region: 'japanese', url: 'https://fixtures.r2.dev/japanese.mp3' },
       { ...base, id: 'B_NEUTRAL', url: 'https://fixtures.r2.dev/neutral.mp3' },

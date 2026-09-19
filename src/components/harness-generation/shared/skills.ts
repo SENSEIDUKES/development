@@ -1,25 +1,6 @@
 import { cloneHarnessValue } from './ids';
-import {
-  buildSelectedTranslationGlossary,
-  isTranslationSkillCompatible,
-  presentSelectedTranslationGlossary,
-  translationCompatibilityError,
-  translationMatchSource,
-  translationTargetLanguage,
-  validateTranslationSkillMetadata,
-} from './translationSkill';
-import type {
-  CapaPrompt,
-  HarnessSelectedTranslationGlossary,
-  HarnessSkillLoadoutSnapshot,
-  HarnessSkillApplication,
-  HarnessSkillManifest,
-  HarnessSkillReference,
-  HarnessSkillSlotId,
-  HarnessStory,
-  ImmediateChapterRequest,
-  StoryInformationPacket,
-} from './types';
+import { buildSelectedTranslationGlossary, isTranslationSkillCompatible, presentSelectedTranslationGlossary, translationCompatibilityError, translationMatchSource, translationTargetLanguage, validateTranslationSkillMetadata } from '../../../narrative/translationSkill';
+import type { CapaPrompt, HarnessSelectedTranslationGlossary, HarnessSkillLoadoutSnapshot, HarnessSkillApplication, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId, HarnessStory, ImmediateChapterRequest, StoryInformationPacket } from '../../../narrative/generation';
 
 export interface CapaSlotDefinition {
   id: HarnessSkillSlotId;

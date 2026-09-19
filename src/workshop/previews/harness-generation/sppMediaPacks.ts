@@ -1,10 +1,5 @@
 import type { PackContent } from 'seihouse-productions-package';
-import {
-  createRegisteredMediaPackCatalog,
-  mediaPackKey,
-  validateMediaPack,
-  type MediaPack,
-} from '@seihouse/sen/audio';
+import { createRegisteredMediaPackCatalog, mediaPackKey, validateMediaPack, type MediaPack } from '@seihouse/library/media';
 
 export const SPP_MEDIA_PACK_STORAGE_KEY = 'seihouse.harness.media-packs.v1';
 export const SPP_MEDIA_CATALOG_BYTE_LIMIT = 2 * 1024 * 1024;

@@ -1,3 +1,4 @@
+import type { QiAccountState } from '@seihouse/library/cultivation';
 /**
  * The User Profile services port.
  *
@@ -24,7 +25,7 @@
  */
 
 import React, { createContext, createElement, useContext } from 'react';
-import type { SenLanguageCode } from '../../../lib/language';
+import { type SenLanguageCode } from '@seihouse/sen/contracts';
 import type {
   AccountRole,
   ActiveStatusEffect,
@@ -59,21 +60,6 @@ export interface DaoClaimState {
   reconcile: () => Promise<DaoClaimResult>;
 }
 
-/**
- * A Qi deposit the server has already recorded (today: a Daily Dao Pillar
- * claim delivered through `src/server/qi`). The host mirrors it onto the
- * profile it holds so rank and balance update without a reload; it never
- * decides or changes the amount. Production refreshes the cultivation profile
- * after `awardDirectQi`-style persistence; the Workshop adds it locally.
- */
-export interface QiDepositReceipt {
-  amount: number;
-  /** The ledger balance after the deposit, when the server reported one. */
-  balanceAfter?: number;
-  source: 'dao-pillar';
-  transactionId?: string;
-}
-
 export interface UserProfileControllerProps {
   currentUser: AppUser | null;
   stories: Story[];
@@ -90,8 +76,8 @@ export interface UserProfileController {
   unlockedSpecialQi?: readonly SpecialQiId[];
   /** Legacy daily refinement claim; the locked reference page still reads it. The Cave's Daily Dao Pillar claims through `src/components/dao-pillar` instead. */
   dailyClaim?: DaoClaimState;
-  /** Reflects a server-recorded Qi deposit on the held profile. Absent hosts leave the balance to their next profile refresh. */
-  applyQiDeposit?: (deposit: QiDepositReceipt) => void;
+  /** Read-only server ledger projection used by the current Cave. */
+  cultivation?: QiAccountState;
   // Library / app-shell state (production: `useAppStore`)
   syncStatus: string;
   lastSavedTime: Date | null;

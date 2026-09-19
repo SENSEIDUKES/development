@@ -2,15 +2,10 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import { X } from 'lucide-react';
-import type { SystemEvent, SystemStatusBar, SystemStatusScreen } from '../shared/types';
-import type { ColorCodeId, SystemColorMeaning } from '../shared/colorCodes';
-import {
-  getColorCodeStyle,
-  getSystemColorStyle,
-  getSystemCompactClassification,
-  resolveSystemOutcomeColorCode,
-} from '../shared/colorCodes';
-import type { SystemPromptRow } from '../shared/systemPromptPresentation';
+import type { SystemEvent, SystemStatusBar, SystemStatusScreen } from '../../../narrative/story';
+import type { ColorCodeId, SystemColorMeaning } from '../../../narrative/colorCodes';
+import { getColorCodeStyle, getSystemColorStyle, getSystemCompactClassification, resolveSystemOutcomeColorCode } from '../../../narrative/colorCodes';
+import type { SystemPromptRow } from '../../../narrative/systemPromptPresentation';
 
 /** An open Codex hovercard floats above this dialog and answers Escape first. */
 const CODEX_HOVERCARD_SELECTOR = '[data-slot="codex-hovercard"]';

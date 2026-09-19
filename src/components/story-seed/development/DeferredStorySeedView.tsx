@@ -4,7 +4,7 @@ import {
   type ErrorInfo,
   type ReactNode,
 } from 'react';
-import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel } from '../../../presentation';
+import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel } from '@seihouse/sen/presentation';
 
 interface DeferredStorySeedViewProps {
   children: ReactNode;

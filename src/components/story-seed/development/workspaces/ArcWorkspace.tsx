@@ -1,10 +1,7 @@
-import { ArcPlanView } from '../../../arc-goals/development/ArcPlanView';
+import { ArcPlanView } from '@seihouse/sen/arc-goals';
 import { Compass, Hourglass, ShieldAlert, Sparkles, Swords } from 'lucide-react';
-import { SENArcIcon } from '../../../sen-icons';
-import type {
-  StorySeedInput,
-  StorySeedStorySauceLevel,
-} from '../../shared/storySeedSchema';
+import { LibraryArcIcon as SENArcIcon } from '@seihouse/library-ui';
+import { type StorySeedInput, type StorySeedStorySauceLevel } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
 import {
   patchPlotAndTropeSettings,
@@ -15,7 +12,7 @@ import {
   worldFoundations,
   type UpdateSeed,
 } from '../seedState';
-import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '../../../../presentation';
+import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { WorkspaceShell } from './WorkspaceShell';
 import { handleRadioGroupKeyDown } from '../radioGroupKeyboard';
 

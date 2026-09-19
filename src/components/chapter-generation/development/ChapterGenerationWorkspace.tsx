@@ -12,7 +12,7 @@ import {
   ScrollText,
   Shield,
 } from "lucide-react";
-import { SENWorldIdentityIcon } from '../../sen-icons';
+import { LibraryWorldIdentityIcon as SENWorldIdentityIcon } from '@seihouse/library-ui';
 import { useRef, useState, type ReactNode } from "react";
 import { getChapterWritingStyleInstruction } from "../shared/lib/chapterWritingStyle";
 import type { SceneAnchors, SceneType } from "../shared/lib/sceneRhythm";
@@ -21,7 +21,7 @@ import type {
   ChapterPipelineStageKey,
   ChapterPacket,
 } from "../shared/pipeline/types";
-import type { ChapterHandoff, ChapterEndState } from "../shared/types";
+import { type ChapterHandoff, type ChapterEndState } from '@seihouse/sen/generation';
 import ManifestedChapterView from "./ManifestedChapterView";
 import {
   Chip,

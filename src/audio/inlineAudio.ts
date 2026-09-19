@@ -1,16 +1,7 @@
-import {
-  getByUrl,
-  loadLibraryCues,
-  type LibraryCue,
-  type LibraryCueCategory,
-  type LibraryCuesLoadResult,
-} from './libraryCues';
+import { getByUrl, parseAudioCues, type AudioCue, type AudioCueCategory, type AudioCuesLoadResult } from './cues';
 import { extractReaderVisibleAudioText } from './readerVisibleText';
-import {
-  isMediaResourceProvenance,
-  isPublicHttpsMediaUrl,
-  type MediaResourceProvenance,
-} from './mediaPacks';
+import { isMediaResourceProvenance, type MediaResourceProvenance } from './media';
+import { isPublicHttpsMediaUrl } from './mediaUrl';
 
 export const INLINE_AUDIO_CUE_CATEGORIES = [
   'beasts',
@@ -18,7 +9,7 @@ export const INLINE_AUDIO_CUE_CATEGORIES = [
   'artifacts',
   'locations',
   'factions',
-] as const satisfies readonly LibraryCueCategory[];
+] as const satisfies readonly AudioCueCategory[];
 
 export type InlineAudioCueCategory = (typeof INLINE_AUDIO_CUE_CATEGORIES)[number];
 
@@ -59,7 +50,7 @@ export interface WorldCueIntent {
 
 /**
  * Persistable application-owned annotation. Only application resolution adds
- * the client-safe Library URL; no catalog/file/asset identifier is persisted.
+ * the host-authorized playback URL; no catalog/file/asset identifier is persisted.
  */
 export interface ResolvedWorldCueMoment {
   id: string;
@@ -108,7 +99,7 @@ export type WorldCueResolution =
     };
 
 export type ResolvedWorldCueValidation =
-  | { ok: true; cue: LibraryCue & { category: InlineAudioCueCategory } }
+  | { ok: true; cue: AudioCue & { category: InlineAudioCueCategory } }
   | {
       ok: false;
       reason:
@@ -146,8 +137,8 @@ export interface InlineAudioTextSegment {
   moment?: ResolvedAudioMoment;
 }
 
-const DEFAULT_LIBRARY_CUES = loadLibraryCues();
-const INLINE_CATEGORY_SET = new Set<LibraryCueCategory>(INLINE_AUDIO_CUE_CATEGORIES);
+const EMPTY_AUDIO_CUES = parseAudioCues([]);
+const INLINE_CATEGORY_SET = new Set<AudioCueCategory>(INLINE_AUDIO_CUE_CATEGORIES);
 const RELATED_ENTITY_TYPE_SET = new Set<string>(WORLD_CUE_RELATED_ENTITY_TYPES);
 export const MAX_WORLD_CUE_MOMENTS_PER_CHAPTER = 24;
 export const MAX_WORLD_CUE_TRIGGER_LENGTH = 240;
@@ -385,7 +376,7 @@ export function validateWorldCueIntent(candidate: unknown): WorldCueIntentValida
   if (!Number.isInteger(occurrenceIndex) || (occurrenceIndex as number) < 0) {
     return { ok: false, reason: 'invalid-intent', message: 'occurrenceIndex must be a zero-based integer.' };
   }
-  if (typeof sourceCategory !== 'string' || !INLINE_CATEGORY_SET.has(sourceCategory as LibraryCueCategory)) {
+  if (typeof sourceCategory !== 'string' || !INLINE_CATEGORY_SET.has(sourceCategory as AudioCueCategory)) {
     return {
       ok: false,
       reason: 'invalid-intent',
@@ -487,10 +478,10 @@ const compareStrings = (left: string, right: string) => left < right ? -1 : left
  * Resolve only an exact category/variation match. Tags rank candidates,
  * confidence breaks semantic ties, and URL order makes the result stable.
  */
-export function resolveLibraryCueForWorldCue(
+export function resolveCatalogCueForWorldCue(
   intent: Pick<WorldCueIntent, 'sourceCategory' | 'variation' | 'semanticTags'>,
-  loaded: LibraryCuesLoadResult = DEFAULT_LIBRARY_CUES,
-): LibraryCue & { category: InlineAudioCueCategory } | null {
+  loaded: AudioCuesLoadResult = EMPTY_AUDIO_CUES,
+): AudioCue & { category: InlineAudioCueCategory } | null {
   if (!INLINE_CATEGORY_SET.has(intent.sourceCategory)) return null;
   const variation = normalizedValue(intent.variation);
   const tags = new Set(intent.semanticTags.map(normalizedValue).filter(Boolean));
@@ -498,7 +489,7 @@ export function resolveLibraryCueForWorldCue(
     cue.category === intent.sourceCategory
     && normalizedValue(cue.metadata.broad_variation) === variation
   ));
-  const tagScore = (cue: LibraryCue) => new Set(
+  const tagScore = (cue: AudioCue) => new Set(
     cue.metadata.soft_tags.map(normalizedValue).filter(tag => tags.has(tag)),
   ).size;
   const ranked = [...candidates].sort((left, right) => (
@@ -506,7 +497,7 @@ export function resolveLibraryCueForWorldCue(
     || right.metadata.confidence_score - left.metadata.confidence_score
     || compareStrings(left.public_url, right.public_url)
   ));
-  return (ranked[0] as LibraryCue & { category: InlineAudioCueCategory } | undefined) ?? null;
+  return (ranked[0] as AudioCue & { category: InlineAudioCueCategory } | undefined) ?? null;
 }
 
 const exactOccurrenceOffset = (text: string, phrase: string, occurrenceIndex: number): number => {
@@ -533,11 +524,11 @@ const stableHash = (value: string): string => {
   return (hash >>> 0).toString(36);
 };
 
-/** Validate placement and resolve an approved Library Cue after generation. */
+/** Validate placement and resolve a host-approved cue after generation. */
 export function resolveWorldCueIntent(
   candidate: unknown,
   block: WorldCueChapterBlock,
-  loaded: LibraryCuesLoadResult = DEFAULT_LIBRARY_CUES,
+  loaded: AudioCuesLoadResult = EMPTY_AUDIO_CUES,
 ): WorldCueResolution {
   const validation = validateWorldCueIntent(candidate);
   if (!validation.ok) return validation;
@@ -557,9 +548,9 @@ export function resolveWorldCueIntent(
   if (selectedOffset < 0) {
     return { ok: false, reason: 'occurrence-not-found', message: 'The requested zero-based phrase occurrence is absent.' };
   }
-  const cue = resolveLibraryCueForWorldCue(intent, loaded);
+  const cue = resolveCatalogCueForWorldCue(intent, loaded);
   if (!cue) {
-    return { ok: false, reason: 'unresolved-cue', message: 'No approved Library Cue matches this category and variation.' };
+    return { ok: false, reason: 'unresolved-cue', message: 'No host-approved cue matches this category and variation.' };
   }
   const idSeed = [
     intent.blockId,
@@ -598,7 +589,7 @@ const getEmbeddedIntents = (blocks: readonly WorldCueChapterBlock[]): unknown[] 
 export function resolveChapterAudioMoments(
   blocks: readonly WorldCueChapterBlock[],
   intents?: readonly unknown[],
-  loaded: LibraryCuesLoadResult = DEFAULT_LIBRARY_CUES,
+  loaded: AudioCuesLoadResult = EMPTY_AUDIO_CUES,
 ): ChapterAudioMomentsResolution {
   const candidates = intents ? [...intents] : getEmbeddedIntents(blocks);
   const blockById = new Map(blocks.map(block => [block.id, block]));
@@ -685,7 +676,7 @@ export function resolveChapterAudioMoments(
 /** Revalidate persisted resolution so stale/unapproved URLs never get a glyph. */
 export function resolveResolvedAudioMomentCue(
   moment: ResolvedWorldCueMoment,
-  loaded: LibraryCuesLoadResult = DEFAULT_LIBRARY_CUES,
+  loaded: AudioCuesLoadResult = EMPTY_AUDIO_CUES,
 ): ResolvedWorldCueValidation {
   if (
     !isPlainObject(moment)
@@ -707,10 +698,9 @@ export function resolveResolvedAudioMomentCue(
   ) {
     return { ok: false, reason: 'invalid-moment', message: 'This World Cue annotation is invalid.' };
   }
-  if (moment.cue.provenance?.kind === 'media-pack') {
+  if (moment.cue.provenance) {
     if (
       !isMediaResourceProvenance(moment.cue.provenance)
-      || moment.cue.provenance.type !== 'sound-cue'
       || !isPublicHttpsMediaUrl(moment.cue.publicUrl)
       || !INLINE_CATEGORY_SET.has(moment.sourceCategory)
     ) {
@@ -727,7 +717,7 @@ export function resolveResolvedAudioMomentCue(
     return {
       ok: true,
       cue: {
-        file_path: moment.cue.provenance.source.path,
+        file_path: moment.cue.provenance.source?.path ?? moment.cue.publicUrl,
         public_url: moment.cue.publicUrl,
         category: moment.sourceCategory,
         metadata: {
@@ -742,7 +732,7 @@ export function resolveResolvedAudioMomentCue(
   }
   const cue = getByUrl(loaded, moment.cue.publicUrl);
   if (!cue) {
-    return { ok: false, reason: 'not-found', message: 'This World Cue is no longer available in the Library catalog.' };
+    return { ok: false, reason: 'not-found', message: 'This World Cue is no longer available in the host catalog.' };
   }
   if (!INLINE_CATEGORY_SET.has(cue.category)) {
     return { ok: false, reason: 'reserved-category', message: `${cue.category} cues belong to another audio surface.` };
@@ -761,13 +751,13 @@ export function resolveResolvedAudioMomentCue(
   )) {
     return { ok: false, reason: 'invalid-moment', message: 'This World Cue action placement is invalid.' };
   }
-  return { ok: true, cue: cue as LibraryCue & { category: InlineAudioCueCategory } };
+  return { ok: true, cue: cue as AudioCue & { category: InlineAudioCueCategory } };
 }
 
 /** Resolve an application-owned World Cue artifact to the shared playback source. */
 export function resolvePlayableAudioMoment(
   moment: ResolvedAudioMoment,
-  loaded: LibraryCuesLoadResult = DEFAULT_LIBRARY_CUES,
+  loaded: AudioCuesLoadResult = EMPTY_AUDIO_CUES,
 ): PlayableAudioMomentResolution {
   const resolution = resolveResolvedAudioMomentCue(moment, loaded);
   return resolution.ok

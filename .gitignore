@@ -8,6 +8,9 @@ generated/codex-voice-api
 generated/reader-translation-api
 generated/energy-api
 generated/dao-pillar-api
+generated/development-apis
+generated/library-economy-api
+artifacts/
 *.tsbuildinfo
 vite-preview.log
 vite-preview-error.log

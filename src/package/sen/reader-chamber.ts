@@ -39,7 +39,7 @@ export type { SystemBlockProps } from '../../components/reader-chamber/developme
 export { WorldNotice } from '../../components/reader-chamber/development/WorldNotice';
 export type { WorldNoticeProps } from '../../components/reader-chamber/development/WorldNotice';
 export { SystemColorLegend } from '../../components/reader-chamber/development/SystemColorLegend';
-export { VirtualizedList } from '../../components/reader-chamber/development/VirtualizedList';
+export { VirtualizedList } from '../../presentation/VirtualizedList';
 export {
   InlineAudio,
   InlineAudioControl,
@@ -52,16 +52,15 @@ export type {
   InlineAudioTextProps,
 } from '../../components/reader-chamber/development/InlineAudio';
 
-export * from '../../components/reader-chamber/shared/types';
-export * from '../../components/reader-chamber/shared/systemPromptPresentation';
+export * from '../../narrative/story';
+export * from '../../narrative/systemPromptPresentation';
 export * from '../../components/reader-chamber/shared/readerTypography';
 export * from '../../components/reader-chamber/shared/readerLegend';
 export * from '../../components/reader-chamber/shared/autoCuePolicy';
 export * from '../../components/reader-chamber/shared/manifestationEligibility';
 export * from '../../components/reader-chamber/shared/alterFateLock';
-export * from '../../components/reader-chamber/shared/batchToReaderAdapter';
-export * from '../../components/reader-chamber/shared/dialect';
-export { generateId, generateUUID } from '../../components/reader-chamber/shared/id';
+export * from '../../narrative/dialect';
+export { generateId, generateUUID } from '../../narrative/id';
 export type {
   AudioSettings,
   ChapterNavigationState,

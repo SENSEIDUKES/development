@@ -1,4 +1,4 @@
-import type { RewardEntry } from '../../components/dao-pillar/shared/daoPillarContracts';
+import { type RewardEntry } from '@seihouse/library/dao-pillar';
 import type { JsonObject } from '../qi/qiLedger';
 import type { DaoPillarClaimRecord } from './types';
 

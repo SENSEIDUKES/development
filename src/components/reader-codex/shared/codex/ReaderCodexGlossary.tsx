@@ -1,18 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BookMarked, RefreshCcw, Sparkles, ShieldAlert } from 'lucide-react';
-import { SENSearchIcon } from '../../../sen-icons';
+import { NarrativeIcon } from '../../../../presentation';
 import { StoryMemory, StoryArc, MultiModelRouting } from '../types';
-import { extractWorkshopGlossaryTerms } from '../codexCompatibility';
-
-const DEFAULT_CULTIVATION_GLOSSARY = [
-  { term: "Qi (气)", category: "Vital Energy", definition: "The fundamental spiritual life energy flowing through all celestial creation. Cultivators refine raw worldly Qi inside their dantian to grow standard power." },
-  { term: "Dantian (丹田)", category: "Anatomy", definition: "The spiritual elixir field located near the core of the physical body. It functions as the central crucible of alchemical cultivation storage." },
-  { term: "Heavenly Tribulation (天劫)", category: "Cosmic Phenomenon", definition: "Savage, lightning-infused trials triggered by the Heavenly Tao when a cultivator breaks through critical tier thresholds, trying to disintegrate them for defying physical laws." },
-  { term: "Jade Slip (玉简)", category: "Substance", definition: "Exquisite spiritual jade plates onto which supreme grandmaster mental brands are inscribed, utilized to safely store cultivation martial manuals." },
-  { term: "Kowtow (叩头)", category: "Culture", definition: "Kneeling and knocking the forehead to the ground. A submissive form of showing utmost respect or pleading for grand master mercy." },
-  { term: "Dao (道)", category: "Cosmic Law", definition: "The infinite, incomprehensible 'Way' or natural order governing absolute physical and spiritual dimensions. Cultivators seek total enlightenment of their chosen Dao paths." },
-  { term: "Spiritual Meridians (经脉)", category: "Anatomy", definition: "The internal energetic high-speed channels of the body through which refined Qi flows. Blocked or destroyed meridians lead to crippled cultivation ruins." }
-];
+import { useReaderRuntime, useReaderStore } from '../../../../narrative/readerRuntime';
 
 type GlossaryTerm = { term: string; category: string; definition: string };
 
@@ -45,6 +35,9 @@ interface ReaderCodexGlossaryProps {
 }
 
 export function ReaderCodexGlossary({ memory, arcs, mcName, routingConfig }: ReaderCodexGlossaryProps) {
+  const { extractGlossary, preferences, defaultGlossary = [] } = useReaderRuntime();
+  const storyId = useReaderStore(state => state.activeStoryId);
+  const glossaryKey = `glossary:${storyId ?? 'unattached'}`;
   const [glossarySearch, setGlossarySearch] = useState('');
   const [customGlossary, setCustomGlossary] = useState<GlossaryTerm[]>([]);
   const [isExtractingGlossary, setIsExtractingGlossary] = useState(false);
@@ -52,19 +45,17 @@ export function ReaderCodexGlossary({ memory, arcs, mcName, routingConfig }: Rea
 
   useEffect(() => {
     try {
-      const cached = localStorage.getItem(`custom_glossary_${mcName}`);
-      if (cached) {
-        setCustomGlossary(JSON.parse(cached));
-      }
+      const cached = preferences?.read(glossaryKey);
+      setCustomGlossary(cached ? JSON.parse(cached) : []);
     } catch (e) {
       console.error("Failed to read glossary cache", e);
     }
-  }, [mcName]);
+  }, [glossaryKey, preferences]);
 
   const saveCustomGlossaryLocally = (terms: GlossaryTerm[]) => {
     setCustomGlossary(terms);
     try {
-      localStorage.setItem(`custom_glossary_${mcName}`, JSON.stringify(terms));
+      preferences?.write(glossaryKey, JSON.stringify(terms));
     } catch (e) {
       console.warn('LocalStorage Quota exceeded for glossary:', e);
     }
@@ -78,7 +69,8 @@ export function ReaderCodexGlossary({ memory, arcs, mcName, routingConfig }: Rea
       const characterNames = memory.characters?.map(c => c.name) || [];
       const factionNames = (memory.factions || []).map(f => f.name);
 
-      const generatedTerms = await extractWorkshopGlossaryTerms({
+      if (!extractGlossary) throw new Error('The host has not enabled glossary generation.');
+      const generatedTerms = await extractGlossary({
         storyTitle: arcs[0]?.title || "Active Light Novel Matrix",
         mcName,
         powerSystem: memory.powerSystem,
@@ -100,7 +92,7 @@ export function ReaderCodexGlossary({ memory, arcs, mcName, routingConfig }: Rea
     }
   };
 
-  const compositeGlossary = [...DEFAULT_CULTIVATION_GLOSSARY, ...customGlossary];
+  const compositeGlossary = [...defaultGlossary, ...customGlossary];
   const filteredGlossary = compositeGlossary.filter(item =>
     item.term.toLowerCase().includes(glossarySearch.toLowerCase()) ||
     item.definition.toLowerCase().includes(glossarySearch.toLowerCase()) ||
@@ -145,7 +137,7 @@ export function ReaderCodexGlossary({ memory, arcs, mcName, routingConfig }: Rea
       )}
 
       <div className="relative">
-        <SENSearchIcon size={16} className="absolute left-3 top-2.5 text-neutral-600" />
+        <NarrativeIcon name="search" size={16} className="absolute left-3 top-2.5 text-neutral-600" />
         <input
           type="text"
           value={glossarySearch}

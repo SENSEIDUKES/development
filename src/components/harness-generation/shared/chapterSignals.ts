@@ -1,7 +1,7 @@
 import { SOUNDSCAPE_REGIONS, type SoundscapeRegion } from '../../../audio/soundscapes';
 import { INLINE_AUDIO_CUE_CATEGORIES, WORLD_CUE_RELATED_ENTITY_TYPES, type InlineAudioCueCategory, type WorldCueRelatedEntityType } from '../../../audio/inlineAudio';
-import { STORY_ENTITY_TYPES, type StoryBlockMetadata, type StoryEntityType, type SystemEvent } from '../../chapter-generation/shared/types';
-import type { HarnessWarning } from './types';
+import { STORY_ENTITY_TYPES, type StoryBlockMetadata, type StoryEntityType, type SystemEvent } from '../../../narrative/chapter';
+import type { HarnessWarning } from '../../../narrative/generation';
 
 /**
  * The compact semantic signal contract of the Generation Model Call.

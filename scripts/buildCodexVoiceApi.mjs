@@ -8,6 +8,7 @@ const debugBundle = process.env.CODEX_VOICE_API_DEBUG_BUNDLE === "1";
 await build({
   root: repositoryRoot,
   configFile: false,
+  resolve: { alias: packageAliases },
   envDir: false,
   publicDir: false,
   logLevel: "warn",
@@ -30,3 +31,4 @@ await build({
     },
   },
 });
+import { packageAliases } from './packageAliases.mjs';

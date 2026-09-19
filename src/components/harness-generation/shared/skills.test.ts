@@ -1,18 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { HarnessGenerationController } from './controller';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { createHarnessStory } from './foundation';
 import { defaultHarnessRuntime } from './ids';
-import { createEmptyHarnessWorkspaceState, InMemoryHarnessGenerationRepository } from './repository';
-import {
-  CAPA_SCHEMA,
-  HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS,
-  assembleCapaPrompt,
-  createHarnessSkillCatalog,
-  freezeHarnessSkillLoadout,
-  validateHarnessSkillManifest,
-} from './skills';
-import type { HarnessSkillManifest, HarnessSkillSlotId } from './types';
-import { SEN_NOVEL_AUTHOR_SKILL } from './authorSkill';
+import { createEmptyHarnessWorkspaceState } from '@seihouse/sen/harness-generation';
+import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { CAPA_SCHEMA, HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS, assembleCapaPrompt, createHarnessSkillCatalog, freezeHarnessSkillLoadout, validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { type HarnessSkillManifest, type HarnessSkillSlotId } from '@seihouse/sen/harness-generation';
+import { SEN_NOVEL_AUTHOR_SKILL } from '@seihouse/sen/harness-generation';
 import { SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS } from '../../../lib/senLightNovelAuthorInstructions';
 import { CHAPTER_PROMPTS } from '../../chapter-generation/shared/lib/chapterPrompts';
 

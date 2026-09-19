@@ -1,0 +1,908 @@
+import { STORY_ENTITY_TYPES, type BeastSonicProfile, type ChapterManifestDiagnostics, type ChapterManifestWarning, type FateResultData, type RegularSystemEvent, type StoryBlock, type StoryBlockMetadata, type SystemEvent, type SystemPromptPresentation, type WorldNoticeData } from './chapter';
+import { normalizeSystemPromptChanges, normalizeSystemStatusScreen } from './systemPromptPresentation';
+import { validateWorldCueIntent, type WorldCueIntent } from '../audio/inlineAudio';
+import { isSoundscapeRegion } from '../audio/soundscapes';
+
+type JsonRecord = Record<string, unknown>;
+
+export const MINIMUM_CHAPTER_WORD_COUNT = 2_000;
+
+const BLOCK_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
+const BLOCK_ATMOSPHERE_CATEGORIES = ["wind", "crowd", "waves", "rain", "combat", "noise"] as const;
+const BEAST_EVENT_TYPES = ["reveal", "power-up", "technique", "injury", "turning-point", "death", "breakthrough"] as const;
+const BEAST_SIZES = ["tiny", "small", "medium", "large", "giant", "colossal"] as const;
+const SYSTEM_EVENT_KINDS = ["system_prompt", "fate_system_prompt"] as const;
+const SYSTEM_PROMPT_TYPES = [
+  "neutral", "codex_update", "friendly_scan", "enemy_scan", "warning", "critical_danger",
+  "progression", "breakthrough", "reward", "romance", "karmic_bond", "mystery", "fate_event",
+  "corruption", "death_event", "quest_update", "choice_consequence", "system_error",
+] as const;
+const SYSTEM_PROMPT_PRESENTATIONS = ["narrative", "mechanical", "world_notice"] as const;
+const FATE_OUTCOMES: FateResultData["outcome"][] = ["FATE AVERTED", "FATE SCARRED", "DOOM MANIFESTED"];
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  Boolean(value) && typeof value === "object" && !Array.isArray(value);
+
+const nonEmptyString = (value: unknown): string | undefined =>
+  typeof value === "string" && value.trim() ? value.trim() : undefined;
+
+const finiteNumber = (value: unknown): number | undefined =>
+  typeof value === "number" && Number.isFinite(value) ? value : undefined;
+
+const parseWholeJson = (text: string): unknown | undefined => {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+};
+
+const recordsFromJson = (value: unknown): JsonRecord[] => {
+  if (typeof value === "string" && value.trim()) return [{ text: value.trim() }];
+  if (Array.isArray(value)) {
+    return value.flatMap(item => recordsFromJson(item));
+  }
+  if (!isRecord(value)) return [];
+  if (Array.isArray(value.blocks)) return value.blocks.flatMap(item => recordsFromJson(item));
+  return [value];
+};
+
+const extractFirstBalancedValue = (text: string): string | undefined => {
+  const start = text.search(/[\[{]/);
+  if (start < 0) return undefined;
+  const stack: string[] = [];
+  let inString = false;
+  let escaped = false;
+  for (let index = start; index < text.length; index += 1) {
+    const character = text[index];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (character === "\\") escaped = true;
+      else if (character === '"') inString = false;
+      continue;
+    }
+    if (character === '"') {
+      inString = true;
+      continue;
+    }
+    if (character === "{" || character === "[") stack.push(character === "{" ? "}" : "]");
+    else if (character === "}" || character === "]") {
+      if (stack.pop() !== character) return undefined;
+      if (stack.length === 0) return text.slice(start, index + 1);
+    }
+  }
+  return undefined;
+};
+
+interface ExtractedManifestRecords {
+  records: JsonRecord[];
+  skippedBlocks: number;
+  plainProse: boolean;
+}
+
+const looksLikeUnreadableJson = (text: string): boolean =>
+  /^[\s\[{]/.test(text) || /"(?:text|blocks)"\s*:/.test(text);
+
+const isProviderRefusal = (text: string): boolean => {
+  const normalized = text.trim().replace(/^['"]+/, "");
+  return /^(?:i (?:cannot|can't|am unable)\b|i(?:'m| am) sorry[,;:]?\s*(?:but\s+)?i (?:cannot|can't|am unable)|as an ai\b|i must decline\b)/i.test(normalized);
+};
+
+const extractManifestRecords = (text: string): ExtractedManifestRecords => {
+  const whole = parseWholeJson(text);
+  if (whole !== undefined) {
+    return { records: recordsFromJson(whole), skippedBlocks: 0, plainProse: false };
+  }
+
+  const lineRecords: JsonRecord[] = [];
+  let lineSkippedBlocks = 0;
+  const jsonLikeLines = text.split(/\r?\n/).filter(line => /^[\s]*[\[{]/.test(line));
+  for (const line of jsonLikeLines) {
+    const parsed = parseWholeJson(line.trim().replace(/,$/, ""));
+    if (parsed === undefined) lineSkippedBlocks += 1;
+    else lineRecords.push(...recordsFromJson(parsed));
+  }
+  if (lineRecords.length > 0) {
+    return { records: lineRecords, skippedBlocks: lineSkippedBlocks, plainProse: false };
+  }
+
+  const records: JsonRecord[] = [];
+  let skippedBlocks = 0;
+  let cursor = 0;
+  while (cursor < text.length) {
+    const relativeStart = text.slice(cursor).search(/[\[{]/);
+    if (relativeStart < 0) break;
+    const start = cursor + relativeStart;
+    const balanced = extractFirstBalancedValue(text.slice(start));
+    if (!balanced) {
+      skippedBlocks += 1;
+      cursor = text.indexOf("\n", start) + 1;
+      if (cursor <= 0) break;
+      continue;
+    }
+    const parsed = parseWholeJson(balanced);
+    if (parsed === undefined) skippedBlocks += 1;
+    else records.push(...recordsFromJson(parsed));
+    cursor = start + balanced.length;
+  }
+  if (records.length > 0 || skippedBlocks > 0 || looksLikeUnreadableJson(text)) {
+    return { records, skippedBlocks, plainProse: false };
+  }
+
+  const prose = text
+    .split(/\r?\n\s*\r?\n/)
+    .map(paragraph => paragraph.trim())
+    .filter(Boolean)
+    .map(paragraph => ({ text: paragraph }));
+  return { records: prose, skippedBlocks: 0, plainProse: prose.length > 0 };
+};
+
+const countProseWords = (text: string): number => text
+  .trim()
+  .split(/\s+/u)
+  .filter(Boolean)
+  .length;
+
+interface BlockWarningContext {
+  warnings: ChapterManifestWarning[];
+  blockIndex: number;
+  blockId?: string;
+}
+
+const warning = (
+  context: BlockWarningContext,
+  code: ChapterManifestWarning["code"],
+  message: string,
+  field?: string,
+) => context.warnings.push({
+  code,
+  message,
+  blockIndex: context.blockIndex,
+  ...(context.blockId ? { blockId: context.blockId } : {}),
+  ...(field ? { field } : {}),
+});
+
+const safeFieldLabel = (field: string): string => field
+  .replace(/[^A-Za-z0-9_.[\]-]/g, "")
+  .slice(0, 96) || "unnamed";
+
+const optionalStringField = (
+  record: JsonRecord,
+  field: string,
+  context: BlockWarningContext,
+  path: string,
+): string | undefined => {
+  if (record[field] === undefined || record[field] === null || record[field] === "") return undefined;
+  const value = nonEmptyString(record[field]);
+  if (!value) warning(context, "optional-field-removed", `Removed invalid optional ${path}.`, path);
+  return value;
+};
+
+const optionalNumberField = (
+  record: JsonRecord,
+  field: string,
+  context: BlockWarningContext,
+  path: string,
+): number | undefined => {
+  if (record[field] === undefined || record[field] === null) return undefined;
+  const value = finiteNumber(record[field]);
+  if (value === undefined) warning(context, "optional-field-removed", `Removed invalid optional ${path}.`, path);
+  return value;
+};
+
+const optionalStringArrayField = (
+  record: JsonRecord,
+  field: string,
+  context: BlockWarningContext,
+  path: string,
+): string[] | undefined => {
+  const raw = record[field];
+  if (raw === undefined || raw === null) return undefined;
+  if (!Array.isArray(raw)) {
+    warning(context, "optional-field-removed", `Removed invalid optional ${path}.`, path);
+    return undefined;
+  }
+  const values = raw.flatMap((item, index) => {
+    const value = nonEmptyString(item);
+    if (value) return [value];
+    warning(context, "optional-field-removed", `Removed invalid optional ${path}[${index}].`, `${path}[${index}]`);
+    return [];
+  });
+  return values.length > 0 ? values : undefined;
+};
+
+const parseMetadataEntities = (
+  value: unknown,
+  context: BlockWarningContext,
+): StoryBlockMetadata["entities"] => {
+  if (value === undefined || value === null) return undefined;
+  if (!Array.isArray(value)) {
+    warning(context, "optional-field-removed", "Removed invalid optional metadata.entities.", "metadata.entities");
+    return undefined;
+  }
+  const entities = value.flatMap((item, index) => {
+    const path = `metadata.entities[${index}]`;
+    if (!isRecord(item)) {
+      warning(context, "optional-field-removed", `Removed invalid optional ${path}.`, path);
+      return [];
+    }
+    const name = nonEmptyString(item.name);
+    const type = nonEmptyString(item.type);
+    const mention = nonEmptyString(item.mention);
+    if (!name || !type || !STORY_ENTITY_TYPES.includes(type as (typeof STORY_ENTITY_TYPES)[number])
+      || (mention !== "reveal" && mention !== "reference")) {
+      warning(context, "optional-field-removed", `Removed invalid optional ${path}.`, path);
+      return [];
+    }
+    return [{
+      name,
+      type: type as NonNullable<StoryBlockMetadata["entities"]>[number]["type"],
+      mention: mention as NonNullable<StoryBlockMetadata["entities"]>[number]["mention"],
+    }];
+  });
+  return entities.length > 0 ? entities : undefined;
+};
+
+const parseMusic = (
+  value: unknown,
+  context: BlockWarningContext,
+): StoryBlockMetadata["music"] => {
+  if (value === undefined || value === null) return undefined;
+  if (!isRecord(value)) {
+    warning(context, "optional-field-removed", "Removed invalid optional metadata.music.", "metadata.music");
+    return undefined;
+  }
+  const mood = nonEmptyString(value.mood);
+  if (!mood) {
+    warning(context, "optional-field-removed", "Removed invalid optional metadata.music.", "metadata.music");
+    return undefined;
+  }
+  const region = optionalStringField(value, "region", context, "metadata.music.region");
+  const validRegion = isSoundscapeRegion(region) ? region : undefined;
+  if (region && !validRegion) {
+    warning(context, "optional-field-removed", "Removed unsupported optional metadata.music.region.", "metadata.music.region");
+  }
+  const intensity = optionalNumberField(value, "intensity", context, "metadata.music.intensity");
+  if (value.customUrl !== undefined) {
+    warning(context, "optional-field-removed", "Removed model-owned metadata.music.customUrl.", "metadata.music.customUrl");
+  }
+  if (value.trackId !== undefined) {
+    warning(context, "optional-field-removed", "Removed model-owned metadata.music.trackId.", "metadata.music.trackId");
+  }
+  for (const field of Object.keys(value)) {
+    if (!["mood", "region", "intensity", "customUrl", "trackId"].includes(field)) {
+      const path = safeFieldLabel(`metadata.music.${field}`);
+      warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
+    }
+  }
+  return {
+    mood,
+    ...(validRegion ? { region: validRegion } : {}),
+    ...(intensity === undefined ? {} : { intensity }),
+  };
+};
+
+const parseBeastEvent = (
+  value: unknown,
+  context: BlockWarningContext,
+): StoryBlockMetadata["beastEvent"] => {
+  if (value === undefined || value === null) return undefined;
+  if (!isRecord(value) || !isRecord(value.profile)) {
+    warning(context, "optional-field-removed", "Removed invalid optional metadata.beastEvent.", "metadata.beastEvent");
+    return undefined;
+  }
+  const type = nonEmptyString(value.type);
+  if (!type || !BEAST_EVENT_TYPES.includes(type as (typeof BEAST_EVENT_TYPES)[number])) {
+    warning(context, "optional-field-removed", "Removed invalid optional metadata.beastEvent.", "metadata.beastEvent");
+    return undefined;
+  }
+  const profile: BeastSonicProfile = {};
+  const size = optionalStringField(value.profile, "size", context, "metadata.beastEvent.profile.size");
+  if (size && BEAST_SIZES.includes(size as (typeof BEAST_SIZES)[number])) {
+    profile.size = size as BeastSonicProfile["size"];
+  } else if (size) {
+    warning(context, "optional-field-removed", "Removed unsupported optional metadata.beastEvent.profile.size.", "metadata.beastEvent.profile.size");
+  }
+  for (const field of ["bodyType", "element", "movement", "intelligence", "threatTier", "signatureSound"] as const) {
+    const parsed = optionalStringField(value.profile, field, context, `metadata.beastEvent.profile.${field}`);
+    if (parsed) profile[field] = parsed;
+  }
+  return { type: type as NonNullable<StoryBlockMetadata["beastEvent"]>["type"], profile };
+};
+
+const exactOccurrenceOffset = (
+  text: string,
+  phrase: string,
+  occurrenceIndex: number,
+): number => {
+  let fromIndex = 0;
+  for (let index = 0; index <= occurrenceIndex; index += 1) {
+    const found = text.indexOf(phrase, fromIndex);
+    if (found < 0) return -1;
+    if (index === occurrenceIndex) return found;
+    fromIndex = found + phrase.length;
+  }
+  return -1;
+};
+
+export interface ParsedModelWorldCueIntents {
+  intents: WorldCueIntent[];
+  droppedCount: number;
+}
+
+/**
+ * Converts untrusted, block-local model annotations into the shared model-safe
+ * contract. The application supplies the stable block reference and discards
+ * invalid annotations without sacrificing otherwise valid prose.
+ */
+export function parseModelWorldCueIntents(
+  value: unknown,
+  blockId: string,
+  blockText: string,
+): ParsedModelWorldCueIntents {
+  if (!Array.isArray(value)) {
+    return { intents: [], droppedCount: value === undefined || value === null ? 0 : 1 };
+  }
+
+  const intents: WorldCueIntent[] = [];
+  const seenPlacements = new Set<string>();
+  let droppedCount = 0;
+  for (const candidate of value) {
+    if (!isRecord(candidate)) {
+      droppedCount += 1;
+      continue;
+    }
+    if (isRecord(candidate.relatedEntity) && "id" in candidate.relatedEntity) {
+      droppedCount += 1;
+      continue;
+    }
+    const validation = validateWorldCueIntent({
+      ...candidate,
+      blockId,
+    });
+    const offset = validation.ok
+      ? exactOccurrenceOffset(
+          blockText,
+          validation.intent.triggerPhrase,
+          validation.intent.occurrenceIndex,
+        )
+      : -1;
+    if (!validation.ok || offset < 0) {
+      droppedCount += 1;
+      continue;
+    }
+    const intent = validation.intent;
+    const placementKey = [
+      intent.blockId,
+      offset,
+      offset + intent.triggerPhrase.length,
+    ].join("\u001f");
+    if (seenPlacements.has(placementKey)) {
+      droppedCount += 1;
+      continue;
+    }
+    seenPlacements.add(placementKey);
+    intents.push(intent);
+  }
+  return { intents, droppedCount };
+}
+
+const parseBlockMetadata = (
+  value: unknown,
+  context: BlockWarningContext,
+  blockText: string,
+): StoryBlockMetadata | undefined => {
+  if (value === undefined || value === null) return undefined;
+  if (!isRecord(value)) {
+    warning(context, "optional-field-removed", "Removed invalid optional metadata.", "metadata");
+    return undefined;
+  }
+  const metadata: StoryBlockMetadata = {};
+  for (const field of ["sceneType", "motion", "emotion", "audioSignature", "speakerName", "mode", "speakerRole"] as const) {
+    const parsed = optionalStringField(value, field, context, `metadata.${field}`);
+    if (parsed) metadata[field] = parsed;
+  }
+  for (const field of ["intensity", "tension", "danger", "mysticism"] as const) {
+    const parsed = optionalNumberField(value, field, context, `metadata.${field}`);
+    if (parsed !== undefined) metadata[field] = parsed;
+  }
+  const environment = optionalStringArrayField(value, "environment", context, "metadata.environment");
+  if (environment) metadata.environment = environment;
+  const atmosphereTags = optionalStringArrayField(value, "atmosphereTags", context, "metadata.atmosphereTags");
+  if (atmosphereTags) metadata.atmosphereTags = atmosphereTags;
+  const atmosphereCategory = optionalStringField(value, "atmosphereCategory", context, "metadata.atmosphereCategory");
+  if (atmosphereCategory && BLOCK_ATMOSPHERE_CATEGORIES.includes(
+    atmosphereCategory as (typeof BLOCK_ATMOSPHERE_CATEGORIES)[number],
+  )) metadata.atmosphereCategory = atmosphereCategory as StoryBlockMetadata["atmosphereCategory"];
+  else if (atmosphereCategory) {
+    warning(context, "optional-field-removed", "Removed unsupported optional metadata.atmosphereCategory.", "metadata.atmosphereCategory");
+  }
+  if (value.theme !== undefined && value.theme !== null) {
+    const theme = nonEmptyString(value.theme)
+      ?? optionalStringArrayField(value, "theme", context, "metadata.theme");
+    if (theme) metadata.theme = theme;
+    else if (!Array.isArray(value.theme)) {
+      warning(context, "optional-field-removed", "Removed invalid optional metadata.theme.", "metadata.theme");
+    }
+  }
+  const entities = parseMetadataEntities(value.entities, context);
+  if (entities) metadata.entities = entities;
+  const music = parseMusic(value.music, context);
+  if (music) metadata.music = music;
+  const beastEvent = parseBeastEvent(value.beastEvent, context);
+  if (beastEvent) metadata.beastEvent = beastEvent;
+  const parsedAudioMoments = parseModelWorldCueIntents(
+    value.audioMoments,
+    context.blockId ?? `block-${context.blockIndex + 1}`,
+    blockText,
+  );
+  if (parsedAudioMoments.intents.length > 0) {
+    metadata.audioMoments = parsedAudioMoments.intents;
+  }
+  if (parsedAudioMoments.droppedCount > 0) {
+    warning(
+      context,
+      "optional-field-removed",
+      `Removed ${parsedAudioMoments.droppedCount} invalid optional World Cue audio moment${parsedAudioMoments.droppedCount === 1 ? "" : "s"}.`,
+      "metadata.audioMoments",
+    );
+  }
+
+  const knownFields = new Set([
+    "sceneType", "environment", "atmosphereCategory", "atmosphereTags", "theme", "motion", "emotion",
+    "intensity", "tension", "danger", "mysticism", "audioSignature", "speakerName", "mode",
+    "speakerRole", "entities", "music", "beastEvent", "audioMoments",
+  ]);
+  for (const field of Object.keys(value)) {
+    if (!knownFields.has(field)) {
+      const path = safeFieldLabel(`metadata.${field}`);
+      warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
+    }
+  }
+  return Object.keys(metadata).length > 0 ? metadata : undefined;
+};
+
+const parseFateResult = (
+  value: unknown,
+  context: BlockWarningContext,
+): FateResultData | undefined => {
+  if (value === undefined || value === null) return undefined;
+  if (!isRecord(value)) {
+    warning(context, "optional-field-removed", "Removed invalid optional system.fateResult.", "system.fateResult");
+    return undefined;
+  }
+  const outcome = nonEmptyString(value.outcome);
+  const timelineScar = nonEmptyString(value.timelineScar);
+  const permanentCosts = Array.isArray(value.permanentCosts)
+    ? value.permanentCosts.map(nonEmptyString).filter((item): item is string => Boolean(item))
+    : undefined;
+  if (!outcome || !FATE_OUTCOMES.includes(outcome as FateResultData["outcome"])
+    || !timelineScar || !permanentCosts) {
+    warning(context, "optional-field-removed", "Removed invalid optional system.fateResult.", "system.fateResult");
+    return undefined;
+  }
+  const newActiveStats = optionalStringArrayField(value, "newActiveStats", context, "system.fateResult.newActiveStats");
+  return {
+    outcome: outcome as FateResultData["outcome"],
+    timelineScar,
+    permanentCosts,
+    ...(optionalStringField(value, "newStoryState", context, "system.fateResult.newStoryState") ? {
+      newStoryState: optionalStringField(value, "newStoryState", context, "system.fateResult.newStoryState"),
+    } : {}),
+    ...(newActiveStats ? { newActiveStats } : {}),
+    ...(optionalStringField(value, "genreShift", context, "system.fateResult.genreShift") ? {
+      genreShift: optionalStringField(value, "genreShift", context, "system.fateResult.genreShift"),
+    } : {}),
+  };
+};
+
+/**
+ * World Notices remain a small, generic document contract: one entry renders a
+ * notice and multiple entries render a board. Invalid entries are discarded
+ * independently so a readable board does not disappear because of one bad row.
+ */
+const parseWorldNotice = (
+  value: unknown,
+  context: BlockWarningContext,
+): WorldNoticeData | undefined => {
+  if (!isRecord(value)) {
+    if (value !== undefined && value !== null) {
+      warning(context, "optional-field-removed", "Removed invalid optional system.worldNotice.", "system.worldNotice");
+    }
+    return undefined;
+  }
+  if (!Array.isArray(value.entries)) {
+    warning(context, "optional-field-removed", "Removed invalid optional system.worldNotice.entries.", "system.worldNotice.entries");
+    return undefined;
+  }
+
+  const entries = value.entries.flatMap((entry, entryIndex) => {
+    const entryPath = `system.worldNotice.entries[${entryIndex}]`;
+    if (!isRecord(entry)) {
+      warning(context, "optional-field-removed", `Removed invalid optional ${entryPath}.`, entryPath);
+      return [];
+    }
+    const title = nonEmptyString(entry.title);
+    if (!title) {
+      warning(context, "optional-field-removed", `Removed invalid optional ${entryPath}.title.`, `${entryPath}.title`);
+      return [];
+    }
+    const body = optionalStringField(entry, "body", context, `${entryPath}.body`);
+    let details: WorldNoticeData["entries"][number]["details"];
+    if (entry.details !== undefined && entry.details !== null) {
+      if (!Array.isArray(entry.details)) {
+        warning(context, "optional-field-removed", `Removed invalid optional ${entryPath}.details.`, `${entryPath}.details`);
+      } else {
+        const parsedDetails = entry.details.flatMap((detail, detailIndex) => {
+          const detailPath = `${entryPath}.details[${detailIndex}]`;
+          if (!isRecord(detail)) {
+            warning(context, "optional-field-removed", `Removed invalid optional ${detailPath}.`, detailPath);
+            return [];
+          }
+          const label = nonEmptyString(detail.label);
+          const value = nonEmptyString(detail.value);
+          if (!label || !value) {
+            warning(context, "optional-field-removed", `Removed invalid optional ${detailPath}.`, detailPath);
+            return [];
+          }
+          for (const field of Object.keys(detail)) {
+            if (!["label", "value"].includes(field)) {
+              const path = safeFieldLabel(`${detailPath}.${field}`);
+              warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
+            }
+          }
+          return [{ label, value }];
+        });
+        if (parsedDetails.length > 0) details = parsedDetails;
+      }
+    }
+    for (const field of Object.keys(entry)) {
+      if (!["title", "body", "details"].includes(field)) {
+        const path = safeFieldLabel(`${entryPath}.${field}`);
+        warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
+      }
+    }
+    return [{
+      title,
+      ...(body ? { body } : {}),
+      ...(details ? { details } : {}),
+    }];
+  });
+
+  for (const field of Object.keys(value)) {
+    if (field !== "entries") {
+      const path = safeFieldLabel(`system.worldNotice.${field}`);
+      warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
+    }
+  }
+  if (entries.length === 0) {
+    warning(context, "optional-field-removed", "Removed invalid optional system.worldNotice with no readable entries.", "system.worldNotice.entries");
+    return undefined;
+  }
+  return { entries };
+};
+
+const parseSystemEvent = (
+  value: unknown,
+  context: BlockWarningContext,
+): SystemEvent | undefined => {
+  if (value === undefined || value === null) return undefined;
+  if (!isRecord(value)) {
+    warning(context, "optional-field-removed", "Removed invalid optional system object.", "system");
+    return undefined;
+  }
+  const kind = nonEmptyString(value.kind);
+  const title = nonEmptyString(value.title);
+  if (!kind || !SYSTEM_EVENT_KINDS.includes(kind as (typeof SYSTEM_EVENT_KINDS)[number]) || !title) {
+    warning(context, "optional-field-removed", "Removed invalid optional system object.", "system");
+    return undefined;
+  }
+  if (kind === "fate_system_prompt" && (value.fateResult === undefined || value.fateResult === null)) {
+    warning(context, "optional-field-removed", "Removed fate_system_prompt lacking required fateResult object.", "system.fateResult");
+    return undefined;
+  }
+  const promptType = optionalStringField(value, "promptType", context, "system.promptType");
+  const validPromptType = promptType && SYSTEM_PROMPT_TYPES.includes(promptType as (typeof SYSTEM_PROMPT_TYPES)[number])
+    ? promptType as SystemEvent["promptType"]
+    : undefined;
+  if (promptType && !validPromptType) {
+    warning(context, "optional-field-removed", "Removed unsupported optional system.promptType.", "system.promptType");
+  }
+  let rows: SystemEvent["rows"];
+  if (value.rows !== undefined && value.rows !== null) {
+    if (!Array.isArray(value.rows)) {
+      warning(context, "optional-field-removed", "Removed invalid optional system.rows.", "system.rows");
+    } else {
+      const parsedRows = value.rows.flatMap((item, index) => {
+        if (!isRecord(item) || !nonEmptyString(item.label) || !nonEmptyString(item.value)) {
+          warning(context, "optional-field-removed", `Removed invalid optional system.rows[${index}].`, `system.rows[${index}]`);
+          return [];
+        }
+        const trend = item.trend === "up" || item.trend === "down"
+          ? item.trend as "up" | "down"
+          : undefined;
+        return [{
+          label: nonEmptyString(item.label)!,
+          value: nonEmptyString(item.value)!,
+          ...(trend ? { trend } : {}),
+        }];
+      });
+      if (parsedRows.length > 0) rows = parsedRows;
+    }
+  }
+  const rarity = optionalStringField(value, "rarity", context, "system.rarity");
+  const badge = isRecord(value.badge)
+    && nonEmptyString(value.badge.label)
+    && nonEmptyString(value.badge.value)
+    ? { label: nonEmptyString(value.badge.label)!, value: nonEmptyString(value.badge.value)! }
+    : undefined;
+  if (value.badge !== undefined && value.badge !== null && !badge) {
+    warning(context, "optional-field-removed", "Removed invalid optional system.badge.", "system.badge");
+  }
+  const changes = normalizeSystemPromptChanges(value.changes);
+  if (value.changes !== undefined && (!Array.isArray(value.changes) || changes.length !== value.changes.length)) {
+    warning(context, "optional-field-removed", "Removed invalid optional system.changes entries.", "system.changes");
+  }
+  let fateResult: FateResultData | undefined;
+  if (kind === "fate_system_prompt") {
+    fateResult = parseFateResult(value.fateResult, context);
+    if (!fateResult) {
+      warning(context, "optional-field-removed", "Removed fate_system_prompt with invalid fateResult object.", "system.fateResult");
+      return undefined;
+    }
+  } else if (value.fateResult !== undefined && value.fateResult !== null) {
+    warning(context, "optional-field-removed", "Removed disallowed fateResult from regular system_prompt.", "system.fateResult");
+  }
+
+  const allowedFields = kind === "system_prompt"
+    ? ["kind", "title", "promptType", "flavor", "rows", "rarity", "badge", "changes", "status", "fateResult", "presentation", "worldNotice"]
+    : ["kind", "title", "promptType", "rows", "rarity", "badge", "changes", "fateResult", "presentation", "worldNotice"];
+  for (const field of Object.keys(value)) {
+    if (!allowedFields.includes(field)) {
+      const path = safeFieldLabel(`system.${field}`);
+      warning(context, "optional-field-removed", `Removed unsupported optional ${path}.`, path);
+    }
+  }
+  if (kind === "fate_system_prompt") {
+    if (!fateResult) return undefined;
+    for (const field of ["presentation", "worldNotice"] as const) {
+      if (value[field] !== undefined && value[field] !== null) {
+        const path = `system.${field}`;
+        warning(context, "optional-field-removed", `Removed unsupported optional ${path} from fate_system_prompt.`, path);
+      }
+    }
+    return {
+      kind: "fate_system_prompt",
+      title,
+      ...(validPromptType ? { promptType: validPromptType } : {}),
+      ...(rows ? { rows } : {}),
+      ...(rarity ? { rarity } : {}),
+      ...(badge ? { badge } : {}),
+      ...(changes.length > 0 ? { changes } : {}),
+      fateResult,
+    };
+  }
+
+  const flavor = optionalStringField(value, "flavor", context, "system.flavor");
+  const requestedPresentation = optionalStringField(value, "presentation", context, "system.presentation");
+  let presentation = requestedPresentation && SYSTEM_PROMPT_PRESENTATIONS.includes(
+    requestedPresentation as (typeof SYSTEM_PROMPT_PRESENTATIONS)[number],
+  )
+    ? requestedPresentation as SystemPromptPresentation
+    : undefined;
+  if (requestedPresentation && !presentation) {
+    warning(context, "optional-field-removed", "Removed unsupported optional system.presentation.", "system.presentation");
+  }
+
+  let worldNotice: WorldNoticeData | undefined;
+  if (presentation === "world_notice") {
+    worldNotice = parseWorldNotice(value.worldNotice, context);
+    if (!worldNotice) {
+      warning(
+        context,
+        "optional-field-removed",
+        "Removed world_notice presentation lacking a readable system.worldNotice.entries payload.",
+        "system.presentation",
+      );
+      presentation = undefined;
+    }
+  } else if (value.worldNotice !== undefined && value.worldNotice !== null) {
+    warning(
+      context,
+      "optional-field-removed",
+      "Removed system.worldNotice without presentation \"world_notice\".",
+      "system.worldNotice",
+    );
+  }
+  const status = presentation === "mechanical"
+    ? normalizeSystemStatusScreen(value.status)
+    : undefined;
+  if (presentation === "mechanical" && value.status !== undefined && value.status !== null && !status) {
+    warning(context, "optional-field-removed", "Removed invalid optional system.status.", "system.status");
+  } else if (presentation !== "mechanical" && value.status !== undefined && value.status !== null) {
+    warning(context, "optional-field-removed", "Removed system.status without presentation \"mechanical\".", "system.status");
+  }
+
+  return {
+    kind: "system_prompt",
+    title,
+    ...(validPromptType ? { promptType: validPromptType } : {}),
+    ...(flavor ? { flavor } : {}),
+    ...(rows ? { rows } : {}),
+    ...(rarity ? { rarity } : {}),
+    ...(badge ? { badge } : {}),
+    ...(changes.length > 0 ? { changes } : {}),
+    ...(presentation ? { presentation } : {}),
+    ...(worldNotice ? { worldNotice } : {}),
+    ...(status ? { status } : {}),
+  };
+};
+
+/**
+ * A System Panel reaches the Reader only when it satisfies the current SEN
+ * presentation contract. Callers may discard an incomplete panel while still
+ * retaining its block text as readable chapter prose.
+ */
+export const isCompleteSystemEvent = (system: SystemEvent): boolean => {
+  if (system.kind === "fate_system_prompt") return Boolean(system.fateResult);
+  const regular = system as RegularSystemEvent;
+  if (!regular.promptType || !regular.presentation) return false;
+  if (regular.presentation === "mechanical") {
+    return Boolean(regular.status && Object.keys(regular.status).length > 0);
+  }
+  if (regular.presentation === "world_notice") {
+    return Array.isArray(regular.worldNotice?.entries) && regular.worldNotice.entries.length > 0;
+  }
+  return true;
+};
+
+const normalizedBlockId = (
+  record: JsonRecord,
+  index: number,
+  chapterNumber: number,
+  warnings: ChapterManifestWarning[],
+): string => {
+  const raw = nonEmptyString(record.id);
+  const id = `c${chapterNumber}-p${index + 1}`;
+  if (raw !== id) {
+    warnings.push({
+      code: "block-id-generated",
+      message: raw
+        ? `Replaced a ${BLOCK_ID_PATTERN.test(raw) ? "model-supplied" : "invalid"} block ID with the stable code-owned ID.`
+        : "Assigned a stable code-owned block ID.",
+      blockIndex: index,
+      blockId: id,
+      field: "id",
+    });
+  }
+  return id;
+};
+
+const normalizeBlock = (
+  record: JsonRecord,
+  index: number,
+  chapterNumber: number,
+  warnings: ChapterManifestWarning[],
+): StoryBlock | undefined => {
+  const text = nonEmptyString(record.text);
+  if (!text) {
+    warnings.push({
+      code: "block-skipped",
+      message: "Skipped a Manifest block because it contained no usable prose text.",
+      blockIndex: index,
+      field: "text",
+    });
+    return undefined;
+  }
+  const id = normalizedBlockId(record, index, chapterNumber, warnings);
+  const context: BlockWarningContext = { warnings, blockIndex: index, blockId: id };
+  const metadata = parseBlockMetadata(record.metadata, context, text);
+  const system = parseSystemEvent(record.system, context);
+  const rawType = nonEmptyString(record.type);
+  const type = rawType === "dialogue" || (!rawType && metadata?.mode === "dialogue")
+    ? "dialogue"
+    : "paragraph";
+  if (rawType && rawType !== type) {
+    const safeType = ["narration", "system"].includes(rawType)
+      ? `'${rawType}'`
+      : "an unsupported prose-like label";
+    warning(
+      context,
+      "block-type-normalized",
+      `Normalized prose block type ${safeType} to '${type}'.`,
+      "type",
+    );
+  } else if (record.type !== undefined && !rawType) {
+    warning(context, "block-type-normalized", "Normalized an invalid prose block type to 'paragraph'.", "type");
+  }
+  const knownFields = new Set(["id", "type", "text", "metadata", "system"]);
+  for (const field of Object.keys(record)) {
+    if (!knownFields.has(field)) {
+      const label = safeFieldLabel(field);
+      warning(context, "optional-field-removed", `Removed unsupported optional block field '${label}'.`, label);
+    }
+  }
+  return {
+    id,
+    type,
+    text,
+    ...(metadata ? { metadata } : {}),
+    ...(system ? { system } : {}),
+  };
+};
+
+export interface NormalizedManifestResult {
+  blocks: StoryBlock[];
+  generatedContent: string;
+  diagnostics: ChapterManifestDiagnostics;
+}
+
+/**
+ * Treats readable prose as the Manifest's essential result. Optional formatting
+ * and enrichment can be recovered or removed without discarding the chapter.
+ */
+export function normalizeManifestResponse(
+  text: string,
+  chapterNumber: number,
+): NormalizedManifestResult {
+  const cleaned = text
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/^\s*```(?:json)?\s*/i, "")
+    .replace(/\s*```\s*$/i, "")
+    .replace(/^\s*---CHAPTER_BLOCKS---\s*/i, "")
+    .trim();
+  if (!cleaned) throw new Error("Manifest Chapter returned no content.");
+
+  const extracted = extractManifestRecords(cleaned);
+  if (extracted.records.length > 500) throw new Error("Manifest Chapter returned too many blocks.");
+  const warnings: ChapterManifestWarning[] = Array.from(
+    { length: extracted.skippedBlocks },
+    () => ({
+      code: "block-skipped" as const,
+      message: "Skipped an unreadable Manifest block while preserving surrounding prose.",
+    }),
+  );
+  if (extracted.plainProse) {
+    warnings.push({
+      code: "plain-prose-recovered",
+      message: "Recovered a plain-prose Manifest response into paragraph blocks.",
+    });
+  }
+  const blocks = extracted.records
+    .map((record, index) => normalizeBlock(
+      record,
+      index,
+      chapterNumber,
+      warnings,
+    ))
+    .filter((block): block is StoryBlock => Boolean(block));
+  if (blocks.length === 0) {
+    throw new Error("Manifest Chapter returned no recoverable prose.");
+  }
+  const generatedContent = blocks.map(block => block.text).join("\n\n");
+  if (isProviderRefusal(generatedContent)) {
+    throw new Error("Manifest Chapter returned a provider refusal instead of prose.");
+  }
+  const wordCount = countProseWords(generatedContent);
+  if (wordCount < MINIMUM_CHAPTER_WORD_COUNT) {
+    warnings.push({
+      code: "under-minimum-word-count",
+      message: `Preserved the chapter at ${wordCount.toLocaleString()} words; it needs repair or review because the minimum is ${MINIMUM_CHAPTER_WORD_COUNT.toLocaleString()} words.`,
+      field: "wordCount",
+    });
+  }
+  const status = wordCount < MINIMUM_CHAPTER_WORD_COUNT
+    || warnings.some(item => item.code === "block-skipped")
+    ? "needs-review"
+    : "healthy";
+  return {
+    blocks,
+    generatedContent,
+    diagnostics: {
+      status,
+      wordCount,
+      minimumWordCount: MINIMUM_CHAPTER_WORD_COUNT,
+      warnings,
+    },
+  };
+}

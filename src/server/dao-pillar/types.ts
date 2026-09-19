@@ -1,13 +1,11 @@
-import type { EnergyPrincipal } from '../energy/types';
-import type { DeliveredReward, RewardEntry } from '../../components/dao-pillar/shared/daoPillarContracts';
+import { type DeliveredReward, type RewardEntry } from '@seihouse/library/dao-pillar';
 import type { JsonObject } from '../qi/qiLedger';
 
 /**
  * Who a Dao Pillar operation runs for. Resolved on the server by the same
- * bearer-token resolver Energy uses (`createEnergyPrincipalResolver`); request
+ * bearer-token resolver Energy uses (`createPrincipalResolver`); request
  * bodies never name the user.
  */
-export type DaoPillarPrincipal = EnergyPrincipal;
 
 /** How the calendar decides which scheduled day "today" is. */
 export interface DaoPillarCalendarConfig {

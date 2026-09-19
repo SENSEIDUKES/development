@@ -1,7 +1,7 @@
-import { NarrativeNavigationDrawerPanel } from '../../../presentation';
+import { NarrativeNavigationDrawerPanel } from '@seihouse/sen/presentation';
 import { Check, ChevronRight, Sparkles } from 'lucide-react';
-import type { StorySeedInput } from '../shared/storySeedSchema';
-import { type NarrativeNavigationDrawerAccent as LibraryNavigationDrawerAccent, type NarrativeNavigationDrawerItem as LibraryNavigationDrawerItem, type NarrativeNavigationDrawerProfile as LibraryNavigationDrawerProfile, type NarrativeNavigationDrawerSection as LibraryNavigationDrawerSection } from '../../../presentation';
+import { type StorySeedInput } from '@seihouse/sen/story-seed';
+import { type NarrativeNavigationDrawerAccent as LibraryNavigationDrawerAccent, type NarrativeNavigationDrawerItem as LibraryNavigationDrawerItem, type NarrativeNavigationDrawerProfile as LibraryNavigationDrawerProfile, type NarrativeNavigationDrawerSection as LibraryNavigationDrawerSection } from '@seihouse/sen/presentation';
 import {
   FAMILY_ICONS,
   FAMILY_SECTIONS,

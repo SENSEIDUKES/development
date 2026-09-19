@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  collectBlockAutoCues,
-  deriveStructuredAutoCue,
-  normalizeAutoCue,
-} from './autoCuePolicy';
+import { collectBlockAutoCues, deriveStructuredAutoCue, normalizeAutoCue } from '@seihouse/sen/reader-chamber';
 
 describe('automatic narrative cue policy', () => {
   it('never turns Bestiary reveals or beast noun tags into automatic audio', () => {

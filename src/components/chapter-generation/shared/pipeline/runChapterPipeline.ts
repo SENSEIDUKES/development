@@ -1,7 +1,9 @@
 import { estimateTokens } from "../lib/helpers";
 import type { GenerationStage } from "../stageTypes";
-import type { ChapterContent } from "../types";
-import { acceptChapterMedia } from "../acceptedChapterMedia";
+import { type ChapterContent } from '@seihouse/sen/contracts';
+import { acceptChapterMedia } from '@seihouse/sen/generation';
+import { createMediaCatalog } from '@seihouse/sen/audio';
+import { LIBRARY_BASE_MEDIA } from '../../../../host/media/libraryCatalog';
 import type {
   ChapterGenerationModelCalls,
   ChapterModelCallKind,
@@ -66,7 +68,7 @@ export function buildChapterPipelineRun(
   const chapterForOutput = repairedChapter ?? manifestedChapter;
   const acceptedChapter: ChapterContent = { ...chapterForOutput };
   delete acceptedChapter.audioMoments;
-  const acceptedMedia = acceptChapterMedia(acceptedChapter.blocks ?? []);
+  const acceptedMedia = acceptChapterMedia(acceptedChapter.blocks ?? [], createMediaCatalog(LIBRARY_BASE_MEDIA));
   if (acceptedChapter.blocks) acceptedChapter.blocks = acceptedMedia.blocks;
   const finalOutput: ChapterContent = {
     ...acceptedChapter,

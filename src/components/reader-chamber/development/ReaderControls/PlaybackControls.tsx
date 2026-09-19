@@ -1,6 +1,6 @@
 import React from 'react';
 import { Play, Pause } from 'lucide-react';
-import { Chapter } from '../../shared/types';
+import { Chapter } from '../../../../narrative/story';
 import { PlaybackState } from './types';
 
 interface Props {

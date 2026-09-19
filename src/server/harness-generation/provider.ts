@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
-import type { HarnessProviderReceipt } from '../../components/harness-generation/shared/types';
+import { type HarnessProviderReceipt } from '@seihouse/sen/harness-generation';
 import { geminiHarnessModelId } from './config';
 
 export interface HarnessTextGenerationRequest {

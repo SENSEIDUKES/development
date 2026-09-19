@@ -2,13 +2,13 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { LibraryPresentationProvider } from '../../../library-presentation/LibraryPresentationProvider';
+import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { MainLibraryHeader, type MainLibraryHeaderAdapter } from '../MainLibraryHeader';
 import { MainLibraryHomeInsights } from '../MainLibraryHomeInsights';
 import { MainLibraryPreview } from '../../../../workshop/previews/library-shell/MainLibraryPreview';
 
 vi.mock('@seihouse/library-ui', async importOriginal => ({ ...await importOriginal<typeof import('@seihouse/library-ui')>(), ParticleEffect: () => null }));
-vi.mock('../../../../audio/DevAudioPlayback', () => ({ useDevAudioPlayback: () => ({
+vi.mock('../../../../audio/playback', () => ({ useNarrativeAudio: () => ({
   isPlaying: false, currentTrackId: null, stop: vi.fn(),
 }) }));
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

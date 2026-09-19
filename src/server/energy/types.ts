@@ -1,24 +1,8 @@
-import type {
-  EnergyActionId,
-  EnergyTransactionKind,
-} from '../../components/energy/shared/energyContracts';
+import { type EnergyActionId, type EnergyTransactionKind } from '@seihouse/library/energy';
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 export type JsonObject = { [key: string]: JsonValue };
-
-/** Who an Energy operation runs for. Always resolved on the server, never trusted from a body. */
-export interface EnergyPrincipal {
-  uid: string;
-  role: 'owner' | 'admin' | 'user';
-  /** How the identity was established. Production hosts only ever see `verified`. */
-  identity: 'verified' | 'development';
-  /**
-   * Whether the server grants this principal the development-only controls
-   * (test grant, reset). Decided by server configuration, never by a client.
-   */
-  developmentAccess: boolean;
-}
 
 export interface EnergyAccountRecord {
   uid: string;

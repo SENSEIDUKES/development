@@ -45,8 +45,6 @@ const pack = packageTarget => {
 try {
   const lock = JSON.parse(await readFile(join(root, 'package-lock.json'), 'utf8'));
   const peers = ['react', 'react-dom', 'react-focus-lock', 'lucide-react', 'motion', '@types/react', '@types/react-dom'].map(name => name + '@' + lock.packages['node_modules/' + name].version);
-  const audioPack = JSON.parse(runNpm(['pack', join(root, 'node_modules/@seihouse/audio-player'), '--ignore-scripts', '--pack-destination', consumerDirectory, '--json'], root))[0];
-  peers.push(join(consumerDirectory, audioPack.filename));
   const dependencyTarballs = target.smokeDependencies.map(id => pack(resolveTarget(id)));
   const tarballPath = pack(target);
 
@@ -56,7 +54,7 @@ try {
     type: 'module',
   }, null, 2));
   runNpm(
-    ['install', '--ignore-scripts', ...peers, join(root, 'vendor/seihouse-ui-0.4.0.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.4.0.tgz')] : []), ...dependencyTarballs, tarballPath],
+    ['install', '--ignore-scripts', ...peers, join(root, 'vendor/seihouse-ui-0.4.0.tgz'), ...(target.id === 'library' ? [join(root, 'vendor/seihouse-library-ui-0.5.0.tgz')] : []), ...dependencyTarballs, tarballPath],
     consumerDirectory,
   );
 
@@ -66,12 +64,14 @@ try {
     import assert from 'node:assert/strict';
     import { createElement } from 'react';
     import { renderToStaticMarkup } from 'react-dom/server';
-    import { NarrativeTextBox } from '@seihouse/sen';
+    import { NarrativePresentationProvider, NarrativeTextBox } from '@seihouse/sen';
     ${target.id === 'library' ? "import { LibraryPresentationProvider } from '@seihouse/library/presentation';" : ''}
     const field = createElement(NarrativeTextBox, { label: 'World', defaultValue: 'Astral' });
-    const html = renderToStaticMarkup(${target.id === 'library' ? 'createElement(LibraryPresentationProvider, null, field)' : 'field'});
+    const publisherBrand = props => createElement('label', { 'data-publisher-brand': 'independent' }, props.label, createElement('input', { defaultValue: props.defaultValue }));
+    const html = renderToStaticMarkup(${target.id === 'library' ? 'createElement(LibraryPresentationProvider, { assets: { emblem: "https://library.example/emblem.svg" } }, field)' : 'createElement(NarrativePresentationProvider, { components: { NarrativeTextBox: publisherBrand } }, field)'});
     assert.match(html, /Astral/);
     assert.equal(html.includes('glass-field'), ${target.id === 'library'});
+    assert.equal(html.includes('data-publisher-brand="independent"'), ${target.id === 'sen'});
   `);
   run(process.execPath, ['presentation-smoke.mjs'], consumerDirectory);
 
@@ -123,6 +123,7 @@ try {
     assert(!installedManifest.exports['./library']);
     assert(!JSON.stringify(installedManifest).includes('@seihouse/library'));
     assert(!(await import('node:fs')).existsSync(join(consumerDirectory, 'node_modules/@seihouse/library-ui')));
+    assert(!(await import('node:fs')).existsSync(join(consumerDirectory, 'node_modules/@seihouse/audio-player')));
   }
   const linked = target.smokeDependencies.length > 0
     ? ` linked against ${target.smokeDependencies.join(', ')},`

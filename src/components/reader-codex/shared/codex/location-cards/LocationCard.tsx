@@ -3,11 +3,8 @@ import { Location, Story } from '../../types';
 import { Download, Compass, Lock, MapPin, Eye, RefreshCcw, Loader2, Sparkles, Settings2 } from 'lucide-react';
 import { ReaderCodexImageGallery } from '../ReaderCodexImageGallery';
 import { resolveEntityImageHistory } from '../entityImageHistory';
-import { handleDownload } from '../../codexCompatibility';
-import {
-  getColorCodeSurfaceStyle,
-  resolveLocationSafetyColorCode,
-} from '../../../../reader-chamber/shared/colorCodes';
+import { handleDownload } from '../../downloadUtils';
+import { getColorCodeSurfaceStyle, resolveLocationSafetyColorCode } from '../../../../../narrative/colorCodes';
 
 interface LocationCardProps {
   loc: Location;
@@ -16,7 +13,7 @@ interface LocationCardProps {
   hasAppeared: boolean;
   canGenerate: boolean;
   isGenerating: boolean;
-  isFreeUserOnHubStory: boolean;
+  manifestationRestricted: boolean;
   handleAwakenCardImage: (id: string, type: "location", obj: any) => void;
   setSelectedNodeChar: (c: any) => void;
   openEntryContextEditor?: () => void;
@@ -29,7 +26,7 @@ export const LocationCard: React.FC<LocationCardProps> = ({
   hasAppeared,
   canGenerate,
   isGenerating,
-  isFreeUserOnHubStory,
+  manifestationRestricted,
   handleAwakenCardImage,
   setSelectedNodeChar,
   openEntryContextEditor,
@@ -152,7 +149,7 @@ export const LocationCard: React.FC<LocationCardProps> = ({
                 tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => canGenerate && handleAwakenCardImage(loc.id, 'location', loc)}
                 disabled={!canGenerate || isGenerating}
                 className={`p-1 rounded flex items-center justify-center transition-all ${
-                  isFreeUserOnHubStory
+                  manifestationRestricted
                     ? 'text-neutral-600 bg-neutral-900 cursor-not-allowed border border-neutral-800'
                     : isGenerating
                     ? 'text-portal bg-portal/10 border border-portal/30'
@@ -163,7 +160,7 @@ export const LocationCard: React.FC<LocationCardProps> = ({
                       : 'text-neutral-600 bg-neutral-900 border border-neutral-800'
                 }`}
                 title={
-                  isFreeUserOnHubStory ? "Visual manifestation locked for mortal users in demo hub. Register or use own keys to manifest visuals." :
+                  manifestationRestricted ? "Visual manifestation is unavailable for this story." :
                   !hasAppeared ? "Entity must manifest in the story to visually capture." :
                   loc.evolutionReady && hasImage ? "Evolution milestone reached! Regenerate to reveal new visual stage." :
                   canGenerate && hasImage ? "Regenerate visual representation." :
@@ -172,7 +169,7 @@ export const LocationCard: React.FC<LocationCardProps> = ({
                 }
               >
                 {isGenerating ? <Loader2 size={12} className="animate-spin" /> :
-                 loc.evolutionReady && hasImage && !isFreeUserOnHubStory ? <Sparkles size={12} /> :
+                 loc.evolutionReady && hasImage && !manifestationRestricted ? <Sparkles size={12} /> :
                  hasImage ? <RefreshCcw size={12} /> : <Sparkles size={12} />}
               </button>
             ) : (

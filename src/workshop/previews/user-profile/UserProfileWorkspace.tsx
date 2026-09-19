@@ -1,3 +1,5 @@
+import { QiClientProvider, createHttpQiClient } from '@seihouse/library/cultivation';
+import { handleQiHttp } from '../../../server/qi/http';
 /**
  * Workshop preview for the User Profile replica.
  *
@@ -10,14 +12,14 @@
 import { useCallback, useMemo, useState } from 'react';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
-import DevelopmentUserProfile from '../../../components/user-profile/development/UserProfile';
+import { LibraryProfile as DevelopmentUserProfile } from '@seihouse/library/profile';
 import ReferenceUserProfile from '../../../components/user-profile/reference/UserProfile';
-import { UserProfileServicesProvider } from '../../../components/user-profile/shared/userProfileServices';
-import { EnergyClientProvider, createHttpEnergyClient } from '../../../components/energy/shared/energyClient';
-import { developmentEnergyToken } from '../../../server/energy/authentication';
-import { DaoPillarClientProvider, createHttpDaoPillarClient } from '../../../components/dao-pillar/shared/daoPillarClient';
+import { UserProfileServicesProvider } from '@seihouse/library/profile';
+import { EnergyClientProvider, createHttpEnergyClient } from '@seihouse/library/energy';
+import { developmentIdentityToken } from '../../../server/identity/authentication';
+import { DaoPillarClientProvider, createHttpDaoPillarClient } from '@seihouse/library/dao-pillar';
 import { createLocalDaoPillarClient } from '../dao-pillar/localDaoPillarClient';
-import type { AppUser } from '../../../components/user-profile/shared/types';
+import { type AppUser } from '@seihouse/library/profile';
 import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigation';
 import { createMockUserProfileServices } from './mockUserProfileServices';
 import { getPreviewScenario } from './previewData';
@@ -69,7 +71,7 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
   // ledger behind `/api/energy`, identified as the scenario's account.
   const currentUid = currentUser?.uid ?? null;
   const energyClient = useMemo(
-    () => createHttpEnergyClient({ token: () => (currentUid ? developmentEnergyToken(currentUid) : null) }),
+    () => createHttpEnergyClient({ token: () => (currentUid ? developmentIdentityToken(currentUid) : null) }),
     [currentUid],
   );
 
@@ -81,8 +83,21 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
     if (previewState === 'claim-failed') return createLocalDaoPillarClient({ uid: currentUid, mode: 'claim-failed', collectedDays: [9, 10, 11, 12] });
     if (previewState === 'claim-unresolved') return createLocalDaoPillarClient({ uid: currentUid, mode: 'claim-unresolved', collectedDays: [9, 10, 11, 12] });
     if (previewState === 'collected-today') return createLocalDaoPillarClient({ uid: currentUid, collectedDays: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], collectedToday: true });
-    return createHttpDaoPillarClient({ token: () => developmentEnergyToken(currentUid) });
+    return createHttpDaoPillarClient({ token: () => developmentIdentityToken(currentUid) });
   }, [currentUid, previewState]);
+
+  const qiClient = useMemo(() => {
+    if ('repository' in daoPillarClient && currentUid) {
+      const local = daoPillarClient as ReturnType<typeof createLocalDaoPillarClient>;
+      return { async getSnapshot() {
+        await local.getCalendar().catch(() => undefined);
+        const result = await handleQiHttp({ method: 'GET' }, { ledger: local.repository.qi, resolvePrincipal: async () => ({ uid: currentUid, role: 'user', identity: 'development', developmentAccess: true }) });
+        if (result.status !== 200 || !('balance' in result.body)) throw new Error('Preview cultivation unavailable.');
+        return result.body;
+      } };
+    }
+    return createHttpQiClient({ endpoint: '/api/library-economy?capability=cultivation', token: () => currentUid ? developmentIdentityToken(currentUid) : null });
+  }, [daoPillarClient, currentUid]);
 
   const renderPane = (Component: typeof DevelopmentUserProfile, pane: string) => (
     // Remounting on scenario change throws away the mock's in-memory account
@@ -92,6 +107,7 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
       <UserProfileServicesProvider services={services}>
         <EnergyClientProvider client={pane === 'development' ? energyClient : null}>
         <DaoPillarClientProvider client={pane === 'development' ? daoPillarClient : null}>
+        <QiClientProvider client={pane === 'development' ? qiClient : null}>
         <Component
           currentUser={currentUser}
           stories={scenario.stories}
@@ -106,6 +122,7 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
           onNavigateHome={() => logExcludedAction('Navigate to Library home (production router)')}
           onNavigateLibrary={navigateLibraryPreview}
         />
+        </QiClientProvider>
         </DaoPillarClientProvider>
         </EnergyClientProvider>
       </UserProfileServicesProvider>

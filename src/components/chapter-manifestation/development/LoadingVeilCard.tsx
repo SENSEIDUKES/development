@@ -1,10 +1,10 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles } from 'lucide-react';
-import type { LoadingTaskCard } from '../shared/taskCard';
+import type { LoadingTaskCard } from '../../../library/manifestations/taskCard';
 import NarrativeManifestationZone from './NarrativeManifestationZone';
 import MediaManifestationZone from './MediaManifestationZone';
-import { LibraryScrubber } from './journey-scrubber/LibraryScrubber';
+import { LibraryScrubber } from '@seihouse/library-ui';
 
 /**
  * Celestial field — a quiet scatter of fixed star points behind the agent

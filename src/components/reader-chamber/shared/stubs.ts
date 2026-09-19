@@ -18,14 +18,10 @@
  */
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
-import type { SenLanguageCode } from '../../../lib/language';
-import type {
-  ReaderChapter,
-  ReaderCodexStoryPatchUpdater,
-  StoryWorld,
-  UpdateStoryFields,
-} from './types';
-import { collectCodexTerms } from '../../reader-codex/shared/codexHighlighting';
+import { type SenLanguageCode } from '@seihouse/sen/contracts';
+import { type ReaderChapter, type ReaderCodexStoryPatchUpdater, type StoryWorld, type UpdateStoryFields } from '@seihouse/sen/contracts';
+import { collectCodexTerms } from '@seihouse/sen/reader-codex';
+import type { ReaderStoreSnapshot } from '@seihouse/sen/reader-runtime';
 
 export const LOCAL_ONLY_MODE = true;
 
@@ -196,6 +192,26 @@ function useAppStoreBase<T>(selector?: (store: MockAppStore) => T): T | MockAppS
 export const useAppStore = Object.assign(useAppStoreBase, {
   getState: (): MockAppStore => ({ ...state, ...mockActions }),
 });
+
+let cachedReaderSource: MockAppState | undefined;
+let cachedReaderSnapshot: ReaderStoreSnapshot;
+export const readerPreviewStore = {
+  subscribe(listener: () => void) {
+    listeners.add(listener);
+    return () => { listeners.delete(listener); };
+  },
+  getSnapshot(): ReaderStoreSnapshot {
+    if (cachedReaderSource !== state) {
+      cachedReaderSource = state;
+      cachedReaderSnapshot = {
+        ...state, ...mockActions, languagePreferences: state.userProfile,
+        canShowOverlays: state.canShowRelicInReader,
+        setCanShowOverlays: mockActions.setCanShowRelicInReader,
+      };
+    }
+    return cachedReaderSnapshot;
+  },
+};
 
 /** Stand-in for `store/useGenerationStore`'s `selectIsGenerating`. */
 export const selectIsGenerating = (store: { isGenerating?: boolean }) =>

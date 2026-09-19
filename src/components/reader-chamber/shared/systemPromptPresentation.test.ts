@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { SystemEvent } from './types';
-import {
-  getSystemPromptSurface,
-  normalizeFateResultData,
-  normalizeSystemPromptRows,
-  normalizeSystemStatusScreen,
-  normalizeWorldNoticeData,
-  resolveSystemPromptRoute,
-} from './systemPromptPresentation';
+import { type SystemEvent } from '@seihouse/sen/cards';
+import { getSystemPromptSurface, normalizeFateResultData, normalizeSystemPromptRows, normalizeSystemStatusScreen, normalizeWorldNoticeData, resolveSystemPromptRoute } from '@seihouse/sen/cards';
 
 describe('System Prompt presentation routing', () => {
   it('uses one structural route for Narrative, Mechanical, World Notice, and Fate', () => {

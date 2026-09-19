@@ -11,7 +11,7 @@ import {
 const packJson = () => JSON.stringify({
   id: 'test.spp.soundscapes', version: '1.0.0', type: 'soundscape',
   displayName: 'SPP Test Soundscapes', description: 'A data-only fixture.',
-  entries: [{ id: 'SPP_TEST', mood: 'quiet-test', moods: ['quiet-test'], tags: ['quiet'], url: 'https://fixtures.r2.dev/quiet.mp3', isPremium: false }],
+  entries: [{ id: 'SPP_TEST', mood: 'quiet-test', moods: ['quiet-test'], tags: ['quiet'], url: 'https://fixtures.r2.dev/quiet.mp3' }],
 });
 
 const storage = () => {

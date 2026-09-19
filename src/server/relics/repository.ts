@@ -1,11 +1,5 @@
-import type {
-  EarnedRelicRecord,
-  JsonObject,
-  RelicAchievementTemplate,
-  RelicCompletionEvidence,
-  StoryRelicAssignment,
-} from './types';
-import type { RelicTemplateDefinition } from './model';
+import { type EarnedRelicRecord, type JsonObject, type RelicAchievementTemplate, type RelicCompletionEvidence, type StoryRelicAssignment } from '@seihouse/library/relics';
+import { type RelicTemplateDefinition } from '@seihouse/library/relics';
 
 export class RelicConflictError extends Error {
   constructor(message: string) {

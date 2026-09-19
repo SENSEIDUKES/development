@@ -1,17 +1,12 @@
 import React from 'react';
+import { NarrativeIcon } from '../../../../../presentation/narrativeArt';
 import { Character, Story } from '../../types';
 import { Download, Compass, Lock, Award, Play, Square, Sparkles, Loader2, RotateCcw, VolumeX } from 'lucide-react';
 import { ReaderCodexImageGallery } from '../ReaderCodexImageGallery';
 import { resolveEntityImageHistory } from '../entityImageHistory';
-import { handleDownload } from '../../codexCompatibility';
-import { AGENTS } from '../../codexCompatibility';
+import { handleDownload } from '../../downloadUtils';
 import type { CodexVoiceQuoteStatus } from '../../hooks/useCodexVoiceQuote';
-import {
-  getColorCodeStyle,
-  getColorCodeSurfaceStyle,
-  resolveCharacterRelationshipColorCode,
-  resolveCharacterStatusColorCode,
-} from '../../../../reader-chamber/shared/colorCodes';
+import { getColorCodeStyle, getColorCodeSurfaceStyle, resolveCharacterRelationshipColorCode, resolveCharacterStatusColorCode } from '../../../../../narrative/colorCodes';
 
 interface CharacterCardProps {
   char: Character;
@@ -22,7 +17,7 @@ interface CharacterCardProps {
   voiceStatus: CodexVoiceQuoteStatus;
   isGenerating: boolean;
   canGenerate: boolean;
-  isFreeUserOnHubStory: boolean;
+  manifestationRestricted: boolean;
   /** A deliberate tap is the only thing that can create or play voice audio. */
   onQuoteTap: (char: Character) => void;
   /** True once this session's most recent tap produced audio to download. */
@@ -41,7 +36,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
   voiceStatus,
   isGenerating,
   canGenerate,
-  isFreeUserOnHubStory,
+  manifestationRestricted,
   onQuoteTap,
   canDownloadVoice = false,
   onDownloadVoice,
@@ -54,13 +49,13 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
   const statusColorCode = resolveCharacterStatusColorCode(char.status);
   const relationshipColorCode = resolveCharacterRelationshipColorCode(char, activeStory.mcName);
   const visualAriaLabel = isGenerating
-    ? `VERSA is working on visual for ${char.name}`
+    ? `Preparing artwork on visual for ${char.name}`
     : !hasAppeared
       ? `Undiscovered visual for ${char.name}`
-      : isFreeUserOnHubStory
+      : manifestationRestricted
         ? hasImage
           ? `Portrait active for ${char.name}`
-          : `Portrait locked for ${char.name} (Free)`
+          : `Portrait locked for ${char.name}`
         : char.evolutionReady
           ? `Awaken evolution for ${char.name}`
           : hasImage
@@ -267,12 +262,12 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
                 ? 'bg-portal border-portal text-void shadow-[0_0_10px_rgba(4,172,255,0.4)]'
                 : 'bg-void border-portal/15 text-portal hover:border-portal hover:bg-portal/5 hover:shadow-[0_0_8px_rgba(4,172,255,0.2)]'
             }`}
-            title={!hasAppeared ? "Unlock manifestation by encountering them in the story." : isFreeUserOnHubStory ? "Please Ascend to the Inner Sect to customize this original codex portrait." : !canGenerate ? "Evolution requires further story progression." : ""}
+            title={!hasAppeared ? "Unlock manifestation by encountering them in the story." : manifestationRestricted ? "Visual manifestation is unavailable for this story." : !canGenerate ? "Evolution requires further story progression." : ""}
           >
               {isGenerating ? (
                 <>
-                  <img src={AGENTS.VERSA.logoUrl} className="w-4 h-4 object-contain animate-pulse" alt="VERSA" />
-                  <span>VERSA is working...</span>
+                  <NarrativeIcon name="generating" className="w-4 h-4 animate-spin" />
+                  <span>Preparing artwork...</span>
                 </>
               ) : (
                 <>
@@ -280,8 +275,8 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
                   <span>
                     {!hasAppeared
                       ? 'Undiscovered'
-                      : isFreeUserOnHubStory
-                      ? (hasImage ? 'Portrait Active' : 'Portrait Locked (Free)')
+                      : manifestationRestricted
+                      ? (hasImage ? 'Portrait Active' : 'Portrait Locked')
                       : char.evolutionReady
                       ? 'Awaken Evolution'
                       : hasImage

@@ -1,4 +1,4 @@
-import { validateMediaPack, type MediaPack } from '@seihouse/sen/audio';
+import { validateMediaPack, type MediaPack } from '@seihouse/library/media';
 
 /** Small Development-only catalogs. These are not product Media Packs. */
 export const WORKSHOP_MEDIA_PACKS: MediaPack[] = [
@@ -16,7 +16,6 @@ export const WORKSHOP_MEDIA_PACKS: MediaPack[] = [
       tags: ['rain', 'mountain-pass', 'thunder'],
       region: 'chinese',
       url: 'https://fixtures-media.r2.dev/soundscapes/storm-path.mp3',
-      isPremium: false,
     }],
   }),
   validateMediaPack({

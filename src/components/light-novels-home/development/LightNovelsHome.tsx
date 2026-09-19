@@ -1,3 +1,4 @@
+import { useLibraryAssets } from '../../../library/assets';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Eye } from 'lucide-react';
@@ -5,26 +6,13 @@ import { LibraryPanel, LibraryCard, LibraryCardMedia, LibraryCardTitle, Manifest
 import { SEIBadge, SEIFilterChip, SEISelect, SEIEmptyState } from '@seihouse/ui';
 import type { LightNovelsHomeProps } from '../shared/homeContracts';
 import { ExpansionSeals, type WorldExpansionPreview } from './WorldExpressions';
-import { SENDiscoveryIcon, SENManifestingIcon } from '../../sen-icons';
+import { LibraryDiscoveryIcon as SENDiscoveryIcon, LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import '../shared/home.css';
-const HERO_VIDEOS = [
-  "https://video.seihouse.org/LIGHT%20NOVEL/LIGHT_NOVEL_INTRO.mp4",
-  "https://video.seihouse.org/LIGHT%20NOVEL/LIGHT_NOVEL_INTRO2.mp4"
-];
-
-const CELESTIAL_FALLBACK_IMAGES = [
-  "https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/images/LIBRARY%20BACKDROPS/LIBRARY_THUNDER.PNG",
-  "https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/images/LIBRARY%20BACKDROPS/LIBRARY_RAIN.PNG",
-  "https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/images/LIBRARY%20BACKDROPS/LIBRARY_MOUNTAINS.PNG",
-  "https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/images/LIBRARY%20BACKDROPS/LIBRARY_FOREST.PNG",
-  "https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/images/LIBRARY%20BACKDROPS/LIBRARY_DAYTIME.PNG"
-];
-
-
 /** Existing LibraryScreen Home presentation. Data and navigation belong to the host. */
 export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWorld, children, expansionsByWorld = {} }: LightNovelsHomeProps & {
   expansionsByWorld?: Readonly<Record<string, readonly WorldExpansionPreview[]>>;
 }) {
+  const { homeVideos: HERO_VIDEOS = [], homeImages: CELESTIAL_FALLBACK_IMAGES = [] } = useLibraryAssets();
   const [currentVideoIdx, setCurrentVideoIdx] = useState(0);
   const [currentImageIdx, setCurrentImageIdx] = useState(0);
   const [videoPlaying, setVideoPlaying] = useState(false);
@@ -33,12 +21,12 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
 
   // Rotate backup celestial library images every 6 seconds
   useEffect(() => {
-    if (!active) return;
+    if (!active || CELESTIAL_FALLBACK_IMAGES.length < 2) return;
     const interval = setInterval(() => {
       setCurrentImageIdx((prev) => (prev + 1) % CELESTIAL_FALLBACK_IMAGES.length);
     }, 6000);
     return () => clearInterval(interval);
-  }, [active]);
+  }, [active, CELESTIAL_FALLBACK_IMAGES.length]);
 
   useEffect(() => {
     const video = heroVideoRef.current;
@@ -122,7 +110,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
         </AnimatePresence>
 
         {/* Layer 2: Primary Celestial Videos (Always attempted as primary layer overlaying the backdrops) */}
-        {!videoError && (
+        {!videoError && HERO_VIDEOS.length > 0 && (
           <div className="absolute inset-0 z-10 overflow-hidden bg-transparent">
             <video
               ref={heroVideoRef}
@@ -146,7 +134,7 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
                 setVideoPlaying(false);
               }}
               onEnded={() => {
-                setCurrentVideoIdx((prev) => (prev === 0 ? 1 : 0));
+                setCurrentVideoIdx((prev) => ((prev + 1) % HERO_VIDEOS.length));
               }}
               className={`w-full h-full object-cover transition-opacity duration-1000 ease-in-out select-none pointer-events-none ${
                 videoPlaying ? "opacity-50 sm:opacity-60" : "opacity-0"

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { compileStoryInformationPacket } from './context';
 import { createHarnessStory } from './foundation';
-import { createEmptyHarnessWorkspaceState } from './repository';
+import { createEmptyHarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { appendHarnessCorrection } from './canonicalState';
 
 const fixture = () => {
@@ -13,7 +13,7 @@ const fixture = () => {
       foundationRevisionId: foundation.id, storyInformationPacketId: `context-${chapterNumber}`,
       chapterNumber, title: `Chapter ${chapterNumber}`, titleSource: 'model',
       prose: `Scene ${chapterNumber}. ` + 'The tide rises. '.repeat(80), eventIds: [],
-      responseMode: 'json', createdAt: 'a', committedAt: 'b', mediaLoadout: { capturedAt: 'a' },
+      responseMode: 'json', createdAt: 'a', committedAt: 'b', mediaLoadout: { capturedAt: 'a', soundscapes: [], soundCues: [] },
     });
   }
   story.head = { nextChapterNumber: 5, lastCommittedChapterId: 'chapter-4' };

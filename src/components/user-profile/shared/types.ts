@@ -14,77 +14,10 @@
  * display-name strings, and this development repository stores no aliases for
  * the names they replaced.
  */
-import type { SenLanguageCode } from '../../../lib/language';
+import { type SenLanguageCode } from '@seihouse/sen/contracts';
 
-export interface StatusEffectDef {
-  name: string;
-  type: 'Curse' | 'Blessing' | 'Affliction' | 'Mutation';
-  description: string;
-  durationMs: number;
-  scope: 'Account-wide' | 'Story-specific';
-  visual?: string;
-  counterplay?: string;
-  rewardHook?: string;
-  qiMultiplier?: number;
-  sectQiMultiplier?: number;
-  targetProgress?: number;
-}
-
-export interface ActiveStatusEffect {
-  id: string;
-  effectDef: StatusEffectDef;
-  appliedAt: string;
-  expiresAt: string;
-  sourceArtifactId?: string;
-  progress?: number;
-  targetProgress?: number;
-  completedAt?: string;
-  isUnlockedReward?: boolean;
-}
-
-export interface SpecialUnlockDef {
-  type:
-    | 'cosmetic'
-    | 'sen_workshop'
-    | 'customization'
-    | 'profile_item'
-    | 'badge'
-    | 'theme'
-    | 'other';
-  label: string;
-  description?: string;
-}
-
-export interface CosmicArtifact {
-  id: string;
-  name: string;
-  description: string;
-  unlockedAt: string;
-  sourceStoryId?: string;
-  sourceStoryTitle?: string;
-  sourceChapterNumber?: number;
-  eventKey?: string;
-  milestoneType:
-    | 'chapter_seal'
-    | 'rank_up'
-    | 'challenge_complete'
-    | 'first_breakthrough'
-    | 'streak_attained'
-    | 'codex_linked';
-  milestoneName: string;
-  imageUrl?: string;
-  rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic' | 'Transcendent';
-  attributeBoost?: string;
-  statusEffectDef?: StatusEffectDef;
-  specialUnlock?: SpecialUnlockDef | string;
-
-  // Weekly Offering System
-  offeringWeekId?: string;
-  gatheredAt?: string;
-  status?: 'unsubmitted' | 'submitted' | 'auto_submitted';
-  rewardValueQi?: number;
-  rewardValueSectMerit?: number;
-}
+import type { CosmicArtifact, ActiveStatusEffect } from '../../../library/relics/view';
+export type { CosmicArtifact, StatusEffectDef, ActiveStatusEffect, SpecialUnlockDef } from '../../../library/relics/view';
 
 export type ChapterWritingStyle =
   | 'Standard'

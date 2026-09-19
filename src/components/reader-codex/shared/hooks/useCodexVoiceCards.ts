@@ -1,27 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useDevAudioPlayback } from '../../../../audio/DevAudioPlayback';
+import { useNarrativeAudio } from '../../../../audio/playback';
 
-const LEGACY_WORKSHOP_VOICE_PREFIX = 'workshop-voice:';
-
-/** The only source shape the server's synthesized response ever produces. */
-const PLAYABLE_VOICE_DATA_URI = /^data:audio\/mpeg;base64,[a-z0-9+/]+=*$/iu;
+import { isPublicHttpsUrl } from '../../../../audio/mediaUrl';
+const PLAYABLE_VOICE_DATA_URI = /^data:audio\/(?:mpeg|wav|ogg|mp4|webm|aac|flac);base64,[a-z0-9+/]+=*$/iu;
 
 /** One shared-queue track identity per Character, so voices can never overlap. */
 export const codexVoiceTrackId = (characterId: string): string => `codex-voice:${characterId}`;
 
 /**
  * A Character's voiceKey is only an identity. Reader playback is available
- * only for the exact audio data URI the server's synthesis response produced
- * this session; nothing else is ever accepted as a playback source.
+ * only for a host-authorized audio source, never for an opaque voice identity.
  */
 export const isPlayableCodexVoiceSource = (value?: string): boolean => {
   const source = value?.trim();
-  if (!source || source.startsWith(LEGACY_WORKSHOP_VOICE_PREFIX)) return false;
-  return PLAYABLE_VOICE_DATA_URI.test(source);
+  if (!source) return false;
+  return PLAYABLE_VOICE_DATA_URI.test(source) || isPublicHttpsUrl(source) || /^blob:https?:\/\/[^\s]+$/u.test(source);
 };
 
 /**
- * Plays completed Character voice artifacts through DEV's one shared audio
+ * Plays completed Character voice artifacts through the host's shared audio
  * owner. It never assigns a voice, synthesizes in the browser, or autoplays.
  */
 export function useCodexVoiceCards() {
@@ -33,7 +30,7 @@ export function useCodexVoiceCards() {
     restart,
     replace,
     stop,
-  } = useDevAudioPlayback();
+  } = useNarrativeAudio();
   const activeTrackIdRef = useRef<string | null>(null);
   const activeCharacterIdRef = useRef<string | null>(null);
 

@@ -1,14 +1,12 @@
 // @vitest-environment jsdom
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  audioDataUri,
-  codexVoiceIdentity,
-  useCodexVoiceQuote,
-  type CodexVoiceResolution,
-} from './useCodexVoiceQuote';
-import type { Character } from '../types';
+import { audioDataUri, useCodexVoiceQuote } from '@seihouse/sen/reader-codex';
+import { type CodexVoiceResolution } from '@seihouse/sen/contracts';
+import { codexVoiceIdentity } from '../../../../host/reader/codexVoice';
+import { type Character } from '@seihouse/sen/contracts';
 
 const playback = vi.hoisted(() => ({
   autoplayBlocked: false,
@@ -19,8 +17,8 @@ const playback = vi.hoisted(() => ({
   stop: vi.fn(),
 }));
 
-vi.mock('../../../../audio/DevAudioPlayback', () => ({
-  useDevAudioPlayback: () => playback,
+vi.mock('../../../../audio/playback', () => ({
+  useNarrativeAudio: () => playback,
 }));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

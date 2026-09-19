@@ -1,4 +1,4 @@
-import type { Story } from './types';
+import type { Story } from '../../../narrative/story';
 
 /**
  * Returns the reader-safe explanation for why a chapter cannot be used as a

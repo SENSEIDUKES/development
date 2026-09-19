@@ -5,4 +5,4 @@
  * them keeps the migrated Codex source-compatible without introducing a
  * second, drifting story model.
  */
-export * from '../../reader-chamber/shared/types';
+export * from '../../../narrative/story';

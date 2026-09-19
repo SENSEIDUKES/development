@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { COLOR_CODE_PALETTE_IDS, SYSTEM_COLORS_LEGEND } from '../shared/colorCodes';
-import { SystemColorLegend } from './SystemColorLegend';
+import { COLOR_CODE_PALETTE_IDS, SYSTEM_COLORS_LEGEND } from '@seihouse/sen/color-codes';
+import { SystemColorLegend } from '@seihouse/sen/reader-chamber';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

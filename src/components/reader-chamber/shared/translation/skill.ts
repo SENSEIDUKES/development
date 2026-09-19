@@ -14,7 +14,7 @@
  */
 
 import { getSenLanguageLabel, type SenLanguageCode } from '../../../../lib/language';
-import type { HarnessSkillManifest } from '../../../harness-generation/shared/types';
+import type { HarnessSkillManifest } from '../../../../narrative/generation';
 
 export type ReaderTranslationSkillResolution =
   | { ok: true; skill: HarnessSkillManifest }

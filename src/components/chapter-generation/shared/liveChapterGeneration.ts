@@ -1,4 +1,4 @@
-import type { StorySeedArtifact } from "../../story-seed/shared/storySeedRepository";
+import { type StorySeedArtifact } from '@seihouse/sen/story-seed';
 import type { StorySeedChapterMappingReport } from "./packets/storySeedChapterAdapter";
 import type { ChapterPipelineRun } from "./pipeline/types";
 import type { ChapterTokenUsageSummary } from "./pipeline/usage";

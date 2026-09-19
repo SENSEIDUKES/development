@@ -1,3 +1,4 @@
+import { useLibraryAssets } from '../../../library/assets';
 import { UserProfileHome } from './UserProfileHome';
 import type { CaveAccountControls } from './caveAccountControls';
 import { WorkspaceHeader } from '../../library-shell/development/WorkspaceHeader';
@@ -12,7 +13,7 @@ import {
 } from 'lucide-react';
 import {
   LibraryButton,
-  ParticleEffect,
+  LibraryCaveBackdrop,
 } from '@seihouse/library-ui';
 import {
   SEIDialog,
@@ -21,7 +22,7 @@ import {
   SEIDialogTitle,
   SEIInlineAlert,
 } from '@seihouse/ui';
-import { StoryAuthGate, STORY_AUTH_DISSOLVE_MS } from '@seihouse/sen/story-seed';
+import { StoryAuthGate, STORY_AUTH_DISSOLVE_MS } from '@seihouse/library/story-seed';
 import type { AppUser, Story } from '../shared/types';
 import { useUserProfileServices } from '../shared/userProfileServices';
 import {
@@ -60,12 +61,12 @@ import {
 import { LibraryNavigation, LibrarySectionSidebar } from '../../library-shell/development/LibraryNavigation';
 import type { LibraryLocation } from '../../library-shell/development/libraryRoutes';
 import { WorkspaceShell } from '../../library-shell/development/WorkspaceShell';
-import { SENNavigationIcon } from '../../library-shell/development/SENNavigationIcon';
+import { LibraryNavigationIcon as SENNavigationIcon } from '@seihouse/library-ui';
 import { EnergyPanel } from '../../energy/development/EnergyPanel';
 import { useEnergyAccount } from '../../energy/shared/useEnergyAccount';
 import { DaoPillarView } from '../../dao-pillar/development/DaoPillarView';
 import { useDaoPillarCalendar } from '../../dao-pillar/shared/useDaoPillarCalendar';
-import { qiAmountOf } from '../../dao-pillar/shared/daoPillarContracts';
+import { useQiAccount, getDaoRankData } from '@seihouse/library/cultivation';
 
 interface UserProfileProps {
   currentUser: AppUser | null;
@@ -96,7 +97,18 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   // directly. Both arrive through the injected services port here, so this file
   // carries no Firebase, PostgreSQL, or generation dependency of its own.
   const { useController: useUserProfile, localOnlyMode, authenticate } = useUserProfileServices();
-  const controller = useUserProfile({ currentUser, stories, onLogout, onNavigateHome });
+  const hostController = useUserProfile({ currentUser, stories, onLogout, onNavigateHome });
+  const route = useCaveRoute();
+  const isPublicView = route.audience === 'public';
+  const cultivation = useQiAccount({ enabled: Boolean(currentUser) && !isPublicView });
+  // Private balances are read from the ledger only. These fields are a render projection,
+  // never a second store or a profile mutation. Public records remain host-supplied.
+  const balance = cultivation.snapshot?.balance;
+  const controller = isPublicView ? hostController : {
+    ...hostController, cultivation,
+    profile: hostController.profile ? { ...hostController.profile, qi: balance, dao_xp: balance, heavenly_qi: balance } : null,
+    daoData: getDaoRankData(balance ?? 0),
+  };
   const {
     profile,
     error,
@@ -137,13 +149,11 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     handleApplyPortrait,
   } = controller;
 
-  const route = useCaveRoute();
   const { view, navigate } = route;
   const mainRef = useRef<HTMLDivElement>(null);
   const previousUser = useRef(currentUser);
   const previousPath = useRef(route.path);
   const focusedPath = useRef<string | undefined>(undefined);
-  const isPublicView = route.audience === 'public';
   // Where Exit lands. Set as the public view is opened, so leaving returns to
   // the Cave page the cultivator was on; a direct public link falls back Home.
   const publicReturnPath = useRef<string | null>(null);
@@ -219,7 +229,9 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     })),
   }), [boostState]);
 
+  const assets = useLibraryAssets();
   const environment = getCaveEnvironment(environmentId);
+  const environmentImage = assets.caveImages?.[environment.id];
   const isSignedOut = !currentUser && !localOnlyMode;
   const isPrivileged = profile?.role === 'owner' || profile?.role === 'admin';
   // Energy is server truth read through the host-mounted Energy client. The
@@ -227,19 +239,12 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const energyAccount = useEnergyAccount({ enabled: Boolean(currentUser) && !isPublicView });
   const energy = energyAccount.status === 'unavailable' ? undefined
     : { account: energyAccount, onOpen: () => navigate('/home/energy') };
-  // The Daily Dao Pillar is server truth read through the host-mounted
-  // calendar client. A delivered claim is mirrored onto the held profile so
-  // rank and balance move at once; the calendar itself never moves a balance.
-  const applyQiDeposit = controller.applyQiDeposit;
-  const daoPillar = useDaoPillarCalendar({
-    enabled: Boolean(currentUser) && !isPublicView,
-    onRewardDelivered: delivered => {
-      const amount = qiAmountOf(delivered);
-      if (amount <= 0) return;
-      const qi = delivered.find(entry => entry.type === 'qi');
-      applyQiDeposit?.({ amount, source: 'dao-pillar', balanceAfter: qi?.balanceAfter, transactionId: qi?.transactionId });
-    },
-  });
+  // A delivered, replayed, or recovered claim invalidates the read projection.
+  // Refreshing the ledger never credits QI; only the server performs deposits.
+  const daoPillar = useDaoPillarCalendar({ enabled: Boolean(currentUser) && !isPublicView });
+  useEffect(() => {
+    if (daoPillar.snapshot) void cultivation.refresh();
+  }, [daoPillar.snapshot, cultivation.refresh]);
 
   // The Akashic Switchboard is a destination here; the controller still owns
   // when its registries are fetched, keyed off this flag exactly as in production.
@@ -459,28 +464,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
       else onNavigateLibrary(target);
     }} sectionMenu={caveSidebarMounted ? navigationDefinition : undefined}>
     <div className="cave-workspace relative min-h-[100dvh] bg-[#03060c] text-neutral-200" data-cave-environment={environment.id} data-cave-audience={route.audience}>
-      {/* Backdrop: stock Immortal Land art, cooled into the cave palette */}
-      <div
-        aria-hidden="true"
-        data-cave-backdrop-layer
-        className="pointer-events-none absolute inset-0 overflow-clip"
-      >
-        <img
-          key={environment.src}
-          src={environment.src}
-          alt=""
-          className="h-full w-full object-cover object-center opacity-55"
-          data-cave-backdrop
-        />
-        <div className="absolute inset-0 bg-[#061022]/45 mix-blend-multiply" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_28%,transparent_25%,rgba(3,6,12,0.55)_60%,rgba(3,6,12,0.92)_100%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#03060c] via-[#03060c]/70 to-transparent" />
-        {ambientMotes ? (
-          <div className="absolute inset-0 opacity-60" data-cave-motes>
-            <ParticleEffect accent="#04ACFF" dispersion={0.7} speedScale={0.45} foregroundSelector="[data-cave-identity]" />
-          </div>
-        ) : null}
-      </div>
+      {environmentImage && <LibraryCaveBackdrop src={environmentImage} ambientMotes={ambientMotes} />}
 
       <WorkspaceShell
         className="cave-shell relative z-10"
@@ -488,7 +472,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         sidebarLabel={navigationDefinition.label}
         sidebar={caveSidebarMounted ? <LibrarySectionSidebar /> : undefined}
         header={<WorkspaceHeader title="Profile" landmark="none"
-          emblem={{ src: '/favicon.jpg', alt: 'SEN' }}
+          emblem={assets.emblem ? { src: assets.emblem, alt: 'SEN' } : undefined}
           home={{ href: '/', label: 'Return to Library', onNavigate: onNavigateHome }}
           contextualItem={isPublicView ? <button type="button" onClick={exitPublicView}
             aria-label="Exit public view" title="Exit public view"

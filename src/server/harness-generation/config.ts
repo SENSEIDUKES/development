@@ -1,4 +1,4 @@
-import type { HarnessGenerationServerInfo } from '../../components/harness-generation/shared/types';
+import { type HarnessGenerationServerInfo } from '@seihouse/sen/harness-generation';
 
 export type HarnessGenerationEnvironment = Record<string, string | undefined>;
 

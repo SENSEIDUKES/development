@@ -1,4 +1,4 @@
-import { generateId } from '../shared/id';
+import { generateId } from '../../../narrative/id';
 import {
   normalizeSenLanguageCode,
   resolveReadingLanguageCode,
@@ -11,44 +11,38 @@ import {
 } from '../shared/readerLanguage';
 import { mergeReaderTranslation } from '../shared/translation/readerFacing';
 import { useChapterTranslation } from '../shared/translation/useChapterTranslation';
-import type { HarnessSkillManifest } from '../../harness-generation/shared/types';
+import type { HarnessSkillManifest } from '../../../narrative/generation';
 import React, { useRef, useState, useEffect, useMemo } from "react";
 import {
   ShieldAlert,
   Play,
 } from "lucide-react";
-import {
-  ReaderChapter,
-  StoryWorld,
-  UpdateStoryFields,
-  ReaderPreferences,
-  Bookmark,
-} from "../shared/types";
+import { ReaderChapter, StoryWorld, UpdateStoryFields, ReaderPreferences, Bookmark } from '../../../narrative/story';
 import { motion, AnimatePresence } from "motion/react";
 import { ParticleSystem } from "./ParticleSystem";
-import { useAppStore } from "../shared/stubs";
-import { selectIsGenerating } from "../shared/stubs";
-import { LOCAL_ONLY_MODE } from "../shared/stubs";
+import { useReaderStore } from '../../../narrative/readerRuntime';
+import { selectIsGenerating } from '../../../narrative/readerRuntime';
+import { useReaderRuntime } from '../../../narrative/readerRuntime';
 import { AlterFatePanel } from "./AlterFatePanel";
 import { ReaderSettings } from "./ReaderSettings";
 import { CosmicBookmarksPanel } from "./CosmicBookmarksPanel";
-import { useReaderPlayback, extractSFXCues } from "../shared/readerPlayback";
-import { useReaderVisuals } from "../shared/stubs";
+import { useReaderPlayback } from '../../../narrative/readerRuntime';
+import { extractReaderVisibleAudioText as extractSFXCues } from '../../../audio/readerVisibleText';
+import { useReaderVisuals } from '../../../narrative/readerRuntime';
 
 import { ReaderHeader } from "./ReaderHeader";
 import { ReaderViewport } from "./ReaderViewport";
 import { ReaderControls } from "./ReaderControls";
-import { useCinematicScroll } from "../shared/stubs";
+import { useCinematicScroll } from '../../../narrative/readerRuntime';
 import { cinematicEffectGovernor } from "../shared/effects/cinematicEffectGovernor";
-import { useReadingPosition } from "../shared/stubs";
+import { useReadingPosition } from '../../../narrative/readerRuntime';
 import { getFateLockMessage } from '../shared/alterFateLock';
 import { DEFAULT_READER_TYPOGRAPHY } from '../shared/readerTypography';
-import { SYSTEM_LEGEND_DISMISSED_STORAGE_KEY } from '../shared/readerLegend';
 import { CodexHovercard } from '../../reader-codex/development/CodexHovercard';
 import {
   createCodexHighlighter,
   splitByCodexTerms,
-} from '../../reader-codex/shared/codexHighlighting';
+} from '../../../narrative/codexHighlighting';
 
 interface ReaderChamberProps {
   chapters: ReaderChapter[];
@@ -138,8 +132,9 @@ export default function ReaderChamber({
   const selectedChapter =
     chapters.find((c) => c.number === selectedChapterNum) || chapters[0];
 
+  const runtime = useReaderRuntime();
   const [showLegend, setShowLegend] = useState(() => {
-    return localStorage.getItem(SYSTEM_LEGEND_DISMISSED_STORAGE_KEY) !== "true";
+    return runtime.preferences?.read("legend-dismissed") !== "true";
   });
 
   const hasSystemBlocks = useMemo(() => {
@@ -166,10 +161,10 @@ export default function ReaderChamber({
   const [isCheckingConsistency, setIsCheckingConsistency] = useState(false);
   const [consistencyWarnings, setConsistencyWarnings] = useState<string[] | null>(null);
   const readerRef = useRef<HTMLDivElement>(null);
-  const readerMode = useAppStore((state) => state.readerMode);
-  const immersion = useAppStore((state) => state.immersion);
-  const setReaderMode = useAppStore((state) => state.setReaderMode);
-  const setImmersion = useAppStore((state) => state.setImmersion);
+  const readerMode = useReaderStore((state) => state.readerMode);
+  const immersion = useReaderStore((state) => state.immersion);
+  const setReaderMode = useReaderStore((state) => state.setReaderMode);
+  const setImmersion = useReaderStore((state) => state.setImmersion);
 
   const { 
     handleManifestReveal, 
@@ -193,7 +188,7 @@ export default function ReaderChamber({
 
   // --- Reading language and the derived translation layer ---
   const maxChapterNum = chapters.length > 0 ? Math.max(...chapters.map(c => c.number)) : 0;
-  const userProfile = useAppStore((state) => state.userProfile);
+  const userProfile = useReaderStore((state) => state.languagePreferences);
 
   /**
    * The story's permanent Original Language. Canon is always in this language;
@@ -303,15 +298,15 @@ export default function ReaderChamber({
     ),
   });
 
-  const setCanShowRelicInReader = useAppStore(state => state.setCanShowRelicInReader);
+  const setCanShowOverlays = useReaderStore(state => state.setCanShowOverlays);
 
   useEffect(() => {
     // Narration always wins over scroll position, and a chapter change resets the gate.
-    setCanShowRelicInReader?.(!isPlayingText);
+    setCanShowOverlays?.(!isPlayingText);
     return () => {
-      setCanShowRelicInReader?.(true);
+      setCanShowOverlays?.(true);
     };
-  }, [selectedChapterNum, isPlayingText, setCanShowRelicInReader]);
+  }, [selectedChapterNum, isPlayingText, setCanShowOverlays]);
 
   useEffect(() => {
     const el = readerRef.current;
@@ -319,7 +314,7 @@ export default function ReaderChamber({
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = el;
-      const currentAllowed = useAppStore.getState().canShowRelicInReader;
+      const currentAllowed = runtime.store.getSnapshot().canShowOverlays;
       let nextAllowed = true;
 
       if (isPlayingText) {
@@ -333,7 +328,7 @@ export default function ReaderChamber({
       }
 
       if (currentAllowed !== nextAllowed) {
-        setCanShowRelicInReader?.(nextAllowed);
+        setCanShowOverlays?.(nextAllowed);
       }
     };
 
@@ -341,14 +336,14 @@ export default function ReaderChamber({
     return () => {
       el.removeEventListener('scroll', handleScroll);
     };
-  }, [selectedChapterNum, isPlayingText, setCanShowRelicInReader]);
+  }, [selectedChapterNum, isPlayingText, setCanShowOverlays]);
 
   // --- atmospheric audio (just reference, no actual addition needed here)
-  const isReaderFullscreen = useAppStore((state) => state.isReaderFullscreen);
-  const setIsReaderFullscreen = useAppStore(
+  const isReaderFullscreen = useReaderStore((state) => state.isReaderFullscreen);
+  const setIsReaderFullscreen = useReaderStore(
     (state) => state.setIsReaderFullscreen,
   );
-  const activeAgentId = useAppStore((state) => state.activeAgentId);
+  const activeAgentId = useReaderStore((state) => state.activeAgentId);
 
   // --- Theme & Reader Typography Customizer States ---
   const [showReaderSettings, setShowReaderSettings] = useState(false);
@@ -502,7 +497,7 @@ export default function ReaderChamber({
       if (cue.type === 'narrative.metadata.signature') {
         // Metadata cues now also flow for scene music alone; the shake is
         // a visual effect and stays tied to the Holographic Visions toggle.
-        if (!useAppStore.getState().immersion.imagePopups) return;
+        if (!runtime.store.getSnapshot().immersion.imagePopups) return;
         const meta = cue.metadata || cue.value;
         if (meta) {
           const isIntense =
@@ -856,22 +851,12 @@ export default function ReaderChamber({
   };
 
   const handleGenerate = () => {
-    if (isGenerating || selectIsGenerating(useAppStore.getState())) return;
-    const { currentUser } = useAppStore.getState();
-    if (!currentUser && !LOCAL_ONLY_MODE) {
-      alert("You must sync your spirit (sign in) to forge new chapters.");
-      return;
-    }
+    if (isGenerating || selectIsGenerating(runtime.store.getSnapshot()) || !runtime.canGenerate(activeStory.id)) return;
     onGenerateChapter(selectedChapter.number);
   };
 
   const handleGenerateNextFive = () => {
-    if (isGenerating || selectIsGenerating(useAppStore.getState())) return;
-    const { currentUser } = useAppStore.getState();
-    if (!currentUser && !LOCAL_ONLY_MODE) {
-      alert("You must sync your spirit (sign in) to forge new chapters.");
-      return;
-    }
+    if (isGenerating || selectIsGenerating(runtime.store.getSnapshot()) || !runtime.canGenerate(activeStory.id)) return;
     onGenerateNextFiveChapters(selectedChapter.number);
   };
 
@@ -1037,9 +1022,9 @@ export default function ReaderChamber({
               const nextState = !showLegend;
               setShowLegend(nextState);
               if (!nextState) {
-                localStorage.setItem(SYSTEM_LEGEND_DISMISSED_STORAGE_KEY, "true");
+                runtime.preferences?.write("legend-dismissed", "true");
               } else {
-                localStorage.removeItem(SYSTEM_LEGEND_DISMISSED_STORAGE_KEY);
+                runtime.preferences?.remove("legend-dismissed");
               }
             }}
             audio={{
@@ -1132,7 +1117,11 @@ export default function ReaderChamber({
         showFateCodex={showFateCodex}
         setShowFateCodex={setShowFateCodex}
         showLegend={showLegend}
-        setShowLegend={setShowLegend}
+        setShowLegend={(show) => {
+          setShowLegend(show);
+          if (!show) runtime.preferences?.write("legend-dismissed", "true");
+          else runtime.preferences?.remove("legend-dismissed");
+        }}
         hasSystemBlocks={hasSystemBlocks}
         chapters={chapters}
       />

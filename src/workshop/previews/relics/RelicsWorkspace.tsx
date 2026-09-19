@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { createLocalRelicsClient } from './localRelicsClient';
 import { RelicReveal as ReferenceRelicReveal } from '../../../components/relics/reference/RelicReveal';
 import {
   RelicCard,
@@ -15,12 +16,12 @@ type Scene = 'cards' | 'reveal';
 
 const RARITY_RANKS = ['Transcendent', 'Mythic', 'Legendary', 'Epic', 'Rare', 'Common'];
 
-function RelicsScene({ scene, RevealComponent }: { scene: Scene; RevealComponent: typeof ReferenceRelicReveal }) {
+function RelicsScene({ scene, RevealComponent, items = mockRelics }: { scene: Scene; RevealComponent: typeof ReferenceRelicReveal; items?: CosmicArtifact[] }) {
   const [inspectArtifact, setInspectArtifact] = useState<CosmicArtifact | null>(null);
   const [revealArtifact, setRevealArtifact] = useState<CosmicArtifact | null>(null);
   const [replayKey, setReplayKey] = useState(0);
 
-  const getRelicsByRarity = (rarity: string) => mockRelics.filter((r) => r.rarity === rarity);
+  const getRelicsByRarity = (rarity: string) => items.filter((r) => r.rarity === rarity);
 
   const openReveal = (relic: CosmicArtifact) => {
     setInspectArtifact(null);
@@ -44,7 +45,8 @@ function RelicsScene({ scene, RevealComponent }: { scene: Scene; RevealComponent
         {!revealArtifact ? (
           <button
             type="button"
-            onClick={() => openReveal(mockRelics[0])}
+            disabled={!items.length}
+            onClick={() => openReveal(items[0])}
             className="flex items-center gap-2 px-6 py-3 rounded-full border border-portal/40 text-portal text-sm uppercase tracking-widest font-mono hover:bg-portal/10 hover:border-portal/70 transition-colors"
           >
             <Sparkles size={14} /> Open Reveal Flow
@@ -122,6 +124,14 @@ function RelicsScene({ scene, RevealComponent }: { scene: Scene; RevealComponent
 export function RelicsWorkspace() {
   const entry = workshopEntries.find((e) => e.id === 'relics-gallery')!;
   const [scene, setScene] = useState<Scene>('cards');
+  const client = useMemo(createLocalRelicsClient, []);
+  const [items, setItems] = useState<CosmicArtifact[]>([]);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let active = true;
+    void client.getSnapshot().then(snapshot => { if (active) setItems(snapshot.earned); }, reason => { if (active) setError(String(reason)); });
+    return () => { active = false; };
+  }, [client]);
 
   return (
     <FeatureWorkspace
@@ -160,7 +170,7 @@ export function RelicsWorkspace() {
         ],
       }}
       renderReference={() => <RelicsScene scene={scene} RevealComponent={ReferenceRelicReveal} />}
-      renderDevelopment={() => <RelicsScene scene={scene} RevealComponent={DevelopmentRelicReveal} />}
+      renderDevelopment={() => error ? <p role="alert">{error}</p> : !items.length ? <p role="status">Loading earned Relics…</p> : <RelicsScene scene={scene} RevealComponent={DevelopmentRelicReveal} items={items} />}
     />
   );
 }

@@ -1,4 +1,4 @@
-import ManifestationChamber, { ChamberForegroundMotes } from './ManifestationChamber';
+import { ManifestationChamber, ChamberForegroundMotes } from '@seihouse/library-ui';
 import { OMEN_SCENES, selectOmenSceneId } from './omen-scenes';
 
 export interface NarrativeManifestationZoneProps {

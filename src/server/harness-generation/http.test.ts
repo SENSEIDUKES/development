@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { HarnessGenerationRequest } from '../../narrative/generation';
+import { type HarnessGenerationRequest } from '@seihouse/sen/harness-generation';
 import { handleHarnessGenerationHttp } from './http';
 import type { HarnessTextGenerationRequest } from './provider';
-import { SEN_NOVEL_AUTHOR_SKILL } from '../../components/harness-generation/shared/authorSkill';
-import { assembleCapaPrompt } from '../../components/harness-generation/shared/skills';
+import { SEN_NOVEL_AUTHOR_SKILL } from '@seihouse/sen/harness-generation';
+import { assembleCapaPrompt } from '@seihouse/sen/harness-generation';
 import { HARNESS_RESPONSE_CONTRACT } from './prompt';
-import { arcGenerationContext } from '../../components/arc-goals/shared/arcGoals';
+import { arcGenerationContext } from '@seihouse/sen/arc-goals';
 
 const foundation = () => ({
   id: 'hfr_test',

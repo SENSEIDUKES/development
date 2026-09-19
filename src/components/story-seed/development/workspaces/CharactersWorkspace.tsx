@@ -7,9 +7,9 @@ import {
   Star,
   User,
 } from 'lucide-react';
-import { SENCharactersIcon } from '../../../sen-icons';
-import type { StorySeedCharacter, StorySeedInput } from '../../shared/storySeedSchema';
-import { normalizeCodexAliases, parseCodexAliases } from '../../shared/codexContext';
+import { LibraryCharactersIcon as SENCharactersIcon } from '@seihouse/library-ui';
+import { type StorySeedCharacter, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { normalizeCodexAliases, parseCodexAliases } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
 import {
   patchMainCharacter,
@@ -17,7 +17,7 @@ import {
   worldFoundations,
   type UpdateSeed,
 } from '../seedState';
-import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '../../../../presentation';
+import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { WorkspaceShell, WorkspaceSubheading } from './WorkspaceShell';
 
 interface CharactersWorkspaceProps {

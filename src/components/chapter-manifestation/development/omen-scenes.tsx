@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
-import SwordCultivatorClash from './SwordCultivatorClash';
-import CelestialChannel from './CelestialChannel';
+import { SwordCultivatorClash } from '@seihouse/library-ui';
+import { CelestialChannel } from '@seihouse/library-ui';
 
 /**
  * Narrative omen scenes — the registry the narrative manifestation zone

@@ -1,4 +1,4 @@
-import type { RewardEntry, RewardType } from '../../components/dao-pillar/shared/daoPillarContracts';
+import { type RewardEntry, type RewardType } from '@seihouse/library/dao-pillar';
 import { addCalendarDays, calendarDaysBetween, isCalendarDate, isValidTimeZone } from './calendar';
 import type { DaoPillarDaySchedule, DaoPillarTheme } from './types';
 

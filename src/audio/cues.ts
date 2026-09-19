@@ -1,9 +1,8 @@
 /**
- * Library cues — client-safe.
+ * Portable audio-cue catalog contracts — client-safe.
  *
- * Static curated SEN audio cues. Each entry has a stable `public_url` on the
- * existing `celestialaudio.seihouse.org` CDN that the playback layer can load
- * directly. No credentials or provider lookups are required to consume a cue.
+ * Hosts supply catalog records. The contract contains no built-in provider,
+ * domain, account, entitlement or first-party catalog.
  *
  * Category ownership is documented in `src/audio/README.md`. In short:
  *   - beasts, weapons, artifacts, locations, factions — resolved by the
@@ -98,10 +97,10 @@ export interface AudioCuesLoadResult {
   issues: AudioCueIssue[];
 }
 
-export class LibraryCueValidationError extends Error {
+export class AudioCueValidationError extends Error {
   constructor(readonly fatal: string[]) {
-    super(`Library cues validation failed: ${fatal.join('; ')}`);
-    this.name = 'LibraryCueValidationError';
+    super(`Audio cue validation failed: ${fatal.join('; ')}`);
+    this.name = 'AudioCueValidationError';
   }
 }
 
@@ -134,7 +133,7 @@ const normalizeCategory = (raw: string): AudioCueCategory | null => {
 
 export const parseAudioCues = (raw: unknown): AudioCuesLoadResult => {
   if (!Array.isArray(raw)) {
-    throw new LibraryCueValidationError(['root must be an array of cue entries.']);
+    throw new AudioCueValidationError(['root must be an array of cue entries.']);
   }
   // Preserve every input entry so a malformed row can still be inspected by
   // index after load. Lookup indexes are built only from valid rows.

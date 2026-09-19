@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Bookmark, Check, List } from 'lucide-react';
-import type { StorySeedInput } from '../shared/storySeedSchema';
+import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import type { SeedUpdate } from './seedState';
 import type { SeedSectionId } from './seedSections';
 import { buildStorySeedDrawerSections, storySeedDrawerProfile } from './StorySeedSelector';
@@ -11,7 +11,7 @@ import { HeaderActionButton, type HeaderAction } from '../../library-shell/devel
 import { WorkspaceNavigation, WorkspaceBottomControls, WorkspaceSidebar, useWorkspaceNavigation } from '../../library-shell/development/WorkspaceNavigation';
 import { WorkspaceSheet } from '../../library-shell/development/WorkspaceSheet';
 import { SENStorySeedIcon } from './SENStorySeedIcon';
-import { SENBankIcon, SENExitIcon, SENHelpIcon, SENManifestingIcon, SENSettingsIcon } from '../../sen-icons';
+import { LibraryBankIcon as SENBankIcon, LibraryExitIcon as SENExitIcon, LibraryHelpIcon as SENHelpIcon, LibraryManifestingIcon as SENManifestingIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/library-ui';
 import './story-seed.css';
 
 interface StorySeedWorkspaceChromeProps {

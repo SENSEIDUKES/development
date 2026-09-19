@@ -55,12 +55,12 @@ assert.match(provenance.sourceCommit, /^[a-f0-9]{40}$/);
 assert.equal(provenance.repository, 'https://github.com/SENSEIDUKES/UI');
 for (const name of ['ui', 'library-ui']) {
   const packageName = `@seihouse/${name}`;
-  const file = `vendor/seihouse-${name}-0.4.0.tgz`;
+  const file = provenance.artifacts[packageName].file;
   const integrity = `sha512-${createHash('sha512')
     .update(readFileSync(path.join(root, file)))
     .digest('base64')}`;
   assert.equal(manifest.dependencies[packageName], `file:${file}`);
-  assert.equal(lock.packages[`node_modules/${packageName}`].version, '0.4.0');
+  assert.equal(lock.packages[`node_modules/${packageName}`].version, provenance.artifacts[packageName].version);
   assert.equal(
     lock.packages[`node_modules/${packageName}`].integrity,
     integrity,
@@ -80,7 +80,7 @@ for (const name of ['ui', 'library-ui']) {
   const packageName = `@seihouse/${name}`;
   const installed = path.join(root, 'node_modules', packageName);
   if (!existsSync(installed)) continue;
-  const tarball = `vendor/seihouse-${name}-0.4.0.tgz`;
+  const tarball = provenance.artifacts[packageName].file;
   const entries = readTarball(path.join(root, tarball));
   const stale = [];
   for (const [entry, content] of entries) {
@@ -101,5 +101,5 @@ for (const name of ['ui', 'library-ui']) {
 }
 
 console.log(
-  '[ui-artifacts] UI and Library UI 0.4.0 tarballs match the manifest, lockfile SHA-512 integrity, source provenance, and the installed packages.',
+  '[ui-artifacts] UI tarballs match the manifest, lockfile SHA-512 integrity, source provenance, and the installed packages.',
 );

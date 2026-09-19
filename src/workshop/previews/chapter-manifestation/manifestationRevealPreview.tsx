@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Play, RotateCcw } from 'lucide-react';
-import { CelestialScrollVessel } from '@seihouse/library/manifestations';
+import { CelestialScrollVessel } from '@seihouse/library-ui';
 import { ManifestationReveal } from '@seihouse/sen/manifestations';
 import {
   MANIFESTATION_REVEAL_STATES,
@@ -180,7 +180,7 @@ export function ManifestationRevealPreview({
       <CelestialScrollVessel
         state={controller.state}
         asset={controller.content.src ? MOCK_REVEALED_ASSET : null}
-        mediaKind={controller.mediaKind}
+        placeholderLabel={MEDIA_KIND_LABEL[controller.mediaKind]}
       />
     ),
     [controller.content.src, controller.mediaKind, controller.state],

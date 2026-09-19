@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { compileStoryInformationPacket } from './context';
 import { createHarnessStory } from './foundation';
-import { createEmptyHarnessWorkspaceState } from './repository';
+import { createEmptyHarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { appendHarnessCorrection } from './canonicalState';
 
 const fixture = () => {

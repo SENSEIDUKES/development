@@ -8,3 +8,6 @@ export * from '../../components/story-seed/shared/storySeedSerialization';
 export * from '../../components/story-seed/shared/storyStyle';
 export * from '../../components/story-seed/shared/storyTagInference';
 export * from '../../components/story-seed/shared/types';
+export { generateUUID, generateId } from '../../narrative/id';
+export * from '../../components/story-seed/shared/storyTagCatalog';
+export { StoryFoundationEditor } from '../../narrative/StoryFoundationEditor';

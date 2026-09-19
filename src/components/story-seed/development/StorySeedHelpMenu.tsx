@@ -1,10 +1,11 @@
+import { useLibraryAssets } from '../../../library/assets';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ChevronRight, Pause, Play, X } from 'lucide-react';
 import { cn } from '@seihouse/ui';
-import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel } from '../../../presentation';
-import { useNarrativeAudio } from '../../../audio/playback';
-import { SENHelpIcon, SENSearchIcon } from '../../sen-icons';
+import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel } from '@seihouse/sen/presentation';
+import { useNarrativeAudio } from '@seihouse/sen/audio';
+import { LibraryHelpIcon as SENHelpIcon, LibrarySearchIcon as SENSearchIcon } from '@seihouse/library-ui';
 import {
   DEFAULT_HELP_LANGUAGE,
   STORY_SEED_HELP_ITEMS,
@@ -49,7 +50,7 @@ const getPlayableAudioUrl = (audioUrl?: string): string | null => {
 
   try {
     const baseUrl = typeof document === 'undefined'
-      ? 'https://library.seihouse.org'
+      ? 'https://host.invalid'
       : document.baseURI;
     const parsedUrl = new URL(candidate, baseUrl);
     const isAudioDataUrl = parsedUrl.protocol === 'data:' && candidate.startsWith('data:audio/');
@@ -77,8 +78,10 @@ export const LibraryHelpMenu = ({
   language = DEFAULT_HELP_LANGUAGE,
   page = 'library',
   title = 'Library Help',
-  topics = STORY_SEED_HELP_ITEMS,
+  topics: suppliedTopics,
 }: LibraryHelpMenuProps) => {
+  const { helpAudio } = useLibraryAssets();
+  const topics = useMemo(() => suppliedTopics ?? STORY_SEED_HELP_ITEMS.map(item => ({ ...item, translations: { ...item.translations, en: { ...item.translations.en!, audioUrl: helpAudio?.[item.id] } } })), [suppliedTopics, helpAudio]);
   const reduceMotion = useReducedMotion();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [query, setQuery] = useState('');

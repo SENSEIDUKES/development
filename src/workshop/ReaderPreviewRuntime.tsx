@@ -1,4 +1,5 @@
 import { useMemo, type PropsWithChildren } from 'react';
+import { makeWorkshopManifestation } from './readerImageFixtures';
 import { ReaderRuntimeProvider, type ReaderRuntime } from '@seihouse/sen/reader-runtime';
 import { readerPreviewStore, setMockState, useAppStore } from '../components/reader-chamber/shared/stubs';
 import { useReaderPlayback } from '../components/reader-chamber/shared/readerPlayback';
@@ -15,6 +16,10 @@ const runtime: ReaderRuntime = {
   useNarration: useReaderPlayback,
   tracks: TRACK_LIBRARY.map(track => ({ ...track, group: track.url.split('/AUDIO/')[1]?.split('/')[0] || 'OTHER' })),
   requestVoice: requestCodexVoice,
+  manifestImages: async ({ id, name, type, description }) => ({
+    urls: [0, 1, 2].map(variant => makeWorkshopManifestation(id, name, type, variant)),
+    prompt: `${type} manifestation for ${name}: ${description ?? ''}`,
+  }),
   defaultGlossary: DEFAULT_CULTIVATION_GLOSSARY,
   preferences: {
     read: key => { try { return localStorage.getItem(`workshop.reader.${key}`); } catch { return null; } },

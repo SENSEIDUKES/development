@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { resolvePlayableAudioMoment } from '../../../audio/inlineAudio';
-import { createLibraryMediaPort, validateMediaPack, type MediaPack, type MediaPackEntitlement } from '../../../library/media/mediaPacks';
-import { HarnessGenerationController } from './controller';
+import { resolvePlayableAudioMoment } from '@seihouse/sen/audio';
+import { createLibraryMediaPort, validateMediaPack, type MediaPack, type MediaPackEntitlement } from '@seihouse/library/media';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import type { HarnessRuntime } from './ids';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
-import { createHarnessSenStory } from './senAdapter';
-import type { HarnessGenerationModelAdapter, HarnessGenerationRequest, HarnessGenerationResponse } from '../../../narrative/generation';
+import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 
 const runtime = (): HarnessRuntime => {
   let id = 0;

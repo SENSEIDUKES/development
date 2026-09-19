@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { audioDataUri, useCodexVoiceQuote, type CodexVoiceResolution } from './useCodexVoiceQuote';
+import { audioDataUri, useCodexVoiceQuote } from '@seihouse/sen/reader-codex';
+import { type CodexVoiceResolution } from '@seihouse/sen/contracts';
 import { codexVoiceIdentity } from '../../../../host/reader/codexVoice';
-import type { Character } from '../types';
+import { type Character } from '@seihouse/sen/contracts';
 
 const playback = vi.hoisted(() => ({
   autoplayBlocked: false,

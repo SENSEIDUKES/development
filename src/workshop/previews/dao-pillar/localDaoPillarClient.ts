@@ -5,13 +5,14 @@
  * start, after the end, failures) is reachable without a server. It is never
  * transferred: a host mounts `createHttpDaoPillarClient` against its real API.
  */
-import type { DaoPillarClient } from '../../../components/dao-pillar/shared/daoPillarClient';
-import { DaoPillarClientError } from '../../../components/dao-pillar/shared/daoPillarClient';
+import { type DaoPillarClient } from '@seihouse/library/dao-pillar';
+import { DaoPillarClientError } from '@seihouse/library/dao-pillar';
 import { addCalendarDays, calendarDateIn } from '../../../server/dao-pillar/calendar';
 import { InMemoryDaoPillarRepository } from '../../../server/dao-pillar/inMemoryDaoPillarRepository';
 import { DaoPillarService } from '../../../server/dao-pillar/service';
 import { BETA_TEST_THEME, buildRewardSchedule, cycleIdFor, withCalendar } from '../../../server/dao-pillar/themes';
-import type { DaoPillarPrincipal, DaoPillarTheme } from '../../../server/dao-pillar/types';
+import type { LibraryPrincipal } from '../../../server/identity/types';
+import type { DaoPillarTheme } from '../../../server/dao-pillar/types';
 
 export type LocalDaoPillarMode = 'success' | 'claim-failed' | 'claim-unresolved' | 'offline';
 
@@ -42,7 +43,7 @@ export function createLocalDaoPillarClient({
   theme = BETA_TEST_THEME,
   delayMs = 0,
   now = () => new Date(),
-}: LocalDaoPillarClientOptions): DaoPillarClient & { service: DaoPillarService; repository: InMemoryDaoPillarRepository } {
+}: LocalDaoPillarClientOptions): DaoPillarClient & { ready: Promise<void>; service: DaoPillarService; repository: InMemoryDaoPillarRepository } {
   const today = calendarDateIn(theme.calendar.timeZone, now());
   const startsOn = phase === 'before' ? addCalendarDays(today, 3)
     : phase === 'after' ? addCalendarDays(today, -(theme.calendar.days + 2))
@@ -50,7 +51,7 @@ export function createLocalDaoPillarClient({
   const activeTheme = withCalendar(theme, { startsOn });
   const repository = new InMemoryDaoPillarRepository();
   const service = new DaoPillarService(repository, { identityMode: 'development', activeTheme }, { now });
-  const principal: DaoPillarPrincipal = { uid, role: 'user', identity: 'development', developmentAccess: true };
+  const principal: LibraryPrincipal = { uid, role: 'user', identity: 'development', developmentAccess: true };
 
   const schedule = buildRewardSchedule(activeTheme);
   const seeded = (async () => {
@@ -73,6 +74,7 @@ export function createLocalDaoPillarClient({
   const offline = async () => { throw new DaoPillarClientError(0, 'network', 'The Dao Pillar could not be reached. Check your connection and try again.'); };
 
   return {
+    ready: seeded,
     service,
     repository,
     getCalendar: () => (mode === 'offline' ? offline() : settle(() => service.getSnapshot(principal))),

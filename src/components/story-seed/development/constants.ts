@@ -1,6 +1,6 @@
-import type { StoryStyle } from '../shared/storyStyle';
+import { type StoryStyle } from '@seihouse/sen/story-seed';
 
-export * from '../shared/storyTagCatalog';
+export * from '@seihouse/sen/story-seed';
 
 // `Fate Survival` is deliberately absent: it is an experience layer owned by
 // Story Seed Settings, not a genre a novel can be written in.

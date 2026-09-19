@@ -1,4 +1,6 @@
 import type { ReactElement, ReactNode } from 'react';
+import { LibraryAssetsProvider } from '@seihouse/library/presentation';
+import { LIBRARY_ASSETS } from '../host/media/libraryAssets';
 import { DevAudioPlaybackProvider } from '../audio/DevAudioPlayback';
 import { ReaderPreviewRuntime } from '../workshop/ReaderPreviewRuntime';
 
@@ -16,7 +18,7 @@ import { ReaderPreviewRuntime } from '../workshop/ReaderPreviewRuntime';
  * wrapped in unrelated setup.
  */
 export function renderWithDevAudio(node: ReactNode): ReactElement {
-  return <DevAudioPlaybackProvider><ReaderPreviewRuntime>{node}</ReaderPreviewRuntime></DevAudioPlaybackProvider>;
+  return <DevAudioPlaybackProvider><ReaderPreviewRuntime><LibraryAssetsProvider value={LIBRARY_ASSETS}>{node}</LibraryAssetsProvider></ReaderPreviewRuntime></DevAudioPlaybackProvider>;
 }
 
 /**

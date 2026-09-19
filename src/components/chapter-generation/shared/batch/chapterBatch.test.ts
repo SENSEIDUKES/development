@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import type { StorySeedInput } from "../../../story-seed/shared/storySeedSchema";
-import type { WorldBlueprint } from "../../../story-seed/shared/types";
+import { type StorySeedInput } from '@seihouse/sen/story-seed';
+import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { adaptFinalizedStorySeedToChapterContracts } from "../packets/storySeedChapterAdapter";
 import { assembleChapterPacket } from "../pipeline/assembleChapterPacket";
 import type { ChapterPipelineRun } from "../pipeline/types";
 import { aggregateChapterTokenUsage } from "../pipeline/usage";
 import type { ChapterModelCallUsage } from "../pipeline/usage";
-import type { ChapterHandoff } from '../../../../narrative/chapter';
+import { type ChapterHandoff } from '@seihouse/sen/generation';
 import {
   buildNextChapterContinuation,
   createFiveChapterBatchState,

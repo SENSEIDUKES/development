@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { useNarrativeAudio } from './playback';
+import { useNarrativeAudio } from '@seihouse/sen/audio';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -125,12 +125,16 @@ describe('NarrativeAudioPlayback data-URI sources', () => {
 
     await act(async () => control('play-voice').click());
     await vi.waitFor(() => expect(play).toHaveBeenCalledTimes(1));
-    expect(container.querySelector('[data-testid="autoplay-blocked"]')?.textContent).toBe('true');
+    await vi.waitFor(() => {
+      expect(container.querySelector('[data-testid="autoplay-blocked"]')?.textContent).toBe('true');
+    });
 
     await act(async () => control('restart-voice').click());
 
-    expect(play).toHaveBeenCalledTimes(2);
-    expect(container.querySelector('[data-testid="autoplay-blocked"]')?.textContent).toBe('false');
+    await vi.waitFor(() => {
+      expect(play).toHaveBeenCalledTimes(2);
+      expect(container.querySelector('[data-testid="autoplay-blocked"]')?.textContent).toBe('false');
+    });
   });
 
   it.each(['pause-voice', 'stop-voice'])('cancels queued playback when the user clicks %s', async (controlId) => {

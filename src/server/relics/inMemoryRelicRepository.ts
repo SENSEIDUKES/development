@@ -1,12 +1,4 @@
-import {
-  assertCompletionEvidence,
-  assertRelicTemplateDefinition,
-  assertStoryRelicProgress,
-  cloneJson,
-  initialStoryRelicProgress,
-  RelicValidationError,
-  snapshotRelicTemplate,
-} from './model';
+import { assertCompletionEvidence, assertRelicTemplateDefinition, assertStoryRelicProgress, cloneJson, initialStoryRelicProgress, RelicValidationError, snapshotRelicTemplate } from '@seihouse/library/relics';
 import {
   RelicConflictError,
   RelicNotFoundError,
@@ -17,12 +9,7 @@ import {
   type RelicRepository,
   type UpdateRelicTemplateCommand,
 } from './repository';
-import {
-  RELIC_SCHEMA_VERSION,
-  type EarnedRelicRecord,
-  type RelicAchievementTemplate,
-  type StoryRelicAssignment,
-} from './types';
+import { RELIC_SCHEMA_VERSION, type EarnedRelicRecord, type RelicAchievementTemplate, type StoryRelicAssignment } from '@seihouse/library/relics';
 
 export interface InMemoryRelicRepositoryOptions {
   now?: () => string;

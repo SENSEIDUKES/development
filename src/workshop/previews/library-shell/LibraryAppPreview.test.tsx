@@ -2,7 +2,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { LibraryPresentationProvider } from '../../../components/library-presentation/LibraryPresentationProvider';
+import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { DevelopmentHeaderPreview } from './DevelopmentHeaderPreview';
 import { libraryPreviewUrl, navigateLibraryPreview } from './libraryPreviewNavigation';
 

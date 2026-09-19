@@ -10,9 +10,9 @@
 import { useMemo, useState } from 'react';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
-import { DaoPillarView } from '../../../components/dao-pillar/development/DaoPillarView';
-import { useDaoPillarCalendar } from '../../../components/dao-pillar/shared/useDaoPillarCalendar';
-import type { DaoPillarClient } from '../../../components/dao-pillar/shared/daoPillarClient';
+import { DaoPillarView } from '@seihouse/library/dao-pillar';
+import { useDaoPillarCalendar } from '@seihouse/library/dao-pillar';
+import { type DaoPillarClient } from '@seihouse/library/dao-pillar';
 import { createLocalDaoPillarClient } from './localDaoPillarClient';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'dao-pillar')!;

@@ -1,13 +1,5 @@
-import {
-  applyInferredStoryTags,
-  assertValidStorySeedInput,
-  normalizeStorySeedInput,
-  normalizeWorldBlueprint,
-  type StorySeedCharacter,
-  type StorySeedFaction,
-  type StorySeedInput,
-} from "../../../story-seed/shared/storySeedSchema";
-import type { WorldBlueprint } from "../../../story-seed/shared/types";
+import { applyInferredStoryTags, assertValidStorySeedInput, normalizeStorySeedInput, normalizeWorldBlueprint, type StorySeedCharacter, type StorySeedFaction, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { buildChapterContract } from "../lib/chapterHandoff";
 import type { SceneType } from "../lib/sceneRhythm";
 import { FIRST_CHAPTER_FALLBACK_SUMMARY, type ChapterMission } from "./chapterMission";

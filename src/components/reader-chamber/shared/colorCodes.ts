@@ -1,2 +1,2 @@
 /** Locked-reference adapter; not a published or live application surface. */
-export * from '../../../narrative/colorCodes';
+export * from '@seihouse/sen/color-codes';

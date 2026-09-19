@@ -1,5 +1,5 @@
-import { ARC_LENGTH } from '../../components/arc-goals/shared/arcGoals';
-import type { StorySeedInput } from "../../components/story-seed/shared/storySeedSchema";
+import { ARC_LENGTH } from '@seihouse/sen/arc-goals';
+import { type StorySeedInput } from '@seihouse/sen/story-seed';
 
 export const WORLD_BLUEPRINT_SYSTEM_PROMPT = `You are an elite light-novel creative director and world architect. Build a detailed World Blueprint that can serve as the canon bible for serialized chapter generation.
 

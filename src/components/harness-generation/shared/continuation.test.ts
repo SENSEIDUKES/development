@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { HarnessGenerationController } from './controller';
-import { HarnessCapabilityRegistry, resolveHarnessEntity, type HarnessCapabilityContext } from './capabilities';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
+import { HarnessCapabilityRegistry, resolveHarnessEntity, type HarnessCapabilityContext } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
-import { createHarnessSenStory } from './senAdapter';
+import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
 import { compileStoryInformationPacket } from './context';
 import { preserveSemanticEvents } from './responseAcceptance';
 import { buildHarnessMechanicalContinuity } from './mechanicalContinuity';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
-import type { HarnessGenerationModelAdapter, HarnessGenerationRequest } from '../../../narrative/generation';
+import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest } from '@seihouse/sen/harness-generation';
 
 const arcOperation = async (request: { storyInformation: { chapterNumber: number } }) => ({
   rawProviderResponse: JSON.stringify({ plan: { arcNumber: Math.floor((request.storyInformation.chapterNumber - 1) / 100) + 1, goals: [{ id: `arc-${request.storyInformation.chapterNumber}-goal`, text: 'Carry the story through its opening arc.', chapters: 100 }] }, destinedEnding: 'Bring the story to its true conclusion.' }),

@@ -1,5 +1,5 @@
-import type { StoryDetailDisplay } from '../../../components/light-novels-home/shared/storyDetailContracts';
-import type { WorldExpansionPreview } from '../../../components/light-novels-home/development/WorldExpressions';
+import { type StoryDetailDisplay } from '@seihouse/library/home';
+import { type WorldExpansionPreview } from '@seihouse/library/home';
 
 /** One local featured novel. Adaptations never enter the homepage catalog. */
 export const featuredNovel: StoryDetailDisplay = {

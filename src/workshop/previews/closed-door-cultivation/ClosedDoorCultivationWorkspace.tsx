@@ -50,9 +50,9 @@ function PreviewCanvas({
   onStateChange: (state: PreviewState) => void;
   daysCultivating?: number;
 }) {
-  const handleClaim = async (qi: number) => {
+  const handleClaim = async () => {
     await new Promise((resolve) => setTimeout(resolve, 800));
-    console.log(`[Preview] Claimed ${qi} Qi`);
+    console.log(`[Preview only] Acknowledged the ${qiEarned} Qi animation; no ledger award.`);
   };
 
   return (

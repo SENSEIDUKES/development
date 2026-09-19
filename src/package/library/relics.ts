@@ -12,4 +12,7 @@
 export { RelicCard, renderArtifactIcon } from '../../components/relics/shared/RelicCard';
 export { RelicModal } from '../../components/relics/shared/RelicModal';
 export { RelicReveal, type RelicRevealProps } from '../../components/relics/development/RelicReveal';
-export * from '../../components/relics/shared/types';
+export * from '../../library/relics/contracts';
+export * from '../../library/relics/model';
+export * from '../../library/relics/view';
+export * from '../../library/relics/client';

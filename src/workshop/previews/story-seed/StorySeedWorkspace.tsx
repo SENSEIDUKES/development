@@ -1,7 +1,7 @@
 import { startWorkshopHarnessStory } from '../harness-generation/storySeedHandoff';
 import type { InitialStoryGenerationPayload } from '@seihouse/sen/story-seed';
 import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigation';
-import { LIBRARY_DESTINATIONS } from '../../../components/library-shell/development/libraryRoutes';
+import { LIBRARY_DESTINATIONS } from '@seihouse/library/shell';
 import { lazy, useCallback, useEffect, useRef, useState } from 'react';
 import { CreationModal as DevelopmentCreationModal } from '@seihouse/library/story-seed';
 import { requestWorldBlueprint } from '../../../host/story-seed/blueprintGenerationClient';

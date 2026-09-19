@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createAuthorizedMediaCatalog, createRegisteredMediaPackCatalog, freezeMediaLoadout, mediaPackKey, validateMediaPack, type MediaPack } from '../library/media/mediaPacks';
-import { resolveAuthorizedSoundscape } from './media';
-import { resolveSoundscapeTrack, type SceneAudioTrack } from './soundscapes';
+import { createAuthorizedMediaCatalog, createRegisteredMediaPackCatalog, freezeMediaLoadout, mediaPackKey, validateMediaPack, type MediaPack } from '@seihouse/library/media';
+import { resolveAuthorizedSoundscape } from '@seihouse/sen/audio';
+import { resolveSoundscapeTrack, type SceneAudioTrack } from '@seihouse/sen/audio';
 
 const soundscape = (overrides: Record<string, unknown> = {}) => ({
   id: 'test.storm-soundscapes', version: '1.0.0', type: 'soundscape',

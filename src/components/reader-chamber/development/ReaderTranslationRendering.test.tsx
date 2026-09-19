@@ -1,17 +1,15 @@
 // @vitest-environment jsdom
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import React, { act, createRef } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SenLanguageCode } from '../../../lib/language';
-import type { ReaderChapter, ReaderPreferences, StoryBlock, StoryWorld } from '../../../narrative/story';
+import { type SenLanguageCode } from '@seihouse/sen/contracts';
+import { type ReaderChapter, type ReaderPreferences, type StoryBlock, type StoryWorld } from '@seihouse/sen/contracts';
 import { resetMockState } from '../shared/stubs';
-import {
-  buildReaderFacingChapter,
-  mergeReaderTranslation,
-} from '../shared/translation/readerFacing';
-import { validateReaderTranslationResponse } from '../shared/translation/validate';
-import { ReaderViewport } from './ReaderViewport';
+import { buildReaderFacingChapter, mergeReaderTranslation } from '@seihouse/sen/translation';
+import { validateReaderTranslationResponse } from '@seihouse/sen/translation';
+import { ReaderViewport } from '@seihouse/sen/reader-chamber';
 
 // World Cue controls mount a real playback adapter; the Reader's own audio
 // stack is not what this file is testing.
@@ -73,6 +71,7 @@ const chapter = (): ReaderChapter => ({
     relatedEntity: { name: 'Ashen Sword', type: 'artifact' },
     cue: {
       publicUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_1.mp3',
+      provenance: { catalogId: 'test-cues', version: '1' },
     },
   }],
 });

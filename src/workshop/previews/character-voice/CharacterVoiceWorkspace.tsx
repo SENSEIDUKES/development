@@ -97,7 +97,7 @@ export function CharacterVoiceWorkspace() {
                 voiceStatus={status}
                 isGenerating={false}
                 canGenerate
-                isFreeUserOnHubStory={false}
+                manifestationRestricted={false}
                 onQuoteTap={handleQuoteTap}
                 canDownloadVoice={canDownloadVoice(character)}
                 onDownloadVoice={() => handleDownloadVoice(character)}

@@ -10,7 +10,7 @@
  * the shared Stage 2 planner, while no production code path reads from this
  * file yet. Written to be easy to lift into Light-Novels once approved.
  */
-import type { ChapterHandoff } from '../../../../narrative/chapter';
+import { type ChapterHandoff } from '@seihouse/sen/generation';
 
 export type SceneType = "worldBuilding" | "conflict" | "progression";
 

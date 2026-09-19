@@ -1,5 +1,5 @@
 /**
- * `@seihouse/sen/chapter-generation` — the DEV Chapter Generation surface.
+ * Former public Chapter Generation surface, now a DEV-only diagnostic.
  *
  * The live one- and five-chapter test flow, Diagnostics workspace, Reader
  * handoff views, and the canonical Story Seed → packet → four-stage pipeline
@@ -7,8 +7,8 @@
  * Workshop adapters, fixtures, and locked Reference inspector stay outside
  * this client package entry.
  */
-import '../../components/reader-chamber/shared/reader-chamber.css';
-import '../../components/reader-codex/shared/reader-codex.css';
+import '@seihouse/sen/styles.css';
+import '@seihouse/sen/styles.css';
 
 export {
   default as ChapterGenerationTestFlow,
@@ -36,8 +36,8 @@ export {
 
 export * from '../../components/chapter-generation/shared/batch/chapterBatch';
 export * from '../../components/chapter-generation/shared/liveChapterGeneration';
-export * from '../../narrative/acceptedChapterMedia';
-export * from '../../narrative/manifestNormalizer';
+export * from '@seihouse/sen/generation';
+export * from '@seihouse/sen/generation';
 export * from '../../components/chapter-generation/shared/packets/index';
 export * from '../../components/chapter-generation/shared/pipeline/assembleChapterPacket';
 export * from '../../components/chapter-generation/shared/pipeline/chapterEffectRules';
@@ -46,4 +46,4 @@ export * from '../../components/chapter-generation/shared/pipeline/runChapterPip
 export * from '../../components/chapter-generation/shared/pipeline/types';
 export * from '../../components/chapter-generation/shared/pipeline/usage';
 export * from '../../components/chapter-generation/shared/reviewExports';
-export * from '../../narrative/chapter';
+export * from '@seihouse/sen/generation';

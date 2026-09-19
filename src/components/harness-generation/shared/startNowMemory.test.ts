@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import fixture from './fixtures/startNowMemory.json';
-import { HarnessGenerationController } from './controller';
+import fixture from '../../../test-utils/fixtures/startNowMemory.json';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
-import { buildCanonicalStoryView } from './canonicalState';
+import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
 import { compileStoryInformationPacket } from './context';
-import type { HarnessGenerationResponse } from '../../../narrative/generation';
+import { type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 
 const response = (value: unknown): HarnessGenerationResponse => ({
   rawProviderResponse: JSON.stringify(value), providerReceipt: { provider: 'captured-gemini', model: 'fixture',

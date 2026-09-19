@@ -4,7 +4,7 @@
  * is the token-budget allocator that decides which context sections get
  * included, demoted to brief, or dropped under the 24k v2 memory+history cap.
  */
-import { ChapterContract, ContextBlock, ContextManifestSection, ContextManifestSectionKey } from '../../../../narrative/chapter';
+import { ChapterContract, ContextBlock, ContextManifestSection, ContextManifestSectionKey } from '@seihouse/sen/generation';
 import { renderChapterContractLines } from "./chapterHandoff";
 import { estimateTokens } from "./helpers";
 import { RenderedEntityCard } from "./entityCards";

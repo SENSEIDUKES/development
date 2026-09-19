@@ -1,16 +1,20 @@
 import { createElement } from 'react';
+import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
+import { createLibraryMediaPort } from '@seihouse/library/media';
+
+const media = createLibraryMediaPort({ registered: [], entitlements: [], base: LIBRARY_BASE_MEDIA });
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { DevAudioPlaybackProvider } from '../../../audio/DevAudioPlayback';
-import { InlineAudioText } from '../../reader-chamber/development/InlineAudio';
-import { SystemBlock } from '../../reader-chamber/development/SystemBlock';
-import type { SystemEvent } from '../../../narrative/story';
-import { HarnessGenerationController } from './controller';
+import { InlineAudioText } from '@seihouse/sen/reader-chamber';
+import { SystemBlock } from '@seihouse/sen/cards';
+import { type SystemEvent } from '@seihouse/sen/cards';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { acceptHarnessModelResponse } from './responseAcceptance';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
-import { createHarnessSenStory } from './senAdapter';
-import { HARNESS_GENERATION_SCHEMA_VERSION } from '../../../narrative/generation';
-import type { HarnessGenerationModelAdapter, HarnessGenerationRequest, HarnessGenerationResponse } from '../../../narrative/generation';
+import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
+import { HARNESS_GENERATION_SCHEMA_VERSION } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 
 const response = (rawProviderResponse: string): HarnessGenerationResponse => ({
   rawProviderResponse,
@@ -119,7 +123,7 @@ describe('HARNESS canonical structured chapter and media path', () => {
   it('commits, reloads, and adapts every signal family into HARNESS-built blocks and resolved media', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const raw = JSON.stringify(mediaChapter());
-    const controller = new HarnessGenerationController({ repository, modelAdapter: adapter(raw) });
+    const controller = new HarnessGenerationController({ repository, media, modelAdapter: adapter(raw) });
     await controller.hydrate();
     const story = await controller.createStory({
       premise: 'Mara confronts a debt spirit in a rain-soaked courtyard.',
@@ -169,14 +173,14 @@ describe('HARNESS canonical structured chapter and media path', () => {
         triggerPhrase: 'the fox growled',
         sourceCategory: 'beasts',
         relatedEntity: { name: 'Vermilion Debt Fox', type: 'creature' },
-        cue: { publicUrl: expect.stringContaining('/Beasts/Growl/') },
+        cue: expect.objectContaining({ publicUrl: expect.stringContaining('/Beasts/Growl/'), provenance: { catalogId: 'library-default-cues', version: '1' } }),
       }),
     ]);
     expect(committed.chapters[0].soundscapes).toEqual([
       expect.objectContaining({ blockId: 'c1-p1', intent: expect.objectContaining({ mood: 'tension', region: 'chinese' }) }),
     ]);
 
-    const reloaded = new HarnessGenerationController({ repository, modelAdapter: adapter('{}') });
+    const reloaded = new HarnessGenerationController({ repository, media, modelAdapter: adapter('{}') });
     await reloaded.hydrate();
     const readerStory = createHarnessSenStory(reloaded.snapshot(), story.id);
     const readerChapter = readerStory.arcs[0].chapters[0];
@@ -210,7 +214,7 @@ describe('HARNESS canonical structured chapter and media path', () => {
   it('keeps a prose-only chapter on the normal generation and Reader path', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const raw = JSON.stringify({ prose: 'Mara crossed the quiet courtyard.', arcCompletion: { goalId: 'arc-1-opening', completed: false, evidence: '' } });
-    const controller = new HarnessGenerationController({ repository, modelAdapter: adapter(raw) });
+    const controller = new HarnessGenerationController({ repository, media, modelAdapter: adapter(raw) });
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'Mara crosses a quiet city.', destinedEnding: 'Reach home.', initialArcPlan: { arcNumber: 1, goals: [{ id: 'arc-1-opening', text: 'Reach home.', chapters: 100 }] } });
     await controller.generateNextChapter(story.id, 'fixture');
@@ -238,14 +242,14 @@ describe('HARNESS canonical structured chapter and media path', () => {
 
     const repository = new FailStructuredCommitRepository();
     const model = adapter(JSON.stringify(mediaChapter()));
-    const controller = new HarnessGenerationController({ repository, modelAdapter: model });
+    const controller = new HarnessGenerationController({ repository, media, modelAdapter: model });
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'Mara faces the debt fox.', destinedEnding: 'Return home.', initialArcPlan: { arcNumber: 1, goals: [{ id: 'arc-1-opening', text: 'Face the debt fox.', chapters: 100 }] } });
     await controller.generateNextChapter(story.id, 'fixture');
     expect(controller.snapshot().attempts[0]).toMatchObject({ stage: 'accepted_not_durable', recoveryStage: 'committed' });
     expect(controller.snapshot().attempts[0].acceptedDraft?.blocks?.[0].metadata?.entities?.[0].mention).toBe('reveal');
 
-    const reloaded = new HarnessGenerationController({ repository, modelAdapter: model });
+    const reloaded = new HarnessGenerationController({ repository, media, modelAdapter: model });
     await reloaded.hydrate();
     await reloaded.retryAppropriateStage(reloaded.snapshot().attempts[0].id);
     expect(model.generate).toHaveBeenCalledTimes(1);

@@ -1,230 +1,86 @@
-/**
- * The packages DEV publishes, and the boundary each one is held to.
- *
- * `@seihouse/sen` is the portable expanded-narrative engine: an author or
- * company installs it inside their own application and supplies their own
- * writing, branding, storage, authentication, and generation method.
- * `@seihouse/library` is SEIHouse's first-party host application — the
- * branded implementation of SEN. Library may depend on SEN; SEN must never
- * depend on Library, and neither may reach the Workshop shell, its previews
- * and mocks, or `src/server/`.
- *
- * Every build, boundary, and smoke script reads these descriptors, so the
- * two packages stay verified the same way.
- */
-
-/** Import paths no published package may reach, whichever lane it is in. */
+/** Build and packed-consumer expectations. Entries come from manifests. */
 const NEVER_PUBLISHED = [
-  ['src/workshop/', 'Workshop shell or preview mock'],
-  ['src/server/', 'server module'],
-  ['src/components/card-workshop/', 'Workshop-only card workshop view'],
+  ['src/workshop/', 'Workshop module'], ['src/server/', 'backend module'],
+  ['src/host/', 'concrete host adapter'], ['src/test-utils/', 'test support'],
+  ['workshop.reader.', 'Workshop storage'], ['IndexedDBHarnessGenerationRepository', 'concrete persistence'],
 ];
-
-/** Source directories owned by the Library lane. */
-export const LIBRARY_OWNED = [
-  'src/components/closed-door-cultivation/',
-  'src/components/relics/',
-  'src/package/library/',
-  'src/components/library/',
-  'src/components/library-presentation/',
-];
-
+const common = id => ({
+  id, name: '@seihouse/' + id, sourceDirectory: 'src/package/' + id, distDirectory: 'dist/' + id,
+  styleSheet: id + '.css', viteConfig: id === 'sen' ? 'vite.package.config.ts' : 'vite.library.config.ts',
+  tsconfig: id === 'sen' ? 'tsconfig.package.json' : 'tsconfig.library.json', assets: [],
+});
 export const PACKAGE_TARGETS = {
   sen: {
-    id: 'sen',
-    name: '@seihouse/sen',
-    sourceDirectory: 'src/package/sen',
-    distDirectory: 'dist/sen',
-    styleSheet: 'sen.css',
-    /** Entries that carry no styling and must not import the stylesheet. */
-    unstyledEntries: ['audio', 'presentation', 'index'],
-    viteConfig: 'vite.package.config.ts',
-    tsconfig: 'tsconfig.package.json',
-    forbiddenBundleContents: [
-      ...NEVER_PUBLISHED,
-      ['@seihouse/library-ui', 'Library UI dependency'],
-      ...LIBRARY_OWNED.map(path => [path, 'Library-owned surface']),
-    ],
-    /** Runtime assets the published components address from root paths. */
-    assets: [
-      'favicon.jpg',
-      'manifest-backdrops/immortal-land-1.jpg',
-      'manifest-backdrops/immortal-land-2.jpg',
-      'manifest-backdrops/immortal-land-3.jpg',
-      'manifest-backdrops/immortal-land-4.jpg',
-      'manifest-backdrops/immortal-land-5.jpg',
-      'story-seed/library-auth-backdrop.jpg',
-    ],
-    /** Tarballs a smoke consumer must install before this one. */
-    typeDependencies: [],
-    smokeDependencies: [],
-    /** Named exports the packed consumer must be able to import and bundle. */
+    ...common('sen'),
+    unstyledEntries: ['index', 'audio', 'contracts', 'generation', 'reader-runtime', 'translation', 'arc-goals', 'harness-generation', 'presentation'],
+    forbiddenBundleContents: [...NEVER_PUBLISHED, ['@seihouse/library', 'Library dependency'], ['celestialaudio.seihouse.org', 'first-party catalog'], ['library-auth-backdrop', 'Library auth artwork']],
+    typeDependencies: [], smokeDependencies: [],
     smokeExports: {
       '@seihouse/sen': ['NarrativePresentationProvider', 'SEN_PACKAGE_VERSION'],
-      '@seihouse/sen/presentation': ['NarrativePresentationProvider', 'NarrativeTextBox', 'AmbientEffect'],
-      '@seihouse/sen/color-codes': [
-        'COLOR_CODES',
-        'getColorCodeValue',
-        'resolveCharacterRelationshipColorCode',
-        'resolveCodexEntityColorCode',
-        'resolveLocationColorCode',
-        'resolveSystemOutcomeColorCode',
-      ],
-      '@seihouse/sen/cards': [
-        'SEICard',
-        'CodexCard',
-        'CodexHovercard',
-        'CharacterCard',
-        'LocationCard',
-        'resolveCodexEntityAccent',
-        'SystemBlock',
-        'WorldNotice',
-        'FateResultCard',
-        'resolveSystemPromptRoute',
-        'normalizeFateResultData',
-        'normalizeSystemPromptChanges',
-        'normalizeSystemPromptRows',
-        'normalizeSystemStatusScreen',
-        'normalizeWorldNoticeData',
-      ],
-      '@seihouse/sen/reader-chamber': [
-        'ReaderChamber',
-        'ReaderViewport',
-        'SystemBlock',
-        'WorldNotice',
-        'FateResultCard',
-        'resolveSystemPromptRoute',
-      ],
+      '@seihouse/sen/presentation': ['NarrativeArtProvider', 'NarrativeTextBox', 'AmbientEffect'],
+      '@seihouse/sen/contracts': ['DEFAULT_SEN_LANGUAGE_CODE'],
+      '@seihouse/sen/color-codes': ['COLOR_CODES', 'getColorCodeValue', 'resolveCharacterRelationshipColorCode'],
+      '@seihouse/sen/cards': ['CodexCard', 'CodexHovercard', 'CharacterCard', 'LocationCard', 'SystemBlock', 'WorldNotice', 'FateResultCard'],
+      '@seihouse/sen/reader-chamber': ['ReaderChamber', 'ReaderViewport'],
       '@seihouse/sen/reader-codex': ['ReaderCodex', 'CodexSheetOverlay'],
-      '@seihouse/sen/manifestations': ['ManifestationChamber', 'ManifestationReveal'],
-      '@seihouse/sen/audio': ['loadLibraryCues', 'resolveWorldCueIntent'],
-      '@seihouse/sen/story-seed': ['CreationModal', 'createEmptyStorySeedInput', 'parseStorySeedJson'],
-      '@seihouse/sen/chapter-generation': [
-        'ChapterGenerationTestFlow',
-        'adaptFinalizedStorySeedToChapterContracts',
-        'runFiveChapterBatch',
-      ],
-      '@seihouse/sen/harness-generation': [
-        'HarnessGenerationWorkspace',
-        'HarnessGenerationController',
-        'HARNESS_GENERATION_INDEXED_DB_NAME',
-      ],
-      // The compatibility aliases kept for one version.
-      '@seihouse/sen/codex-cards': ['CodexCard'],
+      '@seihouse/sen/reader-runtime': ['ReaderRuntimeProvider'],
+      '@seihouse/sen/translation': ['ReaderTranslationController', 'ReaderTranslationRuntimeProvider'],
+      '@seihouse/sen/manifestations': ['ManifestationReveal'],
+      '@seihouse/sen/audio': ['parseAudioCues', 'createMediaCatalog', 'resolveWorldCueIntent', 'NarrativeAudioProvider'],
+      '@seihouse/sen/story-seed': ['StoryFoundationEditor', 'createEmptyStorySeedInput', 'parseStorySeedJson'],
+      '@seihouse/sen/generation': ['acceptChapterMedia'],
+      '@seihouse/sen/harness-generation': ['HarnessGenerationController', 'createHarnessSenStory'],
+      '@seihouse/sen/arc-goals': ['ARC_LENGTH'],
     },
-    /** Public types the packed consumer must be able to resolve. */
     smokeTypes: `
-      import type { CreationModalProps, StorySeedInput } from '@seihouse/sen/story-seed';
-      import type { ChapterContent, FiveChapterBatchState, ManifestChapterRequest } from '@seihouse/sen/chapter-generation';
-      import type { HarnessGenerationWorkspaceProps, HarnessStory } from '@seihouse/sen/harness-generation';
-      import type { ColorCodeId, ColorCodeDefinition } from '@seihouse/sen/color-codes';
-      import type {
-        CodexCardProps,
-        FateResultCardProps,
-        FateResultData,
-
-        SystemBlockProps,
-        SystemEvent,
-        SystemPromptBadge,
-        SystemPromptChange,
-        SystemPromptExpandedData,
-        SystemPromptPresentation,
-        SystemPromptRoute,
-        SystemPromptRoutePresentation,
-        SystemStatusAbility,
-        SystemStatusBar,
-        SystemStatusEffect,
-        SystemStatusScreen,
-        SystemStatusStat,
-        WorldNoticeData,
-        WorldNoticeEntry,
-        WorldNoticeProps,
-      } from '@seihouse/sen/cards';
-      import type {
-        ReaderChapter,
-      } from '@seihouse/sen/reader-chamber';
-      declare const creation: CreationModalProps;
-      declare const seed: StorySeedInput;
-      declare const batch: FiveChapterBatchState;
-      declare const request: ManifestChapterRequest;
-      declare const harnessWorkspace: HarnessGenerationWorkspaceProps;
-      declare const harnessStory: HarnessStory;
-      declare const generatedBlock: NonNullable<ChapterContent['blocks']>[number];
-      declare const colorCode: ColorCodeId;
-      declare const colorCodeDefinition: ColorCodeDefinition;
-      declare const codexCard: CodexCardProps;
-      declare const card: import('@seihouse/ui').SEICardProps;
-      declare const fateResultCard: FateResultCardProps;
-      declare const systemBlock: SystemBlockProps;
-      declare const systemRoute: SystemPromptRoute;
-      declare const systemRoutePresentation: SystemPromptRoutePresentation;
-      declare const worldNotice: WorldNoticeProps;
-      declare const fateResult: FateResultData;
-      declare const systemEvent: SystemEvent;
-      declare const systemPromptBadge: SystemPromptBadge;
-      declare const systemPromptChange: SystemPromptChange;
-      declare const systemPromptPresentation: SystemPromptPresentation;
-      declare const systemPromptExpanded: SystemPromptExpandedData;
-      declare const systemStatusAbility: SystemStatusAbility;
-      declare const systemStatusBar: SystemStatusBar;
-      declare const systemStatusEffect: SystemStatusEffect;
-      declare const systemStatusScreen: SystemStatusScreen;
-      declare const systemStatusStat: SystemStatusStat;
-      declare const worldNoticeData: WorldNoticeData;
-      declare const worldNoticeEntry: WorldNoticeEntry;
-      declare const readerChapter: ReaderChapter;
-      const readerBlock: NonNullable<ReaderChapter['blocks']>[number] = generatedBlock;
-      void [
-        creation, seed, batch, request, harnessWorkspace, harnessStory, generatedBlock, colorCode, colorCodeDefinition, codexCard, card,
-        fateResultCard, systemBlock, systemRoute, systemRoutePresentation, worldNotice,
-        fateResult, systemEvent, systemPromptBadge, systemPromptChange, systemPromptPresentation, systemPromptExpanded,
-        systemStatusAbility, systemStatusBar, systemStatusEffect, systemStatusScreen, systemStatusStat,
-        worldNoticeData, worldNoticeEntry, readerChapter, readerBlock,
-      ];
+      import type { StoryWorld, StoryBlock, ReaderChapter, NarrativeUsagePort } from '@seihouse/sen/contracts';
+      import type { ReaderRuntime } from '@seihouse/sen/reader-runtime';
+      import type { StorySeedInput, StorySeedRepository } from '@seihouse/sen/story-seed';
+      import type { HarnessStory, HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
+      import type { ChapterContent } from '@seihouse/sen/generation';
+      import type { FrozenNarrativeMedia, NarrativeAudioPlayback } from '@seihouse/sen/audio';
+      interface PublisherAccount { publisherUserId: string; imprint: string }
+      declare const account: PublisherAccount;
+      declare const repository: StorySeedRepository;
+      declare const customSeed: StorySeedInput;
+      void repository.create(account.publisherUserId, customSeed, undefined, 'en');
+      declare const block: NonNullable<ChapterContent['blocks']>[number];
+      const readerBlock: NonNullable<ReaderChapter['blocks']>[number] = block;
+      type All = [StoryWorld, StoryBlock, NarrativeUsagePort, ReaderRuntime, StorySeedInput, HarnessStory, HarnessGenerationModelAdapter, FrozenNarrativeMedia, NarrativeAudioPlayback, PublisherAccount];
+      void readerBlock;
     `,
   },
-
   library: {
-    id: 'library',
-    name: '@seihouse/library',
-    sourceDirectory: 'src/package/library',
-    distDirectory: 'dist/library',
-    // Library adds no stylesheet of its own: its surfaces are Tailwind-only
-    // and use the host import of `@seihouse/library-ui/styles.css`.
-    styleSheet: 'library.css',
-    unstyledEntries: ['index', 'cultivation', 'relics', 'presentation'],
-    viteConfig: 'vite.library.config.ts',
-    tsconfig: 'tsconfig.library.json',
+    ...common('library'),
+    unstyledEntries: ['index', 'cultivation', 'energy', 'dao-pillar', 'media', 'presentation'],
     forbiddenBundleContents: NEVER_PUBLISHED,
-    assets: [],
-    /**
-     * Library resolves `@seihouse/sen/*` to SEN's emitted declarations, so the
-     * SEN package must be built first. `scripts/requirePackageTypes.mjs`
-     * enforces this before `tsc` runs.
-     */
-    typeDependencies: ['sen'],
-    smokeDependencies: ['sen'],
+    typeDependencies: ['sen'], smokeDependencies: ['sen'],
     smokeExports: {
-      '@seihouse/library': ['LIBRARY_PACKAGE_VERSION', 'RelicCard', 'ClosedDoorCultivationModal'],
+      '@seihouse/library': ['LIBRARY_PACKAGE_VERSION'],
       '@seihouse/library/presentation': ['LibraryPresentationProvider'],
-      '@seihouse/library/cultivation': ['ClosedDoorCultivationModal'],
-      '@seihouse/library/relics': ['RelicCard', 'RelicModal', 'RelicReveal'],
+      '@seihouse/library/profile': ['LibraryProfile', 'UserProfileServicesProvider'],
+      '@seihouse/library/energy': ['EnergyPanel', 'EnergyClientProvider', 'createHttpEnergyClient'],
+      '@seihouse/library/cultivation': ['ClosedDoorCultivationModal', 'QiClientProvider', 'createHttpQiClient', 'getDaoRankData'],
+      '@seihouse/library/dao-pillar': ['DaoPillarView', 'DaoPillarClientProvider'],
+      '@seihouse/library/relics': ['RelicCard', 'RelicModal', 'RelicReveal', 'projectEarnedRelic'],
+      '@seihouse/library/shell': ['LibraryNavigation', 'WorkspaceShell', 'WorkspaceHeader'],
+      '@seihouse/library/home': ['LightNovelsHome', 'StoryDetailScreen'],
+      '@seihouse/library/story-seed': ['CreationModal', 'StoryCreationProvider'],
+      '@seihouse/library/generation': ['HarnessGenerationWorkspace'],
+      '@seihouse/library/media': ['createLibraryMediaPort', 'validateMediaPack'],
+      '@seihouse/library/manifestations': ['AILoadingVeil'],
     },
     smokeTypes: `
-      import type { ClosedDoorCultivationModalProps } from '@seihouse/library/cultivation';
-      import type { CosmicArtifact, RelicRevealProps } from '@seihouse/library/relics';
-      declare const cultivation: ClosedDoorCultivationModalProps;
-      declare const artifact: CosmicArtifact;
-      declare const reveal: RelicRevealProps;
-      void [cultivation, artifact, reveal];
+      import type { UserProfileServices } from '@seihouse/library/profile';
+      import type { EnergyClient } from '@seihouse/library/energy';
+      import type { QiClient } from '@seihouse/library/cultivation';
+      import type { EarnedRelicRecord, RelicsClient } from '@seihouse/library/relics';
+      import type { HarnessGenerationWorkspaceProps } from '@seihouse/library/generation';
+      type All = [UserProfileServices, EnergyClient, QiClient, EarnedRelicRecord, RelicsClient, HarnessGenerationWorkspaceProps];
     `,
   },
 };
-
 export const resolveTarget = id => {
-  const target = PACKAGE_TARGETS[id];
-  if (!target) {
-    throw new Error(`Unknown package target "${id}" — expected one of ${Object.keys(PACKAGE_TARGETS).join(', ')}.`);
-  }
-  return target;
+  if (!PACKAGE_TARGETS[id]) throw new Error('Unknown package target: ' + id);
+  return PACKAGE_TARGETS[id];
 };

@@ -6,6 +6,7 @@ import { defineConfig } from 'vite';
 import { resolveTarget } from './scripts/packageTargets.mjs';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { packageAliases } from './scripts/packageAliases.mjs';
 
 /**
  * Shared build configuration for the packages DEV publishes:
@@ -79,6 +80,7 @@ export const createPackageBuildConfig = (options: PackageBuildOptions) => {
   const target = resolveTarget(options.target) as PackageTarget;
   return defineConfig({
   plugins: [react(), tailwindcss()],
+  resolve: { alias: packageAliases.filter(alias => alias.replacement.replaceAll('\\', '/').includes(`/src/package/${options.target}/`)) },
   // The application public directory also contains Workshop-only screenshot
   // fixtures. Package runtime assets are copied from an explicit allow-list by
   // `finalizePackage.mjs` instead of publishing that entire directory.

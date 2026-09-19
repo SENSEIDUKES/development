@@ -157,7 +157,7 @@ export interface EnergyHttpError {
     | 'unavailable';
 }
 
-export const ENERGY_API_PATH = '/api/energy';
+export const ENERGY_API_PATH = '/api/library-economy?capability=energy';
 
 /** How many recent ledger lines a snapshot carries. */
 export const ENERGY_ACTIVITY_LIMIT = 25;

@@ -1,9 +1,5 @@
-import {
-  ENERGY_PRICE_CATALOG,
-  type EnergyAccountSnapshot,
-  type EnergyHttpError,
-} from '../../components/energy/shared/energyContracts';
-import type { EnergyPrincipalResolver } from './authentication';
+import { ENERGY_PRICE_CATALOG, type EnergyAccountSnapshot, type EnergyHttpError } from '@seihouse/library/energy';
+import type { PrincipalResolver } from '../identity/authentication';
 import {
   EnergyConflictError,
   EnergyNotFoundError,
@@ -26,7 +22,7 @@ export interface EnergyHttpResponse {
 
 export interface EnergyHttpDependencies {
   service: EnergyService;
-  resolvePrincipal: EnergyPrincipalResolver;
+  resolvePrincipal: PrincipalResolver;
   onError?: (error: unknown) => void;
 }
 

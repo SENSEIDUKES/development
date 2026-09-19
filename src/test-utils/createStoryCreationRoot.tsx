@@ -1,4 +1,5 @@
-import { createRoot as createDomRoot, type Root, type RootOptions } from 'react-dom/client';
+import type { Root, RootOptions } from 'react-dom/client';
+import { createRoot as createDomRoot } from './createLibraryRoot';
 import { StoryCreationPreviewRuntime } from '../workshop/StoryCreationPreviewRuntime';
 
 /** Test-owned host injection; Library itself never installs a preview default. */

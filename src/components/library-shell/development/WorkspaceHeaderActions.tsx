@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton } from '../../../presentation';
+import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton } from '@seihouse/sen/presentation';
 import { MoreHorizontal, type LucideIcon } from 'lucide-react';
 import './workspace-header.css';
 

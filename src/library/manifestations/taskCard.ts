@@ -1,12 +1,7 @@
 import type { LoadingTaskCard, LoadingPhase } from '@seihouse/sen/manifestations';
 export interface LoadingAgentPresentation { id: string; name: string; logoUrl: string; colorClass: string }
 export type { LoadingTaskCard } from '@seihouse/sen/manifestations';
-import {
-  buildManifestationSpec,
-  type ManifestationSpec,
-  type MediaRevealState,
-  type RevealedMediaAsset,
-} from '../../components/chapter-manifestation/shared/manifestation';
+import { buildManifestationSpec, type ManifestationSpec, type MediaRevealState, type RevealedMediaAsset } from '@seihouse/sen/manifestations';
 
 /**
  * LoadingTaskCard — the single interchangeable format every loading

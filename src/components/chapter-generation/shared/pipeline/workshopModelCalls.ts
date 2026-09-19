@@ -10,7 +10,7 @@ import {
   type SceneType,
 } from "../lib/sceneRhythm";
 import { createArcChapterPosition } from "../packets/livingStoryState";
-import type { ChapterHandoff } from '../../../../narrative/chapter';
+import { type ChapterHandoff } from '@seihouse/sen/generation';
 import type {
   ChapterEffectSelection,
   ChapterPlan,

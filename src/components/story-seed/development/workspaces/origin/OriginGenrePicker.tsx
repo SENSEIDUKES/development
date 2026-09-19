@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { GENRE_PRESETS } from '../../constants';
-import { NarrativeTextBox as LibraryTextBox } from '../../../../../presentation';
+import { NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { workspaceCompactLabelClass } from '../WorkspaceShell';
 import { handleRadioGroupKeyDown, radioGroupTabIndex } from '../../radioGroupKeyboard';
 

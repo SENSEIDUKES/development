@@ -2,8 +2,8 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { SEN_LANGUAGES, isSenLanguageCode } from '../../../lib/language';
-import type { UserProfile } from './types';
+import { SEN_LANGUAGES, isSenLanguageCode } from '@seihouse/sen/contracts';
+import { type UserProfile } from '@seihouse/library/profile';
 
 const SOURCE_ROOT = fileURLToPath(new URL('../../..', import.meta.url));
 

@@ -1,3 +1,4 @@
+import { loadLibraryCues } from '../../../host/media/libraryCatalog';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ReaderViewport,
@@ -85,12 +86,12 @@ const CONTEXT_WORLD_CUE_INTENTS = [
 const CONTEXT_AUDIO_MOMENTS = (() => {
   const resolution = resolveChapterAudioMoments(
     [{ id: CONTEXT_OPENING_BLOCK_ID, text: CONTEXT_OPENING_TEXT }],
-    CONTEXT_WORLD_CUE_INTENTS,
+    CONTEXT_WORLD_CUE_INTENTS, loadLibraryCues(),
   );
   if (resolution.issues.length > 0) {
     throw new Error('Card Workshop World Cue fixture failed validation.');
   }
-  return resolution.audioMoments;
+  return resolution.audioMoments.map(moment => ({ ...moment, cue: { ...moment.cue, provenance: { catalogId: 'library-default-cues', version: '1' } } }));
 })();
 
 const CONTEXT_READER_PREFERENCES: ReaderPreferences = {

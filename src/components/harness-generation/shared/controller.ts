@@ -9,6 +9,9 @@ import {
   reviseStoryFoundation,
 } from './foundation';
 import { compileStoryInformationPacket } from './context';
+import { createHarnessSenStory } from './senAdapter';
+import { diffHarnessReaderPatch } from './readerEdits';
+import type { ReaderCodexStoryPatchUpdater } from '../../../narrative/story';
 import { isTranslationSkillCompatible, translationCompatibilityError } from '../../../narrative/translationSkill';
 import { buildImmediateChapterRequest } from './immediateChapterRequest';
 import { appendHarnessCorrection, type AppendHarnessCorrectionInput } from './canonicalState';
@@ -361,10 +364,35 @@ export class HarnessGenerationController {
 
   async addCorrection(storyId: string, input: AppendHarnessCorrectionInput) {
     this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the active operation before changing canon.');
     if (!findStory(this.state, storyId)) throw new Error('Open a Harness story before adding a correction.');
-    const corrected = appendHarnessCorrection(this.state, storyId, input, this.runtime);
-    await this.persist(corrected.state);
-    return cloneHarnessValue(corrected.correction);
+    this.generating = true;
+    try {
+      const corrected = appendHarnessCorrection(this.state, storyId, input, this.runtime);
+      await this.persist(corrected.state);
+      return cloneHarnessValue(corrected.correction);
+    } finally { this.generating = false; }
+  }
+
+  /** Reader/Codex edits use the same repository and correction journal as all HARNESS canon. */
+  async updateReaderStory(storyId: string, chapterNumber: number, updates: ReaderCodexStoryPatchUpdater): Promise<void> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the active operation before editing the Reader.');
+    if (!Number.isSafeInteger(chapterNumber) || chapterNumber < 1) throw new Error('Choose a valid chapter.');
+    if (!findStory(this.state, storyId)) throw new Error('Open a Harness story before editing the Reader.');
+    if (activeAttemptForStory(this.state, storyId)) throw new Error('Recover the pending chapter before editing the Reader.');
+    this.generating = true;
+    try {
+      const before = createHarnessSenStory(this.state, storyId, chapterNumber);
+      const patch = typeof updates === 'function' ? updates(before) : updates;
+      const changes = diffHarnessReaderPatch(before, patch);
+      if (!changes.length) return;
+      const corrected = appendHarnessCorrection(this.state, storyId, { kind: 'reader-edit', reason: 'Author edit from Reader/Codex.' }, this.runtime);
+      corrected.correction.readerEdit = { chapterNumber, changes };
+      // appendHarnessCorrection clones the state: update its stored journal entry too.
+      corrected.state.corrections.find(item => item.id === corrected.correction.id)!.readerEdit = corrected.correction.readerEdit;
+      await this.persist(corrected.state);
+    } finally { this.generating = false; }
   }
 
   async steerStory(storyId: string, direction: string, mode: 'future' | 'revise-history' = 'future') {

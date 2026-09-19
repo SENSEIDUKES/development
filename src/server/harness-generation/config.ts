@@ -1,4 +1,4 @@
-import type { HarnessGenerationServerInfo } from '../../narrative/generation';
+import { type HarnessGenerationServerInfo } from '@seihouse/sen/harness-generation';
 
 export type HarnessGenerationEnvironment = Record<string, string | undefined>;
 

@@ -25,10 +25,8 @@ import {
  *   - reduced-motion handling for the tap press feedback (vessels own
  *     their own artwork motion).
  *
- * It deliberately owns NO artwork. The vessel — passed as the `vessel` prop
- * — renders the visual content for the current state. The current vessel
- * is the celestial scroll (`development/vessels/CelestialScrollVessel`),
- * but the mechanic's contract is vessel-agnostic.
+ * It deliberately owns NO artwork. The host-supplied `vessel` renders the
+ * visual content for the current state; the contract is vessel-agnostic.
  *
  * Caller ownership: the reveal NEVER advances its own state. The caller
  * owns every transition; `onUnseal` is a tap notification, not a state

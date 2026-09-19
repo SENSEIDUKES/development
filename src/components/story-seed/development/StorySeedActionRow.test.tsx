@@ -4,7 +4,7 @@ import { act } from 'react';
 import { type Root } from 'react-dom/client';
 import { createRoot } from '../../../test-utils/createStoryCreationRoot';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { createEmptyStorySeedInput } from '../shared/storySeedSchema';
+import { createEmptyStorySeedInput } from '@seihouse/sen/story-seed';
 import { StorySeedWorkspaceChrome } from './StorySeedWorkspaceChrome';
 
 vi.mock('../../../audio/playback', () => ({ useNarrativeAudio: () => ({

@@ -1,8 +1,8 @@
 import { memo, type Dispatch, type SetStateAction } from 'react';
 import { GitBranch, HelpCircle, Shield } from 'lucide-react';
-import { SENCharactersIcon } from '../../../sen-icons';
-import type { WorldBlueprint } from '../../shared/types';
-import { NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea } from '../../../../presentation';
+import { LibraryCharactersIcon as SENCharactersIcon } from '@seihouse/library-ui';
+import { type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea } from '@seihouse/sen/presentation';
 import { BlueprintSectionHeading, EditableChip } from './BlueprintDossierPrimitives';
 
 interface BlueprintCollectionSectionsProps {

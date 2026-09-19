@@ -11,7 +11,7 @@ import { aggregateChapterTokenUsage } from './pipeline/usage';
 import type { LivingStoryCharacterState, LivingStoryCodex, LivingStoryState, LivingStoryThreads } from './packets/livingStoryState';
 import type { StoryConstitution } from './packets/storyConstitution';
 import { canonicalLivingStoryEntityKey, mergeLivingStoryRecords } from './packets/livingStoryEntityIdentity';
-import type { Ability, ContextManifest, Artifact, Character, CreatureSpecies, Faction, Location, ReaderChapter, ReaderChapterGenerationUsage, ReaderTokenUsageTotals, StoryBlock, StoryCuePayload, StoryMemory, StoryWorld } from '../../../narrative/story';
+import { type Ability, type ContextManifest, type Artifact, type Character, type CreatureSpecies, type Faction, type Location, type ReaderChapter, type ReaderChapterGenerationUsage, type ReaderTokenUsageTotals, type StoryBlock, type StoryCuePayload, type StoryMemory, type StoryWorld } from '@seihouse/sen/contracts';
 
 const clone = <T,>(value: T): T => structuredClone(value);
 

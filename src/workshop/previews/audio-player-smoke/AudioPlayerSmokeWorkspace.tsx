@@ -1,5 +1,5 @@
 import { Pause, Play, Square, Volume2, VolumeX } from 'lucide-react';
-import { useNarrativeAudio } from '../../../audio/playback';
+import { useNarrativeAudio } from '@seihouse/sen/audio';
 
 const SMOKE_TRACK = {
   id: 'development-audio-smoke',

@@ -51,7 +51,7 @@ export const isCodexVoiceQuoteEligible = (character: Character): boolean => (
 
 /** Turn the server's base64 audio bytes into a directly playable data URI. */
 export const audioDataUri = (audio: CodexVoiceAudio): string => (
-  `data:${audio.mimeType};base64,${audio.base64}`
+  audio.source ?? `data:${audio.mimeType};base64,${audio.base64}`
 );
 
 const downloadFilename = (character: Character): string => (

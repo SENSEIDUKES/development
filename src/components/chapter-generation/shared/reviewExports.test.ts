@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { StorySeedArtifact } from "../../story-seed/shared/storySeedRepository";
+import { type StorySeedArtifact } from '@seihouse/sen/story-seed';
 import { createCompletedFiveChapterTestBatch } from "./batch/chapterBatchTestFixture";
 import { aggregateChapterTokenUsage } from "./pipeline/usage";
 import {

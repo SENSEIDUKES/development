@@ -9,8 +9,8 @@
  * The Codex renders inside the Reader Chamber's typography, so this entry
  * carries both stylesheets.
  *
- * Card-level Codex pieces are published separately from
- * `@seihouse/sen/codex-cards`.
+ * Card-level Codex pieces are exported from this entry; there is no parallel
+ * Codex-card package surface.
  */
 import '../../components/reader-chamber/shared/reader-chamber.css';
 import '../../components/reader-codex/shared/reader-codex.css';
@@ -62,3 +62,4 @@ export * from '../../components/reader-codex/shared/codexContext';
 export * from '../../components/reader-codex/shared/codexEntryContext';
 export * from '../../components/reader-codex/shared/assetIdentity';
 export * from '../../components/reader-codex/shared/types';
+export { handleDownload } from '../../components/reader-codex/shared/downloadUtils';

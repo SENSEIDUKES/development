@@ -15,13 +15,8 @@ vi.mock('motion/react', async () => {
   return { ...actual, useReducedMotion: () => true };
 });
 
-import ManifestationReveal from '../../../narrative/ManifestationReveal';
-import {
-  isManifestationRevealInteractive,
-  manifestationRevealAriaLabel,
-  MANIFESTATION_REVEAL_STATES,
-  type ManifestationRevealState,
-} from '../shared/manifestationReveal';
+import { ManifestationReveal } from '@seihouse/sen/manifestations';
+import { isManifestationRevealInteractive, manifestationRevealAriaLabel, MANIFESTATION_REVEAL_STATES, type ManifestationRevealState } from '@seihouse/sen/manifestations';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

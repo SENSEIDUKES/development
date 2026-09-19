@@ -6,7 +6,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { LibraryBottomNavigation, LibraryButton, LibraryCard, LibraryDragonCycleIcon, LibraryHeaderBadge, LibraryNavigationDrawer, LibraryNavigationDrawerPanel, LibraryPanel, LibrarySoundGlyph, LibraryTextArea, LibraryTextBox, ManifestButton, type LibraryNavigationDrawerSection } from '@seihouse/library-ui';
-import { SENArcIcon, SENManifestingIcon, SENPowerSystemIcon, SENProfileIcon, SENSettingsIcon } from '../components/sen-icons';
+import { LibraryArcIcon as SENArcIcon, LibraryManifestingIcon as SENManifestingIcon, LibraryPowerSystemIcon as SENPowerSystemIcon, LibraryProfileIcon as SENProfileIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/library-ui';
 
 /**
  * LibraryComponents — the home page's Library Components tab.

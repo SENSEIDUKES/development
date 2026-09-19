@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { WorldBlueprint } from "../../../story-seed/shared/types";
-import { STORY_SEED_SCHEMA_VERSION } from "../../../story-seed/shared/storySeedSchema";
-import type { StorySeedInput } from "../../../story-seed/shared/storySeedSchema";
+import { type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { STORY_SEED_SCHEMA_VERSION } from '@seihouse/sen/story-seed';
+import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import { ESTABLISHED_SCENARIO } from "../fixtures/mockGenerationData";
 import { storyConstitutionFromScenario, storyConstitutionFromSeed } from "./storyConstitution";
 

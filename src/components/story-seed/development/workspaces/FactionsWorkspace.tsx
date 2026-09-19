@@ -1,8 +1,8 @@
-import type { StorySeedFaction, StorySeedInput } from '../../shared/storySeedSchema';
-import { normalizeCodexAliases, parseCodexAliases } from '../../shared/codexContext';
+import { type StorySeedFaction, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { normalizeCodexAliases, parseCodexAliases } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
 import { setFactions, worldFoundations, type UpdateSeed } from '../seedState';
-import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '../../../../presentation';
+import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { WorkspaceShell } from './WorkspaceShell';
 import { SENStorySeedIcon } from '../SENStorySeedIcon';
 

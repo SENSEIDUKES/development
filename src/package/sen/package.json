@@ -73,7 +73,6 @@
     }
   },
   "peerDependencies": {
-    "@seihouse/audio-player": "*",
     "lucide-react": ">=1",
     "motion": ">=12",
     "react": "^19.0.0",

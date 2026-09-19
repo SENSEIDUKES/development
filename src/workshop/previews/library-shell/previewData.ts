@@ -1,4 +1,4 @@
-import type { StorySeedInput } from '../../../components/story-seed/shared/storySeedSchema';
+import { type StorySeedInput } from '@seihouse/sen/story-seed';
 
 export const shellStates = {
   'main-library': ['linked', 'guest', 'syncing', 'offline', 'profile', 'active-story', 'long-name', 'missing-profile', 'dao-local', 'dao-error'],

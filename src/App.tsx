@@ -3,7 +3,7 @@ import { WorkshopHome } from './workshop/WorkshopHome';
 import { DeferredWorkspace } from './workshop/DeferredWorkspace';
 import { ArrowLeft } from 'lucide-react';
 import './styles.css';
-import './components/reader-chamber/shared/color-codes.css';
+import '@seihouse/sen/styles.css';
 
 const CelestialBackdropWorkspace = lazy(() =>
   import('./workshop/previews/celestial-backdrop/CelestialBackdropWorkspace')

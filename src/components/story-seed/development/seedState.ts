@@ -10,19 +10,7 @@
  * ```
  */
 
-import type {
-  StorySeedAbilities,
-  StorySeedCharacter,
-  StorySeedFaction,
-  StorySeedFateSurvivalSettings,
-  StorySeedInput,
-  StorySeedMainCharacter,
-  StorySeedPlotAndTropeSettings,
-  StorySeedPowerSystem,
-  StorySeedStoryRequired,
-  StorySeedWorldFoundations,
-  StorySeedWorldIdentity,
-} from '../shared/storySeedSchema';
+import { type StorySeedAbilities, type StorySeedCharacter, type StorySeedFaction, type StorySeedFateSurvivalSettings, type StorySeedInput, type StorySeedMainCharacter, type StorySeedPlotAndTropeSettings, type StorySeedPowerSystem, type StorySeedStoryRequired, type StorySeedWorldFoundations, type StorySeedWorldIdentity } from '@seihouse/sen/story-seed';
 
 export type SeedUpdate = (seed: StorySeedInput) => StorySeedInput;
 export type UpdateSeed = (update: SeedUpdate) => void;

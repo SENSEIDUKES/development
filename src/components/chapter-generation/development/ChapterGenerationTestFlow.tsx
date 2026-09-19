@@ -33,7 +33,7 @@ import type {
   ManifestChapterResponse,
   SafeChapterGenerationFailure,
 } from "../shared/liveChapterGeneration";
-import { SENManifestingIcon } from "../../library-shell/development/SENGlobalIcon";
+import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import {
   createFiveChapterBatchState,
   errorResponseToBatchFailure,
@@ -57,9 +57,9 @@ import {
   usageForChapterRun,
 } from "../shared/reviewExports";
 import { listWorkshopStorySeeds, LOCAL_WORKSHOP_STORY_SEED_OWNER_ID } from '../../../workshop/previews/story-seed/storySeedStorage';
-import { type StorySeedArtifact, type StorySeedRecord } from '../../story-seed/shared/storySeedRepository';
-import { parseStorySeedJson } from "../../story-seed/shared/storySeedSerialization";
-import type { RawStorySeedArtifact } from "../../story-seed/shared/storySeedSerialization";
+import { type StorySeedArtifact, type StorySeedRecord } from '@seihouse/sen/story-seed';
+import { parseStorySeedJson } from '@seihouse/sen/story-seed';
+import { type RawStorySeedArtifact } from '@seihouse/sen/story-seed';
 import ChapterGenerationWorkspace from "./ChapterGenerationWorkspace";
 import FiveChapterReaderSession from "./FiveChapterReaderSession";
 import ManifestedChapterView from "./ManifestedChapterView";

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { handleHarnessGenerationHttp } from '../../../server/harness-generation/http';
-import { SEN_NOVEL_AUTHOR_SKILL } from './authorSkill';
-import { HarnessGenerationController } from './controller';
+import { SEN_NOVEL_AUTHOR_SKILL } from '@seihouse/sen/harness-generation';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
-import { validateHarnessSkillManifest } from './skills';
-import { validateTranslationGlossaryResource } from '../../../narrative/translationSkill';
-import type { HarnessGenerationResponse, HarnessSkillManifest } from '../../../narrative/generation';
+import { validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { validateTranslationGlossaryResource } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationResponse, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 
 /** Test-only Translation manifest; never an installed product skill. */
 const japaneseSkill = (): HarnessSkillManifest => validateHarnessSkillManifest({

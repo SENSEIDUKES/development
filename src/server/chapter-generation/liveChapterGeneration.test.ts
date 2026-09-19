@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { resolveSystemPromptRoute } from "@seihouse/sen/cards";
 import { createCompletedSingleChapterReaderSession } from '../../components/chapter-generation/shared/batchToReaderAdapter';
-import type { StorySeedInput } from "../../components/story-seed/shared/storySeedSchema";
-import type { WorldBlueprint } from "../../components/story-seed/shared/types";
+import { type StorySeedInput } from '@seihouse/sen/story-seed';
+import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import type { ManifestChapterResponse } from "../../components/chapter-generation/shared/liveChapterGeneration";
 import { adaptFinalizedStorySeedToChapterContracts } from "../../components/chapter-generation/shared/packets/storySeedChapterAdapter";
 import { createArcChapterPosition } from "../../components/chapter-generation/shared/packets/livingStoryState";
@@ -485,7 +485,7 @@ describe("live Chapter Generation model boundaries", () => {
       expect.objectContaining({
         blockId: "c1-p1",
         triggerPhrase: "witness bell tolled once",
-        cue: { publicUrl: expect.stringContaining("/Locations/Signatures/") },
+        cue: expect.objectContaining({ publicUrl: expect.stringContaining("/Locations/Signatures/") }),
       }),
     ]);
     expect(run.manifestedChapter.blocks?.[2].system?.fateResult).toMatchObject({

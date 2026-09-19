@@ -9,5 +9,5 @@ export {
   validateSceneAudioTrack,
   type SceneAudioTrack,
   type SoundscapeIntent,
-} from '../../../audio/soundscapes';
+} from '@seihouse/sen/audio';
 export { TRACK_LIBRARY } from '../../../host/media/soundscapeCatalog';

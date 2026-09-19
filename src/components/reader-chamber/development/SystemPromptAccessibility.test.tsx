@@ -2,7 +2,8 @@
 import React, { act } from 'react';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('motion/react', async importOriginal => {
@@ -10,7 +11,7 @@ vi.mock('motion/react', async importOriginal => {
   return { ...actual, useReducedMotion: () => true };
 });
 
-import { SystemBlock } from './SystemBlock';
+import { SystemBlock } from '@seihouse/sen/cards';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

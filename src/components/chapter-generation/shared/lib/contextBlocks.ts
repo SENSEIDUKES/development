@@ -2,7 +2,7 @@
  * Verbatim port of Light-Novels `src/lib/contextBlocks.ts` (verified against
  * `main`). Pure — no network/DB — safe to run in the Workshop.
  */
-import type { ContextBlock } from '../../../../narrative/chapter';
+import { type ContextBlock } from '@seihouse/sen/generation';
 
 export type ContextEngine = "v1" | "v2";
 

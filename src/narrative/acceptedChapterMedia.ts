@@ -12,7 +12,7 @@ export interface AcceptedChapterMedia {
 /**
  * Finalizes canonical chapter blocks after their text and optional metadata
  * have been normalized. Model-authored World Cue intents are resolved through
- * the approved Library catalog, then removed so only application-owned media
+ * the host-approved catalog, then removed so only application-owned media
  * records can reach persistence and Reader Chamber.
  */
 export function acceptChapterMedia(

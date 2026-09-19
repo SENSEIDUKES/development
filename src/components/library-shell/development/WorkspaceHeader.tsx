@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { SEIAppHeader, SEIToolbar } from '@seihouse/ui';
-import { NarrativeButton as LibraryButton, NarrativeHeaderBadge as LibraryHeaderBadge } from '../../../presentation';
+import { NarrativeButton as LibraryButton, NarrativeHeaderBadge as LibraryHeaderBadge } from '@seihouse/sen/presentation';
 import { ArrowLeft } from 'lucide-react';
 import { HeaderActionButton, HeaderOverflow, type HeaderAction } from './WorkspaceHeaderActions';
 import { useCompactHeader } from './workspaceMedia';

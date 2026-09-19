@@ -45,7 +45,7 @@ async function mount() {
   const root = createRoot(document.getElementById('root')!);
   if (query.get('variant') === 'development') {
     await import('../../../styles.css');
-    if (source === 'main-library' && query.get('source') !== 'cultivator-cave') await import('../../../components/library-shell/development/header-theme.css');
+    if (source === 'main-library' && query.get('source') !== 'cultivator-cave') await import('@seihouse/library/styles.css');
     else await import('../../../styles.css');
     await import('./preview-environment.css');
     const { DevelopmentHeaderPreview } = await import('./DevelopmentHeaderPreview');

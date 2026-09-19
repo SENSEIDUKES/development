@@ -1,5 +1,5 @@
-import { createArcChapterPosition } from '../../../arc-goals/shared/arcGoals';
-export { createArcChapterPosition } from '../../../arc-goals/shared/arcGoals';
+import { createArcChapterPosition } from '@seihouse/sen/arc-goals';
+export { createArcChapterPosition } from '@seihouse/sen/arc-goals';
 /**
  * Living Story State — story-owned data that changes as chapters are written.
  * Permanent world rules and Story Seed settings intentionally live in the
@@ -7,7 +7,7 @@ export { createArcChapterPosition } from '../../../arc-goals/shared/arcGoals';
  */
 import type { MockChapterGenerationScenario } from "../fixtures/mockGenerationData";
 import { deriveSceneAnchors, type SceneAnchors, type SceneType } from "../lib/sceneRhythm";
-import type { ChapterHandoff, ContextBlock, SceneFingerprint } from '../../../../narrative/chapter';
+import { type ChapterHandoff, type ContextBlock, type SceneFingerprint } from '@seihouse/sen/generation';
 import type { ArcChapterPosition } from "./types";
 
 export interface LivingStoryCharacterState {

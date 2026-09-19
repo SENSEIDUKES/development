@@ -12,10 +12,10 @@ import {
   SquarePen,
   type LucideIcon,
 } from 'lucide-react';
-import type { StorySeedRecord } from '../shared/storySeedRepository';
-import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '../../../presentation';
+import { type StorySeedRecord } from '@seihouse/sen/story-seed';
+import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
 import { SENStorySeedIcon } from './SENStorySeedIcon';
-import { SENManifestingIcon } from '../../library-shell/development/SENGlobalIcon';
+import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 
 /**
  * Story Bank — the permanent home for every saved Story Seed and its latest

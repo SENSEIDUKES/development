@@ -10,11 +10,8 @@
  * configuration, shared with Harness Generation.
  */
 
-import {
-  READER_TRANSLATION_SCHEMA_VERSION,
-  type ReaderTranslationRequest,
-} from '../../components/reader-chamber/shared/translation/contract';
-import { isSenLanguageCode } from '../../lib/language';
+import { READER_TRANSLATION_SCHEMA_VERSION, type ReaderTranslationRequest } from '@seihouse/sen/translation';
+import { isSenLanguageCode } from '@seihouse/sen/contracts';
 import {
   resolveHarnessGenerationConfig,
   type HarnessGenerationEnvironment,

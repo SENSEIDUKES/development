@@ -18,7 +18,7 @@ export interface ReaderStoreSnapshot {
   readerMode: string;
   immersion: ImmersionSettingsState;
   isReaderFullscreen: boolean;
-  canShowRelicInReader: boolean;
+  canShowOverlays: boolean;
   languagePreferences: ReaderLanguagePreferences | null;
   activeAgentId: string | null;
   isGenerating: boolean;
@@ -27,7 +27,7 @@ export interface ReaderStoreSnapshot {
   setReaderMode(mode: string): void;
   setImmersion(value: Partial<ImmersionSettingsState>): void;
   setIsReaderFullscreen(value: boolean): void;
-  setCanShowRelicInReader(value: boolean): void;
+  setCanShowOverlays(value: boolean): void;
   setAutoPlayNarration(value: boolean): void;
   updateStory: UpdateStoryFields;
   saveStories(): Promise<void>;
@@ -70,6 +70,7 @@ export interface ReaderPreferenceStorage {
 }
 
 export interface ReaderRuntime {
+  manifestImages?(input: { storyId: string; id: string; name: string; description?: string; type: 'character' | 'location' | 'artifact' }): Promise<{ urls: string[]; prompt: string }>;
   store: { getSnapshot(): ReaderStoreSnapshot; subscribe(listener: () => void): () => void };
   /** Hooks are supplied once for a mounted provider and follow React's hook rules. */
   useNarration(input: { selectedChapter: ReaderChapter; activeTranslationContent: string | null }): NarrationPlayback;

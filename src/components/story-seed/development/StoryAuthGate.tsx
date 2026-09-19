@@ -1,3 +1,4 @@
+import { useLibraryAssets } from '../../../library/assets';
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Mail } from 'lucide-react';
@@ -17,11 +18,6 @@ import { Mail } from 'lucide-react';
  * long before revealing the intake.
  */
 export const STORY_AUTH_DISSOLVE_MS = 900;
-
-const BACKDROP_VIDEO_URL =
-  'https://pub-e482c2dbbb984c3c87ecdd8ae3a92183.r2.dev/LIBRARY/videos/VIDEO/Library%20Auth%20(Backdrop%20Video).mp4';
-const BACKDROP_IMAGE_URL = '/story-seed/library-auth-backdrop.jpg';
-const CELESTIAL_LIBRARY_EMBLEM_URL = '/favicon.jpg';
 
 interface StorySeedNetworkInformation extends EventTarget {
   effectiveType?: 'slow-2g' | '2g' | '3g' | '4g';
@@ -128,6 +124,7 @@ export default function StoryAuthGate({
   reassurance = 'Your Story Seed will not be lost.',
   context = 'story-seed',
 }: StoryAuthGateProps = {}) {
+  const { authImage: BACKDROP_IMAGE_URL, authVideo: BACKDROP_VIDEO_URL, emblem: CELESTIAL_LIBRARY_EMBLEM_URL } = useLibraryAssets();
   const isLinked = linked ?? false;
   const prefersReducedMotion = useReducedMotion();
   const [videoReady, setVideoReady] = useState(false);
@@ -239,17 +236,17 @@ export default function StoryAuthGate({
       positioned pane) so it never collides with the Workshop controls that
       float at z-[200]; production wants the full-viewport `fixed` takeover. */}
       {/* Layer 1: static poster, always present so the world never flashes black */}
-      <img
+      {BACKDROP_IMAGE_URL && <img
         src={BACKDROP_IMAGE_URL}
         alt=""
         aria-hidden="true"
         decoding="async"
         fetchPriority="high"
         className="absolute inset-0 w-full h-full object-cover object-[62%_40%] select-none pointer-events-none"
-      />
+      />}
 
       {/* Layer 2: motion backdrop, fades in only once it is actually playing */}
-      {videoAllowed && (
+      {videoAllowed && BACKDROP_VIDEO_URL && (
         <video
           src={BACKDROP_VIDEO_URL}
           autoPlay
@@ -288,14 +285,14 @@ export default function StoryAuthGate({
           className="w-full max-w-sm sm:max-w-md lg:mt-[6vh] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-3xl px-6 py-8 sm:px-9 sm:py-10 bg-[linear-gradient(165deg,rgba(10,18,32,0.38),rgba(3,6,12,0.46))] backdrop-blur-md [-webkit-backdrop-filter:blur(12px)] border border-[rgba(148,196,255,0.22)] shadow-[0_18px_60px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(180,220,255,0.12)]"
         >
           <div className="flex flex-col items-center text-center gap-5">
-            <img
+            {CELESTIAL_LIBRARY_EMBLEM_URL && <img
               src={CELESTIAL_LIBRARY_EMBLEM_URL}
               alt="Celestial Library"
               width={56}
               height={56}
               decoding="async"
               className="h-14 w-14 rounded-full object-cover ring-1 ring-[#D4AF37]/45 shadow-[0_0_24px_rgba(212,175,55,0.25)]"
-            />
+            />}
 
             <h1 className="font-display font-bold text-signal text-4xl sm:text-[2.6rem] leading-tight tracking-tight [text-shadow:0_1px_12px_rgba(0,0,0,0.55)]">
               Your Destiny Awaits

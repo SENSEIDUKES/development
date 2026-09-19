@@ -4,7 +4,7 @@
  * stay at their owning boundaries so this helper contains only identical work.
  */
 import type { BudgetedContext } from "../lib/contextBudgeter";
-import type { ChapterContract } from '../../../../narrative/chapter';
+import { type ChapterContract } from '@seihouse/sen/generation';
 import {
   buildLegacyGenerationMemory,
   type ChapterGenerationPacket,

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/buildChapterGenerationApi.mjs && node scripts/buildHarnessGenerationApi.mjs && node scripts/buildStorySeedBlueprintApi.mjs && node scripts/buildCodexVoiceApi.mjs && node scripts/buildReaderTranslationApi.mjs && node scripts/buildEnergyApi.mjs && node scripts/buildDaoPillarApi.mjs",
+    "build": "tsc -b && vite build && node scripts/buildChapterGenerationApi.mjs && node scripts/buildHarnessGenerationApi.mjs && node scripts/buildStorySeedBlueprintApi.mjs && node scripts/buildCodexVoiceApi.mjs && node scripts/buildReaderTranslationApi.mjs && node scripts/buildLibraryEconomyApi.mjs",
     "preview": "vite preview",
     "build:package": "npm run build:package:sen && npm run build:package:library",
     "build:package:sen": "vite build --config vite.package.config.ts && tsc -p tsconfig.package.json && node scripts/finalizePackage.mjs sen",
@@ -31,7 +31,7 @@
   "dependencies": {
     "@google/genai": "^2.16.0",
     "@seihouse/audio-player": "github:SENSEIDUKES/AUDIO-PLAYER#b1e05870f4c3e9cad2ddb74119371c5c7cba6471",
-    "@seihouse/library-ui": "file:vendor/seihouse-library-ui-0.4.0.tgz",
+    "@seihouse/library-ui": "file:vendor/seihouse-library-ui-0.5.0.tgz",
     "@seihouse/ui": "file:vendor/seihouse-ui-0.4.0.tgz",
     "@vitejs/plugin-react": "latest",
     "fflate": "^0.8.3",

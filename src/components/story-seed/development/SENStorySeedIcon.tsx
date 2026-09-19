@@ -1,1 +1,1 @@
-export { SENStorySeedIcon, type StorySeedIconName } from '../../sen-icons';
+export { LibraryStorySeedIcon as SENStorySeedIcon, type LibraryStorySeedIconName as StorySeedIconName } from '@seihouse/library-ui';

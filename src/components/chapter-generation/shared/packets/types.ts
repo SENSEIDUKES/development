@@ -17,7 +17,7 @@ export type ChapterInstructionOwnerId =
   | ChapterGenerationPackageId
   | "chapterPlan";
 
-export type { ArcChapterPosition } from '../../../arc-goals/shared/arcGoals';
+export type { ArcChapterPosition } from '@seihouse/sen/arc-goals';
 
 /** Traceability for one existing generation input or instruction. */
 export interface ChapterInstructionTrace {

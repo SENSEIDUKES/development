@@ -567,7 +567,8 @@ export interface KarmaFateNode {
 }
 
 export interface RouteConfig {
-  provider: "gemini" | "openrouter" | "ollama";
+  /** Opaque host adapter identity; the engine has no provider allow-list. */
+  provider: string;
   model: string;
   temperature?: number;
   maxOutputTokens?: number;

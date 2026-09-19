@@ -1,4 +1,4 @@
-import type { HarnessArcRequest, HarnessGenerationRequest, HarnessGenerationResponse, HarnessMemoryRecoveryRequest } from '../../narrative/generation';
+import { type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessMemoryRecoveryRequest } from '@seihouse/sen/harness-generation';
 import {
   harnessGenerationServerInfo,
   resolveHarnessGenerationConfig,

@@ -62,3 +62,6 @@ export {
 } from '../../components/harness-generation/shared/authorSkill';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';
+export { HarnessReaderSession } from '../../components/harness-generation/development/HarnessReaderSession';
+export { findStory, findFoundationRevision } from '../../components/harness-generation/shared/foundation';
+export * from '../../components/harness-generation/shared/chapterSignals';

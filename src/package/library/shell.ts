@@ -7,3 +7,8 @@ export * from '../../components/library-shell/development/WorkspaceHeaderUtiliti
 export * from '../../components/library-shell/development/WorkspaceNavigation';
 export * from '../../components/library-shell/development/WorkspaceSheet';
 export * from '../../components/library-shell/development/WorkspaceShell';
+export * from '../../components/library-shell/development/MainLibraryFooter';
+export * from '../../components/library-shell/development/MainLibraryHeader';
+export * from '../../components/library-shell/development/MainLibraryHomeInsights';
+export * from '../../components/library-shell/development/MainLibraryNavigation';
+export * from '../../components/library-shell/shared/MainLibraryAdapter';

@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { HarnessGenerationController } from './controller';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
-import { createHarnessSenStory } from './senAdapter';
+import { createHarnessSenStory } from '@seihouse/sen/harness-generation';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
-import type { HarnessArcRequest, HarnessGenerationRequest, HarnessGenerationModelAdapter } from '../../../narrative/generation';
-import type { ArcPlan } from '../../arc-goals/shared/arcGoals';
+import { type HarnessArcRequest, type HarnessGenerationRequest, type HarnessGenerationModelAdapter } from '@seihouse/sen/harness-generation';
+import { type ArcPlan } from '@seihouse/sen/arc-goals';
 
 const plan: ArcPlan = { arcNumber: 1, goals: [{ id: 'arc-1-first', text: 'Meet the invader.', chapters: 1 }, { id: 'arc-1-second', text: 'Defeat the invader.', chapters: 99 }] };
 const response = (body: unknown) => ({ rawProviderResponse: JSON.stringify(body), providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } } });

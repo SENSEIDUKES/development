@@ -1,5 +1,5 @@
-import type { WorldBlueprint } from '../../components/story-seed/shared/types';
-import type { BlueprintGenerationPayload } from '../../components/story-seed/shared/storySeedSchema';
+import { type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
 
 const ENDPOINT = '/api/generate-blueprint';
 const REQUEST_TIMEOUT_MS = 130_000;

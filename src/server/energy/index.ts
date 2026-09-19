@@ -3,9 +3,10 @@
  * boundary; nothing in `src/server/chapter-generation` or
  * `src/server/harness-generation` imports this yet, by design.
  */
-export * from './authentication';
 export * from './config';
 export * from './http';
+export * from './narrativeOperation';
+export * from './narrativeUsage';
 export * from './inMemoryEnergyRepository';
 export * from './postgresEnergyRepository';
 export * from './repository';
@@ -20,7 +21,7 @@ export {
   isEnergyActionId,
   pricedEnergyActions,
   resolveEnergyPrice,
-} from '../../components/energy/shared/energyContracts';
+} from '@seihouse/library/energy';
 export type {
   EnergyAccountSnapshot,
   EnergyActionId,
@@ -29,4 +30,4 @@ export type {
   EnergyPriceEntry,
   EnergyPriceQuote,
   EnergyTransactionKind,
-} from '../../components/energy/shared/energyContracts';
+} from '@seihouse/library/energy';

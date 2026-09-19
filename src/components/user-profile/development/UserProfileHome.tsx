@@ -35,15 +35,10 @@ import {
   getAuraGlowStyle,
   resolveRankVisual,
   rankBackground,
-} from "./qi";
+} from "../../../library/cultivation/progression";
 import { isEffectActive } from './timedEffects';
-import { SENNavigationIcon } from '../../library-shell/development/SENNavigationIcon';
-import {
-  SENProfileIcon,
-  SENQiIcon,
-  SENQiYinYangIcon,
-  SENSettingsIcon,
-} from '../../library-shell/development/SENGlobalIcon';
+import { LibraryNavigationIcon as SENNavigationIcon } from '@seihouse/library-ui';
+import { LibraryProfileIcon as SENProfileIcon, LibraryQiIcon as SENQiIcon, LibraryQiYinYangIcon as SENQiYinYangIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/library-ui';
 
 export { isEffectActive } from './timedEffects';
 
@@ -155,6 +150,7 @@ export function UserProfileHome({
 }) {
   const { profile, formData, isLoading } = controller;
   const isPublic = mode === "public";
+  const cultivationKnown = isPublic || !controller.cultivation || controller.cultivation.status === 'ready';
   const { navigate } = useCaveRoute();
   const creatorLinks = profile?.uid ? (['worlds', 'storefront'] as const).map(destination => {
     const path = publicCavePath(destination, profile.uid);
@@ -198,7 +194,7 @@ export function UserProfileHome({
   const activeRank = resolveRankVisual(auraSelection, auraXp);
   const hasAuraOverride = activeAuraOverride(effects, now) !== null;
   const hasFireTitle = activeRank.rank.id === 'leader' && activeRank.source === 'rank' && !hasAuraOverride;
-  const nextRank = daoData.maxQi === null ? null : getRankForQi(daoData.maxQi);
+  const nextRank = !cultivationKnown || daoData.maxQi === null ? null : getRankForQi(daoData.maxQi);
   const currentRankStyle = getAuraTextStyle(`rank:${rank.id}`, [], auraXp, now);
   const nextRankStyle = nextRank ? getAuraTextStyle(`rank:${nextRank.id}`, [], daoData.maxQi!, now) : {};
   const progressRef = useRef<HTMLButtonElement>(null);
@@ -446,8 +442,8 @@ export function UserProfileHome({
                     onClick={() => openPanel("progress")}>
                     <span className="cave-home-progress" role="progressbar"
                       aria-label={daoData.nextRank ? `Cultivation toward ${daoData.nextRank}` : "Maximum rank"}
-                      aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(daoData.progress)}
-                      aria-valuetext={`${formatQi(daoData.currentQi)} Qi${daoData.maxQi !== null ? ` of ${formatQi(daoData.maxQi)}` : ", maximum rank"}`}
+                      aria-valuemin={0} aria-valuemax={100} aria-valuenow={cultivationKnown ? Math.round(daoData.progress) : undefined}
+                      aria-valuetext={cultivationKnown ? `${formatQi(daoData.currentQi)} Qi${daoData.maxQi !== null ? ` of ${formatQi(daoData.maxQi)}` : ", maximum rank"}` : 'Cultivation balance unavailable'}
                       style={{ "--cave-rank-background": rankBackground(rank.visual),
                         "--cave-progress": `${daoData.progress}%` } as React.CSSProperties}
                       data-cave-progress>
@@ -456,10 +452,10 @@ export function UserProfileHome({
                   </button>
                   <div className="cave-home-rank-row" data-cave-rank-row>
                     <p className={currentRankStyle.className} style={currentRankStyle.style}
-                      data-cave-rank>{daoData.rank}</p>
+                      data-cave-rank>{cultivationKnown ? daoData.rank : 'Cultivation unavailable'}</p>
                     {nextRank ? <p className={nextRankStyle.className} style={nextRankStyle.style}
                       data-cave-next-rank>{nextRank.name}</p>
-                      : <p className="text-neutral-400" data-cave-next-rank>Maximum rank</p>}
+                      : <p className="text-neutral-400" data-cave-next-rank>{cultivationKnown ? 'Maximum rank' : 'Waiting for the ledger'}</p>}
                   </div>
                   {bio && <section className="mt-4" aria-label="Cultivator bio" data-cave-bio-section>
                     <h3 className="cave-bio-label">CULTIVATOR BIO</h3>
@@ -702,7 +698,7 @@ export function UserProfileHome({
           </SEIDialogDescription>
           {panel === "progress" ? (
             <p className="mt-4 font-mono" data-cave-qi>
-              {formatQi(daoData.currentQi)}{daoData.maxQi !== null ? ` / ${formatQi(daoData.maxQi)} Qi` : " Qi · Maximum rank"}
+              {cultivationKnown ? `${formatQi(daoData.currentQi)}${daoData.maxQi !== null ? ` / ${formatQi(daoData.maxQi)} Qi` : ' Qi · Maximum rank'}` : controller.cultivation?.error ?? 'Cultivation balance is not connected.'}
             </p>
           ) : panel === "bio" ? (
             <p className="mt-4 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{bio}</p>

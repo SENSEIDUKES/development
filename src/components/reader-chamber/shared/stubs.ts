@@ -18,9 +18,9 @@
  */
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
-import type { SenLanguageCode } from '../../../lib/language';
-import type { ReaderChapter, ReaderCodexStoryPatchUpdater, StoryWorld, UpdateStoryFields } from '../../../narrative/story';
-import { collectCodexTerms } from '../../../narrative/codexHighlighting';
+import { type SenLanguageCode } from '@seihouse/sen/contracts';
+import { type ReaderChapter, type ReaderCodexStoryPatchUpdater, type StoryWorld, type UpdateStoryFields } from '@seihouse/sen/contracts';
+import { collectCodexTerms } from '@seihouse/sen/reader-codex';
 import type { ReaderStoreSnapshot } from '@seihouse/sen/reader-runtime';
 
 export const LOCAL_ONLY_MODE = true;
@@ -203,7 +203,11 @@ export const readerPreviewStore = {
   getSnapshot(): ReaderStoreSnapshot {
     if (cachedReaderSource !== state) {
       cachedReaderSource = state;
-      cachedReaderSnapshot = { ...state, ...mockActions, languagePreferences: state.userProfile };
+      cachedReaderSnapshot = {
+        ...state, ...mockActions, languagePreferences: state.userProfile,
+        canShowOverlays: state.canShowRelicInReader,
+        setCanShowOverlays: mockActions.setCanShowRelicInReader,
+      };
     }
     return cachedReaderSnapshot;
   },

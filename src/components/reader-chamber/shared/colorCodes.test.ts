@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { COLOR_CODES, COLOR_CODE_PALETTE_IDS, getColorCodeStyle, getColorCodeSurfaceStyle, getColorCodeValue, getSystemColorMeaning, getSystemColorStyle, resolveArtifactColorCode, resolveCharacterRelationshipColorCode, resolveCodexEntityColorCode, resolveFactionAlignmentColorCode, resolveFactionStatusColorCode, resolveFateFlagColorCode, resolveFateResultColorCode, resolveFateTypeColorCode, resolveLocationColorCode, resolveLocationSafetyColorCode, resolveKarmaMetricColorCode, resolveRelationshipAffinityColorCode, resolveSystemBadgeColorCode, resolveSystemOutcomeColorCode, type ColorCodeId } from '../../../narrative/colorCodes';
+import { COLOR_CODES, COLOR_CODE_PALETTE_IDS, getColorCodeStyle, getColorCodeSurfaceStyle, getColorCodeValue, getSystemColorMeaning, getSystemColorStyle, resolveArtifactColorCode, resolveCharacterRelationshipColorCode, resolveCodexEntityColorCode, resolveFactionAlignmentColorCode, resolveFactionStatusColorCode, resolveFateFlagColorCode, resolveFateResultColorCode, resolveFateTypeColorCode, resolveLocationColorCode, resolveLocationSafetyColorCode, resolveKarmaMetricColorCode, resolveRelationshipAffinityColorCode, resolveSystemBadgeColorCode, resolveSystemOutcomeColorCode, type ColorCodeId } from '@seihouse/sen/color-codes';
 
 const expectedSystemColorCodes: Record<string, ColorCodeId> = {
   neutral: 'unknown',
@@ -177,7 +177,7 @@ describe('Color Codes', () => {
     }
 
     expect(readerCss).toContain("@import './color-codes.css';");
-    expect(appEntry).toContain("import './components/reader-chamber/shared/color-codes.css';");
+    expect(appEntry).toContain("import '@seihouse/sen/styles.css';");
 
     const breakthrough = getSystemColorMeaning('breakthrough');
     expect(getSystemColorStyle(breakthrough)).toMatchObject({

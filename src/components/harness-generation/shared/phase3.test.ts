@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { HarnessCapabilityRegistry, resolveHarnessEntity, type HarnessCapabilityHandler } from './capabilities';
+import { HarnessCapabilityRegistry, resolveHarnessEntity, type HarnessCapabilityHandler } from '@seihouse/sen/harness-generation';
 import { appendHarnessCorrection, buildCanonicalStoryView } from './canonicalState';
 import { compileStoryInformationPacket } from './context';
-import { HarnessGenerationController } from './controller';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import type { HarnessRuntime } from './ids';
-import { createEmptyHarnessWorkspaceState, readHarnessWorkspaceState } from './repository';
+import { createEmptyHarnessWorkspaceState, readHarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
-import { HARNESS_GENERATION_SCHEMA_VERSION, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessSemanticEvent, type HarnessWorkspaceState } from '../../../narrative/generation';
+import { HARNESS_GENERATION_SCHEMA_VERSION, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessSemanticEvent, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 
 const runtime = (): HarnessRuntime => {
   let id = 0;

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Compass } from 'lucide-react';
 import { LibraryButton } from '@seihouse/library-ui';
-import { WorkspaceHeader } from '../../../components/library-shell/development/WorkspaceHeader';
-import { WorkspaceShell } from '../../../components/library-shell/development/WorkspaceShell';
+import { WorkspaceHeader } from '@seihouse/library/shell';
+import { WorkspaceShell } from '@seihouse/library/shell';
 
 /** Focused header states inside the existing Library Shell preview. */
 export function HeaderSlotPreview({ state }: { state: string }) {

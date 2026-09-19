@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { LibraryAssetsProvider, type LibraryAssets } from '../../library/assets';
 import * as LibraryUI from '@seihouse/library-ui';
 import {
   NarrativePresentationProvider,
@@ -6,7 +7,7 @@ import {
   type NarrativeIconProps,
   type NarrativePresentation,
 } from '@seihouse/sen/presentation';
-import { SENCharactersIcon, SENSettingsIcon, SENSearchIcon, SENManifestingIcon } from '../sen-icons';
+import { LibraryCharactersIcon as SENCharactersIcon, LibrarySettingsIcon as SENSettingsIcon, LibrarySearchIcon as SENSearchIcon, LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 
 function LibraryNarrativeIcon({ name, ...props }: NarrativeIconProps) {
   const icons = { characters: SENCharactersIcon, settings: SENSettingsIcon, search: SENSearchIcon, generating: SENManifestingIcon };
@@ -43,13 +44,15 @@ const components = {
 export function LibraryPresentationProvider({
   children,
   backdrops = [],
+  assets = {},
 }: {
   children: ReactNode;
   backdrops?: readonly string[];
+  assets?: LibraryAssets;
 }) {
   return (
     <NarrativePresentationProvider components={components}>
-      <NarrativeArtProvider value={{ Icon: LibraryNarrativeIcon, backdrops }}>{children}</NarrativeArtProvider>
+      <LibraryAssetsProvider value={assets}><NarrativeArtProvider value={{ Icon: LibraryNarrativeIcon, backdrops }}>{children}</NarrativeArtProvider></LibraryAssetsProvider>
     </NarrativePresentationProvider>
   );
 }

@@ -2,7 +2,7 @@
  * Verbatim port of Light-Novels `src/lib/codexContext.ts` (verified against
  * `main`). Pure — no network/DB — safe to run in the Workshop.
  */
-import type { BaseCodexEntry } from '../../../../narrative/chapter';
+import { type BaseCodexEntry } from '@seihouse/sen/generation';
 
 export interface NamedCodexEntry extends BaseCodexEntry {
   id?: string;

@@ -1,13 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  DEFAULT_SEN_LANGUAGE_CODE,
-  SEN_LANGUAGES,
-  getSenLanguageLabel,
-  getSenTextDirection,
-  isSenLanguageCode,
-  normalizeSenLanguageCode,
-  resolveReadingLanguageCode,
-} from './language';
+import { DEFAULT_SEN_LANGUAGE_CODE, SEN_LANGUAGES, getSenLanguageLabel, getSenTextDirection, isSenLanguageCode, normalizeSenLanguageCode, resolveReadingLanguageCode } from '@seihouse/sen/contracts';
 
 describe('SEN language registry', () => {
   it('exposes one entry per supported language with a stable code, label, and direction', () => {

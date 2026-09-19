@@ -1,10 +1,10 @@
 import React from 'react';
 import LoadingSystem from './LoadingSystem';
 import { buildAILoadingTaskCard, type LoadingAgentPresentation } from '../../../library/manifestations/taskCard';
-import { manifestationModeForOperation, type MediaRevealState, type RevealedMediaAsset } from '../shared/manifestation';
+import { manifestationModeForOperation, type MediaRevealState, type RevealedMediaAsset } from '@seihouse/sen/manifestations';
 import { NARRATIVE_STATUS_LINES, MEDIA_STATUS_LINES } from '../../../library/manifestations/statusLines';
-import { AmbientEffect as ParticleEffect } from '../../../presentation';
-import type { AILoadingVeilProps } from '../shared/loadingVeil';
+import { AmbientEffect as ParticleEffect } from '@seihouse/sen/presentation';
+import type { AILoadingVeilProps } from '../../../library/manifestations/loadingVeil';
 
 /**
  * Development-only extension of the shared veil props: optional journey

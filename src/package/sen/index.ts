@@ -20,7 +20,7 @@
  * - `@seihouse/sen/manifestations`     — the Manifestation surfaces
  * - `@seihouse/sen/audio`              — the client-safe audio surface
  * - `@seihouse/sen/story-seed`         — Story Seed creation and contracts
- * - `@seihouse/sen/chapter-generation` — generation and handoff surfaces
+ * - `@seihouse/sen/generation`         — provider-neutral chapter and handoff contracts
  * - `@seihouse/sen/harness-generation` — independent checkpoint-first novel core
  *
  * SEIHouse's own first-party surfaces — cultivation and Qi progression, the
@@ -35,4 +35,4 @@ export * from './presentation';
 export * from '../../lib/language';
 
 /** The package surface version, bumped with the published package. */
-export const SEN_PACKAGE_VERSION = '0.4.0';
+export const SEN_PACKAGE_VERSION = '0.5.0';

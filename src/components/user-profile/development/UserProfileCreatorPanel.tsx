@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Download } from 'lucide-react';
-import { SENDiscoveryIcon, SENStoreIcon } from '../../sen-icons';
+import { LibraryDiscoveryIcon as SENDiscoveryIcon, LibraryStoreIcon as SENStoreIcon } from '@seihouse/library-ui';
 import { LibraryButton, LibraryPanel } from '@seihouse/library-ui';
 import { SEIEmptyState, SEIInlineAlert } from '@seihouse/ui';
 import { useUserProfileServices } from '../shared/userProfileServices';

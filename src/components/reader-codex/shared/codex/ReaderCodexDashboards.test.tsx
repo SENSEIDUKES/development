@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { StoryMemory, StoryWorld } from '../types';
-import { ReaderCodexDashboards } from './ReaderCodexDashboards';
+import { type StoryMemory, type StoryWorld } from '@seihouse/sen/contracts';
+import { ReaderCodexDashboards } from '@seihouse/sen/reader-codex';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

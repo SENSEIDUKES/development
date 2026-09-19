@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createEmptyStorySeedInput, normalizeStorySeedInput, normalizeWorldBlueprint } from './storySeedSchema';
-import { createStorySeedExport, parseStorySeedJson } from './storySeedSerialization';
+import { createEmptyStorySeedInput, normalizeStorySeedInput, normalizeWorldBlueprint } from '@seihouse/sen/story-seed';
+import { createStorySeedExport, parseStorySeedJson } from '@seihouse/sen/story-seed';
 
 describe('Story Seed arc plans', () => {
   it('round-trips the authoritative editable plan without a second long-term goal', () => {

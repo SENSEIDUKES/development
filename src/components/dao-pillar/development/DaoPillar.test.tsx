@@ -2,12 +2,12 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DeliveredReward } from '../shared/daoPillarContracts';
-import { useDaoPillarCalendar, type UseDaoPillarCalendarOptions } from '../shared/useDaoPillarCalendar';
+import { type DeliveredReward } from '@seihouse/library/dao-pillar';
+import { useDaoPillarCalendar, type UseDaoPillarCalendarOptions } from '@seihouse/library/dao-pillar';
 import { createLocalDaoPillarClient } from '../../../workshop/previews/dao-pillar/localDaoPillarClient';
-import { DaoPillarView, describeToday } from './DaoPillarView';
+import { DaoPillarView, describeToday } from '@seihouse/library/dao-pillar';
 import { daoPillarCardLabels } from '../../user-profile/development/UserProfileHome';
-import { formatCycleRange } from './daoPillarFormat';
+import { formatCycleRange } from '@seihouse/library/dao-pillar';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

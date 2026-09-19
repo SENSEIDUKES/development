@@ -50,7 +50,7 @@ export interface WorldCueIntent {
 
 /**
  * Persistable application-owned annotation. Only application resolution adds
- * the client-safe Library URL; no catalog/file/asset identifier is persisted.
+ * the host-authorized playback URL; no catalog/file/asset identifier is persisted.
  */
 export interface ResolvedWorldCueMoment {
   id: string;
@@ -478,7 +478,7 @@ const compareStrings = (left: string, right: string) => left < right ? -1 : left
  * Resolve only an exact category/variation match. Tags rank candidates,
  * confidence breaks semantic ties, and URL order makes the result stable.
  */
-export function resolveLibraryCueForWorldCue(
+export function resolveCatalogCueForWorldCue(
   intent: Pick<WorldCueIntent, 'sourceCategory' | 'variation' | 'semanticTags'>,
   loaded: AudioCuesLoadResult = EMPTY_AUDIO_CUES,
 ): AudioCue & { category: InlineAudioCueCategory } | null {
@@ -524,7 +524,7 @@ const stableHash = (value: string): string => {
   return (hash >>> 0).toString(36);
 };
 
-/** Validate placement and resolve an approved Library Cue after generation. */
+/** Validate placement and resolve a host-approved cue after generation. */
 export function resolveWorldCueIntent(
   candidate: unknown,
   block: WorldCueChapterBlock,
@@ -548,9 +548,9 @@ export function resolveWorldCueIntent(
   if (selectedOffset < 0) {
     return { ok: false, reason: 'occurrence-not-found', message: 'The requested zero-based phrase occurrence is absent.' };
   }
-  const cue = resolveLibraryCueForWorldCue(intent, loaded);
+  const cue = resolveCatalogCueForWorldCue(intent, loaded);
   if (!cue) {
-    return { ok: false, reason: 'unresolved-cue', message: 'No approved Library Cue matches this category and variation.' };
+    return { ok: false, reason: 'unresolved-cue', message: 'No host-approved cue matches this category and variation.' };
   }
   const idSeed = [
     intent.blockId,
@@ -732,7 +732,7 @@ export function resolveResolvedAudioMomentCue(
   }
   const cue = getByUrl(loaded, moment.cue.publicUrl);
   if (!cue) {
-    return { ok: false, reason: 'not-found', message: 'This World Cue is no longer available in the Library catalog.' };
+    return { ok: false, reason: 'not-found', message: 'This World Cue is no longer available in the host catalog.' };
   }
   if (!INLINE_CATEGORY_SET.has(cue.category)) {
     return { ok: false, reason: 'reserved-category', message: `${cue.category} cues belong to another audio surface.` };

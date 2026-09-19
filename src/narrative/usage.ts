@@ -9,6 +9,8 @@ export interface NarrativeUsageRequest {
 export interface NarrativeUsageAuthorization {
   /** Opaque host receipt; never a client permission to settle or refund funds. */
   receipt: string;
+  /** Recovery distinguishes an active hold from a completed or abandoned operation. */
+  state: 'authorized' | 'settled' | 'released';
 }
 
 /** Implemented by a trusted host orchestrator, outside the browser's authority. */

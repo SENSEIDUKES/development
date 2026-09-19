@@ -2,12 +2,12 @@
 import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { LibraryPresentationProvider } from '../../library-presentation/LibraryPresentationProvider';
-import { LibraryNavigation, LibrarySectionSidebar } from './LibraryNavigation';
+import { LibraryPresentationProvider } from '@seihouse/library/presentation';
+import { LibraryNavigation, LibrarySectionSidebar } from '@seihouse/library/shell';
 import { MainLibraryNavigation } from './MainLibraryNavigation';
-import { activeLibraryDestination, librarySectionItems, type LibraryLocation } from './libraryRoutes';
+import { activeLibraryDestination, librarySectionItems, type LibraryLocation } from '@seihouse/library/shell';
 import { StorySeedWorkspaceChrome } from '../../story-seed/development/StorySeedWorkspaceChrome';
-import { createEmptyStorySeedInput } from '../../story-seed/shared/storySeedSchema';
+import { createEmptyStorySeedInput } from '@seihouse/sen/story-seed';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let container: HTMLDivElement;

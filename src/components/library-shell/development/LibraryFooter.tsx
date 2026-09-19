@@ -2,7 +2,7 @@ import type { HTMLAttributes, ReactNode } from 'react';
 import { ChevronRight, Globe } from 'lucide-react';
 import { LibraryPanel } from '@seihouse/library-ui';
 import { SEIDisclosure, SEIDisclosureGroup } from '@seihouse/ui';
-import { getSenLanguageLabel, type SenLanguageCode } from '../../../lib/language';
+import { getSenLanguageLabel, type SenLanguageCode } from '@seihouse/sen/contracts';
 import { LIBRARY_FOOTER_SOCIAL_GLYPHS, LIBRARY_FOOTER_SOCIAL_LABELS, type LibraryFooterSocialNetwork } from './LibraryFooterSocialIcons';
 import './library-footer.css';
 

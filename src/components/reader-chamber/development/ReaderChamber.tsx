@@ -298,15 +298,15 @@ export default function ReaderChamber({
     ),
   });
 
-  const setCanShowRelicInReader = useReaderStore(state => state.setCanShowRelicInReader);
+  const setCanShowOverlays = useReaderStore(state => state.setCanShowOverlays);
 
   useEffect(() => {
     // Narration always wins over scroll position, and a chapter change resets the gate.
-    setCanShowRelicInReader?.(!isPlayingText);
+    setCanShowOverlays?.(!isPlayingText);
     return () => {
-      setCanShowRelicInReader?.(true);
+      setCanShowOverlays?.(true);
     };
-  }, [selectedChapterNum, isPlayingText, setCanShowRelicInReader]);
+  }, [selectedChapterNum, isPlayingText, setCanShowOverlays]);
 
   useEffect(() => {
     const el = readerRef.current;
@@ -314,7 +314,7 @@ export default function ReaderChamber({
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = el;
-      const currentAllowed = runtime.store.getSnapshot().canShowRelicInReader;
+      const currentAllowed = runtime.store.getSnapshot().canShowOverlays;
       let nextAllowed = true;
 
       if (isPlayingText) {
@@ -328,7 +328,7 @@ export default function ReaderChamber({
       }
 
       if (currentAllowed !== nextAllowed) {
-        setCanShowRelicInReader?.(nextAllowed);
+        setCanShowOverlays?.(nextAllowed);
       }
     };
 
@@ -336,7 +336,7 @@ export default function ReaderChamber({
     return () => {
       el.removeEventListener('scroll', handleScroll);
     };
-  }, [selectedChapterNum, isPlayingText, setCanShowRelicInReader]);
+  }, [selectedChapterNum, isPlayingText, setCanShowOverlays]);
 
   // --- atmospheric audio (just reference, no actual addition needed here)
   const isReaderFullscreen = useReaderStore((state) => state.isReaderFullscreen);

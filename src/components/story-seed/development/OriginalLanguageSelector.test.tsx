@@ -4,10 +4,10 @@ import { act } from 'react';
 import { type Root } from 'react-dom/client';
 import { createRoot } from '../../../test-utils/createStoryCreationRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SEN_LANGUAGES } from '../../../lib/language';
-import { createBlueprintDraftFromSeed, createEmptyStorySeedInput } from '../shared/storySeedSchema';
+import { SEN_LANGUAGES } from '@seihouse/sen/contracts';
+import { createBlueprintDraftFromSeed, createEmptyStorySeedInput } from '@seihouse/sen/story-seed';
 import { resetMockState } from '../shared/stubs';
-import { BlueprintReview } from './BlueprintReview';
+import { BlueprintReview } from '@seihouse/library/story-seed';
 
 let container: HTMLDivElement;
 let root: Root;

@@ -1,11 +1,11 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import ManifestationChamber, { ChamberForegroundMotes } from './ManifestationChamber';
-import ManifestationReveal from '../../../narrative/ManifestationReveal';
-import CelestialScrollVessel from './vessels/CelestialScrollVessel';
-import type { MediaManifestation, MediaRevealState } from '../shared/manifestation';
-import { MEDIA_KIND_LABEL } from '../shared/manifestation';
-import type { RevealedContent } from '../shared/manifestationReveal';
+import { ManifestationChamber, ChamberForegroundMotes } from '@seihouse/library-ui';
+import { ManifestationReveal } from '@seihouse/sen/manifestations';
+import { CelestialScrollVessel } from '@seihouse/library-ui';
+import { type MediaManifestation, type MediaRevealState } from '@seihouse/sen/manifestations';
+import { MEDIA_KIND_LABEL } from '@seihouse/sen/manifestations';
+import { type RevealedContent } from '@seihouse/sen/manifestations';
 
 /**
  * Golden ambient energy pooling behind the scroll (chamber Layer 0) — the
@@ -118,7 +118,7 @@ export default function MediaManifestationZone({ isVersa, spec, onUnseal }: Medi
             <CelestialScrollVessel
               state={spec.reveal}
               asset={spec.asset ?? null}
-              mediaKind={spec.mediaKind}
+              placeholderLabel={MEDIA_KIND_LABEL[spec.mediaKind]}
             />
           }
         />

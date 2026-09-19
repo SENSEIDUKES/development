@@ -1,5 +1,5 @@
-import type { SystemEvent } from '../../../narrative/story';
-import type { CodexCardTerm } from '../../reader-chamber/development/CodexCard';
+import { type SystemEvent } from '@seihouse/sen/cards';
+import { type CodexCardTerm } from '@seihouse/sen/cards';
 
 export type CardPresentationKind =
   | 'codex-card'

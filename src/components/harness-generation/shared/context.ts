@@ -1,4 +1,5 @@
 import { harnessArcContext } from './arcState';
+import { semanticReaderChanges } from './readerEdits';
 import { buildCanonicalStoryView } from './canonicalState';
 import { buildHarnessMechanicalContinuity } from './mechanicalContinuity';
 import { verifyHarnessEventEvidence } from './responseAcceptance';
@@ -101,8 +102,12 @@ export const compileStoryInformationPacket = (
     return [{ id, kind, label, evidence, facts }];
   };
   for (const correction of corrections) {
+    const { readerEdit, ...canonicalCorrection } = correction;
+    const semanticEdits = readerEdit ? semanticReaderChanges(readerEdit.changes) : undefined;
+    if (readerEdit && !semanticEdits?.length) continue;
     const value = {
-      ...correction,
+      ...canonicalCorrection,
+      ...(readerEdit ? { readerEdit: { chapterNumber: readerEdit.chapterNumber, changes: semanticEdits! } } : {}),
       targetEvidence: correction.targetRecordIds.flatMap(referent),
       ...(correction.resolvedRecordId ? { resolvedEntity: referent(correction.resolvedRecordId)[0] } : {}),
     };

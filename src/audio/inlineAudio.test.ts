@@ -1,16 +1,7 @@
+import { loadLibraryCues } from '../host/media/libraryCatalog';
 import { describe, expect, it } from 'vitest';
-import { parseAudioCues } from './cues';
-import {
-  resolveChapterAudioMoments,
-  resolveLibraryCueForWorldCue,
-  resolvePlayableAudioMoment,
-  resolveResolvedAudioMomentCue,
-  resolveWorldCueIntent,
-  splitByResolvedAudioMoments,
-  validateWorldCueIntent,
-  type ResolvedWorldCueMoment,
-  type WorldCueIntent,
-} from './inlineAudio';
+import { parseAudioCues } from '@seihouse/sen/audio';
+import { resolveCatalogCueForWorldCue, resolveChapterAudioMoments, resolvePlayableAudioMoment, resolveResolvedAudioMomentCue, resolveWorldCueIntent, splitByResolvedAudioMoments, validateWorldCueIntent, type ResolvedWorldCueMoment, type WorldCueIntent } from '@seihouse/sen/audio';
 
 const growlIntent: WorldCueIntent = {
   blockId: 'block-a',
@@ -208,7 +199,7 @@ describe('World Cue intent validation', () => {
     })).toMatchObject({ ok: false, reason: 'ineligible-phrase' });
     expect(resolveResolvedAudioMomentCue(resolvedMoment({
       triggerPhrase: 'the fox growled.',
-    }))).toMatchObject({ ok: false, reason: 'invalid-moment' });
+    }), loadLibraryCues())).toMatchObject({ ok: false, reason: 'invalid-moment' });
     for (const punctuation of ['—', '–', '”', "'"]) {
       expect(validateWorldCueIntent({
         ...growlIntent,
@@ -258,9 +249,9 @@ describe('World Cue catalog resolution', () => {
       },
     ]);
 
-    expect(resolveLibraryCueForWorldCue(growlIntent, loaded)?.public_url)
+    expect(resolveCatalogCueForWorldCue(growlIntent, loaded)?.public_url)
       .toBe('https://audio.example/a.mp3');
-    expect(resolveLibraryCueForWorldCue({
+    expect(resolveCatalogCueForWorldCue({
       ...growlIntent,
       variation: 'missing',
     }, loaded)).toBeNull();
@@ -269,7 +260,7 @@ describe('World Cue catalog resolution', () => {
   it('persists only the client-safe URL after exact placement and catalog validation', () => {
     const result = resolveWorldCueIntent(
       growlIntent,
-      { id: 'block-a', text: 'At dusk the fox growled once.' },
+      { id: 'block-a', text: 'At dusk the fox growled once.' }, loadLibraryCues(),
     );
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error(result.message);
@@ -286,13 +277,13 @@ describe('World Cue catalog resolution', () => {
   });
 
   it('revalidates persisted URLs and category/variation ownership before rendering', () => {
-    expect(resolveResolvedAudioMomentCue(resolvedMoment())).toMatchObject({ ok: true });
+    expect(resolveResolvedAudioMomentCue(resolvedMoment(), loadLibraryCues())).toMatchObject({ ok: true });
     expect(resolveResolvedAudioMomentCue(resolvedMoment({
       cue: { publicUrl: 'https://audio.example/unapproved.mp3' },
-    }))).toMatchObject({ ok: false, reason: 'not-found' });
+    }), loadLibraryCues())).toMatchObject({ ok: false, reason: 'not-found' });
     expect(resolveResolvedAudioMomentCue(resolvedMoment({
       sourceCategory: 'weapons',
-    }))).toMatchObject({ ok: false, reason: 'category-mismatch' });
+    }), loadLibraryCues())).toMatchObject({ ok: false, reason: 'category-mismatch' });
   });
 });
 
@@ -301,7 +292,7 @@ describe('World Cue placement and chapter resolution', () => {
     const text = 'the fox growled, then the fox growled again.';
     const result = resolveWorldCueIntent(
       { ...growlIntent, occurrenceIndex: 1 },
-      { id: 'block-a', text },
+      { id: 'block-a', text }, loadLibraryCues(),
     );
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error(result.message);
@@ -318,13 +309,13 @@ describe('World Cue placement and chapter resolution', () => {
       id: 'block-a',
       text: '[SFX: the fox growled] At dusk the fox growled.',
     };
-    expect(resolveWorldCueIntent(growlIntent, block)).toMatchObject({ ok: true });
+    expect(resolveWorldCueIntent(growlIntent, block, loadLibraryCues())).toMatchObject({ ok: true });
     expect(resolveWorldCueIntent(
       { ...growlIntent, occurrenceIndex: 1 },
-      block,
+      block, loadLibraryCues(),
     )).toMatchObject({ ok: false, reason: 'occurrence-not-found' });
 
-    const chapter = resolveChapterAudioMoments([block], [growlIntent]);
+    const chapter = resolveChapterAudioMoments([block], [growlIntent], loadLibraryCues());
     expect(chapter.issues).toEqual([]);
     expect(chapter.audioMoments).toHaveLength(1);
   });
@@ -334,7 +325,7 @@ describe('World Cue placement and chapter resolution', () => {
       { id: 'block-a', text: 'At dusk the fox growled.' },
       { id: 'block-b', text: 'At dawn the fox growled.' },
     ];
-    const resolution = resolveChapterAudioMoments(blocks, [growlIntent]);
+    const resolution = resolveChapterAudioMoments(blocks, [growlIntent], loadLibraryCues());
     expect(resolution.issues).toEqual([]);
     expect(resolution.audioMoments).toHaveLength(1);
     expect(resolution.audioMoments[0].blockId).toBe('block-a');
@@ -344,11 +335,11 @@ describe('World Cue placement and chapter resolution', () => {
 
     expect(resolveWorldCueIntent(
       { ...growlIntent, occurrenceIndex: 2 },
-      blocks[0],
+      blocks[0], loadLibraryCues(),
     )).toMatchObject({ ok: false, reason: 'occurrence-not-found' });
     expect(resolveWorldCueIntent(
       growlIntent,
-      { id: 'block-a', text: 'At dusk the fox watched.' },
+      { id: 'block-a', text: 'At dusk the fox watched.' }, loadLibraryCues(),
     )).toMatchObject({ ok: false, reason: 'phrase-not-found' });
   });
 
@@ -385,7 +376,7 @@ describe('World Cue placement and chapter resolution', () => {
         text: 'the fox growled.',
         system: { kind: 'warning', title: 'Threat detected' },
       }],
-      [growlIntent],
+      [growlIntent], loadLibraryCues(),
     );
     expect(resolution.audioMoments).toEqual([]);
     expect(resolution.issues).toContainEqual(expect.objectContaining({ reason: 'reserved-block' }));
@@ -397,7 +388,7 @@ describe('World Cue placement and chapter resolution', () => {
       [
         growlIntent,
         { ...growlIntent, triggerPhrase: 'fox growled' },
-      ],
+      ], loadLibraryCues(),
     );
     expect(overlap.audioMoments).toHaveLength(1);
     expect(overlap.issues).toContainEqual(expect.objectContaining({ reason: 'overlapping-placement' }));
@@ -410,7 +401,7 @@ describe('World Cue placement and chapter resolution', () => {
       ...growlIntent,
       blockId: block.id,
     }));
-    const bounded = resolveChapterAudioMoments(manyBlocks, manyIntents);
+    const bounded = resolveChapterAudioMoments(manyBlocks, manyIntents, loadLibraryCues());
     expect(bounded.audioMoments).toHaveLength(24);
     expect(bounded.issues).toContainEqual(expect.objectContaining({
       reason: 'invalid-intent',

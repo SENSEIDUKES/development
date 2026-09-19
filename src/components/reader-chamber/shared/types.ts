@@ -1,2 +1,2 @@
 /** Locked-reference adapter; not a published or live application surface. */
-export * from '../../../narrative/story';
+export * from '@seihouse/sen/contracts';

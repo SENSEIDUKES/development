@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getByAnyTag, getByCategory, getByTag, getByUrl, getByVariation, getCategories, AUDIO_CUE_CATEGORIES, parseAudioCues, type AudioCue, type AudioCuesLoadResult } from './cues';
+import { getByAnyTag, getByCategory, getByTag, getByUrl, getByVariation, getCategories, AUDIO_CUE_CATEGORIES, parseAudioCues, type AudioCue, type AudioCuesLoadResult } from '@seihouse/sen/audio';
 import { loadLibraryCues } from '../host/media/libraryCatalog';
 
 const makeValidCue = (overrides: Partial<{

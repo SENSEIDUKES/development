@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import React, { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ResolvedSoundscape } from '../../../../audio/media';
+import { type ResolvedSoundscape } from '@seihouse/sen/audio';
 import { AudioMenu } from './AudioMenu';
 
 const playback = vi.hoisted(() => ({
@@ -23,9 +24,9 @@ vi.mock('../../../../audio/playback', () => ({
   useNarrativeAudio: () => playback,
 }));
 
-vi.mock('../../shared/stubs', () => ({
+vi.mock('../../../../narrative/readerRuntime', async importOriginal => ({
+  ...await importOriginal<typeof import('../../../../narrative/readerRuntime')>(),
   useAudioMix: () => audioMix,
-  vibrate: vi.fn(),
 }));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

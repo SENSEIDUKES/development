@@ -2,11 +2,11 @@ import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { parseEnv } from 'node:util';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
-import { HarnessGenerationController, exportHarnessStory } from '../../components/harness-generation/shared/controller';
+import { HarnessGenerationController, exportHarnessStory } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../test-utils/InMemoryHarnessGenerationRepository';
-import { createEmptyHarnessWorkspaceState } from '../../components/harness-generation/shared/repository';
-import { buildCanonicalStoryView } from '../../components/harness-generation/shared/canonicalState';
-import type { HarnessGenerationResponse, HarnessStory, HarnessWorkspaceState } from '../../narrative/generation';
+import { createEmptyHarnessWorkspaceState } from '@seihouse/sen/harness-generation';
+import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationResponse, type HarnessStory, type HarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { handleHarnessGenerationHttp } from './http';
 
 // Opt-in: reads an existing author export and an existing server environment.

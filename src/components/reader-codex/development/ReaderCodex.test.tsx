@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { act, useState } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   installAudioMediaStubs,
@@ -8,14 +9,9 @@ import {
 } from '../../../test-utils/renderWithDevAudio';
 import { createReaderCodexPreviewStory } from '../../../workshop/previews/reader-codex/previewData';
 import { resetMockState } from '../../reader-chamber/shared/stubs';
-import ReaderCodex from './ReaderCodex';
-import { CodexSheetOverlay } from './CodexSheetOverlay';
-import type {
-  ReaderCodexStoryPatch,
-  StoryMemory,
-  StoryWorld,
-  UpdateStoryFields,
-} from '../shared/types';
+import { ReaderCodex } from '@seihouse/sen/reader-codex';
+import { CodexSheetOverlay } from '@seihouse/sen/reader-codex';
+import { type ReaderCodexStoryPatch, type StoryMemory, type StoryWorld, type UpdateStoryFields } from '@seihouse/sen/contracts';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

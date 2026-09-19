@@ -1,16 +1,14 @@
 // @vitest-environment jsdom
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import React, { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useNarrativeAudio, type NarrativeAudioPlayback, type NarrativeAudioPlaybackEvent } from '../../../audio/playback';
+import { useNarrativeAudio, type NarrativeAudioPlayback, type NarrativeAudioPlaybackEvent } from '@seihouse/sen/audio';
 import { DevAudioPlaybackProvider } from '../../../audio/DevAudioPlayback';
-import {
-  getInlineCueTrackId,
-  type ResolvedAudioMoment,
-} from '../../../audio/inlineAudio';
+import { getInlineCueTrackId, type ResolvedAudioMoment } from '@seihouse/sen/audio';
 import { installAudioMediaStubs } from '../../../test-utils/renderWithDevAudio';
-import { InlineAudio, InlineAudioControl, InlineAudioText } from './InlineAudio';
+import { InlineAudio, InlineAudioControl, InlineAudioText } from '@seihouse/sen/reader-chamber';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -25,6 +23,7 @@ const beastMoment: ResolvedAudioMoment = {
   relatedEntity: { name: 'Vermilion Debt Fox', type: 'creature' },
   cue: {
     publicUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Beasts/Growl/Tiger_Growl_1.mp3',
+    provenance: { catalogId: 'test-cues', version: '1' },
   },
 };
 
@@ -39,6 +38,7 @@ const weaponMoment: ResolvedAudioMoment = {
   relatedEntity: { name: 'Ashen Sword', type: 'artifact' },
   cue: {
     publicUrl: 'https://celestialaudio.seihouse.org/DEFAULT/Weapons/Unsheathe/Sword_Unsheathe_1.mp3',
+    provenance: { catalogId: 'test-cues', version: '1' },
   },
 };
 

@@ -1,4 +1,4 @@
-import type { HarnessGenerationModelAdapter, HarnessGenerationRequest, HarnessGenerationResponse, HarnessGenerationServerInfo, HarnessMemoryRecoveryRequest, HarnessArcRequest } from '../../narrative/generation';
+import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessGenerationServerInfo, type HarnessMemoryRecoveryRequest, type HarnessArcRequest } from '@seihouse/sen/harness-generation';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);

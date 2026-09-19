@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AGENTS } from '../../../lib/agents';
 import ReferenceAILoadingVeil from '../../../components/chapter-manifestation/reference/AILoadingVeil';
-import { AILoadingVeil as DevelopmentAILoadingVeil, defaultDestinationFor } from '@seihouse/library/manifestations';
+import { AILoadingVeil as DevelopmentAILoadingVeil } from '@seihouse/library/manifestations';
+import { defaultDestinationFor } from '@seihouse/library-ui';
 import {
   manifestationModeForOperation,
   type MediaRevealState,

@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetMockState } from '../../reader-chamber/shared/stubs';
-import { getColorCodeValue } from '../../../narrative/colorCodes';
-import { CodexHovercard } from './CodexHovercard';
+import { getColorCodeValue } from '@seihouse/sen/color-codes';
+import { CodexHovercard } from '@seihouse/sen/cards';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

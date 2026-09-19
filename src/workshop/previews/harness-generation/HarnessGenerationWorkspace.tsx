@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
 import { HarnessGenerationWorkspace as HarnessGenerationSurface } from '@seihouse/library/generation';
 import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
 import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
@@ -39,6 +40,7 @@ export function HarnessGenerationWorkspace() {
       renderReference={() => <HarnessGenerationReference />}
       renderDevelopment={() => <HarnessGenerationSurface repository={repository} modelAdapter={modelAdapter} storySeedSource={storySeedSource} installedSkills={installedSkills}
         registeredMediaPacks={WORKSHOP_MEDIA_PACKS} mediaPackEntitlements={mediaPackEntitlements}
+        baseMedia={LIBRARY_BASE_MEDIA}
         onGrantDevelopmentMediaReward={(reference: MediaPackReference) => {
           const unlockedAt = new Date();
           const entitlement: MediaPackEntitlement = {

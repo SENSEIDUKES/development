@@ -1,3 +1,4 @@
+import { useLibraryAssets } from '../../../library/assets';
 import React, { useRef, useState } from 'react';
 import {
   AlertTriangle,
@@ -32,11 +33,7 @@ import {
   SEISelect,
   SEISwitch,
 } from '@seihouse/ui';
-import {
-  DEFAULT_SEN_LANGUAGE_CODE,
-  SEN_LANGUAGES,
-  normalizeSenLanguageCode,
-} from '../../../lib/language';
+import { DEFAULT_SEN_LANGUAGE_CODE, SEN_LANGUAGES, normalizeSenLanguageCode } from '@seihouse/sen/contracts';
 import type { AppUser, ChapterWritingStyle, Story } from '../shared/types';
 import { useUserProfileServices, type UserProfileController } from '../shared/userProfileServices';
 import { CHAPTER_WRITING_STYLE_OPTIONS, normalizeChapterWritingStyle } from './chapterWritingStyle';
@@ -48,7 +45,7 @@ import {
   getAuraTextStyle,
   rankToken,
   resolveRankVisual,
-} from './qi';
+} from '../../../library/cultivation/progression';
 import { CAVE_ENVIRONMENTS } from './caveEnvironment';
 import {
   DISPLAY_NAME_MAX_VISIBLE,
@@ -63,7 +60,7 @@ import {
   handleProfileRadioGroupKeyDown,
   profileRadioTabIndex,
 } from './radioGroupKeyboard';
-import { SENExitIcon, SENProfileIcon } from '../../library-shell/development/SENGlobalIcon';
+import { LibraryExitIcon as SENExitIcon, LibraryProfileIcon as SENProfileIcon } from '@seihouse/library-ui';
 
 const IDENTITY_FIELDS = ['displayName', 'displayNameColor'] as const;
 
@@ -149,6 +146,7 @@ export function UserProfileSettingsPanel({
   const hasEnabledAuraSelection = RANKS.some(
     rank => Boolean(profile) && currentXp >= rank.unlockedAt && auraSelection === rankToken(rank),
   );
+  const assets = useLibraryAssets();
   const hasEnvironmentSelection = CAVE_ENVIRONMENTS.some(environment => environment.id === environmentId);
   const previewStyle = getAuraTextStyle(auraSelection, profile?.activeStatusEffects, currentXp);
   // A custom spectrum is any stored value that resolves to the cultivator's own
@@ -422,7 +420,7 @@ export function UserProfileSettingsPanel({
                           isSelected ? 'border-[#e2c46a]' : 'border-white/10 hover:border-white/30'
                         }`}
                       >
-                        <img src={environment.src} alt="" className="aspect-[16/10] w-full object-cover" loading="lazy" />
+                        <img src={assets.caveImages?.[environment.id]} alt="" className="aspect-[16/10] w-full object-cover" loading="lazy" />
                         <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent px-2 pb-1.5 pt-4">
                           <span className="block truncate font-sc text-[10px] font-bold uppercase tracking-wider text-neutral-100">{environment.name}</span>
                           <span className="block truncate font-sans text-[9px] text-neutral-400">{environment.mood}</span>

@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ReaderCodexMysteries } from './ReaderCodexMysteries';
+import { ReaderCodexMysteries } from '@seihouse/sen/reader-codex';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 

@@ -1,15 +1,4 @@
-import {
-  ENERGY_ACTIVITY_LIMIT,
-  ENERGY_PRICE_CATALOG,
-  energyActionLabel,
-  isEnergyActionId,
-  resolveEnergyPrice,
-  type EnergyAccountSnapshot,
-  type EnergyActionId,
-  type EnergyActivityEntry,
-  type EnergyBalance,
-  type EnergyPriceQuote,
-} from '../../components/energy/shared/energyContracts';
+import { ENERGY_ACTIVITY_LIMIT, ENERGY_PRICE_CATALOG, energyActionLabel, isEnergyActionId, resolveEnergyPrice, type EnergyAccountSnapshot, type EnergyActionId, type EnergyActivityEntry, type EnergyBalance, type EnergyPriceQuote } from '@seihouse/library/energy';
 import type { ResolvedEnergyConfig } from './config';
 import {
   assertEnergyAmount,
@@ -19,13 +8,8 @@ import {
   type EnergyRepository,
   type EnergyReservationResult,
 } from './repository';
-import type {
-  EnergyPrincipal,
-  EnergyProviderCost,
-  EnergyReservation,
-  EnergyTransaction,
-  JsonObject,
-} from './types';
+import type { LibraryPrincipal } from '../identity/types';
+import type { EnergyProviderCost, EnergyReservation, EnergyTransaction, JsonObject } from './types';
 
 export class EnergyAuthorizationError extends Error {
   constructor(message: string) {
@@ -115,7 +99,7 @@ export class EnergyService {
    * Makes sure the principal's account exists. Development users receive the
    * configured initial grant exactly once; the idempotency key is the guard.
    */
-  private async prepareAccount(principal: EnergyPrincipal): Promise<void> {
+  private async prepareAccount(principal: LibraryPrincipal): Promise<void> {
     await this.repository.ensureAccount(principal.uid);
     if (!principal.developmentAccess || this.config.developmentInitialGrant <= 0) return;
     await this.repository.applyGrant({
@@ -127,17 +111,17 @@ export class EnergyService {
     });
   }
 
-  async getBalance(principal: EnergyPrincipal): Promise<EnergyBalance> {
+  async getBalance(principal: LibraryPrincipal): Promise<EnergyBalance> {
     await this.prepareAccount(principal);
     const account = (await this.repository.getAccount(principal.uid))!;
     return { balance: account.balance, held: account.held, available: account.balance - account.held };
   }
 
-  async listTransactions(principal: EnergyPrincipal, limit = ENERGY_ACTIVITY_LIMIT): Promise<EnergyTransaction[]> {
+  async listTransactions(principal: LibraryPrincipal, limit = ENERGY_ACTIVITY_LIMIT): Promise<EnergyTransaction[]> {
     return this.repository.listTransactions(principal.uid, limit);
   }
 
-  async getSnapshot(principal: EnergyPrincipal): Promise<EnergyAccountSnapshot> {
+  async getSnapshot(principal: LibraryPrincipal): Promise<EnergyAccountSnapshot> {
     const balance = await this.getBalance(principal);
     const transactions = await this.listTransactions(principal);
     return {
@@ -157,7 +141,7 @@ export class EnergyService {
   }
 
   /** Server-internal grant (purchases, rewards, corrections). Not reachable from a browser. */
-  async grant(principal: EnergyPrincipal, input: EnergyGrantInput): Promise<EnergyLedgerResult> {
+  async grant(principal: LibraryPrincipal, input: EnergyGrantInput): Promise<EnergyLedgerResult> {
     assertEnergyAmount(input.amount);
     assertIdempotencyKey(input.idempotencyKey);
     await this.prepareAccount(principal);
@@ -170,7 +154,7 @@ export class EnergyService {
     });
   }
 
-  private assertDevelopmentAccess(principal: EnergyPrincipal): void {
+  private assertDevelopmentAccess(principal: LibraryPrincipal): void {
     if (!principal.developmentAccess) {
       throw new EnergyAuthorizationError('Development Energy controls are not available for this account.');
     }
@@ -178,7 +162,7 @@ export class EnergyService {
 
   /** Development-only test grant. Refused for every principal without development access. */
   async grantDevelopment(
-    principal: EnergyPrincipal,
+    principal: LibraryPrincipal,
     input: { amount?: number; idempotencyKey: string },
   ): Promise<EnergyLedgerResult> {
     this.assertDevelopmentAccess(principal);
@@ -196,7 +180,7 @@ export class EnergyService {
   }
 
   /** Development-only reset: wipes the ledger and re-applies the initial grant. */
-  async resetDevelopment(principal: EnergyPrincipal): Promise<EnergyBalance> {
+  async resetDevelopment(principal: LibraryPrincipal): Promise<EnergyBalance> {
     this.assertDevelopmentAccess(principal);
     await this.repository.resetAccount(principal.uid);
     return this.getBalance(principal);
@@ -211,7 +195,7 @@ export class EnergyService {
    * releasing later never consults the catalog again, so repricing or
    * unpricing an action cannot change, or strand, Energy already held.
    */
-  async reserve(principal: EnergyPrincipal, input: EnergyReserveInput): Promise<EnergyReservationResult> {
+  async reserve(principal: LibraryPrincipal, input: EnergyReserveInput): Promise<EnergyReservationResult> {
     const quote = this.getPrice(input.actionId);
     const quantity = input.quantity ?? 1;
     assertEnergyAmount(quantity, 'quantity');
@@ -235,7 +219,7 @@ export class EnergyService {
    * only *names* the action, so an action that has since been repriced or
    * unpriced still settles.
    */
-  async settle(principal: EnergyPrincipal, input: EnergySettleInput): Promise<EnergyReservationResult> {
+  async settle(principal: LibraryPrincipal, input: EnergySettleInput): Promise<EnergyReservationResult> {
     const reservation = await this.ownedReservation(principal, input.reservationId);
     return this.repository.settleReservation({
       uid: principal.uid,
@@ -253,7 +237,7 @@ export class EnergyService {
    * Returns the reservation's stored amount, and likewise never re-prices, so
    * a failure cannot strand Energy behind a catalog edit.
    */
-  async release(principal: EnergyPrincipal, input: EnergyReleaseInput): Promise<EnergyReservationResult> {
+  async release(principal: LibraryPrincipal, input: EnergyReleaseInput): Promise<EnergyReservationResult> {
     const reservation = await this.ownedReservation(principal, input.reservationId);
     return this.repository.releaseReservation({
       uid: principal.uid,
@@ -264,11 +248,11 @@ export class EnergyService {
   }
 
   /** Finds the reservation an earlier attempt created for the same intent, if any. */
-  async findReservation(principal: EnergyPrincipal, idempotencyKey: string): Promise<EnergyReservation | null> {
+  async findReservation(principal: LibraryPrincipal, idempotencyKey: string): Promise<EnergyReservation | null> {
     return this.repository.findReservationByIdempotencyKey(principal.uid, idempotencyKey);
   }
 
-  private async ownedReservation(principal: EnergyPrincipal, reservationId: string): Promise<EnergyReservation> {
+  private async ownedReservation(principal: LibraryPrincipal, reservationId: string): Promise<EnergyReservation> {
     const reservation = await this.repository.getReservation(principal.uid, reservationId);
     if (!reservation) throw new EnergyValidationError([`Energy reservation ${reservationId} was not found for this account.`]);
     return reservation;

@@ -1,16 +1,17 @@
 // @vitest-environment jsdom
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { validateHarnessSkillManifest } from '../../../harness-generation/shared/skills';
-import type { HarnessSkillManifest } from '../../../../narrative/generation';
-import type { SenLanguageCode } from '../../../../lib/language';
-import type { ReaderChapter } from '../../../../narrative/story';
-import { ReaderTranslationController } from './controller';
-import type { ReaderTranslationProvider } from './provider';
+import { validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { type SenLanguageCode } from '@seihouse/sen/contracts';
+import { type ReaderChapter } from '@seihouse/sen/contracts';
+import { ReaderTranslationController } from '@seihouse/sen/translation';
+import { type ReaderTranslationProvider } from '@seihouse/sen/translation';
 import { InMemoryReaderTranslationRepository } from './repository';
-import { useChapterTranslation } from './useChapterTranslation';
-import { ReaderTranslationRuntimeProvider } from './runtime';
+import { useChapterTranslation } from '@seihouse/sen/translation';
+import { ReaderTranslationRuntimeProvider } from '@seihouse/sen/translation';
 
 const chapter: ReaderChapter = {
   persistenceId: 'chapter-1',

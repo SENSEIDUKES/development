@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { ReaderTranslationRequest } from '../../components/reader-chamber/shared/translation/contract';
+import { type ReaderTranslationRequest } from '@seihouse/sen/translation';
 import type { HarnessTextModelProvider } from '../harness-generation/provider';
 import {
   handleReaderTranslationHttp,

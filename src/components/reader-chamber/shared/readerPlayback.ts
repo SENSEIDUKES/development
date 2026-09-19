@@ -10,10 +10,10 @@
  * audio ever runs.
  */
 
-import type { ReaderChapter } from '../../../narrative/story';
+import { type ReaderChapter } from '@seihouse/sen/contracts';
 import { useAppStore } from './stubs';
 import { setMockState } from './stubs';
-import { extractReaderVisibleAudioText } from '../../../audio/readerVisibleText';
+import { extractReaderVisibleAudioText } from '@seihouse/sen/audio';
 
 export const extractSFXCues = extractReaderVisibleAudioText;
 

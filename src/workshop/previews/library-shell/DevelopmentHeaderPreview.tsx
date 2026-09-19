@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { MainLibraryHeader } from '../../../components/library-shell/development/MainLibraryHeader';
-import { MainLibraryHomeInsights } from '../../../components/library-shell/development/MainLibraryHomeInsights';
+import { MainLibraryHeader } from '@seihouse/library/shell';
+import { MainLibraryHomeInsights } from '@seihouse/library/shell';
 import { MainLibraryPreview } from './MainLibraryPreview';
 import { StorySeedWorkspace } from '../story-seed/StorySeedWorkspace';
 import { UserProfileWorkspace } from '../user-profile/UserProfileWorkspace';
@@ -8,7 +8,7 @@ import type { PreviewState } from '../story-seed/previewStates';
 import type { UserProfilePreviewState } from '../user-profile/previewStates';
 import type { HeaderConfiguration } from './headerPreviewData';
 import { libraryPreviewUrl, readLibraryPreviewLocation } from './libraryPreviewNavigation';
-import type { LibraryLocation } from '../../../components/library-shell/development/libraryRoutes';
+import { type LibraryLocation } from '@seihouse/library/shell';
 import { HeaderSlotPreview } from './HeaderSlotPreview';
 
 /** Exercise the real Development consumers with their existing Workshop adapters. */

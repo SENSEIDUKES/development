@@ -205,6 +205,7 @@ export interface RelicRevealProps {
   /** The relic being celebrated. */
   artifact: CosmicArtifact;
   /** Fired by the "Claim Relic" button (and only by it). */
+  /** Acknowledges an already-earned server record; MUST NOT award currency or inventory. */
   onClaim: (artifact: CosmicArtifact) => void;
   /** Fired when the revealed backdrop is tapped. Matches the source behavior. */
   onDismiss?: () => void;

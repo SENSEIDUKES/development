@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import type { StorySeedInput } from "../../components/story-seed/shared/storySeedSchema";
-import { createStorySeedExport, parseStorySeedJson } from "../../components/story-seed/shared/storySeedSerialization";
-import type { WorldBlueprint } from "../../components/story-seed/shared/types";
+import { type StorySeedInput } from '@seihouse/sen/story-seed';
+import { createStorySeedExport, parseStorySeedJson } from '@seihouse/sen/story-seed';
+import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { adaptFinalizedStorySeedToChapterContracts } from "../../components/chapter-generation/shared/packets/storySeedChapterAdapter";
 import { handleStorySeedBlueprintHttp } from "./http";
 import { resolveStorySeedBlueprintConfig } from "./config";

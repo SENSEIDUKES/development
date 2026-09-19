@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
-import { SENStoryIcon } from '../../../sen-icons';
-import type { StorySeedInput } from '../../shared/storySeedSchema';
-import { normalizeStoryStyle } from '../../shared/storyStyle';
+import { LibraryStoryIcon as SENStoryIcon } from '@seihouse/library-ui';
+import { type StorySeedInput } from '@seihouse/sen/story-seed';
+import { normalizeStoryStyle } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
 import {
   patchStoryRequired,
@@ -10,7 +10,7 @@ import {
   worldIdentity,
   type UpdateSeed,
 } from '../seedState';
-import { NarrativeTextBox as LibraryTextBox } from '../../../../presentation';
+import { NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { WorkspaceShell } from './WorkspaceShell';
 import { OriginGenrePicker } from './origin/OriginGenrePicker';
 import { OriginPremiseAndTags } from './origin/OriginPremiseAndTags';

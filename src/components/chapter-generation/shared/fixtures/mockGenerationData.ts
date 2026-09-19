@@ -5,7 +5,7 @@
  * against representative input, exactly like `storyRouter.ts`'s
  * `/api/generate-chapter-stream` handler does against a real Story document.
  */
-import type { ChapterHandoff, ContextBlock, SceneFingerprint } from '../../../../narrative/chapter';
+import { type ChapterHandoff, type ContextBlock, type SceneFingerprint } from '@seihouse/sen/generation';
 import type { GlossaryGenerationResult } from "../lib/glossaryFormatter";
 import type { CulturalProseStyleId } from "../lib/culturalProse";
 import type { FatePressureTier, SceneType } from "../lib/sceneRhythm";

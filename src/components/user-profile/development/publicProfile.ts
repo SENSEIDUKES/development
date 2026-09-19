@@ -26,7 +26,7 @@
  */
 
 import type { CosmicArtifact, Story, UserProfile } from '../shared/types';
-import { getDaoRankData } from './qi';
+import { getDaoRankData } from '../../../library/cultivation/progression';
 
 /** The five areas a cultivator chooses to publish. */
 export interface PublicProfileVisibility {

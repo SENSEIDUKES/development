@@ -10,30 +10,13 @@ import {
 } from 'react';
 import './story-seed.css';
 import { motion } from 'motion/react';
-import type { WorldBlueprint } from '../shared/types';
-import { generateUUID } from '../shared/id';
+import { type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { generateUUID } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore, type StoryCreationSnapshot } from '../../../library/story-seed/runtime';
-import { type StorySeedArtifact, type StorySeedRecord } from '../shared/storySeedRepository';
-import {
-  applyInferredStoryTags,
-  buildBlueprintGenerationPayload,
-  buildInitialStoryGenerationPayload,
-  createBlueprintDraftFromSeed,
-  createEmptyStorySeedInput,
-  normalizeStorySeedInput,
-  normalizeWorldBlueprint,
-  validateStorySeedDraft,
-  validateStorySeedInput,
-  type BlueprintGenerationPayload,
-  type InitialStoryGenerationPayload,
-  type StorySeedInput,
-} from '../shared/storySeedSchema';
-import { createStoryAdministrativeMetadata } from '../shared/storyAdministrativeMetadata';
-import {
-  DEFAULT_SEN_LANGUAGE_CODE,
-  normalizeSenLanguageCode,
-  type SenLanguageCode,
-} from '../../../lib/language';
+import { type StorySeedArtifact, type StorySeedRecord } from '@seihouse/sen/story-seed';
+import { applyInferredStoryTags, buildBlueprintGenerationPayload, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, normalizeStorySeedInput, normalizeWorldBlueprint, validateStorySeedDraft, validateStorySeedInput, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { createStoryAdministrativeMetadata } from '@seihouse/sen/story-seed';
+import { DEFAULT_SEN_LANGUAGE_CODE, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
 import StoryAuthGate, { STORY_AUTH_DISSOLVE_MS } from './StoryAuthGate';
 
 // Creation workspace
@@ -51,12 +34,12 @@ import { FactionsWorkspace } from './workspaces/FactionsWorkspace';
 import { AbilitiesWorkspace } from './workspaces/AbilitiesWorkspace';
 import { PowerSystemWorkspace } from './workspaces/PowerSystemWorkspace';
 
-import { NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '../../../presentation';
+import { NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
 import { DeferredStorySeedView } from './DeferredStorySeedView';
 import { StorySeedWorkspaceChrome } from './StorySeedWorkspaceChrome';
-import { SENManifestingIcon } from '../../library-shell/development/SENGlobalIcon';
+import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import { useStoryBankRecords } from './useStoryBankRecords';
-import { downloadStorySeed, downloadStorySeedCollection } from '../shared/storySeedSerialization';
+import { downloadStorySeed, downloadStorySeedCollection } from '@seihouse/sen/story-seed';
 
 export interface CreationModalProps {
   /** Return explicitly to the host main hub/Home. */

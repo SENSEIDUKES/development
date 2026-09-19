@@ -1,9 +1,9 @@
 import { Route } from 'lucide-react';
-import { SENAbilityIcon } from '../../../sen-icons';
-import type { StorySeedInput } from '../../shared/storySeedSchema';
+import { LibraryAbilityIcon as SENAbilityIcon } from '@seihouse/library-ui';
+import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
 import { patchAbilities, worldFoundations, type UpdateSeed } from '../seedState';
-import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '../../../../presentation';
+import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { GuidanceNote, WorkspaceShell } from './WorkspaceShell';
 
 interface AbilitiesWorkspaceProps {

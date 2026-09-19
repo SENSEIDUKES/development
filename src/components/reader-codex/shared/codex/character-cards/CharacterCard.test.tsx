@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { createRoot } from '../../../../../test-utils/createReaderRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { CharacterCard } from './CharacterCard';
-import { CodexProvider } from '../CodexContext';
-import type { CodexVoiceQuoteStatus } from '../../hooks/useCodexVoiceQuote';
-import type { Character, Story } from '../../types';
+import { CharacterCard } from '@seihouse/sen/cards';
+import { CodexProvider } from '@seihouse/sen/reader-codex';
+import { type CodexVoiceQuoteStatus } from '@seihouse/sen/reader-codex';
+import { type Character, type Story } from '@seihouse/sen/contracts';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -56,7 +57,7 @@ const render = (
         voiceStatus={status}
         isGenerating={false}
         canGenerate
-        isFreeUserOnHubStory={false}
+        manifestationRestricted={false}
         onQuoteTap={onQuoteTap}
         beginCharEdit={vi.fn()}
         handleAwakenCardImage={vi.fn()}

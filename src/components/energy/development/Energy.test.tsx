@@ -2,18 +2,11 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ENERGY_PRICE_CATALOG } from '../shared/energyContracts';
-import { EnergyClientProvider, createHttpEnergyClient, type EnergyClient } from '../shared/energyClient';
-import { useEnergyAccount, type EnergyAccountState } from '../shared/useEnergyAccount';
+import { ENERGY_PRICE_CATALOG } from '@seihouse/library/energy';
+import { EnergyClientProvider, createHttpEnergyClient, type EnergyClient } from '@seihouse/library/energy';
+import { useEnergyAccount, type EnergyAccountState } from '@seihouse/library/energy';
 import { createLocalEnergyClient } from '../../../workshop/previews/energy/localEnergyClient';
-import {
-  EnergyActionCost,
-  EnergyBalanceIndicator,
-  EnergyDeductionNotice,
-  EnergyInsufficientState,
-  EnergyPanel,
-  energyDeductionToast,
-} from './index';
+import { EnergyActionCost, EnergyBalanceIndicator, EnergyDeductionNotice, EnergyInsufficientState, EnergyPanel, energyDeductionToast } from '@seihouse/library/energy';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -106,7 +99,7 @@ describe('Energy client hook', () => {
     const fetchMock = vi.fn(async (_url: string, init: RequestInit) => new Response(JSON.stringify({ uid: 'u', balance: 1, held: 0, available: 1, prices: [], activity: [], developmentControls: null, updatedAt: 'now' }), { status: 200 }));
     const client = createHttpEnergyClient({ token: () => 'dev:u', fetch: fetchMock as unknown as typeof fetch });
     await client.grantDevelopment({ amount: 5, idempotencyKey: 'k' });
-    expect(fetchMock).toHaveBeenCalledWith('/api/energy', expect.objectContaining({
+    expect(fetchMock).toHaveBeenCalledWith('/api/library-economy?capability=energy', expect.objectContaining({
       method: 'POST',
       headers: expect.objectContaining({ Authorization: 'Bearer dev:u' }),
       body: JSON.stringify({ operation: 'development.grant', amount: 5, idempotencyKey: 'k' }),

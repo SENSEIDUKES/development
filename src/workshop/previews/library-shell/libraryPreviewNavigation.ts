@@ -1,4 +1,4 @@
-import type { LibraryLocation } from '../../../components/library-shell/development/libraryRoutes';
+import { type LibraryLocation } from '@seihouse/library/shell';
 
 /** Workshop route transport only. Production supplies its existing router callback. */
 export function libraryPreviewUrl(location: LibraryLocation) {

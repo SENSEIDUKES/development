@@ -1,14 +1,14 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import { HarnessGenerationWorkspace } from '../../../library/generation/HarnessGenerationWorkspace';
-import { SEN_NOVEL_AUTHOR_SKILL } from './authorSkill';
+import { HarnessGenerationWorkspace } from '@seihouse/library/generation';
+import { SEN_NOVEL_AUTHOR_SKILL } from '@seihouse/sen/harness-generation';
 import { compileStoryInformationPacket } from './context';
-import { HarnessGenerationController } from './controller';
-import { HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS, assembleCapaPrompt } from './skills';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
+import { HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS, assembleCapaPrompt } from '@seihouse/sen/harness-generation';
 import type { HarnessRuntime } from './ids';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
-import type { HarnessGenerationModelAdapter, HarnessGenerationRequest, HarnessGenerationResponse, HarnessSkillManifest } from '../../../narrative/generation';
+import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 
 const runtime = (): HarnessRuntime => {
   let id = 0;

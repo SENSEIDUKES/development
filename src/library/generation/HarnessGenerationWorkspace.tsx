@@ -1,20 +1,24 @@
+import { StoryFoundationEditor } from '@seihouse/sen/story-seed';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { FrozenNarrativeMedia } from '@seihouse/sen/audio';
 import { BookOpen, CheckCircle2, CircleAlert, Download, FileText, ListTree, LoaderCircle, Pause, Play, Plus, Puzzle, RefreshCcw, Volume2 } from 'lucide-react';
 import { createLibraryMediaPort, isMediaPackEntitlementActive, mediaPackKey, type MediaPack, type MediaPackEntitlement, type MediaPackReference, type StoryMediaLoadoutSlot } from '../media/mediaPacks';
-import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox, CreationButton as ManifestButton } from '../../presentation/index';
-import { SENManifestingIcon } from '../../components/library-shell/development/SENGlobalIcon';
-import { HarnessGenerationController, exportHarnessStory } from '../../components/harness-generation/shared/controller';
-import { findFoundationRevision, findStory } from '../../components/harness-generation/shared/foundation';
-import { buildCanonicalStoryView } from '../../components/harness-generation/shared/canonicalState';
-import { DEFAULT_HARNESS_CONTEXT_POLICY } from '../../components/harness-generation/shared/context';
-import { CAPA_SCHEMA, HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS, harnessSkillKey } from '../../components/harness-generation/shared/skills';
-import { isTranslationSkillCompatible, translationTargetLanguage } from '../../narrative/translationSkill';
-import { includeBundledHarnessSkills } from '../../components/harness-generation/shared/authorSkill';
-import { HarnessReaderSession } from '../../components/harness-generation/development/HarnessReaderSession';
-import { type HarnessGenerationRepository } from '../../components/harness-generation/shared/repository';
-import type { HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessGenerationServerInfo, HarnessCorrectionKind, HarnessSemanticEvent, HarnessStory, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId, HarnessStorySeedOption, HarnessStorySeedSource, HarnessWorkspaceState, StoryFoundationInput } from '../../narrative/generation';
+import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
+import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
+import { HarnessGenerationController, exportHarnessStory } from '@seihouse/sen/harness-generation';
+import { findFoundationRevision, findStory } from '@seihouse/sen/harness-generation';
+import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
+import { DEFAULT_HARNESS_CONTEXT_POLICY } from '@seihouse/sen/harness-generation';
+import { CAPA_SCHEMA, HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS, harnessSkillKey } from '@seihouse/sen/harness-generation';
+import { isTranslationSkillCompatible, translationTargetLanguage } from '@seihouse/sen/harness-generation';
+import { includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
+import { HarnessReaderSession } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationAttempt, type HarnessGenerationModelAdapter, type HarnessGenerationServerInfo, type HarnessCorrectionKind, type HarnessSemanticEvent, type HarnessStory, type HarnessSkillManifest, type HarnessSkillReference, type HarnessSkillSlotId, type HarnessStorySeedOption, type HarnessStorySeedSource, type HarnessWorkspaceState, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
 
 export interface HarnessGenerationWorkspaceProps {
+  /** Host-selected first-party records; never a built-in SEN catalog. */
+  baseMedia?: FrozenNarrativeMedia;
   /** Injection points keep the live UI testable without a provider or browser database. */
   repository: HarnessGenerationRepository;
   modelAdapter: HarnessGenerationModelAdapter;
@@ -74,150 +78,6 @@ const storyChapters = (state: HarnessWorkspaceState, storyId: string) => state.c
 const storyEvents = (state: HarnessWorkspaceState, storyId: string) => state.events
   .filter(event => event.storyId === storyId)
   .sort((left, right) => left.chapterNumber - right.chapterNumber);
-
-const field = (
-  input: StoryFoundationInput,
-  key: Exclude<keyof StoryFoundationInput, 'sourceSnapshot' | 'identities'>,
-  value: string,
-): StoryFoundationInput => ({ ...input, [key]: value });
-
-function FoundationEditor({
-  form,
-  story,
-  busy,
-  error,
-  onChange,
-  onSubmit,
-}: {
-  form: StoryFoundationInput;
-  story?: HarnessStory;
-  busy: boolean;
-  error?: string;
-  onChange: (next: StoryFoundationInput) => void;
-  onSubmit: () => void;
-}) {
-  return (
-    <LibraryPanel as="section" padding="md" aria-labelledby="harness-foundation-title">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-cyan-200/55">Permanent author canon</p>
-          <h2 id="harness-foundation-title" className="mt-1 font-display text-xl text-white">Story Foundation</h2>
-          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-neutral-400">
-            {form.sourceSnapshot
-              ? 'This independent snapshot was copied from Story Seed. Saving changes creates a new Harness revision without rewriting the source.'
-              : 'Premise is the only requirement. Every generation freezes the active revision before the provider is called.'}
-          </p>
-        </div>
-        {story && <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 font-mono text-[10px] text-cyan-100">{form.sourceSnapshot ? 'Story Seed snapshot' : 'Revision saved'}</span>}
-      </div>
-
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <LibraryTextBox
-          id="harness-foundation-title-input"
-          label="Title"
-          value={form.title ?? ''}
-          onChange={value => onChange(field(form, 'title', value))}
-          helpText="Optional. The premise supplies a local title when left blank."
-          disabled={busy}
-        />
-        <LibraryTextBox
-          id="harness-foundation-genre-input"
-          label="Genre"
-          value={form.genre ?? ''}
-          onChange={value => onChange(field(form, 'genre', value))}
-          disabled={busy}
-        />
-      </div>
-
-      <div className="mt-4">
-        <LibraryTextArea
-          id="harness-foundation-premise"
-          label="Premise"
-          required
-          value={form.premise}
-          onChange={value => onChange(field(form, 'premise', value))}
-          helpText="The smallest permanent statement needed to begin a durable Harness story."
-          error={error}
-          rows={4}
-          disabled={busy}
-        />
-      </div>
-
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <LibraryTextArea
-          id="harness-foundation-instructions"
-          label="Permanent instructions"
-          value={form.permanentInstructions ?? ''}
-          onChange={value => onChange(field(form, 'permanentInstructions', value))}
-          rows={4}
-          disabled={busy}
-        />
-        <LibraryTextArea
-          id="harness-foundation-tone"
-          label="Tone and style"
-          value={form.toneStyle ?? ''}
-          onChange={value => onChange(field(form, 'toneStyle', value))}
-          rows={4}
-          disabled={busy}
-        />
-        <LibraryTextArea
-          id="harness-foundation-opening"
-          label="Opening situation"
-          value={form.openingSituation ?? ''}
-          onChange={value => onChange(field(form, 'openingSituation', value))}
-          rows={4}
-          disabled={busy}
-        />
-        <LibraryTextArea
-          id="harness-foundation-direction"
-          label="Intended direction"
-          value={form.intendedDirection ?? ''}
-          onChange={value => onChange(field(form, 'intendedDirection', value))}
-          rows={4}
-          disabled={busy}
-        />
-        <LibraryTextArea
-          id="harness-foundation-canon"
-          label="Declared canon"
-          value={form.declaredCanon ?? ''}
-          onChange={value => onChange(field(form, 'declaredCanon', value))}
-          rows={4}
-          disabled={busy}
-        />
-        <LibraryTextArea
-          id="harness-foundation-characters"
-          label="Characters"
-          value={form.characters ?? ''}
-          onChange={value => onChange(field(form, 'characters', value))}
-          rows={4}
-          disabled={busy}
-        />
-      </div>
-
-      <div className="mt-4">
-        <LibraryTextArea
-          id="harness-foundation-world-facts"
-          label="World facts"
-          value={form.worldFacts ?? ''}
-          onChange={value => onChange(field(form, 'worldFacts', value))}
-          rows={4}
-          disabled={busy}
-        />
-      </div>
-
-      <div className="mt-5 flex flex-wrap gap-3">
-        <ManifestButton
-          type="button"
-          onClick={onSubmit}
-          loading={busy}
-          icon={story ? CheckCircle2 : SENManifestingIcon}
-        >
-          {story ? 'Save Foundation Revision' : 'Create Harness Story'}
-        </ManifestButton>
-      </div>
-    </LibraryPanel>
-  );
-}
 
 function StorySeedStart({
   options,
@@ -879,6 +739,7 @@ export function HarnessGenerationWorkspace({
   renderSkillImport,
   renderSlotSkillImport,
   registeredMediaPacks = EMPTY_MEDIA_PACKS,
+  baseMedia,
   mediaPackEntitlements = EMPTY_MEDIA_ENTITLEMENTS,
   onGrantDevelopmentMediaReward,
 }: HarnessGenerationWorkspaceProps) {
@@ -889,11 +750,11 @@ export function HarnessGenerationWorkspace({
   const repository = injectedRepository;
   const modelAdapter = injectedAdapter;
   const controller = useMemo(
-    () => new HarnessGenerationController({ repository, modelAdapter, media: createLibraryMediaPort({ registered: registeredMediaPacks, entitlements: mediaPackEntitlements }) }),
+    () => new HarnessGenerationController({ repository, modelAdapter, media: createLibraryMediaPort({ registered: registeredMediaPacks, entitlements: mediaPackEntitlements, base: baseMedia }) }),
     [repository, modelAdapter],
   );
   useEffect(() => controller.setInstalledSkills(installedSkills), [controller, installedSkills]);
-  useEffect(() => controller.setMediaPort(createLibraryMediaPort({ registered: registeredMediaPacks, entitlements: mediaPackEntitlements })), [controller, registeredMediaPacks, mediaPackEntitlements]);
+  useEffect(() => controller.setMediaPort(createLibraryMediaPort({ registered: registeredMediaPacks, entitlements: mediaPackEntitlements, base: baseMedia })), [controller, registeredMediaPacks, mediaPackEntitlements, baseMedia]);
   const [state, setState] = useState<HarnessWorkspaceState>();
   const [serverInfo, setServerInfo] = useState<HarnessGenerationServerInfo>();
   const [selectedStoryId, setSelectedStoryId] = useState<string>();
@@ -1215,7 +1076,7 @@ export function HarnessGenerationWorkspace({
                     Back to saved Story Seeds
                   </LibraryButton>
                 )}
-                <FoundationEditor
+                <StoryFoundationEditor createIcon={SENManifestingIcon}
                   form={foundationForm}
                   busy={busy}
                   error={foundationError}
@@ -1323,7 +1184,7 @@ export function HarnessGenerationWorkspace({
               <details className="rounded-xl border border-white/10 bg-black/15 p-3">
                 <summary className="cursor-pointer text-sm font-medium text-neutral-300">Foundation snapshot and revisions</summary>
                 <div className="mt-3">
-                  <FoundationEditor
+                  <StoryFoundationEditor createIcon={SENManifestingIcon}
                     form={foundationForm}
                     story={selectedStory}
                     busy={busy}

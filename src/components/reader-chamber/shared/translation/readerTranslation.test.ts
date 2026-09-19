@@ -1,20 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
-import { validateHarnessSkillManifest } from '../../../harness-generation/shared/skills';
-import type { HarnessSkillManifest } from '../../../../narrative/generation';
-import type { ReaderChapter, StoryBlock } from '../../../../narrative/story';
-import { READER_TRANSLATION_SCHEMA_VERSION, type DerivedChapterTranslation } from './contract';
-import { ReaderTranslationController } from './controller';
-import type { ReaderTranslationProvider } from './provider';
+import { validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { type ReaderChapter, type StoryBlock } from '@seihouse/sen/contracts';
+import { READER_TRANSLATION_SCHEMA_VERSION, type DerivedChapterTranslation } from '@seihouse/sen/translation';
+import { ReaderTranslationController } from '@seihouse/sen/translation';
+import { type ReaderTranslationProvider } from '@seihouse/sen/translation';
 import { InMemoryReaderTranslationRepository } from './repository';
 import { MAX_CACHED_TRANSLATIONS } from '../../../../host/reader/translationStorage';
 import { WebReaderTranslationRepository } from '../../../../host/reader/translationStorage';
-import {
-  buildReaderFacingChapter,
-  mergeReaderTranslation,
-  readerFacingContentHash,
-} from './readerFacing';
-import { readerTranslationSkillContentDigest, resolveReaderTranslationSkill } from './skill';
-import { validateReaderTranslationResponse } from './validate';
+import { buildReaderFacingChapter, mergeReaderTranslation, readerFacingContentHash } from '@seihouse/sen/translation';
+import { readerTranslationSkillContentDigest, resolveReaderTranslationSkill } from '@seihouse/sen/translation';
+import { validateReaderTranslationResponse } from '@seihouse/sen/translation';
 
 /**
  * Test-only manifests and fixtures. Nothing here is an installable product

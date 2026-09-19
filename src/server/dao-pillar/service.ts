@@ -1,18 +1,10 @@
-import {
-  describeRewards,
-  type DaoPillarCalendarSnapshot,
-  type DaoPillarClaimResponse,
-  type DaoPillarPhase,
-  type DaoPillarStreak,
-  type DaoPillarThemePresentation,
-  type DaoPillarTile,
-  type DaoPillarToday,
-} from '../../components/dao-pillar/shared/daoPillarContracts';
+import { describeRewards, type DaoPillarCalendarSnapshot, type DaoPillarClaimResponse, type DaoPillarPhase, type DaoPillarStreak, type DaoPillarThemePresentation, type DaoPillarTile, type DaoPillarToday } from '@seihouse/library/dao-pillar';
 import { addCalendarDays, calendarDateIn } from './calendar';
 import type { ResolvedDaoPillarConfig } from './config';
 import { DaoPillarNotAvailableError, type DaoPillarRepository } from './repository';
 import { buildRewardSchedule, cycleEndsOn, cycleIdFor, scheduledDayOn, validateDaoPillarTheme } from './themes';
-import type { DaoPillarClaimRecord, DaoPillarDaySchedule, DaoPillarPrincipal, DaoPillarTheme } from './types';
+import type { DaoPillarClaimRecord, DaoPillarDaySchedule, DaoPillarTheme } from './types';
+import type { LibraryPrincipal } from '../identity/types';
 
 export interface DaoPillarServiceOptions {
   /** The server clock. Tests inject a fixed instant. */
@@ -82,12 +74,12 @@ export class DaoPillarService {
     return 'active';
   }
 
-  async getSnapshot(principal: DaoPillarPrincipal): Promise<DaoPillarCalendarSnapshot> {
+  async getSnapshot(principal: LibraryPrincipal): Promise<DaoPillarCalendarSnapshot> {
     const claims = await this.repository.listClaims(principal.uid);
     return this.snapshotFrom(principal, claims);
   }
 
-  private snapshotFrom(principal: DaoPillarPrincipal, claims: readonly DaoPillarClaimRecord[]): DaoPillarCalendarSnapshot {
+  private snapshotFrom(principal: LibraryPrincipal, claims: readonly DaoPillarClaimRecord[]): DaoPillarCalendarSnapshot {
     const today = this.today();
     const phase = this.phaseOn(today);
     const todayDay = phase === 'active' ? scheduledDayOn(this.theme, today) : null;
@@ -143,7 +135,7 @@ export class DaoPillarService {
    * reward come from the server schedule; the caller supplies nothing but
    * their identity. Repeating the call replays the original claim.
    */
-  async claimToday(principal: DaoPillarPrincipal): Promise<DaoPillarClaimResponse> {
+  async claimToday(principal: LibraryPrincipal): Promise<DaoPillarClaimResponse> {
     const today = this.today();
     const phase = this.phaseOn(today);
     if (phase === 'before') throw new DaoPillarNotAvailableError(`${this.theme.name} begins on ${this.theme.calendar.startsOn}.`);

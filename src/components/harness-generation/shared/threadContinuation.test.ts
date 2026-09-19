@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { appendHarnessCorrection, buildCanonicalStoryView } from './canonicalState';
 import { compileStoryInformationPacket } from './context';
-import { HarnessGenerationController } from './controller';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
-import type { HarnessGenerationRequest, HarnessGenerationResponse } from '../../../narrative/generation';
+import { type HarnessGenerationRequest, type HarnessGenerationResponse } from '@seihouse/sen/harness-generation';
 
 interface ChapterFixture { chapter: HarnessGenerationResponse; memory: HarnessGenerationResponse }
 

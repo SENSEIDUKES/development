@@ -2,20 +2,20 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom';
 import { GlobalHeader } from '../../../components/library-shell/reference/main-library/GlobalHeader';
 import { LibraryCollectionStrip } from '../../../components/library-shell/reference/main-library/LibraryCollectionStrip';
-import { MainLibraryAdapterContext, type MainLibraryAdapter } from '../../../components/library-shell/shared/MainLibraryAdapter';
-import { MainLibraryNavigation } from '../../../components/library-shell/development/MainLibraryNavigation';
-import { MainLibraryFooter } from '../../../components/library-shell/development/MainLibraryFooter';
-import type { LibraryLocation } from '../../../components/library-shell/development/libraryRoutes';
-import { LightNovelsHome } from '../../../components/light-novels-home/development/LightNovelsHome';
+import { MainLibraryAdapterContext, type MainLibraryAdapter } from '@seihouse/library/shell';
+import { MainLibraryNavigation } from '@seihouse/library/shell';
+import { MainLibraryFooter } from '@seihouse/library/shell';
+import { type LibraryLocation } from '@seihouse/library/shell';
+import { LightNovelsHome } from '@seihouse/library/home';
 import { LightNovelsHome as ReferenceHome } from '../../../components/light-novels-home/reference/LightNovelsHome';
-import { StoryDetailScreen } from '../../../components/light-novels-home/development/StoryDetailScreen';
+import { StoryDetailScreen } from '@seihouse/library/home';
 import { StoryDetailScreen as ReferenceStoryDetail } from '../../../components/light-novels-home/reference/StoryDetailScreen';
-import { WorldExpressions } from '../../../components/light-novels-home/development/WorldExpressions';
+import { WorldExpressions } from '@seihouse/library/home';
 import { featuredNovel, featuredExpansions, homePreviewWorlds, homePreviewExpansions } from '../light-novels-home/previewData';
 import { libraryPreviewUrl, navigateLibraryPreview, readLibraryPreviewLocation } from './libraryPreviewNavigation';
 
 // The footer's Support menu opens the same Library Help the header utilities use.
-const LibraryHelpMenu = lazy(() => import('../../../components/story-seed/development/StorySeedHelpMenu')
+const LibraryHelpMenu = lazy(() => import('@seihouse/library/story-seed')
   .then(module => ({ default: module.LibraryHelpMenu })));
 // Social channels and legal pages are host configuration. The Workshop has no
 // published URLs for them, so these fixtures report the destination locally

@@ -20,7 +20,7 @@ import {
   WandSparkles,
   Zap,
   type LucideIcon,
-} from 'lucide-react';
+} from "lucide-react";
 
 /**
  * Library Help content — the single home for guidance that used to live
@@ -37,9 +37,9 @@ import {
  */
 
 /** Languages the Help menu can speak. English is the launch language. */
-export type StorySeedHelpLanguage = 'en';
+export type StorySeedHelpLanguage = "en";
 
-export const DEFAULT_HELP_LANGUAGE: StorySeedHelpLanguage = 'en';
+export const DEFAULT_HELP_LANGUAGE: StorySeedHelpLanguage = "en";
 
 export interface StorySeedHelpTranslation {
   /** Written guidance line shown on the item's info card. */
@@ -59,7 +59,9 @@ export interface StorySeedHelpItem {
   /** Library pages where this topic should be prioritized. */
   contexts?: string[];
   /** Guidance per language. */
-  translations: Partial<Record<StorySeedHelpLanguage, StorySeedHelpTranslation>>;
+  translations: Partial<
+    Record<StorySeedHelpLanguage, StorySeedHelpTranslation>
+  >;
 }
 
 /** Prioritize the current page, then filter against every visible text field. */
@@ -79,8 +81,9 @@ export const getLibraryHelpItems = (
     .filter(({ item }) => {
       if (!normalizedQuery) return true;
       const translation = getHelpTranslation(item, language);
-      return [item.label, translation?.line, translation?.detail]
-        .some(value => value?.toLocaleLowerCase().includes(normalizedQuery));
+      return [item.label, translation?.line, translation?.detail].some(
+        (value) => value?.toLocaleLowerCase().includes(normalizedQuery),
+      );
     })
     .sort((a, b) => {
       return b.isRelevant - a.isRelevant || a.index - b.index;
@@ -95,250 +98,228 @@ export const getHelpTranslation = (
 ): StorySeedHelpTranslation | undefined =>
   item.translations[language] ?? item.translations[DEFAULT_HELP_LANGUAGE];
 
-/** The SEIHouse lines CDN folder holding the shared Library help lines. */
-const LIBRARY_HELP_LINES_CDN =
-  'https://lines.seihouse.org/LIBRARY/Lines/SYSTEM/SYSTEM/HELP%20LINES';
-
 export const STORY_SEED_HELP_ITEMS: StorySeedHelpItem[] = [
   {
-    id: 'story-seed',
-    label: 'Story Seed',
+    id: "story-seed",
+    label: "Story Seed",
     icon: Sprout,
-    contexts: ['story-seed'],
+    contexts: ["story-seed"],
     translations: {
       en: {
-        line: 'Your Story Seed is the first spark of the novel. Give the Library enough information for it to create your universe.',
-        detail: 'Quick tip: Start with the clearest version of your idea. You can deepen the world as the seed grows.',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/STORY%20SEED%20ENG.mp3`,
+        line: "Your Story Seed is the first spark of the novel. Give the Library enough information for it to create your universe.",
+        detail:
+          "Quick tip: Start with the clearest version of your idea. You can deepen the world as the seed grows.",
       },
     },
   },
   {
-    id: 'style',
-    label: 'Style',
+    id: "style",
+    label: "Style",
     icon: PenLine,
-    contexts: ['story-seed'],
+    contexts: ["story-seed"],
     translations: {
       en: {
-        line: 'Style controls the flavor of the writing, not the plot itself, cultivator',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/STYLE%20ENG.mp3`,
+        line: "Style controls the flavor of the writing, not the plot itself, cultivator",
       },
     },
   },
   {
-    id: 'premise',
-    label: 'Premise',
+    id: "premise",
+    label: "Premise",
     icon: Lightbulb,
-    contexts: ['story-seed'],
+    contexts: ["story-seed"],
     translations: {
       en: {
-        line: 'The premise tells the Library what your story is really about, scholar.',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/PREMISE%20ENG.mp3`,
+        line: "The premise tells the Library what your story is really about, scholar.",
       },
     },
   },
   {
-    id: 'genre',
-    label: 'Genre',
+    id: "genre",
+    label: "Genre",
     icon: Drama,
-    contexts: ['story-seed'],
+    contexts: ["story-seed"],
     translations: {
       en: {
-        line: 'Genre tells the Library what kind of story this should feel like.',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/GENRE%20ENG.mp3`,
+        line: "Genre tells the Library what kind of story this should feel like.",
       },
     },
   },
   {
-    id: 'story-tags',
-    label: 'Story Tags',
+    id: "story-tags",
+    label: "Story Tags",
     icon: Tag,
-    contexts: ['story-seed'],
+    contexts: ["story-seed"],
     translations: {
       en: {
-        line: 'Story Tags are powerful signals. For the best results, use a few strong ones instead of flooding the story.',
-        detail: 'Quick tip: Choose the tags that most strongly define the experience you want the reader to have.',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/STORY%20TAGS%20ENG.mp3`,
+        line: "Story Tags are powerful signals. For the best results, use a few strong ones instead of flooding the story.",
+        detail:
+          "Quick tip: Choose the tags that most strongly define the experience you want the reader to have.",
       },
     },
   },
   {
-    id: 'world',
-    label: 'World',
+    id: "world",
+    label: "World",
     icon: Globe,
-    contexts: ['story-seed'],
+    contexts: ["story-seed"],
     translations: {
       en: {
-        line: 'World details shape the setting, powers, factions, and rules around your story, Choose wisely disciple.',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/WORLD%20ENG.mp3`,
+        line: "World details shape the setting, powers, factions, and rules around your story, Choose wisely disciple.",
       },
     },
   },
   {
-    id: 'arc',
-    label: 'ARC',
+    id: "arc",
+    label: "ARC",
     icon: Route,
-    contexts: ['story-seed'],
+    contexts: ["story-seed"],
     translations: {
       en: {
-        line: 'ARC guides the path of the story, including plot, tropes, even Face-Slaps, Use ARC to shape the Novels Destiny.',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/ARC%20ENG.mp3`,
+        line: "ARC guides the path of the story, including plot, tropes, even Face-Slaps, Use ARC to shape the Novels Destiny.",
       },
     },
   },
   {
-    id: 'origin',
-    label: 'Origin',
+    id: "origin",
+    label: "Origin",
     icon: Feather,
-    contexts: ['story-seed'],
+    contexts: ["story-seed"],
     translations: {
       en: {
-        line: 'Origin holds the required heart of your story, the title, premise, genre, style and tags.',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/ORIGIN%20ENG.mp3`,
+        line: "Origin holds the required heart of your story, the title, premise, genre, style and tags.",
       },
     },
   },
   {
-    id: 'fate-survival',
-    label: 'Fate Survival',
+    id: "fate-survival",
+    label: "Fate Survival",
     icon: Shield,
-    contexts: ['story-seed', 'fate'],
+    contexts: ["story-seed", "fate"],
     translations: {
       en: {
-        line: 'Fate Survival is a narrative pressure system layered on top of any genre.',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/Fate%20Survival%20Eng.mp3`,
+        line: "Fate Survival is a narrative pressure system layered on top of any genre.",
       },
     },
   },
   {
-    id: 'mind-palace',
-    label: 'Mind Palace',
+    id: "mind-palace",
+    label: "Mind Palace",
     icon: Brain,
-    contexts: ['fate'],
+    contexts: ["fate"],
     translations: {
       en: {
-        line: 'Mind Palace is the temporary clue-tracking system used during a Fate Event.',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/Mind%20Palace%20Eng.mp3`,
+        line: "Mind Palace is the temporary clue-tracking system used during a Fate Event.",
       },
     },
   },
   {
-    id: 'alter-fate',
-    label: 'Alter Fate',
+    id: "alter-fate",
+    label: "Alter Fate",
     icon: GitBranch,
-    contexts: ['reader', 'fate'],
+    contexts: ["reader", "fate"],
     translations: {
       en: {
-        line: 'The ability for a reader to change the outcome of the next scenes narrative',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/Alter%20Fate%20-%20Eng.mp3`,
+        line: "The ability for a reader to change the outcome of the next scenes narrative",
       },
     },
   },
   {
-    id: 'fate-event',
-    label: 'Fate Event',
+    id: "fate-event",
+    label: "Fate Event",
     icon: Gauge,
-    contexts: ['fate'],
+    contexts: ["fate"],
     translations: {
       en: {
-        line: 'A Fate Event is a Mechanic in which after a series of chapters fate forces  a decision to be made.',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/Fate%20event%20eng.mp3`,
+        line: "A Fate Event is a Mechanic in which after a series of chapters fate forces  a decision to be made.",
       },
     },
   },
   {
-    id: 'manifest',
-    label: 'Manifest',
+    id: "manifest",
+    label: "Manifest",
     icon: WandSparkles,
-    contexts: ['library', 'story-seed', 'reader'],
+    contexts: ["library", "story-seed", "reader"],
     translations: {
       en: {
-        line: 'Manifesting is the act of generating chapters, images, audio, rewards, and videos in the the celestial library',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/Manifest%20-%20Eng.mp3`,
+        line: "Manifesting is the act of generating chapters, images, audio, rewards, and videos in the the celestial library",
       },
     },
   },
   {
-    id: 'seed-bank',
-    label: 'Seed Bank',
+    id: "seed-bank",
+    label: "Seed Bank",
     icon: Landmark,
-    contexts: ['story-seed', 'seed-bank'],
+    contexts: ["story-seed", "seed-bank"],
     translations: {
       en: {
-        line: 'The storage bank for a Readers Story Seeds and world blueprints',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/Seed%20Bank%20-%20ENG.mp3`,
+        line: "The storage bank for a Readers Story Seeds and world blueprints",
       },
     },
   },
   {
-    id: 'world-blueprint',
-    label: 'World Blueprint',
+    id: "world-blueprint",
+    label: "World Blueprint",
     icon: ScrollText,
-    contexts: ['story-seed', 'seed-bank'],
+    contexts: ["story-seed", "seed-bank"],
     translations: {
       en: {
-        line: 'A World Blueprint is the final overview of a novel before it is manifested from the seed.',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/World%20Blueprint%20-%20Eng.mp3`,
+        line: "A World Blueprint is the final overview of a novel before it is manifested from the seed.",
       },
     },
   },
   {
-    id: 'energy',
-    label: 'Energy',
+    id: "energy",
+    label: "Energy",
     icon: Zap,
-    contexts: ['library', 'story-seed'],
+    contexts: ["library", "story-seed"],
     translations: {
       en: {
-        line: 'Energy is the currency used for manifesting inside of the celestial library',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/Energy%20-%20Eng.mp3`,
+        line: "Energy is the currency used for manifesting inside of the celestial library",
       },
     },
   },
   {
-    id: 'sen',
-    label: 'SEN',
+    id: "sen",
+    label: "SEN",
     icon: Sparkles,
-    contexts: ['library'],
+    contexts: ["library"],
     translations: {
       en: {
-        line: 'SEIHouse Expanded Novels, is a narrative engine designed by, and for the library',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/SEN%20-%20ENG.mp3`,
+        line: "SEN is a portable expanded-narrative engine. Celestial Library is its first-party host; other authors bring their own content, branding, accounts, and storage.",
       },
     },
   },
   {
-    id: 'celestial-library',
-    label: 'Celestial Library',
+    id: "celestial-library",
+    label: "Celestial Library",
     icon: Library,
-    contexts: ['library'],
+    contexts: ["library"],
     translations: {
       en: {
-        line: 'The Celestial Library is home for Narration, illustration, Animation, video games and wandering scholars from around the universe.',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/Celestial%20Library%20-%20Eng.mp3`,
+        line: "The Celestial Library is home for Narration, illustration, Animation, video games and wandering scholars from around the universe.",
       },
     },
   },
   {
-    id: 'relics',
-    label: 'Relics',
+    id: "relics",
+    label: "Relics",
     icon: Gem,
-    contexts: ['library', 'relics'],
+    contexts: ["library", "relics"],
     translations: {
       en: {
-        line: 'Items lost by the Library that a cultivator can return for a reward',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/Relics%20-%20Eng.mp3`,
+        line: "Items lost by the Library that a cultivator can return for a reward",
       },
     },
   },
   {
-    id: 'pressure',
-    label: 'Pressure',
+    id: "pressure",
+    label: "Pressure",
     icon: BookOpen,
-    contexts: ['story-seed', 'fate'],
+    contexts: ["story-seed", "fate"],
     translations: {
       en: {
-        line: 'Pressure is how much influence the Library exerts over a scholars story',
-        audioUrl: `${LIBRARY_HELP_LINES_CDN}/Pressure%20-%20eng.mp3`,
+        line: "Pressure is how much influence the Library exerts over a scholars story",
       },
     },
   },

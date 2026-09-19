@@ -1,5 +1,6 @@
 import type { GenerationStage } from "../stageTypes";
-import type { ChapterContent, ChapterHandoff, ContextManifest } from '../../../../narrative/chapter';
+import { type ChapterContent } from '@seihouse/sen/contracts';
+import { type ChapterHandoff, type ContextManifest } from '@seihouse/sen/generation';
 import type { ChapterMission } from "../packets/chapterMission";
 import type {
   LivingStoryCharacterStateUpdate,

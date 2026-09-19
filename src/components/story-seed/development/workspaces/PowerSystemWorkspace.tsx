@@ -1,9 +1,9 @@
 import { Layers } from 'lucide-react';
-import { SENPowerSystemIcon } from '../../../sen-icons';
-import type { StorySeedInput } from '../../shared/storySeedSchema';
+import { LibraryPowerSystemIcon as SENPowerSystemIcon } from '@seihouse/library-ui';
+import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
 import { patchPowerSystem, worldFoundations, type UpdateSeed } from '../seedState';
-import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '../../../../presentation';
+import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { WorkspaceShell } from './WorkspaceShell';
 
 interface PowerSystemWorkspaceProps {

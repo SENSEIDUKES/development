@@ -7,7 +7,7 @@ import type { StoryBlock } from './chapter';
  * persisted shape (attempt, chapter, or workspace state fields). This is a
  * development system: storage at any other version is reset, never
  * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 12 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 13 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -573,6 +573,7 @@ export interface HarnessProjectionRecord {
 }
 
 export type HarnessCorrectionKind =
+  | 'reader-edit'
   | 'resolve-entity'
   | 'correct-fact'
   | 'mark-incorrect'
@@ -580,6 +581,8 @@ export type HarnessCorrectionKind =
   | 'supersede-interpretation';
 
 export interface HarnessAuthorCorrection {
+  /** Durable author deltas, applied to derived Reader/Codex views by HARNESS. */
+  readerEdit?: { chapterNumber: number; changes: HarnessReaderChange[] };
   id: string;
   storyId: string;
   kind: HarnessCorrectionKind;
@@ -596,6 +599,12 @@ export interface HarnessAuthorCorrection {
     evidence: string;
     facts: Record<string, string | string[] | boolean | undefined>;
   };
+}
+
+export interface HarnessReaderChange {
+  path: Array<string | { id: string }>;
+  value?: unknown;
+  remove?: true;
 }
 
 export interface HarnessCanonicalStoryView {

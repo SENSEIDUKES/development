@@ -46,7 +46,8 @@ const isGlobalIpv6 = (hostname: string): boolean => {
   );
 };
 
-export const isPublicHttpsMediaUrl = (value: string): boolean => {
+/** Host-authorized HTTPS resources may use signed URLs or extensionless routes. */
+export const isPublicHttpsUrl = (value: string): boolean => {
   try {
     const parsed = new URL(value);
     if (parsed.protocol !== 'https:' || !parsed.hostname || parsed.username || parsed.password) return false;
@@ -54,8 +55,15 @@ export const isPublicHttpsMediaUrl = (value: string): boolean => {
     if (!hostname || hostname === 'localhost' || hostname.endsWith('.localhost')) return false;
     if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname) && !isGlobalIpv4(hostname)) return false;
     if (hostname.includes(':') && !isGlobalIpv6(hostname)) return false;
-    return !parsed.search && !parsed.hash && SUPPORTED_AUDIO_FILE.test(parsed.pathname);
+    return true;
   } catch {
     return false;
   }
+};
+
+/** Stable catalog records intentionally require a public, non-expiring file URL. */
+export const isPublicHttpsMediaUrl = (value: string): boolean => {
+  if (!isPublicHttpsUrl(value)) return false;
+  const parsed = new URL(value);
+  return !parsed.search && !parsed.hash && SUPPORTED_AUDIO_FILE.test(parsed.pathname);
 };

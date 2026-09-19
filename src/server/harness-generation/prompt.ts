@@ -1,19 +1,7 @@
-import { ARC_LENGTH, ARC_PLAN_SCHEMA, createArcChapterPosition } from '../../components/arc-goals/shared/arcGoals';
-import {
-  HARNESS_CREATURE_EVENT_TYPES,
-  HARNESS_CREATURE_SIZES,
-  HARNESS_DIALOGUE_DELIVERIES,
-  HARNESS_FATE_OUTCOMES,
-  HARNESS_MANIFESTATION_MENTIONS,
-  HARNESS_MANIFESTATION_TYPES,
-  HARNESS_SOUND_CUE_CATEGORIES,
-  HARNESS_SOUND_CUE_ENTITY_TYPES,
-  HARNESS_SOUNDSCAPE_REGIONS,
-  HARNESS_SYSTEM_PANEL_MEANINGS,
-  HARNESS_SYSTEM_PANEL_PRESENTATIONS,
-} from '../../components/harness-generation/shared/chapterSignals';
-import type { HarnessArcRequest, HarnessGenerationRequest, HarnessMemoryRecoveryRequest, ImmediateChapterRequest, StoryInformationPacket } from '../../narrative/generation';
-import { HARNESS_MEMORY_CATEGORIES } from '../../narrative/generation';
+import { ARC_LENGTH, ARC_PLAN_SCHEMA, createArcChapterPosition } from '@seihouse/sen/arc-goals';
+import { HARNESS_CREATURE_EVENT_TYPES, HARNESS_CREATURE_SIZES, HARNESS_DIALOGUE_DELIVERIES, HARNESS_FATE_OUTCOMES, HARNESS_MANIFESTATION_MENTIONS, HARNESS_MANIFESTATION_TYPES, HARNESS_SOUND_CUE_CATEGORIES, HARNESS_SOUND_CUE_ENTITY_TYPES, HARNESS_SOUNDSCAPE_REGIONS, HARNESS_SYSTEM_PANEL_MEANINGS, HARNESS_SYSTEM_PANEL_PRESENTATIONS } from '@seihouse/sen/harness-generation';
+import { type HarnessArcRequest, type HarnessGenerationRequest, type HarnessMemoryRecoveryRequest, type ImmediateChapterRequest, type StoryInformationPacket } from '@seihouse/sen/harness-generation';
+import { HARNESS_MEMORY_CATEGORIES } from '@seihouse/sen/harness-generation';
 
 const memoryEntryProperties = {
     details: { type: 'object', properties: {

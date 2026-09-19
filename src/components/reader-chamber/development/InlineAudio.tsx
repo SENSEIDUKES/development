@@ -69,7 +69,7 @@ export function InlineAudioControl({ moment, playback }: InlineAudioControlProps
     } else if (event.type === 'pause') {
       setStatus('idle');
     } else if (event.type === 'error') {
-      setLocalError(event.error || 'The Library Cue could not be played.');
+      setLocalError(event.error || 'The story cue could not be played.');
       setStatus('error');
     }
   }), [playback, trackId]);
@@ -82,7 +82,7 @@ export function InlineAudioControl({ moment, playback }: InlineAudioControlProps
       return;
     }
     if (playback.hasError) {
-      setLocalError(playback.errorMessage || 'The Library Cue could not be played.');
+      setLocalError(playback.errorMessage || 'The story cue could not be played.');
       setStatus('error');
     } else if (playback.autoplayBlocked) {
       setLocalError('Playback was blocked. Tap the highlight again to retry.');
@@ -108,7 +108,7 @@ export function InlineAudioControl({ moment, playback }: InlineAudioControlProps
       return;
     }
     if (!trackId) {
-      setLocalError('The Library Cue could not be resolved.');
+      setLocalError('The story cue could not be resolved.');
       setStatus('error');
       return;
     }
@@ -119,10 +119,10 @@ export function InlineAudioControl({ moment, playback }: InlineAudioControlProps
         id: trackId,
         source: resolution.publicUrl,
         title: moment.triggerPhrase,
-        artist: 'SEN Library Cue',
+        artist: 'Story cue',
       });
     } catch (error) {
-      setLocalError(error instanceof Error ? error.message : 'The Library Cue could not be played.');
+      setLocalError(error instanceof Error ? error.message : 'The story cue could not be played.');
       setStatus('error');
     }
   }, [moment.triggerPhrase, playback, resolution, trackId]);

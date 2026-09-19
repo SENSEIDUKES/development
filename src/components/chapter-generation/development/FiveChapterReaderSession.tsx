@@ -1,11 +1,7 @@
 import { ArrowLeft, Download, FlaskConical, Sigma } from "lucide-react";
 import { useMemo, useRef, useState, type ReactNode } from "react";
-import {
-  ReaderChamber,
-  buildFiveChapterReaderExport,
-  createChapterScopedCodexStory,
-  createCompletedBatchReaderSession,
-} from "@seihouse/sen/reader-chamber";
+import { ReaderChamber } from '@seihouse/sen/reader-chamber';
+import { buildFiveChapterReaderExport, createChapterScopedCodexStory, createCompletedBatchReaderSession } from '../shared/batchToReaderAdapter';
 import { CodexSheetOverlay } from "@seihouse/sen/reader-codex";
 import type {
   ReaderTokenUsageTotals,

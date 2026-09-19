@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { StoryFoundationInput } from '../../../components/harness-generation/shared/types';
+import type { StoryFoundationInput } from '../../../narrative/generation';
 import { buildInitialStoryGenerationPayload } from '../../../components/story-seed/shared/storySeedSchema';
 import { createStoryAdministrativeMetadata } from '../../../components/story-seed/shared/storyAdministrativeMetadata';
 import { createMockStorySeedRecord } from '../story-seed/previewData';

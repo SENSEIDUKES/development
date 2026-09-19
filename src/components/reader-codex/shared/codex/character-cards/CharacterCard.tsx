@@ -3,15 +3,9 @@ import { Character, Story } from '../../types';
 import { Download, Compass, Lock, Award, Play, Square, Sparkles, Loader2, RotateCcw, VolumeX } from 'lucide-react';
 import { ReaderCodexImageGallery } from '../ReaderCodexImageGallery';
 import { resolveEntityImageHistory } from '../entityImageHistory';
-import { handleDownload } from '../../codexCompatibility';
-import { AGENTS } from '../../codexCompatibility';
+import { handleDownload } from '../../downloadUtils';
 import type { CodexVoiceQuoteStatus } from '../../hooks/useCodexVoiceQuote';
-import {
-  getColorCodeStyle,
-  getColorCodeSurfaceStyle,
-  resolveCharacterRelationshipColorCode,
-  resolveCharacterStatusColorCode,
-} from '../../../../reader-chamber/shared/colorCodes';
+import { getColorCodeStyle, getColorCodeSurfaceStyle, resolveCharacterRelationshipColorCode, resolveCharacterStatusColorCode } from '../../../../../narrative/colorCodes';
 
 interface CharacterCardProps {
   char: Character;
@@ -271,7 +265,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
           >
               {isGenerating ? (
                 <>
-                  <img src={AGENTS.VERSA.logoUrl} className="w-4 h-4 object-contain animate-pulse" alt="VERSA" />
+                  <Loader2 className="w-4 h-4 animate-spin" aria-label="Generating" />
                   <span>VERSA is working...</span>
                 </>
               ) : (

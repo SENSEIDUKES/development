@@ -1,23 +1,15 @@
 import { chapterTitleFallback, defaultHarnessRuntime, stableHarnessId, type HarnessRuntime } from './ids';
-import { acceptChapterMedia } from '../../chapter-generation/shared/acceptedChapterMedia';
-import type { AuthorizedMediaCatalog } from '../../../audio/mediaPacks';
-import { isCompleteSystemEvent, normalizeManifestResponse } from '../../chapter-generation/shared/manifestNormalizer';
+import { acceptChapterMedia } from '../../../narrative/acceptedChapterMedia';
+import type { MediaCatalog } from '../../../audio/media';
+import { isCompleteSystemEvent, normalizeManifestResponse } from '../../../narrative/manifestNormalizer';
 import {
   applyHarnessChapterSignals,
   readHarnessChapterSignals,
   splitHarnessProseParagraphs,
   type HarnessCastMember,
 } from './chapterSignals';
-import { HARNESS_MEMORY_CATEGORIES } from './types';
-import type {
-  HarnessAcceptedChapterDraft,
-  HarnessModelPlan,
-  HarnessRejectedEventDiagnostic,
-  HarnessSemanticEvent,
-  HarnessWarning,
-  HarnessEventDetails,
-  HarnessCanonicalKind,
-} from './types';
+import { HARNESS_MEMORY_CATEGORIES } from '../../../narrative/generation';
+import type { HarnessAcceptedChapterDraft, HarnessModelPlan, HarnessRejectedEventDiagnostic, HarnessSemanticEvent, HarnessWarning, HarnessEventDetails, HarnessCanonicalKind } from '../../../narrative/generation';
 
 type ParsedResponse = {
   accepted: true;
@@ -163,7 +155,7 @@ const memoryExtraction = (parsed: Record<string, unknown>): unknown[] | undefine
 
 export interface HarnessResponseAcceptanceOptions {
   /** The equipped Media Loadout catalog used to resolve soundscapes and Sound Cues. */
-  mediaCatalog?: AuthorizedMediaCatalog;
+  mediaCatalog?: MediaCatalog;
   /** Foundation cast; HARNESS assigns dialogue speaker roles from it. */
   cast?: readonly HarnessCastMember[];
 }

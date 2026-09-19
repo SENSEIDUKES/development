@@ -1,4 +1,6 @@
-import { HarnessGenerationController, IndexedDbHarnessGenerationRepository, HarnessGenerationHttpClient } from '@seihouse/sen/harness-generation';
+import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
+import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
+import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
 import type { InitialStoryGenerationPayload } from '@seihouse/sen/story-seed';
 import { STORY_SEED_SCHEMA_VERSION } from '@seihouse/sen/story-seed';
 import type {
@@ -6,12 +8,8 @@ import type {
   HarnessStorySeedSource,
   StoryFoundationInput,
 } from '@seihouse/sen/harness-generation';
-import {
-  getStoryStyleLabel,
-  listWorkshopStorySeeds,
-  LOCAL_WORKSHOP_STORY_SEED_OWNER_ID,
-  type StorySeedRecord,
-} from '@seihouse/sen/story-seed';
+import { getStoryStyleLabel, type StorySeedRecord } from '@seihouse/sen/story-seed';
+import { listWorkshopStorySeeds, LOCAL_WORKSHOP_STORY_SEED_OWNER_ID } from '../story-seed/storySeedStorage';
 
 const joinSections = (sections: Array<[string, unknown]>): string | undefined => {
   const present = sections.filter(([, value]) => {

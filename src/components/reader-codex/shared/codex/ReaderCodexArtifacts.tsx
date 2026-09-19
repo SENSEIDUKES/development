@@ -2,16 +2,11 @@ import React, { useState } from 'react';
 import { Plus, Sword, RefreshCcw, Sparkles, Download, Lock, Compass, Settings2 } from 'lucide-react';
 import { Artifact, StoryWorld } from '../types';
 import { useCodex } from './CodexContext';
-import { useAppStore } from '../codexCompatibility';
-import { isHubStoryLockedForUser } from '../codexCompatibility';
+import { useReaderRuntime } from '../../../../narrative/readerRuntime';
 import { ReaderCodexImageGallery } from './ReaderCodexImageGallery';
 import { resolveEntityImageHistory } from './entityImageHistory';
-import { handleDownload } from '../codexCompatibility';
-import {
-  getColorCodeSurfaceStyle,
-  getColorCodeValue,
-  resolveArtifactColorCode,
-} from '../../../reader-chamber/shared/colorCodes';
+import { handleDownload } from '../downloadUtils';
+import { getColorCodeSurfaceStyle, getColorCodeValue, resolveArtifactColorCode } from '../../../../narrative/colorCodes';
 
 
 interface ReaderCodexArtifactsProps {
@@ -33,8 +28,8 @@ export function ReaderCodexArtifacts({
     openEntryContextEditor,
   } = useCodex();
 
-  const userProfile = useAppStore(state => state.userProfile);
-  const isFreeUserOnHubStory = isHubStoryLockedForUser(activeStory, userProfile);
+  const runtime = useReaderRuntime();
+  const isFreeUserOnHubStory = !runtime.canManifest(activeStory.id);
 
   const [showAddArtifactForm, setShowAddArtifactForm] = useState(false);
   const [newArtifact, setNewArtifact] = useState({

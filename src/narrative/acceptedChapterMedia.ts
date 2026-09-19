@@ -1,11 +1,6 @@
-import { resolveChapterAudioMoments, type ResolvedAudioMoment } from '../../../audio/inlineAudio';
-import {
-  createAuthorizedMediaCatalog,
-  resolveAuthorizedSoundscape,
-  type AuthorizedMediaCatalog,
-  type ResolvedSoundscape,
-} from '../../../audio/mediaPacks';
-import type { StoryBlock } from './types';
+import { resolveChapterAudioMoments, type ResolvedAudioMoment } from '../audio/inlineAudio';
+import { createMediaCatalog, resolveAuthorizedSoundscape, type MediaCatalog, type ResolvedSoundscape } from '../audio/media';
+import type { StoryBlock } from './chapter';
 
 export interface AcceptedChapterMedia {
   blocks: StoryBlock[];
@@ -22,12 +17,12 @@ export interface AcceptedChapterMedia {
  */
 export function acceptChapterMedia(
   blocks: readonly StoryBlock[],
-  catalog: AuthorizedMediaCatalog = createAuthorizedMediaCatalog(),
+  catalog: MediaCatalog = createMediaCatalog(),
 ): AcceptedChapterMedia {
   const resolution = resolveChapterAudioMoments(blocks, undefined, catalog.soundCues);
   const audioMoments = resolution.audioMoments.map(moment => {
     const provenance = catalog.soundCueProvenanceByUrl.get(moment.cue.publicUrl);
-    return provenance?.kind === 'media-pack'
+    return provenance
       ? { ...moment, cue: { ...moment.cue, provenance } }
       : moment;
   });

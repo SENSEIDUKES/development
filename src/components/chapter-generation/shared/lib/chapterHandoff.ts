@@ -2,14 +2,7 @@
  * Verbatim port of Light-Novels `src/lib/chapterHandoff.ts` (verified against
  * `main`). Pure — no network/DB — safe to run in the Workshop.
  */
-import {
-  ChapterContract,
-  ChapterEndState,
-  ChapterHandoff,
-  ContractReport,
-  SceneActionType,
-  SceneFingerprint,
-} from "../types";
+import { ChapterContract, ChapterEndState, ChapterHandoff, ContractReport, SceneActionType, SceneFingerprint } from '../../../../narrative/chapter';
 
 export const SCENE_ACTION_TYPES: SceneActionType[] = [
   "battle",

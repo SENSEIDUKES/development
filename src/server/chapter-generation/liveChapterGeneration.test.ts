@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { resolveSystemPromptRoute } from "@seihouse/sen/cards";
-import { createCompletedSingleChapterReaderSession } from "@seihouse/sen/reader-chamber";
+import { createCompletedSingleChapterReaderSession } from '../../components/chapter-generation/shared/batchToReaderAdapter';
 import type { StorySeedInput } from "../../components/story-seed/shared/storySeedSchema";
 import type { WorldBlueprint } from "../../components/story-seed/shared/types";
 import type { ManifestChapterResponse } from "../../components/chapter-generation/shared/liveChapterGeneration";

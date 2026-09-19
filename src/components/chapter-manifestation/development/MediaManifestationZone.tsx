@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import ManifestationChamber, { ChamberForegroundMotes } from './ManifestationChamber';
-import ManifestationReveal from './ManifestationReveal';
+import ManifestationReveal from '../../../narrative/ManifestationReveal';
 import CelestialScrollVessel from './vessels/CelestialScrollVessel';
 import type { MediaManifestation, MediaRevealState } from '../shared/manifestation';
 import { MEDIA_KIND_LABEL } from '../shared/manifestation';

@@ -8,11 +8,9 @@
  */
 
 import type { SenLanguageCode } from '../../../../lib/language';
-import {
-  selectTranslationGlossaryEntries,
-} from '../../../harness-generation/shared/translationSkill';
-import type { HarnessSkillManifest } from '../../../harness-generation/shared/types';
-import type { ReaderChapter } from '../types';
+import { selectTranslationGlossaryEntries } from '../../../../narrative/translationSkill';
+import type { HarnessSkillManifest } from '../../../../narrative/generation';
+import type { ReaderChapter } from '../../../../narrative/story';
 import {
   READER_TRANSLATION_SCHEMA_VERSION,
   isReaderTranslationFresh,

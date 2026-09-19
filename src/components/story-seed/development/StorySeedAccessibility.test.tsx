@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { act, useState } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import { type Root } from 'react-dom/client';
+import { createRoot } from '../../../test-utils/createStoryCreationRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createBlueprintDraftFromSeed,
@@ -13,12 +14,8 @@ import {
   setMockState,
   useAppStore,
 } from '../shared/stubs';
-import {
-  resetStorySeedRepository,
-  setStorySeedRepository,
-  type StorySeedRecord,
-  type StorySeedRepository,
-} from '../shared/storySeedRepository';
+import { resetStorySeedRepository, setStorySeedRepository } from '../../../workshop/previews/story-seed/storySeedStorage';
+import { type StorySeedRecord, type StorySeedRepository } from '../shared/storySeedRepository';
 import { BlueprintReview } from './BlueprintReview';
 import CreationModal from './CreationModal';
 import { StoryBank } from './StoryBank';
@@ -33,8 +30,8 @@ import { OriginGenrePicker } from './workspaces/origin/OriginGenrePicker';
 import { OriginPremiseAndTags } from './workspaces/origin/OriginPremiseAndTags';
 import { OriginStyleSelector } from './workspaces/origin/OriginStyleSelector';
 
-vi.mock('../../../audio/DevAudioPlayback', () => ({
-  useDevAudioPlayback: () => ({
+vi.mock('../../../audio/playback', () => ({
+  useNarrativeAudio: () => ({
     currentSource: null,
     currentTrackId: null,
     isMuted: false,

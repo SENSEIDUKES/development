@@ -1,9 +1,6 @@
 import { useMemo, useState } from "react";
-import {
-  ReaderChamber,
-  createChapterScopedCodexStory,
-  createCompletedSingleChapterReaderSession,
-} from "@seihouse/sen/reader-chamber";
+import { ReaderChamber } from '@seihouse/sen/reader-chamber';
+import { createChapterScopedCodexStory, createCompletedSingleChapterReaderSession } from '../shared/batchToReaderAdapter';
 import { CodexSheetOverlay } from "@seihouse/sen/reader-codex";
 import type {
   StoryMemory,

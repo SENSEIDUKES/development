@@ -4,7 +4,7 @@ import type { StoryMemory, StoryWorld, UpdateStoryFields } from '@seihouse/sen/r
 import { CodexSheetOverlay } from '@seihouse/sen/reader-codex';
 import { createHarnessSenStory } from '../shared/senAdapter';
 import type { HarnessGenerationController } from '../shared/controller';
-import type { HarnessSkillManifest, HarnessWorkspaceState } from '../shared/types';
+import type { HarnessSkillManifest, HarnessWorkspaceState } from '../../../narrative/generation';
 
 export function HarnessReaderSession({ state, storyId, onClose, controller, installedSkills }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;

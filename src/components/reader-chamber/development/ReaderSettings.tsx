@@ -16,11 +16,11 @@ import {
   Type,
   Volume2,
 } from 'lucide-react';
-import { ReaderChapter, ReaderPreferences } from '../shared/types';
+import { ReaderChapter, ReaderPreferences } from '../../../narrative/story';
 import { getReaderTypography } from '../shared/readerTypography';
 import { AudioMenu } from './ReaderControls/AudioMenu';
 import { AudioSettings, ImmersionPreferences } from './ReaderControls/types';
-import { SENSettingsIcon } from '../../sen-icons';
+import { NarrativeIcon } from '../../../presentation';
 import {
   ReadingLanguageSection,
   type ReadingLanguageSectionProps,
@@ -696,7 +696,7 @@ export const ReaderSettings: React.FC<ReaderSettingsProps> = ({
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_70%_0%,rgba(4,172,255,0.06),transparent_38%)]" />
       <div className="relative mx-auto max-w-[1480px] space-y-5">
         <div className="flex items-center gap-3 border-b border-neutral-800/80 pb-4">
-          <SENSettingsIcon size={18} className="text-portal" />
+          <NarrativeIcon name="settings" size={18} className="text-portal" />
           <h3 className="font-sans text-sm font-medium uppercase tracking-[0.2em] text-neutral-100 sm:text-base">
             Reader Settings
           </h3>

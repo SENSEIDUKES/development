@@ -2,12 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { HarnessGenerationController } from './controller';
 import { compileStoryInformationPacket } from './context';
 import { createHarnessStory, reviseStoryFoundation } from './foundation';
-import {
-  InMemoryHarnessGenerationRepository,
-  createEmptyHarnessWorkspaceState,
-  readHarnessWorkspaceState,
-} from './repository';
-import { HARNESS_GENERATION_SCHEMA_VERSION } from './types';
+import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { createEmptyHarnessWorkspaceState, readHarnessWorkspaceState } from './repository';
+import { HARNESS_GENERATION_SCHEMA_VERSION } from '../../../narrative/generation';
 
 const foundationInput = { title: 'Ninth Meridian', premise: 'A courier outruns a falling dynasty.' };
 

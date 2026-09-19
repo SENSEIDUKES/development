@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Shield, MapPin, Swords, User, Loader2 } from 'lucide-react';
 import { Character, Faction, Artifact, Location } from './types';
-import { useAppStore } from './codexCompatibility';
-import { getColorCodeStyle, resolveCodexEntityColorCode } from '../../reader-chamber/shared/colorCodes';
+import { useReaderStore } from '../../../narrative/readerRuntime';
+import { getColorCodeStyle, resolveCodexEntityColorCode } from '../../../narrative/colorCodes';
 
 interface CodexHovercardProps {
   term: string;
@@ -61,8 +61,8 @@ export const CodexHovercard: React.FC<CodexHovercardProps> = ({ type, entry, chi
     }
   };
 
-  const activeStoryId = useAppStore((state) => state.activeStoryId);
-  const activeStory = useAppStore((state) =>
+  const activeStoryId = useReaderStore((state) => state.activeStoryId);
+  const activeStory = useReaderStore((state) =>
     state.stories.find((s) => s.id === activeStoryId)
   );
 

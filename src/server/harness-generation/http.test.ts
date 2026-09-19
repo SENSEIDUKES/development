@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { HarnessGenerationRequest } from '../../components/harness-generation/shared/types';
+import type { HarnessGenerationRequest } from '../../narrative/generation';
 import { handleHarnessGenerationHttp } from './http';
 import type { HarnessTextGenerationRequest } from './provider';
 import { SEN_NOVEL_AUTHOR_SKILL } from '../../components/harness-generation/shared/authorSkill';

@@ -56,12 +56,8 @@ import {
   stoppedChapterNumber,
   usageForChapterRun,
 } from "../shared/reviewExports";
-import {
-  listWorkshopStorySeeds,
-  LOCAL_WORKSHOP_STORY_SEED_OWNER_ID,
-  type StorySeedArtifact,
-  type StorySeedRecord,
-} from "../../story-seed/shared/storySeedRepository";
+import { listWorkshopStorySeeds, LOCAL_WORKSHOP_STORY_SEED_OWNER_ID } from '../../../workshop/previews/story-seed/storySeedStorage';
+import { type StorySeedArtifact, type StorySeedRecord } from '../../story-seed/shared/storySeedRepository';
 import { parseStorySeedJson } from "../../story-seed/shared/storySeedSerialization";
 import type { RawStorySeedArtifact } from "../../story-seed/shared/storySeedSerialization";
 import ChapterGenerationWorkspace from "./ChapterGenerationWorkspace";

@@ -21,7 +21,7 @@ import type {
   ChapterPipelineStageKey,
   ChapterPacket,
 } from "../shared/pipeline/types";
-import type { ChapterHandoff, ChapterEndState } from "../shared/types";
+import type { ChapterHandoff, ChapterEndState } from '../../../narrative/chapter';
 import ManifestedChapterView from "./ManifestedChapterView";
 import {
   Chip,

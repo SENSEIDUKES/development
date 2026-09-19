@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bookmark as BookmarkIcon, Trash2, ChevronRight } from 'lucide-react';
-import { VirtualizedList } from './VirtualizedList';
-import { Chapter, Bookmark } from '../shared/types';
+import { VirtualizedList } from '../../../presentation/VirtualizedList';
+import { Chapter, Bookmark } from '../../../narrative/story';
 
 interface CosmicBookmarksPanelProps {
   showBookmarksPanel: boolean;

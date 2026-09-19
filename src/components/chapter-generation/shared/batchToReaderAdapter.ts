@@ -4,40 +4,14 @@
  * never mutates, advances, retries, or persists the Pass 2 source batch.
  */
 
-import type {
-  BatchChapterRun,
-  FiveChapterBatchState,
-} from "../../chapter-generation/shared/batch/chapterBatch";
-import type { ManifestChapterResponse } from "../../chapter-generation/shared/liveChapterGeneration";
-import type { ChapterTokenUsageSummary } from "../../chapter-generation/shared/pipeline/usage";
-import { aggregateChapterTokenUsage } from "../../chapter-generation/shared/pipeline/usage";
-import type {
-  LivingStoryCharacterState,
-  LivingStoryCodex,
-  LivingStoryState,
-  LivingStoryThreads,
-} from "../../chapter-generation/shared/packets/livingStoryState";
-import type { StoryConstitution } from "../../chapter-generation/shared/packets/storyConstitution";
-import {
-  canonicalLivingStoryEntityKey,
-  mergeLivingStoryRecords,
-} from "../../chapter-generation/shared/packets/livingStoryEntityIdentity";
-import type {
-  Ability,
-  ContextManifest,
-  Artifact,
-  Character,
-  CreatureSpecies,
-  Faction,
-  Location,
-  ReaderChapter,
-  ReaderChapterGenerationUsage,
-  ReaderTokenUsageTotals,
-  StoryBlock,
-  StoryCuePayload,
-  StoryMemory,
-  StoryWorld,
-} from "./types";
+import type { BatchChapterRun, FiveChapterBatchState } from './batch/chapterBatch';
+import type { ManifestChapterResponse } from './liveChapterGeneration';
+import type { ChapterTokenUsageSummary } from './pipeline/usage';
+import { aggregateChapterTokenUsage } from './pipeline/usage';
+import type { LivingStoryCharacterState, LivingStoryCodex, LivingStoryState, LivingStoryThreads } from './packets/livingStoryState';
+import type { StoryConstitution } from './packets/storyConstitution';
+import { canonicalLivingStoryEntityKey, mergeLivingStoryRecords } from './packets/livingStoryEntityIdentity';
+import type { Ability, ContextManifest, Artifact, Character, CreatureSpecies, Faction, Location, ReaderChapter, ReaderChapterGenerationUsage, ReaderTokenUsageTotals, StoryBlock, StoryCuePayload, StoryMemory, StoryWorld } from '../../../narrative/story';
 
 const clone = <T,>(value: T): T => structuredClone(value);
 

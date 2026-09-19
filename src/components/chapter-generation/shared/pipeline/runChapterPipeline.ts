@@ -1,7 +1,7 @@
 import { estimateTokens } from "../lib/helpers";
 import type { GenerationStage } from "../stageTypes";
-import type { ChapterContent } from "../types";
-import { acceptChapterMedia } from "../acceptedChapterMedia";
+import type { ChapterContent } from '../../../../narrative/chapter';
+import { acceptChapterMedia } from '../../../../narrative/acceptedChapterMedia';
 import type {
   ChapterGenerationModelCalls,
   ChapterModelCallKind,

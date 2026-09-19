@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Shield, Sparkles, TriangleAlert as AlertTriangle, Eye, CircleQuestionMark as HelpCircle, Heart, Flame, ShieldAlert, Award, RefreshCw, Star, Skull } from 'lucide-react';
-import { getColorCodeSurfaceStyle, getColorCodeValue, resolveFateTypeColorCode } from '../shared/colorCodes';
+import { getColorCodeSurfaceStyle, getColorCodeValue, resolveFateTypeColorCode } from '../../../narrative/colorCodes';
 
 interface FateType {
   type: string;

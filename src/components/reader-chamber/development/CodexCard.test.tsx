@@ -3,14 +3,9 @@ import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import React, { act, createRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type {
-  ReaderChapter,
-  ReaderPreferences,
-  StoryBlock,
-  StoryWorld,
-} from '../shared/types';
+import type { ReaderChapter, ReaderPreferences, StoryBlock, StoryWorld } from '../../../narrative/story';
 import { resetMockState } from '../shared/stubs';
-import { getColorCodeValue } from '../shared/colorCodes';
+import { getColorCodeValue } from '../../../narrative/colorCodes';
 import { CodexCard } from './CodexCard';
 import { ReaderViewport } from './ReaderViewport';
 

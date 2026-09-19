@@ -1,9 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Play, RotateCcw } from 'lucide-react';
-import {
-  CelestialScrollVessel,
-  ManifestationReveal,
-} from '@seihouse/sen/manifestations';
+import { CelestialScrollVessel } from '@seihouse/library/manifestations';
+import { ManifestationReveal } from '@seihouse/sen/manifestations';
 import {
   MANIFESTATION_REVEAL_STATES,
   type ManifestationRevealState,

@@ -2,8 +2,8 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createPack } from 'seihouse-productions-package';
 import { HarnessGenerationController } from '../../../components/harness-generation/shared/controller';
-import { InMemoryHarnessGenerationRepository } from '../../../components/harness-generation/shared/repository';
-import type { HarnessGenerationResponse } from '../../../components/harness-generation/shared/types';
+import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import type { HarnessGenerationResponse } from '../../../narrative/generation';
 import { handleHarnessGenerationHttp } from '../../../server/harness-generation/http';
 import { createHarnessSppSkill, inspectHarnessSpp, loadHarnessSppSkills, readHarnessSppText, saveHarnessSppSkill, SPP_SKILL_STORAGE_KEY } from './sppSkills';
 

@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { StoryWorld } from '../shared/types';
+import { StoryWorld } from '../../../narrative/story';
 import { FateSurvivalExplanation } from './FateSurvivalExplanation';
-import { getColorCodeStyle, getColorCodeSurfaceStyle, getColorCodeValue, type ColorCodeId } from '../shared/colorCodes';
+import { getColorCodeStyle, getColorCodeSurfaceStyle, getColorCodeValue, type ColorCodeId } from '../../../narrative/colorCodes';
 
 const FATE_ALERT_COLOR_CODE: ColorCodeId = 'corruption';
 const fateAlertColorStyle = getColorCodeStyle(FATE_ALERT_COLOR_CODE);

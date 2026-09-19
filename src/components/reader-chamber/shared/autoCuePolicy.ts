@@ -1,4 +1,4 @@
-import { StoryBlock } from './types';
+import { StoryBlock } from '../../../narrative/story';
 const isDevBuild = () => false; // Workshop: dev-build curation logging disabled
 
 /**

@@ -3,12 +3,8 @@ import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  DevAudioPlaybackProvider,
-  useDevAudioPlayback,
-  type DevAudioPlayback,
-  type DevAudioPlaybackEvent,
-} from '../../../audio/DevAudioPlayback';
+import { useNarrativeAudio, type NarrativeAudioPlayback, type NarrativeAudioPlaybackEvent } from '../../../audio/playback';
+import { DevAudioPlaybackProvider } from '../../../audio/DevAudioPlayback';
 import {
   getInlineCueTrackId,
   type ResolvedAudioMoment,
@@ -47,16 +43,16 @@ const weaponMoment: ResolvedAudioMoment = {
 };
 
 interface FakePlayback {
-  playback: DevAudioPlayback;
-  emit: (event: DevAudioPlaybackEvent) => void;
+  playback: NarrativeAudioPlayback;
+  emit: (event: NarrativeAudioPlaybackEvent) => void;
   unsubscribe: ReturnType<typeof vi.fn>;
 }
 
 function createFakePlayback(autoPlay = false): FakePlayback {
-  const listeners = new Set<(event: DevAudioPlaybackEvent) => void>();
+  const listeners = new Set<(event: NarrativeAudioPlaybackEvent) => void>();
   const unsubscribe = vi.fn();
-  const emit = (event: DevAudioPlaybackEvent) => listeners.forEach(listener => listener(event));
-  const playback: DevAudioPlayback = {
+  const emit = (event: NarrativeAudioPlaybackEvent) => listeners.forEach(listener => listener(event));
+  const playback: NarrativeAudioPlayback = {
     autoplayBlocked: false,
     currentSource: null,
     currentTrackId: null,
@@ -361,7 +357,7 @@ describe('InlineAudioControl', () => {
 });
 
 function PlaybackProbe() {
-  const playback = useDevAudioPlayback();
+  const playback = useNarrativeAudio();
   return <output data-testid="track-id">{playback.currentTrackId}</output>;
 }
 

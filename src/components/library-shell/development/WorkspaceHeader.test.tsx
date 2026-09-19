@@ -9,7 +9,7 @@ import { WorkspaceHeader } from './WorkspaceHeader';
 import { MainLibraryHeader } from './MainLibraryHeader';
 import { STORY_SEED_HELP_ITEMS } from '../../story-seed/development/storySeedHelp';
 
-vi.mock('../../../audio/DevAudioPlayback', () => ({ useDevAudioPlayback: () => ({
+vi.mock('../../../audio/playback', () => ({ useNarrativeAudio: () => ({
   isPlaying: false, currentTrackId: null, stop: vi.fn(),
 }) }));
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

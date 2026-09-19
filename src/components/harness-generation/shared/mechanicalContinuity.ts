@@ -1,4 +1,4 @@
-import type { HarnessSemanticEvent } from './types';
+import type { HarnessSemanticEvent } from '../../../narrative/generation';
 
 /** Quantities are observations, never automatically reset from a Foundation. */
 export const buildHarnessMechanicalContinuity = (events: HarnessSemanticEvent[]) => {

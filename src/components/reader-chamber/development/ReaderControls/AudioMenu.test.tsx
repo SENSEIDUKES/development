@@ -2,7 +2,7 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ResolvedSoundscape } from '../../../../audio/mediaPacks';
+import type { ResolvedSoundscape } from '../../../../audio/media';
 import { AudioMenu } from './AudioMenu';
 
 const playback = vi.hoisted(() => ({
@@ -19,8 +19,8 @@ const audioMix = vi.hoisted(() => ({
   setChannel: vi.fn(),
 }));
 
-vi.mock('../../../../audio/DevAudioPlayback', () => ({
-  useDevAudioPlayback: () => playback,
+vi.mock('../../../../audio/playback', () => ({
+  useNarrativeAudio: () => playback,
 }));
 
 vi.mock('../../shared/stubs', () => ({
@@ -35,9 +35,9 @@ const resolved: ResolvedSoundscape = {
   blockId: 'block-1',
   intent: { blockId: 'block-1', mood: 'storm-path', semanticTags: ['rain'] },
   resource: {
-    track: { id: 'PACK_TRACK', mood: 'storm-path', moods: ['storm-path'], tags: ['rain'], url: 'https://fixtures.r2.dev/pack-track.mp3', isPremium: false },
+    track: { id: 'PACK_TRACK', mood: 'storm-path', moods: ['storm-path'], tags: ['rain'], url: 'https://fixtures.r2.dev/pack-track.mp3' },
     provenance: {
-      kind: 'media-pack', id: 'test.pack', version: '1.0.0', type: 'soundscape',
+      catalogId: 'test.pack', version: '1.0.0',
       source: { path: 'catalogs/pack.json', digest: 'a'.repeat(64) },
     },
   },

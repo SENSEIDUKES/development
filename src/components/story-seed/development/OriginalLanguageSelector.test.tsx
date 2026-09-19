@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import { type Root } from 'react-dom/client';
+import { createRoot } from '../../../test-utils/createStoryCreationRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SEN_LANGUAGES } from '../../../lib/language';
 import { createBlueprintDraftFromSeed, createEmptyStorySeedInput } from '../shared/storySeedSchema';

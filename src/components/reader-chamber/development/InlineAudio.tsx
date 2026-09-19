@@ -16,17 +16,14 @@ import {
   type InlineAudioTextSegment,
   type ResolvedAudioMoment,
 } from '../../../audio/inlineAudio';
-import {
-  useDevAudioPlayback,
-  type DevAudioPlayback,
-} from '../../../audio/DevAudioPlayback';
+import { useNarrativeAudio, type NarrativeAudioPlayback } from '../../../audio/playback';
 import './InlineAudio.css';
 
 export type InlineAudioStatus = 'idle' | 'loading' | 'playing' | 'error';
 
 export interface InlineAudioControlProps {
   moment: ResolvedAudioMoment;
-  playback: DevAudioPlayback;
+  playback: NarrativeAudioPlayback;
 }
 
 /**
@@ -168,7 +165,7 @@ export interface InlineAudioProps {
 
 /** Production-portable Reader primitive bound to the one shared audio owner. */
 export function InlineAudio({ moment }: InlineAudioProps) {
-  const playback = useDevAudioPlayback();
+  const playback = useNarrativeAudio();
   return <InlineAudioControl moment={moment} playback={playback} />;
 }
 

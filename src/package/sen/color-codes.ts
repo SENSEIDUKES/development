@@ -16,4 +16,4 @@
  */
 import '../../components/reader-chamber/shared/reader-chamber.css';
 
-export * from '../../components/reader-chamber/shared/colorCodes';
+export * from '../../narrative/colorCodes';

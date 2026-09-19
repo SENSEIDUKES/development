@@ -12,21 +12,8 @@ import './story-seed.css';
 import { motion } from 'motion/react';
 import type { WorldBlueprint } from '../shared/types';
 import { generateUUID } from '../shared/id';
-import {
-  AGENTS,
-  LOCAL_ONLY_MODE,
-  type MockAppStore,
-  selectIsGenerating,
-  useAppStore,
-} from '../shared/stubs';
-import {
-  createStorySeed,
-  importStorySeeds,
-  LOCAL_WORKSHOP_STORY_SEED_OWNER_ID,
-  updateStorySeed,
-  type StorySeedArtifact,
-  type StorySeedRecord,
-} from '../shared/storySeedRepository';
+import { useStoryCreationRuntime, useStoryCreationStore, type StoryCreationSnapshot } from '../../../library/story-seed/runtime';
+import { type StorySeedArtifact, type StorySeedRecord } from '../shared/storySeedRepository';
 import {
   applyInferredStoryTags,
   buildBlueprintGenerationPayload,
@@ -141,13 +128,13 @@ const STORY_SEED_WORKSPACES: Record<SeedSectionId, ComponentType<StorySeedWorksp
 };
 
 interface CreationModalStoreSlice {
-  activeAgentId: MockAppStore['activeAgentId'];
-  currentUser: MockAppStore['currentUser'];
+  activeAgentId: StoryCreationSnapshot['activeAgentId'];
+  currentUser: StoryCreationSnapshot['currentUser'];
   equippedRelicTitle: string | null;
-  libraryStories: MockAppStore['stories'];
+  libraryStories: StoryCreationSnapshot['stories'];
 }
 
-const selectCreationModalStore = (state: MockAppStore): CreationModalStoreSlice => {
+const selectCreationModalStore = (state: StoryCreationSnapshot): CreationModalStoreSlice => {
   const storyMaker = state.routingConfig.storyMaker;
   return {
     activeAgentId: state.activeAgentId,
@@ -160,15 +147,17 @@ const selectCreationModalStore = (state: MockAppStore): CreationModalStoreSlice 
 };
 
 export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage }: CreationModalProps) {
-  const storeIsGenerating = useAppStore(selectIsGenerating);
+  const runtime = useStoryCreationRuntime();
+  const guestWorkspace = Boolean(runtime.guestOwnerId);
+  const storeIsGenerating = useStoryCreationStore(state => state.isGenerating);
   const {
     activeAgentId,
     currentUser,
     equippedRelicTitle,
     libraryStories,
-  } = useAppStore(selectCreationModalStore);
+  } = useStoryCreationStore(selectCreationModalStore);
   const seedOwnerId = currentUser?.uid
-    || (LOCAL_ONLY_MODE ? LOCAL_WORKSHOP_STORY_SEED_OWNER_ID : null);
+    || runtime.guestOwnerId || null;
   // Stories manifested from a banked seed drive the Story Bank's "Novel
   // Manifested" card state (stories link back to their seed by `sourceSeedId`).
   const manifestedSeedIds = useMemo(() => new Set(
@@ -277,7 +266,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   // mounted for STORY_AUTH_DISSOLVE_MS so StoryAuthGate's shell can dissolve
   // over the still-visible backdrop before the intake is revealed.
   useEffect(() => {
-    if (LOCAL_ONLY_MODE) return;
+    if (guestWorkspace) return;
     if (!currentUser) {
       wasAuthRef.current = true;
       return;
@@ -314,8 +303,8 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     const activeRecord = currentSeedRef.current;
     const requestId = ++persistRequestIdRef.current;
     const saved = activeRecord && activeRecord.userId === ownerAtStart
-      ? await updateStorySeed(ownerAtStart, activeRecord, payload, blueprintArtifact, language)
-      : await createStorySeed(seedOwnerId, payload, blueprintArtifact, language);
+      ? await runtime.repository.update(ownerAtStart, activeRecord, payload, blueprintArtifact, language)
+      : await runtime.repository.create(seedOwnerId, payload, blueprintArtifact, language);
     const currentRecord = currentSeedRef.current;
     const stillActive = requestId === persistRequestIdRef.current
       && seedOwnerIdRef.current === ownerAtStart
@@ -367,7 +356,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
 
   const handleImport = async (artifacts: StorySeedArtifact[]) => {
     if (artifacts.length === 0) return;
-    const imported = seedOwnerId ? await importStorySeeds(seedOwnerId, artifacts) : [];
+    const imported = seedOwnerId ? await runtime.repository.importMany(seedOwnerId, artifacts) : [];
     if (imported.length > 0) {
       const importedIds = new Set(imported.map(record => record.id));
       setSavedSeeds(previous => [
@@ -442,7 +431,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
    * and saved with the seed.
    */
   const handleGenerateBlueprintClick = async () => {
-    if (isGenerating || selectIsGenerating(useAppStore.getState())) return;
+    if (isGenerating || runtime.store.getSnapshot().isGenerating) return;
     // Story Tags are filled by inference first, so only Style, Genre, and
     // Premise can ever leave the seed short of generation readiness.
     const seedInput = applyInferredStoryTags(normalizeStorySeedInput(seed));
@@ -522,7 +511,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     let savedSeed: StorySeedRecord | null;
     try {
       savedSeed = await persistSeed(seedInput, cleanBlueprint, language);
-      if (!LOCAL_ONLY_MODE && !savedSeed) {
+      if (!guestWorkspace && !savedSeed) {
         setSeedError('The story was not started because its source seed could not be saved to your account.');
         return;
       }
@@ -535,7 +524,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     const sourceSeedId = savedSeed?.id || record?.id || `local-seed-${generateUUID()}`;
     const administrative = createStoryAdministrativeMetadata({
       storyId: `story-${generateUUID()}`,
-      creatorId: currentUser?.uid || LOCAL_WORKSHOP_STORY_SEED_OWNER_ID,
+      creatorId: seedOwnerId || '',
       sourceSeedId,
       originalLanguage: language,
     });
@@ -554,7 +543,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   };
 
   const handleStartStoryClick = async () => {
-    if (isGenerating || selectIsGenerating(useAppStore.getState())) return;
+    if (isGenerating || runtime.store.getSnapshot().isGenerating) return;
     if (!blueprint) return;
     const seedInput = applyInferredStoryTags(normalizeStorySeedInput(seed));
     await startStoryFromSeed(seedInput, blueprint, currentSeed, originalLanguage);
@@ -568,7 +557,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
    * workspace with the validation errors instead of starting.
    */
   const handleManifestSeed = async (record: StorySeedRecord) => {
-    if (isGenerating || selectIsGenerating(useAppStore.getState())) return;
+    if (isGenerating || runtime.store.getSnapshot().isGenerating) return;
     if (!record.blueprint) return;
     const seedInput = applyInferredStoryTags(normalizeStorySeedInput(record.seed));
     loadSeedIntoWorkspace(record);
@@ -656,8 +645,8 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   const requestExportCurrentSeed = useLatestCallback(handleExportCurrentSeed);
   const requestGenerateBlueprint = useLatestCallback(handleGenerateBlueprintClick);
 
-  if ((!currentUser || authDissolving) && !LOCAL_ONLY_MODE) {
-    return <StoryAuthGate />;
+  if ((!currentUser || authDissolving) && !guestWorkspace) {
+    return <StoryAuthGate linked={Boolean(currentUser)} onAuthenticate={runtime.authenticate} />;
   }
 
   if (stage === 'blueprint' && blueprint) {
@@ -702,7 +691,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
         showStoryBank={showStoryBank} helpOpen={helpOpen} canManifest={canGenerate}
         manifestLabel={isGenerating ? (activeAgentId === 'versa' ? 'VERSA is drafting...' : 'Manifesting...') : 'Manifest World Blueprint'}
         manifestDisabledReason={missing.length ? `Manifest disabled — missing: ${missingRequiredLabels}` : undefined}
-        manifestIndicator={activeAgentId === 'versa' ? <img src={AGENTS.VERSA.logoUrl} className="h-5 w-5 animate-pulse object-contain" alt="" aria-hidden="true" /> : undefined}
+        manifestIndicator={activeAgentId === 'versa' ? <img src={runtime.authorMarkUrl} className="h-5 w-5 animate-pulse object-contain" alt="" aria-hidden="true" /> : undefined}
         status={isGenerating ? 'Creating your World Blueprint' : savedFeedback ? 'Draft saved' : missing.length ? `Missing required: ${missingRequiredLabels}` : 'All required Story inputs complete'}
         error={seedError || error} onSaveDraft={requestSaveDraft} onManifest={requestGenerateBlueprint}
       onToggleStoryBank={toggleStoryBank} onOpenHelp={openHelp} onSecondaryIntent={preloadStorySeedSecondary}
@@ -815,7 +804,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
                 loading={isGenerating}
                 // While VERSA drafts, its mark replaces the generic spinner.
                 loadingIndicator={activeAgentId === 'versa' ? (
-                  <img src={AGENTS.VERSA.logoUrl} className="h-5 w-5 shrink-0 animate-pulse object-contain" alt="" aria-hidden="true" />
+                  <img src={runtime.authorMarkUrl} className="h-5 w-5 shrink-0 animate-pulse object-contain" alt="" aria-hidden="true" />
                 ) : undefined}
                 aria-label={missing.length > 0 ? `Manifest disabled — missing: ${missingRequiredLabels}` : undefined}
                 title={missing.length > 0 ? `Missing required: ${missingRequiredLabels}` : 'Manifest the World Blueprint'}

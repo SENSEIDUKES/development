@@ -1,59 +1,11 @@
+import { NarrativeAudioProvider, type NarrativeAudioRequest, type NarrativeAudioPlaybackEvent, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
 import {
   AudioSessionProvider,
   type Track,
   useAudioSession,
 } from '@seihouse/audio-player';
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  type PropsWithChildren,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, type PropsWithChildren } from 'react';
 import '@seihouse/audio-player/styles.css';
-
-export interface DevAudioRequest {
-  id: string;
-  source: string;
-  title?: string;
-  artist?: string;
-}
-
-export type DevAudioPlaybackEvent =
-  | { type: 'track-change'; trackId: string | null }
-  | { type: 'play'; trackId: string }
-  | { type: 'pause'; trackId: string | null }
-  | { type: 'queue-end' }
-  | { type: 'error'; trackId: string | null; error: string };
-
-export interface DevAudioPlayback {
-  autoplayBlocked: boolean;
-  currentSource: string | null;
-  currentTrackId: string | null;
-  errorMessage: string;
-  hasError: boolean;
-  isBuffering: boolean;
-  isMuted: boolean;
-  isPlaying: boolean;
-  volume: number;
-  load: (request: DevAudioRequest) => void;
-  pause: () => void;
-  play: (request?: DevAudioRequest) => void;
-  /** Replace the shared queue and play one user-requested source immediately. */
-  replace: (request: DevAudioRequest) => void;
-  /** Restart the current shared track from the beginning after a user gesture. */
-  restart: (trackId: string) => boolean;
-  setVolume: (volume: number) => void;
-  stop: (trackId?: string) => void;
-  subscribe: (handler: (event: DevAudioPlaybackEvent) => void) => () => void;
-  subscribeToTrackChange: (handler: (trackId: string | null) => void) => () => void;
-  subscribeToQueueEnd: (handler: () => void) => () => void;
-  toggleMute: () => void;
-}
-
-const DevAudioPlaybackContext = createContext<DevAudioPlayback | null>(null);
 
 const AUDIO_DATA_URI = /^data:(audio\/[a-z0-9.+-]+);base64,([a-z0-9+/]+=*)$/iu;
 const POST_QUEUE_PLAYBACK_DELAY_MS = 100;
@@ -98,7 +50,7 @@ function DevAudioPlaybackBridge({ children }: PropsWithChildren) {
     }
   }, []);
 
-  const toTrack = useCallback((request: DevAudioRequest): Track => {
+  const toTrack = useCallback((request: NarrativeAudioRequest): Track => {
     const audioBlob = audioDataUriToBlob(request.source);
     const audioFile = audioBlob ? URL.createObjectURL(audioBlob) : request.source;
     if (audioBlob) transientAudioUrlsRef.current.add(audioFile);
@@ -129,12 +81,12 @@ function DevAudioPlaybackBridge({ children }: PropsWithChildren) {
     transientAudioUrlsRef.current.clear();
   }, [cancelPendingReplacementPlayback]);
 
-  const load = useCallback((request: DevAudioRequest) => {
+  const load = useCallback((request: NarrativeAudioRequest) => {
     cancelPendingReplacementPlayback();
     session.setQueue([toTrack(request)]);
   }, [cancelPendingReplacementPlayback, session, toTrack]);
 
-  const play = useCallback((request?: DevAudioRequest) => {
+  const play = useCallback((request?: NarrativeAudioRequest) => {
     if (request) {
       cancelPendingReplacementPlayback();
       session.playNow(toTrack(request));
@@ -148,7 +100,7 @@ function DevAudioPlaybackBridge({ children }: PropsWithChildren) {
     session.pause();
   }, [cancelPendingReplacementPlayback, session]);
 
-  const replace = useCallback((request: DevAudioRequest) => {
+  const replace = useCallback((request: NarrativeAudioRequest) => {
     cancelPendingReplacementPlayback();
     const playbackToken = replacePlaybackTokenRef.current;
     // `setQueue(..., true)` asks the player to begin while its own source
@@ -189,7 +141,7 @@ function DevAudioPlaybackBridge({ children }: PropsWithChildren) {
     session.subscribe('track-change', ({ track }) => handler(track?.id ?? null))
   ), [session]);
 
-  const subscribe = useCallback((handler: (event: DevAudioPlaybackEvent) => void) => {
+  const subscribe = useCallback((handler: (event: NarrativeAudioPlaybackEvent) => void) => {
     const unsubscribers = [
       session.subscribe('track-change', ({ track }) => {
         handler({ type: 'track-change', trackId: track?.id ?? null });
@@ -210,7 +162,7 @@ function DevAudioPlaybackBridge({ children }: PropsWithChildren) {
     return () => unsubscribers.forEach(unsubscribe => unsubscribe());
   }, [session]);
 
-  const value = useMemo<DevAudioPlayback>(() => ({
+  const value = useMemo<NarrativeAudioPlayback>(() => ({
     autoplayBlocked: session.autoplayBlocked,
     currentSource: session.currentTrack?.audioFile ?? null,
     currentTrackId: session.currentTrack?.id ?? null,
@@ -234,9 +186,9 @@ function DevAudioPlaybackBridge({ children }: PropsWithChildren) {
   }), [load, pause, play, replace, restart, session, stop, subscribe, subscribeToQueueEnd, subscribeToTrackChange]);
 
   return (
-    <DevAudioPlaybackContext.Provider value={value}>
+    <NarrativeAudioProvider value={value}>
       {children}
-    </DevAudioPlaybackContext.Provider>
+    </NarrativeAudioProvider>
   );
 }
 
@@ -250,12 +202,4 @@ export function DevAudioPlaybackProvider({ children }: PropsWithChildren) {
       <DevAudioPlaybackBridge>{children}</DevAudioPlaybackBridge>
     </AudioSessionProvider>
   );
-}
-
-export function useDevAudioPlayback() {
-  const context = useContext(DevAudioPlaybackContext);
-  if (!context) {
-    throw new Error('useDevAudioPlayback must be used within DevAudioPlaybackProvider');
-  }
-  return context;
 }

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { HarnessGenerationController } from './controller';
 import { createHarnessStory } from './foundation';
 import { defaultHarnessRuntime } from './ids';
-import { createEmptyHarnessWorkspaceState, InMemoryHarnessGenerationRepository } from './repository';
+import { createEmptyHarnessWorkspaceState } from './repository';
+import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import {
   CAPA_SCHEMA,
   HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS,
@@ -11,7 +12,7 @@ import {
   freezeHarnessSkillLoadout,
   validateHarnessSkillManifest,
 } from './skills';
-import type { HarnessSkillManifest, HarnessSkillSlotId } from './types';
+import type { HarnessSkillManifest, HarnessSkillSlotId } from '../../../narrative/generation';
 import { SEN_NOVEL_AUTHOR_SKILL } from './authorSkill';
 import { SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS } from '../../../lib/senLightNovelAuthorInstructions';
 import { CHAPTER_PROMPTS } from '../../chapter-generation/shared/lib/chapterPrompts';

@@ -2,11 +2,7 @@
  * Verbatim port of Light-Novels `src/server/contextManifest.ts` (verified
  * against `main`). Pure — no network/DB — safe to run in the Workshop.
  */
-import {
-  ContextManifest,
-  ContextManifestSection,
-  ContextManifestSectionKey,
-} from "../types";
+import { ContextManifest, ContextManifestSection, ContextManifestSectionKey } from '../../../../narrative/chapter';
 import { estimateTokens } from "./helpers";
 import type { SectionOutcome } from "./contextBudgeter";
 

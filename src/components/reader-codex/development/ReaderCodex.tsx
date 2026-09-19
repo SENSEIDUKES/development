@@ -6,8 +6,9 @@ import {
   Compass,
   BookMarked, BookOpen, Activity, History
 } from 'lucide-react';
-import { SENCharactersIcon } from '../../sen-icons';
-import { generateId, vibrate } from '../shared/codexCompatibility';
+import { NarrativeIcon } from '../../../presentation';
+import { generateId } from '../../../narrative/id';
+import { useReaderRuntime } from '../../../narrative/readerRuntime';
 import { ArcPlanView } from '../../arc-goals/development/ArcPlanView';
 import type { ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { StoryMemory, Character, CreatureSpecies, StoryArc, StoryWorld, MultiModelRouting, UpdateStoryFields } from '../shared/types';
@@ -236,6 +237,7 @@ export default function ReaderCodex({
   updateStoryFields,
   routingConfig
 }: ReaderCodexProps) {
+  const { haptic: vibrate } = useReaderRuntime();
   const memory = useMemo(() => normalizeSparseMemory(rawMemory), [rawMemory]);
 
   const [activePage, setActivePage] = useState<'portraits' | 'bestiary' | 'karma' | 'power' | 'artifacts' | 'fate' | 'lore'>('portraits');
@@ -463,15 +465,15 @@ export default function ReaderCodex({
         <div className="flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible pb-2 md:pb-0 gap-1.5 md:gap-1.5 md:space-y-1.5 no-scrollbar whitespace-nowrap w-full" id="codex-tab-scroller">
           {/* Portraits Link */}
           <button
-             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => { vibrate('softTap'); setActivePage('portraits'); }}
+             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => { vibrate?.('softTap'); setActivePage('portraits'); }}
             className={codexTabClass(activePage === 'portraits', 'neutral')}
           >
-            <SENCharactersIcon size={14} className={activePage === 'portraits' ? 'text-human' : ''} />
+            <NarrativeIcon name="characters" size={14} className={activePage === 'portraits' ? 'text-human' : ''} />
             <span>Portraits</span>
           </button>
 
           <button
-             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => { vibrate('softTap'); setActivePage('bestiary'); }}
+             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => { vibrate?.('softTap'); setActivePage('bestiary'); }}
             className={codexTabClass(activePage === 'bestiary', 'green')}
           >
             <BookOpen size={14} className={activePage === 'bestiary' ? 'text-green-400' : ''} />
@@ -481,7 +483,7 @@ export default function ReaderCodex({
           {/* Karma Link */}
           <button
              tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => {
-              vibrate('softTap');
+              vibrate?.('softTap');
               setActivePage('karma');
               setSelectedNodeChar(null);
             }}
@@ -493,7 +495,7 @@ export default function ReaderCodex({
 
           {/* Power Rankings Link */}
           <button
-             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => { vibrate('softTap'); setActivePage('power'); }}
+             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => { vibrate?.('softTap'); setActivePage('power'); }}
             className={codexTabClass(activePage === 'power', 'gold')}
           >
             <Zap size={14} className={activePage === 'power' ? 'text-yellow-500' : ''} />
@@ -502,7 +504,7 @@ export default function ReaderCodex({
 
           {/* Artifacts Gallery Link */}
           <button
-             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => { vibrate('softTap'); setActivePage('artifacts'); }}
+             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => { vibrate?.('softTap'); setActivePage('artifacts'); }}
             className={codexTabClass(activePage === 'artifacts', 'orange')}
           >
             <Sword size={14} className={activePage === 'artifacts' ? 'text-orange-500' : ''} />
@@ -511,7 +513,7 @@ export default function ReaderCodex({
 
           {/* Fate Panel Link */}
           <button
-             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => { vibrate('softTap'); setActivePage('fate'); }}
+             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => { vibrate?.('softTap'); setActivePage('fate'); }}
             className={codexTabClass(activePage === 'fate', 'green')}
           >
             <Compass size={14} className={activePage === 'fate' ? 'text-green-400' : ''} />
@@ -520,7 +522,7 @@ export default function ReaderCodex({
 
           {/* Lore Link */}
           <button
-             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => { vibrate('softTap'); setActivePage('lore'); }}
+             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => { vibrate?.('softTap'); setActivePage('lore'); }}
             className={codexTabClass(activePage === 'lore', 'purple')}
           >
             <BookMarked size={12} className={activePage === 'lore' ? 'text-purple-400' : ''} />

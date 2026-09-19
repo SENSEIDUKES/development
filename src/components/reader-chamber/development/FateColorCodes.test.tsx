@@ -2,8 +2,8 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { FateResultData, StoryWorld, SystemEvent } from '../shared/types';
-import { getColorCodeValue, resolveFateConsequenceDetailColorCode } from '../shared/colorCodes';
+import type { FateResultData, StoryWorld, SystemEvent } from '../../../narrative/story';
+import { getColorCodeValue, resolveFateConsequenceDetailColorCode } from '../../../narrative/colorCodes';
 import { FateResultCard } from './FateResultCard';
 import { FateSurvivalExplanation } from './FateSurvivalExplanation';
 import { ReaderFateAlerts } from './ReaderFateAlerts';

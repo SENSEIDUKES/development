@@ -1,15 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { validateHarnessSkillManifest } from '../../../harness-generation/shared/skills';
-import type { HarnessSkillManifest } from '../../../harness-generation/shared/types';
-import type { ReaderChapter, StoryBlock } from '../types';
+import type { HarnessSkillManifest } from '../../../../narrative/generation';
+import type { ReaderChapter, StoryBlock } from '../../../../narrative/story';
 import { READER_TRANSLATION_SCHEMA_VERSION, type DerivedChapterTranslation } from './contract';
 import { ReaderTranslationController } from './controller';
 import type { ReaderTranslationProvider } from './provider';
-import {
-  InMemoryReaderTranslationRepository,
-  MAX_CACHED_TRANSLATIONS,
-  WebReaderTranslationRepository,
-} from './repository';
+import { InMemoryReaderTranslationRepository } from './repository';
+import { MAX_CACHED_TRANSLATIONS } from '../../../../host/reader/translationStorage';
+import { WebReaderTranslationRepository } from '../../../../host/reader/translationStorage';
 import {
   buildReaderFacingChapter,
   mergeReaderTranslation,
@@ -569,7 +567,7 @@ describe('the browser translation cache', () => {
       getItem: key => values.get(key) ?? null,
       setItem: (key, value) => { values.set(key, value); },
       removeItem: key => { values.delete(key); },
-    });
+    }, 'translations');
     for (let chapterNumber = 1; chapterNumber <= MAX_CACHED_TRANSLATIONS + 3; chapterNumber += 1) {
       repository.write({
         schemaVersion: READER_TRANSLATION_SCHEMA_VERSION,

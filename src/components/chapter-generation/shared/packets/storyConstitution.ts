@@ -14,7 +14,7 @@ import {
 } from "../lib/chapterWritingStyle";
 import type { GlossaryGenerationResult } from "../lib/glossaryFormatter";
 import type { FatePressureTier } from "../lib/sceneRhythm";
-import type { ChapterWritingStyle } from "../types";
+import type { ChapterWritingStyle } from '../../../../narrative/chapter';
 import {
   assertValidStorySeedInput,
   STORY_SEED_SCHEMA_VERSION,

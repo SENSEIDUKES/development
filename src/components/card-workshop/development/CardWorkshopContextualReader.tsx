@@ -3,11 +3,8 @@ import {
   ReaderViewport,
   getReaderChamberSurfaceClass,
 } from '@seihouse/sen/reader-chamber';
-import {
-  CodexHovercard,
-  getManifestBackdrop,
-  type SystemEvent,
-} from '@seihouse/sen/cards';
+import { CodexHovercard, type SystemEvent } from '@seihouse/sen/cards';
+import { getManifestBackdrop } from '../../../host/reader/manifestBackdrops';
 import {
   createCodexHighlighter,
   splitByCodexTerms,

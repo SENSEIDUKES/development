@@ -1,19 +1,12 @@
-import { generateId } from '../codexCompatibility';
+import { generateId } from '../../../../narrative/id';
 import React, { useState, useMemo } from 'react';
 import { Network, HelpCircle, ArrowLeftRight, Trash2, Download, Scan, Info } from 'lucide-react';
-import { VirtualizedList } from '../../../reader-chamber/development/VirtualizedList';
+import { VirtualizedList } from '../../../../presentation/VirtualizedList';
 import { Character, CharacterRelationship } from '../types';
 import { useCodex } from './CodexContext';
-import { useDialect } from '../codexCompatibility';
-import { handleDownload } from '../codexCompatibility';
-import {
-  getColorCodeSurfaceStyle,
-  getColorCodeValue,
-  resolveCharacterRelationshipColorCode,
-  resolveCharacterStatusColorCode,
-  resolveRelationshipAffinityColorCode,
-  type ColorCodeId,
-} from '../../../reader-chamber/shared/colorCodes';
+import { useDialect } from '../../../../narrative/dialect';
+import { handleDownload } from '../downloadUtils';
+import { getColorCodeSurfaceStyle, getColorCodeValue, resolveCharacterRelationshipColorCode, resolveCharacterStatusColorCode, resolveRelationshipAffinityColorCode, type ColorCodeId } from '../../../../narrative/colorCodes';
 
 
 interface ReaderCodexRelationsProps {

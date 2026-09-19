@@ -1,69 +1,23 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import {
-  BookOpen,
-  CheckCircle2,
-  CircleAlert,
-  Download,
-  FileText,
-  ListTree,
-  LoaderCircle,
-  Pause,
-  Play,
-  Plus,
-  Puzzle,
-  RefreshCcw,
-  Volume2,
-} from 'lucide-react';
-import {
-  isMediaPackEntitlementActive,
-  mediaPackKey,
-  type MediaPack,
-  type MediaPackEntitlement,
-  type MediaPackReference,
-  type StoryMediaLoadoutSlot,
-} from '../../../audio/mediaPacks';
-import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox, CreationButton as ManifestButton } from '../../../presentation';
-import { SENManifestingIcon } from '../../library-shell/development/SENGlobalIcon';
-import {
-  HarnessGenerationController,
-  exportHarnessStory,
-} from '../shared/controller';
-import { findFoundationRevision, findStory } from '../shared/foundation';
-import { buildCanonicalStoryView } from '../shared/canonicalState';
-import { DEFAULT_HARNESS_CONTEXT_POLICY } from '../shared/context';
-import {
-  CAPA_SCHEMA,
-  HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS,
-  harnessSkillKey,
-} from '../shared/skills';
-import { isTranslationSkillCompatible, translationTargetLanguage } from '../shared/translationSkill';
-import { includeBundledHarnessSkills } from '../shared/authorSkill';
-import { HarnessReaderSession } from './HarnessReaderSession';
-import { HarnessGenerationHttpClient } from '../shared/httpClient';
-import {
-  IndexedDbHarnessGenerationRepository,
-  type HarnessGenerationRepository,
-} from '../shared/repository';
-import type {
-  HarnessGenerationAttempt,
-  HarnessGenerationModelAdapter,
-  HarnessGenerationServerInfo,
-  HarnessCorrectionKind,
-  HarnessSemanticEvent,
-  HarnessStory,
-  HarnessSkillManifest,
-  HarnessSkillReference,
-  HarnessSkillSlotId,
-  HarnessStorySeedOption,
-  HarnessStorySeedSource,
-  HarnessWorkspaceState,
-  StoryFoundationInput,
-} from '../shared/types';
+import { BookOpen, CheckCircle2, CircleAlert, Download, FileText, ListTree, LoaderCircle, Pause, Play, Plus, Puzzle, RefreshCcw, Volume2 } from 'lucide-react';
+import { createLibraryMediaPort, isMediaPackEntitlementActive, mediaPackKey, type MediaPack, type MediaPackEntitlement, type MediaPackReference, type StoryMediaLoadoutSlot } from '../media/mediaPacks';
+import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox, CreationButton as ManifestButton } from '../../presentation/index';
+import { SENManifestingIcon } from '../../components/library-shell/development/SENGlobalIcon';
+import { HarnessGenerationController, exportHarnessStory } from '../../components/harness-generation/shared/controller';
+import { findFoundationRevision, findStory } from '../../components/harness-generation/shared/foundation';
+import { buildCanonicalStoryView } from '../../components/harness-generation/shared/canonicalState';
+import { DEFAULT_HARNESS_CONTEXT_POLICY } from '../../components/harness-generation/shared/context';
+import { CAPA_SCHEMA, HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS, harnessSkillKey } from '../../components/harness-generation/shared/skills';
+import { isTranslationSkillCompatible, translationTargetLanguage } from '../../narrative/translationSkill';
+import { includeBundledHarnessSkills } from '../../components/harness-generation/shared/authorSkill';
+import { HarnessReaderSession } from '../../components/harness-generation/development/HarnessReaderSession';
+import { type HarnessGenerationRepository } from '../../components/harness-generation/shared/repository';
+import type { HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessGenerationServerInfo, HarnessCorrectionKind, HarnessSemanticEvent, HarnessStory, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId, HarnessStorySeedOption, HarnessStorySeedSource, HarnessWorkspaceState, StoryFoundationInput } from '../../narrative/generation';
 
 export interface HarnessGenerationWorkspaceProps {
   /** Injection points keep the live UI testable without a provider or browser database. */
-  repository?: HarnessGenerationRepository;
-  modelAdapter?: HarnessGenerationModelAdapter;
+  repository: HarnessGenerationRepository;
+  modelAdapter: HarnessGenerationModelAdapter;
   /** Optional host bridge that supplies saved Story Seeds as frozen inputs. */
   storySeedSource?: HarnessStorySeedSource;
   /** Host-owned inventory. Passing a manifest means that exact skill version is installed and available to equip. */
@@ -932,21 +886,14 @@ export function HarnessGenerationWorkspace({
     () => includeBundledHarnessSkills(installedSkills),
     [installedSkills],
   );
-  const repository = useMemo(
-    () => injectedRepository ?? new IndexedDbHarnessGenerationRepository(),
-    [injectedRepository],
-  );
-  const modelAdapter = useMemo(
-    () => injectedAdapter ?? new HarnessGenerationHttpClient(),
-    [injectedAdapter],
-  );
+  const repository = injectedRepository;
+  const modelAdapter = injectedAdapter;
   const controller = useMemo(
-    () => new HarnessGenerationController({ repository, modelAdapter, registeredMediaPacks, mediaPackEntitlements }),
+    () => new HarnessGenerationController({ repository, modelAdapter, media: createLibraryMediaPort({ registered: registeredMediaPacks, entitlements: mediaPackEntitlements }) }),
     [repository, modelAdapter],
   );
   useEffect(() => controller.setInstalledSkills(installedSkills), [controller, installedSkills]);
-  useEffect(() => controller.setRegisteredMediaPacks(registeredMediaPacks), [controller, registeredMediaPacks]);
-  useEffect(() => controller.setMediaPackEntitlements(mediaPackEntitlements), [controller, mediaPackEntitlements]);
+  useEffect(() => controller.setMediaPort(createLibraryMediaPort({ registered: registeredMediaPacks, entitlements: mediaPackEntitlements })), [controller, registeredMediaPacks, mediaPackEntitlements]);
   const [state, setState] = useState<HarnessWorkspaceState>();
   const [serverInfo, setServerInfo] = useState<HarnessGenerationServerInfo>();
   const [selectedStoryId, setSelectedStoryId] = useState<string>();
@@ -1101,7 +1048,7 @@ export function HarnessGenerationWorkspace({
   };
   const setMediaLoadoutSlot = (slot: StoryMediaLoadoutSlot, reference?: MediaPackReference) => {
     if (!selectedStory) return;
-    void run(() => controller.setMediaLoadoutSlot(selectedStory.id, slot, reference));
+    void run(() => controller.setMediaSelection(selectedStory.id, slot, reference));
   };
   const grantDevelopmentMediaReward = (reference: MediaPackReference) => {
     if (!onGrantDevelopmentMediaReward) return;

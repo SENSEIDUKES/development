@@ -5,7 +5,7 @@
  * dropped since production no longer routes new generation through it. Pure
  * — no network/DB — safe to run in the Workshop.
  */
-import type { ChapterContract, ContextBlock } from "../types";
+import type { ChapterContract, ContextBlock } from '../../../../narrative/chapter';
 import { assembleContext, BudgetedContext } from "./contextBudgeter";
 import {
   formatAbilityLedgerForPrompt,

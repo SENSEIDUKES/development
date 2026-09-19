@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
 import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import { type Root } from 'react-dom/client';
+import { createRoot } from '../../../test-utils/createStoryCreationRoot';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { createEmptyStorySeedInput } from '../shared/storySeedSchema';
 import { StorySeedWorkspaceChrome } from './StorySeedWorkspaceChrome';
 
-vi.mock('../../../audio/DevAudioPlayback', () => ({ useDevAudioPlayback: () => ({
+vi.mock('../../../audio/playback', () => ({ useNarrativeAudio: () => ({
   isPlaying: false, currentTrackId: null, stop: vi.fn(),
 }) }));
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

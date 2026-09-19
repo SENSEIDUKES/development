@@ -2,35 +2,15 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, useReducedMotion } from 'motion/react';
 import { ArrowDown, ArrowUp, ChevronDown, Skull, TriangleAlert as AlertTriangle, X } from 'lucide-react';
-import type {
-  SystemEvent,
-  SystemPromptBadge,
-  SystemPromptChange,
-  SystemPromptExpandedData,
-  SystemPromptExpandedProgress,
-  SystemPromptExpandedSection,
-  SystemPromptExpandedTone,
-} from '../shared/types';
+import type { SystemEvent, SystemPromptBadge, SystemPromptChange, SystemPromptExpandedData, SystemPromptExpandedProgress, SystemPromptExpandedSection, SystemPromptExpandedTone } from '../../../narrative/story';
 import { FateResultCard } from './FateResultCard';
 import { WorldNotice } from './WorldNotice';
 import { SystemPromptMechanical } from './SystemPromptMechanical';
 import { SystemOrbEmblem } from './SystemOrbEmblem';
-import {
-  getSystemPromptSurface,
-  getSystemPromptSurfaceClasses,
-  getSystemPromptSurfaceStyle,
-  resolveSystemPromptRoute,
-} from '../shared/systemPromptPresentation';
-import {
-  getColorCodeStyle,
-  getColorCodeSurfaceStyle,
-  getSystemColorStyle,
-  getSystemCompactClassification,
-  resolveSystemBadgeColorCode,
-  resolveSystemOutcomeColorCode,
-} from '../shared/colorCodes';
-import type { ColorCodeId, SystemColorMeaning } from '../shared/colorCodes';
-export { SYSTEM_COLORS_LEGEND } from '../shared/colorCodes';
+import { getSystemPromptSurface, getSystemPromptSurfaceClasses, getSystemPromptSurfaceStyle, resolveSystemPromptRoute } from '../../../narrative/systemPromptPresentation';
+import { getColorCodeStyle, getColorCodeSurfaceStyle, getSystemColorStyle, getSystemCompactClassification, resolveSystemBadgeColorCode, resolveSystemOutcomeColorCode } from '../../../narrative/colorCodes';
+import type { ColorCodeId, SystemColorMeaning } from '../../../narrative/colorCodes';
+export { SYSTEM_COLORS_LEGEND } from '../../../narrative/colorCodes';
 
 export interface SystemBlockProps extends React.HTMLAttributes<HTMLDivElement> {
   content: string;

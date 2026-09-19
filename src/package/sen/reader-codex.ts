@@ -57,7 +57,7 @@ export * from '../../components/reader-codex/shared/hooks/useCodexVoiceCards';
 export * from '../../components/reader-codex/shared/hooks/useCodexVoiceQuote';
 export * from '../../components/reader-codex/shared/hooks/useHistoricalMediaUrls';
 
-export * from '../../components/reader-codex/shared/codexHighlighting';
+export * from '../../narrative/codexHighlighting';
 export * from '../../components/reader-codex/shared/codexContext';
 export * from '../../components/reader-codex/shared/codexEntryContext';
 export * from '../../components/reader-codex/shared/assetIdentity';

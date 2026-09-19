@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  LOCAL_WORKSHOP_STORY_SEED_OWNER_ID,
-  importStorySeeds,
-  resetStorySeedRepository,
-} from './storySeedRepository';
+import { LOCAL_WORKSHOP_STORY_SEED_OWNER_ID, importStorySeeds, resetStorySeedRepository } from '../../../workshop/previews/story-seed/storySeedStorage';
 import { createEmptyStorySeedInput, type StorySeedInput } from './storySeedSchema';
 import {
   createStorySeedCollectionExport,

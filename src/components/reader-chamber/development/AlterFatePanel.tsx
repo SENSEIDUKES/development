@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 // div instead of changing the approved Alter Fate behavior during Codex import.
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, GitBranch, ShieldAlert, ChevronDown, X } from 'lucide-react';
-import { useDialect } from '../shared/dialect';
+import { useDialect } from '../../../narrative/dialect';
 
 interface AlterFatePanelProps {
   isOpen: boolean;

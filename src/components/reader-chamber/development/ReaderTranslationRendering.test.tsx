@@ -4,12 +4,7 @@ import React, { act, createRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SenLanguageCode } from '../../../lib/language';
-import type {
-  ReaderChapter,
-  ReaderPreferences,
-  StoryBlock,
-  StoryWorld,
-} from '../shared/types';
+import type { ReaderChapter, ReaderPreferences, StoryBlock, StoryWorld } from '../../../narrative/story';
 import { resetMockState } from '../shared/stubs';
 import {
   buildReaderFacingChapter,
@@ -20,8 +15,8 @@ import { ReaderViewport } from './ReaderViewport';
 
 // World Cue controls mount a real playback adapter; the Reader's own audio
 // stack is not what this file is testing.
-vi.mock('../../../audio/DevAudioPlayback', () => ({
-  useDevAudioPlayback: () => ({
+vi.mock('../../../audio/playback', () => ({
+  useNarrativeAudio: () => ({
     currentSource: null, currentTrackId: null, isMuted: false, isPlaying: false, volume: 1,
     load: vi.fn(), pause: vi.fn(), play: vi.fn(), setVolume: vi.fn(), stop: vi.fn(),
     subscribe: vi.fn(() => () => undefined),

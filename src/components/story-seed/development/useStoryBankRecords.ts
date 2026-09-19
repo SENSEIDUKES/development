@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
-import { listStorySeeds, type StorySeedRecord } from '../shared/storySeedRepository';
+import type { StorySeedRecord } from '@seihouse/sen/story-seed';
+import { useStoryCreationRuntime } from '../../../library/story-seed/runtime';
 
 interface StoryBankRecordsState {
   records: StorySeedRecord[];
@@ -18,6 +19,7 @@ export const useStoryBankRecords = (
   ownerId: string | null,
   enabled = true,
 ): StoryBankRecordsState => {
+  const { repository } = useStoryCreationRuntime();
   const [records, setRecords] = useState<StorySeedRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export const useStoryBankRecords = (
     let cancelled = false;
     setLoadError(null);
     setIsLoading(true);
-    listStorySeeds(ownerId)
+    repository.list(ownerId)
       .then(nextRecords => {
         if (!cancelled) setRecords(nextRecords);
       })
@@ -54,7 +56,7 @@ export const useStoryBankRecords = (
     return () => {
       cancelled = true;
     };
-  }, [enabled, ownerId, reloadVersion]);
+  }, [enabled, ownerId, reloadVersion, repository]);
 
   return { records, setRecords, isLoading, loadError, reload };
 };

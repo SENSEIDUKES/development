@@ -12,14 +12,8 @@ import {
   HARNESS_SYSTEM_PANEL_MEANINGS,
   HARNESS_SYSTEM_PANEL_PRESENTATIONS,
 } from '../../components/harness-generation/shared/chapterSignals';
-import type {
-  HarnessArcRequest,
-  HarnessGenerationRequest,
-  HarnessMemoryRecoveryRequest,
-  ImmediateChapterRequest,
-  StoryInformationPacket,
-} from '../../components/harness-generation/shared/types';
-import { HARNESS_MEMORY_CATEGORIES } from '../../components/harness-generation/shared/types';
+import type { HarnessArcRequest, HarnessGenerationRequest, HarnessMemoryRecoveryRequest, ImmediateChapterRequest, StoryInformationPacket } from '../../narrative/generation';
+import { HARNESS_MEMORY_CATEGORIES } from '../../narrative/generation';
 
 const memoryEntryProperties = {
     details: { type: 'object', properties: {

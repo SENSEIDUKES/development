@@ -5,7 +5,7 @@ import {
   manifestationRevealAriaLabel,
   type ManifestationRevealState,
   type RevealedContent,
-} from '../shared/manifestationReveal';
+} from '../components/chapter-manifestation/shared/manifestationReveal';
 
 /**
  * ManifestationReveal — the agnostic "something is revealed" mechanic.

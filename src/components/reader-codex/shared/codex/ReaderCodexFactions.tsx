@@ -4,11 +4,7 @@ import { Character, Faction } from '../types';
 import { useCodex } from './CodexContext';
 import { ReaderCodexImageGallery } from './ReaderCodexImageGallery';
 import { resolveEntityImageHistory } from './entityImageHistory';
-import {
-  getColorCodeSurfaceStyle,
-  resolveFactionAlignmentColorCode,
-  resolveFactionStatusColorCode,
-} from '../../../reader-chamber/shared/colorCodes';
+import { getColorCodeSurfaceStyle, resolveFactionAlignmentColorCode, resolveFactionStatusColorCode } from '../../../../narrative/colorCodes';
 
 interface ReaderCodexFactionsProps {
   factionsToRender: Faction[];

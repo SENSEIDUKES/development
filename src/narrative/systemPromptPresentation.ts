@@ -1,23 +1,7 @@
 import type { CSSProperties } from 'react';
-import {
-  buildSystemContext,
-  getColorCodeValue,
-  getSystemColorMeaning,
-  getSystemColorStyle,
-  resolveFateFlagColorCode,
-} from './colorCodes';
+import { buildSystemContext, getColorCodeValue, getSystemColorMeaning, getSystemColorStyle, resolveFateFlagColorCode } from './colorCodes';
 import type { ColorCodeId, SystemColorMeaning } from './colorCodes';
-import type {
-  FateResultData,
-  SystemEvent,
-  SystemPromptChange,
-  SystemPromptPresentation,
-  SystemStatusBar,
-  SystemStatusEffect,
-  SystemStatusScreen,
-  WorldNoticeData,
-  WorldNoticeEntry,
-} from './types';
+import type { FateResultData, SystemEvent, SystemPromptChange, SystemPromptPresentation, SystemStatusBar, SystemStatusEffect, SystemStatusScreen, WorldNoticeData, WorldNoticeEntry } from './story';
 
 /** The Reader-only rendering outcome for every supported structured System form. */
 export type SystemPromptRoutePresentation = SystemPromptPresentation | 'fate';

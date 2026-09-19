@@ -3,16 +3,8 @@
  * classification and palette-aware values so cards, inline links, relation
  * maps, badges, and Reader system UI cannot drift apart.
  */
-import {
-  getColorCodeValue,
-  resolveCodexEntityBand as resolveSharedCodexEntityBand,
-  resolveCodexEntityColorCode as resolveSharedCodexEntityColorCode,
-} from '../../reader-chamber/shared/colorCodes';
-import type {
-  CodexEntityAccentInput,
-  CodexEntityBand,
-  ColorCodeId,
-} from '../../reader-chamber/shared/colorCodes';
+import { getColorCodeValue, resolveCodexEntityBand as resolveSharedCodexEntityBand, resolveCodexEntityColorCode as resolveSharedCodexEntityColorCode } from '../../../narrative/colorCodes';
+import type { CodexEntityAccentInput, CodexEntityBand, ColorCodeId } from '../../../narrative/colorCodes';
 
 export type {
   CodexEntityAccentInput,

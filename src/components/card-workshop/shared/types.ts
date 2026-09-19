@@ -1,4 +1,4 @@
-import type { SystemEvent } from '../../reader-chamber/shared/types';
+import type { SystemEvent } from '../../../narrative/story';
 import type { CodexCardTerm } from '../../reader-chamber/development/CodexCard';
 
 export type CardPresentationKind =

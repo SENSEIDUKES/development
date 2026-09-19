@@ -1,4 +1,4 @@
-import type { ReaderPreferences } from './types';
+import type { ReaderPreferences } from '../../../narrative/story';
 
 export const DEFAULT_READER_TYPOGRAPHY = {
   lineHeightScale: 1.62,

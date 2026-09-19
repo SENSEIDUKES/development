@@ -4,19 +4,9 @@ import { appendHarnessCorrection, buildCanonicalStoryView } from './canonicalSta
 import { compileStoryInformationPacket } from './context';
 import { HarnessGenerationController } from './controller';
 import type { HarnessRuntime } from './ids';
-import {
-  createEmptyHarnessWorkspaceState,
-  InMemoryHarnessGenerationRepository,
-  readHarnessWorkspaceState,
-} from './repository';
-import {
-  HARNESS_GENERATION_SCHEMA_VERSION,
-  type HarnessGenerationModelAdapter,
-  type HarnessGenerationRequest,
-  type HarnessGenerationResponse,
-  type HarnessSemanticEvent,
-  type HarnessWorkspaceState,
-} from './types';
+import { createEmptyHarnessWorkspaceState, readHarnessWorkspaceState } from './repository';
+import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import { HARNESS_GENERATION_SCHEMA_VERSION, type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessSemanticEvent, type HarnessWorkspaceState } from '../../../narrative/generation';
 
 const runtime = (): HarnessRuntime => {
   let id = 0;
@@ -148,7 +138,7 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
   it('builds distinct relationship, thread, and mystery history without allowing uncommitted records into canonical state', () => {
     const state = createEmptyHarnessWorkspaceState();
     state.stories.push({ id: 'story_fixture', title: 'Story', originalLanguage: 'en', createdAt: 'a', updatedAt: 'a', activeFoundationRevisionId: 'f', foundationRevisionIds: ['f'], head: { nextChapterNumber: 2 } });
-    state.chapters.push({ id: 'chapter_fixture', storyId: 'story_fixture', attemptId: 'a', foundationRevisionId: 'f', storyInformationPacketId: 'c', chapterNumber: 1, title: 'One', titleSource: 'model', prose: 'Prose.', eventIds: [], responseMode: 'json', createdAt: 'a', committedAt: 'b', mediaLoadout: { capturedAt: 'a' } });
+    state.chapters.push({ id: 'chapter_fixture', storyId: 'story_fixture', attemptId: 'a', foundationRevisionId: 'f', storyInformationPacketId: 'c', chapterNumber: 1, title: 'One', titleSource: 'model', prose: 'Prose.', eventIds: [], responseMode: 'json', createdAt: 'a', committedAt: 'b', mediaLoadout: { capturedAt: 'a', soundscapes: [], soundCues: [] } });
     const registry = new HarnessCapabilityRegistry();
     const events = [
       semanticEvent({ id: 'rel1', category: 'relationship', subjects: ['Mara', 'Iven'], description: 'Mara distrusts Iven.' }),

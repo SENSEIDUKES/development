@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ChevronRight, Pause, Play, X } from 'lucide-react';
 import { cn } from '@seihouse/ui';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel } from '../../../presentation';
-import { useDevAudioPlayback } from '../../../audio/DevAudioPlayback';
+import { useNarrativeAudio } from '../../../audio/playback';
 import { SENHelpIcon, SENSearchIcon } from '../../sen-icons';
 import {
   DEFAULT_HELP_LANGUAGE,
@@ -85,7 +85,7 @@ export const LibraryHelpMenu = ({
   const activeIdRef = useRef<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const helpTriggerRef = useRef<HTMLElement | null>(null);
-  const playback = useDevAudioPlayback();
+  const playback = useNarrativeAudio();
   const playbackRef = useRef(playback);
   playbackRef.current = playback;
   const playingId = playback.isPlaying && playback.currentTrackId?.startsWith(HELP_TRACK_PREFIX)

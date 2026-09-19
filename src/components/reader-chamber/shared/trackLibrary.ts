@@ -4,10 +4,10 @@
  * Reader playback resolve against one contract and one deterministic matcher.
  */
 export {
-  TRACK_LIBRARY,
   resolveSoundscapeTrack,
   validateSceneAudioCatalog,
   validateSceneAudioTrack,
   type SceneAudioTrack,
   type SoundscapeIntent,
 } from '../../../audio/soundscapes';
+export { TRACK_LIBRARY } from '../../../host/media/soundscapeCatalog';

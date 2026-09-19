@@ -4,10 +4,7 @@ import {
 } from 'lucide-react';
 import type { CodexContextEditorTarget } from './CodexContext';
 import { StoryMemory, StoryWorld } from '../types';
-import {
-  getColorCodeSurfaceStyle,
-  resolvePowerStageColorCode,
-} from '../../../reader-chamber/shared/colorCodes';
+import { getColorCodeSurfaceStyle, resolvePowerStageColorCode } from '../../../../narrative/colorCodes';
 
 interface ReaderCodexPowerProps {
   memory: StoryMemory;

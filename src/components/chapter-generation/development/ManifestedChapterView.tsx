@@ -1,6 +1,6 @@
 import { FlaskConical, Music } from "lucide-react";
 import { SystemBlock } from "@seihouse/sen/cards";
-import type { ChapterContent, StoryBlock, StoryBlockMetadata } from "../shared/types";
+import type { ChapterContent, StoryBlock, StoryBlockMetadata } from '../../../narrative/chapter';
 import { Chip, EmptyNote } from "./workspaceUi";
 
 const formatToken = (token: string) =>

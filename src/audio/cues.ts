@@ -23,9 +23,9 @@
  * are surfaced in `issues` and excluded from the lookup indexes.
  */
 
-import libraryCuesData from './data/library-cues.v1.json';
 
-export const LIBRARY_CUE_CATEGORIES = [
+
+export const AUDIO_CUE_CATEGORIES = [
   'beasts',
   'weapons',
   'artifacts',
@@ -35,9 +35,9 @@ export const LIBRARY_CUE_CATEGORIES = [
   'system',
 ] as const;
 
-export type LibraryCueCategory = (typeof LIBRARY_CUE_CATEGORIES)[number];
+export type AudioCueCategory = (typeof AUDIO_CUE_CATEGORIES)[number];
 
-export interface LibraryCueMetadata {
+export interface AudioCueMetadata {
   /** Source `main_category`, preserved verbatim from the catalog. */
   main_category: string;
   /** Free-form variation within the category, e.g. "unsheathe", "magic". */
@@ -49,15 +49,15 @@ export interface LibraryCueMetadata {
   confidence_score: number;
 }
 
-export interface LibraryCue {
+export interface AudioCue {
   file_path: string;
   public_url: string;
-  metadata: LibraryCueMetadata;
-  /** Normalized category. Always one of `LIBRARY_CUE_CATEGORIES`. */
-  category: LibraryCueCategory;
+  metadata: AudioCueMetadata;
+  /** Normalized category. Always one of `AUDIO_CUE_CATEGORIES`. */
+  category: AudioCueCategory;
 }
 
-export type LibraryCueIssue =
+export type AudioCueIssue =
   | {
       kind: 'malformed_entry';
       filePath: string;
@@ -79,7 +79,7 @@ export type LibraryCueIssue =
       filePaths: string[];
     };
 
-export interface LibraryCuesLoadResult {
+export interface AudioCuesLoadResult {
   /**
    * Every input entry from the raw array, in order, untrusted. Preserved so
    * that a malformed or unknown-category entry can still be inspected at its
@@ -88,14 +88,14 @@ export interface LibraryCuesLoadResult {
    */
   rawEntries: unknown[];
   /** Entries that parsed and passed validation. */
-  cues: LibraryCue[];
+  cues: AudioCue[];
   /** First-seen cue per public URL. Duplicates are surfaced in `issues`. */
-  byUrl: Map<string, LibraryCue>;
-  byCategory: Map<LibraryCueCategory, LibraryCue[]>;
+  byUrl: Map<string, AudioCue>;
+  byCategory: Map<AudioCueCategory, AudioCue[]>;
   /** Keyed by `${category}/${broad_variation}`. */
-  byVariation: Map<string, LibraryCue[]>;
+  byVariation: Map<string, AudioCue[]>;
   /** Loader-detected issues. */
-  issues: LibraryCueIssue[];
+  issues: AudioCueIssue[];
 }
 
 export class LibraryCueValidationError extends Error {
@@ -125,26 +125,26 @@ const isValidUrl = (url: string): boolean => {
   return true;
 };
 
-const normalizeCategory = (raw: string): LibraryCueCategory | null => {
+const normalizeCategory = (raw: string): AudioCueCategory | null => {
   const lower = raw.toLowerCase();
-  return (LIBRARY_CUE_CATEGORIES as readonly string[]).find((c) => c === lower) as
-    | LibraryCueCategory
+  return (AUDIO_CUE_CATEGORIES as readonly string[]).find((c) => c === lower) as
+    | AudioCueCategory
     | undefined ?? null;
 };
 
-export const parseLibraryCues = (raw: unknown): LibraryCuesLoadResult => {
+export const parseAudioCues = (raw: unknown): AudioCuesLoadResult => {
   if (!Array.isArray(raw)) {
     throw new LibraryCueValidationError(['root must be an array of cue entries.']);
   }
   // Preserve every input entry so a malformed row can still be inspected by
   // index after load. Lookup indexes are built only from valid rows.
   const rawEntries: unknown[] = [...raw];
-  const cues: LibraryCue[] = [];
-  const issues: LibraryCueIssue[] = [];
+  const cues: AudioCue[] = [];
+  const issues: AudioCueIssue[] = [];
   const urlIndex = new Map<string, string[]>();
-  const byCategory = new Map<LibraryCueCategory, LibraryCue[]>();
-  const byVariation = new Map<string, LibraryCue[]>();
-  const byUrl = new Map<string, LibraryCue>();
+  const byCategory = new Map<AudioCueCategory, AudioCue[]>();
+  const byVariation = new Map<string, AudioCue[]>();
+  const byUrl = new Map<string, AudioCue>();
 
   for (let i = 0; i < raw.length; i++) {
     const candidate = raw[i];
@@ -233,7 +233,7 @@ export const parseLibraryCues = (raw: unknown): LibraryCuesLoadResult => {
       continue;
     }
 
-    const cue: LibraryCue = {
+    const cue: AudioCue = {
       file_path: e.file_path,
       public_url: e.public_url,
       metadata: {
@@ -280,29 +280,28 @@ export const parseLibraryCues = (raw: unknown): LibraryCuesLoadResult => {
  * Synchronous loader. The cue file is a small static JSON list; this returns
  * the parsed result with no I/O at import time. Client-safe.
  */
-export const loadLibraryCues = (): LibraryCuesLoadResult => parseLibraryCues(libraryCuesData);
 
 // ─── Lookups ───────────────────────────────────────────────────────────────
 
-export const getByUrl = (loaded: LibraryCuesLoadResult, url: string): LibraryCue | null =>
+export const getByUrl = (loaded: AudioCuesLoadResult, url: string): AudioCue | null =>
   loaded.byUrl.get(url) ?? null;
 
 export const getByCategory = (
-  loaded: LibraryCuesLoadResult,
-  category: LibraryCueCategory,
-): LibraryCue[] => loaded.byCategory.get(category) ?? [];
+  loaded: AudioCuesLoadResult,
+  category: AudioCueCategory,
+): AudioCue[] => loaded.byCategory.get(category) ?? [];
 
 export const getByVariation = (
-  loaded: LibraryCuesLoadResult,
-  category: LibraryCueCategory,
+  loaded: AudioCuesLoadResult,
+  category: AudioCueCategory,
   variation: string,
-): LibraryCue[] => loaded.byVariation.get(`${category}/${variation}`) ?? [];
+): AudioCue[] => loaded.byVariation.get(`${category}/${variation}`) ?? [];
 
 export const getByTag = (
-  loaded: LibraryCuesLoadResult,
-  category: LibraryCueCategory,
+  loaded: AudioCuesLoadResult,
+  category: AudioCueCategory,
   tag: string,
-): LibraryCue[] => {
+): AudioCue[] => {
   const needle = tag.trim().toLowerCase();
   if (!needle) return [];
   return getByCategory(loaded, category).filter((c) =>
@@ -311,10 +310,10 @@ export const getByTag = (
 };
 
 export const getByAnyTag = (
-  loaded: LibraryCuesLoadResult,
-  category: LibraryCueCategory,
+  loaded: AudioCuesLoadResult,
+  category: AudioCueCategory,
   tags: string[],
-): LibraryCue[] => {
+): AudioCue[] => {
   const needles = tags.map((t) => t.trim().toLowerCase()).filter(Boolean);
   if (needles.length === 0) return [];
   const needleSet = new Set(needles);
@@ -323,5 +322,5 @@ export const getByAnyTag = (
   );
 };
 
-export const getCategories = (loaded: LibraryCuesLoadResult): LibraryCueCategory[] =>
+export const getCategories = (loaded: AudioCuesLoadResult): AudioCueCategory[] =>
   Array.from(loaded.byCategory.keys());

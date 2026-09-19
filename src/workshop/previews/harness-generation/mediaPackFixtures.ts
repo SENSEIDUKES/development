@@ -1,4 +1,4 @@
-import { validateMediaPack, type MediaPack } from '@seihouse/sen/audio';
+import { validateMediaPack, type MediaPack } from '@seihouse/library/media';
 
 /** Small Development-only catalogs. These are not product Media Packs. */
 export const WORKSHOP_MEDIA_PACKS: MediaPack[] = [

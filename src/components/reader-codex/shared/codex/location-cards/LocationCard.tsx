@@ -3,11 +3,8 @@ import { Location, Story } from '../../types';
 import { Download, Compass, Lock, MapPin, Eye, RefreshCcw, Loader2, Sparkles, Settings2 } from 'lucide-react';
 import { ReaderCodexImageGallery } from '../ReaderCodexImageGallery';
 import { resolveEntityImageHistory } from '../entityImageHistory';
-import { handleDownload } from '../../codexCompatibility';
-import {
-  getColorCodeSurfaceStyle,
-  resolveLocationSafetyColorCode,
-} from '../../../../reader-chamber/shared/colorCodes';
+import { handleDownload } from '../../downloadUtils';
+import { getColorCodeSurfaceStyle, resolveLocationSafetyColorCode } from '../../../../../narrative/colorCodes';
 
 interface LocationCardProps {
   loc: Location;

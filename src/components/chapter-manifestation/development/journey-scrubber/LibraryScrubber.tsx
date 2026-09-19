@@ -6,7 +6,8 @@ import { motion } from "motion/react";
 import { useScrubberReducedMotion as useReducedMotion } from "./useScrubberReducedMotion";
 import { resolveTraveler } from "./travelers";
 import { resolveTrail } from "./trails";
-import { defaultDestinationFor, resolveDestination } from "./destinations";
+import { defaultDestinationFor } from '@seihouse/library/manifestations';
+import { resolveDestination } from './destinations';
 
 export interface LibraryScrubberStatus {
   /** Stable identity of the operation, e.g. 'Chapter 1'. */

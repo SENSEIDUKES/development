@@ -20,8 +20,6 @@ export { SEICard, SEICardMedia, SEICardContent, SEICardHeader, SEICardTitle, SEI
 
 export {
   CodexCard,
-  FALLBACK_BACKDROPS,
-  getFallbackBackdrop,
   type CodexCardProps,
   type CodexCardTerm,
 } from '../../components/reader-chamber/development/CodexCard';
@@ -38,10 +36,6 @@ export {
   type CodexEntityAccentInput,
   type CodexEntityBand,
 } from '../../components/reader-codex/development/codexEntityAccent';
-export {
-  MANIFEST_BACKDROPS,
-  getManifestBackdrop,
-} from '../../components/reader-codex/development/codexManifestBackdrop';
 export { CharacterCard } from '../../components/reader-codex/shared/codex/character-cards/CharacterCard';
 export { CharacterEditCard } from '../../components/reader-codex/shared/codex/character-cards/CharacterEditCard';
 export { CharacterProfile } from '../../components/reader-codex/shared/codex/character-profiles/CharacterProfile';
@@ -57,7 +51,7 @@ export { SystemBlock } from '../../components/reader-chamber/development/SystemB
 export type { SystemBlockProps } from '../../components/reader-chamber/development/SystemBlock';
 export { WorldNotice } from '../../components/reader-chamber/development/WorldNotice';
 export type { WorldNoticeProps } from '../../components/reader-chamber/development/WorldNotice';
-export * from '../../components/reader-chamber/shared/systemPromptPresentation';
+export * from '../../narrative/systemPromptPresentation';
 export type {
   BaseSystemEvent,
   FateResultData,
@@ -81,4 +75,4 @@ export type {
   WorldNoticeData,
   WorldNoticeDetail,
   WorldNoticeEntry,
-} from '../../components/reader-chamber/shared/types';
+} from '../../narrative/story';

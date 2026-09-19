@@ -4,17 +4,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { DevAudioPlaybackProvider } from '../../../audio/DevAudioPlayback';
 import { InlineAudioText } from '../../reader-chamber/development/InlineAudio';
 import { SystemBlock } from '../../reader-chamber/development/SystemBlock';
-import type { SystemEvent } from '../../reader-chamber/shared/types';
+import type { SystemEvent } from '../../../narrative/story';
 import { HarnessGenerationController } from './controller';
 import { acceptHarnessModelResponse } from './responseAcceptance';
-import { InMemoryHarnessGenerationRepository } from './repository';
+import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { createHarnessSenStory } from './senAdapter';
-import { HARNESS_GENERATION_SCHEMA_VERSION } from './types';
-import type {
-  HarnessGenerationModelAdapter,
-  HarnessGenerationRequest,
-  HarnessGenerationResponse,
-} from './types';
+import { HARNESS_GENERATION_SCHEMA_VERSION } from '../../../narrative/generation';
+import type { HarnessGenerationModelAdapter, HarnessGenerationRequest, HarnessGenerationResponse } from '../../../narrative/generation';
 
 const response = (rawProviderResponse: string): HarnessGenerationResponse => ({
   rawProviderResponse,

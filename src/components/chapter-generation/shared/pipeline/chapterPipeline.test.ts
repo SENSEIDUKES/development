@@ -3,7 +3,7 @@ import { assembleChapterGeneration } from "../assembleGeneration";
 import { assembleChapterGenerationDev } from "../assembleGenerationDev";
 import { ESTABLISHED_SCENARIO } from "../fixtures/mockGenerationData";
 import { assembleChapterGenerationPacket } from "../packets";
-import type { ChapterContent, ChapterHandoff } from "../types";
+import type { ChapterContent, ChapterHandoff } from '../../../../narrative/chapter';
 import { assembleChapterPacket } from "./assembleChapterPacket";
 import { runChapterPipeline } from "./runChapterPipeline";
 import type {

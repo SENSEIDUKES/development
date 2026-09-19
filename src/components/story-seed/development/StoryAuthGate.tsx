@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Mail } from 'lucide-react';
-import { mockLogin, useAppStore } from '../shared/stubs';
 
 /**
  * Story Authentication gate for CreationModal's
@@ -9,14 +8,7 @@ import { mockLogin, useAppStore } from '../shared/stubs';
  * backdrop dominates while a nearly invisible glass shell floats the
  * sign-in actions over it.
  *
- * Workshop boundary: every provider resolves through `mockLogin()` (the
- * same stub CreationModal's old `handleLogin` used) after a short simulated
- * delay, so loading states are inspectable without real auth. On transfer
- * back to Light-Novels, swap the stub import for `firebase/auth` +
- * `lib/firebase` and replace `mockLogin()` with the real provider calls
- * (`signInWithPopup` for Google/Apple, email/password for Email) — the
- * error mapping below is written against Firebase Auth error codes and is
- * dormant here because the mock never fails.
+ * Authentication is supplied explicitly by the host. No provider or mock is selected here.
  */
 
 /**
@@ -60,14 +52,14 @@ export interface StoryAuthAttempt {
 export interface StoryAuthGateProps {
   /** Controlled linked state for hosts outside the Story Seed mock store. */
   linked?: boolean;
-  /** Host-owned authentication. Omit to retain Story Seed's local mock login. */
+  /** Host-owned authentication. Missing services fail closed. */
   onAuthenticate?: (attempt: StoryAuthAttempt) => Promise<unknown> | unknown;
   description?: string;
   reassurance?: string;
   context?: 'story-seed' | 'spirit-link';
 }
 
-/** Firebase Auth code → calm copy. Dormant in the Workshop (mockLogin never rejects). */
+/** Map host authentication error codes to calm copy. */
 const mapAuthError = (error: unknown): string | null => {
   const code = (error as { code?: string } | null)?.code ?? '';
   switch (code) {
@@ -129,9 +121,6 @@ const AppleMark = () => (
 const PROVIDER_BUTTON_BASE =
   'w-full min-h-[48px] h-12 rounded-xl flex items-center justify-center gap-3 font-display text-[0.95rem] transition-all duration-300 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal/70 focus-visible:ring-offset-0 disabled:opacity-60 disabled:pointer-events-none';
 
-/** Simulated provider round-trip so pending/loading states are inspectable. */
-const simulateProviderDelay = () => new Promise<void>(resolve => setTimeout(resolve, 650));
-
 export default function StoryAuthGate({
   linked,
   onAuthenticate,
@@ -139,8 +128,7 @@ export default function StoryAuthGate({
   reassurance = 'Your Story Seed will not be lost.',
   context = 'story-seed',
 }: StoryAuthGateProps = {}) {
-  const storySeedUser = useAppStore(state => state.currentUser);
-  const isLinked = linked ?? Boolean(storySeedUser);
+  const isLinked = linked ?? false;
   const prefersReducedMotion = useReducedMotion();
   const [videoReady, setVideoReady] = useState(false);
   const [videoAllowed, setVideoAllowed] = useState(false);
@@ -209,8 +197,8 @@ export default function StoryAuthGate({
 
   const handleProviderSignIn = (provider: Exclude<AuthProviderId, 'email'>) => {
     void runSignIn(provider, async () => {
-      await simulateProviderDelay();
-      await (onAuthenticate ? onAuthenticate({ provider }) : mockLogin());
+      if (!onAuthenticate) throw new Error('Authentication is not configured by the host.');
+      await onAuthenticate({ provider });
     });
   };
 
@@ -219,10 +207,8 @@ export default function StoryAuthGate({
     const trimmedEmail = email.trim();
     if (!trimmedEmail || !password) return; // native `required` attributes guide the guest
     void runSignIn('email', async () => {
-      await simulateProviderDelay();
-      await (onAuthenticate
-        ? onAuthenticate({ provider: 'email', emailMode, email: trimmedEmail, password })
-        : mockLogin());
+      if (!onAuthenticate) throw new Error('Authentication is not configured by the host.');
+      await onAuthenticate({ provider: 'email', emailMode, email: trimmedEmail, password });
     });
   };
 

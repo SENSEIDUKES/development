@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Play, Square, Volume2, VolumeX } from 'lucide-react';
-import { useAudioMix } from '../../shared/stubs';
-import { AudioChannelId } from '../../shared/stubs';
-import { TRACK_LIBRARY } from '../../shared/trackLibrary';
-import { vibrate } from '../../shared/stubs';
-import { useDevAudioPlayback } from '../../../../audio/DevAudioPlayback';
-import type { ResolvedSoundscape } from '../../../../audio/mediaPacks';
+import { useAudioMix } from '../../../../narrative/readerRuntime';
+import { AudioChannelId } from '../../../../narrative/readerRuntime';
+import type { SceneAudioTrack } from '../../../../audio/soundscapes';
+import { useReaderRuntime } from '../../../../narrative/readerRuntime';
+import { useNarrativeAudio } from '../../../../audio/playback';
+import type { ResolvedSoundscape } from '../../../../audio/media';
 
-const groupTracks = (tracks: typeof TRACK_LIBRARY) => tracks.reduce<Record<string, typeof TRACK_LIBRARY>>((groups, track) => {
-  const folder = track.url.split('/AUDIO/')[1]?.split('/')[0] || 'OTHER';
+const groupTracks = (tracks: SceneAudioTrack[]) => tracks.reduce<Record<string, SceneAudioTrack[]>>((groups, track) => {
+  const folder = track.group || 'OTHER';
   (groups[folder] = groups[folder] || []).push(track);
   return groups;
 }, {});
@@ -96,34 +96,28 @@ export function AudioMenu({
   idSuffix?: string;
   soundscapes?: ResolvedSoundscape[];
 }) {
+  const runtime = useReaderRuntime();
   const { mix, setChannel } = useAudioMix();
-  const playback = useDevAudioPlayback();
+  const playback = useNarrativeAudio();
   const volumeBeforeSoundscape = useRef<number | null>(null);
   const tracks = useMemo(() => {
-    const byId = new Map(TRACK_LIBRARY.map(track => [track.id, track]));
+    const byId = new Map(runtime.tracks.map(track => [track.id, track]));
     soundscapes.forEach(soundscape => byId.set(soundscape.resource.track.id, soundscape.resource.track));
     return [...byId.values()];
-  }, [soundscapes]);
+  }, [soundscapes, runtime.tracks]);
   const scoreGroups = useMemo(() => groupTracks(tracks), [tracks]);
 
   // The pinned music track lives with the playback engine (it is a "what to
   // play" choice, not a level); sync over the existing control/state events.
   const [bgmTrackId, setBgmTrackId] = useState(() =>
-    (typeof localStorage !== 'undefined' && localStorage.getItem('seihouse-bgm-track')) || 'auto',
+    runtime.preferences?.read('music-track') || 'auto',
   );
 
-  useEffect(() => {
-    const handleState = (event: Event) => {
-      const detail = (event as CustomEvent).detail;
-      if (detail && typeof detail.bgmTrackId === 'string') setBgmTrackId(detail.bgmTrackId);
-    };
-    window.addEventListener('seihouse-audio-state', handleState);
-    return () => window.removeEventListener('seihouse-audio-state', handleState);
-  }, []);
 
   const handleTrackChange = (id: string) => {
     setBgmTrackId(id);
-    window.dispatchEvent(new CustomEvent('seihouse-audio-control', { detail: { bgmTrackId: id } }));
+    runtime.preferences?.write('music-track', id);
+    runtime.selectMusicTrack?.(id);
   };
 
   const selectedTrack = bgmTrackId === 'auto'
@@ -158,7 +152,7 @@ export function AudioMenu({
   };
 
   const toggle = (channel: AudioChannelId) => (enabled: boolean) => {
-    vibrate('softTap');
+    runtime.haptic?.('softTap');
     setChannel(channel, { enabled });
   };
   const level = (channel: AudioChannelId) => (volume: number) => setChannel(channel, { volume });

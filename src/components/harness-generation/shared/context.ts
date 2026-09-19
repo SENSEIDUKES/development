@@ -3,17 +3,7 @@ import { buildCanonicalStoryView } from './canonicalState';
 import { buildHarnessMechanicalContinuity } from './mechanicalContinuity';
 import { verifyHarnessEventEvidence } from './responseAcceptance';
 import { cloneHarnessValue, defaultHarnessRuntime, type HarnessRuntime } from './ids';
-import type {
-  HarnessCanonicalRecord,
-  HarnessCanonicalContext,
-  HarnessContextAuditItem,
-  HarnessContextChapter,
-  HarnessContextSelectionPolicy,
-  HarnessStory,
-  HarnessWorkspaceState,
-  StoryFoundationRevision,
-  StoryInformationPacket,
-} from './types';
+import type { HarnessCanonicalRecord, HarnessCanonicalContext, HarnessContextAuditItem, HarnessContextChapter, HarnessContextSelectionPolicy, HarnessStory, HarnessWorkspaceState, StoryFoundationRevision, StoryInformationPacket } from '../../../narrative/generation';
 
 export const DEFAULT_HARNESS_CONTEXT_POLICY: HarnessContextSelectionPolicy = {
   recentChapterCount: 3,

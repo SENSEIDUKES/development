@@ -2,12 +2,8 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  audioDataUri,
-  codexVoiceIdentity,
-  useCodexVoiceQuote,
-  type CodexVoiceResolution,
-} from './useCodexVoiceQuote';
+import { audioDataUri, useCodexVoiceQuote, type CodexVoiceResolution } from './useCodexVoiceQuote';
+import { codexVoiceIdentity } from '../../../../host/reader/codexVoice';
 import type { Character } from '../types';
 
 const playback = vi.hoisted(() => ({
@@ -19,8 +15,8 @@ const playback = vi.hoisted(() => ({
   stop: vi.fn(),
 }));
 
-vi.mock('../../../../audio/DevAudioPlayback', () => ({
-  useDevAudioPlayback: () => playback,
+vi.mock('../../../../audio/playback', () => ({
+  useNarrativeAudio: () => playback,
 }));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

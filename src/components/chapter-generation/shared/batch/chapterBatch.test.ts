@@ -6,7 +6,7 @@ import { assembleChapterPacket } from "../pipeline/assembleChapterPacket";
 import type { ChapterPipelineRun } from "../pipeline/types";
 import { aggregateChapterTokenUsage } from "../pipeline/usage";
 import type { ChapterModelCallUsage } from "../pipeline/usage";
-import type { ChapterHandoff } from "../types";
+import type { ChapterHandoff } from '../../../../narrative/chapter';
 import {
   buildNextChapterContinuation,
   createFiveChapterBatchState,

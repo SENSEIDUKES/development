@@ -1,13 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { SYSTEM_LEGEND_DISMISSED_STORAGE_KEY } from '../shared/readerLegend';
-import {
-  COLOR_CODE_PALETTE_IDS,
-  COLOR_CODE_PALETTES,
-  getColorCodeStyle,
-  getColorCodeSurfaceStyle,
-  SYSTEM_COLORS_LEGEND,
-} from '../shared/colorCodes';
+import { COLOR_CODE_PALETTE_IDS, COLOR_CODE_PALETTES, getColorCodeStyle, getColorCodeSurfaceStyle, SYSTEM_COLORS_LEGEND } from '../../../narrative/colorCodes';
 
 interface SystemColorLegendProps {
   currentPrefs: any;
@@ -57,7 +50,6 @@ export function SystemColorLegend({
           </select>
           <button
             tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => {
-              localStorage.setItem(SYSTEM_LEGEND_DISMISSED_STORAGE_KEY, "true");
               setShowLegend(false);
             }}
             className="text-[9px] uppercase font-mono tracking-wider text-portal hover:text-signal transition-colors px-2.5 py-1.5 border border-portal/30 hover:border-portal rounded-sm bg-portal/5 hover:bg-portal/15 cursor-pointer shadow-[0_0_10px_rgba(4,172,255,0.1)]"

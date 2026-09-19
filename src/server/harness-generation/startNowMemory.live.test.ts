@@ -3,9 +3,10 @@ import { parseEnv } from 'node:util';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
 import { HarnessGenerationController, exportHarnessStory } from '../../components/harness-generation/shared/controller';
-import { InMemoryHarnessGenerationRepository, createEmptyHarnessWorkspaceState } from '../../components/harness-generation/shared/repository';
+import { InMemoryHarnessGenerationRepository } from '../../test-utils/InMemoryHarnessGenerationRepository';
+import { createEmptyHarnessWorkspaceState } from '../../components/harness-generation/shared/repository';
 import { buildCanonicalStoryView } from '../../components/harness-generation/shared/canonicalState';
-import type { HarnessGenerationResponse, HarnessStory, HarnessWorkspaceState } from '../../components/harness-generation/shared/types';
+import type { HarnessGenerationResponse, HarnessStory, HarnessWorkspaceState } from '../../narrative/generation';
 import { handleHarnessGenerationHttp } from './http';
 
 // Opt-in: reads an existing author export and an existing server environment.

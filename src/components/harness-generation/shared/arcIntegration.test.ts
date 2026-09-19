@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController } from './controller';
-import { InMemoryHarnessGenerationRepository } from './repository';
+import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { createHarnessSenStory } from './senAdapter';
 import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
-import type { HarnessArcRequest, HarnessGenerationRequest, HarnessGenerationModelAdapter } from './types';
+import type { HarnessArcRequest, HarnessGenerationRequest, HarnessGenerationModelAdapter } from '../../../narrative/generation';
 import type { ArcPlan } from '../../arc-goals/shared/arcGoals';
 
 const plan: ArcPlan = { arcNumber: 1, goals: [{ id: 'arc-1-first', text: 'Meet the invader.', chapters: 1 }, { id: 'arc-1-second', text: 'Defeat the invader.', chapters: 99 }] };

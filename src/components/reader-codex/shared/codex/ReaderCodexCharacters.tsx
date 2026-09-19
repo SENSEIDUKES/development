@@ -1,8 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Character, Location } from '../types';
 import { useCodex } from './CodexContext';
-import { useAppStore } from '../codexCompatibility';
-import { isHubStoryLockedForUser } from '../codexCompatibility';
+import { useReaderRuntime } from '../../../../narrative/readerRuntime';
 import { useCodexVoiceQuote, type CodexVoiceResolution } from '../hooks/useCodexVoiceQuote';
 import { useCodexLocations } from '../hooks/useCodexLocations';
 import { useCodexCharacterEditing } from '../hooks/useCodexCharacterEditing';
@@ -41,8 +40,8 @@ export function ReaderCodexCharacters({
     openEntryContextEditor,
   } = useCodex();
 
-  const userProfile = useAppStore(state => state.userProfile);
-  const isFreeUserOnHubStory = isHubStoryLockedForUser(activeStory, userProfile);
+  const runtime = useReaderRuntime();
+  const isFreeUserOnHubStory = !runtime.canManifest(activeStory.id);
 
   const [charViewStyle, setCharViewStyle] = useState<'cards' | 'profiles'>('cards');
   // Synthesis resolves seconds after the tap, so the write must start from the

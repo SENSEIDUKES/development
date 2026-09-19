@@ -14,7 +14,7 @@ import {
   type StorySeedInput,
   type StorySeedStoryRequired,
 } from '../shared/storySeedSchema';
-import { AGENTS, useAppStore } from '../shared/stubs';
+import { useStoryCreationRuntime, useStoryCreationStore } from '../../../library/story-seed/runtime';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '../../../presentation';
 import { patchStoryRequired, patchWorldIdentity, type UpdateSeed } from './seedState';
 import { BlueprintCollectionSections } from './blueprint/BlueprintCollectionSections';
@@ -59,7 +59,8 @@ export const BlueprintReview = ({
   originalLanguage,
   onOriginalLanguageChange,
 }: BlueprintReviewProps) => {
-  const activeAgentId = useAppStore(state => state.activeAgentId);
+  const runtime = useStoryCreationRuntime();
+  const activeAgentId = useStoryCreationStore(state => state.activeAgentId);
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState<string | null>(null);
   const [tagLimitError, setTagLimitError] = useState<string | null>(null);
@@ -294,7 +295,7 @@ export const BlueprintReview = ({
                 onClick={onStartStory}
                 loading={isGenerating}
                 loadingIndicator={activeAgentId === 'versa' ? (
-                  <img src={AGENTS.VERSA.logoUrl} className="size-5 animate-pulse object-contain" alt="" aria-hidden="true" />
+                  <img src={runtime.authorMarkUrl} className="size-5 animate-pulse object-contain" alt="" aria-hidden="true" />
                 ) : undefined}
                 iconRight={!isGenerating ? <ArrowRight size={16} /> : undefined}
               >

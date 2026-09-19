@@ -1,7 +1,7 @@
 import React from 'react';
 import { Character, Story } from '../../types';
 import { Users, Eye, Sparkles, RefreshCcw } from 'lucide-react';
-import { getColorCodeStyle, resolveCharacterRelationshipColorCode } from '../../../../reader-chamber/shared/colorCodes';
+import { getColorCodeStyle, resolveCharacterRelationshipColorCode } from '../../../../../narrative/colorCodes';
 
 interface CharacterProfileProps {
   char: Character;

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { HarnessGenerationController } from '../../../components/harness-generation/shared/controller';
-import { InMemoryHarnessGenerationRepository } from '../../../components/harness-generation/shared/repository';
-import type { HarnessGenerationRequest, HarnessGenerationResponse } from '../../../components/harness-generation/shared/types';
+import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
+import type { HarnessGenerationRequest, HarnessGenerationResponse } from '../../../narrative/generation';
 import { handleHarnessGenerationHttp } from '../../../server/harness-generation/http';
 import type { HarnessTextGenerationRequest } from '../../../server/harness-generation/provider';
 import { createMockStorySeedRecord } from '../story-seed/previewData';

@@ -1,5 +1,5 @@
 import { SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS } from '../../../lib/senLightNovelAuthorInstructions';
-import type { HarnessSkillManifest } from './types';
+import type { HarnessSkillManifest } from '../../../narrative/generation';
 
 /**
  * SEN's bundled author skill. It remains a normal, replaceable skill; bundling

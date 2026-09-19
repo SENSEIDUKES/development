@@ -1,3 +1,4 @@
+import { selectNarrativeBackdrop } from '@seihouse/sen/presentation';
 /**
  * codexManifestBackdrop.ts — the Workshop Manifest backdrop pool: the five
  * production "IMMORTAL LAND" revelation landscapes, downloaded from
@@ -21,10 +22,5 @@ export const MANIFEST_BACKDROPS = [
  * always renders the same one.
  */
 export function getManifestBackdrop(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % MANIFEST_BACKDROPS.length;
-  return MANIFEST_BACKDROPS[index];
+  return selectNarrativeBackdrop(id, MANIFEST_BACKDROPS)!;
 }

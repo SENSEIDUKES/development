@@ -1,4 +1,4 @@
-import type { HarnessStory, ImmediateChapterRequest } from './types';
+import type { HarnessStory, ImmediateChapterRequest } from '../../../narrative/generation';
 
 /**
  * Builds the Immediate Chapter Request for one attempt. The HARNESS owns the

@@ -36,9 +36,9 @@ export {
 
 export * from '../../components/chapter-generation/shared/batch/chapterBatch';
 export * from '../../components/chapter-generation/shared/liveChapterGeneration';
-export * from '../../components/chapter-generation/shared/acceptedChapterMedia';
-export * from '../../components/chapter-generation/shared/manifestNormalizer';
-export * from '../../components/chapter-generation/shared/packets';
+export * from '../../narrative/acceptedChapterMedia';
+export * from '../../narrative/manifestNormalizer';
+export * from '../../components/chapter-generation/shared/packets/index';
 export * from '../../components/chapter-generation/shared/pipeline/assembleChapterPacket';
 export * from '../../components/chapter-generation/shared/pipeline/chapterEffectRules';
 export * from '../../components/chapter-generation/shared/pipeline/runChapterPipeline';
@@ -46,4 +46,4 @@ export * from '../../components/chapter-generation/shared/pipeline/runChapterPip
 export * from '../../components/chapter-generation/shared/pipeline/types';
 export * from '../../components/chapter-generation/shared/pipeline/usage';
 export * from '../../components/chapter-generation/shared/reviewExports';
-export * from '../../components/chapter-generation/shared/types';
+export * from '../../narrative/chapter';

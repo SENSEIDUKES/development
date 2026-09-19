@@ -1,11 +1,11 @@
 import { createArcChapterPosition } from '../../arc-goals/shared/arcGoals';
 import { harnessArcContext } from './arcState';
-import type { Character, StoryBlock, StoryMemory, StoryWorld } from '../../reader-chamber/shared/types';
+import type { Character, StoryBlock, StoryMemory, StoryWorld } from '../../../narrative/story';
 import { buildCanonicalStoryView } from './canonicalState';
 import { cloneHarnessValue, stableHarnessId } from './ids';
 import { buildHarnessMechanicalContinuity } from './mechanicalContinuity';
 import { verifyHarnessEventEvidence } from './responseAcceptance';
-import type { HarnessCanonicalRecord, HarnessWorkspaceState } from './types';
+import type { HarnessCanonicalRecord, HarnessWorkspaceState } from '../../../narrative/generation';
 
 const stringFact = (record: HarnessCanonicalRecord, key: string) =>
   typeof record.facts[key] === 'string' ? record.facts[key] as string : undefined;

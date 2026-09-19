@@ -5,7 +5,7 @@
  */
 import type { MockChapterGenerationScenario } from "../fixtures/mockGenerationData";
 import { buildChapterContract } from "../lib/chapterHandoff";
-import type { ChapterContract } from "../types";
+import type { ChapterContract } from '../../../../narrative/chapter';
 import type { LivingStoryState } from "./livingStoryState";
 
 export const FIRST_CHAPTER_FALLBACK_SUMMARY =

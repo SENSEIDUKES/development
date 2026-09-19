@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  MINIMUM_CHAPTER_WORD_COUNT,
-  normalizeManifestResponse,
-} from "../../components/chapter-generation/shared/manifestNormalizer";
+import { MINIMUM_CHAPTER_WORD_COUNT, normalizeManifestResponse } from '../../narrative/manifestNormalizer';
 
 const ndjson = (...blocks: Array<Record<string, unknown> | string>) => [
   "---CHAPTER_BLOCKS---",

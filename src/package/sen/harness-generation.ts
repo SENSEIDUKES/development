@@ -5,21 +5,16 @@
  * A derived adapter and session compose the existing SEN Reader/Codex surfaces.
  */
 export {
-  HarnessGenerationWorkspace,
-  type HarnessGenerationWorkspaceProps,
-} from '../../components/harness-generation/development/HarnessGenerationWorkspace';
-export {
   HarnessGenerationController,
   exportHarnessStory,
   type HarnessEventPreserver,
   type HarnessGenerationControllerOptions,
 } from '../../components/harness-generation/shared/controller';
 export {
-  IndexedDbHarnessGenerationRepository,
-  HARNESS_GENERATION_INDEXED_DB_NAME,
+  createEmptyHarnessWorkspaceState,
+  readHarnessWorkspaceState,
   type HarnessGenerationRepository,
 } from '../../components/harness-generation/shared/repository';
-export { HarnessGenerationHttpClient } from '../../components/harness-generation/shared/httpClient';
 export {
   HarnessCapabilityRegistry,
   buildHarnessProjectionIntents,
@@ -59,11 +54,11 @@ export {
   translationTargetLanguage,
   validateTranslationGlossaryResource,
   validateTranslationSkillMetadata,
-} from '../../components/harness-generation/shared/translationSkill';
+} from '../../narrative/translationSkill';
 export { buildImmediateChapterRequest } from '../../components/harness-generation/shared/immediateChapterRequest';
 export {
   includeBundledHarnessSkills,
   SEN_NOVEL_AUTHOR_SKILL,
 } from '../../components/harness-generation/shared/authorSkill';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
-export * from '../../components/harness-generation/shared/types';
+export * from '../../narrative/generation';

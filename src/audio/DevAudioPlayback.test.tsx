@@ -1,11 +1,9 @@
 // @vitest-environment jsdom
+import { useNarrativeAudio } from './playback';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  DevAudioPlaybackProvider,
-  useDevAudioPlayback,
-} from './DevAudioPlayback';
+import { DevAudioPlaybackProvider } from './DevAudioPlayback';
 import { installAudioMediaStubs } from '../test-utils/renderWithDevAudio';
 
 const VOICE_DATA_URI = 'data:audio/mpeg;base64,AAAA';
@@ -14,7 +12,7 @@ const VOICE_BLOB_URL = 'blob:http://localhost:5173/codex-voice';
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 function PlaybackHarness() {
-  const playback = useDevAudioPlayback();
+  const playback = useNarrativeAudio();
   return (
     <>
       <output data-testid="source">{playback.currentSource ?? 'idle'}</output>
@@ -97,7 +95,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('DevAudioPlayback data-URI sources', () => {
+describe('NarrativeAudioPlayback data-URI sources', () => {
   it('plays synthesized audio as a Blob URL through the shared media element', async () => {
     const play = vi.spyOn(HTMLMediaElement.prototype, 'play');
 

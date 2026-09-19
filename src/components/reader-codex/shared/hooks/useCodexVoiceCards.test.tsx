@@ -19,8 +19,8 @@ const playback = vi.hoisted(() => ({
 const YAN_SHI_ARTIFACT = 'data:audio/mpeg;base64,AAAA';
 const LI_MEI_ARTIFACT = 'data:audio/mpeg;base64,BBBB';
 
-vi.mock('../../../../audio/DevAudioPlayback', () => ({
-  useDevAudioPlayback: () => playback,
+vi.mock('../../../../audio/playback', () => ({
+  useNarrativeAudio: () => playback,
 }));
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

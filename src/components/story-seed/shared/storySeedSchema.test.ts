@@ -19,15 +19,8 @@ import {
   createStorySeedExport,
   parseStorySeedJson,
 } from './storySeedSerialization';
-import {
-  createStorySeed,
-  listStorySeeds,
-  resetStorySeedRepository,
-  setStorySeedRepository,
-  updateStorySeed,
-  type StorySeedRecord,
-  type StorySeedRepository,
-} from './storySeedRepository';
+import { createStorySeed, listStorySeeds, resetStorySeedRepository, setStorySeedRepository, updateStorySeed } from '../../../workshop/previews/story-seed/storySeedStorage';
+import { type StorySeedRecord, type StorySeedRepository } from './storySeedRepository';
 import {
   createStoryAdministrativeMetadata,
   validateStoryAdministrativeMetadata,

@@ -1,13 +1,8 @@
 import React from 'react';
 import LoadingSystem from './LoadingSystem';
-import { buildAILoadingTaskCard } from '../shared/taskCard';
-import {
-  manifestationModeForOperation,
-  NARRATIVE_STATUS_LINES,
-  MEDIA_STATUS_LINES,
-  type MediaRevealState,
-  type RevealedMediaAsset,
-} from '../shared/manifestation';
+import { buildAILoadingTaskCard, type LoadingAgentPresentation } from '../../../library/manifestations/taskCard';
+import { manifestationModeForOperation, type MediaRevealState, type RevealedMediaAsset } from '../shared/manifestation';
+import { NARRATIVE_STATUS_LINES, MEDIA_STATUS_LINES } from '../../../library/manifestations/statusLines';
 import { AmbientEffect as ParticleEffect } from '../../../presentation';
 import type { AILoadingVeilProps } from '../shared/loadingVeil';
 
@@ -18,6 +13,7 @@ import type { AILoadingVeilProps } from '../shared/loadingVeil';
  * defaults.
  */
 interface DevelopmentAILoadingVeilProps extends AILoadingVeilProps {
+  agent: LoadingAgentPresentation;
   travelerId?: string;
   trailStyle?: string;
   destinationId?: string;
@@ -59,6 +55,7 @@ interface DevelopmentAILoadingVeilProps extends AILoadingVeilProps {
  * Workshop-only: do not wire this into production flows.
  */
 export default function AILoadingVeil({
+  agent,
   isGenerating,
   generationPhase,
   generationProgressMessage,
@@ -124,7 +121,7 @@ export default function AILoadingVeil({
       progress: progressWidth,
       mediaReveal: resolvedMediaReveal,
       mediaAsset,
-    }),
+    }, agent),
     // Compact card: no atmospheric phrase and no phase marker pill.
     description: '',
     operationTitle: '',

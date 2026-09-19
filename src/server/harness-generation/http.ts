@@ -1,9 +1,4 @@
-import type {
-  HarnessArcRequest,
-  HarnessGenerationRequest,
-  HarnessGenerationResponse,
-  HarnessMemoryRecoveryRequest,
-} from '../../components/harness-generation/shared/types';
+import type { HarnessArcRequest, HarnessGenerationRequest, HarnessGenerationResponse, HarnessMemoryRecoveryRequest } from '../../narrative/generation';
 import {
   harnessGenerationServerInfo,
   resolveHarnessGenerationConfig,

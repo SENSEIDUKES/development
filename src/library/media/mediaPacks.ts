@@ -1,17 +1,7 @@
-import type { InlineAudioCueCategory } from './inlineAudio';
-import {
-  loadLibraryCues,
-  parseLibraryCues,
-  type LibraryCue,
-  type LibraryCuesLoadResult,
-} from './libraryCues';
-import {
-  TRACK_LIBRARY,
-  resolveSoundscapeTrack,
-  validateSceneAudioCatalog,
-  type SceneAudioTrack,
-  type SoundscapeIntent,
-} from './soundscapes';
+import { isPublicHttpsMediaUrl, createMediaCatalog, type MediaCatalog, type MediaResourceProvenance, type NarrativeMediaPort, type StoryMediaSelection, type FrozenNarrativeMedia } from '@seihouse/sen/audio';
+import type { InlineAudioCueCategory } from '@seihouse/sen/audio';
+import { parseAudioCues, type AudioCue } from '@seihouse/sen/audio';
+import { validateSceneAudioCatalog, type SceneAudioTrack } from '@seihouse/sen/audio';
 
 export const MEDIA_PACK_TYPES = ['soundscape', 'sound-cue'] as const;
 export type MediaPackType = (typeof MEDIA_PACK_TYPES)[number];
@@ -42,7 +32,7 @@ export interface SoundscapePack extends MediaPackBase {
 
 export interface SoundCuePack extends MediaPackBase {
   type: 'sound-cue';
-  entries: Array<LibraryCue & { category: InlineAudioCueCategory }>;
+  entries: Array<AudioCue & { category: InlineAudioCueCategory }>;
 }
 
 export type MediaPack = SoundscapePack | SoundCuePack;
@@ -79,26 +69,6 @@ export interface FrozenMediaLoadoutRecord {
   soundCues?: FrozenMediaPackRecord & { type: 'sound-cue' };
 }
 
-export type MediaResourceProvenance =
-  | { kind: 'base'; catalogId: 'sen-soundscapes' | 'library-cues'; version: '1' }
-  | ({ kind: 'media-pack' } & FrozenMediaPackRecord);
-
-export interface ResolvedSoundscape {
-  id: string;
-  blockId: string;
-  intent: SoundscapeIntent;
-  resource: {
-    track: SceneAudioTrack;
-    provenance: MediaResourceProvenance;
-  };
-}
-
-export interface AuthorizedMediaCatalog {
-  soundscapes: Array<{ track: SceneAudioTrack; provenance: MediaResourceProvenance }>;
-  soundCues: LibraryCuesLoadResult;
-  soundCueProvenanceByUrl: ReadonlyMap<string, MediaResourceProvenance>;
-}
-
 const PACK_FIELDS = new Set(['id', 'version', 'type', 'displayName', 'description', 'source', 'entries']);
 const SOURCE_FIELDS = new Set(['path', 'digest']);
 const SHA256 = /^[a-f0-9]{64}$/;
@@ -128,66 +98,6 @@ const assertNoForbiddenContent = (value: unknown, path = 'pack') => {
     const forbidden = /(?:^|[_-])(?:api[_-]?key|authorization|credentials?|password|private[_-]?key|provider[_-]?secret|secret|access[_-]?token|refresh[_-]?token|bearer[_-]?token|executable|script|instructions?)(?:$|[_-])/i;
     if (forbidden.test(segmentedKey)) throw new Error(`${path}.${key} is forbidden in a data-only Media Pack.`);
     assertNoForbiddenContent(entry, `${path}.${key}`);
-  }
-};
-
-const isGlobalIpv4 = (hostname: string): boolean => {
-  const parts = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)?.slice(1).map(Number);
-  if (!parts) return false;
-  if (parts.some(part => part > 255)) return false;
-  const [first, second, third, fourth] = parts;
-  return !(
-    first === 0
-    || first === 10
-    || first === 127
-    || first >= 224
-    || (first === 100 && second >= 64 && second <= 127)
-    || (first === 169 && second === 254)
-    || (first === 172 && second >= 16 && second <= 31)
-    || (first === 192 && second === 0 && third === 0 && fourth !== 9 && fourth !== 10)
-    || (first === 192 && second === 0 && third === 2)
-    || (first === 192 && second === 88 && third === 99)
-    || (first === 192 && second === 168)
-    || (first === 198 && (second === 18 || second === 19))
-    || (first === 198 && second === 51 && third === 100)
-    || (first === 203 && second === 0 && third === 113)
-  );
-};
-
-const isGlobalIpv6 = (hostname: string): boolean => {
-  if (!hostname.includes(':')) return false;
-  if (hostname.startsWith('::ffff:')) {
-    const embeddedIpv4 = hostname.slice('::ffff:'.length);
-    return isGlobalIpv4(embeddedIpv4);
-  }
-  const [head = '', tail = ''] = hostname.split('::');
-  const headParts = head ? head.split(':') : [];
-  const tailParts = tail ? tail.split(':') : [];
-  const missingParts = 8 - headParts.length - tailParts.length;
-  if (missingParts < 0 || (!hostname.includes('::') && missingParts !== 0)) return false;
-  const parts = [...headParts, ...Array(missingParts).fill('0'), ...tailParts].map(part => Number.parseInt(part || '0', 16));
-  if (parts.length !== 8 || parts.some(part => !Number.isFinite(part) || part < 0 || part > 0xffff)) return false;
-  const [firstHextet, secondHextet, thirdHextet] = parts;
-  if (!Number.isFinite(firstHextet) || firstHextet < 0x2000 || firstHextet > 0x3fff) return false;
-  return !(
-    (firstHextet === 0x2001 && secondHextet === 0x0db8)
-    || (firstHextet === 0x2001 && secondHextet === 0x0002 && thirdHextet === 0)
-    || (firstHextet === 0x2001 && secondHextet >= 0x0010 && secondHextet <= 0x002f)
-    || (firstHextet === 0x3fff && secondHextet <= 0x0fff)
-  );
-};
-
-export const isPublicHttpsMediaUrl = (value: string): boolean => {
-  try {
-    const parsed = new URL(value);
-    if (parsed.protocol !== 'https:' || !parsed.hostname || parsed.username || parsed.password) return false;
-    const hostname = parsed.hostname.replace(/^\[|\]$/g, '').replace(/\.+$/, '').toLowerCase();
-    if (!hostname || hostname === 'localhost' || hostname.endsWith('.localhost')) return false;
-    if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname) && !isGlobalIpv4(hostname)) return false;
-    if (hostname.includes(':') && !isGlobalIpv6(hostname)) return false;
-    return !parsed.search && !parsed.hash && SUPPORTED_AUDIO_FILE.test(parsed.pathname);
-  } catch {
-    return false;
   }
 };
 
@@ -241,7 +151,7 @@ const validateSoundCueEntries = (value: unknown): SoundCuePack['entries'] => {
       );
     }
   });
-  const loaded = parseLibraryCues(value);
+  const loaded = parseAudioCues(value);
   if (loaded.issues.length > 0 || loaded.cues.length !== loaded.rawEntries.length) {
     throw new Error(`Sound Cue catalog validation failed: ${loaded.issues.map(issue => issue.kind).join(', ') || 'invalid entry'}.`);
   }
@@ -300,14 +210,14 @@ export function isMediaPackEntitlementActive(entitlement: MediaPackEntitlement, 
   return Number.isFinite(expiresAt) && instant < expiresAt;
 }
 
-export function createRegisteredMediaPackCatalog(values: readonly unknown[]): ReadonlyMap<string, MediaPack> {
+export function createRegisteredMediaPackCatalog(values: readonly unknown[], base: MediaCatalog = createMediaCatalog()): ReadonlyMap<string, MediaPack> {
   const packs = values.map(validateMediaPack);
   const catalog = new Map<string, MediaPack>();
   const soundscapeIdentities = new Map<string, string>();
   const soundCueIdentities = new Map<string, string>();
-  const baseTrackIds = new Set(TRACK_LIBRARY.map(track => track.id));
-  const baseTrackUrls = new Set(TRACK_LIBRARY.map(track => track.url));
-  const baseCues = loadLibraryCues();
+  const baseTrackIds = new Set(base.soundscapes.map(({ track }) => track.id));
+  const baseTrackUrls = new Set(base.soundscapes.map(({ track }) => track.url));
+  const baseCues = base.soundCues;
   const baseCuePaths = new Set(baseCues.cues.map(cue => cue.file_path));
   const baseCueUrls = new Set(baseCues.cues.map(cue => cue.public_url));
 
@@ -385,25 +295,18 @@ export function recordFrozenMediaLoadout(snapshot: FrozenMediaLoadout): FrozenMe
   };
 }
 
-const baseSoundscapeProvenance: MediaResourceProvenance = {
-  kind: 'base', catalogId: 'sen-soundscapes', version: '1',
-};
-const baseSoundCueProvenance: MediaResourceProvenance = {
-  kind: 'base', catalogId: 'library-cues', version: '1',
-};
-
 const packProvenance = (pack: MediaPack): MediaResourceProvenance => ({
-  kind: 'media-pack',
-  ...packRecord(pack),
+  catalogId: pack.id,
+  version: pack.version,
+  source: { ...pack.source },
 });
 
 /** Base catalogs always remain present; a validated frozen pack can only add candidates. */
-export function createAuthorizedMediaCatalog(snapshot?: FrozenMediaLoadout): AuthorizedMediaCatalog {
-  const soundscapes = TRACK_LIBRARY.map(track => ({ track, provenance: baseSoundscapeProvenance }));
-  const soundCueProvenanceByUrl = new Map<string, MediaResourceProvenance>();
-  const baseCues = loadLibraryCues();
-  baseCues.cues.forEach(cue => soundCueProvenanceByUrl.set(cue.public_url, baseSoundCueProvenance));
-  const cueEntries: LibraryCue[] = [...baseCues.cues];
+export function createAuthorizedMediaCatalog(snapshot?: FrozenMediaLoadout, base: MediaCatalog = createMediaCatalog()): MediaCatalog {
+  const soundscapes = structuredClone(base.soundscapes);
+  const soundCueProvenanceByUrl = new Map(base.soundCueProvenanceByUrl);
+  const baseCues = base.soundCues;
+  const cueEntries: AudioCue[] = [...baseCues.cues];
 
   if (snapshot?.soundscapes) {
     try {
@@ -432,46 +335,44 @@ export function createAuthorizedMediaCatalog(snapshot?: FrozenMediaLoadout): Aut
   }
   return {
     soundscapes,
-    soundCues: parseLibraryCues(cueEntries),
+    soundCues: parseAudioCues(cueEntries),
     soundCueProvenanceByUrl,
   };
 }
 
-export function resolveAuthorizedSoundscape(
-  intent: SoundscapeIntent,
-  catalog: AuthorizedMediaCatalog,
-): ResolvedSoundscape | null {
-  const track = resolveSoundscapeTrack(intent, catalog.soundscapes.map(entry => entry.track));
-  if (!track) return null;
-  const authorized = catalog.soundscapes.find(entry => entry.track.id === track.id && entry.track.url === track.url);
-  if (!authorized) return null;
-  return {
-    id: `soundscape:${intent.blockId}:${track.id}`,
-    blockId: intent.blockId,
-    intent: { ...intent, semanticTags: [...intent.semanticTags] },
-    resource: { track: { ...track, moods: [...track.moods], tags: [...track.tags] }, provenance: authorized.provenance },
-  };
-}
 
-export function isMediaResourceProvenance(value: unknown): value is MediaResourceProvenance {
-  if (!isPlainObject(value) || typeof value.kind !== 'string') return false;
-  if (value.kind === 'base') {
-    return Object.keys(value).every(key => ['kind', 'catalogId', 'version'].includes(key))
-      && value.version === '1'
-      && (value.catalogId === 'sen-soundscapes' || value.catalogId === 'library-cues');
-  }
-  if (value.kind !== 'media-pack') return false;
-  if (!Object.keys(value).every(key => ['kind', 'id', 'version', 'type', 'source'].includes(key))) return false;
-  let source: MediaPackSource;
-  try {
-    source = validateSource(value.source);
-  } catch {
-    return false;
-  }
-  return typeof value.id === 'string'
-    && PACK_ID.test(value.id)
-    && typeof value.version === 'string'
-    && VERSION.test(value.version)
-    && (value.type === 'soundscape' || value.type === 'sound-cue')
-    && source.path.length > 0;
+/** Library translates server-supplied entitlement truth into SEN's opaque media port. */
+export function createLibraryMediaPort(input: {
+  registered: readonly MediaPack[];
+  entitlements: readonly MediaPackEntitlement[];
+  base?: FrozenNarrativeMedia;
+}): NarrativeMediaPort {
+  const base = createMediaCatalog(input.base);
+  const registered = createRegisteredMediaPackCatalog(input.registered, base);
+  const entitlements = structuredClone([...input.entitlements]);
+  return {
+    validateSelection(selection: StoryMediaSelection, at: string) {
+      for (const slot of ['soundscapes', 'soundCues'] as const) {
+        const reference = selection[slot];
+        if (!reference) continue;
+        const pack = resolveRegisteredMediaPack(registered, reference);
+        if (!pack) throw new Error('Only a registered Media Pack can be equipped.');
+        if (pack.type !== (slot === 'soundscapes' ? 'soundscape' : 'sound-cue')) throw new Error(`This slot requires ${slot === 'soundscapes' ? 'Soundscapes' : 'Sound Cues'}.`);
+        if (!entitlements.some(item => mediaPackKey(item.pack) === mediaPackKey(reference) && isMediaPackEntitlementActive(item, at))) throw new Error('Unlock this Media Pack before equipping it.');
+      }
+    },
+    freeze(selection, capturedAt) {
+      // Expired or not-yet-unlocked resources are excluded again at every attempt.
+      const snapshot = freezeMediaLoadout({ loadout: selection, entitlements, registered, capturedAt });
+      const catalog = createAuthorizedMediaCatalog(snapshot, base);
+      return {
+        capturedAt,
+        soundscapes: catalog.soundscapes,
+        soundCues: catalog.soundCues.cues.map(cue => ({
+          cue,
+          provenance: catalog.soundCueProvenanceByUrl.get(cue.public_url)!,
+        })),
+      };
+    },
+  };
 }

@@ -21,7 +21,7 @@ import {
   SEIDialogTitle,
   SEIInlineAlert,
 } from '@seihouse/ui';
-import { StoryAuthGate, STORY_AUTH_DISSOLVE_MS } from '@seihouse/sen/story-seed';
+import { StoryAuthGate, STORY_AUTH_DISSOLVE_MS } from '@seihouse/library/story-seed';
 import type { AppUser, Story } from '../shared/types';
 import { useUserProfileServices } from '../shared/userProfileServices';
 import {

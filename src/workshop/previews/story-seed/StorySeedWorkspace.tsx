@@ -3,13 +3,10 @@ import type { InitialStoryGenerationPayload } from '@seihouse/sen/story-seed';
 import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigation';
 import { LIBRARY_DESTINATIONS } from '../../../components/library-shell/development/libraryRoutes';
 import { lazy, useCallback, useEffect, useRef, useState } from 'react';
-import {
-  CreationModal as DevelopmentCreationModal,
-  requestWorldBlueprint,
-  resetStorySeedRepository,
-  setStorySeedRepository,
-  type BlueprintGenerationPayload,
-} from '@seihouse/sen/story-seed';
+import { CreationModal as DevelopmentCreationModal } from '@seihouse/library/story-seed';
+import { requestWorldBlueprint } from '../../../host/story-seed/blueprintGenerationClient';
+import { resetStorySeedRepository, setStorySeedRepository } from './storySeedStorage';
+import { type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
 import {
   resetMockSeeds,
   resetMockState,

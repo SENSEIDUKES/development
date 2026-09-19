@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useDevAudioPlayback } from '../../../../audio/DevAudioPlayback';
+import { useNarrativeAudio } from '../../../../audio/playback';
 
 const LEGACY_WORKSHOP_VOICE_PREFIX = 'workshop-voice:';
 
@@ -33,7 +33,7 @@ export function useCodexVoiceCards() {
     restart,
     replace,
     stop,
-  } = useDevAudioPlayback();
+  } = useNarrativeAudio();
   const activeTrackIdRef = useRef<string | null>(null);
   const activeCharacterIdRef = useRef<string | null>(null);
 

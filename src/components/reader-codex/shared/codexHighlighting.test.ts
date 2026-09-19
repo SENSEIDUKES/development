@@ -5,7 +5,7 @@ import {
   createCodexHighlighter,
   escapeRegExp,
   splitByCodexTerms,
-} from './codexHighlighting';
+} from '../../../narrative/codexHighlighting';
 
 function memory(overrides: Partial<StoryMemory> = {}): StoryMemory {
   return {

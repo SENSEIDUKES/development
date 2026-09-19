@@ -1,25 +1,7 @@
-import {
-  STORY_ENTITY_TYPES,
-  type BeastSonicProfile,
-  type ChapterManifestDiagnostics,
-  type ChapterManifestWarning,
-  type FateResultData,
-  type RegularSystemEvent,
-  type StoryBlock,
-  type StoryBlockMetadata,
-  type SystemEvent,
-  type SystemPromptPresentation,
-  type WorldNoticeData,
-} from "./types";
-import {
-  normalizeSystemPromptChanges,
-  normalizeSystemStatusScreen,
-} from "../../reader-chamber/shared/systemPromptPresentation";
-import {
-  validateWorldCueIntent,
-  type WorldCueIntent,
-} from "../../../audio/inlineAudio";
-import { isSoundscapeRegion } from "../../../audio/soundscapes";
+import { STORY_ENTITY_TYPES, type BeastSonicProfile, type ChapterManifestDiagnostics, type ChapterManifestWarning, type FateResultData, type RegularSystemEvent, type StoryBlock, type StoryBlockMetadata, type SystemEvent, type SystemPromptPresentation, type WorldNoticeData } from './chapter';
+import { normalizeSystemPromptChanges, normalizeSystemStatusScreen } from './systemPromptPresentation';
+import { validateWorldCueIntent, type WorldCueIntent } from '../audio/inlineAudio';
+import { isSoundscapeRegion } from '../audio/soundscapes';
 
 type JsonRecord = Record<string, unknown>;
 

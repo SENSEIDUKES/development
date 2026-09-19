@@ -2,7 +2,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { COLOR_CODE_PALETTE_IDS, SYSTEM_COLORS_LEGEND } from '../shared/colorCodes';
+import { COLOR_CODE_PALETTE_IDS, SYSTEM_COLORS_LEGEND } from '../../../narrative/colorCodes';
 import { SystemColorLegend } from './SystemColorLegend';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

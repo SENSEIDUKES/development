@@ -1,11 +1,5 @@
 import { cloneHarnessValue, defaultHarnessRuntime, stableHarnessId, type HarnessRuntime } from './ids';
-import type {
-  HarnessAuthorCorrection,
-  HarnessCanonicalRecord,
-  HarnessCanonicalStoryView,
-  HarnessCorrectionKind,
-  HarnessWorkspaceState,
-} from './types';
+import type { HarnessAuthorCorrection, HarnessCanonicalRecord, HarnessCanonicalStoryView, HarnessCorrectionKind, HarnessWorkspaceState } from '../../../narrative/generation';
 
 const activeRecordsForStory = (state: HarnessWorkspaceState, storyId: string) => {
   const committedChapterIds = new Set(state.chapters.filter(chapter => chapter.storyId === storyId).map(chapter => chapter.id));

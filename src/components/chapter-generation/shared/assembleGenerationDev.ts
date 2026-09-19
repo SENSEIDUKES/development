@@ -11,7 +11,7 @@ import {
   type ChapterPipelineRun,
   type CulturalProseOverride,
 } from "./pipeline";
-import type { ChapterContent, ChapterHandoff, StoryBlock } from "./types";
+import type { ChapterContent, ChapterHandoff, StoryBlock } from '../../../narrative/chapter';
 
 export type { CulturalProseOverride } from "./pipeline";
 

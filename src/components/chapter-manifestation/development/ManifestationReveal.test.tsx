@@ -15,7 +15,7 @@ vi.mock('motion/react', async () => {
   return { ...actual, useReducedMotion: () => true };
 });
 
-import ManifestationReveal from './ManifestationReveal';
+import ManifestationReveal from '../../../narrative/ManifestationReveal';
 import {
   isManifestationRevealInteractive,
   manifestationRevealAriaLabel,

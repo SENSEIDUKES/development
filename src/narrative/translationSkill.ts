@@ -8,16 +8,8 @@
  * chapter actually touches reach the CAPA Prompt.
  */
 
-import { isSenLanguageCode, type SenLanguageCode } from '../../../lib/language';
-import type {
-  HarnessSelectedTranslationGlossary,
-  HarnessSkillManifest,
-  HarnessTranslationGlossaryEntry,
-  HarnessTranslationGlossaryResource,
-  HarnessTranslationSkillMetadata,
-  ImmediateChapterRequest,
-  StoryInformationPacket,
-} from './types';
+import { isSenLanguageCode, type SenLanguageCode } from '../lib/language';
+import type { HarnessSelectedTranslationGlossary, HarnessSkillManifest, HarnessTranslationGlossaryEntry, HarnessTranslationGlossaryResource, HarnessTranslationSkillMetadata, ImmediateChapterRequest, StoryInformationPacket } from './generation';
 
 export const TRANSLATION_GLOSSARY_ENTRY_LIMIT = 5_000;
 const TERM_LENGTH_LIMIT = 200;

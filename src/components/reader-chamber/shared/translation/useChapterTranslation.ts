@@ -8,15 +8,14 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SenLanguageCode } from '../../../../lib/language';
-import type { HarnessSkillManifest } from '../../../harness-generation/shared/types';
-import type { ReaderChapter } from '../types';
+import type { HarnessSkillManifest } from '../../../../narrative/generation';
+import type { ReaderChapter } from '../../../../narrative/story';
 import type { DerivedChapterTranslation } from './contract';
 import {
   ReaderTranslationController,
   type ReaderTranslationStory,
 } from './controller';
-import { ReaderTranslationHttpProvider } from './provider';
-import { WebReaderTranslationRepository } from './repository';
+import { useReaderTranslationController } from './runtime';
 import { readerTranslationSkillContentDigest } from './skill';
 
 export type ChapterTranslationStatus =
@@ -36,24 +35,6 @@ export interface ChapterTranslationState {
 
 const ORIGINAL: ChapterTranslationState = { status: 'original', translation: null, message: null };
 
-let sharedController: ReaderTranslationController | null = null;
-
-/** One controller per page, so its cache and request de-duplication persist. */
-export const readerTranslationController = (): ReaderTranslationController => {
-  sharedController ??= new ReaderTranslationController({
-    repository: new WebReaderTranslationRepository(),
-    provider: new ReaderTranslationHttpProvider(),
-  });
-  return sharedController;
-};
-
-/** Test and Workshop seam for supplying a controller with its own fixtures. */
-export const setReaderTranslationController = (
-  controller: ReaderTranslationController | null,
-): void => {
-  sharedController = controller;
-};
-
 export interface UseChapterTranslationInput {
   story: ReaderTranslationStory;
   chapter: ReaderChapter;
@@ -70,14 +51,14 @@ export function useChapterTranslation({
   installedSkills,
 }: UseChapterTranslationInput): ChapterTranslationState {
   const [state, setState] = useState<ChapterTranslationState>(ORIGINAL);
-  const controller = useMemo(readerTranslationController, []);
+  const controller = useReaderTranslationController();
   const requestRef = useRef(0);
 
   // A host that passes nothing would otherwise hand the controller a new empty
   // array on every render.
   const skills = useMemo(() => installedSkills ?? [], [installedSkills]);
   useEffect(() => {
-    controller.setInstalledSkills(skills);
+    controller?.setInstalledSkills(skills);
   }, [controller, skills]);
 
   const chapterNumber = chapter.number;
@@ -98,6 +79,10 @@ export function useChapterTranslation({
       setState(ORIGINAL);
       return;
     }
+    if (!controller) {
+      setState({ status: 'unavailable', translation: null, message: 'The host has not enabled translation.' });
+      return;
+    }
     setState(current => (
       current.status === 'translating' ? current : { status: 'translating', translation: null, message: null }
     ));
@@ -112,6 +97,7 @@ export function useChapterTranslation({
             : { status: outcome.status, translation: null, message: outcome.message },
       );
     });
+    return () => { requestRef.current += 1; };
     // `chapterSignature` and `skillSignature` stand in for the object
     // identities of `chapter` and `skills`, which change on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps

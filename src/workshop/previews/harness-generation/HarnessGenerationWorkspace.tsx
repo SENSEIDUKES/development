@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
-import { HarnessGenerationWorkspace as HarnessGenerationSurface, type HarnessSkillManifest } from '@seihouse/sen/harness-generation';
-import { mediaPackKey, type MediaPackEntitlement, type MediaPackReference } from '@seihouse/sen/audio';
+import { HarnessGenerationWorkspace as HarnessGenerationSurface } from '@seihouse/library/generation';
+import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
+import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
+import type { HarnessSkillManifest } from '@seihouse/sen/harness-generation';
+import { mediaPackKey, type MediaPackEntitlement, type MediaPackReference } from '@seihouse/library/media';
 import { HarnessGenerationReference } from '../../../components/harness-generation/reference/HarnessGenerationReference';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
@@ -13,6 +16,8 @@ import { WORKSHOP_MEDIA_PACKS } from './mediaPackFixtures';
 const storySeedSource = createWorkshopStorySeedSource();
 
 export function HarnessGenerationWorkspace() {
+  const [repository] = useState(() => new IndexedDbHarnessGenerationRepository());
+  const [modelAdapter] = useState(() => new HarnessGenerationHttpClient());
   const [saved] = useState(() => {
     try { return { skills: loadHarnessSppSkills(localStorage), error: '' }; }
     catch { return { skills: [] as HarnessSkillManifest[], error: 'Saved SPP skills could not be loaded. Reimport the packages to restore their skills.' }; }
@@ -32,7 +37,7 @@ export function HarnessGenerationWorkspace() {
       entry={entry}
       allowCompare={false}
       renderReference={() => <HarnessGenerationReference />}
-      renderDevelopment={() => <HarnessGenerationSurface storySeedSource={storySeedSource} installedSkills={installedSkills}
+      renderDevelopment={() => <HarnessGenerationSurface repository={repository} modelAdapter={modelAdapter} storySeedSource={storySeedSource} installedSkills={installedSkills}
         registeredMediaPacks={WORKSHOP_MEDIA_PACKS} mediaPackEntitlements={mediaPackEntitlements}
         onGrantDevelopmentMediaReward={(reference: MediaPackReference) => {
           const unlockedAt = new Date();

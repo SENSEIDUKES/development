@@ -7,11 +7,7 @@ export { createArcChapterPosition } from '../../../arc-goals/shared/arcGoals';
  */
 import type { MockChapterGenerationScenario } from "../fixtures/mockGenerationData";
 import { deriveSceneAnchors, type SceneAnchors, type SceneType } from "../lib/sceneRhythm";
-import type {
-  ChapterHandoff,
-  ContextBlock,
-  SceneFingerprint,
-} from "../types";
+import type { ChapterHandoff, ContextBlock, SceneFingerprint } from '../../../../narrative/chapter';
 import type { ArcChapterPosition } from "./types";
 
 export interface LivingStoryCharacterState {

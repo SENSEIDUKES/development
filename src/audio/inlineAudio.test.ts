@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseLibraryCues } from './libraryCues';
+import { parseAudioCues } from './cues';
 import {
   resolveChapterAudioMoments,
   resolveLibraryCueForWorldCue,
@@ -244,7 +244,7 @@ describe('World Cue intent validation', () => {
 
 describe('World Cue catalog resolution', () => {
   it('resolves deterministically by exact variation, tag overlap, confidence, then URL', () => {
-    const loaded = parseLibraryCues([
+    const loaded = parseAudioCues([
       catalogEntry('z.mp3', ['tiger', 'close'], 0.6, 'https://audio.example/z.mp3'),
       catalogEntry('b.mp3', ['tiger'], 1, 'https://audio.example/b.mp3'),
       catalogEntry('a.mp3', ['tiger', 'close'], 0.9, 'https://audio.example/a.mp3'),
@@ -369,7 +369,7 @@ describe('World Cue placement and chapter resolution', () => {
         ],
       },
     }];
-    const loaded = parseLibraryCues([
+    const loaded = parseAudioCues([
       catalogEntry('growl.mp3', ['tiger', 'close'], 1),
     ]);
     const resolution = resolveChapterAudioMoments(blocks, undefined, loaded);

@@ -26,12 +26,15 @@ export function HarnessGenerationWorkspace() {
   });
   const [importedSkills, setImportedSkills] = useState(saved.skills);
   const [officialInventoryReady, setOfficialInventoryReady] = useState(false);
+  const [officialInstallAttempt, setOfficialInstallAttempt] = useState(0);
   const [mediaPackEntitlements, setMediaPackEntitlements] = useState<MediaPackEntitlement[]>([]);
   const [storageError, setStorageError] = useState(saved.error);
   const installedSkills = useMemo(() => [...WORKSHOP_HARNESS_SKILLS, ...importedSkills], [importedSkills]);
   const entry = workshopEntries.find(item => item.id === 'harness-generation')!;
   useEffect(() => {
     let active = true;
+    setOfficialInventoryReady(false);
+    setStorageError('');
     void installOfficialCapaSkills(localStorage).then(({ installed }) => {
       if (!active) return;
       setImportedSkills(installed);
@@ -45,7 +48,7 @@ export function HarnessGenerationWorkspace() {
       setOfficialInventoryReady(true);
     });
     return () => { active = false; };
-  }, []);
+  }, [officialInstallAttempt]);
   /** The host owns the browser inventory; both import entry points save through it. */
   const install = (skill: HarnessSkillManifest) => {
     setImportedSkills(saveHarnessSppSkill(localStorage, importedSkills, skill));
@@ -59,7 +62,12 @@ export function HarnessGenerationWorkspace() {
       renderDevelopment={() => !officialInventoryReady
         ? <p role="status">Validating official CAPA defaults…</p>
         : storageError.startsWith('Official CAPA defaults could not be installed')
-          ? <p role="alert">{storageError}</p>
+          ? <div>
+              <p role="alert">{storageError}</p>
+              <button type="button" onClick={() => setOfficialInstallAttempt(attempt => attempt + 1)}>
+                Retry official CAPA installation
+              </button>
+            </div>
           : <HarnessGenerationSurface repository={repository} modelAdapter={modelAdapter} storySeedSource={storySeedSource} installedSkills={installedSkills}
         registeredMediaPacks={WORKSHOP_MEDIA_PACKS} mediaPackEntitlements={mediaPackEntitlements}
         baseMedia={LIBRARY_BASE_MEDIA}

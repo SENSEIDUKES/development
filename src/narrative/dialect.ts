@@ -104,8 +104,8 @@ export function useDialect(overrideGenrePath?: string) {
   const activeStoryId = useReaderStore(state => state.activeStoryId);
   const stories = useReaderStore(state => state.stories || []);
   const story = stories.find(s => s.id === activeStoryId);
-  
+
   const genrePath = overrideGenrePath || story?.genre || story?.intake?.genrePath;
-  
+
   return useCallback((key: string) => getDialectLabel(key, genrePath), [genrePath]);
 }

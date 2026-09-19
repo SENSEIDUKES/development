@@ -22,7 +22,6 @@ export interface SceneAudioTrack {
   /** Optional host-supplied display grouping, independent of URL layout. */
   group?: string;
 }
-
 export interface SoundscapeIntent {
   blockId: string;
   mood?: string;
@@ -127,4 +126,3 @@ export function resolveSoundscapeTrack(
     || compareCodePoints(left.url, right.url)
   ))[0] ?? null;
 }
-

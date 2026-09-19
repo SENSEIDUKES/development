@@ -32,7 +32,7 @@ const request = (): HarnessGenerationRequest => ({
     committedChapters: [],
     arc: arcGenerationContext({ arcNumber: 1, goals: [{ id: 'arc-1-opening', text: 'Reach the moved city.', chapters: 100 }] }, 1, 'Restore the city.'),
   },
-  immediateChapterRequest: { chapterNumber: 1, continuation: false },
+  immediateChapterRequest: { chapterNumber: 1, continuation: false, chapterScale: { minWords: 1_800, maxWords: 2_500 } },
 });
 
 const environment = { GEMINI_API_KEY: 'test-key' };
@@ -114,7 +114,7 @@ describe('Harness Generation HTTP boundary', () => {
       ],
     });
     skilled.storyInformation.steering = [{ id: 'dir-1', direction: 'Bring the envoy to the gate.', mode: 'future', effectiveChapter: 1, createdAt: '2026-09-12T00:00:00.000Z' }];
-    skilled.immediateChapterRequest = { chapterNumber: 1, continuation: false, assignment: 'Bring the envoy to the gate.' };
+    skilled.immediateChapterRequest = { chapterNumber: 1, continuation: false, chapterScale: { minWords: 1_800, maxWords: 2_500 }, assignment: 'Bring the envoy to the gate.' };
     const result = await handleHarnessGenerationHttp(
       { method: 'POST', body: skilled },
       { environment, providerFactory: () => ({ provider: 'gemini', model: skilled.model, generate }) },
@@ -127,7 +127,7 @@ describe('Harness Generation HTTP boundary', () => {
     expect(input.systemInstruction.indexOf('CAPA SKILL [Author]')).toBeLessThan(input.systemInstruction.indexOf('CAPA SKILL [Pacing]'));
     expect(input.systemInstruction).toContain('elite Eastern fantasy web-novel author specializing in Asian light novels');
     expect(input.systemInstruction.split('Do not resolve the siege in this chapter.')).toHaveLength(2);
-    expect(input.systemInstruction).toContain('prose is the complete chapter and its sole body');
+    expect(input.systemInstruction).toContain('paragraphs is the complete chapter and its sole body');
     expect(input.systemInstruction).toContain('Every signal carries anchorText');
     expect(input.systemInstruction).toContain('The HARNESS assigns speaker roles from the cast.');
     expect(input.systemInstruction).toContain('The HARNESS constructs the complete mechanical, narrative, World Notice, or Fate presentation afterward.');
@@ -138,7 +138,7 @@ describe('Harness Generation HTTP boundary', () => {
     expect(skilled.capaPrompt.text).not.toMatch(/R2|track list|Library Cue catalog/i);
     // The provider schema is the compact semantic contract, never the SEN block, memory, or presentation contracts.
     const chapterSchema = input.responseJsonSchema as { properties: Record<string, unknown>; required: string[] };
-    expect(chapterSchema.required).toEqual(['prose', 'arcCompletion']);
+    expect(chapterSchema.required).toEqual(['paragraphs', 'arcCompletion']);
     expect(Object.keys(chapterSchema.properties)).not.toContain('blocks');
     expect(Object.keys(chapterSchema.properties)).not.toContain('memory');
     expect(JSON.stringify(chapterSchema)).not.toContain('anyOf');

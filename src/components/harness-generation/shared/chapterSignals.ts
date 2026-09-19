@@ -53,10 +53,16 @@ const MAX_ANCHOR_LENGTH = 400;
 const MAX_TAGS = 8;
 const MAX_ENTRIES = 12;
 
-export interface HarnessDialogueSignal { anchorText: string; speaker: string; delivery?: HarnessDialogueDelivery }
-export interface HarnessManifestationSignal { anchorText: string; name: string; type: StoryEntityType; mention: 'reveal' | 'reference' }
-export interface HarnessSystemPanelSignal {
-  anchorText: string;
+/**
+ * Every anchored signal may carry a zero-based `occurrenceIndex` selecting
+ * which occurrence of a repeated `anchorText` it means. A unique anchor omits
+ * it; a repeated anchor without one is dropped rather than guessed.
+ */
+export interface HarnessAnchoredSignal { anchorText: string; occurrenceIndex?: number }
+
+export interface HarnessDialogueSignal extends HarnessAnchoredSignal { speaker: string; delivery?: HarnessDialogueDelivery }
+export interface HarnessManifestationSignal extends HarnessAnchoredSignal { name: string; type: StoryEntityType; mention: 'reveal' | 'reference' }
+export interface HarnessSystemPanelSignal extends HarnessAnchoredSignal {
   presentation: HarnessSystemPanelPresentation;
   title: string;
   meaning?: HarnessSystemPanelMeaning;
@@ -65,13 +71,13 @@ export interface HarnessSystemPanelSignal {
   /** Fate panels only. */
   outcome?: HarnessFateOutcome;
 }
-export interface HarnessSoundscapeSignal { anchorText: string; mood: string; region?: SoundscapeRegion; tags?: string[]; intensity?: number }
-export interface HarnessSoundCueSignal {
-  anchorText: string; category: InlineAudioCueCategory; variation: string; tags?: string[];
+export interface HarnessSoundscapeSignal extends HarnessAnchoredSignal { mood: string; region?: SoundscapeRegion; tags?: string[]; intensity?: number }
+export interface HarnessSoundCueSignal extends HarnessAnchoredSignal {
+  category: InlineAudioCueCategory; variation: string; tags?: string[];
   entityName?: string; entityType?: WorldCueRelatedEntityType;
 }
-export interface HarnessCreatureEventSignal {
-  anchorText: string; type: (typeof HARNESS_CREATURE_EVENT_TYPES)[number]; name?: string;
+export interface HarnessCreatureEventSignal extends HarnessAnchoredSignal {
+  type: (typeof HARNESS_CREATURE_EVENT_TYPES)[number]; name?: string;
   size?: (typeof HARNESS_CREATURE_SIZES)[number]; bodyType?: string; element?: string; movement?: string;
   intelligence?: string; threatTier?: string; signatureSound?: string;
 }
@@ -87,7 +93,8 @@ export interface HarnessChapterSignals {
 
 /** The intentionally small transport shape requested from the provider. */
 export interface HarnessModelChapterReply extends Partial<HarnessChapterSignals> {
-  prose: string;
+  /** The sole authoritative chapter body: one entry per prose paragraph. */
+  paragraphs: string[];
   title?: string;
   plan?: string;
   arcCompletion: { goalId: string; completed: boolean; evidence: string };
@@ -105,6 +112,10 @@ const tags = (value: unknown): string[] | undefined => {
   const list = [...new Set(value.map(item => text(item, 48)).filter((item): item is string => Boolean(item)))].slice(0, MAX_TAGS);
   return list.length ? list : undefined;
 };
+
+/** A zero-based selector among repeated occurrences of the same anchor phrase. */
+const occurrenceSelector = (value: unknown): number | undefined =>
+  typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : undefined;
 
 type SignalReader<T> = (value: Record<string, unknown>) => T | undefined;
 
@@ -221,7 +232,12 @@ export const readHarnessChapterSignals = (reply: Record<string, unknown>): Harne
       const anchorText = isRecord(item) ? text(item.anchorText, MAX_ANCHOR_LENGTH) : undefined;
       const parsed = anchorText ? READERS[family]({ ...item as Record<string, unknown>, anchorText }) : undefined;
       if (!parsed) { dropped += 1; return; }
-      (signals[family] as Array<typeof parsed>).push(parsed);
+      // An unreadable occurrence selector is simply absent; the anchor then has
+      // to be unique on its own or the signal is dropped by anchor resolution.
+      const occurrenceIndex = isRecord(item) ? occurrenceSelector(item.occurrenceIndex) : undefined;
+      (signals[family] as Array<typeof parsed>).push(
+        occurrenceIndex === undefined ? parsed : { ...parsed, occurrenceIndex },
+      );
     });
     if (raw.length > HARNESS_SIGNAL_LIMITS[family]) dropped += raw.length - HARNESS_SIGNAL_LIMITS[family];
     if (dropped) {
@@ -233,13 +249,6 @@ export const readHarnessChapterSignals = (reply: Record<string, unknown>): Harne
   }
   return { signals, warnings };
 };
-
-/** Paragraph boundaries are the canonical SEN block boundaries. */
-export const splitHarnessProseParagraphs = (prose: string): string[] => prose
-  .replace(/\r\n?/g, '\n')
-  .split(/\n[ \t]*\n+/)
-  .map(paragraph => paragraph.trim())
-  .filter(Boolean);
 
 export interface HarnessCastMember { name: string; role?: string; isMainCharacter?: boolean }
 
@@ -253,44 +262,129 @@ interface CandidateBlock {
 
 const excerpt = (value: string) => `${value.slice(0, 60)}${value.length > 60 ? '…' : ''}`;
 
-type AnchorResolution = { ok: true; index: number } | { ok: false; reason: 'missing' | 'ambiguous' };
+/**
+ * Quotation marks that a JSON round trip or a typographic style may swap for
+ * one another. They are equivalent for matching only; stored prose keeps the
+ * exact characters the writer produced.
+ */
+const QUOTE_EQUIVALENTS: Record<string, string> = {
+  '‘': "'", '’': "'", '‚': "'", '‛': "'", '′': "'",
+  '“': '"', '”': '"', '„': '"', '‟': '"', '″': '"',
+};
 
 /**
- * An anchor must identify exactly one place in the chapter. A phrase found in
- * more than one block — or, when the signal's position inside its block decides
- * where the effect lands, more than once within that block — is ambiguous, and
- * the HARNESS drops the signal rather than silently annotating the wrong
- * sentence. `positional` is true for the families whose placement is an offset
- * in the prose: a System Panel splits its block at the anchor, and a Sound Cue
- * plays at the anchor's occurrence.
+ * A matching-only projection of a passage: whitespace runs collapse to one
+ * space and equivalent quotation marks fold together, while `offsets` maps
+ * every projected character back to its exact index in the original text, so a
+ * match always resolves to a real prose span.
+ */
+const normalizeForAnchoring = (value: string): { text: string; offsets: number[] } => {
+  const characters: string[] = [];
+  const offsets: number[] = [];
+  let pendingSpace = false;
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
+    if (/\s/u.test(character)) { if (characters.length) pendingSpace = true; continue; }
+    if (pendingSpace) { characters.push(' '); offsets.push(index); pendingSpace = false; }
+    characters.push(QUOTE_EQUIVALENTS[character] ?? character);
+    offsets.push(index);
+  }
+  return { text: characters.join(''), offsets };
+};
+
+/** One exact prose span an anchor resolves to. */
+interface AnchorOccurrence { blockIndex: number; start: number; end: number }
+
+const findAnchorOccurrences = (blocks: readonly CandidateBlock[], anchorText: string): AnchorOccurrence[] => {
+  const needle = normalizeForAnchoring(anchorText).text;
+  const occurrences: AnchorOccurrence[] = [];
+  if (!needle) return occurrences;
+  blocks.forEach((block, blockIndex) => {
+    const haystack = normalizeForAnchoring(block.text);
+    let cursor = haystack.text.indexOf(needle);
+    while (cursor >= 0) {
+      occurrences.push({
+        blockIndex,
+        start: haystack.offsets[cursor],
+        end: haystack.offsets[cursor + needle.length - 1] + 1,
+      });
+      cursor = haystack.text.indexOf(needle, cursor + 1);
+    }
+  });
+  return occurrences;
+};
+
+type AnchorFailure = 'missing' | 'ambiguous' | 'occurrence-out-of-range';
+type AnchorResolution = { ok: true; occurrence: AnchorOccurrence } | { ok: false; reason: AnchorFailure };
+
+/**
+ * An anchor must identify exactly one place in the chapter. `positional` is
+ * true for the families whose placement is an offset in the prose: a System
+ * Panel and a dialogue span split their block at the anchor, and a Sound Cue
+ * plays at the anchor's occurrence. Block-level families only need one block,
+ * so a phrase repeated inside a single paragraph is unambiguous for them.
+ *
+ * A repeated phrase is disambiguated by the signal's zero-based
+ * `occurrenceIndex` over every occurrence in reading order. Without one, the
+ * HARNESS drops the signal rather than silently choosing the first match.
  */
 const resolveAnchor = (
   blocks: readonly CandidateBlock[],
-  anchorText: string,
+  signal: HarnessAnchoredSignal,
   positional: boolean,
 ): AnchorResolution => {
-  const matches: number[] = [];
-  blocks.forEach((block, index) => { if (block.text.includes(anchorText)) matches.push(index); });
-  if (!matches.length) return { ok: false, reason: 'missing' };
-  if (matches.length > 1) return { ok: false, reason: 'ambiguous' };
-  const [index] = matches;
-  const text = blocks[index].text;
-  if (positional && text.indexOf(anchorText) !== text.lastIndexOf(anchorText)) {
-    return { ok: false, reason: 'ambiguous' };
+  const occurrences = findAnchorOccurrences(blocks, signal.anchorText);
+  if (!occurrences.length) return { ok: false, reason: 'missing' };
+  if (signal.occurrenceIndex !== undefined) {
+    const chosen = occurrences[signal.occurrenceIndex];
+    return chosen ? { ok: true, occurrence: chosen } : { ok: false, reason: 'occurrence-out-of-range' };
   }
-  return { ok: true, index };
+  const ambiguous = positional
+    ? occurrences.length > 1
+    : new Set(occurrences.map(occurrence => occurrence.blockIndex)).size > 1;
+  return ambiguous ? { ok: false, reason: 'ambiguous' } : { ok: true, occurrence: occurrences[0] };
 };
 
 const anchorWarning = (
   family: HarnessSignalFamily,
   anchorText: string,
-  reason: 'missing' | 'ambiguous',
+  reason: AnchorFailure,
 ): HarnessWarning => ({
   code: 'optional_chapter_structure_omitted',
   message: reason === 'missing'
-    ? `Omitted a ${familyLabel[family]} signal whose anchor "${excerpt(anchorText)}" is not in the chapter prose.`
-    : `Omitted a ${familyLabel[family]} signal whose anchor "${excerpt(anchorText)}" occurs more than once, so the place it marks is ambiguous.`,
+    ? `Omitted a ${familyLabel[family]} signal whose anchor "${excerpt(anchorText)}" is not in this chapter's paragraphs.`
+    : reason === 'occurrence-out-of-range'
+      ? `Omitted a ${familyLabel[family]} signal whose anchor "${excerpt(anchorText)}" does not occur as many times as its occurrenceIndex requires.`
+      : `Omitted a ${familyLabel[family]} signal whose anchor "${excerpt(anchorText)}" occurs more than once and carries no occurrenceIndex, so the place it marks is ambiguous.`,
 });
+
+/**
+ * Replaces the anchored block with the prose before the span, the span itself,
+ * and the prose after it. The split is the System Panel technique, reused so a
+ * dialogue span never stamps the narration around it.
+ */
+const splitBlockAtSpan = (
+  blocks: CandidateBlock[],
+  occurrence: AnchorOccurrence,
+  span: (text: string) => CandidateBlock,
+): void => {
+  const block = blocks[occurrence.blockIndex];
+  const before = block.text.slice(0, occurrence.start).trim();
+  const after = block.text.slice(occurrence.end).trim();
+  blocks.splice(occurrence.blockIndex, 1, ...[
+    before ? { text: before } : undefined,
+    span(block.text.slice(occurrence.start, occurrence.end)),
+    after ? { text: after } : undefined,
+  ].filter((candidate): candidate is CandidateBlock => Boolean(candidate)));
+};
+
+/** Which occurrence of this exact phrase the chosen span is, inside its own block. */
+const occurrenceWithinBlock = (text: string, phrase: string, start: number): number => {
+  let index = 0;
+  let cursor = text.indexOf(phrase);
+  while (cursor >= 0 && cursor < start) { index += 1; cursor = text.indexOf(phrase, cursor + 1); }
+  return index;
+};
 
 const metadataOf = (block: CandidateBlock) => (block.metadata ??= {});
 
@@ -352,9 +446,14 @@ export interface HarnessSignalApplication {
 
 /**
  * Matches accepted signals to exact prose anchors and converts them into the
- * detailed SEN block structures. A System Panel anchor that sits inside a
- * larger paragraph is split into its own block so its readable text becomes
- * the card content; every other signal annotates the block containing it.
+ * detailed SEN block structures.
+ *
+ * Order matters. The two span families run first and split their paragraph at
+ * the exact anchored text — a System Panel so its readable text becomes the
+ * card, a dialogue span so the narration around it stays narration. Block-level
+ * families then annotate the final blocks, and Sound Cues resolve last against
+ * the exact span they fire on. Nothing ever rewrites prose: a signal that
+ * cannot be placed is dropped with a warning and its text stays where it was.
  */
 export const applyHarnessChapterSignals = (
   paragraphs: readonly string[],
@@ -365,54 +464,60 @@ export const applyHarnessChapterSignals = (
   const blocks: CandidateBlock[] = paragraphs.map(text => ({ text }));
 
   for (const signal of signals.systemPanels) {
-    const anchor = resolveAnchor(blocks, signal.anchorText, true);
+    const anchor = resolveAnchor(blocks, signal, true);
     if (!anchor.ok) { warnings.push(anchorWarning('systemPanels', signal.anchorText, anchor.reason)); continue; }
-    const block = blocks[anchor.index];
-    if (block.system) {
+    if (blocks[anchor.occurrence.blockIndex].system) {
       warnings.push({ code: 'optional_chapter_structure_omitted', message: `Omitted a second System Panel anchored on "${excerpt(signal.anchorText)}"; a block carries one panel.` });
       continue;
     }
-    const start = block.text.indexOf(signal.anchorText);
-    const before = block.text.slice(0, start).trim();
-    const after = block.text.slice(start + signal.anchorText.length).trim();
-    const panel: CandidateBlock = { text: signal.anchorText, system: buildHarnessSystemPanel(signal) };
-    blocks.splice(anchor.index, 1, ...[before ? { text: before } : undefined, panel, after ? { text: after } : undefined]
-      .filter((candidate): candidate is CandidateBlock => Boolean(candidate)));
+    splitBlockAtSpan(blocks, anchor.occurrence, text => ({ text, system: buildHarnessSystemPanel(signal) }));
   }
 
+  // Dialogue metadata belongs to the spoken words alone. The anchored span
+  // becomes its own dialogue block, so several speakers can share one original
+  // paragraph and the narration between them is never attributed to anyone.
   for (const signal of signals.dialogue) {
-    const anchor = resolveAnchor(blocks, signal.anchorText, false);
+    const anchor = resolveAnchor(blocks, signal, true);
     if (!anchor.ok) { warnings.push(anchorWarning('dialogue', signal.anchorText, anchor.reason)); continue; }
-    const block = blocks[anchor.index];
-    if (block.system) continue;
-    const metadata = metadataOf(block);
-    if (!block.type) {
-      block.type = 'dialogue';
-      metadata.mode = 'dialogue';
-      metadata.speakerName = signal.speaker;
-      const role = speakerRole(signal.speaker, cast);
-      if (role) metadata.speakerRole = role;
-      if (signal.delivery) metadata.emotion = signal.delivery;
+    const block = blocks[anchor.occurrence.blockIndex];
+    if (block.system || block.type === 'dialogue') {
+      warnings.push({
+        code: 'optional_chapter_structure_omitted',
+        message: block.system
+          ? `Omitted a dialogue signal anchored on "${excerpt(signal.anchorText)}"; that passage is a System Panel.`
+          : `Omitted a dialogue signal anchored on "${excerpt(signal.anchorText)}"; that passage is already attributed to a speaker.`,
+      });
+      continue;
     }
+    const role = speakerRole(signal.speaker, cast);
+    splitBlockAtSpan(blocks, anchor.occurrence, text => ({
+      text,
+      type: 'dialogue',
+      metadata: {
+        mode: 'dialogue', speakerName: signal.speaker,
+        ...(role ? { speakerRole: role } : {}),
+        ...(signal.delivery ? { emotion: signal.delivery } : {}),
+      },
+    }));
   }
 
   for (const signal of signals.manifestations) {
-    const anchor = resolveAnchor(blocks, signal.anchorText, false);
+    const anchor = resolveAnchor(blocks, signal, false);
     if (!anchor.ok) { warnings.push(anchorWarning('manifestations', signal.anchorText, anchor.reason)); continue; }
-    const metadata = metadataOf(blocks[anchor.index]);
+    const metadata = metadataOf(blocks[anchor.occurrence.blockIndex]);
     metadata.entities = [...(metadata.entities ?? []).filter(entity => entity.name !== signal.name || entity.type !== signal.type),
       { name: signal.name, type: signal.type, mention: signal.mention }];
   }
 
   for (const signal of signals.creatureEvents) {
-    const anchor = resolveAnchor(blocks, signal.anchorText, false);
+    const anchor = resolveAnchor(blocks, signal, false);
     if (!anchor.ok) { warnings.push(anchorWarning('creatureEvents', signal.anchorText, anchor.reason)); continue; }
-    const metadata = metadataOf(blocks[anchor.index]);
+    const metadata = metadataOf(blocks[anchor.occurrence.blockIndex]);
     if (metadata.beastEvent) {
       warnings.push({ code: 'optional_chapter_structure_omitted', message: `Omitted a second creature event anchored on "${excerpt(signal.anchorText)}"; a block carries one.` });
       continue;
     }
-    const { anchorText: _anchor, type, name, ...profile } = signal;
+    const { anchorText: _anchor, occurrenceIndex: _occurrence, type, name, ...profile } = signal;
     metadata.beastEvent = { type, profile };
     if (name && !metadata.entities?.some(entity => entity.name === name && entity.type === 'creature')) {
       metadata.entities = [...(metadata.entities ?? []), { name, type: 'creature', mention: type === 'reveal' ? 'reveal' : 'reference' }];
@@ -420,9 +525,9 @@ export const applyHarnessChapterSignals = (
   }
 
   for (const signal of signals.soundscapes) {
-    const anchor = resolveAnchor(blocks, signal.anchorText, false);
+    const anchor = resolveAnchor(blocks, signal, false);
     if (!anchor.ok) { warnings.push(anchorWarning('soundscapes', signal.anchorText, anchor.reason)); continue; }
-    const metadata = metadataOf(blocks[anchor.index]);
+    const metadata = metadataOf(blocks[anchor.occurrence.blockIndex]);
     if (metadata.music) {
       warnings.push({ code: 'optional_chapter_structure_omitted', message: `Omitted a second soundscape anchored on "${excerpt(signal.anchorText)}"; a block carries one.` });
       continue;
@@ -434,13 +539,18 @@ export const applyHarnessChapterSignals = (
   }
 
   for (const signal of signals.soundCues) {
-    // The cue plays at this exact phrase, so occurrence 0 is only correct when
-    // the anchor occurs exactly once in exactly one block.
-    const anchor = resolveAnchor(blocks, signal.anchorText, true);
+    const anchor = resolveAnchor(blocks, signal, true);
     if (!anchor.ok) { warnings.push(anchorWarning('soundCues', signal.anchorText, anchor.reason)); continue; }
-    const metadata = metadataOf(blocks[anchor.index]);
+    const block = blocks[anchor.occurrence.blockIndex];
+    // The cue fires at this exact prose span. The trigger phrase is the prose
+    // itself, never the model's anchor spelling, and the occurrence is the one
+    // the resolver will find at the same place inside this block.
+    const triggerPhrase = block.text.slice(anchor.occurrence.start, anchor.occurrence.end);
+    const metadata = metadataOf(block);
     metadata.audioMoments = [...(metadata.audioMoments ?? []), {
-      triggerPhrase: signal.anchorText, occurrenceIndex: 0, sourceCategory: signal.category, variation: signal.variation,
+      triggerPhrase,
+      occurrenceIndex: occurrenceWithinBlock(block.text, triggerPhrase, anchor.occurrence.start),
+      sourceCategory: signal.category, variation: signal.variation,
       semanticTags: signal.tags ?? [],
       ...(signal.entityName ? { relatedEntity: { name: signal.entityName, ...(signal.entityType ? { type: signal.entityType } : {}) } } : {}),
     }];

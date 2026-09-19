@@ -140,7 +140,7 @@ describe('Story Seed to Harness handoff', () => {
     expect(requests[1].storyInformation.foundationRevision.revision).toBe(2);
     expect(requests[1].storyInformation.foundationRevision.input.sourceSnapshot).toEqual(input.sourceSnapshot);
     expect(requests[1].storyInformation.committedChapters[0].prose).toBe('Mara waits at the sealed harbor gate.');
-    expect(requests[1].immediateChapterRequest).toEqual({ chapterNumber: 2, continuation: true });
+    expect(requests[1].immediateChapterRequest).toEqual({ chapterNumber: 2, continuation: true, chapterScale: { minWords: 1_800, maxWords: 2_500 } });
     const { userPrompt, systemInstruction } = provider.mock.calls[1][0];
     expect(userPrompt).toContain('Remain at the gate; do not finish the tournament arc yet.');
     expect(userPrompt).toContain('Keep the strange premise believable.');

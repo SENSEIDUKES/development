@@ -65,3 +65,4 @@ export * from '../../narrative/generation';
 export { HarnessReaderSession } from '../../components/harness-generation/development/HarnessReaderSession';
 export { findStory, findFoundationRevision } from '../../components/harness-generation/shared/foundation';
 export * from '../../components/harness-generation/shared/chapterSignals';
+export * from '../../components/harness-generation/shared/chapterBody';

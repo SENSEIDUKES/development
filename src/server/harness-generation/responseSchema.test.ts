@@ -32,19 +32,31 @@ describe('HARNESS chapter response schema shape', () => {
     expect(shape.maxObjectDepth).toBeLessThanOrEqual(5);
     expect(shape.objectSchemas).toBeLessThanOrEqual(12);
     expect(shape.serializedBytes).toBeLessThan(5_000);
-    expect(HARNESS_CHAPTER_RESPONSE_SCHEMA.required).toEqual(['prose', 'arcCompletion']);
+    expect(HARNESS_CHAPTER_RESPONSE_SCHEMA.required).toEqual(['paragraphs', 'arcCompletion']);
     expect(Object.keys(HARNESS_CHAPTER_RESPONSE_SCHEMA.properties)).toEqual([
-      'title', 'plan', 'prose', 'arcCompletion', 'dialogue', 'manifestations', 'systemPanels', 'soundscapes', 'soundCues', 'creatureEvents',
+      'title', 'plan', 'paragraphs', 'arcCompletion', 'dialogue', 'manifestations', 'systemPanels', 'soundscapes', 'soundCues', 'creatureEvents',
     ]);
     const serialized = JSON.stringify(HARNESS_CHAPTER_RESPONSE_SCHEMA);
-    for (const forbidden of ['blocks', 'memory', 'metadata', 'status', 'worldNotice', 'fateResult', 'blockId', 'url', 'asset', 'catalog', 'trackId', 'id"']) {
+    for (const forbidden of ['prose', 'blocks', 'memory', 'metadata', 'status', 'worldNotice', 'fateResult', 'blockId', 'url', 'asset', 'catalog', 'trackId', 'id"']) {
       expect(serialized, forbidden).not.toContain(`"${forbidden}"`);
     }
     for (const family of ['dialogue', 'manifestations', 'systemPanels', 'soundscapes', 'soundCues', 'creatureEvents'] as const) {
-      const items = HARNESS_CHAPTER_RESPONSE_SCHEMA.properties[family].items as { properties: { anchorText: unknown }; required: readonly string[] };
+      const items = HARNESS_CHAPTER_RESPONSE_SCHEMA.properties[family].items as { properties: { anchorText: unknown; occurrenceIndex: unknown }; required: readonly string[] };
       expect(items.properties.anchorText).toBeDefined();
       expect(items.required).toContain('anchorText');
+      // Disambiguation is available everywhere an anchor can repeat, and never required.
+      expect(items.properties.occurrenceIndex).toEqual({ type: 'integer', minimum: 0, description: expect.any(String) });
+      expect(items.required).not.toContain('occurrenceIndex');
     }
+  });
+
+  it('keeps the model-authored chapter body to one shallow array of paragraph strings', () => {
+    const body = HARNESS_CHAPTER_RESPONSE_SCHEMA.properties.paragraphs;
+    expect(body.type).toBe('array');
+    expect(body.items).toEqual({ type: 'string' });
+    // A one-string body cannot be requested, so a lost blank line cannot
+    // collapse a chapter into a single block.
+    expect(Object.keys(HARNESS_CHAPTER_RESPONSE_SCHEMA.properties)).not.toContain('prose');
   });
 
   it('keeps the thirteen-category memory contract on the separate extraction call only', () => {

@@ -5,9 +5,15 @@ import { isCompleteSystemEvent, normalizeManifestResponse } from '../../../narra
 import {
   applyHarnessChapterSignals,
   readHarnessChapterSignals,
-  splitHarnessProseParagraphs,
   type HarnessCastMember,
 } from './chapterSignals';
+import {
+  harnessChapterBody,
+  harnessChapterBodyWarnings,
+  normalizeHarnessParagraphs,
+  splitHarnessProseParagraphs,
+  type HarnessChapterBody,
+} from './chapterBody';
 import { HARNESS_MEMORY_CATEGORIES } from '../../../narrative/generation';
 import type { HarnessAcceptedChapterDraft, HarnessModelPlan, HarnessRejectedEventDiagnostic, HarnessSemanticEvent, HarnessWarning, HarnessEventDetails, HarnessCanonicalKind } from '../../../narrative/generation';
 
@@ -161,14 +167,43 @@ export interface HarnessResponseAcceptanceOptions {
 }
 
 /**
- * Prose is the authoritative chapter. The HARNESS splits it into canonical
- * SEN blocks, matches every accepted signal to its exact prose anchor, builds
- * the detailed SEN structures, and resolves media through the equipped Media
- * Loadout. Any failure here removes optional structure, never readable prose.
+ * Reads the authoritative chapter body. `paragraphs` is the model-authored
+ * body and the only field the response schema requests. A reply that carries
+ * readable prose without it is still recovered rather than lost.
+ */
+const acceptedChapterBody = (
+  parsed: Record<string, unknown>,
+  warnings: HarnessWarning[],
+): HarnessChapterBody | undefined => {
+  const paragraphs = normalizeHarnessParagraphs(parsed.paragraphs);
+  if (paragraphs) {
+    if (parsed.prose !== undefined) {
+      warnings.push({
+        code: 'competing_prose_ignored',
+        message: 'The harness ignored a prose field because the paragraphs array is the authoritative chapter body.',
+      });
+    }
+    return harnessChapterBody(paragraphs);
+  }
+  const prose = nonEmptyString(parsed.prose);
+  if (!prose) return undefined;
+  warnings.push({
+    code: 'chapter_body_recovered',
+    message: 'The provider returned chapter prose without the requested paragraphs array; the harness recovered its paragraphs from the blank lines in that prose.',
+  });
+  return harnessChapterBody(splitHarnessProseParagraphs(prose));
+};
+
+/**
+ * The accepted paragraphs are the chapter. The HARNESS builds canonical SEN
+ * blocks from them, matches every accepted signal to its exact prose anchor,
+ * builds the detailed SEN structures, and resolves media through the equipped
+ * Media Loadout. Any failure here removes optional structure, never readable
+ * prose.
  */
 const acceptedProseChapter = (
   parsed: Record<string, unknown>,
-  prose: string,
+  paragraphs: readonly string[],
   chapterNumber: number,
   warnings: HarnessWarning[],
   options: HarnessResponseAcceptanceOptions,
@@ -176,7 +211,7 @@ const acceptedProseChapter = (
   const signals = readHarnessChapterSignals(parsed);
   warnings.push(...signals.warnings);
   try {
-    const applied = applyHarnessChapterSignals(splitHarnessProseParagraphs(prose), signals.signals, options.cast ?? []);
+    const applied = applyHarnessChapterSignals(paragraphs, signals.signals, options.cast ?? []);
     warnings.push(...applied.warnings);
     const normalized = normalizeManifestResponse(JSON.stringify({ blocks: applied.blocks }), chapterNumber);
     const blocks = normalized.blocks.map(block => {
@@ -190,6 +225,9 @@ const acceptedProseChapter = (
     });
     const media = acceptChapterMedia(blocks, options.mediaCatalog);
     for (const warning of normalized.diagnostics.warnings) {
+      // Chapter scale is a HARNESS measurement against the HARNESS target and
+      // is reported once as `chapter_scale_below_target`; the SEN normalizer's
+      // own floor would only repeat it against a different number.
       if (warning.code === 'under-minimum-word-count') continue;
       warnings.push({
         code: warning.code === 'optional-field-removed'
@@ -239,23 +277,25 @@ export const acceptHarnessModelResponse = (
   const parsed = parseJsonObject(raw);
   if (parsed) {
     appendIgnoredIdentityWarning(parsed, warnings);
-    // The model prose is the authoritative chapter; the HARNESS keeps it as
-    // written and derives its own paragraph blocks from it.
-    const prose = nonEmptyString(parsed.prose);
-    if (!prose || looksLikeRefusal(prose)) {
+    // The model paragraphs are the authoritative chapter. The HARNESS keeps
+    // every paragraph's text exactly as written, derives the readable prose
+    // from them, and builds one ordered SEN block per paragraph.
+    const body = acceptedChapterBody(parsed, warnings);
+    if (!body || looksLikeRefusal(body.prose)) {
       return {
         accepted: false,
-        reason: 'The provider response did not contain usable chapter prose.',
+        reason: 'The provider response did not contain a usable chapter body.',
         warnings,
       };
     }
     if (parsed.blocks !== undefined) {
       warnings.push({
         code: 'competing_prose_ignored',
-        message: 'The harness ignored a blocks field because prose is the authoritative chapter body.',
+        message: 'The harness ignored a blocks field because the paragraphs array is the authoritative chapter body.',
       });
     }
-    const structured = acceptedProseChapter(parsed, prose, chapterNumber, warnings, options);
+    warnings.push(...harnessChapterBodyWarnings(body.metrics));
+    const structured = acceptedProseChapter(parsed, body.paragraphs, chapterNumber, warnings, options);
     const title = nonEmptyString(parsed.title);
     if (!title) {
       warnings.push({
@@ -267,7 +307,9 @@ export const acceptHarnessModelResponse = (
     return {
       accepted: true,
       draft: {
-        prose,
+        paragraphs: body.paragraphs,
+        prose: body.prose,
+        metrics: body.metrics,
         ...(structured?.blocks ? { blocks: structured.blocks } : {}),
         ...(structured?.audioMoments ? { audioMoments: structured.audioMoments } : {}),
         ...(structured?.soundscapes ? { soundscapes: structured.soundscapes } : {}),
@@ -281,14 +323,15 @@ export const acceptHarnessModelResponse = (
     };
   }
 
-  const prose = recoverPlainProse(raw);
-  if (!prose) {
+  const recovered = recoverPlainProse(raw);
+  if (!recovered) {
     return {
       accepted: false,
       reason: 'The provider response could not be recovered as usable chapter prose.',
       warnings,
     };
   }
+  const body = harnessChapterBody(splitHarnessProseParagraphs(recovered));
   warnings.push(
     {
       code: 'plain_prose_recovery',
@@ -298,11 +341,14 @@ export const acceptHarnessModelResponse = (
       code: 'missing_title',
       message: `The provider response had no usable title; the harness assigned ${chapterTitleFallback(chapterNumber)}.`,
     },
+    ...harnessChapterBodyWarnings(body.metrics),
   );
   return {
     accepted: true,
     draft: {
-      prose,
+      paragraphs: body.paragraphs,
+      prose: body.prose,
+      metrics: body.metrics,
       title: chapterTitleFallback(chapterNumber),
       titleSource: 'harness-fallback',
       responseMode: 'plain-prose-recovery',

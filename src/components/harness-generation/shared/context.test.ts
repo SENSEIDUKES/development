@@ -12,7 +12,8 @@ const fixture = () => {
       id: `chapter-${chapterNumber}`, storyId: story.id, attemptId: `attempt-${chapterNumber}`,
       foundationRevisionId: foundation.id, storyInformationPacketId: `context-${chapterNumber}`,
       chapterNumber, title: `Chapter ${chapterNumber}`, titleSource: 'model',
-      prose: `Scene ${chapterNumber}. ` + 'The tide rises. '.repeat(80), eventIds: [],
+      prose: `Scene ${chapterNumber}. ` + 'The tide rises. '.repeat(80), paragraphs: [`Scene ${chapterNumber}.`, 'The tide rises. '.repeat(80).trim()],
+      metrics: { wordCount: 241, paragraphCount: 2, meetsScaleTarget: false }, eventIds: [],
       responseMode: 'json', createdAt: 'a', committedAt: 'b', mediaLoadout: { capturedAt: 'a', soundscapes: [], soundCues: [] },
     });
   }

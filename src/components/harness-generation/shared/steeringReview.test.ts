@@ -61,7 +61,7 @@ describe('Steering review regressions', () => {
     expect(context.committedChapters[0].events[0].details).toEqual(state.events[0].details);
     const prompt = buildHarnessGenerationPrompt({ storyId: story.id, attemptId: 'tiny', model: 'fixture',
       capaPrompt: state.attempts[0].capaPrompt, storyInformation: context,
-      immediateChapterRequest: { chapterNumber: 2, continuation: true } });
+      immediateChapterRequest: { chapterNumber: 2, continuation: true, chapterScale: { minWords: 1_800, maxWords: 2_500 } } });
     const evidence = JSON.parse(prompt.userPrompt.split('COMMITTED STORY EVIDENCE\n')[1].split('\nFROZEN STORY SEED')[0]);
     expect(evidence.priorChapters[0].semanticEvents[0].details).toMatchObject({
       speech: { speaker: 'Iven', quote: '"Stay together."' }, mechanics: { value: '16' },

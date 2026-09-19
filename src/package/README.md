@@ -12,7 +12,7 @@ not a build convenience.
 
 ## Canonical UI owners
 
-The UI repository owns `@seihouse/ui@0.4.0` (universal primitives and experience tokens) and `@seihouse/library-ui@0.4.0` (Celestial Library components). Development pins reproducible private tarballs in `vendor/`. SEN depends on universal UI, exposes `NarrativePresentationProvider`, and has no Library UI import, re-export, or dependency. Library's `LibraryPresentationProvider` supplies the branded components without copying them.
+The UI repository owns `@seihouse/ui@0.4.0` (universal primitives and experience tokens) and `@seihouse/library-ui@0.5.0` (stateless Celestial Library presentation). Development pins reproducible private tarballs in `vendor/`. SEN depends on universal UI, exposes `NarrativePresentationProvider`, and has no Library UI import, re-export, or dependency. Library's `LibraryPresentationProvider` supplies the branded components and host asset locations without copying either into SEN.
 
 The old `@seihouse/sen/ui` and `@seihouse/sen/library` UI entries are removed in SEN 0.4.0; import components directly from Library UI. All narrative feature entries remain. See [migration evidence](../../docs/library-ui-migration.md).
 
@@ -42,10 +42,11 @@ Workshop and the packages always render the same source.
   output directory, stylesheet, assets, forbidden bundle contents, and the
   smoke-test contract. The build, boundary check, finalize step, and smoke
   test all read it.
-- `scripts/checkPackageBoundaries.mjs` — walks the real import graph from every
-  published entry and fails if one reaches the Workshop shell, a preview, a
-  mock, a locked `reference/` replica, a test, `src/server/`, or — for SEN —
-  anything Library owns.
+- `scripts/ownershipInventory.mjs` and `scripts/ownershipGraph.mjs` — classify
+  every production source file before checking public closures. They reject
+  unowned/unexported capabilities, cross-owner source imports, Workshop/mock
+  or host defaults, undeclared dependencies, cycles and wrong dependency
+  direction. `checkPackageBoundaries.mjs` runs this same check; no waivers remain.
 - `vite.package.shared.ts` — the shared build; each package's entry list comes
   from its own `package.json` `exports`, so the manifest is the single source
   of truth for what ships.

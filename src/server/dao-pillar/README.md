@@ -45,16 +45,20 @@ when today is still open, yesterday. A theme change never resets it.
 
 ## Identity and configuration
 
-Identity is the Energy resolver (`createEnergyPrincipalResolver`): `Bearer dev:<uid>` in
-development, a verified token in production, mode shared through `ENERGY_IDENTITY_MODE`.
+Identity comes from the shared host-owned principal resolver under
+`src/server/identity/`: `Bearer dev:<uid>` in Development and a verified token
+in production. The mode is shared through `LIBRARY_IDENTITY_MODE`; Energy does
+not own authentication.
 
 Environment: `DAO_PILLAR_ACTIVE_THEME` (default `beta-test`), `DAO_PILLAR_TIME_ZONE` and
 `DAO_PILLAR_STARTS_ON` (override the active theme's calendar without a code change).
 
 ## HTTP boundary
 
-`handleDaoPillarHttp` serves `/api/dao-pillar` (`vite.config.ts` in the dev server,
-`api/dao-pillar.js` on Vercel via `scripts/buildDaoPillarApi.mjs`):
+`handleDaoPillarHttp` is routed through the consolidated
+`/api/library-economy?capability=dao-pillar` host boundary
+(`src/server/developmentApis.ts` in DEV and `api/library-economy.js` for the
+reference Vercel bundle):
 
 - `GET` → `DaoPillarCalendarSnapshot` (theme, cycle, today, thirty tiles, streak).
 - `POST { operation: 'claim' }` → `DaoPillarClaimResponse` (`claimed` | `already-collected`,
@@ -66,11 +70,11 @@ As with Energy, DEV runs the **in-memory adapters** for previewing: claims and Q
 life of the dev server or Vercel instance and reset with it. `PostgresDaoPillarRepository` +
 `PostgresQiLedger` over `database/migrations/20260918_002_qi_ledger.sql` and
 `20260918_003_dao_pillar_calendar.sql` are the durable reference implementation, proven by
-running both migrations verbatim on PGlite. Production's Qi balance lives on the Light-Novels
-profile (`daoXp` / `heavenlyQi`, moved by `awardDirectQi`); a host adopting this system either
-applies the ledger migration beside that profile or implements `QiLedger` and
-`DaoPillarRepository` against its own store. The Cave mirrors each delivered deposit onto the
-profile it holds (`applyQiDeposit`), so rank and balance update without a reload.
+running both migrations verbatim on PGlite. The authoritative DEV Qi balance
+is the ledger projection. Profile consumes that projection and refreshes it
+after a delivered claim; it does not mirror or increment a second balance. A
+future production host must implement `QiLedger` and `DaoPillarRepository`
+against its selected store without reintroducing a parallel profile authority.
 
 ## Verification
 

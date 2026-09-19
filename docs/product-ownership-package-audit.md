@@ -442,3 +442,93 @@ The isolated passes indicate the full-suite failures are load-sensitive timeouts
 ## Part One change attestation
 
 **Verified at delivery:** The audit branch is based on the exact approved `main` commit above. The only intended tracked change is this report. No product code, package manifest, export, schema, API, migration, test, build script, or runtime behavior is changed by Part One.
+
+---
+
+## Part Two implementation status (2026-09-19)
+
+This section is a post-audit implementation record. The facts above remain the
+verified Part One baseline at `60934256`; they have not been rewritten as if the
+problems never existed.
+
+### Implemented ownership map
+
+| Owner | Implemented responsibility |
+| --- | --- |
+| `@seihouse/ui@0.4.0` | Universal primitives and tokens; unchanged. |
+| `@seihouse/library-ui@0.5.0` | Stateless Celestial icons, Cave backdrop/particles, manifestation chamber/scenes/vessel and journey scrubber. Coordinated UI PR #68, source `04b8949`. |
+| `@seihouse/sen@0.5.0` | Neutral story/chapter/block contracts, Reader and Codex, Color Codes/cards, translation/accessibility, story foundation/import/export, portable media intent/provenance/playback, neutral manifestations, HARNESS canonical state/continuity/CAPA/recovery and generic usage authorization. |
+| `@seihouse/library@0.3.0` | Profile/Cave, Energy client contracts, QI/cultivation, DAO Pillar, Relics, shell/navigation, Home/discovery, branded Story Seed, first-party HARNESS composition, media entitlement policy and Celestial manifestation orchestration. |
+| Library host/backend | Identity verification, APIs, provider access, Energy/QI/DAO/Relics transaction authority, concrete catalogs/assets/storage and DEV reference adapters. |
+| Workshop | Legacy Chapter Generation diagnostics, previews, fixtures, mock stores, local persistence and simulation. |
+| Tooling | Complete ownership inventory/graph, builds, pack verification and API bundlers. |
+| Deferred | Cross-product provenance remains unexported pending an approved cross-product owner. No fifth package was created. |
+
+### Public package changes
+
+SEN now deliberately exports root, `presentation`, `contracts`,
+`reader-runtime`, `reader-chamber`, `reader-codex`, `color-codes`, `cards`,
+`manifestations`, `audio`, `story-seed`, `generation`, `harness-generation`,
+`translation`, `arc-goals`, and `styles.css`. The deprecated `codex-cards` and
+legacy `chapter-generation` entries are removed.
+
+Library now deliberately exports root, `presentation`, `profile`, `energy`,
+`cultivation`, `dao-pillar`, `relics`, `shell`, `home`, `story-seed`,
+`generation`, `media`, `manifestations`, and `styles.css`.
+
+### Implemented corrections
+
+- Every production source under `src`, `api`, `database` and `scripts` is
+  classified. New source fails closed. Published closure and complete owner
+  reachability are both checked, so an unexported capability cannot be hidden.
+- Direct cross-owner source imports, package/source cycles, wrong SEN direction,
+  undeclared dependencies, dynamic imports and embedded mock/Workshop/host
+  defaults are rejected. The former 11 mock waivers are gone.
+- Shared story, chapter, block, translation, voice, generation, media and Reader
+  runtime contracts live in neutral SEN modules. Reader/Codex edits append
+  identity-addressed deltas to the HARNESS correction journal; committed prose
+  and newly generated entities remain canonical.
+- Reader/Codex require explicit host state, narration, playback, preferences,
+  glossary, voice and image ports. SEN has no first-party catalog, CDN, premium,
+  authentication, Energy, QI, Library UI or Workshop dependency.
+- Story Seed is split: SEN owns portable foundation/schema/repository/editor;
+  Library owns authentication UI, Story Bank, Help and the branded journey.
+- Stateless Celestial presentation moved to Library UI. Library retains route,
+  account, economy and orchestration decisions. Concrete asset locations moved
+  into a host-supplied `LibraryAssets` catalog.
+- Profile reads QI from the single ledger projection and Energy from its own
+  Library client. DAO claims and cultivation claims never send an amount from
+  the browser. Relics use one Library contract projected from the existing v3
+  server repository; reveal acknowledgment is not an award operation.
+- SEN's generic `NarrativeUsagePort` carries only operation, capability and
+  story identity. Library's trusted Energy adapter binds verified principal,
+  action policy and story authorization. Provider output is checkpointed before
+  settlement; unknown outcomes retain the hold and fail closed on retry.
+- Legacy Chapter Generation is unpublished Workshop diagnostics. HARNESS is the
+  only canonical generated-story state owner in the package graph.
+
+### Deliberately unresolved outside DEV
+
+No production repository, production data, production service, cloud/database
+choice, secret, billing connection or transfer was changed. PGlite/in-memory
+stores and concrete Gemini/HTTP implementations are DEV reference adapters,
+not a production architecture decision. A settled-refund product policy remains
+unselected; no client refund or destructive charge deletion was added.
+
+### Part Two verification record
+
+The maintained commands and final PR/CI result are recorded here before merge:
+
+| Verification | Result |
+| --- | --- |
+| Ownership graph | **Pass:** 824 classified source files; 169 SEN and 160 Library files reachable; zero violations or waivers. Documentation is checked against real manifest exports. |
+| TypeScript project build | **Pass.** |
+| Focused ownership/HARNESS/economy/Profile/media tests | **Pass.** Includes journal reload/failure/new-entity retention, Energy reservation/settlement/unknown-outcome recovery, QI/DAO/Relics authority and host-asset injection. |
+| Full unit suite, default timeout | **1,141 pass, 2 skip, 1 aggregate failure:** only the known DAO Postgres first-test 5-second cold-start timeout; no assertion mismatch. This is narrower than the Part One baseline. |
+| Full unit suite, parallel with database headroom | **Pass once:** 134 files passed, 2 skipped; 1,142 tests passed, 2 skipped. A later repeat hit the existing 60-second ceiling in the Chapter-50 continuation test under worker contention; that test passed alone in 22 seconds. |
+| Full unit suite, stable final run | **Pass:** 134 files passed, 2 skipped; 1,142 tests passed, 2 skipped with one worker and 20-second database test/hook headroom. This is the final regression result. |
+| Packed SEN consumer | **Pass:** custom branding/account/storage types, all 16 exports, no Library UI/audio-player install, AI omitted. |
+| Packed Library consumer | **Pass:** all 14 exports install, typecheck and bundle on top of packed SEN and the two pinned UI artifacts. |
+| Workshop and API build | **Pass:** Vite application plus Chapter Generation diagnostic, HARNESS, Story Seed, Codex voice, translation and consolidated Library economy API bundles. |
+| Browser/accessibility | **Pass:** real Chromium at 390px and 1440px loaded Profile, Story Seed and HARNESS without console errors or horizontal overflow; the focused accessibility/browser set passed 26/26. Browser verification also caught and removed a stale Workshop-only `isPremium` field before delivery. |
+| Diff hygiene | **Pass:** `git diff --check`. |

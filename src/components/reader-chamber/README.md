@@ -384,7 +384,7 @@ and the Codex Card ambience/accent helpers per the Reader Codex README:
 - `development/ContextInspector.tsx` → `src/components/ContextInspector.tsx`
 - Style changes from `shared/reader-chamber.css` → merge back into `src/index.css`
 - `src/audio/inlineAudio.ts` → the provider-neutral action and catalog-resolution
-  contract, alongside the production copy of the approved Library Cue catalog
+  contract; the host must supply its own approved catalog and media resolver
 
 Workshop-only — never transfer: `shared/stubs.ts`, `shared/types.ts` (production
 `src/types.ts` is authoritative), `shared/trackLibrary.ts` (production

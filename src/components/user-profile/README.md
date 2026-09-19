@@ -8,9 +8,20 @@
   `src/hooks/useUserProfile.ts`
 - **Workshop preview:** `?preview=user-profile`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-18
+- **Last Workshop update:** 2026-09-19
 - **Last source comparison:** 2026-09-10
-- **Replica status:** under refinement
+- **Replica status:** `@seihouse/library/profile` surface consuming separate Library economy capabilities
+
+## Current ownership (2026-09-19)
+
+Profile owns the Celestial Library account surface and orchestration; it does
+not own Energy, Qi, rewards, or Relic authority. Energy comes from
+`@seihouse/library/energy`. Rank and cultivation progress are projections of
+the host-authenticated Qi ledger exposed through
+`@seihouse/library/cultivation`. Dao Pillar delivers an idempotent server reward
+and then signals Profile to refresh that projection. Relics arrive through the
+read-only Library Relics client. Host authentication, persistence, roles, and
+administration remain outside the package.
 
 The page is reached in production from `src/App.tsx`, which renders `<UserProfile currentUser
 stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Light-Novels`
@@ -18,9 +29,9 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
-- **2026-09-18 Daily Dao Pillar calendar:** The Home card is now a link to `/home/dao-pillar`, which holds the new server-owned 30-day reward calendar (`src/components/dao-pillar`, `src/server/dao-pillar`): the active Beta Test theme banner over a five-by-six grid of scheduled days, collected / available today / locked / missed states, 500 Qi milestones on days 7, 14, 21 and 28, and a one-claim-per-day collection validated and deposited on the server. The card shows the server streak, whether today is open or collected, and the amount collected today. A delivered claim is mirrored onto the profile through the new optional `applyQiDeposit` controller member so rank and balance update without a reload. `UserProfileDaoPillarPanel.tsx` (refinement, cracked pillar, repair) was removed from the Cave; its legacy controller members stay on the contract for the locked reference page. Public views never mount the calendar.
+- **2026-09-18 Daily Dao Pillar calendar:** The Home card is now a link to `/home/dao-pillar`, which holds the new server-owned 30-day reward calendar (`src/components/dao-pillar`, `src/server/dao-pillar`): the active Beta Test theme banner over a five-by-six grid of scheduled days, collected / available today / locked / missed states, 500 Qi milestones on days 7, 14, 21 and 28, and a one-claim-per-day collection validated and deposited on the server. The card shows the server streak, whether today is open or collected, and the amount collected today. The original local deposit mirror was replaced on 2026-09-19 by a refresh of the authoritative Qi-ledger projection. `UserProfileDaoPillarPanel.tsx` (refinement, cracked pillar, repair) was removed from the Cave; its legacy controller members stay on the contract for the locked reference page. Public views never mount the calendar.
 
-- **2026-09-18 Energy emblem:** The Home Energy emblem now reads the live server-owned balance through the shared Energy client (`src/components/energy`) and opens the new `/home/energy` Cave destination holding the Energy panel (balance, purpose, example costs, recent activity, development controls when the server exposes them). `accountControls.energyBalance` was removed: the Cave keeps no Energy number of its own, and without an `EnergyClientProvider` the emblem stays a plain label. Public views never mount it. Chapter generation and every other generation flow remain unconnected to Energy.
+- **2026-09-18 Energy emblem:** The Home Energy emblem now reads the live server-owned balance through the shared Energy client (`src/components/energy`) and opens the new `/home/energy` Cave destination holding the Energy panel (balance, purpose, example costs, recent activity, development controls when the server exposes them). `accountControls.energyBalance` was removed: the Cave keeps no Energy number of its own, and without an `EnergyClientProvider` the emblem stays a plain label. Public views never mount it. HARNESS uses only SEN's neutral usage port; the Library host connects that port to Energy on the server.
 
 - **2026-09-18 public-view exit:** The header eye now exits public view directly, returning to the prior private page or Home for direct public links. Removed the redundant action toolbar; Search and desktop navigation retain their existing Exit action.
 
@@ -227,14 +238,15 @@ shared/       — the services port, domain types, and the unforked offering-wee
 | `publicProfile.ts` | The public view's domain: the visibility configuration, the stat/highlight shapes, and the record → presentation build |
 | `displayName.ts` | The twelve visible-character display-name rule (grapheme counting and clamping) |
 | `caveEnvironment.ts` | The five stock cave environments, the destination tile art, the emblem, the motto, and the stage helper |
-| `rankVisuals.ts` | **The canonical rank colour system** — the ten ranks, their Qi thresholds, and each rank's colour identity as data, with the renderers every surface consumes |
-| `qi.ts` | Rank progression maths and the Cultivator Aura style helpers, derived from `rankVisuals.ts` |
+| `src/library/cultivation/rankVisuals.ts` | **The canonical Library rank colour system** — the ten ranks, their Qi thresholds, and each rank's colour identity as data |
+| `src/library/cultivation/progression.ts` | Rank progression maths and Cultivator Aura helpers derived from the Qi-ledger projection |
 | `chapterWritingStyle.ts` | Unchanged presentation values from production |
 | `userProfile.css` | The two rank-agnostic aura text classes plus the Cave ornament (title presence, rules, plaques, portrait ring) and the identity rank row, bio, and Boost styles |
 
-`shared/` retains the domain types, offering-week helper, and service port. The port includes
-optional special-Qi unlocks, the legacy daily-claim status the locked reference still reads, and
-the optional `applyQiDeposit` mirror the Daily Dao Pillar calendar uses after a delivered claim.
+`shared/` retains Profile types, the offering-week helper, and the host service
+port. Cultivation and Qi contracts live under `src/library/cultivation/`.
+Legacy daily-claim members remain only for the locked reference; the active Cave
+refreshes its Qi projection after a Dao Pillar reward.
 
 ## The Cultivator Cave
 
@@ -787,9 +799,9 @@ profile needs a host-supplied record and its own authorization; this change adds
 
 `UserProfile.accountControls` accepts host-owned `inboxUnreadCount`, (`energyBalance` was removed on 2026-09-18 in favour of the shared Energy client),
 `onOpenInbox`, `onOpenStore`, and `onRedeemCode`. Energy is generation currency, independent
-of Qi; missing Energy reads Unavailable, while zero remains zero. The development wrapper
-supplies sample 120 Energy and two unread messages. No account schema or persistence is added.
-Hosts should supply their current balance/count and destination callbacks. Without callbacks,
+of Qi; missing Energy reads Unavailable, while zero remains zero. The Workshop host
+supplies a fixture Energy client and two unread messages. No account schema or persistence is added.
+Hosts should supply their Energy provider, current count, and destination callbacks. Without callbacks,
 the Cave opens explicit unavailable previews at `/home/inbox`, `/home/store`, and
 `/settings/redeem-code`, each with a return control. These routes do not pretend to retrieve
 messages, buy items, or redeem codes. `/settings` and `/settings/switchboard` stay compatible.

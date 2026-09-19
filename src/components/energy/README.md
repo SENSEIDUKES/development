@@ -9,11 +9,12 @@
 - **Last Workshop update:** 2026-09-18
 - **Last source comparison:** 2026-09-18 (Light-Novels inspected for authentication,
   idempotency and Postgres conventions; it has no Energy system to compare against)
-- **Status:** approved reconstruction (Workshop Replica Mode B), phase 1 skeleton
+- **Status:** approved reconstruction (Workshop Replica Mode B), packaged Library capability
 
-Energy is the one meter that will eventually gate every SEN generation feature. This phase
-builds the standalone system and its reusable surfaces. **No generation flow spends Energy
-yet**, and `src/server/energy/energyBoundary.test.ts` fails if one starts to.
+Energy is a Library economy capability. `@seihouse/library/energy` publishes its
+client-safe contracts, provider, hooks, and screens. SEN sees only its neutral
+usage-authorization port; it never imports balances, prices, account types, or
+transaction models.
 
 ## What lives where
 
@@ -28,10 +29,9 @@ yet**, and `src/server/energy/energyBoundary.test.ts` fails if one starts to.
 | Insufficient state | `development/EnergyInsufficientState.tsx` | "This needs ⚡ 3 and you have ⚡ 1." with an Open Energy action. |
 | Energy panel | `development/EnergyPanel.tsx` | Balance, what Energy is for, example costs, recent activity, development controls when the server exposed them. |
 
-There is no `reference/` folder: nothing was imported from production. The pieces depend on
-`@seihouse/ui` only, so a SEN generation surface can adopt them later without reaching into
-Library. They are not yet exported from either package barrel; that decision belongs to the
-phase that wires generation.
+There is no `reference/` folder: nothing was imported from production. The pieces are exported
+from `@seihouse/library/energy`. Portable generation uses `@seihouse/sen/generation` usage
+contracts and a host adapter; it does not adopt Library Energy UI or domain types.
 
 ## Profile integration
 
@@ -50,6 +50,17 @@ plain label and no request is made. The public view never mounts it. The former
   them and the server refuses the calls anyway.
 - Double-clicks cannot double-grant: each grant click mints an idempotency key that the server
   honours once.
+
+## Generation authorization
+
+`src/server/energy/narrativeUsage.ts` implements SEN's neutral authorization
+port for the Library host. Reservations, settlement, release, and recovery are
+server-owned and idempotent. `narrativeOperation.ts` checkpoints before a
+provider call and durably records the provider result before settlement. An
+unknown provider outcome keeps the hold and fails closed on retry instead of
+calling the provider twice. There is no client-authorized refund. Any future
+settled-charge refund must be an append-only server adjustment that preserves
+the original charge.
 
 ## Transfer
 

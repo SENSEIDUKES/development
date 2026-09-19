@@ -40,11 +40,11 @@ The Cave's **Daily Dao Pillar card is a link** to `/home/dao-pillar`. It shows t
 whether today is open or collected, and the amount collected today — all read from the same
 snapshot the destination renders (`daoPillarCardLabels`). Collecting happens on the open tile.
 
-After a delivered claim the hook calls `onRewardDelivered`; `UserProfile.tsx` passes the Qi to
-the controller's `applyQiDeposit`, so the profile's cultivation fields, rank and bar update
-without a reload. The Workshop mock adds the amount locally; a production host refreshes the
-profile after its own persistence. Without a `DaoPillarClientProvider` the card says the Dao
-Pillar is not connected and the destination explains the same. Public views never mount it.
+After a delivered claim the hook calls `onRewardDelivered` as a refresh signal.
+The server has already deposited the idempotent reward through the Qi ledger;
+Profile re-reads that ledger projection and never adds a parallel local
+balance. Without a `DaoPillarClientProvider` the card says the Dao Pillar is
+not connected and the destination explains the same. Public views never mount it.
 
 The legacy controller members (`dailyClaim`, `handleCheckIn`, `handleRepairPillar`, `isCracked`,
 `daysTo3`, `daysTo10`) stay on the services contract because the locked reference page still

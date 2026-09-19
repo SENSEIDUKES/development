@@ -1,5 +1,10 @@
 # Chapter Generation
 
+> **Ownership status (2026-09-19):** This is a Workshop-only legacy
+> diagnostic. HARNESS is the canonical generation owner. Nothing in this
+> folder is exported by `@seihouse/sen`; retained adapters may be deleted once
+> HARNESS parity is proven.
+
 - **Source repository:** `SENSEIDUKES/Light-Novels`
 - **Source location:** `src/hooks/chapterPipeline/chapterBatch.ts`, `src/aiRouter.ts`, `src/server/routes/storyRouter.ts`, and the Story Seed, prompt, handoff, formatting, and context dependencies
 - **Workshop preview:** `?preview=chapter-generation-flow`
@@ -141,7 +146,7 @@ ID, voice key, provider ID, or catalog row.
 
 After the final Process result (including any repaired chapter), application code
 validates each intent against its exact block and action phrase, resolves it
-deterministically through the approved Library Cue catalog, and persists only
+deterministically through the host-supplied cue catalog, and persists only
 successful annotations on `ChapterContent.audioMoments`. Model proposals are
 removed from block metadata after this resolution. A separate optional server
 voice resolver may append only completed dialogue artifacts after binding them
@@ -355,12 +360,12 @@ per-chapter coverage.
 
 ## Workshop history
 
-- **2026-08-21:** Published the Development one-/five-chapter flow,
+- **2026-08-21:** Historically published the Development one-/five-chapter flow,
   Diagnostics, Reader handoffs, batch contracts, Story Seed packet adapter,
   and reusable four-stage pipeline through
-  `@seihouse/sen/chapter-generation`. The Workshop Development pane now
-  consumes that entry; the server provider/API, deterministic Workshop model
-  adapters, fixtures, and locked Reference inspector remain excluded.
+  through a dedicated SEN entry. That entry was removed on 2026-09-19 when
+  HARNESS became the sole canonical generation owner; this flow now remains
+  reachable only from Workshop diagnostics.
 - **2026-08-20:** Disconnected chapter generation from voice synthesis entirely. The dialogue-audio resolver, its chapter-dialogue annotation path, and the Codex voice-clip write-back are removed from the handler, the Vercel entry point, and the Development server. Generated dialogue now produces no provider call, no voice annotation in chapter prose, and no Character voice clip. Worldcues are unchanged and still resolve only curated sound effects for audible narrative actions; Character voice moved to the Reader Codex signature quote.
 - **2026-08-20:** Removed the `CHAPTER_GENERATION_ACCESS_TOKEN` shared bearer token. Chapter generation and the Codex signature-quote audio endpoint no longer require an additional manually entered application token; server-only provider credentials remain private to the server, while same-origin and per-visitor request budgets protect the live Development calls from casual public abuse.
 

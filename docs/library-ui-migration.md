@@ -1,17 +1,17 @@
-# Library UI ownership migration — 2026-09-06
+# Library UI ownership migration — updated 2026-09-19
 
 | Package | Repository | Ownership |
 | --- | --- | --- |
 | `@seihouse/ui@0.4.0` | UI | Universal primitives and experience tokens |
-| `@seihouse/library-ui@0.4.0` | UI | Celestial Library branded components, glyphs, particles, glass and spectral styles |
-| `@seihouse/sen@0.4.0` | development | Portable narrative behavior and host presentation contracts |
-| `@seihouse/library@0.2.0` | development | First-party features and Library presentation composition |
+| `@seihouse/library-ui@0.5.0` | UI | Stateless Celestial Library components, glyphs, particles, glass and spectral styles |
+| `@seihouse/sen@0.5.0` | development | Portable narrative behavior, neutral UI, and host contracts |
+| `@seihouse/library@0.3.0` | development | First-party behavior, orchestration, and Library presentation composition |
 
-UI PR [#53](https://github.com/SENSEIDUKES/UI/pull/53) merged first. The vendored UI artifacts are built from its merge commit; see [provenance](../vendor/ui-artifacts.json). Universal UI does not depend on Library UI. SEN does not import, re-export, bundle, or depend on Library UI or Library. Library links to SEN and Library UI as peers.
+UI PR [#53](https://github.com/SENSEIDUKES/UI/pull/53) established the original split. Coordinated UI PR [#68](https://github.com/SENSEIDUKES/UI/pull/68) completes the stateless presentation transfer used by the current artifacts; see [provenance](../vendor/ui-artifacts.json). Universal UI does not depend on Library UI. SEN does not import, re-export, bundle, or depend on Library UI or Library. Library links to SEN and Library UI as peers.
 
 ## Consumer integration
 
-All narrative feature subpaths remain: Color Codes, cards, Reader Chamber, Reader Codex, Manifestations, audio, Story Seed, Chapter Generation, Harness Generation, and the `codex-cards` compatibility alias. Their state, generation, storage, media, and event handlers retain their existing owners. The misleading SEN `ui` and `library` skin entries and their root/card Library component re-exports are removed. Universal card primitives remain available through `@seihouse/ui` and SEN's cards entry.
+The current SEN subpaths are documented in [`src/package/sen/README.md`](../src/package/sen/README.md). Chapter Generation is no longer public and remains a Workshop diagnostic while HARNESS is canonical. The former `codex-cards` compatibility entry is removed; its portable pieces are reachable through `reader-codex`. First-party state, storage, media catalogs, entitlements, and event orchestration are owned by Library or the host. Universal card primitives remain available through `@seihouse/ui` and SEN's cards entry.
 
 SEN's `presentation` entry exposes typed slots and `NarrativePresentationProvider`. Its defaults adapt universal SEIHouse primitives to existing narrative callbacks. Ambient decoration defaults to absent. Hosts can override individual slots; nested providers inherit the surrounding presentation. React 19 is the supported peer contract, matching canonical UI.
 
@@ -50,7 +50,7 @@ The only file retained under `src/components/library` is an import-only `Particl
 
 The local Light-Novels checkout still pins `@seihouse/sen` from `vendor/seihouse-sen-0.2.0-f7d119e.tgz`; it is not upgraded by this task. Its eventual upgrade must adopt the first-party presentation provider and the two UI artifacts. SEA-VAULT still pins UI 0.3.0 and is outside this migration. Other installations outside these checked repositories have not been audited.
 
-SEN retains its existing shrink-only ledger of 11 development mock integration edges; this migration does not claim to replace those host store/audio/haptic adapters. Live generation providers, authentication, storage backends, and production audio were not exercised by this presentation migration. UI artifacts remain private tarballs, not registry releases.
+The Part Two ownership guard has removed the former mock-integration waiver ledger. Published SEN now requires explicit host ports for accounts, storage, generation, media resolution, playback, and haptics; Workshop implementations are not reachable from its public graph. Live production providers and infrastructure remain outside this development reconstruction. UI artifacts remain vendored private tarballs, not registry releases.
 
 ## Deleted files
 

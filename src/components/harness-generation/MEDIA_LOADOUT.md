@@ -27,8 +27,8 @@ ledger is stored in the HARNESS workspace.
 
 ## Pack validation
 
-`src/audio/mediaPacks.ts` extends the existing `SceneAudioTrack` and
-`LibraryCue` contracts. Packs require a stable ID and semantic version, one
+`src/library/media/mediaPacks.ts` applies Library catalog and entitlement
+policy over SEN's portable `SceneAudioTrack` and cue contracts. Packs require a stable ID and semantic version, one
 declared pack type, display metadata, an explicitly selected relative JSON
 source path, its lowercase SHA-256 digest, and validated entries with public
 HTTPS audio URLs.
@@ -37,8 +37,8 @@ Validation rejects malformed or mixed entries, duplicate catalog identities,
 non-audio and non-JSON files, signed or credential-bearing URLs, credentials,
 provider secrets, executable/script/instruction fields, unsupported Cue
 categories, and conflicts with built-in catalog identities. The base
-`TRACK_LIBRARY` and Library Cue catalog remain the base experience; they were
-not repackaged.
+The first-party soundscape and cue catalogs live under `src/host/media/` and
+remain host records; they are not part of SEN or repackaged as portable data.
 
 The optional SPP host adapter in
 `src/workshop/previews/harness-generation/sppMediaPacks.ts` accepts only an

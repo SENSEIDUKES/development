@@ -12,6 +12,7 @@
     "build:package:library": "node scripts/requirePackageTypes.mjs library && vite build --config vite.library.config.ts && tsc -p tsconfig.library.json && node scripts/finalizePackage.mjs library",
     "check:ui-artifacts": "node scripts/checkUIArtifacts.mjs",
     "check:package-boundaries": "node scripts/checkPackageBoundaries.mjs",
+    "check:ownership": "node scripts/checkOwnership.mjs",
     "test:package": "npm run check:ui-artifacts && npm run check:package-boundaries && npm run build:package && node scripts/smokePackage.mjs sen && node scripts/smokePackage.mjs library",
     "validate:chapter-effects": "vitest run scripts/validateChapterEffectRules.test.ts",
     "test:chapter-manifestation": "vitest run src/components/chapter-manifestation",
@@ -44,6 +45,7 @@
     "vite": "latest"
   },
   "devDependencies": {
+    "@babel/parser": "^7.29.9",
     "@electric-sql/pglite": "^0.5.8",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^22.20.1",

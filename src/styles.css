@@ -309,6 +309,65 @@ body {
   color: rgba(236, 231, 221, 0.62);
 }
 
+/* Icons tab — each card displays the canonical Library UI glyph rather than
+   an exported image or copied path data, so the catalog remains an accurate
+   visual reference for the published component API. */
+.workshop-icons { margin-top: 2.5rem; }
+.workshop-icon-group + .workshop-icon-group { margin-top: 2.75rem; }
+.workshop-icon-group-header { margin-bottom: 1rem; }
+.workshop-icon-group-header h2 {
+  margin: 0;
+  color: rgba(236, 231, 221, 0.92);
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 500;
+}
+.workshop-icon-group-header p {
+  margin: 0.35rem 0 0;
+  color: rgba(236, 231, 221, 0.48);
+  font-size: 0.8rem;
+}
+.workshop-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 0.75rem;
+}
+.workshop-icon-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(236, 231, 221, 0.12);
+  border-radius: 0.9rem;
+  background: rgba(8, 10, 16, 0.68);
+  padding: 0.75rem;
+}
+.workshop-icon-preview {
+  display: grid;
+  min-height: 6.75rem;
+  place-items: center;
+  border: 1px solid rgba(4, 172, 255, 0.14);
+  border-radius: 0.65rem;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(4, 172, 255, 0.14), transparent 62%),
+    rgba(0, 0, 0, 0.42);
+  color: #e8e0c8;
+}
+.workshop-icon-preview svg { width: auto; height: auto; }
+.workshop-icon-card h3 {
+  margin: 0.7rem 0 0;
+  color: rgba(236, 231, 221, 0.9);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.workshop-icon-card code {
+  display: block;
+  margin-top: 0.35rem;
+  overflow-wrap: anywhere;
+  color: rgba(4, 172, 255, 0.76);
+  font-size: 0.65rem;
+  line-height: 1.35;
+}
+
 .workshop-orbit {
   position: absolute;
   top: 50%;

@@ -6,6 +6,7 @@ import {
   type WorkshopSection,
 } from './manifest';
 import { LibraryComponentsGrid } from './LibraryComponents';
+import { IconsGrid } from './Icons';
 import { ProvenanceTab } from './ProvenanceTab';
 
 const HOME_TABS: ReadonlyArray<{ id: WorkshopSection; label: string; description: string }> = [
@@ -14,6 +15,7 @@ const HOME_TABS: ReadonlyArray<{ id: WorkshopSection; label: string; description
   { id: 'sen', label: 'SEN', description: 'Reading, Codex, and chapter generation systems.' },
   { id: 'shared', label: 'Shared', description: 'Reusable pieces and standalone visual previews.' },
   { id: 'library-components', label: 'Library Components', description: 'Reusable Celestial Library primitives, rendered live.' },
+  { id: 'icons', label: 'Icons', description: 'Every current custom Celestial Library SVG glyph, rendered live.' },
   { id: 'provenance', label: 'Provenance', description: 'Reusable provenance marks, records, evidence contracts, and future connection maps for AI-generated assets.' },
 ];
 
@@ -218,6 +220,7 @@ export function WorkshopHome() {
                   ))}
                 </div>}
                 {tab.id === 'library-components' && <LibraryComponentsGrid />}
+                {tab.id === 'icons' && <IconsGrid />}
                 {tab.id === 'provenance' && <ProvenanceTab />}
               </>
             )}

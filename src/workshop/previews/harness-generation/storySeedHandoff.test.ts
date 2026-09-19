@@ -5,7 +5,12 @@ import { type HarnessGenerationRequest, type HarnessGenerationResponse } from '@
 import { handleHarnessGenerationHttp } from '../../../server/harness-generation/http';
 import type { HarnessTextGenerationRequest } from '../../../server/harness-generation/provider';
 import { createMockStorySeedRecord } from '../story-seed/previewData';
-import { createHarnessFoundationFromStorySeed } from './storySeedHandoff';
+import {
+  createHarnessFoundationFromStorySeed,
+  createOfficialCapaDefaultLoadout,
+  updateOfficialCapaStyle,
+} from './storySeedHandoff';
+import { OFFICIAL_STYLE_REFERENCES } from './officialCapaSkills';
 
 describe('Story Seed to Harness handoff', () => {
   it('copies the saved seed and Blueprint into a complete independent Foundation snapshot', () => {
@@ -71,6 +76,23 @@ describe('Story Seed to Harness handoff', () => {
       ...foundation,
       sourceSnapshot: undefined,
     })).not.toContain('originalLanguage');
+  });
+
+  it('changes only the Style slot and never changes Original Language or Translation', () => {
+    const record = createMockStorySeedRecord();
+    record.originalLanguage = 'ko';
+    const original = {
+      ...createOfficialCapaDefaultLoadout('chinese'),
+      translation: { id: 'manual.translation', version: '4.2.0' },
+    };
+    const changed = updateOfficialCapaStyle(original, 'japanese');
+
+    expect(changed).toEqual({ ...original, style: OFFICIAL_STYLE_REFERENCES.japanese });
+    expect(record.originalLanguage).toBe('ko');
+    expect(changed.translation).toEqual(original.translation);
+    expect(changed.author).toEqual(original.author);
+    expect(changed.pacing).toEqual(original.pacing);
+    expect(changed.continuity).toEqual(original.continuity);
   });
 
   it('carries the frozen source, latest revision, corrections, and continuation through reload and serialized HTTP to the provider', async () => {

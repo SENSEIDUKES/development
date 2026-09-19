@@ -874,7 +874,11 @@ export function HarnessGenerationWorkspace({
 
   const startFromStorySeed = (option: HarnessStorySeedOption) => {
     void run(async () => {
-      const created = await controller.createStory(option.foundation, option.originalLanguage);
+      const created = await controller.createStory(
+        option.foundation,
+        option.originalLanguage,
+        option.initialSkillLoadout,
+      );
       setSelectedStoryId(created.id);
       setManualStart(false);
     });

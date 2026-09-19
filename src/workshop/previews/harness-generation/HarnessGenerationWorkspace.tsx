@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
 import { HarnessGenerationWorkspace as HarnessGenerationSurface } from '@seihouse/library/generation';
 import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
@@ -12,6 +12,7 @@ import { createWorkshopStorySeedSource } from './storySeedHandoff';
 import { WORKSHOP_HARNESS_SKILLS } from './skillCatalog';
 import { SppSkillImport } from './SppSkillImport';
 import { loadHarnessSppSkills, saveHarnessSppSkill } from './sppSkills';
+import { installOfficialCapaSkills } from './officialCapaSkills';
 import { WORKSHOP_MEDIA_PACKS } from './mediaPackFixtures';
 
 const storySeedSource = createWorkshopStorySeedSource();
@@ -24,10 +25,27 @@ export function HarnessGenerationWorkspace() {
     catch { return { skills: [] as HarnessSkillManifest[], error: 'Saved SPP skills could not be loaded. Reimport the packages to restore their skills.' }; }
   });
   const [importedSkills, setImportedSkills] = useState(saved.skills);
+  const [officialInventoryReady, setOfficialInventoryReady] = useState(false);
   const [mediaPackEntitlements, setMediaPackEntitlements] = useState<MediaPackEntitlement[]>([]);
   const [storageError, setStorageError] = useState(saved.error);
   const installedSkills = useMemo(() => [...WORKSHOP_HARNESS_SKILLS, ...importedSkills], [importedSkills]);
   const entry = workshopEntries.find(item => item.id === 'harness-generation')!;
+  useEffect(() => {
+    let active = true;
+    void installOfficialCapaSkills(localStorage).then(({ installed }) => {
+      if (!active) return;
+      setImportedSkills(installed);
+      setStorageError('');
+      setOfficialInventoryReady(true);
+    }).catch(error => {
+      if (!active) return;
+      setStorageError(error instanceof Error
+        ? `Official CAPA defaults could not be installed: ${error.message}`
+        : 'Official CAPA defaults could not be installed.');
+      setOfficialInventoryReady(true);
+    });
+    return () => { active = false; };
+  }, []);
   /** The host owns the browser inventory; both import entry points save through it. */
   const install = (skill: HarnessSkillManifest) => {
     setImportedSkills(saveHarnessSppSkill(localStorage, importedSkills, skill));
@@ -38,7 +56,11 @@ export function HarnessGenerationWorkspace() {
       entry={entry}
       allowCompare={false}
       renderReference={() => <HarnessGenerationReference />}
-      renderDevelopment={() => <HarnessGenerationSurface repository={repository} modelAdapter={modelAdapter} storySeedSource={storySeedSource} installedSkills={installedSkills}
+      renderDevelopment={() => !officialInventoryReady
+        ? <p role="status">Validating official CAPA defaults…</p>
+        : storageError.startsWith('Official CAPA defaults could not be installed')
+          ? <p role="alert">{storageError}</p>
+          : <HarnessGenerationSurface repository={repository} modelAdapter={modelAdapter} storySeedSource={storySeedSource} installedSkills={installedSkills}
         registeredMediaPacks={WORKSHOP_MEDIA_PACKS} mediaPackEntitlements={mediaPackEntitlements}
         baseMedia={LIBRARY_BASE_MEDIA}
         onGrantDevelopmentMediaReward={(reference: MediaPackReference) => {

@@ -24,12 +24,18 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-09-17 |
+| Last Workshop update | 2026-09-19 |
 | Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Steered continuation with a derived SEN Reader adapter |
 
 ### History
 
+- **2026-09-19:** Registered the six supplied CAPA SPP archives as validated,
+  stable Development inventory and connected new Story Seed stories to the
+  official Author, Pacing, Continuity, and exact Chinese/Japanese/Korean Style
+  packages. Accessibility and Translation remain empty because no approved
+  packages were supplied. Package/path/file/archive provenance is frozen with
+  generation attempts; ordinary reloads preserve each story's saved equipment.
 - **2026-09-17:** Repaired the Generation Model Call response contract. A real
   Gemini chapter request was failing with `400 INVALID_ARGUMENT` while the
   provider compiled the previous response schema (nested SEN blocks with

@@ -28,6 +28,40 @@ same CAPA Prompt; the slot only determines its order.
 Intake itself never promotes text to instructions. Package names and categories never
 trigger behavior.
 
+## Official Development defaults
+
+Development keeps the six supplied archives unchanged and runs them through the same
+`intakePack`, selected-instruction, manifest-validation, inventory, and equipment path as a
+manual import. The host registry pins package ID, version, exact readable instruction path,
+selected-file SHA-256, complete resource inventory, archive SHA-256, and CAPA slot. A filename
+or display title never decides equipment.
+
+| Supplied SPP | CAPA slot | Story Seed mapping | Default |
+| --- | --- | --- | --- |
+| `CAPA-AUTHOR.spp` | Author | Every new Story Seed story | Yes |
+| `CAPA-Pacing.spp` | Pacing | Every new Story Seed story | Yes |
+| `CAPA-Continuity.spp` | Continuity | Every new Story Seed story | Yes |
+| `CAPA-STYLE-CHINESE.spp` | Style | Chinese Style | Yes for that choice |
+| `CAPA-STYLE-JAPANESE.spp` | Style | Japanese Style | Yes for that choice |
+| `CAPA-STYLE-KOREAN.spp` | Style | Korean Style | Yes for that choice |
+
+All six manifests are valid but declare the same container package ID,
+`9a7ce291-b3e7-4938-bc6d-a9bc688137b5`. Their exact selected paths and declared host slots
+produce distinct installed skill identities without rewriting that real package identity.
+The Continuity archive's `CONITINUITY` resource-path spelling is also retained exactly.
+
+No Accessibility or Translation SPP was supplied. Clear Reading, Easy Read, Literal Reading,
+Standard Accessibility, and Translation therefore have no official mapping and those slots
+remain empty. Style never changes Original Language and never equips Translation. A new story
+gets the official defaults once; its saved per-story loadout is authoritative afterward, so an
+ordinary reload cannot overwrite a manual replacement. A deliberate Story Seed style change
+replaces only the Style reference before that story is created.
+
+The v4 Development inventory key resets the stale v3 browser inventory rather than migrating
+it. Official installation first validates the complete set, then saves each exact skill
+idempotently; a missing or altered archive is reported and no substitute instructions are
+manufactured.
+
 The host retains selected skill text, not the whole archive. Reload restores the installed
 inventory and per-story equipped references; reupload to inspect the full package again.
 Reinstalling identical content is idempotent. Changed content under an installed version

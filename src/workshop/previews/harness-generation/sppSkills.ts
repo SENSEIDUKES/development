@@ -5,8 +5,8 @@ import { extractDocxInstructionText, isDocxInstructionFile } from './docxInstruc
 
 export const SPP_SKILL_TEXT_LIMIT = HARNESS_SKILL_INSTRUCTION_LIMIT;
 export const SPP_GLOSSARY_BYTE_LIMIT = 2 * 1024 * 1024;
-/** Bumped when Media left CAPA so stale saved skill inventories reset, not migrate. */
-export const SPP_SKILL_STORAGE_KEY = 'seihouse.harness.imported-skills.v3';
+/** Bumped for full-container provenance; stale Development inventories reset, not migrate. */
+export const SPP_SKILL_STORAGE_KEY = 'seihouse.harness.imported-skills.v4';
 
 /** Intake validates all assets before the host can select any instruction text. */
 export async function inspectHarnessSpp(input: PackInput): Promise<PackContent> {

@@ -371,7 +371,7 @@ describe('Mission Reminder', () => {
     expect(() => buildMissionReminder({ text: 'No author section.', skills: [] })).toThrow('equipped Author skill');
   });
 
-  it('is frozen on each attempt for inspection but not sent in the provider request', async () => {
+  it('is frozen on each attempt and travels as its own request field, presented once as section 8', async () => {
     const run = await setup();
     const story = await run.controller.createStory({ premise: 'Yi Chen joins the Azure Sect.', destinedEnding: 'Glory.', initialArcPlan: plan });
     const preview = run.controller.describeMissionReminder(story.id);
@@ -379,10 +379,13 @@ describe('Mission Reminder', () => {
     const attempt = run.controller.snapshot().attempts[0];
     expect(attempt.missionReminder).toEqual(preview);
     expect(run.adapter.generate).toHaveBeenCalledTimes(1);
-    expect(JSON.stringify(run.requests[0])).not.toContain('MISSION REMINDER');
+    expect(run.requests[0].missionReminder).toEqual(preview);
+    // It never hides inside the CAPA Prompt or the Story Information Packet.
+    expect(run.requests[0].capaPrompt.text).not.toContain('MISSION REMINDER');
+    expect(JSON.stringify(run.requests[0].storyInformation)).not.toContain('MISSION REMINDER');
     const prompt = buildHarnessGenerationPrompt(run.requests[0]);
     expect(prompt.systemInstruction).not.toContain('MISSION REMINDER');
-    expect(prompt.userPrompt).not.toContain('MISSION REMINDER');
+    expect(prompt.userPrompt.split('MISSION REMINDER:')).toHaveLength(2);
   });
 });
 

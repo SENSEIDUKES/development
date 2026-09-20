@@ -6,6 +6,7 @@ import { SEN_NOVEL_AUTHOR_SKILL } from '@seihouse/sen/harness-generation';
 import { assembleCapaPrompt } from '@seihouse/sen/harness-generation';
 import { HARNESS_RESPONSE_CONTRACT } from './prompt';
 import { arcGenerationContext } from '@seihouse/sen/arc-goals';
+import { buildMissionReminder } from '@seihouse/sen/harness-generation';
 
 const foundation = () => ({
   id: 'hfr_test',
@@ -15,23 +16,30 @@ const foundation = () => ({
   input: { premise: 'A cartographer returns to a city that has moved overnight.' },
 });
 
+const capaPrompt = () => assembleCapaPrompt({ capturedAt: '2026-09-12T00:00:00.000Z', skills: [SEN_NOVEL_AUTHOR_SKILL] });
+
 const request = (): HarnessGenerationRequest => ({
   storyId: 'hst_test',
   attemptId: 'hga_test',
   model: 'google/gemini-3.1-flash-lite',
-  capaPrompt: assembleCapaPrompt({ capturedAt: '2026-09-12T00:00:00.000Z', skills: [SEN_NOVEL_AUTHOR_SKILL] }),
+  capaPrompt: capaPrompt(),
   storyInformation: {
     id: 'hctx_test',
     storyId: 'hst_test',
     attemptId: 'hga_test',
-    foundationRevision: foundation(),
+    foundationRevisionId: foundation().id,
+    foundationRevision: 1,
     storyHead: { nextChapterNumber: 1 },
-    originalLanguage: 'en',
     chapterNumber: 1,
     createdAt: '2026-08-29T00:00:00.000Z',
-    committedChapters: [],
+    currentStory: { title: 'The Moved City', originalLanguage: 'en', premise: foundation().input.premise, authorDirections: [], corrections: [] },
+    storyDirection: { destinedEnding: 'Restore the city.', hardPins: [] },
     arc: arcGenerationContext({ arcNumber: 1, goals: [{ id: 'arc-1-opening', text: 'Reach the moved city.', chapters: 100 }] }, 1, 'Restore the city.'),
+    previouslyOn: [],
+    canonicalState: { characters: [], relationships: [], locations: [], factions: [], artifacts: [], abilities: [], resources: [] },
+    diagnostics: { budgetSource: 'test', sections: [], omitted: [], identityAmbiguities: [], storage: { chapters: 0, events: 0, canonicalRecords: 0, activeRecords: 0, recaps: 0 } },
   },
+  missionReminder: buildMissionReminder(capaPrompt()),
   immediateChapterRequest: { chapterNumber: 1, continuation: false, chapterScale: { minWords: 1_800, maxWords: 2_500 } },
 });
 
@@ -113,7 +121,7 @@ describe('Harness Generation HTTP boundary', () => {
         SEN_NOVEL_AUTHOR_SKILL,
       ],
     });
-    skilled.storyInformation.steering = [{ id: 'dir-1', direction: 'Bring the envoy to the gate.', mode: 'future', effectiveChapter: 1, createdAt: '2026-09-12T00:00:00.000Z' }];
+    skilled.storyInformation.currentStory.authorDirections = [{ direction: 'Bring the envoy to the gate.', mode: 'future', effectiveChapter: 1 }];
     skilled.immediateChapterRequest = { chapterNumber: 1, continuation: false, chapterScale: { minWords: 1_800, maxWords: 2_500 }, assignment: 'Bring the envoy to the gate.' };
     const result = await handleHarnessGenerationHttp(
       { method: 'POST', body: skilled },
@@ -139,20 +147,23 @@ describe('Harness Generation HTTP boundary', () => {
     // The provider schema is the compact semantic contract, never the SEN block, memory, or presentation contracts.
     const chapterSchema = input.responseJsonSchema as { properties: Record<string, unknown>; required: string[] };
     expect(chapterSchema.required).toEqual(['paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict']);
-    // The Mission Reminder, Hard Pins, recaps, and rhythm recommendation are not part of the Generation Model Call yet.
-    expect(input.systemInstruction).not.toContain('MISSION REMINDER');
-    expect(input.userPrompt).not.toContain('MISSION REMINDER');
-    expect(input.userPrompt).not.toMatch(/hardPins|rhythmRecommendation|Previously on/i);
+    // Diagnostics never leave the HARNESS.
+    expect(input.userPrompt).not.toMatch(/selectionAudit|diagnostics|budgetSource/);
     expect(Object.keys(chapterSchema.properties)).not.toContain('blocks');
     expect(Object.keys(chapterSchema.properties)).not.toContain('memory');
     expect(JSON.stringify(chapterSchema)).not.toContain('anyOf');
     expect(JSON.stringify(chapterSchema)).not.toContain('fateResult');
     // Generation content: story information plus the immediate request, with no skill instructions.
     expect(input.userPrompt).toMatch(/^STORY INFORMATION PACKET/);
-    expect(input.userPrompt).toContain('PERSISTENT AUTHOR DIRECTION');
-    expect(input.userPrompt).toContain('FUTURE DIRECTION (effective Chapter 1): Bring the envoy to the gate.');
-    expect(input.userPrompt.indexOf('PERSISTENT AUTHOR DIRECTION')).toBeLessThan(input.userPrompt.indexOf('IMMEDIATE CHAPTER REQUEST'));
+    expect(input.userPrompt).toContain('CURRENT STORY INFORMATION');
+    expect(input.userPrompt).toContain('"direction": "Bring the envoy to the gate."');
+    expect(input.userPrompt.indexOf('CURRENT STORY INFORMATION')).toBeLessThan(input.userPrompt.indexOf('IMMEDIATE CHAPTER REQUEST'));
     expect(input.userPrompt).toContain('NEXT CHAPTER ASSIGNMENT: Bring the envoy to the gate.');
+    // The Mission Reminder is its own section now, after the packet and before the request.
+    expect(input.userPrompt).toContain('MISSION REMINDER: You are the author of this novel');
+    expect(input.userPrompt.indexOf('MISSION REMINDER')).toBeGreaterThan(input.userPrompt.indexOf('CURRENT CANONICAL STATE'));
+    expect(input.userPrompt.indexOf('MISSION REMINDER')).toBeLessThan(input.userPrompt.indexOf('IMMEDIATE CHAPTER REQUEST'));
+    expect(input.systemInstruction).not.toContain('MISSION REMINDER');
     expect(input.userPrompt).not.toContain('Do not resolve the siege in this chapter.');
     expect(input.userPrompt).not.toContain(SEN_NOVEL_AUTHOR_SKILL.instructions);
   });
@@ -184,7 +195,7 @@ describe('Harness Generation HTTP boundary', () => {
 
   it('rejects an invalid Foundation before a provider call', async () => {
     const invalid = request();
-    invalid.storyInformation.foundationRevision.input.premise = ' ';
+    invalid.storyInformation.currentStory.premise = ' ';
     const result = await handleHarnessGenerationHttp({ method: 'POST', body: invalid }, { environment });
     expect(result).toMatchObject({ status: 400, body: { error: expect.stringContaining('premise') } });
   });

@@ -1,68 +1,81 @@
 import { harnessArcContext } from './arcState';
+import { projectCanonicalState } from './canonicalProjection';
 import { semanticReaderChanges } from './readerEdits';
-import { buildCanonicalStoryView } from './canonicalState';
-import { buildHarnessMechanicalContinuity } from './mechanicalContinuity';
-import { verifyHarnessEventEvidence } from './responseAcceptance';
+import { GENERATION_PACKET_BUDGET, estimatePacketTokens } from './packetBudget';
 import { cloneHarnessValue, defaultHarnessRuntime, type HarnessRuntime } from './ids';
-import type { HarnessCanonicalRecord, HarnessCanonicalContext, HarnessContextAuditItem, HarnessContextChapter, HarnessContextSelectionPolicy, HarnessStory, HarnessWorkspaceState, StoryFoundationRevision, StoryInformationPacket } from '../../../narrative/generation';
+import type { CurrentStoryProjection, HarnessStory, HarnessWorkspaceState, PacketSectionId, PacketSectionMeasurement, PreviouslyOnEntry, RhythmDirectionSection, StoryFoundationRevision, StoryInformationPacket } from '../../../narrative/generation';
 
-export const DEFAULT_HARNESS_CONTEXT_POLICY: HarnessContextSelectionPolicy = {
-  recentChapterCount: 3,
-  maxEstimatedTokens: 24_000,
-  includeMinorEvents: false,
-};
+const text = (value: string | undefined) => value?.trim() ? value.trim() : undefined;
 
-const estimateTokens = (value: unknown) => Math.max(1, Math.ceil(JSON.stringify(value).length / 4));
-
-const chapterContext = (state: HarnessWorkspaceState, chapterId: string): HarnessContextChapter | undefined => {
-  const chapter = state.chapters.find(candidate => candidate.id === chapterId);
-  if (!chapter) return undefined;
-  const eventsById = new Map(state.events.map(event => [event.id, event]));
+/**
+ * Current Story Information: reads the active Foundation's stable domain
+ * fields into one compact projection. The Story Seed snapshot, storage
+ * identifiers, and generation diagnostics stay out of it.
+ */
+export const projectCurrentStory = (
+  state: HarnessWorkspaceState,
+  story: HarnessStory,
+  foundation: StoryFoundationRevision,
+): CurrentStoryProjection => {
+  const input = foundation.input;
+  const labels = new Map(state.canonicalRecords.filter(record => record.storyId === story.id).map(record => [record.id, record.label ?? record.facts.description ?? record.kind]));
+  const corrections = state.corrections.filter(correction => correction.storyId === story.id)
+    .reverse().sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+    .flatMap(correction => {
+      // Reader edits without semantic meaning are presentation history, not canon.
+      const semanticEdits = correction.readerEdit ? semanticReaderChanges(correction.readerEdit.changes) : undefined;
+      if (correction.readerEdit && !semanticEdits?.length) return [];
+      const targets = correction.targetRecordIds.map(id => String(labels.get(id) ?? id));
+      return [{
+        kind: correction.kind,
+        reason: correction.reason,
+        ...(targets.length ? { targets } : {}),
+        ...(semanticEdits?.length ? { readerEdit: { chapterNumber: correction.readerEdit!.chapterNumber, changes: semanticEdits.map(change => ({
+          path: change.path.map(part => typeof part === 'string' ? part : part.id).join('.'),
+          ...(change.remove ? { remove: true as const } : { value: change.value }),
+        })) } } : {}),
+        ...(correction.referenceLabel ? { referenceLabel: correction.referenceLabel } : {}),
+        ...(correction.acceptedAlias ? { acceptedAlias: correction.acceptedAlias } : {}),
+        ...(correction.resolvedRecordId ? { resolvedEntity: String(labels.get(correction.resolvedRecordId) ?? correction.resolvedRecordId) } : {}),
+        ...(correction.replacement ? { replacement: {
+          kind: correction.replacement.kind,
+          ...(correction.replacement.label ? { label: correction.replacement.label } : {}),
+          facts: Object.fromEntries(Object.entries(correction.replacement.facts)
+            .flatMap(([key, value]) => value === undefined ? [] : [[key, Array.isArray(value) ? value.join(', ') : String(value)]])),
+        } } : {}),
+      }];
+    });
   return {
-    chapterId: chapter.id,
-    chapterNumber: chapter.chapterNumber,
-    title: chapter.title,
-    prose: chapter.prose,
-    events: chapter.eventIds.flatMap(eventId => {
-      const event = eventsById.get(eventId);
-      return event ? [{
-        id: event.id,
-        description: event.description,
-        evidenceVerified: verifyHarnessEventEvidence(event, chapter.prose).evidenceVerified,
-        ...(event.category ? { category: event.category } : {}),
-        ...(event.subjects ? { subjects: [...event.subjects] } : {}),
-        ...(event.subjectKinds ? { subjectKinds: { ...event.subjectKinds } } : {}),
-        ...(event.significance ? { significance: event.significance } : {}),
-        ...(event.evidence ? { evidence: event.evidence } : {}),
-        ...(event.requestedEffects ? { requestedEffects: [...event.requestedEffects] } : {}),
-        ...(event.facts ? { facts: { ...event.facts } } : {}),
-        ...(event.details ? { details: cloneHarnessValue(event.details) } : {}),
-      }] : [];
-    }),
+    title: story.title,
+    originalLanguage: story.originalLanguage,
+    premise: input.premise,
+    ...(text(input.genre) ? { genre: input.genre!.trim() } : {}),
+    ...(text(input.toneStyle) ? { toneStyle: input.toneStyle!.trim() } : {}),
+    ...(text(input.permanentInstructions) ? { permanentInstructions: input.permanentInstructions!.trim() } : {}),
+    ...(text(input.openingSituation) ? { openingSetup: input.openingSituation!.trim() } : {}),
+    ...(text(input.intendedDirection) ? { intendedDirection: input.intendedDirection!.trim() } : {}),
+    ...(text(input.declaredCanon) ? { declaredCanon: input.declaredCanon!.trim() } : {}),
+    ...(text(input.characters) ? { characters: input.characters!.trim() } : {}),
+    ...(text(input.worldFacts) ? { worldFacts: input.worldFacts!.trim() } : {}),
+    ...(input.cast?.length ? { cast: cloneHarnessValue(input.cast) } : {}),
+    ...(input.identities?.length ? { identities: cloneHarnessValue(input.identities) } : {}),
+    authorDirections: (story.steering ?? []).map(direction => ({ direction: direction.direction, mode: direction.mode, effectiveChapter: direction.effectiveChapter })),
+    corrections,
   };
 };
 
-const recordPriority = (record: HarnessCanonicalRecord) => {
-  if (record.kind === 'plot-thread' && record.facts.state === 'open') return 1;
-  if (record.kind === 'mystery' && record.facts.knowledgeState !== 'revealed') return 2;
-  if (['character', 'relationship', 'location-world'].includes(record.kind)) return 3;
-  if (['faction', 'artifact', 'progression'].includes(record.kind)) return 4;
-  return 5;
+const measure = (section: PacketSectionId, value: unknown): PacketSectionMeasurement => {
+  const budget = GENERATION_PACKET_BUDGET.sections[section];
+  const estimatedTokens = value === undefined ? 0 : estimatePacketTokens(value);
+  return { section, estimatedTokens, ...('tokens' in budget ? { budgetTokens: budget.tokens } : {}), protected: budget.protected,
+    overBudget: 'tokens' in budget ? estimatedTokens > budget.tokens : false };
 };
 
-const auditItem = (
-  id: string,
-  sourceKind: HarnessContextAuditItem['sourceKind'],
-  sourceRecordIds: string[],
-  label: string,
-  reason: string,
-  value: unknown,
-): HarnessContextAuditItem => ({ id, sourceKind, sourceRecordIds, label, reason, estimatedTokens: estimateTokens(value) });
-
 /**
- * Compiles the Story Information Packet: only persisted story evidence,
- * selected and weighted by the HARNESS, with every inclusion and omission
- * recorded. CAPA skills are assembled separately and never enter this packet.
+ * Compiles the Story Information Packet: distinct, compact sections built from
+ * persisted story state, with every omission recorded in HARNESS diagnostics.
+ * CAPA skills are assembled separately and never enter this packet; the
+ * frozen Mission Reminder travels beside it on the request.
  */
 export const compileStoryInformationPacket = (
   state: HarnessWorkspaceState,
@@ -71,198 +84,92 @@ export const compileStoryInformationPacket = (
   attemptId: string,
   runtime: HarnessRuntime = defaultHarnessRuntime,
 ): StoryInformationPacket => {
-  const policy = cloneHarnessValue(story.contextPolicy ?? DEFAULT_HARNESS_CONTEXT_POLICY);
-  const included: HarnessContextAuditItem[] = [];
-  const omitted: HarnessContextAuditItem[] = [];
-  let remaining = policy.maxEstimatedTokens;
-
-  // Never silently discard author authority, even under an unusually small budget.
-  const steering = cloneHarnessValue(story.steering ?? []);
-  for (const direction of steering) {
-    const item = auditItem(`ctx-${direction.id}`, 'correction', [direction.id], 'Author direction',
-      'Persistent author direction takes precedence over proposed plans; only explicit history revisions change past facts.', direction);
-    included.push(item);
-    remaining -= item.estimatedTokens;
-  }
-  const foundationItem = auditItem(`ctx-foundation-${foundationRevision.id}`, 'foundation', [foundationRevision.id],
-    `Story Foundation revision ${foundationRevision.revision}`, 'The selected permanent Foundation revision is always included.', foundationRevision.input);
-  included.push(foundationItem);
-  remaining -= foundationItem.estimatedTokens;
-  if (remaining < 0) foundationItem.reason += ` Foundation alone exceeds the soft selection budget by ${-remaining} estimated tokens; it was not truncated.`;
-
-  // Reserve author intent before prose or derived records can consume the budget.
-  // Reverse append order also makes equal timestamps deterministic (latest wins).
-  const corrections = state.corrections.filter(correction => correction.storyId === story.id)
-    .reverse().sort((left, right) => right.createdAt.localeCompare(left.createdAt));
-  const selectedCorrections: HarnessCanonicalContext['corrections'] = [];
-  const referent = (id: string) => {
-    const record = state.canonicalRecords.find(candidate => candidate.id === id && candidate.storyId === story.id);
-    if (!record) return [];
-    const { kind, label, evidence, facts } = record;
-    return [{ id, kind, label, evidence, facts }];
-  };
-  for (const correction of corrections) {
-    const { readerEdit, ...canonicalCorrection } = correction;
-    const semanticEdits = readerEdit ? semanticReaderChanges(readerEdit.changes) : undefined;
-    if (readerEdit && !semanticEdits?.length) continue;
-    const value = {
-      ...canonicalCorrection,
-      ...(readerEdit ? { readerEdit: { chapterNumber: readerEdit.chapterNumber, changes: semanticEdits! } } : {}),
-      targetEvidence: correction.targetRecordIds.flatMap(referent),
-      ...(correction.resolvedRecordId ? { resolvedEntity: referent(correction.resolvedRecordId)[0] } : {}),
-    };
-    const item = auditItem(`ctx-correction-${correction.id}`, 'correction', [correction.id, ...correction.targetRecordIds],
-      `Author correction: ${correction.kind}`, 'Selected newest first, before chapter prose and canonical records; includes available target evidence.', value);
-    // Corrections are authoritative, not optional retrieval candidates. Skipping a
-    // long new correction and fitting a shorter old one reverses author intent.
-    selectedCorrections.push(value);
-    included.push(item);
-    remaining -= item.estimatedTokens;
-    if (remaining < 0) item.reason += ` Protected author correction exceeds the soft selection budget by ${-remaining} estimated tokens; optional history is omitted first.`;
-  }
-
-  const allChapters = state.chapters.filter(chapter => chapter.storyId === story.id)
+  const chapters = state.chapters.filter(chapter => chapter.storyId === story.id)
     .sort((left, right) => left.chapterNumber - right.chapterNumber);
-  const latestChapterId = story.head.lastCommittedChapterId ?? allChapters.at(-1)?.id;
-  if (latestChapterId && !allChapters.some(chapter => chapter.id === latestChapterId)) {
+  const latestChapterId = story.head.lastCommittedChapterId ?? chapters.at(-1)?.id;
+  if (latestChapterId && !chapters.some(chapter => chapter.id === latestChapterId)) {
     throw new Error('The latest committed chapter is missing. Restore its saved context before continuing; the harness will not substitute an older chapter.');
   }
-  const recentIds = new Set(allChapters.slice(-policy.recentChapterCount).map(chapter => chapter.id));
-  const chaptersById = new Map(allChapters.map(chapter => [chapter.id, chapter]));
-  const committedEvents = state.events.filter(event => event.storyId === story.id && event.chapterId && chaptersById.has(event.chapterId))
-    .map(event => verifyHarnessEventEvidence(event, chaptersById.get(event.chapterId!)!.prose))
-    .sort((a, b) => a.chapterNumber - b.chapterNumber);
-  const mechanicalContinuity = buildHarnessMechanicalContinuity(committedEvents);
-  for (const observation of mechanicalContinuity) {
-    const item = auditItem(`ctx-mechanics-${observation.sourceId}`, 'canonical-record',
-      [observation.sourceId, ...observation.subsequentDevelopments.map(event => event.sourceId)],
-      `${observation.subject}: ${observation.name}`, 'Preserve quantified observations and later transfers or spending before optional prose.', observation);
-    included.push(item); remaining -= item.estimatedTokens;
-  }
-  const committedChapters: HarnessContextChapter[] = [];
-  for (const chapter of [...allChapters].reverse()) {
-    const context = chapterContext(state, chapter.id)!;
-    const item = auditItem(`ctx-chapter-${chapter.id}`, 'chapter-prose', [chapter.id, ...chapter.eventIds],
-      `Chapter ${chapter.chapterNumber}: ${chapter.title}`,
-      recentIds.has(chapter.id) ? `Selected newest first within the recent-chapter window (${policy.recentChapterCount}), before derived records.` : `Omitted outside the recent-chapter window (${policy.recentChapterCount}).`, context);
-    const immediateContinuation = chapter.id === latestChapterId;
-    if (!recentIds.has(chapter.id) && !immediateContinuation) omitted.push(item);
-    else if (immediateContinuation || item.estimatedTokens <= remaining) {
-      committedChapters.push(context);
-      included.push(item);
-      remaining -= item.estimatedTokens;
-      if (immediateContinuation) {
-        item.reason = 'Protected immediate continuation: the latest committed chapter is always included intact.';
-        if (remaining < 0) item.reason += ` Mandatory context exceeds the soft selection budget by ${-remaining} estimated tokens; optional history is omitted first.`;
-      }
-    } else omitted.push({ ...item, reason: `Chapter omitted: needs ${item.estimatedTokens} estimated tokens, ${Math.max(0, remaining)} remain after Foundation, author corrections, and newer chapters. Prose was not truncated.` });
-  }
-  // Allocate newest first, but read the retained prose in narrative order.
-  committedChapters.sort((left, right) => left.chapterNumber - right.chapterNumber);
+  const nextChapterNumber = story.head.nextChapterNumber;
 
-  const developments: NonNullable<StoryInformationPacket['developments']> = [];
-  // Reserve half the remaining budget for compact developments, after recent prose.
-  // Latest subject/category observations come first; older consequences stay searchable.
-  let memoryBudget = Math.max(0, Math.floor(remaining / 2));
-  const keys = new Set<string>();
-  const recentFirst = [...committedEvents].reverse();
-  const current = recentFirst.filter(event => {
-    const key = event.details?.mechanics
-      ? `mechanics:${event.details.mechanics.subject}:${event.details.mechanics.name}`
-      : `${event.category ?? 'event'}:${[...(event.subjects ?? [event.id])].sort().join('|')}`;
-    if (keys.has(key)) return false;
-    keys.add(key);
-    return true;
+  const currentStory = projectCurrentStory(state, story, foundationRevision);
+  const storyDirection = {
+    ...(text(foundationRevision.input.destinedEnding) ? { destinedEnding: foundationRevision.input.destinedEnding!.trim() } : {}),
+    hardPins: (story.hardPins ?? []).map(pin => pin.text),
+  };
+  const arc = harnessArcContext(story, foundationRevision.input, nextChapterNumber);
+
+  // Section 5 comes from the persisted recommendation only; nothing is recomputed here.
+  const recommendation = story.rhythmRecommendation;
+  const latestSuggestions = [...chapters].reverse().find(chapter => chapter.rhythm?.nextChapterSuggestions)?.rhythm?.nextChapterSuggestions;
+  const rhythm: RhythmDirectionSection | undefined = recommendation ? {
+    fatePressure: recommendation.fatePressure,
+    recentFunctions: recommendation.recentFunctions.map(entry => ({ chapterNumber: entry.chapterNumber, chapterFunction: entry.chapterFunction })),
+    recommendedFunction: recommendation.recommendedFunction,
+    reason: recommendation.reason,
+    ...(latestSuggestions?.[recommendation.recommendedFunction] ? { suggestion: latestSuggestions[recommendation.recommendedFunction] } : {}),
+  } : undefined;
+
+  // Section 6: saved recaps only. A chapter without one is skipped, never replaced by prose.
+  const omitted: StoryInformationPacket['diagnostics']['omitted'] = [];
+  const withRecap = chapters.filter(chapter => chapter.recap?.text);
+  const previouslyOn: PreviouslyOnEntry[] = withRecap.slice(-GENERATION_PACKET_BUDGET.previouslyOnCount)
+    .map(chapter => ({ chapterNumber: chapter.chapterNumber, title: chapter.title, recap: chapter.recap!.text }));
+  for (const chapter of withRecap.slice(0, Math.max(0, withRecap.length - GENERATION_PACKET_BUDGET.previouslyOnCount))) {
+    omitted.push({ section: 'previouslyOn', label: `Chapter ${chapter.chapterNumber}: ${chapter.title}`, sourceRecordIds: [chapter.id],
+      reason: `Older than the latest ${GENERATION_PACKET_BUDGET.previouslyOnCount} recaps; it remains saved with its chapter.` });
+  }
+  for (const chapter of chapters.filter(chapter => !chapter.recap?.text)) {
+    omitted.push({ section: 'previouslyOn', label: `Chapter ${chapter.chapterNumber}: ${chapter.title}`, sourceRecordIds: [chapter.id],
+      reason: 'No saved recap; full chapter prose is never substituted.' });
+  }
+
+  // Section 7: latest applicable canonical state, prioritized by the current arc, request, cast, and recent chapters.
+  const activeChapterNumbers = chapters.slice(-GENERATION_PACKET_BUDGET.activeChapterWindow).map(chapter => chapter.chapterNumber);
+  const canonical = projectCanonicalState({
+    state, storyId: story.id,
+    focusText: [arc?.activeGoal.text, story.steering?.at(-1)?.direction, ...(story.hardPins ?? []).map(pin => pin.text), rhythm?.suggestion].filter(Boolean).join(' '),
+    castNames: [...(foundationRevision.input.cast ?? []).map(member => member.name), ...(foundationRevision.input.identities ?? []).map(identity => identity.name)],
+    activeChapterNumbers,
   });
-  const currentSet = new Set(current);
-  const ordered = [...current, ...recentFirst.filter(event => !currentSet.has(event))];
-  for (const event of ordered) {
-    const value = { chapterNumber: event.chapterNumber, sourceId: event.id, description: event.description, evidence: event.evidence, evidenceVerified: event.evidenceVerified,
-      ...(event.details ? { details: cloneHarnessValue(event.details) } : {}) };
-    const item = auditItem(`ctx-development-${event.id}`, 'canonical-record', [event.id],
-      `Development in Chapter ${event.chapterNumber}`, 'Committed event evidence survives optional processing failures.', value);
-    if (item.estimatedTokens <= memoryBudget) {
-      developments.push(value); included.push(item);
-      memoryBudget -= item.estimatedTokens; remaining -= item.estimatedTokens;
-    } else omitted.push({ ...item, reason: 'Omitted from compact memory; original chapter and event remain available for targeted lookup.' });
-  }
-  developments.sort((a, b) => a.chapterNumber - b.chapterNumber);
+  omitted.push(...canonical.omitted);
 
-  // At most three excerpts, matched against explicit names/direction, not another model loop.
-  const terms = Array.from(new Set((steering.slice(-1)[0]?.direction ?? '').toLowerCase().match(/[\p{L}\p{N}]{4,}/gu) ?? []))
-    .filter(term => !['with', 'that', 'this', 'from', 'have', 'into', 'should', 'chapter', 'story'].includes(term));
-  const lookups: NonNullable<StoryInformationPacket['lookups']> = [];
-  const candidates = allChapters.filter(chapter => !recentIds.has(chapter.id)).map(chapter => {
-    const haystack = terms.length ? chapter.prose.toLowerCase() : '';
-    return { chapter, haystack, score: terms.filter(term => haystack.includes(term)).length };
-  }).filter(item => item.score > 0 || !item.chapter.eventIds.length)
-    .sort((a, b) => b.score - a.score || b.chapter.chapterNumber - a.chapter.chapterNumber).slice(0, 3);
-  for (const { chapter, haystack } of candidates) {
-    const match = terms.map(term => haystack.indexOf(term)).find(index => index >= 0) ?? 0;
-    const value = { chapterNumber: chapter.chapterNumber, sourceId: chapter.id,
-      excerpt: chapter.prose.slice(Math.max(0, match - 200), Math.max(0, match - 200) + 1600) };
-    const item = auditItem(`ctx-lookup-${chapter.id}`, 'chapter-prose', [chapter.id], `Lookup: Chapter ${chapter.chapterNumber}`,
-      'Bounded original evidence lookup for current direction or a chapter awaiting event repair.', value);
-    if (item.estimatedTokens <= remaining) { lookups.push(value); included.push(item); remaining -= item.estimatedTokens; }
-    else omitted.push({ ...item, reason: 'Lookup omitted because the context budget was exhausted.' });
-  }
-  const view = buildCanonicalStoryView(state, story.id);
-  const currentThreadIds = new Set(view.currentThreads.map(record => record.id));
-  const selectedRecords: HarnessCanonicalRecord[] = [];
-  const chapterNumbers = new Map(allChapters.map(chapter => [chapter.id, chapter.chapterNumber]));
-  const records = [...view.records].sort((left, right) => recordPriority(left) - recordPriority(right)
-    || (chapterNumbers.get(right.chapterId ?? '') ?? Infinity) - (chapterNumbers.get(left.chapterId ?? '') ?? Infinity));
-  for (const record of records) {
-    const minor = record.sourceEventId ? state.events.find(event => event.id === record.sourceEventId)?.significance === 'minor' : false;
-    const item = auditItem(`ctx-record-${record.id}`, 'canonical-record', [record.id, ...(record.sourceEventId ? [record.sourceEventId] : [])],
-      `${record.kind}: ${record.label ?? record.facts.description ?? record.id}`,
-      minor && !policy.includeMinorEvents ? 'Omitted because the visible policy excludes minor events.' : 'Included as active, explicitly evidenced canonical state.', record);
-    if (record.kind === 'plot-thread' && !currentThreadIds.has(record.id)) {
-      omitted.push({ ...item, reason: 'Historical or unsupported thread state: only the latest supported status enters continuation; the original record remains in story history.' });
-    } else if (minor && !policy.includeMinorEvents) omitted.push(item);
-    else if (item.estimatedTokens <= remaining) {
-      selectedRecords.push(record);
-      included.push(item);
-      remaining -= item.estimatedTokens;
-    } else omitted.push({ ...item, reason: 'Omitted because the visible context token budget was exhausted.' });
-  }
-
-  const handoff = selectedRecords.filter(record => record.confidence === 'resolved' && (
-    (record.kind === 'plot-thread' && currentThreadIds.has(record.id) && record.facts.state === 'open')
-    || (record.kind === 'mystery' && record.facts.knowledgeState !== 'revealed')
-    || record.kind === 'narrative-event'))
-    .slice(-12)
-    .map(record => ({ description: String(record.facts.description ?? record.evidence), sourceRecordIds: [record.id, ...(record.sourceEventId ? [record.sourceEventId] : [])] }));
-  if (handoff.length) {
-    const item = auditItem(`ctx-handoff-${attemptId}`, 'derived-handoff', handoff.flatMap(entry => entry.sourceRecordIds),
-      'Deterministic chapter handoff', 'Derived only from selected open threads, mysteries, and narrative events.', handoff);
-    if (item.estimatedTokens <= remaining) {
-      included.push(item);
-      remaining -= item.estimatedTokens;
-    } else {
-      omitted.push({ ...item, reason: 'Omitted because the visible context token budget was exhausted.' });
-      handoff.splice(0, handoff.length);
-    }
-  }
+  const sections: PacketSectionMeasurement[] = [
+    measure('currentStory', currentStory),
+    measure('storyDirection', storyDirection),
+    measure('arc', arc),
+    measure('rhythm', rhythm),
+    measure('previouslyOn', previouslyOn),
+    measure('canonicalState', canonical.projection),
+  ];
 
   return {
     id: runtime.createId('hctx'),
     storyId: story.id,
     attemptId,
-    foundationRevision: cloneHarnessValue(foundationRevision),
+    foundationRevisionId: foundationRevision.id,
+    foundationRevision: foundationRevision.revision,
     storyHead: cloneHarnessValue(story.head),
-    originalLanguage: story.originalLanguage,
-    chapterNumber: story.head.nextChapterNumber,
+    chapterNumber: nextChapterNumber,
     createdAt: runtime.now(),
-    committedChapters,
-    arc: harnessArcContext(story, foundationRevision.input, story.head.nextChapterNumber),
-    steering,
-    developments,
-    lookups,
-    mechanicalContinuity,
-    contextVersion: 2,
-    selectionPolicy: policy,
-    canonicalContext: { corrections: cloneHarnessValue(selectedCorrections), records: cloneHarnessValue(selectedRecords), handoff },
-    selectionAudit: { included, omitted, totalEstimatedTokens: included.reduce((sum, item) => sum + item.estimatedTokens, 0) },
+    currentStory,
+    storyDirection,
+    ...(arc ? { arc } : {}),
+    ...(rhythm ? { rhythm } : {}),
+    previouslyOn,
+    canonicalState: canonical.projection,
+    diagnostics: {
+      budgetSource: GENERATION_PACKET_BUDGET.source,
+      sections,
+      omitted,
+      identityAmbiguities: canonical.identityAmbiguities,
+      storage: {
+        chapters: chapters.length,
+        events: state.events.filter(event => event.storyId === story.id).length,
+        canonicalRecords: state.canonicalRecords.filter(record => record.storyId === story.id).length,
+        activeRecords: canonical.activeRecordCount,
+        recaps: withRecap.length,
+      },
+    },
   };
 };

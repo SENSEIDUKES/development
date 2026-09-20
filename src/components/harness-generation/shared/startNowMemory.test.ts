@@ -52,9 +52,12 @@ describe('Start Now captured prose and memory regression', () => {
       // that as a visible gap instead of claiming exhaustive understanding.
       expect(saved.attempts[0].postCommitProcessing).toBe('warnings');
       const context = compileStoryInformationPacket(saved, saved.stories[0], saved.foundations[0], 'next');
-      expect(context.canonicalContext!.records.some(record => record.facts.timeLimit === 'forty-eight hours')).toBe(true);
-      expect(context.committedChapters[0].events.some(event => event.evidenceVerified)).toBe(true);
-      if (recover) expect(context.committedChapters[0].events.slice(0, 4).every(event => event.evidenceVerified === false)).toBe(true);
+      // Timeline and thread interpretations stay in storage; the packet carries current entity state only.
+      expect(JSON.stringify(context)).not.toContain('forty-eight hours');
+      expect(context.canonicalState.locations[0]).toMatchObject({ facts: expect.objectContaining({ rank: 'F-Tier (Prototype)', difficulty: 'Brutal' }) });
+      expect(context.canonicalState.artifacts[0]).toMatchObject({ facts: expect.objectContaining({ energyReserves: '0.04%' }) });
+      expect(context.canonicalState.characters.filter(character => character.name === 'Xie Jin')).toHaveLength(1);
+      expect(JSON.stringify(context)).not.toContain(fixture.prose.slice(0, 80));
     }
   });
 });

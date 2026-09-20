@@ -1,6 +1,7 @@
 import { ARC_LENGTH, ARC_PLAN_SCHEMA, createArcChapterPosition } from '@seihouse/sen/arc-goals';
 import { HARNESS_CREATURE_EVENT_TYPES, HARNESS_CREATURE_SIZES, HARNESS_DIALOGUE_DELIVERIES, HARNESS_FATE_OUTCOMES, HARNESS_MANIFESTATION_MENTIONS, HARNESS_MANIFESTATION_TYPES, HARNESS_SOUND_CUE_CATEGORIES, HARNESS_SOUND_CUE_ENTITY_TYPES, HARNESS_SOUNDSCAPE_REGIONS, HARNESS_SYSTEM_PANEL_MEANINGS, HARNESS_SYSTEM_PANEL_PRESENTATIONS } from '@seihouse/sen/harness-generation';
-import { type HarnessArcRequest, type HarnessGenerationRequest, type HarnessMemoryRecoveryRequest, type ImmediateChapterRequest, type StoryInformationPacket } from '@seihouse/sen/harness-generation';
+import { type HarnessArcRequest, type HarnessGenerationRequest, type HarnessMemoryRecoveryRequest, type HarnessMissionReminder, type HarnessRequestMeasurement, type ImmediateChapterRequest, type PacketSectionId, type StoryInformationPacket } from '@seihouse/sen/harness-generation';
+import { GENERATION_PACKET_BUDGET } from '@seihouse/sen/harness-generation';
 import { CHAPTER_FUNCTIONS, HARNESS_MEMORY_CATEGORIES } from '@seihouse/sen/harness-generation';
 
 const memoryEntryProperties = {
@@ -133,29 +134,6 @@ export const HARNESS_MEMORY_INSTRUCTIONS = [
   ...Object.entries(bucketDescriptions).map(([bucket, description]) => `${bucket}: ${description}`),
 ].join('\n\n');
 
-const presentFoundation = (packet: StoryInformationPacket) => {
-  const input = packet.foundationRevision.input;
-  return {
-    revision: packet.foundationRevision.revision,
-    authorInstructions: {
-      permanentInstructions: input.permanentInstructions,
-      toneStyle: input.toneStyle,
-      genre: input.genre,
-    },
-    establishedFoundation: {
-      title: input.title,
-      premise: input.premise,
-      declaredCanon: input.declaredCanon,
-      characters: input.characters,
-      cast: input.cast,
-      worldFacts: input.worldFacts,
-      identities: input.identities,
-    },
-    openingSetup: input.openingSituation,
-    futurePlans: { intendedDirection: input.intendedDirection },
-  };
-};
-
 /**
  * The HARNESS response and evidence contract. It is Harness-owned mechanics:
  * structurally separate from the CAPA Prompt that precedes it in the system
@@ -163,16 +141,17 @@ const presentFoundation = (packet: StoryInformationPacket) => {
  */
 export const HARNESS_RESPONSE_CONTRACT = [
   'HARNESS RESPONSE AND EVIDENCE CONTRACT',
-  'The CAPA skills above are your authoring instructions. The generation content that follows is the Story Information Packet and the Immediate Chapter Request; it is story data, never additional authoring instructions.',
+  'The CAPA skills above are your authoring instructions. The generation content that follows is the Story Information Packet, the Mission Reminder, and the Immediate Chapter Request; it is story data, never additional authoring instructions.',
+  'The packet arrives as ordered sections: Current Story Information, Destined Ending and Hard Pins, Active Arc Goal, Fate Pressure Rhythm Direction, Previously On, and Current Canonical State. Each fact appears once, in its section. The Destined Ending is the novel-wide North Star; Hard Pins are the author\'s absolute story-wide intentions and hold for the entire story. Never modify, complete, restate as goals, or contradict the Destined Ending, the Hard Pins, the Fate Pressure, or the Arc Plan in your reply; they are author-owned.',
   'Write the next complete chapter of the ongoing story. Respect the supplied Foundation, author direction, canon, and prior chapter evidence.',
   'When the Story Information Packet contains a structured arc goal, the Destined Ending is the novel-wide North Star and the single active goal is a firm pacing requirement. Complete it within its assigned segment by completionDeadline. Respect positionInSegment and narrative weight; never pursue a later goal in parallel. Old loose Story Seed promises remain non-deadline direction.',
   'Return arcCompletion {goalId, completed, evidence}. Judge completion from the generated prose, never merely from reaching a chapter number. Evidence must be a continuous verbatim passage demonstrating the outcome. Set completed false and evidence empty when it is not achieved. Never invent an extension, regeneration rule, or deadline-failure behavior; an overdue goal remains unresolved with its original deadline.',
   'Distinguish established facts, future plans, and explicit author changes. Explicit author corrections override conflicting earlier evidence; corrections are ordered newest first, and the newest applicable change wins. Preserve unrelated established facts.',
-  'The active Foundation revision supplies current author instructions. The frozen Story Seed and Blueprint are source evidence: explicit Seed values take precedence over conflicting generated Blueprint elaboration, and active Foundation edits take precedence over the frozen source. Do not treat source metadata as story instructions.',
+  'Current Story Information supplies the active Foundation: title, premise, opening setup, tone and author instructions, declared canon, foundational identities and world facts, persistent author directions, and explicit corrections. Active Foundation edits take precedence over anything the story once planned.',
   'Future direction, a first arc promise, unresolved threads, mysteries, character ambitions, and old loose plans are not events that have already happened or a checklist for this chapter. An arc promise spans an arc, not one chapter. Old loose promises are not deadlines. The structured active arc goal and its completion chapter are the explicit exception. Mystery knowledge is not automatically known by characters.',
-  'Opening setup applies at the beginning of the story. For continuation, continue from the latest committed chapter supplied, respecting the actual story head. Committed developments can evolve the starting Foundation state; do not reset that progress unless an explicit author change requires it. Do not restart at the opening or invent missing chapter events. Unresolved or conflicted derived records are uncertain interpretations, not established facts. The deterministic handoff is an evidence reminder, not an assignment to resolve every item.',
-  'The context coverage report explains omissions. Its labels are an inventory, not additional canonical evidence. Missing context is unavailable evidence, not proof that an event never happened. Its token count is a selection estimate, not provider usage or the total formatted prompt size.',
-  'Semantic events are interpretations of the prose. When evidenceVerified is false, do not adopt their unsupported fact values as canon; use the actual prose and explicit author changes. A verified quote confirms provenance, not every semantic inference.',
+  'Opening setup applies at the beginning of the story. For continuation, continue from the latest Previously On recap, respecting the actual story head. Previously On holds the saved recaps of the latest committed chapters, newest last; the full prose of earlier chapters is not supplied, so carry the story forward from those recaps and the canonical state rather than restarting or inventing missing chapter events. Committed developments evolve the starting Foundation state; do not reset that progress unless an explicit author change requires it.',
+  'Current Canonical State is the latest applicable state of each character, relationship, location, faction, artifact, ability, and resource, resolved by the HARNESS. It is the current truth to continue from; it is not a checklist of things to mention. Resources list absolute balances observed in the story: never restore an opening balance, silently refill a resource, or use an old owner after a transfer. State new balances in the prose when they change.',
+  'Fate Pressure Rhythm Direction names the chapter function the HARNESS recommends next (progression, worldBuilding, or conflict), the recent sequence it evaluated, its reason, and, when available, the previous chapter\'s own suggestion for that function. Favor that function while keeping the chapter natural; the Active Arc Goal remains the firm requirement.',
   'Return one JSON object only. paragraphs is the complete chapter and its sole body: an ordered array with one entry per prose paragraph, written as continuous readable prose, including the readable text of any System Panel as its own entry exactly where the reader meets it. Never put the whole chapter in one entry and never add blank-line markers or numbering. title and plan are optional. arcCompletion is required. Do not return prose, chapter blocks, memory, or any other chapter body.',
   'After the chapter, return recap: a short "Previously On" recap of this chapter in two to four sentences, written for a reader returning later. Return chapterFunction: the one primary function this completed chapter served, progression, worldBuilding, or conflict. Return three one-line possibilities for the next chapter: nextProgression, nextWorldBuilding, and nextConflict, one per function. They are creative possibilities only; the HARNESS and the author decide which function actually comes next. Never return hardPins, fatePressure, or destinedEnding: story direction is author-owned and any such field is ignored.',
   'Optional signal families describe semantic intent the chapter itself establishes: dialogue, manifestations, systemPanels, soundscapes, soundCues, and creatureEvents. Each is a flat list. Every signal carries anchorText: one exact, distinctive passage copied verbatim from an entry of the paragraphs array you are returning in this reply, with the same characters, punctuation, and quotation marks. Never copy an anchor from a prior chapter, from the Story Information Packet, or from any text outside this reply; such an anchor is dropped. When the same phrase appears more than once, add occurrenceIndex, a zero-based count over its occurrences in reading order, or the signal is dropped as ambiguous. The HARNESS matches anchors to its own paragraph blocks, validates each signal on its own, and drops any signal whose anchor is absent. A dropped signal never removes prose. Omit signals the chapter does not support; omit whole families with nothing to report.',
@@ -181,83 +160,68 @@ export const HARNESS_RESPONSE_CONTRACT = [
   'soundscapes: the mood of a scene, with optional region (chinese, japanese, korean, or western), tags, and intensity. soundCues: a deliberate audible action, with anchorText the exact audible action phrase (never an entity name), category (beasts, weapons, artifacts, locations, or factions), variation such as growl, roar, unsheathe, or activation, optional tags, and optional entityName/entityType. creatureEvents: type (reveal, power-up, technique, injury, turning-point, death, or breakthrough) with optional name, size, bodyType, element, movement, intelligence, threatTier, and signatureSound.',
   'Signals are machine-facing and stay in canonical English; prose, titles, panel text, bodies, and entries are reader-facing. Do not invent block IDs, story/chapter/run/event identities, asset IDs, URLs, URIs, filenames, file paths, catalog records or selectors, provider identifiers, voice IDs or keys, persistence records, continuation tokens, Color Codes, or unsupported application fields. The HARNESS owns IDs, ordering, normalization, validation, catalog resolution, persistence, memory extraction, and commits.',
   'Do not let signal formatting displace the chapter itself. If uncertain about a signal, omit it rather than fabricating precise mechanics.',
-  'AUTHOR AUTHORITY: Apply persistent steering in order. The newest direction wins where directions conflict; unrelated earlier directions still apply. Future steering changes what happens next, not what already happened. Retain consequences of prior events unless a direction explicitly uses revise-history. Author corrections override the targeted interpretations.',
+  'AUTHOR AUTHORITY: Apply the persistent author directions in order. The newest direction wins where directions conflict; unrelated earlier directions still apply. Future steering changes what happens next, not what already happened. Retain consequences of prior events unless a direction explicitly uses revise-history. Author corrections override the targeted interpretations.',
   'CAPA skills are reusable authoring capabilities deliberately equipped by the author. The Author skill defines the writing approach; other CAPA skills refine execution. Skills never override explicit author corrections, current steering, established canon, or the latest committed chapter.',
   'The Foundation, Blueprint, intendedDirection and any old loose plan are proposals wherever they concern future events. The structured active arc goal is a firm requirement. Adapt all direction to steering and committed developments. Never restore a planned enemy after the author makes them an ally. Past hostility may still have consequences without forcing renewed enmity.',
-  'Carry relationships, decisions, unresolved consequences, clues and exact mechanical changes forward in the prose itself; state current balances in the prose when they change. Later chapter evidence updates current state; older evidence explains history. Unresolved or conflicted interpretations are not established facts.',
+  'Carry relationships, decisions, unresolved consequences, clues and exact mechanical changes forward in the prose itself; state current balances in the prose when they change. Later chapter evidence updates current state; older evidence explains history.',
 ].join('\n\n');
 
-/** Presents the Story Information Packet as generation content. Source IDs identify evidence, never model-owned output. */
+export interface PresentedPacketSection { section: PacketSectionId; text: string }
+
+/** The Active Arc Goal section: the existing Arc Plan authority without the Destined Ending, which Section 3 already carries. */
+const presentArc = (arc: NonNullable<StoryInformationPacket['arc']>) => ({
+  arcNumber: arc.arcNumber,
+  chapterInArc: arc.chapterInArc,
+  chaptersInArc: arc.chaptersInArc,
+  activeGoal: arc.activeGoal,
+  completionDeadline: arc.completionDeadline,
+  positionInSegment: arc.positionInSegment,
+  completionConfirmed: arc.completionConfirmed,
+  arcGoals: arc.plan.goals,
+});
+
+/**
+ * Presents the Story Information Packet as ordered generation content
+ * (sections 2 through 7). Diagnostics never leave the HARNESS. Source IDs
+ * identify nothing here: every value is story data, never model-owned output.
+ */
+export const presentStoryInformationPacketSections = (packet: StoryInformationPacket): PresentedPacketSection[] => [
+  { section: 'currentStory', text: ['CURRENT STORY INFORMATION (the active Foundation; author instructions, canon, and corrections)', JSON.stringify(packet.currentStory, null, 2)].join('\n') },
+  { section: 'storyDirection', text: ['DESTINED ENDING AND HARD PINS (author-owned; never modify or complete them)', JSON.stringify(packet.storyDirection, null, 2)].join('\n') },
+  { section: 'arc', text: ['ACTIVE ARC GOAL (authoritative frozen pacing instruction)', JSON.stringify(packet.arc ? presentArc(packet.arc) : null, null, 2)].join('\n') },
+  { section: 'rhythm', text: ['FATE PRESSURE RHYTHM DIRECTION (recommended next chapter function)', JSON.stringify(packet.rhythm ?? null, null, 2)].join('\n') },
+  { section: 'previouslyOn', text: ['PREVIOUSLY ON (saved recaps of the latest committed chapters, oldest first)', packet.previouslyOn.length
+    ? JSON.stringify(packet.previouslyOn, null, 2)
+    : 'No chapter has been committed yet; this is the story opening.'].join('\n') },
+  { section: 'canonicalState', text: ['CURRENT CANONICAL STATE (latest applicable state per resolved entity)', presentCanonicalState(packet.canonicalState)].join('\n') },
+];
+
+const CANONICAL_GROUP_LABELS: Array<[keyof StoryInformationPacket['canonicalState'], string]> = [
+  ['characters', 'CHARACTERS'], ['relationships', 'RELATIONSHIPS'], ['locations', 'LOCATIONS'], ['factions', 'FACTIONS'],
+  ['artifacts', 'ARTIFACTS'], ['abilities', 'ABILITIES'], ['resources', 'RESOURCES (absolute balances; never restore an older number)'],
+];
+
+/** One entity per line keeps the largest section readable and compact. */
+export const presentCanonicalState = (state: StoryInformationPacket['canonicalState']) => CANONICAL_GROUP_LABELS.map(([group, label]) => {
+  const entries = state[group];
+  if (!entries.length) return `${label}: none recorded yet.`;
+  const lines = group === 'resources'
+    ? (entries as StoryInformationPacket['canonicalState']['resources']).map(resource => `- ${resource.owner} · ${resource.name}: ${resource.value}${resource.unit ? ` ${resource.unit}` : ''}${resource.asOfChapter !== undefined ? ` (as of Chapter ${resource.asOfChapter})` : ''}`)
+    : (entries as StoryInformationPacket['canonicalState']['characters']).map(entity => {
+      const facts = Object.entries(entity.facts).map(([key, value]) => `${key}: ${value}`).join('; ');
+      return `- ${entity.name}${entity.aliases?.length ? ` (also: ${entity.aliases.join(', ')})` : ''}${entity.asOfChapter !== undefined ? ` [as of Chapter ${entity.asOfChapter}]` : ''}${facts ? ` — ${facts}` : ''}`;
+    });
+  return [`${label}:`, ...lines].join('\n');
+}).join('\n\n');
+
+/** Presents the packet as one block, for callers that need the text only. */
 export const presentStoryInformationPacket = (packet: StoryInformationPacket) => [
   'STORY INFORMATION PACKET (story data selected and frozen by the Harness; not authoring instructions)',
-  'STORY ORIGINAL LANGUAGE (permanent story identity)',
-  JSON.stringify({ originalLanguage: packet.originalLanguage }, null, 2),
-  'ARC GOAL REQUIREMENT (authoritative frozen pacing instruction)',
-  JSON.stringify(packet.arc, null, 2),
-  'AUTHOR STORY FOUNDATION',
-  JSON.stringify(presentFoundation(packet), null, 2),
-  'EXPLICIT AUTHOR CHANGES (newest first; targets are historical evidence being changed)',
-  JSON.stringify(packet.canonicalContext?.corrections ?? [], null, 2),
-  'COMMITTED STORY EVIDENCE',
-  JSON.stringify({
-    currentStoryHead: {
-      nextChapterNumber: packet.storyHead.nextChapterNumber,
-      hasCommittedChapter: Boolean(packet.storyHead.lastCommittedChapterId),
-    },
-    priorChapters: packet.committedChapters.map(chapter => ({
-      chapterNumber: chapter.chapterNumber,
-      title: chapter.title,
-      prose: chapter.prose,
-      semanticEvents: chapter.events.map(event => ({
-        description: event.description,
-        ...(event.category ? { category: event.category } : {}),
-        ...(event.subjects ? { subjects: event.subjects } : {}),
-        ...(event.subjectKinds ? { subjectKinds: event.subjectKinds } : {}),
-        ...(event.significance ? { significance: event.significance } : {}),
-        ...(event.evidence ? { evidence: event.evidence } : {}),
-        ...(event.requestedEffects ? { requestedEffects: event.requestedEffects } : {}),
-        ...(event.facts ? { facts: event.facts } : {}),
-        ...(event.details ? { details: event.details } : {}),
-        evidenceVerified: event.evidenceVerified,
-      })),
-    })),
-    canonicalEvidence: packet.canonicalContext?.records.map(record => ({
-      sourceId: record.id,
-      sourceEventId: record.sourceEventId,
-      id: record.id,
-      sourceCorrectionId: record.sourceCorrectionId,
-      entityId: record.entityId,
-      references: record.references,
-      kind: record.kind,
-      label: record.label,
-      evidence: record.evidence,
-      confidence: record.confidence,
-      facts: record.facts,
-    })) ?? [],
-    deterministicHandoff: packet.canonicalContext?.handoff ?? [],
-    committedDevelopments: packet.developments ?? [],
-    originalEvidenceLookups: packet.lookups ?? [],
-  }, null, 2),
-  'FROZEN STORY SEED AND BLUEPRINT SOURCE (background provenance; subordinate to active Foundation and explicit changes)',
-  JSON.stringify(packet.foundationRevision.input.sourceSnapshot ?? null, null, 2),
-  'CONTEXT COVERAGE AND OMISSIONS',
-  JSON.stringify({
-    policy: packet.selectionPolicy,
-    audit: packet.selectionAudit,
-    latestCommittedChapterId: packet.storyHead.lastCommittedChapterId,
-    immediateContinuationIncluded: packet.storyHead.lastCommittedChapterId
-      ? packet.committedChapters.some(chapter => chapter.chapterId === packet.storyHead.lastCommittedChapterId)
-      : null,
-  }, null, 2),
-  'PERSISTENT AUTHOR DIRECTION (story history; newest wins on conflict)',
-  packet.steering?.length ? [
-    'These are instructions to execute, not historical events or optional themes. Retain unrelated earlier directions; newest wins on conflict.',
-    ...packet.steering.map(direction => `${direction.mode === 'revise-history' ? 'EXPLICIT HISTORY REVISION' : 'FUTURE DIRECTION'} (effective Chapter ${direction.effectiveChapter}): ${direction.direction}`),
-  ].join('\n') : 'No persistent author direction has been recorded.',
-  'MECHANICAL CONTINUITY — DO NOT RESET RESOURCES',
-  JSON.stringify(packet.mechanicalContinuity ?? [], null, 2),
-  'Each quantity above was observed in its source chapter. Subsequent transfers, spending, losses, or depletion take precedence over that old number. Never restore the Foundation opening balance, silently refill resources, or use an old owner after a transfer. If later evidence leaves the balance uncertain, establish it through the story before using it. Emit absolute balances for every affected owner when a transfer or depletion occurs, including zero. Preserve established names and units.',
+  ...presentStoryInformationPacketSections(packet).map(section => section.text),
 ].join('\n\n');
+
+/** Presents the frozen Mission Reminder (section 8). */
+export const presentMissionReminder = (reminder: HarnessMissionReminder) => reminder.text;
 
 /** Presents the Immediate Chapter Request: the one instruction for the chapter being generated now. */
 export const presentImmediateChapterRequest = (request: ImmediateChapterRequest) => [
@@ -276,28 +240,47 @@ export const presentImmediateChapterRequest = (request: ImmediateChapterRequest)
 
 /**
  * One Generation Model Call. The CAPA Prompt is the authoring instruction; the
- * Story Information Packet plus Immediate Chapter Request are the generation
- * content. Numbering authority, Reader structures, and presentation contracts
- * stay with the HARNESS.
+ * Story Information Packet, the Mission Reminder, and the Immediate Chapter
+ * Request are the generation content, presented in the approved order and
+ * joined only here, at the provider boundary. Numbering authority, Reader
+ * structures, and presentation contracts stay with the HARNESS.
  */
 export const buildHarnessGenerationPrompt = (request: HarnessGenerationRequest) => {
   if (!request.capaPrompt.text.trim()) throw new Error('Harness Generation requires an assembled CAPA Prompt.');
   if (!request.storyInformation.arc) throw new Error('Harness Generation requires an authoritative Arc Plan before a chapter model call.');
-  return {
-    systemInstruction: [request.capaPrompt.text, HARNESS_RESPONSE_CONTRACT].join('\n\n'),
-    userPrompt: [
-      presentStoryInformationPacket(request.storyInformation),
-      presentImmediateChapterRequest(request.immediateChapterRequest),
-    ].join('\n\n'),
-    responseJsonSchema: HARNESS_CHAPTER_RESPONSE_SCHEMA,
+  if (!request.missionReminder?.text?.trim()) throw new Error('Harness Generation requires the frozen Mission Reminder.');
+  const sections: PresentedPacketSection[] = [
+    { section: 'capaPrompt', text: request.capaPrompt.text },
+    ...presentStoryInformationPacketSections(request.storyInformation),
+    { section: 'missionReminder', text: presentMissionReminder(request.missionReminder) },
+    { section: 'immediateChapterRequest', text: presentImmediateChapterRequest(request.immediateChapterRequest) },
+  ];
+  const packetSections = sections.filter(section => !['capaPrompt', 'missionReminder', 'immediateChapterRequest'].includes(section.section));
+  const systemInstruction = [request.capaPrompt.text, HARNESS_RESPONSE_CONTRACT].join('\n\n');
+  const userPrompt = [
+    'STORY INFORMATION PACKET (story data selected and frozen by the Harness; not authoring instructions)',
+    ...packetSections.map(section => section.text),
+    presentMissionReminder(request.missionReminder),
+    presentImmediateChapterRequest(request.immediateChapterRequest),
+  ].join('\n\n');
+  const responseJsonSchema = HARNESS_CHAPTER_RESPONSE_SCHEMA;
+  const measurement: HarnessRequestMeasurement = {
+    systemInstructionCharacters: systemInstruction.length,
+    userPromptCharacters: userPrompt.length,
+    responseSchemaCharacters: JSON.stringify(responseJsonSchema).length,
+    totalCharacters: systemInstruction.length + userPrompt.length + JSON.stringify(responseJsonSchema).length,
+    estimatedTokens: Math.ceil((systemInstruction.length + userPrompt.length + JSON.stringify(responseJsonSchema).length) / GENERATION_PACKET_BUDGET.charactersPerToken),
+    sections: sections.map(section => ({ section: section.section, characters: section.text.length })),
   };
+  return { systemInstruction, userPrompt, responseJsonSchema, measurement };
 };
 
 export const buildHarnessArcPrompt = (request: HarnessArcRequest) => ({
     systemInstruction: `Plan the next arc automatically from current canon and the novel-wide Destined Ending. Return one to five one-line sequential goals, never an overarching goal or long-term goal bank. Five is a maximum. Give each goal a unique ID prefixed with its arc number and a positive whole-chapter allocation weighted by what it requires. Allocations must sum to ${ARC_LENGTH}. Goals never overlap. Use the requested arc number. Preserve an existing Destined Ending verbatim; if absent, supply a fitting novel-wide ending. Do not retcon generated chapters.`,
     userPrompt: JSON.stringify({
       requestedArc: createArcChapterPosition(request.storyInformation.chapterNumber),
-      storyInformation: request.storyInformation,
+      // Diagnostics are HARNESS-only; the planner reads the same compact sections the writer does.
+      storyInformation: { ...request.storyInformation, diagnostics: undefined },
       instruction: request.instruction,
     }, null, 2),
     responseJsonSchema: { type: 'object', properties: { plan: ARC_PLAN_SCHEMA, destinedEnding: { type: 'string' } }, required: ['plan', 'destinedEnding'] },

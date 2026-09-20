@@ -13,8 +13,9 @@
 Harness Generation is an independent, checkpoint-first novel core. It gives an
 author a frozen Foundation copied from a saved Story Seed, asks a provider for one complete
 chapter, preserves raw output before interpreting it, accepts usable prose
-through canonical SEN chapter blocks, and carries committed prose, optional
-accepted media metadata, and semantic-event evidence into the next chapter.
+through canonical SEN chapter blocks, and carries saved recaps, story
+direction, and the current canonical state into the next chapter while the
+complete prose, evidence, and memory history stay in storage.
 
 It is not a replacement, wrapper, import path, or compatibility layer for the
 existing Chapter Generation feature.
@@ -30,6 +31,28 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-09-20:** Replaced the bloated Story Information delivery with the
+  compact long-story generation packet. The Story Information Packet is now
+  six distinct sections (`shared/context.ts`, `shared/canonicalProjection.ts`)
+  budgeted by the one configuration in `shared/packetBudget.ts`: Current
+  Story Information projected from stable Foundation fields (no Story Seed
+  snapshot, storage record, or repeated copy), Destined Ending and Hard Pins,
+  the Active Arc Goal from the existing Arc Plan authority, the persisted Fate
+  Pressure rhythm direction with the previous chapter's matching suggestion,
+  the latest five saved recaps, and the current canonical state: one latest
+  applicable entry per resolved entity, deterministic alias and correction
+  merging only, probable near-duplicates flagged for inspection, and
+  relevance-ranked selection (current arc, request, cast, recent chapters)
+  that compacts older entities before omitting any. Complete prior chapters,
+  raw evidence passages, memory extractions, threads, mysteries, timelines, and
+  the selection audit no longer reach the provider; the audit lives in packet
+  `diagnostics` and the Development diagnostics panel. The Generation Model
+  Call presents nine sections once, in order, adds the frozen Mission Reminder
+  as its own request field, and returns the exact serialized request size,
+  which the attempt persists (`requestMeasurement`). A provider retry resends
+  the abandoned attempt's frozen inputs instead of rebuilding them from newer
+  state. The per-story context policy and its controls were removed. Schema
+  version 16 resets stale Development data.
 - **2026-09-20:** Built the story-direction sources the later packet-assembly
   change will draw on, without changing the Generation Model Call inputs.
   `src/narrative/storyDirection.ts` is the shared domain contract: at most

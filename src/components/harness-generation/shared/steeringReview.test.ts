@@ -50,22 +50,21 @@ describe('Steering review regressions', () => {
     expect(reloaded.snapshot().stories[0].steering).toBeUndefined();
   });
 
-  it('retains cast mentions and prior-chapter details when compact memory cannot fit', async () => {
+  it('carries cast identity and the latest resource balance as current canonical state, without the prose', async () => {
     const { controller, story } = await setup();
     await controller.generateNextChapter(story.id, 'fixture');
     const state = controller.snapshot();
     expect(state.canonicalRecords.filter(record => record.kind === 'character').map(record => record.label)).toContain('Mara');
-    const context = compileStoryInformationPacket(state, { ...state.stories[0],
-      contextPolicy: { maxEstimatedTokens: 1, recentChapterCount: 3, includeMinorEvents: false } }, state.foundations[0], 'tiny');
-    expect(context.developments).toEqual([]);
-    expect(context.committedChapters[0].events[0].details).toEqual(state.events[0].details);
-    const prompt = buildHarnessGenerationPrompt({ storyId: story.id, attemptId: 'tiny', model: 'fixture',
-      capaPrompt: state.attempts[0].capaPrompt, storyInformation: context,
+    const context = compileStoryInformationPacket(state, state.stories[0], state.foundations[0], 'next');
+    expect(context.canonicalState.characters.find(character => character.name === 'Iven')?.facts).toMatchObject({ role: 'Captain' });
+    expect(context.canonicalState.resources).toEqual([expect.objectContaining({ owner: 'Mara', name: 'Sparks', value: '16', unit: 'sparks', asOfChapter: 1 })]);
+    const prompt = buildHarnessGenerationPrompt({ storyId: story.id, attemptId: 'next', model: 'fixture',
+      capaPrompt: state.attempts[0].capaPrompt, storyInformation: context, missionReminder: state.attempts[0].missionReminder,
       immediateChapterRequest: { chapterNumber: 2, continuation: true, chapterScale: { minWords: 1_800, maxWords: 2_500 } } });
-    const evidence = JSON.parse(prompt.userPrompt.split('COMMITTED STORY EVIDENCE\n')[1].split('\nFROZEN STORY SEED')[0]);
-    expect(evidence.priorChapters[0].semanticEvents[0].details).toMatchObject({
-      speech: { speaker: 'Iven', quote: '"Stay together."' }, mechanics: { value: '16' },
-    });
+    expect(prompt.userPrompt).toContain('CURRENT CANONICAL STATE');
+    expect(prompt.userPrompt).toContain('Mara · Sparks: 16 sparks (as of Chapter 1)');
+    // The speech quote is chapter evidence, not current state; it stays in storage.
+    expect(prompt.userPrompt).not.toContain('"Stay together."');
   });
 
   it('does not let unchecked later quantities or spending alter SEN memory', async () => {

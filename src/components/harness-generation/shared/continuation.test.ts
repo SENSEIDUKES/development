@@ -130,16 +130,18 @@ describe('Steered continuation and SEN boundaries', () => {
       }
     }
     for (const request of requests) {
-      if (request.immediateChapterRequest.chapterNumber > 1) expect(request.storyInformation.steering?.[0].direction).toContain('ally');
-      if (request.immediateChapterRequest.chapterNumber > 10) expect(request.storyInformation.steering?.[1].direction).toContain('mercy');
-      if (request.immediateChapterRequest.chapterNumber > 20) expect(request.storyInformation.steering?.[2].mode).toBe('revise-history');
+      const directions = request.storyInformation.currentStory.authorDirections;
+      if (request.immediateChapterRequest.chapterNumber > 1) expect(directions[0].direction).toContain('ally');
+      if (request.immediateChapterRequest.chapterNumber > 10) expect(directions[1].direction).toContain('mercy');
+      if (request.immediateChapterRequest.chapterNumber > 20) expect(directions[2].mode).toBe('revise-history');
     }
     const state = controller.snapshot();
     expect(state.chapters).toHaveLength(50);
-    expect(requests[49].storyInformation.committedChapters.map(chapter => chapter.chapterNumber)).toEqual([47, 48, 49]);
-    expect(requests[49].storyInformation.developments?.some(event => event.chapterNumber < 47)).toBe(true);
-    expect(requests[7].storyInformation.developments?.some(event => event.chapterNumber === 7)).toBe(true);
-    expect(requests[49].storyInformation.steering).toHaveLength(4);
+    // No prior chapter prose travels; current state carries the latest balance and relationship only.
+    expect(JSON.stringify(requests[49].storyInformation)).not.toContain('Mara meets Iven.');
+    expect(requests[49].storyInformation.canonicalState.resources).toEqual([expect.objectContaining({ owner: 'Mara', name: 'Sparks', value: '49', asOfChapter: 49 })]);
+    expect(requests[49].storyInformation.canonicalState.characters.find(character => character.name === 'Iven')?.facts.relationshipToMC).toBe('Ally');
+    expect(requests[49].storyInformation.currentStory.authorDirections).toHaveLength(4);
     const prompt = buildHarnessGenerationPrompt(requests[49]);
     expect(prompt.systemInstruction).toContain('newest direction wins');
     expect(prompt.userPrompt).toContain('Make Iven an ally');
@@ -162,9 +164,9 @@ describe('Steered continuation and SEN boundaries', () => {
     expect(createHarnessSenStory(state, story.id, 1).memory?.characters?.find(character => character.name === 'Iven')?.relationshipToMC).toBe('Enemy');
     expect(state.chapters[0].prose).toContain('Enemy');
     const currentStory = state.stories[0];
-    const tiny = compileStoryInformationPacket(state, { ...currentStory, contextPolicy: { recentChapterCount: 3, maxEstimatedTokens: 1, includeMinorEvents: false } }, state.foundations[0], 'tiny');
-    expect(tiny.steering).toHaveLength(4);
-    expect(tiny.selectionAudit?.omitted.some(item => item.sourceRecordIds.includes(currentStory.steering![0].id))).toBe(false);
+    const next = compileStoryInformationPacket(state, currentStory, state.foundations[0], 'next');
+    expect(next.currentStory.authorDirections).toHaveLength(4);
+    expect(next.diagnostics.omitted.some(item => item.sourceRecordIds.includes(currentStory.steering![0].id))).toBe(false);
   }, 60_000);
 
   it('keeps exact zero and negative mechanics but withholds unsupported details', () => {

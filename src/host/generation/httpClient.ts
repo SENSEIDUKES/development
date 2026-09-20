@@ -25,6 +25,12 @@ const parseGenerationResponse = (value: unknown): HarnessGenerationResponse => {
   if (!isRecord(value) || typeof value.rawProviderResponse !== 'string' || !isRecord(value.providerReceipt)) {
     throw new Error('Harness Generation returned an invalid provider response.');
   }
+  // The measurement is optional and only trusted when it is a complete record.
+  const measurement = value.requestMeasurement;
+  if (measurement !== undefined && (!isRecord(measurement) || typeof measurement.totalCharacters !== 'number' || !Array.isArray(measurement.sections))) {
+    const { requestMeasurement: _invalid, ...rest } = value;
+    return rest as unknown as HarnessGenerationResponse;
+  }
   return value as unknown as HarnessGenerationResponse;
 };
 

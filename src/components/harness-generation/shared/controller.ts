@@ -43,7 +43,7 @@ import {
   createEmptyHarnessWorkspaceState,
   type HarnessGenerationRepository,
 } from './repository';
-import type { HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessContextSelectionPolicy, HarnessStory, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessMemoryRecovery, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
+import type { HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessMemoryRecovery, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export type HarnessEventPreserver = (
   rawEvents: unknown[],
@@ -372,23 +372,6 @@ export class HarnessGenerationController {
     return buildMissionReminder(assembleCapaPrompt(freezeHarnessSkillLoadout(story, this.skillCatalog, this.runtime.now())));
   }
 
-  async setContextPolicy(storyId: string, policy: HarnessContextSelectionPolicy): Promise<HarnessStory> {
-    this.assertHydrated();
-    if (!Number.isInteger(policy.recentChapterCount) || policy.recentChapterCount < 1) {
-      throw new Error('Recent chapter count must be a positive whole number.');
-    }
-    if (!Number.isInteger(policy.maxEstimatedTokens) || policy.maxEstimatedTokens < 1) {
-      throw new Error('Context token budget must be a positive whole number.');
-    }
-    const candidate = cloneHarnessValue(this.state);
-    const story = findStory(candidate, storyId);
-    if (!story) throw new Error('Open a Harness story before changing its context policy.');
-    story.contextPolicy = cloneHarnessValue(policy);
-    story.updatedAt = this.runtime.now();
-    await this.persist(candidate);
-    return cloneHarnessValue(story);
-  }
-
   async setSkillSlot(
     storyId: string,
     slot: HarnessSkillSlotId,
@@ -654,12 +637,16 @@ export class HarnessGenerationController {
     return this.generateNextChapterInternal(storyId, model, batchId);
   }
 
-  /** Frozen Media Loadout reuse is reachable only from the explicit retry path. */
+  /**
+   * Frozen-input reuse is reachable only from the explicit retry path: a
+   * retried provider request resends exactly what the abandoned attempt froze
+   * instead of rebuilding it from newer story state.
+   */
   private async generateNextChapterInternal(
     storyId: string,
     model: string,
     batchId?: string,
-    reusedMediaLoadout?: FrozenNarrativeMedia,
+    frozen?: Pick<HarnessGenerationAttempt, 'capaPrompt' | 'storyInformation' | 'immediateChapterRequest' | 'missionReminder' | 'mediaLoadout'>,
   ): Promise<HarnessWorkspaceState> {
     this.assertHydrated();
     if (this.generating) throw new Error('A Harness chapter request is already running.');
@@ -680,28 +667,27 @@ export class HarnessGenerationController {
       this.generating = true;
       try { await this.prepareArcPlan(storyId, model); }
       finally { this.generating = false; }
-      return this.generateNextChapterInternal(storyId, model, batchId, reusedMediaLoadout);
+      return this.generateNextChapterInternal(storyId, model, batchId, frozen);
     }
     const attemptId = this.runtime.createId('hga');
     const startedAt = this.runtime.now();
-    // The HARNESS prepares the two Generation Model Call inputs separately:
-    // the CAPA Prompt (how the model authors) and the Story Information
-    // Packet (what it authors), plus the Immediate Chapter Request.
-    // Story Information and the Immediate Chapter Request are frozen first so
-    // an equipped Translation glossary is selected against exactly the inputs
-    // this attempt sends, and replays with them.
-    const storyInformation = compileStoryInformationPacket(this.state, story, foundation, attemptId, this.runtime);
-    const immediateChapterRequest = buildImmediateChapterRequest(story);
-    const capaPrompt = assembleCapaPrompt(
+    // The HARNESS prepares the Generation Model Call inputs separately: the
+    // CAPA Prompt (how the model authors), the Story Information Packet (what
+    // it authors) with its distinct sections, the Mission Reminder, and the
+    // Immediate Chapter Request. Story Information and the Immediate Chapter
+    // Request are frozen first so an equipped Translation glossary is selected
+    // against exactly the inputs this attempt sends, and replays with them.
+    const storyInformation = frozen ? cloneHarnessValue({ ...frozen.storyInformation, attemptId }) : compileStoryInformationPacket(this.state, story, foundation, attemptId, this.runtime);
+    const immediateChapterRequest = frozen ? cloneHarnessValue(frozen.immediateChapterRequest) : buildImmediateChapterRequest(story);
+    const capaPrompt = frozen ? cloneHarnessValue(frozen.capaPrompt) : assembleCapaPrompt(
       freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt),
       { storyInformation, immediateChapterRequest },
     );
-    const mediaLoadout = reusedMediaLoadout
-      ? cloneHarnessValue(reusedMediaLoadout)
+    const mediaLoadout = frozen
+      ? cloneHarnessValue(frozen.mediaLoadout)
       : this.media?.freeze(story.mediaLoadout, startedAt) ?? emptyNarrativeMedia(startedAt);
-    // Frozen beside the CAPA Prompt for inspection; it is not part of the
-    // Generation Model Call until the later packet-assembly change.
-    const missionReminder = buildMissionReminder(capaPrompt);
+    // Frozen beside the CAPA Prompt; presented as its own section at the provider boundary.
+    const missionReminder = frozen ? cloneHarnessValue(frozen.missionReminder) : buildMissionReminder(capaPrompt);
     const attempt: HarnessGenerationAttempt = {
       id: attemptId,
       storyId,
@@ -740,6 +726,7 @@ export class HarnessGenerationController {
           model: attempt.model,
           capaPrompt: attempt.capaPrompt,
           storyInformation: attempt.storyInformation,
+          missionReminder: attempt.missionReminder,
           immediateChapterRequest: attempt.immediateChapterRequest,
         });
       } catch (error) {
@@ -755,6 +742,8 @@ export class HarnessGenerationController {
       rawAttempt.rawReceivedAt = this.runtime.now();
       rawAttempt.rawProviderResponse = response.rawProviderResponse;
       rawAttempt.providerReceipt = response.providerReceipt;
+      // The host measured the exact serialized request it sent; keep it with the attempt.
+      if (response.requestMeasurement) rawAttempt.requestMeasurement = cloneHarnessValue(response.requestMeasurement);
       rawAttempt.failure = undefined;
       if (!await this.persistCheckpoint(rawReceived, attemptId, 'raw_received')) return this.snapshot();
 
@@ -1273,12 +1262,20 @@ export class HarnessGenerationController {
     abandonedAttempt.recoveryStage = undefined;
     abandonedAttempt.failure = undefined;
     await this.persist(abandoned);
-    return this.generateNextChapterInternal(
-      attempt.storyId,
-      attempt.model,
-      attempt.batchId,
-      attempt.mediaLoadout,
-    );
+    // A frozen packet without its Arc Plan was never a sendable request, and a
+    // failed attempt does not block later chapters, so frozen inputs are
+    // resent unchanged only while the story head still points at the chapter
+    // they were prepared for. Otherwise the retry rebuilds for the current head.
+    const story = findStory(this.state, attempt.storyId);
+    const sameChapter = story?.head.nextChapterNumber === attempt.immediateChapterRequest.chapterNumber;
+    const frozen = attempt.storyInformation.arc && sameChapter ? {
+      capaPrompt: attempt.capaPrompt,
+      storyInformation: attempt.storyInformation,
+      immediateChapterRequest: attempt.immediateChapterRequest,
+      missionReminder: attempt.missionReminder,
+      mediaLoadout: attempt.mediaLoadout,
+    } : undefined;
+    return this.generateNextChapterInternal(attempt.storyId, attempt.model, attempt.batchId, frozen);
   }
 
   private emptyBatchUsage(): HarnessBatchUsageAggregate {

@@ -29,7 +29,9 @@ export {
   buildCanonicalStoryView,
   type AppendHarnessCorrectionInput,
 } from '../../components/harness-generation/shared/canonicalState';
-export { DEFAULT_HARNESS_CONTEXT_POLICY } from '../../components/harness-generation/shared/context';
+export { compileStoryInformationPacket, projectCurrentStory } from '../../components/harness-generation/shared/context';
+export { projectCanonicalState, normalizeIdentityLabel, type CanonicalProjectionInput, type CanonicalProjectionResult } from '../../components/harness-generation/shared/canonicalProjection';
+export { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER, estimatePacketTokens, type PacketSectionBudget } from '../../components/harness-generation/shared/packetBudget';
 export {
   CAPA_SCHEMA,
   CAPA_PROMPT_TOKEN_LIMIT,

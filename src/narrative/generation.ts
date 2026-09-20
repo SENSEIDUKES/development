@@ -8,7 +8,7 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * persisted shape (attempt, chapter, or workspace state fields). This is a
  * development system: storage at any other version is reset, never
  * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 15 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 16 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -102,7 +102,6 @@ export interface HarnessStory {
   activeFoundationRevisionId: string;
   foundationRevisionIds: string[];
   head: HarnessStoryHead;
-  contextPolicy?: HarnessContextSelectionPolicy;
   /** Append-only author directions, independent of the frozen opening outline. */
   steering?: HarnessSteering[];
   /** Per-story references to host-installed skills. The full manifests are frozen per request. */
@@ -406,54 +405,171 @@ export interface HarnessProviderReceipt {
   usage: HarnessUsageReceipt;
 }
 
-export interface HarnessContextChapter {
-  chapterId: string;
+/**
+ * Current Story Information: the compact, model-facing projection of the
+ * active Foundation. It reads stable domain fields (a visible "Core Premise"
+ * or "Synopsis" label never reaches here) and carries no Story Seed snapshot,
+ * storage record, or duplicated copy of the same text.
+ */
+export interface CurrentStoryProjection {
+  title: string;
+  /** The story's permanent authoring language, carried as explicit story information. */
+  originalLanguage: SenLanguageCode;
+  premise: string;
+  genre?: string;
+  toneStyle?: string;
+  permanentInstructions?: string;
+  openingSetup?: string;
+  intendedDirection?: string;
+  declaredCanon?: string;
+  characters?: string;
+  worldFacts?: string;
+  cast?: NonNullable<HarnessEventDetails['character']>[];
+  identities?: Array<{ name: string; aliases?: string[]; kind: 'character' | 'location-world' | 'faction'; evidence: string }>;
+  /** Persistent author directions, oldest first; the newest wins on conflict. */
+  authorDirections: Array<Pick<HarnessSteering, 'direction' | 'mode' | 'effectiveChapter'>>;
+  /** Explicit author corrections, newest first, compacted to their meaning. */
+  corrections: Array<{
+    kind: HarnessCorrectionKind;
+    reason: string;
+    targets?: string[];
+    referenceLabel?: string;
+    acceptedAlias?: string;
+    resolvedEntity?: string;
+    replacement?: { kind: HarnessCanonicalKind; label?: string; facts: Record<string, string> };
+    /** Semantic Reader/Codex edits only; presentation fields never travel. */
+    readerEdit?: { chapterNumber: number; changes: Array<{ path: string; value?: unknown; remove?: true }> };
+  }>;
+}
+
+/** The Destined Ending beside the user's Hard Pins, in the user's order. */
+export interface StoryDirectionSection {
+  destinedEnding?: string;
+  hardPins: string[];
+}
+
+/** Compact Fate Pressure rhythm direction: tier, recent sequence, recommendation, reason, matching suggestion. */
+export interface RhythmDirectionSection {
+  fatePressure: FatePressure;
+  recentFunctions: Array<{ chapterNumber: number; chapterFunction: ChapterFunction }>;
+  recommendedFunction: ChapterFunction;
+  reason: string;
+  /** The previous chapter's suggestion matching the recommended function, when one was saved. */
+  suggestion?: string;
+}
+
+export interface PreviouslyOnEntry {
   chapterNumber: number;
   title: string;
-  prose: string;
-  events: Array<Pick<
-    HarnessSemanticEvent,
-    'id' | 'description' | 'category' | 'subjects' | 'subjectKinds' | 'significance' | 'evidence' | 'evidenceVerified' | 'requestedEffects' | 'facts' | 'details'
-  >>;
+  recap: string;
+}
+
+/** The latest applicable state of one resolved entity: concise facts, never evidence passages. */
+export interface CanonicalEntityState {
+  name: string;
+  aliases?: string[];
+  /** The latest committed chapter that changed this entity; absent for Foundation-only identities. */
+  asOfChapter?: number;
+  facts: Record<string, string>;
+}
+
+/** The latest absolute quantity observed for one owner's named resource. */
+export interface CanonicalResourceState {
+  owner: string;
+  name: string;
+  value: string;
+  unit?: string;
+  asOfChapter?: number;
+}
+
+/** Current canonical state: only the latest applicable state per resolved entity. */
+export interface CanonicalStateProjection {
+  characters: CanonicalEntityState[];
+  relationships: CanonicalEntityState[];
+  locations: CanonicalEntityState[];
+  factions: CanonicalEntityState[];
+  artifacts: CanonicalEntityState[];
+  abilities: CanonicalEntityState[];
+  resources: CanonicalResourceState[];
+}
+
+export type PacketSectionId =
+  | 'capaPrompt'
+  | 'currentStory'
+  | 'storyDirection'
+  | 'arc'
+  | 'rhythm'
+  | 'previouslyOn'
+  | 'canonicalState'
+  | 'missionReminder'
+  | 'immediateChapterRequest';
+
+export interface PacketSectionMeasurement {
+  section: PacketSectionId;
+  estimatedTokens: number;
+  budgetTokens?: number;
+  protected: boolean;
+  overBudget: boolean;
+}
+
+export interface PacketOmission {
+  section: PacketSectionId;
+  label: string;
+  reason: string;
+  sourceRecordIds: string[];
+}
+
+/** A probable near-duplicate identity the HARNESS refused to merge silently. */
+export interface CanonicalIdentityAmbiguity {
+  kind: HarnessCanonicalKind;
+  labels: string[];
+  recordIds: string[];
+  reason: string;
+}
+
+/**
+ * HARNESS diagnostics about how the packet was assembled. Inspectable in
+ * Development; never presented to the provider.
+ */
+export interface StoryInformationDiagnostics {
+  budgetSource: string;
+  sections: PacketSectionMeasurement[];
+  omitted: PacketOmission[];
+  identityAmbiguities: CanonicalIdentityAmbiguity[];
+  /** Storage totals at assembly time, so growth stays visible while the packet stays compact. */
+  storage: { chapters: number; events: number; canonicalRecords: number; activeRecords: number; recaps: number };
 }
 
 /**
  * Story Information Packet: the story information selected, weighted,
- * organized, and frozen by the HARNESS for one generation attempt. It contains
- * story data only; CAPA skill instructions never enter it.
+ * organized, and frozen by the HARNESS for one generation attempt. Each
+ * section stays a distinct structured source until the provider boundary
+ * presents them in the approved order. It contains story data only; CAPA
+ * skill instructions never enter it.
  */
 export interface StoryInformationPacket {
-  arc?: import('../components/arc-goals/shared/arcGoals').ArcGenerationContext;
   id: string;
   storyId: string;
   attemptId: string;
-  foundationRevision: StoryFoundationRevision;
+  foundationRevisionId: string;
+  foundationRevision: number;
   storyHead: HarnessStoryHead;
-  /** The story's permanent authoring language, carried as explicit story information. */
-  originalLanguage: SenLanguageCode;
   chapterNumber: number;
   createdAt: string;
-  committedChapters: HarnessContextChapter[];
-  /** Phase 3 additions are optional so frozen Phase 2 snapshots remain valid. */
-  contextVersion?: 2;
-  selectionPolicy?: HarnessContextSelectionPolicy;
-  canonicalContext?: HarnessCanonicalContext;
-  selectionAudit?: HarnessContextSelectionAudit;
-  steering?: HarnessSteering[];
-  /** Compact committed evidence survives capability failure and the prose window. */
-  developments?: Array<{ chapterNumber: number; sourceId: string; description: string; evidence?: string; evidenceVerified?: boolean; details?: HarnessEventDetails }>;
-  lookups?: Array<{ chapterNumber: number; sourceId: string; excerpt: string }>;
-  mechanicalContinuity?: MechanicalContinuityObservation[];
-}
-
-export interface MechanicalContinuityObservation {
-  sourceId: string;
-  chapterNumber: number;
-  subject: string;
-  name: string;
-  value: string;
-  unit?: string;
-  subsequentDevelopments: Array<{ sourceId: string; chapterNumber: number; description: string }>;
+  /** Section 2. */
+  currentStory: CurrentStoryProjection;
+  /** Section 3. */
+  storyDirection: StoryDirectionSection;
+  /** Section 4: the existing Arc Plan authority, frozen. */
+  arc?: import('../components/arc-goals/shared/arcGoals').ArcGenerationContext;
+  /** Section 5. */
+  rhythm?: RhythmDirectionSection;
+  /** Section 6: the latest saved recaps, oldest first. */
+  previouslyOn: PreviouslyOnEntry[];
+  /** Section 7. */
+  canonicalState: CanonicalStateProjection;
+  /** HARNESS-only; the provider boundary never presents it. */
+  diagnostics: StoryInformationDiagnostics;
 }
 
 export interface HarnessChapter {
@@ -529,6 +645,8 @@ export interface HarnessGenerationAttempt {
   committedAt?: string;
   rawProviderResponse?: string;
   providerReceipt?: HarnessProviderReceipt;
+  /** The measured size of the serialized request this attempt actually sent. */
+  requestMeasurement?: HarnessRequestMeasurement;
   acceptedDraft?: HarnessAcceptedChapterDraft;
   /** Stable event IDs are assigned before the chapter commits. */
   preservedEvents?: HarnessSemanticEvent[];
@@ -706,45 +824,6 @@ export interface HarnessCanonicalStoryView {
   corrections: HarnessAuthorCorrection[];
 }
 
-export interface HarnessContextSelectionPolicy {
-  recentChapterCount: number;
-  maxEstimatedTokens: number;
-  includeMinorEvents: boolean;
-}
-
-export type HarnessContextSourceKind =
-  | 'foundation'
-  | 'correction'
-  | 'chapter-prose'
-  | 'semantic-event'
-  | 'canonical-record'
-  | 'derived-handoff';
-
-export interface HarnessContextAuditItem {
-  id: string;
-  sourceKind: HarnessContextSourceKind;
-  sourceRecordIds: string[];
-  label: string;
-  reason: string;
-  estimatedTokens: number;
-}
-
-export interface HarnessContextSelectionAudit {
-  included: HarnessContextAuditItem[];
-  omitted: HarnessContextAuditItem[];
-  totalEstimatedTokens: number;
-}
-
-export interface HarnessCanonicalContext {
-  corrections: Array<HarnessAuthorCorrection & {
-    /** Frozen referents remain intelligible even when their records are omitted. */
-    targetEvidence?: Array<Pick<HarnessCanonicalRecord, 'id' | 'kind' | 'label' | 'evidence' | 'facts'>>;
-    resolvedEntity?: Pick<HarnessCanonicalRecord, 'id' | 'kind' | 'label' | 'evidence' | 'facts'>;
-  }>;
-  records: HarnessCanonicalRecord[];
-  handoff: Array<{ description: string; sourceRecordIds: string[] }>;
-}
-
 export interface HarnessBatchUsageAggregate {
   reportedCalls: number;
   estimatedCalls: number;
@@ -826,12 +905,27 @@ export interface HarnessGenerationRequest {
   model: string;
   capaPrompt: CapaPrompt;
   storyInformation: StoryInformationPacket;
+  /** Section 8: the frozen Mission Reminder, kept distinct until the provider boundary. */
+  missionReminder: HarnessMissionReminder;
   immediateChapterRequest: ImmediateChapterRequest;
+}
+
+/** The size of the serialized provider request the host actually sent, measured at the provider boundary. */
+export interface HarnessRequestMeasurement {
+  systemInstructionCharacters: number;
+  userPromptCharacters: number;
+  responseSchemaCharacters: number;
+  totalCharacters: number;
+  estimatedTokens: number;
+  /** Serialized characters of each presented packet section, in presentation order. */
+  sections: Array<{ section: PacketSectionId; characters: number }>;
 }
 
 export interface HarnessGenerationResponse {
   rawProviderResponse: string;
   providerReceipt: HarnessProviderReceipt;
+  /** Present for chapter requests measured at the provider boundary. */
+  requestMeasurement?: HarnessRequestMeasurement;
 }
 
 export interface HarnessGenerationModelAdapter {

@@ -111,10 +111,10 @@ describe('Harness Generation Phase 2 novel core', () => {
     });
     expect(state.attempts[0].warnings.some(warning => warning.code === 'ignored_model_identity')).toBe(true);
     expect(provider.generate).toHaveBeenCalledTimes(1);
-    expect(provider.generate.mock.calls[0][0].storyInformation.foundationRevision.input.premise).toContain('courier');
+    expect(provider.generate.mock.calls[0][0].storyInformation.currentStory.premise).toContain('courier');
   });
 
-  it('freezes an injected Story Seed snapshot inside the Harness-owned Foundation and generation context', async () => {
+  it('freezes an injected Story Seed snapshot inside the Harness-owned Foundation but never in the generation packet', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const provider = adapter(response(JSON.stringify({ prose: 'The archive door opened beneath the tide.' })));
     const controller = new HarnessGenerationController({ repository, modelAdapter: provider.value, runtime: runtime() });
@@ -133,9 +133,14 @@ describe('Harness Generation Phase 2 novel core', () => {
     await controller.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
 
     const request = provider.generate.mock.calls[0][0] as HarnessGenerationRequest;
-    const frozenSeed = request.storyInformation.foundationRevision.input.sourceSnapshot?.seed as { story: { required: { premise: string } } };
+    const attempt = repository.snapshot().attempts[0];
+    const frozenSeed = attempt.foundationSnapshot.input.sourceSnapshot?.seed as { story: { required: { premise: string } } };
     expect(frozenSeed.story.required.premise).toBe('Original seed premise.');
-    expect(request.storyInformation.foundationRevision.input.sourceSnapshot?.sourceId).toBe('seed-1');
+    expect(attempt.foundationSnapshot.input.sourceSnapshot?.sourceId).toBe('seed-1');
+    // The compact packet reads the Foundation's domain fields; the snapshot itself never travels.
+    expect(request.storyInformation.currentStory.premise).toBe('Original seed premise.');
+    expect(JSON.stringify(request.storyInformation)).not.toContain('sourceSnapshot');
+    expect(JSON.stringify(request.storyInformation)).not.toContain('seed-1');
   });
 
   it('equips the bundled Author skill when an older saved story is hydrated', async () => {
@@ -415,13 +420,14 @@ describe('Harness Generation Phase 2 novel core', () => {
     expect(provider.generate).toHaveBeenCalledTimes(1);
   });
 
-  it('hydrates committed work and sends committed Chapter 1 prose and events into Chapter 2 context', async () => {
+  it('hydrates committed work and sends committed Chapter 1 recap and canonical state, never its prose, into Chapter 2 context', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const provider = adapter(
       response(JSON.stringify({
         title: 'A Door in the Floodwall',
         prose: 'Nera found the door behind the floodwall at first light.',
-        memory: { events: [{ description: 'Nera discovers a sealed door behind the floodwall.', category: 'mystery' }] },
+        recap: 'Nera found a sealed door behind the floodwall.',
+        memory: { events: [{ description: 'Nera discovers a sealed door behind the floodwall.', category: 'character', subjects: ['Nera'], evidence: 'Nera found the door behind the floodwall at first light.', details: { character: { name: 'Nera', role: 'Keeper' } } }] },
       })),
       response(JSON.stringify({
         prose: 'The sealed door opened only when Nera spoke the name she had lost.',
@@ -438,11 +444,9 @@ describe('Harness Generation Phase 2 novel core', () => {
 
     const chapterTwoRequest = provider.generate.mock.calls[1][0] as HarnessGenerationRequest;
     expect(chapterTwoRequest.immediateChapterRequest).toEqual({ chapterNumber: 2, continuation: true, chapterScale: { minWords: 1_800, maxWords: 2_500 } });
-    expect(chapterTwoRequest.storyInformation.committedChapters).toHaveLength(1);
-    expect(chapterTwoRequest.storyInformation.committedChapters[0]).toMatchObject({
-      prose: expect.stringContaining('floodwall'),
-      events: [expect.objectContaining({ description: expect.stringContaining('sealed door') })],
-    });
+    expect(chapterTwoRequest.storyInformation.previouslyOn).toEqual([{ chapterNumber: 1, title: 'A Door in the Floodwall', recap: 'Nera found a sealed door behind the floodwall.' }]);
+    expect(chapterTwoRequest.storyInformation.canonicalState.characters).toEqual([expect.objectContaining({ name: 'Nera', asOfChapter: 1, facts: expect.objectContaining({ role: 'Keeper' }) })]);
+    expect(JSON.stringify(chapterTwoRequest.storyInformation)).not.toContain('at first light');
     expect(reloaded.snapshot().chapters.map(chapter => chapter.chapterNumber)).toEqual([1, 2]);
   });
 

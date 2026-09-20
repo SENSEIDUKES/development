@@ -28,12 +28,16 @@ const packet = (premise: string): StoryInformationPacket => ({
   id: 'hctx_test',
   storyId: 'hst_test',
   attemptId: 'hga_test',
-  foundationRevision: { id: 'hfr_test', storyId: 'hst_test', revision: 1, createdAt: 'a', input: { premise } },
+  foundationRevisionId: 'hfr_test',
+  foundationRevision: 1,
   storyHead: { nextChapterNumber: 1 },
-  originalLanguage: 'ja',
   chapterNumber: 1,
   createdAt: 'a',
-  committedChapters: [],
+  currentStory: { title: 'Test', originalLanguage: 'ja', premise, authorDirections: [], corrections: [] },
+  storyDirection: { hardPins: [] },
+  previouslyOn: [],
+  canonicalState: { characters: [], relationships: [], locations: [], factions: [], artifacts: [], abilities: [], resources: [] },
+  diagnostics: { budgetSource: 'test', sections: [], omitted: [], identityAmbiguities: [], storage: { chapters: 0, events: 0, canonicalRecords: 0, activeRecords: 0, recaps: 0 } },
 });
 
 const request = (assignment?: string): ImmediateChapterRequest =>

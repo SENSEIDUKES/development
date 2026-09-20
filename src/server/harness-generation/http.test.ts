@@ -138,7 +138,11 @@ describe('Harness Generation HTTP boundary', () => {
     expect(skilled.capaPrompt.text).not.toMatch(/R2|track list|Library Cue catalog/i);
     // The provider schema is the compact semantic contract, never the SEN block, memory, or presentation contracts.
     const chapterSchema = input.responseJsonSchema as { properties: Record<string, unknown>; required: string[] };
-    expect(chapterSchema.required).toEqual(['paragraphs', 'arcCompletion']);
+    expect(chapterSchema.required).toEqual(['paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict']);
+    // The Mission Reminder, Hard Pins, recaps, and rhythm recommendation are not part of the Generation Model Call yet.
+    expect(input.systemInstruction).not.toContain('MISSION REMINDER');
+    expect(input.userPrompt).not.toContain('MISSION REMINDER');
+    expect(input.userPrompt).not.toMatch(/hardPins|rhythmRecommendation|Previously on/i);
     expect(Object.keys(chapterSchema.properties)).not.toContain('blocks');
     expect(Object.keys(chapterSchema.properties)).not.toContain('memory');
     expect(JSON.stringify(chapterSchema)).not.toContain('anyOf');

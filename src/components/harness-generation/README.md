@@ -24,12 +24,37 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-09-19 |
+| Last Workshop update | 2026-09-20 |
 | Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Steered continuation with a derived SEN Reader adapter |
 
 ### History
 
+- **2026-09-20:** Built the story-direction sources the later packet-assembly
+  change will draw on, without changing the Generation Model Call inputs.
+  `src/narrative/storyDirection.ts` is the shared domain contract: at most
+  three user-created Hard Pins with no weighting field, the canonical Fate
+  Pressure tiers (`mortal`, `immortal`, `heaven`), the three chapter
+  functions, and the recap shape. Hard Pins live on the story and are written
+  only through `setHardPins`; the chapter writer and the Arc planner cannot
+  create or change them (`ignored_model_story_direction`). Fate Pressure is
+  copied from the Story Seed domain value into `StoryFoundationInput` at the
+  handoff and is never read from a label. The existing chapter reply gained
+  five shallow strings (`recap`, `chapterFunction`, `nextProgression`,
+  `nextWorldBuilding`, `nextConflict`); acceptance validates each on its own,
+  warns (`optional_recap_omitted`, `optional_rhythm_metadata_omitted`) and
+  never rejects prose, and the commit saves them once with their chapter.
+  Recaps are author-editable (`editChapterRecap`) and survive reload, replay,
+  retry, and export. `shared/rhythm.ts` holds the one Fate Pressure
+  configuration (Development defaults, ported from the Workshop Scene Rhythm
+  Tracker) and the deterministic recommendation persisted on the story at
+  every commit and Foundation revision. `shared/missionReminder.ts` builds the
+  short Mission Reminder from the Author portion of the frozen CAPA Prompt and
+  freezes it on each attempt for inspection. The Library workspace shows the
+  permanent Active Arc Goal (from the existing Arc Plan authority), the
+  Destined Ending, the Hard Pins editor, Fate Pressure with recent rhythm,
+  suggestions and recommendation, the Mission Reminder, and per-chapter
+  recaps. Schema version 15 resets stale Development data.
 - **2026-09-19:** Registered the six supplied CAPA SPP archives as validated,
   stable Development inventory and connected new Story Seed stories to the
   official Author, Pacing, Continuity, and exact Chinese/Japanese/Korean Style

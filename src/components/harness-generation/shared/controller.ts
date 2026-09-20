@@ -28,6 +28,9 @@ import {
   SEN_NOVEL_AUTHOR_SKILL,
 } from './authorSkill';
 import { cloneHarnessValue, defaultHarnessRuntime, stableHarnessId, type HarnessRuntime } from './ids';
+import { buildRhythmRecommendation, type ChapterFunctionRecord } from './rhythm';
+import { buildMissionReminder } from './missionReminder';
+import { CHAPTER_RECAP_TEXT_LIMIT, validateHardPinInputs, type HardPin, type HardPinInput } from '../../../narrative/storyDirection';
 import {
   acceptHarnessModelResponse,
   preserveSemanticEvents,
@@ -89,6 +92,28 @@ const attemptById = (state: HarnessWorkspaceState, attemptId: string): HarnessGe
 
 const activeAttemptForStory = (state: HarnessWorkspaceState, storyId: string) =>
   state.attempts.find(attempt => attempt.storyId === storyId && blockingAttempt(attempt));
+
+/** Saved chapter functions, oldest first. Chapters without a saved function are skipped. */
+const chapterFunctionHistory = (state: HarnessWorkspaceState, storyId: string): ChapterFunctionRecord[] =>
+  state.chapters
+    .filter(chapter => chapter.storyId === storyId && chapter.rhythm?.chapterFunction)
+    .sort((left, right) => left.chapterNumber - right.chapterNumber)
+    .map(chapter => ({ chapterNumber: chapter.chapterNumber, chapterFunction: chapter.rhythm!.chapterFunction! }));
+
+/**
+ * Refreshes the story's persisted Fate Pressure recommendation from its own
+ * saved chapter functions and the centralized rhythm configuration. Runs on
+ * the candidate state inside the same write as the change that made it stale.
+ */
+const refreshRhythmRecommendation = (state: HarnessWorkspaceState, story: HarnessStory, now: string) => {
+  const foundation = findFoundationRevision(state, story.activeFoundationRevisionId);
+  story.rhythmRecommendation = buildRhythmRecommendation({
+    fatePressure: foundation?.input.fatePressure,
+    forChapterNumber: story.head.nextChapterNumber,
+    history: chapterFunctionHistory(state, story.id),
+    computedAt: now,
+  });
+};
 
 /**
  * The single state owner for a local Harness story. It persists each durable
@@ -283,6 +308,7 @@ export class HarnessGenerationController {
         },
       };
     }
+    refreshRhythmRecommendation(created.state, created.story, created.story.createdAt);
     await this.persist(created.state);
     return cloneHarnessValue(created.story);
   }
@@ -290,8 +316,60 @@ export class HarnessGenerationController {
   async saveFoundationRevision(storyId: string, input: StoryFoundationInput): Promise<HarnessStory> {
     this.assertHydrated();
     const revised = reviseStoryFoundation(this.state, storyId, input, this.runtime);
+    // A revision may change the story's Fate Pressure, so the recommendation follows it.
+    refreshRhythmRecommendation(revised.state, revised.story, revised.story.updatedAt);
     await this.persist(revised.state);
     return cloneHarnessValue(revised.story);
+  }
+
+  /**
+   * Replaces the story's ordered Hard Pins. This is the only writer: the user
+   * creates, edits, reorders, and removes them here, and no provider reply,
+   * arc plan, or replay can reach this list.
+   */
+  async setHardPins(storyId: string, pins: HardPinInput[]): Promise<HardPin[]> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the active Harness operation before changing Hard Pins.');
+    const inputs = validateHardPinInputs(pins);
+    const candidate = cloneHarnessValue(this.state);
+    const story = findStory(candidate, storyId);
+    if (!story) throw new Error('Open a Harness story before changing its Hard Pins.');
+    const now = this.runtime.now();
+    const existing = new Map((story.hardPins ?? []).map(pin => [pin.id, pin]));
+    story.hardPins = inputs.map(input => {
+      const previous = input.id ? existing.get(input.id) : undefined;
+      if (input.id && !previous) throw new Error('A Hard Pin identity did not match this story.');
+      if (previous) return previous.text === input.text ? previous : { ...previous, text: input.text, updatedAt: now };
+      return { id: this.runtime.createId('hpin'), text: input.text, createdAt: now, updatedAt: now };
+    });
+    story.updatedAt = now;
+    await this.persist(candidate);
+    return cloneHarnessValue(story.hardPins);
+  }
+
+  /** Author edit of a saved "Previously On" recap. Empty text removes it; prose is never touched. */
+  async editChapterRecap(chapterId: string, text: string): Promise<void> {
+    this.assertHydrated();
+    if (this.generating) throw new Error('Wait for the active Harness operation before editing a recap.');
+    const trimmed = text.trim();
+    if (trimmed.length > CHAPTER_RECAP_TEXT_LIMIT) throw new Error(`A recap must stay within ${CHAPTER_RECAP_TEXT_LIMIT} characters.`);
+    const candidate = cloneHarnessValue(this.state);
+    const chapter = candidate.chapters.find(entry => entry.id === chapterId);
+    if (!chapter) throw new Error('Choose a saved chapter before editing its recap.');
+    const now = this.runtime.now();
+    if (trimmed) chapter.recap = { text: trimmed, source: 'author', updatedAt: now };
+    else delete chapter.recap;
+    const story = findStory(candidate, chapter.storyId);
+    if (story) story.updatedAt = now;
+    await this.persist(candidate);
+  }
+
+  /** The Mission Reminder the next attempt would freeze, for inspection. Never persisted here and never sent. */
+  describeMissionReminder(storyId: string) {
+    this.assertHydrated();
+    const story = findStory(this.state, storyId);
+    if (!story) throw new Error('Open a Harness story before inspecting its Mission Reminder.');
+    return buildMissionReminder(assembleCapaPrompt(freezeHarnessSkillLoadout(story, this.skillCatalog, this.runtime.now())));
   }
 
   async setContextPolicy(storyId: string, policy: HarnessContextSelectionPolicy): Promise<HarnessStory> {
@@ -621,6 +699,9 @@ export class HarnessGenerationController {
     const mediaLoadout = reusedMediaLoadout
       ? cloneHarnessValue(reusedMediaLoadout)
       : this.media?.freeze(story.mediaLoadout, startedAt) ?? emptyNarrativeMedia(startedAt);
+    // Frozen beside the CAPA Prompt for inspection; it is not part of the
+    // Generation Model Call until the later packet-assembly change.
+    const missionReminder = buildMissionReminder(capaPrompt);
     const attempt: HarnessGenerationAttempt = {
       id: attemptId,
       storyId,
@@ -630,6 +711,7 @@ export class HarnessGenerationController {
       mediaLoadout,
       storyInformation,
       immediateChapterRequest,
+      missionReminder,
       model: model.trim(),
       chapterNumber: story.head.nextChapterNumber,
       stage: 'request_started',
@@ -856,6 +938,10 @@ export class HarnessGenerationController {
       ...(acceptedDraft.soundscapes ? { soundscapes: cloneHarnessValue(acceptedDraft.soundscapes) } : {}),
       mediaLoadout: cloneHarnessValue(commitAttempt.mediaLoadout),
       ...(acceptedDraft.plan ? { plan: acceptedDraft.plan } : {}),
+      // The recap and rhythm metadata are saved exactly once, with their own
+      // chapter. Later chapters never regenerate or overwrite them.
+      ...(acceptedDraft.recap ? { recap: { text: acceptedDraft.recap, source: 'model' as const, updatedAt: committedAt } } : {}),
+      ...(acceptedDraft.rhythm ? { rhythm: cloneHarnessValue(acceptedDraft.rhythm) } : {}),
       eventIds: committedEvents.map(event => event.id),
       responseMode: acceptedDraft.responseMode,
       createdAt: commitAttempt.proseAcceptedAt ?? commitAttempt.startedAt,
@@ -869,6 +955,7 @@ export class HarnessGenerationController {
       lastCommittedAt: committedAt,
     };
     commitHarnessArc(commitStory, commitAttempt);
+    refreshRhythmRecommendation(candidate, commitStory, committedAt);
     commitStory.updatedAt = committedAt;
     commitAttempt.stage = 'committed';
     commitAttempt.committedAt = committedAt;

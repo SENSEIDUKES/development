@@ -1,7 +1,10 @@
 import { StoryFoundationEditor } from '@seihouse/sen/story-seed';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { FrozenNarrativeMedia } from '@seihouse/sen/audio';
-import { BookOpen, CheckCircle2, CircleAlert, Download, FileText, ListTree, LoaderCircle, Pause, Play, Plus, Puzzle, RefreshCcw, Volume2 } from 'lucide-react';
+import { BookOpen, CheckCircle2, CircleAlert, Compass, Download, FileText, ListTree, LoaderCircle, Pause, Pin, Play, Plus, Puzzle, RefreshCcw, Target, Volume2 } from 'lucide-react';
+import { ARC_LENGTH, ArcPlanView } from '@seihouse/sen/arc-goals';
+import { CHAPTER_FUNCTIONS, FATE_PRESSURE_RHYTHM_CONFIG, HARD_PIN_LIMIT, harnessArcContext } from '@seihouse/sen/harness-generation';
+import type { ChapterFunction, HardPinInput, HarnessChapter, HarnessMissionReminder, StoryFoundationRevision } from '@seihouse/sen/harness-generation';
 import { createLibraryMediaPort, isMediaPackEntitlementActive, mediaPackKey, type MediaPack, type MediaPackEntitlement, type MediaPackReference, type StoryMediaLoadoutSlot } from '../media/mediaPacks';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
 import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
@@ -492,6 +495,251 @@ function MediaLoadoutPanel({
   );
 }
 
+const chapterFunctionLabel: Record<ChapterFunction, string> = {
+  progression: 'Progression',
+  worldBuilding: 'World-building',
+  conflict: 'Conflict',
+};
+
+/**
+ * The permanent Active Arc Goal display. Every value comes from the existing
+ * Arc Goal authority (`harnessArcContext`), never from a second goal system.
+ */
+function ActiveArcGoalCard({ story, foundation, generatedThrough, busy, onEditPlan }: {
+  story: HarnessStory;
+  foundation?: StoryFoundationRevision;
+  generatedThrough: number;
+  busy: boolean;
+  onEditPlan: (plan: Parameters<typeof ArcPlanView>[0]['plan']) => Promise<void>;
+}) {
+  const [planOpen, setPlanOpen] = useState(false);
+  const context = foundation ? harnessArcContext(story, foundation.input, story.head.nextChapterNumber) : undefined;
+  if (!context) {
+    return (
+      <div className="rounded-xl border border-dashed border-cyan-300/25 bg-cyan-400/[0.04] p-4" data-testid="harness-active-arc-goal">
+        <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-200/55">Active Arc Goal</p>
+        <p className="mt-2 text-sm text-neutral-300">No Arc Plan exists yet. The Arc planner creates it automatically before Chapter {story.head.nextChapterNumber} is requested.</p>
+      </div>
+    );
+  }
+  const goalIndex = context.plan.goals.findIndex(goal => goal.id === context.activeGoal.id) + 1;
+  const remaining = context.completionDeadline - story.head.nextChapterNumber;
+  const status = context.completionConfirmed
+    ? 'Completed with verbatim evidence'
+    : remaining > 0 ? `${remaining} ${remaining === 1 ? 'chapter' : 'chapters'} left before the deadline`
+      : remaining === 0 ? 'Due in the next chapter: it cannot commit without completion evidence'
+        : 'Overdue: the next chapter cannot commit without completion evidence';
+  return (
+    <div className="rounded-xl border border-cyan-300/30 bg-cyan-400/[0.07] p-4" data-testid="harness-active-arc-goal">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-200/55">Active Arc Goal · Arc {context.arcNumber}</p>
+          <p className="mt-1 text-sm font-semibold text-white">Goal {goalIndex} of {context.plan.goals.length}</p>
+          <p className="mt-2 text-base leading-relaxed text-neutral-100">{context.activeGoal.text}</p>
+        </div>
+        <span className={`shrink-0 rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] ${context.completionConfirmed ? 'border-emerald-300/30 bg-emerald-400/10 text-emerald-100' : remaining <= 0 ? 'border-human/30 bg-human-brand/10 text-human' : 'border-cyan-300/25 bg-cyan-400/10 text-cyan-100'}`}>
+          Deadline · Chapter {context.completionDeadline}
+        </span>
+      </div>
+      <dl className="mt-3 grid gap-2 text-xs text-neutral-400 sm:grid-cols-3">
+        <div><dt className="font-mono uppercase tracking-[0.14em] text-neutral-500">Allocated chapters</dt><dd className="mt-1 text-neutral-200">{context.activeGoal.startChapter}–{context.activeGoal.endChapter} · {context.activeGoal.chapters} of {ARC_LENGTH}</dd></div>
+        <div><dt className="font-mono uppercase tracking-[0.14em] text-neutral-500">Current position</dt><dd className="mt-1 text-neutral-200">Next: Chapter {story.head.nextChapterNumber} · {context.display} · segment chapter {context.positionInSegment} of {context.activeGoal.chapters}</dd></div>
+        <div><dt className="font-mono uppercase tracking-[0.14em] text-neutral-500">Status</dt><dd className="mt-1 text-neutral-200">{status}</dd></div>
+      </dl>
+      <LibraryButton type="button" size="sm" variant="ghost" className="mt-3" onClick={() => setPlanOpen(open => !open)} disabled={busy}>
+        {planOpen ? 'Hide complete Arc Plan' : 'Open complete Arc Plan'}
+      </LibraryButton>
+      {planOpen && <ArcPlanView key={`${context.plan.arcNumber}-${story.arcPlans?.length ?? 0}`} defaultOpen plan={context.plan} activeGoalId={context.activeGoal.id} generatedThrough={generatedThrough} onEdit={onEditPlan} />}
+    </div>
+  );
+}
+
+/**
+ * Story-direction sources: the Destined Ending, user-created Hard Pins, the
+ * story's Fate Pressure with its rhythm recommendation, and the Mission
+ * Reminder. These are displayed and edited here; none of them enters the
+ * provider request yet.
+ */
+function StoryDirectionPanel({ story, foundation, chapters, generatedThrough, missionReminder, busy, onSaveHardPins, onEditPlan }: {
+  story: HarnessStory;
+  foundation?: StoryFoundationRevision;
+  chapters: HarnessChapter[];
+  generatedThrough: number;
+  missionReminder?: HarnessMissionReminder | { error: string };
+  busy: boolean;
+  onSaveHardPins: (pins: HardPinInput[]) => Promise<void>;
+  onEditPlan: (plan: Parameters<typeof ArcPlanView>[0]['plan']) => Promise<void>;
+}) {
+  const savedPins = story.hardPins ?? [];
+  // Only the saved pins themselves reset the draft, so an unrelated story
+  // update (a recap edit, a commit) never discards unsaved pin text.
+  const savedKey = JSON.stringify(savedPins.map(pin => ({ id: pin.id, text: pin.text })));
+  const [draft, setDraft] = useState<HardPinInput[]>(() => savedPins.map(pin => ({ id: pin.id, text: pin.text })));
+  const [pinError, setPinError] = useState('');
+  useEffect(() => {
+    setDraft(JSON.parse(savedKey) as HardPinInput[]);
+    setPinError('');
+  }, [story.id, savedKey]);
+  const dirty = JSON.stringify(draft) !== savedKey;
+  const savePins = async () => {
+    setPinError('');
+    try { await onSaveHardPins(draft); }
+    catch (error) { setPinError(error instanceof Error ? error.message : 'The Hard Pins could not be saved.'); }
+  };
+
+  const recommendation = story.rhythmRecommendation;
+  const tier = recommendation ? FATE_PRESSURE_RHYTHM_CONFIG.tiers[recommendation.fatePressure] : undefined;
+  const latestRhythmChapter = [...chapters].reverse().find(chapter => chapter.rhythm?.nextChapterSuggestions);
+  const suggestions = latestRhythmChapter?.rhythm?.nextChapterSuggestions;
+
+  return (
+    <LibraryPanel as="section" padding="md" aria-labelledby="harness-direction-title" data-testid="harness-story-direction">
+      <div className="flex items-center gap-2">
+        <Compass size={18} className="text-cyan-200" aria-hidden="true" />
+        <h2 id="harness-direction-title" className="font-display text-xl text-white">Story direction</h2>
+      </div>
+      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-400">
+        Hard Pins describe the story’s long-term destiny beside the Destined Ending. The Active Arc Goal describes its immediate current direction. Fate Pressure decides which of the writer’s next-chapter possibilities to favor. Nothing here is sent to the provider yet.
+      </p>
+
+      <div className="mt-5">
+        <ActiveArcGoalCard story={story} foundation={foundation} generatedThrough={generatedThrough} busy={busy} onEditPlan={onEditPlan} />
+      </div>
+
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+          <div className="flex items-center gap-2">
+            <Target size={16} className="text-gold-accent" aria-hidden="true" />
+            <h3 className="text-sm font-semibold text-white">Destined Ending</h3>
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-neutral-200">
+            {foundation?.input.destinedEnding ?? 'Not set yet. The Arc planner supplies the novel-wide ending before the first chapter; edit it in the Foundation.'}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-black/20 p-4" data-testid="harness-hard-pins">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Pin size={16} className="text-gold-accent" aria-hidden="true" />
+              <h3 className="text-sm font-semibold text-white">Hard Pins</h3>
+            </div>
+            <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-neutral-500">{savedPins.length}/{HARD_PIN_LIMIT} saved</span>
+          </div>
+          <p className="mt-2 text-xs leading-relaxed text-neutral-500">Story-wide intentions only you write. The writer never invents or completes them, and they carry no weight or ranking.</p>
+          <ol className="mt-3 space-y-2">
+            {draft.map((pin, index) => (
+              <li key={pin.id ?? `new-${index}`} className="flex flex-wrap items-center gap-2">
+                <span className="w-5 font-mono text-[10px] text-neutral-500">{index + 1}.</span>
+                <input
+                  aria-label={`Hard Pin ${index + 1}`}
+                  value={pin.text}
+                  disabled={busy}
+                  onChange={event => setDraft(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, text: event.target.value } : item))}
+                  placeholder="Make Yi Chen take the Azure Sect to glory throughout the entire story."
+                  className="min-h-11 min-w-0 flex-1 rounded-lg border border-white/15 bg-black/35 px-3 text-sm text-white"
+                />
+                <LibraryButton type="button" size="sm" variant="ghost" disabled={busy || index === 0} aria-label={`Move Hard Pin ${index + 1} earlier`} onClick={() => setDraft(current => { const next = [...current]; [next[index - 1], next[index]] = [next[index], next[index - 1]]; return next; })}>↑</LibraryButton>
+                <LibraryButton type="button" size="sm" variant="ghost" disabled={busy || index === draft.length - 1} aria-label={`Move Hard Pin ${index + 1} later`} onClick={() => setDraft(current => { const next = [...current]; [next[index + 1], next[index]] = [next[index], next[index + 1]]; return next; })}>↓</LibraryButton>
+                <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} aria-label={`Remove Hard Pin ${index + 1}`} onClick={() => setDraft(current => current.filter((_, itemIndex) => itemIndex !== index))}>Remove</LibraryButton>
+              </li>
+            ))}
+          </ol>
+          {draft.length === 0 && <p className="mt-3 text-xs text-neutral-500">No Hard Pins yet.</p>}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <LibraryButton type="button" size="sm" variant="secondary" icon={Plus} disabled={busy || draft.length >= HARD_PIN_LIMIT} onClick={() => setDraft(current => [...current, { text: '' }])}>Add Hard Pin</LibraryButton>
+            <LibraryButton type="button" size="sm" disabled={busy || !dirty} onClick={() => void savePins()}>Save Hard Pins</LibraryButton>
+          </div>
+          {pinError && <p role="alert" className="mt-2 text-xs text-human">{pinError}</p>}
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4" data-testid="harness-fate-pressure">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-white">Fate Pressure and rhythm</h3>
+          {recommendation && (
+            <span className="rounded-full border border-cyan-300/25 bg-cyan-400/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-cyan-100">
+              {tier?.label ?? recommendation.fatePressure} · {recommendation.fatePressureSource === 'story' ? 'story value' : 'Development default'}
+            </span>
+          )}
+        </div>
+        {tier && <p className="mt-2 text-xs leading-relaxed text-neutral-500">{tier.summary} Tuning: {FATE_PRESSURE_RHYTHM_CONFIG.source.replace(/-/g, ' ')}.</p>}
+        {recommendation ? (
+          <div className="mt-3 grid gap-3 lg:grid-cols-2">
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">Recent rhythm (saved chapter functions)</p>
+              {recommendation.recentFunctions.length ? (
+                <ol className="mt-2 flex flex-wrap gap-2">
+                  {recommendation.recentFunctions.map(entry => (
+                    <li key={entry.chapterNumber} className="rounded-full border border-white/15 px-2 py-1 font-mono text-[10px] text-neutral-300">Ch {entry.chapterNumber} · {chapterFunctionLabel[entry.chapterFunction]}</li>
+                  ))}
+                </ol>
+              ) : <p className="mt-2 text-xs text-neutral-500">No chapter function has been saved yet.</p>}
+              <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">Recommended for Chapter {recommendation.forChapterNumber}</p>
+              <p className="mt-1 text-sm font-semibold text-cyan-100">{chapterFunctionLabel[recommendation.recommendedFunction]}</p>
+              <p className="mt-1 text-xs leading-relaxed text-neutral-400">{recommendation.reason}</p>
+              <p className="mt-2 font-mono text-[10px] text-neutral-500">Weights: {CHAPTER_FUNCTIONS.map(type => `${type} ${recommendation.weights[type]}`).join(' · ')}{recommendation.blocked.length ? ` · blocked: ${recommendation.blocked.join(', ')}` : ''}</p>
+            </div>
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">Writer’s next-chapter possibilities{latestRhythmChapter ? ` (after Chapter ${latestRhythmChapter.chapterNumber})` : ''}</p>
+              {suggestions ? (
+                <ul className="mt-2 space-y-2">
+                  {CHAPTER_FUNCTIONS.map(type => (
+                    <li key={type} className={`rounded-lg border p-2 text-xs ${type === recommendation.recommendedFunction ? 'border-cyan-300/40 bg-cyan-400/[0.08] text-neutral-100' : 'border-white/10 text-neutral-300'}`}>
+                      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-neutral-500">{chapterFunctionLabel[type]}{type === recommendation.recommendedFunction ? ' · favored' : ''}</span>
+                      <p className="mt-1 leading-relaxed">{suggestions[type] ?? 'Not supplied for this chapter.'}</p>
+                    </li>
+                  ))}
+                </ul>
+              ) : <p className="mt-2 text-xs text-neutral-500">The writer has not supplied next-chapter possibilities yet.</p>}
+            </div>
+          </div>
+        ) : <p className="mt-2 text-xs text-neutral-500">The rhythm recommendation appears after the story is saved.</p>}
+      </div>
+
+      <details className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3" data-testid="harness-mission-reminder">
+        <summary className="cursor-pointer text-sm font-medium text-neutral-200">Mission Reminder · from the equipped Author skill</summary>
+        {missionReminder && 'error' in missionReminder
+          ? <p className="mt-2 text-xs text-human">{missionReminder.error}</p>
+          : <>
+            <p className="mt-2 text-[11px] leading-relaxed text-neutral-500">A brief reminder that the model is the author of this novel. Sourced from the Author portion of the CAPA Prompt; it performs no story analysis and is not sent to the provider yet.</p>
+            <pre className="mt-2 whitespace-pre-wrap break-words font-sans text-xs leading-relaxed text-neutral-300">{missionReminder?.text ?? 'Equip an installed Author skill to see the Mission Reminder.'}</pre>
+          </>}
+      </details>
+    </LibraryPanel>
+  );
+}
+
+/** A saved "Previously On" recap with in-place author editing. Prose is never touched here. */
+function ChapterRecapEditor({ chapter, busy, onSave }: { chapter: HarnessChapter; busy: boolean; onSave: (text: string) => Promise<void> }) {
+  const [text, setText] = useState(chapter.recap?.text ?? '');
+  const [editing, setEditing] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => { setText(chapter.recap?.text ?? ''); setEditing(false); setError(''); }, [chapter.id, chapter.recap?.updatedAt]);
+  return (
+    <div className="mt-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs" data-testid={`harness-recap-${chapter.chapterNumber}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">Previously on · {chapter.recap ? `${chapter.recap.source === 'author' ? 'edited by author' : 'written by the chapter model'} · ${formatDate(chapter.recap.updatedAt)}` : 'no recap saved'}</p>
+        {!editing && <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} onClick={() => setEditing(true)}>{chapter.recap ? 'Edit recap' : 'Write recap'}</LibraryButton>}
+      </div>
+      {editing ? (
+        <div className="mt-2 space-y-2">
+          <textarea aria-label={`Chapter ${chapter.chapterNumber} recap`} value={text} disabled={busy} onChange={event => setText(event.target.value)}
+            className="min-h-20 w-full rounded-lg border border-white/15 bg-black/35 p-2 text-sm text-white" />
+          <div className="flex flex-wrap gap-2">
+            <LibraryButton type="button" size="sm" disabled={busy} onClick={() => void (async () => {
+              setError('');
+              try { await onSave(text); setEditing(false); }
+              catch (cause) { setError(cause instanceof Error ? cause.message : 'The recap could not be saved.'); }
+            })()}>Save recap</LibraryButton>
+            <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} onClick={() => { setText(chapter.recap?.text ?? ''); setEditing(false); setError(''); }}>Cancel</LibraryButton>
+          </div>
+          {error && <p role="alert" className="text-human">{error}</p>}
+        </div>
+      ) : chapter.recap ? <p className="mt-2 leading-relaxed text-neutral-300">{chapter.recap.text}</p> : null}
+    </div>
+  );
+}
+
 function SemanticEventList({ events }: { events: HarnessSemanticEvent[] }) {
   if (!events.length) return <p className="text-sm text-neutral-400">No semantic events were supplied for committed chapters.</p>;
   return (
@@ -552,6 +800,11 @@ function Diagnostics({ attempt }: { attempt?: HarnessGenerationAttempt }) {
       <details className="mt-4 rounded-xl border border-white/10 bg-black/20 p-3">
         <summary className="cursor-pointer text-xs font-medium text-neutral-200">Frozen CAPA Prompt</summary>
         <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words text-[11px] leading-relaxed text-neutral-400">{attempt.capaPrompt.text}</pre>
+      </details>
+      <details className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
+        <summary className="cursor-pointer text-xs font-medium text-neutral-200">Frozen Mission Reminder · not in the provider request</summary>
+        <p className="mt-2 text-[11px] leading-relaxed text-neutral-500">Sourced from {attempt.missionReminder.sourceSkill.name} v{attempt.missionReminder.sourceSkill.version}. Kept beside the attempt for later packet assembly.</p>
+        <pre className="mt-3 whitespace-pre-wrap break-words text-[11px] leading-relaxed text-neutral-400">{attempt.missionReminder.text}</pre>
       </details>
       <details className="mt-3 rounded-xl border border-emerald-300/15 bg-emerald-400/[0.03] p-3">
         <summary className="cursor-pointer text-xs font-medium text-emerald-100">Frozen Media Loadout · runtime only</summary>
@@ -930,6 +1183,31 @@ export function HarnessGenerationWorkspace({
     void run(() => controller.retryModelRequest(attempt.id));
   };
   const retryArcPlan = () => selectedStory && void run(() => controller.retryArcPlan(selectedStory.id, model));
+  const saveHardPins = async (pins: HardPinInput[]) => {
+    if (!selectedStory) return;
+    setBusy(true);
+    setMessage(undefined);
+    try { await controller.setHardPins(selectedStory.id, pins); }
+    finally { setBusy(false); }
+  };
+  const editArcPlan = async (plan: Parameters<typeof controller.editArcGoals>[1]) => {
+    if (!selectedStory) return;
+    setBusy(true);
+    setMessage(undefined);
+    try { await controller.editArcGoals(selectedStory.id, plan); }
+    finally { setBusy(false); }
+  };
+  const saveRecap = async (chapterId: string, text: string) => {
+    setBusy(true);
+    setMessage(undefined);
+    try { await controller.editChapterRecap(chapterId, text); }
+    finally { setBusy(false); }
+  };
+  const missionReminder = useMemo<HarnessMissionReminder | { error: string } | undefined>(() => {
+    if (!state || !selectedStory) return undefined;
+    try { return controller.describeMissionReminder(selectedStory.id); }
+    catch (error) { return { error: error instanceof Error ? error.message : 'The Mission Reminder is unavailable.' }; }
+  }, [controller, state, selectedStory]);
 
   const replay = () => selectedStory && void run(() => controller.replayStory(selectedStory.id));
   const savePolicy = (recentChapterCount: number, maxEstimatedTokens: number, includeMinorEvents: boolean) => {
@@ -1090,6 +1368,19 @@ export function HarnessGenerationWorkspace({
               </>
             )}
 
+            {selectedStory && (
+              <StoryDirectionPanel
+                story={selectedStory}
+                foundation={selectedFoundation}
+                chapters={chapters}
+                generatedThrough={chapters.at(-1)?.chapterNumber ?? 0}
+                missionReminder={missionReminder}
+                busy={busy}
+                onSaveHardPins={saveHardPins}
+                onEditPlan={editArcPlan}
+              />
+            )}
+
             {renderSkillImport?.(busy)}
             {selectedStory && (
               <SkillLoadoutPanel
@@ -1218,6 +1509,17 @@ export function HarnessGenerationWorkspace({
                         {chapter.metrics.meetsScaleTarget ? '' : ' · below chapter-scale target'}
                       </p>
                       <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} onClick={() => void run(() => controller.replayStory(selectedStory.id, chapter.id))}>Repair chapter enhancements</LibraryButton>
+                      <ChapterRecapEditor chapter={chapter} busy={busy} onSave={text => saveRecap(chapter.id, text)} />
+                      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+                        Chapter function: {chapter.rhythm?.chapterFunction ? chapterFunctionLabel[chapter.rhythm.chapterFunction] : 'not saved'}
+                      </p>
+                      {chapter.rhythm?.nextChapterSuggestions && (
+                        <ul className="mt-1 space-y-1 text-xs text-neutral-400">
+                          {CHAPTER_FUNCTIONS.map(type => chapter.rhythm?.nextChapterSuggestions?.[type]
+                            ? <li key={type}><span className="text-neutral-500">{chapterFunctionLabel[type]} next:</span> {chapter.rhythm.nextChapterSuggestions[type]}</li>
+                            : null)}
+                        </ul>
+                      )}
                       {chapter.plan && (
                         <details className="mt-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-xs text-neutral-300">
                           <summary className="cursor-pointer">Optional plan</summary>

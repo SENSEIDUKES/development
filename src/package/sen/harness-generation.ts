@@ -57,6 +57,22 @@ export {
 } from '../../narrative/translationSkill';
 export { buildImmediateChapterRequest } from '../../components/harness-generation/shared/immediateChapterRequest';
 export {
+  FATE_PRESSURE_RHYTHM_CONFIG,
+  buildRhythmRecommendation,
+  recommendNextChapterFunction,
+  type ChapterFunctionRecord,
+  type FatePressureRhythmConfig,
+  type FatePressureTierProfile,
+  type HarnessRhythmRecommendation,
+} from '../../components/harness-generation/shared/rhythm';
+export {
+  MISSION_REMINDER_OPENING,
+  MISSION_REMINDER_TEXT_LIMIT,
+  buildMissionReminder,
+} from '../../components/harness-generation/shared/missionReminder';
+export { harnessArcContext } from '../../components/harness-generation/shared/arcState';
+export * from '../../narrative/storyDirection';
+export {
   includeBundledHarnessSkills,
   SEN_NOVEL_AUTHOR_SKILL,
 } from '../../components/harness-generation/shared/authorSkill';

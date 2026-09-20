@@ -34,6 +34,10 @@ describe('Story Seed to Harness handoff', () => {
     expect(foundation.characters).toContain('Ye Chen');
     expect(foundation.worldFacts).toContain('Heavenly Sword Sect');
     expect(foundation.intendedDirection).toContain('First arc promise');
+    // The canonical Fate Pressure domain value crosses the boundary as its own
+    // field, independent of the visible Story Seed label or placement.
+    expect(foundation.fatePressure).toBe(record.seed.story.optional.fateSurvival.pressure);
+    expect(['mortal', 'immortal', 'heaven']).toContain(foundation.fatePressure);
 
     record.seed.story.required.premise = 'Changed after handoff.';
     const snapshotSeed = foundation.sourceSnapshot?.seed as typeof record.seed;

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { ARC_LENGTH, arcGoalSegments, editArcPlan, type ArcPlan } from '../shared/arcGoals';
 
-export function ArcPlanView({ plan, activeGoalId, generatedThrough = 0, onEdit }: {
+export function ArcPlanView({ plan, activeGoalId, generatedThrough = 0, onEdit, defaultOpen = false }: {
   plan: ArcPlan; activeGoalId?: string; generatedThrough?: number; onEdit?: (plan: ArcPlan) => Promise<void> | void;
+  /** Opens the complete plan immediately, for a host surface that summons it from a summary. */
+  defaultOpen?: boolean;
 }) {
   const [draft, setDraft] = useState<ArcPlan>();
   const [error, setError] = useState('');
@@ -14,7 +16,7 @@ export function ArcPlanView({ plan, activeGoalId, generatedThrough = 0, onEdit }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'The arc plan could not be saved.'); }
     finally { setSaving(false); }
   };
-  return <details className="my-3 rounded-xl border border-neutral-800 p-4 text-sm text-neutral-300 break-words">
+  return <details open={defaultOpen || undefined} className="my-3 rounded-xl border border-neutral-800 p-4 text-sm text-neutral-300 break-words">
     <summary className="cursor-pointer">Arc {plan.arcNumber} · {ARC_LENGTH} chapters · Goals</summary>
     <ol className="mt-3 space-y-3">
       {arcGoalSegments(plan).map(goal => <li key={goal.id}>

@@ -15,7 +15,8 @@ import {
   type HarnessChapterBody,
 } from './chapterBody';
 import { HARNESS_MEMORY_CATEGORIES } from '../../../narrative/generation';
-import type { HarnessAcceptedChapterDraft, HarnessModelPlan, HarnessRejectedEventDiagnostic, HarnessSemanticEvent, HarnessWarning, HarnessEventDetails, HarnessCanonicalKind } from '../../../narrative/generation';
+import { CHAPTER_FUNCTIONS, CHAPTER_RECAP_TEXT_LIMIT, isChapterFunction, type ChapterFunction, type NextChapterSuggestions } from '../../../narrative/storyDirection';
+import type { HarnessAcceptedChapterDraft, HarnessChapterRhythm, HarnessModelPlan, HarnessRejectedEventDiagnostic, HarnessSemanticEvent, HarnessWarning, HarnessEventDetails, HarnessCanonicalKind } from '../../../narrative/generation';
 
 type ParsedResponse = {
   accepted: true;
@@ -130,6 +131,73 @@ const parsePlan = (value: unknown, warnings: HarnessWarning[]): HarnessModelPlan
     });
   }
   return undefined;
+};
+
+/** Story direction is author-owned: a chapter reply can never write it. */
+const STORY_DIRECTION_FIELDS = ['hardPins', 'fatePressure', 'destinedEnding', 'rhythmRecommendation'] as const;
+
+const appendIgnoredStoryDirectionWarning = (source: Record<string, unknown>, warnings: HarnessWarning[]) => {
+  const ignored = STORY_DIRECTION_FIELDS.filter(key => source[key] !== undefined);
+  if (ignored.length) {
+    warnings.push({
+      code: 'ignored_model_story_direction',
+      message: `The harness ignored model-supplied ${ignored.join(', ')}; Hard Pins, Fate Pressure, and the Destined Ending are author-owned story direction.`,
+    });
+  }
+};
+
+/** The optional "Previously On" recap: a short string, or a warning and nothing. */
+const parseRecap = (value: unknown, warnings: HarnessWarning[]): string | undefined => {
+  const recap = nonEmptyString(value);
+  if (recap) {
+    if (recap.length > CHAPTER_RECAP_TEXT_LIMIT) {
+      warnings.push({
+        code: 'optional_recap_omitted',
+        message: `The recap ran past ${CHAPTER_RECAP_TEXT_LIMIT} characters and was kept for editing; shorten it before it is reused.`,
+      });
+    }
+    return recap;
+  }
+  warnings.push({
+    code: 'optional_recap_omitted',
+    message: value === undefined
+      ? 'The provider omitted the chapter recap; the chapter is kept and a recap can be written by hand.'
+      : 'The provider recap was malformed and was omitted; the chapter is kept and a recap can be written by hand.',
+  });
+  return undefined;
+};
+
+/** The suggestion field names requested from the writer, one per chapter function. */
+export const NEXT_CHAPTER_SUGGESTION_FIELDS: Record<ChapterFunction, string> = {
+  progression: 'nextProgression',
+  worldBuilding: 'nextWorldBuilding',
+  conflict: 'nextConflict',
+};
+
+const rhythmWarning = (message: string): HarnessWarning => ({ code: 'optional_rhythm_metadata_omitted', message });
+
+/**
+ * Reads the completed chapter's function and the three next-chapter
+ * possibilities. Each piece is validated on its own so one malformed value
+ * never discards the others, and none of them can reject the prose.
+ */
+const parseRhythm = (parsed: Record<string, unknown>, warnings: HarnessWarning[]): HarnessChapterRhythm | undefined => {
+  const rhythm: HarnessChapterRhythm = {};
+  if (isChapterFunction(parsed.chapterFunction)) rhythm.chapterFunction = parsed.chapterFunction;
+  else warnings.push(rhythmWarning(parsed.chapterFunction === undefined
+    ? 'The provider omitted the completed chapter function; the rhythm history skips this chapter.'
+    : `The provider chapter function was not one of ${CHAPTER_FUNCTIONS.join(', ')} and was omitted; the rhythm history skips this chapter.`));
+  const suggestions: NextChapterSuggestions = {};
+  for (const type of CHAPTER_FUNCTIONS) {
+    const field = NEXT_CHAPTER_SUGGESTION_FIELDS[type];
+    const text = nonEmptyString(parsed[field]);
+    if (text && !/[\r\n]/.test(text)) suggestions[type] = text;
+    else warnings.push(rhythmWarning(parsed[field] === undefined
+      ? `The provider omitted the ${type} suggestion (${field}); the chapter is kept without it.`
+      : `The provider ${type} suggestion (${field}) was malformed and was omitted; the chapter is kept without it.`));
+  }
+  if (Object.keys(suggestions).length) rhythm.nextChapterSuggestions = suggestions;
+  return rhythm.chapterFunction || rhythm.nextChapterSuggestions ? rhythm : undefined;
 };
 
 /**
@@ -277,6 +345,7 @@ export const acceptHarnessModelResponse = (
   const parsed = parseJsonObject(raw);
   if (parsed) {
     appendIgnoredIdentityWarning(parsed, warnings);
+    appendIgnoredStoryDirectionWarning(parsed, warnings);
     // The model paragraphs are the authoritative chapter. The HARNESS keeps
     // every paragraph's text exactly as written, derives the readable prose
     // from them, and builds one ordered SEN block per paragraph.
@@ -304,6 +373,8 @@ export const acceptHarnessModelResponse = (
       });
     }
     const plan = parsePlan(parsed.plan, warnings);
+    const recap = parseRecap(parsed.recap, warnings);
+    const rhythm = parseRhythm(parsed, warnings);
     return {
       accepted: true,
       draft: {
@@ -316,6 +387,8 @@ export const acceptHarnessModelResponse = (
         title: title ?? chapterTitleFallback(chapterNumber),
         titleSource: title ? 'model' : 'harness-fallback',
         ...(plan ? { plan } : {}),
+        ...(recap ? { recap } : {}),
+        ...(rhythm ? { rhythm } : {}),
         responseMode: 'json',
       },
       rawEvents: [],
@@ -342,6 +415,8 @@ export const acceptHarnessModelResponse = (
       message: `The provider response had no usable title; the harness assigned ${chapterTitleFallback(chapterNumber)}.`,
     },
     ...harnessChapterBodyWarnings(body.metrics),
+    { code: 'optional_recap_omitted', message: 'Plain-prose recovery carries no recap; one can be written by hand.' },
+    rhythmWarning('Plain-prose recovery carries no chapter function or next-chapter suggestions; the rhythm history skips this chapter.'),
   );
   return {
     accepted: true,

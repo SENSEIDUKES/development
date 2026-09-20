@@ -1,7 +1,7 @@
 import { ARC_LENGTH, ARC_PLAN_SCHEMA, createArcChapterPosition } from '@seihouse/sen/arc-goals';
 import { HARNESS_CREATURE_EVENT_TYPES, HARNESS_CREATURE_SIZES, HARNESS_DIALOGUE_DELIVERIES, HARNESS_FATE_OUTCOMES, HARNESS_MANIFESTATION_MENTIONS, HARNESS_MANIFESTATION_TYPES, HARNESS_SOUND_CUE_CATEGORIES, HARNESS_SOUND_CUE_ENTITY_TYPES, HARNESS_SOUNDSCAPE_REGIONS, HARNESS_SYSTEM_PANEL_MEANINGS, HARNESS_SYSTEM_PANEL_PRESENTATIONS } from '@seihouse/sen/harness-generation';
 import { type HarnessArcRequest, type HarnessGenerationRequest, type HarnessMemoryRecoveryRequest, type ImmediateChapterRequest, type StoryInformationPacket } from '@seihouse/sen/harness-generation';
-import { HARNESS_MEMORY_CATEGORIES } from '@seihouse/sen/harness-generation';
+import { CHAPTER_FUNCTIONS, HARNESS_MEMORY_CATEGORIES } from '@seihouse/sen/harness-generation';
 
 const memoryEntryProperties = {
     details: { type: 'object', properties: {
@@ -73,6 +73,14 @@ export const HARNESS_CHAPTER_RESPONSE_SCHEMA = {
       properties: { goalId: text, completed: { type: 'boolean' }, evidence: text },
       required: ['goalId', 'completed', 'evidence'],
     },
+    // Story-direction sources written beside the chapter in this same reply.
+    // They are shallow strings: the HARNESS saves them with the committed
+    // chapter and treats every one as optional at acceptance.
+    recap: { type: 'string', description: 'Two to four sentence "Previously On" recap of this chapter.' },
+    chapterFunction: { type: 'string', enum: [...CHAPTER_FUNCTIONS], description: 'The primary function this chapter served.' },
+    nextProgression: { type: 'string', description: 'One-line progression possibility for the next chapter.' },
+    nextWorldBuilding: { type: 'string', description: 'One-line world-building possibility for the next chapter.' },
+    nextConflict: { type: 'string', description: 'One-line conflict possibility for the next chapter.' },
     dialogue: { type: 'array', items: { type: 'object', properties: {
       anchorText: anchoredText, occurrenceIndex, speaker: text, delivery: { type: 'string', enum: [...HARNESS_DIALOGUE_DELIVERIES] },
     }, required: ['anchorText', 'speaker'] } },
@@ -109,7 +117,7 @@ export const HARNESS_CHAPTER_RESPONSE_SCHEMA = {
       bodyType: text, element: text, movement: text, intelligence: text, threatTier: text, signatureSound: text,
     }, required: ['anchorText', 'type'] } },
   },
-  required: ['paragraphs', 'arcCompletion'],
+  required: ['paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict'],
 } as const;
 
 export const HARNESS_MEMORY_INSTRUCTIONS = [
@@ -166,6 +174,7 @@ export const HARNESS_RESPONSE_CONTRACT = [
   'The context coverage report explains omissions. Its labels are an inventory, not additional canonical evidence. Missing context is unavailable evidence, not proof that an event never happened. Its token count is a selection estimate, not provider usage or the total formatted prompt size.',
   'Semantic events are interpretations of the prose. When evidenceVerified is false, do not adopt their unsupported fact values as canon; use the actual prose and explicit author changes. A verified quote confirms provenance, not every semantic inference.',
   'Return one JSON object only. paragraphs is the complete chapter and its sole body: an ordered array with one entry per prose paragraph, written as continuous readable prose, including the readable text of any System Panel as its own entry exactly where the reader meets it. Never put the whole chapter in one entry and never add blank-line markers or numbering. title and plan are optional. arcCompletion is required. Do not return prose, chapter blocks, memory, or any other chapter body.',
+  'After the chapter, return recap: a short "Previously On" recap of this chapter in two to four sentences, written for a reader returning later. Return chapterFunction: the one primary function this completed chapter served, progression, worldBuilding, or conflict. Return three one-line possibilities for the next chapter: nextProgression, nextWorldBuilding, and nextConflict, one per function. They are creative possibilities only; the HARNESS and the author decide which function actually comes next. Never return hardPins, fatePressure, or destinedEnding: story direction is author-owned and any such field is ignored.',
   'Optional signal families describe semantic intent the chapter itself establishes: dialogue, manifestations, systemPanels, soundscapes, soundCues, and creatureEvents. Each is a flat list. Every signal carries anchorText: one exact, distinctive passage copied verbatim from an entry of the paragraphs array you are returning in this reply, with the same characters, punctuation, and quotation marks. Never copy an anchor from a prior chapter, from the Story Information Packet, or from any text outside this reply; such an anchor is dropped. When the same phrase appears more than once, add occurrenceIndex, a zero-based count over its occurrences in reading order, or the signal is dropped as ambiguous. The HARNESS matches anchors to its own paragraph blocks, validates each signal on its own, and drops any signal whose anchor is absent. A dropped signal never removes prose. Omit signals the chapter does not support; omit whole families with nothing to report.',
   'dialogue: one signal per spoken passage that needs attribution, with anchorText the exact quoted words and nothing else, speaker the established character name, and optional delivery. The HARNESS turns that exact span into its own dialogue block, so narration included in the anchor would be read as speech; a paragraph holding several speakers needs one signal per spoken passage. The HARNESS assigns speaker roles from the cast. manifestations: entities the reader should meet, with name, type (character, artifact, location, creature, or faction) and mention (reveal for a first meaningful appearance, reference otherwise).',
   'systemPanels: one per readable System Panel in the prose. anchorText is the exact readable panel text. presentation is narrative, mechanical, world_notice, or fate. Supply title, optional meaning (the semantic color family), optional body, and optional entries as simple label/value pairs: mechanical presentations need entries for their stats; a fate presentation needs outcome (FATE AVERTED, FATE SCARRED, or DOOM MANIFESTED), body as the timeline scar, and entries as permanent costs. The HARNESS constructs the complete mechanical, narrative, World Notice, or Fate presentation afterward.',

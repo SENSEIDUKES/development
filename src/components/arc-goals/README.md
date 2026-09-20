@@ -1,7 +1,7 @@
 # SEN Arc Goals
 
 - **Created:** 2026-09-13
-- **Last Workshop update:** 2026-09-15
+- **Last Workshop update:** 2026-09-20
 - **Status:** neutral SEN contract integrated with the DEV HARNESS host
 - **Preview:** existing Story Seed ARC workspace and HARNESS Reader Codex chapter recaps
 - **Source comparison:** DEV implementation audited 2026-09-13; no production replica imported
@@ -23,6 +23,7 @@ The package exposes these through `@seihouse/sen/arc-goals`.
 | Durable revisions, frozen context, confirmed completion | Existing HARNESS story record, controller, and IndexedDB repository |
 | Later-arc planning at a successful boundary | HARNESS controller using the existing generation HTTP/provider boundary |
 | Chapter grouping, plan inspection and editing | HARNESS SEN adapter, Reader session, and Codex chapter-recap area |
+| Permanent Active Arc Goal display (arc, goal n of total, text, allocated range, current position, deadline/status, complete-plan opener) | HARNESS Library workspace, reading `harnessArcContext`; `ArcPlanView` gained only a `defaultOpen` prop |
 
 The Blueprint carries a generated initial proposal. An explicit seed arcPlan takes
 precedence. HARNESS copies that initial plan once; subsequent seed changes do not

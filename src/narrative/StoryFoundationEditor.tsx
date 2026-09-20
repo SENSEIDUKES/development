@@ -1,6 +1,7 @@
 import { BookOpen, CheckCircle2, type LucideIcon } from 'lucide-react';
 import { NarrativePanel as LibraryPanel, NarrativeTextBox as LibraryTextBox, NarrativeTextArea as LibraryTextArea, CreationButton as ManifestButton } from '../presentation';
 import type { StoryFoundationInput, HarnessStory } from './generation';
+import { FATE_PRESSURE_TIERS, isFatePressure } from './storyDirection';
 
 const field = (
   input: StoryFoundationInput,
@@ -132,6 +133,35 @@ export function StoryFoundationEditor({
           rows={4}
           disabled={busy}
         />
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <LibraryTextArea
+          id="harness-foundation-destined-ending"
+          label="Destined Ending"
+          value={form.destinedEnding ?? ''}
+          onChange={value => onChange(field(form, 'destinedEnding', value))}
+          helpText="The novel-wide ending. Left blank, the Arc planner supplies one before the first chapter."
+          rows={3}
+          disabled={busy}
+        />
+        <div>
+          <label className="block text-[10px] uppercase tracking-[0.14em] text-neutral-500" htmlFor="harness-foundation-fate-pressure">Fate Pressure</label>
+          <select
+            id="harness-foundation-fate-pressure"
+            value={form.fatePressure ?? ''}
+            disabled={busy}
+            onChange={event => {
+              const { fatePressure: _previous, ...rest } = form;
+              onChange(isFatePressure(event.target.value) ? { ...rest, fatePressure: event.target.value } : rest);
+            }}
+            className="mt-1 min-h-11 w-full rounded-lg border border-white/15 bg-black/35 px-3 text-sm text-neutral-100 outline-none focus:border-cyan-300/60"
+          >
+            <option value="">Not set · Development default applies</option>
+            {FATE_PRESSURE_TIERS.map(tier => <option key={tier} value={tier}>{tier}</option>)}
+          </select>
+          <p className="mt-2 text-[11px] leading-relaxed text-neutral-500">Storyteller intensity for the rhythm recommendation. Copied from the Story Seed; separate from Fate Survival.</p>
+        </div>
       </div>
 
       <div className="mt-5 flex flex-wrap gap-3">

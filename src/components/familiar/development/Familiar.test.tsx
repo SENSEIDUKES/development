@@ -33,7 +33,10 @@ afterEach(() => {
 const imageLoaded = () => act(() => container.querySelector('img')!.dispatchEvent(new Event('load')));
 const frame = () => container.querySelector('[data-familiar-frame]')?.getAttribute('data-familiar-frame');
 const click = async (element: Element) => { await act(async () => (element as HTMLElement).click()); };
-const open = () => click(container.querySelector('button')!);
+const open = async () => {
+  await click(container.querySelector('button')!);
+  await click(document.querySelector('[aria-label="Show Energy"]')!);
+};
 const snapshot = (balance: number): EnergyAccountSnapshot => ({ uid: 'test-account', balance, held: 3, available: balance - 3, prices: [], activity: [], developmentControls: { initialGrant: 500, defaultGrant: 100, maxGrant: 10000 }, updatedAt: '2026-09-20T00:00:00Z' });
 
 describe('Familiar sprite playback', () => {
@@ -134,7 +137,7 @@ describe('Familiar Energy interaction', () => {
     await open();
     expect(document.body.textContent).toContain('Sign in to see your Energy.');
     await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
-    expect(container.querySelector('button')?.getAttribute('aria-expanded')).toBe('false');
+    expect(document.querySelector('[aria-label="Show Energy"]')?.getAttribute('aria-expanded')).toBe('false');
   });
 });
 
@@ -182,7 +185,7 @@ describe('Floating companion', () => {
     return { x: Number.parseFloat(style.left), y: Number.parseFloat(style.top) };
   };
 
-  it.each(['mouse', 'touch'])('distinguishes %s drag from tap and only reads Energy on tap', async pointerType => {
+  it.each(['mouse', 'touch'])('distinguishes %s drag from tap and only reads Energy after choosing the action', async pointerType => {
     const client: EnergyClient = { getSnapshot: vi.fn().mockResolvedValue(snapshot(81)), grantDevelopment: vi.fn(), resetDevelopment: vi.fn() };
     await act(async () => root.render(<EnergyClientProvider client={client}><FamiliarCompanion familiar={celestialGuardian} /></EnergyClientProvider>));
     pointer('pointerdown', 900, 600, 1, pointerType);
@@ -197,6 +200,9 @@ describe('Floating companion', () => {
     pointer('pointermove', 52, 51, 1, pointerType);
     pointer('pointerup', 52, 51, 1, pointerType);
     await act(async () => mouseClick());
+    expect(client.getSnapshot).not.toHaveBeenCalled();
+    expect(pet().getAttribute('aria-expanded')).toBe('true');
+    await click(document.querySelector('[aria-label="Show Energy"]')!);
     expect(client.getSnapshot).toHaveBeenCalledOnce();
     expect(document.body.textContent).toContain('Current Energy81');
   });
@@ -221,6 +227,7 @@ describe('Floating companion', () => {
       expect(location().x).toBeLessThanOrEqual(204);
       expect(location().y).toBeLessThanOrEqual(300 - 12 - 104 * 208 / 192 + 0.001);
       await click(pet()); // Keyboard-style activation still works after a cancelled pointer.
+      await click(document.querySelector('[aria-label="Show Energy"]')!);
       expect(document.body.textContent).toContain('Sign in to see your Energy');
     } finally {
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
@@ -235,19 +242,19 @@ describe('Floating companion', () => {
     expect(document.querySelector('.familiar-companion')).toBeNull();
   });
 
-  it('minimizes from the panel, restores its position, and returns keyboard focus', async () => {
+  it('minimizes from the action tray, restores its position, and returns keyboard focus', async () => {
     await act(async () => root.render(<ManagedCompanion />));
     act(() => pet().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true })));
     const before = location();
     await click(pet());
-    await click([...document.querySelectorAll('button')].find(button => button.textContent === 'Minimize Familiar')!);
+    await click(document.querySelector('[aria-label="Minimize Familiar"]')!);
     expect(document.querySelector('.familiar-companion')).toBeNull();
     const recall = container.querySelector<HTMLButtonElement>('.familiar-recall')!;
     expect(document.activeElement).toBe(recall);
     await click(recall);
     expect(location()).toEqual(before);
     expect(document.activeElement).toBe(pet());
-    expect(pet().getAttribute('aria-expanded')).toBe('false');
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 
   it('resizes live, preserves aspect ratio, and caps invalid host preferences', () => {
@@ -262,6 +269,17 @@ describe('Floating companion', () => {
     pointer('pointerdown', 600, 500);
     pointer('pointermove', 4000, 4000);
     pointer('pointerup', 4000, 4000);
-    expect(location().y + 208 * (208 / 192)).toBeLessThanOrEqual(window.innerHeight - 72 - 12 + 0.001);
+    expect(location().y + 208 * (208 / 192) + 48).toBeLessThanOrEqual(window.innerHeight - 72 - 12 + 0.001);
+  });
+
+  it('reveals actions on mouse hover, dismisses them outside, and preserves touch access', async () => {
+    await act(async () => root.render(<ManagedCompanion />));
+    expect(document.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(true);
+    pointer('pointerover', 100, 100);
+    expect(document.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(false);
+    await act(async () => document.body.dispatchEvent(new Event('pointerdown', { bubbles: true })));
+    expect(document.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(true);
+    await click(document.querySelector('[aria-label="Show Familiar actions"]')!);
+    expect(document.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(false);
   });
 });

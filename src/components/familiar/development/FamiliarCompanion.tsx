@@ -17,6 +17,8 @@ export interface FamiliarCompanionProps extends Pick<FamiliarProps, 'familiar' |
 
 const WIDTH = 104;
 const MARGIN = 12;
+const DOCK_HEIGHT = 48;
+const DOCK_WIDTH = 104;
 const clamp = (point: Point, bounds: Bounds): Point => ({
   x: Math.max(bounds.left, Math.min(bounds.right, point.x)),
   y: Math.max(bounds.top, Math.min(bounds.bottom, point.y)),
@@ -52,15 +54,16 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
       const rect = boundaryRef?.current?.getBoundingClientRect();
       const visible = { left: Math.max(left, rect?.left ?? left), top: Math.max(top, rect?.top ?? top),
         right: Math.min(right, rect?.right ?? right), bottom: Math.min(bottom - bottomInset, rect?.bottom ?? bottom) };
-      const nextWidth = Math.min(WIDTH * scale, visible.right - visible.left - MARGIN * 2, (visible.bottom - visible.top - MARGIN * 2) / ratio);
-      if ((boundaryRef && !rect) || nextWidth < 44) {
+      const nextWidth = Math.min(WIDTH * scale, visible.right - visible.left - MARGIN * 2, (visible.bottom - visible.top - MARGIN * 2 - DOCK_HEIGHT) / ratio);
+      if ((boundaryRef && !rect) || nextWidth < 44 || visible.right - visible.left < DOCK_WIDTH + MARGIN * 2) {
         setBounds(null);
         setOpen(false);
         return;
       }
       setWidth(nextWidth);
-      const next = { left: visible.left + MARGIN, top: visible.top + MARGIN,
-        right: visible.right - nextWidth - MARGIN, bottom: visible.bottom - nextWidth * ratio - MARGIN };
+      const extraWidth = Math.max(0, DOCK_WIDTH - nextWidth) / 2;
+      const next = { left: visible.left + MARGIN + extraWidth, top: visible.top + MARGIN,
+        right: visible.right - nextWidth - MARGIN - extraWidth, bottom: visible.bottom - nextWidth * ratio - DOCK_HEIGHT - MARGIN };
       setBounds(next);
       setPosition(previous => clamp(previous ?? { x: next.right, y: next.bottom - (bottomInset ? 0 : 72) }, next));
     };
@@ -92,8 +95,8 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
   if (minimized || !bounds || !position) return null;
   return createPortal(<div ref={element} className="familiar-companion" data-dragging={dragging || undefined}
     style={{ left: position.x, top: position.y, width }}>
-    <span id={instructions} className="familiar-sr-only">Drag to move. Use arrow keys to move when focused. Press Enter to see Energy.</span>
-    <Familiar {...props} open={open} onOpenChange={setOpen} panelSide={position.y - bounds.top < 220 ? 'bottom' : 'top'} triggerProps={{
+    <span id={instructions} className="familiar-sr-only">Drag to move. Use arrow keys to move when focused. Press Enter for Familiar actions.</span>
+    <Familiar {...props} open={open} onOpenChange={setOpen} onMinimize={onMinimize} dragging={dragging} triggerProps={{
       'aria-describedby': instructions,
       onPointerDown: event => {
         if (event.button !== 0 || event.isPrimary === false || gesture.current) return;
@@ -131,7 +134,6 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
         setPosition(clamp({ x: position.x + delta.x, y: position.y + delta.y }, bounds));
       },
     }}>
-      {onMinimize && <button type="button" className="familiar-minimize" onClick={() => { setOpen(false); onMinimize(); }}>Minimize Familiar</button>}
       {children}
     </Familiar>
   </div>, document.body);

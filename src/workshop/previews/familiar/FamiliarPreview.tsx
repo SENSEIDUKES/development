@@ -19,7 +19,7 @@ export function FamiliarPreview() {
       <span className="familiar-preview-tag">Celestial companion</span>
     </header>
     <ProductFamiliarSession><ProductFamiliarSurface animation={animation} paused={paused}>
-      <div className="familiar-stage"><p>Drag your Familiar around this space. Tap to see Energy.</p></div>
+      <div className="familiar-stage"><p>Drag your Familiar around this space. Tap for actions, then choose Energy.</p></div>
     </ProductFamiliarSurface></ProductFamiliarSession>
     <div className="familiar-preview-controls">
       <label htmlFor={selectId}>Animation</label>

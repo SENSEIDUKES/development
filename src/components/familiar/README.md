@@ -37,9 +37,11 @@ The source README was inspected but is not shipped because it contains machine-l
 - `development/FamiliarSprite.tsx` crops/scales the sheet and owns only playback.
   It pauses for reduced motion, hidden documents, the explicit pause control, loading,
   and failed images. Clip changes reset to frame zero; unmount clears the timer.
-- `development/Familiar.tsx` wraps the renderer in the existing `SEIPopover` primitive.
-  Tap, click, or keyboard activation opens Energy; Close, Escape, or an outside press
-  dismisses it. The UI primitive owns placement, viewport collisions, and focus return.
+- `development/Familiar.tsx` pairs the renderer with the existing `SEIDialog` primitive.
+  Hover, tap, or keyboard activation reveals a shadow-shaped action tray. Choosing
+  Energy opens a viewport-centered dialog; Close, Escape, or an outside press
+  dismisses it. The UI primitive owns focus trapping, scroll locking, and focus return;
+  viewport units center the dialog and bound its scrolling body above navigation.
 - `@seihouse/library/familiar` exports both components and their data contracts.
   No Workshop imports, account identities, asset URLs, or server code ship in this entry.
 - `src/host/familiar/celestialGuardian.ts` interprets this particular supplied package.
@@ -123,7 +125,7 @@ The Library companion remains outside the portable SEN Reader implementation.
 Familiar is now one card inside Workshop **Shared**, preserving `?preview=familiar`
 and its existing comparison workspace. It remains a Library-owned capability.
 
-The Energy panel exposes **Minimize Familiar**. The host controls `minimized` and
+The action tray exposes **Energy** and **Minimize Familiar**. The host controls `minimized` and
 `onMinimize`; the mounted companion keeps its drag position while hidden and stops
 sprite playback. `FamiliarRecall` provides a 44px accessible button for the host
 header. Recall restores the pet and keyboard focus. Development mounts the button
@@ -185,7 +187,19 @@ Desktop and mobile Chromium verification covered the Shared listing, live size
 changes and Reset, header minimize/recall, and normal/fullscreen Reader recall.
 The deployed preview requires Vercel login, so visual verification was local.
 
+Action-tray follow-up: 22 focused tests passed across Familiar, source integrity,
+and product integration. TypeScript, production build, package boundaries, and
+both packed-consumer checks passed. Chromium verified native touch activation,
+desktop hover, 320/390px viewport centering, desktop centering, tray alignment at
+60% size, navigation clearance, minimize/recall, keyboard focus trapping and return,
+Escape/outside dismissal, and reduced-motion handling.
+
 ## Workshop history
+
+- 2026-09-20: Added the compact shadow/action tray and moved Energy into the shared
+  modal dialog primitive, centered on the viewport above navigation. The tray keeps
+  44px touch targets at every pet size; drag bounds reserve its full footprint.
+  Opening the tray does not fetch Energy; selecting Energy reads the host account.
 
 - 2026-09-20: Inspected the complete supplied package and atlas; copied required assets
   with provenance hashes; added the Familiar tab, reusable renderer, original comparison,

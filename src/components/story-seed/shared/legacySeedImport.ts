@@ -39,12 +39,6 @@ const pick = (source: Record<string, unknown>, fields: readonly string[]): Recor
 
 const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 
-/** Old general-direction fields that expressed overlapping intent, merged into one. */
-const mergeDirection = (...values: unknown[]): string => {
-  const parts = Array.from(new Set(values.map(text).filter(Boolean)));
-  return parts.join('\n\n');
-};
-
 /**
  * Accepts the Phase-1 flat intake (`{ novelTitle, corePremise, … }`, with or
  * without an `intake`/`blueprint` wrapper) and the interim nested shape
@@ -117,22 +111,6 @@ export const importLegacyStorySeed = (value: unknown): StorySeedInput => {
           || '',
       },
       optional: {
-        plotAndTropeSettings: {
-          ...pick(record(storyOptional.plotAndTropeSettings), [
-            'firstMajorConflict', 'mainAntagonistPressure',
-          ]),
-          ...pick(storyOptional, ['firstMajorConflict', 'mainAntagonistPressure']),
-          ...pick(intake, ['firstMajorConflict', 'mainAntagonistPressure']),
-        },
-        additionalStoryDirection: mergeDirection(
-          storyOptional.additionalStoryDirection,
-          storyOptional.desiredPlotDirection,
-          storyOptional.mustIncludeElements,
-          storyOptional.thingsToAvoid,
-          intake.desiredPlotDirection,
-          intake.mustIncludeElements,
-          intake.thingsToAvoid,
-        ),
         makeItWorkInstruction: first(
           storyOptional.makeItWorkInstruction,
           intake.makeItWorkInstruction,

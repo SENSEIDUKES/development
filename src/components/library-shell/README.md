@@ -4,7 +4,7 @@
 - **Source locations:** Light-Novels `src/components/GlobalHeader.tsx` (`GlobalHeader`), `src/components/DaoInsights.tsx` (`DaoInsights`), and the collection navigation in `src/components/LibraryScreen.tsx` (`LibraryScreen`). Development `src/components/story-seed/development/CreationModal.tsx` (`CreationModal`), `StorySeedHeader.tsx`, `StorySeedSelector.tsx`, `StorySeedMobileNavigation.tsx`, and `StorySeedSettings.tsx`.
 - **Workshop preview:** `?preview=library-shell`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-17
+- **Last Workshop update:** 2026-09-20
 - **Last source comparison:** 2026-09-08
 - **Replica status:** under refinement; locked captures plus Development workspaces on the canonical `SEIAppHeader` and `SEIAppShell`.
 
@@ -145,3 +145,10 @@ Fixed the shared Settings/Search sheet shifting half its width off-screen in pro
 ## Standalone Home foundation — 2026-09-09
 
 The Library Shell Workshop entry now starts at Library (`state=library`). The new `?preview=light-novels-home` entry opens the existing Light-Novels homepage presentation, extracted from the verified source because this shell previously contained only a hero/content placeholder. Both use the existing responsive document and four-item navigation. Library and Discover retain the existing content-slot boundaries; Profile retains the real Cave preview. Home and Profile local state survive global navigation in the shared document. Header Search now distinguishes Home from Library. Programmatic content focus preserves the header's scroll position. See [Home ownership and transfer notes](../light-novels-home/README.md). Existing locked captures and their comparison dates are unchanged.
+
+## 2026-09-20 — Active Story Seed capture host
+
+The Development capture now mounts the existing `StoryCreationPreviewRuntime`,
+so Story Seed receives its required repository and runtime provider. The
+canonical full-flow browser verification remains `?preview=story-seed`. Locked
+historical captures were not edited.

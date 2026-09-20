@@ -7,6 +7,7 @@ import { type StorySeedRecord, type StorySeedRepository } from '@seihouse/sen/st
 import { createStoryAdministrativeMetadata, validateStoryAdministrativeMetadata } from '@seihouse/sen/story-seed';
 
 const blueprint: WorldBlueprint = {
+  arcPlan: { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the gate.', chapters: 100 }] },
   title: 'Ashes of the Ninth Meridian',
   logline: 'Seven doomed timelines. One chance to break fate.',
   worldOverview: 'A shattered celestial court rules the sects through fate ledgers.',
@@ -37,14 +38,11 @@ const completeSeed = (): StorySeedInput => ({
     optional: {
       intendedForMatureAudiences: true,
       fateSurvival: { enabled: true, visibility: 'partial', pressure: 'immortal' },
-      plotAndTropeSettings: {
+      funSettings: {
         faceSlap: 'low',
         plotArmor: 'high',
         recognition: 'medium',
-        firstMajorConflict: 'The sect tournament',
-        mainAntagonistPressure: 'The celestial court',
       },
-      additionalStoryDirection: 'Escalating court intrigue.',
       makeItWorkInstruction: 'The weakest bloodline is secretly the only one heaven fears.',
     },
   },
@@ -87,13 +85,13 @@ describe('Story Seed creator/story/world contract', () => {
     expect(Object.keys(seed.world).sort()).toEqual(['optional', 'required']);
     expect(Object.keys(seed.story.required).sort()).toEqual(['genre', 'premise', 'storyTags', 'style']);
     expect(Object.keys(seed.story.optional).sort()).toEqual([
-      'additionalStoryDirection',
       'fateSurvival',
+      'funSettings',
+      'hardPins',
       'intendedForMatureAudiences',
       'makeItWorkInstruction',
-      'plotAndTropeSettings',
     ]);
-    expect(seed.story.optional.plotAndTropeSettings).toMatchObject({
+    expect(seed.story.optional.funSettings).toMatchObject({
       faceSlap: 'low',
       plotArmor: 'high',
       recognition: 'medium',
@@ -112,7 +110,7 @@ describe('Story Seed creator/story/world contract', () => {
       visibility: 'partial',
       pressure: 'immortal',
     });
-    expect(empty.story.optional.plotAndTropeSettings).toEqual({
+    expect(empty.story.optional.funSettings).toEqual({
       faceSlap: 'medium',
       plotArmor: 'medium',
       recognition: 'medium',
@@ -131,7 +129,7 @@ describe('Story Seed creator/story/world contract', () => {
           genre: 'Xianxia',
           style: 'korean',
         },
-        optional: { intendedForMatureAudiences: false, fateSurvival: { enabled: false, visibility: 'partial', pressure: 'immortal' }, plotAndTropeSettings: {} },
+        optional: { intendedForMatureAudiences: false, fateSurvival: { enabled: false, visibility: 'partial', pressure: 'immortal' }, funSettings: {} },
       },
     };
     expect(validateStorySeedInput(worldless)).toEqual({ valid: true, errors: [] });
@@ -187,7 +185,7 @@ describe('Story Seed creator/story/world contract', () => {
     const draft = createBlueprintDraftFromSeed(completeSeed());
 
     expect(draft.originSnapshot?.premise).toBe('A prince must survive the seven timelines that say he dies.');
-    expect(draft.logline).toBe('Escalating court intrigue.');
+    expect(draft.logline).toBe('');
     expect(draft.logline).not.toBe(draft.originSnapshot?.premise);
     expect(draft.styleBible).toBe('');
     expect(draft.mainCharacter).toMatchObject({
@@ -293,15 +291,15 @@ describe('Story Seed creator/story/world contract', () => {
     expect(normalizeStorySeedInput(withStyle('Lush, poetic narration')).story.required.style).toBe('');
   });
 
-  it('normalizes missing and legacy story-sauce values to medium', () => {
+  it('normalizes missing and invalid Fun Settings values to medium', () => {
     const missing = normalizeStorySeedInput({
       ...completeSeed(),
       story: {
         ...completeSeed().story,
-        optional: { intendedForMatureAudiences: false, fateSurvival: { enabled: false, visibility: 'partial', pressure: 'immortal' }, plotAndTropeSettings: {} },
+        optional: { intendedForMatureAudiences: false, fateSurvival: { enabled: false, visibility: 'partial', pressure: 'immortal' }, funSettings: {} },
       },
     });
-    expect(missing.story.optional.plotAndTropeSettings).toEqual({
+    expect(missing.story.optional.funSettings).toEqual({
       faceSlap: 'medium',
       plotArmor: 'medium',
       recognition: 'medium',
@@ -313,7 +311,7 @@ describe('Story Seed creator/story/world contract', () => {
       story: {
         ...completeSeed().story,
         optional: {
-          plotAndTropeSettings: {
+          funSettings: {
             faceSlap: 'HIGH',
             plotArmor: 'extreme',
             recognition: null,
@@ -321,7 +319,7 @@ describe('Story Seed creator/story/world contract', () => {
         },
       },
     });
-    expect(legacy.story.optional.plotAndTropeSettings).toEqual({
+    expect(legacy.story.optional.funSettings).toEqual({
       faceSlap: 'high',
       plotArmor: 'medium',
       recognition: 'medium',
@@ -333,7 +331,7 @@ describe('Story Seed creator/story/world contract', () => {
       ...completeSeed(),
       story: {
         ...completeSeed().story,
-        optional: { plotAndTropeSettings: {} },
+        optional: { funSettings: {} },
       },
     });
     expect(missing.story.optional.makeItWorkInstruction).toBeUndefined();
@@ -434,7 +432,7 @@ describe('Story Seed creator/story/world contract', () => {
   it('serializes only creator/story/world and round-trips portable files', () => {
     const seed = completeSeed();
     const exported = createStorySeedExport(seed);
-    expect(exported).toMatchObject({ format: 'seihouse-story-seed', version: 4 });
+    expect(exported).toMatchObject({ format: 'seihouse-story-seed', version: 5 });
     expect(Object.keys(exported.seed).sort()).toEqual(['creator', 'story', 'world']);
     expect(exported.seed).not.toHaveProperty('intake');
     expect(exported.seed).not.toHaveProperty('blueprint');
@@ -446,8 +444,8 @@ describe('Story Seed creator/story/world contract', () => {
     expect(roundTripped.story.optional.intendedForMatureAudiences).toBe(true);
     expect(roundTripped.story.optional.fateSurvival)
       .toEqual({ enabled: true, visibility: 'partial', pressure: 'immortal' });
-    expect(roundTripped.story.optional.plotAndTropeSettings)
-      .toEqual(seed.story.optional.plotAndTropeSettings);
+    expect(roundTripped.story.optional.funSettings)
+      .toEqual(seed.story.optional.funSettings);
     expect(roundTripped.story.optional.makeItWorkInstruction)
       .toBe('The weakest bloodline is secretly the only one heaven fears.');
     expect(roundTripped.world.optional.worldIdentity).toEqual(seed.world.optional.worldIdentity);
@@ -522,11 +520,10 @@ describe('Story Seed creator/story/world contract', () => {
       style: 'chinese',
     });
     // General direction consolidates, while Make It Work keeps its own path.
-    expect(migrated.story.optional.additionalStoryDirection)
-      .toBe('Escalating court intrigue.');
+    expect(migrated.story.optional).not.toHaveProperty('additionalStoryDirection');
     expect(migrated.story.optional.makeItWorkInstruction)
       .toBe('Never erase the cost of changing fate.');
-    expect(migrated.story.optional.plotAndTropeSettings).toEqual({
+    expect(migrated.story.optional.funSettings).toEqual({
       faceSlap: 'medium',
       plotArmor: 'medium',
       recognition: 'medium',
@@ -553,7 +550,7 @@ describe('Story Seed creator/story/world contract', () => {
       ...createEmptyStorySeedInput(),
       story: {
         required: { storyTags: [], premise: 'Only the premise so far.', genre: '', style: '' },
-        optional: { intendedForMatureAudiences: true, fateSurvival: { enabled: false, visibility: 'partial', pressure: 'immortal' }, plotAndTropeSettings: {} },
+        optional: { intendedForMatureAudiences: true, fateSurvival: { enabled: false, visibility: 'partial', pressure: 'immortal' }, funSettings: {} },
       },
     };
     const saved = await createStorySeed('creator-1', draft, undefined, 'en');
@@ -566,7 +563,7 @@ describe('Story Seed creator/story/world contract', () => {
     expect(reloaded.seed.story.optional.intendedForMatureAudiences).toBe(true);
     expect(reloaded.seed.story.optional.fateSurvival)
       .toEqual({ enabled: false, visibility: 'partial', pressure: 'immortal' });
-    expect(reloaded.seed.story.optional.plotAndTropeSettings).toEqual({
+    expect(reloaded.seed.story.optional.funSettings).toEqual({
       faceSlap: 'medium',
       plotArmor: 'medium',
       recognition: 'medium',
@@ -578,7 +575,7 @@ describe('Story Seed creator/story/world contract', () => {
     const seed = completeSeed();
     const created = await createStorySeed('creator-1', seed, undefined, 'en');
     expect(await listStorySeeds('creator-1')).toEqual([created]);
-    expect(created.seed.story.optional.plotAndTropeSettings).toMatchObject({
+    expect(created.seed.story.optional.funSettings).toMatchObject({
       faceSlap: 'low',
       plotArmor: 'high',
       recognition: 'medium',
@@ -589,7 +586,7 @@ describe('Story Seed creator/story/world contract', () => {
 
     // Account metadata lives on the record, never inside creator/story/world.
     expect(Object.keys(created.seed).sort()).toEqual(['creator', 'story', 'world']);
-    expect(created).toMatchObject({ id: expect.any(String), userId: 'creator-1', schemaVersion: 4 });
+    expect(created).toMatchObject({ id: expect.any(String), userId: 'creator-1', schemaVersion: 5 });
 
     const changed: StorySeedInput = {
       ...seed,
@@ -762,7 +759,7 @@ describe('Story Seed creator/story/world contract', () => {
       expect(Object.keys(request.storySeed).sort()).toEqual(['creator', 'story', 'world']);
       expect(request.storySeed.story.required.storyTags).toEqual(['death flags', 'foreknowledge']);
       expect(request.storySeed.story.optional.intendedForMatureAudiences).toBe(true);
-      expect(request.storySeed.story.optional.plotAndTropeSettings).toMatchObject({
+      expect(request.storySeed.story.optional.funSettings).toMatchObject({
         faceSlap: 'low',
         plotArmor: 'high',
         recognition: 'medium',

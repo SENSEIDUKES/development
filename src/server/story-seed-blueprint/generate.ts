@@ -58,7 +58,7 @@ export const WORLD_BLUEPRINT_RESPONSE_SCHEMA = {
     majorFactions: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
     initialCharacters: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
     majorMysteries: { type: "array", items: { type: "string", minLength: 1 } },
-    arcPlan: ARC_PLAN_SCHEMA,
+    arcPlan: { ...ARC_PLAN_SCHEMA, properties: { ...ARC_PLAN_SCHEMA.properties, goals: { ...ARC_PLAN_SCHEMA.properties.goals, minItems: 1, maxItems: 1 } } },
     firstArcPromise: { type: "string", minLength: 1 },
     tropeRules: { type: "string", minLength: 1 },
     styleBible: { type: "string", minLength: 1 },
@@ -174,7 +174,7 @@ export const generateWorldBlueprint = async (
   });
   const blueprint = finalizeGeneratedWorldBlueprint(generated, storySeed);
   assertCompleteGeneratedBlueprint(blueprint);
-  if (!blueprint.arcPlan || validateArcPlan(blueprint.arcPlan).arcNumber !== 1) throw new Error('The generated Blueprint needs a valid Arc 1 plan.');
+  if (!blueprint.arcPlan || validateArcPlan(blueprint.arcPlan).arcNumber !== 1 || blueprint.arcPlan.goals.length !== 1) throw new Error('The generated Blueprint needs a valid Arc 1 plan.');
 
   // This is the exact downstream gate used by the Chapter Generation upload
   // flow. Returning only its normalized artifact proves there is no fixture

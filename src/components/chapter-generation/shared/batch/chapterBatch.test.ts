@@ -34,7 +34,7 @@ const seed = (): StorySeedInput => ({
     optional: {
       intendedForMatureAudiences: false,
       fateSurvival: { enabled: false, visibility: "partial", pressure: "immortal" },
-      plotAndTropeSettings: { faceSlap: "low", plotArmor: "medium", recognition: "medium" },
+      funSettings: { faceSlap: "low", plotArmor: "medium", recognition: "medium" },
     },
   },
   world: {

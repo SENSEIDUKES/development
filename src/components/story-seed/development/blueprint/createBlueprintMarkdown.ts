@@ -74,19 +74,19 @@ ${blueprint.societyStructure || ''}
 ### Power System Outline
 ${blueprint.powerSystemOutline || ''}
 
-## Overall Story Direction
-
-### Overall / Core Story Direction
-${blueprint.logline || ''}
-
-### First Arc Promise
-${blueprint.firstArcPromise || ''}
+## Arc
 
 ### Destined Ending
 ${blueprint.destinedEnding || ''}
 
-### Trope Guidance / Story Direction
-${blueprint.tropeRules || ''}
+### Hard Pins
+${markdownList((blueprint.hardPins ?? []).map(pin => pin.text))}
+
+### Active Arc Goal
+${blueprint.arcPlan?.goals[0]?.text || ''}
+
+### Fun Settings
+${Object.entries(blueprint.funSettings ?? {}).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
 
 **Estimated Arcs:** ${blueprint.estimatedArcs || ''}
 

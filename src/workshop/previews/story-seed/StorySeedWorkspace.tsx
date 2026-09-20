@@ -255,6 +255,8 @@ async function runDevelopmentFillScenario(isCancelled: () => boolean) {
   // World Identity
   if (!await selectSection(/^World Identity$/)) return;
   if (!mutateRoots('development', isCancelled, root => {
+    setFieldValue(root, 'make-it-work-instruction-input', 'The weakest bloodline is secretly the only one heaven fears.');
+    setFieldValue(root, 'main-opposition-input', 'The celestial court');
     setFieldValue(root, 'world-type-input', 'Ancient sect world with a collapsing celestial court');
     setFieldValue(root, 'society-structure-input', 'Sect-led feudal hierarchy');
     setFieldValue(root, 'starting-location-input', 'Outer sect labor quarry inside a volcanic rift.');
@@ -299,10 +301,9 @@ async function runDevelopmentFillScenario(isCancelled: () => boolean) {
     (root.querySelector('[id="arc-face-slap-high"]') as HTMLElement | null)?.click();
     (root.querySelector('[id="arc-plot-armor-low"]') as HTMLElement | null)?.click();
     (root.querySelector('[id="arc-recognition-high"]') as HTMLElement | null)?.click();
-    setFieldValue(root, 'a11y-control-jolpc3b', 'Shatter the fated assassination timeline');
-    setFieldValue(root, 'a11y-control-6a6tmbf', 'Sect tournament that reveals the first assassination attempt');
+    setFieldValue(root, 'hard-pin-1', 'Protect the prince.');
+    setFieldValue(root, 'active-arc-goal-input', 'Reach Foundation rank.');
     setFieldValue(root, 'destined-ending-input', 'The prince survives and severs the celestial court from fate.');
-    setFieldValue(root, 'make-it-work-instruction-input', 'The weakest bloodline is secretly the only one heaven fears.');
   })) return;
 
   // Land back on Origin.
@@ -437,7 +438,7 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
       activeBlueprintRequestRef.current = controller;
       setBlueprintGenerating(true);
       try {
-        if (localGeneration) { await wait(300); return { ...createMockBlueprint(), arcPlan: payload.storySeed.story.optional.arcPlan ?? createFilledStorySeedInput().story.optional.arcPlan }; }
+        if (localGeneration) { await wait(300); return { ...createMockBlueprint(), arcPlan: { arcNumber: 1, goals: [payload.storySeed.story.optional.activeArcGoal ?? createFilledStorySeedInput().story.optional.activeArcGoal!] } }; }
         return await requestWorldBlueprint(payload, blueprintAccessToken, controller.signal);
       } finally {
         if (activeBlueprintRequestRef.current === controller) {

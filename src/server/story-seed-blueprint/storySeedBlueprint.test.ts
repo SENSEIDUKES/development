@@ -28,14 +28,11 @@ const canonicalSeed = (): StorySeedInput => ({
     optional: {
       intendedForMatureAudiences: true,
       fateSurvival: { enabled: true, visibility: "partial", pressure: "heaven" },
-      plotAndTropeSettings: {
+      funSettings: {
         faceSlap: "low",
         plotArmor: "medium",
         recognition: "high",
-        firstMajorConflict: "Survive the succession hearing without exposing the remembered timelines.",
-        mainAntagonistPressure: "The regent owns every witness except one.",
       },
-      additionalStoryDirection: "A quiet conspiracy becomes a war over who may rewrite an oath.",
       makeItWorkInstruction: "The prince's laziness is a disciplined defense against prophetic surveillance.",
     },
   },
@@ -120,7 +117,7 @@ const generatedBlueprint = (): Record<string, unknown> => ({
     "Regent Zhao — the architect of the hearing",
   ],
   majorMysteries: ["Who taught the dead heaven to remember broken oaths?"],
-  arcPlan: { arcNumber: 1, goals: [{ id: "arc-1-hearing", text: "Survive the hearing.", chapters: 70 }, { id: "arc-1-oath", text: "Investigate the oath network.", chapters: 30 }] },
+  arcPlan: { arcNumber: 1, goals: [{ id: "arc-1-hearing", text: "Survive the hearing.", chapters: 100 }] },
   firstArcPromise: "A different first conflict.",
   tropeRules: "Foreknowledge creates costly choices rather than automatic victories.",
   styleBible: "Restrained court tension, exact ritual detail, and sudden spectacle.",
@@ -150,6 +147,21 @@ const manifest = async (provider: RecordingProvider) => handleStorySeedBlueprint
 });
 
 describe("protected Story Seed World Blueprint generation", () => {
+  it('requests only one initial goal and retains author-owned Hard Pins and Fun Settings', async () => {
+    const seed = canonicalSeed();
+    seed.story.optional.hardPins = [{ text: 'Keep the master alive.' }];
+    seed.story.optional.activeArcGoal = { id: 'arc-1-author', text: 'Reach the hearing.', chapters: 100 };
+    const provider = new RecordingProvider({ ...generatedBlueprint(), hardPins: [{ text: 'Unwanted model goal.' }], funSettings: { faceSlap: 'high' } });
+    const response = await handleStorySeedBlueprintHttp({ method: 'POST', headers: { Authorization: 'Bearer development-access-token' }, body: { storySeed: seed } }, { environment, providerFactory: () => provider });
+    expect(response.status).toBe(200);
+    const blueprint = response.body as WorldBlueprint;
+    expect(blueprint.hardPins).toEqual(seed.story.optional.hardPins);
+    expect(blueprint.funSettings).toEqual(seed.story.optional.funSettings);
+    expect(blueprint.arcPlan?.goals).toEqual([seed.story.optional.activeArcGoal]);
+    expect(provider.requests[0].responseJsonSchema.properties.arcPlan.properties.goals).toMatchObject({ minItems: 1, maxItems: 1 });
+    expect(provider.requests[0].userPrompt).not.toMatch(/one to five|firstMajorConflict|additionalStoryDirection|plotAndTropeSettings/);
+  });
+
   it.each([false, true])("accepts empty Fate Survival arrays when enabled=%s", async enabled => {
     const seed = canonicalSeed();
     seed.story.optional.fateSurvival.enabled = enabled;
@@ -190,7 +202,7 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(blueprint.blueprintVersion).toBe("v1.0");
     expect(blueprint.originSnapshot).toEqual(seed.story.required);
     expect(blueprint.title).toBe(seed.world.optional.worldIdentity.title);
-    expect(blueprint.logline).toBe(seed.story.optional.additionalStoryDirection);
+    expect(blueprint.logline).toBe(generatedBlueprint().logline);
     expect(blueprint.worldOverview).toBe(seed.world.optional.worldIdentity.worldType);
     expect(blueprint.startingLocation).toBe(seed.world.optional.worldIdentity.startingLocation);
     expect(blueprint.societyStructure).toBe(seed.world.optional.worldIdentity.societyStructure);
@@ -213,7 +225,7 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(blueprint.majorFactions.filter(entry => entry.toLocaleLowerCase().includes("vermilion tribunal")))
       .toHaveLength(1);
     expect(blueprint.majorFactions).toContain("Regent's Bronze Guard — the palace's private army");
-    expect(blueprint.firstArcPromise).toBe(seed.story.optional.plotAndTropeSettings.firstMajorConflict);
+    expect(blueprint.firstArcPromise).toBe(generatedBlueprint().firstArcPromise);
     expect(blueprint.destinedEnding).toBe(seed.world.optional.worldFoundations.destinedEnding);
   });
 
@@ -269,7 +281,7 @@ describe("protected Story Seed World Blueprint generation", () => {
     });
     expect(onError).toHaveBeenCalledOnce();
     expect(onError.mock.calls[0][0]).toEqual(new Error(
-      "Gemini returned an incomplete World Blueprint: tropeRules, styleBible, "
+      "Gemini returned an incomplete World Blueprint: logline, firstArcPromise, tropeRules, styleBible, "
       + "mainCharacter.age, mainCharacter.appearance.",
     ));
   });

@@ -10,7 +10,7 @@
  * ```
  */
 
-import { type StorySeedAbilities, type StorySeedCharacter, type StorySeedFaction, type StorySeedFateSurvivalSettings, type StorySeedInput, type StorySeedMainCharacter, type StorySeedPlotAndTropeSettings, type StorySeedPowerSystem, type StorySeedStoryRequired, type StorySeedWorldFoundations, type StorySeedWorldIdentity } from '@seihouse/sen/story-seed';
+import { type StorySeedAbilities, type StorySeedCharacter, type StorySeedFaction, type StorySeedFateSurvivalSettings, type StorySeedInput, type StorySeedMainCharacter, type FunSettings, type StorySeedPowerSystem, type StorySeedStoryRequired, type StorySeedWorldFoundations, type StorySeedWorldIdentity } from '@seihouse/sen/story-seed';
 
 export type SeedUpdate = (seed: StorySeedInput) => StorySeedInput;
 export type UpdateSeed = (update: SeedUpdate) => void;
@@ -25,22 +25,16 @@ export const patchStoryRequired = (patch: Partial<StorySeedStoryRequired>): Seed
 export const updateStoryTags = (next: (previous: string[]) => string[]): SeedUpdate =>
   seed => patchStoryRequired({ storyTags: next(seed.story.required.storyTags) })(seed);
 
-export const patchPlotAndTropeSettings = (patch: Partial<StorySeedPlotAndTropeSettings>): SeedUpdate =>
+export const patchFunSettings = (patch: Partial<FunSettings>): SeedUpdate =>
   seed => ({
     ...seed,
     story: {
       ...seed.story,
       optional: {
         ...seed.story.optional,
-        plotAndTropeSettings: { ...seed.story.optional.plotAndTropeSettings, ...patch },
+        funSettings: { ...seed.story.optional.funSettings, ...patch },
       },
     },
-  });
-
-export const setAdditionalStoryDirection = (value: string): SeedUpdate =>
-  seed => ({
-    ...seed,
-    story: { ...seed.story, optional: { ...seed.story.optional, additionalStoryDirection: value } },
   });
 
 export const setMakeItWorkInstruction = (value: string): SeedUpdate =>
@@ -117,8 +111,8 @@ export const setFactions = (factions: StorySeedFaction[]): SeedUpdate =>
 
 // Convenience readers so workspaces never repeat the full path.
 export const storyRequired = (seed: StorySeedInput): StorySeedStoryRequired => seed.story.required;
-export const plotAndTropeSettings = (seed: StorySeedInput): StorySeedPlotAndTropeSettings =>
-  seed.story.optional.plotAndTropeSettings;
+export const funSettings = (seed: StorySeedInput): FunSettings =>
+  seed.story.optional.funSettings;
 export const worldIdentity = (seed: StorySeedInput): StorySeedWorldIdentity =>
   seed.world.optional.worldIdentity;
 export const worldFoundations = (seed: StorySeedInput): StorySeedWorldFoundations =>

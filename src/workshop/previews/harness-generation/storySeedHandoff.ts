@@ -1,3 +1,5 @@
+import { createInitialArcPlan } from '@seihouse/sen/arc-goals';
+import { validateHardPinInputs, normalizeFunSettings } from '@seihouse/sen/story-seed';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
 import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
@@ -57,7 +59,9 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
       majorMysteries: [...(blueprint?.majorMysteries ?? [])],
       unresolvedPlotThreads: [...(blueprint?.unresolvedPlotThreads ?? [])],
     },
-    initialArcPlan: optional.arcPlan || blueprint?.arcPlan,
+    initialArcPlan: optional.activeArcGoal ? createInitialArcPlan(optional.activeArcGoal) : blueprint?.arcPlan,
+    initialHardPins: validateHardPinInputs(optional.hardPins ?? []),
+    funSettings: normalizeFunSettings(optional.funSettings),
     identities: [
       ...((world.mainCharacter?.name || blueprint?.mainCharacter?.name) ? [{
         name: world.mainCharacter?.name || blueprint!.mainCharacter!.name,
@@ -79,7 +83,6 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
     ]),
     permanentInstructions: joinSections([
       ['Make it work', optional.makeItWorkInstruction],
-      ['Blueprint trope rules', blueprint?.tropeRules],
     ]),
     openingSituation: identity.startingLocation || blueprint?.startingLocation,
     declaredCanon: joinSections([
@@ -99,19 +102,13 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
     }] : undefined,
     worldFacts: joinSections([
       ['World identity', identity],
+      ['Main Opposition', world.mainOpposition],
       ['Factions', world.factions],
       ['Abilities', world.abilities],
       ['Power system', world.powerSystem],
       ['Blueprint society', blueprint?.societyStructure],
       ['Blueprint power system', blueprint?.powerSystemOutline],
       ['Blueprint factions', blueprint?.majorFactions],
-    ]),
-    intendedDirection: joinSections([
-      ['Additional story direction', optional.additionalStoryDirection],
-      ['Plot and trope settings', optional.plotAndTropeSettings],
-      ['Blueprint logline', blueprint?.logline],
-      ['First arc promise', blueprint?.firstArcPromise],
-      ['Estimated arcs (pacing guide, not a chapter deadline)', blueprint?.estimatedArcs],
     ]),
     sourceSnapshot: {
       kind: 'story-seed',

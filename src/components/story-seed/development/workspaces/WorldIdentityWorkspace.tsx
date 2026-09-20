@@ -1,8 +1,8 @@
-import { Landmark, MapPin } from 'lucide-react';
+import { Landmark, MapPin, Sparkles, ShieldAlert } from 'lucide-react';
 import { LibraryWorldIdentityIcon as SENWorldIdentityIcon } from '@seihouse/library-ui';
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
-import { patchWorldIdentity, worldIdentity, type UpdateSeed } from '../seedState';
+import { patchWorldIdentity, worldIdentity, patchWorldFoundations, worldFoundations, setMakeItWorkInstruction, type UpdateSeed } from '../seedState';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { WorkspaceShell } from './WorkspaceShell';
 
@@ -48,6 +48,12 @@ export const WorldIdentityWorkspace = ({ seed, updateSeed }: WorldIdentityWorksp
         rows={3}
         placeholder="e.g., A sprawling outer sect labor quarry built inside a cavernous volcanic rift. The air is heavy with sulfur, and molten ore glows in the deep trenches..."
       />
+      <LibraryTextArea id="make-it-work-instruction-input" label="Make It Work" icon={Sparkles} maxLength={1500}
+        helpText="Use this for strange, difficult, contradictory, or highly specific ideas the Library must preserve and make believable inside the story."
+        value={seed.story.optional.makeItWorkInstruction || ''} onChange={value => updateSeed(setMakeItWorkInstruction(value))} rows={5} />
+      <LibraryTextBox id="main-opposition-input" label="Main Opposition" icon={ShieldAlert}
+        helpText="Who or what pushes back against the main character the hardest."
+        value={worldFoundations(seed).mainOpposition || ''} onChange={value => updateSeed(patchWorldFoundations({ mainOpposition: value }))} />
     </WorkspaceShell>
   );
 };

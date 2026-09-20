@@ -17,7 +17,7 @@ const finalizedSeed: StorySeedInput = {
     optional: {
       intendedForMatureAudiences: false,
       fateSurvival: { enabled: true, visibility: "partial", pressure: "immortal" },
-      plotAndTropeSettings: {},
+      funSettings: {},
     },
   },
   world: {

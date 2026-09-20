@@ -78,3 +78,6 @@ export function confirmArcGoal(context: ArcGenerationContext, chapterNumber: num
     || !prose.includes(result.evidence) || chapterNumber < context.activeGoal.startChapter) return undefined;
   return { arcNumber: context.plan.arcNumber, goalId: result.goalId, goalText: context.activeGoal.text, chapterNumber, evidence: result.evidence };
 }
+
+/** Story Seed supplies one initial goal; the existing plan/deadline contract remains authoritative. */
+export const createInitialArcPlan = (goal: ArcGoal): ArcPlan => validateArcPlan({ arcNumber: 1, goals: [goal] });

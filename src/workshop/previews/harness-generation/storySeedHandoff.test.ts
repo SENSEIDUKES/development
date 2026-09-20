@@ -14,6 +14,61 @@ import { buildHarnessGenerationPrompt } from '../../../server/harness-generation
 import { OFFICIAL_STYLE_REFERENCES } from './officialCapaSkills';
 
 describe('Story Seed to Harness handoff', () => {
+  it('routes Arc inputs once and freezes the original pins and active goal across reload, retry, and replay', async () => {
+    const record = createMockStorySeedRecord();
+    record.seed.story.optional.hardPins = [{ text: 'PIN_KEEP_MASTER' }, { text: 'PIN_KEEP_TEMPLE' }, { text: 'PIN_KEEP_VOW' }];
+    record.seed.story.optional.activeArcGoal = { id: 'arc-1-gate', text: 'GOAL_OPEN_GATE', chapters: 100 };
+    record.seed.story.optional.funSettings = { faceSlap: 'high', plotArmor: 'low', recognition: 'medium' };
+    record.seed.story.optional.makeItWorkInstruction = 'WORLD_WALKING_MOUNTAIN';
+    record.seed.world.optional.worldFoundations.mainOpposition = 'WORLD_GATE_KEEPER';
+    record.seed.world.optional.worldFoundations.destinedEnding = 'ENDING_FREE_VALLEY';
+    Object.assign(record.seed.story.optional, { additionalStoryDirection: 'REMOVED_DIRECTION', firstMajorConflict: 'REMOVED_CONFLICT', arcPlan: { goals: [{ text: 'REMOVED_FUTURE_GOAL' }] } });
+    record.blueprint!.logline = 'REMOVED_BLUEPRINT_DIRECTION';
+    record.blueprint!.firstArcPromise = 'REMOVED_FIRST_CONFLICT';
+    const foundation = createHarnessFoundationFromStorySeed(record);
+    const requests: HarnessGenerationRequest[] = [];
+    const adapter = {
+      getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }),
+      arcOperation: vi.fn(),
+      generate: vi.fn(async (request: HarnessGenerationRequest): Promise<HarnessGenerationResponse> => {
+        requests.push(structuredClone(request));
+        return { rawProviderResponse: requests.length === 1 ? '' : JSON.stringify({ paragraphs: ['The traveler reaches the gate.'] }),
+          providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: '2026-09-20T12:00:00Z', usage: { source: 'unavailable' } } };
+      }),
+    };
+    const repository = new InMemoryHarnessGenerationRepository();
+    const controller = new HarnessGenerationController({ repository, modelAdapter: adapter });
+    await controller.hydrate();
+    const story = await controller.createStory(foundation, 'ja');
+    await controller.generateNextChapter(story.id, 'fixture');
+    const failed = controller.snapshot().attempts[0];
+    expect(failed.stage).toBe('generation_failed');
+    const prompt = buildHarnessGenerationPrompt(requests[0]);
+    for (const marker of ['PIN_KEEP_MASTER', 'PIN_KEEP_TEMPLE', 'PIN_KEEP_VOW', 'ENDING_FREE_VALLEY', 'GOAL_OPEN_GATE', 'WORLD_WALKING_MOUNTAIN', 'WORLD_GATE_KEEPER', '"funSettings"']) {
+      expect(prompt.userPrompt.split(marker), marker).toHaveLength(2);
+      expect(prompt.systemInstruction).not.toContain(marker);
+    }
+    expect(prompt.userPrompt).not.toMatch(/REMOVED_|arcGoals|"plan"/);
+    expect(requests[0].storyInformation.arc).toMatchObject({ activeGoal: { text: 'GOAL_OPEN_GATE' }, completionDeadline: 100 });
+    expect(requests[0].storyInformation.currentStory.funSettings).toEqual(record.seed.story.optional.funSettings);
+    expect(JSON.stringify(requests[0].storyInformation.canonicalState)).not.toMatch(/PIN_|GOAL_|funSettings/);
+    expect(requests[0].storyInformation.currentStory.intendedDirection).toBeUndefined();
+    expect(requests[0].immediateChapterRequest).not.toHaveProperty('funSettings');
+    const invalid = structuredClone(requests[0]);
+    invalid.storyInformation.storyDirection.hardPins.push('FOURTH_PIN');
+    expect(() => buildHarnessGenerationPrompt(invalid)).toThrow('at most 3');
+    await controller.setHardPins(story.id, [{ text: 'LATER_PIN' }]);
+    await controller.editArcGoals(story.id, { arcNumber: 1, goals: [{ id: 'arc-1-later', text: 'LATER_GOAL', chapters: 100 }] });
+    const reloaded = new HarnessGenerationController({ repository, modelAdapter: adapter });
+    await reloaded.hydrate();
+    await reloaded.retryModelRequest(failed.id);
+    expect(requests[1].storyInformation).toEqual({ ...requests[0].storyInformation, attemptId: requests[1].attemptId });
+    await reloaded.replayStory(story.id);
+    expect(reloaded.snapshot().attempts[0].storyInformation.storyDirection).toEqual(requests[0].storyInformation.storyDirection);
+    expect(reloaded.snapshot().attempts[0].storyInformation.arc).toEqual(requests[0].storyInformation.arc);
+    expect(adapter.arcOperation).not.toHaveBeenCalled();
+  });
+
   it.each([false, true])('gates Fate Survival at the provider boundary when enabled=%s, through reload', async enabled => {
     const record = createMockStorySeedRecord();
     record.seed.story.optional.fateSurvival = { enabled, visibility: 'partial', pressure: 'heaven' };
@@ -21,7 +76,7 @@ describe('Story Seed to Harness handoff', () => {
     record.blueprint!.majorMysteries = ['UNIQUE_SURVIVAL_MYSTERY'];
     record.blueprint!.unresolvedPlotThreads = ['UNIQUE_SURVIVAL_THREAD'];
     const foundation = createHarnessFoundationFromStorySeed(record);
-    expect(foundation.intendedDirection).not.toMatch(/Fate and survival|majorMysteries|unresolvedPlotThreads|UNIQUE_/);
+    expect(foundation.intendedDirection).toBeUndefined();
     const requests: HarnessGenerationRequest[] = [];
     const modelAdapter = { getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }), arcOperation: vi.fn(), generate: vi.fn(async (request: HarnessGenerationRequest): Promise<HarnessGenerationResponse> => {
       requests.push(request);
@@ -76,7 +131,7 @@ describe('Story Seed to Harness handoff', () => {
     expect(foundation.toneStyle).toContain('Blueprint style bible');
     expect(foundation.characters).toContain('Ye Chen');
     expect(foundation.worldFacts).toContain('Heavenly Sword Sect');
-    expect(foundation.intendedDirection).toContain('First arc promise');
+    expect(foundation.intendedDirection).toBeUndefined();
     // The canonical Fate Pressure domain value crosses the boundary as its own
     // field, independent of the visible Story Seed label or placement.
     expect(foundation.fatePressure).toBe(record.seed.story.optional.fateSurvival.pressure);
@@ -106,12 +161,12 @@ describe('Story Seed to Harness handoff', () => {
     const foundation = createHarnessFoundationFromStorySeed(record);
     expect(foundation.openingSituation).toBe('Author opening');
     expect(foundation.destinedEnding).toBe('Author ending');
-    expect(foundation.intendedDirection).not.toContain('Author ending');
-    expect(foundation.intendedDirection).not.toContain('Generated ending');
+    expect(foundation.intendedDirection).toBeUndefined();
+    expect(foundation.intendedDirection).toBeUndefined();
     expect(foundation.declaredCanon).not.toContain(record.blueprint!.logline);
     expect(foundation.declaredCanon).not.toContain(record.blueprint!.majorMysteries[0]);
-    expect(foundation.intendedDirection).toContain(record.blueprint!.firstArcPromise);
-    expect(foundation.intendedDirection).toContain('Estimated arcs');
+    expect(foundation.intendedDirection).toBeUndefined();
+    expect(foundation.intendedDirection).toBeUndefined();
     expect(foundation.characters).toContain('Additional profile detail');
   });
 
@@ -203,7 +258,7 @@ describe('Story Seed to Harness handoff', () => {
     expect(userPrompt).toContain('"eyeColor": "green"');
     expect(userPrompt).not.toContain('Mara has green eyes.');
     expect(userPrompt).not.toContain('targetEvidence');
-    expect(userPrompt).toContain(record.blueprint!.firstArcPromise);
+    expect(userPrompt).not.toContain(record.blueprint!.firstArcPromise);
     expect(userPrompt).not.toContain('CONTEXT COVERAGE AND OMISSIONS');
     expect(userPrompt).not.toContain('selectionAudit');
     expect(systemInstruction).toContain('An arc promise spans an arc, not one chapter.');

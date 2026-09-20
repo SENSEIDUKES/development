@@ -464,3 +464,13 @@ application explicitly needs them.
 ### 2026-09-06 — Library UI ownership migration
 
 Reusable presentation now comes from the canonical Library UI package. Portable SEN surfaces resolve presentation through the host provider; the first-party Workshop supplies LibraryPresentationProvider. Domain, generation, persistence, media, and locked reference sources are unchanged.
+
+### 2026-09-20 — Story Seed Arc handoff
+
+Story Seed initializes the existing Hard Pin authority with zero to three
+author-owned entries and the existing Arc Plan authority with one initial goal.
+Only the active goal and its deadline are presented to the generation model;
+the full Arc Plan remains internal. Fun Settings are optional Current Story
+Information and cannot override canon, CAPA, ending, pins, or the current goal.
+They do not enter canonical state or CAPA. The saved HARNESS schema is now 18;
+existing Development reset behavior rejects stale state.

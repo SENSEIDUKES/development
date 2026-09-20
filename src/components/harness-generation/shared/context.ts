@@ -1,3 +1,4 @@
+import { validateHardPinInputs } from '../../../narrative/storyDirection';
 import { harnessArcContext } from './arcState';
 import { projectCanonicalState } from './canonicalProjection';
 import { semanticReaderChanges } from './readerEdits';
@@ -53,6 +54,7 @@ export const projectCurrentStory = (
     ...(text(input.toneStyle) ? { toneStyle: input.toneStyle!.trim() } : {}),
     ...(text(input.permanentInstructions) ? { permanentInstructions: input.permanentInstructions!.trim() } : {}),
     ...(text(input.openingSituation) ? { openingSetup: input.openingSituation!.trim() } : {}),
+    ...(input.funSettings ? { funSettings: cloneHarnessValue(input.funSettings) } : {}),
     ...(text(input.intendedDirection) ? { intendedDirection: input.intendedDirection!.trim() } : {}),
     ...(text(input.declaredCanon) ? { declaredCanon: input.declaredCanon!.trim() } : {}),
     ...(text(input.characters) ? { characters: input.characters!.trim() } : {}),
@@ -97,7 +99,7 @@ export const compileStoryInformationPacket = (
   const currentStory = projectCurrentStory(state, story, foundationRevision);
   const storyDirection = {
     ...(text(foundationRevision.input.destinedEnding) ? { destinedEnding: foundationRevision.input.destinedEnding!.trim() } : {}),
-    hardPins: (story.hardPins ?? []).map(pin => pin.text),
+    hardPins: validateHardPinInputs((story.hardPins ?? []).map(({ id, text }) => ({ id, text }))).map(pin => pin.text),
   };
   const arc = harnessArcContext(story, foundationRevision.input, nextChapterNumber);
 

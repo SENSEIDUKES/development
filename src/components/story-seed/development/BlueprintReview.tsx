@@ -16,12 +16,14 @@ import { patchStoryRequired, patchWorldIdentity, type UpdateSeed } from './seedS
 import { BlueprintCollectionSections } from './blueprint/BlueprintCollectionSections';
 import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import {
-  BlueprintDirectionSection,
   BlueprintHeaderSection,
+  BlueprintNotesSection,
   BlueprintMainCharacterSection,
   BlueprintOriginSection,
   BlueprintWorldSettingSection,
 } from './blueprint/BlueprintReviewSections';
+import { ArcWorkspace } from './workspaces/ArcWorkspace';
+import { normalizeWorldBlueprint } from '@seihouse/sen/story-seed';
 import { createBlueprintMarkdown } from './blueprint/createBlueprintMarkdown';
 import { SEN_LANGUAGES, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
 
@@ -77,6 +79,15 @@ export const BlueprintReview = ({
     blueprint.mainCharacter?.personality,
     blueprint.mcProfile,
   ]);
+  const reviewSeed: StorySeedInput = {
+    ...seed,
+    world: { ...seed.world, optional: { ...seed.world.optional,
+      worldFoundations: { ...seed.world.optional.worldFoundations, destinedEnding: blueprint.destinedEnding },
+    } },
+    story: { ...seed.story, optional: { ...seed.story.optional,
+      activeArcGoal: seed.story.optional.activeArcGoal ?? blueprint.arcPlan?.goals[0],
+    } },
+  };
   const copyPayloadRef = useRef({ blueprint, origin, mainCharacter });
 
   useEffect(() => {
@@ -219,17 +230,18 @@ export const BlueprintReview = ({
           setBlueprint={setBlueprint}
         />
 
-        {/* 5 · Overall Story Direction — generated guidance, with the Destined
-              Ending carrying the key-field weight. */}
-        <BlueprintDirectionSection
-          logline={blueprint.logline}
-          firstArcPromise={blueprint.firstArcPromise}
-          destinedEnding={blueprint.destinedEnding}
-          tropeRules={blueprint.tropeRules}
-          styleBible={blueprint.styleBible}
-          estimatedArcs={blueprint.estimatedArcs}
-          setBlueprint={setBlueprint}
-        />
+        <ArcWorkspace seed={reviewSeed} updateSeed={update => {
+          const next = update(reviewSeed);
+          updateSeed(() => next);
+          setBlueprint(current => normalizeWorldBlueprint({ ...current,
+            destinedEnding: next.world.optional.worldFoundations.destinedEnding,
+            arcPlan: undefined,
+          }, next));
+        }} />
+
+        {!blueprint.arcPlan && <p className="text-sm text-neutral-300">Add an Active Arc Goal, or refine the seed and generate a Blueprint suggestion, before beginning the story.</p>}
+
+        <BlueprintNotesSection styleBible={blueprint.styleBible} estimatedArcs={blueprint.estimatedArcs} setBlueprint={setBlueprint} />
 
         <BlueprintCollectionSections
           survivalEnabled={seed.story.optional.fateSurvival.enabled}
@@ -286,6 +298,7 @@ export const BlueprintReview = ({
                 icon={SENManifestingIcon}
                 className="sm:w-auto"
                 onClick={onStartStory}
+                disabled={!blueprint.arcPlan || blueprint.arcPlan.goals.length !== 1}
                 loading={isGenerating}
                 loadingIndicator={activeAgentId === 'versa' ? (
                   <img src={runtime.authorMarkUrl} className="size-5 animate-pulse object-contain" alt="" aria-hidden="true" />

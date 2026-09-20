@@ -4,17 +4,13 @@ import {
   Drama,
   Feather,
   FileText,
-  Flag,
-  Hourglass,
   Info,
   Landmark,
   MapPin,
   ScrollText,
   Tag,
-  Target,
-  Wand2,
 } from 'lucide-react';
-import { LibraryArcIcon as SENArcIcon, LibraryPowerSystemIcon as SENPowerSystemIcon, LibraryWorldIdentityIcon as SENWorldIdentityIcon } from '@seihouse/library-ui';
+import { LibraryPowerSystemIcon as SENPowerSystemIcon, LibraryWorldIdentityIcon as SENWorldIdentityIcon } from '@seihouse/library-ui';
 import { type WorldBlueprint, type WorldBlueprintMainCharacter } from '@seihouse/sen/story-seed';
 import { STORY_PREMISE_MAX_LENGTH, STORY_TAG_LIMIT, type StorySeedStoryRequired } from '@seihouse/sen/story-seed';
 import { STORY_STYLE_OPTIONS, type StoryStyle } from '@seihouse/sen/story-seed';
@@ -324,81 +320,15 @@ export const BlueprintWorldSettingSection = memo(({
 
 BlueprintWorldSettingSection.displayName = 'BlueprintWorldSettingSection';
 
-interface BlueprintDirectionSectionProps {
-  logline?: WorldBlueprint['logline'];
-  firstArcPromise?: WorldBlueprint['firstArcPromise'];
-  destinedEnding?: WorldBlueprint['destinedEnding'];
-  tropeRules?: WorldBlueprint['tropeRules'];
+interface BlueprintNotesSectionProps {
   styleBible?: WorldBlueprint['styleBible'];
   estimatedArcs?: WorldBlueprint['estimatedArcs'];
   setBlueprint: Dispatch<SetStateAction<WorldBlueprint>>;
 }
-
-export const BlueprintDirectionSection = memo(({
-  logline,
-  firstArcPromise,
-  destinedEnding,
-  tropeRules,
-  styleBible,
-  estimatedArcs,
-  setBlueprint,
-}: BlueprintDirectionSectionProps) => (
-  <LibraryPanel as="section" aria-labelledby="blueprint-direction-heading" padding="md">
-    <BlueprintSectionHeading
-      id="blueprint-direction-heading"
-      icon={SENArcIcon}
-      title="Overall Story Direction"
-      tagline="The generated path from the opening promise to the destined ending."
-    />
-
+export const BlueprintNotesSection = memo(({ styleBible, estimatedArcs, setBlueprint }: BlueprintNotesSectionProps) => (
+  <LibraryPanel as="section" aria-labelledby="blueprint-notes-heading" padding="md">
+    <BlueprintSectionHeading id="blueprint-notes-heading" icon={FileText} title="Generated Notes" tagline="Review the suggested prose guidance and estimated story length." />
     <div className="mt-5 space-y-5">
-      <LibraryTextArea
-        id="blueprint-core-direction"
-        label="Overall / Core Story Direction"
-        rightElement={<EditableChip />}
-        icon={Target}
-        value={logline || ''}
-        onChange={value => setBlueprint(current => ({ ...current, logline: value }))}
-        rows={4}
-        className="leading-relaxed"
-        placeholder="The generated high-level direction for the complete story..."
-      />
-
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <LibraryTextArea
-          id="blueprint-first-arc"
-          label="First Arc Promise"
-          rightElement={<EditableChip />}
-          icon={Flag}
-          value={firstArcPromise || ''}
-          onChange={value => setBlueprint(current => ({ ...current, firstArcPromise: value }))}
-          rows={5}
-          className="leading-relaxed"
-          placeholder="The opening conflict, stakes, and payoff promised by Arc One..."
-        />
-        <div className="blueprint-key-field">
-          <LibraryTextArea
-            id="blueprint-destined-ending"
-            label="Destined Ending"
-            rightElement={<EditableChip />}
-            icon={Hourglass}
-            value={destinedEnding || ''}
-            onChange={value => setBlueprint(current => ({ ...current, destinedEnding: value }))}
-            rows={5}
-            className="leading-relaxed"
-            placeholder="The intended fated destination of the story..."
-          />
-        </div>
-        <LibraryTextArea
-          id="blueprint-trope-guidance"
-          label="Trope Guidance / Story Direction"
-          rightElement={<EditableChip />}
-          icon={Wand2}
-          value={tropeRules || ''}
-          onChange={value => setBlueprint(current => ({ ...current, tropeRules: value }))}
-          rows={5}
-          placeholder="Tropes to use or subvert, tone rules, and directional guardrails..."
-        />
         <LibraryTextArea
           id="blueprint-style-bible"
           label="Generated Style Bible"
@@ -410,8 +340,6 @@ export const BlueprintDirectionSection = memo(({
           className="font-mono"
           placeholder="Generated prose rules, forbidden phrasing, and tone requirements..."
         />
-      </div>
-
       <div className="sm:max-w-xs">
         <LibraryTextBox
           id="blueprint-estimated-arcs"
@@ -438,5 +366,4 @@ export const BlueprintDirectionSection = memo(({
     </div>
   </LibraryPanel>
 ));
-
-BlueprintDirectionSection.displayName = 'BlueprintDirectionSection';
+BlueprintNotesSection.displayName = 'BlueprintNotesSection';

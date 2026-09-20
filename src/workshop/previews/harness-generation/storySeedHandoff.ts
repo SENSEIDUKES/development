@@ -50,10 +50,13 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
     title: identity.title || blueprint?.title || record.title,
     premise: required.premise,
     destinedEnding: world.destinedEnding || blueprint?.destinedEnding,
-    // The canonical Fate Pressure domain value. Its current Story Seed home is
-    // the Fate & Survival settings group; the HARNESS consumes the value, not
-    // that placement, so a later Story Seed redesign does not touch this.
     fatePressure: optional.fateSurvival.pressure,
+    fateSurvival: {
+      enabled: optional.fateSurvival.enabled,
+      visibility: optional.fateSurvival.visibility,
+      majorMysteries: [...(blueprint?.majorMysteries ?? [])],
+      unresolvedPlotThreads: [...(blueprint?.unresolvedPlotThreads ?? [])],
+    },
     initialArcPlan: optional.arcPlan || blueprint?.arcPlan,
     identities: [
       ...((world.mainCharacter?.name || blueprint?.mainCharacter?.name) ? [{
@@ -106,13 +109,9 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
     intendedDirection: joinSections([
       ['Additional story direction', optional.additionalStoryDirection],
       ['Plot and trope settings', optional.plotAndTropeSettings],
-      ['Fate and survival settings', optional.fateSurvival],
       ['Blueprint logline', blueprint?.logline],
-      ['Major mysteries (unresolved; not character knowledge)', blueprint?.majorMysteries],
       ['First arc promise', blueprint?.firstArcPromise],
       ['Estimated arcs (pacing guide, not a chapter deadline)', blueprint?.estimatedArcs],
-      ['Unresolved plot threads', blueprint?.unresolvedPlotThreads],
-      ['Destined ending', world.destinedEnding || blueprint?.destinedEnding],
     ]),
     sourceSnapshot: {
       kind: 'story-seed',

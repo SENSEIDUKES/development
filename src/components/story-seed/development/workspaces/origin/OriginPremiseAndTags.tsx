@@ -100,7 +100,7 @@ interface OriginPremiseAndTagsProps {
   selectedStyle?: StoryStyle;
   onPremiseChange: (premise: string) => void;
   updateSeed: UpdateSeed;
-  genrePicker: ReactNode;
+  beforeTags?: ReactNode;
 }
 
 export const OriginPremiseAndTags = ({
@@ -110,7 +110,7 @@ export const OriginPremiseAndTags = ({
   selectedStyle,
   onPremiseChange,
   updateSeed,
-  genrePicker,
+  beforeTags,
 }: OriginPremiseAndTagsProps) => {
   const [dismissedGhostKey, setDismissedGhostKey] = useState<string | null>(null);
   const [tagLimitError, setTagLimitError] = useState<string | null>(null);
@@ -156,7 +156,7 @@ export const OriginPremiseAndTags = ({
     <>
       <LibraryTextArea
         id="core-premise-input"
-        label="Core Premise / Secret Catalyst"
+        label="Synopsis"
         icon={Feather}
         required
         maxLength={STORY_PREMISE_MAX_LENGTH}
@@ -172,7 +172,7 @@ export const OriginPremiseAndTags = ({
           <button
             type="button"
             onClick={handleCyclePremise}
-            aria-label="Show another example premise"
+            aria-label="Show another example synopsis"
             className="story-seed-touch-target inline-flex h-10 w-10 items-center justify-center rounded-full border border-portal/35 bg-portal/10 text-portal transition-all hover:border-portal hover:bg-portal/15 hover:shadow-[0_0_12px_rgba(4,172,255,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal/70 active:scale-95"
           >
             <span
@@ -184,6 +184,8 @@ export const OriginPremiseAndTags = ({
           </button>
         )}
       />
+      {beforeTags}
+
       <AnimatePresence>
         {ghostSuggestion && (
           <motion.button
@@ -201,8 +203,6 @@ export const OriginPremiseAndTags = ({
           </motion.button>
         )}
       </AnimatePresence>
-
-      {genrePicker}
 
       <OriginTagEditor
         premise={premise}
@@ -277,7 +277,7 @@ const OriginTagEditor = memo(({
   return (
       <section className="glass-panel space-y-4 p-4 sm:p-5" aria-labelledby="origin-tags-title">
         <div>
-          <p id="origin-tags-title" className="flex items-center gap-2 font-sc text-[11px] font-bold uppercase tracking-widest text-signal"><Tag size={13} className="text-[#CDB271]" aria-hidden="true" />Story Tags</p>
+          <p id="origin-tags-title" className="flex items-center gap-2 font-sc text-[11px] font-bold uppercase tracking-widest text-signal"><Tag size={13} className="text-[#CDB271]" aria-hidden="true" />Tags</p>
           <p className="mt-1 font-sans text-xs text-neutral-400">Optional — inferred from your origin if left empty.</p>
         </div>
 

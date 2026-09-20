@@ -8,7 +8,7 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * persisted shape (attempt, chapter, or workspace state fields). This is a
  * development system: storage at any other version is reset, never
  * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 16 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 17 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -26,7 +26,16 @@ export interface HarnessStorySeedSnapshot {
   blueprint?: unknown;
 }
 
+/** Author-owned Fate Survival proposals, separate from canon and character knowledge. */
+export interface FateSurvivalContext {
+  enabled: boolean;
+  visibility: 'full' | 'partial' | 'none';
+  majorMysteries: string[];
+  unresolvedPlotThreads: string[];
+}
+
 export interface StoryFoundationInput {
+  fateSurvival?: FateSurvivalContext;
   destinedEnding?: string;
   /**
    * The story's canonical Fate Pressure tier (storyteller intensity). Copied
@@ -499,6 +508,7 @@ export type PacketSectionId =
   | 'storyDirection'
   | 'arc'
   | 'rhythm'
+  | 'fateSurvival'
   | 'previouslyOn'
   | 'canonicalState'
   | 'missionReminder'
@@ -564,6 +574,8 @@ export interface StoryInformationPacket {
   arc?: import('../components/arc-goals/shared/arcGoals').ArcGenerationContext;
   /** Section 5. */
   rhythm?: RhythmDirectionSection;
+  /** Present only when Survival is enabled; never canonical state. */
+  fateSurvival?: FateSurvivalContext;
   /** Section 6: the latest saved recaps, oldest first. */
   previouslyOn: PreviouslyOnEntry[];
   /** Section 7. */

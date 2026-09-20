@@ -4,7 +4,7 @@
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **Replica created:** 2026-08-01
-- **Last Workshop update:** 2026-09-16
+- **Last Workshop update:** 2026-09-20
 - **Last source comparison:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and ready for production transfer
 
@@ -16,20 +16,19 @@ cleaner, and canonical production Blueprint fields were verified against
 
 Story Seed is one creation flow with these visible destinations:
 
-- **Origin** owns Story Title, Style, Core Premise / Secret Catalyst, Genre,
-  and Story Tags.
+- **Origin** presents Style, Genre, Title, Synopsis, Pressure, Survival, and Tags, in that order on every viewport.
 - **ARC** owns story-sauce controls, story direction, first
   major conflict, main opposition, Destined Ending, and Make It Work.
 - **World** owns World Identity, Characters, Factions, Abilities, and Power
   System.
-- **Story Seed Settings** owns mature-audience metadata and Fate Survival.
+- **Story Seed Settings** owns mature-audience metadata.
 - **Help** owns searchable written guidance and translated audio playback.
 - **Story Bank** is the only home for saved seeds, import/export, Blueprint
   access, seed reuse, and novel manifestation actions.
 - **World Blueprint** is an editable sibling artifact. It is not nested inside
   the portable Creator / Story / World seed.
 
-The canonical Story Seed shape is `creator / story / world`. Story Title has
+The canonical Story Seed shape is `creator / story / world`. Title has
 one owner at `world.optional.worldIdentity.title`; Blueprint title editing
 updates that same value. The Blueprint keeps creator-authored Origin
 provenance separate from generated story direction.
@@ -369,3 +368,28 @@ Replaced the Story Seed mobile Back control's Celestial Library emblem with the 
 ## 2026-09-09 production sheet viewport fix
 
 Fixed the shared Settings/Search sheet shifting half its width off-screen in production builds. CSS optimization lowered the mobile `translate: none` reset to `transform`, leaving the canonical dialog centering translation active. WorkspaceSheet now resets the original translation through responsive utilities, while desktop centering, dialog focus/scroll behavior and Settings state remain unchanged. Verify the production output with `node scripts/verifyWorkspaceSheet.browser.mjs` after `npm run build` and `npm run preview -- --port 4173`; dev-server-only testing does not catch this regression.
+
+## 2026-09-20 - Origin and Fate Survival routing
+
+Origin reuses `world.optional.worldIdentity.title`, `story.required.premise`,
+and `story.optional.fateSurvival`; no Story Seed storage shape changed.
+Pressure remains independent of the Survival switch and retains the existing
+three tiers and HARNESS rhythm math. Survival retains its visibility setting.
+
+Blueprint `majorMysteries` and `unresolvedPlotThreads` are Fate Survival proposals.
+Review and portable export retain their entries while Survival is off; new Blueprint
+generation accepts empty arrays and requests them when off. When on, the model may
+create entries for Fate Survival only. The Story Seed-to-HARNESS handoff stores them
+in the typed Foundation Fate Survival field; the packet includes that field only
+while enabled, in one labeled section separate from canon and character knowledge.
+The complete Fate settings, mystery arrays, and Destined Ending no longer enter
+`intendedDirection`. Pressure and Destined Ending each use their dedicated section.
+Official Chinese, Japanese, and Korean Style package mapping is unchanged.
+
+This changes the HARNESS Foundation/packet shape: schema 17 resets stale Development
+HARNESS workspaces through the existing repository boundary. Story Seed/Blueprint
+records are unaffected. Transfer requires the Origin controls and related editor
+files, Blueprint response/prompt changes, neutral HARNESS contract/normalization/
+packet/presentation changes, and the host's equivalent of `storySeedHandoff.ts`.
+No production repository, locked Reference, rhythm math, CAPA, media, or Fate Survival
+gameplay implementation was changed.

@@ -31,6 +31,14 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-09-20:** Story Seed Origin routing now retains Fate Survival settings and
+  Blueprint mystery/thread proposals in a dedicated Foundation field. The packet
+  and provider include one labeled Fate Survival context section only while enabled;
+  disabled proposals remain saved but never enter ordinary chapter context. Pressure
+  remains in rhythm direction and Destined Ending in story direction, each once;
+  the handoff no longer copies any of these through `intendedDirection`. Schema 17
+  resets stale Development HARNESS data; Story Seed and Blueprint storage stay intact.
+
 - **2026-09-20:** Replaced the bloated Story Information delivery with the
   compact long-story generation packet. The Story Information Packet is now
   six distinct sections (`shared/context.ts`, `shared/canonicalProjection.ts`)

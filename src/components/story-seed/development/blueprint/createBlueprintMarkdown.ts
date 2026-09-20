@@ -35,7 +35,7 @@ ${metadata}
 
 ## Origin Snapshot
 
-### Core Premise / Secret Catalyst (User-Created Origin)
+### Synopsis (User-Created Origin)
 ${origin.premise || ''}
 
 **Genre:** ${origin.genre || ''}
@@ -99,10 +99,14 @@ ${markdownList(blueprint.initialCharacters || [])}
 ## Factions
 ${markdownList(blueprint.majorFactions || [])}
 
-## Major Mysteries
+## Fate Survival
+
+Unresolved proposals for Survival only; not character knowledge or established canon. Saved entries remain available when Survival is off.
+
+### Major Mysteries
 ${markdownList(blueprint.majorMysteries || [])}
 
-## Unresolved Plot Threads
+### Unresolved Plot Threads
 ${markdownList(blueprint.unresolvedPlotThreads || [])}
 `.trim();
 };

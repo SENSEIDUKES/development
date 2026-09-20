@@ -6,6 +6,7 @@ import { NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea } 
 import { BlueprintSectionHeading, EditableChip } from './BlueprintDossierPrimitives';
 
 interface BlueprintCollectionSectionsProps {
+  survivalEnabled: boolean;
   initialCharacters?: WorldBlueprint['initialCharacters'];
   majorFactions?: WorldBlueprint['majorFactions'];
   majorMysteries?: WorldBlueprint['majorMysteries'];
@@ -14,6 +15,7 @@ interface BlueprintCollectionSectionsProps {
 }
 
 export const BlueprintCollectionSections = memo(({
+  survivalEnabled,
   initialCharacters,
   majorFactions,
   majorMysteries,
@@ -71,8 +73,10 @@ export const BlueprintCollectionSections = memo(({
       <BlueprintSectionHeading
         id="blueprint-mysteries-heading"
         icon={HelpCircle}
-        title="Major Mysteries / Unresolved Plot Threads"
-        tagline="Open questions and threads the story promises to resolve."
+        title="Fate Survival"
+        tagline={survivalEnabled
+          ? 'Survival is on. These mysteries and unresolved threads enter generation as Fate Survival context, never character knowledge.'
+          : 'Survival is off. Saved mysteries and unresolved threads are retained here and excluded from chapter generation.'}
       />
 
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">

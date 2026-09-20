@@ -36,12 +36,10 @@ for (const engine of [chromium, webkit]) {
         await dialog.waitFor();
         await page.waitForTimeout(350); // Let the existing open animation settle.
         await checkBounds(dialog, width, 844);
-        await dialog.getByRole('switch', { name: 'Fate Survival', exact: true }).click();
+        await dialog.getByRole('switch', { name: 'Rated 18+', exact: true }).click();
         await page.setViewportSize({ width, height: 430 });
         await checkBounds(dialog, width, 430);
-        const option = dialog.getByRole('radio', { name: /^Mortal/ });
-        await option.click();
-        assert.equal(await option.getAttribute('aria-checked'), 'true');
+        assert.equal(await dialog.getByRole('switch', { name: 'Rated 18+', exact: true }).getAttribute('aria-checked'), 'true');
         await checkBounds(dialog, width, 430);
         await dialog.getByRole('button', { name: 'Close settings', exact: true }).click();
         await dialog.waitFor({ state: 'detached' });

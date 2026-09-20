@@ -232,6 +232,7 @@ export const BlueprintReview = ({
         />
 
         <BlueprintCollectionSections
+          survivalEnabled={seed.story.optional.fateSurvival.enabled}
           initialCharacters={blueprint.initialCharacters}
           majorFactions={blueprint.majorFactions}
           majorMysteries={blueprint.majorMysteries}

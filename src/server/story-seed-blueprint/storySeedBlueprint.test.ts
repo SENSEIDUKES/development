@@ -150,6 +150,23 @@ const manifest = async (provider: RecordingProvider) => handleStorySeedBlueprint
 });
 
 describe("protected Story Seed World Blueprint generation", () => {
+  it.each([false, true])("accepts empty Fate Survival arrays when enabled=%s", async enabled => {
+    const seed = canonicalSeed();
+    seed.story.optional.fateSurvival.enabled = enabled;
+    const provider = new RecordingProvider({ ...generatedBlueprint(), majorMysteries: [], unresolvedPlotThreads: [] });
+    const response = await handleStorySeedBlueprintHttp({
+      method: 'POST', headers: { Authorization: 'Bearer development-access-token' }, body: { storySeed: seed },
+    }, { environment, providerFactory: () => provider });
+    expect(response.status).toBe(200);
+    expect(provider.requests[0].responseJsonSchema.properties.majorMysteries).not.toHaveProperty('minItems');
+    expect(provider.requests[0].responseJsonSchema.properties.unresolvedPlotThreads).not.toHaveProperty('minItems');
+    expect(provider.requests[0].userPrompt).toContain(enabled
+      ? 'You may create majorMysteries and unresolvedPlotThreads for the Fate Survival experience.'
+      : 'Return empty arrays for majorMysteries and unresolvedPlotThreads.');
+    expect(JSON.stringify(response.body)).toContain('"majorMysteries":[]');
+    expect(JSON.stringify(response.body)).toContain('"unresolvedPlotThreads":[]');
+  });
+
   it("sends the complete canonical seed and preserves creator-authored canon", async () => {
     const provider = new RecordingProvider();
     const response = await manifest(provider);
@@ -252,8 +269,8 @@ describe("protected Story Seed World Blueprint generation", () => {
     });
     expect(onError).toHaveBeenCalledOnce();
     expect(onError.mock.calls[0][0]).toEqual(new Error(
-      "Gemini returned an incomplete World Blueprint: tropeRules, styleBible, majorMysteries, "
-      + "unresolvedPlotThreads, mainCharacter.age, mainCharacter.appearance.",
+      "Gemini returned an incomplete World Blueprint: tropeRules, styleBible, "
+      + "mainCharacter.age, mainCharacter.appearance.",
     ));
   });
 

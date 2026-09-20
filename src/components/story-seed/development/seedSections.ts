@@ -11,7 +11,7 @@ import type { StorySeedIconName } from './SENStorySeedIcon';
  * The visible navigation hierarchy and its canonical Story Seed ownership.
  * Origin is the single editor for required Story inputs; ARC owns optional
  * direction and the destined ending; World owns the optional foundations.
- * Experience metadata such as Fate Survival belongs to Story Seed Settings.
+ * Origin also owns Pressure and Survival; Settings owns mature-audience metadata.
  */
 export type SeedFamily = 'story' | 'world';
 
@@ -135,7 +135,7 @@ export const FAMILY_SECTIONS: Record<SeedFamily, SeedSection[]> = {
 
 export interface RequiredStoryInput {
   id: 'style' | 'genre' | 'premise';
-  label: 'Style' | 'Genre' | 'Premise';
+  label: 'Style' | 'Genre' | 'Synopsis';
   isFilled: (seed: StorySeedInput) => boolean;
 }
 
@@ -154,7 +154,7 @@ export const REQUIRED_STORY_SECTIONS: RequiredStoryInput[] = [
   },
   {
     id: 'premise',
-    label: 'Premise',
+    label: 'Synopsis',
     isFilled: seed => hasText(storyRequired(seed).premise),
   },
 ];

@@ -31,6 +31,14 @@ export interface FamiliarOption {
 export const FAMILIAR_DEFAULT_SIZE = 1;
 export const FAMILIAR_MIN_SIZE = 0.6;
 export const FAMILIAR_MAX_SIZE = 2;
+export const FAMILIAR_MOBILE_DEFAULT_SIZE = 1;
+export const FAMILIAR_MOBILE_MAX_SIZE = 1.5;
+/** Resolve presentation only; never rewrite a larger saved desktop preference on resize. */
+export function familiarDisplaySize(size: number | undefined, mobile: boolean): number {
+  const fallback = mobile ? FAMILIAR_MOBILE_DEFAULT_SIZE : FAMILIAR_DEFAULT_SIZE;
+  const normalized = normalizeFamiliarSize(size === undefined || !Number.isFinite(size) ? fallback : size);
+  return mobile ? Math.min(FAMILIAR_MOBILE_MAX_SIZE, normalized) : normalized;
+}
 /** Clamp a host profile preference to the supported range, defaulting invalid values. */
 export function normalizeFamiliarSize(size = FAMILIAR_DEFAULT_SIZE): number {
   return Number.isFinite(size) ? Math.min(FAMILIAR_MAX_SIZE, Math.max(FAMILIAR_MIN_SIZE, size)) : FAMILIAR_DEFAULT_SIZE;

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, useState } from 'react';
+import { act, Profiler, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EnergyClientProvider, type EnergyClient, type EnergyAccountSnapshot } from '@seihouse/library/energy';
@@ -9,15 +9,28 @@ import { FamiliarSprite } from './FamiliarSprite';
 import { FamiliarSelection } from './FamiliarSelection';
 import { FamiliarCompanion } from './FamiliarCompanion';
 import { FamiliarRecall } from './FamiliarRecall';
+import { FAMILIAR_MOBILE_QUERY } from './useFamiliarMobile';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root;
 let container: HTMLDivElement;
 let reduced = false;
+let mobile = false;
+let mediaListeners: Set<() => void>;
+let frames: Map<number, FrameRequestCallback>;
+const flushFrames = () => act(() => {
+  const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach(callback => callback(0));
+});
 beforeEach(() => {
   reduced = false;
+  mobile = false;
+  mediaListeners = new Set();
+  frames = new Map();
+  let nextFrame = 0;
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { frames.set(++nextFrame, callback); return nextFrame; });
+  vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id));
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
-  Object.defineProperty(window, 'matchMedia', { configurable: true, value: vi.fn().mockImplementation((media: string) => ({ media, matches: reduced, addEventListener: vi.fn(), removeEventListener: vi.fn() })) });
+  Object.defineProperty(window, 'matchMedia', { configurable: true, value: vi.fn().mockImplementation((media: string) => ({ media, get matches() { return media === FAMILIAR_MOBILE_QUERY ? mobile : reduced; }, addEventListener: (_: string, callback: () => void) => mediaListeners.add(callback), removeEventListener: (_: string, callback: () => void) => mediaListeners.delete(callback) })) });
   container = document.createElement('div');
   document.body.append(container);
   root = createRoot(container);
@@ -48,7 +61,7 @@ describe('Familiar sprite playback', () => {
     expect(frame()).toBe('0');
     act(() => vi.advanceTimersByTime(1));
     expect(frame()).toBe('1');
-    expect(container.querySelector('img')!.style.left).toBe('-100%');
+    expect(container.querySelector('img')!.style.transform).toBe('translate(-12.5%, 0%)');
     for (const duration of [110, 110, 140, 140, 320]) act(() => vi.advanceTimersByTime(duration));
     expect(frame()).toBe('0');
     act(() => root.render(<FamiliarSprite familiar={celestialGuardian} paused />));
@@ -67,11 +80,10 @@ describe('Familiar sprite playback', () => {
     act(() => root.render(<FamiliarSprite familiar={celestialGuardian} animation="neutral" />));
     imageLoaded();
     expect(frame()).toBe('0');
-    expect(container.querySelector('img')!.style.left).toBe('-600%');
+    expect(container.querySelector('img')!.style.transform).toBe('translate(-75%, 0%)');
     act(() => root.render(<FamiliarSprite familiar={celestialGuardian} animation="look-270" />));
     imageLoaded();
-    expect(container.querySelector('img')!.style.top).toBe('-1000%');
-    expect(container.querySelector('img')!.style.left).toBe('-400%');
+    expect(container.querySelector('img')!.style.transform).toBe('translate(-50%, -90.9090909090909%)');
     expect(vi.getTimerCount()).toBe(0);
   });
 
@@ -85,6 +97,31 @@ describe('Familiar sprite playback', () => {
     expect(vi.getTimerCount()).toBe(0);
     act(() => container.querySelector('img')!.dispatchEvent(new Event('error')));
     expect(container.textContent).toContain('Familiar artwork could not load.');
+  });
+
+  it('plays without React commits and stops offscreen, in the background, and after unmount', () => {
+    vi.useFakeTimers();
+    let intersect!: IntersectionObserverCallback;
+    const disconnect = vi.fn();
+    vi.stubGlobal('IntersectionObserver', class { constructor(callback: IntersectionObserverCallback) { intersect = callback; } observe() {} disconnect = disconnect; });
+    const commit = vi.fn();
+    act(() => root.render(<Profiler id="sprite" onRender={commit}><FamiliarSprite familiar={celestialGuardian} /></Profiler>));
+    imageLoaded();
+    expect(vi.getTimerCount()).toBe(0);
+    act(() => intersect([{ isIntersecting: true }] as IntersectionObserverEntry[], {} as IntersectionObserver));
+    const count = commit.mock.calls.length;
+    act(() => vi.advanceTimersByTime(390));
+    expect(frame()).toBe('2');
+    expect(commit).toHaveBeenCalledTimes(count);
+    act(() => intersect([{ isIntersecting: false }] as IntersectionObserverEntry[], {} as IntersectionObserver));
+    expect(vi.getTimerCount()).toBe(0);
+    act(() => intersect([{ isIntersecting: true }] as IntersectionObserverEntry[], {} as IntersectionObserver));
+    vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    expect(vi.getTimerCount()).toBe(0);
+    act(() => root.render(null));
+    expect(disconnect).toHaveBeenCalledOnce();
+    expect(mediaListeners.size).toBe(0);
   });
 });
 
@@ -178,11 +215,13 @@ describe('Floating companion', () => {
     const event = new Event(type, { bubbles: true });
     Object.assign(event, { clientX: x, clientY: y, pointerId, pointerType, button: 0, isPrimary: pointerId === 1 });
     act(() => pet().dispatchEvent(event));
+    flushFrames();
   };
   const mouseClick = () => act(() => { pet().dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 })); });
   const location = () => {
     const style = document.querySelector<HTMLElement>('.familiar-companion')!.style;
-    return { x: Number.parseFloat(style.left), y: Number.parseFloat(style.top) };
+    const [x, y] = style.transform.match(/-?[\d.]+/g)!.map(Number);
+    return { x, y };
   };
 
   it.each(['mouse', 'touch'])('distinguishes %s drag from tap and only reads Energy after choosing the action', async pointerType => {
@@ -224,6 +263,7 @@ describe('Floating companion', () => {
       Object.defineProperty(window, 'innerWidth', { configurable: true, value: 320 });
       Object.defineProperty(window, 'innerHeight', { configurable: true, value: 300 });
       act(() => window.dispatchEvent(new Event('resize')));
+      flushFrames();
       expect(location().x).toBeLessThanOrEqual(204);
       expect(location().y).toBeLessThanOrEqual(300 - 12 - 104 * 208 / 192 + 0.001);
       await click(pet()); // Keyboard-style activation still works after a cancelled pointer.
@@ -306,5 +346,90 @@ describe('Header Familiar actions', () => {
     await click(document.querySelector('[aria-label="Expand Familiar"]')!);
     expect(onRecall).toHaveBeenCalledOnce();
     expect(client.getSnapshot).toHaveBeenCalledOnce();
+  });
+});
+
+describe('Mobile sizing and inactive work', () => {
+  it('maps mobile 10–100 to 0.6–1.5, defaults/resets to 50, and preserves desktop preferences on resize', async () => {
+    mobile = true;
+    const change = vi.fn();
+    const render = (size?: number) => act(() => root.render(<>
+      <FamiliarSelection options={[celestialGuardianOption]} selectedId={celestialGuardian.id} size={size} onSizeChange={change} onSelect={vi.fn()} />
+      <FamiliarCompanion familiar={celestialGuardian} size={size} />
+    </>));
+    render();
+    const slider = container.querySelector('input')!;
+    expect([slider.min, slider.max, slider.value]).toEqual(['10', '100', '50']);
+    expect(document.querySelector<HTMLElement>('.familiar-companion')!.style.width).toBe('104px');
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+    for (const [value, expected] of [['10', 0.6], ['100', 1.5]] as const) {
+      act(() => { setter.call(slider, value); slider.dispatchEvent(new Event('input', { bubbles: true })); });
+      expect(change).toHaveBeenLastCalledWith(expected);
+    }
+    render(2);
+    expect(slider.value).toBe('100');
+    expect(document.querySelector<HTMLElement>('.familiar-companion')!.style.width).toBe('156px');
+    await click(container.querySelector('.familiar-size-slider button')!);
+    expect(change).toHaveBeenLastCalledWith(1);
+    change.mockClear();
+    act(() => { mobile = false; mediaListeners.forEach(update => update()); });
+    expect([slider.min, slider.max, slider.value]).toEqual(['60', '200', '200']);
+    expect(document.querySelector<HTMLElement>('.familiar-companion')!.style.width).toBe('208px');
+    expect(change).not.toHaveBeenCalled();
+  });
+
+  it('batches scroll measurements and detaches geometry work while minimized', () => {
+    const boundary = document.createElement('div');
+    const measure = vi.spyOn(boundary, 'getBoundingClientRect').mockReturnValue({ left: 0, top: 0, right: 1000, bottom: 800 } as DOMRect);
+    const boundaryRef = { current: boundary };
+    act(() => root.render(<FamiliarCompanion familiar={celestialGuardian} boundaryRef={boundaryRef} />));
+    measure.mockClear();
+    for (let n = 0; n < 20; n++) act(() => window.dispatchEvent(new Event('scroll')));
+    expect(measure).not.toHaveBeenCalled();
+    expect(frames.size).toBe(1);
+    flushFrames();
+    expect(measure).toHaveBeenCalledOnce();
+    act(() => root.render(<FamiliarCompanion familiar={celestialGuardian} boundaryRef={boundaryRef} minimized />));
+    measure.mockClear();
+    act(() => window.dispatchEvent(new Event('scroll')));
+    expect(frames.size).toBe(0);
+    expect(measure).not.toHaveBeenCalled();
+  });
+
+  it('coalesces drag samples, flushes the final position on release, and cancels queued work on unmount', () => {
+    act(() => root.render(<FamiliarCompanion familiar={celestialGuardian} />));
+    const pet = document.querySelector('.familiar-companion button')!;
+    const pointer = (type: string, x: number) => {
+      const event = new Event(type, { bubbles: true });
+      Object.assign(event, { pointerId: 1, button: 0, clientX: x, clientY: 500, isPrimary: true });
+      act(() => pet.dispatchEvent(event));
+    };
+    pointer('pointerdown', 900);
+    const before = document.querySelector<HTMLElement>('.familiar-companion')!.style.transform;
+    for (let x = 890; x >= 700; x -= 10) pointer('pointermove', x);
+    expect(frames.size).toBe(1);
+    expect(document.querySelector<HTMLElement>('.familiar-companion')!.style.transform).toBe(before);
+    pointer('pointerup', 700);
+    expect(frames.size).toBe(0);
+    expect(document.querySelector<HTMLElement>('.familiar-companion')!.style.transform).not.toBe(before);
+    pointer('pointerdown', 700);
+    pointer('pointermove', 650);
+    expect(frames.size).toBe(1);
+    act(() => root.render(null));
+    expect(frames.size).toBe(0);
+  });
+
+  it('releases the animated hero when offscreen and resumes the supplied GIF on return', () => {
+    let intersect!: IntersectionObserverCallback;
+    vi.stubGlobal('IntersectionObserver', class { constructor(callback: IntersectionObserverCallback) { intersect = callback; } observe() {} disconnect() {} });
+    act(() => root.render(<FamiliarSelection options={[celestialGuardianOption]} onSelect={vi.fn()} />));
+    const img = container.querySelector('img')!;
+    expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
+    act(() => intersect([{ isIntersecting: true }] as IntersectionObserverEntry[], {} as IntersectionObserver));
+    expect(img.getAttribute('src')).toBe(celestialGuardianOption.heroUrl);
+    act(() => intersect([{ isIntersecting: false }] as IntersectionObserverEntry[], {} as IntersectionObserver));
+    expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
+    act(() => intersect([{ isIntersecting: true }] as IntersectionObserverEntry[], {} as IntersectionObserver));
+    expect(img.getAttribute('src')).toBe(celestialGuardianOption.heroUrl);
   });
 });

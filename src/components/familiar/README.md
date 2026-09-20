@@ -135,8 +135,13 @@ through the generic `WorkspaceHeaderAccessoryProvider` on Home, Profile, and Cre
 the standalone Reader and Familiar canvas use a sticky recall control at their top
 edge, including fullscreen Reader states without a product header.
 
-Profile Customization → Familiar includes a live native size slider from 60% to
-200% and a **Reset** action. `handleFamiliarSizeChange` updates only
+Profile Customization → Familiar includes a live native size slider and **Reset**.
+Desktop retains 60–200% with a 100% default. Mobile shows 10–100%, mapping linearly
+to the existing 0.6–1.5 multiplier: 10% = old 60%, 50% = old 100%, 100% = old 150%.
+The mobile default and Reset are **50%**. Narrow layouts (up to 767px) and touch-only
+devices use this policy, including landscape phones. Larger saved desktop sizes are
+capped for mobile display without a profile write; returning to desktop restores the
+saved size. `handleFamiliarSizeChange` updates only
 `UserProfile.familiarSize` through the existing profile owner, preserving unrelated
 drafts, and reports the committed preference to the shared product session. This
 preview adapter writes synchronously to its existing in-memory profile. Production
@@ -200,6 +205,10 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-09-20: Added the mobile 10–100% display range and 50% default/Reset while
+  retaining the canonical profile multiplier and desktop range. Audited and reduced
+  sprite, scrolling, dragging, hidden playback, and touch glass rendering work;
+  see [performance audit and validation](PERFORMANCE.md).
 - 2026-09-20: Floating and header interactions select the supplied waving clip on
   hover, tap, or keyboard focus, returning to the resting clip when disengaged.
   Familiars without a waving clip retain their normal animation. Existing pause

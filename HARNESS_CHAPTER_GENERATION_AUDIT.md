@@ -57,12 +57,16 @@ Five findings account for essentially all of the reported symptoms, and they are
    (`:399-405`), and a block carries at most one soundscape (`:422-434`) and one creature
    event (`:407-420`). Soundscape resolution is per block
    (`src/narrative/acceptedChapterMedia.ts:28-45`), so one block yields at most one
-   soundscape per chapter.
+   soundscape per chapter. Note that **real paragraphs shrink this problem but do not solve
+   it**: the drop at `:275` fires on any anchor found in more than one block, so a phrase
+   repeated across two paragraphs is still rejected before occurrence selection is reached.
+   That case needs an explicit chapter-wide occurrence index, not just better blocks (§5, §9).
 
 5. **Context is duplicated four times over by construction, and the selection audit is
    itself sent to the model.** The same extracted memory reaches the prompt as chapter
-   events, as `committedDevelopments`, as `canonicalEvidence` records, and again as the
-   `deterministicHandoff` — each carrying the same verbatim `evidence` passage. On top of
+   events, as `committedDevelopments`, as `canonicalEvidence` records — each carrying the
+   same verbatim `evidence` passage — and once more as the `deterministicHandoff`, which
+   restates the event's `description` rather than copying its evidence (see §6.2). On top of
    that, `selectionAudit.included` / `omitted` (one entry per item, each with a long
    `reason` sentence) is serialized into the user prompt
    (`src/server/harness-generation/prompt.ts:229-237`). Nothing deduplicates, nothing
@@ -95,7 +99,7 @@ for all of them.
 | Chapter 2 referenced an anchor from Chapter 1 | The contract says anchors are "copied verbatim from prose" (`prompt.ts:164`) but never says *from the prose you are writing in this reply*; Chapter 1's full prose is in the packet as `priorChapters[].prose` (`prompt.ts:193-196`). HARNESS correctly drops it as `missing` | Verified (contract gap + drop path); Inference (that this is why the model reached back) |
 | Manifestations accumulated on one giant block | `chapterSignals.ts:399-405` appends every manifestation to `blocks[anchor.index].metadata.entities` | Verified |
 | Dialogue/media "applied to an entire mixed block" | Same block-as-unit ownership; media resolution is per block (`acceptedChapterMedia.ts:28-45`) | Verified |
-| ~7,483 context tokens after one 426-word chapter | Fourfold evidence duplication + Seed/Blueprint snapshot + serialized selection audit; see §6 | Verified (each duplication path); Inference (the exact arithmetic) |
+| ~7,483 context tokens after one 426-word chapter | Threefold verbatim evidence duplication plus a restated handoff + Seed/Blueprint snapshot + serialized selection audit; see §6 | Verified (each duplication path); Inference (the exact arithmetic) |
 | Chinese Style SPP and chapter-to-chapter continuity worked | Style skill is a single instruction block assembled into the CAPA Prompt (`shared/skills.ts:177-185`); continuity comes from the protected latest-chapter rule (`shared/context.ts:148-157`) | Verified |
 | Memory extraction worked but produced repetitive/fragmented records | One canonical record per event per handler (`shared/capabilities.ts:108`), never merged or superseded by a later record for the same `entityId` (`shared/canonicalState.ts:4-11`) | Verified |
 
@@ -111,7 +115,7 @@ for all of them.
 | **Old actual result** | The one recorded live run produced **1,083 words across 20 NDJSON blocks** against the 2,500-word target (`chapter-generation/README.md:329-340`). The old system missed its own target by more than half, with the same model. Verified. |
 | **Current HARNESS state** | No length instruction exists. `HARNESS_RESPONSE_CONTRACT` (`src/server/harness-generation/prompt.ts:151-174`) describes the JSON envelope, arc completion, signal families, and author authority — never chapter size. `presentImmediateChapterRequest` (`:249-257`) says only "Write Chapter N" plus the steering assignment. The official CAPA Author SPP says "complete, highly descriptive and immersive chapters" with no number; the official CAPA Pacing SPP is entirely qualitative. Verified by extracting `src/workshop/previews/harness-generation/official-capa/CAPA-AUTHOR.spp` and `CAPA-Pacing.spp`. |
 | **Provider output limits** | Not the constraint. `maxOutputTokens` defaults to 16,384 (`harness-generation/config.ts:55-58`), roughly 12,000 words. A 426-word chapter uses about 4% of it. Verified. |
-| **Verified problem** | (a) No target is communicated. (b) The one existing floor is *deliberately suppressed* for HARNESS: `responseAcceptance.ts:193` reads `if (warning.code === 'under-minimum-word-count') continue;`. (c) HARNESS never computes or stores a word count — `grep wordCount` across `src/narrative/generation.ts` and all of `harness-generation/` returns nothing. The system is blind to the symptom. (d) The only documented HARNESS-era norm is *small*: the 50-chapter continuation evaluation used "compact chapters requested at 400–600 words" and produced 19,969 words over 50 chapters (`CONTINUATION_EVALUATION.md:28-30`). The current 304–426 output is the system behaving exactly as its evidence base was tuned. |
+| **Verified problem** | (a) No target is communicated. (b) The one existing floor is *deliberately suppressed* for HARNESS: `responseAcceptance.ts:193` reads `if (warning.code === 'under-minimum-word-count') continue;`. (c) A word count **is** computed on every accepted chapter and then thrown away. `acceptedProseChapter` calls `normalizeManifestResponse`, which counts the words and returns `diagnostics.wordCount` alongside the `under-minimum-word-count` warning (`manifestNormalizer.ts:886-905`). HARNESS reads only `normalized.diagnostics.warnings`, skips that one code, and never reads `diagnostics.wordCount` — it is not carried onto the accepted draft, not persisted on the committed chapter, and not shown anywhere (`grep wordCount` across `src/narrative/generation.ts` and all of `harness-generation/` returns nothing). The measurement exists for one function call and then the system is blind to it. (d) The only documented HARNESS-era norm is *small*: the 50-chapter continuation evaluation used "compact chapters requested at 400–600 words" and produced 19,969 words over 50 chapters (`CONTINUATION_EVALUATION.md:28-30`). The current 304–426 output is the system behaving exactly as its evidence base was tuned. |
 | **Inference** | The JSON response mode contributes. HARNESS requests `responseMimeType: 'application/json'` with a `responseJsonSchema` (`provider.ts:55-56`); the old Manifest call used `responseFormat: "text"` with NDJSON (`modelCalls.ts:1333-1342`). Constrained JSON decoding on a *-flash-lite* model tends to compress free-text fields and to under-emit literal `\n\n` inside a string. This is consistent with both the shortness and the single-paragraph shape, but I did not run a controlled comparison. |
 | **Recommendation** | **Adapt.** Preserve the *intention* (a substantial serialized chapter with an enforced floor and an inspectable count). Do not restore the literal 2,500/2,000/60–100 numbers as a hard contract — the old system never hit them, and a rigid global number fights the Pacing Skill's job. Give HARNESS: (1) a declared target range that lives in Story Information, not in a CAPA skill, so Pacing can shape *within* it; (2) a computed, persisted `wordCount` and `paragraphCount` on every committed chapter; (3) stop suppressing the existing floor warning — surface it as an inspectable diagnostic, not a hard rejection, so prose is never lost. |
 
@@ -188,7 +192,11 @@ Gemini reply (JSON, prose: "…")
   resolve-media ordering; the "a dropped signal never removes prose" rule; the Media Loadout
   freeze and catalog-resolution boundary; the System Panel block-split technique.
 - **Reconnect:** the old system's explicit `occurrenceIndex` (`chapterPrompts.ts:48`), which lets a
-  model disambiguate a repeated phrase instead of losing the cue.
+  model disambiguate a repeated phrase instead of losing the cue. It must be **counted over the
+  whole reply in reading order, not within one block**. Today `resolveAnchor` rejects a
+  cross-block repeat before any occurrence logic could run (`chapterSignals.ts:275`), so a
+  block-scoped index would fix only same-paragraph repeats and leave the cross-paragraph case
+  exactly as broken as it is now. A single chapter-wide index needs no separate block selector.
 - **Adapt:** anchor matching should normalize whitespace and Unicode quotation marks before
   comparison, and should report *why* each signal was dropped in a form the Development
   inspector can show per signal (it currently emits a prose-excerpt warning string).
@@ -229,13 +237,20 @@ packet for Chapter 2 of a story with one committed chapter contains:
 
 ### 6.2 The five duplication paths (all verified)
 
-1. **Evidence quadruplication.** A single extracted memory event's verbatim `evidence`
-   passage is emitted in `priorChapters[].semanticEvents[].evidence`, in
-   `committedDevelopments[].evidence`, in `canonicalEvidence[].evidence`
-   (`capabilities.ts:115` sets `evidence: event.evidence ?? event.description`), and again
-   in `deterministicHandoff[]` when the record qualifies (`context.ts:230-235`). Four copies
-   of the same sentence, plus the *original sentence itself* in Chapter 1's full prose —
-   five in total.
+1. **Evidence triplication, plus a fourth semantic restatement.** A single extracted memory
+   event's verbatim `evidence` passage is emitted **three** times: in
+   `priorChapters[].semanticEvents[].evidence`, in `committedDevelopments[].evidence`, and in
+   `canonicalEvidence[].evidence` (`capabilities.ts:115` sets
+   `evidence: event.evidence ?? event.description`). Plus the *original sentence itself* in
+   Chapter 1's full prose — four appearances of the same passage.
+   `deterministicHandoff[]` is a **fourth, near-duplicate restatement rather than a fourth
+   verbatim copy**: it emits `String(record.facts.description ?? record.evidence)`
+   (`context.ts:235`), and `canonicalRecord` always sets `facts.description = event.description`
+   (`capabilities.ts:119`), so a qualifying record contributes the event's *description* — which
+   the reader has already seen twice, in `priorChapters[].semanticEvents[].description` and in
+   `committedDevelopments[].description`. The `?? record.evidence` fallback is unreachable for
+   records built this way. Either way the packet carries the same small fact again; only its
+   exact wording differs.
 2. **Description duplication inside records.** `canonicalRecord` sets
    `facts: { ...event.facts, description: event.description, ... }` (`capabilities.ts:119`),
    so each record repeats its source event's description inside its own facts object,
@@ -274,14 +289,14 @@ export is not in-repo):* a 13-bucket extraction over a 426-word chapter typicall
 | Chapter 1 events (copy 1) | ~1,400 |
 | `committedDevelopments` (copy 2) | ~1,300 |
 | `canonicalEvidence` records (copy 3, with fan-out) | ~1,800 |
-| `deterministicHandoff` (copy 4) | ~200 |
+| `deterministicHandoff` (restated descriptions, not a verbatim copy) | ~200 |
 | Selection audit (`included` + `omitted`) | ~800–1,200 |
 | Mechanical continuity, steering, section headers, JSON punctuation | ~300 |
 | **Total** | **~7,800** |
 
 That lands on the reported ~7,483 without any single section being unreasonable. **The
 packet is not too big because any one thing is too big — it is too big because the same
-small thing is present four to five times.**
+small fact is present four to five times, three of those verbatim.**
 
 ### 6.4 Does memory update entities, or create differently named duplicates?
 
@@ -413,13 +428,13 @@ to Arc Goals, and cross-chapter function sequencing (Rhythm) has no home at all.
 | **Provider limits** | — | 16,384 `maxOutputTokens`, gemini-3.1-flash-lite | Identical: 16,384, same model (`harness-generation/config.ts:5`, `:55-58`) | Not a constraint — a 426-word chapter uses ~4% | **Preserve** |
 | **Paragraph transport** | Paragraph = transport unit: one NDJSON object per paragraph (`chapterPrompts.ts:43`) | Worked structurally; 20 blocks in the live run | Paragraphs are `\n\n` inside one JSON string; `splitHarnessProseParagraphs` (`chapterSignals.ts:238`) is the only recovery; **no warning on a one-block chapter** | One chapter = one SEN block; every downstream effect collapses with it | **Rebuild** — make paragraph boundaries structural in the response contract; warn/repair on a one-block chapter |
 | **Dialogue attribution** | Dialogue metadata attaches to the exact spoken passage | Per-paragraph `speakerName` / `speakerRole` — better, but still paragraph-granular | Whole containing block is stamped `type: 'dialogue'` + `speakerName`; first signal wins; later signals in that block dropped **silently** (`chapterSignals.ts:383-397`) | A mixed 304-word chapter became Iron-Hand Chen's dialogue block | **Rebuild** — split the block at the anchored span (the System Panel technique, `chapterSignals.ts:375-380`); **Reconnect** the span algorithm already in `senAdapter.ts:171-197` |
-| **Anchor resolution** | An anchor must name one place in the chapter | Model supplied an explicit `occurrenceIndex` to disambiguate (`chapterPrompts.ts:48`) | Block-scoped uniqueness; ambiguous ⇒ drop (`chapterSignals.ts:267-282`), deliberately introduced in `69fd7db` | Rule is right; **granularity is wrong** — one block maximizes false ambiguity; no normalization of quotes/whitespace; no way for the model to disambiguate | **Adapt** — normalize before matching; **Reconnect** `occurrenceIndex`; re-evaluate ambiguity against real paragraph blocks |
+| **Anchor resolution** | An anchor must name one place in the chapter | Model supplied an explicit `occurrenceIndex` to disambiguate (`chapterPrompts.ts:48`) | Block-scoped uniqueness; ambiguous ⇒ drop (`chapterSignals.ts:267-282`), deliberately introduced in `69fd7db` | Rule is right; **granularity is wrong** — one block maximizes false ambiguity; no normalization of quotes/whitespace; no way for the model to disambiguate. Paragraph blocks alone do not fix this: a phrase repeated across two paragraphs is still rejected (`chapterSignals.ts:275`) | **Adapt** — normalize before matching; **Reconnect** `occurrenceIndex` counted across the whole reply, which covers same-block and cross-block repeats alike; re-evaluate ambiguity against real paragraph blocks |
 | **Manifestations** | Reveal/reference positioned where the reader meets the entity | Per-block `entities` array | Appended to the containing block (`chapterSignals.ts:399-405`) | All manifestations pile onto one block; reveal positioning destroyed | **Preserve** the contract; fixed by the paragraph rebuild |
 | **System Panels** | Visible UI treatment at the earning moment, in every genre | Rich nested `system` object; caused Gemini schema rejection (`README.md:39-45`) | Compact signal → `buildHarnessSystemPanel` (`chapterSignals.ts:312-345`); **splits its block at the anchor** | None — this is the correct pattern and the template for dialogue | **Preserve**; **Discard** the old nested schema |
 | **Soundscapes** | Per-scene backing mood | Per-block `music` object | One per block (`chapterSignals.ts:422-434`); resolved per block (`acceptedChapterMedia.ts:28-45`) | One block ⇒ one soundscape per chapter; scene changes inaudible | **Preserve** the contract; fixed by the paragraph rebuild |
 | **Sound Cues** | Cue fires at the exact audible action phrase | `triggerPhrase` + author-supplied `occurrenceIndex` | Hardcoded `occurrenceIndex: 0`, correctness bought by dropping ambiguous anchors (`chapterSignals.ts:436-447`) | Legitimate repeated-phrase cues are lost | **Reconnect** `occurrenceIndex` |
 | **Media resolver / Reader delivery** | Model expresses intent; application resolves approved assets | Cue resolver + catalog | Frozen Media Loadout, `acceptChapterMedia` resolves and strips model proposals (`acceptedChapterMedia.ts:47-53`); Reader copies verbatim (`senAdapter.ts:136-169`) | None — sound boundary, well documented (`MEDIA_LOADOUT.md:50-74`) | **Preserve** |
-| **Context — evidence duplication** | Relevant, authoritative, non-repetitive context | Section-capped budget with `brief` demotion (`contextBudgeter.ts:12-26`, `:43-52`) | Same evidence in 4 sections + prose (`prompt.ts:193-224`); descriptions repeated inside record `facts` (`capabilities.ts:119`); handler fan-out multiplies records (`capabilities.ts:305-335`) | ~7,483 tokens from a 426-word chapter | **Rebuild** — emit evidence once, reference by `sourceId` |
+| **Context — evidence duplication** | Relevant, authoritative, non-repetitive context | Section-capped budget with `brief` demotion (`contextBudgeter.ts:12-26`, `:43-52`) | Same verbatim evidence in 3 sections + prose, restated once more in the handoff (`prompt.ts:193-224`, `context.ts:235`); descriptions repeated inside record `facts` (`capabilities.ts:119`); handler fan-out multiplies records (`capabilities.ts:305-335`) | ~7,483 tokens from a 426-word chapter | **Rebuild** — emit evidence once, reference by `sourceId` |
 | **Context — audit in prompt** | Audit is an inspection artifact | Context manifest was a separate inspection object | `selectionAudit` serialized into the user prompt (`prompt.ts:229-237`); the contract has to tell the model to ignore it (`prompt.ts:161`) | Pure overhead, grows linearly with record count, uncounted by `totalEstimatedTokens` | **Reconnect** — keep it on the frozen attempt and in Development only |
 | **Context — budget shape** | Sections degrade rather than disappear | Ten capped sections + `brief` tier + relevance ranking, same 24,000 total | One flat `maxEstimatedTokens: 24_000` (`context.ts:9-13`); first-come-first-served | At Chapter 50 with 400–600-word chapters the audit already hit **~23,468 tokens** (`CONTINUATION_EVALUATION.md:63-65`); saturation, then permanent priority-order starvation | **Adapt** the old design's *shape*, not its code |
 | **Memory — entity identity** | Stable identity across chapters | Codex identity with author aliases | `entityId` stable for exact lowercase label (`capabilities.ts:252`; `foundation.ts:10`) | Works for exact labels; near-miss names ("Chen" vs "Iron-Hand Chen") silently create distinct entities | **Adapt** — normalize labels; surface near-misses as `unresolved` instead of minting a duplicate |
@@ -471,8 +486,13 @@ paragraph count in double digits, and the export shows one SEN block per paragra
    exists at `senAdapter.ts:171-197`. Warn when a dialogue signal is dropped.
 7. Normalize whitespace and Unicode quotation marks before anchor comparison
    (`chapterSignals.ts:273`), so a curly-quote round trip stops looking like a missing anchor.
-8. Restore an explicit **`occurrenceIndex`** on positional signals so a repeated phrase can be
-   disambiguated instead of discarded.
+8. Restore an explicit **`occurrenceIndex`** on anchored signals so a repeated phrase can be
+   disambiguated instead of discarded. Count it over **every occurrence in the reply, in reading
+   order** — not per block. Splitting the chapter into paragraphs (Group 1) removes the
+   *chapter-wide* collapse but not cross-paragraph repetition: `resolveAnchor` drops an anchor
+   found in more than one block before occurrence selection is reached
+   (`chapterSignals.ts:275`), so without a chapter-wide index that case stays broken. Cover both
+   in tests: a phrase repeated inside one paragraph, and the same phrase repeated across two.
 9. Add to the response contract that anchors must come from **this reply's prose**, not from
    prior chapters in the packet (`prompt.ts:164` currently says only "copied verbatim from prose").
 10. Re-evaluate the one-panel / one-soundscape / one-creature-event per-block limits now that

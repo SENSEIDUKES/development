@@ -9,7 +9,7 @@ import { handleQiHttp } from '../../../server/qi/http';
  * renders identically under a real adapter in Light-Novels.
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import { LibraryProfile as DevelopmentUserProfile } from '@seihouse/library/profile';
@@ -24,6 +24,7 @@ import { navigateLibraryPreview } from '../library-shell/libraryPreviewNavigatio
 import { createMockUserProfileServices } from './mockUserProfileServices';
 import { getPreviewScenario } from './previewData';
 import { previewPublicCreators } from './publicCreatorData';
+import { PREVIEW_FAMILIAR_ID, ProductFamiliarSession, ProductFamiliarSurface, useProductFamiliarPreview } from '../familiar/ProductFamiliarPreview';
 import {
   DEFAULT_USER_PROFILE_PREVIEW_STATE,
   USER_PROFILE_PREVIEW_STATES,
@@ -35,6 +36,11 @@ const entry = workshopEntries.find(candidate => candidate.id === 'user-profile')
 const MAX_LOGGED_ACTIONS = 8;
 
 export function UserProfileWorkspace({ embedded = false, initialState }: { embedded?: boolean; initialState?: UserProfilePreviewState } = {}) {
+  return <ProductFamiliarSession initialState={initialState}><UserProfileContent embedded={embedded} initialState={initialState} /></ProductFamiliarSession>;
+}
+
+function UserProfileContent({ embedded, initialState }: { embedded: boolean; initialState?: UserProfilePreviewState }) {
+  const reportProfile = useProductFamiliarPreview()?.reportProfile;
   const [previewState, setPreviewState] = useState<UserProfilePreviewState>(
     initialState ?? DEFAULT_USER_PROFILE_PREVIEW_STATE,
   );
@@ -66,10 +72,20 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
     [logExcludedAction, previewState],
   );
 
+  const developmentServices = useMemo(() => createMockUserProfileServices({
+    state: previewState, logExcludedAction, onSignIn: setLinkedAccount,
+    profileOverride: { familiarId: PREVIEW_FAMILIAR_ID },
+    onFamiliarProfile: reportProfile,
+  }), [previewState, logExcludedAction, reportProfile]);
+
   const currentUser = scenario.currentUser ?? linkedAccount;
   // Energy is never mocked: the Development pane reads the real server-owned
   // ledger behind `/api/energy`, identified as the scenario's account.
   const currentUid = currentUser?.uid ?? null;
+  useEffect(() => {
+    // Switch the companion's Energy identity immediately, before the delayed profile fixture loads.
+    reportProfile?.({ uid: currentUid, familiarId: PREVIEW_FAMILIAR_ID });
+  }, [currentUid, reportProfile]);
   const energyClient = useMemo(
     () => createHttpEnergyClient({ token: () => (currentUid ? developmentIdentityToken(currentUid) : null) }),
     [currentUid],
@@ -104,7 +120,7 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
     // state, so each scenario starts from its own snapshot rather than
     // inheriting edits made in the previous one.
     <div key={`${pane}-${previewState}-${currentUser?.uid ?? 'anonymous'}`} className="pb-16">
-      <UserProfileServicesProvider services={services}>
+      <UserProfileServicesProvider services={pane === 'development' ? developmentServices : services}>
         <EnergyClientProvider client={pane === 'development' ? energyClient : null}>
         <DaoPillarClientProvider client={pane === 'development' ? daoPillarClient : null}>
         <QiClientProvider client={pane === 'development' ? qiClient : null}>
@@ -117,6 +133,7 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
           onLogout={() => {
             logExcludedAction('Sign out — mock account unlinked locally instead');
             setLinkedAccount(null);
+            if (pane === 'development') reportProfile?.({ uid: null });
             if (scenario.currentUser) setPreviewState('signed-out');
           }}
           onNavigateHome={() => logExcludedAction('Navigate to Library home (production router)')}
@@ -153,7 +170,7 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
     </div>
   );
 
-  if (embedded) return renderPane(DevelopmentUserProfile, 'development');
+  if (embedded) return <ProductFamiliarSurface headerRecall bottomInset={72}>{renderPane(DevelopmentUserProfile, 'development')}</ProductFamiliarSurface>;
 
   return (
     <FeatureWorkspace
@@ -190,7 +207,7 @@ export function UserProfileWorkspace({ embedded = false, initialState }: { embed
         ],
       }}
       renderReference={() => renderPane(ReferenceUserProfile, 'reference')}
-      renderDevelopment={() => renderPane(DevelopmentUserProfile, 'development')}
+      renderDevelopment={() => <ProductFamiliarSurface headerRecall bottomInset={72}>{renderPane(DevelopmentUserProfile, 'development')}</ProductFamiliarSurface>}
     />
   );
 }

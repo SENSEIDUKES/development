@@ -27,6 +27,10 @@ const homeVisible = () => !container.querySelector('[data-light-novels-home]')?.
 
 it('opens standalone Home by default and preserves filters across Library, Discover, Profile and history', async () => {
   await render();
+  const companion = document.querySelector<HTMLButtonElement>('.familiar-companion button')!;
+  expect(companion).not.toBeNull();
+  await act(async () => companion.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true })));
+  const companionLeft = companion.parentElement!.style.left;
   expect(homeVisible()).toBe(true);
   expect(current()).toBe('Home');
   expect(container.textContent).toContain('Defying the Heavens');
@@ -46,6 +50,15 @@ it('opens standalone Home by default and preserves filters across Library, Disco
   expect(sort.value).toBe('newest');
   await act(async () => { window.history.replaceState(null, '', libraryPreviewUrl({ screen: 'home', collection: 'my-library' })); window.dispatchEvent(new PopStateEvent('popstate')); });
   expect(current()).toBe('Library'); expect(homeVisible()).toBe(false);
+  expect(document.querySelectorAll('.familiar-companion')).toHaveLength(1);
+  expect(document.querySelector('.familiar-companion button')).toBe(companion);
+  expect(companion.parentElement!.style.left).toBe(companionLeft);
+});
+
+it.each(['guest', 'reference'])('does not place a companion on the %s surface', async state => {
+  if (state === 'reference') window.history.replaceState(null, '', '/library-shell.html?homeReference=1');
+  await render(state === 'guest' ? 'guest' : 'linked');
+  expect(document.querySelector('.familiar-companion')).toBeNull();
 });
 
 it.each([['library', 'Library'], ['discover', 'Discover']])('keeps the %s fixture directly addressable', async (state, label) => {

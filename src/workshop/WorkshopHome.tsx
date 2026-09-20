@@ -8,6 +8,7 @@ import {
 import { LibraryComponentsGrid } from './LibraryComponents';
 import { IconsGrid } from './Icons';
 import { ProvenanceTab } from './ProvenanceTab';
+import { celestialGuardianOption } from '../host/familiar/celestialGuardian';
 
 const HOME_TABS: ReadonlyArray<{ id: WorkshopSection; label: string; description: string }> = [
   { id: 'home', label: 'Home', description: 'The Library app shell and user profile.' },
@@ -108,6 +109,7 @@ function CardWorkshopVisual() {
 }
 
 function CardVisual({ id }: { id: string }) {
+  if (id === 'familiar') return <img src={celestialGuardianOption.stillUrl} alt="Celestial Guardian Familiar" style={{ height: '100%', width: '100%', objectFit: 'contain' }} />;
   if (id === 'card-workshop') return <CardWorkshopVisual />;
   if (id === 'celestial-backdrop') return <CelestialVisual />;
   if (id === 'chapter-generation-manifestation') return <ManifestationVisual />;

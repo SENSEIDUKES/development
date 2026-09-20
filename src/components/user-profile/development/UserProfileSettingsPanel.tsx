@@ -1,4 +1,5 @@
 import { useLibraryAssets } from '../../../library/assets';
+import { FamiliarSelection } from '../../familiar/development/FamiliarSelection';
 import React, { useRef, useState } from 'react';
 import {
   AlertTriangle,
@@ -113,6 +114,7 @@ export function UserProfileSettingsPanel({
     localOnlyMode: LOCAL_ONLY_MODE,
     setLocalOnlyMode,
     requestLibrarySync,
+    familiars = [],
   } = useUserProfileServices();
   const {
     profile,
@@ -215,13 +217,19 @@ export function UserProfileSettingsPanel({
   return (
     <div className="text-neutral-300" data-cave-settings>
       <SEITabs defaultValue="customization" variant="pill">
-        <SEITabsList aria-label="Settings categories" className="max-w-full">
+        <SEITabsList aria-label="Settings categories" className="grid w-full grid-cols-2 sm:flex sm:w-auto">
           <SEITabsTrigger value="customization" className="min-h-11 flex-1">Customization</SEITabsTrigger>
           <SEITabsTrigger value="accessibility" className="min-h-11 flex-1">Accessibility</SEITabsTrigger>
           <SEITabsTrigger value="account" className="min-h-11 flex-1">Account</SEITabsTrigger>
           <SEITabsTrigger value="advanced" className="min-h-11 flex-1">Advanced</SEITabsTrigger>
         </SEITabsList>
         <SEITabsPanel value="customization" keepMounted className="pt-4">
+          <SEITabs defaultValue="appearance" variant="pill">
+            <SEITabsList aria-label="Customization sections" className="max-w-full">
+              <SEITabsTrigger value="appearance" className="min-h-11 flex-1">Appearance</SEITabsTrigger>
+              <SEITabsTrigger value="familiar" className="min-h-11 flex-1">Familiar</SEITabsTrigger>
+            </SEITabsList>
+            <SEITabsPanel value="appearance" keepMounted className="pt-4">
           <SEIDisclosureGroup type="multiple" defaultValue={['identity']}>
             {/* ---- Identity & Aura ------------------------------------------ */}
             <SEIDisclosure value="identity" heading="Identity & Cultivator Aura" icon={SENProfileIcon} supportingText="Your editable Dao Name and the aura it carries.">
@@ -436,6 +444,14 @@ export function UserProfileSettingsPanel({
             </SEIDisclosure>
 
           </SEIDisclosureGroup>
+            </SEITabsPanel>
+            <SEITabsPanel value="familiar" keepMounted className="pt-4">
+              <FamiliarSelection options={familiars} selectedId={profile?.familiarId}
+                size={profile?.familiarSize} onSizeChange={controller.handleFamiliarSizeChange}
+                pending={controller.isSavingFamiliar} disabled={!profile || !controller.handleFamiliarChange}
+                onSelect={id => void controller.handleFamiliarChange?.(id)} />
+            </SEITabsPanel>
+          </SEITabs>
         </SEITabsPanel>
         <SEITabsPanel value="accessibility" keepMounted className="pt-4">
           <SEIDisclosureGroup type="multiple" defaultValue={['language']}>

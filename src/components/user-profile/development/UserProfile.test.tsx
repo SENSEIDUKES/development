@@ -764,14 +764,14 @@ describe('Cultivator Cave settings', () => {
     await act(async () => controller().setFormData(previous => ({ ...previous, displayName: 'Unsaved draft' })));
     const slider = container.querySelector<HTMLInputElement>('.familiar-size-slider input')!;
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
-    await act(async () => { setter.call(slider, '1.8'); slider.dispatchEvent(new Event('input', { bubbles: true })); });
+    await act(async () => { setter.call(slider, '180'); slider.dispatchEvent(new Event('input', { bubbles: true })); });
     expect(controller().profile?.familiarSize).toBe(1.8);
     expect(controller().formData.displayName).toBe('Unsaved draft');
     expect(controller().profile?.displayName).not.toBe('Unsaved draft');
     expect(onFamiliarProfile).toHaveBeenLastCalledWith({ uid: 'workshop-cultivator', familiarId: 'celestial-guardian', familiarSize: 1.8 });
     await click(container.querySelector('.familiar-size-slider button')!);
     expect(controller().profile?.familiarSize).toBe(1);
-    expect(slider.value).toBe('1');
+    expect(slider.value).toBe('100');
     expect(slider.getAttribute('aria-valuetext')).toBe('100%');
   });
 

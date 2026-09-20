@@ -22,8 +22,10 @@ Standalone Development/Compare canvases constrain their pet to their own visible
 area. The profile component and SEN Reader do not own a global pet mount; see
 [Familiar production transfer notes](../familiar/README.md).
 
-The Familiar customization section now includes a live 60–200% size slider and
-Reset. The existing profile controller owns `familiarSize` and preserves unrelated
+The Familiar customization section includes a live size slider and Reset: desktop
+retains 60–200% / default 100%; mobile displays 10–100% / default 50%, mapping to the
+old 60–150% physical sizes. This mobile sizing refinement was added on 2026-09-20.
+The existing profile controller owns the unchanged `familiarSize` multiplier and preserves unrelated
 drafts. A minimized Familiar appears as a recall button in the Profile header;
 the app session preserves its position and size across Home/Profile navigation.
 

@@ -128,7 +128,9 @@ and its existing comparison workspace. It remains a Library-owned capability.
 The action tray exposes **Energy** and **Minimize Familiar**. The host controls `minimized` and
 `onMinimize`; the mounted companion keeps its drag position while hidden and stops
 sprite playback. `FamiliarRecall` provides a 44px accessible button for the host
-header. Recall restores the pet and keyboard focus. Development mounts the button
+header. Tapping the silhouette opens a glass menu with Energy and Expand. Energy
+uses the same centered dialog while the pet stays docked; only Expand invokes
+`onRecall` and restores the floating pet and keyboard focus. Development mounts the button
 through the generic `WorkspaceHeaderAccessoryProvider` on Home, Profile, and Creator;
 the standalone Reader and Familiar canvas use a sticky recall control at their top
 edge, including fullscreen Reader states without a product header.
@@ -145,6 +147,8 @@ or browser storage key is introduced.
 sprite to the available viewport without changing its aspect ratio. `bottomInset`
 reserves space for persistent host navigation. Production should retain minimize
 state in the app shell and render `FamiliarRecall` in its header while minimized.
+Both surfaces must sit under the same authenticated `EnergyClientProvider`;
+Development supplies that provider at the product session boundary.
 
 ## Verification
 
@@ -196,6 +200,10 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-09-20: Floating and header interactions select the supplied waving clip on
+  hover, tap, or keyboard focus, returning to the resting clip when disengaged.
+  Familiars without a waving clip retain their normal animation. Existing pause
+  and reduced-motion behavior is preserved. Verified real frame playback in Chromium.
 - 2026-09-20: Added the compact Library glass shadow/action tray and moved Energy into the shared
   modal dialog primitive, centered on the viewport above navigation. The tray keeps
   44px touch targets at every pet size; drag bounds reserve its full footprint.
@@ -203,6 +211,10 @@ Escape/outside dismissal, and reduced-motion handling.
 - 2026-09-20: Expanded active highlights to fill each glass action segment and removed
   the recall button's decorative ring/background, retaining its 44px hit area and
   keyboard focus indicator around the pet silhouette.
+- 2026-09-20: Header activation now opens Energy/Expand actions without restoring the
+  pet. Both modes share `FamiliarEnergyAction`; only explicit Expand recalls it.
+  Verified 23 focused tests, TypeScript/build, mobile/desktop menu use, live Energy
+  while docked, explicit expansion, and keyboard dismissal/focus return.
 
 - 2026-09-20: Inspected the complete supplied package and atlas; copied required assets
   with provenance hashes; added the Familiar tab, reusable renderer, original comparison,

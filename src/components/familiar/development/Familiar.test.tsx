@@ -252,6 +252,8 @@ describe('Floating companion', () => {
     const recall = container.querySelector<HTMLButtonElement>('.familiar-recall')!;
     expect(document.activeElement).toBe(recall);
     await click(recall);
+    expect(document.querySelector('.familiar-companion')).toBeNull();
+    await click(document.querySelector('[aria-label="Expand Familiar"]')!);
     expect(location()).toEqual(before);
     expect(document.activeElement).toBe(pet());
     expect(document.querySelector('[role="dialog"]')).toBeNull();
@@ -275,11 +277,34 @@ describe('Floating companion', () => {
   it('reveals actions on mouse hover, dismisses them outside, and preserves touch access', async () => {
     await act(async () => root.render(<ManagedCompanion />));
     expect(document.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(true);
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Idle');
     pointer('pointerover', 100, 100);
     expect(document.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(false);
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Waving');
     await act(async () => document.body.dispatchEvent(new Event('pointerdown', { bubbles: true })));
     expect(document.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(true);
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Idle');
     await click(document.querySelector('[aria-label="Show Familiar actions"]')!);
     expect(document.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(false);
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Waving');
+  });
+});
+
+describe('Header Familiar actions', () => {
+  it('reads the same Energy account without restoring the floating pet until Expand is chosen', async () => {
+    const onRecall = vi.fn();
+    const client: EnergyClient = { getSnapshot: vi.fn().mockResolvedValue(snapshot(64)), grantDevelopment: vi.fn(), resetDevelopment: vi.fn() };
+    await act(async () => root.render(<EnergyClientProvider client={client}><FamiliarRecall familiar={celestialGuardian} onRecall={onRecall} /></EnergyClientProvider>));
+    await click(container.querySelector('.familiar-recall')!);
+    expect(container.querySelector('[role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Waving');
+    expect(onRecall).not.toHaveBeenCalled();
+    expect(client.getSnapshot).not.toHaveBeenCalled();
+    await click(document.querySelector('[aria-label="Show Energy"]')!);
+    expect(document.body.textContent).toContain('Current Energy64');
+    expect(onRecall).not.toHaveBeenCalled();
+    await click(document.querySelector('[aria-label="Close Energy panel"]')!);
+    await click(document.querySelector('[aria-label="Expand Familiar"]')!);
+    expect(onRecall).toHaveBeenCalledOnce();
+    expect(client.getSnapshot).toHaveBeenCalledOnce();
   });
 });

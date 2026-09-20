@@ -23,9 +23,12 @@ export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_P
   }));
   useEffect(() => setMinimized(false), [selection.uid]);
   const value = useMemo(() => ({ selection, reportProfile, minimized, setMinimized }), [selection, minimized]);
+  const client = useMemo(() => createHttpEnergyClient({ token: () => selection.uid ? developmentIdentityToken(selection.uid) : null }), [selection.uid]);
   if (parent) return <>{children}</>;
   return <SelectionContext.Provider value={value}>
-    <WorkspaceHeaderAccessoryProvider accessory={<ProductFamiliarRecall />}>{children}</WorkspaceHeaderAccessoryProvider>
+    <EnergyClientProvider client={client}>
+      <WorkspaceHeaderAccessoryProvider accessory={<ProductFamiliarRecall />}>{children}</WorkspaceHeaderAccessoryProvider>
+    </EnergyClientProvider>
   </SelectionContext.Provider>;
 }
 
@@ -36,7 +39,7 @@ export function useProductFamiliarPreview() { return useContext(SelectionContext
 function ProductFamiliarRecall() {
   const context = useProductFamiliarPreview();
   if (!context?.minimized || !context.selection.uid || context.selection.familiarId !== celestialGuardian.id) return null;
-  return <FamiliarRecall familiar={celestialGuardian} onRecall={() => context.setMinimized(false)} />;
+  return <FamiliarRecall key={context.selection.uid} familiar={celestialGuardian} onRecall={() => context.setMinimized(false)} />;
 }
 
 /** Restrict standalone previews to their canvas; an embedded app owns one viewport companion. */
@@ -47,16 +50,15 @@ export function ProductFamiliarSurface({ children, viewport = false, headerRecal
   const context = useProductFamiliarPreview();
   const boundary = useRef<HTMLDivElement>(null);
   const uid = context?.selection.uid;
-  const client = useMemo(() => createHttpEnergyClient({ token: () => uid ? developmentIdentityToken(uid) : null }), [uid]);
   if (parentSurface) return <>{children}</>;
   return <SurfaceContext.Provider value={true}>
     <div ref={boundary} className="product-familiar-surface">
       {!headerRecall && context?.minimized && <div className="product-familiar-recall" aria-label="Familiar controls"><ProductFamiliarRecall /></div>}
       {children}
-      {uid && context?.selection.familiarId === celestialGuardian.id && <EnergyClientProvider client={client}>
+      {uid && context?.selection.familiarId === celestialGuardian.id &&
         <FamiliarCompanion key={uid} familiar={celestialGuardian} boundaryRef={viewport ? undefined : boundary} animation={animation} paused={paused}
           size={context.selection.familiarSize} minimized={context.minimized} onMinimize={() => context.setMinimized(true)} bottomInset={bottomInset} />
-      </EnergyClientProvider>}
+      }
     </div>
   </SurfaceContext.Provider>;
 }

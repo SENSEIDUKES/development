@@ -45,7 +45,7 @@ it.each(['Clear selection', 'Sign out'])('removes the companion when the profile
   expect(document.querySelector('.familiar-companion')).toBeNull();
 });
 
-it('uses the product header to recall a minimized pet and applies the reported profile size', () => {
+it('opens header actions before explicitly expanding a minimized pet and preserves its profile size', async () => {
   render();
   click('Resize');
   expect(Number.parseFloat(document.querySelector<HTMLElement>('.familiar-companion')!.style.width)).toBeCloseTo(187.2);
@@ -53,7 +53,9 @@ it('uses the product header to recall a minimized pet and applies the reported p
   expect(document.querySelector('.familiar-companion')).toBeNull();
   const recall = container.querySelector<HTMLButtonElement>('header .familiar-recall')!;
   expect(recall).not.toBeNull();
-  act(() => recall.click());
+  await act(async () => recall.click());
+  expect(document.querySelector('.familiar-companion')).toBeNull();
+  await act(async () => document.querySelector<HTMLButtonElement>('[aria-label="Expand Familiar"]')!.click());
   expect(document.querySelector('.familiar-companion')).not.toBeNull();
   expect(container.querySelector('.familiar-recall')).toBeNull();
 });

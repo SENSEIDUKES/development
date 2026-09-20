@@ -30,6 +30,22 @@ export interface FamiliarProps extends FamiliarSpriteProps {
   children?: ReactNode;
 }
 
+/** Share the authoritative Energy action and centered dialog across floating and header trays. */
+export function FamiliarEnergyAction({ open, onOpenChange, children }: Pick<FamiliarProps, 'open' | 'onOpenChange' | 'children'>) {
+  return <SEIDialog open={open} onOpenChange={onOpenChange}>
+    <SEIDialogTrigger className="familiar-action" aria-label="Show Energy" title="Energy"><Zap aria-hidden="true" size={21} /></SEIDialogTrigger>
+    <SEIDialogContent variant="dark" hideClose className="familiar-energy-panel" backdropClassName="familiar-energy-backdrop" bodyClassName="familiar-energy-body">
+      <div className="familiar-panel-heading">
+        <SEIDialogTitle>Energy</SEIDialogTitle>
+        <SEIDialogClose className="familiar-panel-button" aria-label="Close Energy panel"><X aria-hidden="true" size={20} /></SEIDialogClose>
+      </div>
+      <SEIDialogDescription>Your current account balance.</SEIDialogDescription>
+      <FamiliarEnergy />
+      {children}
+    </SEIDialogContent>
+  </SEIDialog>;
+}
+
 /** Reveal compact pet actions, then present Energy in a viewport-centered dialog. */
 export function Familiar({ open: controlledOpen, onOpenChange, triggerProps, onMinimize, dragging = false, children, ...props }: FamiliarProps) {
   const generatedStatusId = useId();
@@ -61,25 +77,14 @@ export function Familiar({ open: controlledOpen, onOpenChange, triggerProps, onM
       aria-expanded={expanded} aria-controls={actionsId}
       onClick={event => { triggerProps?.onClick?.(event); if (!event.defaultPrevented) setPinned(value => !value); }}
       aria-describedby={[triggerProps?.['aria-describedby'], statusId].filter(Boolean).join(' ')}>
-      <FamiliarSprite {...props} statusId={statusId} />
+      <FamiliarSprite {...props} animation={expanded && props.familiar.animations.waving ? 'waving' : props.animation} statusId={statusId} />
     </button>
-    <SEIDialog open={open} onOpenChange={setOpen}>
-      <div className="familiar-dock">
-        <button type="button" className="familiar-shadow" hidden={expanded} aria-label="Show Familiar actions" aria-expanded={expanded} aria-controls={actionsId} onClick={() => setPinned(true)}><span /></button>
-        <div id={actionsId} className="familiar-actions" role="group" aria-label="Familiar actions" hidden={!expanded}>
-          <SEIDialogTrigger className="familiar-action" aria-label="Show Energy" title="Energy"><Zap aria-hidden="true" size={21} /></SEIDialogTrigger>
-          {onMinimize && <button type="button" className="familiar-action" aria-label="Minimize Familiar" title="Minimize Familiar" onClick={onMinimize}><ChevronDown aria-hidden="true" size={21} /></button>}
-        </div>
+    <div className="familiar-dock">
+      <button type="button" className="familiar-shadow" hidden={expanded} aria-label="Show Familiar actions" aria-expanded={expanded} aria-controls={actionsId} onClick={() => setPinned(true)}><span /></button>
+      <div id={actionsId} className="familiar-actions" role="group" aria-label="Familiar actions" hidden={!expanded}>
+        <FamiliarEnergyAction open={open} onOpenChange={setOpen}>{children}</FamiliarEnergyAction>
+        {onMinimize && <button type="button" className="familiar-action" aria-label="Minimize Familiar" title="Minimize Familiar" onClick={onMinimize}><ChevronDown aria-hidden="true" size={21} /></button>}
       </div>
-      <SEIDialogContent variant="dark" hideClose className="familiar-energy-panel" backdropClassName="familiar-energy-backdrop" bodyClassName="familiar-energy-body">
-        <div className="familiar-panel-heading">
-          <SEIDialogTitle>Energy</SEIDialogTitle>
-          <SEIDialogClose className="familiar-panel-button" aria-label="Close Energy panel"><X aria-hidden="true" size={20} /></SEIDialogClose>
-        </div>
-        <SEIDialogDescription>Your current account balance.</SEIDialogDescription>
-        <FamiliarEnergy />
-        {children}
-      </SEIDialogContent>
-    </SEIDialog>
+    </div>
   </div>;
 }

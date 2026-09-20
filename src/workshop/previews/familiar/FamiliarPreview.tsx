@@ -5,6 +5,7 @@ import { getPreviewScenario } from '../user-profile/previewData';
 import { DEFAULT_USER_PROFILE_PREVIEW_STATE } from '../user-profile/previewStates';
 import './familiarPreview.css';
 
+/** Exercise the real atlas and Energy client inside a bounded Workshop canvas. */
 export function FamiliarPreview() {
   const [animation, setAnimation] = useState('idle');
   const [paused, setPaused] = useState(false);

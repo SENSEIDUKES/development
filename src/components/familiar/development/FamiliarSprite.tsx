@@ -9,11 +9,13 @@ export interface FamiliarSpriteProps {
   statusId?: string;
 }
 
+/** Select an atlas clip and restart playback when its artwork or animation changes. */
 export function FamiliarSprite({ familiar, animation = 'idle', paused = false, statusId }: FamiliarSpriteProps) {
   const clip = familiar.animations[animation] ?? familiar.animations.idle;
   return <SpritePlayback key={`${familiar.spriteUrl}:${animation}`} familiar={familiar} clip={clip} paused={paused} statusId={statusId} />;
 }
 
+/** Play supplied frame timings while respecting pause, visibility, and reduced motion. */
 function SpritePlayback({ familiar, clip, paused, statusId }: {
   familiar: FamiliarDefinition;
   clip: FamiliarDefinition['animations'][string];

@@ -3,6 +3,7 @@ import { useEnergyAccount } from '../../energy/shared/useEnergyAccount';
 import { FamiliarSprite, type FamiliarSpriteProps } from './FamiliarSprite';
 import { useId, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
+/** Read the active host account whenever the Energy panel mounts. */
 function FamiliarEnergy() {
   // Mount on each open: re-read the same server ledger used by the profile.
   const account = useEnergyAccount();
@@ -27,6 +28,7 @@ export interface FamiliarProps extends FamiliarSpriteProps {
   children?: ReactNode;
 }
 
+/** Render a sprite trigger and dismissible Energy panel with optional host actions. */
 export function Familiar({ open, onOpenChange, triggerProps, panelSide = 'top', children, ...props }: FamiliarProps) {
   const generatedStatusId = useId();
   const statusId = props.statusId ?? generatedStatusId;

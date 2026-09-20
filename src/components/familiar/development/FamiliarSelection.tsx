@@ -14,6 +14,7 @@ export interface FamiliarSelectionProps {
   onSizeChange?: (size: number) => void;
 }
 
+/** Present host-owned unlock options and optional live sizing without storing preferences. */
 export function FamiliarSelection({ options, selectedId, pending = false, disabled = false, onSelect, size, onSizeChange }: FamiliarSelectionProps) {
   const sizeId = useId();
   const currentSize = normalizeFamiliarSize(size);

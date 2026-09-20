@@ -80,6 +80,7 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
     };
   }, [boundaryRef, scale, ratio, bottomInset]);
 
+  /** Release the active pointer and prevent a drag from opening the Energy panel. */
   function finish(event: PointerEvent<HTMLButtonElement>, cancelled = false) {
     if (gesture.current?.id !== event.pointerId) return;
     suppressClick.current = cancelled || gesture.current.moved;

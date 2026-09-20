@@ -29,8 +29,10 @@ export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_P
   </SelectionContext.Provider>;
 }
 
+/** Access the preview's active profile projection and companion visibility controls. */
 export function useProductFamiliarPreview() { return useContext(SelectionContext); }
 
+/** Offer recall only for an authenticated preview account with the known selection. */
 function ProductFamiliarRecall() {
   const context = useProductFamiliarPreview();
   if (!context?.minimized || !context.selection.uid || context.selection.familiarId !== celestialGuardian.id) return null;

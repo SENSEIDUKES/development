@@ -2,12 +2,13 @@ import type { ResolvedAudioMoment } from '../audio/inlineAudio';
 import type { FrozenNarrativeMedia, ResolvedSoundscape, StoryMediaSelection } from '../audio/media';
 import type { SenLanguageCode } from '../lib/language';
 import type { StoryBlock } from './chapter';
+import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterSuggestions } from './storyDirection';
 
 /** Independent Harness Generation contracts. Bump this on any change to a
  * persisted shape (attempt, chapter, or workspace state fields). This is a
  * development system: storage at any other version is reset, never
  * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 14 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 15 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -27,6 +28,12 @@ export interface HarnessStorySeedSnapshot {
 
 export interface StoryFoundationInput {
   destinedEnding?: string;
+  /**
+   * The story's canonical Fate Pressure tier (storyteller intensity). Copied
+   * from the Story Seed domain value at the boundary; never read from a
+   * visible label and never written by a model reply.
+   */
+  fatePressure?: FatePressure;
   initialArcPlan?: import('../components/arc-goals/shared/arcGoals').ArcPlan;
   title?: string;
   /** The only author field required to start a Harness story. */
@@ -102,6 +109,21 @@ export interface HarnessStory {
   skillLoadout?: Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>;
   /** Entitled Media Packs equipped for this story. Separate from CAPA skills. */
   mediaLoadout?: StoryMediaSelection;
+  /** User-created story-wide intentions (at most `HARD_PIN_LIMIT`). Only the user writes them. */
+  hardPins?: HardPin[];
+  /** The deterministic Fate Pressure recommendation for the next chapter, refreshed at every commit. */
+  rhythmRecommendation?: import('../components/harness-generation/shared/rhythm').HarnessRhythmRecommendation;
+}
+
+/**
+ * Rhythm metadata the writer returns beside the chapter: the function this
+ * chapter served and one short possibility per function for the next chapter.
+ * HARNESS validates each piece independently; a malformed piece is omitted
+ * with a warning and never touches the prose.
+ */
+export interface HarnessChapterRhythm {
+  chapterFunction?: ChapterFunction;
+  nextChapterSuggestions?: NextChapterSuggestions;
 }
 
 export type HarnessSkillSlotId =
@@ -218,6 +240,17 @@ export interface CapaPrompt {
   translationGlossary?: HarnessSelectedTranslationGlossary;
 }
 
+/**
+ * A short, inspectable reminder that the model is the author of this novel,
+ * sourced from the Author portion of the assembled CAPA Prompt. Built by
+ * `buildMissionReminder`; it performs no story analysis and no model call.
+ */
+export interface HarnessMissionReminder {
+  text: string;
+  /** The equipped Author skill the excerpt was taken from. */
+  sourceSkill: { id: string; version: string; name: string };
+}
+
 /** The selected, already-rendered glossary reference for one attempt. */
 export interface HarnessSelectedTranslationGlossary {
   skillId: string;
@@ -290,6 +323,9 @@ export interface HarnessAcceptedChapterDraft {
   title: string;
   titleSource: 'model' | 'harness-fallback';
   plan?: HarnessModelPlan;
+  /** The writer's short "Previously On" recap of this chapter, saved only when the chapter commits. */
+  recap?: string;
+  rhythm?: HarnessChapterRhythm;
   responseMode: 'json' | 'plain-prose-recovery';
 }
 
@@ -348,7 +384,10 @@ export interface HarnessWarning {
     | 'projection_unresolved'
     | 'post_commit_processing_pending'
     | 'batch_paused'
-    | 'arc_plan_pending';
+    | 'arc_plan_pending'
+    | 'optional_recap_omitted'
+    | 'optional_rhythm_metadata_omitted'
+    | 'ignored_model_story_direction';
   message: string;
 }
 
@@ -440,6 +479,10 @@ export interface HarnessChapter {
   /** Pack/version provenance of the frozen catalog that produced this media. */
   mediaLoadout: FrozenNarrativeMedia;
   plan?: HarnessModelPlan;
+  /** Saved once at commit; later chapters never regenerate it, and the author may edit it. */
+  recap?: ChapterRecap;
+  /** The completed chapter's function and the three next-chapter possibilities, saved at commit. */
+  rhythm?: HarnessChapterRhythm;
   eventIds: string[];
   responseMode: 'json' | 'plain-prose-recovery';
   createdAt: string;
@@ -474,6 +517,8 @@ export interface HarnessGenerationAttempt {
   /** The frozen Story Information Packet for this attempt. */
   storyInformation: StoryInformationPacket;
   immediateChapterRequest: ImmediateChapterRequest;
+  /** Frozen for inspection and later packet assembly; not part of the Generation Model Call yet. */
+  missionReminder: HarnessMissionReminder;
   model: string;
   chapterNumber: number;
   stage: HarnessAttemptStage;

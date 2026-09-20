@@ -1,5 +1,6 @@
 import { validateArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
+import { FATE_PRESSURE_TIERS, isFatePressure } from '../../../narrative/storyDirection';
 import { cloneHarnessValue, defaultHarnessRuntime, emptyStoryHead, stableHarnessId, type HarnessRuntime } from './ids';
 import type { HarnessStory, HarnessWorkspaceState, StoryFoundationInput, StoryFoundationRevision, HarnessCanonicalRecord } from '../../../narrative/generation';
 
@@ -39,6 +40,11 @@ export const normalizeStoryFoundationInput = (input: StoryFoundationInput): Stor
   for (const key of optionalFoundationKeys) {
     const value = input[key]?.trim();
     if (value) normalized[key] = value;
+  }
+  // Fate Pressure is a stable domain value, not a label: anything else is rejected.
+  if (input.fatePressure !== undefined) {
+    if (!isFatePressure(input.fatePressure)) throw new Error(`Fate Pressure must be one of ${FATE_PRESSURE_TIERS.join(', ')}.`);
+    normalized.fatePressure = input.fatePressure;
   }
   if (input.sourceSnapshot?.kind === 'story-seed') {
     normalized.sourceSnapshot = cloneHarnessValue(input.sourceSnapshot);

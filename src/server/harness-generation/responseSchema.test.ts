@@ -31,10 +31,15 @@ describe('HARNESS chapter response schema shape', () => {
     // root → signal list → signal → label/value list → entry: nothing deeper.
     expect(shape.maxObjectDepth).toBeLessThanOrEqual(5);
     expect(shape.objectSchemas).toBeLessThanOrEqual(12);
-    expect(shape.serializedBytes).toBeLessThan(5_000);
-    expect(HARNESS_CHAPTER_RESPONSE_SCHEMA.required).toEqual(['paragraphs', 'arcCompletion']);
+    // Five shallow story-direction strings (recap, chapter function, three
+    // suggestions) sit beside the chapter; see the PR for before/after sizes.
+    expect(shape.serializedBytes).toBeLessThan(5_500);
+    expect(HARNESS_CHAPTER_RESPONSE_SCHEMA.required).toEqual([
+      'paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict',
+    ]);
     expect(Object.keys(HARNESS_CHAPTER_RESPONSE_SCHEMA.properties)).toEqual([
-      'title', 'plan', 'paragraphs', 'arcCompletion', 'dialogue', 'manifestations', 'systemPanels', 'soundscapes', 'soundCues', 'creatureEvents',
+      'title', 'plan', 'paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict',
+      'dialogue', 'manifestations', 'systemPanels', 'soundscapes', 'soundCues', 'creatureEvents',
     ]);
     const serialized = JSON.stringify(HARNESS_CHAPTER_RESPONSE_SCHEMA);
     for (const forbidden of ['prose', 'blocks', 'memory', 'metadata', 'status', 'worldNotice', 'fateResult', 'blockId', 'url', 'asset', 'catalog', 'trackId', 'id"']) {
@@ -47,6 +52,16 @@ describe('HARNESS chapter response schema shape', () => {
       // Disambiguation is available everywhere an anchor can repeat, and never required.
       expect(items.properties.occurrenceIndex).toEqual({ type: 'integer', minimum: 0, description: expect.any(String) });
       expect(items.required).not.toContain('occurrenceIndex');
+    }
+  });
+
+  it('keeps the recap, chapter function, and three suggestions as shallow root strings', () => {
+    const { recap, chapterFunction, nextProgression, nextWorldBuilding, nextConflict } = HARNESS_CHAPTER_RESPONSE_SCHEMA.properties;
+    for (const field of [recap, nextProgression, nextWorldBuilding, nextConflict]) expect(field.type).toBe('string');
+    expect(chapterFunction).toMatchObject({ type: 'string', enum: ['progression', 'worldBuilding', 'conflict'] });
+    // Story direction is author-owned: the provider is never asked for it.
+    for (const forbidden of ['hardPins', 'fatePressure', 'destinedEnding', 'rhythmRecommendation', 'missionReminder']) {
+      expect(JSON.stringify(HARNESS_CHAPTER_RESPONSE_SCHEMA)).not.toContain(`"${forbidden}"`);
     }
   });
 

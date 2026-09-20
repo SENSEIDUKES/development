@@ -85,6 +85,19 @@ describe('Familiar sprite playback', () => {
 });
 
 describe('Familiar Energy interaction', () => {
+  it('announces artwork status outside the image semantics and describes the trigger', () => {
+    act(() => root.render(<Familiar familiar={celestialGuardian} />));
+    const status = container.querySelector('[role="status"]')!;
+    expect(status.closest('[role="img"]')).toBeNull();
+    expect(status.getAttribute('aria-live')).toBe('polite');
+    expect(container.querySelector('button')!.getAttribute('aria-describedby')).toContain(status.id);
+    expect(status.textContent).toBe('Loading Familiar…');
+    imageLoaded();
+    expect(status.textContent).toBe('');
+    act(() => container.querySelector('img')!.dispatchEvent(new Event('error')));
+    expect(status.textContent).toBe('Familiar artwork could not load.');
+  });
+
   it('reads on tap, distinguishes held Energy, refreshes on reopen, and never treats maxGrant as capacity', async () => {
     const client: EnergyClient = { getSnapshot: vi.fn().mockResolvedValueOnce(snapshot(73)).mockResolvedValue(snapshot(91)), grantDevelopment: vi.fn(), resetDevelopment: vi.fn() };
     await act(async () => root.render(<EnergyClientProvider client={client}><Familiar familiar={celestialGuardian} /></EnergyClientProvider>));

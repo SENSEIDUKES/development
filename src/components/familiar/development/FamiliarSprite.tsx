@@ -6,17 +6,19 @@ export interface FamiliarSpriteProps {
   familiar: FamiliarDefinition;
   animation?: string;
   paused?: boolean;
+  statusId?: string;
 }
 
-export function FamiliarSprite({ familiar, animation = 'idle', paused = false }: FamiliarSpriteProps) {
+export function FamiliarSprite({ familiar, animation = 'idle', paused = false, statusId }: FamiliarSpriteProps) {
   const clip = familiar.animations[animation] ?? familiar.animations.idle;
-  return <SpritePlayback key={`${familiar.spriteUrl}:${animation}`} familiar={familiar} clip={clip} paused={paused} />;
+  return <SpritePlayback key={`${familiar.spriteUrl}:${animation}`} familiar={familiar} clip={clip} paused={paused} statusId={statusId} />;
 }
 
-function SpritePlayback({ familiar, clip, paused }: {
+function SpritePlayback({ familiar, clip, paused, statusId }: {
   familiar: FamiliarDefinition;
   clip: FamiliarDefinition['animations'][string];
   paused: boolean;
+  statusId?: string;
 }) {
   const [frame, setFrame] = useState(0);
   const [loaded, setLoaded] = useState(false);
@@ -46,13 +48,16 @@ function SpritePlayback({ familiar, clip, paused }: {
     aspectRatio: `${familiar.cellWidth} / ${familiar.cellHeight}`,
   } satisfies CSSProperties;
 
-  return <span className="familiar-sprite" style={style} role="img" aria-label={`${familiar.displayName}, ${clip.label}`} data-familiar-frame={frame}>
+  return <span className="familiar-artwork">
+    <span className="familiar-sprite" style={style} role="img" aria-label={`${familiar.displayName}, ${clip.label}`} data-familiar-frame={frame}>
     {!failed && <img
       src={familiar.spriteUrl} alt="" draggable={false}
       onLoad={() => setLoaded(true)} onError={() => setFailed(true)}
       style={{ width: `${familiar.columns * 100}%`, height: `${familiar.rows * 100}%`, left: `${-clip.columns[frame] * 100}%`, top: `${-clip.row * 100}%`, visibility: loaded ? 'visible' : 'hidden' }}
     />}
-    {!loaded && !failed && <span className="familiar-image-status">Loading Familiar…</span>}
-    {failed && <span className="familiar-image-status">Familiar artwork could not load.</span>}
+    </span>
+    <span id={statusId} className="familiar-image-status" role="status" aria-live="polite">
+      {failed ? 'Familiar artwork could not load.' : !loaded ? 'Loading Familiar…' : ''}
+    </span>
   </span>;
 }

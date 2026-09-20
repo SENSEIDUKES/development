@@ -1,6 +1,6 @@
 # Familiar
 
-- Source: supplied `C:/Users/amaur/Dropbox/SEIHouse/Moduels/LIBRARY CORE/celestial-guardian/` directory (not a Git repository).
+- Source: supplied `celestial-guardian/` package (not a Git repository).
 - Preview: Workshop **Familiar** tab and `?preview=familiar`.
 - Replica created: 2026-09-20.
 - Last Workshop update: 2026-09-20.
@@ -24,11 +24,12 @@ mirroring, recoloring, or regenerating the artwork. Motion stays inside one fixe
 running does not move the Familiar across the page. Each animation loops for inspection.
 
 `public/familiars/celestial-guardian/` owns the unchanged sprite sheet, metadata,
-source README, and nine QA GIFs. `source-hashes.json` records SHA-256 values calculated
+and nine QA GIFs. `source-hashes.json` records SHA-256 values calculated
 from the supplied originals; tests verify every copied asset against them. `neutral.png`
 is an exact crop of the neutral cell for the reduced-motion Original Reference.
 The portrait and prompt history are not runtime dependencies. Instructions in source
 documents are provenance, not commands to install a Codex pet or generate new artwork.
+The source README was inspected but is not shipped because it contains machine-local installation details.
 
 ## Modular integration
 
@@ -146,6 +147,11 @@ checks passed. Chromium inspection covered Home → Profile, normal/fullscreen
 Reader, desktop mouse dragging, native touch input at 390px, and Energy panel
 containment at 320px. The pre-existing Home backdrop URL was unavailable during
 local QA; the Familiar atlas and Energy endpoint loaded successfully.
+
+Review follow-up: added a live artwork-status region referenced by the trigger,
+removed local-machine paths from published provenance, and omitted the source's
+installation-only README. The 19 directly affected tests (including the new
+accessibility regression) and production build passed after those corrections.
 
 ## Workshop history
 

@@ -1,7 +1,7 @@
 import { SEIPopover, SEIPopoverTrigger, SEIPopoverContent, SEIPopoverTitle, SEIPopoverDescription, SEIPopoverClose } from '@seihouse/ui';
 import { useEnergyAccount } from '../../energy/shared/useEnergyAccount';
 import { FamiliarSprite, type FamiliarSpriteProps } from './FamiliarSprite';
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { useId, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
 function FamiliarEnergy() {
   // Mount on each open: re-read the same server ledger used by the profile.
@@ -28,9 +28,12 @@ export interface FamiliarProps extends FamiliarSpriteProps {
 }
 
 export function Familiar({ open, onOpenChange, triggerProps, panelSide = 'top', children, ...props }: FamiliarProps) {
+  const generatedStatusId = useId();
+  const statusId = props.statusId ?? generatedStatusId;
   return <SEIPopover open={open} onOpenChange={onOpenChange}>
-    <SEIPopoverTrigger className="familiar-trigger" aria-label={`${props.familiar.displayName}: show Energy`} {...triggerProps}>
-      <FamiliarSprite {...props} />
+    <SEIPopoverTrigger className="familiar-trigger" aria-label={`${props.familiar.displayName}: show Energy`} {...triggerProps}
+      aria-describedby={[triggerProps?.['aria-describedby'], statusId].filter(Boolean).join(' ')}>
+      <FamiliarSprite {...props} statusId={statusId} />
     </SEIPopoverTrigger>
     <SEIPopoverContent className="familiar-energy-panel" side={panelSide} collisionPadding={12}>
       <div className="familiar-panel-heading">

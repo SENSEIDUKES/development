@@ -57,7 +57,7 @@ export const workshopEntries: WorkshopEntry[] = [
     id: 'familiar', section: 'familiar', title: 'Familiar comparison workspace',
     description: 'Compare the supplied Celestial Guardian greeting with the reusable sprite renderer and live Energy interaction.',
     category: 'animations', version: 'v1.0',
-    source: { repository: 'Supplied Celestial Guardian package', path: 'C:/Users/amaur/Dropbox/SEIHouse/Moduels/LIBRARY CORE/celestial-guardian/', lastCompared: '2026-09-20' },
+    source: { repository: 'Supplied Celestial Guardian package', path: 'celestial-guardian/', lastCompared: '2026-09-20' },
   },
   {
     id: 'light-novels-home', section: 'home', title: 'Light Novels Home',

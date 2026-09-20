@@ -112,7 +112,7 @@ describe('HARNESS Media Loadout runtime integration', () => {
     await controller.generateNextChapter(story.id, 'fixture');
     const request = provider.generate.mock.calls[0][0] as HarnessGenerationRequest;
     expect(Object.keys(request)).toEqual([
-      'storyId', 'attemptId', 'model', 'capaPrompt', 'storyInformation', 'immediateChapterRequest',
+      'storyId', 'attemptId', 'model', 'capaPrompt', 'storyInformation', 'missionReminder', 'immediateChapterRequest',
     ]);
     const serializedRequest = JSON.stringify(request);
     expect(serializedRequest).not.toContain(soundscapes.id);

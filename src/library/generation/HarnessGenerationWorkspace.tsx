@@ -11,7 +11,7 @@ import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-
 import { HarnessGenerationController, exportHarnessStory } from '@seihouse/sen/harness-generation';
 import { findFoundationRevision, findStory } from '@seihouse/sen/harness-generation';
 import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
-import { DEFAULT_HARNESS_CONTEXT_POLICY } from '@seihouse/sen/harness-generation';
+import { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER } from '@seihouse/sen/harness-generation';
 import { CAPA_SCHEMA, HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS, harnessSkillKey } from '@seihouse/sen/harness-generation';
 import { isTranslationSkillCompatible, translationTargetLanguage } from '@seihouse/sen/harness-generation';
 import { includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
@@ -837,7 +837,6 @@ function HarnessInspection({
   onReplay,
   onRecover,
   onCorrection,
-  onPolicy,
 }: {
   state: HarnessWorkspaceState;
   story: HarnessStory;
@@ -853,7 +852,6 @@ function HarnessInspection({
     resolvedRecordId?: string;
     replacement?: { kind: 'narrative-event'; evidence: string; facts: { description: string } };
   }) => void;
-  onPolicy: (recentChapterCount: number, maxEstimatedTokens: number, includeMinorEvents: boolean) => void;
 }) {
   const view = buildCanonicalStoryView(state, story.id);
   const receipts = state.capabilityReceipts.filter(receipt => receipt.storyId === story.id && receipt.status !== 'superseded');
@@ -864,21 +862,13 @@ function HarnessInspection({
   const [referenceLabel, setReferenceLabel] = useState('');
   const [resolvedRecordId, setResolvedRecordId] = useState('');
   const [replacementEvidence, setReplacementEvidence] = useState('');
-  const policy = story.contextPolicy ?? DEFAULT_HARNESS_CONTEXT_POLICY;
-  const [recentCount, setRecentCount] = useState(String(policy.recentChapterCount));
-  const [tokenBudget, setTokenBudget] = useState(String(policy.maxEstimatedTokens));
-  const [includeMinor, setIncludeMinor] = useState(policy.includeMinorEvents);
-
   useEffect(() => {
-    setRecentCount(String(policy.recentChapterCount));
-    setTokenBudget(String(policy.maxEstimatedTokens));
-    setIncludeMinor(policy.includeMinorEvents);
     setCorrectionReason('');
     setTargetRecordId('');
     setReferenceLabel('');
     setResolvedRecordId('');
     setReplacementEvidence('');
-  }, [story.id, policy.recentChapterCount, policy.maxEstimatedTokens, policy.includeMinorEvents]);
+  }, [story.id]);
 
   const groups = [
     ['Characters', view.characters], ['Relationships', view.relationships], ['Locations and world', view.locations],
@@ -949,18 +939,47 @@ function HarnessInspection({
           <li key={item.id}><span className="text-white">{item.kind}</span> · {item.status} — {item.explanation}</li>
         ))}</ul>
       </details>
-      <details className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
-        <summary className="cursor-pointer text-sm font-medium text-neutral-200">Selected next-chapter context</summary>
-        <div className="mt-3 grid gap-2 sm:grid-cols-3">
-          <label className="text-xs text-neutral-400">Recent chapters<input className="mt-1 w-full rounded-lg border border-white/15 bg-black/35 p-2 text-white" type="number" min="1" value={recentCount} onChange={event => setRecentCount(event.target.value)} /></label>
-          <label className="text-xs text-neutral-400">Estimated token budget<input className="mt-1 w-full rounded-lg border border-white/15 bg-black/35 p-2 text-white" type="number" min="1" value={tokenBudget} onChange={event => setTokenBudget(event.target.value)} /></label>
-          <label className="flex items-end gap-2 pb-2 text-xs text-neutral-400"><input type="checkbox" checked={includeMinor} onChange={event => setIncludeMinor(event.target.checked)} /> Include minor events</label>
-        </div>
-        <div className="mt-3"><LibraryButton type="button" size="sm" onClick={() => onPolicy(Number(recentCount), Number(tokenBudget), includeMinor)} disabled={busy}>Save visible policy</LibraryButton></div>
-        {attempt?.storyInformation.selectionAudit && <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <div><p className="font-mono text-[10px] uppercase text-cyan-200/60">Included</p><ul className="mt-2 space-y-1 text-xs text-neutral-400">{attempt.storyInformation.selectionAudit.included.map(item => <li key={item.id}>{item.label} · {item.estimatedTokens} tokens · {item.reason}</li>)}</ul></div>
-          <div><p className="font-mono text-[10px] uppercase text-neutral-500">Omitted</p><ul className="mt-2 space-y-1 text-xs text-neutral-500">{attempt.storyInformation.selectionAudit.omitted.map(item => <li key={item.id}>{item.label} · {item.reason}</li>)}</ul></div>
-        </div>}
+      <details className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3" data-testid="harness-packet-diagnostics">
+        <summary className="cursor-pointer text-sm font-medium text-neutral-200">Generation packet budget and diagnostics</summary>
+        <p className="mt-2 text-xs leading-relaxed text-neutral-500">
+          Centralized {GENERATION_PACKET_BUDGET.source.replace(/-/g, ' ')} budgets. Protected sections are never removed; canonical state is selected by relevance to the current arc, request, cast, and recent chapters. This audit stays in HARNESS and never enters the provider request.
+        </p>
+        {attempt ? (
+          <>
+            <table className="mt-3 w-full text-left text-xs text-neutral-300">
+              <thead><tr className="font-mono text-[10px] uppercase tracking-[0.12em] text-neutral-500"><th className="pr-2">Section</th><th className="pr-2">Estimated tokens</th><th className="pr-2">Budget</th><th className="pr-2">Sent characters</th></tr></thead>
+              <tbody>
+                {PACKET_SECTION_ORDER.map(section => {
+                  const measured = attempt.storyInformation.diagnostics.sections.find(item => item.section === section);
+                  const budget = GENERATION_PACKET_BUDGET.sections[section];
+                  const sent = attempt.requestMeasurement?.sections.find(item => item.section === section)?.characters;
+                  return <tr key={section} className={measured?.overBudget ? 'text-amber-200' : ''}>
+                    <td className="pr-2 py-1">{section}{budget.protected ? ' · protected' : ''}</td>
+                    <td className="pr-2 py-1">{measured ? measured.estimatedTokens.toLocaleString() : section === 'capaPrompt' ? attempt.capaPrompt.estimatedTokens.toLocaleString() : '—'}</td>
+                    <td className="pr-2 py-1">{'tokens' in budget ? budget.tokens.toLocaleString() : 'none'}</td>
+                    <td className="pr-2 py-1">{sent !== undefined ? sent.toLocaleString() : '—'}</td>
+                  </tr>;
+                })}
+              </tbody>
+            </table>
+            <p className="mt-3 text-xs text-neutral-300">
+              {attempt.requestMeasurement
+                ? `Serialized provider request: ${attempt.requestMeasurement.totalCharacters.toLocaleString()} characters (${attempt.requestMeasurement.systemInstructionCharacters.toLocaleString()} system · ${attempt.requestMeasurement.userPromptCharacters.toLocaleString()} user · ${attempt.requestMeasurement.responseSchemaCharacters.toLocaleString()} schema) ≈ ${attempt.requestMeasurement.estimatedTokens.toLocaleString()} tokens of a ${GENERATION_PACKET_BUDGET.requestTokens.toLocaleString()} soft ceiling.`
+                : 'The serialized request size arrives with the provider response.'}
+            </p>
+            <p className="mt-1 text-xs text-neutral-500">
+              Storage: {attempt.storyInformation.diagnostics.storage.chapters} chapters · {attempt.storyInformation.diagnostics.storage.events} events · {attempt.storyInformation.diagnostics.storage.canonicalRecords} canonical records ({attempt.storyInformation.diagnostics.storage.activeRecords} active) · {attempt.storyInformation.diagnostics.storage.recaps} recaps.
+            </p>
+            {attempt.storyInformation.diagnostics.identityAmbiguities.length > 0 && <div className="mt-3">
+              <p className="font-mono text-[10px] uppercase text-gold-accent">Probable near-duplicate identities (kept apart)</p>
+              <ul className="mt-2 space-y-1 text-xs text-neutral-400">{attempt.storyInformation.diagnostics.identityAmbiguities.map((item, index) => <li key={`${item.kind}-${index}`}>{item.kind}: {item.labels.join(' / ')} · {item.reason}</li>)}</ul>
+            </div>}
+            <div className="mt-3">
+              <p className="font-mono text-[10px] uppercase text-neutral-500">Omitted or compacted ({attempt.storyInformation.diagnostics.omitted.length})</p>
+              <ul className="mt-2 space-y-1 text-xs text-neutral-500">{attempt.storyInformation.diagnostics.omitted.map((item, index) => <li key={`${item.section}-${index}`}>{item.section} · {item.label} · {item.reason}</li>)}</ul>
+            </div>
+          </>
+        ) : <p className="mt-3 text-xs text-neutral-500">Diagnostics appear with the first chapter attempt.</p>}
       </details>
 
       <details className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
@@ -1210,10 +1229,6 @@ export function HarnessGenerationWorkspace({
   }, [controller, state, selectedStory]);
 
   const replay = () => selectedStory && void run(() => controller.replayStory(selectedStory.id));
-  const savePolicy = (recentChapterCount: number, maxEstimatedTokens: number, includeMinorEvents: boolean) => {
-    if (!selectedStory) return;
-    void run(() => controller.setContextPolicy(selectedStory.id, { recentChapterCount, maxEstimatedTokens, includeMinorEvents }));
-  };
   const addCorrection = (input: Parameters<typeof controller.addCorrection>[1]) => {
     if (!selectedStory) return;
     void run(() => controller.addCorrection(selectedStory.id, input));
@@ -1554,7 +1569,6 @@ export function HarnessGenerationWorkspace({
               onReplay={replay}
               onRecover={chapterId => { void run(() => controller.recoverChapterMemory(chapterId, model)); }}
               onCorrection={addCorrection}
-              onPolicy={savePolicy}
             />}
 
             {selectedStory && <Diagnostics attempt={attempt} />}

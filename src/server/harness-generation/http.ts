@@ -46,6 +46,17 @@ const requireFoundation = (foundation: unknown) => {
   }
 };
 
+/** The compact packet must carry its Current Story Information section with a premise. */
+const requirePacket = (packet: unknown) => {
+  if (!isRecord(packet) || !isRecord(packet.currentStory) || !isRecord(packet.canonicalState) || !Array.isArray(packet.previouslyOn)
+    || !isRecord(packet.storyDirection) || !Number.isInteger(packet.chapterNumber) || Number(packet.chapterNumber) < 1) {
+    throw new Error('Harness Generation needs a compact Story Information Packet.');
+  }
+  if (typeof packet.currentStory.premise !== 'string' || !packet.currentStory.premise.trim()) {
+    throw new Error('A Story Foundation premise is required.');
+  }
+};
+
 const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRecoveryRequest | HarnessArcRequest => {
   const parsed = typeof body === 'string' ? JSON.parse(body) : body;
   if (!isRecord(parsed)) throw new Error('The Harness Generation request must be a JSON object.');
@@ -57,11 +68,9 @@ const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRe
     return parsed as unknown as HarnessMemoryRecoveryRequest;
   }
   if (parsed.operation === 'plan-arc') {
-    if (!isRecord(parsed.storyInformation) || !Array.isArray(parsed.storyInformation.committedChapters)
-      || !isRecord(parsed.storyInformation.storyHead) || !Number.isInteger(parsed.storyInformation.chapterNumber)
-      || Number(parsed.storyInformation.chapterNumber) < 1 || typeof parsed.model !== 'string'
+    if (!isRecord(parsed.storyInformation) || !isRecord(parsed.storyInformation.storyHead) || typeof parsed.model !== 'string'
       || typeof parsed.storyId !== 'string') throw new Error('Arc operations require a frozen Story Information Packet.');
-    requireFoundation(parsed.storyInformation.foundationRevision);
+    requirePacket(parsed.storyInformation);
     return parsed as unknown as HarnessArcRequest;
   }
   if (parsed.operation !== undefined) throw new Error('Unknown Harness Generation operation.');
@@ -69,10 +78,13 @@ const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRe
   if (!isRecord(parsed.capaPrompt) || typeof parsed.capaPrompt.text !== 'string' || !parsed.capaPrompt.text.trim()) {
     throw new Error('Harness Generation requires an assembled CAPA Prompt.');
   }
-  if (!isRecord(parsed.storyInformation) || !Array.isArray(parsed.storyInformation.committedChapters) || !isRecord(parsed.storyInformation.arc)) {
-    throw new Error('Harness Generation needs an auditable Story Information Packet with an authoritative Arc Plan.');
+  if (!isRecord(parsed.storyInformation) || !isRecord(parsed.storyInformation.arc)) {
+    throw new Error('Harness Generation needs a compact Story Information Packet with an authoritative Arc Plan.');
   }
-  requireFoundation(parsed.storyInformation.foundationRevision);
+  requirePacket(parsed.storyInformation);
+  if (!isRecord(parsed.missionReminder) || typeof parsed.missionReminder.text !== 'string' || !parsed.missionReminder.text.trim()) {
+    throw new Error('Harness Generation requires the frozen Mission Reminder.');
+  }
   if (typeof parsed.storyId !== 'string' || typeof parsed.attemptId !== 'string') {
     throw new Error('Harness Generation needs story and attempt identities.');
   }
@@ -146,6 +158,7 @@ export const handleHarnessGenerationHttp = async (
       message.includes('Choose a configured')
       || message.includes('is not configured for Harness Generation')
       || message.includes('requires an assembled CAPA Prompt')
+      || message.includes('requires the frozen Mission Reminder')
     ) {
       return requestError(message);
     }

@@ -1,108 +1,94 @@
 import { describe, expect, it } from 'vitest';
-import { compileStoryInformationPacket } from './context';
+import { compileStoryInformationPacket, projectCurrentStory } from './context';
 import { createHarnessStory } from './foundation';
 import { createEmptyHarnessWorkspaceState } from '@seihouse/sen/harness-generation';
 import { appendHarnessCorrection } from './canonicalState';
+import { GENERATION_PACKET_BUDGET } from './packetBudget';
+import type { HarnessCanonicalRecord } from '@seihouse/sen/harness-generation';
 
-const fixture = () => {
-  const created = createHarnessStory(createEmptyHarnessWorkspaceState(), { premise: 'A city follows the tide.' });
+const fixture = (chapterCount = 4) => {
+  const created = createHarnessStory(createEmptyHarnessWorkspaceState(), {
+    premise: 'A city follows the tide.', title: 'Tidebound', destinedEnding: 'The city anchors itself.', fatePressure: 'mortal',
+    sourceSnapshot: { kind: 'story-seed', sourceId: 'seed-9', sourceUpdatedAt: 'a', schemaVersion: 3, seed: { secret: 'SEED SNAPSHOT BODY' } },
+  });
   const { state, story, foundation } = created;
-  for (let chapterNumber = 1; chapterNumber <= 4; chapterNumber += 1) {
+  for (let chapterNumber = 1; chapterNumber <= chapterCount; chapterNumber += 1) {
     state.chapters.push({
       id: `chapter-${chapterNumber}`, storyId: story.id, attemptId: `attempt-${chapterNumber}`,
       foundationRevisionId: foundation.id, storyInformationPacketId: `context-${chapterNumber}`,
       chapterNumber, title: `Chapter ${chapterNumber}`, titleSource: 'model',
       prose: `Scene ${chapterNumber}. ` + 'The tide rises. '.repeat(80), paragraphs: [`Scene ${chapterNumber}.`, 'The tide rises. '.repeat(80).trim()],
       metrics: { wordCount: 241, paragraphCount: 2, meetsScaleTarget: false }, eventIds: [],
+      ...(chapterNumber === 2 ? {} : { recap: { text: `Recap ${chapterNumber}.`, source: 'model', updatedAt: 'a' } }),
+      rhythm: { chapterFunction: 'worldBuilding', nextChapterSuggestions: { progression: `Go ${chapterNumber}`, worldBuilding: `Explore ${chapterNumber}`, conflict: `Fight ${chapterNumber}` } },
       responseMode: 'json', createdAt: 'a', committedAt: 'b', mediaLoadout: { capturedAt: 'a', soundscapes: [], soundCues: [] },
     });
   }
-  story.head = { nextChapterNumber: 5, lastCommittedChapterId: 'chapter-4' };
-  state.canonicalRecords.push({
-    id: 'wrong', storyId: story.id, chapterId: 'chapter-1', capabilityId: 'characters', capabilityVersion: '1',
-    kind: 'character', label: 'Mara', evidence: 'Mara has blue eyes.', confidence: 'resolved',
-    facts: { eyeColor: 'blue' }, createdAt: 'a', warnings: [],
+  story.head = { nextChapterNumber: chapterCount + 1, lastCommittedChapterId: `chapter-${chapterCount}` };
+  story.hardPins = [{ id: 'p1', text: 'Mara never leaves the city.', createdAt: 'a', updatedAt: 'a' }];
+  story.rhythmRecommendation = { fatePressure: 'mortal', fatePressureSource: 'story', forChapterNumber: chapterCount + 1, recommendedFunction: 'conflict', reason: 'Test reason.', recentFunctions: [{ chapterNumber: chapterCount, chapterFunction: 'worldBuilding' }], weights: { progression: 2, worldBuilding: 3, conflict: 1 }, blocked: [], computedAt: 'a' };
+  const record = (id: string, chapterId: string, overrides: Partial<HarnessCanonicalRecord>): HarnessCanonicalRecord => ({
+    id, storyId: story.id, chapterId, capabilityId: 'characters', capabilityVersion: '1', kind: 'character', label: 'Mara',
+    evidence: 'RAW EVIDENCE PASSAGE ' + id, confidence: 'resolved', facts: {}, createdAt: 'a', warnings: [], entityId: 'mara', ...overrides,
   });
-  const corrected = appendHarnessCorrection(state, story.id, {
-    kind: 'mark-incorrect', targetRecordIds: ['wrong'], reason: 'That eye color is incorrect.',
-  });
-  corrected.state.canonicalRecords.push({
-    id: 'thread', storyId: story.id, chapterId: 'chapter-4', capabilityId: 'plot-threads', capabilityVersion: '1',
-    kind: 'plot-thread', evidence: 'The gate remains sealed.', confidence: 'resolved',
-    facts: { state: 'open', description: 'The gate remains sealed.' }, createdAt: 'c', warnings: [],
-  });
-  return { ...created, state: corrected.state, correction: corrected.correction };
+  state.canonicalRecords.push(
+    record('mara-1', 'chapter-1', { facts: { eyeColor: 'blue', role: 'Courier', description: 'Mara arrives.' } }),
+    record('mara-3', 'chapter-3', { facts: { role: 'Captain', description: 'Mara takes command.' } }),
+  );
+  return { ...created, state };
 };
 
-describe('Harness context priorities', () => {
-  it('reserves correction and latest prose before older chapters or derived records', () => {
-    const { state, story, foundation, correction } = fixture();
-    const full = compileStoryInformationPacket(state, story, foundation, 'full');
-    const cost = (id: string) => full.selectionAudit!.included.find(item => item.sourceRecordIds[0] === id)!.estimatedTokens;
-    story.contextPolicy = { recentChapterCount: 3, includeMinorEvents: false,
-      maxEstimatedTokens: cost(foundation.id) + cost(correction.id) + cost('chapter-4') };
-    const context = compileStoryInformationPacket(state, story, foundation, 'tight');
-    expect(context.canonicalContext!.corrections[0]).toMatchObject({
-      id: correction.id, targetEvidence: [{ id: 'wrong', evidence: 'Mara has blue eyes.' }],
-    });
-    expect(context.committedChapters.map(chapter => chapter.chapterNumber)).toEqual([4]);
-    expect(context.selectionAudit!.included.map(item => item.sourceKind)).toEqual(['foundation', 'correction', 'chapter-prose']);
-    expect(context.selectionAudit!.omitted.find(item => item.sourceRecordIds[0] === 'chapter-3')!.reason).toContain('0 remain');
-    expect(context.selectionAudit!.omitted.find(item => item.sourceRecordIds[0] === 'chapter-1')!.reason).toContain('outside');
-    expect(full.committedChapters.map(chapter => chapter.chapterNumber)).toEqual([2, 3, 4]);
+describe('Compact Story Information Packet', () => {
+  it('projects Current Story Information from stable Foundation fields without the Story Seed snapshot', () => {
+    const { state, story, foundation } = fixture();
+    story.steering = [{ id: 's1', direction: 'Keep the tide rising.', mode: 'future', effectiveChapter: 3, createdAt: 'a' }];
+    const current = projectCurrentStory(state, story, foundation);
+    expect(current).toMatchObject({ title: 'Tidebound', premise: 'A city follows the tide.', originalLanguage: 'en', authorDirections: [{ direction: 'Keep the tide rising.', mode: 'future', effectiveChapter: 3 }], corrections: [] });
+    expect(JSON.stringify(current)).not.toContain('SEED SNAPSHOT BODY');
+    expect(JSON.stringify(current)).not.toContain('sourceSnapshot');
+    expect(current).not.toHaveProperty('destinedEnding');
+    expect(current).not.toHaveProperty('fatePressure');
   });
 
-  it('preserves all corrections and immediate continuation even beyond the soft budget', () => {
-    const { state, story, foundation, correction } = fixture();
-    state.corrections.push({ ...correction, id: 'newer', reason: 'The latest author instruction.' });
-    const full = compileStoryInformationPacket(state, story, foundation, 'full');
-    expect(full.canonicalContext!.corrections.map(item => item.id)).toEqual(['newer', correction.id]);
-    story.contextPolicy = { recentChapterCount: 3, includeMinorEvents: false,
-      maxEstimatedTokens: full.selectionAudit!.included.slice(0, 2).reduce((sum, item) => sum + item.estimatedTokens, 0) };
-    const tight = compileStoryInformationPacket(state, story, foundation, 'tight');
-    expect(tight.canonicalContext!.corrections.map(item => item.id)).toEqual(['newer', correction.id]);
-    expect(tight.committedChapters.map(chapter => chapter.chapterNumber)).toEqual([4]);
-    expect(tight.selectionAudit!.included.find(item => item.sourceRecordIds[0] === correction.id)!.reason).toContain('Protected author correction');
-    story.contextPolicy.maxEstimatedTokens = 1;
-    const tiny = compileStoryInformationPacket(state, story, foundation, 'tiny');
-    expect(tiny.foundationRevision).toEqual(foundation);
-    expect(tiny.selectionAudit!.included[0].reason).toContain('exceeds the soft selection budget');
-    expect(tiny.selectionAudit!.omitted.every(item => item.reason.length > 0)).toBe(true);
-    expect(tiny.committedChapters.map(chapter => chapter.chapterNumber)).toEqual([4]);
-    expect(tiny.canonicalContext!.corrections.map(item => item.id)).toEqual(['newer', correction.id]);
-    expect(tiny.selectionAudit!.totalEstimatedTokens).toBeGreaterThan(story.contextPolicy.maxEstimatedTokens);
+  it('assembles distinct sections: direction, arc, rhythm with the matching suggestion, recaps, and latest canonical state', () => {
+    const { state, story, foundation } = fixture();
+    story.arcPlans = [{ plan: { arcNumber: 1, goals: [{ id: 'g1', text: 'Anchor the city.', chapters: 100 }] }, effectiveChapter: 1, reason: 'initial' }];
+    const packet = compileStoryInformationPacket(state, story, foundation, 'next');
+    expect(packet.storyDirection).toEqual({ destinedEnding: 'The city anchors itself.', hardPins: ['Mara never leaves the city.'] });
+    expect(packet.arc).toMatchObject({ arcNumber: 1, activeGoal: { id: 'g1' }, completionDeadline: 100, positionInSegment: 5 });
+    expect(packet.rhythm).toEqual({ fatePressure: 'mortal', recentFunctions: [{ chapterNumber: 4, chapterFunction: 'worldBuilding' }], recommendedFunction: 'conflict', reason: 'Test reason.', suggestion: 'Fight 4' });
+    // Chapter 2 has no recap and is skipped, never replaced by prose.
+    expect(packet.previouslyOn).toEqual([{ chapterNumber: 1, title: 'Chapter 1', recap: 'Recap 1.' }, { chapterNumber: 3, title: 'Chapter 3', recap: 'Recap 3.' }, { chapterNumber: 4, title: 'Chapter 4', recap: 'Recap 4.' }]);
+    expect(packet.diagnostics.omitted).toContainEqual(expect.objectContaining({ section: 'previouslyOn', label: 'Chapter 2: Chapter 2' }));
+    // Latest applicable state: the newest role wins, the older eye color survives, evidence stays home.
+    expect(packet.canonicalState.characters).toEqual([{ name: 'Mara', asOfChapter: 3, facts: { eyeColor: 'blue', role: 'Captain', description: 'Mara takes command.' } }]);
+    expect(JSON.stringify(packet)).not.toContain('RAW EVIDENCE PASSAGE');
+    expect(JSON.stringify(packet)).not.toContain('The tide rises.');
+    expect(packet.diagnostics.storage).toMatchObject({ chapters: 4, canonicalRecords: 2, recaps: 3 });
   });
 
-  it('freezes alias resolution evidence even when the resolved record is not selected', () => {
+  it('keeps only the latest five recaps and records the older ones as omitted', () => {
+    const { state, story, foundation } = fixture(9);
+    const packet = compileStoryInformationPacket(state, story, foundation, 'next');
+    expect(GENERATION_PACKET_BUDGET.previouslyOnCount).toBe(5);
+    expect(packet.previouslyOn.map(entry => entry.chapterNumber)).toEqual([5, 6, 7, 8, 9]);
+    expect(packet.diagnostics.omitted.filter(item => item.section === 'previouslyOn' && item.reason.includes('Older'))).toHaveLength(3);
+  });
+
+  it('compacts corrections into Current Story Information and keeps their evidence in storage', () => {
     const { state, story, foundation } = fixture();
     const corrected = appendHarnessCorrection(state, story.id, {
-      kind: 'resolve-entity', reason: 'Captain refers to Mara.', referenceLabel: 'Captain',
-      acceptedAlias: 'Captain', resolvedRecordId: 'wrong',
+      kind: 'correct-fact', targetRecordIds: ['mara-3'], reason: 'Mara was demoted.',
+      replacement: { kind: 'character', label: 'Mara', evidence: 'The author says Mara is a deckhand.', facts: { role: 'Deckhand' } },
     });
-    const context = compileStoryInformationPacket(corrected.state, story, foundation, 'alias');
-    expect(context.canonicalContext!.corrections[0]).toMatchObject({
-      acceptedAlias: 'Captain', resolvedRecordId: 'wrong', resolvedEntity: { label: 'Mara' },
-    });
-    expect(context.canonicalContext!.records.some(record => record.id === 'wrong')).toBe(false);
+    const packet = compileStoryInformationPacket(corrected.state, story, foundation, 'next');
+    expect(packet.currentStory.corrections).toEqual([{ kind: 'correct-fact', reason: 'Mara was demoted.', targets: ['Mara'], replacement: { kind: 'character', label: 'Mara', facts: { role: 'Deckhand' } } }]);
+    expect(JSON.stringify(packet)).not.toContain('The author says Mara is a deckhand.');
+    expect(packet.canonicalState.characters[0].facts.role).toBe('Deckhand');
+    expect(corrected.state.canonicalRecords.find(record => record.id === 'mara-3')?.supersededByCorrectionId).toBe(corrected.correction.id);
   });
 
-  it('never fits an old instruction and chapter in place of larger current ones', () => {
-    const { state, story, foundation, correction } = fixture();
-    state.corrections.push({ ...correction, id: 'large-current',
-      reason: 'Mara is now an ally. ' + 'Author explanation. '.repeat(200), createdAt: '2099-01-01' });
-    state.chapters[3].prose = 'Latest continuation scene. '.repeat(400);
-    story.contextPolicy = { recentChapterCount: 3, includeMinorEvents: false, maxEstimatedTokens: 500 };
-    const snapshot = structuredClone(state);
-    const context = compileStoryInformationPacket(state, story, foundation, 'tight-current');
-    expect(context.canonicalContext!.corrections[0].id).toBe('large-current');
-    expect(context.committedChapters.map(chapter => chapter.chapterNumber)).toEqual([4]);
-    expect(context.committedChapters[0].prose).toBe(state.chapters[3].prose);
-    expect(context.selectionAudit!.omitted.some(item => item.sourceKind === 'correction')).toBe(false);
-    expect(context.selectionAudit!.included.filter(item => item.reason.includes('soft selection budget')).length).toBeGreaterThan(0);
-    expect(state).toEqual(snapshot);
-  });
-
-  it('stops context preparation if the committed story head points to a missing chapter', () => {
+  it('stops packet preparation if the committed story head points to a missing chapter', () => {
     const { state, story, foundation } = fixture();
     state.chapters = state.chapters.filter(chapter => chapter.id !== story.head.lastCommittedChapterId);
     expect(() => compileStoryInformationPacket(state, story, foundation, 'missing'))

@@ -261,9 +261,12 @@ describe('Harness Generation Phase 3 deterministic story harness', () => {
     expect(corrected.canonicalRecords.find(item => item.id === record.id)?.supersededByCorrectionId).toBe(corrected.corrections[0].id);
     const foundation = corrected.foundations[0];
     const context = compileStoryInformationPacket(corrected, corrected.stories[0], foundation, 'next', runtime());
-    expect(context.canonicalContext?.corrections).toHaveLength(1);
-    expect(context.selectionAudit?.included.some(item => item.sourceKind === 'correction')).toBe(true);
-    expect(context.selectionAudit?.included.every(item => item.reason.length > 0)).toBe(true);
+    // The correction travels compactly inside Current Story Information; its
+    // evidence passage and the superseded record stay in storage.
+    expect(context.currentStory.corrections).toEqual([expect.objectContaining({ kind: 'correct-fact', reason: 'Author correction.', targets: ['Mara'], replacement: { kind: 'character', label: 'Mara Vale', facts: { description: 'Mara is Mara Vale.' } } })]);
+    expect(JSON.stringify(context)).not.toContain('Her full canonical name is Mara Vale.');
+    expect(context.canonicalState.characters.map(character => character.name)).toEqual(['Mara Vale']);
+    expect(context.diagnostics.omitted.every(item => item.reason.length > 0)).toBe(true);
   });
 
   it('reloads, retries, and resumes a failed sequential batch without duplicating committed chapters', async () => {

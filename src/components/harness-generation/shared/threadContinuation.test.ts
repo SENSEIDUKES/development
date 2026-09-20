@@ -62,11 +62,12 @@ describe('Current thread state and continuation', () => {
     expect(state.events).toEqual(beforeReplay.events);
     expect(state.chapters).toEqual(beforeReplay.chapters);
     const context = compileStoryInformationPacket(state, state.stories[0], state.foundations[0], 'next');
-    expect(context.canonicalContext!.records.filter(record => record.kind === 'plot-thread').map(record => record.facts.state)).toEqual(['resolved']);
-    expect(context.canonicalContext!.handoff).toEqual([]);
-    expect(context.selectionAudit!.omitted.some(item => item.reason.startsWith('Historical or unsupported thread state'))).toBe(true);
+    // Threads are storage-only: the compact packet never turns them into automatic goals.
+    expect(JSON.stringify(context.canonicalState)).not.toContain('Open the gate');
+    expect(JSON.stringify(context)).not.toContain('Opening the gate remains unresolved.');
+    expect(JSON.stringify(context)).not.toContain('The gate task is resolved.');
     await reloaded.generateNextChapter(story.id, 'fixture');
-    expect(generate.mock.calls[2][0].storyInformation.canonicalContext!.handoff).toEqual([]);
+    expect(JSON.stringify(generate.mock.calls[2][0].storyInformation)).not.toContain('handoff');
     // A later, evidenced reopening is legitimate; closure is not permanent deletion.
     expect(buildCanonicalStoryView(reloaded.snapshot(), story.id).currentThreads[0].facts.state).toBe('open');
   });
@@ -80,7 +81,7 @@ describe('Current thread state and continuation', () => {
     expect(view.threads.some(record => record.confidence === 'unresolved')).toBe(true);
     expect(view.currentThreads.map(record => record.facts.state)).toEqual(['open']);
     const context = compileStoryInformationPacket(state, state.stories[0], state.foundations[0], 'next');
-    expect(context.canonicalContext!.handoff.map(item => item.description)).toEqual(['Opening the gate remains unresolved.']);
+    expect(JSON.stringify(context)).not.toContain('Opening the gate remains unresolved.');
   });
 
   it('handles legacy exact labels, explicit corrections, and separate identities without deleting evidence', async () => {

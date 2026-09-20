@@ -29,14 +29,21 @@ export const executeHarnessGeneration = async (
   const provider = providerFactory
     ? providerFactory({ apiKey: config.apiKey, model })
     : new GeminiHarnessTextProvider(config.apiKey, model);
-  const prompt = 'operation' in request ? request.operation === 'recover-memory' ? buildHarnessMemoryRecoveryPrompt(request) : buildHarnessArcPrompt(request) : buildHarnessGenerationPrompt(request);
+  const chapter = 'operation' in request ? undefined : buildHarnessGenerationPrompt(request);
+  const prompt = chapter ?? ('operation' in request && request.operation === 'recover-memory'
+    ? buildHarnessMemoryRecoveryPrompt(request as HarnessMemoryRecoveryRequest)
+    : buildHarnessArcPrompt(request as HarnessArcRequest));
   try {
-    return await provider.generate({
-      ...prompt,
+    const result = await provider.generate({
+      systemInstruction: prompt.systemInstruction,
+      userPrompt: prompt.userPrompt,
+      responseJsonSchema: prompt.responseJsonSchema,
       temperature: 'operation' in request ? 0 : config.temperature,
       maxOutputTokens: config.maxOutputTokens,
       timeoutMs: config.timeoutMs,
     });
+    // The measurement is taken from the exact strings the provider received.
+    return chapter ? { ...result, requestMeasurement: chapter.measurement } : result;
   } catch (error) {
     throw new HarnessGenerationExecutionError(error);
   }

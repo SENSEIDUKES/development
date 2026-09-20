@@ -141,23 +141,33 @@ describe('Story Seed to Harness handoff', () => {
     await reloaded.hydrate();
     await reloaded.generateNextChapter(story.id, 'google/gemini-3.1-flash-lite');
 
-    expect(requests[1].storyInformation.foundationRevision.revision).toBe(2);
-    expect(requests[1].storyInformation.foundationRevision.input.sourceSnapshot).toEqual(input.sourceSnapshot);
-    expect(requests[1].storyInformation.committedChapters[0].prose).toBe('Mara waits at the sealed harbor gate.');
+    expect(requests[1].storyInformation.foundationRevision).toBe(2);
+    // The frozen Story Seed stays on the attempt's Foundation snapshot; the packet carries no copy of it.
+    expect(reloaded.snapshot().attempts[1].foundationSnapshot.input.sourceSnapshot).toEqual(input.sourceSnapshot);
+    expect(JSON.stringify(requests[1].storyInformation)).not.toContain('sourceSnapshot');
+    expect(requests[1].storyInformation.previouslyOn).toEqual([]);
+    expect(JSON.stringify(requests[1].storyInformation)).not.toContain('Mara waits at the sealed harbor gate.');
     expect(requests[1].immediateChapterRequest).toEqual({ chapterNumber: 2, continuation: true, chapterScale: { minWords: 1_800, maxWords: 2_500 } });
     const { userPrompt, systemInstruction } = provider.mock.calls[1][0];
     expect(userPrompt).toContain('Remain at the gate; do not finish the tournament arc yet.');
-    expect(userPrompt).toContain('Keep the strange premise believable.');
+    // The revision replaced the permanent instructions, and the frozen seed no
+    // longer travels as background, so the replaced text is gone from the request.
+    expect(userPrompt).not.toContain('Keep the strange premise believable.');
+    expect(requests[0].storyInformation.currentStory.permanentInstructions).toContain('Keep the strange premise believable.');
     expect(userPrompt).not.toContain('A later Seed edit must not leak');
-    expect(userPrompt).toContain('Mara has green eyes.');
-    expect(userPrompt).toContain('targetEvidence');
-    expect(userPrompt).toContain('futurePlans');
+    // The correction's meaning travels; its evidence passage and storage identifiers do not.
+    expect(userPrompt).toContain('"eyeColor": "green"');
+    expect(userPrompt).not.toContain('Mara has green eyes.');
+    expect(userPrompt).not.toContain('targetEvidence');
     expect(userPrompt).toContain(record.blueprint!.firstArcPromise);
-    expect(userPrompt).toContain('"immediateContinuationIncluded": true');
-    expect(userPrompt).toContain('CONTEXT COVERAGE AND OMISSIONS');
+    expect(userPrompt).not.toContain('CONTEXT COVERAGE AND OMISSIONS');
+    expect(userPrompt).not.toContain('selectionAudit');
     expect(systemInstruction).toContain('An arc promise spans an arc, not one chapter.');
     expect(systemInstruction).toContain('newest applicable change wins');
-    expect(systemInstruction).toContain('active Foundation edits take precedence');
+    expect(systemInstruction).toContain('Active Foundation edits take precedence');
     expect(reloaded.snapshot().attempts[1].storyInformation).toEqual(requests[1].storyInformation);
+    expect(reloaded.snapshot().attempts[1].requestMeasurement).toMatchObject({
+      systemInstructionCharacters: systemInstruction.length, userPromptCharacters: userPrompt.length,
+    });
   });
 });

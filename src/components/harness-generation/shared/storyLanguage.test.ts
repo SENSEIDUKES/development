@@ -50,7 +50,7 @@ describe('Original Language as permanent HARNESS story identity', () => {
       created.foundation,
       'hga_fixture',
     );
-    expect(packet.originalLanguage).toBe('zh-CN');
+    expect(packet.currentStory.originalLanguage).toBe('zh-CN');
   });
 
   it('keeps Original Language unchanged when the Story Foundation is revised', () => {

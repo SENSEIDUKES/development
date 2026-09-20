@@ -112,7 +112,7 @@ describe('HARNESS canonical arc integration', () => {
     const context = run.requests[0].storyInformation.arc!;
     expect(context).toMatchObject({ destinedEnding: 'Unite the kingdoms.', arcNumber: 1, chapterInArc: 1, activeGoal: { id: 'arc-1-first', startChapter: 1, endChapter: 1 }, completionDeadline: 1, positionInSegment: 1 });
     const prompt = buildHarnessGenerationPrompt(run.requests[0]);
-    expect(prompt.userPrompt).toContain('ARC GOAL REQUIREMENT');
+    expect(prompt.userPrompt).toContain('ACTIVE ARC GOAL');
     expect(prompt.responseJsonSchema.required).toContain('arcCompletion');
     expect(JSON.stringify(prompt.responseJsonSchema)).not.toContain('arcReconciliation');
     expect(run.repository.snapshot().stories[0].goalCompletions).toHaveLength(1);

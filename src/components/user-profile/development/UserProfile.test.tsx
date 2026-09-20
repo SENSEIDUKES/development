@@ -679,7 +679,7 @@ describe('Cultivator Cave settings', () => {
     await click(byText('[data-cave-account-actions] button', 'Settings'));
     const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('[aria-label="Settings categories"] [role="tab"]'));
     expect(tabs.map(tab => tab.textContent)).toEqual(['Customization', 'Accessibility', 'Account', 'Advanced']);
-    const visibleHeadings = () => Array.from(document.querySelectorAll('[data-cave-settings] [role="tabpanel"]:not([hidden]) [data-slot="disclosure-heading"]')).map(node => node.textContent);
+    const visibleHeadings = () => Array.from(document.querySelectorAll('[data-cave-settings] [data-slot="disclosure-heading"]')).filter(node => !node.closest('[hidden]')).map(node => node.textContent);
     expect(visibleHeadings()).toEqual(['Identity & Cultivator Aura', 'Cultivator Portrait', 'Cave Environment']);
     await act(async () => controller().setFormData(previous => ({ ...previous, displayName: 'Cloud Reader' })));
     await click(tabs[1]);
@@ -728,6 +728,28 @@ describe('Cultivator Cave settings', () => {
     await click(byText('[data-slot="disclosure-trigger"]', 'Account'));
     await click(byText('button', 'Sever Link'));
     expect(onLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it('selects the available Familiar through the profile owner without saving unrelated edits', async () => {
+    const { controller } = await renderCave();
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
+    await act(async () => controller().setFormData(previous => ({ ...previous, displayName: 'Draft Name' })));
+    await click(byText('[aria-label="Customization sections"] [role="tab"]', 'Familiar'));
+    const selection = document.querySelector('[aria-label="Familiar selection"]')!;
+    expect(selection.closest('[role="tabpanel"]')?.hasAttribute('hidden')).toBe(false);
+    expect(selection.querySelectorAll('article')).toHaveLength(1);
+    expect(selection.querySelector('img')?.getAttribute('src')).toBe('https://gif.seihouse.org/LIBRARY/GIFS/celestial%20Guardian.gif');
+    await click(byText('button', 'Select Celestial Guardian'));
+    expect(controller().isSavingFamiliar).toBe(true);
+    await act(async () => { await vi.advanceTimersByTimeAsync(700); });
+    expect(controller().profile?.familiarId).toBe('celestial-guardian');
+    expect(controller().profile?.displayName).not.toBe('Draft Name');
+    expect(controller().formData.displayName).toBe('Draft Name');
+    expect(selection.querySelector('button')?.getAttribute('aria-pressed')).toBe('true');
+    expect(selection.textContent).toContain('Current Familiar: Celestial Guardian');
+    await act(async () => { await controller().handleFamiliarChange?.('not-unlocked'); });
+    expect(controller().profile?.familiarId).toBe('celestial-guardian');
+    expect(controller().error).toBe('This Familiar is not available for selection.');
   });
 
   it('keeps custom radio groups to one tab stop and supports native radio keys', async () => {

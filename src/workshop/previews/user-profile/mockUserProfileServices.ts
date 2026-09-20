@@ -28,6 +28,7 @@
  */
 
 import type React from 'react';
+import { celestialGuardianOption } from '../../../host/familiar/celestialGuardian';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '@seihouse/sen/contracts';
 import { type DaoRankData, type DaoClaimResult, type SpecialQiId, type UserProfileController, type UserProfileControllerProps, type UserProfileServices } from '@seihouse/library/profile';
@@ -142,6 +143,8 @@ export function createMockUserProfileServices({
     >(null);
     const [countdown, setCountdown] = useState(30);
     const [isSavingChapterWritingStyle, setIsSavingChapterWritingStyle] = useState(false);
+    const [isSavingFamiliar, setIsSavingFamiliar] = useState(false);
+    const familiarSaveLock = useRef(false);
 
     const [showPortraitModal, setShowPortraitModal] = useState(false);
     const [portraitUploadFile, setPortraitUploadFile] = useState<File | null>(null);
@@ -161,6 +164,8 @@ export function createMockUserProfileServices({
       accountEpoch.current += 1;
       profileRef.current = null;
       claimLock.current = false;
+      familiarSaveLock.current = false;
+      setIsSavingFamiliar(false);
       resultRef.current = undefined;
       setClaimPending(false);
       setClaimResult(undefined);
@@ -294,6 +299,35 @@ export function createMockUserProfileServices({
         formData.defaultReadingLanguage || DEFAULT_SEN_LANGUAGE_CODE,
       );
     }, [currentUser, formData, pendingLanguageChange, performSave, profile]);
+
+    const handleFamiliarChange = useCallback(async (id: string) => {
+      if (!currentUser || !profileRef.current || familiarSaveLock.current) return;
+      if (id !== celestialGuardianOption.id || !celestialGuardianOption.available) {
+        setError('This Familiar is not available for selection.');
+        return;
+      }
+      const epoch = accountEpoch.current;
+      familiarSaveLock.current = true;
+      setIsSavingFamiliar(true);
+      setError('');
+      try {
+        await failIfScenarioFails('Your Familiar could not be saved. Please retry.');
+        await delay(PROFILE_SAVE_MS);
+        if (!mounted.current || epoch !== accountEpoch.current || !profileRef.current) return;
+        const next = { ...profileRef.current, familiarId: id, updatedAt: new Date().toISOString() };
+        profileRef.current = next;
+        setProfile(next);
+        // Preserve unrelated identity/language drafts while committing this field.
+        setFormData(previous => ({ ...previous, familiarId: id }));
+      } catch (failure) {
+        if (mounted.current && epoch === accountEpoch.current) setError(failure instanceof Error ? failure.message : 'Familiar selection failed.');
+      } finally {
+        if (mounted.current && epoch === accountEpoch.current) {
+          familiarSaveLock.current = false;
+          setIsSavingFamiliar(false);
+        }
+      }
+    }, [currentUser]);
 
     const handleLanguageChangeDirect = useCallback(
       (name: 'interfaceLanguage' | 'defaultReadingLanguage', value: SenLanguageCode) => {
@@ -728,6 +762,8 @@ export function createMockUserProfileServices({
       colorInputRef,
       handleChange,
       handleSave,
+      handleFamiliarChange,
+      isSavingFamiliar,
 
       showAdvanced,
       setShowAdvanced,
@@ -807,6 +843,7 @@ export function createMockUserProfileServices({
       onSignIn(MOCK_ACCOUNT);
     },
     useController,
+    familiars: [celestialGuardianOption],
 
     localOnlyMode: scenario.localOnlyMode,
     setLocalOnlyMode: next =>

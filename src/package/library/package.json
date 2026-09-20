@@ -32,6 +32,10 @@
       "types": "./dist/types/package/library/energy.d.ts",
       "import": "./dist/energy.js"
     },
+    "./familiar": {
+      "types": "./dist/types/package/library/familiar.d.ts",
+      "import": "./dist/familiar.js"
+    },
     "./dao-pillar": {
       "types": "./dist/types/package/library/dao-pillar.d.ts",
       "import": "./dist/dao-pillar.js"

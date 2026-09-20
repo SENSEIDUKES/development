@@ -53,6 +53,7 @@ export const ownershipRules = [
   ['src/components/light-novels-home/', 'library', 'home'],
   ['src/components/user-profile/', 'library', 'profile'],
   ['src/components/energy/', 'library', 'energy'],
+  ['src/components/familiar/', 'library', 'familiar'],
   ['src/components/dao-pillar/', 'library', 'dao pillar'],
   ['src/components/closed-door-cultivation/', 'library', 'cultivation'],
   ['src/components/relics/', 'library', 'relics'],

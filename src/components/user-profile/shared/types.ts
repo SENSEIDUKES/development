@@ -41,6 +41,8 @@ export interface UserProfile {
   displayNameColor?: string;
   avatarUrl: string;
   activePortraitId?: string;
+  /** Development customization selection; the host validates availability when saving. */
+  familiarId?: string;
   /** The account's UI language. Distinct from the reading language. */
   interfaceLanguage: SenLanguageCode;
   /** The language Reader Chamber displays by default; never story canon. */

@@ -39,7 +39,7 @@ const canonicalSeed = (): StorySeedInput => ({
     optional: {
       intendedForMatureAudiences: false,
       fateSurvival: { enabled: false, visibility: "partial", pressure: "immortal" },
-      plotAndTropeSettings: {
+      funSettings: {
         faceSlap: "low",
         plotArmor: "medium",
         recognition: "medium",

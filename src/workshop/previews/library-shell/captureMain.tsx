@@ -50,11 +50,12 @@ async function mount() {
     await import('./preview-environment.css');
     const { DevelopmentHeaderPreview } = await import('./DevelopmentHeaderPreview');
     const { DevAudioPlaybackProvider } = await import('../../../audio/DevAudioPlayback');
+    const { StoryCreationPreviewRuntime } = await import('../../StoryCreationPreviewRuntime');
     const { headerStates } = await import('./headerPreviewData');
     const configuration = query.get('source') === 'header-states' ? 'header-states' : query.get('source') === 'cultivator-cave' ? 'cultivator-cave' : source;
     const headerState = (headerStates[configuration] as readonly string[]).includes(requested) ? requested : headerStates[configuration][0];
     document.title = 'Library Shell — Development headers';
-    root.render(<CaptureExitToWorkshop><DevAudioPlaybackProvider><LibraryPresentationProvider><DevelopmentHeaderPreview source={configuration} state={headerState} /></LibraryPresentationProvider></DevAudioPlaybackProvider></CaptureExitToWorkshop>);
+    root.render(<CaptureExitToWorkshop><DevAudioPlaybackProvider><StoryCreationPreviewRuntime><LibraryPresentationProvider><DevelopmentHeaderPreview source={configuration} state={headerState} /></LibraryPresentationProvider></StoryCreationPreviewRuntime></DevAudioPlaybackProvider></CaptureExitToWorkshop>);
   } else if (source === 'main-library') {
     await import('../../../components/library-shell/reference/main-library/source-theme.css');
     const { MainLibraryPreview } = await import('./MainLibraryPreview');

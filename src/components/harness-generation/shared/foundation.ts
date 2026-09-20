@@ -1,6 +1,6 @@
 import { validateArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
-import { FATE_PRESSURE_TIERS, isFatePressure } from '../../../narrative/storyDirection';
+import { FATE_PRESSURE_TIERS, isFatePressure, normalizeFunSettings, validateHardPinInputs } from '../../../narrative/storyDirection';
 import { cloneHarnessValue, defaultHarnessRuntime, emptyStoryHead, stableHarnessId, type HarnessRuntime } from './ids';
 import type { HarnessStory, HarnessWorkspaceState, StoryFoundationInput, StoryFoundationRevision, HarnessCanonicalRecord } from '../../../narrative/generation';
 
@@ -33,6 +33,8 @@ export const normalizeStoryFoundationInput = (input: StoryFoundationInput): Stor
   if (!premise) throw new Error('A Story Foundation needs a premise before a chapter can be generated.');
 
   const normalized: StoryFoundationInput = { premise };
+  if (input.initialHardPins !== undefined) normalized.initialHardPins = validateHardPinInputs(input.initialHardPins);
+  if (input.funSettings !== undefined) normalized.funSettings = normalizeFunSettings(input.funSettings);
   if (input.initialArcPlan) {
     normalized.initialArcPlan = validateArcPlan(input.initialArcPlan);
     if (normalized.initialArcPlan.arcNumber !== 1) throw new Error('Story Seed supplies Arc 1.');
@@ -126,6 +128,7 @@ export const createHarnessStory = (
     head: emptyStoryHead(),
     arcPlans: normalizedInput.initialArcPlan ? [{ plan: normalizedInput.initialArcPlan, effectiveChapter: 1, reason: 'initial' }] : [],
     goalCompletions: [],
+    hardPins: (normalizedInput.initialHardPins ?? []).map(pin => ({ ...pin, id: pin.id ?? runtime.createId('hpin'), createdAt, updatedAt: createdAt })),
   };
   return {
     state: {

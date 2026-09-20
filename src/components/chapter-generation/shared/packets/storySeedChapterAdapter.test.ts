@@ -17,14 +17,11 @@ const seed = (): StorySeedInput => ({
     optional: {
       intendedForMatureAudiences: false,
       fateSurvival: { enabled: true, visibility: "partial", pressure: "heaven" },
-      plotAndTropeSettings: {
+      funSettings: {
         faceSlap: "low",
         plotArmor: "medium",
         recognition: "medium",
-        firstMajorConflict: "Survive the succession hearing without revealing the remembered timelines.",
-        mainAntagonistPressure: "The regent controls the tribunal.",
       },
-      additionalStoryDirection: "Let alliances form through costly choices.",
       makeItWorkInstruction: "Make foreknowledge useful but never certain.",
     },
   },

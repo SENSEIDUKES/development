@@ -17,10 +17,8 @@ cleaner, and canonical production Blueprint fields were verified against
 Story Seed is one creation flow with these visible destinations:
 
 - **Origin** presents Style, Genre, Title, Synopsis, Pressure, Survival, and Tags, in that order on every viewport.
-- **ARC** owns story-sauce controls, story direction, first
-  major conflict, main opposition, Destined Ending, and Make It Work.
-- **World** owns World Identity, Characters, Factions, Abilities, and Power
-  System.
+- **ARC** presents Destined Ending, up to three optional Hard Pins, one initial Active Arc Goal, and Fun Settings, in that order.
+- **World** owns World Identity (including Make It Work and Main Opposition), Characters, Factions, Abilities, and Power System.
 - **Story Seed Settings** owns mature-audience metadata.
 - **Help** owns searchable written guidance and translated audio playback.
 - **Story Bank** is the only home for saved seeds, import/export, Blueprint
@@ -393,3 +391,33 @@ files, Blueprint response/prompt changes, neutral HARNESS contract/normalization
 packet/presentation changes, and the host's equivalent of `storySeedHandoff.ts`.
 No production repository, locked Reference, rhythm math, CAPA, media, or Fate Survival
 gameplay implementation was changed.
+
+### 2026-09-20 — Arc destination and initial direction
+
+Arc now collects Destined Ending, Hard Pins, Active Arc Goal, and Fun Settings.
+The initial goal uses the existing ArcGoal contract and its 100-chapter single-goal
+Arc 1 deadline. Blueprint generation suggests only one goal when it is blank;
+authored pins are never model-generated. Blueprint review edits the same seed
+values. Full Blueprint/HARNESS Arc Plan infrastructure remains available outside
+Story Seed.
+
+The sole Story Seed → HARNESS adapter initializes the story's existing Hard Pin
+authority (maximum three). Ending and pins reach their dedicated section once;
+the model-facing Active Arc Goal section includes only the current goal and its
+deadline, not the full plan. Fun Settings enter Current Story Information only,
+subordinate to ending, pins, current goal, canon, and CAPA. Make It Work remains
+permanent author guidance and Main Opposition enters world facts. Retired Story
+Direction, First Major Conflict, and seed Arc Plan inputs are discarded.
+
+Fate Pressure/Survival gating, official Style selection, and Original Language
+are unchanged. Retry/replay preserve the original frozen direction and goal.
+Seed schema 5 and HARNESS schema 18 reset stale Development records with the
+existing reset policy. No runtime aliases, dual reads, or migrations were added.
+The Library Shell active capture now receives the existing Story Creation
+provider. Historical captures are untouched; their compile-time support and
+preview-only fixture stay outside the package graph and active data paths.
+
+Verification: `scripts/verifyStorySeedArc.browser.mjs` exercises the canonical
+preview at 390 and 1440 pixels, complete navigation, Arc/World edits, save/reload,
+Blueprint review/export, and the active capture route. Focused tests cover the
+schema, Blueprint provider boundary, persistence, and frozen HARNESS handoff.

@@ -1,3 +1,4 @@
+import { validateHardPinInputs } from '@seihouse/sen/harness-generation';
 import { ARC_LENGTH, ARC_PLAN_SCHEMA, createArcChapterPosition } from '@seihouse/sen/arc-goals';
 import { HARNESS_CREATURE_EVENT_TYPES, HARNESS_CREATURE_SIZES, HARNESS_DIALOGUE_DELIVERIES, HARNESS_FATE_OUTCOMES, HARNESS_MANIFESTATION_MENTIONS, HARNESS_MANIFESTATION_TYPES, HARNESS_SOUND_CUE_CATEGORIES, HARNESS_SOUND_CUE_ENTITY_TYPES, HARNESS_SOUNDSCAPE_REGIONS, HARNESS_SYSTEM_PANEL_MEANINGS, HARNESS_SYSTEM_PANEL_PRESENTATIONS } from '@seihouse/sen/harness-generation';
 import { type HarnessArcRequest, type HarnessGenerationRequest, type HarnessMemoryRecoveryRequest, type HarnessMissionReminder, type HarnessRequestMeasurement, type ImmediateChapterRequest, type PacketSectionId, type StoryInformationPacket } from '@seihouse/sen/harness-generation';
@@ -177,7 +178,6 @@ const presentArc = (arc: NonNullable<StoryInformationPacket['arc']>) => ({
   completionDeadline: arc.completionDeadline,
   positionInSegment: arc.positionInSegment,
   completionConfirmed: arc.completionConfirmed,
-  arcGoals: arc.plan.goals,
 });
 
 /**
@@ -186,8 +186,8 @@ const presentArc = (arc: NonNullable<StoryInformationPacket['arc']>) => ({
  * identify nothing here: every value is story data, never model-owned output.
  */
 export const presentStoryInformationPacketSections = (packet: StoryInformationPacket): PresentedPacketSection[] => [
-  { section: 'currentStory', text: ['CURRENT STORY INFORMATION (the active Foundation; author instructions, canon, and corrections)', JSON.stringify(packet.currentStory, null, 2)].join('\n') },
-  { section: 'storyDirection', text: ['DESTINED ENDING AND HARD PINS (author-owned; never modify or complete them)', JSON.stringify(packet.storyDirection, null, 2)].join('\n') },
+  { section: 'currentStory', text: ['CURRENT STORY INFORMATION (the active Foundation; author instructions, canon, and corrections). Fun Settings are optional creative flavor, never canon or CAPA; they cannot override Destined Ending, Hard Pins, Active Arc Goal, canon, or CAPA skills.', JSON.stringify(packet.currentStory, null, 2)].join('\n') },
+  { section: 'storyDirection', text: ['DESTINED ENDING AND HARD PINS (author-owned; never modify or complete them)', JSON.stringify({ destinedEnding: packet.storyDirection.destinedEnding, hardPins: validateHardPinInputs(packet.storyDirection.hardPins.map(text => ({ text }))).map(pin => pin.text) }, null, 2)].join('\n') },
   { section: 'arc', text: ['ACTIVE ARC GOAL (authoritative frozen pacing instruction)', JSON.stringify(packet.arc ? presentArc(packet.arc) : null, null, 2)].join('\n') },
   { section: 'rhythm', text: ['FATE PRESSURE RHYTHM DIRECTION (recommended next chapter function)', JSON.stringify(packet.rhythm ?? null, null, 2)].join('\n') },
   ...(packet.fateSurvival?.enabled ? [{ section: 'fateSurvival' as const, text: [

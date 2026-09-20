@@ -8,7 +8,7 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * persisted shape (attempt, chapter, or workspace state fields). This is a
  * development system: storage at any other version is reset, never
  * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 17 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 18 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -35,6 +35,8 @@ export interface FateSurvivalContext {
 }
 
 export interface StoryFoundationInput {
+  initialHardPins?: import('./storyDirection').HardPinInput[];
+  funSettings?: import('./storyDirection').FunSettings;
   fateSurvival?: FateSurvivalContext;
   destinedEnding?: string;
   /**
@@ -421,6 +423,7 @@ export interface HarnessProviderReceipt {
  * storage record, or duplicated copy of the same text.
  */
 export interface CurrentStoryProjection {
+  funSettings?: import('./storyDirection').FunSettings;
   title: string;
   /** The story's permanent authoring language, carried as explicit story information. */
   originalLanguage: SenLanguageCode;

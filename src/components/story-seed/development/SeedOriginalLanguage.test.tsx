@@ -28,6 +28,7 @@ let root: Root;
 
 const seedInput = (premise: string): StorySeedInput => {
   const seed = createEmptyStorySeedInput();
+  seed.story.optional.activeArcGoal = { id: 'arc-1-gate', text: 'Reach the gate.', chapters: 100 };
   seed.story.required.premise = premise;
   seed.story.required.genre = 'Xianxia';
   seed.story.required.style = 'chinese';

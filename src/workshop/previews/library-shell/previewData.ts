@@ -5,12 +5,13 @@ export const shellStates = {
   'story-seed': ['empty', 'filled', 'long-title', 'saved', 'generating', 'versa', 'error'],
 } as const;
 export type ShellSource = keyof typeof shellStates;
+// Historical shell-only fixture: retired settings never enter active normalization or generation.
 export function makeSeed(state: string): StorySeedInput {
   return {
     creator: {},
     story: {
       required: { storyTags: [], premise: state === 'empty' ? '' : 'A fallen disciple remembers seven doomed timelines and has one chance to change fate.', genre: state === 'empty' ? '' : 'Xianxia', style: state === 'empty' ? '' : 'chinese' },
-      optional: { intendedForMatureAudiences: false, fateSurvival: { enabled: false, visibility: 'partial', pressure: 'immortal' }, plotAndTropeSettings: { faceSlap: 'medium', plotArmor: 'medium', recognition: 'medium' } },
+      optional: { intendedForMatureAudiences: false, fateSurvival: { enabled: false, visibility: 'partial', pressure: 'immortal' }, funSettings: {}, plotAndTropeSettings: { faceSlap: 'medium', plotArmor: 'medium', recognition: 'medium' } },
     },
     world: { required: {}, optional: { worldIdentity: {}, worldFoundations: {} } },
   };

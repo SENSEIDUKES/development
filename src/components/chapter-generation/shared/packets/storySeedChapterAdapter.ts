@@ -239,10 +239,8 @@ const buildChapterMissionFromSeed = (
   blueprint: WorldBlueprint,
   temporaryInstruction: string,
 ): { mission: ChapterMission; source: string } => {
-  const plot = seed.story.optional.plotAndTropeSettings;
   const missionCandidates = [
     ["WorldBlueprint.firstArcPromise", blueprint.firstArcPromise],
-    ["StorySeedInput.story.optional.plotAndTropeSettings.firstMajorConflict", plot.firstMajorConflict],
     ["WorldBlueprint.logline", blueprint.logline],
     ["StorySeedInput.story.required.premise", seed.story.required.premise],
   ] as const;
@@ -262,8 +260,7 @@ const buildChapterMissionFromSeed = (
     seed.world.optional.worldFoundations.mainCharacter?.startingWeakness,
   ].map(value => value?.trim()).filter(Boolean).join(" | ");
   const openTension = nonEmpty(
-    plot.firstMajorConflict,
-    plot.mainAntagonistPressure,
+    seed.world.optional.worldFoundations.mainOpposition,
     blueprint.firstArcPromise,
   );
   const contract = buildChapterContract({ chapterNumber: 1, premise });

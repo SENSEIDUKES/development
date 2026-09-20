@@ -1,3 +1,5 @@
+import { createInitialArcPlan, validateArcPlan } from '@seihouse/sen/arc-goals';
+import { validateHardPinInputs, normalizeFunSettings } from '@seihouse/sen/story-seed';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
 import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
@@ -38,6 +40,12 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
   const optional = seed.story.optional;
   const identity = seed.world.optional.worldIdentity;
   const world = seed.world.optional.worldFoundations;
+  const initialArcPlan = optional.activeArcGoal
+    ? createInitialArcPlan(optional.activeArcGoal)
+    : blueprint?.arcPlan ? validateArcPlan(blueprint.arcPlan) : undefined;
+  if (initialArcPlan && (initialArcPlan.arcNumber !== 1 || initialArcPlan.goals.length !== 1)) {
+    throw new Error('Story Seed supplies exactly one initial Active Arc Goal in Arc 1.');
+  }
   const style = getStoryStyleLabel(required.style);
   const blueprintCharacters = (blueprint?.initialCharacters ?? []).map(entry => {
     // Blueprint's named-list convention separates a name from its parenthesized role.
@@ -57,7 +65,9 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
       majorMysteries: [...(blueprint?.majorMysteries ?? [])],
       unresolvedPlotThreads: [...(blueprint?.unresolvedPlotThreads ?? [])],
     },
-    initialArcPlan: optional.arcPlan || blueprint?.arcPlan,
+    initialArcPlan,
+    initialHardPins: validateHardPinInputs(optional.hardPins ?? []),
+    funSettings: normalizeFunSettings(optional.funSettings),
     identities: [
       ...((world.mainCharacter?.name || blueprint?.mainCharacter?.name) ? [{
         name: world.mainCharacter?.name || blueprint!.mainCharacter!.name,
@@ -79,7 +89,6 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
     ]),
     permanentInstructions: joinSections([
       ['Make it work', optional.makeItWorkInstruction],
-      ['Blueprint trope rules', blueprint?.tropeRules],
     ]),
     openingSituation: identity.startingLocation || blueprint?.startingLocation,
     declaredCanon: joinSections([
@@ -99,19 +108,13 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
     }] : undefined,
     worldFacts: joinSections([
       ['World identity', identity],
+      ['Main Opposition', world.mainOpposition],
       ['Factions', world.factions],
       ['Abilities', world.abilities],
       ['Power system', world.powerSystem],
       ['Blueprint society', blueprint?.societyStructure],
       ['Blueprint power system', blueprint?.powerSystemOutline],
       ['Blueprint factions', blueprint?.majorFactions],
-    ]),
-    intendedDirection: joinSections([
-      ['Additional story direction', optional.additionalStoryDirection],
-      ['Plot and trope settings', optional.plotAndTropeSettings],
-      ['Blueprint logline', blueprint?.logline],
-      ['First arc promise', blueprint?.firstArcPromise],
-      ['Estimated arcs (pacing guide, not a chapter deadline)', blueprint?.estimatedArcs],
     ]),
     sourceSnapshot: {
       kind: 'story-seed',

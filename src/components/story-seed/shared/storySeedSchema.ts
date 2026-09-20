@@ -6,7 +6,7 @@
  * ├── creator
  * ├── story
  * │   ├── required   storyTags · premise · genre · style
- * │   └── optional   intendedForMatureAudiences · fateSurvival · plotAndTropeSettings · additionalStoryDirection · makeItWorkInstruction
+ * │   └── optional   intendedForMatureAudiences · fateSurvival · funSettings · hardPins · activeArcGoal · makeItWorkInstruction
  * └── world
  *     ├── required   (intentionally empty — World has no required inputs)
  *     └── optional   worldIdentity · worldFoundations
@@ -23,7 +23,9 @@
  * belongs to the locked `reference/` replica (see `referenceIntake.ts`).
  */
 
-import { validateArcPlan, type ArcPlan } from '../../arc-goals/shared/arcGoals';
+import { createInitialArcPlan, validateArcPlan, type ArcGoal } from '../../arc-goals/shared/arcGoals';
+import { normalizeFunSettings, validateHardPinInputs, type FunSettings, type HardPinInput } from '../../../narrative/storyDirection';
+export { normalizeFunSettings, HARD_PIN_LIMIT, HARD_PIN_TEXT_LIMIT, validateHardPinInputs, type FunSettings, type FunSettingLevel, type HardPinInput } from '../../../narrative/storyDirection';
 import type {
   WorldBlueprint,
   WorldBlueprintMainCharacter,
@@ -41,7 +43,7 @@ import { normalizeStoryStyle, type StoryStyle } from './storyStyle';
  * incompatibly, so stale records are rejected instead of silently read as
  * empty. Version 3 is the Creator / Story / World hierarchy above.
  */
-export const STORY_SEED_SCHEMA_VERSION = 4 as const;
+export const STORY_SEED_SCHEMA_VERSION = 5 as const;
 export const WORLD_BLUEPRINT_VERSION = 'v1.0' as const;
 export const STORY_PREMISE_MAX_LENGTH = 3_000;
 export const STORY_TAG_LIMIT = 12;
@@ -66,7 +68,6 @@ export interface StorySeedStoryRequired {
 }
 
 /** The narrative shape of the novel — where it is headed and what pushes back. */
-export type StorySeedStorySauceLevel = 'low' | 'medium' | 'high';
 export type StorySeedFateVisibility = 'full' | 'partial' | 'none';
 export type StorySeedSurvivalPressure = 'heaven' | 'immortal' | 'mortal';
 
@@ -76,25 +77,13 @@ export interface StorySeedFateSurvivalSettings {
   pressure: StorySeedSurvivalPressure;
 }
 
-export interface StorySeedPlotAndTropeSettings {
-  faceSlap?: StorySeedStorySauceLevel;
-  plotArmor?: StorySeedStorySauceLevel;
-  recognition?: StorySeedStorySauceLevel;
-  firstMajorConflict?: string;
-  mainAntagonistPressure?: string;
-}
-
 export interface StorySeedStoryOptional {
-  arcPlan?: ArcPlan;
+  activeArcGoal?: ArcGoal;
+  hardPins?: HardPinInput[];
   /** Story metadata only; this does not request explicit generated content. */
   intendedForMatureAudiences: boolean;
   fateSurvival: StorySeedFateSurvivalSettings;
-  plotAndTropeSettings: StorySeedPlotAndTropeSettings;
-  /**
-   * General freeform direction for the story. Legacy `desiredPlotDirection`,
-   * `mustIncludeElements`, and `thingsToAvoid` values consolidate here.
-   */
-  additionalStoryDirection?: string;
+  funSettings: FunSettings;
   /**
    * High-priority creative intent for strange, difficult, contradictory, or
    * highly specific ideas. Generation should preserve and make the idea
@@ -175,6 +164,7 @@ export interface StorySeedWorldFoundations {
   abilities?: StorySeedAbilities;
   powerSystem?: StorySeedPowerSystem;
   destinedEnding?: string;
+  mainOpposition?: string;
 }
 
 export interface StorySeedWorldOptional {
@@ -236,10 +226,6 @@ const optionalTextFields = <T extends object>(
   }),
 ) as T;
 
-const normalizeStorySauceLevel = (value: unknown): StorySeedStorySauceLevel => {
-  const normalized = text(value)?.toLowerCase();
-  return normalized === 'low' || normalized === 'high' ? normalized : 'medium';
-};
 
 const normalizeFateVisibility = (value: unknown): StorySeedFateVisibility => {
   const normalized = text(value)?.toLowerCase();
@@ -251,7 +237,6 @@ const normalizeSurvivalPressure = (value: unknown): StorySeedSurvivalPressure =>
   return normalized === 'heaven' || normalized === 'mortal' ? normalized : 'immortal';
 };
 
-const PLOT_AND_TROPE_FIELDS = ['firstMajorConflict', 'mainAntagonistPressure'] as const;
 const WORLD_IDENTITY_FIELDS = ['title', 'worldType', 'societyStructure', 'startingLocation'] as const;
 const MAIN_CHARACTER_FIELDS = [
   'name', 'startingIdentity', 'personality', 'mainFlaw',
@@ -288,7 +273,6 @@ const normalizeFaction = (value: unknown, index: number): StorySeedFaction | nul
 
 const normalizeStoryOptional = (value: unknown): StorySeedStoryOptional => {
   const source = isRecord(value) ? value : {};
-  const plotAndTropeSettings = isRecord(source.plotAndTropeSettings) ? source.plotAndTropeSettings : {};
   const normalized: StorySeedStoryOptional = {
     intendedForMatureAudiences: source.intendedForMatureAudiences === true,
     fateSurvival: {
@@ -296,16 +280,10 @@ const normalizeStoryOptional = (value: unknown): StorySeedStoryOptional => {
       visibility: normalizeFateVisibility(isRecord(source.fateSurvival) ? source.fateSurvival.visibility : undefined),
       pressure: normalizeSurvivalPressure(isRecord(source.fateSurvival) ? source.fateSurvival.pressure : undefined),
     },
-    plotAndTropeSettings: {
-      ...optionalTextFields<StorySeedPlotAndTropeSettings>(plotAndTropeSettings, PLOT_AND_TROPE_FIELDS),
-      faceSlap: normalizeStorySauceLevel(plotAndTropeSettings.faceSlap),
-      plotArmor: normalizeStorySauceLevel(plotAndTropeSettings.plotArmor),
-      recognition: normalizeStorySauceLevel(plotAndTropeSettings.recognition),
-    },
+    funSettings: normalizeFunSettings(source.funSettings),
+    hardPins: validateHardPinInputs(source.hardPins ?? []),
   };
-  if (source.arcPlan !== undefined) normalized.arcPlan = validateArcPlan(source.arcPlan);
-  const additionalStoryDirection = text(source.additionalStoryDirection);
-  if (additionalStoryDirection) normalized.additionalStoryDirection = additionalStoryDirection;
+  if (source.activeArcGoal !== undefined) normalized.activeArcGoal = createInitialArcPlan(source.activeArcGoal as ArcGoal).goals[0];
   const makeItWorkInstruction = text(source.makeItWorkInstruction);
   if (makeItWorkInstruction) normalized.makeItWorkInstruction = makeItWorkInstruction;
   return normalized;
@@ -343,6 +321,8 @@ const normalizeWorldFoundations = (value: unknown): StorySeedWorldFoundations =>
   );
   if (Object.keys(powerSystem).length > 0) normalized.powerSystem = powerSystem;
 
+  const mainOpposition = text(source.mainOpposition);
+  if (mainOpposition) normalized.mainOpposition = mainOpposition;
   const destinedEnding = text(source.destinedEnding);
   if (destinedEnding) normalized.destinedEnding = destinedEnding;
 
@@ -381,7 +361,7 @@ export const createEmptyStorySeedInput = (): StorySeedInput => ({
         visibility: 'partial',
         pressure: 'immortal',
       },
-      plotAndTropeSettings: {
+      funSettings: {
         faceSlap: 'medium',
         plotArmor: 'medium',
         recognition: 'medium',
@@ -419,6 +399,15 @@ export const validateStorySeedDraft = (value: unknown): StorySeedValidationResul
     // World holds no required creator inputs, but the family must still exist.
     if (!isRecord(value.world.required)) errors.push('World required inputs must be an object.');
     if (!isRecord(value.world.optional)) errors.push('World optional settings must be an object.');
+  }
+
+  if (isRecord(value.story) && isRecord(value.story.optional)) {
+    try { validateHardPinInputs(value.story.optional.hardPins ?? []); }
+    catch (error) { errors.push(error instanceof Error ? error.message : 'Invalid Hard Pins.'); }
+    if (value.story.optional.activeArcGoal !== undefined) {
+      try { createInitialArcPlan(value.story.optional.activeArcGoal as ArcGoal); }
+      catch (error) { errors.push(error instanceof Error ? error.message : 'Invalid Active Arc Goal.'); }
+    }
   }
 
   return { valid: errors.length === 0, errors };
@@ -544,10 +533,9 @@ export const createBlueprintDraftFromSeed = (
     ...(text(context.updatedAt) ? { updatedAt: text(context.updatedAt) } : {}),
     originSnapshot: createBlueprintOriginSnapshot(seed),
     title: worldIdentity.title || 'Untitled Story',
-    // Origin owns the premise. Direction is intentionally projected from the
-    // separate ARC field so a draft never disguises the premise as generated
-    // blueprint guidance.
-    logline: seed.story.optional.additionalStoryDirection || '',
+    // Generated summaries stay blank until Blueprint generation.
+    // The initial Active Arc Goal has its own canonical contract.
+    logline: '',
     worldOverview: worldIdentity.worldType || '',
     startingLocation: worldIdentity.startingLocation || '',
     societyStructure: worldIdentity.societyStructure || '',
@@ -565,8 +553,10 @@ export const createBlueprintDraftFromSeed = (
     majorFactions: (worldFoundations.factions || []).map(faction => faction.name),
     initialCharacters: (worldFoundations.additionalCharacters || []).map(character => character.name),
     majorMysteries: [],
-    arcPlan: seed.story.optional.arcPlan,
-    firstArcPromise: seed.story.optional.plotAndTropeSettings.firstMajorConflict || '',
+    arcPlan: seed.story.optional.activeArcGoal ? createInitialArcPlan(seed.story.optional.activeArcGoal) : undefined,
+    hardPins: validateHardPinInputs(seed.story.optional.hardPins ?? []),
+    funSettings: normalizeFunSettings(seed.story.optional.funSettings),
+    firstArcPromise: '',
     tropeRules: '',
     styleBible: '',
     destinedEnding: worldFoundations.destinedEnding || '',
@@ -660,7 +650,9 @@ export const normalizeWorldBlueprint = (
     majorMysteries: Array.isArray(source.majorMysteries)
       ? stringList(source.majorMysteries)
       : fallback.majorMysteries,
-    arcPlan: normalizedSeed.story.optional.arcPlan ?? (source.arcPlan ? validateArcPlan(source.arcPlan) : fallback.arcPlan),
+    arcPlan: normalizedSeed.story.optional.activeArcGoal ? createInitialArcPlan(normalizedSeed.story.optional.activeArcGoal) : (source.arcPlan ? validateArcPlan(source.arcPlan) : fallback.arcPlan),
+    hardPins: validateHardPinInputs(seed ? normalizedSeed.story.optional.hardPins ?? [] : source.hardPins ?? []),
+    funSettings: normalizeFunSettings(seed ? normalizedSeed.story.optional.funSettings : source.funSettings),
     firstArcPromise: read('firstArcPromise', fallback.firstArcPromise),
     tropeRules: read('tropeRules', fallback.tropeRules),
     styleBible: read('styleBible', fallback.styleBible),
@@ -779,7 +771,7 @@ export const finalizeGeneratedWorldBlueprint = (
     blueprintVersion: WORLD_BLUEPRINT_VERSION,
     originSnapshot: createBlueprintOriginSnapshot(storySeed),
     title: text(worldIdentity.title) || generated.title,
-    logline: text(storySeed.story.optional.additionalStoryDirection) || generated.logline,
+    logline: generated.logline,
     worldOverview: text(worldIdentity.worldType) || generated.worldOverview,
     startingLocation: text(worldIdentity.startingLocation) || generated.startingLocation,
     societyStructure: text(worldIdentity.societyStructure) || generated.societyStructure,
@@ -801,8 +793,7 @@ export const finalizeGeneratedWorldBlueprint = (
       worldFoundations.additionalCharacters || [],
       characterBlueprintEntry,
     ),
-    firstArcPromise: text(storySeed.story.optional.plotAndTropeSettings.firstMajorConflict)
-      || generated.firstArcPromise,
+    firstArcPromise: generated.firstArcPromise,
     destinedEnding: text(worldFoundations.destinedEnding) || generated.destinedEnding,
   };
 };
@@ -822,5 +813,12 @@ export const buildInitialStoryGenerationPayload = (
   const storySeed = applyInferredStoryTags(normalizeStorySeedInput(seed));
   assertValidStorySeedInput(storySeed);
   assertValidStoryAdministrativeMetadata(administrative);
-  return { storySeed, administrative, blueprint, chapterCount };
+  if (!blueprint.arcPlan) {
+    throw new Error('Review one Active Arc Goal in Blueprint before beginning the story.');
+  }
+  const arcPlan = validateArcPlan(blueprint.arcPlan);
+  if (arcPlan.arcNumber !== 1 || arcPlan.goals.length !== 1) {
+    throw new Error('Review one Active Arc Goal in Blueprint before beginning the story.');
+  }
+  return { storySeed, administrative, blueprint: { ...blueprint, arcPlan }, chapterCount };
 };

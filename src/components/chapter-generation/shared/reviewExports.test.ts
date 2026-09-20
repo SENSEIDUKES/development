@@ -22,7 +22,7 @@ const artifact = (): StorySeedArtifact => ({
       optional: {
         intendedForMatureAudiences: false,
         fateSurvival: { enabled: false, visibility: "partial", pressure: "mortal" },
-        plotAndTropeSettings: { faceSlap: "low", plotArmor: "low", recognition: "low" },
+        funSettings: { faceSlap: "low", plotArmor: "low", recognition: "low" },
       },
     },
     world: { required: {}, optional: { worldIdentity: {}, worldFoundations: {} } },

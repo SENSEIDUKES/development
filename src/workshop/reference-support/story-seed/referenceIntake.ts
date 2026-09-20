@@ -17,13 +17,17 @@ import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import type {} from '@seihouse/sen/story-seed';
 
 /**
- * The locked Library Shell replica still reads this retired field. This is
- * type-only reference intake support: Story Seed normalization and all active
- * generation adapters omit it.
+ * Compile-time support for the locked Library Shell capture's original inputs.
+ * This module is outside the package graph. Active normalization, persistence,
+ * and generation never read these historical properties.
  */
-declare module '@seihouse/sen/story-seed' {
-  interface StorySeedPlotAndTropeSettings {
-    longTermGoal?: string;
+declare module '../../../components/story-seed/shared/storySeedSchema' {
+  // Historical helpers use this retired type without runtime validation.
+  // Deliberately opaque: do not revive a second active settings schema here.
+  type StorySeedPlotAndTropeSettings = any;
+  interface StorySeedStoryOptional {
+    additionalStoryDirection?: string;
+    plotAndTropeSettings?: StorySeedPlotAndTropeSettings;
   }
 }
 

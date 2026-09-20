@@ -181,15 +181,12 @@ export const createFilledStorySeedInput = (): StorySeedInput => ({
     optional: {
       intendedForMatureAudiences: true,
       fateSurvival: { enabled: true, visibility: 'partial', pressure: 'immortal' },
-      plotAndTropeSettings: {
+      funSettings: {
         faceSlap: 'high',
         plotArmor: 'low',
         recognition: 'high',
-        firstMajorConflict: 'Sect tournament that reveals the first assassination attempt',
-        mainAntagonistPressure: "The celestial court's fate auditors",
       },
-      arcPlan: { arcNumber: 1, goals: [{ id: 'arc-1-rank', text: 'Reach Foundation rank.', chapters: 65 }, { id: 'arc-1-prince', text: 'Protect the prince from the assassination plot.', chapters: 35 }] },
-      additionalStoryDirection: 'Slow sect building with escalating court intrigue.',
+      activeArcGoal: { id: 'arc-1-rank', text: 'Reach Foundation rank.', chapters: 100 },
       makeItWorkInstruction: 'The weakest bloodline is secretly the only one heaven fears.',
     },
   },
@@ -203,6 +200,7 @@ export const createFilledStorySeedInput = (): StorySeedInput => ({
         startingLocation: 'A sprawling outer sect labor quarry built inside a cavernous volcanic rift.',
       },
       worldFoundations: {
+        mainOpposition: "The celestial court's fate auditors",
         mainCharacter: {
           name: 'Ye Chen',
           startingIdentity: 'Crippled young master, secretly the reincarnated Ninth Prince',

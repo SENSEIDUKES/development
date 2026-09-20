@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
 import { normalizeStoryStyle } from '@seihouse/sen/story-seed';
-import { plotAndTropeSettings, storyRequired, worldFoundations, worldIdentity } from './seedState';
+import { storyRequired, worldFoundations, worldIdentity } from './seedState';
 import type { StorySeedIconName } from './SENStorySeedIcon';
 
 /**
@@ -63,11 +63,8 @@ export const SEED_SECTIONS: SeedSection[] = [
     icon: 'arc',
     tagline: 'The forces that shape the journey and the destination it ultimately reaches.',
     isFilled: seed => {
-      const settings = plotAndTropeSettings(seed);
-      return hasText(seed.story.optional.additionalStoryDirection)
-        || hasText(seed.story.optional.makeItWorkInstruction)
-        || hasText(settings.firstMajorConflict)
-        || hasText(settings.mainAntagonistPressure)
+      return hasText(seed.story.optional.activeArcGoal?.text)
+        || Boolean(seed.story.optional.hardPins?.length)
         || hasText(worldFoundations(seed).destinedEnding);
     },
   },
@@ -81,7 +78,9 @@ export const SEED_SECTIONS: SeedSection[] = [
       const identity = worldIdentity(seed);
       return hasText(identity.worldType)
         || hasText(identity.startingLocation)
-        || hasText(identity.societyStructure);
+        || hasText(identity.societyStructure)
+        || hasText(seed.story.optional.makeItWorkInstruction)
+        || hasText(worldFoundations(seed).mainOpposition);
     },
   },
   {

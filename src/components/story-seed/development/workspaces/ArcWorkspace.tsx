@@ -1,30 +1,19 @@
-import { ArcPlanView } from '@seihouse/sen/arc-goals';
-import { Compass, Hourglass, ShieldAlert, Sparkles, Swords } from 'lucide-react';
-import { LibraryArcIcon as SENArcIcon } from '@seihouse/library-ui';
-import { type StorySeedInput, type StorySeedStorySauceLevel } from '@seihouse/sen/story-seed';
+import { useEffect, useState } from 'react';
+import { ARC_LENGTH } from '@seihouse/sen/arc-goals';
+import { Hourglass, Target, Pin } from 'lucide-react';
+import { HARD_PIN_LIMIT, HARD_PIN_TEXT_LIMIT, type StorySeedInput, type FunSettingLevel } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
-import {
-  patchPlotAndTropeSettings,
-  patchWorldFoundations,
-  plotAndTropeSettings,
-  setAdditionalStoryDirection,
-  setMakeItWorkInstruction,
-  worldFoundations,
-  type UpdateSeed,
-} from '../seedState';
+import { patchFunSettings, patchWorldFoundations, funSettings, worldFoundations, type UpdateSeed } from '../seedState';
 import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { WorkspaceShell } from './WorkspaceShell';
 import { handleRadioGroupKeyDown } from '../radioGroupKeyboard';
 
-interface ArcWorkspaceProps {
-  seed: StorySeedInput;
-  updateSeed: UpdateSeed;
-}
+interface ArcWorkspaceProps { seed: StorySeedInput; updateSeed: UpdateSeed; }
 
-type StorySauceKey = 'faceSlap' | 'plotArmor' | 'recognition';
+type FunSettingKey = 'faceSlap' | 'plotArmor' | 'recognition';
 
-const STORY_SAUCE_LEVELS: ReadonlyArray<{
-  value: StorySeedStorySauceLevel;
+const FUN_LEVELS: ReadonlyArray<{
+  value: FunSettingLevel;
   label: string;
 }> = [
   { value: 'low', label: 'Low' },
@@ -32,20 +21,12 @@ const STORY_SAUCE_LEVELS: ReadonlyArray<{
   { value: 'high', label: 'High' },
 ];
 
-const MAKE_IT_WORK_PLACEHOLDER = [
-  'The main character cultivates immortality through toe kung fu. Make it work.',
-  'Every major fighter in this world uses a wheelchair. Make it work.',
-  'The weakest bloodline is secretly the only one heaven fears.',
-  'The villain is correct, but still has to be stopped.',
-  'The protagonist can only grow stronger by losing public fights.',
-].join('\n');
-
-const STORY_SAUCE_SETTINGS: ReadonlyArray<{
-  key: StorySauceKey;
+const FUN_SETTINGS: ReadonlyArray<{
+  key: FunSettingKey;
   id: string;
   label: string;
   help: string;
-  levelCopy: Record<StorySeedStorySauceLevel, string>;
+  levelCopy: Record<FunSettingLevel, string>;
 }> = [
   {
     key: 'faceSlap',
@@ -82,35 +63,59 @@ const STORY_SAUCE_SETTINGS: ReadonlyArray<{
   },
 ];
 
-/**
- * Optional ARC workspace. Story sauce extends the existing
- * `story.optional.plotAndTropeSettings` branch; plot direction, Make It Work,
- * and Destined Ending keep their own canonical paths.
- */
 export const ArcWorkspace = ({ seed, updateSeed }: ArcWorkspaceProps) => {
   const section = getSeedSection('arc');
-  const settings = plotAndTropeSettings(seed);
-
+  const settings = funSettings(seed);
+  const savedPins = JSON.stringify((seed.story.optional.hardPins ?? []).map(pin => pin.text));
+  const [pinDrafts, setPinDrafts] = useState<string[]>(() => JSON.parse(savedPins));
+  useEffect(() => {
+    setPinDrafts(current => JSON.stringify(current.map(text => text.trim()).filter(Boolean)) === savedPins ? current : JSON.parse(savedPins));
+  }, [savedPins]);
+  const updatePin = (index: number, text: string) => {
+    const next = Array.from({ length: HARD_PIN_LIMIT }, (_, i) => i === index ? text : (pinDrafts[i] ?? ''));
+    setPinDrafts(next);
+    updateSeed(current => ({ ...current, story: { ...current.story, optional: {
+      ...current.story.optional, hardPins: next.map(text => text.trim()).filter(Boolean).map(text => ({ text })),
+    } } }));
+  };
   return (
     <WorkspaceShell section={section} complete={section.isFilled(seed)}>
-      {seed.story.optional.arcPlan
-        ? <ArcPlanView plan={seed.story.optional.arcPlan} onEdit={arcPlan => updateSeed(current => ({ ...current, story: { ...current.story, optional: { ...current.story.optional, arcPlan } } }))} />
-        : <p className="text-sm text-neutral-400">AI will create one to five sequential goals for the first 100-chapter arc when your story is prepared. You can proceed automatically or inspect and adjust the plan here.</p>}
-      <section className="glass-panel p-4 sm:p-5" aria-labelledby="arc-story-sauce-title">
+      <LibraryTextArea id="destined-ending-input" label="Destined Ending" icon={Hourglass} maxLength={1500}
+        helpText="The true long-term destination of this novel. If left blank, the Library recommends a fitting ending from your Origin. You can alter this outcome later."
+        value={worldFoundations(seed).destinedEnding || ''}
+        onChange={value => updateSeed(patchWorldFoundations({ destinedEnding: value }))} rows={3} />
+      <section aria-labelledby="arc-hard-pins-title" className="glass-panel p-4 sm:p-5">
+        <h3 id="arc-hard-pins-title" className="font-display text-lg text-[#DDC58A]">Hard Pins</h3>
+        <p className="mb-4 text-xs text-neutral-400">Long-term promises the story must keep on the way to its Destined Ending. Up to three, all optional.</p>
+        <div className="space-y-3">
+          {Array.from({ length: HARD_PIN_LIMIT }, (_, index) => (
+            <LibraryTextBox key={index} id={`hard-pin-${index + 1}`} label={`Hard Pin ${index + 1}`} icon={Pin}
+              maxLength={HARD_PIN_TEXT_LIMIT} value={pinDrafts[index] ?? ''} onChange={value => updatePin(index, value)} />
+          ))}
+        </div>
+      </section>
+      <LibraryTextBox id="active-arc-goal-input" label="Active Arc Goal" icon={Target}
+        helpText="What the story is working toward right now. It guides the current arc and can change when the next arc begins."
+        value={seed.story.optional.activeArcGoal?.text ?? ''}
+        onChange={text => updateSeed(current => ({ ...current, story: { ...current.story, optional: {
+          ...current.story.optional, activeArcGoal: text.trim() ? { id: current.story.optional.activeArcGoal?.id ?? 'arc-1-initial', text, chapters: ARC_LENGTH } : undefined,
+        } } }))} />
+      <p className="text-xs text-neutral-400">Initial arc deadline: Chapter {ARC_LENGTH}. Leave the goal blank for a Blueprint suggestion you can review.</p>
+      <section className="glass-panel p-4 sm:p-5" aria-labelledby="arc-fun-settings-title">
         <div className="mb-4">
           <h3
-            id="arc-story-sauce-title"
+            id="arc-fun-settings-title"
             className="font-sc text-xs font-bold uppercase tracking-[0.18em] text-[#DDC58A]"
           >
-            Story Sauce
+            Fun Settings
           </h3>
           <p className="mt-1 font-sans text-xs leading-relaxed text-neutral-400">
-            Tune recurring payoff while keeping the story's core direction intact.
+            Optional ingredients you want the story to make room for because they make it more enjoyable.
           </p>
         </div>
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          {STORY_SAUCE_SETTINGS.map(setting => {
+          {FUN_SETTINGS.map(setting => {
             const selected = settings[setting.key] || 'medium';
             return (
               <fieldset
@@ -132,7 +137,7 @@ export const ArcWorkspace = ({ seed, updateSeed }: ArcWorkspaceProps) => {
                   aria-describedby={`arc-${setting.id}-summary arc-${setting.id}-description`}
                   className="mt-3 grid grid-cols-3 gap-1.5"
                 >
-                  {STORY_SAUCE_LEVELS.map(option => {
+                  {FUN_LEVELS.map(option => {
                     const isSelected = selected === option.value;
                     return (
                       <button
@@ -143,7 +148,7 @@ export const ArcWorkspace = ({ seed, updateSeed }: ArcWorkspaceProps) => {
                         aria-checked={isSelected}
                         tabIndex={isSelected ? 0 : -1}
                         title={setting.levelCopy[option.value]}
-                        onClick={() => updateSeed(patchPlotAndTropeSettings({ [setting.key]: option.value }))}
+                        onClick={() => updateSeed(patchFunSettings({ [setting.key]: option.value }))}
                         onKeyDown={handleRadioGroupKeyDown}
                         className={`min-h-11 cursor-pointer rounded-lg border px-1.5 font-sc text-[10px] font-bold uppercase tracking-[0.08em] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CDB271]/70 ${
                           isSelected
@@ -169,63 +174,6 @@ export const ArcWorkspace = ({ seed, updateSeed }: ArcWorkspaceProps) => {
         </div>
       </section>
 
-      <LibraryTextArea
-        id="desired-plot-direction-input"
-        label="Story Direction"
-        icon={SENArcIcon}
-        maxLength={1500}
-        helpText="Extra direction for the journey — must-have elements, things to avoid, pacing, or plot emphasis."
-        value={seed.story.optional.additionalStoryDirection || ''}
-        onChange={(value) => updateSeed(setAdditionalStoryDirection(value))}
-        rows={3}
-        placeholder="e.g. Revenge focused, slow sect building, kingdom conquering..."
-      />
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <LibraryTextBox
-          id="a11y-control-6a6tmbf"
-          label="First Major Conflict"
-          icon={Swords}
-          value={settings.firstMajorConflict || ''}
-          onChange={(value) => updateSeed(patchPlotAndTropeSettings({ firstMajorConflict: value }))}
-          placeholder="e.g., Sect tournament, survival trial..."
-        />
-        <div className="sm:col-span-2">
-          <LibraryTextBox
-            id="main-antagonist-pressure-input"
-            label="Main Opposition"
-            icon={ShieldAlert}
-            helpText="Who or what pushes back against the main character the hardest."
-            value={settings.mainAntagonistPressure || ''}
-            onChange={(value) => updateSeed(patchPlotAndTropeSettings({ mainAntagonistPressure: value }))}
-            placeholder="e.g., The celestial court's fate auditors..."
-          />
-        </div>
-      </div>
-
-      <LibraryTextArea
-        id="destined-ending-input"
-        label="Destined Ending"
-        icon={Hourglass}
-        maxLength={1500}
-        helpText="The true long-term destination of this novel. If left blank, the Library recommends a fitting ending from your Origin and ARC direction. You can alter this outcome later."
-        value={worldFoundations(seed).destinedEnding || ''}
-        onChange={(value) => updateSeed(patchWorldFoundations({ destinedEnding: value }))}
-        rows={3}
-        placeholder="e.g. The kingdom falls, the MC ascends, or the lovers are separated..."
-      />
-
-      <LibraryTextArea
-        id="make-it-work-instruction-input"
-        label="Make It Work"
-        icon={Sparkles}
-        maxLength={1500}
-        helpText="Use this for strange, difficult, contradictory, or highly specific ideas the Library must preserve and make believable inside the story."
-        value={seed.story.optional.makeItWorkInstruction || ''}
-        onChange={(value) => updateSeed(setMakeItWorkInstruction(value))}
-        rows={5}
-        placeholder={MAKE_IT_WORK_PLACEHOLDER}
-      />
     </WorkspaceShell>
   );
 };

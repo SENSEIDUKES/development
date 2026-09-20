@@ -92,3 +92,19 @@ export interface ChapterRecap {
   source: 'model' | 'author';
   updatedAt: string;
 }
+
+/** Optional creative flavor; subordinate to story direction, canon, and CAPA. */
+export type FunSettingLevel = 'low' | 'medium' | 'high';
+export interface FunSettings {
+  faceSlap?: FunSettingLevel;
+  plotArmor?: FunSettingLevel;
+  recognition?: FunSettingLevel;
+}
+export const normalizeFunSettings = (value: unknown): FunSettings => {
+  const source = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+  const level = (input: unknown): FunSettingLevel => {
+    const value = typeof input === 'string' ? input.trim().toLowerCase() : '';
+    return value === 'low' || value === 'high' ? value : 'medium';
+  };
+  return { faceSlap: level(source.faceSlap), plotArmor: level(source.plotArmor), recognition: level(source.recognition) };
+};

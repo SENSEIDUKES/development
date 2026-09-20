@@ -196,7 +196,7 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
-- 2026-09-20: Added the compact shadow/action tray and moved Energy into the shared
+- 2026-09-20: Added the compact Library glass shadow/action tray and moved Energy into the shared
   modal dialog primitive, centered on the viewport above navigation. The tray keeps
   44px touch targets at every pet size; drag bounds reserve its full footprint.
   Opening the tray does not fetch Energy; selecting Energy reads the host account.

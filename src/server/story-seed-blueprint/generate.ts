@@ -57,14 +57,14 @@ export const WORLD_BLUEPRINT_RESPONSE_SCHEMA = {
     mcProfile: { type: "string", minLength: 1 },
     majorFactions: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
     initialCharacters: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
-    majorMysteries: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
+    majorMysteries: { type: "array", items: { type: "string", minLength: 1 } },
     arcPlan: ARC_PLAN_SCHEMA,
     firstArcPromise: { type: "string", minLength: 1 },
     tropeRules: { type: "string", minLength: 1 },
     styleBible: { type: "string", minLength: 1 },
     destinedEnding: { type: "string", minLength: 1 },
     estimatedArcs: { type: "integer", minimum: 1, maximum: 100 },
-    unresolvedPlotThreads: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
+    unresolvedPlotThreads: { type: "array", items: { type: "string", minLength: 1 } },
   },
 } as const;
 
@@ -134,8 +134,6 @@ const REQUIRED_STRINGS = [
 const REQUIRED_ARRAYS = [
   "majorFactions",
   "initialCharacters",
-  "majorMysteries",
-  "unresolvedPlotThreads",
 ] as const;
 
 const assertCompleteGeneratedBlueprint = (blueprint: WorldBlueprint): void => {

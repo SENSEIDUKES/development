@@ -92,6 +92,8 @@ export const compileStoryInformationPacket = (
   }
   const nextChapterNumber = story.head.nextChapterNumber;
 
+  const fateSurvival = foundationRevision.input.fateSurvival?.enabled
+    ? cloneHarnessValue(foundationRevision.input.fateSurvival) : undefined;
   const currentStory = projectCurrentStory(state, story, foundationRevision);
   const storyDirection = {
     ...(text(foundationRevision.input.destinedEnding) ? { destinedEnding: foundationRevision.input.destinedEnding!.trim() } : {}),
@@ -139,6 +141,7 @@ export const compileStoryInformationPacket = (
     measure('storyDirection', storyDirection),
     measure('arc', arc),
     measure('rhythm', rhythm),
+    ...(fateSurvival ? [measure('fateSurvival', fateSurvival)] : []),
     measure('previouslyOn', previouslyOn),
     measure('canonicalState', canonical.projection),
   ];
@@ -156,6 +159,7 @@ export const compileStoryInformationPacket = (
     storyDirection,
     ...(arc ? { arc } : {}),
     ...(rhythm ? { rhythm } : {}),
+    ...(fateSurvival ? { fateSurvival } : {}),
     previouslyOn,
     canonicalState: canonical.projection,
     diagnostics: {

@@ -261,7 +261,7 @@ describe('Story Seed creator/story/world contract', () => {
       errors: [
         'Style is required.',
         'Genre is required.',
-        'Premise is required.',
+        'Synopsis is required.',
         'Story Tags are required.',
       ],
     });
@@ -273,7 +273,7 @@ describe('Story Seed creator/story/world contract', () => {
     oversized.story.required.storyTags = Array.from({ length: 13 }, (_, index) => `tag ${index + 1}`);
 
     expect(validateStorySeedInput(oversized).errors).toEqual([
-      `Premise cannot exceed ${STORY_PREMISE_MAX_LENGTH.toLocaleString('en-US')} characters.`,
+      `Synopsis cannot exceed ${STORY_PREMISE_MAX_LENGTH.toLocaleString('en-US')} characters.`,
       'Story Tags cannot exceed 12.',
     ]);
   });

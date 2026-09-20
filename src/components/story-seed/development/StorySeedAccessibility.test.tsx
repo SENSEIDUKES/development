@@ -22,6 +22,7 @@ import { StorySeedSettings } from '@seihouse/library/story-seed';
 import { useStoryBankRecords } from './useStoryBankRecords';
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
 import { FactionsWorkspace } from './workspaces/FactionsWorkspace';
+import { OriginWorkspace } from './workspaces/OriginWorkspace';
 import { OriginGenrePicker } from './workspaces/origin/OriginGenrePicker';
 import { OriginPremiseAndTags } from './workspaces/origin/OriginPremiseAndTags';
 import { OriginStyleSelector } from './workspaces/origin/OriginStyleSelector';
@@ -147,7 +148,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
         storyTags={[]}
         onPremiseChange={onPremiseChange}
         updateSeed={updateSeed}
-        genrePicker={<button type="button">Genre</button>}
+        beforeTags={<button type="button">Pressure</button>}
       />}</LibraryPresentationProvider>,
     ));
 
@@ -168,7 +169,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
         storyTags={[]}
         onPremiseChange={onPremiseChange}
         updateSeed={updateSeed}
-        genrePicker={<button type="button">Genre</button>}
+        beforeTags={<button type="button">Pressure</button>}
       />}</LibraryPresentationProvider>,
     ));
     expect(container.textContent).toContain('Add tag:');
@@ -193,7 +194,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
           ...previous.story, required: { ...previous.story.required, premise },
         } }))}
         updateSeed={setSeed}
-        genrePicker={null}
+        beforeTags={null}
       />;
     };
     act(() => root.render(<LibraryPresentationProvider>{<Harness />}</LibraryPresentationProvider>));
@@ -227,7 +228,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
         storyTags={seed.story.required.storyTags}
         onPremiseChange={() => {}}
         updateSeed={setSeed}
-        genrePicker={null}
+        beforeTags={null}
       />;
     };
     act(() => root.render(<LibraryPresentationProvider>{<Harness />}</LibraryPresentationProvider>));
@@ -317,7 +318,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     const manifest = container.querySelector<HTMLButtonElement>('button[data-variant="manifest"]');
     expect(manifest?.disabled).toBe(true);
     expect(manifest?.getAttribute('aria-label')).toBe(
-      'Manifest World Blueprint — Manifest disabled — missing: Style, Genre, Premise',
+      'Manifest World Blueprint — Manifest disabled — missing: Style, Genre, Synopsis',
     );
   });
 
@@ -360,7 +361,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     const settingsSeed = createEmptyStorySeedInput();
     settingsSeed.story.optional.fateSurvival.enabled = true;
     const settingsUpdate = vi.fn();
-    act(() => root.render(<LibraryPresentationProvider>{<StorySeedSettings seed={settingsSeed} updateSeed={settingsUpdate} />}</LibraryPresentationProvider>));
+    act(() => root.render(<LibraryPresentationProvider>{<OriginWorkspace seed={settingsSeed} updateSeed={settingsUpdate} />}</LibraryPresentationProvider>));
     radios = Array.from(container.querySelectorAll<HTMLButtonElement>('[aria-label="Fate Visibility"] [role="radio"]'));
     expect(radios.filter(radio => radio.tabIndex === 0)).toHaveLength(1);
     radios[0].focus();

@@ -46,6 +46,20 @@ export const normalizeStoryFoundationInput = (input: StoryFoundationInput): Stor
     if (!isFatePressure(input.fatePressure)) throw new Error(`Fate Pressure must be one of ${FATE_PRESSURE_TIERS.join(', ')}.`);
     normalized.fatePressure = input.fatePressure;
   }
+  if (input.fateSurvival !== undefined) {
+    const survival = input.fateSurvival;
+    if (typeof survival.enabled !== 'boolean'
+      || !['full', 'partial', 'none'].includes(survival.visibility)
+      || !Array.isArray(survival.majorMysteries) || !survival.majorMysteries.every(value => typeof value === 'string')
+      || !Array.isArray(survival.unresolvedPlotThreads) || !survival.unresolvedPlotThreads.every(value => typeof value === 'string')) {
+      throw new Error('Fate Survival needs an enabled flag, visibility, and mystery/thread arrays.');
+    }
+    normalized.fateSurvival = {
+      enabled: survival.enabled, visibility: survival.visibility,
+      majorMysteries: survival.majorMysteries.map(value => value.trim()).filter(Boolean),
+      unresolvedPlotThreads: survival.unresolvedPlotThreads.map(value => value.trim()).filter(Boolean),
+    };
+  }
   if (input.sourceSnapshot?.kind === 'story-seed') {
     normalized.sourceSnapshot = cloneHarnessValue(input.sourceSnapshot);
   }

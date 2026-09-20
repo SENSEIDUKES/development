@@ -5,6 +5,7 @@ import { normalizeStoryStyle } from '@seihouse/sen/story-seed';
 import { getSeedSection } from '../seedSections';
 import {
   patchStoryRequired,
+  patchFateSurvival,
   patchWorldIdentity,
   storyRequired,
   worldIdentity,
@@ -14,6 +15,7 @@ import { NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
 import { WorkspaceShell } from './WorkspaceShell';
 import { OriginGenrePicker } from './origin/OriginGenrePicker';
 import { OriginPremiseAndTags } from './origin/OriginPremiseAndTags';
+import { OriginFateControls } from './origin/OriginFateControls';
 import { OriginStyleSelector } from './origin/OriginStyleSelector';
 
 interface OriginWorkspaceProps {
@@ -23,7 +25,7 @@ interface OriginWorkspaceProps {
 
 const ORIGIN_SECTION = getSeedSection('origin');
 
-/** Keeps all four Story essentials in one mobile-first creation flow. */
+/** One Origin flow over the canonical Story Seed values. */
 export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
   const { premise, genre, storyTags, style } = storyRequired(seed);
   const identity = worldIdentity(seed);
@@ -48,7 +50,7 @@ export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
   const titleField = useMemo(() => (
     <LibraryTextBox
       id="origin-story-title-input"
-      label="Story Title"
+      label="Title"
       icon={SENStoryIcon}
       helpText="Optional — the Library will generate a title if you leave this blank."
       value={identity.title || ''}
@@ -65,9 +67,11 @@ export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
 
   return (
     <WorkspaceShell section={ORIGIN_SECTION} complete={originComplete}>
-      {titleField}
-
       {styleSelector}
+
+      {genrePicker}
+
+      {titleField}
 
       <OriginPremiseAndTags
         premise={premise}
@@ -76,7 +80,10 @@ export const OriginWorkspace = ({ seed, updateSeed }: OriginWorkspaceProps) => {
         selectedStyle={selectedStyle}
         onPremiseChange={updatePremise}
         updateSeed={updateSeed}
-        genrePicker={genrePicker}
+        beforeTags={<OriginFateControls
+          settings={seed.story.optional.fateSurvival}
+          onChange={patch => updateSeed(patchFateSurvival(patch))}
+        />}
       />
     </WorkspaceShell>
   );

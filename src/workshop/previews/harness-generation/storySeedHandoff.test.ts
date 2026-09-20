@@ -10,9 +10,52 @@ import {
   createOfficialCapaDefaultLoadout,
   updateOfficialCapaStyle,
 } from './storySeedHandoff';
+import { buildHarnessGenerationPrompt } from '../../../server/harness-generation/prompt';
 import { OFFICIAL_STYLE_REFERENCES } from './officialCapaSkills';
 
 describe('Story Seed to Harness handoff', () => {
+  it.each([false, true])('gates Fate Survival at the provider boundary when enabled=%s, through reload', async enabled => {
+    const record = createMockStorySeedRecord();
+    record.seed.story.optional.fateSurvival = { enabled, visibility: 'partial', pressure: 'heaven' };
+    record.seed.world.optional.worldFoundations.destinedEnding = 'UNIQUE_DESTINED_ENDING';
+    record.blueprint!.majorMysteries = ['UNIQUE_SURVIVAL_MYSTERY'];
+    record.blueprint!.unresolvedPlotThreads = ['UNIQUE_SURVIVAL_THREAD'];
+    const foundation = createHarnessFoundationFromStorySeed(record);
+    expect(foundation.intendedDirection).not.toMatch(/Fate and survival|majorMysteries|unresolvedPlotThreads|UNIQUE_/);
+    const requests: HarnessGenerationRequest[] = [];
+    const modelAdapter = { getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }), arcOperation: vi.fn(), generate: vi.fn(async (request: HarnessGenerationRequest): Promise<HarnessGenerationResponse> => {
+      requests.push(request);
+      return { rawProviderResponse: JSON.stringify({ paragraphs: ['The traveler waits at the gate.'] }),
+        providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: '2026-09-20T12:00:00Z', usage: { source: 'unavailable' } } };
+    }) };
+    // Supply the existing Arc Plan authority, so the test needs no planning call.
+    foundation.initialArcPlan = { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the gate.', chapters: 100 }] };
+    const repository = new InMemoryHarnessGenerationRepository();
+    const controller = new HarnessGenerationController({ repository, modelAdapter });
+    await controller.hydrate();
+    const story = await controller.createStory(foundation);
+    const reloaded = new HarnessGenerationController({ repository, modelAdapter });
+    await reloaded.hydrate();
+    await reloaded.generateNextChapter(story.id, 'fixture');
+    const packet = requests[0].storyInformation;
+    const prompt = buildHarnessGenerationPrompt(requests[0]);
+    expect(packet.rhythm?.fatePressure).toBe('heaven');
+    expect(prompt.userPrompt.split('"fatePressure"')).toHaveLength(2);
+    expect(prompt.userPrompt.split('UNIQUE_DESTINED_ENDING')).toHaveLength(2);
+    expect(JSON.stringify(packet.currentStory)).not.toMatch(/UNIQUE_|fateSurvival|fatePressure/);
+    expect(JSON.stringify(packet.canonicalState)).not.toMatch(/UNIQUE_SURVIVAL/);
+    for (const marker of ['UNIQUE_SURVIVAL_MYSTERY', 'UNIQUE_SURVIVAL_THREAD', 'FATE SURVIVAL CONTEXT']) {
+      expect(prompt.userPrompt.split(marker)).toHaveLength(enabled ? 2 : 1);
+    }
+    expect(packet.fateSurvival).toEqual(enabled ? foundation.fateSurvival : undefined);
+    expect(reloaded.snapshot().foundations[0].input.fateSurvival?.majorMysteries).toEqual(['UNIQUE_SURVIVAL_MYSTERY']);
+    expect(prompt.measurement.sections.filter(section => section.section === 'fateSurvival')).toHaveLength(enabled ? 1 : 0);
+    // Toggle the same Foundation without deleting stored proposals, then generate again.
+    await reloaded.saveFoundationRevision(story.id, { ...foundation, fateSurvival: { ...foundation.fateSurvival!, enabled: !enabled } });
+    await reloaded.generateNextChapter(story.id, 'fixture');
+    expect(requests[1].storyInformation.fateSurvival?.majorMysteries).toEqual(enabled ? undefined : ['UNIQUE_SURVIVAL_MYSTERY']);
+  });
+
   it('copies the saved seed and Blueprint into a complete independent Foundation snapshot', () => {
     const record = createMockStorySeedRecord();
     const originalPremise = record.seed.story.required.premise;
@@ -62,7 +105,8 @@ describe('Story Seed to Harness handoff', () => {
     record.blueprint!.mcProfile = 'Additional profile detail that must survive.';
     const foundation = createHarnessFoundationFromStorySeed(record);
     expect(foundation.openingSituation).toBe('Author opening');
-    expect(foundation.intendedDirection).toContain('Author ending');
+    expect(foundation.destinedEnding).toBe('Author ending');
+    expect(foundation.intendedDirection).not.toContain('Author ending');
     expect(foundation.intendedDirection).not.toContain('Generated ending');
     expect(foundation.declaredCanon).not.toContain(record.blueprint!.logline);
     expect(foundation.declaredCanon).not.toContain(record.blueprint!.majorMysteries[0]);

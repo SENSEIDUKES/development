@@ -63,7 +63,7 @@ export const BlueprintHeaderSection = memo(({
     <div className="blueprint-title-field mx-auto mt-5 max-w-2xl">
       <LibraryTextBox
         id="blueprint-story-title"
-        label="Story Title"
+        label="Title"
         rightElement={<EditableChip />}
         value={title || ''}
         onChange={onTitleChange}
@@ -110,7 +110,7 @@ export const BlueprintOriginSection = memo(({
       <div className="blueprint-key-field">
         <LibraryTextArea
           id="blueprint-origin-premise"
-          label="Core Premise / Secret Catalyst"
+          label="Synopsis"
           rightElement={<EditableChip />}
           icon={Feather}
           value={origin.premise}

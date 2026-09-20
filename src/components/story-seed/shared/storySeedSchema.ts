@@ -438,9 +438,9 @@ export const validateStorySeedInput = (value: unknown): StorySeedValidationResul
     // Style first: it is the first decision the creation flow asks for.
     if (!normalizeStoryStyle(required.style)) errors.push('Style is required.');
     if (!text(required.genre)) errors.push('Genre is required.');
-    if (!text(required.premise)) errors.push('Premise is required.');
+    if (!text(required.premise)) errors.push('Synopsis is required.');
     if (typeof required.premise === 'string' && required.premise.length > STORY_PREMISE_MAX_LENGTH) {
-      errors.push(`Premise cannot exceed ${STORY_PREMISE_MAX_LENGTH.toLocaleString('en-US')} characters.`);
+      errors.push(`Synopsis cannot exceed ${STORY_PREMISE_MAX_LENGTH.toLocaleString('en-US')} characters.`);
     }
     const storyTags = stringList(required.storyTags);
     if (storyTags.length === 0) errors.push('Story Tags are required.');

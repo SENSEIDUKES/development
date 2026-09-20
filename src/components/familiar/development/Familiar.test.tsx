@@ -7,6 +7,7 @@ import { celestialGuardian, celestialGuardianOption } from '../../../host/famili
 import { Familiar } from './Familiar';
 import { FamiliarSprite } from './FamiliarSprite';
 import { FamiliarSelection } from './FamiliarSelection';
+import { FamiliarCompanion } from './FamiliarCompanion';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root;
@@ -144,5 +145,72 @@ describe('Familiar selection', () => {
     expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
     act(() => img.dispatchEvent(new Event('error')));
     expect(img.dataset.fallback).toBe('true');
+  });
+});
+
+describe('Floating companion', () => {
+  const pet = () => document.querySelector<HTMLButtonElement>('.familiar-companion button')!;
+  const pointer = (type: string, x: number, y: number, pointerId = 1, pointerType = 'mouse') => {
+    const event = new Event(type, { bubbles: true });
+    Object.assign(event, { clientX: x, clientY: y, pointerId, pointerType, button: 0, isPrimary: pointerId === 1 });
+    act(() => pet().dispatchEvent(event));
+  };
+  const mouseClick = () => act(() => { pet().dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 })); });
+  const location = () => {
+    const style = document.querySelector<HTMLElement>('.familiar-companion')!.style;
+    return { x: Number.parseFloat(style.left), y: Number.parseFloat(style.top) };
+  };
+
+  it.each(['mouse', 'touch'])('distinguishes %s drag from tap and only reads Energy on tap', async pointerType => {
+    const client: EnergyClient = { getSnapshot: vi.fn().mockResolvedValue(snapshot(81)), grantDevelopment: vi.fn(), resetDevelopment: vi.fn() };
+    await act(async () => root.render(<EnergyClientProvider client={client}><FamiliarCompanion familiar={celestialGuardian} /></EnergyClientProvider>));
+    pointer('pointerdown', 900, 600, 1, pointerType);
+    pointer('pointermove', 100, 100, 2, pointerType);
+    expect(document.querySelector('[data-dragging]')).toBeNull();
+    pointer('pointermove', -2000, -2000, 1, pointerType);
+    expect(location()).toEqual({ x: 12, y: 12 });
+    pointer('pointerup', -2000, -2000, 1, pointerType);
+    mouseClick();
+    expect(client.getSnapshot).not.toHaveBeenCalled();
+    pointer('pointerdown', 50, 50, 1, pointerType);
+    pointer('pointermove', 52, 51, 1, pointerType);
+    pointer('pointerup', 52, 51, 1, pointerType);
+    await act(async () => mouseClick());
+    expect(client.getSnapshot).toHaveBeenCalledOnce();
+    expect(document.body.textContent).toContain('Current Energy81');
+  });
+
+  it('cleans up cancelled gestures, supports keyboard movement, and reclamps after resizing', async () => {
+    await act(async () => root.render(<FamiliarCompanion familiar={celestialGuardian} />));
+    pointer('pointerdown', 900, 600);
+    pointer('pointermove', 890, 580);
+    pointer('pointercancel', 890, 580);
+    mouseClick();
+    expect(pet().getAttribute('aria-expanded')).toBe('false');
+    expect(document.querySelector('[data-dragging]')).toBeNull();
+    const before = location();
+    act(() => pet().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true })));
+    expect(location().x).toBe(before.x - 16);
+    const originalWidth = window.innerWidth;
+    const originalHeight = window.innerHeight;
+    try {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: 320 });
+      Object.defineProperty(window, 'innerHeight', { configurable: true, value: 300 });
+      act(() => window.dispatchEvent(new Event('resize')));
+      expect(location().x).toBeLessThanOrEqual(204);
+      expect(location().y).toBeLessThanOrEqual(300 - 12 - 104 * 208 / 192);
+      await click(pet()); // Keyboard-style activation still works after a cancelled pointer.
+      expect(document.body.textContent).toContain('Sign in to see your Energy');
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
+      Object.defineProperty(window, 'innerHeight', { configurable: true, value: originalHeight });
+    }
+  });
+
+  it('keeps hidden comparison panes from creating another floating companion', () => {
+    const hidden = document.createElement('div');
+    const boundaryRef = { current: hidden };
+    act(() => root.render(<FamiliarCompanion familiar={celestialGuardian} boundaryRef={boundaryRef} />));
+    expect(document.querySelector('.familiar-companion')).toBeNull();
   });
 });

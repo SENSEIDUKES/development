@@ -84,6 +84,39 @@ existing `EnergyClientProvider` with its verified current-user token. Keep the W
 identity adapter, selectors, stage, reference GIFs, and navigation in Development.
 No Light-Novels files were changed.
 
+### Floating companion and product-page integration — 2026-09-20
+
+`FamiliarCompanion` is the reusable app-shell mount exported by
+`@seihouse/library/familiar`. It portals a small 104px sprite above page content;
+pointer capture supports mouse, pen, and touch dragging. A six-pixel threshold
+separates dragging from tapping, and cancelled gestures cannot open Energy.
+Arrow keys move the focused pet. Resize, scrolling, and the mobile visual viewport
+clamp it to the visible page. The existing sprite renderer preserves package
+animation timing and reduced-motion behavior. `Familiar` also accepts host-owned
+panel children for future actions; no support-ticket backend is introduced.
+
+The Development Library document mounts one companion around Home, Library,
+Discover, and Profile, so navigation retains its position. Creator also mounts
+it in its existing document. Standalone Profile, Reader Chamber, and the Familiar
+test stage constrain it to their visible Development canvas. Hidden Compare
+panes, Original Reference, signed-out accounts, and the Workshop catalog do not
+produce a floating companion. No global mount was added to the Workshop App.
+
+`ProductFamiliarPreview` is Workshop-only composition: product fixtures start
+with Celestial Guardian equipped for inspection. Profile's existing controller
+reports loaded/committed selection and account changes into that session; nested
+pages reuse the same mount. Energy still comes from the real
+`/api/library-economy?capability=energy` ledger for that account. Selection and drag position are session state, not new
+production persistence. A document reload resets the preview position.
+
+For production transfer, mount **one** `FamiliarCompanion` under the existing
+authenticated Energy provider and above the router's product-page outlet, with
+the definition selected by the current account's persisted `familiarId`. Keep it
+mounted across route changes, key it by account identity, and remove it on
+sign-out or no selection. Omit `boundaryRef` to use the app viewport. Do not
+transfer `ProductFamiliarPreview`, Development identity tokens, or fixture defaults.
+The Library companion remains outside the portable SEN Reader implementation.
+
 ## Verification
 
 Focused tests cover source hashes, all 26 states, geometry, variable frame timing,
@@ -105,6 +138,15 @@ all 41 tests in those three affected files passed in a serial recheck with a 20-
 timeout. The broad suite was not completed. Local visual artifacts are in
 `output/playwright/` (not shipped).
 
+Floating companion follow-up: 271 focused tests passed across 16 files, including
+pointer/touch threshold and cancellation, bounds/resize, keyboard movement,
+hidden comparison panes, nested mounts, account removal, and navigation position.
+TypeScript, production build, package ownership, and both packed-consumer smoke
+checks passed. Chromium inspection covered Home → Profile, normal/fullscreen
+Reader, desktop mouse dragging, native touch input at 390px, and Energy panel
+containment at 320px. The pre-existing Home backdrop URL was unavailable during
+local QA; the Familiar atlas and Energy endpoint loaded successfully.
+
 ## Workshop history
 
 - 2026-09-20: Inspected the complete supplied package and atlas; copied required assets
@@ -112,3 +154,5 @@ timeout. The broad suite was not completed. Local visual artifacts are in
   and authoritative Energy interaction without creating a balance or capacity policy.
 - 2026-09-20: Added the requested profile Customization → Familiar selection tab and
   hosted GIF hero through the existing profile services boundary.
+- 2026-09-20: Added the floating, draggable companion to Development product pages,
+  with a contained drag preview, touch/keyboard interaction, and app-shell transfer instructions.

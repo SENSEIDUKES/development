@@ -3,6 +3,11 @@
 .familiar-image-status { display: grid; place-items: center; height: 100%; min-height: 208px; font-size: 14px; }
 .familiar-trigger { display: block; width: min(240px, 100%); padding: 0; border: 0; border-radius: 24px; background: transparent; cursor: pointer; color: inherit; }
 .familiar-trigger:focus-visible { outline: 2px solid #96ddf9; outline-offset: 8px; }
+.familiar-companion { position: fixed; z-index: 45; isolation: isolate; }
+.familiar-companion .familiar-trigger { width: 100%; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.familiar-companion[data-dragging] .familiar-trigger { cursor: grabbing; }
+.familiar-companion .familiar-image-status { min-height: 112px; font-size: 11px; }
+.familiar-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .familiar-energy-panel { width: min(280px, calc(100vw - 24px)); padding: 16px; background: #101c2c; color: #eef7ff; border: 1px solid #668698; border-radius: 16px; z-index: 300; box-shadow: 0 12px 40px #0006; }
 .familiar-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-weight: 600; }
 .familiar-panel-button { min-width: 44px; min-height: 44px; cursor: pointer; border-radius: 8px; }

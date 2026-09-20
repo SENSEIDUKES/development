@@ -4,7 +4,7 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `f89cb41`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-09-16
+- **Last Workshop update:** 2026-09-20
 - **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
@@ -439,3 +439,11 @@ and block-scoped rendering together; do not copy the preview fixtures as data.
 ### 2026-09-06 — Library UI ownership migration
 
 Reusable presentation now comes from the canonical Library UI package. Portable SEN surfaces resolve presentation through the host provider; the first-party Workshop supplies LibraryPresentationProvider. Domain, generation, persistence, media, and locked reference sources are unchanged.
+
+### 2026-09-20 — Library Familiar host preview
+
+The Development preview composes the reusable floating Library Familiar around
+the Reader canvas. It supports dragging and authoritative Energy inspection in
+normal and fullscreen reading states. The portable SEN Reader and locked reference
+have no Familiar dependency; production should mount it once in the Library app
+shell. See [Familiar transfer notes](../familiar/README.md).

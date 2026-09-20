@@ -152,3 +152,13 @@ The Development capture now mounts the existing `StoryCreationPreviewRuntime`,
 so Story Seed receives its required repository and runtime provider. The
 canonical full-flow browser verification remains `?preview=story-seed`. Locked
 historical captures were not edited.
+
+## 2026-09-20 — Floating Familiar on product pages
+
+The Development document owns one Library Familiar across Home, Library, Discover,
+and Profile, retaining drag position during in-document navigation. Creator mounts
+the same companion in its document. Guest and original-home fixtures omit it.
+Profile supplies committed selection/account changes; Energy uses the existing
+server account client. The Workshop catalog and locked references have no global
+pet. See [Familiar transfer notes](../familiar/README.md) for the single production
+app-shell mount and preview-only fixture boundaries.

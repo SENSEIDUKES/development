@@ -67,6 +67,7 @@ export interface MockUserProfileServicesOptions {
   claimMode?: 'success' | 'failed' | 'unresolved';
   repairMode?: 'success' | 'failed';
   profileOverride?: Partial<UserProfile>;
+  onFamiliarProfile?: (selection: { uid: string | null; familiarId?: string }) => void;
   unlockedSpecialQi?: readonly SpecialQiId[];
   /** Records a production action the Workshop deliberately does not perform. */
   logExcludedAction: ExcludedActionLogger;
@@ -83,6 +84,7 @@ export function createMockUserProfileServices({
   claimMode = state === 'claim-failed' ? 'failed' : state === 'claim-unresolved' ? 'unresolved' : 'success',
   repairMode = 'success',
   profileOverride,
+  onFamiliarProfile,
   unlockedSpecialQi,
   logExcludedAction,
   onSignIn,
@@ -170,6 +172,7 @@ export function createMockUserProfileServices({
       setClaimPending(false);
       setClaimResult(undefined);
       if (!currentUser) {
+        onFamiliarProfile?.({ uid: null });
         profileRef.current = null;
         setProfile(null);
         setFormData({});
@@ -188,6 +191,7 @@ export function createMockUserProfileServices({
           return;
         }
         profileRef.current = scenario.profile ? { ...scenario.profile, ...profileOverride } : null;
+        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: profileRef.current?.familiarId });
         setProfile(profileRef.current);
         setFormData(profileRef.current ?? {});
         setIsLoading(false);
@@ -319,6 +323,7 @@ export function createMockUserProfileServices({
         setProfile(next);
         // Preserve unrelated identity/language drafts while committing this field.
         setFormData(previous => ({ ...previous, familiarId: id }));
+        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: id });
       } catch (failure) {
         if (mounted.current && epoch === accountEpoch.current) setError(failure instanceof Error ? failure.message : 'Familiar selection failed.');
       } finally {

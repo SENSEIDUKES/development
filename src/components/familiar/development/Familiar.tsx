@@ -1,6 +1,7 @@
 import { SEIPopover, SEIPopoverTrigger, SEIPopoverContent, SEIPopoverTitle, SEIPopoverDescription, SEIPopoverClose } from '@seihouse/ui';
 import { useEnergyAccount } from '../../energy/shared/useEnergyAccount';
 import { FamiliarSprite, type FamiliarSpriteProps } from './FamiliarSprite';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 function FamiliarEnergy() {
   // Mount on each open: re-read the same server ledger used by the profile.
@@ -17,18 +18,28 @@ function FamiliarEnergy() {
 }
 
 /** Uses the host's EnergyClientProvider. No account identity or ledger is created here. */
-export function Familiar(props: FamiliarSpriteProps) {
-  return <SEIPopover>
-    <SEIPopoverTrigger className="familiar-trigger" aria-label={`${props.familiar.displayName}: show Energy`}>
+export interface FamiliarProps extends FamiliarSpriteProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  triggerProps?: ButtonHTMLAttributes<HTMLButtonElement>;
+  panelSide?: 'top' | 'bottom';
+  /** Host-owned actions can extend the panel without changing sprite playback. */
+  children?: ReactNode;
+}
+
+export function Familiar({ open, onOpenChange, triggerProps, panelSide = 'top', children, ...props }: FamiliarProps) {
+  return <SEIPopover open={open} onOpenChange={onOpenChange}>
+    <SEIPopoverTrigger className="familiar-trigger" aria-label={`${props.familiar.displayName}: show Energy`} {...triggerProps}>
       <FamiliarSprite {...props} />
     </SEIPopoverTrigger>
-    <SEIPopoverContent className="familiar-energy-panel" side="top" collisionPadding={12}>
+    <SEIPopoverContent className="familiar-energy-panel" side={panelSide} collisionPadding={12}>
       <div className="familiar-panel-heading">
         <SEIPopoverTitle>Energy</SEIPopoverTitle>
         <SEIPopoverClose className="familiar-panel-button" aria-label="Close Energy panel">×</SEIPopoverClose>
       </div>
       <SEIPopoverDescription>Your current account balance.</SEIPopoverDescription>
       <FamiliarEnergy />
+      {children}
     </SEIPopoverContent>
   </SEIPopover>;
 }

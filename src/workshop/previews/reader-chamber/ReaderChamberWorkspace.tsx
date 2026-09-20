@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { ProductFamiliarSession, ProductFamiliarSurface } from '../familiar/ProductFamiliarPreview';
 import ReferenceReaderChamber from '../../../components/reader-chamber/reference/ReaderChamber';
 import { CodexSheetOverlay as ReferenceCodexSheetOverlay } from '../../../components/reader-codex/reference/CodexSheetOverlay';
 import {
@@ -379,6 +380,7 @@ export function ReaderChamberWorkspace() {
         </PreviewCanvas>
       )}
       renderDevelopment={() => (
+        <ProductFamiliarSession><ProductFamiliarSurface>
         <PreviewCanvas
           key={`development-${activeState}`}
           CodexOverlay={DevelopmentCodexSheetOverlay}
@@ -386,6 +388,7 @@ export function ReaderChamberWorkspace() {
         >
           <DevelopmentReaderChamber {...chamberProps} />
         </PreviewCanvas>
+        </ProductFamiliarSurface></ProductFamiliarSession>
       )}
     />
   );

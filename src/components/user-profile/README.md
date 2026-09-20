@@ -12,6 +12,16 @@
 - **Last source comparison:** 2026-09-10
 - **Replica status:** `@seihouse/library/profile` surface consuming separate Library economy capabilities
 
+### 2026-09-20 — Floating Familiar preview
+
+Development profile fixtures start with Celestial Guardian selected. The existing
+profile controller reports loaded and successfully saved Familiar selections to
+the shared preview session; sign-out removes the companion, and account changes
+reset its Energy interaction. An embedded Profile reuses the app's single mount.
+Standalone Development/Compare canvases constrain their pet to their own visible
+area. The profile component and SEN Reader do not own a global pet mount; see
+[Familiar production transfer notes](../familiar/README.md).
+
 ## Current ownership (2026-09-19)
 
 Profile owns the Celestial Library account surface and orchestration; it does

@@ -731,7 +731,9 @@ describe('Cultivator Cave settings', () => {
   });
 
   it('selects the available Familiar through the profile owner without saving unrelated edits', async () => {
-    const { controller } = await renderCave();
+    const onFamiliarProfile = vi.fn();
+    const { controller } = await renderCave({ adapter: { onFamiliarProfile } });
+    expect(onFamiliarProfile).toHaveBeenLastCalledWith({ uid: 'workshop-cultivator', familiarId: undefined });
     await click(byText('[data-cave-account-actions] button', 'Settings'));
     await act(async () => controller().setFormData(previous => ({ ...previous, displayName: 'Draft Name' })));
     await click(byText('[aria-label="Customization sections"] [role="tab"]', 'Familiar'));
@@ -741,8 +743,10 @@ describe('Cultivator Cave settings', () => {
     expect(selection.querySelector('img')?.getAttribute('src')).toBe('https://gif.seihouse.org/LIBRARY/GIFS/celestial%20Guardian.gif');
     await click(byText('button', 'Select Celestial Guardian'));
     expect(controller().isSavingFamiliar).toBe(true);
+    expect(onFamiliarProfile).not.toHaveBeenCalledWith({ uid: 'workshop-cultivator', familiarId: 'celestial-guardian' });
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
     expect(controller().profile?.familiarId).toBe('celestial-guardian');
+    expect(onFamiliarProfile).toHaveBeenLastCalledWith({ uid: 'workshop-cultivator', familiarId: 'celestial-guardian' });
     expect(controller().profile?.displayName).not.toBe('Draft Name');
     expect(controller().formData.displayName).toBe('Draft Name');
     expect(selection.querySelector('button')?.getAttribute('aria-pressed')).toBe('true');

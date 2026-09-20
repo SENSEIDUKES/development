@@ -10,13 +10,20 @@ import type { HeaderConfiguration } from './headerPreviewData';
 import { libraryPreviewUrl, readLibraryPreviewLocation } from './libraryPreviewNavigation';
 import { type LibraryLocation } from '@seihouse/library/shell';
 import { HeaderSlotPreview } from './HeaderSlotPreview';
+import { ProductFamiliarSession, ProductFamiliarSurface } from '../familiar/ProductFamiliarPreview';
 
 /** Exercise the real Development consumers with their existing Workshop adapters. */
 export function DevelopmentHeaderPreview({ source, state }: { source: HeaderConfiguration; state: string }) {
   const [message, setMessage] = useState('Local preview ready.');
   if (source === 'header-states') return <HeaderSlotPreview state={state} />;
-  if (source === 'main-library' || source === 'cultivator-cave') return <LibraryAppPreview source={source} state={state} message={message} setMessage={setMessage} />;
-  if (source === 'story-seed') return <StorySeedWorkspace embedded localGeneration initialState={state as PreviewState} />;
+  if (source === 'main-library' || source === 'cultivator-cave') {
+    const app = <LibraryAppPreview source={source} state={state} message={message} setMessage={setMessage} />;
+    if (new URLSearchParams(window.location.search).get('homeReference') === '1') return app;
+    return <ProductFamiliarSession initialState={source === 'cultivator-cave' ? state as UserProfilePreviewState : state === 'guest' ? 'signed-out' : 'developed-cultivator'}>
+      <ProductFamiliarSurface viewport>{app}</ProductFamiliarSurface>
+    </ProductFamiliarSession>;
+  }
+  if (source === 'story-seed') return <ProductFamiliarSession><ProductFamiliarSurface viewport><StorySeedWorkspace embedded localGeneration initialState={state as PreviewState} /></ProductFamiliarSurface></ProductFamiliarSession>;
   return null;
 }
 

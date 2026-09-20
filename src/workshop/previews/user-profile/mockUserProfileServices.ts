@@ -29,6 +29,7 @@
 
 import type React from 'react';
 import { celestialGuardianOption } from '../../../host/familiar/celestialGuardian';
+import { normalizeFamiliarSize } from '@seihouse/library/familiar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '@seihouse/sen/contracts';
 import { type DaoRankData, type DaoClaimResult, type SpecialQiId, type UserProfileController, type UserProfileControllerProps, type UserProfileServices } from '@seihouse/library/profile';
@@ -67,7 +68,7 @@ export interface MockUserProfileServicesOptions {
   claimMode?: 'success' | 'failed' | 'unresolved';
   repairMode?: 'success' | 'failed';
   profileOverride?: Partial<UserProfile>;
-  onFamiliarProfile?: (selection: { uid: string | null; familiarId?: string }) => void;
+  onFamiliarProfile?: (selection: { uid: string | null; familiarId?: string; familiarSize?: number }) => void;
   unlockedSpecialQi?: readonly SpecialQiId[];
   /** Records a production action the Workshop deliberately does not perform. */
   logExcludedAction: ExcludedActionLogger;
@@ -191,7 +192,7 @@ export function createMockUserProfileServices({
           return;
         }
         profileRef.current = scenario.profile ? { ...scenario.profile, ...profileOverride } : null;
-        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: profileRef.current?.familiarId });
+        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: profileRef.current?.familiarId, familiarSize: profileRef.current?.familiarSize });
         setProfile(profileRef.current);
         setFormData(profileRef.current ?? {});
         setIsLoading(false);
@@ -323,7 +324,7 @@ export function createMockUserProfileServices({
         setProfile(next);
         // Preserve unrelated identity/language drafts while committing this field.
         setFormData(previous => ({ ...previous, familiarId: id }));
-        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: id });
+        onFamiliarProfile?.({ uid: currentUser.uid, familiarId: id, familiarSize: next.familiarSize });
       } catch (failure) {
         if (mounted.current && epoch === accountEpoch.current) setError(failure instanceof Error ? failure.message : 'Familiar selection failed.');
       } finally {
@@ -332,6 +333,16 @@ export function createMockUserProfileServices({
           setIsSavingFamiliar(false);
         }
       }
+    }, [currentUser]);
+
+    const handleFamiliarSizeChange = useCallback((size: number) => {
+      if (!currentUser || !profileRef.current?.familiarId) return;
+      const familiarSize = normalizeFamiliarSize(size);
+      const next = { ...profileRef.current, familiarSize, updatedAt: new Date().toISOString() };
+      profileRef.current = next;
+      setProfile(next);
+      setFormData(previous => ({ ...previous, familiarSize }));
+      onFamiliarProfile?.({ uid: currentUser.uid, familiarId: next.familiarId, familiarSize });
     }, [currentUser]);
 
     const handleLanguageChangeDirect = useCallback(
@@ -768,6 +779,7 @@ export function createMockUserProfileServices({
       handleChange,
       handleSave,
       handleFamiliarChange,
+      handleFamiliarSizeChange,
       isSavingFamiliar,
 
       showAdvanced,

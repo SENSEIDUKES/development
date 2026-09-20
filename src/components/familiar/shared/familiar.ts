@@ -27,3 +27,10 @@ export interface FamiliarOption {
   stillUrl: string;
   available: boolean;
 }
+
+export const FAMILIAR_DEFAULT_SIZE = 1;
+export const FAMILIAR_MIN_SIZE = 0.6;
+export const FAMILIAR_MAX_SIZE = 2;
+export function normalizeFamiliarSize(size = FAMILIAR_DEFAULT_SIZE): number {
+  return Number.isFinite(size) ? Math.min(FAMILIAR_MAX_SIZE, Math.max(FAMILIAR_MIN_SIZE, size)) : FAMILIAR_DEFAULT_SIZE;
+}

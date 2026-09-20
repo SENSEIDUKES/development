@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act } from 'react';
+import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EnergyClientProvider, type EnergyClient, type EnergyAccountSnapshot } from '@seihouse/library/energy';
@@ -8,6 +8,7 @@ import { Familiar } from './Familiar';
 import { FamiliarSprite } from './FamiliarSprite';
 import { FamiliarSelection } from './FamiliarSelection';
 import { FamiliarCompanion } from './FamiliarCompanion';
+import { FamiliarRecall } from './FamiliarRecall';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root;
@@ -162,6 +163,13 @@ describe('Familiar selection', () => {
 });
 
 describe('Floating companion', () => {
+  function ManagedCompanion() {
+    const [minimized, setMinimized] = useState(false);
+    return <>
+      {minimized && <FamiliarRecall familiar={celestialGuardian} onRecall={() => setMinimized(false)} />}
+      <FamiliarCompanion familiar={celestialGuardian} minimized={minimized} onMinimize={() => setMinimized(true)} />
+    </>;
+  }
   const pet = () => document.querySelector<HTMLButtonElement>('.familiar-companion button')!;
   const pointer = (type: string, x: number, y: number, pointerId = 1, pointerType = 'mouse') => {
     const event = new Event(type, { bubbles: true });
@@ -211,7 +219,7 @@ describe('Floating companion', () => {
       Object.defineProperty(window, 'innerHeight', { configurable: true, value: 300 });
       act(() => window.dispatchEvent(new Event('resize')));
       expect(location().x).toBeLessThanOrEqual(204);
-      expect(location().y).toBeLessThanOrEqual(300 - 12 - 104 * 208 / 192);
+      expect(location().y).toBeLessThanOrEqual(300 - 12 - 104 * 208 / 192 + 0.001);
       await click(pet()); // Keyboard-style activation still works after a cancelled pointer.
       expect(document.body.textContent).toContain('Sign in to see your Energy');
     } finally {
@@ -225,5 +233,35 @@ describe('Floating companion', () => {
     const boundaryRef = { current: hidden };
     act(() => root.render(<FamiliarCompanion familiar={celestialGuardian} boundaryRef={boundaryRef} />));
     expect(document.querySelector('.familiar-companion')).toBeNull();
+  });
+
+  it('minimizes from the panel, restores its position, and returns keyboard focus', async () => {
+    await act(async () => root.render(<ManagedCompanion />));
+    act(() => pet().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true })));
+    const before = location();
+    await click(pet());
+    await click([...document.querySelectorAll('button')].find(button => button.textContent === 'Minimize Familiar')!);
+    expect(document.querySelector('.familiar-companion')).toBeNull();
+    const recall = container.querySelector<HTMLButtonElement>('.familiar-recall')!;
+    expect(document.activeElement).toBe(recall);
+    await click(recall);
+    expect(location()).toEqual(before);
+    expect(document.activeElement).toBe(pet());
+    expect(pet().getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('resizes live, preserves aspect ratio, and caps invalid host preferences', () => {
+    act(() => root.render(<FamiliarCompanion familiar={celestialGuardian} size={2} />));
+    expect(document.querySelector<HTMLElement>('.familiar-companion')!.style.width).toBe('208px');
+    act(() => root.render(<FamiliarCompanion familiar={celestialGuardian} size={0.6} />));
+    expect(document.querySelector<HTMLElement>('.familiar-companion')!.style.width).toBe('62.4px');
+    act(() => root.render(<FamiliarCompanion familiar={celestialGuardian} size={NaN} />));
+    expect(document.querySelector<HTMLElement>('.familiar-companion')!.style.width).toBe('104px');
+    expect(container.querySelector('.familiar-companion')).toBeNull(); // The pet remains portalled to the page.
+    act(() => root.render(<FamiliarCompanion familiar={celestialGuardian} size={2} bottomInset={72} />));
+    pointer('pointerdown', 600, 500);
+    pointer('pointermove', 4000, 4000);
+    pointer('pointerup', 4000, 4000);
+    expect(location().y + 208 * (208 / 192)).toBeLessThanOrEqual(window.innerHeight - 72 - 12 + 0.001);
   });
 });

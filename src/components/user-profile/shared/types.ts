@@ -43,6 +43,8 @@ export interface UserProfile {
   activePortraitId?: string;
   /** Development customization selection; the host validates availability when saving. */
   familiarId?: string;
+  /** Familiar scale preference; 1 is the default size. */
+  familiarSize?: number;
   /** The account's UI language. Distinct from the reading language. */
   interfaceLanguage: SenLanguageCode;
   /** The language Reader Chamber displays by default; never story canon. */

@@ -17,7 +17,7 @@ export interface WorkshopSource {
 }
 
 /** Workshop navigation only; does not change package or implementation ownership. */
-export type WorkshopSection = 'home' | 'library' | 'sen' | 'shared' | 'library-components' | 'icons' | 'familiar' | 'provenance';
+export type WorkshopSection = 'home' | 'library' | 'sen' | 'shared' | 'library-components' | 'icons' | 'provenance';
 
 export type WorkshopEntry = {
   id: string;
@@ -54,7 +54,7 @@ export function getWorkshopVersionLabel(version: WorkshopEntry['version']) {
  */
 export const workshopEntries: WorkshopEntry[] = [
   {
-    id: 'familiar', section: 'familiar', title: 'Familiar comparison workspace',
+    id: 'familiar', section: 'shared', title: 'Familiar',
     description: 'Compare the supplied Celestial Guardian greeting with the reusable sprite renderer and live Energy interaction.',
     category: 'animations', version: 'v1.0',
     source: { repository: 'Supplied Celestial Guardian package', path: 'celestial-guardian/', lastCompared: '2026-09-20' },

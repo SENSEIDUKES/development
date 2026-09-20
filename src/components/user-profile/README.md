@@ -22,6 +22,11 @@ Standalone Development/Compare canvases constrain their pet to their own visible
 area. The profile component and SEN Reader do not own a global pet mount; see
 [Familiar production transfer notes](../familiar/README.md).
 
+The Familiar customization section now includes a live 60–200% size slider and
+Reset. The existing profile controller owns `familiarSize` and preserves unrelated
+drafts. A minimized Familiar appears as a recall button in the Profile header;
+the app session preserves its position and size across Home/Profile navigation.
+
 ## Current ownership (2026-09-19)
 
 Profile owns the Celestial Library account surface and orchestration; it does

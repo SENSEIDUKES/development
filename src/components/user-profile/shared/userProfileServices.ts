@@ -77,6 +77,7 @@ export interface UserProfileController {
   /** Saves only the Familiar selection through the existing account owner. */
   handleFamiliarChange?: (id: string) => Promise<void> | void;
   isSavingFamiliar?: boolean;
+  handleFamiliarSizeChange?: (size: number) => void;
   unlockedSpecialQi?: readonly SpecialQiId[];
   /** Legacy daily refinement claim; the locked reference page still reads it. The Cave's Daily Dao Pillar claims through `src/components/dao-pillar` instead. */
   dailyClaim?: DaoClaimState;

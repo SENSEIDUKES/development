@@ -39,10 +39,9 @@ describe('WorkshopHome', () => {
       Home: ['light-novels-home', 'library-shell', 'user-profile', 'dao-pillar'],
       Library: ['story-seed'],
       SEN: ['chapter-generation-flow', 'harness-generation', 'chapter-generation-manifestation', 'character-voice', 'reader-codex', 'reader-chamber', 'card-workshop'],
-      Shared: ['celestial-backdrop', 'idle-cultivation', 'relics-gallery', 'energy'],
+      Shared: ['familiar', 'celestial-backdrop', 'idle-cultivation', 'relics-gallery', 'energy'],
       'Library Components': [],
       Icons: [],
-      Familiar: ['familiar'],
       Provenance: [],
     };
     expect(previewIds()).toEqual(groups.Home);
@@ -73,7 +72,7 @@ describe('WorkshopHome', () => {
 
   it('connects every tab to uniquely labelled panels with one tab stop', () => {
     const tabs = container.querySelectorAll<HTMLButtonElement>('[role="tab"]');
-    expect([...tabs].map((element) => element.textContent)).toEqual(['Home', 'Library', 'SEN', 'Shared', 'Library Components', 'Icons', 'Familiar', 'Provenance']);
+    expect([...tabs].map((element) => element.textContent)).toEqual(['Home', 'Library', 'SEN', 'Shared', 'Library Components', 'Icons', 'Provenance']);
     for (const element of tabs) {
       select(element.textContent!);
       expect(container.querySelectorAll('[role="tab"][tabindex="0"]')).toHaveLength(1);

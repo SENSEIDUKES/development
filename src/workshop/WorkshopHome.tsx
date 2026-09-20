@@ -8,7 +8,7 @@ import {
 import { LibraryComponentsGrid } from './LibraryComponents';
 import { IconsGrid } from './Icons';
 import { ProvenanceTab } from './ProvenanceTab';
-import { FamiliarPreview } from './previews/familiar/FamiliarPreview';
+import { celestialGuardianOption } from '../host/familiar/celestialGuardian';
 
 const HOME_TABS: ReadonlyArray<{ id: WorkshopSection; label: string; description: string }> = [
   { id: 'home', label: 'Home', description: 'The Library app shell and user profile.' },
@@ -17,7 +17,6 @@ const HOME_TABS: ReadonlyArray<{ id: WorkshopSection; label: string; description
   { id: 'shared', label: 'Shared', description: 'Reusable pieces and standalone visual previews.' },
   { id: 'library-components', label: 'Library Components', description: 'Reusable Celestial Library primitives, rendered live.' },
   { id: 'icons', label: 'Icons', description: 'Every current custom Celestial Library SVG glyph, rendered live.' },
-  { id: 'familiar', label: 'Familiar', description: 'Meet the Celestial Guardian and explore its original animations.' },
   { id: 'provenance', label: 'Provenance', description: 'Reusable provenance marks, records, evidence contracts, and future connection maps for AI-generated assets.' },
 ];
 
@@ -110,6 +109,7 @@ function CardWorkshopVisual() {
 }
 
 function CardVisual({ id }: { id: string }) {
+  if (id === 'familiar') return <img src={celestialGuardianOption.stillUrl} alt="Celestial Guardian Familiar" style={{ height: '100%', width: '100%', objectFit: 'contain' }} />;
   if (id === 'card-workshop') return <CardWorkshopVisual />;
   if (id === 'celestial-backdrop') return <CelestialVisual />;
   if (id === 'chapter-generation-manifestation') return <ManifestationVisual />;
@@ -201,13 +201,12 @@ export function WorkshopHome() {
                     {tab.description}
                   </p>
                 </header>
-                {tab.id === 'familiar' && <FamiliarPreview />}
                 {workshopEntries.some((entry) => entry.section === tab.id) && <div className="workshop-grid">
                   {workshopEntries.filter((entry) => entry.section === tab.id).map((entry) => (
                     <a className="workshop-card" href={`?preview=${entry.id}`} key={entry.id}>
-                      {entry.id !== 'familiar' && <div className="workshop-card-visual">
+                      <div className="workshop-card-visual">
                         <CardVisual id={entry.id} />
-                      </div>}
+                      </div>
                       <div className="workshop-card-body">
                         <h2>{entry.title}</h2>
                         <p>{entry.description}</p>

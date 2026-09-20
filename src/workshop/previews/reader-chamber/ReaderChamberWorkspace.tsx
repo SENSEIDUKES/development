@@ -380,7 +380,7 @@ export function ReaderChamberWorkspace() {
         </PreviewCanvas>
       )}
       renderDevelopment={() => (
-        <ProductFamiliarSession><ProductFamiliarSurface>
+        <ProductFamiliarSession><ProductFamiliarSurface bottomInset={80}>
         <PreviewCanvas
           key={`development-${activeState}`}
           CodexOverlay={DevelopmentCodexSheetOverlay}

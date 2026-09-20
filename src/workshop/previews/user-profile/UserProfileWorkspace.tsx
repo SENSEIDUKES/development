@@ -170,7 +170,7 @@ function UserProfileContent({ embedded, initialState }: { embedded: boolean; ini
     </div>
   );
 
-  if (embedded) return <ProductFamiliarSurface>{renderPane(DevelopmentUserProfile, 'development')}</ProductFamiliarSurface>;
+  if (embedded) return <ProductFamiliarSurface headerRecall bottomInset={72}>{renderPane(DevelopmentUserProfile, 'development')}</ProductFamiliarSurface>;
 
   return (
     <FeatureWorkspace
@@ -207,7 +207,7 @@ function UserProfileContent({ embedded, initialState }: { embedded: boolean; ini
         ],
       }}
       renderReference={() => renderPane(ReferenceUserProfile, 'reference')}
-      renderDevelopment={() => <ProductFamiliarSurface>{renderPane(DevelopmentUserProfile, 'development')}</ProductFamiliarSurface>}
+      renderDevelopment={() => <ProductFamiliarSurface headerRecall bottomInset={72}>{renderPane(DevelopmentUserProfile, 'development')}</ProductFamiliarSurface>}
     />
   );
 }

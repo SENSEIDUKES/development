@@ -162,3 +162,8 @@ Profile supplies committed selection/account changes; Energy uses the existing
 server account client. The Workshop catalog and locked references have no global
 pet. See [Familiar transfer notes](../familiar/README.md) for the single production
 app-shell mount and preview-only fixture boundaries.
+
+Minimized Familiars use the shared header's generic
+`WorkspaceHeaderAccessoryProvider` slot for a callback button. The slot is
+host-provided content and owns no Familiar or account state. Size and visibility
+remain with the profile/app owners.

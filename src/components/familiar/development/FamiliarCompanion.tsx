@@ -1,12 +1,18 @@
 import { useEffect, useId, useRef, useState, type RefObject, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { Familiar, type FamiliarProps } from './Familiar';
+import { normalizeFamiliarSize } from '../shared/familiar';
 
 type Point = { x: number; y: number };
 type Bounds = { left: number; top: number; right: number; bottom: number };
 export interface FamiliarCompanionProps extends Pick<FamiliarProps, 'familiar' | 'animation' | 'paused' | 'children'> {
   /** Omit in the product app shell. Workshop hosts constrain it to their preview. */
   boundaryRef?: RefObject<HTMLElement | null>;
+  size?: number;
+  minimized?: boolean;
+  onMinimize?: () => void;
+  /** Space occupied by a host's persistent bottom navigation. */
+  bottomInset?: number;
 }
 
 const WIDTH = 104;
@@ -17,8 +23,10 @@ const clamp = (point: Point, bounds: Bounds): Point => ({
 });
 
 /** One instance belongs in the host app shell, beneath its account/Energy providers. */
-export function FamiliarCompanion({ boundaryRef, ...props }: FamiliarCompanionProps) {
-  const height = WIDTH * props.familiar.cellHeight / props.familiar.cellWidth;
+export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMinimize, bottomInset = 0, children, ...props }: FamiliarCompanionProps) {
+  const scale = normalizeFamiliarSize(size);
+  const ratio = props.familiar.cellHeight / props.familiar.cellWidth;
+  const [width, setWidth] = useState(WIDTH * scale);
   const [bounds, setBounds] = useState<Bounds | null>(null);
   const [position, setPosition] = useState<Point | null>(null);
   const [open, setOpen] = useState(false);
@@ -26,6 +34,13 @@ export function FamiliarCompanion({ boundaryRef, ...props }: FamiliarCompanionPr
   const gesture = useRef<{ id: number; start: Point; origin: Point; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
   const instructions = useId();
+  const element = useRef<HTMLDivElement>(null);
+  const wasMinimized = useRef(false);
+  useEffect(() => {
+    if (!minimized && wasMinimized.current) element.current?.querySelector('button')?.focus({ preventScroll: true });
+    if (minimized) setOpen(false);
+    wasMinimized.current = minimized;
+  }, [minimized]);
 
   useEffect(() => {
     const update = () => {
@@ -36,16 +51,18 @@ export function FamiliarCompanion({ boundaryRef, ...props }: FamiliarCompanionPr
       const bottom = top + (viewport?.height ?? window.innerHeight);
       const rect = boundaryRef?.current?.getBoundingClientRect();
       const visible = { left: Math.max(left, rect?.left ?? left), top: Math.max(top, rect?.top ?? top),
-        right: Math.min(right, rect?.right ?? right), bottom: Math.min(bottom, rect?.bottom ?? bottom) };
-      if ((boundaryRef && !rect) || visible.right - visible.left < WIDTH + MARGIN * 2 || visible.bottom - visible.top < height + MARGIN * 2) {
+        right: Math.min(right, rect?.right ?? right), bottom: Math.min(bottom - bottomInset, rect?.bottom ?? bottom) };
+      const nextWidth = Math.min(WIDTH * scale, visible.right - visible.left - MARGIN * 2, (visible.bottom - visible.top - MARGIN * 2) / ratio);
+      if ((boundaryRef && !rect) || nextWidth < 44) {
         setBounds(null);
         setOpen(false);
         return;
       }
+      setWidth(nextWidth);
       const next = { left: visible.left + MARGIN, top: visible.top + MARGIN,
-        right: visible.right - WIDTH - MARGIN, bottom: visible.bottom - height - MARGIN };
+        right: visible.right - nextWidth - MARGIN, bottom: visible.bottom - nextWidth * ratio - MARGIN };
       setBounds(next);
-      setPosition(previous => clamp(previous ?? { x: next.right, y: next.bottom - 72 }, next));
+      setPosition(previous => clamp(previous ?? { x: next.right, y: next.bottom - (bottomInset ? 0 : 72) }, next));
     };
     update();
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
@@ -61,7 +78,7 @@ export function FamiliarCompanion({ boundaryRef, ...props }: FamiliarCompanionPr
       window.visualViewport?.removeEventListener('resize', update);
       window.visualViewport?.removeEventListener('scroll', update);
     };
-  }, [boundaryRef, height]);
+  }, [boundaryRef, scale, ratio, bottomInset]);
 
   function finish(event: PointerEvent<HTMLButtonElement>, cancelled = false) {
     if (gesture.current?.id !== event.pointerId) return;
@@ -71,9 +88,9 @@ export function FamiliarCompanion({ boundaryRef, ...props }: FamiliarCompanionPr
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   }
 
-  if (!bounds || !position) return null;
-  return createPortal(<div className="familiar-companion" data-dragging={dragging || undefined}
-    style={{ left: position.x, top: position.y, width: WIDTH }}>
+  if (minimized || !bounds || !position) return null;
+  return createPortal(<div ref={element} className="familiar-companion" data-dragging={dragging || undefined}
+    style={{ left: position.x, top: position.y, width }}>
     <span id={instructions} className="familiar-sr-only">Drag to move. Use arrow keys to move when focused. Press Enter to see Energy.</span>
     <Familiar {...props} open={open} onOpenChange={setOpen} panelSide={position.y - bounds.top < 220 ? 'bottom' : 'top'} triggerProps={{
       'aria-describedby': instructions,
@@ -112,6 +129,9 @@ export function FamiliarCompanion({ boundaryRef, ...props }: FamiliarCompanionPr
         setOpen(false);
         setPosition(clamp({ x: position.x + delta.x, y: position.y + delta.y }, bounds));
       },
-    }} />
+    }}>
+      {onMinimize && <button type="button" className="familiar-minimize" onClick={() => { setOpen(false); onMinimize(); }}>Minimize Familiar</button>}
+      {children}
+    </Familiar>
   </div>, document.body);
 }

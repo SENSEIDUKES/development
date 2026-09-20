@@ -3,6 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ProductFamiliarSession, ProductFamiliarSurface, useProductFamiliarPreview } from './ProductFamiliarPreview';
+import { WorkspaceHeader } from '@seihouse/library/shell';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let container: HTMLDivElement;
@@ -19,9 +20,12 @@ function ProfileEvents() {
     <button onClick={() => context.reportProfile({ uid: 'another-account', familiarId: 'celestial-guardian' })}>Switch account</button>
     <button onClick={() => context.reportProfile({ uid: context.selection.uid })}>Clear selection</button>
     <button onClick={() => context.reportProfile({ uid: null })}>Sign out</button>
+    <button onClick={() => context.setMinimized(true)}>Minimize</button>
+    <button onClick={() => context.reportProfile({ ...context.selection, familiarSize: 1.8 })}>Resize</button>
   </>;
 }
-const render = () => act(() => root.render(<ProductFamiliarSession><ProductFamiliarSurface viewport>
+const render = () => act(() => root.render(<ProductFamiliarSession><ProductFamiliarSurface viewport headerRecall>
+  <WorkspaceHeader title="Product" />
   <ProductFamiliarSession><ProductFamiliarSurface viewport><ProfileEvents /></ProductFamiliarSurface></ProductFamiliarSession>
 </ProductFamiliarSurface></ProductFamiliarSession>));
 const click = (label: string) => act(() => [...container.querySelectorAll('button')].find(button => button.textContent === label)!.click());
@@ -39,4 +43,17 @@ it.each(['Clear selection', 'Sign out'])('removes the companion when the profile
   render();
   click(action);
   expect(document.querySelector('.familiar-companion')).toBeNull();
+});
+
+it('uses the product header to recall a minimized pet and applies the reported profile size', () => {
+  render();
+  click('Resize');
+  expect(Number.parseFloat(document.querySelector<HTMLElement>('.familiar-companion')!.style.width)).toBeCloseTo(187.2);
+  click('Minimize');
+  expect(document.querySelector('.familiar-companion')).toBeNull();
+  const recall = container.querySelector<HTMLButtonElement>('header .familiar-recall')!;
+  expect(recall).not.toBeNull();
+  act(() => recall.click());
+  expect(document.querySelector('.familiar-companion')).not.toBeNull();
+  expect(container.querySelector('.familiar-recall')).toBeNull();
 });

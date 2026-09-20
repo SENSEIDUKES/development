@@ -20,10 +20,10 @@ export function DevelopmentHeaderPreview({ source, state }: { source: HeaderConf
     const app = <LibraryAppPreview source={source} state={state} message={message} setMessage={setMessage} />;
     if (new URLSearchParams(window.location.search).get('homeReference') === '1') return app;
     return <ProductFamiliarSession initialState={source === 'cultivator-cave' ? state as UserProfilePreviewState : state === 'guest' ? 'signed-out' : 'developed-cultivator'}>
-      <ProductFamiliarSurface viewport>{app}</ProductFamiliarSurface>
+      <ProductFamiliarSurface viewport headerRecall bottomInset={72}>{app}</ProductFamiliarSurface>
     </ProductFamiliarSession>;
   }
-  if (source === 'story-seed') return <ProductFamiliarSession><ProductFamiliarSurface viewport><StorySeedWorkspace embedded localGeneration initialState={state as PreviewState} /></ProductFamiliarSurface></ProductFamiliarSession>;
+  if (source === 'story-seed') return <ProductFamiliarSession><ProductFamiliarSurface viewport headerRecall bottomInset={72}><StorySeedWorkspace embedded localGeneration initialState={state as PreviewState} /></ProductFamiliarSurface></ProductFamiliarSession>;
   return null;
 }
 

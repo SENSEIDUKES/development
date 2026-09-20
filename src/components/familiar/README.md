@@ -1,7 +1,7 @@
 # Familiar
 
 - Source: supplied `celestial-guardian/` package (not a Git repository).
-- Preview: Workshop **Familiar** tab and `?preview=familiar`.
+- Preview: Workshop **Shared → Familiar** and `?preview=familiar`.
 - Replica created: 2026-09-20.
 - Last Workshop update: 2026-09-20.
 - Last source comparison: 2026-09-20.
@@ -88,7 +88,7 @@ No Light-Novels files were changed.
 ### Floating companion and product-page integration — 2026-09-20
 
 `FamiliarCompanion` is the reusable app-shell mount exported by
-`@seihouse/library/familiar`. It portals a small 104px sprite above page content;
+`@seihouse/library/familiar`. It portals a sprite (104px at the default size) above page content;
 pointer capture supports mouse, pen, and touch dragging. A six-pixel threshold
 separates dragging from tapping, and cancelled gestures cannot open Energy.
 Arrow keys move the focused pet. Resize, scrolling, and the mobile visual viewport
@@ -118,12 +118,38 @@ sign-out or no selection. Omit `boundaryRef` to use the app viewport. Do not
 transfer `ProductFamiliarPreview`, Development identity tokens, or fixture defaults.
 The Library companion remains outside the portable SEN Reader implementation.
 
+### Size, minimize, and callback — 2026-09-20
+
+Familiar is now one card inside Workshop **Shared**, preserving `?preview=familiar`
+and its existing comparison workspace. It remains a Library-owned capability.
+
+The Energy panel exposes **Minimize Familiar**. The host controls `minimized` and
+`onMinimize`; the mounted companion keeps its drag position while hidden and stops
+sprite playback. `FamiliarRecall` provides a 44px accessible button for the host
+header. Recall restores the pet and keyboard focus. Development mounts the button
+through the generic `WorkspaceHeaderAccessoryProvider` on Home, Profile, and Creator;
+the standalone Reader and Familiar canvas use a sticky recall control at their top
+edge, including fullscreen Reader states without a product header.
+
+Profile Customization → Familiar includes a live native size slider from 60% to
+200% and a **Reset** action. `handleFamiliarSizeChange` updates only
+`UserProfile.familiarSize` through the existing profile owner, preserving unrelated
+drafts, and reports the committed preference to the shared product session. This
+preview adapter writes synchronously to its existing in-memory profile. Production
+must connect that port to its existing profile persistence. No separate size store
+or browser storage key is introduced.
+
+`FamiliarCompanion.size` accepts the profile multiplier, validates it, and fits the
+sprite to the available viewport without changing its aspect ratio. `bottomInset`
+reserves space for persistent host navigation. Production should retain minimize
+state in the app shell and render `FamiliarRecall` in its header while minimized.
+
 ## Verification
 
 Focused tests cover source hashes, all 26 states, geometry, variable frame timing,
 looping, pause/reset/cleanup, reduced motion, missing artwork, live-client reads,
 held Energy, missing maximum, loading/error/retry, reopening, and dismissal.
-Workshop navigation tests cover the new tab and existing keyboard navigation.
+Workshop navigation tests cover the Shared listing and existing keyboard navigation.
 Package ownership and packed-consumer checks include the new public Library entry.
 The repository has no lint command/configuration; TypeScript, ownership checks,
 tests, production build, and `git diff --check` are its applicable checks.
@@ -153,6 +179,12 @@ removed local-machine paths from published provenance, and omitted the source's
 installation-only README. The 19 directly affected tests (including the new
 accessibility regression) and production build passed after those corrections.
 
+Size and recall follow-up: 222 focused tests passed across 10 files. TypeScript,
+production build, package ownership, and both packed-consumer checks passed.
+Desktop and mobile Chromium verification covered the Shared listing, live size
+changes and Reset, header minimize/recall, and normal/fullscreen Reader recall.
+The deployed preview requires Vercel login, so visual verification was local.
+
 ## Workshop history
 
 - 2026-09-20: Inspected the complete supplied package and atlas; copied required assets
@@ -162,3 +194,5 @@ accessibility regression) and production build passed after those corrections.
   hosted GIF hero through the existing profile services boundary.
 - 2026-09-20: Added the floating, draggable companion to Development product pages,
   with a contained drag preview, touch/keyboard interaction, and app-shell transfer instructions.
+- 2026-09-20: Moved the Workshop entry into Shared; added header minimize/callback,
+  profile size/reset controls, and navigation-aware bounds at every size.

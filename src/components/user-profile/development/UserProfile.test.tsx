@@ -749,11 +749,30 @@ describe('Cultivator Cave settings', () => {
     expect(onFamiliarProfile).toHaveBeenLastCalledWith({ uid: 'workshop-cultivator', familiarId: 'celestial-guardian' });
     expect(controller().profile?.displayName).not.toBe('Draft Name');
     expect(controller().formData.displayName).toBe('Draft Name');
-    expect(selection.querySelector('button')?.getAttribute('aria-pressed')).toBe('true');
+    expect(selection.querySelector('article button')?.getAttribute('aria-pressed')).toBe('true');
     expect(selection.textContent).toContain('Current Familiar: Celestial Guardian');
     await act(async () => { await controller().handleFamiliarChange?.('not-unlocked'); });
     expect(controller().profile?.familiarId).toBe('celestial-guardian');
     expect(controller().error).toBe('This Familiar is not available for selection.');
+  });
+
+  it('resizes and resets the selected Familiar without saving unrelated drafts', async () => {
+    const onFamiliarProfile = vi.fn();
+    const { controller } = await renderCave({ adapter: { profileOverride: { familiarId: 'celestial-guardian' }, onFamiliarProfile } });
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
+    await click(byText('[aria-label="Customization sections"] [role="tab"]', 'Familiar'));
+    await act(async () => controller().setFormData(previous => ({ ...previous, displayName: 'Unsaved draft' })));
+    const slider = container.querySelector<HTMLInputElement>('.familiar-size-slider input')!;
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+    await act(async () => { setter.call(slider, '1.8'); slider.dispatchEvent(new Event('input', { bubbles: true })); });
+    expect(controller().profile?.familiarSize).toBe(1.8);
+    expect(controller().formData.displayName).toBe('Unsaved draft');
+    expect(controller().profile?.displayName).not.toBe('Unsaved draft');
+    expect(onFamiliarProfile).toHaveBeenLastCalledWith({ uid: 'workshop-cultivator', familiarId: 'celestial-guardian', familiarSize: 1.8 });
+    await click(container.querySelector('.familiar-size-slider button')!);
+    expect(controller().profile?.familiarSize).toBe(1);
+    expect(slider.value).toBe('1');
+    expect(slider.getAttribute('aria-valuetext')).toBe('100%');
   });
 
   it('keeps custom radio groups to one tab stop and supports native radio keys', async () => {

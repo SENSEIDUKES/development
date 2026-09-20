@@ -60,7 +60,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/library/presentation': ['LibraryPresentationProvider'],
       '@seihouse/library/profile': ['LibraryProfile', 'UserProfileServicesProvider'],
       '@seihouse/library/energy': ['EnergyPanel', 'EnergyClientProvider', 'createHttpEnergyClient'],
-      '@seihouse/library/familiar': ['Familiar', 'FamiliarSprite', 'FamiliarSelection', 'FamiliarCompanion'],
+      '@seihouse/library/familiar': ['Familiar', 'FamiliarSprite', 'FamiliarSelection', 'FamiliarCompanion', 'FamiliarRecall'],
       '@seihouse/library/cultivation': ['ClosedDoorCultivationModal', 'QiClientProvider', 'createHttpQiClient', 'getDaoRankData'],
       '@seihouse/library/dao-pillar': ['DaoPillarView', 'DaoPillarClientProvider'],
       '@seihouse/library/relics': ['RelicCard', 'RelicModal', 'RelicReveal', 'projectEarnedRelic'],

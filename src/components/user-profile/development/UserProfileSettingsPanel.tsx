@@ -447,6 +447,7 @@ export function UserProfileSettingsPanel({
             </SEITabsPanel>
             <SEITabsPanel value="familiar" keepMounted className="pt-4">
               <FamiliarSelection options={familiars} selectedId={profile?.familiarId}
+                size={profile?.familiarSize} onSizeChange={controller.handleFamiliarSizeChange}
                 pending={controller.isSavingFamiliar} disabled={!profile || !controller.handleFamiliarChange}
                 onSelect={id => void controller.handleFamiliarChange?.(id)} />
             </SEITabsPanel>

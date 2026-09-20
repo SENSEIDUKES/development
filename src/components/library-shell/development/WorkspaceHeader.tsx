@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { SEIAppHeader, SEIToolbar } from '@seihouse/ui';
 import { NarrativeButton as LibraryButton, NarrativeHeaderBadge as LibraryHeaderBadge } from '@seihouse/sen/presentation';
 import { ArrowLeft } from 'lucide-react';
@@ -6,6 +6,12 @@ import { HeaderActionButton, HeaderOverflow, type HeaderAction } from './Workspa
 import { useCompactHeader } from './workspaceMedia';
 import { WorkspaceHeaderUtilities, type HeaderSearchItem } from './WorkspaceHeaderUtilities';
 import './workspace-header.css';
+
+const HeaderAccessoryContext = createContext<ReactNode>(null);
+/** Host-owned persistent actions shared across the product's page headers. */
+export function WorkspaceHeaderAccessoryProvider({ accessory, children }: { accessory: ReactNode; children: ReactNode }) {
+  return <HeaderAccessoryContext.Provider value={accessory}>{children}</HeaderAccessoryContext.Provider>;
+}
 
 export interface WorkspaceHeaderProps {
   title: string;
@@ -40,6 +46,7 @@ export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAc
   secondaryActions = [], overflowActions = [], contextualItem, help, searchItems = [],
   status, landmark = 'banner' }: WorkspaceHeaderProps) {
   const compact = useCompactHeader();
+  const accessory = useContext(HeaderAccessoryContext);
   const commands = [...secondaryActions, ...(primaryAction ? [primaryAction] : []), ...overflowActions];
   const searchCommands = [...searchItems, ...commands.filter(action => !searchItems.some(item => item.id === action.id))];
   return <>
@@ -68,6 +75,7 @@ export function WorkspaceHeader({ title, subtitle, emblem, home, back, primaryAc
     </span>}
     actions={<>
       {contextualItem != null && contextualItem !== false && contextualItem !== '' && <div className="workspace-header-context">{contextualItem}</div>}
+      {accessory}
       <WorkspaceHeaderUtilities items={searchCommands} help={help} />
     </>}
   />

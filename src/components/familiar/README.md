@@ -200,6 +200,9 @@ Escape/outside dismissal, and reduced-motion handling.
   modal dialog primitive, centered on the viewport above navigation. The tray keeps
   44px touch targets at every pet size; drag bounds reserve its full footprint.
   Opening the tray does not fetch Energy; selecting Energy reads the host account.
+- 2026-09-20: Expanded active highlights to fill each glass action segment and removed
+  the recall button's decorative ring/background, retaining its 44px hit area and
+  keyboard focus indicator around the pet silhouette.
 
 - 2026-09-20: Inspected the complete supplied package and atlas; copied required assets
   with provenance hashes; added the Familiar tab, reusable renderer, original comparison,

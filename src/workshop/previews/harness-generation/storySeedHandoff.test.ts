@@ -14,6 +14,18 @@ import { buildHarnessGenerationPrompt } from '../../../server/harness-generation
 import { OFFICIAL_STYLE_REFERENCES } from './officialCapaSkills';
 
 describe('Story Seed to Harness handoff', () => {
+  it('rejects multi-goal or later-arc Blueprint fallbacks instead of invoking a broader planner', () => {
+    const record = createMockStorySeedRecord();
+    delete record.seed.story.optional.activeArcGoal;
+    for (const plan of [
+      { arcNumber: 2, goals: [{ id: 'arc-2-gate', text: 'Reach the gate.', chapters: 100 }] },
+      { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the gate.', chapters: 50 }, { id: 'arc-1-city', text: 'Reach the city.', chapters: 50 }] },
+    ]) {
+      record.blueprint!.arcPlan = plan;
+      expect(() => createHarnessFoundationFromStorySeed(record)).toThrow('exactly one initial Active Arc Goal in Arc 1');
+    }
+  });
+
   it('routes Arc inputs once and freezes the original pins and active goal across reload, retry, and replay', async () => {
     const record = createMockStorySeedRecord();
     record.seed.story.optional.hardPins = [{ text: 'PIN_KEEP_MASTER' }, { text: 'PIN_KEEP_TEMPLE' }, { text: 'PIN_KEEP_VOW' }];

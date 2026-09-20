@@ -1,4 +1,4 @@
-import { createInitialArcPlan } from '@seihouse/sen/arc-goals';
+import { createInitialArcPlan, validateArcPlan } from '@seihouse/sen/arc-goals';
 import { validateHardPinInputs, normalizeFunSettings } from '@seihouse/sen/story-seed';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
@@ -40,6 +40,12 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
   const optional = seed.story.optional;
   const identity = seed.world.optional.worldIdentity;
   const world = seed.world.optional.worldFoundations;
+  const initialArcPlan = optional.activeArcGoal
+    ? createInitialArcPlan(optional.activeArcGoal)
+    : blueprint?.arcPlan ? validateArcPlan(blueprint.arcPlan) : undefined;
+  if (initialArcPlan && (initialArcPlan.arcNumber !== 1 || initialArcPlan.goals.length !== 1)) {
+    throw new Error('Story Seed supplies exactly one initial Active Arc Goal in Arc 1.');
+  }
   const style = getStoryStyleLabel(required.style);
   const blueprintCharacters = (blueprint?.initialCharacters ?? []).map(entry => {
     // Blueprint's named-list convention separates a name from its parenthesized role.
@@ -59,7 +65,7 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
       majorMysteries: [...(blueprint?.majorMysteries ?? [])],
       unresolvedPlotThreads: [...(blueprint?.unresolvedPlotThreads ?? [])],
     },
-    initialArcPlan: optional.activeArcGoal ? createInitialArcPlan(optional.activeArcGoal) : blueprint?.arcPlan,
+    initialArcPlan,
     initialHardPins: validateHardPinInputs(optional.hardPins ?? []),
     funSettings: normalizeFunSettings(optional.funSettings),
     identities: [

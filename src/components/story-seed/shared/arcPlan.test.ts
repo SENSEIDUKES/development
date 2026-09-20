@@ -1,8 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { createEmptyStorySeedInput, normalizeStorySeedInput, normalizeWorldBlueprint } from '@seihouse/sen/story-seed';
+import { buildInitialStoryGenerationPayload, createStoryAdministrativeMetadata, createBlueprintDraftFromSeed, createEmptyStorySeedInput, normalizeStorySeedInput, normalizeWorldBlueprint } from '@seihouse/sen/story-seed';
 import { createStorySeedExport, parseStorySeedJson } from '@seihouse/sen/story-seed';
 
 describe('Story Seed arc plans', () => {
+  it('rejects later arcs and multi-goal Blueprints at story creation', () => {
+    const seed = createEmptyStorySeedInput();
+    seed.story.required = { premise: 'An exile returns.', genre: 'Fantasy', style: 'chinese', storyTags: ['exile'] };
+    const blueprint = createBlueprintDraftFromSeed(seed);
+    const administrative = createStoryAdministrativeMetadata({ storyId: 'story', creatorId: 'author', sourceSeedId: 'seed', originalLanguage: 'en' });
+    for (const plan of [
+      { arcNumber: 2, goals: [{ id: 'arc-2-gate', text: 'Reach the gate.', chapters: 100 }] },
+      { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the gate.', chapters: 50 }, { id: 'arc-1-city', text: 'Reach the city.', chapters: 50 }] },
+    ]) {
+      expect(() => buildInitialStoryGenerationPayload(seed, administrative, { ...blueprint, arcPlan: plan }, 1)).toThrow('Review one Active Arc Goal');
+    }
+  });
+
   it('round-trips the authoritative editable plan without a second long-term goal', () => {
     const seed = createEmptyStorySeedInput();
     seed.story.required = { premise: 'An exile returns.', genre: 'Fantasy', style: 'chinese', storyTags: ['exile'] };

@@ -813,9 +813,12 @@ export const buildInitialStoryGenerationPayload = (
   const storySeed = applyInferredStoryTags(normalizeStorySeedInput(seed));
   assertValidStorySeedInput(storySeed);
   assertValidStoryAdministrativeMetadata(administrative);
-  if (!blueprint.arcPlan || blueprint.arcPlan.goals.length !== 1) {
+  if (!blueprint.arcPlan) {
     throw new Error('Review one Active Arc Goal in Blueprint before beginning the story.');
   }
-  createInitialArcPlan(blueprint.arcPlan.goals[0]);
-  return { storySeed, administrative, blueprint, chapterCount };
+  const arcPlan = validateArcPlan(blueprint.arcPlan);
+  if (arcPlan.arcNumber !== 1 || arcPlan.goals.length !== 1) {
+    throw new Error('Review one Active Arc Goal in Blueprint before beginning the story.');
+  }
+  return { storySeed, administrative, blueprint: { ...blueprint, arcPlan }, chapterCount };
 };

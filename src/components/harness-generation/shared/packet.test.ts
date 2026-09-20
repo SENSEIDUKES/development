@@ -137,6 +137,31 @@ describe('Compact long-story generation packet', () => {
     expect(exportHarnessStory(state, run.story.id).attempts.map(attempt => attempt.storyInformation)).toEqual(before);
   });
 
+  it('rebuilds the inputs instead of resending a frozen packet once the story head has moved past its chapter', async () => {
+    const run = await setup();
+    await run.controller.generateNextChapter(run.story.id, 'fixture');
+    let fail = true;
+    const generate = run.adapter.generate as ReturnType<typeof vi.fn<(request: HarnessGenerationRequest) => Promise<HarnessGenerationResponse>>>;
+    const original = generate.getMockImplementation()!;
+    generate.mockImplementation(async (request: HarnessGenerationRequest) => { if (fail) { fail = false; throw new Error('provider down'); } return original(request); });
+    await run.controller.generateNextChapter(run.story.id, 'fixture');
+    const failed = run.controller.snapshot().attempts.at(-1)!;
+    expect(failed.stage).toBe('generation_failed');
+    // A failed attempt does not block the story: Chapter 2 commits from a fresh request.
+    await run.controller.generateNextChapter(run.story.id, 'fixture');
+    expect(run.controller.snapshot().chapters.map(chapter => chapter.chapterNumber)).toEqual([1, 2]);
+    // Retrying the stale failure must not resend Chapter 2's frozen packet as Chapter 3.
+    await run.controller.retryModelRequest(failed.id);
+    const retried = run.controller.snapshot().attempts.at(-1)!;
+    const retriedRequest = run.requests.at(-1)!;
+    expect(retried.stage).toBe('committed');
+    expect(retried.chapterNumber).toBe(3);
+    expect(retriedRequest.immediateChapterRequest.chapterNumber).toBe(3);
+    expect(retriedRequest.storyInformation.chapterNumber).toBe(3);
+    expect(retriedRequest.storyInformation.previouslyOn.map(entry => entry.chapterNumber)).toEqual([1, 2]);
+    expect(run.controller.snapshot().chapters.map(chapter => chapter.chapterNumber)).toEqual([1, 2, 3]);
+  });
+
   it('persists the measured size of the exact serialized provider request', async () => {
     const run = await setup({ throughHttp: true });
     await run.controller.generateNextChapter(run.story.id, 'google/gemini-3.1-flash-lite');

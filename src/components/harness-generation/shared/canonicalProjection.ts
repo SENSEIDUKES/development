@@ -154,14 +154,15 @@ export const projectCanonicalState = (input: CanonicalProjectionInput): Canonica
   // Probable near-duplicates: flagged, never merged. Same kind, one name's tokens
   // contained in the other's (e.g. "Yi Chen" and "Elder Yi Chen"), and no declared alias.
   const entities = [...merged.values()];
+  const labelInfo = entities.map(group => ({ tokens: tokensOf(group.label), normalized: normalizeIdentityLabel(group.label) }));
   for (let left = 0; left < entities.length; left += 1) {
     for (let right = left + 1; right < entities.length; right += 1) {
       const a = entities[left]; const b = entities[right];
       if (a.kind !== b.kind) continue;
-      const aTokens = tokensOf(a.label); const bTokens = tokensOf(b.label);
+      const aTokens = labelInfo[left].tokens; const bTokens = labelInfo[right].tokens;
       if (!aTokens.length || !bTokens.length) continue;
       const subset = aTokens.every(token => bTokens.includes(token)) || bTokens.every(token => aTokens.includes(token));
-      const sameCore = normalizeIdentityLabel(a.label) === normalizeIdentityLabel(b.label);
+      const sameCore = labelInfo[left].normalized === labelInfo[right].normalized;
       if (subset || sameCore) {
         ambiguities.push({ kind: a.kind, labels: [a.label, b.label], recordIds: [...a.records, ...b.records].map(record => record.id),
           reason: sameCore ? 'The names match apart from a parenthetical or punctuation, but no declared alias links them; both were kept.'

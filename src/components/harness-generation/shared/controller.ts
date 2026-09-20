@@ -1262,9 +1262,13 @@ export class HarnessGenerationController {
     abandonedAttempt.recoveryStage = undefined;
     abandonedAttempt.failure = undefined;
     await this.persist(abandoned);
-    // A frozen packet without its Arc Plan was never a sendable request, so
-    // only a complete frozen input set is resent unchanged.
-    const frozen = attempt.storyInformation.arc ? {
+    // A frozen packet without its Arc Plan was never a sendable request, and a
+    // failed attempt does not block later chapters, so frozen inputs are
+    // resent unchanged only while the story head still points at the chapter
+    // they were prepared for. Otherwise the retry rebuilds for the current head.
+    const story = findStory(this.state, attempt.storyId);
+    const sameChapter = story?.head.nextChapterNumber === attempt.immediateChapterRequest.chapterNumber;
+    const frozen = attempt.storyInformation.arc && sameChapter ? {
       capaPrompt: attempt.capaPrompt,
       storyInformation: attempt.storyInformation,
       immediateChapterRequest: attempt.immediateChapterRequest,

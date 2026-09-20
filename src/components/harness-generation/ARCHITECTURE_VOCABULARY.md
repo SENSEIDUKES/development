@@ -54,8 +54,8 @@ history.
 4. The Story Information Packet must never contain CAPA skill instructions.
 5. The generation model does not own context weighting, canon storage,
    chapter numbering, persistence, or commits.
-6. The HARNESS combines both inputs in one provider call and receives the
-   resulting chapter.
+6. The HARNESS combines all four inputs in one provider call and receives
+   the resulting chapter.
 7. Each concept has one authoritative definition (this file) and one
    implementation owner. Do not create parallel terminology, schemas,
    assemblers, or context systems for a concept already defined here.

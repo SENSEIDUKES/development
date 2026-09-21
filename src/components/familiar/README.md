@@ -214,6 +214,10 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-09-21: Kept one decoded atlas mounted across animation changes so activity,
+  drag, keyboard, and interaction clips no longer flash the loading state. Initial
+  atlas decode now uses the host-supplied lightweight still; loading remains available
+  to assistive technology and visible copy is reserved for a real artwork failure.
 - 2026-09-21: Mirrored the current Codex companion behavior: active, needs-input,
   ready, and blocked activity select the supplied running, waiting, review, and failed
   rows; horizontal pointer/keyboard motion selects the supplied left/right loops; and
@@ -261,4 +265,6 @@ interaction clip for direct engagement. Add focused tests for each state and mot
 direction. Never invent a task/status mapping for an unmatched row: retain it for an
 explicit host event only after its Codex meaning is verified. Static look-direction cells
 remain available for a host that has a verified directional-look event, but are not
-substituted for movement loops.
+substituted for movement loops. Supply a lightweight still through `placeholderUrl` so
+the Familiar remains visible during its first atlas decode; animation changes must reuse
+the loaded atlas rather than remounting it.

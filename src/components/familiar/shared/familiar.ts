@@ -11,6 +11,8 @@ export interface FamiliarDefinition {
   displayName: string;
   description: string;
   spriteUrl: string;
+  /** Optional lightweight still shown while the full atlas decodes. */
+  placeholderUrl?: string;
   columns: number;
   rows: number;
   cellWidth: number;

@@ -43,7 +43,8 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const imageLoaded = () => act(() => container.querySelector('img')!.dispatchEvent(new Event('load')));
+const atlas = () => container.querySelector<HTMLImageElement>('.familiar-sprite-atlas')!;
+const imageLoaded = () => act(() => atlas().dispatchEvent(new Event('load')));
 const frame = () => container.querySelector('[data-familiar-frame]')?.getAttribute('data-familiar-frame');
 const click = async (element: Element) => { await act(async () => (element as HTMLElement).click()); };
 const open = async () => {
@@ -61,7 +62,7 @@ describe('Familiar sprite playback', () => {
     expect(frame()).toBe('0');
     act(() => vi.advanceTimersByTime(1));
     expect(frame()).toBe('1');
-    expect(container.querySelector('img')!.style.transform).toBe('translate(-12.5%, 0%)');
+    expect(atlas().style.transform).toBe('translate(-12.5%, 0%)');
     for (const duration of [110, 110, 140, 140, 320]) act(() => vi.advanceTimersByTime(duration));
     expect(frame()).toBe('0');
     act(() => root.render(<FamiliarSprite familiar={celestialGuardian} paused />));
@@ -74,16 +75,20 @@ describe('Familiar sprite playback', () => {
   it('resets when switching clips and renders static neutral and look cells without timers', () => {
     vi.useFakeTimers();
     act(() => root.render(<FamiliarSprite familiar={celestialGuardian} animation="running-right" />));
+    const initialAtlas = atlas();
+    expect(container.querySelector('.familiar-sprite-placeholder')).not.toBeNull();
     imageLoaded();
+    expect(container.querySelector('.familiar-sprite-placeholder')).toBeNull();
     act(() => vi.advanceTimersByTime(120));
     expect(frame()).toBe('1');
     act(() => root.render(<FamiliarSprite familiar={celestialGuardian} animation="neutral" />));
-    imageLoaded();
+    expect(atlas()).toBe(initialAtlas);
+    expect(container.querySelector('[role="status"]')?.textContent).toBe('');
     expect(frame()).toBe('0');
-    expect(container.querySelector('img')!.style.transform).toBe('translate(-75%, 0%)');
+    expect(atlas().style.transform).toBe('translate(-75%, 0%)');
     act(() => root.render(<FamiliarSprite familiar={celestialGuardian} animation="look-270" />));
-    imageLoaded();
-    expect(container.querySelector('img')!.style.transform).toBe('translate(-50%, -90.9090909090909%)');
+    expect(atlas()).toBe(initialAtlas);
+    expect(atlas().style.transform).toBe('translate(-50%, -90.9090909090909%)');
     expect(vi.getTimerCount()).toBe(0);
   });
 
@@ -100,7 +105,7 @@ describe('Familiar sprite playback', () => {
     act(() => vi.advanceTimersByTime(2000));
     expect(frame()).toBe('0');
     expect(vi.getTimerCount()).toBe(0);
-    act(() => container.querySelector('img')!.dispatchEvent(new Event('error')));
+    act(() => atlas().dispatchEvent(new Event('error')));
     expect(container.textContent).toContain('Familiar artwork could not load.');
   });
 
@@ -136,11 +141,13 @@ describe('Familiar Energy interaction', () => {
     const status = container.querySelector('[role="status"]')!;
     expect(status.closest('[role="img"]')).toBeNull();
     expect(status.getAttribute('aria-live')).toBe('polite');
+    expect(status.hasAttribute('data-failed')).toBe(false);
     expect(container.querySelector('button')!.getAttribute('aria-describedby')).toContain(status.id);
     expect(status.textContent).toBe('Loading Familiar…');
     imageLoaded();
     expect(status.textContent).toBe('');
-    act(() => container.querySelector('img')!.dispatchEvent(new Event('error')));
+    act(() => atlas().dispatchEvent(new Event('error')));
+    expect(status.hasAttribute('data-failed')).toBe(true);
     expect(status.textContent).toBe('Familiar artwork could not load.');
   });
 

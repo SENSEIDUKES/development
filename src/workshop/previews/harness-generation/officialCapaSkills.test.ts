@@ -9,6 +9,7 @@ import {
   OFFICIAL_STYLE_REFERENCES,
   type OfficialCapaArchiveLoader,
 } from './officialCapaSkills';
+import { inspectHarnessSpp } from './sppSkills';
 import { createOfficialCapaDefaultLoadout } from './storySeedHandoff';
 
 class MemoryStorage implements Pick<Storage, 'getItem' | 'setItem'> {
@@ -40,6 +41,16 @@ const adapter = (requests: HarnessGenerationRequest[] = []) => ({
 });
 
 describe('official CAPA SPP defaults', () => {
+  it('uses a unique registered package ID that matches each shipped archive manifest', async () => {
+    const registeredIds = OFFICIAL_CAPA_PACKAGES.map(definition => definition.packageId);
+    expect(new Set(registeredIds).size).toBe(OFFICIAL_CAPA_PACKAGES.length);
+
+    for (const definition of OFFICIAL_CAPA_PACKAGES) {
+      const content = await inspectHarnessSpp(await loadFixture(definition));
+      expect(content.manifest.id).toBe(definition.packageId);
+    }
+  });
+
   it('validates and installs every supplied package once, preserving exact provenance on reload', async () => {
     const storage = new MemoryStorage();
     const first = await installOfficialCapaSkills(storage, loadFixture);

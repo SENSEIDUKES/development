@@ -13,6 +13,7 @@ account schema, Energy policy, atlas artwork or frame timing changes.
 | Every captured scroll measured bounds and allocated new position/bounds objects, even when unchanged; minimized companions retained listeners. | Coalesce geometry updates to one animation frame, retain unchanged state, omit document-scroll listening for viewport-only mounts, detach geometry observers/listeners while minimized. | A burst of 20 scroll events produces one measurement; none while minimized. |
 | High-frequency pointer samples changed layout position and React state. | Batch pointer positions per animation frame, move via transform, flush the final sample on release, and cancel queued work on unmount/minimize. | Burst/release/cleanup tests plus existing mouse/touch/cancel/keyboard bounds tests. |
 | Live blur sampled content behind the moving tray on touch devices. | Keep the glass gradient, border and shadow but use a more opaque gradient without backdrop filters on touch-only devices. Desktop retains blur. | Computed-style assertions and mobile screenshots in WebKit and Chromium. |
+| Changing activity or movement clips remounted the atlas image, resetting its loaded state and exposing loading copy during normal interaction. | Keep one atlas element mounted across clip changes, reset only its frame cursor, and show the host's lightweight still while the atlas performs its initial decode. Loading remains announced to assistive technology; visible copy is reserved for an actual failure. | Regression tests retain the same image node across clip changes and verify placeholder removal after load. |
 
 ## Size policy
 
@@ -35,8 +36,9 @@ including landscape phones. Existing 44px action targets remain independent of s
   touch emulation (6× CPU throttling) verified default, minimum, maximum, Reset,
   waving, minimized Energy, explicit Expand, lighter glass and landscape mobile cap.
   Desktop Chromium verified the original 60–200% range and interactions.
-- Delayed atlas response preserves the loading message and starts playback after
-  loading; an aborted atlas request produces the existing failure message. Reduced
+- Delayed atlas response preserves the lightweight still and accessible loading
+  announcement, then starts playback after loading; an aborted atlas request produces the
+  existing visible failure message. Reduced
   motion freezes frames. Automated tests verify hidden-document/offscreen cleanup.
 
 ### Isolated playback measurement

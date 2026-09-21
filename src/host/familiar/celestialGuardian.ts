@@ -16,6 +16,7 @@ export const celestialGuardianOption: FamiliarOption = {
 export const celestialGuardian: FamiliarDefinition = {
   id: pet.id, displayName: pet.displayName, description: pet.description,
   spriteUrl: `${base}/${pet.spritesheetPath}`,
+  placeholderUrl: `${base}/neutral.png`,
   columns: request.atlas.columns, rows: request.atlas.rows,
   cellWidth: request.atlas.cell_width, cellHeight: request.atlas.cell_height,
   animations: Object.fromEntries([

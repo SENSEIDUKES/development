@@ -6,7 +6,7 @@ mkdirSync(out, { recursive: true });
 const url = 'http://127.0.0.1:4173/library-shell.html?variant=development&source=main-library&screen=home&collection=featured';
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-proxy-server'] });
 const report = {};
-for (const [name, viewport] of Object.entries({ phone: { width: 390, height: 844 }, narrow: { width: 320, height: 640 }, desktop: { width: 1440, height: 900 } })) {
+for (const [name, viewport] of Object.entries({ phone: { width: 390, height: 844 }, narrow: { width: 320, height: 640 }, laptop: { width: 1280, height: 800 }, desktop: { width: 1440, height: 900 } })) {
   const context = await browser.newContext({ viewport, deviceScaleFactor: 1, reducedMotion: 'reduce' });
   const page = await context.newPage();
   await page.route('**/*', route => {
@@ -42,20 +42,37 @@ for (const [name, viewport] of Object.entries({ phone: { width: 390, height: 844
   });
   await footer.screenshot({ path: `${out}/footer-${name}.png` });
   await page.screenshot({ path: `${out}/page-${name}.png` });
-  // Keyboard: Tab into the accordion, open with Enter, verify one-at-a-time and focus ring.
-  await page.getByRole('button', { name: 'Explore' }).focus();
-  await page.keyboard.press('Enter');
-  await page.waitForTimeout(300);
-  const afterEnter = await page.evaluate(() => Array.from(document.querySelectorAll('[data-library-footer] [data-slot="disclosure-trigger"]')).map(b => b.getAttribute('aria-expanded')));
-  await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('Enter');
-  await page.waitForTimeout(300);
-  const afterSecond = await page.evaluate(() => ({
-    expanded: Array.from(document.querySelectorAll('[data-library-footer] [data-slot="disclosure-trigger"]')).map(b => b.getAttribute('aria-expanded')),
-    focused: document.activeElement?.textContent?.trim(),
-    outline: getComputedStyle(document.activeElement).outlineStyle,
-  }));
-  await footer.screenshot({ path: `${out}/footer-${name}-open.png` });
+  // Narrow viewports collapse the menus into accordions and wide ones stand them
+  // open in columns, so each width verifies the behavior it actually renders.
+  const wide = await page.evaluate(() => document.querySelector('[data-library-footer] .library-footer-columns') !== null);
+  let menus;
+  if (wide) {
+    menus = await page.evaluate(() => ({
+      layout: 'columns',
+      columns: Array.from(document.querySelectorAll('[data-library-footer] .library-footer-column')).map(column => ({
+        heading: column.querySelector('h3')?.textContent,
+        links: column.querySelectorAll('.library-footer-link').length,
+      })),
+      // Every destination is readable without opening anything.
+      collapsed: document.querySelectorAll('[data-library-footer] [data-slot="disclosure-trigger"]').length,
+    }));
+  } else {
+    // Keyboard: Tab into the accordion, open with Enter, verify one-at-a-time and focus ring.
+    await page.getByRole('button', { name: 'Explore' }).focus();
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(300);
+    const afterEnter = await page.evaluate(() => Array.from(document.querySelectorAll('[data-library-footer] [data-slot="disclosure-trigger"]')).map(b => b.getAttribute('aria-expanded')));
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(300);
+    const afterSecond = await page.evaluate(() => ({
+      expanded: Array.from(document.querySelectorAll('[data-library-footer] [data-slot="disclosure-trigger"]')).map(b => b.getAttribute('aria-expanded')),
+      focused: document.activeElement?.textContent?.trim(),
+      outline: getComputedStyle(document.activeElement).outlineStyle,
+    }));
+    menus = { layout: 'accordions', afterEnter, afterSecond };
+    await footer.screenshot({ path: `${out}/footer-${name}-open.png` });
+  }
   // At the page bottom the global strip must clear the legal row.
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await page.waitForTimeout(200);
@@ -65,7 +82,7 @@ for (const [name, viewport] of Object.entries({ phone: { width: 390, height: 844
     return strip ? Math.round(strip.top - footer.bottom) : null;
   });
   await page.screenshot({ path: `${out}/page-${name}-bottom.png` });
-  report[name] = { ...metrics, afterEnter, afterSecond, clearanceAboveStrip: clearance };
+  report[name] = { ...metrics, menus, clearanceAboveStrip: clearance };
   await context.close();
 }
 await browser.close();

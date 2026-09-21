@@ -82,6 +82,19 @@
   color: var(--library-footer-cream);
   text-shadow: 0 0 22px rgba(4, 172, 255, 0.16);
 }
+/* The wordmark reads itself: gold initials tie S, E and N to the three words. */
+.library-footer-expansion {
+  margin: 0;
+  font-family: var(--font-sen-display, var(--font-display, "Alegreya", serif));
+  font-size: 1.0625rem;
+  line-height: 1.35;
+  letter-spacing: 0.08em;
+  color: rgba(239, 230, 211, 0.92);
+}
+.library-footer-expansion-initial {
+  font-weight: 600;
+  color: var(--library-footer-gold);
+}
 .library-footer-statement {
   margin: 0;
   max-width: 30rem;
@@ -276,26 +289,75 @@
   border-radius: 0.75rem;
 }
 
-@media (min-width: 768px) {
+/* Wide viewports have room to stand the three menus open side by side, so a
+   laptop never shows a tall stack of closed accordions beside a half-empty
+   identity column. The identity keeps a left rail with the social row and the
+   language pill beneath it; `display: contents` lets those three controls place
+   themselves in the page grid without a second markup tree. The width here
+   matches WIDE_FOOTER_QUERY in workspaceMedia.ts, which swaps the accordions
+   for the columns this layout expects. */
+@media (min-width: 1024px) {
   .library-footer {
     margin-top: 2rem;
-    padding: 1.75rem 1.5rem 1rem;
+    padding: 2rem 2rem 1rem;
   }
   .library-footer-inner {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-    align-items: center;
-    column-gap: 2.5rem;
-    max-width: 64rem;
+    max-width: 72rem;
+    grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
+    grid-template-areas:
+      "identity menus"
+      "social   menus"
+      "language menus"
+      "legal    legal";
+    align-content: start;
+    column-gap: 3rem;
+    row-gap: 1rem;
+  }
+  .library-footer-identity {
+    grid-area: identity;
+  }
+  .library-footer-controls {
+    display: contents;
+  }
+  .library-footer-social {
+    grid-area: social;
+    justify-self: center;
+  }
+  .library-footer-menus {
+    grid-area: menus;
+    align-self: start;
+  }
+  .library-footer-language-row {
+    grid-area: language;
+  }
+  .library-footer-mark {
+    font-size: 2.75rem;
+  }
+  .library-footer-columns {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.25rem 1.5rem;
+    padding: 1.5rem 1.75rem;
+  }
+  .library-footer-column-heading {
+    margin: 0 0 0.375rem;
+    padding-inline: 0.625rem;
+    font-family: var(--font-sen-sc, var(--font-sc, "Alegreya SC", serif));
+    font-size: 0.9375rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--library-footer-gold);
   }
   .library-footer-legal {
-    grid-column: 1 / -1;
+    grid-area: legal;
     grid-auto-flow: column;
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
-  }
-  .library-footer-mark {
-    font-size: 2.5rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(190, 216, 255, 0.14);
   }
 }
 

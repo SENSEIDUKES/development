@@ -119,13 +119,17 @@ export function LightNovelsHome({ active = true, worlds, onCreateStory, onOpenWo
               autoPlay={active}
               muted={true}
               playsInline={true}
-              preload="auto"
+              preload="metadata"
               poster={CELESTIAL_FALLBACK_IMAGES[0]}
               onPlay={() => {
                 setVideoPlaying(true);
                 setVideoError(false);
               }}
               onPlaying={() => {
+                setVideoPlaying(true);
+                setVideoError(false);
+              }}
+              onCanPlay={() => {
                 setVideoPlaying(true);
                 setVideoError(false);
               }}

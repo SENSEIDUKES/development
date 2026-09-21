@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import type { ReactNode } from 'react';
 import { LibraryPresentationProvider } from '@seihouse/library/presentation';
+import { LIBRARY_ASSETS } from '../../../host/media/libraryAssets';
 import { shellStates, type ShellSource } from './previewData';
 
 /**
@@ -55,7 +56,7 @@ async function mount() {
     const configuration = query.get('source') === 'header-states' ? 'header-states' : query.get('source') === 'cultivator-cave' ? 'cultivator-cave' : source;
     const headerState = (headerStates[configuration] as readonly string[]).includes(requested) ? requested : headerStates[configuration][0];
     document.title = 'Library Shell — Development headers';
-    root.render(<CaptureExitToWorkshop><DevAudioPlaybackProvider><StoryCreationPreviewRuntime><LibraryPresentationProvider><DevelopmentHeaderPreview source={configuration} state={headerState} /></LibraryPresentationProvider></StoryCreationPreviewRuntime></DevAudioPlaybackProvider></CaptureExitToWorkshop>);
+    root.render(<CaptureExitToWorkshop><DevAudioPlaybackProvider><StoryCreationPreviewRuntime><LibraryPresentationProvider assets={LIBRARY_ASSETS}><DevelopmentHeaderPreview source={configuration} state={headerState} /></LibraryPresentationProvider></StoryCreationPreviewRuntime></DevAudioPlaybackProvider></CaptureExitToWorkshop>);
   } else if (source === 'main-library') {
     await import('../../../components/library-shell/reference/main-library/source-theme.css');
     const { MainLibraryPreview } = await import('./MainLibraryPreview');

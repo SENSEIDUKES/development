@@ -60,7 +60,7 @@ export function Familiar({ open: controlledOpen, onOpenChange, triggerProps, onM
   const open = controlledOpen ?? localOpen;
   const expanded = !dragging && (pinned || hovered || focused || open);
   const activityAnimation = familiarActivityAnimation(props.familiar, props.activity);
-  const animation = props.animation ?? activityAnimation ?? (expanded && props.familiar.animations.waving ? 'waving' : undefined);
+  const animation = props.animation ?? (expanded && props.familiar.animations.waving ? 'waving' : activityAnimation);
   const setOpen = (next: boolean) => { setLocalOpen(next); onOpenChange?.(next); };
   useEffect(() => {
     if (dragging) { setPinned(false); setHovered(false); setFocused(false); }

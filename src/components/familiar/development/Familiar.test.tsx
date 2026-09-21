@@ -321,18 +321,30 @@ describe('Floating companion', () => {
   });
 
   it('reveals actions on mouse hover, dismisses them outside, and preserves touch access', async () => {
-    await act(async () => root.render(<ManagedCompanion />));
+    await act(async () => root.render(<FamiliarCompanion familiar={celestialGuardian} activity="running" />));
     expect(document.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(true);
-    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Idle');
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Working with timepiece');
     pointer('pointerover', 100, 100);
     expect(document.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(false);
     expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Waving');
     await act(async () => document.body.dispatchEvent(new Event('pointerdown', { bubbles: true })));
     expect(document.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(true);
-    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Idle');
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Working with timepiece');
     await click(document.querySelector('[aria-label="Show Familiar actions"]')!);
     expect(document.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(false);
     expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Waving');
+  });
+
+  it('does not let a keyboard movement reset interrupt a pointer drag', () => {
+    vi.useFakeTimers();
+    act(() => root.render(<FamiliarCompanion familiar={celestialGuardian} />));
+    act(() => pet().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true })));
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Moving left');
+    pointer('pointerdown', 600, 500);
+    pointer('pointermove', 640, 500);
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Moving right');
+    act(() => vi.advanceTimersByTime(280));
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Moving right');
   });
 
   it.each([

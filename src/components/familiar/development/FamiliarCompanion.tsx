@@ -155,6 +155,10 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
         active.moved = true;
         setDragging(true);
         setOpen(false);
+        if (movementTimeout.current !== null) {
+          window.clearTimeout(movementTimeout.current);
+          movementTimeout.current = null;
+        }
         setMovementAnimation(dragAnimation(props.familiar, { x: dx, y: dy }));
         pendingPosition.current = { x: active.origin.x + dx, y: active.origin.y + dy };
         if (dragFrame.current === null) dragFrame.current = requestAnimationFrame(flushPosition);

@@ -214,6 +214,9 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-09-21: Made drag animation direction follow the latest pointer sample instead
+  of total distance from the drag origin. Left/right reversals now switch immediately,
+  unchanged direction avoids repeated state updates, and position remains frame-batched.
 - 2026-09-21: Kept one decoded atlas mounted across animation changes so activity,
   drag, keyboard, and interaction clips no longer flash the loading state. Initial
   atlas decode now uses the host-supplied lightweight still; loading remains available

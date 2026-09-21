@@ -18,6 +18,23 @@ export interface FamiliarDefinition {
   animations: Readonly<Record<string, FamiliarAnimation>>;
 }
 
+/** The activity states a Codex-style host can report for its active companion. */
+export type FamiliarActivity = 'running' | 'needs-input' | 'ready' | 'blocked';
+
+const activityAnimation: Readonly<Record<FamiliarActivity, string>> = {
+  running: 'running',
+  'needs-input': 'waiting',
+  ready: 'review',
+  blocked: 'failed',
+};
+
+/** Use a supplied semantic clip when a host reports the matching Codex activity. */
+export function familiarActivityAnimation(familiar: FamiliarDefinition, activity: FamiliarActivity | undefined): string | undefined {
+  if (!activity) return undefined;
+  const animation = activityAnimation[activity];
+  return familiar.animations[animation] ? animation : undefined;
+}
+
 /** Host-provided selection catalogue. Availability is supplied by the host, not awarded by UI. */
 export interface FamiliarOption {
   id: string;

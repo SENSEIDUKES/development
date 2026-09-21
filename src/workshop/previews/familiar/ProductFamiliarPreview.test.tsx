@@ -45,6 +45,11 @@ it.each(['Clear selection', 'Sign out'])('removes the companion when the profile
   expect(document.querySelector('.familiar-companion')).toBeNull();
 });
 
+it('forwards Codex activity into the mounted companion', () => {
+  act(() => root.render(<ProductFamiliarSession><ProductFamiliarSurface viewport activity="blocked"><span /></ProductFamiliarSurface></ProductFamiliarSession>));
+  expect(document.querySelector('.familiar-companion [role="img"]')?.getAttribute('aria-label')).toBe('Celestial Guardian, Disappointed');
+});
+
 it('opens header actions before explicitly expanding a minimized pet and preserves its profile size', async () => {
   render();
   click('Resize');

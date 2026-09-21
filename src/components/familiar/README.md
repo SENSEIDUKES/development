@@ -3,7 +3,7 @@
 - Source: supplied `celestial-guardian/` package (not a Git repository).
 - Preview: Workshop **Shared → Familiar** and `?preview=familiar`.
 - Replica created: 2026-09-20.
-- Last Workshop update: 2026-09-20.
+- Last Workshop update: 2026-09-21.
 - Last source comparison: 2026-09-20.
 - Lifecycle: original artwork preserved; reusable renderer and Energy interaction under development.
 - Owner: Library. This first-party companion is not a SEN narrative capability.
@@ -42,6 +42,15 @@ The source README was inspected but is not shipped because it contains machine-l
   Energy opens a viewport-centered dialog; Close, Escape, or an outside press
   dismisses it. The UI primitive owns focus trapping, scroll locking, and focus return;
   viewport units center the dialog and bound its scrolling body above navigation.
+- `development/FamiliarCompanion.tsx` selects the supplied rightward or leftward
+  running loop while the user drags predominantly in that direction, and for a brief
+  keyboard arrow movement. It returns to the host-selected resting clip at release.
+  Vertical motion retains that resting clip because the source has no vertical movement
+  loop; task-status rows remain reserved for their documented task states.
+- The `activity` prop mirrors the desktop Codex status priority: `running` uses
+  `running`, `needs-input` uses `waiting`, `ready` uses `review`, and `blocked`
+  uses `failed`. A direct drag temporarily takes priority so the companion visibly
+  moves with the user; an explicit `animation` remains an inspection override.
 - `@seihouse/library/familiar` exports both components and their data contracts.
   No Workshop imports, account identities, asset URLs, or server code ship in this entry.
 - `src/host/familiar/celestialGuardian.ts` interprets this particular supplied package.
@@ -205,6 +214,11 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-09-21: Mirrored the current Codex companion behavior: active, needs-input,
+  ready, and blocked activity select the supplied running, waiting, review, and failed
+  rows; horizontal pointer/keyboard motion selects the supplied left/right loops; and
+  direct interaction keeps the supplied wave. The Familiar preview now exercises all
+  four Codex activity states rather than relying on an atlas-only dropdown.
 - 2026-09-20: Added the mobile 10–100% display range and 50% default/Reset while
   retaining the canonical profile multiplier and desktop range. Audited and reduced
   sprite, scrolling, dragging, hidden playback, and touch glass rendering work;
@@ -234,3 +248,17 @@ Escape/outside dismissal, and reduced-motion handling.
   with a contained drag preview, touch/keyboard interaction, and app-shell transfer instructions.
 - 2026-09-20: Moved the Workshop entry into Shared; added header minimize/callback,
   profile size/reset controls, and navigation-aware bounds at every size.
+
+## Future familiar intake rule
+
+Every familiar brought into Development from Codex must carry over its complete supplied
+animation contract, not just its resting art. Before integration, inspect the Codex pet
+metadata/atlas and record its state names and durations in the host definition. Wire the
+Codex activity bridge (`running`, `needs-input`, `ready`, `blocked`) to the familiar's
+supplied active, waiting, completed, and blocked clips; wire the supplied left/right
+movement loops to horizontal pointer and keyboard movement; and preserve the supplied
+interaction clip for direct engagement. Add focused tests for each state and motion
+direction. Never invent a task/status mapping for an unmatched row: retain it for an
+explicit host event only after its Codex meaning is verified. Static look-direction cells
+remain available for a host that has a verified directional-look event, but are not
+substituted for movement loops.

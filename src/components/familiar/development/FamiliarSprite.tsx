@@ -1,19 +1,22 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import type { FamiliarDefinition } from '../shared/familiar';
+import { familiarActivityAnimation, type FamiliarActivity, type FamiliarDefinition } from '../shared/familiar';
 import { useFamiliarVisibility } from './useFamiliarVisibility';
 import './familiar.css';
 
 export interface FamiliarSpriteProps {
   familiar: FamiliarDefinition;
+  /** Host activity selects its matching supplied clip unless an explicit animation overrides it. */
+  activity?: FamiliarActivity;
   animation?: string;
   paused?: boolean;
   statusId?: string;
 }
 
 /** Select an atlas clip and restart playback when its artwork or animation changes. */
-export function FamiliarSprite({ familiar, animation = 'idle', paused = false, statusId }: FamiliarSpriteProps) {
-  const clip = familiar.animations[animation] ?? familiar.animations.idle;
-  return <SpritePlayback key={`${familiar.spriteUrl}:${animation}`} familiar={familiar} clip={clip} paused={paused} statusId={statusId} />;
+export function FamiliarSprite({ familiar, activity, animation, paused = false, statusId }: FamiliarSpriteProps) {
+  const selectedAnimation = animation ?? familiarActivityAnimation(familiar, activity) ?? 'idle';
+  const clip = familiar.animations[selectedAnimation] ?? familiar.animations.idle;
+  return <SpritePlayback key={`${familiar.spriteUrl}:${selectedAnimation}`} familiar={familiar} clip={clip} paused={paused} statusId={statusId} />;
 }
 
 /** Play supplied frame timings while respecting pause, visibility, and reduced motion. */

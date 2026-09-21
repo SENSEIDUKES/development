@@ -2,6 +2,7 @@ import { SEIDialog, SEIDialogTrigger, SEIDialogContent, SEIDialogTitle, SEIDialo
 import { ChevronDown, Zap, X } from 'lucide-react';
 import { useEnergyAccount } from '../../energy/shared/useEnergyAccount';
 import { FamiliarSprite, type FamiliarSpriteProps } from './FamiliarSprite';
+import { familiarActivityAnimation } from '../shared/familiar';
 import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
 /** Read the active host account whenever the Energy panel mounts. */
@@ -58,6 +59,8 @@ export function Familiar({ open: controlledOpen, onOpenChange, triggerProps, onM
   const [focused, setFocused] = useState(false);
   const open = controlledOpen ?? localOpen;
   const expanded = !dragging && (pinned || hovered || focused || open);
+  const activityAnimation = familiarActivityAnimation(props.familiar, props.activity);
+  const animation = props.animation ?? activityAnimation ?? (expanded && props.familiar.animations.waving ? 'waving' : undefined);
   const setOpen = (next: boolean) => { setLocalOpen(next); onOpenChange?.(next); };
   useEffect(() => {
     if (dragging) { setPinned(false); setHovered(false); setFocused(false); }
@@ -77,7 +80,7 @@ export function Familiar({ open: controlledOpen, onOpenChange, triggerProps, onM
       aria-expanded={expanded} aria-controls={actionsId}
       onClick={event => { triggerProps?.onClick?.(event); if (!event.defaultPrevented) setPinned(value => !value); }}
       aria-describedby={[triggerProps?.['aria-describedby'], statusId].filter(Boolean).join(' ')}>
-      <FamiliarSprite {...props} animation={expanded && props.familiar.animations.waving ? 'waving' : props.animation} statusId={statusId} />
+      <FamiliarSprite {...props} animation={animation} statusId={statusId} />
     </button>
     <div className="familiar-dock">
       <button type="button" className="familiar-shadow" hidden={expanded} aria-label="Show Familiar actions" aria-expanded={expanded} aria-controls={actionsId} onClick={() => setPinned(true)}><span /></button>

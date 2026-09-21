@@ -1,12 +1,12 @@
 import { useEffect, useId, useRef, useState, type RefObject, type PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { Familiar, type FamiliarProps } from './Familiar';
-import { familiarDisplaySize } from '../shared/familiar';
+import { familiarDisplaySize, type FamiliarActivity } from '../shared/familiar';
 import { useFamiliarMobile } from './useFamiliarMobile';
 
 type Point = { x: number; y: number };
 type Bounds = { left: number; top: number; right: number; bottom: number };
-export interface FamiliarCompanionProps extends Pick<FamiliarProps, 'familiar' | 'animation' | 'paused' | 'children'> {
+export interface FamiliarCompanionProps extends Pick<FamiliarProps, 'familiar' | 'activity' | 'animation' | 'paused' | 'children'> {
   /** Omit in the product app shell. Workshop hosts constrain it to their preview. */
   boundaryRef?: RefObject<HTMLElement | null>;
   size?: number;
@@ -25,6 +25,13 @@ const clamp = (point: Point, bounds: Bounds): Point => ({
   y: Math.max(bounds.top, Math.min(bounds.bottom, point.y)),
 });
 
+/** The supplied side-running rows are the only movement loops in the atlas. */
+function dragAnimation(familiar: FamiliarProps['familiar'], delta: Point): string | undefined {
+  if (Math.abs(delta.x) < Math.abs(delta.y) || delta.x === 0) return undefined;
+  const animation = delta.x > 0 ? 'running-right' : 'running-left';
+  return familiar.animations[animation] ? animation : undefined;
+}
+
 /** One instance belongs in the host app shell, beneath its account/Energy providers. */
 export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMinimize, bottomInset = 0, children, ...props }: FamiliarCompanionProps) {
   const mobile = useFamiliarMobile();
@@ -35,6 +42,7 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
   const [position, setPosition] = useState<Point | null>(null);
   const [open, setOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [movementAnimation, setMovementAnimation] = useState<string>();
   const gesture = useRef<{ id: number; start: Point; origin: Point; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
   const instructions = useId();
@@ -43,6 +51,7 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
   const pendingPosition = useRef<Point | null>(null);
   const dragFrame = useRef<number | null>(null);
   const liveBounds = useRef<Bounds | null>(null);
+  const movementTimeout = useRef<number | null>(null);
   /** Coalesce pointer samples to one position update per display frame. */
   function flushPosition() {
     if (dragFrame.current !== null) cancelAnimationFrame(dragFrame.current);
@@ -55,6 +64,9 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
     dragFrame.current = null;
     pendingPosition.current = null;
     gesture.current = null;
+    if (movementTimeout.current !== null) window.clearTimeout(movementTimeout.current);
+    movementTimeout.current = null;
+    setMovementAnimation(undefined);
   }, [minimized]);
   useEffect(() => {
     if (!minimized && wasMinimized.current) element.current?.querySelector('button')?.focus({ preventScroll: true });
@@ -118,6 +130,7 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
     suppressClick.current = cancelled || gesture.current.moved;
     gesture.current = null;
     setDragging(false);
+    setMovementAnimation(undefined);
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   }
 
@@ -125,7 +138,7 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
   return createPortal(<div ref={element} className="familiar-companion" data-dragging={dragging || undefined}
     style={{ left: 0, top: 0, transform: `translate(${position.x}px, ${position.y}px)`, width }}>
     <span id={instructions} className="familiar-sr-only">Drag to move. Use arrow keys to move when focused. Press Enter for Familiar actions.</span>
-    <Familiar {...props} open={open} onOpenChange={setOpen} onMinimize={onMinimize} dragging={dragging} triggerProps={{
+    <Familiar {...props} animation={movementAnimation ?? props.animation} open={open} onOpenChange={setOpen} onMinimize={onMinimize} dragging={dragging} triggerProps={{
       'aria-describedby': instructions,
       onPointerDown: event => {
         if (event.button !== 0 || event.isPrimary === false || gesture.current) return;
@@ -142,6 +155,7 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
         active.moved = true;
         setDragging(true);
         setOpen(false);
+        setMovementAnimation(dragAnimation(props.familiar, { x: dx, y: dy }));
         pendingPosition.current = { x: active.origin.x + dx, y: active.origin.y + dy };
         if (dragFrame.current === null) dragFrame.current = requestAnimationFrame(flushPosition);
       },
@@ -162,6 +176,12 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
         event.preventDefault();
         setOpen(false);
         setPosition(clamp({ x: position.x + delta.x, y: position.y + delta.y }, bounds));
+        if (movementTimeout.current !== null) window.clearTimeout(movementTimeout.current);
+        setMovementAnimation(dragAnimation(props.familiar, delta));
+        movementTimeout.current = window.setTimeout(() => {
+          movementTimeout.current = null;
+          setMovementAnimation(undefined);
+        }, 280);
       },
     }}>
       {children}

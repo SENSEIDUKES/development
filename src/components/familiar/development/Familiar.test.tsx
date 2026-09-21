@@ -369,9 +369,14 @@ describe('Floating companion', () => {
     pointer('pointerdown', 600, 500);
     pointer('pointermove', 640, 500);
     expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Moving right');
-    pointer('pointermove', 500, 500);
-    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Moving left');
-    pointer('pointerup', 500, 500);
+    const reversal = new Event('pointermove', { bubbles: true });
+    Object.assign(reversal, { clientX: 620, clientY: 500, pointerId: 1, pointerType: 'touch', button: 0, isPrimary: true });
+    act(() => {
+      pet().dispatchEvent(reversal); // Reverse before crossing the original pointer-down position.
+      expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Moving left');
+    });
+    flushFrames();
+    pointer('pointerup', 620, 500);
     expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Working with timepiece');
   });
 

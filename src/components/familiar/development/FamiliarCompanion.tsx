@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type RefObject, type PointerEvent } from 'react';
-import { createPortal } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 import { Familiar, type FamiliarProps } from './Familiar';
 import { familiarDisplaySize, type FamiliarActivity } from '../shared/familiar';
 import { useFamiliarMobile } from './useFamiliarMobile';
@@ -43,7 +43,7 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
   const [open, setOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [movementAnimation, setMovementAnimation] = useState<string>();
-  const gesture = useRef<{ id: number; start: Point; origin: Point; moved: boolean } | null>(null);
+  const gesture = useRef<{ id: number; start: Point; last: Point; origin: Point; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
   const instructions = useId();
   const element = useRef<HTMLDivElement>(null);
@@ -52,6 +52,13 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
   const dragFrame = useRef<number | null>(null);
   const liveBounds = useRef<Bounds | null>(null);
   const movementTimeout = useRef<number | null>(null);
+  const movementAnimationRef = useRef<string | undefined>(undefined);
+  function applyMovementAnimation(animation: string | undefined, immediate = false) {
+    if (movementAnimationRef.current === animation) return;
+    movementAnimationRef.current = animation;
+    if (immediate) flushSync(() => setMovementAnimation(animation));
+    else setMovementAnimation(animation);
+  }
   /** Coalesce pointer samples to one position update per display frame. */
   function flushPosition() {
     if (dragFrame.current !== null) cancelAnimationFrame(dragFrame.current);
@@ -66,6 +73,7 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
     gesture.current = null;
     if (movementTimeout.current !== null) window.clearTimeout(movementTimeout.current);
     movementTimeout.current = null;
+    movementAnimationRef.current = undefined;
     setMovementAnimation(undefined);
   }, [minimized]);
   useEffect(() => {
@@ -130,7 +138,7 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
     suppressClick.current = cancelled || gesture.current.moved;
     gesture.current = null;
     setDragging(false);
-    setMovementAnimation(undefined);
+    applyMovementAnimation(undefined);
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   }
 
@@ -143,15 +151,19 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
       onPointerDown: event => {
         if (event.button !== 0 || event.isPrimary === false || gesture.current) return;
         suppressClick.current = false;
-        gesture.current = { id: event.pointerId, start: { x: event.clientX, y: event.clientY }, origin: position, moved: false };
+        const point = { x: event.clientX, y: event.clientY };
+        gesture.current = { id: event.pointerId, start: point, last: point, origin: position, moved: false };
         event.currentTarget.setPointerCapture?.(event.pointerId);
       },
       onPointerMove: event => {
         const active = gesture.current;
         if (!active || event.pointerId !== active.id) return;
-        const dx = event.clientX - active.start.x;
-        const dy = event.clientY - active.start.y;
+        const current = { x: event.clientX, y: event.clientY };
+        const dx = current.x - active.start.x;
+        const dy = current.y - active.start.y;
         if (!active.moved && Math.hypot(dx, dy) < 6) return;
+        const movement = { x: current.x - active.last.x, y: current.y - active.last.y };
+        active.last = current;
         active.moved = true;
         setDragging(true);
         setOpen(false);
@@ -159,7 +171,8 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
           window.clearTimeout(movementTimeout.current);
           movementTimeout.current = null;
         }
-        setMovementAnimation(dragAnimation(props.familiar, { x: dx, y: dy }));
+        const animation = dragAnimation(props.familiar, movement);
+        if (animation) applyMovementAnimation(animation, true);
         pendingPosition.current = { x: active.origin.x + dx, y: active.origin.y + dy };
         if (dragFrame.current === null) dragFrame.current = requestAnimationFrame(flushPosition);
       },
@@ -181,10 +194,10 @@ export function FamiliarCompanion({ boundaryRef, size, minimized = false, onMini
         setOpen(false);
         setPosition(clamp({ x: position.x + delta.x, y: position.y + delta.y }, bounds));
         if (movementTimeout.current !== null) window.clearTimeout(movementTimeout.current);
-        setMovementAnimation(dragAnimation(props.familiar, delta));
+        applyMovementAnimation(dragAnimation(props.familiar, delta));
         movementTimeout.current = window.setTimeout(() => {
           movementTimeout.current = null;
-          setMovementAnimation(undefined);
+          applyMovementAnimation(undefined);
         }, 280);
       },
     }}>

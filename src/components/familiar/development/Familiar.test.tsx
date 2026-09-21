@@ -87,6 +87,11 @@ describe('Familiar sprite playback', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
+  it('selects the supplied Codex activity clip when used as a standalone renderer', () => {
+    act(() => root.render(<FamiliarSprite familiar={celestialGuardian} activity="ready" />));
+    expect(container.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe('Celestial Guardian, Thoughtful review');
+  });
+
   it('respects reduced motion and reports a missing image', () => {
     vi.useFakeTimers();
     reduced = true;
@@ -257,6 +262,7 @@ describe('Floating companion', () => {
     const before = location();
     act(() => pet().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true })));
     expect(location().x).toBe(before.x - 16);
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Moving left');
     const originalWidth = window.innerWidth;
     const originalHeight = window.innerHeight;
     try {
@@ -315,18 +321,58 @@ describe('Floating companion', () => {
   });
 
   it('reveals actions on mouse hover, dismisses them outside, and preserves touch access', async () => {
-    await act(async () => root.render(<ManagedCompanion />));
+    await act(async () => root.render(<FamiliarCompanion familiar={celestialGuardian} activity="running" />));
     expect(document.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(true);
-    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Idle');
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Working with timepiece');
     pointer('pointerover', 100, 100);
     expect(document.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(false);
     expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Waving');
     await act(async () => document.body.dispatchEvent(new Event('pointerdown', { bubbles: true })));
     expect(document.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(true);
-    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Idle');
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Working with timepiece');
     await click(document.querySelector('[aria-label="Show Familiar actions"]')!);
     expect(document.querySelector<HTMLElement>('.familiar-actions')!.hidden).toBe(false);
     expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Waving');
+  });
+
+  it('does not let a keyboard movement reset interrupt a pointer drag', () => {
+    vi.useFakeTimers();
+    act(() => root.render(<FamiliarCompanion familiar={celestialGuardian} />));
+    act(() => pet().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true })));
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Moving left');
+    pointer('pointerdown', 600, 500);
+    pointer('pointermove', 640, 500);
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Moving right');
+    act(() => vi.advanceTimersByTime(280));
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Moving right');
+  });
+
+  it.each([
+    ['running', 'Working with timepiece'],
+    ['needs-input', 'Waiting for input'],
+    ['ready', 'Thoughtful review'],
+    ['blocked', 'Disappointed'],
+  ] as const)('uses the supplied Codex %s activity clip', (activity, label) => {
+    act(() => root.render(<FamiliarCompanion familiar={celestialGuardian} activity={activity} />));
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe(`Celestial Guardian, ${label}`);
+  });
+
+  it('uses the supplied side-running animation for horizontal drag direction and restores activity on release', () => {
+    act(() => root.render(<FamiliarCompanion familiar={celestialGuardian} activity="running" />));
+    pointer('pointerdown', 600, 500);
+    pointer('pointermove', 640, 500);
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Moving right');
+    pointer('pointermove', 500, 500);
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Moving left');
+    pointer('pointerup', 500, 500);
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Working with timepiece');
+  });
+
+  it('does not substitute an unrelated task animation for a vertical drag', () => {
+    act(() => root.render(<FamiliarCompanion familiar={celestialGuardian} />));
+    pointer('pointerdown', 600, 500);
+    pointer('pointermove', 600, 440);
+    expect(document.querySelector('.familiar-companion [role="img"]')!.getAttribute('aria-label')).toBe('Celestial Guardian, Idle');
   });
 });
 

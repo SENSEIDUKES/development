@@ -43,9 +43,9 @@ function ProductFamiliarRecall() {
 }
 
 /** Restrict standalone previews to their canvas; an embedded app owns one viewport companion. */
-export function ProductFamiliarSurface({ children, viewport = false, headerRecall = false, animation, paused, bottomInset }: {
+export function ProductFamiliarSurface({ children, viewport = false, headerRecall = false, activity, animation, paused, bottomInset }: {
   children: ReactNode; viewport?: boolean; headerRecall?: boolean;
-} & Pick<FamiliarCompanionProps, 'animation' | 'paused' | 'bottomInset'>) {
+} & Pick<FamiliarCompanionProps, 'activity' | 'animation' | 'paused' | 'bottomInset'>) {
   const parentSurface = useContext(SurfaceContext);
   const context = useProductFamiliarPreview();
   const boundary = useRef<HTMLDivElement>(null);
@@ -56,7 +56,7 @@ export function ProductFamiliarSurface({ children, viewport = false, headerRecal
       {!headerRecall && context?.minimized && <div className="product-familiar-recall" aria-label="Familiar controls"><ProductFamiliarRecall /></div>}
       {children}
       {uid && context?.selection.familiarId === celestialGuardian.id &&
-        <FamiliarCompanion key={uid} familiar={celestialGuardian} boundaryRef={viewport ? undefined : boundary} animation={animation} paused={paused}
+        <FamiliarCompanion key={uid} familiar={celestialGuardian} boundaryRef={viewport ? undefined : boundary} activity={activity} animation={animation} paused={paused}
           size={context.selection.familiarSize} minimized={context.minimized} onMinimize={() => context.setMinimized(true)} bottomInset={bottomInset} />
       }
     </div>

@@ -21,7 +21,6 @@ import {
 } from './sppSkills';
 
 const DOCX_MEDIA_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-const SHARED_PACKAGE_ID = '9a7ce291-b3e7-4938-bc6d-a9bc688137b5';
 
 export interface OfficialCapaPackageDefinition {
   key: 'author' | 'pacing' | 'continuity' | 'style-chinese' | 'style-japanese' | 'style-korean';
@@ -41,8 +40,8 @@ export interface OfficialCapaPackageDefinition {
 export const OFFICIAL_CAPA_PACKAGES: readonly OfficialCapaPackageDefinition[] = [
   {
     key: 'author', archiveFile: 'CAPA-AUTHOR.spp', archiveUrl: authorArchiveUrl,
-    archiveSha256: 'd1b2bac09eef5f8abc148c17d2771f2b5e234096db2859a8f8ac04952e7f354e',
-    packageId: SHARED_PACKAGE_ID, packageName: 'CAPA AUTHOR', packageVersion: '1.0.1', slot: 'author',
+    archiveSha256: '5210a911e243aacfd51a943e4899c51b94a076fc1ca1e54afc23f686b7951380',
+    packageId: 'e103be1b-ade1-4670-867a-13cb0fa1d7ba', packageName: 'CAPA AUTHOR', packageVersion: '1.0.1', slot: 'author',
     instructionSourcePath: 'assets/1-CAPA - AUTHOR.docx', instructionPath: 'assets/1-CAPA - AUTHOR.docx.txt',
     resources: [
       { path: 'assets/1-CAPA - AUTHOR.docx', mediaType: DOCX_MEDIA_TYPE, sha256: '2d020251bbadec8eeae99f044b9ff9c6c3ed1d47a309e1994fa52e81ad827bb1' },
@@ -51,8 +50,8 @@ export const OFFICIAL_CAPA_PACKAGES: readonly OfficialCapaPackageDefinition[] = 
   },
   {
     key: 'pacing', archiveFile: 'CAPA-Pacing.spp', archiveUrl: pacingArchiveUrl,
-    archiveSha256: 'afc389b39aaa16b4dd7411c8fd2f6412b583a708a00ebba476ebd0c6fd2eebc9',
-    packageId: SHARED_PACKAGE_ID, packageName: 'CAPA Pacing', packageVersion: '1.0.1', slot: 'pacing',
+    archiveSha256: '6bad51fffe602921483e7f21a7018ef4c8aab4a7b8583e7f057851b78afb13bc',
+    packageId: '38720040-ce9c-402b-ad91-d1dd6d840aa3', packageName: 'CAPA Pacing', packageVersion: '1.0.1', slot: 'pacing',
     instructionSourcePath: 'assets/1-CAPA - PACING.docx', instructionPath: 'assets/1-CAPA - PACING.docx.txt',
     resources: [
       { path: 'assets/1-CAPA - PACING.docx', mediaType: DOCX_MEDIA_TYPE, sha256: '2b1f11fe1fcca88854eef5ba2f30e9579fda027344e8b3ca049a0b4eda22da68' },
@@ -61,8 +60,8 @@ export const OFFICIAL_CAPA_PACKAGES: readonly OfficialCapaPackageDefinition[] = 
   },
   {
     key: 'continuity', archiveFile: 'CAPA-Continuity.spp', archiveUrl: continuityArchiveUrl,
-    archiveSha256: '2c5fba7c67a1608f04f19ceb7a441ba3a192d7a153ec864da5617d9caca0f108',
-    packageId: SHARED_PACKAGE_ID, packageName: 'CAPA Continuity', packageVersion: '1.0.1', slot: 'continuity',
+    archiveSha256: 'ca37414fb6b0b73aaba85b8432a2f051d6a9dbe3d6a0eec3442090c6f29fc97c',
+    packageId: '831e2788-76b1-48b3-924e-445153c3eb7a', packageName: 'CAPA Continuity', packageVersion: '1.0.1', slot: 'continuity',
     instructionSourcePath: 'assets/1-CAPA - CONITINUITY.docx', instructionPath: 'assets/1-CAPA - CONITINUITY.docx.txt',
     resources: [
       { path: 'assets/1-CAPA - CONITINUITY.docx', mediaType: DOCX_MEDIA_TYPE, sha256: 'a3a28c1687a2687c57c1183c55ffcbc3b0474872ff2a9917036265b46dbd26a3' },
@@ -71,8 +70,8 @@ export const OFFICIAL_CAPA_PACKAGES: readonly OfficialCapaPackageDefinition[] = 
   },
   {
     key: 'style-chinese', archiveFile: 'CAPA-STYLE-CHINESE.spp', archiveUrl: chineseStyleArchiveUrl,
-    archiveSha256: 'fca99db4dd1db6c5313757bbc009e3764cdabbd94fc860574ec3f1c473a8a919',
-    packageId: SHARED_PACKAGE_ID, packageName: 'STYLE - CHINESE', packageVersion: '1.0.0', slot: 'style', storyStyle: 'chinese',
+    archiveSha256: 'bd9c79e8b856ab79a2c1bfd765a8058e99f2420b5c81695ac512ff2267568a12',
+    packageId: '4fe6006b-a152-46e7-a4af-6255eabad4a9', packageName: 'STYLE - CHINESE', packageVersion: '1.0.0', slot: 'style', storyStyle: 'chinese',
     instructionSourcePath: 'assets/1-1-CAPA - STYLE CHINESE.docx', instructionPath: 'assets/1-1-CAPA - STYLE CHINESE.docx.txt',
     resources: [
       { path: 'assets/1-1-CAPA - STYLE CHINESE.docx', mediaType: DOCX_MEDIA_TYPE, sha256: '9382f8b6918607dcf6536667b1101e7f0eebe12a4e4c67193f79fea438b9af34' },
@@ -81,8 +80,8 @@ export const OFFICIAL_CAPA_PACKAGES: readonly OfficialCapaPackageDefinition[] = 
   },
   {
     key: 'style-japanese', archiveFile: 'CAPA-STYLE-JAPANESE.spp', archiveUrl: japaneseStyleArchiveUrl,
-    archiveSha256: 'd9016e4da0ef4138b54627b37b6acc9e923b92ceaded11137440543ab62dcdf3',
-    packageId: SHARED_PACKAGE_ID, packageName: 'STYLE - JAPANESE', packageVersion: '1.0.0', slot: 'style', storyStyle: 'japanese',
+    archiveSha256: '0233e82545e82645fbdf49eeafa03ae3791a1739c845d4e06bca3954d1c6659e',
+    packageId: 'a776656d-20fa-42a6-bf84-790a4e9d6bb2', packageName: 'STYLE - JAPANESE', packageVersion: '1.0.0', slot: 'style', storyStyle: 'japanese',
     instructionSourcePath: 'assets/1-CAPA - STYLE JAPANESE.docx', instructionPath: 'assets/1-CAPA - STYLE JAPANESE.docx.txt',
     resources: [
       { path: 'assets/1-CAPA - STYLE JAPANESE.docx', mediaType: DOCX_MEDIA_TYPE, sha256: '9b490776db6c154830dd715aa3a7afff4ba055da617850f49303068712a46cc1' },
@@ -91,8 +90,8 @@ export const OFFICIAL_CAPA_PACKAGES: readonly OfficialCapaPackageDefinition[] = 
   },
   {
     key: 'style-korean', archiveFile: 'CAPA-STYLE-KOREAN.spp', archiveUrl: koreanStyleArchiveUrl,
-    archiveSha256: '5956cc5fafe4bce44811f5b0b3686912b4b011be3dee3d462c073916f40bff39',
-    packageId: SHARED_PACKAGE_ID, packageName: 'STYLE - KOREAN', packageVersion: '1.0.0', slot: 'style', storyStyle: 'korean',
+    archiveSha256: '6a9f2ede69a0a1c5d2e332452f7981e95c8c9c31cd56f6061bf6717f5d5bae09',
+    packageId: '565b9514-aeed-4719-b5f5-1a000afd92c3', packageName: 'STYLE - KOREAN', packageVersion: '1.0.0', slot: 'style', storyStyle: 'korean',
     instructionSourcePath: 'assets/1-CAPA - STYLE KOREAN.docx', instructionPath: 'assets/1-CAPA - STYLE KOREAN.docx.txt',
     resources: [
       { path: 'assets/1-CAPA - STYLE KOREAN.docx', mediaType: DOCX_MEDIA_TYPE, sha256: 'a892d48242d660e54ffddd94080191c9805fa56bf71a228599d5f3c9b2f9f47c' },

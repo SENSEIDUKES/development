@@ -7,8 +7,9 @@ import { LIBRARY_FOOTER_SOCIAL_GLYPHS, LIBRARY_FOOTER_SOCIAL_LABELS, type Librar
 import { useWideFooter } from './workspaceMedia';
 import './library-footer.css';
 
-/** The production statement, kept verbatim. */
-export const LIBRARY_FOOTER_STATEMENT = 'SEIHOUSE: A BETTER TIME CAPSULE AND TRANSLATOR OF ARTISTIC EXPRESSION';
+/** The company statement. The wordmark above it already names SEIHouse. */
+export const LIBRARY_FOOTER_STATEMENT = 'A BETTER TIME CAPSULE AND TRANSLATOR OF ARTISTIC EXPRESSION';
+export const LIBRARY_FOOTER_MARK = 'SEN';
 /** What the SEN wordmark stands for, read out beneath it. */
 export const LIBRARY_FOOTER_EXPANSION = 'SEIHouse Expanded Novels';
 export const LIBRARY_FOOTER_COPYRIGHT = '© 2026 SEIHouse Productions LLC';
@@ -91,13 +92,11 @@ export function LibraryFooter({ groups, social, legal, language, emblem, classNa
           {emblem && <img src={emblem.src} alt="" className="library-footer-emblem" decoding="async" />}
           <span className="library-footer-hairline" />
         </div>
-        <p className="library-footer-mark" data-footer-production-mark>SEN</p>
-        {/* One lettering for the whole phrase, cycling the shared Celestial
-            Library spectrum rather than tinting single letters. */}
+        {/* The wordmark carries the lettering, cycling the shared Celestial
+            Library spectrum; what it stands for reads plainly beneath it. */}
         <LibraryElementalTitle as="p" element="celestial" intensity="subtle" shadow="none"
-          className="library-footer-expansion" data-footer-expansion>
-          {LIBRARY_FOOTER_EXPANSION}
-        </LibraryElementalTitle>
+          className="library-footer-mark" data-footer-production-mark>{LIBRARY_FOOTER_MARK}</LibraryElementalTitle>
+        <p className="library-footer-expansion" data-footer-expansion>{LIBRARY_FOOTER_EXPANSION}</p>
         <p className="library-footer-statement">{LIBRARY_FOOTER_STATEMENT}</p>
       </div>
 

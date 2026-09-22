@@ -70,25 +70,13 @@
     0 0 18px rgba(4, 172, 255, 0.18),
     0 0 28px rgba(212, 175, 55, 0.14);
 }
-.library-footer-mark {
-  margin: 0;
-  font-family: var(--font-sen-display, var(--font-display, "Alegreya", serif));
-  font-size: 2rem;
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: 0.45em;
-  /* Visually center a letter-spaced word; the trailing space is part of the last glyph. */
-  padding-left: 0.45em;
-  color: var(--library-footer-cream);
-  text-shadow: 0 0 22px rgba(4, 172, 255, 0.16);
-}
-/* The wordmark reads itself. `LibraryElementalTitle` letters the whole phrase as
-   one instead of tinting single letters, and the phrase holds a single colour at
-   a time that travels the Celestial Library spectrum — the portal blue, violet
-   and gold `library-spectrum.css` gives the header plaques and emblems, on its
-   18s cadence. The lettering's own layers paint a vertical gradient and a
-   sweeping sheen, which would leave neighbouring letters different colours, so
-   the text and its glow take the animated colour and the sheen stands down. */
+/* The wordmark carries the identity's motion. `LibraryElementalTitle` letters it
+   as one and it holds a single colour at a time, travelling the Celestial
+   Library spectrum — the portal blue, violet and gold `library-spectrum.css`
+   gives the header plaques and emblems, on its 18s cadence. The lettering's own
+   vertical gradient and sweeping sheen would leave neighbouring letters
+   different colours, so the text and its glow take the animated colour and the
+   sheen stands down. */
 @keyframes library-footer-spectrum-cycle {
   0%,
   100% {
@@ -101,35 +89,52 @@
     color: #e5c67c;
   }
 }
+.library-footer-mark {
+  margin: 0;
+  font-family: var(--font-sen-display, var(--font-display, "Alegreya", serif));
+  font-size: 2rem;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: 0.45em;
+  /* Visually center a letter-spaced word; the trailing space is part of the last glyph. */
+  padding-left: 0.45em;
+  --et-high: #f7e6b4;
+  --et-glow: #7c5cff;
+  animation: library-footer-spectrum-cycle 18s ease-in-out infinite;
+}
+.library-footer-mark .library-elemental-title__text,
+.library-footer-mark .library-elemental-title__aura {
+  background-image: none;
+  color: inherit;
+}
+.library-footer-mark .library-elemental-title__aura {
+  text-shadow: 0 0 0.16em currentColor;
+}
+.library-footer-mark .library-elemental-title__energy {
+  display: none;
+}
+/* What the wordmark stands for, stated plainly so the lettering above keeps the
+   eye. */
 .library-footer-expansion {
   margin: 0;
   font-family: var(--font-sen-display, var(--font-display, "Alegreya", serif));
   font-size: 1.0625rem;
   line-height: 1.35;
   letter-spacing: 0.08em;
-  --et-high: #f7e6b4;
-  --et-glow: #7c5cff;
-  animation: library-footer-spectrum-cycle 18s ease-in-out infinite;
+  color: rgba(239, 230, 211, 0.92);
 }
-.library-footer-expansion .library-elemental-title__text,
-.library-footer-expansion .library-elemental-title__aura {
-  background-image: none;
-  color: inherit;
-}
-.library-footer-expansion .library-elemental-title__aura {
-  text-shadow: 0 0 0.14em currentColor;
-}
-.library-footer-expansion .library-elemental-title__energy {
-  display: none;
-}
+/* The company statement reads as a motto rather than a label: the display
+   serif's true italic (Alegreya SC ships no italic face, so it would be a
+   synthetic slant) at book weight, its tracking eased back from the wordmark's. */
 .library-footer-statement {
   margin: 0;
-  max-width: 30rem;
-  font-family: var(--font-sen-sc, var(--font-sc, "Alegreya SC", serif));
-  font-size: 0.6875rem;
-  font-weight: 700;
-  line-height: 1.7;
-  letter-spacing: 0.22em;
+  max-width: 32rem;
+  font-family: var(--font-sen-display, var(--font-display, "Alegreya", serif));
+  font-style: italic;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--library-footer-muted);
 }
@@ -396,7 +401,7 @@
   }
   /* The lettering's own layers already pause themselves; this is the footer's
      colour cycle, so the footer stops it and holds the spectrum's blue. */
-  .library-footer-expansion {
+  .library-footer-mark {
     animation: none;
     color: #04acff;
   }

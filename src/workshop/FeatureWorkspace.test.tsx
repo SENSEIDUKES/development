@@ -12,7 +12,9 @@ const entry: WorkshopEntry = {
   title: 'Controls Test',
   description: 'Shared Workshop Controls test fixture.',
   category: 'other',
-  section: 'shared',
+  section: 'components',
+  owner: 'workshop',
+  status: 'active',
   version: 'v1.0',
   source: {
     repository: 'SENSEIDUKES/development',

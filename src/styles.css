@@ -265,6 +265,107 @@ body {
 }
 .workshop-card:hover .workshop-card-arrow { transform: translateX(4px); }
 
+/* Package ownership badge: which package owns an item, independent of the
+   Workshop section it is shown in. */
+.workshop-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+}
+.workshop-owner,
+.workshop-lifecycle {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.workshop-owner-sen { color: #2f5f8a; }
+.workshop-owner-library { color: #8a5a12; }
+.workshop-owner-library-ui { color: #6b4a8a; }
+.workshop-owner-workshop { color: #5c554b; }
+.workshop-owner-deferred { color: #8a3a2c; }
+.workshop-lifecycle { color: rgba(28, 24, 19, 0.6); border-style: dashed; }
+.workshop-group-header .workshop-owner-sen { color: #8fc0ec; }
+.workshop-group-header .workshop-owner-library { color: #e2b864; }
+.workshop-group-header .workshop-owner-library-ui { color: #c7a7ec; }
+.workshop-group-header .workshop-owner-workshop { color: rgba(236, 231, 221, 0.7); }
+.workshop-group-header .workshop-owner-deferred { color: #e89a88; }
+.workshop-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.workshop-card-body p.workshop-card-archive-note {
+  font-style: italic;
+  color: rgba(28, 24, 19, 0.7);
+}
+
+/* Subsections inside a Workshop section. */
+.workshop-group { margin-top: clamp(2.25rem, 6vw, 3.5rem); }
+.workshop-group .workshop-grid { margin-top: 1.1rem; }
+/* Keep a lone card at normal width instead of stretching across the row. */
+.workshop-group > .workshop-grid,
+.workshop-archive .workshop-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); }
+.workshop-group-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+.workshop-group-title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(236, 231, 221, 0.72);
+}
+.workshop-group-description {
+  margin: 0.6rem 0 0;
+  max-width: 36rem;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: rgba(236, 231, 221, 0.45);
+}
+
+/* Archive: a lifecycle filter outside the four primary sections. */
+.workshop-archive {
+  margin-top: clamp(3rem, 8vw, 4.5rem);
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(236, 231, 221, 0.09);
+}
+.workshop-archive-toggle {
+  min-height: 44px;
+  border: 1px solid rgba(236, 231, 221, 0.18);
+  border-radius: 999px;
+  background: transparent;
+  padding: 0.5rem 1.1rem;
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(236, 231, 221, 0.7);
+  cursor: pointer;
+}
+.workshop-archive-toggle[aria-expanded='true'] { color: #f4efe6; border-color: rgba(236, 231, 221, 0.4); }
+.workshop-archive-toggle:focus-visible {
+  outline: 2px solid #ece7dd;
+  outline-offset: 3px;
+}
+.workshop-archive .workshop-card { opacity: 0.88; }
+
 /* Library Components tab — the same card language as the feature grids,
    holding live previews of the real shared primitives instead of placeholder
    visuals. The cards are not links and the previews are interactive, so the

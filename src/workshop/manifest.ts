@@ -16,8 +16,41 @@ export interface WorkshopSource {
   lastCompared: string;
 }
 
-/** Workshop navigation only; does not change package or implementation ownership. */
-export type WorkshopSection = 'home' | 'library' | 'sen' | 'shared' | 'library-components' | 'icons' | 'provenance';
+/**
+ * Workshop navigation only: where SENSEI mentally works on something. It never
+ * changes package or implementation ownership — see `WorkshopOwner` for that.
+ */
+export type WorkshopSection = 'pages' | 'customization' | 'systems' | 'components';
+
+/** Optional subsection inside a Workshop section (currently only Pages uses them). */
+export type WorkshopGroup = 'home' | 'create' | 'read' | 'account' | 'commerce';
+
+/**
+ * The package lane that actually owns a Workshop item. Declared explicitly per
+ * entry — never inferred from file paths — and kept in step with the real
+ * boundaries in `scripts/ownershipInventory.mjs` and `src/package/README.md`.
+ *
+ * - `sen` — `@seihouse/sen`, the portable narrative engine.
+ * - `library` — `@seihouse/library`, SEIHouse's first-party host application.
+ * - `library-ui` — `@seihouse/library-ui`, the stateless Celestial Library presentation package.
+ * - `workshop` — Workshop-only tooling that ships in no package.
+ * - `deferred` — owned by neither package yet, unexported by approval.
+ */
+export type WorkshopOwner = 'sen' | 'library' | 'library-ui' | 'workshop' | 'deferred';
+
+export const WORKSHOP_OWNER_LABELS: Record<WorkshopOwner, string> = {
+  sen: 'SEN',
+  library: 'LIBRARY',
+  'library-ui': 'LIBRARY UI',
+  workshop: 'WORKSHOP',
+  deferred: 'DEFERRED',
+};
+
+/**
+ * Lifecycle filter, separate from navigation. Archived entries leave the four
+ * active sections but keep their `?preview=` route and implementation intact.
+ */
+export type WorkshopStatus = 'active' | 'legacy' | 'archived';
 
 export type WorkshopEntry = {
   id: string;
@@ -25,10 +58,59 @@ export type WorkshopEntry = {
   description: string;
   category: WorkshopCategory;
   section: WorkshopSection;
+  group?: WorkshopGroup;
+  owner: WorkshopOwner;
+  status: WorkshopStatus;
+  /** Preview id of the entry that supersedes this one. */
+  replacedBy?: string;
+  archiveNote?: string;
   /** Manually maintained Workshop release version. Never inferred from source changes. */
   version: `v${number}.${number}`;
   source: WorkshopSource;
 };
+
+export const WORKSHOP_SECTIONS: ReadonlyArray<{
+  id: WorkshopSection;
+  label: string;
+  description: string;
+  groups?: ReadonlyArray<{ id: WorkshopGroup; label: string }>;
+}> = [
+  {
+    id: 'pages',
+    label: 'Pages',
+    description: 'Full screens a reader or creator moves through.',
+    groups: [
+      { id: 'home', label: 'Home' },
+      { id: 'create', label: 'Create' },
+      { id: 'read', label: 'Read' },
+      { id: 'account', label: 'Account' },
+      { id: 'commerce', label: 'Commerce' },
+    ],
+  },
+  { id: 'customization', label: 'Customization', description: 'Companions, relics, and rewards a cultivator collects and shapes.' },
+  { id: 'systems', label: 'Systems', description: 'Generation, voice, economy, and provenance systems behind the pages.' },
+  { id: 'components', label: 'Components', description: 'Reusable visual pieces, primitives, and icons.' },
+];
+
+/**
+ * Live inventories rendered inline on the Workshop home instead of opening a
+ * `?preview=` route. They carry the same section and ownership metadata.
+ */
+export type WorkshopPanelId = 'library-components' | 'icons' | 'provenance';
+
+export type WorkshopPanel = {
+  id: WorkshopPanelId;
+  title: string;
+  description: string;
+  section: WorkshopSection;
+  owner: WorkshopOwner;
+};
+
+export const workshopPanels: WorkshopPanel[] = [
+  { id: 'provenance', section: 'systems', owner: 'deferred', title: 'Provenance', description: 'Reusable provenance marks, records, evidence contracts, and future connection maps for AI-generated assets.' },
+  { id: 'library-components', section: 'components', owner: 'library-ui', title: 'Library Components', description: 'Reusable Celestial Library primitives, rendered live.' },
+  { id: 'icons', section: 'components', owner: 'library-ui', title: 'Icons', description: 'Every current custom Celestial Library SVG glyph, rendered live.' },
+];
 
 export type WorkshopTrack = 'development' | 'production';
 
@@ -51,29 +133,21 @@ export function getWorkshopVersionLabel(version: WorkshopEntry['version']) {
  * One entry per actual feature — never per version. A feature's Original
  * Reference vs Development split lives inside its own Workshop page
  * (see FeatureWorkspace), not as a second manifest entry or homepage card.
+ * Array order is display order inside each section and group.
  */
 export const workshopEntries: WorkshopEntry[] = [
   {
-    id: 'familiar', section: 'shared', title: 'Familiar',
-    description: 'Inspect eleven supplied Familiar atlases, ranks, and hosted heroes through the reusable sprite renderer and live Energy interaction.',
-    category: 'animations', version: 'v1.0',
-    source: { repository: 'Supplied Familiar packages', path: 'Familiars/Packages/', lastCompared: '2026-09-22' },
-  },
-  {
-    id: 'motion-picture', section: 'shared', title: 'Motion Picture',
-    description: 'A still that turns into its own motion clip on demand, with an aura sampled from the artwork, for any item that has a picture and a clip: story cards, Familiars, relics. Includes a clip source panel for testing real footage, and compares against the production cover toggle it replaces.',
-    category: 'animations', version: 'v1.0',
-    source: { repository: 'SENSEIDUKES/Light-Novels', path: 'src/components/StoryDetailScreen.tsx', lastCompared: '2026-09-22' },
-  },
-  {
-    id: 'light-novels-home', section: 'home', title: 'Light Novels Home',
+    id: 'light-novels-home', section: 'pages', group: 'home', owner: 'library', status: 'active', title: 'Light Novels Home',
     description: 'The existing Light Novels homepage and novel detail, with one mock novel showing manga/game seals and an Explore This World lane. Shared Home, Library, Discover and Profile navigation.',
     category: 'other', version: 'v1.0',
     source: { repository: 'SENSEIDUKES/Light-Novels', path: 'src/components/LibraryScreen.tsx; src/components/StoryDetailScreen.tsx', lastCompared: '2026-09-09' },
   },
   {
     id: 'library-shell',
-    section: 'home',
+    section: 'pages',
+    group: 'home',
+    owner: 'library',
+    status: 'active',
     title: 'Library Shell',
     description: 'Main Library header and integrated Story Seed/Cultivator Cave Development workspaces with shared headers and responsive navigation at phone, tablet, and desktop sizes; locked shell captures remain available for comparison. Story Seed source is captured from development: CreationModal, StorySeedHeader, StorySeedSelector, StorySeedMobileNavigation, and StorySeedSettings.',
     category: 'other',
@@ -85,86 +159,11 @@ export const workshopEntries: WorkshopEntry[] = [
     },
   },
   {
-    id: 'celestial-backdrop',
-    section: 'shared',
-    title: 'Celestial Particle Backdrop',
-    description: 'Color-adaptive celestial particle field with a hidden scroll absorption point.',
-    category: 'backgrounds',
-    version: 'v1.5',
-    source: {
-      repository: 'SENSEIDUKES/Light-Novels',
-      path: 'src/components/ParticleEffect.tsx',
-      lastCompared: '2026-07-29',
-    },
-  },
-  {
-    id: 'chapter-generation-flow',
-    section: 'sen',
-    title: 'Chapter Generation',
-    description: 'Development-only one- or five-chapter manifestation harness with sequential server-side Gemini calls, disposable processed-state handoffs, retry checkpoints, token usage, per-chapter Diagnostics, and a completed-batch Reader Chamber handoff.',
-    category: 'other',
-    version: 'v2.2',
-    source: {
-      repository: 'SENSEIDUKES/Light-Novels',
-      path: 'src/hooks/chapterPipeline/chapterBatch.ts; src/aiRouter.ts; src/server/routes/storyRouter.ts',
-      lastCompared: '2026-08-09',
-    },
-  },
-  {
-    id: 'harness-generation',
-    section: 'sen',
-    title: 'Harness Generation',
-    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter, independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and Chapter 1 → Chapter 2 continuity without Reader or legacy generation dependencies.',
-    category: 'other',
-    version: 'v1.0',
-    source: {
-      repository: 'SENSEIDUKES/development',
-      path: 'src/components/harness-generation/',
-      lastCompared: '2026-08-29',
-    },
-  },
-  {
-    id: 'chapter-generation-manifestation',
-    section: 'sen',
-    title: 'Chapter Generation Manifestation',
-    description: 'Aura Veil state simulator with two workshop areas — the full-shell Aura Veil (narrative and media manifestation modes, driven by one task-card format) and a focused standalone Manifestation Reveal preview for the agnostic sealed → unsealing → revealed mechanic and its current celestial scroll vessel.',
-    category: 'animations',
-    version: 'v1.6',
-    source: {
-      repository: 'SENSEIDUKES/Light-Novels',
-      path: 'src/components/AILoadingVeil.tsx',
-      lastCompared: '2026-07-29',
-    },
-  },
-  {
-    id: 'idle-cultivation',
-    section: 'shared',
-    title: 'Closed-Door Cultivation',
-    description: 'Idle Qi reward presentation and absorption animation.',
-    category: 'rewards',
-    version: 'v1.7',
-    source: {
-      repository: 'SENSEIDUKES/Light-Novels',
-      path: 'src/components/ClosedDoorCultivationModal.tsx',
-      lastCompared: '2026-07-29',
-    },
-  },
-  {
-    id: 'relics-gallery',
-    section: 'shared',
-    title: 'Relics Gallery',
-    description: 'Cosmic Artifact cards separated by rarity rank, with the full-screen Relic Reveal celebration flow.',
-    category: 'rewards',
-    version: 'v1.3',
-    source: {
-      repository: 'SENSEIDUKES/Light-Novels',
-      path: 'src/components/UserProfileInventoryPanel.tsx',
-      lastCompared: '2026-07-29',
-    },
-  },
-  {
     id: 'story-seed',
-    section: 'library',
+    section: 'pages',
+    group: 'create',
+    owner: 'library',
+    status: 'active',
     title: 'Story Seed',
     description: 'Two-panel creation workspace on the Creator / Story / World contract — compact Origin and ARC editing, Story Seed Settings, the Story Bank home for saved seeds and their World Blueprints (with import/export), and an editable World Blueprint dossier whose hierarchy keeps canonical Origin provenance separate from generated story direction while preserving every editable Blueprint field, now wearing the modern Library glass skin with gold-edged key fields.',
     category: 'other',
@@ -176,34 +175,11 @@ export const workshopEntries: WorkshopEntry[] = [
     },
   },
   {
-    id: 'character-voice',
-    section: 'sen',
-    title: 'Character Voice',
-    description: 'The Reader Codex signature-quote voice on a named Character Portrait card: a tap calls ElevenLabs through the server and plays the returned audio immediately. Nothing is stored — every tap calls ElevenLabs again.',
-    category: 'codex-ui',
-    version: 'v1.0',
-    source: {
-      repository: 'SENSEIDUKES/Light-Novels',
-      path: 'src/components/ReaderCodex.tsx',
-      lastCompared: '2026-08-13',
-    },
-  },
-  {
-    id: 'reader-codex',
-    section: 'sen',
-    title: 'Reader Codex',
-    description: 'The complete Living Codex sheet with separate Human/Non-Human Portraits, a species Bestiary, Karma, Power Rankings, Artifacts, Fate, and Lore, wired to local Reader story state.',
-    category: 'codex-ui',
-    version: 'v1.2',
-    source: {
-      repository: 'SENSEIDUKES/Light-Novels',
-      path: 'src/components/ReaderCodex.tsx; src/components/CodexSheetOverlay.tsx',
-      lastCompared: '2026-08-13',
-    },
-  },
-  {
     id: 'reader-chamber',
-    section: 'sen',
+    section: 'pages',
+    group: 'read',
+    owner: 'sen',
+    status: 'active',
     title: 'Reader Chamber',
     description: 'The full reading UI with generated five-chapter sessions, chapter-scoped Reader Codex memory, and persisted action-scoped Worldcues resolved through the approved Library catalog.',
     category: 'reader-ui',
@@ -215,21 +191,27 @@ export const workshopEntries: WorkshopEntry[] = [
     },
   },
   {
-    id: 'card-workshop',
-    section: 'sen',
-    title: 'Card Workshop',
-    description: 'Development-only Card Type Tabs and contextual ReaderViewport preview for inspecting Codex Cards, compact or expanded System Panels, Fate results, and independent action-scoped Worldcue annotations without generating a chapter.',
-    category: 'reader-ui',
-    version: 'v1.5',
+    id: 'reader-codex',
+    section: 'pages',
+    group: 'read',
+    owner: 'sen',
+    status: 'active',
+    title: 'Reader Codex',
+    description: 'The complete Living Codex sheet with separate Human/Non-Human Portraits, a species Bestiary, Karma, Power Rankings, Artifacts, Fate, and Lore, wired to local Reader story state.',
+    category: 'codex-ui',
+    version: 'v1.2',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
-      path: 'src/components/SystemBlock.tsx; src/components/FateResultCard.tsx; src/components/ReaderViewport.tsx',
-      lastCompared: '2026-08-22',
+      path: 'src/components/ReaderCodex.tsx; src/components/CodexSheetOverlay.tsx',
+      lastCompared: '2026-08-13',
     },
   },
   {
     id: 'user-profile',
-    section: 'home',
+    section: 'pages',
+    group: 'account',
+    owner: 'library',
+    status: 'active',
     title: 'User Profile',
     description: "The cultivator's profile. The locked reference is the production Celestial Tools page; Development is the Cultivator Cave redesign — a portrait, identity, rank and Qi over a stock Immortal Land backdrop, four destinations (Stories, Relics, Dao Pillar, Active Status Effects), a cinematic Spirit Link authentication flow, and one gear-triggered Settings panel holding identity, aura, portrait, environment, language, writing, sync, backup, advanced tools, Sever Link, and the authorized Akashic Switchboard — driven entirely by local mock adapters.",
     category: 'other',
@@ -242,7 +224,10 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'dao-pillar',
-    section: 'home',
+    section: 'pages',
+    group: 'account',
+    owner: 'library',
+    status: 'active',
     title: 'Daily Dao Pillar',
     description: 'The Cultivator Cave’s 30-day reward calendar: one Library-controlled active theme (Beta Test first) over a five-by-six grid of scheduled days, collected / available today / locked / missed states, milestone days, and a server-validated one-claim-per-day collection that deposits Qi through the server ledger. Previewed against an in-process calendar; the User Profile preview runs it against /api/dao-pillar.',
     category: 'other',
@@ -255,7 +240,10 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'celestial-store',
-    section: 'home',
+    section: 'pages',
+    group: 'commerce',
+    owner: 'library',
+    status: 'active',
     title: 'Celestial Store',
     description: 'The official Store extracted out of the profile into its own Cave destination: live QI and Energy balances over two framed shelves of daily Familiar offers — two Energy, four QI — with catalogue ranks, owned/equipped states, and a focused detail dialog for buying and equipping. Familiars only; the creator User Store on public profiles is a separate, untouched surface.',
     category: 'other',
@@ -267,8 +255,91 @@ export const workshopEntries: WorkshopEntry[] = [
     },
   },
   {
+    id: 'familiar', section: 'customization', owner: 'library', status: 'active', title: 'Familiar',
+    description: 'Inspect eleven supplied Familiar atlases, ranks, and hosted heroes through the reusable sprite renderer and live Energy interaction.',
+    category: 'animations', version: 'v1.0',
+    source: { repository: 'Supplied Familiar packages', path: 'Familiars/Packages/', lastCompared: '2026-09-22' },
+  },
+  {
+    id: 'relics-gallery',
+    section: 'customization',
+    owner: 'library',
+    status: 'active',
+    title: 'Relics Gallery',
+    description: 'Cosmic Artifact cards separated by rarity rank, with the full-screen Relic Reveal celebration flow.',
+    category: 'rewards',
+    version: 'v1.3',
+    source: {
+      repository: 'SENSEIDUKES/Light-Novels',
+      path: 'src/components/UserProfileInventoryPanel.tsx',
+      lastCompared: '2026-07-29',
+    },
+  },
+  {
+    id: 'idle-cultivation',
+    section: 'customization',
+    owner: 'library',
+    status: 'active',
+    title: 'Closed-Door Cultivation',
+    description: 'Idle Qi reward presentation and absorption animation.',
+    category: 'rewards',
+    version: 'v1.7',
+    source: {
+      repository: 'SENSEIDUKES/Light-Novels',
+      path: 'src/components/ClosedDoorCultivationModal.tsx',
+      lastCompared: '2026-07-29',
+    },
+  },
+  {
+    id: 'harness-generation',
+    section: 'systems',
+    owner: 'sen',
+    status: 'active',
+    title: 'Harness Generation',
+    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter, independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and Chapter 1 → Chapter 2 continuity without Reader or legacy generation dependencies.',
+    category: 'other',
+    version: 'v1.0',
+    source: {
+      repository: 'SENSEIDUKES/development',
+      path: 'src/components/harness-generation/',
+      lastCompared: '2026-08-29',
+    },
+  },
+  {
+    id: 'chapter-generation-manifestation',
+    section: 'systems',
+    owner: 'library',
+    status: 'active',
+    title: 'Chapter Generation Manifestation',
+    description: 'Aura Veil state simulator with two workshop areas — the full-shell Aura Veil (narrative and media manifestation modes, driven by one task-card format) and a focused standalone Manifestation Reveal preview for the agnostic sealed → unsealing → revealed mechanic and its current celestial scroll vessel.',
+    category: 'animations',
+    version: 'v1.6',
+    source: {
+      repository: 'SENSEIDUKES/Light-Novels',
+      path: 'src/components/AILoadingVeil.tsx',
+      lastCompared: '2026-07-29',
+    },
+  },
+  {
+    id: 'character-voice',
+    section: 'systems',
+    owner: 'sen',
+    status: 'active',
+    title: 'Character Voice',
+    description: 'The Reader Codex signature-quote voice on a named Character Portrait card: a tap calls ElevenLabs through the server and plays the returned audio immediately. Nothing is stored — every tap calls ElevenLabs again.',
+    category: 'codex-ui',
+    version: 'v1.0',
+    source: {
+      repository: 'SENSEIDUKES/Light-Novels',
+      path: 'src/components/ReaderCodex.tsx',
+      lastCompared: '2026-08-13',
+    },
+  },
+  {
     id: 'energy',
-    section: 'shared',
+    section: 'systems',
+    owner: 'library',
+    status: 'active',
     title: 'Energy',
     description: 'The shared, server-owned Energy meter behind SEN generation: balance indicator, action-cost indicator, deduction notice, insufficient-Energy state, and the Energy panel the profile opens. Development test prices only; no generation flow spends Energy yet.',
     category: 'other',
@@ -277,6 +348,59 @@ export const workshopEntries: WorkshopEntry[] = [
       repository: 'SENSEIDUKES/development',
       path: 'src/components/energy/; src/server/energy/',
       lastCompared: '2026-09-18',
+    },
+  },
+  {
+    id: 'motion-picture', section: 'components', owner: 'sen', status: 'active', title: 'Motion Picture',
+    description: 'A still that turns into its own motion clip on demand, with an aura sampled from the artwork, for any item that has a picture and a clip: story cards, Familiars, relics. Includes a clip source panel for testing real footage, and compares against the production cover toggle it replaces.',
+    category: 'animations', version: 'v1.0',
+    source: { repository: 'SENSEIDUKES/Light-Novels', path: 'src/components/StoryDetailScreen.tsx', lastCompared: '2026-09-22' },
+  },
+  {
+    id: 'celestial-backdrop',
+    section: 'components',
+    owner: 'library-ui',
+    status: 'active',
+    title: 'Celestial Particle Backdrop',
+    description: 'Color-adaptive celestial particle field with a hidden scroll absorption point.',
+    category: 'backgrounds',
+    version: 'v1.5',
+    source: {
+      repository: 'SENSEIDUKES/Light-Novels',
+      path: 'src/components/ParticleEffect.tsx',
+      lastCompared: '2026-07-29',
+    },
+  },
+  {
+    id: 'card-workshop',
+    section: 'components',
+    owner: 'workshop',
+    status: 'active',
+    title: 'Card Workshop',
+    description: 'Development-only Card Type Tabs and contextual ReaderViewport preview for inspecting Codex Cards, compact or expanded System Panels, Fate results, and independent action-scoped Worldcue annotations without generating a chapter.',
+    category: 'reader-ui',
+    version: 'v1.5',
+    source: {
+      repository: 'SENSEIDUKES/Light-Novels',
+      path: 'src/components/SystemBlock.tsx; src/components/FateResultCard.tsx; src/components/ReaderViewport.tsx',
+      lastCompared: '2026-08-22',
+    },
+  },
+  {
+    id: 'chapter-generation-flow',
+    section: 'systems',
+    owner: 'workshop',
+    status: 'archived',
+    replacedBy: 'harness-generation',
+    archiveNote: 'The earlier chapter-generation diagnostics flow, kept intact for reference.',
+    title: 'Chapter Generation',
+    description: 'Development-only one- or five-chapter manifestation harness with sequential server-side Gemini calls, disposable processed-state handoffs, retry checkpoints, token usage, per-chapter Diagnostics, and a completed-batch Reader Chamber handoff.',
+    category: 'other',
+    version: 'v2.2',
+    source: {
+      repository: 'SENSEIDUKES/Light-Novels',
+      path: 'src/hooks/chapterPipeline/chapterBatch.ts; src/aiRouter.ts; src/server/routes/storyRouter.ts',
+      lastCompared: '2026-08-09',
     },
   },
 ];

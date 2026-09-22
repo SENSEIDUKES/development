@@ -121,7 +121,9 @@ describe('Reusable Energy pieces', () => {
   it('renders the configured action cost from the shared catalog', async () => {
     await render(<><EnergyActionCost actionId="chapter.generate" /><EnergyActionCost actionId="image.generate" /><EnergyActionCost actionId="narration.generate" /><EnergyActionCost price={7} /></>);
     const costs = Array.from(container.querySelectorAll('.energy-action-cost'));
-    expect(costs.map(cost => cost.textContent)).toEqual(['⚡1', '⚡3', '⚡7']);
+    // The Energy mark is drawn artwork now, so only the number is text.
+    expect(costs.map(cost => cost.textContent)).toEqual(['1', '3', '7']);
+    expect(costs.every(cost => cost.querySelector('[data-sen-navigation-icon="energy"]'))).toBe(true);
     expect(costs[0].getAttribute('aria-label')).toBe('Costs 1 Energy');
     expect(ENERGY_PRICE_CATALOG.find(entry => entry.actionId === 'narration.generate')?.price).toBeNull();
   });
@@ -135,7 +137,9 @@ describe('Reusable Energy pieces', () => {
     </>);
     expect(container.querySelector('[aria-label="Energy balance loading"]')).not.toBeNull();
     expect(container.querySelectorAll('.energy-amount')).toHaveLength(2);
-    expect(container.querySelector('[aria-label="Energy balance 1,234"]')?.textContent).toBe('⚡1,234');
+    const indicator = container.querySelector('[aria-label="Energy balance 1,234"]')!;
+    expect(indicator.textContent).toBe('1,234');
+    expect(indicator.querySelector('[data-sen-navigation-icon="energy"]')).not.toBeNull();
   });
 
   it('describes a successful deduction and an insufficient balance without triggering them', async () => {
@@ -144,11 +148,11 @@ describe('Reusable Energy pieces', () => {
       <EnergyDeductionNotice details={{ amount: 1, actionLabel: 'Chapter', available: 499 }} />
       <EnergyInsufficientState required={3} available={1} onOpenEnergy={onOpenEnergy} />
     </>);
-    expect(container.querySelector('[data-energy-deduction]')?.textContent).toContain('⚡ 1 Energy used for chapter');
+    expect(container.querySelector('[data-energy-deduction]')?.textContent).toContain('1 Energy used for chapter');
     expect(container.querySelector('[data-energy-deduction]')?.textContent).toContain('499 Energy remaining.');
-    expect(container.querySelector('[data-energy-insufficient]')?.textContent).toContain('This needs ⚡ 3 and you have ⚡ 1.');
+    expect(container.querySelector('[data-energy-insufficient]')?.textContent).toContain('This needs 3 Energy and you have 1.');
     await act(async () => { Array.from(container.querySelectorAll('button')).find(button => button.textContent === 'Open Energy')!.click(); });
     expect(onOpenEnergy).toHaveBeenCalledOnce();
-    expect(energyDeductionToast({ amount: 3, actionLabel: 'Image', available: 10 })).toMatchObject({ tone: 'success', title: '⚡ 3 Energy used for image', duration: 4000 });
+    expect(energyDeductionToast({ amount: 3, actionLabel: 'Image', available: 10 })).toMatchObject({ tone: 'success', title: '3 Energy used for image', duration: 4000 });
   });
 });

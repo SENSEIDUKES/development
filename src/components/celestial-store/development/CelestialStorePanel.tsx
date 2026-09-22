@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
-import { LibraryButton } from '@seihouse/library-ui';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { LibraryButton, LibraryGlobalIcon } from '@seihouse/library-ui';
 import {
   SEIDialog,
   SEIDialogContent,
@@ -11,7 +11,7 @@ import type { EnergyAccountState } from '../../energy/shared/useEnergyAccount';
 import { EnergyAmount } from '../../energy/development/EnergyAmount';
 import { FamiliarHero } from '../../familiar/development/FamiliarSelection';
 import type { FamiliarOption } from '../../familiar/shared/familiar';
-import { dailyStoreRotation, type CelestialStoreOffer } from '../shared/rotation';
+import { dailyStoreRotation, rotationDayKey, type CelestialStoreOffer } from '../shared/rotation';
 import type { CelestialStoreConfig } from '../shared/storeConfig';
 import {
   ownsFamiliar,
@@ -22,11 +22,11 @@ import './celestialStore.css';
 
 const formatQi = new Intl.NumberFormat('en-US').format;
 
-/** The single 🌀 + number rendering the Store's QI amounts share. */
+/** The single QI mark + number rendering the Store's QI amounts share. */
 function QiAmount({ amount, state = 'ready', label }: { amount: number | null; state?: 'ready' | 'loading' | 'unavailable'; label: string }) {
   return (
     <span className="celestial-store-qi-amount" data-qi-state={state} aria-label={label} role="img">
-      <span className="celestial-store-qi-glyph" aria-hidden="true">🌀</span>
+      <LibraryGlobalIcon name="qi-yin-yang" size="1em" className="celestial-store-qi-glyph" aria-hidden="true" />
       <span aria-hidden="true">{state === 'ready' && amount !== null ? formatQi(amount) : '—'}</span>
     </span>
   );
@@ -138,6 +138,33 @@ export interface CelestialStorePanelProps {
 }
 
 /**
+ * Follow the live local day so a Store left open overnight rotates with it
+ * rather than serving yesterday's shelves. An explicitly supplied date is a
+ * fixed instant for previews and tests, and never re-reads the clock.
+ */
+function useRotationDate(fixed?: Date): Date {
+  const fixedTime = fixed?.getTime();
+  const [current, setCurrent] = useState(() => (fixedTime === undefined ? new Date() : new Date(fixedTime)));
+  useEffect(() => {
+    if (fixedTime !== undefined) {
+      setCurrent(previous => (previous.getTime() === fixedTime ? previous : new Date(fixedTime)));
+      return;
+    }
+    let timer: ReturnType<typeof setTimeout>;
+    const follow = () => {
+      const now = new Date();
+      // Same day means the same rotation: keep the old instant so nothing re-renders.
+      setCurrent(previous => (rotationDayKey(previous) === rotationDayKey(now) ? previous : now));
+      const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
+      timer = setTimeout(follow, Math.max(1_000, midnight - now.getTime()));
+    };
+    follow();
+    return () => clearTimeout(timer);
+  }, [fixedTime]);
+  return current;
+}
+
+/**
  * The dedicated Celestial Store page: live balances over two framed shelves —
  * Energy Familiars and QI Familiars — showing today's shared rotation. Cards
  * open a focused detail dialog with the purchase or equip action. Familiars
@@ -156,10 +183,23 @@ export function CelestialStorePanel({
   date,
   config,
 }: CelestialStorePanelProps) {
-  const rotation = useMemo(() => dailyStoreRotation(options, date ?? new Date(), config), [options, date, config]);
+  const rotationDate = useRotationDate(date);
+  const rotation = useMemo(() => dailyStoreRotation(options, rotationDate, config), [options, rotationDate, config]);
   const [selected, setSelected] = useState<CelestialStoreOffer | null>(null);
   const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null);
   const dialogOpener = useRef<HTMLButtonElement | null>(null);
+  // An in-flight guard the host cannot omit: `purchasePending` is optional and
+  // only lands a render later, so without this a double activation could send
+  // a production adapter two debits for one offer.
+  const purchaseLock = useRef(false);
+  const [purchasing, setPurchasing] = useState(false);
+
+  // A new day is a new rotation, so yesterday's open offer stops being for sale:
+  // close the dialog rather than let a stale offer reach `onPurchase`.
+  useEffect(() => {
+    setSelected(null);
+    setPurchaseMessage(null);
+  }, [rotation.dayKey]);
 
   const qiState = !cultivation || cultivation.status === 'unavailable' ? 'unavailable'
     : cultivation.status === 'ready' ? 'ready' : 'loading';
@@ -182,9 +222,16 @@ export function CelestialStorePanel({
   const affordable = balanceKnown && (selectedBalance ?? 0) >= selectedPrice;
 
   const buy = async () => {
-    if (!selected || !onPurchase) return;
-    const result = await onPurchase({ familiarId: selected.familiarId, currency: selected.currency, price: selectedPrice });
-    setPurchaseMessage(result.message);
+    if (!selected || !onPurchase || purchaseLock.current) return;
+    purchaseLock.current = true;
+    setPurchasing(true);
+    try {
+      const result = await onPurchase({ familiarId: selected.familiarId, currency: selected.currency, price: selectedPrice });
+      setPurchaseMessage(result.message);
+    } finally {
+      purchaseLock.current = false;
+      setPurchasing(false);
+    }
   };
 
   return (
@@ -237,9 +284,9 @@ export function CelestialStorePanel({
                   </LibraryButton>
                 ) : (
                   <LibraryButton fullWidth variant="secondary"
-                    disabled={!onPurchase || purchasePending || !affordable}
+                    disabled={!onPurchase || purchasePending || purchasing || !affordable}
                     onClick={() => void buy()}>
-                    {purchasePending ? 'Purchasing…'
+                    {purchasePending || purchasing ? 'Purchasing…'
                       : !onPurchase ? 'Purchases are not connected here'
                       : !balanceKnown ? 'Balance unavailable'
                       : !affordable ? `Not enough ${selected.currency === 'energy' ? 'Energy' : 'QI'}`

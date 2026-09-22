@@ -102,8 +102,10 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const hostController = useUserProfile({ currentUser, stories, onLogout, onNavigateHome });
   // Familiar ownership and purchases are host account state behind the same
   // services port as everything else; without a Store service the page still
-  // renders, with purchases plainly disconnected.
-  const useStoreAccount = celestialStore?.useStoreAccount ?? useUnavailableCelestialStoreAccount;
+  // renders, with purchases plainly disconnected. The chosen hook is pinned for
+  // this mount: the fallback calls no hooks and a real one does, so swapping
+  // them mid-mount would change the hook sequence and fail the render.
+  const [useStoreAccount] = useState(() => celestialStore?.useStoreAccount ?? useUnavailableCelestialStoreAccount);
   const storeAccount = useStoreAccount();
   const route = useCaveRoute();
   const isPublicView = route.audience === 'public';

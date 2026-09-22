@@ -91,7 +91,11 @@ function resolveOffer(config: CelestialStoreOfferConfig, options: readonly Famil
   if (!option || option.isDefault) return undefined;
   const price = offerPrice(config, option);
   if (price === undefined) return undefined;
-  const salePrice = config.salePrice !== undefined && config.salePrice > 0 && config.salePrice < price
+  // A sale price is charged like any other price, so it meets the same bar:
+  // a positive safe integer strictly below the normal price. Anything else is
+  // not a discount and never renders as one.
+  const salePrice = config.salePrice !== undefined && Number.isSafeInteger(config.salePrice)
+    && config.salePrice > 0 && config.salePrice < price
     ? config.salePrice
     : undefined;
   return { familiarId: config.familiarId, currency: config.currency, price, salePrice, option };

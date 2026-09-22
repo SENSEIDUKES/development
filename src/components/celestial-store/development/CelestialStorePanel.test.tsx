@@ -180,6 +180,63 @@ describe('CelestialStorePanel', () => {
     expect(equipped).toHaveProperty('disabled', true);
   });
 
+  it('sends one purchase for one offer even when Buy is activated twice before the host reports pending', async () => {
+    // A host may not supply `purchasePending` at all, so the panel must serialize on its own.
+    let settle: (result: { outcome: 'purchased'; message: string }) => void = () => {};
+    const onPurchase = vi.fn().mockImplementation(() => new Promise(resolve => { settle = resolve; }));
+    await render(<CelestialStorePanel options={OPTIONS} date={DAY}
+      cultivation={qiReady(100_000)} energy={energyReady(2_000)} onPurchase={onPurchase} />);
+    const offer = dailyStoreRotation(OPTIONS, DAY).energy[0];
+    await click(container.querySelector(`[data-store-offer="${offer.familiarId}"] button`));
+    const dialog = document.querySelector('.celestial-store-detail')!;
+    const buy = [...dialog.querySelectorAll('button')].find(candidate => candidate.textContent?.startsWith('Buy for'))!;
+    await click(buy);
+    await click(buy);
+    expect(onPurchase).toHaveBeenCalledTimes(1);
+    // The control stays disabled and honest until the request settles.
+    const inFlight = [...dialog.querySelectorAll('button')].find(candidate => candidate.textContent === 'Purchasing…')!;
+    expect(inFlight).toHaveProperty('disabled', true);
+    await act(async () => { settle({ outcome: 'purchased', message: 'Bought once.' }); });
+    expect(onPurchase).toHaveBeenCalledTimes(1);
+    expect(dialog.querySelector('[role="status"]')?.textContent).toBe('Bought once.');
+  });
+
+  it('rotates at local midnight and closes an offer opened the previous day', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date(2026, 8, 22, 23, 59, 30));
+      await render(<CelestialStorePanel options={OPTIONS}
+        cultivation={qiReady(100_000)} energy={energyReady(2_000)} onPurchase={vi.fn()} />);
+      const yesterday = container.querySelector('.celestial-store')?.getAttribute('data-store-day');
+      expect(yesterday).toBe('2026-09-22');
+      const offer = dailyStoreRotation(OPTIONS, new Date(2026, 8, 22)).qi[0];
+      await click(container.querySelector(`[data-store-offer="${offer.familiarId}"] button`));
+      expect(document.querySelector('.celestial-store-detail')).not.toBeNull();
+      // Cross midnight: the shelves become the new day's, and yesterday's offer
+      // can no longer be submitted from a dialog left open.
+      vi.setSystemTime(new Date(2026, 8, 23, 0, 0, 1));
+      await act(async () => { await vi.advanceTimersByTimeAsync(31_000); });
+      expect(container.querySelector('.celestial-store')?.getAttribute('data-store-day')).toBe('2026-09-23');
+      expect([...document.querySelectorAll('.celestial-store-detail button')]
+        .some(button => button.textContent?.startsWith('Buy for'))).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps an explicitly supplied date fixed rather than following the clock', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date(2026, 8, 22, 23, 59, 30));
+      await render(<CelestialStorePanel options={OPTIONS} date={DAY} />);
+      vi.setSystemTime(new Date(2026, 8, 24, 12, 0, 0));
+      await act(async () => { await vi.advanceTimersByTimeAsync(120_000); });
+      expect(container.querySelector('.celestial-store')?.getAttribute('data-store-day')).toBe('2026-09-22');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('never sells the default Familiar and renders only Familiar shelves', async () => {
     await render(<CelestialStorePanel options={OPTIONS} date={DAY} />);
     expect(container.querySelector('[data-store-offer="quill"]')).toBeNull();

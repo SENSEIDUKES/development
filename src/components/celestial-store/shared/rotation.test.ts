@@ -147,6 +147,26 @@ describe('dailyStoreRotation', () => {
     const fox = rotation.energy.find(offer => offer.familiarId === 'nine-tailed-fox')!;
     expect(fox.salePrice).toBeUndefined();
   });
+
+  it('rejects a sale price that is not a positive safe integer, so no fractional amount is ever charged', () => {
+    for (const salePrice of [0.5, 449.99, -100, 0, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 2]) {
+      // A single-offer pool so the Familiar under test is always on the shelf.
+      const config: CelestialStoreConfig = {
+        energySlots: 1,
+        qiSlots: 0,
+        offers: [{ familiarId: 'phoenix', currency: 'energy', salePrice }],
+      };
+      const phoenix = dailyStoreRotation(OPTIONS, new Date(2026, 8, 22), config).energy[0];
+      expect(phoenix, `sale price ${salePrice} must still leave the offer on the shelf`).toBeDefined();
+      expect(phoenix.salePrice, `sale price ${salePrice} must not apply`).toBeUndefined();
+      expect(phoenix.price).toBe(600);
+    }
+    // A sound discount still applies, so the guard rejects only bad values.
+    const sound = dailyStoreRotation(OPTIONS, new Date(2026, 8, 22), {
+      energySlots: 1, qiSlots: 0, offers: [{ familiarId: 'phoenix', currency: 'energy', salePrice: 450 }],
+    }).energy[0];
+    expect(sound.salePrice).toBe(450);
+  });
 });
 
 describe('offerPrice', () => {

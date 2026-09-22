@@ -10,7 +10,7 @@ export interface EnergyBalanceIndicatorProps {
 }
 
 /**
- * The compact live balance: ⚡ 500. Shows the *available* Energy (settled
+ * The compact live balance: the Energy mark and 500. Shows the *available* Energy (settled
  * minus held), because that is what the next generation can use. Renders a
  * quiet dash while loading and nothing at all when Energy is not connected,
  * so a host surface never invents a number.

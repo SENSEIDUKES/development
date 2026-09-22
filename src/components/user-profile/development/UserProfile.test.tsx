@@ -524,7 +524,8 @@ describe('Cultivator Cave home', () => {
     for (const id of ['qi-reserves', 'dao-pillar', 'status-effects']) {
       expect(container.querySelector(`[data-cave-card="${id}"]`)).not.toBeNull();
     }
-    expect(open('qi-reserves').querySelector('[data-sen-global-icon="qi"]')).not.toBeNull();
+    // Qi carries the yin-yang mark everywhere, on the card as in its dialog.
+    expect(open('qi-reserves').querySelector('[data-sen-global-icon="qi-yin-yang"]')).not.toBeNull();
     expect(open('dao-pillar').textContent).toContain('12 Day Streak');
     expect(open('status-effects').textContent).toContain('Active Effects · 2');
     expect(text()).not.toContain(profile.username);

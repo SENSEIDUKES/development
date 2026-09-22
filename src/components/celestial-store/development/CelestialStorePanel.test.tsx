@@ -95,18 +95,22 @@ describe('CelestialStorePanel', () => {
     expect(container.querySelector('[aria-label="Energy balance unavailable"]')).not.toBeNull();
   });
 
-  it('separates two Energy offers and four QI offers into their own framed shelves', async () => {
+  it('gathers every Familiar into one shelf, each card naming its own currency', async () => {
     await render(<CelestialStorePanel options={OPTIONS} date={DAY} />);
-    const energyShelf = container.querySelector('[data-store-shelf="energy"]')!;
-    const qiShelf = container.querySelector('[data-store-shelf="qi"]')!;
-    expect(energyShelf.textContent).toContain('Energy Familiars');
-    expect(qiShelf.textContent).toContain('QI Familiars');
-    const energyCards = energyShelf.querySelectorAll('[data-store-offer]');
-    const qiCards = qiShelf.querySelectorAll('[data-store-offer]');
-    expect(energyCards).toHaveLength(2);
-    expect(qiCards).toHaveLength(4);
-    for (const card of energyCards) expect(card.getAttribute('data-store-currency')).toBe('energy');
-    for (const card of qiCards) expect(card.getAttribute('data-store-currency')).toBe('qi');
+    const shelves = container.querySelectorAll('[data-store-shelf]');
+    expect(shelves).toHaveLength(1);
+    const shelf = shelves[0];
+    expect(shelf.getAttribute('data-store-shelf')).toBe('familiars');
+    expect(shelf.textContent).toContain('Familiars');
+    // The rotation still buys two with Energy and four with QI; only the
+    // presentation is consolidated, and each card carries its own currency.
+    const cards = shelf.querySelectorAll('[data-store-offer]');
+    expect(cards).toHaveLength(6);
+    const currencies = [...cards].map(card => card.getAttribute('data-store-currency'));
+    expect(currencies.filter(currency => currency === 'energy')).toHaveLength(2);
+    expect(currencies.filter(currency => currency === 'qi')).toHaveLength(4);
+    // Energy offers lead, so the shelf reads premium-first.
+    expect(currencies.slice(0, 2)).toEqual(['energy', 'energy']);
   });
 
   it('displays catalogue rank and one price per card, and reduced-motion still sources', async () => {
@@ -114,7 +118,7 @@ describe('CelestialStorePanel', () => {
     const rotation = dailyStoreRotation(OPTIONS, DAY);
     for (const offer of [...rotation.energy, ...rotation.qi]) {
       const card = container.querySelector(`[data-store-offer="${offer.familiarId}"]`)!;
-      expect(card.querySelector('.familiar-option-rarity')?.textContent).toBe(offer.option.rarity);
+      expect(card.querySelector('.shop-card-rank')?.textContent).toBe(offer.option.rarity);
       expect(card.querySelector('[data-store-price]')?.getAttribute('data-store-price')).toBe(String(offer.price));
       expect(card.querySelectorAll('[data-store-price]')).toHaveLength(1);
       expect(card.querySelector('source[media="(prefers-reduced-motion: reduce)"]')?.getAttribute('srcset')).toBe(offer.option.stillUrl);
@@ -240,6 +244,6 @@ describe('CelestialStorePanel', () => {
   it('never sells the default Familiar and renders only Familiar shelves', async () => {
     await render(<CelestialStorePanel options={OPTIONS} date={DAY} />);
     expect(container.querySelector('[data-store-offer="quill"]')).toBeNull();
-    expect(container.querySelectorAll('[data-store-shelf]')).toHaveLength(2);
+    expect(container.querySelectorAll('[data-store-shelf]')).toHaveLength(1);
   });
 });

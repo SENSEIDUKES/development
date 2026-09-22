@@ -14,7 +14,7 @@ durable ledgers and concrete infrastructure stay in the host/backend.
 | `./profile` | Cave/Profile behavior, public views, settings, admin host ports |
 | `./energy` | Client-safe Energy contracts, read projections and provider |
 | `./familiar` | Sprite animation, draggable/resizable companion, minimize/recall, and profile selection through the existing Energy provider |
-| `./celestial-store` | Official Familiar Store page: offer configuration, deterministic daily rotation, and the account port for host-owned ownership and purchases |
+| `./celestial-store` | Official Familiar Store page and the reusable `ShopCard`: offer configuration, deterministic daily rotation, and the account port for host-owned ownership and purchases |
 | `./cultivation` | QI read projection, rank authority and cultivation surfaces |
 | `./dao-pillar` | Calendar/reward contracts and server-result-driven UI |
 | `./relics` | One Relics domain/read model, client projection and presentation |

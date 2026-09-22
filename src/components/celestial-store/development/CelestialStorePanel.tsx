@@ -11,6 +11,7 @@ import type { EnergyAccountState } from '../../energy/shared/useEnergyAccount';
 import { EnergyAmount } from '../../energy/development/EnergyAmount';
 import { FamiliarHero } from '../../familiar/development/FamiliarSelection';
 import type { FamiliarOption } from '../../familiar/shared/familiar';
+import { ShopCard } from './ShopCard';
 import { dailyStoreRotation, rotationDayKey, type CelestialStoreOffer } from '../shared/rotation';
 import type { CelestialStoreConfig } from '../shared/storeConfig';
 import {
@@ -47,71 +48,47 @@ function OfferPriceLine({ offer }: { offer: CelestialStoreOffer }) {
   );
 }
 
-function OfferCard({ offer, owned, equipped, onOpen }: {
-  offer: CelestialStoreOffer;
-  owned: boolean;
-  equipped: boolean;
-  onOpen: (offer: CelestialStoreOffer, opener: HTMLButtonElement | null) => void;
-}) {
-  const [active, setActive] = useState(false);
-  const opener = useRef<HTMLButtonElement>(null);
-  return (
-    <article className="celestial-store-card" data-store-offer={offer.familiarId} data-store-currency={offer.currency} data-rarity={offer.option.rarity}>
-      <button
-        ref={opener}
-        type="button"
-        className="celestial-store-card-button"
-        aria-haspopup="dialog"
-        onClick={() => onOpen(offer, opener.current)}
-        onPointerEnter={event => { if (event.pointerType === 'mouse') setActive(true); }}
-        onPointerLeave={event => { if (event.pointerType === 'mouse') setActive(false); }}
-        onPointerDown={event => { if (event.pointerType !== 'mouse') setActive(true); }}
-        onPointerUp={event => { if (event.pointerType !== 'mouse') setActive(false); }}
-        onPointerCancel={() => setActive(false)}
-        onFocus={() => setActive(true)}
-        onBlur={() => setActive(false)}
-      >
-        <FamiliarHero key={offer.option.heroUrl} option={offer.option} active={active} />
-        <span className="celestial-store-card-name">{offer.option.name}</span>
-        <span className="familiar-option-rarity" data-rarity={offer.option.rarity}>{offer.option.rarity}</span>
-        {equipped
-          ? <span className="familiar-option-equipped celestial-store-card-state">Equipped</span>
-          : owned
-            ? <span className="familiar-option-default celestial-store-card-state">Owned</span>
-            : <OfferPriceLine offer={offer} />}
-      </button>
-    </article>
-  );
-}
-
-function Shelf({ id, title, tagline, offers, ownedFamiliarIds, equippedFamiliarId, onOpen }: {
-  id: 'energy' | 'qi';
-  title: string;
-  tagline: string;
+/**
+ * One shelf holding every Familiar on offer today, whatever it costs. The
+ * price line on each card carries its own currency emblem, so a cultivator
+ * reads Energy from QI at a glance without the Store sorting them into
+ * separate pens and naming the obvious.
+ */
+function FamiliarShelf({ offers, ownedFamiliarIds, equippedFamiliarId, onOpen }: {
   offers: readonly CelestialStoreOffer[];
   ownedFamiliarIds: readonly string[];
   equippedFamiliarId?: string;
   onOpen: (offer: CelestialStoreOffer, opener: HTMLButtonElement | null) => void;
 }) {
   return (
-    <section className="celestial-store-shelf" data-store-shelf={id} aria-labelledby={`celestial-store-shelf-${id}`}>
+    <section className="celestial-store-shelf" data-store-shelf="familiars" aria-labelledby="celestial-store-shelf-familiars">
       <header className="celestial-store-shelf-header">
-        <h3 id={`celestial-store-shelf-${id}`} className="celestial-store-shelf-title">{title}</h3>
-        <p className="celestial-store-shelf-tagline">{tagline}</p>
+        <h3 id="celestial-store-shelf-familiars" className="celestial-store-shelf-title">Familiars</h3>
+        <p className="celestial-store-shelf-tagline">Companions who walk the Library beside you.</p>
       </header>
       {offers.length === 0
         ? <p className="celestial-store-shelf-empty">Today’s offers could not be prepared. Return tomorrow.</p>
         : (
           <div className="celestial-store-grid">
-            {offers.map(offer => (
-              <OfferCard
-                key={offer.familiarId}
-                offer={offer}
-                owned={ownsFamiliar(ownedFamiliarIds, offer.familiarId, offer.option.isDefault)}
-                equipped={equippedFamiliarId === offer.familiarId}
-                onOpen={onOpen}
-              />
-            ))}
+            {offers.map(offer => {
+              const equipped = equippedFamiliarId === offer.familiarId;
+              const owned = ownsFamiliar(ownedFamiliarIds, offer.familiarId, offer.option.isDefault);
+              return (
+                <ShopCard
+                  key={offer.familiarId}
+                  offerId={offer.familiarId}
+                  name={offer.option.name}
+                  rank={offer.option.rarity}
+                  currency={offer.currency}
+                  renderMedia={active => <FamiliarHero key={offer.option.heroUrl} option={offer.option} active={active} />}
+                  price={<OfferPriceLine offer={offer} />}
+                  state={equipped ? { label: 'Equipped', tone: 'equipped' }
+                    : owned ? { label: 'Owned', tone: 'owned' }
+                    : undefined}
+                  onOpen={opener => onOpen(offer, opener)}
+                />
+              );
+            })}
           </div>
         )}
     </section>
@@ -185,6 +162,8 @@ export function CelestialStorePanel({
 }: CelestialStorePanelProps) {
   const rotationDate = useRotationDate(date);
   const rotation = useMemo(() => dailyStoreRotation(options, rotationDate, config), [options, rotationDate, config]);
+  // One shelf, Energy offers first: the emblem on each price tells them apart.
+  const offers = useMemo(() => [...rotation.energy, ...rotation.qi], [rotation]);
   const [selected, setSelected] = useState<CelestialStoreOffer | null>(null);
   const [purchaseMessage, setPurchaseMessage] = useState<string | null>(null);
   const dialogOpener = useRef<HTMLButtonElement | null>(null);
@@ -247,10 +226,8 @@ export function CelestialStorePanel({
         </div>
       </div>
 
-      <Shelf id="energy" title="Energy Familiars" tagline="Premium companions acquired with Energy."
-        offers={rotation.energy} ownedFamiliarIds={ownedFamiliarIds} equippedFamiliarId={equippedFamiliarId} onOpen={openOffer} />
-      <Shelf id="qi" title="QI Familiars" tagline="Companions cultivated through the Library."
-        offers={rotation.qi} ownedFamiliarIds={ownedFamiliarIds} equippedFamiliarId={equippedFamiliarId} onOpen={openOffer} />
+      <FamiliarShelf offers={offers} ownedFamiliarIds={ownedFamiliarIds}
+        equippedFamiliarId={equippedFamiliarId} onOpen={openOffer} />
 
       <SEIDialog open={selected !== null} onOpenChange={open => { if (!open) setSelected(null); }}>
         <SEIDialogContent

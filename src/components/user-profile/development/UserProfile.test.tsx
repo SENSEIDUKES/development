@@ -468,19 +468,21 @@ describe('Cultivator Cave home', () => {
     // Balances come from the QI ledger and Energy server projections, never static copy.
     expect(container.querySelector('[aria-label="QI balance 28,400"]')).not.toBeNull();
     expect(container.querySelector('[aria-label="Energy balance 500"]')).not.toBeNull();
-    // Today's shared rotation: two Energy offers and four QI offers, never mixed.
-    const energyCards = container.querySelectorAll('[data-store-shelf="energy"] [data-store-offer]');
-    const qiCards = container.querySelectorAll('[data-store-shelf="qi"] [data-store-offer]');
-    expect(energyCards).toHaveLength(2);
-    expect(qiCards).toHaveLength(4);
+    // Today's shared rotation on one shelf: two bought with Energy, four with QI.
+    const cards = container.querySelectorAll('[data-store-shelf="familiars"] [data-store-offer]');
+    expect(cards).toHaveLength(6);
+    const currencies = [...cards].map(card => card.getAttribute('data-store-currency'));
+    expect(currencies.filter(currency => currency === 'energy')).toHaveLength(2);
+    expect(currencies.filter(currency => currency === 'qi')).toHaveLength(4);
     // Ranks render from the host catalogue, never inferred from price or currency.
-    for (const card of [...energyCards, ...qiCards]) {
+    for (const card of cards) {
       const id = card.getAttribute('data-store-offer')!;
       const catalogueRank = allFamiliarOptions.find(option => option.id === id)?.rarity;
-      expect(card.querySelector('.familiar-option-rarity')?.textContent).toBe(catalogueRank);
+      expect(card.querySelector('.shop-card-rank')?.textContent).toBe(catalogueRank);
     }
     // Purchase a QI offer (28,400 covers every provisional QI price), then equip it.
-    const offerId = qiCards[0].getAttribute('data-store-offer')!;
+    const offerId = [...cards].find(card => card.getAttribute('data-store-currency') === 'qi')!
+      .getAttribute('data-store-offer')!;
     await click(container.querySelector(`[data-store-offer="${offerId}"] button`)!);
     const dialog = document.querySelector('.celestial-store-detail')!;
     await click([...dialog.querySelectorAll('button')].find(button => button.textContent?.startsWith('Buy for'))!);

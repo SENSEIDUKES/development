@@ -14,6 +14,10 @@ export {
   type CelestialStorePanelProps,
 } from '../../components/celestial-store/development/CelestialStorePanel';
 export {
+  ShopCard,
+  type ShopCardProps,
+} from '../../components/celestial-store/development/ShopCard';
+export {
   CELESTIAL_STORE_CONFIG,
   ENERGY_ELIGIBLE_FAMILIAR_IDS,
   ENERGY_FAMILIAR_PRICES,

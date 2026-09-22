@@ -1,0 +1,45 @@
+/* Shop Card — one purchasable thing on a Store shelf.
+   Owns only the card: frame, artwork well, name, tier badge, and the price or
+   owned line. The currency emblem inside the price line is what tells a
+   cultivator how this one is bought, so the card never labels it twice. */
+
+.shop-card { min-width: 0; border: 1px solid #d6bd8744; border-radius: 16px; overflow: hidden; background: #0b1726; }
+.shop-card[data-rarity="epic"] { border-color: #d6bd8788; box-shadow: 0 0 18px #d6bd8714; }
+.shop-card[data-rarity="rare"] { border-color: #8f6fd988; box-shadow: 0 0 18px #8f6fd914; }
+.shop-card[data-rarity="legendary"] { border-color: #e8c56d99; box-shadow: 0 0 20px #e8c56d1c; }
+
+.shop-card-button {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  width: 100%; padding: 0 8px 14px; border: 0; background: transparent;
+  color: inherit; text-align: center; cursor: pointer;
+}
+.shop-card-button:focus-visible { outline: 2px solid #96ddf9; outline-offset: -2px; border-radius: 16px; }
+
+/* The artwork well spans the card's full width, above its own padding. */
+.shop-card-button > picture > img,
+.shop-card-button > img {
+  display: block; width: calc(100% + 16px); margin: 0 -8px 4px;
+  aspect-ratio: 1 / 1; object-fit: contain; background: #080f1c;
+}
+
+.shop-card-name { font-family: Georgia, serif; font-size: 15px; line-height: 1.3; color: #f0e2bf; overflow-wrap: anywhere; }
+
+.shop-card-rank, .shop-card-state {
+  border: 1px solid color-mix(in srgb, #b5d7eb 45%, transparent);
+  border-radius: 999px;
+  padding: 0.15rem 0.45rem;
+  font-family: var(--font-sans, sans-serif);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.shop-card-rank { color: #d9f1ff; background: color-mix(in srgb, #2b6d92 28%, transparent); }
+.shop-card-rank[data-rarity="rare"] { color: #c3f0d6; border-color: color-mix(in srgb, #2fa869 55%, transparent); background: color-mix(in srgb, #1e7a4c 30%, transparent); }
+.shop-card-rank[data-rarity="epic"] { color: #e9d0ff; background: color-mix(in srgb, #7048a8 30%, transparent); }
+.shop-card-rank[data-rarity="legendary"] { color: #ffe4a0; background: color-mix(in srgb, #9b6917 34%, transparent); }
+
+.shop-card-state { margin-top: 2px; }
+.shop-card-state[data-tone="equipped"] { color: #b9f5c9; border-color: color-mix(in srgb, #4bd67a 55%, transparent); background: color-mix(in srgb, #1d7240 28%, transparent); }
+.shop-card-state[data-tone="owned"] { color: #fae6a6; border-color: color-mix(in srgb, #d6aa4b 55%, transparent); background: color-mix(in srgb, #72511d 28%, transparent); }

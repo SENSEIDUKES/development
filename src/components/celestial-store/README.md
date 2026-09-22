@@ -13,9 +13,11 @@
   Familiar catalogue, Energy pricing, and profile Store stub were inspected in this repository)
 - **Status:** approved reconstruction (Workshop Replica Mode B), first rotation live
 - **Visual target:** the supplied Celestial Store reference — midnight navy, antique gold and
-  blue-purple seals, two framed shelves, a two-column mobile card grid — rendered with the
-  real integrated Familiar assets and the existing Library design language, never the
-  reference's generated character art
+  blue-purple seals, a two-column mobile card grid — rendered with the real integrated
+  Familiar assets and the existing Library design language, never the reference's generated
+  character art. The reference's split Energy/QI shelves were consolidated into one
+  Familiars shelf on 2026-09-22; the currency emblem on each price says how a Familiar is
+  bought, so the Store does not sort them into separate pens and name the obvious.
 
 The Celestial Store is the official first-party Store, extracted from the bottom of the
 profile into its own dedicated Cave destination (`/home/store`). The profile's Home keeps its
@@ -34,8 +36,9 @@ arrive as their own shelves when they are real.
 | Offer configuration | `shared/storeConfig.ts` | Store merchandising policy only: the Energy/QI eligible pools, slot counts (2 Energy, 4 QI), rank-based Energy prices (Rare 300 / Epic 600 / Legendary 1,000), **provisional** QI prices, and the optional genuine-discount shape (`price` + `salePrice`). Never a second Familiar registry. |
 | Daily rotation | `shared/rotation.ts` | One shared deterministic rotation per local calendar day: a seeded shuffle (xmur3 + mulberry32 on `celestial-store:<day>:<currency>`) of each currency pool, resolved against the host-supplied catalogue projection. Stable all day, reshuffles the next day. No personalization, probabilities, or offer engine. |
 | Account port | `shared/storeAccount.ts` | Ownership and purchases as host account state — never inferred from Store configuration. The default Familiar (Quill) is implicitly owned and never merchandised. |
-| The page | `development/CelestialStorePanel.tsx` | Live balances (QI ledger read + Energy account read), the two framed shelves, cards with the real animated heroes (hover-gated, lazy, reduced-motion stills — no atlas decode), and the focused detail dialog with Buy / Owned / Equip / Equipped. |
-| Styles | `development/celestialStore.css` | Midnight-navy shelves, gold and blue-purple frames, restrained glow. Rarity chips and hero framing reuse `familiar.css`. |
+| The page | `development/CelestialStorePanel.tsx` | Live balances (QI ledger read + Energy account read), one framed shelf holding the whole rotation, and the focused detail dialog with Buy / Owned / Equip / Equipped. |
+| Shop card | `development/ShopCard.tsx` | One purchasable thing on a shelf: artwork well, name, tier badge, and the price or owned line. Deliberately generic — it knows nothing about Familiars; the caller supplies the artwork renderer and the price line, so a future Audio Pack or Theme reuses it unchanged. Published as part of `@seihouse/library/celestial-store` and expected to be worked on on its own. |
+| Styles | `development/celestialStore.css`, `development/shopCard.css` | Midnight-navy shelf in a gold frame with restrained glow; the card owns its own frame, artwork well, and badges. |
 
 ## Boundaries
 
@@ -66,6 +69,18 @@ performs the ledger deductions server-side, and a host decision on where the Sto
 entry points live (the Cave button today; bottom navigation later, deliberately not yet).
 
 ## Workshop history
+
+- **2026-09-22 one shelf, reusable card** — The split Energy/QI shelves became one Familiars
+  shelf: the rotation still draws two Energy and four QI offers, Energy first, but they share
+  a single frame and grid because each card's price already carries its currency emblem. The
+  card itself moved out to `development/ShopCard.tsx` as a kind-agnostic component with its
+  own styles, tests, and package export, ready to be developed on its own as the Store grows
+  past Familiars.
+
+- **2026-09-22 review hardening** — Serialized purchases behind an in-flight guard the host
+  cannot omit; the rotation now follows the local day and closes a stale offer at midnight;
+  sale prices must be positive safe integers like every other price; the store-account hook
+  is pinned for the mount so the hook sequence cannot change under a provider swap.
 
 - **2026-09-22** — Created: extracted the official Store from the profile stub into the
   dedicated `/home/store` destination; first daily rotation (2 Energy + 4 QI), reference-art

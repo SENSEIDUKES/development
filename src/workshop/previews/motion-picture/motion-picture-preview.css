@@ -1,0 +1,111 @@
+/* Workshop-only framing. None of this travels with the component. */
+.motion-picture-preview { padding: 24px 16px 48px; }
+.motion-picture-preview > header { max-width: 62ch; margin-bottom: 24px; }
+.motion-picture-preview h3 { font-family: Georgia, serif; font-size: 22px; color: #f4e5bd; }
+.motion-picture-preview h4 { font-family: Georgia, serif; font-size: 17px; color: #f0e2bf; }
+.motion-picture-preview p { font-size: 13px; line-height: 1.6; color: #b9c7d6; }
+
+.motion-picture-preview-section { margin-top: 36px; }
+.motion-picture-preview-section > p { max-width: 62ch; margin-bottom: 20px; }
+
+/* Clip source panel */
+.clip-source-panel {
+  display: block;
+  margin: 24px 0 8px;
+  padding: 16px;
+  border: 1px solid #d6bd8744;
+  border-radius: 12px;
+  background: #0b172680;
+}
+.clip-source-panel-heading label { display: block; font-weight: 600; color: #f0e2bf; }
+.clip-source-panel-heading p { margin-top: 2px; max-width: 62ch; }
+.clip-source-panel-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.clip-source-panel-row input {
+  flex: 1 1 260px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #d6bd8744;
+  border-radius: 8px;
+  background: #050b14;
+  color: #e6f6ff;
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+}
+.clip-source-panel-row input:focus-visible, .clip-source-panel-row button:focus-visible { outline: 2px solid #96ddf9; outline-offset: 2px; }
+.clip-source-panel-row button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid #d6bd8766;
+  border-radius: 8px;
+  background: #13263a;
+  color: #e6f6ff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.clip-source-panel-row button:hover:not(:disabled) { background: #1b3653; }
+.clip-source-panel-row button:disabled { opacity: 0.4; cursor: default; }
+.clip-source-panel-note { margin-top: 10px; font-size: 12px; color: #8bdbff; overflow-wrap: anywhere; }
+.clip-source-panel-hint { margin-top: 4px; font-size: 12px; color: #7f8ea0; }
+
+/* Story card */
+.motion-picture-preview-cards { display: flex; flex-wrap: wrap; gap: 24px; }
+.story-card-demo {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 220px);
+  border: 1px solid #d6bd8744;
+  border-radius: 14px;
+  background: #0b1726;
+  overflow: hidden;
+}
+.story-card-demo-cover { width: 100%; }
+.story-card-demo-cover .motion-picture-frame { aspect-ratio: 2 / 3; border-radius: 0; }
+.story-card-demo-chapters {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: #050b14b3;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #e6f6ff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.story-card-demo-body { padding: 12px 14px 14px; }
+.story-card-demo-body h4 { margin: 0; font-size: 15px; line-height: 1.3; color: #f0e2bf; }
+.story-card-demo-author { margin-top: 2px; font-size: 12px; color: #8b9cae; }
+.story-card-demo-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.story-card-demo-tag, .story-card-demo-stage {
+  padding: 2px 7px;
+  border: 1px solid color-mix(in srgb, #b5d7eb 45%, transparent);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.story-card-demo-tag { color: #d9f1ff; background: color-mix(in srgb, #2b6d92 28%, transparent); }
+.story-card-demo-stage { color: #c3f0d6; background: color-mix(in srgb, #1e7a4c 30%, transparent); }
+
+/* Shapes and states */
+.motion-picture-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 40px 24px;
+  align-items: start;
+}
+.motion-picture-preview-item { display: flex; flex-direction: column; gap: 14px; }
+
+/* The aura reaches well outside the frame, so each cell leaves it room. */
+.motion-picture-preview-art { width: min(100%, 200px); margin: 0 auto; }
+.motion-picture-preview-art-portrait .motion-picture-frame { aspect-ratio: 2 / 3; }
+.motion-picture-preview-art-square .motion-picture-frame { aspect-ratio: 1 / 1; }
+
+.motion-picture-preview-copy h5 { margin: 0 0 4px; font-family: Georgia, serif; font-size: 15px; color: #f0e2bf; }
+.motion-picture-preview-state { margin-top: 6px; font-size: 12px; color: #8bdbff; }

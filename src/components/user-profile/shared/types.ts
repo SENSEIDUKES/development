@@ -57,7 +57,9 @@ export interface UserProfile {
   joinedDate: string;
   updatedAt: string;
   role?: AccountRole;
-  qi?: number; // legacy
+  /** Legacy spendable-QI field. It must never be used as DAO XP. */
+  qi?: number;
+  /** Permanent progression source for rank, aura unlocks, and rank progress. */
   dao_xp?: number;
   dao_rank?: string;
   heavenly_qi?: number;

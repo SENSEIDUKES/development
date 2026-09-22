@@ -26,7 +26,7 @@
  */
 
 import type { CosmicArtifact, Story, UserProfile } from '../shared/types';
-import { getDaoRankData } from '../../../library/cultivation/progression';
+import { getDaoRankData, resolvePermanentDaoXp } from '../../../library/cultivation/progression';
 
 /** The five areas a cultivator chooses to publish. */
 export interface PublicProfileVisibility {
@@ -114,12 +114,12 @@ function formatReadingTime(minutes: number): string {
 }
 
 /**
- * Development-only reading rate. Lifetime cultivation is the only durable
+ * Development-only reading rate. Permanent DAO XP is the only durable
  * record of time spent reading in the current domain model, so the Workshop
  * reads an hour of reading out of it at a fixed rate. A host with real session
  * telemetry replaces this whole function, not the constant.
  */
-const DEVELOPMENT_QI_PER_MINUTE = 12;
+const DEVELOPMENT_DAO_XP_PER_MINUTE = 12;
 
 /**
  * The four featured entries, one per supported medium, drawn from the
@@ -175,8 +175,8 @@ export function developmentPublicRecord(
   profile: UserProfile,
   stories: readonly Story[],
 ): PublicProfileRecord {
-  const lifetimeQi = profile.dao_xp ?? profile.qi ?? 0;
-  const rank = getDaoRankData(lifetimeQi).rank;
+  const daoXp = resolvePermanentDaoXp(profile.dao_xp, profile.dao_rank);
+  const rank = getDaoRankData(daoXp ?? 0).rank;
   // Scoped to the viewed cultivator, not whoever is signed in — a public page
   // must never attribute another account's stories to this profile. The
   // unowned allowance matches `UserProfileStoriesPanel`, where a story with no
@@ -186,7 +186,7 @@ export function developmentPublicRecord(
   );
 
   return {
-    bio: lifetimeQi > 0
+    bio: (daoXp ?? 0) > 0
       ? `${rank} of the quiet hours. I read slowly, reread often, and keep a lantern lit for the arcs everyone else abandoned.`
       : '',
     stats: [
@@ -196,7 +196,7 @@ export function developmentPublicRecord(
       {
         id: 'reading-time',
         label: 'Reading time',
-        value: formatReadingTime(Math.round(lifetimeQi / DEVELOPMENT_QI_PER_MINUTE)),
+        value: formatReadingTime(Math.round((daoXp ?? 0) / DEVELOPMENT_DAO_XP_PER_MINUTE)),
       },
     ],
     highlights: highlightsFor(profile, activeStories),

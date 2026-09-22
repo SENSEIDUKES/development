@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ENERGY_PRICE_CATALOG } from '@seihouse/library/energy';
 import { EnergyClientProvider, createHttpEnergyClient, type EnergyClient } from '@seihouse/library/energy';
 import { useEnergyAccount, type EnergyAccountState } from '@seihouse/library/energy';
+import { ENERGY_ITEM_PRICES, ENERGY_PACKS, QI_ITEM_PRICES, QI_PACKS, type QiAccountState } from '@seihouse/library/cultivation';
 import { createLocalEnergyClient } from '../../../workshop/previews/energy/localEnergyClient';
 import { EnergyActionCost, EnergyBalanceIndicator, EnergyDeductionNotice, EnergyInsufficientState, EnergyPanel, energyDeductionToast } from '@seihouse/library/energy';
 
@@ -124,8 +125,53 @@ describe('Reusable Energy pieces', () => {
     // The Energy mark is drawn artwork now, so only the number is text.
     expect(costs.map(cost => cost.textContent)).toEqual(['1', '3', '7']);
     expect(costs.every(cost => cost.querySelector('[data-sen-navigation-icon="energy"]'))).toBe(true);
-    expect(costs[0].getAttribute('aria-label')).toBe('Costs 1 Energy');
+    expect(costs[0].getAttribute('aria-label')).toBe('Costs 1 Energy (projected)');
     expect(ENERGY_PRICE_CATALOG.find(entry => entry.actionId === 'narration.generate')?.price).toBeNull();
+  });
+
+  it('renders the three balances and every shared working standard without a checkout control', async () => {
+    const client = createLocalEnergyClient({ uid: 'economy-reader' });
+    const snapshot = await client.getSnapshot();
+    const account: EnergyAccountState = {
+      status: 'ready',
+      snapshot,
+      error: null,
+      pending: false,
+      refresh: vi.fn(),
+      grantDevelopment: vi.fn(),
+      resetDevelopment: vi.fn(),
+    };
+    const qi: QiAccountState = {
+      status: 'ready',
+      snapshot: { uid: 'economy-reader', balance: 13_480, transactions: [] },
+      error: null,
+    };
+
+    await render(<EnergyPanel account={account} qi={qi} daoXp={13_480} />);
+
+    expect(container.querySelector('[data-economy-balance="energy"] [aria-label="Energy balance 500"]')).not.toBeNull();
+    expect(container.querySelector('[data-economy-balance="qi"] [aria-label="QI balance 13,480"]')).not.toBeNull();
+    expect(container.querySelector('[data-economy-balance="dao-xp"]')?.textContent).toContain('Current rank: Leader');
+    expect(container.querySelector('[data-economy-balance="dao-xp"] [role="progressbar"]')?.getAttribute('aria-valuetext'))
+      .toBe('13,480 DAO XP of 25,000 toward Sage');
+    expect(container.querySelector('[data-economy-section="energy"]')?.textContent).toContain('1 Energy = $0.02');
+    expect(container.textContent).not.toContain('$0.020');
+    expect(container.querySelector('[data-economy-section="qi"]')?.textContent).toContain('1 QI = $0.002');
+
+    expect(ENERGY_PACKS).toEqual([
+      { amount: 250, priceUsd: 5 }, { amount: 500, priceUsd: 10 },
+      { amount: 1_000, priceUsd: 20 }, { amount: 2_500, priceUsd: 50 },
+    ]);
+    expect(ENERGY_ITEM_PRICES).toEqual({ rare: 300, epic: 600, legendary: 1_000 });
+    expect(QI_PACKS).toEqual([
+      { amount: 2_500, priceUsd: 5 }, { amount: 5_000, priceUsd: 10 },
+      { amount: 10_000, priceUsd: 20 }, { amount: 25_000, priceUsd: 50 },
+    ]);
+    expect(QI_ITEM_PRICES).toEqual({ common: 500, rare: 2_000, epic: 8_000, legendary: 25_000 });
+    expect(container.querySelector('[data-energy-action="chapter.generate"]')?.textContent).toContain('Projected');
+    expect(container.querySelector('[data-energy-action="video.generate"]')?.textContent).toContain('30–50 Energy');
+    expect(container.textContent).toContain('No checkout is connected here');
+    expect(container.textContent).toContain('does not add a checkout, daily award, or achievement payout');
   });
 
   it('renders the balance indicator for loading, ready, unavailable and plain values', async () => {

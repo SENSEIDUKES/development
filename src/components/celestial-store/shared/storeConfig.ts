@@ -1,4 +1,5 @@
 import type { FamiliarRarity } from '../../familiar/shared/familiar';
+import { ENERGY_ITEM_PRICES, QI_ITEM_PRICES } from '../../../library/cultivation/economyStandards';
 
 /**
  * Celestial Store offer configuration.
@@ -18,8 +19,8 @@ export interface CelestialStoreOfferConfig {
   familiarId: string;
   currency: StoreCurrency;
   /**
-   * Normal price in the offer's currency. Energy offers may omit it to take
-   * the rank-based `ENERGY_FAMILIAR_PRICES` amount; QI offers must state one.
+   * Normal price in the offer's currency. Either currency may omit it to take
+   * the shared rarity-based working price for that currency.
    */
   price?: number;
   /** Optional genuine discount: the price charged while lower than `price`. */
@@ -38,28 +39,9 @@ export interface CelestialStoreConfig {
   offers: readonly CelestialStoreOfferConfig[];
 }
 
-/** Current Energy pricing by catalogue rank. Common Familiars have no Energy price. */
-export const ENERGY_FAMILIAR_PRICES: Readonly<Partial<Record<FamiliarRarity, number>>> = {
-  rare: 300,
-  epic: 600,
-  legendary: 1_000,
-};
-
-/**
- * PROVISIONAL QI PRICES — not finalized business rules.
- *
- * These development-pass amounts exist only so the Store UI has something to
- * render; they are Store configuration, deliberately kept out of components,
- * and are expected to change before any production transfer.
- */
-export const PROVISIONAL_QI_PRICES: Readonly<Record<string, number>> = {
-  'celestial-moon-moth': 25_000,
-  'galaxy-octopus': 18_000,
-  'judgmental-jiangshi': 15_000,
-  'lucky-bake-danuki': 8_000,
-  'lady-bug': 8_000,
-  'living-grimoire': 12_000,
-};
+/** Shared item standards, kept here as Store-facing aliases for compatibility. */
+export const ENERGY_FAMILIAR_PRICES: Readonly<Partial<Record<FamiliarRarity, number>>> = ENERGY_ITEM_PRICES;
+export const QI_FAMILIAR_PRICES: Readonly<Record<FamiliarRarity, number>> = QI_ITEM_PRICES;
 
 /** The first rotation pools. Quill stays the included default and is never listed. */
 export const ENERGY_ELIGIBLE_FAMILIAR_IDS = [
@@ -90,7 +72,6 @@ export const CELESTIAL_STORE_CONFIG: CelestialStoreConfig = {
     ...QI_ELIGIBLE_FAMILIAR_IDS.map((familiarId): CelestialStoreOfferConfig => ({
       familiarId,
       currency: 'qi',
-      price: PROVISIONAL_QI_PRICES[familiarId],
     })),
   ],
 };

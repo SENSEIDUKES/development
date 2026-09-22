@@ -68,7 +68,7 @@ import { CelestialStorePanel } from '../../celestial-store/development/Celestial
 import { useUnavailableCelestialStoreAccount } from '../../celestial-store/shared/storeAccount';
 import { DaoPillarView } from '../../dao-pillar/development/DaoPillarView';
 import { useDaoPillarCalendar } from '../../dao-pillar/shared/useDaoPillarCalendar';
-import { useQiAccount, getDaoRankData } from '@seihouse/library/cultivation';
+import { useQiAccount, getDaoRankData, resolvePermanentDaoXp } from '@seihouse/library/cultivation';
 
 interface UserProfileProps {
   currentUser: AppUser | null;
@@ -110,13 +110,14 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const route = useCaveRoute();
   const isPublicView = route.audience === 'public';
   const cultivation = useQiAccount({ enabled: Boolean(currentUser) && !isPublicView });
-  // Private balances are read from the ledger only. These fields are a render projection,
-  // never a second store or a profile mutation. Public records remain host-supplied.
-  const balance = cultivation.snapshot?.balance;
+  // Spendable QI is read from the ledger only. Permanent DAO XP stays on the
+  // host profile record and is never overwritten by a balance refresh.
+  const qiBalance = cultivation.snapshot?.balance;
+  const daoXp = resolvePermanentDaoXp(hostController.profile?.dao_xp, hostController.profile?.dao_rank);
   const controller = isPublicView ? hostController : {
     ...hostController, cultivation,
-    profile: hostController.profile ? { ...hostController.profile, qi: balance, dao_xp: balance, heavenly_qi: balance } : null,
-    daoData: getDaoRankData(balance ?? 0),
+    profile: hostController.profile ? { ...hostController.profile, qi: qiBalance } : null,
+    daoData: getDaoRankData(daoXp ?? 0),
   };
   const {
     profile,
@@ -394,8 +395,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         );
       case 'energy':
         return (
-          <UserProfileCaveDestination id="energy" title="Energy" subtitle="Powers generation throughout SEN" icon={<SENNavigationIcon name="energy" size={18} />} onBack={returnHome}>
-            <EnergyPanel account={energyAccount} />
+          <UserProfileCaveDestination id="energy" title="Energy, QI & DAO XP" subtitle="Balances, working standards, and permanent progression" icon={<SENNavigationIcon name="energy" size={18} />} onBack={returnHome}>
+            <EnergyPanel account={energyAccount} qi={cultivation} daoXp={daoXp} />
           </UserProfileCaveDestination>
         );
       case 'settings':

@@ -15,7 +15,10 @@
 export const ENERGY_ACTION_IDS = [
   'chapter.generate',
   'image.generate',
+  'short-cue.generate',
+  'long-cue.generate',
   'soundscape.generate',
+  'video.generate',
   'narration.generate',
   'translation.generate',
 ] as const;
@@ -35,18 +38,31 @@ export interface EnergyPriceEntry {
    * but it cannot be reserved.
    */
   price: number | null;
+  /**
+   * A variable projected action's inclusive upper price. The server refuses to
+   * reserve one until a trusted caller selects a whole-number quote inside the
+   * range, so a future video flow cannot silently charge the displayed minimum.
+   */
+  maximumPrice?: number;
+  /** The number is a working projection, not evidence of a live provider charge. */
+  projected?: boolean;
 }
 
 /**
  * The single editable price catalog. Change a price here and every consumer
  * — the ledger, the profile panel, the action-cost indicator — follows.
  *
- * These are development test prices, not the final Energy economy.
+ * These are the shared working standards. Generation paths remain deliberately
+ * disconnected in this repository, so each entry is visibly projected until a
+ * host wires an actual operation through the server-side reservation boundary.
  */
 export const ENERGY_PRICE_CATALOG: readonly EnergyPriceEntry[] = [
-  { actionId: 'chapter.generate', label: 'Chapter', price: 1 },
-  { actionId: 'image.generate', label: 'Image', price: 3 },
-  { actionId: 'soundscape.generate', label: 'Soundscape', price: null },
+  { actionId: 'chapter.generate', label: 'Chapter', price: 1, projected: true },
+  { actionId: 'image.generate', label: 'Image', price: 3, projected: true },
+  { actionId: 'short-cue.generate', label: 'Short cue', price: 3, projected: true },
+  { actionId: 'long-cue.generate', label: 'Long cue', price: 15, projected: true },
+  { actionId: 'soundscape.generate', label: 'Soundscape', price: 20, projected: true },
+  { actionId: 'video.generate', label: 'Video', price: 30, maximumPrice: 50, projected: true },
   { actionId: 'narration.generate', label: 'Narration', price: null },
   { actionId: 'translation.generate', label: 'Translation', price: null },
 ];
@@ -60,6 +76,22 @@ export class EnergyPriceUnavailableError extends Error {
   }
 }
 
+/** A variable projected action must be quoted by the trusted server caller. */
+export class EnergyPriceQuoteRequiredError extends Error {
+  readonly actionId: EnergyActionId;
+  readonly minimum: number;
+  readonly maximum: number;
+  constructor(actionId: EnergyActionId, minimum: number, maximum: number, quotedPrice?: number) {
+    super(quotedPrice === undefined
+      ? `Energy action ${actionId} requires a quoted price between ${minimum} and ${maximum} Energy.`
+      : `Energy action ${actionId} must be quoted between ${minimum} and ${maximum} Energy.`);
+    this.name = 'EnergyPriceQuoteRequiredError';
+    this.actionId = actionId;
+    this.minimum = minimum;
+    this.maximum = maximum;
+  }
+}
+
 export const getEnergyPriceEntry = (actionId: EnergyActionId): EnergyPriceEntry => {
   const entry = ENERGY_PRICE_CATALOG.find(candidate => candidate.actionId === actionId);
   if (!entry) throw new Error(`Energy action ${actionId} is not in the price catalog.`);
@@ -70,20 +102,46 @@ export interface EnergyPriceQuote {
   actionId: EnergyActionId;
   label: string;
   price: number;
+  maximumPrice?: number;
+  projected: boolean;
 }
 
-/** Resolve the configured price of an action, or throw when it is unpriced. */
-export const resolveEnergyPrice = (actionId: EnergyActionId): EnergyPriceQuote => {
+/** A user-facing catalog label for a fixed price or an inclusive price range. */
+export const formatEnergyPriceRange = (entry: Pick<EnergyPriceEntry, 'price' | 'maximumPrice'>): string => {
+  if (entry.price === null) return 'Not priced';
+  const format = new Intl.NumberFormat('en-US').format;
+  return entry.maximumPrice === undefined ? format(entry.price) : `${format(entry.price)}–${format(entry.maximumPrice)}`;
+};
+
+/**
+ * Resolve the configured charge for a trusted server operation. Fixed prices
+ * need no extra input. Variable projected prices require a whole-number quote
+ * inside the shared range, so a generation owner cannot silently treat a
+ * displayed "30–50" cost as a fixed 30.
+ */
+export const resolveEnergyPrice = (actionId: EnergyActionId, quotedPrice?: number): EnergyPriceQuote => {
   const entry = getEnergyPriceEntry(actionId);
   if (entry.price === null) throw new EnergyPriceUnavailableError(actionId);
-  return { actionId, label: entry.label, price: entry.price };
+  if (entry.maximumPrice !== undefined) {
+    if (typeof quotedPrice !== 'number' || !Number.isSafeInteger(quotedPrice) || quotedPrice < entry.price || quotedPrice > entry.maximumPrice) {
+      throw new EnergyPriceQuoteRequiredError(actionId, entry.price, entry.maximumPrice, quotedPrice);
+    }
+    return {
+      actionId,
+      label: entry.label,
+      price: quotedPrice,
+      maximumPrice: entry.maximumPrice,
+      projected: Boolean(entry.projected),
+    };
+  }
+  return { actionId, label: entry.label, price: entry.price, projected: Boolean(entry.projected) };
 };
 
 /**
  * The permanent user-facing name of an action, resolved independently of its
  * current price.
  *
- * Prices are deliberately experimental: an action can be repriced or unpriced
+ * Prices are deliberately configurable: an action can be repriced or unpriced
  * at any time, and a reservation taken while it was priced must still be able
  * to settle or release afterwards. Anything that only needs to *name* an
  * action — a ledger description, a receipt — uses this instead of
@@ -96,7 +154,13 @@ export const energyActionLabel = (actionId: EnergyActionId): string =>
 /** Catalog rows that carry a price, in catalog order — what a UI lists as examples. */
 export const pricedEnergyActions = (): EnergyPriceQuote[] => ENERGY_PRICE_CATALOG
   .filter((entry): entry is EnergyPriceEntry & { price: number } => entry.price !== null)
-  .map(entry => ({ actionId: entry.actionId, label: entry.label, price: entry.price }));
+  .map(entry => ({
+    actionId: entry.actionId,
+    label: entry.label,
+    price: entry.price,
+    maximumPrice: entry.maximumPrice,
+    projected: Boolean(entry.projected),
+  }));
 
 export type EnergyTransactionKind = 'grant' | 'reserve' | 'charge' | 'release';
 

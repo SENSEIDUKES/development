@@ -35,7 +35,7 @@ import type { CelestialStorePurchase, CelestialStorePurchaseResult } from '@seih
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '@seihouse/sen/contracts';
 import { type DaoRankData, type DaoClaimResult, type SpecialQiId, type UserProfileController, type UserProfileControllerProps, type UserProfileServices } from '@seihouse/library/profile';
 import { type AccountRole, type ActiveStatusEffect, type AdminStoryRow, type AppUser, type ChapterWritingStyle, type PremiumTier, type StorySeed, type UserProfile } from '@seihouse/library/profile';
-import { getDaoRankData } from '@seihouse/library/cultivation';
+import { getDaoRankData, resolvePermanentDaoXp } from '@seihouse/library/cultivation';
 import { getCurrentOfferingWeekId } from '@seihouse/library/profile';
 import {
   MOCK_ACCOUNT,
@@ -239,7 +239,7 @@ export function createMockUserProfileServices({
     const daysTo3 = currentStreak === 0 ? 3 : (currentStreak % 3 === 0 ? 3 : 3 - (currentStreak % 3));
     const daysTo10 = currentStreak === 0 ? 10 : (currentStreak % 10 === 0 ? 10 : 10 - (currentStreak % 10));
 
-    const daoData = getDaoRankData(profile?.dao_xp ?? profile?.qi ?? 0) as DaoRankData;
+    const daoData = getDaoRankData(resolvePermanentDaoXp(profile?.dao_xp, profile?.dao_rank) ?? 0) as DaoRankData;
     const equippedArtifact = profile?.cosmicInventory?.find(
       artifact => artifact.id === profile?.equippedArtifactId,
     );
@@ -564,19 +564,18 @@ export function createMockUserProfileServices({
       if (!profile || !profile.daoPillarCracked || claimLock.current || resultRef.current?.outcome === 'unresolved') return;
       if (repairMode === 'failed') throw new Error('Repair persistence failed');
       const repairCost = 50;
-      const currentQiVal = profile.heavenly_qi !== undefined ? profile.heavenly_qi : (profile.qi || 0);
+      const currentQiVal = profile.qi ?? profile.heavenly_qi ?? 0;
       if (currentQiVal >= repairCost) {
         commitProfile({
           ...profile,
-          qi: Math.max(0, (profile.qi || 0) - repairCost),
-          dao_xp: Math.max(0, (profile.dao_xp ?? profile.qi ?? 0) - repairCost),
+          qi: Math.max(0, currentQiVal - repairCost),
           heavenly_qi: Math.max(0, currentQiVal - repairCost),
           daoPillarCracked: false,
           daoPillarStreak: currentStreak > 0 ? currentStreak : 1,
         });
         setError('');
       } else {
-        setError('Insufficient Heavenly Qi to repair Dao Pillar (Requires 50).');
+        setError('Insufficient QI to repair Dao Pillar (Requires 50).');
       }
     }, [commitProfile, currentStreak, profile, repairMode]);
 
@@ -633,14 +632,13 @@ export function createMockUserProfileServices({
         if (newStreak % 10 === 0) qiBonus += 100;
         else if (newStreak % 3 === 0) qiBonus += 20;
 
-        const currentQiVal = profile.heavenly_qi !== undefined ? profile.heavenly_qi : (profile.qi || 0);
+        const currentQiVal = profile.qi ?? profile.heavenly_qi ?? 0;
         commitProfile({
           ...profile,
           lastReadDate: todayStr,
           daoPillarStreak: newStreak,
           daoPillarCracked: cracked,
-          qi: (profile.qi || 0) + qiBonus,
-          dao_xp: (profile.dao_xp ?? profile.qi ?? 0) + qiBonus,
+          qi: currentQiVal + qiBonus,
           heavenly_qi: currentQiVal + qiBonus,
           updatedAt: new Date().toISOString(),
         });
@@ -734,12 +732,11 @@ export function createMockUserProfileServices({
           sectMerit += artifact.rewardValueSectMerit || 0;
           return { ...artifact, status: 'submitted' as const, gatheredAt: now };
         });
-        const currentQiVal = profile.heavenly_qi !== undefined ? profile.heavenly_qi : (profile.qi || 0);
+        const currentQiVal = profile.qi ?? profile.heavenly_qi ?? 0;
         commitProfile({
           ...profile,
           cosmicInventory,
-          qi: (profile.qi || 0) + qi,
-          dao_xp: (profile.dao_xp || 0) + qi,
+          qi: currentQiVal + qi,
           heavenly_qi: currentQiVal + qi,
           sect_qi: (profile.sect_qi || 0) + sectMerit,
           updatedAt: now,

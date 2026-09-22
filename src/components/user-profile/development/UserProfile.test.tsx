@@ -34,7 +34,7 @@ import {
   countVisibleCharacters,
   isDisplayNameWithinLimit,
 } from './displayName';
-import { MASTER_RANK, RANKS, CAVE_AURA_TEXT_SURFACE, MIN_AURA_TEXT_CONTRAST, accessibleAuraTextColor, auraGradientTextContrastRatio, auraTextContrastRatio, getAuraSelection, getAuraGlowStyle, getAuraTextStyle, activeAuraOverride, getRankForQi, rankBackground, resolveRankVisual } from '@seihouse/library/cultivation';
+import { MASTER_RANK, RANKS, CAVE_AURA_TEXT_SURFACE, MIN_AURA_TEXT_CONTRAST, accessibleAuraTextColor, auraGradientTextContrastRatio, auraTextContrastRatio, getAuraSelection, getAuraGlowStyle, getAuraTextStyle, activeAuraOverride, getRankForDaoXp, rankBackground, resolvePermanentDaoXp, resolveRankVisual } from '@seihouse/library/cultivation';
 import { nextEffectRefreshDelay } from './timedEffects';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -84,7 +84,7 @@ afterEach(() => {
 });
 
 interface RenderOptions {
-  /** Explicit backend fixture balance; never a value the Profile can update. */
+  /** Explicit spendable-QI ledger fixture; never a value that can update rank. */
   qiBalance?: number;
   publicCreators?: readonly PublicCreator[];
   accountControls?: import('./caveAccountControls').CaveAccountControls;
@@ -148,7 +148,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
   await daoPillarClient?.ready;
   const ledger = daoPillarClient?.repository.qi ?? new InMemoryQiLedger();
   const uid = scenario.currentUser?.uid ?? 'workshop-cultivator';
-  const initialBalance = qiBalance ?? scenario.profile?.dao_xp ?? 0;
+  const initialBalance = qiBalance ?? scenario.profile?.qi ?? 0;
   const existing = (await ledger.getAccount(uid))?.balance ?? 0;
   if (initialBalance > existing) await ledger.deposit({ uid, amount: initialBalance - existing, idempotencyKey: 'fixture-initial', source: 'test-fixture', description: 'Explicit test account' });
   const qiClient: QiClient = { async getSnapshot() { return { uid, balance: (await ledger.getAccount(uid))?.balance ?? 0, transactions: await ledger.listTransactions(uid, 100) }; } };
@@ -251,7 +251,7 @@ describe('Profile creator navigation', () => {
       expect(new URL(link.href).searchParams.get('cave')).toBe(publicCavePath(destination, controller().profile!.uid));
     }
     expect(container.querySelector('[data-cave-rank]')?.textContent).toBe('Leader');
-    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,480 Qi of 25,000');
+    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,480 DAO XP of 25,000');
     expect(container.querySelector('.cave-tier-badge')?.textContent).toBe('Inner Sect');
     expect(container.querySelector('.library-global-navigation')?.textContent).toContain('HomeLibraryDiscoverProfile');
   });
@@ -391,7 +391,7 @@ describe('Cultivator Cave home', () => {
     await renderCave({ accountControls });
     expect(container.querySelector('[data-cave-energy]')?.textContent).toBe('Energy');
     expect(container.querySelector<HTMLButtonElement>('[data-cave-energy]')?.disabled).toBe(true);
-    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,480 Qi of 25,000');
+    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,480 DAO XP of 25,000');
     expect(container.querySelector('[data-cave-unread]')).not.toBeNull();
     await click(container.querySelector('[aria-label="Inbox, 3 unread messages"]')!);
     expect(accountControls.onOpenInbox).toHaveBeenCalledTimes(1);
@@ -405,7 +405,7 @@ describe('Cultivator Cave home', () => {
     expect(container.querySelector('.library-global-navigation')?.textContent).not.toContain('Settings');
   });
 
-  it('shows the live server Energy balance and opens the Energy panel from the emblem', async () => {
+  it('shows live Energy, spendable QI, permanent DAO XP, and working standards from the Energy emblem', async () => {
     const energyClient = createLocalEnergyClient({ uid: 'workshop-cultivator' });
     const grant = vi.spyOn(energyClient, 'grantDevelopment');
     await renderCave({ energyClient });
@@ -416,9 +416,23 @@ describe('Cultivator Cave home', () => {
     await click(emblem);
     expect(new URL(window.location.href).searchParams.get('cave')).toBe('/home/energy');
     const panel = container.querySelector('[data-cave-destination="energy"]')!;
-    expect(panel.textContent).toContain('Energy powers generation throughout SEN');
+    expect(panel.textContent).toContain('Energy, QI & DAO XP');
+    expect(panel.querySelector('[data-economy-summary]')).not.toBeNull();
+    expect(panel.querySelector('[data-economy-balance="energy"] [aria-label="Energy balance 500"]')).not.toBeNull();
+    expect(panel.querySelector('[data-economy-balance="qi"] [aria-label="QI balance 13,480"]')).not.toBeNull();
+    expect(panel.querySelector('[data-economy-balance="dao-xp"]')?.textContent).toContain('Permanent DAO XP');
+    expect(panel.querySelector('[data-dao-rank-summary]')?.textContent).toContain('Current rank: Leader');
+    expect(panel.querySelector('[data-economy-section="energy"]')?.textContent).toContain('1 Energy = $0.02');
+    expect(panel.querySelector('[data-economy-section="qi"]')?.textContent).toContain('1 QI = $0.002');
+    expect(panel.querySelector('[data-economy-section="dao-xp"]')?.textContent).toContain('Master50,000 DAO XP');
     expect(panel.querySelector('[data-energy-action="chapter.generate"]')?.textContent).toContain('1');
     expect(panel.querySelector('[data-energy-action="image.generate"]')?.textContent).toContain('3');
+    expect(panel.querySelector('[data-energy-action="short-cue.generate"]')?.textContent).toContain('3');
+    expect(panel.querySelector('[data-energy-action="long-cue.generate"]')?.textContent).toContain('15');
+    expect(panel.querySelector('[data-energy-action="soundscape.generate"]')?.textContent).toContain('20');
+    expect(panel.querySelector('[data-energy-action="video.generate"]')?.textContent).toContain('30–50 Energy');
+    expect(panel.textContent).toContain('Projected');
+    expect(panel.textContent).toContain('No checkout is connected here');
     expect(panel.querySelector('[data-energy-activity-kind="grant"]')?.textContent).toContain('Development starting Energy');
     await click(byText('[data-energy-development-controls] button', 'Grant 100 Energy'));
     await act(async () => { await vi.advanceTimersByTimeAsync(10); });
@@ -520,7 +534,7 @@ describe('Cultivator Cave home', () => {
     expect(container.querySelector('[data-cave-portrait] img')?.getAttribute('src')).toBe(profile.avatarUrl);
     expect(container.querySelector('#cave-cultivator-name')?.textContent).toContain(profile.displayName);
     expect(container.querySelector('[data-cave-rank]')?.textContent).toContain('Leader');
-    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,480 Qi of 25,000');
+    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,480 DAO XP of 25,000');
     expect(container.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('11');
 
     for (const id of ['qi-reserves', 'dao-pillar', 'status-effects']) {
@@ -682,7 +696,7 @@ describe('Cultivator Cave destinations', () => {
     await click(container.querySelector('[aria-label="Return to cave"]')!);
     expect(open('dao-pillar').textContent).toContain('13 Day Streak');
     expect(open('dao-pillar').textContent).toContain('Collected today · +100 Qi');
-    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,580 Qi of 25,000');
+    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,480 DAO XP of 25,000');
     expect(result.controller().profile?.dao_xp).toBe(13480);
     expect(result.controller().profile?.heavenly_qi).toBe(13480);
   });
@@ -893,11 +907,11 @@ describe('Cultivator Cave settings', () => {
 
   it('announces the selected Custom Spectrum without changing its picker behavior', async () => {
     await renderCave({
-      qiBalance: 50_000,
+      qiBalance: 0,
       adapter: {
         profileOverride: {
           dao_xp: 50_000,
-          qi: 50_000,
+          qi: 0,
           displayNameColor: '#000000',
         },
       },
@@ -908,6 +922,27 @@ describe('Cultivator Cave settings', () => {
     const spectrum = document.body.querySelector<HTMLButtonElement>('[aria-label="Custom spectrum"]')!;
     expect(spectrum.disabled).toBe(false);
     expect(spectrum.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('does not unlock Aura ranks or the spectrum from a spendable QI balance', async () => {
+    await renderCave({
+      qiBalance: 50_000,
+      adapter: {
+        profileOverride: {
+          dao_xp: 0,
+          qi: 0,
+          displayNameColor: 'rank:master',
+        },
+      },
+    });
+    await click(byText('[data-cave-account-actions] button', 'Settings'));
+    if (!document.body.querySelector<HTMLDetailsElement>('.cave-aura-picker')?.open) await click(document.body.querySelector('summary.cave-aura-summary')!);
+
+    const rows = Array.from(document.body.querySelectorAll<HTMLButtonElement>(
+      '[role="radiogroup"][aria-label="Cultivator Aura rank"] [role="radio"]',
+    ));
+    expect(rows.find(row => row.textContent?.includes('Master'))?.disabled).toBe(true);
+    expect(document.body.querySelector<HTMLButtonElement>('[aria-label="Custom spectrum"]')?.disabled).toBe(true);
   });
 
   it('keeps Harmony and a cracked Pillar text opaque enough for their dark surface', async () => {
@@ -1042,7 +1077,7 @@ describe('Cultivator Cave stage helper', () => {
 });
 
 describe('rank colour system', () => {
-  it('is one ten-rank ladder with the agreed Qi thresholds', () => {
+  it('is one ten-rank ladder with the agreed permanent DAO XP thresholds', () => {
     expect(RANKS.map(rank => [rank.name, rank.unlockedAt])).toEqual([
       ['Reader', 0],
       ['Disciple', 100],
@@ -1100,17 +1135,23 @@ describe('rank colour system', () => {
   });
 
   it('falls back to the rank the cultivator has earned when nothing is selected', () => {
-    expect(getRankForQi(0).id).toBe('reader');
-    expect(getRankForQi(11999).id).toBe('elder');
-    expect(getRankForQi(12000).id).toBe('leader');
-    expect(getRankForQi(50000).id).toBe('master');
+    expect(getRankForDaoXp(0).id).toBe('reader');
+    expect(getRankForDaoXp(11999).id).toBe('elder');
+    expect(getRankForDaoXp(12000).id).toBe('leader');
+    expect(getRankForDaoXp(50000).id).toBe('master');
     expect(resolveRankVisual(undefined, 6000).rank.id).toBe('elder');
+  });
+
+  it('preserves permanent DAO XP and only uses a legacy rank when exact progression is absent', () => {
+    expect(resolvePermanentDaoXp(13_480, 'Reader')).toBe(13_480);
+    expect(resolvePermanentDaoXp(undefined, 'Leader')).toBe(12_000);
+    expect(resolvePermanentDaoXp(undefined, undefined)).toBeNull();
   });
 
   it('resolves rank tokens, the legacy aura values, and a custom spectrum', () => {
     expect(resolveRankVisual('rank:sage', 0).rank.id).toBe('sage');
 
-    // Legacy values map by the Qi threshold they were unlocked at, so nobody is
+    // Legacy values map by the DAO XP threshold they were unlocked at, so nobody is
     // promoted or demoted by the ladder change.
     expect(resolveRankVisual('#8B5CF6', 0).rank.id).toBe('author');
     expect(resolveRankVisual('gradient-violet-gold', 0).rank.id).toBe('leader');
@@ -1190,7 +1231,7 @@ describe('rank colour system', () => {
     expect(glowStyle.className).not.toContain('border-neutral-900');
   });
 
-  it('lists every rank in Settings as name, colour and Qi, with no aura lore', async () => {
+  it('lists every rank in Settings as name, colour and DAO XP, with no aura lore', async () => {
     await renderCave();
     await click(byText('[data-cave-account-actions] button', 'Settings'));
     if (!document.body.querySelector<HTMLDetailsElement>('.cave-aura-picker')?.open) await click(document.body.querySelector('summary.cave-aura-summary')!);
@@ -1198,10 +1239,10 @@ describe('rank colour system', () => {
       document.body.querySelectorAll('[role="radiogroup"][aria-label="Cultivator Aura rank"] [role="radio"]'),
     );
     expect(rows).toHaveLength(RANKS.length);
-    expect(rows[0].textContent).toBe('Reader0 Qi');
-    expect(rows[RANKS.length - 1].textContent).toBe('Master50,000 Qi');
+    expect(rows[0].textContent).toBe('Reader0 DAO XP');
+    expect(rows[RANKS.length - 1].textContent).toBe('Master50,000 DAO XP');
 
-    // The developed cultivator sits at 13,480 Qi: Leader is equipped, Sage is locked.
+    // The developed cultivator has earned 13,480 DAO XP: Leader is equipped, Sage is locked.
     const leader = rows[7];
     expect(leader.textContent).toContain('Leader');
     expect(leader.textContent).toContain('Equipped');
@@ -1213,10 +1254,10 @@ describe('rank colour system', () => {
     expect(document.body.textContent).not.toContain('Sect Entrance Aura');
   });
 
-  it('gates the custom spectrum on reaching Master at 50,000 Qi', async () => {
+  it('gates the custom spectrum on reaching Master at 50,000 DAO XP', async () => {
     await renderCave();
     await click(byText('[data-cave-account-actions] button', 'Settings'));
-    expect(document.body.textContent).toContain('Requires Master (50,000 Qi)');
+    expect(document.body.textContent).toContain('Requires Master (50,000 DAO XP)');
 
     if (!document.body.querySelector<HTMLDetailsElement>('.cave-aura-picker')?.open) await click(document.body.querySelector('summary.cave-aura-summary')!);
     const spectrum = document.body.querySelector<HTMLButtonElement>('[aria-label="Custom spectrum"]')!;
@@ -1378,10 +1419,10 @@ describe('Home dynamic data and claim contract', () => {
     expect(container.querySelector('h2')?.textContent).toContain(expected);
     expect(container.innerHTML).not.toContain('private-handle');
   });
-  it.each([0, 300, 50000])('uses ledger balance %s despite conflicting profile fields', async expected => {
-    await renderCave({ qiBalance: expected, adapter: { profileOverride: { dao_xp: 99999, qi: 98765, heavenly_qi: 99 } } });
-    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toMatch(new RegExp(`^${expected.toLocaleString()}`));
-    expect(container.querySelector('[data-cave-rank], [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(expected).name);
+  it.each([0, 300, 50000])('uses permanent DAO XP %s despite conflicting spendable QI balances', async expected => {
+    await renderCave({ qiBalance: expected === 0 ? 50_000 : 0, adapter: { profileOverride: { dao_xp: expected, qi: 98_765, heavenly_qi: 99 } } });
+    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toMatch(new RegExp(`^${expected.toLocaleString()} DAO XP`));
+    expect(container.querySelector('[data-cave-rank], [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForDaoXp(expected).name);
     expect((container.querySelector('[data-cave-progress]') as HTMLElement).style.getPropertyValue('--cave-rank-background')).toBeTruthy();
     if (expected === 50000) expect(text()).toContain('Maximum rank');
   });
@@ -1415,7 +1456,7 @@ describe('Home dynamic data and claim contract', () => {
     const now = Date.now();
     expect(effectStatement({ ...effect, expiresAt: new Date(now + 7 * 86400000).toISOString(), effectDef: { ...effect.effectDef, qiMultiplier: undefined, sectQiMultiplier: 1.1 } }, now)).toBe('+10% Sect Qi · 7 days');
   });
-  it('claims once across rapid taps and route changes, with rank progress updated', async () => {
+  it('claims QI once across rapid taps and route changes without changing rank progress', async () => {
     const result = await renderCave();
     await click(open('dao-pillar'));
     await act(async () => { daoTile(13).click(); daoTile(13).click(); daoTile(13).click(); });
@@ -1423,7 +1464,7 @@ describe('Home dynamic data and claim contract', () => {
     expect(daoTileStates().filter(state => state === 'collected')).toHaveLength(13);
     await navigateTo('/home');
     expect(open('dao-pillar').textContent).toContain('Collected today · +100 Qi');
-    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,580 Qi of 25,000');
+    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,480 DAO XP of 25,000');
     await navigateTo('/home/dao-pillar');
     expect(daoTile(13).dataset.state).toBe('collected');
     expect(container.querySelectorAll('.dao-tile[data-state="available"]')).toHaveLength(0);
@@ -1633,15 +1674,16 @@ describe('Claim and existing profile edits', () => {
     expect(result.controller().profile?.displayName).toBe('Updated Display Name');
     expect(result.controller().profile?.dao_xp).toBe(13480);
   });
-  it('updates the rank and bar together when collection crosses a threshold', async () => {
+  it('keeps permanent rank and progress fixed when a QI claim crosses a rank-looking threshold', async () => {
     await renderCave({ qiBalance: 99, adapter: { profileOverride: { dao_xp: 99, qi: 99 } } });
-    expect(container.querySelector('[data-cave-rank], [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(99).name);
+    expect(container.querySelector('[data-cave-rank], [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForDaoXp(99).name);
     await click(open('dao-pillar'));
     await click(daoTile(13));
     await settle();
     await navigateTo('/home');
-    expect(container.querySelector('[data-cave-rank], [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForQi(199).name);
-    expect((container.querySelector('[data-cave-progress]') as HTMLElement).style.getPropertyValue('--cave-rank-background')).toBe(rankBackground(getRankForQi(199).visual));
+    expect(container.querySelector('[data-cave-rank], [data-cave-rank][data-element="none"]')?.textContent).toBe(getRankForDaoXp(99).name);
+    expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('99 DAO XP of 100');
+    expect((container.querySelector('[data-cave-progress]') as HTMLElement).style.getPropertyValue('--cave-rank-background')).toBe(rankBackground(getRankForDaoXp(99).visual));
   });
 });
 
@@ -1703,7 +1745,7 @@ describe('Public view of the Cave', () => {
     // The four private areas are replaced, not hidden alongside their public twin.
     expect(container.querySelector('[data-cave-bio]')?.textContent).toContain('quiet hours');
     expect(container.querySelector('[data-cave-progress]')).not.toBeNull();
-    expect(container.querySelector('[data-cave-qi]')).toBeNull();
+    expect(container.querySelector('[data-cave-dao-xp]')).toBeNull();
     expect(container.querySelector('[data-cave-card="stats"]')).not.toBeNull();
     expect(container.querySelector('[data-cave-card="qi-reserves"]')).toBeNull();
     expect(container.querySelector('[data-cave-card="highlights"]')).not.toBeNull();
@@ -2054,7 +2096,7 @@ it('uses the supplied profile clock consistently at aura expiry', () => {
 
 describe('identity rank progression and cultivator bio', () => {
   it.each(RANKS)('shows canonical endpoints and colors for $name', async rank => {
-    await renderCave({ qiBalance: rank.unlockedAt, adapter: { profileOverride: { dao_xp: rank.unlockedAt, qi: 999999, sect_qi: 765432 } } });
+    await renderCave({ qiBalance: 999_999, adapter: { profileOverride: { dao_xp: rank.unlockedAt, qi: 999999, sect_qi: 765432 } } });
     const current = container.querySelector<HTMLElement>('[data-cave-rank]')!;
     const next = RANKS[RANKS.indexOf(rank) + 1];
     expect(current.textContent).toBe(rank.name);
@@ -2072,7 +2114,7 @@ describe('identity rank progression and cultivator bio', () => {
     const identity = container.querySelector('[data-cave-identity]')!;
     expect(identity.textContent).not.toContain('Qi Reserves');
     expect(identity.textContent).not.toContain('765,432');
-    expect(identity.querySelector('[data-cave-qi]')).toBeNull();
+    expect(identity.querySelector('[data-cave-dao-xp]')).toBeNull();
   });
 
   it('reveals exact cultivation in the existing dismissible dialog', async () => {
@@ -2081,9 +2123,9 @@ describe('identity rank progression and cultivator bio', () => {
     expect(trigger.tagName).toBe('BUTTON');
     expect(trigger.disabled).toBe(false);
     expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
-    expect(document.querySelector('[data-cave-qi]')).toBeNull();
+    expect(document.querySelector('[data-cave-dao-xp]')).toBeNull();
     await click(trigger);
-    expect(document.querySelector('[role="dialog"]')?.textContent).toContain('13,480 / 25,000 Qi');
+    expect(document.querySelector('[role="dialog"]')?.textContent).toContain('13,480 / 25,000 DAO XP');
     expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('98');
     const close = byText('button', 'Close');
     expect(close).not.toBeNull();

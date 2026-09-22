@@ -4,7 +4,7 @@ import {
   CELESTIAL_STORE_CONFIG,
   ENERGY_ELIGIBLE_FAMILIAR_IDS,
   ENERGY_FAMILIAR_PRICES,
-  PROVISIONAL_QI_PRICES,
+  QI_FAMILIAR_PRICES,
   QI_ELIGIBLE_FAMILIAR_IDS,
 } from './storeConfig';
 import { offerPrice } from './rotation';
@@ -50,6 +50,10 @@ describe('Celestial Store configuration', () => {
     expect(ENERGY_FAMILIAR_PRICES).toEqual({ rare: 300, epic: 600, legendary: 1_000 });
   });
 
+  it('uses the shared spendable-QI item pricing', () => {
+    expect(QI_FAMILIAR_PRICES).toEqual({ common: 500, rare: 2_000, epic: 8_000, legendary: 25_000 });
+  });
+
   it('resolves a price for every configured offer against the real catalogue ranks', () => {
     for (const offer of CELESTIAL_STORE_CONFIG.offers) {
       const entry = familiarCatalogue.find(candidate => candidate.definition.id === offer.familiarId)!;
@@ -64,7 +68,7 @@ describe('Celestial Store configuration', () => {
         available: true,
       });
       expect(price, `unpriceable offer ${offer.familiarId}`).toBeGreaterThan(0);
-      if (offer.currency === 'qi') expect(price).toBe(PROVISIONAL_QI_PRICES[offer.familiarId]);
+      if (offer.currency === 'qi') expect(price).toBe(QI_FAMILIAR_PRICES[entry.definition.rarity]);
     }
   });
 });

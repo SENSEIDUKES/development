@@ -1,6 +1,6 @@
 import React from 'react';
 import { LibraryNavigationIcon } from '@seihouse/library-ui';
-import { getEnergyPriceEntry, type EnergyActionId } from '../shared/energyContracts';
+import { formatEnergyPriceRange, getEnergyPriceEntry, type EnergyActionId } from '../shared/energyContracts';
 import { formatEnergy } from './EnergyAmount';
 import './energy.css';
 
@@ -18,11 +18,12 @@ export function EnergyActionCost({ actionId, price, className = '' }: EnergyActi
   const entry = actionId ? getEnergyPriceEntry(actionId) : null;
   const resolved = entry ? entry.price : price ?? null;
   if (resolved === null) return null;
-  const label = `Costs ${formatEnergy(resolved)} Energy`;
+  const display = entry ? formatEnergyPriceRange(entry) : formatEnergy(resolved);
+  const label = `Costs ${display} Energy${entry?.projected ? ' (projected)' : ''}`;
   return (
     <span className={`energy-action-cost ${className}`.trim()} data-energy-action={actionId ?? undefined} title={label} aria-label={label} role="img">
       <LibraryNavigationIcon name="energy" size="1em" className="energy-glyph" aria-hidden="true" />
-      <span aria-hidden="true">{formatEnergy(resolved)}</span>
+      <span aria-hidden="true">{display}</span>
     </span>
   );
 }

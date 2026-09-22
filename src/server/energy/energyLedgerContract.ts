@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ENERGY_PRICE_CATALOG, resolveEnergyPrice, type EnergyActionId } from '@seihouse/library/energy';
+import { ENERGY_PRICE_CATALOG, EnergyPriceQuoteRequiredError, resolveEnergyPrice, type EnergyActionId } from '@seihouse/library/energy';
 import type { ResolvedEnergyConfig } from './config';
 import { EnergyValidationError, InsufficientEnergyError, type EnergyRepository } from './repository';
 import { EnergyAuthorizationError, EnergyService } from './service';
@@ -123,6 +123,25 @@ export function describeEnergyLedgerContract(
       expect(chapters.reservation.amount).toBe(5);
       expect(await service.getBalance(principal)).toEqual({ balance: 500, held: 8, available: 492 });
       await expect(service.reserve(principal, { actionId: 'narration.generate', idempotencyKey: 'nar-1' })).rejects.toThrow(/no price yet/);
+    });
+
+    it('requires a trusted whole-number quote for the projected video price range', async () => {
+      const { service, principal } = await setup();
+      expect(() => service.getPrice('video.generate')).toThrow(EnergyPriceQuoteRequiredError);
+      expect(() => service.getPrice('video.generate', 29)).toThrow(EnergyPriceQuoteRequiredError);
+      expect(() => service.getPrice('video.generate', 51)).toThrow(EnergyPriceQuoteRequiredError);
+      expect(service.getPrice('video.generate', 42)).toMatchObject({
+        actionId: 'video.generate', price: 42, maximumPrice: 50, projected: true,
+      });
+
+      const { reservation } = await service.reserve(principal, {
+        actionId: 'video.generate',
+        quotedPrice: 47,
+        idempotencyKey: 'video-47',
+      });
+      expect(reservation.amount).toBe(47);
+      expect(reservation.metadata).toMatchObject({ pricing: { unitPrice: 47, quantity: 1 } });
+      expect(await service.getBalance(principal)).toEqual({ balance: 500, held: 47, available: 453 });
     });
 
     it('never lets reservations exceed the available balance', async () => {

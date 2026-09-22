@@ -2,6 +2,7 @@ import type { FamiliarOption } from '../../familiar/shared/familiar';
 import {
   CELESTIAL_STORE_CONFIG,
   ENERGY_FAMILIAR_PRICES,
+  QI_FAMILIAR_PRICES,
   type CelestialStoreConfig,
   type CelestialStoreOfferConfig,
   type StoreCurrency,
@@ -69,7 +70,9 @@ function seededShuffle<T>(items: readonly T[], seed: string): T[] {
 
 /** The normal price for one configured offer, or undefined when unresolvable. */
 export function offerPrice(config: CelestialStoreOfferConfig, option: FamiliarOption): number | undefined {
-  const price = config.price ?? (config.currency === 'energy' ? ENERGY_FAMILIAR_PRICES[option.rarity] : undefined);
+  const price = config.price ?? (config.currency === 'energy'
+    ? ENERGY_FAMILIAR_PRICES[option.rarity]
+    : QI_FAMILIAR_PRICES[option.rarity]);
   return typeof price === 'number' && Number.isSafeInteger(price) && price > 0 ? price : undefined;
 }
 

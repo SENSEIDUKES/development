@@ -45,6 +45,7 @@ import {
   getAuraSwatchStyle,
   getAuraTextStyle,
   rankToken,
+  resolvePermanentDaoXp,
   resolveRankVisual,
 } from '../../../library/cultivation/progression';
 import { CAVE_ENVIRONMENTS } from './caveEnvironment';
@@ -137,23 +138,23 @@ export function UserProfileSettingsPanel({
   const [isSavingIdentity, setIsSavingIdentity] = useState(false);
   const importInputRef = useRef<HTMLInputElement>(null);
 
-  const currentXp = profile?.dao_xp || profile?.qi || 0;
-  const isMaster = currentXp >= MASTER_RANK.unlockedAt;
+  const currentDaoXp = resolvePermanentDaoXp(profile?.dao_xp, profile?.dao_rank);
+  const isMaster = currentDaoXp !== null && currentDaoXp >= MASTER_RANK.unlockedAt;
   const selectedAura = formData.displayNameColor ?? profile?.displayNameColor;
-  const auraSelection = getAuraSelection(selectedAura, currentXp);
-  const selectedAuraVisual = resolveRankVisual(auraSelection, currentXp);
-  // A legacy saved rank can be above the current Qi threshold. A disabled
+  const auraSelection = getAuraSelection(selectedAura, currentDaoXp ?? 0);
+  const selectedAuraVisual = resolveRankVisual(auraSelection, currentDaoXp ?? 0);
+  // A legacy saved rank can be above the current DAO XP threshold. A disabled
   // checked radio is not a keyboard tab stop, so only an enabled selection
   // may claim the group's roving tab position.
   const hasEnabledAuraSelection = RANKS.some(
-    rank => Boolean(profile) && currentXp >= rank.unlockedAt && auraSelection === rankToken(rank),
+    rank => Boolean(profile) && currentDaoXp !== null && currentDaoXp >= rank.unlockedAt && auraSelection === rankToken(rank),
   );
   const assets = useLibraryAssets();
   const hasEnvironmentSelection = CAVE_ENVIRONMENTS.some(environment => environment.id === environmentId);
-  const previewStyle = getAuraTextStyle(auraSelection, profile?.activeStatusEffects, currentXp);
+  const previewStyle = getAuraTextStyle(auraSelection, profile?.activeStatusEffects, currentDaoXp ?? 0);
   // A custom spectrum is any stored value that resolves to the cultivator's own
   // colour rather than to a rank on the ladder.
-  const isCustomSelected = Boolean(selectedAura) && resolveRankVisual(selectedAura, currentXp).source === 'custom';
+  const isCustomSelected = Boolean(selectedAura) && resolveRankVisual(selectedAura, currentDaoXp ?? 0).source === 'custom';
   const isIdentityDirty = IDENTITY_FIELDS.some(field => (formData[field] ?? '') !== (profile?.[field] ?? ''));
   // The twelve-character cap applies to the display name only. Typing and
   // pasting are clamped; a longer name already stored (written before the cap)
@@ -277,12 +278,12 @@ export function UserProfileSettingsPanel({
                     <ChevronDown size={16} aria-hidden="true" className="cave-aura-chevron" />
                   </summary>
                   <div className="cave-aura-options space-y-3">
-                    <p className="text-xs text-neutral-400">Choose the aura your name carries. <span className="whitespace-nowrap">{currentXp.toLocaleString()} Qi earned</span></p>
-                  {/* One row per rank: the name, its colour, and the Qi it costs. */}
+                    <p className="text-xs text-neutral-400">Choose the aura your name carries. <span className="whitespace-nowrap">{currentDaoXp === null ? 'DAO XP unavailable' : `${currentDaoXp.toLocaleString()} DAO XP earned`}</span></p>
+                  {/* One row per rank: the name, its colour, and the DAO XP it requires. */}
                   <div role="radiogroup" aria-label="Cultivator Aura rank" className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
                     {RANKS.map((rank, index) => {
                       const token = rankToken(rank);
-                      const isUnlocked = currentXp >= rank.unlockedAt;
+                      const isUnlocked = currentDaoXp !== null && currentDaoXp >= rank.unlockedAt;
                       const isSelected = auraSelection === token;
                       return (
                         <button
@@ -311,7 +312,7 @@ export function UserProfileSettingsPanel({
                             {rank.name}
                           </span>
                           <span className="shrink-0 font-mono text-[10px] tracking-wider text-neutral-400">
-                            {rank.unlockedAt.toLocaleString()} Qi
+                            {rank.unlockedAt.toLocaleString()} DAO XP
                           </span>
                           {isSelected ? (
                             <span className="shrink-0 rounded-full bg-[#04ACFF] px-2 py-0.5 font-sc text-[9px] font-bold uppercase tracking-widest text-black">
@@ -359,7 +360,7 @@ export function UserProfileSettingsPanel({
                         Custom Spectrum
                         {!isMaster ? (
                           <span className="ml-2 rounded border border-white/10 px-1.5 py-0.5 text-[8px] text-neutral-400">
-                            Requires {MASTER_RANK.name} ({MASTER_RANK.unlockedAt.toLocaleString()} Qi)
+                            Requires {MASTER_RANK.name} ({MASTER_RANK.unlockedAt.toLocaleString()} DAO XP)
                           </span>
                         ) : null}
                       </p>

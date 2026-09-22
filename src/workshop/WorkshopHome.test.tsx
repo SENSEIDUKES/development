@@ -39,7 +39,7 @@ describe('WorkshopHome', () => {
       Home: ['light-novels-home', 'library-shell', 'user-profile', 'dao-pillar'],
       Library: ['story-seed'],
       SEN: ['chapter-generation-flow', 'harness-generation', 'chapter-generation-manifestation', 'character-voice', 'reader-codex', 'reader-chamber', 'card-workshop'],
-      Shared: ['familiar', 'celestial-backdrop', 'idle-cultivation', 'relics-gallery', 'energy'],
+      Shared: ['familiar', 'motion-picture', 'celestial-backdrop', 'idle-cultivation', 'relics-gallery', 'energy'],
       'Library Components': [],
       Icons: [],
       Provenance: [],

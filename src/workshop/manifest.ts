@@ -60,6 +60,12 @@ export const workshopEntries: WorkshopEntry[] = [
     source: { repository: 'Supplied Familiar packages', path: 'Familiars/Packages/', lastCompared: '2026-09-22' },
   },
   {
+    id: 'motion-picture', section: 'shared', title: 'Motion Picture',
+    description: 'A still that turns into its own motion clip on demand, with an aura sampled from the artwork, for any item that has a picture and a clip: story cards, Familiars, relics. Includes a clip source panel for testing real footage, and compares against the production cover toggle it replaces.',
+    category: 'animations', version: 'v1.0',
+    source: { repository: 'SENSEIDUKES/Light-Novels', path: 'src/components/StoryDetailScreen.tsx', lastCompared: '2026-09-22' },
+  },
+  {
     id: 'light-novels-home', section: 'home', title: 'Light Novels Home',
     description: 'The existing Light Novels homepage and novel detail, with one mock novel showing manga/game seals and an Explore This World lane. Shared Home, Library, Discover and Profile navigation.',
     category: 'other', version: 'v1.0',

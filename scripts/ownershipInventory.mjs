@@ -46,6 +46,7 @@ export const ownershipRules = [
   ['src/components/chapter-manifestation/shared/taskCard.ts', 'workshop', 'locked-reference adapter'],
   ['src/components/chapter-manifestation/shared/CompactIndicator.tsx', 'workshop', 'locked-reference adapter'],
   ['src/components/chapter-manifestation/development/', 'library', 'Celestial manifestations'],
+  ['src/components/motion-picture/development/', 'sen', 'motion picture'],
   ['src/components/library-shell/', 'library', 'shell'],
   ['src/components/library-presentation/', 'library', 'presentation adapter'],
   ['src/components/library/', 'workshop', 'locked-reference adapter'],

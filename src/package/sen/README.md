@@ -18,6 +18,7 @@ accounts, Energy, QI, first-party catalogs, Workshop state, or concrete APIs.
 | `./color-codes` | Single narrative Color Code authority |
 | `./cards` | Narrative and System card families |
 | `./manifestations` | Neutral manifestation capability and reveal UI |
+| `./motion-picture` | Item-neutral still-to-motion picture for any pictured entity |
 | `./audio` | Media intent, resolution, provenance and playback contracts |
 | `./story-seed` | Foundation schema, validation, import/export, repository port and neutral editor |
 | `./generation` | Provider-neutral chapter/block/media acceptance contracts |

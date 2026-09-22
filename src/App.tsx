@@ -50,6 +50,7 @@ const StorySeedWorkspace = lazy(() =>
     .then(module => ({ default: module.StorySeedWorkspace })),
 );
 const LightNovelsHomeWorkspace = lazy(() => import('./workshop/previews/light-novels-home/LightNovelsHomeWorkspace').then(module => ({ default: module.LightNovelsHomeWorkspace })));
+const MotionPictureWorkspace = lazy(() => import('./workshop/previews/motion-picture/MotionPictureWorkspace').then(module => ({ default: module.MotionPictureWorkspace })));
 const LibraryShellWorkspace = lazy(() =>
   import('./workshop/previews/library-shell/LibraryShellWorkspace')
     .then(module => ({ default: module.LibraryShellWorkspace })),
@@ -95,6 +96,7 @@ const previewRegistry: Record<string, ComponentType> = {
   'relics-gallery': RelicsWorkspace,
   'story-seed': StorySeedWorkspace,
   'light-novels-home': LightNovelsHomeWorkspace,
+  'motion-picture': MotionPictureWorkspace,
   'library-shell': LibraryShellWorkspace,
   'user-profile': UserProfileWorkspace,
 };

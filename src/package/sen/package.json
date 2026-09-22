@@ -34,6 +34,10 @@
       "types": "./dist/types/package/sen/manifestations.d.ts",
       "import": "./dist/manifestations.js"
     },
+    "./motion-picture": {
+      "types": "./dist/types/package/sen/motion-picture.d.ts",
+      "import": "./dist/motion-picture.js"
+    },
     "./audio": {
       "types": "./dist/types/package/sen/audio.d.ts",
       "import": "./dist/audio.js"

@@ -26,6 +26,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/sen/reader-runtime': ['ReaderRuntimeProvider'],
       '@seihouse/sen/translation': ['ReaderTranslationController', 'ReaderTranslationRuntimeProvider'],
       '@seihouse/sen/manifestations': ['ManifestationReveal'],
+      '@seihouse/sen/motion-picture': ['MotionPicture'],
       '@seihouse/sen/audio': ['parseAudioCues', 'createMediaCatalog', 'resolveWorldCueIntent', 'NarrativeAudioProvider'],
       '@seihouse/sen/story-seed': ['StoryFoundationEditor', 'createEmptyStorySeedInput', 'parseStorySeedJson'],
       '@seihouse/sen/generation': ['acceptChapterMedia'],

@@ -169,7 +169,7 @@ describe('MainLibraryFooter', () => {
   it('uses the existing Main Library destinations and the shared router callback', async () => {
     const onNavigate = vi.fn(); const onOpenHelp = vi.fn(); const host = adapter();
     await render(<MainLibraryFooter adapter={host} location={{ screen: 'home', collection: 'featured' }} onNavigate={onNavigate} onOpenHelp={onOpenHelp} social={[]} legal={[]} />);
-    expect(triggers().map(button => button.textContent?.trim())).toEqual(['Explore', 'SEIHouse', 'Support']);
+    expect(triggers().map(button => button.textContent?.trim())).toEqual(['Explore', 'About Us', 'Support']);
     const links = () => Array.from(footer().querySelectorAll<HTMLButtonElement>('.library-footer-link'));
     const open = async (group: string, label: string) => { await click(trigger(group)); await click(links().find(link => link.textContent === label)); };
     await open('Explore', 'Sects');
@@ -178,9 +178,9 @@ describe('MainLibraryFooter', () => {
     expect(onNavigate).toHaveBeenLastCalledWith({ screen: 'pricing' });
     await open('Explore', 'Fate Survival Challenges');
     expect(onNavigate).toHaveBeenLastCalledWith({ screen: 'home', collection: 'challenges' });
-    await open('SEIHouse', 'Relics');
+    await open('About Us', 'Relics');
     expect(onNavigate).toHaveBeenLastCalledWith({ screen: 'profile', cave: '/relics' });
-    await open('SEIHouse', 'Story Seed');
+    await open('About Us', 'Story Seed');
     expect(onNavigate).toHaveBeenLastCalledWith({ screen: 'creator' });
     await open('Support', 'Library Help');
     expect(onOpenHelp).toHaveBeenCalledTimes(1);

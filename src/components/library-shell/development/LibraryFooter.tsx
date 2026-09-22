@@ -1,6 +1,6 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import { ChevronRight, Globe } from 'lucide-react';
-import { LibraryElementalTitle, LibraryPanel } from '@seihouse/library-ui';
+import { LibraryElementalTitle } from '@seihouse/library-ui';
 import { SEIDisclosure, SEIDisclosureGroup } from '@seihouse/ui';
 import { getSenLanguageLabel, type SenLanguageCode } from '@seihouse/sen/contracts';
 import { LIBRARY_FOOTER_SOCIAL_GLYPHS, LIBRARY_FOOTER_SOCIAL_LABELS, type LibraryFooterSocialNetwork } from './LibraryFooterSocialIcons';
@@ -92,7 +92,7 @@ export function LibraryFooter({ groups, social, legal, language, emblem, classNa
       </div>
 
       <div className="library-footer-controls">
-        {visibleGroups.length > 0 && <LibraryPanel padding="none" className="library-footer-menus">
+        {visibleGroups.length > 0 && <div className="library-footer-menus">
           {/* One open section at a time; everything starts collapsed. Wide
               viewports set these side by side as tabs — see library-footer.css. */}
           <SEIDisclosureGroup type="single" defaultValue={null} className="library-footer-disclosures" role="navigation" aria-label="Footer menus">
@@ -105,9 +105,9 @@ export function LibraryFooter({ groups, social, legal, language, emblem, classNa
               </ul>
             </SEIDisclosure>)}
           </SEIDisclosureGroup>
-        </LibraryPanel>}
+        </div>}
 
-        {visibleSocial.length > 0 && <LibraryPanel padding="none" className="library-footer-social">
+        {visibleSocial.length > 0 && <div className="library-footer-social">
           <ul className="library-footer-social-list" aria-label="SEIHouse social channels">
             {visibleSocial.map(item => {
               const Glyph = LIBRARY_FOOTER_SOCIAL_GLYPHS[item.network];
@@ -119,7 +119,7 @@ export function LibraryFooter({ groups, social, legal, language, emblem, classNa
               </li>;
             })}
           </ul>
-        </LibraryPanel>}
+        </div>}
 
         {language && <div className="library-footer-language-row">
           <button type="button" className="library-footer-language" onClick={language.onOpenSettings}

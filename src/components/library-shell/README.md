@@ -42,6 +42,14 @@ The wide footer no longer sets the identity against a menu card side by side: at
 
 This removed a branch rather than adding one. The wide columns markup, `WIDE_FOOTER_QUERY` and `useWideFooter()` are gone — every width now renders the same `SEIDisclosureGroup`, and only `library-footer.css` differs, so there is no media-query hook, no first-paint swap, and single-open behaviour, `inert` collapsed content, keyboard activation and focus rings are the component's at every size rather than the narrow branch's alone. `workspaceMedia.ts` is back to the header and navigation breakpoints it owned before. The verification harness follows: it records the layout each width produced — one stacked column or three tab columns — and runs the same keyboard single-open check everywhere, which the old wide branch had no accordions to answer.
 
+## Footer surfaces and the global strip's width — 2026-09-22
+
+The footer's menus and channels dropped their `LibraryPanel` glass, and the language control traded its lit lozenge for a plain outline. Stacked a few rows above the global bottom strip, those surfaces read as the same material as the strip itself, so the footer now carries its identity as type and marks on the page's own ink and the strip stays the one glass object on screen. The hairlines between the menu groups — and under each tab in the wide row — carry the structure the card used to. `LibraryFooter` renders plain containers; the class names, targets and behaviour are unchanged.
+
+`MainLibraryFooter`'s middle menu is labelled **About Us** rather than SEIHouse; its group id and destinations are untouched.
+
+The global bottom strip hugs its content above 768px (`library-navigation.css`). A phone's strip spans the screen and its four destinations share that width from a zero flex basis; past 42rem the bar stopped growing but the buttons kept the shared basis, so every destination sat in a box nearly twice the width its icon and label needed — 154px against the phone's 83px. Off that basis they size to their own label, and the bar is 325px at 1280px wide instead of 672px. The floor stays 44px, and clearance above the strip is unchanged at 14px.
+
 ## Capture boundary
 
 The locked reference area records two existing systems for comparison. Its captures remain unchanged. The separate Development area now proves the shared header family and responsive navigation in the active Story Seed and Cultivator Cave; see [component contracts](../../../docs/library-header-family.md). Main Library was read at `4a3dd02b6640b2ec50d8d1d136e37fb808249ed2` and Story Seed at development `7e1302bd2d5c3205706ddb1362607abed6a850e6`; neither was re-read on 2026-09-09, so their source-comparison dates are unchanged. The vendored UI artifacts now come from UI commit `42961e48e78ee816f9c2801a37a7f66af8aa2ae2` (UI PR #60), which adds `SEIAppHeader`, `SEIAppShell` and the compact `LibraryHeaderBadge` presentation.

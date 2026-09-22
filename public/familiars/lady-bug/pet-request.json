@@ -1,0 +1,3299 @@
+{
+  "pet_id": "lady-bug",
+  "display_name": "Lady Bug",
+  "description": "A fearless little adventurer with open wings, a windswept scarf, and a compass charm who expects you to keep up.",
+  "created_at": "2026-09-21T21:55:51.232127-04:00",
+  "sprite_version_number": 2,
+  "atlas": {
+    "columns": 8,
+    "rows": 11,
+    "cell_width": 192,
+    "cell_height": 208,
+    "width": 1536,
+    "height": 2288
+  },
+  "rows": [
+    {
+      "state": "idle",
+      "row": 0,
+      "frames": 6,
+      "purpose": "calm resting, breathing, and blinking loop"
+    },
+    {
+      "state": "running-right",
+      "row": 1,
+      "frames": 8,
+      "purpose": "rightward drag movement loop"
+    },
+    {
+      "state": "running-left",
+      "row": 2,
+      "frames": 8,
+      "purpose": "leftward drag movement loop"
+    },
+    {
+      "state": "waving",
+      "row": 3,
+      "frames": 4,
+      "purpose": "greeting or attention gesture"
+    },
+    {
+      "state": "jumping",
+      "row": 4,
+      "frames": 5,
+      "purpose": "hover or playful jump"
+    },
+    {
+      "state": "failed",
+      "row": 5,
+      "frames": 8,
+      "purpose": "blocked, failed, or cancelled reaction"
+    },
+    {
+      "state": "waiting",
+      "row": 6,
+      "frames": 6,
+      "purpose": "waiting for approval, help, or user input"
+    },
+    {
+      "state": "running",
+      "row": 7,
+      "frames": 6,
+      "purpose": "active task work or processing"
+    },
+    {
+      "state": "review",
+      "row": 8,
+      "frames": 6,
+      "purpose": "ready or completed output review"
+    },
+    {
+      "state": "look-row-9",
+      "row": 9,
+      "frames": 8,
+      "directions": [
+        "000",
+        "022.5",
+        "045",
+        "067.5",
+        "090",
+        "112.5",
+        "135",
+        "157.5"
+      ],
+      "purpose": "clockwise look directions from up through down-right"
+    },
+    {
+      "state": "look-row-10",
+      "row": 10,
+      "frames": 8,
+      "directions": [
+        "180",
+        "202.5",
+        "225",
+        "247.5",
+        "270",
+        "292.5",
+        "315",
+        "337.5"
+      ],
+      "purpose": "clockwise look directions from down through up-left"
+    }
+  ],
+  "layout_guides": [
+    {
+      "state": "idle",
+      "path": "references\\layout-guides\\idle.png",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "running-right",
+      "path": "references\\layout-guides\\running-right.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "running-left",
+      "path": "references\\layout-guides\\running-left.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "waving",
+      "path": "references\\layout-guides\\waving.png",
+      "width": 768,
+      "height": 208,
+      "frames": 4,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "jumping",
+      "path": "references\\layout-guides\\jumping.png",
+      "width": 960,
+      "height": 208,
+      "frames": 5,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "failed",
+      "path": "references\\layout-guides\\failed.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "waiting",
+      "path": "references\\layout-guides\\waiting.png",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "running",
+      "path": "references\\layout-guides\\running.png",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "review",
+      "path": "references\\layout-guides\\review.png",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "look-row-9",
+      "path": "references\\layout-guides\\look-row-9.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "look-row-10",
+      "path": "references\\layout-guides\\look-row-10.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "look-cardinals",
+      "path": "references\\layout-guides\\look-cardinals.png",
+      "width": 768,
+      "height": 208,
+      "frames": 4,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    }
+  ],
+  "references": [
+    {
+      "path": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\lady-bug\\references\\reference-01.png",
+      "width": 1145,
+      "height": 1374,
+      "mode": "RGBA",
+      "format": "PNG",
+      "source_path": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\images\\Lady Bug.png",
+      "copied_path": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\lady-bug\\references\\reference-01.png"
+    }
+  ],
+  "chroma_key": {
+    "hex": "#00FF00",
+    "rgb": [
+      0,
+      255,
+      0
+    ],
+    "name": "green",
+    "selection": "auto",
+    "score": 216.77
+  },
+  "pet_notes": "Fearless little ladybug adventurer in a glossy red-and-black shell, open translucent wings, windswept purple scarf, gold compass charm, large violet eyes, and an eager forward-pointing pose; preserve the exact face, materials, markings, proportions, and silhouette from the reference.",
+  "style_preset": "auto",
+  "style_notes": "Polished 3D toy-like mascot rendering matching the reference; compact full-body sprite, transparent chroma background for deterministic cleanup, no text or scenery.",
+  "style_contract": "Pet-safe sprite: compact full-body mascot, readable in a 192x208 cell, clear silhouette, simple face, stable palette/materials, and crisp edges for chroma-key extraction. Style `auto`: Infer the most appropriate pet-safe style from the user request and reference images, then keep that exact style consistent across every row. User style notes: Polished 3D toy-like mascot rendering matching the reference; compact full-body sprite, transparent chroma background for deterministic cleanup, no text or scenery..",
+  "brand_name": "",
+  "brand_brief": "",
+  "brand_sources": [],
+  "pet_safe_style": "Pet-safe sprite: compact full-body mascot, readable in a 192x208 cell, clear silhouette, simple face, stable palette/materials, and crisp edges for chroma-key extraction.",
+  "primary_generation_skill": "$imagegen",
+  "source_reference": {
+    "source_image_filename": "Lady Bug.png",
+    "package_relative_path": "source/Lady Bug.png",
+    "provenance": "Copied byte-for-byte from the user-supplied attached reference image.",
+    "original_path": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\images\\Lady Bug.png"
+  },
+  "visual_decisions": {
+    "personality": "Fearless, eager, upbeat little adventurer who points toward the next destination and expects her companion to keep up.",
+    "visual_priorities": [
+      "large violet eyes and expressive brows",
+      "glossy red-and-black shell with readable spots",
+      "open translucent wings",
+      "windswept violet scarf",
+      "gold compass charm",
+      "forward-pointing hand and compact flying silhouette"
+    ],
+    "animation_mannerisms": [
+      "idle blinking and gentle hover",
+      "running uses a clear directional airborne gait",
+      "waving moves the existing arm with the hand attached",
+      "jumping tucks and extends legs",
+      "failed bows with embarrassed tired expression",
+      "waiting stands patiently",
+      "running studies the compass while working",
+      "review watches and points thoughtfully"
+    ],
+    "direction_mechanics": "Head, eye globes, eyelids, antennae, scarf, wings, and pointing arm turn together around a stable abdomen, legs, compass, and wing-root anchor; no whole-sprite rotation or skew.",
+    "small_size": "Preserve face, violet eyes, shell silhouette, scarf, wings, and compass at 60px; simplify secondary wing highlights before obscuring the face.",
+    "palette": "Glossy crimson and black shell, warm cream face and abdomen, luminous pale-gold translucent wings, saturated violet scarf and eyes, and gold compass accents."
+  },
+  "generation_metadata": {
+    "workflow": "hatch-pet Codex v2",
+    "image_generation": "Grounded imagegen strips generated from the supplied reference and canonical base, followed by deterministic extraction and assembly.",
+    "standard_rows": "All nine standard animation rows independently generated as grounded strips; every strip passed component extraction QA.",
+    "look_rows": "Rows 9 and 10 coherently synthesized in exact clockwise order from approved cardinal anchors; row 10 was regenerated after blind semantic review detected right-facing drift.",
+    "running_left": "Independently generated because scarf wind, pointing arm, wing arrangement, and compass charm are asymmetric; not mirrored.",
+    "deterministic_assembly": "assemble_extended_atlas.py with one final edge-local chroma despill pass."
+  },
+  "direction_review": {
+    "order": [
+      "000",
+      "022.5",
+      "045",
+      "067.5",
+      "090",
+      "112.5",
+      "135",
+      "157.5",
+      "180",
+      "202.5",
+      "225",
+      "247.5",
+      "270",
+      "292.5",
+      "315",
+      "337.5"
+    ],
+    "meanings": {
+      "up": "000",
+      "screen_right": "090",
+      "down": "180",
+      "screen_left": "270"
+    },
+    "cardinal_review": "All four cardinal directions pass hard gates.",
+    "blind_review": "Three isolated blind reviewers reached strict-majority pass for all 14 direction pairs, including hard 270 screen-left.",
+    "continuity": "Adjacent-direction continuity measured after final assembly; warnings are recorded in look-continuity.json."
+  },
+  "final_artifacts": {
+    "atlas": "spritesheet.webp",
+    "neutral": "neutral.png",
+    "timing": "animation-timing.json",
+    "previews": "previews/*.gif",
+    "hero": "hero.gif",
+    "installed_pet": "C:\\Users\\amaur\\.codex\\pets\\lady-bug"
+  },
+  "validation_artifacts": {
+    "atlas_validator": "qa/validation-extended.json",
+    "chroma_cleanup": "qa/chroma-despill-extended.json",
+    "contact_sheet": "qa/contact-sheet-extended.png",
+    "direction_sheet": "qa/look-directions.png",
+    "blind_pairs": "qa/direction-blind-pairs.png",
+    "blind_validation": "qa/direction-blind-validation.json",
+    "continuity": "qa/look-continuity.json",
+    "frame_inspection": "qa/review.json"
+  },
+  "generation_jobs": [
+    {
+      "id": "base",
+      "kind": "base-pet",
+      "status": "complete",
+      "prompt_file": "prompts/base-pet.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        }
+      ],
+      "output_path": "decoded/base.png",
+      "depends_on": [],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c598-10be-7e42-901e-28b390209d01\\exec-33511264-c0c0-4e5d-ac2f-1e53a2f37c4f.png",
+      "completed_at": "2026-09-22T01:57:38.4035751Z"
+    },
+    {
+      "id": "idle",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/idle.md",
+      "retry_prompt_file": "prompts/row-retries/idle.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/idle.png",
+          "role": "layout guide for 6 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/idle.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "no deterministic derivation is configured for this state"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c6d5-9370-7e81-961d-3784baf359c1\\exec-16a9aeeb-f11d-4020-b5ac-67d760fbb111.png",
+      "completed_at": "2026-09-22T02:01:33.0805211Z"
+    },
+    {
+      "id": "running-right",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/running-right.md",
+      "retry_prompt_file": "prompts/row-retries/running-right.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/running-right.png",
+          "role": "layout guide for 8 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/running-right.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "no deterministic derivation is configured for this state"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c6d5-b88e-7ec3-993d-a61bf38a7646\\exec-81a646eb-a24c-43c8-81c7-553c1ed1ddb4.png",
+      "completed_at": "2026-09-22T02:04:19.4066109Z"
+    },
+    {
+      "id": "running-left",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/running-left.md",
+      "retry_prompt_file": "prompts/row-retries/running-left.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/running-left.png",
+          "role": "layout guide for 8 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        },
+        {
+          "path": "decoded/running-right.png",
+          "role": "rightward gait reference for leftward row decision"
+        }
+      ],
+      "output_path": "decoded/running-left.png",
+      "depends_on": [
+        "base",
+        "running-right"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base",
+        "running-right"
+      ],
+      "derivation_policy": {
+        "may_derive": true,
+        "may_derive_from": "running-right",
+        "derivation": "framewise-horizontal-mirror-preserving-order",
+        "requires_explicit_approval": true,
+        "fallback_generation_skill": "$imagegen"
+      },
+      "mirror_policy": {
+        "may_derive": true,
+        "may_derive_from": "running-right",
+        "derivation": "framewise-horizontal-mirror-preserving-order",
+        "requires_explicit_approval": true,
+        "fallback_generation_skill": "$imagegen"
+      },
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c6db-b3e6-7361-9b4a-fc61444ea444\\exec-c78b744c-b11b-4730-81fb-a6b56d79c31d.png",
+      "completed_at": "2026-09-22T02:13:43.8719458Z",
+      "derivation_decision": "independently-generated: asymmetric scarf, pointing arm, wing arrangement, and compass charm make mirroring unsafe"
+    },
+    {
+      "id": "waving",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/waving.md",
+      "retry_prompt_file": "prompts/row-retries/waving.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/waving.png",
+          "role": "layout guide for 4 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/waving.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c6d5-e0b9-72c0-967a-6672ed62179b\\exec-0b94122d-7444-44a7-978e-29d3a15c6628.png",
+      "completed_at": "2026-09-22T02:01:21.900171Z"
+    },
+    {
+      "id": "jumping",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/jumping.md",
+      "retry_prompt_file": "prompts/row-retries/jumping.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/jumping.png",
+          "role": "layout guide for 5 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/jumping.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c6da-3447-7df3-a07e-58c7d1bcf589\\exec-d1865ff5-f650-45ad-85bd-b71201b6688a.png",
+      "completed_at": "2026-09-22T02:05:15.0851755Z"
+    },
+    {
+      "id": "failed",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/failed.md",
+      "retry_prompt_file": "prompts/row-retries/failed.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/failed.png",
+          "role": "layout guide for 8 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/failed.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c6da-6321-7de2-b811-ef6b15d18761\\exec-9913df3e-68f5-49d9-ada3-dd156bcde7d2.png",
+      "completed_at": "2026-09-22T02:06:27.918196Z"
+    },
+    {
+      "id": "waiting",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/waiting.md",
+      "retry_prompt_file": "prompts/row-retries/waiting.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/waiting.png",
+          "role": "layout guide for 6 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/waiting.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c6dd-b2b1-7293-b352-22ad9c4a8eaa\\exec-fa9273a2-d4ae-4d00-a5c2-3ea25bed303d.png",
+      "completed_at": "2026-09-22T02:14:04.1472569Z"
+    },
+    {
+      "id": "running",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/running.md",
+      "retry_prompt_file": "prompts/row-retries/running.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/running.png",
+          "role": "layout guide for 6 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/running.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c6e4-a367-7ef3-b597-22b7f99e680c\\exec-af89d82b-c509-4e43-b301-a4728138cd09.png",
+      "completed_at": "2026-09-22T02:18:03.9369639Z"
+    },
+    {
+      "id": "review",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/review.md",
+      "retry_prompt_file": "prompts/row-retries/review.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/review.png",
+          "role": "layout guide for 6 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/review.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c6e4-c06b-7cc2-89ac-1e6fcd72051e\\exec-28f8d3f4-9bf9-4448-a15c-eb0162f6fd0a.png",
+      "completed_at": "2026-09-22T02:17:17.1507575Z"
+    },
+    {
+      "id": "look-cardinals",
+      "kind": "look-cardinal-strip",
+      "status": "complete",
+      "prompt_file": "prompts/look-cardinals.md",
+      "repair_prompt_files": {
+        "000": "prompts/look-anchor-repairs/000.md",
+        "090": "prompts/look-anchor-repairs/090.md",
+        "180": "prompts/look-anchor-repairs/180.md",
+        "270": "prompts/look-anchor-repairs/270.md"
+      },
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/look-cardinals.png",
+          "role": "layout guide for four cardinal slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        },
+        {
+          "path": "qa/contact-sheet.png",
+          "role": "approved standard-row identity, scale, and baseline reference"
+        }
+      ],
+      "output_path": "decoded/look-cardinals.png",
+      "extracted_output_paths": [
+        "decoded/look-anchors/000.png",
+        "decoded/look-anchors/090.png",
+        "decoded/look-anchors/180.png",
+        "decoded/look-anchors/270.png"
+      ],
+      "approved_strip_path": "decoded/look-anchors-approved.png",
+      "depends_on": [
+        "idle",
+        "running-right",
+        "running-left",
+        "waving",
+        "jumping",
+        "failed",
+        "waiting",
+        "running",
+        "review"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "look_mechanics_file": "qa/look-mechanics.md",
+      "directions": [
+        "000",
+        "090",
+        "180",
+        "270"
+      ],
+      "packaging_eligible": false,
+      "parallelizable_after": [
+        "idle",
+        "running-right",
+        "running-left",
+        "waving",
+        "jumping",
+        "failed",
+        "waiting",
+        "running",
+        "review"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "cardinal directions require grounded pet-specific generation"
+      },
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c6e9-4b74-7361-92c2-fa6cf7d8034f\\exec-4daa9e45-0c45-4ae0-9ca0-38def5b03cbd.png",
+      "completed_at": "2026-09-22T02:23:23.9065048Z"
+    },
+    {
+      "id": "look-row-9",
+      "kind": "look-row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/look-row-9.md",
+      "retry_prompt_file": "prompts/row-retries/look-row-9.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/look-row-9.png",
+          "role": "layout guide for 8 direction slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        },
+        {
+          "path": "qa/contact-sheet.png",
+          "role": "approved standard-row identity, scale, and baseline reference"
+        },
+        {
+          "path": "decoded/look-anchors-approved.png",
+          "role": "approved cardinal reference strip in order 000 up, 090 screen-right, 180 down, 270 screen-left; interpolate intermediate directions evenly"
+        }
+      ],
+      "output_path": "decoded/look-row-9.png",
+      "depends_on": [
+        "look-cardinals"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "look_mechanics_file": "qa/look-mechanics.md",
+      "directions": [
+        "000",
+        "022.5",
+        "045",
+        "067.5",
+        "090",
+        "112.5",
+        "135",
+        "157.5"
+      ],
+      "parallelizable_after": [
+        "look-cardinals"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "look directions require grounded pet-specific generation"
+      },
+      "coherent_synthesis_required": true,
+      "individual_cell_packaging_allowed": false,
+      "packaging_eligible": true,
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c6ee-0640-7b31-a7df-671bb2bd0131\\exec-ee4ad285-b1bc-4817-9698-311dbf2a117e.png",
+      "completed_at": "2026-09-22T02:27:59.9577681Z"
+    },
+    {
+      "id": "look-row-10",
+      "kind": "look-row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/look-row-10.md",
+      "retry_prompt_file": "prompts/row-retries/look-row-10.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/look-row-10.png",
+          "role": "layout guide for 8 direction slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        },
+        {
+          "path": "qa/contact-sheet.png",
+          "role": "approved standard-row identity, scale, and baseline reference"
+        },
+        {
+          "path": "decoded/look-anchors-approved.png",
+          "role": "approved cardinal reference strip in order 000 up, 090 screen-right, 180 down, 270 screen-left; interpolate intermediate directions evenly"
+        },
+        {
+          "path": "decoded/look-row-9.png",
+          "role": "completed first half of the clockwise look loop for row 10 continuity"
+        }
+      ],
+      "output_path": "decoded/look-row-10.png",
+      "depends_on": [
+        "look-cardinals",
+        "look-row-9"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "look_mechanics_file": "qa/look-mechanics.md",
+      "directions": [
+        "180",
+        "202.5",
+        "225",
+        "247.5",
+        "270",
+        "292.5",
+        "315",
+        "337.5"
+      ],
+      "parallelizable_after": [
+        "look-cardinals",
+        "look-row-9"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "look directions require grounded pet-specific generation"
+      },
+      "coherent_synthesis_required": true,
+      "individual_cell_packaging_allowed": false,
+      "packaging_eligible": true,
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c598-10be-7e42-901e-28b390209d01\\exec-eff50741-cd67-42d5-a38f-44effbdac48c.png",
+      "completed_at": "2026-09-22T03:04:00Z",
+      "repair_history": [
+        "Initial row failed semantic blind review because horizontal cells read screen-right.",
+        "Regenerated complete row with explicit screen-left landmark lock and smaller centered sprites.",
+        "Deterministic assembly and edge-safety validation passed for the repaired row."
+      ]
+    }
+  ],
+  "qa_results": {
+    "atlas": {
+      "ok": true,
+      "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\lady-bug\\final\\spritesheet-extended.webp",
+      "format": "WEBP",
+      "mode": "RGBA",
+      "columns": 8,
+      "rows": 11,
+      "sprite_version_number": 2,
+      "width": 1536,
+      "height": 2288,
+      "transparent_rgb_residue_pixels": 0,
+      "errors": [],
+      "warnings": [],
+      "cells": [
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13432,
+          "opaque_chroma_key_pixels": 1,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13332,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13508,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 13503,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 13313,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 13310,
+          "opaque_chroma_key_pixels": 2,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 13151,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 14095,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13150,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 14629,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 12062,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 14891,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 13971,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 13299,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 12397,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 14733,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 14376,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 14630,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 14999,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 14382,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 14990,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 16485,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 14143,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13179,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 12990,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13105,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 12741,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 4,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 5,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 18619,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 15088,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 17083,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 14955,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 17194,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 5,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13157,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13251,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 17963,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 18767,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 20144,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 20880,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 21196,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 21854,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 11723,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13118,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 12188,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 11876,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 13052,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 11714,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13325,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 12518,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13951,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 14976,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 14524,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 14044,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 14106,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 12766,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13091,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 13227,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 12564,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 13123,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 11832,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 11477,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 11510,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 11924,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 11928,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 11624,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 10943,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 10485,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 9892,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 9664,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 10011,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 9719,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 9739,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 9731,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 9690,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 9602,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        }
+      ]
+    },
+    "installed_atlas": {
+      "ok": true,
+      "file": "C:\\Users\\amaur\\.codex\\pets\\lady-bug\\spritesheet.webp",
+      "format": "WEBP",
+      "mode": "RGBA",
+      "columns": 8,
+      "rows": 11,
+      "sprite_version_number": 2,
+      "width": 1536,
+      "height": 2288,
+      "transparent_rgb_residue_pixels": 0,
+      "errors": [],
+      "warnings": [],
+      "cells": [
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13432,
+          "opaque_chroma_key_pixels": 1,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13332,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13508,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 13503,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 13313,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 13310,
+          "opaque_chroma_key_pixels": 2,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 13151,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 14095,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13150,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 14629,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 12062,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 14891,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 13971,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 13299,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 12397,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 14733,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 14376,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 14630,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 14999,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 14382,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 14990,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 16485,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 14143,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13179,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 12990,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13105,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 12741,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 4,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 5,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 18619,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 15088,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 17083,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 14955,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 17194,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 5,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13157,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13251,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 17963,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 18767,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 20144,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 20880,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 21196,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 21854,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 11723,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13118,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 12188,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 11876,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 13052,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 11714,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13325,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 12518,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13951,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 14976,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 14524,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 14044,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 14106,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 12766,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13091,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 13227,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 12564,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 13123,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 11832,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 11477,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 11510,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 11924,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 11928,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 11624,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 10943,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 10485,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 9892,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 9664,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 10011,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 9719,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 9739,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 9731,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 9690,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 9602,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        }
+      ]
+    },
+    "chroma": {
+      "ok": true,
+      "input": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\lady-bug\\final\\spritesheet-extended.png",
+      "output": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\lady-bug\\final\\spritesheet-extended.png",
+      "chroma_key": "#00FF00",
+      "algorithm": "edge-local-chroma-spill-suppression",
+      "strength": 1,
+      "edge_radius": 5,
+      "spill_tolerance": 0.15,
+      "minimum_saturation": 0.1,
+      "changed_pixels": 208570,
+      "decontaminated_pixels": 208497,
+      "spill_suppressed_pixels": 208570,
+      "rejected_pixels": 0,
+      "changed_by_cell": {
+        "r2c6": 4100,
+        "r2c0": 3905,
+        "r2c5": 3732,
+        "r1c4": 3685,
+        "r2c7": 3674,
+        "r4c2": 3670,
+        "r2c3": 3648,
+        "r1c2": 3579,
+        "r2c1": 3568,
+        "r2c4": 3564,
+        "r1c5": 3535,
+        "r2c2": 3516,
+        "r4c0": 3504,
+        "r4c1": 3474,
+        "r4c4": 3444,
+        "r4c3": 3388,
+        "r1c1": 3331,
+        "r1c0": 3328,
+        "r1c6": 3326,
+        "r6c4": 3090,
+        "r5c2": 3049,
+        "r5c3": 3048,
+        "r1c7": 3035,
+        "r5c4": 3020,
+        "r6c1": 3015,
+        "r1c3": 2956,
+        "r5c7": 2872,
+        "r5c6": 2857,
+        "r5c5": 2847,
+        "r8c0": 2720,
+        "r9c3": 2706,
+        "r3c1": 2694,
+        "r9c4": 2689,
+        "r9c7": 2682,
+        "r3c2": 2673,
+        "r9c5": 2650,
+        "r9c0": 2650,
+        "r7c3": 2628,
+        "r9c1": 2623,
+        "r6c2": 2616,
+        "r5c0": 2615,
+        "r3c0": 2597,
+        "r7c2": 2592,
+        "r3c3": 2585,
+        "r9c2": 2569,
+        "r6c3": 2557,
+        "r9c6": 2540,
+        "r7c4": 2532,
+        "r8c5": 2521,
+        "r8c2": 2503,
+        "r5c1": 2491,
+        "r6c0": 2489,
+        "r8c4": 2443,
+        "r7c0": 2440,
+        "r10c7": 2440,
+        "r10c5": 2426,
+        "r6c5": 2418,
+        "r8c1": 2414,
+        "r7c5": 2410,
+        "r10c6": 2408,
+        "r10c4": 2379,
+        "r10c3": 2337,
+        "r10c2": 2337,
+        "r8c3": 2331,
+        "r10c0": 2328,
+        "r10c1": 2295,
+        "r7c1": 2258,
+        "r0c1": 2226,
+        "r0c2": 2223,
+        "r0c4": 2222,
+        "r0c0": 2220,
+        "r0c3": 2202,
+        "r0c5": 2188,
+        "r0c6": 1943
+      },
+      "alpha_preserved": true
+    },
+    "direction_blind": {
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "unconfirmed": [],
+      "reviewRequired": false,
+      "pairs": [
+        {
+          "pair": "horizontal-1",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "022.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "337.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "horizontal-2",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "045",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "315",
+            "pass": true
+          }
+        },
+        {
+          "pair": "horizontal-3",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "067.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "292.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "horizontal-4",
+          "axis": "horizontal",
+          "gate": "hard",
+          "A": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "270",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "090",
+            "pass": true
+          }
+        },
+        {
+          "pair": "horizontal-5",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "247.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "112.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "horizontal-6",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "135",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "225",
+            "pass": true
+          }
+        },
+        {
+          "pair": "horizontal-7",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "157.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "202.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-1",
+          "axis": "vertical",
+          "gate": "hard",
+          "A": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "180",
+            "pass": true
+          },
+          "B": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "000",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-2",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "022.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "157.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-3",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "045",
+            "pass": true
+          },
+          "B": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "135",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-4",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "112.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "067.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-5",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "337.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "202.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-6",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "315",
+            "pass": true
+          },
+          "B": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "225",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-7",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "247.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "292.5",
+            "pass": true
+          }
+        }
+      ]
+    },
+    "continuity": {
+      "ok": true,
+      "reviewRequired": true,
+      "medianDiffPixels": 2440.0,
+      "warnings": [
+        "157.5->180 diff is a local outlier (4862 pixels vs neighbor average 2847)",
+        "157.5->180 center shift is high (15.4px)",
+        "270->292.5 diff is a local outlier (2434 pixels vs neighbor average 1654)",
+        "337.5->000 diff is a local outlier (6303 pixels vs neighbor average 2749)",
+        "337.5->000 center shift is high (12.4px)",
+        "337.5->000 sprite area ratio is high (1.24)"
+      ],
+      "alphaHoles": [],
+      "pairs": [
+        {
+          "from": "000",
+          "to": "022.5",
+          "firstPixels": 10989,
+          "secondPixels": 10563,
+          "diffPixels": 2849,
+          "centerDelta": 1.5,
+          "areaRatio": 1.040329451860267
+        },
+        {
+          "from": "022.5",
+          "to": "045",
+          "firstPixels": 10563,
+          "secondPixels": 10589,
+          "diffPixels": 1992,
+          "centerDelta": 2.5,
+          "areaRatio": 1.0024614219445234
+        },
+        {
+          "from": "045",
+          "to": "067.5",
+          "firstPixels": 10589,
+          "secondPixels": 10977,
+          "diffPixels": 2446,
+          "centerDelta": 2.5,
+          "areaRatio": 1.03664179809236
+        },
+        {
+          "from": "067.5",
+          "to": "090",
+          "firstPixels": 10977,
+          "secondPixels": 10985,
+          "diffPixels": 2194,
+          "centerDelta": 2.0,
+          "areaRatio": 1.000728796574656
+        },
+        {
+          "from": "090",
+          "to": "112.5",
+          "firstPixels": 10985,
+          "secondPixels": 10673,
+          "diffPixels": 2421,
+          "centerDelta": 2.0615528128088303,
+          "areaRatio": 1.0292326431181487
+        },
+        {
+          "from": "112.5",
+          "to": "135",
+          "firstPixels": 10673,
+          "secondPixels": 10019,
+          "diffPixels": 2681,
+          "centerDelta": 2.9154759474226504,
+          "areaRatio": 1.0652759756462722
+        },
+        {
+          "from": "135",
+          "to": "157.5",
+          "firstPixels": 10019,
+          "secondPixels": 9576,
+          "diffPixels": 2875,
+          "centerDelta": 5.522680508593631,
+          "areaRatio": 1.0462614870509608
+        },
+        {
+          "from": "157.5",
+          "to": "180",
+          "firstPixels": 9576,
+          "secondPixels": 9162,
+          "diffPixels": 4862,
+          "centerDelta": 15.435349040433131,
+          "areaRatio": 1.0451866404715127
+        },
+        {
+          "from": "180",
+          "to": "202.5",
+          "firstPixels": 9162,
+          "secondPixels": 8900,
+          "diffPixels": 2819,
+          "centerDelta": 3.1622776601683795,
+          "areaRatio": 1.029438202247191
+        },
+        {
+          "from": "202.5",
+          "to": "225",
+          "firstPixels": 8900,
+          "secondPixels": 9237,
+          "diffPixels": 1613,
+          "centerDelta": 1.0,
+          "areaRatio": 1.0378651685393259
+        },
+        {
+          "from": "225",
+          "to": "247.5",
+          "firstPixels": 9237,
+          "secondPixels": 8971,
+          "diffPixels": 2143,
+          "centerDelta": 4.123105625617661,
+          "areaRatio": 1.0296510979823876
+        },
+        {
+          "from": "247.5",
+          "to": "270",
+          "firstPixels": 8971,
+          "secondPixels": 8942,
+          "diffPixels": 1404,
+          "centerDelta": 1.5,
+          "areaRatio": 1.0032431223439946
+        },
+        {
+          "from": "270",
+          "to": "292.5",
+          "firstPixels": 8942,
+          "secondPixels": 8960,
+          "diffPixels": 2434,
+          "centerDelta": 3.1622776601683795,
+          "areaRatio": 1.002012972489376
+        },
+        {
+          "from": "292.5",
+          "to": "315",
+          "firstPixels": 8960,
+          "secondPixels": 8933,
+          "diffPixels": 1905,
+          "centerDelta": 1.8027756377319946,
+          "areaRatio": 1.0030225008395837
+        },
+        {
+          "from": "315",
+          "to": "337.5",
+          "firstPixels": 8933,
+          "secondPixels": 8849,
+          "diffPixels": 2649,
+          "centerDelta": 0.7071067811865476,
+          "areaRatio": 1.0094925980336762
+        },
+        {
+          "from": "337.5",
+          "to": "000",
+          "firstPixels": 8849,
+          "secondPixels": 10989,
+          "diffPixels": 6303,
+          "centerDelta": 12.379418403139947,
+          "areaRatio": 1.241835235619844
+        }
+      ]
+    },
+    "direction_semantics": {
+      "ok": true,
+      "reviewed_by": "parent normal-size visual inspection",
+      "directions": [
+        {
+          "direction": "000",
+          "expected": "up",
+          "verdict": "pass",
+          "observed": "eyes and chin pitch upward; face remains centered",
+          "reason": "Upward gaze is unmistakable from raised pupils, open upper eyelids, and lifted chin."
+        },
+        {
+          "direction": "022.5",
+          "expected": "up-right",
+          "verdict": "pass",
+          "observed": "eyes and head slightly screen-right while still pitched up",
+          "reason": "Diagonal interpolates cleanly from up toward right with stable lower body."
+        },
+        {
+          "direction": "045",
+          "expected": "up-right",
+          "verdict": "pass",
+          "observed": "nose, pupils, and pointing arm move screen-right with upward eye line",
+          "reason": "Both horizontal right cue and vertical up cue are visible."
+        },
+        {
+          "direction": "067.5",
+          "expected": "up-right",
+          "verdict": "pass",
+          "observed": "rightward face turn with a smaller upward pitch",
+          "reason": "Near-right diagonal remains in the up-right quadrant and advances evenly."
+        },
+        {
+          "direction": "090",
+          "expected": "right",
+          "verdict": "pass",
+          "observed": "nose tip, pupils, pointing arm, and scarf lead toward screen-right",
+          "reason": "Cardinal right is clear from head turn and right-facing eyes."
+        },
+        {
+          "direction": "112.5",
+          "expected": "down-right",
+          "verdict": "pass",
+          "observed": "head remains screen-right while eye line lowers",
+          "reason": "Rightward head turn persists while gaze crosses below the horizontal axis."
+        },
+        {
+          "direction": "135",
+          "expected": "down-right",
+          "verdict": "pass",
+          "observed": "face turns right and eyes/chin angle down-right",
+          "reason": "Diagonal occupies the down-right quadrant with continuous scarf and wing follow-through."
+        },
+        {
+          "direction": "157.5",
+          "expected": "down-right",
+          "verdict": "pass",
+          "observed": "near-front face with lowered eyes and slight right bias",
+          "reason": "Final down-right step remains before the clear down cardinal."
+        },
+        {
+          "direction": "180",
+          "expected": "down",
+          "verdict": "pass",
+          "observed": "eyes and chin pitch down; brows/eyelids reshape",
+          "reason": "Cardinal down is unmistakable and preserves the anchored legs and compass."
+        },
+        {
+          "direction": "202.5",
+          "expected": "down-left",
+          "verdict": "pass",
+          "observed": "downward eye line with head beginning screen-left turn",
+          "reason": "Diagonal leaves down through the left quadrant without reversal."
+        },
+        {
+          "direction": "225",
+          "expected": "down-left",
+          "verdict": "pass",
+          "observed": "nose and pupils shift screen-left while remaining lowered",
+          "reason": "Both left and down cues are visible at pet size."
+        },
+        {
+          "direction": "247.5",
+          "expected": "down-left",
+          "verdict": "pass",
+          "observed": "stronger screen-left head turn with lowered eyelids",
+          "reason": "Near-left diagonal stays in the down-left quadrant; transparent opening is an intentional wing gap."
+        },
+        {
+          "direction": "270",
+          "expected": "left",
+          "verdict": "pass",
+          "observed": "nose tip, pupils, pointing arm, and scarf lead screen-left",
+          "reason": "Cardinal left is unmistakable from the opposing head turn and arm aim."
+        },
+        {
+          "direction": "292.5",
+          "expected": "up-left",
+          "verdict": "pass",
+          "observed": "head remains left while eye line rises",
+          "reason": "Leftward turn persists while gaze crosses above the horizontal axis."
+        },
+        {
+          "direction": "315",
+          "expected": "up-left",
+          "verdict": "pass",
+          "observed": "pupils and chin angle up-left with stable shell and wings",
+          "reason": "Diagonal occupies the up-left quadrant and follows the ordered loop."
+        },
+        {
+          "direction": "337.5",
+          "expected": "up-left",
+          "verdict": "pass",
+          "observed": "near-front face with raised eyes and slight left bias",
+          "reason": "Final step approaches the approved 000-up pose without reversal or snap."
+        }
+      ]
+    }
+  },
+  "timing": {
+    "idle": [
+      280,
+      110,
+      110,
+      140,
+      140,
+      320
+    ],
+    "running-right": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      220
+    ],
+    "running-left": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      220
+    ],
+    "waving": [
+      140,
+      140,
+      140,
+      280
+    ],
+    "jumping": [
+      140,
+      140,
+      140,
+      140,
+      280
+    ],
+    "failed": [
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      240
+    ],
+    "waiting": [
+      150,
+      150,
+      150,
+      150,
+      150,
+      260
+    ],
+    "running": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      220
+    ],
+    "review": [
+      150,
+      150,
+      150,
+      150,
+      150,
+      280
+    ]
+  },
+  "final_atlas_source": ".hatch-runs/lady-bug/final/spritesheet-extended.webp"
+}

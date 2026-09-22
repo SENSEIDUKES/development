@@ -1,0 +1,21 @@
+{
+  "pet.json": "688436d5df1b60403581b6050bc8a5a44c24a0d717bb921729dbc7317e8f7abe",
+  "pet-request.json": "428be6f03fb080e2dcb8c4fe3bfba5cc9ba2dc701959c7919fb0ff9c3d82d114",
+  "spritesheet.webp": "31d2eae8f362966432fc56da0cb97512b96dd56d7717be41d128132ea79c56dd",
+  "neutral.png": "ce9ac87b98b260f9426d165de2aae0016a3f8e367f706137e4c0fde3c20601ab",
+  "animation-timing.json": "46ac01f4aac78064f290cc46af55302ca9b6f7699d4d980f6b77b4060ebd9bf3",
+  "hero.gif": "c8fd0881d7081470812d9616b2b831f50cf1adc4c44c0d0a1d7c013ab77ec1cd",
+  "preview.gif": "c8fd0881d7081470812d9616b2b831f50cf1adc4c44c0d0a1d7c013ab77ec1cd",
+  "validation.json": "210411640b2654859122fc83213659b3f072a15ab44c5999f9d5db3efa452a3e",
+  "renderer-validation.json": "fdb406d47cf34f9d08b75027141b5279a96c422826e229afae9c7d049240046f",
+  "IMPORT-HANDOFF.md": "640df13e75c51ea2033378016b918483f10d7eab2ec1180589688f5d669d13e6",
+  "previews/idle.gif": "835879e63f57fdb17c8565e8ed2abc1726b890d046b77d80c834ffce74297ac2",
+  "previews/running-right.gif": "3a58248f0d863cf949f2afda6daa7b4e5d0db605dd3e6901c27da043e5fc2a2f",
+  "previews/running-left.gif": "cdd5998ac28a14f9980f0d0f3c717efd2541c869d5b1c6ba7e798bfa8d62ae1b",
+  "previews/waving.gif": "f7a000bfdb0dd44e970c4a78afe971055ed70e7e6d664b28c71a35e21ff5e156",
+  "previews/jumping.gif": "eb41bdd47cc601d092d7ba903c1b0afe5f13997e2350086412ce19cd63d26fa0",
+  "previews/failed.gif": "154bbdaaf90057d5d95ae6c5cb3488df95408f2703ec558cc7e2e82f3f4f29ac",
+  "previews/waiting.gif": "2b43c26be7f84960e42c984a33825d954108f7016ba62d2641a13df4b068df1d",
+  "previews/running.gif": "ce2952ccc6c49f573b40683232c7f5e7d710190e0ccc362c3299ca856f58496e",
+  "previews/review.gif": "e5225c34e975e85e24e43d017f7b4331ee2c19cce0c344d9d5a96e9d350961e2"
+}

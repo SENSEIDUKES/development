@@ -1,0 +1,2955 @@
+{
+  "pet_id": "judgmental-jiangshi",
+  "display_name": "Judgmental Jiangshi",
+  "description": "A discerning little jiangshi whose skeptical amber side-eye, tiny fangs, and formal talismaned robes make every quiet reaction feel unmistakably his.",
+  "created_at": "2026-09-21T23:18:25.355377+00:00",
+  "sprite_version_number": 2,
+  "atlas": {
+    "columns": 8,
+    "rows": 11,
+    "cell_width": 192,
+    "cell_height": 208,
+    "width": 1536,
+    "height": 2288
+  },
+  "rows": [
+    {
+      "state": "idle",
+      "row": 0,
+      "frames": 6,
+      "purpose": "calm resting, breathing, and blinking loop"
+    },
+    {
+      "state": "running-right",
+      "row": 1,
+      "frames": 8,
+      "purpose": "rightward drag movement loop"
+    },
+    {
+      "state": "running-left",
+      "row": 2,
+      "frames": 8,
+      "purpose": "leftward drag movement loop"
+    },
+    {
+      "state": "waving",
+      "row": 3,
+      "frames": 4,
+      "purpose": "greeting or attention gesture"
+    },
+    {
+      "state": "jumping",
+      "row": 4,
+      "frames": 5,
+      "purpose": "hover or playful jump"
+    },
+    {
+      "state": "failed",
+      "row": 5,
+      "frames": 8,
+      "purpose": "blocked, failed, or cancelled reaction"
+    },
+    {
+      "state": "waiting",
+      "row": 6,
+      "frames": 6,
+      "purpose": "waiting for approval, help, or user input"
+    },
+    {
+      "state": "running",
+      "row": 7,
+      "frames": 6,
+      "purpose": "active task work or processing"
+    },
+    {
+      "state": "review",
+      "row": 8,
+      "frames": 6,
+      "purpose": "ready or completed output review"
+    },
+    {
+      "state": "look-row-9",
+      "row": 9,
+      "frames": 8,
+      "directions": [
+        "000",
+        "022.5",
+        "045",
+        "067.5",
+        "090",
+        "112.5",
+        "135",
+        "157.5"
+      ],
+      "purpose": "clockwise look directions from up through down-right"
+    },
+    {
+      "state": "look-row-10",
+      "row": 10,
+      "frames": 8,
+      "directions": [
+        "180",
+        "202.5",
+        "225",
+        "247.5",
+        "270",
+        "292.5",
+        "315",
+        "337.5"
+      ],
+      "purpose": "clockwise look directions from down through up-left"
+    }
+  ],
+  "layout_guides": [
+    {
+      "state": "idle",
+      "path": "references\\layout-guides\\idle.png",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "running-right",
+      "path": "references\\layout-guides\\running-right.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "running-left",
+      "path": "references\\layout-guides\\running-left.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "waving",
+      "path": "references\\layout-guides\\waving.png",
+      "width": 768,
+      "height": 208,
+      "frames": 4,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "jumping",
+      "path": "references\\layout-guides\\jumping.png",
+      "width": 960,
+      "height": 208,
+      "frames": 5,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "failed",
+      "path": "references\\layout-guides\\failed.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "waiting",
+      "path": "references\\layout-guides\\waiting.png",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "running",
+      "path": "references\\layout-guides\\running.png",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "review",
+      "path": "references\\layout-guides\\review.png",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "look-row-9",
+      "path": "references\\layout-guides\\look-row-9.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "look-row-10",
+      "path": "references\\layout-guides\\look-row-10.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "look-cardinals",
+      "path": "references\\layout-guides\\look-cardinals.png",
+      "width": 768,
+      "height": 208,
+      "frames": 4,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    }
+  ],
+  "references": [
+    {
+      "path": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\judgmental-jiangshi\\references\\reference-01.png",
+      "width": 1024,
+      "height": 1536,
+      "mode": "RGBA",
+      "format": "PNG",
+      "source_path": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\images\\Judgmental Jiangshi.png",
+      "copied_path": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\judgmental-jiangshi\\references\\reference-01.png"
+    }
+  ],
+  "chroma_key": {
+    "hex": "#FF00FF",
+    "rgb": [
+      255,
+      0,
+      255
+    ],
+    "name": "magenta",
+    "selection": "auto",
+    "score": 215.5
+  },
+  "pet_notes": "Accessible chibi jiangshi familiar with a restrained floating silhouette and dry, judgmental personality. Preserve pale green skin; large amber eyes with heavy lids and skeptical side-eye; arched brows; tiny paired fangs; oversized black round official hat with aged gold trim, red top tassel, and centered yellow forehead talisman bearing a simple red ornamental seal-like motif; short black hair; dark charcoal robe with broad sleeves, deep teal lining and cloud panels, aged gold piping, jade clasp and waist ornament, red waist tassel; small black-and-gold shoes. Small-size priorities: face and eyes first, hat-plus-talisman silhouette second, wide sleeves and robe third. No scenery, shadows, detached effects, symbols outside the attached talisman, or extra props.",
+  "style_preset": "auto",
+  "style_notes": "Faithful stylized 3D chibi toy rendering from the reference, simplified only for 60px readability; compact full-body proportions, soft fabric and aged-metal materials, restrained motion, clean flat chroma background.",
+  "style_contract": "Pet-safe sprite: compact full-body mascot, readable in a 192x208 cell, clear silhouette, simple face, stable palette/materials, and crisp edges for chroma-key extraction. Style `auto`: Infer the most appropriate pet-safe style from the user request and reference images, then keep that exact style consistent across every row. User style notes: Faithful stylized 3D chibi toy rendering from the reference, simplified only for 60px readability; compact full-body proportions, soft fabric and aged-metal materials, restrained motion, clean flat chroma background..",
+  "brand_name": "",
+  "brand_brief": "",
+  "brand_sources": [],
+  "pet_safe_style": "Pet-safe sprite: compact full-body mascot, readable in a 192x208 cell, clear silhouette, simple face, stable palette/materials, and crisp edges for chroma-key extraction.",
+  "primary_generation_skill": "$imagegen",
+  "animation_timing_ms": {
+    "idle": [
+      280,
+      110,
+      110,
+      140,
+      140,
+      320
+    ],
+    "running-right": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      220
+    ],
+    "running-left": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      220
+    ],
+    "waving": [
+      140,
+      140,
+      140,
+      280
+    ],
+    "jumping": [
+      140,
+      140,
+      140,
+      140,
+      280
+    ],
+    "failed": [
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      240
+    ],
+    "waiting": [
+      150,
+      150,
+      150,
+      150,
+      150,
+      260
+    ],
+    "running": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      220
+    ],
+    "review": [
+      150,
+      150,
+      150,
+      150,
+      150,
+      280
+    ]
+  },
+  "source_reference": {
+    "filename": "Judgmental Jiangshi.png",
+    "package_path": "source/Judgmental Jiangshi.png",
+    "provenance": "Exact user-supplied reference image copied without modification.",
+    "sha256": "D9295D3F54F6857D8262137953B731EBB6EE1D6320AA2DE66A7F8616646660DF"
+  },
+  "visual_decisions": {
+    "identity": "Pale green chibi jiangshi with heavy-lidded amber eyes, tiny paired fangs, an oversized black-and-aged-gold official hat, attached yellow forehead talisman with red seal, charcoal robe with teal lining and cloud panels, jade ornaments, red tassels, and black-and-gold shoes.",
+    "personality": "Dryly skeptical, composed, discerning, quietly helpful, and endearingly judgmental.",
+    "small_size_priority": "Face and amber eyes first; hat-and-talisman silhouette second; broad sleeves and bell-shaped robe third.",
+    "attached_features": "Hat, talisman, jade ornaments, and tassels remain physically attached in every state; no detached effects or extra props were introduced.",
+    "running_left": "Safely derived by framewise mirroring of the approved running-right row; the centered attached details and lack of a one-sided held prop preserve identity.",
+    "look_mechanics": "The lower robe and shoes stay anchored while eyes, lids, brows, head, hat, and attached talisman communicate direction; tassels follow with restrained secondary motion and the whole sprite is never rotated."
+  },
+  "generation_jobs": {
+    "schema_version": 1,
+    "created_at": "2026-09-21T23:18:25.382059+00:00",
+    "run_dir": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\judgmental-jiangshi",
+    "primary_generation_skill": "$imagegen",
+    "jobs": [
+      {
+        "id": "base",
+        "kind": "base-pet",
+        "status": "complete",
+        "prompt_file": "prompts/base-pet.md",
+        "input_images": [
+          {
+            "path": "references\\reference-01.png",
+            "role": "pet reference"
+          }
+        ],
+        "output_path": "decoded/base.png",
+        "depends_on": [],
+        "generation_skill": "$imagegen",
+        "requires_grounded_generation": true,
+        "allow_prompt_only_generation": false,
+        "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c643-e52e-7d20-b2d9-f00504e77323\\exec-dd2c0ef0-0363-43b4-a7b7-8acbc3458084.png",
+        "completed_at": "2026-09-21T23:22:17.3465663Z"
+      },
+      {
+        "id": "idle",
+        "kind": "row-strip",
+        "status": "complete",
+        "prompt_file": "prompts/rows/idle.md",
+        "retry_prompt_file": "prompts/row-retries/idle.md",
+        "input_images": [
+          {
+            "path": "references\\reference-01.png",
+            "role": "pet reference"
+          },
+          {
+            "path": "references/layout-guides/idle.png",
+            "role": "layout guide for 6 frame slots; use for spacing only, do not copy guide lines"
+          },
+          {
+            "path": "references/canonical-base.png",
+            "role": "canonical identity reference"
+          }
+        ],
+        "output_path": "decoded/idle.png",
+        "depends_on": [
+          "base"
+        ],
+        "generation_skill": "$imagegen",
+        "requires_grounded_generation": true,
+        "allow_prompt_only_generation": false,
+        "identity_reference_paths": [
+          "references/canonical-base.png"
+        ],
+        "parallelizable_after": [
+          "base"
+        ],
+        "derivation_policy": {
+          "may_derive": false,
+          "reason": "no deterministic derivation is configured for this state"
+        },
+        "mirror_policy": {},
+        "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c643-e52e-7d20-b2d9-f00504e77323\\exec-faf3f3e1-2ff0-480a-b02d-e8c9d8c66a58.png",
+        "completed_at": "2026-09-21T23:26:31.7176757Z"
+      },
+      {
+        "id": "running-right",
+        "kind": "row-strip",
+        "status": "complete",
+        "prompt_file": "prompts/rows/running-right.md",
+        "retry_prompt_file": "prompts/row-retries/running-right.md",
+        "input_images": [
+          {
+            "path": "references\\reference-01.png",
+            "role": "pet reference"
+          },
+          {
+            "path": "references/layout-guides/running-right.png",
+            "role": "layout guide for 8 frame slots; use for spacing only, do not copy guide lines"
+          },
+          {
+            "path": "references/canonical-base.png",
+            "role": "canonical identity reference"
+          }
+        ],
+        "output_path": "decoded/running-right.png",
+        "depends_on": [
+          "base"
+        ],
+        "generation_skill": "$imagegen",
+        "requires_grounded_generation": true,
+        "allow_prompt_only_generation": false,
+        "identity_reference_paths": [
+          "references/canonical-base.png"
+        ],
+        "parallelizable_after": [
+          "base"
+        ],
+        "derivation_policy": {
+          "may_derive": false,
+          "reason": "no deterministic derivation is configured for this state"
+        },
+        "mirror_policy": {},
+        "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c648-439d-7f61-908b-f84f7803ba81\\exec-8086853d-9c4a-45ef-bedb-ff593f640705.png",
+        "completed_at": "2026-09-21T23:28:53.5144855Z"
+      },
+      {
+        "id": "running-left",
+        "kind": "row-strip",
+        "status": "complete",
+        "prompt_file": "prompts/rows/running-left.md",
+        "retry_prompt_file": "prompts/row-retries/running-left.md",
+        "input_images": [
+          {
+            "path": "references\\reference-01.png",
+            "role": "pet reference"
+          },
+          {
+            "path": "references/layout-guides/running-left.png",
+            "role": "layout guide for 8 frame slots; use for spacing only, do not copy guide lines"
+          },
+          {
+            "path": "references/canonical-base.png",
+            "role": "canonical identity reference"
+          },
+          {
+            "path": "decoded/running-right.png",
+            "role": "rightward gait reference for leftward row decision"
+          }
+        ],
+        "output_path": "decoded/running-left.png",
+        "depends_on": [
+          "base",
+          "running-right"
+        ],
+        "generation_skill": "$imagegen",
+        "requires_grounded_generation": true,
+        "allow_prompt_only_generation": false,
+        "identity_reference_paths": [
+          "references/canonical-base.png"
+        ],
+        "parallelizable_after": [
+          "base",
+          "running-right"
+        ],
+        "derivation_policy": {
+          "may_derive": true,
+          "may_derive_from": "running-right",
+          "derivation": "framewise-horizontal-mirror-preserving-order",
+          "requires_explicit_approval": true,
+          "fallback_generation_skill": "$imagegen"
+        },
+        "mirror_policy": {
+          "may_derive": true,
+          "may_derive_from": "running-right",
+          "derivation": "framewise-horizontal-mirror-preserving-order",
+          "requires_explicit_approval": true,
+          "fallback_generation_skill": "$imagegen"
+        },
+        "source_path": "decoded\\running-right.png",
+        "derived_from": "running-right",
+        "completed_at": "2026-09-21T23:29:23.278093+00:00",
+        "metadata": {
+          "width": 2172,
+          "height": 724,
+          "mode": "RGBA",
+          "format": "PNG"
+        },
+        "mirror_decision": {
+          "approved": true,
+          "approved_at": "2026-09-21T23:29:23.278093+00:00",
+          "note": "The rightward strip has a coherent alternating cadence and the familiar has no hand-held asymmetric prop; centered talisman, centered jade clasp, robe, sleeves, shoes, and attached tassels remain identity-correct when mirrored, while gaze and travel direction reverse naturally.",
+          "transform": "framewise-horizontal-mirror-preserving-order"
+        }
+      },
+      {
+        "id": "waving",
+        "kind": "row-strip",
+        "status": "complete",
+        "prompt_file": "prompts/rows/waving.md",
+        "retry_prompt_file": "prompts/row-retries/waving.md",
+        "input_images": [
+          {
+            "path": "references\\reference-01.png",
+            "role": "pet reference"
+          },
+          {
+            "path": "references/layout-guides/waving.png",
+            "role": "layout guide for 4 frame slots; use for spacing only, do not copy guide lines"
+          },
+          {
+            "path": "references/canonical-base.png",
+            "role": "canonical identity reference"
+          }
+        ],
+        "output_path": "decoded/waving.png",
+        "depends_on": [
+          "base"
+        ],
+        "generation_skill": "$imagegen",
+        "requires_grounded_generation": true,
+        "allow_prompt_only_generation": false,
+        "identity_reference_paths": [
+          "references/canonical-base.png"
+        ],
+        "parallelizable_after": [
+          "base"
+        ],
+        "derivation_policy": {
+          "may_derive": false,
+          "reason": "state requires its own generated animation semantics"
+        },
+        "mirror_policy": {},
+        "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c643-e52e-7d20-b2d9-f00504e77323\\exec-10285aad-2c6f-4347-8958-536b091de4c1.png",
+        "completed_at": "2026-09-21T23:36:18.1043176Z"
+      },
+      {
+        "id": "jumping",
+        "kind": "row-strip",
+        "status": "complete",
+        "prompt_file": "prompts/rows/jumping.md",
+        "retry_prompt_file": "prompts/row-retries/jumping.md",
+        "input_images": [
+          {
+            "path": "references\\reference-01.png",
+            "role": "pet reference"
+          },
+          {
+            "path": "references/layout-guides/jumping.png",
+            "role": "layout guide for 5 frame slots; use for spacing only, do not copy guide lines"
+          },
+          {
+            "path": "references/canonical-base.png",
+            "role": "canonical identity reference"
+          }
+        ],
+        "output_path": "decoded/jumping.png",
+        "depends_on": [
+          "base"
+        ],
+        "generation_skill": "$imagegen",
+        "requires_grounded_generation": true,
+        "allow_prompt_only_generation": false,
+        "identity_reference_paths": [
+          "references/canonical-base.png"
+        ],
+        "parallelizable_after": [
+          "base"
+        ],
+        "derivation_policy": {
+          "may_derive": false,
+          "reason": "state requires its own generated animation semantics"
+        },
+        "mirror_policy": {},
+        "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c648-439d-7f61-908b-f84f7803ba81\\exec-d2c44e27-cd43-40f6-b7d6-07b7d8b11a24.png",
+        "completed_at": "2026-09-21T23:32:06.8070269Z"
+      },
+      {
+        "id": "failed",
+        "kind": "row-strip",
+        "status": "complete",
+        "prompt_file": "prompts/rows/failed.md",
+        "retry_prompt_file": "prompts/row-retries/failed.md",
+        "input_images": [
+          {
+            "path": "references\\reference-01.png",
+            "role": "pet reference"
+          },
+          {
+            "path": "references/layout-guides/failed.png",
+            "role": "layout guide for 8 frame slots; use for spacing only, do not copy guide lines"
+          },
+          {
+            "path": "references/canonical-base.png",
+            "role": "canonical identity reference"
+          }
+        ],
+        "output_path": "decoded/failed.png",
+        "depends_on": [
+          "base"
+        ],
+        "generation_skill": "$imagegen",
+        "requires_grounded_generation": true,
+        "allow_prompt_only_generation": false,
+        "identity_reference_paths": [
+          "references/canonical-base.png"
+        ],
+        "parallelizable_after": [
+          "base"
+        ],
+        "derivation_policy": {
+          "may_derive": false,
+          "reason": "state requires its own generated animation semantics"
+        },
+        "mirror_policy": {},
+        "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c64e-a59c-7a81-b3fd-d82b275aa8aa\\exec-94acdc3e-0d2a-42a7-927c-3ee7c2292e25.png",
+        "completed_at": "2026-09-21T23:32:36.5914683Z"
+      },
+      {
+        "id": "waiting",
+        "kind": "row-strip",
+        "status": "complete",
+        "prompt_file": "prompts/rows/waiting.md",
+        "retry_prompt_file": "prompts/row-retries/waiting.md",
+        "input_images": [
+          {
+            "path": "references\\reference-01.png",
+            "role": "pet reference"
+          },
+          {
+            "path": "references/layout-guides/waiting.png",
+            "role": "layout guide for 6 frame slots; use for spacing only, do not copy guide lines"
+          },
+          {
+            "path": "references/canonical-base.png",
+            "role": "canonical identity reference"
+          }
+        ],
+        "output_path": "decoded/waiting.png",
+        "depends_on": [
+          "base"
+        ],
+        "generation_skill": "$imagegen",
+        "requires_grounded_generation": true,
+        "allow_prompt_only_generation": false,
+        "identity_reference_paths": [
+          "references/canonical-base.png"
+        ],
+        "parallelizable_after": [
+          "base"
+        ],
+        "derivation_policy": {
+          "may_derive": false,
+          "reason": "state requires its own generated animation semantics"
+        },
+        "mirror_policy": {},
+        "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c648-439d-7f61-908b-f84f7803ba81\\exec-2465557e-9617-4b5b-ad85-11c62308a4d9.png",
+        "completed_at": "2026-09-21T23:37:10.3667668Z"
+      },
+      {
+        "id": "running",
+        "kind": "row-strip",
+        "status": "complete",
+        "prompt_file": "prompts/rows/running.md",
+        "retry_prompt_file": "prompts/row-retries/running.md",
+        "input_images": [
+          {
+            "path": "references\\reference-01.png",
+            "role": "pet reference"
+          },
+          {
+            "path": "references/layout-guides/running.png",
+            "role": "layout guide for 6 frame slots; use for spacing only, do not copy guide lines"
+          },
+          {
+            "path": "references/canonical-base.png",
+            "role": "canonical identity reference"
+          }
+        ],
+        "output_path": "decoded/running.png",
+        "depends_on": [
+          "base"
+        ],
+        "generation_skill": "$imagegen",
+        "requires_grounded_generation": true,
+        "allow_prompt_only_generation": false,
+        "identity_reference_paths": [
+          "references/canonical-base.png"
+        ],
+        "parallelizable_after": [
+          "base"
+        ],
+        "derivation_policy": {
+          "may_derive": false,
+          "reason": "state requires its own generated animation semantics"
+        },
+        "mirror_policy": {},
+        "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c64e-a59c-7a81-b3fd-d82b275aa8aa\\exec-45436cd4-dd7a-4488-b383-ac6b54f7e26c.png",
+        "completed_at": "2026-09-21T23:37:40.2330704Z"
+      },
+      {
+        "id": "review",
+        "kind": "row-strip",
+        "status": "complete",
+        "prompt_file": "prompts/rows/review.md",
+        "retry_prompt_file": "prompts/row-retries/review.md",
+        "input_images": [
+          {
+            "path": "references\\reference-01.png",
+            "role": "pet reference"
+          },
+          {
+            "path": "references/layout-guides/review.png",
+            "role": "layout guide for 6 frame slots; use for spacing only, do not copy guide lines"
+          },
+          {
+            "path": "references/canonical-base.png",
+            "role": "canonical identity reference"
+          }
+        ],
+        "output_path": "decoded/review.png",
+        "depends_on": [
+          "base"
+        ],
+        "generation_skill": "$imagegen",
+        "requires_grounded_generation": true,
+        "allow_prompt_only_generation": false,
+        "identity_reference_paths": [
+          "references/canonical-base.png"
+        ],
+        "parallelizable_after": [
+          "base"
+        ],
+        "derivation_policy": {
+          "may_derive": false,
+          "reason": "state requires its own generated animation semantics"
+        },
+        "mirror_policy": {},
+        "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c643-e52e-7d20-b2d9-f00504e77323\\exec-edd18c2b-6d1f-4964-b5e0-981fad0f071c.png",
+        "completed_at": "2026-09-21T23:39:49.2551012Z"
+      },
+      {
+        "id": "look-cardinals",
+        "kind": "look-cardinal-strip",
+        "status": "complete",
+        "prompt_file": "prompts/look-cardinals.md",
+        "repair_prompt_files": {
+          "000": "prompts/look-anchor-repairs/000.md",
+          "090": "prompts/look-anchor-repairs/090.md",
+          "180": "prompts/look-anchor-repairs/180.md",
+          "270": "prompts/look-anchor-repairs/270.md"
+        },
+        "input_images": [
+          {
+            "path": "references\\reference-01.png",
+            "role": "pet reference"
+          },
+          {
+            "path": "references/layout-guides/look-cardinals.png",
+            "role": "layout guide for four cardinal slots; use for spacing only, do not copy guide lines"
+          },
+          {
+            "path": "references/canonical-base.png",
+            "role": "canonical identity reference"
+          },
+          {
+            "path": "qa/contact-sheet.png",
+            "role": "approved standard-row identity, scale, and baseline reference"
+          }
+        ],
+        "output_path": "decoded/look-cardinals.png",
+        "extracted_output_paths": [
+          "decoded/look-anchors/000.png",
+          "decoded/look-anchors/090.png",
+          "decoded/look-anchors/180.png",
+          "decoded/look-anchors/270.png"
+        ],
+        "approved_strip_path": "decoded/look-anchors-approved.png",
+        "depends_on": [
+          "idle",
+          "running-right",
+          "running-left",
+          "waving",
+          "jumping",
+          "failed",
+          "waiting",
+          "running",
+          "review"
+        ],
+        "generation_skill": "$imagegen",
+        "requires_grounded_generation": true,
+        "allow_prompt_only_generation": false,
+        "identity_reference_paths": [
+          "references/canonical-base.png"
+        ],
+        "look_mechanics_file": "qa/look-mechanics.md",
+        "directions": [
+          "000",
+          "090",
+          "180",
+          "270"
+        ],
+        "packaging_eligible": false,
+        "parallelizable_after": [
+          "idle",
+          "running-right",
+          "running-left",
+          "waving",
+          "jumping",
+          "failed",
+          "waiting",
+          "running",
+          "review"
+        ],
+        "derivation_policy": {
+          "may_derive": false,
+          "reason": "cardinal directions require grounded pet-specific generation"
+        },
+        "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c643-e52e-7d20-b2d9-f00504e77323\\exec-950007a0-621b-44f5-beb0-e063658c590d.png",
+        "completed_at": "2026-09-21T23:51:04.4711469Z"
+      },
+      {
+        "id": "look-row-9",
+        "kind": "look-row-strip",
+        "status": "complete",
+        "prompt_file": "prompts/rows/look-row-9.md",
+        "retry_prompt_file": "prompts/row-retries/look-row-9.md",
+        "input_images": [
+          {
+            "path": "references\\reference-01.png",
+            "role": "pet reference"
+          },
+          {
+            "path": "references/layout-guides/look-row-9.png",
+            "role": "layout guide for 8 direction slots; use for spacing only, do not copy guide lines"
+          },
+          {
+            "path": "references/canonical-base.png",
+            "role": "canonical identity reference"
+          },
+          {
+            "path": "qa/contact-sheet.png",
+            "role": "approved standard-row identity, scale, and baseline reference"
+          },
+          {
+            "path": "decoded/look-anchors-approved.png",
+            "role": "approved cardinal reference strip in order 000 up, 090 screen-right, 180 down, 270 screen-left; interpolate intermediate directions evenly"
+          }
+        ],
+        "output_path": "decoded/look-row-9.png",
+        "depends_on": [
+          "look-cardinals"
+        ],
+        "generation_skill": "$imagegen",
+        "requires_grounded_generation": true,
+        "allow_prompt_only_generation": false,
+        "identity_reference_paths": [
+          "references/canonical-base.png"
+        ],
+        "look_mechanics_file": "qa/look-mechanics.md",
+        "directions": [
+          "000",
+          "022.5",
+          "045",
+          "067.5",
+          "090",
+          "112.5",
+          "135",
+          "157.5"
+        ],
+        "parallelizable_after": [
+          "look-cardinals"
+        ],
+        "derivation_policy": {
+          "may_derive": false,
+          "reason": "look directions require grounded pet-specific generation"
+        },
+        "coherent_synthesis_required": true,
+        "individual_cell_packaging_allowed": false,
+        "packaging_eligible": true,
+        "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c643-e52e-7d20-b2d9-f00504e77323\\exec-e234c3af-7763-4d5e-9bd2-f31eb745ad97.png",
+        "completed_at": "2026-09-21T23:58:04.2995860Z"
+      },
+      {
+        "id": "look-row-10",
+        "kind": "look-row-strip",
+        "status": "complete",
+        "prompt_file": "prompts/rows/look-row-10.md",
+        "retry_prompt_file": "prompts/row-retries/look-row-10.md",
+        "input_images": [
+          {
+            "path": "references\\reference-01.png",
+            "role": "pet reference"
+          },
+          {
+            "path": "references/layout-guides/look-row-10.png",
+            "role": "layout guide for 8 direction slots; use for spacing only, do not copy guide lines"
+          },
+          {
+            "path": "references/canonical-base.png",
+            "role": "canonical identity reference"
+          },
+          {
+            "path": "qa/contact-sheet.png",
+            "role": "approved standard-row identity, scale, and baseline reference"
+          },
+          {
+            "path": "decoded/look-anchors-approved.png",
+            "role": "approved cardinal reference strip in order 000 up, 090 screen-right, 180 down, 270 screen-left; interpolate intermediate directions evenly"
+          },
+          {
+            "path": "decoded/look-row-9.png",
+            "role": "completed first half of the clockwise look loop for row 10 continuity"
+          }
+        ],
+        "output_path": "decoded/look-row-10.png",
+        "depends_on": [
+          "look-cardinals",
+          "look-row-9"
+        ],
+        "generation_skill": "$imagegen",
+        "requires_grounded_generation": true,
+        "allow_prompt_only_generation": false,
+        "identity_reference_paths": [
+          "references/canonical-base.png"
+        ],
+        "look_mechanics_file": "qa/look-mechanics.md",
+        "directions": [
+          "180",
+          "202.5",
+          "225",
+          "247.5",
+          "270",
+          "292.5",
+          "315",
+          "337.5"
+        ],
+        "parallelizable_after": [
+          "look-cardinals",
+          "look-row-9"
+        ],
+        "derivation_policy": {
+          "may_derive": false,
+          "reason": "look directions require grounded pet-specific generation"
+        },
+        "coherent_synthesis_required": true,
+        "individual_cell_packaging_allowed": false,
+        "packaging_eligible": true,
+        "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c643-e52e-7d20-b2d9-f00504e77323\\exec-669b625e-29fb-4025-9995-f005edee12ed.png",
+        "completed_at": "2026-09-22T00:11:00.0438195Z"
+      }
+    ]
+  },
+  "final_atlas": {
+    "path": "spritesheet.webp",
+    "sha256": "5B63087DF819515C2875A66CE7F71D5E6B5035A65F14A85490A8915D9FFA4EEC",
+    "columns": 8,
+    "rows": 11,
+    "cell_width": 192,
+    "cell_height": 208,
+    "width": 1536,
+    "height": 2288,
+    "neutral_frame": {
+      "row": 0,
+      "column": 6,
+      "path": "neutral.png"
+    },
+    "hero_animation": "waving"
+  },
+  "validation_artifacts": {
+    "official_v2_atlas_validator": {
+      "ok": true,
+      "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\Packages\\judgmental-jiangshi\\spritesheet.webp",
+      "format": "WEBP",
+      "mode": "RGBA",
+      "columns": 8,
+      "rows": 11,
+      "sprite_version_number": 2,
+      "width": 1536,
+      "height": 2288,
+      "transparent_rgb_residue_pixels": 0,
+      "errors": [],
+      "warnings": [],
+      "cells": [
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13925,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13807,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13787,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 13333,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 13891,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 13948,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 13736,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13754,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13820,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13551,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 13985,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 14035,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 14639,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 14123,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 13744,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13754,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13884,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13543,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 13985,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 14035,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 14639,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 14123,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 13744,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13381,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 14578,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 14994,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 13399,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 4,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 5,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 8935,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 9982,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 10157,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 9823,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 9291,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 5,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 12905,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 12436,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 12354,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 12874,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 13381,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 12845,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 12511,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 12631,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 12772,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13347,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 12948,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 12909,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 12556,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 12595,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13537,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13249,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13501,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 13403,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 12867,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 13406,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13353,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 12988,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13944,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 13718,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 13253,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 13297,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 12679,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 12437,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 12297,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 12368,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 12217,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 12173,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 12030,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 11451,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 11194,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 11072,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 11296,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 11211,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 11173,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 11296,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 11589,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 11968,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        }
+      ]
+    },
+    "standard_visual_review": {
+      "ok": true,
+      "reviewed_rows": [
+        "idle",
+        "running-right",
+        "running-left",
+        "waving",
+        "jumping",
+        "failed",
+        "waiting",
+        "running",
+        "review"
+      ],
+      "qa_note": "Jumping now clearly progresses through low anticipation, rising lift, airborne peak, descent, and low settle with stable scale and safe padding, while all other standard rows remain passing.",
+      "warnings": [
+        "jumping used stable-slots extraction; visual playback is stable and unclipped"
+      ],
+      "repairs": [
+        {
+          "row": "jumping",
+          "failure_class": "extraction",
+          "evidence": "Automatic per-pose fitting erased the source strip's vertical travel in the first preview.",
+          "correction": "Re-extracted jumping with stable-slots and regenerated the atlas contact sheet and previews.",
+          "result": "Independent visual QA passed the repaired jump and all other rows."
+        }
+      ]
+    },
+    "chroma_transparency_cleanup": {
+      "ok": true,
+      "input": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\judgmental-jiangshi\\final\\spritesheet-extended.png",
+      "output": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\judgmental-jiangshi\\final\\spritesheet-extended.png",
+      "chroma_key": "#FF00FF",
+      "algorithm": "edge-local-chroma-spill-suppression",
+      "strength": 1,
+      "edge_radius": 5,
+      "spill_tolerance": 0.15,
+      "minimum_saturation": 0.1,
+      "changed_pixels": 112846,
+      "decontaminated_pixels": 108295,
+      "spill_suppressed_pixels": 112846,
+      "rejected_pixels": 0,
+      "changed_by_cell": {
+        "r1c7": 1910,
+        "r2c7": 1910,
+        "r2c1": 1880,
+        "r1c5": 1875,
+        "r2c5": 1875,
+        "r1c1": 1848,
+        "r1c4": 1833,
+        "r2c4": 1833,
+        "r1c6": 1778,
+        "r2c6": 1778,
+        "r5c5": 1774,
+        "r5c3": 1772,
+        "r5c6": 1749,
+        "r5c2": 1722,
+        "r2c2": 1721,
+        "r1c3": 1719,
+        "r2c3": 1719,
+        "r3c2": 1718,
+        "r1c2": 1710,
+        "r5c0": 1705,
+        "r5c7": 1703,
+        "r1c0": 1697,
+        "r2c0": 1697,
+        "r5c1": 1689,
+        "r3c1": 1686,
+        "r5c4": 1684,
+        "r7c0": 1684,
+        "r7c5": 1676,
+        "r7c1": 1641,
+        "r7c3": 1634,
+        "r7c2": 1621,
+        "r7c4": 1602,
+        "r6c4": 1537,
+        "r0c5": 1471,
+        "r8c4": 1470,
+        "r6c2": 1468,
+        "r8c5": 1465,
+        "r6c1": 1461,
+        "r8c2": 1459,
+        "r0c4": 1456,
+        "r6c0": 1437,
+        "r6c5": 1431,
+        "r0c0": 1426,
+        "r3c3": 1419,
+        "r0c1": 1418,
+        "r8c0": 1416,
+        "r0c2": 1414,
+        "r4c1": 1401,
+        "r6c3": 1388,
+        "r3c0": 1385,
+        "r9c2": 1385,
+        "r9c0": 1384,
+        "r0c3": 1380,
+        "r9c4": 1377,
+        "r9c3": 1375,
+        "r9c5": 1366,
+        "r9c6": 1353,
+        "r8c1": 1349,
+        "r4c3": 1339,
+        "r4c2": 1335,
+        "r8c3": 1330,
+        "r9c1": 1318,
+        "r9c7": 1313,
+        "r10c6": 1298,
+        "r10c5": 1253,
+        "r10c4": 1242,
+        "r10c2": 1231,
+        "r0c6": 1229,
+        "r10c3": 1225,
+        "r10c1": 1222,
+        "r10c7": 1220,
+        "r10c0": 1199,
+        "r4c4": 1195,
+        "r4c0": 1163
+      },
+      "alpha_preserved": true
+    },
+    "cardinal_direction_review": {
+      "ok": true,
+      "strip": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\judgmental-jiangshi\\decoded\\look-cardinals.png",
+      "directions": [
+        "000",
+        "090",
+        "180",
+        "270"
+      ],
+      "errors": [],
+      "anchors": [
+        {
+          "direction": "000",
+          "source_box": [
+            0,
+            0,
+            542,
+            725
+          ],
+          "used_pixels": 154362,
+          "edge_pixels": 0,
+          "output": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\judgmental-jiangshi\\decoded\\look-anchors\\000.png"
+        },
+        {
+          "direction": "090",
+          "source_box": [
+            542,
+            0,
+            1084,
+            725
+          ],
+          "used_pixels": 144165,
+          "edge_pixels": 0,
+          "output": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\judgmental-jiangshi\\decoded\\look-anchors\\090.png"
+        },
+        {
+          "direction": "180",
+          "source_box": [
+            1084,
+            0,
+            1627,
+            725
+          ],
+          "used_pixels": 150845,
+          "edge_pixels": 0,
+          "output": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\judgmental-jiangshi\\decoded\\look-anchors\\180.png"
+        },
+        {
+          "direction": "270",
+          "source_box": [
+            1627,
+            0,
+            2169,
+            725
+          ],
+          "used_pixels": 142943,
+          "edge_pixels": 0,
+          "output": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\judgmental-jiangshi\\decoded\\look-anchors\\270.png"
+        }
+      ]
+    },
+    "look_directions_row_9": {
+      "row9_qa": "pass",
+      "qa_note": "All eight registered poses preserve identity and attachment while advancing coherently from unmistakable up through right to down-right without reversal, clipping, scale pop, registration jump, or whole-sprite rotation.",
+      "directions": [
+        {
+          "direction": "000",
+          "verdict": "pass",
+          "expected": "up",
+          "observed": "Horizontal: pupils, nose, and talisman remain centered and the ears are symmetric; vertical: irises sit high, lids open upward, chin lifts, and the hat-brim underside is exposed.",
+          "reason": "Unambiguous centered upward gaze."
+        },
+        {
+          "direction": "022.5",
+          "verdict": "pass",
+          "expected": "up-right",
+          "observed": "Horizontal: pupils and nose begin shifting screen-right with slight rightward head yaw and talisman-plane turn; vertical: eyes remain high and the chin stays lifted.",
+          "reason": "Clear first clockwise step into the up-right quadrant."
+        },
+        {
+          "direction": "045",
+          "verdict": "pass",
+          "expected": "up-right",
+          "observed": "Horizontal: face center, nose, pupils, hat, and talisman yaw farther screen-right; vertical: high irises and raised chin retain a strong upward component.",
+          "reason": "Balanced diagonal up-right pose."
+        },
+        {
+          "direction": "067.5",
+          "verdict": "pass",
+          "expected": "up-right",
+          "observed": "Horizontal: pronounced screen-right yaw compresses the far cheek and angles the hat and talisman plane; vertical: pupils remain above center and the head is still pitched upward.",
+          "reason": "Correct near-right up-right intermediate."
+        },
+        {
+          "direction": "090",
+          "verdict": "pass",
+          "expected": "right",
+          "observed": "Horizontal: face center, nose, pupils, chin, sleeves, hat, and narrowed talisman plane all point unmistakably screen-right; vertical: pupils and pitch settle near neutral.",
+          "reason": "Unambiguous right cardinal without whole-sprite rotation."
+        },
+        {
+          "direction": "112.5",
+          "verdict": "pass",
+          "expected": "down-right",
+          "observed": "Horizontal: restrained rightward yaw persists across pupils, nose, cheek, hat, and talisman; vertical: irises drop below center, upper lids lower, and the chin begins to tuck.",
+          "reason": "Clear first clockwise step into the down-right quadrant."
+        },
+        {
+          "direction": "135",
+          "verdict": "pass",
+          "expected": "down-right",
+          "observed": "Horizontal: face and hat remain distinctly yawed screen-right with the talisman side-on; vertical: pupils sit lower, lids descend, chin tucks further, and more upper brim plane appears.",
+          "reason": "Balanced diagonal down-right pose."
+        },
+        {
+          "direction": "157.5",
+          "verdict": "pass",
+          "expected": "down-right",
+          "observed": "Horizontal: a residual screen-right nose, pupil, cheek, and talisman-plane offset remains; vertical: strongly lowered irises, heavy lids, tucked chin, and visible upper brim plane approach down.",
+          "reason": "Correct near-down intermediate with preserved rightward component."
+        }
+      ],
+      "continuity": "pass",
+      "warnings": []
+    },
+    "look_directions_row_10": {
+      "row10_qa": "pass",
+      "qa_note": "All eight row-10 poses preserve identity, registration, attachments, and scale while advancing coherently from unmistakable down through left to up-left, with both row boundaries forming ordinary 22.5-degree steps.",
+      "directions": [
+        {
+          "direction": "180",
+          "verdict": "pass",
+          "expected": "down",
+          "observed": "Horizontal: pupils, nose, chin, and talisman remain centered with symmetric ears; vertical: irises sit low beneath heavy lids, chin tucks, and the hat brim shows its top plane.",
+          "reason": "Unambiguous centered downward gaze."
+        },
+        {
+          "direction": "202.5",
+          "verdict": "pass",
+          "expected": "down-left",
+          "observed": "Horizontal: pupils, nose, face center, hat, and talisman plane begin shifting screen-left; vertical: lowered irises, heavy lids, and tucked chin retain the downward component.",
+          "reason": "Clear first clockwise step into the down-left quadrant."
+        },
+        {
+          "direction": "225",
+          "verdict": "pass",
+          "expected": "down-left",
+          "observed": "Horizontal: face, pupils, nose, hat, and talisman yaw farther screen-left with the near cheek and ear opening; vertical: eyes remain low and the chin stays tucked.",
+          "reason": "Balanced diagonal down-left pose."
+        },
+        {
+          "direction": "247.5",
+          "verdict": "pass",
+          "expected": "down-left",
+          "observed": "Horizontal: pronounced screen-left yaw compresses the far cheek and narrows the talisman plane; vertical: pupils remain below center and the head is still pitched downward.",
+          "reason": "Correct near-left down-left intermediate."
+        },
+        {
+          "direction": "270",
+          "verdict": "pass",
+          "expected": "left",
+          "observed": "Horizontal: pupils, nose, face center, chin, sleeves, hat, and side-on talisman point unmistakably screen-left; vertical: pupil height and head pitch settle near neutral.",
+          "reason": "Unambiguous left cardinal without whole-sprite rotation."
+        },
+        {
+          "direction": "292.5",
+          "verdict": "pass",
+          "expected": "up-left",
+          "observed": "Horizontal: restrained screen-left yaw persists across pupils, nose, cheek, hat, and talisman; vertical: irises rise, lids open slightly, and the chin begins lifting.",
+          "reason": "Clear first clockwise step into the up-left quadrant."
+        },
+        {
+          "direction": "315",
+          "verdict": "pass",
+          "expected": "up-left",
+          "observed": "Horizontal: face and hat remain distinctly yawed screen-left with the talisman angled on the forehead plane; vertical: pupils sit high, brows and lids open upward, and the chin lifts further.",
+          "reason": "Balanced diagonal up-left pose."
+        },
+        {
+          "direction": "337.5",
+          "verdict": "pass",
+          "expected": "up-left",
+          "observed": "Horizontal: a residual screen-left pupil, nose, cheek, and talisman-plane offset remains; vertical: strongly raised irises, lifted chin, and visible brim underside approach up.",
+          "reason": "Correct near-up intermediate with preserved leftward component."
+        }
+      ],
+      "continuity": "pass",
+      "boundary_evidence": "At 157.5 to 180 the remaining rightward yaw recenters while the low gaze deepens smoothly, and at 337.5 to 000 the remaining leftward yaw recenters while the already raised gaze resolves upward; neither boundary shows a snap, reversal, scale change, registration jump, attachment break, or whole-sprite rotation.",
+      "warnings": []
+    },
+    "earlier_ultra_strict_chroma_edge_check": {
+      "ok": false,
+      "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\judgmental-jiangshi\\final\\spritesheet-extended.webp",
+      "format": "WEBP",
+      "mode": "RGBA",
+      "columns": 8,
+      "rows": 11,
+      "sprite_version_number": 2,
+      "width": 1536,
+      "height": 2288,
+      "transparent_rgb_residue_pixels": 0,
+      "errors": [
+        "running-right row 1 column 5 has 5 visible edge pixels contaminated by chroma key #FF00FF",
+        "running-left row 2 column 5 has 5 visible edge pixels contaminated by chroma key #FF00FF"
+      ],
+      "warnings": [],
+      "cells": [
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13925,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13807,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13787,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 13333,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 13891,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 13948,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 13736,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13754,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13820,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13551,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 13985,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 14035,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 14639,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 5
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 14123,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 13744,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13754,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13884,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13543,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 13985,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 14035,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 14639,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 5
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 14123,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 13744,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13381,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 14578,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 14994,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 13399,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 4,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 5,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 8935,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 9982,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 10157,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 9823,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 9291,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 5,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 12905,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 12436,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 12354,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 12874,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 13381,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 12845,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 12511,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 12631,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 12772,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13347,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 12948,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 12909,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 12556,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 12595,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13537,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13249,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13501,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 13403,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 12867,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 13406,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13353,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 12988,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 13944,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 13718,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 13253,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 13297,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 12679,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 12437,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 12297,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 12368,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 12217,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 12173,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 12030,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 11451,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 11194,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 11072,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 11296,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 11211,
+          "opaque_chroma_key_pixels": 1,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 11173,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 11296,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 11589,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 11968,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        }
+      ]
+    }
+  },
+  "accepted_non_blocking_warnings": [
+    "An earlier ultra-strict chroma-edge check reported five magenta-adjacent edge pixels in running-right row 1 column 5 and the mirrored running-left row 2 column 5. The current official Hatch Pet v2 validator passes with no warnings, the atlas has no transparent chroma residue, cleanup passed, and the user confirmed the installed pet renders correctly in Codex.",
+    "The jumping strip used stable-slot extraction and passed the completed visual review."
+  ]
+}

@@ -8,13 +8,16 @@
   `src/hooks/useUserProfile.ts`
 - **Workshop preview:** `?preview=user-profile`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-20
+- **Last Workshop update:** 2026-09-22
 - **Last source comparison:** 2026-09-10
 - **Replica status:** `@seihouse/library/profile` surface consuming separate Library economy capabilities
 
-### 2026-09-20 — Floating Familiar preview
+### 2026-09-22 — Catalogue-driven Familiar preview
 
-Development profile fixtures start with Celestial Guardian selected. The existing
+Development profile fixtures start with Quill, the catalogue's separately declared
+default, selected. The Familiar section renders all eleven currently inspectable
+catalogue options with their host-supplied ranks; no rank determines availability,
+ownership, acquisition, or pricing. The existing
 profile controller reports loaded and successfully saved Familiar selections to
 the shared preview session; sign-out removes the companion, and account changes
 reset its Energy interaction. An embedded Profile reuses the app's single mount.
@@ -46,7 +49,7 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
-- **2026-09-20 Familiar selection:** Customization now has Appearance and Familiar tabs. The Familiar selector consumes a host-supplied option list, currently Celestial Guardian, and displays the requested hosted GIF hero. The existing profile controller saves only `familiarId`, preserving unrelated drafts and rejecting unavailable IDs. Selection follows the Workshop profile adapter's existing in-memory lifetime; production persistence and future unlock enforcement remain host responsibilities. The reusable selector is exported from `@seihouse/library/familiar`; locked references are unchanged.
+- **2026-09-22 Familiar catalogue:** Customization's Familiar tab now consumes the complete eleven-entry Library catalogue, with one declarative `isDefault` Familiar (Quill) and catalogue-driven common/rare/epic ranks. The profile component receives projected options through its existing service boundary; availability is still host-supplied and independent from ranks, ownership, acquisition, or pricing. The existing profile controller saves only `familiarId`, preserving unrelated drafts and rejecting unavailable IDs. Selection follows the Workshop profile adapter's existing in-memory lifetime; production persistence and future unlock enforcement remain host responsibilities. The reusable selector is exported from `@seihouse/library/familiar`; locked references are unchanged.
 
 - **2026-09-18 Daily Dao Pillar calendar:** The Home card is now a link to `/home/dao-pillar`, which holds the new server-owned 30-day reward calendar (`src/components/dao-pillar`, `src/server/dao-pillar`): the active Beta Test theme banner over a five-by-six grid of scheduled days, collected / available today / locked / missed states, 500 Qi milestones on days 7, 14, 21 and 28, and a one-claim-per-day collection validated and deposited on the server. The card shows the server streak, whether today is open or collected, and the amount collected today. The original local deposit mirror was replaced on 2026-09-19 by a refresh of the authoritative Qi-ledger projection. `UserProfileDaoPillarPanel.tsx` (refinement, cracked pillar, repair) was removed from the Cave; its legacy controller members stay on the contract for the locked reference page. Public views never mount the calendar.
 

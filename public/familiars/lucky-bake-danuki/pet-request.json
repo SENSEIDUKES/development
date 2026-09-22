@@ -1,0 +1,3786 @@
+{
+  "pet_id": "lucky-bake-danuki",
+  "display_name": "Lucky Bake-danuki",
+  "description": "A warm-hearted red-brown bake-danuki with a woven moon hat, lucky promissory scroll, and moon-marked flask brings good fortune to your side.",
+  "created_at": "2026-09-21T21:19:58.343766+00:00",
+  "sprite_version_number": 2,
+  "atlas": {
+    "columns": 8,
+    "rows": 11,
+    "cell_width": 192,
+    "cell_height": 208,
+    "width": 1536,
+    "height": 2288
+  },
+  "rows": [
+    {
+      "state": "idle",
+      "row": 0,
+      "frames": 6,
+      "purpose": "calm resting, breathing, and blinking loop"
+    },
+    {
+      "state": "running-right",
+      "row": 1,
+      "frames": 8,
+      "purpose": "rightward drag movement loop"
+    },
+    {
+      "state": "running-left",
+      "row": 2,
+      "frames": 8,
+      "purpose": "leftward drag movement loop"
+    },
+    {
+      "state": "waving",
+      "row": 3,
+      "frames": 4,
+      "purpose": "greeting or attention gesture"
+    },
+    {
+      "state": "jumping",
+      "row": 4,
+      "frames": 5,
+      "purpose": "hover or playful jump"
+    },
+    {
+      "state": "failed",
+      "row": 5,
+      "frames": 8,
+      "purpose": "blocked, failed, or cancelled reaction"
+    },
+    {
+      "state": "waiting",
+      "row": 6,
+      "frames": 6,
+      "purpose": "waiting for approval, help, or user input"
+    },
+    {
+      "state": "running",
+      "row": 7,
+      "frames": 6,
+      "purpose": "active task work or processing"
+    },
+    {
+      "state": "review",
+      "row": 8,
+      "frames": 6,
+      "purpose": "ready or completed output review"
+    },
+    {
+      "state": "look-row-9",
+      "row": 9,
+      "frames": 8,
+      "directions": [
+        "000",
+        "022.5",
+        "045",
+        "067.5",
+        "090",
+        "112.5",
+        "135",
+        "157.5"
+      ],
+      "purpose": "clockwise look directions from up through down-right"
+    },
+    {
+      "state": "look-row-10",
+      "row": 10,
+      "frames": 8,
+      "directions": [
+        "180",
+        "202.5",
+        "225",
+        "247.5",
+        "270",
+        "292.5",
+        "315",
+        "337.5"
+      ],
+      "purpose": "clockwise look directions from down through up-left"
+    }
+  ],
+  "layout_guides": [
+    {
+      "state": "idle",
+      "path": "references\\layout-guides\\idle.png",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "running-right",
+      "path": "references\\layout-guides\\running-right.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "running-left",
+      "path": "references\\layout-guides\\running-left.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "waving",
+      "path": "references\\layout-guides\\waving.png",
+      "width": 768,
+      "height": 208,
+      "frames": 4,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "jumping",
+      "path": "references\\layout-guides\\jumping.png",
+      "width": 960,
+      "height": 208,
+      "frames": 5,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "failed",
+      "path": "references\\layout-guides\\failed.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "waiting",
+      "path": "references\\layout-guides\\waiting.png",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "running",
+      "path": "references\\layout-guides\\running.png",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "review",
+      "path": "references\\layout-guides\\review.png",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "look-row-9",
+      "path": "references\\layout-guides\\look-row-9.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "look-row-10",
+      "path": "references\\layout-guides\\look-row-10.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "look-cardinals",
+      "path": "references\\layout-guides\\look-cardinals.png",
+      "width": 768,
+      "height": 208,
+      "frames": 4,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    }
+  ],
+  "references": [
+    {
+      "path": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\lucky-bake-danuki\\references\\reference-01.png",
+      "width": 1222,
+      "height": 1287,
+      "mode": "RGBA",
+      "format": "PNG",
+      "source_path": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\images\\Lucky Bake-danuki.png",
+      "copied_path": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\lucky-bake-danuki\\references\\reference-01.png"
+    }
+  ],
+  "chroma_key": {
+    "hex": "#00FFFF",
+    "rgb": [
+      0,
+      255,
+      255
+    ],
+    "name": "cyan",
+    "selection": "auto",
+    "score": 238.33
+  },
+  "pet_notes": "Compact full-body Japanese bake-danuki lucky spirit. Preserve a rounded plush red-brown raccoon-dog body with cream belly and muzzle, dark charcoal eye mask and paws, large green almond eyes, petite pointed ears, a broad woven straw hat with a polished gold crescent ornament, a purple braided cord sash with gold braid and crescent tassel, a cream ceramic moon-marked flask held in one paw, and an attached parchment promissory scroll held in the other. The scroll may use an abstract red-and-gold crescent seal but no readable text. Keep the warm premium painterly mascot style, calm clever friendly smile, giant curled dark-tipped tail, and full readable silhouette.",
+  "style_preset": "auto",
+  "style_notes": "Warm premium painterly mascot rendering from the reference, clean separable full-body sprite, preserve material hierarchy of plush fur, woven straw, parchment, ceramic, purple cord and polished gold. Simplify surface detail only where needed for 60px recognition. No text, logos, detached particles, shadows, scenery, floor marks, or glow.",
+  "style_contract": "Pet-safe sprite: compact full-body mascot, readable in a 192x208 cell, clear silhouette, simple face, stable palette/materials, and crisp edges for chroma-key extraction. Style `auto`: Infer the most appropriate pet-safe style from the user request and reference images, then keep that exact style consistent across every row. User style notes: Warm premium painterly mascot rendering from the reference, clean separable full-body sprite, preserve material hierarchy of plush fur, woven straw, parchment, ceramic, purple cord and polished gold. Simplify surface detail only where needed for 60px recognition. No text, logos, detached particles, shadows, scenery, floor marks, or glow..",
+  "brand_name": "",
+  "brand_brief": "",
+  "brand_sources": [],
+  "pet_safe_style": "Pet-safe sprite: compact full-body mascot, readable in a 192x208 cell, clear silhouette, simple face, stable palette/materials, and crisp edges for chroma-key extraction.",
+  "primary_generation_skill": "$imagegen",
+  "animation_timing_ms": {
+    "idle": [
+      280,
+      110,
+      110,
+      140,
+      140,
+      320
+    ],
+    "running-right": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      220
+    ],
+    "running-left": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      220
+    ],
+    "waving": [
+      140,
+      140,
+      140,
+      280
+    ],
+    "jumping": [
+      140,
+      140,
+      140,
+      140,
+      280
+    ],
+    "failed": [
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      240
+    ],
+    "waiting": [
+      150,
+      150,
+      150,
+      150,
+      150,
+      260
+    ],
+    "running": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      220
+    ],
+    "review": [
+      150,
+      150,
+      150,
+      150,
+      150,
+      280
+    ]
+  },
+  "source_reference": {
+    "original_filename": "Lucky Bake-danuki.png",
+    "original_absolute_path": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\images\\Lucky Bake-danuki.png",
+    "handoff_relative_path": "source/Lucky Bake-danuki.png",
+    "sha256": "1d9f4072810a4c768fac886f0a13e706a681c2765d06db60aaf449b151e04c1b",
+    "role": "sole visual authority"
+  },
+  "visual_decisions": {
+    "identity": "Rounded red-brown bake-danuki with cream muzzle and belly, charcoal eye mask and paws, green almond eyes, ringed tail, woven straw hat, gold crescent, purple-and-gold cord, parchment promissory scroll, and moon flask.",
+    "small_size_priority": "Green eyes, dark mask, rounded tanuki silhouette, straw crescent hat, ringed tail, parchment scroll, and moon flask stay readable at 60px.",
+    "prop_policy": "The scroll remains attached and uses only an abstract crescent seal with no readable text; flask, cord, tassel, hat crescent, and tail remain attached.",
+    "running_left": "Independently generated because mirroring would invert the asymmetric scroll, flask, crescent ornament, and cord handedness.",
+    "look_mechanics": "Planted lower body, physical whole-eye and muzzle turns, subtle worn-hat/brim follow-through, attached scroll/flask lag, and small tail counterbalance; no whole-sprite rotation."
+  },
+  "generation_jobs": [
+    {
+      "id": "base",
+      "kind": "base-pet",
+      "status": "complete",
+      "prompt_file": "prompts/base-pet.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        }
+      ],
+      "output_path": "decoded/base.png",
+      "depends_on": [],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c5d7-402b-7150-9faa-2083b94a9c3d\\exec-ebcd5228-2178-4c9e-9d8f-15ca6cabfe91.png",
+      "completed_at": "2026-09-21T21:22:48.4710784Z"
+    },
+    {
+      "id": "idle",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/idle.md",
+      "retry_prompt_file": "prompts/row-retries/idle.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/idle.png",
+          "role": "layout guide for 6 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/idle.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "no deterministic derivation is configured for this state"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c640-a384-7131-b9e6-e63ee543be1f\\exec-704da93b-1f24-4cfc-a80e-a3a2b562bced.png",
+      "completed_at": "2026-09-21T23:29:31.8135931Z",
+      "repair_reason": "The original idle source placed neighboring poses across fixed slot boundaries, leaving a foreign image fragment on the right edge of idle frames 00-04 and the neutral stance.",
+      "repair_result": "The replacement six-frame family uses isolated silhouettes with wide cyan gutters; every idle cell and neutral frame contains exactly one complete pet with no foreign edge fragment."
+    },
+    {
+      "id": "running-right",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/running-right.md",
+      "retry_prompt_file": "prompts/row-retries/running-right.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/running-right.png",
+          "role": "layout guide for 8 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/running-right.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "no deterministic derivation is configured for this state"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c5d9-fe4c-7b73-b2e0-70e15f68281c\\exec-d954abb7-19fa-4503-9e41-a13eeb0d6182.png",
+      "completed_at": "2026-09-21T21:24:56.8739784Z"
+    },
+    {
+      "id": "running-left",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/running-left.md",
+      "retry_prompt_file": "prompts/row-retries/running-left.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/running-left.png",
+          "role": "layout guide for 8 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        },
+        {
+          "path": "decoded/running-right.png",
+          "role": "rightward gait reference for leftward row decision"
+        }
+      ],
+      "output_path": "decoded/running-left.png",
+      "depends_on": [
+        "base",
+        "running-right"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base",
+        "running-right"
+      ],
+      "derivation_policy": {
+        "may_derive": true,
+        "may_derive_from": "running-right",
+        "derivation": "framewise-horizontal-mirror-preserving-order",
+        "requires_explicit_approval": true,
+        "fallback_generation_skill": "$imagegen"
+      },
+      "mirror_policy": {
+        "may_derive": true,
+        "may_derive_from": "running-right",
+        "derivation": "framewise-horizontal-mirror-preserving-order",
+        "requires_explicit_approval": true,
+        "fallback_generation_skill": "$imagegen"
+      },
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c5db-b3aa-7d43-808c-0d15e97c02af\\exec-3be7c374-212e-4628-8692-e909900a072d.png",
+      "completed_at": "2026-09-21T21:27:58.1578991Z"
+    },
+    {
+      "id": "waving",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/waving.md",
+      "retry_prompt_file": "prompts/row-retries/waving.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/waving.png",
+          "role": "layout guide for 4 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/waving.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c61f-413c-7fe1-9456-b145bdb8c7fb\\exec-57fec015-cad8-4632-814c-3efd063813ba.png",
+      "completed_at": "2026-09-21T22:53:33.4059385Z",
+      "repair_reason": "Replaced the complete waving family because frames 01 and 02 duplicated the parchment-gripping paw while adding a third waving paw.",
+      "repair_result": "The same left paw releases the parchment, waves, and returns while the sash supports the parchment; every frame has exactly two connected forepaws and identical blank parchment artwork with a stable crescent seal."
+    },
+    {
+      "id": "jumping",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/jumping.md",
+      "retry_prompt_file": "prompts/row-retries/jumping.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/jumping.png",
+          "role": "layout guide for 5 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/jumping.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c5de-76bf-7462-b5d4-6211310028a7\\exec-e407b1b6-69d3-453f-b4c1-0e0ad9fe18ef.png",
+      "completed_at": "2026-09-21T21:31:49.9743519Z"
+    },
+    {
+      "id": "failed",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/failed.md",
+      "retry_prompt_file": "prompts/row-retries/failed.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/failed.png",
+          "role": "layout guide for 8 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/failed.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c5df-64a9-7492-adda-1fa5f48934ae\\exec-4e64076d-7ba5-4c08-86e1-12ce2a676bf2.png",
+      "completed_at": "2026-09-21T21:32:36.0559784Z"
+    },
+    {
+      "id": "waiting",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/waiting.md",
+      "retry_prompt_file": "prompts/row-retries/waiting.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/waiting.png",
+          "role": "layout guide for 6 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/waiting.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c5e2-0562-7932-a71a-51030f372d13\\exec-d3605cfd-1f6b-4ebd-8ee9-4e8e2186e126.png",
+      "completed_at": "2026-09-21T21:34:50.8651096Z"
+    },
+    {
+      "id": "running",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/running.md",
+      "retry_prompt_file": "prompts/row-retries/running.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/running.png",
+          "role": "layout guide for 6 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/running.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c5e2-b6d7-7640-99e8-c1ec0d1a51a9\\exec-98b52693-5888-43c8-8b0a-f46b7200c743.png",
+      "completed_at": "2026-09-21T21:35:47.0191627Z"
+    },
+    {
+      "id": "review",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/review.md",
+      "retry_prompt_file": "prompts/row-retries/review.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/review.png",
+          "role": "layout guide for 6 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/review.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c5e4-d929-76f2-956c-cd7e048babc4\\exec-96a6f0f1-57d6-43df-9a39-a63b5662c34a.png",
+      "completed_at": "2026-09-21T21:38:49.983882Z"
+    },
+    {
+      "id": "look-cardinals",
+      "kind": "look-cardinal-strip",
+      "status": "complete",
+      "prompt_file": "prompts/look-cardinals.md",
+      "repair_prompt_files": {
+        "000": "prompts/look-anchor-repairs/000.md",
+        "090": "prompts/look-anchor-repairs/090.md",
+        "180": "prompts/look-anchor-repairs/180.md",
+        "270": "prompts/look-anchor-repairs/270.md"
+      },
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/look-cardinals.png",
+          "role": "layout guide for four cardinal slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        },
+        {
+          "path": "qa/contact-sheet.png",
+          "role": "approved standard-row identity, scale, and baseline reference"
+        }
+      ],
+      "output_path": "decoded/look-cardinals.png",
+      "extracted_output_paths": [
+        "decoded/look-anchors/000.png",
+        "decoded/look-anchors/090.png",
+        "decoded/look-anchors/180.png",
+        "decoded/look-anchors/270.png"
+      ],
+      "approved_strip_path": "decoded/look-anchors-approved.png",
+      "depends_on": [
+        "idle",
+        "running-right",
+        "running-left",
+        "waving",
+        "jumping",
+        "failed",
+        "waiting",
+        "running",
+        "review"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "look_mechanics_file": "qa/look-mechanics.md",
+      "directions": [
+        "000",
+        "090",
+        "180",
+        "270"
+      ],
+      "packaging_eligible": false,
+      "parallelizable_after": [
+        "idle",
+        "running-right",
+        "running-left",
+        "waving",
+        "jumping",
+        "failed",
+        "waiting",
+        "running",
+        "review"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "cardinal directions require grounded pet-specific generation"
+      },
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c5eb-90f8-72b2-86df-a91ffffab5a6\\exec-31ffaa14-9f05-4d84-b1a2-6d1da0cfbcc2.png",
+      "completed_at": "2026-09-21T21:45:27.298983Z"
+    },
+    {
+      "id": "look-row-9",
+      "kind": "look-row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/look-row-9.md",
+      "retry_prompt_file": "prompts/row-retries/look-row-9.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/look-row-9.png",
+          "role": "layout guide for 8 direction slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        },
+        {
+          "path": "qa/contact-sheet.png",
+          "role": "approved standard-row identity, scale, and baseline reference"
+        },
+        {
+          "path": "decoded/look-anchors-approved.png",
+          "role": "approved cardinal reference strip in order 000 up, 090 screen-right, 180 down, 270 screen-left; interpolate intermediate directions evenly"
+        }
+      ],
+      "output_path": "decoded/look-row-9.png",
+      "depends_on": [
+        "look-cardinals"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "look_mechanics_file": "qa/look-mechanics.md",
+      "directions": [
+        "000",
+        "022.5",
+        "045",
+        "067.5",
+        "090",
+        "112.5",
+        "135",
+        "157.5"
+      ],
+      "parallelizable_after": [
+        "look-cardinals"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "look directions require grounded pet-specific generation"
+      },
+      "coherent_synthesis_required": true,
+      "individual_cell_packaging_allowed": false,
+      "packaging_eligible": true,
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c600-368f-79e3-9142-164aad1c50cd\\exec-572d5989-0a24-4250-aeb1-b8548f851f9d.png",
+      "completed_at": "2026-09-21T21:50:07.9916669Z",
+      "final_selected_after_repair": true
+    },
+    {
+      "id": "look-row-10",
+      "kind": "look-row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/look-row-10.md",
+      "retry_prompt_file": "prompts/row-retries/look-row-10.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/look-row-10.png",
+          "role": "layout guide for 8 direction slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        },
+        {
+          "path": "qa/contact-sheet.png",
+          "role": "approved standard-row identity, scale, and baseline reference"
+        },
+        {
+          "path": "decoded/look-anchors-approved.png",
+          "role": "approved cardinal reference strip in order 000 up, 090 screen-right, 180 down, 270 screen-left; interpolate intermediate directions evenly"
+        },
+        {
+          "path": "decoded/look-row-9.png",
+          "role": "completed first half of the clockwise look loop for row 10 continuity"
+        }
+      ],
+      "output_path": "decoded/look-row-10.png",
+      "depends_on": [
+        "look-cardinals",
+        "look-row-9"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "look_mechanics_file": "qa/look-mechanics.md",
+      "directions": [
+        "180",
+        "202.5",
+        "225",
+        "247.5",
+        "270",
+        "292.5",
+        "315",
+        "337.5"
+      ],
+      "parallelizable_after": [
+        "look-cardinals",
+        "look-row-9"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "look directions require grounded pet-specific generation"
+      },
+      "coherent_synthesis_required": true,
+      "individual_cell_packaging_allowed": false,
+      "packaging_eligible": true,
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c603-4a77-7b93-aa3c-b79f265137b8\\exec-cd96602e-b558-4624-9423-af101c19643e.png",
+      "completed_at": "2026-09-21T21:55:16.8189199Z",
+      "final_selected_after_repair": true
+    }
+  ],
+  "direction_anchor_repairs": {
+    "reason": "Initial isolated blind review identified reversed screen-coordinate horizontal cardinals.",
+    "repaired_directions": [
+      "090",
+      "270"
+    ],
+    "final_rows_resynthesized": [
+      "look-row-9",
+      "look-row-10"
+    ]
+  },
+  "animation_repairs": {
+    "idle": {
+      "reason": "The original idle strip crossed fixed slot boundaries, leaving a fragment of the neighboring pose on the right edge of idle frames 00-04 and the neutral stance.",
+      "result": "The accepted complete six-frame family uses isolated silhouettes with wide gutters; each idle cell and neutral frame contains exactly one complete pet with no foreign edge fragment.",
+      "independent_visual_qa": "pass"
+    },
+    "waving": {
+      "reason": "The original wave duplicated the parchment-gripping paw as a third waving paw; the first replacement also introduced changing parchment marks.",
+      "result": "The accepted complete four-frame family uses exactly two forepaws, the same left paw releases and returns to the sash-supported parchment, and the blank parchment plus crescent seal remain stable in every frame.",
+      "independent_visual_qa": "pass"
+    }
+  },
+  "final_atlas": {
+    "path": "spritesheet.webp",
+    "sha256": "bd62d7f8bebad528c43ee48cc43118eefdea28757e660cebc0da13abcdd87e6a",
+    "dimensions": {
+      "width": 1536,
+      "height": 2288,
+      "columns": 8,
+      "rows": 11,
+      "cell_width": 192,
+      "cell_height": 208
+    },
+    "neutral_frame": {
+      "row": 0,
+      "column": 6,
+      "handoff_path": "neutral.png"
+    },
+    "hero_animation": "waving"
+  },
+  "validation_artifacts": {
+    "atlas_validator": {
+      "ok": true,
+      "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\lucky-bake-danuki\\final\\repair4b\\spritesheet-extended.webp",
+      "format": "WEBP",
+      "mode": "RGBA",
+      "columns": 8,
+      "rows": 11,
+      "sprite_version_number": 2,
+      "width": 1536,
+      "height": 2288,
+      "transparent_rgb_residue_pixels": 0,
+      "errors": [],
+      "warnings": [],
+      "cells": [
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 22457,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 22808,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 22538,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 22673,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 22725,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 22703,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 23144,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 21652,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 20576,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 19539,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 20330,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 19677,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 19311,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 19036,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 20416,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 21680,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 19899,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 20525,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 20568,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 19916,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 19707,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 20334,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 21441,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 23245,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 23733,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 24025,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 23288,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 4,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 5,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 13643,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 13471,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 14660,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 14095,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 13492,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 5,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 21161,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 20842,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 19687,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 19564,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 19824,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 18898,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 18827,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 21045,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 21023,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 21417,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 20185,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 20325,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 21662,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 20943,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 21765,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 22129,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 21767,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 21357,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 21703,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 23822,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 21186,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 19976,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 20289,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 19573,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 20174,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 21112,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 20980,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 21322,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 21223,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 21078,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 20789,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 20903,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 20600,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 20574,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 19673,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 19718,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 19240,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 19486,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 19829,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 19825,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 20271,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 20011,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        }
+      ]
+    },
+    "chroma_cleanup": {
+      "ok": true,
+      "input": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\lucky-bake-danuki\\final\\repair4b\\spritesheet-extended.png",
+      "output": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\lucky-bake-danuki\\final\\repair4b\\spritesheet-extended.png",
+      "chroma_key": "#00FFFF",
+      "algorithm": "edge-local-chroma-spill-suppression",
+      "strength": 1,
+      "edge_radius": 5,
+      "spill_tolerance": 0.15,
+      "minimum_saturation": 0.1,
+      "changed_pixels": 130146,
+      "decontaminated_pixels": 129402,
+      "spill_suppressed_pixels": 130146,
+      "rejected_pixels": 0,
+      "changed_by_cell": {
+        "r9c3": 2368,
+        "r9c0": 2345,
+        "r9c7": 2333,
+        "r9c6": 2253,
+        "r9c1": 2252,
+        "r9c5": 2247,
+        "r10c6": 2228,
+        "r9c2": 2227,
+        "r9c4": 2225,
+        "r10c7": 2218,
+        "r10c0": 2062,
+        "r10c1": 2044,
+        "r10c5": 2036,
+        "r10c3": 2020,
+        "r10c4": 2000,
+        "r10c2": 1986,
+        "r2c0": 1904,
+        "r2c7": 1852,
+        "r0c4": 1850,
+        "r3c0": 1845,
+        "r3c1": 1845,
+        "r0c1": 1837,
+        "r0c5": 1836,
+        "r7c5": 1836,
+        "r3c3": 1829,
+        "r0c3": 1817,
+        "r0c0": 1811,
+        "r3c2": 1807,
+        "r0c2": 1804,
+        "r2c6": 1773,
+        "r1c7": 1765,
+        "r2c2": 1763,
+        "r1c0": 1758,
+        "r2c3": 1748,
+        "r1c1": 1742,
+        "r8c5": 1708,
+        "r8c2": 1705,
+        "r8c0": 1705,
+        "r7c0": 1702,
+        "r7c4": 1698,
+        "r2c4": 1697,
+        "r2c1": 1685,
+        "r7c2": 1683,
+        "r7c3": 1659,
+        "r2c5": 1658,
+        "r1c2": 1652,
+        "r1c5": 1651,
+        "r8c4": 1651,
+        "r6c2": 1649,
+        "r8c1": 1646,
+        "r1c3": 1640,
+        "r7c1": 1639,
+        "r1c6": 1629,
+        "r6c0": 1623,
+        "r1c4": 1617,
+        "r6c1": 1581,
+        "r6c4": 1577,
+        "r5c0": 1572,
+        "r5c1": 1563,
+        "r5c7": 1561,
+        "r6c5": 1537,
+        "r8c3": 1507,
+        "r6c3": 1499,
+        "r0c6": 1493,
+        "r5c4": 1434,
+        "r5c2": 1432,
+        "r5c3": 1409,
+        "r4c2": 1371,
+        "r4c3": 1368,
+        "r4c4": 1352,
+        "r5c5": 1351,
+        "r4c1": 1326,
+        "r4c0": 1326,
+        "r5c6": 1324
+      },
+      "alpha_preserved": true
+    },
+    "blind_direction_validation": {
+      "ok": true,
+      "errors": [],
+      "warnings": [
+        "vertical-7 A vertical axis is ambiguous",
+        "vertical-7 B vertical axis is ambiguous"
+      ],
+      "unconfirmed": [],
+      "reviewRequired": true,
+      "pairs": [
+        {
+          "pair": "horizontal-1",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "337.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "022.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "horizontal-2",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "045",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "315",
+            "pass": true
+          }
+        },
+        {
+          "pair": "horizontal-3",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "292.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "067.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "horizontal-4",
+          "axis": "horizontal",
+          "gate": "hard",
+          "A": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "270",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "090",
+            "pass": true
+          }
+        },
+        {
+          "pair": "horizontal-5",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "247.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "112.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "horizontal-6",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "225",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "135",
+            "pass": true
+          }
+        },
+        {
+          "pair": "horizontal-7",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "202.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "157.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-1",
+          "axis": "vertical",
+          "gate": "hard",
+          "A": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "180",
+            "pass": true
+          },
+          "B": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "000",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-2",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "022.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "157.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-3",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "135",
+            "pass": true
+          },
+          "B": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "045",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-4",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "067.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "112.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-5",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "337.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "202.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-6",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "225",
+            "pass": true
+          },
+          "B": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "315",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-7",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "ambiguous",
+            "expected": "up",
+            "source_direction": "292.5",
+            "pass": false
+          },
+          "B": {
+            "observed": "ambiguous",
+            "expected": "down",
+            "source_direction": "247.5",
+            "pass": false
+          }
+        }
+      ]
+    },
+    "direction_semantics": {
+      "reviewed_by": "independent-final-visual-qa",
+      "directions": [
+        {
+          "degree": "000",
+          "expected": "up",
+          "observed": "up",
+          "verdict": "pass",
+          "reason": "Pupils and muzzle are lifted above the face center."
+        },
+        {
+          "degree": "022.5",
+          "expected": "up-right",
+          "observed": "up-right",
+          "verdict": "pass",
+          "reason": "Eyes and muzzle shift screen-right while retaining raised gaze."
+        },
+        {
+          "degree": "045",
+          "expected": "up-right",
+          "observed": "up-right",
+          "verdict": "pass",
+          "reason": "Clear raised screen-right three-quarter face."
+        },
+        {
+          "degree": "067.5",
+          "expected": "up-right",
+          "observed": "up-right",
+          "verdict": "pass",
+          "reason": "Raised gaze advances naturally toward the right profile."
+        },
+        {
+          "degree": "090",
+          "expected": "screen-right",
+          "observed": "screen-right",
+          "verdict": "pass",
+          "reason": "Unmistakable screen-right profile with nose and eyes aimed right."
+        },
+        {
+          "degree": "112.5",
+          "expected": "down-right",
+          "observed": "down-right",
+          "verdict": "pass",
+          "reason": "Rightward face lowers with eyelids and muzzle directed down."
+        },
+        {
+          "degree": "135",
+          "expected": "down-right",
+          "observed": "down-right",
+          "verdict": "pass",
+          "reason": "Clear low screen-right three-quarter face."
+        },
+        {
+          "degree": "157.5",
+          "expected": "down-right",
+          "observed": "down-right",
+          "verdict": "pass",
+          "reason": "Continued rightward low gaze immediately before down."
+        },
+        {
+          "degree": "180",
+          "expected": "down",
+          "observed": "down",
+          "verdict": "pass",
+          "reason": "Both eyes and muzzle are directed distinctly down."
+        },
+        {
+          "degree": "202.5",
+          "expected": "down-left",
+          "observed": "down-left",
+          "verdict": "pass",
+          "reason": "Low gaze turns screen-left with the muzzle crossing left."
+        },
+        {
+          "degree": "225",
+          "expected": "down-left",
+          "observed": "down-left",
+          "verdict": "pass",
+          "reason": "Clear low screen-left three-quarter face."
+        },
+        {
+          "degree": "247.5",
+          "expected": "down-left",
+          "observed": "down-left",
+          "verdict": "warning",
+          "reason": "Labeled normal-size loop reads down-left through lowered eyes and leftward muzzle despite blind vertical ambiguity."
+        },
+        {
+          "degree": "270",
+          "expected": "screen-left",
+          "observed": "screen-left",
+          "verdict": "pass",
+          "reason": "Unmistakable screen-left profile with nose and eyes aimed left."
+        },
+        {
+          "degree": "292.5",
+          "expected": "up-left",
+          "observed": "up-left",
+          "verdict": "warning",
+          "reason": "Labeled normal-size loop reads up-left through raised eyes and leftward muzzle despite blind vertical ambiguity."
+        },
+        {
+          "degree": "315",
+          "expected": "up-left",
+          "observed": "up-left",
+          "verdict": "pass",
+          "reason": "Clear raised screen-left three-quarter face."
+        },
+        {
+          "degree": "337.5",
+          "expected": "up-left",
+          "observed": "up-left",
+          "verdict": "pass",
+          "reason": "Raised leftward gaze closes smoothly into 000."
+        }
+      ]
+    },
+    "continuity": {
+      "ok": true,
+      "reviewRequired": true,
+      "medianDiffPixels": 1888.0,
+      "warnings": [
+        "000 has transparent interior hole rows (y=185, y=186, y=187, y=188, +11 more)",
+        "022.5 has transparent interior hole rows (y=185, y=186, y=187, y=188, +11 more)",
+        "045 has transparent interior hole rows (y=185, y=186, y=187, y=188, +11 more)",
+        "067.5 has transparent interior hole rows (y=186, y=187, y=188, y=189, +10 more)",
+        "090 has transparent interior hole rows (y=186, y=187, y=188, y=189, +10 more)",
+        "112.5 has transparent interior hole rows (y=185, y=186, y=187, y=188, +11 more)",
+        "135 has transparent interior hole rows (y=186, y=187, y=188, y=189, +10 more)",
+        "157.5 has transparent interior hole rows (y=187, y=188, y=189, y=190, +9 more)",
+        "180 has transparent interior hole rows (y=185, y=186, y=187, y=188, +12 more)",
+        "202.5 has transparent interior hole rows (y=185, y=186, y=187, y=188, +11 more)",
+        "225 has transparent interior hole rows (y=185, y=186, y=187, y=188, +11 more)",
+        "247.5 has transparent interior hole rows (y=185, y=186, y=187, y=188, +12 more)",
+        "270 has transparent interior hole rows (y=185, y=186, y=187, y=188, +12 more)",
+        "292.5 has transparent interior hole rows (y=184, y=185, y=186, y=187, +13 more)",
+        "315 has transparent interior hole rows (y=184, y=185, y=186, y=187, +13 more)",
+        "337.5 has transparent interior hole rows (y=184, y=185, y=186, y=187, +13 more)",
+        "157.5->180 diff is a local outlier (4262 pixels vs neighbor average 2000)",
+        "337.5->000 diff is a local outlier (3416 pixels vs neighbor average 2018)"
+      ],
+      "alphaHoles": [
+        {
+          "direction": "000",
+          "holes": [
+            {
+              "row": 185,
+              "transparentPixels": 33,
+              "spanPixels": 87
+            },
+            {
+              "row": 186,
+              "transparentPixels": 39,
+              "spanPixels": 87
+            },
+            {
+              "row": 187,
+              "transparentPixels": 41,
+              "spanPixels": 87
+            },
+            {
+              "row": 188,
+              "transparentPixels": 43,
+              "spanPixels": 89
+            },
+            {
+              "row": 189,
+              "transparentPixels": 44,
+              "spanPixels": 98
+            },
+            {
+              "row": 190,
+              "transparentPixels": 45,
+              "spanPixels": 103
+            },
+            {
+              "row": 191,
+              "transparentPixels": 46,
+              "spanPixels": 106
+            },
+            {
+              "row": 192,
+              "transparentPixels": 46,
+              "spanPixels": 108
+            },
+            {
+              "row": 193,
+              "transparentPixels": 46,
+              "spanPixels": 110
+            },
+            {
+              "row": 194,
+              "transparentPixels": 47,
+              "spanPixels": 111
+            },
+            {
+              "row": 195,
+              "transparentPixels": 48,
+              "spanPixels": 112
+            },
+            {
+              "row": 196,
+              "transparentPixels": 49,
+              "spanPixels": 111
+            },
+            {
+              "row": 197,
+              "transparentPixels": 49,
+              "spanPixels": 111
+            },
+            {
+              "row": 198,
+              "transparentPixels": 52,
+              "spanPixels": 110
+            },
+            {
+              "row": 199,
+              "transparentPixels": 54,
+              "spanPixels": 106
+            }
+          ]
+        },
+        {
+          "direction": "022.5",
+          "holes": [
+            {
+              "row": 185,
+              "transparentPixels": 36,
+              "spanPixels": 87
+            },
+            {
+              "row": 186,
+              "transparentPixels": 39,
+              "spanPixels": 87
+            },
+            {
+              "row": 187,
+              "transparentPixels": 43,
+              "spanPixels": 88
+            },
+            {
+              "row": 188,
+              "transparentPixels": 44,
+              "spanPixels": 90
+            },
+            {
+              "row": 189,
+              "transparentPixels": 45,
+              "spanPixels": 99
+            },
+            {
+              "row": 190,
+              "transparentPixels": 46,
+              "spanPixels": 104
+            },
+            {
+              "row": 191,
+              "transparentPixels": 46,
+              "spanPixels": 107
+            },
+            {
+              "row": 192,
+              "transparentPixels": 47,
+              "spanPixels": 109
+            },
+            {
+              "row": 193,
+              "transparentPixels": 48,
+              "spanPixels": 111
+            },
+            {
+              "row": 194,
+              "transparentPixels": 48,
+              "spanPixels": 111
+            },
+            {
+              "row": 195,
+              "transparentPixels": 48,
+              "spanPixels": 112
+            },
+            {
+              "row": 196,
+              "transparentPixels": 50,
+              "spanPixels": 112
+            },
+            {
+              "row": 197,
+              "transparentPixels": 52,
+              "spanPixels": 112
+            },
+            {
+              "row": 198,
+              "transparentPixels": 53,
+              "spanPixels": 110
+            },
+            {
+              "row": 199,
+              "transparentPixels": 56,
+              "spanPixels": 105
+            }
+          ]
+        },
+        {
+          "direction": "045",
+          "holes": [
+            {
+              "row": 185,
+              "transparentPixels": 33,
+              "spanPixels": 87
+            },
+            {
+              "row": 186,
+              "transparentPixels": 36,
+              "spanPixels": 86
+            },
+            {
+              "row": 187,
+              "transparentPixels": 40,
+              "spanPixels": 88
+            },
+            {
+              "row": 188,
+              "transparentPixels": 43,
+              "spanPixels": 90
+            },
+            {
+              "row": 189,
+              "transparentPixels": 45,
+              "spanPixels": 95
+            },
+            {
+              "row": 190,
+              "transparentPixels": 45,
+              "spanPixels": 101
+            },
+            {
+              "row": 191,
+              "transparentPixels": 46,
+              "spanPixels": 104
+            },
+            {
+              "row": 192,
+              "transparentPixels": 46,
+              "spanPixels": 107
+            },
+            {
+              "row": 193,
+              "transparentPixels": 47,
+              "spanPixels": 109
+            },
+            {
+              "row": 194,
+              "transparentPixels": 48,
+              "spanPixels": 111
+            },
+            {
+              "row": 195,
+              "transparentPixels": 48,
+              "spanPixels": 111
+            },
+            {
+              "row": 196,
+              "transparentPixels": 49,
+              "spanPixels": 112
+            },
+            {
+              "row": 197,
+              "transparentPixels": 50,
+              "spanPixels": 112
+            },
+            {
+              "row": 198,
+              "transparentPixels": 52,
+              "spanPixels": 110
+            },
+            {
+              "row": 199,
+              "transparentPixels": 54,
+              "spanPixels": 108
+            }
+          ]
+        },
+        {
+          "direction": "067.5",
+          "holes": [
+            {
+              "row": 186,
+              "transparentPixels": 35,
+              "spanPixels": 82
+            },
+            {
+              "row": 187,
+              "transparentPixels": 38,
+              "spanPixels": 84
+            },
+            {
+              "row": 188,
+              "transparentPixels": 40,
+              "spanPixels": 87
+            },
+            {
+              "row": 189,
+              "transparentPixels": 41,
+              "spanPixels": 96
+            },
+            {
+              "row": 190,
+              "transparentPixels": 42,
+              "spanPixels": 99
+            },
+            {
+              "row": 191,
+              "transparentPixels": 43,
+              "spanPixels": 102
+            },
+            {
+              "row": 192,
+              "transparentPixels": 43,
+              "spanPixels": 104
+            },
+            {
+              "row": 193,
+              "transparentPixels": 43,
+              "spanPixels": 106
+            },
+            {
+              "row": 194,
+              "transparentPixels": 45,
+              "spanPixels": 106
+            },
+            {
+              "row": 195,
+              "transparentPixels": 45,
+              "spanPixels": 108
+            },
+            {
+              "row": 196,
+              "transparentPixels": 46,
+              "spanPixels": 107
+            },
+            {
+              "row": 197,
+              "transparentPixels": 47,
+              "spanPixels": 107
+            },
+            {
+              "row": 198,
+              "transparentPixels": 49,
+              "spanPixels": 105
+            },
+            {
+              "row": 199,
+              "transparentPixels": 52,
+              "spanPixels": 97
+            }
+          ]
+        },
+        {
+          "direction": "090",
+          "holes": [
+            {
+              "row": 186,
+              "transparentPixels": 34,
+              "spanPixels": 82
+            },
+            {
+              "row": 187,
+              "transparentPixels": 38,
+              "spanPixels": 84
+            },
+            {
+              "row": 188,
+              "transparentPixels": 40,
+              "spanPixels": 87
+            },
+            {
+              "row": 189,
+              "transparentPixels": 41,
+              "spanPixels": 96
+            },
+            {
+              "row": 190,
+              "transparentPixels": 41,
+              "spanPixels": 100
+            },
+            {
+              "row": 191,
+              "transparentPixels": 43,
+              "spanPixels": 103
+            },
+            {
+              "row": 192,
+              "transparentPixels": 43,
+              "spanPixels": 105
+            },
+            {
+              "row": 193,
+              "transparentPixels": 43,
+              "spanPixels": 107
+            },
+            {
+              "row": 194,
+              "transparentPixels": 45,
+              "spanPixels": 108
+            },
+            {
+              "row": 195,
+              "transparentPixels": 45,
+              "spanPixels": 108
+            },
+            {
+              "row": 196,
+              "transparentPixels": 46,
+              "spanPixels": 108
+            },
+            {
+              "row": 197,
+              "transparentPixels": 47,
+              "spanPixels": 108
+            },
+            {
+              "row": 198,
+              "transparentPixels": 49,
+              "spanPixels": 106
+            },
+            {
+              "row": 199,
+              "transparentPixels": 52,
+              "spanPixels": 98
+            }
+          ]
+        },
+        {
+          "direction": "112.5",
+          "holes": [
+            {
+              "row": 185,
+              "transparentPixels": 33,
+              "spanPixels": 86
+            },
+            {
+              "row": 186,
+              "transparentPixels": 36,
+              "spanPixels": 85
+            },
+            {
+              "row": 187,
+              "transparentPixels": 38,
+              "spanPixels": 87
+            },
+            {
+              "row": 188,
+              "transparentPixels": 41,
+              "spanPixels": 90
+            },
+            {
+              "row": 189,
+              "transparentPixels": 43,
+              "spanPixels": 98
+            },
+            {
+              "row": 190,
+              "transparentPixels": 44,
+              "spanPixels": 102
+            },
+            {
+              "row": 191,
+              "transparentPixels": 44,
+              "spanPixels": 105
+            },
+            {
+              "row": 192,
+              "transparentPixels": 46,
+              "spanPixels": 107
+            },
+            {
+              "row": 193,
+              "transparentPixels": 46,
+              "spanPixels": 109
+            },
+            {
+              "row": 194,
+              "transparentPixels": 46,
+              "spanPixels": 110
+            },
+            {
+              "row": 195,
+              "transparentPixels": 48,
+              "spanPixels": 111
+            },
+            {
+              "row": 196,
+              "transparentPixels": 48,
+              "spanPixels": 110
+            },
+            {
+              "row": 197,
+              "transparentPixels": 50,
+              "spanPixels": 110
+            },
+            {
+              "row": 198,
+              "transparentPixels": 51,
+              "spanPixels": 109
+            },
+            {
+              "row": 199,
+              "transparentPixels": 54,
+              "spanPixels": 101
+            }
+          ]
+        },
+        {
+          "direction": "135",
+          "holes": [
+            {
+              "row": 186,
+              "transparentPixels": 33,
+              "spanPixels": 86
+            },
+            {
+              "row": 187,
+              "transparentPixels": 37,
+              "spanPixels": 86
+            },
+            {
+              "row": 188,
+              "transparentPixels": 40,
+              "spanPixels": 88
+            },
+            {
+              "row": 189,
+              "transparentPixels": 42,
+              "spanPixels": 93
+            },
+            {
+              "row": 190,
+              "transparentPixels": 44,
+              "spanPixels": 100
+            },
+            {
+              "row": 191,
+              "transparentPixels": 45,
+              "spanPixels": 105
+            },
+            {
+              "row": 192,
+              "transparentPixels": 46,
+              "spanPixels": 108
+            },
+            {
+              "row": 193,
+              "transparentPixels": 46,
+              "spanPixels": 110
+            },
+            {
+              "row": 194,
+              "transparentPixels": 48,
+              "spanPixels": 110
+            },
+            {
+              "row": 195,
+              "transparentPixels": 48,
+              "spanPixels": 111
+            },
+            {
+              "row": 196,
+              "transparentPixels": 49,
+              "spanPixels": 111
+            },
+            {
+              "row": 197,
+              "transparentPixels": 50,
+              "spanPixels": 112
+            },
+            {
+              "row": 198,
+              "transparentPixels": 51,
+              "spanPixels": 111
+            },
+            {
+              "row": 199,
+              "transparentPixels": 53,
+              "spanPixels": 109
+            }
+          ]
+        },
+        {
+          "direction": "157.5",
+          "holes": [
+            {
+              "row": 187,
+              "transparentPixels": 35,
+              "spanPixels": 90
+            },
+            {
+              "row": 188,
+              "transparentPixels": 39,
+              "spanPixels": 93
+            },
+            {
+              "row": 189,
+              "transparentPixels": 44,
+              "spanPixels": 98
+            },
+            {
+              "row": 190,
+              "transparentPixels": 47,
+              "spanPixels": 106
+            },
+            {
+              "row": 191,
+              "transparentPixels": 49,
+              "spanPixels": 110
+            },
+            {
+              "row": 192,
+              "transparentPixels": 50,
+              "spanPixels": 113
+            },
+            {
+              "row": 193,
+              "transparentPixels": 51,
+              "spanPixels": 115
+            },
+            {
+              "row": 194,
+              "transparentPixels": 52,
+              "spanPixels": 116
+            },
+            {
+              "row": 195,
+              "transparentPixels": 53,
+              "spanPixels": 117
+            },
+            {
+              "row": 196,
+              "transparentPixels": 54,
+              "spanPixels": 118
+            },
+            {
+              "row": 197,
+              "transparentPixels": 55,
+              "spanPixels": 118
+            },
+            {
+              "row": 198,
+              "transparentPixels": 57,
+              "spanPixels": 117
+            },
+            {
+              "row": 199,
+              "transparentPixels": 60,
+              "spanPixels": 115
+            }
+          ]
+        },
+        {
+          "direction": "180",
+          "holes": [
+            {
+              "row": 185,
+              "transparentPixels": 36,
+              "spanPixels": 87
+            },
+            {
+              "row": 186,
+              "transparentPixels": 40,
+              "spanPixels": 87
+            },
+            {
+              "row": 187,
+              "transparentPixels": 41,
+              "spanPixels": 88
+            },
+            {
+              "row": 188,
+              "transparentPixels": 43,
+              "spanPixels": 89
+            },
+            {
+              "row": 189,
+              "transparentPixels": 44,
+              "spanPixels": 94
+            },
+            {
+              "row": 190,
+              "transparentPixels": 45,
+              "spanPixels": 100
+            },
+            {
+              "row": 191,
+              "transparentPixels": 46,
+              "spanPixels": 103
+            },
+            {
+              "row": 192,
+              "transparentPixels": 46,
+              "spanPixels": 105
+            },
+            {
+              "row": 193,
+              "transparentPixels": 47,
+              "spanPixels": 107
+            },
+            {
+              "row": 194,
+              "transparentPixels": 48,
+              "spanPixels": 109
+            },
+            {
+              "row": 195,
+              "transparentPixels": 48,
+              "spanPixels": 109
+            },
+            {
+              "row": 196,
+              "transparentPixels": 50,
+              "spanPixels": 109
+            },
+            {
+              "row": 197,
+              "transparentPixels": 50,
+              "spanPixels": 109
+            },
+            {
+              "row": 198,
+              "transparentPixels": 51,
+              "spanPixels": 108
+            },
+            {
+              "row": 199,
+              "transparentPixels": 52,
+              "spanPixels": 106
+            },
+            {
+              "row": 200,
+              "transparentPixels": 55,
+              "spanPixels": 95
+            }
+          ]
+        },
+        {
+          "direction": "202.5",
+          "holes": [
+            {
+              "row": 185,
+              "transparentPixels": 36,
+              "spanPixels": 86
+            },
+            {
+              "row": 186,
+              "transparentPixels": 39,
+              "spanPixels": 87
+            },
+            {
+              "row": 187,
+              "transparentPixels": 41,
+              "spanPixels": 87
+            },
+            {
+              "row": 188,
+              "transparentPixels": 43,
+              "spanPixels": 90
+            },
+            {
+              "row": 189,
+              "transparentPixels": 43,
+              "spanPixels": 95
+            },
+            {
+              "row": 190,
+              "transparentPixels": 44,
+              "spanPixels": 101
+            },
+            {
+              "row": 191,
+              "transparentPixels": 44,
+              "spanPixels": 103
+            },
+            {
+              "row": 192,
+              "transparentPixels": 46,
+              "spanPixels": 105
+            },
+            {
+              "row": 193,
+              "transparentPixels": 46,
+              "spanPixels": 107
+            },
+            {
+              "row": 194,
+              "transparentPixels": 47,
+              "spanPixels": 107
+            },
+            {
+              "row": 195,
+              "transparentPixels": 48,
+              "spanPixels": 109
+            },
+            {
+              "row": 196,
+              "transparentPixels": 48,
+              "spanPixels": 109
+            },
+            {
+              "row": 197,
+              "transparentPixels": 49,
+              "spanPixels": 107
+            },
+            {
+              "row": 198,
+              "transparentPixels": 50,
+              "spanPixels": 106
+            },
+            {
+              "row": 199,
+              "transparentPixels": 51,
+              "spanPixels": 102
+            }
+          ]
+        },
+        {
+          "direction": "225",
+          "holes": [
+            {
+              "row": 185,
+              "transparentPixels": 36,
+              "spanPixels": 86
+            },
+            {
+              "row": 186,
+              "transparentPixels": 39,
+              "spanPixels": 87
+            },
+            {
+              "row": 187,
+              "transparentPixels": 41,
+              "spanPixels": 87
+            },
+            {
+              "row": 188,
+              "transparentPixels": 43,
+              "spanPixels": 89
+            },
+            {
+              "row": 189,
+              "transparentPixels": 43,
+              "spanPixels": 95
+            },
+            {
+              "row": 190,
+              "transparentPixels": 44,
+              "spanPixels": 101
+            },
+            {
+              "row": 191,
+              "transparentPixels": 45,
+              "spanPixels": 103
+            },
+            {
+              "row": 192,
+              "transparentPixels": 45,
+              "spanPixels": 105
+            },
+            {
+              "row": 193,
+              "transparentPixels": 46,
+              "spanPixels": 106
+            },
+            {
+              "row": 194,
+              "transparentPixels": 46,
+              "spanPixels": 107
+            },
+            {
+              "row": 195,
+              "transparentPixels": 47,
+              "spanPixels": 108
+            },
+            {
+              "row": 196,
+              "transparentPixels": 48,
+              "spanPixels": 108
+            },
+            {
+              "row": 197,
+              "transparentPixels": 48,
+              "spanPixels": 108
+            },
+            {
+              "row": 198,
+              "transparentPixels": 50,
+              "spanPixels": 106
+            },
+            {
+              "row": 199,
+              "transparentPixels": 51,
+              "spanPixels": 101
+            }
+          ]
+        },
+        {
+          "direction": "247.5",
+          "holes": [
+            {
+              "row": 185,
+              "transparentPixels": 36,
+              "spanPixels": 87
+            },
+            {
+              "row": 186,
+              "transparentPixels": 40,
+              "spanPixels": 87
+            },
+            {
+              "row": 187,
+              "transparentPixels": 42,
+              "spanPixels": 88
+            },
+            {
+              "row": 188,
+              "transparentPixels": 43,
+              "spanPixels": 90
+            },
+            {
+              "row": 189,
+              "transparentPixels": 45,
+              "spanPixels": 93
+            },
+            {
+              "row": 190,
+              "transparentPixels": 45,
+              "spanPixels": 100
+            },
+            {
+              "row": 191,
+              "transparentPixels": 45,
+              "spanPixels": 103
+            },
+            {
+              "row": 192,
+              "transparentPixels": 47,
+              "spanPixels": 105
+            },
+            {
+              "row": 193,
+              "transparentPixels": 47,
+              "spanPixels": 107
+            },
+            {
+              "row": 194,
+              "transparentPixels": 47,
+              "spanPixels": 109
+            },
+            {
+              "row": 195,
+              "transparentPixels": 49,
+              "spanPixels": 109
+            },
+            {
+              "row": 196,
+              "transparentPixels": 49,
+              "spanPixels": 109
+            },
+            {
+              "row": 197,
+              "transparentPixels": 50,
+              "spanPixels": 109
+            },
+            {
+              "row": 198,
+              "transparentPixels": 51,
+              "spanPixels": 108
+            },
+            {
+              "row": 199,
+              "transparentPixels": 52,
+              "spanPixels": 105
+            },
+            {
+              "row": 200,
+              "transparentPixels": 55,
+              "spanPixels": 95
+            }
+          ]
+        },
+        {
+          "direction": "270",
+          "holes": [
+            {
+              "row": 185,
+              "transparentPixels": 36,
+              "spanPixels": 88
+            },
+            {
+              "row": 186,
+              "transparentPixels": 40,
+              "spanPixels": 89
+            },
+            {
+              "row": 187,
+              "transparentPixels": 43,
+              "spanPixels": 89
+            },
+            {
+              "row": 188,
+              "transparentPixels": 43,
+              "spanPixels": 90
+            },
+            {
+              "row": 189,
+              "transparentPixels": 45,
+              "spanPixels": 94
+            },
+            {
+              "row": 190,
+              "transparentPixels": 45,
+              "spanPixels": 101
+            },
+            {
+              "row": 191,
+              "transparentPixels": 47,
+              "spanPixels": 105
+            },
+            {
+              "row": 192,
+              "transparentPixels": 47,
+              "spanPixels": 107
+            },
+            {
+              "row": 193,
+              "transparentPixels": 48,
+              "spanPixels": 108
+            },
+            {
+              "row": 194,
+              "transparentPixels": 49,
+              "spanPixels": 109
+            },
+            {
+              "row": 195,
+              "transparentPixels": 49,
+              "spanPixels": 111
+            },
+            {
+              "row": 196,
+              "transparentPixels": 50,
+              "spanPixels": 111
+            },
+            {
+              "row": 197,
+              "transparentPixels": 50,
+              "spanPixels": 111
+            },
+            {
+              "row": 198,
+              "transparentPixels": 51,
+              "spanPixels": 109
+            },
+            {
+              "row": 199,
+              "transparentPixels": 53,
+              "spanPixels": 107
+            },
+            {
+              "row": 200,
+              "transparentPixels": 55,
+              "spanPixels": 97
+            }
+          ]
+        },
+        {
+          "direction": "292.5",
+          "holes": [
+            {
+              "row": 184,
+              "transparentPixels": 33,
+              "spanPixels": 90
+            },
+            {
+              "row": 185,
+              "transparentPixels": 38,
+              "spanPixels": 90
+            },
+            {
+              "row": 186,
+              "transparentPixels": 42,
+              "spanPixels": 91
+            },
+            {
+              "row": 187,
+              "transparentPixels": 44,
+              "spanPixels": 92
+            },
+            {
+              "row": 188,
+              "transparentPixels": 46,
+              "spanPixels": 93
+            },
+            {
+              "row": 189,
+              "transparentPixels": 47,
+              "spanPixels": 96
+            },
+            {
+              "row": 190,
+              "transparentPixels": 47,
+              "spanPixels": 103
+            },
+            {
+              "row": 191,
+              "transparentPixels": 49,
+              "spanPixels": 107
+            },
+            {
+              "row": 192,
+              "transparentPixels": 49,
+              "spanPixels": 109
+            },
+            {
+              "row": 193,
+              "transparentPixels": 49,
+              "spanPixels": 110
+            },
+            {
+              "row": 194,
+              "transparentPixels": 51,
+              "spanPixels": 111
+            },
+            {
+              "row": 195,
+              "transparentPixels": 51,
+              "spanPixels": 112
+            },
+            {
+              "row": 196,
+              "transparentPixels": 51,
+              "spanPixels": 113
+            },
+            {
+              "row": 197,
+              "transparentPixels": 53,
+              "spanPixels": 113
+            },
+            {
+              "row": 198,
+              "transparentPixels": 53,
+              "spanPixels": 111
+            },
+            {
+              "row": 199,
+              "transparentPixels": 55,
+              "spanPixels": 109
+            },
+            {
+              "row": 200,
+              "transparentPixels": 57,
+              "spanPixels": 98
+            }
+          ]
+        },
+        {
+          "direction": "315",
+          "holes": [
+            {
+              "row": 184,
+              "transparentPixels": 33,
+              "spanPixels": 90
+            },
+            {
+              "row": 185,
+              "transparentPixels": 38,
+              "spanPixels": 90
+            },
+            {
+              "row": 186,
+              "transparentPixels": 42,
+              "spanPixels": 91
+            },
+            {
+              "row": 187,
+              "transparentPixels": 44,
+              "spanPixels": 91
+            },
+            {
+              "row": 188,
+              "transparentPixels": 45,
+              "spanPixels": 93
+            },
+            {
+              "row": 189,
+              "transparentPixels": 47,
+              "spanPixels": 97
+            },
+            {
+              "row": 190,
+              "transparentPixels": 48,
+              "spanPixels": 103
+            },
+            {
+              "row": 191,
+              "transparentPixels": 48,
+              "spanPixels": 107
+            },
+            {
+              "row": 192,
+              "transparentPixels": 50,
+              "spanPixels": 109
+            },
+            {
+              "row": 193,
+              "transparentPixels": 50,
+              "spanPixels": 111
+            },
+            {
+              "row": 194,
+              "transparentPixels": 50,
+              "spanPixels": 111
+            },
+            {
+              "row": 195,
+              "transparentPixels": 51,
+              "spanPixels": 113
+            },
+            {
+              "row": 196,
+              "transparentPixels": 52,
+              "spanPixels": 113
+            },
+            {
+              "row": 197,
+              "transparentPixels": 53,
+              "spanPixels": 113
+            },
+            {
+              "row": 198,
+              "transparentPixels": 53,
+              "spanPixels": 111
+            },
+            {
+              "row": 199,
+              "transparentPixels": 55,
+              "spanPixels": 108
+            },
+            {
+              "row": 200,
+              "transparentPixels": 57,
+              "spanPixels": 98
+            }
+          ]
+        },
+        {
+          "direction": "337.5",
+          "holes": [
+            {
+              "row": 184,
+              "transparentPixels": 34,
+              "spanPixels": 89
+            },
+            {
+              "row": 185,
+              "transparentPixels": 40,
+              "spanPixels": 90
+            },
+            {
+              "row": 186,
+              "transparentPixels": 43,
+              "spanPixels": 90
+            },
+            {
+              "row": 187,
+              "transparentPixels": 45,
+              "spanPixels": 91
+            },
+            {
+              "row": 188,
+              "transparentPixels": 46,
+              "spanPixels": 93
+            },
+            {
+              "row": 189,
+              "transparentPixels": 47,
+              "spanPixels": 99
+            },
+            {
+              "row": 190,
+              "transparentPixels": 49,
+              "spanPixels": 105
+            },
+            {
+              "row": 191,
+              "transparentPixels": 49,
+              "spanPixels": 108
+            },
+            {
+              "row": 192,
+              "transparentPixels": 50,
+              "spanPixels": 110
+            },
+            {
+              "row": 193,
+              "transparentPixels": 51,
+              "spanPixels": 111
+            },
+            {
+              "row": 194,
+              "transparentPixels": 51,
+              "spanPixels": 112
+            },
+            {
+              "row": 195,
+              "transparentPixels": 52,
+              "spanPixels": 114
+            },
+            {
+              "row": 196,
+              "transparentPixels": 53,
+              "spanPixels": 114
+            },
+            {
+              "row": 197,
+              "transparentPixels": 53,
+              "spanPixels": 113
+            },
+            {
+              "row": 198,
+              "transparentPixels": 54,
+              "spanPixels": 112
+            },
+            {
+              "row": 199,
+              "transparentPixels": 56,
+              "spanPixels": 109
+            },
+            {
+              "row": 200,
+              "transparentPixels": 58,
+              "spanPixels": 98
+            }
+          ]
+        }
+      ],
+      "pairs": [
+        {
+          "from": "000",
+          "to": "022.5",
+          "firstPixels": 20271,
+          "secondPixels": 20586,
+          "diffPixels": 2510,
+          "centerDelta": 2.692582403567252,
+          "areaRatio": 1.015539440580139
+        },
+        {
+          "from": "022.5",
+          "to": "045",
+          "firstPixels": 20586,
+          "secondPixels": 20530,
+          "diffPixels": 1691,
+          "centerDelta": 2.0,
+          "areaRatio": 1.0027277155382368
+        },
+        {
+          "from": "045",
+          "to": "067.5",
+          "firstPixels": 20530,
+          "secondPixels": 20313,
+          "diffPixels": 1937,
+          "centerDelta": 2.23606797749979,
+          "areaRatio": 1.0106828139615025
+        },
+        {
+          "from": "067.5",
+          "to": "090",
+          "firstPixels": 20313,
+          "secondPixels": 20053,
+          "diffPixels": 1839,
+          "centerDelta": 2.5495097567963922,
+          "areaRatio": 1.0129656410512142
+        },
+        {
+          "from": "090",
+          "to": "112.5",
+          "firstPixels": 20053,
+          "secondPixels": 20177,
+          "diffPixels": 2262,
+          "centerDelta": 0.7071067811865476,
+          "areaRatio": 1.0061836134244253
+        },
+        {
+          "from": "112.5",
+          "to": "135",
+          "firstPixels": 20177,
+          "secondPixels": 19877,
+          "diffPixels": 2160,
+          "centerDelta": 3.8078865529319543,
+          "areaRatio": 1.0150928208482166
+        },
+        {
+          "from": "135",
+          "to": "157.5",
+          "firstPixels": 19877,
+          "secondPixels": 19845,
+          "diffPixels": 2160,
+          "centerDelta": 2.692582403567252,
+          "areaRatio": 1.0016124968505922
+        },
+        {
+          "from": "157.5",
+          "to": "180",
+          "firstPixels": 19845,
+          "secondPixels": 19050,
+          "diffPixels": 4262,
+          "centerDelta": 4.743416490252569,
+          "areaRatio": 1.041732283464567
+        },
+        {
+          "from": "180",
+          "to": "202.5",
+          "firstPixels": 19050,
+          "secondPixels": 19055,
+          "diffPixels": 1839,
+          "centerDelta": 2.692582403567252,
+          "areaRatio": 1.000262467191601
+        },
+        {
+          "from": "202.5",
+          "to": "225",
+          "firstPixels": 19055,
+          "secondPixels": 18644,
+          "diffPixels": 1369,
+          "centerDelta": 0.5,
+          "areaRatio": 1.0220446256168205
+        },
+        {
+          "from": "225",
+          "to": "247.5",
+          "firstPixels": 18644,
+          "secondPixels": 18865,
+          "diffPixels": 1362,
+          "centerDelta": 2.0615528128088303,
+          "areaRatio": 1.0118536794679254
+        },
+        {
+          "from": "247.5",
+          "to": "270",
+          "firstPixels": 18865,
+          "secondPixels": 19225,
+          "diffPixels": 1407,
+          "centerDelta": 0.7071067811865476,
+          "areaRatio": 1.0190829578584681
+        },
+        {
+          "from": "270",
+          "to": "292.5",
+          "firstPixels": 19225,
+          "secondPixels": 19223,
+          "diffPixels": 1423,
+          "centerDelta": 1.8027756377319946,
+          "areaRatio": 1.0001040420329814
+        },
+        {
+          "from": "292.5",
+          "to": "315",
+          "firstPixels": 19223,
+          "secondPixels": 19592,
+          "diffPixels": 2031,
+          "centerDelta": 1.8027756377319946,
+          "areaRatio": 1.0191957550850543
+        },
+        {
+          "from": "315",
+          "to": "337.5",
+          "firstPixels": 19592,
+          "secondPixels": 19328,
+          "diffPixels": 1525,
+          "centerDelta": 0.5,
+          "areaRatio": 1.013658940397351
+        },
+        {
+          "from": "337.5",
+          "to": "000",
+          "firstPixels": 19328,
+          "secondPixels": 20271,
+          "diffPixels": 3416,
+          "centerDelta": 3.8078865529319543,
+          "areaRatio": 1.048789321192053
+        }
+      ]
+    },
+    "repair_log": {
+      "repairs": [
+        {
+          "kind": "look-direction-anchor-and-row-resynthesis",
+          "cause": "Initial blind direction review classified 090 and 270 opposite their required screen-coordinate cardinals.",
+          "evidence": "Initial blind validation hard-gate errors on horizontal-4.",
+          "correction": "Regenerated 090 and 270 anchor poses with explicit screen-coordinate landmarks, then regenerated both complete coherent look rows.",
+          "result": "Final blind validation passed both cardinal pairs and all horizontal pairs."
+        }
+      ]
+    }
+  }
+}

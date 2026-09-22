@@ -730,7 +730,7 @@ describe('Cultivator Cave settings', () => {
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
 
-  it('selects the available Familiar through the profile owner without saving unrelated edits', async () => {
+  it('presents the full ranked Familiar catalogue and selects its default through the profile owner without saving unrelated edits', async () => {
     const onFamiliarProfile = vi.fn();
     const { controller } = await renderCave({ adapter: { onFamiliarProfile } });
     expect(onFamiliarProfile).toHaveBeenLastCalledWith({ uid: 'workshop-cultivator', familiarId: undefined });
@@ -739,20 +739,24 @@ describe('Cultivator Cave settings', () => {
     await click(byText('[aria-label="Customization sections"] [role="tab"]', 'Familiar'));
     const selection = document.querySelector('[aria-label="Familiar selection"]')!;
     expect(selection.closest('[role="tabpanel"]')?.hasAttribute('hidden')).toBe(false);
-    expect(selection.querySelectorAll('article')).toHaveLength(1);
-    expect(selection.querySelector('img')?.getAttribute('src')).toBe('https://gif.seihouse.org/LIBRARY/GIFS/celestial%20Guardian.gif');
-    await click(byText('button', 'Select Celestial Guardian'));
+    expect(selection.querySelectorAll('article')).toHaveLength(11);
+    expect(selection.querySelector('img')?.getAttribute('src')).toBe('https://media.seihouse.org/SEN/GIF/celestial%20Guardian.gif');
+    expect(selection.querySelectorAll('[data-rarity="epic"]')).toHaveLength(2);
+    const quill = [...selection.querySelectorAll<HTMLElement>('article')].find(article => article.textContent?.includes('Quill'))!;
+    expect(quill.querySelector('[data-rarity]')?.textContent).toBe('common');
+    expect(quill.textContent).toContain('Default');
+    await click(byText('button', 'Select Quill'));
     expect(controller().isSavingFamiliar).toBe(true);
-    expect(onFamiliarProfile).not.toHaveBeenCalledWith({ uid: 'workshop-cultivator', familiarId: 'celestial-guardian' });
+    expect(onFamiliarProfile).not.toHaveBeenCalledWith({ uid: 'workshop-cultivator', familiarId: 'quill' });
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
-    expect(controller().profile?.familiarId).toBe('celestial-guardian');
-    expect(onFamiliarProfile).toHaveBeenLastCalledWith({ uid: 'workshop-cultivator', familiarId: 'celestial-guardian' });
+    expect(controller().profile?.familiarId).toBe('quill');
+    expect(onFamiliarProfile).toHaveBeenLastCalledWith({ uid: 'workshop-cultivator', familiarId: 'quill' });
     expect(controller().profile?.displayName).not.toBe('Draft Name');
     expect(controller().formData.displayName).toBe('Draft Name');
-    expect(selection.querySelector('article button')?.getAttribute('aria-pressed')).toBe('true');
-    expect(selection.textContent).toContain('Current Familiar: Celestial Guardian');
+    expect(quill.querySelector('button')?.getAttribute('aria-pressed')).toBe('true');
+    expect(selection.textContent).toContain('Current Familiar: Quill');
     await act(async () => { await controller().handleFamiliarChange?.('not-unlocked'); });
-    expect(controller().profile?.familiarId).toBe('celestial-guardian');
+    expect(controller().profile?.familiarId).toBe('quill');
     expect(controller().error).toBe('This Familiar is not available for selection.');
   });
 

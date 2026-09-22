@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EnergyClientProvider, type EnergyClient, type EnergyAccountSnapshot } from '@seihouse/library/energy';
 import { celestialGuardian, celestialGuardianOption } from '../../../host/familiar/celestialGuardian';
+import { allFamiliarOptions } from '../../../host/familiar/catalogue';
 import { Familiar } from './Familiar';
 import { FamiliarSprite } from './FamiliarSprite';
 import { FamiliarSelection } from './FamiliarSelection';
@@ -191,6 +192,16 @@ describe('Familiar Energy interaction', () => {
 });
 
 describe('Familiar selection', () => {
+  it('renders ranks and the catalogue default without inferring either in the selection component', async () => {
+    await act(async () => root.render(<FamiliarSelection options={allFamiliarOptions} onSelect={vi.fn()} />));
+    const articles = Array.from(container.querySelectorAll<HTMLElement>('article'));
+    expect(articles).toHaveLength(11);
+    expect(articles.find(article => article.textContent?.includes('Celestial Guardian'))?.querySelector('[data-rarity]')?.textContent).toBe('epic');
+    const quill = articles.find(article => article.textContent?.includes('Quill'))!;
+    expect(quill.querySelector('[data-rarity]')?.textContent).toBe('common');
+    expect(quill.textContent).toContain('Default');
+  });
+
   it('uses host availability and pending state, and never offers an unlock action', async () => {
     const select = vi.fn();
     await act(async () => root.render(<FamiliarSelection options={[{ ...celestialGuardianOption, available: false }]} onSelect={select} />));

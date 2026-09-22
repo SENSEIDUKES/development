@@ -1,0 +1,4100 @@
+{
+  "pet_id": "galaxy-octopus",
+  "display_name": "Galaxy Octopus",
+  "description": "A stern yet endearing cosmic octopus whose jewel-bright eyes, starry blue-violet skin, curled tentacles, and gold celestial charms make a compact, watchful companion.",
+  "created_at": "2026-09-21T23:43:57.989094+00:00",
+  "sprite_version_number": 2,
+  "atlas": {
+    "columns": 8,
+    "rows": 11,
+    "cell_width": 192,
+    "cell_height": 208,
+    "width": 1536,
+    "height": 2288
+  },
+  "rows": [
+    {
+      "state": "idle",
+      "row": 0,
+      "frames": 6,
+      "purpose": "calm resting, breathing, and blinking loop"
+    },
+    {
+      "state": "running-right",
+      "row": 1,
+      "frames": 8,
+      "purpose": "rightward drag movement loop"
+    },
+    {
+      "state": "running-left",
+      "row": 2,
+      "frames": 8,
+      "purpose": "leftward drag movement loop"
+    },
+    {
+      "state": "waving",
+      "row": 3,
+      "frames": 4,
+      "purpose": "greeting or attention gesture"
+    },
+    {
+      "state": "jumping",
+      "row": 4,
+      "frames": 5,
+      "purpose": "hover or playful jump"
+    },
+    {
+      "state": "failed",
+      "row": 5,
+      "frames": 8,
+      "purpose": "blocked, failed, or cancelled reaction"
+    },
+    {
+      "state": "waiting",
+      "row": 6,
+      "frames": 6,
+      "purpose": "waiting for approval, help, or user input"
+    },
+    {
+      "state": "running",
+      "row": 7,
+      "frames": 6,
+      "purpose": "active task work or processing"
+    },
+    {
+      "state": "review",
+      "row": 8,
+      "frames": 6,
+      "purpose": "ready or completed output review"
+    },
+    {
+      "state": "look-row-9",
+      "row": 9,
+      "frames": 8,
+      "directions": [
+        "000",
+        "022.5",
+        "045",
+        "067.5",
+        "090",
+        "112.5",
+        "135",
+        "157.5"
+      ],
+      "purpose": "clockwise look directions from up through down-right"
+    },
+    {
+      "state": "look-row-10",
+      "row": 10,
+      "frames": 8,
+      "directions": [
+        "180",
+        "202.5",
+        "225",
+        "247.5",
+        "270",
+        "292.5",
+        "315",
+        "337.5"
+      ],
+      "purpose": "clockwise look directions from down through up-left"
+    }
+  ],
+  "layout_guides": [
+    {
+      "state": "idle",
+      "path": "references\\layout-guides\\idle.png",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "running-right",
+      "path": "references\\layout-guides\\running-right.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "running-left",
+      "path": "references\\layout-guides\\running-left.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "waving",
+      "path": "references\\layout-guides\\waving.png",
+      "width": 768,
+      "height": 208,
+      "frames": 4,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "jumping",
+      "path": "references\\layout-guides\\jumping.png",
+      "width": 960,
+      "height": 208,
+      "frames": 5,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "failed",
+      "path": "references\\layout-guides\\failed.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "waiting",
+      "path": "references\\layout-guides\\waiting.png",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "running",
+      "path": "references\\layout-guides\\running.png",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "review",
+      "path": "references\\layout-guides\\review.png",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "look-row-9",
+      "path": "references\\layout-guides\\look-row-9.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "look-row-10",
+      "path": "references\\layout-guides\\look-row-10.png",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "look-cardinals",
+      "path": "references\\layout-guides\\look-cardinals.png",
+      "width": 768,
+      "height": 208,
+      "frames": 4,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    }
+  ],
+  "references": [
+    {
+      "path": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\references\\reference-01.png",
+      "width": 1205,
+      "height": 1306,
+      "mode": "RGBA",
+      "format": "PNG",
+      "source_path": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\images\\Octopus.png",
+      "copied_path": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\references\\reference-01.png"
+    }
+  ],
+  "chroma_key": {
+    "hex": "#00FF00",
+    "rgb": [
+      0,
+      255,
+      0
+    ],
+    "name": "green",
+    "selection": "auto",
+    "score": 207.13
+  },
+  "pet_notes": "Compact stern-cute galaxy octopus with a large rounded cobalt-indigo head, turquoise facial center, huge emerald eyes under heavy expressive brow ridges, eight thick curled blue-violet tentacles with cream-and-gold suction cups, folded front tentacles, gold scrollwork cuff, and round gold cosmic-wave medallion. Preserve the original polished storybook 3D-painterly material, galaxy speckles and swirls, compact full-body silhouette, stern observant expression, and minimal accessories. Personality is composed, vigilant, quietly protective, deliberate, and secretly affectionate. At pet size prioritize eye direction, head silhouette, eight-tentacle fan, gold suction cups, cuff, and medallion.",
+  "style_preset": "auto",
+  "style_notes": "Preserve the attached image as sole visual authority: polished luminous storybook 3D-painterly rendering, deep cobalt/indigo/violet skin with cyan highlights, sparse embedded pink-cyan-gold star specks, large green irises, gold accents, clean compact silhouette, transparent-ready sprite construction; simplify only tiny surface speckles when needed for 60px readability.",
+  "style_contract": "Pet-safe sprite: compact full-body mascot, readable in a 192x208 cell, clear silhouette, simple face, stable palette/materials, and crisp edges for chroma-key extraction. Style `auto`: Infer the most appropriate pet-safe style from the user request and reference images, then keep that exact style consistent across every row. User style notes: Preserve the attached image as sole visual authority: polished luminous storybook 3D-painterly rendering, deep cobalt/indigo/violet skin with cyan highlights, sparse embedded pink-cyan-gold star specks, large green irises, gold accents, clean compact silhouette, transparent-ready sprite construction; simplify only tiny surface speckles when needed for 60px readability..",
+  "brand_name": "",
+  "brand_brief": "",
+  "brand_sources": [],
+  "pet_safe_style": "Pet-safe sprite: compact full-body mascot, readable in a 192x208 cell, clear silhouette, simple face, stable palette/materials, and crisp edges for chroma-key extraction.",
+  "primary_generation_skill": "$imagegen",
+  "animation_timing_ms": {
+    "idle": [
+      280,
+      110,
+      110,
+      140,
+      140,
+      320
+    ],
+    "running-right": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      220
+    ],
+    "running-left": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      220
+    ],
+    "waving": [
+      140,
+      140,
+      140,
+      280
+    ],
+    "jumping": [
+      140,
+      140,
+      140,
+      140,
+      280
+    ],
+    "failed": [
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      240
+    ],
+    "waiting": [
+      150,
+      150,
+      150,
+      150,
+      150,
+      260
+    ],
+    "running": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      220
+    ],
+    "review": [
+      150,
+      150,
+      150,
+      150,
+      150,
+      280
+    ]
+  },
+  "source_reference": {
+    "original_filename": "Octopus.png",
+    "original_absolute_path": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\images\\Octopus.png",
+    "handoff_relative_path": "source/Octopus.png",
+    "sha256": "b9f89724867b0be382206da76d3f55f9df0b67dc9696d57f8d54f3c50be212ef",
+    "role": "sole visual authority"
+  },
+  "personality": {
+    "summary": "Composed, vigilant, quietly protective, deliberate, and secretly affectionate.",
+    "animation_mannerisms": "Physical eye globes lead the gaze; heavy brows and eyelids reinforce emotion; the planted curled tentacle fan provides restrained counterbalance; the cuff and medallion stay attached."
+  },
+  "visual_decisions": {
+    "identity": "Compact stern-cute octopus with a large cobalt-indigo mantle, turquoise face center, huge emerald eyes under heavy brows, exactly eight thick curled blue-violet tentacles, cream-and-gold suction cups, folded front pair, gold cuff, and round cosmic-wave medallion.",
+    "small_size_priority": "Large emerald eyes, stern brow silhouette, rounded mantle, eight-tentacle fan, gold suction cups, cuff, and medallion remain readable at 60px.",
+    "surface_policy": "Preserve luminous blue-violet galaxy swirls and sparse embedded cyan, pink, and gold specks while simplifying only tiny speckles that would muddy the 60px silhouette.",
+    "anatomy_policy": "Exactly eight connected tentacles in every state; waving, waiting, and review move existing front tentacles instead of creating extra limbs.",
+    "running_left": "Independently generated because mirroring would invert the asymmetric cuff and medallion relationship.",
+    "look_mechanics": "Lower tentacle fan planted; physical whole-eye rotation, eyelid and brow reshaping, subtle mantle pitch/yaw, small continuous tip counterbalance, stable cuff limb, and attached medallion follow-through; no whole-sprite rotation."
+  },
+  "generation_jobs": [
+    {
+      "id": "base",
+      "kind": "base-pet",
+      "status": "complete",
+      "prompt_file": "prompts/base-pet.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        }
+      ],
+      "output_path": "decoded/base.png",
+      "depends_on": [],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "source_path": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\selected-output.png",
+      "completed_at": "2026-09-21T23:46:53.3358945Z"
+    },
+    {
+      "id": "idle",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/idle.md",
+      "retry_prompt_file": "prompts/row-retries/idle.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/idle.png",
+          "role": "layout guide for 6 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/idle.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "no deterministic derivation is configured for this state"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c65d-e847-73a2-9008-cb0abe4911d3\\exec-a29bb3db-8591-4321-8c00-890e8050a63d.png",
+      "completed_at": "2026-09-21T23:51:50.4725245Z"
+    },
+    {
+      "id": "running-right",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/running-right.md",
+      "retry_prompt_file": "prompts/row-retries/running-right.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/running-right.png",
+          "role": "layout guide for 8 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/running-right.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "no deterministic derivation is configured for this state"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c65e-3d6d-7073-954d-5fa03216f9ec\\exec-9da33458-bf31-4761-a4e6-424eb327f4a7.png",
+      "completed_at": "2026-09-21T23:51:50.479Z"
+    },
+    {
+      "id": "running-left",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/running-left.md",
+      "retry_prompt_file": "prompts/row-retries/running-left.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/running-left.png",
+          "role": "layout guide for 8 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        },
+        {
+          "path": "decoded/running-right.png",
+          "role": "rightward gait reference for leftward row decision"
+        }
+      ],
+      "output_path": "decoded/running-left.png",
+      "depends_on": [
+        "base",
+        "running-right"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base",
+        "running-right"
+      ],
+      "derivation_policy": {
+        "may_derive": true,
+        "may_derive_from": "running-right",
+        "derivation": "framewise-horizontal-mirror-preserving-order",
+        "requires_explicit_approval": true,
+        "fallback_generation_skill": "$imagegen"
+      },
+      "mirror_policy": {
+        "may_derive": true,
+        "may_derive_from": "running-right",
+        "derivation": "framewise-horizontal-mirror-preserving-order",
+        "requires_explicit_approval": true,
+        "fallback_generation_skill": "$imagegen"
+      },
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c65d-e847-73a2-9008-cb0abe4911d3\\exec-6baed11e-da33-4185-a08e-425d46b16a85.png",
+      "completed_at": "2026-09-21T23:55:32.6500537Z"
+    },
+    {
+      "id": "waving",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/waving.md",
+      "retry_prompt_file": "prompts/row-retries/waving.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/waving.png",
+          "role": "layout guide for 4 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/waving.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c65e-3d6d-7073-954d-5fa03216f9ec\\exec-64e65829-87c2-4d71-b881-a1e1c2bd8c64.png",
+      "completed_at": "2026-09-21T23:55:32.6534263Z"
+    },
+    {
+      "id": "jumping",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/jumping.md",
+      "retry_prompt_file": "prompts/row-retries/jumping.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/jumping.png",
+          "role": "layout guide for 5 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/jumping.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c5b0-e373-78f1-8810-8c0ec582ec6c\\exec-22cce254-9ccb-42a0-b970-9d4d9151af62.png",
+      "completed_at": "2026-09-21T23:55:32.65365Z"
+    },
+    {
+      "id": "failed",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/failed.md",
+      "retry_prompt_file": "prompts/row-retries/failed.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/failed.png",
+          "role": "layout guide for 8 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/failed.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c65d-e847-73a2-9008-cb0abe4911d3\\exec-9d937486-43a4-4729-8f3c-3924df399917.png",
+      "completed_at": "2026-09-21T23:59:32.1849043Z"
+    },
+    {
+      "id": "waiting",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/waiting.md",
+      "retry_prompt_file": "prompts/row-retries/waiting.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/waiting.png",
+          "role": "layout guide for 6 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/waiting.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c65e-3d6d-7073-954d-5fa03216f9ec\\exec-161fff6a-ba2d-42d6-90a4-1e9eb9f60406.png",
+      "completed_at": "2026-09-21T23:59:32.1887622Z"
+    },
+    {
+      "id": "running",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/running.md",
+      "retry_prompt_file": "prompts/row-retries/running.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/running.png",
+          "role": "layout guide for 6 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/running.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c5b0-e373-78f1-8810-8c0ec582ec6c\\exec-3eae2e7d-a953-4cfa-ae03-56f570eb4a65.png",
+      "completed_at": "2026-09-21T23:59:32.1890153Z"
+    },
+    {
+      "id": "review",
+      "kind": "row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/review.md",
+      "retry_prompt_file": "prompts/row-retries/review.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/review.png",
+          "role": "layout guide for 6 frame slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        }
+      ],
+      "output_path": "decoded/review.png",
+      "depends_on": [
+        "base"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "parallelizable_after": [
+        "base"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "state requires its own generated animation semantics"
+      },
+      "mirror_policy": {},
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c65d-e847-73a2-9008-cb0abe4911d3\\exec-0a0f09c2-32c5-46ae-b77e-e48221085118.png",
+      "completed_at": "2026-09-22T00:01:22.3457983Z"
+    },
+    {
+      "id": "look-cardinals",
+      "kind": "look-cardinal-strip",
+      "status": "complete",
+      "prompt_file": "prompts/look-cardinals.md",
+      "repair_prompt_files": {
+        "000": "prompts/look-anchor-repairs/000.md",
+        "090": "prompts/look-anchor-repairs/090.md",
+        "180": "prompts/look-anchor-repairs/180.md",
+        "270": "prompts/look-anchor-repairs/270.md"
+      },
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/look-cardinals.png",
+          "role": "layout guide for four cardinal slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        },
+        {
+          "path": "qa/contact-sheet.png",
+          "role": "approved standard-row identity, scale, and baseline reference"
+        }
+      ],
+      "output_path": "decoded/look-cardinals.png",
+      "extracted_output_paths": [
+        "decoded/look-anchors/000.png",
+        "decoded/look-anchors/090.png",
+        "decoded/look-anchors/180.png",
+        "decoded/look-anchors/270.png"
+      ],
+      "approved_strip_path": "decoded/look-anchors-approved.png",
+      "depends_on": [
+        "idle",
+        "running-right",
+        "running-left",
+        "waving",
+        "jumping",
+        "failed",
+        "waiting",
+        "running",
+        "review"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "look_mechanics_file": "qa/look-mechanics.md",
+      "directions": [
+        "000",
+        "090",
+        "180",
+        "270"
+      ],
+      "packaging_eligible": false,
+      "parallelizable_after": [
+        "idle",
+        "running-right",
+        "running-left",
+        "waving",
+        "jumping",
+        "failed",
+        "waiting",
+        "running",
+        "review"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "cardinal directions require grounded pet-specific generation"
+      },
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c65d-e847-73a2-9008-cb0abe4911d3\\exec-e1f70aae-8a16-4039-88c2-185412b23694.png",
+      "completed_at": "2026-09-22T00:07:13.3135631Z"
+    },
+    {
+      "id": "look-row-9",
+      "kind": "look-row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/look-row-9.md",
+      "retry_prompt_file": "prompts/row-retries/look-row-9.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/look-row-9.png",
+          "role": "layout guide for 8 direction slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        },
+        {
+          "path": "qa/contact-sheet.png",
+          "role": "approved standard-row identity, scale, and baseline reference"
+        },
+        {
+          "path": "decoded/look-anchors-approved.png",
+          "role": "approved cardinal reference strip in order 000 up, 090 screen-right, 180 down, 270 screen-left; interpolate intermediate directions evenly"
+        }
+      ],
+      "output_path": "decoded/look-row-9.png",
+      "depends_on": [
+        "look-cardinals"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "look_mechanics_file": "qa/look-mechanics.md",
+      "directions": [
+        "000",
+        "022.5",
+        "045",
+        "067.5",
+        "090",
+        "112.5",
+        "135",
+        "157.5"
+      ],
+      "parallelizable_after": [
+        "look-cardinals"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "look directions require grounded pet-specific generation"
+      },
+      "coherent_synthesis_required": true,
+      "individual_cell_packaging_allowed": false,
+      "packaging_eligible": true,
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c65d-e847-73a2-9008-cb0abe4911d3\\exec-1b4cbd72-d200-4522-b5ee-47757d40be51.png",
+      "completed_at": "2026-09-22T00:11:11.1135182Z"
+    },
+    {
+      "id": "look-row-10",
+      "kind": "look-row-strip",
+      "status": "complete",
+      "prompt_file": "prompts/rows/look-row-10.md",
+      "retry_prompt_file": "prompts/row-retries/look-row-10.md",
+      "input_images": [
+        {
+          "path": "references\\reference-01.png",
+          "role": "pet reference"
+        },
+        {
+          "path": "references/layout-guides/look-row-10.png",
+          "role": "layout guide for 8 direction slots; use for spacing only, do not copy guide lines"
+        },
+        {
+          "path": "references/canonical-base.png",
+          "role": "canonical identity reference"
+        },
+        {
+          "path": "qa/contact-sheet.png",
+          "role": "approved standard-row identity, scale, and baseline reference"
+        },
+        {
+          "path": "decoded/look-anchors-approved.png",
+          "role": "approved cardinal reference strip in order 000 up, 090 screen-right, 180 down, 270 screen-left; interpolate intermediate directions evenly"
+        },
+        {
+          "path": "decoded/look-row-9.png",
+          "role": "completed first half of the clockwise look loop for row 10 continuity"
+        }
+      ],
+      "output_path": "decoded/look-row-10.png",
+      "depends_on": [
+        "look-cardinals",
+        "look-row-9"
+      ],
+      "generation_skill": "$imagegen",
+      "requires_grounded_generation": true,
+      "allow_prompt_only_generation": false,
+      "identity_reference_paths": [
+        "references/canonical-base.png"
+      ],
+      "look_mechanics_file": "qa/look-mechanics.md",
+      "directions": [
+        "180",
+        "202.5",
+        "225",
+        "247.5",
+        "270",
+        "292.5",
+        "315",
+        "337.5"
+      ],
+      "parallelizable_after": [
+        "look-cardinals",
+        "look-row-9"
+      ],
+      "derivation_policy": {
+        "may_derive": false,
+        "reason": "look directions require grounded pet-specific generation"
+      },
+      "coherent_synthesis_required": true,
+      "individual_cell_packaging_allowed": false,
+      "packaging_eligible": true,
+      "source_path": "C:\\Users\\amaur\\.codex\\generated_images\\01a0c65d-e847-73a2-9008-cb0abe4911d3\\exec-528f5654-81ec-4b5e-9e10-c78a8b72b9c0.png",
+      "completed_at": "2026-09-22T00:15:19.7743784Z"
+    }
+  ],
+  "final_atlas": {
+    "path": "spritesheet.webp",
+    "sha256": "9a7ee5b3a9dc1be7898c4f1813d85120df329635af7a7f5ce6621382fb705886",
+    "dimensions": {
+      "width": 1536,
+      "height": 2288,
+      "columns": 8,
+      "rows": 11,
+      "cell_width": 192,
+      "cell_height": 208
+    },
+    "neutral_frame": {
+      "row": 0,
+      "column": 6,
+      "handoff_path": "neutral.png"
+    },
+    "hero_animation": "waving"
+  },
+  "validation_artifacts": {
+    "atlas_validator": {
+      "ok": true,
+      "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\final\\spritesheet-extended.webp",
+      "format": "WEBP",
+      "mode": "RGBA",
+      "columns": 8,
+      "rows": 11,
+      "sprite_version_number": 2,
+      "width": 1536,
+      "height": 2288,
+      "transparent_rgb_residue_pixels": 0,
+      "errors": [],
+      "warnings": [],
+      "cells": [
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 23104,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 23250,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 23320,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 23067,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 23338,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 22961,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 22938,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "idle",
+          "row": 0,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 22913,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 22237,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 23054,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 23122,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 22763,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 22897,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 21928,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-right",
+          "row": 1,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 21901,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 23484,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 20955,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 21539,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 23173,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 21004,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 22756,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 24416,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running-left",
+          "row": 2,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 22434,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 24135,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 24094,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 25272,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 24499,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 4,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 5,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waving",
+          "row": 3,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 12524,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 15158,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 16369,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 15360,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 12445,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 5,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "jumping",
+          "row": 4,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 22788,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 22880,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 22783,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 25722,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 24737,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 24318,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 22972,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "failed",
+          "row": 5,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 22633,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 23675,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 24854,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 25569,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 24510,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 23886,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 23810,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "waiting",
+          "row": 6,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 24354,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 23570,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 23568,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 24382,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 23553,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 23260,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "running",
+          "row": 7,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 22996,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 23252,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 23081,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 23319,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 22787,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 22685,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 6,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "review",
+          "row": 8,
+          "column": 7,
+          "used": false,
+          "nontransparent_pixels": 0,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 23058,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 22884,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 22697,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 22766,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 22839,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 22567,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 22127,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-000-to-157.5",
+          "row": 9,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 22140,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 0,
+          "used": true,
+          "nontransparent_pixels": 23330,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 1,
+          "used": true,
+          "nontransparent_pixels": 23097,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 2,
+          "used": true,
+          "nontransparent_pixels": 23006,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 3,
+          "used": true,
+          "nontransparent_pixels": 23098,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 4,
+          "used": true,
+          "nontransparent_pixels": 23213,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 5,
+          "used": true,
+          "nontransparent_pixels": 22980,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 6,
+          "used": true,
+          "nontransparent_pixels": 22484,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        },
+        {
+          "state": "look-180-to-337.5",
+          "row": 10,
+          "column": 7,
+          "used": true,
+          "nontransparent_pixels": 22390,
+          "opaque_chroma_key_pixels": 0,
+          "chroma_fringe_pixels": 0
+        }
+      ]
+    },
+    "chroma_cleanup": {
+      "ok": true,
+      "input": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\final\\spritesheet-extended.png",
+      "output": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\final\\spritesheet-extended.png",
+      "chroma_key": "#00FF00",
+      "algorithm": "edge-local-chroma-spill-suppression",
+      "strength": 1,
+      "edge_radius": 5,
+      "spill_tolerance": 0.15,
+      "minimum_saturation": 0.1,
+      "changed_pixels": 153778,
+      "decontaminated_pixels": 151423,
+      "spill_suppressed_pixels": 153778,
+      "rejected_pixels": 0,
+      "changed_by_cell": {
+        "r1c6": 3422,
+        "r1c2": 3271,
+        "r1c3": 3231,
+        "r1c5": 3220,
+        "r1c4": 2982,
+        "r1c1": 2817,
+        "r3c1": 2797,
+        "r3c2": 2698,
+        "r7c3": 2669,
+        "r1c7": 2631,
+        "r1c0": 2611,
+        "r6c1": 2537,
+        "r7c0": 2475,
+        "r6c2": 2471,
+        "r7c1": 2453,
+        "r6c3": 2412,
+        "r3c0": 2411,
+        "r7c4": 2356,
+        "r3c3": 2351,
+        "r6c5": 2309,
+        "r6c0": 2304,
+        "r6c4": 2288,
+        "r7c5": 2273,
+        "r7c2": 2264,
+        "r2c6": 2108,
+        "r4c3": 2033,
+        "r4c2": 2010,
+        "r2c5": 1994,
+        "r2c0": 1949,
+        "r2c3": 1930,
+        "r5c3": 1929,
+        "r8c0": 1926,
+        "r8c3": 1921,
+        "r8c1": 1911,
+        "r4c1": 1901,
+        "r5c5": 1900,
+        "r5c0": 1895,
+        "r8c2": 1890,
+        "r5c4": 1884,
+        "r8c5": 1880,
+        "r5c7": 1878,
+        "r10c7": 1872,
+        "r2c4": 1867,
+        "r5c1": 1858,
+        "r9c3": 1854,
+        "r8c4": 1848,
+        "r5c6": 1845,
+        "r10c4": 1844,
+        "r9c4": 1843,
+        "r2c7": 1817,
+        "r10c2": 1814,
+        "r2c1": 1813,
+        "r5c2": 1813,
+        "r10c5": 1809,
+        "r10c3": 1805,
+        "r10c6": 1805,
+        "r9c5": 1796,
+        "r9c7": 1775,
+        "r2c2": 1771,
+        "r10c1": 1770,
+        "r9c2": 1749,
+        "r0c0": 1734,
+        "r0c4": 1730,
+        "r9c1": 1719,
+        "r9c6": 1719,
+        "r9c0": 1716,
+        "r10c0": 1707,
+        "r0c1": 1678,
+        "r0c5": 1673,
+        "r0c2": 1637,
+        "r0c6": 1568,
+        "r0c3": 1560,
+        "r4c4": 1415,
+        "r4c0": 1362
+      },
+      "alpha_preserved": true
+    },
+    "standard_frames": {
+      "ok": true,
+      "frames_root": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames",
+      "states": [
+        "idle",
+        "running-right",
+        "running-left",
+        "waving",
+        "jumping",
+        "failed",
+        "waiting",
+        "running",
+        "review"
+      ],
+      "errors": [],
+      "warnings": [
+        "jumping used extraction method stable-slots; confirm motion playback remains stable and unclipped"
+      ],
+      "rows": [
+        {
+          "state": "idle",
+          "expected_frames": 6,
+          "actual_frames": 6,
+          "extraction_method": "components",
+          "ok": true,
+          "errors": [],
+          "warnings": [],
+          "frames": [
+            {
+              "index": 0,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\idle\\00.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23104,
+              "bbox": [
+                16,
+                5,
+                176,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 362
+            },
+            {
+              "index": 1,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\idle\\01.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23250,
+              "bbox": [
+                18,
+                5,
+                173,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 350
+            },
+            {
+              "index": 2,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\idle\\02.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23320,
+              "bbox": [
+                17,
+                5,
+                174,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 229
+            },
+            {
+              "index": 3,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\idle\\03.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23067,
+              "bbox": [
+                17,
+                5,
+                175,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 334
+            },
+            {
+              "index": 4,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\idle\\04.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23338,
+              "bbox": [
+                17,
+                5,
+                175,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 347
+            },
+            {
+              "index": 5,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\idle\\05.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 22961,
+              "bbox": [
+                17,
+                5,
+                174,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 328
+            }
+          ]
+        },
+        {
+          "state": "running-right",
+          "expected_frames": 8,
+          "actual_frames": 8,
+          "extraction_method": "components",
+          "ok": true,
+          "errors": [],
+          "warnings": [],
+          "frames": [
+            {
+              "index": 0,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running-right\\00.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 22913,
+              "bbox": [
+                11,
+                5,
+                180,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 16
+            },
+            {
+              "index": 1,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running-right\\01.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 22237,
+              "bbox": [
+                15,
+                5,
+                177,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 15
+            },
+            {
+              "index": 2,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running-right\\02.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23054,
+              "bbox": [
+                10,
+                5,
+                182,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 22
+            },
+            {
+              "index": 3,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running-right\\03.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23122,
+              "bbox": [
+                11,
+                5,
+                180,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 26
+            },
+            {
+              "index": 4,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running-right\\04.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 22763,
+              "bbox": [
+                11,
+                5,
+                180,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 19
+            },
+            {
+              "index": 5,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running-right\\05.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 22897,
+              "bbox": [
+                11,
+                5,
+                180,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 26
+            },
+            {
+              "index": 6,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running-right\\06.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 21928,
+              "bbox": [
+                16,
+                5,
+                175,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 16
+            },
+            {
+              "index": 7,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running-right\\07.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 21901,
+              "bbox": [
+                14,
+                5,
+                178,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 30
+            }
+          ]
+        },
+        {
+          "state": "running-left",
+          "expected_frames": 8,
+          "actual_frames": 8,
+          "extraction_method": "components",
+          "ok": true,
+          "errors": [],
+          "warnings": [],
+          "frames": [
+            {
+              "index": 0,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running-left\\00.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23484,
+              "bbox": [
+                8,
+                5,
+                184,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 584
+            },
+            {
+              "index": 1,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running-left\\01.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 20955,
+              "bbox": [
+                19,
+                5,
+                173,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 505
+            },
+            {
+              "index": 2,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running-left\\02.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 21539,
+              "bbox": [
+                16,
+                5,
+                175,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 531
+            },
+            {
+              "index": 3,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running-left\\03.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23173,
+              "bbox": [
+                13,
+                5,
+                179,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 544
+            },
+            {
+              "index": 4,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running-left\\04.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 21004,
+              "bbox": [
+                17,
+                5,
+                174,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 535
+            },
+            {
+              "index": 5,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running-left\\05.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 22756,
+              "bbox": [
+                8,
+                5,
+                184,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 536
+            },
+            {
+              "index": 6,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running-left\\06.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 24416,
+              "bbox": [
+                8,
+                5,
+                183,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 562
+            },
+            {
+              "index": 7,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running-left\\07.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 22434,
+              "bbox": [
+                12,
+                5,
+                179,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 488
+            }
+          ]
+        },
+        {
+          "state": "waving",
+          "expected_frames": 4,
+          "actual_frames": 4,
+          "extraction_method": "components",
+          "ok": true,
+          "errors": [],
+          "warnings": [],
+          "frames": [
+            {
+              "index": 0,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\waving\\00.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 24135,
+              "bbox": [
+                5,
+                6,
+                187,
+                201
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 23
+            },
+            {
+              "index": 1,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\waving\\01.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 24094,
+              "bbox": [
+                5,
+                10,
+                187,
+                197
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 23
+            },
+            {
+              "index": 2,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\waving\\02.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 25272,
+              "bbox": [
+                5,
+                8,
+                187,
+                200
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 28
+            },
+            {
+              "index": 3,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\waving\\03.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 24499,
+              "bbox": [
+                5,
+                5,
+                187,
+                202
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 26
+            }
+          ]
+        },
+        {
+          "state": "jumping",
+          "expected_frames": 5,
+          "actual_frames": 5,
+          "extraction_method": "stable-slots",
+          "ok": true,
+          "errors": [],
+          "warnings": [
+            "jumping used extraction method stable-slots; confirm motion playback remains stable and unclipped"
+          ],
+          "frames": [
+            {
+              "index": 0,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\jumping\\00.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 12524,
+              "bbox": [
+                30,
+                68,
+                161,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 13
+            },
+            {
+              "index": 1,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\jumping\\01.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 15158,
+              "bbox": [
+                25,
+                28,
+                167,
+                189
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 11
+            },
+            {
+              "index": 2,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\jumping\\02.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 16369,
+              "bbox": [
+                16,
+                5,
+                176,
+                162
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 8
+            },
+            {
+              "index": 3,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\jumping\\03.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 15360,
+              "bbox": [
+                27,
+                28,
+                164,
+                190
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 17
+            },
+            {
+              "index": 4,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\jumping\\04.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 12445,
+              "bbox": [
+                31,
+                67,
+                161,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 6
+            }
+          ]
+        },
+        {
+          "state": "failed",
+          "expected_frames": 8,
+          "actual_frames": 8,
+          "extraction_method": "components",
+          "ok": true,
+          "errors": [],
+          "warnings": [],
+          "frames": [
+            {
+              "index": 0,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\failed\\00.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 22788,
+              "bbox": [
+                16,
+                5,
+                175,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 440
+            },
+            {
+              "index": 1,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\failed\\01.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 22880,
+              "bbox": [
+                17,
+                5,
+                175,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 418
+            },
+            {
+              "index": 2,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\failed\\02.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 22783,
+              "bbox": [
+                18,
+                5,
+                174,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 382
+            },
+            {
+              "index": 3,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\failed\\03.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 25722,
+              "bbox": [
+                8,
+                5,
+                184,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 456
+            },
+            {
+              "index": 4,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\failed\\04.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 24737,
+              "bbox": [
+                11,
+                5,
+                180,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 453
+            },
+            {
+              "index": 5,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\failed\\05.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 24318,
+              "bbox": [
+                12,
+                5,
+                180,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 424
+            },
+            {
+              "index": 6,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\failed\\06.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 22972,
+              "bbox": [
+                16,
+                5,
+                176,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 396
+            },
+            {
+              "index": 7,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\failed\\07.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 22633,
+              "bbox": [
+                17,
+                5,
+                175,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 427
+            }
+          ]
+        },
+        {
+          "state": "waiting",
+          "expected_frames": 6,
+          "actual_frames": 6,
+          "extraction_method": "components",
+          "ok": true,
+          "errors": [],
+          "warnings": [],
+          "frames": [
+            {
+              "index": 0,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\waiting\\00.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23675,
+              "bbox": [
+                11,
+                5,
+                181,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 34
+            },
+            {
+              "index": 1,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\waiting\\01.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 24854,
+              "bbox": [
+                10,
+                5,
+                182,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 35
+            },
+            {
+              "index": 2,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\waiting\\02.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 25569,
+              "bbox": [
+                10,
+                5,
+                181,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 30
+            },
+            {
+              "index": 3,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\waiting\\03.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 24510,
+              "bbox": [
+                10,
+                5,
+                181,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 26
+            },
+            {
+              "index": 4,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\waiting\\04.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23886,
+              "bbox": [
+                10,
+                5,
+                181,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 30
+            },
+            {
+              "index": 5,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\waiting\\05.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23810,
+              "bbox": [
+                11,
+                5,
+                181,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 37
+            }
+          ]
+        },
+        {
+          "state": "running",
+          "expected_frames": 6,
+          "actual_frames": 6,
+          "extraction_method": "components",
+          "ok": true,
+          "errors": [],
+          "warnings": [],
+          "frames": [
+            {
+              "index": 0,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running\\00.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 24354,
+              "bbox": [
+                11,
+                5,
+                181,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 53
+            },
+            {
+              "index": 1,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running\\01.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23570,
+              "bbox": [
+                12,
+                5,
+                179,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 40
+            },
+            {
+              "index": 2,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running\\02.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23568,
+              "bbox": [
+                14,
+                5,
+                177,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 39
+            },
+            {
+              "index": 3,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running\\03.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 24382,
+              "bbox": [
+                10,
+                5,
+                181,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 45
+            },
+            {
+              "index": 4,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running\\04.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23553,
+              "bbox": [
+                14,
+                5,
+                178,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 57
+            },
+            {
+              "index": 5,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\running\\05.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23260,
+              "bbox": [
+                14,
+                5,
+                178,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 53
+            }
+          ]
+        },
+        {
+          "state": "review",
+          "expected_frames": 6,
+          "actual_frames": 6,
+          "extraction_method": "components",
+          "ok": true,
+          "errors": [],
+          "warnings": [],
+          "frames": [
+            {
+              "index": 0,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\review\\00.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 22996,
+              "bbox": [
+                15,
+                5,
+                176,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 330
+            },
+            {
+              "index": 1,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\review\\01.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23252,
+              "bbox": [
+                15,
+                5,
+                176,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 313
+            },
+            {
+              "index": 2,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\review\\02.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23081,
+              "bbox": [
+                16,
+                5,
+                175,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 356
+            },
+            {
+              "index": 3,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\review\\03.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 23319,
+              "bbox": [
+                16,
+                5,
+                176,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 355
+            },
+            {
+              "index": 4,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\review\\04.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 22787,
+              "bbox": [
+                17,
+                5,
+                175,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 268
+            },
+            {
+              "index": 5,
+              "file": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\frames\\review\\05.png",
+              "width": 192,
+              "height": 208,
+              "nontransparent_pixels": 22685,
+              "bbox": [
+                17,
+                5,
+                175,
+                203
+              ],
+              "edge_pixels": 0,
+              "chroma_adjacent_pixels": 328
+            }
+          ]
+        }
+      ]
+    },
+    "cardinal_extraction": {
+      "ok": true,
+      "strip": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\decoded\\look-cardinals.png",
+      "directions": [
+        "000",
+        "090",
+        "180",
+        "270"
+      ],
+      "errors": [],
+      "anchors": [
+        {
+          "direction": "000",
+          "source_box": [
+            0,
+            0,
+            542,
+            725
+          ],
+          "used_pixels": 190577,
+          "edge_pixels": 0,
+          "output": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\decoded\\look-anchors\\000.png"
+        },
+        {
+          "direction": "090",
+          "source_box": [
+            542,
+            0,
+            1085,
+            725
+          ],
+          "used_pixels": 193952,
+          "edge_pixels": 0,
+          "output": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\decoded\\look-anchors\\090.png"
+        },
+        {
+          "direction": "180",
+          "source_box": [
+            1085,
+            0,
+            1628,
+            725
+          ],
+          "used_pixels": 191183,
+          "edge_pixels": 0,
+          "output": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\decoded\\look-anchors\\180.png"
+        },
+        {
+          "direction": "270",
+          "source_box": [
+            1628,
+            0,
+            2170,
+            725
+          ],
+          "used_pixels": 189436,
+          "edge_pixels": 0,
+          "output": "C:\\Users\\amaur\\Dropbox\\SEIHouse\\Moduels\\LIBRARY CORE\\Familiars\\.hatch-runs\\galaxy-octopus\\decoded\\look-anchors\\270.png"
+        }
+      ]
+    },
+    "cardinal_semantics": {
+      "ok": true,
+      "reviewed_by": "parent",
+      "display_scale": "normal pet size",
+      "directions": [
+        {
+          "direction": "000",
+          "verdict": "pass",
+          "evidence": "Both physical eye globes aim high with lower sclera visible and the mantle/face pitched upward."
+        },
+        {
+          "direction": "090",
+          "verdict": "pass",
+          "evidence": "Face center, nose, and both irises cross toward the viewer's screen-right; the far eye narrows naturally."
+        },
+        {
+          "direction": "180",
+          "verdict": "pass",
+          "evidence": "Both physical eye globes aim low under lowered brows and the face pitches down toward the folded tentacles."
+        },
+        {
+          "direction": "270",
+          "verdict": "pass",
+          "evidence": "Face center, nose, and both irises cross toward the viewer's screen-left; the far eye narrows naturally."
+        }
+      ]
+    },
+    "row_9_registration": {
+      "scale": 0.5739130434782609
+    },
+    "row_9_semantics": {
+      "ok": true,
+      "reviewed_by": "parent",
+      "registered_row": "qa/look-row-9-registered.png",
+      "directions": [
+        {
+          "direction": "000",
+          "expected": "up",
+          "verdict": "pass",
+          "observed": "whole eye globes high, face pitched up"
+        },
+        {
+          "direction": "022.5",
+          "expected": "up-right",
+          "verdict": "pass",
+          "observed": "eyes remain high and begin crossing screen-right"
+        },
+        {
+          "direction": "045",
+          "expected": "up-right",
+          "verdict": "pass",
+          "observed": "face and eye globes clearly up-right"
+        },
+        {
+          "direction": "067.5",
+          "expected": "up-right",
+          "verdict": "pass",
+          "observed": "strong screen-right turn with remaining upward eye cue"
+        },
+        {
+          "direction": "090",
+          "expected": "right",
+          "verdict": "pass",
+          "observed": "face center and eye globes unmistakably screen-right"
+        },
+        {
+          "direction": "112.5",
+          "expected": "down-right",
+          "verdict": "pass",
+          "observed": "rightward face with first downward eye and lid cue"
+        },
+        {
+          "direction": "135",
+          "expected": "down-right",
+          "verdict": "pass",
+          "observed": "face and eyes clearly down-right"
+        },
+        {
+          "direction": "157.5",
+          "expected": "down-right",
+          "verdict": "pass",
+          "observed": "near-down pose retaining a subtle screen-right cue"
+        }
+      ],
+      "continuity": {
+        "verdict": "pass",
+        "evidence": "All eight poses keep a stable lower tentacle fan, body height, scale, cuff limb, medallion attachment, and advance evenly from up through right toward down with no reversal, snap, overlap, or registration jump."
+      }
+    },
+    "row_10_semantics": {
+      "ok": true,
+      "reviewed_by": "parent",
+      "directions": [
+        {
+          "direction": "180",
+          "expected": "down",
+          "verdict": "pass",
+          "observed": "whole eye globes low, face pitched down"
+        },
+        {
+          "direction": "202.5",
+          "expected": "down-left",
+          "verdict": "pass",
+          "observed": "eyes remain low and begin crossing screen-left"
+        },
+        {
+          "direction": "225",
+          "expected": "down-left",
+          "verdict": "pass",
+          "observed": "face and eye globes clearly down-left"
+        },
+        {
+          "direction": "247.5",
+          "expected": "down-left",
+          "verdict": "pass",
+          "observed": "strong screen-left turn with remaining downward cue"
+        },
+        {
+          "direction": "270",
+          "expected": "left",
+          "verdict": "pass",
+          "observed": "face center and eye globes unmistakably screen-left"
+        },
+        {
+          "direction": "292.5",
+          "expected": "up-left",
+          "verdict": "pass",
+          "observed": "leftward face with first upward eye and lid cue"
+        },
+        {
+          "direction": "315",
+          "expected": "up-left",
+          "verdict": "pass",
+          "observed": "face and eyes clearly up-left"
+        },
+        {
+          "direction": "337.5",
+          "expected": "up-left",
+          "verdict": "pass",
+          "observed": "near-up pose retaining a subtle screen-left cue"
+        }
+      ],
+      "continuity": {
+        "verdict": "pass",
+        "evidence": "Row 10 continues from 157.5 through down and the left arc to one step before 000 with stable scale, lower tentacle fan, cuff limb, medallion attachment, and no reversal, snap, overlap, or registration jump."
+      }
+    },
+    "blind_direction_validation": {
+      "ok": true,
+      "errors": [],
+      "warnings": [
+        "horizontal-1 A classified screen-right; expected screen-left",
+        "horizontal-1 B classified screen-left; expected screen-right",
+        "horizontal-5 A classified screen-right; expected screen-left",
+        "horizontal-5 B classified screen-left; expected screen-right",
+        "horizontal-7 A horizontal axis is ambiguous",
+        "vertical-4 B vertical axis is ambiguous"
+      ],
+      "unconfirmed": [],
+      "reviewRequired": true,
+      "pairs": [
+        {
+          "pair": "horizontal-1",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-right",
+            "expected": "screen-left",
+            "source_direction": "337.5",
+            "pass": false
+          },
+          "B": {
+            "observed": "screen-left",
+            "expected": "screen-right",
+            "source_direction": "022.5",
+            "pass": false
+          }
+        },
+        {
+          "pair": "horizontal-2",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "045",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "315",
+            "pass": true
+          }
+        },
+        {
+          "pair": "horizontal-3",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "067.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "292.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "horizontal-4",
+          "axis": "horizontal",
+          "gate": "hard",
+          "A": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "090",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "270",
+            "pass": true
+          }
+        },
+        {
+          "pair": "horizontal-5",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-right",
+            "expected": "screen-left",
+            "source_direction": "247.5",
+            "pass": false
+          },
+          "B": {
+            "observed": "screen-left",
+            "expected": "screen-right",
+            "source_direction": "112.5",
+            "pass": false
+          }
+        },
+        {
+          "pair": "horizontal-6",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "screen-left",
+            "expected": "screen-left",
+            "source_direction": "225",
+            "pass": true
+          },
+          "B": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "135",
+            "pass": true
+          }
+        },
+        {
+          "pair": "horizontal-7",
+          "axis": "horizontal",
+          "gate": "review",
+          "A": {
+            "observed": "ambiguous",
+            "expected": "screen-left",
+            "source_direction": "202.5",
+            "pass": false
+          },
+          "B": {
+            "observed": "screen-right",
+            "expected": "screen-right",
+            "source_direction": "157.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-1",
+          "axis": "vertical",
+          "gate": "hard",
+          "A": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "180",
+            "pass": true
+          },
+          "B": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "000",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-2",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "022.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "157.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-3",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "045",
+            "pass": true
+          },
+          "B": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "135",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-4",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "067.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "ambiguous",
+            "expected": "down",
+            "source_direction": "112.5",
+            "pass": false
+          }
+        },
+        {
+          "pair": "vertical-5",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "202.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "337.5",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-6",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "225",
+            "pass": true
+          },
+          "B": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "315",
+            "pass": true
+          }
+        },
+        {
+          "pair": "vertical-7",
+          "axis": "vertical",
+          "gate": "review",
+          "A": {
+            "observed": "up",
+            "expected": "up",
+            "source_direction": "292.5",
+            "pass": true
+          },
+          "B": {
+            "observed": "down",
+            "expected": "down",
+            "source_direction": "247.5",
+            "pass": true
+          }
+        }
+      ]
+    },
+    "direction_semantics": {
+      "ok": true,
+      "reviewed_by": "independent final visual QA worker",
+      "directions": [
+        {
+          "direction": "000",
+          "expected": "up",
+          "verdict": "pass",
+          "observed": "up",
+          "reason": "Horizontal centered with no side cue; whole eye globes and face pitch upward."
+        },
+        {
+          "direction": "022.5",
+          "expected": "up-right",
+          "verdict": "pass",
+          "observed": "up-right",
+          "reason": "Horizontal face and eyes begin screen-right; vertical eye globes remain up."
+        },
+        {
+          "direction": "045",
+          "expected": "up-right",
+          "verdict": "pass",
+          "observed": "up-right",
+          "reason": "Horizontal face and eyes screen-right; vertical gaze clearly up."
+        },
+        {
+          "direction": "067.5",
+          "expected": "up-right",
+          "verdict": "pass",
+          "observed": "up-right",
+          "reason": "Horizontal turn strongly screen-right; vertical eyelid and eye position retain an up cue."
+        },
+        {
+          "direction": "090",
+          "expected": "right",
+          "verdict": "pass",
+          "observed": "right",
+          "reason": "Horizontal face center and whole eye globes unmistakably screen-right; vertical neutral."
+        },
+        {
+          "direction": "112.5",
+          "expected": "down-right",
+          "verdict": "pass",
+          "observed": "down-right",
+          "reason": "Horizontal face and eyes screen-right; vertical eyelids and eye position begin down."
+        },
+        {
+          "direction": "135",
+          "expected": "down-right",
+          "verdict": "pass",
+          "observed": "down-right",
+          "reason": "Horizontal face and eyes screen-right; vertical gaze clearly down."
+        },
+        {
+          "direction": "157.5",
+          "expected": "down-right",
+          "verdict": "pass",
+          "observed": "down-right",
+          "reason": "Horizontal subtle screen-right cue; vertical face and whole eye globes near down."
+        },
+        {
+          "direction": "180",
+          "expected": "down",
+          "verdict": "pass",
+          "observed": "down",
+          "reason": "Horizontal centered with no side cue; whole eye globes and face pitch down."
+        },
+        {
+          "direction": "202.5",
+          "expected": "down-left",
+          "verdict": "pass",
+          "observed": "down-left",
+          "reason": "Horizontal face and eyes begin screen-left; vertical eye globes remain down."
+        },
+        {
+          "direction": "225",
+          "expected": "down-left",
+          "verdict": "pass",
+          "observed": "down-left",
+          "reason": "Horizontal face and eyes screen-left; vertical gaze clearly down."
+        },
+        {
+          "direction": "247.5",
+          "expected": "down-left",
+          "verdict": "pass",
+          "observed": "down-left",
+          "reason": "Horizontal turn strongly screen-left; vertical eyelid and eye position retain a down cue."
+        },
+        {
+          "direction": "270",
+          "expected": "left",
+          "verdict": "pass",
+          "observed": "left",
+          "reason": "Horizontal face center and whole eye globes unmistakably screen-left; vertical neutral."
+        },
+        {
+          "direction": "292.5",
+          "expected": "up-left",
+          "verdict": "pass",
+          "observed": "up-left",
+          "reason": "Horizontal face and eyes screen-left; vertical eyelids and eye position begin up."
+        },
+        {
+          "direction": "315",
+          "expected": "up-left",
+          "verdict": "pass",
+          "observed": "up-left",
+          "reason": "Horizontal face and eyes screen-left; vertical gaze clearly up."
+        },
+        {
+          "direction": "337.5",
+          "expected": "up-left",
+          "verdict": "pass",
+          "observed": "up-left",
+          "reason": "Horizontal subtle screen-left cue; vertical face and whole eye globes near up."
+        }
+      ],
+      "accepted_warnings": [
+        "Blind intermediate classifiers reversed or marked ambiguous several subtle axes, while labeled normal-size review confirms all intended quadrants and no loop reversal.",
+        "Continuity hole candidates are the designed negative spaces between curled tentacles.",
+        "Continuity diff outliers have no visible snap, scale pop, or registration jump."
+      ]
+    },
+    "continuity": {
+      "ok": true,
+      "reviewRequired": true,
+      "medianDiffPixels": 1482.5,
+      "warnings": [
+        "000 has transparent interior hole rows (y=197, y=198, y=199, y=200)",
+        "022.5 has transparent interior hole rows (y=195, y=196, y=197, y=198, +1 more)",
+        "045 has transparent interior hole rows (y=195, y=196, y=197)",
+        "067.5 has transparent interior hole rows (y=195, y=196, y=197, y=198)",
+        "090 has transparent interior hole rows (y=195, y=196, y=197, y=198, +1 more)",
+        "112.5 has transparent interior hole rows (y=195, y=196, y=197, y=198, +1 more)",
+        "135 has transparent interior hole rows (y=195, y=196, y=197, y=198)",
+        "157.5 has transparent interior hole rows (y=195, y=196, y=197, y=198)",
+        "180 has transparent interior hole rows (y=197, y=198, y=199, y=200)",
+        "202.5 has transparent interior hole rows (y=196, y=197, y=198, y=199, +1 more)",
+        "225 has transparent interior hole rows (y=195, y=196, y=197)",
+        "247.5 has transparent interior hole rows (y=195, y=196, y=197, y=198)",
+        "270 has transparent interior hole rows (y=195, y=196, y=197, y=198, +2 more)",
+        "292.5 has transparent interior hole rows (y=195, y=196, y=197, y=198, +1 more)",
+        "315 has transparent interior hole rows (y=195, y=196, y=197, y=198)",
+        "337.5 has transparent interior hole rows (y=195, y=196, y=197, y=198)",
+        "067.5->090 diff is a local outlier (1814 pixels vs neighbor average 1170)",
+        "112.5->135 diff is a local outlier (1836 pixels vs neighbor average 1194)",
+        "157.5->180 diff is a local outlier (2894 pixels vs neighbor average 1507)",
+        "337.5->000 diff is a local outlier (2742 pixels vs neighbor average 1814)"
+      ],
+      "alphaHoles": [
+        {
+          "direction": "000",
+          "holes": [
+            {
+              "row": 197,
+              "transparentPixels": 37,
+              "spanPixels": 102
+            },
+            {
+              "row": 198,
+              "transparentPixels": 37,
+              "spanPixels": 96
+            },
+            {
+              "row": 199,
+              "transparentPixels": 40,
+              "spanPixels": 94
+            },
+            {
+              "row": 200,
+              "transparentPixels": 44,
+              "spanPixels": 82
+            }
+          ]
+        },
+        {
+          "direction": "022.5",
+          "holes": [
+            {
+              "row": 195,
+              "transparentPixels": 33,
+              "spanPixels": 103
+            },
+            {
+              "row": 196,
+              "transparentPixels": 35,
+              "spanPixels": 96
+            },
+            {
+              "row": 197,
+              "transparentPixels": 36,
+              "spanPixels": 95
+            },
+            {
+              "row": 198,
+              "transparentPixels": 39,
+              "spanPixels": 92
+            },
+            {
+              "row": 199,
+              "transparentPixels": 44,
+              "spanPixels": 89
+            }
+          ]
+        },
+        {
+          "direction": "045",
+          "holes": [
+            {
+              "row": 195,
+              "transparentPixels": 38,
+              "spanPixels": 98
+            },
+            {
+              "row": 196,
+              "transparentPixels": 38,
+              "spanPixels": 97
+            },
+            {
+              "row": 197,
+              "transparentPixels": 40,
+              "spanPixels": 94
+            }
+          ]
+        },
+        {
+          "direction": "067.5",
+          "holes": [
+            {
+              "row": 195,
+              "transparentPixels": 37,
+              "spanPixels": 99
+            },
+            {
+              "row": 196,
+              "transparentPixels": 37,
+              "spanPixels": 97
+            },
+            {
+              "row": 197,
+              "transparentPixels": 39,
+              "spanPixels": 95
+            },
+            {
+              "row": 198,
+              "transparentPixels": 43,
+              "spanPixels": 91
+            }
+          ]
+        },
+        {
+          "direction": "090",
+          "holes": [
+            {
+              "row": 195,
+              "transparentPixels": 35,
+              "spanPixels": 107
+            },
+            {
+              "row": 196,
+              "transparentPixels": 37,
+              "spanPixels": 103
+            },
+            {
+              "row": 197,
+              "transparentPixels": 38,
+              "spanPixels": 97
+            },
+            {
+              "row": 198,
+              "transparentPixels": 40,
+              "spanPixels": 95
+            },
+            {
+              "row": 199,
+              "transparentPixels": 46,
+              "spanPixels": 92
+            }
+          ]
+        },
+        {
+          "direction": "112.5",
+          "holes": [
+            {
+              "row": 195,
+              "transparentPixels": 37,
+              "spanPixels": 106
+            },
+            {
+              "row": 196,
+              "transparentPixels": 37,
+              "spanPixels": 98
+            },
+            {
+              "row": 197,
+              "transparentPixels": 39,
+              "spanPixels": 97
+            },
+            {
+              "row": 198,
+              "transparentPixels": 41,
+              "spanPixels": 94
+            },
+            {
+              "row": 199,
+              "transparentPixels": 49,
+              "spanPixels": 90
+            }
+          ]
+        },
+        {
+          "direction": "135",
+          "holes": [
+            {
+              "row": 195,
+              "transparentPixels": 36,
+              "spanPixels": 99
+            },
+            {
+              "row": 196,
+              "transparentPixels": 37,
+              "spanPixels": 98
+            },
+            {
+              "row": 197,
+              "transparentPixels": 39,
+              "spanPixels": 95
+            },
+            {
+              "row": 198,
+              "transparentPixels": 44,
+              "spanPixels": 91
+            }
+          ]
+        },
+        {
+          "direction": "157.5",
+          "holes": [
+            {
+              "row": 195,
+              "transparentPixels": 35,
+              "spanPixels": 98
+            },
+            {
+              "row": 196,
+              "transparentPixels": 37,
+              "spanPixels": 98
+            },
+            {
+              "row": 197,
+              "transparentPixels": 39,
+              "spanPixels": 95
+            },
+            {
+              "row": 198,
+              "transparentPixels": 43,
+              "spanPixels": 90
+            }
+          ]
+        },
+        {
+          "direction": "180",
+          "holes": [
+            {
+              "row": 197,
+              "transparentPixels": 36,
+              "spanPixels": 103
+            },
+            {
+              "row": 198,
+              "transparentPixels": 37,
+              "spanPixels": 96
+            },
+            {
+              "row": 199,
+              "transparentPixels": 39,
+              "spanPixels": 94
+            },
+            {
+              "row": 200,
+              "transparentPixels": 42,
+              "spanPixels": 90
+            }
+          ]
+        },
+        {
+          "direction": "202.5",
+          "holes": [
+            {
+              "row": 196,
+              "transparentPixels": 34,
+              "spanPixels": 101
+            },
+            {
+              "row": 197,
+              "transparentPixels": 36,
+              "spanPixels": 95
+            },
+            {
+              "row": 198,
+              "transparentPixels": 38,
+              "spanPixels": 93
+            },
+            {
+              "row": 199,
+              "transparentPixels": 40,
+              "spanPixels": 91
+            },
+            {
+              "row": 200,
+              "transparentPixels": 49,
+              "spanPixels": 86
+            }
+          ]
+        },
+        {
+          "direction": "225",
+          "holes": [
+            {
+              "row": 195,
+              "transparentPixels": 37,
+              "spanPixels": 99
+            },
+            {
+              "row": 196,
+              "transparentPixels": 39,
+              "spanPixels": 98
+            },
+            {
+              "row": 197,
+              "transparentPixels": 41,
+              "spanPixels": 95
+            }
+          ]
+        },
+        {
+          "direction": "247.5",
+          "holes": [
+            {
+              "row": 195,
+              "transparentPixels": 37,
+              "spanPixels": 100
+            },
+            {
+              "row": 196,
+              "transparentPixels": 38,
+              "spanPixels": 98
+            },
+            {
+              "row": 197,
+              "transparentPixels": 40,
+              "spanPixels": 96
+            },
+            {
+              "row": 198,
+              "transparentPixels": 42,
+              "spanPixels": 93
+            }
+          ]
+        },
+        {
+          "direction": "270",
+          "holes": [
+            {
+              "row": 195,
+              "transparentPixels": 36,
+              "spanPixels": 108
+            },
+            {
+              "row": 196,
+              "transparentPixels": 38,
+              "spanPixels": 105
+            },
+            {
+              "row": 197,
+              "transparentPixels": 38,
+              "spanPixels": 98
+            },
+            {
+              "row": 198,
+              "transparentPixels": 40,
+              "spanPixels": 96
+            },
+            {
+              "row": 199,
+              "transparentPixels": 43,
+              "spanPixels": 94
+            },
+            {
+              "row": 200,
+              "transparentPixels": 50,
+              "spanPixels": 90
+            }
+          ]
+        },
+        {
+          "direction": "292.5",
+          "holes": [
+            {
+              "row": 195,
+              "transparentPixels": 36,
+              "spanPixels": 106
+            },
+            {
+              "row": 196,
+              "transparentPixels": 38,
+              "spanPixels": 99
+            },
+            {
+              "row": 197,
+              "transparentPixels": 40,
+              "spanPixels": 96
+            },
+            {
+              "row": 198,
+              "transparentPixels": 41,
+              "spanPixels": 94
+            },
+            {
+              "row": 199,
+              "transparentPixels": 47,
+              "spanPixels": 92
+            }
+          ]
+        },
+        {
+          "direction": "315",
+          "holes": [
+            {
+              "row": 195,
+              "transparentPixels": 36,
+              "spanPixels": 99
+            },
+            {
+              "row": 196,
+              "transparentPixels": 38,
+              "spanPixels": 98
+            },
+            {
+              "row": 197,
+              "transparentPixels": 39,
+              "spanPixels": 96
+            },
+            {
+              "row": 198,
+              "transparentPixels": 41,
+              "spanPixels": 93
+            }
+          ]
+        },
+        {
+          "direction": "337.5",
+          "holes": [
+            {
+              "row": 195,
+              "transparentPixels": 37,
+              "spanPixels": 99
+            },
+            {
+              "row": 196,
+              "transparentPixels": 38,
+              "spanPixels": 98
+            },
+            {
+              "row": 197,
+              "transparentPixels": 39,
+              "spanPixels": 96
+            },
+            {
+              "row": 198,
+              "transparentPixels": 44,
+              "spanPixels": 92
+            }
+          ]
+        }
+      ],
+      "pairs": [
+        {
+          "from": "000",
+          "to": "022.5",
+          "firstPixels": 22288,
+          "secondPixels": 22088,
+          "diffPixels": 2131,
+          "centerDelta": 0.0,
+          "areaRatio": 1.0090546903295907
+        },
+        {
+          "from": "022.5",
+          "to": "045",
+          "firstPixels": 22088,
+          "secondPixels": 21925,
+          "diffPixels": 1459,
+          "centerDelta": 0.5,
+          "areaRatio": 1.0074344355758267
+        },
+        {
+          "from": "045",
+          "to": "067.5",
+          "firstPixels": 21925,
+          "secondPixels": 21960,
+          "diffPixels": 1062,
+          "centerDelta": 0.5,
+          "areaRatio": 1.0015963511972634
+        },
+        {
+          "from": "067.5",
+          "to": "090",
+          "firstPixels": 21960,
+          "secondPixels": 21993,
+          "diffPixels": 1814,
+          "centerDelta": 0.5,
+          "areaRatio": 1.001502732240437
+        },
+        {
+          "from": "090",
+          "to": "112.5",
+          "firstPixels": 21993,
+          "secondPixels": 21770,
+          "diffPixels": 1277,
+          "centerDelta": 0.5,
+          "areaRatio": 1.0102434542949013
+        },
+        {
+          "from": "112.5",
+          "to": "135",
+          "firstPixels": 21770,
+          "secondPixels": 21341,
+          "diffPixels": 1836,
+          "centerDelta": 0.5,
+          "areaRatio": 1.02010215078956
+        },
+        {
+          "from": "135",
+          "to": "157.5",
+          "firstPixels": 21341,
+          "secondPixels": 21337,
+          "diffPixels": 1111,
+          "centerDelta": 0.5,
+          "areaRatio": 1.0001874677789755
+        },
+        {
+          "from": "157.5",
+          "to": "180",
+          "firstPixels": 21337,
+          "secondPixels": 22568,
+          "diffPixels": 2894,
+          "centerDelta": 1.5,
+          "areaRatio": 1.0576932089797066
+        },
+        {
+          "from": "180",
+          "to": "202.5",
+          "firstPixels": 22568,
+          "secondPixels": 22292,
+          "diffPixels": 1903,
+          "centerDelta": 0.0,
+          "areaRatio": 1.012381123272923
+        },
+        {
+          "from": "202.5",
+          "to": "225",
+          "firstPixels": 22292,
+          "secondPixels": 22197,
+          "diffPixels": 1567,
+          "centerDelta": 0.7071067811865476,
+          "areaRatio": 1.0042798576384195
+        },
+        {
+          "from": "225",
+          "to": "247.5",
+          "firstPixels": 22197,
+          "secondPixels": 22277,
+          "diffPixels": 1144,
+          "centerDelta": 0.0,
+          "areaRatio": 1.0036040906428796
+        },
+        {
+          "from": "247.5",
+          "to": "270",
+          "firstPixels": 22277,
+          "secondPixels": 22394,
+          "diffPixels": 1444,
+          "centerDelta": 0.5,
+          "areaRatio": 1.00525205368766
+        },
+        {
+          "from": "270",
+          "to": "292.5",
+          "firstPixels": 22394,
+          "secondPixels": 22181,
+          "diffPixels": 1467,
+          "centerDelta": 0.5,
+          "areaRatio": 1.0096028132185204
+        },
+        {
+          "from": "292.5",
+          "to": "315",
+          "firstPixels": 22181,
+          "secondPixels": 21673,
+          "diffPixels": 1459,
+          "centerDelta": 0.5,
+          "areaRatio": 1.0234393023577724
+        },
+        {
+          "from": "315",
+          "to": "337.5",
+          "firstPixels": 21673,
+          "secondPixels": 21551,
+          "diffPixels": 1498,
+          "centerDelta": 0.0,
+          "areaRatio": 1.005660990209271
+        },
+        {
+          "from": "337.5",
+          "to": "000",
+          "firstPixels": 21551,
+          "secondPixels": 22288,
+          "diffPixels": 2742,
+          "centerDelta": 1.5811388300841898,
+          "areaRatio": 1.0341979490510882
+        }
+      ]
+    },
+    "final_visual_review": {
+      "ok": true,
+      "reviewer": "independent final visual QA worker",
+      "visual_qa": "pass",
+      "qa_note": "All nine final rows preserve the stern-cute Galaxy Octopus identity with complete frames, stable extraction, correct state motion, and no clipping, overlap, artifacts, or anatomy violations; blind validation is ok=true.",
+      "review_warnings": [
+        "Jumping stable-slots extraction warning accepted after contact-sheet and GIF inspection confirmed the intended vertical arc without clipping or pop.",
+        "Intermediate blind classifier reversals or ambiguity at 022.5, 112.5, 202.5, 247.5, and 337.5 are accepted because labeled normal-size poses occupy the correct quadrants and the ordered loop never reverses.",
+        "Continuity transparent-hole warnings are intentional negative spaces between curled tentacles, not body holes or seams.",
+        "Continuity diff outliers at natural cardinal transitions show no visible snap, scale pop, or registration jump."
+      ],
+      "repair_rows": []
+    },
+    "size_readability": {
+      "widths_reviewed": [
+        60,
+        100,
+        150
+      ],
+      "verdict": "pass"
+    }
+  },
+  "accepted_non_blocking_warnings": [
+    "Jumping uses stable-slot extraction to preserve the intended vertical arc; final GIF review confirms no clipping or size pop.",
+    "Blind reviewers disagreed on several subtle intermediate axes, while all four cardinal hard gates pass and labeled normal-size review confirms every intended quadrant without reversal.",
+    "Continuity hole candidates are the intended open spaces between curled tentacles, not transparency holes inside the body.",
+    "Continuity diff outliers at natural cardinal transitions show no visible snap, scale pop, identity change, or registration jump."
+  ]
+}

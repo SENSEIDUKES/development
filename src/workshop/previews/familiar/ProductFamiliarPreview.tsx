@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState, type R
 import { FamiliarCompanion, FamiliarRecall, type FamiliarCompanionProps } from '@seihouse/library/familiar';
 import { WorkspaceHeaderAccessoryProvider } from '@seihouse/library/shell';
 import { EnergyClientProvider, createHttpEnergyClient } from '@seihouse/library/energy';
-import { celestialGuardian } from '../../../host/familiar/celestialGuardian';
+import { defaultFamiliar, familiarCatalogueEntry } from '../../../host/familiar/catalogue';
 import { developmentIdentityToken } from '../../../server/identity/authentication';
 import { getPreviewScenario } from '../user-profile/previewData';
 import { DEFAULT_USER_PROFILE_PREVIEW_STATE, type UserProfilePreviewState } from '../user-profile/previewStates';
@@ -11,15 +11,15 @@ import './productFamiliarPreview.css';
 type Selection = { uid: string | null; familiarId?: string; familiarSize?: number };
 const SelectionContext = createContext<{ selection: Selection; reportProfile: (selection: Selection) => void; minimized: boolean; setMinimized: (minimized: boolean) => void } | null>(null);
 const SurfaceContext = createContext(false);
-export const PREVIEW_FAMILIAR_ID = celestialGuardian.id;
+export const PREVIEW_FAMILIAR_ID = defaultFamiliar.definition.id;
 
 /** Preview-only projection of the active profile, never a second profile/ledger store. */
-export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_PROFILE_PREVIEW_STATE }: { children: ReactNode; initialState?: UserProfilePreviewState }) {
+export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_PROFILE_PREVIEW_STATE, initialFamiliarId = PREVIEW_FAMILIAR_ID }: { children: ReactNode; initialState?: UserProfilePreviewState; initialFamiliarId?: string }) {
   const parent = useContext(SelectionContext);
   const [minimized, setMinimized] = useState(false);
   const [selection, reportProfile] = useState<Selection>(() => ({
     uid: getPreviewScenario(initialState).currentUser?.uid ?? null,
-    familiarId: PREVIEW_FAMILIAR_ID,
+    familiarId: initialFamiliarId,
   }));
   useEffect(() => setMinimized(false), [selection.uid]);
   const value = useMemo(() => ({ selection, reportProfile, minimized, setMinimized }), [selection, minimized]);
@@ -38,8 +38,9 @@ export function useProductFamiliarPreview() { return useContext(SelectionContext
 /** Offer recall only for an authenticated preview account with the known selection. */
 function ProductFamiliarRecall() {
   const context = useProductFamiliarPreview();
-  if (!context?.minimized || !context.selection.uid || context.selection.familiarId !== celestialGuardian.id) return null;
-  return <FamiliarRecall key={context.selection.uid} familiar={celestialGuardian} onRecall={() => context.setMinimized(false)} />;
+  const familiar = familiarCatalogueEntry(context?.selection.familiarId)?.definition;
+  if (!context?.minimized || !context.selection.uid || !familiar) return null;
+  return <FamiliarRecall key={`${context.selection.uid}:${familiar.id}`} familiar={familiar} onRecall={() => context.setMinimized(false)} />;
 }
 
 /** Restrict standalone previews to their canvas; an embedded app owns one viewport companion. */
@@ -50,13 +51,14 @@ export function ProductFamiliarSurface({ children, viewport = false, headerRecal
   const context = useProductFamiliarPreview();
   const boundary = useRef<HTMLDivElement>(null);
   const uid = context?.selection.uid;
+  const familiar = familiarCatalogueEntry(context?.selection.familiarId)?.definition;
   if (parentSurface) return <>{children}</>;
   return <SurfaceContext.Provider value={true}>
     <div ref={boundary} className="product-familiar-surface">
       {!headerRecall && context?.minimized && <div className="product-familiar-recall" aria-label="Familiar controls"><ProductFamiliarRecall /></div>}
       {children}
-      {uid && context?.selection.familiarId === celestialGuardian.id &&
-        <FamiliarCompanion key={uid} familiar={celestialGuardian} boundaryRef={viewport ? undefined : boundary} activity={activity} animation={animation} paused={paused}
+      {uid && familiar &&
+        <FamiliarCompanion key={`${uid}:${familiar.id}`} familiar={familiar} boundaryRef={viewport ? undefined : boundary} activity={activity} animation={animation} paused={paused}
           size={context.selection.familiarSize} minimized={context.minimized} onMinimize={() => context.setMinimized(true)} bottomInset={bottomInset} />
       }
     </div>

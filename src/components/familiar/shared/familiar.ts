@@ -6,10 +6,17 @@ export interface FamiliarAnimation {
   durations: readonly number[];
 }
 
+/** Stable catalogue rank supplied by the Library host; it never implies ownership or pricing. */
+export type FamiliarRarity = 'common' | 'rare' | 'epic' | 'legendary';
+
 export interface FamiliarDefinition {
   id: string;
   displayName: string;
   description: string;
+  /** Content metadata from the host catalogue, separate from availability and acquisition. */
+  rarity: FamiliarRarity;
+  /** The host may use its single default Familiar when no persisted choice has been made. */
+  isDefault?: boolean;
   spriteUrl: string;
   /** Optional lightweight still shown while the full atlas decodes. */
   placeholderUrl?: string;
@@ -42,6 +49,9 @@ export interface FamiliarOption {
   id: string;
   name: string;
   description: string;
+  /** Catalogue projection for presentation; it is not inferred by this component. */
+  rarity: FamiliarRarity;
+  isDefault?: boolean;
   heroUrl: string;
   stillUrl: string;
   available: boolean;

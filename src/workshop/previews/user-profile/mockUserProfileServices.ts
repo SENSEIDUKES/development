@@ -28,7 +28,7 @@
  */
 
 import type React from 'react';
-import { celestialGuardianOption } from '../../../host/familiar/celestialGuardian';
+import { allFamiliarOptions } from '../../../host/familiar/catalogue';
 import { normalizeFamiliarSize } from '@seihouse/library/familiar';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '@seihouse/sen/contracts';
@@ -307,7 +307,7 @@ export function createMockUserProfileServices({
 
     const handleFamiliarChange = useCallback(async (id: string) => {
       if (!currentUser || !profileRef.current || familiarSaveLock.current) return;
-      if (id !== celestialGuardianOption.id || !celestialGuardianOption.available) {
+      if (!allFamiliarOptions.some(option => option.id === id && option.available)) {
         setError('This Familiar is not available for selection.');
         return;
       }
@@ -860,7 +860,7 @@ export function createMockUserProfileServices({
       onSignIn(MOCK_ACCOUNT);
     },
     useController,
-    familiars: [celestialGuardianOption],
+    familiars: allFamiliarOptions,
 
     localOnlyMode: scenario.localOnlyMode,
     setLocalOnlyMode: next =>

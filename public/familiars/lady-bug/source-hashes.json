@@ -1,0 +1,18 @@
+{
+  "pet.json": "496595ed4ff2336d9ab8c1bfcbc8e2e793a4d50577cc65f1f4db591fcd3cf33d",
+  "pet-request.json": "9e763f4d82362baeb73f7c86e195358fa4b57fd04b3e8f4001d8514e2a8222eb",
+  "spritesheet.webp": "541f43d0b448bd181fe8c76064a7178d8f47c3386229e3e4e7be8b62eec7be32",
+  "neutral.png": "07698dbf9d04cacab20ffbdd9c7b077848876628fcd3e3d5d8b3aa16ad5ffe64",
+  "animation-timing.json": "70be4d5b94a0676a5656057f6615a586f3437a6252078dba38641301c06a33ce",
+  "previews/idle.gif": "131146f2ffacc5be36067dbb377f8fcad71a8dd57cd7dcd59dc78f10bcd4be55",
+  "previews/running-right.gif": "01f1b8966d390338293ebf0bb639e5eb8226d9e1cf525f0417440495414789f4",
+  "previews/running-left.gif": "58cb2f2ca47bf638a5225b78626a9da17600f19b462b219e05b3b525894ff181",
+  "previews/waving.gif": "cdd48372ba99f7973ba82d9c01d3f084582367a3f84e890ec7f4a4cf63f047d2",
+  "previews/jumping.gif": "79b38517c6dd9a8f2f3817a9bd65dc6772c53f74fa0046fd669c7122e21a816c",
+  "previews/failed.gif": "e7a6ffd0660feea27aab7fb79b46836a35fa59b77360079ad3e5b8702744e1a6",
+  "previews/waiting.gif": "dd533007e98d65f3ec5c5cce83ae1458dfaf577762fb2404d8dfa824d7b7c5eb",
+  "previews/running.gif": "045289907493212a5047372c7717a849be36fafb3546f865a6c4b51b8d63919c",
+  "previews/review.gif": "5b70724fa0112a41a4ed5e013bd1212f636f6970d27926ff908f5c27e467ab59",
+  "hero.gif": "cdd48372ba99f7973ba82d9c01d3f084582367a3f84e890ec7f4a4cf63f047d2",
+  "source/Lady Bug.png": "4b0ac648128e5287836467b8d3a77291d98b867fdeb56f71af6f8d6c358a8ebe"
+}

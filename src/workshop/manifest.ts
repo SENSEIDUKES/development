@@ -55,9 +55,9 @@ export function getWorkshopVersionLabel(version: WorkshopEntry['version']) {
 export const workshopEntries: WorkshopEntry[] = [
   {
     id: 'familiar', section: 'shared', title: 'Familiar',
-    description: 'Compare the supplied Celestial Guardian greeting with the reusable sprite renderer and live Energy interaction.',
+    description: 'Inspect eleven supplied Familiar atlases, ranks, and hosted heroes through the reusable sprite renderer and live Energy interaction.',
     category: 'animations', version: 'v1.0',
-    source: { repository: 'Supplied Celestial Guardian package', path: 'celestial-guardian/', lastCompared: '2026-09-20' },
+    source: { repository: 'Supplied Familiar packages', path: 'Familiars/Packages/', lastCompared: '2026-09-22' },
   },
   {
     id: 'light-novels-home', section: 'home', title: 'Light Novels Home',

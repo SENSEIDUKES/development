@@ -1,0 +1,19 @@
+{
+  "pet.json": "a56c69595ae589cbb7960bbd423195d39063c3494bd7cdac70979cba5b208908",
+  "pet-request.json": "0173a4e30fa8ae54d2da07b2bd6924b9d08e45b68a81fb9f80ae9afa8c32add3",
+  "spritesheet.webp": "7cca1a2c5295c27e841371f99108d0aa540901112f3ae96d7985e818be30b3ae",
+  "neutral.png": "d98b630cbb893818dc86623241f33813f97b2d8ee775260a593962be03a232b1",
+  "animation-timing.json": "70be4d5b94a0676a5656057f6615a586f3437a6252078dba38641301c06a33ce",
+  "previews/idle.gif": "aad5c97bc5ae2a555258aab5b7680640ff4796acd8d4a55882ec52803bad6f90",
+  "previews/running-right.gif": "a9ae78351240dae70997a80111fd29c0cf5abc956fd9c3e446e9477d3f276f37",
+  "previews/running-left.gif": "edfa77179ef838c944bd3c7ab6c047deb35d99dc3cd4a13a050539c6d35a885c",
+  "previews/waving.gif": "5b8c244a61cb1f820483b0052be6aebee8f2a2f7e8a1524249f01a43109554ad",
+  "previews/jumping.gif": "0fdfb3686fd115054139ae8a8683c0d2e5527820cac50952342447492260abdc",
+  "previews/failed.gif": "ba5d680cb07e270373b08b4f36b8922d105d441e314401afcb15fe189c73de0a",
+  "previews/waiting.gif": "d1b8a87012ef5f7aeda3198e77e6a326042c04d1f7f6e2218a56409f5ef5bcc0",
+  "previews/running.gif": "6121bd9c52f040c8968348bad544b1fca0e2974d5dee5d652d076bc508f410e3",
+  "previews/review.gif": "d86d683ebde631fecae2eb38befaa9241e1a81de4d0ef4cd3a7be7ffbb5639da",
+  "hero.gif": "5b8c244a61cb1f820483b0052be6aebee8f2a2f7e8a1524249f01a43109554ad",
+  "source/Celestial Moon Moth.png": "c2311d765259aef844894fbbf8317ac0d149f70259d1e5ad0129a426c05f9031",
+  "IMPORT-HANDOFF.md": "04f6765efbca411dafe1e71d392439442867f602a2e4f154c962c5df8688dd5e"
+}

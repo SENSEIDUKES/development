@@ -1,0 +1,1032 @@
+{
+  "pet_id": "nine-tailed-fox",
+  "display_name": "Nine-tailed Fox",
+  "description": "An elegant white-and-pink nine-tailed fox with luminous violet eyes and a crescent pendant brings gentle magic to your side.",
+  "created_at": "2026-09-21T20:13:58.748100+00:00",
+  "sprite_version_number": 2,
+  "atlas": {
+    "columns": 8,
+    "rows": 11,
+    "cell_width": 192,
+    "cell_height": 208,
+    "width": 1536,
+    "height": 2288
+  },
+  "rows": [
+    {
+      "state": "idle",
+      "row": 0,
+      "frames": 6,
+      "purpose": "calm resting, breathing, and blinking loop"
+    },
+    {
+      "state": "running-right",
+      "row": 1,
+      "frames": 8,
+      "purpose": "rightward drag movement loop"
+    },
+    {
+      "state": "running-left",
+      "row": 2,
+      "frames": 8,
+      "purpose": "leftward drag movement loop"
+    },
+    {
+      "state": "waving",
+      "row": 3,
+      "frames": 4,
+      "purpose": "greeting or attention gesture"
+    },
+    {
+      "state": "jumping",
+      "row": 4,
+      "frames": 5,
+      "purpose": "hover or playful jump"
+    },
+    {
+      "state": "failed",
+      "row": 5,
+      "frames": 8,
+      "purpose": "blocked, failed, or cancelled reaction"
+    },
+    {
+      "state": "waiting",
+      "row": 6,
+      "frames": 6,
+      "purpose": "waiting for approval, help, or user input"
+    },
+    {
+      "state": "running",
+      "row": 7,
+      "frames": 6,
+      "purpose": "active task work or processing"
+    },
+    {
+      "state": "review",
+      "row": 8,
+      "frames": 6,
+      "purpose": "ready or completed output review"
+    },
+    {
+      "state": "look-row-9",
+      "row": 9,
+      "frames": 8,
+      "directions": [
+        "000",
+        "022.5",
+        "045",
+        "067.5",
+        "090",
+        "112.5",
+        "135",
+        "157.5"
+      ],
+      "purpose": "clockwise look directions from up through down-right"
+    },
+    {
+      "state": "look-row-10",
+      "row": 10,
+      "frames": 8,
+      "directions": [
+        "180",
+        "202.5",
+        "225",
+        "247.5",
+        "270",
+        "292.5",
+        "315",
+        "337.5"
+      ],
+      "purpose": "clockwise look directions from down through up-left"
+    }
+  ],
+  "layout_guides": [
+    {
+      "state": "idle",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "running-right",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "running-left",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "waving",
+      "width": 768,
+      "height": 208,
+      "frames": 4,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "jumping",
+      "width": 960,
+      "height": 208,
+      "frames": 5,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "failed",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "waiting",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "running",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "review",
+      "width": 1152,
+      "height": 208,
+      "frames": 6,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "look-row-9",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "look-row-10",
+      "width": 1536,
+      "height": 208,
+      "frames": 8,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    },
+    {
+      "state": "look-cardinals",
+      "width": 768,
+      "height": 208,
+      "frames": 4,
+      "cell_width": 192,
+      "cell_height": 208,
+      "safe_margin_x": 18,
+      "safe_margin_y": 16,
+      "usage": "layout guide input only; do not copy visible guide lines into generated sprite strips"
+    }
+  ],
+  "references": [
+    {
+      "path": "source/codex-clipboard-7b2368e1-a2d0-4067-814e-34c61757364c.png",
+      "original_filename": "codex-clipboard-7b2368e1-a2d0-4067-814e-34c61757364c.png",
+      "provenance": "Exact user-supplied reference image; sole visual authority",
+      "sha256": "c459d6c43197bb60528e1ad2e6a2b6bccfeaf0b16790e8aefe7e017f2727a295",
+      "width": 1312,
+      "height": 1199,
+      "mode": "RGBA"
+    }
+  ],
+  "chroma_key": {
+    "hex": "#0000FF",
+    "rgb": [
+      0,
+      0,
+      255
+    ],
+    "name": "blue",
+    "selection": "auto",
+    "score": 246.26
+  },
+  "pet_notes": "Sole artistic authority is the supplied fox reference. Preserve large violet-pink almond eyes, black lashes, tiny brown nose, smiling muzzle, white silky fur with rose-pink tips and chest ruff, large pointed pink-inner ears, petite seated quadruped proportions, nine broad fluffy tails in elegant fan, and gold crescent pendant with pink flower and hanging pink jewel. Gentle, poised, affectionate, curious personality. Keep face large and unobscured at 60px; simplify tiny fur strands and pendant details, retain distinct broad tail lobes. No new props, particles, effects, symbols or shadows. Preserve crescent orientation by independently generating left travel.",
+  "style_preset": "auto",
+  "style_notes": "Match the polished soft painterly dimensional illustration of the supplied image, compact full-body readable sprite with clean silhouette and generous safe padding; transparent final background.",
+  "style_contract": "Pet-safe sprite: compact full-body mascot, readable in a 192x208 cell, clear silhouette, simple face, stable palette/materials, and crisp edges for chroma-key extraction. Style `auto`: Infer the most appropriate pet-safe style from the user request and reference images, then keep that exact style consistent across every row. User style notes: Match the polished soft painterly dimensional illustration of the supplied image, compact full-body readable sprite with clean silhouette and generous safe padding; transparent final background..",
+  "brand_name": "",
+  "brand_brief": "",
+  "brand_sources": [],
+  "pet_safe_style": "Pet-safe sprite: compact full-body mascot, readable in a 192x208 cell, clear silhouette, simple face, stable palette/materials, and crisp edges for chroma-key extraction.",
+  "primary_generation_skill": "$imagegen",
+  "generation": {
+    "skill": "installed hatch-pet with installed imagegen",
+    "mode": "built-in imagegen; separately generated grounded animation families",
+    "jobs": [
+      {
+        "id": "base",
+        "kind": "base-pet",
+        "status": "complete",
+        "grounding_roles": [
+          "pet reference"
+        ],
+        "selected_source_sha256": "3b99f11685ddb32d7bf439fc65f1de4d526ebcc316d759bae0b8b2961e188729"
+      },
+      {
+        "id": "idle",
+        "kind": "row-strip",
+        "status": "complete",
+        "grounding_roles": [
+          "pet reference",
+          "layout guide for 6 frame slots; use for spacing only, do not copy guide lines",
+          "canonical identity reference"
+        ],
+        "selected_source_sha256": "34df87b9535029666c05e647434e5d27768bff1acf4d20cc4ab38808d6b8785b"
+      },
+      {
+        "id": "running-right",
+        "kind": "row-strip",
+        "status": "complete",
+        "grounding_roles": [
+          "pet reference",
+          "layout guide for 8 frame slots; use for spacing only, do not copy guide lines",
+          "canonical identity reference"
+        ],
+        "selected_source_sha256": "4ac3d4dcc7363ff3bf16b8c6e15c4639986bea2c0a43f8c8a5c43a6f72a73d17"
+      },
+      {
+        "id": "running-left",
+        "kind": "row-strip",
+        "status": "complete",
+        "grounding_roles": [
+          "pet reference",
+          "layout guide for 8 frame slots; use for spacing only, do not copy guide lines",
+          "canonical identity reference",
+          "rightward gait reference for leftward row decision"
+        ],
+        "selected_source_sha256": "11da7d40adc69676ba46ce6dbde18e9931b22dd3c1a6a18a8cbeae788761d209"
+      },
+      {
+        "id": "waving",
+        "kind": "row-strip",
+        "status": "complete",
+        "grounding_roles": [
+          "pet reference",
+          "layout guide for 4 frame slots; use for spacing only, do not copy guide lines",
+          "canonical identity reference"
+        ],
+        "selected_source_sha256": "0795b3aead3e868cbc94030d1303a0d6e4c07baed720d22aec1471324c2e95d2"
+      },
+      {
+        "id": "jumping",
+        "kind": "row-strip",
+        "status": "complete",
+        "grounding_roles": [
+          "pet reference",
+          "layout guide for 5 frame slots; use for spacing only, do not copy guide lines",
+          "canonical identity reference"
+        ],
+        "selected_source_sha256": "16eb0d7cefadc41d1223b76d594447ea4834d789e5dd87453f242aa96b738822"
+      },
+      {
+        "id": "failed",
+        "kind": "row-strip",
+        "status": "complete",
+        "grounding_roles": [
+          "pet reference",
+          "layout guide for 8 frame slots; use for spacing only, do not copy guide lines",
+          "canonical identity reference"
+        ],
+        "selected_source_sha256": "d8aa62921e69e298aee53e8549359d28a6a50c269a0a43bc294360dcb51dbefb"
+      },
+      {
+        "id": "waiting",
+        "kind": "row-strip",
+        "status": "complete",
+        "grounding_roles": [
+          "pet reference",
+          "layout guide for 6 frame slots; use for spacing only, do not copy guide lines",
+          "canonical identity reference"
+        ],
+        "selected_source_sha256": "d5b0c637de738dd5ded4b3c3a2a97011c6f42d1ca542d8c92b526dcdca28db03"
+      },
+      {
+        "id": "running",
+        "kind": "row-strip",
+        "status": "complete",
+        "grounding_roles": [
+          "pet reference",
+          "layout guide for 6 frame slots; use for spacing only, do not copy guide lines",
+          "canonical identity reference"
+        ],
+        "selected_source_sha256": "2e44f1e9c051c05bc7b3f768c1b5d56c07d02b918383c75aca8742811d5ac768"
+      },
+      {
+        "id": "review",
+        "kind": "row-strip",
+        "status": "complete",
+        "grounding_roles": [
+          "pet reference",
+          "layout guide for 6 frame slots; use for spacing only, do not copy guide lines",
+          "canonical identity reference"
+        ],
+        "selected_source_sha256": "d2da3b0b5ca89710823f54fbb9a79b5dc2d6afac1e64f8f5181664f83d233c19"
+      },
+      {
+        "id": "look-cardinals",
+        "kind": "look-cardinal-strip",
+        "status": "complete",
+        "grounding_roles": [
+          "pet reference",
+          "layout guide for four cardinal slots; use for spacing only, do not copy guide lines",
+          "canonical identity reference",
+          "approved standard-row identity, scale, and baseline reference"
+        ],
+        "selected_source_sha256": "e58b0f9bb8444e81e9c0962894c786d8c54a35775f942a5886fbc812333fa498",
+        "processed_source_sha256": "7841ad5c9610ca38145e3fa5abbd3060f979e05e7ed3aa175ad007ab873fe827"
+      },
+      {
+        "id": "look-row-9",
+        "kind": "look-row-strip",
+        "status": "complete",
+        "grounding_roles": [
+          "pet reference",
+          "layout guide for 8 direction slots; use for spacing only, do not copy guide lines",
+          "canonical identity reference",
+          "approved standard-row identity, scale, and baseline reference",
+          "approved cardinal reference strip in order 000 up, 090 screen-right, 180 down, 270 screen-left; interpolate intermediate directions evenly"
+        ],
+        "selected_source_sha256": "9c597af99baebd8d5ec74cef707ec148018d7ecb6fe0eb7f8356a2daa523643a"
+      },
+      {
+        "id": "look-row-10",
+        "kind": "look-row-strip",
+        "status": "complete",
+        "grounding_roles": [
+          "pet reference",
+          "layout guide for 8 direction slots; use for spacing only, do not copy guide lines",
+          "canonical identity reference",
+          "approved standard-row identity, scale, and baseline reference",
+          "approved cardinal reference strip in order 000 up, 090 screen-right, 180 down, 270 screen-left; interpolate intermediate directions evenly",
+          "completed first half of the clockwise look loop for row 10 continuity"
+        ],
+        "selected_source_sha256": "bc9fdc97b79583500ee6d4eac8179358c7280074f1bc284937e6bba95adb4c00"
+      }
+    ],
+    "running_left": "independently generated to preserve asymmetric crescent-flower pendant",
+    "assembly": "Deterministic skill scripts; one final v2 edge-local despill pass; lossless WebP copied unchanged after validation",
+    "repair_history": [
+      {
+        "stage": "jumping extraction",
+        "class": "extraction",
+        "evidence": "Per-component recentering weakened the generated vertical arc.",
+        "action": "Used skill stable-slots extraction.",
+        "result": "Passed independent motion review; frame bottoms 203,202,173,198,203; stable scale, no clipping."
+      },
+      {
+        "stage": "cardinal extraction",
+        "class": "component connectivity",
+        "evidence": "Isolated source background pixels triggered 78 source-edge pixels while all four sprite bodies were inset at least 11px.",
+        "action": "Used skill component grouping to normalize the four original poses, then reran cardinal extraction.",
+        "result": "Default edge checks and independent cardinal review passed."
+      },
+      {
+        "stage": "look-row-10",
+        "class": "source geometry",
+        "evidence": "All eight tail fans connected into one component bbox [4,223,2169,533], area 478726; could not recover eight groups.",
+        "action": "Regenerate complete coherent row with clear gaps between tail silhouettes and unchanged head/body scale.",
+        "result": "Complete replacement passed eight-pose recovery, fixed shared-scale registration, default edge checks and independent labeled semantics/continuity."
+      }
+    ],
+    "standard_row_review": {
+      "visual_qa": "pass",
+      "reviewed_by": "fox_standard_qa independent worker",
+      "all_nine_gifs_decoded_and_visually_reviewed": true,
+      "rows": {
+        "idle": "Real blink and breathing variation; stable identity",
+        "running-right": "Eight right-facing alternating gait poses",
+        "running-left": "Eight independently generated left-facing alternating gait poses",
+        "waving": "Seated forepaw wave with changing angle and height",
+        "jumping": "Crouch-lift-apex-descent-settle; bottoms 203,202,173,198,203; stable scale and no clipping",
+        "failed": "Ears droop and head bows then recovers",
+        "waiting": "Expectant asking forepaw and head tilt",
+        "running": "Seated processing and focused eye/head motion, no locomotion",
+        "review": "Studying gaze and chin paw, blink and reset"
+      },
+      "warnings": [
+        "Fine flower/gem detail and overlapping tails are simplified for small-size readability."
+      ],
+      "repairs": []
+    },
+    "cardinal_review": {
+      "ok": true,
+      "reviewed_by": "independent fox_anchor_qa worker",
+      "cardinals": [
+        {
+          "direction": "000",
+          "verdict": "pass",
+          "reason": "Head tilts back; nose and eyes clearly lifted, readable at full and half cell size."
+        },
+        {
+          "direction": "090",
+          "verdict": "pass",
+          "reason": "Three-quarter head turn, nose and gaze unmistakably screen-right without body rotation."
+        },
+        {
+          "direction": "180",
+          "verdict": "pass",
+          "reason": "Bowed head, lowered nose and downward eye line distinct from neutral even at half size."
+        },
+        {
+          "direction": "270",
+          "verdict": "pass",
+          "reason": "Three-quarter head turn, nose and gaze unmistakably screen-left without body rotation."
+        }
+      ],
+      "warnings": [],
+      "extraction_note": "Removed isolated background pixels using skill component_frame_groups and component_group_image, preserving four complete source poses; re-extraction edge checks passed."
+    }
+  },
+  "personality": "Gentle, poised, affectionate and curious, with patient anticipation and quiet thoughtful attention.",
+  "look_mechanics": "# Nine-tailed Fox look mechanics\n\nThe supplied white-and-pink fox has a separate flexible neck and a large expressive face. Keep seated haunches, front paws, chest pendant attachment, and broad nine-tail fan anchored. The neck and head lead attention with physical eyeball rotation inside the original almond eyelid apertures. Violet irises, dark pupils, sclera, lashes, eyelids and highlights move together; never add replacement eyes. Ears and cheek fur follow the head subtly. The pendant stays on the chest and changes occlusion only naturally under the chin, never swaps crescent or flower sides.\n\n000 up: lift muzzle/chin and extend the neck slightly, pupils and eye globes aim upward, lower muzzle underside more visible, ears follow back slightly. Must clearly look above viewer, not neutral.\n090 screen-right: turn head to image right; nose is clearly right of head center, face surface and eye sockets turn right, far cheek and far eye narrow naturally. Torso remains seated and anchored.\n180 down: tuck chin toward chest, nose points down toward forepaws, eyelids lower over downward-aimed violet eyes and more crown/forehead becomes visible. Must clearly look below viewer, not sleepy neutral.\n270 screen-left: turn head to image left; nose clearly left of head center, face surface and eye sockets turn left, opposite cheek and eye become foreshortened. Never use the rightward default pose for this cardinal.\n\nEach 22.5-degree step should interpolate head yaw and pitch evenly along a smooth circular attention path, with roughly equal facial landmark displacement per step. At near-vertical diagonals, retain visible horizontal head/eye turn; at near-horizontal diagonals, retain visible up/down pitch. Row 9 moves up through up-right to right and down-right. Row 10 moves down through down-left to left and up-left. 157.5 to 180 and 337.5 to 000 are ordinary single steps, with no tail-fan flips, body translations, head-scale changes, or pendant jumps.\n\nSmall-size priorities: preserve the large original violet almond eyes and smiling tiny muzzle, upright ears, white/pink materials, visible gold crescent pendant, compact full body and recognizable nine-tail fan. Simplify individual fur strands and tiny flower petals. Tail lobes may overlap naturally but cannot cover the face. No whole-sprite rotation, skew, arbitrary warping, new props, particles, shadows, glow or detached marks.\n",
+  "directions_review": [
+    {
+      "direction": "000",
+      "verdict": "pass",
+      "expected": "up",
+      "observed": "up",
+      "reason": "The centered raised-chin pose is an unmistakable up cardinal and preserves the canonical fox identity and seated silhouette.",
+      "horizontal_evidence": "Nose and muzzle remain centered between the cheeks, with balanced ears and no readable left or right turn.",
+      "vertical_evidence": "Chin, nose, and both pupils lift clearly above the neutral eye line toward the top of the cell."
+    },
+    {
+      "direction": "022.5",
+      "verdict": "warning",
+      "expected": "up-right",
+      "observed": "up-right",
+      "reason": "The face begins a coherent clockwise move from up toward screen-right without a scale or identity change.",
+      "horizontal_evidence": "Nose tip and muzzle shift to screen-right of the head center, and the rightward cheek/profile becomes visible.",
+      "vertical_evidence": "Raised chin and high pupil placement retain a strong upward component.",
+      "blind_review_note": "The isolated horizontal blind pair returned an ambiguous majority. Labeled normal-size review accepts this as minor because the muzzle and nose sit screen-right of center, the upward axis passed blind review, and the ordered loop advances from 000 toward 045 without reversal."
+    },
+    {
+      "direction": "045",
+      "verdict": "pass",
+      "expected": "up-right",
+      "observed": "up-right",
+      "reason": "The head and eyes clearly occupy the intended up-right quadrant at an intermediate turn.",
+      "horizontal_evidence": "Muzzle, nose tip, and pupil focus sit to screen-right of the head center.",
+      "vertical_evidence": "The muzzle is lifted and the pupils remain above the neutral eye line."
+    },
+    {
+      "direction": "067.5",
+      "verdict": "pass",
+      "expected": "up-right",
+      "observed": "up-right",
+      "reason": "This is a near-right pose with a still-readable upward tilt, bridging smoothly into 090.",
+      "horizontal_evidence": "The nose projects strongly to screen-right and the far side of the face recedes toward a right profile.",
+      "vertical_evidence": "The nose and visible pupil remain slightly elevated relative to the level 090 profile."
+    },
+    {
+      "direction": "090",
+      "verdict": "pass",
+      "expected": "right",
+      "observed": "right",
+      "reason": "The screen-right cardinal is unambiguous and keeps the torso upright rather than rotating the whole sprite.",
+      "horizontal_evidence": "Nose tip, muzzle projection, and visible pupil all point decisively to screen-right in profile.",
+      "vertical_evidence": "Muzzle and eye line are approximately level, with no dominant upward or downward tilt."
+    },
+    {
+      "direction": "112.5",
+      "verdict": "warning",
+      "expected": "down-right",
+      "observed": "down-right",
+      "reason": "The right-facing profile begins a clear, coherent descent into the down-right quadrant.",
+      "horizontal_evidence": "Nose tip and muzzle remain strongly displaced to screen-right of the head center.",
+      "vertical_evidence": "Chin and pupil line drop below the level 090 pose.",
+      "blind_review_note": "The isolated vertical blind pair returned an ambiguous majority. Labeled normal-size review accepts this as minor because the rightward profile is unambiguous and the lowered chin and pupil line begin the continuous descent from 090 toward 135."
+    },
+    {
+      "direction": "135",
+      "verdict": "warning",
+      "expected": "down-right",
+      "observed": "down-right",
+      "reason": "The bowed face retains a definite rightward aim while increasing the downward component.",
+      "horizontal_evidence": "Nose, muzzle, and visible pupil remain on the screen-right side of the face.",
+      "vertical_evidence": "Lowered chin, hooded upper lids, and downward pupil placement clearly indicate down.",
+      "blind_review_note": "The isolated horizontal blind majority classified the pose screen-left. Labeled normal-size review accepts this as minor because the nose and muzzle visibly project screen-right, the downward axis passed blind review, and the pose remains between 112.5 and 157.5 without a quadrant reversal."
+    },
+    {
+      "direction": "157.5",
+      "verdict": "pass",
+      "expected": "down-right",
+      "observed": "down-right",
+      "reason": "The deep bow approaches the down cardinal while preserving a modest but readable screen-right offset.",
+      "horizontal_evidence": "The nose tip and muzzle sit slightly to screen-right of the face center rather than becoming centered early.",
+      "vertical_evidence": "The head is deeply lowered and both eyes aim toward the lower-right area of the cell."
+    },
+    {
+      "direction": "180",
+      "verdict": "pass",
+      "expected": "down",
+      "observed": "down",
+      "reason": "The centered bowed pose is an unmistakable down cardinal with stable paws, tails, pendant, and body scale.",
+      "horizontal_evidence": "Nose and muzzle return to the centerline with balanced cheeks and ears, removing the prior right component.",
+      "vertical_evidence": "Chin is tucked toward the chest and both pupils aim clearly below the neutral eye line."
+    },
+    {
+      "direction": "202.5",
+      "verdict": "pass",
+      "expected": "down-left",
+      "observed": "down-left",
+      "reason": "The loop leaves the down cardinal toward screen-left with a clear downward gaze and no reversal.",
+      "horizontal_evidence": "Nose tip, muzzle, and pupil focus shift to screen-left of the centered 180 pose.",
+      "vertical_evidence": "The chin stays tucked and the visible eye remains aimed below the neutral eye line."
+    },
+    {
+      "direction": "225",
+      "verdict": "warning",
+      "expected": "down-left",
+      "observed": "down-left",
+      "reason": "The face occupies the intended down-left quadrant at a coherent intermediate angle.",
+      "horizontal_evidence": "Muzzle projection and nose tip are clearly left of the head center.",
+      "vertical_evidence": "Lowered brow, chin, and pupil placement preserve a strong downward component.",
+      "blind_review_note": "The isolated horizontal blind majority classified the pose screen-right. Labeled normal-size review accepts this as minor because the muzzle and nose visibly project screen-left, the downward axis passed blind review, and the pose remains between 202.5 and 247.5 without a quadrant reversal."
+    },
+    {
+      "direction": "247.5",
+      "verdict": "pass",
+      "expected": "down-left",
+      "observed": "down-left",
+      "reason": "This near-left pose remains slightly downturned and bridges smoothly into the 270 cardinal.",
+      "horizontal_evidence": "The nose projects strongly to screen-left and the far side of the face recedes toward a left profile.",
+      "vertical_evidence": "The muzzle and visible pupil remain lower than the level 270 pose."
+    },
+    {
+      "direction": "270",
+      "verdict": "pass",
+      "expected": "left",
+      "observed": "left",
+      "reason": "The screen-left cardinal is unambiguous and uses a head turn while the seated body stays upright.",
+      "horizontal_evidence": "Nose tip, muzzle projection, and visible pupil all point decisively to screen-left in profile.",
+      "vertical_evidence": "Muzzle and eye line are approximately level, with no dominant upward or downward tilt."
+    },
+    {
+      "direction": "292.5",
+      "verdict": "pass",
+      "expected": "up-left",
+      "observed": "up-left",
+      "reason": "The head rises naturally from the left cardinal into the up-left quadrant; the larger pixel diff reflects the intended elevation, not a visual snap.",
+      "horizontal_evidence": "Nose tip and muzzle remain clearly to screen-left of the head center.",
+      "vertical_evidence": "Chin and visible pupil lift above the level 270 pose."
+    },
+    {
+      "direction": "315",
+      "verdict": "pass",
+      "expected": "up-left",
+      "observed": "up-left",
+      "reason": "The face holds a balanced up-left intermediate angle and continues the clockwise rise coherently.",
+      "horizontal_evidence": "Nose, muzzle, and pupil focus remain displaced to screen-left.",
+      "vertical_evidence": "Raised chin and high pupil placement provide a clear upward component."
+    },
+    {
+      "direction": "337.5",
+      "verdict": "warning",
+      "expected": "up-left",
+      "observed": "up-left",
+      "reason": "The pose approaches centered up while retaining a readable left offset; the wrap to 000 is semantically ordered and identity remains stable.",
+      "horizontal_evidence": "Nose tip and muzzle remain slightly left of the face center rather than centering before 000.",
+      "vertical_evidence": "Chin is fully lifted and both pupils aim toward the upper-left area of the cell.",
+      "blind_review_note": "The isolated horizontal blind pair returned an ambiguous majority. Labeled normal-size review accepts this as minor because the nose remains slightly screen-left of center, the upward axis passed blind review, and the wrap into 000 completes the loop without reversal."
+    }
+  ],
+  "animation_timing": {
+    "idle": [
+      280,
+      110,
+      110,
+      140,
+      140,
+      320
+    ],
+    "running-right": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      220
+    ],
+    "running-left": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      220
+    ],
+    "waving": [
+      140,
+      140,
+      140,
+      280
+    ],
+    "jumping": [
+      140,
+      140,
+      140,
+      140,
+      280
+    ],
+    "failed": [
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      240
+    ],
+    "waiting": [
+      150,
+      150,
+      150,
+      150,
+      150,
+      260
+    ],
+    "running": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      220
+    ],
+    "review": [
+      150,
+      150,
+      150,
+      150,
+      150,
+      280
+    ]
+  },
+  "default_animation": "idle",
+  "hero_animation": "waving",
+  "neutral_frame": {
+    "path": "neutral.png",
+    "row": 0,
+    "column": 6,
+    "width": 192,
+    "height": 208,
+    "source": "spritesheet.webp",
+    "purpose": "reduced motion, loading, header recall, profile selection"
+  },
+  "spriteVersionNumber": 2,
+  "spritesheetPath": "spritesheet.webp",
+  "validation": {
+    "atlas_sha256": "eedf6a0ddd8b50b6a331571bba352bc64c36376cbad776722e303c985d8b50d4",
+    "installed_atlas_byte_identical": true,
+    "three_isolated_blind_reviews": true,
+    "cardinals": "pass",
+    "semantics": "no failures",
+    "continuity_reviewed": true,
+    "sizes_reviewed": [
+      60,
+      100,
+      150
+    ],
+    "accepted_warnings": [
+      "Accepted minor blind uncertainty for intermediate directions 022.5, 112.5, 135, 225, and 337.5 after labeled ordered-loop review confirmed the intended quadrants and no reversal.",
+      "Accepted continuity metric outliers at 157.5-to-180, 270-to-292.5, and 337.5-to-000 because the visible changes are natural head-turn and elevation transitions with stable body scale, registration, and identity.",
+      "Accepted alpha-gap heuristic warnings as natural negative spaces between ears, paws, legs, and separate tails; no transparent seam or hole crosses a filled body region."
+    ],
+    "validated_at": "2026-09-21T20:56:18.016763+00:00",
+    "blind_consensus": {
+      "pairs": [
+        {
+          "pair": "horizontal-1",
+          "A": "ambiguous",
+          "B": "ambiguous",
+          "reason": "strict majority of independent blind reviews",
+          "votes": {
+            "A": {
+              "ambiguous": 2,
+              "screen-right": 1
+            },
+            "B": {
+              "ambiguous": 2,
+              "screen-right": 1
+            }
+          }
+        },
+        {
+          "pair": "horizontal-2",
+          "A": "screen-left",
+          "B": "screen-right",
+          "reason": "strict majority of independent blind reviews",
+          "votes": {
+            "A": {
+              "screen-left": 3
+            },
+            "B": {
+              "screen-right": 3
+            }
+          }
+        },
+        {
+          "pair": "horizontal-3",
+          "A": "screen-left",
+          "B": "screen-right",
+          "reason": "strict majority of independent blind reviews",
+          "votes": {
+            "A": {
+              "screen-left": 3
+            },
+            "B": {
+              "screen-right": 3
+            }
+          }
+        },
+        {
+          "pair": "horizontal-4",
+          "A": "screen-right",
+          "B": "screen-left",
+          "reason": "strict majority of independent blind reviews",
+          "votes": {
+            "A": {
+              "screen-right": 3
+            },
+            "B": {
+              "screen-left": 3
+            }
+          }
+        },
+        {
+          "pair": "horizontal-5",
+          "A": "screen-left",
+          "B": "screen-right",
+          "reason": "strict majority of independent blind reviews",
+          "votes": {
+            "A": {
+              "screen-left": 3
+            },
+            "B": {
+              "screen-right": 3
+            }
+          }
+        },
+        {
+          "pair": "horizontal-6",
+          "A": "screen-left",
+          "B": "screen-right",
+          "reason": "strict majority of independent blind reviews",
+          "votes": {
+            "A": {
+              "screen-left": 3
+            },
+            "B": {
+              "screen-right": 2,
+              "screen-left": 1
+            }
+          }
+        },
+        {
+          "pair": "horizontal-7",
+          "A": "screen-left",
+          "B": "screen-right",
+          "reason": "strict majority of independent blind reviews",
+          "votes": {
+            "A": {
+              "screen-left": 3
+            },
+            "B": {
+              "screen-right": 3
+            }
+          }
+        },
+        {
+          "pair": "vertical-1",
+          "A": "up",
+          "B": "down",
+          "reason": "strict majority of independent blind reviews",
+          "votes": {
+            "A": {
+              "up": 3
+            },
+            "B": {
+              "down": 3
+            }
+          }
+        },
+        {
+          "pair": "vertical-2",
+          "A": "down",
+          "B": "up",
+          "reason": "strict majority of independent blind reviews",
+          "votes": {
+            "A": {
+              "down": 3
+            },
+            "B": {
+              "up": 3
+            }
+          }
+        },
+        {
+          "pair": "vertical-3",
+          "A": "down",
+          "B": "up",
+          "reason": "strict majority of independent blind reviews",
+          "votes": {
+            "A": {
+              "down": 3
+            },
+            "B": {
+              "up": 3
+            }
+          }
+        },
+        {
+          "pair": "vertical-4",
+          "A": "ambiguous",
+          "B": "up",
+          "reason": "strict majority of independent blind reviews",
+          "votes": {
+            "A": {
+              "ambiguous": 1,
+              "up": 1,
+              "down": 1
+            },
+            "B": {
+              "up": 3
+            }
+          }
+        },
+        {
+          "pair": "vertical-5",
+          "A": "up",
+          "B": "down",
+          "reason": "strict majority of independent blind reviews",
+          "votes": {
+            "A": {
+              "up": 3
+            },
+            "B": {
+              "up": 1,
+              "down": 2
+            }
+          }
+        },
+        {
+          "pair": "vertical-6",
+          "A": "down",
+          "B": "up",
+          "reason": "strict majority of independent blind reviews",
+          "votes": {
+            "A": {
+              "down": 3
+            },
+            "B": {
+              "up": 3
+            }
+          }
+        },
+        {
+          "pair": "vertical-7",
+          "A": "up",
+          "B": "down",
+          "reason": "strict majority of independent blind reviews",
+          "votes": {
+            "A": {
+              "down": 1,
+              "up": 2
+            },
+            "B": {
+              "down": 3
+            }
+          }
+        }
+      ]
+    },
+    "final_visual_review": {
+      "visual_qa": "pass",
+      "hero": "waving",
+      "warnings": [
+        "Accepted minor blind uncertainty for intermediate directions 022.5, 112.5, 135, 225, and 337.5 after labeled ordered-loop review confirmed the intended quadrants and no reversal.",
+        "Accepted continuity metric outliers at 157.5-to-180, 270-to-292.5, and 337.5-to-000 because the visible changes are natural head-turn and elevation transitions with stable body scale, registration, and identity.",
+        "Accepted alpha-gap heuristic warnings as natural negative spaces between ears, paws, legs, and separate tails; no transparent seam or hole crosses a filled body region."
+      ],
+      "checks": {
+        "v2_validation": "pass: validator reports ok=true, 1536x2288 RGBA, spriteVersionNumber 2, no errors or warnings",
+        "chroma_cleanup": "pass: authoritative extended despill report reports ok=true; no further fringe retry required",
+        "standard_state_loops": "pass: all nine decoded frame sequences match idle, directional running, waving, jumping, failed, waiting, active running, and review semantics with stable identity and no conspicuous pop",
+        "direction_cardinals": "pass: 000 up, 090 screen-right, 180 down, and 270 screen-left are visually unmistakable and passed isolated blind review",
+        "direction_intermediates": "pass with warnings: all twelve intermediates stay in their intended quadrants and the ordered loop has no reversal",
+        "direction_continuity": "pass with warnings: flagged pixel-diff outliers are visually smooth semantic transitions without snap, scale pop, broken attachment, or identity drift",
+        "alpha_integrity": "pass: heuristic gaps are natural exterior negative spaces around separate tails and limbs; no accidental interior hole, band, or seam is visible",
+        "readability": "pass: face, gaze, silhouette, and nine-tail identity remain clear at 60, 100, and 150 pixels",
+        "neutral_identity": "pass: neutral matches the same face, palette, proportions, pendant, paws, and nine-tail silhouette used throughout the atlas",
+        "frame_clipping": "pass: every decoded frame is complete within its slot with no critical clipping, overlap, guide marks, or detached forbidden effects",
+        "source_identity": "pass: the white-and-pink nine-tailed fox identity is preserved across every standard and look-direction frame"
+      },
+      "repairs": []
+    },
+    "chroma_cleanup": {
+      "ok": true,
+      "chroma_key": "#0000FF",
+      "algorithm": "edge-local-chroma-spill-suppression",
+      "strength": 1,
+      "edge_radius": 5,
+      "spill_tolerance": 0.15,
+      "minimum_saturation": 0.1,
+      "changed_pixels": 186008,
+      "decontaminated_pixels": 185951,
+      "spill_suppressed_pixels": 186008,
+      "rejected_pixels": 0,
+      "alpha_preserved": true
+    },
+    "atlas_validator": {
+      "ok": true,
+      "format": "WEBP",
+      "mode": "RGBA",
+      "columns": 8,
+      "rows": 11,
+      "sprite_version_number": 2,
+      "width": 1536,
+      "height": 2288,
+      "transparent_rgb_residue_pixels": 0,
+      "errors": [],
+      "warnings": []
+    },
+    "blind_review_resolution": {
+      "decision": "accept",
+      "severity": "minor",
+      "failed_checks": [
+        "horizontal-1: 337.5 and 022.5 horizontal cues had ambiguous blind majorities",
+        "horizontal-6: 135 and 225 horizontal cues had opposite blind majorities",
+        "vertical-4: 112.5 vertical cue had an ambiguous blind majority"
+      ],
+      "evidence": [
+        "All four cardinal directions are unambiguous in the labeled sheet and passed the three isolated blind reviews.",
+        "022.5 retains a visible screen-right muzzle offset and passed its upward blind axis; 337.5 retains a visible screen-left muzzle offset and passed its upward blind axis.",
+        "135 visibly projects its nose and muzzle screen-right and 225 visibly projects them screen-left; both passed their downward blind axes and remain in their labeled principal quadrants.",
+        "112.5 keeps an unmistakable right profile while its lowered chin and pupil line begin the continuous descent from 090 through 135.",
+        "The ordered 16-pose loop contains no wrong-quadrant pose or reversal, and the 157.5-to-180, 270-to-292.5, and 337.5-to-000 continuity outliers show natural head-turn or elevation changes without a snap, scale pop, identity change, or registration jump."
+      ],
+      "reviewed_by": "independent final visual QA"
+    }
+  }
+}

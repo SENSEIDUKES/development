@@ -55,7 +55,12 @@ export function FamiliarSelection({ options, selectedId, pending = false, disabl
       {options.map(option => <article className="familiar-option" key={option.id}>
         <FamiliarHero key={option.heroUrl} option={option} />
         <div className="familiar-option-details">
-          <h4>{option.name}</h4><p>{option.description}</p>
+          <div className="familiar-option-heading">
+            <h4>{option.name}</h4>
+            <span className="familiar-option-rarity" data-rarity={option.rarity}>{option.rarity}</span>
+            {option.isDefault && <span className="familiar-option-default">Default</span>}
+          </div>
+          <p>{option.description}</p>
           <LibraryButton variant="secondary" fullWidth className="mt-4 !min-h-11" aria-pressed={selectedId === option.id}
             disabled={disabled || pending || !option.available || selectedId === option.id}
             onClick={() => onSelect(option.id)}>

@@ -102,7 +102,7 @@ When adding a new experiment:
 
 1. Give it a focused feature folder under `src/components/` with `reference/` and `development/` subfolders (`shared/` only if something is genuinely unforked).
 2. Add a workspace preview wrapper under `src/workshop/previews/<feature>/`, built on `FeatureWorkspace`.
-3. Add one entry to `src/workshop/manifest.ts`, including `source.repository`, `source.path`, and `source.lastCompared`.
+3. Add one entry to `src/workshop/manifest.ts`, including `source.repository`, `source.path`, `source.lastCompared`, its Workshop `section` (Pages, Customization, Systems, or Components), its explicit package `owner` (matching `scripts/ownershipInventory.mjs`), and `status`. Retire an entry by setting `status: 'archived'` (with `replacedBy`/`archiveNote`), never by deleting it or its route.
 4. Register it in the `previewRegistry` in `src/App.tsx`. Make it reachable through a simple `?preview=<id>` URL.
 5. Add one component README (at the feature folder root) containing source information, current dates, Workshop history, mock boundaries, and transfer instructions.
 6. Document any files that must be copied into the source application.

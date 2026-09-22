@@ -1,8 +1,14 @@
-import { useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import {
   getWorkshopTrack,
   getWorkshopVersionLabel,
+  WORKSHOP_OWNER_LABELS,
+  WORKSHOP_SECTIONS,
   workshopEntries,
+  workshopPanels,
+  type WorkshopEntry,
+  type WorkshopOwner,
+  type WorkshopPanel,
   type WorkshopSection,
 } from './manifest';
 import { LibraryComponentsGrid } from './LibraryComponents';
@@ -10,15 +16,8 @@ import { IconsGrid } from './Icons';
 import { ProvenanceTab } from './ProvenanceTab';
 import { defaultFamiliar } from '../host/familiar/catalogue';
 
-const HOME_TABS: ReadonlyArray<{ id: WorkshopSection; label: string; description: string }> = [
-  { id: 'home', label: 'Home', description: 'The Library app shell and user profile.' },
-  { id: 'library', label: 'Library', description: 'Story creation in the Library.' },
-  { id: 'sen', label: 'SEN', description: 'Reading, Codex, and chapter generation systems.' },
-  { id: 'shared', label: 'Shared', description: 'Reusable pieces and standalone visual previews.' },
-  { id: 'library-components', label: 'Library Components', description: 'Reusable Celestial Library primitives, rendered live.' },
-  { id: 'icons', label: 'Icons', description: 'Every current custom Celestial Library SVG glyph, rendered live.' },
-  { id: 'provenance', label: 'Provenance', description: 'Reusable provenance marks, records, evidence contracts, and future connection maps for AI-generated assets.' },
-];
+const activeEntries = workshopEntries.filter((entry) => entry.status !== 'archived');
+const archivedEntries = workshopEntries.filter((entry) => entry.status === 'archived');
 
 function CelestialVisual() {
   return (
@@ -136,21 +135,126 @@ function EdgeOrbit({ side }: { side: 'left' | 'right' }) {
   );
 }
 
+/** The package lane that owns an item — independent of which Workshop section shows it. */
+function OwnerBadge({ owner }: { owner: WorkshopOwner }) {
+  return (
+    <span className={`workshop-owner workshop-owner-${owner}`}>
+      <span className="workshop-visually-hidden">Owned by </span>
+      {WORKSHOP_OWNER_LABELS[owner]}
+    </span>
+  );
+}
+
+function titleOf(id: string) {
+  return workshopEntries.find((entry) => entry.id === id)?.title ?? id;
+}
+
+function EntryCard({ entry }: { entry: WorkshopEntry }) {
+  return (
+    <a className="workshop-card" href={`?preview=${entry.id}`}>
+      <div className="workshop-card-visual">
+        <CardVisual id={entry.id} />
+      </div>
+      <div className="workshop-card-body">
+        <div className="workshop-card-tags">
+          <OwnerBadge owner={entry.owner} />
+          {entry.status !== 'active' && <span className="workshop-lifecycle">{entry.status}</span>}
+        </div>
+        <h2>{entry.title}</h2>
+        <p>{entry.description}</p>
+        {entry.replacedBy && <p className="workshop-card-archive-note">Superseded by {titleOf(entry.replacedBy)}.</p>}
+        {entry.archiveNote && <p className="workshop-card-archive-note">{entry.archiveNote}</p>}
+        <div className="workshop-card-meta">
+          <span className={`workshop-status workshop-status-${getWorkshopTrack(entry.version)}`}>
+            <span className="workshop-status-dot" aria-hidden="true" />
+            {getWorkshopVersionLabel(entry.version)}
+          </span>
+          <span className="workshop-card-arrow" aria-hidden="true">→</span>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+function EntryGrid({ entries }: { entries: readonly WorkshopEntry[] }) {
+  if (!entries.length) return null;
+  return (
+    <div className="workshop-grid">
+      {entries.map((entry) => <EntryCard entry={entry} key={entry.id} />)}
+    </div>
+  );
+}
+
+function InlinePanel({ panel }: { panel: WorkshopPanel }) {
+  const headingId = `workshop-inline-${panel.id}`;
+  return (
+    <section className="workshop-group workshop-inline-panel" aria-labelledby={headingId} data-panel={panel.id}>
+      <div className="workshop-group-header">
+        <h2 className="workshop-group-title" id={headingId}>{panel.title}</h2>
+        <OwnerBadge owner={panel.owner} />
+      </div>
+      <p className="workshop-group-description">{panel.description}</p>
+      {panel.id === 'library-components' && <LibraryComponentsGrid />}
+      {panel.id === 'icons' && <IconsGrid />}
+      {panel.id === 'provenance' && <ProvenanceTab />}
+    </section>
+  );
+}
+
+function SectionContent({ section }: { section: (typeof WORKSHOP_SECTIONS)[number] }) {
+  const entries = activeEntries.filter((entry) => entry.section === section.id);
+  const panels = workshopPanels.filter((panel) => panel.section === section.id);
+  return (
+    <>
+      {section.groups
+        ? section.groups.map((group) => {
+          const groupEntries = entries.filter((entry) => entry.group === group.id);
+          if (!groupEntries.length) return null;
+          const headingId = `workshop-group-${section.id}-${group.id}`;
+          return (
+            <section className="workshop-group" aria-labelledby={headingId} key={group.id} data-group={group.id}>
+              <h2 className="workshop-group-title" id={headingId}>{group.label}</h2>
+              <EntryGrid entries={groupEntries} />
+            </section>
+          );
+        })
+        : <EntryGrid entries={entries} />}
+      {panels.map((panel) => <InlinePanel panel={panel} key={panel.id} />)}
+    </>
+  );
+}
+
 export function WorkshopHome() {
-  const [activeTab, setActiveTab] = useState<WorkshopSection>('home');
+  const [activeTab, setActiveTab] = useState<WorkshopSection>('pages');
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const navRef = useRef<HTMLDivElement | null>(null);
+
+  // On phones the section bar scrolls sideways; keep the selected tab in view.
+  useEffect(() => {
+    const nav = navRef.current;
+    const index = WORKSHOP_SECTIONS.findIndex((section) => section.id === activeTab);
+    if (nav && nav.scrollWidth > nav.clientWidth) tabRefs.current[index]?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [activeTab]);
+
+  function selectTab(id: WorkshopSection) {
+    setActiveTab(id);
+    // The phone section bar is sticky, so a switch can happen deep in a long
+    // section; start the new section at its top instead of mid-page.
+    if (window.scrollY > 0) window.scrollTo({ top: 0 });
+  }
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     let nextIndex: number;
     switch (event.key) {
-      case 'ArrowRight': nextIndex = (index + 1) % HOME_TABS.length; break;
-      case 'ArrowLeft': nextIndex = (index - 1 + HOME_TABS.length) % HOME_TABS.length; break;
+      case 'ArrowRight': nextIndex = (index + 1) % WORKSHOP_SECTIONS.length; break;
+      case 'ArrowLeft': nextIndex = (index - 1 + WORKSHOP_SECTIONS.length) % WORKSHOP_SECTIONS.length; break;
       case 'Home': nextIndex = 0; break;
-      case 'End': nextIndex = HOME_TABS.length - 1; break;
+      case 'End': nextIndex = WORKSHOP_SECTIONS.length - 1; break;
       default: return;
     }
     event.preventDefault();
-    setActiveTab(HOME_TABS[nextIndex].id);
+    selectTab(WORKSHOP_SECTIONS[nextIndex].id);
     tabRefs.current[nextIndex]?.focus();
   }
 
@@ -162,8 +266,8 @@ export function WorkshopHome() {
       <div className="workshop-shell">
         <div className="workshop-topbar">
           <span className="workshop-brand">SEIHOUSE</span>
-          <div className="workshop-nav" aria-label="Workshop sections" role="tablist">
-            {HOME_TABS.map((tab, index) => (
+          <div className="workshop-nav" aria-label="Workshop sections" role="tablist" ref={navRef}>
+            {WORKSHOP_SECTIONS.map((tab, index) => (
               <button
                 key={tab.id}
                 type="button"
@@ -174,7 +278,7 @@ export function WorkshopHome() {
                 aria-controls={`workshop-panel-${tab.id}`}
                 tabIndex={activeTab === tab.id ? 0 : -1}
                 className={`workshop-nav-tab ${activeTab === tab.id ? 'workshop-nav-tab-active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => selectTab(tab.id)}
                 onKeyDown={(event) => handleTabKeyDown(event, index)}
               >
                 {tab.label}
@@ -183,7 +287,7 @@ export function WorkshopHome() {
           </div>
         </div>
 
-        {HOME_TABS.map((tab) => (
+        {WORKSHOP_SECTIONS.map((tab) => (
           <section
             key={tab.id}
             id={`workshop-panel-${tab.id}`}
@@ -201,33 +305,36 @@ export function WorkshopHome() {
                     {tab.description}
                   </p>
                 </header>
-                {workshopEntries.some((entry) => entry.section === tab.id) && <div className="workshop-grid">
-                  {workshopEntries.filter((entry) => entry.section === tab.id).map((entry) => (
-                    <a className="workshop-card" href={`?preview=${entry.id}`} key={entry.id}>
-                      <div className="workshop-card-visual">
-                        <CardVisual id={entry.id} />
-                      </div>
-                      <div className="workshop-card-body">
-                        <h2>{entry.title}</h2>
-                        <p>{entry.description}</p>
-                        <div className="workshop-card-meta">
-                          <span className={`workshop-status workshop-status-${getWorkshopTrack(entry.version)}`}>
-                            <span className="workshop-status-dot" aria-hidden="true" />
-                            {getWorkshopVersionLabel(entry.version)}
-                          </span>
-                          <span className="workshop-card-arrow" aria-hidden="true">→</span>
-                        </div>
-                      </div>
-                    </a>
-                  ))}
-                </div>}
-                {tab.id === 'library-components' && <LibraryComponentsGrid />}
-                {tab.id === 'icons' && <IconsGrid />}
-                {tab.id === 'provenance' && <ProvenanceTab />}
+                <SectionContent section={tab} />
               </>
             )}
           </section>
         ))}
+
+        {archivedEntries.length > 0 && (
+          <section className="workshop-archive" aria-label="Archive">
+            <button
+              type="button"
+              id="workshop-archive-toggle"
+              className="workshop-archive-toggle"
+              aria-expanded={archiveOpen}
+              aria-controls="workshop-archive-panel"
+              onClick={() => setArchiveOpen((open) => !open)}
+            >
+              Archive · {archivedEntries.length}
+            </button>
+            <div id="workshop-archive-panel" hidden={!archiveOpen}>
+              {archiveOpen && (
+                <>
+                  <p className="workshop-group-description">
+                    Retired previews, kept intact and reachable at their original links for reference.
+                  </p>
+                  <EntryGrid entries={archivedEntries} />
+                </>
+              )}
+            </div>
+          </section>
+        )}
 
         <footer className="workshop-footer">
           <span>Build thoughtful interfaces.</span>

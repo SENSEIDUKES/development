@@ -8,7 +8,7 @@ export const featuredNovel: StoryDetailDisplay = {
   genre: 'Xianxia',
   createdAt: '2026-09-09T12:00:00Z',
   reads: 1280,
-  imageUrl: '/card-workshop/test-images/ye_chen_portrait.png',
+  imageUrl: 'https://video.seihouse.org/LIGHT%20NOVEL/LIGHT_NOVEL_INTRO.mp4',
   chapterCount: 24,
   chapterWritingStyle: 'Standard',
   mcName: 'Ye Chen',

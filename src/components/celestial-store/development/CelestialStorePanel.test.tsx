@@ -228,6 +228,26 @@ describe('CelestialStorePanel', () => {
     }
   });
 
+  it('never offers an equipped Familiar for sale, even when the owned list has not caught up', async () => {
+    // Every account that chose a Familiar before ownership was tracked looks
+    // like this: equipped on the profile, absent from the Store's owned list.
+    const onPurchase = vi.fn();
+    const offer = dailyStoreRotation(OPTIONS, DAY).energy[0];
+    await render(<CelestialStorePanel options={OPTIONS} date={DAY}
+      equippedFamiliarId={offer.familiarId} ownedFamiliarIds={[]}
+      cultivation={qiReady(100_000)} energy={energyReady(5_000)}
+      onPurchase={onPurchase} onEquip={vi.fn()} />);
+    const card = container.querySelector(`[data-store-offer="${offer.familiarId}"]`)!;
+    expect(card.textContent).toContain('Equipped');
+    expect(card.querySelector('[data-store-price]')).toBeNull();
+    await click(card.querySelector('button'));
+    const dialog = document.querySelector('.celestial-store-detail')!;
+    const buttons = [...dialog.querySelectorAll('button')];
+    expect(buttons.some(button => button.textContent?.startsWith('Buy for'))).toBe(false);
+    expect(buttons.some(button => button.textContent === 'Equipped' && button.disabled)).toBe(true);
+    expect(onPurchase).not.toHaveBeenCalled();
+  });
+
   it('closes an open offer that a same-day configuration change retires', async () => {
     const soleOffer = { energySlots: 1, qiSlots: 0, offers: [{ familiarId: 'phoenix', currency: 'energy' as const }] };
     await render(<CelestialStorePanel options={OPTIONS} date={DAY} config={soleOffer}

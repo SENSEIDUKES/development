@@ -203,8 +203,14 @@ export function CelestialStorePanel({
     setSelected(offer);
   };
 
-  const selectedOwned = selected ? ownsFamiliar(ownedFamiliarIds, selected.familiarId, selected.option.isDefault) : false;
   const selectedEquipped = selected ? equippedFamiliarId === selected.familiarId : false;
+  // Equipping implies ownership. The two facts come from different places —
+  // the equipped Familiar from the profile, the owned list from the Store
+  // account — so they can disagree, and every account that chose a Familiar
+  // before ownership was tracked has exactly that shape. Without this, such an
+  // account is offered its own equipped companion for sale.
+  const selectedOwned = selectedEquipped
+    || (selected ? ownsFamiliar(ownedFamiliarIds, selected.familiarId, selected.option.isDefault) : false);
   const selectedPrice = selected ? selected.salePrice ?? selected.price : 0;
   const selectedBalance = selected?.currency === 'energy' ? energyAvailable : qiBalance;
   const balanceKnown = selected ? (selected.currency === 'energy' ? energyState : qiState) === 'ready' && selectedBalance !== null : false;

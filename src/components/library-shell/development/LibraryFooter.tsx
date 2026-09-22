@@ -1,6 +1,6 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import { ChevronRight, Globe } from 'lucide-react';
-import { LibraryPanel } from '@seihouse/library-ui';
+import { LibraryElementalTitle, LibraryPanel } from '@seihouse/library-ui';
 import { SEIDisclosure, SEIDisclosureGroup } from '@seihouse/ui';
 import { getSenLanguageLabel, type SenLanguageCode } from '@seihouse/sen/contracts';
 import { LIBRARY_FOOTER_SOCIAL_GLYPHS, LIBRARY_FOOTER_SOCIAL_LABELS, type LibraryFooterSocialNetwork } from './LibraryFooterSocialIcons';
@@ -92,30 +92,16 @@ export function LibraryFooter({ groups, social, legal, language, emblem, classNa
           <span className="library-footer-hairline" />
         </div>
         <p className="library-footer-mark" data-footer-production-mark>SEN</p>
-        {/* The initials carry the wordmark's gold so the acronym reads itself. */}
-        <p className="library-footer-expansion" data-footer-expansion>
-          {LIBRARY_FOOTER_EXPANSION.split(' ').map((word, index) => <span key={word}>
-            {index > 0 ? ' ' : ''}<span className="library-footer-expansion-initial">{word.slice(0, 1)}</span>{word.slice(1)}
-          </span>)}
-        </p>
+        {/* One lettering for the whole phrase, cycling the shared Celestial
+            Library spectrum rather than tinting single letters. */}
+        <LibraryElementalTitle as="p" element="celestial" intensity="subtle" shadow="none"
+          className="library-footer-expansion" data-footer-expansion>
+          {LIBRARY_FOOTER_EXPANSION}
+        </LibraryElementalTitle>
         <p className="library-footer-statement">{LIBRARY_FOOTER_STATEMENT}</p>
       </div>
 
       <div className="library-footer-controls">
-        {visibleSocial.length > 0 && <LibraryPanel padding="none" className="library-footer-social">
-          <ul className="library-footer-social-list" aria-label="SEIHouse social channels">
-            {visibleSocial.map(item => {
-              const Glyph = LIBRARY_FOOTER_SOCIAL_GLYPHS[item.network];
-              const label = LIBRARY_FOOTER_SOCIAL_LABELS[item.network];
-              return <li key={item.network}>
-                <FooterControl item={item} className="library-footer-social-link" aria-label={`SEIHouse on ${label}`} data-social={item.network}>
-                  <Glyph size={26} />
-                </FooterControl>
-              </li>;
-            })}
-          </ul>
-        </LibraryPanel>}
-
         {visibleGroups.length > 0 && <LibraryPanel padding="none" className="library-footer-menus">
           {wide
             ? <nav className="library-footer-columns" aria-label="Footer menus">
@@ -131,6 +117,20 @@ export function LibraryFooter({ groups, social, legal, language, emblem, classNa
                 {groupLinks(group)}
               </SEIDisclosure>)}
             </SEIDisclosureGroup>}
+        </LibraryPanel>}
+
+        {visibleSocial.length > 0 && <LibraryPanel padding="none" className="library-footer-social">
+          <ul className="library-footer-social-list" aria-label="SEIHouse social channels">
+            {visibleSocial.map(item => {
+              const Glyph = LIBRARY_FOOTER_SOCIAL_GLYPHS[item.network];
+              const label = LIBRARY_FOOTER_SOCIAL_LABELS[item.network];
+              return <li key={item.network}>
+                <FooterControl item={item} className="library-footer-social-link" aria-label={`SEIHouse on ${label}`} data-social={item.network}>
+                  <Glyph size={26} />
+                </FooterControl>
+              </li>;
+            })}
+          </ul>
         </LibraryPanel>}
 
         {language && <div className="library-footer-language-row">

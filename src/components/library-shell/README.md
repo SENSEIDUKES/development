@@ -4,7 +4,7 @@
 - **Source locations:** Light-Novels `src/components/GlobalHeader.tsx` (`GlobalHeader`), `src/components/DaoInsights.tsx` (`DaoInsights`), and the collection navigation in `src/components/LibraryScreen.tsx` (`LibraryScreen`). Development `src/components/story-seed/development/CreationModal.tsx` (`CreationModal`), `StorySeedHeader.tsx`, `StorySeedSelector.tsx`, `StorySeedMobileNavigation.tsx`, and `StorySeedSettings.tsx`.
 - **Workshop preview:** `?preview=library-shell`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-21
+- **Last Workshop update:** 2026-09-22
 - **Last source comparison:** 2026-09-08
 - **Replica status:** under refinement; locked captures plus Development workspaces on the canonical `SEIAppHeader` and `SEIAppShell`.
 
@@ -26,7 +26,13 @@ The footer holds no routes or URLs. `MainLibraryFooter` adapts the existing Main
 
 The footer's old two-column split began at 768px and centred a short identity beside a tall stack of closed accordions, which left laptops with a half-empty left side and every destination hidden behind a click. The wide layout now begins at 1024px (`WIDE_FOOTER_QUERY` in `workspaceMedia.ts`, the same module that owns the header and navigation breakpoints, so markup and CSS cannot disagree). At and above it, `LibraryFooter` renders the three menus as open columns — gold Alegreya SC headings over the existing link list — and the page grid gives the identity a left rail carrying the social row and the language pill beneath it, with the legal row on its own hairline-separated bar. `display: contents` on the controls wrapper places those three pieces directly in that grid, so there is no second markup tree and no change to the 44px targets. Below 1024px, phones and tablets keep the accordion stack exactly as before; the disclosure group is what the narrow branch still renders, so single-open behavior, `inert` content and focus rings are untouched.
 
-The identity now states what the wordmark means: the `SEN` mark keeps its production text, and a new line beneath it reads `SEIHouse Expanded Novels` with the S, E and N carried in the footer's gold so the acronym reads itself. The company statement — "SEIHOUSE: A BETTER TIME CAPSULE AND TRANSLATOR OF ARTISTIC EXPRESSION" — is unchanged and still sits beneath it.
+The identity now states what the wordmark means: the `SEN` mark keeps its production text, and a new line beneath it reads `SEIHouse Expanded Novels`. The company statement — "SEIHOUSE: A BETTER TIME CAPSULE AND TRANSLATOR OF ARTISTIC EXPRESSION" — is unchanged and still sits beneath it.
+
+## Footer identity colour and control order — 2026-09-22
+
+Three refinements at the product owner's direction. The social pill moved below the menus card and above the language control, so the narrow footer reads identity, menus, channels, language; the wide layout is placed by grid areas and keeps the social row in the identity rail. The disclosure chevrons and the language chevron dropped their gold for a muted cream at half opacity — they were pulling more attention than the identity above them.
+
+The expansion line is now `LibraryElementalTitle` (`element="celestial"`, subtle intensity, no shadow) rather than hand-tinted initials: the whole phrase holds one colour at a time and travels the Celestial Library spectrum from `library-spectrum.css` — portal blue, violet, gold — on that sheet's 18s cadence. The lettering's vertical gradient and sweeping sheen would leave neighbouring letters different colours, so the footer points the text and its aura at the animated colour and stands the sheen down; reduced motion holds the spectrum's blue. `LIBRARY_FOOTER_EXPANSION` remains the single source of the phrase, and the decorative layers the component adds are `aria-hidden`, so the line is still announced once.
 
 ## Capture boundary
 

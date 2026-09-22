@@ -82,18 +82,45 @@
   color: var(--library-footer-cream);
   text-shadow: 0 0 22px rgba(4, 172, 255, 0.16);
 }
-/* The wordmark reads itself: gold initials tie S, E and N to the three words. */
+/* The wordmark reads itself. `LibraryElementalTitle` letters the whole phrase as
+   one instead of tinting single letters, and the phrase holds a single colour at
+   a time that travels the Celestial Library spectrum — the portal blue, violet
+   and gold `library-spectrum.css` gives the header plaques and emblems, on its
+   18s cadence. The lettering's own layers paint a vertical gradient and a
+   sweeping sheen, which would leave neighbouring letters different colours, so
+   the text and its glow take the animated colour and the sheen stands down. */
+@keyframes library-footer-spectrum-cycle {
+  0%,
+  100% {
+    color: #04acff;
+  }
+  33% {
+    color: #7c5cff;
+  }
+  66% {
+    color: #e5c67c;
+  }
+}
 .library-footer-expansion {
   margin: 0;
   font-family: var(--font-sen-display, var(--font-display, "Alegreya", serif));
   font-size: 1.0625rem;
   line-height: 1.35;
   letter-spacing: 0.08em;
-  color: rgba(239, 230, 211, 0.92);
+  --et-high: #f7e6b4;
+  --et-glow: #7c5cff;
+  animation: library-footer-spectrum-cycle 18s ease-in-out infinite;
 }
-.library-footer-expansion-initial {
-  font-weight: 600;
-  color: var(--library-footer-gold);
+.library-footer-expansion .library-elemental-title__text,
+.library-footer-expansion .library-elemental-title__aura {
+  background-image: none;
+  color: inherit;
+}
+.library-footer-expansion .library-elemental-title__aura {
+  text-shadow: 0 0 0.14em currentColor;
+}
+.library-footer-expansion .library-elemental-title__energy {
+  display: none;
 }
 .library-footer-statement {
   margin: 0;
@@ -168,8 +195,10 @@
   letter-spacing: 0.01em;
   color: var(--library-footer-cream);
 }
+/* Quiet affordances: the chevrons mark where to press without competing with
+   the identity above them. */
 .library-footer-disclosure-trigger [data-slot="disclosure-chevron"] {
-  color: var(--library-footer-gold);
+  color: rgba(223, 216, 207, 0.5);
 }
 .library-footer-disclosure-trigger:hover [data-slot="disclosure-heading"] {
   color: var(--library-footer-portal);
@@ -230,7 +259,7 @@
   color: var(--library-footer-portal);
 }
 .library-footer-language-chevron {
-  color: var(--library-footer-gold);
+  color: rgba(223, 216, 207, 0.5);
 }
 
 /* Legal */
@@ -364,5 +393,11 @@
 @media (prefers-reduced-motion: reduce) {
   .library-footer * {
     transition: none !important;
+  }
+  /* The lettering's own layers already pause themselves; this is the footer's
+     colour cycle, so the footer stops it and holds the spectrum's blue. */
+  .library-footer-expansion {
+    animation: none;
+    color: #04acff;
   }
 }

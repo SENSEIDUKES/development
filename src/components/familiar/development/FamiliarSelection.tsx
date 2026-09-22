@@ -6,17 +6,52 @@ import { FAMILIAR_DEFAULT_SIZE, FAMILIAR_MOBILE_DEFAULT_SIZE, familiarDisplaySiz
 import { useFamiliarMobile } from './useFamiliarMobile';
 import { useFamiliarVisibility } from './useFamiliarVisibility';
 
-/** Keep the supplied animated hero, but release it while offscreen or backgrounded. */
-function FamiliarHero({ option }: { option: FamiliarOption }) {
+/** Only play the supplied animated hero while its card is hovered/pressed, on top of the offscreen/backgrounded release. */
+function FamiliarHero({ option, active }: { option: FamiliarOption; active: boolean }) {
   const element = useRef<HTMLPictureElement>(null);
-  const active = useFamiliarVisibility(element);
+  const visible = useFamiliarVisibility(element);
   const [failed, setFailed] = useState(false);
+  const playing = active && visible && !failed;
   return <picture ref={element}>
     <source media="(prefers-reduced-motion: reduce)" srcSet={option.stillUrl} />
-    <img src={active && !failed ? option.heroUrl : option.stillUrl} alt={`${option.name} Familiar`}
+    <img src={playing ? option.heroUrl : option.stillUrl} alt={`${option.name} Familiar`}
       className="familiar-option-hero" loading="lazy" decoding="async" data-fallback={failed || undefined}
       onError={() => setFailed(true)} />
   </picture>;
+}
+
+/** Mouse hover plays the hero like a preview; touch presses and keyboard focus stand in for hover where there's no pointer to hover with. */
+function FamiliarOptionCard({ option, selected, pending, disabled, onSelect }: {
+  option: FamiliarOption;
+  selected: boolean;
+  pending: boolean;
+  disabled: boolean;
+  onSelect: (id: string) => void;
+}) {
+  const [active, setActive] = useState(false);
+  return <article className="familiar-option"
+    onPointerEnter={event => { if (event.pointerType === 'mouse') setActive(true); }}
+    onPointerLeave={event => { if (event.pointerType === 'mouse') setActive(false); }}
+    onPointerDown={event => { if (event.pointerType !== 'mouse') setActive(true); }}
+    onPointerUp={event => { if (event.pointerType !== 'mouse') setActive(false); }}
+    onPointerCancel={() => setActive(false)}
+    onFocus={() => setActive(true)} onBlur={() => setActive(false)}>
+    <FamiliarHero key={option.heroUrl} option={option} active={active} />
+    <div className="familiar-option-details">
+      <div className="familiar-option-heading">
+        <h4>{option.name}</h4>
+        <span className="familiar-option-rarity" data-rarity={option.rarity}>{option.rarity}</span>
+        {selected && <span className="familiar-option-equipped">Equipped</span>}
+        {option.isDefault && <span className="familiar-option-default">Default</span>}
+      </div>
+      <p>{option.description}</p>
+      <LibraryButton variant="secondary" fullWidth className="mt-4 !min-h-11" aria-pressed={selected}
+        disabled={disabled || pending || !option.available || selected}
+        onClick={() => onSelect(option.id)}>
+        {!option.available ? 'Locked' : pending ? 'Saving selection…' : selected ? 'Selected' : `Select ${option.name}`}
+      </LibraryButton>
+    </div>
+  </article>;
 }
 
 export interface FamiliarSelectionProps {
@@ -52,22 +87,8 @@ export function FamiliarSelection({ options, selectedId, pending = false, disabl
     </div>}
     {!options.length && <p>No Familiars are available yet.</p>}
     <div className="familiar-selection-options">
-      {options.map(option => <article className="familiar-option" key={option.id}>
-        <FamiliarHero key={option.heroUrl} option={option} />
-        <div className="familiar-option-details">
-          <div className="familiar-option-heading">
-            <h4>{option.name}</h4>
-            <span className="familiar-option-rarity" data-rarity={option.rarity}>{option.rarity}</span>
-            {option.isDefault && <span className="familiar-option-default">Default</span>}
-          </div>
-          <p>{option.description}</p>
-          <LibraryButton variant="secondary" fullWidth className="mt-4 !min-h-11" aria-pressed={selectedId === option.id}
-            disabled={disabled || pending || !option.available || selectedId === option.id}
-            onClick={() => onSelect(option.id)}>
-            {!option.available ? 'Locked' : pending ? 'Saving selection…' : selectedId === option.id ? 'Selected' : `Select ${option.name}`}
-          </LibraryButton>
-        </div>
-      </article>)}
+      {options.map(option => <FamiliarOptionCard key={option.id} option={option} selected={selectedId === option.id}
+        pending={pending} disabled={disabled} onSelect={onSelect} />)}
     </div>
     <p role="status">{pending ? 'Saving your Familiar…' : options.find(option => option.id === selectedId) ? `Current Familiar: ${options.find(option => option.id === selectedId)!.name}` : 'No Familiar selected.'}</p>
   </section>;

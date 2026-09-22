@@ -48,6 +48,16 @@ const atlas = () => container.querySelector<HTMLImageElement>('.familiar-sprite-
 const imageLoaded = () => act(() => atlas().dispatchEvent(new Event('load')));
 const frame = () => container.querySelector('[data-familiar-frame]')?.getAttribute('data-familiar-frame');
 const click = async (element: Element) => { await act(async () => (element as HTMLElement).click()); };
+const hover = (element: Element, entering: boolean) => {
+  const event = new Event(entering ? 'pointerover' : 'pointerout', { bubbles: true });
+  Object.assign(event, { pointerType: 'mouse' });
+  act(() => element.dispatchEvent(event));
+};
+const touch = (element: Element, type: string) => {
+  const event = new Event(type, { bubbles: true });
+  Object.assign(event, { pointerType: 'touch' });
+  act(() => element.dispatchEvent(event));
+};
 const open = async () => {
   await click(container.querySelector('button')!);
   await click(document.querySelector('[aria-label="Show Energy"]')!);
@@ -202,6 +212,15 @@ describe('Familiar selection', () => {
     expect(quill.textContent).toContain('Default');
   });
 
+  it('marks only the equipped card, next to its rank, without touching selection elsewhere', async () => {
+    await act(async () => root.render(<FamiliarSelection options={[celestialGuardianOption, { ...celestialGuardianOption, id: 'other', name: 'Other' }]} selectedId="celestial-guardian" onSelect={vi.fn()} />));
+    const articles = Array.from(container.querySelectorAll<HTMLElement>('article'));
+    const equipped = articles.find(article => article.textContent?.includes('Celestial Guardian'))!;
+    const other = articles.find(article => article.textContent?.includes('Other'))!;
+    expect(equipped.querySelector('[data-rarity]')!.nextElementSibling?.textContent).toBe('Equipped');
+    expect(other.textContent).not.toContain('Equipped');
+  });
+
   it('uses host availability and pending state, and never offers an unlock action', async () => {
     const select = vi.fn();
     await act(async () => root.render(<FamiliarSelection options={[{ ...celestialGuardianOption, available: false }]} onSelect={select} />));
@@ -217,11 +236,41 @@ describe('Familiar selection', () => {
   it('falls back to the host still image when the requested hero is unavailable', async () => {
     await act(async () => root.render(<FamiliarSelection options={[celestialGuardianOption]} onSelect={vi.fn()} />));
     const img = container.querySelector('img')!;
+    hover(container.querySelector('article')!, true);
     expect(img.getAttribute('src')).toBe(celestialGuardianOption.heroUrl);
     act(() => img.dispatchEvent(new Event('error')));
     expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
     act(() => img.dispatchEvent(new Event('error')));
     expect(img.dataset.fallback).toBe('true');
+  });
+
+  it('only plays the hero on mouse hover, a touch press, or keyboard focus, leaving it still by default', () => {
+    act(() => root.render(<FamiliarSelection options={[celestialGuardianOption]} onSelect={vi.fn()} />));
+    const img = container.querySelector('img')!;
+    const article = container.querySelector('article')!;
+    const button = container.querySelector('button')!;
+    expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
+    hover(article, true);
+    expect(img.getAttribute('src')).toBe(celestialGuardianOption.heroUrl);
+    hover(article, false);
+    expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
+    touch(article, 'pointerdown');
+    expect(img.getAttribute('src')).toBe(celestialGuardianOption.heroUrl);
+    touch(article, 'pointerup');
+    expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
+    touch(article, 'pointerdown');
+    expect(img.getAttribute('src')).toBe(celestialGuardianOption.heroUrl);
+    touch(article, 'pointercancel');
+    expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
+    act(() => button.focus());
+    expect(img.getAttribute('src')).toBe(celestialGuardianOption.heroUrl);
+    act(() => button.blur());
+    expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
+    // A touch pointer entering/leaving never counts as hover, so it can't get the hero stuck on.
+    const touchoverEvent = new Event('pointerover', { bubbles: true });
+    Object.assign(touchoverEvent, { pointerType: 'touch' });
+    act(() => article.dispatchEvent(touchoverEvent));
+    expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
   });
 });
 
@@ -493,6 +542,7 @@ describe('Mobile sizing and inactive work', () => {
     vi.stubGlobal('IntersectionObserver', class { constructor(callback: IntersectionObserverCallback) { intersect = callback; } observe() {} disconnect() {} });
     act(() => root.render(<FamiliarSelection options={[celestialGuardianOption]} onSelect={vi.fn()} />));
     const img = container.querySelector('img')!;
+    hover(container.querySelector('article')!, true);
     expect(img.getAttribute('src')).toBe(celestialGuardianOption.stillUrl);
     act(() => intersect([{ isIntersecting: true }] as IntersectionObserverEntry[], {} as IntersectionObserver));
     expect(img.getAttribute('src')).toBe(celestialGuardianOption.heroUrl);

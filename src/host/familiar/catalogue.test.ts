@@ -5,7 +5,7 @@ const expectedRarities = {
   'celestial-guardian': 'epic',
   'celestial-moon-moth': 'epic',
   'little-monkey-king': 'rare',
-  phoenix: 'rare',
+  phoenix: 'epic',
   'nine-tailed-fox': 'rare',
   'galaxy-octopus': 'rare',
   'judgmental-jiangshi': 'rare',

@@ -56,7 +56,7 @@
 .familiar-option-details { padding: 16px; }
 .familiar-option-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; }
 .familiar-option-heading h4 { margin: 0; font-family: Georgia, serif; font-size: 20px; color: #f0e2bf; }
-.familiar-option-rarity, .familiar-option-default {
+.familiar-option-rarity, .familiar-option-equipped, .familiar-option-default {
   border: 1px solid color-mix(in srgb, #b5d7eb 45%, transparent);
   border-radius: 999px;
   padding: 0.15rem 0.45rem;
@@ -68,9 +68,10 @@
   text-transform: uppercase;
 }
 .familiar-option-rarity { color: #d9f1ff; background: color-mix(in srgb, #2b6d92 28%, transparent); }
-.familiar-option-rarity[data-rarity="rare"] { color: #c7e5ff; }
+.familiar-option-rarity[data-rarity="rare"] { color: #c3f0d6; border-color: color-mix(in srgb, #2fa869 55%, transparent); background: color-mix(in srgb, #1e7a4c 30%, transparent); }
 .familiar-option-rarity[data-rarity="epic"] { color: #e9d0ff; background: color-mix(in srgb, #7048a8 30%, transparent); }
 .familiar-option-rarity[data-rarity="legendary"] { color: #ffe4a0; background: color-mix(in srgb, #9b6917 34%, transparent); }
+.familiar-option-equipped { color: #b9f5c9; border-color: color-mix(in srgb, #4bd67a 55%, transparent); background: color-mix(in srgb, #1d7240 28%, transparent); }
 .familiar-option-default { color: #fae6a6; border-color: color-mix(in srgb, #d6aa4b 55%, transparent); background: color-mix(in srgb, #72511d 28%, transparent); }
 /* Preserve the glass silhouette without live backdrop sampling on touch devices. */
 @media (hover: none) and (pointer: coarse) {

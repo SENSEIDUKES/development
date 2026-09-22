@@ -1,4 +1,4 @@
-import { useRef, useState, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import {
   getWorkshopTrack,
   getWorkshopVersionLabel,
@@ -228,6 +228,21 @@ export function WorkshopHome() {
   const [activeTab, setActiveTab] = useState<WorkshopSection>('pages');
   const [archiveOpen, setArchiveOpen] = useState(false);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const navRef = useRef<HTMLDivElement | null>(null);
+
+  // On phones the section bar scrolls sideways; keep the selected tab in view.
+  useEffect(() => {
+    const nav = navRef.current;
+    const index = WORKSHOP_SECTIONS.findIndex((section) => section.id === activeTab);
+    if (nav && nav.scrollWidth > nav.clientWidth) tabRefs.current[index]?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [activeTab]);
+
+  function selectTab(id: WorkshopSection) {
+    setActiveTab(id);
+    // The phone section bar is sticky, so a switch can happen deep in a long
+    // section; start the new section at its top instead of mid-page.
+    if (window.scrollY > 0) window.scrollTo({ top: 0 });
+  }
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     let nextIndex: number;
@@ -239,7 +254,7 @@ export function WorkshopHome() {
       default: return;
     }
     event.preventDefault();
-    setActiveTab(WORKSHOP_SECTIONS[nextIndex].id);
+    selectTab(WORKSHOP_SECTIONS[nextIndex].id);
     tabRefs.current[nextIndex]?.focus();
   }
 
@@ -251,7 +266,7 @@ export function WorkshopHome() {
       <div className="workshop-shell">
         <div className="workshop-topbar">
           <span className="workshop-brand">SEIHOUSE</span>
-          <div className="workshop-nav" aria-label="Workshop sections" role="tablist">
+          <div className="workshop-nav" aria-label="Workshop sections" role="tablist" ref={navRef}>
             {WORKSHOP_SECTIONS.map((tab, index) => (
               <button
                 key={tab.id}
@@ -263,7 +278,7 @@ export function WorkshopHome() {
                 aria-controls={`workshop-panel-${tab.id}`}
                 tabIndex={activeTab === tab.id ? 0 : -1}
                 className={`workshop-nav-tab ${activeTab === tab.id ? 'workshop-nav-tab-active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => selectTab(tab.id)}
                 onKeyDown={(event) => handleTabKeyDown(event, index)}
               >
                 {tab.label}

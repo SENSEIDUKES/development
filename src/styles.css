@@ -530,6 +530,87 @@ body {
   }
 }
 
+/* Phone Workshop home: a compact sticky section bar that never wraps, and
+   denser cards so a section reads as a scannable list rather than a stack
+   of poster-sized tiles. Desktop is untouched. */
+@media (max-width: 40rem) {
+  /* `clip` still clips the edge orbits but, unlike `hidden`, lets the
+     section bar stick. Browsers without `clip` keep `hidden` (non-sticky). */
+  .workshop-home { overflow: clip; }
+  .workshop-shell { padding: 0 1rem; }
+  .workshop-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    flex-wrap: nowrap;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.1rem;
+    margin: 0 -1rem;
+    padding: calc(0.55rem + env(safe-area-inset-top, 0px)) 1rem 0;
+    background: rgba(11, 10, 9, 0.92);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+  }
+  .workshop-brand {
+    font-size: 0.62rem;
+    letter-spacing: 0.42em;
+    color: rgba(236, 231, 221, 0.6);
+  }
+  .workshop-nav {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 0.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 -0.25rem;
+  }
+  .workshop-nav::-webkit-scrollbar { display: none; }
+  .workshop-nav-tab {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 0.55rem 0.25rem 0.7rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+  }
+  .workshop-nav-tab-active::after { bottom: 0; }
+
+  .workshop-header { padding: 1.25rem 0 0; }
+  .workshop-title { font-size: 1.9rem; }
+  .workshop-kicker { display: none; }
+
+  .workshop-group { margin-top: 1.6rem; }
+  .workshop-group .workshop-grid { margin-top: 0.7rem; }
+  .workshop-group-title { font-size: 0.66rem; letter-spacing: 0.28em; }
+  .workshop-grid { gap: 0.75rem; margin-top: 1.25rem; }
+
+  /* Preview-link cards only; the live Library Components cards keep their stages. */
+  a.workshop-card {
+    border-radius: 0.6rem;
+    box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.4);
+  }
+  a.workshop-card:hover { transform: none; }
+  a.workshop-card .workshop-card-visual:empty { display: none; }
+  a.workshop-card .workshop-card-visual { aspect-ratio: 12 / 5; overflow: hidden; }
+  a.workshop-card .workshop-card-body { padding: 0.95rem 1rem 0.85rem; }
+  a.workshop-card .workshop-card-tags { margin-bottom: 0.45rem; }
+  a.workshop-card .workshop-card-body h2 { font-size: 1.2rem; }
+  a.workshop-card .workshop-card-body p {
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+  }
+  a.workshop-card .workshop-card-body p.workshop-card-archive-note { -webkit-line-clamp: 2; line-clamp: 2; }
+  a.workshop-card .workshop-card-meta { padding-top: 0.75rem; }
+
+  .workshop-archive { margin-top: 2.25rem; }
+}
+
 @media (pointer: coarse) {
   .workshop-touch-target {
     min-width: 44px;

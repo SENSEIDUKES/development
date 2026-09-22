@@ -1,0 +1,4 @@
+# Byte-verified Familiar assets retain their supplied bytes, including metadata line endings,
+# across platforms. Renderer-only pet-request projections are intentionally sanitized first.
+public/familiars/** -text
+src/host/familiar/package-metadata/** -text

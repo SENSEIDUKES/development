@@ -18,6 +18,7 @@ function ProfileEvents() {
   const context = useProductFamiliarPreview()!;
   return <>
     <button onClick={() => context.reportProfile({ uid: 'another-account', familiarId: 'celestial-guardian' })}>Switch account</button>
+    <button onClick={() => context.reportProfile({ ...context.selection, familiarId: 'phoenix' })}>Equip Phoenix</button>
     <button onClick={() => context.reportProfile({ uid: context.selection.uid })}>Clear selection</button>
     <button onClick={() => context.reportProfile({ uid: null })}>Sign out</button>
     <button onClick={() => context.setMinimized(true)}>Minimize</button>
@@ -47,7 +48,13 @@ it.each(['Clear selection', 'Sign out'])('removes the companion when the profile
 
 it('forwards Codex activity into the mounted companion', () => {
   act(() => root.render(<ProductFamiliarSession><ProductFamiliarSurface viewport activity="blocked"><span /></ProductFamiliarSurface></ProductFamiliarSession>));
-  expect(document.querySelector('.familiar-companion [role="img"]')?.getAttribute('aria-label')).toBe('Celestial Guardian, Disappointed');
+  expect(document.querySelector('.familiar-companion [role="img"]')?.getAttribute('aria-label')).toBe('Quill, Disappointed');
+});
+
+it('resolves the profile selection through the catalogue instead of hard-coding Celestial Guardian', () => {
+  render();
+  click('Equip Phoenix');
+  expect(document.querySelector('.familiar-companion [role="img"]')?.getAttribute('aria-label')).toContain('Phoenix');
 });
 
 it('opens header actions before explicitly expanding a minimized pet and preserves its profile size', async () => {

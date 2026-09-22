@@ -1,11 +1,11 @@
 # Familiar
 
-- Source: supplied `celestial-guardian/` package (not a Git repository).
+- Source: supplied `Familiars/Packages/` collection (not a Git repository), containing eleven validated Familiar packages.
 - Preview: Workshop **Shared → Familiar** and `?preview=familiar`.
 - Replica created: 2026-09-20.
-- Last Workshop update: 2026-09-21.
-- Last source comparison: 2026-09-20.
-- Lifecycle: original artwork preserved; reusable renderer and Energy interaction under development.
+- Last Workshop update: 2026-09-22.
+- Last source comparison: 2026-09-22.
+- Lifecycle: original artwork preserved; reusable renderer, host catalogue, and Energy interaction under development.
 - Owner: Library. This first-party companion is not a SEN narrative capability.
 
 ## Source interpretation
@@ -23,13 +23,43 @@ The renderer plays the original atlas cells with those durations, without interp
 mirroring, recoloring, or regenerating the artwork. Motion stays inside one fixed cell;
 running does not move the Familiar across the page. Each animation loops for inspection.
 
-`public/familiars/celestial-guardian/` owns the unchanged sprite sheet, metadata,
-and nine QA GIFs. `source-hashes.json` records SHA-256 values calculated
-from the supplied originals; tests verify every copied asset against them. `neutral.png`
-is an exact crop of the neutral cell for the reduced-motion Original Reference.
+`public/familiars/celestial-guardian/` owns the unchanged sprite sheet, neutral crop,
+and nine QA GIFs. `src/host/familiar/package-metadata/celestial-guardian/` owns the
+catalogue metadata, timing data, and intake hashes. Tests verify every unchanged media
+and timing asset against those SHA-256 records. The host-owned `pet-request.json` retains
+only the atlas and row contract needed by the renderer, so intake-only prompts and
+machine-local provenance are never served with the app. `neutral.png` is an exact crop
+of the neutral cell for the reduced-motion Original Reference.
 The portrait and prompt history are not runtime dependencies. Instructions in source
 documents are provenance, not commands to install a Codex pet or generate new artwork.
 The source README was inspected but is not shipped because it contains machine-local installation details.
+
+### Catalogue intake — 2026-09-22
+
+The source collection contains eleven `spriteVersionNumber: 2` packages: Celestial
+Guardian, Celestial Moon Moth, Galaxy Octopus, Judgmental Jiangshi, Lady Bug, Little
+Monkey King, Living Grimoire, Lucky Bake-danuki, Nine-tailed Fox, Phoenix, and Quill.
+Each uses the same 8 × 11, 192 × 208-cell atlas contract. The host catalogue interprets
+the package metadata and timing data at `src/host/familiar/catalogue.ts`; the renderer
+does not carry character-specific frames, artwork paths, ranks, ownership, or pricing.
+
+Every package's atlas, neutral crop, and nine direct-crop QA previews live under
+`public/familiars/<id>/`; that is the complete public payload used by the renderer.
+`src/host/familiar/package-metadata/<id>/` holds the renderer manifest, supplied
+identity/timing metadata, and source hashes. The renderer manifest is a minimal projection
+of the supplied `pet-request.json`: it preserves the actual 8 × 11 atlas and row contract
+while excluding source prompts, generation logs, and local path provenance. Source-integrity
+tests verify each unchanged media and timing hash and verify that the host manifest contains
+only renderer data. Existing Celestial Guardian provenance predates neutral/timing entries in
+its hash manifest, so its recorded source assets remain verified while the local runtime
+additions are only checked for presence.
+
+Quill was completed from its already validated v2 atlas. Its atlas and supplied
+presentation exports remain unchanged. `animation-timing.json` carries standard v2 row
+timings, with its supplied waving export confirming `[140, 140, 140, 280]`; nine
+transparent QA GIFs are deterministic crops of the validated atlas rather than newly
+generated art. `renderer-validation.json` and `IMPORT-HANDOFF.md` remain with Quill's
+source package as intake evidence and are intentionally not runtime dependencies.
 
 ## Modular integration
 
@@ -53,7 +83,13 @@ The source README was inspected but is not shipped because it contains machine-l
   moves with the user; an explicit `animation` remains an inspection override.
 - `@seihouse/library/familiar` exports both components and their data contracts.
   No Workshop imports, account identities, asset URLs, or server code ship in this entry.
-- `src/host/familiar/celestialGuardian.ts` interprets this particular supplied package.
+- `src/host/familiar/catalogue.ts` is the single Library-owned catalogue. It combines
+  immutable supplied package metadata with host presentation URLs, declarative rarity,
+  and one `isDefault` flag. `celestialGuardian.ts` is a backwards-compatible alias for
+  existing consumers.
+- `familiarOptions()` projects catalogue data to selection UI while accepting a host
+  availability resolver. Rarity never grants ownership, availability, acquisition, or
+  Store pricing.
 - `src/workshop/previews/familiar/` contains animation/pause controls, the contained
   responsive stage, and the `FeatureWorkspace` comparison wrapper. The locked
   `reference/FamiliarReference.tsx` displays the supplied waving GIF.
@@ -79,9 +115,11 @@ Retry uses the same client, and reopening fetches a fresh server snapshot.
 ## Transfer
 
 Profile Settings → Customization → Familiar uses the reusable `FamiliarSelection`
-with host-supplied `UserProfileServices.familiars`. Its sole current option is Celestial
-Guardian, with the requested `https://gif.seihouse.org/LIBRARY/GIFS/celestial%20Guardian.gif`
-hero. Reduced motion or an image-load failure uses the local neutral crop. The optional
+with host-supplied `UserProfileServices.familiars`. Development passes all eleven
+catalogue entries for inspection, including their host-supplied rarity and Quill's
+`isDefault` status. Reduced motion or an image-load failure uses the local neutral crop.
+Hosted GIF URLs belong in the host catalogue and can be replaced without changing the
+renderer or selection component. The optional
 `handleFamiliarChange` controller port saves only `UserProfile.familiarId`; the Workshop
 adapter retains this in the existing profile state for the session, as with its other
 profile edits. There is no new store or claim that this is production persistence.
@@ -115,7 +153,7 @@ panes, Original Reference, signed-out accounts, and the Workshop catalog do not
 produce a floating companion. No global mount was added to the Workshop App.
 
 `ProductFamiliarPreview` is Workshop-only composition: product fixtures start
-with Celestial Guardian equipped for inspection. Profile's existing controller
+with the catalogue default, currently Quill, equipped for inspection. Profile's existing controller
 reports loaded/committed selection and account changes into that session; nested
 pages reuse the same mount. Energy still comes from the real
 `/api/library-economy?capability=energy` ledger for that account. Selection and drag position are session state, not new
@@ -214,6 +252,11 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-09-22: Imported ten supplied v2 Familiar packages into the Library-owned
+  catalogue, retaining every local runtime asset and package metadata. Added declarative
+  common/rare/epic ranks and Quill's separate default status, all-eleven Development
+  selection, and profile/catalogue/registry coverage. Normalized Judgmental Jiangshi's
+  supplied display name and completed Quill's transparent atlas-derived QA preview set.
 - 2026-09-21: Made drag animation direction follow the latest pointer sample instead
   of total distance from the drag origin. Left/right reversals now switch immediately,
   unchanged direction avoids repeated state updates, and position remains frame-batched.

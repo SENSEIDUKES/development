@@ -1,0 +1,19 @@
+{
+  "IMPORT-HANDOFF.md": "84e260b58ec1fdef9071b71de3194a52a9f2bccdeabe70f4f967f445096c7a66",
+  "animation-timing.json": "46ac01f4aac78064f290cc46af55302ca9b6f7699d4d980f6b77b4060ebd9bf3",
+  "hero.gif": "895c33e3fc78b1e2e9f197bb1f3aef99b8a3b7fa3b4ad742e31431fa9f64543c",
+  "neutral.png": "2974be36a670c2d06f88f12808f6f83d820f2b66e7b1bf8f899889b2f9d3c94b",
+  "pet-request.json": "cc12d6c195666ec0b93573d3b7d15ca943a802b0ec0cd8c30f8f20da33ed60cd",
+  "pet.json": "a8e6f0672b9615422949897793f079cab608f367dbd58cc4ee6f27c318f1eb8e",
+  "previews/failed.gif": "0fb3959373135da4019ea8ae8f3cc136f6ce640646c9f215550e67b8b68f50a5",
+  "previews/idle.gif": "7be0dce91d7ef63715bd6f7d594db30e21f2dc3ca4ea3baff6cd44af3eed540e",
+  "previews/jumping.gif": "32707d28ebf85cd1b308b7f087f67a290e72dab53031894d87d4936d2bbbf536",
+  "previews/review.gif": "cfc8ec188d8ed6893f8e5b63874ef172087a769d07dacbb2e7e169baade2fae6",
+  "previews/running-left.gif": "0ba339508067f4e1916759a7fdde4adde18e1a86b0d18d7ed94197eb67e1b478",
+  "previews/running-right.gif": "6cfeba73dd784e0971a54ee493270c2e13b044ee59be5f30fa2bb86476d0b151",
+  "previews/running.gif": "73188920ee8f455604d8ca1a4db03dc58065796b369ec1d09ca9b414346d1845",
+  "previews/waiting.gif": "ee6f25e9e74bff1c8070cf45fb63e0ec90181f252ddef9954b94793da8c49e02",
+  "previews/waving.gif": "895c33e3fc78b1e2e9f197bb1f3aef99b8a3b7fa3b4ad742e31431fa9f64543c",
+  "source/Lucky Bake-danuki.png": "1d9f4072810a4c768fac886f0a13e706a681c2765d06db60aaf449b151e04c1b",
+  "spritesheet.webp": "bd62d7f8bebad528c43ee48cc43118eefdea28757e660cebc0da13abcdd87e6a"
+}

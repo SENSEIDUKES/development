@@ -1,0 +1,19 @@
+{
+  "IMPORT-HANDOFF.md": "65f419b03908d42535c20dabde65f484345a486246933213c8064eebe3699423",
+  "animation-timing.json": "46ac01f4aac78064f290cc46af55302ca9b6f7699d4d980f6b77b4060ebd9bf3",
+  "hero.gif": "888b311a6f23ab6f093e53678517f671df93cb5a937ddb82ae22c35010f0d449",
+  "neutral.png": "4c3b32bd19cec7715e4b27a58366f1d8f759de317c27c8928a8470e0ae9cfb9e",
+  "pet-request.json": "fa319b158dd83ec22a4278074e9d45d0d7637307f7f45d47cce42025febda48e",
+  "pet.json": "dae254c18a41475a6dcd61bf9862579103db4dbf8f951ed8ce2224da91ca6681",
+  "previews/failed.gif": "f70e161661f6d6ef378489a3c7c16b8230cebf641d5b3c3a6b3cf41d19a60e83",
+  "previews/idle.gif": "5ba151c9e254b363955df5282a3e9d61755768862630d9e319c55aa5638f0e79",
+  "previews/jumping.gif": "a582243316a08c5727cffde8768b396ef41bab994d1191af968656b3e10ace05",
+  "previews/review.gif": "91457189a418da6a45336e305d1511eeb6fc71464262ff3a6f50efa39c6a93d2",
+  "previews/running-left.gif": "f9d525a1a5bb12da68bd87142736fa0eb7ef3a44e2dd8a5bd61727a4c0d849b1",
+  "previews/running-right.gif": "30dc17ed94b4c53be67329e6a6a4daf18a15d0752b8babdd6efa968b8e6560e8",
+  "previews/running.gif": "05f2ff6e3f3a17f726e60c409b7514badb954f0e71364bcdf6b1bbb194432da5",
+  "previews/waiting.gif": "ba706f91fa4996e9aa06ac3a9de6640dac4bb7215f133ec4cac22d22698f7b3e",
+  "previews/waving.gif": "888b311a6f23ab6f093e53678517f671df93cb5a937ddb82ae22c35010f0d449",
+  "source/Octopus.png": "b9f89724867b0be382206da76d3f55f9df0b67dc9696d57f8d54f3c50be212ef",
+  "spritesheet.webp": "9a7ee5b3a9dc1be7898c4f1813d85120df329635af7a7f5ce6621382fb705886"
+}

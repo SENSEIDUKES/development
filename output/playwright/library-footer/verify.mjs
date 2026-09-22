@@ -42,37 +42,30 @@ for (const [name, viewport] of Object.entries({ phone: { width: 390, height: 844
   });
   await footer.screenshot({ path: `${out}/footer-${name}.png` });
   await page.screenshot({ path: `${out}/page-${name}.png` });
-  // Narrow viewports collapse the menus into accordions and wide ones stand them
-  // open in columns, so each width verifies the behavior it actually renders.
-  const wide = await page.evaluate(() => document.querySelector('[data-library-footer] .library-footer-columns') !== null);
-  let menus;
-  if (wide) {
-    menus = await page.evaluate(() => ({
-      layout: 'columns',
-      columns: Array.from(document.querySelectorAll('[data-library-footer] .library-footer-column')).map(column => ({
-        heading: column.querySelector('h3')?.textContent,
-        links: column.querySelectorAll('.library-footer-link').length,
-      })),
-      // Every destination is readable without opening anything.
-      collapsed: document.querySelectorAll('[data-library-footer] [data-slot="disclosure-trigger"]').length,
-    }));
-  } else {
-    // Keyboard: Tab into the accordion, open with Enter, verify one-at-a-time and focus ring.
-    await page.getByRole('button', { name: 'Explore' }).focus();
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(300);
-    const afterEnter = await page.evaluate(() => Array.from(document.querySelectorAll('[data-library-footer] [data-slot="disclosure-trigger"]')).map(b => b.getAttribute('aria-expanded')));
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(300);
-    const afterSecond = await page.evaluate(() => ({
-      expanded: Array.from(document.querySelectorAll('[data-library-footer] [data-slot="disclosure-trigger"]')).map(b => b.getAttribute('aria-expanded')),
-      focused: document.activeElement?.textContent?.trim(),
-      outline: getComputedStyle(document.activeElement).outlineStyle,
-    }));
-    menus = { layout: 'accordions', afterEnter, afterSecond };
-    await footer.screenshot({ path: `${out}/footer-${name}-open.png` });
-  }
+  // Every width renders the same menus; narrow stacks them and wide sets them in
+  // a row of tabs, so record which layout this width produced and then exercise
+  // the one behaviour both share.
+  const layout = await page.evaluate(() => {
+    const group = document.querySelector('[data-library-footer] .library-footer-disclosures');
+    const style = getComputedStyle(group);
+    const columns = style.gridTemplateColumns.split(' ').filter(Boolean).length;
+    return { display: style.display, columns: style.display === 'grid' ? columns : 1 };
+  });
+  // Keyboard: Tab into the menus, open with Enter, verify one-at-a-time and focus ring.
+  await page.getByRole('button', { name: 'Explore' }).focus();
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(300);
+  const afterEnter = await page.evaluate(() => Array.from(document.querySelectorAll('[data-library-footer] [data-slot="disclosure-trigger"]')).map(b => b.getAttribute('aria-expanded')));
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(300);
+  const afterSecond = await page.evaluate(() => ({
+    expanded: Array.from(document.querySelectorAll('[data-library-footer] [data-slot="disclosure-trigger"]')).map(b => b.getAttribute('aria-expanded')),
+    focused: document.activeElement?.textContent?.trim(),
+    outline: getComputedStyle(document.activeElement).outlineStyle,
+  }));
+  const menus = { ...layout, afterEnter, afterSecond };
+  await footer.screenshot({ path: `${out}/footer-${name}-open.png` });
   // At the page bottom the global strip must clear the legal row.
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await page.waitForTimeout(200);

@@ -12,13 +12,9 @@ import { useSyncExternalStore } from 'react';
  *   than crushing it.
  * - Desktop (`>= 1024px`): the persistent sidebar rail replaces the drawer and
  *   the bottom controls. Below it, phones and tablets keep both.
- * - Wide footer (`>= 1024px`): the platform footer opens its three menus into
- *   side-by-side columns instead of stacked accordions. `library-footer.css`
- *   keys its wide layout off the same width, so markup and layout agree.
  */
 export const COMPACT_HEADER_QUERY = '(max-width: 1279px)';
 export const DESKTOP_NAVIGATION_QUERY = '(min-width: 1024px)';
-export const WIDE_FOOTER_QUERY = '(min-width: 1024px)';
 
 function subscribe(query: string) {
   return (notify: () => void) => {
@@ -30,7 +26,6 @@ function subscribe(query: string) {
 
 const compactSubscribe = subscribe(COMPACT_HEADER_QUERY);
 const desktopSubscribe = subscribe(DESKTOP_NAVIGATION_QUERY);
-const wideFooterSubscribe = subscribe(WIDE_FOOTER_QUERY);
 export function useCompactHeader() {
   return useSyncExternalStore(
     compactSubscribe,
@@ -48,15 +43,6 @@ export function useDesktopNavigation() {
   return useSyncExternalStore(
     desktopSubscribe,
     () => window.matchMedia(DESKTOP_NAVIGATION_QUERY).matches,
-    () => false,
-  );
-}
-
-/** True where the footer has room to show every menu open beside the identity. */
-export function useWideFooter() {
-  return useSyncExternalStore(
-    wideFooterSubscribe,
-    () => window.matchMedia(WIDE_FOOTER_QUERY).matches,
     () => false,
   );
 }

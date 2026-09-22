@@ -330,66 +330,48 @@
    themselves in the page grid without a second markup tree. The width here
    matches WIDE_FOOTER_QUERY in workspaceMedia.ts, which swaps the accordions
    for the columns this layout expects. */
+/* Wide viewports keep the same single centred column the phone reads, rather
+   than setting the identity against a tall menu card: side by side, one half was
+   always carrying the other. The extra width goes to the menus, which sit as
+   three tabs in a row — closed the card is barely taller than its headings, and
+   opening one drops its links beneath that heading, in its own column. The
+   markup never changes; only this layout does. */
 @media (min-width: 1024px) {
   .library-footer {
     margin-top: 2rem;
-    padding: 2rem 2rem 1rem;
+    padding: 2.5rem 2rem 1rem;
   }
   .library-footer-inner {
-    max-width: 72rem;
-    grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
-    grid-template-areas:
-      "identity menus"
-      "social   menus"
-      "language menus"
-      "legal    legal";
-    align-content: start;
-    column-gap: 3rem;
-    row-gap: 1rem;
-  }
-  .library-footer-identity {
-    grid-area: identity;
-  }
-  .library-footer-controls {
-    display: contents;
-  }
-  .library-footer-social {
-    grid-area: social;
-    justify-self: center;
-  }
-  .library-footer-menus {
-    grid-area: menus;
-    align-self: start;
-  }
-  .library-footer-language-row {
-    grid-area: language;
+    max-width: 52rem;
+    gap: 1.5rem;
   }
   .library-footer-mark {
     font-size: 2.75rem;
   }
-  .library-footer-columns {
+  .library-footer-social {
+    justify-self: center;
+    width: min(100%, 26rem);
+  }
+  .library-footer-disclosures {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.25rem 1.5rem;
-    padding: 1.5rem 1.75rem;
+    align-items: start;
+    column-gap: 1.5rem;
+    padding-inline: 1.5rem;
   }
-  .library-footer-column-heading {
-    margin: 0 0 0.375rem;
-    padding-inline: 0.625rem;
-    font-family: var(--font-sen-sc, var(--font-sc, "Alegreya SC", serif));
-    font-size: 0.9375rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--library-footer-gold);
+  /* The row carries its own tab rules, so the stacked dividers step aside. */
+  .library-footer-disclosure {
+    border-bottom: 0;
+  }
+  .library-footer-disclosure-trigger {
+    border-bottom: 1px solid rgba(190, 216, 255, 0.16);
   }
   .library-footer-legal {
-    grid-area: legal;
     grid-auto-flow: column;
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
-    margin-top: 0.75rem;
+    margin-top: 0.5rem;
     padding-top: 0.75rem;
     border-top: 1px solid rgba(190, 216, 255, 0.14);
   }

@@ -228,6 +228,52 @@ describe('CelestialStorePanel', () => {
     }
   });
 
+  it('closes an open offer that a same-day configuration change retires', async () => {
+    const soleOffer = { energySlots: 1, qiSlots: 0, offers: [{ familiarId: 'phoenix', currency: 'energy' as const }] };
+    await render(<CelestialStorePanel options={OPTIONS} date={DAY} config={soleOffer}
+      cultivation={qiReady(100_000)} energy={energyReady(5_000)} onPurchase={vi.fn()} />);
+    await click(container.querySelector('[data-store-offer="phoenix"] button'));
+    expect(document.querySelector('.celestial-store-detail')?.textContent).toContain('phoenix');
+    // The shelf changes under the open dialog; the retired offer must not stay buyable.
+    await render(<CelestialStorePanel options={OPTIONS} date={DAY}
+      config={{ energySlots: 1, qiSlots: 0, offers: [{ familiarId: 'nine-tailed-fox', currency: 'energy' as const }] }}
+      cultivation={qiReady(100_000)} energy={energyReady(5_000)} onPurchase={vi.fn()} />);
+    expect([...document.querySelectorAll('.celestial-store-detail button')]
+      .some(button => button.textContent?.startsWith('Buy for'))).toBe(false);
+  });
+
+  it('never submits a price the shelf has since changed', async () => {
+    const onPurchase = vi.fn().mockResolvedValue({ outcome: 'purchased', message: 'Bought.' });
+    const at = (salePrice?: number) => ({
+      energySlots: 1, qiSlots: 0,
+      offers: [{ familiarId: 'phoenix', currency: 'energy' as const, salePrice }],
+    });
+    await render(<CelestialStorePanel options={OPTIONS} date={DAY} config={at(450)}
+      cultivation={qiReady(100_000)} energy={energyReady(5_000)} onPurchase={onPurchase} />);
+    await click(container.querySelector('[data-store-offer="phoenix"] button'));
+    expect([...document.querySelectorAll('.celestial-store-detail button')]
+      .find(button => button.textContent?.startsWith('Buy for'))?.textContent).toBe('Buy for 450 Energy');
+    // The sale ends while the dialog is open: the old 450 must not be charged.
+    await render(<CelestialStorePanel options={OPTIONS} date={DAY} config={at(undefined)}
+      cultivation={qiReady(100_000)} energy={energyReady(5_000)} onPurchase={onPurchase} />);
+    const stillBuyable = [...document.querySelectorAll('.celestial-store-detail button')]
+      .find(button => button.textContent?.startsWith('Buy for'));
+    expect(stillBuyable).toBeUndefined();
+    expect(onPurchase).not.toHaveBeenCalled();
+  });
+
+  it('keeps an open offer whose terms have not changed', async () => {
+    const config = { energySlots: 1, qiSlots: 0, offers: [{ familiarId: 'phoenix', currency: 'energy' as const }] };
+    await render(<CelestialStorePanel options={OPTIONS} date={DAY} config={config}
+      cultivation={qiReady(100_000)} energy={energyReady(5_000)} onPurchase={vi.fn()} />);
+    await click(container.querySelector('[data-store-offer="phoenix"] button'));
+    // A fresh options array with identical terms must not close the dialog.
+    await render(<CelestialStorePanel options={[...OPTIONS]} date={DAY} config={{ ...config }}
+      cultivation={qiReady(100_000)} energy={energyReady(5_000)} onPurchase={vi.fn()} />);
+    expect([...document.querySelectorAll('.celestial-store-detail button')]
+      .find(button => button.textContent?.startsWith('Buy for'))?.textContent).toBe('Buy for 600 Energy');
+  });
+
   it('keeps an explicitly supplied date fixed rather than following the clock', async () => {
     vi.useFakeTimers();
     try {

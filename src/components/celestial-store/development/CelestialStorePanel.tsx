@@ -173,12 +173,22 @@ export function CelestialStorePanel({
   const purchaseLock = useRef(false);
   const [purchasing, setPurchasing] = useState(false);
 
-  // A new day is a new rotation, so yesterday's open offer stops being for sale:
-  // close the dialog rather than let a stale offer reach `onPurchase`.
+  // An open offer keeps its place only while an identical one is still on the
+  // shelf. A new day retires the whole rotation, and a same-day change to the
+  // catalogue or the configuration can retire or reprice one offer; either way
+  // a stale offer must not reach `onPurchase`. Matching on the acquisition
+  // terms means a repricing closes the dialog rather than quietly charging
+  // yesterday's number. `offers` already changes with the day, so it is the
+  // only dependency needed — and the purchase message is left alone here, so a
+  // host that passes a fresh `options` array each render cannot wipe it.
   useEffect(() => {
-    setSelected(null);
-    setPurchaseMessage(null);
-  }, [rotation.dayKey]);
+    setSelected(current => {
+      if (!current) return null;
+      return offers.find(offer => offer.familiarId === current.familiarId
+        && offer.currency === current.currency
+        && (offer.salePrice ?? offer.price) === (current.salePrice ?? current.price)) ?? null;
+    });
+  }, [offers]);
 
   const qiState = !cultivation || cultivation.status === 'unavailable' ? 'unavailable'
     : cultivation.status === 'ready' ? 'ready' : 'loading';

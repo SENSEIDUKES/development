@@ -139,7 +139,7 @@ export const familiarCatalogue: readonly FamiliarCatalogueEntry[] = [
   defineFamiliar({ pet: littleMonkeyKingPet, request: littleMonkeyKingRequest, timing: littleMonkeyKingTiming,
     heroUrl: 'https://media.seihouse.org/SEN/GIF/little%20monkey%20king.gif', rarity: 'rare', neutralColumn: 0 }),
   defineFamiliar({ pet: phoenixPet, request: phoenixRequest, timing: phoenixTiming,
-    heroUrl: 'https://media.seihouse.org/SEN/GIF/pheonix.gif', rarity: 'rare', neutralColumn: 0 }),
+    heroUrl: 'https://media.seihouse.org/SEN/GIF/pheonix.gif', rarity: 'epic', neutralColumn: 0 }),
   defineFamiliar({ pet: nineTailedFoxPet, request: nineTailedFoxRequest, timing: nineTailedFoxTiming,
     heroUrl: 'https://media.seihouse.org/SEN/GIF/Nine%20tailed%20fox.gif', rarity: 'rare', neutralColumn: 6 }),
   defineFamiliar({ pet: galaxyOctopusPet, request: galaxyOctopusRequest, timing: galaxyOctopusTiming,

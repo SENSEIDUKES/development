@@ -740,8 +740,8 @@ describe('Cultivator Cave settings', () => {
     const selection = document.querySelector('[aria-label="Familiar selection"]')!;
     expect(selection.closest('[role="tabpanel"]')?.hasAttribute('hidden')).toBe(false);
     expect(selection.querySelectorAll('article')).toHaveLength(11);
-    expect(selection.querySelector('img')?.getAttribute('src')).toBe('https://media.seihouse.org/SEN/GIF/celestial%20Guardian.gif');
-    expect(selection.querySelectorAll('[data-rarity="epic"]')).toHaveLength(2);
+    expect(selection.querySelector('img')?.getAttribute('src')).toBe('/familiars/celestial-guardian/neutral.png');
+    expect(selection.querySelectorAll('[data-rarity="epic"]')).toHaveLength(3);
     const quill = [...selection.querySelectorAll<HTMLElement>('article')].find(article => article.textContent?.includes('Quill'))!;
     expect(quill.querySelector('[data-rarity]')?.textContent).toBe('common');
     expect(quill.textContent).toContain('Default');

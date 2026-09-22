@@ -1,5 +1,6 @@
 import type { QiAccountState } from '@seihouse/library/cultivation';
 import type { FamiliarOption } from '../../familiar/shared/familiar';
+import type { CelestialStoreAccountServices } from '../../celestial-store/shared/storeAccount';
 /**
  * The User Profile services port.
  *
@@ -195,6 +196,12 @@ export interface UserProfileController {
 export interface UserProfileServices {
   /** Host catalog with account-specific unlock availability. */
   familiars?: readonly FamiliarOption[];
+  /**
+   * Celestial Store account access: Familiar ownership and the purchase call.
+   * Ownership is account state, never Store configuration; the Workshop
+   * supplies an in-memory grant that persists nothing.
+   */
+  celestialStore?: CelestialStoreAccountServices;
   /** Production: `useUserProfile(props)` from `src/hooks/useUserProfile.ts`. */
   useController: (props: UserProfileControllerProps) => UserProfileController;
 

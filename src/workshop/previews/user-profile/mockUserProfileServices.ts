@@ -30,7 +30,8 @@
 import type React from 'react';
 import { allFamiliarOptions } from '../../../host/familiar/catalogue';
 import { normalizeFamiliarSize } from '@seihouse/library/familiar';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import type { CelestialStorePurchase, CelestialStorePurchaseResult } from '@seihouse/library/celestial-store';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '@seihouse/sen/contracts';
 import { type DaoRankData, type DaoClaimResult, type SpecialQiId, type UserProfileController, type UserProfileControllerProps, type UserProfileServices } from '@seihouse/library/profile';
 import { type AccountRole, type ActiveStatusEffect, type AdminStoryRow, type AppUser, type ChapterWritingStyle, type PremiumTier, type StorySeed, type UserProfile } from '@seihouse/library/profile';
@@ -854,6 +855,50 @@ export function createMockUserProfileServices({
     };
   };
 
+  /**
+   * Development-only Familiar ownership for the Celestial Store. Production
+   * would persist purchases on the account and deduct the server ledgers;
+   * this grant lives in memory for the preview session, deducts nothing, and
+   * survives Cave navigation because it outlives the hook.
+   */
+  const ownedFamiliars = {
+    ids: [] as readonly string[],
+    listeners: new Set<() => void>(),
+    grant(id: string) {
+      if (this.ids.includes(id)) return;
+      this.ids = [...this.ids, id];
+      this.listeners.forEach(listener => listener());
+    },
+  };
+  const subscribeOwned = (listener: () => void) => {
+    ownedFamiliars.listeners.add(listener);
+    return () => { ownedFamiliars.listeners.delete(listener); };
+  };
+  const readOwned = () => ownedFamiliars.ids;
+
+  const useStoreAccount = () => {
+    const ownedFamiliarIds = useSyncExternalStore(subscribeOwned, readOwned, readOwned);
+    const [pending, setPending] = useState(false);
+    const purchase = useCallback(async (attempt: CelestialStorePurchase): Promise<CelestialStorePurchaseResult> => {
+      const name = allFamiliarOptions.find(option => option.id === attempt.familiarId)?.name ?? 'This Familiar';
+      if (readOwned().includes(attempt.familiarId)) {
+        return { outcome: 'already-owned', message: `${name} already lives in your cave.` };
+      }
+      setPending(true);
+      try {
+        await failIfScenarioFails(`${name} could not be purchased. Please retry.`);
+        await delay(PROFILE_SAVE_MS);
+        ownedFamiliars.grant(attempt.familiarId);
+        return { outcome: 'purchased', message: `${name} joins your cave. Equip it whenever you like.` };
+      } catch (failure) {
+        return { outcome: 'failed', message: failure instanceof Error ? failure.message : 'The purchase failed.' };
+      } finally {
+        setPending(false);
+      }
+    }, []);
+    return { ownedFamiliarIds, pending, purchase };
+  };
+
   return {
     authenticate: attempt => {
       logExcludedAction(`${attempt.provider} sign-in — mock account linked locally instead`);
@@ -861,6 +906,7 @@ export function createMockUserProfileServices({
     },
     useController,
     familiars: allFamiliarOptions,
+    celestialStore: { useStoreAccount },
 
     localOnlyMode: scenario.localOnlyMode,
     setLocalOnlyMode: next =>

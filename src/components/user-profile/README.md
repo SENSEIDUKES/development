@@ -49,6 +49,17 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-22 Celestial Store destination:** The `/home/store` stub ("The Store is not
+  available yet.") is now the dedicated official Celestial Store page
+  (`src/components/celestial-store`): live QI-ledger and Energy-account balances over two
+  framed shelves of daily Familiar offers (two Energy, four QI), catalogue-driven ranks and
+  heroes, and a detail dialog that buys through the new optional `celestialStore` services
+  port and equips through the existing `handleFamiliarChange`. Home's small Store entry
+  button is unchanged as the door; the official Store itself no longer lives on the profile.
+  The creator User Store (`/public/creators/<uid>/storefront`) and every other profile
+  surface are untouched. The Workshop adapter supplies an in-memory ownership grant that
+  deducts nothing; production persistence and ledger deduction remain host responsibilities.
+
 - **2026-09-22 Familiar catalogue:** Customization's Familiar tab now consumes the complete eleven-entry Library catalogue, with one declarative `isDefault` Familiar (Quill) and catalogue-driven common/rare/epic ranks. The profile component receives projected options through its existing service boundary; availability is still host-supplied and independent from ranks, ownership, acquisition, or pricing. The existing profile controller saves only `familiarId`, preserving unrelated drafts and rejecting unavailable IDs. Selection follows the Workshop profile adapter's existing in-memory lifetime; production persistence and future unlock enforcement remain host responsibilities. The reusable selector is exported from `@seihouse/library/familiar`; locked references are unchanged.
 
 - **2026-09-18 Daily Dao Pillar calendar:** The Home card is now a link to `/home/dao-pillar`, which holds the new server-owned 30-day reward calendar (`src/components/dao-pillar`, `src/server/dao-pillar`): the active Beta Test theme banner over a five-by-six grid of scheduled days, collected / available today / locked / missed states, 500 Qi milestones on days 7, 14, 21 and 28, and a one-claim-per-day collection validated and deposited on the server. The card shows the server streak, whether today is open or collected, and the amount collected today. The original local deposit mirror was replaced on 2026-09-19 by a refresh of the authoritative Qi-ledger projection. `UserProfileDaoPillarPanel.tsx` (refinement, cracked pillar, repair) was removed from the Cave; its legacy controller members stay on the contract for the locked reference page. Public views never mount the calendar.

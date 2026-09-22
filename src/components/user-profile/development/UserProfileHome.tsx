@@ -38,7 +38,7 @@ import {
 } from "../../../library/cultivation/progression";
 import { isEffectActive } from './timedEffects';
 import { LibraryNavigationIcon as SENNavigationIcon } from '@seihouse/library-ui';
-import { LibraryProfileIcon as SENProfileIcon, LibraryQiIcon as SENQiIcon, LibraryQiYinYangIcon as SENQiYinYangIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/library-ui';
+import { LibraryProfileIcon as SENProfileIcon, LibraryQiYinYangIcon as SENQiYinYangIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/library-ui';
 
 export { isEffectActive } from './timedEffects';
 
@@ -535,7 +535,7 @@ export function UserProfileHome({
               onClick={() => openPanel("qi")}
               data-cave-card="qi-reserves"
             >
-              <SENQiIcon aria-hidden="true" className="cave-home-glyph" />
+              <SENQiYinYangIcon aria-hidden="true" className="cave-home-glyph" />
               <span className="min-w-0 flex-1">
                 <span className="block font-display">Qi Reserves</span>
                 <span className="block text-xs text-neutral-400">

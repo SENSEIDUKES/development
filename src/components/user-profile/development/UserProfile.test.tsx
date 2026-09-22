@@ -24,6 +24,7 @@ import { QiClientProvider, type QiClient } from '@seihouse/library/cultivation';
 import { InMemoryQiLedger } from '../../../server/qi/inMemoryQiLedger';
 import { createLocalDaoPillarClient, type LocalDaoPillarClientOptions } from '../../../workshop/previews/dao-pillar/localDaoPillarClient';
 import { createMockUserProfileServices } from '../../../workshop/previews/user-profile/mockUserProfileServices';
+import { allFamiliarOptions } from '../../../host/familiar/catalogue';
 import { getPreviewScenario } from '../../../workshop/previews/user-profile/previewData';
 import type { UserProfilePreviewState } from '../../../workshop/previews/user-profile/previewStates';
 import { CAVE_ENVIRONMENTS, getCultivationStage } from './caveEnvironment';
@@ -448,7 +449,9 @@ describe('Cultivator Cave home', () => {
     expect(text()).toContain('Inbox is not connected');
     await click(container.querySelector('[aria-label="Return to cave"]')!);
     await click(byText('[data-cave-account-actions] button', 'Store'));
-    expect(text()).toContain('The Store is not available yet.');
+    expect(container.querySelector('[data-cave-destination="store"]')).not.toBeNull();
+    expect(text()).toContain('Celestial Store');
+    expect(container.querySelector('[aria-label="Energy balance unavailable"]')).not.toBeNull();
     await click(container.querySelector('[aria-label="Return to cave"]')!);
     await click(byText('[data-cave-account-actions] button', 'Settings'));
     await click(byText('button', 'Account'));
@@ -456,6 +459,44 @@ describe('Cultivator Cave home', () => {
     expect(text()).toContain('Code redemption is not connected');
     await click(container.querySelector('[aria-label="Return to Settings"]')!);
     expect(container.querySelector('[data-cave-settings]')).not.toBeNull();
+  });
+
+  it('serves the dedicated Celestial Store with ledger balances, split shelves, and a purchase-then-equip flow', async () => {
+    await renderCave({ energyClient: createLocalEnergyClient({ uid: 'workshop-cultivator' }), qiBalance: 28_400 });
+    await navigateTo('/home/store');
+    expect(container.querySelector('[data-cave-destination="store"]')).not.toBeNull();
+    // Balances come from the QI ledger and Energy server projections, never static copy.
+    expect(container.querySelector('[aria-label="QI balance 28,400"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label="Energy balance 500"]')).not.toBeNull();
+    // Today's shared rotation on one shelf: two bought with Energy, four with QI.
+    const cards = container.querySelectorAll('[data-store-shelf="familiars"] [data-store-offer]');
+    expect(cards).toHaveLength(6);
+    const currencies = [...cards].map(card => card.getAttribute('data-store-currency'));
+    expect(currencies.filter(currency => currency === 'energy')).toHaveLength(2);
+    expect(currencies.filter(currency => currency === 'qi')).toHaveLength(4);
+    // Ranks render from the host catalogue, never inferred from price or currency.
+    for (const card of cards) {
+      const id = card.getAttribute('data-store-offer')!;
+      const catalogueRank = allFamiliarOptions.find(option => option.id === id)?.rarity;
+      expect(card.querySelector('.shop-card-rank')?.textContent).toBe(catalogueRank);
+    }
+    // Purchase a QI offer (28,400 covers every provisional QI price), then equip it.
+    const offerId = [...cards].find(card => card.getAttribute('data-store-currency') === 'qi')!
+      .getAttribute('data-store-offer')!;
+    await click(container.querySelector(`[data-store-offer="${offerId}"] button`)!);
+    const dialog = document.querySelector('.celestial-store-detail')!;
+    await click([...dialog.querySelectorAll('button')].find(button => button.textContent?.startsWith('Buy for'))!);
+    await act(async () => { await vi.advanceTimersByTimeAsync(700); });
+    expect(dialog.textContent).toContain('joins your cave');
+    const equip = [...dialog.querySelectorAll('button')].find(button => button.textContent?.startsWith('Equip'))!;
+    await click(equip);
+    await act(async () => { await vi.advanceTimersByTimeAsync(700); });
+    expect([...dialog.querySelectorAll('button')].some(button => button.textContent === 'Equipped' && button.disabled)).toBe(true);
+    // The owned state survives leaving and reopening the Store.
+    await click(document.querySelector('.celestial-store-detail [aria-label="Close dialog"], .celestial-store-detail [data-sei-dialog-close]') ?? dialog.querySelector('button')!);
+    await navigateTo('/home');
+    await navigateTo('/home/store');
+    expect(container.querySelector(`[data-store-offer="${offerId}"]`)?.textContent).toContain('Equipped');
   });
 
   it('does not invent an unavailable Energy balance or expose account controls publicly', async () => {
@@ -485,7 +526,8 @@ describe('Cultivator Cave home', () => {
     for (const id of ['qi-reserves', 'dao-pillar', 'status-effects']) {
       expect(container.querySelector(`[data-cave-card="${id}"]`)).not.toBeNull();
     }
-    expect(open('qi-reserves').querySelector('[data-sen-global-icon="qi"]')).not.toBeNull();
+    // Qi carries the yin-yang mark everywhere, on the card as in its dialog.
+    expect(open('qi-reserves').querySelector('[data-sen-global-icon="qi-yin-yang"]')).not.toBeNull();
     expect(open('dao-pillar').textContent).toContain('12 Day Streak');
     expect(open('status-effects').textContent).toContain('Active Effects · 2');
     expect(text()).not.toContain(profile.username);

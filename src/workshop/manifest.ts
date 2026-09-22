@@ -254,6 +254,19 @@ export const workshopEntries: WorkshopEntry[] = [
     },
   },
   {
+    id: 'celestial-store',
+    section: 'home',
+    title: 'Celestial Store',
+    description: 'The official Store extracted out of the profile into its own Cave destination: live QI and Energy balances over two framed shelves of daily Familiar offers — two Energy, four QI — with catalogue ranks, owned/equipped states, and a focused detail dialog for buying and equipping. Familiars only; the creator User Store on public profiles is a separate, untouched surface.',
+    category: 'other',
+    version: 'v1.0',
+    source: {
+      repository: 'SENSEIDUKES/development',
+      path: 'src/components/celestial-store/; src/host/familiar/catalogue.ts',
+      lastCompared: '2026-09-22',
+    },
+  },
+  {
     id: 'energy',
     section: 'shared',
     title: 'Energy',

@@ -55,6 +55,7 @@ export const ownershipRules = [
   ['src/components/user-profile/', 'library', 'profile'],
   ['src/components/energy/', 'library', 'energy'],
   ['src/components/familiar/', 'library', 'familiar'],
+  ['src/components/celestial-store/', 'library', 'celestial store'],
   ['src/components/dao-pillar/', 'library', 'dao pillar'],
   ['src/components/closed-door-cultivation/', 'library', 'cultivation'],
   ['src/components/relics/', 'library', 'relics'],

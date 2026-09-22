@@ -59,6 +59,10 @@ const UserProfileWorkspace = lazy(() =>
   import('./workshop/previews/user-profile/UserProfileWorkspace')
     .then(module => ({ default: module.UserProfileWorkspace })),
 );
+const CelestialStoreWorkspace = lazy(() =>
+  import('./workshop/previews/celestial-store/CelestialStoreWorkspace')
+    .then(module => ({ default: module.CelestialStoreWorkspace })),
+);
 const DaoPillarWorkspace = lazy(() =>
   import('./workshop/previews/dao-pillar/DaoPillarWorkspace')
     .then(module => ({ default: module.DaoPillarWorkspace })),
@@ -83,6 +87,7 @@ const previewRegistry: Record<string, ComponentType> = {
   'audio-player-smoke': AudioPlayerSmokeWorkspace,
   'card-workshop': CardWorkshopWorkspace,
   'celestial-backdrop': CelestialBackdropWorkspace,
+  'celestial-store': CelestialStoreWorkspace,
   'character-voice': CharacterVoiceWorkspace,
   'chapter-generation-flow': ChapterGenerationFlowWorkspace,
   'chapter-generation-manifestation': ChapterManifestationWorkspace,

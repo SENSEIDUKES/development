@@ -12,7 +12,8 @@ export interface EnergyDeductionDetails {
 }
 
 export const describeEnergyDeduction = ({ amount, actionLabel, available }: EnergyDeductionDetails) => ({
-  title: `⚡ ${formatEnergy(amount)} Energy used for ${actionLabel.toLowerCase()}`,
+  // A toast title is plain text, so the Energy mark cannot be drawn here.
+  title: `${formatEnergy(amount)} Energy used for ${actionLabel.toLowerCase()}`,
   description: `${formatEnergy(available)} Energy remaining.`,
 });
 

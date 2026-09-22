@@ -13,8 +13,9 @@ export interface EnergyInsufficientStateProps {
   className?: string;
 }
 
+// Plain sentence text, so the Energy mark cannot be drawn here: the word carries it.
 export const describeInsufficientEnergy = (required: number, available: number) =>
-  `This needs ⚡ ${formatEnergy(required)} and you have ⚡ ${formatEnergy(available)}.`;
+  `This needs ${formatEnergy(required)} Energy and you have ${formatEnergy(available)}.`;
 
 /**
  * The blocked state a generation control shows when the server refuses a

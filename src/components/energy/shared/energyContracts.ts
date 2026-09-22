@@ -44,7 +44,7 @@ export interface EnergyPriceEntry {
    * range, so a future video flow cannot silently charge the displayed minimum.
    */
   maximumPrice?: number;
-  /** The number is a working projection, not evidence of a live provider charge. */
+  /** The current projected charge, not evidence of a live provider charge. */
   projected?: boolean;
 }
 
@@ -52,7 +52,7 @@ export interface EnergyPriceEntry {
  * The single editable price catalog. Change a price here and every consumer
  * — the ledger, the profile panel, the action-cost indicator — follows.
  *
- * These are the shared working standards. Generation paths remain deliberately
+ * This is the current shared Energy price schedule. Generation paths remain deliberately
  * disconnected in this repository, so each entry is visibly projected until a
  * host wires an actual operation through the server-side reservation boundary.
  */
@@ -151,7 +151,7 @@ export const resolveEnergyPrice = (actionId: EnergyActionId, quotedPrice?: numbe
 export const energyActionLabel = (actionId: EnergyActionId): string =>
   ENERGY_PRICE_CATALOG.find(candidate => candidate.actionId === actionId)?.label ?? actionId;
 
-/** Catalog rows that carry a price, in catalog order — what a UI lists as examples. */
+/** Catalog rows that carry a price, in catalog order — what a UI lists as current projected costs. */
 export const pricedEnergyActions = (): EnergyPriceQuote[] => ENERGY_PRICE_CATALOG
   .filter((entry): entry is EnergyPriceEntry & { price: number } => entry.price !== null)
   .map(entry => ({

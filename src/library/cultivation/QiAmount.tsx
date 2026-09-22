@@ -15,9 +15,12 @@ export interface QiAmountProps {
 /** The common QI mark and number used by Library economy surfaces. */
 export function QiAmount({ amount, state = 'ready', className = '', label }: QiAmountProps) {
   return (
-    <span className={`qi-amount ${className}`.trim()} data-qi-state={state} aria-label={label} role="img">
-      <LibraryGlobalIcon name="qi-yin-yang" size="1em" className="qi-glyph" aria-hidden="true" />
-      <span aria-hidden="true">{state === 'ready' && amount !== null ? formatQi(amount) : '—'}</span>
-    </span>
+    <>
+      <span className={`qi-amount ${className}`.trim()} data-qi-state={state} aria-label={label} role="img">
+        <LibraryGlobalIcon name="qi-yin-yang" size="1em" className="qi-glyph" aria-hidden="true" />
+        <span aria-hidden="true">{state === 'ready' && amount !== null ? formatQi(amount) : '—'}</span>
+      </span>
+      <span className="sr-only" data-qi-status role="status" aria-live="polite" aria-atomic="true">{label}</span>
+    </>
   );
 }

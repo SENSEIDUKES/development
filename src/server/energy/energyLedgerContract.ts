@@ -37,8 +37,8 @@ export const replayLedger = (transactions: EnergyTransaction[]) => {
 
 /**
  * Rewrites one catalog price for the duration of `body`, the way an
- * experimental reprice or an action being taken off the price list would, then
- * restores it. Energy prices are deliberately unstable, so the ledger has to
+ * scheduled reprice or an action being taken off the price list would, then
+ * restores it. The current price schedule can change over time, so the ledger has to
  * survive this happening between a reservation and its settlement.
  */
 export const withCatalogPrice = async <T>(

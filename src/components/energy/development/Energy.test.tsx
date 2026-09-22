@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ENERGY_PRICE_CATALOG } from '@seihouse/library/energy';
 import { EnergyClientProvider, createHttpEnergyClient, type EnergyClient } from '@seihouse/library/energy';
 import { useEnergyAccount, type EnergyAccountState } from '@seihouse/library/energy';
-import { ENERGY_ITEM_PRICES, ENERGY_PACKS, QI_ITEM_PRICES, QI_PACKS, type QiAccountState } from '@seihouse/library/cultivation';
+import { ENERGY_ITEM_PRICES, ENERGY_PACKS, QI_ITEM_PRICES, QI_PACKS, QiAmount, type QiAccountState } from '@seihouse/library/cultivation';
 import { createLocalEnergyClient } from '../../../workshop/previews/energy/localEnergyClient';
 import { EnergyActionCost, EnergyBalanceIndicator, EnergyDeductionNotice, EnergyInsufficientState, EnergyPanel, energyDeductionToast } from '@seihouse/library/energy';
 
@@ -119,6 +119,20 @@ describe('Energy client hook', () => {
 });
 
 describe('Reusable Energy pieces', () => {
+  it('announces QI balance changes through one persistent status region', async () => {
+    await render(<QiAmount amount={2_500} label="QI balance 2,500" />);
+    const status = container.querySelector<HTMLElement>('[data-qi-status]');
+    expect(status).not.toBeNull();
+    expect(status?.getAttribute('role')).toBe('status');
+    expect(status?.getAttribute('aria-live')).toBe('polite');
+    expect(status?.textContent).toBe('QI balance 2,500');
+    expect(container.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe('QI balance 2,500');
+
+    await render(<QiAmount amount={2_600} label="QI balance 2,600" />);
+    expect(container.querySelector('[data-qi-status]')).toBe(status);
+    expect(status?.textContent).toBe('QI balance 2,600');
+  });
+
   it('renders the configured action cost from the shared catalog', async () => {
     await render(<><EnergyActionCost actionId="chapter.generate" /><EnergyActionCost actionId="image.generate" /><EnergyActionCost actionId="narration.generate" /><EnergyActionCost price={7} /></>);
     const costs = Array.from(container.querySelectorAll('.energy-action-cost'));
@@ -129,7 +143,7 @@ describe('Reusable Energy pieces', () => {
     expect(ENERGY_PRICE_CATALOG.find(entry => entry.actionId === 'narration.generate')?.price).toBeNull();
   });
 
-  it('renders the three balances and every shared working standard without a checkout control', async () => {
+  it('renders the three balances and every current price-schedule entry without a checkout control', async () => {
     const client = createLocalEnergyClient({ uid: 'economy-reader' });
     const snapshot = await client.getSnapshot();
     const account: EnergyAccountState = {
@@ -155,8 +169,10 @@ describe('Reusable Energy pieces', () => {
     expect(container.querySelector('[data-economy-balance="dao-xp"] [role="progressbar"]')?.getAttribute('aria-valuetext'))
       .toBe('13,480 DAO XP of 25,000 toward Sage');
     expect(container.querySelector('[data-economy-section="energy"]')?.textContent).toContain('1 Energy = $0.02');
+    expect(container.querySelector('[data-economy-section="energy"]')?.textContent).toContain('Energy price schedule');
     expect(container.textContent).not.toContain('$0.020');
     expect(container.querySelector('[data-economy-section="qi"]')?.textContent).toContain('1 QI = $0.002');
+    expect(container.querySelector('[data-economy-section="qi"]')?.textContent).toContain('QI price schedule');
 
     expect(ENERGY_PACKS).toEqual([
       { amount: 250, priceUsd: 5 }, { amount: 500, priceUsd: 10 },

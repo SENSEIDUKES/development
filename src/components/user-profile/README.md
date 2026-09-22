@@ -549,10 +549,12 @@ Once the Cave is approved, copy back from `development/`:
   → `src/components/` in Light-Novels.
 - Transfer `StoryAuthGate.tsx` and `public/story-seed/library-auth-backdrop.jpg` with the Cave, or
   consume the gate from the SEN package once that package version is installed in Light-Novels.
-- `rankVisuals.ts` → a new `src/lib/rankVisuals.ts`, plus the changes to `qi.ts` → the matching
-  exports in `src/lib/qi.ts`. Production's `AURA_TIERS`, `getAuraColorForXp`, and the two magic
-  `colorHex` strings are gone; see *The rank colour system* for what replaces them and for the
-  `displayNameColor` compatibility rules.
+- `rankVisuals.ts` → a new `src/lib/rankVisuals.ts` for `RANKS`, `getRankForDaoXp`, and
+  `resolvePermanentDaoXp`. Transfer `progression.ts`'s `DAO_RANKS`, `getDaoRankData`, and
+  dependent aura helpers into the matching exports in `src/lib/qi.ts`; retain `getRankForQi`
+  only as a compatibility alias for `getRankForDaoXp`, using permanent DAO XP. Production's
+  `AURA_TIERS`, `getAuraColorForXp`, and the two magic `colorHex` strings are gone; see *The
+  rank colour system* for what replaces them and for the `displayNameColor` compatibility rules.
 - `userProfile.css` → the aura block in `src/index.css` plus the Cave ornament rules. The per-tier
   `.aura-gradient-violet-gold` / `.aura-animated-custom` classes are replaced by the rank-agnostic
   `.aura-gradient-text` / `.aura-spectrum-text` pair.

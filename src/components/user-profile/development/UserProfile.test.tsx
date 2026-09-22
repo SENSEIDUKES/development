@@ -405,7 +405,7 @@ describe('Cultivator Cave home', () => {
     expect(container.querySelector('.library-global-navigation')?.textContent).not.toContain('Settings');
   });
 
-  it('shows live Energy, spendable QI, permanent DAO XP, and working standards from the Energy emblem', async () => {
+  it('shows live Energy, spendable QI, permanent DAO XP, and the current price schedule from the Energy emblem', async () => {
     const energyClient = createLocalEnergyClient({ uid: 'workshop-cultivator' });
     const grant = vi.spyOn(energyClient, 'grantDevelopment');
     await renderCave({ energyClient });

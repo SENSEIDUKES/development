@@ -20,7 +20,7 @@ export interface CelestialStoreOfferConfig {
   currency: StoreCurrency;
   /**
    * Normal price in the offer's currency. Either currency may omit it to take
-   * the shared rarity-based working price for that currency.
+   * the shared rarity-based current price for that currency.
    */
   price?: number;
   /** Optional genuine discount: the price charged while lower than `price`. */

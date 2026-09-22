@@ -36,8 +36,9 @@ future adapter has an executable definition of correct to satisfy.
 
 ## Prices
 
-Prices live in one place: `src/components/energy/shared/energyContracts.ts`. Current test
-prices are `chapter.generate` 1 and `image.generate` 3; `soundscape.generate`,
+Prices live in one place: `src/components/energy/shared/energyContracts.ts`. The current
+projected generation schedule is chapter 1, image 3, short cue 3, long cue 15, soundscape 20,
+and video 30–50 Energy; video requires a trusted whole-number quote in that range.
 `narration.generate` and `translation.generate` exist but are unpriced and cannot be reserved.
 The user-facing price never depends on provider cost; `settle` may record provider cost as
 internal transaction metadata that no snapshot exposes.

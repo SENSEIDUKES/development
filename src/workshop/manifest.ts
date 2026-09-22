@@ -341,7 +341,7 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'library',
     status: 'active',
     title: 'Energy',
-    description: 'The shared, server-owned Energy meter behind SEN generation: balance indicator, action-cost indicator, deduction notice, insufficient-Energy state, and the Energy panel the profile opens. Development test prices only; no generation flow spends Energy yet.',
+    description: 'The shared, server-owned Energy meter behind SEN generation: balance indicator, action-cost indicator, deduction notice, insufficient-Energy state, and the Energy, QI & DAO XP page the profile opens. The current price schedule is shared with Store offers; no generation flow charges Energy yet.',
     category: 'other',
     version: 'v1.0',
     source: {

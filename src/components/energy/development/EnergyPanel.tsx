@@ -58,7 +58,7 @@ export interface EnergyPanelProps {
 
 /**
  * The Library economy page: live Energy, spendable QI, and permanent DAO XP
- * together with their shared working standards. It renders balances from their
+ * together with the current shared price schedule. It renders balances from their
  * authoritative projections and keeps purchase/checkout deliberately outside
  * this presentational page.
  */
@@ -136,10 +136,10 @@ export function EnergyPanel({ account, qi, daoXp, className = '' }: EnergyPanelP
         <SEIInlineAlert tone="info" title="Energy is not connected here">Sign in to see your Energy balance and activity.</SEIInlineAlert>
       ) : null}
 
-      <section className="economy-section" data-economy-section="energy" aria-labelledby="energy-working-standards">
+      <section className="economy-section" data-economy-section="energy" aria-labelledby="energy-price-schedule">
         <div>
-          <h3 id="energy-working-standards">Energy</h3>
-          <p>Energy powers generation throughout SEN. <strong>1 Energy = {usd(ENERGY_USD_PER_UNIT)}.</strong></p>
+          <h3 id="energy-price-schedule">Energy price schedule</h3>
+          <p>Energy powers generation throughout SEN. <strong>Current schedule: 1 Energy = {usd(ENERGY_USD_PER_UNIT)}.</strong></p>
         </div>
         <div className="economy-standard-grid">
           <StandardList title="Packs">
@@ -157,13 +157,13 @@ export function EnergyPanel({ account, qi, daoXp, className = '' }: EnergyPanelP
             </li>
           ))}
         </StandardList>
-        <p className="economy-note">Packs are displayed working prices only. No checkout is connected here; projected generation costs become charges only when a host completes a successful server-authorized generation.</p>
+        <p className="economy-note">Packs and item prices follow the current schedule. No checkout is connected here; projected generation costs become charges only when a host completes a successful server-authorized generation.</p>
       </section>
 
-      <section className="economy-section" data-economy-section="qi" aria-labelledby="qi-working-standards">
+      <section className="economy-section" data-economy-section="qi" aria-labelledby="qi-price-schedule">
         <div>
-          <h3 id="qi-working-standards">QI</h3>
-          <p>QI is a spendable balance users can earn or purchase. <strong>1 QI = {usd(QI_USD_PER_UNIT)}.</strong> Buying or spending QI never changes DAO XP or rank.</p>
+          <h3 id="qi-price-schedule">QI price schedule</h3>
+          <p>QI is a spendable balance users can earn or purchase. <strong>Current schedule: 1 QI = {usd(QI_USD_PER_UNIT)}.</strong> Buying or spending QI never changes DAO XP or rank.</p>
         </div>
         <div className="economy-standard-grid">
           <StandardList title="Packs">
@@ -173,7 +173,7 @@ export function EnergyPanel({ account, qi, daoXp, className = '' }: EnergyPanelP
             {Object.entries(QI_ITEM_PRICES).map(([rarity, price]) => <li key={rarity}><span>{rarity}</span><strong>{formatQi(price)} QI</strong></li>)}
           </StandardList>
         </div>
-        <p className="economy-note">Pack prices are visible for planning only. This page does not add a checkout, daily award, or achievement payout.</p>
+        <p className="economy-note">Packs and item prices follow the current schedule. This page does not add a checkout, daily award, or achievement payout.</p>
       </section>
 
       <section className="economy-section" data-economy-section="dao-xp" aria-labelledby="dao-xp-ranks">

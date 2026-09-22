@@ -33,7 +33,7 @@ arrive as their own shelves when they are real.
 
 | Piece | File | Role |
 | --- | --- | --- |
-| Offer configuration | `shared/storeConfig.ts` | Store merchandising policy only: the Energy/QI eligible pools, slot counts (2 Energy, 4 QI), and aliases to the shared working rarity prices (Energy Rare 300 / Epic 600 / Legendary 1,000; QI Common 500 / Rare 2,000 / Epic 8,000 / Legendary 25,000). Never a second Familiar registry. |
+| Offer configuration | `shared/storeConfig.ts` | Store merchandising policy only: the Energy/QI eligible pools, slot counts (2 Energy, 4 QI), and aliases to the shared current rarity prices (Energy Rare 300 / Epic 600 / Legendary 1,000; QI Common 500 / Rare 2,000 / Epic 8,000 / Legendary 25,000). Never a second Familiar registry. |
 | Daily rotation | `shared/rotation.ts` | One shared deterministic rotation per local calendar day: a seeded shuffle (xmur3 + mulberry32 on `celestial-store:<day>:<currency>`) of each currency pool, resolved against the host-supplied catalogue projection. Stable all day, reshuffles the next day. No personalization, probabilities, or offer engine. |
 | Account port | `shared/storeAccount.ts` | Ownership and purchases as host account state — never inferred from Store configuration. The default Familiar (Quill) is implicitly owned and never merchandised. |
 | The page | `development/CelestialStorePanel.tsx` | Live balances (QI ledger read + Energy account read), one framed shelf holding the whole rotation, and the focused detail dialog with Buy / Owned / Equip / Equipped. |
@@ -48,9 +48,9 @@ arrive as their own shelves when they are real.
 - **Account state** owns QI balance (`useQiAccount`), Energy balance (`useEnergyAccount`),
   Familiar ownership (the `celestialStore` services port), and the equipped Familiar
   (`profile.familiarId` via `handleFamiliarChange`).
-- **Working prices are shared.** `src/library/cultivation/economyStandards.ts` owns the Energy
+- **The current price schedule is shared.** `src/library/cultivation/economyStandards.ts` owns the Energy
   and spendable-QI pack/item values. `storeConfig.ts` exposes only Store-facing aliases, so the
-  Store and the Energy, QI & DAO XP page cannot silently disagree. These displayed values do not
+  Store and the Energy, QI & DAO XP page cannot silently disagree. The schedule does not itself
   add checkout or authorize a ledger deduction.
 - No loot boxes, randomized purchases, fake discounts, false scarcity, countdown pressure,
   or extra currencies. A `salePrice` at or above the normal price never renders as a sale.
@@ -71,6 +71,12 @@ performs the ledger deductions server-side, and a host decision on where the Sto
 entry points live (the Cave button today; bottom navigation later, deliberately not yet).
 
 ## Workshop history
+
+- **2026-09-22 current price schedule** — Confirmed the shared Energy and QI values as the
+  authoritative current catalogue values. The Store still uses its existing
+  in-memory preview
+  purchase behavior; production checkout, ownership persistence, and server-side deductions
+  remain host work.
 
 - **2026-09-22 shared economy standards** — Replaced the per-Familiar provisional QI table with
   the shared spendable-QI rarity table. The Store still uses its existing in-memory preview

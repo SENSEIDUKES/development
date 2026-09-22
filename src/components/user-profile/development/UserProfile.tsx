@@ -395,7 +395,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         );
       case 'energy':
         return (
-          <UserProfileCaveDestination id="energy" title="Energy, QI & DAO XP" subtitle="Balances, working standards, and permanent progression" icon={<SENNavigationIcon name="energy" size={18} />} onBack={returnHome}>
+          <UserProfileCaveDestination id="energy" title="Energy, QI & DAO XP" subtitle="Live balances, the current price schedule, and permanent progression" icon={<SENNavigationIcon name="energy" size={18} />} onBack={returnHome}>
             <EnergyPanel account={energyAccount} qi={cultivation} daoXp={daoXp} />
           </UserProfileCaveDestination>
         );

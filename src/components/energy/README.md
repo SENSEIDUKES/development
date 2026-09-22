@@ -27,7 +27,7 @@ transaction models.
 | Action cost | `development/EnergyActionCost.tsx` | The fixed or ranged projected Energy cost next to a control. Reads the catalog; renders nothing for an unpriced action. |
 | Deduction notice | `development/EnergyDeductionNotice.tsx` | In-place confirmation plus `energyDeductionToast` for `SEIToastProvider` hosts. |
 | Insufficient state | `development/EnergyInsufficientState.tsx` | "This needs ⚡ 3 and you have ⚡ 1." with an Open Energy action. |
-| Economy page | `development/EnergyPanel.tsx` | One Energy, QI & DAO XP page: live Energy, spendable QI, permanent DAO XP rank/progress, shared working packs/item prices, projected generation costs, Energy activity, and server-gated development controls. |
+| Economy page | `development/EnergyPanel.tsx` | One Energy, QI & DAO XP page: live Energy, spendable QI, permanent DAO XP rank/progress, the shared current price schedule, projected generation costs, Energy activity, and server-gated development controls. |
 
 There is no `reference/` folder: nothing was imported from production. The pieces are exported
 from `@seihouse/library/energy`. Portable generation uses `@seihouse/sen/generation` usage
@@ -55,8 +55,8 @@ never mounts it. The former
 - QI is a separate spendable ledger read and DAO XP is a permanent profile projection. Neither a
   QI purchase nor a QI spend can change rank, aura unlocks, or DAO XP progress.
 - Packs and Familiar rarity prices live in `src/library/cultivation/economyStandards.ts`; fixed
-  and ranged generation costs live in `shared/energyContracts.ts`. Pack values are displayed
-  working prices only: this page intentionally has no checkout.
+  and ranged generation costs live in `shared/energyContracts.ts`. Those values are the current
+  price schedule; this page intentionally has no checkout.
 
 ## Generation authorization
 
@@ -88,8 +88,12 @@ against a production deployment.
 
 ## Workshop history
 
+- **2026-09-22 current price schedule** — Clarified the shared Energy and QI values as the
+  current price schedule everywhere they render. Checkout and provider billing remain separate
+  host integrations; projected generation labels remain explicit.
+
 - **2026-09-22 Energy, QI & DAO XP** — Expanded the former Energy-only destination into the
   three-value economy page while preserving the live Energy activity and development controls.
-  Added shared working pack/item standards, clearly projected generation costs, and the
+  Added shared pack/item prices, clearly projected generation costs, and the
   database action-id migration required by the catalog. QI purchases, QI spends, daily awards,
   achievement payouts, checkout, and production generation connections were not added here.

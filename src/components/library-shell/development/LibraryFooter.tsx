@@ -1,13 +1,16 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import { ChevronRight, Globe } from 'lucide-react';
-import { LibraryPanel } from '@seihouse/library-ui';
+import { LibraryElementalTitle } from '@seihouse/library-ui';
 import { SEIDisclosure, SEIDisclosureGroup } from '@seihouse/ui';
 import { getSenLanguageLabel, type SenLanguageCode } from '@seihouse/sen/contracts';
 import { LIBRARY_FOOTER_SOCIAL_GLYPHS, LIBRARY_FOOTER_SOCIAL_LABELS, type LibraryFooterSocialNetwork } from './LibraryFooterSocialIcons';
 import './library-footer.css';
 
-/** The production statement, kept verbatim. */
-export const LIBRARY_FOOTER_STATEMENT = 'SEIHOUSE: A BETTER TIME CAPSULE AND TRANSLATOR OF ARTISTIC EXPRESSION';
+/** The company statement. The wordmark above it already names SEIHouse. */
+export const LIBRARY_FOOTER_STATEMENT = 'A BETTER TIME CAPSULE AND TRANSLATOR OF ARTISTIC EXPRESSION';
+export const LIBRARY_FOOTER_MARK = 'SEN';
+/** What the SEN wordmark stands for, read out beneath it. */
+export const LIBRARY_FOOTER_EXPANSION = 'SEIHouse Expanded Novels';
 export const LIBRARY_FOOTER_COPYRIGHT = '© 2026 SEIHouse Productions LLC';
 
 /**
@@ -80,12 +83,31 @@ export function LibraryFooter({ groups, social, legal, language, emblem, classNa
           {emblem && <img src={emblem.src} alt="" className="library-footer-emblem" decoding="async" />}
           <span className="library-footer-hairline" />
         </div>
-        <p className="library-footer-mark" data-footer-production-mark>SEN</p>
+        {/* The wordmark carries the lettering, cycling the shared Celestial
+            Library spectrum; what it stands for reads plainly beneath it. */}
+        <LibraryElementalTitle as="p" element="celestial" intensity="subtle" shadow="none"
+          className="library-footer-mark" data-footer-production-mark>{LIBRARY_FOOTER_MARK}</LibraryElementalTitle>
+        <p className="library-footer-expansion" data-footer-expansion>{LIBRARY_FOOTER_EXPANSION}</p>
         <p className="library-footer-statement">{LIBRARY_FOOTER_STATEMENT}</p>
       </div>
 
       <div className="library-footer-controls">
-        {visibleSocial.length > 0 && <LibraryPanel padding="none" className="library-footer-social">
+        {visibleGroups.length > 0 && <div className="library-footer-menus">
+          {/* One open section at a time; everything starts collapsed. Wide
+              viewports set these side by side as tabs — see library-footer.css. */}
+          <SEIDisclosureGroup type="single" defaultValue={null} className="library-footer-disclosures" role="navigation" aria-label="Footer menus">
+            {visibleGroups.map(group => <SEIDisclosure key={group.id} value={group.id} heading={group.label} headingLevel="h3"
+              className="library-footer-disclosure" triggerClassName="library-footer-disclosure-trigger" contentClassName="library-footer-disclosure-content">
+              <ul className="library-footer-links">
+                {group.items.map(item => <li key={item.id}>
+                  <FooterControl item={item} className="library-footer-link">{item.label}</FooterControl>
+                </li>)}
+              </ul>
+            </SEIDisclosure>)}
+          </SEIDisclosureGroup>
+        </div>}
+
+        {visibleSocial.length > 0 && <div className="library-footer-social">
           <ul className="library-footer-social-list" aria-label="SEIHouse social channels">
             {visibleSocial.map(item => {
               const Glyph = LIBRARY_FOOTER_SOCIAL_GLYPHS[item.network];
@@ -97,21 +119,7 @@ export function LibraryFooter({ groups, social, legal, language, emblem, classNa
               </li>;
             })}
           </ul>
-        </LibraryPanel>}
-
-        {visibleGroups.length > 0 && <LibraryPanel padding="none" className="library-footer-menus">
-          {/* One open section at a time; everything starts collapsed. */}
-          <SEIDisclosureGroup type="single" defaultValue={null} className="library-footer-disclosures" role="navigation" aria-label="Footer menus">
-            {visibleGroups.map(group => <SEIDisclosure key={group.id} value={group.id} heading={group.label} headingLevel="h3"
-              className="library-footer-disclosure" triggerClassName="library-footer-disclosure-trigger" contentClassName="library-footer-disclosure-content">
-              <ul className="library-footer-links">
-                {group.items.map(item => <li key={item.id}>
-                  <FooterControl item={item} className="library-footer-link">{item.label}</FooterControl>
-                </li>)}
-              </ul>
-            </SEIDisclosure>)}
-          </SEIDisclosureGroup>
-        </LibraryPanel>}
+        </div>}
 
         {language && <div className="library-footer-language-row">
           <button type="button" className="library-footer-language" onClick={language.onOpenSettings}

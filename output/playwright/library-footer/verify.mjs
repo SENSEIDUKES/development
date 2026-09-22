@@ -6,7 +6,7 @@ mkdirSync(out, { recursive: true });
 const url = 'http://127.0.0.1:4173/library-shell.html?variant=development&source=main-library&screen=home&collection=featured';
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-proxy-server'] });
 const report = {};
-for (const [name, viewport] of Object.entries({ phone: { width: 390, height: 844 }, narrow: { width: 320, height: 640 }, desktop: { width: 1440, height: 900 } })) {
+for (const [name, viewport] of Object.entries({ phone: { width: 390, height: 844 }, narrow: { width: 320, height: 640 }, laptop: { width: 1280, height: 800 }, desktop: { width: 1440, height: 900 } })) {
   const context = await browser.newContext({ viewport, deviceScaleFactor: 1, reducedMotion: 'reduce' });
   const page = await context.newPage();
   await page.route('**/*', route => {
@@ -42,7 +42,16 @@ for (const [name, viewport] of Object.entries({ phone: { width: 390, height: 844
   });
   await footer.screenshot({ path: `${out}/footer-${name}.png` });
   await page.screenshot({ path: `${out}/page-${name}.png` });
-  // Keyboard: Tab into the accordion, open with Enter, verify one-at-a-time and focus ring.
+  // Every width renders the same menus; narrow stacks them and wide sets them in
+  // a row of tabs, so record which layout this width produced and then exercise
+  // the one behaviour both share.
+  const layout = await page.evaluate(() => {
+    const group = document.querySelector('[data-library-footer] .library-footer-disclosures');
+    const style = getComputedStyle(group);
+    const columns = style.gridTemplateColumns.split(' ').filter(Boolean).length;
+    return { display: style.display, columns: style.display === 'grid' ? columns : 1 };
+  });
+  // Keyboard: Tab into the menus, open with Enter, verify one-at-a-time and focus ring.
   await page.getByRole('button', { name: 'Explore' }).focus();
   await page.keyboard.press('Enter');
   await page.waitForTimeout(300);
@@ -55,6 +64,7 @@ for (const [name, viewport] of Object.entries({ phone: { width: 390, height: 844
     focused: document.activeElement?.textContent?.trim(),
     outline: getComputedStyle(document.activeElement).outlineStyle,
   }));
+  const menus = { ...layout, afterEnter, afterSecond };
   await footer.screenshot({ path: `${out}/footer-${name}-open.png` });
   // At the page bottom the global strip must clear the legal row.
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
@@ -65,7 +75,7 @@ for (const [name, viewport] of Object.entries({ phone: { width: 390, height: 844
     return strip ? Math.round(strip.top - footer.bottom) : null;
   });
   await page.screenshot({ path: `${out}/page-${name}-bottom.png` });
-  report[name] = { ...metrics, afterEnter, afterSecond, clearanceAboveStrip: clearance };
+  report[name] = { ...metrics, menus, clearanceAboveStrip: clearance };
   await context.close();
 }
 await browser.close();

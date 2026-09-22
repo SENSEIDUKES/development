@@ -32,7 +32,7 @@ export function MainLibraryFooter({ adapter, location, onNavigate, onOpenHelp, s
       { id: 'sects', label: 'Sects', onSelect: go({ screen: 'sects' }) },
       { id: 'tiers', label: 'Tiers', onSelect: go({ screen: 'pricing' }) },
     ] },
-    { id: 'seihouse', label: 'SEIHouse', items: [
+    { id: 'seihouse', label: 'About Us', items: [
       { id: 'story-seed', label: 'Story Seed', onSelect: go({ screen: 'creator' }) },
       { id: 'cultivator-cave', label: 'Cultivator Cave', onSelect: go({ screen: 'profile', cave: '/home' }) },
       // The existing Cave Stories screen already owns the account's stored seeds.

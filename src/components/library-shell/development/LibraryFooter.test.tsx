@@ -31,6 +31,12 @@ const click = async (element: Element | null | undefined) => {
   await act(async () => { (element as HTMLElement).click(); });
 };
 const footer = () => container.querySelector('[data-library-footer]')!;
+// The elemental lettering repeats the wordmark in aria-hidden decoration layers.
+// Only the one visible layer is announced, so that is what the mark "reads".
+const markText = () => {
+  const mark = footer().querySelector('[data-footer-production-mark]')!;
+  return (mark.querySelector('.library-elemental-title__text') ?? mark).textContent;
+};
 const triggers = () => Array.from(footer().querySelectorAll<HTMLButtonElement>('[data-slot="disclosure-trigger"]'));
 const trigger = (label: string) => triggers().find(button => button.textContent?.trim() === label);
 
@@ -52,9 +58,14 @@ const props = (): LibraryFooterProps => ({
 describe('LibraryFooter', () => {
   it('keeps the SEN identity and the exact SEIHouse statement', async () => {
     await render(<LibraryFooter {...props()} />);
-    expect(footer().querySelector('[data-footer-production-mark]')?.textContent).toBe('SEN');
+    expect(markText()).toBe('SEN');
+    // The decoration never reaches the accessibility tree, so the mark is read once.
+    const mark = footer().querySelector('[data-footer-production-mark]')!;
+    expect(Array.from(mark.querySelectorAll('span')).filter(layer => layer.textContent === 'SEN'
+      && !layer.closest('[aria-hidden="true"]'))).toHaveLength(1);
+    expect(footer().querySelector('[data-footer-expansion]')?.textContent).toBe('SEIHouse Expanded Novels');
     expect(footer().querySelector('.library-footer-statement')?.textContent).toBe(LIBRARY_FOOTER_STATEMENT);
-    expect(LIBRARY_FOOTER_STATEMENT).toBe('SEIHOUSE: A BETTER TIME CAPSULE AND TRANSLATOR OF ARTISTIC EXPRESSION');
+    expect(LIBRARY_FOOTER_STATEMENT).toBe('A BETTER TIME CAPSULE AND TRANSLATOR OF ARTISTIC EXPRESSION');
     expect(footer().querySelector('.library-footer-emblem')?.getAttribute('src')).toBe('/library-shell/celestial-library.jpg');
   });
 
@@ -158,7 +169,7 @@ describe('MainLibraryFooter', () => {
   it('uses the existing Main Library destinations and the shared router callback', async () => {
     const onNavigate = vi.fn(); const onOpenHelp = vi.fn(); const host = adapter();
     await render(<MainLibraryFooter adapter={host} location={{ screen: 'home', collection: 'featured' }} onNavigate={onNavigate} onOpenHelp={onOpenHelp} social={[]} legal={[]} />);
-    expect(triggers().map(button => button.textContent?.trim())).toEqual(['Explore', 'SEIHouse', 'Support']);
+    expect(triggers().map(button => button.textContent?.trim())).toEqual(['Explore', 'About Us', 'Support']);
     const links = () => Array.from(footer().querySelectorAll<HTMLButtonElement>('.library-footer-link'));
     const open = async (group: string, label: string) => { await click(trigger(group)); await click(links().find(link => link.textContent === label)); };
     await open('Explore', 'Sects');
@@ -167,9 +178,9 @@ describe('MainLibraryFooter', () => {
     expect(onNavigate).toHaveBeenLastCalledWith({ screen: 'pricing' });
     await open('Explore', 'Fate Survival Challenges');
     expect(onNavigate).toHaveBeenLastCalledWith({ screen: 'home', collection: 'challenges' });
-    await open('SEIHouse', 'Relics');
+    await open('About Us', 'Relics');
     expect(onNavigate).toHaveBeenLastCalledWith({ screen: 'profile', cave: '/relics' });
-    await open('SEIHouse', 'Story Seed');
+    await open('About Us', 'Story Seed');
     expect(onNavigate).toHaveBeenLastCalledWith({ screen: 'creator' });
     await open('Support', 'Library Help');
     expect(onOpenHelp).toHaveBeenCalledTimes(1);

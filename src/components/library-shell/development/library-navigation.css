@@ -23,6 +23,22 @@
   letter-spacing: normal !important;
 }
 .library-global-navigation button > span:last-child { max-width: none; overflow: visible; }
+/* A phone's strip spans the screen and its destinations share the width evenly.
+   Past that the strip has more room than its four destinations need, and the
+   slack lands inside the buttons — so the bar hugs its content instead and
+   stays centred. */
+@media (min-width: 768px) {
+  .library-global-navigation {
+    width: fit-content;
+  }
+  /* Each destination shares the phone's width from a zero basis, which would
+     collapse them all to the 44px floor once the bar stops stretching. Off the
+     shared basis they size to their own label instead. */
+  .library-global-navigation button {
+    flex: 0 0 auto;
+    padding-inline: 0.875rem !important;
+  }
+}
 .library-navigation-layout .workspace-shell-rail {
   height: calc(100dvh - var(--workspace-header-height) - var(--library-bottom-clearance));
 }

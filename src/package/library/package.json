@@ -36,6 +36,10 @@
       "types": "./dist/types/package/library/familiar.d.ts",
       "import": "./dist/familiar.js"
     },
+    "./celestial-store": {
+      "types": "./dist/types/package/library/celestial-store.d.ts",
+      "import": "./dist/celestial-store.js"
+    },
     "./dao-pillar": {
       "types": "./dist/types/package/library/dao-pillar.d.ts",
       "import": "./dist/dao-pillar.js"

@@ -6,8 +6,8 @@ import { FAMILIAR_DEFAULT_SIZE, FAMILIAR_MOBILE_DEFAULT_SIZE, familiarDisplaySiz
 import { useFamiliarMobile } from './useFamiliarMobile';
 import { useFamiliarVisibility } from './useFamiliarVisibility';
 
-/** Only play the supplied animated hero while its card is hovered/pressed, on top of the offscreen/backgrounded release. */
-function FamiliarHero({ option, active }: { option: FamiliarOption; active: boolean }) {
+/** Only play the supplied animated hero while its card is hovered/pressed, on top of the offscreen/backgrounded release. Shared with the Celestial Store cards. */
+export function FamiliarHero({ option, active }: { option: FamiliarOption; active: boolean }) {
   const element = useRef<HTMLPictureElement>(null);
   const visible = useFamiliarVisibility(element);
   const [failed, setFailed] = useState(false);

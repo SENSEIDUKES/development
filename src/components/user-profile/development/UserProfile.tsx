@@ -64,6 +64,8 @@ import { WorkspaceShell } from '../../library-shell/development/WorkspaceShell';
 import { LibraryNavigationIcon as SENNavigationIcon } from '@seihouse/library-ui';
 import { EnergyPanel } from '../../energy/development/EnergyPanel';
 import { useEnergyAccount } from '../../energy/shared/useEnergyAccount';
+import { CelestialStorePanel } from '../../celestial-store/development/CelestialStorePanel';
+import { useUnavailableCelestialStoreAccount } from '../../celestial-store/shared/storeAccount';
 import { DaoPillarView } from '../../dao-pillar/development/DaoPillarView';
 import { useDaoPillarCalendar } from '../../dao-pillar/shared/useDaoPillarCalendar';
 import { useQiAccount, getDaoRankData } from '@seihouse/library/cultivation';
@@ -96,8 +98,13 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   // Production calls `useUserProfile(...)` and reads the Firebase local-only flag
   // directly. Both arrive through the injected services port here, so this file
   // carries no Firebase, PostgreSQL, or generation dependency of its own.
-  const { useController: useUserProfile, localOnlyMode, authenticate } = useUserProfileServices();
+  const { useController: useUserProfile, localOnlyMode, authenticate, familiars = [], celestialStore } = useUserProfileServices();
   const hostController = useUserProfile({ currentUser, stories, onLogout, onNavigateHome });
+  // Familiar ownership and purchases are host account state behind the same
+  // services port as everything else; without a Store service the page still
+  // renders, with purchases plainly disconnected.
+  const useStoreAccount = celestialStore?.useStoreAccount ?? useUnavailableCelestialStoreAccount;
+  const storeAccount = useStoreAccount();
   const route = useCaveRoute();
   const isPublicView = route.audience === 'public';
   const cultivation = useQiAccount({ enabled: Boolean(currentUser) && !isPublicView });
@@ -356,13 +363,31 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     if (isSignedOut) return null;
     switch (view) {
       case 'inbox':
-      case 'store':
       case 'redeem-code':
         return (
-          <UserProfileCaveDestination id={view} title={view === 'inbox' ? 'Inbox' : view === 'store' ? 'Store' : 'Redeem Code'}
+          <UserProfileCaveDestination id={view} title={view === 'inbox' ? 'Inbox' : 'Redeem Code'}
             onBack={view === 'redeem-code' ? () => navigate('/settings') : returnHome}
             backLabel={view === 'redeem-code' ? 'Return to Settings' : 'Return to cave'}>
-            <p className="text-neutral-400">{view === 'inbox' ? 'Inbox is not connected in this preview.' : view === 'store' ? 'The Store is not available yet.' : 'Code redemption is not connected in this preview.'}</p>
+            <p className="text-neutral-400">{view === 'inbox' ? 'Inbox is not connected in this preview.' : 'Code redemption is not connected in this preview.'}</p>
+          </UserProfileCaveDestination>
+        );
+      case 'store':
+        // The official Celestial Store's dedicated page. The creator's own
+        // User Store stays the public `storefront` destination above.
+        return (
+          <UserProfileCaveDestination id="store" title="Celestial Store" subtitle="Familiars of the Celestial Library"
+            icon={<SENNavigationIcon name="store" size={18} />} onBack={returnHome}>
+            <CelestialStorePanel
+              options={familiars}
+              cultivation={cultivation}
+              energy={energyAccount}
+              equippedFamiliarId={profile?.familiarId}
+              ownedFamiliarIds={storeAccount.ownedFamiliarIds}
+              onEquip={controller.handleFamiliarChange}
+              equipPending={controller.isSavingFamiliar}
+              onPurchase={celestialStore ? storeAccount.purchase : undefined}
+              purchasePending={storeAccount.pending}
+            />
           </UserProfileCaveDestination>
         );
       case 'energy':

@@ -1,0 +1,71 @@
+/* Celestial Store — midnight navy shelves, antique gold and blue-purple seals,
+   restrained glow. Rarity chips and hero framing reuse familiar.css. */
+
+.celestial-store { display: flex; flex-direction: column; gap: 24px; }
+
+/* Live balances, framed like the reference's twin seals. */
+.celestial-store-balances { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.celestial-store-balance {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 52px; padding: 8px 12px;
+  border: 1px solid #d6bd8744; border-radius: 999px;
+  background: linear-gradient(160deg, #0d1a2ecc, #070f1ecc);
+  box-shadow: inset 0 1px 0 #f0e2bf14;
+  color: #eef7ff; font-variant-numeric: tabular-nums; font-weight: 600;
+}
+.celestial-store-balance[data-store-balance="qi"] { border-color: #8f6fd955; }
+.celestial-store-balance-label { font-size: 13px; font-weight: 400; color: #b9c7d6; }
+
+.celestial-store-qi-amount { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.celestial-store-qi-glyph { color: #b78cff; filter: drop-shadow(0 0 6px #7a4fd966); }
+
+/* One framed shelf per currency; the frames stay visually separate. */
+.celestial-store-shelf {
+  padding: 18px 14px 20px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #0a1424f0, #081020f0);
+}
+.celestial-store-shelf[data-store-shelf="energy"] { border: 1px solid #d6bd8759; box-shadow: inset 0 0 44px #d6bd870f; }
+.celestial-store-shelf[data-store-shelf="qi"] { border: 1px solid #8f6fd959; box-shadow: inset 0 0 44px #8f6fd912; }
+.celestial-store-shelf-header { text-align: center; }
+.celestial-store-shelf-title {
+  margin: 0; font-family: Georgia, serif; font-size: 22px; letter-spacing: 0.06em;
+  color: #f4e5bd; text-shadow: 0 0 14px #d6bd8733;
+}
+.celestial-store-shelf[data-store-shelf="qi"] .celestial-store-shelf-title { color: #e6d6ff; text-shadow: 0 0 14px #8f6fd933; }
+.celestial-store-shelf-tagline { margin: 4px 0 0; font-size: 13px; line-height: 1.6; color: #b9c7d6; }
+.celestial-store-shelf-empty { margin: 16px 0 0; text-align: center; font-size: 13px; color: #8fa0b5; }
+
+/* Mobile-first two-column card grid inside each shelf. */
+.celestial-store-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+@media (min-width: 480px) { .celestial-store-grid { gap: 16px; } }
+
+.celestial-store-card { min-width: 0; border: 1px solid #d6bd8744; border-radius: 16px; overflow: hidden; background: #0b1726; }
+.celestial-store-card[data-rarity="epic"] { border-color: #d6bd8788; box-shadow: 0 0 18px #d6bd8714; }
+.celestial-store-card[data-rarity="rare"] { border-color: #8f6fd988; box-shadow: 0 0 18px #8f6fd914; }
+.celestial-store-card[data-rarity="legendary"] { border-color: #e8c56d99; box-shadow: 0 0 20px #e8c56d1c; }
+.celestial-store-card-button {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  width: 100%; padding: 0 8px 14px; border: 0; background: transparent;
+  color: inherit; text-align: center; cursor: pointer;
+}
+.celestial-store-card-button:focus-visible { outline: 2px solid #96ddf9; outline-offset: -2px; border-radius: 16px; }
+.celestial-store-card .familiar-option-hero { aspect-ratio: 1 / 1; max-height: none; margin: 0 -8px 4px; width: calc(100% + 16px); }
+.celestial-store-card-name { font-family: Georgia, serif; font-size: 15px; line-height: 1.3; color: #f0e2bf; overflow-wrap: anywhere; }
+.celestial-store-card-state { margin-top: 2px; }
+
+.celestial-store-price { display: inline-flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 5px; margin-top: 2px; font-size: 14px; color: #eef7ff; }
+.celestial-store-price-currency { font-size: 12px; color: #b9c7d6; }
+.celestial-store-price-was { font-size: 12px; color: #8fa0b5; }
+
+/* Focused detail dialog. */
+.celestial-store-detail { width: min(420px, calc(100vw - 32px)); }
+.celestial-store-detail-title { font-family: Georgia, serif; color: #f0e2bf; }
+.celestial-store-detail-hero { margin-top: 12px; border: 1px solid #d6bd8744; border-radius: 16px; overflow: hidden; background: #080f1c; }
+.celestial-store-detail-hero[data-rarity="rare"] { border-color: #8f6fd977; }
+.celestial-store-detail-hero .familiar-option-hero { aspect-ratio: 4 / 3; max-height: 320px; }
+.celestial-store-detail-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; margin-top: 12px; }
+.celestial-store-detail-description { margin: 10px 0 0; font-size: 13px; line-height: 1.6; color: #b9c7d6; }
+.celestial-store-detail .celestial-store-price { margin-top: 12px; font-size: 16px; }
+.celestial-store-detail-actions { margin-top: 14px; }
+.celestial-store-detail-status { min-height: 1.2em; margin: 10px 0 0; font-size: 13px; color: #c3f0d6; }

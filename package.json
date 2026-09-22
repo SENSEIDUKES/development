@@ -35,6 +35,7 @@
     "test:arc-goals": "vitest run src/components/arc-goals",
     "test:card-workshop": "vitest run src/components/card-workshop",
     "test:closed-door-cultivation": "vitest run src/components/closed-door-cultivation",
+    "test:celestial-store": "vitest run src/components/celestial-store",
     "test:familiar": "vitest run src/components/familiar src/host/familiar src/workshop/previews/familiar",
     "test:provenance": "vitest run src/components/provenance src/workshop/ProvenanceTab.test.tsx",
     "test:sen-icons": "vitest run src/components/sen-icons",

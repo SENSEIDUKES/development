@@ -15,10 +15,25 @@ const expectedRarities = {
   quill: 'common',
 } as const;
 
+const expectedNeutralColumns = {
+  'celestial-guardian': 6,
+  'celestial-moon-moth': 0,
+  'little-monkey-king': 0,
+  phoenix: 0,
+  'nine-tailed-fox': 6,
+  'galaxy-octopus': 6,
+  'judgmental-jiangshi': 6,
+  'lucky-bake-danuki': 6,
+  'lady-bug': 6,
+  'living-grimoire': 0,
+  quill: 0,
+} as const;
+
 describe('Library Familiar catalogue', () => {
   it('has one complete renderer definition and the assigned rank for every supplied Familiar', () => {
     expect(familiarCatalogue).toHaveLength(11);
     expect(Object.fromEntries(familiarCatalogue.map(entry => [entry.definition.id, entry.definition.rarity]))).toEqual(expectedRarities);
+    expect(Object.fromEntries(familiarCatalogue.map(entry => [entry.definition.id, entry.definition.animations.neutral.columns[0]]))).toEqual(expectedNeutralColumns);
     for (const entry of familiarCatalogue) {
       const familiar = entry.definition;
       expect(familiarCatalogueEntry(familiar.id)).toBe(entry);

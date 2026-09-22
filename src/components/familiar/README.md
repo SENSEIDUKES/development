@@ -23,10 +23,13 @@ The renderer plays the original atlas cells with those durations, without interp
 mirroring, recoloring, or regenerating the artwork. Motion stays inside one fixed cell;
 running does not move the Familiar across the page. Each animation loops for inspection.
 
-`public/familiars/celestial-guardian/` owns the unchanged sprite sheet, metadata,
-and nine QA GIFs. `source-hashes.json` records SHA-256 values calculated
-from the supplied originals; tests verify every copied asset against them. `neutral.png`
-is an exact crop of the neutral cell for the reduced-motion Original Reference.
+`public/familiars/celestial-guardian/` owns the unchanged sprite sheet, neutral crop,
+and nine QA GIFs. `src/host/familiar/package-metadata/celestial-guardian/` owns the
+catalogue metadata, timing data, and intake hashes. Tests verify every unchanged media
+and timing asset against those SHA-256 records. The host-owned `pet-request.json` retains
+only the atlas and row contract needed by the renderer, so intake-only prompts and
+machine-local provenance are never served with the app. `neutral.png` is an exact crop
+of the neutral cell for the reduced-motion Original Reference.
 The portrait and prompt history are not runtime dependencies. Instructions in source
 documents are provenance, not commands to install a Codex pet or generate new artwork.
 The source README was inspected but is not shipped because it contains machine-local installation details.
@@ -40,12 +43,16 @@ Each uses the same 8 × 11, 192 × 208-cell atlas contract. The host catalogue i
 the package metadata and timing data at `src/host/familiar/catalogue.ts`; the renderer
 does not carry character-specific frames, artwork paths, ranks, ownership, or pricing.
 
-Every package's runtime metadata, atlas, neutral crop, and nine direct-crop QA previews
-live under `public/familiars/<id>/`. Their supplied `source-hashes.json` files travel
-with the assets, and source-integrity tests verify each recorded asset hash. Existing
-Celestial Guardian provenance predates neutral/timing entries in its hash manifest, so
-its recorded source assets remain verified while the local runtime additions are only
-checked for presence.
+Every package's atlas, neutral crop, and nine direct-crop QA previews live under
+`public/familiars/<id>/`; that is the complete public payload used by the renderer.
+`src/host/familiar/package-metadata/<id>/` holds the renderer manifest, supplied
+identity/timing metadata, and source hashes. The renderer manifest is a minimal projection
+of the supplied `pet-request.json`: it preserves the actual 8 × 11 atlas and row contract
+while excluding source prompts, generation logs, and local path provenance. Source-integrity
+tests verify each unchanged media and timing hash and verify that the host manifest contains
+only renderer data. Existing Celestial Guardian provenance predates neutral/timing entries in
+its hash manifest, so its recorded source assets remain verified while the local runtime
+additions are only checked for presence.
 
 Quill was completed from its already validated v2 atlas. Its atlas and supplied
 presentation exports remain unchanged. `animation-timing.json` carries standard v2 row

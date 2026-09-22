@@ -1,37 +1,37 @@
 import type { FamiliarDefinition, FamiliarOption, FamiliarRarity } from '@seihouse/library/familiar';
-import celestialGuardianPet from '../../../public/familiars/celestial-guardian/pet.json';
-import celestialGuardianRequest from '../../../public/familiars/celestial-guardian/pet-request.json';
-import celestialGuardianTiming from '../../../public/familiars/celestial-guardian/animation-timing.json';
-import celestialMoonMothPet from '../../../public/familiars/celestial-moon-moth/pet.json';
-import celestialMoonMothRequest from '../../../public/familiars/celestial-moon-moth/pet-request.json';
-import celestialMoonMothTiming from '../../../public/familiars/celestial-moon-moth/animation-timing.json';
-import galaxyOctopusPet from '../../../public/familiars/galaxy-octopus/pet.json';
-import galaxyOctopusRequest from '../../../public/familiars/galaxy-octopus/pet-request.json';
-import galaxyOctopusTiming from '../../../public/familiars/galaxy-octopus/animation-timing.json';
-import judgmentalJiangshiPet from '../../../public/familiars/judgmental-jiangshi/pet.json';
-import judgmentalJiangshiRequest from '../../../public/familiars/judgmental-jiangshi/pet-request.json';
-import judgmentalJiangshiTiming from '../../../public/familiars/judgmental-jiangshi/animation-timing.json';
-import ladyBugPet from '../../../public/familiars/lady-bug/pet.json';
-import ladyBugRequest from '../../../public/familiars/lady-bug/pet-request.json';
-import ladyBugTiming from '../../../public/familiars/lady-bug/animation-timing.json';
-import littleMonkeyKingPet from '../../../public/familiars/little-monkey-king/pet.json';
-import littleMonkeyKingRequest from '../../../public/familiars/little-monkey-king/pet-request.json';
-import littleMonkeyKingTiming from '../../../public/familiars/little-monkey-king/animation-timing.json';
-import livingGrimoirePet from '../../../public/familiars/living-grimoire/pet.json';
-import livingGrimoireRequest from '../../../public/familiars/living-grimoire/pet-request.json';
-import livingGrimoireTiming from '../../../public/familiars/living-grimoire/animation-timing.json';
-import luckyBakeDanukiPet from '../../../public/familiars/lucky-bake-danuki/pet.json';
-import luckyBakeDanukiRequest from '../../../public/familiars/lucky-bake-danuki/pet-request.json';
-import luckyBakeDanukiTiming from '../../../public/familiars/lucky-bake-danuki/animation-timing.json';
-import nineTailedFoxPet from '../../../public/familiars/nine-tailed-fox/pet.json';
-import nineTailedFoxRequest from '../../../public/familiars/nine-tailed-fox/pet-request.json';
-import nineTailedFoxTiming from '../../../public/familiars/nine-tailed-fox/animation-timing.json';
-import phoenixPet from '../../../public/familiars/phoenix/pet.json';
-import phoenixRequest from '../../../public/familiars/phoenix/pet-request.json';
-import phoenixTiming from '../../../public/familiars/phoenix/animation-timing.json';
-import quillPet from '../../../public/familiars/quill/pet.json';
-import quillRequest from '../../../public/familiars/quill/pet-request.json';
-import quillTiming from '../../../public/familiars/quill/animation-timing.json';
+import celestialGuardianPet from './package-metadata/celestial-guardian/pet.json';
+import celestialGuardianRequest from './package-metadata/celestial-guardian/pet-request.json';
+import celestialGuardianTiming from './package-metadata/celestial-guardian/animation-timing.json';
+import celestialMoonMothPet from './package-metadata/celestial-moon-moth/pet.json';
+import celestialMoonMothRequest from './package-metadata/celestial-moon-moth/pet-request.json';
+import celestialMoonMothTiming from './package-metadata/celestial-moon-moth/animation-timing.json';
+import galaxyOctopusPet from './package-metadata/galaxy-octopus/pet.json';
+import galaxyOctopusRequest from './package-metadata/galaxy-octopus/pet-request.json';
+import galaxyOctopusTiming from './package-metadata/galaxy-octopus/animation-timing.json';
+import judgmentalJiangshiPet from './package-metadata/judgmental-jiangshi/pet.json';
+import judgmentalJiangshiRequest from './package-metadata/judgmental-jiangshi/pet-request.json';
+import judgmentalJiangshiTiming from './package-metadata/judgmental-jiangshi/animation-timing.json';
+import ladyBugPet from './package-metadata/lady-bug/pet.json';
+import ladyBugRequest from './package-metadata/lady-bug/pet-request.json';
+import ladyBugTiming from './package-metadata/lady-bug/animation-timing.json';
+import littleMonkeyKingPet from './package-metadata/little-monkey-king/pet.json';
+import littleMonkeyKingRequest from './package-metadata/little-monkey-king/pet-request.json';
+import littleMonkeyKingTiming from './package-metadata/little-monkey-king/animation-timing.json';
+import livingGrimoirePet from './package-metadata/living-grimoire/pet.json';
+import livingGrimoireRequest from './package-metadata/living-grimoire/pet-request.json';
+import livingGrimoireTiming from './package-metadata/living-grimoire/animation-timing.json';
+import luckyBakeDanukiPet from './package-metadata/lucky-bake-danuki/pet.json';
+import luckyBakeDanukiRequest from './package-metadata/lucky-bake-danuki/pet-request.json';
+import luckyBakeDanukiTiming from './package-metadata/lucky-bake-danuki/animation-timing.json';
+import nineTailedFoxPet from './package-metadata/nine-tailed-fox/pet.json';
+import nineTailedFoxRequest from './package-metadata/nine-tailed-fox/pet-request.json';
+import nineTailedFoxTiming from './package-metadata/nine-tailed-fox/animation-timing.json';
+import phoenixPet from './package-metadata/phoenix/pet.json';
+import phoenixRequest from './package-metadata/phoenix/pet-request.json';
+import phoenixTiming from './package-metadata/phoenix/animation-timing.json';
+import quillPet from './package-metadata/quill/pet.json';
+import quillRequest from './package-metadata/quill/pet-request.json';
+import quillTiming from './package-metadata/quill/animation-timing.json';
 
 type PetManifest = {
   id: string;
@@ -141,15 +141,15 @@ export const familiarCatalogue: readonly FamiliarCatalogueEntry[] = [
   defineFamiliar({ pet: phoenixPet, request: phoenixRequest, timing: phoenixTiming,
     heroUrl: 'https://media.seihouse.org/SEN/GIF/pheonix.gif', rarity: 'rare', neutralColumn: 0 }),
   defineFamiliar({ pet: nineTailedFoxPet, request: nineTailedFoxRequest, timing: nineTailedFoxTiming,
-    heroUrl: 'https://media.seihouse.org/SEN/GIF/Nine%20tailed%20fox.gif', rarity: 'rare', neutralColumn: 0 }),
+    heroUrl: 'https://media.seihouse.org/SEN/GIF/Nine%20tailed%20fox.gif', rarity: 'rare', neutralColumn: 6 }),
   defineFamiliar({ pet: galaxyOctopusPet, request: galaxyOctopusRequest, timing: galaxyOctopusTiming,
-    heroUrl: 'https://media.seihouse.org/SEN/GIF/Galaxy%20Octopus.gif', rarity: 'rare', neutralColumn: 0 }),
+    heroUrl: 'https://media.seihouse.org/SEN/GIF/Galaxy%20Octopus.gif', rarity: 'rare', neutralColumn: 6 }),
   defineFamiliar({ pet: judgmentalJiangshiPet, request: judgmentalJiangshiRequest, timing: judgmentalJiangshiTiming,
-    heroUrl: 'https://media.seihouse.org/SEN/GIF/judgmental%20jiangshi.gif', rarity: 'rare', neutralColumn: 0 }),
+    heroUrl: 'https://media.seihouse.org/SEN/GIF/judgmental%20jiangshi.gif', rarity: 'rare', neutralColumn: 6 }),
   defineFamiliar({ pet: luckyBakeDanukiPet, request: luckyBakeDanukiRequest, timing: luckyBakeDanukiTiming,
-    heroUrl: 'https://media.seihouse.org/SEN/GIF/lucky-bake-danuki.gif', rarity: 'common', neutralColumn: 0 }),
+    heroUrl: 'https://media.seihouse.org/SEN/GIF/lucky-bake-danuki.gif', rarity: 'common', neutralColumn: 6 }),
   defineFamiliar({ pet: ladyBugPet, request: ladyBugRequest, timing: ladyBugTiming,
-    heroUrl: 'https://media.seihouse.org/SEN/GIF/Lady%20Bug.gif', rarity: 'common', neutralColumn: 0 }),
+    heroUrl: 'https://media.seihouse.org/SEN/GIF/Lady%20Bug.gif', rarity: 'common', neutralColumn: 6 }),
   defineFamiliar({ pet: livingGrimoirePet, request: livingGrimoireRequest, timing: livingGrimoireTiming,
     heroUrl: 'https://media.seihouse.org/SEN/GIF/Living%20grimore.gif', rarity: 'common', neutralColumn: 0 }),
   defineFamiliar({ pet: quillPet, request: quillRequest, timing: quillTiming,

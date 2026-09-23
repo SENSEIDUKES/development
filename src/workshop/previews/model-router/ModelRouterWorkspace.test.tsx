@@ -20,7 +20,7 @@ it('separates the router into Chapters, Images and TTS and marks which models ar
   const luna = container.querySelector('[data-model="openrouter/openai/gpt-6-luna"]');
   expect(luna?.textContent).toContain('No key');
   expect(container.querySelector('[data-model="google/gemini-3.8-flash"]')?.textContent).toContain('Ready');
-  expect(container.textContent).toContain('needs OPENROUTER_API_KEY');
+  expect(container.textContent).toContain('needs OpenRouter-Dev');
   await act(async () => tabs[2].click());
   expect(container.querySelector('[data-model="eleven_multilingual_v2"]')?.textContent).toContain('Default');
 });

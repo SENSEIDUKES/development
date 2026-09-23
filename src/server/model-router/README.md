@@ -24,7 +24,7 @@ Model ids carry their route: `google/gemini-*` → Gemini, `openrouter/<vendor>/
 | Variable | Purpose |
 | --- | --- |
 | `GEMINI_API_KEY` | Gemini models |
-| `OPENROUTER_API_KEY` | OpenRouter models (GPT-6 Luna, GPT-6 Luna Pro appear once set) |
+| `OpenRouter-Dev` (or `OPENROUTER_API_KEY`) | OpenRouter models (GPT-6 Luna, GPT-6 Luna Pro appear once set) |
 | `OPENROUTER_MODELS` | Extra OpenRouter models, comma-separated (`openai/gpt-5.6-luna`) |
 | `OPENROUTER_REASONING_EFFORT` | Optional reasoning effort for reasoning models |
 | `HARNESS_GENERATION_MODELS`, `CHAPTER_GENERATION_MODELS` | Models pinned ahead of the catalog |

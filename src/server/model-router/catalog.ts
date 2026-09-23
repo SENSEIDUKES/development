@@ -8,7 +8,7 @@
  *
  * Model ids carry their route:
  * - `google/gemini-…` (or bare `gemini-…`) → Google Gemini API (`GEMINI_API_KEY`)
- * - `openrouter/<vendor>/<model>` → OpenRouter (`OPENROUTER_API_KEY`)
+ * - `openrouter/<vendor>/<model>` → OpenRouter (`OpenRouter-Dev`, or `OPENROUTER_API_KEY`)
  * - `eleven_…` → ElevenLabs (`ELEVENLABS_API_KEY`)
  */
 
@@ -24,10 +24,15 @@ export interface RoutedModel {
   stage: ModelStage;
 }
 
-export const MODEL_PROVIDERS: Record<ModelProviderId, { label: string; keyVariable: string }> = {
-  gemini: { label: 'Google Gemini', keyVariable: 'GEMINI_API_KEY' },
-  openrouter: { label: 'OpenRouter', keyVariable: 'OPENROUTER_API_KEY' },
-  elevenlabs: { label: 'ElevenLabs', keyVariable: 'ELEVENLABS_API_KEY' },
+/**
+ * `keyVariable` is the name shown in messages and the Router; `keyVariables`
+ * lists every environment name accepted, in priority order.
+ */
+export const MODEL_PROVIDERS: Record<ModelProviderId, { label: string; keyVariable: string; keyVariables: readonly string[] }> = {
+  gemini: { label: 'Google Gemini', keyVariable: 'GEMINI_API_KEY', keyVariables: ['GEMINI_API_KEY'] },
+  // The Vercel variable is named `OpenRouter-Dev`; the conventional name also works.
+  openrouter: { label: 'OpenRouter', keyVariable: 'OpenRouter-Dev', keyVariables: ['OpenRouter-Dev', 'OPENROUTER_API_KEY'] },
+  elevenlabs: { label: 'ElevenLabs', keyVariable: 'ELEVENLABS_API_KEY', keyVariables: ['ELEVENLABS_API_KEY'] },
 };
 
 const OPENROUTER_PREFIX = 'openrouter/';
@@ -72,8 +77,11 @@ export const TTS_MODELS: readonly RoutedModel[] = [
 export const DEFAULT_TTS_MODEL = 'eleven_multilingual_v2';
 
 export const providerKey = (environment: ModelEnvironment, provider: ModelProviderId): string | undefined => {
-  const raw = environment[MODEL_PROVIDERS[provider].keyVariable]?.trim();
-  return raw && raw !== 'MY_GEMINI_API_KEY' ? raw : undefined;
+  for (const name of MODEL_PROVIDERS[provider].keyVariables) {
+    const raw = environment[name]?.trim();
+    if (raw && raw !== 'MY_GEMINI_API_KEY') return raw;
+  }
+  return undefined;
 };
 
 /** Which provider serves a chapter-capable text model id, or undefined when the id is not routable. */
@@ -120,7 +128,7 @@ export interface ChapterModelRoute {
  *
  * `listVariable` (for example `HARNESS_GENERATION_MODELS`) pins models ahead of
  * the catalog; `OPENROUTER_MODELS` adds any extra OpenRouter model to test.
- * Catalog OpenRouter models appear once `OPENROUTER_API_KEY` exists, so the
+ * Catalog OpenRouter models appear once the OpenRouter key exists, so the
  * selector never offers a route that cannot run.
  */
 export const resolveChapterModelRoute = (
@@ -164,4 +172,4 @@ export const requireTextModelKey = (model: string, keys: ChapterModelRoute['keys
 };
 
 export const isMissingKeyMessage = (message: string): boolean =>
-  /(?:GEMINI|OPENROUTER)_API_KEY is not configured/.test(message);
+  /(?:GEMINI_API_KEY|OPENROUTER_API_KEY|OpenRouter-Dev) is not configured/.test(message);

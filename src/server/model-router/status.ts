@@ -46,7 +46,7 @@ export interface ModelRouterStatus {
 }
 
 const providerStatus = (environment: ModelEnvironment, ids: ModelProviderId[]): ModelRouterProviderStatus[] =>
-  ids.map(id => ({ id, ...MODEL_PROVIDERS[id], configured: Boolean(providerKey(environment, id)) }));
+  ids.map(id => ({ id, label: MODEL_PROVIDERS[id].label, keyVariable: MODEL_PROVIDERS[id].keyVariable, configured: Boolean(providerKey(environment, id)) }));
 
 const modelStatus = (
   environment: ModelEnvironment,

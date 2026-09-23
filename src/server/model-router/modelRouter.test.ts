@@ -54,9 +54,17 @@ describe('Model Router catalog', () => {
     expect(CHAPTER_MODELS.every(model => textModelProvider(model.id) === model.provider)).toBe(true);
   });
 
+  it('reads the OpenRouter key from OpenRouter-Dev, falling back to OPENROUTER_API_KEY', () => {
+    const route = (environment: Record<string, string>) => resolveChapterModelRoute(environment, 'HARNESS_GENERATION_MODELS', 'HARNESS_GENERATION_DEFAULT_MODEL');
+    expect(route({ 'OpenRouter-Dev': 'dev-key' }).keys.openrouter).toBe('dev-key');
+    expect(route({ 'OpenRouter-Dev': 'dev-key', OPENROUTER_API_KEY: 'other' }).keys.openrouter).toBe('dev-key');
+    expect(route({ OPENROUTER_API_KEY: 'other' }).keys.openrouter).toBe('other');
+    expect(route({ 'OpenRouter-Dev': 'dev-key' }).models.map(model => model.id)).toContain('openrouter/openai/gpt-6-luna');
+  });
+
   it('names the missing credential for the chosen model', () => {
     expect(() => requireTextModelKey('openrouter/openai/gpt-6-luna', { gemini: 'g' }))
-      .toThrow('OPENROUTER_API_KEY is not configured on the Development server.');
+      .toThrow('OpenRouter-Dev is not configured on the Development server.');
     expect(requireTextModelKey('google/gemini-3.8-flash', { gemini: 'g' })).toBe('g');
   });
 });

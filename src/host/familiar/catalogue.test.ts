@@ -58,11 +58,11 @@ describe('Library Familiar catalogue', () => {
     expect(familiarCatalogueEntry('judgmental-jiangshi')?.definition.displayName).toBe('Judgmental Jiangshi');
   });
 
-  it('keeps Quill waving on the raised-paw atlas poses for its whole playback loop', () => {
+  it('plays Quill’s complete raised-paw wave loop', () => {
     expect(familiarCatalogueEntry('quill')?.definition.animations.waving).toMatchObject({
       row: 3,
-      columns: [1, 2],
-      durations: [140, 140],
+      columns: [0, 1, 2, 3],
+      durations: [140, 140, 140, 280],
     });
   });
 

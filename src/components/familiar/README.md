@@ -5,7 +5,7 @@
 - Replica created: 2026-09-20.
 - Last Workshop update: 2026-09-23.
 - Last source comparison: 2026-09-22.
-- Lifecycle: original artwork preserved; reusable renderer, host catalogue, and Energy interaction under development.
+- Lifecycle: supplied source packages retained; the reusable renderer, host catalogue, and Energy interaction remain in Development.
 - Owner: Library. This first-party companion is not a SEN narrative capability.
 
 ## Source interpretation
@@ -54,16 +54,15 @@ only renderer data. Existing Celestial Guardian provenance predates neutral/timi
 its hash manifest, so its recorded source assets remain verified while the local runtime
 additions are only checked for presence.
 
-Quill was completed from its already validated v2 atlas. Its atlas and supplied
-presentation exports remain unchanged. `animation-timing.json` carries standard v2 row
-timings, with its supplied waving export confirming `[140, 140, 140, 280]`; nine
-transparent QA GIFs are deterministic crops of the validated atlas rather than newly
-generated art. `renderer-validation.json` and `IMPORT-HANDOFF.md` remain with Quill's
-source package as intake evidence and are intentionally not runtime dependencies.
-The supplied waving row starts and ends with lowered-paw transition cells, so Development
-playback loops only raised-paw columns 1 and 2. Both the floating companion and the active
-profile-card preview use that same local two-pose loop; the supplied atlas and presentation
-exports are preserved.
+Quill keeps the same `quill` catalogue ID, common rarity, default status, and Lightning
+training affinity. Its Development presentation has been replaced with a generated v2
+atlas grounded in the supplied `Quill-v2.png` artwork. The new cobalt-and-cream fox-cat
+has natural fur texture, gold-edged cyan Lightning markings, and a compass-star pendant.
+It preserves the shared 8 × 11, 192 × 208 atlas contract and includes all sixteen look
+directions. The nine transparent QA GIFs are deterministic crops of the accepted atlas.
+Quill's waving loop now plays all four raised-paw frames with durations
+`[140, 140, 140, 280]`. `renderer-validation.json` and `IMPORT-HANDOFF.md` remain with
+Quill's source package as intake evidence and are intentionally not runtime dependencies.
 
 ## Modular integration
 
@@ -256,6 +255,10 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-09-23: Replaced Quill's Development presentation with the Lightning-themed v2
+  atlas grounded in the supplied `Quill-v2.png`. Preserved the `quill` ID, common/default
+  catalogue settings, and Lightning training affinity; retained the full four-frame wave
+  loop and regenerated the nine deterministic previews from the new atlas.
 - 2026-09-23: Familiar rarity (this catalogue's `rarity`) is now documented and labelled as its
   own scale, "Epic familiar", separate from the cultivator's Bond Rank with a Familiar
   ("Legendary bond"); `familiarRarityLabel` lives beside `FamiliarRarity`. The profile's equipped

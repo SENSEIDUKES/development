@@ -2,7 +2,7 @@
  * The Familiar account client port, its shared read cache, and the Celestial
  * Store account adapter built on it.
  *
- * Ownership, training and cosmetic selections are server state. The client
+ * Ownership, bonds, element mastery and cosmetic selections are server state. The client
  * asks; the server decides prices, spends QI or Energy, and answers with the
  * whole account, which replaces the cache.
  */
@@ -17,13 +17,15 @@ import {
   type OfferQiResponse,
   type PurchaseFamiliarInput,
   type PurchaseFamiliarResponse,
-  type SelectFamiliarCosmeticsInput,
+  type ActiveElementalEffectSelection,
+  type SelectFamiliarFormInput,
 } from './contracts';
 
 export interface FamiliarsClient {
   getSnapshot(): Promise<FamiliarTrainingSnapshot>;
   offerQi(input: OfferQiInput): Promise<OfferQiResponse>;
-  selectCosmetics(input: SelectFamiliarCosmeticsInput): Promise<FamiliarTrainingSnapshot>;
+  selectForm(input: SelectFamiliarFormInput): Promise<FamiliarTrainingSnapshot>;
+  selectElementalEffect(selection: ActiveElementalEffectSelection): Promise<FamiliarTrainingSnapshot>;
   purchase(input: PurchaseFamiliarInput): Promise<PurchaseFamiliarResponse>;
   /** Development only. The server refuses it for production users. */
   grantFamiliarDevelopment(familiarId: string): Promise<FamiliarTrainingSnapshot>;
@@ -42,7 +44,8 @@ export class FamiliarsClientError extends Error {
 
 const isSnapshot = (value: unknown): value is FamiliarTrainingSnapshot => {
   const body = value as Partial<FamiliarTrainingSnapshot> | null;
-  return Boolean(body) && typeof body?.uid === 'string' && Array.isArray(body?.familiars) && Array.isArray(body?.ownedFamiliarIds);
+  return Boolean(body) && typeof body?.uid === 'string' && Array.isArray(body?.familiars) && Array.isArray(body?.ownedFamiliarIds)
+    && Array.isArray(body?.masteredElements) && typeof body?.activeEffect === 'object';
 };
 const withSnapshot = <T extends { snapshot: FamiliarTrainingSnapshot }>(value: unknown): value is T =>
   Boolean(value) && typeof value === 'object' && isSnapshot((value as T).snapshot);
@@ -73,7 +76,8 @@ export function createHttpFamiliarsClient(options: { token: () => string | null 
   return {
     getSnapshot: () => request({ method: 'GET' }, isSnapshot),
     offerQi: input => request({ method: 'POST', body: { operation: 'offer-qi', ...input } }, withSnapshot<OfferQiResponse>),
-    selectCosmetics: input => request({ method: 'POST', body: { operation: 'select-cosmetics', ...input } }, isSnapshot),
+    selectForm: input => request({ method: 'POST', body: { operation: 'select-form', ...input } }, isSnapshot),
+    selectElementalEffect: selection => request({ method: 'POST', body: { operation: 'select-elemental-effect', selection } }, isSnapshot),
     purchase: input => request({ method: 'POST', body: { operation: 'purchase', ...input } }, withSnapshot<PurchaseFamiliarResponse>),
     grantFamiliarDevelopment: familiarId => request({ method: 'POST', body: { operation: 'development.grant-familiar', familiarId } }, isSnapshot),
   };
@@ -83,7 +87,7 @@ export interface FamiliarsState {
   status: 'unavailable' | 'loading' | 'ready' | 'error';
   snapshot: FamiliarTrainingSnapshot | null;
   error: string | null;
-  /** True while an offering, selection or purchase is in flight. */
+  /** True while an offering, a selection or a purchase is in flight. */
   pending: boolean;
 }
 
@@ -122,7 +126,8 @@ export function createFamiliarsStore(client: FamiliarsClient) {
       }
     },
     offerQi: (input: OfferQiInput) => mutate(() => client.offerQi(input), result => result.snapshot, 'The offering could not be made. Please try again.'),
-    selectCosmetics: (input: SelectFamiliarCosmeticsInput) => mutate(() => client.selectCosmetics(input), result => result, 'That look could not be chosen. Please try again.'),
+    selectForm: (input: SelectFamiliarFormInput) => mutate(() => client.selectForm(input), result => result, 'That form could not be chosen. Please try again.'),
+    selectElementalEffect: (selection: ActiveElementalEffectSelection) => mutate(() => client.selectElementalEffect(selection), result => result, 'That effect could not be chosen. Please try again.'),
     purchase: (input: PurchaseFamiliarInput) => mutate(() => client.purchase(input), result => result.snapshot, 'The purchase failed. Nothing was charged.'),
     grantFamiliarDevelopment: (familiarId: string) => mutate(() => client.grantFamiliarDevelopment(familiarId), result => result, 'The Familiar could not be granted.'),
     clear() { request += 1; publish(UNAVAILABLE); },
@@ -152,8 +157,9 @@ export function useFamiliars({ enabled = true }: { enabled?: boolean } = {}) {
   const refresh = useCallback(async () => { await active?.refresh(); }, [active]);
   /** Each call is one offering intent with its own idempotency key. */
   const offerQi = useCallback((familiarId: string, amount: number) => active ? active.offerQi({ familiarId, amount, idempotencyKey: newKey() }) : notConnected(), [active]);
-  const selectCosmetics = useCallback((input: SelectFamiliarCosmeticsInput) => active ? active.selectCosmetics(input) : notConnected(), [active]);
-  return { ...(enabled ? state : UNAVAILABLE), refresh, offerQi, selectCosmetics, connected: Boolean(active) };
+  const selectForm = useCallback((input: SelectFamiliarFormInput) => active ? active.selectForm(input) : notConnected(), [active]);
+  const selectElementalEffect = useCallback((selection: ActiveElementalEffectSelection) => active ? active.selectElementalEffect(selection) : notConnected(), [active]);
+  return { ...(enabled ? state : UNAVAILABLE), refresh, offerQi, selectForm, selectElementalEffect, connected: Boolean(active) };
 }
 
 /** Workshop helper: the mounted store, for development-only scenario controls. */

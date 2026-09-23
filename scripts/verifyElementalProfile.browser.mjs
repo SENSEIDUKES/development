@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 /**
  * Checks the elemental title in the developed profile preview. The name takes
- * the equipped Familiar's chosen effect (Quill, trained to Rare bond, lightning
- * Whisper); the rank row keeps plain rank colours and carries no element.
+ * the Active Familiar's bond effect (Quill at Rare bond: Lightning Title ·
+ * Blaze); the rank row keeps plain rank colours and carries no element.
  */
 export async function verifyElementalProfile(page) {
   for (const width of [320, 390, 768, 1280]) {
@@ -10,7 +10,7 @@ export async function verifyElementalProfile(page) {
     const name = page.getByRole('heading', {name: 'Kept Reading', exact: true});
     await name.scrollIntoViewIfNeeded();
     assert.equal(await name.getAttribute('data-element'), 'lightning');
-    assert.equal(await name.getAttribute('data-cave-name-effect'), 'elemental-title:lightning:subtle');
+    assert.equal(await name.getAttribute('data-cave-name-effect'), 'elemental-title:lightning:active');
     assert.equal(await page.locator('[data-cave-rank]').getAttribute('data-element'), null);
     const box = await name.boundingBox();
     await page.waitForTimeout(300);

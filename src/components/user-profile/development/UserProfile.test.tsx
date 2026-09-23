@@ -754,28 +754,38 @@ describe('Cultivator Cave destinations', () => {
     expect(daoTile(13).dataset.state).toBe('available');
   });
 
-  it('trains the equipped Familiar with QI and letters the name with its elemental title', async () => {
+  it('letters the name with the Active Familiar’s bond effect, which grows as QI cultivates the bond', async () => {
     await renderCave({ rewards: { openingDaoXp: 13_480, qiGrant: 2_000 } });
-    expect(open('familiar').textContent).toContain('Quill');
-    expect(open('familiar').textContent).toContain('Common bond · No effect chosen');
-    expect(container.querySelector('[data-cave-name]')?.getAttribute('data-element')).toBe('none');
+    const name = () => container.querySelector('[data-cave-name]')!;
+    // Common bond already lends a whisper of the Familiar's element while it is active.
+    expect(open('familiar').textContent).toContain('Lightning Title · Whisper');
+    expect(open('familiar').getAttribute('aria-label')).toBe('Quill, Common bond, Lightning Title · Whisper');
+    expect(name().getAttribute('data-cave-name-effect')).toBe('elemental-title:lightning:subtle');
     await click(open('familiar'));
     expect(caveRoute()).toBe('/home/familiar');
+    expect(container.querySelector('[data-familiar-identity]')?.textContent).toBe('Common familiar · Lightning element · Active Familiar');
     await click(byText('button', 'Offer 1,000 QI'));
     await settle();
-    expect(text()).toContain('Quill reached Rare bond: Lightning Title · Whisper.');
-    await click(byText('[data-familiar-training] button', 'Lightning Title · Whisper'));
-    await settle();
+    expect(text()).toContain('Quill reached Rare bond: Lightning Title · Blaze.');
+    expect(container.querySelector('[data-familiar-bond]')?.textContent).toBe('Rare bond');
+    // Nothing is mastered yet, so the name effect can only follow Quill or be turned off.
+    expect(container.querySelectorAll('[data-elemental-effect-panel] [role="radio"]')).toHaveLength(2);
     await click(container.querySelector('[aria-label="Return to cave"]')!);
     await settle();
-    const name = container.querySelector('[data-cave-name]')!;
-    expect(name.getAttribute('data-element')).toBe('lightning');
-    expect(name.getAttribute('data-cave-name-effect')).toBe('elemental-title:lightning:subtle');
-    expect(open('familiar').textContent).toContain('Lightning Title · Whisper');
-    expect(open('familiar').getAttribute('aria-label')).toBe('Quill, Rare bond, Lightning Title · Whisper');
+    expect(name().getAttribute('data-element')).toBe('lightning');
+    expect(name().getAttribute('data-cave-name-effect')).toBe('elemental-title:lightning:active');
+    expect(open('familiar').getAttribute('aria-label')).toBe('Quill, Rare bond, Lightning Title · Blaze');
     expect(open('qi').textContent).toContain('1,000 to spend');
     // Spending QI never touches DAO XP, the only input to rank.
     expect(valueText()).toBe('13,480 DAO XP of 25,000');
+
+    await click(open('familiar'));
+    await click(byText('[data-elemental-effect-panel] [role="radio"]', 'None'));
+    await settle();
+    await click(container.querySelector('[aria-label="Return to cave"]')!);
+    await settle();
+    expect(name().getAttribute('data-element')).toBe('none');
+    expect(open('familiar').textContent).toContain('Rare bond · No name effect');
   });
 });
 

@@ -4,18 +4,17 @@
  * One cultivator on one in-browser development economy, so every relationship
  * in the reward system can be tried end to end: activity earns achievements,
  * achievements mint Mystery Scrolls, scrolls and creation raise DAO XP (which
- * alone sets the rank and its colours), QI trains a Familiar until its
- * elemental title letters the name, Fate Survival grants a Relic worth DAO XP
+ * alone sets the rank and its colours), QI cultivates a Familiar's bond until
+ * it masters its element, Fate Survival grants a Relic worth DAO XP
  * and Energy, the Dao Pillar pays QI, and the Celestial Store sells Familiars
  * for QI or Energy. Every balance moves through real server code; only the
  * inputs a real host would supply are simulated.
  */
 import { useRef, useState } from 'react';
-import { LibraryElementalTitle } from '@seihouse/library-ui';
 import { CelestialStorePanel, type CelestialStorePurchase } from '@seihouse/library/celestial-store';
 import { getAuraTextStyle, getDaoRankData, getRankForDaoXp, rankBackground } from '@seihouse/library/cultivation';
 import { DaoPillarView, useDaoPillarCalendar } from '@seihouse/library/dao-pillar';
-import { activeFamiliarEffect, FamiliarTrainingPanel, useFamiliarStoreAccount } from '@seihouse/library/familiar';
+import { activeNameEffect, ElementalEffectPanel, FamiliarNameEffect, FamiliarTrainingPanel, useFamiliarStoreAccount } from '@seihouse/library/familiar';
 import { FateSurvivalRelicsPanel, RelicReveal, type FateSurvivalOutcome, type FateSurvivalRelicView } from '@seihouse/library/relics';
 import { AchievementsPanel } from '@seihouse/library/rewards';
 import { allFamiliarOptions } from '../../../host/familiar/catalogue';
@@ -45,7 +44,8 @@ const RELATIONSHIPS: ReadonlyArray<readonly [string, string]> = [
   ['Fate Survival', 'Relic → DAO XP + Energy'],
   ['Daily Dao Pillar', 'QI'],
   ['DAO XP', 'Cultivator Rank → colours only'],
-  ['QI offered to a Familiar', 'Tiers → forms and elemental titles'],
+  ['QI offered to a Familiar', 'Bond Rank → stronger elemental titles, forms'],
+  ['Legendary bond', 'Element mastered → wear it with any Familiar'],
   ['QI or Energy in the Celestial Store', 'Familiars'],
 ];
 
@@ -54,17 +54,15 @@ function CultivatorCard({ equippedId }: { equippedId: string }) {
   const xp = daoXp.snapshot?.balance ?? 0;
   const data = getDaoRankData(xp);
   const rank = getRankForDaoXp(xp);
-  const effect = activeFamiliarEffect(familiars.snapshot, equippedId);
+  const resolved = activeNameEffect(familiars.snapshot, equippedId);
   const nameStyle = getAuraTextStyle(`rank:${rank.id}`, xp);
   return (
     <section className="rounded-2xl border border-[#d4af37]/40 bg-[#03060c] p-4 text-center" aria-label="Cultivator" data-reward-loop-cultivator>
-      {effect ? (
-        <LibraryElementalTitle as="h2" size="lg" element={effect.element} intensity={effect.intensity}
-          shadow={effect.intensity === 'legendary' ? 'outlined' : 'soft'} className="font-display" data-cultivator-effect={effect.id}>{DISPLAY_NAME}</LibraryElementalTitle>
-      ) : (
-        <h2 className={`font-display text-2xl ${nameStyle.className ?? ''}`} style={nameStyle.style} data-cultivator-effect="none">{DISPLAY_NAME}</h2>
-      )}
-      <p className="mt-1 text-[11px] text-white/50">{effect ? `${effect.label} from the equipped Familiar` : 'Rank colours · no Familiar effect active'}</p>
+      <FamiliarNameEffect as="h2" size="lg" effect={resolved?.effect ?? null} className="font-display"
+        plainClassName={`text-2xl ${nameStyle.className ?? ''}`} plainStyle={nameStyle.style} data-cultivator-effect={resolved?.effect.id ?? 'none'}>{DISPLAY_NAME}</FamiliarNameEffect>
+      <p className="mt-1 text-[11px] text-white/50">
+        {resolved ? `${resolved.effect.label} · ${resolved.coupled ? 'follows the Active Familiar' : 'mastered, worn with any Familiar'}` : 'Rank colours · no name effect'}
+      </p>
       <div className="mx-auto mt-3 h-2 max-w-xs overflow-hidden rounded-full bg-white/10" role="progressbar" aria-label="DAO XP toward the next rank"
         aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(data.progress)}>
         <span className="block h-full rounded-full" style={{ width: `${data.progress}%`, background: rankBackground(rank.visual) }} />
@@ -174,8 +172,11 @@ function RewardLoop() {
             </div>
           )}
           {tab === 'familiar' && (
-            <FamiliarTrainingPanel familiars={account.familiars} options={allFamiliarOptions} qiBalance={account.qi.snapshot?.balance ?? null}
-              displayName={DISPLAY_NAME} equippedFamiliarId={equippedId} onOffered={() => void account.refreshBalances()} />
+            <div className="space-y-4">
+              <ElementalEffectPanel familiars={account.familiars} options={allFamiliarOptions} activeFamiliarId={equippedId} displayName={DISPLAY_NAME} />
+              <FamiliarTrainingPanel familiars={account.familiars} options={allFamiliarOptions} qiBalance={account.qi.snapshot?.balance ?? null}
+                activeFamiliarId={equippedId} onOffered={() => void account.refreshBalances()} />
+            </div>
           )}
           {tab === 'store' && <StoreTab equippedId={equippedId} onEquip={setEquippedId} />}
         </div>

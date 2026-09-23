@@ -61,7 +61,7 @@ export const PACKAGE_TARGETS = {
       '@seihouse/library/presentation': ['LibraryPresentationProvider'],
       '@seihouse/library/profile': ['LibraryProfile', 'UserProfileServicesProvider'],
       '@seihouse/library/energy': ['EnergyPanel', 'EnergyClientProvider', 'createHttpEnergyClient'],
-      '@seihouse/library/familiar': ['Familiar', 'FamiliarSprite', 'FamiliarSelection', 'FamiliarCompanion', 'FamiliarRecall', 'FamiliarTrainingPanel', 'FamiliarsClientProvider', 'createHttpFamiliarsClient', 'activeFamiliarEffect'],
+      '@seihouse/library/familiar': ['Familiar', 'FamiliarSprite', 'FamiliarSelection', 'FamiliarCompanion', 'FamiliarRecall', 'FamiliarTrainingPanel', 'FamiliarsClientProvider', 'createHttpFamiliarsClient', 'activeNameEffect', 'ElementalEffectPanel', 'FamiliarNameEffect'],
       '@seihouse/library/cultivation': ['ClosedDoorCultivationModal', 'QiClientProvider', 'createHttpQiClient', 'DaoXpClientProvider', 'createHttpDaoXpClient', 'getDaoRankData'],
       '@seihouse/library/dao-pillar': ['DaoPillarView', 'DaoPillarClientProvider'],
       '@seihouse/library/relics': ['RelicReveal', 'FateSurvivalRelicsPanel', 'RelicsClientProvider', 'createHttpRelicsClient'],

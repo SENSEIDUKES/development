@@ -3,25 +3,33 @@ import {
   dailyStoreRotation,
   type CelestialStoreConfig,
 } from '@seihouse/library/celestial-store';
-import type {
-  FamiliarCosmeticEffect,
-  FamiliarForm,
-  FamiliarOption,
-  FamiliarTrainingSnapshot,
-  FamiliarTrainingView,
-  FamiliarUnlock,
-  OfferQiInput,
-  OfferQiResponse,
-  PurchaseFamiliarInput,
-  PurchaseFamiliarResponse,
-  SelectFamiliarCosmeticsInput,
+import {
+  bondRankIndex,
+  bondRankLabel,
+  FAMILIAR_ELEMENT_LABELS,
+  FAMILIAR_ELEMENTS,
+  type ActiveElementalEffectSelection,
+  type FamiliarBondRank,
+  type FamiliarElementalMastery,
+  type FamiliarElementalTitleEffect,
+  type FamiliarOption,
+  type FamiliarSignatureEffect,
+  type FamiliarTrainingSnapshot,
+  type FamiliarTrainingView,
+  type FamiliarUnlock,
+  type OfferQiInput,
+  type OfferQiResponse,
+  type PurchaseFamiliarInput,
+  type PurchaseFamiliarResponse,
+  type SelectFamiliarFormInput,
 } from '@seihouse/library/familiar';
 import { allFamiliarOptions } from '../../host/familiar/catalogue';
 import type { EnergyService } from '../energy/service';
 import type { LibraryPrincipal } from '../identity/types';
 import type { QiLedger } from '../qi/qiLedger';
-import { FamiliarConflictError, FamiliarValidationError, type FamiliarAccountRecord, type FamiliarRepository } from './repository';
-import { FAMILIAR_TRAINING_LADDER, familiarElement, MAX_TRAINING_QI, tierFor, validateTrainingLadder, type FamiliarTrainingTier } from './training';
+import { FamiliarConflictError, FamiliarValidationError, type FamiliarAccountRecord, type FamiliarMasteryRecord, type FamiliarRepository } from './repository';
+import { FAMILIAR_SIGNATURES, validateSignatures, type FamiliarSignatureDefinition } from './signatures';
+import { bondRankFor, FAMILIAR_BOND_LADDER, familiarElement, MAX_BOND_QI, masteryEffect, validateBondLadder, type FamiliarBondRankDefinition } from './training';
 
 export interface FamiliarServiceDependencies {
   repository: FamiliarRepository;
@@ -30,9 +38,14 @@ export interface FamiliarServiceDependencies {
   /** Host catalogue projection; availability here is ignored — ownership decides it. */
   catalogue?: readonly FamiliarOption[];
   store?: CelestialStoreConfig;
-  ladder?: readonly FamiliarTrainingTier[];
+  ladder?: readonly FamiliarBondRankDefinition[];
+  signatures?: readonly FamiliarSignatureDefinition[];
   now?: () => Date;
 }
+
+const unlockLabel = (unlock: FamiliarUnlock) => unlock.kind === 'form' ? unlock.form.label : unlock.effect.label;
+const signatureEffect = (definition: FamiliarSignatureDefinition): FamiliarSignatureEffect =>
+  ({ id: definition.id, kind: 'signature', label: definition.label, familiarId: definition.familiarId });
 
 const MAX_OFFER = 1_000_000;
 /** Client keys are short (a UUID); 120 leaves room for the prefixes every ledger key adds. */
@@ -40,11 +53,18 @@ const MAX_KEY = 120;
 const validKey = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0 && value.length <= MAX_KEY;
 
 /**
- * The Familiar account: ownership, QI training, and cosmetic selections.
+ * The Familiar account: ownership, bonds, element mastery, and the
+ * cultivator's cosmetic selections.
  *
- * - Offering QI trains one Familiar. The QI ledger spends only what the
- *   remaining tiers need, and the offer is recorded once per idempotency key.
- * - Tiers unlock alternate forms and cosmetic effects, and nothing else.
+ * - Offering QI cultivates one Familiar's bond. The QI ledger spends only
+ *   what the remaining bond ranks need, and the offer is recorded once per
+ *   idempotency key.
+ * - Bond ranks unlock stronger elemental titles, forms and (where SEIHouse
+ *   wrote one) the Familiar's signature — and nothing else.
+ * - Legendary bond masters the Familiar's element, permanently, in the same
+ *   write as the offering that reached it.
+ * - The Active Elemental Effect is one account-level choice; the Active
+ *   Familiar stays host profile state and is resolved against it.
  * - Buying a Familiar in the Celestial Store debits QI or Energy at today's
  *   server-resolved price, then grants ownership.
  *
@@ -57,7 +77,8 @@ export class FamiliarService {
   private readonly energy: EnergyService;
   private readonly catalogue: readonly FamiliarOption[];
   private readonly store: CelestialStoreConfig;
-  private readonly ladder: readonly FamiliarTrainingTier[];
+  private readonly ladder: readonly FamiliarBondRankDefinition[];
+  private readonly signatures: readonly FamiliarSignatureDefinition[];
   private readonly now: () => Date;
   private readonly queues = new Map<string, Promise<unknown>>();
 
@@ -67,7 +88,8 @@ export class FamiliarService {
     this.energy = dependencies.energy;
     this.catalogue = dependencies.catalogue ?? allFamiliarOptions;
     this.store = dependencies.store ?? CELESTIAL_STORE_CONFIG;
-    this.ladder = validateTrainingLadder(dependencies.ladder ?? FAMILIAR_TRAINING_LADDER);
+    this.ladder = validateBondLadder(dependencies.ladder ?? FAMILIAR_BOND_LADDER);
+    this.signatures = validateSignatures(dependencies.signatures ?? FAMILIAR_SIGNATURES, this.catalogue);
     this.now = dependencies.now ?? (() => new Date());
   }
 
@@ -90,37 +112,56 @@ export class FamiliarService {
     return Boolean(option.isDefault) || account.owned.some(entry => entry.familiarId === option.id);
   }
 
+  private signatureFor(familiarId: string) {
+    return this.signatures.find(signature => signature.familiarId === familiarId) ?? null;
+  }
+
+  /** What one bond rank unlocks for one Familiar: the shared ladder in its element, plus its own signature. */
+  private unlocksAt(familiarId: string, rank: FamiliarBondRankDefinition): FamiliarUnlock[] {
+    const signature = this.signatureFor(familiarId);
+    return [
+      ...rank.unlocks(familiarElement(familiarId)),
+      ...(signature?.requiredBondRank === rank.rank ? [{ kind: 'signature' as const, effect: signatureEffect(signature) }] : []),
+    ];
+  }
+
   private viewOf(account: FamiliarAccountRecord, option: FamiliarOption): FamiliarTrainingView {
     const element = familiarElement(option.id);
     const qiOffered = account.training[option.id] ?? 0;
-    const reached = tierFor(qiOffered, this.ladder);
-    const tiers = this.ladder.map(tier => ({
-      tier: tier.tier, name: tier.name, qiRequired: tier.qiRequired,
-      reached: qiOffered >= tier.qiRequired, unlocks: tier.unlocks(element),
+    const reached = bondRankFor(qiOffered, this.ladder);
+    const bondRanks = this.ladder.map(rank => ({
+      rank: rank.rank, qiRequired: rank.qiRequired, reached: qiOffered >= rank.qiRequired, unlocks: this.unlocksAt(option.id, rank),
     }));
-    const unlocked = tiers.filter(tier => tier.reached).flatMap(tier => tier.unlocks);
+    const unlocked = bondRanks.filter(rank => rank.reached).flatMap(rank => rank.unlocks);
     const unlockedForms = unlocked.flatMap(unlock => unlock.kind === 'form' ? [unlock.form] : []);
-    const unlockedEffects = unlocked.flatMap(unlock => unlock.kind === 'effect' ? [unlock.effect] : []);
-    const next = this.ladder.find(tier => tier.qiRequired > qiOffered);
-    const stored = account.selections[option.id];
+    // The strongest title reached: a bond effect below Legendary, the mastered title at Legendary.
+    const bondEffect = unlocked.flatMap(unlock => unlock.kind === 'bond-effect' || unlock.kind === 'mastery' ? [unlock.effect] : []).at(-1)!;
+    const next = this.ladder.find(rank => rank.qiRequired > qiOffered);
+    const signature = this.signatureFor(option.id);
+    const storedForm = account.forms[option.id];
     return {
       familiarId: option.id,
       owned: this.owns(account, option),
       isDefault: Boolean(option.isDefault),
       element,
       qiOffered,
-      tier: reached.tier,
-      tierName: reached.name,
-      nextTier: next ? { tier: next.tier, name: next.name, qiRequired: next.qiRequired, qiRemaining: next.qiRequired - qiOffered } : null,
-      tiers,
+      bondRank: reached.rank,
+      nextBondRank: next ? { rank: next.rank, qiRequired: next.qiRequired, qiRemaining: next.qiRequired - qiOffered } : null,
+      bondRanks,
+      bondEffect,
+      signature: signature ? {
+        effect: signatureEffect(signature),
+        requiredBondRank: signature.requiredBondRank,
+        unlocked: bondRankIndex(reached.rank) >= bondRankIndex(signature.requiredBondRank),
+      } : null,
       unlockedForms,
-      unlockedEffects,
-      // A stored choice that is no longer unlocked (a ladder change) quietly falls away.
-      selection: {
-        formId: stored?.formId && unlockedForms.some(form => form.id === stored.formId) ? stored.formId : null,
-        effectId: stored?.effectId && unlockedEffects.some(effect => effect.id === stored.effectId) ? stored.effectId : null,
-      },
+      // A stored form that is no longer unlocked (a ladder change) quietly falls away.
+      selection: { formId: storedForm && unlockedForms.some(form => form.id === storedForm) ? storedForm : null },
     };
+  }
+
+  private masteryOf(record: FamiliarMasteryRecord): FamiliarElementalMastery {
+    return { element: record.element, effect: masteryEffect(record.element), masteredWith: record.familiarId, masteredAt: record.masteredAt };
   }
 
   private snapshotOf(account: FamiliarAccountRecord): FamiliarTrainingSnapshot {
@@ -129,6 +170,8 @@ export class FamiliarService {
       uid: account.uid,
       ownedFamiliarIds: familiars.filter(view => view.owned).map(view => view.familiarId),
       familiars,
+      masteredElements: FAMILIAR_ELEMENTS.flatMap(element => account.masteries.filter(record => record.element === element).map(record => this.masteryOf(record))),
+      activeEffect: account.activeEffect,
       updatedAt: this.now().toISOString(),
     };
   }
@@ -137,71 +180,108 @@ export class FamiliarService {
     return this.snapshotOf(await this.repository.getAccount(principal.uid));
   }
 
-  private unlocksBetween(familiarId: string, tierBefore: number, tierAfter: number): FamiliarUnlock[] {
-    const element = familiarElement(familiarId);
-    return this.ladder.filter(tier => tier.tier > tierBefore && tier.tier <= tierAfter).flatMap(tier => tier.unlocks(element));
+  private unlocksBetween(familiarId: string, before: FamiliarBondRank, after: FamiliarBondRank): FamiliarUnlock[] {
+    return this.ladder
+      .filter(rank => bondRankIndex(rank.rank) > bondRankIndex(before) && bondRankIndex(rank.rank) <= bondRankIndex(after))
+      .flatMap(rank => this.unlocksAt(familiarId, rank));
   }
 
-  /** Offers QI to one owned Familiar. Spends only what the remaining tiers need. */
+  /** Offers QI to one owned Familiar. Spends only what the remaining bond ranks need. */
   async offerQi(principal: LibraryPrincipal, input: OfferQiInput): Promise<OfferQiResponse> {
     const option = this.option(input.familiarId);
     if (!Number.isSafeInteger(input.amount) || input.amount <= 0 || input.amount > MAX_OFFER) throw new FamiliarValidationError(['Offer a positive whole amount of QI.']);
     if (!validKey(input.idempotencyKey)) throw new FamiliarValidationError([`An idempotency key of 1–${MAX_KEY} characters is required.`]);
     return this.serialize(principal.uid, async () => {
       const account = await this.repository.getAccount(principal.uid);
+      const element = familiarElement(option.id);
       const replay = account.offers.find(offer => offer.idempotencyKey === input.idempotencyKey);
       if (replay) {
         if (replay.familiarId !== option.id || replay.requested !== input.amount) {
           throw new FamiliarConflictError('That offering key was already used for a different offering.');
         }
-        const tierBefore = tierFor(replay.qiBefore, this.ladder).tier;
-        const tierAfter = tierFor(replay.qiAfter, this.ladder).tier;
+        const bondRankBefore = bondRankFor(replay.qiBefore, this.ladder).rank;
+        const bondRankAfter = bondRankFor(replay.qiAfter, this.ladder).rank;
+        const reachedLegendary = bondRankAfter === 'legendary' && bondRankBefore !== 'legendary';
+        const mastery = reachedLegendary ? account.masteries.find(record => record.element === element && record.familiarId === option.id) : undefined;
         return {
           outcome: 'replayed', message: `That offering to ${option.name} was already made.`, spent: replay.spent,
-          tierBefore, tierAfter, newUnlocks: this.unlocksBetween(option.id, tierBefore, tierAfter), snapshot: this.snapshotOf(account),
+          bondRankBefore, bondRankAfter, newUnlocks: this.unlocksBetween(option.id, bondRankBefore, bondRankAfter),
+          mastered: mastery ? this.masteryOf(mastery) : null, snapshot: this.snapshotOf(account),
         };
       }
-      if (!this.owns(account, option)) throw new FamiliarConflictError(`Bring ${option.name} home before training it.`);
+      if (!this.owns(account, option)) throw new FamiliarConflictError(`Bring ${option.name} home before cultivating its bond.`);
       const qiOffered = account.training[option.id] ?? 0;
-      const remaining = MAX_TRAINING_QI(this.ladder) - qiOffered;
-      const tierBefore = tierFor(qiOffered, this.ladder).tier;
+      const remaining = MAX_BOND_QI(this.ladder) - qiOffered;
+      const bondRankBefore = bondRankFor(qiOffered, this.ladder).rank;
       if (remaining <= 0) {
-        return { outcome: 'fully-trained', message: `${option.name} is fully trained.`, spent: 0, tierBefore, tierAfter: tierBefore, newUnlocks: [], snapshot: this.snapshotOf(account) };
+        return {
+          outcome: 'fully-bonded', message: `${option.name} has reached Legendary bond.`, spent: 0,
+          bondRankBefore, bondRankAfter: bondRankBefore, newUnlocks: [], mastered: null, snapshot: this.snapshotOf(account),
+        };
       }
       const amount = Math.min(input.amount, remaining);
       const spend = await this.qi.spend({
         uid: principal.uid, amount, idempotencyKey: `familiar-training:${input.idempotencyKey}`,
-        source: 'familiar-training', description: `${option.name} · training`, metadata: { familiarId: option.id },
+        source: 'familiar-training', description: `${option.name} · bond`, metadata: { familiarId: option.id },
       });
-      const tierAfter = tierFor(qiOffered + amount, this.ladder).tier;
+      const bondRankAfter = bondRankFor(qiOffered + amount, this.ladder).rank;
+      // Legendary bond masters the element, unless another Familiar already mastered it.
+      const mastery: FamiliarMasteryRecord | null = bondRankAfter === 'legendary' && !account.masteries.some(record => record.element === element)
+        ? { element, familiarId: option.id, masteredAt: this.now().toISOString() }
+        : null;
       const updated = await this.repository.recordOffer(principal.uid, {
         idempotencyKey: input.idempotencyKey, familiarId: option.id, requested: input.amount, spent: amount,
         qiBefore: qiOffered, qiAfter: qiOffered + amount, qiTransactionId: spend.transaction.id, offeredAt: this.now().toISOString(),
-      });
-      const newUnlocks = this.unlocksBetween(option.id, tierBefore, tierAfter);
-      const reachedName = this.ladder.find(tier => tier.tier === tierAfter)?.name;
+      }, mastery);
+      const newUnlocks = this.unlocksBetween(option.id, bondRankBefore, bondRankAfter);
+      const shown = newUnlocks.filter(unlock => unlock.kind !== 'mastery').map(unlockLabel);
+      const elementName = FAMILIAR_ELEMENT_LABELS[element];
       return {
         outcome: 'trained',
-        message: tierAfter > tierBefore
-          ? `${option.name} reached ${reachedName} bond: ${newUnlocks.map(unlock => unlock.kind === 'form' ? unlock.form.label : unlock.effect.label).join(', ') || 'a new tier'}.`
-          : `${option.name} accepted ${amount.toLocaleString('en-US')} QI.`,
-        spent: amount, tierBefore, tierAfter, newUnlocks, snapshot: this.snapshotOf(updated),
+        message: bondRankAfter === bondRankBefore
+          ? `${option.name} accepted ${amount.toLocaleString('en-US')} QI.`
+          : bondRankAfter === 'legendary'
+            ? mastery
+              ? `${option.name} reached ${bondRankLabel('legendary')}. You mastered ${elementName}: ${elementName} Mastery joins your collection and can be worn with any Familiar.`
+              : `${option.name} reached ${bondRankLabel('legendary')}. You had already mastered ${elementName}.`
+            : `${option.name} reached ${bondRankLabel(bondRankAfter)}: ${shown.join(', ')}.`,
+        spent: amount, bondRankBefore, bondRankAfter, newUnlocks, mastered: mastery ? this.masteryOf(mastery) : null, snapshot: this.snapshotOf(updated),
       };
     });
   }
 
-  /** Chooses the form and effect one owned Familiar wears. Only unlocked choices are accepted. */
-  async selectCosmetics(principal: LibraryPrincipal, input: SelectFamiliarCosmeticsInput): Promise<FamiliarTrainingSnapshot> {
+  /** Chooses the form one owned Familiar wears. Only unlocked forms are accepted. */
+  async selectForm(principal: LibraryPrincipal, input: SelectFamiliarFormInput): Promise<FamiliarTrainingSnapshot> {
     const option = this.option(input.familiarId);
     return this.serialize(principal.uid, async () => {
       const account = await this.repository.getAccount(principal.uid);
-      if (!this.owns(account, option)) throw new FamiliarConflictError(`Bring ${option.name} home before choosing its look.`);
-      const view = this.viewOf(account, option);
-      const form: FamiliarForm | undefined = input.formId === null ? undefined : view.unlockedForms.find(candidate => candidate.id === input.formId);
-      const effect: FamiliarCosmeticEffect | undefined = input.effectId === null ? undefined : view.unlockedEffects.find(candidate => candidate.id === input.effectId);
-      if (input.formId !== null && !form) throw new FamiliarConflictError('That form is not unlocked yet.');
-      if (input.effectId !== null && !effect) throw new FamiliarConflictError('That effect is not unlocked yet.');
-      return this.snapshotOf(await this.repository.selectCosmetics(principal.uid, option.id, { formId: form?.id ?? null, effectId: effect?.id ?? null }));
+      if (!this.owns(account, option)) throw new FamiliarConflictError(`Bring ${option.name} home before choosing its form.`);
+      if (input.formId !== null && !this.viewOf(account, option).unlockedForms.some(form => form.id === input.formId)) {
+        throw new FamiliarConflictError('That form is not unlocked yet.');
+      }
+      return this.snapshotOf(await this.repository.selectForm(principal.uid, option.id, input.formId));
+    });
+  }
+
+  /**
+   * Chooses the Active Elemental Effect. Following the Active Familiar (its
+   * bond effect or its signature) and wearing nothing are always allowed; a
+   * mastered element only once the cultivator has mastered it.
+   */
+  async selectElementalEffect(principal: LibraryPrincipal, selection: ActiveElementalEffectSelection): Promise<FamiliarTrainingSnapshot> {
+    const source = (selection as { source?: unknown } | null)?.source;
+    if (source !== 'bond' && source !== 'signature' && source !== 'mastered' && source !== 'none') {
+      throw new FamiliarValidationError(['Choose the Active Familiar’s bond, its signature, a mastered element, or none.']);
+    }
+    const element = source === 'mastered' ? (selection as { element?: unknown }).element : undefined;
+    if (source === 'mastered' && !FAMILIAR_ELEMENTS.includes(element as never)) throw new FamiliarValidationError(['Name the mastered element to wear.']);
+    return this.serialize(principal.uid, async () => {
+      const account = await this.repository.getAccount(principal.uid);
+      if (source === 'mastered' && !account.masteries.some(record => record.element === element)) {
+        throw new FamiliarConflictError('Reach Legendary bond with a Familiar of that element to master it first.');
+      }
+      const stored: ActiveElementalEffectSelection = source === 'mastered' ? { source, element: element as FamiliarElementalTitleEffect['element'] } : { source };
+      return this.snapshotOf(await this.repository.selectActiveEffect(principal.uid, stored));
     });
   }
 

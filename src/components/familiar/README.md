@@ -256,6 +256,11 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-09-23: Familiar rarity (this catalogue's `rarity`) is now documented and labelled as its
+  own scale, "Epic familiar", separate from the cultivator's Bond Rank with a Familiar
+  ("Legendary bond"); `familiarRarityLabel` lives beside `FamiliarRarity`. The profile's equipped
+  Familiar is the Active Familiar the bond system resolves name effects against. See
+  [`../familiar-training/README.md`](../familiar-training/README.md).
 - 2026-09-23: Familiars now own the Library's active cosmetic effects. Ownership, QI training
   tiers, alternate forms and elemental titles live in the Familiar account
   (`src/server/familiars/`, `src/library/familiars/`) with its training panel in

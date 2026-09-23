@@ -65,10 +65,11 @@ import { useAchievements } from '../../../library/rewards/achievementsClient';
 import { useRefreshWhenReplaced } from '../../../library/rewards/balanceRefresh';
 import { useRelics } from '../../../library/relics/relicsClient';
 import { useFamiliars } from '../../../library/familiars/familiarsClient';
-import { activeFamiliarEffect, familiarTraining } from '../../../library/familiars/contracts';
+import { activeNameEffect, bondRankLabel, familiarTraining } from '../../../library/familiars/contracts';
 import { AchievementsPanel } from '../../rewards/development/AchievementsPanel';
 import { FateSurvivalRelicsPanel } from '../../relics/development/FateSurvivalRelicsPanel';
 import { FamiliarTrainingPanel } from '../../familiar-training/development/FamiliarTrainingPanel';
+import { ElementalEffectPanel } from '../../familiar-training/development/ElementalEffectPanel';
 
 interface UserProfileProps {
   currentUser: AppUser | null;
@@ -281,8 +282,10 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   useRefreshWhenReplaced(familiarAccount.snapshot, refreshSpendBalances);
   const equippedOption = familiars.find(option => option.id === profile?.familiarId)
     ?? familiars.find(option => option.isDefault);
+  // The equipped Familiar is the Active Familiar; the Familiar account resolves
+  // the Active Elemental Effect against it.
   const equippedTraining = familiarTraining(familiarAccount.snapshot, equippedOption?.id);
-  const familiarEffect = activeFamiliarEffect(familiarAccount.snapshot, equippedOption?.id);
+  const nameEffect = activeNameEffect(familiarAccount.snapshot, equippedOption?.id);
 
   // The Akashic Switchboard is a destination here; the controller still owns
   // when its registries are fetched, keyed off this flag exactly as in production.
@@ -463,14 +466,21 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         );
       case 'familiar':
         return (
-          <UserProfileCaveDestination id="familiar" title="Familiar" subtitle="Train with QI to unlock forms and cosmetic effects" icon={<Sparkles size={18} />} onBack={returnHome}>
-            <FamiliarTrainingPanel
-              familiars={familiarAccount}
-              options={familiars}
-              qiBalance={cultivation.snapshot?.balance ?? null}
-              displayName={profile?.displayName?.trim() || 'Cultivator'}
-              equippedFamiliarId={equippedOption?.id}
-            />
+          <UserProfileCaveDestination id="familiar" title="Familiar" subtitle="Cultivate bonds with QI and master their elements" icon={<Sparkles size={18} />} onBack={returnHome}>
+            <div className="space-y-4">
+              <ElementalEffectPanel
+                familiars={familiarAccount}
+                options={familiars}
+                activeFamiliarId={equippedOption?.id}
+                displayName={profile?.displayName?.trim() || 'Cultivator'}
+              />
+              <FamiliarTrainingPanel
+                familiars={familiarAccount}
+                options={familiars}
+                qiBalance={cultivation.snapshot?.balance ?? null}
+                activeFamiliarId={equippedOption?.id}
+              />
+            </div>
           </UserProfileCaveDestination>
         );
       case 'switchboard':
@@ -506,8 +516,8 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           qi={cultivation.status === 'unavailable' ? undefined : { balance: cultivation.snapshot?.balance ?? null, onOpen: () => navigate('/home/energy') }}
           familiar={familiarAccount.connected && equippedOption ? {
             name: equippedOption.name,
-            tierName: equippedTraining?.tierName ?? null,
-            effect: familiarEffect,
+            bondLabel: equippedTraining ? bondRankLabel(equippedTraining.bondRank) : null,
+            effect: nameEffect?.effect ?? null,
             onOpen: () => navigate('/home/familiar'),
           } : undefined}
           rewards={achievements.connected || relics.connected ? {

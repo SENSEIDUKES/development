@@ -21,9 +21,10 @@ const nullableString = (value: unknown) => value === null || typeof value === 's
 /**
  * The browser-facing Familiar boundary.
  *
- * - `GET` → ownership, training and cosmetic selections for every Familiar.
- * - `POST { operation: 'offer-qi', familiarId, amount, idempotencyKey }` → trains one Familiar.
- * - `POST { operation: 'select-cosmetics', familiarId, formId, effectId }` → chooses its look.
+ * - `GET` → ownership, bonds, masteries and selections for every Familiar.
+ * - `POST { operation: 'offer-qi', familiarId, amount, idempotencyKey }` → cultivates one Familiar's bond.
+ * - `POST { operation: 'select-form', familiarId, formId }` → chooses a companion's form.
+ * - `POST { operation: 'select-elemental-effect', selection }` → chooses the Active Elemental Effect.
  * - `POST { operation: 'purchase', familiarId, currency, price, idempotencyKey }`
  *   → buys it in the Celestial Store at today's server-resolved price.
  * - `POST { operation: 'development.grant-familiar', familiarId }` → Workshop
@@ -46,9 +47,12 @@ export async function handleFamiliarsHttp(
       case 'offer-qi':
         if (typeof body.familiarId !== 'string' || typeof body.amount !== 'number' || typeof body.idempotencyKey !== 'string') throw new FamiliarValidationError(['An offering needs a Familiar, an amount and an idempotency key.']);
         return ok(await dependencies.service.offerQi(principal, { familiarId: body.familiarId, amount: body.amount, idempotencyKey: body.idempotencyKey }));
-      case 'select-cosmetics':
-        if (typeof body.familiarId !== 'string' || !nullableString(body.formId) || !nullableString(body.effectId)) throw new FamiliarValidationError(['A selection needs a Familiar and a form and effect (or null).']);
-        return ok(await dependencies.service.selectCosmetics(principal, { familiarId: body.familiarId, formId: body.formId as string | null, effectId: body.effectId as string | null }));
+      case 'select-form':
+        if (typeof body.familiarId !== 'string' || !nullableString(body.formId)) throw new FamiliarValidationError(['A form choice needs a Familiar and a form (or null).']);
+        return ok(await dependencies.service.selectForm(principal, { familiarId: body.familiarId, formId: body.formId as string | null }));
+      case 'select-elemental-effect':
+        if (!isRecord(body.selection)) throw new FamiliarValidationError(['An elemental effect choice needs a selection.']);
+        return ok(await dependencies.service.selectElementalEffect(principal, body.selection as never));
       case 'purchase':
         if (typeof body.familiarId !== 'string' || (body.currency !== 'qi' && body.currency !== 'energy') || typeof body.price !== 'number' || typeof body.idempotencyKey !== 'string') {
           throw new FamiliarValidationError(['A purchase needs a Familiar, a currency, the displayed price and an idempotency key.']);

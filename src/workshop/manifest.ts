@@ -92,7 +92,7 @@ export const WORKSHOP_SECTIONS: ReadonlyArray<{
   {
     id: 'rewards',
     label: 'Rewards',
-    description: 'How a cultivator earns and spends: achievements and Mystery Scrolls, Fate Survival Relics, Familiar training with QI, and the recurring Dao Pillar. Start with the Reward Loop to see every piece move together.',
+    description: 'How a cultivator earns and spends: achievements and Mystery Scrolls, Fate Survival Relics, Familiar bonds cultivated with QI, and the recurring Dao Pillar. Start with the Reward Loop to see every piece move together.',
     groups: [
       { id: 'reward-overview', label: 'Start here' },
       { id: 'earning', label: 'Earning' },
@@ -279,9 +279,9 @@ export const workshopEntries: WorkshopEntry[] = [
     source: { repository: 'SENSEIDUKES/development', path: 'src/components/rewards/; src/server/achievements/', lastCompared: '2026-09-23' },
   },
   {
-    id: 'familiar-training', section: 'rewards', group: 'spending', owner: 'library', status: 'active', title: 'Familiar Training',
-    description: 'Offer QI to one Familiar to raise its tier — Common, Rare, Epic, Legendary — unlocking a radiant form and elemental titles that letter the cultivator’s name. The equipped Familiar’s chosen effect is the one active effect, and no effect grants a boost, discount or advantage.',
-    category: 'rewards', version: 'v1.0',
+    id: 'familiar-training', section: 'rewards', group: 'spending', owner: 'library', status: 'active', title: 'Familiar Bonds',
+    description: 'Familiar rarity says how rare a Familiar is; Bond Rank says how far you have cultivated it with QI, so an Epic familiar can reach a Legendary bond. Common, Rare and Epic bond letter your name in the Active Familiar’s element, growing stronger; Legendary bond masters the element for good, to wear with any Familiar. Signatures are SEIHouse-written pieces for one Familiar. Nothing grants an advantage.',
+    category: 'rewards', version: 'v1.1',
     source: { repository: 'SENSEIDUKES/development', path: 'src/components/familiar-training/; src/server/familiars/', lastCompared: '2026-09-23' },
   },
   {

@@ -2,12 +2,13 @@
  * Workshop-only account seeding for the in-process development economy.
  *
  * A scenario describes what an account already did — DAO XP carried over,
- * chapters read, Fate Survival outcomes, Familiars bought and trained — and
+ * chapters read, Fate Survival outcomes, Familiars bought and bonded — and
  * `seedWorkshopAccount` replays it through the same services the HTTP routes
  * use. Nothing here decides a reward: every scroll, Relic, credit and unlock
  * comes out of the server code exactly as it would for real activity. Seeding
  * is idempotent, so running it twice changes nothing.
  */
+import type { ActiveElementalEffectSelection } from '@seihouse/library/familiar';
 import type { FateSurvivalOutcome } from '@seihouse/library/relics';
 import type { LibraryActivityKind } from '@seihouse/library/rewards';
 import { defaultFamiliar } from '../../../host/familiar/catalogue';
@@ -34,8 +35,10 @@ export interface WorkshopAccountSeed {
   fateSurvival?: readonly { challengeId: string; outcome: FateSurvivalOutcome; storyId?: string }[];
   /** Familiars bought before (granted through the development operation). */
   ownedFamiliars?: readonly string[];
-  /** QI offered to a Familiar, and the look chosen for it. */
-  training?: readonly { familiarId: string; qi: number; effectId?: string | null; formId?: string | null }[];
+  /** QI offered to a Familiar's bond, and the form chosen for it. */
+  training?: readonly { familiarId: string; qi: number; formId?: string | null }[];
+  /** The Active Elemental Effect; unset keeps the default (follow the Active Familiar). */
+  activeEffect?: ActiveElementalEffectSelection;
 }
 
 export const QUILL = defaultFamiliar.definition.id;
@@ -43,7 +46,7 @@ export const QUILL = defaultFamiliar.definition.id;
 const chapters = (storyId: string, count: number): WorkshopActivity[] =>
   Array.from({ length: count }, (_, index) => ({ kind: 'chapter.read' as const, subjectId: `${storyId}:${index + 1}`, storyId }));
 
-/** A long-time cultivator: a Leader with scrolls to open, a Relic, and a trained Quill. */
+/** A long-time cultivator: a Leader with scrolls to open, a Relic, and Quill at Rare bond. */
 export const DEVELOPED_CULTIVATOR_SEED: WorkshopAccountSeed = {
   qiGrant: 2_150,
   daoPillarDays: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
@@ -56,7 +59,7 @@ export const DEVELOPED_CULTIVATOR_SEED: WorkshopAccountSeed = {
   openedScrolls: ['reading.first-chapter'],
   fateSurvival: [{ challengeId: 'ashes-trial-1', outcome: 'FATE AVERTED', storyId: 'story-ashes' }],
   ownedFamiliars: ['phoenix'],
-  training: [{ familiarId: QUILL, qi: 1_000, effectId: 'elemental-title:lightning:subtle' }],
+  training: [{ familiarId: QUILL, qi: 1_000 }],
 };
 
 const principalFor = (uid: string): LibraryPrincipal => ({ uid, role: 'user', identity: 'development', developmentAccess: true });
@@ -100,8 +103,7 @@ export async function seedWorkshopAccount(economy: DevelopmentEconomy, uid: stri
   for (const familiarId of seed.ownedFamiliars ?? []) await economy.familiars.grantFamiliarDevelopment(principal, familiarId);
   for (const plan of seed.training ?? []) {
     if (plan.qi > 0) await economy.familiars.offerQi(principal, { familiarId: plan.familiarId, amount: plan.qi, idempotencyKey: `workshop-seed:${plan.familiarId}` });
-    if (plan.effectId !== undefined || plan.formId !== undefined) {
-      await economy.familiars.selectCosmetics(principal, { familiarId: plan.familiarId, effectId: plan.effectId ?? null, formId: plan.formId ?? null });
-    }
+    if (plan.formId !== undefined) await economy.familiars.selectForm(principal, { familiarId: plan.familiarId, formId: plan.formId });
   }
+  if (seed.activeEffect) await economy.familiars.selectElementalEffect(principal, seed.activeEffect);
 }

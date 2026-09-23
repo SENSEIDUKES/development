@@ -44,7 +44,7 @@ cultivator's colours. Dao Pillar and Mystery Scrolls deliver idempotent server
 rewards and then signal Profile to refresh the affected ledger projections.
 Achievements and scrolls arrive through `@seihouse/library/rewards`, Fate
 Survival Relics through the read-only `@seihouse/library/relics` client, and
-Familiar training and its cosmetic effects through `@seihouse/library/familiar`.
+Familiar bonds, element mastery and the Active Elemental Effect through `@seihouse/library/familiar`.
 Host authentication, persistence, roles, and administration remain outside the
 package.
 
@@ -54,6 +54,14 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
 
 ## Workshop history
 
+- **2026-09-23 Familiar bonds:** The Cave's Familiar destination shows the name-effect panel
+  (the Active Elemental Effect and the mastered-elements collection) above the bond panel. The
+  profile's equipped Familiar is the Active Familiar; `activeNameEffect` resolves what letters
+  the name, rendered through `FamiliarNameEffect`. Common bond already lends a whisper of the
+  Active Familiar's element, so a cultivator's name is lettered from day one unless they choose
+  None (rank colours). The Home Familiar card reads "Quill, Rare bond, Lightning Title · Blaze".
+  `verifyElementalProfile.browser.mjs` now expects the Rare-bond title
+  (`elemental-title:lightning:active`) on the developed profile.
 - **2026-09-23 reward rework:** The Cave follows the new reward model.
   - **Home** swaps the Qi Reserves and Active Effects controls for a **QI** card (the
     spendable balance, opening `/home/energy`) and a **Familiar** card (the equipped

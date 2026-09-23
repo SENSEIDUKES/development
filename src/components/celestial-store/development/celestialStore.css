@@ -17,7 +17,7 @@
 .celestial-store-balance-label { font-size: 13px; font-weight: 400; color: #b9c7d6; }
 
 .celestial-store-qi-amount { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
-.celestial-store-qi-glyph { color: #b78cff; font-size: 1.1em; line-height: 1; filter: drop-shadow(0 0 6px #7a4fd966); }
+.celestial-store-qi-amount .qi-glyph { color: #b78cff; font-size: 1.1em; line-height: 1; filter: drop-shadow(0 0 6px #7a4fd966); }
 
 /* One framed shelf holds every Familiar, whatever its currency. */
 .celestial-store-shelf {

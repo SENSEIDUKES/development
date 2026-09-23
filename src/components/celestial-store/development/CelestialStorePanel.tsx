@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { LibraryButton, LibraryGlobalIcon } from '@seihouse/library-ui';
+import { LibraryButton } from '@seihouse/library-ui';
 import {
   SEIDialog,
   SEIDialogContent,
@@ -7,6 +7,7 @@ import {
   SEIDialogTitle,
 } from '@seihouse/ui';
 import type { QiAccountState } from '../../../library/cultivation/contracts';
+import { formatQi, QiAmount } from '../../../library/cultivation/QiAmount';
 import type { EnergyAccountState } from '../../energy/shared/useEnergyAccount';
 import { EnergyAmount } from '../../energy/development/EnergyAmount';
 import { FamiliarHero } from '../../familiar/development/FamiliarSelection';
@@ -21,25 +22,13 @@ import {
 } from '../shared/storeAccount';
 import './celestialStore.css';
 
-const formatQi = new Intl.NumberFormat('en-US').format;
-
-/** The single QI mark + number rendering the Store's QI amounts share. */
-function QiAmount({ amount, state = 'ready', label }: { amount: number | null; state?: 'ready' | 'loading' | 'unavailable'; label: string }) {
-  return (
-    <span className="celestial-store-qi-amount" data-qi-state={state} aria-label={label} role="img">
-      <LibraryGlobalIcon name="qi-yin-yang" size="1em" className="celestial-store-qi-glyph" aria-hidden="true" />
-      <span aria-hidden="true">{state === 'ready' && amount !== null ? formatQi(amount) : '—'}</span>
-    </span>
-  );
-}
-
 function OfferPriceLine({ offer }: { offer: CelestialStoreOffer }) {
   const current = offer.salePrice ?? offer.price;
   return (
     <span className="celestial-store-price" data-store-price={current}>
       {offer.currency === 'energy'
         ? <EnergyAmount amount={current} size="sm" label={`${current} Energy`} />
-        : <QiAmount amount={current} label={`${formatQi(current)} QI`} />}
+        : <QiAmount className="celestial-store-qi-amount" amount={current} label={`${formatQi(current)} QI`} />}
       <span className="celestial-store-price-currency" aria-hidden="true">{offer.currency === 'energy' ? 'Energy' : 'QI'}</span>
       {offer.salePrice !== undefined && (
         <s className="celestial-store-price-was" aria-label={`Normal price ${formatQi(offer.price)}`}>{formatQi(offer.price)}</s>
@@ -233,7 +222,7 @@ export function CelestialStorePanel({
     <div className="celestial-store" data-store-day={rotation.dayKey}>
       <div className="celestial-store-balances" data-store-balances>
         <div className="celestial-store-balance" data-store-balance="qi">
-          <QiAmount amount={qiBalance} state={qiState} label={qiState === 'ready' && qiBalance !== null ? `QI balance ${formatQi(qiBalance)}` : 'QI balance unavailable'} />
+          <QiAmount className="celestial-store-qi-amount" amount={qiBalance} state={qiState} label={qiState === 'ready' && qiBalance !== null ? `QI balance ${formatQi(qiBalance)}` : 'QI balance unavailable'} />
           <span className="celestial-store-balance-label" aria-hidden="true">QI</span>
         </div>
         <div className="celestial-store-balance" data-store-balance="energy">

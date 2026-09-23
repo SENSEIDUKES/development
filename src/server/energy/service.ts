@@ -36,6 +36,8 @@ export interface EnergyReserveInput {
   idempotencyKey: string;
   /** Units of the action, defaults to 1. The reservation holds `price × quantity`. */
   quantity?: number;
+  /** Required only for a variable catalog range, such as projected video generation. */
+  quotedPrice?: number;
   metadata?: JsonObject;
 }
 
@@ -90,9 +92,9 @@ export class EnergyService {
   }
 
   /** Price lookup straight from the shared catalog. Throws for unpriced actions. */
-  getPrice(actionId: EnergyActionId): EnergyPriceQuote {
+  getPrice(actionId: EnergyActionId, quotedPrice?: number): EnergyPriceQuote {
     if (!isEnergyActionId(actionId)) throw new EnergyValidationError([`Unknown Energy action ${String(actionId)}.`]);
-    return resolveEnergyPrice(actionId);
+    return resolveEnergyPrice(actionId, quotedPrice);
   }
 
   /**
@@ -196,7 +198,7 @@ export class EnergyService {
    * unpricing an action cannot change, or strand, Energy already held.
    */
   async reserve(principal: LibraryPrincipal, input: EnergyReserveInput): Promise<EnergyReservationResult> {
-    const quote = this.getPrice(input.actionId);
+    const quote = this.getPrice(input.actionId, input.quotedPrice);
     const quantity = input.quantity ?? 1;
     assertEnergyAmount(quantity, 'quantity');
     assertIdempotencyKey(input.idempotencyKey);

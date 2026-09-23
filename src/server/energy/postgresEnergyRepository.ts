@@ -93,7 +93,8 @@ const translateSqlError = (error: unknown): never => {
 
 /**
  * Durable ledger adapter over the functions defined in
- * `database/migrations/20260918_001_energy_ledger.sql`. Every method is one
+ * `database/migrations/20260918_001_energy_ledger.sql` and its follow-on
+ * Energy migrations. Every method is one
  * SQL statement, so each ledger movement commits atomically with its
  * transaction line and the database's row lock serialises concurrent calls.
  */

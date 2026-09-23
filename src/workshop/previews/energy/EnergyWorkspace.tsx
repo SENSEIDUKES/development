@@ -13,6 +13,7 @@ import { workshopEntries } from '../../manifest';
 import { type EnergyClient } from '@seihouse/library/energy';
 import { useEnergyAccount } from '@seihouse/library/energy';
 import { EnergyActionCost, EnergyBalanceIndicator, EnergyDeductionNotice, EnergyInsufficientState, EnergyPanel, energyDeductionToast } from '@seihouse/library/energy';
+import type { QiAccountState } from '@seihouse/library/cultivation';
 import { createLocalEnergyClient } from './localEnergyClient';
 
 const entry = workshopEntries.find(candidate => candidate.id === 'energy')!;
@@ -51,6 +52,9 @@ function EnergyPieces({ client }: { client: EnergyClient }) {
   const account = useEnergyAccount({ client });
   const { toast } = useSEIToast();
   const available = account.snapshot?.available ?? 0;
+  const qi: QiAccountState = account.status === 'error'
+    ? { status: 'error', snapshot: null, error: 'QI could not be read.' }
+    : { status: 'ready', snapshot: { uid: 'workshop-cultivator', balance: 13_480, transactions: [] }, error: null };
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 pb-16 pt-6 text-neutral-200 sm:px-8">
       <Section title="Balance indicator · lives inside other surfaces">
@@ -78,7 +82,7 @@ function EnergyPieces({ client }: { client: EnergyClient }) {
         <EnergyInsufficientState required={3} available={Math.min(available, 1)} onOpenEnergy={() => toast({ title: 'A host opens its Energy panel here.', tone: 'info' })} />
       </Section>
       <Section title="Energy information panel · the profile's Energy destination">
-        <EnergyPanel account={account} />
+        <EnergyPanel account={account} qi={qi} daoXp={13_480} />
       </Section>
     </div>
   );
@@ -87,7 +91,7 @@ function EnergyPieces({ client }: { client: EnergyClient }) {
 function EnergyReference() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 text-sm text-neutral-400 sm:px-8">
-      Energy has no production original. It is built here first, as the shared meter every SEN generation feature will draw from, and transfers to Light-Novels as a whole system.
+      Energy has no production original. It is built here first as the Library economy page — live Energy, spendable QI, and permanent DAO XP — while SEN remains unaware of Library balances and prices.
     </div>
   );
 }

@@ -41,12 +41,17 @@ import type {
   UserProfile,
 } from './types';
 
-/** Shape of `getDaoRankData(...)`. `nextRank` / `maxQi` are null at max rank. */
+/** Shape of `getDaoRankData(...)`. `nextRank` / `maxDaoXp` are null at max rank. */
 export interface DaoRankData {
   rank: string;
   nextRank: string | null;
   progress: number;
+  maxDaoXp: number | null;
+  currentDaoXp: number;
+  rankThreshold: number;
+  /** @deprecated Locked-reference compatibility only; this holds DAO XP, not QI. */
   maxQi: number | null;
+  /** @deprecated Locked-reference compatibility only; this holds DAO XP, not QI. */
   currentQi: number;
 }
 

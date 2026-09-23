@@ -2,10 +2,14 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { afterAll, describe, expect, it } from 'vitest';
+import { ENERGY_ACTION_IDS } from '@seihouse/library/energy';
 import { describeEnergyLedgerContract } from './energyLedgerContract';
 import { PostgresEnergyRepository } from './postgresEnergyRepository';
 
-const MIGRATION = path.resolve(__dirname, '../../../database/migrations/20260918_001_energy_ledger.sql');
+const MIGRATIONS = [
+  '20260918_001_energy_ledger.sql',
+  '20260922_001_energy_generation_actions.sql',
+].map(file => path.resolve(__dirname, '../../../database/migrations', file));
 
 let database: Promise<PGlite> | undefined;
 
@@ -20,7 +24,7 @@ const createDatabase = async () => {
   database ??= (async () => {
     const db = new PGlite();
     await db.exec('CREATE TABLE user_account (uid TEXT PRIMARY KEY);');
-    await db.exec(await readFile(MIGRATION, 'utf8'));
+    for (const migration of MIGRATIONS) await db.exec(await readFile(migration, 'utf8'));
     for (const uid of ['dev-user', 'prod-user', 'someone-else']) {
       await db.query('INSERT INTO user_account (uid) VALUES ($1)', [uid]);
     }
@@ -38,6 +42,17 @@ afterAll(async () => {
 describeEnergyLedgerContract('postgres migration', async () => new PostgresEnergyRepository(await createDatabase()));
 
 describe('Energy Postgres migration guards', () => {
+  it('accepts every action ID in the shared Energy catalog', async () => {
+    const db = await createDatabase();
+    await db.query('SELECT energy_apply_grant($1, $2, $3, $4, $5::jsonb)', ['dev-user', 100, 'catalog-actions', 'Catalog test Energy', '{}']);
+    for (const [index, actionId] of ENERGY_ACTION_IDS.entries()) {
+      await expect(db.query(
+        'SELECT energy_create_reservation($1, $2, $3, $4, $5, $6::jsonb)',
+        ['dev-user', actionId, 1, `catalog-action-${index}`, `${actionId} reserved`, '{}'],
+      )).resolves.toBeDefined();
+    }
+  });
+
   it('rejects direct balance writes that would break the ledger invariants', async () => {
     const db = await createDatabase();
     await db.query('SELECT energy_ensure_account($1)', ['dev-user']);

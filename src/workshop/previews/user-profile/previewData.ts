@@ -148,7 +148,7 @@ export const MOCK_ARTIFACTS: CosmicArtifact[] = [
       scope: 'Account-wide',
       visual: 'A faint gold underline beneath your display name.',
       counterplay: 'Ends early if the Dao Pillar cracks.',
-      rewardHook: 'Complete 500 Qi of reading to unlock a Transcendent aura preview.',
+      rewardHook: 'Aura ranks follow permanent DAO XP; no challenge payout is configured.',
       qiMultiplier: 1.15,
       targetProgress: 500,
     },

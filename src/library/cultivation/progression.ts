@@ -208,52 +208,83 @@ function accessibleAuraTextVisual(visual: RankVisual): RankVisual {
 }
 
 /**
- * The Qi ladder, derived from the canonical ranks so a rank can never carry one
+ * The DAO XP ladder, derived from the canonical ranks so a rank can never carry one
  * threshold here and another one in its colour data.
  */
-export const DAO_RANKS = RANKS.map(rank => ({ threshold: rank.unlockedAt, name: rank.name }));
+export const DAO_RANKS = RANKS.map(rank => ({
+  id: rank.id,
+  threshold: rank.unlockedAt,
+  name: rank.name,
+}));
 
-export function getDaoRankData(qi: number = 0) {
+export interface DaoRankData {
+  rank: string;
+  nextRank: string | null;
+  /** Percentage through the current rank band. */
+  progress: number;
+  /** The permanent DAO XP threshold for the next rank, or null at Master. */
+  maxDaoXp: number | null;
+  /** The current permanent DAO XP total. */
+  currentDaoXp: number;
+  /** The current rank's permanent DAO XP floor. */
+  rankThreshold: number;
+  /**
+   * @deprecated Compatibility projection for the locked historical reference.
+   * This is permanent DAO XP, not a spendable QI balance; active code uses
+   * `maxDaoXp`.
+   */
+  maxQi: number | null;
+  /** @deprecated See `maxQi`; active code uses `currentDaoXp`. */
+  currentQi: number;
+}
+
+export function getDaoRankData(daoXp: number = 0): DaoRankData {
+  const currentDaoXp = Number.isFinite(daoXp) ? Math.max(0, daoXp) : 0;
   let currentTitle = DAO_RANKS[0].name;
-  let nextThreshold = DAO_RANKS[1].threshold;
-  let nextTitle = DAO_RANKS[1].name;
+  let nextThreshold: number | null = DAO_RANKS[1]?.threshold ?? null;
+  let nextTitle: string | null = DAO_RANKS[1]?.name ?? null;
   let previousThreshold = DAO_RANKS[0].threshold;
 
   for (let i = 0; i < DAO_RANKS.length; i++) {
-    if (qi >= DAO_RANKS[i].threshold) {
+    if (currentDaoXp >= DAO_RANKS[i].threshold) {
       currentTitle = DAO_RANKS[i].name;
       previousThreshold = DAO_RANKS[i].threshold;
       if (i + 1 < DAO_RANKS.length) {
         nextThreshold = DAO_RANKS[i+1].threshold;
         nextTitle = DAO_RANKS[i+1].name;
       } else {
-        nextThreshold = null as any;
-        nextTitle = null as any;
+        nextThreshold = null;
+        nextTitle = null;
       }
     }
   }
 
-  const progress = nextThreshold ? ((qi - previousThreshold) / (nextThreshold - previousThreshold)) * 100 : 100;
+  const progress = nextThreshold !== null
+    ? ((currentDaoXp - previousThreshold) / (nextThreshold - previousThreshold)) * 100
+    : 100;
 
   return {
-     rank: currentTitle,
-     nextRank: nextTitle,
-     progress: Math.min(Math.max(progress, 0), 100),
-     maxQi: nextThreshold,
-     currentQi: qi
+    rank: currentTitle,
+    nextRank: nextTitle,
+    progress: Math.min(Math.max(progress, 0), 100),
+    maxDaoXp: nextThreshold,
+    currentDaoXp,
+    rankThreshold: previousThreshold,
+    maxQi: nextThreshold,
+    currentQi: currentDaoXp,
   };
 }
 
 /**
  * The stored aura selection to paint with: whatever the cultivator chose, or
- * the rank their Qi has reached. Legacy stored values still resolve, so this
+ * the rank their permanent DAO XP has reached. Legacy stored values still resolve, so this
  * accepts anything `displayNameColor` has ever held.
  */
 export function getAuraSelection(
   explicitColor: string | undefined,
-  xp: number | undefined,
+  daoXp: number | undefined,
 ): string {
-  const resolved = resolveRankVisual(explicitColor, xp);
+  const resolved = resolveRankVisual(explicitColor, daoXp);
   return resolved.source === 'custom' ? resolved.visual.stops[0] : rankToken(resolved.rank);
 }
 
@@ -281,7 +312,7 @@ export function activeAuraOverride(
 export function getAuraTextStyle(
   selection?: string,
   activeStatusEffects?: ActiveStatusEffect[],
-  xp?: number,
+  daoXp?: number,
   now = Date.now(),
 ): { style?: React.CSSProperties; className?: string } {
   if (!selection) return {};
@@ -304,7 +335,7 @@ export function getAuraTextStyle(
     };
   }
 
-  const { visual } = resolveRankVisual(selection, xp);
+  const { visual } = resolveRankVisual(selection, daoXp);
   const textVisual = accessibleAuraTextVisual(visual);
 
   if (textVisual.kind === 'solid') {
@@ -327,7 +358,7 @@ export function getAuraTextStyle(
 export function getAuraGlowStyle(
   selection?: string,
   activeStatusEffects?: ActiveStatusEffect[],
-  xp?: number,
+  daoXp?: number,
   now = Date.now(),
 ): { style?: React.CSSProperties; className: string } {
   if (!selection) return { className: '' };
@@ -338,7 +369,7 @@ export function getAuraGlowStyle(
     return { className: 'shadow-[0_0_25px_rgba(139,0,0,0.7)] border-human/40 animate-pulse motion-reduce:animate-none' };
   }
 
-  const { visual } = resolveRankVisual(selection, xp);
+  const { visual } = resolveRankVisual(selection, daoXp);
   return {
     style: {
       boxShadow: rankGlowShadow(visual, visual.kind === 'solid' ? 20 : 30),
@@ -361,6 +392,8 @@ export {
   rankGlowShadow,
   rankGlowFilter,
   resolveRankVisual,
+  resolvePermanentDaoXp,
+  getRankForDaoXp,
   getRankForQi,
   getRankById,
 } from './rankVisuals';

@@ -13,7 +13,7 @@
  * stops so the dominant colours keep the majority of the ramp.
  *
  * Nothing here imports React, Tailwind, or a status effect. The style helpers
- * that layer status effects on top live in `qi.ts`.
+ * that layer status effects on top live in `progression.ts`.
  */
 
 export type RankId =
@@ -52,7 +52,7 @@ export interface Rank {
   id: RankId;
   /** The rank name, exactly as it is shown. */
   name: string;
-  /** Heavenly Qi required to reach this rank. */
+  /** Permanent DAO XP required to reach this rank. */
   unlockedAt: number;
   visual: RankVisual;
   /** Whether the portrait carries the ambient mote layer at this rank. */
@@ -84,8 +84,8 @@ const TROPHY_GOLD = '#FFD700'; // 🏆
 const VIOLET = '#A855F7'; //      🟣
 
 /**
- * The ten ranks, ascending. This is the single source for both the Qi ladder
- * and the colour system; `DAO_RANKS` in `qi.ts` is derived from it.
+ * The ten ranks, ascending. This is the single source for the DAO XP ladder
+ * and the colour system; `DAO_RANKS` in `progression.ts` is derived from it.
  */
 export const RANKS: Rank[] = [
   {
@@ -223,9 +223,9 @@ export function getRankById(id: RankId): Rank {
   return RANKS.find(rank => rank.id === id) ?? RANKS[0];
 }
 
-/** The highest rank the given Qi total has reached. */
-export function getRankForQi(qi: number | undefined): Rank {
-  const total = Number.isFinite(qi) ? Math.max(0, qi ?? 0) : 0;
+/** The highest rank the given permanent DAO XP total has reached. */
+export function getRankForDaoXp(daoXp: number | undefined): Rank {
+  const total = Number.isFinite(daoXp) ? Math.max(0, daoXp ?? 0) : 0;
   let reached = RANKS[0];
   for (const rank of RANKS) {
     if (total < rank.unlockedAt) break;
@@ -235,7 +235,51 @@ export function getRankForQi(qi: number | undefined): Rank {
 }
 
 /**
- * Values `displayNameColor` held before the ten-rank ladder, mapped by the Qi
+ * Compatibility alias for package consumers migrating from the former
+ * rank-from-QI name. New Library code must use `getRankForDaoXp`; no caller
+ * should pass a spendable QI balance here.
+ */
+export const getRankForQi = getRankForDaoXp;
+
+const LEGACY_RANK_NAMES: Readonly<Record<string, RankId>> = {
+  reader: 'reader',
+  disciple: 'disciple',
+  scribe: 'scribe',
+  scholar: 'scholar',
+  author: 'author',
+  adept: 'adept',
+  elder: 'elder',
+  leader: 'leader',
+  sage: 'sage',
+  master: 'master',
+  'mortal reader': 'reader',
+  'wandering disciple': 'disciple',
+  'outer sect scribe': 'scribe',
+  'inner sect scholar': 'scholar',
+  'dao adept': 'author',
+  'spirit author': 'adept',
+  'heavenly chronicler': 'elder',
+  'sage of branching paths': 'leader',
+  'dao master': 'sage',
+};
+
+/**
+ * Read permanent DAO XP without ever treating spendable QI as progression.
+ * A legacy persisted rank can retain its threshold while a host backfills an
+ * exact DAO XP value; an account with neither remains unknown rather than
+ * being promoted from a purchase balance.
+ */
+export function resolvePermanentDaoXp(
+  daoXp: number | undefined | null,
+  legacyRank?: string | undefined | null,
+): number | null {
+  if (typeof daoXp === 'number' && Number.isFinite(daoXp)) return Math.max(0, daoXp);
+  const rankId = typeof legacyRank === 'string' ? LEGACY_RANK_NAMES[legacyRank.trim().toLowerCase()] : undefined;
+  return rankId ? getRankById(rankId).unlockedAt : null;
+}
+
+/**
+ * Values `displayNameColor` held before the ten-rank ladder, mapped by the DAO XP
  * threshold they were unlocked at, so an existing cultivator keeps a treatment
  * they had actually earned rather than being promoted or demoted.
  */
@@ -266,16 +310,16 @@ export interface ResolvedRankVisual {
 
 /**
  * Resolve the treatment to paint. An explicit selection wins; otherwise the
- * rank the cultivator's Qi has reached is used.
+ * rank the cultivator's permanent DAO XP has reached is used.
  *
  * A raw hex is the Master custom spectrum and is honoured whenever it is
  * stored — the Settings picker is what gates *setting* one on reaching Master.
  */
 export function resolveRankVisual(
   selected: string | undefined | null,
-  qi: number | undefined,
+  daoXp: number | undefined,
 ): ResolvedRankVisual {
-  const earned = getRankForQi(qi);
+  const earned = getRankForDaoXp(daoXp);
   const value = selected?.trim();
 
   if (value) {

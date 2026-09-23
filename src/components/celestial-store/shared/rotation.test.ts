@@ -5,7 +5,7 @@ import {
   CELESTIAL_STORE_CONFIG,
   ENERGY_ELIGIBLE_FAMILIAR_IDS,
   ENERGY_FAMILIAR_PRICES,
-  PROVISIONAL_QI_PRICES,
+  QI_FAMILIAR_PRICES,
   QI_ELIGIBLE_FAMILIAR_IDS,
   type CelestialStoreConfig,
 } from './storeConfig';
@@ -81,14 +81,14 @@ describe('dailyStoreRotation', () => {
     expect(selections.size).toBeGreaterThan(1);
   });
 
-  it('prices Energy offers from the rank table and QI offers from the provisional configuration', () => {
+  it('prices Energy and spendable-QI offers from their shared rarity standards', () => {
     const rotation = dailyStoreRotation(OPTIONS, new Date(2026, 8, 22));
     for (const offer of rotation.energy) {
       expect(offer.price).toBe(ENERGY_FAMILIAR_PRICES[offer.option.rarity]);
       expect(offer.salePrice).toBeUndefined();
     }
     for (const offer of rotation.qi) {
-      expect(offer.price).toBe(PROVISIONAL_QI_PRICES[offer.familiarId]);
+      expect(offer.price).toBe(QI_FAMILIAR_PRICES[offer.option.rarity]);
       expect(offer.salePrice).toBeUndefined();
     }
   });

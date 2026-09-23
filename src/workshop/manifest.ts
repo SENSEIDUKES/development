@@ -213,7 +213,7 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'library',
     status: 'active',
     title: 'User Profile',
-    description: "The cultivator's profile. The locked reference is the production Celestial Tools page; Development is the Cultivator Cave redesign — a portrait, identity, rank and Qi over a stock Immortal Land backdrop, four destinations (Stories, Relics, Dao Pillar, Active Status Effects), a cinematic Spirit Link authentication flow, and one gear-triggered Settings panel holding identity, aura, portrait, environment, language, writing, sync, backup, advanced tools, Sever Link, and the authorized Akashic Switchboard — driven entirely by local mock adapters.",
+    description: "The cultivator's profile. The locked reference is the production Celestial Tools page; Development is the Cultivator Cave redesign — a portrait, identity, permanent DAO XP rank, and spendable QI over a stock Immortal Land backdrop, four destinations (Stories, Relics, Dao Pillar, Active Status Effects), the Energy, QI & DAO XP page, a cinematic Spirit Link authentication flow, and one gear-triggered Settings panel holding identity, aura, portrait, environment, language, writing, sync, backup, advanced tools, Sever Link, and the authorized Akashic Switchboard — driven entirely by local mock adapters.",
     category: 'other',
     version: 'v1.2',
     source: {
@@ -341,7 +341,7 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'library',
     status: 'active',
     title: 'Energy',
-    description: 'The shared, server-owned Energy meter behind SEN generation: balance indicator, action-cost indicator, deduction notice, insufficient-Energy state, and the Energy panel the profile opens. Development test prices only; no generation flow spends Energy yet.',
+    description: 'The shared, server-owned Energy meter behind SEN generation: balance indicator, action-cost indicator, deduction notice, insufficient-Energy state, and the Energy, QI & DAO XP page the profile opens. The current price schedule is shared with Store offers; no generation flow charges Energy yet.',
     category: 'other',
     version: 'v1.0',
     source: {

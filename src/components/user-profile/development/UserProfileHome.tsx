@@ -28,12 +28,13 @@ import { LibraryTierBadge } from "./LibraryTierBadge";
 import { caveHref, publicCavePath, useCaveRoute } from './caveNavigation';
 import {
   getDaoRankData,
-  getRankForQi,
+  getRankForDaoXp,
   getAuraSelection,
   getAuraTextStyle,
   activeAuraOverride,
   getAuraGlowStyle,
   resolveRankVisual,
+  resolvePermanentDaoXp,
   rankBackground,
 } from "../../../library/cultivation/progression";
 import { isEffectActive } from './timedEffects';
@@ -150,7 +151,8 @@ export function UserProfileHome({
 }) {
   const { profile, formData, isLoading } = controller;
   const isPublic = mode === "public";
-  const cultivationKnown = isPublic || !controller.cultivation || controller.cultivation.status === 'ready';
+  const daoXp = resolvePermanentDaoXp(profile?.dao_xp, profile?.dao_rank);
+  const daoXpKnown = daoXp !== null;
   const { navigate } = useCaveRoute();
   const creatorLinks = profile?.uid ? (['worlds', 'storefront'] as const).map(destination => {
     const path = publicCavePath(destination, profile.uid);
@@ -172,31 +174,31 @@ export function UserProfileHome({
   const effectsRef = useRef<HTMLButtonElement>(null);
   const statsRef = useRef<HTMLButtonElement>(null);
   const highlightsRef = useRef<HTMLButtonElement>(null);
-  const auraXp = profile?.dao_xp ?? profile?.qi ?? 0;
-  const daoData = getDaoRankData(auraXp);
-  const rank = getRankForQi(auraXp);
+  const daoProgress = daoXp ?? 0;
+  const daoData = getDaoRankData(daoProgress);
+  const rank = getRankForDaoXp(daoProgress);
   const effects = (profile?.activeStatusEffects ?? []).filter((effect) =>
     isEffectActive(effect, now),
   );
-  const auraSelection = getAuraSelection(profile?.displayNameColor, auraXp);
+  const auraSelection = getAuraSelection(profile?.displayNameColor, daoProgress);
   const nameStyle = getAuraTextStyle(
     auraSelection,
     effects,
-    auraXp,
+    daoProgress,
     now,
   );
   const auraGlow = getAuraGlowStyle(
     auraSelection,
     effects,
-    auraXp,
+    daoProgress,
     now,
   );
-  const activeRank = resolveRankVisual(auraSelection, auraXp);
+  const activeRank = resolveRankVisual(auraSelection, daoProgress);
   const hasAuraOverride = activeAuraOverride(effects, now) !== null;
   const hasFireTitle = activeRank.rank.id === 'leader' && activeRank.source === 'rank' && !hasAuraOverride;
-  const nextRank = !cultivationKnown || daoData.maxQi === null ? null : getRankForQi(daoData.maxQi);
-  const currentRankStyle = getAuraTextStyle(`rank:${rank.id}`, [], auraXp, now);
-  const nextRankStyle = nextRank ? getAuraTextStyle(`rank:${nextRank.id}`, [], daoData.maxQi!, now) : {};
+  const nextRank = !daoXpKnown || daoData.maxDaoXp === null ? null : getRankForDaoXp(daoData.maxDaoXp);
+  const currentRankStyle = getAuraTextStyle(`rank:${rank.id}`, [], daoProgress, now);
+  const nextRankStyle = nextRank ? getAuraTextStyle(`rank:${nextRank.id}`, [], daoData.maxDaoXp!, now) : {};
   const progressRef = useRef<HTMLButtonElement>(null);
   const bioOpenerRef = useRef<HTMLButtonElement>(null);
   const bioRef = useRef<HTMLParagraphElement>(null);
@@ -252,7 +254,7 @@ export function UserProfileHome({
   }, [bio]);
   useEffect(() => { setPanel(null); }, [profile?.uid, bio]);
   const panelTitles: Record<HomePanel, string> = {
-    progress: "Cultivation progress",
+    progress: "DAO XP progress",
     bio: "Cultivator bio",
     qi: "Qi Reserves",
     effects: "Active Effects",
@@ -438,12 +440,12 @@ export function UserProfileHome({
               {profile && (
                 <>
                   <button ref={progressRef} type="button" className="cave-progress-trigger mt-3"
-                    aria-label="Show exact cultivation progress" aria-haspopup="dialog"
+                    aria-label="Show exact DAO XP progress" aria-haspopup="dialog"
                     onClick={() => openPanel("progress")}>
                     <span className="cave-home-progress" role="progressbar"
-                      aria-label={daoData.nextRank ? `Cultivation toward ${daoData.nextRank}` : "Maximum rank"}
-                      aria-valuemin={0} aria-valuemax={100} aria-valuenow={cultivationKnown ? Math.round(daoData.progress) : undefined}
-                      aria-valuetext={cultivationKnown ? `${formatQi(daoData.currentQi)} Qi${daoData.maxQi !== null ? ` of ${formatQi(daoData.maxQi)}` : ", maximum rank"}` : 'Cultivation balance unavailable'}
+                      aria-label={daoData.nextRank ? `DAO XP toward ${daoData.nextRank}` : "Maximum rank"}
+                      aria-valuemin={0} aria-valuemax={100} aria-valuenow={daoXpKnown ? Math.round(daoData.progress) : undefined}
+                      aria-valuetext={daoXpKnown ? `${formatQi(daoData.currentDaoXp)} DAO XP${daoData.maxDaoXp !== null ? ` of ${formatQi(daoData.maxDaoXp)}` : ", maximum rank"}` : 'DAO XP unavailable'}
                       style={{ "--cave-rank-background": rankBackground(rank.visual),
                         "--cave-progress": `${daoData.progress}%` } as React.CSSProperties}
                       data-cave-progress>
@@ -452,10 +454,10 @@ export function UserProfileHome({
                   </button>
                   <div className="cave-home-rank-row" data-cave-rank-row>
                     <p className={currentRankStyle.className} style={currentRankStyle.style}
-                      data-cave-rank>{cultivationKnown ? daoData.rank : 'Cultivation unavailable'}</p>
+                      data-cave-rank>{daoXpKnown ? daoData.rank : 'DAO XP unavailable'}</p>
                     {nextRank ? <p className={nextRankStyle.className} style={nextRankStyle.style}
                       data-cave-next-rank>{nextRank.name}</p>
-                      : <p className="text-neutral-400" data-cave-next-rank>{cultivationKnown ? 'Maximum rank' : 'Waiting for the ledger'}</p>}
+                      : <p className="text-neutral-400" data-cave-next-rank>{daoXpKnown ? 'Maximum rank' : 'Waiting for DAO XP'}</p>}
                   </div>
                   {bio && <section className="mt-4" aria-label="Cultivator bio" data-cave-bio-section>
                     <h3 className="cave-bio-label">CULTIVATOR BIO</h3>
@@ -686,7 +688,7 @@ export function UserProfileHome({
             {panel ? panelTitles[panel] : panelTitles.qi}
           </SEIDialogTitle>
           <SEIDialogDescription className="sr-only">
-            {panel === "progress" ? "Exact cultivation toward the next rank"
+            {panel === "progress" ? "Exact DAO XP toward the next rank"
               : panel === "bio" ? "Complete bio for this cultivator"
               : panel === "effects"
               ? "Current effects and remaining duration"
@@ -697,8 +699,8 @@ export function UserProfileHome({
                   : "Unlocked special Qi balances"}
           </SEIDialogDescription>
           {panel === "progress" ? (
-            <p className="mt-4 font-mono" data-cave-qi>
-              {cultivationKnown ? `${formatQi(daoData.currentQi)}${daoData.maxQi !== null ? ` / ${formatQi(daoData.maxQi)} Qi` : ' Qi · Maximum rank'}` : controller.cultivation?.error ?? 'Cultivation balance is not connected.'}
+            <p className="mt-4 font-mono" data-cave-dao-xp>
+              {daoXpKnown ? `${formatQi(daoData.currentDaoXp)}${daoData.maxDaoXp !== null ? ` / ${formatQi(daoData.maxDaoXp)} DAO XP` : ' DAO XP · Maximum rank'}` : 'DAO XP is not available on this profile.'}
             </p>
           ) : panel === "bio" ? (
             <p className="mt-4 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{bio}</p>

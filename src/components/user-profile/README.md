@@ -32,22 +32,33 @@ The existing profile controller owns the unchanged `familiarSize` multiplier and
 drafts. A minimized Familiar appears as a recall button in the Profile header;
 the app session preserves its position and size across Home/Profile navigation.
 
-## Current ownership (2026-09-19)
+## Current ownership (2026-09-22)
 
 Profile owns the Celestial Library account surface and orchestration; it does
-not own Energy, Qi, rewards, or Relic authority. Energy comes from
-`@seihouse/library/energy`. Rank and cultivation progress are projections of
-the host-authenticated Qi ledger exposed through
-`@seihouse/library/cultivation`. Dao Pillar delivers an idempotent server reward
-and then signals Profile to refresh that projection. Relics arrive through the
-read-only Library Relics client. Host authentication, persistence, roles, and
-administration remain outside the package.
+not own Energy, spendable QI, permanent DAO XP, rewards, or Relic authority.
+Energy comes from `@seihouse/library/energy`; QI comes from the host-authenticated
+ledger exposed through `@seihouse/library/cultivation`; permanent DAO XP comes
+from the host profile. Rank, aura unlocks, and progress derive from DAO XP only.
+Dao Pillar delivers an idempotent server QI reward and then signals Profile to
+refresh that ledger projection; it cannot promote a rank. Relics arrive through
+the read-only Library Relics client. Host authentication, persistence, roles,
+and administration remain outside the package.
 
 The page is reached in production from `src/App.tsx`, which renders `<UserProfile currentUser
 stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Light-Novels`
 `main` at commit `4a3dd02`.
 
 ## Workshop history
+
+- **2026-09-22 Energy, QI & DAO XP and rank switch:** `/home/energy` is now the one
+  **Energy, QI & DAO XP** destination. Its top summary renders live Energy, the spendable
+  QI ledger balance, and permanent DAO XP with current rank/progress; it retains Energy
+  activity and development controls. Its packs/item prices are shared with the Store and its
+  generation costs are visibly projected. Profile Home, public-profile projection, and Aura
+  gates now read only `dao_xp` (or the threshold of a legacy persisted rank during a host
+  backfill), never the QI balance. A QI claim, purchase, or spend therefore cannot change rank.
+  No checkout, new QI daily award, achievement payout, or production profile migration was
+  added in this repository.
 
 - **2026-09-22 Celestial Store destination:** The `/home/store` stub ("The Store is not
   available yet.") is now the dedicated official Celestial Store page
@@ -238,11 +249,11 @@ stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Li
   interactive shell now paints above the decorative environment, and the backdrop cannot intercept
   pointer input, so profile cards remain visible and tappable on mobile and desktop.
 - **2026-09-08:** Replaced the Celestial Aura tier list with the canonical **rank colour system** in
-  `rankVisuals.ts`: the ten-rank ladder (Reader → Master) with its Qi thresholds, and each rank's
+  `rankVisuals.ts`: the ten-rank ladder (Reader → Master) with its permanent DAO XP thresholds, and each rank's
   solid colour or multi-stop gradient as first-class data. The display name, the rank orb, the
   portrait glow, the portrait motes, and the Settings rank list all render from it. Settings now
-  shows only name, swatch and Qi per rank. Master remains the user-controlled spectrum, at
-  50,000 Qi. Qi earning mechanics are untouched.
+  shows only name, swatch and DAO XP per rank. Master remains the user-controlled spectrum, at
+  50,000 DAO XP. Spendable-QI earning mechanics are separate from rank progression.
 
 ## Folder layout
 
@@ -271,13 +282,14 @@ shared/       — the services port, domain types, and the unforked offering-wee
 | `publicProfile.ts` | The public view's domain: the visibility configuration, the stat/highlight shapes, and the record → presentation build |
 | `displayName.ts` | The twelve visible-character display-name rule (grapheme counting and clamping) |
 | `caveEnvironment.ts` | The five stock cave environments, the destination tile art, the emblem, the motto, and the stage helper |
-| `src/library/cultivation/rankVisuals.ts` | **The canonical Library rank colour system** — the ten ranks, their Qi thresholds, and each rank's colour identity as data |
-| `src/library/cultivation/progression.ts` | Rank progression maths and Cultivator Aura helpers derived from the Qi-ledger projection |
+| `src/library/cultivation/rankVisuals.ts` | **The canonical Library rank colour system** — the ten ranks, their permanent DAO XP thresholds, and each rank's colour identity as data |
+| `src/library/cultivation/progression.ts` | Rank progression maths and Cultivator Aura helpers derived from permanent DAO XP |
 | `chapterWritingStyle.ts` | Unchanged presentation values from production |
 | `userProfile.css` | The two rank-agnostic aura text classes plus the Cave ornament (title presence, rules, plaques, portrait ring) and the identity rank row, bio, and Boost styles |
 
 `shared/` retains Profile types, the offering-week helper, and the host service
-port. Cultivation and Qi contracts live under `src/library/cultivation/`.
+port. Cultivation, permanent DAO XP, and spendable-QI contracts live under
+`src/library/cultivation/`.
 Legacy daily-claim members remain only for the locked reference; the active Cave
 refreshes its Qi projection after a Dao Pillar reward.
 
@@ -315,10 +327,10 @@ confirmation, account, synchronization, and permission behavior stays with its c
 ### The rank colour system
 
 `rankVisuals.ts` is the single source for the rank ladder and for every colour the profile paints.
-`DAO_RANKS` in `qi.ts` is derived from it, so a rank cannot carry one threshold in the ladder and a
+`DAO_RANKS` in `progression.ts` is derived from it, so a rank cannot carry one threshold in the ladder and a
 different one in its colour data.
 
-| # | Rank | Qi | Colour identity |
+| # | Rank | DAO XP | Colour identity |
 | --- | --- | --- | --- |
 | 1 | Reader | 0 | solid white `#E5E7EB` |
 | 2 | Disciple | 100 | solid green `#22C55E` |
@@ -361,21 +373,21 @@ renderer takes one path:
 The only CSS the system still needs is the two rank-agnostic classes in `userProfile.css`: text
 clipping, and the spectrum drift. No rank has a class, a magic gradient name, or a branch of its own.
 
-**Settings** lists each rank as its name, its colour or gradient swatch, and the Qi it unlocks at —
+**Settings** lists each rank as its name, its colour or gradient swatch, and the permanent DAO XP it unlocks at —
 nothing else. The per-tier aura names and lore lines ("Prism Branching Gradient", "You master
 branches") are gone.
 
-**Master** stays the endgame: reaching 50,000 Qi unlocks the colour picker, and the chosen colour is
+**Master** stays the endgame: reaching 50,000 DAO XP unlocks the colour picker, and the chosen colour is
 stored on `displayNameColor` as a raw hex.
 
 #### `displayNameColor` compatibility
 
 The field now stores a `rank:<id>` token, or a raw hex for a Master custom spectrum.
 `resolveRankVisual` still reads every value production has ever written. The nine legacy values map
-by the Qi threshold they were unlocked at, so nobody is promoted or demoted by the ladder change:
+by the DAO XP threshold they were unlocked at, so nobody is promoted or demoted by the ladder change:
 `#8B5CF6` (Dao Adept, 1,500) resolves to Author, `gradient-violet-gold` (12,000) to Leader, and
 `animated-custom` (25,000) to Sage. A stored raw hex is honoured whenever it is present — the
-50,000 Qi gate is on *setting* one, not on painting one that was already earned.
+50,000 DAO XP gate is on *setting* one, not on painting one that was already earned.
 
 ### Stage label
 
@@ -481,7 +493,7 @@ typed, the untouched username, and the blocked save for a name stored before the
 The rank colour system has its own block: the ten thresholds, `rankBackground` over both a solid and
 a weighted multi-stop gradient, the earned-rank fallback, `resolveRankVisual` over rank tokens /
 legacy aura values / a custom hex, the solid-versus-gradient text treatments, the simplified
-Settings rank list, and the 50,000 Qi gate on the custom spectrum.
+Settings rank list, and the 50,000 DAO XP gate on the custom spectrum.
 
 ## Reusable Workshop dependencies
 
@@ -537,10 +549,12 @@ Once the Cave is approved, copy back from `development/`:
   → `src/components/` in Light-Novels.
 - Transfer `StoryAuthGate.tsx` and `public/story-seed/library-auth-backdrop.jpg` with the Cave, or
   consume the gate from the SEN package once that package version is installed in Light-Novels.
-- `rankVisuals.ts` → a new `src/lib/rankVisuals.ts`, plus the changes to `qi.ts` → the matching
-  exports in `src/lib/qi.ts`. Production's `AURA_TIERS`, `getAuraColorForXp`, and the two magic
-  `colorHex` strings are gone; see *The rank colour system* for what replaces them and for the
-  `displayNameColor` compatibility rules.
+- `rankVisuals.ts` → a new `src/lib/rankVisuals.ts` for `RANKS`, `getRankForDaoXp`, and
+  `resolvePermanentDaoXp`. Transfer `progression.ts`'s `DAO_RANKS`, `getDaoRankData`, and
+  dependent aura helpers into the matching exports in `src/lib/qi.ts`; retain `getRankForQi`
+  only as a compatibility alias for `getRankForDaoXp`, using permanent DAO XP. Production's
+  `AURA_TIERS`, `getAuraColorForXp`, and the two magic `colorHex` strings are gone; see *The
+  rank colour system* for what replaces them and for the `displayNameColor` compatibility rules.
 - `userProfile.css` → the aura block in `src/index.css` plus the Cave ornament rules. The per-tier
   `.aura-gradient-violet-gold` / `.aura-animated-custom` classes are replaced by the rank-agnostic
   `.aura-gradient-text` / `.aura-spectrum-text` pair.
@@ -581,7 +595,7 @@ const services: UserProfileServices = {
   of them without a deliberate migration task.
 - **`displayNameColor` is the one exception.** Its vocabulary changed with the rank colour system:
   it now stores a `rank:<id>` token, or a raw hex for a Master custom spectrum. No migration is
-  required — `resolveRankVisual` reads every legacy value production wrote, mapped by the Qi
+  required — `resolveRankVisual` reads every legacy value production wrote, mapped by the DAO XP
   threshold it was unlocked at (see *The rank colour system*). Keep that legacy map when
   transferring, or existing cultivators lose their aura.
 - The cave environment choice is not persisted. Adding a profile field for it is a production
@@ -681,9 +695,10 @@ settings, and existing child URLs are preserved. The locked reference is unchang
 
 `development/UserProfileHome.tsx` owns Home presentation. Transfer it with the
 existing feature stylesheet and services port. Rank progress and its numeric label
-both read `dao_xp ?? qi ?? 0`, using the existing development rank ladder and Home's
-semantic rank-bar hooks. Spendable Heavenly Qi remains compatible in the domain model;
-it is not a special reserve or a substitute for lifetime cultivation.
+read permanent `dao_xp` only, with an existing persisted rank supplying a conservative
+threshold while a production host backfills exact DAO XP. Spendable QI and legacy Heavenly
+Qi remain compatible in the domain model; neither is a special reserve nor a substitute for
+lifetime cultivation.
 
 The services port adds optional `unlockedSpecialQi` (`sect` / `demonic`) and
 `dailyClaim`. Explicit unlocks show zero balances; legacy profiles without unlock
@@ -732,7 +747,7 @@ both, and only the information areas below them change:
 
 | Area | Private | Public |
 | --- | --- | --- |
-| Under the rank | Cultivation progress and Qi | The cultivator's bio |
+| Under the rank | Permanent DAO XP progress | The cultivator's bio |
 | Left card | Qi Reserves | Stats |
 | Right card | Active Effects | Highlights |
 | Action | Daily Dao Pillar (opens the calendar) | Boost |
@@ -832,7 +847,7 @@ profile needs a host-supplied record and its own authorization; this change adds
 
 `UserProfile.accountControls` accepts host-owned `inboxUnreadCount`, (`energyBalance` was removed on 2026-09-18 in favour of the shared Energy client),
 `onOpenInbox`, `onOpenStore`, and `onRedeemCode`. Energy is generation currency, independent
-of Qi; missing Energy reads Unavailable, while zero remains zero. The Workshop host
+of spendable QI and permanent DAO XP; missing Energy reads Unavailable, while zero remains zero. The Workshop host
 supplies a fixture Energy client and two unread messages. No account schema or persistence is added.
 Hosts should supply their Energy provider, current count, and destination callbacks. Without callbacks,
 the Cave opens explicit unavailable previews at `/home/inbox`, `/home/store`, and

@@ -6,7 +6,7 @@ not a build convenience.
 | Directory | Package | What it is |
 | --- | --- | --- |
 | [`sen/`](./sen/README.md) | `@seihouse/sen` | **The portable engine.** SEIHouse Expanded Novels: an embeddable expanded-narrative engine another author or company installs in their own application, supplying their own writing, branding, storage, authentication, and generation method. |
-| [`library/`](./library/README.md) | `@seihouse/library` | **The first-party host application.** SEIHouse's own branded implementation of SEN: cultivation and Qi progression, the relic economy, and Library-specific presentation. |
+| [`library/`](./library/README.md) | `@seihouse/library` | **The first-party host application.** SEIHouse's own branded implementation of SEN: permanent DAO XP cultivation, spendable QI, the relic economy, and Library-specific presentation. |
 
 **Library may depend on SEN. SEN must never depend on Library.**
 
@@ -25,7 +25,7 @@ Ask what an outside author installing SEN would need:
   narrative surfaces built on them. AI chapter generation is one optional
   content source here, never a requirement.
 - **Library** — SEIHouse's own product: Library visuals and language,
-  cultivation/Qi progression, hub behavior, economy, services, and
+  permanent DAO XP cultivation, spendable QI, hub behavior, economy, services, and
   infrastructure.
 
 When a surface mixes the two — reusable behavior wearing a Library skin — the

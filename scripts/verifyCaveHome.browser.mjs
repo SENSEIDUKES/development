@@ -44,8 +44,9 @@ export async function verifyCaveHome(page) {
   await choose('Home edge cases');
   await card('familiar').press('Space');
   await page.locator('[data-familiar-training]').waitFor({ timeout: 20000 });
-  check(cave() === '/home/familiar', 'Familiar must open Familiar training');
-  check((await page.locator('main').innerText()).includes('never grants a boost'), 'training must say it grants no advantage');
+  check(cave() === '/home/familiar', 'Familiar must open Familiar bonds');
+  check(/never grants? a boost/.test(await page.locator('main').innerText()), 'bonds must say they grant no advantage');
+  check(await page.locator('[data-elemental-effect-panel]').count() === 1, 'the Familiar page must offer the Active Elemental Effect');
   await returnToCave();
   await card('rewards').click();
   await page.locator('[data-achievements-panel]').waitFor({ timeout: 20000 });

@@ -1,39 +1,93 @@
 /**
- * Familiar training and cosmetic-effect contracts shared by the server-owned
- * Familiar account and every Library surface.
+ * Familiar bond, mastery and name-effect contracts shared by the
+ * server-owned Familiar account and every Library surface.
  *
- * Familiars own the active-effect mechanic. A cultivator trains one Familiar
- * at a time by offering it QI; accumulated QI raises that Familiar's tier,
- * and tiers unlock alternate forms and cosmetic effects such as a
- * `LibraryElementalTitle` treatment on the cultivator's name. The equipped
- * Familiar's selected effect is the cultivator's one active effect.
+ * Two scales describe a Familiar, and they never stand in for each other:
+ *
+ * - **Familiar rarity** (`FamiliarRarity`, from the host catalogue) says how
+ *   rare the Familiar is. It is content and never changes per cultivator.
+ * - **Bond Rank** (`FamiliarBondRank`) says how far this cultivator has
+ *   cultivated this Familiar by offering it QI. An Epic familiar can reach a
+ *   Legendary bond.
+ *
+ * Both use the words Common, Rare, Epic and Legendary, so every label names
+ * its scale: "Epic familiar", "Legendary bond".
+ *
+ * Name effects come in two kinds:
+ *
+ * - **Elements** are shared instruments. Every Familiar channels one, and any
+ *   cultivator can master any of them. Through Common, Rare and Epic bond the
+ *   Familiar's elemental title grows stronger but shows only while that
+ *   Familiar is the Active Familiar. At Legendary bond the cultivator masters
+ *   the element: its effect joins the permanent collection and can be worn
+ *   with any Familiar.
+ * - **Signatures** are custom animation pieces SEIHouse writes in code for one
+ *   specific Familiar. No setting produces one, and a signature never leaves
+ *   its Familiar.
+ *
+ * The Active Familiar (which companion follows the cultivator) is host
+ * profile state. The Active Elemental Effect (what letters the DAO name) is
+ * the Familiar account's choice. Before an element is mastered the two are
+ * coupled; mastery lets them separate.
  *
  * Every effect is cosmetic. None carries a boost, multiplier, discount,
  * rarity advantage, or gameplay benefit — the shapes below have no field
- * that could express one, and the server validates its catalogue against
- * that rule at load.
+ * that could express one, and the server validates its content at load.
  */
 
-/** The `LibraryElementalTitle` elements a Familiar can lend (never `none`). */
+/** The `LibraryElementalTitle` elements a Familiar can channel (never `none`). */
 export const FAMILIAR_ELEMENTS = ['fire', 'lightning', 'frost', 'celestial', 'void'] as const;
 export type FamiliarElement = (typeof FAMILIAR_ELEMENTS)[number];
 export type FamiliarEffectIntensity = 'subtle' | 'active' | 'legendary';
 
-/** The cultivator's name lettered in the Familiar's element. Purely cosmetic. */
+export const FAMILIAR_ELEMENT_LABELS: Readonly<Record<FamiliarElement, string>> = {
+  fire: 'Fire', lightning: 'Lightning', frost: 'Frost', celestial: 'Celestial', void: 'Void',
+};
+
+/** How far a cultivator has cultivated one Familiar. Not the Familiar's rarity. */
+export const FAMILIAR_BOND_RANKS = ['common', 'rare', 'epic', 'legendary'] as const;
+export type FamiliarBondRank = (typeof FAMILIAR_BOND_RANKS)[number];
+
+const BOND_RANK_NAMES: Readonly<Record<FamiliarBondRank, string>> = {
+  common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary',
+};
+
+/** "Legendary bond" — always name the scale, so it never reads as the Familiar's rarity. */
+export const bondRankLabel = (rank: FamiliarBondRank) => `${BOND_RANK_NAMES[rank]} bond`;
+export const bondRankIndex = (rank: FamiliarBondRank) => FAMILIAR_BOND_RANKS.indexOf(rank);
+
+/**
+ * The cultivator's name lettered in an element. `mastered` is false for the
+ * bond effects a Familiar lends while it is active, and true for the effect
+ * of an element the cultivator has mastered.
+ */
 export interface FamiliarElementalTitleEffect {
   id: string;
   kind: 'elemental-title';
   label: string;
   element: FamiliarElement;
   intensity: FamiliarEffectIntensity;
+  mastered: boolean;
 }
 
-/** Future cosmetic effect kinds join this union; each stays presentation-only. */
-export type FamiliarCosmeticEffect = FamiliarElementalTitleEffect;
+/**
+ * A signature piece: custom animation SEIHouse wrote for one Familiar. The
+ * contract carries only its identity; the animation itself is code, looked up
+ * by `id` in the client's signature registry.
+ */
+export interface FamiliarSignatureEffect {
+  id: string;
+  kind: 'signature';
+  label: string;
+  familiarId: string;
+}
+
+export type FamiliarCosmeticEffect = FamiliarElementalTitleEffect | FamiliarSignatureEffect;
 
 /**
- * An alternate appearance. Until dedicated form artwork is supplied, a form
- * is a presentation treatment over the Familiar's existing artwork.
+ * An alternate appearance for the companion itself. Until dedicated form
+ * artwork is supplied, a form is a presentation treatment over the
+ * Familiar's existing artwork. Forms stay with their Familiar.
  */
 export interface FamiliarForm {
   id: string;
@@ -43,13 +97,17 @@ export interface FamiliarForm {
 }
 
 export type FamiliarUnlock =
+  /** The Familiar's elemental title at this bond rank, worn while it is active. */
+  | { kind: 'bond-effect'; effect: FamiliarElementalTitleEffect }
   | { kind: 'form'; form: FamiliarForm }
-  | { kind: 'effect'; effect: FamiliarCosmeticEffect };
+  /** Legendary bond: the element's mastered effect joins the permanent collection. */
+  | { kind: 'mastery'; element: FamiliarElement; effect: FamiliarElementalTitleEffect }
+  /** This Familiar's signature piece, when SEIHouse has written one. */
+  | { kind: 'signature'; effect: FamiliarSignatureEffect };
 
-export interface FamiliarTrainingTierView {
-  tier: number;
-  name: string;
-  /** Total QI offered to this Familiar to reach the tier. */
+export interface FamiliarBondRankView {
+  rank: FamiliarBondRank;
+  /** Total QI offered to this Familiar to reach the rank. */
   qiRequired: number;
   reached: boolean;
   unlocks: FamiliarUnlock[];
@@ -59,51 +117,84 @@ export interface FamiliarTrainingView {
   familiarId: string;
   owned: boolean;
   isDefault: boolean;
+  /** The element this Familiar channels. */
   element: FamiliarElement;
   /** Total QI this cultivator has offered to this Familiar. */
   qiOffered: number;
-  tier: number;
-  tierName: string;
-  nextTier: { tier: number; name: string; qiRequired: number; qiRemaining: number } | null;
-  tiers: FamiliarTrainingTierView[];
+  bondRank: FamiliarBondRank;
+  nextBondRank: { rank: FamiliarBondRank; qiRequired: number; qiRemaining: number } | null;
+  bondRanks: FamiliarBondRankView[];
+  /** The elemental title this Familiar lends at its current bond rank while it is the Active Familiar. */
+  bondEffect: FamiliarElementalTitleEffect;
+  /** The signature piece written for this Familiar, if any, and whether this cultivator's bond has unlocked it. */
+  signature: { effect: FamiliarSignatureEffect; requiredBondRank: FamiliarBondRank; unlocked: boolean } | null;
   unlockedForms: FamiliarForm[];
-  unlockedEffects: FamiliarCosmeticEffect[];
-  /** The form and effect the cultivator chose for this Familiar; null for none. */
-  selection: { formId: string | null; effectId: string | null };
+  /** The companion's chosen form; null for its base look. */
+  selection: { formId: string | null };
 }
+
+/** One element this cultivator has mastered. Permanent: mastery is never taken back. */
+export interface FamiliarElementalMastery {
+  element: FamiliarElement;
+  effect: FamiliarElementalTitleEffect;
+  /** The Familiar whose Legendary bond mastered it. */
+  masteredWith: string;
+  masteredAt: string;
+}
+
+/**
+ * What letters the cultivator's DAO name.
+ *
+ * - `bond` (coupled): the Active Familiar's elemental title at its bond rank.
+ * - `signature` (coupled): the Active Familiar's signature piece, when it has
+ *   an unlocked one; otherwise its bond effect.
+ * - `mastered` (independent): a mastered element, whichever Familiar is active.
+ * - `none`: the rank colours.
+ */
+export type ActiveElementalEffectSelection =
+  | { source: 'bond' }
+  | { source: 'signature' }
+  | { source: 'mastered'; element: FamiliarElement }
+  | { source: 'none' };
+
+export const DEFAULT_ACTIVE_ELEMENTAL_EFFECT: ActiveElementalEffectSelection = { source: 'bond' };
 
 export interface FamiliarTrainingSnapshot {
   uid: string;
   /** Owned outright; the default Familiar is included implicitly. */
   ownedFamiliarIds: string[];
   familiars: FamiliarTrainingView[];
+  /** The permanent collection of mastered elements. */
+  masteredElements: FamiliarElementalMastery[];
+  activeEffect: ActiveElementalEffectSelection;
   updatedAt: string;
 }
 
 export interface OfferQiInput {
   familiarId: string;
-  /** QI to offer. The server spends only what the next tiers still need. */
+  /** QI to offer. The server spends only what the remaining bond ranks need. */
   amount: number;
   /** One offer per key: a retried offer never spends twice. */
   idempotencyKey: string;
 }
 
 export interface OfferQiResponse {
-  outcome: 'trained' | 'replayed' | 'fully-trained';
+  outcome: 'trained' | 'replayed' | 'fully-bonded';
   message: string;
   /** QI actually spent by this offer. */
   spent: number;
-  tierBefore: number;
-  tierAfter: number;
-  /** What this offer unlocked, in tier order. */
+  bondRankBefore: FamiliarBondRank;
+  bondRankAfter: FamiliarBondRank;
+  /** What this offer unlocked, in rank order. */
   newUnlocks: FamiliarUnlock[];
+  /** The element this offer mastered, when it reached Legendary bond in an element not mastered before. */
+  mastered: FamiliarElementalMastery | null;
   snapshot: FamiliarTrainingSnapshot;
 }
 
-export interface SelectFamiliarCosmeticsInput {
+export interface SelectFamiliarFormInput {
   familiarId: string;
   formId: string | null;
-  effectId: string | null;
 }
 
 export interface PurchaseFamiliarInput {
@@ -122,7 +213,8 @@ export interface PurchaseFamiliarResponse {
 
 export type FamiliarsHttpOperation =
   | ({ operation: 'offer-qi' } & OfferQiInput)
-  | ({ operation: 'select-cosmetics' } & SelectFamiliarCosmeticsInput)
+  | ({ operation: 'select-form' } & SelectFamiliarFormInput)
+  | { operation: 'select-elemental-effect'; selection: ActiveElementalEffectSelection }
   | ({ operation: 'purchase' } & PurchaseFamiliarInput)
   | { operation: 'development.grant-familiar'; familiarId: string };
 
@@ -137,14 +229,31 @@ export const FAMILIARS_API_PATH = '/api/library-economy?capability=familiars';
 export const familiarTraining = (snapshot: FamiliarTrainingSnapshot | null | undefined, familiarId: string | null | undefined): FamiliarTrainingView | null =>
   snapshot && familiarId ? snapshot.familiars.find(entry => entry.familiarId === familiarId) ?? null : null;
 
+export interface ResolvedNameEffect {
+  effect: FamiliarCosmeticEffect;
+  source: 'bond' | 'signature' | 'mastered';
+  /** True while the effect follows the Active Familiar; false for a mastered element worn independently. */
+  coupled: boolean;
+}
+
 /**
- * The cultivator's active cosmetic effect: the equipped Familiar's selected
- * effect, and only while it is owned and the effect is unlocked.
+ * The effect lettering the cultivator's DAO name: the Active Elemental Effect
+ * resolved against the Active Familiar. Coupled choices follow the Active
+ * Familiar, and only while the cultivator owns it; a mastered element shows
+ * whichever Familiar is active.
  */
-export function activeFamiliarEffect(snapshot: FamiliarTrainingSnapshot | null | undefined, equippedFamiliarId: string | null | undefined): FamiliarCosmeticEffect | null {
-  const training = familiarTraining(snapshot, equippedFamiliarId);
-  if (!training?.owned || !training.selection.effectId) return null;
-  return training.unlockedEffects.find(effect => effect.id === training.selection.effectId) ?? null;
+export function activeNameEffect(snapshot: FamiliarTrainingSnapshot | null | undefined, activeFamiliarId: string | null | undefined): ResolvedNameEffect | null {
+  if (!snapshot) return null;
+  const selection = snapshot.activeEffect;
+  if (selection.source === 'none') return null;
+  if (selection.source === 'mastered') {
+    const mastery = snapshot.masteredElements.find(entry => entry.element === selection.element);
+    return mastery ? { effect: mastery.effect, source: 'mastered', coupled: false } : null;
+  }
+  const active = familiarTraining(snapshot, activeFamiliarId);
+  if (!active?.owned) return null;
+  if (selection.source === 'signature' && active.signature?.unlocked) return { effect: active.signature.effect, source: 'signature', coupled: true };
+  return { effect: active.bondEffect, source: 'bond', coupled: true };
 }
 
 /** The selected, unlocked form of a Familiar, if any. */

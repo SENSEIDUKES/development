@@ -7,8 +7,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
  * Applies every development migration in order and checks the rules the
  * reward schema itself enforces: one Mystery Scroll per achievement, scrolls
  * open once, Relics come only from Fate Survival and pay only DAO XP and
- * Energy, and Familiar training or purchases move currency in the same
- * transaction as what they pay for.
+ * Energy, Familiar bonds or purchases move currency in the same transaction
+ * as what they pay for, and Legendary bond masters an element once.
  */
 const MIGRATIONS = path.resolve(__dirname, '../../../database/migrations');
 let database: Promise<PGlite> | undefined;
@@ -42,7 +42,7 @@ describe('Reward schema', () => {
     const tables = await db.query<{ table_name: string }>(`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'`);
     const names = tables.rows.map(row => row.table_name);
     expect(names).not.toContain('earned_relic');
-    expect(names).toEqual(expect.arrayContaining(['library_activity', 'mystery_scroll', 'fate_survival_relic', 'familiar_training', 'dao_xp_account']));
+    expect(names).toEqual(expect.arrayContaining(['library_activity', 'mystery_scroll', 'fate_survival_relic', 'familiar_training', 'familiar_elemental_mastery', 'dao_xp_account']));
   });
 
   it('earns one Mystery Scroll per achievement and opens it exactly once', async () => {
@@ -71,26 +71,47 @@ describe('Reward schema', () => {
     await expect(insert('challenge-2', '[{"type":"qi","amount":200}]')).rejects.toThrow(/fate_survival_relic_rewards_allowed/);
   });
 
-  it('trains a Familiar with QI in one transaction, clamped to the cap and replay-safe', async () => {
+  it('cultivates a bond with QI in one transaction, clamped to Legendary bond, replay-safe, and mastering the element once', async () => {
     const db = await createDatabase();
-    await db.query(`SELECT qi_apply_deposit('reader', 5000, 'grant', 'development-grant', 'Grant', '{}')`);
-    const offer = async (key: string, amount: number, familiar = 'quill', included = true) => json<{ outcome: string; offer?: { spent: number; qi_after: number } }>(
-      await db.query('SELECT familiar_apply_offer($1, $2, $3, $4, $5, $6, $7) AS result', ['reader', familiar, included, amount, 4000, key, 'Quill · training']), 'result');
+    await db.query(`SELECT qi_apply_deposit('reader', 9000, 'grant', 'development-grant', 'Grant', '{}')`);
+    type OfferResult = { outcome: string; offer?: { spent: number; qi_after: number }; mastery?: { element: string; familiar_id: string } | null };
+    const offer = async (key: string, amount: number, familiar = 'quill', element = 'lightning', included = true) => json<OfferResult>(
+      await db.query('SELECT familiar_apply_offer($1, $2, $3, $4, $5, $6, $7, $8) AS result', ['reader', familiar, element, included, amount, 4000, key, 'Quill · bond']), 'result');
 
-    expect(await offer('one', 1000)).toMatchObject({ outcome: 'trained', offer: { spent: 1000, qi_after: 1000 } });
+    expect(await offer('one', 1000)).toMatchObject({ outcome: 'trained', offer: { spent: 1000, qi_after: 1000 }, mastery: null });
     expect(await offer('one', 1000)).toMatchObject({ outcome: 'replayed' });
     await expect(offer('one', 999)).rejects.toThrow(/familiar_conflict/);
-    expect(await offer('two', 9000)).toMatchObject({ outcome: 'trained', offer: { spent: 3000, qi_after: 4000 } });
-    expect(await offer('three', 10)).toMatchObject({ outcome: 'fully-trained' });
+    expect(await offer('two', 9000)).toMatchObject({ outcome: 'trained', offer: { spent: 3000, qi_after: 4000 }, mastery: { element: 'lightning', familiar_id: 'quill' } });
+    expect(await offer('two', 9000)).toMatchObject({ outcome: 'replayed', mastery: { element: 'lightning' } });
+    expect(await offer('three', 10)).toMatchObject({ outcome: 'fully-bonded' });
+    // A second lightning Familiar reaching Legendary bond does not master Lightning again.
+    expect(await offer('monkey', 4000, 'little-monkey-king')).toMatchObject({ outcome: 'trained', mastery: null });
+    const masteries = await db.query<{ element: string; familiar_id: string }>('SELECT element, familiar_id FROM familiar_elemental_mastery');
+    expect(masteries.rows).toEqual([{ element: 'lightning', familiar_id: 'quill' }]);
     expect(await qiBalance(db)).toBe(1000);
 
-    await expect(offer('stranger', 10, 'phoenix', false)).rejects.toThrow(/familiar_conflict/);
+    await expect(offer('stranger', 10, 'phoenix', 'fire', false)).rejects.toThrow(/familiar_conflict/);
+  });
+
+  it('lets the Active Elemental Effect wear only an element the account has mastered', async () => {
+    const db = await createDatabase();
+    await db.query(`SELECT qi_apply_deposit('reader', 4000, 'grant', 'development-grant', 'Grant', '{}')`);
+    await db.query(`SELECT familiar_ensure_account('reader')`);
+    const choose = (source: string, element: string | null) =>
+      db.query('UPDATE familiar_account SET active_effect_source = $1, active_effect_element = $2 WHERE uid = $3', [source, element, 'reader']);
+    await expect(choose('mastered', 'lightning')).rejects.toThrow(/familiar_account_active_effect_mastered/);
+    await expect(choose('bond', 'lightning')).rejects.toThrow(/familiar_account_active_effect_element/);
+    await expect(choose('boosted', null)).rejects.toThrow(/check constraint/);
+    await db.query(`SELECT familiar_apply_offer('reader', 'quill', 'lightning', true, 4000, 4000, 'master', 'Quill · bond')`);
+    await choose('mastered', 'lightning');
+    const account = await db.query<{ active_effect_source: string }>(`SELECT active_effect_source FROM familiar_account WHERE uid = 'reader'`);
+    expect(account.rows[0].active_effect_source).toBe('mastered');
   });
 
   it('records nothing when the QI spend is refused', async () => {
     const db = await createDatabase();
     await db.query(`SELECT qi_apply_deposit('reader', 50, 'grant', 'development-grant', 'Grant', '{}')`);
-    await expect(db.query(`SELECT familiar_apply_offer('reader', 'quill', true, 100, 4000, 'poor', 'Quill · training')`)).rejects.toThrow(/qi_insufficient/);
+    await expect(db.query(`SELECT familiar_apply_offer('reader', 'quill', 'lightning', true, 100, 4000, 'poor', 'Quill · bond')`)).rejects.toThrow(/qi_insufficient/);
     const offers = await db.query('SELECT count(*)::int AS count FROM familiar_offer');
     expect((offers.rows[0] as { count: number }).count).toBe(0);
     expect(await qiBalance(db)).toBe(50);

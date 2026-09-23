@@ -13,7 +13,7 @@ durable ledgers and concrete infrastructure stay in the host/backend.
 | `./presentation` | Library-to-SEN presentation composition and host asset-location provider |
 | `./profile` | Cave/Profile behavior, public views, settings, admin host ports |
 | `./energy` | Client-safe Energy contracts, read projections and provider |
-| `./familiar` | Sprite animation, draggable/resizable companion, minimize/recall, profile selection, and the Familiar account: ownership, QI training, and cosmetic forms and effects (`FamiliarTrainingPanel`, `activeFamiliarEffect`) |
+| `./familiar` | Sprite animation, draggable/resizable companion, minimize/recall, profile selection, and the Familiar account: ownership, Bond Rank cultivated with QI, element mastery, and the Active Elemental Effect (`FamiliarTrainingPanel`, `ElementalEffectPanel`, `FamiliarNameEffect`, `activeNameEffect`) |
 | `./celestial-store` | Official Familiar Store page and the reusable `ShopCard`: offer configuration, deterministic daily rotation, and the account port for host-owned ownership and purchases |
 | `./cultivation` | Spendable-QI and permanent DAO XP read projections (DAO XP alone sets Cultivator Rank, which only chooses colours), economy standards, and cultivation surfaces |
 | `./dao-pillar` | Calendar/reward contracts and server-result-driven UI |

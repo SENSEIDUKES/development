@@ -6,8 +6,17 @@ export interface FamiliarAnimation {
   durations: readonly number[];
 }
 
-/** Stable catalogue rank supplied by the Library host; it never implies ownership or pricing. */
+/**
+ * How rare the Familiar is: stable catalogue content supplied by the Library
+ * host. It never implies ownership or pricing, and it is not the cultivator's
+ * Bond Rank with the Familiar, which shares the same four words.
+ */
 export type FamiliarRarity = 'common' | 'rare' | 'epic' | 'legendary';
+
+const RARITY_NAMES: Readonly<Record<FamiliarRarity, string>> = { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
+
+/** "Epic familiar" — always name the scale, so it never reads as a Bond Rank. */
+export const familiarRarityLabel = (rarity: FamiliarRarity) => `${RARITY_NAMES[rarity]} familiar`;
 
 export interface FamiliarDefinition {
   id: string;

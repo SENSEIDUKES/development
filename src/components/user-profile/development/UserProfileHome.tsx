@@ -6,7 +6,7 @@ import {
   Sigma,
   Sparkles,
 } from "lucide-react";
-import { LibraryButton, LibraryElementalTitle, LibraryPanel } from "@seihouse/library-ui";
+import { LibraryButton, LibraryPanel } from "@seihouse/library-ui";
 import {
   SEIDialog,
   SEIDialogContent,
@@ -17,6 +17,7 @@ import {
 import type { UserProfileController } from "./userProfileServices";
 import type { PremiumTier } from "./types";
 import type { FamiliarCosmeticEffect } from "../../../library/familiars/contracts";
+import { FamiliarNameEffect } from "../../familiar-training/development/FamiliarNameEffect";
 import type { PublicProfilePresentation } from "./publicProfile";
 import type { CaveAccountControls } from "./caveAccountControls";
 import { EnergyBalanceIndicator } from "../../energy/development/EnergyBalanceIndicator";
@@ -84,12 +85,12 @@ export type UserProfileHomeMode = "private" | "public";
 
 type HomePanel = "stats" | "highlights" | "progress" | "bio";
 
-/** The equipped Familiar as the Home card shows it; the Familiar account is its authority. */
+/** The Active Familiar as the Home card shows it; the Familiar account is its authority. */
 export interface HomeFamiliarSummary {
   name: string;
-  /** The Familiar's training tier, when training is connected. */
-  tierName: string | null;
-  /** Its selected cosmetic effect: the cultivator's one active effect. */
+  /** "Rare bond": how far the cultivator has cultivated it, when bonds are connected. */
+  bondLabel: string | null;
+  /** The resolved Active Elemental Effect lettering the name, if any. */
   effect: FamiliarCosmeticEffect | null;
   onOpen: () => void;
 }
@@ -127,7 +128,7 @@ export function UserProfileHome({
   daoPillar?: DaoPillarCalendarState;
   /** Spendable QI from the QI ledger, and where the balances page is. Absent when QI is not connected. */
   qi?: { balance: number | null; onOpen: () => void };
-  /** The equipped Familiar and its active cosmetic effect. */
+  /** The Active Familiar and the effect lettering the name. */
   familiar?: HomeFamiliarSummary;
   /** Achievements, Mystery Scrolls and Fate Survival Relics. */
   rewards?: HomeRewardsSummary;
@@ -159,9 +160,9 @@ export function UserProfileHome({
   const daoProgress = daoXp ?? 0;
   const daoData = getDaoRankData(daoProgress);
   const rank = getRankForDaoXp(daoProgress);
-  // Rank chooses the colours. The equipped Familiar's selected effect, when
-  // there is one, letters the name in its element instead; the rank colours
-  // stay on the portrait ring, the progress bar and the rank row.
+  // Rank chooses the colours. The Active Elemental Effect, when there is one,
+  // letters the name instead; the rank colours stay on the portrait ring, the
+  // progress bar and the rank row.
   const auraSelection = getAuraSelection(profile?.displayNameColor, daoProgress);
   const nameStyle = getAuraTextStyle(auraSelection, daoProgress);
   const auraGlow = getAuraGlowStyle(auraSelection, daoProgress);
@@ -338,20 +339,19 @@ export function UserProfileHome({
               <div ref={identityRef} className="cave-home-identity-group" data-cave-identity-group
                 data-marker-inline={markerLayout.inline}
                 style={{ "--cave-name-width": `${markerLayout.nameWidth}px` } as React.CSSProperties}>
-              <LibraryElementalTitle
+              <FamiliarNameEffect
                 as="h2"
-                element={titleEffect?.element ?? "none"}
-                intensity={titleEffect?.intensity ?? "active"}
-                shadow={titleEffect ? (titleEffect.intensity === "legendary" ? "outlined" : "soft") : "none"}
+                effect={titleEffect}
                 id="cave-cultivator-name"
                 tabIndex={-1}
-                className={`cave-home-username w-fit font-display text-2xl leading-tight outline-none sm:text-3xl ${titleEffect ? "" : nameStyle.className || "text-neutral-100"}`}
-                style={titleEffect ? undefined : nameStyle.style}
+                className="cave-home-username w-fit font-display text-2xl leading-tight outline-none sm:text-3xl"
+                plainClassName={nameStyle.className || "text-neutral-100"}
+                plainStyle={nameStyle.style}
                 data-cave-name
                 data-cave-name-effect={titleEffect?.id}
               >
                 {profile?.displayName?.trim() || "Cultivator"}
-              </LibraryElementalTitle>
+              </FamiliarNameEffect>
               {profile && (
                 <LibraryTierBadge className="cave-tier-badge"
                   aria-label={`Subscription tier: ${tiers[profile.premiumTier ?? "mortal"]}`}>
@@ -474,17 +474,17 @@ export function UserProfileHome({
               onClick={familiar?.onOpen}
               disabled={!familiar}
               data-cave-card="familiar"
-              aria-label={familiar ? [familiar.name, familiar.tierName ? `${familiar.tierName} bond` : null, familiar.effect?.label ?? "no effect chosen"].filter(Boolean).join(", ") : undefined}
+              aria-label={familiar ? [familiar.name, familiar.bondLabel, familiar.effect?.label ?? "no name effect"].filter(Boolean).join(", ") : undefined}
             >
               <Sparkles aria-hidden="true" className="cave-home-glyph text-violet-300" />
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-display">{familiar?.name ?? "Familiar"}</span>
-                {/* The active effect is what the card is for; its tier shows here
-                    only while no effect is chosen, and always on the Familiar page. */}
+                {/* The name effect is what the card is for; the bond shows here
+                    only while no effect is worn, and always on the Familiar page. */}
                 <span className="line-clamp-3 text-xs text-neutral-400" data-cave-familiar-effect={familiar?.effect?.id}
-                  data-cave-familiar-tier={familiar?.tierName ?? undefined}>
+                  data-cave-familiar-bond={familiar?.bondLabel ?? undefined}>
                   {familiar
-                    ? familiar.effect?.label ?? [familiar.tierName ? `${familiar.tierName} bond` : null, "No effect chosen"].filter(Boolean).join(" · ")
+                    ? familiar.effect?.label ?? [familiar.bondLabel, "No name effect"].filter(Boolean).join(" · ")
                     : "Not connected"}
                 </span>
               </span>

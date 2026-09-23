@@ -14,11 +14,12 @@ behind their own identity and storage.
   Survival Relics and a one-time opening balance may credit it; the ledger refuses anything else,
   and so does its SQL `CHECK`.
 - **QI** is spendable. It arrives from the Daily Dao Pillar and Mystery Scrolls, and is spent on
-  Familiar training and QI-priced Celestial Store offers. Spending QI never moves DAO XP or rank.
+  Familiar bonds and QI-priced Celestial Store offers. Spending QI never moves DAO XP or rank.
 - **Energy** powers generation. Fate Survival Relics may grant it, and Energy-priced Store offers
   spend it. Generation keeps its own reserve-then-charge path.
-- **No reward grants an advantage.** Familiar tiers unlock forms and cosmetic effects only; the
-  training ladder is validated at load and refuses any unlock carrying more than presentation.
+- **No reward grants an advantage.** Familiar Bond Ranks unlock elemental titles, forms, element
+  mastery and signature pieces only; the bond ladder and signatures are validated at load and
+  refuse anything carrying more than presentation.
 
 ## What lives where
 
@@ -31,7 +32,7 @@ behind their own identity and storage.
 | Energy ledger | `energy/` | Grants, generation reservations and (new) direct spends. |
 | Achievements | `achievements/` | Catalogue, versioned evaluators, activity intake, one scroll per goal per account, opening and delivery, creation DAO XP. |
 | Fate Survival Relics | `relics/` | Relic catalogue, outcome → rarity mapping, one Relic per challenge per account, delivery. |
-| Familiars | `familiars/` | Ownership, QI training, cosmetic selection, Store purchases at today's server-resolved price. One purchase key buys one Familiar, and each payment's ledger key names the Familiar it bought. |
+| Familiars | `familiars/` | Ownership, Bond Rank cultivated with QI (Common → Legendary, separate from the Familiar's catalogue rarity), permanent element mastery at Legendary bond, SEIHouse-written signatures, the companion's form and the account's Active Elemental Effect, and Store purchases at today's server-resolved price. One purchase key buys one Familiar, and each payment's ledger key names the Familiar it bought. See `src/components/familiar-training/README.md`. |
 | Daily Dao Pillar | `dao-pillar/` | Unchanged calendar; deposits QI only. |
 | Development economy | `economy/developmentRuntime.ts` | One runtime wiring all of the above, served at `/api/library-economy?capability=<name>` for `energy`, `dao-pillar`, `cultivation`, `dao-xp`, `achievements`, `relics`, `familiars`. |
 
@@ -45,6 +46,7 @@ behind their own identity and storage.
 | `20260923_004_achievements_mystery_scrolls.sql` | Activity, earned achievements, scrolls; drops the retired Relic v3 tables | Not written yet (in-memory only) |
 | `20260923_005_fate_survival_relics.sql` | One Relic per challenge, DAO XP and Energy only | Not written yet (in-memory only) |
 | `20260923_006_familiar_training.sql` | Ownership, training, offers, purchases | Not written yet (in-memory only) |
+| `20260923_007_familiar_bond_mastery.sql` | Element mastery (one per element, recorded with the offering that reached Legendary bond), the Active Elemental Effect; retires per-Familiar effect choices | Not written yet (in-memory only) |
 
 `rewardSchema.test.ts` applies every migration in order with PGlite and proves the new
 constraints. None of these migrations is applied to a production database by this repository.

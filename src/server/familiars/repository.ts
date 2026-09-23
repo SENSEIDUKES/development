@@ -1,3 +1,5 @@
+import type { ActiveElementalEffectSelection, FamiliarElement } from '@seihouse/library/familiar';
+
 export class FamiliarValidationError extends Error {
   readonly issues: string[];
   constructor(issues: string[]) {
@@ -26,14 +28,21 @@ export interface FamiliarOwnershipRecord {
 export interface FamiliarOfferRecord {
   idempotencyKey: string;
   familiarId: string;
-  /** What the cultivator offered; `spent` is less when the top tier needed less. */
+  /** What the cultivator offered; `spent` is less when the bond needed less. */
   requested: number;
   spent: number;
-  /** Total QI this Familiar had been offered before and after this offering. Tiers derive from these. */
+  /** Total QI this Familiar had been offered before and after this offering. Bond ranks derive from these. */
   qiBefore: number;
   qiAfter: number;
   qiTransactionId: string | null;
   offeredAt: string;
+}
+
+/** One mastered element. The first Legendary bond in an element masters it, permanently. */
+export interface FamiliarMasteryRecord {
+  element: FamiliarElement;
+  familiarId: string;
+  masteredAt: string;
 }
 
 export interface FamiliarAccountRecord {
@@ -41,19 +50,24 @@ export interface FamiliarAccountRecord {
   owned: FamiliarOwnershipRecord[];
   /** Total QI offered per Familiar. */
   training: Record<string, number>;
-  selections: Record<string, { formId: string | null; effectId: string | null }>;
+  /** Each companion's chosen form. */
+  forms: Record<string, string | null>;
   offers: FamiliarOfferRecord[];
+  masteries: FamiliarMasteryRecord[];
+  activeEffect: ActiveElementalEffectSelection;
 }
 
 /**
  * Durable Familiar account storage. The service serializes each account's
  * writes, so every method here is a single-record update; the Postgres
- * migration adds the row lock and unique constraints that make the QI spend
- * and the training (or ownership) change one transaction.
+ * migrations add the row lock and unique constraints that make the QI spend,
+ * the training change and any mastery it earns one transaction.
  */
 export interface FamiliarRepository {
   getAccount(uid: string): Promise<FamiliarAccountRecord>;
   grantOwnership(uid: string, ownership: FamiliarOwnershipRecord): Promise<FamiliarAccountRecord>;
-  recordOffer(uid: string, offer: FamiliarOfferRecord): Promise<FamiliarAccountRecord>;
-  selectCosmetics(uid: string, familiarId: string, selection: { formId: string | null; effectId: string | null }): Promise<FamiliarAccountRecord>;
+  /** Records an offering and, when it reached Legendary bond in a new element, that mastery with it. */
+  recordOffer(uid: string, offer: FamiliarOfferRecord, mastery: FamiliarMasteryRecord | null): Promise<FamiliarAccountRecord>;
+  selectForm(uid: string, familiarId: string, formId: string | null): Promise<FamiliarAccountRecord>;
+  selectActiveEffect(uid: string, selection: ActiveElementalEffectSelection): Promise<FamiliarAccountRecord>;
 }

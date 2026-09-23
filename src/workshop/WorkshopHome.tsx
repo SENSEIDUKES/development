@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { Router } from 'lucide-react';
 import {
   getWorkshopTrack,
   getWorkshopVersionLabel,
@@ -14,8 +13,8 @@ import {
 } from './manifest';
 import { LibraryComponentsGrid } from './LibraryComponents';
 import { IconsGrid } from './Icons';
-import { ProvenanceTab } from './ProvenanceTab';
 import { defaultFamiliar } from '../host/familiar/catalogue';
+import { ModelRouterGear } from './ModelRouterSettings';
 
 const activeEntries = workshopEntries.filter((entry) => entry.status !== 'archived');
 const archivedEntries = workshopEntries.filter((entry) => entry.status === 'archived');
@@ -108,11 +107,16 @@ function CardWorkshopVisual() {
   );
 }
 
-function ModelRouterVisual() {
+function ProvenanceVisual() {
   return (
-    <div role="img" aria-label="Model Router" style={{ display: 'grid', height: '100%', width: '100%', placeItems: 'center', color: '#9d927e' }}>
-      <Router aria-hidden="true" size={72} strokeWidth={1.25} />
-    </div>
+    <svg viewBox="0 0 400 240" role="img" aria-label="Provenance preview" preserveAspectRatio="xMidYMid slice">
+      <rect x="120" y="44" width="160" height="152" rx="10" fill="none" stroke="#b3a898" strokeWidth="1.2" opacity="0.7" />
+      <rect x="146" y="72" width="108" height="8" rx="4" fill="#d8d0bf" />
+      <rect x="146" y="92" width="88" height="6" rx="3" fill="#e3dcd0" />
+      <rect x="146" y="106" width="96" height="6" rx="3" fill="#e3dcd0" />
+      <circle cx="200" cy="152" r="22" fill="none" stroke="#9d927e" strokeWidth="1.6" />
+      <path d="M190 152 l7 7 l13 -14" fill="none" stroke="#b3402f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
@@ -123,7 +127,7 @@ function CardVisual({ id }: { id: string }) {
   if (id === 'chapter-generation-manifestation') return <ManifestationVisual />;
   if (id === 'idle-cultivation') return <IdleCultivationVisual />;
   if (id === 'relics-gallery') return <RelicsGalleryVisual />;
-  if (id === 'model-router') return <ModelRouterVisual />;
+  if (id === 'provenance') return <ProvenanceVisual />;
   return null;
 }
 
@@ -206,7 +210,6 @@ function InlinePanel({ panel }: { panel: WorkshopPanel }) {
       <p className="workshop-group-description">{panel.description}</p>
       {panel.id === 'library-components' && <LibraryComponentsGrid />}
       {panel.id === 'icons' && <IconsGrid />}
-      {panel.id === 'provenance' && <ProvenanceTab />}
     </section>
   );
 }
@@ -275,7 +278,10 @@ export function WorkshopHome() {
 
       <div className="workshop-shell">
         <div className="workshop-topbar">
-          <span className="workshop-brand">SEIHOUSE</span>
+          <div className="workshop-brand-row">
+            <span className="workshop-brand">SEIHOUSE</span>
+            <ModelRouterGear />
+          </div>
           <div className="workshop-nav" aria-label="Workshop sections" role="tablist" ref={navRef}>
             {WORKSHOP_SECTIONS.map((tab, index) => (
               <button

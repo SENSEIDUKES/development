@@ -1,5 +1,6 @@
 import { lazy, type ComponentType, type ReactNode } from 'react';
 import { WorkshopHome } from './workshop/WorkshopHome';
+import { ModelRouterGear } from './workshop/ModelRouterSettings';
 import { DeferredWorkspace } from './workshop/DeferredWorkspace';
 import { ArrowLeft } from 'lucide-react';
 import './styles.css';
@@ -71,6 +72,10 @@ const EnergyWorkspace = lazy(() =>
   import('./workshop/previews/energy/EnergyWorkspace')
     .then(module => ({ default: module.EnergyWorkspace })),
 );
+const ProvenanceWorkspace = lazy(() =>
+  import('./workshop/previews/provenance/ProvenanceWorkspace')
+    .then(module => ({ default: module.ProvenanceWorkspace })),
+);
 const ModelRouterWorkspace = lazy(() =>
   import('./workshop/previews/model-router/ModelRouterWorkspace')
     .then(module => ({ default: module.ModelRouterWorkspace })),
@@ -98,6 +103,7 @@ const previewRegistry: Record<string, ComponentType> = {
   'dao-pillar': DaoPillarWorkspace,
   'energy': EnergyWorkspace,
   'model-router': ModelRouterWorkspace,
+  'provenance': ProvenanceWorkspace,
   'familiar': FamiliarWorkspace,
   'harness-generation': HarnessGenerationWorkspace,
   'idle-cultivation': ClosedDoorCultivationWorkspace,
@@ -117,7 +123,7 @@ function PreviewLayout({ children }: { children: ReactNode }) {
       {/* In normal document flow (not fixed) so it scrolls away with the page
           instead of permanently floating over a preview's own sticky header
           (e.g. the Reader Chamber's in-chamber title bar) at the same corner. */}
-      <div className="px-4 pt-3 pb-1 sm:px-6 sm:pt-4 sm:pb-2">
+      <div className="flex items-center justify-between gap-3 px-4 pt-3 pb-1 sm:px-6 sm:pt-4 sm:pb-2">
         <a
           href="/"
           className="workshop-touch-target inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-neutral-900/80 hover:bg-neutral-800 text-neutral-300 hover:text-white rounded-full backdrop-blur transition-all duration-200 border border-neutral-700/50 shadow-lg text-xs sm:text-sm"
@@ -126,6 +132,7 @@ function PreviewLayout({ children }: { children: ReactNode }) {
           <ArrowLeft size={14} className="shrink-0" />
           Back to Workshop
         </a>
+        <ModelRouterGear />
       </div>
       {children}
     </>

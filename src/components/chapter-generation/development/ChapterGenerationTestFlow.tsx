@@ -60,6 +60,7 @@ import { listWorkshopStorySeeds, LOCAL_WORKSHOP_STORY_SEED_OWNER_ID } from '../.
 import { type StorySeedArtifact, type StorySeedRecord } from '@seihouse/sen/story-seed';
 import { parseStorySeedJson } from '@seihouse/sen/story-seed';
 import { type RawStorySeedArtifact } from '@seihouse/sen/story-seed';
+import { preferredModel, readModelPreference, subscribeModelPreference, writeModelPreference } from "../../../host/generation/modelPreference";
 import ChapterGenerationWorkspace from "./ChapterGenerationWorkspace";
 import FiveChapterReaderSession from "./FiveChapterReaderSession";
 import ManifestedChapterView from "./ManifestedChapterView";
@@ -531,6 +532,11 @@ export function ChapterGenerationTestFlow() {
   const [sourceError, setSourceError] = useState<string | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  // Follow a model chosen from the Workshop Model Router gear while this page is open.
+  useEffect(() => subscribeModelPreference(() => {
+    const saved = readModelPreference("chapters");
+    if (!generating && saved && serverInfo?.models.some(option => option.id === saved)) setModel(saved);
+  }), [generating, serverInfo]);
   const [result, setResult] = useState<ManifestChapterResponse | null>(null);
   const [failedUsage, setFailedUsage] = useState<ChapterTokenUsageSummary | null>(null);
   const [generationFailure, setGenerationFailure] = useState<SafeChapterGenerationFailure | null>(null);
@@ -599,7 +605,7 @@ export function ChapterGenerationTestFlow() {
       }
       if (infoResult.status === "fulfilled") {
         setServerInfo(infoResult.value);
-        setModel(infoResult.value.defaultModel);
+        setModel(preferredModel("chapters", infoResult.value.models, infoResult.value.defaultModel));
       } else {
         errors.push(infoResult.reason instanceof Error
           ? infoResult.reason.message
@@ -826,6 +832,7 @@ export function ChapterGenerationTestFlow() {
                 onChange={event => {
                   abortActiveManifest();
                   setModel(event.target.value);
+                  writeModelPreference("chapters", event.target.value);
                   setResult(null);
                   setBatch(null);
                   setFailedUsage(null);

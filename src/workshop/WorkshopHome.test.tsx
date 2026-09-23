@@ -42,11 +42,15 @@ function archiveToggle() {
 const ACTIVE_GROUPS = {
   Pages: ['light-novels-home', 'library-shell', 'story-seed', 'reader-chamber', 'reader-codex', 'user-profile', 'dao-pillar', 'celestial-store'],
   Customization: ['familiar', 'relics-gallery', 'idle-cultivation'],
-  Systems: ['harness-generation', 'chapter-generation-manifestation', 'character-voice', 'energy', 'model-router'],
+  Systems: ['harness-generation', 'chapter-generation-manifestation', 'character-voice', 'provenance', 'energy'],
   Components: ['motion-picture', 'celestial-backdrop', 'card-workshop'],
 };
 
 describe('WorkshopHome', () => {
+  it('offers the Model Router gear in the header', () => {
+    expect(container.querySelector('.workshop-topbar [aria-label="Model Router settings"]')).not.toBeNull();
+  });
+
   it('shows exactly the four Workshop sections as tabs', () => {
     const tabs = container.querySelectorAll<HTMLButtonElement>('[role="tab"]');
     expect([...tabs].map((element) => element.textContent)).toEqual(['Pages', 'Customization', 'Systems', 'Components']);
@@ -96,7 +100,7 @@ describe('WorkshopHome', () => {
       'light-novels-home': 'library', 'library-shell': 'library', 'story-seed': 'library',
       'reader-chamber': 'sen', 'reader-codex': 'sen', 'user-profile': 'library', 'dao-pillar': 'library', 'celestial-store': 'library',
       familiar: 'library', 'relics-gallery': 'library', 'idle-cultivation': 'library',
-      'harness-generation': 'sen', 'chapter-generation-manifestation': 'library', 'character-voice': 'sen', energy: 'library', 'model-router': 'deferred',
+      'harness-generation': 'sen', 'chapter-generation-manifestation': 'library', 'character-voice': 'sen', provenance: 'deferred', energy: 'library', 'model-router': 'deferred',
       'motion-picture': 'sen', 'celestial-backdrop': 'library-ui', 'card-workshop': 'workshop',
       'chapter-generation-flow': 'workshop',
     });
@@ -108,9 +112,10 @@ describe('WorkshopHome', () => {
     }
   });
 
-  it('renders Provenance under Systems and the live Library Components and Icons under Components', () => {
+  it('opens Provenance as its own Systems card and renders the live Library Components and Icons under Components', () => {
     select('Systems');
-    expect(activePanel().querySelector('section[data-panel="provenance"]')).not.toBeNull();
+    expect(activePanel().querySelector('a[href="?preview=provenance"]')).not.toBeNull();
+    expect(activePanel().querySelector('section[data-panel]')).toBeNull();
     expect(activePanel().querySelectorAll('.workshop-card-library')).toHaveLength(0);
     select('Components');
     expect([...activePanel().querySelectorAll('section[data-panel]')].map((section) => section.getAttribute('data-panel'))).toEqual(['library-components', 'icons']);
@@ -118,8 +123,8 @@ describe('WorkshopHome', () => {
     expect(activePanel().querySelector('section[aria-label="Library components"]')).not.toBeNull();
   });
 
-  it('keeps only the old Chapter Generation archived, reachable, and outside the four sections', () => {
-    expect(workshopEntries.filter((entry) => entry.status === 'archived').map((entry) => entry.id)).toEqual(['chapter-generation-flow']);
+  it('keeps the old Chapter Generation and Model Router page archived, reachable, and outside the four sections', () => {
+    expect(workshopEntries.filter((entry) => entry.status === 'archived').map((entry) => entry.id)).toEqual(['model-router', 'chapter-generation-flow']);
     expect(workshopEntries.find((entry) => entry.id === 'idle-cultivation')?.status).toBe('active');
     expect(container.querySelector('#workshop-archive-panel')!.closest('[role="tabpanel"]')).toBeNull();
     expect(archiveToggle().getAttribute('aria-expanded')).toBe('false');
@@ -129,7 +134,7 @@ describe('WorkshopHome', () => {
     expect(archiveToggle().getAttribute('aria-expanded')).toBe('true');
     const archive = container.querySelector<HTMLElement>('#workshop-archive-panel')!;
     expect(archive.hidden).toBe(false);
-    expect(previewIds(archive)).toEqual(['chapter-generation-flow']);
+    expect(previewIds(archive)).toEqual(['model-router', 'chapter-generation-flow']);
     const card = archive.querySelector('a[href="?preview=chapter-generation-flow"]')!;
     expect(card.textContent).toContain('Superseded by Harness Generation.');
     expect(card.querySelector('.workshop-lifecycle')?.textContent).toBe('archived');

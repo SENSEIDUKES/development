@@ -23,6 +23,8 @@ export interface ChapterGenerationServerInfo {
 export interface ManifestChapterRequest {
   artifact: StorySeedArtifact;
   model: string;
+  /** Model Router Advanced setting; the server ignores levels the model does not accept. */
+  reasoningLevel?: string;
   temporaryInstruction?: string;
   /** Server-produced disposable state for Chapter 2+ of a sequential batch. */
   continuation?: AuthenticatedChapterGenerationContinuation;

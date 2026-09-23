@@ -13,6 +13,8 @@ import { createHarnessTextProvider } from '../harness-generation/provider';
 import { createChapterTextProvider } from '../chapter-generation/provider';
 import { resolveChapterGenerationConfig } from '../chapter-generation/config';
 import { modelRouterStatus } from './status';
+import { resolveReasoningLevel } from './catalog';
+import { geminiThinkingConfig } from './geminiThinking';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -128,5 +130,33 @@ describe('Model Router status', () => {
     expect(chapters.models.find(model => model.id === 'openrouter/openai/gpt-6-luna')?.available).toBe(false);
     expect(chapters.models.find(model => model.id === 'google/gemini-3.8-flash')?.available).toBe(true);
     expect(status.capabilities[2].defaultModel).toBe('eleven_multilingual_v2');
+  });
+});
+
+describe('Model Router reasoning levels', () => {
+  it('accepts only the levels each model supports', () => {
+    expect(resolveReasoningLevel('google/gemini-3.8-flash', 'high')).toBe('high');
+    expect(resolveReasoningLevel('google/gemini-3.8-flash', 'minimal')).toBeUndefined();
+    expect(resolveReasoningLevel('openrouter/openai/gpt-6-luna', 'xhigh')).toBe('xhigh');
+    expect(resolveReasoningLevel('openrouter/openai/gpt-6-luna', 'bogus')).toBeUndefined();
+    expect(resolveReasoningLevel('google/gemini-unknown', 'high')).toBeUndefined();
+    expect(CHAPTER_MODELS.every(model => model.reasoning?.levels.includes(model.reasoning.defaultLevel) ?? true)).toBe(true);
+  });
+
+  it('maps levels to Gemini thinking config and to OpenRouter reasoning effort', async () => {
+    expect(geminiThinkingConfig('high')).toEqual({ thinkingConfig: { thinkingLevel: 'HIGH' } });
+    expect(geminiThinkingConfig(undefined)).toEqual({});
+    expect(geminiThinkingConfig('xhigh')).toEqual({});
+    const fetchMock = vi.fn(async () => okResponse('{}'));
+    vi.stubGlobal('fetch', fetchMock);
+    const provider = createHarnessTextProvider('openrouter/openai/gpt-6-luna', resolveHarnessGenerationConfig({ OPENROUTER_API_KEY: 'o' }));
+    await provider.generate({ systemInstruction: 's', userPrompt: 'u', temperature: 1, maxOutputTokens: 1024, timeoutMs: 10_000, reasoningLevel: 'high' });
+    const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body as string);
+    expect(body.reasoning).toEqual({ effort: 'high' });
+  });
+
+  it('reports each model\'s reasoning levels in the Router status', () => {
+    const chapters = modelRouterStatus({ GEMINI_API_KEY: 'g' }).capabilities[0];
+    expect(chapters.models.find(model => model.id === 'google/gemini-3.1-pro-preview')?.reasoning).toEqual({ levels: ['low', 'medium', 'high'], defaultLevel: 'high' });
   });
 });

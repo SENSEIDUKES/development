@@ -1,17 +1,19 @@
 /**
  * Workshop-wide Model Router: a gear button that opens the router from any
- * Workshop page. Chapters models are selectable here; the choice is saved in
- * this browser and every chapter surface (Harness Generation, Chapter
- * Generation) starts from it. Images and TTS are shown for reference.
+ * Workshop page. Pick a capability, then a provider, then a model. Chapters
+ * models are selectable; the choice is saved in this browser and the features
+ * marked "follows router" use it. Images and TTS are shown for reference.
+ * "Used by" comes from `GENERATION_CONSUMERS` in the server catalog. The
+ * Advanced button tunes the selected model's reasoning level.
  */
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BookOpenText, Check, Image as ImageIcon, Settings, Volume2, X } from 'lucide-react';
+import { BookOpenText, Check, Image as ImageIcon, Settings, SlidersHorizontal, Volume2, X } from 'lucide-react';
 import type {
   ModelRouterCapabilityStatus,
   ModelRouterStatus,
 } from '../server/model-router/status';
-import { useModelPreference } from '../host/generation/modelPreference';
+import { useModelPreference, useReasoningPreferences } from '../host/generation/modelPreference';
 
 type Load =
   | { state: 'loading' }
@@ -30,43 +32,111 @@ const SERVER_OWNED_NOTE: Partial<Record<ModelRouterCapabilityStatus['id'], strin
 const isStatus = (value: unknown): value is ModelRouterStatus =>
   Boolean(value) && typeof value === 'object' && Array.isArray((value as ModelRouterStatus).capabilities);
 
-function ModelRow({ model, selected, selectable, onSelect }: {
-  model: ModelRouterCapabilityStatus['models'][number];
+type RouterModel = ModelRouterCapabilityStatus['models'][number];
+type RouterProvider = ModelRouterCapabilityStatus['providers'][number];
+
+function ModelRow({ model, selected, selectable, reasoningLevel, onSelect }: {
+  model: RouterModel;
   selected: boolean;
   selectable: boolean;
+  /** A non-default reasoning level saved in Advanced settings. */
+  reasoningLevel?: string;
   onSelect: () => void;
 }) {
-  const badges = (
-    <div className="flex flex-wrap gap-1.5 text-[10px] font-mono uppercase tracking-wider">
-      {selected && <span className="inline-flex items-center gap-1 rounded border border-cyan-400/40 bg-cyan-500/20 px-1.5 py-0.5 text-cyan-100"><Check aria-hidden="true" size={10} />Selected</span>}
-      {model.isDefault && !selected && <span className="rounded border border-white/15 px-1.5 py-0.5 text-white/55">Server default</span>}
-      {model.stage !== 'current' && <span className="rounded border border-amber-400/30 px-1.5 py-0.5 text-amber-200">{model.stage}</span>}
-      <span className={`rounded border px-1.5 py-0.5 ${model.available ? 'border-emerald-400/30 text-emerald-200' : 'border-white/10 text-white/40'}`}>
-        {model.available ? 'Ready' : 'No key'}
-      </span>
-    </div>
-  );
   const body = (
     <>
-      <div className="min-w-0 text-left">
-        <p className={`text-sm ${model.available ? 'text-white/90' : 'text-white/45'}`}>{model.label}</p>
-        <p className="truncate font-mono text-[10px] text-white/35">{model.id}</p>
-      </div>
-      {badges}
+      <span className="min-w-0 flex-1 text-left">
+        <span className={`block truncate text-[13px] leading-tight ${model.available ? 'text-white/90' : 'text-white/40'}`}>{model.label.replace(/ · OpenRouter$/, '')}</span>
+        <span className="block truncate font-mono text-[10px] leading-tight text-white/30">{model.id}</span>
+      </span>
+      <span className="flex shrink-0 items-center gap-1 font-mono text-[9px] uppercase tracking-wider">
+        {model.stage !== 'current' && <span className="rounded border border-amber-400/30 px-1 py-px text-amber-200">{model.stage}</span>}
+        {model.isDefault && !selected && <span className="rounded border border-white/15 px-1 py-px text-white/50">Default</span>}
+        {reasoningLevel && <span className="rounded border border-violet-400/35 px-1 py-px text-violet-200" title="Reasoning level">{reasoningLevel}</span>}
+        {!model.available && <span className="rounded border border-white/10 px-1 py-px text-white/40">No key</span>}
+        {selected && <Check aria-label="Selected" className="text-cyan-300" size={15} />}
+      </span>
     </>
   );
   if (!selectable) {
-    return <li data-model={model.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">{body}</li>;
+    return <li data-model={model.id} className="flex items-center gap-2 px-2.5 py-1.5">{body}</li>;
   }
   return (
     <li data-model={model.id}>
       <button type="button" role="radio" aria-checked={selected} disabled={!model.available} onClick={onSelect}
-        className={`workshop-touch-target my-1 flex w-full flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2.5 transition-colors disabled:cursor-not-allowed ${selected
+        className={`workshop-touch-target flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 transition-colors disabled:cursor-not-allowed ${selected
           ? 'border-cyan-400/40 bg-cyan-500/10'
-          : 'border-transparent hover:border-white/15 hover:bg-white/5'}`}>
+          : 'border-transparent hover:bg-white/5'}`}>
         {body}
       </button>
     </li>
+  );
+}
+
+function ProviderPicker({ providers, models, active, onPick }: {
+  providers: RouterProvider[];
+  models: RouterModel[];
+  active: string;
+  onPick: (provider: RouterProvider['id']) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Providers">
+      {providers.map(provider => {
+        const count = models.filter(model => model.provider === provider.id).length;
+        return (
+          <button key={provider.id} type="button" role="tab" aria-selected={active === provider.id} data-provider={provider.id}
+            onClick={() => onPick(provider.id)}
+            title={provider.configured ? 'Key configured' : `Needs ${provider.keyVariable}`}
+            className={`workshop-touch-target flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${active === provider.id
+              ? 'border-cyan-400/40 bg-cyan-500/15 text-cyan-50'
+              : 'border-white/10 text-white/60 hover:bg-white/5'}`}>
+            <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${provider.configured ? 'bg-emerald-400' : 'bg-white/25'}`} />
+            {provider.label}
+            <span className="font-mono text-[10px] text-white/40">{count}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Advanced settings for the selected model: its reasoning level, when it has one. */
+function AdvancedSettings({ model, level, onChange }: {
+  model?: RouterModel;
+  level?: string;
+  onChange: (level: string | undefined) => void;
+}) {
+  const reasoning = model?.reasoning;
+  const option = (value: string | undefined, label: string) => {
+    const active = (level ?? undefined) === value;
+    return (
+      <button key={label} type="button" role="radio" aria-checked={active} onClick={() => onChange(value)}
+        className={`workshop-touch-target rounded-md border px-2 py-1 text-[11px] capitalize transition-colors ${active
+          ? 'border-violet-400/45 bg-violet-500/15 text-violet-50'
+          : 'border-white/10 text-white/60 hover:bg-white/5'}`}>
+        {label}
+      </button>
+    );
+  };
+  return (
+    <section aria-label="Advanced settings" className="rounded-lg border border-violet-400/20 bg-violet-500/[0.04] px-2.5 py-2">
+      <h3 className="font-mono text-[9px] uppercase tracking-[0.2em] text-violet-200/70">
+        Reasoning{model ? ` · ${model.label.replace(/ · OpenRouter$/, '')}` : ''}
+      </h3>
+      {reasoning ? (
+        <>
+          <div className="mt-1.5 flex flex-wrap gap-1" role="radiogroup" aria-label="Reasoning level">
+            {option(undefined, `Default (${reasoning.defaultLevel})`)}
+            {reasoning.levels.map(value => option(value, value))}
+          </div>
+          <p className="mt-1.5 text-[10px] leading-snug text-white/40">
+            Higher levels think longer before writing: slower and costlier, often more careful. Saved per model in this browser.
+          </p>
+        </>
+      ) : (
+        <p className="mt-1 text-[11px] text-white/45">{model ? 'This model has no reasoning controls.' : 'Select a model first.'}</p>
+      )}
+    </section>
   );
 }
 
@@ -74,54 +144,63 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
   const [saved, setSaved] = useModelPreference('chapters');
   const selectable = capability.id === 'chapters';
   const savedIsOffered = selectable && capability.models.some(model => model.id === saved && model.available);
-  const selectedId = selectable ? (savedIsOffered ? saved : capability.defaultModel) : capability.defaultModel;
+  const selectedId = selectable && savedIsOffered ? saved : capability.defaultModel;
+  const selectedProvider = capability.models.find(model => model.id === selectedId)?.provider;
+  const [provider, setProvider] = useState<RouterProvider['id']>(
+    () => selectedProvider ?? capability.providers.find(item => item.configured)?.id ?? capability.providers[0].id,
+  );
+  const activeProvider = capability.providers.find(item => item.id === provider) ?? capability.providers[0];
+  const models = capability.models.filter(model => model.provider === activeProvider.id);
   const note = SERVER_OWNED_NOTE[capability.id];
+  const [reasoning, setReasoning] = useReasoningPreferences();
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const selectedModel = capability.models.find(model => model.id === selectedId);
 
   return (
-    <div className="space-y-4" role="tabpanel" aria-label={`${capability.label} router`}>
-      <p className="text-sm text-white/60">{capability.description}</p>
-
-      <section className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
-        <h3 className="text-[10px] font-mono uppercase tracking-[0.22em] text-white/40">Providers</h3>
-        <ul className="mt-3 flex flex-wrap gap-2">
-          {capability.providers.map(provider => (
-            <li key={provider.id} className={`rounded-lg border px-3 py-2 text-xs ${provider.configured
-              ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100'
-              : 'border-white/10 text-white/50'}`}>
-              <span className="font-semibold">{provider.label}</span>
-              <span className="ml-2 font-mono text-[10px]">
-                {provider.configured ? 'key configured' : `needs ${provider.keyVariable}`}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
-        <h3 className="text-[10px] font-mono uppercase tracking-[0.22em] text-white/40">
-          {selectable ? 'Choose a model' : 'Models'}
-        </h3>
+    <div className="space-y-2.5" role="tabpanel" aria-label={`${capability.label} router`}>
+      <div className="flex items-start justify-between gap-2">
+        <ProviderPicker providers={capability.providers} models={capability.models} active={activeProvider.id} onPick={setProvider} />
         {selectable && (
-          <p className="mt-2 text-xs text-white/50">
-            Tap a model to route every chapter generation through it. Saved in this browser.
-          </p>
+          <button type="button" aria-label="Advanced settings" aria-expanded={advancedOpen} title="Advanced settings"
+            onClick={() => setAdvancedOpen(open => !open)}
+            className={`workshop-touch-target grid h-7 w-7 shrink-0 place-items-center rounded-full border transition-colors ${advancedOpen
+              ? 'border-violet-400/45 bg-violet-500/15 text-violet-100'
+              : 'border-white/10 text-white/55 hover:bg-white/5 hover:text-white/85'}`}>
+            <SlidersHorizontal aria-hidden="true" size={13} />
+          </button>
         )}
-        {note && <p className="mt-2 text-xs text-white/50">{note}</p>}
-        <ul className="mt-2 divide-y divide-white/5" role={selectable ? 'radiogroup' : undefined} aria-label={selectable ? 'Chapter model' : undefined}>
-          {capability.models.map(model => (
-            <ModelRow key={model.id} model={model} selectable={selectable}
-              selected={model.id === selectedId} onSelect={() => setSaved(model.id)} />
-          ))}
-        </ul>
-      </section>
-
-      <section className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
-        <h3 className="text-[10px] font-mono uppercase tracking-[0.22em] text-white/40">Used by</h3>
-        <p className="mt-3 text-sm text-white/70">
-          {selectable
-            ? 'Harness Generation · Chapter Generation. Story Seed Blueprint and Reader Translation use the server default.'
-            : capability.consumers.length ? capability.consumers.join(' · ') : 'No generation surface uses this router yet.'}
-        </p>
+      </div>
+      {selectable && advancedOpen && (
+        <AdvancedSettings model={selectedModel} level={selectedModel ? reasoning[selectedModel.id] : undefined}
+          onChange={level => selectedModel && setReasoning(selectedModel.id, level)} />
+      )}
+      {!activeProvider.configured && (
+        <p className="text-[11px] text-white/45">Add <span className="font-mono">{activeProvider.keyVariable}</span> in Vercel to use these models.</p>
+      )}
+      {note && <p className="text-[11px] leading-snug text-white/45">{note}</p>}
+      <ul className="space-y-0.5 rounded-lg border border-white/10 bg-white/[0.02] p-1"
+        role={selectable ? 'radiogroup' : undefined} aria-label={selectable ? `${activeProvider.label} chapter models` : undefined}>
+        {models.map(model => (
+          <ModelRow key={model.id} model={model} selectable={selectable}
+            reasoningLevel={selectable && model.reasoning?.levels.some(level => level === reasoning[model.id]) ? reasoning[model.id] : undefined}
+            selected={model.id === selectedId} onSelect={() => setSaved(model.id)} />
+        ))}
+        {!models.length && <li className="px-2.5 py-1.5 text-xs text-white/40">No models from this provider.</li>}
+      </ul>
+      <section aria-label="Used by" className="rounded-lg border border-white/10 bg-white/[0.02] px-2.5 py-2">
+        <h3 className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/40">Used by</h3>
+        {capability.consumers.length ? (
+          <ul className="mt-1.5 flex flex-wrap gap-1.5">
+            {capability.consumers.map(consumer => (
+              <li key={consumer.name} className="rounded-md border border-white/10 px-2 py-0.5 text-[11px] text-white/75">
+                {consumer.name}
+                <span className={`ml-1.5 font-mono text-[9px] uppercase ${consumer.modelChoice === 'router' ? 'text-cyan-300' : 'text-white/35'}`}>
+                  {consumer.modelChoice === 'router' ? 'follows router' : 'server default'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : <p className="mt-1 text-[11px] text-white/45">No Workshop feature generates with this yet.</p>}
       </section>
     </div>
   );
@@ -150,30 +229,30 @@ export function ModelRouterPanel({ endpoint = '/api/model-router' }: { endpoint?
   const current = capabilities.find(capability => capability.id === active);
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Router capabilities">
+    <div className="space-y-3">
+      <div className="grid grid-cols-3 gap-1 rounded-lg border border-white/10 bg-white/[0.02] p-0.5" role="tablist" aria-label="Router capabilities">
         {(['chapters', 'images', 'tts'] as const).map(id => {
           const Icon = CAPABILITY_ICONS[id];
           return (
             <button key={id} type="button" role="tab" aria-selected={active === id} onClick={() => setActive(id)}
-              className={`workshop-touch-target flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors ${active === id
-                ? 'border-cyan-400/35 bg-cyan-500/15 text-cyan-100'
-                : 'border-white/10 text-white/55 hover:border-white/20 hover:bg-white/5 hover:text-white/85'}`}>
-              <Icon aria-hidden="true" size={14} />
+              className={`workshop-touch-target flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs transition-colors ${active === id
+                ? 'bg-cyan-500/15 text-cyan-100'
+                : 'text-white/55 hover:bg-white/5 hover:text-white/85'}`}>
+              <Icon aria-hidden="true" size={13} />
               {CAPABILITY_LABELS[id]}
             </button>
           );
         })}
       </div>
 
-      {load.state === 'loading' && <p className="text-sm text-white/50">Reading the router…</p>}
+      {load.state === 'loading' && <p className="text-xs text-white/50">Reading the router…</p>}
       {load.state === 'error' && (
         <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 p-4 text-sm text-rose-100">
           <p>{load.message}</p>
           <button type="button" onClick={() => void refresh()} className="mt-2 underline">Try again</button>
         </div>
       )}
-      {current && <CapabilityPanel capability={current} />}
+      {current && <CapabilityPanel key={current.id} capability={current} />}
     </div>
   );
 }
@@ -210,16 +289,13 @@ export function ModelRouterGear({ className = '' }: { className?: string }) {
         <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-6"
           onClick={event => { if (event.target === event.currentTarget) setOpen(false); }}>
           <div role="dialog" aria-modal="true" aria-labelledby={titleId}
-            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl border border-white/10 bg-[#05070d] px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-5 text-white shadow-2xl sm:rounded-2xl sm:px-6"
+            className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-white/10 bg-[#05070d] px-3 pb-[calc(0.9rem+env(safe-area-inset-bottom,0px))] pt-3 text-white shadow-2xl sm:rounded-2xl sm:px-4"
             style={{ fontFamily: 'var(--font-sans)' }}>
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <h2 id={titleId} className="text-lg font-semibold">Model Router</h2>
-                <p className="text-xs text-white/50">Choose which model the Workshop generates with.</p>
-              </div>
+            <div className="mb-2.5 flex items-center justify-between gap-3">
+              <h2 id={titleId} className="text-sm font-semibold tracking-wide">Model Router</h2>
               <button ref={closeButton} type="button" aria-label="Close Model Router" onClick={() => setOpen(false)}
-                className="workshop-touch-target grid h-9 w-9 place-items-center rounded-full border border-white/10 text-white/60 hover:bg-white/5 hover:text-white">
-                <X aria-hidden="true" size={16} />
+                className="workshop-touch-target grid h-8 w-8 place-items-center rounded-full border border-white/10 text-white/60 hover:bg-white/5 hover:text-white">
+                <X aria-hidden="true" size={15} />
               </button>
             </div>
             <ModelRouterPanel />

@@ -5,7 +5,7 @@ import {
 } from './config';
 import { buildHarnessGenerationPrompt, buildHarnessMemoryRecoveryPrompt, buildHarnessArcPrompt } from './prompt';
 import { createHarnessTextProvider, type HarnessTextModelProvider } from './provider';
-import { requireTextModelKey } from '../model-router/catalog';
+import { requireTextModelKey, resolveReasoningLevel } from '../model-router/catalog';
 
 export type HarnessProviderFactory = (input: { apiKey: string; model: string }) => HarnessTextModelProvider;
 
@@ -21,6 +21,8 @@ export const executeHarnessGeneration = async (
   request: HarnessGenerationRequest | HarnessMemoryRecoveryRequest | HarnessArcRequest,
   config: ResolvedHarnessGenerationConfig,
   providerFactory?: HarnessProviderFactory,
+  /** Router Advanced setting from the request body; checked against the catalog. */
+  requestedReasoningLevel?: unknown,
 ): Promise<HarnessGenerationResponse> => {
   const model = resolveConfiguredHarnessModel(request.model, config);
   const apiKey = requireTextModelKey(model, config.keys);
@@ -36,6 +38,7 @@ export const executeHarnessGeneration = async (
       systemInstruction: prompt.systemInstruction,
       userPrompt: prompt.userPrompt,
       responseJsonSchema: prompt.responseJsonSchema,
+      reasoningLevel: resolveReasoningLevel(model, requestedReasoningLevel),
       temperature: 'operation' in request ? 0 : config.temperature,
       maxOutputTokens: config.maxOutputTokens,
       timeoutMs: config.timeoutMs,

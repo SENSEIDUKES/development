@@ -34,6 +34,23 @@ from that vocabulary. Use those terms as defined there; do not invent
 parallel terminology, schemas, assemblers, or context systems for a
 concept it already defines.
 
+### Generation features and the Model Router
+
+Every feature that calls a generation model (text, image, or speech) must be
+registered in the Model Router in the same change that adds it:
+
+1. Add it to `GENERATION_CONSUMERS` in `src/server/model-router/catalog.ts`
+   with its capability, the server file that makes the call, and whether it
+   follows the Router's model choice (`router`) or the server default.
+   Provider adapter files go in `PROVIDER_ADAPTERS`.
+2. Route its model through the catalog (`resolveChapterModelRoute`,
+   `requireTextModelKey`, the provider factories) instead of pinning a model
+   string or reading a provider key directly.
+
+The Router's "Used by" section is generated from that registry, so it is the
+product owner's view of what every model powers. `src/server/model-router/generationConsumers.test.ts`
+scans the repository and fails on any unregistered model call.
+
 ## Required skills
 
 Before beginning any implementation, download, install or otherwise make available, and read all required skills for this repository.

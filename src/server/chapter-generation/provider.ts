@@ -7,7 +7,8 @@ import type {
   EstimatedStageInputTokenBreakdown,
 } from "../../components/chapter-generation/shared/pipeline/usage";
 import { geminiApiModelId, type ResolvedChapterGenerationConfig } from "./config";
-import { requireTextModelKey, textModelProvider } from "../model-router/catalog";
+import { requireTextModelKey, textModelProvider, type ReasoningLevel } from "../model-router/catalog";
+import { geminiThinkingConfig } from "../model-router/geminiThinking";
 import { generateOpenRouterText } from "../model-router/openRouter";
 
 export interface ChapterTextGenerationRequest {
@@ -20,6 +21,8 @@ export interface ChapterTextGenerationRequest {
   maxOutputTokens: number;
   estimatedInputBreakdown?: EstimatedStageInputTokenBreakdown;
   abortSignal?: AbortSignal;
+  /** Router Advanced setting; omitted means the model's own default. */
+  reasoningLevel?: ReasoningLevel;
 }
 
 export interface ChapterTextGenerationResult {
@@ -62,6 +65,7 @@ export class GeminiChapterTextProvider implements ChapterTextModelProvider {
           temperature: request.temperature,
           maxOutputTokens: request.maxOutputTokens,
           abortSignal: request.abortSignal,
+          ...geminiThinkingConfig(request.reasoningLevel),
           ...(request.responseFormat === "json"
             ? { responseMimeType: "application/json" }
             : {}),
@@ -128,7 +132,7 @@ export class OpenRouterChapterTextProvider implements ChapterTextModelProvider {
         maxOutputTokens: request.maxOutputTokens,
         responseFormat: request.responseFormat,
         abortSignal: request.abortSignal,
-        reasoningEffort: this.reasoningEffort,
+        reasoningEffort: request.reasoningLevel ?? this.reasoningEffort,
       });
       const text = result.text.trim();
       const inputTokens = result.usage?.inputTokens

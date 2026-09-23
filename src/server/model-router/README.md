@@ -21,6 +21,13 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 Model ids carry their route: `google/gemini-*` → Gemini, `openrouter/<vendor>/<model>`
 → OpenRouter, `eleven_*` → ElevenLabs.
 
+## Adding a generation feature
+
+Register it in `GENERATION_CONSUMERS` (and any new provider file in
+`PROVIDER_ADAPTERS`) in `catalog.ts` in the same change. The Router's
+"Used by" section reads that list, and `generationConsumers.test.ts` fails on
+any model call that is not registered. See AGENTS.md.
+
 ## Environment
 
 | Variable | Purpose |
@@ -28,7 +35,7 @@ Model ids carry their route: `google/gemini-*` → Gemini, `openrouter/<vendor>/
 | `GEMINI_API_KEY` | Gemini models |
 | `OpenRouter-Dev` (or `OPENROUTER_API_KEY`) | OpenRouter models (GPT-6 Luna, GPT-6 Luna Pro appear once set) |
 | `OPENROUTER_MODELS` | Extra OpenRouter models, comma-separated (`openai/gpt-5.6-luna`) |
-| `OPENROUTER_REASONING_EFFORT` | Optional reasoning effort for reasoning models |
+| `OPENROUTER_REASONING_EFFORT` | Optional server fallback reasoning effort for OpenRouter models (the Router's Advanced setting wins) |
 | `HARNESS_GENERATION_MODELS`, `CHAPTER_GENERATION_MODELS` | Models pinned ahead of the catalog |
 | `*_DEFAULT_MODEL` | Default model per surface (otherwise Gemini 3.1 Flash Lite) |
 | `ELEVENLABS_API_KEY`, `ELEVENLABS_MODEL_ID` | TTS |
@@ -39,6 +46,7 @@ Model ids carry their route: `google/gemini-*` → Gemini, `openrouter/<vendor>/
 
 - `catalog.ts` — models, providers, routing and key resolution
 - `openRouter.ts` — OpenRouter chat-completions call
+- `geminiThinking.ts` — maps Router reasoning levels to Gemini `thinkingLevel`
 - `status.ts` — capability status for the Workshop
 - `vercelHandler.ts` → `api/model-router.js` (built by `scripts/buildModelRouterApi.mjs`)
 - Workshop gear and panel: `src/workshop/ModelRouterSettings.tsx`
@@ -58,3 +66,11 @@ Copy this folder plus the provider changes in `src/server/harness-generation/`,
 - 2026-09-23 — Chapter models are selectable from a Workshop-wide gear. The
   choice is saved in the browser and drives Harness Generation and Chapter
   Generation. The Systems card was archived in favor of the gear.
+- 2026-09-23 — Compact, provider-first panel: pick a capability, then a
+  provider, then a model. "Used by" now comes from the `GENERATION_CONSUMERS`
+  registry, enforced by a repository scan test and an AGENTS.md rule.
+- 2026-09-23 — Advanced settings: a sliders button tunes the selected chapter
+  model's reasoning level (levels per model live in `CHAPTER_MODELS`). The
+  level is saved per model in the browser, sent with Harness and Chapter
+  Generation requests, checked by `resolveReasoningLevel`, and passed to Gemini
+  as `thinkingLevel` or to OpenRouter as `reasoning.effort`.

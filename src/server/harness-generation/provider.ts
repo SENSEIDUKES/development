@@ -1,8 +1,9 @@
 import { GoogleGenAI } from '@google/genai';
 import { type HarnessProviderReceipt } from '@seihouse/sen/harness-generation';
 import { geminiHarnessModelId, type ResolvedHarnessGenerationConfig } from './config';
-import { requireTextModelKey, textModelProvider } from '../model-router/catalog';
+import { requireTextModelKey, textModelProvider, type ReasoningLevel } from '../model-router/catalog';
 import { generateOpenRouterText } from '../model-router/openRouter';
+import { geminiThinkingConfig } from '../model-router/geminiThinking';
 
 export interface HarnessTextGenerationRequest {
   systemInstruction: string;
@@ -11,6 +12,8 @@ export interface HarnessTextGenerationRequest {
   maxOutputTokens: number;
   timeoutMs: number;
   responseJsonSchema?: unknown;
+  /** Router Advanced setting; omitted means the model's own default. */
+  reasoningLevel?: ReasoningLevel;
 }
 
 export interface HarnessTextGenerationResult {
@@ -56,6 +59,7 @@ export class GeminiHarnessTextProvider implements HarnessTextModelProvider {
           maxOutputTokens: request.maxOutputTokens,
           responseMimeType: 'application/json',
           ...(request.responseJsonSchema ? { responseJsonSchema: request.responseJsonSchema } : {}),
+          ...geminiThinkingConfig(request.reasoningLevel),
           abortSignal: controller.signal,
         },
       });
@@ -127,7 +131,7 @@ export class OpenRouterHarnessTextProvider implements HarnessTextModelProvider {
         responseFormat: 'json',
         responseJsonSchema: request.responseJsonSchema,
         abortSignal: controller.signal,
-        reasoningEffort: this.reasoningEffort,
+        reasoningEffort: request.reasoningLevel ?? this.reasoningEffort,
       });
       const inputTokens = result.usage?.inputTokens ?? estimateTokens(`${request.systemInstruction}\n\n${request.userPrompt}`);
       const outputTokens = result.usage?.outputTokens ?? estimateTokens(result.text);

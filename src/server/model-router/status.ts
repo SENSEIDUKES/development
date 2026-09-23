@@ -1,12 +1,15 @@
 import {
   CHAPTER_MODELS,
   DEFAULT_TTS_MODEL,
+  GENERATION_CONSUMERS,
+  type GenerationConsumer,
   IMAGE_MODELS,
   MODEL_PROVIDERS,
   providerKey,
   resolveChapterModelRoute,
   TTS_MODELS,
   type ModelCapability,
+  type ModelReasoning,
   type ModelEnvironment,
   type ModelProviderId,
   type ModelStage,
@@ -28,14 +31,16 @@ export interface ModelRouterModelStatus {
   /** Its provider key is configured, so a surface could call it now. */
   available: boolean;
   isDefault: boolean;
+  /** Tunable reasoning levels, when the model has them. */
+  reasoning?: ModelReasoning;
 }
 
 export interface ModelRouterCapabilityStatus {
   id: ModelCapability;
   label: string;
   description: string;
-  /** Surfaces that currently generate through this capability. */
-  consumers: string[];
+  /** Features that currently generate through this capability (from `GENERATION_CONSUMERS`). */
+  consumers: Array<Pick<GenerationConsumer, 'name' | 'modelChoice'>>;
   defaultModel?: string;
   providers: ModelRouterProviderStatus[];
   models: ModelRouterModelStatus[];
@@ -44,6 +49,10 @@ export interface ModelRouterCapabilityStatus {
 export interface ModelRouterStatus {
   capabilities: ModelRouterCapabilityStatus[];
 }
+
+const consumersFor = (capability: ModelCapability) => GENERATION_CONSUMERS
+  .filter(consumer => consumer.capability === capability)
+  .map(({ name, modelChoice }) => ({ name, modelChoice }));
 
 const providerStatus = (environment: ModelEnvironment, ids: ModelProviderId[]): ModelRouterProviderStatus[] =>
   ids.map(id => ({ id, label: MODEL_PROVIDERS[id].label, keyVariable: MODEL_PROVIDERS[id].keyVariable, configured: Boolean(providerKey(environment, id)) }));
@@ -83,7 +92,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         id: 'chapters',
         label: 'Chapters',
         description: 'Text models that write chapters, Story Seed Blueprints, and reader translations.',
-        consumers: ['Harness Generation', 'Chapter Generation', 'Story Seed Blueprint', 'Reader Translation'],
+        consumers: consumersFor('chapters'),
         defaultModel: chapters.defaultModel,
         providers: providerStatus(environment, ['gemini', 'openrouter']),
         models: modelStatus(environment, chapterModels, chapters.defaultModel),
@@ -92,7 +101,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         id: 'images',
         label: 'Images',
         description: 'Image models for covers, portraits, and scene art.',
-        consumers: [],
+        consumers: consumersFor('images'),
         providers: providerStatus(environment, ['gemini', 'openrouter']),
         models: modelStatus(environment, IMAGE_MODELS),
       },
@@ -100,7 +109,7 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         id: 'tts',
         label: 'TTS',
         description: 'Text-to-speech models that voice characters and Codex quotes.',
-        consumers: ['Codex Voice Quote'],
+        consumers: consumersFor('tts'),
         defaultModel: ttsDefault,
         providers: providerStatus(environment, ['elevenlabs']),
         models: modelStatus(environment, ttsModels, ttsDefault),

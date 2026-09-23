@@ -16,7 +16,7 @@ ${JSON.stringify(storySeed, null, 2)}
 Completion rules:
 - Complete every output field. No blank strings. majorFactions and initialCharacters must not be empty; majorMysteries and unresolvedPlotThreads may be empty.
 - Preserve all non-empty Story Seed facts. The server will enforce creator-authored values after generation, so build around them rather than contradicting them.
-- Generate a strong logline and overall direction when the creator left them open.
+- Generate a strong logline when the creator left it open.
 - Establish the world overview, opening location, society, and a usable power-system outline.
 - Complete the main character's name, age, appearance, personality, and background profile when missing.
 - Include the creator's named characters and factions, then add only useful supporting entries.
@@ -24,7 +24,7 @@ Completion rules:
 - ${storySeed.story.optional.fateSurvival.enabled
   ? 'Survival is enabled. You may create majorMysteries and unresolvedPlotThreads for the Fate Survival experience. Keep them only in those arrays, as unresolved proposals, never character knowledge or ordinary canonical state.'
   : 'Survival is disabled. Return empty arrays for majorMysteries and unresolvedPlotThreads. Do not invent Fate Survival mysteries or unresolved threads, or embed them in other fields.'}
-- The style bible must translate genre, style, tags, maturity metadata, and story direction into actionable prose, pacing, viewpoint, dialogue, and thematic guidance.
+- The style bible must translate genre, style, tags, and maturity metadata into actionable prose, pacing, viewpoint, dialogue, and thematic guidance.
 - The trope rules must explicitly account for face-slap, plot-armor, recognition, and Make It Work settings. Keep Fate Survival settings out of trope rules; HARNESS receives them through dedicated context. Apply the other settings without exposing app-control language as ordinary narration.
 - mcProfile must match mainCharacter.backgroundProfile for compatibility.
 

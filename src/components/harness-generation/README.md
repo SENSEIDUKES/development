@@ -25,11 +25,22 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-09-20 |
+| Last Workshop update | 2026-09-23 |
 | Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Steered continuation with a derived SEN Reader adapter |
 
 ### History
+
+- **2026-09-23:** Finished the Story Seed ↔ HARNESS verification; the upstream
+  generation configuration is complete. The handoff now sends every Story Seed
+  concept once: each character and faction travels only as a Foundation identity
+  whose evidence is its single description (authored Seed entries with structured
+  aliases, plus Blueprint additions); `characters` is no longer filled from the
+  Seed, and `worldFacts` holds only World, Society, Power system, and Main
+  Opposition. Title and opening no longer repeat inside World Identity JSON, Blueprint
+  copies of authored entities are not re-sent, and storage IDs no longer reach the
+  provider. No HARNESS schema change; stories created before this keep their frozen
+  Foundation.
 
 - **2026-09-20:** Story Seed Origin routing now retains Fate Survival settings and
   Blueprint mystery/thread proposals in a dedicated Foundation field. The packet

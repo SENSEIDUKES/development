@@ -5,6 +5,7 @@ import { type HarnessGenerationRequest, type HarnessGenerationResponse } from '@
 import { handleHarnessGenerationHttp } from '../../../server/harness-generation/http';
 import type { HarnessTextGenerationRequest } from '../../../server/harness-generation/provider';
 import { createMockStorySeedRecord } from '../story-seed/previewData';
+import { normalizeWorldBlueprint } from '@seihouse/sen/story-seed';
 import {
   createHarnessFoundationFromStorySeed,
   createOfficialCapaDefaultLoadout,
@@ -140,9 +141,10 @@ describe('Story Seed to Harness handoff', () => {
       },
     });
     expect(foundation.toneStyle).toContain('Chinese');
-    expect(foundation.toneStyle).toContain('Blueprint style bible');
-    expect(foundation.characters).toContain('Ye Chen');
-    expect(foundation.worldFacts).toContain('Heavenly Sword Sect');
+    expect(foundation.toneStyle).toContain('Style bible');
+    expect(foundation.characters).toBeUndefined();
+    expect(foundation.identities?.map(identity => identity.name)).toContain('Ye Chen');
+    expect(foundation.identities?.find(identity => identity.name === 'Heavenly Sword Sect')?.kind).toBe('faction');
     expect(foundation.intendedDirection).toBeUndefined();
     // The canonical Fate Pressure domain value crosses the boundary as its own
     // field, independent of the visible Story Seed label or placement.
@@ -152,6 +154,53 @@ describe('Story Seed to Harness handoff', () => {
     record.seed.story.required.premise = 'Changed after handoff.';
     const snapshotSeed = foundation.sourceSnapshot?.seed as typeof record.seed;
     expect(snapshotSeed.story.required.premise).toBe(originalPremise);
+  });
+
+  it('delivers every Story Seed world value to the provider exactly once', async () => {
+    const record = createMockStorySeedRecord();
+    const world = record.seed.world.optional;
+    Object.assign(world.worldIdentity, { title: 'TITLE_ONCE', worldType: 'WORLD_ONCE', societyStructure: 'SOCIETY_ONCE', startingLocation: 'OPENING_ONCE' });
+    Object.assign(world.worldFoundations, {
+      mainOpposition: 'OPPOSITION_ONCE',
+      mainCharacter: { name: 'Hero Once', personality: 'HERO_TEMPER_ONCE', bio: 'HERO_BIO_ONCE' },
+      additionalCharacters: [{ id: 'storage-id-char', name: 'Ally Once', aliases: ['ALLY_ALIAS_ONCE'], bio: 'ALLY_BIO_ONCE' }],
+      factions: [{ id: 'storage-id-faction', name: 'Guild Once', aliases: ['GUILD_ALIAS_ONCE'], description: 'GUILD_PROFILE_ONCE' }],
+      abilities: { startingPowerConcept: 'POWER_CONCEPT_ONCE' },
+      powerSystem: { flavor: 'POWER_FLAVOR_ONCE' },
+    });
+    record.seed.story.required.storyTags = ['TAG_ONCE'];
+    record.blueprint = normalizeWorldBlueprint({
+      ...record.blueprint!,
+      mainCharacter: { name: 'Hero Once', age: '20', personality: 'HERO_TEMPER_ONCE', appearance: 'HERO_LOOK_ONCE', backgroundProfile: 'HERO_BIO_ONCE and REVIEWED_PROSE_ONCE' },
+      initialCharacters: ['Ally Once — profile: ALLY_BIO_ONCE', 'Rival Once (Rival)'],
+      majorFactions: ['Guild Once — profile: GUILD_PROFILE_ONCE', 'Cult Once'],
+      powerSystemOutline: 'POWER_CONCEPT_ONCE ladder, POWER_LADDER_ONCE',
+      styleBible: 'STYLE_BIBLE_ONCE',
+    }, record.seed);
+    const foundation = createHarnessFoundationFromStorySeed(record);
+    const requests: HarnessGenerationRequest[] = [];
+    const controller = new HarnessGenerationController({ repository: new InMemoryHarnessGenerationRepository(), modelAdapter: {
+      getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }),
+      arcOperation: vi.fn(),
+      generate: vi.fn(async (request: HarnessGenerationRequest): Promise<HarnessGenerationResponse> => {
+        requests.push(structuredClone(request));
+        return { rawProviderResponse: JSON.stringify({ paragraphs: ['Hero Once waits.'] }),
+          providerReceipt: { provider: 'fixture', model: 'fixture', generatedAt: '2026-09-23T12:00:00Z', usage: { source: 'unavailable' } } };
+      }),
+    } });
+    await controller.hydrate();
+    const story = await controller.createStory(foundation);
+    await controller.generateNextChapter(story.id, 'fixture');
+    const { userPrompt } = buildHarnessGenerationPrompt(requests[0]);
+
+    for (const marker of ['TITLE_ONCE', 'WORLD_ONCE', 'SOCIETY_ONCE', 'OPENING_ONCE', 'OPPOSITION_ONCE', 'HERO_TEMPER_ONCE',
+      'HERO_BIO_ONCE', 'REVIEWED_PROSE_ONCE', 'HERO_LOOK_ONCE', 'ALLY_BIO_ONCE', 'ALLY_ALIAS_ONCE', 'GUILD_PROFILE_ONCE',
+      'GUILD_ALIAS_ONCE', 'POWER_CONCEPT_ONCE', 'POWER_FLAVOR_ONCE', 'POWER_LADDER_ONCE', 'STYLE_BIBLE_ONCE', 'TAG_ONCE',
+      'Rival Once (Rival)']) {
+      expect(userPrompt.split(marker), marker).toHaveLength(2);
+    }
+    expect(userPrompt).not.toMatch(/storage-id-|Blueprint (main character|character profile|initial characters|factions|society|power system)/);
+    expect(foundation.identities?.map(identity => identity.name)).toEqual(['Hero Once', 'Ally Once', 'Rival Once', 'Guild Once', 'Cult Once']);
   });
 
   it('accepts a saved seed without a Blueprint', () => {
@@ -168,18 +217,14 @@ describe('Story Seed to Harness handoff', () => {
     record.seed.world.optional.worldFoundations.destinedEnding = 'Author ending';
     record.blueprint!.startingLocation = 'Generated opening';
     record.blueprint!.destinedEnding = 'Generated ending';
-    record.blueprint!.mainCharacter = { name: 'Mara', age: '20', personality: 'Quiet', appearance: 'Tall', backgroundProfile: 'Sailor' };
-    record.blueprint!.mcProfile = 'Additional profile detail that must survive.';
+    record.blueprint!.mainCharacter = { name: 'Mara', age: '20', personality: 'Quiet', appearance: 'Tall', backgroundProfile: 'Additional profile detail that must survive.' };
     const foundation = createHarnessFoundationFromStorySeed(record);
     expect(foundation.openingSituation).toBe('Author opening');
     expect(foundation.destinedEnding).toBe('Author ending');
     expect(foundation.intendedDirection).toBeUndefined();
-    expect(foundation.intendedDirection).toBeUndefined();
     expect(foundation.declaredCanon).not.toContain(record.blueprint!.logline);
     expect(foundation.declaredCanon).not.toContain(record.blueprint!.majorMysteries[0]);
-    expect(foundation.intendedDirection).toBeUndefined();
-    expect(foundation.intendedDirection).toBeUndefined();
-    expect(foundation.characters).toContain('Additional profile detail');
+    expect(foundation.identities?.find(identity => identity.name === 'Ye Chen')?.evidence).toContain('Additional profile detail');
   });
 
   it('keeps Original Language out of the neutral Foundation the boundary produces', () => {

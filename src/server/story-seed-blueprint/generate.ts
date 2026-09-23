@@ -2,7 +2,6 @@ import { ARC_PLAN_SCHEMA, validateArcPlan } from '@seihouse/sen/arc-goals';
 import { GoogleGenAI } from "@google/genai";
 import { buildBlueprintGenerationPayload, finalizeGeneratedWorldBlueprint, type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
 import { type WorldBlueprint } from '@seihouse/sen/story-seed';
-import { adaptFinalizedStorySeedToChapterContracts } from "../../components/chapter-generation/shared/packets/storySeedChapterAdapter";
 import {
   geminiBlueprintModelId,
   type ResolvedStorySeedBlueprintConfig,
@@ -205,9 +204,7 @@ export const generateWorldBlueprint = async (
   const blueprint = finalizeGeneratedWorldBlueprint(generated, storySeed);
   assertCompleteGeneratedBlueprint(blueprint);
   if (!blueprint.arcPlan || validateArcPlan(blueprint.arcPlan).arcNumber !== 1 || blueprint.arcPlan.goals.length !== 1) throw new Error('The generated Blueprint needs a valid Arc 1 plan.');
-
-  // This is the exact downstream gate used by the Chapter Generation upload
-  // flow. Returning only its normalized artifact proves there is no fixture
-  // substitution or looser Story Seed-only success path.
-  return adaptFinalizedStorySeedToChapterContracts({ seed: storySeed, blueprint }).blueprint;
+  // HARNESS is the only downstream consumer. These gates plus the Story Seed
+  // handoff validation are its contract; no legacy chapter adapter runs here.
+  return blueprint;
 };

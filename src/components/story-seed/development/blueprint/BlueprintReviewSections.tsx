@@ -246,7 +246,7 @@ interface BlueprintWorldSettingSectionProps {
   startingLocation?: WorldBlueprint['startingLocation'];
   societyStructure?: WorldBlueprint['societyStructure'];
   powerSystemOutline?: WorldBlueprint['powerSystemOutline'];
-  setBlueprint: Dispatch<SetStateAction<WorldBlueprint>>;
+  onUpdateWorldSetting: (patch: Partial<Pick<WorldBlueprint, 'worldOverview' | 'startingLocation' | 'societyStructure' | 'powerSystemOutline'>>) => void;
 }
 
 export const BlueprintWorldSettingSection = memo(({
@@ -254,7 +254,7 @@ export const BlueprintWorldSettingSection = memo(({
   startingLocation,
   societyStructure,
   powerSystemOutline,
-  setBlueprint,
+  onUpdateWorldSetting,
 }: BlueprintWorldSettingSectionProps) => (
   <LibraryPanel as="section" aria-labelledby="blueprint-world-setting-heading" padding="md">
     <BlueprintSectionHeading
@@ -272,7 +272,7 @@ export const BlueprintWorldSettingSection = memo(({
           rightElement={<EditableChip />}
           icon={SENWorldIdentityIcon}
           value={worldOverview || ''}
-          onChange={value => setBlueprint(current => ({ ...current, worldOverview: value }))}
+          onChange={value => onUpdateWorldSetting({ worldOverview: value })}
           rows={7}
           className="font-serif leading-relaxed text-[#dfd8cf]"
           placeholder="The setting, lore, and physical characteristics of this universe..."
@@ -286,7 +286,7 @@ export const BlueprintWorldSettingSection = memo(({
           rightElement={<EditableChip />}
           icon={MapPin}
           value={startingLocation || ''}
-          onChange={value => setBlueprint(current => ({ ...current, startingLocation: value }))}
+          onChange={value => onUpdateWorldSetting({ startingLocation: value })}
           rows={5}
           className="leading-relaxed"
           placeholder="Where the story begins..."
@@ -297,7 +297,7 @@ export const BlueprintWorldSettingSection = memo(({
           rightElement={<EditableChip />}
           icon={Landmark}
           value={societyStructure || ''}
-          onChange={value => setBlueprint(current => ({ ...current, societyStructure: value }))}
+          onChange={value => onUpdateWorldSetting({ societyStructure: value })}
           rows={5}
           placeholder="Feudal, corporate, sect-based, military rule..."
         />
@@ -309,7 +309,7 @@ export const BlueprintWorldSettingSection = memo(({
         rightElement={<EditableChip />}
         icon={SENPowerSystemIcon}
         value={powerSystemOutline || ''}
-        onChange={value => setBlueprint(current => ({ ...current, powerSystemOutline: value }))}
+        onChange={value => onUpdateWorldSetting({ powerSystemOutline: value })}
         rows={4}
         className="font-mono leading-relaxed"
         placeholder="Power scaling, ranks, costs, limits, magical energy..."

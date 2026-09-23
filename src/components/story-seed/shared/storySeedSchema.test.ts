@@ -218,7 +218,10 @@ describe('Story Seed creator/story/world contract', () => {
 
   it('preserves deliberately cleared editable fields instead of restoring seed fallbacks', () => {
     const seed = completeSeed();
-    seed.world.optional.worldIdentity.title = '';
+    // Review edits to Seed-owned values write through, so a cleared review
+    // field arrives with its Seed value cleared too.
+    Object.assign(seed.world.optional.worldIdentity, { title: '', startingLocation: '', societyStructure: '' });
+    Object.assign(seed.world.optional.worldFoundations.mainCharacter!, { name: '', personality: '' });
     const cleared = normalizeWorldBlueprint({
       ...blueprint,
       title: '',
@@ -250,6 +253,23 @@ describe('Story Seed creator/story/world contract', () => {
         appearance: '',
         backgroundProfile: '',
       },
+    });
+  });
+
+  it('keeps Seed-authored values authoritative over stale Blueprint copies', () => {
+    const seed = completeSeed();
+    Object.assign(seed.world.optional.worldIdentity, { worldType: 'Seed world', startingLocation: 'Seed opening', societyStructure: 'Seed order' });
+    Object.assign(seed.world.optional.worldFoundations, { destinedEnding: 'Seed ending' });
+    Object.assign(seed.world.optional.worldFoundations.mainCharacter!, { name: 'Seed Hero', personality: 'Seed temper' });
+    const normalized = normalizeWorldBlueprint({
+      ...blueprint,
+      worldOverview: 'Stale world', startingLocation: 'Stale opening', societyStructure: 'Stale order', destinedEnding: 'Stale ending',
+      mainCharacter: { name: 'Stale Hero', age: '19', personality: 'Stale temper', appearance: 'Tall', backgroundProfile: 'Reviewed prose' },
+    }, seed);
+
+    expect(normalized).toMatchObject({
+      worldOverview: 'Seed world', startingLocation: 'Seed opening', societyStructure: 'Seed order', destinedEnding: 'Seed ending',
+      mainCharacter: { name: 'Seed Hero', age: '19', personality: 'Seed temper', appearance: 'Tall', backgroundProfile: 'Reviewed prose' },
     });
   });
 

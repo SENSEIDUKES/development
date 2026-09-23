@@ -600,9 +600,11 @@ export const normalizeWorldBlueprint = (
     typeof record[field] === 'string';
   const legacyProfile = readString(source, 'mcProfile', fallbackMainCharacter.backgroundProfile);
   const mainCharacter: WorldBlueprintMainCharacter = {
-    name: readString(sourceMainCharacter, 'name', fallbackMainCharacter.name),
+    name: text(normalizedSeed.world.optional.worldFoundations.mainCharacter?.name)
+      || readString(sourceMainCharacter, 'name', fallbackMainCharacter.name),
     age: readString(sourceMainCharacter, 'age', fallbackMainCharacter.age),
-    personality: readString(sourceMainCharacter, 'personality', fallbackMainCharacter.personality),
+    personality: text(normalizedSeed.world.optional.worldFoundations.mainCharacter?.personality)
+      || readString(sourceMainCharacter, 'personality', fallbackMainCharacter.personality),
     appearance: readString(sourceMainCharacter, 'appearance', fallbackMainCharacter.appearance),
     backgroundProfile: hasString(sourceMainCharacter, 'backgroundProfile')
       ? readString(sourceMainCharacter, 'backgroundProfile')
@@ -612,7 +614,11 @@ export const normalizeWorldBlueprint = (
   // non-string fields receive safe defaults for older Blueprint records.
   const read = (field: string, fallbackValue = ''): string =>
     readString(source, field, fallbackValue);
-  const requestedTitle = normalizedSeed.world.optional.worldIdentity.title;
+  // Values the Seed and the Blueprint review both edit have one owner: an
+  // authored Seed value is authoritative, and review edits write through to it.
+  const seedIdentity = normalizedSeed.world.optional.worldIdentity;
+  const seedFoundations = normalizedSeed.world.optional.worldFoundations;
+  const requestedTitle = seedIdentity.title;
   const preserveSourceMetadata = context.preserveSourceMetadata !== false;
   const sourceMetadata = (field: string): string | undefined =>
     preserveSourceMetadata ? text(source[field]) : undefined;
@@ -635,9 +641,9 @@ export const normalizeWorldBlueprint = (
     originSnapshot,
     title: requestedTitle || read('title', fallback.title),
     logline: read('logline', fallback.logline),
-    worldOverview: read('worldOverview', fallback.worldOverview),
-    startingLocation: read('startingLocation', fallback.startingLocation),
-    societyStructure: read('societyStructure', fallback.societyStructure),
+    worldOverview: text(seedIdentity.worldType) || read('worldOverview', fallback.worldOverview),
+    startingLocation: text(seedIdentity.startingLocation) || read('startingLocation', fallback.startingLocation),
+    societyStructure: text(seedIdentity.societyStructure) || read('societyStructure', fallback.societyStructure),
     powerSystemOutline: read('powerSystemOutline', fallback.powerSystemOutline),
     mainCharacter,
     mcProfile: mainCharacter.backgroundProfile,
@@ -656,7 +662,7 @@ export const normalizeWorldBlueprint = (
     firstArcPromise: read('firstArcPromise', fallback.firstArcPromise),
     tropeRules: read('tropeRules', fallback.tropeRules),
     styleBible: read('styleBible', fallback.styleBible),
-    destinedEnding: read('destinedEnding', fallback.destinedEnding || ''),
+    destinedEnding: text(seedFoundations.destinedEnding) || read('destinedEnding', fallback.destinedEnding || ''),
     estimatedArcs,
     unresolvedPlotThreads: Array.isArray(source.unresolvedPlotThreads)
       ? stringList(source.unresolvedPlotThreads)
@@ -677,6 +683,26 @@ const withAuthoritativeDetails = (
   const authoritative = missing.map(([label, value]) => `${label}: ${value}`).join('\n');
   return [authoritative, generated].filter(Boolean).join('\n\n');
 };
+
+const mainCharacterAuthoredDetails = (
+  mainCharacter: StorySeedMainCharacter,
+): Array<[label: string, value: string | undefined]> => [
+  ['Starting identity', mainCharacter.startingIdentity],
+  ['Main flaw', mainCharacter.mainFlaw],
+  ['Secret advantage', mainCharacter.secretAdvantage],
+  ['Starting weakness', mainCharacter.startingWeakness],
+  ['Moral alignment', mainCharacter.moralAlignment],
+  ['Creator profile', mainCharacter.bio],
+];
+
+const powerSystemAuthoredDetails = (
+  worldFoundations: StorySeedWorldFoundations,
+): Array<[label: string, value: string | undefined]> => [
+  ['Starting power concept', worldFoundations.abilities?.startingPowerConcept],
+  ['Unique path', worldFoundations.abilities?.uniquePath],
+  ['Power flavor', worldFoundations.powerSystem?.flavor],
+  ['Known ranks', worldFoundations.powerSystem?.knownRanks],
+];
 
 const characterBlueprintEntry = (character: StorySeedCharacter): string => {
   const details = [
@@ -705,28 +731,116 @@ const factionBlueprintEntry = (faction: StorySeedFaction): string => {
   return details.length > 0 ? `${faction.name} — ${details.join('; ')}` : faction.name;
 };
 
+/** Blueprint list entries that do not name a creator-authored entity. */
+const entriesWithoutAuthoredNames = (
+  generated: string[],
+  authored: Array<{ name: string }>,
+): string[] => {
+  const normalizeEntry = (entry: string) => entry
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+  const authoredNames = authored.map(entry => normalizeEntry(entry.name)).filter(Boolean);
+  const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const authoredNamePattern = authoredNames.length > 0
+    ? new RegExp(authoredNames.map(name => ` ${escapeRegExp(name)} `).join('|'))
+    : undefined;
+  return generated.filter(entry => {
+    const candidate = ` ${normalizeEntry(entry)} `;
+    return !(authoredNamePattern?.test(candidate) ?? false);
+  });
+};
+
 const mergeAuthoritativeEntries = <T extends { name: string }>(
   generated: string[],
   authored: T[],
   describe: (entry: T) => string,
 ): string[] => {
   const validAuthored = authored.filter(entry => Boolean(text(entry.name)));
-  const normalizeEntry = (entry: string) => entry
-    .toLocaleLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, ' ')
-    .trim();
-  const authoredNames = validAuthored.map(entry => normalizeEntry(entry.name));
-  const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const authoredNamePattern = authoredNames.length > 0
-    ? new RegExp(authoredNames.map(name => ` ${escapeRegExp(name)} `).join('|'))
-    : undefined;
   return [
     ...validAuthored.map(describe),
-    ...generated.filter(entry => {
-      const candidate = ` ${normalizeEntry(entry)} `;
-      return !(authoredNamePattern?.test(candidate) ?? false);
-    }),
+    ...entriesWithoutAuthoredNames(generated, validAuthored),
   ];
+};
+
+export interface StorySeedWorldEntity {
+  name: string;
+  aliases?: string[];
+  /** One self-contained description; the only place this entity's details travel. */
+  description: string;
+}
+
+/** The reviewed world canon a Story Seed hands to generation, one value per concept. */
+export interface StorySeedWorldCanon {
+  mainCharacter?: StorySeedWorldEntity;
+  characters: StorySeedWorldEntity[];
+  factions: StorySeedWorldEntity[];
+  worldOverview?: string;
+  societyStructure?: string;
+  powerSystem?: string;
+}
+
+// Blueprint list convention: `Name (role)` or `Name — details`.
+const blueprintEntryName = (entry: string): string =>
+  (entry.match(/^(.+?)(?:\s+\(.+\)|\s+—\s+.+)$/)?.[1] ?? entry).trim();
+
+/**
+ * Resolves the Story Seed and its reviewed Blueprint into one value per
+ * concept. Creator-authored Seed values stay authoritative (the same rule
+ * `finalizeGeneratedWorldBlueprint` applies); the Blueprint supplies reviewed
+ * prose and generated additions, never a second copy of an authored entity.
+ */
+export const resolveStorySeedWorldCanon = (
+  seed: StorySeedInput,
+  blueprint?: WorldBlueprint,
+): StorySeedWorldCanon => {
+  const { worldIdentity, worldFoundations } = seed.world.optional;
+  const authoredMain = worldFoundations.mainCharacter || {};
+  const reviewedMain = blueprint?.mainCharacter;
+  const mainName = text(authoredMain.name) || text(reviewedMain?.name);
+  const mainDescription = [
+    ['Age', text(reviewedMain?.age)],
+    ['Appearance', text(reviewedMain?.appearance)],
+    ['Personality', text(authoredMain.personality) || text(reviewedMain?.personality)],
+    ['Background', text(withAuthoritativeDetails(
+      text(reviewedMain?.backgroundProfile) || text(blueprint?.mcProfile) || '',
+      mainCharacterAuthoredDetails(authoredMain),
+    ))],
+  ].filter((entry): entry is [string, string] => Boolean(entry[1]))
+    .map(([label, value]) => `${label}: ${value}`).join('\n');
+  const authoredCharacters = (worldFoundations.additionalCharacters || []).filter(entry => text(entry.name));
+  const authoredFactions = (worldFoundations.factions || []).filter(entry => text(entry.name));
+  const authoredEntity = (entry: StorySeedCharacter | StorySeedFaction, description: string): StorySeedWorldEntity => ({
+    name: entry.name.trim(),
+    ...(entry.aliases?.length ? { aliases: [...entry.aliases] } : {}),
+    description,
+  });
+  const generatedEntities = (entries: string[] | undefined, authored: Array<{ name: string }>): StorySeedWorldEntity[] =>
+    entriesWithoutAuthoredNames((entries || []).map(entry => entry.trim()).filter(Boolean), authored)
+      .map(entry => ({ name: blueprintEntryName(entry), description: entry }))
+      .filter(entry => entry.name.toLocaleLowerCase() !== mainName?.toLocaleLowerCase());
+  const worldOverview = text(worldIdentity.worldType) || text(blueprint?.worldOverview);
+  const societyStructure = text(worldIdentity.societyStructure) || text(blueprint?.societyStructure);
+  const powerSystem = text(withAuthoritativeDetails(
+    blueprint?.powerSystemOutline || '',
+    powerSystemAuthoredDetails(worldFoundations),
+  ));
+
+  return {
+    ...(mainName ? { mainCharacter: { name: mainName, description: mainDescription || mainName } } : {}),
+    characters: [
+      // Aliases travel structurally, so the description does not repeat them.
+      ...authoredCharacters.map(entry => authoredEntity(entry, characterBlueprintEntry({ ...entry, aliases: undefined }))),
+      ...generatedEntities(blueprint?.initialCharacters, authoredCharacters),
+    ],
+    factions: [
+      ...authoredFactions.map(entry => authoredEntity(entry, factionBlueprintEntry({ ...entry, aliases: undefined }))),
+      ...generatedEntities(blueprint?.majorFactions, authoredFactions),
+    ],
+    ...(worldOverview ? { worldOverview } : {}),
+    ...(societyStructure ? { societyStructure } : {}),
+    ...(powerSystem ? { powerSystem } : {}),
+  };
 };
 
 /**
@@ -747,23 +861,11 @@ export const finalizeGeneratedWorldBlueprint = (
   const generatedMainCharacter = generated.mainCharacter as WorldBlueprintMainCharacter;
   const backgroundProfile = withAuthoritativeDetails(
     generatedMainCharacter.backgroundProfile,
-    [
-      ['Starting identity', mainCharacter.startingIdentity],
-      ['Main flaw', mainCharacter.mainFlaw],
-      ['Secret advantage', mainCharacter.secretAdvantage],
-      ['Starting weakness', mainCharacter.startingWeakness],
-      ['Moral alignment', mainCharacter.moralAlignment],
-      ['Creator profile', mainCharacter.bio],
-    ],
+    mainCharacterAuthoredDetails(mainCharacter),
   );
   const powerSystemOutline = withAuthoritativeDetails(
     generated.powerSystemOutline,
-    [
-      ['Starting power concept', worldFoundations.abilities?.startingPowerConcept],
-      ['Unique path', worldFoundations.abilities?.uniquePath],
-      ['Power flavor', worldFoundations.powerSystem?.flavor],
-      ['Known ranks', worldFoundations.powerSystem?.knownRanks],
-    ],
+    powerSystemAuthoredDetails(worldFoundations),
   );
 
   return {

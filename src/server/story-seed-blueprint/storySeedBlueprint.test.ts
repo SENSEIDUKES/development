@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { type StorySeedInput } from '@seihouse/sen/story-seed';
-import { createStorySeedExport, parseStorySeedJson } from '@seihouse/sen/story-seed';
+import { createStorySeedExport, parseStorySeedJson, STORY_SEED_SCHEMA_VERSION } from "@seihouse/sen/story-seed";
 import { type WorldBlueprint } from '@seihouse/sen/story-seed';
-import { adaptFinalizedStorySeedToChapterContracts } from "../../components/chapter-generation/shared/packets/storySeedChapterAdapter";
+import { createHarnessFoundationFromStorySeed } from "../../workshop/previews/harness-generation/storySeedHandoff";
 import { handleStorySeedBlueprintHttp } from "./http";
 import { resolveStorySeedBlueprintConfig } from "./config";
 import type {
@@ -318,27 +318,25 @@ describe("protected Story Seed World Blueprint generation", () => {
     }).temperature).toBe(0);
   });
 
-  it("exports a paired artifact that loads through Chapter Generation with no fixture fallback", async () => {
+  it("exports a paired artifact that loads through the HARNESS handoff with no fixture fallback", async () => {
     const response = await manifest(new RecordingProvider());
     expect(response.status).toBe(200);
     const exported = createStorySeedExport(canonicalSeed(), response.body as WorldBlueprint);
     const [uploaded] = parseStorySeedJson(JSON.stringify(exported), { normalizeBlueprint: false });
 
-    const adapted = adaptFinalizedStorySeedToChapterContracts({
-      seed: uploaded.seed,
-      blueprint: uploaded.blueprint,
+    const blueprint = uploaded.blueprint as WorldBlueprint;
+    const foundation = createHarnessFoundationFromStorySeed({
+      id: "exported-seed", userId: "author", createdAt: "2026-09-23T00:00:00.000Z", updatedAt: "2026-09-23T00:00:00.000Z",
+      schemaVersion: STORY_SEED_SCHEMA_VERSION, title: blueprint.title, originalLanguage: "en",
+      seed: uploaded.seed, blueprint,
     });
 
-    expect(adapted.blueprint.title).toBe("The Seventh Oath");
-    expect(adapted.contracts.storyConstitution.storySeed).toEqual(uploaded.seed);
-    expect(adapted.seed.world.optional.worldFoundations.additionalCharacters?.[0])
-      .toMatchObject({
-        name: "Minister Sui",
-        age: "52",
-        connectionToMC: "former tutor",
-        bio: "The only minister whose testimony changed between timelines.",
-      });
-    expect(adapted.contracts.storyConstitution.worldBlueprint).toEqual(adapted.blueprint);
-    expect(JSON.stringify(adapted)).not.toContain("workshop-fixture");
+    expect(foundation.title).toBe("The Seventh Oath");
+    expect(foundation.sourceSnapshot?.seed).toEqual(uploaded.seed);
+    const minister = foundation.identities?.filter(identity => identity.name === "Minister Sui");
+    expect(minister).toHaveLength(1);
+    expect(minister?.[0].evidence).toContain("former tutor");
+    expect(minister?.[0].evidence).toContain("The only minister whose testimony changed between timelines.");
+    expect(JSON.stringify(foundation)).not.toContain("workshop-fixture");
   });
 });

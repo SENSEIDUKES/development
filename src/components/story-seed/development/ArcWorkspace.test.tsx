@@ -3,7 +3,7 @@ import { act, useState } from 'react';
 import type { Root } from 'react-dom/client';
 import { createRoot } from '../../../test-utils/createStoryCreationRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createBlueprintDraftFromSeed, createEmptyStorySeedInput, createStorySeedExport, parseStorySeedJson, normalizeStorySeedInput, buildBlueprintGenerationPayload, buildInitialStoryGenerationPayload, createStoryAdministrativeMetadata, type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { createBlueprintDraftFromSeed, normalizeWorldBlueprint, createEmptyStorySeedInput, createStorySeedExport, parseStorySeedJson, normalizeStorySeedInput, buildBlueprintGenerationPayload, buildInitialStoryGenerationPayload, createStoryAdministrativeMetadata, type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { workshopStorySeedStorage, resetWorkshopStorySeedStorage } from '../shared/workshopStorySeedStorage';
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
 import { WorldIdentityWorkspace } from './workspaces/WorldIdentityWorkspace';
@@ -97,5 +97,24 @@ describe('Story Seed Arc and World ownership', () => {
     const payload = buildBlueprintGenerationPayload(polluted);
     expect(JSON.stringify(payload)).not.toMatch(/REMOVED_|additionalStoryDirection|plotAndTropeSettings|arcPlan/);
     expect(payload.storySeed.story.optional).toHaveProperty('funSettings');
+  });
+  it('writes Blueprint review edits of Seed-owned values through to the Seed that HARNESS reads', () => {
+    const seed = initial();
+    Object.assign(seed.world.optional.worldIdentity, { worldType: 'Old world', startingLocation: 'Old gate', societyStructure: 'Old order' });
+    seed.world.optional.worldFoundations.mainCharacter = { name: 'Old Name', personality: 'Old temper' };
+    render(seed, 'blueprint');
+    fill('blueprint-world-overview', 'Reviewed world');
+    fill('blueprint-opening-location', 'Reviewed gate');
+    fill('blueprint-world-order', 'Reviewed order');
+    fill('blueprint-power-outline', 'Reviewed ladder');
+    fill('blueprint-mc-name', 'Reviewed Name');
+    fill('blueprint-mc-personality', 'Reviewed temper');
+    expect(current.world.optional.worldIdentity).toMatchObject({ worldType: 'Reviewed world', startingLocation: 'Reviewed gate', societyStructure: 'Reviewed order' });
+    expect(current.world.optional.worldFoundations.mainCharacter).toMatchObject({ name: 'Reviewed Name', personality: 'Reviewed temper' });
+    expect(blueprint).toMatchObject({ worldOverview: 'Reviewed world', startingLocation: 'Reviewed gate', societyStructure: 'Reviewed order', powerSystemOutline: 'Reviewed ladder' });
+    // Power System Outline is review prose; authored power details stay in their own Seed fields.
+    expect(current.world.optional.worldFoundations.powerSystem).toBeUndefined();
+    const reloaded = normalizeWorldBlueprint(blueprint, current);
+    expect(reloaded).toMatchObject({ worldOverview: 'Reviewed world', startingLocation: 'Reviewed gate', mainCharacter: { name: 'Reviewed Name', personality: 'Reviewed temper' } });
   });
 });

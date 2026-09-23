@@ -12,7 +12,7 @@ import { type WorldBlueprint, type WorldBlueprintMainCharacter } from '@seihouse
 import { STORY_TAG_LIMIT, type StorySeedInput, type StorySeedStoryRequired } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore } from '../../../library/story-seed/runtime';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
-import { patchStoryRequired, patchWorldIdentity, type UpdateSeed } from './seedState';
+import { patchMainCharacter, patchStoryRequired, patchWorldIdentity, type UpdateSeed } from './seedState';
 import { BlueprintCollectionSections } from './blueprint/BlueprintCollectionSections';
 import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import {
@@ -126,7 +126,23 @@ export const BlueprintReview = ({
     updateOrigin({ storyTags });
   }, [updateOrigin]);
 
+  // Review edits to values the Seed also owns write through to the Seed, the
+  // single source HARNESS reads; review-only prose stays on the Blueprint.
+  const updateWorldSetting = useCallback((patch: Partial<Pick<WorldBlueprint, 'worldOverview' | 'startingLocation' | 'societyStructure' | 'powerSystemOutline'>>) => {
+    const { worldOverview, powerSystemOutline: _reviewOnly, ...identityPatch } = patch;
+    const seedPatch = { ...identityPatch, ...(worldOverview !== undefined ? { worldType: worldOverview } : {}) };
+    if (Object.keys(seedPatch).length) updateSeed(patchWorldIdentity(seedPatch));
+    setBlueprint(current => ({ ...current, ...patch }));
+  }, [setBlueprint, updateSeed]);
+
   const updateMainCharacter = useCallback((patch: Partial<WorldBlueprintMainCharacter>) => {
+    const { name, personality } = patch;
+    if (name !== undefined || personality !== undefined) {
+      updateSeed(patchMainCharacter({
+        ...(name !== undefined ? { name } : {}),
+        ...(personality !== undefined ? { personality } : {}),
+      }));
+    }
     setBlueprint(current => {
       const currentMainCharacter: WorldBlueprintMainCharacter = {
         name: current.mainCharacter?.name || '',
@@ -144,7 +160,7 @@ export const BlueprintReview = ({
         mcProfile: nextMainCharacter.backgroundProfile,
       };
     });
-  }, [setBlueprint]);
+  }, [setBlueprint, updateSeed]);
 
   const handleCopyBlueprint = useCallback(async () => {
     const { blueprint: currentBlueprint, origin: currentOrigin, mainCharacter: currentMainCharacter } = copyPayloadRef.current;
@@ -227,7 +243,7 @@ export const BlueprintReview = ({
           startingLocation={blueprint.startingLocation}
           societyStructure={blueprint.societyStructure}
           powerSystemOutline={blueprint.powerSystemOutline}
-          setBlueprint={setBlueprint}
+          onUpdateWorldSetting={updateWorldSetting}
         />
 
         <ArcWorkspace seed={reviewSeed} updateSeed={update => {

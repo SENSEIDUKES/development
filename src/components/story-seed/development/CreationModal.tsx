@@ -14,7 +14,7 @@ import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { generateUUID } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore, type StoryCreationSnapshot } from '../../../library/story-seed/runtime';
 import { type StorySeedArtifact, type StorySeedRecord } from '@seihouse/sen/story-seed';
-import { applyInferredStoryTags, buildBlueprintGenerationPayload, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, normalizeStorySeedInput, normalizeWorldBlueprint, validateStorySeedDraft, validateStorySeedInput, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { applyInferredStoryTags, buildBlueprintGenerationPayload, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, mirrorSeedIntoBlueprint, normalizeStorySeedInput, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { createStoryAdministrativeMetadata } from '@seihouse/sen/story-seed';
 import { DEFAULT_SEN_LANGUAGE_CODE, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
 import StoryAuthGate, { STORY_AUTH_DISSOLVE_MS } from './StoryAuthGate';
@@ -239,6 +239,20 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     });
   }, []);
 
+  // The Seed owns every value it has a field for. Whichever surface edits it
+  // (Seed workspaces or Blueprint review), the Blueprint mirrors it at once, so
+  // a stale Blueprint copy can never be saved or promoted back into the Seed.
+  useEffect(() => {
+    setBlueprint(current => {
+      if (!current) return current;
+      try {
+        return mirrorSeedIntoBlueprint(current, normalizeStorySeedInput(seed));
+      } catch {
+        return current;
+      }
+    });
+  }, [seed]);
+
   // Post-auth visual transition: once a gated guest signs in, keep the gate
   // mounted for STORY_AUTH_DISSOLVE_MS so StoryAuthGate's shell can dissolve
   // over the still-visible backdrop before the intake is revealed.
@@ -316,10 +330,10 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       return;
     }
     try {
-      const blueprintArtifact = blueprint
-        ? normalizeWorldBlueprint(blueprint, seedInput, { creator: currentUser?.displayName })
+      const reconciled = blueprint
+        ? reconcileStorySeedBlueprint(seedInput, blueprint, { creator: currentUser?.displayName })
         : undefined;
-      const saved = await persistSeed(seedInput, blueprintArtifact, originalLanguage);
+      const saved = await persistSeed(reconciled?.seed ?? seedInput, reconciled?.blueprint, originalLanguage);
       if (!saved) return;
       setSeedError(null);
       setSavedFeedback(true);
@@ -345,21 +359,22 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       setActiveSeed(null);
     }
     const selectedArtifact = imported[0] || artifacts[0];
-    const selected = normalizeStorySeedInput(selectedArtifact.seed);
+    const reconciled = selectedArtifact.blueprint
+      ? reconcileStorySeedBlueprint(
+          normalizeStorySeedInput(selectedArtifact.seed),
+          selectedArtifact.blueprint,
+          imported[0]
+            ? blueprintContextForRecord(imported[0])
+            : { creator: currentUser?.displayName },
+        )
+      : undefined;
+    const selected = reconciled?.seed ?? normalizeStorySeedInput(selectedArtifact.seed);
     setSeed(selected);
     // An imported artifact keeps the Original Language its file recorded; the
     // repository has already applied the English fallback where it had none.
     resolveOriginalLanguage(imported[0]?.originalLanguage
       ?? normalizeSenLanguageCode(selectedArtifact.originalLanguage, DEFAULT_SEN_LANGUAGE_CODE));
-    setBlueprint(selectedArtifact.blueprint
-      ? normalizeWorldBlueprint(
-          selectedArtifact.blueprint,
-          selected,
-          imported[0]
-            ? blueprintContextForRecord(imported[0])
-            : { creator: currentUser?.displayName },
-        )
-      : createBlueprintDraftFromSeed(selected, { creator: currentUser?.displayName }));
+    setBlueprint(reconciled?.blueprint ?? createBlueprintDraftFromSeed(selected, { creator: currentUser?.displayName }));
     setStage('blueprint');
     setShowImportPanel(false);
     setShowStoryBank(false);
@@ -368,15 +383,16 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
 
   /** Make a banked record the active seed and project its Blueprint draft. */
   const loadSeedIntoWorkspace = (record: StorySeedRecord) => {
-    const selected = normalizeStorySeedInput(record.seed);
+    const reconciled = record.blueprint
+      ? reconcileStorySeedBlueprint(normalizeStorySeedInput(record.seed), record.blueprint, blueprintContextForRecord(record))
+      : undefined;
+    const selected = reconciled?.seed ?? normalizeStorySeedInput(record.seed);
     setActiveSeed(record);
     setSeed(selected);
     // Each seed restores its own Original Language; the previously opened
     // seed's choice must never carry over into this one.
     resolveOriginalLanguage(record.originalLanguage);
-    setBlueprint(record.blueprint
-      ? normalizeWorldBlueprint(record.blueprint, selected, blueprintContextForRecord(record))
-      : createBlueprintDraftFromSeed(selected, { creator: currentUser?.displayName }));
+    setBlueprint(reconciled?.blueprint ?? createBlueprintDraftFromSeed(selected, { creator: currentUser?.displayName }));
     setSeedError(null);
   };
 
@@ -425,19 +441,18 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       // initial Story Seed route.
       preloadStorySeedSecondary();
       const generated = await onGenerateBlueprint(buildBlueprintGenerationPayload(seedInput));
-      const bp = normalizeWorldBlueprint(generated, seedInput, {
+      // Everything the Blueprint generated that the Seed has a field for
+      // (world identity, ending, goal, main character, side characters,
+      // factions) is copied into the Seed, where review edits it.
+      const { seed: generatedSeed, blueprint: bp } = reconcileStorySeedBlueprint(seedInput, generated, {
         creator: currentUser?.displayName,
         preserveSourceMetadata: false,
       });
-      if (bp.arcPlan && !seedInput.story.optional.activeArcGoal) {
-        seedInput.story.optional.activeArcGoal = bp.arcPlan.goals[0];
-      }
-      seedInput.world.optional.worldFoundations.destinedEnding = bp.destinedEnding;
-      setSeed(seedInput);
+      setSeed(generatedSeed);
       setBlueprint(bp);
       setStage('blueprint');
       try {
-        await persistSeed(seedInput, bp, originalLanguage);
+        await persistSeed(generatedSeed, bp, originalLanguage);
         setSeedError(null);
       } catch (seedSaveError) {
         console.error('Failed to save generated story seed:', seedSaveError);
@@ -456,33 +471,32 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
    * persisted source seed record.
    */
   const startStoryFromSeed = async (
-    seedInput: StorySeedInput,
+    sourceSeed: StorySeedInput,
     blueprintArtifact: WorldBlueprint,
     record: StorySeedRecord | null,
     language: SenLanguageCode,
   ) => {
-    const validation = validateStorySeedInput(seedInput);
-    if (!validation.valid) {
-      setSeedError(validation.errors.join(' '));
-      return;
-    }
-
+    // The story starts from the reconciled pair: every reviewed value is in the Seed.
+    let seedInput: StorySeedInput;
     let cleanBlueprint: WorldBlueprint;
     try {
-      const normalizedBlueprint = normalizeWorldBlueprint(blueprintArtifact, seedInput, {
+      const reconciled = reconcileStorySeedBlueprint(sourceSeed, blueprintArtifact, {
         ...blueprintContextForRecord(record || undefined),
       });
+      seedInput = reconciled.seed;
       cleanBlueprint = {
-        ...normalizedBlueprint,
-        mcProfile: normalizedBlueprint.mainCharacter?.backgroundProfile || normalizedBlueprint.mcProfile,
-        majorFactions: normalizedBlueprint.majorFactions.map(f => f.trim()).filter(Boolean),
-        initialCharacters: normalizedBlueprint.initialCharacters.map(f => f.trim()).filter(Boolean),
-        majorMysteries: normalizedBlueprint.majorMysteries.map(f => f.trim()).filter(Boolean),
-        unresolvedPlotThreads: normalizedBlueprint.unresolvedPlotThreads.map(f => f.trim()).filter(Boolean),
+        ...reconciled.blueprint,
+        majorMysteries: reconciled.blueprint.majorMysteries.map(f => f.trim()).filter(Boolean),
+        unresolvedPlotThreads: reconciled.blueprint.unresolvedPlotThreads.map(f => f.trim()).filter(Boolean),
       };
     } catch (blueprintError) {
       console.error('Failed to prepare World Blueprint:', blueprintError);
       setSeedError('The story was not started because its World Blueprint is invalid. Refine it and try again.');
+      return;
+    }
+    const validation = validateStorySeedInput(seedInput);
+    if (!validation.valid) {
+      setSeedError(validation.errors.join(' '));
       return;
     }
 
@@ -550,14 +564,11 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   };
 
   const handleExportCurrentSeed = () => {
-    const payload = normalizeStorySeedInput(seed);
-    const blueprintArtifact = blueprint
-      ? normalizeWorldBlueprint(
-          blueprint,
-          payload,
-          blueprintContextForRecord(currentSeed || undefined),
-        )
+    const reconciled = blueprint
+      ? reconcileStorySeedBlueprint(normalizeStorySeedInput(seed), blueprint, blueprintContextForRecord(currentSeed || undefined))
       : undefined;
+    const payload = reconciled?.seed ?? normalizeStorySeedInput(seed);
+    const blueprintArtifact = reconciled?.blueprint;
     // Start sharing immediately so iOS Safari retains the user gesture needed
     // to present Save to Files. Persistence can finish independently.
     setSeedError(null);
@@ -572,10 +583,10 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   };
 
   const handleExportSavedSeed = (record: StorySeedRecord) => {
-    const blueprintArtifact = record.blueprint
-      ? normalizeWorldBlueprint(record.blueprint, record.seed, blueprintContextForRecord(record))
+    const reconciled = record.blueprint
+      ? reconcileStorySeedBlueprint(record.seed, record.blueprint, blueprintContextForRecord(record))
       : undefined;
-    void downloadStorySeed(record.seed, blueprintArtifact, record.originalLanguage).catch(downloadError => {
+    void downloadStorySeed(reconciled?.seed ?? record.seed, reconciled?.blueprint, record.originalLanguage).catch(downloadError => {
       console.error('Failed to export saved story seed:', downloadError);
       setSeedError('The seed could not be exported. Please try again.');
     });
@@ -583,15 +594,10 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
 
   const handleExportAllSeeds = () => {
     void downloadStorySeedCollection(savedSeeds.map(record => ({
-      seed: record.seed,
       originalLanguage: record.originalLanguage,
-      ...(record.blueprint ? {
-        blueprint: normalizeWorldBlueprint(
-          record.blueprint,
-          record.seed,
-          blueprintContextForRecord(record),
-        ),
-      } : {}),
+      ...(record.blueprint
+        ? reconcileStorySeedBlueprint(record.seed, record.blueprint, blueprintContextForRecord(record))
+        : { seed: record.seed }),
     }))).catch(downloadError => {
       console.error('Failed to export account story seeds:', downloadError);
       setSeedError('Your seeds could not be exported. Please try again.');

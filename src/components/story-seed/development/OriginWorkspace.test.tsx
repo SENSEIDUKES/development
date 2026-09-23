@@ -75,7 +75,7 @@ describe('Origin hierarchy and canonical Fate controls', () => {
   });
 
   it('labels saved Blueprint mysteries as inactive Fate Survival context while retaining editable entries', () => {
-    act(() => root.render(<LibraryPresentationProvider><BlueprintCollectionSections survivalEnabled={false}
+    act(() => root.render(<LibraryPresentationProvider><BlueprintCollectionSections seed={createEmptyStorySeedInput()} updateSeed={vi.fn()} survivalEnabled={false}
       majorMysteries={['The sealed gate']} unresolvedPlotThreads={['The missing key']} setBlueprint={vi.fn()} /></LibraryPresentationProvider>));
     expect(container.textContent).toContain('Survival is off.');
     expect(container.textContent).toContain('excluded from chapter generation');

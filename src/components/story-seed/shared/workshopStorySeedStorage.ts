@@ -10,7 +10,7 @@
 
 import { DEFAULT_SEN_LANGUAGE_CODE, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
 import { generateUUID } from '@seihouse/sen/story-seed';
-import { STORY_SEED_SCHEMA_VERSION, normalizeStorySeedInput, normalizeWorldBlueprint, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { STORY_SEED_SCHEMA_VERSION, normalizeStorySeedInput, reconcileStorySeedBlueprint, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { type StorySeedRecord, type StorySeedRepository } from '@seihouse/sen/story-seed';
 
@@ -39,10 +39,12 @@ const normalizeRecord = (value: unknown): StorySeedRecord | null => {
     || typeof source.updatedAt !== 'string'
   ) return null;
   try {
-    const seed = normalizeStorySeedInput(source.seed);
-    const blueprint = isRecord(source.blueprint)
-      ? normalizeWorldBlueprint(source.blueprint, seed)
+    // A stored Blueprint's values live in its Seed; the Blueprint mirrors it.
+    const reconciled = isRecord(source.blueprint)
+      ? reconcileStorySeedBlueprint(normalizeStorySeedInput(source.seed), source.blueprint)
       : undefined;
+    const seed = reconciled?.seed ?? normalizeStorySeedInput(source.seed);
+    const blueprint = reconciled?.blueprint;
     return {
       schemaVersion: STORY_SEED_SCHEMA_VERSION,
       id: source.id,
@@ -120,7 +122,8 @@ const buildRecord = (
   blueprint?: WorldBlueprint,
 ): StorySeedRecord => {
   if (!userId) throw new Error('Sign in to save story seeds to your account.');
-  const seed = normalizeStorySeedInput(input);
+  const reconciled = blueprint ? reconcileStorySeedBlueprint(normalizeStorySeedInput(input), blueprint) : undefined;
+  const seed = reconciled?.seed ?? normalizeStorySeedInput(input);
   return {
     schemaVersion: STORY_SEED_SCHEMA_VERSION,
     id,
@@ -130,7 +133,7 @@ const buildRecord = (
     updatedAt: new Date().toISOString(),
     originalLanguage,
     seed,
-    ...(blueprint ? { blueprint: normalizeWorldBlueprint(blueprint, seed) } : {}),
+    ...(reconciled ? { blueprint: reconciled.blueprint } : {}),
   };
 };
 

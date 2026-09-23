@@ -9,10 +9,10 @@ import {
 } from 'react';
 import { ArrowLeft, ArrowRight, Check, Copy, Download } from 'lucide-react';
 import { type WorldBlueprint, type WorldBlueprintMainCharacter } from '@seihouse/sen/story-seed';
-import { STORY_TAG_LIMIT, type StorySeedInput, type StorySeedStoryRequired } from '@seihouse/sen/story-seed';
+import { STORY_TAG_LIMIT, type StorySeedInput, type StorySeedStoryRequired, type StorySeedWorldIdentity } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore } from '../../../library/story-seed/runtime';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
-import { patchMainCharacter, patchStoryRequired, patchWorldIdentity, type UpdateSeed } from './seedState';
+import { patchStoryRequired, patchWorldIdentity, type UpdateSeed } from './seedState';
 import { BlueprintCollectionSections } from './blueprint/BlueprintCollectionSections';
 import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
 import {
@@ -23,7 +23,6 @@ import {
   BlueprintWorldSettingSection,
 } from './blueprint/BlueprintReviewSections';
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
-import { normalizeWorldBlueprint } from '@seihouse/sen/story-seed';
 import { createBlueprintMarkdown } from './blueprint/createBlueprintMarkdown';
 import { SEN_LANGUAGES, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
 
@@ -65,29 +64,16 @@ export const BlueprintReview = ({
     () => new Set(origin.storyTags.map(tag => tag.trim()).filter(Boolean)).size,
     [origin.storyTags],
   );
+  // Every value the Seed owns is displayed and edited on the Seed itself; the
+  // Blueprint mirrors it (CreationModal) and keeps only its own prose fields.
+  const identity = seed.world.optional.worldIdentity;
   const mainCharacter = useMemo<WorldBlueprintMainCharacter>(() => ({
     name: blueprint.mainCharacter?.name || '',
     age: blueprint.mainCharacter?.age || '',
     personality: blueprint.mainCharacter?.personality || '',
     appearance: blueprint.mainCharacter?.appearance || '',
     backgroundProfile: blueprint.mainCharacter?.backgroundProfile || blueprint.mcProfile || '',
-  }), [
-    blueprint.mainCharacter?.age,
-    blueprint.mainCharacter?.appearance,
-    blueprint.mainCharacter?.backgroundProfile,
-    blueprint.mainCharacter?.name,
-    blueprint.mainCharacter?.personality,
-    blueprint.mcProfile,
-  ]);
-  const reviewSeed: StorySeedInput = {
-    ...seed,
-    world: { ...seed.world, optional: { ...seed.world.optional,
-      worldFoundations: { ...seed.world.optional.worldFoundations, destinedEnding: blueprint.destinedEnding },
-    } },
-    story: { ...seed.story, optional: { ...seed.story.optional,
-      activeArcGoal: seed.story.optional.activeArcGoal ?? blueprint.arcPlan?.goals[0],
-    } },
-  };
+  }), [blueprint.mainCharacter, blueprint.mcProfile]);
   const copyPayloadRef = useRef({ blueprint, origin, mainCharacter });
 
   useEffect(() => {
@@ -106,16 +92,11 @@ export const BlueprintReview = ({
 
   const updateOrigin = useCallback((patch: Partial<StorySeedStoryRequired>) => {
     updateSeed(patchStoryRequired(patch));
-    setBlueprint(current => ({
-      ...current,
-      originSnapshot: { ...origin, ...current.originSnapshot, ...patch },
-    }));
-  }, [origin, setBlueprint, updateSeed]);
+  }, [updateSeed]);
 
   const updateTitle = useCallback((title: string) => {
     updateSeed(patchWorldIdentity({ title }));
-    setBlueprint(current => ({ ...current, title }));
-  }, [setBlueprint, updateSeed]);
+  }, [updateSeed]);
 
   const updateStoryTags = useCallback((value: string) => {
     const storyTags = value.split(/\r?\n|,/);
@@ -126,41 +107,21 @@ export const BlueprintReview = ({
     updateOrigin({ storyTags });
   }, [updateOrigin]);
 
-  // Review edits to values the Seed also owns write through to the Seed, the
-  // single source HARNESS reads; review-only prose stays on the Blueprint.
-  const updateWorldSetting = useCallback((patch: Partial<Pick<WorldBlueprint, 'worldOverview' | 'startingLocation' | 'societyStructure' | 'powerSystemOutline'>>) => {
-    const { worldOverview, powerSystemOutline: _reviewOnly, ...identityPatch } = patch;
-    const seedPatch = { ...identityPatch, ...(worldOverview !== undefined ? { worldType: worldOverview } : {}) };
-    if (Object.keys(seedPatch).length) updateSeed(patchWorldIdentity(seedPatch));
-    setBlueprint(current => ({ ...current, ...patch }));
-  }, [setBlueprint, updateSeed]);
+  const updateWorldIdentity = useCallback((patch: Partial<StorySeedWorldIdentity>) => {
+    updateSeed(patchWorldIdentity(patch));
+  }, [updateSeed]);
 
-  const updateMainCharacter = useCallback((patch: Partial<WorldBlueprintMainCharacter>) => {
-    const { name, personality } = patch;
-    if (name !== undefined || personality !== undefined) {
-      updateSeed(patchMainCharacter({
-        ...(name !== undefined ? { name } : {}),
-        ...(personality !== undefined ? { personality } : {}),
-      }));
-    }
-    setBlueprint(current => {
-      const currentMainCharacter: WorldBlueprintMainCharacter = {
-        name: current.mainCharacter?.name || '',
-        age: current.mainCharacter?.age || '',
-        personality: current.mainCharacter?.personality || '',
-        appearance: current.mainCharacter?.appearance || '',
-        backgroundProfile: current.mainCharacter?.backgroundProfile || current.mcProfile || '',
-      };
-      const nextMainCharacter = { ...currentMainCharacter, ...patch };
-      return {
-        ...current,
-        mainCharacter: nextMainCharacter,
-        // Keep the established combined field synchronized for existing
-        // initial-story generation consumers.
-        mcProfile: nextMainCharacter.backgroundProfile,
-      };
-    });
-  }, [setBlueprint, updateSeed]);
+  const updateBackgroundProfile = useCallback((backgroundProfile: string) => {
+    setBlueprint(current => ({
+      ...current,
+      mainCharacter: { ...(current.mainCharacter ?? mainCharacter), backgroundProfile },
+      mcProfile: backgroundProfile,
+    }));
+  }, [mainCharacter, setBlueprint]);
+
+  const updatePowerSystemOutline = useCallback((powerSystemOutline: string) => {
+    setBlueprint(current => ({ ...current, powerSystemOutline }));
+  }, [setBlueprint]);
 
   const handleCopyBlueprint = useCallback(async () => {
     const { blueprint: currentBlueprint, origin: currentOrigin, mainCharacter: currentMainCharacter } = copyPayloadRef.current;
@@ -212,7 +173,7 @@ export const BlueprintReview = ({
               every available artifact metadata chip. */}
         <BlueprintHeaderSection
           blueprintVersion={blueprint.blueprintVersion}
-          title={blueprint.title}
+          title={identity.title ?? ''}
           creator={blueprint.creator}
           status={blueprint.status}
           createdAt={blueprint.createdAt}
@@ -230,39 +191,38 @@ export const BlueprintReview = ({
           onUpdateStoryTags={updateStoryTags}
         />
 
-        {/* 3 · Main Character — the protagonist the blueprint builds around. */}
+        {/* 3 · Main Character — the Seed's protagonist, plus the Blueprint's
+              background prose. */}
         <BlueprintMainCharacterSection
-          mainCharacter={mainCharacter}
-          onUpdateMainCharacter={updateMainCharacter}
+          seed={seed}
+          updateSeed={updateSeed}
+          backgroundProfile={mainCharacter.backgroundProfile}
+          onBackgroundProfileChange={updateBackgroundProfile}
         />
 
-        {/* 4 · World Setting — overview leads as a key field; the remaining
-              pillars follow in a scannable order. */}
+        {/* 4 · World Setting — the Seed's world identity, abilities, and power
+              system, plus the Blueprint's power outline prose. */}
         <BlueprintWorldSettingSection
-          worldOverview={blueprint.worldOverview}
-          startingLocation={blueprint.startingLocation}
-          societyStructure={blueprint.societyStructure}
+          seed={seed}
+          updateSeed={updateSeed}
+          worldType={identity.worldType ?? ''}
+          startingLocation={identity.startingLocation ?? ''}
+          societyStructure={identity.societyStructure ?? ''}
           powerSystemOutline={blueprint.powerSystemOutline}
-          onUpdateWorldSetting={updateWorldSetting}
+          onUpdateWorldIdentity={updateWorldIdentity}
+          onPowerSystemOutlineChange={updatePowerSystemOutline}
         />
 
-        <ArcWorkspace seed={reviewSeed} updateSeed={update => {
-          const next = update(reviewSeed);
-          updateSeed(() => next);
-          setBlueprint(current => normalizeWorldBlueprint({ ...current,
-            destinedEnding: next.world.optional.worldFoundations.destinedEnding,
-            arcPlan: undefined,
-          }, next));
-        }} />
+        <ArcWorkspace seed={seed} updateSeed={updateSeed} />
 
-        {!blueprint.arcPlan && <p className="text-sm text-neutral-300">Add an Active Arc Goal, or refine the seed and generate a Blueprint suggestion, before beginning the story.</p>}
+        {!seed.story.optional.activeArcGoal && <p className="text-sm text-neutral-300">Add an Active Arc Goal, or refine the seed and generate a Blueprint suggestion, before beginning the story.</p>}
 
         <BlueprintNotesSection styleBible={blueprint.styleBible} estimatedArcs={blueprint.estimatedArcs} setBlueprint={setBlueprint} />
 
         <BlueprintCollectionSections
+          seed={seed}
+          updateSeed={updateSeed}
           survivalEnabled={seed.story.optional.fateSurvival.enabled}
-          initialCharacters={blueprint.initialCharacters}
-          majorFactions={blueprint.majorFactions}
           majorMysteries={blueprint.majorMysteries}
           unresolvedPlotThreads={blueprint.unresolvedPlotThreads}
           setBlueprint={setBlueprint}
@@ -314,7 +274,7 @@ export const BlueprintReview = ({
                 icon={SENManifestingIcon}
                 className="sm:w-auto"
                 onClick={onStartStory}
-                disabled={!blueprint.arcPlan || blueprint.arcPlan.goals.length !== 1}
+                disabled={!seed.story.optional.activeArcGoal}
                 loading={isGenerating}
                 loadingIndicator={activeAgentId === 'versa' ? (
                   <img src={runtime.authorMarkUrl} className="size-5 animate-pulse object-contain" alt="" aria-hidden="true" />

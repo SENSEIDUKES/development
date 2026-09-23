@@ -624,7 +624,12 @@ describe('Story Seed creator/story/world contract', () => {
     const created = await createStorySeed('creator-1', seed, generated, 'en');
 
     expect(created.seed).not.toHaveProperty('blueprint');
-    expect((await listStorySeeds('creator-1'))[0].blueprint).toEqual(generated);
+    expect((await listStorySeeds('creator-1'))[0].blueprint).toEqual(created.blueprint);
+    // Blueprint-generated cast the Seed has a field for is saved into the Seed.
+    expect(created.seed.world.optional.worldFoundations.additionalCharacters?.map(entry => entry.name))
+      .toEqual(['Elder Qin', 'Ninth Prince']);
+    expect(created.seed.world.optional.worldFoundations.factions?.map(entry => entry.name))
+      .toEqual(['Heavenly Sword Sect', 'Celestial Court']);
 
     const edited = {
       ...generated,
@@ -636,6 +641,9 @@ describe('Story Seed creator/story/world contract', () => {
       },
     };
     const updated = await updateStorySeed('creator-1', created, seed, edited, 'en');
+    expect(updated.seed.world.optional.worldFoundations.mainCharacter).toMatchObject({
+      age: '19', appearance: 'Silver eyes, weathered sect robes, and a broken jade ring.',
+    });
     expect((await listStorySeeds('creator-1'))[0].blueprint).toMatchObject({
       logline: 'The creator-approved overall direction.',
       mainCharacter: { age: '19', appearance: 'Silver eyes, weathered sect robes, and a broken jade ring.' },

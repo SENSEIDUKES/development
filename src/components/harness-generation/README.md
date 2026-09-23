@@ -31,6 +31,12 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-09-23:** The Story Seed handoff reconciles the Seed and Blueprint first,
+  so every Blueprint review edit reaches HARNESS through the Seed. Characters and
+  factions come only from the Seed's structured lists (Blueprint-generated cast is
+  promoted into them); the Blueprint contributes only its background and power
+  outline prose. No HARNESS schema change.
+
 - **2026-09-23:** Finished the Story Seed ↔ HARNESS verification; the upstream
   generation configuration is complete. The handoff now sends every Story Seed
   concept once: each character and faction travels only as a Foundation identity

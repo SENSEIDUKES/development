@@ -11,9 +11,8 @@ interface FactionsWorkspaceProps {
   updateSeed: UpdateSeed;
 }
 
-/** Optional World workspace (`world.optional.worldFoundations.factions`). */
-export const FactionsWorkspace = ({ seed, updateSeed }: FactionsWorkspaceProps) => {
-  const section = getSeedSection('factions');
+/** The Seed's faction editor; the Seed workspace and Blueprint review share it. */
+export const FactionsEditor = ({ seed, updateSeed }: FactionsWorkspaceProps) => {
   const factions = worldFoundations(seed).factions || [];
 
   const updateFaction = (index: number, patch: Partial<StorySeedFaction>) => {
@@ -23,11 +22,7 @@ export const FactionsWorkspace = ({ seed, updateSeed }: FactionsWorkspaceProps) 
   };
 
   return (
-    <WorkspaceShell section={section} complete={section.isFilled(seed)}>
-      <p className="font-sans text-xs text-neutral-400">
-        Pre-define factions or sects for your world. Include their alignment, power level, and connection
-        to the main character. Left empty, the Library invents the powers that fit your Story.
-      </p>
+    <>
       {factions.map((faction, index) => (
         <div key={faction.id} className="glass-panel relative space-y-3 p-4">
           <div className="mb-2 flex items-center justify-between">
@@ -133,6 +128,20 @@ export const FactionsWorkspace = ({ seed, updateSeed }: FactionsWorkspaceProps) 
           + Add Faction ({factions.length}/5)
         </button>
       )}
+    </>
+  );
+};
+
+/** Optional World workspace (`world.optional.worldFoundations.factions`). */
+export const FactionsWorkspace = ({ seed, updateSeed }: FactionsWorkspaceProps) => {
+  const section = getSeedSection('factions');
+  return (
+    <WorkspaceShell section={section} complete={section.isFilled(seed)}>
+      <p className="font-sans text-xs text-neutral-400">
+        Pre-define factions or sects for your world. Include their alignment, power level, and connection
+        to the main character. Left empty, the Library invents the powers that fit your Story.
+      </p>
+      <FactionsEditor seed={seed} updateSeed={updateSeed} />
     </WorkspaceShell>
   );
 };

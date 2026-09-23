@@ -9,7 +9,7 @@ import { isSenLanguageCode, type SenLanguageCode } from '../../../lib/language';
 import {
   STORY_SEED_SCHEMA_VERSION,
   normalizeStorySeedInput,
-  normalizeWorldBlueprint,
+  reconcileStorySeedBlueprint,
   type StorySeedInput,
 } from './storySeedSchema';
 import { importLegacyStorySeed, isLegacyStorySeedShape } from './legacySeedImport';
@@ -116,13 +116,8 @@ function reconcileArtifact(
           },
         },
       });
-  return {
-    seed: reconciledSeed,
-    blueprint: normalizeBlueprint
-      ? normalizeWorldBlueprint(blueprintValue, reconciledSeed)
-      : blueprintValue,
-    ...language,
-  };
+  if (!normalizeBlueprint) return { seed: reconciledSeed, blueprint: blueprintValue, ...language };
+  return { ...reconcileStorySeedBlueprint(reconciledSeed, blueprintValue), ...language };
 }
 
 const createReconciledStorySeedExport = (artifact: StorySeedArtifact) => ({

@@ -212,9 +212,10 @@ describe("protected Story Seed World Blueprint generation", () => {
       personality: seed.world.optional.worldFoundations.mainCharacter?.personality,
       appearance: "Black court robes stitched with a severed seventh sun.",
     });
-    expect(blueprint.mcProfile).toContain("Secret advantage: Memories of seven failed succession hearings");
-    expect(blueprint.powerSystemOutline).toContain("Starting power concept: Oath-sight");
-    expect(blueprint.powerSystemOutline).toContain("Known ranks: Oath Spark → Seal Heart → Crown Soul");
+    // Structured Seed details stay in their Seed fields, never copied into Blueprint prose.
+    expect(blueprint.mcProfile).toBe((generatedBlueprint().mainCharacter as WorldBlueprint["mainCharacter"])?.backgroundProfile);
+    expect(blueprint.mcProfile).not.toContain("Secret advantage:");
+    expect(blueprint.powerSystemOutline).toBe(generatedBlueprint().powerSystemOutline);
     expect(blueprint.initialCharacters[0]).toContain("Minister Sui");
     expect(blueprint.initialCharacters[0]).toContain("age: 52");
     expect(blueprint.initialCharacters.filter(entry => entry.toLocaleLowerCase().includes("minister sui")))

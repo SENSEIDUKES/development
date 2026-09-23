@@ -60,6 +60,10 @@ timings, with its supplied waving export confirming `[140, 140, 140, 280]`; nine
 transparent QA GIFs are deterministic crops of the validated atlas rather than newly
 generated art. `renderer-validation.json` and `IMPORT-HANDOFF.md` remain with Quill's
 source package as intake evidence and are intentionally not runtime dependencies.
+The supplied waving row starts and ends with lowered-paw transition cells, so Development
+playback loops only raised-paw columns 1 and 2. Both the floating companion and the active
+profile-card preview use that same local two-pose loop; the supplied atlas and presentation
+exports are preserved.
 
 ## Modular integration
 
@@ -252,6 +256,8 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-09-22: Corrected Quill's waving clip to loop only its raised-paw atlas cells and
+  aligned the floating companion and active profile-card preview with the local QA loop.
 - 2026-09-22: Imported ten supplied v2 Familiar packages into the Library-owned
   catalogue, retaining every local runtime asset and package metadata. Added declarative
   common/rare/epic ranks and Quill's separate default status, all-eleven Development

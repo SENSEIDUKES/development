@@ -61,6 +61,8 @@ type FamiliarSource = {
   isDefault?: boolean;
   /** Preserve a supplied character-specific animation name where one exists. */
   animationLabels?: Readonly<Record<string, string>>;
+  /** Select only the active source cells when a supplied row includes transition poses. */
+  animationFrameColumns?: Readonly<Record<string, readonly number[]>>;
   /** The supplied local neutral PNG determines the original atlas cell. */
   neutralColumn: number;
 };
@@ -87,15 +89,19 @@ const animationLabels: Readonly<Record<string, string>> = {
 function defineFamiliar(source: FamiliarSource): FamiliarCatalogueEntry {
   const base = `/familiars/${source.pet.id}`;
   const standardRows = source.request.rows.slice(0, 9).map(row => {
-    const durations = source.timing[row.state];
-    if (!durations || durations.length !== row.frames) {
+    const sourceDurations = source.timing[row.state];
+    if (!sourceDurations || sourceDurations.length !== row.frames) {
       throw new Error(`${source.pet.id} has no complete timing for ${row.state}.`);
+    }
+    const columns = source.animationFrameColumns?.[row.state] ?? Array.from({ length: row.frames }, (_, column) => column);
+    if (!columns.length || columns.some(column => !Number.isInteger(column) || column < 0 || column >= row.frames)) {
+      throw new Error(`${source.pet.id} has invalid atlas columns for ${row.state}.`);
     }
     return [row.state, {
       label: source.animationLabels?.[row.state] ?? animationLabels[row.state] ?? row.state,
       row: row.row,
-      columns: Array.from({ length: row.frames }, (_, column) => column),
-      durations,
+      columns,
+      durations: columns.map(column => sourceDurations[column]),
     }] as const;
   });
   const lookRows = source.request.rows.slice(9).flatMap(row =>
@@ -153,7 +159,8 @@ export const familiarCatalogue: readonly FamiliarCatalogueEntry[] = [
   defineFamiliar({ pet: livingGrimoirePet, request: livingGrimoireRequest, timing: livingGrimoireTiming,
     heroUrl: 'https://media.seihouse.org/SEN/GIF/Living%20grimore.gif', rarity: 'common', neutralColumn: 0 }),
   defineFamiliar({ pet: quillPet, request: quillRequest, timing: quillTiming,
-    heroUrl: 'https://media.seihouse.org/SEN/GIF/quillv2.gif', rarity: 'common', isDefault: true, neutralColumn: 0 }),
+    heroUrl: '/familiars/quill/previews/waving.gif', rarity: 'common', isDefault: true, neutralColumn: 0,
+    animationFrameColumns: { waving: [1, 2] } }),
 ];
 
 const configuredDefaultFamiliar = familiarCatalogue.find(entry => entry.definition.isDefault);

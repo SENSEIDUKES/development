@@ -39,7 +39,8 @@ describe('Library Familiar catalogue', () => {
       expect(familiarCatalogueEntry(familiar.id)).toBe(entry);
       expect([familiar.columns, familiar.rows, familiar.cellWidth, familiar.cellHeight]).toEqual([8, 11, 192, 208]);
       expect(Object.keys(familiar.animations)).toHaveLength(26);
-      expect(entry.heroUrl).toMatch(/^https:\/\/media\.seihouse\.org\/SEN\/GIF\/.+\.gif$/);
+      if (familiar.id === 'quill') expect(entry.heroUrl).toBe('/familiars/quill/previews/waving.gif');
+      else expect(entry.heroUrl).toMatch(/^https:\/\/media\.seihouse\.org\/SEN\/GIF\/.+\.gif$/);
       for (const clip of Object.values(familiar.animations)) {
         expect(clip.row).toBeLessThan(familiar.rows);
         expect(clip.columns.every(column => column >= 0 && column < familiar.columns)).toBe(true);
@@ -57,6 +58,14 @@ describe('Library Familiar catalogue', () => {
     expect(familiarCatalogueEntry('judgmental-jiangshi')?.definition.displayName).toBe('Judgmental Jiangshi');
   });
 
+  it('keeps Quill waving on the raised-paw atlas poses for its whole playback loop', () => {
+    expect(familiarCatalogueEntry('quill')?.definition.animations.waving).toMatchObject({
+      row: 3,
+      columns: [1, 2],
+      durations: [140, 140],
+    });
+  });
+
   it('leaves availability host-configurable and independent from rank or default status', () => {
     const options = familiarOptions(entry => entry.definition.id !== 'phoenix' && entry.definition.id !== 'quill');
     expect(options.find(option => option.id === 'phoenix')?.available).toBe(false);
@@ -68,6 +77,6 @@ describe('Library Familiar catalogue', () => {
     expect(familiarCatalogueEntry('living-grimoire')?.heroUrl).toBe('https://media.seihouse.org/SEN/GIF/Living%20grimore.gif');
     expect(familiarCatalogueEntry('phoenix')?.heroUrl).toBe('https://media.seihouse.org/SEN/GIF/pheonix.gif');
     expect(familiarCatalogueEntry('celestial-guardian')?.heroUrl).toBe('https://media.seihouse.org/SEN/GIF/celestial%20Guardian.gif');
-    expect(familiarCatalogueEntry('quill')?.heroUrl).toBe('https://media.seihouse.org/SEN/GIF/quillv2.gif');
+    expect(familiarCatalogueEntry('quill')?.heroUrl).toBe('/familiars/quill/previews/waving.gif');
   });
 });

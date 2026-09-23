@@ -173,3 +173,38 @@ export const requireTextModelKey = (model: string, keys: ChapterModelRoute['keys
 
 export const isMissingKeyMessage = (message: string): boolean =>
   /(?:GEMINI_API_KEY|OPENROUTER_API_KEY|OpenRouter-Dev) is not configured/.test(message);
+
+/**
+ * Every Workshop feature that calls a generation model, and where it calls it.
+ *
+ * This is the source of the Model Router's "Used by" section. When you add a
+ * feature that generates text, images, or speech, register it here in the
+ * same change; `generationConsumers.test.ts` scans the repository and fails
+ * on any model call site that is not listed here or in `PROVIDER_ADAPTERS`.
+ *
+ * `modelChoice` says whether the feature follows the model picked in the
+ * Router gear (`router`) or always uses the server default (`server-default`).
+ */
+export interface GenerationConsumer {
+  name: string;
+  capability: ModelCapability;
+  /** Repository path of the server file that makes the model call. */
+  entry: string;
+  modelChoice: 'router' | 'server-default';
+}
+
+export const GENERATION_CONSUMERS: readonly GenerationConsumer[] = [
+  { name: 'Harness Generation', capability: 'chapters', entry: 'src/server/harness-generation/execute.ts', modelChoice: 'router' },
+  { name: 'Chapter Generation', capability: 'chapters', entry: 'src/server/chapter-generation/execute.ts', modelChoice: 'router' },
+  { name: 'Story Seed Blueprint', capability: 'chapters', entry: 'src/server/story-seed-blueprint/http.ts', modelChoice: 'server-default' },
+  { name: 'Reader Translation', capability: 'chapters', entry: 'src/server/reader-translation/http.ts', modelChoice: 'server-default' },
+  { name: 'Codex Voice Quote', capability: 'tts', entry: 'src/server/audio/codexVoiceQuote.ts', modelChoice: 'server-default' },
+];
+
+/** Files that talk to a provider on behalf of the consumers above. */
+export const PROVIDER_ADAPTERS: readonly string[] = [
+  'src/server/harness-generation/provider.ts',
+  'src/server/chapter-generation/provider.ts',
+  'src/server/story-seed-blueprint/generate.ts',
+  'src/server/audio/codexVoiceQuote.ts',
+];

@@ -21,6 +21,13 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 Model ids carry their route: `google/gemini-*` → Gemini, `openrouter/<vendor>/<model>`
 → OpenRouter, `eleven_*` → ElevenLabs.
 
+## Adding a generation feature
+
+Register it in `GENERATION_CONSUMERS` (and any new provider file in
+`PROVIDER_ADAPTERS`) in `catalog.ts` in the same change. The Router's
+"Used by" section reads that list, and `generationConsumers.test.ts` fails on
+any model call that is not registered. See AGENTS.md.
+
 ## Environment
 
 | Variable | Purpose |
@@ -58,3 +65,6 @@ Copy this folder plus the provider changes in `src/server/harness-generation/`,
 - 2026-09-23 — Chapter models are selectable from a Workshop-wide gear. The
   choice is saved in the browser and drives Harness Generation and Chapter
   Generation. The Systems card was archived in favor of the gear.
+- 2026-09-23 — Compact, provider-first panel: pick a capability, then a
+  provider, then a model. "Used by" now comes from the `GENERATION_CONSUMERS`
+  registry, enforced by a repository scan test and an AGENTS.md rule.

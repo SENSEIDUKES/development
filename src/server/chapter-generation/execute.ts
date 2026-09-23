@@ -27,7 +27,7 @@ import {
   createChapterTextProvider,
   type ChapterTextModelProvider,
 } from "./provider";
-import { requireTextModelKey, textModelProvider } from "../model-router/catalog";
+import { requireTextModelKey, resolveReasoningLevel, textModelProvider } from "../model-router/catalog";
 
 export type ChapterProviderFactory = (input: {
   apiKey: string;
@@ -136,9 +136,18 @@ export async function executeChapterGeneration(
     ? applyChapterContinuation(adapted.contracts, options.verifiedContinuation)
     : adapted.contracts;
   const chapterPacket = assembleChapterPacket(contracts);
-  const provider = options.providerFactory
+  const baseProvider = options.providerFactory
     ? options.providerFactory({ apiKey, model })
     : createChapterTextProvider(model, config);
+  const reasoningLevel = resolveReasoningLevel(model, request.reasoningLevel);
+  // Every stage call carries the Router's reasoning level for this model.
+  const provider: ChapterTextModelProvider = reasoningLevel
+    ? {
+        provider: baseProvider.provider,
+        model: baseProvider.model,
+        generate: stageRequest => baseProvider.generate({ ...stageRequest, reasoningLevel }),
+      }
+    : baseProvider;
   const liveCalls = createLiveChapterModelCalls(provider, {
     temperature: config.temperature,
     maxOutputTokens: config.maxOutputTokens,

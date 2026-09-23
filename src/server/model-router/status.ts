@@ -9,6 +9,7 @@ import {
   resolveChapterModelRoute,
   TTS_MODELS,
   type ModelCapability,
+  type ModelReasoning,
   type ModelEnvironment,
   type ModelProviderId,
   type ModelStage,
@@ -30,6 +31,8 @@ export interface ModelRouterModelStatus {
   /** Its provider key is configured, so a surface could call it now. */
   available: boolean;
   isDefault: boolean;
+  /** Tunable reasoning levels, when the model has them. */
+  reasoning?: ModelReasoning;
 }
 
 export interface ModelRouterCapabilityStatus {

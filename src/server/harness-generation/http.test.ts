@@ -46,6 +46,16 @@ const request = (): HarnessGenerationRequest => ({
 const environment = { GEMINI_API_KEY: 'test-key' };
 
 describe('Harness Generation HTTP boundary', () => {
+  it('passes the Router reasoning level to the provider only when the model accepts it', async () => {
+    const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({ rawProviderResponse: '{}',
+      providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-23', usage: { source: 'unavailable' as const } } }));
+    const send = (reasoningLevel: string) => handleHarnessGenerationHttp({ method: 'POST', body: { ...request(), operation: 'plan-arc', reasoningLevel } },
+      { environment, providerFactory: () => ({ provider: 'gemini', model: request().model, generate }) });
+    await send('high');
+    await send('xhigh');
+    expect(generate.mock.calls.map(call => call[0].reasoningLevel)).toEqual(['high', undefined]);
+  });
+
   it('routes automatic Arc planning through the provider with its own structured schema', async () => {
     const generate = vi.fn(async (_input: HarnessTextGenerationRequest) => ({ rawProviderResponse: '{}',
       providerReceipt: { provider: 'gemini' as const, model: request().model, generatedAt: '2026-09-13', usage: { source: 'unavailable' as const } } }));

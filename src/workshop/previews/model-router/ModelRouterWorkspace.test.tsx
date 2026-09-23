@@ -3,7 +3,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ModelRouterGear } from '../../ModelRouterSettings';
-import { readModelPreference } from '../../../host/generation/modelPreference';
+import { readModelPreference, readReasoningPreference } from '../../../host/generation/modelPreference';
 import { modelRouterStatus } from '../../../server/model-router/status';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -71,4 +71,17 @@ it('lets GPT-6 Luna be selected once the OpenRouter key exists, and closes with 
   expect(readModelPreference('chapters')).toBe('openrouter/openai/gpt-6-luna');
   await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
   expect(document.querySelector('[role="dialog"]')).toBeNull();
+});
+
+it('tunes the selected model\'s reasoning from Advanced settings', async () => {
+  await openRouter({ GEMINI_API_KEY: 'g' });
+  await click(row('google/gemini-3.8-flash')!);
+  await click(document.querySelector<HTMLButtonElement>('[aria-label="Advanced settings"]')!);
+  const levels = () => [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Reasoning level"] button')];
+  expect(levels().map(button => button.textContent)).toEqual(['Default (medium)', 'low', 'medium', 'high']);
+  await click(levels().find(button => button.textContent === 'high')!);
+  expect(readReasoningPreference('google/gemini-3.8-flash')).toBe('high');
+  expect(document.querySelector('[data-model="google/gemini-3.8-flash"]')?.textContent).toContain('high');
+  await click(levels()[0]);
+  expect(readReasoningPreference('google/gemini-3.8-flash')).toBeUndefined();
 });

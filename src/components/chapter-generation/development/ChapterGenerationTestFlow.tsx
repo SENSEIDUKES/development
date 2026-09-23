@@ -60,7 +60,7 @@ import { listWorkshopStorySeeds, LOCAL_WORKSHOP_STORY_SEED_OWNER_ID } from '../.
 import { type StorySeedArtifact, type StorySeedRecord } from '@seihouse/sen/story-seed';
 import { parseStorySeedJson } from '@seihouse/sen/story-seed';
 import { type RawStorySeedArtifact } from '@seihouse/sen/story-seed';
-import { preferredModel, readModelPreference, subscribeModelPreference, writeModelPreference } from "../../../host/generation/modelPreference";
+import { preferredModel, readModelPreference, readReasoningPreference, subscribeModelPreference, writeModelPreference } from "../../../host/generation/modelPreference";
 import ChapterGenerationWorkspace from "./ChapterGenerationWorkspace";
 import FiveChapterReaderSession from "./FiveChapterReaderSession";
 import ManifestedChapterView from "./ManifestedChapterView";
@@ -281,7 +281,8 @@ const manifestThroughServer = async (
         "Content-Type": "application/json",
         Accept: "application/x-ndjson",
       },
-      body: JSON.stringify(request),
+      // The Model Router's Advanced reasoning level for this model rides along.
+      body: JSON.stringify({ ...request, reasoningLevel: request.reasoningLevel ?? readReasoningPreference(request.model) }),
       signal: controller.signal,
     });
     const contentType = response.headers.get("content-type") ?? "";

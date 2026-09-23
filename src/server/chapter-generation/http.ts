@@ -71,6 +71,7 @@ const parseRequest = (body: unknown): ManifestChapterRequest => {
         : {}),
     },
     model: typeof parsed.model === "string" ? parsed.model : "",
+    ...(typeof parsed.reasoningLevel === "string" ? { reasoningLevel: parsed.reasoningLevel } : {}),
     ...(typeof parsed.temporaryInstruction === "string"
       ? { temporaryInstruction: parsed.temporaryInstruction }
       : {}),

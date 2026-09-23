@@ -1,4 +1,10 @@
 import { type HarnessGenerationModelAdapter, type HarnessGenerationRequest, type HarnessGenerationResponse, type HarnessGenerationServerInfo, type HarnessMemoryRecoveryRequest, type HarnessArcRequest } from '@seihouse/sen/harness-generation';
+import { readReasoningPreference } from './modelPreference';
+
+const withReasoningLevel = <T extends { model: string }>(request: T): T & { reasoningLevel?: string } => {
+  const reasoningLevel = typeof window === 'undefined' ? undefined : readReasoningPreference(request.model);
+  return reasoningLevel ? { ...request, reasoningLevel } : request;
+};
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -61,7 +67,9 @@ export class HarnessGenerationHttpClient implements HarnessGenerationModelAdapte
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
-      body: JSON.stringify(request),
+      // The Model Router's Advanced reasoning level for this model rides along;
+      // the server checks it against the catalog.
+      body: JSON.stringify(withReasoningLevel(request)),
     });
     if (!response.ok) throw new Error(await responseError(response));
     return parseGenerationResponse(await response.json());

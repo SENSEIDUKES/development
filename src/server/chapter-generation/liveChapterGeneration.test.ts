@@ -1272,6 +1272,21 @@ describe("server model selection and failure handling", () => {
     expect(JSON.stringify(response.body)).not.toContain("stack");
   });
 
+  it("carries the Router reasoning level into every stage call for a model that accepts it", async () => {
+    const provider = new RecordingProvider();
+    const response = await handleChapterGenerationHttp({
+      method: "POST",
+      body: {
+        artifact: { seed: canonicalSeed(), blueprint: canonicalBlueprint() },
+        model: "google/gemini-3.8-flash",
+        reasoningLevel: "low",
+      },
+    }, { environment, providerFactory: () => provider });
+    expect(response.status).toBe(200);
+    expect(provider.requests.length).toBeGreaterThan(1);
+    expect(new Set(provider.requests.map(request => request.reasoningLevel))).toEqual(new Set(["low"]));
+  });
+
   it("never calls a speech provider or attaches voice audio while generating a chapter", async () => {
     // Chapter generation is completely disconnected from ElevenLabs. Any
     // network call at all during a run would be a regression of that boundary.

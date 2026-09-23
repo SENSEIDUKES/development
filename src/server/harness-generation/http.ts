@@ -139,7 +139,8 @@ export const handleHarnessGenerationHttp = async (
 
   try {
     const config = resolveHarnessGenerationConfig(dependencies.environment);
-    const result = await executeHarnessGeneration(parsed, config, dependencies.providerFactory);
+    const reasoningLevel = (parsed as { reasoningLevel?: unknown }).reasoningLevel;
+    const result = await executeHarnessGeneration(parsed, config, dependencies.providerFactory, reasoningLevel);
     return {
       status: 200,
       body: result satisfies HarnessGenerationResponse,

@@ -17,12 +17,30 @@ export type ModelCapability = 'chapters' | 'images' | 'tts';
 export type ModelProviderId = 'gemini' | 'openrouter' | 'elevenlabs';
 export type ModelStage = 'current' | 'preview' | 'legacy';
 
+/** Reasoning (thinking) levels across providers, lowest to highest. */
+export const REASONING_LEVELS = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const;
+export type ReasoningLevel = typeof REASONING_LEVELS[number];
+
+export interface ModelReasoning {
+  /** Levels this model accepts, lowest to highest. */
+  levels: readonly ReasoningLevel[];
+  /** What the provider uses when no level is sent. */
+  defaultLevel: ReasoningLevel;
+}
+
 export interface RoutedModel {
   id: string;
   label: string;
   provider: ModelProviderId;
   stage: ModelStage;
+  /** Present when the model's reasoning can be tuned (Advanced settings in the Router). */
+  reasoning?: ModelReasoning;
 }
+
+// Levels from the Gemini thinking docs and OpenRouter's model catalog (2026-09-23).
+const GEMINI_THREE_LEVELS: readonly ReasoningLevel[] = ['low', 'medium', 'high'];
+const GEMINI_FOUR_LEVELS: readonly ReasoningLevel[] = ['minimal', 'low', 'medium', 'high'];
+const OPENAI_LEVELS: readonly ReasoningLevel[] = ['none', 'low', 'medium', 'high', 'xhigh', 'max'];
 
 /**
  * `keyVariable` is the name shown in messages and the Router; `keyVariables`
@@ -41,14 +59,14 @@ const OPENROUTER_PATTERN = /^openrouter\/[a-z0-9][a-z0-9._-]*\/[a-z0-9~][a-z0-9.
 
 /** Text models for chapter generation, newest first within each provider. */
 export const CHAPTER_MODELS: readonly RoutedModel[] = [
-  { id: 'google/gemini-3.8-flash', label: 'Gemini 3.8 Flash', provider: 'gemini', stage: 'current' },
-  { id: 'google/gemini-3.7-flash', label: 'Gemini 3.7 Flash', provider: 'gemini', stage: 'current' },
-  { id: 'google/gemini-3.5-flash', label: 'Gemini 3.5 Flash', provider: 'gemini', stage: 'current' },
-  { id: 'google/gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash Lite', provider: 'gemini', stage: 'current' },
-  { id: 'google/gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro Preview', provider: 'gemini', stage: 'preview' },
-  { id: 'google/gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash Lite', provider: 'gemini', stage: 'current' },
-  { id: 'openrouter/openai/gpt-6-luna', label: 'GPT-6 Luna · OpenRouter', provider: 'openrouter', stage: 'current' },
-  { id: 'openrouter/openai/gpt-6-luna-pro', label: 'GPT-6 Luna Pro · OpenRouter', provider: 'openrouter', stage: 'current' },
+  { id: 'google/gemini-3.8-flash', label: 'Gemini 3.8 Flash', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'medium' } },
+  { id: 'google/gemini-3.7-flash', label: 'Gemini 3.7 Flash', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'medium' } },
+  { id: 'google/gemini-3.5-flash', label: 'Gemini 3.5 Flash', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_FOUR_LEVELS, defaultLevel: 'medium' } },
+  { id: 'google/gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash Lite', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_FOUR_LEVELS, defaultLevel: 'minimal' } },
+  { id: 'google/gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro Preview', provider: 'gemini', stage: 'preview', reasoning: { levels: GEMINI_THREE_LEVELS, defaultLevel: 'high' } },
+  { id: 'google/gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash Lite', provider: 'gemini', stage: 'current', reasoning: { levels: GEMINI_FOUR_LEVELS, defaultLevel: 'minimal' } },
+  { id: 'openrouter/openai/gpt-6-luna', label: 'GPT-6 Luna · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: OPENAI_LEVELS, defaultLevel: 'medium' } },
+  { id: 'openrouter/openai/gpt-6-luna-pro', label: 'GPT-6 Luna Pro · OpenRouter', provider: 'openrouter', stage: 'current', reasoning: { levels: OPENAI_LEVELS, defaultLevel: 'medium' } },
 ];
 
 /**
@@ -169,6 +187,17 @@ export const requireTextModelKey = (model: string, keys: ChapterModelRoute['keys
   const key = provider ? keys[provider] : undefined;
   if (!key) throw new Error(missingKeyMessage(model));
   return key;
+};
+
+/**
+ * The reasoning level to send for a model: the requested level when the
+ * catalog says the model accepts it, otherwise nothing (the provider default).
+ * An unknown or stale level is dropped rather than failing the generation.
+ */
+export const resolveReasoningLevel = (model: string, requested: unknown): ReasoningLevel | undefined => {
+  if (typeof requested !== 'string') return undefined;
+  const reasoning = CHAPTER_MODELS.find(option => option.id === model)?.reasoning;
+  return reasoning?.levels.find(level => level === requested);
 };
 
 export const isMissingKeyMessage = (message: string): boolean =>

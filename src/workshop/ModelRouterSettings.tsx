@@ -3,16 +3,17 @@
  * Workshop page. Pick a capability, then a provider, then a model. Chapters
  * models are selectable; the choice is saved in this browser and the features
  * marked "follows router" use it. Images and TTS are shown for reference.
- * "Used by" comes from `GENERATION_CONSUMERS` in the server catalog.
+ * "Used by" comes from `GENERATION_CONSUMERS` in the server catalog. The
+ * Advanced button tunes the selected model's reasoning level.
  */
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BookOpenText, Check, Image as ImageIcon, Settings, Volume2, X } from 'lucide-react';
+import { BookOpenText, Check, Image as ImageIcon, Settings, SlidersHorizontal, Volume2, X } from 'lucide-react';
 import type {
   ModelRouterCapabilityStatus,
   ModelRouterStatus,
 } from '../server/model-router/status';
-import { useModelPreference } from '../host/generation/modelPreference';
+import { useModelPreference, useReasoningPreferences } from '../host/generation/modelPreference';
 
 type Load =
   | { state: 'loading' }
@@ -34,10 +35,12 @@ const isStatus = (value: unknown): value is ModelRouterStatus =>
 type RouterModel = ModelRouterCapabilityStatus['models'][number];
 type RouterProvider = ModelRouterCapabilityStatus['providers'][number];
 
-function ModelRow({ model, selected, selectable, onSelect }: {
+function ModelRow({ model, selected, selectable, reasoningLevel, onSelect }: {
   model: RouterModel;
   selected: boolean;
   selectable: boolean;
+  /** A non-default reasoning level saved in Advanced settings. */
+  reasoningLevel?: string;
   onSelect: () => void;
 }) {
   const body = (
@@ -49,6 +52,7 @@ function ModelRow({ model, selected, selectable, onSelect }: {
       <span className="flex shrink-0 items-center gap-1 font-mono text-[9px] uppercase tracking-wider">
         {model.stage !== 'current' && <span className="rounded border border-amber-400/30 px-1 py-px text-amber-200">{model.stage}</span>}
         {model.isDefault && !selected && <span className="rounded border border-white/15 px-1 py-px text-white/50">Default</span>}
+        {reasoningLevel && <span className="rounded border border-violet-400/35 px-1 py-px text-violet-200" title="Reasoning level">{reasoningLevel}</span>}
         {!model.available && <span className="rounded border border-white/10 px-1 py-px text-white/40">No key</span>}
         {selected && <Check aria-label="Selected" className="text-cyan-300" size={15} />}
       </span>
@@ -96,6 +100,46 @@ function ProviderPicker({ providers, models, active, onPick }: {
   );
 }
 
+/** Advanced settings for the selected model: its reasoning level, when it has one. */
+function AdvancedSettings({ model, level, onChange }: {
+  model?: RouterModel;
+  level?: string;
+  onChange: (level: string | undefined) => void;
+}) {
+  const reasoning = model?.reasoning;
+  const option = (value: string | undefined, label: string) => {
+    const active = (level ?? undefined) === value;
+    return (
+      <button key={label} type="button" role="radio" aria-checked={active} onClick={() => onChange(value)}
+        className={`workshop-touch-target rounded-md border px-2 py-1 text-[11px] capitalize transition-colors ${active
+          ? 'border-violet-400/45 bg-violet-500/15 text-violet-50'
+          : 'border-white/10 text-white/60 hover:bg-white/5'}`}>
+        {label}
+      </button>
+    );
+  };
+  return (
+    <section aria-label="Advanced settings" className="rounded-lg border border-violet-400/20 bg-violet-500/[0.04] px-2.5 py-2">
+      <h3 className="font-mono text-[9px] uppercase tracking-[0.2em] text-violet-200/70">
+        Reasoning{model ? ` · ${model.label.replace(/ · OpenRouter$/, '')}` : ''}
+      </h3>
+      {reasoning ? (
+        <>
+          <div className="mt-1.5 flex flex-wrap gap-1" role="radiogroup" aria-label="Reasoning level">
+            {option(undefined, `Default (${reasoning.defaultLevel})`)}
+            {reasoning.levels.map(value => option(value, value))}
+          </div>
+          <p className="mt-1.5 text-[10px] leading-snug text-white/40">
+            Higher levels think longer before writing: slower and costlier, often more careful. Saved per model in this browser.
+          </p>
+        </>
+      ) : (
+        <p className="mt-1 text-[11px] text-white/45">{model ? 'This model has no reasoning controls.' : 'Select a model first.'}</p>
+      )}
+    </section>
+  );
+}
+
 function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStatus }) {
   const [saved, setSaved] = useModelPreference('chapters');
   const selectable = capability.id === 'chapters';
@@ -108,10 +152,28 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
   const activeProvider = capability.providers.find(item => item.id === provider) ?? capability.providers[0];
   const models = capability.models.filter(model => model.provider === activeProvider.id);
   const note = SERVER_OWNED_NOTE[capability.id];
+  const [reasoning, setReasoning] = useReasoningPreferences();
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const selectedModel = capability.models.find(model => model.id === selectedId);
 
   return (
     <div className="space-y-2.5" role="tabpanel" aria-label={`${capability.label} router`}>
-      <ProviderPicker providers={capability.providers} models={capability.models} active={activeProvider.id} onPick={setProvider} />
+      <div className="flex items-start justify-between gap-2">
+        <ProviderPicker providers={capability.providers} models={capability.models} active={activeProvider.id} onPick={setProvider} />
+        {selectable && (
+          <button type="button" aria-label="Advanced settings" aria-expanded={advancedOpen} title="Advanced settings"
+            onClick={() => setAdvancedOpen(open => !open)}
+            className={`workshop-touch-target grid h-7 w-7 shrink-0 place-items-center rounded-full border transition-colors ${advancedOpen
+              ? 'border-violet-400/45 bg-violet-500/15 text-violet-100'
+              : 'border-white/10 text-white/55 hover:bg-white/5 hover:text-white/85'}`}>
+            <SlidersHorizontal aria-hidden="true" size={13} />
+          </button>
+        )}
+      </div>
+      {selectable && advancedOpen && (
+        <AdvancedSettings model={selectedModel} level={selectedModel ? reasoning[selectedModel.id] : undefined}
+          onChange={level => selectedModel && setReasoning(selectedModel.id, level)} />
+      )}
       {!activeProvider.configured && (
         <p className="text-[11px] text-white/45">Add <span className="font-mono">{activeProvider.keyVariable}</span> in Vercel to use these models.</p>
       )}
@@ -120,6 +182,7 @@ function CapabilityPanel({ capability }: { capability: ModelRouterCapabilityStat
         role={selectable ? 'radiogroup' : undefined} aria-label={selectable ? `${activeProvider.label} chapter models` : undefined}>
         {models.map(model => (
           <ModelRow key={model.id} model={model} selectable={selectable}
+            reasoningLevel={selectable && model.reasoning?.levels.some(level => level === reasoning[model.id]) ? reasoning[model.id] : undefined}
             selected={model.id === selectedId} onSelect={() => setSaved(model.id)} />
         ))}
         {!models.length && <li className="px-2.5 py-1.5 text-xs text-white/40">No models from this provider.</li>}

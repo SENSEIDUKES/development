@@ -183,7 +183,7 @@ export class FamiliarService {
       return {
         outcome: 'trained',
         message: tierAfter > tierBefore
-          ? `${option.name} reached ${reachedName}: ${newUnlocks.map(unlock => unlock.kind === 'form' ? unlock.form.label : unlock.effect.label).join(', ') || 'a new tier'}.`
+          ? `${option.name} reached ${reachedName} bond: ${newUnlocks.map(unlock => unlock.kind === 'form' ? unlock.form.label : unlock.effect.label).join(', ') || 'a new tier'}.`
           : `${option.name} accepted ${amount.toLocaleString('en-US')} QI.`,
         spent: amount, tierBefore, tierAfter, newUnlocks, snapshot: this.snapshotOf(updated),
       };

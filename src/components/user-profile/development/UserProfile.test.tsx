@@ -757,13 +757,13 @@ describe('Cultivator Cave destinations', () => {
   it('trains the equipped Familiar with QI and letters the name with its elemental title', async () => {
     await renderCave({ rewards: { openingDaoXp: 13_480, qiGrant: 2_000 } });
     expect(open('familiar').textContent).toContain('Quill');
-    expect(open('familiar').textContent).toContain('Bonded · No effect chosen');
+    expect(open('familiar').textContent).toContain('Common bond · No effect chosen');
     expect(container.querySelector('[data-cave-name]')?.getAttribute('data-element')).toBe('none');
     await click(open('familiar'));
     expect(caveRoute()).toBe('/home/familiar');
     await click(byText('button', 'Offer 1,000 QI'));
     await settle();
-    expect(text()).toContain('Quill reached Awakened: Lightning Title · Whisper.');
+    expect(text()).toContain('Quill reached Rare bond: Lightning Title · Whisper.');
     await click(byText('[data-familiar-training] button', 'Lightning Title · Whisper'));
     await settle();
     await click(container.querySelector('[aria-label="Return to cave"]')!);
@@ -772,7 +772,7 @@ describe('Cultivator Cave destinations', () => {
     expect(name.getAttribute('data-element')).toBe('lightning');
     expect(name.getAttribute('data-cave-name-effect')).toBe('elemental-title:lightning:subtle');
     expect(open('familiar').textContent).toContain('Lightning Title · Whisper');
-    expect(open('familiar').getAttribute('aria-label')).toBe('Quill, Awakened, Lightning Title · Whisper');
+    expect(open('familiar').getAttribute('aria-label')).toBe('Quill, Rare bond, Lightning Title · Whisper');
     expect(open('qi').textContent).toContain('1,000 to spend');
     // Spending QI never touches DAO XP, the only input to rank.
     expect(valueText()).toBe('13,480 DAO XP of 25,000');

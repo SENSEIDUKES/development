@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 /**
  * Checks the elemental title in the developed profile preview. The name takes
- * the equipped Familiar's chosen effect (Quill, trained to Awakened, lightning
+ * the equipped Familiar's chosen effect (Quill, trained to Rare bond, lightning
  * Whisper); the rank row keeps plain rank colours and carries no element.
  */
 export async function verifyElementalProfile(page) {

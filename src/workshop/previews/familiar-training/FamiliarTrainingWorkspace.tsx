@@ -21,14 +21,14 @@ import { useRewardAccount, useWorkshopEconomy, WorkshopEconomyProvider } from '.
 
 const entry = workshopEntries.find(candidate => candidate.id === 'familiar-training')!;
 
-type TrainingState = 'untrained' | 'awakened' | 'transcendent' | 'no-qi';
+type TrainingState = 'untrained' | 'rare' | 'legendary' | 'no-qi';
 
 const STATES: { id: TrainingState; label: string; description: string; seed: WorkshopAccountSeed }[] = [
-  { id: 'untrained', label: 'Untrained', description: 'Quill is Bonded and the cultivator has 1,500 QI to offer.',
+  { id: 'untrained', label: 'Untrained', description: 'Quill is Common and the cultivator has 1,500 QI to offer.',
     seed: { openingDaoXp: 3_200, qiGrant: 1_500 } },
-  { id: 'awakened', label: 'Awakened', description: 'Quill reached Awakened with its subtle lightning title on; Phoenix was bought and is untrained. 3,000 QI to offer.',
+  { id: 'rare', label: 'Rare', description: 'Quill reached Rare with its subtle lightning title on; Phoenix was bought and is untrained. 3,000 QI to offer.',
     seed: { openingDaoXp: 3_200, qiGrant: 4_000, ownedFamiliars: ['phoenix'], training: [{ familiarId: QUILL, qi: 1_000, effectId: 'elemental-title:lightning:subtle' }] } },
-  { id: 'transcendent', label: 'Fully trained', description: 'Quill is Transcendent: its radiant form and legendary lightning title are on.',
+  { id: 'legendary', label: 'Fully trained', description: 'Quill is Legendary: its radiant form and legendary lightning title are on.',
     seed: { openingDaoXp: 13_480, qiGrant: 10_500, training: [{ familiarId: QUILL, qi: 10_000, effectId: 'elemental-title:lightning:legendary', formId: 'radiant' }] } },
   { id: 'no-qi', label: 'No QI', description: 'Nothing to offer: every offering is disabled until QI arrives.',
     seed: { openingDaoXp: 3_200 } },
@@ -119,7 +119,7 @@ function FamiliarTrainingReference() {
 }
 
 export function FamiliarTrainingWorkspace() {
-  const [state, setState] = useState<TrainingState>('awakened');
+  const [state, setState] = useState<TrainingState>('rare');
   const [equipped, setEquipped] = useState(QUILL);
   const [session, setSession] = useState(0);
   const current = STATES.find(option => option.id === state)!;

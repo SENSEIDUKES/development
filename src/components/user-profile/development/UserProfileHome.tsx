@@ -474,7 +474,7 @@ export function UserProfileHome({
               onClick={familiar?.onOpen}
               disabled={!familiar}
               data-cave-card="familiar"
-              aria-label={familiar ? [familiar.name, familiar.tierName, familiar.effect?.label ?? "no effect chosen"].filter(Boolean).join(", ") : undefined}
+              aria-label={familiar ? [familiar.name, familiar.tierName ? `${familiar.tierName} bond` : null, familiar.effect?.label ?? "no effect chosen"].filter(Boolean).join(", ") : undefined}
             >
               <Sparkles aria-hidden="true" className="cave-home-glyph text-violet-300" />
               <span className="min-w-0 flex-1">
@@ -484,7 +484,7 @@ export function UserProfileHome({
                 <span className="line-clamp-3 text-xs text-neutral-400" data-cave-familiar-effect={familiar?.effect?.id}
                   data-cave-familiar-tier={familiar?.tierName ?? undefined}>
                   {familiar
-                    ? familiar.effect?.label ?? [familiar.tierName, "No effect chosen"].filter(Boolean).join(" · ")
+                    ? familiar.effect?.label ?? [familiar.tierName ? `${familiar.tierName} bond` : null, "No effect chosen"].filter(Boolean).join(" · ")
                     : "Not connected"}
                 </span>
               </span>

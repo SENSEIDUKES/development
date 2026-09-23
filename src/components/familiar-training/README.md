@@ -28,10 +28,10 @@ chosen, that title letters the name in the Cave instead of the rank colour.
 
 | Tier | Total QI offered | Unlocks |
 | --- | --- | --- |
-| Bonded | 0 | — |
-| Awakened | 1,000 | Elemental title · Whisper |
-| Ascended | 4,000 | Radiant form (placeholder glow), elemental title · Blaze |
-| Transcendent | 10,000 | Elemental title · Ascendant |
+| Common | 0 | — |
+| Rare | 1,000 | Elemental title · Whisper |
+| Epic | 4,000 | Radiant form (placeholder glow), elemental title · Blaze |
+| Legendary | 10,000 | Elemental title · Ascendant |
 
 Each Familiar has an element (Quill and the Little Monkey King lightning, Phoenix fire, and so on);
 unlisted Familiars fall back to celestial. The ladder lives in `src/server/familiars/training.ts`.

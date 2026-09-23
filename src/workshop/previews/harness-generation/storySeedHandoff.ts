@@ -1,5 +1,5 @@
 import { createInitialArcPlan, validateArcPlan } from '@seihouse/sen/arc-goals';
-import { validateHardPinInputs, normalizeFunSettings } from '@seihouse/sen/story-seed';
+import { validateHardPinInputs, normalizeFunSettings, resolveStorySeedWorldCanon } from '@seihouse/sen/story-seed';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
 import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
@@ -19,20 +19,21 @@ import {
   OFFICIAL_STYLE_REFERENCES,
 } from './officialCapaSkills';
 
-const joinSections = (sections: Array<[string, unknown]>): string | undefined => {
-  const present = sections.filter(([, value]) => {
-    if (value === undefined || value === null || value === '') return false;
-    if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === 'object') return Object.keys(value).length > 0;
-    return true;
-  });
-  if (!present.length) return undefined;
-  return present.map(([label, value]) => `${label}\n${typeof value === 'string' ? value : JSON.stringify(value, null, 2)}`).join('\n\n');
+const labeledLines = (entries: Array<[string, string | undefined]>): string | undefined => {
+  const present = entries.filter((entry): entry is [string, string] => Boolean(entry[1]?.trim()));
+  return present.length ? present.map(([label, value]) => `${label}: ${value.trim()}`).join('\n') : undefined;
 };
 
 /**
  * The only Story Seed -> Harness translation point. It copies author input
  * into a neutral Foundation and freezes the original artifacts for provenance.
+ *
+ * Every concept crosses exactly once. Story direction (ending, pins, goal,
+ * Fun Settings, Fate) has its own Foundation fields; each character and
+ * faction travels only as a Foundation identity whose evidence is its single
+ * description; world facts carry only what no other field already carries.
+ * `resolveStorySeedWorldCanon` decides between the Seed and its reviewed
+ * Blueprint, so authored values win and Blueprint copies are never re-sent.
  */
 export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): StoryFoundationInput => {
   const { seed, blueprint } = record;
@@ -46,13 +47,8 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
   if (initialArcPlan && (initialArcPlan.arcNumber !== 1 || initialArcPlan.goals.length !== 1)) {
     throw new Error('Story Seed supplies exactly one initial Active Arc Goal in Arc 1.');
   }
-  const style = getStoryStyleLabel(required.style);
-  const blueprintCharacters = (blueprint?.initialCharacters ?? []).map(entry => {
-    // Blueprint's named-list convention separates a name from its parenthesized role.
-    const annotated = entry.match(/^([^()]+?)\s+\((.+)\)$/);
-    return { name: (annotated?.[1] ?? entry).trim(), aliases: annotated ? [entry] : [],
-      kind: 'character' as const, evidence: entry };
-  });
+  const canon = resolveStorySeedWorldCanon(seed, blueprint);
+  const mainCharacter = canon.mainCharacter;
 
   return {
     title: identity.title || blueprint?.title || record.title,
@@ -69,52 +65,26 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
     initialHardPins: validateHardPinInputs(optional.hardPins ?? []),
     funSettings: normalizeFunSettings(optional.funSettings),
     identities: [
-      ...((world.mainCharacter?.name || blueprint?.mainCharacter?.name) ? [{
-        name: world.mainCharacter?.name || blueprint!.mainCharacter!.name,
-        kind: 'character' as const,
-        evidence: JSON.stringify(world.mainCharacter?.name ? world.mainCharacter : blueprint?.mainCharacter),
-      }] : []),
-      ...(world.additionalCharacters ?? []).filter(character => character.name.trim()).map(character => ({
-        name: character.name, aliases: character.aliases, kind: 'character' as const, evidence: JSON.stringify(character),
-      })),
-      ...blueprintCharacters.filter(character => character.name),
-      ...(world.factions ?? []).filter(faction => faction.name.trim()).map(faction => ({
-        name: faction.name, aliases: faction.aliases, kind: 'faction' as const, evidence: JSON.stringify(faction),
-      })),
+      ...(mainCharacter ? [{ name: mainCharacter.name, kind: 'character' as const, evidence: mainCharacter.description }] : []),
+      ...canon.characters.map(entry => ({ name: entry.name, aliases: entry.aliases, kind: 'character' as const, evidence: entry.description })),
+      ...canon.factions.map(entry => ({ name: entry.name, aliases: entry.aliases, kind: 'faction' as const, evidence: entry.description })),
     ],
     genre: required.genre,
-    toneStyle: joinSections([
-      ['Story tradition', style],
-      ['Blueprint style bible', blueprint?.styleBible],
+    toneStyle: labeledLines([
+      ['Story tradition', getStoryStyleLabel(required.style)],
+      ['Style bible', blueprint?.styleBible],
     ]),
-    permanentInstructions: joinSections([
-      ['Make it work', optional.makeItWorkInstruction],
-    ]),
+    permanentInstructions: labeledLines([['Make It Work', optional.makeItWorkInstruction]]),
     openingSituation: identity.startingLocation || blueprint?.startingLocation,
-    declaredCanon: joinSections([
-      ['Story tags', required.storyTags],
-      ['World overview', blueprint?.worldOverview],
-    ]),
-    characters: joinSections([
-      ['Main character', world.mainCharacter],
-      ['Additional characters', world.additionalCharacters],
-      ['Blueprint main character', blueprint?.mainCharacter],
-      ['Blueprint character profile', blueprint?.mcProfile],
-      ['Blueprint initial characters', blueprint?.initialCharacters],
-    ]),
-    cast: (world.mainCharacter?.name || blueprint?.mainCharacter?.name) ? [{
-      name: world.mainCharacter?.name || blueprint!.mainCharacter!.name!,
-      role: 'Main character', isMainCharacter: true, relationshipToMC: 'Self',
+    declaredCanon: labeledLines([['Story tags', required.storyTags.join(', ')]]),
+    cast: mainCharacter ? [{
+      name: mainCharacter.name, role: 'Main character', isMainCharacter: true, relationshipToMC: 'Self',
     }] : undefined,
-    worldFacts: joinSections([
-      ['World identity', identity],
+    worldFacts: labeledLines([
+      ['World', canon.worldOverview],
+      ['Society', canon.societyStructure],
+      ['Power system', canon.powerSystem],
       ['Main Opposition', world.mainOpposition],
-      ['Factions', world.factions],
-      ['Abilities', world.abilities],
-      ['Power system', world.powerSystem],
-      ['Blueprint society', blueprint?.societyStructure],
-      ['Blueprint power system', blueprint?.powerSystemOutline],
-      ['Blueprint factions', blueprint?.majorFactions],
     ]),
     sourceSnapshot: {
       kind: 'story-seed',

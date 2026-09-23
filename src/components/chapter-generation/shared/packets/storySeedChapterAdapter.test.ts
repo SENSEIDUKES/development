@@ -112,8 +112,9 @@ describe("finalized Story Seed to Chapter Generation adapter", () => {
     expect(packet.storyConstitution.source.kind).toBe("story-seed");
     expect(packet.storyConstitution.storySeed?.story.optional.makeItWorkInstruction)
       .toBe("Make foreknowledge useful but never certain.");
+    // An authored World Type is the Blueprint's World Overview; a stale copy never wins.
     expect(packet.storyConstitution.worldBlueprint?.worldOverview)
-      .toContain("imperial oath");
+      .toBe("A cultivation empire beneath a sealed dead heaven");
     expect(packet.storyConstitution.mainCharacterName).toBe("Jin Rui");
     expect(packet.storyConstitution.fateSurvival).toEqual({
       enabled: true,

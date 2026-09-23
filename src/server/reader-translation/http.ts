@@ -17,9 +17,10 @@ import {
   type HarnessGenerationEnvironment,
 } from '../harness-generation/config';
 import {
-  GeminiHarnessTextProvider,
+  createHarnessTextProvider,
   type HarnessTextModelProvider,
 } from '../harness-generation/provider';
+import { missingKeyMessage, textModelProvider } from '../model-router/catalog';
 import { buildReaderTranslationPrompt } from './prompt';
 
 export type ReaderTranslationProviderFactory = (
@@ -313,21 +314,23 @@ export const handleReaderTranslationHttp = async (
     dependencies.onError?.(error);
     return { status: 503, body: { error: 'The translation model configuration is invalid.' }, headers: { ...noStore } };
   }
-  if (!config.apiKey) {
+  const model = config.defaultModel;
+  const provider = textModelProvider(model);
+  const apiKey = provider ? config.keys[provider] : undefined;
+  if (!apiKey) {
     return {
       status: 503,
-      body: { error: 'GEMINI_API_KEY is not configured on the Development server.' },
+      body: { error: missingKeyMessage(model) },
       headers: { ...noStore },
     };
   }
 
-  const model = config.defaultModel;
-  const provider = dependencies.providerFactory
-    ? dependencies.providerFactory({ apiKey: config.apiKey, model })
-    : new GeminiHarnessTextProvider(config.apiKey, model);
+  const textProvider = dependencies.providerFactory
+    ? dependencies.providerFactory({ apiKey, model })
+    : createHarnessTextProvider(model, config);
 
   try {
-    const result = await provider.generate({
+    const result = await textProvider.generate({
       ...buildReaderTranslationPrompt(parsed),
       // A translation restates existing prose; it must not invent variation.
       temperature: 0,

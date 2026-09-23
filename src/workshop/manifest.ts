@@ -351,6 +351,21 @@ export const workshopEntries: WorkshopEntry[] = [
     },
   },
   {
+    id: 'model-router',
+    section: 'systems',
+    owner: 'deferred',
+    status: 'active',
+    title: 'Model Router',
+    description: 'Universal router for every generation model, separated by capability: Chapters (Gemini and OpenRouter), Images, and TTS (ElevenLabs). Shows which providers have keys, which models are ready, and each default.',
+    category: 'other',
+    version: 'v1.0',
+    source: {
+      repository: 'SENSEIDUKES/development',
+      path: 'src/server/model-router/',
+      lastCompared: '2026-09-23',
+    },
+  },
+  {
     id: 'motion-picture', section: 'components', owner: 'sen', status: 'active', title: 'Motion Picture',
     description: 'A still that turns into its own motion clip on demand, with an aura sampled from the artwork, for any item that has a picture and a clip: story cards, Familiars, relics. Includes a clip source panel for testing real footage, and compares against the production cover toggle it replaces.',
     category: 'animations', version: 'v1.0',

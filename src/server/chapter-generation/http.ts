@@ -16,6 +16,7 @@ import {
   type ChapterProviderFactory,
 } from "./execute";
 import { verifyChapterContinuation } from "./continuationSecurity";
+import { isMissingKeyMessage, missingKeyMessage } from "../model-router/catalog";
 
 export interface ChapterGenerationHttpRequest {
   method?: string;
@@ -80,7 +81,7 @@ const parseRequest = (body: unknown): ManifestChapterRequest => {
 };
 
 const isConfigurationError = (message: string) =>
-  message.includes("GEMINI_API_KEY is not configured")
+  isMissingKeyMessage(message)
   || message.includes("CHAPTER_GENERATION_MODELS");
 
 const isRequestError = (message: string) => [
@@ -133,14 +134,14 @@ export async function handleChapterGenerationHttp(
 
   try {
     const config = resolveChapterGenerationConfig(dependencies.environment);
-    if (!config.apiKey) {
-      throw new Error("GEMINI_API_KEY is not configured on the Development server.");
+    if (!config.continuationSecret) {
+      throw new Error(missingKeyMessage(parsedRequest.model));
     }
     const verifiedContinuation = parsedRequest.continuation
       ? verifyChapterContinuation({
           continuation: parsedRequest.continuation,
           artifact: parsedRequest.artifact,
-          secret: config.apiKey,
+          secret: config.continuationSecret,
         })
       : undefined;
     const result = await executeChapterGeneration(parsedRequest, config, {

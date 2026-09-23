@@ -1,7 +1,11 @@
-export type StorySeedBlueprintEnvironment = Record<string, string | undefined>;
+import {
+  DEFAULT_CHAPTER_MODEL,
+  providerKey,
+  providerModelName,
+  textModelProvider,
+} from "../model-router/catalog";
 
-const DEFAULT_MODEL = "google/gemini-3.1-flash-lite";
-const MODEL_ID_PATTERN = /^(?:google\/)?gemini-[a-z0-9][a-z0-9._-]*$/i;
+export type StorySeedBlueprintEnvironment = Record<string, string | undefined>;
 
 const finiteNumber = (value: string | undefined, fallback: number): number => {
   const raw = value?.trim();
@@ -10,7 +14,9 @@ const finiteNumber = (value: string | undefined, fallback: number): number => {
 };
 
 export interface ResolvedStorySeedBlueprintConfig {
+  /** The key for the configured model's provider (Gemini or OpenRouter). */
   apiKey?: string;
+  provider: "gemini" | "openrouter";
   accessToken?: string;
   model: string;
   temperature: number;
@@ -21,18 +27,18 @@ export interface ResolvedStorySeedBlueprintConfig {
 export function resolveStorySeedBlueprintConfig(
   environment: StorySeedBlueprintEnvironment,
 ): ResolvedStorySeedBlueprintConfig {
-  const rawKey = environment.GEMINI_API_KEY?.trim();
-  const apiKey = rawKey && rawKey !== "MY_GEMINI_API_KEY" ? rawKey : undefined;
   const accessToken = environment.STORY_SEED_BLUEPRINT_ACCESS_TOKEN?.trim() || undefined;
   const model = environment.STORY_SEED_BLUEPRINT_MODEL?.trim()
     || environment.CHAPTER_GENERATION_DEFAULT_MODEL?.trim()
-    || DEFAULT_MODEL;
-  if (!MODEL_ID_PATTERN.test(model)) {
-    throw new Error("STORY_SEED_BLUEPRINT_MODEL does not contain a valid Gemini text model.");
+    || DEFAULT_CHAPTER_MODEL;
+  const provider = textModelProvider(model);
+  if (!provider) {
+    throw new Error("STORY_SEED_BLUEPRINT_MODEL does not contain a valid text model.");
   }
 
   return {
-    apiKey,
+    apiKey: providerKey(environment, provider),
+    provider,
     accessToken,
     model,
     temperature: Math.min(2, Math.max(0, finiteNumber(
@@ -51,4 +57,4 @@ export function resolveStorySeedBlueprintConfig(
 }
 
 export const geminiBlueprintModelId = (configuredModel: string): string =>
-  configuredModel.replace(/^google\//, "");
+  providerModelName(configuredModel);

@@ -5,13 +5,16 @@ import type { ChapterTokenUsageSummary } from "./pipeline/usage";
 import type { ChapterUsageStage } from "./pipeline/usage";
 import type { AuthenticatedChapterGenerationContinuation } from "./batch/chapterBatch";
 
+/** Model Router providers that can serve chapter generation. */
+export type ChapterGenerationProvider = "gemini" | "openrouter";
+
 export interface ChapterGenerationModelOption {
   id: string;
   label: string;
 }
 
 export interface ChapterGenerationServerInfo {
-  provider: "gemini";
+  provider: ChapterGenerationProvider;
   configured: boolean;
   models: ChapterGenerationModelOption[];
   defaultModel: string;
@@ -26,7 +29,7 @@ export interface ManifestChapterRequest {
 }
 
 export interface ManifestChapterResponse {
-  provider: "gemini";
+  provider: ChapterGenerationProvider;
   model: string;
   run: ChapterPipelineRun;
   usage: ChapterTokenUsageSummary;

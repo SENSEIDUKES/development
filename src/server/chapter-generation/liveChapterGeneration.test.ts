@@ -1213,10 +1213,12 @@ describe("server model selection and failure handling", () => {
       defaultModel: "google/gemini-second",
     });
     expect(JSON.stringify(serverInfo)).not.toContain(environment.GEMINI_API_KEY);
-    expect(config.models.map(option => option.id)).toEqual([
+    // Pinned models lead; the Model Router catalog follows.
+    expect(config.models.map(option => option.id).slice(0, 2)).toEqual([
       "google/gemini-test",
       "google/gemini-second",
     ]);
+    expect(config.models.map(option => option.id)).toContain("google/gemini-3.8-flash");
     expect(resolveConfiguredChapterModel("google/gemini-test", config))
       .toBe("google/gemini-test");
     expect(() => resolveConfiguredChapterModel("arbitrary/model", config))

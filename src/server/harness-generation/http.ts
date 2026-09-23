@@ -4,6 +4,7 @@ import {
   resolveHarnessGenerationConfig,
   type HarnessGenerationEnvironment,
 } from './config';
+import { isMissingKeyMessage } from '../model-router/catalog';
 import {
   executeHarnessGeneration,
   HarnessGenerationExecutionError,
@@ -97,7 +98,7 @@ const parseRequest = (body: unknown): HarnessGenerationRequest | HarnessMemoryRe
 };
 
 const configurationMessage = (message: string) =>
-  message.includes('GEMINI_API_KEY') || message.includes('HARNESS_GENERATION_MODELS');
+  isMissingKeyMessage(message) || message.includes('HARNESS_GENERATION_MODELS');
 
 export const handleHarnessGenerationHttp = async (
   request: HarnessGenerationHttpRequest,

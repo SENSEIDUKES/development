@@ -1,6 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 import { type HarnessProviderReceipt } from '@seihouse/sen/harness-generation';
-import { geminiHarnessModelId } from './config';
+import { geminiHarnessModelId, type ResolvedHarnessGenerationConfig } from './config';
+import { requireTextModelKey, textModelProvider } from '../model-router/catalog';
+import { generateOpenRouterText } from '../model-router/openRouter';
 
 export interface HarnessTextGenerationRequest {
   systemInstruction: string;
@@ -17,7 +19,7 @@ export interface HarnessTextGenerationResult {
 }
 
 export interface HarnessTextModelProvider {
-  readonly provider: 'gemini';
+  readonly provider: 'gemini' | 'openrouter';
   readonly model: string;
   generate(request: HarnessTextGenerationRequest): Promise<HarnessTextGenerationResult>;
 }
@@ -100,3 +102,69 @@ export class GeminiHarnessTextProvider implements HarnessTextModelProvider {
     }
   }
 }
+
+export class OpenRouterHarnessTextProvider implements HarnessTextModelProvider {
+  readonly provider = 'openrouter' as const;
+
+  constructor(
+    private readonly apiKey: string,
+    readonly model: string,
+    private readonly reasoningEffort?: string,
+  ) {}
+
+  async generate(request: HarnessTextGenerationRequest): Promise<HarnessTextGenerationResult> {
+    const startedAt = Date.now();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), request.timeoutMs);
+    try {
+      const result = await generateOpenRouterText({
+        apiKey: this.apiKey,
+        model: this.model,
+        systemInstruction: request.systemInstruction,
+        userPrompt: request.userPrompt,
+        temperature: request.temperature,
+        maxOutputTokens: request.maxOutputTokens,
+        responseFormat: 'json',
+        responseJsonSchema: request.responseJsonSchema,
+        abortSignal: controller.signal,
+        reasoningEffort: this.reasoningEffort,
+      });
+      const inputTokens = result.usage?.inputTokens ?? estimateTokens(`${request.systemInstruction}\n\n${request.userPrompt}`);
+      const outputTokens = result.usage?.outputTokens ?? estimateTokens(result.text);
+      return {
+        rawProviderResponse: result.text,
+        providerReceipt: {
+          provider: this.provider,
+          model: this.model,
+          generatedAt: new Date().toISOString(),
+          durationMs: Date.now() - startedAt,
+          usage: {
+            source: result.usage ? 'reported' : 'estimated',
+            inputTokens,
+            outputTokens,
+            totalTokens: result.usage?.totalTokens ?? inputTokens + outputTokens,
+          },
+        },
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown provider error';
+      if (controller.signal.aborted) {
+        throw new Error(`The provider exceeded the Harness Generation ${Math.ceil(request.timeoutMs / 1000)} second deadline.`);
+      }
+      throw new Error(`OpenRouter Harness Generation failed: ${message}`);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+}
+
+/** Route a configured Harness model to its provider through the Model Router. */
+export const createHarnessTextProvider = (
+  model: string,
+  config: Pick<ResolvedHarnessGenerationConfig, 'keys' | 'reasoningEffort'>,
+): HarnessTextModelProvider => {
+  const apiKey = requireTextModelKey(model, config.keys);
+  return textModelProvider(model) === 'openrouter'
+    ? new OpenRouterHarnessTextProvider(apiKey, model, config.reasoningEffort)
+    : new GeminiHarnessTextProvider(apiKey, model);
+};

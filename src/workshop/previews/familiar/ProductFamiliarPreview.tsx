@@ -13,15 +13,18 @@ const SelectionContext = createContext<{ selection: Selection; reportProfile: (s
 const SurfaceContext = createContext(false);
 export const PREVIEW_FAMILIAR_ID = defaultFamiliar.definition.id;
 
-/** Preview-only projection of the active profile, never a second profile/ledger store. */
-export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_PROFILE_PREVIEW_STATE, initialFamiliarId = PREVIEW_FAMILIAR_ID }: { children: ReactNode; initialState?: UserProfilePreviewState; initialFamiliarId?: string }) {
+/**
+ * Preview-only projection of the active profile, never a second profile/ledger store.
+ * The companion starts minimized to the header recall; the reader summons it explicitly.
+ */
+export function ProductFamiliarSession({ children, initialState = DEFAULT_USER_PROFILE_PREVIEW_STATE, initialFamiliarId = PREVIEW_FAMILIAR_ID, initiallyMinimized = true }: { children: ReactNode; initialState?: UserProfilePreviewState; initialFamiliarId?: string; initiallyMinimized?: boolean }) {
   const parent = useContext(SelectionContext);
-  const [minimized, setMinimized] = useState(false);
+  const [minimized, setMinimized] = useState(initiallyMinimized);
   const [selection, reportProfile] = useState<Selection>(() => ({
     uid: getPreviewScenario(initialState).currentUser?.uid ?? null,
     familiarId: initialFamiliarId,
   }));
-  useEffect(() => setMinimized(false), [selection.uid]);
+  useEffect(() => setMinimized(initiallyMinimized), [selection.uid, initiallyMinimized]);
   const value = useMemo(() => ({ selection, reportProfile, minimized, setMinimized }), [selection, minimized]);
   const client = useMemo(() => createHttpEnergyClient({ token: () => selection.uid ? developmentIdentityToken(selection.uid) : null }), [selection.uid]);
   if (parent) return <>{children}</>;

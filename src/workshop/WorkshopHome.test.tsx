@@ -42,7 +42,7 @@ function archiveToggle() {
 const ACTIVE_GROUPS = {
   Pages: ['light-novels-home', 'library-shell', 'story-seed', 'reader-chamber', 'reader-codex', 'user-profile', 'dao-pillar', 'celestial-store'],
   Customization: ['familiar', 'relics-gallery', 'idle-cultivation'],
-  Systems: ['harness-generation', 'chapter-generation-manifestation', 'character-voice', 'energy'],
+  Systems: ['harness-generation', 'chapter-generation-manifestation', 'character-voice', 'energy', 'model-router'],
   Components: ['motion-picture', 'celestial-backdrop', 'card-workshop'],
 };
 
@@ -96,7 +96,7 @@ describe('WorkshopHome', () => {
       'light-novels-home': 'library', 'library-shell': 'library', 'story-seed': 'library',
       'reader-chamber': 'sen', 'reader-codex': 'sen', 'user-profile': 'library', 'dao-pillar': 'library', 'celestial-store': 'library',
       familiar: 'library', 'relics-gallery': 'library', 'idle-cultivation': 'library',
-      'harness-generation': 'sen', 'chapter-generation-manifestation': 'library', 'character-voice': 'sen', energy: 'library',
+      'harness-generation': 'sen', 'chapter-generation-manifestation': 'library', 'character-voice': 'sen', energy: 'library', 'model-router': 'deferred',
       'motion-picture': 'sen', 'celestial-backdrop': 'library-ui', 'card-workshop': 'workshop',
       'chapter-generation-flow': 'workshop',
     });

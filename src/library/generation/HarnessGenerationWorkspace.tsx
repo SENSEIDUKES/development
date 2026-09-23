@@ -1457,7 +1457,7 @@ export function HarnessGenerationWorkspace({
                     </select>
                     {serverInfo ? (
                       <p className={`mt-2 text-xs ${serverInfo.configured ? 'text-neutral-500' : 'text-human'}`}>
-                        {serverInfo.configured ? 'Server-side provider configured.' : 'Server-side Gemini key is not configured.'}
+                        {serverInfo.configured ? 'Server-side provider configured.' : 'No server-side model provider key is configured.'}
                       </p>
                     ) : <p className="mt-2 text-xs text-neutral-500">Checking provider configuration…</p>}
                   </div>

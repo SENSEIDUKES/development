@@ -25,7 +25,7 @@ function ProfileEvents() {
     <button onClick={() => context.reportProfile({ ...context.selection, familiarSize: 1.8 })}>Resize</button>
   </>;
 }
-const render = () => act(() => root.render(<ProductFamiliarSession><ProductFamiliarSurface viewport headerRecall>
+const render = () => act(() => root.render(<ProductFamiliarSession initiallyMinimized={false}><ProductFamiliarSurface viewport headerRecall>
   <WorkspaceHeader title="Product" />
   <ProductFamiliarSession><ProductFamiliarSurface viewport><ProfileEvents /></ProductFamiliarSurface></ProductFamiliarSession>
 </ProductFamiliarSurface></ProductFamiliarSession>));
@@ -47,7 +47,7 @@ it.each(['Clear selection', 'Sign out'])('removes the companion when the profile
 });
 
 it('forwards Codex activity into the mounted companion', () => {
-  act(() => root.render(<ProductFamiliarSession><ProductFamiliarSurface viewport activity="blocked"><span /></ProductFamiliarSurface></ProductFamiliarSession>));
+  act(() => root.render(<ProductFamiliarSession initiallyMinimized={false}><ProductFamiliarSurface viewport activity="blocked"><span /></ProductFamiliarSurface></ProductFamiliarSession>));
   expect(document.querySelector('.familiar-companion [role="img"]')?.getAttribute('aria-label')).toBe('Quill, Disappointed');
 });
 
@@ -70,4 +70,14 @@ it('opens header actions before explicitly expanding a minimized pet and preserv
   await act(async () => document.querySelector<HTMLButtonElement>('[aria-label="Expand Familiar"]')!.click());
   expect(document.querySelector('.familiar-companion')).not.toBeNull();
   expect(container.querySelector('.familiar-recall')).toBeNull();
+});
+
+it('starts minimized to the header recall by default', async () => {
+  act(() => root.render(<ProductFamiliarSession><ProductFamiliarSurface viewport headerRecall><WorkspaceHeader title="Product" /></ProductFamiliarSurface></ProductFamiliarSession>));
+  expect(document.querySelector('.familiar-companion')).toBeNull();
+  const recall = container.querySelector<HTMLButtonElement>('header .familiar-recall')!;
+  expect(recall).not.toBeNull();
+  await act(async () => recall.click());
+  await act(async () => document.querySelector<HTMLButtonElement>('[aria-label="Expand Familiar"]')!.click());
+  expect(document.querySelector('.familiar-companion')).not.toBeNull();
 });

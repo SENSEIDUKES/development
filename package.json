@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/buildChapterGenerationApi.mjs && node scripts/buildHarnessGenerationApi.mjs && node scripts/buildStorySeedBlueprintApi.mjs && node scripts/buildCodexVoiceApi.mjs && node scripts/buildReaderTranslationApi.mjs && node scripts/buildLibraryEconomyApi.mjs",
+    "build": "tsc -b && vite build && node scripts/buildChapterGenerationApi.mjs && node scripts/buildHarnessGenerationApi.mjs && node scripts/buildStorySeedBlueprintApi.mjs && node scripts/buildCodexVoiceApi.mjs && node scripts/buildReaderTranslationApi.mjs && node scripts/buildLibraryEconomyApi.mjs && node scripts/buildModelRouterApi.mjs",
     "preview": "vite preview",
     "build:package": "npm run build:package:sen && npm run build:package:library",
     "build:package:sen": "vite build --config vite.package.config.ts && tsc -p tsconfig.package.json && node scripts/finalizePackage.mjs sen",

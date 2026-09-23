@@ -7,6 +7,7 @@ import {
   geminiBlueprintModelId,
   type ResolvedStorySeedBlueprintConfig,
 } from "./config";
+import { generateOpenRouterText } from "../model-router/openRouter";
 import {
   buildWorldBlueprintPrompt,
   WORLD_BLUEPRINT_SYSTEM_PROMPT,
@@ -115,6 +116,35 @@ export class GeminiWorldBlueprintProvider implements WorldBlueprintModelProvider
     }
   }
 }
+
+export class OpenRouterWorldBlueprintProvider implements WorldBlueprintModelProvider {
+  constructor(
+    private readonly apiKey: string,
+    private readonly model: string,
+  ) {}
+
+  async generate(request: WorldBlueprintModelRequest): Promise<unknown> {
+    const { text } = await generateOpenRouterText({
+      apiKey: this.apiKey,
+      model: this.model,
+      systemInstruction: request.systemInstruction,
+      userPrompt: request.userPrompt,
+      temperature: request.temperature,
+      maxOutputTokens: request.maxOutputTokens,
+      responseFormat: "json",
+      responseJsonSchema: request.responseJsonSchema,
+      timeoutMs: request.timeoutMs,
+    });
+    return JSON.parse(text.trim()) as unknown;
+  }
+}
+
+/** Route the configured Blueprint model to its provider through the Model Router. */
+export const createWorldBlueprintProvider = (
+  config: Pick<ResolvedStorySeedBlueprintConfig, "provider" | "model"> & { apiKey: string },
+): WorldBlueprintModelProvider => config.provider === "openrouter"
+  ? new OpenRouterWorldBlueprintProvider(config.apiKey, config.model)
+  : new GeminiWorldBlueprintProvider(config.apiKey, config.model);
 
 const REQUIRED_STRINGS = [
   "blueprintVersion",

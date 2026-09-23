@@ -27,6 +27,10 @@ const homeVisible = () => !container.querySelector('[data-light-novels-home]')?.
 
 it('opens standalone Home by default and preserves filters across Library, Discover, Profile and history', async () => {
   await render();
+  // The companion starts minimized to the header; summon it through the recall.
+  expect(document.querySelector('.familiar-companion')).toBeNull();
+  await act(async () => container.querySelector<HTMLButtonElement>('header .familiar-recall')!.click());
+  await act(async () => document.querySelector<HTMLButtonElement>('[aria-label="Expand Familiar"]')!.click());
   const companion = document.querySelector<HTMLButtonElement>('.familiar-companion button')!;
   expect(companion).not.toBeNull();
   await act(async () => companion.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true })));

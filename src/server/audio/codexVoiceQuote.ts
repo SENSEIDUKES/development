@@ -15,9 +15,10 @@
 import type { LivingStoryRecord } from '../../components/chapter-generation/shared/packets/livingStoryEntityIdentity';
 import { assignCharacterVoices, isCharacterVoiceEligible } from './characterVoiceAssignments';
 import { resolveVoiceKeyToProviderId } from './voiceCatalog';
+import { DEFAULT_TTS_MODEL } from '../model-router/catalog';
 
 const ELEVENLABS_API_ORIGIN = 'https://api.elevenlabs.io';
-const DEFAULT_ELEVENLABS_MODEL = 'eleven_multilingual_v2';
+const DEFAULT_ELEVENLABS_MODEL = DEFAULT_TTS_MODEL;
 const ELEVENLABS_OUTPUT_FORMAT = 'mp3_44100_128';
 const ELEVENLABS_AUDIO_MIME_TYPE = 'audio/mpeg';
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;

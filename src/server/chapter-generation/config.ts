@@ -3,38 +3,25 @@ import type {
   ChapterGenerationServerInfo,
 } from "../../components/chapter-generation/shared/liveChapterGeneration";
 
+import {
+  providerKey,
+  providerModelName,
+  resolveChapterModelRoute,
+  textModelProvider,
+  type ChapterModelRoute,
+} from "../model-router/catalog";
+
 export type ChapterGenerationEnvironment = Record<string, string | undefined>;
 
-const DEFAULT_MODELS = [
-  "google/gemini-3.1-flash-lite",
-] as const;
-
-const MODEL_ID_PATTERN = /^(?:google\/)?gemini-[a-z0-9][a-z0-9._-]*$/i;
-
-const unique = <T,>(values: T[]): T[] => Array.from(new Set(values));
-
-const configuredModels = (environment: ChapterGenerationEnvironment): string[] => {
-  const fromEnvironment = environment.CHAPTER_GENERATION_MODELS
-    ?.split(",")
-    .map(model => model.trim())
-    .filter(Boolean) ?? [];
-  const candidates = fromEnvironment.length > 0 ? fromEnvironment : [...DEFAULT_MODELS];
-  const models = unique(candidates.filter(model => MODEL_ID_PATTERN.test(model)));
-  if (models.length === 0) {
-    throw new Error("CHAPTER_GENERATION_MODELS does not contain a valid Gemini text model.");
-  }
-  return models;
-};
-
-const modelLabel = (model: string): string => model
-  .replace(/^google\//, "")
-  .split("-")
-  .map(part => part ? `${part[0].toUpperCase()}${part.slice(1)}` : part)
-  .join(" ");
-
 export interface ResolvedChapterGenerationConfig {
+  /** Gemini key, kept for callers that only speak Gemini. */
   apiKey?: string;
-  provider: "gemini";
+  /** Every provider credential the Model Router can route to. */
+  keys: ChapterModelRoute["keys"];
+  /** Seals disposable continuation state; any configured provider key serves. */
+  continuationSecret?: string;
+  provider: "gemini" | "openrouter";
+  reasoningEffort?: string;
   models: ChapterGenerationModelOption[];
   defaultModel: string;
   temperature: number;
@@ -50,19 +37,20 @@ const finiteNumber = (value: string | undefined, fallback: number): number => {
 export function resolveChapterGenerationConfig(
   environment: ChapterGenerationEnvironment,
 ): ResolvedChapterGenerationConfig {
-  const modelIds = configuredModels(environment);
-  const requestedDefault = environment.CHAPTER_GENERATION_DEFAULT_MODEL?.trim();
-  const defaultModel = requestedDefault && modelIds.includes(requestedDefault)
-    ? requestedDefault
-    : modelIds[0];
-  const rawKey = environment.GEMINI_API_KEY?.trim();
-  const apiKey = rawKey && rawKey !== "MY_GEMINI_API_KEY" ? rawKey : undefined;
+  const route = resolveChapterModelRoute(
+    environment,
+    "CHAPTER_GENERATION_MODELS",
+    "CHAPTER_GENERATION_DEFAULT_MODEL",
+  );
 
   return {
-    apiKey,
-    provider: "gemini",
-    models: modelIds.map(id => ({ id, label: modelLabel(id) })),
-    defaultModel,
+    apiKey: route.keys.gemini,
+    keys: route.keys,
+    continuationSecret: route.keys.gemini ?? providerKey(environment, "openrouter"),
+    provider: textModelProvider(route.defaultModel) ?? "gemini",
+    reasoningEffort: environment.OPENROUTER_REASONING_EFFORT?.trim() || undefined,
+    models: route.models,
+    defaultModel: route.defaultModel,
     temperature: Math.min(2, Math.max(0, finiteNumber(
       environment.CHAPTER_GENERATION_TEMPERATURE ?? environment.AI_TEMPERATURE,
       1,
@@ -84,7 +72,7 @@ export function chapterGenerationServerInfo(
   const config = resolveChapterGenerationConfig(environment);
   return {
     provider: config.provider,
-    configured: Boolean(config.apiKey),
+    configured: Boolean(config.keys.gemini || config.keys.openrouter),
     models: config.models,
     defaultModel: config.defaultModel,
   };
@@ -105,4 +93,4 @@ export function resolveConfiguredChapterModel(
 }
 
 export const geminiApiModelId = (configuredModel: string): string =>
-  configuredModel.replace(/^google\//, "");
+  providerModelName(configuredModel);

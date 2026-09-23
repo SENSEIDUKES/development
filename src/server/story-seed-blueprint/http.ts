@@ -5,10 +5,11 @@ import {
   type StorySeedBlueprintEnvironment,
 } from "./config";
 import {
+  createWorldBlueprintProvider,
   generateWorldBlueprint,
-  GeminiWorldBlueprintProvider,
   type WorldBlueprintModelProvider,
 } from "./generate";
+import { missingKeyMessage } from "../model-router/catalog";
 
 export interface StorySeedBlueprintHttpRequest {
   method?: string;
@@ -62,7 +63,7 @@ export async function handleStorySeedBlueprintHttp(
     return {
       status: 200,
       body: {
-        provider: "gemini",
+        provider: config.provider,
         configured: Boolean(config.apiKey && config.accessToken),
         model: config.model,
       },
@@ -82,7 +83,7 @@ export async function handleStorySeedBlueprintHttp(
     return errorResponse(401, "A valid Development Story Seed access token is required.");
   }
   if (!config.apiKey) {
-    return errorResponse(503, "GEMINI_API_KEY is not configured on the Development server.");
+    return errorResponse(503, missingKeyMessage(config.model));
   }
 
   let payload: BlueprintGenerationPayload;
@@ -98,7 +99,7 @@ export async function handleStorySeedBlueprintHttp(
   try {
     const provider = dependencies.providerFactory
       ? dependencies.providerFactory(config.apiKey, config.model)
-      : new GeminiWorldBlueprintProvider(config.apiKey, config.model);
+      : createWorldBlueprintProvider({ ...config, apiKey: config.apiKey });
     const blueprint = await generateWorldBlueprint(payload, config, provider);
     return {
       status: 200,

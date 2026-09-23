@@ -60,9 +60,11 @@ atlas grounded in the supplied `Quill-v2.png` artwork. The new cobalt-and-cream 
 has natural fur texture, gold-edged cyan Lightning markings, and a compass-star pendant.
 It preserves the shared 8 × 11, 192 × 208 atlas contract and includes all sixteen look
 directions. The nine transparent QA GIFs are deterministic crops of the accepted atlas.
-Quill's waving loop now plays all four raised-paw frames with durations
-`[140, 140, 140, 280]`. `renderer-validation.json` and `IMPORT-HANDOFF.md` remain with
-Quill's source package as intake evidence and are intentionally not runtime dependencies.
+Quill's four-frame wave keeps one forepaw visibly raised with three paws planted in every
+pose, using durations `[140, 140, 140, 280]`. The left-running row is uniformly reduced
+to keep the leading face safely inside its cell. `renderer-validation.json` and
+`IMPORT-HANDOFF.md` remain with Quill's source package as intake evidence and are
+intentionally not runtime dependencies.
 
 ## Modular integration
 
@@ -255,6 +257,9 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-09-23: Clarified Quill's wave silhouette so the raised forepaw reads clearly
+  above three grounded paws throughout the four-frame loop. Reduced the left-running
+  row uniformly to add room around the left-facing face while keeping the foot baseline.
 - 2026-09-23: Replaced Quill's Development presentation with the Lightning-themed v2
   atlas grounded in the supplied `Quill-v2.png`. Preserved the `quill` ID, common/default
   catalogue settings, and Lightning training affinity; retained the full four-frame wave

@@ -221,7 +221,7 @@ export function RewardLoopWorkspace() {
           id: 'states',
           description: state === 'new'
             ? 'A new cultivator: Reader rank, no QI, nothing earned. Read and create to earn the first scrolls.'
-            : 'A developed cultivator: a Leader with sealed scrolls, a Fate Survival Relic, a twelve-day Dao Pillar run, and Quill trained to Awakened.',
+            : 'A developed cultivator: a Leader with sealed scrolls, a Fate Survival Relic, a twelve-day Dao Pillar run, and Quill trained to Rare bond.',
           content: (
             <div className="flex flex-wrap gap-2">
               <WorkshopActionButton pressed={state === 'new'} onClick={() => { setState('new'); setSession(value => value + 1); }}>New cultivator</WorkshopActionButton>

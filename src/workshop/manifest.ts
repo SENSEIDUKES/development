@@ -280,7 +280,7 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'familiar-training', section: 'rewards', group: 'spending', owner: 'library', status: 'active', title: 'Familiar Training',
-    description: 'Offer QI to one Familiar to raise its tier — Bonded, Awakened, Ascended, Transcendent — unlocking a radiant form and elemental titles that letter the cultivator’s name. The equipped Familiar’s chosen effect is the one active effect, and no effect grants a boost, discount or advantage.',
+    description: 'Offer QI to one Familiar to raise its tier — Common, Rare, Epic, Legendary — unlocking a radiant form and elemental titles that letter the cultivator’s name. The equipped Familiar’s chosen effect is the one active effect, and no effect grants a boost, discount or advantage.',
     category: 'rewards', version: 'v1.0',
     source: { repository: 'SENSEIDUKES/development', path: 'src/components/familiar-training/; src/server/familiars/', lastCompared: '2026-09-23' },
   },

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Check, Lock, Sparkles } from 'lucide-react';
 import { LibraryButton, LibraryElementalTitle, LibraryPanel } from '@seihouse/library-ui';
 import { SEIInlineAlert, SEILoadingState } from '@seihouse/ui';
-import type { FamiliarOption } from '../../familiar/shared/familiar';
+import type { FamiliarOption, FamiliarRarity } from '../../familiar/shared/familiar';
 import {
   familiarFormFilter,
   type FamiliarCosmeticEffect,
@@ -29,6 +29,10 @@ const ELEMENT_LABELS: Record<FamiliarElement, string> = {
 const DEFAULT_OFFERS = [100, 500, 1_000] as const;
 const formatWhole = (value: number) => value.toLocaleString('en-US');
 const unlockLabel = (unlock: FamiliarUnlock) => unlock.kind === 'form' ? unlock.form.label : unlock.effect.label;
+const RARITY_LABELS: Record<FamiliarRarity, string> = { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
+/** The Familiar's own rarity and its training tier share the same four names, so every label
+    names which scale it means: "Epic familiar" (rarity) vs. "Legendary bond" (training). */
+const bondLabel = (tierName: string) => `${tierName} bond`;
 
 function effectPreview(effect: FamiliarCosmeticEffect | null) {
   return effect
@@ -126,7 +130,7 @@ export function FamiliarTrainingPanel({
               <button key={entry.familiarId} type="button" role="radio" aria-checked={entry.familiarId === view.familiarId}
                 onClick={() => { setSelectedId(entry.familiarId); setMessage(null); }}
                 className={`familiar-training-chip${entry.familiarId === view.familiarId ? ' is-selected' : ''}`}>
-                {label}<span className="text-neutral-500"> · {entry.tierName}</span>
+                {label}<span className="text-neutral-500"> · {bondLabel(entry.tierName)}</span>
               </button>
             );
           })}
@@ -142,17 +146,19 @@ export function FamiliarTrainingPanel({
             ) : <Sparkles size={40} aria-hidden className="text-neutral-600" />}
           </div>
           <div className="min-w-0 flex-1 text-center sm:text-left">
-            <p className="reward-like-heading">{ELEMENT_LABELS[view.element]} Familiar{equipped ? ' · Equipped' : ''}</p>
+            <p className="reward-like-heading">
+              {option ? `${RARITY_LABELS[option.rarity]} familiar` : `${ELEMENT_LABELS[view.element]} Familiar`}{equipped ? ' · Equipped' : ''}
+            </p>
             <h3 id="familiar-training-name" className="mt-1 font-display text-xl text-neutral-100">{name}</h3>
-            <p className="mt-1 font-serif text-lg text-sky-300" data-familiar-tier={view.tier}>{view.tierName}</p>
+            <p className="mt-1 font-serif text-lg text-sky-300" data-familiar-tier={view.tier}>{bondLabel(view.tierName)}</p>
             <div className="familiar-training-track mt-2" role="progressbar" aria-label={`${name} training`}
               aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}
-              aria-valuetext={view.nextTier ? `${formatWhole(view.qiOffered)} of ${formatWhole(view.nextTier.qiRequired)} QI toward ${view.nextTier.name}` : 'Fully trained'}>
+              aria-valuetext={view.nextTier ? `${formatWhole(view.qiOffered)} of ${formatWhole(view.nextTier.qiRequired)} QI toward ${bondLabel(view.nextTier.name)}` : 'Fully trained'}>
               <span style={{ width: `${percent}%` }} />
             </div>
             <p className="mt-1 font-mono text-[11px] text-neutral-400" data-familiar-qi-offered>
               {view.nextTier
-                ? `${formatWhole(view.qiOffered)} / ${formatWhole(view.nextTier.qiRequired)} QI · ${formatWhole(view.nextTier.qiRemaining)} to ${view.nextTier.name}`
+                ? `${formatWhole(view.qiOffered)} / ${formatWhole(view.nextTier.qiRequired)} QI · ${formatWhole(view.nextTier.qiRemaining)} to ${bondLabel(view.nextTier.name)}`
                 : `${formatWhole(view.qiOffered)} QI offered · fully trained`}
             </p>
           </div>
@@ -188,9 +194,9 @@ export function FamiliarTrainingPanel({
                 {tier.reached ? <Check size={12} /> : <Lock size={10} />}
               </span>
               <span className="min-w-0">
-                <span className={tier.reached ? 'text-neutral-100' : 'text-neutral-400'}>{tier.name}</span>
+                <span className={tier.reached ? 'text-neutral-100' : 'text-neutral-400'}>{bondLabel(tier.name)}</span>
                 <span className="font-mono text-[11px] text-neutral-500"> · {formatWhole(tier.qiRequired)} QI</span>
-                <span className="block text-xs text-neutral-400">{tier.unlocks.length ? tier.unlocks.map(unlockLabel).join(' · ') : 'Bonded — where every Familiar starts'}</span>
+                <span className="block text-xs text-neutral-400">{tier.unlocks.length ? tier.unlocks.map(unlockLabel).join(' · ') : 'Common bond — where every Familiar starts'}</span>
               </span>
             </li>
           ))}

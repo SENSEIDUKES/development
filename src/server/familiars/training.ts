@@ -53,13 +53,13 @@ export const radiantForm = (element: FamiliarElement): FamiliarForm => ({
 });
 
 export const FAMILIAR_TRAINING_LADDER: readonly FamiliarTrainingTier[] = [
-  { tier: 1, name: 'Bonded', qiRequired: 0, unlocks: () => [] },
-  { tier: 2, name: 'Awakened', qiRequired: 1_000, unlocks: element => [{ kind: 'effect', effect: elementalTitleEffect(element, 'subtle') }] },
+  { tier: 1, name: 'Common', qiRequired: 0, unlocks: () => [] },
+  { tier: 2, name: 'Rare', qiRequired: 1_000, unlocks: element => [{ kind: 'effect', effect: elementalTitleEffect(element, 'subtle') }] },
   {
-    tier: 3, name: 'Ascended', qiRequired: 4_000,
+    tier: 3, name: 'Epic', qiRequired: 4_000,
     unlocks: element => [{ kind: 'form', form: radiantForm(element) }, { kind: 'effect', effect: elementalTitleEffect(element, 'active') }],
   },
-  { tier: 4, name: 'Transcendent', qiRequired: 10_000, unlocks: element => [{ kind: 'effect', effect: elementalTitleEffect(element, 'legendary') }] },
+  { tier: 4, name: 'Legendary', qiRequired: 10_000, unlocks: element => [{ kind: 'effect', effect: elementalTitleEffect(element, 'legendary') }] },
 ];
 
 /** Each Familiar's element. Unlisted Familiars fall back to Celestial. */

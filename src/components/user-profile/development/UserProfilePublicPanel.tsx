@@ -7,8 +7,8 @@ import { SEIInlineAlert } from '@seihouse/ui';
  *
  * Those two destinations have not been redesigned yet, so the public view
  * shows the smallest thing that proves the navigation is real and correctly
- * scoped: the titles the *viewed* cultivator published, or the fact that they
- * kept them private. It receives that list as a prop and reads nothing else —
+ * scoped: the story titles or Fate Survival Relic names the *viewed*
+ * cultivator published, or the fact that they kept them private. It receives that list as a prop and reads nothing else —
  * no controller, no signed-in profile, no story or seed service — so no
  * private surface can be reached through a public route.
  */
@@ -22,7 +22,7 @@ export function UserProfilePublicPanel({
   /** Published titles, or `null` when the cultivator keeps this area private. */
   titles: readonly string[] | null;
 }) {
-  const noun = kind === 'stories' ? 'stories' : 'relic titles';
+  const noun = kind === 'stories' ? 'stories' : 'Relic names';
 
   return (
     <div className="min-w-0 space-y-4 [overflow-wrap:anywhere]" data-cave-public-panel={kind}>
@@ -63,8 +63,9 @@ export function UserProfilePublicPanel({
       )}
 
       <p className="font-sans text-xs italic text-neutral-400">
-        Titles only. The public {kind === 'stories' ? 'Stories' : 'Relics'} page is not designed
-        yet; reading, inspection, attunement, and rewards stay in the private Cave.
+        {kind === 'stories'
+          ? 'Titles only. The public Stories page is not designed yet; reading stays in the private Cave.'
+          : 'Names only — the Fate Survival Relics this cultivator earned. The public Relics page is not designed yet; rewards and balances stay in the private Cave.'}
       </p>
     </div>
   );

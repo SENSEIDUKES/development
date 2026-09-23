@@ -7,7 +7,7 @@ import { StorySeedWorkspaceChrome } from './StorySeedWorkspaceChrome';
 export function StorySeedMobileNavigation(props: {
   onNavigateHome: () => void;
   seed: StorySeedInput; updateSeed: (update: SeedUpdate) => void; activeSection: SeedSectionId;
-  equippedTitle?: string | null; showStoryBank: boolean; helpOpen: boolean; isGenerating: boolean;
+  authorName?: string | null; showStoryBank: boolean; helpOpen: boolean; isGenerating: boolean;
   savedFeedback: boolean; canManifest: boolean; onSelectSection: (id: SeedSectionId) => void;
   onToggleStoryBank: () => void; onOpenHelp: () => void; onSaveDraft: () => void; onManifest: () => void;
 }) {

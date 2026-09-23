@@ -20,6 +20,10 @@
       "types": "./dist/types/package/library/relics.d.ts",
       "import": "./dist/relics.js"
     },
+    "./rewards": {
+      "types": "./dist/types/package/library/rewards.d.ts",
+      "import": "./dist/rewards.js"
+    },
     "./presentation": {
       "types": "./dist/types/package/library/presentation.d.ts",
       "import": "./dist/presentation.js"

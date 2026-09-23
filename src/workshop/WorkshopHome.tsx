@@ -77,7 +77,7 @@ function IdleCultivationVisual() {
 
 function RelicsGalleryVisual() {
   return (
-    <svg viewBox="0 0 400 240" role="img" aria-label="Relics gallery preview" preserveAspectRatio="xMidYMid slice">
+    <svg viewBox="0 0 400 240" role="img" aria-label="Fate Survival Relics preview" preserveAspectRatio="xMidYMid slice">
       <defs>
         <linearGradient id="relic-grad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.2" />
@@ -87,6 +87,56 @@ function RelicsGalleryVisual() {
       <rect x="140" y="60" width="120" height="120" rx="12" fill="url(#relic-grad)" stroke="#ec4899" strokeWidth="1" strokeOpacity="0.3" />
       <polygon points="200,80 230,120 200,160 170,120" fill="none" stroke="#ec4899" strokeWidth="1.5" strokeOpacity="0.5" />
       <circle cx="200" cy="120" r="10" fill="#4f46e5" fillOpacity="0.4" />
+    </svg>
+  );
+}
+
+function RewardLoopVisual() {
+  return (
+    <svg viewBox="0 0 400 240" role="img" aria-label="Reward loop preview" preserveAspectRatio="xMidYMid slice">
+      <circle cx="200" cy="120" r="70" fill="none" stroke="#b3a898" strokeWidth="1.2" strokeDasharray="4 6" opacity="0.7" />
+      {[[200, 50, '#d4af37'], [270, 120, '#7dd3ff'], [200, 190, '#a855f7'], [130, 120, '#10b981']].map(([cx, cy, color]) => (
+        <circle key={`${cx}-${cy}`} cx={cx as number} cy={cy as number} r="13" fill="#fbf8f1" stroke={color as string} strokeWidth="2" />
+      ))}
+      <path d="M232 62 l12 4 l-4 12" fill="none" stroke="#9d927e" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M168 178 l-12 -4 l4 -12" fill="none" stroke="#9d927e" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <text x="200" y="126" textAnchor="middle" fontFamily="Georgia, serif" fontSize="18" fill="#9d927e">道</text>
+    </svg>
+  );
+}
+
+function AchievementsVisual() {
+  return (
+    <svg viewBox="0 0 400 240" role="img" aria-label="Mystery Scroll preview" preserveAspectRatio="xMidYMid slice">
+      <rect x="150" y="64" width="100" height="112" rx="6" fill="#fbf8f1" stroke="#d4af37" strokeWidth="1.4" />
+      <rect x="140" y="56" width="120" height="14" rx="7" fill="#e3dcd0" stroke="#b3a898" strokeWidth="1" />
+      <rect x="140" y="170" width="120" height="14" rx="7" fill="#e3dcd0" stroke="#b3a898" strokeWidth="1" />
+      <circle cx="200" cy="120" r="18" fill="none" stroke="#b3402f" strokeWidth="1.6" />
+      <path d="M200 106 l4 10 l10 4 l-10 4 l-4 10 l-4 -10 l-10 -4 l10 -4 z" fill="#d4af37" opacity="0.8" />
+    </svg>
+  );
+}
+
+function FamiliarTrainingVisual() {
+  return (
+    <svg viewBox="0 0 400 240" role="img" aria-label="Familiar training preview" preserveAspectRatio="xMidYMid slice">
+      {[0, 1, 2, 3].map(step => (
+        <rect key={step} x={118 + step * 44} y={170 - step * 26} width="32" height={20 + step * 26} rx="4" fill="#fbf8f1" stroke={step === 3 ? '#d4af37' : '#b3a898'} strokeWidth="1.2" />
+      ))}
+      <text x="200" y="70" textAnchor="middle" fontFamily="Georgia, serif" fontSize="26" fill="#7c5cff" opacity="0.8">Aa</text>
+      <path d="M176 78 q24 -18 48 0" fill="none" stroke="#04acff" strokeWidth="1.4" opacity="0.6" />
+    </svg>
+  );
+}
+
+function DaoPillarVisual() {
+  return (
+    <svg viewBox="0 0 400 240" role="img" aria-label="Daily Dao Pillar preview" preserveAspectRatio="xMidYMid slice">
+      {Array.from({ length: 12 }, (_, index) => (
+        <rect key={index} x={110 + (index % 6) * 32} y={70 + Math.floor(index / 6) * 44} width="24" height="32" rx="4"
+          fill={index < 7 ? '#e3dcd0' : '#fbf8f1'} stroke={index === 7 ? '#d4af37' : '#ddd4c4'} strokeWidth={index === 7 ? 1.8 : 1} />
+      ))}
+      <text x="200" y="190" textAnchor="middle" fontFamily="Georgia, serif" fontSize="22" fill="#9d927e">道</text>
     </svg>
   );
 }
@@ -127,6 +177,10 @@ function CardVisual({ id }: { id: string }) {
   if (id === 'chapter-generation-manifestation') return <ManifestationVisual />;
   if (id === 'idle-cultivation') return <IdleCultivationVisual />;
   if (id === 'relics-gallery') return <RelicsGalleryVisual />;
+  if (id === 'reward-loop') return <RewardLoopVisual />;
+  if (id === 'achievements') return <AchievementsVisual />;
+  if (id === 'familiar-training') return <FamiliarTrainingVisual />;
+  if (id === 'dao-pillar') return <DaoPillarVisual />;
   if (id === 'provenance') return <ProvenanceVisual />;
   return null;
 }

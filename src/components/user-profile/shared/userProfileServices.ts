@@ -1,57 +1,31 @@
-import type { QiAccountState } from '@seihouse/library/cultivation';
-import type { FamiliarOption } from '../../familiar/shared/familiar';
-import type { CelestialStoreAccountServices } from '../../celestial-store/shared/storeAccount';
 /**
- * The User Profile services port.
+ * Production's User Profile services port, kept for the locked reference
+ * replica (`src/components/user-profile/reference/*`) only.
  *
- * Production's `UserProfile` page calls `useUserProfile()` directly, and that
- * hook reaches straight into Firebase Auth, the Zustand app store, PostgreSQL
- * persistence, the profile-picture generation service, R2 uploads, and the
- * admin overview routes. None of that may enter the Workshop, so the copied
- * presentation components read one injected object instead.
- *
- * Nothing in this file implements behavior. It is the contract only:
- *
- * - `UserProfileController` is the exact value production's `useUserProfile`
- *   returns (same names, same call signatures), so the transfer back to
- *   Light-Novels is a provider swap rather than a rewrite.
- * - The remaining members cover the production dependencies the panels
- *   import on their own: provider-aware authentication, `lib/firebase`
- *   (local-only mode), `lib/storage`
- *   (library sync), `lib/artifacts` (weekly offerings), and
- *   `lib/storySeedStorage` + `lib/storySeedFormat` (seed listing and export).
- *
- * The Workshop supplies `mockUserProfileServices`; Light-Novels supplies a real
- * adapter built from its existing modules. See the feature README for the
- * exact transfer wiring.
+ * Light-Novels' `useUserProfile()` still returns the retired economy's
+ * members: the legacy daily check-in and cracked pillar, the special-QI
+ * reserves, Relic attunement with the equipped artifact, and weekly
+ * offerings. The development Cave's port (`../development/userProfileServices.ts`,
+ * published as `@seihouse/library/profile`) removed them. This Workshop-owned
+ * adapter rebuilds production's port as that contract plus the retired
+ * members, behind its own provider, so the locked reference renders exactly as
+ * production does. It ships in no package.
  */
-
 import React, { createContext, createElement, useContext } from 'react';
-import { type SenLanguageCode } from '@seihouse/sen/contracts';
+import type { QiAccountState } from '@seihouse/library/cultivation';
 import type {
-  AccountRole,
-  ActiveStatusEffect,
-  AdminStoryRow,
-  AppUser,
-  ChapterWritingStyle,
-  CosmicArtifact,
-  PremiumTier,
-  Story,
-  StorySeed,
-  UserProfile,
-} from './types';
+  DaoRankData as DevelopmentDaoRankData,
+  UserProfileController as DevelopmentUserProfileController,
+  UserProfileControllerProps,
+  UserProfileServices as DevelopmentUserProfileServices,
+} from '@seihouse/library/profile';
+import type { ActiveStatusEffect, AppUser, CosmicArtifact, Story, StorySeed, UserProfile } from './types';
 
-/** Shape of `getDaoRankData(...)`. `nextRank` / `maxDaoXp` are null at max rank. */
-export interface DaoRankData {
-  rank: string;
-  nextRank: string | null;
-  progress: number;
-  maxDaoXp: number | null;
-  currentDaoXp: number;
-  rankThreshold: number;
-  /** @deprecated Locked-reference compatibility only; this holds DAO XP, not QI. */
+/** Production's rank data: DAO XP, plus the QI-named projections the reference still reads. */
+export interface DaoRankData extends DevelopmentDaoRankData {
+  /** Production names this QI; it holds DAO XP. */
   maxQi: number | null;
-  /** @deprecated Locked-reference compatibility only; this holds DAO XP, not QI. */
+  /** Production names this QI; it holds DAO XP. */
   currentQi: number;
 }
 
@@ -67,123 +41,24 @@ export interface DaoClaimState {
   reconcile: () => Promise<DaoClaimResult>;
 }
 
-export interface UserProfileControllerProps {
-  currentUser: AppUser | null;
-  stories: Story[];
-  onLogout: () => void;
-  onNavigateHome: () => void;
-}
+export type { UserProfileControllerProps };
 
-/**
- * Everything the profile page and its panels consume. Mirrors the return value
- * of `src/hooks/useUserProfile.ts` in Light-Novels, minus the members the page
- * does not read.
- */
-export interface UserProfileController {
-  /** Saves only the Familiar selection through the existing account owner. */
-  handleFamiliarChange?: (id: string) => Promise<void> | void;
-  isSavingFamiliar?: boolean;
-  handleFamiliarSizeChange?: (size: number) => void;
-  unlockedSpecialQi?: readonly SpecialQiId[];
-  /** Legacy daily refinement claim; the locked reference page still reads it. The Cave's Daily Dao Pillar claims through `src/components/dao-pillar` instead. */
-  dailyClaim?: DaoClaimState;
-  /** Read-only server ledger projection used by the current Cave. */
-  cultivation?: QiAccountState;
-  // Library / app-shell state (production: `useAppStore`)
-  syncStatus: string;
-  lastSavedTime: Date | null;
-  setIsSettingsOpen: (open: boolean) => void;
-  setIsShortcutsOpen: (open: boolean) => void;
-  handleExportLibrary: () => void;
-  handleImportLibrary: (event: React.ChangeEvent<HTMLInputElement>) => void;
-
-  // Profile record and edit form
+export interface UserProfileController extends Omit<DevelopmentUserProfileController, 'profile' | 'formData' | 'setFormData' | 'allUsers' | 'daoData'> {
   profile: UserProfile | null;
   formData: Partial<UserProfile>;
   setFormData: React.Dispatch<React.SetStateAction<Partial<UserProfile>>>;
-  isEditing: boolean;
-  setIsEditing: (editing: boolean) => void;
-  isLoading: boolean;
-  error: string;
-  colorInputRef: React.RefObject<HTMLInputElement | null>;
-  handleChange: (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => void;
-  handleSave: () => Promise<void> | void;
-
-  // Disclosure state
-  showAdvanced: boolean;
-  setShowAdvanced: (show: boolean) => void;
+  allUsers: UserProfile[];
+  daoData: DaoRankData;
+  unlockedSpecialQi?: readonly SpecialQiId[];
+  /** The legacy daily refinement claim. */
+  dailyClaim?: DaoClaimState;
+  cultivation?: QiAccountState;
   isQiMenuOpen: boolean;
   setIsQiMenuOpen: (open: boolean) => void;
   activeQiTooltip: string | null;
   setActiveQiTooltip: (tooltip: string | null) => void;
-
-  // Akashic Switchboard (admin)
-  isAdminPanelOpen: boolean;
-  setIsAdminPanelOpen: (open: boolean) => void;
-  adminTab: 'users' | 'stories';
-  setAdminTab: (tab: 'users' | 'stories') => void;
-  allUsers: UserProfile[];
-  allStories: AdminStoryRow[];
-  isFetchingAdminData: boolean;
-  adminSearchQuery: string;
-  setAdminSearchQuery: (query: string) => void;
-  adminError: string;
-  fetchAdminData: () => void;
-  handleUpdateUserRole: (uid: string, role: AccountRole) => void;
-  handleUpdateUserTier: (uid: string, tier: PremiumTier) => void;
-  handleDeleteStoryAdmin: (storyId: string) => void;
-
-  // Language safeguard
-  pendingLanguageChange: {
-    interfaceLanguage: SenLanguageCode;
-    readingLanguage: SenLanguageCode;
-    previousInterfaceLanguage: SenLanguageCode;
-    previousReadingLanguage: SenLanguageCode;
-  } | null;
-  countdown: number;
-  confirmLanguageChange: () => void;
-  revertLanguageChange: () => void;
-  handleLanguageChangeDirect: (
-    name: 'interfaceLanguage' | 'defaultReadingLanguage',
-    value: SenLanguageCode,
-  ) => Promise<void> | void;
-
-  // Chapter writing style default
-  handleDefaultChapterWritingStyleChange: (
-    value: ChapterWritingStyle,
-  ) => Promise<void>;
-  isSavingChapterWritingStyle: boolean;
-
-  // Divine Mirror portrait flow
-  showPortraitModal: boolean;
-  setShowPortraitModal: (show: boolean) => void;
-  portraitUploadFile: File | null;
-  setPortraitUploadFile: (file: File | null) => void;
-  portraitUploadBase64: string;
-  setPortraitUploadBase64: (base64: string) => void;
-  portraitDesc: string;
-  setPortraitDesc: (description: string) => void;
-  isGeneratingPortrait: boolean;
-  isSavingPortrait: boolean;
-  generatedPortraitUrl: string;
-  portraitError: string;
-  generationStep: number;
-  handleFileChange: (file: File) => void;
-  handleDrag: (event: React.DragEvent) => void;
-  handleDrop: (event: React.DragEvent) => void;
-  handleGeneratePortrait: () => Promise<void> | void;
-  handleApplyPortrait: () => Promise<void> | void;
-
-  // Auth
-  handleLogin: () => Promise<void> | void;
-
-  // Cultivation progression
-  daoData: DaoRankData;
   equippedArtifact: CosmicArtifact | undefined;
   currentPowerStage: string;
-  activeStoriesCount: number;
   currentStreak: number;
   isCracked: boolean;
   daysTo3: number;
@@ -191,79 +66,26 @@ export interface UserProfileController {
   handleRepairPillar: () => Promise<void> | void;
   handleCheckIn: () => Promise<void> | void;
   handleAttuneArtifact: (artifactId: string) => Promise<void>;
-
-  // Passed through unchanged from props
-  storageType: string;
-  activeStoryId: string | null;
-  routingConfig: unknown;
 }
 
-export interface UserProfileServices {
-  /** Host catalog with account-specific unlock availability. */
-  familiars?: readonly FamiliarOption[];
-  /**
-   * Celestial Store account access: Familiar ownership and the purchase call.
-   * Ownership is account state, never Store configuration; the Workshop
-   * supplies an in-memory grant that persists nothing.
-   */
-  celestialStore?: CelestialStoreAccountServices;
+export interface UserProfileServices extends Omit<DevelopmentUserProfileServices, 'useController'> {
   /** Production: `useUserProfile(props)` from `src/hooks/useUserProfile.ts`. */
   useController: (props: UserProfileControllerProps) => UserProfileController;
-
-  /** Host-owned Google, Apple, or email authentication for the Spirit Link gate. */
-  authenticate: (attempt: {
-    provider: 'google' | 'apple' | 'email';
-    emailMode?: 'signin' | 'create';
-    email?: string;
-    password?: string;
-  }) => Promise<unknown> | unknown;
-
-  /** Production: `LOCAL_ONLY_MODE` / `setLocalOnlyMode` from `src/lib/firebase.ts`. */
-  localOnlyMode: boolean;
-  setLocalOnlyMode: (next: boolean) => void;
-
-  /** Production: `storyStorage.performSync({ deep: true })` from `src/lib/storage.ts`. */
-  requestLibrarySync: () => void;
-
   /** Production: `submitCurrentWeekOfferings()` from `src/lib/artifacts.ts`. */
   submitCurrentWeekOfferings: () => Promise<{ qi: number; sectMerit: number }>;
-
-  /** Production: `listStorySeeds()` from `src/lib/storySeedStorage.ts`. */
-  listStorySeeds: () => Promise<StorySeed[]>;
-
-  /** Production: `downloadStorySeed` / `downloadStorySeedCollection` from `src/lib/storySeedFormat.ts`. */
-  downloadStorySeed: (seed: StorySeed) => Promise<void>;
-  downloadStorySeedCollection: (seeds: StorySeed[]) => Promise<void>;
 }
 
-const UserProfileServicesContext = createContext<UserProfileServices | null>(null);
+const ReferenceUserProfileServicesContext = createContext<UserProfileServices | null>(null);
 
-export function UserProfileServicesProvider({
-  services,
-  children,
-}: {
-  services: UserProfileServices;
-  children: React.ReactNode;
-}) {
-  return createElement(
-    UserProfileServicesContext.Provider,
-    { value: services },
-    children,
-  );
+/** Mounts production's services for the locked reference pane. */
+export function UserProfileServicesProvider({ services, children }: { services: UserProfileServices; children: React.ReactNode }) {
+  return createElement(ReferenceUserProfileServicesContext.Provider, { value: services }, children);
 }
 
-/**
- * Read the injected services. Throws rather than silently falling back, so a
- * host that forgets the provider fails loudly instead of rendering a profile
- * page wired to nothing.
- */
 export function useUserProfileServices(): UserProfileServices {
-  const services = useContext(UserProfileServicesContext);
+  const services = useContext(ReferenceUserProfileServicesContext);
   if (!services) {
-    throw new Error(
-      'UserProfile requires <UserProfileServicesProvider services={…}>. '
-        + 'The Workshop supplies mockUserProfileServices; Light-Novels supplies the real adapter.',
-    );
+    throw new Error('The locked reference profile requires the reference <UserProfileServicesProvider services={…}>.');
   }
   return services;
 }

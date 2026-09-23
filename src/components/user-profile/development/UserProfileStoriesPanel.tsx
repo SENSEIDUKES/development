@@ -3,8 +3,8 @@ import { BookOpen, Download, Sprout } from 'lucide-react';
 import { LibraryStoriesIcon as SENStoriesIcon } from '@seihouse/library-ui';
 import { LibraryButton, LibraryPanel } from '@seihouse/library-ui';
 import { SEIEmptyState, SEIInlineAlert, SEILoadingState } from '@seihouse/ui';
-import type { AppUser, Story, StorySeed, UserProfile as UserProfileType } from '../shared/types';
-import { useUserProfileServices } from '../shared/userProfileServices';
+import type { AppUser, Story, StorySeed, UserProfile as UserProfileType } from './types';
+import { useUserProfileServices } from './userProfileServices';
 
 interface UserProfileStoriesPanelProps {
   profile: UserProfileType | null;

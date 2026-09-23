@@ -6,14 +6,15 @@ import { LibraryExitIcon as SENExitIcon, LibrarySettingsIcon as SENSettingsIcon 
 export const CAVE_DESTINATIONS = [
   { id: 'home', label: 'Home', icon: 'home' satisfies SENNavigationIconName },
   { id: 'stories', label: 'Stories', icon: 'scroll' satisfies SENNavigationIconName },
-  { id: 'relics', label: 'Relics', icon: 'relic' satisfies SENNavigationIconName },
+  { id: 'rewards', label: 'Rewards', icon: 'relic' satisfies SENNavigationIconName },
   { id: 'settings', label: 'Settings', icon: SENSettingsIcon },
 ] as const;
 export type CaveDestination = typeof CAVE_DESTINATIONS[number]['id'];
 
 /**
- * The public view is the same Cave with a narrower door. It keeps Home,
- * Stories and Relics, and replaces Settings — a private surface — with Exit.
+ * The public view is the same Cave with a narrower door. It keeps Home and
+ * Stories, shows the Relic names the cultivator published in place of the
+ * private Rewards page, and replaces Settings — a private surface — with Exit.
  * Exit is an action rather than a destination, so it carries no route of its
  * own; the workspace decides where leaving lands.
  */
@@ -71,7 +72,7 @@ export function resolveCaveRoute(path: string) {
   const view = scoped && !creatorId ? 'unavailable' : creatorView ?? (!destination ? 'unavailable'
     : audience === 'public' ? (child ? 'unavailable' : destination)
     : !child ? destination
-    : destination === 'home' && (child === 'dao-pillar' || child === 'status-effects' || child === 'inbox' || child === 'store' || child === 'energy') ? child
+    : destination === 'home' && (child === 'dao-pillar' || child === 'familiar' || child === 'inbox' || child === 'store' || child === 'energy') ? child
     : destination === 'settings' && (child === 'switchboard' || child === 'redeem-code') ? child
     : 'unavailable');
   return { path, audience, destination, child, view, creatorId };

@@ -27,6 +27,7 @@ const activityDirection = (entry: EnergyActivityEntry): string => {
     case 'charge': return `−${formatEnergy(entry.amount)}`;
     case 'reserve': return `${formatEnergy(entry.amount)} held`;
     case 'release': return `${formatEnergy(entry.amount)} returned`;
+    case 'spend': return `−${formatEnergy(entry.amount)}`;
   }
 };
 
@@ -98,7 +99,7 @@ export function EnergyPanel({ account, qi, daoXp, className = '' }: EnergyPanelP
             className="economy-qi-amount mt-1"
             label={qiState === 'ready' && qiBalance !== null ? `QI balance ${formatQi(qiBalance)}` : 'QI balance unavailable'}
           />
-          <p className="economy-summary-detail">Earn or purchase QI · never rank progress</p>
+          <p className="economy-summary-detail">For the Celestial Store and Familiar training · never rank progress</p>
         </article>
 
         <article className="economy-summary-card" data-economy-balance="dao-xp">
@@ -163,7 +164,7 @@ export function EnergyPanel({ account, qi, daoXp, className = '' }: EnergyPanelP
       <section className="economy-section" data-economy-section="qi" aria-labelledby="qi-price-schedule">
         <div>
           <h3 id="qi-price-schedule">QI price schedule</h3>
-          <p>QI is a spendable balance users can earn or purchase. <strong>Current schedule: 1 QI = {usd(QI_USD_PER_UNIT)}.</strong> Buying or spending QI never changes DAO XP or rank.</p>
+          <p>QI is a spendable balance users can earn or purchase, and spend in the Celestial Store or on training a Familiar. <strong>Current schedule: 1 QI = {usd(QI_USD_PER_UNIT)}.</strong> Buying or spending QI never changes DAO XP or rank.</p>
         </div>
         <div className="economy-standard-grid">
           <StandardList title="Packs">
@@ -173,13 +174,13 @@ export function EnergyPanel({ account, qi, daoXp, className = '' }: EnergyPanelP
             {Object.entries(QI_ITEM_PRICES).map(([rarity, price]) => <li key={rarity}><span>{rarity}</span><strong>{formatQi(price)} QI</strong></li>)}
           </StandardList>
         </div>
-        <p className="economy-note">Packs and item prices follow the current schedule. This page does not add a checkout, daily award, or achievement payout.</p>
+        <p className="economy-note">Packs and item prices follow the current schedule. No QI checkout is connected here; QI is earned from the Daily Dao Pillar and Mystery Scrolls, each delivered by its own server ledger.</p>
       </section>
 
       <section className="economy-section" data-economy-section="dao-xp" aria-labelledby="dao-xp-ranks">
         <div>
           <h3 id="dao-xp-ranks">DAO XP ranks</h3>
-          <p>DAO XP is permanent earned progression. The rank ladder below is the source of truth for profile rank, aura unlocks, and progress displays.</p>
+          <p>DAO XP is permanent earned progression from achievements, creation, and Fate Survival Relics. It alone sets the Cultivator Rank, and the rank sets the cultivator&rsquo;s colours. The ladder below is the source of truth for both.</p>
         </div>
         <ol className="economy-rank-list">
           {DAO_RANKS.map(rank => <li key={rank.id} data-dao-rank={rank.id}><span>{rank.name}</span><strong>{formatQi(rank.threshold)} DAO XP</strong></li>)}

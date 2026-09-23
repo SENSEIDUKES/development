@@ -5,3 +5,6 @@ export { FamiliarSprite, type FamiliarSpriteProps } from '../../components/famil
 export { Familiar, type FamiliarProps } from '../../components/familiar/development/Familiar';
 export { FamiliarCompanion, type FamiliarCompanionProps } from '../../components/familiar/development/FamiliarCompanion';
 export { FamiliarSelection, type FamiliarSelectionProps } from '../../components/familiar/development/FamiliarSelection';
+export * from '../../library/familiars/contracts';
+export * from '../../library/familiars/familiarsClient';
+export * from '../../components/familiar-training/development';

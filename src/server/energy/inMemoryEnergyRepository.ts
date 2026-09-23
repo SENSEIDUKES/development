@@ -6,6 +6,7 @@ import {
   EnergyNotFoundError,
   InsufficientEnergyError,
   type ApplyEnergyGrantCommand,
+  type ApplyEnergySpendCommand,
   type CreateEnergyReservationCommand,
   type EnergyLedgerResult,
   type EnergyRepository,
@@ -103,6 +104,35 @@ export class InMemoryEnergyRepository implements EnergyRepository {
     const transaction = this.record({
       uid: command.uid,
       kind: 'grant',
+      amount: command.amount,
+      actionId: null,
+      reservationId: null,
+      idempotencyKey: command.idempotencyKey,
+      description: command.description,
+      metadata: cloneJson(command.metadata ?? {}),
+    }, account);
+    return { account: cloneJson(account), transaction: cloneJson(transaction), replayed: false };
+  }
+
+  async applySpend(command: ApplyEnergySpendCommand): Promise<EnergyLedgerResult> {
+    assertUid(command.uid);
+    assertEnergyAmount(command.amount);
+    assertIdempotencyKey(command.idempotencyKey);
+    const account = this.ensure(command.uid);
+    const existing = this.transactionByKey(command.uid, command.idempotencyKey);
+    if (existing) {
+      if (existing.kind !== 'spend' || existing.amount !== command.amount) {
+        throw new EnergyConflictError(`Idempotency key ${command.idempotencyKey} already recorded a ${existing.amount} Energy ${existing.kind}.`);
+      }
+      return { account: cloneJson(account), transaction: cloneJson(existing), replayed: true };
+    }
+    const available = account.balance - account.held;
+    if (command.amount > available) throw new InsufficientEnergyError(command.amount, available);
+    account.balance -= command.amount;
+    account.updatedAt = this.now();
+    const transaction = this.record({
+      uid: command.uid,
+      kind: 'spend',
       amount: command.amount,
       actionId: null,
       reservationId: null,

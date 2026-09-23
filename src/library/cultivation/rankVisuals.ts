@@ -12,8 +12,10 @@
  * support stop that keeps the blend smooth. `positions` weights those support
  * stops so the dominant colours keep the majority of the ramp.
  *
- * Nothing here imports React, Tailwind, or a status effect. The style helpers
- * that layer status effects on top live in `progression.ts`.
+ * Rank chooses colours and nothing else: no rank carries a particle layer,
+ * a title effect, or any other special treatment. Cosmetic effects belong to
+ * Familiars. Nothing here imports React or Tailwind; the style helpers live in
+ * `progression.ts`.
  */
 
 export type RankId =
@@ -55,8 +57,6 @@ export interface Rank {
   /** Permanent DAO XP required to reach this rank. */
   unlockedAt: number;
   visual: RankVisual;
-  /** Whether the portrait carries the ambient mote layer at this rank. */
-  motes: boolean;
 }
 
 /**
@@ -92,21 +92,18 @@ export const RANKS: Rank[] = [
     id: 'reader',
     name: 'Reader',
     unlockedAt: 0,
-    motes: false,
     visual: { kind: 'solid', stops: [WHITE], angle: 90, glow: 'rgba(229,231,235,0.35)' },
   },
   {
     id: 'disciple',
     name: 'Disciple',
     unlockedAt: 100,
-    motes: false,
     visual: { kind: 'solid', stops: [GREEN], angle: 90, glow: 'rgba(34,197,94,0.40)' },
   },
   {
     id: 'scribe',
     name: 'Scribe',
     unlockedAt: 300,
-    motes: false,
     visual: { kind: 'solid', stops: [BLUE], angle: 90, glow: 'rgba(37,99,235,0.45)' },
   },
   {
@@ -114,7 +111,6 @@ export const RANKS: Rank[] = [
     id: 'scholar',
     name: 'Scholar',
     unlockedAt: 750,
-    motes: false,
     visual: {
       kind: 'gradient',
       stops: [BLUE, '#3B82F6', LIGHT_BLUE],
@@ -129,7 +125,6 @@ export const RANKS: Rank[] = [
     id: 'author',
     name: 'Author',
     unlockedAt: 1500,
-    motes: false,
     visual: {
       kind: 'gradient',
       stops: [LIGHT_BLUE, '#CFE7E2', YELLOW],
@@ -143,7 +138,6 @@ export const RANKS: Rank[] = [
     id: 'adept',
     name: 'Adept',
     unlockedAt: 3000,
-    motes: false,
     visual: {
       kind: 'gradient',
       stops: [YELLOW, '#F78F63', PINK],
@@ -157,7 +151,6 @@ export const RANKS: Rank[] = [
     id: 'elder',
     name: 'Elder',
     unlockedAt: 6000,
-    motes: true,
     visual: {
       kind: 'gradient',
       stops: [PINK, '#E63963', RED],
@@ -172,7 +165,6 @@ export const RANKS: Rank[] = [
     id: 'leader',
     name: 'Leader',
     unlockedAt: 12000,
-    motes: true,
     visual: {
       kind: 'gradient',
       stops: [RED, '#F2762A', TROPHY_GOLD],
@@ -187,7 +179,6 @@ export const RANKS: Rank[] = [
     id: 'sage',
     name: 'Sage',
     unlockedAt: 25000,
-    motes: true,
     visual: {
       kind: 'gradient',
       stops: [TROPHY_GOLD, '#F472B6', VIOLET],
@@ -202,7 +193,6 @@ export const RANKS: Rank[] = [
     id: 'master',
     name: 'Master',
     unlockedAt: 50000,
-    motes: true,
     visual: {
       kind: 'spectrum',
       stops: ['#00FFFF', '#FF007F', TROPHY_GOLD, '#00FFFF'],
@@ -233,13 +223,6 @@ export function getRankForDaoXp(daoXp: number | undefined): Rank {
   }
   return reached;
 }
-
-/**
- * Compatibility alias for package consumers migrating from the former
- * rank-from-QI name. New Library code must use `getRankForDaoXp`; no caller
- * should pass a spendable QI balance here.
- */
-export const getRankForQi = getRankForDaoXp;
 
 const LEGACY_RANK_NAMES: Readonly<Record<string, RankId>> = {
   reader: 'reader',

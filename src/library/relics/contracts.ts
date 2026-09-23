@@ -1,140 +1,73 @@
-export const RELIC_SCHEMA_VERSION = 3 as const;
-
-export const RELIC_RARITIES = [
-  'Common',
-  'Rare',
-  'Epic',
-  'Legendary',
-  'Mythic',
-  'Transcendent',
-] as const;
-
-export type RelicRarity = (typeof RELIC_RARITIES)[number];
-
-/** Maximum allowed award; individual achievements choose their own lower value. */
-export const MAX_RELIC_QI_REWARD = 1000;
-
-export type JsonPrimitive = boolean | number | string | null;
-export type JsonValue = JsonPrimitive | JsonObject | JsonValue[];
-
-export interface JsonObject {
-  [key: string]: JsonValue;
-}
-
-export type RelicTemplateStatus = 'draft' | 'active' | 'retired';
-export type StoryRelicStatus = 'assigned' | 'in_progress' | 'earned' | 'disabled';
-
 /**
- * An evaluator identifier is stored as data so the eventual evaluation system
- * can evolve without changing the achievement or persistence contracts.
+ * Relic contracts shared by the server-owned Relic ledger and every Library
+ * surface.
+ *
+ * Relics are lightweight rewards with exactly one source: Fate Survival, the
+ * Library's dedicated challenge system. A Relic may grant DAO XP and Energy
+ * (more at higher rarities) and nothing else — no QI, titles, attunement,
+ * offerings, or status effects. Mystery Scrolls, not Relics, are the reward for
+ * achievements.
+ *
+ * The outcome vocabulary is SEN's own Fate Survival vocabulary. The judging
+ * that turns a run into a trusted outcome belongs to the future Fate Survival
+ * system; until it exists, only the Workshop's development simulator records
+ * outcomes.
  */
-export interface RelicConditionDefinition {
-  evaluatorKey: string;
-  evaluatorVersion: number;
-  hidden: boolean;
-  parameters: JsonObject;
-}
+import type { FateResultData } from '@seihouse/sen/generation';
+import type { DeliveredRewardGrant, RewardGrant, RewardRarity } from '../rewards/contracts';
 
-export interface RelicTitleReward {
-  key: string;
-  title: string;
-  description?: string;
-}
+export type FateSurvivalOutcome = FateResultData['outcome'];
 
-export interface RelicCosmeticReward {
-  key: string;
-  kind: string;
-  label: string;
-  metadata: JsonObject;
-}
+export const FATE_SURVIVAL_OUTCOMES: readonly FateSurvivalOutcome[] = ['FATE AVERTED', 'FATE SCARRED', 'DOOM MANIFESTED'];
 
-export interface RelicRewardDefinition {
-  title?: RelicTitleReward;
-  qi: number;
-  cosmetics: RelicCosmeticReward[];
-}
+export const isFateSurvivalOutcome = (value: unknown): value is FateSurvivalOutcome =>
+  typeof value === 'string' && (FATE_SURVIVAL_OUTCOMES as readonly string[]).includes(value);
 
-export interface RelicAchievementTemplate {
-  schemaVersion: typeof RELIC_SCHEMA_VERSION;
+/** One Relic a cultivator earned from one Fate Survival challenge. */
+export interface FateSurvivalRelicView {
   id: string;
-  key: string;
-  version: number;
-  status: RelicTemplateStatus;
+  relicKey: string;
   name: string;
   description: string;
-  rarity: RelicRarity;
-  condition: RelicConditionDefinition;
-  rewards: RelicRewardDefinition;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * A story keeps the exact definition it was assigned. Later template edits do
- * not silently change an existing story's target, reveal, rarity, or rewards.
- */
-export interface RelicAchievementSnapshot {
-  schemaVersion: typeof RELIC_SCHEMA_VERSION;
-  templateId: string;
-  templateKey: string;
-  templateVersion: number;
-  name: string;
-  description: string;
-  rarity: RelicRarity;
-  condition: RelicConditionDefinition;
-  rewards: RelicRewardDefinition;
-}
-
-export interface StoryRelicProgress {
-  current: number;
-  target: number;
-  unit?: string;
-  metadata: JsonObject;
-  updatedAt: string;
-}
-
-export interface StoryRelicAssignment {
-  schemaVersion: typeof RELIC_SCHEMA_VERSION;
-  id: string;
-  ownerId: string;
-  storyId: string;
-  templateId: string;
-  status: StoryRelicStatus;
-  achievement: RelicAchievementSnapshot;
-  progress: StoryRelicProgress;
-  assignedAt: string;
-  updatedAt: string;
-  earnedAt?: string;
-}
-
-/** Immutable evidence snapshot attached to the successful earning transaction. */
-export interface RelicCompletionEvidence {
-  schemaVersion: typeof RELIC_SCHEMA_VERSION;
-  evaluatorKey: string;
-  evaluatorVersion: number;
-  sourceType: string;
-  sourceId: string;
-  observedAt: string;
-  facts: JsonObject;
-}
-
-export interface EarnedRelicRecord {
-  schemaVersion: typeof RELIC_SCHEMA_VERSION;
-  id: string;
-  ownerId: string;
-  storyId: string;
-  assignmentId: string;
-  templateId: string;
-  achievement: RelicAchievementSnapshot;
-  completionEvidence: RelicCompletionEvidence[];
+  rarity: RewardRarity;
+  /** The Fate Survival challenge this Relic was earned in. One Relic per challenge. */
+  challengeId: string;
+  storyId: string | null;
+  outcome: FateSurvivalOutcome;
+  rewards: RewardGrant[];
+  /** What landed on the ledgers. */
+  delivered: DeliveredRewardGrant[];
   earnedAt: string;
 }
 
-export type RelicConditionDisclosure =
-  | { hidden: true }
-  | {
-      hidden: false;
-      evaluatorKey: string;
-      evaluatorVersion: number;
-      parameters: JsonObject;
-    };
+export interface RelicsSnapshot {
+  uid: string;
+  /** Newest first. */
+  relics: FateSurvivalRelicView[];
+  /** Which rarity each judged outcome earns; `null` earns no Relic. A development default. */
+  outcomeRarity: Record<FateSurvivalOutcome, RewardRarity | null>;
+  updatedAt: string;
+}
+
+/** Development-only: stands in for the future Fate Survival judging system. */
+export interface FateSurvivalOutcomeInput {
+  challengeId: string;
+  outcome: FateSurvivalOutcome;
+  storyId?: string;
+}
+
+export interface FateSurvivalOutcomeResponse {
+  outcome: 'granted' | 'already-granted' | 'no-relic';
+  message: string;
+  relic: FateSurvivalRelicView | null;
+  snapshot: RelicsSnapshot;
+}
+
+export type RelicsHttpOperation = { operation: 'development.fate-survival-outcome' } & FateSurvivalOutcomeInput;
+
+export interface RelicsHttpError {
+  error: string;
+  code: 'unauthenticated' | 'forbidden' | 'invalid_request' | 'method_not_allowed' | 'unavailable';
+}
+
+export const RELICS_API_PATH = '/api/library-economy?capability=relics';

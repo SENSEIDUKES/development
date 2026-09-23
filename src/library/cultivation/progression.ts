@@ -8,9 +8,10 @@
  * deliberately excluded.
  *
  * The rank ladder and every rank colour now live in `rankVisuals.ts` as data.
- * This file holds the progression maths and the two helpers that turn a
- * resolved rank visual into React style props, layering the status effects that
- * override a cultivator's aura on top.
+ * This file holds the progression maths and the helpers that turn a resolved
+ * rank visual into React style props. Permanent DAO XP alone sets the rank, and
+ * the rank only chooses colours: no status effect, relic, or balance overrides
+ * a cultivator's aura.
  *
  * These are visual values and belong to the fork, not to `shared/`: a redesign
  * that restyles the ranks must be able to change them in `development/` without
@@ -18,7 +19,6 @@
  */
 
 import type React from 'react';
-import type { ActiveStatusEffect } from '../../components/user-profile/shared/types';
 import {
   RANKS,
   rankBackground,
@@ -28,7 +28,6 @@ import {
   resolveRankVisual,
   type RankVisual,
 } from './rankVisuals';
-import { isEffectActive } from '../../components/user-profile/development/timedEffects';
 
 export const CAVE_AURA_TEXT_SURFACE = '#03060c';
 export const MIN_AURA_TEXT_CONTRAST = 4.5;
@@ -228,14 +227,6 @@ export interface DaoRankData {
   currentDaoXp: number;
   /** The current rank's permanent DAO XP floor. */
   rankThreshold: number;
-  /**
-   * @deprecated Compatibility projection for the locked historical reference.
-   * This is permanent DAO XP, not a spendable QI balance; active code uses
-   * `maxDaoXp`.
-   */
-  maxQi: number | null;
-  /** @deprecated See `maxQi`; active code uses `currentDaoXp`. */
-  currentQi: number;
 }
 
 export function getDaoRankData(daoXp: number = 0): DaoRankData {
@@ -270,8 +261,6 @@ export function getDaoRankData(daoXp: number = 0): DaoRankData {
     maxDaoXp: nextThreshold,
     currentDaoXp,
     rankThreshold: previousThreshold,
-    maxQi: nextThreshold,
-    currentQi: currentDaoXp,
   };
 }
 
@@ -288,20 +277,6 @@ export function getAuraSelection(
   return resolved.source === 'custom' ? resolved.visual.stops[0] : rankToken(resolved.rank);
 }
 
-/** Which status effect, if any, is overriding the aura right now. */
-export function activeAuraOverride(
-  activeStatusEffects: ActiveStatusEffect[] | undefined,
-  now = Date.now(),
-): 'silenced' | 'cursed' | null {
-  if (!activeStatusEffects?.length) return null;
-  const isActive = (name: string) =>
-    activeStatusEffects.some(e => e.effectDef.name === name && isEffectActive(e, now));
-
-  if (isActive('Ghostly Silence')) return 'silenced';
-  if (isActive('Curse of the Cursed Tome')) return 'cursed';
-  return null;
-}
-
 /**
  * How a display name is painted in its rank's colours.
  *
@@ -311,29 +286,9 @@ export function activeAuraOverride(
  */
 export function getAuraTextStyle(
   selection?: string,
-  activeStatusEffects?: ActiveStatusEffect[],
   daoXp?: number,
-  now = Date.now(),
 ): { style?: React.CSSProperties; className?: string } {
   if (!selection) return {};
-
-  const override = activeAuraOverride(activeStatusEffects, now);
-  if (override === 'silenced') {
-    return {
-      className: 'text-neutral-400 font-normal line-through-none shadow-none filter grayscale'
-    };
-  }
-
-  const cursedClass = override === 'cursed'
-    ? ' animate-pulse motion-reduce:animate-none text-red-400/90 shadow-[0_0_12px_rgba(139,0,0,0.8)]'
-    : '';
-
-  if (override === 'cursed') {
-    return {
-      style: { color: '#ff3333' },
-      className: `drop-shadow-[0_0_5px_rgba(255,255,255,0.15)] font-semibold${cursedClass}`
-    };
-  }
 
   const { visual } = resolveRankVisual(selection, daoXp);
   const textVisual = accessibleAuraTextVisual(visual);
@@ -357,17 +312,9 @@ export function getAuraTextStyle(
  */
 export function getAuraGlowStyle(
   selection?: string,
-  activeStatusEffects?: ActiveStatusEffect[],
   daoXp?: number,
-  now = Date.now(),
 ): { style?: React.CSSProperties; className: string } {
   if (!selection) return { className: '' };
-
-  const override = activeAuraOverride(activeStatusEffects, now);
-  if (override === 'silenced') return { className: 'border-neutral-900 shadow-none' };
-  if (override === 'cursed') {
-    return { className: 'shadow-[0_0_25px_rgba(139,0,0,0.7)] border-human/40 animate-pulse motion-reduce:animate-none' };
-  }
 
   const { visual } = resolveRankVisual(selection, daoXp);
   return {
@@ -394,7 +341,6 @@ export {
   resolveRankVisual,
   resolvePermanentDaoXp,
   getRankForDaoXp,
-  getRankForQi,
   getRankById,
 } from './rankVisuals';
 export type { Rank, RankId, RankVisual, ResolvedRankVisual } from './rankVisuals';

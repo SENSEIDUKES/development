@@ -26,6 +26,14 @@ export interface EnergyGrantInput {
   metadata?: JsonObject;
 }
 
+export interface EnergySpendInput {
+  amount: number;
+  /** Unique per purchase intent: replaying the same key never charges twice. */
+  idempotencyKey: string;
+  description: string;
+  metadata?: JsonObject;
+}
+
 export interface EnergyReserveInput {
   actionId: EnergyActionId;
   /**
@@ -148,6 +156,24 @@ export class EnergyService {
     assertIdempotencyKey(input.idempotencyKey);
     await this.prepareAccount(principal);
     return this.repository.applyGrant({
+      uid: principal.uid,
+      amount: input.amount,
+      idempotencyKey: input.idempotencyKey,
+      description: input.description,
+      metadata: input.metadata,
+    });
+  }
+
+  /**
+   * Server-internal direct debit for an Energy-priced Celestial Store offer.
+   * Never reachable from a browser and never used for generation, which
+   * always reserves first and charges only after a result is stored.
+   */
+  async spend(principal: LibraryPrincipal, input: EnergySpendInput): Promise<EnergyLedgerResult> {
+    assertEnergyAmount(input.amount);
+    assertIdempotencyKey(input.idempotencyKey);
+    await this.prepareAccount(principal);
+    return this.repository.applySpend({
       uid: principal.uid,
       amount: input.amount,
       idempotencyKey: input.idempotencyKey,

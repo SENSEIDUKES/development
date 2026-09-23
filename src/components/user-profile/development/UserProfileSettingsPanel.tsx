@@ -1,5 +1,6 @@
 import { useLibraryAssets } from '../../../library/assets';
 import { FamiliarSelection } from '../../familiar/development/FamiliarSelection';
+import type { FamiliarOption } from '../../familiar/shared/familiar';
 import React, { useRef, useState } from 'react';
 import {
   AlertTriangle,
@@ -35,8 +36,8 @@ import {
   SEISwitch,
 } from '@seihouse/ui';
 import { DEFAULT_SEN_LANGUAGE_CODE, SEN_LANGUAGES, normalizeSenLanguageCode } from '@seihouse/sen/contracts';
-import type { AppUser, ChapterWritingStyle, Story } from '../shared/types';
-import { useUserProfileServices, type UserProfileController } from '../shared/userProfileServices';
+import type { AppUser, ChapterWritingStyle, Story } from './types';
+import { useUserProfileServices, type UserProfileController } from './userProfileServices';
 import { CHAPTER_WRITING_STYLE_OPTIONS, normalizeChapterWritingStyle } from './chapterWritingStyle';
 import {
   MASTER_RANK,
@@ -81,6 +82,11 @@ interface UserProfileSettingsPanelProps {
   onPublicVisibilityChange: (next: PublicProfileVisibility) => void;
   onPreviewPublicView: () => void;
   onRedeemCode: () => void;
+  /**
+   * The Familiar catalogue with availability from the account's ownership.
+   * Defaults to the host catalogue as supplied.
+   */
+  familiarOptions?: readonly FamiliarOption[];
 }
 
 /**
@@ -107,6 +113,7 @@ export function UserProfileSettingsPanel({
   onPublicVisibilityChange,
   onPreviewPublicView,
   onRedeemCode,
+  familiarOptions,
 }: UserProfileSettingsPanelProps) {
   // Production reads the local-only flag and its setter from `lib/firebase` and
   // calls the deep library sync on `lib/storage`. All three arrive through the
@@ -151,7 +158,7 @@ export function UserProfileSettingsPanel({
   );
   const assets = useLibraryAssets();
   const hasEnvironmentSelection = CAVE_ENVIRONMENTS.some(environment => environment.id === environmentId);
-  const previewStyle = getAuraTextStyle(auraSelection, profile?.activeStatusEffects, currentDaoXp ?? 0);
+  const previewStyle = getAuraTextStyle(auraSelection, currentDaoXp ?? 0);
   // A custom spectrum is any stored value that resolves to the cultivator's own
   // colour rather than to a rank on the ladder.
   const isCustomSelected = Boolean(selectedAura) && resolveRankVisual(selectedAura, currentDaoXp ?? 0).source === 'custom';
@@ -447,7 +454,7 @@ export function UserProfileSettingsPanel({
           </SEIDisclosureGroup>
             </SEITabsPanel>
             <SEITabsPanel value="familiar" keepMounted className="pt-4">
-              <FamiliarSelection options={familiars} selectedId={profile?.familiarId}
+              <FamiliarSelection options={familiarOptions ?? familiars} selectedId={profile?.familiarId}
                 size={profile?.familiarSize} onSizeChange={controller.handleFamiliarSizeChange}
                 pending={controller.isSavingFamiliar} disabled={!profile || !controller.handleFamiliarChange}
                 onSelect={id => void controller.handleFamiliarChange?.(id)} />

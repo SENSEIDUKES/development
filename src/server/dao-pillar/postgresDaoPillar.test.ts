@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PostgresQiLedger } from '../qi/postgresQiLedger';
 import { describeDaoPillarContract } from './daoPillarContract';
 import { PostgresDaoPillarRepository } from './postgresDaoPillarRepository';
@@ -32,6 +32,9 @@ const createDatabase = async () => {
   return db;
 };
 
+// Starting a Postgres engine is slow under a parallel run; do it once, outside any test's timeout.
+beforeAll(async () => { await createDatabase(); }, 60_000);
+
 afterAll(async () => {
   await (await database)?.close();
 });
@@ -58,7 +61,7 @@ describe('Dao Pillar Postgres migration guards', () => {
 
   it('rolls the claim back when a reward entry cannot be delivered, leaving Qi untouched', async () => {
     const db = await createDatabase();
-    await expect(claim(db, 13, '[{"type":"qi","amount":100},{"type":"relic","relicId":"r1"}]')).rejects.toThrow(/dao_pillar_unsupported_reward/);
+    await expect(claim(db, 13, '[{"type":"qi","amount":100},{"type":"media-pack","packId":"p1"}]')).rejects.toThrow(/dao_pillar_unsupported_reward/);
     expect((await db.query('SELECT count(*)::int AS n FROM dao_pillar_claim')).rows[0]).toEqual({ n: 0 });
     expect((await db.query('SELECT count(*)::int AS n FROM qi_transaction')).rows[0]).toEqual({ n: 0 });
     expect((await db.query<{ balance: number }>('SELECT balance FROM qi_account WHERE uid = $1', ['dev-user'])).rows[0]?.balance ?? 0).toBe(0);

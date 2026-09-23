@@ -16,16 +16,14 @@ const familyAccent = (family: SeedFamily): LibraryNavigationDrawerAccent =>
   family === 'story' ? 'portal' : 'gold';
 
 /**
- * The default title is the second rank on the cultivation ladder, renamed with
- * it: 'Wandering Disciple' became plain 'Disciple'. The ladder itself lives in
- * the user-profile fork (`user-profile/development/rankVisuals.ts`) and is not
- * imported here — the two forks transfer back to production separately, so
- * neither may depend on the other's `development/` folder.
+ * The drawer's profile block names who is creating. It showed an equipped
+ * Relic title until standalone reward titles were retired; the cultivator's
+ * own name is the only title now, so a signed-in author sees theirs and a
+ * guest workspace says so.
  */
-export const storySeedDrawerProfile = (equippedTitle?: string | null): LibraryNavigationDrawerProfile => ({
-  name: equippedTitle?.trim() || 'Disciple',
-  detail: equippedTitle?.trim() ? 'Equipped relic title' : 'Default Library title',
-  eyebrow: 'Equipped Relic',
+export const storySeedDrawerProfile = (authorName?: string | null): LibraryNavigationDrawerProfile => ({
+  name: authorName?.trim() || 'Guest author',
+  eyebrow: 'Creating as',
   emblem: (
     <span
       aria-hidden="true"
@@ -114,9 +112,9 @@ export function buildStorySeedDrawerSections(
 
 
 /** Compatibility entry for consumers rendering only the feature section panel. */
-export function StorySeedSelector({ seed, activeSection, onSelect, equippedTitle }: {
-  seed: StorySeedInput; activeSection: SeedSectionId; onSelect: (id: SeedSectionId) => void; equippedTitle?: string | null;
+export function StorySeedSelector({ seed, activeSection, onSelect, authorName }: {
+  seed: StorySeedInput; activeSection: SeedSectionId; onSelect: (id: SeedSectionId) => void; authorName?: string | null;
 }) {
-  return <NarrativeNavigationDrawerPanel aria-label="Story Seed sections" profile={storySeedDrawerProfile(equippedTitle)}
+  return <NarrativeNavigationDrawerPanel aria-label="Story Seed sections" profile={storySeedDrawerProfile(authorName)}
     sections={buildStorySeedDrawerSections(seed, activeSection, onSelect)} />;
 }

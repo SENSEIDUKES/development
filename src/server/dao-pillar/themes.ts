@@ -12,9 +12,10 @@ export class DaoPillarThemeError extends Error {
 }
 
 /**
- * The reward kinds the claim path can deliver today. Adding Relics, Titles,
- * Energy or Media Packs means adding their delivery (server + migration) and
- * listing them here; until then a theme that awards them cannot be activated.
+ * The reward kinds the claim path can deliver today. Adding Energy or Media
+ * Packs means adding their delivery (server + migration) and listing them
+ * here; until then a theme that awards them cannot be activated. Relics and
+ * reward Titles are not calendar rewards.
  */
 export const DELIVERABLE_REWARD_TYPES: readonly RewardType[] = ['qi'];
 

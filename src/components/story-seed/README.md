@@ -4,7 +4,7 @@
 - **Source location:** `src/components/CreationModal.tsx` (default export `CreationModal`)
 - **Workshop preview:** `?preview=story-seed` (`&state=<scenario-id>` deep-links a state)
 - **Replica created:** 2026-08-01
-- **Last Workshop update:** 2026-09-20
+- **Last Workshop update:** 2026-09-23
 - **Last source comparison:** 2026-08-10
 - **Lifecycle status:** finalized Workshop feature; refactored, optimized, and ready for production transfer
 
@@ -209,6 +209,7 @@ harness:
 
 ## Concise Workshop history
 
+- **2026-09-23:** Retired the equipped Relic title from the section drawer's profile block: standalone reward titles no longer exist, so the block now reads "Creating as" with the signed-in author's display name ("Author" without one, "Guest author" in a guest workspace). `StoryCreationSnapshot` no longer carries `routingConfig`, which nothing in Story Seed read after that. The locked reference and the captured Library shell keep production's relic title.
 - **2026-09-16:** Froze each new Story Seed's resolved Original Language on its first successful save so later account-default changes cannot alter that saved seed.
 - **2026-09-15:** Added the centralized weighted Arc 1 plan in ARC and the DEV start handoff to HARNESS. Story Seed now resets stale development records for its current schema instead of retaining removed long-term-goal data.
 

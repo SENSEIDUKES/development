@@ -61,10 +61,11 @@ export const PACKAGE_TARGETS = {
       '@seihouse/library/presentation': ['LibraryPresentationProvider'],
       '@seihouse/library/profile': ['LibraryProfile', 'UserProfileServicesProvider'],
       '@seihouse/library/energy': ['EnergyPanel', 'EnergyClientProvider', 'createHttpEnergyClient'],
-      '@seihouse/library/familiar': ['Familiar', 'FamiliarSprite', 'FamiliarSelection', 'FamiliarCompanion', 'FamiliarRecall'],
-      '@seihouse/library/cultivation': ['ClosedDoorCultivationModal', 'QiClientProvider', 'createHttpQiClient', 'getDaoRankData'],
+      '@seihouse/library/familiar': ['Familiar', 'FamiliarSprite', 'FamiliarSelection', 'FamiliarCompanion', 'FamiliarRecall', 'FamiliarTrainingPanel', 'FamiliarsClientProvider', 'createHttpFamiliarsClient', 'activeFamiliarEffect'],
+      '@seihouse/library/cultivation': ['ClosedDoorCultivationModal', 'QiClientProvider', 'createHttpQiClient', 'DaoXpClientProvider', 'createHttpDaoXpClient', 'getDaoRankData'],
       '@seihouse/library/dao-pillar': ['DaoPillarView', 'DaoPillarClientProvider'],
-      '@seihouse/library/relics': ['RelicCard', 'RelicModal', 'RelicReveal', 'projectEarnedRelic'],
+      '@seihouse/library/relics': ['RelicReveal', 'FateSurvivalRelicsPanel', 'RelicsClientProvider', 'createHttpRelicsClient'],
+      '@seihouse/library/rewards': ['AchievementsPanel', 'MysteryScrollReveal', 'RewardRevealCard', 'AchievementsClientProvider', 'createHttpAchievementsClient', 'describeRewardGrants'],
       '@seihouse/library/shell': ['LibraryNavigation', 'WorkspaceShell', 'WorkspaceHeader'],
       '@seihouse/library/home': ['LightNovelsHome', 'StoryDetailScreen'],
       '@seihouse/library/story-seed': ['CreationModal', 'StoryCreationProvider'],
@@ -77,9 +78,12 @@ export const PACKAGE_TARGETS = {
       import type { EnergyClient } from '@seihouse/library/energy';
       import type { FamiliarDefinition, FamiliarSelectionProps } from '@seihouse/library/familiar';
       import type { QiClient } from '@seihouse/library/cultivation';
-      import type { EarnedRelicRecord, RelicsClient } from '@seihouse/library/relics';
+      import type { FateSurvivalRelicView, RelicsClient } from '@seihouse/library/relics';
+      import type { AchievementsClient, MysteryScrollView, RewardGrant } from '@seihouse/library/rewards';
+      import type { FamiliarsClient, FamiliarTrainingSnapshot } from '@seihouse/library/familiar';
+      import type { DaoXpClient } from '@seihouse/library/cultivation';
       import type { HarnessGenerationWorkspaceProps } from '@seihouse/library/generation';
-      type All = [UserProfileServices, EnergyClient, FamiliarDefinition, FamiliarSelectionProps, QiClient, EarnedRelicRecord, RelicsClient, HarnessGenerationWorkspaceProps];
+      type All = [UserProfileServices, EnergyClient, FamiliarDefinition, FamiliarSelectionProps, QiClient, DaoXpClient, FateSurvivalRelicView, RelicsClient, AchievementsClient, MysteryScrollView, RewardGrant, FamiliarsClient, FamiliarTrainingSnapshot, HarnessGenerationWorkspaceProps];
     `,
   },
 };

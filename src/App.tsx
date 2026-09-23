@@ -81,6 +81,9 @@ const ModelRouterWorkspace = lazy(() =>
     .then(module => ({ default: module.ModelRouterWorkspace })),
 );
 const FamiliarWorkspace = lazy(() => import('./workshop/previews/familiar/FamiliarWorkspace').then(module => ({ default: module.FamiliarWorkspace })));
+const RewardLoopWorkspace = lazy(() => import('./workshop/previews/rewards/RewardLoopWorkspace').then(module => ({ default: module.RewardLoopWorkspace })));
+const AchievementsWorkspace = lazy(() => import('./workshop/previews/achievements/AchievementsWorkspace').then(module => ({ default: module.AchievementsWorkspace })));
+const FamiliarTrainingWorkspace = lazy(() => import('./workshop/previews/familiar-training/FamiliarTrainingWorkspace').then(module => ({ default: module.FamiliarTrainingWorkspace })));
 const AudioPlayerSmokeWorkspace = lazy(() =>
   import('./workshop/previews/audio-player-smoke/AudioPlayerSmokeWorkspace')
     .then(module => ({ default: module.AudioPlayerSmokeWorkspace })),
@@ -93,6 +96,7 @@ const AudioPlayerSmokeWorkspace = lazy(() =>
  * inside its own workspace component (see FeatureWorkspace).
  */
 const previewRegistry: Record<string, ComponentType> = {
+  'achievements': AchievementsWorkspace,
   'audio-player-smoke': AudioPlayerSmokeWorkspace,
   'card-workshop': CardWorkshopWorkspace,
   'celestial-backdrop': CelestialBackdropWorkspace,
@@ -105,11 +109,13 @@ const previewRegistry: Record<string, ComponentType> = {
   'model-router': ModelRouterWorkspace,
   'provenance': ProvenanceWorkspace,
   'familiar': FamiliarWorkspace,
+  'familiar-training': FamiliarTrainingWorkspace,
   'harness-generation': HarnessGenerationWorkspace,
   'idle-cultivation': ClosedDoorCultivationWorkspace,
   'reader-codex': ReaderCodexWorkspace,
   'reader-chamber': ReaderChamberWorkspace,
   'relics-gallery': RelicsWorkspace,
+  'reward-loop': RewardLoopWorkspace,
   'story-seed': StorySeedWorkspace,
   'light-novels-home': LightNovelsHomeWorkspace,
   'motion-picture': MotionPictureWorkspace,

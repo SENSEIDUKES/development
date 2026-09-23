@@ -1,176 +1,175 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { createLocalRelicsClient } from './localRelicsClient';
+/**
+ * Workshop preview for Fate Survival Relics.
+ *
+ * Reference: production's locked Relic Reveal for the retired inventory Relic.
+ * Development: the rebuilt Relic — a lightweight Fate Survival reward read
+ * from the Relics ledger on an in-browser development economy, with a
+ * simulator standing in for the unbuilt Fate Survival judge, and a reveal lab
+ * that plays the reveal at every rarity.
+ */
+import { useRef, useState } from 'react';
+import { RotateCcw, Sparkles } from 'lucide-react';
+import { FateSurvivalRelicsPanel, RelicReveal, type FateSurvivalOutcome, type FateSurvivalRelicView } from '@seihouse/library/relics';
+import { REWARD_RARITIES, type RewardRarity } from '@seihouse/library/rewards';
 import { RelicReveal as ReferenceRelicReveal } from '../../../components/relics/reference/RelicReveal';
-import {
-  RelicCard,
-  RelicModal,
-  RelicReveal as DevelopmentRelicReveal,
-  type CosmicArtifact,
-} from '@seihouse/library/relics';
+import type { CosmicArtifact } from '../../../components/relics/shared/types';
+import { FATE_SURVIVAL_RELICS } from '../../../server/relics/catalog';
 import { FeatureWorkspace } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
+import { BalanceStrip, LedgerFeed, SimulatedBadge, WorkshopActionButton, WorkshopCard } from '../rewards/RewardWorkshopKit';
+import { useRewardAccount, WorkshopEconomyProvider } from '../rewards/WorkshopEconomyProvider';
 import { mockRelics } from './mockData';
-import { Sparkles, RotateCcw } from 'lucide-react';
 
-type Scene = 'cards' | 'reveal';
+const entry = workshopEntries.find(candidate => candidate.id === 'relics-gallery')!;
 
-const RARITY_RANKS = ['Transcendent', 'Mythic', 'Legendary', 'Epic', 'Rare', 'Common'];
+type Scene = 'relics' | 'reveal';
 
-function RelicsScene({ scene, RevealComponent, items = mockRelics }: { scene: Scene; RevealComponent: typeof ReferenceRelicReveal; items?: CosmicArtifact[] }) {
-  const [inspectArtifact, setInspectArtifact] = useState<CosmicArtifact | null>(null);
-  const [revealArtifact, setRevealArtifact] = useState<CosmicArtifact | null>(null);
-  const [replayKey, setReplayKey] = useState(0);
+const OUTCOMES: { outcome: FateSurvivalOutcome; label: string }[] = [
+  { outcome: 'FATE AVERTED', label: 'Fate averted' },
+  { outcome: 'FATE SCARRED', label: 'Survived, scarred' },
+  { outcome: 'DOOM MANIFESTED', label: 'Doom manifested' },
+];
 
-  const getRelicsByRarity = (rarity: string) => items.filter((r) => r.rarity === rarity);
+/** A catalogue Relic shaped as the view the ledger returns, for the reveal lab only. */
+function sampleRelic(rarity: RewardRarity): FateSurvivalRelicView {
+  const relic = FATE_SURVIVAL_RELICS.find(candidate => candidate.rarity === rarity) ?? FATE_SURVIVAL_RELICS[0];
+  return {
+    id: `sample-${relic.key}`, relicKey: relic.key, name: relic.name, description: relic.description, rarity: relic.rarity,
+    challengeId: 'reveal-lab', storyId: null, outcome: 'FATE AVERTED', rewards: relic.rewards.map(grant => ({ ...grant })),
+    delivered: [], earnedAt: new Date().toISOString(),
+  };
+}
 
-  const openReveal = (relic: CosmicArtifact) => {
-    setInspectArtifact(null);
-    setReplayKey(0);
-    setRevealArtifact(relic);
+function FateSurvivalScene() {
+  const account = useRewardAccount();
+  const challenge = useRef(0);
+  const [revealing, setRevealing] = useState<FateSurvivalRelicView | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const outcomeRarity = account.relics.snapshot?.outcomeRarity;
+
+  const survive = async (outcome: FateSurvivalOutcome) => {
+    if (!account.relicsStore) return;
+    setPending(true);
+    try {
+      challenge.current += 1;
+      const response = await account.relicsStore.recordFateSurvivalOutcomeDevelopment({ challengeId: `workshop-challenge-${challenge.current}`, outcome });
+      await account.refreshBalances();
+      setMessage(response.message);
+      if (response.outcome === 'granted' && response.relic) setRevealing(response.relic);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'The outcome could not be recorded.');
+    } finally {
+      setPending(false);
+    }
   };
 
-  const reveal = revealArtifact ? (
-    <RevealComponent
-      key={revealArtifact.id}
-      artifact={revealArtifact}
-      replayKey={replayKey}
-      onClaim={() => setRevealArtifact(null)}
-      onDismiss={() => setRevealArtifact(null)}
-    />
-  ) : null;
-
-  if (scene === 'reveal') {
-    return (
-      <div className="min-h-[calc(100vh-11rem)] bg-black text-white font-sans flex items-center justify-center p-6">
-        {!revealArtifact ? (
-          <button
-            type="button"
-            disabled={!items.length}
-            onClick={() => openReveal(items[0])}
-            className="flex items-center gap-2 px-6 py-3 rounded-full border border-portal/40 text-portal text-sm uppercase tracking-widest font-mono hover:bg-portal/10 hover:border-portal/70 transition-colors"
-          >
-            <Sparkles size={14} /> Open Reveal Flow
-          </button>
-        ) : (
-          <>
-            {reveal}
-            <button
-              type="button"
-              onClick={() => setReplayKey((k) => k + 1)}
-              className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[130] flex items-center gap-2 px-5 py-2.5 rounded-full bg-neutral-900/90 border border-neutral-600 text-neutral-200 text-[11px] uppercase tracking-widest font-mono hover:bg-neutral-800 hover:text-white hover:border-neutral-400 transition-colors shadow-lg backdrop-blur"
-            >
-              <RotateCcw size={12} />
-              Replay Effects
-            </button>
-          </>
-        )}
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-[calc(100vh-11rem)] bg-black text-white font-sans p-6 md:p-12 pb-24">
-      <div className="space-y-16">
-        {RARITY_RANKS.map((rarity) => {
-          const relics = getRelicsByRarity(rarity);
-          if (relics.length === 0) return null;
+    <div className="mx-auto max-w-3xl space-y-4 px-4 pb-16 pt-6 text-neutral-200 sm:px-8">
+      <BalanceStrip />
+      <WorkshopCard title="Fate Survival challenge" badge={<SimulatedBadge>Judge not built</SimulatedBadge>}
+        description="Fate Survival is the only source of Relics. Its judge does not exist yet, so choose the outcome a challenge would have reached; the server decides the Relic, delivers its DAO XP and Energy, and grants at most one per challenge.">
+        <div className="flex flex-wrap gap-2">
+          {OUTCOMES.map(option => (
+            <WorkshopActionButton key={option.outcome} disabled={pending} onClick={() => void survive(option.outcome)}>
+              {option.label}{outcomeRarity ? ` → ${outcomeRarity[option.outcome] ?? 'no Relic'}` : ''}
+            </WorkshopActionButton>
+          ))}
+        </div>
+        {message ? <p role="status" className="mt-3 text-xs text-white/70" data-relic-outcome-message>{message}</p> : null}
+        <p className="mt-3 text-[11px] text-white/40">Outcome → rarity is a development default, not a product decision.</p>
+      </WorkshopCard>
+      <FateSurvivalRelicsPanel relics={account.relics} />
+      <LedgerFeed />
+      {revealing ? <RelicReveal key={revealing.id} relic={revealing} onClose={() => setRevealing(null)} /> : null}
+    </div>
+  );
+}
 
-          return (
-            <div key={rarity} className="space-y-4">
-              <h2
-                className={`text-lg font-bold uppercase tracking-widest font-sc pb-2 border-b border-neutral-900/50 ${
-                  rarity === 'Transcendent'
-                    ? 'text-cyan-400'
-                    : rarity === 'Mythic'
-                      ? 'text-red-500'
-                      : rarity === 'Legendary'
-                        ? 'text-amber-500'
-                        : rarity === 'Epic'
-                          ? 'text-purple-400'
-                          : rarity === 'Rare'
-                            ? 'text-emerald-400'
-                            : 'text-neutral-400'
-                }`}
-              >
-                {rarity} Rank
-              </h2>
+function RevealLab({ rarity }: { rarity: RewardRarity }) {
+  const [open, setOpen] = useState(false);
+  const [replayKey, setReplayKey] = useState(0);
+  const relic = sampleRelic(rarity);
+  return (
+    <div className="flex min-h-[calc(100vh-11rem)] items-center justify-center bg-black p-6 text-white">
+      {!open ? (
+        <button type="button" onClick={() => { setReplayKey(0); setOpen(true); }}
+          className="flex min-h-11 items-center gap-2 rounded-full border border-portal/40 px-6 py-3 font-mono text-sm uppercase tracking-widest text-portal transition-colors hover:border-portal/70 hover:bg-portal/10">
+          <Sparkles size={14} /> Open the {rarity} reveal
+        </button>
+      ) : (
+        <>
+          <RelicReveal key={`${relic.id}-${rarity}`} relic={relic} replayKey={replayKey} onClose={() => setOpen(false)} />
+          <button type="button" onClick={() => setReplayKey(key => key + 1)}
+            className="fixed bottom-5 left-1/2 z-[130] flex min-h-11 -translate-x-1/2 items-center gap-2 rounded-full border border-neutral-600 bg-neutral-900/90 px-5 py-2.5 font-mono text-[11px] uppercase tracking-widest text-neutral-200 shadow-lg backdrop-blur transition-colors hover:border-neutral-400 hover:text-white">
+            <RotateCcw size={12} /> Replay effects
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {relics.map((relic) => (
-                  <div key={relic.id} className="flex flex-col gap-2">
-                    <RelicCard artifact={relic} onClick={setInspectArtifact} />
-                    <button
-                      type="button"
-                      onClick={() => openReveal(relic)}
-                      className="flex items-center justify-center gap-1.5 py-1.5 rounded-full border border-portal/40 text-portal text-[10px] uppercase tracking-widest font-mono hover:bg-portal/10 hover:border-portal/70 transition-colors"
-                    >
-                      <Sparkles size={10} />
-                      Reveal
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+function RelicsReference() {
+  const [artifact, setArtifact] = useState<CosmicArtifact | null>(null);
+  return (
+    <div className="mx-auto max-w-3xl px-4 py-8 text-neutral-300 sm:px-8">
+      <p className="text-sm leading-relaxed text-neutral-400">
+        Production’s locked reveal for the retired inventory Relic: earned from story milestones, offered weekly for QI and Sect Merit, and attuned for status effects. Development retires all of that — Relics come only from Fate Survival.
+      </p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {mockRelics.map(relic => (
+          <button key={relic.id} type="button" onClick={() => setArtifact(relic)}
+            className="workshop-touch-target min-h-11 rounded-lg border border-white/10 px-3 py-2 text-xs text-white/70 hover:border-white/25 hover:text-white">
+            {relic.rarity} · {relic.name}
+          </button>
+        ))}
       </div>
-
-      <RelicModal inspectArtifact={inspectArtifact} onClose={() => setInspectArtifact(null)} />
-      {reveal}
+      {artifact ? <ReferenceRelicReveal key={artifact.id} artifact={artifact} onClaim={() => setArtifact(null)} onDismiss={() => setArtifact(null)} /> : null}
     </div>
   );
 }
 
 export function RelicsWorkspace() {
-  const entry = workshopEntries.find((e) => e.id === 'relics-gallery')!;
-  const [scene, setScene] = useState<Scene>('cards');
-  const client = useMemo(createLocalRelicsClient, []);
-  const [items, setItems] = useState<CosmicArtifact[]>([]);
-  const [error, setError] = useState('');
-  useEffect(() => {
-    let active = true;
-    void client.getSnapshot().then(snapshot => { if (active) setItems(snapshot.earned); }, reason => { if (active) setError(String(reason)); });
-    return () => { active = false; };
-  }, [client]);
-
+  const [scene, setScene] = useState<Scene>('relics');
+  const [rarity, setRarity] = useState<RewardRarity>('Legendary');
+  const [session, setSession] = useState(0);
   return (
     <FeatureWorkspace
       entry={entry}
+      allowCompare={false}
       workshopControls={{
+        description: 'The Relics scene runs the development economy in this tab: every Relic, DAO XP and Energy credit comes from real server code. Only the Fate Survival outcome is simulated.',
         defaultSection: 'scenes',
         sections: [
           {
             id: 'scenes',
-            description: 'Switch the Workshop canvas between the inventory gallery and the full reveal flow.',
+            description: scene === 'relics' ? 'Earn Relics through the Fate Survival simulator and inspect the collection.' : 'Play the Relic Reveal at any rarity. The Relic shown is a catalogue sample; nothing is credited.',
             content: (
               <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                aria-pressed={scene === 'cards'}
-                onClick={() => setScene('cards')}
-                className={`workshop-touch-target rounded-lg border px-4 py-2 text-sm transition-colors ${
-                  scene === 'cards' ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-100' : 'bg-white/5 border-transparent text-white/60 hover:bg-white/10'
-                }`}
-              >
-                Compact Cards
-              </button>
-              <button
-                type="button"
-                aria-pressed={scene === 'reveal'}
-                onClick={() => setScene('reveal')}
-                className={`workshop-touch-target rounded-lg border px-4 py-2 text-sm transition-colors ${
-                  scene === 'reveal' ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-100' : 'bg-white/5 border-transparent text-white/60 hover:bg-white/10'
-                }`}
-              >
-                Reveal Flow
-              </button>
+                <WorkshopActionButton pressed={scene === 'relics'} onClick={() => setScene('relics')}>Relics</WorkshopActionButton>
+                <WorkshopActionButton pressed={scene === 'reveal'} onClick={() => setScene('reveal')}>Reveal lab</WorkshopActionButton>
+                {scene === 'relics' && <WorkshopActionButton onClick={() => setSession(value => value + 1)}>Reset account</WorkshopActionButton>}
               </div>
             ),
           },
+          ...(scene === 'reveal' ? [{
+            id: 'effects' as const,
+            description: 'The rarity ladder: the accent colour and ambient effects scale; the card layout never changes.',
+            content: (
+              <div className="flex flex-wrap gap-2">
+                {REWARD_RARITIES.map(option => (
+                  <WorkshopActionButton key={option} pressed={rarity === option} onClick={() => setRarity(option)}>{option}</WorkshopActionButton>
+                ))}
+              </div>
+            ),
+          }] : []),
         ],
       }}
-      renderReference={() => <RelicsScene scene={scene} RevealComponent={ReferenceRelicReveal} />}
-      renderDevelopment={() => error ? <p role="alert">{error}</p> : !items.length ? <p role="status">Loading earned Relics…</p> : <RelicsScene scene={scene} RevealComponent={DevelopmentRelicReveal} items={items} />}
+      renderReference={() => <RelicsReference />}
+      renderDevelopment={() => scene === 'reveal'
+        ? <RevealLab key={rarity} rarity={rarity} />
+        : <WorkshopEconomyProvider key={session}><FateSurvivalScene /></WorkshopEconomyProvider>}
     />
   );
 }

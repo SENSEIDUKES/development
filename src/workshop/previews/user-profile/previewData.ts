@@ -9,11 +9,18 @@
  * in `development/displayName.ts`, except `home-edge-cases`, which keeps a
  * long name on purpose: it stands in for a name stored before the cap existed
  * and exercises both the Home layout and the blocked save in Settings.
+ *
+ * The records use production's profile shape (`components/user-profile/shared`)
+ * because the locked Reference pane still renders it: the Qi cores, the
+ * inventory Relics with their offerings and attunement, and the status effects
+ * below exist for that pane only. The development Cave reads none of them — its
+ * DAO XP opening balance comes from `dao_xp`, and every other balance and
+ * reward comes from the scenario's development economy.
  */
 
-import { getCurrentOfferingWeekId } from '@seihouse/library/profile';
-import { type AdminStoryRow, type AppUser, type CosmicArtifact, type Story, type StorySeed, type UserProfile } from '@seihouse/library/profile';
-import { type SpecialQiId } from '@seihouse/library/profile';
+import { getCurrentOfferingWeekId } from '../../../components/user-profile/shared/offeringWeek';
+import { type AdminStoryRow, type AppUser, type CosmicArtifact, type Story, type StorySeed, type UserProfile } from '../../../components/user-profile/shared/types';
+import { type SpecialQiId } from '../../../components/user-profile/shared/userProfileServices';
 import type { UserProfilePreviewState } from './previewStates';
 
 const CURRENT_WEEK = getCurrentOfferingWeekId();

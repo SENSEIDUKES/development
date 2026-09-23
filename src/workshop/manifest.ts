@@ -20,10 +20,12 @@ export interface WorkshopSource {
  * Workshop navigation only: where SENSEI mentally works on something. It never
  * changes package or implementation ownership — see `WorkshopOwner` for that.
  */
-export type WorkshopSection = 'pages' | 'customization' | 'systems' | 'components';
+export type WorkshopSection = 'pages' | 'rewards' | 'customization' | 'systems' | 'components';
 
-/** Optional subsection inside a Workshop section (currently only Pages uses them). */
-export type WorkshopGroup = 'home' | 'create' | 'read' | 'account' | 'commerce';
+/** Optional subsection inside a Workshop section (Pages and Rewards use them). */
+export type WorkshopGroup =
+  | 'home' | 'create' | 'read' | 'account' | 'commerce'
+  | 'reward-overview' | 'earning' | 'spending' | 'recurring';
 
 /**
  * The package lane that actually owns a Workshop item. Declared explicitly per
@@ -87,7 +89,18 @@ export const WORKSHOP_SECTIONS: ReadonlyArray<{
       { id: 'commerce', label: 'Commerce' },
     ],
   },
-  { id: 'customization', label: 'Customization', description: 'Companions, relics, and rewards a cultivator collects and shapes.' },
+  {
+    id: 'rewards',
+    label: 'Rewards',
+    description: 'How a cultivator earns and spends: achievements and Mystery Scrolls, Fate Survival Relics, Familiar training with QI, and the recurring Dao Pillar. Start with the Reward Loop to see every piece move together.',
+    groups: [
+      { id: 'reward-overview', label: 'Start here' },
+      { id: 'earning', label: 'Earning' },
+      { id: 'spending', label: 'Spending' },
+      { id: 'recurring', label: 'Daily & idle' },
+    ],
+  },
+  { id: 'customization', label: 'Customization', description: 'Companions and the looks a cultivator collects and shapes.' },
   { id: 'systems', label: 'Systems', description: 'Generation, voice, economy, and provenance systems behind the pages.' },
   { id: 'components', label: 'Components', description: 'Reusable visual pieces, primitives, and icons.' },
 ];
@@ -212,7 +225,7 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'library',
     status: 'active',
     title: 'User Profile',
-    description: "The cultivator's profile. The locked reference is the production Celestial Tools page; Development is the Cultivator Cave redesign — a portrait, identity, permanent DAO XP rank, and spendable QI over a stock Immortal Land backdrop, four destinations (Stories, Relics, Dao Pillar, Active Status Effects), the Energy, QI & DAO XP page, a cinematic Spirit Link authentication flow, and one gear-triggered Settings panel holding identity, aura, portrait, environment, language, writing, sync, backup, advanced tools, Sever Link, and the authorized Akashic Switchboard — driven entirely by local mock adapters.",
+    description: "The cultivator's profile. The locked reference is the production Celestial Tools page; Development is the Cultivator Cave redesign — a portrait, identity, a rank coloured by DAO XP alone, and spendable QI over a stock Immortal Land backdrop, destinations for Stories, Rewards (achievements, Mystery Scrolls and Fate Survival Relics), the Dao Pillar and the Familiar (training and its elemental title), the Energy, QI & DAO XP page, a cinematic Spirit Link authentication flow, and one gear-triggered Settings panel. Balances and rewards run on an in-browser copy of the development economy seeded per scenario; profile edits run against local mock adapters.",
     category: 'other',
     version: 'v1.2',
     source: {
@@ -223,12 +236,12 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'dao-pillar',
-    section: 'pages',
-    group: 'account',
+    section: 'rewards',
+    group: 'recurring',
     owner: 'library',
     status: 'active',
     title: 'Daily Dao Pillar',
-    description: 'The Cultivator Cave’s 30-day reward calendar: one Library-controlled active theme (Beta Test first) over a five-by-six grid of scheduled days, collected / available today / locked / missed states, milestone days, and a server-validated one-claim-per-day collection that deposits Qi through the server ledger. Previewed against an in-process calendar; the User Profile preview runs it against /api/dao-pillar.',
+    description: 'The Cultivator Cave’s 30-day reward calendar: one Library-controlled active theme (Beta Test first) over a five-by-six grid of scheduled days, collected / available today / locked / missed states, milestone days, and a server-validated one-claim-per-day collection that deposits QI through the server ledger. Previewed against an in-process calendar; the User Profile preview and the Reward Loop run it on the development economy.',
     category: 'other',
     version: 'v1.0',
     source: {
@@ -254,6 +267,24 @@ export const workshopEntries: WorkshopEntry[] = [
     },
   },
   {
+    id: 'reward-loop', section: 'rewards', group: 'reward-overview', owner: 'workshop', status: 'active', title: 'Reward Loop',
+    description: 'The whole reward system on one live development economy: read, create and explore to earn achievements, open Mystery Scrolls, watch DAO XP recolour the cultivator’s rank, spend QI training a Familiar until its elemental title letters the name, survive a Fate Survival challenge for a Relic, collect the Dao Pillar, and buy from the Celestial Store — every balance moved by real server code.',
+    category: 'rewards', version: 'v1.0',
+    source: { repository: 'SENSEIDUKES/development', path: 'src/workshop/previews/rewards/; src/server/economy/developmentRuntime.ts', lastCompared: '2026-09-23' },
+  },
+  {
+    id: 'achievements', section: 'rewards', group: 'earning', owner: 'library', status: 'active', title: 'Achievements & Mystery Scrolls',
+    description: 'Library-defined goals over natural reading, creation and exploration (other media planned), each earning one Mystery Scroll: most conceal their reward until opened, curated milestones show it upfront. A scroll unseals through the celestial scroll vessel into the Relic Reveal’s rarity card, and only the server decides what it holds.',
+    category: 'rewards', version: 'v1.0',
+    source: { repository: 'SENSEIDUKES/development', path: 'src/components/rewards/; src/server/achievements/', lastCompared: '2026-09-23' },
+  },
+  {
+    id: 'familiar-training', section: 'rewards', group: 'spending', owner: 'library', status: 'active', title: 'Familiar Training',
+    description: 'Offer QI to one Familiar to raise its tier — Bonded, Awakened, Ascended, Transcendent — unlocking a radiant form and elemental titles that letter the cultivator’s name. The equipped Familiar’s chosen effect is the one active effect, and no effect grants a boost, discount or advantage.',
+    category: 'rewards', version: 'v1.0',
+    source: { repository: 'SENSEIDUKES/development', path: 'src/components/familiar-training/; src/server/familiars/', lastCompared: '2026-09-23' },
+  },
+  {
     id: 'familiar', section: 'customization', owner: 'library', status: 'active', title: 'Familiar',
     description: 'Inspect eleven supplied Familiar atlases, ranks, and hosted heroes through the reusable sprite renderer and live Energy interaction.',
     category: 'animations', version: 'v1.0',
@@ -261,13 +292,14 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'relics-gallery',
-    section: 'customization',
+    section: 'rewards',
+    group: 'earning',
     owner: 'library',
     status: 'active',
-    title: 'Relics Gallery',
-    description: 'Cosmic Artifact cards separated by rarity rank, with the full-screen Relic Reveal celebration flow.',
+    title: 'Fate Survival Relics',
+    description: 'Lightweight Relics earned only in Fate Survival challenges — one per challenge, granting DAO XP and Energy by rarity — with the full-screen Relic Reveal at every rarity. The Fate Survival judge is not built yet; a development simulator stands in for its outcome.',
     category: 'rewards',
-    version: 'v1.3',
+    version: 'v1.4',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/UserProfileInventoryPanel.tsx',
@@ -276,11 +308,12 @@ export const workshopEntries: WorkshopEntry[] = [
   },
   {
     id: 'idle-cultivation',
-    section: 'customization',
+    section: 'rewards',
+    group: 'recurring',
     owner: 'library',
     status: 'active',
     title: 'Closed-Door Cultivation',
-    description: 'Idle Qi reward presentation and absorption animation.',
+    description: 'Idle Qi reward presentation and absorption animation. Kept as it is: its future mechanic is undecided.',
     category: 'rewards',
     version: 'v1.7',
     source: {

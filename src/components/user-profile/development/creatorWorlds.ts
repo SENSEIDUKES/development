@@ -1,4 +1,5 @@
-import type { Story, StorySeed, UserProfile } from '../shared/types';
+import type { Story, StorySeed, UserProfile } from './types';
+import type { PublicActivitySummary } from './publicProfile';
 
 /** Development presentation input; publication must be authorized by the host.
  * Missing publication metadata is private. This never reads the account seed index.
@@ -14,6 +15,8 @@ export interface CreatorWorld extends Story {
 export interface PublicCreator {
   profile: UserProfile;
   worlds: readonly CreatorWorld[];
+  /** Host-published activity: Relic names and the reading streak. */
+  activity?: PublicActivitySummary;
 }
 
 export function publicCreatorWorlds(creatorId: string, worlds: readonly CreatorWorld[]) {

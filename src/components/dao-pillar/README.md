@@ -4,11 +4,12 @@
 - **Source location:** `src/components/dao-pillar/` (client contracts, calendar hook, and the view),
   `src/server/dao-pillar/` (the server-owned calendar, see its README) and `src/server/qi/`
   (the Qi deposit ledger the calendar delivers through)
-- **Workshop preview:** `?preview=dao-pillar` for every calendar state against an in-process
-  service; `?preview=user-profile&cave=/home/dao-pillar` for the live Cave destination against
-  `/api/dao-pillar`
+- **Workshop preview:** `?preview=dao-pillar` (in the Workshop's Rewards section) for every
+  calendar state against an in-process service; `?preview=user-profile&cave=/home/dao-pillar` and
+  `?preview=reward-loop` for the live calendar on the development economy
+  (`/api/library-economy?capability=dao-pillar`)
 - **Created:** 2026-09-18
-- **Last Workshop update:** 2026-09-18
+- **Last Workshop update:** 2026-09-23
 - **Last source comparison:** 2026-09-18 (Light-Novels inspected for the profile's daily
   check-in, `awardDirectQi`, and the cultivation profile schema; it has no calendar to compare)
 - **Status:** approved reconstruction (Workshop Replica Mode B), first theme live
@@ -24,7 +25,7 @@ what it awards, and deposits the Qi.
 
 | Piece | File | Role |
 | --- | --- | --- |
-| Contracts | `shared/daoPillarContracts.ts` | The generic reward entry (`{ type: 'qi', amount: 100 }` today; Relics, Titles, Energy, Media Packs typed for later), the calendar snapshot, the claim response. Server and UI both read it. |
+| Contracts | `shared/daoPillarContracts.ts` | The generic reward entry (`{ type: 'qi', amount: 100 }` today; Energy and Media Packs typed for later — Relics come only from Fate Survival and reward Titles are retired, so neither is a calendar reward), the calendar snapshot, the claim response. Server and UI both read it. |
 | Client port | `shared/daoPillarClient.ts` | `DaoPillarClient`, the HTTP implementation, `DaoPillarClientProvider`. A browser reads and claims only through this. |
 | Calendar hook | `shared/useDaoPillarCalendar.ts` | Loading / ready / error / unavailable over the server snapshot; `claim()` with a tap lock, replaces the snapshot with the server's answer, re-reads on a lost answer, and reports each *newly* delivered deposit to the host. |
 | Theme banner | `development/DaoPillarThemeBanner.tsx` | Art, name, tagline, active dates, pillars, seal, motto, description — all from the theme. No user selector. |
@@ -55,7 +56,7 @@ reads them; the Cave no longer does.
 Copy `src/components/dao-pillar/`, `src/server/dao-pillar/`, `src/server/qi/`, the two migrations
 under `database/migrations/`, `public/dao-pillar/`, and mount `DaoPillarClientProvider` with
 `createHttpDaoPillarClient({ token })` where `EnergyClientProvider` is mounted. Serve
-`/api/dao-pillar` from the host with a durable `DaoPillarRepository` and `QiLedger` and the
+`/api/library-economy?capability=dao-pillar` from the host with a durable `DaoPillarRepository` and `QiLedger` and the
 host's own token verifier (`production` identity mode). Leave `src/workshop/previews/dao-pillar/`
 behind.
 
@@ -64,3 +65,13 @@ behind.
 `npm run test:dao-pillar`. Screenshots at 390px: `output/playwright/dao-pillar-calendar-390.png`,
 `dao-pillar-tile-detail-390.png`, `dao-pillar-profile-card-390.png`,
 `dao-pillar-destination-390.png` (the last two against the live dev-server route).
+
+## Workshop history
+
+- **2026-09-23:** Stays the calendar reward feature in the reward rework. Its reward entry no
+  longer types Relics or Titles (Relics come only from Fate Survival; standalone reward Titles
+  are retired), leaving QI today with Energy and Media Packs typed for later. The Workshop entry
+  moved into the new Rewards section, and the Reward Loop runs the calendar beside the other
+  reward sources. Corrected the route to `/api/library-economy?capability=dao-pillar`.
+- **2026-09-18:** Created the 30-day calendar, the server-owned claim, and the Cave card and
+  destination.

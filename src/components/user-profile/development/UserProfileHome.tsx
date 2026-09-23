@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   ChevronRight,
   Mail,
-  Flame,
   Image as ImageIcon,
   Sigma,
   Sparkles,
@@ -15,8 +14,9 @@ import {
   SEIDialogDescription,
   SEILoadingState,
 } from "@seihouse/ui";
-import type { UserProfileController } from "../shared/userProfileServices";
-import type { ActiveStatusEffect, PremiumTier } from "../shared/types";
+import type { UserProfileController } from "./userProfileServices";
+import type { PremiumTier } from "./types";
+import type { FamiliarCosmeticEffect } from "../../../library/familiars/contracts";
 import type { PublicProfilePresentation } from "./publicProfile";
 import type { CaveAccountControls } from "./caveAccountControls";
 import { EnergyBalanceIndicator } from "../../energy/development/EnergyBalanceIndicator";
@@ -31,17 +31,12 @@ import {
   getRankForDaoXp,
   getAuraSelection,
   getAuraTextStyle,
-  activeAuraOverride,
   getAuraGlowStyle,
-  resolveRankVisual,
   resolvePermanentDaoXp,
   rankBackground,
 } from "../../../library/cultivation/progression";
-import { isEffectActive } from './timedEffects';
 import { LibraryNavigationIcon as SENNavigationIcon } from '@seihouse/library-ui';
 import { LibraryProfileIcon as SENProfileIcon, LibraryQiYinYangIcon as SENQiYinYangIcon, LibrarySettingsIcon as SENSettingsIcon } from '@seihouse/library-ui';
-
-export { isEffectActive } from './timedEffects';
 
 const tiers: Record<PremiumTier, string> = {
   mortal: "Mortal",
@@ -71,35 +66,6 @@ export function daoPillarCardLabels(daoPillar?: DaoPillarCalendarState): { strea
   const openTile = snapshot.tiles.find(tile => tile.day === today.day);
   return { streakLabel, daoPillarLabel: `Day ${today.day} · ${openTile ? describeRewards(openTile.rewards) : "Reward"} ready to collect` };
 }
-export function effectStatement(effect: ActiveStatusEffect, now: number) {
-  const modifiers = [
-    [effect.effectDef.qiMultiplier, "Qi"],
-    [effect.effectDef.sectQiMultiplier, "Sect Qi"],
-  ] as const;
-  const description =
-    modifiers
-      .filter(([value]) => typeof value === "number" && Number.isFinite(value))
-      .map(([value, label]) => {
-        const percentage = Math.round((value! - 1) * 100);
-        return `${percentage >= 0 ? "+" : ""}${percentage}% ${label}`;
-      })
-      .join(" · ") ||
-    effect.effectDef.description ||
-    effect.effectDef.name;
-  const minutes = Math.max(
-    1,
-    Math.ceil((Date.parse(effect.expiresAt) - now) / 60000),
-  );
-  const amount =
-    minutes > 1440
-      ? Math.ceil(minutes / 1440)
-      : minutes > 60
-        ? Math.ceil(minutes / 60)
-        : minutes;
-  const unit = minutes > 1440 ? "day" : minutes > 60 ? "hour" : "minute";
-  return `${description} · ${amount} ${unit}${amount === 1 ? "" : "s"}`;
-}
-
 const HIGHLIGHT_MEDIUM_LABELS = {
   "codex-image": "Codex image",
   audio: "Audio",
@@ -116,25 +82,41 @@ export interface HomeBoostState {
 
 export type UserProfileHomeMode = "private" | "public";
 
-type HomePanel = "qi" | "effects" | "stats" | "highlights" | "progress" | "bio";
+type HomePanel = "stats" | "highlights" | "progress" | "bio";
+
+/** The equipped Familiar as the Home card shows it; the Familiar account is its authority. */
+export interface HomeFamiliarSummary {
+  name: string;
+  /** The Familiar's training tier, when training is connected. */
+  tierName: string | null;
+  /** Its selected cosmetic effect: the cultivator's one active effect. */
+  effect: FamiliarCosmeticEffect | null;
+  onOpen: () => void;
+}
+
+/** What the Rewards card counts, straight from the achievements and Relics ledgers. */
+export interface HomeRewardsSummary {
+  sealedScrolls: number | null;
+  relics: number | null;
+  onOpen: () => void;
+}
 
 /** Profile identity reads the viewed controller and its existing bio presentation. */
 export function UserProfileHome({
   controller,
-  now,
   mode = "private",
   publicProfile,
   boost,
   accountControls,
   energy,
+  qi,
+  familiar,
+  rewards,
   daoPillar,
   onOpenDaoPillar,
-  onOpenRelics,
   onOpenSettings,
 }: {
   controller: UserProfileController;
-  /** The parent-owned effect clock, shared with the Status Effects destination. */
-  now: number;
   mode?: UserProfileHomeMode;
   publicProfile?: PublicProfilePresentation;
   boost?: HomeBoostState;
@@ -143,10 +125,14 @@ export function UserProfileHome({
   energy?: { account: EnergyAccountState; onOpen: () => void };
   /** The server-owned Daily Dao Pillar calendar; absent when the calendar is not connected. */
   daoPillar?: DaoPillarCalendarState;
+  /** Spendable QI from the QI ledger, and where the balances page is. Absent when QI is not connected. */
+  qi?: { balance: number | null; onOpen: () => void };
+  /** The equipped Familiar and its active cosmetic effect. */
+  familiar?: HomeFamiliarSummary;
+  /** Achievements, Mystery Scrolls and Fate Survival Relics. */
+  rewards?: HomeRewardsSummary;
   /** Opens the Cave's `/home/dao-pillar` destination holding the reward calendar. */
   onOpenDaoPillar?: () => void;
-  /** Opens the Cave's existing `/relics` route and its inventory panel. */
-  onOpenRelics?: () => void;
   onOpenSettings?: () => void;
 }) {
   const { profile, formData, isLoading } = controller;
@@ -166,39 +152,23 @@ export function UserProfileHome({
       <span>{destination === 'worlds' ? 'Worlds' : 'Store'}</span>
     </a>;
   }) : null;
-  // The same inventory the Relics destination reads; counted, never copied.
-  const relicCount = profile?.cosmicInventory?.length ?? 0;
   const [panel, setPanel] = useState<HomePanel | null>(null);
-  const reservesRef = useRef<HTMLButtonElement>(null);
-  const lastPanel = useRef<HomePanel>("qi");
-  const effectsRef = useRef<HTMLButtonElement>(null);
+  const lastPanel = useRef<HomePanel>("progress");
   const statsRef = useRef<HTMLButtonElement>(null);
   const highlightsRef = useRef<HTMLButtonElement>(null);
   const daoProgress = daoXp ?? 0;
   const daoData = getDaoRankData(daoProgress);
   const rank = getRankForDaoXp(daoProgress);
-  const effects = (profile?.activeStatusEffects ?? []).filter((effect) =>
-    isEffectActive(effect, now),
-  );
+  // Rank chooses the colours. The equipped Familiar's selected effect, when
+  // there is one, letters the name in its element instead; the rank colours
+  // stay on the portrait ring, the progress bar and the rank row.
   const auraSelection = getAuraSelection(profile?.displayNameColor, daoProgress);
-  const nameStyle = getAuraTextStyle(
-    auraSelection,
-    effects,
-    daoProgress,
-    now,
-  );
-  const auraGlow = getAuraGlowStyle(
-    auraSelection,
-    effects,
-    daoProgress,
-    now,
-  );
-  const activeRank = resolveRankVisual(auraSelection, daoProgress);
-  const hasAuraOverride = activeAuraOverride(effects, now) !== null;
-  const hasFireTitle = activeRank.rank.id === 'leader' && activeRank.source === 'rank' && !hasAuraOverride;
+  const nameStyle = getAuraTextStyle(auraSelection, daoProgress);
+  const auraGlow = getAuraGlowStyle(auraSelection, daoProgress);
+  const titleEffect = isPublic ? null : familiar?.effect ?? null;
   const nextRank = !daoXpKnown || daoData.maxDaoXp === null ? null : getRankForDaoXp(daoData.maxDaoXp);
-  const currentRankStyle = getAuraTextStyle(`rank:${rank.id}`, [], daoProgress, now);
-  const nextRankStyle = nextRank ? getAuraTextStyle(`rank:${nextRank.id}`, [], daoData.maxDaoXp!, now) : {};
+  const currentRankStyle = getAuraTextStyle(`rank:${rank.id}`, daoProgress);
+  const nextRankStyle = nextRank ? getAuraTextStyle(`rank:${nextRank.id}`, daoData.maxDaoXp!) : {};
   const progressRef = useRef<HTMLButtonElement>(null);
   const bioOpenerRef = useRef<HTMLButtonElement>(null);
   const bioRef = useRef<HTMLParagraphElement>(null);
@@ -222,20 +192,6 @@ export function UserProfileHome({
     [group, name, badge].forEach(element => observer.observe(element));
     return () => observer.disconnect();
   }, [profile?.displayName, profile?.premiumTier, isLoading]);
-  const showsRankParticles = activeRank.rank.motes;
-  const moteColors = activeRank.visual.stops;
-  const reserves = (
-    [
-      { id: "sect", label: "Sect Qi", balance: profile?.sect_qi ?? 0 },
-      { id: "demonic", label: "Demonic Qi", balance: profile?.demonic_qi ?? 0 },
-    ] as const
-  ).filter(
-    (reserve) =>
-      profile &&
-      (controller.unlockedSpecialQi
-        ? controller.unlockedSpecialQi.includes(reserve.id)
-        : reserve.balance > 0),
-  );
   // Everything the card says about the Dao Pillar is the server's snapshot:
   // streak, whether today is open or collected, and what was collected.
   const { streakLabel, daoPillarLabel } = daoPillarCardLabels(daoPillar);
@@ -256,8 +212,6 @@ export function UserProfileHome({
   const panelTitles: Record<HomePanel, string> = {
     progress: "DAO XP progress",
     bio: "Cultivator bio",
-    qi: "Qi Reserves",
-    effects: "Active Effects",
     stats: "Stats",
     highlights: "Highlights",
   };
@@ -269,12 +223,10 @@ export function UserProfileHome({
     const openers: Record<HomePanel, HTMLButtonElement | null> = {
       progress: progressRef.current,
       bio: bioOpenerRef.current,
-      qi: reservesRef.current,
-      effects: effectsRef.current,
       stats: statsRef.current,
       highlights: highlightsRef.current,
     };
-    return openers[lastPanel.current] ?? reservesRef.current;
+    return openers[lastPanel.current] ?? progressRef.current;
   };
 
   return (
@@ -343,37 +295,6 @@ export function UserProfileHome({
                     className="text-neutral-700"
                   />
                 )}
-                {showsRankParticles ? (
-                  <div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 overflow-hidden mix-blend-screen"
-                  >
-                    <div className="absolute inset-x-0 bottom-2 flex h-8 justify-around opacity-75">
-                      <span
-                        className="h-1 w-1 animate-ping rounded-full motion-reduce:animate-none"
-                        style={{
-                          animationDuration: "3s",
-                          backgroundColor: moteColors[0],
-                        }}
-                      />
-                      <span
-                        className="h-1.5 w-1.5 animate-bounce rounded-full motion-reduce:animate-none"
-                        style={{
-                          animationDuration: "2s",
-                          backgroundColor: moteColors[moteColors.length - 1],
-                        }}
-                      />
-                      <span
-                        className="h-1 w-1 animate-pulse rounded-full motion-reduce:animate-none"
-                        style={{
-                          animationDuration: "2.5s",
-                          backgroundColor:
-                            moteColors[Math.floor(moteColors.length / 2)],
-                        }}
-                      />
-                    </div>
-                  </div>
-                ) : null}
               </div>
             </div>
           </div>
@@ -419,14 +340,15 @@ export function UserProfileHome({
                 style={{ "--cave-name-width": `${markerLayout.nameWidth}px` } as React.CSSProperties}>
               <LibraryElementalTitle
                 as="h2"
-                element={hasFireTitle ? "fire" : "none"}
-                intensity="active"
-                shadow={hasFireTitle ? "outlined" : "none"}
+                element={titleEffect?.element ?? "none"}
+                intensity={titleEffect?.intensity ?? "active"}
+                shadow={titleEffect ? (titleEffect.intensity === "legendary" ? "outlined" : "soft") : "none"}
                 id="cave-cultivator-name"
                 tabIndex={-1}
-                className={`cave-home-username w-fit font-display text-2xl leading-tight outline-none sm:text-3xl ${hasFireTitle ? "" : nameStyle.className || "text-neutral-100"}`}
-                style={hasFireTitle ? undefined : nameStyle.style}
+                className={`cave-home-username w-fit font-display text-2xl leading-tight outline-none sm:text-3xl ${titleEffect ? "" : nameStyle.className || "text-neutral-100"}`}
+                style={titleEffect ? undefined : nameStyle.style}
                 data-cave-name
+                data-cave-name-effect={titleEffect?.id}
               >
                 {profile?.displayName?.trim() || "Cultivator"}
               </LibraryElementalTitle>
@@ -530,46 +452,44 @@ export function UserProfileHome({
         ) : (
           <>
             <button
-              ref={reservesRef}
               type="button"
               className="cave-home-control"
-              aria-haspopup="dialog"
-              onClick={() => openPanel("qi")}
-              data-cave-card="qi-reserves"
+              onClick={qi?.onOpen}
+              disabled={!qi}
+              data-cave-card="qi"
+              aria-label={qi?.balance != null ? `QI, ${formatQi(qi.balance)} to spend` : "QI"}
             >
               <SENQiYinYangIcon aria-hidden="true" className="cave-home-glyph" />
               <span className="min-w-0 flex-1">
-                <span className="block font-display">Qi Reserves</span>
-                <span className="block text-xs text-neutral-400">
-                  Unlocked Qi types
+                <span className="block font-display">QI</span>
+                <span className="line-clamp-2 text-xs text-neutral-400" data-cave-qi>
+                  {qi ? (qi.balance == null ? "Balance loading…" : `${formatQi(qi.balance)} to spend`) : "Not connected"}
                 </span>
               </span>
-              <ChevronRight size={16} aria-hidden="true" className="shrink-0" />
+              {qi ? <ChevronRight size={16} aria-hidden="true" className="shrink-0" /> : null}
             </button>
-            {effects.length > 0 && (
-              <button
-                ref={effectsRef}
-                type="button"
-                className="cave-home-control"
-                aria-haspopup="dialog"
-                onClick={() => openPanel("effects")}
-                data-cave-card="status-effects"
-              >
-                <Flame
-                  aria-hidden="true"
-                  className="cave-home-glyph text-violet-300"
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="block font-display">
-                    Active Effects · {effects.length}
-                  </span>
-                  <span className="block truncate text-xs text-neutral-400">
-                    {effectStatement(effects[0], now)}
-                  </span>
+            <button
+              type="button"
+              className="cave-home-control"
+              onClick={familiar?.onOpen}
+              disabled={!familiar}
+              data-cave-card="familiar"
+              aria-label={familiar ? [familiar.name, familiar.tierName, familiar.effect?.label ?? "no effect chosen"].filter(Boolean).join(", ") : undefined}
+            >
+              <Sparkles aria-hidden="true" className="cave-home-glyph text-violet-300" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-display">{familiar?.name ?? "Familiar"}</span>
+                {/* The active effect is what the card is for; its tier shows here
+                    only while no effect is chosen, and always on the Familiar page. */}
+                <span className="line-clamp-3 text-xs text-neutral-400" data-cave-familiar-effect={familiar?.effect?.id}
+                  data-cave-familiar-tier={familiar?.tierName ?? undefined}>
+                  {familiar
+                    ? familiar.effect?.label ?? [familiar.tierName, "No effect chosen"].filter(Boolean).join(" · ")
+                    : "Not connected"}
                 </span>
-                <ChevronRight size={16} aria-hidden="true" className="shrink-0" />
-              </button>
-            )}
+              </span>
+              {familiar ? <ChevronRight size={16} aria-hidden="true" className="shrink-0" /> : null}
+            </button>
           </>
         )}
       </div>
@@ -636,29 +556,30 @@ export function UserProfileHome({
           </>
         )}
       </div>
-      {/* Relics is a destination of its own, the same weight as the Dao Pillar
-          it follows and above the smaller Store and Settings pair. It opens the
-          Cave's existing `/relics` route, which mounts the one inventory panel;
-          nothing about relics is implemented or stored a second time here. */}
+      {/* Rewards is a destination of its own, the same weight as the Dao Pillar
+          it follows. It counts what the achievements and Relics ledgers hold;
+          nothing about rewards is stored or decided here. */}
       {!isPublic && (
         <div className="mt-3">
           <button
             type="button"
             className="cave-home-pillar"
-            disabled={!onOpenRelics}
-            onClick={onOpenRelics}
-            data-cave-card="relics"
+            disabled={!rewards}
+            onClick={rewards?.onOpen}
+            data-cave-card="rewards"
           >
             <span className="cave-home-pillar-art" aria-hidden="true">
               <SENNavigationIcon name="relic" size={30} />
             </span>
             <span className="min-w-0">
-              <span className="block font-display text-lg">Relics</span>
-              <span className="mt-1 block font-serif text-lg text-sky-300">
-                {formatQi(relicCount)} {relicCount === 1 ? "Relic" : "Relics"}
+              <span className="block font-display text-lg">Rewards</span>
+              <span className="mt-1 block font-serif text-lg text-sky-300" data-cave-sealed-scrolls={rewards?.sealedScrolls ?? undefined}>
+                {rewards?.sealedScrolls == null ? "Mystery Scrolls"
+                  : rewards.sealedScrolls === 0 ? "No sealed scrolls"
+                  : `${formatQi(rewards.sealedScrolls)} sealed ${rewards.sealedScrolls === 1 ? "scroll" : "scrolls"}`}
               </span>
               <span className="mt-1 block text-sm">
-                Inventory, attunement, and the Offering Hall
+                Achievements, Mystery Scrolls{rewards?.relics ? ` and ${formatQi(rewards.relics)} Fate Survival ${rewards.relics === 1 ? "Relic" : "Relics"}` : " and Fate Survival Relics"}
               </span>
             </span>
           </button>
@@ -685,18 +606,13 @@ export function UserProfileHome({
           finalFocus={panelOpener}
         >
           <SEIDialogTitle>
-            {panel ? panelTitles[panel] : panelTitles.qi}
+            {panelTitles[panel ?? lastPanel.current]}
           </SEIDialogTitle>
           <SEIDialogDescription className="sr-only">
-            {panel === "progress" ? "Exact DAO XP toward the next rank"
-              : panel === "bio" ? "Complete bio for this cultivator"
-              : panel === "effects"
-              ? "Current effects and remaining duration"
-              : panel === "stats"
-                ? "Public reading activity for this cultivator"
-                : panel === "highlights"
-                  ? "Media and moments this cultivator features"
-                  : "Unlocked special Qi balances"}
+            {panel === "bio" ? "Complete bio for this cultivator"
+              : panel === "stats" ? "Public reading activity for this cultivator"
+              : panel === "highlights" ? "Media and moments this cultivator features"
+              : "Exact DAO XP toward the next rank"}
           </SEIDialogDescription>
           {panel === "progress" ? (
             <p className="mt-4 font-mono" data-cave-dao-xp>
@@ -704,21 +620,6 @@ export function UserProfileHome({
             </p>
           ) : panel === "bio" ? (
             <p className="mt-4 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{bio}</p>
-          ) : panel === "effects" ? (
-            effects.length ? (
-              <ul className="mt-4 space-y-3">
-                {effects.map((effect) => (
-                  <li
-                    key={effect.id}
-                    className="border-b border-white/10 pb-3 text-sm"
-                  >
-                    <p>{effectStatement(effect, now)}</p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-4">No active effects.</p>
-            )
           ) : panel === "stats" ? (
             stats?.length ? (
               <dl className="mt-4 space-y-3">
@@ -732,7 +633,7 @@ export function UserProfileHome({
             ) : (
               <p className="mt-4">No public stats.</p>
             )
-          ) : panel === "highlights" ? (
+          ) : (
             highlights?.length ? (
               <ul className="mt-4 space-y-3">
                 {highlights.map((highlight) => (
@@ -768,20 +669,6 @@ export function UserProfileHome({
             ) : (
               <p className="mt-4">Nothing featured yet.</p>
             )
-          ) : reserves.length ? (
-            <dl className="mt-4 space-y-3">
-              {reserves.map((reserve) => (
-                <div key={reserve.id} className="flex justify-between gap-4">
-                  <dt className="flex items-center gap-2">
-                    <SENQiYinYangIcon size={18} aria-hidden="true" className="shrink-0 text-portal" />
-                    {reserve.label}
-                  </dt>
-                  <dd>{formatQi(reserve.balance)}</dd>
-                </div>
-              ))}
-            </dl>
-          ) : (
-            <p className="mt-4">No special Qi reserves unlocked.</p>
           )}
           {(panel === "progress" || panel === "bio") && (
             <LibraryButton className="mt-4" onClick={() => setPanel(null)}>Close</LibraryButton>

@@ -162,7 +162,11 @@ export const pricedEnergyActions = (): EnergyPriceQuote[] => ENERGY_PRICE_CATALO
     projected: Boolean(entry.projected),
   }));
 
-export type EnergyTransactionKind = 'grant' | 'reserve' | 'charge' | 'release';
+/**
+ * `spend` is a direct, reservation-free debit for an Energy-priced Celestial
+ * Store offer. Generation always goes through `reserve` → `charge`/`release`.
+ */
+export type EnergyTransactionKind = 'grant' | 'reserve' | 'charge' | 'release' | 'spend';
 
 /** One ledger line as a browser may see it: no provider cost, no internal metadata. */
 export interface EnergyActivityEntry {

@@ -1,14 +1,15 @@
 /**
- * `@seihouse/library/cultivation` — the Closed-Door Cultivation surface.
+ * `@seihouse/library/cultivation` — cultivation progression and balances.
  *
- * Cultivation's permanent DAO XP ranks and spendable QI behavior are Library
- * product behavior, not portable SEN engine behavior: the idle-QI reward, its
- * realm language, and its claim ceremony only make sense inside SEIHouse's
- * first-party host application.
+ * Permanent DAO XP (the only input to Cultivator Rank, which only chooses the
+ * cultivator's Library colours), spendable QI, and the Closed-Door
+ * Cultivation surface are Library product behavior, not portable SEN engine
+ * behavior.
  *
- * The modal itself stays props-driven — reward calculation and persistence
- * remain host responsibilities — so Library keeps the presentation while the
- * application supplies the numbers.
+ * Both balances are read-only projections of server-owned ledgers: the QI and
+ * DAO XP clients can read, never credit or debit. Closed-Door Cultivation
+ * stays props-driven — its future mechanic is undecided, and reward
+ * calculation and persistence remain host responsibilities.
  */
 export {
   ClosedDoorCultivationModal,
@@ -18,4 +19,5 @@ export * from '../../library/cultivation/contracts';
 export * from '../../library/cultivation/economyStandards';
 export * from '../../library/cultivation/progression';
 export * from '../../library/cultivation/qiClient';
+export * from '../../library/cultivation/daoXpClient';
 export * from '../../library/cultivation/QiAmount';

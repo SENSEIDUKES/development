@@ -7,7 +7,6 @@ import {
   Eye,
   Flame,
   Globe,
-  Orbit,
   Shield,
   Sparkles,
 } from 'lucide-react';
@@ -23,27 +22,20 @@ import {
   SEIInlineAlert,
 } from '@seihouse/ui';
 import { StoryAuthGate, STORY_AUTH_DISSOLVE_MS } from '@seihouse/library/story-seed';
-import type { AppUser, Story } from '../shared/types';
-import { useUserProfileServices } from '../shared/userProfileServices';
+import type { AppUser, Story } from './types';
+import { useUserProfileServices } from './userProfileServices';
 import {
   DEFAULT_CAVE_ENVIRONMENT_ID,
   getCaveEnvironment,
 } from './caveEnvironment';
 import { UserProfileCaveDestination, type CaveDestinationId } from './UserProfileCaveDestination';
 import { UserProfileAdminPanel } from './UserProfileAdminPanel';
-import { UserProfileInventoryPanel } from './UserProfileInventoryPanel';
 import { UserProfilePortraitModal } from './UserProfilePortraitModal';
 import { UserProfileSettingsPanel } from './UserProfileSettingsPanel';
-import { UserProfileStatusEffectsPanel } from './UserProfileStatusEffectsPanel';
 import { UserProfileStoriesPanel } from './UserProfileStoriesPanel';
 import { UserProfilePublicPanel } from './UserProfilePublicPanel';
 import { UserProfileCreatorPanel } from './UserProfileCreatorPanel';
 import { publicCreatorWorlds, type PublicCreator } from './creatorWorlds';
-import {
-  EMPTY_ACTIVE_STATUS_EFFECTS,
-  isEffectActive,
-  useProfileEffectClock,
-} from './timedEffects';
 import {
   DEFAULT_PUBLIC_PROFILE_VISIBILITY,
   buildPublicProfile,
@@ -65,10 +57,18 @@ import { LibraryNavigationIcon as SENNavigationIcon } from '@seihouse/library-ui
 import { EnergyPanel } from '../../energy/development/EnergyPanel';
 import { useEnergyAccount } from '../../energy/shared/useEnergyAccount';
 import { CelestialStorePanel } from '../../celestial-store/development/CelestialStorePanel';
-import { useUnavailableCelestialStoreAccount } from '../../celestial-store/shared/storeAccount';
+import { ownsFamiliar, useUnavailableCelestialStoreAccount } from '../../celestial-store/shared/storeAccount';
 import { DaoPillarView } from '../../dao-pillar/development/DaoPillarView';
 import { useDaoPillarCalendar } from '../../dao-pillar/shared/useDaoPillarCalendar';
-import { useQiAccount, getDaoRankData, resolvePermanentDaoXp } from '@seihouse/library/cultivation';
+import { useQiAccount, useDaoXpAccount, getDaoRankData, resolvePermanentDaoXp } from '@seihouse/library/cultivation';
+import { useAchievements } from '../../../library/rewards/achievementsClient';
+import { useRefreshWhenReplaced } from '../../../library/rewards/balanceRefresh';
+import { useRelics } from '../../../library/relics/relicsClient';
+import { useFamiliars } from '../../../library/familiars/familiarsClient';
+import { activeFamiliarEffect, familiarTraining } from '../../../library/familiars/contracts';
+import { AchievementsPanel } from '../../rewards/development/AchievementsPanel';
+import { FateSurvivalRelicsPanel } from '../../relics/development/FateSurvivalRelicsPanel';
+import { FamiliarTrainingPanel } from '../../familiar-training/development/FamiliarTrainingPanel';
 
 interface UserProfileProps {
   currentUser: AppUser | null;
@@ -83,9 +83,11 @@ interface UserProfileProps {
 
 /**
  * The Cultivator Cave — the profile page as a place. The home shows the
- * cultivator's portrait, identity, rank, and Qi over a stock Immortal Land
- * backdrop, within Home, Stories, Relics, and the moved Settings entry. Every
- * value and action is the controller's; the Cave only decides where each one lives.
+ * cultivator's portrait, identity, rank and balances over a stock Immortal Land
+ * backdrop, within Home, Stories, Rewards, and the moved Settings entry. Every
+ * value and action belongs to the controller or to a server-owned client
+ * (QI, DAO XP, Energy, Dao Pillar, achievements, Relics, Familiars); the Cave
+ * only decides where each one lives.
  *
  * The Cave has one other audience: the **public view**, reached from the header
  * and routed under `/public/...`. It is the same shell, the same backdrop, and
@@ -107,16 +109,28 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   // them mid-mount would change the hook sequence and fail the render.
   const [useStoreAccount] = useState(() => celestialStore?.useStoreAccount ?? useUnavailableCelestialStoreAccount);
   const storeAccount = useStoreAccount();
+  // Which Familiars the cultivator may equip is ownership, from the Store account.
+  const familiarOptions = useMemo(() => celestialStore
+    ? familiars.map(option => ({ ...option, available: ownsFamiliar(storeAccount.ownedFamiliarIds, option.id, option.isDefault) }))
+    : familiars, [celestialStore, familiars, storeAccount.ownedFamiliarIds]);
   const route = useCaveRoute();
   const isPublicView = route.audience === 'public';
-  const cultivation = useQiAccount({ enabled: Boolean(currentUser) && !isPublicView });
-  // Spendable QI is read from the ledger only. Permanent DAO XP stays on the
-  // host profile record and is never overwritten by a balance refresh.
-  const qiBalance = cultivation.snapshot?.balance;
-  const daoXp = resolvePermanentDaoXp(hostController.profile?.dao_xp, hostController.profile?.dao_rank);
+  const signedIn = Boolean(currentUser) && !isPublicView;
+  const cultivation = useQiAccount({ enabled: signedIn });
+  const daoXpAccount = useDaoXpAccount({ enabled: signedIn });
+  const achievements = useAchievements({ enabled: signedIn });
+  // Relic names and the Dao Pillar streak also feed the cultivator's own
+  // public view, filtered there by their visibility choices.
+  const relics = useRelics({ enabled: Boolean(currentUser) });
+  const familiarAccount = useFamiliars({ enabled: signedIn });
+  // Permanent DAO XP alone sets the rank, and rank only chooses colours. The
+  // signed-in cultivator's comes from the DAO XP ledger; a host that mounts no
+  // DAO XP client supplies its own projection on the profile record.
+  const recordDaoXp = resolvePermanentDaoXp(hostController.profile?.dao_xp, hostController.profile?.dao_rank);
+  const daoXp = daoXpAccount.status === 'unavailable' ? recordDaoXp : daoXpAccount.snapshot?.balance ?? null;
   const controller = isPublicView ? hostController : {
-    ...hostController, cultivation,
-    profile: hostController.profile ? { ...hostController.profile, qi: qiBalance } : null,
+    ...hostController,
+    profile: hostController.profile ? { ...hostController.profile, dao_xp: daoXp ?? undefined, dao_rank: undefined } : null,
     daoData: getDaoRankData(daoXp ?? 0),
   };
   const {
@@ -139,9 +153,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
     countdown,
     confirmLanguageChange,
     revertLanguageChange,
-    handleAttuneArtifact,
     daoData,
-    equippedArtifact,
     showPortraitModal,
     setShowPortraitModal,
     portraitUploadFile,
@@ -211,8 +223,13 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   );
   const creatorId = route.creatorId ?? profile?.uid;
   const suppliedCreator = publicCreators.find(creator => creator.profile.uid === creatorId);
+  const daoPillar = useDaoPillarCalendar({ enabled: Boolean(currentUser) });
+  const ownActivity = useMemo(() => ({
+    relics: relics.snapshot?.relics.map(({ id, name, rarity }) => ({ id, name, rarity })),
+    readingStreakDays: daoPillar.snapshot?.streak.current,
+  }), [relics.snapshot, daoPillar.snapshot]);
   const publicCreator = profile && profile.uid === creatorId
-    ? { profile, worlds: suppliedCreator?.worlds ?? [] }
+    ? { profile, worlds: suppliedCreator?.worlds ?? [], activity: suppliedCreator?.activity ?? ownActivity }
     : suppliedCreator;
   const viewedProfile = publicCreator?.profile;
   const publicProfile = useMemo(
@@ -222,7 +239,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
       const viewedStories = route.creatorId && publicCreator
         ? publicCreatorWorlds(viewedProfile.uid, publicCreator.worlds).map(world => ({ ...world, userId: viewedProfile.uid }))
         : stories;
-      return buildPublicProfile(developmentPublicRecord(viewedProfile, viewedStories),
+      return buildPublicProfile(developmentPublicRecord(viewedProfile, viewedStories, publicCreator?.activity),
         viewedProfile.uid === profile?.uid ? publicVisibility : DEFAULT_PUBLIC_PROFILE_VISIBILITY);
     },
     [viewedProfile, publicCreator, route.creatorId, profile?.uid, stories, publicVisibility],
@@ -246,15 +263,26 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   const isPrivileged = profile?.role === 'owner' || profile?.role === 'admin';
   // Energy is server truth read through the host-mounted Energy client. The
   // Cave keeps no balance of its own; without a client the emblem stays a label.
-  const energyAccount = useEnergyAccount({ enabled: Boolean(currentUser) && !isPublicView });
+  const energyAccount = useEnergyAccount({ enabled: signedIn });
   const energy = energyAccount.status === 'unavailable' ? undefined
     : { account: energyAccount, onOpen: () => navigate('/home/energy') };
   // A delivered, replayed, or recovered claim invalidates the read projection.
-  // Refreshing the ledger never credits QI; only the server performs deposits.
-  const daoPillar = useDaoPillarCalendar({ enabled: Boolean(currentUser) && !isPublicView });
+  // Refreshing a ledger never credits anything; only the server moves balances.
   useEffect(() => {
     if (daoPillar.snapshot) void cultivation.refresh();
   }, [daoPillar.snapshot, cultivation.refresh]);
+  // An opened scroll lands DAO XP and QI; a Relic lands DAO XP and Energy; a
+  // Familiar offering or purchase spends QI or Energy.
+  const refreshScrollBalances = useCallback(() => Promise.all([cultivation.refresh(), daoXpAccount.refresh()]), [cultivation.refresh, daoXpAccount.refresh]);
+  const refreshRelicBalances = useCallback(() => Promise.all([daoXpAccount.refresh(), energyAccount.refresh()]), [daoXpAccount.refresh, energyAccount.refresh]);
+  const refreshSpendBalances = useCallback(() => Promise.all([cultivation.refresh(), energyAccount.refresh()]), [cultivation.refresh, energyAccount.refresh]);
+  useRefreshWhenReplaced(achievements.snapshot, refreshScrollBalances);
+  useRefreshWhenReplaced(relics.snapshot, refreshRelicBalances);
+  useRefreshWhenReplaced(familiarAccount.snapshot, refreshSpendBalances);
+  const equippedOption = familiars.find(option => option.id === profile?.familiarId)
+    ?? familiars.find(option => option.isDefault);
+  const equippedTraining = familiarTraining(familiarAccount.snapshot, equippedOption?.id);
+  const familiarEffect = activeFamiliarEffect(familiarAccount.snapshot, equippedOption?.id);
 
   // The Akashic Switchboard is a destination here; the controller still owns
   // when its registries are fetched, keyed off this flag exactly as in production.
@@ -299,24 +327,11 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
   }, [isSignedOut, spiritLinkGateMounted]);
 
   const openDestination = useCallback((destination: Exclude<CaveDestinationId, 'unavailable' | 'public-stories' | 'public-relics'>) => {
-    navigate(destination === 'dao-pillar' || destination === 'status-effects'
+    navigate(destination === 'dao-pillar' || destination === 'familiar'
       ? `/home/${destination}` : destination === 'switchboard' ? '/settings/switchboard' : `/${destination}`);
   }, [navigate]);
   const returnHome = useCallback(() => navigate('/home'), [navigate]);
   const returnPublicHome = useCallback(() => navigate(publicCavePath('home', route.creatorId)), [navigate, route.creatorId]);
-
-  const profileEffects = profile?.activeStatusEffects ?? EMPTY_ACTIVE_STATUS_EFFECTS;
-  // Aura overrides need exact start/end updates anywhere they are painted;
-  // only private Home shows a changing remaining-duration label each minute.
-  const tracksEffectTransitions = view === 'home' || view === 'status-effects' || (!isPublicView && view === 'settings');
-  const showsEffectDuration = !isPublicView && view === 'home';
-  const effectsNow = useProfileEffectClock(
-    tracksEffectTransitions ? profileEffects : EMPTY_ACTIVE_STATUS_EFFECTS,
-    showsEffectDuration,
-  );
-  const activeEffects = profileEffects.filter((effect) =>
-    isEffectActive(effect, effectsNow),
-  );
 
   const viewedName = viewedProfile?.displayName?.trim() || 'This cultivator';
 
@@ -344,14 +359,14 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
         );
       case 'relics':
         return (
-          <UserProfileCaveDestination id="public-relics" title="Relics" subtitle={`Published by ${viewedName}`} icon={<SENNavigationIcon name="relic" size={18} />} onBack={returnPublicHome} backLabel="Return to public Home">
+          <UserProfileCaveDestination id="public-relics" title="Relics" subtitle={`Fate Survival Relics published by ${viewedName}`} icon={<SENNavigationIcon name="relic" size={18} />} onBack={returnPublicHome} backLabel="Return to public Home">
             <UserProfilePublicPanel kind="relics" displayName={viewedName} titles={publicProfile?.relicTitles ?? null} />
           </UserProfileCaveDestination>
         );
       case 'home':
         return <UserProfileHome controller={{ ...controller, profile: viewedProfile ?? null,
           formData: { ...controller.formData, avatarUrl: viewedProfile?.avatarUrl ?? '' } }}
-          now={effectsNow} mode="public" publicProfile={publicProfile} boost={boost} />;
+          mode="public" publicProfile={publicProfile} boost={boost} />;
       default:
         return (
           <UserProfileCaveDestination id="unavailable" title="Page unavailable" backLabel="Return to public Home" onBack={returnPublicHome}>
@@ -381,7 +396,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           <UserProfileCaveDestination id="store" title="Celestial Store" subtitle="Familiars of the Celestial Library"
             icon={<SENNavigationIcon name="store" size={18} />} onBack={returnHome}>
             <CelestialStorePanel
-              options={familiars}
+              options={familiarOptions}
               cultivation={cultivation}
               energy={energyAccount}
               equippedFamiliarId={profile?.familiarId}
@@ -417,6 +432,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
               onPublicVisibilityChange={setPublicVisibility}
               onPreviewPublicView={openPublicView}
               onRedeemCode={accountControls?.onRedeemCode ?? (() => navigate('/settings/redeem-code'))}
+              familiarOptions={familiarOptions}
             />
           </UserProfileCaveDestination>
         );
@@ -430,10 +446,13 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
             <UserProfileStoriesPanel profile={profile} currentUser={currentUser} stories={stories} />
           </UserProfileCaveDestination>
         );
-      case 'relics':
+      case 'rewards':
         return (
-          <UserProfileCaveDestination id="relics" title="Relics" subtitle="Inventory, attunement, and the Offering Hall" icon={<SENNavigationIcon name="relic" size={18} />} onBack={returnHome}>
-            <UserProfileInventoryPanel profile={profile} handleAttuneArtifact={handleAttuneArtifact} />
+          <UserProfileCaveDestination id="rewards" title="Rewards" subtitle="Achievements, Mystery Scrolls, and Fate Survival Relics" icon={<SENNavigationIcon name="relic" size={18} />} onBack={returnHome}>
+            <div className="space-y-6">
+              <AchievementsPanel achievements={achievements} />
+              <FateSurvivalRelicsPanel relics={relics} />
+            </div>
           </UserProfileCaveDestination>
         );
       case 'dao-pillar':
@@ -442,10 +461,16 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
             <DaoPillarView calendar={daoPillar} />
           </UserProfileCaveDestination>
         );
-      case 'status-effects':
+      case 'familiar':
         return (
-          <UserProfileCaveDestination id="status-effects" title="Active Status Effects" subtitle="Blessings, curses, and their counterplay" icon={<Orbit size={18} />} onBack={returnHome}>
-            <UserProfileStatusEffectsPanel effects={activeEffects} />
+          <UserProfileCaveDestination id="familiar" title="Familiar" subtitle="Train with QI to unlock forms and cosmetic effects" icon={<Sparkles size={18} />} onBack={returnHome}>
+            <FamiliarTrainingPanel
+              familiars={familiarAccount}
+              options={familiars}
+              qiBalance={cultivation.snapshot?.balance ?? null}
+              displayName={profile?.displayName?.trim() || 'Cultivator'}
+              equippedFamiliarId={equippedOption?.id}
+            />
           </UserProfileCaveDestination>
         );
       case 'switchboard':
@@ -476,8 +501,21 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           </UserProfileCaveDestination>
         );
       default:
-        return <UserProfileHome controller={controller} publicProfile={publicProfile} now={effectsNow} onOpenRelics={() => navigate('/relics')}
-          onOpenSettings={() => navigate('/settings')} energy={energy} daoPillar={daoPillar} onOpenDaoPillar={() => navigate('/home/dao-pillar')} accountControls={{
+        return <UserProfileHome controller={controller} publicProfile={publicProfile}
+          onOpenSettings={() => navigate('/settings')} energy={energy} daoPillar={daoPillar} onOpenDaoPillar={() => navigate('/home/dao-pillar')}
+          qi={cultivation.status === 'unavailable' ? undefined : { balance: cultivation.snapshot?.balance ?? null, onOpen: () => navigate('/home/energy') }}
+          familiar={familiarAccount.connected && equippedOption ? {
+            name: equippedOption.name,
+            tierName: equippedTraining?.tierName ?? null,
+            effect: familiarEffect,
+            onOpen: () => navigate('/home/familiar'),
+          } : undefined}
+          rewards={achievements.connected || relics.connected ? {
+            sealedScrolls: achievements.snapshot ? achievements.snapshot.scrolls.filter(scroll => scroll.status === 'sealed').length : null,
+            relics: relics.snapshot?.relics.length ?? null,
+            onOpen: () => navigate('/rewards'),
+          } : undefined}
+          accountControls={{
           ...accountControls,
           onOpenInbox: accountControls?.onOpenInbox ?? (() => navigate('/home/inbox')),
           onOpenStore: accountControls?.onOpenStore ?? (() => navigate('/home/store')),
@@ -528,7 +566,7 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           linked={Boolean(currentUser)}
           context="spirit-link"
           onAuthenticate={authenticate}
-          description="Sign in to preserve your stories, cultivation, and relics, then return to them from any device."
+          description="Sign in to preserve your stories, cultivation, and rewards, then return to them from any device."
           reassurance="Your Cultivator Cave will remain intact."
         />
       ) : null}
@@ -552,7 +590,6 @@ export default function UserProfile({ currentUser, stories, onLogout, onNavigate
           handleGeneratePortrait={handleGeneratePortrait}
           handleApplyPortrait={handleApplyPortrait}
           daoData={daoData}
-          equippedArtifact={equippedArtifact}
           profile={profile}
         />
       )}

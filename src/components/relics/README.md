@@ -1,82 +1,67 @@
-# Relics Gallery
+# Fate Survival Relics (formerly Relics Gallery)
 
 - **Source repository:** SENSEIDUKES/Light-Novels
 - **Source location:** `src/components/UserProfileInventoryPanel.tsx` (cards), `src/components/ModalsAndToasts.tsx` (the `unlockedArtifactAlert` reveal flow)
-- **Workshop preview:** `?preview=relics-gallery`
+- **Workshop preview:** `?preview=relics-gallery` (in the Workshop's Rewards section)
 - **Replica created:** 2026-07-29
-- **Last Workshop update:** 2026-09-19
+- **Last Workshop update:** 2026-09-23
 - **Last source comparison:** 2026-07-29
-- **Replica status:** Library presentation over one server-backed Relics domain projection
+- **Replica status:** approved reconstruction — development rebuilds Relics as Fate Survival rewards; `reference/` keeps production's retired inventory Relic reveal
 
-## Workshop history
+## What a Relic is now
 
-- **2026-09-19:** Made Relics a deliberate `@seihouse/library/relics` capability. The client reads one domain projection backed by the existing v3 server foundation; reveal acknowledgement is presentation state, not an award. Award/evaluation authority remains server-side, and the package exposes no client operation that can mint a Relic. Stateless celestial visuals now come from `@seihouse/library-ui@0.5.0`.
-
-- **2026-08-25:** Moved to the Library lane. The relic economy is SEIHouse product, not portable SEN behavior, so these surfaces now publish as `@seihouse/library/relics` instead of `@seihouse/sen/relics`. `development/RelicReveal` draws its motes through `@seihouse/sen/ui`, so Library links against the published engine instead of reaching into SEN source. Components, props, and presentation are unchanged.
-
-
-- **2026-08-21:** Published this feature as `@seihouse/sen/relics`: the relic card, its inspection modal, the `development/` claim reveal, and the relic model. `RelicReveal` now draws its motes from the Library-owned `ParticleEffect` instead of an application-root file. The locked `reference/` replica stays Workshop-only.
-
-- **2026-08-17:** Moved the Compact Cards / Reveal Flow scene selector into the shared responsive Workshop Controls menu. Relic card, modal, reveal, claim, and replay interactions remain inside the previewed components.
-- **2026-07-29:** Created faithful Workshop replica, extracted `RelicCard`/`RelicModal` out of `UserProfileInventoryPanel.tsx`, mocked `CosmicArtifact` types and data, separated by rank.
-- **2026-07-29:** Added a Reveal button under each relic opening the full-screen Relic Reveal celebration flow, plus a Workshop-only Replay Effects tool.
-- **2026-07-30:** Forked the reveal flow into an active UI-work copy: rank-neutral sealed-card lighting, a premium closed-card face replacing the placeholder grid panel, a de-duplicated stats box, and spin sparks during the reveal.
-- **2026-07-29:** Reorganized into the standard feature workspace layout. `shared/` holds `RelicCard`/`RelicModal` (identical in both versions — no fork exists for the compact card or detail modal yet); `reference/RelicReveal.tsx` and `development/RelicReveal.tsx` hold the two reveal-flow variants (formerly `relic-reveal`/`relic-reveal-DEV` as separate component folders with a second `relics-dev` preview and homepage card). One Relics Gallery card now opens one workspace with a Scene selector (Compact Cards / Reveal Flow) crossed with the Original Reference / Development / Compare control.
+Relics are lightweight rewards that come only from **Fate Survival** challenges: one per survived
+challenge, granting DAO XP and Energy by rarity. They are not earned from story milestones, not
+equipped, attuned or offered, and carry no title, status effect or QI. Achievements and their
+Mystery Scrolls took over the milestone role (see [`../rewards/README.md`](../rewards/README.md)).
+The server rules live in [`src/server/relics/README.md`](../../server/relics/README.md).
 
 ## Folder layout
 
 ```text
-shared/types.ts       — CosmicArtifact interface
-shared/RelicCard.tsx  — compact rarity card (no reference/development split yet)
-shared/RelicModal.tsx — detail inspection modal (no reference/development split yet)
-reference/RelicReveal.tsx    — untouched full-screen celebration flow
-development/RelicReveal.tsx  — active Workshop version of the celebration flow
+reference/RelicReveal.tsx               — locked replica of production's inventory Relic reveal
+shared/types.ts                         — CosmicArtifact types kept only for the locked references
+development/RelicReveal.tsx             — the Relic Reveal for a Fate Survival Relic
+development/FateSurvivalRelicsPanel.tsx — the cultivator's Relics, each opening its reveal
+development/index.ts                    — package entry (`@seihouse/library/relics`)
 ```
 
-## What was copied
+`development/RelicReveal.tsx` now composes the shared reward-reveal parts in
+`src/components/rewards/development/` — the same rarity ladder, sigils, particles, sealed face and
+haptics that the Mystery Scroll reveal uses — so both rewards reveal the same way.
 
-- `RelicCard`/`RelicModal`: the visual treatment for `CosmicArtifact` objects as they appear in the inventory panel.
-- `RelicReveal`: the complete artifact celebration experience — mystery card entrance/flip, rarity theme ladder (Common → Transcendent), ornate rotating sigil SVG, celestial particle shower backdrop tinted to rarity, stats box, claim button, reduced-motion handling, and vibration patterns.
+## What the Workshop shows
 
-## What changed in Development vs Reference (reveal flow)
+- **Relics scene:** a new account with no Relics, outcome buttons that stand in for the Fate
+  Survival judge ("Fate averted → Legendary", "Fate scarred → Rare", "Doom manifested → no
+  Relic"), the sealed Relic, its reveal, the credited DAO XP and Energy on the balance strip, and
+  the ledger feed. Everything but the outcome runs on the development economy.
+- **Reveal lab:** the Relic Reveal at any rarity with a sample Relic, and Replay effects.
+- **Original Reference:** production's locked reveal with the old inventory mock data.
 
-1. Rank background theme lighting only appears after the reveal — the celestial backdrop stays rank-neutral while the card is sealed.
-2. The initial "Claim Relic" card is rebuilt as the closed face of the final premium card (same frame, hairline, sigil in a neutral sealed tone) instead of the placeholder grid panel.
-3. The stats box no longer repeats the rank in its second cell — it names the artifact type only; the rank already lives in the header label.
-4. Sparks shake loose from the card rim during the reveal spin (disabled under reduced motion).
+## Decisions still open
 
-## What was mocked
+The Fate Survival judge, the outcome → rarity mapping, Relic names and amounts, and whether a
+public profile shows Relic names (it does today, under the "Relic names" visibility switch).
 
-- The `useAppStore` reveal queue (`enqueueRelicReveal`, `popPendingRelic`, reader gating) and story-engine wiring.
-- `vibrate()` from `src/lib/vibration.ts`, replaced with an inline helper using the same patterns.
-- Artifact data comes from `src/workshop/previews/relics/mockData.ts`.
-- Cloud sync, Firebase, and real submission logic behind the cards and modal.
+## Transfer
 
-### Available preview states
+Copy `development/` with `src/components/rewards/development/`, `src/library/relics/`, and
+`src/server/relics/` with its migration. Serve `/api/library-economy?capability=relics` and mount
+`RelicsClientProvider`. Leave `reference/`, `shared/types.ts` and the Workshop preview behind.
 
-- **Scene:** Compact Cards (the rarity grid + detail modal) or Reveal Flow (the full-screen celebration).
-- **Reveal Flow:** mystery (tap to reveal) → revealed, with a Workshop-only Replay Effects tool to jump straight to the revealed state.
+## Workshop history
 
-### Reusable Workshop dependencies
-
-- `src/components/ParticleEffect.tsx`
-- Tailwind theme tokens in `src/styles.css` (`portal`, `gold-accent`)
-
-### Production dependencies intentionally excluded
-
-`useAppStore` / reveal queue, story engine, `react-focus-lock`, Firebase, persistence.
-
-### Files needed for later transfer
-
-- `shared/RelicCard.tsx`, `shared/RelicModal.tsx` → `Light-Novels`, pointing `CosmicArtifact` back at the real `src/types.ts`.
-- `development/RelicReveal.tsx` (once approved) → extract into its own component in `ModalsAndToasts.tsx`, feeding it `unlockedArtifactAlert` + `dismissArtifactAlert` from the store instead of the `artifact`/`onClaim` props.
-- `src/components/ParticleEffect.tsx` already exists in Light-Novels; do not overwrite without a diff.
-- `--color-gold-accent: #D4AF37` theme token, if the target stylesheet lacks it.
-
-### Transfer notes
-
-- The `replayKey` prop on `RelicReveal` is a Workshop fine-tuning tool; it can be dropped or kept when transferring.
-
-### 2026-09-06 — Library UI ownership migration
-
-Reusable presentation now comes from the canonical Library UI package. Portable SEN surfaces resolve presentation through the host provider; the first-party Workshop supplies LibraryPresentationProvider. Domain, generation, persistence, media, and locked reference sources are unchanged.
+- **2026-09-23:** Rebuilt as Fate Survival Relics. Retired the relic card and inspection modal
+  (`shared/RelicCard.tsx`, `shared/RelicModal.tsx`), the weekly offering, attunement and status
+  effects, and the story-milestone Relic achievements. The reveal's rarity ladder and effects
+  moved into shared reward-reveal parts used by Mystery Scrolls too. Added
+  `FateSurvivalRelicsPanel` and the Fate Survival outcome simulator; the entry moved into the
+  Workshop's Rewards section as "Fate Survival Relics".
+- **2026-09-19:** Made Relics a deliberate `@seihouse/library/relics` capability. The client read one domain projection backed by the v3 server foundation; reveal acknowledgement was presentation state, not an award. Stateless celestial visuals come from `@seihouse/library-ui@0.5.0`.
+- **2026-09-06:** Library UI ownership migration: reusable presentation comes from the canonical Library UI package.
+- **2026-08-25:** Moved to the Library lane. The relic economy is SEIHouse product, not portable SEN behavior, so these surfaces publish as `@seihouse/library/relics` instead of `@seihouse/sen/relics`.
+- **2026-08-21:** Published as `@seihouse/sen/relics`: the relic card, its inspection modal, the `development/` claim reveal, and the relic model. `RelicReveal` drew its motes from the Library-owned `ParticleEffect`.
+- **2026-08-17:** Moved the Compact Cards / Reveal Flow scene selector into the shared responsive Workshop Controls menu.
+- **2026-07-30:** Forked the reveal flow: rank-neutral sealed-card lighting, a premium closed-card face, a de-duplicated stats box, and spin sparks during the reveal.
+- **2026-07-29:** Created the faithful Workshop replica, extracted `RelicCard`/`RelicModal` out of `UserProfileInventoryPanel.tsx`, mocked `CosmicArtifact` types and data, added the full-screen Relic Reveal and a Replay Effects tool, and reorganized into one feature workspace.

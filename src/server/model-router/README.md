@@ -1,12 +1,14 @@
 # Model Router
 
 Server-side catalog that routes every generation model to its provider,
-grouped by capability. Workshop entry: `?preview=model-router` (Systems).
+grouped by capability. Opened from the Model Router gear in the Workshop header
+and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
+`?preview=model-router` page is archived but still reachable.
 
 - **Created:** 2026-09-23
 - **Last Workshop update:** 2026-09-23
 - **Last source comparison:** 2026-09-23 (DEV-native; no production counterpart)
-- **Status:** active, owner `deferred` (server/host infrastructure, in no package)
+- **Status:** active (gear); Systems card archived; owner `deferred` (server/host infrastructure, in no package)
 
 ## Capabilities
 
@@ -39,7 +41,8 @@ Model ids carry their route: `google/gemini-*` → Gemini, `openrouter/<vendor>/
 - `openRouter.ts` — OpenRouter chat-completions call
 - `status.ts` — capability status for the Workshop
 - `vercelHandler.ts` → `api/model-router.js` (built by `scripts/buildModelRouterApi.mjs`)
-- Workshop view: `src/workshop/previews/model-router/ModelRouterWorkspace.tsx`
+- Workshop gear and panel: `src/workshop/ModelRouterSettings.tsx`
+- Saved chapter-model choice (this browser): `src/host/generation/modelPreference.ts`
 
 ## Transfer
 
@@ -52,3 +55,6 @@ Copy this folder plus the provider changes in `src/server/harness-generation/`,
 - 2026-09-23 — Created: shared chapter catalog with current Gemini models,
   OpenRouter provider (GPT-6 Luna), image and TTS catalogs, status endpoint
   and Workshop page.
+- 2026-09-23 — Chapter models are selectable from a Workshop-wide gear. The
+  choice is saved in the browser and drives Harness Generation and Chapter
+  Generation. The Systems card was archived in favor of the gear.

@@ -47,6 +47,10 @@ export interface HarnessGenerationWorkspaceProps {
   mediaPackEntitlements?: MediaPackEntitlement[];
   /** Optional Development adapter. Its host callback owns the simulated reward state. */
   onGrantDevelopmentMediaReward?: (reference: MediaPackReference) => void | Promise<void>;
+  /** Host-remembered model choice (the Model Router); used whenever the server offers it. */
+  preferredModel?: string;
+  /** Tells the host the author picked a different model here. */
+  onModelChange?: (model: string) => void;
 }
 
 const emptyFoundation = (): StoryFoundationInput => ({ premise: '' });
@@ -1014,6 +1018,8 @@ export function HarnessGenerationWorkspace({
   baseMedia,
   mediaPackEntitlements = EMPTY_MEDIA_ENTITLEMENTS,
   onGrantDevelopmentMediaReward,
+  preferredModel,
+  onModelChange,
 }: HarnessGenerationWorkspaceProps) {
   const availableSkills = useMemo(
     () => includeBundledHarnessSkills(installedSkills),
@@ -1076,6 +1082,11 @@ export function HarnessGenerationWorkspace({
       unsubscribe();
     };
   }, [controller, modelAdapter]);
+
+  // Follow the host's remembered choice (the Model Router) whenever the server offers it.
+  useEffect(() => {
+    if (preferredModel && serverInfo?.models.some(option => option.id === preferredModel)) setModel(preferredModel);
+  }, [preferredModel, serverInfo]);
 
   useEffect(() => {
     void loadStorySeeds();
@@ -1450,7 +1461,7 @@ export function HarnessGenerationWorkspace({
                       id="harness-generation-model"
                       className="mt-2 min-h-11 w-full rounded-lg border border-white/15 bg-black/35 px-3 text-sm text-neutral-100 outline-none focus:border-cyan-300/60"
                       value={model}
-                      onChange={event => setModel(event.target.value)}
+                      onChange={event => { setModel(event.target.value); onModelChange?.(event.target.value); }}
                       disabled={busy || !serverInfo?.models.length}
                     >
                       {(serverInfo?.models ?? []).map(option => <option key={option.id} value={option.id}>{option.label}</option>)}

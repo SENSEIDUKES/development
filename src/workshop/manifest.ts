@@ -96,7 +96,7 @@ export const WORKSHOP_SECTIONS: ReadonlyArray<{
  * Live inventories rendered inline on the Workshop home instead of opening a
  * `?preview=` route. They carry the same section and ownership metadata.
  */
-export type WorkshopPanelId = 'library-components' | 'icons' | 'provenance';
+export type WorkshopPanelId = 'library-components' | 'icons';
 
 export type WorkshopPanel = {
   id: WorkshopPanelId;
@@ -107,7 +107,6 @@ export type WorkshopPanel = {
 };
 
 export const workshopPanels: WorkshopPanel[] = [
-  { id: 'provenance', section: 'systems', owner: 'deferred', title: 'Provenance', description: 'Reusable provenance marks, records, evidence contracts, and future connection maps for AI-generated assets.' },
   { id: 'library-components', section: 'components', owner: 'library-ui', title: 'Library Components', description: 'Reusable Celestial Library primitives, rendered live.' },
   { id: 'icons', section: 'components', owner: 'library-ui', title: 'Icons', description: 'Every current custom Celestial Library SVG glyph, rendered live.' },
 ];
@@ -336,6 +335,21 @@ export const workshopEntries: WorkshopEntry[] = [
     },
   },
   {
+    id: 'provenance',
+    section: 'systems',
+    owner: 'deferred',
+    status: 'active',
+    title: 'Provenance',
+    description: 'Reusable provenance marks, records, evidence contracts, and future connection maps for AI-generated assets.',
+    category: 'other',
+    version: 'v1.0',
+    source: {
+      repository: 'SENSEIDUKES/development',
+      path: 'src/components/provenance/; src/workshop/ProvenanceTab.tsx',
+      lastCompared: '2026-09-23',
+    },
+  },
+  {
     id: 'energy',
     section: 'systems',
     owner: 'library',
@@ -354,7 +368,8 @@ export const workshopEntries: WorkshopEntry[] = [
     id: 'model-router',
     section: 'systems',
     owner: 'deferred',
-    status: 'active',
+    status: 'archived',
+    archiveNote: 'Moved to the Model Router gear in the Workshop header and on every preview.',
     title: 'Model Router',
     description: 'Universal router for every generation model, separated by capability: Chapters (Gemini and OpenRouter), Images, and TTS (ElevenLabs). Shows which providers have keys, which models are ready, and each default.',
     category: 'other',

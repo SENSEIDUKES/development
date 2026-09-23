@@ -3,6 +3,7 @@ import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
 import { HarnessGenerationWorkspace as HarnessGenerationSurface } from '@seihouse/library/generation';
 import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
 import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
+import { useModelPreference } from '../../../host/generation/modelPreference';
 import type { HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { mediaPackKey, type MediaPackEntitlement, type MediaPackReference } from '@seihouse/library/media';
 import { HarnessGenerationReference } from '../../../components/harness-generation/reference/HarnessGenerationReference';
@@ -20,6 +21,7 @@ const storySeedSource = createWorkshopStorySeedSource();
 export function HarnessGenerationWorkspace() {
   const [repository] = useState(() => new IndexedDbHarnessGenerationRepository());
   const [modelAdapter] = useState(() => new HarnessGenerationHttpClient());
+  const [chapterModel, setChapterModel] = useModelPreference('chapters');
   const [saved] = useState(() => {
     try { return { skills: loadHarnessSppSkills(localStorage), error: '' }; }
     catch { return { skills: [] as HarnessSkillManifest[], error: 'Saved SPP skills could not be loaded. Reimport the packages to restore their skills.' }; }
@@ -71,6 +73,7 @@ export function HarnessGenerationWorkspace() {
           : <HarnessGenerationSurface repository={repository} modelAdapter={modelAdapter} storySeedSource={storySeedSource} installedSkills={installedSkills}
         registeredMediaPacks={WORKSHOP_MEDIA_PACKS} mediaPackEntitlements={mediaPackEntitlements}
         baseMedia={LIBRARY_BASE_MEDIA}
+        preferredModel={chapterModel} onModelChange={setChapterModel}
         onGrantDevelopmentMediaReward={(reference: MediaPackReference) => {
           const unlockedAt = new Date();
           const entitlement: MediaPackEntitlement = {

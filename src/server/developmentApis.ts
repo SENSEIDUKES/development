@@ -8,6 +8,7 @@ import { handleStorySeedBlueprintHttp } from '../server/story-seed-blueprint/htt
 import { handleReaderTranslationHttp } from '../server/reader-translation/http';
 import { handleCodexVoiceQuoteHttp } from '../server/audio/codexVoiceQuoteHttp';
 import { createConfiguredCodexVoiceQuoteService } from '../server/audio/codexVoiceQuote';
+import { modelRouterStatus } from '../server/model-router/status';
 import {
   createPublicGenerationGuard,
   type PublicGenerationGuardResult,
@@ -96,6 +97,10 @@ export const generationApis = (
         } catch {
           writeJson(response, 400, { error: 'Invalid economy request.', code: 'invalid_request' });
         }
+        return;
+      }
+      if (pathname === '/api/model-router') {
+        writeJson(response, 200, modelRouterStatus(environment), { 'Cache-Control': 'no-store' });
         return;
       }
       if (

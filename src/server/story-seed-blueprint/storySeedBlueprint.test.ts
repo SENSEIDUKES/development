@@ -303,7 +303,7 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(response.body).toEqual({ error: "World Blueprint model configuration is invalid." });
     expect(onError).toHaveBeenCalledOnce();
     expect(onError.mock.calls[0][0]).toEqual(new Error(
-      "STORY_SEED_BLUEPRINT_MODEL does not contain a valid Gemini text model.",
+      "STORY_SEED_BLUEPRINT_MODEL does not contain a valid text model.",
     ));
     expect(providerFactory).not.toHaveBeenCalled();
   });

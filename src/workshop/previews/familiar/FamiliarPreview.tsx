@@ -24,7 +24,7 @@ export function FamiliarPreview() {
       <div><p className="familiar-eyebrow">Your Familiar</p><h2>{familiar.displayName}</h2><p>{familiar.description}</p></div>
       <span className="familiar-preview-tag" data-rarity={familiar.rarity}>{familiar.rarity}{familiar.isDefault ? ' · Default' : ''}</span>
     </header>
-    <ProductFamiliarSession key={familiar.id} initialFamiliarId={familiar.id}><ProductFamiliarSurface activity={activity || undefined} animation={animation || undefined} paused={paused}>
+    <ProductFamiliarSession key={familiar.id} initialFamiliarId={familiar.id} initiallyMinimized={false}><ProductFamiliarSurface activity={activity || undefined} animation={animation || undefined} paused={paused}>
       <div className="familiar-stage"><p>Drag your Familiar around this space. Tap for actions, then choose Energy.</p></div>
     </ProductFamiliarSurface></ProductFamiliarSession>
     <div className="familiar-preview-controls">

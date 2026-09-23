@@ -14,7 +14,7 @@ const responseError = async (response: Response) => {
 };
 
 const parseServerInfo = (value: unknown): HarnessGenerationServerInfo => {
-  if (!isRecord(value) || value.provider !== 'gemini' || typeof value.configured !== 'boolean'
+  if (!isRecord(value) || typeof value.provider !== 'string' || typeof value.configured !== 'boolean'
     || !Array.isArray(value.models) || typeof value.defaultModel !== 'string') {
     throw new Error('Harness Generation returned an invalid model configuration.');
   }

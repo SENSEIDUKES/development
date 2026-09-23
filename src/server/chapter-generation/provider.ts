@@ -6,7 +6,9 @@ import type {
   ChapterUsageStage,
   EstimatedStageInputTokenBreakdown,
 } from "../../components/chapter-generation/shared/pipeline/usage";
-import { geminiApiModelId } from "./config";
+import { geminiApiModelId, type ResolvedChapterGenerationConfig } from "./config";
+import { requireTextModelKey, textModelProvider } from "../model-router/catalog";
+import { generateOpenRouterText } from "../model-router/openRouter";
 
 export interface ChapterTextGenerationRequest {
   kind: ChapterModelCallKind;
@@ -101,4 +103,65 @@ export class GeminiChapterTextProvider implements ChapterTextModelProvider {
       throw new Error(`Gemini chapter generation failed during ${request.stage}: ${message}`);
     }
   }
+}
+
+export class OpenRouterChapterTextProvider implements ChapterTextModelProvider {
+  readonly provider = "openrouter";
+
+  constructor(
+    private readonly apiKey: string,
+    readonly model: string,
+    private readonly reasoningEffort?: string,
+  ) {}
+
+  async generate(
+    request: ChapterTextGenerationRequest,
+  ): Promise<ChapterTextGenerationResult> {
+    const startedAt = Date.now();
+    try {
+      const result = await generateOpenRouterText({
+        apiKey: this.apiKey,
+        model: this.model,
+        systemInstruction: request.systemInstruction,
+        userPrompt: request.userPrompt,
+        temperature: request.temperature,
+        maxOutputTokens: request.maxOutputTokens,
+        responseFormat: request.responseFormat,
+        abortSignal: request.abortSignal,
+        reasoningEffort: this.reasoningEffort,
+      });
+      const text = result.text.trim();
+      const inputTokens = result.usage?.inputTokens
+        ?? estimateTokens(`${request.systemInstruction}\n\n${request.userPrompt}`);
+      const outputTokens = result.usage?.outputTokens ?? estimateTokens(text);
+      return {
+        text,
+        usage: {
+          kind: request.kind,
+          stage: request.stage,
+          provider: this.provider,
+          model: this.model,
+          inputTokens,
+          outputTokens,
+          totalTokens: result.usage?.totalTokens ?? inputTokens + outputTokens,
+          generationTimeMs: Date.now() - startedAt,
+          tokenSource: result.usage ? "provider" : "estimated",
+        },
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown provider error";
+      throw new Error(`OpenRouter chapter generation failed during ${request.stage}: ${message}`);
+    }
+  }
+}
+
+/** Route a configured chapter model to its provider through the Model Router. */
+export function createChapterTextProvider(
+  model: string,
+  config: Pick<ResolvedChapterGenerationConfig, "keys" | "reasoningEffort">,
+): ChapterTextModelProvider {
+  const apiKey = requireTextModelKey(model, config.keys);
+  return textModelProvider(model) === "openrouter"
+    ? new OpenRouterChapterTextProvider(apiKey, model, config.reasoningEffort)
+    : new GeminiChapterTextProvider(apiKey, model);
 }

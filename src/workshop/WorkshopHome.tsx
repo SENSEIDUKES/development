@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { Router } from 'lucide-react';
 import {
   getWorkshopTrack,
   getWorkshopVersionLabel,
@@ -107,6 +108,14 @@ function CardWorkshopVisual() {
   );
 }
 
+function ModelRouterVisual() {
+  return (
+    <div role="img" aria-label="Model Router" style={{ display: 'grid', height: '100%', width: '100%', placeItems: 'center', color: '#9d927e' }}>
+      <Router aria-hidden="true" size={72} strokeWidth={1.25} />
+    </div>
+  );
+}
+
 function CardVisual({ id }: { id: string }) {
   if (id === 'familiar') return <img src={defaultFamiliar.definition.placeholderUrl} alt={`${defaultFamiliar.definition.displayName} Familiar`} style={{ height: '100%', width: '100%', objectFit: 'contain' }} />;
   if (id === 'card-workshop') return <CardWorkshopVisual />;
@@ -114,6 +123,7 @@ function CardVisual({ id }: { id: string }) {
   if (id === 'chapter-generation-manifestation') return <ManifestationVisual />;
   if (id === 'idle-cultivation') return <IdleCultivationVisual />;
   if (id === 'relics-gallery') return <RelicsGalleryVisual />;
+  if (id === 'model-router') return <ModelRouterVisual />;
   return null;
 }
 

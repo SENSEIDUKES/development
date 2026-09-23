@@ -71,6 +71,10 @@ const EnergyWorkspace = lazy(() =>
   import('./workshop/previews/energy/EnergyWorkspace')
     .then(module => ({ default: module.EnergyWorkspace })),
 );
+const ModelRouterWorkspace = lazy(() =>
+  import('./workshop/previews/model-router/ModelRouterWorkspace')
+    .then(module => ({ default: module.ModelRouterWorkspace })),
+);
 const FamiliarWorkspace = lazy(() => import('./workshop/previews/familiar/FamiliarWorkspace').then(module => ({ default: module.FamiliarWorkspace })));
 const AudioPlayerSmokeWorkspace = lazy(() =>
   import('./workshop/previews/audio-player-smoke/AudioPlayerSmokeWorkspace')
@@ -93,6 +97,7 @@ const previewRegistry: Record<string, ComponentType> = {
   'chapter-generation-manifestation': ChapterManifestationWorkspace,
   'dao-pillar': DaoPillarWorkspace,
   'energy': EnergyWorkspace,
+  'model-router': ModelRouterWorkspace,
   'familiar': FamiliarWorkspace,
   'harness-generation': HarnessGenerationWorkspace,
   'idle-cultivation': ClosedDoorCultivationWorkspace,

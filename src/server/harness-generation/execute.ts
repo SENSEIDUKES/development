@@ -4,10 +4,8 @@ import {
   type ResolvedHarnessGenerationConfig,
 } from './config';
 import { buildHarnessGenerationPrompt, buildHarnessMemoryRecoveryPrompt, buildHarnessArcPrompt } from './prompt';
-import {
-  GeminiHarnessTextProvider,
-  type HarnessTextModelProvider,
-} from './provider';
+import { createHarnessTextProvider, type HarnessTextModelProvider } from './provider';
+import { requireTextModelKey } from '../model-router/catalog';
 
 export type HarnessProviderFactory = (input: { apiKey: string; model: string }) => HarnessTextModelProvider;
 
@@ -25,10 +23,10 @@ export const executeHarnessGeneration = async (
   providerFactory?: HarnessProviderFactory,
 ): Promise<HarnessGenerationResponse> => {
   const model = resolveConfiguredHarnessModel(request.model, config);
-  if (!config.apiKey) throw new Error('GEMINI_API_KEY is not configured on the Development server.');
+  const apiKey = requireTextModelKey(model, config.keys);
   const provider = providerFactory
-    ? providerFactory({ apiKey: config.apiKey, model })
-    : new GeminiHarnessTextProvider(config.apiKey, model);
+    ? providerFactory({ apiKey, model })
+    : createHarnessTextProvider(model, config);
   const chapter = 'operation' in request ? undefined : buildHarnessGenerationPrompt(request);
   const prompt = chapter ?? ('operation' in request && request.operation === 'recover-memory'
     ? buildHarnessMemoryRecoveryPrompt(request as HarnessMemoryRecoveryRequest)

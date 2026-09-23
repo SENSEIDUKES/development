@@ -24,9 +24,10 @@ import {
 } from "./modelCalls";
 import { sealChapterContinuation } from "./continuationSecurity";
 import {
-  GeminiChapterTextProvider,
+  createChapterTextProvider,
   type ChapterTextModelProvider,
 } from "./provider";
+import { requireTextModelKey, textModelProvider } from "../model-router/catalog";
 
 export type ChapterProviderFactory = (input: {
   apiKey: string;
@@ -116,9 +117,7 @@ export async function executeChapterGeneration(
   options: ExecuteChapterGenerationOptions = {},
 ): Promise<ManifestChapterResponse> {
   const model = resolveConfiguredChapterModel(request.model, config);
-  if (!config.apiKey) {
-    throw new Error("GEMINI_API_KEY is not configured on the Development server.");
-  }
+  const apiKey = requireTextModelKey(model, config.keys);
   if (!request.artifact?.blueprint) {
     throw new Error(
       "Select a finalized Story Seed with its World Blueprint. No Workshop fixture data was substituted.",
@@ -138,8 +137,8 @@ export async function executeChapterGeneration(
     : adapted.contracts;
   const chapterPacket = assembleChapterPacket(contracts);
   const provider = options.providerFactory
-    ? options.providerFactory({ apiKey: config.apiKey, model })
-    : new GeminiChapterTextProvider(config.apiKey, model);
+    ? options.providerFactory({ apiKey, model })
+    : createChapterTextProvider(model, config);
   const liveCalls = createLiveChapterModelCalls(provider, {
     temperature: config.temperature,
     maxOutputTokens: config.maxOutputTokens,
@@ -181,11 +180,11 @@ export async function executeChapterGeneration(
       temporaryInstruction: request.temporaryInstruction,
     }),
     artifact: request.artifact,
-    secret: config.apiKey,
+    secret: config.continuationSecret ?? apiKey,
   });
 
   return {
-    provider: "gemini",
+    provider: textModelProvider(model) ?? "gemini",
     model,
     run,
     usage: aggregateChapterTokenUsage(liveCalls.usage),

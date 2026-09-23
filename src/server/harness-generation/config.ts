@@ -46,9 +46,11 @@ export const resolveHarnessGenerationConfig = (
       environment.HARNESS_GENERATION_MAX_OUTPUT_TOKENS ?? environment.AI_MAX_TOKENS,
       16_384,
     ))),
-    timeoutMs: Math.max(10_000, Math.min(180_000, Math.floor(finiteNumber(
+    // Vercel allows this route 180 seconds. Leave time for the provider result
+    // to be wrapped and returned instead of cutting a slow chapter off at 120s.
+    timeoutMs: Math.max(10_000, Math.min(170_000, Math.floor(finiteNumber(
       environment.HARNESS_GENERATION_TIMEOUT_MS,
-      120_000,
+      170_000,
     )))),
   };
 };

@@ -13,9 +13,9 @@ const formatWhole = (value: number) => value.toLocaleString('en-US');
 
 /** One sentence for what a batch of recorded activity did. */
 export function describeActivityResults(responses: readonly RecordLibraryActivityResponse[]): string {
-  if (!responses.some(response => response.recorded)) return 'Already recorded — nothing moved.';
   const earned = responses.flatMap(response => response.earned.map(scroll => scroll.achievementName));
   const creation = responses.reduce((total, response) => total + response.creationDaoXp, 0);
+  if (!responses.some(response => response.recorded) && !earned.length && creation === 0) return 'Already recorded — nothing moved.';
   const parts: string[] = [];
   if (earned.length) parts.push(`Earned ${earned.join(' and ')} — ${earned.length === 1 ? 'a Mystery Scroll is' : 'Mystery Scrolls are'} waiting.`);
   if (creation > 0) parts.push(`+${formatWhole(creation)} DAO XP for creating.`);

@@ -90,6 +90,50 @@ describe('Achievements and Mystery Scrolls', () => {
     expect((await capped.daoXp.getAccount(uid))?.balance).toBe(25);
   });
 
+  it('finishes an interrupted activity when it is repeated, crediting and minting exactly once', async () => {
+    const { service, daoXp } = setup();
+    const credit = daoXp.credit.bind(daoXp);
+    let failures = 1;
+    daoXp.credit = async command => {
+      if (failures > 0) { failures -= 1; throw new Error('The DAO XP ledger is unavailable.'); }
+      return credit(command);
+    };
+    const created = { kind: 'story.created' as const, subjectId: 'story-9', storyId: 'story-9' };
+    await expect(service.recordActivity(uid, created)).rejects.toThrow('unavailable');
+
+    const retry = await service.recordActivity(uid, created);
+    expect(retry.recorded).toBe(false);
+    expect(retry.creationDaoXp).toBe(50);
+    expect(retry.earned.map(scroll => scroll.achievementKey)).toEqual(['creation.first-story']);
+
+    const again = await service.recordActivity(uid, created);
+    expect(again).toMatchObject({ recorded: false, creationDaoXp: 0, earned: [] });
+    expect((await daoXp.getAccount(uid))?.balance).toBe(50);
+    expect((await service.getSnapshot({ uid })).scrolls).toHaveLength(1);
+  });
+
+  it('keys the creation credit by the activity record, so any valid subject can credit', async () => {
+    const { service, daoXp } = setup();
+    const subjectId = `story-${'x'.repeat(190)}`;
+    expect(subjectId.length).toBeLessThanOrEqual(200);
+    const created = await service.recordActivity(uid, { kind: 'story.created', subjectId });
+    expect(created.creationDaoXp).toBe(50);
+    const [line] = await daoXp.listTransactions(uid, 5);
+    expect(line.idempotencyKey).toMatch(/^creation:.+:dao-xp$/);
+    expect(line.idempotencyKey).not.toContain(subjectId);
+    expect(line.idempotencyKey.length).toBeLessThan(100);
+    await expect(service.recordActivity(uid, { kind: 'chapter.read', subjectId: 'story-1:1', idempotencyKey: 'k'.repeat(221) }))
+      .rejects.toThrow('idempotencyKey must be 1–220 characters.');
+  });
+
+  it('applies one account’s simultaneous creation activities one at a time, within the daily cap', async () => {
+    const { service, daoXp } = setup({ creationDailyCap: 10 });
+    const results = await Promise.all([1, 2, 3].map(chapter =>
+      service.recordActivity(uid, { kind: 'chapter.created', subjectId: `story-3:${chapter}`, storyId: 'story-3' })));
+    expect(results.map(result => result.creationDaoXp)).toEqual([10, 0, 0]);
+    expect((await daoXp.getAccount(uid))?.balance).toBe(10);
+  });
+
   it('keeps hidden goals redacted until earned and never evaluates planned media goals', async () => {
     const { service, view } = setup();
     expect(await view('exploration.hidden-archivist')).toMatchObject({ hidden: true, name: 'Hidden achievement', progress: null, rarity: null });

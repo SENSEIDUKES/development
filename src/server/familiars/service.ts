@@ -35,7 +35,9 @@ export interface FamiliarServiceDependencies {
 }
 
 const MAX_OFFER = 1_000_000;
-const validKey = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0 && value.length <= 200;
+/** Client keys are short (a UUID); 120 leaves room for the prefixes every ledger key adds. */
+const MAX_KEY = 120;
+const validKey = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0 && value.length <= MAX_KEY;
 
 /**
  * The Familiar account: ownership, QI training, and cosmetic selections.
@@ -144,7 +146,7 @@ export class FamiliarService {
   async offerQi(principal: LibraryPrincipal, input: OfferQiInput): Promise<OfferQiResponse> {
     const option = this.option(input.familiarId);
     if (!Number.isSafeInteger(input.amount) || input.amount <= 0 || input.amount > MAX_OFFER) throw new FamiliarValidationError(['Offer a positive whole amount of QI.']);
-    if (!validKey(input.idempotencyKey)) throw new FamiliarValidationError(['An idempotency key of 1–200 characters is required.']);
+    if (!validKey(input.idempotencyKey)) throw new FamiliarValidationError([`An idempotency key of 1–${MAX_KEY} characters is required.`]);
     return this.serialize(principal.uid, async () => {
       const account = await this.repository.getAccount(principal.uid);
       const replay = account.offers.find(offer => offer.idempotencyKey === input.idempotencyKey);
@@ -212,12 +214,15 @@ export class FamiliarService {
     const option = this.option(input.familiarId);
     if (input.currency !== 'qi' && input.currency !== 'energy') throw new FamiliarValidationError(['The Store sells for QI or Energy.']);
     if (!Number.isSafeInteger(input.price) || input.price <= 0) throw new FamiliarValidationError(['A purchase needs the displayed price.']);
-    if (!validKey(input.idempotencyKey)) throw new FamiliarValidationError(['An idempotency key of 1–200 characters is required.']);
+    if (!validKey(input.idempotencyKey)) throw new FamiliarValidationError([`An idempotency key of 1–${MAX_KEY} characters is required.`]);
     const sourceKey = `celestial-store:${input.idempotencyKey}`;
     return this.serialize(principal.uid, async () => {
       const account = await this.repository.getAccount(principal.uid);
-      const ownership = account.owned.find(entry => entry.familiarId === option.id);
-      if (ownership?.sourceKey === sourceKey) return { outcome: 'purchased', message: `${option.name} joins your cave.`, snapshot: this.snapshotOf(account) };
+      // One purchase key buys one Familiar: a key that already bought another
+      // Familiar is refused, never read as a replay.
+      const keyed = account.owned.find(entry => entry.sourceKey === sourceKey);
+      if (keyed && keyed.familiarId !== option.id) throw new FamiliarConflictError('That purchase key was already used for a different Familiar.');
+      if (keyed) return { outcome: 'purchased', message: `${option.name} joins your cave.`, snapshot: this.snapshotOf(account) };
       if (this.owns(account, option)) return { outcome: 'already-owned', message: `${option.name} already lives in your cave.`, snapshot: this.snapshotOf(account) };
       const rotation = dailyStoreRotation(this.catalogue, this.now(), this.store);
       const offer = rotation[input.currency].find(candidate => candidate.familiarId === option.id);
@@ -225,10 +230,13 @@ export class FamiliarService {
       const price = offer.salePrice ?? offer.price;
       if (price !== input.price) throw new FamiliarConflictError(`${option.name}’s price changed. Refresh the Store to see today’s price.`);
       const description = `${option.name} · Celestial Store`;
+      // The ledger key names the Familiar too, so a reused purchase key can
+      // never replay the payment another Familiar was bought with.
+      const ledgerKey = `${sourceKey}:${option.id}`;
       if (input.currency === 'qi') {
-        await this.qi.spend({ uid: principal.uid, amount: price, idempotencyKey: sourceKey, source: 'celestial-store', description, metadata: { familiarId: option.id } });
+        await this.qi.spend({ uid: principal.uid, amount: price, idempotencyKey: ledgerKey, source: 'celestial-store', description, metadata: { familiarId: option.id } });
       } else {
-        await this.energy.spend(principal, { amount: price, idempotencyKey: sourceKey, description, metadata: { source: 'celestial-store', familiarId: option.id } });
+        await this.energy.spend(principal, { amount: price, idempotencyKey: ledgerKey, description, metadata: { source: 'celestial-store', familiarId: option.id } });
       }
       const updated = await this.repository.grantOwnership(principal.uid, { familiarId: option.id, acquiredVia: 'purchase', sourceKey, acquiredAt: this.now().toISOString() });
       return { outcome: 'purchased', message: `${option.name} joins your cave. Equip it whenever you like.`, snapshot: this.snapshotOf(updated) };

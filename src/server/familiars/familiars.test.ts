@@ -129,6 +129,23 @@ describe('Celestial Store purchases through the Familiar account', () => {
     expect((await qi.getAccount(principal.uid))?.balance).toBe(50_000);
   });
 
+  it('refuses a purchase key already used for a different Familiar and charges nothing more', async () => {
+    const { service, qi, fund } = setup();
+    const [first, second] = today.qi;
+    const firstPrice = first.salePrice ?? first.price;
+    const secondPrice = second.salePrice ?? second.price;
+    await fund(firstPrice + secondPrice);
+    await service.purchase(principal, { familiarId: first.familiarId, currency: 'qi', price: firstPrice, idempotencyKey: 'reused' });
+    await expect(service.purchase(principal, { familiarId: second.familiarId, currency: 'qi', price: secondPrice, idempotencyKey: 'reused' }))
+      .rejects.toThrow('That purchase key was already used for a different Familiar.');
+    const snapshot = await service.getSnapshot(principal);
+    expect(snapshot.ownedFamiliarIds).toContain(first.familiarId);
+    expect(snapshot.ownedFamiliarIds).not.toContain(second.familiarId);
+    expect((await qi.getAccount(principal.uid))?.balance).toBe(secondPrice);
+    // Each Familiar has its own ledger key, so one purchase's payment can never be replayed for another.
+    expect((await qi.listTransactions(principal.uid, 5)).find(line => line.kind === 'spend')?.idempotencyKey).toBe(`celestial-store:reused:${first.familiarId}`);
+  });
+
   it('serializes concurrent purchases so one Familiar is paid for once', async () => {
     const { service, qi, fund } = setup();
     const offer = today.qi[0];

@@ -31,7 +31,7 @@ behind their own identity and storage.
 | Energy ledger | `energy/` | Grants, generation reservations and (new) direct spends. |
 | Achievements | `achievements/` | Catalogue, versioned evaluators, activity intake, one scroll per goal per account, opening and delivery, creation DAO XP. |
 | Fate Survival Relics | `relics/` | Relic catalogue, outcome → rarity mapping, one Relic per challenge per account, delivery. |
-| Familiars | `familiars/` | Ownership, QI training, cosmetic selection, Store purchases at today's server-resolved price. |
+| Familiars | `familiars/` | Ownership, QI training, cosmetic selection, Store purchases at today's server-resolved price. One purchase key buys one Familiar, and each payment's ledger key names the Familiar it bought. |
 | Daily Dao Pillar | `dao-pillar/` | Unchanged calendar; deposits QI only. |
 | Development economy | `economy/developmentRuntime.ts` | One runtime wiring all of the above, served at `/api/library-economy?capability=<name>` for `energy`, `dao-pillar`, `cultivation`, `dao-xp`, `achievements`, `relics`, `familiars`. |
 
@@ -59,7 +59,10 @@ trusted activity intake, the Fate Survival judge — and for a checkout.
 
 ## Still needed for production
 
-- A trusted server-side activity intake calling `AchievementService.recordActivity`.
+- A trusted server-side activity intake calling `AchievementService.recordActivity`. The service
+  applies one account's activities one at a time within a server process; a host running several
+  processes must hold the same per-account lock (for example a row lock on the account) so the
+  optional creation cap cannot be raced.
 - The Fate Survival judge calling `RelicService.recordFateSurvivalOutcome` with a verified outcome.
 - Postgres adapters for achievements, Relics and Familiars (the SQL already exists).
 - A Light-Novels plan for retiring the profile's `qi`, special reserves and relic inventory, and

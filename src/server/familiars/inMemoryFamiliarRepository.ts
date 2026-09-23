@@ -1,4 +1,4 @@
-import type { FamiliarAccountRecord, FamiliarOfferRecord, FamiliarOwnershipRecord, FamiliarRepository } from './repository';
+import { FamiliarConflictError, type FamiliarAccountRecord, type FamiliarOfferRecord, type FamiliarOwnershipRecord, type FamiliarRepository } from './repository';
 
 const clone = <T,>(value: T): T => structuredClone(value);
 
@@ -21,6 +21,10 @@ export class InMemoryFamiliarRepository implements FamiliarRepository {
 
   async grantOwnership(uid: string, ownership: FamiliarOwnershipRecord): Promise<FamiliarAccountRecord> {
     const account = this.ensure(uid);
+    // Mirrors the migration's UNIQUE (uid, source_key): one source acquires one Familiar.
+    if (account.owned.some(entry => entry.sourceKey === ownership.sourceKey && entry.familiarId !== ownership.familiarId)) {
+      throw new FamiliarConflictError('That purchase key was already used for a different Familiar.');
+    }
     if (!account.owned.some(entry => entry.familiarId === ownership.familiarId)) account.owned.push(clone(ownership));
     return clone(account);
   }

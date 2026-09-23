@@ -134,11 +134,14 @@ export interface RecordLibraryActivityInput {
 }
 
 export interface RecordLibraryActivityResponse {
-  /** False when the same activity was already recorded; nothing moved. */
+  /**
+   * False when the same activity was already recorded. A repeat never credits
+   * twice; it only finishes what an interrupted first attempt left undone.
+   */
   recorded: boolean;
-  /** Scrolls this activity earned. */
+  /** Scrolls this call earned. */
   earned: MysteryScrollView[];
-  /** DAO XP this activity credited directly for creation. */
+  /** DAO XP this call credited directly for creation. */
   creationDaoXp: number;
   snapshot: AchievementsSnapshot;
 }

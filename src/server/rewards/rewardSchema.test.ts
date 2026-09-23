@@ -106,6 +106,10 @@ describe('Reward schema', () => {
     expect(await buy('phoenix', 'qi', 1500, 'celestial-store:a')).toMatchObject({ outcome: 'purchased' });
     expect(await buy('phoenix', 'qi', 1500, 'celestial-store:a')).toMatchObject({ outcome: 'purchased' });
     expect(await buy('phoenix', 'qi', 1500, 'celestial-store:b')).toMatchObject({ outcome: 'already-owned' });
+    // A key that bought one Familiar never buys another, and its payment is keyed to the Familiar it bought.
+    await expect(buy('galaxy-octopus', 'energy', 300, 'celestial-store:a')).rejects.toThrow(/familiar_conflict/);
+    const spend = await db.query<{ idempotency_key: string }>(`SELECT idempotency_key FROM qi_transaction WHERE kind = 'spend'`);
+    expect(spend.rows.map(row => row.idempotency_key)).toEqual(['celestial-store:a:phoenix']);
     expect(await buy('galaxy-octopus', 'energy', 300, 'celestial-store:c')).toMatchObject({ outcome: 'purchased' });
     await expect(buy('living-grimoire', 'energy', 300, 'celestial-store:d')).rejects.toThrow(/energy_insufficient/);
     expect(await qiBalance(db)).toBe(0);

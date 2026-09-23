@@ -136,10 +136,11 @@ END;
 $$;
 
 -- Buys one Familiar at the price the caller resolved from today's Celestial
--- Store rotation. Debits QI or settled Energy with key `p_key`, then grants
--- ownership. A repeated key returns 'purchased' without charging again; a
--- Familiar already owned another way returns 'already-owned' and charges
--- nothing.
+-- Store rotation. Debits QI or settled Energy with key `p_key:<familiar id>`,
+-- then grants ownership under `p_key`. A repeated key returns 'purchased'
+-- without charging again; a key that already bought a different Familiar
+-- raises `familiar_conflict`; a Familiar already owned another way returns
+-- 'already-owned' and charges nothing.
 CREATE FUNCTION familiar_apply_purchase(
   p_uid TEXT,
   p_familiar_id TEXT,
@@ -158,6 +159,12 @@ BEGIN
   END IF;
   PERFORM familiar_ensure_account(p_uid);
   PERFORM 1 FROM familiar_account WHERE uid = p_uid FOR UPDATE;
+  -- One purchase key buys one Familiar: a key that already bought another
+  -- Familiar is refused, never read as a replay.
+  SELECT * INTO ownership FROM familiar_ownership WHERE uid = p_uid AND source_key = p_key;
+  IF FOUND AND ownership.familiar_id <> p_familiar_id THEN
+    RAISE EXCEPTION 'familiar_conflict: That purchase key was already used for a different Familiar.';
+  END IF;
   SELECT * INTO ownership FROM familiar_ownership WHERE uid = p_uid AND familiar_id = p_familiar_id;
   IF FOUND THEN
     RETURN jsonb_build_object(
@@ -165,10 +172,13 @@ BEGIN
       'ownership', to_jsonb(ownership)
     );
   END IF;
+  -- The ledger key names the Familiar too, so a reused purchase key can never
+  -- replay the payment another Familiar was bought with.
   IF p_currency = 'qi' THEN
-    PERFORM qi_apply_spend(p_uid, p_price, p_key, 'celestial-store', p_description, jsonb_build_object('familiarId', p_familiar_id));
+    PERFORM qi_apply_spend(p_uid, p_price, p_key || ':' || p_familiar_id, 'celestial-store', p_description,
+      jsonb_build_object('familiarId', p_familiar_id));
   ELSE
-    PERFORM energy_apply_spend(p_uid, p_price, p_key, p_description,
+    PERFORM energy_apply_spend(p_uid, p_price, p_key || ':' || p_familiar_id, p_description,
       jsonb_build_object('source', 'celestial-store', 'familiarId', p_familiar_id));
   END IF;
   INSERT INTO familiar_ownership (uid, familiar_id, acquired_via, source_key)

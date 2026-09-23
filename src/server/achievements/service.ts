@@ -86,6 +86,7 @@ export class AchievementService {
   private readonly definitions: readonly AchievementDefinition[];
   private readonly evaluators: AchievementEvaluatorRegistry;
   private readonly now: () => Date;
+  private readonly queues = new Map<string, Promise<unknown>>();
 
   constructor(dependencies: AchievementServiceDependencies) {
     this.repository = dependencies.repository;
@@ -95,6 +96,21 @@ export class AchievementService {
     this.evaluators = dependencies.evaluators ?? createDefaultEvaluatorRegistry();
     this.definitions = validateAchievementCatalog(dependencies.definitions ?? LIBRARY_ACHIEVEMENTS, this.evaluators);
     this.now = dependencies.now ?? (() => new Date());
+  }
+
+  /**
+   * One account's activity is applied one at a time, so the optional creation
+   * cap reads and credits without a race. This covers one server process; a
+   * host running several must hold the same per-account lock (for example a
+   * row lock on the account) around `recordActivity`.
+   */
+  private serialize<T>(uid: string, work: () => Promise<T>): Promise<T> {
+    const previous = this.queues.get(uid) ?? Promise.resolve();
+    const run = previous.catch(() => undefined).then(work);
+    const tail = run.catch(() => undefined);
+    this.queues.set(uid, tail);
+    void tail.then(() => { if (this.queues.get(uid) === tail) this.queues.delete(uid); });
+    return run;
   }
 
   async getSnapshot(principal: Pick<LibraryPrincipal, 'uid'>): Promise<AchievementsSnapshot> {
@@ -159,7 +175,12 @@ export class AchievementService {
   /**
    * Records one trusted activity and applies everything it earns. The host
    * calls this from its own servers; the Workshop reaches it through the
-   * development-only HTTP operation. Repeating an activity changes nothing.
+   * development-only HTTP operation.
+   *
+   * Every step after the record is safe to repeat — the creation credit is
+   * keyed by the activity, an achievement mints one scroll, and each delivery
+   * is keyed by its scroll — so repeating an activity never credits twice, and
+   * a repeat after an interrupted first attempt finishes what it left undone.
    */
   async recordActivity(uid: string, input: RecordLibraryActivityInput & { idempotencyKey?: string }): Promise<RecordLibraryActivityResponse> {
     const issues: string[] = [];
@@ -167,17 +188,22 @@ export class AchievementService {
     if (!isLibraryActivityKind(input.kind)) issues.push('The activity kind is unknown.');
     assertText(input.subjectId, 'subjectId', issues);
     assertText(input.storyId, 'storyId', issues, true);
+    if (input.idempotencyKey !== undefined
+      && (typeof input.idempotencyKey !== 'string' || !input.idempotencyKey.trim() || input.idempotencyKey.length > 220)) {
+      issues.push('idempotencyKey must be 1–220 characters.');
+    }
     if (issues.length) throw new AchievementValidationError(issues);
 
+    return this.serialize(uid, () => this.applyActivity(uid, input));
+  }
+
+  private async applyActivity(uid: string, input: RecordLibraryActivityInput & { idempotencyKey?: string }): Promise<RecordLibraryActivityResponse> {
     const occurredAt = this.now().toISOString();
     const { activity, replayed } = await this.repository.recordActivity({
       uid, kind: input.kind, subjectId: input.subjectId.trim(), storyId: input.storyId?.trim() ?? null,
       idempotencyKey: input.idempotencyKey ?? `${input.kind}:${input.subjectId.trim()}`,
       occurredAt,
     });
-    if (replayed) {
-      return { recorded: false, earned: [], creationDaoXp: 0, snapshot: await this.getSnapshot({ uid }) };
-    }
 
     const creationDaoXp = await this.creditCreation(uid, activity);
     const activities = await this.repository.listActivities(uid);
@@ -207,21 +233,29 @@ export class AchievementService {
       earned.push(this.config.delivery === 'on-earn' ? await this.deliverOnEarn(scroll) : scroll);
     }
     return {
-      recorded: true,
+      recorded: !replayed,
       earned: earned.map(projectMysteryScroll),
       creationDaoXp,
       snapshot: await this.getSnapshot({ uid }),
     };
   }
 
-  /** Creation credits DAO XP directly, idempotently per activity, within the optional daily cap. */
+  /**
+   * Creation credits DAO XP directly, once per activity, within the optional
+   * daily cap. The credit is keyed by the activity record's id — a fixed
+   * length, whatever the subject — and a credit that already landed reports
+   * nothing new.
+   */
   private async creditCreation(uid: string, activity: ActivityRecord): Promise<number> {
     const configured = this.config.creationDaoXp[activity.kind as LibraryActivityKind] ?? 0;
     if (configured <= 0) return 0;
+    const keyPrefix = `creation:${activity.id}`;
+    const lines = await this.daoXp.listTransactions(uid, 1_000);
+    if (lines.some(line => line.idempotencyKey === `${keyPrefix}:dao-xp`)) return 0;
     let amount = configured;
     if (this.config.creationDailyCap !== null) {
       const today = activity.occurredAt.slice(0, 10);
-      const earnedToday = (await this.daoXp.listTransactions(uid, 1_000))
+      const earnedToday = lines
         .filter(line => line.source === 'creation' && line.createdAt.slice(0, 10) === today)
         .reduce((total, line) => total + line.amount, 0);
       amount = Math.max(0, Math.min(configured, this.config.creationDailyCap - earnedToday));
@@ -229,7 +263,7 @@ export class AchievementService {
     if (amount <= 0) return 0;
     await this.deliverer.deliver({
       uid, source: 'creation', grants: [{ type: 'dao-xp', amount }],
-      keyPrefix: `creation:${activity.idempotencyKey}`,
+      keyPrefix,
       description: `${LIBRARY_ACTIVITY_LABELS[activity.kind]} · creation`,
       metadata: { activityId: activity.id, kind: activity.kind, subjectId: activity.subjectId },
     });

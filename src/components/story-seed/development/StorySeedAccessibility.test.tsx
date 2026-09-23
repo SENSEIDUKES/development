@@ -540,7 +540,6 @@ describe('Story Seed keyboard and mobile navigation', () => {
         activeAgentId: state.activeAgentId,
         currentUser: state.currentUser,
         stories: state.stories,
-        equippedRelicTitle: state.routingConfig.storyMaker?.equippedRelicTitle ?? null,
       }));
       renders();
       return null;

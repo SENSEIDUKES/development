@@ -17,16 +17,15 @@ export const DAO_PILLAR_API_PATH = '/api/library-economy?capability=dao-pillar';
 
 /**
  * One thing a scheduled day awards. `qi` is the only kind delivered today;
- * the other kinds exist so a future theme can be configured with Relics,
- * Titles, Energy or Media Packs without changing the calendar or the claim
- * record, and the server refuses to activate a theme whose entries it cannot
- * deliver yet.
+ * the other kinds exist so a future theme can be configured with Energy or
+ * Media Packs without changing the calendar or the claim record, and the
+ * server refuses to activate a theme whose entries it cannot deliver yet.
+ * Relics are never a calendar reward — they come only from Fate Survival —
+ * and standalone reward Titles are retired.
  */
 export type RewardEntry =
   | { type: 'qi'; amount: number }
   | { type: 'energy'; amount: number }
-  | { type: 'relic'; relicId: string; quantity?: number }
-  | { type: 'title'; titleId: string }
   | { type: 'media-pack'; packId: string };
 
 export type RewardType = RewardEntry['type'];
@@ -137,14 +136,12 @@ export interface DaoPillarHttpError {
 
 const formatWhole = (value: number) => value.toLocaleString('en-US');
 
-/** "100 Qi", "500 Qi", or "100 Qi + Relic" for a mixed day. */
+/** "100 Qi", "500 Qi", or "100 Qi + 5 Energy" for a mixed day. */
 export function describeRewards(entries: readonly RewardEntry[]): string {
   return entries.map(entry => {
     switch (entry.type) {
       case 'qi': return `${formatWhole(entry.amount)} Qi`;
       case 'energy': return `${formatWhole(entry.amount)} Energy`;
-      case 'relic': return entry.quantity && entry.quantity > 1 ? `${entry.quantity} Relics` : 'Relic';
-      case 'title': return 'Title';
       case 'media-pack': return 'Media Pack';
     }
   }).join(' + ');

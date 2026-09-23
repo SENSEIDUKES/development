@@ -8,7 +8,7 @@
  * The option strings are persisted values — do not rename them.
  */
 
-import type { ChapterWritingStyle } from '../shared/types';
+import type { ChapterWritingStyle } from './types';
 
 export const DEFAULT_CHAPTER_WRITING_STYLE: ChapterWritingStyle = "Standard";
 

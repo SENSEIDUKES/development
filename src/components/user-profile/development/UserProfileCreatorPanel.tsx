@@ -3,7 +3,7 @@ import { Download } from 'lucide-react';
 import { LibraryDiscoveryIcon as SENDiscoveryIcon, LibraryStoreIcon as SENStoreIcon } from '@seihouse/library-ui';
 import { LibraryButton, LibraryPanel } from '@seihouse/library-ui';
 import { SEIEmptyState, SEIInlineAlert } from '@seihouse/ui';
-import { useUserProfileServices } from '../shared/userProfileServices';
+import { useUserProfileServices } from './userProfileServices';
 import { publicCreatorWorlds, type PublicCreator } from './creatorWorlds';
 
 export function UserProfileCreatorPanel({ creator, kind }: {

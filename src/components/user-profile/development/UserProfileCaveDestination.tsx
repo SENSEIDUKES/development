@@ -18,9 +18,9 @@ export type CaveDestinationId =
   | 'redeem-code'
   | 'unavailable'
   | 'stories'
-  | 'relics'
+  | 'rewards'
   | 'dao-pillar'
-  | 'status-effects'
+  | 'familiar'
   | 'switchboard'
   | 'public-stories'
   | 'public-relics';

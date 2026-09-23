@@ -1,4 +1,8 @@
-import { CosmicArtifact } from '@seihouse/library/relics';
+/**
+ * Production-shaped inventory Relics for the locked Reference pane only. The
+ * development Relics are Fate Survival rewards read from the Relics ledger.
+ */
+import type { CosmicArtifact } from '../../../components/relics/shared/types';
 
 export const mockRelics: CosmicArtifact[] = [
   {

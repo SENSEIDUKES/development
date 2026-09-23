@@ -15,7 +15,7 @@ describe('Dao Pillar in-memory guards', () => {
     const repository = new InMemoryDaoPillarRepository();
     await expect(repository.claimDay({
       uid: 'dev-user', themeId: 'x', cycleId: 'x:2026-09-06', dayNumber: 1, scheduledDate: '2026-09-06',
-      rewards: [{ type: 'relic', relicId: 'r1' }], description: 'x',
+      rewards: [{ type: 'media-pack', packId: 'p1' }], description: 'x',
     })).rejects.toBeInstanceOf(DaoPillarUnsupportedRewardError);
     expect(await repository.listClaims('dev-user')).toHaveLength(0);
     expect(await repository.getQiBalance('dev-user')).toBe(0);
@@ -24,7 +24,7 @@ describe('Dao Pillar in-memory guards', () => {
   it('refuses to construct a service around a theme it cannot deliver', () => {
     expect(() => new DaoPillarService(new InMemoryDaoPillarRepository(), {
       identityMode: 'development',
-      activeTheme: { ...contractTheme, rewards: { ...contractTheme.rewards, everyDay: [{ type: 'title', titleId: 'sage' }] } },
+      activeTheme: { ...contractTheme, rewards: { ...contractTheme.rewards, everyDay: [{ type: 'energy', amount: 5 }] } },
     })).toThrow(/cannot be delivered yet/);
   });
 

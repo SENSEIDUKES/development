@@ -1,13 +1,19 @@
 import {
   assertQiAmount,
   assertQiIdempotencyKey,
+  QiConflictError,
+  QiInsufficientError,
   QiValidationError,
   type JsonObject,
   type QiAccountRecord,
   type QiDepositCommand,
   type QiDepositResult,
   type QiLedger,
+  type QiLedgerResult,
+  type QiSpendCommand,
+  type QiSpendResult,
   type QiTransaction,
+  type QiTransactionKind,
 } from './qiLedger';
 
 /** The slice of a Postgres client the adapter needs (`pg`, PGlite). */
@@ -29,7 +35,7 @@ export const qiAccountFromRow = (row: Row): QiAccountRecord => ({
 export const qiTransactionFromRow = (row: Row): QiTransaction => ({
   id: String(row.id),
   uid: String(row.uid),
-  kind: 'deposit',
+  kind: row.kind as QiTransactionKind,
   amount: Number(row.amount),
   source: String(row.source),
   idempotencyKey: String(row.idempotency_key),
@@ -39,13 +45,21 @@ export const qiTransactionFromRow = (row: Row): QiTransaction => ({
   createdAt: isoTimestamp(row.created_at),
 });
 
+/** The amounts travel in the message text so any driver (pg, PGlite) can recover them. */
+const parseInsufficient = (message: string): QiInsufficientError => {
+  const match = /qi_insufficient:.*?(\d+) QI and (\d+) is available/.exec(message);
+  return new QiInsufficientError(match ? Number(match[1]) : 0, match ? Number(match[2]) : 0);
+};
+
 export const translateQiSqlError = (error: unknown): never => {
   const message = error instanceof Error ? error.message : String(error);
   if (message.includes('qi_validation:')) throw new QiValidationError([message.replace(/^.*qi_validation:\s*/, '')]);
+  if (message.includes('qi_insufficient:')) throw parseInsufficient(message);
+  if (message.includes('qi_conflict:')) throw new QiConflictError(message.replace(/^.*qi_conflict:\s*/, ''));
   throw error;
 };
 
-/** Thin adapter over the `qi_*` functions in `20260918_002_qi_ledger.sql`. */
+/** Thin adapter over the `qi_*` functions in the Qi ledger migrations. */
 export class PostgresQiLedger implements QiLedger {
   constructor(private readonly sql: QiSqlClient) {}
 
@@ -54,12 +68,12 @@ export class PostgresQiLedger implements QiLedger {
     return rows[0] ? qiAccountFromRow(rows[0]) : null;
   }
 
-  async deposit(command: QiDepositCommand): Promise<QiDepositResult> {
+  private async apply(fn: 'qi_apply_deposit' | 'qi_apply_spend', command: QiDepositCommand): Promise<QiLedgerResult> {
     assertQiAmount(command.amount);
     assertQiIdempotencyKey(command.idempotencyKey);
     try {
       const { rows } = await this.sql.query<{ result: Row }>(
-        'SELECT qi_apply_deposit($1, $2, $3, $4, $5, $6::jsonb) AS result',
+        `SELECT ${fn}($1, $2, $3, $4, $5, $6::jsonb) AS result`,
         [command.uid, command.amount, command.idempotencyKey, command.source, command.description, JSON.stringify(command.metadata ?? {})],
       );
       const result = rows[0]?.result;
@@ -72,6 +86,14 @@ export class PostgresQiLedger implements QiLedger {
     } catch (error) {
       return translateQiSqlError(error);
     }
+  }
+
+  deposit(command: QiDepositCommand): Promise<QiDepositResult> {
+    return this.apply('qi_apply_deposit', command);
+  }
+
+  spend(command: QiSpendCommand): Promise<QiSpendResult> {
+    return this.apply('qi_apply_spend', command);
   }
 
   async listTransactions(uid: string, limit: number): Promise<QiTransaction[]> {

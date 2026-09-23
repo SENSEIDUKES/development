@@ -25,7 +25,7 @@
  * persisted, authorized, or rewarded.
  */
 
-import type { CosmicArtifact, Story, UserProfile } from '../shared/types';
+import type { Story, UserProfile } from './types';
 import { getDaoRankData, resolvePermanentDaoXp } from '../../../library/cultivation/progression';
 
 /** The five areas a cultivator chooses to publish. */
@@ -55,7 +55,7 @@ export const PUBLIC_PROFILE_VISIBILITY_FIELDS: readonly {
   { id: 'stats', label: 'Stats', description: 'Date started, reading activity, and reading time.' },
   { id: 'highlights', label: 'Highlights', description: 'The media and moments you chose to feature.' },
   { id: 'stories', label: 'Stories', description: 'Which of your stories appear on your public Stories page.' },
-  { id: 'relicTitles', label: 'Relic titles', description: 'Relic names only — never their descriptions or rewards.' },
+  { id: 'relicTitles', label: 'Relic names', description: 'The names of your Fate Survival Relics — never their descriptions or rewards.' },
 ];
 
 /** The media a highlight may point at. Presentation only; no player is wired. */
@@ -121,14 +121,21 @@ function formatReadingTime(minutes: number): string {
  */
 const DEVELOPMENT_DAO_XP_PER_MINUTE = 12;
 
+/** The public facts the Cave has about a cultivator's activity beyond the profile record. */
+export interface PublicActivitySummary {
+  /** Fate Survival Relics, newest first: the ledger for the signed-in cultivator, the host's public record for others. */
+  relics?: readonly { id: string; name: string; rarity: string }[];
+  /** The Daily Dao Pillar streak, from the calendar or the host's public record. */
+  readingStreakDays?: number;
+}
+
 /**
- * The four featured entries, one per supported medium, drawn from the
- * cultivator's own relics and stories. A host with a real highlight selection
- * replaces this alongside `developmentPublicRecord`.
+ * The featured entries, one per supported medium, drawn from the cultivator's
+ * newest Fate Survival Relic and first story. A host with a real highlight
+ * selection replaces this alongside `developmentPublicRecord`.
  */
-function highlightsFor(profile: UserProfile, stories: readonly Story[]): PublicProfileHighlight[] {
-  const inventory: readonly CosmicArtifact[] = profile.cosmicInventory ?? [];
-  const relic = inventory.find(artifact => artifact.id === profile.equippedArtifactId) ?? inventory[0];
+function highlightsFor(profile: UserProfile, stories: readonly Story[], activity: PublicActivitySummary): PublicProfileHighlight[] {
+  const relic = activity.relics?.[0];
   const story = stories.find(candidate => !candidate.deleted);
   const highlights: PublicProfileHighlight[] = [];
 
@@ -137,8 +144,8 @@ function highlightsFor(profile: UserProfile, stories: readonly Story[]): PublicP
       id: `highlight-codex-${relic.id}`,
       medium: 'codex-image',
       title: relic.name,
-      detail: `Codex image · ${relic.rarity}`,
-      previewSrc: relic.imageUrl || profile.avatarUrl || undefined,
+      detail: `Codex image · ${relic.rarity} Relic`,
+      previewSrc: profile.avatarUrl || undefined,
     });
   }
   if (story) {
@@ -155,14 +162,6 @@ function highlightsFor(profile: UserProfile, stories: readonly Story[]): PublicP
       detail: 'Short clip · 14 sec',
     });
   }
-  if (relic?.sourceStoryTitle && relic.sourceChapterNumber) {
-    highlights.push({
-      id: `highlight-moment-${relic.id}`,
-      medium: 'moment',
-      title: `${relic.sourceStoryTitle}, Chapter ${relic.sourceChapterNumber}`,
-      detail: `Favorite moment · ${relic.milestoneName}`,
-    });
-  }
   return highlights;
 }
 
@@ -174,6 +173,7 @@ function highlightsFor(profile: UserProfile, stories: readonly Story[]): PublicP
 export function developmentPublicRecord(
   profile: UserProfile,
   stories: readonly Story[],
+  activity: PublicActivitySummary = {},
 ): PublicProfileRecord {
   const daoXp = resolvePermanentDaoXp(profile.dao_xp, profile.dao_rank);
   const rank = getDaoRankData(daoXp ?? 0).rank;
@@ -192,16 +192,16 @@ export function developmentPublicRecord(
     stats: [
       { id: 'started', label: 'Started', value: formatStartedOn(profile.joinedDate) },
       { id: 'stories', label: 'Stories read', value: `${profile.savedStoryCount ?? activeStories.length}` },
-      { id: 'streak', label: 'Reading streak', value: `${profile.daoPillarStreak ?? 0} days` },
+      { id: 'streak', label: 'Reading streak', value: `${activity.readingStreakDays ?? 0} days` },
       {
         id: 'reading-time',
         label: 'Reading time',
         value: formatReadingTime(Math.round((daoXp ?? 0) / DEVELOPMENT_DAO_XP_PER_MINUTE)),
       },
     ],
-    highlights: highlightsFor(profile, activeStories),
+    highlights: highlightsFor(profile, activeStories, activity),
     storyTitles: activeStories.map(story => story.title),
-    relicTitles: (profile.cosmicInventory ?? []).map(artifact => artifact.name),
+    relicTitles: (activity.relics ?? []).map(relic => relic.name),
   };
 }
 

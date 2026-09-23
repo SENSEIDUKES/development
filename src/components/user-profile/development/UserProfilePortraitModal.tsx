@@ -4,7 +4,7 @@ import { Camera, Image as ImageIcon, RefreshCw, Sparkles, X } from 'lucide-react
 import { LibraryButton } from '@seihouse/library-ui';
 import { LibraryProfileIcon as SENProfileIcon } from '@seihouse/library-ui';
 import './portraitBuilder.css';
-import { UserProfile } from '../shared/types';
+import { UserProfile } from './types';
 
 const PORTRAIT_GENERATION_LABELS = ['Features', 'Aura', 'Soul', 'Details', 'Finishing Touches', 'Completing'] as const;
 
@@ -25,7 +25,6 @@ interface UserProfilePortraitModalProps {
   handleGeneratePortrait: () => void;
   handleApplyPortrait: () => void;
   daoData: any;
-  equippedArtifact: any;
   profile: UserProfile | null;
 }
 
@@ -46,7 +45,6 @@ export const UserProfilePortraitModal: React.FC<UserProfilePortraitModalProps> =
   handleGeneratePortrait,
   handleApplyPortrait,
   daoData,
-  equippedArtifact,
   profile
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -104,7 +102,7 @@ export const UserProfilePortraitModal: React.FC<UserProfilePortraitModalProps> =
               </div>
               <div className="portrait-builder-identity">
                 <p>{profile?.displayName || 'Cultivator'}</p>
-                <span>{daoData.rank}{equippedArtifact ? ' · Relic attuned' : ''}</span>
+                <span>{daoData.rank}</span>
               </div>
               <p className="portrait-builder-caption">{generatedPortraitUrl ? 'Previewed as it will appear on your profile.' : 'A reflection of the cultivator you are becoming.'}</p>
             </section>

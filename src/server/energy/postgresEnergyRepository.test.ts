@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ENERGY_ACTION_IDS } from '@seihouse/library/energy';
 import { describeEnergyLedgerContract } from './energyLedgerContract';
 import { PostgresEnergyRepository } from './postgresEnergyRepository';
@@ -9,6 +9,7 @@ import { PostgresEnergyRepository } from './postgresEnergyRepository';
 const MIGRATIONS = [
   '20260918_001_energy_ledger.sql',
   '20260922_001_energy_generation_actions.sql',
+  '20260923_002_energy_spend.sql',
 ].map(file => path.resolve(__dirname, '../../../database/migrations', file));
 
 let database: Promise<PGlite> | undefined;
@@ -34,6 +35,9 @@ const createDatabase = async () => {
   await db.exec('TRUNCATE energy_account CASCADE;');
   return db;
 };
+
+// Starting a Postgres engine is slow under a parallel run; do it once, outside any test's timeout.
+beforeAll(async () => { await createDatabase(); }, 60_000);
 
 afterAll(async () => {
   await (await database)?.close();

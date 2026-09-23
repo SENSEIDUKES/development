@@ -59,6 +59,12 @@ export const ownershipRules = [
   ['src/components/dao-pillar/', 'library', 'dao pillar'],
   ['src/components/closed-door-cultivation/', 'library', 'cultivation'],
   ['src/components/relics/', 'library', 'relics'],
+  ['src/components/relics/shared/types.ts', 'workshop', 'locked-reference adapter'],
+  ['src/components/user-profile/shared/types.ts', 'workshop', 'locked-reference adapter'],
+  ['src/components/user-profile/shared/userProfileServices.ts', 'workshop', 'locked-reference adapter'],
+  ['src/components/user-profile/shared/offeringWeek.ts', 'workshop', 'locked-reference adapter'],
+  ['src/components/rewards/', 'library', 'rewards'],
+  ['src/components/familiar-training/', 'library', 'familiar'],
   ['src/components/provenance/', 'deferred', 'cross-product provenance (unexported by approval)'],
   ['src/components/card-workshop/', 'workshop', 'card inspection'],
   ['src/server/', 'host', 'backend'],
@@ -80,7 +86,7 @@ export const ownershipRules = [
 
 export const requiredCapabilities = {
   sen: ['reader', 'codex', 'story foundation', 'arc goals', 'harness', 'manifestation contracts', 'media'],
-  library: ['profile', 'energy', 'cultivation', 'dao pillar', 'relics', 'shell', 'home', 'story creation'],
+  library: ['profile', 'energy', 'cultivation', 'dao pillar', 'rewards', 'relics', 'familiar', 'shell', 'home', 'story creation'],
 };
 
 export function ownershipOf(path, rules = ownershipRules) {

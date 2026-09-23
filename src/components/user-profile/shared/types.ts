@@ -1,132 +1,39 @@
 /**
- * Domain types for the User Profile replica.
+ * Production's profile types, kept for the locked reference replica
+ * (`src/components/user-profile/reference/*`) only.
  *
- * Copied from `SENSEIDUKES/Light-Novels` `src/types.ts`, trimmed to exactly
- * the fields the profile surfaces read. Production's `UserProfile` carries
- * extra portrait-delivery/media-descriptor fields that only matter to the
- * services layer; they are intentionally omitted here so the Workshop replica
- * cannot grow a dependency on production media contracts. Field names and
- * literal unions are otherwise preserved verbatim — they are persisted values
- * and API compatibility strings, not developer-facing names.
- *
- * The language fields are the deliberate exception: `interfaceLanguage` and
- * `defaultReadingLanguage` carry SEN language codes rather than production's
- * display-name strings, and this development repository stores no aliases for
- * the names they replaced.
+ * Light-Novels' `UserProfile` still carries the retired reward economy: the
+ * inventory Relic with attunement and weekly offerings, benefit status
+ * effects, the special-QI reserves, and the legacy daily check-in. The
+ * development Cave's contract (`../development/types.ts`, published as
+ * `@seihouse/library/profile`) dropped all of it. This Workshop-owned adapter
+ * rebuilds production's shape as that contract plus the retired fields, so the
+ * locked reference keeps rendering exactly as production does while nothing
+ * in development can read them. It ships in no package.
  */
-import { type SenLanguageCode } from '@seihouse/sen/contracts';
+import type { UserProfile as DevelopmentUserProfile } from '@seihouse/library/profile';
+import type { ActiveStatusEffect, CosmicArtifact } from '../../relics/shared/types';
 
-import type { CosmicArtifact, ActiveStatusEffect } from '../../../library/relics/view';
-export type { CosmicArtifact, StatusEffectDef, ActiveStatusEffect, SpecialUnlockDef } from '../../../library/relics/view';
+export type {
+  AccountRole,
+  AdminStoryRow,
+  AppUser,
+  ChapterWritingStyle,
+  PremiumTier,
+  Story,
+  StorySeed,
+} from '@seihouse/library/profile';
+export type { ActiveStatusEffect, CosmicArtifact, SpecialUnlockDef, StatusEffectDef } from '../../relics/shared/types';
 
-export type ChapterWritingStyle =
-  | 'Standard'
-  | 'Clear Reading'
-  | 'Easy Read'
-  | 'Literal Reading';
-
-export type PremiumTier =
-  | 'mortal'
-  | 'outer_sect'
-  | 'inner_sect'
-  | 'sect_master'
-  | 'immortal';
-
-export type AccountRole = 'owner' | 'admin' | 'user';
-
-export interface UserProfile {
-  uid: string;
-  username: string;
-  displayName: string;
-  displayNameColor?: string;
-  avatarUrl: string;
-  activePortraitId?: string;
-  /** Development customization selection; the host validates availability when saving. */
-  familiarId?: string;
-  /** Familiar scale preference; 1 is the default size. */
-  familiarSize?: number;
-  /** The account's UI language. Distinct from the reading language. */
-  interfaceLanguage: SenLanguageCode;
-  /** The language Reader Chamber displays by default; never story canon. */
-  defaultReadingLanguage: SenLanguageCode;
-  /** Default copied onto newly created stories; existing stories keep their saved value. */
-  defaultChapterWritingStyle?: ChapterWritingStyle;
-  savedStoryCount: number;
-  activeStories: string[];
-  inactiveStories: string[];
-  joinedDate: string;
-  updatedAt: string;
-  role?: AccountRole;
+export interface UserProfile extends DevelopmentUserProfile {
   /** Legacy spendable-QI field. It must never be used as DAO XP. */
   qi?: number;
-  /** Permanent progression source for rank, aura unlocks, and rank progress. */
-  dao_xp?: number;
-  dao_rank?: string;
   heavenly_qi?: number;
   sect_qi?: number;
   demonic_qi?: number;
-  premiumTier?: PremiumTier;
-  imageGenerationCount?: number;
-  imageQuotaResetAt?: string;
-  writingStreak?: number;
-
-  // Idle Cultivation & Dao Pillar
-  lastSessionEnd?: string;
   daoPillarStreak?: number;
   daoPillarCracked?: boolean;
-  lastReadDate?: string;
-
-  lastInteractionDate?: string;
   cosmicInventory?: CosmicArtifact[];
   equippedArtifactId?: string;
   activeStatusEffects?: ActiveStatusEffect[];
-}
-
-export interface AppUser {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-}
-
-/**
- * Only the `Story` fields the profile surfaces read. Production's `Story` is a
- * large narrative graph; the replica must never depend on that shape.
- */
-export interface Story {
-  id: string;
-  title: string;
-  userId?: string;
-  deleted?: boolean;
-  sourceSeedId?: string;
-}
-
-/**
- * Only the `StorySeed` fields the Story Seeds index renders. `downloadStorySeed`
- * in production also reads `intake` / `blueprint`; export is a service call here,
- * so the replica keeps the payload opaque.
- */
-export interface StorySeed {
-  id: string;
-  userId: string;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * Row shape the Akashic Switchboard renders. Production types this `any[]`;
- * these are the fields the panel actually reads, named exactly as the admin
- * overview returns them.
- */
-export interface AdminStoryRow {
-  id: string;
-  title?: string;
-  genre?: string;
-  mcName?: string;
-  userId?: string;
-  currentChapterNumber?: number;
-  createdAt?: string;
-  updatedAt?: string;
-  deleted?: boolean;
 }

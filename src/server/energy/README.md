@@ -20,12 +20,14 @@ rules hold in a real database. The migration defines:
    flight). `available = balance − held`. Constraints keep both non-negative and `held ≤ balance`.
 2. `energy_reservation` — one row per user intent, unique on `(uid, idempotency_key)`, moving
    `held → settled | released`.
-3. `energy_transaction` — the readable history: `grant`, `reserve`, `charge`, `release`, each
-   with the balance after it, unique on `(uid, idempotency_key)`.
+3. `energy_transaction` — the readable history: `grant`, `reserve`, `charge`, `release` and
+   (since `20260923_002_energy_spend.sql`) `spend`, each with the balance after it, unique on
+   `(uid, idempotency_key)`. A `spend` debits settled Energy directly for an Energy-priced
+   Celestial Store offer; it never touches Energy held for generation in flight.
 
 Every movement runs inside one of the migration's functions (`energy_apply_grant`,
 `energy_create_reservation`, `energy_settle_reservation`, `energy_release_reservation`,
-`energy_reset_account`). Each locks the account row, applies the movement and its history line
+`energy_reset_account`, `energy_apply_spend`). Each locks the account row, applies the movement and its history line
 together, and replays instead of repeating when its idempotency key was already applied.
 
 `PostgresEnergyRepository` is the thin adapter over those functions; it accepts any client with

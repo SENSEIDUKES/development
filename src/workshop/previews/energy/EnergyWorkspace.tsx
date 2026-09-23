@@ -52,9 +52,11 @@ function EnergyPieces({ client }: { client: EnergyClient }) {
   const account = useEnergyAccount({ client });
   const { toast } = useSEIToast();
   const available = account.snapshot?.available ?? 0;
+  // QI and DAO XP are independent balances: spending QI never moves rank, so
+  // the preview deliberately shows two different numbers.
   const qi: QiAccountState = account.status === 'error'
     ? { status: 'error', snapshot: null, error: 'QI could not be read.' }
-    : { status: 'ready', snapshot: { uid: 'workshop-cultivator', balance: 13_480, transactions: [] }, error: null };
+    : { status: 'ready', snapshot: { uid: 'workshop-cultivator', balance: 2_150, transactions: [] }, error: null };
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 pb-16 pt-6 text-neutral-200 sm:px-8">
       <Section title="Balance indicator · lives inside other surfaces">

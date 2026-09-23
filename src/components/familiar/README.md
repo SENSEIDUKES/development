@@ -1,9 +1,9 @@
 # Familiar
 
 - Source: supplied `Familiars/Packages/` collection (not a Git repository), containing eleven validated Familiar packages.
-- Preview: Workshop **Shared → Familiar** and `?preview=familiar`.
+- Preview: Workshop **Customization → Familiar** and `?preview=familiar`.
 - Replica created: 2026-09-20.
-- Last Workshop update: 2026-09-22.
+- Last Workshop update: 2026-09-23.
 - Last source comparison: 2026-09-22.
 - Lifecycle: original artwork preserved; reusable renderer, host catalogue, and Energy interaction under development.
 - Owner: Library. This first-party companion is not a SEN narrative capability.
@@ -256,6 +256,13 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-09-23: Familiars now own the Library's active cosmetic effects. Ownership, QI training
+  tiers, alternate forms and elemental titles live in the Familiar account
+  (`src/server/familiars/`, `src/library/familiars/`) with its training panel in
+  [`../familiar-training/README.md`](../familiar-training/README.md) and the Workshop's Rewards
+  section. This renderer, the catalogue and the companion are unchanged; the Celestial Store
+  now buys through the same Familiar account. The Workshop home lists this entry under
+  Customization.
 - 2026-09-22: Corrected Quill's waving clip to loop only its raised-paw atlas cells and
   aligned the floating companion and active profile-card preview with the local QA loop.
 - 2026-09-22: Imported ten supplied v2 Familiar packages into the Library-owned

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ENERGY_PRICE_CATALOG, EnergyPriceQuoteRequiredError, resolveEnergyPrice, type EnergyActionId } from '@seihouse/library/energy';
 import type { ResolvedEnergyConfig } from './config';
-import { EnergyValidationError, InsufficientEnergyError, type EnergyRepository } from './repository';
+import { EnergyConflictError, EnergyValidationError, InsufficientEnergyError, type EnergyRepository } from './repository';
 import { EnergyAuthorizationError, EnergyService } from './service';
 import type { LibraryPrincipal } from '../identity/types';
 import type { EnergyTransaction } from './types';
@@ -30,6 +30,7 @@ export const replayLedger = (transactions: EnergyTransaction[]) => {
     if (transaction.kind === 'reserve') held += transaction.amount;
     if (transaction.kind === 'charge') { balance -= transaction.amount; held -= transaction.amount; }
     if (transaction.kind === 'release') held -= transaction.amount;
+    if (transaction.kind === 'spend') balance -= transaction.amount;
     expect({ balance, held }).toEqual({ balance: transaction.balanceAfter, held: transaction.heldAfter });
   }
   return { balance, held };
@@ -208,6 +209,29 @@ export function describeEnergyLedgerContract(
       expect((await service.getBalance(principal)).held).toBe(6);
     });
 
+    it('spends settled Energy directly for a Store purchase, once per key', async () => {
+      const { service, principal } = await setup();
+      const first = await service.spend(principal, { amount: 300, idempotencyKey: 'store:phoenix', description: 'Phoenix · Celestial Store', metadata: { source: 'celestial-store' } });
+      expect(first.replayed).toBe(false);
+      expect(first.transaction).toMatchObject({ kind: 'spend', amount: 300, actionId: null, reservationId: null });
+      const replay = await service.spend(principal, { amount: 300, idempotencyKey: 'store:phoenix', description: 'Phoenix · Celestial Store' });
+      expect(replay.replayed).toBe(true);
+      expect(replay.transaction.id).toBe(first.transaction.id);
+      expect(await service.getBalance(principal)).toEqual({ balance: 200, held: 0, available: 200 });
+      expect((await service.getSnapshot(principal)).activity[0]).toMatchObject({ kind: 'spend', amount: 300 });
+    });
+
+    it('never spends held Energy or reuses a key for a different spend', async () => {
+      const { service, principal } = await setup();
+      await service.reserve(principal, { actionId: 'chapter.generate', idempotencyKey: 'hold', quantity: 400 });
+      await expect(service.spend(principal, { amount: 101, idempotencyKey: 'store:fox', description: 'Fox' })).rejects.toMatchObject({ required: 101, available: 100 });
+      await expect(service.spend(principal, { amount: 101, idempotencyKey: 'store:fox', description: 'Fox' })).rejects.toBeInstanceOf(InsufficientEnergyError);
+      await service.spend(principal, { amount: 100, idempotencyKey: 'store:fox', description: 'Fox' });
+      await expect(service.spend(principal, { amount: 90, idempotencyKey: 'store:fox', description: 'Fox' })).rejects.toBeInstanceOf(EnergyConflictError);
+      await expect(service.spend(principal, { amount: 0, idempotencyKey: 'zero', description: 'Nothing' })).rejects.toBeInstanceOf(EnergyValidationError);
+      expect(await service.getBalance(principal)).toEqual({ balance: 400, held: 400, available: 0 });
+    });
+
     it('keeps the transaction history consistent with the stored balance', async () => {
       const { repository, service, principal } = await setup();
       const a = await service.reserve(principal, { actionId: 'chapter.generate', idempotencyKey: 'a' });
@@ -215,12 +239,13 @@ export function describeEnergyLedgerContract(
       await service.settle(principal, { reservationId: a.reservation.id });
       await service.release(principal, { reservationId: b.reservation.id });
       await service.grantDevelopment(principal, { amount: 25, idempotencyKey: 'bonus' });
+      await service.spend(principal, { amount: 24, idempotencyKey: 'store', description: 'Store offer' });
       const c = await service.reserve(principal, { actionId: 'image.generate', idempotencyKey: 'c' });
       const history = await service.listTransactions(principal);
-      expect(history.map(entry => entry.kind)).toEqual(['reserve', 'grant', 'release', 'charge', 'reserve', 'reserve', 'grant']);
+      expect(history.map(entry => entry.kind)).toEqual(['reserve', 'spend', 'grant', 'release', 'charge', 'reserve', 'reserve', 'grant']);
       const account = (await repository.getAccount(principal.uid))!;
       expect(replayLedger(history)).toEqual({ balance: account.balance, held: account.held });
-      expect(account).toMatchObject({ balance: 524, held: c.reservation.amount });
+      expect(account).toMatchObject({ balance: 500, held: c.reservation.amount });
     });
 
     it('resets a development account to a fresh initial grant', async () => {

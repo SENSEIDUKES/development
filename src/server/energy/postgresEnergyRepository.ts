@@ -8,6 +8,7 @@ import {
   EnergyValidationError,
   InsufficientEnergyError,
   type ApplyEnergyGrantCommand,
+  type ApplyEnergySpendCommand,
   type CreateEnergyReservationCommand,
   type EnergyLedgerResult,
   type EnergyRepository,
@@ -133,6 +134,17 @@ export class PostgresEnergyRepository implements EnergyRepository {
     assertIdempotencyKey(command.idempotencyKey);
     const result = await this.document(
       'SELECT energy_apply_grant($1, $2, $3, $4, $5::jsonb) AS result',
+      [command.uid, command.amount, command.idempotencyKey, command.description, JSON.stringify(command.metadata ?? {})],
+    );
+    return { account: accountFromRow(result.account), transaction: transactionFromRow(result.transaction), replayed: result.replayed };
+  }
+
+  async applySpend(command: ApplyEnergySpendCommand): Promise<EnergyLedgerResult> {
+    assertUid(command.uid);
+    assertEnergyAmount(command.amount);
+    assertIdempotencyKey(command.idempotencyKey);
+    const result = await this.document(
+      'SELECT energy_apply_spend($1, $2, $3, $4, $5::jsonb) AS result',
       [command.uid, command.amount, command.idempotencyKey, command.description, JSON.stringify(command.metadata ?? {})],
     );
     return { account: accountFromRow(result.account), transaction: transactionFromRow(result.transaction), replayed: result.replayed };

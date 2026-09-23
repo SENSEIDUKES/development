@@ -1,56 +1,51 @@
-# Relic v3 backend foundation
+# Fate Survival Relics (server)
 
-Created: 2026-08-04
+Created: 2026-08-04 (as the Relic v3 foundation) · Rebuilt: 2026-09-23
 
-Relic v3 moves achievement truth out of the visual reveal flow and generic
-profile-inventory arrays. The existing Relic Gallery and reveal UI are not
-connected to this foundation yet and were not changed.
+Relics are lightweight rewards with one source: **Fate Survival**, the Library's challenge system.
+Surviving a challenge may earn one Relic, which grants DAO XP and Energy — more at higher
+rarities — and nothing else. There is no attunement, weekly offering, status effect, title or QI
+payout; the profile-embedded relic inventory those belonged to is retired in development.
 
-## Ownership
+## How a Relic is earned
 
-Postgres is the durable owner. The migration in
-`database/migrations/20260804_001_relic_v3_foundation.sql` defines three record
-families:
+`RelicService.recordFateSurvivalOutcome(uid, { challengeId, outcome, storyId? })` is the only
+write. It is meant to be called by the Fate Survival judge with a trusted outcome; the judge is
+not built yet, so the Workshop calls it through the development-only
+`development.fate-survival-outcome` operation, which production principals are refused.
 
-1. `relic_achievement_template` stores reusable, versioned achievement
-   definitions.
-2. `story_relic_assignment` stores one assignment per template and story, its
-   independent progress, and an immutable definition/reward snapshot.
-3. `earned_relic` stores the immutable earning, reward snapshot, and completion
-   evidence.
+1. The outcome picks a rarity from `FATE_SURVIVAL_OUTCOME_RARITY` (`FATE AVERTED` → Legendary,
+   `FATE SCARRED` → Rare, `DOOM MANIFESTED` → no Relic).
+2. `relicForChallenge` picks a Relic of that rarity deterministically from the challenge id, so
+   a repeated call for the same challenge always names the same Relic.
+3. The repository stores at most one Relic per challenge per account, with a snapshot of the
+   Relic definition and the outcome it came from.
+4. The reward deliverer credits DAO XP (`fate-survival-relic` source) and Energy with keys
+   `fate-survival-relic:<id>:<currency>`, so a retry credits once.
 
-Both the assignment and earned tables have a unique `(story_id,
-achievement_template_id)` constraint. The earned constraint is the final
-concurrency guard: retries or simultaneous workers cannot award the same
-achievement twice for one story. The same reusable template can still be earned
-once in each different story.
+The browser reads Relics through `GET /api/library-economy?capability=relics` and cannot create
+one.
 
-## Supported v3 contract
+## Files
 
-- Common through Transcendent rarity.
-- Public or hidden condition definitions. Use `discloseRelicCondition` before
-  returning a hidden condition to an unqualified client; it redacts the
-  evaluator key and parameters until the achievement is earned.
-- Optional title rewards.
-- Optional cosmetic rewards with open JSON metadata, without choosing the
-  future cosmetic catalog or fulfillment system.
-- Qi rewards bounded to 0–1000. This is only the maximum allowed value, not a
-  default; each once-per-story achievement still defines its own award.
-- Versioned evaluator keys and JSON parameters.
-- Immutable completion evidence recording evaluator version, source identity,
-  observation time, and supporting facts.
-- Story ownership guards and immutable assignment snapshots so template edits
-  cannot rewrite existing story achievements.
+| File | Role |
+| --- | --- |
+| `catalog.ts` | The six development Relics (Common → Transcendent), the outcome → rarity map, validation against the Relic reward policy. |
+| `service.ts` | `RelicService`: snapshot and outcome recording. |
+| `repository.ts`, `inMemoryRelicRepository.ts` | Storage boundary and the in-memory adapter used by tests and the Workshop. |
+| `http.ts` | The browser-facing handler. |
+| `database/migrations/20260923_005_fate_survival_relics.sql` | Durable reference schema: one Relic per challenge, DAO XP and Energy only. No TypeScript Postgres adapter yet. |
 
-## Evaluation boundary
+## Open decisions
 
-`RelicEvaluatorRegistry` and `RelicEvaluationService` accept injected,
-versioned evaluators. No evaluator is registered by default. This foundation
-does not decide how achievements are generated, which chapter/story signals are
-trusted, how evidence is independently verified, or when rewards are fulfilled.
-Those systems can be added later without changing the three storage contracts.
+The Relic names, the outcome → rarity mapping (challenge difficulty might decide rarity instead),
+and every DAO XP and Energy amount are placeholder development values.
 
-`InMemoryRelicRepository` is a deterministic local/test adapter for proving the
-domain behavior. It is not the production persistence implementation. A later
-integration should implement `RelicRepository` through the existing authenticated
-Data Connect server boundary and apply the included relational schema there.
+## History
+
+- **2026-09-23:** Rebuilt as Fate Survival Relics. The Relic v3 foundation — story-scoped
+  achievement templates, assignments and earned relics with QI, title and cosmetic rewards —
+  was retired. Its proven pieces (versioned evaluators stored as data, immutable definition
+  snapshots, completion evidence, a unique constraint as the final guard) carried over to
+  Achievements (`src/server/achievements/`), and migration `20260923_004` drops its tables.
+- **2026-08-04:** Relic v3 backend foundation created.

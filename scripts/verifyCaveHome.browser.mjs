@@ -14,7 +14,7 @@ export async function verifyCaveHome(page) {
   };
   const destinationLabels = async () => {
     await button('Search').click();
-    const labels = (await page.locator('.workspace-search-results button').allInnerTexts()).map(label => label.trim().toLowerCase()).filter(label => ['home', 'stories', 'relics', 'exit'].includes(label)).join();
+    const labels = (await page.locator('.workspace-search-results button').allInnerTexts()).map(label => label.trim().toLowerCase()).filter(label => ['home', 'stories', 'rewards', 'relics', 'exit'].includes(label)).join();
     await button('Close Search').press('Escape');
     await page.getByRole('dialog').waitFor({ state: 'hidden' });
     return labels;
@@ -25,26 +25,33 @@ export async function verifyCaveHome(page) {
     await button(name).click();
     await page.locator('[data-cave-home] [data-cave-rank]').waitFor();
   };
+  // The retired Qi Reserves and Active Effects controls are gone; QI, the
+  // Familiar and Rewards are the Home's reward cards now.
+  const cave = () => new URL(page.url()).searchParams.get('cave');
+  const returnToCave = async () => {
+    await button('Return to cave').click();
+    await page.locator('[data-cave-home]').waitFor();
+  };
   await choose('New cultivator');
-  check(await card('status-effects').count() === 0, 'empty effects control must be hidden');
-  await card('qi-reserves').press('Enter');
-  await page.getByText('No special Qi reserves unlocked.', { exact: true }).waitFor();
-  await page.keyboard.press('Escape');
-  await page.getByRole('dialog').waitFor({ state: 'hidden' });
-  await page.waitForFunction(() => document.activeElement?.getAttribute('data-cave-card') === 'qi-reserves');
+  check(await card('status-effects').count() === 0 && await card('qi-reserves').count() === 0, 'retired reserves and effects controls must be gone');
+  await page.locator('[data-cave-qi]').filter({ hasText: 'to spend' }).waitFor();
+  check((await card('rewards').innerText()).includes('No sealed scrolls'), 'a new cultivator has no sealed scrolls');
+  await card('qi').press('Enter');
+  await page.locator('[data-energy-panel]').waitFor();
+  check(cave() === '/home/energy', 'QI must open the Energy, QI & DAO XP destination');
+  await returnToCave();
 
   await choose('Home edge cases');
-  await card('status-effects').press('Space');
-  await page.getByRole('dialog', { name: 'Active Effects' }).waitFor();
-  await page.getByText('No active effects.', { exact: true }).waitFor({ timeout: 20000 });
-  await page.keyboard.press('Escape');
-  await page.getByRole('dialog').waitFor({ state: 'hidden' });
-  await page.waitForFunction(() => document.activeElement?.getAttribute('data-cave-card') === 'qi-reserves');
-  await card('qi-reserves').click();
-  const reserves = page.getByRole('dialog', { name: 'Qi Reserves' });
-  check((await reserves.innerText()).includes('Sect Qi\n0'), 'unlocked zero reserve must remain visible');
-  await page.keyboard.press('Escape');
-  await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  await card('familiar').press('Space');
+  await page.locator('[data-familiar-training]').waitFor({ timeout: 20000 });
+  check(cave() === '/home/familiar', 'Familiar must open Familiar training');
+  check((await page.locator('main').innerText()).includes('never grants a boost'), 'training must say it grants no advantage');
+  await returnToCave();
+  await card('rewards').click();
+  await page.locator('[data-achievements-panel]').waitFor({ timeout: 20000 });
+  await page.locator('[data-fate-survival-relics]').waitFor();
+  check(cave() === '/rewards', 'Rewards must open the Rewards destination');
+  await returnToCave();
 
   for (const width of [320, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -52,7 +59,7 @@ export async function verifyCaveHome(page) {
       const portrait = document.querySelector('[data-cave-portrait]').getBoundingClientRect();
       const identity = document.querySelector('[data-cave-identity]').getBoundingClientRect();
       const name = document.querySelector('#cave-cultivator-name').getBoundingClientRect();
-      const reserve = document.querySelector('[data-cave-card="qi-reserves"]').getBoundingClientRect();
+      const reserve = document.querySelector('[data-cave-card="qi"]').getBoundingClientRect();
       return { overflow: document.documentElement.scrollWidth > innerWidth + 1,
         overlap: portrait.bottom > identity.top, textClear: portrait.bottom < name.top,
         compact: reserve.width < identity.width * .6 };
@@ -107,12 +114,16 @@ export async function verifyCaveHome(page) {
   const dockLabels = async () =>
     (await page.locator('.library-global-navigation button').allInnerTexts()).map(label => label.trim().toLowerCase()).join();
   check(await dockLabels() === 'home,library,discover,profile', 'global dock order');
-  check(await destinationLabels() === 'home,stories,relics', 'private Search must leave Settings beneath Daily Dao Pillar');
-  await searchDestination('Relics');
+  check(await destinationLabels() === 'home,stories,rewards', 'private Search must list Home, Stories and Rewards');
+  await searchDestination('Rewards');
+  await page.locator('[data-cave-destination="rewards"]').waitFor();
   // Public View belongs to the Profile settings, so exercise the Profile's
   // own control rather than depending on responsive header actions.
   await searchDestination('Home');
   await button('Settings').click();
+  // Settings groups its sections into categories; Public Profile is under Account.
+  const settingsTab = name => page.getByRole('tab', { name, exact: true }).click();
+  await settingsTab('Account');
   const publicProfileDisclosure = page.getByRole('button', {
     name: 'Public Profile What other cultivators see, and the way in.',
     exact: true,
@@ -124,7 +135,7 @@ export async function verifyCaveHome(page) {
   check(await dockLabels() === 'home,library,discover,profile', 'public global dock remains stable');
   check(await destinationLabels() === 'home,stories,relics,exit', 'public Search must end in Exit');
   check(await page.locator('[data-cave-card="dao-pillar"]').count() === 0, 'private Pillar must not render publicly');
-  check(await page.locator('[data-cave-progress]').count() === 0, 'cultivation progress must not render publicly');
+  check(await page.locator('[data-cave-card="qi"], [data-cave-card="familiar"], [data-cave-card="rewards"]').count() === 0, 'QI, Familiar and Rewards must not render publicly');
   check(await page.locator('[data-cave-bio]').count() === 1, 'public Home must show the bio');
 
   // Boost: immediate visual feedback, reversible, no cultivation change.
@@ -136,31 +147,38 @@ export async function verifyCaveHome(page) {
   check(await boostControl.getAttribute('aria-pressed') === 'false', 'boost must withdraw');
 
   // The name stays centred in the identity plaque at every width, with the
-  // subscription badge outside the heading.
+  // subscription badge beside it rather than inside the heading. The public
+  // name is plain text in rank colours (Familiar effects stay private), so the
+  // text is measured directly.
   for (const width of [320, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     const centring = await page.evaluate(() => {
       const identity = document.querySelector('[data-cave-identity]').getBoundingClientRect();
-      const name = document.querySelector('#cave-cultivator-name span').getBoundingClientRect();
+      const heading = document.querySelector('#cave-cultivator-name');
+      const range = document.createRange();
+      range.selectNodeContents(heading);
+      const name = range.getBoundingClientRect();
       return {
         offset: Math.abs((name.left + name.right) / 2 - (identity.left + identity.right) / 2),
-        badgeInHeading: Boolean(document.querySelector('#cave-cultivator-name .cave-tier-badge')),
-        badgeNearRank: Boolean(document.querySelector('[data-cave-rank-row] .cave-tier-badge')),
+        publicName: heading.getAttribute('data-element') === 'none' && !heading.hasAttribute('data-cave-name-effect'),
+        badgeInHeading: Boolean(heading.querySelector('.cave-tier-badge')),
+        badgeBesideName: Boolean(document.querySelector('[data-cave-identity-group] > .cave-tier-badge')),
         overflow: document.documentElement.scrollWidth > innerWidth + 1,
       };
     });
-    check(centring.offset <= 1 && !centring.badgeInHeading && centring.badgeNearRank && !centring.overflow,
+    check(centring.offset <= 1 && centring.publicName && !centring.badgeInHeading && centring.badgeBesideName && !centring.overflow,
       `public name centring at ${width}: ${JSON.stringify(centring)}`);
   }
   await page.setViewportSize({ width: 390, height: 844 });
 
-  // Public Stories and Relics stay scoped and carry no private surface.
+  // Public Stories and Relics stay scoped and carry no private reward surface.
   await searchDestination('Stories');
   await page.locator('[data-cave-public-panel="stories"]').waitFor();
   check(!(await page.locator('main').innerText()).includes('Story Seeds'), 'public Stories must not expose seeds');
   await searchDestination('Relics');
   await page.locator('[data-cave-public-panel="relics"]').waitFor();
-  check(!(await page.locator('main').innerText()).includes('Offering Hall'), 'public Relics must not expose the Offering Hall');
+  check(await page.locator('[data-achievements-panel], [data-familiar-training]').count() === 0
+    && !(await page.locator('main').innerText()).includes('Mystery Scroll'), 'public Relics must not expose scrolls or training');
 
   // Exit returns to the Settings page that opened the public view.
   await searchDestination('Exit');
@@ -172,21 +190,23 @@ export async function verifyCaveHome(page) {
   // specific return control.
   await searchDestination('Home');
   await page.locator('[data-cave-home]').waitFor();
-  await page.locator('[data-cave-account-controls] button').press('Enter');
+  await page.locator('[data-cave-account-controls]').getByRole('button', { name: /^Inbox/ }).press('Enter');
   await page.getByRole('heading', { name: 'Inbox', exact: true }).waitFor();
   check(new URL(page.url()).searchParams.get('cave') === '/home/inbox', 'Inbox must open its fallback route');
   await button('Return to cave').click();
   await page.locator('[data-cave-home]').waitFor();
 
   await button('Store').click();
-  await page.getByRole('heading', { name: 'Store', exact: true }).waitFor();
-  check(new URL(page.url()).searchParams.get('cave') === '/home/store', 'Store must open its fallback route');
+  await page.getByRole('heading', { name: 'Celestial Store', exact: true }).waitFor();
+  check(new URL(page.url()).searchParams.get('cave') === '/home/store', 'Store must open the Celestial Store');
   await button('Return to cave').click();
   await page.locator('[data-cave-home]').waitFor();
 
   await button('Settings').click();
   await page.getByRole('heading', { name: 'Settings', exact: true }).waitFor();
-  await page.locator('[data-slot="disclosure-trigger"]').filter({ hasText: 'Account' }).click();
+  await settingsTab('Account');
+  const accountDisclosure = page.locator('[data-slot="disclosure-trigger"]').filter({ hasText: 'Account' }).first();
+  if ((await accountDisclosure.getAttribute('aria-expanded')) !== 'true') await accountDisclosure.click();
   await button('Redeem Code').press('Enter');
   await page.getByRole('heading', { name: 'Redeem Code', exact: true }).waitFor();
   check(new URL(page.url()).searchParams.get('cave') === '/settings/redeem-code', 'Redeem Code must open its fallback route');
@@ -194,12 +214,13 @@ export async function verifyCaveHome(page) {
   await page.getByRole('heading', { name: 'Settings', exact: true }).waitFor();
 
   // The twelve-character display-name cap, where the name is edited.
+  await settingsTab('Customization');
   const nameField = page.locator('#cave-display-name');
   await nameField.fill('A Name Far Beyond The Limit');
   check(await nameField.inputValue() === 'A Name Far B', 'display name must clamp to twelve characters');
   check((await page.locator('[data-cave-display-name-count]').innerText()) === '12/12', 'counter must report the cap');
-  await page.locator('#cave-username').fill('a_very_long_private_dao_name_kept_whole');
-  check(await page.locator('#cave-username').inputValue() === 'a_very_long_private_dao_name_kept_whole', 'username must not be capped');
+  await settingsTab('Account');
+  check((await page.locator('[data-cave-username]').innerText()).includes('Locked'), 'username must stay a locked account detail');
 
   // A private publication turns its two public cards into disabled controls.
   // They must not keep the pointer/hover affordance that an available card has.
@@ -228,5 +249,5 @@ export async function verifyCaveHome(page) {
     `disabled public card affordance: ${JSON.stringify(disabledCardAffordance)}`,
   );
 
-  return { widths: [320, 390, 768, 1024, 1440], geometry: 'passed', emptyReserves: 'passed', expirationFocus: 'passed', claims: 'passed', reducedMotion: 'passed', publicView: 'passed', boost: 'passed', accountEntries: 'passed', displayNameLimit: 'passed', disabledAffordance: 'passed' };
+  return { widths: [320, 390, 768, 1024, 1440], geometry: 'passed', rewardCards: 'passed', claims: 'passed', reducedMotion: 'passed', publicView: 'passed', boost: 'passed', accountEntries: 'passed', displayNameLimit: 'passed', disabledAffordance: 'passed' };
 }

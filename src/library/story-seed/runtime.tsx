@@ -6,7 +6,6 @@ export interface StoryCreationSnapshot {
   currentUser: { uid: string; displayName?: string } | null;
   activeAgentId: string | null;
   stories: Array<{ sourceSeedId?: string }>;
-  routingConfig: { storyMaker?: { equippedRelicTitle?: string } };
   isGenerating: boolean;
 }
 

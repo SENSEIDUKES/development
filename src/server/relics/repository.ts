@@ -1,83 +1,44 @@
-import { type EarnedRelicRecord, type JsonObject, type RelicAchievementTemplate, type RelicCompletionEvidence, type StoryRelicAssignment } from '@seihouse/library/relics';
-import { type RelicTemplateDefinition } from '@seihouse/library/relics';
+import type { DeliveredRewardGrant, RewardGrant, RewardRarity } from '@seihouse/library/rewards';
+import type { FateSurvivalOutcome } from '@seihouse/library/relics';
 
-export class RelicConflictError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'RelicConflictError';
+export class RelicValidationError extends Error {
+  readonly issues: string[];
+  constructor(issues: string[]) {
+    super(issues.join(' '));
+    this.name = 'RelicValidationError';
+    this.issues = issues;
   }
 }
 
-export class RelicNotFoundError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'RelicNotFoundError';
-  }
+/** One Relic earned in one Fate Survival challenge; the relic definition is snapshotted. */
+export interface FateSurvivalRelicRecord {
+  id: string;
+  uid: string;
+  challengeId: string;
+  storyId: string | null;
+  outcome: FateSurvivalOutcome;
+  relic: { key: string; name: string; description: string; rarity: RewardRarity; rewards: RewardGrant[] };
+  /** Null until the ledgers confirm every grant. */
+  delivered: DeliveredRewardGrant[] | null;
+  earnedAt: string;
 }
 
-export interface CreateRelicTemplateCommand extends RelicTemplateDefinition {
-  id?: string;
-}
-
-export interface UpdateRelicTemplateCommand {
-  templateId: string;
-  expectedVersion: number;
-  definition: Omit<RelicTemplateDefinition, 'key'>;
-}
-
-export interface AssignStoryRelicCommand {
-  id?: string;
-  ownerId: string;
-  storyId: string;
-  templateId: string;
-  progressTarget?: number;
-  progressUnit?: string;
-}
-
-export interface ApplyRelicEvaluationCommand {
-  ownerId: string;
-  storyId: string;
-  assignmentId: string;
-  progress: {
-    current: number;
-    target: number;
-    unit?: string;
-    metadata: JsonObject;
-  };
-  evaluatedAt: string;
-  completionEvidence?: RelicCompletionEvidence[];
-}
-
-export interface ApplyRelicEvaluationResult {
-  assignment: StoryRelicAssignment;
-  earnedRelic: EarnedRelicRecord | null;
-  earningCreated: boolean;
+export interface CreateRelicGrantCommand {
+  uid: string;
+  challengeId: string;
+  storyId: string | null;
+  outcome: FateSurvivalOutcome;
+  relic: FateSurvivalRelicRecord['relic'];
+  earnedAt: string;
 }
 
 /**
- * Durable Relic storage boundary. A production adapter should execute each
- * evaluation application atomically; the Postgres migration supplies the
- * final concurrency guard for earning uniqueness.
+ * Durable Relic storage. `createGrant` is idempotent per (uid, challengeId):
+ * one Relic per Fate Survival challenge, however often its outcome is
+ * reported. The Postgres migration carries that guard as a unique constraint.
  */
 export interface RelicRepository {
-  createTemplate(command: CreateRelicTemplateCommand): Promise<RelicAchievementTemplate>;
-  updateTemplate(command: UpdateRelicTemplateCommand): Promise<RelicAchievementTemplate>;
-  getTemplate(templateId: string): Promise<RelicAchievementTemplate | null>;
-  listTemplates(): Promise<RelicAchievementTemplate[]>;
-
-  assignToStory(command: AssignStoryRelicCommand): Promise<StoryRelicAssignment>;
-  getStoryAssignment(
-    ownerId: string,
-    storyId: string,
-    assignmentId: string,
-  ): Promise<StoryRelicAssignment | null>;
-  listStoryAssignments(ownerId: string, storyId: string): Promise<StoryRelicAssignment[]>;
-  applyEvaluation(command: ApplyRelicEvaluationCommand): Promise<ApplyRelicEvaluationResult>;
-
-  getEarnedRelicForAchievement(
-    ownerId: string,
-    storyId: string,
-    templateId: string,
-  ): Promise<EarnedRelicRecord | null>;
-  listEarnedRelics(ownerId: string, storyId?: string): Promise<EarnedRelicRecord[]>;
+  createGrant(command: CreateRelicGrantCommand): Promise<{ grant: FateSurvivalRelicRecord; created: boolean }>;
+  recordDelivery(uid: string, grantId: string, delivered: DeliveredRewardGrant[]): Promise<FateSurvivalRelicRecord>;
+  listGrants(uid: string): Promise<FateSurvivalRelicRecord[]>;
 }

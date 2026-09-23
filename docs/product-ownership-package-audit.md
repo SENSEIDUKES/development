@@ -8,6 +8,13 @@
 
 **Scope:** audit and planning only; no product code, package manifest, export, schema, API, or runtime behavior changes
 
+> **Later change (2026-09-23):** this report describes the audited commit and is left as written.
+> The reward rework has since retired the Relic v3 foundation, the story-milestone Relic economy,
+> standalone reward Titles, and the Dao Pillar's Relic and Title reward types. Relics are now Fate
+> Survival rewards, achievements earn Mystery Scrolls, and `@seihouse/library/rewards` exists. See
+> [`src/server/rewards/README.md`](../src/server/rewards/README.md) before acting on any Relic,
+> Title or reward recommendation below.
+
 ## Reading this report
 
 - **Verified fact** means the statement was confirmed from the audited commit's files, import graph, Git history, or a command recorded in this report.

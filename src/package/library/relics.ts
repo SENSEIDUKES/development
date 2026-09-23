@@ -1,18 +1,12 @@
 /**
- * `@seihouse/library/relics` — the Relic surfaces.
+ * `@seihouse/library/relics` — Fate Survival Relics.
  *
- * Relics are part of the Library economy — the reward tiers, the claim
- * ceremony, and the artifact language belong to SEIHouse's own application,
- * not to the portable SEN engine. The relic card, its inspection modal, the
- * claim reveal, and the relic model shared between them live here.
- *
- * These surfaces build on SEN (the shared card and particle systems); the
- * dependency only ever runs Library → SEN.
+ * Relics are lightweight rewards earned only in Fate Survival, the Library's
+ * dedicated challenge system. A Relic may grant DAO XP and Energy and nothing
+ * else. The Library reads them and celebrates them; the server alone grants
+ * them from a judged Fate Survival outcome. Achievements reward Mystery
+ * Scrolls instead (`@seihouse/library/rewards`).
  */
-export { RelicCard, renderArtifactIcon } from '../../components/relics/shared/RelicCard';
-export { RelicModal } from '../../components/relics/shared/RelicModal';
-export { RelicReveal, type RelicRevealProps } from '../../components/relics/development/RelicReveal';
 export * from '../../library/relics/contracts';
-export * from '../../library/relics/model';
-export * from '../../library/relics/view';
-export * from '../../library/relics/client';
+export * from '../../library/relics/relicsClient';
+export * from '../../components/relics/development';

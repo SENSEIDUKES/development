@@ -4,9 +4,10 @@
 - **Source location:** `src/components/energy/` (client contracts and reusable UI) and
   `src/server/energy/` (the server-owned ledger, see its README)
 - **Workshop preview:** `?preview=energy` for the reusable pieces; `?preview=user-profile`
-  for the live profile emblem and panel against `/api/energy`
+  for the live profile emblem and panel on the development economy
+  (`/api/library-economy?capability=energy`)
 - **Created:** 2026-09-18
-- **Last Workshop update:** 2026-09-22
+- **Last Workshop update:** 2026-09-23
 - **Last source comparison:** 2026-09-18 (Light-Novels inspected for authentication,
   idempotency and Postgres conventions; it has no Energy system to compare against)
 - **Status:** approved reconstruction (Workshop Replica Mode B), packaged Library capability
@@ -52,8 +53,9 @@ never mounts it. The former
   them and the server refuses the calls anyway.
 - Double-clicks cannot double-grant: each grant click mints an idempotency key that the server
   honours once.
-- QI is a separate spendable ledger read and DAO XP is a permanent profile projection. Neither a
-  QI purchase nor a QI spend can change rank, aura unlocks, or DAO XP progress.
+- QI is a separate spendable ledger read and DAO XP is the read of its own credit-only ledger.
+  Neither a QI purchase nor a QI spend can change DAO XP or rank; rank only chooses the
+  cultivator's colours.
 - Packs and Familiar rarity prices live in `src/library/cultivation/economyStandards.ts`; fixed
   and ranged generation costs live in `shared/energyContracts.ts`. Those values are the current
   price schedule; this page intentionally has no checkout.
@@ -87,6 +89,12 @@ chosen during production-repository reconstruction — see
 against a production deployment.
 
 ## Workshop history
+
+- **2026-09-23 reward rework** — The page reads DAO XP from its own ledger and explains that it
+  alone sets the Cultivator Rank, which only chooses colours. QI copy names where it is spent
+  (the Celestial Store, Familiar training) and earned (the Dao Pillar, Mystery Scrolls). The
+  Energy ledger gained a direct `spend` for Energy-priced Store offers and accepts grants from
+  Fate Survival Relics. The preview shows QI and DAO XP as two different numbers.
 
 - **2026-09-22 current price schedule** — Clarified the shared Energy and QI values as the
   current price schedule everywhere they render. Checkout and provider billing remain separate

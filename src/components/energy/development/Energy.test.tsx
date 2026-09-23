@@ -157,14 +157,14 @@ describe('Reusable Energy pieces', () => {
     };
     const qi: QiAccountState = {
       status: 'ready',
-      snapshot: { uid: 'economy-reader', balance: 13_480, transactions: [] },
+      snapshot: { uid: 'economy-reader', balance: 2_150, transactions: [] },
       error: null,
     };
 
     await render(<EnergyPanel account={account} qi={qi} daoXp={13_480} />);
 
     expect(container.querySelector('[data-economy-balance="energy"] [aria-label="Energy balance 500"]')).not.toBeNull();
-    expect(container.querySelector('[data-economy-balance="qi"] [aria-label="QI balance 13,480"]')).not.toBeNull();
+    expect(container.querySelector('[data-economy-balance="qi"] [aria-label="QI balance 2,150"]')).not.toBeNull();
     expect(container.querySelector('[data-economy-balance="dao-xp"]')?.textContent).toContain('Current rank: Leader');
     expect(container.querySelector('[data-economy-balance="dao-xp"] [role="progressbar"]')?.getAttribute('aria-valuetext'))
       .toBe('13,480 DAO XP of 25,000 toward Sage');
@@ -187,7 +187,8 @@ describe('Reusable Energy pieces', () => {
     expect(container.querySelector('[data-energy-action="chapter.generate"]')?.textContent).toContain('Projected');
     expect(container.querySelector('[data-energy-action="video.generate"]')?.textContent).toContain('30–50 Energy');
     expect(container.textContent).toContain('No checkout is connected here');
-    expect(container.textContent).toContain('does not add a checkout, daily award, or achievement payout');
+    expect(container.textContent).toContain('No QI checkout is connected here');
+    expect(container.querySelector('[data-economy-section="dao-xp"]')?.textContent).toContain('It alone sets the Cultivator Rank');
   });
 
   it('renders the balance indicator for loading, ready, unavailable and plain values', async () => {

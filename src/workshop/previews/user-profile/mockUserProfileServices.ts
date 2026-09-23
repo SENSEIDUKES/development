@@ -25,6 +25,14 @@
  * attunement and status-effect rules, the optimistic writing-style save and its
  * rollback — is reproduced from `SENSEIDUKES/Light-Novels`
  * `src/hooks/useUserProfile.ts` so the replica behaves like the real page.
+ *
+ * The adapter implements production's port (`components/user-profile/shared/*`,
+ * the locked reference's contract). The development Cave reads the same object
+ * through its narrower port and never touches the retired members — the legacy
+ * check-in, attunement, weekly offerings and special QI exist here only so the
+ * Reference pane keeps behaving like production. The development pane's
+ * balances, rewards and Familiar ownership come from the development economy
+ * (`celestialStore` below is replaced by the Familiar account there).
  */
 
 import type React from 'react';
@@ -33,10 +41,11 @@ import { normalizeFamiliarSize } from '@seihouse/library/familiar';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { CelestialStorePurchase, CelestialStorePurchaseResult } from '@seihouse/library/celestial-store';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '@seihouse/sen/contracts';
-import { type DaoRankData, type DaoClaimResult, type SpecialQiId, type UserProfileController, type UserProfileControllerProps, type UserProfileServices } from '@seihouse/library/profile';
-import { type AccountRole, type ActiveStatusEffect, type AdminStoryRow, type AppUser, type ChapterWritingStyle, type PremiumTier, type StorySeed, type UserProfile } from '@seihouse/library/profile';
+import type { CelestialStoreAccountServices } from '@seihouse/library/celestial-store';
+import { type DaoRankData, type DaoClaimResult, type SpecialQiId, type UserProfileController, type UserProfileControllerProps, type UserProfileServices } from '../../../components/user-profile/shared/userProfileServices';
+import { type AccountRole, type ActiveStatusEffect, type AdminStoryRow, type AppUser, type ChapterWritingStyle, type PremiumTier, type StorySeed, type UserProfile } from '../../../components/user-profile/shared/types';
 import { getDaoRankData, resolvePermanentDaoXp } from '@seihouse/library/cultivation';
-import { getCurrentOfferingWeekId } from '@seihouse/library/profile';
+import { getCurrentOfferingWeekId } from '../../../components/user-profile/shared/offeringWeek';
 import {
   MOCK_ACCOUNT,
   MOCK_ADMIN_STORIES,
@@ -71,6 +80,11 @@ export interface MockUserProfileServicesOptions {
   profileOverride?: Partial<UserProfile>;
   onFamiliarProfile?: (selection: { uid: string | null; familiarId?: string; familiarSize?: number }) => void;
   unlockedSpecialQi?: readonly SpecialQiId[];
+  /**
+   * The Store account to use instead of the in-memory grant — the development
+   * pane passes the Familiar account, which charges QI or Energy on the server.
+   */
+  celestialStore?: CelestialStoreAccountServices;
   /** Records a production action the Workshop deliberately does not perform. */
   logExcludedAction: ExcludedActionLogger;
   /**
@@ -88,6 +102,7 @@ export function createMockUserProfileServices({
   profileOverride,
   onFamiliarProfile,
   unlockedSpecialQi,
+  celestialStore,
   logExcludedAction,
   onSignIn,
 }: MockUserProfileServicesOptions): UserProfileServices {
@@ -239,7 +254,9 @@ export function createMockUserProfileServices({
     const daysTo3 = currentStreak === 0 ? 3 : (currentStreak % 3 === 0 ? 3 : 3 - (currentStreak % 3));
     const daysTo10 = currentStreak === 0 ? 10 : (currentStreak % 10 === 0 ? 10 : 10 - (currentStreak % 10));
 
-    const daoData = getDaoRankData(resolvePermanentDaoXp(profile?.dao_xp, profile?.dao_rank) ?? 0) as DaoRankData;
+    const rankData = getDaoRankData(resolvePermanentDaoXp(profile?.dao_xp, profile?.dao_rank) ?? 0);
+    // Production still names the DAO XP band `maxQi` / `currentQi`.
+    const daoData: DaoRankData = { ...rankData, maxQi: rankData.maxDaoXp, currentQi: rankData.currentDaoXp };
     const equippedArtifact = profile?.cosmicInventory?.find(
       artifact => artifact.id === profile?.equippedArtifactId,
     );
@@ -853,10 +870,11 @@ export function createMockUserProfileServices({
   };
 
   /**
-   * Development-only Familiar ownership for the Celestial Store. Production
-   * would persist purchases on the account and deduct the server ledgers;
-   * this grant lives in memory for the preview session, deducts nothing, and
-   * survives Cave navigation because it outlives the hook.
+   * Reference-pane Familiar ownership for the Celestial Store. Production
+   * persists purchases on the account and deducts the server ledgers; this
+   * grant lives in memory for the preview session, deducts nothing, and
+   * survives Cave navigation because it outlives the hook. The development
+   * pane replaces it with the Familiar account (`celestialStore` option).
    */
   const ownedFamiliars = {
     ids: [] as readonly string[],
@@ -903,7 +921,7 @@ export function createMockUserProfileServices({
     },
     useController,
     familiars: allFamiliarOptions,
-    celestialStore: { useStoreAccount },
+    celestialStore: celestialStore ?? { useStoreAccount },
 
     localOnlyMode: scenario.localOnlyMode,
     setLocalOnlyMode: next =>

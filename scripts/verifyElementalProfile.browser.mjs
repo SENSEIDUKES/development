@@ -1,12 +1,17 @@
 import assert from 'node:assert/strict';
-/** Checks the imported package in the existing developed profile preview. */
+/**
+ * Checks the elemental title in the developed profile preview. The name takes
+ * the equipped Familiar's chosen effect (Quill, trained to Awakened, lightning
+ * Whisper); the rank row keeps plain rank colours and carries no element.
+ */
 export async function verifyElementalProfile(page) {
   for (const width of [320, 390, 768, 1280]) {
     await page.setViewportSize({width, height: 900});
     const name = page.getByRole('heading', {name: 'Kept Reading', exact: true});
     await name.scrollIntoViewIfNeeded();
-    assert.equal(await name.getAttribute('data-element'), 'fire');
-    assert.equal(await page.locator('[data-cave-rank]').getAttribute('data-element'), 'lightning');
+    assert.equal(await name.getAttribute('data-element'), 'lightning');
+    assert.equal(await name.getAttribute('data-cave-name-effect'), 'elemental-title:lightning:subtle');
+    assert.equal(await page.locator('[data-cave-rank]').getAttribute('data-element'), null);
     const box = await name.boundingBox();
     await page.waitForTimeout(300);
     assert.deepEqual(await name.boundingBox(), box, 'animation must not shift title geometry');
@@ -20,5 +25,5 @@ export async function verifyElementalProfile(page) {
   assert.equal(await page.locator('[data-cave-name] .library-elemental-title__text').evaluate(node => getComputedStyle(node).animationName), 'none');
   await page.emulateMedia({reducedMotion: 'no-preference'});
   await page.getByRole('button', {name:/^Inbox/}).click();
-  console.log('Elemental profile: four widths, semantic name, stable layout, keyboard, reduced motion, and Inbox interaction passed.');
+  console.log('Elemental profile: Familiar effect on the name, plain rank colours, four widths, semantic name, stable layout, keyboard, reduced motion, and Inbox interaction passed.');
 }

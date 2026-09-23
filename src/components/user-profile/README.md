@@ -8,7 +8,7 @@
   `src/hooks/useUserProfile.ts`
 - **Workshop preview:** `?preview=user-profile`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-22
+- **Last Workshop update:** 2026-09-23
 - **Last source comparison:** 2026-09-10
 - **Replica status:** `@seihouse/library/profile` surface consuming separate Library economy capabilities
 
@@ -32,23 +32,58 @@ The existing profile controller owns the unchanged `familiarSize` multiplier and
 drafts. A minimized Familiar appears as a recall button in the Profile header;
 the app session preserves its position and size across Home/Profile navigation.
 
-## Current ownership (2026-09-22)
+## Current ownership (2026-09-23)
 
 Profile owns the Celestial Library account surface and orchestration; it does
-not own Energy, spendable QI, permanent DAO XP, rewards, or Relic authority.
-Energy comes from `@seihouse/library/energy`; QI comes from the host-authenticated
-ledger exposed through `@seihouse/library/cultivation`; permanent DAO XP comes
-from the host profile. Rank, aura unlocks, and progress derive from DAO XP only.
-Dao Pillar delivers an idempotent server QI reward and then signals Profile to
-refresh that ledger projection; it cannot promote a rank. Relics arrive through
-the read-only Library Relics client. Host authentication, persistence, roles,
-and administration remain outside the package.
+not own Energy, spendable QI, permanent DAO XP, rewards, Relics, or Familiar
+training. Energy comes from `@seihouse/library/energy`; QI and permanent DAO XP
+come from their own server ledgers through `@seihouse/library/cultivation`
+(the profile's stored `dao_xp` is only a fallback when the DAO XP ledger is not
+connected). Rank and progress derive from DAO XP only, and rank only chooses the
+cultivator's colours. Dao Pillar and Mystery Scrolls deliver idempotent server
+rewards and then signal Profile to refresh the affected ledger projections.
+Achievements and scrolls arrive through `@seihouse/library/rewards`, Fate
+Survival Relics through the read-only `@seihouse/library/relics` client, and
+Familiar training and its cosmetic effects through `@seihouse/library/familiar`.
+Host authentication, persistence, roles, and administration remain outside the
+package.
 
 The page is reached in production from `src/App.tsx`, which renders `<UserProfile currentUser
 stories onLogout onNavigateHome />` (around `App.tsx:697`). Verified against `Light-Novels`
 `main` at commit `4a3dd02`.
 
 ## Workshop history
+
+- **2026-09-23 reward rework:** The Cave follows the new reward model.
+  - **Home** swaps the Qi Reserves and Active Effects controls for a **QI** card (the
+    spendable balance, opening `/home/energy`) and a **Familiar** card (the equipped
+    Familiar's tier and chosen effect, opening the new `/home/familiar` training destination),
+    and adds a **Rewards** card under the Dao Pillar showing sealed Mystery Scrolls and Fate
+    Survival Relics.
+  - **Rewards** replaces the Relics destination: `/rewards` holds the Achievements panel with
+    its Mystery Scrolls and the Fate Survival Relics panel. The inventory panel, weekly
+    Offering Hall, attunement, Qi reserves and timed status effects
+    (`UserProfileInventoryPanel.tsx`, `UserProfileStatusEffectsPanel.tsx`, `timedEffects.ts`)
+    were retired from development; the locked reference keeps them.
+  - **The name** takes the equipped Familiar's elemental title when one is chosen (private
+    view only); otherwise rank colours letter it. DAO XP comes from its ledger, and the rank
+    reacts when a scroll or Relic credits it.
+  - **Public profile** shows Fate Survival Relic names under a "Relic names" switch, and its
+    Codex-image highlight comes from the newest Relic.
+  - **Types:** `development/types.ts` and `development/userProfileServices.ts` are the
+    development contract without the retired fields. `shared/types.ts`,
+    `shared/userProfileServices.ts` and `shared/offeringWeek.ts` are now Workshop-owned
+    adapters that keep production's shapes for the locked reference and the Workshop mocks.
+  - **Workshop:** the Development pane runs a fresh in-browser development economy seeded per
+    scenario (balances, Dao Pillar, achievements, Relics, Familiars); the Reference pane keeps
+    production's retired check-in, attunement and offerings.
+  - **Browser checks:** `scripts/verifyCaveHome.browser.mjs` now walks the QI, Familiar and
+    Rewards cards instead of the retired reserves and effects dialogs, and
+    `verifyElementalProfile.browser.mjs` expects the equipped Familiar's lightning title on the
+    name and plain rank colours on the rank. Checks that had drifted since the 2026-09-18
+    Settings categories and Energy emblem (Settings tabs, the locked username, the public
+    progress bar, the Inbox selector, the Celestial Store heading) were brought up to date. Both
+    pass against the local dev server.
 
 - **2026-09-22 Energy, QI & DAO XP and rank switch:** `/home/energy` is now the one
   **Energy, QI & DAO XP** destination. Its top summary renders live Energy, the spendable

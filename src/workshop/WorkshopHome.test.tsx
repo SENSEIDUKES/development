@@ -40,8 +40,9 @@ function archiveToggle() {
 }
 
 const ACTIVE_GROUPS = {
-  Pages: ['light-novels-home', 'library-shell', 'story-seed', 'reader-chamber', 'reader-codex', 'user-profile', 'dao-pillar', 'celestial-store'],
-  Customization: ['familiar', 'relics-gallery', 'idle-cultivation'],
+  Pages: ['light-novels-home', 'library-shell', 'story-seed', 'reader-chamber', 'reader-codex', 'user-profile', 'celestial-store'],
+  Rewards: ['reward-loop', 'achievements', 'relics-gallery', 'familiar-training', 'dao-pillar', 'idle-cultivation'],
+  Customization: ['familiar'],
   Systems: ['harness-generation', 'chapter-generation-manifestation', 'character-voice', 'provenance', 'energy'],
   Components: ['motion-picture', 'celestial-backdrop', 'card-workshop'],
 };
@@ -51,9 +52,9 @@ describe('WorkshopHome', () => {
     expect(container.querySelector('.workshop-topbar [aria-label="Model Router settings"]')).not.toBeNull();
   });
 
-  it('shows exactly the four Workshop sections as tabs', () => {
+  it('shows exactly the five Workshop sections as tabs', () => {
     const tabs = container.querySelectorAll<HTMLButtonElement>('[role="tab"]');
-    expect([...tabs].map((element) => element.textContent)).toEqual(['Pages', 'Customization', 'Systems', 'Components']);
+    expect([...tabs].map((element) => element.textContent)).toEqual(['Pages', 'Rewards', 'Customization', 'Systems', 'Components']);
   });
 
   it('groups each active preview exactly once and preserves direct links and release labels', () => {
@@ -83,9 +84,26 @@ describe('WorkshopHome', () => {
       { label: 'Home', ids: ['light-novels-home', 'library-shell'] },
       { label: 'Create', ids: ['story-seed'] },
       { label: 'Read', ids: ['reader-chamber', 'reader-codex'] },
-      { label: 'Account', ids: ['user-profile', 'dao-pillar'] },
+      { label: 'Account', ids: ['user-profile'] },
       { label: 'Commerce', ids: ['celestial-store'] },
     ]);
+  });
+
+  it('gathers every reward workspace under Rewards, grouped from the overview to the recurring rewards', () => {
+    select('Rewards');
+    const groups = [...activePanel().querySelectorAll<HTMLElement>('section.workshop-group')].map((group) => ({
+      label: group.querySelector('.workshop-group-title')?.textContent,
+      ids: previewIds(group),
+    }));
+    expect(groups).toEqual([
+      { label: 'Start here', ids: ['reward-loop'] },
+      { label: 'Earning', ids: ['achievements', 'relics-gallery'] },
+      { label: 'Spending', ids: ['familiar-training'] },
+      { label: 'Daily & idle', ids: ['dao-pillar', 'idle-cultivation'] },
+    ]);
+    // The broader Familiar and Store workspaces stay where they belong.
+    expect(workshopEntries.find((entry) => entry.id === 'familiar')?.section).toBe('customization');
+    expect(workshopEntries.find((entry) => entry.id === 'celestial-store')?.group).toBe('commerce');
   });
 
   it('shows the declared package owner on every card and inline panel', () => {
@@ -99,13 +117,14 @@ describe('WorkshopHome', () => {
     expect(Object.fromEntries(workshopEntries.map((entry) => [entry.id, entry.owner]))).toEqual({
       'light-novels-home': 'library', 'library-shell': 'library', 'story-seed': 'library',
       'reader-chamber': 'sen', 'reader-codex': 'sen', 'user-profile': 'library', 'dao-pillar': 'library', 'celestial-store': 'library',
+      'reward-loop': 'workshop', achievements: 'library', 'familiar-training': 'library',
       familiar: 'library', 'relics-gallery': 'library', 'idle-cultivation': 'library',
       'harness-generation': 'sen', 'chapter-generation-manifestation': 'library', 'character-voice': 'sen', provenance: 'deferred', energy: 'library', 'model-router': 'deferred',
       'motion-picture': 'sen', 'celestial-backdrop': 'library-ui', 'card-workshop': 'workshop',
       'chapter-generation-flow': 'workshop',
     });
     for (const panel of workshopPanels) {
-      select({ systems: 'Systems', components: 'Components', pages: 'Pages', customization: 'Customization' }[panel.section]);
+      select({ systems: 'Systems', components: 'Components', pages: 'Pages', rewards: 'Rewards', customization: 'Customization' }[panel.section]);
       const section = activePanel().querySelector(`section[data-panel="${panel.id}"]`)!;
       expect(section.querySelector('.workshop-group-title')?.textContent).toBe(panel.title);
       expect(section.querySelector('.workshop-owner')?.textContent).toBe(`Owned by ${WORKSHOP_OWNER_LABELS[panel.owner]}`);
@@ -123,7 +142,7 @@ describe('WorkshopHome', () => {
     expect(activePanel().querySelector('section[aria-label="Library components"]')).not.toBeNull();
   });
 
-  it('keeps the old Chapter Generation and Model Router page archived, reachable, and outside the four sections', () => {
+  it('keeps the old Chapter Generation and Model Router page archived, reachable, and outside the five sections', () => {
     expect(workshopEntries.filter((entry) => entry.status === 'archived').map((entry) => entry.id)).toEqual(['model-router', 'chapter-generation-flow']);
     expect(workshopEntries.find((entry) => entry.id === 'idle-cultivation')?.status).toBe('active');
     expect(container.querySelector('#workshop-archive-panel')!.closest('[role="tabpanel"]')).toBeNull();
@@ -160,7 +179,7 @@ describe('WorkshopHome', () => {
 
   it('supports arrow wrapping, Home and End while moving focus with selection', () => {
     act(() => tab('Pages').focus());
-    for (const [key, label] of [['ArrowLeft', 'Components'], ['ArrowRight', 'Pages'], ['ArrowRight', 'Customization'], ['End', 'Components'], ['Home', 'Pages']]) {
+    for (const [key, label] of [['ArrowLeft', 'Components'], ['ArrowRight', 'Pages'], ['ArrowRight', 'Rewards'], ['ArrowRight', 'Customization'], ['End', 'Components'], ['Home', 'Pages']]) {
       act(() => document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })));
       expect(document.activeElement).toBe(tab(label));
       expect(tab(label).getAttribute('aria-selected')).toBe('true');

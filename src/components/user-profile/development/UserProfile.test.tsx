@@ -9,9 +9,9 @@ import { UserProfilePortraitModal } from './UserProfilePortraitModal';
 import { UserProfilePublicPanel } from './UserProfilePublicPanel';
 import ReferenceUserProfile from '../reference/UserProfile';
 import { UserProfileServicesProvider } from '@seihouse/library/profile';
-import { type UserProfileController } from '@seihouse/library/profile';
+import { UserProfileServicesProvider as ReferenceUserProfileServicesProvider, type UserProfileController } from '../shared/userProfileServices';
 import type { MockUserProfileServicesOptions } from '../../../workshop/previews/user-profile/mockUserProfileServices';
-import { effectStatement, UserProfileHome } from './UserProfileHome';
+import { UserProfileHome } from './UserProfileHome';
 import { buildPublicProfile, developmentPublicRecord, DEFAULT_PUBLIC_PROFILE_VISIBILITY } from './publicProfile';
 import { CAVE_DESTINATIONS, CAVE_PUBLIC_DESTINATIONS, publicCavePath, resolveCaveRoute } from './caveNavigation';
 import { publicCreatorWorlds, type CreatorWorld, type PublicCreator } from './creatorWorlds';
@@ -34,8 +34,11 @@ import {
   countVisibleCharacters,
   isDisplayNameWithinLimit,
 } from './displayName';
-import { MASTER_RANK, RANKS, CAVE_AURA_TEXT_SURFACE, MIN_AURA_TEXT_CONTRAST, accessibleAuraTextColor, auraGradientTextContrastRatio, auraTextContrastRatio, getAuraSelection, getAuraGlowStyle, getAuraTextStyle, activeAuraOverride, getRankForDaoXp, rankBackground, resolvePermanentDaoXp, resolveRankVisual } from '@seihouse/library/cultivation';
-import { nextEffectRefreshDelay } from './timedEffects';
+import { MASTER_RANK, RANKS, CAVE_AURA_TEXT_SURFACE, MIN_AURA_TEXT_CONTRAST, accessibleAuraTextColor, auraGradientTextContrastRatio, auraTextContrastRatio, getAuraSelection, getAuraTextStyle, getRankForDaoXp, rankBackground, resolvePermanentDaoXp, resolveRankVisual } from '@seihouse/library/cultivation';
+import { useFamiliarStoreAccount } from '@seihouse/library/familiar';
+import { createInProcessEconomyFetch, createWorkshopEconomy, createWorkshopEconomyClients } from '../../../workshop/previews/rewards/workshopEconomy';
+import { EconomyClientProviders } from '../../../workshop/previews/rewards/WorkshopEconomyProvider';
+import { DEVELOPED_CULTIVATOR_SEED, seedWorkshopAccount, type WorkshopAccountSeed } from '../../../workshop/previews/rewards/rewardScenarios';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -96,7 +99,16 @@ interface RenderOptions {
   energyClient?: EnergyClient | null;
   /** The Daily Dao Pillar calendar; defaults to a twelve-day run with today open. */
   daoPillar?: Partial<LocalDaoPillarClientOptions> | null;
+  /**
+   * Mount the whole development economy — QI, DAO XP, Energy, Dao Pillar,
+   * achievements, Relics and Familiars — seeded with what the account already
+   * did, in place of the local calendar and QI fixtures.
+   */
+  rewards?: WorkshopAccountSeed;
 }
+
+/** The developed cultivator's rewards: sealed scrolls, a Relic, a trained Quill. */
+const DEVELOPED_REWARDS: WorkshopAccountSeed = { ...DEVELOPED_CULTIVATOR_SEED, openingDaoXp: 13_480, training: [] };
 
 const TWELVE_DAYS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
@@ -135,8 +147,9 @@ describe('Home portrait access and generation progress', () => {
   });
 });
 
-async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), onNavigateHome = vi.fn(), Component = UserProfile, adapter = {}, accountControls, publicCreators, energyClient = null, daoPillar = {}, qiBalance }: RenderOptions = {}) {
+async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), onNavigateHome = vi.fn(), Component = UserProfile, adapter = {}, accountControls, publicCreators, energyClient = null, daoPillar = {}, qiBalance, rewards }: RenderOptions = {}) {
   const scenario = getPreviewScenario(state);
+  if (rewards) return renderCaveWithEconomy({ state, onLogout, onNavigateHome, adapter, accountControls, publicCreators, rewards });
   // The calendar is server truth: the developed cultivator's twelve-day streak
   // is twelve collected scheduled days, and a new cultivator has none.
   const daoPillarClient = daoPillar === null ? null
@@ -160,6 +173,7 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
   services.useController = props => { controller = useOriginalController(props); return controller; };
   await act(async () => {
     root.render(
+      <ReferenceUserProfileServicesProvider services={services}>
       <UserProfileServicesProvider services={services}>
         <EnergyClientProvider client={energyClient}>
         <DaoPillarClientProvider client={daoPillarClient}>
@@ -176,7 +190,8 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
         </QiClientProvider>
         </DaoPillarClientProvider>
         </EnergyClientProvider>
-      </UserProfileServicesProvider>,
+      </UserProfileServicesProvider>
+      </ReferenceUserProfileServicesProvider>,
     );
   });
   // The mocked profile snapshot resolves on a 450 ms timer.
@@ -184,6 +199,34 @@ async function renderCave({ state = 'developed-cultivator', onLogout = vi.fn(), 
     await vi.advanceTimersByTimeAsync(600);
   });
   return { logExcludedAction, onSignIn, services, controller: () => controller, daoPillarClient, ledger };
+}
+
+/** The Cave on the development economy, as the User Profile preview mounts it. */
+async function renderCaveWithEconomy({ state, onLogout, onNavigateHome, adapter, accountControls, publicCreators, rewards }: Required<Pick<RenderOptions, 'state' | 'onLogout' | 'onNavigateHome' | 'adapter' | 'rewards'>> & Pick<RenderOptions, 'accountControls' | 'publicCreators'>) {
+  const scenario = getPreviewScenario(state);
+  const uid = scenario.currentUser?.uid ?? 'workshop-cultivator';
+  const economy = createWorkshopEconomy();
+  await seedWorkshopAccount(economy, uid, rewards);
+  const clients = createWorkshopEconomyClients(uid, createInProcessEconomyFetch(economy));
+  const logExcludedAction = vi.fn();
+  const onSignIn = vi.fn<(account: AppUser) => void>();
+  const services = createMockUserProfileServices({ state, logExcludedAction, onSignIn, celestialStore: { useStoreAccount: useFamiliarStoreAccount }, ...adapter });
+  const useOriginalController = services.useController;
+  let controller: UserProfileController;
+  services.useController = props => { controller = useOriginalController(props); return controller; };
+  await act(async () => {
+    root.render(
+      <UserProfileServicesProvider services={services}>
+        <EconomyClientProviders clients={clients}>
+          <UserProfile currentUser={scenario.currentUser} stories={scenario.stories} accountControls={accountControls}
+            publicCreators={publicCreators} onLogout={onLogout} onNavigateHome={onNavigateHome} onNavigateLibrary={vi.fn()} />
+        </EconomyClientProviders>
+      </UserProfileServicesProvider>,
+    );
+  });
+  await act(async () => { await vi.advanceTimersByTimeAsync(600); });
+  await settle();
+  return { logExcludedAction, onSignIn, services, controller: () => controller, daoPillarClient: null, ledger: economy.qi, economy };
 }
 
 const text = () => document.body.textContent ?? '';
@@ -214,7 +257,10 @@ const press = async (element: Element, key: string) => {
   });
 };
 
-const open = (id: string) => id === 'stories' || id === 'relics' ? byText<HTMLElement>('nav button', id === 'stories' ? 'Stories' : 'Relics') : byText<HTMLElement>(`[data-cave-card="${id}"]`, '');
+const open = (id: string) => id === 'stories' || id === 'rewards' ? byText<HTMLElement>('nav button', id === 'stories' ? 'Stories' : 'Rewards') : byText<HTMLElement>(`[data-cave-card="${id}"]`, '');
+const caveRoute = () => new URLSearchParams(location.search).get('cave');
+const valueText = () => container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext') ?? '';
+const daoXpShown = () => Number(valueText().split(' DAO XP')[0].replace(/[^\d]/g, ''));
 const daoTile = (day: number) => container.querySelector<HTMLButtonElement>(`.dao-tile[data-day="${day}"]`)!;
 const daoTileStates = () => Array.from(container.querySelectorAll<HTMLButtonElement>('.dao-tile')).map(tile => tile.dataset.state);
 /** Lets the calendar's in-process claim and its re-read settle. */
@@ -280,7 +326,7 @@ describe('Profile creator navigation', () => {
     const other = publicCreators[1];
     await renderCave({ publicCreators });
     await navigateTo(publicCavePath('home', other.profile.uid));
-    expect(container.querySelector('[data-cave-name] .library-elemental-title__text')?.textContent).toBe('Moon Scribe');
+    expect(container.querySelector('[data-cave-name]')?.textContent).toBe('Moon Scribe');
     expect(container.querySelector('[data-cave-account-controls]')).toBeNull();
     await click(byText('a', 'Worlds'));
     expect(container.querySelector('[data-cave-worlds]')?.getAttribute('data-cave-worlds')).toBe(other.profile.uid);
@@ -289,7 +335,7 @@ describe('Profile creator navigation', () => {
     expect(worlds.every(world => world.getAttribute('data-cave-world')?.startsWith(other.profile.uid))).toBe(true);
     expect(text()).not.toMatch(/Private world fixture|Draft world fixture/);
     await click(container.querySelector('[aria-label="Return to Moon Scribe’s profile"]')!);
-    expect(container.querySelector('[data-cave-name] .library-elemental-title__text')?.textContent).toBe('Moon Scribe');
+    expect(container.querySelector('[data-cave-name]')?.textContent).toBe('Moon Scribe');
     await click(byText('a', 'Store'));
     expect(container.querySelector('[data-cave-storefront]')?.getAttribute('data-cave-storefront')).toBe(other.profile.uid);
     expect(text()).toContain('Moon Scribe’s Store');
@@ -526,7 +572,7 @@ describe('Cultivator Cave home', () => {
     }
   });
   it('shows the portrait, compact identity, cultivation and Home controls', async () => {
-    await renderCave();
+    const { ledger } = await renderCave();
     const scenario = getPreviewScenario('developed-cultivator');
     const profile = scenario.profile!;
 
@@ -537,13 +583,18 @@ describe('Cultivator Cave home', () => {
     expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,480 DAO XP of 25,000');
     expect(container.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('11');
 
-    for (const id of ['qi-reserves', 'dao-pillar', 'status-effects']) {
+    for (const id of ['qi', 'familiar', 'dao-pillar', 'rewards']) {
       expect(container.querySelector(`[data-cave-card="${id}"]`)).not.toBeNull();
     }
-    // Qi carries the yin-yang mark everywhere, on the card as in its dialog.
-    expect(open('qi-reserves').querySelector('[data-sen-global-icon="qi-yin-yang"]')).not.toBeNull();
+    // QI is one spendable balance, read from the QI ledger and marked with the yin-yang.
+    expect(open('qi').querySelector('[data-sen-global-icon="qi-yin-yang"]')).not.toBeNull();
+    const qi = (await ledger.getAccount('workshop-cultivator'))!.balance;
+    expect(open('qi').textContent).toContain(`${qi.toLocaleString()} to spend`);
     expect(open('dao-pillar').textContent).toContain('12 Day Streak');
-    expect(open('status-effects').textContent).toContain('Active Effects · 2');
+    // No Familiar or reward client is mounted in this fixture: the cards say so.
+    expect(open('familiar').textContent).toContain('Not connected');
+    expect(container.querySelector('[data-cave-card="qi-reserves"]')).toBeNull();
+    expect(container.querySelector('[data-cave-card="status-effects"]')).toBeNull();
     expect(text()).not.toContain(profile.username);
     expect(container.querySelector('.workspace-header [aria-label="Open settings"]')).toBeNull();
     // The chrome names the workspace without owning the page heading.
@@ -557,38 +608,36 @@ describe('Cultivator Cave home', () => {
     expect(text()).not.toContain('Cultivate in silence. Ascend in the unseen.');
   });
 
-  it('regression: keeps a full-width Relics destination under the Dao Pillar and above Store/Settings', async () => {
-    await renderCave();
+  it('regression: keeps a full-width Rewards destination under the Dao Pillar and above Store/Settings', async () => {
+    await renderCave({ rewards: DEVELOPED_REWARDS });
     const home = container.querySelector('[data-cave-page="home"]')!;
-    const cards = Array.from(home.querySelectorAll('[data-cave-card="dao-pillar"], [data-cave-card="relics"], [data-cave-account-actions]'));
-    // Order on the page: Daily Dao Pillar, then Relics, then Store/Settings.
+    const cards = Array.from(home.querySelectorAll('[data-cave-card="dao-pillar"], [data-cave-card="rewards"], [data-cave-account-actions]'));
+    // Order on the page: Daily Dao Pillar, then Rewards, then Store/Settings.
     expect(cards.map(card => card.getAttribute('data-cave-card') ?? 'account-actions'))
-      .toEqual(['dao-pillar', 'relics', 'account-actions']);
-    const relics = container.querySelector<HTMLButtonElement>('[data-cave-card="relics"]')!;
+      .toEqual(['dao-pillar', 'rewards', 'account-actions']);
+    const rewards = container.querySelector<HTMLButtonElement>('[data-cave-card="rewards"]')!;
     // Full width, like the Dao Pillar it follows — not one half of the small pair.
-    expect(relics.className).toContain('cave-home-pillar');
-    expect(relics.closest('[data-cave-account-actions]')).toBeNull();
-    expect(relics.disabled).toBe(false);
-    expect(relics.textContent).toContain('Relics');
+    expect(rewards.className).toContain('cave-home-pillar');
+    expect(rewards.closest('[data-cave-account-actions]')).toBeNull();
+    expect(rewards.disabled).toBe(false);
+    expect(rewards.textContent).toContain('2 sealed scrolls');
+    expect(rewards.textContent).toContain('1 Fate Survival Relic');
 
-    await click(relics);
-    // The existing /relics route and the one inventory panel, not a second copy.
-    expect(window.location.search).toContain('cave=%2Frelics');
-    expect(container.querySelector('[data-cave-destination="relics"]')).not.toBeNull();
-    expect(text()).toContain('Inventory, attunement, and the Offering Hall');
-    expect(container.querySelectorAll('[data-cave-destination="relics"]')).toHaveLength(1);
-    expect(container.querySelector('[data-cave-card="relics"]')).toBeNull();
+    await click(rewards);
+    expect(caveRoute()).toBe('/rewards');
+    const destination = container.querySelector('[data-cave-destination="rewards"]')!;
+    expect(destination.querySelector('[data-achievements-panel]')).not.toBeNull();
+    expect(destination.querySelector('[data-fate-survival-relics]')).not.toBeNull();
+    expect(text()).not.toContain('Offering Hall');
+    expect(text()).not.toContain('Attune');
+    expect(container.querySelector('[data-cave-card="rewards"]')).toBeNull();
   });
 
-  it('opens special reserves without including cultivation Qi', async () => {
+  it('opens the balances page from the QI card', async () => {
     await renderCave();
-    await click(open('qi-reserves'));
-    const dialog = document.querySelector('[role="dialog"]');
-    expect(dialog?.textContent).toContain('Sect Qi620');
-    expect(dialog?.textContent).toContain('Demonic Qi145');
-    expect(dialog?.textContent).not.toContain('Heavenly Qi');
-    expect(dialog?.querySelectorAll('[data-sen-global-icon="qi-yin-yang"]')).toHaveLength(2);
-    expect(window.location.search).not.toContain('cave=');
+    await click(open('qi'));
+    expect(caveRoute()).toBe('/home/energy');
+    expect(container.querySelector('[data-cave-destination="energy"]')).not.toBeNull();
   });
 
   it('replaces the signed-out Cave with OAuth and links the mock account', async () => {
@@ -644,39 +693,36 @@ describe('Cultivator Cave destinations', () => {
     expect(container.querySelector('[data-cave-home]')).not.toBeNull();
   });
 
-  it('opens Relics with inventory, attunement, and a working Offering Hall', async () => {
-    await renderCave();
-    await searchCaveDestination('Relics');
-    const destination = () => container.querySelector('[data-cave-destination="relics"]')!;
-    expect(destination().textContent).toContain('Soul Attuned');
-    expect(destination().textContent).toContain('Fragment of the First Sentence');
-    expect(byText('[role="tab"]', 'Inventory').textContent).toContain('6');
-    expect(byText('[role="tab"]', 'Offering Pouch').textContent).toContain('3');
-    expect(byText('[role="tab"]', 'History').textContent).toContain('3');
+  it('opens a sealed Mystery Scroll from Rewards and lands its DAO XP and QI', async () => {
+    await renderCave({ rewards: DEVELOPED_REWARDS });
+    const daoXpBefore = daoXpShown();
+    const qiBefore = Number(open('qi').textContent!.replace(/[^\d]/g, ''));
+    await searchCaveDestination('Rewards');
+    expect(caveRoute()).toBe('/rewards');
+    const destination = () => container.querySelector('[data-cave-destination="rewards"]')!;
+    expect(destination().querySelectorAll('[data-reward-sealed="true"]')).toHaveLength(2);
+    expect(destination().querySelector('[data-fate-survival-relic="karmic-compass"]')).not.toBeNull();
+    // A curated milestone shows its reward before opening; a concealed scroll shows nothing.
+    expect(destination().querySelector('[data-mystery-scroll="creation.first-story"]')?.textContent).toContain('+300 DAO XP');
+    const concealed = destination().querySelector<HTMLButtonElement>('[data-mystery-scroll="reading.ten-chapters"]')!;
+    expect(concealed.textContent).toContain('contents hidden');
+    expect(concealed.textContent).not.toContain('DAO XP');
 
-    // Inspect a relic and release / re-attune the soul.
-    await click(byText('button', 'Crown of the Ninth Refusal'));
-    const dialog = () => document.body.querySelector('[data-relic-inspect="relic-mythic"]');
-    expect(dialog()).not.toBeNull();
-    expect(dialog()?.querySelector('dd')?.className).toContain('[overflow-wrap:anywhere]');
-    await click(byText('button', 'Attune Soul'));
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(10);
-    });
-    expect(byText('button', 'Release Attunement')).toBeTruthy();
-    expect(destination().textContent).toContain('Crown of the Ninth Refusal · +8% Sect Qi');
-    await click(byText('button', 'Close'));
-    expect(dialog()).toBeNull();
+    await click(concealed);
+    await click(document.querySelector<HTMLButtonElement>('[data-reveal-action="unseal"]')!);
+    await act(async () => { await vi.advanceTimersByTimeAsync(1500); });
+    await settle();
+    const card = document.querySelector('[data-reward-card]')!;
+    expect(card.getAttribute('data-reward-rarity')).toBe('Rare');
+    expect([...card.querySelectorAll('[data-reward-grant]')].map(cell => cell.textContent?.replace(/\s+/g, ''))).toEqual(['+75|DAOXP', '+250|QI']);
+    await click(byText('button', 'Continue'));
+    expect(document.querySelector('[data-reward-card]')).toBeNull();
+    expect(destination().querySelectorAll('[data-reward-sealed="true"]')).toHaveLength(1);
 
-    // Submit the weekly pouch: relics move to history and rewards pay out.
-    await click(byText('[role="tab"]', 'Offering Pouch'));
-    await click(byText('button', 'Submit Offerings'));
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(1000);
-    });
-    expect(document.body.querySelector('[role="status"]')?.textContent).toContain('3 relics offered: +7,250 Qi and +175 Sect Merit');
-    expect(byText('[role="tab"]', 'Offering Pouch').textContent).toContain('(0)');
-    expect(byText('[role="tab"]', 'History').textContent).toContain('(6)');
+    await searchCaveDestination('Home');
+    await settle();
+    expect(daoXpShown()).toBe(daoXpBefore + 75);
+    expect(open('qi').textContent).toContain(`${(qiBefore + 250).toLocaleString()} to spend`);
   });
 
   it('opens the Dao Pillar calendar from the card and collects today on the open tile', async () => {
@@ -698,7 +744,6 @@ describe('Cultivator Cave destinations', () => {
     expect(open('dao-pillar').textContent).toContain('Collected today · +100 Qi');
     expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,480 DAO XP of 25,000');
     expect(result.controller().profile?.dao_xp).toBe(13480);
-    expect(result.controller().profile?.heavenly_qi).toBe(13480);
   });
 
   it('shows a fresh calendar to a new cultivator', async () => {
@@ -709,23 +754,28 @@ describe('Cultivator Cave destinations', () => {
     expect(daoTile(13).dataset.state).toBe('available');
   });
 
-  it('lists active status effects and shows an empty state for a new cultivator', async () => {
-    await renderCave();
-    await navigateTo('/home/status-effects');
-    const cards = container.querySelectorAll('[aria-label="Active status effects"] > li');
-    expect(cards).toHaveLength(2);
-    expect(cards[0].textContent).toContain('Blessing • Account-wide');
-    expect(cards[0].querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('62');
-    expect(cards[1].textContent).toContain('Reward unlocked');
-
-    act(() => {
-      root.unmount();
-    });
-    root = createRoot(container);
-    await renderCave({ state: 'new-cultivator' });
-    // URL selection survives remounts, just as a direct link survives reload.
-    expect(container.querySelector('[data-cave-destination="status-effects"]')).not.toBeNull();
-    expect(text()).toContain('No status effects are active');
+  it('trains the equipped Familiar with QI and letters the name with its elemental title', async () => {
+    await renderCave({ rewards: { openingDaoXp: 13_480, qiGrant: 2_000 } });
+    expect(open('familiar').textContent).toContain('Quill');
+    expect(open('familiar').textContent).toContain('Bonded · No effect chosen');
+    expect(container.querySelector('[data-cave-name]')?.getAttribute('data-element')).toBe('none');
+    await click(open('familiar'));
+    expect(caveRoute()).toBe('/home/familiar');
+    await click(byText('button', 'Offer 1,000 QI'));
+    await settle();
+    expect(text()).toContain('Quill reached Awakened: Lightning Title · Whisper.');
+    await click(byText('[data-familiar-training] button', 'Lightning Title · Whisper'));
+    await settle();
+    await click(container.querySelector('[aria-label="Return to cave"]')!);
+    await settle();
+    const name = container.querySelector('[data-cave-name]')!;
+    expect(name.getAttribute('data-element')).toBe('lightning');
+    expect(name.getAttribute('data-cave-name-effect')).toBe('elemental-title:lightning:subtle');
+    expect(open('familiar').textContent).toContain('Lightning Title · Whisper');
+    expect(open('familiar').getAttribute('aria-label')).toBe('Quill, Awakened, Lightning Title · Whisper');
+    expect(open('qi').textContent).toContain('1,000 to spend');
+    // Spending QI never touches DAO XP, the only input to rank.
+    expect(valueText()).toBe('13,480 DAO XP of 25,000');
   });
 });
 
@@ -1165,16 +1215,16 @@ describe('rank colour system', () => {
   });
 
   it('paints rank text with an accessible foreground while preserving its rank visual data', () => {
-    const scribe = getAuraTextStyle('rank:scribe', undefined, 300);
+    const scribe = getAuraTextStyle('rank:scribe', 300);
     expect(scribe.style?.color).not.toBe('#2563EB');
     expect(auraTextContrastRatio(scribe.style?.color as string, CAVE_AURA_TEXT_SURFACE)).toBeGreaterThanOrEqual(MIN_AURA_TEXT_CONTRAST);
     expect(scribe.className).not.toContain('aura-gradient-text');
 
-    const sage = getAuraTextStyle('rank:sage', undefined, 25000);
+    const sage = getAuraTextStyle('rank:sage', 25000);
     expect(sage.className).toContain('aura-gradient-text');
     expect(sage.style?.backgroundImage).toContain('#FFD700');
 
-    const master = getAuraTextStyle('rank:master', undefined, 50000);
+    const master = getAuraTextStyle('rank:master', 50000);
     expect(master.className).toContain('aura-spectrum-text');
   });
 
@@ -1182,7 +1232,7 @@ describe('rank colour system', () => {
     const rawMaster = resolveRankVisual('rank:master', 50000).visual;
     expect(auraGradientTextContrastRatio(rawMaster.stops)).toBeLessThan(MIN_AURA_TEXT_CONTRAST);
 
-    const textStyle = getAuraTextStyle('rank:master', undefined, 50000);
+    const textStyle = getAuraTextStyle('rank:master', 50000);
     const renderedStops = textStyle.style?.backgroundImage?.match(/#[0-9a-f]{6}/gi) ?? [];
     expect(auraGradientTextContrastRatio(renderedStops)).toBeGreaterThanOrEqual(MIN_AURA_TEXT_CONTRAST);
     expect(rawMaster.stops).toEqual(['#00FFFF', '#FF007F', '#FFD700', '#00FFFF']);
@@ -1194,41 +1244,10 @@ describe('rank colour system', () => {
       expect(auraTextContrastRatio(accessibleColor)).toBeGreaterThanOrEqual(MIN_AURA_TEXT_CONTRAST);
     }
 
-    const custom = getAuraTextStyle('#000000', undefined, 50000);
+    const custom = getAuraTextStyle('#000000', 50000);
     expect(custom.style?.color).not.toBe('#000000');
     expect(auraTextContrastRatio(custom.style?.color as string)).toBeGreaterThanOrEqual(MIN_AURA_TEXT_CONTRAST);
     expect(resolveRankVisual('#000000', 50000).visual.stops).toEqual(['#000000']);
-
-    const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
-    const silenced = getAuraTextStyle('rank:leader', [{
-      ...effect,
-      effectDef: { ...effect.effectDef, name: 'Ghostly Silence' },
-      expiresAt: new Date(Date.now() + 60_000).toISOString(),
-    }], 12000);
-    expect(silenced.className).toContain('text-neutral-400');
-    expect(silenced.className).not.toContain('opacity-60');
-
-    const cursed = getAuraGlowStyle('rank:leader', [{
-      ...effect,
-      effectDef: { ...effect.effectDef, name: 'Curse of the Cursed Tome' },
-      expiresAt: new Date(Date.now() + 60_000).toISOString(),
-    }], 12000);
-    expect(cursed.className).toContain('motion-reduce:animate-none');
-  });
-
-  it('does not paint a future Aura override before its effect starts', () => {
-    const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
-    const futureSilence = {
-      ...effect,
-      effectDef: { ...effect.effectDef, name: 'Ghostly Silence' },
-      appliedAt: new Date(Date.now() + 60_000).toISOString(),
-      expiresAt: new Date(Date.now() + 120_000).toISOString(),
-    };
-
-    const textStyle = getAuraTextStyle('rank:leader', [futureSilence], 12000);
-    const glowStyle = getAuraGlowStyle('rank:leader', [futureSilence], 12000);
-    expect(textStyle.className).not.toContain('text-neutral-400');
-    expect(glowStyle.className).not.toContain('border-neutral-900');
   });
 
   it('lists every rank in Settings as name, colour and DAO XP, with no aura lore', async () => {
@@ -1312,7 +1331,7 @@ describe('Cave workspace shell', () => {
 describe('Cave workspace routing', () => {
   it('selects the three navigation destinations and focuses each page without duplicating history', async () => {
     await renderCave();
-    for (const label of ['Stories', 'Relics', 'Home']) {
+    for (const label of ['Stories', 'Rewards', 'Home']) {
       await searchCaveDestination(label);
       expect(new URLSearchParams(location.search).get('cave')).toBe('/' + label.toLowerCase());
       expect(document.activeElement?.tagName).toBe('H2');
@@ -1342,7 +1361,7 @@ describe('Cave workspace routing', () => {
     expect(document.activeElement?.id).toBe('cave-destination-settings-title');
   });
 
-  it.each(['/stories/story-123/manifestations', '/relics/item-123', '/relics/offering-hall'])('keeps parent navigation for future route %s', async path => {
+  it.each(['/stories/story-123/manifestations', '/rewards/scroll-123', '/rewards/relics'])('keeps parent navigation for future route %s', async path => {
     history.replaceState(null, '', '/?preview=user-profile&cave=' + encodeURIComponent(path));
     await renderCave();
     expect(text()).toContain('Page unavailable');
@@ -1426,35 +1445,15 @@ describe('Home dynamic data and claim contract', () => {
     expect((container.querySelector('[data-cave-progress]') as HTMLElement).style.getPropertyValue('--cave-rank-background')).toBeTruthy();
     if (expected === 50000) expect(text()).toContain('Maximum rank');
   });
-  it('keeps explicitly unlocked zero reserves and excludes locked positive balances', async () => {
-    await renderCave({ adapter: { unlockedSpecialQi: ['sect'], profileOverride: { sect_qi: 0, demonic_qi: 200 } } });
-    await click(open('qi-reserves'));
-    expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Sect Qi0');
-    expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('Demonic Qi');
-  });
-  it('shows empty reserves and hides effects for a new cultivator', async () => {
-    await renderCave({ state: 'new-cultivator' });
+  it('shows no special-QI reserves or benefit effects, whatever the profile record still carries', async () => {
+    await renderCave({ adapter: { unlockedSpecialQi: ['sect', 'demonic'], profileOverride: { sect_qi: 620, demonic_qi: 145 } } });
+    expect(container.querySelector('[data-cave-card="qi-reserves"]')).toBeNull();
     expect(container.querySelector('[data-cave-card="status-effects"]')).toBeNull();
-    await click(open('qi-reserves'));
-    expect(text()).toContain('No special Qi reserves unlocked.');
-  });
-  it('expires effects while the panel is open and closes on navigation', async () => {
-    const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
-    await renderCave({ adapter: { profileOverride: { activeStatusEffects: [{ ...effect, expiresAt: new Date(Date.now() + 2000).toISOString(), effectDef: { ...effect.effectDef, sectQiMultiplier: 1.1 } }] } } });
-    await click(open('status-effects'));
-    expect(text()).toContain('+10% Sect Qi');
-    await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
-    expect(text()).toContain('No active effects.');
-    expect(container.querySelector('[data-cave-card="status-effects"]')).toBeNull();
+    expect(text()).not.toContain('Sect Qi');
+    expect(text()).not.toContain('Demonic Qi');
+    expect(text()).not.toContain('Active Effects');
     await navigateTo('/home/status-effects');
-    expect(text()).toContain('No status effects are active');
-    await navigateTo('/stories');
-    expect(document.querySelector('[role="dialog"]')).toBeNull();
-  });
-  it('formats multipliers and actual remaining duration without inventing values', () => {
-    const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
-    const now = Date.now();
-    expect(effectStatement({ ...effect, expiresAt: new Date(now + 7 * 86400000).toISOString(), effectDef: { ...effect.effectDef, qiMultiplier: undefined, sectQiMultiplier: 1.1 } }, now)).toBe('+10% Sect Qi · 7 days');
+    expect(text()).toContain('Page unavailable');
   });
   it('claims QI once across rapid taps and route changes without changing rank progress', async () => {
     const result = await renderCave();
@@ -1527,119 +1526,6 @@ describe('Home dynamic data and claim contract', () => {
   });
 });
 
-describe('Profile timed effects', () => {
-  it('schedules only meaningful effect boundaries and never creates a one-second interval', async () => {
-    const now = Date.UTC(2026, 8, 10, 12, 0, 5);
-    const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
-    const activeEffect = {
-      ...effect,
-      appliedAt: new Date(now - 60_000).toISOString(),
-      expiresAt: new Date(now + 10 * 60_000).toISOString(),
-    };
-    const futureEffect = {
-      ...effect,
-      appliedAt: new Date(now + 20_000).toISOString(),
-      expiresAt: new Date(now + 40_000).toISOString(),
-    };
-
-    expect(nextEffectRefreshDelay([], now, true)).toBeNull();
-    expect(nextEffectRefreshDelay([futureEffect], now)).toBe(20_000);
-    expect(nextEffectRefreshDelay([activeEffect], now, true)).toBe(55_000);
-
-    const interval = vi.spyOn(window, 'setInterval');
-    await renderCave({ state: 'new-cultivator' });
-    expect(interval).not.toHaveBeenCalled();
-  });
-
-  it('pauses effect refreshes while hidden and reschedules them when visible', async () => {
-    const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
-    const setTimeoutSpy = vi.spyOn(window, 'setTimeout');
-    const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout');
-    const originalVisibility = Object.getOwnPropertyDescriptor(document, 'visibilityState');
-
-    try {
-      await renderCave({
-        adapter: {
-          profileOverride: {
-            activeStatusEffects: [{
-              ...effect,
-              appliedAt: new Date(Date.now() - 60_000).toISOString(),
-              expiresAt: new Date(Date.now() + 5 * 60_000).toISOString(),
-            }],
-          },
-        },
-      });
-      setTimeoutSpy.mockClear();
-      clearTimeoutSpy.mockClear();
-
-      Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
-      await act(async () => {
-        document.dispatchEvent(new Event('visibilitychange'));
-      });
-      expect(clearTimeoutSpy).toHaveBeenCalled();
-
-      Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
-      await act(async () => {
-        document.dispatchEvent(new Event('visibilitychange'));
-      });
-      expect(setTimeoutSpy).toHaveBeenCalled();
-    } finally {
-      if (originalVisibility) {
-        Object.defineProperty(document, 'visibilityState', originalVisibility);
-      } else {
-        delete (document as { visibilityState?: string }).visibilityState;
-      }
-    }
-  });
-
-  it('refreshes the Settings Aura preview at an effect boundary without minute polling', async () => {
-    const setTimeoutSpy = vi.spyOn(window, 'setTimeout');
-    const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
-    const now = Date.now();
-    const effectStart = now + 150_000;
-    await renderCave({
-      adapter: {
-        profileOverride: {
-          activeStatusEffects: [{
-            ...effect,
-            effectDef: { ...effect.effectDef, name: 'Ghostly Silence' },
-            appliedAt: new Date(effectStart).toISOString(),
-            expiresAt: new Date(now + 5 * 60_000).toISOString(),
-          }],
-        },
-      },
-    });
-    setTimeoutSpy.mockClear();
-
-    await click(byText('[data-cave-account-actions] button', 'Settings'));
-
-    const preview = document.body.querySelector<HTMLElement>('[data-cave-aura-preview]')!;
-    expect(preview.className).not.toContain('text-neutral-400');
-    const expectedBoundaryDelay = effectStart - Date.now();
-    const positiveDelays = setTimeoutSpy.mock.calls
-      .map(([, delay]) => delay)
-      .filter((delay): delay is number => typeof delay === 'number' && delay > 0);
-    expect(positiveDelays).toEqual([expectedBoundaryDelay]);
-    expect(positiveDelays[0]).toBeGreaterThan(60_000);
-
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(expectedBoundaryDelay + 1);
-    });
-    expect(preview.className).toContain('text-neutral-400');
-  });
-
-  it('does not install effect listeners when no time-sensitive effect is rendered', async () => {
-    const addWindowListener = vi.spyOn(window, 'addEventListener');
-    const addDocumentListener = vi.spyOn(document, 'addEventListener');
-
-    await renderCave({ state: 'new-cultivator' });
-
-    expect(addWindowListener.mock.calls.filter(([event]) => event === 'focus')).toHaveLength(0);
-    expect(addDocumentListener.mock.calls.filter(([event]) => event === 'visibilitychange')).toHaveLength(0);
-  });
-});
-
-
 describe('Claim reconciliation', () => {
   it('keeps a lost claim answer honest across navigation until the calendar is re-read', async () => {
     const result = await renderCave({ daoPillar: { mode: 'claim-unresolved' } });
@@ -1709,7 +1595,7 @@ describe('Public view of the Cave', () => {
 
   const destinationLabels = async () => {
     await openSearch();
-    const labels = Array.from(document.querySelectorAll('.workspace-search-results button')).map(button => (button.textContent ?? '').trim()).filter(label => ['Home', 'Stories', 'Relics', 'Exit'].includes(label));
+    const labels = Array.from(document.querySelectorAll('.workspace-search-results button')).map(button => (button.textContent ?? '').trim()).filter(label => ['Home', 'Stories', 'Rewards', 'Relics', 'Exit'].includes(label));
     await closeSearch();
     return labels;
   };
@@ -1727,7 +1613,7 @@ describe('Public view of the Cave', () => {
     await renderCave();
     const profile = getPreviewScenario('developed-cultivator').profile!;
 
-    // Private Home first: progress, reserves, effects, Pillar.
+    // Private Home first: progress, QI, Familiar, Pillar.
     expect(container.querySelector('[data-cave-home-mode]')?.getAttribute('data-cave-home-mode')).toBe('private');
     expect(container.querySelector('[data-cave-progress]')).not.toBeNull();
 
@@ -1747,9 +1633,10 @@ describe('Public view of the Cave', () => {
     expect(container.querySelector('[data-cave-progress]')).not.toBeNull();
     expect(container.querySelector('[data-cave-dao-xp]')).toBeNull();
     expect(container.querySelector('[data-cave-card="stats"]')).not.toBeNull();
-    expect(container.querySelector('[data-cave-card="qi-reserves"]')).toBeNull();
+    expect(container.querySelector('[data-cave-card="qi"]')).toBeNull();
     expect(container.querySelector('[data-cave-card="highlights"]')).not.toBeNull();
-    expect(container.querySelector('[data-cave-card="status-effects"]')).toBeNull();
+    expect(container.querySelector('[data-cave-card="familiar"]')).toBeNull();
+    expect(container.querySelector('[data-cave-card="rewards"]')).toBeNull();
     expect(container.querySelector('[data-cave-card="boost"]')).not.toBeNull();
     expect(container.querySelector('[data-cave-card="dao-pillar"]')).toBeNull();
 
@@ -1779,11 +1666,11 @@ describe('Public view of the Cave', () => {
 
   it('keeps Cave destinations in Search and public Exit returns to the previous location', async () => {
     await renderCave();
-    expect(await destinationLabels()).toEqual(['Home', 'Stories', 'Relics']);
+    expect(await destinationLabels()).toEqual(['Home', 'Stories', 'Rewards']);
     expect(Array.from(container.querySelectorAll('.library-global-navigation button')).map(button => button.textContent)).toEqual(['Home', 'Library', 'Discover', 'Profile']);
 
-    await searchCaveDestination('Relics');
-    expect(cave()).toBe('/relics');
+    await searchCaveDestination('Rewards');
+    expect(cave()).toBe('/rewards');
     await enterPublicView();
     expect(await destinationLabels()).toEqual(['Home', 'Stories', 'Relics', 'Exit']);
     expect(container.querySelector('[data-cave-settings]')).toBeNull();
@@ -1823,27 +1710,27 @@ describe('Public view of the Cave', () => {
   });
 
   it('opens Stats and Highlights from the same two-card composition', async () => {
-    await renderCave();
+    await renderCave({ rewards: DEVELOPED_REWARDS });
     await enterPublicView();
 
     await click(container.querySelector('[data-cave-card="stats"]')!);
     const stats = document.body.querySelector('[role="dialog"]')!;
     expect(stats.textContent).toContain('Started');
-    expect(stats.textContent).toContain('Reading streak');
+    expect(stats.textContent).toContain('Reading streak12 days');
     expect(stats.textContent).toContain('Reading time');
     await click(document.body.querySelector('[role="dialog"] button')!);
 
     await click(container.querySelector('[data-cave-card="highlights"]')!);
     const highlights = document.body.querySelector('[role="dialog"]')!;
     expect(highlights.querySelectorAll('[data-cave-highlight]').length).toBeGreaterThan(0);
-    expect(highlights.querySelector('[data-cave-highlight="codex-image"]')).not.toBeNull();
+    // The newest Fate Survival Relic features first, then the first story's media.
+    expect(highlights.querySelector('[data-cave-highlight="codex-image"]')?.textContent).toContain('Karmic Compass');
     expect(highlights.querySelector('[data-cave-highlight="audio"]')).not.toBeNull();
     expect(highlights.querySelector('[data-cave-highlight="clip"]')).not.toBeNull();
-    expect(highlights.querySelector('[data-cave-highlight="moment"]')).not.toBeNull();
   });
 
   it('scopes public Stories and Relics to the viewed profile without private content', async () => {
-    await renderCave();
+    await renderCave({ rewards: DEVELOPED_REWARDS });
     await enterPublicView();
 
     await searchCaveDestination('Stories');
@@ -1857,16 +1744,19 @@ describe('Public view of the Cave', () => {
     await searchCaveDestination('Relics');
     expect(cave()).toBe('/public/relics');
     expect(container.querySelector('[data-cave-public-panel="relics"]')).not.toBeNull();
-    expect(text()).toContain('Fragment of the First Sentence');
+    expect(text()).toContain('Karmic Compass');
     expect(text()).not.toContain('Offering Hall');
     expect(text()).not.toContain('Attune');
+    // Rewards stay private: no scrolls, balances or delivered amounts publish.
+    expect(text()).not.toContain('Mystery Scroll');
+    expect(text()).not.toContain('DAO XP');
   });
 
   it('never attributes another cultivator\'s stories to the viewed profile', async () => {
     // The owner account owns none of the mock stories; every one belongs to the
     // developed cultivator. A public page must be scoped to the profile it
     // renders, not to whatever story collection the host passed in.
-    await renderCave({ state: 'owner-admin' });
+    await renderCave({ state: 'owner-admin', rewards: { fateSurvival: [{ challengeId: 'owner-trial', outcome: 'FATE SCARRED' }] } });
     await enterPublicView();
     await searchCaveDestination('Stories');
     expect(container.querySelector('[data-cave-public-panel="stories"]')).not.toBeNull();
@@ -1875,9 +1765,9 @@ describe('Public view of the Cave', () => {
     expect(text()).not.toContain('Ashes of the Ninth Heaven');
     expect(text()).not.toContain('Saltwind Sovereign');
 
-    // The owner's own relics, which are their profile's record, still publish.
+    // The owner's own Fate Survival Relics, read from their Relics ledger, still publish.
     await searchCaveDestination('Relics');
-    expect(text()).toContain('Fragment of the First Sentence');
+    expect(text()).toContain('Thread of Mercy');
   });
 
   it.each(['/public/settings', '/public/home/dao-pillar', '/public/settings/switchboard'])(
@@ -1894,7 +1784,7 @@ describe('Public view of the Cave', () => {
   );
 
   it('honours the visibility configuration across Home and the public pages', async () => {
-    await renderCave();
+    await renderCave({ rewards: DEVELOPED_REWARDS });
     await click(byText('[data-cave-account-actions] button', 'Settings'));
     await click(byText('[data-slot="disclosure-trigger"]', 'Public Profile'));
     const switches = () =>
@@ -1920,7 +1810,7 @@ describe('Public view of the Cave', () => {
 
     await searchCaveDestination('Relics');
     expect(container.querySelector('[data-cave-public-empty]')?.textContent).toContain('private');
-    expect(text()).not.toContain('Fragment of the First Sentence');
+    expect(text()).not.toContain('Karmic Compass');
   });
 });
 
@@ -2006,12 +1896,14 @@ it('uses the SEN emblem as the Profile header home action', async () => {
 
 
 describe('LibraryElementalTitle profile integration', () => {
-  it('uses semantic package titles for the Leader name and rank', async () => {
+  it('uses semantic package titles for the name and rank; Leader rank alone adds no title effect', async () => {
     await renderCave();
     const name = container.querySelector('[data-cave-name]')!;
     const rank = container.querySelector('[data-cave-rank]')!;
     expect(name.tagName).toBe('H2');
-    expect(name.getAttribute('data-element')).toBe('fire');
+    // Rank only chooses colours; elemental lettering comes from a Familiar's effect.
+    expect(name.getAttribute('data-element')).toBe('none');
+    expect(name.className).toContain('aura-gradient-text');
     expect(name.getAttribute('tabindex')).toBe('-1');
     expect(rank.tagName).toBe('P');
     expect(rank.classList.contains('aura-gradient-text')).toBe(true);
@@ -2053,11 +1945,11 @@ describe('LibraryElementalTitle profile integration', () => {
   it.each(['', '<img src=x onerror=alert(1)>', '讀者🌟'.repeat(80)])('safely renders dynamic name %s', async displayName => {
     await renderCave({ adapter: { profileOverride: { displayName } } });
     const name = container.querySelector('[data-cave-name]')!;
-    expect(name.querySelector('.library-elemental-title__text')?.textContent).toBe(displayName || 'Cultivator');
+    expect(name.textContent).toBe(displayName || 'Cultivator');
     expect(name.querySelector('img')).toBeNull();
   });
 
-  it('preserves a custom aura instead of replacing its color with fire', async () => {
+  it('paints a custom aura colour on the name', async () => {
     await renderCave({ adapter: { profileOverride: { displayNameColor: '#abcdef' } } });
     const name = container.querySelector('[data-cave-name]') as HTMLElement;
     expect(name.getAttribute('data-element')).not.toBe('fire');
@@ -2066,34 +1958,6 @@ describe('LibraryElementalTitle profile integration', () => {
 });
 
 
-describe('elemental aura overrides', () => {
-  it.each(['Ghostly Silence', 'Curse of the Cursed Tome'])('respects %s on the name and rank', async effectName => {
-    const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
-    await renderCave({ adapter: { profileOverride: { activeStatusEffects: [{
-      ...effect, effectDef: { ...effect.effectDef, name: effectName },
-      appliedAt: new Date(Date.now() - 1000).toISOString(),
-      expiresAt: new Date(Date.now() + 60_000).toISOString(),
-    }] } } });
-    expect(container.querySelector('[data-cave-name]')?.getAttribute('data-element')).toBe('none');
-    expect(container.querySelector('[data-cave-rank]')?.classList.contains('aura-gradient-text')).toBe(true);
-    expect(container.querySelector('[data-cave-name] .library-elemental-title__particles')).toBeNull();
-  });
-});
-
-
-it('uses the supplied profile clock consistently at aura expiry', () => {
-  const clock = Date.now() - 10_000;
-  const effect = getPreviewScenario('developed-cultivator').profile!.activeStatusEffects![0];
-  const effects = [{ ...effect, effectDef: { ...effect.effectDef, name: 'Ghostly Silence' },
-    appliedAt: new Date(clock - 1000).toISOString(), expiresAt: new Date(clock + 1000).toISOString() }];
-  expect(activeAuraOverride(effects, clock)).toBe('silenced');
-  expect(getAuraTextStyle('rank:leader', effects, 12000, clock).className).toContain('text-neutral-400');
-  expect(getAuraGlowStyle('rank:leader', effects, 12000, clock).className).toContain('shadow-none');
-  expect(activeAuraOverride(effects, clock + 1000)).toBeNull();
-  expect(getAuraTextStyle('rank:leader', effects, 12000, clock + 1000).className).not.toContain('text-neutral-400');
-  expect(getAuraGlowStyle('rank:leader', effects, 12000, clock + 1000).className).not.toContain('shadow-none');
-});
-
 describe('identity rank progression and cultivator bio', () => {
   it.each(RANKS)('shows canonical endpoints and colors for $name', async rank => {
     await renderCave({ qiBalance: 999_999, adapter: { profileOverride: { dao_xp: rank.unlockedAt, qi: 999999, sect_qi: 765432 } } });
@@ -2101,14 +1965,14 @@ describe('identity rank progression and cultivator bio', () => {
     const next = RANKS[RANKS.indexOf(rank) + 1];
     expect(current.textContent).toBe(rank.name);
     expect(container.querySelector('[data-cave-next-rank]')?.textContent).toBe(next?.name ?? 'Maximum rank');
-    const expected = getAuraTextStyle(`rank:${rank.id}`, [], rank.unlockedAt);
+    const expected = getAuraTextStyle(`rank:${rank.id}`, rank.unlockedAt);
     expect(current.className).toBe(expected.className);
     const expectedPaint = document.createElement('p');
     Object.assign(expectedPaint.style, expected.style);
     expect(current.style.cssText).toBe(expectedPaint.style.cssText);
     if (next) {
       expectedPaint.style.cssText = '';
-      Object.assign(expectedPaint.style, getAuraTextStyle(`rank:${next.id}`, [], next.unlockedAt).style);
+      Object.assign(expectedPaint.style, getAuraTextStyle(`rank:${next.id}`, next.unlockedAt).style);
       expect(container.querySelector<HTMLElement>('[data-cave-next-rank]')!.style.cssText).toBe(expectedPaint.style.cssText);
     }
     const identity = container.querySelector('[data-cave-identity]')!;
@@ -2148,7 +2012,7 @@ describe('identity rank progression and cultivator bio', () => {
     const result = await renderCave();
     const controller = result.controller();
     const presentation = buildPublicProfile({ ...developmentPublicRecord(controller.profile!, []), bio }, DEFAULT_PUBLIC_PROFILE_VISIBILITY);
-    await act(async () => root.render(<UserProfileHome controller={controller} now={Date.now()} publicProfile={presentation} />));
+    await act(async () => root.render(<UserProfileHome controller={controller} publicProfile={presentation} />));
     expect(container.querySelector('[data-cave-bio-section]')).toBeNull();
     expect(container.textContent).not.toContain('CULTIVATOR BIO');
   });

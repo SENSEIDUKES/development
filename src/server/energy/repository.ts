@@ -48,6 +48,15 @@ export interface ApplyEnergyGrantCommand {
   metadata?: JsonObject;
 }
 
+/** A direct debit (a Celestial Store purchase). Never used for generation. */
+export interface ApplyEnergySpendCommand {
+  uid: string;
+  amount: number;
+  idempotencyKey: string;
+  description: string;
+  metadata?: JsonObject;
+}
+
 export interface CreateEnergyReservationCommand {
   uid: string;
   actionId: EnergyActionId;
@@ -94,6 +103,12 @@ export interface EnergyRepository {
   getAccount(uid: string): Promise<EnergyAccountRecord | null>;
   ensureAccount(uid: string): Promise<EnergyAccountRecord>;
   applyGrant(command: ApplyEnergyGrantCommand): Promise<EnergyLedgerResult>;
+  /**
+   * Debits settled Energy directly, without a reservation. Throws
+   * `InsufficientEnergyError` when `amount` exceeds `balance - held`, and
+   * `EnergyConflictError` when the key was already used for another movement.
+   */
+  applySpend(command: ApplyEnergySpendCommand): Promise<EnergyLedgerResult>;
   /** Throws `InsufficientEnergyError` when `amount` exceeds `balance - held`. */
   createReservation(command: CreateEnergyReservationCommand): Promise<EnergyReservationResult>;
   settleReservation(command: SettleEnergyReservationCommand): Promise<EnergyReservationResult>;

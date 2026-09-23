@@ -20,7 +20,8 @@ interface StorySeedWorkspaceChromeProps {
   seed: StorySeedInput;
   updateSeed: (update: SeedUpdate) => void;
   activeSection: SeedSectionId;
-  equippedTitle?: string | null;
+  /** Who the drawer says is creating; omitted or null reads as a guest author. */
+  authorName?: string | null;
   onSelectSection: (id: SeedSectionId) => void;
   showStoryBank: boolean;
   helpOpen: boolean;
@@ -60,7 +61,7 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
   const { onToggleStoryBank, showStoryBank } = props;
   const definition = useMemo(() => ({
     label: 'Story Seed sections', closeLabel: 'Close sections',
-    profile: storySeedDrawerProfile(props.equippedTitle),
+    profile: storySeedDrawerProfile(props.authorName),
     sections: [
       ...buildStorySeedDrawerSections(props.seed, props.activeSection, props.onSelectSection),
       {
@@ -75,7 +76,7 @@ export function StorySeedWorkspaceChrome(props: StorySeedWorkspaceChromeProps) {
         ],
       },
     ],
-  }), [props.seed, props.activeSection, props.equippedTitle, props.onSelectSection, showStoryBank, onToggleStoryBank, openSettings]);
+  }), [props.seed, props.activeSection, props.authorName, props.onSelectSection, showStoryBank, onToggleStoryBank, openSettings]);
   return <WorkspaceNavigation definition={definition}>
     <StorySeedChromeContent {...props} settingsOpen={settingsOpen} setSettingsOpen={setSettingsOpen}
       openSettings={openSettings} settingsReturnFocusRef={settingsReturnFocusRef} />

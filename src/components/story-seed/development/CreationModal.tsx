@@ -113,21 +113,14 @@ const STORY_SEED_WORKSPACES: Record<SeedSectionId, ComponentType<StorySeedWorksp
 interface CreationModalStoreSlice {
   activeAgentId: StoryCreationSnapshot['activeAgentId'];
   currentUser: StoryCreationSnapshot['currentUser'];
-  equippedRelicTitle: string | null;
   libraryStories: StoryCreationSnapshot['stories'];
 }
 
-const selectCreationModalStore = (state: StoryCreationSnapshot): CreationModalStoreSlice => {
-  const storyMaker = state.routingConfig.storyMaker;
-  return {
-    activeAgentId: state.activeAgentId,
-    currentUser: state.currentUser,
-    equippedRelicTitle: typeof storyMaker?.equippedRelicTitle === 'string'
-      ? storyMaker.equippedRelicTitle
-      : null,
-    libraryStories: state.stories,
-  };
-};
+const selectCreationModalStore = (state: StoryCreationSnapshot): CreationModalStoreSlice => ({
+  activeAgentId: state.activeAgentId,
+  currentUser: state.currentUser,
+  libraryStories: state.stories,
+});
 
 export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage }: CreationModalProps) {
   const runtime = useStoryCreationRuntime();
@@ -136,9 +129,10 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   const {
     activeAgentId,
     currentUser,
-    equippedRelicTitle,
     libraryStories,
   } = useStoryCreationStore(selectCreationModalStore);
+  // A signed-in author without a display name still reads as signed in.
+  const authorName = currentUser ? currentUser.displayName?.trim() || 'Author' : null;
   const seedOwnerId = currentUser?.uid
     || runtime.guestOwnerId || null;
   // Stories manifested from a banked seed drive the Story Bank's "Novel
@@ -670,7 +664,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
     // and the scrolling main region; only Story Seed's own content sits inside.
     <StorySeedWorkspaceChrome
         onNavigateHome={onNavigateHome}
-        seed={seed} updateSeed={updateSeed} activeSection={activeSection} equippedTitle={equippedRelicTitle}
+        seed={seed} updateSeed={updateSeed} activeSection={activeSection} authorName={authorName}
         onSelectSection={selectWorkspaceSection} isGenerating={isGenerating} savedFeedback={savedFeedback}
         showStoryBank={showStoryBank} helpOpen={helpOpen} canManifest={canGenerate}
         manifestLabel={isGenerating ? (activeAgentId === 'versa' ? 'VERSA is drafting...' : 'Manifesting...') : 'Manifest World Blueprint'}

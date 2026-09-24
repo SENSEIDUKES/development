@@ -15,15 +15,16 @@ import { AchievementService } from './service';
 const uid = 'reader-1';
 
 function setup(config: Partial<AchievementsConfig> = {}) {
-  const daoXp = new InMemoryDaoXpLedger();
+  let tick = 0;
+  const now = () => new Date(Date.UTC(2026, 8, 23, 12, 0, tick++));
+  const daoXp = new InMemoryDaoXpLedger({ now: () => now().toISOString() });
   const qi = new InMemoryQiLedger();
   const energy = new InMemoryEnergyRepository();
   const repository = new InMemoryAchievementRepository();
-  let tick = 0;
   const service = new AchievementService({
     repository, daoXp, deliverer: new RewardDeliverer({ daoXp, qi, energy }),
     config: { ...DEFAULT_ACHIEVEMENTS_CONFIG, ...config },
-    now: () => new Date(Date.UTC(2026, 8, 23, 12, 0, tick++)),
+    now,
   });
   const read = async (story: string, chapter: number) => service.recordActivity(uid, { kind: 'chapter.read', subjectId: `${story}:${chapter}`, storyId: story });
   const view = async (key: string) => (await service.getSnapshot({ uid })).achievements.find(achievement => achievement.key === key)!;

@@ -60,9 +60,10 @@ atlas grounded in the supplied `Quill-v2.png` artwork. The new cobalt-and-cream 
 has natural fur texture, gold-edged cyan Lightning markings, and a compass-star pendant.
 It preserves the shared 8 × 11, 192 × 208 atlas contract and includes all sixteen look
 directions. The nine transparent QA GIFs are deterministic crops of the accepted atlas.
-Quill's four-frame wave keeps one forepaw visibly raised with three paws planted in every
-pose, using durations `[140, 140, 140, 280]`. The left-running row is uniformly reduced
-to keep the leading face safely inside its cell. `renderer-validation.json` and
+Quill's four-frame wave raises his anatomical front-right paw (viewer-left) while the
+other three paws remain planted, using durations `[140, 140, 140, 280]`. The left-running
+row mirrors the right-running row at the same scale, with matching per-frame bounds.
+`renderer-validation.json` and
 `IMPORT-HANDOFF.md` remain with Quill's source package as intake evidence and are
 intentionally not runtime dependencies.
 
@@ -257,6 +258,9 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-09-23: Corrected Quill's wave to raise the anatomical front-right paw, with the
+  other three paws grounded. Restored left-running to the exact horizontal mirror of
+  right-running so both directions have identical frame bounds and scale.
 - 2026-09-23: Clarified Quill's wave silhouette so the raised forepaw reads clearly
   above three grounded paws throughout the four-frame loop. Reduced the left-running
   row uniformly to add room around the left-facing face while keeping the foot baseline.

@@ -16,7 +16,18 @@ describe('planHarnessWorkspaceLoad', () => {
     expect(plan.state.stories).toEqual([{ id: 'story-1' }]);
   });
 
-  it('keeps an untouched copy of an older-schema workspace before resetting', () => {
+  it('upgrades a schema 18 workspace in place after keeping an untouched copy of it', () => {
+    const stored = { ...createEmptyHarnessWorkspaceState(), schemaVersion: 18, stories: [{ id: 'story-1', activeFoundationRevisionId: 'f', head: { nextChapterNumber: 1 } }] };
+    const plan = planHarnessWorkspaceLoad(stored, now);
+    expect(plan.state.schemaVersion).toBe(HARNESS_GENERATION_SCHEMA_VERSION);
+    expect(plan.state.stories).toEqual(stored.stories);
+    expect(plan.preserve).toEqual({
+      key: `${PRESERVED_WORKSPACE_PREFIX}v18:2026-09-24T12:00:00.000Z`,
+      record: { preservedAt: now(), reason: 'migrated', schemaVersion: 18, workspace: stored },
+    });
+  });
+
+  it('keeps an untouched copy of an older-schema workspace it cannot migrate before resetting', () => {
     const stored = { schemaVersion: HARNESS_GENERATION_SCHEMA_VERSION - 1, stories: [{ id: 'a' }, { id: 'b' }], chapters: [{ id: 'c1' }] };
     const plan = planHarnessWorkspaceLoad(stored, now);
     expect(plan.state).toEqual(createEmptyHarnessWorkspaceState());

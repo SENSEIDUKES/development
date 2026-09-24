@@ -1,4 +1,4 @@
-import { ARC_PLAN_SCHEMA, validateArcPlan } from '@seihouse/sen/arc-goals';
+import { MAX_ROADMAP_ARCS, arcRoadmapSchema, validateArcRoadmap } from '@seihouse/sen/arc-goals';
 import { GoogleGenAI } from "@google/genai";
 import { buildBlueprintGenerationPayload, finalizeGeneratedWorldBlueprint, type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
 import { type WorldBlueprint } from '@seihouse/sen/story-seed';
@@ -12,7 +12,22 @@ import {
   WORLD_BLUEPRINT_SYSTEM_PROMPT,
 } from "./prompt";
 
-export const WORLD_BLUEPRINT_RESPONSE_SCHEMA = {
+/** Output tokens reserved for every Blueprint field other than the arc roadmap. */
+export const BLUEPRINT_PROSE_OUTPUT_TOKENS = 4_500;
+/** Output tokens one arc plan may need: up to five one-line goals with identities and allocations. */
+export const ROADMAP_OUTPUT_TOKENS_PER_ARC = 250;
+
+/**
+ * How many arcs one Blueprint call can plan within its output budget. The
+ * roadmap is generated whole in the same call; this limit bounds the arc count
+ * the model may choose instead of letting a long roadmap be cut off.
+ */
+export const blueprintRoadmapArcLimit = (maxOutputTokens: number): number => Math.max(1, Math.min(
+  MAX_ROADMAP_ARCS,
+  Math.floor((maxOutputTokens - BLUEPRINT_PROSE_OUTPUT_TOKENS) / ROADMAP_OUTPUT_TOKENS_PER_ARC),
+));
+
+export const worldBlueprintResponseSchema = (maxArcs: number) => ({
   type: "object",
   additionalProperties: false,
   required: [
@@ -28,7 +43,7 @@ export const WORLD_BLUEPRINT_RESPONSE_SCHEMA = {
     "initialCharacters",
     "majorMysteries",
     "firstArcPromise",
-    "arcPlan",
+    "arcPlans",
     "tropeRules",
     "styleBible",
     "destinedEnding",
@@ -58,20 +73,22 @@ export const WORLD_BLUEPRINT_RESPONSE_SCHEMA = {
     majorFactions: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
     initialCharacters: { type: "array", minItems: 1, items: { type: "string", minLength: 1 } },
     majorMysteries: { type: "array", items: { type: "string", minLength: 1 } },
-    arcPlan: { ...ARC_PLAN_SCHEMA, properties: { ...ARC_PLAN_SCHEMA.properties, goals: { ...ARC_PLAN_SCHEMA.properties.goals, minItems: 1, maxItems: 1 } } },
+    arcPlans: arcRoadmapSchema(maxArcs),
     firstArcPromise: { type: "string", minLength: 1 },
     tropeRules: { type: "string", minLength: 1 },
     styleBible: { type: "string", minLength: 1 },
     destinedEnding: { type: "string", minLength: 1 },
-    estimatedArcs: { type: "integer", minimum: 1, maximum: 100 },
+    estimatedArcs: { type: "integer", minimum: 1, maximum: maxArcs },
     unresolvedPlotThreads: { type: "array", items: { type: "string", minLength: 1 } },
   },
-} as const;
+}) as const;
+
+export const WORLD_BLUEPRINT_RESPONSE_SCHEMA = worldBlueprintResponseSchema(MAX_ROADMAP_ARCS);
 
 export interface WorldBlueprintModelRequest {
   systemInstruction: string;
   userPrompt: string;
-  responseJsonSchema: typeof WORLD_BLUEPRINT_RESPONSE_SCHEMA;
+  responseJsonSchema: ReturnType<typeof worldBlueprintResponseSchema>;
   temperature: number;
   maxOutputTokens: number;
   timeoutMs: number;
@@ -107,6 +124,9 @@ export class GeminiWorldBlueprintProvider implements WorldBlueprintModelProvider
           abortSignal: controller.signal,
         },
       });
+      if (response.candidates?.[0]?.finishReason === "MAX_TOKENS") {
+        throw new BlueprintOutputLimitError(request.maxOutputTokens);
+      }
       const output = response.text?.trim();
       if (!output) throw new Error("Gemini returned an empty World Blueprint response.");
       return JSON.parse(output) as unknown;
@@ -135,6 +155,14 @@ export class OpenRouterWorldBlueprintProvider implements WorldBlueprintModelProv
       timeoutMs: request.timeoutMs,
     });
     return JSON.parse(text.trim()) as unknown;
+  }
+}
+
+/** The model stopped at its output limit: the Blueprint and its arc roadmap are incomplete. */
+export class BlueprintOutputLimitError extends Error {
+  constructor(maxOutputTokens: number) {
+    super(`The Blueprint reached the model's ${maxOutputTokens.toLocaleString("en-US")}-token output limit before its arc roadmap was complete. Nothing was shortened or saved. Raise STORY_SEED_BLUEPRINT_MAX_OUTPUT_TOKENS (up to 32,768) or generate again.`);
+    this.name = "BlueprintOutputLimitError";
   }
 }
 
@@ -193,17 +221,25 @@ export const generateWorldBlueprint = async (
   provider: WorldBlueprintModelProvider,
 ): Promise<WorldBlueprint> => {
   const { storySeed } = buildBlueprintGenerationPayload(payload.storySeed);
+  const maxArcs = blueprintRoadmapArcLimit(config.maxOutputTokens);
   const generated = await provider.generate({
     systemInstruction: WORLD_BLUEPRINT_SYSTEM_PROMPT,
-    userPrompt: buildWorldBlueprintPrompt(storySeed),
-    responseJsonSchema: WORLD_BLUEPRINT_RESPONSE_SCHEMA,
+    userPrompt: buildWorldBlueprintPrompt(storySeed, maxArcs),
+    responseJsonSchema: worldBlueprintResponseSchema(maxArcs),
     temperature: config.temperature,
     maxOutputTokens: config.maxOutputTokens,
     timeoutMs: config.timeoutMs,
   });
   const blueprint = finalizeGeneratedWorldBlueprint(generated, storySeed);
   assertCompleteGeneratedBlueprint(blueprint);
-  if (!blueprint.arcPlan || validateArcPlan(blueprint.arcPlan).arcNumber !== 1 || blueprint.arcPlan.goals.length !== 1) throw new Error('The generated Blueprint needs a valid Arc 1 plan.');
+  // The roadmap is all-or-nothing: an incomplete or malformed roadmap fails the
+  // generation loudly instead of being trimmed or padded to fit.
+  const plans = Array.isArray((generated as { arcPlans?: unknown })?.arcPlans) ? (generated as { arcPlans: unknown[] }).arcPlans : [];
+  if (plans.length !== blueprint.estimatedArcs) {
+    throw new Error(`The generated Blueprint planned ${plans.length} of its ${blueprint.estimatedArcs} arcs. Nothing was shortened or saved; generate again.`);
+  }
+  try { validateArcRoadmap(blueprint.arcPlans, blueprint.estimatedArcs); }
+  catch (error) { throw new Error(`The generated arc roadmap is invalid: ${error instanceof Error ? error.message : 'unknown problem'}`); }
   // HARNESS is the only downstream consumer. These gates plus the Story Seed
   // handoff validation are its contract; no legacy chapter adapter runs here.
   return blueprint;

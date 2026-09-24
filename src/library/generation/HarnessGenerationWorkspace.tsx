@@ -18,6 +18,7 @@ import { includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
 import { HarnessReaderSession } from '@seihouse/sen/harness-generation';
 import { type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
 import type { ReaderStateRepository } from '@seihouse/sen/reader-runtime';
+import { NovelBlueprintTab } from './NovelBlueprintTab';
 import { type HarnessGenerationAttempt, type HarnessGenerationModelAdapter, type HarnessGenerationServerInfo, type HarnessCorrectionKind, type HarnessSemanticEvent, type HarnessStory, type HarnessSkillManifest, type HarnessSkillReference, type HarnessSkillSlotId, type HarnessStorySeedOption, type HarnessStorySeedSource, type HarnessWorkspaceState, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
 
 export interface HarnessGenerationWorkspaceProps {
@@ -518,12 +519,13 @@ const chapterFunctionLabel: Record<ChapterFunction, string> = {
  * The permanent Active Arc Goal display. Every value comes from the existing
  * Arc Goal authority (`harnessArcContext`), never from a second goal system.
  */
-function ActiveArcGoalCard({ story, foundation, generatedThrough, busy, onEditPlan }: {
+function ActiveArcGoalCard({ story, foundation, generatedThrough, busy, onOpenBlueprint }: {
   story: HarnessStory;
   foundation?: StoryFoundationRevision;
   generatedThrough: number;
   busy: boolean;
-  onEditPlan: (plan: Parameters<typeof ArcPlanView>[0]['plan']) => Promise<void>;
+  /** Arc Goals are edited in the novel's Blueprint, under its mode rules. */
+  onOpenBlueprint: () => void;
 }) {
   const [planOpen, setPlanOpen] = useState(false);
   const context = foundation ? harnessArcContext(story, foundation.input, story.head.nextChapterNumber) : undefined;
@@ -531,7 +533,9 @@ function ActiveArcGoalCard({ story, foundation, generatedThrough, busy, onEditPl
     return (
       <div className="rounded-xl border border-dashed border-cyan-300/25 bg-cyan-400/[0.04] p-4" data-testid="harness-active-arc-goal">
         <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-200/55">Active Arc Goal</p>
-        <p className="mt-2 text-sm text-neutral-300">No Arc Plan exists yet. The Arc planner creates it automatically before Chapter {story.head.nextChapterNumber} is requested.</p>
+        <p className="mt-2 text-sm text-neutral-300">{foundation?.input.plannedArcCount
+          ? `All ${foundation.input.plannedArcCount} planned arcs are written: the route to the Destined Ending is complete.`
+          : `No Arc Plan exists yet. The Arc planner creates it automatically before Chapter ${story.head.nextChapterNumber} is requested.`}</p>
       </div>
     );
   }
@@ -562,7 +566,10 @@ function ActiveArcGoalCard({ story, foundation, generatedThrough, busy, onEditPl
       <LibraryButton type="button" size="sm" variant="ghost" className="mt-3" onClick={() => setPlanOpen(open => !open)} disabled={busy}>
         {planOpen ? 'Hide complete Arc Plan' : 'Open complete Arc Plan'}
       </LibraryButton>
-      {planOpen && <ArcPlanView key={`${context.plan.arcNumber}-${story.arcPlans?.length ?? 0}`} defaultOpen plan={context.plan} activeGoalId={context.activeGoal.id} generatedThrough={generatedThrough} onEdit={onEditPlan} />}
+      <LibraryButton type="button" size="sm" variant="ghost" className="mt-3" onClick={onOpenBlueprint} disabled={busy}>
+        Edit Arc Goals in Blueprint
+      </LibraryButton>
+      {planOpen && <ArcPlanView key={`${context.plan.arcNumber}-${story.arcPlans?.length ?? 0}`} defaultOpen plan={context.plan} activeGoalId={context.activeGoal.id} generatedThrough={generatedThrough} />}
     </div>
   );
 }
@@ -570,10 +577,10 @@ function ActiveArcGoalCard({ story, foundation, generatedThrough, busy, onEditPl
 /**
  * Story-direction sources: the Destined Ending, user-created Hard Pins, the
  * story's Fate Pressure with its rhythm recommendation, and the Mission
- * Reminder. These are displayed and edited here; none of them enters the
- * provider request yet.
+ * Reminder. Each reaches the chapter request in its own section; Arc Goals
+ * are edited in the novel's Blueprint.
  */
-function StoryDirectionPanel({ story, foundation, chapters, generatedThrough, missionReminder, busy, onSaveHardPins, onEditPlan }: {
+function StoryDirectionPanel({ story, foundation, chapters, generatedThrough, missionReminder, busy, onSaveHardPins, onOpenBlueprint }: {
   story: HarnessStory;
   foundation?: StoryFoundationRevision;
   chapters: HarnessChapter[];
@@ -581,7 +588,7 @@ function StoryDirectionPanel({ story, foundation, chapters, generatedThrough, mi
   missionReminder?: HarnessMissionReminder | { error: string };
   busy: boolean;
   onSaveHardPins: (pins: HardPinInput[]) => Promise<void>;
-  onEditPlan: (plan: Parameters<typeof ArcPlanView>[0]['plan']) => Promise<void>;
+  onOpenBlueprint: () => void;
 }) {
   const savedPins = story.hardPins ?? [];
   // Only the saved pins themselves reset the draft, so an unrelated story
@@ -612,11 +619,11 @@ function StoryDirectionPanel({ story, foundation, chapters, generatedThrough, mi
         <h2 id="harness-direction-title" className="font-display text-xl text-white">Story direction</h2>
       </div>
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-400">
-        Hard Pins describe the story’s long-term destiny beside the Destined Ending. The Active Arc Goal describes its immediate current direction. Fate Pressure decides which of the writer’s next-chapter possibilities to favor. Nothing here is sent to the provider yet.
+        Hard Pins describe the story’s long-term destiny beside the Destined Ending. The Active Arc Goal describes its immediate current direction. Fate Pressure decides which of the writer’s next-chapter possibilities to favor. Each chapter request carries the Destined Ending, the Hard Pins, only the active goal with its deadline, and the rhythm direction.
       </p>
 
       <div className="mt-5">
-        <ActiveArcGoalCard story={story} foundation={foundation} generatedThrough={generatedThrough} busy={busy} onEditPlan={onEditPlan} />
+        <ActiveArcGoalCard story={story} foundation={foundation} generatedThrough={generatedThrough} busy={busy} onOpenBlueprint={onOpenBlueprint} />
       </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
@@ -626,7 +633,7 @@ function StoryDirectionPanel({ story, foundation, chapters, generatedThrough, mi
             <h3 className="text-sm font-semibold text-white">Destined Ending</h3>
           </div>
           <p className="mt-2 text-sm leading-relaxed text-neutral-200">
-            {foundation?.input.destinedEnding ?? 'Not set yet. The Arc planner supplies the novel-wide ending before the first chapter; edit it in the Foundation.'}
+            {foundation?.input.destinedEnding ?? 'Not set yet. The Arc planner supplies the novel-wide ending before the first chapter.'}
           </p>
         </div>
 
@@ -714,7 +721,7 @@ function StoryDirectionPanel({ story, foundation, chapters, generatedThrough, mi
         {missionReminder && 'error' in missionReminder
           ? <p className="mt-2 text-xs text-human">{missionReminder.error}</p>
           : <>
-            <p className="mt-2 text-[11px] leading-relaxed text-neutral-500">A brief reminder that the model is the author of this novel. Sourced from the Author portion of the CAPA Prompt; it performs no story analysis and is not sent to the provider yet.</p>
+            <p className="mt-2 text-[11px] leading-relaxed text-neutral-500">A brief reminder that the model is the author of this novel. Sourced from the Author portion of the CAPA Prompt; it performs no story analysis and travels as its own section of each chapter request.</p>
             <pre className="mt-2 whitespace-pre-wrap break-words font-sans text-xs leading-relaxed text-neutral-300">{missionReminder?.text ?? 'Equip an installed Author skill to see the Mission Reminder.'}</pre>
           </>}
       </details>
@@ -1048,6 +1055,9 @@ export function HarnessGenerationWorkspace({
   const [state, setState] = useState<HarnessWorkspaceState>();
   const [serverInfo, setServerInfo] = useState<HarnessGenerationServerInfo>();
   const [selectedStoryId, setSelectedStoryId] = useState<string>();
+  /** The novel's own page shows its story workspace or its Blueprint. */
+  const [novelTab, setNovelTab] = useState<'novel' | 'blueprint'>('novel');
+  useEffect(() => { setNovelTab('novel'); }, [selectedStoryId]);
   const [foundationForm, setFoundationForm] = useState<StoryFoundationInput>(emptyFoundation);
   const [model, setModel] = useState('');
   const [batchCount, setBatchCount] = useState('');
@@ -1241,6 +1251,20 @@ export function HarnessGenerationWorkspace({
     try { await controller.editArcGoals(selectedStory.id, plan); }
     finally { setBusy(false); }
   };
+  const acceptArcGoals = async (arcNumber: number) => {
+    if (!selectedStory) return;
+    setBusy(true);
+    setMessage(undefined);
+    try { await controller.acceptArcGoals(selectedStory.id, arcNumber); }
+    finally { setBusy(false); }
+  };
+  const saveBlueprintFoundation = async (input: StoryFoundationInput) => {
+    if (!selectedStory) return;
+    setBusy(true);
+    setMessage(undefined);
+    try { await controller.saveFoundationRevision(selectedStory.id, input); }
+    finally { setBusy(false); }
+  };
   const saveRecap = async (chapterId: string, text: string) => {
     setBusy(true);
     setMessage(undefined);
@@ -1411,6 +1435,25 @@ export function HarnessGenerationWorkspace({
             )}
 
             {selectedStory && (
+              <div role="tablist" aria-label={`${selectedStory.title} pages`} className="flex flex-wrap gap-2" data-testid="novel-page-tabs">
+                {([['novel', 'Novel'], ['blueprint', 'Blueprint']] as const).map(([id, label]) => (
+                  <button key={id} type="button" role="tab" id={`novel-tab-${id}`} aria-selected={novelTab === id} aria-controls={id === 'blueprint' ? 'novel-panel-blueprint' : undefined}
+                    onClick={() => setNovelTab(id)}
+                    className={`min-h-11 rounded-full border px-4 text-sm transition-colors ${novelTab === id ? 'border-cyan-300/40 bg-cyan-400/10 text-white' : 'border-white/15 text-neutral-300 hover:border-white/30'}`}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {selectedStory && novelTab === 'blueprint' && (
+              <div role="tabpanel" id="novel-panel-blueprint" aria-labelledby="novel-tab-blueprint">
+                <NovelBlueprintTab story={selectedStory} foundation={selectedFoundation} busy={busy}
+                  onEditArcGoals={editArcPlan} onAcceptArcGoals={acceptArcGoals} onSaveFoundation={saveBlueprintFoundation} />
+              </div>
+            )}
+
+            {selectedStory && novelTab === 'novel' && (
               <StoryDirectionPanel
                 story={selectedStory}
                 foundation={selectedFoundation}
@@ -1419,12 +1462,12 @@ export function HarnessGenerationWorkspace({
                 missionReminder={missionReminder}
                 busy={busy}
                 onSaveHardPins={saveHardPins}
-                onEditPlan={editArcPlan}
+                onOpenBlueprint={() => setNovelTab('blueprint')}
               />
             )}
 
             {renderSkillImport?.(busy)}
-            {selectedStory && (
+            {selectedStory && novelTab === 'novel' && (
               <SkillLoadoutPanel
                 story={selectedStory}
                 installedSkills={availableSkills}
@@ -1435,7 +1478,7 @@ export function HarnessGenerationWorkspace({
               />
             )}
 
-            {selectedStory && (
+            {selectedStory && novelTab === 'novel' && (
               <MediaLoadoutPanel
                 story={selectedStory}
                 packs={registeredMediaPacks}
@@ -1446,7 +1489,7 @@ export function HarnessGenerationWorkspace({
               />
             )}
 
-            {selectedStory && (
+            {selectedStory && novelTab === 'novel' && (
               <LibraryPanel as="section" padding="md" aria-labelledby="harness-generate-title">
                 <div className="mb-5 space-y-3">
                   <label className="block text-sm text-neutral-300" htmlFor="harness-direction">Story direction</label>
@@ -1517,13 +1560,14 @@ export function HarnessGenerationWorkspace({
               </LibraryPanel>
             )}
 
-            {selectedStory && (
+            {selectedStory && novelTab === 'novel' && (
               <details className="rounded-xl border border-white/10 bg-black/15 p-3">
                 <summary className="cursor-pointer text-sm font-medium text-neutral-300">Foundation snapshot and revisions</summary>
                 <div className="mt-3">
                   <StoryFoundationEditor createIcon={SENManifestingIcon}
                     form={foundationForm}
                     story={selectedStory}
+                    fixedDestinedEnding={selectedFoundation?.input.destinedEnding}
                     busy={busy}
                     error={foundationError}
                     onChange={setFoundationForm}
@@ -1533,7 +1577,7 @@ export function HarnessGenerationWorkspace({
               </details>
             )}
 
-            {selectedStory && chapters.length > 0 && (
+            {selectedStory && novelTab === 'novel' && chapters.length > 0 && (
               <LibraryPanel as="section" padding="md" aria-labelledby="harness-chapters-title">
                 <div className="flex items-center gap-2">
                   <BookOpen size={18} className="text-cyan-200" aria-hidden="true" />
@@ -1575,7 +1619,7 @@ export function HarnessGenerationWorkspace({
               </LibraryPanel>
             )}
 
-            {selectedStory && (
+            {selectedStory && novelTab === 'novel' && (
               <LibraryPanel as="section" padding="md" aria-labelledby="harness-events-title">
                 <div className="flex items-center gap-2">
                   <FileText size={17} className="text-cyan-200" aria-hidden="true" />
@@ -1588,7 +1632,7 @@ export function HarnessGenerationWorkspace({
               </LibraryPanel>
             )}
 
-            {selectedStory && <HarnessInspection
+            {selectedStory && novelTab === 'novel' && <HarnessInspection
               state={state}
               story={selectedStory}
               attempt={attempt}
@@ -1598,7 +1642,7 @@ export function HarnessGenerationWorkspace({
               onCorrection={addCorrection}
             />}
 
-            {selectedStory && <Diagnostics attempt={attempt} />}
+            {selectedStory && novelTab === 'novel' && <Diagnostics attempt={attempt} />}
           </div>
         </div>
       )}

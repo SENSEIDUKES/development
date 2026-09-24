@@ -69,10 +69,11 @@ describe('Original Language as permanent HARNESS story identity', () => {
     expect(revised.foundation.input).not.toHaveProperty('originalLanguage');
   });
 
-  it('resets stale workspace state through the schema version boundary instead of migrating it', () => {
+  it('resets stale workspace state from a version with no migration path', () => {
     const stale = {
       ...createEmptyHarnessWorkspaceState(),
-      schemaVersion: HARNESS_GENERATION_SCHEMA_VERSION - 1,
+      // Schema 18 upgrades in place; earlier versions have no migration step.
+      schemaVersion: HARNESS_GENERATION_SCHEMA_VERSION - 2,
       stories: [{ id: 'hst_stale', title: 'Stale', createdAt: 'a', updatedAt: 'a',
         activeFoundationRevisionId: 'f', foundationRevisionIds: ['f'], head: { nextChapterNumber: 1 } }],
     };

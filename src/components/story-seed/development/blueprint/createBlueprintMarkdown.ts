@@ -82,8 +82,8 @@ ${blueprint.destinedEnding || ''}
 ### Hard Pins
 ${markdownList((blueprint.hardPins ?? []).map(pin => pin.text))}
 
-### Active Arc Goal
-${blueprint.arcPlan?.goals[0]?.text || ''}
+### Arc Roadmap
+${(blueprint.arcPlans ?? []).map(plan => [`#### Arc ${plan.arcNumber}`, ...plan.goals.map((goal, index) => `${index + 1}. ${goal.text} (${goal.chapters} chapters)`)].join('\n')).join('\n\n')}
 
 ### Fun Settings
 ${Object.entries(blueprint.funSettings ?? {}).map(([key, value]) => `- ${key}: ${value}`).join('\n')}

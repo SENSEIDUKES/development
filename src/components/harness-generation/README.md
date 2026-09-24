@@ -31,6 +31,27 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-09-24:** Connected the Destined Ending and the Blueprint's arc roadmap.
+  A story started from a reviewed Blueprint receives every arc's saved plan and
+  the planned arc count (`StoryFoundationInput.arcRoadmap`/`plannedArcCount`);
+  each arc keeps its own revision history (`harnessArcPlan`), and a roadmap
+  story never calls the Arc planner at a boundary: after its final arc it stops
+  with an explicit "route complete" error. The chapter request still carries
+  only the active goal, its deadline, and now the arc's position on the route
+  (`plannedArcCount`, `finalArc`); the response contract no longer tells the
+  writer never to "complete" the Destined Ending, so the final arc can reach it
+  while the ending stays user-owned. `arcGoalEditState` is the one edit rule:
+  Regular Reader mode edits the active and upcoming arcs while the novel is
+  private (completed arcs and completed goals never change); Fate Survival
+  reviews each arc once (edit or `acceptArcGoals`) immediately before it
+  begins and locks it when its generation begins (`arcGoalReviews`). The
+  Destined Ending and arc count are fixed across Foundation revisions. Arc
+  Goals are edited from the novel page's new Blueprint tab (Library
+  `NovelBlueprintTab`), which also reopens and saves the novel's World
+  Blueprint as a Foundation revision; the Active Arc Goal card and the HARNESS
+  Reader Codex now show plans read-only. Schema 19 upgrades saved schema 18
+  workspaces in place after the host keeps an untouched copy, instead of
+  resetting them.
 - **2026-09-24:** The Development Reader Chamber now reads saved HARNESS stories
   as a durable reading experience. `HarnessReaderSession` scopes the Reader
   runtime store to the saved story (story data and writes no longer touch the

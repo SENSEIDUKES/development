@@ -28,7 +28,13 @@ export interface WorldBlueprintMainCharacter {
 export interface WorldBlueprint {
   hardPins?: import('../../../narrative/storyDirection').HardPinInput[];
   funSettings?: import('../../../narrative/storyDirection').FunSettings;
-  arcPlan?: import('../../arc-goals/shared/arcGoals').ArcPlan;
+  /**
+   * The arc roadmap: one saved goal plan per arc, Arc 1 through `estimatedArcs`,
+   * forming the route to the Destined Ending. Arc 1's first goal is the Seed's
+   * Active Arc Goal when the creator wrote one. Older Blueprints stored a single
+   * Arc 1 `arcPlan`; `normalizeWorldBlueprint` reads it as a one-arc roadmap.
+   */
+  arcPlans?: import('../../arc-goals/shared/arcGoals').ArcPlan[];
   /** Additive artifact metadata. Older Blueprints safely default to `v1.0`. */
   blueprintVersion?: string;
   creator?: string;

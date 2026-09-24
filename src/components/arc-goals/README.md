@@ -1,7 +1,7 @@
 # SEN Arc Goals
 
 - **Created:** 2026-09-13
-- **Last Workshop update:** 2026-09-20
+- **Last Workshop update:** 2026-09-24
 - **Status:** neutral SEN contract integrated with the DEV HARNESS host
 - **Preview:** existing Story Seed ARC workspace and HARNESS Reader Codex chapter recaps
 - **Source comparison:** DEV implementation audited 2026-09-13; no production replica imported
@@ -17,18 +17,32 @@ The package exposes these through `@seihouse/sen/arc-goals`.
 | Behavior | Owner |
 | --- | --- |
 | Exactly 100 chapters; one to five weighted sequential goals | Neutral SEN arc contract |
-| Arc 1 AI plan and novel-wide Destined Ending | Existing Story Seed Blueprint provider |
-| Creator edits before generation | Story Seed optional.arcPlan; existing seed repository and export |
-| Seed/Blueprint precedence and one-way transfer | Workshop storySeedHandoff adapter |
-| Durable revisions, frozen context, confirmed completion | Existing HARNESS story record, controller, and IndexedDB repository |
-| Later-arc planning at a successful boundary | HARNESS controller using the existing generation HTTP/provider boundary |
+| Destined Ending, arc count, and one goal plan per arc (the arc roadmap) | Existing Story Seed Blueprint provider, generated whole in one call |
+| Creator review and edits before generation | Blueprint review Arc Roadmap (`BlueprintArcRoadmapSection`, reusing `ArcPlanView`); Arc 1's first goal is the Seed's Active Arc Goal |
+| Roadmap validation (`validateArcRoadmap`, `validateBlueprintArcRoadmap`) | Neutral SEN arc contract and the Story Seed Manifest gate |
+| Seed/Blueprint precedence and one-way transfer of the roadmap and arc count | Library `createHarnessFoundationFromStorySeed` (`src/library/story-seed/harnessFoundation.ts`) |
+| Durable per-arc revisions, frozen context, confirmed completion | Existing HARNESS story record, controller, and IndexedDB repository |
+| Mode edit rules (`arcGoalEditState`): Regular Reader edits active/upcoming arcs while private; Fate Survival sets each arc once before it begins and locks it at generation | HARNESS `shared/arcState.ts`, enforced by the controller |
+| Novel-page editing | Library novel page Blueprint tab (`src/library/generation/NovelBlueprintTab.tsx`) |
+| Later-arc planning at a boundary | Only for stories without a roadmap (premise-only starts and Blueprints saved before roadmaps); a roadmap story never invents an arc |
 | Chapter grouping, plan inspection and editing | HARNESS SEN adapter, Reader session, and Codex chapter-recap area |
 | Permanent Active Arc Goal display (arc, goal n of total, text, allocated range, current position, deadline/status, complete-plan opener) | HARNESS Library workspace, reading `harnessArcContext`; `ArcPlanView` gained only a `defaultOpen` prop |
 
-The Blueprint carries a generated initial proposal. An explicit seed arcPlan takes
-precedence. HARNESS copies that initial plan once; subsequent seed changes do not
-silently overwrite generated-story state. Plan edits append effective-chapter revisions.
-Frozen chapter requests and committed prose remain historical evidence.
+The Blueprint generates the whole roadmap when it establishes the Destined Ending and
+arc count: one plan per arc, a coherent route whose final arc reaches the ending. The
+creator reviews and edits every arc before generation. An authored Seed Active Arc
+Goal is Arc 1's first goal. HARNESS copies every arc's plan once, at creation, each
+effective from its arc's first chapter; subsequent seed changes do not silently
+overwrite generated-story state. Plan edits append effective-chapter revisions per
+arc. Frozen chapter requests and committed prose remain historical evidence. Each
+chapter request carries only the active goal of its own arc, its deadline, and the
+arc's position on the planned route. Once all planned arcs are written the story's
+route is complete and HARNESS stops rather than inventing another arc.
+
+The roadmap is generated in one Blueprint call. The configured output budget bounds
+how many arcs it may plan (`blueprintRoadmapArcLimit`: 14 arcs at the default 8,192
+output tokens, up to 100 at 32,768); a response cut off at the limit, or one planning
+fewer arcs than it counts, fails the generation loudly instead of being shortened.
 
 Completion requires a positive model assessment of the generated prose plus
 a continuous exact evidence quotation from that prose. A matching quotation proves
@@ -42,8 +56,9 @@ policy is supplied.
 
 ## Integration boundaries
 
-Story Seed and HARNESS each reset Development storage when their schema version differs;
-there is no migration or unplanned-arc fallback. Legacy Chapter Generation re-exports
+Story Seed Blueprints saved before roadmaps are read as a one-arc roadmap and must be
+regenerated before the Manifest gate accepts them. HARNESS schema 19 upgrades saved
+schema 18 workspaces in place (after keeping an untouched copy) instead of resetting them. Legacy Chapter Generation re-exports
 the neutral arc calculator and position type; it does not own HARNESS goal progression.
 The shipped HTTP adapter supports automatic planning, and every chapter-generation
 adapter must support that plan operation before its first model call. HARNESS persistence

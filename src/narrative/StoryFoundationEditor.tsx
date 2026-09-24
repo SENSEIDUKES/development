@@ -17,8 +17,11 @@ export function StoryFoundationEditor({
   error,
   onChange,
   onSubmit,
+  fixedDestinedEnding,
 }: {
   form: StoryFoundationInput;
+  /** A saved story's Destined Ending: its fixed destination, shown but not edited. */
+  fixedDestinedEnding?: string;
   createIcon?: LucideIcon;
   story?: HarnessStory;
   busy: boolean;
@@ -136,15 +139,23 @@ export function StoryFoundationEditor({
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <LibraryTextArea
-          id="harness-foundation-destined-ending"
-          label="Destined Ending"
-          value={form.destinedEnding ?? ''}
-          onChange={value => onChange(field(form, 'destinedEnding', value))}
-          helpText="The novel-wide ending. Left blank, the Arc planner supplies one before the first chapter."
-          rows={3}
-          disabled={busy}
-        />
+        {fixedDestinedEnding?.trim() ? (
+          <div>
+            <p className="block text-[10px] uppercase tracking-[0.14em] text-neutral-500" id="harness-foundation-destined-ending">Destined Ending</p>
+            <p className="mt-2 text-sm leading-relaxed text-neutral-200" aria-labelledby="harness-foundation-destined-ending">{fixedDestinedEnding}</p>
+            <p className="mt-2 text-[11px] leading-relaxed text-neutral-500">The novel's fixed destination. Revisions keep it unchanged.</p>
+          </div>
+        ) : (
+          <LibraryTextArea
+            id="harness-foundation-destined-ending"
+            label="Destined Ending"
+            value={form.destinedEnding ?? ''}
+            onChange={value => onChange(field(form, 'destinedEnding', value))}
+            helpText="The novel-wide ending. Left blank, the Arc planner supplies one before the first chapter."
+            rows={3}
+            disabled={busy}
+          />
+        )}
         <div>
           <label className="block text-[10px] uppercase tracking-[0.14em] text-neutral-500" htmlFor="harness-foundation-fate-pressure">Fate Pressure</label>
           <select

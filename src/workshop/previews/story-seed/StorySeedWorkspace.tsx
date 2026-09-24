@@ -20,8 +20,8 @@ import {
 } from '../../FeatureWorkspace';
 import { workshopEntries } from '../../manifest';
 import {
+  createMockArcRoadmap,
   createMockBlueprint,
-  createFilledStorySeedInput,
   createReferenceSavedSeeds,
   createStoryBankRecords,
   MOCK_USER_ID,
@@ -438,7 +438,11 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
       activeBlueprintRequestRef.current = controller;
       setBlueprintGenerating(true);
       try {
-        if (localGeneration) { await wait(300); return { ...createMockBlueprint(), arcPlan: { arcNumber: 1, goals: [payload.storySeed.story.optional.activeArcGoal ?? createFilledStorySeedInput().story.optional.activeArcGoal!] } }; }
+        if (localGeneration) {
+          await wait(300);
+          const mock = createMockBlueprint();
+          return { ...mock, arcPlans: createMockArcRoadmap(mock.estimatedArcs, payload.storySeed.story.optional.activeArcGoal) };
+        }
         return await requestWorldBlueprint(payload, blueprintAccessToken, controller.signal);
       } finally {
         if (activeBlueprintRequestRef.current === controller) {

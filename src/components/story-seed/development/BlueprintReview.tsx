@@ -8,7 +8,7 @@ import {
   type SetStateAction,
 } from 'react';
 import { ArrowLeft, ArrowRight, Check, Copy, Download } from 'lucide-react';
-import { type WorldBlueprint, type WorldBlueprintMainCharacter } from '@seihouse/sen/story-seed';
+import { describeBlueprintArcRoadmapProblem, type WorldBlueprint, type WorldBlueprintMainCharacter } from '@seihouse/sen/story-seed';
 import { STORY_TAG_LIMIT, type StorySeedInput, type StorySeedStoryRequired, type StorySeedWorldIdentity } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore } from '../../../library/story-seed/runtime';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
@@ -23,6 +23,7 @@ import {
   BlueprintWorldSettingSection,
 } from './blueprint/BlueprintReviewSections';
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
+import { BlueprintArcRoadmapSection } from './blueprint/BlueprintArcRoadmapSection';
 import { createBlueprintMarkdown } from './blueprint/createBlueprintMarkdown';
 import { SEN_LANGUAGES, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
 
@@ -75,6 +76,7 @@ export const BlueprintReview = ({
     backgroundProfile: blueprint.mainCharacter?.backgroundProfile || blueprint.mcProfile || '',
   }), [blueprint.mainCharacter, blueprint.mcProfile]);
   const copyPayloadRef = useRef({ blueprint, origin, mainCharacter });
+  const roadmapProblem = describeBlueprintArcRoadmapProblem(blueprint);
 
   useEffect(() => {
     copyPayloadRef.current = { blueprint, origin, mainCharacter };
@@ -213,9 +215,16 @@ export const BlueprintReview = ({
           onPowerSystemOutlineChange={updatePowerSystemOutline}
         />
 
-        <ArcWorkspace seed={seed} updateSeed={updateSeed} />
+        <ArcWorkspace seed={seed} updateSeed={updateSeed} showActiveArcGoal={false} />
 
-        {!seed.story.optional.activeArcGoal && <p className="text-sm text-neutral-300">Add an Active Arc Goal, or refine the seed and generate a Blueprint suggestion, before beginning the story.</p>}
+        <BlueprintArcRoadmapSection
+          arcPlans={blueprint.arcPlans}
+          estimatedArcs={blueprint.estimatedArcs}
+          destinedEnding={seed.world.optional.worldFoundations.destinedEnding}
+          problem={roadmapProblem}
+          setBlueprint={setBlueprint}
+          updateSeed={updateSeed}
+        />
 
         <BlueprintNotesSection styleBible={blueprint.styleBible} estimatedArcs={blueprint.estimatedArcs} setBlueprint={setBlueprint} />
 
@@ -274,7 +283,7 @@ export const BlueprintReview = ({
                 icon={SENManifestingIcon}
                 className="sm:w-auto"
                 onClick={onStartStory}
-                disabled={!seed.story.optional.activeArcGoal}
+                disabled={Boolean(roadmapProblem)}
                 loading={isGenerating}
                 loadingIndicator={activeAgentId === 'versa' ? (
                   <img src={runtime.authorMarkUrl} className="size-5 animate-pulse object-contain" alt="" aria-hidden="true" />

@@ -1,5 +1,4 @@
-import { createInitialArcPlan, validateArcPlan } from '@seihouse/sen/arc-goals';
-import { validateHardPinInputs, normalizeFunSettings, reconcileStorySeedBlueprint, resolveStorySeedWorldCanon } from '@seihouse/sen/story-seed';
+import { createHarnessFoundationFromStorySeed } from '@seihouse/library/story-seed';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
 import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
@@ -8,9 +7,8 @@ import { STORY_SEED_SCHEMA_VERSION } from '@seihouse/sen/story-seed';
 import type {
   HarnessStorySeedOption,
   HarnessStorySeedSource,
-  StoryFoundationInput,
 } from '@seihouse/sen/harness-generation';
-import { getStoryStyleLabel, type StorySeedRecord } from '@seihouse/sen/story-seed';
+import { type StorySeedRecord } from '@seihouse/sen/story-seed';
 import type { HarnessSkillReference, HarnessSkillSlotId } from '@seihouse/sen/harness-generation';
 import { listWorkshopStorySeeds, LOCAL_WORKSHOP_STORY_SEED_OWNER_ID } from '../story-seed/storySeedStorage';
 import {
@@ -19,87 +17,9 @@ import {
   OFFICIAL_STYLE_REFERENCES,
 } from './officialCapaSkills';
 
-const labeledLines = (entries: Array<[string, string | undefined]>): string | undefined => {
-  const present = entries.filter((entry): entry is [string, string] => Boolean(entry[1]?.trim()));
-  return present.length ? present.map(([label, value]) => `${label}: ${value.trim()}`).join('\n') : undefined;
-};
-
-/**
- * The only Story Seed -> Harness translation point. It copies author input
- * into a neutral Foundation and freezes the original artifacts for provenance.
- *
- * Every concept crosses exactly once. Story direction (ending, pins, goal,
- * Fun Settings, Fate) has its own Foundation fields; each character and
- * faction travels only as a Foundation identity whose evidence is its single
- * description; world facts carry only what no other field already carries.
- * `resolveStorySeedWorldCanon` decides between the Seed and its reviewed
- * Blueprint, so authored values win and Blueprint copies are never re-sent.
- */
-export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): StoryFoundationInput => {
-  // Reconciled first, so every reviewed Blueprint value is read from the Seed.
-  const { seed, blueprint } = record.blueprint
-    ? reconcileStorySeedBlueprint(record.seed, record.blueprint)
-    : { seed: record.seed, blueprint: undefined };
-  const required = seed.story.required;
-  const optional = seed.story.optional;
-  const identity = seed.world.optional.worldIdentity;
-  const world = seed.world.optional.worldFoundations;
-  const initialArcPlan = optional.activeArcGoal
-    ? createInitialArcPlan(optional.activeArcGoal)
-    // A Blueprint plan that reconcile could not adopt as one Arc 1 goal is rejected below.
-    : record.blueprint?.arcPlan ? validateArcPlan(record.blueprint.arcPlan) : undefined;
-  if (initialArcPlan && (initialArcPlan.arcNumber !== 1 || initialArcPlan.goals.length !== 1)) {
-    throw new Error('Story Seed supplies exactly one initial Active Arc Goal in Arc 1.');
-  }
-  const canon = resolveStorySeedWorldCanon(seed, blueprint);
-  const mainCharacter = canon.mainCharacter;
-
-  return {
-    title: identity.title || record.title,
-    premise: required.premise,
-    destinedEnding: world.destinedEnding,
-    fatePressure: optional.fateSurvival.pressure,
-    fateSurvival: {
-      enabled: optional.fateSurvival.enabled,
-      visibility: optional.fateSurvival.visibility,
-      majorMysteries: [...(blueprint?.majorMysteries ?? [])],
-      unresolvedPlotThreads: [...(blueprint?.unresolvedPlotThreads ?? [])],
-    },
-    initialArcPlan,
-    initialHardPins: validateHardPinInputs(optional.hardPins ?? []),
-    funSettings: normalizeFunSettings(optional.funSettings),
-    identities: [
-      ...(mainCharacter ? [{ name: mainCharacter.name, kind: 'character' as const, evidence: mainCharacter.description }] : []),
-      ...canon.characters.map(entry => ({ name: entry.name, aliases: entry.aliases, kind: 'character' as const, evidence: entry.description })),
-      ...canon.factions.map(entry => ({ name: entry.name, aliases: entry.aliases, kind: 'faction' as const, evidence: entry.description })),
-    ],
-    genre: required.genre,
-    toneStyle: labeledLines([
-      ['Story tradition', getStoryStyleLabel(required.style)],
-      ['Style bible', blueprint?.styleBible],
-    ]),
-    permanentInstructions: labeledLines([['Make It Work', optional.makeItWorkInstruction]]),
-    openingSituation: identity.startingLocation,
-    declaredCanon: labeledLines([['Story tags', required.storyTags.join(', ')]]),
-    cast: mainCharacter ? [{
-      name: mainCharacter.name, role: 'Main character', isMainCharacter: true, relationshipToMC: 'Self',
-    }] : undefined,
-    worldFacts: labeledLines([
-      ['World', canon.worldOverview],
-      ['Society', canon.societyStructure],
-      ['Power system', canon.powerSystem],
-      ['Main Opposition', world.mainOpposition],
-    ]),
-    sourceSnapshot: {
-      kind: 'story-seed',
-      sourceId: record.id,
-      sourceUpdatedAt: record.updatedAt,
-      schemaVersion: record.schemaVersion,
-      seed: structuredClone(seed),
-      ...(blueprint ? { blueprint: structuredClone(blueprint) } : {}),
-    },
-  };
-};
+// The Seed -> Foundation translation is Library-owned so the novel page's
+// Blueprint editor saves through the same mapping as story creation.
+export { createHarnessFoundationFromStorySeed };
 
 type HarnessSkillLoadout = Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>;
 
@@ -159,5 +79,6 @@ export async function startWorkshopHarnessStory(payload: InitialStoryGenerationP
     foundation,
     payload.administrative.originalLanguage,
     createOfficialCapaDefaultLoadout(payload.storySeed.story.required.style),
+    { visibility: payload.administrative.visibility === 'PUBLIC' ? 'public' : payload.administrative.visibility === 'SHARED' ? 'shared' : 'private' },
   );
 }

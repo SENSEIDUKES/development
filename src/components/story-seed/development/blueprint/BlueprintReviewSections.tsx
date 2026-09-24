@@ -310,7 +310,7 @@ interface BlueprintNotesSectionProps {
 }
 export const BlueprintNotesSection = memo(({ styleBible, estimatedArcs, setBlueprint }: BlueprintNotesSectionProps) => (
   <LibraryPanel as="section" aria-labelledby="blueprint-notes-heading" padding="md">
-    <BlueprintSectionHeading id="blueprint-notes-heading" icon={FileText} title="Generated Notes" tagline="Review the suggested prose guidance and estimated story length." />
+    <BlueprintSectionHeading id="blueprint-notes-heading" icon={FileText} title="Generated Notes" tagline="Review the suggested prose guidance and the planned story length." />
     <div className="mt-5 space-y-5">
         <LibraryTextArea
           id="blueprint-style-bible"
@@ -323,29 +323,10 @@ export const BlueprintNotesSection = memo(({ styleBible, estimatedArcs, setBluep
           className="font-mono"
           placeholder="Generated prose rules, forbidden phrasing, and tone requirements..."
         />
-      <div className="sm:max-w-xs">
-        <LibraryTextBox
-          id="blueprint-estimated-arcs"
-          label="Estimated Arcs"
-          rightElement={<EditableChip />}
-          type="number"
-          value={estimatedArcs || ''}
-          onChange={(value) => {
-            const rawValue = value.trim();
-            const parsedValue = Number.parseInt(rawValue, 10);
-            setBlueprint(current => ({
-              ...current,
-              estimatedArcs: rawValue === '' || Number.isNaN(parsedValue)
-                ? 0
-                : Math.min(100, Math.max(1, parsedValue)),
-            }));
-          }}
-          className="text-center font-mono"
-          placeholder="e.g. 5"
-          min="1"
-          max="100"
-        />
-      </div>
+      <p id="blueprint-estimated-arcs" className="font-sans text-sm text-neutral-300">
+        <span className="font-sc text-xs uppercase tracking-widest text-neutral-400">Arc count · </span>
+        {estimatedArcs || 0} {estimatedArcs === 1 ? 'arc' : 'arcs'}, fixed by the Arc Roadmap below. Generate the Blueprint again to plan a different length.
+      </p>
     </div>
   </LibraryPanel>
 ));

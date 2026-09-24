@@ -33,12 +33,14 @@ export function PreservedWorkspaceNotice({ repository, refreshKey }: {
   };
   return (
     <section role="status" className="mx-auto mb-4 mt-4 max-w-7xl rounded-lg border border-amber-400/30 bg-amber-950/20 px-4 py-3 text-sm text-amber-100 sm:px-6">
-      <p>This build could not read an earlier HARNESS workspace, so it kept an untouched copy instead of discarding it.</p>
+      <p>{preserved.every(item => item.reason === 'migrated')
+        ? 'This build upgraded your earlier HARNESS workspace and kept an untouched copy of it first. Your stories and chapters carried over.'
+        : 'This build could not read an earlier HARNESS workspace, so it kept an untouched copy instead of discarding it.'}</p>
       <ul className="mt-2 space-y-2">
         {preserved.map(item => (
           <li key={item.key} className="flex flex-wrap items-center gap-3">
             <span className="text-amber-100/80">
-              {item.schemaVersion === null ? 'Unknown schema' : `Schema ${item.schemaVersion}`} · {item.storyCount} {item.storyCount === 1 ? 'story' : 'stories'} · {item.chapterCount} {item.chapterCount === 1 ? 'chapter' : 'chapters'} · kept {new Date(item.preservedAt).toLocaleString()}
+              {item.schemaVersion === null ? 'Unknown schema' : `Schema ${item.schemaVersion}`}{item.reason === 'migrated' ? ' (upgraded)' : ''} · {item.storyCount} {item.storyCount === 1 ? 'story' : 'stories'} · {item.chapterCount} {item.chapterCount === 1 ? 'chapter' : 'chapters'} · kept {new Date(item.preservedAt).toLocaleString()}
             </span>
             <button type="button" className="min-h-11 rounded border border-amber-300/40 px-3 text-amber-50 hover:bg-amber-400/10" onClick={() => void download(item)}>
               Download preserved workspace

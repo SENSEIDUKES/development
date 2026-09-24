@@ -5,6 +5,7 @@ import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { createHarnessFoundationFromStorySeed } from "../../workshop/previews/harness-generation/storySeedHandoff";
 import { handleStorySeedBlueprintHttp } from "./http";
 import { resolveStorySeedBlueprintConfig } from "./config";
+import { BlueprintOutputLimitError, blueprintRoadmapArcLimit } from "./generate";
 import type {
   WorldBlueprintModelProvider,
   WorldBlueprintModelRequest,
@@ -93,7 +94,7 @@ const canonicalSeed = (): StorySeedInput => ({
   },
 });
 
-const generatedBlueprint = (): Record<string, unknown> => ({
+const generatedBlueprint = (): Record<string, unknown> & { arcPlans?: unknown[] } => ({
   title: "Gemini Tried To Rename It",
   logline: "Gemini tried to replace the creator's direction.",
   worldOverview: "A different world.",
@@ -117,12 +118,16 @@ const generatedBlueprint = (): Record<string, unknown> => ({
     "Regent Zhao — the architect of the hearing",
   ],
   majorMysteries: ["Who taught the dead heaven to remember broken oaths?"],
-  arcPlan: { arcNumber: 1, goals: [{ id: "arc-1-hearing", text: "Survive the hearing.", chapters: 100 }] },
+  arcPlans: [
+    { arcNumber: 1, goals: [{ id: "arc-1-hearing", text: "Survive the hearing.", chapters: 40 }, { id: "arc-1-regent", text: "Expose the regent's forged decree.", chapters: 60 }] },
+    { arcNumber: 2, goals: [{ id: "arc-2-tribunal", text: "Win a seat on the Vermilion Tribunal.", chapters: 100 }] },
+    { arcNumber: 3, goals: [{ id: "arc-3-oath", text: "Break the seventh oath.", chapters: 50 }, { id: "arc-3-ending", text: "Fulfil the Destined Ending.", chapters: 50 }] },
+  ],
   firstArcPromise: "A different first conflict.",
   tropeRules: "Foreknowledge creates costly choices rather than automatic victories.",
   styleBible: "Restrained court tension, exact ritual detail, and sudden spectacle.",
   destinedEnding: "A different ending.",
-  estimatedArcs: 7,
+  estimatedArcs: 3,
   unresolvedPlotThreads: ["The regent recognizes a gesture from another timeline."],
 });
 
@@ -147,7 +152,7 @@ const manifest = async (provider: RecordingProvider) => handleStorySeedBlueprint
 });
 
 describe("protected Story Seed World Blueprint generation", () => {
-  it('requests only one initial goal and retains author-owned Hard Pins and Fun Settings', async () => {
+  it('requests a complete arc roadmap toward the ending and retains author-owned Hard Pins, Fun Settings and the opening goal', async () => {
     const seed = canonicalSeed();
     seed.story.optional.hardPins = [{ text: 'Keep the master alive.' }];
     seed.story.optional.activeArcGoal = { id: 'arc-1-author', text: 'Reach the hearing.', chapters: 100 };
@@ -157,9 +162,40 @@ describe("protected Story Seed World Blueprint generation", () => {
     const blueprint = response.body as WorldBlueprint;
     expect(blueprint.hardPins).toEqual(seed.story.optional.hardPins);
     expect(blueprint.funSettings).toEqual(seed.story.optional.funSettings);
-    expect(blueprint.arcPlan?.goals).toEqual([seed.story.optional.activeArcGoal]);
-    expect(provider.requests[0].responseJsonSchema.properties.arcPlan.properties.goals).toMatchObject({ minItems: 1, maxItems: 1 });
-    expect(provider.requests[0].userPrompt).not.toMatch(/one to five|firstMajorConflict|additionalStoryDirection|plotAndTropeSettings/);
+    // Every arc is saved; Arc 1 opens with the creator's own goal, allocations and later goals intact.
+    expect(blueprint.estimatedArcs).toBe(3);
+    expect(blueprint.arcPlans?.map(plan => plan.arcNumber)).toEqual([1, 2, 3]);
+    expect(blueprint.arcPlans?.[0].goals).toEqual([
+      { id: 'arc-1-hearing', text: 'Reach the hearing.', chapters: 40 },
+      { id: 'arc-1-regent', text: "Expose the regent's forged decree.", chapters: 60 },
+    ]);
+    const schema = provider.requests[0].responseJsonSchema;
+    expect(schema.required).toContain('arcPlans');
+    expect(schema.properties.arcPlans.items.properties.goals).toMatchObject({ minItems: 1, maxItems: 5 });
+    // The default 8,192-token budget bounds the arc count instead of truncating the roadmap.
+    expect(blueprintRoadmapArcLimit(8_192)).toBe(14);
+    expect(schema.properties.estimatedArcs.maximum).toBe(14);
+    expect(schema.properties.arcPlans.maxItems).toBe(14);
+    expect(provider.requests[0].userPrompt).toContain('final arc\'s final goal is the story reaching its Destined Ending');
+    expect(provider.requests[0].userPrompt).toContain('use its text verbatim as Arc 1\'s first goal');
+    expect(provider.requests[0].userPrompt).not.toMatch(/firstMajorConflict|additionalStoryDirection|plotAndTropeSettings/);
+  });
+
+  it('fails loudly instead of shortening a roadmap that plans fewer arcs than it counts', async () => {
+    const provider = new RecordingProvider({ ...generatedBlueprint(), arcPlans: generatedBlueprint().arcPlans!.slice(0, 2) } as Record<string, unknown>);
+    const response = await manifest(provider);
+    expect(response.status).toBe(502);
+    expect((response.body as { error: string }).error).toContain('planned 2 of its 3 arcs. Nothing was shortened or saved');
+  });
+
+  it('reports the model output limit when the roadmap is cut off', async () => {
+    const provider: RecordingProvider = Object.assign(new RecordingProvider(), {
+      generate: async () => { throw new BlueprintOutputLimitError(8_192); },
+    });
+    const response = await manifest(provider);
+    expect(response.status).toBe(502);
+    expect((response.body as { error: string }).error).toContain("8,192-token output limit before its arc roadmap was complete");
+    expect(blueprintRoadmapArcLimit(32_768)).toBe(100);
   });
 
   it.each([false, true])("accepts empty Fate Survival arrays when enabled=%s", async enabled => {

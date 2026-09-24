@@ -5,6 +5,7 @@ import {
   type StorySeedBlueprintEnvironment,
 } from "./config";
 import {
+  BlueprintOutputLimitError,
   createWorldBlueprintProvider,
   generateWorldBlueprint,
   type WorldBlueprintModelProvider,
@@ -112,6 +113,14 @@ export async function handleStorySeedBlueprintHttp(
     if (["Style is required", "Genre is required", "Premise is required", "Story Tags are required"]
       .some(fragment => message.includes(fragment))) {
       return errorResponse(400, message);
+    }
+    // An output limit or an incomplete roadmap is reported as it is, never
+    // hidden behind a generic retry message or shortened to fit.
+    if (error instanceof BlueprintOutputLimitError || /arc roadmap|arcs\. Nothing was shortened/.test(message)) {
+      return errorResponse(502, message);
+    }
+    if (message.includes("output token limit")) {
+      return errorResponse(502, new BlueprintOutputLimitError(config?.maxOutputTokens ?? 0).message);
     }
     return errorResponse(
       502,

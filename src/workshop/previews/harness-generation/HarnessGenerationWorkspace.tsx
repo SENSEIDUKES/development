@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LIBRARY_BASE_MEDIA } from '../../../host/media/libraryCatalog';
 import { HarnessGenerationWorkspace as HarnessGenerationSurface } from '@seihouse/library/generation';
 import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
 import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
+import { IndexedDbReaderStateRepository } from '../../../host/reader/readerStateStorage';
+import { PreservedWorkspaceNotice } from './PreservedWorkspaceNotice';
 import { useModelPreference } from '../../../host/generation/modelPreference';
 import type { HarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { mediaPackKey, type MediaPackEntitlement, type MediaPackReference } from '@seihouse/library/media';
@@ -20,6 +22,26 @@ const storySeedSource = createWorkshopStorySeedSource();
 
 export function HarnessGenerationWorkspace() {
   const [repository] = useState(() => new IndexedDbHarnessGenerationRepository());
+  const [preservedRefresh, setPreservedRefresh] = useState(0);
+  // Re-list preserved copies after each load, which is where a reset preserves one.
+  const surfaceRepository = useMemo(() => ({
+    load: async () => {
+      const state = await repository.load();
+      setPreservedRefresh(value => value + 1);
+      return state;
+    },
+    save: (state: Parameters<typeof repository.save>[0]) => repository.save(state),
+  }), [repository]);
+  const [readerStateRepository] = useState(() => new IndexedDbReaderStateRepository());
+  // The open Reader story lives in the URL so a reload returns to the same story.
+  const [readingStoryId, setReadingStoryId] = useState(() => new URLSearchParams(window.location.search).get('read') ?? undefined);
+  const changeReadingStory = useCallback((storyId: string | undefined) => {
+    setReadingStoryId(storyId);
+    const url = new URL(window.location.href);
+    if (storyId) url.searchParams.set('read', storyId);
+    else url.searchParams.delete('read');
+    window.history.replaceState(window.history.state, '', url);
+  }, []);
   const [modelAdapter] = useState(() => new HarnessGenerationHttpClient());
   const [chapterModel, setChapterModel] = useModelPreference('chapters');
   const [saved] = useState(() => {
@@ -70,7 +92,10 @@ export function HarnessGenerationWorkspace() {
                 Retry official CAPA installation
               </button>
             </div>
-          : <HarnessGenerationSurface repository={repository} modelAdapter={modelAdapter} storySeedSource={storySeedSource} installedSkills={installedSkills}
+          : <><PreservedWorkspaceNotice repository={repository} refreshKey={preservedRefresh} />
+          <HarnessGenerationSurface repository={surfaceRepository} readerStateRepository={readerStateRepository}
+        readingStoryId={readingStoryId} onReadingStoryChange={changeReadingStory}
+        modelAdapter={modelAdapter} storySeedSource={storySeedSource} installedSkills={installedSkills}
         registeredMediaPacks={WORKSHOP_MEDIA_PACKS} mediaPackEntitlements={mediaPackEntitlements}
         baseMedia={LIBRARY_BASE_MEDIA}
         preferredModel={chapterModel} onModelChange={setChapterModel}
@@ -95,7 +120,7 @@ export function HarnessGenerationWorkspace() {
             install(skill);
             await equip(skill);
           }} />
-        )} />}
+        )} /></>}
     />
   );
 }

@@ -17,6 +17,7 @@ import { isTranslationSkillCompatible, translationTargetLanguage } from '@seihou
 import { includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
 import { HarnessReaderSession } from '@seihouse/sen/harness-generation';
 import { type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
+import type { ReaderStateRepository } from '@seihouse/sen/reader-runtime';
 import { type HarnessGenerationAttempt, type HarnessGenerationModelAdapter, type HarnessGenerationServerInfo, type HarnessCorrectionKind, type HarnessSemanticEvent, type HarnessStory, type HarnessSkillManifest, type HarnessSkillReference, type HarnessSkillSlotId, type HarnessStorySeedOption, type HarnessStorySeedSource, type HarnessWorkspaceState, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
 
 export interface HarnessGenerationWorkspaceProps {
@@ -25,6 +26,14 @@ export interface HarnessGenerationWorkspaceProps {
   /** Injection points keep the live UI testable without a provider or browser database. */
   repository: HarnessGenerationRepository;
   modelAdapter: HarnessGenerationModelAdapter;
+  /** Host-owned durable Reader state (place, bookmarks, settings) for stories opened in SEN. */
+  readerStateRepository?: ReaderStateRepository;
+  /**
+   * Host-controlled story open in the Reader, so a host can restore it after a
+   * reload. Without `onReadingStoryChange` the workspace keeps it internally.
+   */
+  readingStoryId?: string;
+  onReadingStoryChange?: (storyId: string | undefined) => void;
   /** Optional host bridge that supplies saved Story Seeds as frozen inputs. */
   storySeedSource?: HarnessStorySeedSource;
   /** Host-owned inventory. Passing a manifest means that exact skill version is installed and available to equip. */
@@ -1020,6 +1029,9 @@ export function HarnessGenerationWorkspace({
   onGrantDevelopmentMediaReward,
   preferredModel,
   onModelChange,
+  readerStateRepository,
+  readingStoryId,
+  onReadingStoryChange,
 }: HarnessGenerationWorkspaceProps) {
   const availableSkills = useMemo(
     () => includeBundledHarnessSkills(installedSkills),
@@ -1041,7 +1053,9 @@ export function HarnessGenerationWorkspace({
   const [batchCount, setBatchCount] = useState('');
   const [direction, setDirection] = useState('');
   const [reviseHistory, setReviseHistory] = useState(false);
-  const [reading, setReading] = useState(false);
+  const [internalReadingStoryId, setInternalReadingStoryId] = useState<string>();
+  const openReadingStoryId = onReadingStoryChange ? readingStoryId : internalReadingStoryId;
+  const setReadingStoryId = onReadingStoryChange ?? setInternalReadingStoryId;
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string>();
   const [foundationError, setFoundationError] = useState<string>();
@@ -1274,8 +1288,10 @@ export function HarnessGenerationWorkspace({
 
   const generationAvailable = Boolean(selectedStory && serverInfo?.configured && model && !busy);
 
-  if (reading && state && selectedStory) return <HarnessReaderSession key={selectedStory.id} state={state} storyId={selectedStory.id}
-    controller={controller} installedSkills={availableSkills} onClose={() => setReading(false)} />;
+  const readingStory = state && openReadingStoryId ? findStory(state, openReadingStoryId) : undefined;
+  if (state && readingStory) return <HarnessReaderSession key={readingStory.id} state={state} storyId={readingStory.id}
+    controller={controller} installedSkills={availableSkills} readerStateRepository={readerStateRepository}
+    onClose={() => { setSelectedStoryId(readingStory.id); setReadingStoryId(undefined); }} />;
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-12 pt-4 sm:px-6 sm:pt-6" data-testid="harness-generation-workspace">
@@ -1522,7 +1538,7 @@ export function HarnessGenerationWorkspace({
                 <div className="flex items-center gap-2">
                   <BookOpen size={18} className="text-cyan-200" aria-hidden="true" />
                   <h2 id="harness-chapters-title" className="font-display text-xl text-white">Committed chapters</h2>
-                  <LibraryButton type="button" size="sm" onClick={() => setReading(true)}>Open in SEN</LibraryButton>
+                  <LibraryButton type="button" size="sm" onClick={() => setReadingStoryId(selectedStory.id)}>Open in SEN</LibraryButton>
                 </div>
                 <div className="mt-5 space-y-5">
                   {chapters.map(chapter => (

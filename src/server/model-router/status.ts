@@ -1,4 +1,5 @@
 import {
+  AUDIO_MODELS,
   CHAPTER_MODELS,
   DEFAULT_TTS_MODEL,
   GENERATION_CONSUMERS,
@@ -8,6 +9,8 @@ import {
   providerKey,
   resolveChapterModelRoute,
   TTS_MODELS,
+  THREE_D_MODELS,
+  VIDEO_MODELS,
   type ModelCapability,
   type ModelReasoning,
   type ModelEnvironment,
@@ -28,7 +31,7 @@ export interface ModelRouterModelStatus {
   label: string;
   provider: ModelProviderId;
   stage: ModelStage;
-  /** Its provider key is configured, so a surface could call it now. */
+  /** Its provider key is configured; this alone does not mean a generation consumer is connected. */
   available: boolean;
   isDefault: boolean;
   /** Tunable reasoning levels, when the model has them. */
@@ -113,6 +116,30 @@ export function modelRouterStatus(environment: ModelEnvironment): ModelRouterSta
         defaultModel: ttsDefault,
         providers: providerStatus(environment, ['elevenlabs']),
         models: modelStatus(environment, ttsModels, ttsDefault),
+      },
+      {
+        id: 'audio',
+        label: 'Audio',
+        description: 'Music generation models that create audio from text and image prompts.',
+        consumers: consumersFor('audio'),
+        providers: providerStatus(environment, ['gemini']),
+        models: modelStatus(environment, AUDIO_MODELS),
+      },
+      {
+        id: 'video',
+        label: 'Video',
+        description: 'Video generation models with natively generated audio.',
+        consumers: consumersFor('video'),
+        providers: providerStatus(environment, ['gemini']),
+        models: modelStatus(environment, VIDEO_MODELS),
+      },
+      {
+        id: '3d',
+        label: '3D',
+        description: '3D model generation models for text and image inputs.',
+        consumers: consumersFor('3d'),
+        providers: providerStatus(environment, ['tripo']),
+        models: modelStatus(environment, THREE_D_MODELS),
       },
     ],
   };

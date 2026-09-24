@@ -8,7 +8,7 @@
  */
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BookOpenText, Check, Image as ImageIcon, Settings, SlidersHorizontal, Volume2, X } from 'lucide-react';
+import { BookOpenText, Box, Check, Image as ImageIcon, Music2, Settings, SlidersHorizontal, Video, Volume2, X } from 'lucide-react';
 import type {
   ModelRouterCapabilityStatus,
   ModelRouterStatus,
@@ -20,13 +20,30 @@ type Load =
   | { state: 'ready'; status: ModelRouterStatus }
   | { state: 'error'; message: string };
 
-const CAPABILITY_ICONS = { chapters: BookOpenText, images: ImageIcon, tts: Volume2 } as const;
-const CAPABILITY_LABELS = { chapters: 'Chapters', images: 'Images', tts: 'TTS' } as const;
+const CAPABILITY_ICONS = {
+  chapters: BookOpenText,
+  images: ImageIcon,
+  tts: Volume2,
+  audio: Music2,
+  video: Video,
+  '3d': Box,
+} as const;
+const CAPABILITY_LABELS = {
+  chapters: 'Chapters',
+  images: 'Images',
+  tts: 'TTS',
+  audio: 'Audio',
+  video: 'Video',
+  '3d': '3D',
+} as const;
 
 /** Why a capability's model is not chosen here. */
 const SERVER_OWNED_NOTE: Partial<Record<ModelRouterCapabilityStatus['id'], string>> = {
   images: 'No Workshop surface generates images yet. These are the models the router will offer once one does.',
   tts: 'The voice model is set on the server (ELEVENLABS_MODEL_ID). Codex voice requests never accept a model from the browser.',
+  audio: 'Gemini Lyria models are listed for reference; audio generation is not connected to a Workshop feature yet.',
+  video: 'Gemini Veo models are listed for reference; video generation is not connected to a Workshop feature yet.',
+  '3d': 'Tripo models are listed for reference; 3D generation is not connected to a Workshop feature yet.',
 };
 
 const isStatus = (value: unknown): value is ModelRouterStatus =>
@@ -231,7 +248,7 @@ export function ModelRouterPanel({ endpoint = '/api/model-router' }: { endpoint?
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-1 rounded-lg border border-white/10 bg-white/[0.02] p-0.5" role="tablist" aria-label="Router capabilities">
-        {(['chapters', 'images', 'tts'] as const).map(id => {
+        {(['chapters', 'images', 'tts', 'audio', 'video', '3d'] as const).map(id => {
           const Icon = CAPABILITY_ICONS[id];
           return (
             <button key={id} type="button" role="tab" aria-selected={active === id} onClick={() => setActive(id)}

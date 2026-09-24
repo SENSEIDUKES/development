@@ -123,7 +123,7 @@ describe('generation surfaces route through the Model Router', () => {
 describe('Model Router status', () => {
   it('groups capabilities and reports configuration without exposing keys', () => {
     const status = modelRouterStatus({ GEMINI_API_KEY: 'secret-g', ELEVENLABS_API_KEY: 'secret-e' });
-    expect(status.capabilities.map(capability => capability.id)).toEqual(['chapters', 'images', 'tts']);
+    expect(status.capabilities.map(capability => capability.id)).toEqual(['chapters', 'images', 'tts', 'audio', 'video', '3d']);
     expect(JSON.stringify(status)).not.toContain('secret-');
     const chapters = status.capabilities[0];
     expect(chapters.providers.find(provider => provider.id === 'openrouter')?.configured).toBe(false);

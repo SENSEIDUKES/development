@@ -25,11 +25,11 @@ const provider = (id: string) => document.querySelector<HTMLButtonElement>(`[dat
 const row = (id: string) => document.querySelector<HTMLButtonElement>(`[data-model="${id}"] button`);
 const listedModels = () => [...document.querySelectorAll('[data-model]')].map(item => item.getAttribute('data-model'));
 
-it('opens from the gear, separated into Chapters, Images and TTS', async () => {
+it('opens from the gear with tabs for each model capability', async () => {
   await openRouter({ GEMINI_API_KEY: 'g' });
   expect(document.querySelector('[role="dialog"]')).not.toBeNull();
   const tabs = [...document.querySelectorAll<HTMLButtonElement>('[aria-label="Router capabilities"] [role="tab"]')];
-  expect(tabs.map(tab => tab.textContent)).toEqual(['Chapters', 'Images', 'TTS']);
+  expect(tabs.map(tab => tab.textContent)).toEqual(['Chapters', 'Images', 'TTS', 'Audio', 'Video', '3D']);
   await click(tabs[2]);
   expect(document.querySelector('[data-model="eleven_multilingual_v2"] [aria-label="Selected"]')).not.toBeNull();
   expect(row('eleven_v3')).toBeNull();

@@ -17,9 +17,17 @@ and on every preview (`src/workshop/ModelRouterSettings.tsx`); the old
 | Chapters | Gemini, OpenRouter | Harness Generation, Chapter Generation, Story Seed Blueprint, Reader Translation |
 | Images | Gemini, OpenRouter | none yet (catalog only) |
 | TTS | ElevenLabs | Codex Voice Quote |
+| Audio | Gemini | none yet (catalog only) |
+| Video | Gemini | none yet (catalog only) |
+| 3D | Tripo AI | none yet (catalog only) |
 
-Model ids carry their route: `google/gemini-*` → Gemini, `openrouter/<vendor>/<model>`
-→ OpenRouter, `eleven_*` → ElevenLabs.
+Model ids carry their route: `google/<model>` → Gemini, `openrouter/<vendor>/<model>`
+→ OpenRouter, `eleven_*` → ElevenLabs, and `tripo-*` → Tripo AI.
+
+The audio catalog lists Lyria 3.5 and Lyria 3 Clip Preview. The video catalog lists
+Veo 3.1, Veo 3.1 Fast, and Veo 3.1 Lite Preview. The 3D catalog lists Tripo V3.1
+and Tripo P1. These entries only describe available provider models; no audio,
+video, or 3D generation consumer is connected yet.
 
 ## Adding a generation feature
 
@@ -39,6 +47,7 @@ any model call that is not registered. See AGENTS.md.
 | `HARNESS_GENERATION_MODELS`, `CHAPTER_GENERATION_MODELS` | Models pinned ahead of the catalog |
 | `*_DEFAULT_MODEL` | Default model per surface (otherwise Gemini 3.1 Flash Lite) |
 | `ELEVENLABS_API_KEY`, `ELEVENLABS_MODEL_ID` | TTS |
+| `TRIPO_API_KEY` | Tripo 3D model provider status |
 
 `GET /api/model-router` returns the read-only status (never key values).
 
@@ -60,6 +69,9 @@ Copy this folder plus the provider changes in `src/server/harness-generation/`,
 
 ## Workshop history
 
+- 2026-09-23 — Added Audio, Video, and 3D catalog tabs for Gemini Lyria, Gemini Veo,
+  and Tripo models. These capabilities are informational only; no generation
+  consumers or provider calls were added.
 - 2026-09-23 — Created: shared chapter catalog with current Gemini models,
   OpenRouter provider (GPT-6 Luna), image and TTS catalogs, status endpoint
   and Workshop page.

@@ -7,14 +7,15 @@
  * list instead of pinning its own model string.
  *
  * Model ids carry their route:
- * - `google/gemini-…` (or bare `gemini-…`) → Google Gemini API (`GEMINI_API_KEY`)
+ * - `google/<model>` (or bare `gemini-…`) → Google Gemini API (`GEMINI_API_KEY`)
  * - `openrouter/<vendor>/<model>` → OpenRouter (`OpenRouter-Dev`, or `OPENROUTER_API_KEY`)
  * - `eleven_…` → ElevenLabs (`ELEVENLABS_API_KEY`)
+ * - `tripo-…` → Tripo API (`TRIPO_API_KEY`)
  */
 
 export type ModelEnvironment = Record<string, string | undefined>;
-export type ModelCapability = 'chapters' | 'images' | 'tts';
-export type ModelProviderId = 'gemini' | 'openrouter' | 'elevenlabs';
+export type ModelCapability = 'chapters' | 'images' | 'tts' | 'audio' | 'video' | '3d';
+export type ModelProviderId = 'gemini' | 'openrouter' | 'elevenlabs' | 'tripo';
 export type ModelStage = 'current' | 'preview' | 'legacy';
 
 /** Reasoning (thinking) levels across providers, lowest to highest. */
@@ -51,6 +52,7 @@ export const MODEL_PROVIDERS: Record<ModelProviderId, { label: string; keyVariab
   // The Vercel variable is named `OpenRouter-Dev`; the conventional name also works.
   openrouter: { label: 'OpenRouter', keyVariable: 'OpenRouter-Dev', keyVariables: ['OpenRouter-Dev', 'OPENROUTER_API_KEY'] },
   elevenlabs: { label: 'ElevenLabs', keyVariable: 'ELEVENLABS_API_KEY', keyVariables: ['ELEVENLABS_API_KEY'] },
+  tripo: { label: 'Tripo AI', keyVariable: 'TRIPO_API_KEY', keyVariables: ['TRIPO_API_KEY'] },
 };
 
 const OPENROUTER_PREFIX = 'openrouter/';
@@ -90,6 +92,25 @@ export const TTS_MODELS: readonly RoutedModel[] = [
   { id: 'eleven_v3', label: 'Eleven v3', provider: 'elevenlabs', stage: 'current' },
   { id: 'eleven_multilingual_v2', label: 'Eleven Multilingual v2', provider: 'elevenlabs', stage: 'current' },
   { id: 'eleven_flash_v2_5', label: 'Eleven Flash v2.5', provider: 'elevenlabs', stage: 'current' },
+];
+
+/** Gemini music-generation models. Catalogued for the Router; no DEV surface calls them yet. */
+export const AUDIO_MODELS: readonly RoutedModel[] = [
+  { id: 'google/lyria-3.5', label: 'Lyria 3.5', provider: 'gemini', stage: 'current' },
+  { id: 'google/lyria-3-clip-preview', label: 'Lyria 3 Clip', provider: 'gemini', stage: 'preview' },
+];
+
+/** Gemini video-generation models. Catalogued for the Router; no DEV surface calls them yet. */
+export const VIDEO_MODELS: readonly RoutedModel[] = [
+  { id: 'google/veo-3.1-generate-preview', label: 'Veo 3.1', provider: 'gemini', stage: 'preview' },
+  { id: 'google/veo-3.1-fast-generate-preview', label: 'Veo 3.1 Fast', provider: 'gemini', stage: 'preview' },
+  { id: 'google/veo-3.1-lite-generate-preview', label: 'Veo 3.1 Lite', provider: 'gemini', stage: 'preview' },
+];
+
+/** Tripo 3D models. Catalogued for the Router; no DEV surface calls them yet. */
+export const THREE_D_MODELS: readonly RoutedModel[] = [
+  { id: 'tripo-v3.1', label: 'Tripo V3.1', provider: 'tripo', stage: 'current' },
+  { id: 'tripo-p1', label: 'Tripo P1', provider: 'tripo', stage: 'current' },
 ];
 
 export const DEFAULT_TTS_MODEL = 'eleven_multilingual_v2';

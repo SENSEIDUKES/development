@@ -159,8 +159,7 @@ export const familiarCatalogue: readonly FamiliarCatalogueEntry[] = [
   defineFamiliar({ pet: livingGrimoirePet, request: livingGrimoireRequest, timing: livingGrimoireTiming,
     heroUrl: 'https://media.seihouse.org/SEN/GIF/Living%20grimore.gif', rarity: 'common', neutralColumn: 0 }),
   defineFamiliar({ pet: quillPet, request: quillRequest, timing: quillTiming,
-    heroUrl: '/familiars/quill/previews/waving.gif', rarity: 'common', isDefault: true, neutralColumn: 0,
-    animationFrameColumns: { waving: [1, 2] } }),
+    heroUrl: '/familiars/quill/previews/waving.gif', rarity: 'common', isDefault: true, neutralColumn: 0 }),
 ];
 
 const configuredDefaultFamiliar = familiarCatalogue.find(entry => entry.definition.isDefault);

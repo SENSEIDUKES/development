@@ -25,11 +25,28 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-09-23 |
+| Last Workshop update | 2026-09-24 |
 | Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Steered continuation with a derived SEN Reader adapter |
 
 ### History
+
+- **2026-09-24:** The Development Reader Chamber now reads saved HARNESS stories
+  as a durable reading experience. `HarnessReaderSession` scopes the Reader
+  runtime store to the saved story (story data and writes no longer touch the
+  Workshop mock store), opens the last-read chapter, and routes Reader-owned
+  fields — place, bookmarks, reader settings, read marks, decorative reveal
+  backdrops — to host Reader state (`readerStateRepository`) instead of the
+  correction journal. Codex, relationship, and media edits keep using the
+  correction journal unchanged; bookmarks or settings already in the journal
+  seed Reader state on first open and remain in the journal untouched. Image
+  manifestation is disabled in HARNESS sessions (no durable image pipeline) so
+  preview art can never be saved into a real story. The Workshop keeps the open
+  story in the URL (`&read=<storyId>`) so a reload returns to the Reader. No
+  HARNESS schema, prompt, Codex, or generation change; schema stays 18.
+  Separately, the host repository no longer discards a workspace it cannot read:
+  a stale or unreadable record is copied to a `preserved:` key in the same
+  atomic write as the reset, and the Workshop offers it for download.
 
 - **2026-09-23:** The Story Seed handoff reconciles the Seed and Blueprint first,
   so every Blueprint review edit reaches HARNESS through the Seed. Characters and
@@ -309,7 +326,14 @@ Codex. Neither component owns a second persistence path. SEN stays provider-neut
    adapter supports it; its failure leaves the chapter committed and retryable
    from the inspection panel.
 
-Only a committed chapter enters the next context snapshot. If storage fails,
+Only a committed chapter enters the next context snapshot.
+
+**Storage resets preserve data.** A saved workspace this build cannot read (an
+older schema version or an unreadable shape) is still reset for this build, but
+the host IndexedDB repository first copies the untouched record to a
+`preserved:v<version>:<time>` key in the same transaction, and the Workshop
+lists it with a download control. Reader state (place, bookmarks, settings) is
+stored separately and is never affected by a HARNESS reset. If storage fails,
 the controller retains the completed local checkpoint, blocks continuation,
 and retries persistence without another model call.
 

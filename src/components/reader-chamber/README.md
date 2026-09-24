@@ -4,11 +4,28 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `f89cb41`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-09-20
+- **Last Workshop update:** 2026-09-24
 - **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
 ## Workshop history
+
+- **2026-09-24:** Development Reader baseline on saved HARNESS stories. The
+  Development Reader Chamber UI is unchanged; what changed is what sits behind
+  it. `useReadingPosition` now saves and restores a semantic paragraph anchor
+  (ported behavior from production `useReadingPosition`: debounced save,
+  font-aware restore with a corrective pass), additionally saving when the
+  reader switches chapters or leaves the page. Reader-owned state — place,
+  last-read chapter, bookmarks, reader settings, read marks, and decorative
+  reveal backdrops — is a portable SEN contract (`src/narrative/readerState.ts`,
+  exported from `@seihouse/sen/reader-runtime`) persisted per story by the host
+  (`src/host/reader/readerStateStorage.ts`, IndexedDB
+  `seihouse-reader-state-v1`), independent of the HARNESS workspace. The host
+  narration hook is now real browser speech (`src/host/reader/webSpeechNarration.ts`):
+  play/pause/resume/stop, narrator/protagonist/side voices, speed, sentence
+  highlighting and block focus, speaking the displayed text only. The Workshop
+  fixture preview uses the same real narration and reading-position behavior.
+  Chapter scroll-follow during narration (`useCinematicScroll`) remains inert.
 
 - **2026-09-16:** Connected committed HARNESS Soundscapes and pack-resolved
   Sound Cues to Reader through the existing shared playback boundary. The
@@ -192,12 +209,12 @@ already carries the same font and color tokens.
      shading + corruption system block);
   4. empty chapter with no content ("Unmanifested Segment").
   Plus two bookmarks and default `readerPreferences`.
-- **Hook stubs** matching the active destructured shapes: `useReaderPlayback`
-  (play/pause flips real store state; `activeChunks` empty), `useReaderVisuals`
+- **Hook stubs** matching the active destructured shapes: `useReaderVisuals`
   (collects Codex terms from local story memory), `useCinematicScroll`
-  (idle/following/yielded), `useReadingPosition` (no-op), `useChapterTranslation`
-  (`translateChapter: async () => null`), `useAudioMix` (settings are real state,
-  no sound), `vibrate` (no-op), `LOCAL_ONLY_MODE = true`.
+  (idle/following/yielded), `useAudioMix` (settings are real state,
+  no sound), `vibrate` (no-op), `LOCAL_ONLY_MODE = true`. Since 2026-09-24,
+  narration (browser speech) and `useReadingPosition` are real in every host,
+  including this fixture; the fixture's story store remains an in-memory mock.
 - **`onSwitchTab`** — the Reader Chamber's existing Codex control opens the migrated
   production-style `CodexSheetOverlay` over the still-mounted Reader. The direct
   `?preview=reader-codex` workspace also exposes Reference, Development, and Compare.

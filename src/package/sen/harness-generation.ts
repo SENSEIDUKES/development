@@ -12,6 +12,7 @@ export {
 } from '../../components/harness-generation/shared/controller';
 export {
   createEmptyHarnessWorkspaceState,
+  isCurrentHarnessWorkspaceState,
   readHarnessWorkspaceState,
   type HarnessGenerationRepository,
 } from '../../components/harness-generation/shared/repository';

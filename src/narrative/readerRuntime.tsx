@@ -1,4 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore, type PropsWithChildren } from 'react';
+import { createContext, useContext, useMemo, useState, useSyncExternalStore, type PropsWithChildren, type RefObject } from 'react';
+import { useSemanticReadingPosition } from '../components/reader-chamber/shared/cinematicScroll/useSemanticReadingPosition';
+import type { ReadingAnchor } from '../components/reader-chamber/shared/cinematicScroll/anchors';
 import type { SenLanguageCode } from '../lib/language';
 import type { Character, ReaderChapter, StoryWorld, UpdateStoryFields } from './story';
 import type { CodexVoiceResolution } from './voice';
@@ -81,7 +83,8 @@ export interface ReaderRuntime {
   canGenerate(storyId: string): boolean;
   canManifest(storyId: string): boolean;
   manifestReveal?: (entry: unknown, type: string) => void;
-  saveReadingPosition?: (position: unknown) => void;
+  /** Optional notification after the Reader saved a place through `updateStoryFields`. */
+  saveReadingPosition?: (anchor: ReadingAnchor) => void;
   extractGlossary?: (input: GlossaryInput) => Promise<GlossaryTerm[]>;
   defaultGlossary?: readonly GlossaryTerm[];
   preferences?: ReaderPreferenceStorage;
@@ -125,9 +128,13 @@ export function useReaderVisuals(input: { selectedChapter: ReaderChapter; active
   return { codexTerms, handleManifestReveal: runtime.manifestReveal, generatingRevealId: null };
 }
 
-export function useReadingPosition(position: { activeStory: StoryWorld; selectedChapterNum: number; hasRenderableContent: boolean; contentRef: unknown; updateStoryFields: unknown }) {
+/** Saves and restores the reader's semantic place through `updateStoryFields`. */
+export function useReadingPosition(position: {
+  activeStory: StoryWorld; selectedChapterNum: number; hasRenderableContent: boolean;
+  contentRef: RefObject<HTMLElement | null>; updateStoryFields: UpdateStoryFields;
+}) {
   const { saveReadingPosition } = useReaderRuntime();
-  useEffect(() => { saveReadingPosition?.(position); }, [saveReadingPosition, position.activeStory.id, position.selectedChapterNum, position.hasRenderableContent]);
+  useSemanticReadingPosition({ ...position, onSaved: saveReadingPosition });
 }
 
 export function useCinematicScroll(_contentRef: unknown) {

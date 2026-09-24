@@ -2,7 +2,7 @@ import { useMemo, type PropsWithChildren } from 'react';
 import { makeWorkshopManifestation } from './readerImageFixtures';
 import { ReaderRuntimeProvider, type ReaderRuntime } from '@seihouse/sen/reader-runtime';
 import { readerPreviewStore, setMockState, useAppStore } from '../components/reader-chamber/shared/stubs';
-import { useReaderPlayback } from '../components/reader-chamber/shared/readerPlayback';
+import { useWebSpeechNarration } from '../host/reader/webSpeechNarration';
 import { extractWorkshopGlossaryTerms } from '../components/reader-codex/shared/workshopGlossary';
 import { TRACK_LIBRARY } from '../host/media/soundscapeCatalog';
 import { requestCodexVoice } from '../host/reader/codexVoice';
@@ -13,7 +13,7 @@ import { WebReaderTranslationRepository, READER_TRANSLATION_STORAGE_KEY } from '
 
 const runtime: ReaderRuntime = {
   store: readerPreviewStore,
-  useNarration: useReaderPlayback,
+  useNarration: useWebSpeechNarration,
   tracks: TRACK_LIBRARY.map(track => ({ ...track, group: track.url.split('/AUDIO/')[1]?.split('/')[0] || 'OTHER' })),
   requestVoice: requestCodexVoice,
   manifestImages: async ({ id, name, type, description }) => ({

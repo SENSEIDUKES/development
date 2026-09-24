@@ -21,7 +21,7 @@ export interface HarnessGenerationRepository {
   save(state: HarnessWorkspaceState): Promise<void>;
 }
 
-const isCurrentHarnessWorkspaceState = (value: unknown): value is HarnessWorkspaceState => {
+export const isCurrentHarnessWorkspaceState = (value: unknown): value is HarnessWorkspaceState => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const candidate = value as Partial<HarnessWorkspaceState> & { schemaVersion?: number };
   return candidate.schemaVersion === HARNESS_GENERATION_SCHEMA_VERSION

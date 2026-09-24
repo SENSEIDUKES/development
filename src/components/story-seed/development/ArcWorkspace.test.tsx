@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
-import { act, useState } from 'react';
+import { act, useEffect, useState } from 'react';
 import type { Root } from 'react-dom/client';
 import { createRoot } from '../../../test-utils/createStoryCreationRoot';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createBlueprintDraftFromSeed, normalizeWorldBlueprint, createEmptyStorySeedInput, createStorySeedExport, parseStorySeedJson, normalizeStorySeedInput, buildBlueprintGenerationPayload, buildInitialStoryGenerationPayload, createStoryAdministrativeMetadata, type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { createBlueprintDraftFromSeed, mirrorSeedIntoBlueprint, reconcileStorySeedBlueprint, createEmptyStorySeedInput, createStorySeedExport, parseStorySeedJson, normalizeStorySeedInput, buildBlueprintGenerationPayload, buildInitialStoryGenerationPayload, createStoryAdministrativeMetadata, type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { workshopStorySeedStorage, resetWorkshopStorySeedStorage } from '../shared/workshopStorySeedStorage';
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
 import { WorldIdentityWorkspace } from './workspaces/WorldIdentityWorkspace';
@@ -22,6 +22,8 @@ const initial = () => {
 const Editor = ({ seed: input, view }: { seed: StorySeedInput; view: 'arc' | 'world' | 'blueprint' }) => {
   const [seed, setSeed] = useState(input);
   const [bp, setBlueprint] = useState(() => createBlueprintDraftFromSeed(input));
+  // The host (CreationModal) keeps the Blueprint mirroring the Seed.
+  useEffect(() => setBlueprint(previous => mirrorSeedIntoBlueprint(previous, normalizeStorySeedInput(seed))), [seed]);
   current = seed; blueprint = bp;
   if (view === 'blueprint') return <BlueprintReview seed={seed} updateSeed={setSeed} blueprint={bp} setBlueprint={setBlueprint} originalLanguage="ja" onOriginalLanguageChange={vi.fn()} onBack={vi.fn()} onStartStory={vi.fn()} onExportSeed={vi.fn()} isGenerating={false} />;
   return view === 'arc' ? <ArcWorkspace seed={seed} updateSeed={setSeed} /> : <WorldIdentityWorkspace seed={seed} updateSeed={setSeed} />;
@@ -98,23 +100,58 @@ describe('Story Seed Arc and World ownership', () => {
     expect(JSON.stringify(payload)).not.toMatch(/REMOVED_|additionalStoryDirection|plotAndTropeSettings|arcPlan/);
     expect(payload.storySeed.story.optional).toHaveProperty('funSettings');
   });
-  it('writes Blueprint review edits of Seed-owned values through to the Seed that HARNESS reads', () => {
+  it('saves every Blueprint review edit of a Seed-owned value to the Seed that HARNESS reads', () => {
     const seed = initial();
     Object.assign(seed.world.optional.worldIdentity, { worldType: 'Old world', startingLocation: 'Old gate', societyStructure: 'Old order' });
-    seed.world.optional.worldFoundations.mainCharacter = { name: 'Old Name', personality: 'Old temper' };
+    seed.world.optional.worldFoundations.mainCharacter = { name: 'Old Name', personality: 'Old temper', startingWeakness: 'Old weakness' };
+    seed.world.optional.worldFoundations.additionalCharacters = [{ id: 'char-1', name: 'Elder Qin', role: 'Protector' }];
+    seed.world.optional.worldFoundations.factions = [{ id: 'faction-1', name: 'Azure Sect', description: 'Old profile' }];
     render(seed, 'blueprint');
     fill('blueprint-world-overview', 'Reviewed world');
     fill('blueprint-opening-location', 'Reviewed gate');
     fill('blueprint-world-order', 'Reviewed order');
     fill('blueprint-power-outline', 'Reviewed ladder');
-    fill('blueprint-mc-name', 'Reviewed Name');
-    fill('blueprint-mc-personality', 'Reviewed temper');
+    fill('a11y-control-kytc0oh', 'Reviewed power style');
+    fill('a11y-control-7b2mqtu', 'Reviewed Name');
+    fill('mc-age-input', '19');
+    fill('mc-appearance-input', 'Ash-grey eyes');
+    fill('mc-personality-input', 'Reviewed temper');
+    fill('mc-starting-weakness-input', 'Reviewed weakness');
+    fill('blueprint-mc-profile', 'Reviewed background prose');
+    fill('char-role-char-1', 'Betrayer');
+    fill('faction-description-faction-1', 'Reviewed faction profile');
+    // Typing keeps inner spaces: the review edits the Seed's raw value.
+    fill('blueprint-opening-location', 'Reviewed gate ');
+    expect(container.querySelector<HTMLTextAreaElement>('#blueprint-opening-location')!.value).toBe('Reviewed gate ');
+    fill('blueprint-opening-location', 'Reviewed gate');
+
+    const foundations = current.world.optional.worldFoundations;
     expect(current.world.optional.worldIdentity).toMatchObject({ worldType: 'Reviewed world', startingLocation: 'Reviewed gate', societyStructure: 'Reviewed order' });
-    expect(current.world.optional.worldFoundations.mainCharacter).toMatchObject({ name: 'Reviewed Name', personality: 'Reviewed temper' });
-    expect(blueprint).toMatchObject({ worldOverview: 'Reviewed world', startingLocation: 'Reviewed gate', societyStructure: 'Reviewed order', powerSystemOutline: 'Reviewed ladder' });
-    // Power System Outline is review prose; authored power details stay in their own Seed fields.
-    expect(current.world.optional.worldFoundations.powerSystem).toBeUndefined();
-    const reloaded = normalizeWorldBlueprint(blueprint, current);
-    expect(reloaded).toMatchObject({ worldOverview: 'Reviewed world', startingLocation: 'Reviewed gate', mainCharacter: { name: 'Reviewed Name', personality: 'Reviewed temper' } });
+    expect(foundations.mainCharacter).toMatchObject({ name: 'Reviewed Name', age: '19', appearance: 'Ash-grey eyes', personality: 'Reviewed temper', startingWeakness: 'Reviewed weakness' });
+    expect(foundations.powerSystem).toEqual({ flavor: 'Reviewed power style' });
+    expect(foundations.additionalCharacters?.[0]).toMatchObject({ name: 'Elder Qin', role: 'Betrayer' });
+    expect(foundations.factions?.[0]).toMatchObject({ name: 'Azure Sect', description: 'Reviewed faction profile' });
+    // The Blueprint mirrors the Seed and keeps only its own prose.
+    expect(blueprint).toMatchObject({
+      worldOverview: 'Reviewed world', startingLocation: 'Reviewed gate', societyStructure: 'Reviewed order', powerSystemOutline: 'Reviewed ladder',
+      mainCharacter: { name: 'Reviewed Name', age: '19', appearance: 'Ash-grey eyes', personality: 'Reviewed temper', backgroundProfile: 'Reviewed background prose' },
+    });
+    expect(blueprint.initialCharacters).toEqual(['Elder Qin — role: Betrayer']);
+    expect(blueprint.majorFactions).toEqual(['Azure Sect — profile: Reviewed faction profile']);
+    // Saving or reloading the pair never brings an old value back.
+    const reloaded = reconcileStorySeedBlueprint(current, blueprint);
+    expect(reloaded.seed).toEqual(normalizeStorySeedInput(current));
+    expect(reloaded.blueprint.mainCharacter?.backgroundProfile).toBe('Reviewed background prose');
+  });
+
+  it('keeps a character removed in the Seed removed from the Blueprint and the saved pair', () => {
+    const seed = initial();
+    seed.world.optional.worldFoundations.additionalCharacters = [{ id: 'char-1', name: 'Elder Qin' }, { id: 'char-2', name: 'Han Li' }];
+    render(seed, 'blueprint');
+    act(() => [...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === 'Remove')!.click());
+    expect(current.world.optional.worldFoundations.additionalCharacters?.map(entry => entry.name)).toEqual(['Han Li']);
+    expect(blueprint.initialCharacters).toEqual(['Han Li']);
+    expect(reconcileStorySeedBlueprint(current, blueprint).seed.world.optional.worldFoundations.additionalCharacters?.map(entry => entry.name))
+      .toEqual(['Han Li']);
   });
 });

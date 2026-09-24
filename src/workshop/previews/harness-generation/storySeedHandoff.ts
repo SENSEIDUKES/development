@@ -1,5 +1,5 @@
 import { createInitialArcPlan, validateArcPlan } from '@seihouse/sen/arc-goals';
-import { validateHardPinInputs, normalizeFunSettings, resolveStorySeedWorldCanon } from '@seihouse/sen/story-seed';
+import { validateHardPinInputs, normalizeFunSettings, reconcileStorySeedBlueprint, resolveStorySeedWorldCanon } from '@seihouse/sen/story-seed';
 import { HarnessGenerationController } from '@seihouse/sen/harness-generation';
 import { IndexedDbHarnessGenerationRepository } from '../../../host/generation/indexedDbRepository';
 import { HarnessGenerationHttpClient } from '../../../host/generation/httpClient';
@@ -36,14 +36,18 @@ const labeledLines = (entries: Array<[string, string | undefined]>): string | un
  * Blueprint, so authored values win and Blueprint copies are never re-sent.
  */
 export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): StoryFoundationInput => {
-  const { seed, blueprint } = record;
+  // Reconciled first, so every reviewed Blueprint value is read from the Seed.
+  const { seed, blueprint } = record.blueprint
+    ? reconcileStorySeedBlueprint(record.seed, record.blueprint)
+    : { seed: record.seed, blueprint: undefined };
   const required = seed.story.required;
   const optional = seed.story.optional;
   const identity = seed.world.optional.worldIdentity;
   const world = seed.world.optional.worldFoundations;
   const initialArcPlan = optional.activeArcGoal
     ? createInitialArcPlan(optional.activeArcGoal)
-    : blueprint?.arcPlan ? validateArcPlan(blueprint.arcPlan) : undefined;
+    // A Blueprint plan that reconcile could not adopt as one Arc 1 goal is rejected below.
+    : record.blueprint?.arcPlan ? validateArcPlan(record.blueprint.arcPlan) : undefined;
   if (initialArcPlan && (initialArcPlan.arcNumber !== 1 || initialArcPlan.goals.length !== 1)) {
     throw new Error('Story Seed supplies exactly one initial Active Arc Goal in Arc 1.');
   }
@@ -51,9 +55,9 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
   const mainCharacter = canon.mainCharacter;
 
   return {
-    title: identity.title || blueprint?.title || record.title,
+    title: identity.title || record.title,
     premise: required.premise,
-    destinedEnding: world.destinedEnding || blueprint?.destinedEnding,
+    destinedEnding: world.destinedEnding,
     fatePressure: optional.fateSurvival.pressure,
     fateSurvival: {
       enabled: optional.fateSurvival.enabled,
@@ -75,7 +79,7 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
       ['Style bible', blueprint?.styleBible],
     ]),
     permanentInstructions: labeledLines([['Make It Work', optional.makeItWorkInstruction]]),
-    openingSituation: identity.startingLocation || blueprint?.startingLocation,
+    openingSituation: identity.startingLocation,
     declaredCanon: labeledLines([['Story tags', required.storyTags.join(', ')]]),
     cast: mainCharacter ? [{
       name: mainCharacter.name, role: 'Main character', isMainCharacter: true, relationshipToMC: 'Self',

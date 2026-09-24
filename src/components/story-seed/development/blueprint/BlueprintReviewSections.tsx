@@ -11,7 +11,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { LibraryPowerSystemIcon as SENPowerSystemIcon, LibraryWorldIdentityIcon as SENWorldIdentityIcon } from '@seihouse/library-ui';
-import { type WorldBlueprint, type WorldBlueprintMainCharacter } from '@seihouse/sen/story-seed';
+import { type StorySeedInput, type StorySeedWorldIdentity, type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { STORY_PREMISE_MAX_LENGTH, STORY_TAG_LIMIT, type StorySeedStoryRequired } from '@seihouse/sen/story-seed';
 import { STORY_STYLE_OPTIONS, type StoryStyle } from '@seihouse/sen/story-seed';
 import { NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
@@ -23,6 +23,10 @@ import {
 } from './BlueprintDossierPrimitives';
 import { formatBlueprintDate } from './createBlueprintMarkdown';
 import { LibraryProfileIcon as SENProfileIcon } from '@seihouse/library-ui';
+import { type UpdateSeed } from '../seedState';
+import { MainCharacterFields } from '../workspaces/CharactersWorkspace';
+import { AbilitiesFields } from '../workspaces/AbilitiesWorkspace';
+import { PowerSystemFields } from '../workspaces/PowerSystemWorkspace';
 
 interface BlueprintHeaderSectionProps {
   blueprintVersion?: WorldBlueprint['blueprintVersion'];
@@ -167,72 +171,41 @@ export const BlueprintOriginSection = memo(({
 BlueprintOriginSection.displayName = 'BlueprintOriginSection';
 
 interface BlueprintMainCharacterSectionProps {
-  mainCharacter: WorldBlueprintMainCharacter;
-  onUpdateMainCharacter: (patch: Partial<WorldBlueprintMainCharacter>) => void;
+  seed: StorySeedInput;
+  updateSeed: UpdateSeed;
+  backgroundProfile: string;
+  onBackgroundProfileChange: (backgroundProfile: string) => void;
 }
 
+/** Main character: every Seed field, edited on the Seed, plus the Blueprint's background prose. */
 export const BlueprintMainCharacterSection = memo(({
-  mainCharacter,
-  onUpdateMainCharacter,
+  seed,
+  updateSeed,
+  backgroundProfile,
+  onBackgroundProfileChange,
 }: BlueprintMainCharacterSectionProps) => (
   <LibraryPanel as="section" aria-labelledby="blueprint-main-character-heading" padding="md">
     <BlueprintSectionHeading
       id="blueprint-main-character-heading"
       icon={SENProfileIcon}
       title="Main Character"
-      tagline="The protagonist this blueprint builds around."
+      tagline="The protagonist this blueprint builds around. Edits save to the Story Seed."
     />
 
     <div className="mt-5 space-y-5">
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <LibraryTextBox
-          id="blueprint-mc-name"
-          label="Name"
-          rightElement={<EditableChip />}
-          icon={SENProfileIcon}
-          value={mainCharacter.name}
-          onChange={name => onUpdateMainCharacter({ name })}
-          placeholder="Main character name"
-        />
-        <LibraryTextBox
-          id="blueprint-mc-age"
-          label="Age"
-          rightElement={<EditableChip />}
-          value={mainCharacter.age}
-          onChange={age => onUpdateMainCharacter({ age })}
-          placeholder="e.g. 18, Ancient, Unknown"
-        />
-        <LibraryTextArea
-          id="blueprint-mc-personality"
-          label="Personality"
-          rightElement={<EditableChip />}
-          value={mainCharacter.personality}
-          onChange={personality => onUpdateMainCharacter({ personality })}
-          rows={4}
-          placeholder="Core temperament, values, contradictions..."
-        />
-        <LibraryTextArea
-          id="blueprint-mc-appearance"
-          label="Appearance"
-          rightElement={<EditableChip />}
-          value={mainCharacter.appearance}
-          onChange={appearance => onUpdateMainCharacter({ appearance })}
-          rows={4}
-          placeholder="Physical appearance, clothing, distinctive features..."
-        />
-      </div>
+      <MainCharacterFields seed={seed} updateSeed={updateSeed} />
 
       <div className="blueprint-key-field">
         <LibraryTextArea
           id="blueprint-mc-profile"
-          label="Background / Profile"
+          label="Generated Background"
           rightElement={<EditableChip />}
           icon={ScrollText}
-          value={mainCharacter.backgroundProfile}
-          onChange={backgroundProfile => onUpdateMainCharacter({ backgroundProfile })}
+          value={backgroundProfile}
+          onChange={onBackgroundProfileChange}
           rows={5}
           className="leading-relaxed"
-          placeholder="Background, starting identity, flaws, gifts, and relevant history..."
+          placeholder="The Blueprint's narrative background for the main character..."
         />
       </div>
     </div>
@@ -242,26 +215,33 @@ export const BlueprintMainCharacterSection = memo(({
 BlueprintMainCharacterSection.displayName = 'BlueprintMainCharacterSection';
 
 interface BlueprintWorldSettingSectionProps {
-  worldOverview?: WorldBlueprint['worldOverview'];
-  startingLocation?: WorldBlueprint['startingLocation'];
-  societyStructure?: WorldBlueprint['societyStructure'];
+  seed: StorySeedInput;
+  updateSeed: UpdateSeed;
+  worldType: string;
+  startingLocation: string;
+  societyStructure: string;
   powerSystemOutline?: WorldBlueprint['powerSystemOutline'];
-  onUpdateWorldSetting: (patch: Partial<Pick<WorldBlueprint, 'worldOverview' | 'startingLocation' | 'societyStructure' | 'powerSystemOutline'>>) => void;
+  onUpdateWorldIdentity: (patch: Partial<StorySeedWorldIdentity>) => void;
+  onPowerSystemOutlineChange: (powerSystemOutline: string) => void;
 }
 
+/** World setting: the Seed's world identity, abilities, and power system, plus the Blueprint's power outline prose. */
 export const BlueprintWorldSettingSection = memo(({
-  worldOverview,
+  seed,
+  updateSeed,
+  worldType,
   startingLocation,
   societyStructure,
   powerSystemOutline,
-  onUpdateWorldSetting,
+  onUpdateWorldIdentity,
+  onPowerSystemOutlineChange,
 }: BlueprintWorldSettingSectionProps) => (
   <LibraryPanel as="section" aria-labelledby="blueprint-world-setting-heading" padding="md">
     <BlueprintSectionHeading
       id="blueprint-world-setting-heading"
       icon={SENWorldIdentityIcon}
       title="World Setting"
-      tagline="The universe, its opening stage, and the rules that govern it."
+      tagline="The universe, its opening stage, and the rules that govern it. Edits save to the Story Seed."
     />
 
     <div className="mt-5 space-y-5">
@@ -271,8 +251,8 @@ export const BlueprintWorldSettingSection = memo(({
           label="World Overview"
           rightElement={<EditableChip />}
           icon={SENWorldIdentityIcon}
-          value={worldOverview || ''}
-          onChange={value => onUpdateWorldSetting({ worldOverview: value })}
+          value={worldType}
+          onChange={value => onUpdateWorldIdentity({ worldType: value })}
           rows={7}
           className="font-serif leading-relaxed text-[#dfd8cf]"
           placeholder="The setting, lore, and physical characteristics of this universe..."
@@ -285,8 +265,8 @@ export const BlueprintWorldSettingSection = memo(({
           label="Opening Location"
           rightElement={<EditableChip />}
           icon={MapPin}
-          value={startingLocation || ''}
-          onChange={value => onUpdateWorldSetting({ startingLocation: value })}
+          value={startingLocation}
+          onChange={value => onUpdateWorldIdentity({ startingLocation: value })}
           rows={5}
           className="leading-relaxed"
           placeholder="Where the story begins..."
@@ -296,12 +276,15 @@ export const BlueprintWorldSettingSection = memo(({
           label="World Order"
           rightElement={<EditableChip />}
           icon={Landmark}
-          value={societyStructure || ''}
-          onChange={value => onUpdateWorldSetting({ societyStructure: value })}
+          value={societyStructure}
+          onChange={value => onUpdateWorldIdentity({ societyStructure: value })}
           rows={5}
           placeholder="Feudal, corporate, sect-based, military rule..."
         />
       </div>
+
+      <AbilitiesFields seed={seed} updateSeed={updateSeed} />
+      <PowerSystemFields seed={seed} updateSeed={updateSeed} />
 
       <LibraryTextArea
         id="blueprint-power-outline"
@@ -309,7 +292,7 @@ export const BlueprintWorldSettingSection = memo(({
         rightElement={<EditableChip />}
         icon={SENPowerSystemIcon}
         value={powerSystemOutline || ''}
-        onChange={value => onUpdateWorldSetting({ powerSystemOutline: value })}
+        onChange={onPowerSystemOutlineChange}
         rows={4}
         className="font-mono leading-relaxed"
         placeholder="Power scaling, ranks, costs, limits, magical energy..."

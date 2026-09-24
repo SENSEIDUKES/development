@@ -1,23 +1,27 @@
 import { memo, type Dispatch, type SetStateAction } from 'react';
 import { GitBranch, HelpCircle, Shield } from 'lucide-react';
 import { LibraryCharactersIcon as SENCharactersIcon } from '@seihouse/library-ui';
-import { type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { type UpdateSeed } from '../seedState';
+import { AdditionalCharactersEditor } from '../workspaces/CharactersWorkspace';
+import { FactionsEditor } from '../workspaces/FactionsWorkspace';
 import { NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea } from '@seihouse/sen/presentation';
 import { BlueprintSectionHeading, EditableChip } from './BlueprintDossierPrimitives';
 
 interface BlueprintCollectionSectionsProps {
+  seed: StorySeedInput;
+  updateSeed: UpdateSeed;
   survivalEnabled: boolean;
-  initialCharacters?: WorldBlueprint['initialCharacters'];
-  majorFactions?: WorldBlueprint['majorFactions'];
   majorMysteries?: WorldBlueprint['majorMysteries'];
   unresolvedPlotThreads?: WorldBlueprint['unresolvedPlotThreads'];
   setBlueprint: Dispatch<SetStateAction<WorldBlueprint>>;
 }
 
+/** Side characters and factions are the Seed's own lists; mysteries and threads stay Blueprint proposals. */
 export const BlueprintCollectionSections = memo(({
+  seed,
+  updateSeed,
   survivalEnabled,
-  initialCharacters,
-  majorFactions,
   majorMysteries,
   unresolvedPlotThreads,
   setBlueprint,
@@ -28,21 +32,11 @@ export const BlueprintCollectionSections = memo(({
         id="blueprint-side-characters-heading"
         icon={SENCharactersIcon}
         title="Side Characters"
-        tagline="Cast members the story can draw on — one per line."
+        tagline="Cast members the story can draw on. Edits save to the Story Seed."
       />
 
-      <div className="mt-5">
-        <LibraryTextArea
-          id="blueprint-side-characters"
-          label="Side Characters (One per line)"
-          rightElement={<EditableChip />}
-          icon={SENCharactersIcon}
-          value={initialCharacters?.join('\n') || ''}
-          onChange={value => setBlueprint(current => ({ ...current, initialCharacters: value.split('\n') }))}
-          rows={6}
-          className="font-mono"
-          placeholder="Elder Qin (Protector)&#10;Junior Sister Han (Ally)&#10;Young Master Ye (Rival)"
-        />
+      <div className="mt-5 space-y-4">
+        <AdditionalCharactersEditor seed={seed} updateSeed={updateSeed} />
       </div>
     </LibraryPanel>
 
@@ -51,21 +45,11 @@ export const BlueprintCollectionSections = memo(({
         id="blueprint-factions-heading"
         icon={Shield}
         title="Factions"
-        tagline="Sects, guilds, and powers that already shape the world — one per line."
+        tagline="Sects, guilds, and powers that already shape the world. Edits save to the Story Seed."
       />
 
-      <div className="mt-5">
-        <LibraryTextArea
-          id="blueprint-factions"
-          label="Major Factions (One per line)"
-          rightElement={<EditableChip />}
-          icon={Shield}
-          value={majorFactions?.join('\n') || ''}
-          onChange={value => setBlueprint(current => ({ ...current, majorFactions: value.split('\n') }))}
-          rows={6}
-          className="font-mono"
-          placeholder="Heavenly Sword Sect&#10;Deep Sea Alliance&#10;Abyssal Cult"
-        />
+      <div className="mt-5 space-y-4">
+        <FactionsEditor seed={seed} updateSeed={updateSeed} />
       </div>
     </LibraryPanel>
 

@@ -171,7 +171,7 @@ describe('Story Seed to Harness handoff', () => {
     record.seed.story.required.storyTags = ['TAG_ONCE'];
     record.blueprint = normalizeWorldBlueprint({
       ...record.blueprint!,
-      mainCharacter: { name: 'Hero Once', age: '20', personality: 'HERO_TEMPER_ONCE', appearance: 'HERO_LOOK_ONCE', backgroundProfile: 'HERO_BIO_ONCE and REVIEWED_PROSE_ONCE' },
+      mainCharacter: { name: 'Hero Once', age: '20', personality: 'HERO_TEMPER_ONCE', appearance: 'HERO_LOOK_ONCE', backgroundProfile: 'REVIEWED_PROSE_ONCE' },
       initialCharacters: ['Ally Once — profile: ALLY_BIO_ONCE', 'Rival Once (Rival)'],
       majorFactions: ['Guild Once — profile: GUILD_PROFILE_ONCE', 'Cult Once'],
       powerSystemOutline: 'POWER_CONCEPT_ONCE ladder, POWER_LADDER_ONCE',
@@ -196,7 +196,7 @@ describe('Story Seed to Harness handoff', () => {
     for (const marker of ['TITLE_ONCE', 'WORLD_ONCE', 'SOCIETY_ONCE', 'OPENING_ONCE', 'OPPOSITION_ONCE', 'HERO_TEMPER_ONCE',
       'HERO_BIO_ONCE', 'REVIEWED_PROSE_ONCE', 'HERO_LOOK_ONCE', 'ALLY_BIO_ONCE', 'ALLY_ALIAS_ONCE', 'GUILD_PROFILE_ONCE',
       'GUILD_ALIAS_ONCE', 'POWER_CONCEPT_ONCE', 'POWER_FLAVOR_ONCE', 'POWER_LADDER_ONCE', 'STYLE_BIBLE_ONCE', 'TAG_ONCE',
-      'Rival Once (Rival)']) {
+      'role: Rival']) {
       expect(userPrompt.split(marker), marker).toHaveLength(2);
     }
     expect(userPrompt).not.toMatch(/storage-id-|Blueprint (main character|character profile|initial characters|factions|society|power system)/);

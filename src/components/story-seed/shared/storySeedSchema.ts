@@ -137,6 +137,8 @@ export interface StorySeedFaction {
 
 export interface StorySeedMainCharacter {
   name?: string;
+  age?: string;
+  appearance?: string;
   startingIdentity?: string;
   personality?: string;
   mainFlaw?: string;
@@ -239,7 +241,7 @@ const normalizeSurvivalPressure = (value: unknown): StorySeedSurvivalPressure =>
 
 const WORLD_IDENTITY_FIELDS = ['title', 'worldType', 'societyStructure', 'startingLocation'] as const;
 const MAIN_CHARACTER_FIELDS = [
-  'name', 'startingIdentity', 'personality', 'mainFlaw',
+  'name', 'age', 'appearance', 'startingIdentity', 'personality', 'mainFlaw',
   'secretAdvantage', 'startingWeakness', 'moralAlignment', 'bio',
 ] as const;
 const ABILITY_FIELDS = ['startingPowerConcept', 'uniquePath'] as const;
@@ -518,6 +520,9 @@ export interface WorldBlueprintContext {
  * generation-facing only: the Blueprint is generated output and is never
  * stored back inside the Story Seed contract.
  */
+/** A draft Blueprint's placeholder title; never promoted into the Seed as a real title. */
+const UNTITLED_BLUEPRINT_TITLE = 'Untitled Story';
+
 export const createBlueprintDraftFromSeed = (
   seed: StorySeedInput,
   context: WorldBlueprintContext = {},
@@ -532,7 +537,7 @@ export const createBlueprintDraftFromSeed = (
     ...(text(context.createdAt) ? { createdAt: text(context.createdAt) } : {}),
     ...(text(context.updatedAt) ? { updatedAt: text(context.updatedAt) } : {}),
     originSnapshot: createBlueprintOriginSnapshot(seed),
-    title: worldIdentity.title || 'Untitled Story',
+    title: worldIdentity.title || UNTITLED_BLUEPRINT_TITLE,
     // Generated summaries stay blank until Blueprint generation.
     // The initial Active Arc Goal has its own canonical contract.
     logline: '',
@@ -602,10 +607,12 @@ export const normalizeWorldBlueprint = (
   const mainCharacter: WorldBlueprintMainCharacter = {
     name: text(normalizedSeed.world.optional.worldFoundations.mainCharacter?.name)
       || readString(sourceMainCharacter, 'name', fallbackMainCharacter.name),
-    age: readString(sourceMainCharacter, 'age', fallbackMainCharacter.age),
+    age: text(normalizedSeed.world.optional.worldFoundations.mainCharacter?.age)
+      || readString(sourceMainCharacter, 'age', fallbackMainCharacter.age),
     personality: text(normalizedSeed.world.optional.worldFoundations.mainCharacter?.personality)
       || readString(sourceMainCharacter, 'personality', fallbackMainCharacter.personality),
-    appearance: readString(sourceMainCharacter, 'appearance', fallbackMainCharacter.appearance),
+    appearance: text(normalizedSeed.world.optional.worldFoundations.mainCharacter?.appearance)
+      || readString(sourceMainCharacter, 'appearance', fallbackMainCharacter.appearance),
     backgroundProfile: hasString(sourceMainCharacter, 'backgroundProfile')
       ? readString(sourceMainCharacter, 'backgroundProfile')
       : legacyProfile,
@@ -780,15 +787,152 @@ export interface StorySeedWorldCanon {
   powerSystem?: string;
 }
 
-// Blueprint list convention: `Name (role)` or `Name — details`.
-const blueprintEntryName = (entry: string): string =>
-  (entry.match(/^(.+?)(?:\s+\(.+\)|\s+—\s+.+)$/)?.[1] ?? entry).trim();
+const labeledDetails = (entries: Array<[label: string, value: string | undefined]>): string =>
+  entries.flatMap(([label, value]) => text(value) ? [`${label}: ${text(value)}`] : []).join('\n');
+
+// Blueprint list convention: `Name (role)`, `Name — details`, `Name: details`, or `Name - details`.
+const parseBlueprintEntry = (entry: string): { name: string; role?: string; details?: string } => {
+  const match = entry.trim().match(/^(.+?)(?:\s+\(([^)]*)\))?(?:\s*(?:—|–|:|\s-)\s*(.*))?$/su);
+  const name = (match?.[1] ?? entry).trim();
+  const role = text(match?.[2]);
+  const details = text(match?.[3]);
+  return { name, ...(role ? { role } : {}), ...(details ? { details } : {}) };
+};
+
+const uniqueEntityId = (prefix: string, name: string, taken: Set<string>): string => {
+  const slug = name.toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '') || 'entry';
+  let id = `${prefix}-${slug}`;
+  for (let index = 2; taken.has(id); index += 1) id = `${prefix}-${slug}-${index}`;
+  taken.add(id);
+  return id;
+};
 
 /**
- * Resolves the Story Seed and its reviewed Blueprint into one value per
- * concept. Creator-authored Seed values stay authoritative (the same rule
- * `finalizeGeneratedWorldBlueprint` applies); the Blueprint supplies reviewed
- * prose and generated additions, never a second copy of an authored entity.
+ * Copies Blueprint values into the Seed wherever the Seed owns that concept
+ * and has no value yet: generated world identity, ending, initial goal,
+ * main-character basics, and every side character or faction the Seed does
+ * not already name. The Seed never loses a value it already has.
+ */
+export const promoteBlueprintIntoSeed = (seed: StorySeedInput, blueprint: WorldBlueprint): StorySeedInput => {
+  const source = normalizeStorySeedInput(seed);
+  const identity = source.world.optional.worldIdentity;
+  const foundations = source.world.optional.worldFoundations;
+  const mainCharacter = foundations.mainCharacter || {};
+  const reviewed = blueprint.mainCharacter;
+  const fill = (current: string | undefined, candidate: string | undefined) => text(current) || text(candidate);
+  const mainName = fill(mainCharacter.name, reviewed?.name);
+
+  const characters = [...(foundations.additionalCharacters || [])];
+  const characterIds = new Set(characters.map(entry => entry.id));
+  for (const line of entriesWithoutAuthoredNames((blueprint.initialCharacters || []).filter(entry => text(entry)), characters)) {
+    const parsed = parseBlueprintEntry(line);
+    if (!parsed.name || parsed.name.toLocaleLowerCase() === mainName?.toLocaleLowerCase()) continue;
+    characters.push({
+      id: uniqueEntityId('blueprint-character', parsed.name, characterIds), name: parsed.name,
+      ...(parsed.role ? { role: parsed.role } : {}), ...(parsed.details ? { bio: parsed.details } : {}),
+    });
+  }
+  const factions = [...(foundations.factions || [])];
+  const factionIds = new Set(factions.map(entry => entry.id));
+  for (const line of entriesWithoutAuthoredNames((blueprint.majorFactions || []).filter(entry => text(entry)), factions)) {
+    const parsed = parseBlueprintEntry(line);
+    if (!parsed.name) continue;
+    factions.push({
+      id: uniqueEntityId('blueprint-faction', parsed.name, factionIds), name: parsed.name,
+      ...(parsed.role ? { role: parsed.role } : {}), ...(parsed.details ? { description: parsed.details } : {}),
+    });
+  }
+  const suggestedPlan = blueprint.arcPlan ? validateArcPlan(blueprint.arcPlan) : undefined;
+  const suggestedGoal = suggestedPlan && suggestedPlan.arcNumber === 1 && suggestedPlan.goals.length === 1
+    ? suggestedPlan.goals[0] : undefined;
+
+  return normalizeStorySeedInput({
+    ...source,
+    story: { ...source.story, optional: {
+      ...source.story.optional,
+      ...(!source.story.optional.activeArcGoal && suggestedGoal ? { activeArcGoal: suggestedGoal } : {}),
+    } },
+    world: { ...source.world, optional: {
+      worldIdentity: {
+        ...identity,
+        title: fill(identity.title, blueprint.title === UNTITLED_BLUEPRINT_TITLE ? undefined : blueprint.title),
+        worldType: fill(identity.worldType, blueprint.worldOverview),
+        startingLocation: fill(identity.startingLocation, blueprint.startingLocation),
+        societyStructure: fill(identity.societyStructure, blueprint.societyStructure),
+      },
+      worldFoundations: {
+        ...foundations,
+        mainCharacter: {
+          ...mainCharacter,
+          name: mainName,
+          age: fill(mainCharacter.age, reviewed?.age),
+          appearance: fill(mainCharacter.appearance, reviewed?.appearance),
+          personality: fill(mainCharacter.personality, reviewed?.personality),
+        },
+        additionalCharacters: characters,
+        factions,
+        destinedEnding: fill(foundations.destinedEnding, blueprint.destinedEnding),
+      },
+    } },
+  });
+};
+
+/**
+ * Rewrites every Seed-owned Blueprint field from the Seed, exactly. The
+ * Blueprint keeps only what the Seed has no field for: background and power
+ * outline prose, style bible, arc estimate, mysteries, threads, metadata.
+ */
+export const mirrorSeedIntoBlueprint = (blueprint: WorldBlueprint, seed: StorySeedInput): WorldBlueprint => {
+  const { worldIdentity, worldFoundations } = seed.world.optional;
+  const mainCharacter = worldFoundations.mainCharacter || {};
+  const backgroundProfile = blueprint.mainCharacter?.backgroundProfile ?? blueprint.mcProfile ?? '';
+  return {
+    ...blueprint,
+    originSnapshot: createBlueprintOriginSnapshot(seed),
+    title: text(worldIdentity.title) || blueprint.title,
+    worldOverview: text(worldIdentity.worldType) || '',
+    startingLocation: text(worldIdentity.startingLocation) || '',
+    societyStructure: text(worldIdentity.societyStructure) || '',
+    mainCharacter: {
+      name: text(mainCharacter.name) || '',
+      age: text(mainCharacter.age) || '',
+      appearance: text(mainCharacter.appearance) || '',
+      personality: text(mainCharacter.personality) || '',
+      backgroundProfile,
+    },
+    mcProfile: backgroundProfile,
+    initialCharacters: (worldFoundations.additionalCharacters || []).filter(entry => text(entry.name)).map(characterBlueprintEntry),
+    majorFactions: (worldFoundations.factions || []).filter(entry => text(entry.name)).map(factionBlueprintEntry),
+    arcPlan: seed.story.optional.activeArcGoal ? createInitialArcPlan(seed.story.optional.activeArcGoal) : undefined,
+    hardPins: validateHardPinInputs(seed.story.optional.hardPins ?? []),
+    funSettings: normalizeFunSettings(seed.story.optional.funSettings),
+    destinedEnding: text(worldFoundations.destinedEnding) || '',
+  };
+};
+
+/**
+ * The single Seed <-> Blueprint boundary for a stored, imported, or newly
+ * generated pair: Blueprint values the Seed can hold are copied into the
+ * Seed, then the Blueprint mirrors the Seed. Every reviewed value lives in
+ * the Seed, and no Blueprint copy can disagree with it.
+ */
+export const reconcileStorySeedBlueprint = (
+  seed: StorySeedInput,
+  blueprint: unknown,
+  context: WorldBlueprintContext = {},
+): { seed: StorySeedInput; blueprint: WorldBlueprint } => {
+  const normalizedSeed = normalizeStorySeedInput(seed);
+  const promotedSeed = promoteBlueprintIntoSeed(normalizedSeed, normalizeWorldBlueprint(blueprint, normalizedSeed, context));
+  return {
+    seed: promotedSeed,
+    blueprint: mirrorSeedIntoBlueprint(normalizeWorldBlueprint(blueprint, promotedSeed, context), promotedSeed),
+  };
+};
+
+/**
+ * Resolves a reconciled Story Seed and Blueprint into one value per concept
+ * for generation. Every structured value comes from the Seed; the Blueprint
+ * adds only prose the Seed has no field for, never a second copy of a fact.
  */
 export const resolveStorySeedWorldCanon = (
   seed: StorySeedInput,
@@ -796,31 +940,22 @@ export const resolveStorySeedWorldCanon = (
 ): StorySeedWorldCanon => {
   const { worldIdentity, worldFoundations } = seed.world.optional;
   const authoredMain = worldFoundations.mainCharacter || {};
-  const reviewedMain = blueprint?.mainCharacter;
-  const mainName = text(authoredMain.name) || text(reviewedMain?.name);
-  const mainDescription = [
-    ['Age', text(reviewedMain?.age)],
-    ['Appearance', text(reviewedMain?.appearance)],
-    ['Personality', text(authoredMain.personality) || text(reviewedMain?.personality)],
-    ['Background', text(withAuthoritativeDetails(
-      text(reviewedMain?.backgroundProfile) || text(blueprint?.mcProfile) || '',
-      mainCharacterAuthoredDetails(authoredMain),
-    ))],
-  ].filter((entry): entry is [string, string] => Boolean(entry[1]))
-    .map(([label, value]) => `${label}: ${value}`).join('\n');
-  const authoredCharacters = (worldFoundations.additionalCharacters || []).filter(entry => text(entry.name));
-  const authoredFactions = (worldFoundations.factions || []).filter(entry => text(entry.name));
+  const mainName = text(authoredMain.name);
+  const structuredMain = labeledDetails([
+    ['Age', authoredMain.age],
+    ['Appearance', authoredMain.appearance],
+    ['Personality', authoredMain.personality],
+    ...mainCharacterAuthoredDetails(authoredMain),
+  ]);
+  const background = text(blueprint?.mainCharacter?.backgroundProfile) || text(blueprint?.mcProfile);
+  const mainDescription = [structuredMain, background ? `Background: ${background}` : ''].filter(Boolean).join('\n');
   const authoredEntity = (entry: StorySeedCharacter | StorySeedFaction, description: string): StorySeedWorldEntity => ({
     name: entry.name.trim(),
     ...(entry.aliases?.length ? { aliases: [...entry.aliases] } : {}),
     description,
   });
-  const generatedEntities = (entries: string[] | undefined, authored: Array<{ name: string }>): StorySeedWorldEntity[] =>
-    entriesWithoutAuthoredNames((entries || []).map(entry => entry.trim()).filter(Boolean), authored)
-      .map(entry => ({ name: blueprintEntryName(entry), description: entry }))
-      .filter(entry => entry.name.toLocaleLowerCase() !== mainName?.toLocaleLowerCase());
-  const worldOverview = text(worldIdentity.worldType) || text(blueprint?.worldOverview);
-  const societyStructure = text(worldIdentity.societyStructure) || text(blueprint?.societyStructure);
+  const worldOverview = text(worldIdentity.worldType);
+  const societyStructure = text(worldIdentity.societyStructure);
   const powerSystem = text(withAuthoritativeDetails(
     blueprint?.powerSystemOutline || '',
     powerSystemAuthoredDetails(worldFoundations),
@@ -828,15 +963,11 @@ export const resolveStorySeedWorldCanon = (
 
   return {
     ...(mainName ? { mainCharacter: { name: mainName, description: mainDescription || mainName } } : {}),
-    characters: [
-      // Aliases travel structurally, so the description does not repeat them.
-      ...authoredCharacters.map(entry => authoredEntity(entry, characterBlueprintEntry({ ...entry, aliases: undefined }))),
-      ...generatedEntities(blueprint?.initialCharacters, authoredCharacters),
-    ],
-    factions: [
-      ...authoredFactions.map(entry => authoredEntity(entry, factionBlueprintEntry({ ...entry, aliases: undefined }))),
-      ...generatedEntities(blueprint?.majorFactions, authoredFactions),
-    ],
+    // Aliases travel structurally, so descriptions do not repeat them.
+    characters: (worldFoundations.additionalCharacters || []).filter(entry => text(entry.name))
+      .map(entry => authoredEntity(entry, characterBlueprintEntry({ ...entry, aliases: undefined }))),
+    factions: (worldFoundations.factions || []).filter(entry => text(entry.name))
+      .map(entry => authoredEntity(entry, factionBlueprintEntry({ ...entry, aliases: undefined }))),
     ...(worldOverview ? { worldOverview } : {}),
     ...(societyStructure ? { societyStructure } : {}),
     ...(powerSystem ? { powerSystem } : {}),
@@ -859,14 +990,9 @@ export const finalizeGeneratedWorldBlueprint = (
   const { worldIdentity, worldFoundations } = storySeed.world.optional;
   const mainCharacter = worldFoundations.mainCharacter || {};
   const generatedMainCharacter = generated.mainCharacter as WorldBlueprintMainCharacter;
-  const backgroundProfile = withAuthoritativeDetails(
-    generatedMainCharacter.backgroundProfile,
-    mainCharacterAuthoredDetails(mainCharacter),
-  );
-  const powerSystemOutline = withAuthoritativeDetails(
-    generated.powerSystemOutline,
-    powerSystemAuthoredDetails(worldFoundations),
-  );
+  // Structured Seed details stay in their Seed fields; Blueprint prose never
+  // carries a second, separately editable copy of them.
+  const backgroundProfile = generatedMainCharacter.backgroundProfile;
 
   return {
     ...generated,
@@ -877,10 +1003,12 @@ export const finalizeGeneratedWorldBlueprint = (
     worldOverview: text(worldIdentity.worldType) || generated.worldOverview,
     startingLocation: text(worldIdentity.startingLocation) || generated.startingLocation,
     societyStructure: text(worldIdentity.societyStructure) || generated.societyStructure,
-    powerSystemOutline,
+    powerSystemOutline: generated.powerSystemOutline,
     mainCharacter: {
       ...generatedMainCharacter,
       name: text(mainCharacter.name) || generatedMainCharacter.name,
+      age: text(mainCharacter.age) || generatedMainCharacter.age,
+      appearance: text(mainCharacter.appearance) || generatedMainCharacter.appearance,
       personality: text(mainCharacter.personality) || generatedMainCharacter.personality,
       backgroundProfile,
     },

@@ -81,6 +81,10 @@ try {
     await page.getByRole('button', { name: 'Manifest Story', exact: true }).waitFor();
     await page.locator('#hard-pin-2').fill('Keep the revised promise.');
     await page.locator('#active-arc-goal-input').fill('Unlock the mountain gate.');
+    // Blueprint review edits save to the Seed, including the generated cast.
+    await page.locator('#char-role-blueprint-character-the-keeper').fill('Gatekeeper ally');
+    await page.locator('#faction-description-blueprint-faction-the-gate').fill('Guardians of the pass.');
+    await page.locator('#mc-age-input').fill('26');
     await page.screenshot({ path: `output/playwright/story-seed-blueprint-${width}.png`, fullPage: true });
     const download = page.waitForEvent('download');
     await button('Export Seed + Blueprint').click();
@@ -90,10 +94,20 @@ try {
     assert(content.includes('Keep the revised promise.'));
     assert(content.includes('Unlock the mountain gate.'));
     assert(!/plotAndTropeSettings|additionalStoryDirection|firstMajorConflict/.test(content));
+    const exportedSeed = JSON.parse(content).seed.world.optional.worldFoundations;
+    assert.equal(exportedSeed.additionalCharacters.find(entry => entry.name === 'The Keeper')?.role, 'Gatekeeper ally');
+    assert.equal(exportedSeed.factions.find(entry => entry.name === 'The Gate')?.description, 'Guardians of the pass.');
+    assert.equal(exportedSeed.mainCharacter.age, '26');
+    await button('Refine Details').click();
+    await section('Characters');
+    assert.equal(await page.locator('#char-role-blueprint-character-the-keeper').inputValue(), 'Gatekeeper ally');
+    assert.equal(await page.locator('#mc-age-input').inputValue(), '26');
+    await section('Factions');
+    assert.equal(await page.locator('#faction-description-blueprint-faction-the-gate').inputValue(), 'Guardians of the pass.');
     await page.goto(`${origin}/library-shell.html?source=story-seed&variant=development&state=empty-intake`);
     await page.locator('#origin-style-title').waitFor();
     assert.deepEqual(errors, [], 'No browser runtime errors, including the active shell capture');
-    console.log(`Story Seed ${width}px: complete navigation, Arc hierarchy, World controls, save/reload, Blueprint edits/export, and active capture passed.`);
+    console.log(`Story Seed ${width}px: complete navigation, Arc hierarchy, World controls, save/reload, Blueprint edits saved to the Seed, export, and active capture passed.`);
     await context.close();
   }
 } finally { await browser.close(); }

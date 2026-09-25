@@ -40,7 +40,6 @@
 .docs-article h1 { margin: 0; font-family: var(--font-sans); font-size: clamp(2rem, 3.8vw, 2.8rem); font-weight: 400; letter-spacing: -0.045em; line-height: 1.2; color: #f4efe6; }
 .docs-article h1:focus { outline: none; }
 .docs-intro { margin: 1.25rem 0 0; max-width: 38rem; font-size: 1.05rem; line-height: 1.8; color: #c9c2b6; }
-.docs-note { margin: 1.75rem 0 0; padding: 1rem 1.1rem; border-left: 2px solid #b3402f; background: rgba(179, 64, 47, 0.07); color: #c9c2b6; font-size: 0.85rem; line-height: 1.7; }
 .docs-category-index { margin-top: 2.5rem; }
 .docs-category-index section { padding: 1.5rem 0; border-top: 1px solid var(--docs-line); }
 .docs-category-index h2, .docs-definition h2 { margin: 0; font-size: 1.15rem; font-weight: 500; letter-spacing: -0.02em; }

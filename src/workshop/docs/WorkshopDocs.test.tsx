@@ -113,6 +113,7 @@ describe('Workshop Docs', () => {
 
   it('renders and searches approved content from the same entry when filled', () => {
     const entry = docsTopics.find(topic => topic.id === 'spp')!;
+    const original = { definition: entry.definition, howItFits: entry.howItFits, related: entry.related };
     try {
       entry.definition = 'A test definition with a uniquely searchable phrase.';
       entry.howItFits = 'A test connection.';
@@ -123,9 +124,12 @@ describe('Workshop Docs', () => {
       search('uniquely searchable');
       expect(container.querySelectorAll('.docs-results li')).toHaveLength(1);
     } finally {
-      delete entry.definition;
-      delete entry.howItFits;
-      delete entry.related;
+      if (original.definition === undefined) delete entry.definition;
+      else entry.definition = original.definition;
+      if (original.howItFits === undefined) delete entry.howItFits;
+      else entry.howItFits = original.howItFits;
+      if (original.related === undefined) delete entry.related;
+      else entry.related = original.related;
     }
   });
 });

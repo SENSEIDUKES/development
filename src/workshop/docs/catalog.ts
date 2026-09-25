@@ -17,16 +17,42 @@ export interface DocsCategory {
 
 const topic = (id: string, title: string, aliases: string[] = []): DocsTopic => ({ id, title, aliases });
 
-// The product-term audit supplies the index, not approved definitions. Deliberately
-// leave explanation fields absent until the product owner supplies their wording.
+// The product-term audit supplied the index, not approved definitions. Add
+// explanations only as each term's meaning is confirmed by the product owner.
 export const docsCategories: readonly DocsCategory[] = [
   {
     id: 'product', title: 'Product & people', description: 'The products, the Workshop, and the people using them.',
     topics: [
-      topic('seihouse', 'SEIHouse'), topic('sen', 'SEN', ['SEIHouse Expanded Novels']),
-      topic('library', 'Library', ['Celestial Library']), topic('workshop', 'Workshop', ['Development', 'DEV']),
-      topic('sensei', 'SENSEI'), topic('creator', 'Creator', ['Author']),
-      topic('reader', 'Reader', ['Cultivator']),
+      {
+        ...topic('seihouse', 'SEIHouse'),
+        definition: 'A better time capsule and translator of artistic expression.',
+        howItFits: 'SEIHouse is the company and creative platform we are building around that purpose. SEN (SEIHouse Expanded Novels) is our engine for expanded novels, and the Celestial Library is our own place to create and experience them. SEA (SEIHouse Expanded Albums) brings the same vision into music. We develop and pressure-test reusable systems through SEN so they can serve SEA too; the two sides grow together.',
+      },
+      {
+        ...topic('sen', 'SEN', ['SEIHouse Expanded Novels']),
+        definition: 'Our portable engine for expanded novels.',
+        howItFits: 'We build SEN as the shared narrative foundation beneath the Celestial Library. It provides story and chapter structure, Reader and Codex experiences, cards, Color Codes, translation, and other reusable capabilities. Other creators and publishers can use SEN in their own apps with their own stories, branding, accounts, storage, and media. AI generation is an optional content source. We keep Library-specific rules in the Library so SEN stays portable.',
+      },
+      {
+        ...topic('library', 'Library', ['Celestial Library']),
+        definition: 'Our home for creating, discovering, and experiencing expanded novels.',
+        howItFits: 'The Celestial Library is the application we build on top of SEN. SEN gives us reusable narrative capabilities; we add our visual identity, story creation and discovery, profiles and community, cultivation and QI, rewards, and economy. The Library’s host and backend provide accounts, storage, APIs, and the source of truth for transactions. We keep those first-party rules here so SEN can power other apps too.',
+      },
+      {
+        ...topic('workshop', 'Workshop', ['Development', 'DEV']),
+        definition: 'Our space for building, previewing, and refining SEIHouse experiences.',
+        howItFits: 'We use the Workshop inside the Development repository to see SEN and Library work in context while it is still being developed. Its previews, controls, and Docs let us test product flows and agree on the language around them. Workshop is our workbench, not a product package: SEN owns reusable narrative behavior, and Library owns our first-party product behavior. Moving approved work into production is a separate step.',
+      },
+      {
+        ...topic('creator', 'Creator', ['Author']),
+        definition: 'A person making a story, album, or other work with SEIHouse.',
+        howItFits: 'We use Creator for the person making a work, whether it is a novel, album, or another form. It is not a separate kind of user from Reader: someone can create one work and experience another. SEN and the Celestial Library support novel work; SEA extends the same platform to albums. In each case, the artistic direction belongs to the creator.',
+      },
+      {
+        ...topic('reader', 'Reader', ['Cultivator']),
+        definition: 'A person experiencing a story; in the Celestial Library, we call that reader a Cultivator.',
+        howItFits: 'We use Reader for the person reading chapters, listening, or exploring a story’s Codex. SEN carries the reusable reading experience, and we bring it into the Celestial Library with our cultivation language and progression. Cultivator is our name for the Reader there, not a separate user type. The same person can be a Creator when making a work.',
+      },
     ],
   },
   {

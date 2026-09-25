@@ -90,6 +90,7 @@ export const docsCategories: readonly DocsCategory[] = [
     id: 'reader-codex', title: 'Reader & Codex', description: 'The reading experience and its structured story world.',
     topics: [
       topic('reader-chamber', 'Reader Chamber'), topic('reader-codex', 'Reader Codex'),
+      topic('mind-palace', 'Mind Palace', ['bookmark', 'saved passage']),
       topic('codex-record', 'Codex Record', ['Character', 'Location', 'Faction', 'Artifact', 'Ability', 'Power System', 'Lore', 'World Rule']),
       topic('portrait', 'Portrait'), topic('bestiary', 'Bestiary', ['species']),
       topic('system-prompt', 'System Prompt', ['Fate System Prompt']),

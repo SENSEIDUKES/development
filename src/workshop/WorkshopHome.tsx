@@ -15,6 +15,8 @@ import { LibraryComponentsGrid } from './LibraryComponents';
 import { IconsGrid } from './Icons';
 import { defaultFamiliar } from '../host/familiar/catalogue';
 import { ModelRouterGear } from './ModelRouterSettings';
+import { WorkshopDocs } from './docs/WorkshopDocs';
+import { docsHref } from './docs/catalog';
 
 const activeEntries = workshopEntries.filter((entry) => entry.status !== 'archived');
 const archivedEntries = workshopEntries.filter((entry) => entry.status === 'archived');
@@ -291,11 +293,32 @@ function SectionContent({ section }: { section: (typeof WORKSHOP_SECTIONS)[numbe
   );
 }
 
+function readWorkshopLocation(): { tab: WorkshopSection; doc: string } {
+  const params = new URLSearchParams(window.location.search);
+  const tab = WORKSHOP_SECTIONS.find(section => section.id === params.get('tab'))?.id ?? 'pages';
+  return { tab, doc: params.get('doc') || 'overview' };
+}
+
 export function WorkshopHome() {
-  const [activeTab, setActiveTab] = useState<WorkshopSection>('pages');
+  const [location, setLocation] = useState(readWorkshopLocation);
+  const activeTab = location.tab;
   const [archiveOpen, setArchiveOpen] = useState(false);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const navRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const restoreLocation = () => setLocation(readWorkshopLocation());
+    window.addEventListener('popstate', restoreLocation);
+    return () => window.removeEventListener('popstate', restoreLocation);
+  }, []);
+
+  function navigate(tab: WorkshopSection, doc = 'overview') {
+    const query = tab === 'docs' ? docsHref(doc) : `?tab=${tab}`;
+    if (window.location.search !== query) window.history.pushState(null, '', query);
+    setLocation({ tab, doc });
+    // A sticky phone tab or a Docs link may be used deep in the previous page.
+    if (window.scrollY > 0) window.scrollTo({ top: 0 });
+  }
 
   // On phones the section bar scrolls sideways; keep the selected tab in view.
   useEffect(() => {
@@ -305,10 +328,7 @@ export function WorkshopHome() {
   }, [activeTab]);
 
   function selectTab(id: WorkshopSection) {
-    setActiveTab(id);
-    // The phone section bar is sticky, so a switch can happen deep in a long
-    // section; start the new section at its top instead of mid-page.
-    if (window.scrollY > 0) window.scrollTo({ top: 0 });
+    navigate(id);
   }
 
   function handleTabKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -366,7 +386,9 @@ export function WorkshopHome() {
             hidden={activeTab !== tab.id}
             tabIndex={0}
           >
-            {activeTab === tab.id && (
+            {activeTab === tab.id && (tab.id === 'docs' ? (
+              <WorkshopDocs topicId={location.doc} onNavigate={doc => navigate('docs', doc)} />
+            ) : (
               <>
                 <header className="workshop-header">
                   <h1 className="workshop-title">{tab.label}</h1>
@@ -377,11 +399,11 @@ export function WorkshopHome() {
                 </header>
                 <SectionContent section={tab} />
               </>
-            )}
+            ))}
           </section>
         ))}
 
-        {archivedEntries.length > 0 && (
+        {activeTab !== 'docs' && archivedEntries.length > 0 && (
           <section className="workshop-archive" aria-label="Archive">
             <button
               type="button"

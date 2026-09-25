@@ -10,6 +10,7 @@ let container: HTMLDivElement;
 let root: Root;
 
 beforeEach(() => {
+  window.history.replaceState(null, '', '/');
   Object.defineProperty(window, 'matchMedia', { configurable: true, value: vi.fn().mockImplementation((media: string) => ({ media, matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })) });
   container = document.createElement('div');
   document.body.appendChild(container);
@@ -52,9 +53,9 @@ describe('WorkshopHome', () => {
     expect(container.querySelector('.workshop-topbar [aria-label="Model Router settings"]')).not.toBeNull();
   });
 
-  it('shows exactly the five Workshop sections as tabs', () => {
+  it('shows the five Workshop sections and the Docs tab', () => {
     const tabs = container.querySelectorAll<HTMLButtonElement>('[role="tab"]');
-    expect([...tabs].map((element) => element.textContent)).toEqual(['Pages', 'Rewards', 'Customization', 'Systems', 'Components']);
+    expect([...tabs].map((element) => element.textContent)).toEqual(['Pages', 'Rewards', 'Customization', 'Systems', 'Components', 'Docs']);
   });
 
   it('groups each active preview exactly once and preserves direct links and release labels', () => {
@@ -124,7 +125,7 @@ describe('WorkshopHome', () => {
       'chapter-generation-flow': 'workshop',
     });
     for (const panel of workshopPanels) {
-      select({ systems: 'Systems', components: 'Components', pages: 'Pages', rewards: 'Rewards', customization: 'Customization' }[panel.section]);
+      select({ systems: 'Systems', components: 'Components', pages: 'Pages', rewards: 'Rewards', customization: 'Customization', docs: 'Docs' }[panel.section]);
       const section = activePanel().querySelector(`section[data-panel="${panel.id}"]`)!;
       expect(section.querySelector('.workshop-group-title')?.textContent).toBe(panel.title);
       expect(section.querySelector('.workshop-owner')?.textContent).toBe(`Owned by ${WORKSHOP_OWNER_LABELS[panel.owner]}`);
@@ -179,10 +180,55 @@ describe('WorkshopHome', () => {
 
   it('supports arrow wrapping, Home and End while moving focus with selection', () => {
     act(() => tab('Pages').focus());
-    for (const [key, label] of [['ArrowLeft', 'Components'], ['ArrowRight', 'Pages'], ['ArrowRight', 'Rewards'], ['ArrowRight', 'Customization'], ['End', 'Components'], ['Home', 'Pages']]) {
+    for (const [key, label] of [['ArrowLeft', 'Docs'], ['ArrowRight', 'Pages'], ['ArrowRight', 'Rewards'], ['ArrowRight', 'Customization'], ['End', 'Docs'], ['Home', 'Pages']]) {
       act(() => document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })));
       expect(document.activeElement).toBe(tab(label));
       expect(tab(label).getAttribute('aria-selected')).toBe('true');
     }
+  });
+
+  it('opens Docs inside Workshop without preview cards or the archive', () => {
+    select('Docs');
+    expect(activePanel().querySelector('h1')?.textContent).toBe('What each thing is.How it all fits.');
+    expect(previewIds()).toEqual([]);
+    expect(container.querySelector('#workshop-archive-toggle')).toBeNull();
+    expect(window.location.search).toBe('?tab=docs');
+    select('Pages');
+    expect(archiveToggle()).not.toBeNull();
+  });
+
+  it('supports shareable topics and restores Workshop tabs and topics on browser navigation', () => {
+    select('Docs');
+    const spp = activePanel().querySelector<HTMLAnchorElement>('a[href="?tab=docs&doc=spp"]')!;
+    act(() => spp.click());
+    expect(window.location.search).toBe('?tab=docs&doc=spp');
+    expect(activePanel().querySelector('h1')?.textContent).toBe('SPP');
+    expect(activePanel().textContent).toContain('The definition for this term hasn’t been added yet.');
+    act(() => {
+      window.history.replaceState(null, '', '?tab=docs&doc=arc-goal');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    expect(activePanel().querySelector('h1')?.textContent).toBe('Arc Goal');
+    act(() => {
+      window.history.replaceState(null, '', '?tab=systems');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    expect(tab('Systems').getAttribute('aria-selected')).toBe('true');
+    expect(previewIds()).toEqual(ACTIVE_GROUPS.Systems);
+  });
+
+  it('opens a direct topic URL on mount and handles unknown topics without inventing an entry', () => {
+    act(() => root.unmount());
+    window.history.replaceState(null, '', '?tab=docs&doc=harness');
+    root = createRoot(container);
+    act(() => root.render(<WorkshopHome />));
+    expect(activePanel().querySelector('h1')?.textContent).toBe('HARNESS');
+    act(() => {
+      window.history.replaceState(null, '', '?tab=docs&doc=missing');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    expect(activePanel().querySelector('h1')?.textContent).toBe('Topic not found');
+    act(() => activePanel().querySelector<HTMLAnchorElement>('.docs-back-link')!.click());
+    expect(window.location.search).toBe('?tab=docs');
   });
 });

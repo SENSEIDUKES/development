@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { dailyStoreRotation } from '@seihouse/library/celestial-store';
-import { activeFamiliarForm, activeNameEffect, bondRankLabel, familiarFormFilter, familiarRarityLabel, familiarTraining } from '@seihouse/library/familiar';
+import {
+  activeFamiliarForm,
+  activeNameEffect,
+  bondRankLabel,
+  FAMILIAR_ELEMENT_LABELS,
+  FAMILIAR_ELEMENTS,
+  familiarFormFilter,
+  familiarRarityLabel,
+  familiarTraining,
+} from '@seihouse/library/familiar';
 import { allFamiliarOptions, defaultFamiliar } from '../../host/familiar/catalogue';
 import { resolveEnergyConfig } from '../energy/config';
 import { InMemoryEnergyRepository } from '../energy/inMemoryEnergyRepository';
@@ -29,6 +38,18 @@ function setup() {
 }
 
 describe('Familiar bonds', () => {
+  it('supports the complete twelve-element Familiar contract', () => {
+    expect(FAMILIAR_ELEMENTS).toEqual([
+      'fire', 'lightning', 'frost', 'water', 'wind', 'earth',
+      'nature', 'poison', 'metal', 'space', 'celestial', 'void',
+    ]);
+    expect(FAMILIAR_ELEMENTS.map(element => FAMILIAR_ELEMENT_LABELS[element])).toEqual([
+      'Fire', 'Lightning', 'Frost', 'Water', 'Wind', 'Earth',
+      'Nature', 'Poison', 'Metal', 'Space', 'Celestial', 'Void',
+    ]);
+    expect(validateBondLadder()).toBe(FAMILIAR_BOND_LADDER);
+  });
+
   it('cultivates an owned Familiar through Common, Rare and Epic bond, each lending a stronger elemental title', async () => {
     const { service, qi, fund } = setup();
     const start = (await service.getSnapshot(principal)).familiars.find(view => view.familiarId === quill)!;

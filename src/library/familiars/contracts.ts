@@ -35,13 +35,37 @@
  * that could express one, and the server validates its content at load.
  */
 
-/** The `LibraryElementalTitle` elements a Familiar can channel (never `none`). */
-export const FAMILIAR_ELEMENTS = ['fire', 'lightning', 'frost', 'celestial', 'void'] as const;
+/** Every element a Familiar can channel (never `none`). */
+export const FAMILIAR_ELEMENTS = [
+  'fire',
+  'lightning',
+  'frost',
+  'water',
+  'wind',
+  'earth',
+  'nature',
+  'poison',
+  'metal',
+  'space',
+  'celestial',
+  'void',
+] as const;
 export type FamiliarElement = (typeof FAMILIAR_ELEMENTS)[number];
 export type FamiliarEffectIntensity = 'subtle' | 'active' | 'legendary';
 
 export const FAMILIAR_ELEMENT_LABELS: Readonly<Record<FamiliarElement, string>> = {
-  fire: 'Fire', lightning: 'Lightning', frost: 'Frost', celestial: 'Celestial', void: 'Void',
+  fire: 'Fire',
+  lightning: 'Lightning',
+  frost: 'Frost',
+  water: 'Water',
+  wind: 'Wind',
+  earth: 'Earth',
+  nature: 'Nature',
+  poison: 'Poison',
+  metal: 'Metal',
+  space: 'Space',
+  celestial: 'Celestial',
+  void: 'Void',
 };
 
 /** How far a cultivator has cultivated one Familiar. Not the Familiar's rarity. */

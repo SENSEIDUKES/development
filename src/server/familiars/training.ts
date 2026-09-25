@@ -33,9 +33,10 @@ export interface FamiliarBondRankDefinition {
   unlocks: (element: FamiliarElement) => FamiliarUnlock[];
 }
 
-const ELEMENT_GLOW: Readonly<Record<FamiliarElement, string>> = {
+const ELEMENT_GLOW: Readonly<Partial<Record<FamiliarElement, string>>> = {
   fire: '#ff6a13', lightning: '#2589ff', frost: '#6bd6f0', celestial: '#d5b668', void: '#994bfa',
 };
+const DEFAULT_FORM_GLOW = '#d5b668';
 
 const INTENSITY_LABELS: Readonly<Record<FamiliarEffectIntensity, string>> = {
   subtle: 'Whisper', active: 'Blaze', legendary: 'Ascendant',
@@ -65,7 +66,7 @@ export const radiantForm = (element: FamiliarElement): FamiliarForm => ({
   id: 'radiant',
   label: 'Radiant form',
   description: `Placeholder form: the Familiar’s artwork wreathed in ${FAMILIAR_ELEMENT_LABELS[element].toLowerCase()} light until dedicated form artwork is supplied.`,
-  treatment: { glow: ELEMENT_GLOW[element], saturate: 1.25, brightness: 1.08, hueRotate: 0 },
+  treatment: { glow: ELEMENT_GLOW[element] ?? DEFAULT_FORM_GLOW, saturate: 1.25, brightness: 1.08, hueRotate: 0 },
 });
 
 export const FAMILIAR_BOND_LADDER: readonly FamiliarBondRankDefinition[] = [

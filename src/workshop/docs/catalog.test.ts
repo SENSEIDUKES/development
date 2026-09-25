@@ -23,6 +23,9 @@ describe('Docs topic catalog', () => {
     const cultivatorResults = searchDocs('Cultivator').map(topic => topic.id);
     expect(cultivatorResults).toContain('reader');
     expect(docsTopics.some(topic => topic.id === 'cultivator' || topic.title === 'Cultivator')).toBe(false);
+    const fateOutcomeResults = searchDocs('Fate Outcome').map(topic => topic.id);
+    expect(fateOutcomeResults).toContain('fate-survival');
+    expect(docsTopics.some(topic => topic.id === 'fate-outcome' || topic.title === 'Fate Outcome')).toBe(false);
     expect(searchDocs('not-a-real-term')).toEqual([]);
   });
 

@@ -41,8 +41,7 @@ export const docsCategories: readonly DocsCategory[] = [
       topic('fun-settings', 'Fun Settings'), topic('arc-roadmap', 'Arc Roadmap'),
       topic('arc-goal', 'Arc Goal', ['Active Arc Goal', 'allocation', 'deadline']),
       topic('fate-pressure', 'Fate Pressure'), topic('chapter-rhythm', 'Chapter Rhythm'),
-      topic('fate-survival', 'Fate Survival'), topic('alter-fate', 'Alter Fate'),
-      topic('fate-outcome', 'Fate Outcome'),
+      topic('fate-survival', 'Fate Survival', ['Fate Outcome']), topic('alter-fate', 'Alter Fate'),
     ],
   },
   {

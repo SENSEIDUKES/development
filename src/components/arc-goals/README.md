@@ -24,10 +24,10 @@ The package exposes these through `@seihouse/sen/arc-goals`.
 | Seed/Blueprint precedence and one-way transfer of the roadmap and arc count | Library `createHarnessFoundationFromStorySeed` (`src/library/story-seed/harnessFoundation.ts`) |
 | Durable per-arc revisions, frozen context, confirmed completion | Existing HARNESS story record, controller, and IndexedDB repository |
 | Mode edit rules (`arcGoalEditState`): Regular Reader edits active/upcoming arcs while private; Fate Survival sets each arc once before it begins and locks it at generation; completed and missed goals are history in both | HARNESS `shared/arcState.ts`, enforced by the controller |
-| Deadline rule: in both modes an unachieved deadline chapter commits and records the goal as missed; the mode decides what a miss means (Regular Reader: off track, continuing past a missed final goal; Fate Survival: a broken route and closing stretch) | HARNESS `commitHarnessArc` / `harnessArcContext` in `shared/arcState.ts` |
+| Deadline rule: in both modes an unachieved deadline chapter commits and records the goal as missed; the mode decides what a miss means (Regular Reader: off track, continuing past a missed final goal; Fate Survival: a broken route, after which the next chapter must end the story) | HARNESS `commitHarnessArc` / `harnessArcContext` in `shared/arcState.ts` |
 | Novel-page editing | Library novel page Blueprint tab (`src/library/generation/NovelBlueprintTab.tsx`) |
 | Later-arc planning at a boundary | Only for stories without a roadmap (premise-only starts and Blueprints saved before roadmaps); a roadmap story never invents an arc |
-| Chapter grouping, plan inspection and editing | HARNESS SEN adapter (`harnessChapterArc` keeps closing and past-final-goal chapters in the arc they continue), Reader session, and Codex chapter-recap area |
+| Chapter grouping, plan inspection and editing | HARNESS SEN adapter (`harnessChapterArc` keeps the chapter ending a broken route, and past-final-goal chapters, in the arc they continue), Reader session, and Codex chapter-recap area |
 | Active Arc Goal display (arc, goal n of total, text, allocated range, next chapter, deadline/status by mode, the arc's goals) | SEN `FateArcGoalCard` (HARNESS `development/FatePanel.tsx`), shown on the Reader's Fate page and in the Library workspace, reading `harnessArcContext`; `ArcPlanView` marks completed and missed goals |
 
 The Blueprint generates the whole roadmap when it establishes the Destined Ending and

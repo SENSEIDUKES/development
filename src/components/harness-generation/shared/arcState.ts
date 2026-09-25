@@ -15,16 +15,14 @@ import type { HarnessArcContext, HarnessArcGoalReview, HarnessGenerationAttempt,
  * Fate Survival: the reader directs every chapter; each arc's goals are set
  * once, immediately before that arc begins, and locked when its generation
  * begins. Missing at least half of one arc's goals, or the final goal, breaks
- * the route, and the story closes within a short closing stretch. A fatal
- * ending the writer shows ends the story at once.
+ * the route, and the next chapter must bring the story to its end. A story
+ * ends only when committed prose shows the ending, and a fatal ending the
+ * writer shows ends it at once.
  */
 export type { HarnessStoryMode };
 
 export const harnessStoryMode = (foundation?: Pick<StoryFoundationInput, 'fateSurvival'>): HarnessStoryMode =>
   foundation?.fateSurvival?.enabled ? 'survival' : 'regular';
-
-/** Fate Survival: the most chapters a story may still write after its route breaks. */
-export const SURVIVAL_CLOSING_CHAPTER_LIMIT = 5 as const;
 
 /** Fate Survival's current rule: missing at least half of one arc's goals breaks the route, such as 3 of 5 or 2 of 4. */
 export const goalsThatBreakRoute = (goalsInArc: number) => Math.max(1, Math.ceil(goalsInArc / 2));
@@ -63,8 +61,8 @@ export function regularFinalGoalMissed(story: HarnessStory, foundation?: Pick<St
 }
 
 /**
- * The arc a chapter belongs to: its own, except that a broken route's closing
- * chapters, and Regular Reader chapters past a missed final goal, stay with
+ * The arc a chapter belongs to: its own, except that the chapter ending a
+ * broken route, and Regular Reader chapters past a missed final goal, stay with
  * the arc they continue even beyond its planned end. No arc begins after them.
  */
 export function harnessChapterArc(story: HarnessStory, foundation: Pick<StoryFoundationInput, 'fateSurvival' | 'plannedArcCount'> | undefined, chapterNumber: number): number {
@@ -84,9 +82,10 @@ const carriedContext = (context: ArcGenerationContext, chapter: number, display:
 
 /**
  * The Active Arc Goal for a chapter, with where the story stands on its route.
- * A broken route's closing chapters keep the arc it broke in, even past that
- * arc's planned end. After a missed final goal, Regular Reader mode keeps that
- * goal as its destination past the roadmap instead of inventing another.
+ * After the route breaks, the chapter that must end the story keeps the arc it
+ * broke in, even past that arc's planned end. After a missed final goal,
+ * Regular Reader mode keeps that goal as its destination past the roadmap
+ * instead of inventing another.
  */
 export function harnessArcContext(story: HarnessStory, foundation: StoryFoundationInput, chapter: number): HarnessArcContext | undefined {
   const ending = foundation.destinedEnding ?? '';
@@ -94,12 +93,10 @@ export function harnessArcContext(story: HarnessStory, foundation: StoryFoundati
   if (broken && chapter > broken.chapterNumber) {
     const plan = harnessArcPlan(story, broken.arcNumber, broken.chapterNumber);
     if (!plan) return undefined;
-    const closingChapter = chapter - broken.chapterNumber;
     return {
       ...carriedContext(arcGenerationContext(plan, broken.chapterNumber, ending, story.goalCompletions, foundation.plannedArcCount),
-        chapter, `Arc ${broken.arcNumber} — closing chapter ${closingChapter} of ${broken.closingChapterLimit}`),
-      route: { status: 'broken', missedGoals: structuredClone(broken.missedGoals), brokenInChapter: broken.chapterNumber, reason: broken.reason,
-        closingChapter, closingChapterLimit: broken.closingChapterLimit },
+        chapter, `Arc ${broken.arcNumber} — the route is broken; this chapter ends the story`),
+      route: { status: 'broken', missedGoals: structuredClone(broken.missedGoals), brokenInChapter: broken.chapterNumber, reason: broken.reason },
     };
   }
   const plan = harnessArcPlan(story, arcOf(chapter), chapter);
@@ -132,7 +129,8 @@ export const attemptStoryMode = (attempt: HarnessGenerationAttempt): HarnessStor
 /**
  * The writer's report that this chapter's prose completes the story's ending,
  * accepted only in Fate Survival and only with a continuous verbatim passage
- * from the chapter. Returns the evidence, or a warning when a report is set aside.
+ * from the chapter. An unsupported claim is never an ending. Returns the
+ * evidence, or a warning when a report is set aside.
  */
 export function readStoryEnding(attempt: HarnessGenerationAttempt): { evidence?: string; warning?: HarnessWarning } {
   const report = readArcReply(attempt.rawProviderResponse ?? '').storyEnded as { ended?: unknown; evidence?: unknown } | undefined;
@@ -148,13 +146,33 @@ export function readStoryEnding(attempt: HarnessGenerationAttempt): { evidence?:
 }
 
 /**
+ * Fate Survival: once the route is broken, the next chapter must end the
+ * story, and it commits only when its prose shows that ending (the writer's
+ * report with a verbatim passage). Without it the chapter stays uncommitted,
+ * with its reader direction intact, so the reader can try again; the HARNESS
+ * never makes a recovery call on its own. Returns why the chapter cannot
+ * commit, or nothing when it can.
+ */
+export function missingRequiredEnding(attempt: HarnessGenerationAttempt): { message: string; warnings: HarnessWarning[] } | undefined {
+  const route = attempt.storyInformation.arc?.route;
+  if (route?.status !== 'broken') return undefined;
+  const ending = readStoryEnding(attempt);
+  if (ending.evidence) return undefined;
+  return {
+    message: `The route to the Destined Ending broke in Chapter ${route.brokenInChapter}, so Chapter ${attempt.chapterNumber} must end the story, but its prose does not show that ending.`,
+    warnings: ending.warning ? [ending.warning] : [],
+  };
+}
+
+/**
  * Runs inside the existing atomic chapter commit, including persistence
  * retries. In both modes it records the active goal honestly: achieved with
  * verbatim evidence, or missed once its deadline chapter commits without it.
  * Then it applies the mode's consequence: the Destined Ending reached through
  * the final goal ends the story; in Fate Survival a missed goal may break the
- * route, the writer may show the story ending, and a broken route's closing
- * stretch ends it. Returns warnings about reports it set aside.
+ * route, and the story ends when the committed prose shows it ending. A
+ * chapter count or a broken route alone never ends it. Returns warnings about
+ * reports it set aside.
  */
 export function commitHarnessArc(story: HarnessStory, attempt: HarnessGenerationAttempt, recordedAt: string): HarnessWarning[] {
   const context = attempt.storyInformation.arc;
@@ -166,7 +184,7 @@ export function commitHarnessArc(story: HarnessStory, attempt: HarnessGeneration
   const route = context.route;
   let outcome: 'completed' | 'missed' | undefined;
   let evidence = '';
-  // A broken route has no goal left to reach: its closing chapters only bring the story to its end.
+  // A broken route has no goal left to reach: the chapter after it only brings the story to its end.
   if (route?.status !== 'broken') {
     const completion = confirmArcGoal(context, chapterNumber, attempt.acceptedDraft.prose, reply.arcCompletion);
     const claim = reply.arcCompletion as { completed?: unknown } | undefined;
@@ -205,13 +223,11 @@ export function commitHarnessArc(story: HarnessStory, attempt: HarnessGeneration
       : missedGoalsBreakRoute(missedGoals.length, context.plan.goals.length) ? 'arc-goals-missed' as const : undefined;
     if (reason) {
       story.brokenRoute = { chapterNumber, arcNumber: context.plan.arcNumber, reason, goalsInArc: context.plan.goals.length,
-        missedGoals, closingChapterLimit: SURVIVAL_CLOSING_CHAPTER_LIMIT, recordedAt };
+        missedGoals, recordedAt };
     }
   }
+  // Only prose that shows the ending ends the story, including a genuine ending in the chapter that broke the route.
   if (ending.evidence) conclude({ outcome: 'fate-failed', reason: 'story-ended', chapterNumber, evidence: ending.evidence });
-  else if (route?.status === 'broken' && route.closingChapter >= route.closingChapterLimit) {
-    conclude({ outcome: 'fate-failed', reason: 'closing-limit-reached', chapterNumber, evidence: '' });
-  }
   return warnings;
 }
 
@@ -220,9 +236,7 @@ export function storyConclusionGap(story: HarnessStory): string | undefined {
   const ended = story.conclusion;
   if (!ended) return undefined;
   if (ended.outcome === 'destined-ending-reached') return `The story reached its Destined Ending in Chapter ${ended.chapterNumber}. No further chapter is written.`;
-  return ended.reason === 'closing-limit-reached'
-    ? `Fate failed in Chapter ${ended.chapterNumber}: the route had broken, and that was the last of its closing chapters. No further chapter is written.`
-    : `Fate failed in Chapter ${ended.chapterNumber}: the story ended there. No further chapter is written.`;
+  return `Fate failed in Chapter ${ended.chapterNumber}: the story ended there. No further chapter is written.`;
 }
 
 /**
@@ -232,7 +246,7 @@ export function storyConclusionGap(story: HarnessStory): string | undefined {
  * their next arc automatically.
  */
 export function needsArcPlan(story: HarnessStory, foundation?: Pick<StoryFoundationInput, 'plannedArcCount'>): boolean {
-  // A broken route's closing chapters never begin a new arc.
+  // The chapter that ends a broken route never begins a new arc.
   if (story.brokenRoute || foundation?.plannedArcCount) return false;
   return !harnessArcPlan(story, arcOf(story.head.nextChapterNumber));
 }
@@ -240,7 +254,7 @@ export function needsArcPlan(story: HarnessStory, foundation?: Pick<StoryFoundat
 /** Why the next chapter has no saved plan in a roadmap story, if it has none. */
 export function roadmapPlanGap(story: HarnessStory, foundation: Pick<StoryFoundationInput, 'plannedArcCount' | 'fateSurvival'>): string | undefined {
   const count = foundation.plannedArcCount;
-  // Closing chapters, and Regular Reader chapters past a missed final goal, need no further plan.
+  // The chapter ending a broken route, and Regular Reader chapters past a missed final goal, need no further plan.
   if (!count || story.brokenRoute || regularFinalGoalMissed(story, foundation)) return undefined;
   const arc = arcOf(story.head.nextChapterNumber);
   if (arc > count) return `All ${count} planned ${count === 1 ? 'arc is' : 'arcs are'} written: the route to the Destined Ending is complete. Chapter ${story.head.nextChapterNumber} would begin Arc ${arc}, which the novel's Blueprint never planned.`;
@@ -289,7 +303,7 @@ export function arcGoalEditState(story: HarnessStory, foundation: Pick<StoryFoun
   const denied = (reason: string, review?: HarnessArcGoalEditState['review']): HarnessArcGoalEditState =>
     ({ arcNumber, mode, status, editable: false, reason, ...(review ? { review } : {}), canAccept: false, lockedGoalIds, missedGoalIds });
   if (!plan) return denied(`Arc ${arcNumber} has no saved plan.`);
-  if (story.brokenRoute) return denied(`The route broke in Chapter ${story.brokenRoute.chapterNumber}, and the story is closing. No arc's goals change now.`);
+  if (story.brokenRoute) return denied(`The route broke in Chapter ${story.brokenRoute.chapterNumber}, and the next chapter ends the story. No arc's goals change now.`);
   if (status === 'completed') return denied(`Arc ${arcNumber} is complete. Its goals are part of the novel's history.`);
   if (lockedGoalIds.length === plan.goals.length) return denied(`Every goal in Arc ${arcNumber} is resolved.`);
 
@@ -310,7 +324,7 @@ export function arcGoalEditState(story: HarnessStory, foundation: Pick<StoryFoun
 
 /** Fate Survival: the arc about to be generated must have used its one-time review. */
 export function survivalArcReviewGap(story: HarnessStory, foundation: Pick<StoryFoundationInput, 'fateSurvival'>): string | undefined {
-  // Closing chapters begin no arc, so they need no review.
+  // The chapter that ends a broken route begins no arc, so it needs no review.
   if (harnessStoryMode(foundation) !== 'survival' || story.brokenRoute) return undefined;
   const arc = arcOf(story.head.nextChapterNumber);
   const review = arcGoalReview(story, arc);

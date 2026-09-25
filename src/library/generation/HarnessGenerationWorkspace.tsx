@@ -11,14 +11,14 @@ import { HarnessGenerationController, exportHarnessStory } from '@seihouse/sen/h
 import { findFoundationRevision, findStory } from '@seihouse/sen/harness-generation';
 import { buildCanonicalStoryView } from '@seihouse/sen/harness-generation';
 import { GENERATION_PACKET_BUDGET, PACKET_SECTION_ORDER } from '@seihouse/sen/harness-generation';
-import { CAPA_SCHEMA, HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS, harnessSkillKey } from '@seihouse/sen/harness-generation';
+import { CAPA_SCHEMA, HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS, SEN_FATE_SURVIVAL_SKILL, harnessSkillKey } from '@seihouse/sen/harness-generation';
 import { isTranslationSkillCompatible, translationTargetLanguage } from '@seihouse/sen/harness-generation';
 import { includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
 import { HarnessReaderSession } from '@seihouse/sen/harness-generation';
 import { type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
 import type { ReaderStateRepository } from '@seihouse/sen/reader-runtime';
 import { NovelBlueprintTab } from './NovelBlueprintTab';
-import { type HarnessGenerationAttempt, type HarnessGenerationModelAdapter, type HarnessGenerationServerInfo, type HarnessCorrectionKind, type HarnessSemanticEvent, type HarnessStory, type HarnessSkillManifest, type HarnessSkillReference, type HarnessSkillSlotId, type HarnessStorySeedOption, type HarnessStorySeedSource, type HarnessWorkspaceState, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
+import { type HarnessGenerationAttempt, type HarnessGenerationModelAdapter, type HarnessGenerationServerInfo, type HarnessCorrectionKind, type HarnessSemanticEvent, type HarnessStory, type HarnessStoryMode, type HarnessSkillManifest, type HarnessSkillReference, type HarnessSkillSlotId, type HarnessStorySeedOption, type HarnessStorySeedSource, type HarnessWorkspaceState, type StoryFoundationInput } from '@seihouse/sen/harness-generation';
 
 export interface HarnessGenerationWorkspaceProps {
   /** Host-selected first-party records; never a built-in SEN catalog. */
@@ -221,6 +221,7 @@ function AttemptStatus({
 
 function SkillLoadoutPanel({
   story,
+  fateMode,
   installedSkills,
   busy,
   onChange,
@@ -228,6 +229,8 @@ function SkillLoadoutPanel({
   onInstalled,
 }: {
   story: HarnessStory;
+  /** The story's Fate mode, which fills the mode-managed Fate slot. */
+  fateMode: HarnessStoryMode;
   installedSkills: HarnessSkillManifest[];
   busy: boolean;
   onChange: (slot: HarnessSkillSlotId, reference?: HarnessSkillReference) => void;
@@ -235,7 +238,9 @@ function SkillLoadoutPanel({
   onInstalled?: (slot: HarnessSkillSlotId, skill: HarnessSkillManifest) => Promise<void>;
 }) {
   const installedByKey = new Map(installedSkills.map(skill => [harnessSkillKey(skill), skill]));
-  const equippedCount = Object.keys(story.skillLoadout ?? {}).length;
+  // The Fate slot follows the story's Fate mode, so only hand-equipped slots count here.
+  const equippableSlots = CAPA_SCHEMA.filter(slot => !slot.managedBy);
+  const equippedCount = equippableSlots.filter(slot => story.skillLoadout?.[slot.id]).length;
   const missingCount = Object.values(story.skillLoadout ?? {})
     .filter(reference => reference && !installedByKey.has(harnessSkillKey(reference))).length;
 
@@ -252,7 +257,7 @@ function SkillLoadoutPanel({
           </p>
         </div>
         <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-cyan-100">
-          {equippedCount}/{CAPA_SCHEMA.length} equipped · 1 locked
+          {equippedCount}/{equippableSlots.length} equipped · 1 locked
         </span>
       </div>
 
@@ -264,6 +269,32 @@ function SkillLoadoutPanel({
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {CAPA_SCHEMA.map(slot => {
+          if (slot.managedBy === 'fate-mode') {
+            const active = fateMode === 'survival';
+            return (
+              <article key={slot.id} data-testid="harness-fate-slot" className={`rounded-xl border p-4 ${active ? 'border-cyan-300/30 bg-cyan-400/[0.07]' : 'border-white/10 bg-black/20'}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Puzzle size={16} className="shrink-0 text-cyan-200/75" aria-hidden="true" />
+                    <h3 className="text-sm font-semibold text-white">{slot.label}</h3>
+                  </div>
+                  <span className={`shrink-0 font-mono text-[9px] uppercase tracking-[0.12em] ${active ? 'text-cyan-100' : 'text-neutral-500'}`}>
+                    {active ? 'Loaded' : 'Not used'}
+                  </span>
+                </div>
+                <p className="mt-2 min-h-10 text-xs leading-relaxed text-neutral-500">{slot.description}</p>
+                <p className="mt-3 text-xs leading-relaxed text-neutral-300">{active
+                  ? `${SEN_FATE_SURVIVAL_SKILL.name} v${SEN_FATE_SURVIVAL_SKILL.version} loads on every chapter of this Fate Survival story.`
+                  : 'Regular Reader stories leave this slot empty. It follows the story\'s Fate mode and is never equipped by hand.'}</p>
+                {active && (
+                  <details className="mt-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+                    <summary className="cursor-pointer text-[11px] font-medium text-cyan-100">View skill instructions</summary>
+                    <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap break-words font-sans text-xs leading-relaxed text-neutral-300">{SEN_FATE_SURVIVAL_SKILL.instructions}</pre>
+                  </details>
+                )}
+              </article>
+            );
+          }
           const reference = story.skillLoadout?.[slot.id];
           const selectedKey = reference ? harnessSkillKey(reference) : '';
           const selected = reference ? installedByKey.get(selectedKey) : undefined;
@@ -1400,6 +1431,7 @@ export function HarnessGenerationWorkspace({
             {selectedStory && novelTab === 'novel' && (
               <SkillLoadoutPanel
                 story={selectedStory}
+                fateMode={selectedMode}
                 installedSkills={availableSkills}
                 busy={busy}
                 onChange={setSkillSlot}

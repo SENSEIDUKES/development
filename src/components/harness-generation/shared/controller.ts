@@ -1,7 +1,7 @@
 import { createArcChapterPosition, editArcPlan, validateArcPlan, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import { createMediaCatalog, emptyNarrativeMedia, type FrozenNarrativeMedia, type NarrativeMediaPort, type MediaResourceReference, type MediaSelectionSlot } from '../../../audio/media';
-import { arcGoalEditState, commitHarnessArc, harnessArcContext, harnessArcPlan, harnessStoryMode, needsArcPlan, readArcReply, roadmapPlanGap, storyConclusionGap, survivalArcReviewGap, withArcGoalReview, arcGoalReview } from './arcState';
+import { arcGoalEditState, commitHarnessArc, harnessArcContext, harnessArcPlan, harnessStoryMode, missingRequiredEnding, needsArcPlan, readArcReply, roadmapPlanGap, storyConclusionGap, survivalArcReviewGap, withArcGoalReview, arcGoalReview } from './arcState';
 import {
   createHarnessStory,
   findFoundationRevision,
@@ -19,6 +19,7 @@ import { appendHarnessCorrection, type AppendHarnessCorrectionInput } from './ca
 import { HarnessCapabilityRegistry } from './capabilities';
 import {
   CAPA_SCHEMA,
+  managedCapaSlotReason,
   assembleCapaPrompt,
   createHarnessSkillCatalog,
   freezeHarnessSkillLoadout,
@@ -293,6 +294,8 @@ export class HarnessGenerationController {
       for (const slot of CAPA_SCHEMA) {
         const reference = initialSkillLoadout[slot.id];
         if (!reference) continue;
+        const managed = managedCapaSlotReason(slot.id);
+        if (managed) throw new Error(managed);
         const manifest = resolveHarnessSkill(this.skillCatalog, reference);
         if (!manifest) throw new Error(`${slot.label} skill ${reference.id}@${reference.version} is not installed in this host.`);
         if (manifest.slot !== slot.id) throw new Error(`${manifest.name} cannot be equipped in the ${slot.label} slot.`);
@@ -385,7 +388,8 @@ export class HarnessGenerationController {
     this.assertHydrated();
     const story = findStory(this.state, storyId);
     if (!story) throw new Error('Open a Harness story before inspecting its Mission Reminder.');
-    return buildMissionReminder(assembleCapaPrompt(freezeHarnessSkillLoadout(story, this.skillCatalog, this.runtime.now())));
+    const mode = harnessStoryMode(findFoundationRevision(this.state, story.activeFoundationRevisionId)?.input);
+    return buildMissionReminder(assembleCapaPrompt(freezeHarnessSkillLoadout(story, this.skillCatalog, this.runtime.now(), mode)));
   }
 
   async setSkillSlot(
@@ -398,6 +402,8 @@ export class HarnessGenerationController {
     if (!CAPA_SCHEMA.some(definition => definition.id === slot)) {
       throw new Error(`${slot} is not a supported CAPA skill slot.`);
     }
+    const managed = managedCapaSlotReason(slot);
+    if (managed) throw new Error(managed);
     const candidate = cloneHarnessValue(this.state);
     const story = findStory(candidate, storyId);
     if (!story) throw new Error('Open a Harness story before changing its skills.');
@@ -767,8 +773,9 @@ export class HarnessGenerationController {
     // against exactly the inputs this attempt sends, and replays with them.
     const storyInformation = frozen ? cloneHarnessValue({ ...frozen.storyInformation, attemptId }) : compileStoryInformationPacket(this.state, story, foundation, attemptId, this.runtime);
     const immediateChapterRequest = frozen ? cloneHarnessValue(frozen.immediateChapterRequest) : buildImmediateChapterRequest(story);
+    // The Fate slot follows the chapter's frozen Fate mode: every Fate Survival call carries its skill.
     const capaPrompt = frozen ? cloneHarnessValue(frozen.capaPrompt) : assembleCapaPrompt(
-      freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt),
+      freezeHarnessSkillLoadout(story, this.skillCatalog, startedAt, storyInformation.storyDirection.fateMode ?? 'regular'),
       { storyInformation, immediateChapterRequest },
     );
     const mediaLoadout = frozen
@@ -796,7 +803,7 @@ export class HarnessGenerationController {
     const requestStarted = cloneHarnessValue(this.state);
     requestStarted.attempts.push(attempt);
     // Fate Survival: the arc's goals lock when its generation begins, in the
-    // same write as the request checkpoint. Closing chapters begin no arc.
+    // same write as the request checkpoint. The chapter ending a broken route begins no arc.
     const startedStory = findStory(requestStarted, storyId)!;
     const arcNumber = createArcChapterPosition(attempt.chapterNumber).arcNumber;
     if (harnessStoryMode(foundation.input) === 'survival' && !startedStory.brokenRoute && !arcGoalReview(startedStory, arcNumber)?.lockedAt) {
@@ -989,6 +996,12 @@ export class HarnessGenerationController {
     }
     if (!attempt.storyInformation.arc) {
       return this.appendFailure(attemptId, { stage: 'response', message: 'The frozen Story Information Packet has no authoritative Arc Plan.' });
+    }
+    // After a broken route, the chapter commits only when its prose shows the ending. Otherwise it
+    // stays uncommitted and its reader direction stays in place for the retry; no recovery call is made.
+    const missingEnding = missingRequiredEnding(attempt);
+    if (missingEnding) {
+      return this.appendFailure(attemptId, { stage: 'response', message: missingEnding.message }, missingEnding.warnings);
     }
 
     const committedAt = this.runtime.now();

@@ -142,8 +142,7 @@ export interface HarnessStory {
   earlierSteering?: HarnessEarlierSteering[];
   /**
    * Fate Survival: set once, when the route to the Destined Ending breaks. The
-   * story then has a closing stretch of at most `closingChapterLimit` chapters
-   * and never begins another arc.
+   * next chapter must end the story; it never begins another arc.
    */
   brokenRoute?: HarnessBrokenRoute;
   /** Set once when the story reaches or fails its Destined Ending. No chapter is written after it. */
@@ -194,6 +193,7 @@ export interface HarnessChapterRhythm {
 export type HarnessSkillSlotId =
   | 'author'
   | 'pacing'
+  | 'fate'
   | 'continuity'
   | 'style'
   | 'accessibility'
@@ -389,18 +389,16 @@ export interface HarnessMissedGoal {
 /**
  * Fate Survival: the route to the Destined Ending broke when this chapter
  * committed, because at least half of one arc's goals were missed or the
- * final goal was. The story then closes naturally within its closing stretch.
+ * final goal was. The next chapter must bring the story to its end.
  */
 export interface HarnessBrokenRoute {
-  /** The chapter whose commit broke the route. Closing chapters follow it. */
+  /** The chapter whose commit broke the route. The chapter after it must end the story. */
   chapterNumber: number;
   arcNumber: number;
   reason: 'arc-goals-missed' | 'final-goal-missed';
   goalsInArc: number;
   /** The arc's missed goals when it broke, in order. */
   missedGoals: HarnessMissedGoal[];
-  /** The most chapters the story may still write before it must have ended. */
-  closingChapterLimit: number;
   recordedAt: string;
 }
 
@@ -415,33 +413,30 @@ export type HarnessArcRoute =
   | { status: 'off-track'; missedGoals: HarnessMissedGoal[] }
   /** Regular Reader: the final goal was missed. The story keeps pursuing the Destined Ending, with no further goal. */
   | { status: 'past-final-goal'; missedGoals: HarnessMissedGoal[]; finalGoalMissedInChapter: number }
-  /** Fate Survival: the route broke; this chapter is one of its closing chapters. */
+  /** Fate Survival: the route broke, so this chapter must bring the story to its end. */
   | {
     status: 'broken';
     missedGoals: HarnessMissedGoal[];
     brokenInChapter: number;
     reason: HarnessBrokenRoute['reason'];
-    /** This chapter's place in the closing stretch, from 1. */
-    closingChapter: number;
-    closingChapterLimit: number;
   };
 
 /** The Active Arc Goal section: the Arc Plan authority for one chapter, with where the story stands on its route. */
 export type HarnessArcContext = import('../components/arc-goals/shared/arcGoals').ArcGenerationContext & { route?: HarnessArcRoute };
 
 /**
- * How the story ended. Regular Reader mode never fails its fate: it ends by
- * reaching the Destined Ending, on its final goal or, after that goal was
- * missed, by pursuing the ending until the prose reaches it. Fate Survival
- * may also end in failure: the writer shows the story ending with a verbatim
- * passage (a fatal ending, or the close of a broken route), or the broken
- * route's closing stretch runs out.
+ * How the story ended, recorded only when committed prose shows it. Regular
+ * Reader mode never fails its fate: it ends by reaching the Destined Ending,
+ * on its final goal or, after that goal was missed, by pursuing the ending
+ * until the prose reaches it. Fate Survival may also end in failure, when the
+ * writer shows the story ending with a verbatim passage: a fatal ending at any
+ * point, or the ending the chapter after a broken route must write.
  */
 export interface HarnessStoryConclusion {
   outcome: 'destined-ending-reached' | 'fate-failed';
-  reason: 'final-goal-completed' | 'reached-after-final-goal-missed' | 'story-ended' | 'closing-limit-reached';
+  reason: 'final-goal-completed' | 'reached-after-final-goal-missed' | 'story-ended';
   chapterNumber: number;
-  /** The verbatim passage that shows it. Empty when the closing stretch ran out. */
+  /** The verbatim passage from the committed prose that shows it. */
   evidence: string;
   recordedAt: string;
 }

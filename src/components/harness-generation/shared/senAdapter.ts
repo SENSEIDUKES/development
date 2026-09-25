@@ -201,8 +201,8 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
     originalLanguage: story.originalLanguage,
     customPremise: foundation?.input.premise ?? '', createdAt: story.createdAt, updatedAt: story.updatedAt,
     // Chapters' arcs plus the arc the next chapter opens, when it has a saved plan.
-    // A roadmap's later arcs stay out of the Reader until they begin; closing
-    // chapters and chapters past a missed final goal stay in the arc they continue.
+    // A roadmap's later arcs stay out of the Reader until they begin; the chapter
+    // ending a broken route and chapters past a missed final goal stay in the arc they continue.
     memory, arcs: Array.from(new Set([...readerChapters.map(chapter => chapterArc(chapter.number)), ...((!historical && harnessArcPlan(story, chapterArc(story.head.nextChapterNumber))) ? [chapterArc(story.head.nextChapterNumber)] : [])])).sort((left, right) => left - right).map(arcNumber => {
       const arcChapters = readerChapters.filter(chapter => chapterArc(chapter.number) === arcNumber);
       const position = historical ? Math.min(throughChapter, arcChapters.at(-1)?.number ?? throughChapter) : story.head.nextChapterNumber;

@@ -126,7 +126,7 @@ export function SppSkillImport({ busy, destinationSlot, onInstall }: {
             <select id={fieldId('slot')} value={slot} disabled={disabled} onChange={event => {
               setChosenSlot(event.target.value as HarnessSkillSlotId); setError(''); setMessage('');
             }} className="min-h-11 w-full rounded-lg bg-neutral-900 px-3 text-sm text-white">
-              {CAPA_SCHEMA.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+              {CAPA_SCHEMA.filter(item => !item.managedBy).map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
             </select>
           </>}
 

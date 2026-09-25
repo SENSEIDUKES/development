@@ -55,11 +55,17 @@ existing Chapter Generation feature.
   the writer is never pushed into claiming success to save a chapter. The mode
   decides what a miss means (see "Fate modes" below): off track in Regular Reader
   mode, where a missed final goal lets the story continue past its roadmap toward
-  the same Destined Ending; a broken route and a closing stretch of at most five
-  chapters in Fate Survival. The writer can report, with a verbatim passage, that
-  a Survival chapter completes the story's ending (`storyEnded`, for example a
-  death). An ended story writes and plans nothing more; no successor destiny is
-  planned. The
+  the same Destined Ending; a broken route in Fate Survival, after which the next
+  chapter must end the story and is saved only when its prose shows that ending.
+  The writer reports, with a verbatim passage, that a Survival chapter completes
+  the story's ending (`storyEnded`, for example a death); a story ends only when
+  committed prose shows it, never on a chapter count, a broken route alone, or an
+  unsupported claim. Every Fate Survival chapter call carries SEN's Fate Survival
+  CAPA skill (`shared/fateSurvivalSkill.ts`) in the new mode-managed Fate slot:
+  follow the reader's direction, pursue goals and the ending without forcing
+  success, let consequences stand, and write the ending when the route breaks.
+  An ended story writes and plans nothing more; no successor destiny is planned.
+  The
   retired Survival visibility and Blueprint mystery/thread proposals, their
   packet section, `steerStory`, `revise-history` and the `NEXT CHAPTER ASSIGNMENT`
   wording are removed. Schema 20 migrates saved stories: a direction given since
@@ -492,19 +498,22 @@ error in both places and keeps the chosen direction for the retry.
 
 Both modes record every Arc Goal honestly. A goal is achieved only when the writer
 reports it with a verbatim passage from the chapter; when its deadline chapter
-commits without that, it is recorded as missed. Every chapter commits; nothing
-waits for the writer to claim success. `commitHarnessArc` applies the rest, in the
-same write as the chapter:
+commits without that, it is recorded as missed. A chapter never waits for the
+writer to claim a goal. The one chapter that can be held back is the one a broken
+Fate Survival route requires to end the story: `missingRequiredEnding` keeps it
+uncommitted until its prose shows that ending. `commitHarnessArc` applies the
+rest, in the same write as the chapter:
 
 | | Regular Reader | Fate Survival |
 | --- | --- | --- |
 | Who directs | Fate (Rhythm) by default; the reader may take any chapter | The reader, every chapter |
+| Fate CAPA skill | None: the mode-managed Fate slot stays empty | SEN Fate Survival, loaded on every chapter call |
 | Destined Ending | Guaranteed as the standing direction: every chapter pursues it; nothing forces the prose to reach it | Not guaranteed |
 | A missed goal | The story is off track; the next goal begins; no consequence | Counted within its arc; the next goal begins |
 | Route breaks | Never | When at least half of one arc's goals are missed (`goalsThatBreakRoute`: 1 of 1 or 2, 2 of 3 or 4, 3 of 5) or the final goal is missed (`HarnessStory.brokenRoute`) |
 | Missed final goal | No ending is recorded. The story continues past its roadmap with that goal still its destination and no deadline (`route.status: 'past-final-goal'`); no arc or goal is invented. When the prose reaches the Destined Ending the story concludes (`reached-after-final-goal-missed`) | The route breaks (`final-goal-missed`) |
-| After the route breaks | — | A closing stretch of at most `SURVIVAL_CLOSING_CHAPTER_LIMIT` (5) chapters, still reader-directed, with the failed-route context (`route.status: 'broken'`). The writer ends the story as soon as the prose earns it; closing chapters may pass the arc's planned end but never begin, plan, review or lock another arc |
-| The story ends | The final goal achieved (`final-goal-completed`) | The final goal achieved; the writer shows the story ending with a verbatim passage (`story-ended`: a fatal ending at any point, or the close of a broken route, which needs no extra chapters when already complete); or the last closing chapter commits (`closing-limit-reached`) |
+| After the route breaks | — | The next chapter must end the story (`route.status: 'broken'`, and the Fate Survival skill's ending rule). The reader still directs it. It commits only when its prose shows the ending (`storyEnded` with a verbatim passage); otherwise it is not saved, its direction stays in place, and the reader tries again. No recovery call is made. It may pass the arc's planned end but never begins, plans, reviews or locks another arc. A chapter that breaks the route and already shows a genuine ending ends the story at once |
+| The story ends | The final goal achieved (`final-goal-completed`) | Only when committed prose shows it: the final goal achieved, or the writer's verbatim passage showing the ending (`story-ended`: a fatal ending at any point, or the ending a broken route requires). A chapter count, a broken route alone, or an unsupported claim never ends it |
 
 After `HarnessStory.conclusion` is set no chapter is written or planned. How a
 Regular reader might later change the Destined Ending, and any "continue this

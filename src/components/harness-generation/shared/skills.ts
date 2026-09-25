@@ -1,11 +1,18 @@
 import { cloneHarnessValue } from './ids';
 import { buildSelectedTranslationGlossary, isTranslationSkillCompatible, presentSelectedTranslationGlossary, translationCompatibilityError, translationMatchSource, translationTargetLanguage, validateTranslationSkillMetadata } from '../../../narrative/translationSkill';
-import type { CapaPrompt, HarnessSelectedTranslationGlossary, HarnessSkillLoadoutSnapshot, HarnessSkillApplication, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId, HarnessStory, ImmediateChapterRequest, StoryInformationPacket } from '../../../narrative/generation';
+import type { CapaPrompt, HarnessSelectedTranslationGlossary, HarnessSkillLoadoutSnapshot, HarnessSkillApplication, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId, HarnessStory, HarnessStoryMode, ImmediateChapterRequest, StoryInformationPacket } from '../../../narrative/generation';
+import { SEN_FATE_SURVIVAL_SKILL } from './fateSurvivalSkill';
 
 export interface CapaSlotDefinition {
   id: HarnessSkillSlotId;
   label: string;
   description: string;
+  /**
+   * `fate-mode`: the HARNESS fills this slot from the story's Fate mode on every
+   * chapter call (SEN's Fate Survival skill in Fate Survival, nothing in Regular
+   * Reader mode). It is never equipped by hand.
+   */
+  managedBy?: 'fate-mode';
 }
 
 /**
@@ -17,6 +24,7 @@ export interface CapaSlotDefinition {
 export const CAPA_SCHEMA: readonly CapaSlotDefinition[] = [
   { id: 'author', label: 'Author', description: 'Defines how the writing model approaches and writes the chapter.' },
   { id: 'pacing', label: 'Pacing', description: 'Controls event spacing, arc pressure, and payoff timing.' },
+  { id: 'fate', label: 'Fate', description: 'Carries the Fate mode\'s writing rules: the reader\'s direction, honest pursuit, lasting consequences, and endings.', managedBy: 'fate-mode' },
   { id: 'continuity', label: 'Continuity', description: 'Adds specialized canon and long-range consistency guidance.' },
   { id: 'style', label: 'Style', description: 'Shapes prose tradition, voice, rhythm, and presentation.' },
   { id: 'accessibility', label: 'Accessibility', description: 'Adapts reading and generation for specific access needs.' },
@@ -30,6 +38,11 @@ const HARNESS_SKILL_APPLICATIONS: readonly HarnessSkillApplication[] = [
 ];
 
 export const harnessSkillKey = (reference: HarnessSkillReference) => `${reference.id}@${reference.version}`;
+
+/** Why a slot cannot be equipped by hand, when it cannot. */
+export const managedCapaSlotReason = (slot: HarnessSkillSlotId) => CAPA_SCHEMA.find(definition => definition.id === slot)?.managedBy === 'fate-mode'
+  ? 'The Fate slot follows the story\'s Fate mode: Fate Survival loads its skill on every chapter, and Regular Reader mode leaves it empty.'
+  : undefined;
 export const HARNESS_SKILL_INSTRUCTION_LIMIT = 16_000;
 
 const nonEmpty = (value: string, label: string) => {
@@ -88,6 +101,8 @@ export const freezeHarnessSkillLoadout = (
   story: HarnessStory,
   catalog: ReadonlyMap<string, HarnessSkillManifest>,
   capturedAt: string,
+  /** The Fate mode of the chapter being frozen. Fate Survival loads its skill into the Fate slot. */
+  fateMode: HarnessStoryMode = 'regular',
 ): HarnessSkillLoadoutSnapshot => {
   const unsupportedSlot = Object.keys(story.skillLoadout ?? {})
     .find(slot => !CAPA_SCHEMA.some(definition => definition.id === slot));
@@ -95,6 +110,13 @@ export const freezeHarnessSkillLoadout = (
     throw new Error(`${unsupportedSlot} is not a supported CAPA skill slot.`);
   }
   const skills = CAPA_SCHEMA.flatMap(slot => {
+    // A mode-managed slot ignores the story's loadout: its skill follows the Fate mode.
+    if (slot.managedBy === 'fate-mode') {
+      if (fateMode !== 'survival') return [];
+      const manifest = resolveHarnessSkill(catalog, SEN_FATE_SURVIVAL_SKILL);
+      if (!manifest) throw new Error('The Fate Survival skill is not installed in this host, so a Fate Survival chapter cannot be written.');
+      return [cloneHarnessValue(manifest)];
+    }
     const reference = story.skillLoadout?.[slot.id];
     if (!reference) return [];
     const manifest = resolveHarnessSkill(catalog, reference);

@@ -152,7 +152,7 @@ describe('The Fate page in the HARNESS Reader', { timeout: 20_000 }, () => {
     const page = fatePage();
     expect(page.textContent).toContain('Fate Survival');
     expect(page.textContent).toContain('Not guaranteed.');
-    expect(page.textContent).toContain('breaks the route, and the story then closes within 5 chapters');
+    expect(page.textContent).toContain('breaks the route, and the next chapter ends the story');
     // Two goals: missing one of them is half, so this goal's miss would break the route.
     expect(page.querySelector('[data-testid="fate-route"]')!.textContent).toBe('Missed in this arc: 0 of 2. One more miss breaks the route.');
     const chooser = page.querySelector('[data-testid="fate-path-chooser"]')!;
@@ -279,22 +279,25 @@ describe('Where the route stands on the Fate page', { timeout: 20_000 }, () => {
     expect(page.querySelector('[data-testid="fate-path-chooser"]')!.textContent).toContain('Chapter 101 follows fate unless you choose otherwise.');
   });
 
-  it('Fate Survival with a broken route: the closing stretch, still directed by the reader, then how it ended', async () => {
-    const brokenRoute = { chapterNumber: 20, arcNumber: 1, reason: 'arc-goals-missed' as const, goalsInArc: 2, closingChapterLimit: 5, recordedAt: 'then',
+  it('Fate Survival with a broken route: the next chapter must end the story, still directed by the reader, then how it ended', async () => {
+    const brokenRoute = { chapterNumber: 20, arcNumber: 1, reason: 'arc-goals-missed' as const, goalsInArc: 2, recordedAt: 'then',
       missedGoals: [{ goalId: 'arc-1-bells', text: 'Ring the drowned bells again.', chapterNumber: 20 }] };
-    const page = await showFateAt({ fateSurvival: { enabled: true } }, 22, [{ goalId: 'arc-1-bells', chapterNumber: 20, outcome: 'missed' }],
+    const page = await showFateAt({ fateSurvival: { enabled: true } }, 21, [{ goalId: 'arc-1-bells', chapterNumber: 20, outcome: 'missed' }],
       story => { story.brokenRoute = brokenRoute; });
     const card = page.querySelector('[data-testid="fate-arc-goal"]')!;
     expect(card.textContent).toContain('Route broken');
     expect(card.textContent).toContain('1 of Arc 1\'s 2 goals were missed by Chapter 20');
-    expect(card.querySelector('[data-testid="fate-arc-goal-status"]')!.textContent).toBe('Chapter 22 is closing chapter 2 of 5. The story ends as soon as the prose earns it.');
-    expect(page.querySelector('[data-testid="fate-path-chooser"]')!.textContent).toContain('You still direct each closing chapter');
+    expect(card.querySelector('[data-testid="fate-arc-goal-status"]')!.textContent)
+      .toBe('Chapter 21 must bring the story to its end. It is saved only when its prose shows that ending; if it does not, try again with the same direction.');
+    expect(page.textContent).not.toMatch(/closing chapter|closing stretch/i);
+    expect(page.querySelector('[data-testid="fate-path-chooser"]')!.textContent).toContain('Your direction for this chapter leads the story to its end');
 
-    const closed = await showFateAt({ fateSurvival: { enabled: true } }, 26, [{ goalId: 'arc-1-bells', chapterNumber: 20, outcome: 'missed' }], story => {
+    const closed = await showFateAt({ fateSurvival: { enabled: true } }, 22, [{ goalId: 'arc-1-bells', chapterNumber: 20, outcome: 'missed' }], story => {
       story.brokenRoute = brokenRoute;
-      story.conclusion = { outcome: 'fate-failed', reason: 'closing-limit-reached', chapterNumber: 25, evidence: '', recordedAt: 'now' };
+      story.conclusion = { outcome: 'fate-failed', reason: 'story-ended', chapterNumber: 21, evidence: 'The drowned bells rang once over Mara\'s grave.', recordedAt: 'now' };
     });
-    expect(closed.querySelector('[data-testid="fate-conclusion"]')!.textContent).toContain('The route had broken, and the story closed in Chapter 25, the last of its closing chapters.');
+    expect(closed.querySelector('[data-testid="fate-conclusion"]')!.textContent).toContain('The story ended in Chapter 21, and the Destined Ending was never reached.');
+    expect(closed.querySelector('[data-testid="fate-conclusion"]')!.textContent).toContain('The drowned bells rang once over Mara\'s grave.');
     expect(closed.querySelector('[data-testid="fate-path-chooser"]')).toBeNull();
   });
 });

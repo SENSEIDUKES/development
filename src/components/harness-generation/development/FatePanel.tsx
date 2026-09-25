@@ -13,7 +13,7 @@ import {
   type HarnessStoryMode,
   type StoryFoundationInput,
 } from '../../../narrative/generation';
-import { SURVIVAL_CLOSING_CHAPTER_LIMIT, arcGoalEditState, goalsThatBreakRoute, harnessArcContext, harnessStoryMode } from '../shared/arcState';
+import { arcGoalEditState, goalsThatBreakRoute, harnessArcContext, harnessStoryMode } from '../shared/arcState';
 import { pendingChapterDirection } from '../shared/chapterDirection';
 
 /** Reader-facing names for Rhythm's three chapter functions. */
@@ -59,8 +59,8 @@ function MissedGoalList({ goals }: { goals: HarnessMissedGoal[] }) {
 /**
  * The story's active Arc Goal, read from the one Arc Goal authority
  * (`harnessArcContext`), with where the story stands on its route: on track,
- * off track, past a missed final goal (Regular Reader), or broken and closing
- * (Fate Survival).
+ * off track, past a missed final goal (Regular Reader), or broken, so the
+ * next chapter ends the story (Fate Survival).
  */
 export function FateArcGoalCard({ story, foundation, generatedThrough, actions }: {
   story: HarnessStory;
@@ -101,7 +101,6 @@ export function FateArcGoalCard({ story, foundation, generatedThrough, actions }
   );
 
   if (route?.status === 'broken') {
-    const last = route.closingChapter >= route.closingChapterLimit;
     return (
       <div className="rounded-xl border border-amber-300/40 bg-amber-400/10 p-4" data-testid="fate-arc-goal">
         <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-200/70">Route broken · Arc {context.arcNumber}</p>
@@ -113,9 +112,7 @@ export function FateArcGoalCard({ story, foundation, generatedThrough, actions }
         </p>
         <MissedGoalList goals={route.missedGoals} />
         <p className="mt-3 text-xs text-amber-100" data-testid="fate-arc-goal-status">
-          Chapter {nextChapter} is closing chapter {route.closingChapter} of {route.closingChapterLimit}. {last
-            ? 'It is the last: the story ends in it.'
-            : 'The story ends as soon as the prose earns it.'}
+          Chapter {nextChapter} must bring the story to its end. It is saved only when its prose shows that ending; if it does not, try again with the same direction.
         </p>
         {planControls}
       </div>
@@ -240,7 +237,7 @@ export function FatePathChooser({ story, foundation, chapters, busy = false, foc
         {mode === 'regular'
           ? 'Fate decides each chapter by default. To intervene, take one of four paths: one of the writer’s three suggested directions, or your own. Your choice directs this one chapter and is used up once the chapter is saved.'
           : story.brokenRoute
-            ? 'The route is broken. You still direct each closing chapter, and the writer brings the story to its end as soon as the prose earns it.'
+            ? 'The route is broken. Your direction for this chapter leads the story to its end: the writer brings it to a believable ending here.'
             : 'You direct every chapter. Fate offers no paths here: the writer follows your direction and the story answers honestly, so success is never guaranteed.'}
       </p>
       <p className="mt-3 text-xs text-neutral-300" data-testid="fate-path-current">
@@ -290,7 +287,6 @@ const CONCLUSION_TEXT: Record<HarnessStoryConclusion['reason'], (chapterNumber: 
   'final-goal-completed': chapter => `The story reached its Destined Ending in Chapter ${chapter}.`,
   'reached-after-final-goal-missed': chapter => `The story reached its Destined Ending in Chapter ${chapter}, after its final goal was missed.`,
   'story-ended': chapter => `The story ended in Chapter ${chapter}, and the Destined Ending was never reached.`,
-  'closing-limit-reached': chapter => `The route had broken, and the story closed in Chapter ${chapter}, the last of its closing chapters. The Destined Ending was never reached.`,
 };
 
 /** How the story ended, when it has. */
@@ -317,7 +313,7 @@ export function FateDestinedEnding({ foundation }: { foundation?: StoryFoundatio
       <p className={eyebrow}>Destined Ending</p>
       <p className="mt-2 break-words text-sm leading-relaxed text-neutral-100">{foundation?.destinedEnding?.trim() || 'Not set yet. It is established before the first chapter.'}</p>
       <p className="mt-2 text-xs text-neutral-400">{mode === 'survival'
-        ? `Not guaranteed. Your choices decide whether the story reaches it; it can fail, even by death. Missing at least half of an arc's goals, or the final goal, breaks the route, and the story then closes within ${SURVIVAL_CLOSING_CHAPTER_LIMIT} chapters.`
+        ? `Not guaranteed. Your choices decide whether the story reaches it; it can fail, even by death. Missing at least half of an arc's goals, or the final goal, breaks the route, and the next chapter ends the story.`
         : 'Guaranteed as the story\'s standing direction: every chapter pursues it. A missed goal puts the story off track, but never fails its fate.'}</p>
     </div>
   );

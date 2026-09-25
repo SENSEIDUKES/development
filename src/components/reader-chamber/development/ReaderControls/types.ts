@@ -34,9 +34,9 @@ export interface ImmersionPreferences {
 }
 
 /**
- * The Comments entry reuses the Chronicle Anchors (bookmarks) panel until the
- * full comments system replaces it — `open`/`onToggle` drive that same drawer
- * and `count` carries the anchor badge.
+ * The Mind Palace entry — `open`/`onToggle` drive the drawer of passages the
+ * reader kept, and `count` carries their badge. (Named `comments` for the
+ * earlier placeholder use of this bottom-bar slot.)
  */
 export interface CommentsControl {
   open: boolean;

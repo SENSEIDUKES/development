@@ -1,3 +1,4 @@
+import { createAnchoredBookmark, resolveBookmarkIndex, type MindPalaceBlock } from '../shared/mindPalace';
 import { generateId } from '../../../narrative/id';
 import {
   normalizeSenLanguageCode,
@@ -23,7 +24,6 @@ import { ParticleSystem } from "./ParticleSystem";
 import { useReaderStore } from '../../../narrative/readerRuntime';
 import { selectIsGenerating } from '../../../narrative/readerRuntime';
 import { useReaderRuntime } from '../../../narrative/readerRuntime';
-import { AlterFatePanel } from "./AlterFatePanel";
 import { ReaderSettings } from "./ReaderSettings";
 import { CosmicBookmarksPanel } from "./CosmicBookmarksPanel";
 import { useReaderPlayback } from '../../../narrative/readerRuntime';
@@ -36,7 +36,6 @@ import { ReaderControls } from "./ReaderControls";
 import { useCinematicScroll } from '../../../narrative/readerRuntime';
 import { cinematicEffectGovernor } from "../shared/effects/cinematicEffectGovernor";
 import { useReadingPosition } from '../../../narrative/readerRuntime';
-import { getFateLockMessage } from '../shared/alterFateLock';
 import { DEFAULT_READER_TYPOGRAPHY } from '../shared/readerTypography';
 import { CodexHovercard } from '../../reader-codex/development/CodexHovercard';
 import {
@@ -46,7 +45,6 @@ import {
 
 interface ReaderChamberProps {
   chapters: ReaderChapter[];
-  currentPowerStage: string;
   onGenerateChapter: (chapterNumber: number) => Promise<void>;
   onGenerateNextFiveChapters: (fromChapterNumber: number) => Promise<void>;
   isGenerating: boolean;
@@ -63,11 +61,11 @@ interface ReaderChamberProps {
    * this list and never reads a host inventory directly.
    */
   installedSkills?: HarnessSkillManifest[];
-  handleAlterFate?: (
-    chapterNumber: number,
-    direction: string,
-    customPrompt: string,
-  ) => Promise<void>;
+  /**
+   * Opens the host's Fate page, where the reader sees where the story is headed
+   * and chooses the next chapter's path. Absent when the host has none.
+   */
+  onOpenFate?: () => void;
   handleSealChapter?: (chapterNumber: number) => Promise<void>;
   handleCheckConsistency?: (chapterNumber: number) => Promise<string[]>;
 }
@@ -112,7 +110,6 @@ export function getReaderChamberSurfaceClass(
 
 export default function ReaderChamber({
   chapters,
-  currentPowerStage,
   onGenerateChapter,
   onGenerateNextFiveChapters,
   isGenerating,
@@ -125,7 +122,7 @@ export default function ReaderChamber({
   activeStory,
   updateStoryFields,
   installedSkills,
-  handleAlterFate,
+  onOpenFate,
   handleSealChapter,
   handleCheckConsistency,
 }: ReaderChamberProps) {
@@ -156,8 +153,6 @@ export default function ReaderChamber({
   // WORKSHOP: dropped unused production selectors (stories, activeStoryId,
   // saveStories, routingConfig) — nothing in the chamber reads them.
 
-  const [isAlterFateOpen, setIsAlterFateOpen] = useState(false);
-  const [showFateCodex, setShowFateCodex] = useState(false);
   const [isCheckingConsistency, setIsCheckingConsistency] = useState(false);
   const [consistencyWarnings, setConsistencyWarnings] = useState<string[] | null>(null);
   const readerRef = useRef<HTMLDivElement>(null);
@@ -602,14 +597,19 @@ export default function ReaderChamber({
     return () => target.removeEventListener("scroll", handleScroll);
   }, [showReaderSettings, selectedChapterNum, activeStory.id]);
 
-  // --- Cosmic Bookmarking System States & Handlers ---
+  // --- Mind Palace (anchored passage bookmarks): states & handlers ---
   const [showBookmarksPanel, setShowBookmarksPanel] = useState(false);
   const [editingBookmarkParagraphIndex, setEditingBookmarkParagraphIndex] =
     useState<number | null>(null);
   const [bookmarkNoteText, setBookmarkNoteText] = useState("");
-  const [pendingScrollToParagraph, setPendingScrollToParagraph] = useState<
-    number | null
-  >(null);
+  const [pendingBookmark, setPendingBookmark] = useState<Bookmark | null>(null);
+  const [mindPalaceNotice, setMindPalaceNotice] = useState<string | null>(null);
+  // The canonical blocks of the open chapter, in the same order the Reader
+  // shows them (a translation overlays text but never reorders blocks).
+  const mindPalaceBlocks = useMemo<MindPalaceBlock[]>(() => selectedChapter.blocks
+    ?? (selectedChapter.generatedContent || '').split('\n\n').map(text => ({ text })),
+  [selectedChapter.blocks, selectedChapter.generatedContent]);
+
 
   const renderHighlightedText = React.useCallback((text: string, paragraphIndex: number) => {
     const isPlaying = isPlayingText || isPausedText;
@@ -734,16 +734,22 @@ export default function ReaderChamber({
     setIsReaderFullscreen(!isReaderFullscreen);
   };
 
-  // Scroll to paragraph effect
+  // Mind Palace jump: go only to the block that still holds the saved
+  // passage. When the chapter no longer has it, say so instead of guessing.
   useEffect(() => {
     if (
-      pendingScrollToParagraph !== null &&
+      pendingBookmark !== null &&
+      pendingBookmark.chapterNumber === selectedChapter.number &&
       (selectedChapter.generatedContent || selectedChapter.blocks)
     ) {
+      const target = resolveBookmarkIndex(pendingBookmark, selectedChapter.number, mindPalaceBlocks);
+      if (target === undefined) {
+        setMindPalaceNotice(`This passage is no longer in Chapter ${pendingBookmark.chapterNumber}, so the Mind Palace cannot take you to it.`);
+        setPendingBookmark(null);
+        return;
+      }
       const timer = setTimeout(() => {
-        const element = document.getElementById(
-          `para-${pendingScrollToParagraph}`,
-        );
+        const element = document.getElementById(`para-${target}`);
         if (element) {
           // Programmatic scrollIntoView does NOT fire wheel/touchstart events,
           // so explicitly yield the cinematic scroll controller.
@@ -766,12 +772,14 @@ export default function ReaderChamber({
             );
           }, 3000);
         }
-        setPendingScrollToParagraph(null);
+        setPendingBookmark(null);
       }, 150);
       return () => clearTimeout(timer);
     }
   }, [
-    pendingScrollToParagraph,
+    pendingBookmark,
+    mindPalaceBlocks,
+    selectedChapter.number,
     selectedChapterNum,
     selectedChapter.generatedContent,
     selectedChapter.blocks,
@@ -802,51 +810,36 @@ export default function ReaderChamber({
 
   const activeBookmarks = activeStory.bookmarks || [];
 
-  const handleSaveBookmark = (
-    paraIdx: number,
-    excerpt: string,
-    noteText: string,
-  ) => {
-    const bookmark: Bookmark = {
-      id: generateId(7),
-      chapterNumber: selectedChapter.number,
-      paragraphIndex: paraIdx,
-      paragraphExcerpt: excerpt.substring(0, 150),
-      note: noteText,
-      createdAt: new Date().toISOString(),
-    };
+  /** Keeps the passage at this block in the Mind Palace, or updates the note of the one already kept there. */
+  const handleSaveBookmark = (paraIdx: number, noteText: string) => {
+    const block = mindPalaceBlocks[paraIdx];
+    if (!block?.text.trim()) return;
+    const chapterNumber = selectedChapter.number;
     void updateStoryFields(activeStory.id, (current) => {
       const bookmarks = Array.isArray(current.bookmarks) ? current.bookmarks : [];
-      const hasExistingBookmark = bookmarks.some((candidate) => (
-        candidate.chapterNumber === bookmark.chapterNumber
-        && candidate.paragraphIndex === bookmark.paragraphIndex
-      ));
+      const existing = bookmarks.find(candidate => resolveBookmarkIndex(candidate, chapterNumber, mindPalaceBlocks) === paraIdx);
       return {
-        bookmarks: hasExistingBookmark
-          ? bookmarks.map((candidate) => (
-            candidate.chapterNumber === bookmark.chapterNumber
-            && candidate.paragraphIndex === bookmark.paragraphIndex
-              ? { ...candidate, note: noteText }
-              : candidate
-          ))
-          : [...bookmarks, bookmark],
+        bookmarks: existing
+          ? bookmarks.map(candidate => candidate.id === existing.id ? { ...candidate, note: noteText.trim() || undefined } : candidate)
+          : [...bookmarks, createAnchoredBookmark({
+            id: generateId(7), chapterNumber, index: paraIdx, block, note: noteText, createdAt: new Date().toISOString(),
+          })],
       };
     });
     setEditingBookmarkParagraphIndex(null);
     setBookmarkNoteText("");
   };
 
-  const handleRemoveBookmark = (chapterNum: number, paraIdx: number) => {
+  const handleRemoveBookmark = (bookmarkId: string) => {
     void updateStoryFields(activeStory.id, (current) => ({
-      bookmarks: (Array.isArray(current.bookmarks) ? current.bookmarks : []).filter(
-        (bookmark) => !(bookmark.chapterNumber === chapterNum && bookmark.paragraphIndex === paraIdx),
-      ),
+      bookmarks: (Array.isArray(current.bookmarks) ? current.bookmarks : []).filter(bookmark => bookmark.id !== bookmarkId),
     }));
   };
 
   const handleJumpToBookmark = (b: Bookmark) => {
+    setMindPalaceNotice(null);
     setSelectedChapterNum(b.chapterNumber);
-    setPendingScrollToParagraph(b.paragraphIndex);
+    setPendingBookmark(b);
     setShowBookmarksPanel(false);
   };
 
@@ -859,8 +852,6 @@ export default function ReaderChamber({
     if (isGenerating || selectIsGenerating(runtime.store.getSnapshot()) || !runtime.canGenerate(activeStory.id)) return;
     onGenerateNextFiveChapters(selectedChapter.number);
   };
-
-  const alterFateLockMessage = getFateLockMessage(activeStory, selectedChapterNum);
 
   const handleExportText = () => {
     let textToExport = selectedChapter.generatedContent || "";
@@ -990,8 +981,7 @@ export default function ReaderChamber({
           onOpenAudioControls={handleOpenAudioControls}
           showReaderSettings={showReaderSettings}
           setShowReaderSettings={setShowReaderSettings}
-          onAlterFate={handleAlterFate ? () => setIsAlterFateOpen(true) : undefined}
-          alterFateLockMessage={alterFateLockMessage}
+          onOpenFate={onOpenFate}
           getHeaderThemeClasses={getHeaderThemeClasses}
           isVisible={isHeaderVisible}
         />
@@ -1066,7 +1056,6 @@ export default function ReaderChamber({
         preferredLang={preferredLang}
         selectedChapter={selectedChapter}
         activeStory={activeStory}
-        currentPowerStage={currentPowerStage}
         selectedChapterNum={selectedChapterNum}
         maxChapterNum={maxChapterNum}
         
@@ -1114,8 +1103,6 @@ export default function ReaderChamber({
         handleGenerateNextFive={handleGenerateNextFive}
         activeAgentId={activeAgentId}
         
-        showFateCodex={showFateCodex}
-        setShowFateCodex={setShowFateCodex}
         showLegend={showLegend}
         setShowLegend={(show) => {
           setShowLegend(show);
@@ -1149,7 +1136,14 @@ export default function ReaderChamber({
         }}
       />
 
-      {/* THE CHRONICLE ANCHORS (BOOKMARKS DRAW PANEL) */}
+      {mindPalaceNotice && (
+        <div role="status" className="fixed inset-x-3 bottom-24 z-50 mx-auto flex max-w-md items-start gap-3 rounded-lg border border-amber-300/40 bg-neutral-950/95 p-3 text-xs text-amber-100 shadow-xl sm:inset-x-auto sm:right-6">
+          <span className="min-w-0 flex-1">{mindPalaceNotice}</span>
+          <button type="button" onClick={() => setMindPalaceNotice(null)} className="min-h-11 shrink-0 px-2 text-neutral-300 hover:text-signal" aria-label="Dismiss Mind Palace notice">Dismiss</button>
+        </div>
+      )}
+
+      {/* MIND PALACE (passage drawer) */}
       <CosmicBookmarksPanel
         showBookmarksPanel={showBookmarksPanel}
         setShowBookmarksPanel={setShowBookmarksPanel}
@@ -1158,18 +1152,6 @@ export default function ReaderChamber({
         handleRemoveBookmark={handleRemoveBookmark}
         handleJumpToBookmark={handleJumpToBookmark}
       />
-
-      {handleAlterFate && (
-        <AlterFatePanel
-          isOpen={isAlterFateOpen}
-          onClose={() => setIsAlterFateOpen(false)}
-          chapterNumber={selectedChapterNum}
-          onConfirmFork={(direction, prompt) => {
-            setIsAlterFateOpen(false);
-            handleAlterFate(selectedChapterNum, direction, prompt);
-          }}
-        />
-      )}
 
       {/* Small Resume Affordance — shown when narration is playing but the
           user took manual control, so automated movement has yielded. */}
@@ -1211,7 +1193,7 @@ export default function ReaderChamber({
               <ShieldAlert size={20} /> Continuity Guard Warning
             </h3>
             <p className="text-signal text-sm mb-6">
-              The Heavenly Dao sensors have detected potential logic fractures in this chapter. It is recommended to alter fate or manually edit before sealing.
+              The Heavenly Dao sensors have detected potential logic fractures in this chapter. Review or edit the chapter before sealing it.
             </p>
             <ul className="space-y-3 mb-8">
               {consistencyWarnings.map((warning, idx) => (

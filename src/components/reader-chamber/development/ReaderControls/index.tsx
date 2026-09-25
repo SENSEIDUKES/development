@@ -35,13 +35,13 @@ export function ReaderControls({
           <ArrowLeft size={16} />
         </button>
 
-        {/* Comments — reuses the Chronicle Anchors panel for now */}
+        {/* Mind Palace — the passages the reader chose to keep */}
         <button
           type="button"
           onClick={comments.onToggle}
-          aria-label="Comments"
+          aria-label="Mind Palace"
           aria-expanded={comments.open}
-          title="Comments"
+          title="Mind Palace"
           className={`p-2 border rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal/70 relative ${
             comments.open
               ? "border-portal bg-portal/10 text-portal"

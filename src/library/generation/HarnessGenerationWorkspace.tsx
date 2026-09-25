@@ -1,10 +1,9 @@
 import { StoryFoundationEditor } from '@seihouse/sen/story-seed';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { FrozenNarrativeMedia } from '@seihouse/sen/audio';
-import { BookOpen, CheckCircle2, CircleAlert, Compass, Download, FileText, ListTree, LoaderCircle, Pause, Pin, Play, Plus, Puzzle, RefreshCcw, Target, Volume2 } from 'lucide-react';
-import { ARC_LENGTH, ArcPlanView } from '@seihouse/sen/arc-goals';
-import { CHAPTER_FUNCTIONS, FATE_PRESSURE_RHYTHM_CONFIG, HARD_PIN_LIMIT, harnessArcContext } from '@seihouse/sen/harness-generation';
-import type { ChapterFunction, HardPinInput, HarnessChapter, HarnessMissionReminder, StoryFoundationRevision } from '@seihouse/sen/harness-generation';
+import { BookOpen, CheckCircle2, CircleAlert, Compass, Download, FileText, ListTree, LoaderCircle, Pause, Pin, Play, Plus, Puzzle, RefreshCcw, Volume2 } from 'lucide-react';
+import { CHAPTER_FUNCTIONS, CHAPTER_FUNCTION_LABELS, FATE_MODE_LABELS, FATE_PRESSURE_RHYTHM_CONFIG, FateArcGoalCard, FateConclusion, FateDestinedEnding, FatePathChooser, HARD_PIN_LIMIT, chapterDirectionGap, describeChapterPath, harnessStoryMode } from '@seihouse/sen/harness-generation';
+import type { ChapterDirectionChoice, HardPinInput, HarnessChapter, HarnessMissionReminder, StoryFoundationRevision } from '@seihouse/sen/harness-generation';
 import { createLibraryMediaPort, isMediaPackEntitlementActive, mediaPackKey, type MediaPack, type MediaPackEntitlement, type MediaPackReference, type StoryMediaLoadoutSlot } from '../media/mediaPacks';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
 import { LibraryManifestingIcon as SENManifestingIcon } from '@seihouse/library-ui';
@@ -509,78 +508,14 @@ function MediaLoadoutPanel({
   );
 }
 
-const chapterFunctionLabel: Record<ChapterFunction, string> = {
-  progression: 'Progression',
-  worldBuilding: 'World-building',
-  conflict: 'Conflict',
-};
-
-/**
- * The permanent Active Arc Goal display. Every value comes from the existing
- * Arc Goal authority (`harnessArcContext`), never from a second goal system.
- */
-function ActiveArcGoalCard({ story, foundation, generatedThrough, busy, onOpenBlueprint }: {
-  story: HarnessStory;
-  foundation?: StoryFoundationRevision;
-  generatedThrough: number;
-  busy: boolean;
-  /** Arc Goals are edited in the novel's Blueprint, under its mode rules. */
-  onOpenBlueprint: () => void;
-}) {
-  const [planOpen, setPlanOpen] = useState(false);
-  const context = foundation ? harnessArcContext(story, foundation.input, story.head.nextChapterNumber) : undefined;
-  if (!context) {
-    return (
-      <div className="rounded-xl border border-dashed border-cyan-300/25 bg-cyan-400/[0.04] p-4" data-testid="harness-active-arc-goal">
-        <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-200/55">Active Arc Goal</p>
-        <p className="mt-2 text-sm text-neutral-300">{foundation?.input.plannedArcCount
-          ? `All ${foundation.input.plannedArcCount} planned arcs are written: the route to the Destined Ending is complete.`
-          : `No Arc Plan exists yet. The Arc planner creates it automatically before Chapter ${story.head.nextChapterNumber} is requested.`}</p>
-      </div>
-    );
-  }
-  const goalIndex = context.plan.goals.findIndex(goal => goal.id === context.activeGoal.id) + 1;
-  const remaining = context.completionDeadline - story.head.nextChapterNumber;
-  const status = context.completionConfirmed
-    ? 'Completed with verbatim evidence'
-    : remaining > 0 ? `${remaining} ${remaining === 1 ? 'chapter' : 'chapters'} left before the deadline`
-      : remaining === 0 ? 'Due in the next chapter: it cannot commit without completion evidence'
-        : 'Overdue: the next chapter cannot commit without completion evidence';
-  return (
-    <div className="rounded-xl border border-cyan-300/30 bg-cyan-400/[0.07] p-4" data-testid="harness-active-arc-goal">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-cyan-200/55">Active Arc Goal · Arc {context.arcNumber}</p>
-          <p className="mt-1 text-sm font-semibold text-white">Goal {goalIndex} of {context.plan.goals.length}</p>
-          <p className="mt-2 text-base leading-relaxed text-neutral-100">{context.activeGoal.text}</p>
-        </div>
-        <span className={`shrink-0 rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.12em] ${context.completionConfirmed ? 'border-emerald-300/30 bg-emerald-400/10 text-emerald-100' : remaining <= 0 ? 'border-human/30 bg-human-brand/10 text-human' : 'border-cyan-300/25 bg-cyan-400/10 text-cyan-100'}`}>
-          Deadline · Chapter {context.completionDeadline}
-        </span>
-      </div>
-      <dl className="mt-3 grid gap-2 text-xs text-neutral-400 sm:grid-cols-3">
-        <div><dt className="font-mono uppercase tracking-[0.14em] text-neutral-500">Allocated chapters</dt><dd className="mt-1 text-neutral-200">{context.activeGoal.startChapter}–{context.activeGoal.endChapter} · {context.activeGoal.chapters} of {ARC_LENGTH}</dd></div>
-        <div><dt className="font-mono uppercase tracking-[0.14em] text-neutral-500">Current position</dt><dd className="mt-1 text-neutral-200">Next: Chapter {story.head.nextChapterNumber} · {context.display} · segment chapter {context.positionInSegment} of {context.activeGoal.chapters}</dd></div>
-        <div><dt className="font-mono uppercase tracking-[0.14em] text-neutral-500">Status</dt><dd className="mt-1 text-neutral-200">{status}</dd></div>
-      </dl>
-      <LibraryButton type="button" size="sm" variant="ghost" className="mt-3" onClick={() => setPlanOpen(open => !open)} disabled={busy}>
-        {planOpen ? 'Hide complete Arc Plan' : 'Open complete Arc Plan'}
-      </LibraryButton>
-      <LibraryButton type="button" size="sm" variant="ghost" className="mt-3" onClick={onOpenBlueprint} disabled={busy}>
-        Edit Arc Goals in Blueprint
-      </LibraryButton>
-      {planOpen && <ArcPlanView key={`${context.plan.arcNumber}-${story.arcPlans?.length ?? 0}`} defaultOpen plan={context.plan} activeGoalId={context.activeGoal.id} generatedThrough={generatedThrough} />}
-    </div>
-  );
-}
-
 /**
  * Story-direction sources: the Destined Ending, user-created Hard Pins, the
- * story's Fate Pressure with its rhythm recommendation, and the Mission
- * Reminder. Each reaches the chapter request in its own section; Arc Goals
- * are edited in the novel's Blueprint.
+ * active Arc Goal, the story's Fate Pressure rhythm, the next chapter's path,
+ * and the Mission Reminder. The Arc Goal, ending and path displays are the
+ * same SEN Fate pieces the HARNESS Reader's Fate page shows; Arc Goals are
+ * edited in the novel's Blueprint.
  */
-function StoryDirectionPanel({ story, foundation, chapters, generatedThrough, missionReminder, busy, onSaveHardPins, onOpenBlueprint }: {
+function StoryDirectionPanel({ story, foundation, chapters, generatedThrough, missionReminder, busy, onSaveHardPins, onOpenBlueprint, onChooseDirection }: {
   story: HarnessStory;
   foundation?: StoryFoundationRevision;
   chapters: HarnessChapter[];
@@ -589,6 +524,7 @@ function StoryDirectionPanel({ story, foundation, chapters, generatedThrough, mi
   busy: boolean;
   onSaveHardPins: (pins: HardPinInput[]) => Promise<void>;
   onOpenBlueprint: () => void;
+  onChooseDirection: (choice: ChapterDirectionChoice | null) => Promise<void>;
 }) {
   const savedPins = story.hardPins ?? [];
   // Only the saved pins themselves reset the draft, so an unrelated story
@@ -607,10 +543,9 @@ function StoryDirectionPanel({ story, foundation, chapters, generatedThrough, mi
     catch (error) { setPinError(error instanceof Error ? error.message : 'The Hard Pins could not be saved.'); }
   };
 
+  const mode = harnessStoryMode(foundation?.input);
   const recommendation = story.rhythmRecommendation;
   const tier = recommendation ? FATE_PRESSURE_RHYTHM_CONFIG.tiers[recommendation.fatePressure] : undefined;
-  const latestRhythmChapter = [...chapters].reverse().find(chapter => chapter.rhythm?.nextChapterSuggestions);
-  const suggestions = latestRhythmChapter?.rhythm?.nextChapterSuggestions;
 
   return (
     <LibraryPanel as="section" padding="md" aria-labelledby="harness-direction-title" data-testid="harness-story-direction">
@@ -619,23 +554,18 @@ function StoryDirectionPanel({ story, foundation, chapters, generatedThrough, mi
         <h2 id="harness-direction-title" className="font-display text-xl text-white">Story direction</h2>
       </div>
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-neutral-400">
-        Hard Pins describe the story’s long-term destiny beside the Destined Ending. The Active Arc Goal describes its immediate current direction. Fate Pressure decides which of the writer’s next-chapter possibilities to favor. Each chapter request carries the Destined Ending, the Hard Pins, only the active goal with its deadline, and the rhythm direction.
+        {FATE_MODE_LABELS[mode]}. Hard Pins describe the story’s long-term destiny beside the Destined Ending, and the Active Arc Goal its current destination. {mode === 'survival'
+          ? 'The reader directs every chapter; nothing is written until they do.'
+          : 'Fate Pressure picks each chapter’s path unless the reader chooses one for that chapter.'}
       </p>
 
       <div className="mt-5">
-        <ActiveArcGoalCard story={story} foundation={foundation} generatedThrough={generatedThrough} busy={busy} onOpenBlueprint={onOpenBlueprint} />
+        <FateArcGoalCard story={story} foundation={foundation?.input} generatedThrough={generatedThrough}
+          actions={<LibraryButton type="button" size="sm" variant="ghost" onClick={onOpenBlueprint} disabled={busy}>Edit Arc Goals in Blueprint</LibraryButton>} />
       </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-          <div className="flex items-center gap-2">
-            <Target size={16} className="text-gold-accent" aria-hidden="true" />
-            <h3 className="text-sm font-semibold text-white">Destined Ending</h3>
-          </div>
-          <p className="mt-2 text-sm leading-relaxed text-neutral-200">
-            {foundation?.input.destinedEnding ?? 'Not set yet. The Arc planner supplies the novel-wide ending before the first chapter.'}
-          </p>
-        </div>
+        <FateDestinedEnding foundation={foundation?.input} />
 
         <div className="rounded-xl border border-white/10 bg-black/20 p-4" data-testid="harness-hard-pins">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -673,6 +603,12 @@ function StoryDirectionPanel({ story, foundation, chapters, generatedThrough, mi
         </div>
       </div>
 
+      <div className="mt-4">
+        {story.conclusion
+          ? <FateConclusion story={story} />
+          : <FatePathChooser story={story} foundation={foundation?.input} chapters={chapters} busy={busy} onChoose={onChooseDirection} />}
+      </div>
+
       <div className="mt-4 rounded-xl border border-white/10 bg-black/20 p-4" data-testid="harness-fate-pressure">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-white">Fate Pressure and rhythm</h3>
@@ -683,35 +619,21 @@ function StoryDirectionPanel({ story, foundation, chapters, generatedThrough, mi
           )}
         </div>
         {tier && <p className="mt-2 text-xs leading-relaxed text-neutral-500">{tier.summary} Tuning: {FATE_PRESSURE_RHYTHM_CONFIG.source.replace(/-/g, ' ')}.</p>}
+        {mode === 'survival' && <p className="mt-2 text-xs leading-relaxed text-neutral-400">Fate Survival chapters follow the reader’s direction, so this automatic recommendation is not sent to the writer.</p>}
         {recommendation ? (
-          <div className="mt-3 grid gap-3 lg:grid-cols-2">
-            <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">Recent rhythm (saved chapter functions)</p>
-              {recommendation.recentFunctions.length ? (
-                <ol className="mt-2 flex flex-wrap gap-2">
-                  {recommendation.recentFunctions.map(entry => (
-                    <li key={entry.chapterNumber} className="rounded-full border border-white/15 px-2 py-1 font-mono text-[10px] text-neutral-300">Ch {entry.chapterNumber} · {chapterFunctionLabel[entry.chapterFunction]}</li>
-                  ))}
-                </ol>
-              ) : <p className="mt-2 text-xs text-neutral-500">No chapter function has been saved yet.</p>}
-              <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">Recommended for Chapter {recommendation.forChapterNumber}</p>
-              <p className="mt-1 text-sm font-semibold text-cyan-100">{chapterFunctionLabel[recommendation.recommendedFunction]}</p>
-              <p className="mt-1 text-xs leading-relaxed text-neutral-400">{recommendation.reason}</p>
-              <p className="mt-2 font-mono text-[10px] text-neutral-500">Weights: {CHAPTER_FUNCTIONS.map(type => `${type} ${recommendation.weights[type]}`).join(' · ')}{recommendation.blocked.length ? ` · blocked: ${recommendation.blocked.join(', ')}` : ''}</p>
-            </div>
-            <div>
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">Writer’s next-chapter possibilities{latestRhythmChapter ? ` (after Chapter ${latestRhythmChapter.chapterNumber})` : ''}</p>
-              {suggestions ? (
-                <ul className="mt-2 space-y-2">
-                  {CHAPTER_FUNCTIONS.map(type => (
-                    <li key={type} className={`rounded-lg border p-2 text-xs ${type === recommendation.recommendedFunction ? 'border-cyan-300/40 bg-cyan-400/[0.08] text-neutral-100' : 'border-white/10 text-neutral-300'}`}>
-                      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-neutral-500">{chapterFunctionLabel[type]}{type === recommendation.recommendedFunction ? ' · favored' : ''}</span>
-                      <p className="mt-1 leading-relaxed">{suggestions[type] ?? 'Not supplied for this chapter.'}</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : <p className="mt-2 text-xs text-neutral-500">The writer has not supplied next-chapter possibilities yet.</p>}
-            </div>
+          <div className="mt-3">
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">Recent rhythm (saved chapter functions)</p>
+            {recommendation.recentFunctions.length ? (
+              <ol className="mt-2 flex flex-wrap gap-2">
+                {recommendation.recentFunctions.map(entry => (
+                  <li key={entry.chapterNumber} className="rounded-full border border-white/15 px-2 py-1 font-mono text-[10px] text-neutral-300">Ch {entry.chapterNumber} · {CHAPTER_FUNCTION_LABELS[entry.chapterFunction]}</li>
+                ))}
+              </ol>
+            ) : <p className="mt-2 text-xs text-neutral-500">No chapter function has been saved yet.</p>}
+            <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">Recommended for Chapter {recommendation.forChapterNumber}</p>
+            <p className="mt-1 text-sm font-semibold text-cyan-100">{CHAPTER_FUNCTION_LABELS[recommendation.recommendedFunction]}</p>
+            <p className="mt-1 text-xs leading-relaxed text-neutral-400">{recommendation.reason}</p>
+            <p className="mt-2 font-mono text-[10px] text-neutral-500">Weights: {CHAPTER_FUNCTIONS.map(type => `${type} ${recommendation.weights[type]}`).join(' · ')}{recommendation.blocked.length ? ` · blocked: ${recommendation.blocked.join(', ')}` : ''}</p>
           </div>
         ) : <p className="mt-2 text-xs text-neutral-500">The rhythm recommendation appears after the story is saved.</p>}
       </div>
@@ -729,7 +651,6 @@ function StoryDirectionPanel({ story, foundation, chapters, generatedThrough, mi
   );
 }
 
-/** A saved "Previously On" recap with in-place author editing. Prose is never touched here. */
 function ChapterRecapEditor({ chapter, busy, onSave }: { chapter: HarnessChapter; busy: boolean; onSave: (text: string) => Promise<void> }) {
   const [text, setText] = useState(chapter.recap?.text ?? '');
   const [editing, setEditing] = useState(false);
@@ -1061,8 +982,6 @@ export function HarnessGenerationWorkspace({
   const [foundationForm, setFoundationForm] = useState<StoryFoundationInput>(emptyFoundation);
   const [model, setModel] = useState('');
   const [batchCount, setBatchCount] = useState('');
-  const [direction, setDirection] = useState('');
-  const [reviseHistory, setReviseHistory] = useState(false);
   const [internalReadingStoryId, setInternalReadingStoryId] = useState<string>();
   const openReadingStoryId = onReadingStoryChange ? readingStoryId : internalReadingStoryId;
   const setReadingStoryId = onReadingStoryChange ?? setInternalReadingStoryId;
@@ -1117,11 +1036,6 @@ export function HarnessGenerationWorkspace({
   }, [loadStorySeeds]);
 
   const selectedStory = state && selectedStoryId ? findStory(state, selectedStoryId) : undefined;
-  useEffect(() => {
-    setDirection('');
-    setReviseHistory(false);
-  }, [selectedStory?.id]);
-
   const selectedFoundation = state && selectedStory
     ? findFoundationRevision(state, selectedStory.activeFoundationRevisionId)
     : undefined;
@@ -1236,6 +1150,14 @@ export function HarnessGenerationWorkspace({
     if (!attempt) return;
     void run(() => controller.retryModelRequest(attempt.id));
   };
+  /** The next chapter's path. Errors reach the chooser, which shows them beside the choice. */
+  const chooseDirection = async (choice: ChapterDirectionChoice | null) => {
+    if (!selectedStory) return;
+    setBusy(true);
+    setMessage(undefined);
+    try { await controller.chooseChapterDirection(selectedStory.id, choice); }
+    finally { setBusy(false); }
+  };
   const retryArcPlan = () => selectedStory && void run(() => controller.retryArcPlan(selectedStory.id, model));
   const saveHardPins = async (pins: HardPinInput[]) => {
     if (!selectedStory) return;
@@ -1311,10 +1233,17 @@ export function HarnessGenerationWorkspace({
   };
 
   const generationAvailable = Boolean(selectedStory && serverInfo?.configured && model && !busy);
+  const selectedMode = harnessStoryMode(selectedFoundation?.input);
+  // Fate Survival writes nothing until the reader directs the chapter, and never in batches.
+  const directionGap = selectedStory ? chapterDirectionGap(selectedStory, selectedMode) : undefined;
+  const readerGenerate = state && openReadingStoryId && serverInfo?.configured && model
+    ? async () => { await controller.generateNextChapter(openReadingStoryId, model); }
+    : undefined;
 
   const readingStory = state && openReadingStoryId ? findStory(state, openReadingStoryId) : undefined;
   if (state && readingStory) return <HarnessReaderSession key={readingStory.id} state={state} storyId={readingStory.id}
     controller={controller} installedSkills={availableSkills} readerStateRepository={readerStateRepository}
+    onGenerateNextChapter={readerGenerate}
     onClose={() => { setSelectedStoryId(readingStory.id); setReadingStoryId(undefined); }} />;
 
   return (
@@ -1463,6 +1392,7 @@ export function HarnessGenerationWorkspace({
                 busy={busy}
                 onSaveHardPins={saveHardPins}
                 onOpenBlueprint={() => setNovelTab('blueprint')}
+                onChooseDirection={chooseDirection}
               />
             )}
 
@@ -1491,21 +1421,6 @@ export function HarnessGenerationWorkspace({
 
             {selectedStory && novelTab === 'novel' && (
               <LibraryPanel as="section" padding="md" aria-labelledby="harness-generate-title">
-                <div className="mb-5 space-y-3">
-                  <label className="block text-sm text-neutral-300" htmlFor="harness-direction">Story direction</label>
-                  <textarea id="harness-direction" value={direction} onChange={event => setDirection(event.target.value)} disabled={busy}
-                    placeholder="Make the planned enemy an ally. Keep the consequences of their earlier actions."
-                    className="min-h-24 w-full rounded-lg border border-white/15 bg-black/35 p-3 text-sm text-white" />
-                  <label className="flex min-h-11 items-center gap-2 text-xs text-neutral-400">
-                    <input type="checkbox" checked={reviseHistory} onChange={event => setReviseHistory(event.target.checked)} disabled={busy} />
-                    This direction explicitly revises past history
-                  </label>
-                  <LibraryButton type="button" size="sm" disabled={busy || !direction.trim()} onClick={() => void run(async () => {
-                    await controller.steerStory(selectedStory.id, direction, reviseHistory ? 'revise-history' : 'future');
-                    setDirection(''); setReviseHistory(false);
-                  })}>Save direction</LibraryButton>
-                  {selectedStory.steering?.at(-1) && <p className="text-sm text-neutral-300">Latest direction: {selectedStory.steering.at(-1)!.direction}</p>}
-                </div>
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-200/55">One-call generation</p>
@@ -1537,11 +1452,12 @@ export function HarnessGenerationWorkspace({
                     type="button"
                     icon={SENManifestingIcon}
                     onClick={generate}
-                    disabled={!generationAvailable}
+                    disabled={!generationAvailable || Boolean(directionGap) || Boolean(selectedStory.conclusion)}
                     loading={busy}
                   >
                     Generate Next Chapter
                   </ManifestButton>
+                  {(directionGap || selectedStory.conclusion) && <p className="mt-2 text-xs text-neutral-400" data-testid="harness-generation-gap">{directionGap ?? 'This story has ended. No further chapter is written.'}</p>}
                 </div>
                 <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-4">
                   <div className="flex flex-wrap items-end gap-3">
@@ -1549,7 +1465,7 @@ export function HarnessGenerationWorkspace({
                       <input id="harness-batch-count" type="number" min="1" placeholder="Choose a count" value={batchCount} onChange={event => setBatchCount(event.target.value)} disabled={busy}
                         className="mt-1 min-h-11 w-full rounded-lg border border-white/15 bg-black/35 px-3 text-sm text-white" />
                     </label>
-                    <LibraryButton type="button" size="sm" icon={Play} onClick={startBatch} disabled={!generationAvailable || !batchCount}>Start sequential batch</LibraryButton>
+                    <LibraryButton type="button" size="sm" icon={Play} onClick={startBatch} disabled={!generationAvailable || !batchCount || selectedMode === 'survival' || Boolean(selectedStory.conclusion)}>Start sequential batch</LibraryButton>
                     {batch?.status === 'running' || batch?.status === 'pause_requested' ? <LibraryButton type="button" size="sm" variant="secondary" icon={Pause} onClick={pauseBatch} disabled={batch.status === 'pause_requested'}>Pause after active call</LibraryButton> : null}
                     {batch?.status === 'paused' && <LibraryButton type="button" size="sm" icon={Play} onClick={resumeBatch} loading={busy}>Resume batch</LibraryButton>}
                     {batch && ['failed', 'provider_outcome_unknown'].includes(batch.status) && <LibraryButton type="button" size="sm" variant="secondary" icon={RefreshCcw} onClick={retryBatch} loading={busy}>{batch.status === 'provider_outcome_unknown' ? 'Explicitly retry unknown call' : 'Retry failed batch chapter'}</LibraryButton>}
@@ -1597,12 +1513,13 @@ export function HarnessGenerationWorkspace({
                       <LibraryButton type="button" size="sm" variant="ghost" disabled={busy} onClick={() => void run(() => controller.replayStory(selectedStory.id, chapter.id))}>Repair chapter enhancements</LibraryButton>
                       <ChapterRecapEditor chapter={chapter} busy={busy} onSave={text => saveRecap(chapter.id, text)} />
                       <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">
-                        Chapter function: {chapter.rhythm?.chapterFunction ? chapterFunctionLabel[chapter.rhythm.chapterFunction] : 'not saved'}
+                        Chapter function: {chapter.rhythm?.chapterFunction ? CHAPTER_FUNCTION_LABELS[chapter.rhythm.chapterFunction] : 'not saved'}
                       </p>
+                      {chapter.path && <p className="mt-1 text-xs text-neutral-400">Path: {describeChapterPath(chapter.path)}</p>}
                       {chapter.rhythm?.nextChapterSuggestions && (
                         <ul className="mt-1 space-y-1 text-xs text-neutral-400">
                           {CHAPTER_FUNCTIONS.map(type => chapter.rhythm?.nextChapterSuggestions?.[type]
-                            ? <li key={type}><span className="text-neutral-500">{chapterFunctionLabel[type]} next:</span> {chapter.rhythm.nextChapterSuggestions[type]}</li>
+                            ? <li key={type}><span className="text-neutral-500">{CHAPTER_FUNCTION_LABELS[type]} next:</span> {chapter.rhythm.nextChapterSuggestions[type]}</li>
                             : null)}
                         </ul>
                       )}

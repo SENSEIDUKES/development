@@ -68,12 +68,16 @@ export interface StorySeedStoryRequired {
 }
 
 /** The narrative shape of the novel — where it is headed and what pushes back. */
-export type StorySeedFateVisibility = 'full' | 'partial' | 'none';
 export type StorySeedSurvivalPressure = 'heaven' | 'immortal' | 'mortal';
 
+/**
+ * The novel's Fate settings. `enabled` chooses Fate Survival (the reader
+ * directs every chapter and the Destined Ending is not guaranteed) instead of
+ * Regular Reader mode; it is fixed once the novel begins. `pressure` is the
+ * story's Fate Pressure tier, which shapes automatic Rhythm.
+ */
 export interface StorySeedFateSurvivalSettings {
   enabled: boolean;
-  visibility: StorySeedFateVisibility;
   pressure: StorySeedSurvivalPressure;
 }
 
@@ -250,11 +254,6 @@ const optionalTextFields = <T extends object>(
 ) as T;
 
 
-const normalizeFateVisibility = (value: unknown): StorySeedFateVisibility => {
-  const normalized = text(value)?.toLowerCase();
-  return normalized === 'full' || normalized === 'none' ? normalized : 'partial';
-};
-
 const normalizeSurvivalPressure = (value: unknown): StorySeedSurvivalPressure => {
   const normalized = text(value)?.toLowerCase();
   return normalized === 'heaven' || normalized === 'mortal' ? normalized : 'immortal';
@@ -300,7 +299,6 @@ const normalizeStoryOptional = (value: unknown): StorySeedStoryOptional => {
     intendedForMatureAudiences: source.intendedForMatureAudiences === true,
     fateSurvival: {
       enabled: isRecord(source.fateSurvival) ? source.fateSurvival.enabled === true : false,
-      visibility: normalizeFateVisibility(isRecord(source.fateSurvival) ? source.fateSurvival.visibility : undefined),
       pressure: normalizeSurvivalPressure(isRecord(source.fateSurvival) ? source.fateSurvival.pressure : undefined),
     },
     funSettings: normalizeFunSettings(source.funSettings),
@@ -381,7 +379,6 @@ export const createEmptyStorySeedInput = (): StorySeedInput => ({
       intendedForMatureAudiences: false,
       fateSurvival: {
         enabled: false,
-        visibility: 'partial',
         pressure: 'immortal',
       },
       funSettings: {
@@ -620,7 +617,6 @@ export const createBlueprintDraftFromSeed = (
     mcProfile: backgroundProfile,
     majorFactions: (worldFoundations.factions || []).map(faction => faction.name),
     initialCharacters: (worldFoundations.additionalCharacters || []).map(character => character.name),
-    majorMysteries: [],
     arcPlans: alignArcRoadmapWithSeed(undefined, seed),
     hardPins: validateHardPinInputs(seed.story.optional.hardPins ?? []),
     funSettings: normalizeFunSettings(seed.story.optional.funSettings),
@@ -629,7 +625,6 @@ export const createBlueprintDraftFromSeed = (
     styleBible: '',
     destinedEnding: worldFoundations.destinedEnding || '',
     estimatedArcs: 10,
-    unresolvedPlotThreads: [],
   };
 };
 
@@ -726,9 +721,6 @@ export const normalizeWorldBlueprint = (
     initialCharacters: Array.isArray(source.initialCharacters)
       ? stringList(source.initialCharacters)
       : fallback.initialCharacters,
-    majorMysteries: Array.isArray(source.majorMysteries)
-      ? stringList(source.majorMysteries)
-      : fallback.majorMysteries,
     arcPlans: alignArcRoadmapWithSeed(readArcRoadmap(source), normalizedSeed),
     hardPins: validateHardPinInputs(seed ? normalizedSeed.story.optional.hardPins ?? [] : source.hardPins ?? []),
     funSettings: normalizeFunSettings(seed ? normalizedSeed.story.optional.funSettings : source.funSettings),
@@ -737,9 +729,6 @@ export const normalizeWorldBlueprint = (
     styleBible: read('styleBible', fallback.styleBible),
     destinedEnding: text(seedFoundations.destinedEnding) || read('destinedEnding', fallback.destinedEnding || ''),
     estimatedArcs,
-    unresolvedPlotThreads: Array.isArray(source.unresolvedPlotThreads)
-      ? stringList(source.unresolvedPlotThreads)
-      : fallback.unresolvedPlotThreads,
   };
 };
 
@@ -1058,7 +1047,7 @@ export const promoteBlueprintIntoSeed = (seed: StorySeedInput, blueprint: WorldB
 /**
  * Rewrites every Seed-owned Blueprint field from the Seed, exactly. The
  * Blueprint keeps only what the Seed has no field for: background and power
- * outline prose, style bible, arc estimate, mysteries, threads, metadata.
+ * outline prose, style bible, arc estimate, metadata.
  */
 export const mirrorSeedIntoBlueprint = (blueprint: WorldBlueprint, seed: StorySeedInput): WorldBlueprint => {
   const { worldIdentity, worldFoundations } = seed.world.optional;

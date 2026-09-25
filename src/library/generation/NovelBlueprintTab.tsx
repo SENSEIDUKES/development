@@ -46,16 +46,14 @@ export const foundationFromNovelBlueprint = (
     seed: next.seed,
     blueprint,
   } as Parameters<typeof createHarnessFoundationFromStorySeed>[0]);
-  const { arcRoadmap: _roadmap, initialArcPlan: _initialPlan, initialHardPins: _pins, plannedArcCount: _count, destinedEnding: _ending, ...editable } = mapped;
+  const { arcRoadmap: _roadmap, initialArcPlan: _initialPlan, initialHardPins: _pins, plannedArcCount: _count, destinedEnding: _ending, fateSurvival: _mode, ...editable } = mapped;
   return {
     ...editable,
     ...(current.destinedEnding ? { destinedEnding: current.destinedEnding } : {}),
     ...(current.plannedArcCount ? { plannedArcCount: current.plannedArcCount } : {}),
-    // Fate Pressure and Survival are story settings, not Blueprint fields.
+    // Fate Pressure and the Fate mode are story settings, not Blueprint fields.
     ...(current.fatePressure ? { fatePressure: current.fatePressure } : {}),
-    ...(current.fateSurvival ? { fateSurvival: { ...current.fateSurvival,
-      majorMysteries: mapped.fateSurvival?.majorMysteries ?? current.fateSurvival.majorMysteries,
-      unresolvedPlotThreads: mapped.fateSurvival?.unresolvedPlotThreads ?? current.fateSurvival.unresolvedPlotThreads } } : {}),
+    ...(current.fateSurvival ? { fateSurvival: { enabled: current.fateSurvival.enabled } } : {}),
   };
 };
 
@@ -118,7 +116,7 @@ export function NovelBlueprintTab({ story, foundation, busy, onEditArcGoals, onA
                 {plan ? (
                   <ArcPlanView key={`${arcNumber}-${story.arcPlans?.length ?? 0}`} plan={plan} defaultOpen={state.status === 'active'}
                     title={`${plan.goals.length} ${plan.goals.length === 1 ? 'goal' : 'goals'}`}
-                    lockedGoalIds={state.lockedGoalIds}
+                    lockedGoalIds={state.lockedGoalIds} missedGoalIds={state.missedGoalIds}
                     editLabel={mode === 'survival' ? `Edit Arc ${arcNumber} goals (one time)` : `Edit Arc ${arcNumber} goals`}
                     editNotice={mode === 'survival' ? `This is Arc ${arcNumber}'s one-time edit. After you save, its goals are set and lock when its first chapter is generated.` : undefined}
                     onEdit={state.editable && !busy ? onEditArcGoals : undefined} />

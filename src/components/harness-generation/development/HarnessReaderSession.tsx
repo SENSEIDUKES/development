@@ -17,6 +17,7 @@ import {
   type ReaderStoryState,
 } from '@seihouse/sen/reader-runtime';
 import { createHarnessSenStory } from '../shared/senAdapter';
+import { FatePage } from './FatePage';
 import type { HarnessGenerationController } from '../shared/controller';
 import type { HarnessSkillManifest, HarnessWorkspaceState } from '../../../narrative/generation';
 import type { StoryWorld } from '../../../narrative/story';
@@ -57,8 +58,10 @@ function createSessionReaderStore(parent: ReaderRuntime['store']) {
   };
 }
 
-export function HarnessReaderSession({ state, storyId, onClose, controller, installedSkills, readerStateRepository }: {
+export function HarnessReaderSession({ state, storyId, onClose, controller, installedSkills, readerStateRepository, onGenerateNextChapter }: {
   state: HarnessWorkspaceState; storyId: string; onClose: () => void; controller: HarnessGenerationController;
+  /** Writes the story's next chapter with the host's model, from the Fate page. Absent when the host cannot generate here. */
+  onGenerateNextChapter?: () => Promise<void>;
   /** Host inventory; the Reader resolves its own `reader` Translation skill from it. */
   installedSkills?: HarnessSkillManifest[];
   /** Host-owned durable Reader state. Without it, place, bookmarks and settings last for this session only. */
@@ -69,6 +72,7 @@ export function HarnessReaderSession({ state, storyId, onClose, controller, inst
   const [readerState, setReaderState] = useState<ReaderStoryState>();
   const [selectedChapter, setSelectedChapter] = useState(1);
   const [codexOpen, setCodexOpen] = useState(false);
+  const [fateOpen, setFateOpen] = useState(false);
   const [editError, setEditError] = useState('');
   const [storageError, setStorageError] = useState('');
   const readerStateRef = useRef<ReaderStoryState | undefined>(undefined);
@@ -151,19 +155,27 @@ export function HarnessReaderSession({ state, storyId, onClose, controller, inst
 
   if (!readerState) return <main className="mx-auto w-full max-w-6xl px-4 py-6"><p role="status" className="text-sm text-neutral-400">Opening your place in the story…</p></main>;
 
+  if (fateOpen) {
+    return <main className="mx-auto w-full min-w-0 max-w-6xl">
+      <FatePage state={state} storyId={storyId} controller={controller} onBack={() => setFateOpen(false)}
+        onGenerateNextChapter={onGenerateNextChapter}
+        onReadChapter={number => { setSelectedChapter(number); setFateOpen(false); }} />
+    </main>;
+  }
+
   const readChapters = new Set(readerState.readChapters);
   return <ReaderRuntimeProvider value={runtime}>
     <main className="mx-auto w-full min-w-0 max-w-6xl px-2 py-3 sm:px-4">
-      <p className="mb-3 text-xs text-neutral-400">Reading from HARNESS. Your place, bookmarks and settings are saved with this story; Codex edits are saved through its correction journal; committed chapter prose stays unchanged.</p>
+      <p className="mb-3 text-xs text-neutral-400">Reading from HARNESS. Your place, Mind Palace passages and settings are saved with this story; Codex edits are saved through its correction journal; committed chapter prose stays unchanged.</p>
       {storageError && <p role="alert" className="mb-3 text-sm text-amber-300">{storageError}</p>}
       {editError && <p role="alert" className="mb-3 text-sm text-red-300">{editError}</p>}
       <ReaderChamber chapters={chapters.map(chapter => ({ ...chapter, status: readChapters.has(chapter.number) ? 'read' : 'unread' }))}
-        currentPowerStage={chapterStory.memory?.currentPowerStage ?? 'Not yet established'}
         onGenerateChapter={async () => undefined} onGenerateNextFiveChapters={async () => undefined} isGenerating={false}
         selectedChapterNum={selectedChapter} setSelectedChapterNum={setSelectedChapter}
         onToggleRead={number => commitReaderState(setReaderChapterRead(readerStateRef.current!, number, !readerStateRef.current!.readChapters.includes(number)))}
         arcTitle={story.title} onBack={onClose} onSwitchTab={tab => { if (tab === 'codex') setCodexOpen(true); }}
-        activeStory={activeStory} updateStoryFields={updateStoryFields} installedSkills={installedSkills} />
+        activeStory={activeStory} updateStoryFields={updateStoryFields} installedSkills={installedSkills}
+        onOpenFate={() => setFateOpen(true)} />
       <CodexSheetOverlay isOpen={codexOpen} onClose={() => setCodexOpen(false)} activeStory={activeStory}
         generatedThrough={state.stories.find(item => item.id === storyId)!.head.nextChapterNumber - 1}
         onUpdateMemory={memory => { void updateStoryFields(storyId, { memory }).catch(() => undefined); }} updateStoryFields={updateStoryFields}

@@ -65,12 +65,7 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
     premise: required.premise,
     destinedEnding: world.destinedEnding,
     fatePressure: optional.fateSurvival.pressure,
-    fateSurvival: {
-      enabled: optional.fateSurvival.enabled,
-      visibility: optional.fateSurvival.visibility,
-      majorMysteries: [...(blueprint?.majorMysteries ?? [])],
-      unresolvedPlotThreads: [...(blueprint?.unresolvedPlotThreads ?? [])],
-    },
+    fateSurvival: { enabled: optional.fateSurvival.enabled },
     ...(completeRoadmap ? { arcRoadmap: completeRoadmap, plannedArcCount: completeRoadmap.length } : {}),
     ...(initialArcPlan ? { initialArcPlan } : {}),
     initialHardPins: validateHardPinInputs(optional.hardPins ?? []),

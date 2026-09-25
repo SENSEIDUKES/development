@@ -103,14 +103,5 @@ ${markdownList(blueprint.initialCharacters || [])}
 ## Factions
 ${markdownList(blueprint.majorFactions || [])}
 
-## Fate Survival
-
-Unresolved proposals for Survival only; not character knowledge or established canon. Saved entries remain available when Survival is off.
-
-### Major Mysteries
-${markdownList(blueprint.majorMysteries || [])}
-
-### Unresolved Plot Threads
-${markdownList(blueprint.unresolvedPlotThreads || [])}
 `.trim();
 };

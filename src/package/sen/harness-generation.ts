@@ -60,6 +60,7 @@ export {
   validateTranslationSkillMetadata,
 } from '../../narrative/translationSkill';
 export { buildImmediateChapterRequest } from '../../components/harness-generation/shared/immediateChapterRequest';
+export { attemptChapterPath, chapterDirectionGap, pendingChapterDirection, validateChapterDirectionChoice } from '../../components/harness-generation/shared/chapterDirection';
 export {
   FATE_PRESSURE_RHYTHM_CONFIG,
   buildRhythmRecommendation,
@@ -74,7 +75,7 @@ export {
   MISSION_REMINDER_TEXT_LIMIT,
   buildMissionReminder,
 } from '../../components/harness-generation/shared/missionReminder';
-export { arcGoalEditState, harnessArcContext, harnessArcPlan, harnessStoryMode, type HarnessArcGoalEditState, type HarnessStoryMode } from '../../components/harness-generation/shared/arcState';
+export { arcGoalEditState, harnessArcContext, harnessArcPlan, harnessStoryMode, storyConclusionGap, type HarnessArcGoalEditState, type HarnessStoryMode } from '../../components/harness-generation/shared/arcState';
 export * from '../../narrative/storyDirection';
 export {
   includeBundledHarnessSkills,
@@ -83,6 +84,16 @@ export {
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';
 export { HarnessReaderSession } from '../../components/harness-generation/development/HarnessReaderSession';
+export { FatePage } from '../../components/harness-generation/development/FatePage';
+export {
+  CHAPTER_FUNCTION_LABELS,
+  FATE_MODE_LABELS,
+  FateArcGoalCard,
+  FateConclusion,
+  FateDestinedEnding,
+  FatePathChooser,
+  describeChapterPath,
+} from '../../components/harness-generation/development/FatePanel';
 export { findStory, findFoundationRevision } from '../../components/harness-generation/shared/foundation';
 export * from '../../components/harness-generation/shared/chapterSignals';
 export * from '../../components/harness-generation/shared/chapterBody';

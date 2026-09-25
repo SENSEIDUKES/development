@@ -8,7 +8,6 @@ import { CAPA_SCHEMA, HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS, assembleCapaPrompt, 
 import { type HarnessSkillManifest, type HarnessSkillSlotId } from '@seihouse/sen/harness-generation';
 import { SEN_NOVEL_AUTHOR_SKILL } from '@seihouse/sen/harness-generation';
 import { SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS } from '../../../lib/senLightNovelAuthorInstructions';
-import { CHAPTER_PROMPTS } from '../../chapter-generation/shared/lib/chapterPrompts';
 
 const pacingSkill = (): HarnessSkillManifest => ({
   id: 'seihouse.long-range-pacing',
@@ -61,7 +60,6 @@ describe('Harness installed skills', () => {
       applications: ['generation'],
       instructions: SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS,
     });
-    expect(CHAPTER_PROMPTS.system.startsWith(SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS)).toBe(true);
   });
 
   it('requires generation skills to carry actual instructions', () => {

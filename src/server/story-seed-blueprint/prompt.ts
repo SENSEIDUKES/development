@@ -48,7 +48,7 @@ export const buildWorldBlueprintPrompt = (storySeed: StorySeedInput, maxArcs: nu
 ${JSON.stringify(storySeed, null, 2)}
 
 Completion rules:
-- Complete every output field. No blank strings. majorFactions and initialCharacters must not be empty; majorMysteries and unresolvedPlotThreads may be empty.
+- Complete every output field. No blank strings. majorFactions and initialCharacters must not be empty.
 - Generate a strong logline.
 ${worldFactRules(storySeed).map(rule => `- ${rule}`).join('\n')}
 - Complete the main character's name, age, appearance, personality, and background profile when missing.
@@ -62,9 +62,6 @@ ${worldFactRules(storySeed).map(rule => `- ${rule}`).join('\n')}
   ? 'Arc 1 must begin with story.optional.activeArcGoal: use its text verbatim as Arc 1\'s first goal and plan the rest of the route around it.'
   : 'Choose Arc 1\'s first goal as the immediate goal the creator will review.'}
 - Establish the first-arc promise, trope rules, and a practical style bible.
-- ${storySeed.story.optional.fateSurvival.enabled
-  ? 'Survival is enabled. You may create majorMysteries and unresolvedPlotThreads for the Fate Survival experience. Keep them only in those arrays, as unresolved proposals, never character knowledge or ordinary canonical state.'
-  : 'Survival is disabled. Return empty arrays for majorMysteries and unresolvedPlotThreads. Do not invent Fate Survival mysteries or unresolved threads, or embed them in other fields.'}
 - The style bible must translate genre, style, tags, and maturity metadata into actionable prose, pacing, viewpoint, dialogue, and thematic guidance.
 - The trope rules must explicitly account for face-slap, plot-armor, recognition, and Make It Work settings. Keep Fate Survival settings out of trope rules; chapter generation receives them separately. Apply the other settings without exposing app-control language as ordinary narration.
 - mcProfile repeats mainCharacter.backgroundProfile exactly.

@@ -77,9 +77,67 @@ const migrateV18ToV19 = (stored: StoredWorkspace): StoredWorkspace => {
   };
 };
 
+type StoredRecord = Record<string, unknown>;
+
+/** Fate Survival keeps only its switch; the old visibility setting and mystery/thread proposals served the retired Survival design. */
+const survivalSwitchOnly = (input: StoredRecord | undefined) => {
+  const survival = input?.fateSurvival as StoredRecord | undefined;
+  if (input && survival) input.fateSurvival = { enabled: survival.enabled === true };
+};
+
+/** A frozen packet loses the retired Survival section and persistent directions; everything else stays as frozen. */
+const retirePacketFields = (packet: StoredRecord | undefined) => {
+  if (!packet) return;
+  delete packet.fateSurvival;
+  delete (packet.currentStory as StoredRecord | undefined)?.authorDirections;
+  const diagnostics = packet.diagnostics as { sections?: Array<{ section?: string }>; omitted?: Array<{ section?: string }> } | undefined;
+  if (diagnostics?.sections) diagnostics.sections = diagnostics.sections.filter(entry => entry.section !== 'fateSurvival');
+  if (diagnostics?.omitted) diagnostics.omitted = diagnostics.omitted.filter(entry => entry.section !== 'fateSurvival');
+};
+
+/**
+ * v19 → v20: persistent steering became the reader's one-chapter direction.
+ * A direction saved since the last commit becomes the next chapter's pending
+ * direction; every saved direction is kept as the story's earlier-steering
+ * record, which is never sent to the writer again. Fate Survival keeps only
+ * its switch, and frozen attempts drop the retired packet fields.
+ */
+const migrateV19ToV20 = (stored: StoredWorkspace): StoredWorkspace => {
+  const state = stored as unknown as { stories: StoredRecord[]; foundations: StoredRecord[]; attempts: StoredRecord[]; arcPlanOperations: StoredRecord[] };
+  return {
+    ...stored,
+    schemaVersion: 20,
+    stories: state.stories.map(story => {
+      const { steering, ...rest } = story as StoredRecord & { steering?: Array<{ id: string; direction: string; mode: 'future' | 'revise-history'; effectiveChapter: number; createdAt: string }> };
+      if (!steering?.length) return rest;
+      const nextChapter = (story.head as { nextChapterNumber: number }).nextChapterNumber;
+      const latest = steering.at(-1)!;
+      return {
+        ...rest,
+        earlierSteering: steering.map(({ direction, mode, effectiveChapter, createdAt }) => ({ direction, mode, effectiveChapter, createdAt })),
+        ...(latest.effectiveChapter === nextChapter ? { nextChapterDirection: {
+          id: latest.id, forChapter: nextChapter, choice: { kind: 'reader', text: latest.direction }, chosenAt: latest.createdAt,
+        } } : {}),
+      };
+    }),
+    foundations: state.foundations.map(foundation => { survivalSwitchOnly(foundation.input as StoredRecord); return foundation; }),
+    attempts: state.attempts.map(attempt => {
+      survivalSwitchOnly((attempt.foundationSnapshot as StoredRecord | undefined)?.input as StoredRecord | undefined);
+      retirePacketFields(attempt.storyInformation as StoredRecord | undefined);
+      delete (attempt.immediateChapterRequest as StoredRecord | undefined)?.assignment;
+      return attempt;
+    }),
+    arcPlanOperations: state.arcPlanOperations.map(operation => {
+      retirePacketFields((operation.request as StoredRecord | undefined)?.storyInformation as StoredRecord | undefined);
+      return operation;
+    }),
+  };
+};
+
 /** Explicit upgrade steps, keyed by the version they upgrade from. */
 const HARNESS_WORKSPACE_MIGRATIONS: Record<number, (stored: StoredWorkspace) => StoredWorkspace> = {
   18: migrateV18ToV19,
+  19: migrateV19ToV20,
 };
 
 /**

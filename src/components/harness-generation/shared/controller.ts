@@ -1,7 +1,7 @@
 import { createArcChapterPosition, editArcPlan, validateArcPlan, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import { createMediaCatalog, emptyNarrativeMedia, type FrozenNarrativeMedia, type NarrativeMediaPort, type MediaResourceReference, type MediaSelectionSlot } from '../../../audio/media';
-import { arcDeadlineFailure, arcGoalEditState, commitHarnessArc, harnessArcContext, harnessArcPlan, harnessStoryMode, needsArcPlan, readArcReply, roadmapPlanGap, survivalArcReviewGap, withArcGoalReview, arcGoalReview } from './arcState';
+import { arcDeadlineFailure, arcGoalEditState, commitHarnessArc, harnessArcContext, harnessArcPlan, harnessStoryMode, needsArcPlan, readArcReply, readFateFailure, roadmapPlanGap, storyConclusionGap, survivalArcReviewGap, withArcGoalReview, arcGoalReview } from './arcState';
 import {
   createHarnessStory,
   findFoundationRevision,
@@ -14,6 +14,7 @@ import { diffHarnessReaderPatch } from './readerEdits';
 import type { ReaderCodexStoryPatchUpdater } from '../../../narrative/story';
 import { isTranslationSkillCompatible, translationCompatibilityError } from '../../../narrative/translationSkill';
 import { buildImmediateChapterRequest } from './immediateChapterRequest';
+import { attemptChapterPath, chapterDirectionGap, pendingChapterDirection, validateChapterDirectionChoice } from './chapterDirection';
 import { appendHarnessCorrection, type AppendHarnessCorrectionInput } from './canonicalState';
 import { HarnessCapabilityRegistry } from './capabilities';
 import {
@@ -43,7 +44,7 @@ import {
   createEmptyHarnessWorkspaceState,
   type HarnessGenerationRepository,
 } from './repository';
-import type { HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessMemoryRecovery, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
+import type { ChapterDirectionChoice, HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessMemoryRecovery, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export type HarnessEventPreserver = (
   rawEvents: unknown[],
@@ -327,6 +328,9 @@ export class HarnessGenerationController {
     if (previous?.plannedArcCount && input.plannedArcCount !== previous.plannedArcCount) {
       throw new Error('The planned arc count is fixed once the novel begins.');
     }
+    if (previous && Boolean(input.fateSurvival?.enabled) !== Boolean(previous.fateSurvival?.enabled)) {
+      throw new Error('A novel\'s Fate mode (Regular Reader or Fate Survival) is fixed once it begins.');
+    }
     const revised = reviseStoryFoundation(this.state, storyId, input, this.runtime);
     // A revision may change the story's Fate Pressure, so the recommendation follows it.
     refreshRhythmRecommendation(revised.state, revised.story, revised.story.updatedAt);
@@ -489,25 +493,39 @@ export class HarnessGenerationController {
     } finally { this.generating = false; }
   }
 
-  async steerStory(storyId: string, direction: string, mode: 'future' | 'revise-history' = 'future') {
+  /**
+   * Saves the reader's choice for the next chapter only, or clears it so Rhythm
+   * chooses automatically. Regular Reader mode accepts one of the three chapter
+   * functions (with the idea the reader picked) or the reader's own direction;
+   * Fate Survival accepts only the reader's own direction. The choice survives a
+   * failed attempt and is consumed when that chapter commits.
+   */
+  async chooseChapterDirection(storyId: string, choice: ChapterDirectionChoice | null) {
     this.assertHydrated();
-    if (this.generating) throw new Error('Pause after the active chapter before changing direction.');
-    if (!direction.trim()) throw new Error('Describe the direction for the story.');
-    if (mode !== 'future' && mode !== 'revise-history') throw new Error('Choose a supported steering mode.');
+    if (this.generating) throw new Error('Wait for the chapter being written before changing its direction.');
     const candidate = cloneHarnessValue(this.state);
     const story = findStory(candidate, storyId);
-    if (!story) throw new Error('Open a Harness story before steering it.');
+    if (!story) throw new Error('Open a Harness story before choosing its direction.');
     if (activeAttemptForStory(candidate, storyId)) {
       throw new Error('Finish or explicitly retry the current chapter checkpoint before changing direction.');
     }
-    const steering = {
-      id: this.runtime.createId('hsteer'), direction: direction.trim(), mode,
-      effectiveChapter: story.head.nextChapterNumber, createdAt: this.runtime.now(),
-    };
-    story.steering = [...(story.steering ?? []), steering];
-    story.updatedAt = steering.createdAt;
+    const ended = storyConclusionGap(story);
+    if (ended) throw new Error(ended);
+    const now = this.runtime.now();
+    if (!choice) {
+      delete story.nextChapterDirection;
+    } else {
+      const mode = harnessStoryMode(findFoundationRevision(candidate, story.activeFoundationRevisionId)?.input);
+      story.nextChapterDirection = {
+        id: this.runtime.createId('hdir'),
+        forChapter: story.head.nextChapterNumber,
+        choice: validateChapterDirectionChoice(choice, mode),
+        chosenAt: now,
+      };
+    }
+    story.updatedAt = now;
     await this.persist(candidate);
-    return cloneHarnessValue(steering);
+    return cloneHarnessValue(story.nextChapterDirection);
   }
 
   private async prepareArcPlan(storyId: string, model: string) {
@@ -718,6 +736,9 @@ export class HarnessGenerationController {
       throw new Error('This Harness adapter cannot create the authoritative Arc Plan required before chapter generation.');
     }
 
+    // An ended story never requests another chapter or plans another arc.
+    const ended = storyConclusionGap(story);
+    if (ended) throw new Error(ended);
     if (needsArcPlan(story, foundation.input) || !foundation.input.destinedEnding) {
       this.generating = true;
       try { await this.prepareArcPlan(storyId, model); }
@@ -732,6 +753,10 @@ export class HarnessGenerationController {
     }
     const reviewGap = survivalArcReviewGap(story, foundation.input);
     if (reviewGap) throw new Error(reviewGap);
+    // Fate Survival is written one reader-directed chapter at a time. A retry
+    // resends the direction its attempt already carries.
+    const directionGap = frozen?.immediateChapterRequest.direction ? undefined : chapterDirectionGap(story, harnessStoryMode(foundation.input));
+    if (directionGap) throw new Error(directionGap);
     const attemptId = this.runtime.createId('hga');
     const startedAt = this.runtime.now();
     // The HARNESS prepares the Generation Model Call inputs separately: the
@@ -1001,6 +1026,7 @@ export class HarnessGenerationController {
       // chapter. Later chapters never regenerate or overwrite them.
       ...(acceptedDraft.recap ? { recap: { text: acceptedDraft.recap, source: 'model' as const, updatedAt: committedAt } } : {}),
       ...(acceptedDraft.rhythm ? { rhythm: cloneHarnessValue(acceptedDraft.rhythm) } : {}),
+      ...(attemptChapterPath(commitAttempt) ? { path: attemptChapterPath(commitAttempt)! } : {}),
       eventIds: committedEvents.map(event => event.id),
       responseMode: acceptedDraft.responseMode,
       createdAt: commitAttempt.proseAcceptedAt ?? commitAttempt.startedAt,
@@ -1013,7 +1039,14 @@ export class HarnessGenerationController {
       lastCommittedChapterId: chapter.id,
       lastCommittedAt: committedAt,
     };
-    commitHarnessArc(commitStory, commitAttempt);
+    commitHarnessArc(commitStory, commitAttempt, committedAt);
+    const fateReport = readFateFailure(commitAttempt);
+    if (fateReport.warning) addWarnings(commitAttempt, [fateReport.warning]);
+    // The reader's direction was for this chapter only: it is consumed here,
+    // in the same write that commits the chapter it directed.
+    if (commitStory.nextChapterDirection && commitStory.nextChapterDirection.forChapter <= commitAttempt.chapterNumber) {
+      delete commitStory.nextChapterDirection;
+    }
     refreshRhythmRecommendation(candidate, commitStory, committedAt);
     commitStory.updatedAt = committedAt;
     commitAttempt.stage = 'committed';
@@ -1031,7 +1064,7 @@ export class HarnessGenerationController {
       return this.snapshot();
     }
     await this.replayStory(commitAttempt.storyId, chapterId);
-    if (createArcChapterPosition(commitAttempt.chapterNumber + 1).chapterInArc === 1) {
+    if (createArcChapterPosition(commitAttempt.chapterNumber + 1).chapterInArc === 1 && !findStory(this.state, commitAttempt.storyId)?.conclusion) {
       try { await this.prepareArcPlan(commitAttempt.storyId, commitAttempt.model); }
       catch (error) {
         const pending = cloneHarnessValue(this.state);
@@ -1338,7 +1371,10 @@ export class HarnessGenerationController {
     // they were prepared for. Otherwise the retry rebuilds for the current head.
     const story = findStory(this.state, attempt.storyId);
     const sameChapter = story?.head.nextChapterNumber === attempt.immediateChapterRequest.chapterNumber;
-    const frozen = attempt.storyInformation.arc && sameChapter ? {
+    // A reader who changed this chapter's direction after the failure gets the
+    // new direction: the request is rebuilt instead of resent.
+    const sameDirection = (story ? pendingChapterDirection(story)?.id : undefined) === attempt.immediateChapterRequest.direction?.id;
+    const frozen = attempt.storyInformation.arc && sameChapter && sameDirection ? {
       capaPrompt: attempt.capaPrompt,
       storyInformation: attempt.storyInformation,
       immediateChapterRequest: attempt.immediateChapterRequest,
@@ -1417,6 +1453,9 @@ export class HarnessGenerationController {
     }
     if (this.state.batches.some(batch => batch.storyId === storyId && ['running', 'pause_requested'].includes(batch.status))) {
       throw new Error('This story already has an active batch.');
+    }
+    if (harnessStoryMode(findFoundationRevision(this.state, story.activeFoundationRevisionId)?.input) === 'survival') {
+      throw new Error('Fate Survival is written one reader-directed chapter at a time, so it cannot run a batch.');
     }
     const now = this.runtime.now();
     const batch: HarnessBatchRun = {

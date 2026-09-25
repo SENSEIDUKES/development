@@ -362,7 +362,7 @@ describe('Story Seed keyboard and mobile navigation', () => {
     settingsSeed.story.optional.fateSurvival.enabled = true;
     const settingsUpdate = vi.fn();
     act(() => root.render(<LibraryPresentationProvider>{<OriginWorkspace seed={settingsSeed} updateSeed={settingsUpdate} />}</LibraryPresentationProvider>));
-    radios = Array.from(container.querySelectorAll<HTMLButtonElement>('[aria-label="Fate Visibility"] [role="radio"]'));
+    radios = Array.from(container.querySelectorAll<HTMLButtonElement>('[aria-label="Pressure"] [role="radio"]'));
     expect(radios.filter(radio => radio.tabIndex === 0)).toHaveLength(1);
     radios[0].focus();
     act(() => radios[0].dispatchEvent(keyboardEvent('ArrowRight')));

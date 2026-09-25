@@ -37,8 +37,6 @@ export interface AILoadingTaskInput {
 export const AI_PHASES: LoadingPhase[] = [
   { id: 'blueprint', label: 'Aetherial Mapping' },
   { id: 'initial-arc', label: 'Scripture Initiation' },
-  { id: 'steer', label: 'Sovereign Shift' },
-  { id: 'alter-fate', label: 'Fate Alteration' },
   { id: 'cover', label: 'Cover Reforging' },
   { id: 'image', label: 'Image Manifestation' },
   { id: 'audio', label: 'Audio Manifestation' },
@@ -50,8 +48,6 @@ export const AI_PHASES: LoadingPhase[] = [
 export const AI_PHASE_PHRASES: Record<string, string> = {
   blueprint: 'Establishing foundational laws, power limitations, and planetary properties.',
   'initial-arc': 'Transcribing the grand volume ledger, compiling chapter milestones and character templates.',
-  steer: 'Merging your custom instructions with fate timelines to trigger the subsequent 10 chapters.',
-  'alter-fate': 'Rebinding the threads of fate around your chosen divergence.',
   cover: 'Translating core premise variables into bespoke high-fidelity digital art.',
   image: 'Condensing celestial pigments into a standalone vision.',
   audio: 'Weaving ethereal resonance into a standalone soundscape.',

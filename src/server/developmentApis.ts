@@ -1,8 +1,6 @@
 import type { Plugin } from 'vite';
 import { createDevelopmentEconomy } from '../server/economy/developmentRuntime';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { handleChapterGenerationHttp } from '../server/chapter-generation/http';
-import type { ChapterGenerationStreamEvent } from '../components/chapter-generation/shared/liveChapterGeneration';
 import { handleHarnessGenerationHttp } from '../server/harness-generation/http';
 import { handleStorySeedBlueprintHttp } from '../server/story-seed-blueprint/http';
 import { handleReaderTranslationHttp } from '../server/reader-translation/http';
@@ -42,17 +40,9 @@ const writeJson = (
   response.end(JSON.stringify(body));
 };
 
-const acceptsChapterStream = (request: IncomingMessage) =>
-  request.headers.accept?.includes('application/x-ndjson') ?? false;
-
 export const generationApis = (
   environment: Record<string, string | undefined>,
 ): Plugin => {
-  const guardChapterGeneration = createPublicGenerationGuard({
-    key: 'chapter-generation',
-    limit: 6,
-    windowMs: 30 * 60 * 1_000,
-  });
   const guardHarnessGeneration = createPublicGenerationGuard({
     key: 'harness-generation',
     limit: 6,
@@ -104,8 +94,7 @@ export const generationApis = (
         return;
       }
       if (
-        pathname !== '/api/chapter-generation'
-        && pathname !== '/api/harness-generation'
+        pathname !== '/api/harness-generation'
         && pathname !== '/api/generate-blueprint'
         && pathname !== '/api/codex-voice-quote'
         && pathname !== '/api/reader-translation'
@@ -116,9 +105,7 @@ export const generationApis = (
       try {
         const admission: PublicGenerationGuardResult = request.method?.toUpperCase() !== 'POST'
           ? { allowed: true }
-          : pathname === '/api/chapter-generation'
-            ? guardChapterGeneration(request)
-            : pathname === '/api/harness-generation'
+          : pathname === '/api/harness-generation'
               ? guardHarnessGeneration(request)
             : pathname === '/api/codex-voice-quote'
               ? guardCodexVoiceQuote(request)
@@ -171,52 +158,14 @@ export const generationApis = (
           writeJson(response, result.status, result.body, result.headers);
           return;
         }
-        if (pathname === '/api/harness-generation') {
-          const result = await handleHarnessGenerationHttp(
-            { method: request.method, body, headers: request.headers },
-            {
-              environment,
-              onError: error => console.error('[harness-generation]', error),
-            },
-          );
-          writeJson(response, result.status, result.body, result.headers);
-          return;
-        }
-        const streaming = request.method?.toUpperCase() === 'POST' && acceptsChapterStream(request);
-        let streamStarted = false;
-        const writeEvent = (event: ChapterGenerationStreamEvent) => {
-          if (!streamStarted) {
-            response.statusCode = 200;
-            response.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
-            response.setHeader('Cache-Control', 'no-store');
-            streamStarted = true;
-          }
-          response.write(`${JSON.stringify(event)}\n`);
-        };
-        const result = await handleChapterGenerationHttp(
+        const result = await handleHarnessGenerationHttp(
           { method: request.method, body, headers: request.headers },
           {
             environment,
-            onError: error => console.error('[chapter-generation]', error),
-            ...(streaming ? { onStageChange: stage => writeEvent({ type: 'stage', stage }) } : {}),
+            onError: error => console.error('[harness-generation]', error),
           },
         );
-        if (streaming) {
-          if (!streamStarted) {
-            response.statusCode = result.status;
-            response.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
-            response.setHeader('Cache-Control', 'no-store');
-            streamStarted = true;
-          }
-          writeEvent({
-            type: 'result',
-            status: result.status,
-            body: result.body as Extract<ChapterGenerationStreamEvent, { type: 'result' }>['body'],
-          });
-          response.end();
-        } else {
-          writeJson(response, result.status, result.body, result.headers);
-        }
+        writeJson(response, result.status, result.body, result.headers);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Invalid request.';
         writeJson(response, message.includes('2 MB') ? 413 : 400, { error: message });

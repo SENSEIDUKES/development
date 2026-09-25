@@ -44,6 +44,9 @@ const setup = async (overrides: Partial<StoryFoundationInput> = {}, visibility?:
   return { controller, repository, story, requests, arcOperation, jumpTo, setOutput: (value: Record<string, unknown>) => { output = value; } };
 };
 
+/** A reader's own direction for one chapter; Fate Survival writes nothing without one. */
+const READER = { kind: 'reader' as const, text: 'Lin climbs the archive tower before the water rises.' };
+
 const arc1Done = [
   { arcNumber: 1, goalId: 'arc-1-flood', goalText: roadmap[0].goals[0].text, chapterNumber: 40 },
 ];
@@ -69,7 +72,7 @@ describe('HARNESS arc roadmap from the Blueprint', () => {
     // The ending may be reached in prose; it is never rewritten.
     expect(prompt.systemInstruction).not.toMatch(/never modify, complete|never modify or complete/i);
     expect(prompt.userPrompt).not.toMatch(/never modify or complete/i);
-    expect(prompt.systemInstruction).toContain('writing the ending into the prose then is the intended outcome');
+    expect(prompt.systemInstruction).toContain('writing the ending into the prose is the intended outcome');
     expect(prompt.systemInstruction).toContain('never rewrite, replace, weaken, or contradict them');
   });
 
@@ -118,11 +121,12 @@ describe('HARNESS arc roadmap from the Blueprint', () => {
   });
 
   it('Fate Survival: sets each arc once immediately before it begins and locks it when generation begins', async () => {
-    const run = await setup({ fateSurvival: { enabled: true, visibility: 'partial', majorMysteries: [], unresolvedPlotThreads: [] } });
+    const run = await setup({ fateSurvival: { enabled: true } });
     // Arc 1 was reviewed in the Blueprint immediately before the story began.
     expect(run.controller.snapshot().stories[0].arcGoalReviews).toEqual([{ arcNumber: 1, reviewedAt: expect.any(String), edited: false, source: 'blueprint-creation' }]);
     await expect(run.controller.editArcGoals(run.story.id, roadmap[0])).rejects.toThrow('one-time review');
     await expect(run.controller.editArcGoals(run.story.id, roadmap[1])).rejects.toThrow('immediately before it begins');
+    await run.controller.chooseChapterDirection(run.story.id, READER);
     await run.controller.generateNextChapter(run.story.id, 'fixture');
     expect(run.controller.snapshot().stories[0].arcGoalReviews?.[0].lockedAt).toBeTruthy();
 
@@ -132,6 +136,7 @@ describe('HARNESS arc roadmap from the Blueprint', () => {
     await atArc2.editArcGoals(run.story.id, edited);
     await expect(atArc2.editArcGoals(run.story.id, roadmap[1])).rejects.toThrow('one-time review');
     await expect(atArc2.acceptArcGoals(run.story.id, 2)).rejects.toThrow('one-time review');
+    await atArc2.chooseChapterDirection(run.story.id, READER);
     await atArc2.generateNextChapter(run.story.id, 'fixture');
     const review = atArc2.snapshot().stories[0].arcGoalReviews?.find(entry => entry.arcNumber === 2);
     expect(review).toMatchObject({ edited: true, source: 'novel-blueprint', lockedAt: expect.any(String) });
@@ -140,11 +145,12 @@ describe('HARNESS arc roadmap from the Blueprint', () => {
   });
 
   it('Fate Survival: accepting a plan as written uses the review without changing the plan', async () => {
-    const run = await setup({ fateSurvival: { enabled: true, visibility: 'none', majorMysteries: [], unresolvedPlotThreads: [] } });
+    const run = await setup({ fateSurvival: { enabled: true } });
     const atArc2 = await run.jumpTo(101, [...arc1Done, { arcNumber: 1, goalId: 'arc-1-map', goalText: roadmap[0].goals[1].text, chapterNumber: 100 }]);
     await atArc2.acceptArcGoals(run.story.id, 2);
     await expect(atArc2.editArcGoals(run.story.id, roadmap[1])).rejects.toThrow('one-time review');
     expect(atArc2.snapshot().stories[0].arcPlans).toHaveLength(2);
+    await atArc2.chooseChapterDirection(run.story.id, READER);
     await atArc2.generateNextChapter(run.story.id, 'fixture');
     expect(run.requests.at(-1)!.storyInformation.arc?.activeGoal.id).toBe('arc-2-dive');
   });

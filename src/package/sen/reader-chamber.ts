@@ -25,14 +25,11 @@ export { default as ReaderChamber, getReaderChamberSurfaceClass } from '../../co
 export { ReaderViewport } from '../../components/reader-chamber/development/ReaderViewport';
 export { ReaderHeader } from '../../components/reader-chamber/development/ReaderHeader';
 export { ReaderSettings } from '../../components/reader-chamber/development/ReaderSettings';
-export { ReaderFateAlerts } from '../../components/reader-chamber/development/ReaderFateAlerts';
 export { ReaderControls } from '../../components/reader-chamber/development/ReaderControls';
-export { AlterFatePanel } from '../../components/reader-chamber/development/AlterFatePanel';
 export { CosmicBookmarksPanel } from '../../components/reader-chamber/development/CosmicBookmarksPanel';
 export { ContextInspector } from '../../components/reader-chamber/development/ContextInspector';
 export { FateResultCard } from '../../components/reader-chamber/development/FateResultCard';
 export type { FateResultCardProps } from '../../components/reader-chamber/development/FateResultCard';
-export { FateSurvivalExplanation } from '../../components/reader-chamber/development/FateSurvivalExplanation';
 export { ParticleSystem } from '../../components/reader-chamber/development/ParticleSystem';
 export { SystemBlock } from '../../components/reader-chamber/development/SystemBlock';
 export type { SystemBlockProps } from '../../components/reader-chamber/development/SystemBlock';
@@ -58,7 +55,6 @@ export * from '../../components/reader-chamber/shared/readerTypography';
 export * from '../../components/reader-chamber/shared/readerLegend';
 export * from '../../components/reader-chamber/shared/autoCuePolicy';
 export * from '../../components/reader-chamber/shared/manifestationEligibility';
-export * from '../../components/reader-chamber/shared/alterFateLock';
 export * from '../../narrative/dialect';
 export { generateId, generateUUID } from '../../narrative/id';
 export type {

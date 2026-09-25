@@ -2,8 +2,8 @@
  * Story-direction domain contract shared by Story Seed and HARNESS.
  *
  * These are stable, presentation-neutral values. Visible labels (for example
- * the current Story Seed "Survival Pressure" option or a future "Synopsis"
- * rename) are never data authority: consumers read these fields, not the
+ * the Story Seed "Pressure" option or a future "Synopsis" rename) are never
+ * data authority: consumers read these fields, not the
  * interface that happens to display them today.
  */
 

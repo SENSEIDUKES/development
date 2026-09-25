@@ -14,6 +14,15 @@ const arcOperation = async (request: { storyInformation: { chapterNumber: number
   providerReceipt: { provider: 'fixture' as const, model: 'fixture', generatedAt: 'now', usage: { source: 'unavailable' as const } },
 });
 
+
+/** The reader's one-chapter directions in the long continuation run, by chapter. */
+const READER_DIRECTIONS: Record<number, string> = {
+  2: 'Make Iven an ally; preserve the consequences of the burned bridge.',
+  11: 'Show mercy to captives; Iven remains an ally.',
+  21: 'Mara learns the bridge was struck by lightning, not burned by Iven.',
+  36: 'Let Iven lead the rescue while Mara negotiates.',
+};
+
 describe('Steered continuation and SEN boundaries', () => {
   it('projects typed memory and keeps recovered mechanical details distinct from writer events', async () => {
     const prose = 'Mara has 16 sparks. Captain Iven says, "Stay together." Mara spends her sparks and has 0 sparks. The bell has 3 charges.';
@@ -107,10 +116,8 @@ describe('Steered continuation and SEN boundaries', () => {
     await controller.hydrate();
     const story = await controller.createStory({ premise: 'Mara crosses a burned bridge.', intendedDirection: 'Iven must become the final enemy.' });
     for (let n = 1; n <= 50; n++) {
-      if (n === 2) await controller.steerStory(story.id, 'Make Iven an ally; preserve the consequences of the burned bridge.');
-      if (n === 11) await controller.steerStory(story.id, 'Show mercy to captives; Iven remains an ally.');
-      if (n === 21) await controller.steerStory(story.id, 'The bridge was destroyed by lightning, not by Iven.', 'revise-history');
-      if (n === 36) await controller.steerStory(story.id, 'Let Iven lead the rescue while Mara negotiates.');
+      const direction = READER_DIRECTIONS[n];
+      if (direction) await controller.chooseChapterDirection(story.id, { kind: 'reader', text: direction });
       await controller.generateNextChapter(story.id, 'fixture');
       if (n === 7) {
         expect(controller.snapshot().attempts.at(-1)?.postCommitProcessing).toBe('failed');
@@ -129,11 +136,13 @@ describe('Steered continuation and SEN boundaries', () => {
         expect(createHarnessSenStory(controller.snapshot(), story.id).memory?.worldRules).toContain('Mara: Sparks: 12 sparks');
       }
     }
+    // Each reader direction reaches exactly the chapter it was chosen for, then is used up.
     for (const request of requests) {
-      const directions = request.storyInformation.currentStory.authorDirections;
-      if (request.immediateChapterRequest.chapterNumber > 1) expect(directions[0].direction).toContain('ally');
-      if (request.immediateChapterRequest.chapterNumber > 10) expect(directions[1].direction).toContain('mercy');
-      if (request.immediateChapterRequest.chapterNumber > 20) expect(directions[2].mode).toBe('revise-history');
+      const chapterDirection = READER_DIRECTIONS[request.immediateChapterRequest.chapterNumber];
+      if (chapterDirection) expect(request.immediateChapterRequest.direction?.choice).toEqual({ kind: 'reader', text: chapterDirection });
+      else expect(request.immediateChapterRequest.direction).toBeUndefined();
+      // A reader's choice replaces Rhythm's automatic direction for that chapter.
+      expect(Boolean(request.storyInformation.rhythm)).toBe(!chapterDirection);
     }
     const state = controller.snapshot();
     expect(state.chapters).toHaveLength(50);
@@ -141,10 +150,13 @@ describe('Steered continuation and SEN boundaries', () => {
     expect(JSON.stringify(requests[49].storyInformation)).not.toContain('Mara meets Iven.');
     expect(requests[49].storyInformation.canonicalState.resources).toEqual([expect.objectContaining({ owner: 'Mara', name: 'Sparks', value: '49', asOfChapter: 49 })]);
     expect(requests[49].storyInformation.canonicalState.characters.find(character => character.name === 'Iven')?.facts.relationshipToMC).toBe('Ally');
-    expect(requests[49].storyInformation.currentStory.authorDirections).toHaveLength(4);
-    const prompt = buildHarnessGenerationPrompt(requests[49]);
-    expect(prompt.systemInstruction).toContain('newest direction wins');
-    expect(prompt.userPrompt).toContain('Make Iven an ally');
+    const directed = buildHarnessGenerationPrompt(requests[1]);
+    expect(directed.systemInstruction).toContain('READER DIRECTION');
+    expect(directed.userPrompt).toContain(`READER DIRECTION FOR THIS CHAPTER: ${READER_DIRECTIONS[2]}`);
+    expect(directed.userPrompt).not.toContain('FATE PRESSURE RHYTHM DIRECTION');
+    const automatic = buildHarnessGenerationPrompt(requests[49]);
+    expect(automatic.userPrompt).not.toContain('Make Iven an ally');
+    expect(automatic.userPrompt).toContain('FATE PRESSURE RHYTHM DIRECTION');
     const sen = createHarnessSenStory(state, story.id);
     expect(sen.id).toBe(story.id);
     expect(sen.mcName).toBe('Mara');
@@ -165,8 +177,10 @@ describe('Steered continuation and SEN boundaries', () => {
     expect(state.chapters[0].prose).toContain('Enemy');
     const currentStory = state.stories[0];
     const next = compileStoryInformationPacket(state, currentStory, state.foundations[0], 'next');
-    expect(next.currentStory.authorDirections).toHaveLength(4);
-    expect(next.diagnostics.omitted.some(item => item.sourceRecordIds.includes(currentStory.steering![0].id))).toBe(false);
+    expect(currentStory.nextChapterDirection).toBeUndefined();
+    expect(next.rhythm).toBeDefined();
+    expect(state.chapters[1].path).toMatchObject({ kind: 'reader', text: READER_DIRECTIONS[2] });
+    expect(state.chapters[2].path).toMatchObject({ kind: 'automatic' });
   }, 60_000);
 
   it('keeps exact zero and negative mechanics but withholds unsupported details', () => {

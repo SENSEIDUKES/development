@@ -33,15 +33,16 @@ const packet = (premise: string): StoryInformationPacket => ({
   storyHead: { nextChapterNumber: 1 },
   chapterNumber: 1,
   createdAt: 'a',
-  currentStory: { title: 'Test', originalLanguage: 'ja', premise, authorDirections: [], corrections: [] },
+  currentStory: { title: 'Test', originalLanguage: 'ja', premise, corrections: [] },
   storyDirection: { hardPins: [] },
   previouslyOn: [],
   canonicalState: { characters: [], relationships: [], locations: [], factions: [], artifacts: [], abilities: [], resources: [] },
   diagnostics: { budgetSource: 'test', sections: [], omitted: [], identityAmbiguities: [], storage: { chapters: 0, events: 0, canonicalRecords: 0, activeRecords: 0, recaps: 0 } },
 });
 
-const request = (assignment?: string): ImmediateChapterRequest =>
-  ({ chapterNumber: 1, continuation: false, chapterScale: { minWords: 1_800, maxWords: 2_500 }, ...(assignment ? { assignment } : {}) });
+const request = (readerDirection?: string): ImmediateChapterRequest =>
+  ({ chapterNumber: 1, continuation: false, chapterScale: { minWords: 1_800, maxWords: 2_500 },
+    ...(readerDirection ? { direction: { id: 'hdir-test', forChapter: 1, choice: { kind: 'reader', text: readerDirection }, chosenAt: 'a' } } : {}) });
 
 describe('Translation skill contract', () => {
   it('requires exactly one supported target language', () => {

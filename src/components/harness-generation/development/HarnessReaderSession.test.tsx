@@ -99,11 +99,17 @@ describe('HarnessReaderSession on a saved HARNESS story', { timeout: 20_000 }, (
     await flush(2100);
     expect(readerState.records.get(story.id)?.lastReadChapter).toBe(2);
 
-    await click(button => button.title === 'Bookmark this position', 'bookmark control');
-    await click(button => button.getAttribute('aria-label') === 'Save bookmark', 'Save bookmark');
+    // The older journal bookmark is found again by its excerpt, on its own passage.
+    expect(buttonBy(button => button.title === 'Edit this Mind Palace passage')).toBeTruthy();
+    await click(button => button.title === 'Keep this passage in your Mind Palace', 'Mind Palace control');
+    await click(button => button.getAttribute('aria-label') === 'Save to Mind Palace', 'Save to Mind Palace');
     const saved = readerState.records.get(story.id)!;
     expect(saved.bookmarks.map(bookmark => bookmark.id)).toContain('legacy');
     expect(saved.bookmarks).toHaveLength(2);
+    // A new passage is anchored to its block and its exact text.
+    const kept = saved.bookmarks.find(bookmark => bookmark.id !== 'legacy')!;
+    const chapter = canonBefore.chapters.find(entry => entry.chapterNumber === 2)!;
+    expect(kept).toMatchObject({ chapterNumber: 2, paragraphIndex: 0, blockId: chapter.blocks![0].id, passage: 'A keeper waited on the causeway with a lantern.' });
 
     await click(button => button.getAttribute('aria-label') === 'Reader Settings', 'Reader Settings');
     await click(button => button.textContent?.trim() === 'Mark as Read', 'Mark as Read');
@@ -119,7 +125,7 @@ describe('HarnessReaderSession on a saved HARNESS story', { timeout: 20_000 }, (
     root = createRoot(container);
     await mount(harness, readerState);
     expect(container.textContent).toContain('A keeper waited on the causeway with a lantern.');
-    expect(container.querySelectorAll('.custom-bookmark-bg').length).toBeGreaterThanOrEqual(1);
+    expect(container.querySelectorAll('.custom-bookmark-bg')).toHaveLength(2);
     expect(container.querySelector('#reader-chamber-root')?.className).toContain('#1a1614');
   });
 

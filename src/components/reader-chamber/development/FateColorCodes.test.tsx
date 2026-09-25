@@ -7,8 +7,6 @@ import { type FateResultData, type SystemEvent } from '@seihouse/sen/cards';
 import { type StoryWorld } from '@seihouse/sen/contracts';
 import { getColorCodeValue, resolveFateConsequenceDetailColorCode } from '@seihouse/sen/color-codes';
 import { FateResultCard } from '@seihouse/sen/cards';
-import { FateSurvivalExplanation } from '@seihouse/sen/reader-chamber';
-import { ReaderFateAlerts } from '@seihouse/sen/reader-chamber';
 import { SystemBlock } from '@seihouse/sen/cards';
 import { FateSurvivalExplanation as StorySeedFateSurvivalExplanation } from '../../story-seed/reference/FateSurvivalExplanation';
 
@@ -110,44 +108,16 @@ describe('Reader fate Color Codes', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('uses the same Color Codes in fate-type choices and Reader fate alerts', () => {
-    act(() => {
-      root.render(<FateSurvivalExplanation />);
-    });
-    const fateButtons = [...container.querySelectorAll<HTMLButtonElement>('button[data-color-code]')];
-    expect(fateButtons.map(button => button.dataset.colorCode)).toEqual(fateTypeColorCodes);
-
-    act(() => fateButtons[0]?.click());
-    expect(fateButtons[0]?.style.color).toBe(getColorCodeValue('corruption'));
-
-    // The visible Story Seed Original Reference uses this same fate taxonomy,
-    // rather than keeping a second palette beside the Reader's mapping.
+  it('keeps the locked Story Seed reference fate-type choices on the shared Color Codes', () => {
+    // The SEN Reader no longer shows the old genre-triggered Fate Survival
+    // banners; the locked Story Seed Original Reference still renders its fate
+    // taxonomy, and it must use the same palette as the Reader's mapping.
     act(() => {
       root.render(<StorySeedFateSurvivalExplanation />);
     });
-    expect([...container.querySelectorAll<HTMLButtonElement>('button[data-color-code]')]
-      .map(button => button.dataset.colorCode)).toEqual(fateTypeColorCodes);
-
-    const fateStory = {
-      genre: 'Fate Survival',
-      hardcoreFateMode: true,
-      mcName: 'Rin',
-      memory: { currentPowerStage: 'Foundation Establishment' },
-    } as StoryWorld;
-    act(() => {
-      root.render(
-        <ReaderFateAlerts
-          activeStory={fateStory}
-          currentPowerStage="Mortal"
-          selectedChapterNum={4}
-          showFateCodex={false}
-          setShowFateCodex={vi.fn()}
-        />,
-      );
-    });
-
-    expect(container.querySelector('[data-color-code="corruption"]')?.textContent)
-      .toContain('Fate Survival Mode Active');
-    expect(container.textContent).toContain('Hardcore Fate Mode Engaged');
+    const fateButtons = [...container.querySelectorAll<HTMLButtonElement>('button[data-color-code]')];
+    expect(fateButtons.map(button => button.dataset.colorCode)).toEqual(fateTypeColorCodes);
+    act(() => fateButtons[0]?.click());
+    expect(fateButtons[0]?.style.color).toBe(getColorCodeValue('corruption'));
   });
 });

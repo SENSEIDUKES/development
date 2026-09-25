@@ -33,7 +33,7 @@ const setup = async () => {
   return { controller, repository, story, runtime, modelAdapter };
 };
 
-describe('Steering review regressions', () => {
+describe('Chapter direction review regressions', () => {
   it('blocks direction changes at a saved checkpoint and after reload', async () => {
     const { controller, repository, story, modelAdapter } = await setup();
     const save = repository.save.bind(repository);
@@ -43,11 +43,11 @@ describe('Steering review regressions', () => {
     });
     await controller.generateNextChapter(story.id, 'fixture');
     expect(controller.snapshot().attempts[0].stage).toBe('accepted_not_durable');
-    await expect(controller.steerStory(story.id, 'Make Iven an ally')).rejects.toThrow('checkpoint');
+    await expect(controller.chooseChapterDirection(story.id, { kind: 'reader', text: 'Make Iven an ally' })).rejects.toThrow('checkpoint');
     const reloaded = new HarnessGenerationController({ repository, modelAdapter });
     await reloaded.hydrate();
-    await expect(reloaded.steerStory(story.id, 'Make Iven an ally')).rejects.toThrow('checkpoint');
-    expect(reloaded.snapshot().stories[0].steering).toBeUndefined();
+    await expect(reloaded.chooseChapterDirection(story.id, { kind: 'reader', text: 'Make Iven an ally' })).rejects.toThrow('checkpoint');
+    expect(reloaded.snapshot().stories[0].nextChapterDirection).toBeUndefined();
   });
 
   it('carries cast identity and the latest resource balance as current canonical state, without the prose', async () => {

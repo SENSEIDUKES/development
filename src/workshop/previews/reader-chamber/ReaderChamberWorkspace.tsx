@@ -130,14 +130,8 @@ export function ReaderChamberWorkspace() {
       if (scenario.uiAction === 'preferences') {
         clickInChamber((b) => b.getAttribute('aria-label') === 'Reader Settings');
       } else if (scenario.uiAction === 'bookmarks') {
-        // The Comments button reuses the Chronicle Anchors drawer for now.
-        clickInChamber((b) => b.getAttribute('aria-label') === 'Comments');
-      } else if (scenario.uiAction === 'alter-fate') {
-        // Alter Fate lives in the header Quick Action menu — open it first
-        // (discrete click updates flush synchronously, so the menu item is
-        // clickable immediately after).
-        clickInChamber((b) => b.getAttribute('aria-label') === 'Quick Actions');
-        clickInChamber((b) => (b.getAttribute('aria-label') || '').includes('Alter Fate'));
+        // The bottom bar's Mind Palace button opens the kept-passage drawer.
+        clickInChamber((b) => b.getAttribute('aria-label') === 'Mind Palace');
       } else if (scenario.uiAction === 'seal') {
         clickInChamber((b) => /Seal Chapter|^Publish$/.test(b.textContent?.trim() ?? ''));
       }
@@ -205,9 +199,6 @@ export function ReaderChamberWorkspace() {
     onSwitchTab: undefined as ((tab: ReaderTab) => void) | undefined,
     activeStory,
     updateStoryFields,
-    handleAlterFate: async (chapterNumber: number, direction: string, customPrompt: string) => {
-      console.log('[Preview] Alter Fate', { chapterNumber, direction, customPrompt });
-    },
     handleSealChapter: async (chapterNumber: number) => {
       updateMockStory(MOCK_STORY_ID, (current) => ({
         arcs: current.arcs.map((arc) => ({

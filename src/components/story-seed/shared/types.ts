@@ -75,13 +75,11 @@ export interface WorldBlueprint {
   mcProfile: string;
   majorFactions: string[];
   initialCharacters: string[];
-  majorMysteries: string[];
   firstArcPromise: string;
   tropeRules: string;
   styleBible: string;
   destinedEnding?: string;
   estimatedArcs: number;
-  unresolvedPlotThreads: string[];
 }
 
 /**

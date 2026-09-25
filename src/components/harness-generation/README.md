@@ -27,9 +27,40 @@ existing Chapter Generation feature.
 | Replica creation date | 2026-08-29 |
 | Last Workshop update | 2026-09-25 |
 | Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
-| Lifecycle status | Steered continuation with a derived SEN Reader adapter |
+| Lifecycle status | Reader-directed continuation (Fate page) with a derived SEN Reader adapter |
 
 ### History
+
+- **2026-09-25 (Fate Phase 2):** Persistent steering is replaced by the reader's
+  one-chapter direction. The HARNESS Reader's Alter Fate opens a new SEN **Fate
+  page** (`development/FatePage.tsx`, built from `FatePanel.tsx`) showing the
+  Destined Ending with its mode's promise, the active Arc Goal, and the next
+  chapter's path. Regular Reader mode offers four paths: leave it to fate
+  (Rhythm's automatic pick), one of the writer's three next-chapter ideas, or the
+  reader's own words. Fate Survival offers only the reader's own words and writes
+  nothing until they are given. `controller.chooseChapterDirection` saves the
+  choice as `HarnessStory.nextChapterDirection` for that one chapter; it survives
+  failed attempts (a retry resends it, or rebuilds when the reader changed it)
+  and is consumed in the same write that commits the chapter, which records its
+  `path`. The choice travels only in the Immediate Chapter Request
+  (`direction`); the packet's Rhythm section is sent only for automatic paths, so
+  reader direction and Rhythm never compete. The Fate mode now reaches the
+  writer (`storyDirection.fateMode`) and is fixed once a novel begins. Regular
+  Reader mode keeps its guarantee: a goal's deadline chapter still cannot commit
+  unachieved, and completing the final arc's last goal (`finalGoal`) records
+  `HarnessStory.conclusion` and ends the story. Fate Survival never forces
+  success: an unmet goal at its deadline commits and is recorded as missed
+  (`ArcGoalCompletion.outcome: 'missed'`), the next goal begins, a missed final
+  goal fails fate, and the writer may report, with a verbatim passage, that the
+  chapter made the ending impossible (`fateFailure`, for example a death). An
+  ended story writes and plans nothing more; no successor destiny is planned. The
+  retired Survival visibility and Blueprint mystery/thread proposals, their
+  packet section, `steerStory`, `revise-history` and the `NEXT CHAPTER ASSIGNMENT`
+  wording are removed. Schema 20 migrates saved stories: a direction given since
+  the last commit becomes the next chapter's direction, every earlier direction
+  is kept read-only as `earlierSteering`, Survival keeps only its switch, and
+  frozen attempts drop the retired fields. The Library workspace uses the same
+  SEN Fate pieces in place of its steering form and private arc goal card.
 
 - **2026-09-25:** The Story Seed handoff now carries the Blueprint's added world
   detail. Where the author wrote the world, society, or opening location, the
@@ -430,13 +461,17 @@ the separate inventory and runtime boundary documented in
 catalog fixtures and a Workshop-owned temporary test reward adapter; it does not define product
 packs, marketplace behavior, currency, scheduling, or a reward economy.
 
-## Steering and continuation
+## Chapter direction and continuation
 
-`controller.steerStory(id, direction)` appends a durable future direction.
-`revise-history` is the explicit alternative when an author changes past canon.
-Directions are frozen into each request and retained in exports/reloads. The latest
-conflicting direction wins; earlier unrelated directions and past consequences
-remain. Foundation/Blueprint future plans are subordinate proposals.
+The reader directs one chapter at a time. `controller.chooseChapterDirection(id,
+choice)` saves the path for the next chapter only: one of Rhythm's three chapter
+functions with the idea the reader picked (Regular Reader mode), or the reader's
+own direction in their words (either mode). `null` returns Regular Reader mode to
+fate's automatic pick. The choice travels in the Immediate Chapter Request, stays
+through failed attempts, and is consumed when that chapter commits; the committed
+chapter records the `path` it took. Fate Survival requires a direction for every
+chapter and cannot run batches. Corrections, not directions, change established
+canon; Foundation/Blueprint future plans are subordinate proposals.
 
 The ordinary cycle remains prepare context → one writing call → commit prose →
 preserve/process developments → continue. There is no routine literary review
@@ -453,8 +488,8 @@ identities make repeated repair idempotent; older repairs do not become the late
 story state merely because they ran later. Dropped or incomplete memory is repaired
 by re-running the separate extraction, which reuses a saved raw extraction before
 requesting a new one. The Reader preview derives chapter-scoped memory. Its reading settings
-and edits are session-local; durable story changes belong to Harness steering and
-corrections. Fully malformed optional output still requires usable source evidence;
+and edits are session-local; durable story changes belong to the reader's chapter
+directions and corrections. Fully malformed optional output still requires usable source evidence;
 replay does not invent missing facts or call the model again.
 
 ## Generation Model Call and inspection

@@ -28,7 +28,7 @@ const canonicalSeed = (): StorySeedInput => ({
     },
     optional: {
       intendedForMatureAudiences: true,
-      fateSurvival: { enabled: true, visibility: "partial", pressure: "heaven" },
+      fateSurvival: { enabled: true, pressure: "heaven" },
       funSettings: {
         faceSlap: "low",
         plotArmor: "medium",
@@ -117,7 +117,6 @@ const generatedBlueprint = (): Record<string, unknown> & { arcPlans?: unknown[] 
     "The witness Minister Sui (Rain Witness) — a contradictory generated description",
     "Regent Zhao — the architect of the hearing",
   ],
-  majorMysteries: ["Who taught the dead heaven to remember broken oaths?"],
   arcPlans: [
     { arcNumber: 1, goals: [{ id: "arc-1-hearing", text: "Survive the hearing.", chapters: 40 }, { id: "arc-1-regent", text: "Expose the regent's forged decree.", chapters: 60 }] },
     { arcNumber: 2, goals: [{ id: "arc-2-tribunal", text: "Win a seat on the Vermilion Tribunal.", chapters: 100 }] },
@@ -128,7 +127,6 @@ const generatedBlueprint = (): Record<string, unknown> & { arcPlans?: unknown[] 
   styleBible: "Restrained court tension, exact ritual detail, and sudden spectacle.",
   destinedEnding: "A different ending.",
   estimatedArcs: 3,
-  unresolvedPlotThreads: ["The regent recognizes a gesture from another timeline."],
 });
 
 class RecordingProvider implements WorldBlueprintModelProvider {
@@ -198,21 +196,19 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(blueprintRoadmapArcLimit(32_768)).toBe(100);
   });
 
-  it.each([false, true])("accepts empty Fate Survival arrays when enabled=%s", async enabled => {
+  it.each([false, true])("never asks for Fate Survival mysteries or threads when Survival is %s", async enabled => {
     const seed = canonicalSeed();
     seed.story.optional.fateSurvival.enabled = enabled;
-    const provider = new RecordingProvider({ ...generatedBlueprint(), majorMysteries: [], unresolvedPlotThreads: [] });
+    // A model that still volunteers the retired lists has them dropped.
+    const provider = new RecordingProvider({ ...generatedBlueprint(), majorMysteries: ["A volunteered mystery"], unresolvedPlotThreads: ["A volunteered thread"] } as ReturnType<typeof generatedBlueprint>);
     const response = await handleStorySeedBlueprintHttp({
       method: 'POST', headers: { Authorization: 'Bearer development-access-token' }, body: { storySeed: seed },
     }, { environment, providerFactory: () => provider });
     expect(response.status).toBe(200);
-    expect(provider.requests[0].responseJsonSchema.properties.majorMysteries).not.toHaveProperty('minItems');
-    expect(provider.requests[0].responseJsonSchema.properties.unresolvedPlotThreads).not.toHaveProperty('minItems');
-    expect(provider.requests[0].userPrompt).toContain(enabled
-      ? 'You may create majorMysteries and unresolvedPlotThreads for the Fate Survival experience.'
-      : 'Return empty arrays for majorMysteries and unresolvedPlotThreads.');
-    expect(JSON.stringify(response.body)).toContain('"majorMysteries":[]');
-    expect(JSON.stringify(response.body)).toContain('"unresolvedPlotThreads":[]');
+    expect(Object.keys(provider.requests[0].responseJsonSchema.properties)).not.toContain('majorMysteries');
+    expect(Object.keys(provider.requests[0].responseJsonSchema.properties)).not.toContain('unresolvedPlotThreads');
+    expect(provider.requests[0].userPrompt).not.toMatch(/majorMysteries|unresolvedPlotThreads/);
+    expect(JSON.stringify(response.body)).not.toMatch(/majorMysteries|unresolvedPlotThreads|volunteered/);
   });
 
   it("sends the complete canonical seed and preserves creator-authored canon", async () => {
@@ -298,8 +294,6 @@ describe("protected Story Seed World Blueprint generation", () => {
       logline: "",
       majorFactions: [],
       initialCharacters: [],
-      majorMysteries: [],
-      unresolvedPlotThreads: [],
       estimatedArcs: 0,
     });
     const response = await handleStorySeedBlueprintHttp({
@@ -492,7 +486,7 @@ describe("Cleaned-up Blueprint instructions", () => {
       "Describe minors safely and never sexualize a character under 18",
       "Return the JSON object only.",
     ]) expect(count(both, rule)).toBe(1);
-    expect(count(both, "majorMysteries and unresolvedPlotThreads")).toBe(2);
+    expect(both).not.toMatch(/majorMysteries|unresolvedPlotThreads/);
     for (const removed of [
       "when the creator left it open", "The server will enforce", "for compatibility", "HARNESS", "CAPA",
       "Preserve author Hard Pins exactly", "Fate Survival is optional", "Return only the requested JSON object",
@@ -529,8 +523,8 @@ describe("Cleaned-up Blueprint instructions", () => {
     expect(schema.additionalProperties).toBe(false);
     expect([...schema.required].sort()).toEqual([
       "arcPlans", "destinedEnding", "estimatedArcs", "firstArcPromise", "initialCharacters", "logline", "mainCharacter",
-      "majorFactions", "majorMysteries", "mcProfile", "powerSystemOutline", "societyStructure", "startingLocation",
-      "styleBible", "title", "tropeRules", "unresolvedPlotThreads", "worldOverview",
+      "majorFactions", "mcProfile", "powerSystemOutline", "societyStructure", "startingLocation",
+      "styleBible", "title", "tropeRules", "worldOverview",
     ]);
     expect(Object.keys(schema.properties)).not.toContain("worldOverviewDetail");
     expect(blueprintRoadmapArcLimit(8_192)).toBe(14);

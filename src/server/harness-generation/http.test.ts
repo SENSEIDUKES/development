@@ -32,7 +32,7 @@ const request = (): HarnessGenerationRequest => ({
     storyHead: { nextChapterNumber: 1 },
     chapterNumber: 1,
     createdAt: '2026-08-29T00:00:00.000Z',
-    currentStory: { title: 'The Moved City', originalLanguage: 'en', premise: foundation().input.premise, authorDirections: [], corrections: [] },
+    currentStory: { title: 'The Moved City', originalLanguage: 'en', premise: foundation().input.premise, corrections: [] },
     storyDirection: { destinedEnding: 'Restore the city.', hardPins: [] },
     arc: arcGenerationContext({ arcNumber: 1, goals: [{ id: 'arc-1-opening', text: 'Reach the moved city.', chapters: 100 }] }, 1, 'Restore the city.'),
     previouslyOn: [],
@@ -131,8 +131,8 @@ describe('Harness Generation HTTP boundary', () => {
         SEN_NOVEL_AUTHOR_SKILL,
       ],
     });
-    skilled.storyInformation.currentStory.authorDirections = [{ direction: 'Bring the envoy to the gate.', mode: 'future', effectiveChapter: 1 }];
-    skilled.immediateChapterRequest = { chapterNumber: 1, continuation: false, chapterScale: { minWords: 1_800, maxWords: 2_500 }, assignment: 'Bring the envoy to the gate.' };
+    skilled.immediateChapterRequest = { chapterNumber: 1, continuation: false, chapterScale: { minWords: 1_800, maxWords: 2_500 },
+      direction: { id: 'hdir-test', forChapter: 1, choice: { kind: 'reader', text: 'Bring the envoy to the gate.' }, chosenAt: '2026-09-25T00:00:00.000Z' } };
     const result = await handleHarnessGenerationHttp(
       { method: 'POST', body: skilled },
       { environment, providerFactory: () => ({ provider: 'gemini', model: skilled.model, generate }) },
@@ -166,9 +166,11 @@ describe('Harness Generation HTTP boundary', () => {
     // Generation content: story information plus the immediate request, with no skill instructions.
     expect(input.userPrompt).toMatch(/^STORY INFORMATION PACKET/);
     expect(input.userPrompt).toContain('CURRENT STORY INFORMATION');
-    expect(input.userPrompt).toContain('"direction": "Bring the envoy to the gate."');
+    // The reader's direction is stated once, in the request that acts on it.
+    expect(input.userPrompt.split('Bring the envoy to the gate.')).toHaveLength(2);
     expect(input.userPrompt.indexOf('CURRENT STORY INFORMATION')).toBeLessThan(input.userPrompt.indexOf('IMMEDIATE CHAPTER REQUEST'));
-    expect(input.userPrompt).toContain('NEXT CHAPTER ASSIGNMENT: Bring the envoy to the gate.');
+    expect(input.userPrompt).toContain('READER DIRECTION FOR THIS CHAPTER: Bring the envoy to the gate.');
+    expect(input.userPrompt.indexOf('READER DIRECTION FOR THIS CHAPTER')).toBeGreaterThan(input.userPrompt.indexOf('IMMEDIATE CHAPTER REQUEST'));
     // The Mission Reminder is its own section now, after the packet and before the request.
     expect(input.userPrompt).toContain('MISSION REMINDER: You are the author of this novel');
     expect(input.userPrompt.indexOf('MISSION REMINDER')).toBeGreaterThan(input.userPrompt.indexOf('CURRENT CANONICAL STATE'));

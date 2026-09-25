@@ -1,12 +1,16 @@
-import { arcFirstChapter, arcGoalCompleted, arcGenerationContext, confirmArcGoal, createArcChapterPosition, type ArcPlan } from '../../arc-goals/shared/arcGoals';
-import type { HarnessArcGoalReview, HarnessGenerationAttempt, HarnessStory, StoryFoundationInput } from '../../../narrative/generation';
+import { arcFirstChapter, arcGoalResolution, arcGoalResolved, arcGenerationContext, confirmArcGoal, createArcChapterPosition, type ArcPlan } from '../../arc-goals/shared/arcGoals';
+import type { HarnessArcGoalReview, HarnessGenerationAttempt, HarnessStory, HarnessStoryConclusion, HarnessStoryMode, HarnessWarning, StoryFoundationInput } from '../../../narrative/generation';
 
 /**
- * Regular Reader mode: Rhythm directs by default and Arc Goals stay editable
- * while the novel is private. Fate Survival: each arc's goals are set once,
- * immediately before that arc begins, and locked when its generation begins.
+ * Regular Reader mode: Rhythm directs by default, the reader may direct any
+ * chapter, Arc Goals stay editable while the novel is private, and the
+ * Destined Ending is guaranteed: a goal's deadline chapter cannot commit
+ * until the goal is achieved. Fate Survival: the reader directs every chapter;
+ * each arc's goals are set once, immediately before that arc begins, and
+ * locked when its generation begins; a goal can be missed and the Destined
+ * Ending can fail.
  */
-export type HarnessStoryMode = 'regular' | 'survival';
+export type { HarnessStoryMode };
 
 export const harnessStoryMode = (foundation?: Pick<StoryFoundationInput, 'fateSurvival'>): HarnessStoryMode =>
   foundation?.fateSurvival?.enabled ? 'survival' : 'regular';
@@ -38,25 +42,91 @@ export function readArcReply(raw: string): Record<string, unknown> {
   catch { return {}; }
 }
 
-/** A deadline failure is a failed attempt, never a chapter commit or plan extension. */
+/** The mode an attempt was prepared under, from its frozen packet. Packets frozen before modes reached the writer read as Regular. */
+export const attemptStoryMode = (attempt: HarnessGenerationAttempt): HarnessStoryMode =>
+  attempt.storyInformation.storyDirection.fateMode ?? 'regular';
+
+/**
+ * Regular Reader mode guarantees the Destined Ending: a goal's deadline chapter
+ * is a failed attempt, never a commit or plan extension, until the goal is
+ * achieved. Fate Survival never blocks here: a missed deadline is recorded
+ * when the chapter commits (`commitHarnessArc`), so the model is never pushed
+ * into writing success just to save a chapter.
+ */
 export function arcDeadlineFailure(attempt: HarnessGenerationAttempt): string | undefined {
   const context = attempt.storyInformation.arc;
   if (!context || !attempt.acceptedDraft) return 'The frozen Story Information Packet has no authoritative Arc Plan.';
+  if (attemptStoryMode(attempt) === 'survival') return undefined;
   if (attempt.chapterNumber < context.completionDeadline) return undefined;
   const completion = confirmArcGoal(context, attempt.chapterNumber, attempt.acceptedDraft.prose,
     readArcReply(attempt.rawProviderResponse ?? '').arcCompletion);
   return completion ? undefined : `Chapter ${attempt.chapterNumber} is the completion deadline for “${context.activeGoal.text}”. The chapter cannot commit until the model reports completion with verbatim evidence from its prose.`;
 }
 
-/** Runs inside the existing atomic chapter commit, including persistence retries. */
-export function commitHarnessArc(story: HarnessStory, attempt: HarnessGenerationAttempt) {
+/**
+ * The writer's report that this chapter made the Destined Ending impossible,
+ * accepted only in Fate Survival and only with a continuous verbatim passage
+ * from the chapter. Returns the evidence, or a warning when a report is set aside.
+ */
+export function readFateFailure(attempt: HarnessGenerationAttempt): { evidence?: string; warning?: HarnessWarning } {
+  const report = readArcReply(attempt.rawProviderResponse ?? '').fateFailure as { failed?: unknown; evidence?: unknown } | undefined;
+  if (!report || report.failed !== true || !attempt.acceptedDraft) return {};
+  const evidence = typeof report.evidence === 'string' ? report.evidence.trim() : '';
+  if (attemptStoryMode(attempt) !== 'survival') {
+    return { warning: { code: 'ignored_fate_failure', message: 'The writer reported a failed fate, but Regular Reader mode guarantees the Destined Ending. The report was set aside.' } };
+  }
+  if (!evidence || !attempt.acceptedDraft.prose.includes(evidence)) {
+    return { warning: { code: 'ignored_fate_failure', message: 'The writer reported a failed fate without a verbatim passage from the chapter. The story continues.' } };
+  }
+  return { evidence };
+}
+
+/**
+ * Runs inside the existing atomic chapter commit, including persistence
+ * retries. Records a completed goal; in Fate Survival also records a goal
+ * whose deadline chapter committed unachieved as missed. Returns how the story
+ * ended when this chapter ended it.
+ */
+export function commitHarnessArc(story: HarnessStory, attempt: HarnessGenerationAttempt, recordedAt: string): HarnessStoryConclusion | undefined {
   const context = attempt.storyInformation.arc;
-  if (!context || !attempt.acceptedDraft) return;
+  if (!context || !attempt.acceptedDraft) return undefined;
+  const survival = attemptStoryMode(attempt) === 'survival';
   const completion = confirmArcGoal(context, attempt.chapterNumber, attempt.acceptedDraft.prose,
     readArcReply(attempt.rawProviderResponse ?? '').arcCompletion);
-  if (completion && !(story.goalCompletions ?? []).some(done => done.arcNumber === completion.arcNumber && done.goalId === completion.goalId && done.goalText === completion.goalText)) {
-    story.goalCompletions = [...(story.goalCompletions ?? []), completion];
+  const recorded = (goalId: string, goalText: string) => (story.goalCompletions ?? [])
+    .some(done => (done.arcNumber ?? context.plan.arcNumber) === context.plan.arcNumber && done.goalId === goalId && (!done.goalText || done.goalText === goalText));
+  let outcome: 'completed' | 'missed' | undefined;
+  if (completion) {
+    if (!recorded(completion.goalId, completion.goalText!)) story.goalCompletions = [...(story.goalCompletions ?? []), completion];
+    outcome = 'completed';
+  } else if (survival && attempt.chapterNumber >= context.completionDeadline && !arcGoalResolved(context.plan, context.activeGoal, story.goalCompletions, attempt.chapterNumber + 1)) {
+    story.goalCompletions = [...(story.goalCompletions ?? []), {
+      arcNumber: context.plan.arcNumber, goalId: context.activeGoal.id, goalText: context.activeGoal.text,
+      chapterNumber: attempt.chapterNumber, evidence: '', outcome: 'missed',
+    }];
+    outcome = 'missed';
   }
+  if (story.conclusion) return undefined;
+  const failure = survival ? readFateFailure(attempt).evidence : undefined;
+  const conclusion: Omit<HarnessStoryConclusion, 'recordedAt'> | undefined = failure
+    ? { outcome: 'fate-failed', reason: 'writer-reported-fate-failure', chapterNumber: attempt.chapterNumber, evidence: failure }
+    : context.finalGoal && outcome === 'completed'
+      ? { outcome: 'destined-ending-reached', reason: 'final-goal-completed', chapterNumber: attempt.chapterNumber, evidence: completion!.evidence }
+      : context.finalGoal && outcome === 'missed'
+        ? { outcome: 'fate-failed', reason: 'final-goal-missed', chapterNumber: attempt.chapterNumber, evidence: '' }
+        : undefined;
+  if (!conclusion) return undefined;
+  story.conclusion = { ...conclusion, recordedAt };
+  return story.conclusion;
+}
+
+/** Why no further chapter can be written, once the story has ended. */
+export function storyConclusionGap(story: HarnessStory): string | undefined {
+  const ended = story.conclusion;
+  if (!ended) return undefined;
+  return ended.outcome === 'destined-ending-reached'
+    ? `The story reached its Destined Ending in Chapter ${ended.chapterNumber}. No further chapter is written.`
+    : `Fate failed in Chapter ${ended.chapterNumber}: the Destined Ending can no longer be reached. No further chapter is written.`;
 }
 
 /**
@@ -99,8 +169,10 @@ export interface HarnessArcGoalEditState {
   review?: 'pending' | 'edited' | 'accepted' | 'locked' | 'not-yet';
   /** Fate Survival: the plan may be accepted as written instead of edited. */
   canAccept: boolean;
-  /** Completed goals keep their wording, allocation and position. */
+  /** Resolved goals (completed or missed) keep their wording, allocation and position. */
   lockedGoalIds: string[];
+  /** Fate Survival goals whose deadline passed unmet. They are among the locked goals. */
+  missedGoalIds: string[];
 }
 
 /**
@@ -113,17 +185,19 @@ export function arcGoalEditState(story: HarnessStory, foundation: Pick<StoryFoun
   const currentArc = arcOf(story.head.nextChapterNumber);
   const status = arcNumber < currentArc ? 'completed' : arcNumber === currentArc ? 'active' : 'upcoming';
   const plan = harnessArcPlan(story, arcNumber);
-  const lockedGoalIds = plan ? plan.goals.filter(goal => arcGoalCompleted(plan, goal, story.goalCompletions)).map(goal => goal.id) : [];
+  // Completed and missed goals are both history.
+  const lockedGoalIds = plan ? plan.goals.filter(goal => arcGoalResolved(plan, goal, story.goalCompletions)).map(goal => goal.id) : [];
+  const missedGoalIds = plan ? plan.goals.filter(goal => arcGoalResolution(plan, goal, story.goalCompletions)?.outcome === 'missed').map(goal => goal.id) : [];
   const denied = (reason: string, review?: HarnessArcGoalEditState['review']): HarnessArcGoalEditState =>
-    ({ arcNumber, mode, status, editable: false, reason, ...(review ? { review } : {}), canAccept: false, lockedGoalIds });
+    ({ arcNumber, mode, status, editable: false, reason, ...(review ? { review } : {}), canAccept: false, lockedGoalIds, missedGoalIds });
   if (!plan) return denied(`Arc ${arcNumber} has no saved plan.`);
   if (status === 'completed') return denied(`Arc ${arcNumber} is complete. Its goals are part of the novel's history.`);
-  if (lockedGoalIds.length === plan.goals.length) return denied(`Every goal in Arc ${arcNumber} is complete.`);
+  if (lockedGoalIds.length === plan.goals.length) return denied(`Every goal in Arc ${arcNumber} is resolved.`);
 
   if (mode === 'regular') {
     const visibility = story.visibility ?? 'private';
     if (visibility !== 'private') return denied('Arc Goals can be edited only while the novel is private.');
-    return { arcNumber, mode, status, editable: true, canAccept: false, lockedGoalIds };
+    return { arcNumber, mode, status, editable: true, canAccept: false, lockedGoalIds, missedGoalIds };
   }
 
   const review = arcGoalReview(story, arcNumber);
@@ -132,7 +206,7 @@ export function arcGoalEditState(story: HarnessStory, foundation: Pick<StoryFoun
     return denied(`Arc ${arcNumber}'s goals were set in its one-time review and lock when its first chapter is generated.`, review.edited ? 'edited' : 'accepted');
   }
   if (status === 'upcoming') return denied(`Fate Survival sets Arc ${arcNumber}'s goals once, immediately before it begins.`, 'not-yet');
-  return { arcNumber, mode, status, editable: true, review: 'pending', canAccept: true, lockedGoalIds };
+  return { arcNumber, mode, status, editable: true, review: 'pending', canAccept: true, lockedGoalIds, missedGoalIds };
 }
 
 /** Fate Survival: the arc about to be generated must have used its one-time review. */

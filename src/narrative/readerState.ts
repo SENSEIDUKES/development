@@ -106,7 +106,9 @@ export function readReaderStoryState(value: unknown, storyId: string): ReaderSto
   if (!Array.isArray(value.bookmarks) || !Array.isArray(value.readChapters) || typeof value.updatedAt !== 'string') return undefined;
   const bookmarks = value.bookmarks.filter((bookmark): bookmark is Bookmark => object(bookmark)
     && typeof bookmark.id === 'string' && positiveInteger(bookmark.chapterNumber)
-    && Number.isSafeInteger(bookmark.paragraphIndex) && (bookmark.paragraphIndex as number) >= 0);
+    && Number.isSafeInteger(bookmark.paragraphIndex) && (bookmark.paragraphIndex as number) >= 0
+    && (bookmark.blockId === undefined || typeof bookmark.blockId === 'string')
+    && (bookmark.passage === undefined || typeof bookmark.passage === 'string'));
   const state = applyReaderStatePatch({
     schemaVersion: READER_STATE_SCHEMA_VERSION, storyId, bookmarks, readChapters: value.readChapters.filter(positiveInteger),
     updatedAt: value.updatedAt,

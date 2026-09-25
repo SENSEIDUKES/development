@@ -69,7 +69,7 @@ describe('Compact long-story generation packet', () => {
     await run.controller.generateNextChapter(run.story.id, 'fixture');
     await run.controller.generateNextChapter(run.story.id, 'fixture');
     const prompt = buildHarnessGenerationPrompt(run.requests[1]);
-    expect(prompt.measurement.sections.map(section => section.section)).toEqual(PACKET_SECTION_ORDER.filter(section => section !== 'fateSurvival'));
+    expect(prompt.measurement.sections.map(section => section.section)).toEqual(PACKET_SECTION_ORDER);
     const markers = ['CAPA SKILL [Author]', 'CURRENT STORY INFORMATION', 'DESTINED ENDING AND HARD PINS', 'ACTIVE ARC GOAL', 'FATE PRESSURE RHYTHM DIRECTION', 'PREVIOUSLY ON', 'CURRENT CANONICAL STATE', 'MISSION REMINDER:', 'IMMEDIATE CHAPTER REQUEST'];
     const serialized = `${prompt.systemInstruction}\n\n${prompt.userPrompt}`;
     const positions = markers.map(marker => ({ marker, index: serialized.indexOf(marker), count: serialized.split(marker).length - 1 }));
@@ -176,7 +176,7 @@ describe('Compact long-story generation packet', () => {
       totalCharacters: sent.systemInstruction.length + sent.userPrompt.length + JSON.stringify(sent.responseJsonSchema).length,
     });
     expect(attempt.requestMeasurement!.sections.reduce((sum, section) => sum + section.characters, 0)).toBeLessThanOrEqual(attempt.requestMeasurement!.totalCharacters);
-    expect(attempt.requestMeasurement!.sections.map(section => section.section)).toEqual(PACKET_SECTION_ORDER.filter(section => section !== 'fateSurvival'));
+    expect(attempt.requestMeasurement!.sections.map(section => section.section)).toEqual(PACKET_SECTION_ORDER);
     // The provider received the same nine sections the local builder produces.
     const local = buildHarnessGenerationPrompt(run.requests[1]);
     expect(local.userPrompt).toBe(sent.userPrompt);

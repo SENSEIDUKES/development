@@ -13,7 +13,7 @@ accounts, Energy, QI, first-party catalogs, Workshop state, or concrete APIs.
 | `./contracts` | Story, chapter, block, identity, voice, usage and language contracts |
 | `./presentation` | Product-neutral presentation provider and slots |
 | `./reader-runtime` | Required host ports for Reader/Codex state and services |
-| `./reader-chamber` | Portable Reader behavior and UI |
+| `./reader-chamber` | Portable Reader behavior and UI, including the anchored Mind Palace |
 | `./reader-codex` | Portable Codex behavior and UI |
 | `./color-codes` | Single narrative Color Code authority |
 | `./cards` | Narrative and System card families |
@@ -22,14 +22,24 @@ accounts, Energy, QI, first-party catalogs, Workshop state, or concrete APIs.
 | `./audio` | Media intent, resolution, provenance and playback contracts |
 | `./story-seed` | Foundation schema, validation, import/export, repository port and neutral editor |
 | `./generation` | Provider-neutral chapter/block/media acceptance contracts |
-| `./harness-generation` | Canonical state, continuity, CAPA, generation ports, recovery and export |
+| `./harness-generation` | Canonical state, continuity, CAPA, generation ports, recovery and export; the Fate page and its panels |
 | `./translation` | Translation/accessibility contracts and controller |
 | `./arc-goals` | Arc planning contracts and operations |
 | `./styles.css` | SEN feature styles |
 
 There is no `chapter-generation` or `codex-cards` compatibility entry. Legacy
-Chapter Generation remains Workshop diagnostics; HARNESS is the one canonical
-generated-story owner.
+Chapter Generation was retired; HARNESS is the one canonical generated-story
+owner.
+
+**0.6.0 (breaking):** removed `AlterFatePanel`, `ReaderFateAlerts`,
+`FateSurvivalExplanation` and the `alterFateLock` helpers from `./reader-chamber`
+(the Reader's `handleAlterFate` prop became `onOpenFate`, and its unused
+`currentPowerStage` prop is gone); removed `HarnessSteering`,
+`controller.steerStory` and the Fate Survival mystery/visibility fields from
+`./harness-generation` in favor of `chooseChapterDirection`, the one-chapter
+`HarnessChapterDirection`, and the Fate page (`FatePage`, `FatePathChooser`,
+`FateArcGoalCard`, `FateDestinedEnding`, `FateConclusion`). Saved HARNESS
+workspaces upgrade in place (schema 20).
 
 ## Required host composition
 

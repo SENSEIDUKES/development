@@ -52,34 +52,36 @@ describe('Origin hierarchy and canonical Fate controls', () => {
     click('[aria-label="Pressure"] [role="radio"]');
     expect(current.story.optional.fateSurvival).toMatchObject({ enabled: false, pressure: 'heaven' });
     click('[role="switch"][aria-label="Survival"]');
-    click('[aria-label="Fate Visibility"] [role="radio"]:nth-child(2)');
+    // The retired Fate Visibility choice is gone; Survival is only its switch.
+    expect(container.querySelector('[aria-label="Fate Visibility"]')).toBeNull();
+    expect(container.textContent).toContain('You direct every chapter yourself');
     const blueprint = createBlueprintDraftFromSeed(current);
-    blueprint.majorMysteries = ['Who sealed the western gate?'];
-    blueprint.unresolvedPlotThreads = ['Find the missing key.'];
+    // An older Blueprint's Survival mystery proposals are not read back.
+    Object.assign(blueprint, { majorMysteries: ['Who sealed the western gate?'], unresolvedPlotThreads: ['Find the missing key.'] });
     const saved = await workshopStorySeedStorage.create('origin-test', current, blueprint, 'en');
     const reloaded = (await workshopStorySeedStorage.list('origin-test'))[0];
     render(reloaded.seed);
     expect(container.querySelector('[role="switch"][aria-label="Survival"]')?.getAttribute('aria-checked')).toBe('true');
-    expect(current.story.optional.fateSurvival).toEqual({ enabled: true, visibility: 'partial', pressure: 'heaven' });
+    expect(current.story.optional.fateSurvival).toEqual({ enabled: true, pressure: 'heaven' });
     click('[role="switch"][aria-label="Survival"]');
     const updated = await workshopStorySeedStorage.update('origin-test', saved, current, undefined, 'en');
     const [artifact] = parseStorySeedJson(JSON.stringify(createStorySeedExport(updated.seed, updated.blueprint, 'en')));
     const [imported] = await workshopStorySeedStorage.importMany('origin-import', [artifact]);
-    expect(imported.blueprint?.majorMysteries).toEqual(blueprint.majorMysteries);
-    expect(imported.blueprint?.unresolvedPlotThreads).toEqual(blueprint.unresolvedPlotThreads);
+    expect(imported.blueprint).not.toHaveProperty('majorMysteries');
+    expect(imported.blueprint).not.toHaveProperty('unresolvedPlotThreads');
     render(imported.seed);
-    expect(current.story.optional.fateSurvival).toEqual({ enabled: false, visibility: 'partial', pressure: 'heaven' });
+    expect(current.story.optional.fateSurvival).toEqual({ enabled: false, pressure: 'heaven' });
     click('[role="switch"][aria-label="Survival"]');
     expect(current.story.optional.fateSurvival.enabled).toBe(true);
     expect(current.story.optional.fateSurvival.pressure).toBe('heaven');
   });
 
-  it('labels saved Blueprint mysteries as inactive Fate Survival context while retaining editable entries', () => {
-    act(() => root.render(<LibraryPresentationProvider><BlueprintCollectionSections seed={createEmptyStorySeedInput()} updateSeed={vi.fn()} survivalEnabled={false}
-      majorMysteries={['The sealed gate']} unresolvedPlotThreads={['The missing key']} setBlueprint={vi.fn()} /></LibraryPresentationProvider>));
-    expect(container.textContent).toContain('Survival is off.');
-    expect(container.textContent).toContain('excluded from chapter generation');
-    expect(container.querySelector<HTMLTextAreaElement>('#blueprint-major-mysteries')?.value).toBe('The sealed gate');
-    expect(container.querySelector<HTMLTextAreaElement>('#blueprint-unresolved-threads')?.value).toBe('The missing key');
+  it('shows side characters and factions without the retired Fate Survival mystery panel', () => {
+    act(() => root.render(<LibraryPresentationProvider><BlueprintCollectionSections seed={createEmptyStorySeedInput()} updateSeed={vi.fn()} /></LibraryPresentationProvider>));
+    expect(container.textContent).toContain('Side Characters');
+    expect(container.textContent).toContain('Factions');
+    expect(container.textContent).not.toContain('Fate Survival');
+    expect(container.querySelector('#blueprint-major-mysteries')).toBeNull();
+    expect(container.querySelector('#blueprint-unresolved-threads')).toBeNull();
   });
 });

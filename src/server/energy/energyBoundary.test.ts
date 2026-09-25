@@ -6,12 +6,10 @@ const root = path.resolve(__dirname, '../../..');
 
 /** Every generation owner that must stay unaware of Energy in this phase. */
 const GENERATION_OWNERS = [
-  'src/server/chapter-generation',
   'src/server/harness-generation',
   'src/server/story-seed-blueprint',
   'src/server/reader-translation',
   'src/server/audio',
-  'src/components/chapter-generation',
   'src/components/harness-generation',
   'src/components/chapter-manifestation',
   'src/components/story-seed',
@@ -32,7 +30,7 @@ describe('Energy integration boundary', () => {
   });
 
   it('keeps the generation API bundles free of the Energy ledger', () => {
-    for (const script of ['buildChapterGenerationApi.mjs', 'buildHarnessGenerationApi.mjs']) {
+    for (const script of ['buildHarnessGenerationApi.mjs']) {
       expect(readFileSync(path.join(root, 'scripts', script), 'utf8')).not.toMatch(/energy/i);
     }
   });

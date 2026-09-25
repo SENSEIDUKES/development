@@ -179,7 +179,6 @@ export const translationMatchSource = (
     story.intendedDirection,
     ...(story.cast ?? []).flatMap(member => [member.name, member.role, member.relationshipToMC]),
     ...(story.identities ?? []).flatMap(identity => [identity.name, ...(identity.aliases ?? []), identity.evidence]),
-    ...story.authorDirections.map(direction => direction.direction),
     ...story.corrections.flatMap(correction => [correction.reason, correction.replacement?.label, ...Object.values(correction.replacement?.facts ?? {})]),
     storyInformation.storyDirection.destinedEnding,
     ...storyInformation.storyDirection.hardPins,
@@ -191,7 +190,7 @@ export const translationMatchSource = (
       ...(Array.isArray(entity.aliases) ? entity.aliases as string[] : []),
       ...Object.values((entity.facts as Record<string, string> | undefined) ?? {}),
     ]),
-    immediateChapterRequest.assignment,
+    immediateChapterRequest.direction?.choice.kind === 'reader' ? immediateChapterRequest.direction.choice.text : immediateChapterRequest.direction?.choice.suggestion,
   ];
   return text.filter((value): value is string => typeof value === 'string' && Boolean(value.trim()))
     .join('\n')

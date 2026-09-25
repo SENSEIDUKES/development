@@ -4,12 +4,33 @@
 - **Source location:** `src/components/ReaderChamber.tsx` and `src/components/ReaderViewport.tsx` (verified on `origin/main` @ `f89cb41`)
 - **Workshop preview:** `?preview=reader-chamber`
 - **Replica created:** 2026-07-31
-- **Last Workshop update:** 2026-09-24
+- **Last Workshop update:** 2026-09-25
 - **Last source comparison:** 2026-08-22
 - **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-09-25 (Fate Phase 2):** The development Reader no longer carries the
+  retired Fate Survival and Alter Fate (Branch) surfaces. Removed from
+  `development/` and the SEN package: `AlterFatePanel` (the "linked copy"
+  timeline fork, whose only handler was a Workshop `console.log`),
+  `ReaderFateAlerts` (the genre-string–triggered banner with its hard-coded
+  "DOOM DEADLINE: CHAPTER 7" countdown and Hardcore Fate banner), and
+  `FateSurvivalExplanation`. The header Quick Action **Alter Fate** now calls
+  the host's `onOpenFate`; the HARNESS Reader opens its Fate page there
+  (see the Harness Generation README). The paragraph bookmarks became the first
+  **Mind Palace**: `shared/mindPalace.ts` anchors each kept passage to the
+  block's stable identity (`blockId`) and its exact canonical text (`passage`),
+  so a passage whose block moved is still found, a block whose words changed is
+  never mistaken for it, and bookmarks saved before anchoring are found again by
+  their excerpt without guessing between copies. Save, note, remove and jump
+  work as before; tapping a kept passage now opens its note with an explicit
+  Remove instead of deleting it; a jump that can no longer find its passage says
+  so instead of landing elsewhere. The bottom bar's placeholder "Comments"
+  button is now **Mind Palace**, the drawer is titled Mind Palace, and kept
+  passages get a quiet gold margin (`custom-bookmark-bg`, previously unstyled).
+  The locked `reference/` replica is unchanged; `shared/alterFateLock.ts` now
+  serves only it.
 - **2026-09-24:** Development Reader baseline on saved HARNESS stories. The
   Development Reader Chamber UI is unchanged; what changed is what sits behind
   it. `useReadingPosition` now saves and restores a semantic paragraph anchor
@@ -145,8 +166,10 @@ reference/                    — untouched replica of production, locked
 development/                  — active Workshop version; started as an exact copy of reference/
   (same files, except: ReaderSettings.tsx replaces ReaderPreferencesPanel.tsx;
    ReaderControls/ no longer contains ImmersionSettings.tsx or
-   ChapterNavigation.tsx; AudioWidget.tsx was removed; InlineAudio.tsx and
-   InlineAudio.css add the Phase 3 prose primitive — see history)
+   ChapterNavigation.tsx; AudioWidget.tsx, AlterFatePanel.tsx,
+   ReaderFateAlerts.tsx and FateSurvivalExplanation.tsx were removed;
+   InlineAudio.tsx and InlineAudio.css add the Phase 3 prose primitive — see
+   history)
 shared/                       — code genuinely identical between the two forks
   types.ts                    — ReaderChapter + composing types, StoryBlock/metadata/SystemEvent/
                                 FateResultData, StoryCuePayload, ContextManifest,
@@ -247,15 +270,14 @@ Effects section when supplied.
 **States — Reading** — normal reading states and reading setup
 
 - `reading` — rich blocks chapter 1 (System Panels, Fate Result card, inline World Cues,
-  Context Inspector, legend, Fate Survival banner)
+  Context Inspector, legend)
 - `fullscreen` — header hidden; click prose to toggle back
 - Chapter selector (1–4)
 
 **States — Menus** — opened panels, drawers, and overlays
 
 - `preferences-open` — Reader Settings panel expanded
-- `bookmarks-open` — Comments button opening the Chronicle Anchors drawer (two anchor cards)
-- `alter-fate-open` — Alter Fate (branch) modal
+- `bookmarks-open` — Mind Palace button opening the kept-passage drawer (two passage cards)
 
 **Pages** — alternate Reader Chamber states and special full-screen conditions
 
@@ -324,8 +346,9 @@ All substitutions are import-level aliases only — JSX is byte-identical to pro
 - **Codex service actions are local** — the migrated UI, navigation, edit controls,
   caches, dialogs, and responsive layouts are present, but live AI/media generation,
   authentication, quota charging, and remote persistence do not run in the Workshop.
-- **Alter Fate focus behavior is unchanged from the existing Workshop replica**;
-  the migrated Codex context dialog uses `react-focus-lock` like production.
+- **Alter Fate opens the host's Fate page** in development; production's
+  branch panel remains only in the locked reference. The migrated Codex context
+  dialog uses `react-focus-lock` like production.
 - **Audio is intentionally partial** — the mixer's music, atmosphere, and
   narration remain inert. Only valid persisted Worldcues play, through the
   single shared DEV audio session and only after their own tap target is used.
@@ -340,10 +363,9 @@ All substitutions are import-level aliases only — JSX is byte-identical to pro
   inherited color. `text-jade-accent`, `text-neutral-350/550/650`,
   `border-neutral-850/855`, and `animate-fadeIn`/`animate-fade-in` are no-ops in BOTH
   repos (no token/keyframes anywhere), so parity there is automatic.
-- **Mock story genre is `Fate Survival`**, so the Fate Survival banner renders on
-  every chapter (production behavior for that genre) and the Alter Fate panel uses
-  the `plain` dialect labels ("Story Steering" / "Command Prompt") exactly as
-  production would for this genre.
+- **Mock story genre is `Xianxia`**. The development Reader no longer reacts to
+  a genre string; the locked reference's Fate Survival banner would still render
+  for a story whose genre is literally "Fate Survival".
 - **Chapter Visual Memories are removed** — the Reader no longer renders a chapter-hero component or invokes an end-of-chapter image trigger. Existing chapter media data is left intact for compatibility and Manga Studio is unchanged.
 - **Shared store between Compare panes** — the mock store is a module singleton, so
   in Compare mode both panes navigate/toggle in lockstep (intended: same data on
@@ -395,8 +417,7 @@ and the Codex Card ambience/accent helpers per the Reader Codex README:
   (new file; the Manifest seal idle-breath keyframes and reduced-motion backstop
   imported by `CodexCard.tsx`)
 - `src/components/library/LibraryCard.tsx` and its existing shared Library dependencies (including `LibraryDragonCycleIcon`, which the Manifest seal reuses unchanged) → the source application's compatible Library foundation before transferring `CodexCard`
-- `development/ReaderFateAlerts.tsx` → `src/components/ReaderFateAlerts.tsx`
-- `development/FateSurvivalExplanation.tsx` → `src/components/FateSurvivalExplanation.tsx`
+- `shared/mindPalace.ts` → the Reader's shared library (anchored Mind Palace passages; `CosmicBookmarksPanel.tsx` and `ReaderViewport.tsx` depend on it)
 - `development/SystemColorLegend.tsx` → `src/components/SystemColorLegend.tsx`
 - `development/ContextInspector.tsx` → `src/components/ContextInspector.tsx`
 - Style changes from `shared/reader-chamber.css` → merge back into `src/index.css`
@@ -432,11 +453,14 @@ and block-scoped rendering together; do not copy the preview fixtures as data.
 - `ReaderViewport.tsx` carries one deliberate rewrite: `chapterNumbers.at(-1)` →
   index access (Workshop tsconfig targets ES2020 without `Array.prototype.at`).
   Safe to carry back, or restore `.at(-1)`.
-- `ReaderChamber.tsx` carries two strict-null coercions (`cue.danger ?? 0`) and two
-  prop casts (`handleUpdatePreference`, `handleAlterFate`) required by the
-  Workshop's stricter tsconfig; both are behavior-identical.
-- The Alter Fate panel's production button label "Sundert The Timeline" is a
-  production typo preserved verbatim — fix it deliberately in production, not here.
+- `ReaderChamber.tsx` carries two strict-null coercions (`cue.danger ?? 0`) and a
+  prop cast (`handleUpdatePreference`) required by the Workshop's stricter
+  tsconfig; both are behavior-identical.
+- Production still has `AlterFatePanel`, `ReaderFateAlerts` and
+  `FateSurvivalExplanation` in its Reader. On transfer, retire them with the
+  development Reader and give the host an `onOpenFate` target; do not carry the
+  reference panel's branch copy ("Sundert The Timeline", a production typo kept
+  verbatim in `reference/`) forward.
 - `ReaderCodexStoryPatch` in `shared/types.ts` now mirrors production's intentional
   allowlist, preventing the Reader/Codex callback from overwriting unrelated story fields.
 - lucide icons: on transfer, either keep the aliased imports (they exist in current

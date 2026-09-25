@@ -21,6 +21,7 @@ import { getSenTextDirection, type SenLanguageCode } from '../../../lib/language
 import { createCodexHighlighter, splitByCodexTerms } from '../../../narrative/codexHighlighting';
 import { InlineAudioText } from './InlineAudio';
 import type { ResolvedAudioMoment } from '../../../audio/inlineAudio';
+import type { ReaderContinueAction } from './ReaderControls/types';
 
 interface ReaderViewportProps {
   readerRef: React.RefObject<HTMLDivElement | null>;
@@ -72,6 +73,8 @@ interface ReaderViewportProps {
   
   navigatePrev: () => void;
   navigateNext: () => void;
+  /** Next's action at the newest chapter, when the host offers one. */
+  continueAfterLatest?: ReaderContinueAction;
   
   handleSealChapter?: (chapterNumber: number) => Promise<void>;
   handleSealClick: () => void;
@@ -128,6 +131,7 @@ export function ReaderViewport({
   getFocusClass,
   navigatePrev,
   navigateNext,
+  continueAfterLatest,
   handleSealChapter,
   handleSealClick,
   isCheckingConsistency,
@@ -1009,13 +1013,16 @@ export function ReaderViewport({
 
             <button
                tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={navigateNext}
-              disabled={selectedChapterNum === maxChapterNum}
+              disabled={selectedChapterNum === maxChapterNum && (!continueAfterLatest || continueAfterLatest.busy)}
               className="px-6 py-2 rounded-full border border-neutral-800 hover:border-gold-accent text-neutral-400 hover:text-gold-accent disabled:opacity-20 transition-all font-sc uppercase text-[10px] tracking-wider flex items-center space-x-2"
             >
-              <span>Next</span>
-              <ArrowRight size={14} />
+              <span>{selectedChapterNum === maxChapterNum && continueAfterLatest ? continueAfterLatest.label : "Next"}</span>
+              {selectedChapterNum === maxChapterNum && continueAfterLatest?.busy ? <Loader2 size={14} className="animate-spin" /> : <ArrowRight size={14} />}
             </button>
           </div>
+          {selectedChapterNum === maxChapterNum && continueAfterLatest?.error && (
+            <p role="alert" className="-mt-4 pb-8 text-right text-xs text-amber-200">{continueAfterLatest.error}</p>
+          )}
           {isCompletedBatchEndpoint && (
             <div className="pb-8 flex flex-col items-center gap-2">
               <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">Batch complete — choose the next fate.</p>

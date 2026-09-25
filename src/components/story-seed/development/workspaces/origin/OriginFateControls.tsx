@@ -77,7 +77,7 @@ export const OriginFateControls = ({ settings, onChange }: FateSurvivalSettingPr
           <span className="min-w-0">
             <span className="block font-sc text-xs font-semibold tracking-wide text-signal">Survival</span>
             <span className="mt-1 block font-sans text-[11px] leading-relaxed text-neutral-400">
-              You direct every chapter yourself, and the Destined Ending is not guaranteed: your choices can fail it, even by death. Off, fate chooses each chapter's path unless you step in, and the ending is guaranteed. This is fixed once the novel begins.
+              You direct every chapter yourself, and the Destined Ending is not guaranteed: your choices can fail it, even by death. Off, fate chooses each chapter's path unless you step in, and the Destined Ending stays the story's guaranteed direction. This is fixed once the novel begins.
             </span>
           </span>
           <button

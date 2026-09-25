@@ -140,6 +140,12 @@ export interface HarnessStory {
    * Kept as the author's record; never sent to the writer again.
    */
   earlierSteering?: HarnessEarlierSteering[];
+  /**
+   * Fate Survival: set once, when the route to the Destined Ending breaks. The
+   * story then has a closing stretch of at most `closingChapterLimit` chapters
+   * and never begins another arc.
+   */
+  brokenRoute?: HarnessBrokenRoute;
   /** Set once when the story reaches or fails its Destined Ending. No chapter is written after it. */
   conclusion?: HarnessStoryConclusion;
   /** Per-story references to host-installed skills. The full manifests are frozen per request. */
@@ -372,17 +378,70 @@ export interface HarnessEarlierSteering {
   createdAt: string;
 }
 
+/** A goal whose deadline chapter committed without the goal achieved. */
+export interface HarnessMissedGoal {
+  goalId: string;
+  text: string;
+  /** The deadline chapter it was missed in. */
+  chapterNumber: number;
+}
+
 /**
- * How the story ended. Regular Reader mode ends only by reaching the Destined
- * Ending; Fate Survival may also fail it: its final goal missed, or the writer
- * reporting, with a verbatim passage, that the story's events made it
- * impossible (for example, the protagonist's death).
+ * Fate Survival: the route to the Destined Ending broke when this chapter
+ * committed, because at least half of one arc's goals were missed or the
+ * final goal was. The story then closes naturally within its closing stretch.
+ */
+export interface HarnessBrokenRoute {
+  /** The chapter whose commit broke the route. Closing chapters follow it. */
+  chapterNumber: number;
+  arcNumber: number;
+  reason: 'arc-goals-missed' | 'final-goal-missed';
+  goalsInArc: number;
+  /** The arc's missed goals when it broke, in order. */
+  missedGoals: HarnessMissedGoal[];
+  /** The most chapters the story may still write before it must have ended. */
+  closingChapterLimit: number;
+  recordedAt: string;
+}
+
+/**
+ * Where the story stands on its route to the Destined Ending as of one
+ * chapter. Sent with the Active Arc Goal so the writer knows it.
+ */
+export type HarnessArcRoute =
+  /** No goal of this arc has been missed. */
+  | { status: 'on-track' }
+  /** Goals of this arc were missed; the route still leads to the Destined Ending. */
+  | { status: 'off-track'; missedGoals: HarnessMissedGoal[] }
+  /** Regular Reader: the final goal was missed. The story keeps pursuing the Destined Ending, with no further goal. */
+  | { status: 'past-final-goal'; missedGoals: HarnessMissedGoal[]; finalGoalMissedInChapter: number }
+  /** Fate Survival: the route broke; this chapter is one of its closing chapters. */
+  | {
+    status: 'broken';
+    missedGoals: HarnessMissedGoal[];
+    brokenInChapter: number;
+    reason: HarnessBrokenRoute['reason'];
+    /** This chapter's place in the closing stretch, from 1. */
+    closingChapter: number;
+    closingChapterLimit: number;
+  };
+
+/** The Active Arc Goal section: the Arc Plan authority for one chapter, with where the story stands on its route. */
+export type HarnessArcContext = import('../components/arc-goals/shared/arcGoals').ArcGenerationContext & { route?: HarnessArcRoute };
+
+/**
+ * How the story ended. Regular Reader mode never fails its fate: it ends by
+ * reaching the Destined Ending, on its final goal or, after that goal was
+ * missed, by pursuing the ending until the prose reaches it. Fate Survival
+ * may also end in failure: the writer shows the story ending with a verbatim
+ * passage (a fatal ending, or the close of a broken route), or the broken
+ * route's closing stretch runs out.
  */
 export interface HarnessStoryConclusion {
   outcome: 'destined-ending-reached' | 'fate-failed';
-  reason: 'final-goal-completed' | 'final-goal-missed' | 'writer-reported-fate-failure';
+  reason: 'final-goal-completed' | 'reached-after-final-goal-missed' | 'story-ended' | 'closing-limit-reached';
   chapterNumber: number;
-  /** The verbatim passage that shows it. Empty for a missed final goal. */
+  /** The verbatim passage that shows it. Empty when the closing stretch ran out. */
   evidence: string;
   recordedAt: string;
 }
@@ -485,7 +544,8 @@ export interface HarnessWarning {
     | 'optional_recap_omitted'
     | 'optional_rhythm_metadata_omitted'
     | 'ignored_model_story_direction'
-    | 'ignored_fate_failure';
+    | 'ignored_story_ending'
+    | 'unconfirmed_arc_completion';
   message: string;
 }
 
@@ -540,7 +600,7 @@ export interface CurrentStoryProjection {
   }>;
 }
 
-/** The Destined Ending beside the user's Hard Pins, in the user's order, and the mode that decides whether the ending is guaranteed. */
+/** The Destined Ending beside the user's Hard Pins, in the user's order, and the mode that decides what the ending's promise means. */
 export interface StoryDirectionSection {
   destinedEnding?: string;
   hardPins: string[];
@@ -660,8 +720,8 @@ export interface StoryInformationPacket {
   currentStory: CurrentStoryProjection;
   /** Section 3. */
   storyDirection: StoryDirectionSection;
-  /** Section 4: the existing Arc Plan authority, frozen. */
-  arc?: import('../components/arc-goals/shared/arcGoals').ArcGenerationContext;
+  /** Section 4: the existing Arc Plan authority, frozen, with where the story stands on its route. */
+  arc?: HarnessArcContext;
   /** Section 5: present only when Rhythm chooses this chapter's path automatically. */
   rhythm?: RhythmDirectionSection;
   /** Section 6: the latest saved recaps, oldest first. */

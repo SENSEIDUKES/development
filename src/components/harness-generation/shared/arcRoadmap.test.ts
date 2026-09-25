@@ -72,7 +72,7 @@ describe('HARNESS arc roadmap from the Blueprint', () => {
     // The ending may be reached in prose; it is never rewritten.
     expect(prompt.systemInstruction).not.toMatch(/never modify, complete|never modify or complete/i);
     expect(prompt.userPrompt).not.toMatch(/never modify or complete/i);
-    expect(prompt.systemInstruction).toContain('writing the ending into the prose is the intended outcome');
+    expect(prompt.systemInstruction).toContain('that goal is the story reaching the Destined Ending; write the ending into the prose when the story earns it');
     expect(prompt.systemInstruction).toContain('never rewrite, replace, weaken, or contradict them');
   });
 

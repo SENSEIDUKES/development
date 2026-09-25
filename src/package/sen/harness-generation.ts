@@ -75,7 +75,7 @@ export {
   MISSION_REMINDER_TEXT_LIMIT,
   buildMissionReminder,
 } from '../../components/harness-generation/shared/missionReminder';
-export { arcGoalEditState, harnessArcContext, harnessArcPlan, harnessStoryMode, storyConclusionGap, type HarnessArcGoalEditState, type HarnessStoryMode } from '../../components/harness-generation/shared/arcState';
+export { SURVIVAL_CLOSING_CHAPTER_LIMIT, arcGoalEditState, goalsThatBreakRoute, harnessArcContext, harnessArcPlan, harnessChapterArc, harnessStoryMode, missedGoalsBreakRoute, regularFinalGoalMissed, storyConclusionGap, type HarnessArcGoalEditState, type HarnessStoryMode } from '../../components/harness-generation/shared/arcState';
 export * from '../../narrative/storyDirection';
 export {
   includeBundledHarnessSkills,
@@ -85,6 +85,7 @@ export { createHarnessSenStory } from '../../components/harness-generation/share
 export * from '../../narrative/generation';
 export { HarnessReaderSession } from '../../components/harness-generation/development/HarnessReaderSession';
 export { FatePage } from '../../components/harness-generation/development/FatePage';
+export { useNextChapterWriter, type NextChapterWriter } from '../../components/harness-generation/development/useNextChapterWriter';
 export {
   CHAPTER_FUNCTION_LABELS,
   FATE_MODE_LABELS,

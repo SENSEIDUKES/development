@@ -1,7 +1,7 @@
 import { createArcChapterPosition, editArcPlan, validateArcPlan, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import { createMediaCatalog, emptyNarrativeMedia, type FrozenNarrativeMedia, type NarrativeMediaPort, type MediaResourceReference, type MediaSelectionSlot } from '../../../audio/media';
-import { arcDeadlineFailure, arcGoalEditState, commitHarnessArc, harnessArcContext, harnessArcPlan, harnessStoryMode, needsArcPlan, readArcReply, readFateFailure, roadmapPlanGap, storyConclusionGap, survivalArcReviewGap, withArcGoalReview, arcGoalReview } from './arcState';
+import { arcGoalEditState, commitHarnessArc, harnessArcContext, harnessArcPlan, harnessStoryMode, needsArcPlan, readArcReply, roadmapPlanGap, storyConclusionGap, survivalArcReviewGap, withArcGoalReview, arcGoalReview } from './arcState';
 import {
   createHarnessStory,
   findFoundationRevision,
@@ -796,10 +796,10 @@ export class HarnessGenerationController {
     const requestStarted = cloneHarnessValue(this.state);
     requestStarted.attempts.push(attempt);
     // Fate Survival: the arc's goals lock when its generation begins, in the
-    // same write as the request checkpoint.
+    // same write as the request checkpoint. Closing chapters begin no arc.
     const startedStory = findStory(requestStarted, storyId)!;
     const arcNumber = createArcChapterPosition(attempt.chapterNumber).arcNumber;
-    if (harnessStoryMode(foundation.input) === 'survival' && !arcGoalReview(startedStory, arcNumber)?.lockedAt) {
+    if (harnessStoryMode(foundation.input) === 'survival' && !startedStory.brokenRoute && !arcGoalReview(startedStory, arcNumber)?.lockedAt) {
       startedStory.arcGoalReviews = withArcGoalReview(startedStory, { ...arcGoalReview(startedStory, arcNumber), arcNumber, lockedAt: startedAt });
     }
     if (batchId) {
@@ -987,9 +987,8 @@ export class HarnessGenerationController {
         'The pending chapter identity already exists in this story. Restore a local export before continuing.',
       );
     }
-    const deadlineFailure = arcDeadlineFailure(attempt);
-    if (deadlineFailure) {
-      return this.appendFailure(attemptId, { stage: 'response', message: deadlineFailure });
+    if (!attempt.storyInformation.arc) {
+      return this.appendFailure(attemptId, { stage: 'response', message: 'The frozen Story Information Packet has no authoritative Arc Plan.' });
     }
 
     const committedAt = this.runtime.now();
@@ -1039,9 +1038,8 @@ export class HarnessGenerationController {
       lastCommittedChapterId: chapter.id,
       lastCommittedAt: committedAt,
     };
-    commitHarnessArc(commitStory, commitAttempt, committedAt);
-    const fateReport = readFateFailure(commitAttempt);
-    if (fateReport.warning) addWarnings(commitAttempt, [fateReport.warning]);
+    // Records the goal honestly (achieved or missed) and applies the Fate mode's consequence.
+    addWarnings(commitAttempt, commitHarnessArc(commitStory, commitAttempt, committedAt));
     // The reader's direction was for this chapter only: it is consumed here,
     // in the same write that commits the chapter it directed.
     if (commitStory.nextChapterDirection && commitStory.nextChapterDirection.forChapter <= commitAttempt.chapterNumber) {

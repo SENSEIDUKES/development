@@ -7,11 +7,13 @@ import {
   type ChapterDirectionChoice,
   type HarnessChapter,
   type HarnessChapterPath,
+  type HarnessMissedGoal,
   type HarnessStory,
+  type HarnessStoryConclusion,
   type HarnessStoryMode,
   type StoryFoundationInput,
 } from '../../../narrative/generation';
-import { arcGoalEditState, harnessArcContext, harnessStoryMode } from '../shared/arcState';
+import { SURVIVAL_CLOSING_CHAPTER_LIMIT, arcGoalEditState, goalsThatBreakRoute, harnessArcContext, harnessStoryMode } from '../shared/arcState';
 import { pendingChapterDirection } from '../shared/chapterDirection';
 
 /** Reader-facing names for Rhythm's three chapter functions. */
@@ -40,9 +42,25 @@ const button = 'min-h-11 rounded-full border px-4 text-sm transition-colors disa
 const primaryButton = `${button} border-cyan-300/50 bg-cyan-400/15 text-cyan-50 hover:bg-cyan-400/25`;
 const quietButton = `${button} border-white/15 text-neutral-200 hover:border-white/30`;
 
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+/** Ends a line with a full stop unless it already ends a sentence. */
+const sentence = (text: string) => /[.!?…]$/.test(text.trim()) ? text.trim() : `${text.trim()}.`;
+
+/** The goals an arc has missed, oldest first. */
+function MissedGoalList({ goals }: { goals: HarnessMissedGoal[] }) {
+  if (!goals.length) return null;
+  return (
+    <ul className="mt-2 space-y-1 text-xs text-amber-100/90" data-testid="fate-missed-goals">
+      {goals.map(goal => <li key={goal.goalId}>Missed in Chapter {goal.chapterNumber}: {goal.text}</li>)}
+    </ul>
+  );
+}
+
 /**
  * The story's active Arc Goal, read from the one Arc Goal authority
- * (`harnessArcContext`), with the deadline rule of the story's Fate mode.
+ * (`harnessArcContext`), with where the story stands on its route: on track,
+ * off track, past a missed final goal (Regular Reader), or broken and closing
+ * (Fate Survival).
  */
 export function FateArcGoalCard({ story, foundation, generatedThrough, actions }: {
   story: HarnessStory;
@@ -53,30 +71,84 @@ export function FateArcGoalCard({ story, foundation, generatedThrough, actions }
 }) {
   const [planOpen, setPlanOpen] = useState(false);
   const mode = harnessStoryMode(foundation);
-  const context = foundation ? harnessArcContext(story, foundation, story.head.nextChapterNumber) : undefined;
+  const nextChapter = story.head.nextChapterNumber;
+  const context = foundation ? harnessArcContext(story, foundation, nextChapter) : undefined;
   if (!context) {
     return (
       <div className={`${panel} border-dashed`} data-testid="fate-arc-goal">
         <p className={eyebrow}>Active Arc Goal</p>
         <p className="mt-2 text-sm text-neutral-300">{foundation?.plannedArcCount
           ? `All ${foundation.plannedArcCount} planned arcs are written.`
-          : `No Arc Plan exists yet. The Arc planner creates it before Chapter ${story.head.nextChapterNumber} is written.`}</p>
+          : `No Arc Plan exists yet. The Arc planner creates it before Chapter ${nextChapter} is written.`}</p>
         {actions}
       </div>
     );
   }
+  const route = context.route;
+  const editState = arcGoalEditState(story, foundation, context.plan.arcNumber);
+  const planControls = (
+    <>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button type="button" className={quietButton} onClick={() => setPlanOpen(open => !open)}>
+          {planOpen ? 'Hide the arc\'s goals' : 'Show the arc\'s goals'}
+        </button>
+        {actions}
+      </div>
+      {planOpen && <ArcPlanView key={`${context.plan.arcNumber}-${story.arcPlans?.length ?? 0}`} defaultOpen plan={context.plan}
+        activeGoalId={context.activeGoal.id} generatedThrough={generatedThrough}
+        lockedGoalIds={editState.lockedGoalIds} missedGoalIds={editState.missedGoalIds} />}
+    </>
+  );
+
+  if (route?.status === 'broken') {
+    const last = route.closingChapter >= route.closingChapterLimit;
+    return (
+      <div className="rounded-xl border border-amber-300/40 bg-amber-400/10 p-4" data-testid="fate-arc-goal">
+        <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-200/70">Route broken · Arc {context.arcNumber}</p>
+        <p className="mt-1 text-sm font-semibold text-white">The Destined Ending can no longer be reached</p>
+        <p className="mt-2 text-sm leading-relaxed text-neutral-100">
+          {route.reason === 'final-goal-missed'
+            ? `The final goal was missed in Chapter ${route.brokenInChapter}.`
+            : `${route.missedGoals.length} of Arc ${context.arcNumber}'s ${plural(context.plan.goals.length, 'goal')} were missed by Chapter ${route.brokenInChapter}, which breaks the route.`}
+        </p>
+        <MissedGoalList goals={route.missedGoals} />
+        <p className="mt-3 text-xs text-amber-100" data-testid="fate-arc-goal-status">
+          Chapter {nextChapter} is closing chapter {route.closingChapter} of {route.closingChapterLimit}. {last
+            ? 'It is the last: the story ends in it.'
+            : 'The story ends as soon as the prose earns it.'}
+        </p>
+        {planControls}
+      </div>
+    );
+  }
+
+  if (route?.status === 'past-final-goal') {
+    return (
+      <div className="rounded-xl border border-amber-300/30 bg-amber-400/[0.07] p-4" data-testid="fate-arc-goal">
+        <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-amber-200/70">Off track · past the final goal of Arc {context.arcNumber}</p>
+        <p className="mt-1 text-sm font-semibold text-white">The final goal was missed in Chapter {route.finalGoalMissedInChapter}</p>
+        <p className="mt-2 break-words text-base leading-relaxed text-neutral-100">{context.activeGoal.text}</p>
+        <p className="mt-3 text-xs text-neutral-200" data-testid="fate-arc-goal-status">
+          The story keeps pursuing its Destined Ending past the roadmap, with no further goal and no deadline. It ends when the story reaches it.
+        </p>
+        {planControls}
+      </div>
+    );
+  }
+
   const goalIndex = context.plan.goals.findIndex(goal => goal.id === context.activeGoal.id) + 1;
-  const remaining = context.completionDeadline - story.head.nextChapterNumber;
+  const remaining = context.completionDeadline - nextChapter;
   const status = context.completionConfirmed
     ? 'Achieved, with a passage from the story as evidence'
-    : mode === 'survival'
-      ? remaining > 0 ? `${remaining} ${remaining === 1 ? 'chapter' : 'chapters'} left to reach it`
-        : 'Its deadline is the next chapter. If it is not reached there, it is missed and the story moves on without it.'
-      : remaining > 0 ? `${remaining} ${remaining === 1 ? 'chapter' : 'chapters'} left before the deadline`
-        : remaining === 0 ? 'Due in the next chapter: it cannot be saved until the goal is achieved'
-          : 'Overdue: the next chapter cannot be saved until the goal is achieved';
-  const lastResolution = (story.goalCompletions ?? []).at(-1);
-  const editState = arcGoalEditState(story, foundation, context.plan.arcNumber);
+    : remaining > 0 ? `${plural(remaining, 'chapter')} left ${mode === 'survival' ? 'to reach it' : 'before the deadline'}`
+      : mode === 'survival' ? 'Its deadline is the next chapter. If it is not reached there, it is missed.'
+        : 'Its deadline is the next chapter. If it is not reached there, it is recorded as missed and the story is off track.';
+  const missedGoals = route?.status === 'off-track' ? route.missedGoals : [];
+  const toBreak = goalsThatBreakRoute(context.plan.goals.length) - missedGoals.length;
+  const routeLine = mode === 'regular'
+    ? missedGoals.length ? `Off track: ${plural(missedGoals.length, 'goal')} missed in this arc. The story keeps pursuing its Destined Ending.` : undefined
+    : context.finalGoal ? 'This is the final goal. Missing it breaks the route.'
+      : `Missed in this arc: ${missedGoals.length} of ${context.plan.goals.length}. ${toBreak === 1 ? 'One more miss breaks' : `${toBreak} more misses break`} the route.`;
   return (
     <div className="rounded-xl border border-cyan-300/30 bg-cyan-400/[0.07] p-4" data-testid="fate-arc-goal">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -91,21 +163,12 @@ export function FateArcGoalCard({ story, foundation, generatedThrough, actions }
       </div>
       <dl className="mt-3 grid gap-2 text-xs text-neutral-400 sm:grid-cols-3">
         <div><dt className={eyebrow}>Allocated chapters</dt><dd className="mt-1 text-neutral-200">{context.activeGoal.startChapter}–{context.activeGoal.endChapter} · {context.activeGoal.chapters} of {ARC_LENGTH}</dd></div>
-        <div><dt className={eyebrow}>Next chapter</dt><dd className="mt-1 text-neutral-200">Chapter {story.head.nextChapterNumber} · {context.display}</dd></div>
+        <div><dt className={eyebrow}>Next chapter</dt><dd className="mt-1 text-neutral-200">Chapter {nextChapter} · {context.display}</dd></div>
         <div><dt className={eyebrow}>Status</dt><dd className="mt-1 text-neutral-200" data-testid="fate-arc-goal-status">{status}</dd></div>
       </dl>
-      {lastResolution?.outcome === 'missed' && (
-        <p className="mt-3 text-xs text-amber-200" data-testid="fate-missed-goal">Missed in Chapter {lastResolution.chapterNumber}: {lastResolution.goalText ?? 'the previous goal'}.</p>
-      )}
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button type="button" className={quietButton} onClick={() => setPlanOpen(open => !open)}>
-          {planOpen ? 'Hide the arc\'s goals' : 'Show the arc\'s goals'}
-        </button>
-        {actions}
-      </div>
-      {planOpen && <ArcPlanView key={`${context.plan.arcNumber}-${story.arcPlans?.length ?? 0}`} defaultOpen plan={context.plan}
-        activeGoalId={context.activeGoal.id} generatedThrough={generatedThrough}
-        lockedGoalIds={editState.lockedGoalIds} missedGoalIds={editState.missedGoalIds} />}
+      {routeLine && <p className={`mt-3 text-xs ${missedGoals.length ? 'text-amber-200' : 'text-neutral-400'}`} data-testid="fate-route">{routeLine}</p>}
+      <MissedGoalList goals={missedGoals} />
+      {planControls}
     </div>
   );
 }
@@ -113,16 +176,19 @@ export function FateArcGoalCard({ story, foundation, generatedThrough, actions }
 type PathOption = 'fate' | ChapterFunction | 'reader';
 
 /**
- * The next chapter's path. Regular Reader mode: leave it to fate (Rhythm's
- * automatic pick), choose one of the writer's three next-chapter ideas, or
- * write your own direction. Fate Survival: only your own direction, every
- * chapter. The choice directs that one chapter and is used up when it is saved.
+ * The next chapter's path. Regular Reader mode: fate decides by default
+ * (Rhythm's automatic pick); the reader may intervene through four paths, one
+ * of the writer's three suggested directions or their own direction. Fate
+ * Survival: only the reader's own direction, every chapter. A choice directs
+ * that one chapter and is used up when it is saved.
  */
-export function FatePathChooser({ story, foundation, chapters, busy = false, onChoose }: {
+export function FatePathChooser({ story, foundation, chapters, busy = false, focusDirection = false, onChoose }: {
   story: HarnessStory;
   foundation?: StoryFoundationInput;
   chapters: HarnessChapter[];
   busy?: boolean;
+  /** Puts the reader straight into their own direction, as the step the chapter is waiting on. */
+  focusDirection?: boolean;
   onChoose: (choice: ChapterDirectionChoice | null) => Promise<void>;
 }) {
   const mode = harnessStoryMode(foundation);
@@ -171,9 +237,11 @@ export function FatePathChooser({ story, foundation, chapters, busy = false, onC
       <p className={eyebrow}>{FATE_MODE_LABELS[mode]}</p>
       <h3 id={`fate-path-title-${story.id}`} className="mt-1 text-base font-semibold text-white">Chapter {chapterNumber}’s path</h3>
       <p className="mt-1 text-xs leading-relaxed text-neutral-400">
-        {mode === 'survival'
-          ? 'You direct every chapter. Fate offers no paths here: the writer follows your direction and the story answers honestly, so success is never guaranteed.'
-          : 'Leave the path to fate, or take it yourself. Your choice directs this one chapter and is used up once the chapter is saved.'}
+        {mode === 'regular'
+          ? 'Fate decides each chapter by default. To intervene, take one of four paths: one of the writer’s three suggested directions, or your own. Your choice directs this one chapter and is used up once the chapter is saved.'
+          : story.brokenRoute
+            ? 'The route is broken. You still direct each closing chapter, and the writer brings the story to its end as soon as the prose earns it.'
+            : 'You direct every chapter. Fate offers no paths here: the writer follows your direction and the story answers honestly, so success is never guaranteed.'}
       </p>
       <p className="mt-3 text-xs text-neutral-300" data-testid="fate-path-current">
         {pending ? `Set for Chapter ${chapterNumber}: ${describeChapterPath(pending.choice)}`
@@ -184,11 +252,12 @@ export function FatePathChooser({ story, foundation, chapters, busy = false, onC
         <legend className="sr-only">Chapter {chapterNumber}’s path</legend>
         {mode === 'regular' && radio('fate', 'Let fate decide',
           recommendation
-            ? <>{CHAPTER_FUNCTION_LABELS[recommendation.recommendedFunction]}{ideas[recommendation.recommendedFunction] ? ` — ${ideas[recommendation.recommendedFunction]}` : ''}. <span className="text-neutral-500">{recommendation.reason}</span></>
-            : 'Fate Pressure picks the next chapter’s function from the story’s recent rhythm.',
-          'Rhythm')}
+            ? <>{sentence(`Rhythm picks ${CHAPTER_FUNCTION_LABELS[recommendation.recommendedFunction]}${ideas[recommendation.recommendedFunction] ? ` — ${ideas[recommendation.recommendedFunction]}` : ''}`)} <span className="text-neutral-500">{recommendation.reason}</span></>
+            : 'Rhythm picks the next chapter’s function from the story’s recent rhythm and its Fate Pressure.',
+          'Default')}
+        {mode === 'regular' && <p className={`${eyebrow} pt-2`} data-testid="fate-intervention-heading">Or intervene · four paths</p>}
         {mode === 'regular' && CHAPTER_FUNCTIONS.map(type => radio(type, CHAPTER_FUNCTION_LABELS[type],
-          ideas[type] ?? 'No idea saved for this function yet; the writer chooses how to serve it.',
+          ideas[type] ?? 'No suggestion saved for this function yet; the writer chooses how to serve it.',
           recommendation?.recommendedFunction === type ? 'Fate’s pick' : undefined))}
         {mode === 'regular' ? radio('reader', 'Your own direction', 'Tell the story what happens next, in your words.')
           : null}
@@ -196,7 +265,7 @@ export function FatePathChooser({ story, foundation, chapters, busy = false, onC
           <div className="space-y-1">
             <label htmlFor={`fate-direction-${story.id}`} className="block text-xs text-neutral-300">Your direction for Chapter {chapterNumber}</label>
             <textarea id={`fate-direction-${story.id}`} value={text} maxLength={CHAPTER_DIRECTION_TEXT_LIMIT}
-              onChange={event => setText(event.target.value)} disabled={disabled}
+              onChange={event => setText(event.target.value)} disabled={disabled} autoFocus={focusDirection}
               placeholder={mode === 'survival' ? 'What your protagonist does next, in your own words.' : 'What should happen next, in your own words.'}
               className="min-h-24 w-full rounded-lg border border-white/15 bg-black/35 p-3 text-sm text-white" />
             <p className="text-right font-mono text-[10px] text-neutral-500">{text.length}/{CHAPTER_DIRECTION_TEXT_LIMIT}</p>
@@ -217,20 +286,24 @@ export function FatePathChooser({ story, foundation, chapters, busy = false, onC
   );
 }
 
+const CONCLUSION_TEXT: Record<HarnessStoryConclusion['reason'], (chapterNumber: number) => string> = {
+  'final-goal-completed': chapter => `The story reached its Destined Ending in Chapter ${chapter}.`,
+  'reached-after-final-goal-missed': chapter => `The story reached its Destined Ending in Chapter ${chapter}, after its final goal was missed.`,
+  'story-ended': chapter => `The story ended in Chapter ${chapter}, and the Destined Ending was never reached.`,
+  'closing-limit-reached': chapter => `The route had broken, and the story closed in Chapter ${chapter}, the last of its closing chapters. The Destined Ending was never reached.`,
+};
+
 /** How the story ended, when it has. */
 export function FateConclusion({ story }: { story: HarnessStory }) {
   const ended = story.conclusion;
   if (!ended) return null;
   const reached = ended.outcome === 'destined-ending-reached';
+  const text = CONCLUSION_TEXT[ended.reason]?.(ended.chapterNumber)
+    ?? (reached ? `The story reached its Destined Ending in Chapter ${ended.chapterNumber}.` : `Fate failed in Chapter ${ended.chapterNumber}.`);
   return (
     <div role="status" data-testid="fate-conclusion" className={`rounded-xl border p-4 ${reached ? 'border-emerald-300/40 bg-emerald-400/10' : 'border-amber-300/40 bg-amber-400/10'}`}>
       <p className="text-sm font-semibold text-white">{reached ? 'The Destined Ending was reached' : 'Fate failed'}</p>
-      <p className="mt-1 text-xs leading-relaxed text-neutral-200">
-        {reached ? `The story reached its Destined Ending in Chapter ${ended.chapterNumber}.`
-          : ended.reason === 'final-goal-missed' ? `The final goal was missed in Chapter ${ended.chapterNumber}, so the Destined Ending was never reached.`
-            : `In Chapter ${ended.chapterNumber}, the story made its Destined Ending impossible.`}
-        {' '}No further chapter is written.
-      </p>
+      <p className="mt-1 text-xs leading-relaxed text-neutral-200">{text} No further chapter is written.</p>
       {ended.evidence && <blockquote className="mt-2 border-l-2 border-white/20 pl-3 text-xs italic text-neutral-300">{ended.evidence}</blockquote>}
     </div>
   );
@@ -244,8 +317,8 @@ export function FateDestinedEnding({ foundation }: { foundation?: StoryFoundatio
       <p className={eyebrow}>Destined Ending</p>
       <p className="mt-2 break-words text-sm leading-relaxed text-neutral-100">{foundation?.destinedEnding?.trim() || 'Not set yet. It is established before the first chapter.'}</p>
       <p className="mt-2 text-xs text-neutral-400">{mode === 'survival'
-        ? 'Not guaranteed. Your choices decide whether the story reaches it; it can fail, even by death.'
-        : 'Guaranteed. The story reaches it in the final goal of its final arc.'}</p>
+        ? `Not guaranteed. Your choices decide whether the story reaches it; it can fail, even by death. Missing at least half of an arc's goals, or the final goal, breaks the route, and the story then closes within ${SURVIVAL_CLOSING_CHAPTER_LIMIT} chapters.`
+        : 'Guaranteed as the story\'s standing direction: every chapter pursues it. A missed goal puts the story off track, but never fails its fate.'}</p>
     </div>
   );
 }

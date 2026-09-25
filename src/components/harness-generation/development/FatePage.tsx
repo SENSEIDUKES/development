@@ -1,18 +1,18 @@
-import { useState } from 'react';
 import type { HarnessWorkspaceState } from '../../../narrative/generation';
 import type { HarnessGenerationController } from '../shared/controller';
 import { harnessStoryMode } from '../shared/arcState';
 import { chapterDirectionGap } from '../shared/chapterDirection';
 import { FATE_MODE_LABELS, FateArcGoalCard, FateConclusion, FateDestinedEnding, FatePathChooser, describeChapterPath } from './FatePanel';
+import { useNextChapterWriter, type NextChapterWriter } from './useNextChapterWriter';
 
 /**
  * The HARNESS Reader's Fate page: where the story is headed (the Destined
- * Ending and the active Arc Goal) and the path of the next chapter. Regular
- * Reader mode lets fate (Rhythm) choose or lets the reader take the path;
- * Fate Survival asks the reader to direct every chapter. Writing the chapter
- * is a host action, since the host owns the model choice.
+ * Ending, the active Arc Goal and where the route stands) and the path of the
+ * next chapter. Regular Reader mode lets fate (Rhythm) decide by default, with
+ * four paths to intervene; Fate Survival asks the reader to direct every
+ * chapter. Writing the chapter is a host action, since the host owns the model.
  */
-export function FatePage({ state, storyId, controller, onBack, onGenerateNextChapter, onReadChapter }: {
+export function FatePage({ state, storyId, controller, onBack, onGenerateNextChapter, onReadChapter, writer: sharedWriter, focusDirection = false }: {
   state: HarnessWorkspaceState;
   storyId: string;
   controller: HarnessGenerationController;
@@ -21,10 +21,13 @@ export function FatePage({ state, storyId, controller, onBack, onGenerateNextCha
   onGenerateNextChapter?: () => Promise<void>;
   /** Opens a chapter in the Reader. */
   onReadChapter?: (chapterNumber: number) => void;
+  /** The session's writer, when another surface can also start the write. */
+  writer?: NextChapterWriter;
+  /** Opened as the step the next chapter waits on: the reader's own direction. */
+  focusDirection?: boolean;
 }) {
-  const [writing, setWriting] = useState(false);
-  const [error, setError] = useState('');
-  const [written, setWritten] = useState<number>();
+  const ownWriter = useNextChapterWriter(controller, storyId, onGenerateNextChapter);
+  const { writing, error, written, write, reset } = sharedWriter ?? ownWriter;
   const story = state.stories.find(entry => entry.id === storyId);
   if (!story) return <p role="alert" className="p-4 text-sm text-amber-200">This story is no longer available.</p>;
   const foundation = state.foundations.find(entry => entry.id === story.activeFoundationRevisionId)?.input;
@@ -33,19 +36,7 @@ export function FatePage({ state, storyId, controller, onBack, onGenerateNextCha
   const lastChapter = chapters.at(-1);
   const nextChapter = story.head.nextChapterNumber;
   const gap = chapterDirectionGap(story, mode);
-
-  const write = async () => {
-    if (!onGenerateNextChapter) return;
-    setWriting(true); setError(''); setWritten(undefined);
-    try {
-      await onGenerateNextChapter();
-      const latest = controller.snapshot().stories.find(entry => entry.id === storyId);
-      if (latest && latest.head.nextChapterNumber > nextChapter) setWritten(nextChapter);
-      else setError(`Chapter ${nextChapter} was not saved. Its direction is kept, so you can try again.`);
-    } catch (cause) {
-      setError(`${cause instanceof Error ? cause.message : 'The chapter could not be written.'} Its direction is kept, so you can try again.`);
-    } finally { setWriting(false); }
-  };
+  const writtenPath = chapters.find(chapter => chapter.chapterNumber === written)?.path;
 
   return (
     <section className="mx-auto w-full min-w-0 max-w-3xl space-y-4 px-3 py-4 sm:px-4" aria-labelledby="fate-page-title" data-testid="fate-page">
@@ -65,8 +56,8 @@ export function FatePage({ state, storyId, controller, onBack, onGenerateNextCha
       )}
 
       {!story.conclusion && (
-        <FatePathChooser story={story} foundation={foundation} chapters={chapters} busy={writing}
-          onChoose={async choice => { setWritten(undefined); await controller.chooseChapterDirection(storyId, choice); }} />
+        <FatePathChooser story={story} foundation={foundation} chapters={chapters} busy={writing} focusDirection={focusDirection}
+          onChoose={async choice => { reset(); await controller.chooseChapterDirection(storyId, choice); }} />
       )}
 
       {!story.conclusion && onGenerateNextChapter && (
@@ -81,7 +72,7 @@ export function FatePage({ state, storyId, controller, onBack, onGenerateNextCha
       {error && <p role="alert" className="text-sm text-amber-200">{error}</p>}
       {written !== undefined && (
         <div role="status" className="flex flex-wrap items-center gap-3 text-sm text-emerald-200">
-          <span>Chapter {written} is written. Its direction was used and cleared.</span>
+          <span>Chapter {written} is written.{writtenPath && writtenPath.kind !== 'automatic' ? ' Its direction was used and cleared.' : ''}</span>
           {onReadChapter && <button type="button" onClick={() => onReadChapter(written)} className="min-h-11 rounded-full border border-emerald-300/40 px-4 text-sm text-emerald-50">Read Chapter {written}</button>}
         </div>
       )}

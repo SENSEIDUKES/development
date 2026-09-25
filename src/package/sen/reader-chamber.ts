@@ -63,5 +63,6 @@ export type {
   CommentsControl,
   ImmersionPreferences,
   PlaybackState,
+  ReaderContinueAction,
   ReaderControlsProps,
 } from '../../components/reader-chamber/development/ReaderControls/types';

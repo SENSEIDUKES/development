@@ -17,9 +17,9 @@ export interface ArcPlan { arcNumber: number; goals: ArcGoal[] }
 export interface ArcGoalSegment extends ArcGoal { startChapter: number; endChapter: number }
 /**
  * How a goal was resolved. `completed` (the default for records saved before
- * outcomes existed) carries verbatim evidence from the prose. `missed` is Fate
- * Survival only: its deadline chapter committed without the goal achieved, so
- * the goal becomes history and the next one begins.
+ * outcomes existed) carries verbatim evidence from the prose. `missed`: its
+ * deadline chapter committed without the goal achieved, so the goal becomes
+ * history and the next one begins. Goals are never claimed to meet a deadline.
  */
 export interface ArcGoalCompletion { arcNumber?: number; goalText?: string; goalId: string; chapterNumber: number; evidence: string; outcome?: 'completed' | 'missed' }
 export interface ArcPlanRevision { plan: ArcPlan; effectiveChapter: number; reason: 'initial' | 'edit' }
@@ -77,7 +77,7 @@ export function arcGoalCompleted(plan: ArcPlan, goal: ArcGoal, completions: ArcG
 export function arcGoalResolved(plan: ArcPlan, goal: ArcGoal, completions: ArcGoalCompletion[] = [], beforeChapter = Infinity) {
   return Boolean(arcGoalResolution(plan, goal, completions, beforeChapter));
 }
-/** Resolution (completed, or missed in Fate Survival) AND the allocated segment boundary are required to advance. */
+/** Resolution (completed or missed) AND the allocated segment boundary are required to advance. */
 export function activeArcGoal(plan: ArcPlan, chapter: number, completions: ArcGoalCompletion[] = []): ArcGoalSegment {
   const segments = arcGoalSegments(plan);
   return segments.find(goal => chapter <= goal.endChapter || !arcGoalResolved(plan, goal, completions, chapter)) ?? segments[segments.length - 1];
@@ -89,6 +89,13 @@ export function arcGenerationContext(plan: ArcPlan, chapter: number, destinedEnd
     completionConfirmed: arcGoalCompleted(plan, activeGoal, completions, chapter),
     ...(plannedArcCount ? { plannedArcCount, finalArc: plan.arcNumber >= plannedArcCount,
       finalGoal: plan.arcNumber >= plannedArcCount && activeGoal.id === plan.goals[plan.goals.length - 1].id } : {}) };
+}
+/** This arc's goals missed before a chapter, in plan order, with the chapter each was missed in. */
+export function arcMissedGoals(plan: ArcPlan, completions: ArcGoalCompletion[] = [], beforeChapter = Infinity) {
+  return plan.goals.flatMap(goal => {
+    const resolution = arcGoalResolution(plan, goal, completions, beforeChapter);
+    return resolution?.outcome === 'missed' ? [{ goalId: goal.id, text: goal.text, chapterNumber: resolution.chapterNumber }] : [];
+  });
 }
 /** The HARNESS stores an edit as a future revision; earlier frozen packets remain unchanged. */
 export function editArcPlan(previous: ArcPlan, proposed: ArcPlan): ArcPlan {

@@ -33,6 +33,7 @@ import { useReaderVisuals } from '../../../narrative/readerRuntime';
 import { ReaderHeader } from "./ReaderHeader";
 import { ReaderViewport } from "./ReaderViewport";
 import { ReaderControls } from "./ReaderControls";
+import type { ReaderContinueAction } from "./ReaderControls/types";
 import { useCinematicScroll } from '../../../narrative/readerRuntime';
 import { cinematicEffectGovernor } from "../shared/effects/cinematicEffectGovernor";
 import { useReadingPosition } from '../../../narrative/readerRuntime';
@@ -66,6 +67,11 @@ interface ReaderChamberProps {
    * and chooses the next chapter's path. Absent when the host has none.
    */
   onOpenFate?: () => void;
+  /**
+   * What Next does at the newest chapter, such as writing the next chapter or
+   * asking the reader to direct it first. Absent, Next stops at the newest chapter.
+   */
+  continueAfterLatest?: ReaderContinueAction;
   handleSealChapter?: (chapterNumber: number) => Promise<void>;
   handleCheckConsistency?: (chapterNumber: number) => Promise<string[]>;
 }
@@ -123,6 +129,7 @@ export default function ReaderChamber({
   updateStoryFields,
   installedSkills,
   onOpenFate,
+  continueAfterLatest,
   handleSealChapter,
   handleCheckConsistency,
 }: ReaderChamberProps) {
@@ -896,16 +903,26 @@ export default function ReaderChamber({
     }
   };
 
+  const openChapter = (chapterNumber: number) => {
+    setSelectedChapterNum(chapterNumber);
+    // Programmatic scroll — does not fire wheel events, so explicitly yield.
+    interveneAutoScroll();
+    readerRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const navigateNext = () => {
     const nextChapter = chapters.find(
       (c) => c.number === selectedChapterNum + 1,
     );
     if (nextChapter) {
-      setSelectedChapterNum(selectedChapterNum + 1);
-      // Programmatic scroll — does not fire wheel events, so explicitly yield.
-      interveneAutoScroll();
-      readerRef.current?.scrollIntoView({ behavior: "smooth" });
+      openChapter(selectedChapterNum + 1);
+      return;
     }
+    // At the newest chapter, Next runs the host's action there and opens what it produced.
+    if (selectedChapterNum !== maxChapterNum || !continueAfterLatest || continueAfterLatest.busy) return;
+    void Promise.resolve(continueAfterLatest.onContinue()).then(opened => {
+      if (opened !== undefined) openChapter(opened);
+    });
   };
 
   const filteredChapters = chapters.filter((c) => {
@@ -1093,6 +1110,7 @@ export default function ReaderChamber({
         
         navigatePrev={navigatePrev}
         navigateNext={navigateNext}
+        continueAfterLatest={continueAfterLatest}
         
         handleSealChapter={handleSealChapter}
         handleSealClick={handleSealClick}
@@ -1120,6 +1138,7 @@ export default function ReaderChamber({
           maxChapterNum,
           navigatePrev,
           navigateNext,
+          continueAfterLatest,
           onSwitchTab,
         }}
         playback={{

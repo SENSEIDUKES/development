@@ -18,7 +18,13 @@
   "DOOM DEADLINE: CHAPTER 7" countdown and Hardcore Fate banner), and
   `FateSurvivalExplanation`. The header Quick Action **Alter Fate** now calls
   the host's `onOpenFate`; the HARNESS Reader opens its Fate page there
-  (see the Harness Generation README). The paragraph bookmarks became the first
+  (see the Harness Generation README). Next at the newest chapter can now run a
+  host action (`continueAfterLatest`, typed `ReaderContinueAction`): the
+  bottom-bar Next and the end-of-chapter link name it (for example "Write
+  Chapter 4" or "Direct Chapter 4"), show it running, report its error, and
+  open the chapter it produced with the same scroll as ordinary navigation.
+  Without one, Next still stops at the newest chapter; earlier chapters and
+  swipes only navigate. The paragraph bookmarks became the first
   **Mind Palace**: `shared/mindPalace.ts` anchors each kept passage to the
   block's stable identity (`blockId`) and its exact canonical text (`passage`),
   so a passage whose block moved is still found, a block whose words changed is

@@ -64,18 +64,21 @@ describe('HARNESS canonical arc integration', () => {
     expect(reloaded.snapshot().stories.find(item => item.id === story.id)?.arcPlans).toHaveLength(1);
   });
 
-  it('fails an overdue chapter before commit when completion evidence is absent, leaving the head unchanged', async () => {
+  it('commits a deadline chapter that did not achieve its goal and records the goal as missed, never forcing success', async () => {
     const run = await setup();
     run.setOutput({ prose: 'She saw the invader and fled.', arcCompletion: { goalId: plan.goals[0].id, completed: false, evidence: '' } });
     await run.controller.generateNextChapter(run.story.id, 'fixture');
-    const failed = run.controller.snapshot();
-    expect(failed.chapters).toHaveLength(0);
-    expect(failed.stories[0].head.nextChapterNumber).toBe(1);
-    expect(failed.attempts[0]).toMatchObject({ stage: 'generation_failed', failure: { stage: 'response' } });
-    expect(failed.attempts[0].failure?.message).toContain('completion deadline');
+    const saved = run.controller.snapshot();
+    expect(saved.chapters).toHaveLength(1);
+    expect(saved.stories[0].head.nextChapterNumber).toBe(2);
+    expect(saved.attempts[0].stage).toBe('committed');
+    expect(saved.stories[0].goalCompletions).toEqual([expect.objectContaining({ goalId: 'arc-1-first', outcome: 'missed', chapterNumber: 1, evidence: '' })]);
+    // The next goal begins.
+    await run.controller.generateNextChapter(run.story.id, 'fixture');
+    expect(run.requests[1].storyInformation.arc?.activeGoal.id).toBe('arc-1-second');
   });
 
-  it('blocks an uncompleted active goal when an edited allocation moves its deadline into the past', async () => {
+  it('records a goal as missed when an edited allocation moves its deadline into the past', async () => {
     const run = await setup();
     const editablePlan: ArcPlan = {
       arcNumber: 1,
@@ -100,10 +103,10 @@ describe('HARNESS canonical arc integration', () => {
     });
     await run.controller.generateNextChapter(story.id, 'fixture');
 
-    const failed = run.controller.snapshot();
-    expect(failed.stories.find(item => item.id === story.id)?.head.nextChapterNumber).toBe(3);
-    expect(failed.chapters.filter(chapter => chapter.storyId === story.id)).toHaveLength(2);
-    expect(failed.attempts.at(-1)?.failure?.message).toContain('completion deadline');
+    const saved = run.controller.snapshot();
+    expect(saved.stories.find(item => item.id === story.id)?.head.nextChapterNumber).toBe(4);
+    expect(saved.stories.find(item => item.id === story.id)?.goalCompletions)
+      .toEqual([expect.objectContaining({ goalId: 'edited-first', outcome: 'missed', chapterNumber: 3 })]);
   });
 
   it('freezes the authoritative goal context and persists evidenced completion', async () => {

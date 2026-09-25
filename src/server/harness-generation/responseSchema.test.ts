@@ -39,7 +39,7 @@ describe('HARNESS chapter response schema shape', () => {
     ]);
     expect(Object.keys(HARNESS_CHAPTER_RESPONSE_SCHEMA.properties)).toEqual([
       'title', 'plan', 'paragraphs', 'arcCompletion', 'recap', 'chapterFunction', 'nextProgression', 'nextWorldBuilding', 'nextConflict',
-      'fateFailure', 'dialogue', 'manifestations', 'systemPanels', 'soundscapes', 'soundCues', 'creatureEvents',
+      'storyEnded', 'dialogue', 'manifestations', 'systemPanels', 'soundscapes', 'soundCues', 'creatureEvents',
     ]);
     const serialized = JSON.stringify(HARNESS_CHAPTER_RESPONSE_SCHEMA);
     for (const forbidden of ['prose', 'blocks', 'memory', 'metadata', 'status', 'worldNotice', 'fateResult', 'blockId', 'url', 'asset', 'catalog', 'trackId', 'id"']) {

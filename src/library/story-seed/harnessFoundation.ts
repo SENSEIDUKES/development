@@ -16,6 +16,10 @@ const labeledLines = (entries: Array<[string, string | undefined]>): string | un
   return present.length ? present.map(([label, value]) => `${label}: ${value.trim()}`).join('\n') : undefined;
 };
 
+/** An author fact followed, on its own line, by the Blueprint's added detail. */
+const withAddedDetail = (fact: string | undefined, detail: string | undefined): string | undefined =>
+  detail ? [fact?.trim(), detail].filter(Boolean).join('\n') : fact;
+
 /**
  * The only Story Seed -> Harness translation point. It copies author input
  * into a neutral Foundation and freezes the original artifacts for provenance.
@@ -24,7 +28,8 @@ const labeledLines = (entries: Array<[string, string | undefined]>): string | un
  * roadmap, arc count, Fun Settings, Fate) has its own Foundation fields; each
  * character and faction travels only as a Foundation identity whose evidence
  * is its single description; world facts carry only what no other field
- * already carries. `resolveStorySeedWorldCanon` decides between the Seed and
+ * already carries. Where the author wrote a world, society, or opening fact,
+ * the Blueprint's compatible added detail travels beside it, once. `resolveStorySeedWorldCanon` decides between the Seed and
  * its reviewed Blueprint, so authored values win and Blueprint copies are
  * never re-sent.
  *
@@ -81,14 +86,16 @@ export const createHarnessFoundationFromStorySeed = (record: StorySeedRecord): S
       ['Style bible', blueprint?.styleBible],
     ]),
     permanentInstructions: labeledLines([['Make It Work', optional.makeItWorkInstruction]]),
-    openingSituation: identity.startingLocation,
+    openingSituation: withAddedDetail(identity.startingLocation, canon.startingLocationDetail),
     declaredCanon: labeledLines([['Story tags', required.storyTags.join(', ')]]),
     cast: mainCharacter ? [{
       name: mainCharacter.name, role: 'Main character', isMainCharacter: true, relationshipToMC: 'Self',
     }] : undefined,
     worldFacts: labeledLines([
       ['World', canon.worldOverview],
+      ['World detail', canon.worldOverviewDetail],
       ['Society', canon.societyStructure],
+      ['Society detail', canon.societyStructureDetail],
       ['Power system', canon.powerSystem],
       ['Main Opposition', world.mainOpposition],
     ]),

@@ -126,6 +126,12 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, o
         powerSystemOutline={blueprint.powerSystemOutline}
         onUpdateWorldIdentity={patch => updateSeed(patchWorldIdentity(patch))}
         onPowerSystemOutlineChange={powerSystemOutline => setBlueprint(current => ({ ...current, powerSystemOutline }))}
+        worldFactDetails={{
+          worldOverviewDetail: blueprint.worldOverviewDetail,
+          startingLocationDetail: blueprint.startingLocationDetail,
+          societyStructureDetail: blueprint.societyStructureDetail,
+        }}
+        onWorldFactDetailChange={(field, value) => setBlueprint(current => ({ ...current, [field]: value }))}
       />
       <BlueprintNotesSection styleBible={blueprint.styleBible} setBlueprint={setBlueprint} />
       <BlueprintCollectionSections

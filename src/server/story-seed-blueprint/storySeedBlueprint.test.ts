@@ -471,3 +471,82 @@ describe("Blueprint arc count and added arcs", () => {
     expect(errorOf(await post({ operation: "rewrite-everything", storySeed: canonicalSeed() }, provider))).toBe("Unknown Blueprint operation.");
   });
 });
+
+describe("Cleaned-up Blueprint instructions", () => {
+  const promptFor = async (seed: StorySeedInput) => {
+    const provider = new RecordingProvider();
+    await post({ storySeed: seed }, provider);
+    const { systemInstruction, userPrompt } = provider.requests[0];
+    return { systemInstruction, userPrompt, both: `${systemInstruction}\n${userPrompt}`, schema: provider.requests[0].responseJsonSchema };
+  };
+  const count = (haystack: string, needle: string) => haystack.split(needle).length - 1;
+
+  it("states each rule once and drops dead conditions, internal labels, and the genre list", async () => {
+    const { systemInstruction, userPrompt, both } = await promptFor(canonicalSeed());
+    for (const rule of [
+      "Every non-empty value is authoritative",
+      "Make It Work is an absolute worldbuilding instruction",
+      "Destined Ending is the novel's fixed destination",
+      "integrate it instead of replacing it",
+      "Describe minors safely and never sexualize a character under 18",
+      "Return the JSON object only.",
+    ]) expect(count(both, rule)).toBe(1);
+    expect(count(both, "majorMysteries and unresolvedPlotThreads")).toBe(2);
+    for (const removed of [
+      "when the creator left it open", "The server will enforce", "for compatibility", "HARNESS", "CAPA",
+      "Preserve author Hard Pins exactly", "Fate Survival is optional", "Return only the requested JSON object",
+      "You are fluent in", "Wuxia, Xianxia, Xuanhuan",
+    ]) expect(both).not.toContain(removed);
+    expect(systemInstruction).toContain("Treat the creator's storytelling tradition and genre as adaptable lenses rather than mandatory tropes.");
+    expect(userPrompt).toContain("- Generate a strong logline.\n");
+    expect(userPrompt).toContain("Begin every entry with its name: Name (role) — description.");
+    expect(userPrompt).toContain("- mcProfile repeats mainCharacter.backgroundProfile exactly.");
+  });
+
+  it("asks for added detail only where the creator wrote the world fact", async () => {
+    const allWritten = await promptFor(canonicalSeed());
+    expect(allWritten.userPrompt).toContain("- Establish a usable power-system outline.\n");
+    expect(allWritten.userPrompt).toContain("- The creator already wrote the world overview (worldIdentity.worldType), opening location (worldIdentity.startingLocation), and society (worldIdentity.societyStructure); that wording stays the fact. In worldOverview, startingLocation, and societyStructure, write only compatible added detail that builds on the matching fact, never restating or contradicting it.");
+    const noneWritten = canonicalSeed();
+    noneWritten.world.optional.worldIdentity = { title: "The Seventh Oath" };
+    const open = await promptFor(noneWritten);
+    expect(open.userPrompt).toContain("- Establish the world overview, opening location, society, and a usable power-system outline.\n");
+    expect(open.userPrompt).not.toContain("The creator already wrote");
+    const someWritten = canonicalSeed();
+    someWritten.world.optional.worldIdentity = { title: "The Seventh Oath", societyStructure: "Nine clans share power." };
+    const partial = await promptFor(someWritten);
+    expect(partial.userPrompt).toContain("- Establish the world overview, opening location, and a usable power-system outline.\n");
+    expect(partial.userPrompt).toContain("- The creator already wrote the society (worldIdentity.societyStructure); that wording stays the fact. In societyStructure, write only");
+  });
+
+  it("keeps the strict output form and needs no more output, so the arc limit is unchanged", async () => {
+    const { schema } = await promptFor(canonicalSeed());
+    expect(schema.additionalProperties).toBe(false);
+    expect([...schema.required].sort()).toEqual([
+      "arcPlans", "destinedEnding", "estimatedArcs", "firstArcPromise", "initialCharacters", "logline", "mainCharacter",
+      "majorFactions", "majorMysteries", "mcProfile", "powerSystemOutline", "societyStructure", "startingLocation",
+      "styleBible", "title", "tropeRules", "unresolvedPlotThreads", "worldOverview",
+    ]);
+    expect(Object.keys(schema.properties)).not.toContain("worldOverviewDetail");
+    expect(blueprintRoadmapArcLimit(8_192)).toBe(14);
+    expect(schema.properties.arcPlans.maxItems).toBe(14);
+  });
+
+  it("returns the added detail beside the author's facts, never in their place", async () => {
+    const provider = new RecordingProvider({
+      ...generatedBlueprint(),
+      worldOverview: "Oaths are recorded in the sky as scars of light.",
+      startingLocation: "Rainwater in the court runs red during hearings.",
+      societyStructure: "Every clan keeps a witness sect as hostage and guarantor.",
+    });
+    const response = await post({ storySeed: canonicalSeed() }, provider);
+    const blueprint = response.body as WorldBlueprint;
+    const identity = canonicalSeed().world.optional.worldIdentity;
+    expect(blueprint).toMatchObject({
+      worldOverview: identity.worldType, startingLocation: identity.startingLocation, societyStructure: identity.societyStructure,
+      worldOverviewDetail: "Oaths are recorded in the sky as scars of light.",
+      startingLocationDetail: "Rainwater in the court runs red during hearings.",
+      societyStructureDetail: "Every clan keeps a witness sect as hostage and guarantor.",
+    });
+  });
+});

@@ -51,6 +51,16 @@ export interface WorldBlueprint {
   worldOverview: string;
   startingLocation: string;
   societyStructure: string;
+  /**
+   * Generated detail that builds on an author-supplied world, opening-location,
+   * or society fact. The author's wording stays the fact (in the Seed and the
+   * field above); this Blueprint-owned prose only adds to it and never repeats
+   * it. Absent when the author left the fact to the model, whose text is then
+   * the fact itself. Older Blueprints have none.
+   */
+  worldOverviewDetail?: string;
+  startingLocationDetail?: string;
+  societyStructureDetail?: string;
   powerSystemOutline: string;
   /** Structured fields added without removing the legacy combined profile. */
   mainCharacter?: WorldBlueprintMainCharacter;

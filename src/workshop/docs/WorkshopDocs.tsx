@@ -33,7 +33,7 @@ function TopicLink({ id, onNavigate, children, ...props }: {
 function TopicNavigation({ topicId, onNavigate, collapsedCategories, onToggleCategory }: TopicNavigationProps) {
   const instanceId = useId();
   return (
-    <nav aria-label="Docs topics" className="docs-navigation">
+    <nav aria-label="NovelExpanded Docs topics" className="docs-navigation">
       <TopicLink id="overview" onNavigate={onNavigate} aria-current={topicId === 'overview' ? 'page' : undefined}>Overview</TopicLink>
       {docsCategories.map(category => (
         <section key={category.id}>
@@ -115,24 +115,24 @@ export function WorkshopDocs({ topicId, onNavigate }: DocsProps) {
   return (
     <div className="workshop-docs">
       <header className="docs-toolbar">
-        <div className="docs-label"><BookOpen size={20} aria-hidden="true" /><span>Docs</span></div>
+        <div className="docs-label"><BookOpen size={20} aria-hidden="true" /><span>NovelExpanded Docs</span></div>
         <div className="docs-toolbar-actions">
           <SEIDrawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-            <SEIDrawerTrigger className="docs-menu-button" aria-label="Browse Docs topics">
+            <SEIDrawerTrigger className="docs-menu-button" aria-label="Browse NovelExpanded Docs topics">
               <Menu size={20} aria-hidden="true" />
             </SEIDrawerTrigger>
             <SEIDrawerContent unstyled side="left" className="docs-drawer" backdropClassName="docs-drawer-backdrop"
               finalFocus={focusArticle.current ? headingRef : undefined}>
               <div className="docs-drawer-header">
-                <SEIDrawerTitle className="docs-drawer-title">Docs topics</SEIDrawerTitle>
-                <SEIDrawerClose className="docs-icon-button" aria-label="Close Docs topics"><X size={20} aria-hidden="true" /></SEIDrawerClose>
+                <SEIDrawerTitle className="docs-drawer-title">NovelExpanded Docs topics</SEIDrawerTitle>
+                <SEIDrawerClose className="docs-icon-button" aria-label="Close NovelExpanded Docs topics"><X size={20} aria-hidden="true" /></SEIDrawerClose>
               </div>
               <div className="docs-drawer-scroll"><TopicNavigation {...navigationProps} /></div>
             </SEIDrawerContent>
           </SEIDrawer>
           <div className="docs-search" role="search">
             <Search size={18} aria-hidden="true" />
-            <input ref={searchRef} type="search" aria-label="Search Docs" placeholder="Search Docs"
+            <input ref={searchRef} type="search" aria-label="Search NovelExpanded Docs" placeholder="Search NovelExpanded Docs"
               value={query} onChange={event => setQuery(event.target.value)}
               onKeyDown={event => { if (event.key === 'Escape') setQuery(''); }} />
             {query && <button type="button" className="docs-icon-button" aria-label="Clear search" onClick={() => { setQuery(''); searchRef.current?.focus(); }}><X size={16} aria-hidden="true" /></button>}
@@ -161,9 +161,9 @@ export function WorkshopDocs({ topicId, onNavigate }: DocsProps) {
             </>
           ) : topicId === 'overview' ? (
             <>
-              <p className="docs-eyebrow">The shared reference</p>
+              <p className="docs-eyebrow">NovelExpanded Docs</p>
               <h1 id="docs-article-title" ref={headingRef} tabIndex={-1}>What each thing is.<br />How it all fits.</h1>
-              <p className="docs-intro">A common understanding of SEIHouse’s core concepts, for people and models.</p>
+              <p className="docs-intro">Our shared reference for the Celestial Library and SEN—what each concept means and how they connect.</p>
               <div className="docs-category-index">
                 {docsCategories.map(group => (
                   <section key={group.id}>
@@ -183,7 +183,7 @@ export function WorkshopDocs({ topicId, onNavigate }: DocsProps) {
             </>
           ) : topic ? (
             <>
-              <p className="docs-eyebrow"><TopicLink id="overview" onNavigate={navigate}>Docs</TopicLink><span aria-hidden="true"> / </span>{category?.title}</p>
+              <p className="docs-eyebrow"><TopicLink id="overview" onNavigate={navigate}>NovelExpanded Docs</TopicLink><span aria-hidden="true"> / </span>{category?.title}</p>
               <h1 id="docs-article-title" ref={headingRef} tabIndex={-1}>{topic.title}</h1>
               <section className="docs-definition">
                 <h2>What it is</h2>
@@ -201,9 +201,9 @@ export function WorkshopDocs({ topicId, onNavigate }: DocsProps) {
             </>
           ) : (
             <>
-              <p className="docs-eyebrow">Docs</p>
+              <p className="docs-eyebrow">NovelExpanded Docs</p>
               <h1 id="docs-article-title" ref={headingRef} tabIndex={-1}>Topic not found</h1>
-              <p className="docs-intro">This link doesn’t match a Docs topic.</p>
+              <p className="docs-intro">This link doesn’t match a NovelExpanded Docs topic.</p>
               <TopicLink id="overview" onNavigate={navigate} className="docs-back-link">Browse all topics <ArrowRight size={16} aria-hidden="true" /></TopicLink>
             </>
           )}

@@ -69,7 +69,7 @@ Open the local or forwarded Vite preview, usually on port `5173`.
 
 The home screen is driven by [`src/workshop/manifest.ts`](./src/workshop/manifest.ts). Each approved experiment should have its own preview and a clear entry in that manifest.
 
-As of 2026-09-25, the header has five preview sections and a Docs tab — navigation, not package ownership:
+As of 2026-09-25, the header has five preview sections and a NovelExpanded Docs tab — navigation, not package ownership:
 
 - **Pages** — subsections Home (Light Novels Home, Library Shell), Create (Story Seed), Read (Reader Chamber, Reader Codex), Account (User Profile / Cultivator Cave), and Commerce (Celestial Store).
 - **Rewards** — Reward Loop, Achievements, Fate Survival Relics, Familiar Training, Daily Dao Pillar, and Closed-Door Cultivation.

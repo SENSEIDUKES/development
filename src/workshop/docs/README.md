@@ -1,10 +1,13 @@
-# Workshop Docs
+# NovelExpanded Docs
 
 Workshop-owned reference surface, created and updated 2026-09-25. This is a
-top-level **Docs** tab, not a portable SEN/Library feature or an Original /
+top-level **NovelExpanded Docs** tab focused on SEN and the Celestial Library, not a portable SEN/Library feature or an Original /
 Development preview. The visual reference is the supplied Google API docs
 screenshots: topic navigation, search, and a readable article. SEIHouse's existing
 Workshop colors and typography are retained. No production source is imported.
+
+Content stays within SEN and Library concepts. The SEIHouse entry alone explains
+the broader company context and SEA; other topics do not cover albums or SEA.
 
 - Open `?tab=docs`; individual entries use `?tab=docs&doc=arc-goal`.
 - Desktop has a persistent, independently scrolling topic sidebar. Phones and
@@ -23,7 +26,7 @@ Workshop colors and typography are retained. No production source is imported.
 - No database, authentication, generated content, external requests, local
   storage, package exports, or production transfer is introduced. URL state is
   owned by `WorkshopHome`; browser Back/Forward restores tabs and topics.
-- The existing preview Archive remains on other Workshop tabs, never in Docs.
+- The existing preview Archive remains on other Workshop tabs, never in NovelExpanded Docs.
 
 Validation: `npm run test:workshop`, `npm run typecheck`, `npm run build`, and
 `npm run check:package-boundaries`. Browser checks should cover direct URLs,

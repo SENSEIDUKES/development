@@ -44,6 +44,15 @@ describe('Docs topic catalog', () => {
     expect(docsTopics.some(topic => /gemini|gpt-|eleven|veo/i.test(topic.title))).toBe(false);
   });
 
+  it('keeps SEA and album information only in the SEIHouse entry', () => {
+    for (const entry of docsTopics) {
+      if (entry.id === 'seihouse') continue;
+      expect([entry.title, ...entry.aliases, entry.definition, entry.howItFits].join(' ')).not.toMatch(/\bSEA\b|\balbums?\b/i);
+    }
+    expect(findDocsTopic('seihouse')?.howItFits).toMatch(/\bSEA\b/);
+    expect(searchDocs('SEA').map(entry => entry.id)).toEqual(['seihouse']);
+  });
+
   it('builds portable Workshop URLs', () => {
     expect(docsHref()).toBe('?tab=docs');
     expect(docsHref('arc-goal')).toBe('?tab=docs&doc=arc-goal');

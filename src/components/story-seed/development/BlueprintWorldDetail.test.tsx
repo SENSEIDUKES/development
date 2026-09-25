@@ -61,38 +61,65 @@ const Review = ({ details }: { details: Partial<WorldBlueprint> }) => {
 };
 
 const area = (id: string) => container.querySelector<HTMLTextAreaElement>(`#${id}`);
+const identity = () => createFilledStorySeedInput().world.optional.worldIdentity;
+const earlierNote = (id: string) => container.querySelector(`[data-testid="${id}-earlier"]`);
+const typeInto = (id: string, value: string) => act(() => {
+  const input = area(id)!;
+  Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(input, value);
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+});
+const markdown = () => createBlueprintMarkdown(latest, createFilledStorySeedInput().story.required, latest.mainCharacter!);
 
 describe('Blueprint review world detail', () => {
   it('shows the generated detail under each author fact and saves edits to the Blueprint only', () => {
-    act(() => root.render(<Review details={{ worldOverviewDetail: 'Refined qi trades like coin.', societyStructureDetail: 'Elders sell promotions.' }} />));
-    expect(area('blueprint-world-overview')!.value).toBe(createFilledStorySeedInput().world.optional.worldIdentity.worldType);
+    act(() => root.render(<Review details={{
+      worldOverviewDetail: 'Refined qi trades like coin.', worldOverviewDetailBasis: identity().worldType,
+      societyStructureDetail: 'Elders sell promotions.', societyStructureDetailBasis: identity().societyStructure,
+    }} />));
+    expect(area('blueprint-world-overview')!.value).toBe(identity().worldType);
     expect(area('blueprint-world-overview-detail')!.value).toBe('Refined qi trades like coin.');
     expect(area('blueprint-world-order-detail')!.value).toBe('Elders sell promotions.');
     expect(area('blueprint-opening-location-detail')).toBeNull();
-    act(() => {
-      const input = area('blueprint-world-overview-detail')!;
-      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(input, 'Refined qi trades like coin between sects.');
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    });
+    expect(earlierNote('blueprint-world-overview-detail')).toBeNull();
+    typeInto('blueprint-world-overview-detail', 'Refined qi trades like coin between sects.');
     expect(latest.worldOverviewDetail).toBe('Refined qi trades like coin between sects.');
-    expect(latest.worldOverview).toBe(createFilledStorySeedInput().world.optional.worldIdentity.worldType);
+    expect(latest.worldOverview).toBe(identity().worldType);
   });
 
-  it('hides a detail while its fact is empty and brings it back with the fact', () => {
-    act(() => root.render(<Review details={{ worldOverviewDetail: 'Refined qi trades like coin.' }} />));
-    const type = (value: string) => act(() => {
-      const input = area('blueprint-world-overview')!;
-      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(input, value);
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-    type('');
+  it('hides a detail while its fact is empty and brings it back with the same fact', () => {
+    act(() => root.render(<Review details={{ worldOverviewDetail: 'Refined qi trades like coin.', worldOverviewDetailBasis: identity().worldType }} />));
+    typeInto('blueprint-world-overview', '');
     expect(area('blueprint-world-overview-detail')).toBeNull();
     expect(latest.worldOverviewDetail).toBe('Refined qi trades like coin.');
-    const origin = createFilledStorySeedInput().story.required;
-    expect(createBlueprintMarkdown(latest, origin, latest.mainCharacter!)).not.toContain('World Detail');
-    type('A restored world.');
+    expect(markdown()).not.toContain('World Detail');
+    typeInto('blueprint-world-overview', identity().worldType!);
     expect(area('blueprint-world-overview-detail')!.value).toBe('Refined qi trades like coin.');
-    expect(createBlueprintMarkdown(latest, origin, latest.mainCharacter!)).toContain('**World Detail:** Refined qi trades like coin.');
+    expect(earlierNote('blueprint-world-overview-detail')).toBeNull();
+    expect(markdown()).toContain('**World Detail:** Refined qi trades like coin.');
+  });
+
+  it('marks a detail written for an earlier version of its fact until the author keeps or edits it', () => {
+    act(() => root.render(<Review details={{ worldOverviewDetail: 'Refined qi trades like coin.', worldOverviewDetailBasis: identity().worldType }} />));
+    typeInto('blueprint-world-overview', 'A neon megacity where corporations own every soul.');
+    expect(area('blueprint-world-overview-detail')!.value).toBe('Refined qi trades like coin.');
+    expect(earlierNote('blueprint-world-overview-detail')).not.toBeNull();
+    expect(markdown()).not.toContain('World Detail');
+    // Keeping it as it is reviews it against the new line.
+    act(() => container.querySelector<HTMLButtonElement>('[aria-label="Keep World Detail as is"]')!.click());
+    expect(earlierNote('blueprint-world-overview-detail')).toBeNull();
+    expect(latest.worldOverviewDetailBasis).toBe('A neon megacity where corporations own every soul.');
+    expect(markdown()).toContain('**World Detail:** Refined qi trades like coin.');
+    // So does editing it.
+    typeInto('blueprint-world-overview', 'A drowned archipelago of rival sword clans.');
+    expect(earlierNote('blueprint-world-overview-detail')).not.toBeNull();
+    typeInto('blueprint-world-overview-detail', 'Clan fleets duel for the last dry islands.');
+    expect(earlierNote('blueprint-world-overview-detail')).toBeNull();
+    expect(markdown()).toContain('**World Detail:** Clan fleets duel for the last dry islands.');
+    // An emptied detail has nothing to mark, whatever the line says.
+    typeInto('blueprint-world-overview-detail', '');
+    typeInto('blueprint-world-overview', 'A floating tea-house city.');
+    expect(area('blueprint-world-overview-detail')!.value).toBe('');
+    expect(earlierNote('blueprint-world-overview-detail')).toBeNull();
   });
 
   it('shows no detail fields for a Blueprint without them', () => {

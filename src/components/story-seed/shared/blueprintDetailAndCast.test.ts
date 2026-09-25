@@ -9,6 +9,7 @@ import {
   parseStorySeedJson,
   reconcileStorySeedBlueprint,
   resolveStorySeedWorldCanon,
+  reviewWorldFactDetail,
   type StorySeedInput,
   type WorldBlueprint,
 } from '@seihouse/sen/story-seed';
@@ -72,6 +73,8 @@ describe('World detail beside the author\'s world facts', () => {
     expect(blueprint.worldOverviewDetail).toBe('Refined qi trades like coin, and every rank is inscribed in a fate ledger.');
     expect(blueprint.societyStructureDetail).toBe('Inner disciples hold the votes; outer disciples dig for pill rations.');
     expect(blueprint.startingLocationDetail).toBe('Sulfur steam floods the lower galleries at dusk.');
+    // Each detail is bound to the author's wording it was written for.
+    expect(blueprint).toMatchObject({ worldOverviewDetailBasis: WORLD, societyStructureDetailBasis: SOCIETY, startingLocationDetailBasis: OPENING });
   });
 
   it('uses the model\'s text as the fact where the author left it open, with no separate detail', () => {
@@ -87,10 +90,15 @@ describe('World detail beside the author\'s world facts', () => {
   it('derives every detail itself and ignores one the model sends on its own', () => {
     const open = authoredSeed();
     open.world.optional.worldIdentity.worldType = '';
-    const stray = { worldOverviewDetail: 'A stray detail the model wrote on its own.', societyStructureDetail: 'Another stray detail.' };
-    expect(finalizeGeneratedWorldBlueprint(modelReply(stray), open)).not.toHaveProperty('worldOverviewDetail');
-    expect(finalizeGeneratedWorldBlueprint(modelReply(stray), open).societyStructureDetail)
-      .toBe('Inner disciples hold the votes; outer disciples dig for pill rations.');
+    const stray = {
+      worldOverviewDetail: 'A stray detail the model wrote on its own.', worldOverviewDetailBasis: 'A stray basis.',
+      societyStructureDetail: 'Another stray detail.', societyStructureDetailBasis: 'Another stray basis.',
+    };
+    const blueprint = finalizeGeneratedWorldBlueprint(modelReply(stray), open);
+    expect(blueprint).not.toHaveProperty('worldOverviewDetail');
+    expect(blueprint).not.toHaveProperty('worldOverviewDetailBasis');
+    expect(blueprint.societyStructureDetail).toBe('Inner disciples hold the votes; outer disciples dig for pill rations.');
+    expect(blueprint.societyStructureDetailBasis).toBe(SOCIETY);
   });
 
   it('never writes a detail into the Seed and keeps it through review, saving, export, and import', () => {
@@ -103,6 +111,9 @@ describe('World detail beside the author\'s world facts', () => {
       worldOverviewDetail: reviewed.blueprint.worldOverviewDetail,
       societyStructureDetail: reviewed.blueprint.societyStructureDetail,
       startingLocationDetail: reviewed.blueprint.startingLocationDetail,
+      worldOverviewDetailBasis: WORLD,
+      societyStructureDetailBasis: SOCIETY,
+      startingLocationDetailBasis: OPENING,
     });
     // An author clearing a detail is an edit that stays cleared.
     expect(normalizeWorldBlueprint({ ...reviewed.blueprint, worldOverviewDetail: '' }, reviewed.seed).worldOverviewDetail).toBe('');
@@ -112,8 +123,9 @@ describe('World detail beside the author\'s world facts', () => {
     const seed = authoredSeed();
     const saved = { ...finalizeGeneratedWorldBlueprint(modelReply(), seed) } as Partial<WorldBlueprint>;
     delete saved.worldOverviewDetail; delete saved.societyStructureDetail; delete saved.startingLocationDetail;
+    delete saved.worldOverviewDetailBasis; delete saved.societyStructureDetailBasis; delete saved.startingLocationDetailBasis;
     const loaded = reconcileStorySeedBlueprint(seed, saved).blueprint;
-    expect(Object.keys(loaded).filter(key => key.endsWith('Detail'))).toEqual([]);
+    expect(Object.keys(loaded).filter(key => /Detail(Basis)?$/.test(key))).toEqual([]);
     expect(resolveStorySeedWorldCanon(seed, loaded)).not.toHaveProperty('worldOverviewDetail');
   });
 
@@ -136,6 +148,34 @@ describe('World detail beside the author\'s world facts', () => {
     expect(resolveStorySeedWorldCanon(kept.seed, kept.blueprint)).not.toHaveProperty('worldOverviewDetail');
     expect(resolveStorySeedWorldCanon(kept.seed, kept.blueprint).societyStructureDetail).toBe(reviewed.blueprint.societyStructureDetail);
     expect(resolveStorySeedWorldCanon(reviewed.seed, kept.blueprint).worldOverviewDetail).toBe(reviewed.blueprint.worldOverviewDetail);
+  });
+
+  it('withholds a detail from a rewritten fact until the author keeps or edits it', () => {
+    const seed = authoredSeed();
+    const reviewed = reconcileStorySeedBlueprint(seed, finalizeGeneratedWorldBlueprint(modelReply(), seed));
+    const rewrite = (worldType: string) => {
+      const next = structuredClone(reviewed.seed);
+      next.world.optional.worldIdentity.worldType = worldType;
+      return next;
+    };
+    // Case, spacing, and punctuation leave the fact as it was.
+    const restyled = rewrite(`  ${WORLD.toUpperCase()}.  `);
+    expect(resolveStorySeedWorldCanon(restyled, mirrorSeedIntoBlueprint(reviewed.blueprint, restyled)).worldOverviewDetail)
+      .toBe(reviewed.blueprint.worldOverviewDetail);
+    // A different fact never receives the detail written for the old one, and the Blueprint keeps it.
+    const MEGACITY = 'A neon megacity where corporations own every soul';
+    const rewritten = reconcileStorySeedBlueprint(rewrite(MEGACITY), mirrorSeedIntoBlueprint(reviewed.blueprint, rewrite(MEGACITY)));
+    expect(rewritten.blueprint.worldOverviewDetail).toBe(reviewed.blueprint.worldOverviewDetail);
+    expect(resolveStorySeedWorldCanon(rewritten.seed, rewritten.blueprint)).not.toHaveProperty('worldOverviewDetail');
+    expect(resolveStorySeedWorldCanon(rewritten.seed, rewritten.blueprint).societyStructureDetail).toBe(reviewed.blueprint.societyStructureDetail);
+    // Keeping it as it is, or editing it, reviews it against the new fact.
+    const kept = reviewWorldFactDetail(rewritten.blueprint, 'worldOverviewDetail', rewritten.blueprint.worldOverviewDetail!, MEGACITY);
+    expect(resolveStorySeedWorldCanon(rewritten.seed, kept).worldOverviewDetail).toBe(reviewed.blueprint.worldOverviewDetail);
+    const edited = reviewWorldFactDetail(rewritten.blueprint, 'worldOverviewDetail', 'Neon rain never stops.', MEGACITY);
+    expect(resolveStorySeedWorldCanon(rewritten.seed, edited).worldOverviewDetail).toBe('Neon rain never stops.');
+    // A detail with no recorded fact is never used.
+    const { worldOverviewDetailBasis: _basis, ...unbound } = reviewed.blueprint;
+    expect(resolveStorySeedWorldCanon(reviewed.seed, unbound)).not.toHaveProperty('worldOverviewDetail');
   });
 
   it('removes only sentences that restate the fact', () => {

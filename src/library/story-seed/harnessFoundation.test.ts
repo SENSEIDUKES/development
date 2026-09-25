@@ -67,9 +67,23 @@ describe('Story Seed handoff of world detail and generated cast', () => {
     expect(foundation.openingSituation).toBeUndefined();
   });
 
+  it('sends no detail for a fact the author rewrote after generation', () => {
+    const record = reviewedRecord();
+    const seed = structuredClone(record.seed);
+    seed.world.optional.worldIdentity.worldType = 'A drowned archipelago of rival sword clans';
+    const foundation = createHarnessFoundationFromStorySeed({ ...record, seed, blueprint: mirrorSeedIntoBlueprint(record.blueprint, seed) });
+    expect(foundation.worldFacts).toContain('World: A drowned archipelago of rival sword clans\nSociety:');
+    expect(foundation.worldFacts).not.toContain(WORLD_DETAIL);
+    expect(foundation.worldFacts).toContain(`Society: ${SOCIETY}\nSociety detail: ${SOCIETY_DETAIL}`);
+  });
+
   it('leaves a novel without details exactly as before', () => {
     const record = reviewedRecord();
-    const { worldOverviewDetail: _world, societyStructureDetail: _society, startingLocationDetail: _opening, ...older } = record.blueprint;
+    const {
+      worldOverviewDetail: _world, societyStructureDetail: _society, startingLocationDetail: _opening,
+      worldOverviewDetailBasis: _worldBasis, societyStructureDetailBasis: _societyBasis, startingLocationDetailBasis: _openingBasis,
+      ...older
+    } = record.blueprint;
     const foundation = createHarnessFoundationFromStorySeed({ ...record, blueprint: older });
     expect(foundation.worldFacts).toContain(`World: ${WORLD}\nSociety: ${SOCIETY}\n`);
     expect(foundation.worldFacts).not.toContain('detail');

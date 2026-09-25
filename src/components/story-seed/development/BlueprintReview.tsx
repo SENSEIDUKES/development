@@ -8,7 +8,7 @@ import {
   type SetStateAction,
 } from 'react';
 import { ArrowLeft, ArrowRight, Check, Copy, Download } from 'lucide-react';
-import { describeBlueprintArcRoadmapProblem, type WorldBlueprint, type WorldBlueprintMainCharacter, type WorldFactDetailField } from '@seihouse/sen/story-seed';
+import { describeBlueprintArcRoadmapProblem, reviewWorldFactDetail, type WorldBlueprint, type WorldBlueprintMainCharacter, type WorldFactDetailField } from '@seihouse/sen/story-seed';
 import { STORY_TAG_LIMIT, type StorySeedInput, type StorySeedStoryRequired, type StorySeedWorldIdentity } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore } from '../../../library/story-seed/runtime';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
@@ -146,14 +146,21 @@ export const BlueprintReview = ({
     setBlueprint(current => ({ ...current, powerSystemOutline }));
   }, [setBlueprint]);
 
-  const updateWorldFactDetail = useCallback((field: WorldFactDetailField, value: string) => {
-    setBlueprint(current => ({ ...current, [field]: value }));
+  const updateWorldFactDetail = useCallback((field: WorldFactDetailField, value: string, fact: string) => {
+    setBlueprint(current => reviewWorldFactDetail(current, field, value, fact));
   }, [setBlueprint]);
   const worldFactDetails = useMemo(() => ({
     worldOverviewDetail: blueprint.worldOverviewDetail,
+    worldOverviewDetailBasis: blueprint.worldOverviewDetailBasis,
     startingLocationDetail: blueprint.startingLocationDetail,
+    startingLocationDetailBasis: blueprint.startingLocationDetailBasis,
     societyStructureDetail: blueprint.societyStructureDetail,
-  }), [blueprint.worldOverviewDetail, blueprint.startingLocationDetail, blueprint.societyStructureDetail]);
+    societyStructureDetailBasis: blueprint.societyStructureDetailBasis,
+  }), [
+    blueprint.worldOverviewDetail, blueprint.worldOverviewDetailBasis,
+    blueprint.startingLocationDetail, blueprint.startingLocationDetailBasis,
+    blueprint.societyStructureDetail, blueprint.societyStructureDetailBasis,
+  ]);
 
   const handleCopyBlueprint = useCallback(async () => {
     const { blueprint: currentBlueprint, origin: currentOrigin, mainCharacter: currentMainCharacter } = copyPayloadRef.current;

@@ -1,11 +1,15 @@
 import { type StorySeedStoryRequired } from '@seihouse/sen/story-seed';
 import { type WorldBlueprint, type WorldBlueprintMainCharacter } from '@seihouse/sen/story-seed';
-import { getStoryStyleLabel } from '@seihouse/sen/story-seed';
+import { getStoryStyleLabel, worldFactDetailIsCurrent, type WorldFactDetailField } from '@seihouse/sen/story-seed';
 
 export const formatBlueprintDate = (value: string): string => {
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString();
 };
+
+/** A detail line, written only while the detail belongs to its fact as that fact reads now. */
+const factDetailLine = (blueprint: WorldBlueprint, detail: WorldFactDetailField, fact: string | undefined, label: string): string =>
+  worldFactDetailIsCurrent(blueprint, detail, fact) && blueprint[detail] ? `\n**${label}:** ${blueprint[detail]}\n` : '';
 
 const markdownList = (items: string[]): string => {
   const cleanItems = items.map(item => item.trim()).filter(Boolean);
@@ -64,13 +68,13 @@ ${mainCharacter.backgroundProfile}
 
 ### World Overview
 ${blueprint.worldOverview || ''}
-${blueprint.worldOverview?.trim() && blueprint.worldOverviewDetail ? `\n**World Detail:** ${blueprint.worldOverviewDetail}\n` : ''}
+${factDetailLine(blueprint, 'worldOverviewDetail', blueprint.worldOverview, 'World Detail')}
 ### Opening Location
 ${blueprint.startingLocation || ''}
-${blueprint.startingLocation?.trim() && blueprint.startingLocationDetail ? `\n**Opening Location Detail:** ${blueprint.startingLocationDetail}\n` : ''}
+${factDetailLine(blueprint, 'startingLocationDetail', blueprint.startingLocation, 'Opening Location Detail')}
 ### World Order
 ${blueprint.societyStructure || ''}
-${blueprint.societyStructure?.trim() && blueprint.societyStructureDetail ? `\n**World Order Detail:** ${blueprint.societyStructureDetail}\n` : ''}
+${factDetailLine(blueprint, 'societyStructureDetail', blueprint.societyStructure, 'World Order Detail')}
 ### Power System Outline
 ${blueprint.powerSystemOutline || ''}
 

@@ -715,8 +715,8 @@ export const normalizeWorldBlueprint = (
     startingLocation: text(seedIdentity.startingLocation) || read('startingLocation', fallback.startingLocation),
     societyStructure: text(seedIdentity.societyStructure) || read('societyStructure', fallback.societyStructure),
     // An explicit empty string is the author clearing a detail, kept like any edit.
-    ...Object.fromEntries(WORLD_FACT_DETAILS.flatMap(({ detail }) =>
-      hasString(source, detail) ? [[detail, read(detail)]] : [])),
+    ...Object.fromEntries(WORLD_FACT_DETAILS.flatMap(({ detail, basis }) =>
+      [detail, basis].flatMap(key => hasString(source, key) ? [[key, read(key)]] : []))),
     powerSystemOutline: read('powerSystemOutline', fallback.powerSystemOutline),
     mainCharacter,
     mcProfile: mainCharacter.backgroundProfile,
@@ -804,6 +804,7 @@ const factionBlueprintEntry = (faction: StorySeedFaction): string => {
   return details.length > 0 ? `${faction.name} — ${details.join('; ')}` : faction.name;
 };
 
+/** A text's words for comparison, ignoring case, spacing, and punctuation. */
 const comparableWords = (value: string): string[] =>
   value.toLocaleLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
 
@@ -844,6 +845,7 @@ const newBlueprintEntries = (generated: string[], knownNames: readonly string[])
   });
 };
 
+/** The author's entries as written, then each generated entry that adds a new entity. */
 const mergeAuthoritativeEntries = <T extends { name: string; aliases?: string[] }>(
   generated: string[],
   authored: T[],
@@ -859,24 +861,55 @@ const mergeAuthoritativeEntries = <T extends { name: string; aliases?: string[] 
 
 /**
  * The author-owned world facts a Blueprint may add detail to: the Seed field
- * holding the author's wording, the Blueprint field that mirrors it, and the
- * Blueprint-owned field for the model's compatible added detail.
+ * holding the author's wording, the Blueprint field that mirrors it, the
+ * Blueprint-owned field for the model's compatible added detail, and the fact
+ * as it read when that detail was generated or last reviewed.
  */
 export const WORLD_FACT_DETAILS = [
-  { fact: 'worldType', field: 'worldOverview', detail: 'worldOverviewDetail' },
-  { fact: 'startingLocation', field: 'startingLocation', detail: 'startingLocationDetail' },
-  { fact: 'societyStructure', field: 'societyStructure', detail: 'societyStructureDetail' },
+  { fact: 'worldType', field: 'worldOverview', detail: 'worldOverviewDetail', basis: 'worldOverviewDetailBasis' },
+  { fact: 'startingLocation', field: 'startingLocation', detail: 'startingLocationDetail', basis: 'startingLocationDetailBasis' },
+  { fact: 'societyStructure', field: 'societyStructure', detail: 'societyStructureDetail', basis: 'societyStructureDetailBasis' },
 ] as const satisfies ReadonlyArray<{
   fact: keyof StorySeedWorldIdentity;
   field: keyof WorldBlueprint;
   detail: keyof WorldBlueprint;
+  basis: keyof WorldBlueprint;
 }>;
 
 export type WorldFactDetailField = typeof WORLD_FACT_DETAILS[number]['detail'];
+export type WorldFactDetailBasisField = typeof WORLD_FACT_DETAILS[number]['basis'];
+
+/** The `WORLD_FACT_DETAILS` entry for one detail field. */
+const worldFactDetailEntry = (detail: WorldFactDetailField) =>
+  WORLD_FACT_DETAILS.find(entry => entry.detail === detail)!;
+
+/**
+ * Whether a detail was generated or last reviewed against the author's fact as
+ * it reads now; case, spacing, and punctuation aside. A detail written for an
+ * earlier or cleared version of the fact is kept but not used.
+ */
+export const worldFactDetailIsCurrent = (
+  blueprint: Partial<Pick<WorldBlueprint, WorldFactDetailBasisField>> | undefined,
+  detail: WorldFactDetailField,
+  fact: string | undefined,
+): boolean => {
+  const factWords = comparableWords(fact ?? '');
+  const basis = blueprint?.[worldFactDetailEntry(detail).basis];
+  return factWords.length > 0 && factWords.join(' ') === comparableWords(basis ?? '').join(' ');
+};
+
+/** The author's edit to a detail, which also reviews it against the fact it sits under. */
+export const reviewWorldFactDetail = (
+  blueprint: WorldBlueprint,
+  detail: WorldFactDetailField,
+  value: string,
+  fact: string,
+): WorldBlueprint => ({ ...blueprint, [detail]: value, [worldFactDetailEntry(detail).basis]: fact.trim() });
 
 /** Lead-in words a restated fact may carry: "This is …", "The society here is a …". */
 const RESTATEMENT_LEAD_WORDS = 5;
 
+/** Whether a sentence only restates the author's fact, adding nothing to it. */
 const restatesFact = (sentence: string, factWords: string[]): boolean => {
   const words = comparableWords(sentence);
   if (!words.length) return true;
@@ -1094,11 +1127,13 @@ export const resolveStorySeedWorldCanon = (
   });
   const worldOverview = text(worldIdentity.worldType);
   const societyStructure = text(worldIdentity.societyStructure);
-  // A detail only travels beside its fact: a fact the author cleared sends
-  // no detail, though the Blueprint keeps it in case the fact returns.
+  // A detail only travels beside the fact it was written or last reviewed
+  // for: a cleared or rewritten fact sends none, though the Blueprint keeps it.
   const factDetails = Object.fromEntries(WORLD_FACT_DETAILS.flatMap(entry => {
     const fact = text(worldIdentity[entry.fact]);
-    const detail = fact ? detailBeyondAuthoredFact(fact, blueprint?.[entry.detail]) : undefined;
+    const detail = worldFactDetailIsCurrent(blueprint, entry.detail, fact)
+      ? detailBeyondAuthoredFact(fact, blueprint?.[entry.detail])
+      : undefined;
     return detail ? [[entry.detail, detail]] : [];
   })) as Pick<StorySeedWorldCanon, WorldFactDetailField>;
   const powerSystem = text(withAuthoritativeDetails(
@@ -1132,7 +1167,7 @@ export const finalizeGeneratedWorldBlueprint = (
   const storySeed = normalizeStorySeedInput(seed);
   // Details are derived below from the author's facts, never taken as sent.
   const modelOutput = Object.fromEntries(Object.entries(isRecord(value) ? value : {})
-    .filter(([key]) => !WORLD_FACT_DETAILS.some(entry => entry.detail === key)));
+    .filter(([key]) => !WORLD_FACT_DETAILS.some(entry => entry.detail === key || entry.basis === key)));
   const generated = normalizeWorldBlueprint(modelOutput, storySeed, {
     preserveSourceMetadata: false,
   });
@@ -1144,12 +1179,13 @@ export const finalizeGeneratedWorldBlueprint = (
   const backgroundProfile = generatedMainCharacter.backgroundProfile;
   const mainCharacterName = text(mainCharacter.name) || text(generatedMainCharacter.name);
   // Where the author wrote a world fact, the model was asked for compatible
-  // detail in that field instead; the author's wording stays the fact.
-  const worldFactDetails = Object.fromEntries(WORLD_FACT_DETAILS.flatMap(({ fact, field, detail }) => {
+  // detail in that field instead; the author's wording stays the fact, and
+  // the detail is bound to that wording.
+  const worldFactDetails = Object.fromEntries(WORLD_FACT_DETAILS.flatMap(({ fact, field, detail, basis }) => {
     const authored = text(worldIdentity[fact]);
     const added = authored ? detailBeyondAuthoredFact(authored, text(modelOutput[field])) : undefined;
-    return added ? [[detail, added]] : [];
-  })) as Pick<WorldBlueprint, WorldFactDetailField>;
+    return added ? [[detail, added], [basis, authored]] : [];
+  })) as Pick<WorldBlueprint, WorldFactDetailField | WorldFactDetailBasisField>;
 
   return {
     ...generated,

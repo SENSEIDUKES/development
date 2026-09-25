@@ -61,6 +61,14 @@ export interface WorldBlueprint {
   worldOverviewDetail?: string;
   startingLocationDetail?: string;
   societyStructureDetail?: string;
+  /**
+   * The author's fact as it read when each detail above was generated or last
+   * reviewed. A detail is used only while its fact still reads the same, so
+   * one written for an earlier or different fact never travels beside it.
+   */
+  worldOverviewDetailBasis?: string;
+  startingLocationDetailBasis?: string;
+  societyStructureDetailBasis?: string;
   powerSystemOutline: string;
   /** Structured fields added without removing the legacy combined profile. */
   mainCharacter?: WorldBlueprintMainCharacter;

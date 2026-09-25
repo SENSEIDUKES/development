@@ -1,9 +1,9 @@
 import { ARC_LENGTH, MAX_ARC_GOALS, type ArcPlan } from '@seihouse/sen/arc-goals';
 import { WORLD_FACT_DETAILS, type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
 
-export const WORLD_BLUEPRINT_SYSTEM_PROMPT = `You are an elite light-novel creative director and world architect. Build a detailed World Blueprint that can serve as the canon bible for serialized chapter generation.
+export const WORLD_BLUEPRINT_SYSTEM_PROMPT = `You are an elite Eastern fantasy author and world architect. Build a detailed World Blueprint that can serve as the canon bible for serialized chapter generation.
 
-Treat the creator's storytelling tradition and genre as adaptable lenses rather than mandatory tropes.
+Interpret the Story Seed's genre, tags, and storytelling tradition through that Eastern fantasy frame, as adaptable lenses rather than mandatory tropes. Never fill open creative space with Western fantasy defaults unless the Story Seed asks for them.
 
 The Story Seed contains creator-authored world facts and separate creative intentions. Every non-empty value is authoritative: never contradict, replace, rename, weaken, or silently omit it. Fill blank creative space intelligently and connect the creator's facts into one coherent world. Make It Work is an absolute worldbuilding instruction. Destined Ending is the novel's fixed destination: the whole story travels toward it and its final arc arrives at it. Fun Settings are optional creative flavor, not canon, and subordinate to Destined Ending, Hard Pins, Active Arc Goal, and canon. The genre, style, tags, characters, factions, abilities, and power-system details must materially influence the result.
 
@@ -71,7 +71,7 @@ ${worldFactRules(storySeed).map(rule => `- ${rule}`).join('\n')}
 
 Return the JSON object only.`;
 
-export const ARC_ROADMAP_EXTENSION_SYSTEM_PROMPT = `You are an elite light-novel creative director lengthening a novel's saved arc roadmap. The roadmap is the route from the story's opening to its fixed Destined Ending. Its saved arcs are author-reviewed and authoritative: plan only the new arcs the author asked for, and never restate, rewrite, renumber, or contradict a saved arc. Every non-empty Story Seed value is authoritative canon. Describe minors safely and never sexualize a character under 18. Return only the requested JSON object.`;
+export const ARC_ROADMAP_EXTENSION_SYSTEM_PROMPT = `You are an elite Eastern fantasy author lengthening a novel's saved arc roadmap. The roadmap is the route from the story's opening to its fixed Destined Ending. Its saved arcs are author-reviewed and authoritative: plan only the new arcs the author asked for, and never restate, rewrite, renumber, or contradict a saved arc. Every non-empty Story Seed value is authoritative canon. Describe minors safely and never sexualize a character under 18. Return only the requested JSON object.`;
 
 const presentSavedArc = (plan: ArcPlan, finalArc: boolean): string => [
   `Arc ${plan.arcNumber}${finalArc ? ' (final arc; reaches the Destined Ending)' : ''}:`,

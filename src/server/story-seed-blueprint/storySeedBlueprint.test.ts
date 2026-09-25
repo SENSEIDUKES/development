@@ -430,6 +430,7 @@ describe("Blueprint arc count and added arcs", () => {
     expect(added.map(plan => plan.arcNumber)).toEqual([3, 4]);
     expect(added[0].goals.map(goal => goal.id)).toEqual(["arc-3-oath-2", "arc-3-siege"]);
     const request = provider.requests[0];
+    expect(request.systemInstruction.startsWith("You are an elite Eastern fantasy author lengthening a novel's saved arc roadmap.")).toBe(true);
     expect(request.systemInstruction).toContain("plan only the new arcs the author asked for, and never restate, rewrite, renumber, or contradict a saved arc");
     expect(request.userPrompt).toContain("from 3 to 5 arcs. Plan only the 2 new arcs.");
     expect(request.userPrompt).toContain("between Arc 2 and the final arc");
@@ -497,7 +498,11 @@ describe("Cleaned-up Blueprint instructions", () => {
       "Preserve author Hard Pins exactly", "Fate Survival is optional", "Return only the requested JSON object",
       "You are fluent in", "Wuxia, Xianxia, Xuanhuan",
     ]) expect(both).not.toContain(removed);
-    expect(systemInstruction).toContain("Treat the creator's storytelling tradition and genre as adaptable lenses rather than mandatory tropes.");
+    // The anchor is who the model is, not a genre list: an Eastern fantasy author
+    // who reads whatever genre and tags the creator chose through that frame.
+    expect(systemInstruction.startsWith("You are an elite Eastern fantasy author and world architect.")).toBe(true);
+    expect(systemInstruction).toContain("Interpret the Story Seed's genre, tags, and storytelling tradition through that Eastern fantasy frame, as adaptable lenses rather than mandatory tropes. Never fill open creative space with Western fantasy defaults unless the Story Seed asks for them.");
+    for (const genreList of ["Wuxia", "Xuanhuan", "LitRPG", "tower climbing", "cultivation realms"]) expect(systemInstruction).not.toContain(genreList);
     expect(userPrompt).toContain("- Generate a strong logline.\n");
     expect(userPrompt).toContain("Begin every entry with its name: Name (role) — description.");
     expect(userPrompt).toContain("- mcProfile repeats mainCharacter.backgroundProfile exactly.");

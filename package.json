@@ -44,7 +44,7 @@
     "test:economy": "vitest run src/server/economy",
     "test:reader-translation": "vitest run src/server/reader-translation",
     "test:public-generation-guard": "vitest run src/server/shared",
-    "test:workshop": "vitest run src/workshop/FeatureWorkspace.test.tsx src/workshop/WorkshopHome.test.tsx",
+    "test:workshop": "vitest run src/workshop/FeatureWorkspace.test.tsx src/workshop/WorkshopHome.test.tsx src/workshop/docs",
     "verify": "npm run typecheck && npm test && npm run check:ownership && npm run check:package-boundaries && npm run test:package"
   },
   "dependencies": {

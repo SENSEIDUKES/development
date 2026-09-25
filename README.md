@@ -69,20 +69,22 @@ Open the local or forwarded Vite preview, usually on port `5173`.
 
 The home screen is driven by [`src/workshop/manifest.ts`](./src/workshop/manifest.ts). Each approved experiment should have its own preview and a clear entry in that manifest.
 
-As of 2026-09-22, the header has exactly four sections — where work happens, not who owns it:
+As of 2026-09-25, the header has five preview sections and a Docs tab — navigation, not package ownership:
 
-- **Pages** — subsections Home (Light Novels Home, Library Shell), Create (Story Seed), Read (Reader Chamber, Reader Codex), Account (User Profile / Cultivator Cave, Daily Dao Pillar), and Commerce (Celestial Store).
-- **Customization** — Familiar, Relics Gallery, and Closed-Door Cultivation.
-- **Systems** — Harness Generation, Chapter Generation Manifestation, Character Voice, Energy, and the live Provenance panel.
+- **Pages** — subsections Home (Light Novels Home, Library Shell), Create (Story Seed), Read (Reader Chamber, Reader Codex), Account (User Profile / Cultivator Cave), and Commerce (Celestial Store).
+- **Rewards** — Reward Loop, Achievements, Fate Survival Relics, Familiar Training, Daily Dao Pillar, and Closed-Door Cultivation.
+- **Customization** — Familiar.
+- **Systems** — Harness Generation, Chapter Generation Manifestation, Character Voice, Provenance, and Energy.
 - **Components** — Motion Picture, Celestial Particle Backdrop, Card Workshop, and the live Library Components and Icons inventories.
+- **Docs** — [the shared product-term reference](./src/workshop/docs/README.md) at `?tab=docs`: grouped topic navigation, search, and one current explanation per term. Topic pages are scaffolded; definitions are intentionally unfilled for now.
 
 Each manifest entry declares:
 
 - `section` (and optional `group`) — Workshop navigation only.
 - `owner` — the package lane that actually owns it (`sen`, `library`, `library-ui`, `workshop`, or `deferred`), shown as a badge on every card and inline panel. It is written explicitly, never inferred from file paths, and must agree with `scripts/ownershipInventory.mjs`; changing a badge never moves code between packages.
-- `status` — `active`, `legacy`, or `archived`. Archived entries leave the four sections and appear only under the **Archive** control below them, but keep their implementation and direct `?preview=<id>` URL. Optional `replacedBy` and `archiveNote` explain why. Today only the old Chapter Generation (`chapter-generation-flow`) is archived, superseded by Harness Generation.
+- `status` — `active`, `legacy`, or `archived`. Archived entries leave the preview sections and appear only under the **Archive** control below them, but keep their implementation and direct `?preview=<id>` URL. Optional `replacedBy` and `archiveNote` explain why. The old Chapter Generation (`chapter-generation-flow`) and Model Router page are archived. The Archive is not shown in Docs.
 
-The inline Library Components, Icons, and Provenance inventories are listed in `workshopPanels` with the same `section` and `owner` metadata. Canonical implementations and direct `?preview=<id>` URLs stay in place. The header wraps on narrow screens and supports Left/Right arrows, Home/End, and Tab into the labelled active panel; the Archive control is a standard disclosure button.
+The inline Library Components and Icons inventories are listed in `workshopPanels` with the same `section` and `owner` metadata. Canonical implementations and direct `?preview=<id>` URLs stay in place. The header scrolls horizontally on phones and supports Left/Right arrows, Home/End, and Tab into the labelled active panel; the Archive control is a standard disclosure button. Docs is Workshop tooling, not a feature preview or a published package entry.
 
 Current entries:
 

@@ -165,7 +165,7 @@ export function HarnessReaderSession({ state, storyId, onClose, controller, inst
         arcTitle={story.title} onBack={onClose} onSwitchTab={tab => { if (tab === 'codex') setCodexOpen(true); }}
         activeStory={activeStory} updateStoryFields={updateStoryFields} installedSkills={installedSkills} />
       <CodexSheetOverlay isOpen={codexOpen} onClose={() => setCodexOpen(false)} activeStory={activeStory}
-        onEditArcPlan={plan => controller.editArcGoals(storyId, plan)} generatedThrough={state.stories.find(item => item.id === storyId)!.head.nextChapterNumber - 1}
+        generatedThrough={state.stories.find(item => item.id === storyId)!.head.nextChapterNumber - 1}
         onUpdateMemory={memory => { void updateStoryFields(storyId, { memory }).catch(() => undefined); }} updateStoryFields={updateStoryFields}
         onJumpToChapter={number => { setSelectedChapter(number); setCodexOpen(false); }} />
     </main>

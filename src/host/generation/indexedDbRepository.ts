@@ -1,4 +1,4 @@
-import { createEmptyHarnessWorkspaceState, isCurrentHarnessWorkspaceState, readHarnessWorkspaceState, HARNESS_GENERATION_SCHEMA_VERSION, type HarnessWorkspaceState, type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
+import { createEmptyHarnessWorkspaceState, isCurrentHarnessWorkspaceState, migrateHarnessWorkspaceState, readHarnessWorkspaceState, HARNESS_GENERATION_SCHEMA_VERSION, type HarnessWorkspaceState, type HarnessGenerationRepository } from '@seihouse/sen/harness-generation';
 const cloneHarnessValue = <T,>(value: T): T => structuredClone(value);
 export const HARNESS_GENERATION_INDEXED_DB_NAME = 'seihouse-harness-generation-v1';
 const STORE_NAME = 'workspace';
@@ -8,7 +8,8 @@ export const PRESERVED_WORKSPACE_PREFIX = 'preserved:';
 /** An untouched copy of a workspace this build could not read, kept instead of discarded. */
 export interface PreservedHarnessWorkspace {
   preservedAt: string;
-  reason: 'schema-version' | 'unreadable';
+  /** `migrated`: the copy taken before an earlier version was upgraded in place. */
+  reason: 'schema-version' | 'unreadable' | 'migrated';
   schemaVersion: number | null;
   workspace: unknown;
 }
@@ -28,8 +29,10 @@ const countOf = (value: unknown, field: string) => {
 };
 
 /**
- * Decides what a load must write. Stored data the current schema cannot read
- * is reset for this build, but only together with a preserved copy of it.
+ * Decides what a load must write. Storage from an earlier version with an
+ * explicit migration is upgraded with its stories kept, after an untouched copy
+ * of the original is preserved. Stored data the current schema cannot read or
+ * migrate is reset for this build, but only together with a preserved copy.
  */
 export function planHarnessWorkspaceLoad(stored: unknown, now: () => string = () => new Date().toISOString()): {
   state: HarnessWorkspaceState;
@@ -40,6 +43,16 @@ export function planHarnessWorkspaceLoad(stored: unknown, now: () => string = ()
   const version = (stored as { schemaVersion?: unknown } | null)?.schemaVersion;
   const schemaVersion = typeof version === 'number' ? version : null;
   const preservedAt = now();
+  const migrated = migrateHarnessWorkspaceState(stored);
+  if (migrated) {
+    return {
+      state: migrated,
+      preserve: {
+        key: `${PRESERVED_WORKSPACE_PREFIX}v${schemaVersion}:${preservedAt}`,
+        record: { preservedAt, reason: 'migrated', schemaVersion, workspace: stored },
+      },
+    };
+  }
   return {
     state: createEmptyHarnessWorkspaceState(),
     preserve: {

@@ -15,20 +15,26 @@ import { buildHarnessGenerationPrompt } from '../../../server/harness-generation
 import { OFFICIAL_STYLE_REFERENCES } from './officialCapaSkills';
 
 describe('Story Seed to Harness handoff', () => {
-  it('rejects multi-goal or later-arc Blueprint fallbacks instead of invoking a broader planner', () => {
+  it('hands over the complete reviewed roadmap and arc count, and only Arc 1 from a pre-roadmap Blueprint', () => {
     const record = createMockStorySeedRecord();
-    delete record.seed.story.optional.activeArcGoal;
-    for (const plan of [
-      { arcNumber: 2, goals: [{ id: 'arc-2-gate', text: 'Reach the gate.', chapters: 100 }] },
-      { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the gate.', chapters: 50 }, { id: 'arc-1-city', text: 'Reach the city.', chapters: 50 }] },
-    ]) {
-      record.blueprint!.arcPlan = plan;
-      expect(() => createHarnessFoundationFromStorySeed(record)).toThrow('exactly one initial Active Arc Goal in Arc 1');
-    }
+    const foundation = createHarnessFoundationFromStorySeed(record);
+    expect(foundation.plannedArcCount).toBe(3);
+    expect(foundation.arcRoadmap).toEqual(record.blueprint!.arcPlans);
+    expect(foundation.arcRoadmap?.[0].goals[0].text).toBe(record.seed.story.optional.activeArcGoal!.text);
+    expect(foundation).not.toHaveProperty('initialArcPlan');
+    // A Blueprint saved before roadmaps (one Arc 1 plan of a longer story) still starts a story.
+    const legacy = createMockStorySeedRecord();
+    delete legacy.seed.story.optional.activeArcGoal;
+    legacy.blueprint = { ...legacy.blueprint!, arcPlans: legacy.blueprint!.arcPlans!.slice(0, 1), estimatedArcs: 12 };
+    const legacyFoundation = createHarnessFoundationFromStorySeed(legacy);
+    expect(legacyFoundation.arcRoadmap).toBeUndefined();
+    expect(legacyFoundation.plannedArcCount).toBeUndefined();
+    expect(legacyFoundation.initialArcPlan).toEqual(legacy.blueprint.arcPlans![0]);
   });
 
   it('routes Arc inputs once and freezes the original pins and active goal across reload, retry, and replay', async () => {
     const record = createMockStorySeedRecord();
+    record.seed.story.optional.fateSurvival.enabled = false;
     record.seed.story.optional.hardPins = [{ text: 'PIN_KEEP_MASTER' }, { text: 'PIN_KEEP_TEMPLE' }, { text: 'PIN_KEEP_VOW' }];
     record.seed.story.optional.activeArcGoal = { id: 'arc-1-gate', text: 'GOAL_OPEN_GATE', chapters: 100 };
     record.seed.story.optional.funSettings = { faceSlap: 'high', plotArmor: 'low', recognition: 'medium' };
@@ -62,7 +68,7 @@ describe('Story Seed to Harness handoff', () => {
       expect(prompt.systemInstruction).not.toContain(marker);
     }
     expect(prompt.userPrompt).not.toMatch(/REMOVED_|arcGoals|"plan"/);
-    expect(requests[0].storyInformation.arc).toMatchObject({ activeGoal: { text: 'GOAL_OPEN_GATE' }, completionDeadline: 100 });
+    expect(requests[0].storyInformation.arc).toMatchObject({ activeGoal: { text: 'GOAL_OPEN_GATE' }, completionDeadline: 30, plannedArcCount: 3, finalArc: false });
     expect(requests[0].storyInformation.currentStory.funSettings).toEqual(record.seed.story.optional.funSettings);
     expect(JSON.stringify(requests[0].storyInformation.canonicalState)).not.toMatch(/PIN_|GOAL_|funSettings/);
     expect(requests[0].storyInformation.currentStory.intendedDirection).toBeUndefined();

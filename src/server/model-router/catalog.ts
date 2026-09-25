@@ -247,6 +247,7 @@ export const GENERATION_CONSUMERS: readonly GenerationConsumer[] = [
   { name: 'Harness Generation', capability: 'chapters', entry: 'src/server/harness-generation/execute.ts', modelChoice: 'router' },
   { name: 'Chapter Generation', capability: 'chapters', entry: 'src/server/chapter-generation/execute.ts', modelChoice: 'router' },
   { name: 'Story Seed Blueprint', capability: 'chapters', entry: 'src/server/story-seed-blueprint/http.ts', modelChoice: 'server-default' },
+  { name: 'Blueprint Add Arcs', capability: 'chapters', entry: 'src/server/story-seed-blueprint/http.ts', modelChoice: 'server-default' },
   { name: 'Reader Translation', capability: 'chapters', entry: 'src/server/reader-translation/http.ts', modelChoice: 'server-default' },
   { name: 'Codex Voice Quote', capability: 'tts', entry: 'src/server/audio/codexVoiceQuote.ts', modelChoice: 'server-default' },
 ];

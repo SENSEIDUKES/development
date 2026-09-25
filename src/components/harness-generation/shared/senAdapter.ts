@@ -1,6 +1,6 @@
 import { createArcChapterPosition } from '../../arc-goals/shared/arcGoals';
 import { applyHarnessReaderChanges } from './readerEdits';
-import { harnessArcContext } from './arcState';
+import { harnessArcContext, harnessArcPlan } from './arcState';
 import type { Character, StoryBlock, StoryMemory, StoryWorld } from '../../../narrative/story';
 import { buildCanonicalStoryView } from './canonicalState';
 import { cloneHarnessValue, stableHarnessId } from './ids';
@@ -200,7 +200,9 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
     // Permanent story identity: every committed chapter above is canon in it.
     originalLanguage: story.originalLanguage,
     customPremise: foundation?.input.premise ?? '', createdAt: story.createdAt, updatedAt: story.updatedAt,
-    memory, arcs: Array.from(new Set([...readerChapters.map(chapter => createArcChapterPosition(chapter.number).arcNumber), ...((story.arcPlans?.at(-1)?.plan && !historical) ? [story.arcPlans.at(-1)!.plan.arcNumber] : [])])).map(arcNumber => {
+    // Chapters' arcs plus the arc the next chapter opens, when it has a saved plan.
+    // A roadmap's later arcs stay out of the Reader until they begin.
+    memory, arcs: Array.from(new Set([...readerChapters.map(chapter => createArcChapterPosition(chapter.number).arcNumber), ...((!historical && harnessArcPlan(story, createArcChapterPosition(story.head.nextChapterNumber).arcNumber)) ? [createArcChapterPosition(story.head.nextChapterNumber).arcNumber] : [])])).sort((left, right) => left - right).map(arcNumber => {
       const arcChapters = readerChapters.filter(chapter => createArcChapterPosition(chapter.number).arcNumber === arcNumber);
       const position = historical ? Math.min(throughChapter, arcChapters.at(-1)?.number ?? throughChapter) : story.head.nextChapterNumber;
       const goalContext = harnessArcContext(story, foundation?.input ?? { premise: '' }, position);

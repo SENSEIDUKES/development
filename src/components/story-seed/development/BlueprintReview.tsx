@@ -8,7 +8,7 @@ import {
   type SetStateAction,
 } from 'react';
 import { ArrowLeft, ArrowRight, Check, Copy, Download } from 'lucide-react';
-import { type WorldBlueprint, type WorldBlueprintMainCharacter } from '@seihouse/sen/story-seed';
+import { describeBlueprintArcRoadmapProblem, type WorldBlueprint, type WorldBlueprintMainCharacter } from '@seihouse/sen/story-seed';
 import { STORY_TAG_LIMIT, type StorySeedInput, type StorySeedStoryRequired, type StorySeedWorldIdentity } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore } from '../../../library/story-seed/runtime';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel, CreationButton as ManifestButton } from '@seihouse/sen/presentation';
@@ -23,6 +23,7 @@ import {
   BlueprintWorldSettingSection,
 } from './blueprint/BlueprintReviewSections';
 import { ArcWorkspace } from './workspaces/ArcWorkspace';
+import { BlueprintArcRoadmapSection, type BlueprintArcAction } from './blueprint/BlueprintArcRoadmapSection';
 import { createBlueprintMarkdown } from './blueprint/createBlueprintMarkdown';
 import { SEN_LANGUAGES, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
 
@@ -35,6 +36,10 @@ interface BlueprintReviewProps {
   onStartStory: () => void;
   onExportSeed: () => void;
   isGenerating: boolean;
+  /** Replaces the whole Blueprint with a fresh one planned at the chosen arc count. */
+  onRegenerateBlueprint?: (arcCount: number) => Promise<void>;
+  /** Plans only the arcs being added, inserted before the final arc. Absent when the host cannot. */
+  onAddArcs?: (arcCount: number) => Promise<void>;
   /** Permanent story identity, chosen before the story is manifested. */
   originalLanguage: SenLanguageCode;
   onOriginalLanguageChange: (language: SenLanguageCode) => void;
@@ -49,6 +54,8 @@ export const BlueprintReview = ({
   onStartStory,
   onExportSeed,
   isGenerating,
+  onRegenerateBlueprint,
+  onAddArcs,
   originalLanguage,
   onOriginalLanguageChange,
 }: BlueprintReviewProps) => {
@@ -75,6 +82,22 @@ export const BlueprintReview = ({
     backgroundProfile: blueprint.mainCharacter?.backgroundProfile || blueprint.mcProfile || '',
   }), [blueprint.mainCharacter, blueprint.mcProfile]);
   const copyPayloadRef = useRef({ blueprint, origin, mainCharacter });
+  const roadmapProblem = describeBlueprintArcRoadmapProblem(blueprint);
+  // The arc action in progress owns the busy state, so the Manifest button
+  // never claims to be manifesting while arcs are being planned.
+  const [arcAction, setArcAction] = useState<BlueprintArcAction | null>(null);
+  const runArcAction = useCallback(async (action: BlueprintArcAction, arcCount: number) => {
+    const handler = action === 'add' ? onAddArcs : onRegenerateBlueprint;
+    if (!handler) return;
+    setArcAction(action);
+    try {
+      await handler(arcCount);
+    } finally {
+      if (isMountedRef.current) setArcAction(null);
+    }
+  }, [onAddArcs, onRegenerateBlueprint]);
+  const addArcs = useCallback((arcCount: number) => runArcAction('add', arcCount), [runArcAction]);
+  const regenerate = useCallback((arcCount: number) => runArcAction('regenerate', arcCount), [runArcAction]);
 
   useEffect(() => {
     copyPayloadRef.current = { blueprint, origin, mainCharacter };
@@ -213,11 +236,22 @@ export const BlueprintReview = ({
           onPowerSystemOutlineChange={updatePowerSystemOutline}
         />
 
-        <ArcWorkspace seed={seed} updateSeed={updateSeed} />
+        <ArcWorkspace seed={seed} updateSeed={updateSeed} showActiveArcGoal={false} />
 
-        {!seed.story.optional.activeArcGoal && <p className="text-sm text-neutral-300">Add an Active Arc Goal, or refine the seed and generate a Blueprint suggestion, before beginning the story.</p>}
+        <BlueprintArcRoadmapSection
+          arcPlans={blueprint.arcPlans}
+          estimatedArcs={blueprint.estimatedArcs}
+          destinedEnding={seed.world.optional.worldFoundations.destinedEnding}
+          problem={roadmapProblem}
+          setBlueprint={setBlueprint}
+          updateSeed={updateSeed}
+          arcAction={arcAction}
+          generating={isGenerating}
+          onAddArcs={onAddArcs ? addArcs : undefined}
+          onRegenerate={onRegenerateBlueprint ? regenerate : undefined}
+        />
 
-        <BlueprintNotesSection styleBible={blueprint.styleBible} estimatedArcs={blueprint.estimatedArcs} setBlueprint={setBlueprint} />
+        <BlueprintNotesSection styleBible={blueprint.styleBible} setBlueprint={setBlueprint} />
 
         <BlueprintCollectionSections
           seed={seed}
@@ -274,14 +308,14 @@ export const BlueprintReview = ({
                 icon={SENManifestingIcon}
                 className="sm:w-auto"
                 onClick={onStartStory}
-                disabled={!seed.story.optional.activeArcGoal}
-                loading={isGenerating}
+                disabled={Boolean(roadmapProblem) || Boolean(arcAction)}
+                loading={isGenerating && !arcAction}
                 loadingIndicator={activeAgentId === 'versa' ? (
                   <img src={runtime.authorMarkUrl} className="size-5 animate-pulse object-contain" alt="" aria-hidden="true" />
                 ) : undefined}
                 iconRight={!isGenerating ? <ArrowRight size={16} /> : undefined}
               >
-                {isGenerating
+                {isGenerating && !arcAction
                   ? (activeAgentId === 'versa' ? 'VERSA is writing...' : 'Manifesting...')
                   : 'Manifest Story'}
               </ManifestButton>

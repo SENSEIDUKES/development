@@ -118,12 +118,20 @@ describe('HARNESS canonical arc integration', () => {
     expect(run.repository.snapshot().stories[0].goalCompletions).toHaveLength(1);
   });
 
-  it('stores unrestricted edits as a future revision without mutating frozen history', async () => {
+  it('stores edits as a future revision without mutating frozen history or completed goals', async () => {
     const run = await setup();
     await run.controller.generateNextChapter(run.story.id, 'fixture');
+    // The first goal completed in Chapter 1: it keeps its wording, allocation and place.
+    await expect(run.controller.editArcGoals(run.story.id, { ...plan, goals: [
+      { ...plan.goals[1], chapters: 40 }, { ...plan.goals[0], chapters: 60 },
+    ] })).rejects.toThrow('Completed goals keep their wording');
+    await expect(run.controller.editArcGoals(run.story.id, { ...plan, goals: [
+      { ...plan.goals[0], text: 'Rewrite the past.' }, plan.goals[1],
+    ] })).rejects.toThrow('Completed goals keep their wording');
     const edited: ArcPlan = { ...plan, goals: [
-      { ...plan.goals[1], text: 'Expose the invader before the duel.', chapters: 40 },
-      { ...plan.goals[0], text: 'Survive the first encounter.', chapters: 60 },
+      plan.goals[0],
+      { ...plan.goals[1], text: 'Expose the invader before the duel.', chapters: 59 },
+      { id: 'arc-1-third', text: 'Defeat the invader.', chapters: 40 },
     ] };
     await run.controller.editArcGoals(run.story.id, edited);
     run.setOutput({ prose: 'The invader’s hidden patron was exposed.' });

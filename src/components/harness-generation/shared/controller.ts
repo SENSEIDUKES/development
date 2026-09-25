@@ -1,7 +1,7 @@
 import { createArcChapterPosition, editArcPlan, validateArcPlan, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import { createMediaCatalog, emptyNarrativeMedia, type FrozenNarrativeMedia, type NarrativeMediaPort, type MediaResourceReference, type MediaSelectionSlot } from '../../../audio/media';
-import { arcDeadlineFailure, commitHarnessArc, needsArcPlan, readArcReply } from './arcState';
+import { arcDeadlineFailure, arcGoalEditState, commitHarnessArc, harnessArcContext, harnessArcPlan, harnessStoryMode, needsArcPlan, readArcReply, roadmapPlanGap, survivalArcReviewGap, withArcGoalReview, arcGoalReview } from './arcState';
 import {
   createHarnessStory,
   findFoundationRevision,
@@ -43,7 +43,7 @@ import {
   createEmptyHarnessWorkspaceState,
   type HarnessGenerationRepository,
 } from './repository';
-import type { HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessMemoryRecovery, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
+import type { HarnessAttemptFailure, HarnessAttemptStage, HarnessArcPlanOperation, HarnessGenerationAttempt, HarnessGenerationModelAdapter, HarnessBatchRun, HarnessBatchUsageAggregate, HarnessCapabilityReceipt, HarnessStory, HarnessStoryVisibility, HarnessWarning, HarnessWorkspaceState, StoryFoundationInput, HarnessMemoryRecovery, HarnessSkillManifest, HarnessSkillReference, HarnessSkillSlotId } from '../../../narrative/generation';
 
 export type HarnessEventPreserver = (
   rawEvents: unknown[],
@@ -279,9 +279,11 @@ export class HarnessGenerationController {
     input: StoryFoundationInput,
     originalLanguage: SenLanguageCode = DEFAULT_SEN_LANGUAGE_CODE,
     initialSkillLoadout?: Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>,
+    options: { visibility?: HarnessStoryVisibility } = {},
   ): Promise<HarnessStory> {
     this.assertHydrated();
     const created = createHarnessStory(this.state, input, originalLanguage, this.runtime);
+    created.story.visibility = options.visibility ?? 'private';
     if (initialSkillLoadout) {
       const unsupportedSlot = Object.keys(initialSkillLoadout)
         .find(slot => !CAPA_SCHEMA.some(definition => definition.id === slot));
@@ -315,6 +317,16 @@ export class HarnessGenerationController {
 
   async saveFoundationRevision(storyId: string, input: StoryFoundationInput): Promise<HarnessStory> {
     this.assertHydrated();
+    const story = findStory(this.state, storyId);
+    const previous = story ? findFoundationRevision(this.state, story.activeFoundationRevisionId)?.input : undefined;
+    // The Destined Ending is the novel's fixed destination and the arc count
+    // its planned route: once set, a revision can carry them but never change them.
+    if (previous?.destinedEnding?.trim() && input.destinedEnding?.trim() !== previous.destinedEnding.trim()) {
+      throw new Error('The Destined Ending is this novel\'s fixed destination and cannot be changed by a revision.');
+    }
+    if (previous?.plannedArcCount && input.plannedArcCount !== previous.plannedArcCount) {
+      throw new Error('The planned arc count is fixed once the novel begins.');
+    }
     const revised = reviseStoryFoundation(this.state, storyId, input, this.runtime);
     // A revision may change the story's Fate Pressure, so the recommendation follows it.
     refreshRhythmRecommendation(revised.state, revised.story, revised.story.updatedAt);
@@ -501,7 +513,7 @@ export class HarnessGenerationController {
   private async prepareArcPlan(storyId: string, model: string) {
     const story = findStory(this.state, storyId)!;
     const foundation = findFoundationRevision(this.state, story.activeFoundationRevisionId)!;
-    const planNeeded = needsArcPlan(story);
+    const planNeeded = needsArcPlan(story, foundation.input);
     if (!this.modelAdapter.arcOperation) throw new Error('This Harness adapter cannot create the authoritative Arc Plan required before chapter generation.');
     if (!planNeeded && foundation.input.destinedEnding) return;
     const pending = this.state.arcPlanOperations.filter(operation => operation.storyId === storyId
@@ -545,7 +557,7 @@ export class HarnessGenerationController {
     const foundation = findFoundationRevision(this.state, operation.foundationRevisionId)!;
     try {
       const reply = readArcReply(operation.rawProviderResponse);
-      const plan = needsArcPlan(story) ? validateArcPlan(reply.plan) : undefined;
+      const plan = needsArcPlan(story, foundation.input) ? validateArcPlan(reply.plan) : undefined;
       if (plan && plan.arcNumber !== createArcChapterPosition(story.head.nextChapterNumber).arcNumber) throw new Error('The generated plan targets the wrong arc.');
       if (!foundation.input.destinedEnding?.trim() && (typeof reply.destinedEnding !== 'string' || !reply.destinedEnding.trim())) throw new Error('The arc planner must supply the novel Destined Ending.');
       let candidate = cloneHarnessValue(this.state);
@@ -583,15 +595,58 @@ export class HarnessGenerationController {
     return this.snapshot();
   }
 
+  /**
+   * Saves an edit to one arc's goals as a new revision effective from the next
+   * chapter; committed chapters keep the plan they were written against.
+   * `arcGoalEditState` decides what is allowed: Regular Reader mode edits the
+   * active and upcoming arcs while the novel is private; Fate Survival edits an
+   * arc once, immediately before it begins. Completed goals and completed arcs
+   * never change, and a locked Survival plan is never revised.
+   */
   async editArcGoals(storyId: string, proposed: ArcPlan) {
     this.assertHydrated();
     if (this.generating || activeAttemptForStory(this.state, storyId)) throw new Error('Finish the current chapter checkpoint before editing goals.');
     const candidate = cloneHarnessValue(this.state);
     const story = findStory(candidate, storyId);
-    const previous = story?.arcPlans?.at(-1)?.plan;
-    if (!story || !previous) throw new Error('This story has no generated arc plan yet.');
+    if (!story) throw new Error('Open a Harness story before editing its goals.');
+    const foundation = findFoundationRevision(candidate, story.activeFoundationRevisionId)?.input;
+    const arcNumber = proposed?.arcNumber;
+    const previous = Number.isInteger(arcNumber) ? harnessArcPlan(story, arcNumber) : undefined;
+    if (!previous) throw new Error('This story has no saved plan for that arc yet.');
+    const permission = arcGoalEditState(story, foundation, arcNumber);
+    if (!permission.editable) throw new Error(permission.reason ?? `Arc ${arcNumber}'s goals cannot be edited now.`);
     const plan = editArcPlan(previous, proposed);
-    story.arcPlans!.push({ plan, effectiveChapter: story.head.nextChapterNumber, reason: 'edit' });
+    permission.lockedGoalIds.forEach(goalId => {
+      const index = previous.goals.findIndex(goal => goal.id === goalId);
+      if (JSON.stringify(plan.goals[index]) !== JSON.stringify(previous.goals[index])) {
+        throw new Error(`“${previous.goals[index].text}” is complete. Completed goals keep their wording, chapters, and place in the arc.`);
+      }
+    });
+    const otherArcGoalIds = new Set((story.arcPlans ?? []).filter(revision => revision.plan.arcNumber !== arcNumber)
+      .flatMap(revision => revision.plan.goals.map(goal => goal.id)));
+    const reused = plan.goals.find(goal => otherArcGoalIds.has(goal.id));
+    if (reused) throw new Error(`Goal identity “${reused.id}” already belongs to another arc.`);
+    const now = this.runtime.now();
+    story.arcPlans = [...(story.arcPlans ?? []), { plan, effectiveChapter: story.head.nextChapterNumber, reason: 'edit' }];
+    if (permission.mode === 'survival') {
+      story.arcGoalReviews = withArcGoalReview(story, { arcNumber, reviewedAt: now, edited: true, source: 'novel-blueprint' });
+    }
+    story.updatedAt = now;
+    await this.persist(candidate);
+  }
+
+  /** Fate Survival: uses an arc's one-time review by accepting its saved plan as written. */
+  async acceptArcGoals(storyId: string, arcNumber: number) {
+    this.assertHydrated();
+    if (this.generating || activeAttemptForStory(this.state, storyId)) throw new Error('Finish the current chapter checkpoint before reviewing goals.');
+    const candidate = cloneHarnessValue(this.state);
+    const story = findStory(candidate, storyId);
+    if (!story) throw new Error('Open a Harness story before reviewing its goals.');
+    const permission = arcGoalEditState(story, findFoundationRevision(candidate, story.activeFoundationRevisionId)?.input, arcNumber);
+    if (!permission.canAccept) throw new Error(permission.reason ?? `Arc ${arcNumber}'s plan is not awaiting review.`);
+    const now = this.runtime.now();
+    story.arcGoalReviews = withArcGoalReview(story, { arcNumber, reviewedAt: now, edited: false, source: 'novel-blueprint' });
+    story.updatedAt = now;
     await this.persist(candidate);
   }
 
@@ -663,12 +718,20 @@ export class HarnessGenerationController {
       throw new Error('This Harness adapter cannot create the authoritative Arc Plan required before chapter generation.');
     }
 
-    if (needsArcPlan(story) || !foundation.input.destinedEnding) {
+    if (needsArcPlan(story, foundation.input) || !foundation.input.destinedEnding) {
       this.generating = true;
       try { await this.prepareArcPlan(storyId, model); }
       finally { this.generating = false; }
       return this.generateNextChapterInternal(storyId, model, batchId, frozen);
     }
+    // A roadmap story never invents an arc: the next chapter needs its saved plan.
+    const gap = roadmapPlanGap(story, foundation.input);
+    if (gap) throw new Error(gap);
+    if (!harnessArcContext(story, foundation.input, story.head.nextChapterNumber)) {
+      throw new Error(`Chapter ${story.head.nextChapterNumber} has no saved Arc Plan.`);
+    }
+    const reviewGap = survivalArcReviewGap(story, foundation.input);
+    if (reviewGap) throw new Error(reviewGap);
     const attemptId = this.runtime.createId('hga');
     const startedAt = this.runtime.now();
     // The HARNESS prepares the Generation Model Call inputs separately: the
@@ -707,6 +770,13 @@ export class HarnessGenerationController {
     };
     const requestStarted = cloneHarnessValue(this.state);
     requestStarted.attempts.push(attempt);
+    // Fate Survival: the arc's goals lock when its generation begins, in the
+    // same write as the request checkpoint.
+    const startedStory = findStory(requestStarted, storyId)!;
+    const arcNumber = createArcChapterPosition(attempt.chapterNumber).arcNumber;
+    if (harnessStoryMode(foundation.input) === 'survival' && !arcGoalReview(startedStory, arcNumber)?.lockedAt) {
+      startedStory.arcGoalReviews = withArcGoalReview(startedStory, { ...arcGoalReview(startedStory, arcNumber), arcNumber, lockedAt: startedAt });
+    }
     if (batchId) {
       const batch = requestStarted.batches.find(entry => entry.id === batchId);
       if (!batch || batch.storyId !== storyId) throw new Error('The persisted Harness batch no longer matches this story.');

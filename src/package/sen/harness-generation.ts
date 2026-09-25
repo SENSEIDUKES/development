@@ -13,6 +13,7 @@ export {
 export {
   createEmptyHarnessWorkspaceState,
   isCurrentHarnessWorkspaceState,
+  migrateHarnessWorkspaceState,
   readHarnessWorkspaceState,
   type HarnessGenerationRepository,
 } from '../../components/harness-generation/shared/repository';
@@ -73,7 +74,7 @@ export {
   MISSION_REMINDER_TEXT_LIMIT,
   buildMissionReminder,
 } from '../../components/harness-generation/shared/missionReminder';
-export { harnessArcContext } from '../../components/harness-generation/shared/arcState';
+export { arcGoalEditState, harnessArcContext, harnessArcPlan, harnessStoryMode, type HarnessArcGoalEditState, type HarnessStoryMode } from '../../components/harness-generation/shared/arcState';
 export * from '../../narrative/storyDirection';
 export {
   includeBundledHarnessSkills,

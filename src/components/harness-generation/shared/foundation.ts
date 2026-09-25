@@ -1,4 +1,4 @@
-import { validateArcPlan } from '../../arc-goals/shared/arcGoals';
+import { MAX_ROADMAP_ARCS, arcFirstChapter, validateArcPlan, validateArcRoadmap } from '../../arc-goals/shared/arcGoals';
 import { DEFAULT_SEN_LANGUAGE_CODE, type SenLanguageCode } from '../../../lib/language';
 import { FATE_PRESSURE_TIERS, isFatePressure, normalizeFunSettings, validateHardPinInputs } from '../../../narrative/storyDirection';
 import { cloneHarnessValue, defaultHarnessRuntime, emptyStoryHead, stableHarnessId, type HarnessRuntime } from './ids';
@@ -38,6 +38,16 @@ export const normalizeStoryFoundationInput = (input: StoryFoundationInput): Stor
   if (input.initialArcPlan) {
     normalized.initialArcPlan = validateArcPlan(input.initialArcPlan);
     if (normalized.initialArcPlan.arcNumber !== 1) throw new Error('Story Seed supplies Arc 1.');
+  }
+  if (input.plannedArcCount !== undefined) {
+    if (!Number.isInteger(input.plannedArcCount) || input.plannedArcCount < 1 || input.plannedArcCount > MAX_ROADMAP_ARCS) {
+      throw new Error(`The planned arc count must be a whole number from 1 to ${MAX_ROADMAP_ARCS}.`);
+    }
+    normalized.plannedArcCount = input.plannedArcCount;
+  }
+  if (input.arcRoadmap !== undefined) {
+    normalized.arcRoadmap = validateArcRoadmap(input.arcRoadmap, normalized.plannedArcCount ?? input.arcRoadmap.length);
+    normalized.plannedArcCount = normalized.arcRoadmap.length;
   }
   for (const key of optionalFoundationKeys) {
     const value = input[key]?.trim();
@@ -126,7 +136,15 @@ export const createHarnessStory = (
     activeFoundationRevisionId: foundation.id,
     foundationRevisionIds: [foundation.id],
     head: emptyStoryHead(),
-    arcPlans: normalizedInput.initialArcPlan ? [{ plan: normalizedInput.initialArcPlan, effectiveChapter: 1, reason: 'initial' }] : [],
+    // A reviewed Blueprint roadmap arrives whole: every arc's plan is saved now,
+    // effective from that arc's first chapter. Without one, only Arc 1 is known.
+    arcPlans: normalizedInput.arcRoadmap
+      ? normalizedInput.arcRoadmap.map(plan => ({ plan, effectiveChapter: arcFirstChapter(plan.arcNumber), reason: 'initial' as const }))
+      : normalizedInput.initialArcPlan ? [{ plan: normalizedInput.initialArcPlan, effectiveChapter: 1, reason: 'initial' }] : [],
+    // The Blueprint review that approved the roadmap is Arc 1's review, made
+    // immediately before the story began. Later arcs are reviewed in turn.
+    ...(normalizedInput.arcRoadmap && normalizedInput.fateSurvival?.enabled
+      ? { arcGoalReviews: [{ arcNumber: 1, reviewedAt: createdAt, edited: false, source: 'blueprint-creation' as const }] } : {}),
     goalCompletions: [],
     hardPins: (normalizedInput.initialHardPins ?? []).map(pin => ({ ...pin, id: pin.id ?? runtime.createId('hpin'), createdAt, updatedAt: createdAt })),
   };

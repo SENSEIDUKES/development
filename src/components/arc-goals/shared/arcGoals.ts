@@ -24,6 +24,10 @@ export interface ArcGenerationContext extends ArcChapterPosition {
   completionDeadline: number;
   positionInSegment: number;
   completionConfirmed: boolean;
+  /** How many arcs the saved roadmap plans. Absent for stories without a roadmap. */
+  plannedArcCount?: number;
+  /** True when this arc is the roadmap's last: its goals carry the story to the Destined Ending. */
+  finalArc?: boolean;
 }
 export const ARC_PLAN_SCHEMA = {
   type: 'object', properties: { arcNumber: { type: 'integer', minimum: 1 }, goals: {
@@ -60,11 +64,12 @@ export function activeArcGoal(plan: ArcPlan, chapter: number, completions: ArcGo
   const segments = arcGoalSegments(plan);
   return segments.find(goal => chapter <= goal.endChapter || !arcGoalCompleted(plan, goal, completions, chapter)) ?? segments[segments.length - 1];
 }
-export function arcGenerationContext(plan: ArcPlan, chapter: number, destinedEnding: string, completions: ArcGoalCompletion[] = []): ArcGenerationContext {
+export function arcGenerationContext(plan: ArcPlan, chapter: number, destinedEnding: string, completions: ArcGoalCompletion[] = [], plannedArcCount?: number): ArcGenerationContext {
   const activeGoal = activeArcGoal(plan, chapter, completions);
   return { ...createArcChapterPosition(chapter), destinedEnding, plan: structuredClone(plan), activeGoal,
     completionDeadline: activeGoal.endChapter, positionInSegment: chapter - activeGoal.startChapter + 1,
-    completionConfirmed: arcGoalCompleted(plan, activeGoal, completions, chapter) };
+    completionConfirmed: arcGoalCompleted(plan, activeGoal, completions, chapter),
+    ...(plannedArcCount ? { plannedArcCount, finalArc: plan.arcNumber >= plannedArcCount } : {}) };
 }
 /** The HARNESS stores an edit as a future revision; earlier frozen packets remain unchanged. */
 export function editArcPlan(previous: ArcPlan, proposed: ArcPlan): ArcPlan {
@@ -81,3 +86,75 @@ export function confirmArcGoal(context: ArcGenerationContext, chapterNumber: num
 
 /** Story Seed supplies one initial goal; the existing plan/deadline contract remains authoritative. */
 export const createInitialArcPlan = (goal: ArcGoal): ArcPlan => validateArcPlan({ arcNumber: 1, goals: [goal] });
+
+/** The first chapter of an arc. */
+export const arcFirstChapter = (arcNumber: number): number => (arcNumber - 1) * ARC_LENGTH + 1;
+
+/** The upper bound on arcs one roadmap may plan. The Blueprint model's output budget may allow fewer. */
+export const MAX_ROADMAP_ARCS = 100 as const;
+
+/**
+ * An arc roadmap: one saved plan per arc, Arc 1 through Arc N, in order. Every
+ * plan keeps the existing sequential goal, allocation, and deadline contract;
+ * goal identities are unique across the whole roadmap so a completion can never
+ * be claimed by a goal in another arc.
+ */
+export function validateArcRoadmap(value: unknown, arcCount?: number): ArcPlan[] {
+  if (!Array.isArray(value) || value.length < 1) throw new Error('An arc roadmap needs a plan for at least one arc.');
+  if (value.length > MAX_ROADMAP_ARCS) throw new Error(`An arc roadmap plans at most ${MAX_ROADMAP_ARCS} arcs.`);
+  if (arcCount !== undefined && value.length !== arcCount) {
+    throw new Error(`The arc roadmap plans ${value.length} of ${arcCount} arcs. Every arc needs a saved plan.`);
+  }
+  const ids = new Set<string>();
+  return value.map((entry, index) => {
+    const plan = validateArcPlan(entry);
+    if (plan.arcNumber !== index + 1) throw new Error(`Arc plans must run in order; entry ${index + 1} is Arc ${plan.arcNumber}.`);
+    for (const goal of plan.goals) {
+      if (ids.has(goal.id)) throw new Error(`Goal identity “${goal.id}” appears in more than one arc.`);
+      ids.add(goal.id);
+    }
+    return plan;
+  });
+}
+
+/** Response schema for arc plans generated in one call: a whole roadmap, or only the arcs being added. */
+export const arcRoadmapSchema = (maxArcs: number, minArcs = 1) => ({
+  type: 'array', minItems: minArcs, maxItems: maxArcs, items: ARC_PLAN_SCHEMA,
+});
+
+/**
+ * Whether arcs can be added to a roadmap without re-planning a saved arc. New
+ * arcs go in before the final arc; a one-arc roadmap's only arc is both its
+ * opening and its final arc, so it has no such place.
+ */
+export const arcsCanBeAddedBeforeFinal = (roadmap: readonly ArcPlan[]): boolean => roadmap.length >= 2;
+
+/**
+ * Lengthens a roadmap without re-planning it. The new arcs go in before the
+ * final arc, which keeps its goals and remains the arc that reaches the
+ * Destined Ending; every other saved arc keeps its goals and its number. The
+ * new arcs are numbered by position, whatever numbers they arrived with, and a
+ * new goal whose identity is already taken is given a unique one, so a
+ * completion can never be claimed by a goal in another arc.
+ */
+export function insertArcsBeforeFinal(roadmap: readonly ArcPlan[], added: readonly ArcPlan[]): ArcPlan[] {
+  const saved = validateArcRoadmap(roadmap);
+  if (!arcsCanBeAddedBeforeFinal(saved)) {
+    throw new Error('A one-arc roadmap is both its opening and its final arc, so there is no place to add arcs without re-planning it. Regenerate the Blueprint with more arcs instead.');
+  }
+  if (!added.length) throw new Error('Add at least one arc.');
+  const taken = new Set(saved.flatMap(plan => plan.goals.map(goal => goal.id)));
+  const uniqueId = (id: string) => {
+    let candidate = id;
+    for (let suffix = 2; taken.has(candidate); suffix += 1) candidate = `${id}-${suffix}`;
+    taken.add(candidate);
+    return candidate;
+  };
+  const finalIndex = saved.length - 1;
+  const inserted = added.map((entry, index) => {
+    const plan = validateArcPlan({ ...entry, arcNumber: finalIndex + 1 + index });
+    return { ...plan, goals: plan.goals.map(goal => ({ ...goal, id: uniqueId(goal.id) })) };
+  });
+  const arcCount = saved.length + inserted.length;
+  return validateArcRoadmap([...saved.slice(0, finalIndex), ...inserted, { ...saved[finalIndex], arcNumber: arcCount }], arcCount);
+}

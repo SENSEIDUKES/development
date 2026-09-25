@@ -7,7 +7,7 @@ import { type StorySeedRecord, type StorySeedRepository } from '@seihouse/sen/st
 import { createStoryAdministrativeMetadata, validateStoryAdministrativeMetadata } from '@seihouse/sen/story-seed';
 
 const blueprint: WorldBlueprint = {
-  arcPlan: { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the gate.', chapters: 100 }] },
+  arcPlans: Array.from({ length: 7 }, (_, index) => ({ arcNumber: index + 1, goals: [{ id: `arc-${index + 1}-goal`, text: index ? `Hold the route through Arc ${index + 1}.` : 'Reach the gate.', chapters: 100 }] })),
   title: 'Ashes of the Ninth Meridian',
   logline: 'Seven doomed timelines. One chance to break fate.',
   worldOverview: 'A shattered celestial court rules the sects through fate ledgers.',

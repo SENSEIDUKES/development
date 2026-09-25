@@ -5,10 +5,11 @@ import type { StoryBlock } from './chapter';
 import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterSuggestions } from './storyDirection';
 
 /** Independent Harness Generation contracts. Bump this on any change to a
- * persisted shape (attempt, chapter, or workspace state fields). This is a
- * development system: storage at any other version is reset, never
- * migrated — see `readHarnessWorkspaceState` in `repository.ts`. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 18 as const;
+ * persisted shape (attempt, chapter, or workspace state fields) and add the
+ * matching upgrade step to `HARNESS_WORKSPACE_MIGRATIONS` in `repository.ts`,
+ * so saved stories carry over. Storage with no migration path is preserved
+ * untouched by the host and replaced with an empty workspace. */
+export const HARNESS_GENERATION_SCHEMA_VERSION = 19 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -46,6 +47,14 @@ export interface StoryFoundationInput {
    */
   fatePressure?: FatePressure;
   initialArcPlan?: import('../components/arc-goals/shared/arcGoals').ArcPlan;
+  /**
+   * Every arc's saved goal plan from the reviewed Blueprint, Arc 1 through
+   * `plannedArcCount`. HARNESS copies it once, at story creation; later plan
+   * edits are story revisions, never Foundation edits.
+   */
+  arcRoadmap?: import('../components/arc-goals/shared/arcGoals').ArcPlan[];
+  /** How many arcs the story's route to its Destined Ending was planned for. Fixed once set. */
+  plannedArcCount?: number;
   title?: string;
   /** The only author field required to start a Harness story. */
   premise: string;
@@ -123,6 +132,28 @@ export interface HarnessStory {
   hardPins?: HardPin[];
   /** The deterministic Fate Pressure recommendation for the next chapter, refreshed at every commit. */
   rhythmRecommendation?: import('../components/harness-generation/shared/rhythm').HarnessRhythmRecommendation;
+  /** Who may read the novel. Arc Goals stay editable in Regular Reader mode only while it is private. Absent means private. */
+  visibility?: HarnessStoryVisibility;
+  /**
+   * Fate Survival's one-time arc goal review, one entry per arc: the plan is
+   * reviewed (edited once or accepted as written) before the arc begins and
+   * locked when that arc's generation begins.
+   */
+  arcGoalReviews?: HarnessArcGoalReview[];
+}
+
+export type HarnessStoryVisibility = 'private' | 'shared' | 'public';
+
+export interface HarnessArcGoalReview {
+  arcNumber: number;
+  /** When the user used the arc's one-time review. Absent until then. */
+  reviewedAt?: string;
+  /** Whether that review edited the plan (true) or accepted it as written (false). */
+  edited?: boolean;
+  /** Where the review happened: the Blueprint review before the story began, or the novel's Blueprint. */
+  source?: 'blueprint-creation' | 'novel-blueprint' | 'migration';
+  /** Set when generation of the arc begins. A locked plan is never revised. */
+  lockedAt?: string;
 }
 
 /**

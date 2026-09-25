@@ -19,16 +19,21 @@ const initial = () => {
   seed.story.required = { premise: 'A traveler returns.', genre: 'Fantasy', style: 'japanese', storyTags: ['exile'] };
   return seed;
 };
-const Editor = ({ seed: input, view }: { seed: StorySeedInput; view: 'arc' | 'world' | 'blueprint' }) => {
+const Editor = ({ seed: input, view, initialBlueprint }: { seed: StorySeedInput; view: 'arc' | 'world' | 'blueprint'; initialBlueprint?: WorldBlueprint }) => {
   const [seed, setSeed] = useState(input);
-  const [bp, setBlueprint] = useState(() => createBlueprintDraftFromSeed(input));
+  const [bp, setBlueprint] = useState(() => initialBlueprint ?? createBlueprintDraftFromSeed(input));
   // The host (CreationModal) keeps the Blueprint mirroring the Seed.
   useEffect(() => setBlueprint(previous => mirrorSeedIntoBlueprint(previous, normalizeStorySeedInput(seed))), [seed]);
   current = seed; blueprint = bp;
   if (view === 'blueprint') return <BlueprintReview seed={seed} updateSeed={setSeed} blueprint={bp} setBlueprint={setBlueprint} originalLanguage="ja" onOriginalLanguageChange={vi.fn()} onBack={vi.fn()} onStartStory={vi.fn()} onExportSeed={vi.fn()} isGenerating={false} />;
   return view === 'arc' ? <ArcWorkspace seed={seed} updateSeed={setSeed} /> : <WorldIdentityWorkspace seed={seed} updateSeed={setSeed} />;
 };
-const render = (seed: StorySeedInput, view: 'arc' | 'world' | 'blueprint' = 'arc') => act(() => root.render(<Editor key={view} seed={seed} view={view} />));
+const render = (seed: StorySeedInput, view: 'arc' | 'world' | 'blueprint' = 'arc', initialBlueprint?: WorldBlueprint) => act(() => root.render(<Editor key={initialBlueprint ? `${view}-generated` : view} seed={seed} view={view} initialBlueprint={initialBlueprint} />));
+const button = (text: string) => [...container.querySelectorAll<HTMLButtonElement>('button')].find(item => item.textContent?.trim() === text);
+const roadmap = [
+  { arcNumber: 1, goals: [{ id: 'arc-1-gate', text: 'Reach the mountain gate.', chapters: 60 }, { id: 'arc-1-trial', text: 'Pass the trial.', chapters: 40 }] },
+  { arcNumber: 2, goals: [{ id: 'arc-2-valley', text: 'Free the valley.', chapters: 100 }] },
+];
 const fill = (id: string, value: string) => act(() => {
   const input = container.querySelector<HTMLInputElement | HTMLTextAreaElement>(`#${id}`)!;
   const prototype = input instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
@@ -66,25 +71,37 @@ describe('Story Seed Arc and World ownership', () => {
     render(current, 'world');
     fill('make-it-work-instruction-input', 'The mountain walks. Make it believable.');
     fill('main-opposition-input', 'The gate keeper.');
+    // A draft without a generated roadmap cannot begin a story.
     render(current, 'blueprint');
+    expect(button('Manifest Story')?.disabled).toBe(true);
+    expect(container.textContent).toContain('plan every arc');
+    expect(container.querySelector('#active-arc-goal-input')).toBeNull();
+    // A generated two-arc roadmap: review and edit it before the story begins.
+    render(current, 'blueprint', reconcileStorySeedBlueprint(current, { ...createBlueprintDraftFromSeed(current), arcPlans: roadmap, estimatedArcs: 2 }).blueprint);
     fill('hard-pin-2', 'Rebuild the temple.');
-    fill('active-arc-goal-input', 'Open the mountain gate.');
+    act(() => button('Edit Arc 1 goals')!.click());
+    const openingGoal = container.querySelector<HTMLInputElement>('[data-testid="blueprint-arc-roadmap"] fieldset input')!;
+    act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(openingGoal, 'Open the mountain gate.');
+      openingGoal.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => { button('Save goals')!.click(); });
     expect(blueprint.hardPins).toEqual(current.story.optional.hardPins);
-    expect(blueprint.arcPlan?.goals).toEqual([current.story.optional.activeArcGoal]);
+    // Arc 1's opening goal writes through to the Seed; its allocation and the rest of the route stay saved.
+    expect(current.story.optional.activeArcGoal).toEqual({ id: 'arc-1-gate', text: 'Open the mountain gate.', chapters: 100 });
+    expect(blueprint.arcPlans?.[0].goals).toEqual([{ id: 'arc-1-gate', text: 'Open the mountain gate.', chapters: 60 }, roadmap[0].goals[1]]);
+    expect(blueprint.arcPlans?.[1]).toEqual(roadmap[1]);
     expect(blueprint.funSettings?.faceSlap).toBe('high');
+    expect(button('Manifest Story')?.disabled).toBe(false);
     const saved = await workshopStorySeedStorage.create('arc-test', current, blueprint, 'ja');
     const loaded = (await workshopStorySeedStorage.list('arc-test'))[0];
     expect(loaded.seed).toEqual(normalizeStorySeedInput(current));
     const [imported] = parseStorySeedJson(JSON.stringify(createStorySeedExport(loaded.seed, loaded.blueprint, 'ja')));
     const payload = buildInitialStoryGenerationPayload(imported.seed, createStoryAdministrativeMetadata({ storyId: 'story', creatorId: 'arc-test', sourceSeedId: saved.id, originalLanguage: 'ja' }), imported.blueprint!, 1);
     expect(payload.storySeed.story.optional.hardPins).toHaveLength(3);
-    expect(payload.blueprint.arcPlan?.goals).toEqual([{ id: 'arc-1-initial', text: 'Open the mountain gate.', chapters: 100 }]);
+    expect(payload.blueprint.arcPlans).toEqual(blueprint.arcPlans);
     expect(payload.storySeed.story.optional.makeItWorkInstruction).toContain('mountain walks');
     expect(payload.storySeed.world.optional.worldFoundations.mainOpposition).toBe('The gate keeper.');
-    fill('active-arc-goal-input', '');
-    const manifest = [...container.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.trim() === 'Manifest Story');
-    expect(manifest?.disabled).toBe(true);
-    expect(() => buildInitialStoryGenerationPayload(current, payload.administrative, blueprint, 1)).toThrow('Review one Active Arc Goal');
   });
 
   it('rejects a fourth pin and strips obsolete inputs before Blueprint generation', () => {

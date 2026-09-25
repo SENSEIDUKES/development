@@ -10,6 +10,7 @@ import {
   type StorySeedInput,
   type StorySeedRecord,
 } from '@seihouse/sen/story-seed';
+import type { ArcPlan } from '@seihouse/sen/arc-goals';
 
 export const MOCK_USER_ID = 'mock-user-workshop';
 
@@ -113,7 +114,40 @@ export const createFilledIntake = (): IntakeData => ({
   makeItWorkInstruction: '',
 });
 
+const MOCK_ROUTE = [
+  ['Survive the outer sect tournament', 'Expose the first assassin', 'Earn the prince\'s trust'],
+  ['Reach the inner sect', 'Break the Abyssal Cult\'s hold on the elders', 'Recover the Sovereign Ring'],
+  ['Defy the celestial court\'s decree', 'Unite the sects behind the prince', 'Shatter the court\'s grip on fate'],
+] as const;
+
+/**
+ * A complete mock roadmap: one plan per arc, ending at the Destined Ending.
+ * Arc 1 opens with the creator's Active Arc Goal when one is supplied.
+ */
+export const createMockArcRoadmap = (arcCount: number, openingGoal?: { id: string; text: string }): ArcPlan[] =>
+  Array.from({ length: arcCount }, (_, index) => {
+    const arcNumber = index + 1;
+    const texts: string[] = [...MOCK_ROUTE[Math.min(index, MOCK_ROUTE.length - 1)]];
+    if (arcNumber === arcCount) texts[texts.length - 1] = 'The prince survives and the court\'s grip on fate is broken';
+    else if (index >= MOCK_ROUTE.length - 1) texts[texts.length - 1] = `Hold the alliance together through the trials of Arc ${arcNumber}`;
+    const goals = texts.map((text, goalIndex) => ({ id: `arc-${arcNumber}-goal-${goalIndex + 1}`, text, chapters: goalIndex === 0 ? 30 : goalIndex === 1 ? 40 : 30 }));
+    if (arcNumber === 1 && openingGoal) goals[0] = { ...goals[0], id: openingGoal.id, text: openingGoal.text };
+    return { arcNumber, goals };
+  });
+
+/**
+ * Mock arcs for Add arcs: bridge arcs numbered from `firstArc`, which the
+ * Blueprint review inserts before the final arc.
+ */
+export const createMockAddedArcs = (firstArc: number, count: number): ArcPlan[] =>
+  Array.from({ length: count }, (_, index) => {
+    const arcNumber = firstArc + index;
+    const texts = [`Hold the alliance together through the trials of Arc ${arcNumber}`, `Uncover the court's next move against the prince`, `Force the elders to choose a side`];
+    return { arcNumber, goals: texts.map((text, goalIndex) => ({ id: `arc-${arcNumber}-added-${goalIndex + 1}`, text, chapters: goalIndex === 1 ? 40 : 30 })) };
+  });
+
 export const createMockBlueprint = (): WorldBlueprint => ({
+  arcPlans: createMockArcRoadmap(3),
   blueprintVersion: 'v1.0',
   creator: 'Workshop Creator',
   title: 'Ashes of the Ninth Meridian',
@@ -133,7 +167,7 @@ export const createMockBlueprint = (): WorldBlueprint => ({
   tropeRules: 'Face-slapping tied to fate corrections, not petty insults.',
   styleBible: 'Close third-person narration with restrained exposition, concrete sensory detail, and sharp reversals at scene endings.',
   destinedEnding: "The prince survives and shatters the celestial court's grip on fate.",
-  estimatedArcs: 12,
+  estimatedArcs: 3,
   unresolvedPlotThreads: ['Sever the engagement with Chu family', 'Win the Inner Sect tournament'],
 });
 

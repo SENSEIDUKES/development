@@ -8,7 +8,12 @@ import { NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBo
 import { WorkspaceShell } from './WorkspaceShell';
 import { handleRadioGroupKeyDown } from '../radioGroupKeyboard';
 
-interface ArcWorkspaceProps { seed: StorySeedInput; updateSeed: UpdateSeed; }
+interface ArcWorkspaceProps {
+  seed: StorySeedInput;
+  updateSeed: UpdateSeed;
+  /** The Blueprint review edits Arc 1's opening goal inside its roadmap instead. */
+  showActiveArcGoal?: boolean;
+}
 
 type FunSettingKey = 'faceSlap' | 'plotArmor' | 'recognition';
 
@@ -63,7 +68,7 @@ const FUN_SETTINGS: ReadonlyArray<{
   },
 ];
 
-export const ArcWorkspace = ({ seed, updateSeed }: ArcWorkspaceProps) => {
+export const ArcWorkspace = ({ seed, updateSeed, showActiveArcGoal = true }: ArcWorkspaceProps) => {
   const section = getSeedSection('arc');
   const settings = funSettings(seed);
   const savedPins = JSON.stringify((seed.story.optional.hardPins ?? []).map(pin => pin.text));
@@ -94,13 +99,15 @@ export const ArcWorkspace = ({ seed, updateSeed }: ArcWorkspaceProps) => {
           ))}
         </div>
       </section>
-      <LibraryTextBox id="active-arc-goal-input" label="Active Arc Goal" icon={Target}
-        helpText="What the story is working toward right now. It guides the current arc and can change when the next arc begins."
-        value={seed.story.optional.activeArcGoal?.text ?? ''}
-        onChange={text => updateSeed(current => ({ ...current, story: { ...current.story, optional: {
-          ...current.story.optional, activeArcGoal: text.trim() ? { id: current.story.optional.activeArcGoal?.id ?? 'arc-1-initial', text, chapters: ARC_LENGTH } : undefined,
-        } } }))} />
-      <p className="text-xs text-neutral-400">Initial arc deadline: Chapter {ARC_LENGTH}. Leave the goal blank for a Blueprint suggestion you can review.</p>
+      {showActiveArcGoal && <>
+        <LibraryTextBox id="active-arc-goal-input" label="Active Arc Goal" icon={Target}
+          helpText="The first goal of Arc 1: what the story works toward right now. The Blueprint plans every arc from here to the Destined Ending, and you review that whole roadmap before the story begins."
+          value={seed.story.optional.activeArcGoal?.text ?? ''}
+          onChange={text => updateSeed(current => ({ ...current, story: { ...current.story, optional: {
+            ...current.story.optional, activeArcGoal: text.trim() ? { id: current.story.optional.activeArcGoal?.id ?? 'arc-1-initial', text, chapters: ARC_LENGTH } : undefined,
+          } } }))} />
+        <p className="text-xs text-neutral-400">Leave the goal blank for a Blueprint suggestion you can review.</p>
+      </>}
       <section className="glass-panel p-4 sm:p-5" aria-labelledby="arc-fun-settings-title">
         <div className="mb-4">
           <h3

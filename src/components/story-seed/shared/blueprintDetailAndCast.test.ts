@@ -10,6 +10,7 @@ import {
   reconcileStorySeedBlueprint,
   resolveStorySeedWorldCanon,
   reviewWorldFactDetail,
+  worldFactDetailIsCurrent,
   type StorySeedInput,
   type WorldBlueprint,
 } from '@seihouse/sen/story-seed';
@@ -176,6 +177,17 @@ describe('World detail beside the author\'s world facts', () => {
     // A detail with no recorded fact is never used.
     const { worldOverviewDetailBasis: _basis, ...unbound } = reviewed.blueprint;
     expect(resolveStorySeedWorldCanon(reviewed.seed, unbound)).not.toHaveProperty('worldOverviewDetail');
+  });
+
+  it('treats a case, spacing, or punctuation edit as the same fact in any script', () => {
+    const current = (basis: string, fact: string) => worldFactDetailIsCurrent({ worldOverviewDetailBasis: basis }, 'worldOverviewDetail', fact);
+    expect(current('天庭，修士', '天庭修士')).toBe(true);
+    expect(current('天庭，修士。', ' 天庭 修士 ')).toBe(true);
+    expect(current('Sect-led, feudal hierarchy', 'sect led feudal hierarchy.')).toBe(true);
+    expect(current('天庭，修士', '天庭，凡人')).toBe(false);
+    expect(current('Sect-led feudal hierarchy', 'Clan-led feudal hierarchy')).toBe(false);
+    expect(current('', '天庭')).toBe(false);
+    expect(current('天庭', '，。')).toBe(false);
   });
 
   it('removes only sentences that restate the fact', () => {

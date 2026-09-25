@@ -884,6 +884,14 @@ const worldFactDetailEntry = (detail: WorldFactDetailField) =>
   WORLD_FACT_DETAILS.find(entry => entry.detail === detail)!;
 
 /**
+ * A fact's wording without case, spacing, or punctuation. Separators are
+ * dropped rather than treated as word breaks, so a punctuation-only edit in a
+ * script written without spaces ("天庭，修士" → "天庭修士") leaves it unchanged.
+ */
+const factWording = (value: string | undefined): string =>
+  (value ?? '').toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+
+/**
  * Whether a detail was generated or last reviewed against the author's fact as
  * it reads now; case, spacing, and punctuation aside. A detail written for an
  * earlier or cleared version of the fact is kept but not used.
@@ -893,9 +901,8 @@ export const worldFactDetailIsCurrent = (
   detail: WorldFactDetailField,
   fact: string | undefined,
 ): boolean => {
-  const factWords = comparableWords(fact ?? '');
-  const basis = blueprint?.[worldFactDetailEntry(detail).basis];
-  return factWords.length > 0 && factWords.join(' ') === comparableWords(basis ?? '').join(' ');
+  const wording = factWording(fact);
+  return wording.length > 0 && wording === factWording(blueprint?.[worldFactDetailEntry(detail).basis]);
 };
 
 /** The author's edit to a detail, which also reviews it against the fact it sits under. */

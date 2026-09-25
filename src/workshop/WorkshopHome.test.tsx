@@ -53,9 +53,9 @@ describe('WorkshopHome', () => {
     expect(container.querySelector('.workshop-topbar [aria-label="Model Router settings"]')).not.toBeNull();
   });
 
-  it('shows the five Workshop sections and the Docs tab', () => {
+  it('shows the five Workshop sections and the NovelExpanded Docs tab', () => {
     const tabs = container.querySelectorAll<HTMLButtonElement>('[role="tab"]');
-    expect([...tabs].map((element) => element.textContent)).toEqual(['Pages', 'Rewards', 'Customization', 'Systems', 'Components', 'Docs']);
+    expect([...tabs].map((element) => element.textContent)).toEqual(['Pages', 'Rewards', 'Customization', 'Systems', 'Components', 'NovelExpanded Docs']);
   });
 
   it('groups each active preview exactly once and preserves direct links and release labels', () => {
@@ -125,7 +125,7 @@ describe('WorkshopHome', () => {
       'chapter-generation-flow': 'workshop',
     });
     for (const panel of workshopPanels) {
-      select({ systems: 'Systems', components: 'Components', pages: 'Pages', rewards: 'Rewards', customization: 'Customization', docs: 'Docs' }[panel.section]);
+      select({ systems: 'Systems', components: 'Components', pages: 'Pages', rewards: 'Rewards', customization: 'Customization', docs: 'NovelExpanded Docs' }[panel.section]);
       const section = activePanel().querySelector(`section[data-panel="${panel.id}"]`)!;
       expect(section.querySelector('.workshop-group-title')?.textContent).toBe(panel.title);
       expect(section.querySelector('.workshop-owner')?.textContent).toBe(`Owned by ${WORKSHOP_OWNER_LABELS[panel.owner]}`);
@@ -185,15 +185,15 @@ describe('WorkshopHome', () => {
 
   it('supports arrow wrapping, Home and End while moving focus with selection', () => {
     act(() => tab('Pages').focus());
-    for (const [key, label] of [['ArrowLeft', 'Docs'], ['ArrowRight', 'Pages'], ['ArrowRight', 'Rewards'], ['ArrowRight', 'Customization'], ['End', 'Docs'], ['Home', 'Pages']]) {
+    for (const [key, label] of [['ArrowLeft', 'NovelExpanded Docs'], ['ArrowRight', 'Pages'], ['ArrowRight', 'Rewards'], ['ArrowRight', 'Customization'], ['End', 'NovelExpanded Docs'], ['Home', 'Pages']]) {
       act(() => document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })));
       expect(document.activeElement).toBe(tab(label));
       expect(tab(label).getAttribute('aria-selected')).toBe('true');
     }
   });
 
-  it('opens Docs inside Workshop without preview cards or the archive', () => {
-    select('Docs');
+  it('opens NovelExpanded Docs inside Workshop without preview cards or the archive', () => {
+    select('NovelExpanded Docs');
     expect(activePanel().querySelector('h1')?.textContent).toBe('What each thing is.How it all fits.');
     expect(previewIds()).toEqual([]);
     expect(container.querySelector('#workshop-archive-toggle')).toBeNull();
@@ -203,7 +203,7 @@ describe('WorkshopHome', () => {
   });
 
   it('supports shareable topics and restores Workshop tabs and topics on browser navigation', () => {
-    select('Docs');
+    select('NovelExpanded Docs');
     const spp = activePanel().querySelector<HTMLAnchorElement>('a[href="?tab=docs&doc=spp"]')!;
     act(() => spp.click());
     expect(window.location.search).toBe('?tab=docs&doc=spp');

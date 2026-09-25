@@ -108,7 +108,7 @@ export const WORKSHOP_SECTIONS: ReadonlyArray<{
   { id: 'customization', label: 'Customization', description: 'Companions and the looks a cultivator collects and shapes.' },
   { id: 'systems', label: 'Systems', description: 'Generation, voice, economy, and provenance systems behind the pages.' },
   { id: 'components', label: 'Components', description: 'Reusable visual pieces, primitives, and icons.' },
-  { id: 'docs', label: 'Docs', description: 'What each thing is and how it fits.' },
+  { id: 'docs', label: 'NovelExpanded Docs', description: 'What Library and SEN concepts are and how they fit together.' },
 ];
 
 /**

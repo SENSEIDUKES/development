@@ -21,7 +21,7 @@ const topic = (id: string, title: string, aliases: string[] = []): DocsTopic => 
 // explanations only as each term's meaning is confirmed by the product owner.
 export const docsCategories: readonly DocsCategory[] = [
   {
-    id: 'product', title: 'Product & people', description: 'The products, the Workshop, and the people using them.',
+    id: 'product', title: 'Product & people', description: 'SEN, the Celestial Library, our Workshop, and the people creating and reading stories.',
     topics: [
       {
         ...topic('seihouse', 'SEIHouse'),
@@ -40,13 +40,13 @@ export const docsCategories: readonly DocsCategory[] = [
       },
       {
         ...topic('workshop', 'Workshop', ['Development', 'DEV']),
-        definition: 'Our space for building, previewing, and refining SEIHouse experiences.',
-        howItFits: 'We use the Workshop inside the Development repository to see SEN and Library work in context while it is still being developed. Its previews, controls, and Docs let us test product flows and agree on the language around them. Workshop is our workbench, not a product package: SEN owns reusable narrative behavior, and Library owns our first-party product behavior. Moving approved work into production is a separate step.',
+        definition: 'Our space for building, previewing, and refining SEN and Library experiences.',
+        howItFits: 'We use the Workshop inside the Development repository to see SEN and Library work in context while it is still being developed. Its previews, controls, and NovelExpanded Docs let us test product flows and agree on the language around them. Workshop is our workbench, not a product package: SEN owns reusable narrative behavior, and Library owns our first-party product behavior. Moving approved work into production is a separate step.',
       },
       {
         ...topic('creator', 'Creator', ['Author']),
-        definition: 'A person making a story, album, or other work with SEIHouse.',
-        howItFits: 'We use Creator for the person making a work, whether it is a novel, album, or another form. It is not a separate kind of user from Reader: someone can create one work and experience another. SEN and the Celestial Library support novel work; SEA extends the same platform to albums. In each case, the artistic direction belongs to the creator.',
+        definition: 'A person creating a story with SEN or the Celestial Library.',
+        howItFits: 'We use Creator for the person making a story. It is not a separate kind of user from Reader: someone can create one story and experience another. SEN provides reusable story and chapter capabilities, while the Celestial Library gives creators our own place to make and share their novels. The artistic direction belongs to the creator.',
       },
       {
         ...topic('reader', 'Reader', ['Cultivator']),

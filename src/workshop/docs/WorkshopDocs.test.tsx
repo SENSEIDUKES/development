@@ -30,13 +30,13 @@ function search(value: string) {
   return input;
 }
 
-describe('Workshop Docs', () => {
+describe('NovelExpanded Docs', () => {
   it('opens the shared mobile drawer, follows a topic, and dismisses it with Escape', async () => {
-    const trigger = container.querySelector<HTMLButtonElement>('[aria-label="Browse Docs topics"]')!;
+    const trigger = container.querySelector<HTMLButtonElement>('[aria-label="Browse NovelExpanded Docs topics"]')!;
     await act(async () => trigger.click());
     const drawer = document.querySelector<HTMLElement>('[role="dialog"]')!;
     expect(drawer).not.toBeNull();
-    expect(document.getElementById(drawer.getAttribute('aria-labelledby')!)?.textContent).toBe('Docs topics');
+    expect(document.getElementById(drawer.getAttribute('aria-labelledby')!)?.textContent).toBe('NovelExpanded Docs topics');
     const link = drawer.querySelector<HTMLAnchorElement>('a[href="?tab=docs&doc=spp"]')!;
     await act(async () => link.click());
     expect(onNavigate).toHaveBeenCalledWith('spp');
@@ -77,7 +77,7 @@ describe('Workshop Docs', () => {
     expect(productToggles).toHaveLength(1);
     expect(productToggles.every(button => button.getAttribute('aria-expanded') === 'false')).toBe(true);
 
-    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Browse Docs topics"]')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Browse NovelExpanded Docs topics"]')!.click());
     const allProductToggles = [...document.querySelectorAll<HTMLButtonElement>('.docs-navigation .docs-category-toggle')]
       .filter(button => button.textContent?.includes('Product & people'));
     expect(allProductToggles).toHaveLength(2);

@@ -49,12 +49,12 @@ const props = (): LibraryFooterProps => ({
 });
 
 describe('LibraryFooter', () => {
-  it('opens on the SEIHouse title above the exact SEIHouse statement', async () => {
+  it('opens on the NovelExpanded title above the exact SEIHouse statement', async () => {
     await render(<LibraryFooter {...props()} />);
     const identity = footer().querySelector('.library-footer-identity')!;
     expect(Array.from(identity.children).map(child => child.className)).toEqual(['library-footer-title', 'library-footer-statement']);
     expect(identity.querySelector('[data-footer-title]')?.textContent).toBe(LIBRARY_FOOTER_TITLE);
-    expect(LIBRARY_FOOTER_TITLE).toBe('SEIHouse');
+    expect(LIBRARY_FOOTER_TITLE).toBe('NovelExpanded');
     expect(identity.querySelector('.library-footer-statement')?.textContent).toBe(LIBRARY_FOOTER_STATEMENT);
     expect(LIBRARY_FOOTER_STATEMENT).toBe('A BETTER TIME CAPSULE AND TRANSLATOR OF ARTISTIC EXPRESSION');
     expect(footer().querySelector('img')).toBeNull();

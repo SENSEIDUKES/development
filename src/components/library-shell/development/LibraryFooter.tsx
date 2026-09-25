@@ -6,7 +6,7 @@ import { LIBRARY_FOOTER_SOCIAL_GLYPHS, LIBRARY_FOOTER_SOCIAL_LABELS, type Librar
 import './library-footer.css';
 
 /** The footer's title, set above the company statement. */
-export const LIBRARY_FOOTER_TITLE = 'SEIHouse';
+export const LIBRARY_FOOTER_TITLE = 'NovelExpanded';
 /** The company statement, read beneath the title. */
 export const LIBRARY_FOOTER_STATEMENT = 'A BETTER TIME CAPSULE AND TRANSLATOR OF ARTISTIC EXPRESSION';
 /** The legal line, dated from the current year so it never goes stale. */

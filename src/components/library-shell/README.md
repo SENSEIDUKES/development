@@ -67,7 +67,7 @@ Regression coverage: `LibraryShellResilience.test.tsx`.
 
 ## Footer identity trimmed to the statement — 2026-09-25
 
-At the product owner's direction the footer read as busy, so everything above the company statement came out: the emblem seal and its gold hairlines, the `SEN` elemental wordmark and the `SEIHouse Expanded Novels` line. The footer now opens on a single `SEIHouse` title (`LIBRARY_FOOTER_TITLE`, cream display serif) above "A better time capsule and translator of artistic expression", then the menus, channels, language and legal row. `LibraryFooter` no longer takes an `emblem`, and `LIBRARY_FOOTER_MARK` and `LIBRARY_FOOTER_EXPANSION` are gone; the header keeps the emblem through `LIBRARY_EMBLEM`. The 2026-09-22 identity entries above describe the superseded arrangement.
+At the product owner's direction the footer read as busy, so everything above the company statement came out: the emblem seal and its gold hairlines, the `SEN` elemental wordmark and the `SEIHouse Expanded Novels` line. The footer now opens on a single `NovelExpanded` title (`LIBRARY_FOOTER_TITLE`, cream display serif) above "A better time capsule and translator of artistic expression", then the menus, channels, language and legal row. `LibraryFooter` no longer takes an `emblem`, and `LIBRARY_FOOTER_MARK` and `LIBRARY_FOOTER_EXPANSION` are gone; the header keeps the emblem through `LIBRARY_EMBLEM`. The 2026-09-22 identity entries above describe the superseded arrangement.
 
 ## Capture boundary
 

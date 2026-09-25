@@ -23,6 +23,9 @@ the broader company context and SEA; other topics do not cover albums or SEA.
   entry when its meaning is confirmed; unfilled topics show placeholders.
   Search includes explanation text automatically. Do not add a second entry,
   revision selector, historical definition, or dated model roster.
+- Product & people and Story have current explanations; later categories remain
+  unfilled until reviewed. Story's Fate terms follow the current reader-directed
+  Fate modes, not older branching or Fate Survival visibility rules.
 - No database, authentication, generated content, external requests, local
   storage, package exports, or production transfer is introduced. URL state is
   owned by `WorkshopHome`; browser Back/Forward restores tabs and topics.

@@ -5,7 +5,7 @@ import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { createHarnessFoundationFromStorySeed } from "../../workshop/previews/harness-generation/storySeedHandoff";
 import { handleStorySeedBlueprintHttp } from "./http";
 import { resolveStorySeedBlueprintConfig } from "./config";
-import { BlueprintOutputLimitError, blueprintRoadmapArcLimit } from "./generate";
+import { BlueprintOutputLimitError, arcRoadmapExtensionArcLimit, blueprintRoadmapArcLimit } from "./generate";
 import type {
   WorldBlueprintModelProvider,
   WorldBlueprintModelRequest,
@@ -375,5 +375,99 @@ describe("protected Story Seed World Blueprint generation", () => {
     expect(minister?.[0].evidence).toContain("former tutor");
     expect(minister?.[0].evidence).toContain("The only minister whose testimony changed between timelines.");
     expect(JSON.stringify(foundation)).not.toContain("workshop-fixture");
+  });
+});
+
+const post = (body: Record<string, unknown>, provider: WorldBlueprintModelProvider, overrides: Record<string, string> = {}) => handleStorySeedBlueprintHttp({
+  method: "POST",
+  headers: { Authorization: "Bearer development-access-token" },
+  body,
+}, { environment: { ...environment, ...overrides }, providerFactory: () => provider });
+
+const errorOf = (response: { body: unknown }) => (response.body as { error: string }).error;
+
+describe("Blueprint arc count and added arcs", () => {
+  it("regenerates with the arc count the author chose, as an exact schema and prompt instruction", async () => {
+    const provider = new RecordingProvider();
+    const response = await post({ storySeed: canonicalSeed(), arcCount: 3 }, provider);
+    expect(response.status).toBe(200);
+    expect((response.body as WorldBlueprint).arcPlans).toHaveLength(3);
+    const schema = provider.requests[0].responseJsonSchema;
+    expect(schema.properties.estimatedArcs).toMatchObject({ minimum: 3, maximum: 3 });
+    expect(schema.properties.arcPlans).toMatchObject({ minItems: 3, maxItems: 3 });
+    expect(provider.requests[0].userPrompt).toContain("The author chose the story's length: estimatedArcs is exactly 3.");
+    expect(provider.requests[0].userPrompt).not.toContain("a realistic estimatedArcs");
+  });
+
+  it("refuses a chosen arc count the output budget cannot hold, before calling the model", async () => {
+    const provider = new RecordingProvider();
+    const response = await post({ storySeed: canonicalSeed(), arcCount: 20 }, provider);
+    expect(response.status).toBe(400);
+    expect(errorOf(response)).toContain("at most 14 arcs within the model's 8,192-token output limit, and 20 were requested. Nothing was generated.");
+    expect(provider.requests).toHaveLength(0);
+    expect(errorOf(await post({ storySeed: canonicalSeed(), arcCount: 2.5 }, provider))).toContain("whole number from 1 to 100");
+  });
+
+  it("fails loudly when the model plans a different length than the author chose", async () => {
+    const response = await post({ storySeed: canonicalSeed(), arcCount: 4 }, new RecordingProvider());
+    expect(response.status).toBe(502);
+    expect(errorOf(response)).toContain("planned 3 arcs instead of the 4 requested. Nothing was shortened or saved");
+  });
+
+  const reviewed = async () => (await manifest(new RecordingProvider())).body as WorldBlueprint;
+  const addedArcs = (...ids: string[][]) => ({ arcPlans: ids.map((goalIds, index) => ({
+    arcNumber: 3 + index,
+    goals: goalIds.map((id, goalIndex) => ({ id, text: `New goal ${id}.`, chapters: goalIndex ? 1 : 101 - goalIds.length })),
+  })) });
+
+  it("plans only the new arcs, with the saved roadmap as context, and returns them numbered before the final arc", async () => {
+    const blueprint = await reviewed();
+    // The model reuses a saved goal identity; the new goal is given a unique one.
+    const provider = new RecordingProvider(addedArcs(["arc-3-oath", "arc-3-siege"], ["arc-4-return"]));
+    const response = await post({ operation: "extend-arc-roadmap", storySeed: canonicalSeed(), blueprint, arcCount: 5 }, provider);
+    expect(response.status).toBe(200);
+    const added = (response.body as { addedArcPlans: Array<{ arcNumber: number; goals: Array<{ id: string }> }> }).addedArcPlans;
+    expect(added.map(plan => plan.arcNumber)).toEqual([3, 4]);
+    expect(added[0].goals.map(goal => goal.id)).toEqual(["arc-3-oath-2", "arc-3-siege"]);
+    const request = provider.requests[0];
+    expect(request.systemInstruction).toContain("plan only the new arcs the author asked for, and never restate, rewrite, renumber, or contradict a saved arc");
+    expect(request.userPrompt).toContain("from 3 to 5 arcs. Plan only the 2 new arcs.");
+    expect(request.userPrompt).toContain("between Arc 2 and the final arc");
+    expect(request.userPrompt).toContain("the current final arc becomes Arc 5 and keeps its goals unchanged");
+    expect(request.userPrompt).toContain("[arc-2-tribunal] Win a seat on the Vermilion Tribunal. (100 chapters)");
+    expect(request.userPrompt).toContain("Arc 3 (final arc; reaches the Destined Ending):");
+    expect(request.userPrompt).toContain("lead into the final arc's first goal, \"Break the seventh oath.\"");
+    expect(request.userPrompt).toContain("Destined Ending (the fixed destination): Jin Rui must accept or destroy the seventh crown.");
+    const schema = request.responseJsonSchema as unknown as { required: string[]; properties: { arcPlans: { minItems: number; maxItems: number } } };
+    expect(schema.required).toEqual(["arcPlans"]);
+    expect(schema.properties.arcPlans).toMatchObject({ minItems: 2, maxItems: 2 });
+  });
+
+  it("adds nothing when the model plans the wrong number of arcs or invalid ones", async () => {
+    const blueprint = await reviewed();
+    const short = await post({ operation: "extend-arc-roadmap", storySeed: canonicalSeed(), blueprint, arcCount: 5 }, new RecordingProvider(addedArcs(["arc-3-only"])));
+    expect(short.status).toBe(502);
+    expect(errorOf(short)).toBe("The model planned 1 of the 2 new arcs. Nothing was added; try again.");
+    const invalid = await post({ operation: "extend-arc-roadmap", storySeed: canonicalSeed(), blueprint, arcCount: 4 }, new RecordingProvider({ arcPlans: [{ arcNumber: 3, goals: [{ id: "arc-3-short", text: "Too short.", chapters: 40 }] }] }));
+    expect(invalid.status).toBe(502);
+    expect(errorOf(invalid)).toContain("The new arcs are invalid: Goal allocations must total 100 chapters. Nothing was added");
+  });
+
+  it("refuses requests that would re-plan a saved arc or exceed one call's budget, without calling the model", async () => {
+    const blueprint = await reviewed();
+    const provider = new RecordingProvider(addedArcs(["unused"]));
+    const oneArc = { ...blueprint, estimatedArcs: 1, arcPlans: blueprint.arcPlans!.slice(0, 1) };
+    const single = await post({ operation: "extend-arc-roadmap", storySeed: canonicalSeed(), blueprint: oneArc, arcCount: 3 }, provider);
+    expect(single.status).toBe(400);
+    expect(errorOf(single)).toContain("plans the whole story as one arc");
+    const notLonger = await post({ operation: "extend-arc-roadmap", storySeed: canonicalSeed(), blueprint, arcCount: 3 }, provider);
+    expect(notLonger.status).toBe(400);
+    expect(errorOf(notLonger)).toContain("already plans 3 arcs");
+    const tooMany = await post({ operation: "extend-arc-roadmap", storySeed: canonicalSeed(), blueprint, arcCount: 18 }, provider, { STORY_SEED_BLUEPRINT_MAX_OUTPUT_TOKENS: "4096" });
+    expect(tooMany.status).toBe(400);
+    expect(errorOf(tooMany)).toContain("One request can add at most 14 arcs within the model's 4,096-token output limit, and 15 were requested. Nothing was generated.");
+    expect(provider.requests).toHaveLength(0);
+    expect(arcRoadmapExtensionArcLimit(8_192)).toBe(30);
+    expect(errorOf(await post({ operation: "rewrite-everything", storySeed: canonicalSeed() }, provider))).toBe("Unknown Blueprint operation.");
   });
 });

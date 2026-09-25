@@ -1,4 +1,10 @@
-import { type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
+import {
+  ARC_ROADMAP_EXTENSION_OPERATION,
+  type ArcRoadmapExtensionPayload,
+  type BlueprintGenerationPayload,
+  type StorySeedInput,
+  type WorldBlueprint,
+} from '@seihouse/sen/story-seed';
 import { hasValidBearerToken } from "../shared/bearerToken";
 import {
   resolveStorySeedBlueprintConfig,
@@ -6,7 +12,10 @@ import {
 } from "./config";
 import {
   BlueprintOutputLimitError,
+  BlueprintRequestError,
+  BlueprintRoadmapError,
   createWorldBlueprintProvider,
+  extendArcRoadmap,
   generateWorldBlueprint,
   type WorldBlueprintModelProvider,
 } from "./generate";
@@ -39,12 +48,34 @@ const errorResponse = (status: number, error: string): StorySeedBlueprintHttpRes
   headers: { "Cache-Control": "no-store" },
 });
 
-const parseRequest = (body: unknown): BlueprintGenerationPayload => {
+/** One endpoint, two operations: a whole Blueprint, or only the arcs an author is adding to one. */
+type BlueprintHttpOperation =
+  | { operation: "generate"; payload: BlueprintGenerationPayload }
+  | { operation: typeof ARC_ROADMAP_EXTENSION_OPERATION; payload: ArcRoadmapExtensionPayload };
+
+const parseRequest = (body: unknown): BlueprintHttpOperation => {
   const parsed = typeof body === "string" ? JSON.parse(body) : body;
   if (!isRecord(parsed) || !isRecord(parsed.storySeed)) {
     throw new Error("The Blueprint request must contain the complete finalized Story Seed.");
   }
-  return { storySeed: parsed.storySeed as unknown as BlueprintGenerationPayload["storySeed"] };
+  const storySeed = parsed.storySeed as unknown as StorySeedInput;
+  if (parsed.operation === ARC_ROADMAP_EXTENSION_OPERATION) {
+    if (!isRecord(parsed.blueprint)) throw new Error("An arc request must contain the reviewed World Blueprint.");
+    return {
+      operation: ARC_ROADMAP_EXTENSION_OPERATION,
+      payload: {
+        operation: ARC_ROADMAP_EXTENSION_OPERATION,
+        storySeed,
+        blueprint: parsed.blueprint as unknown as WorldBlueprint,
+        arcCount: parsed.arcCount as number,
+      },
+    };
+  }
+  if (parsed.operation !== undefined) throw new Error("Unknown Blueprint operation.");
+  return {
+    operation: "generate",
+    payload: { storySeed, ...(parsed.arcCount === undefined ? {} : { arcCount: parsed.arcCount as number }) },
+  };
 };
 
 export async function handleStorySeedBlueprintHttp(
@@ -87,9 +118,9 @@ export async function handleStorySeedBlueprintHttp(
     return errorResponse(503, missingKeyMessage(config.model));
   }
 
-  let payload: BlueprintGenerationPayload;
+  let parsed: BlueprintHttpOperation;
   try {
-    payload = parseRequest(request.body);
+    parsed = parseRequest(request.body);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid JSON request.";
     return errorResponse(400, message === "Unexpected end of JSON input"
@@ -101,30 +132,32 @@ export async function handleStorySeedBlueprintHttp(
     const provider = dependencies.providerFactory
       ? dependencies.providerFactory(config.apiKey, config.model)
       : createWorldBlueprintProvider({ ...config, apiKey: config.apiKey });
-    const blueprint = await generateWorldBlueprint(payload, config, provider);
+    const body = parsed.operation === ARC_ROADMAP_EXTENSION_OPERATION
+      ? { addedArcPlans: await extendArcRoadmap(parsed.payload, config, provider) }
+      : await generateWorldBlueprint(parsed.payload, config, provider);
     return {
       status: 200,
-      body: blueprint,
+      body,
       headers: { "Cache-Control": "no-store" },
     };
   } catch (error) {
     dependencies.onError?.(error);
     const message = error instanceof Error ? error.message : "Unknown Blueprint generation failure";
-    if (["Style is required", "Genre is required", "Premise is required", "Story Tags are required"]
-      .some(fragment => message.includes(fragment))) {
+    if (error instanceof BlueprintRequestError
+      || ["Style is required", "Genre is required", "Premise is required", "Story Tags are required"]
+        .some(fragment => message.includes(fragment))) {
       return errorResponse(400, message);
     }
     // An output limit or an incomplete roadmap is reported as it is, never
     // hidden behind a generic retry message or shortened to fit.
-    if (error instanceof BlueprintOutputLimitError || /arc roadmap|arcs\. Nothing was shortened/.test(message)) {
+    if (error instanceof BlueprintOutputLimitError || error instanceof BlueprintRoadmapError) {
       return errorResponse(502, message);
     }
     if (message.includes("output token limit")) {
       return errorResponse(502, new BlueprintOutputLimitError(config?.maxOutputTokens ?? 0).message);
     }
-    return errorResponse(
-      502,
-      "Gemini could not produce a complete World Blueprint. No Story Seed data was changed; please retry.",
-    );
+    return errorResponse(502, parsed.operation === ARC_ROADMAP_EXTENSION_OPERATION
+      ? "The new arcs could not be planned. Nothing was changed; please retry."
+      : "Gemini could not produce a complete World Blueprint. No Story Seed data was changed; please retry.");
   }
 }

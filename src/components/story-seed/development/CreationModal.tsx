@@ -14,7 +14,8 @@ import { type WorldBlueprint } from '@seihouse/sen/story-seed';
 import { generateUUID } from '@seihouse/sen/story-seed';
 import { useStoryCreationRuntime, useStoryCreationStore, type StoryCreationSnapshot } from '../../../library/story-seed/runtime';
 import { type StorySeedArtifact, type StorySeedRecord } from '@seihouse/sen/story-seed';
-import { applyInferredStoryTags, buildBlueprintGenerationPayload, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, mirrorSeedIntoBlueprint, normalizeStorySeedInput, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { insertArcsBeforeFinal, type ArcPlan } from '@seihouse/sen/arc-goals';
+import { applyInferredStoryTags, buildArcRoadmapExtensionPayload, buildBlueprintGenerationPayload, buildInitialStoryGenerationPayload, createBlueprintDraftFromSeed, createEmptyStorySeedInput, mirrorSeedIntoBlueprint, normalizeStorySeedInput, reconcileStorySeedBlueprint, validateStorySeedDraft, validateStorySeedInput, type ArcRoadmapExtensionPayload, type BlueprintGenerationPayload, type InitialStoryGenerationPayload, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { createStoryAdministrativeMetadata } from '@seihouse/sen/story-seed';
 import { DEFAULT_SEN_LANGUAGE_CODE, normalizeSenLanguageCode, type SenLanguageCode } from '@seihouse/sen/contracts';
 import StoryAuthGate, { STORY_AUTH_DISSOLVE_MS } from './StoryAuthGate';
@@ -46,6 +47,12 @@ export interface CreationModalProps {
   onNavigateHome: () => void;
   onStartStory: (payload: InitialStoryGenerationPayload) => Promise<void>;
   onGenerateBlueprint: (payload: BlueprintGenerationPayload) => Promise<WorldBlueprint>;
+  /**
+   * Plans only the arcs an author adds to a reviewed Blueprint and returns
+   * them. Without it, the review offers only a whole-Blueprint regeneration
+   * for a different arc count.
+   */
+  onExtendArcRoadmap?: (payload: ArcRoadmapExtensionPayload) => Promise<ArcPlan[]>;
   isGenerating: boolean;
   error: string | null;
   /**
@@ -122,7 +129,7 @@ const selectCreationModalStore = (state: StoryCreationSnapshot): CreationModalSt
   libraryStories: state.stories,
 });
 
-export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, isGenerating: isGeneratingProp, error, accountDefaultLanguage }: CreationModalProps) {
+export default function CreationModal({ onNavigateHome, onStartStory, onGenerateBlueprint, onExtendArcRoadmap, isGenerating: isGeneratingProp, error, accountDefaultLanguage }: CreationModalProps) {
   const runtime = useStoryCreationRuntime();
   const guestWorkspace = Boolean(runtime.guestOwnerId);
   const storeIsGenerating = useStoryCreationStore(state => state.isGenerating);
@@ -195,6 +202,10 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   // The workspace edits the canonical Story Seed directly — there is no
   // separate flat view model between the form and the contract any more.
   const [seed, setSeed] = useState<StorySeedInput>(createEmptyStorySeedInput);
+  // The latest rendered pair, read when a long request returns, so edits made
+  // while it was in flight are built on instead of overwritten.
+  const latestReviewRef = useRef<{ seed: StorySeedInput; blueprint: WorldBlueprint | null }>({ seed, blueprint });
+  latestReviewRef.current = { seed, blueprint };
 
   const setActiveSeed = useCallback((record: StorySeedRecord | null) => {
     currentSeedRef.current = record;
@@ -433,34 +444,82 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
       setSeedError(validation.errors.join(' '));
       return;
     }
-    // Write the inferred tags back so the creator sees exactly what is saved.
-    if (seed.story.required.storyTags.length === 0) setSeed(seedInput);
     try {
-      // Blueprint review code downloads while the provider is generating, so
-      // the dossier is ready when the response arrives without burdening the
-      // initial Story Seed route.
-      preloadStorySeedSecondary();
-      const generated = await onGenerateBlueprint(buildBlueprintGenerationPayload(seedInput));
-      // Everything the Blueprint generated that the Seed has a field for
-      // (world identity, ending, goal, main character, side characters,
-      // factions) is copied into the Seed, where review edits it.
-      const { seed: generatedSeed, blueprint: bp } = reconcileStorySeedBlueprint(seedInput, generated, {
-        creator: currentUser?.displayName,
-        preserveSourceMetadata: false,
-      });
-      setSeed(generatedSeed);
-      setBlueprint(bp);
-      setStage('blueprint');
-      try {
-        await persistSeed(generatedSeed, bp, originalLanguage);
-        setSeedError(null);
-      } catch (seedSaveError) {
-        console.error('Failed to save generated story seed:', seedSaveError);
-        setSeedError('The blueprint was generated, but its account seed was not saved. Retry before starting the story.');
-      }
+      await generateBlueprintFrom(seedInput);
     } catch (generationError) {
       console.error('Failed to generate World Blueprint:', generationError);
       setSeedError(mapCreationFailure('blueprint', generationError));
+    }
+  };
+
+  /**
+   * Generates a Blueprint from a validated Seed, at the arc count the author
+   * chose when there is one, and opens it for review. Generation failures are
+   * thrown to the caller.
+   */
+  const generateBlueprintFrom = async (seedInput: StorySeedInput, arcCount?: number) => {
+    // Write the inferred tags back so the creator sees exactly what is saved.
+    if (seed.story.required.storyTags.length === 0) setSeed(seedInput);
+    // Blueprint review code downloads while the provider is generating, so
+    // the dossier is ready when the response arrives without burdening the
+    // initial Story Seed route.
+    preloadStorySeedSecondary();
+    const generated = await onGenerateBlueprint(buildBlueprintGenerationPayload(seedInput, { arcCount }));
+    // Everything the Blueprint generated that the Seed has a field for
+    // (world identity, ending, goal, main character, side characters,
+    // factions) is copied into the Seed, where review edits it.
+    const { seed: generatedSeed, blueprint: bp } = reconcileStorySeedBlueprint(seedInput, generated, {
+      creator: currentUser?.displayName,
+      preserveSourceMetadata: false,
+    });
+    setSeed(generatedSeed);
+    setBlueprint(bp);
+    setStage('blueprint');
+    try {
+      await persistSeed(generatedSeed, bp, originalLanguage);
+      setSeedError(null);
+    } catch (seedSaveError) {
+      console.error('Failed to save generated story seed:', seedSaveError);
+      setSeedError('The blueprint was generated, but its account seed was not saved. Retry before starting the story.');
+    }
+  };
+
+  /**
+   * Blueprint review: replace the whole Blueprint with a fresh one planned at
+   * the chosen arc count. The Seed, with every reviewed value it owns, is the
+   * input, so the Destined Ending and opening goal carry over.
+   */
+  const handleRegenerateBlueprint = async (arcCount: number) => {
+    if (runtime.store.getSnapshot().isGenerating) throw new Error('Another generation is still running. Try again when it finishes.');
+    const seedInput = applyInferredStoryTags(normalizeStorySeedInput(seed));
+    const validation = validateStorySeedInput(seedInput);
+    if (!validation.valid) throw new Error(validation.errors.join(' '));
+    await generateBlueprintFrom(seedInput, arcCount);
+  };
+
+  /**
+   * Blueprint review: plan only the arcs being added. Every saved arc keeps
+   * its goals; the new ones go in before the final arc, which still reaches
+   * the Destined Ending. The lengthened Blueprint is saved like a generated one.
+   */
+  const handleAddArcs = async (arcCount: number) => {
+    if (!onExtendArcRoadmap || !blueprint) return;
+    if (runtime.store.getSnapshot().isGenerating) throw new Error('Another generation is still running. Try again when it finishes.');
+    const context = blueprintContextForRecord(currentSeed || undefined);
+    const reviewed = reconcileStorySeedBlueprint(applyInferredStoryTags(normalizeStorySeedInput(seed)), blueprint, context);
+    const added = await onExtendArcRoadmap(buildArcRoadmapExtensionPayload(reviewed.seed, reviewed.blueprint, arcCount));
+    const latest = latestReviewRef.current;
+    const base = latest.blueprint ?? reviewed.blueprint;
+    const arcPlans = insertArcsBeforeFinal(base.arcPlans ?? [], added);
+    const lengthened: WorldBlueprint = { ...base, arcPlans, estimatedArcs: arcPlans.length };
+    setBlueprint(lengthened);
+    try {
+      const saved = reconcileStorySeedBlueprint(applyInferredStoryTags(normalizeStorySeedInput(latest.seed)), lengthened, context);
+      await persistSeed(saved.seed, saved.blueprint, originalLanguage);
+      setSeedError(null);
+    } catch (seedSaveError) {
+      console.error('Failed to save the lengthened Blueprint:', seedSaveError);
+      setSeedError('The new arcs were added, but this seed was not saved to your account. Save the draft before leaving.');
     }
   };
 
@@ -628,6 +687,8 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
   const requestStartStory = useLatestCallback(handleStartStoryClick);
   const requestExportCurrentSeed = useLatestCallback(handleExportCurrentSeed);
   const requestGenerateBlueprint = useLatestCallback(handleGenerateBlueprintClick);
+  const requestRegenerateBlueprint = useLatestCallback(handleRegenerateBlueprint);
+  const requestAddArcs = useLatestCallback(handleAddArcs);
 
   if ((!currentUser || authDissolving) && !guestWorkspace) {
     return <StoryAuthGate linked={Boolean(currentUser)} onAuthenticate={runtime.authenticate} />;
@@ -651,6 +712,8 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
             onStartStory={requestStartStory}
             onExportSeed={requestExportCurrentSeed}
             isGenerating={isGenerating}
+            onRegenerateBlueprint={requestRegenerateBlueprint}
+            onAddArcs={onExtendArcRoadmap ? requestAddArcs : undefined}
             originalLanguage={originalLanguage}
             onOriginalLanguageChange={resolveOriginalLanguage}
           />

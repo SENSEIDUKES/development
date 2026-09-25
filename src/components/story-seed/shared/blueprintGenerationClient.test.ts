@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
-import { requestWorldBlueprint } from '../../../host/story-seed/blueprintGenerationClient';
+import { requestArcRoadmapExtension, requestWorldBlueprint } from '../../../host/story-seed/blueprintGenerationClient';
 
 const payload: BlueprintGenerationPayload = {
   storySeed: {
@@ -59,5 +59,24 @@ describe('Blueprint generation client cancellation', () => {
     controller.abort(new DOMException('Scenario changed', 'AbortError'));
 
     await expect(request).rejects.toThrow('Scenario changed');
+  });
+});
+
+describe('Adding arcs through the Blueprint client', () => {
+  const extension = { operation: 'extend-arc-roadmap' as const, storySeed: payload.storySeed, blueprint: {} as never, arcCount: 5 };
+  const added = [{ arcNumber: 3, goals: [{ id: 'arc-3-new', text: 'Cross the second moon.', chapters: 100 }] }];
+
+  it('posts the extension request and returns only the new arcs', async () => {
+    const fetchNewArcs = vi.fn(async () => new Response(JSON.stringify({ addedArcPlans: added }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchNewArcs);
+    await expect(requestArcRoadmapExtension(extension, 'development-token')).resolves.toEqual(added);
+    const [, init] = fetchNewArcs.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toMatchObject({ operation: 'extend-arc-roadmap', arcCount: 5 });
+  });
+
+  it('reports the server reason as it is', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: 'The model planned 1 of the 2 new arcs. Nothing was added; try again.' }), { status: 502 })));
+    await expect(requestArcRoadmapExtension(extension, 'development-token')).rejects.toThrow('The model planned 1 of the 2 new arcs.');
+    await expect(requestArcRoadmapExtension(extension, ' ')).rejects.toThrow('before adding arcs');
   });
 });

@@ -117,7 +117,44 @@ export function validateArcRoadmap(value: unknown, arcCount?: number): ArcPlan[]
   });
 }
 
-/** Response schema for a complete roadmap generated in one call. */
-export const arcRoadmapSchema = (maxArcs: number) => ({
-  type: 'array', minItems: 1, maxItems: maxArcs, items: ARC_PLAN_SCHEMA,
+/** Response schema for arc plans generated in one call: a whole roadmap, or only the arcs being added. */
+export const arcRoadmapSchema = (maxArcs: number, minArcs = 1) => ({
+  type: 'array', minItems: minArcs, maxItems: maxArcs, items: ARC_PLAN_SCHEMA,
 });
+
+/**
+ * Whether arcs can be added to a roadmap without re-planning a saved arc. New
+ * arcs go in before the final arc; a one-arc roadmap's only arc is both its
+ * opening and its final arc, so it has no such place.
+ */
+export const arcsCanBeAddedBeforeFinal = (roadmap: readonly ArcPlan[]): boolean => roadmap.length >= 2;
+
+/**
+ * Lengthens a roadmap without re-planning it. The new arcs go in before the
+ * final arc, which keeps its goals and remains the arc that reaches the
+ * Destined Ending; every other saved arc keeps its goals and its number. The
+ * new arcs are numbered by position, whatever numbers they arrived with, and a
+ * new goal whose identity is already taken is given a unique one, so a
+ * completion can never be claimed by a goal in another arc.
+ */
+export function insertArcsBeforeFinal(roadmap: readonly ArcPlan[], added: readonly ArcPlan[]): ArcPlan[] {
+  const saved = validateArcRoadmap(roadmap);
+  if (!arcsCanBeAddedBeforeFinal(saved)) {
+    throw new Error('A one-arc roadmap is both its opening and its final arc, so there is no place to add arcs without re-planning it. Regenerate the Blueprint with more arcs instead.');
+  }
+  if (!added.length) throw new Error('Add at least one arc.');
+  const taken = new Set(saved.flatMap(plan => plan.goals.map(goal => goal.id)));
+  const uniqueId = (id: string) => {
+    let candidate = id;
+    for (let suffix = 2; taken.has(candidate); suffix += 1) candidate = `${id}-${suffix}`;
+    taken.add(candidate);
+    return candidate;
+  };
+  const finalIndex = saved.length - 1;
+  const inserted = added.map((entry, index) => {
+    const plan = validateArcPlan({ ...entry, arcNumber: finalIndex + 1 + index });
+    return { ...plan, goals: plan.goals.map(goal => ({ ...goal, id: uniqueId(goal.id) })) };
+  });
+  const arcCount = saved.length + inserted.length;
+  return validateArcRoadmap([...saved.slice(0, finalIndex), ...inserted, { ...saved[finalIndex], arcNumber: arcCount }], arcCount);
+}

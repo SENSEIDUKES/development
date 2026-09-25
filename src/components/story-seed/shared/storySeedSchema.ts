@@ -23,7 +23,7 @@
  * belongs to the locked `reference/` replica (see `referenceIntake.ts`).
  */
 
-import { ARC_LENGTH, createInitialArcPlan, validateArcPlan, validateArcRoadmap, type ArcGoal, type ArcPlan } from '../../arc-goals/shared/arcGoals';
+import { ARC_LENGTH, MAX_ROADMAP_ARCS, arcsCanBeAddedBeforeFinal, createInitialArcPlan, validateArcPlan, validateArcRoadmap, type ArcGoal, type ArcPlan } from '../../arc-goals/shared/arcGoals';
 import { normalizeFunSettings, validateHardPinInputs, type FunSettings, type HardPinInput } from '../../../narrative/storyDirection';
 export { normalizeFunSettings, HARD_PIN_LIMIT, HARD_PIN_TEXT_LIMIT, validateHardPinInputs, type FunSettings, type FunSettingLevel, type HardPinInput } from '../../../narrative/storyDirection';
 import type {
@@ -189,6 +189,27 @@ export interface StorySeedInput {
 
 export interface BlueprintGenerationPayload {
   storySeed: StorySeedInput;
+  /**
+   * The number of arcs the author asked the Blueprint to plan. Absent, the
+   * model chooses a realistic length for the story.
+   */
+  arcCount?: number;
+}
+
+/** Names an arc extension request on the Blueprint endpoint. */
+export const ARC_ROADMAP_EXTENSION_OPERATION = 'extend-arc-roadmap' as const;
+
+/**
+ * Asks for only the arcs an author is adding to a reviewed Blueprint. The
+ * saved roadmap travels as context and is never re-planned; the new arcs go in
+ * before its final arc (see `insertArcsBeforeFinal`).
+ */
+export interface ArcRoadmapExtensionPayload {
+  operation: typeof ARC_ROADMAP_EXTENSION_OPERATION;
+  storySeed: StorySeedInput;
+  blueprint: WorldBlueprint;
+  /** The roadmap's length once the new arcs are added. */
+  arcCount: number;
 }
 
 export interface InitialStoryGenerationPayload extends BlueprintGenerationPayload {
@@ -1072,10 +1093,44 @@ export const finalizeGeneratedWorldBlueprint = (
   };
 };
 
-export const buildBlueprintGenerationPayload = (seed: StorySeedInput): BlueprintGenerationPayload => {
+/** A requested arc count is a whole number of arcs a roadmap can hold. */
+export const validateRequestedArcCount = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value > MAX_ROADMAP_ARCS) {
+    throw new Error(`The arc count must be a whole number from 1 to ${MAX_ROADMAP_ARCS}.`);
+  }
+  return value;
+};
+
+export const buildBlueprintGenerationPayload = (
+  seed: StorySeedInput,
+  options: { arcCount?: number } = {},
+): BlueprintGenerationPayload => {
   const storySeed = applyInferredStoryTags(normalizeStorySeedInput(seed));
   assertValidStorySeedInput(storySeed);
-  return { storySeed };
+  return { storySeed, ...(options.arcCount === undefined ? {} : { arcCount: validateRequestedArcCount(options.arcCount) }) };
+};
+
+/**
+ * Validates a request to add arcs to a reviewed Blueprint: a valid Seed, a
+ * complete saved roadmap with a place before its final arc, and a longer
+ * target length.
+ */
+export const buildArcRoadmapExtensionPayload = (
+  seed: StorySeedInput,
+  blueprint: WorldBlueprint,
+  arcCount: number,
+): ArcRoadmapExtensionPayload => {
+  const storySeed = applyInferredStoryTags(normalizeStorySeedInput(seed));
+  assertValidStorySeedInput(storySeed);
+  const arcPlans = validateBlueprintArcRoadmap(blueprint);
+  if (!arcsCanBeAddedBeforeFinal(arcPlans)) {
+    throw new Error('This roadmap plans the whole story as one arc, which is both its opening and its final arc. Regenerate the Blueprint with more arcs instead.');
+  }
+  const target = validateRequestedArcCount(arcCount);
+  if (target <= arcPlans.length) {
+    throw new Error(`The roadmap already plans ${arcPlans.length} ${arcPlans.length === 1 ? 'arc' : 'arcs'}. Choose a larger arc count to add arcs, or regenerate the Blueprint to plan fewer.`);
+  }
+  return { operation: ARC_ROADMAP_EXTENSION_OPERATION, storySeed, blueprint: { ...blueprint, arcPlans }, arcCount: target };
 };
 
 export const buildInitialStoryGenerationPayload = (

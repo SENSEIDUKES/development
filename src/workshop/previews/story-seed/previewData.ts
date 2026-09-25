@@ -135,6 +135,17 @@ export const createMockArcRoadmap = (arcCount: number, openingGoal?: { id: strin
     return { arcNumber, goals };
   });
 
+/**
+ * Mock arcs for Add arcs: bridge arcs numbered from `firstArc`, which the
+ * Blueprint review inserts before the final arc.
+ */
+export const createMockAddedArcs = (firstArc: number, count: number): ArcPlan[] =>
+  Array.from({ length: count }, (_, index) => {
+    const arcNumber = firstArc + index;
+    const texts = [`Hold the alliance together through the trials of Arc ${arcNumber}`, `Uncover the court's next move against the prince`, `Force the elders to choose a side`];
+    return { arcNumber, goals: texts.map((text, goalIndex) => ({ id: `arc-${arcNumber}-added-${goalIndex + 1}`, text, chapters: goalIndex === 1 ? 40 : 30 })) };
+  });
+
 export const createMockBlueprint = (): WorldBlueprint => ({
   arcPlans: createMockArcRoadmap(3),
   blueprintVersion: 'v1.0',

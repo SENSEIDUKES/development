@@ -25,11 +25,24 @@ existing Chapter Generation feature.
 | Field | Value |
 | --- | --- |
 | Replica creation date | 2026-08-29 |
-| Last Workshop update | 2026-09-24 |
+| Last Workshop update | 2026-09-25 |
 | Last source comparison | 2026-09-12 — verified the creative author direction in `Light-Novels/src/server/prompts.ts` on `main` before extracting the Author skill |
 | Lifecycle status | Steered continuation with a derived SEN Reader adapter |
 
 ### History
+
+- **2026-09-25:** The Story Seed handoff now carries the Blueprint's added world
+  detail. Where the author wrote the world, society, or opening location, the
+  Foundation keeps the author's line as the fact and adds the Blueprint's
+  compatible detail beside it once: `World detail` and `Society detail` lines in
+  `worldFacts`, and the opening detail on its own line after the author's opening
+  in `openingSituation`. A detail travels only while its fact still reads as it
+  did when the detail was generated or last reviewed, so a cleared or rewritten
+  fact never receives a detail written for another. Generated supporting
+  characters and factions that mention an author's character or faction now reach
+  the Foundation as identities instead of being discarded upstream. The
+  chapter-writing prompt and the packet's structure are unchanged; stories without
+  detail keep identical Foundations. No HARNESS schema change.
 
 - **2026-09-24:** Connected the Destined Ending and the Blueprint's arc roadmap.
   A story started from a reviewed Blueprint receives every arc's saved plan and

@@ -1,6 +1,7 @@
 import { memo, type Dispatch, type SetStateAction } from 'react';
 import {
   CalendarDays,
+  Check,
   Drama,
   Feather,
   FileText,
@@ -11,10 +12,22 @@ import {
   Tag,
 } from 'lucide-react';
 import { LibraryPowerSystemIcon as SENPowerSystemIcon, LibraryWorldIdentityIcon as SENWorldIdentityIcon } from '@seihouse/library-ui';
-import { type StorySeedInput, type StorySeedWorldIdentity, type WorldBlueprint } from '@seihouse/sen/story-seed';
+import {
+  worldFactDetailIsCurrent,
+  type StorySeedInput,
+  type StorySeedWorldIdentity,
+  type WorldBlueprint,
+  type WorldFactDetailBasisField,
+  type WorldFactDetailField,
+} from '@seihouse/sen/story-seed';
 import { STORY_PREMISE_MAX_LENGTH, STORY_TAG_LIMIT, type StorySeedStoryRequired } from '@seihouse/sen/story-seed';
 import { STORY_STYLE_OPTIONS, type StoryStyle } from '@seihouse/sen/story-seed';
-import { NarrativePanel as LibraryPanel, NarrativeTextArea as LibraryTextArea, NarrativeTextBox as LibraryTextBox } from '@seihouse/sen/presentation';
+import {
+  NarrativeButton as LibraryButton,
+  NarrativePanel as LibraryPanel,
+  NarrativeTextArea as LibraryTextArea,
+  NarrativeTextBox as LibraryTextBox,
+} from '@seihouse/sen/presentation';
 import {
   BlueprintSectionHeading,
   EditableChip,
@@ -223,7 +236,58 @@ interface BlueprintWorldSettingSectionProps {
   powerSystemOutline?: WorldBlueprint['powerSystemOutline'];
   onUpdateWorldIdentity: (patch: Partial<StorySeedWorldIdentity>) => void;
   onPowerSystemOutlineChange: (powerSystemOutline: string) => void;
+  /** The Blueprint's generated detail beside each author-written fact, when it has one, and the fact it was written for. */
+  worldFactDetails?: WorldFactDetails;
+  /** An edit to a detail, which also reviews it against the fact shown above it. */
+  onWorldFactDetailChange?: (field: WorldFactDetailField, value: string, fact: string) => void;
 }
+
+type WorldFactDetails = Partial<Pick<WorldBlueprint, WorldFactDetailField | WorldFactDetailBasisField>>;
+
+/**
+ * A Blueprint-owned detail under the author's fact it adds to. Absent until
+ * generation writes one, and hidden while the fact is empty. A detail written
+ * for an earlier version of the fact stays visible but is marked, and chapter
+ * generation skips it until the author edits or keeps it.
+ */
+const WorldFactDetailArea = ({ id, label, field, fact, details, onChange }: {
+  id: string;
+  label: string;
+  field: WorldFactDetailField;
+  fact: string;
+  details: WorldFactDetails;
+  onChange?: (field: WorldFactDetailField, value: string, fact: string) => void;
+}) => {
+  const value = details[field];
+  if (typeof value !== 'string' || !fact.trim()) return null;
+  // An emptied detail has nothing written for an earlier fact.
+  const current = !value.trim() || worldFactDetailIsCurrent(details, field, fact);
+  return (
+    <div>
+      <LibraryTextArea
+        id={id}
+        label={label}
+        rightElement={<EditableChip />}
+        value={value}
+        onChange={next => onChange?.(field, next, fact)}
+        rows={4}
+        className="leading-relaxed"
+        helpText={current ? 'Generated detail that adds to the line above. Chapter generation receives both; your line stays the fact.' : undefined}
+      />
+      {!current && (
+        <div className="mt-2 flex flex-wrap items-center gap-3 rounded-lg border border-amber-300/30 bg-amber-950/20 p-3" data-testid={`${id}-earlier`}>
+          <p className="min-w-0 flex-1 text-sm leading-relaxed text-amber-100">
+            Written for an earlier version of the line above, so chapter generation skips it. Edit it to fit, or keep it as it is.
+          </p>
+          <LibraryButton type="button" size="sm" variant="secondary" icon={Check} aria-label={`Keep ${label} as is`}
+            onClick={() => onChange?.(field, value, fact)}>
+            Keep as is
+          </LibraryButton>
+        </div>
+      )}
+    </div>
+  );
+};
 
 /** World setting: the Seed's world identity, abilities, and power system, plus the Blueprint's power outline prose. */
 export const BlueprintWorldSettingSection = memo(({
@@ -235,6 +299,8 @@ export const BlueprintWorldSettingSection = memo(({
   powerSystemOutline,
   onUpdateWorldIdentity,
   onPowerSystemOutlineChange,
+  worldFactDetails = {},
+  onWorldFactDetailChange,
 }: BlueprintWorldSettingSectionProps) => (
   <LibraryPanel as="section" aria-labelledby="blueprint-world-setting-heading" padding="md">
     <BlueprintSectionHeading
@@ -258,29 +324,39 @@ export const BlueprintWorldSettingSection = memo(({
           placeholder="The setting, lore, and physical characteristics of this universe..."
         />
       </div>
+      <WorldFactDetailArea id="blueprint-world-overview-detail" label="World Detail" field="worldOverviewDetail"
+        details={worldFactDetails} fact={worldType} onChange={onWorldFactDetailChange} />
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <LibraryTextArea
-          id="blueprint-opening-location"
-          label="Opening Location"
-          rightElement={<EditableChip />}
-          icon={MapPin}
-          value={startingLocation}
-          onChange={value => onUpdateWorldIdentity({ startingLocation: value })}
-          rows={5}
-          className="leading-relaxed"
-          placeholder="Where the story begins..."
-        />
-        <LibraryTextArea
-          id="blueprint-world-order"
-          label="World Order"
-          rightElement={<EditableChip />}
-          icon={Landmark}
-          value={societyStructure}
-          onChange={value => onUpdateWorldIdentity({ societyStructure: value })}
-          rows={5}
-          placeholder="Feudal, corporate, sect-based, military rule..."
-        />
+        <div className="space-y-5">
+          <LibraryTextArea
+            id="blueprint-opening-location"
+            label="Opening Location"
+            rightElement={<EditableChip />}
+            icon={MapPin}
+            value={startingLocation}
+            onChange={value => onUpdateWorldIdentity({ startingLocation: value })}
+            rows={5}
+            className="leading-relaxed"
+            placeholder="Where the story begins..."
+          />
+          <WorldFactDetailArea id="blueprint-opening-location-detail" label="Opening Location Detail" field="startingLocationDetail"
+            details={worldFactDetails} fact={startingLocation} onChange={onWorldFactDetailChange} />
+        </div>
+        <div className="space-y-5">
+          <LibraryTextArea
+            id="blueprint-world-order"
+            label="World Order"
+            rightElement={<EditableChip />}
+            icon={Landmark}
+            value={societyStructure}
+            onChange={value => onUpdateWorldIdentity({ societyStructure: value })}
+            rows={5}
+            placeholder="Feudal, corporate, sect-based, military rule..."
+          />
+          <WorldFactDetailArea id="blueprint-world-order-detail" label="World Order Detail" field="societyStructureDetail"
+            details={worldFactDetails} fact={societyStructure} onChange={onWorldFactDetailChange} />
+        </div>
       </div>
 
       <AbilitiesFields seed={seed} updateSeed={updateSeed} />

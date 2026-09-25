@@ -6,7 +6,7 @@ import { lazy, useCallback, useEffect, useRef, useState } from 'react';
 import { CreationModal as DevelopmentCreationModal } from '@seihouse/library/story-seed';
 import { requestArcRoadmapExtension, requestWorldBlueprint } from '../../../host/story-seed/blueprintGenerationClient';
 import { resetStorySeedRepository, setStorySeedRepository } from './storySeedStorage';
-import { type ArcRoadmapExtensionPayload, type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
+import { finalizeGeneratedWorldBlueprint, type ArcRoadmapExtensionPayload, type BlueprintGenerationPayload } from '@seihouse/sen/story-seed';
 import {
   resetMockSeeds,
   resetMockState,
@@ -443,7 +443,12 @@ export function StorySeedWorkspace({ embedded = false, initialState, localGenera
           await wait(300);
           const mock = createMockBlueprint();
           const arcCount = payload.arcCount ?? mock.estimatedArcs;
-          return { ...mock, estimatedArcs: arcCount, arcPlans: createMockArcRoadmap(arcCount, payload.storySeed.story.optional.activeArcGoal) };
+          // Finalized like the server's reply, so the preview shows the same
+          // author-fact detail and cast merging a real generation produces.
+          return finalizeGeneratedWorldBlueprint(
+            { ...mock, estimatedArcs: arcCount, arcPlans: createMockArcRoadmap(arcCount, payload.storySeed.story.optional.activeArcGoal) },
+            payload.storySeed,
+          );
         }
         return await requestWorldBlueprint(payload, blueprintAccessToken, controller.signal);
       } finally {

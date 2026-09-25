@@ -4,6 +4,7 @@ import {
   mirrorSeedIntoBlueprint,
   normalizeStorySeedInput,
   reconcileStorySeedBlueprint,
+  reviewWorldFactDetail,
   type StorySeedInput,
   type WorldBlueprint,
 } from '@seihouse/sen/story-seed';
@@ -126,6 +127,15 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, o
         powerSystemOutline={blueprint.powerSystemOutline}
         onUpdateWorldIdentity={patch => updateSeed(patchWorldIdentity(patch))}
         onPowerSystemOutlineChange={powerSystemOutline => setBlueprint(current => ({ ...current, powerSystemOutline }))}
+        worldFactDetails={{
+          worldOverviewDetail: blueprint.worldOverviewDetail,
+          worldOverviewDetailBasis: blueprint.worldOverviewDetailBasis,
+          startingLocationDetail: blueprint.startingLocationDetail,
+          startingLocationDetailBasis: blueprint.startingLocationDetailBasis,
+          societyStructureDetail: blueprint.societyStructureDetail,
+          societyStructureDetailBasis: blueprint.societyStructureDetailBasis,
+        }}
+        onWorldFactDetailChange={(field, value, fact) => setBlueprint(current => reviewWorldFactDetail(current, field, value, fact))}
       />
       <BlueprintNotesSection styleBible={blueprint.styleBible} setBlueprint={setBlueprint} />
       <BlueprintCollectionSections

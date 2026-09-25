@@ -1,13 +1,47 @@
 import { ARC_LENGTH, MAX_ARC_GOALS, type ArcPlan } from '@seihouse/sen/arc-goals';
-import { type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { WORLD_FACT_DETAILS, type StorySeedInput, type WorldBlueprint } from '@seihouse/sen/story-seed';
 
-export const WORLD_BLUEPRINT_SYSTEM_PROMPT = `You are an elite light-novel creative director and world architect. Build a detailed World Blueprint that can serve as the canon bible for serialized chapter generation.
+export const WORLD_BLUEPRINT_SYSTEM_PROMPT = `You are an elite Eastern fantasy author and world architect. Build a detailed World Blueprint that can serve as the canon bible for serialized chapter generation.
 
-Use the storytelling tradition selected by the creator. You are fluent in Wuxia, Xianxia, Xuanhuan, cultivation, LitRPG, system stories, academy stories, kingdom building, crafting and alchemy, beast taming, tower climbing, regression, urban fantasy, apocalypse, cosmic fantasy, political intrigue, cozy slice of life, romance, and mystery. Treat these as adaptable lenses rather than mandatory tropes.
+Interpret the Story Seed's genre, tags, and storytelling tradition through that Eastern fantasy frame, as adaptable lenses rather than mandatory tropes. Never fill open creative space with Western fantasy defaults unless the Story Seed asks for them.
 
-The Story Seed contains creator-authored world facts and separate creative intentions. Every non-empty value is authoritative. Never contradict, replace, rename, weaken, or silently omit it. Fill blank creative space intelligently and connect the creator's facts into one coherent world. Make It Work is an absolute worldbuilding instruction. Destined Ending is the novel's fixed destination: the whole story travels toward it and its final arc arrives at it. Fun Settings are optional creative flavor, subordinate to Destined Ending, Hard Pins, Active Arc Goal, canon, and CAPA skills. They are not canon or skills. Preserve author Hard Pins exactly; do not invent more. The genre, style, tags, characters, factions, abilities, and power-system details must materially influence the result. Fate Survival is optional: follow its enabled flag and keep its mysteries and unresolved threads confined to their dedicated arrays.
+The Story Seed contains creator-authored world facts and separate creative intentions. Every non-empty value is authoritative: never contradict, replace, rename, weaken, or silently omit it. Fill blank creative space intelligently and connect the creator's facts into one coherent world. Make It Work is an absolute worldbuilding instruction. Destined Ending is the novel's fixed destination: the whole story travels toward it and its final arc arrives at it. Fun Settings are optional creative flavor, not canon, and subordinate to Destined Ending, Hard Pins, Active Arc Goal, and canon. The genre, style, tags, characters, factions, abilities, and power-system details must materially influence the result.
 
-When a creator supplied a character or faction, integrate it instead of replacing it. You may add supporting characters and factions when the story needs them. Describe minors safely and never sexualize a character under 18. Return only the requested JSON object.`;
+When a creator supplied a character or faction, integrate it instead of replacing it. You may add supporting characters and factions when the story needs them. Describe minors safely and never sexualize a character under 18.`;
+
+/** How the completion rules name each world fact the creator may have written. */
+const WORLD_FACT_PROMPT_LABELS: Record<typeof WORLD_FACT_DETAILS[number]['field'], string> = {
+  worldOverview: 'world overview',
+  startingLocation: 'opening location',
+  societyStructure: 'society',
+};
+
+const listPhrase = (items: string[]): string => items.length <= 2
+  ? items.join(' and ')
+  : `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+
+/**
+ * World facts the creator left open are established in full. Facts the
+ * creator wrote stay theirs; the matching Blueprint field carries only
+ * compatible detail that adds to the fact, which chapter generation receives
+ * beside it.
+ */
+const worldFactRules = (storySeed: StorySeedInput): string[] => {
+  const identity = storySeed.world.optional.worldIdentity;
+  const written = WORLD_FACT_DETAILS.filter(entry => identity[entry.fact]?.trim());
+  const open = WORLD_FACT_DETAILS.filter(entry => !identity[entry.fact]?.trim());
+  const establish = open.length
+    ? `the ${listPhrase([...open.map(entry => WORLD_FACT_PROMPT_LABELS[entry.field]), 'a usable power-system outline'])}`
+    : 'a usable power-system outline';
+  const facts = listPhrase(written.map(entry => `${WORLD_FACT_PROMPT_LABELS[entry.field]} (worldIdentity.${entry.fact})`));
+  const fields = listPhrase(written.map(entry => entry.field));
+  return [
+    `Establish ${establish}.`,
+    ...(written.length
+      ? [`The creator already wrote the ${facts}; that wording stays the fact. In ${fields}, write only compatible added detail that builds on the matching fact, never restating or contradicting it.`]
+      : []),
+  ];
+};
 
 export const buildWorldBlueprintPrompt = (storySeed: StorySeedInput, maxArcs: number, arcCount?: number): string => `Create one complete World Blueprint from this finalized canonical Story Seed:
 
@@ -15,11 +49,10 @@ ${JSON.stringify(storySeed, null, 2)}
 
 Completion rules:
 - Complete every output field. No blank strings. majorFactions and initialCharacters must not be empty; majorMysteries and unresolvedPlotThreads may be empty.
-- Preserve all non-empty Story Seed facts. The server will enforce creator-authored values after generation, so build around them rather than contradicting them.
-- Generate a strong logline when the creator left it open.
-- Establish the world overview, opening location, society, and a usable power-system outline.
+- Generate a strong logline.
+${worldFactRules(storySeed).map(rule => `- ${rule}`).join('\n')}
 - Complete the main character's name, age, appearance, personality, and background profile when missing.
-- Include the creator's named characters and factions, then add only useful supporting entries.
+- Include the creator's named characters and factions, then add only useful supporting entries. Begin every entry with its name: Name (role) — description.
 - ${arcCount === undefined
   ? `Establish the Destined Ending first, then a realistic estimatedArcs between 1 and ${maxArcs}.`
   : `Establish the Destined Ending first. The author chose the story's length: estimatedArcs is exactly ${arcCount}.`} Each arc is exactly ${ARC_LENGTH} chapters.
@@ -33,12 +66,12 @@ Completion rules:
   ? 'Survival is enabled. You may create majorMysteries and unresolvedPlotThreads for the Fate Survival experience. Keep them only in those arrays, as unresolved proposals, never character knowledge or ordinary canonical state.'
   : 'Survival is disabled. Return empty arrays for majorMysteries and unresolvedPlotThreads. Do not invent Fate Survival mysteries or unresolved threads, or embed them in other fields.'}
 - The style bible must translate genre, style, tags, and maturity metadata into actionable prose, pacing, viewpoint, dialogue, and thematic guidance.
-- The trope rules must explicitly account for face-slap, plot-armor, recognition, and Make It Work settings. Keep Fate Survival settings out of trope rules; HARNESS receives them through dedicated context. Apply the other settings without exposing app-control language as ordinary narration.
-- mcProfile must match mainCharacter.backgroundProfile for compatibility.
+- The trope rules must explicitly account for face-slap, plot-armor, recognition, and Make It Work settings. Keep Fate Survival settings out of trope rules; chapter generation receives them separately. Apply the other settings without exposing app-control language as ordinary narration.
+- mcProfile repeats mainCharacter.backgroundProfile exactly.
 
 Return the JSON object only.`;
 
-export const ARC_ROADMAP_EXTENSION_SYSTEM_PROMPT = `You are an elite light-novel creative director lengthening a novel's saved arc roadmap. The roadmap is the route from the story's opening to its fixed Destined Ending. Its saved arcs are author-reviewed and authoritative: plan only the new arcs the author asked for, and never restate, rewrite, renumber, or contradict a saved arc. Every non-empty Story Seed value is authoritative canon. Describe minors safely and never sexualize a character under 18. Return only the requested JSON object.`;
+export const ARC_ROADMAP_EXTENSION_SYSTEM_PROMPT = `You are an elite Eastern fantasy author lengthening a novel's saved arc roadmap. The roadmap is the route from the story's opening to its fixed Destined Ending. Its saved arcs are author-reviewed and authoritative: plan only the new arcs the author asked for, and never restate, rewrite, renumber, or contradict a saved arc. Every non-empty Story Seed value is authoritative canon. Describe minors safely and never sexualize a character under 18. Return only the requested JSON object.`;
 
 const presentSavedArc = (plan: ArcPlan, finalArc: boolean): string => [
   `Arc ${plan.arcNumber}${finalArc ? ' (final arc; reaches the Destined Ending)' : ''}:`,

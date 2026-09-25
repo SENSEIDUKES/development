@@ -26,7 +26,7 @@ export const docsCategories: readonly DocsCategory[] = [
       topic('seihouse', 'SEIHouse'), topic('sen', 'SEN', ['SEIHouse Expanded Novels']),
       topic('library', 'Library', ['Celestial Library']), topic('workshop', 'Workshop', ['Development', 'DEV']),
       topic('sensei', 'SENSEI'), topic('creator', 'Creator', ['Author']),
-      topic('reader', 'Reader'), topic('cultivator', 'Cultivator'),
+      topic('reader', 'Reader', ['Cultivator']),
     ],
   },
   {

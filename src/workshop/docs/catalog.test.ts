@@ -20,6 +20,9 @@ describe('Docs topic catalog', () => {
     expect(searchDocs('Expanded Novels').map(topic => topic.id)).toEqual(['sen']);
     expect(searchDocs('goal active').map(topic => topic.id)).toEqual(['arc-goal']);
     expect(searchDocs('Packages').map(topic => topic.id)).toContain('seihouse-ui');
+    const cultivatorResults = searchDocs('Cultivator').map(topic => topic.id);
+    expect(cultivatorResults).toContain('reader');
+    expect(docsTopics.some(topic => topic.id === 'cultivator' || topic.title === 'Cultivator')).toBe(false);
     expect(searchDocs('not-a-real-term')).toEqual([]);
   });
 

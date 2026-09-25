@@ -228,14 +228,19 @@ interface BlueprintWorldSettingSectionProps {
   onWorldFactDetailChange?: (field: WorldFactDetailField, value: string) => void;
 }
 
-/** A Blueprint-owned detail under the author's fact it adds to; absent until generation writes one. */
-const WorldFactDetailArea = ({ id, label, value, field, onChange }: {
+/**
+ * A Blueprint-owned detail under the author's fact it adds to. Absent until
+ * generation writes one, and hidden while the fact is empty; the stored detail
+ * returns with the fact.
+ */
+const WorldFactDetailArea = ({ id, label, value, fact, field, onChange }: {
   id: string;
   label: string;
   value?: string;
+  fact: string;
   field: WorldFactDetailField;
   onChange?: (field: WorldFactDetailField, value: string) => void;
-}) => typeof value === 'string' ? (
+}) => typeof value === 'string' && fact.trim() ? (
   <LibraryTextArea
     id={id}
     label={label}
@@ -284,7 +289,7 @@ export const BlueprintWorldSettingSection = memo(({
         />
       </div>
       <WorldFactDetailArea id="blueprint-world-overview-detail" label="World Detail" field="worldOverviewDetail"
-        value={worldFactDetails.worldOverviewDetail} onChange={onWorldFactDetailChange} />
+        value={worldFactDetails.worldOverviewDetail} fact={worldType} onChange={onWorldFactDetailChange} />
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <div className="space-y-5">
@@ -300,7 +305,7 @@ export const BlueprintWorldSettingSection = memo(({
             placeholder="Where the story begins..."
           />
           <WorldFactDetailArea id="blueprint-opening-location-detail" label="Opening Location Detail" field="startingLocationDetail"
-            value={worldFactDetails.startingLocationDetail} onChange={onWorldFactDetailChange} />
+            value={worldFactDetails.startingLocationDetail} fact={startingLocation} onChange={onWorldFactDetailChange} />
         </div>
         <div className="space-y-5">
           <LibraryTextArea
@@ -314,7 +319,7 @@ export const BlueprintWorldSettingSection = memo(({
             placeholder="Feudal, corporate, sect-based, military rule..."
           />
           <WorldFactDetailArea id="blueprint-world-order-detail" label="World Order Detail" field="societyStructureDetail"
-            value={worldFactDetails.societyStructureDetail} onChange={onWorldFactDetailChange} />
+            value={worldFactDetails.societyStructureDetail} fact={societyStructure} onChange={onWorldFactDetailChange} />
         </div>
       </div>
 

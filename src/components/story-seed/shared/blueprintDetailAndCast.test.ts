@@ -4,6 +4,7 @@ import {
   createStorySeedExport,
   detailBeyondAuthoredFact,
   finalizeGeneratedWorldBlueprint,
+  mirrorSeedIntoBlueprint,
   normalizeWorldBlueprint,
   parseStorySeedJson,
   reconcileStorySeedBlueprint,
@@ -122,6 +123,19 @@ describe('World detail beside the author\'s world facts', () => {
     const canon = resolveStorySeedWorldCanon(reviewed.seed, { ...reviewed.blueprint, societyStructureDetail: `It is a ${SOCIETY.toLowerCase()}.` });
     expect(canon).toMatchObject({ worldOverview: WORLD, worldOverviewDetail: 'Refined qi trades like coin, and every rank is inscribed in a fate ledger.', societyStructure: SOCIETY });
     expect(canon).not.toHaveProperty('societyStructureDetail');
+  });
+
+  it('withholds a cleared fact\'s detail while keeping it for when the fact returns', () => {
+    const seed = authoredSeed();
+    const reviewed = reconcileStorySeedBlueprint(seed, finalizeGeneratedWorldBlueprint(modelReply(), seed));
+    const cleared = structuredClone(reviewed.seed);
+    cleared.world.optional.worldIdentity.worldType = '   ';
+    // As in the review, the Blueprint mirrors the cleared Seed before it is saved.
+    const kept = reconcileStorySeedBlueprint(cleared, mirrorSeedIntoBlueprint(reviewed.blueprint, cleared));
+    expect(kept.blueprint.worldOverviewDetail).toBe(reviewed.blueprint.worldOverviewDetail);
+    expect(resolveStorySeedWorldCanon(kept.seed, kept.blueprint)).not.toHaveProperty('worldOverviewDetail');
+    expect(resolveStorySeedWorldCanon(kept.seed, kept.blueprint).societyStructureDetail).toBe(reviewed.blueprint.societyStructureDetail);
+    expect(resolveStorySeedWorldCanon(reviewed.seed, kept.blueprint).worldOverviewDetail).toBe(reviewed.blueprint.worldOverviewDetail);
   });
 
   it('removes only sentences that restate the fact', () => {

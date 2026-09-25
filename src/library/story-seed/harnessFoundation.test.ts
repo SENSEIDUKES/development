@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { HarnessGenerationController, type HarnessGenerationRequest } from '@seihouse/sen/harness-generation';
-import { STORY_SEED_SCHEMA_VERSION, createEmptyStorySeedInput, finalizeGeneratedWorldBlueprint, reconcileStorySeedBlueprint, type StorySeedInput } from '@seihouse/sen/story-seed';
+import { STORY_SEED_SCHEMA_VERSION, createEmptyStorySeedInput, finalizeGeneratedWorldBlueprint, mirrorSeedIntoBlueprint, reconcileStorySeedBlueprint, type StorySeedInput } from '@seihouse/sen/story-seed';
 import { createHarnessFoundationFromStorySeed } from '@seihouse/library/story-seed';
 import { InMemoryHarnessGenerationRepository } from '../../test-utils/InMemoryHarnessGenerationRepository';
 import { buildHarnessGenerationPrompt } from '../../server/harness-generation/prompt';
@@ -52,6 +52,19 @@ describe('Story Seed handoff of world detail and generated cast', () => {
     expect(foundation.openingSituation).toBe(`${OPENING}\n${OPENING_DETAIL}`);
     for (const fact of [WORLD, SOCIETY]) expect(occurrences(foundation.worldFacts!, fact)).toBe(1);
     expect(foundation.identities?.map(identity => identity.name)).toContain('Junior Sister Han');
+  });
+
+  it('sends no detail for a fact the author cleared', () => {
+    const record = reviewedRecord();
+    const seed = structuredClone(record.seed);
+    seed.world.optional.worldIdentity.worldType = '';
+    seed.world.optional.worldIdentity.startingLocation = '';
+    // Saved as the review saves it: the Blueprint mirrors the cleared Seed and keeps its details.
+    const foundation = createHarnessFoundationFromStorySeed({ ...record, seed, blueprint: mirrorSeedIntoBlueprint(record.blueprint, seed) });
+    expect(foundation.worldFacts).not.toContain('World detail');
+    expect(foundation.worldFacts).not.toContain(WORLD_DETAIL);
+    expect(foundation.worldFacts).toContain(`Society: ${SOCIETY}\nSociety detail: ${SOCIETY_DETAIL}`);
+    expect(foundation.openingSituation).toBeUndefined();
   });
 
   it('leaves a novel without details exactly as before', () => {

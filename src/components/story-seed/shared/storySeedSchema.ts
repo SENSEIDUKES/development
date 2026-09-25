@@ -1094,8 +1094,11 @@ export const resolveStorySeedWorldCanon = (
   });
   const worldOverview = text(worldIdentity.worldType);
   const societyStructure = text(worldIdentity.societyStructure);
+  // A detail only travels beside its fact: a fact the author cleared sends
+  // no detail, though the Blueprint keeps it in case the fact returns.
   const factDetails = Object.fromEntries(WORLD_FACT_DETAILS.flatMap(entry => {
-    const detail = detailBeyondAuthoredFact(worldIdentity[entry.fact], blueprint?.[entry.detail]);
+    const fact = text(worldIdentity[entry.fact]);
+    const detail = fact ? detailBeyondAuthoredFact(fact, blueprint?.[entry.detail]) : undefined;
     return detail ? [[entry.detail, detail]] : [];
   })) as Pick<StorySeedWorldCanon, WorldFactDetailField>;
   const powerSystem = text(withAuthoritativeDetails(

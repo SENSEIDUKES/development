@@ -64,13 +64,13 @@ ${mainCharacter.backgroundProfile}
 
 ### World Overview
 ${blueprint.worldOverview || ''}
-${blueprint.worldOverviewDetail ? `\n**World Detail:** ${blueprint.worldOverviewDetail}\n` : ''}
+${blueprint.worldOverview?.trim() && blueprint.worldOverviewDetail ? `\n**World Detail:** ${blueprint.worldOverviewDetail}\n` : ''}
 ### Opening Location
 ${blueprint.startingLocation || ''}
-${blueprint.startingLocationDetail ? `\n**Opening Location Detail:** ${blueprint.startingLocationDetail}\n` : ''}
+${blueprint.startingLocation?.trim() && blueprint.startingLocationDetail ? `\n**Opening Location Detail:** ${blueprint.startingLocationDetail}\n` : ''}
 ### World Order
 ${blueprint.societyStructure || ''}
-${blueprint.societyStructureDetail ? `\n**World Order Detail:** ${blueprint.societyStructureDetail}\n` : ''}
+${blueprint.societyStructure?.trim() && blueprint.societyStructureDetail ? `\n**World Order Detail:** ${blueprint.societyStructureDetail}\n` : ''}
 ### Power System Outline
 ${blueprint.powerSystemOutline || ''}
 

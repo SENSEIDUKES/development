@@ -23,7 +23,12 @@
 .docs-layout { display: grid; grid-template-columns: 14rem minmax(0, 1fr); }
 .docs-sidebar { position: sticky; top: 1rem; align-self: start; max-height: calc(100dvh - 2rem); overflow-y: auto; overscroll-behavior: contain; padding: 1.5rem 1rem 2rem 0; scrollbar-width: thin; }
 .docs-navigation section { margin-top: 1.75rem; }
-.docs-navigation h2 { margin: 0 0 0.4rem; padding: 0 0.75rem; font-size: 0.8rem; font-weight: 500; color: #ece7dd; }
+.docs-navigation h2 { margin: 0 0 0.4rem; font-size: 0.8rem; font-weight: 500; color: #ece7dd; }
+.docs-category-toggle { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; width: 100%; min-height: 44px; padding: 0 0.75rem; border: 0; border-radius: 0.3rem; background: transparent; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+.docs-category-toggle:hover { background: rgba(236, 231, 221, 0.05); }
+.docs-category-toggle svg { flex: 0 0 auto; color: var(--docs-muted); transition: transform 150ms ease; }
+.docs-category-toggle[aria-expanded='false'] svg { transform: rotate(-90deg); }
+.docs-category-toggle:focus-visible { outline: 2px solid var(--docs-link); outline-offset: 2px; }
 .docs-navigation ul, .docs-results, .docs-category-index ul, .docs-related { list-style: none; margin: 0; padding: 0; }
 .docs-navigation a { display: flex; align-items: center; min-height: 44px; padding: 0.5rem 0.75rem; color: var(--docs-muted); text-decoration: none; font-size: 0.83rem; line-height: 1.5; border-radius: 0.3rem; overflow-wrap: anywhere; }
 .docs-navigation a:hover { color: #ece7dd; background: rgba(236, 231, 221, 0.04); }
@@ -39,6 +44,7 @@
 .docs-category-index { margin-top: 2.5rem; }
 .docs-category-index section { padding: 1.5rem 0; border-top: 1px solid var(--docs-line); }
 .docs-category-index h2, .docs-definition h2 { margin: 0; font-size: 1.15rem; font-weight: 500; letter-spacing: -0.02em; }
+.docs-category-index .docs-category-toggle { min-height: 44px; padding: 0; font-size: 1.15rem; }
 .docs-category-index p { margin: 0.65rem 0; font-size: 0.9rem; line-height: 1.7; color: var(--docs-muted); }
 .docs-category-index ul, .docs-related { display: flex; flex-wrap: wrap; column-gap: 1.1rem; }
 .docs-category-index a, .docs-related a { display: inline-flex; align-items: center; min-height: 44px; font-size: 0.85rem; }

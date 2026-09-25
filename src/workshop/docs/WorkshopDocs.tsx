@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
-import { ArrowRight, BookOpen, Menu, Search, X } from 'lucide-react';
+import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { ArrowRight, BookOpen, ChevronDown, Menu, Search, X } from 'lucide-react';
 import { SEIDrawer, SEIDrawerClose, SEIDrawerContent, SEIDrawerTitle, SEIDrawerTrigger } from '@seihouse/ui';
 import { docsCategories, docsHref, findDocsTopic, searchDocs } from './catalog';
 import './docs.css';
@@ -7,6 +7,11 @@ import './docs.css';
 interface DocsProps {
   topicId: string;
   onNavigate: (id: string) => void;
+}
+
+interface TopicNavigationProps extends DocsProps {
+  collapsedCategories: ReadonlySet<string>;
+  onToggleCategory: (id: string) => void;
 }
 
 function TopicLink({ id, onNavigate, children, ...props }: {
@@ -25,14 +30,20 @@ function TopicLink({ id, onNavigate, children, ...props }: {
   return <a href={docsHref(id)} onClick={navigate} {...props}>{children}</a>;
 }
 
-function TopicNavigation({ topicId, onNavigate }: DocsProps) {
+function TopicNavigation({ topicId, onNavigate, collapsedCategories, onToggleCategory }: TopicNavigationProps) {
+  const instanceId = useId();
   return (
     <nav aria-label="Docs topics" className="docs-navigation">
       <TopicLink id="overview" onNavigate={onNavigate} aria-current={topicId === 'overview' ? 'page' : undefined}>Overview</TopicLink>
       {docsCategories.map(category => (
         <section key={category.id}>
-          <h2>{category.title}</h2>
-          <ul>
+          <h2>
+            <button type="button" className="docs-category-toggle" aria-expanded={!collapsedCategories.has(category.id)}
+              aria-controls={`${instanceId}-topics-${category.id}`} onClick={() => onToggleCategory(category.id)}>
+              <span>{category.title}</span><ChevronDown aria-hidden="true" size={15} />
+            </button>
+          </h2>
+          <ul id={`${instanceId}-topics-${category.id}`} hidden={collapsedCategories.has(category.id)}>
             {category.topics.map(topic => (
               <li key={topic.id}>
                 <TopicLink id={topic.id} onNavigate={onNavigate} aria-current={topicId === topic.id ? 'page' : undefined}>
@@ -50,6 +61,7 @@ function TopicNavigation({ topicId, onNavigate }: DocsProps) {
 export function WorkshopDocs({ topicId, onNavigate }: DocsProps) {
   const [query, setQuery] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [collapsedCategories, setCollapsedCategories] = useState<ReadonlySet<string>>(() => new Set());
   const searchRef = useRef<HTMLInputElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const focusArticle = useRef(false);
@@ -87,6 +99,17 @@ export function WorkshopDocs({ topicId, onNavigate }: DocsProps) {
     if (!drawerOpen && !searching && id === topicId) headingRef.current?.focus({ preventScroll: true });
   }
 
+  function toggleCategory(id: string) {
+    setCollapsedCategories(current => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const navigationProps = { topicId, onNavigate: navigate, collapsedCategories, onToggleCategory: toggleCategory };
+
   return (
     <div className="workshop-docs">
       <header className="docs-toolbar">
@@ -102,7 +125,7 @@ export function WorkshopDocs({ topicId, onNavigate }: DocsProps) {
                 <SEIDrawerTitle className="docs-drawer-title">Docs topics</SEIDrawerTitle>
                 <SEIDrawerClose className="docs-icon-button" aria-label="Close Docs topics"><X size={20} aria-hidden="true" /></SEIDrawerClose>
               </div>
-              <div className="docs-drawer-scroll"><TopicNavigation topicId={topicId} onNavigate={navigate} /></div>
+              <div className="docs-drawer-scroll"><TopicNavigation {...navigationProps} /></div>
             </SEIDrawerContent>
           </SEIDrawer>
           <div className="docs-search" role="search">
@@ -116,7 +139,7 @@ export function WorkshopDocs({ topicId, onNavigate }: DocsProps) {
       </header>
 
       <div className="docs-layout">
-        <aside className="docs-sidebar"><TopicNavigation topicId={topicId} onNavigate={navigate} /></aside>
+        <aside className="docs-sidebar"><TopicNavigation {...navigationProps} /></aside>
         <article className="docs-article" aria-labelledby="docs-article-title">
           {searching ? (
             <>
@@ -143,9 +166,16 @@ export function WorkshopDocs({ topicId, onNavigate }: DocsProps) {
               <div className="docs-category-index">
                 {docsCategories.map(group => (
                   <section key={group.id}>
-                    <h2>{group.title}</h2>
-                    <p>{group.description}</p>
-                    <ul>{group.topics.map(entry => <li key={entry.id}><TopicLink id={entry.id} onNavigate={navigate}>{entry.title}</TopicLink></li>)}</ul>
+                    <h2>
+                      <button type="button" className="docs-category-toggle" aria-expanded={!collapsedCategories.has(group.id)}
+                        aria-controls={`docs-overview-topics-${group.id}`} onClick={() => toggleCategory(group.id)}>
+                        <span>{group.title}</span><ChevronDown aria-hidden="true" size={17} />
+                      </button>
+                    </h2>
+                    <div id={`docs-overview-topics-${group.id}`} hidden={collapsedCategories.has(group.id)}>
+                      <p>{group.description}</p>
+                      <ul>{group.topics.map(entry => <li key={entry.id}><TopicLink id={entry.id} onNavigate={navigate}>{entry.title}</TopicLink></li>)}</ul>
+                    </div>
                   </section>
                 ))}
               </div>

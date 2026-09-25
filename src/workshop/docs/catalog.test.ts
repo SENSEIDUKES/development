@@ -31,7 +31,8 @@ describe('Docs topic catalog', () => {
 
   it('defines Product & people terms while leaving later categories for their own phase', () => {
     const productTopics = docsCategories.find(category => category.id === 'product')!.topics;
-    expect(productTopics).toHaveLength(7);
+    expect(productTopics.map(topic => topic.id)).toEqual(['seihouse', 'sen', 'library', 'workshop', 'creator', 'reader']);
+    expect(findDocsTopic('sensei')).toBeUndefined();
     for (const topic of productTopics) {
       expect(topic.definition?.trim()).toBeTruthy();
       expect(topic.definition!.length).toBeLessThanOrEqual(140);

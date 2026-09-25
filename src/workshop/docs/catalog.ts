@@ -17,8 +17,8 @@ export interface DocsCategory {
 
 const topic = (id: string, title: string, aliases: string[] = []): DocsTopic => ({ id, title, aliases });
 
-// The product-term audit supplies the index, not approved definitions. Deliberately
-// leave explanation fields absent until the product owner supplies their wording.
+// The product-term audit supplied the index, not approved definitions. Add
+// explanations only as each term's meaning is confirmed by the product owner.
 export const docsCategories: readonly DocsCategory[] = [
   {
     id: 'product', title: 'Product & people', description: 'The products, the Workshop, and the people using them.',
@@ -26,37 +26,32 @@ export const docsCategories: readonly DocsCategory[] = [
       {
         ...topic('seihouse', 'SEIHouse'),
         definition: 'A better time capsule and translator of artistic expression.',
-        howItFits: 'SEIHouse is the company and connected product vision behind its creative tools. SEN (SEIHouse Expanded Novels) is the current focus and proving ground for reusable systems; the Celestial Library is its first-party application built on SEN. SEA (SEIHouse Expanded Albums) carries that platform vision into music. Systems built and refined through SEN are intended to support SEA, so the two product areas advance as connected work.',
+        howItFits: 'SEIHouse is the company and creative platform we are building around that purpose. SEN (SEIHouse Expanded Novels) is our engine for expanded novels, and the Celestial Library is our own place to create and experience them. SEA (SEIHouse Expanded Albums) brings the same vision into music. We develop and pressure-test reusable systems through SEN so they can serve SEA too; the two sides grow together.',
       },
       {
         ...topic('sen', 'SEN', ['SEIHouse Expanded Novels']),
-        definition: 'SEIHouse’s portable engine for expanded novels.',
-        howItFits: 'An author or company can embed SEN in its own application and supply its own stories, branding, accounts, storage, media, and optional generation method. SEN provides reusable narrative systems, including structured story and chapter contracts, Reader and Codex experiences, cards, Color Codes, and translation. AI generation is optional. The Celestial Library is SEIHouse’s first-party application built on SEN; Library adds its own branding and product rules while SEN remains portable for other publishers.',
+        definition: 'Our portable engine for expanded novels.',
+        howItFits: 'We build SEN as the shared narrative foundation beneath the Celestial Library. It provides story and chapter structure, Reader and Codex experiences, cards, Color Codes, translation, and other reusable capabilities. Other creators and publishers can use SEN in their own apps with their own stories, branding, accounts, storage, and media. AI generation is an optional content source. We keep Library-specific rules in the Library so SEN stays portable.',
       },
       {
         ...topic('library', 'Library', ['Celestial Library']),
-        definition: 'SEIHouse’s first-party app for creating, reading, and exploring expanded novels.',
-        howItFits: 'The Celestial Library is one application built on SEN: SEN supplies portable expanded-narrative capabilities, while Library provides SEIHouse’s branded product around them. Library adds its own home and discovery, profiles and community, story-creation journey, cultivation and QI progression, rewards, and economy. Host services provide identity verification, APIs, durable storage, and authoritative transactions. This lets Library have a distinct first-party experience without putting its product rules into portable SEN.',
+        definition: 'Our home for creating, discovering, and experiencing expanded novels.',
+        howItFits: 'The Celestial Library is the application we build on top of SEN. SEN gives us reusable narrative capabilities; we add our visual identity, story creation and discovery, profiles and community, cultivation and QI, rewards, and economy. The Library’s host and backend provide accounts, storage, APIs, and the source of truth for transactions. We keep those first-party rules here so SEN can power other apps too.',
       },
       {
         ...topic('workshop', 'Workshop', ['Development', 'DEV']),
-        definition: 'SEIHouse’s internal workspace for building and previewing product experiences.',
-        howItFits: 'The Workshop lives in the Development repository and gives the team a place to inspect working components and product flows through previews. Its sections, cards, controls, Docs, fixtures, and mocks help develop and test systems owned by SEN or Library packages; the Workshop itself does not determine package ownership. A preview is a development surface. Integrating approved work into a production app is a separate step.',
-      },
-      {
-        ...topic('sensei', 'SENSEI'),
-        definition: 'SENSEI is the artist name of SEIHouse founder Amaury Lindy.',
-        howItFits: 'SENSEI is the founder and artist who sets SEIHouse’s creative vision and product direction. SEIHouse is the company and platform built around that direction; SEN, the Celestial Library, and SEA are connected products that turn the vision into tools and experiences for creative work.',
+        definition: 'Our space for building, previewing, and refining SEIHouse experiences.',
+        howItFits: 'We use the Workshop inside the Development repository to see SEN and Library work in context while it is still being developed. Its previews, controls, and Docs let us test product flows and agree on the language around them. Workshop is our workbench, not a product package: SEN owns reusable narrative behavior, and Library owns our first-party product behavior. Moving approved work into production is a separate step.',
       },
       {
         ...topic('creator', 'Creator', ['Author']),
-        definition: 'A person who makes a creative work using SEIHouse tools.',
-        howItFits: 'Creator describes a person’s activity with a particular work, not a permanent kind of account. The same person can create one story or album and read or listen to another. SEN and the Celestial Library support novel creation and reading; SEA carries SEIHouse’s platform vision into music. Shared systems can support each format while the creator keeps their own expressive identity.',
+        definition: 'A person making a story, album, or other work with SEIHouse.',
+        howItFits: 'We use Creator for the person making a work, whether it is a novel, album, or another form. It is not a separate kind of user from Reader: someone can create one work and experience another. SEN and the Celestial Library support novel work; SEA extends the same platform to albums. In each case, the artistic direction belongs to the creator.',
       },
       {
         ...topic('reader', 'Reader', ['Cultivator']),
-        definition: 'A person reading or experiencing a work; in the Celestial Library, a Reader is called a Cultivator.',
-        howItFits: 'Reader describes the person’s activity while experiencing a particular work. SEN supplies portable Reader and Codex capabilities to the application hosting it; the Celestial Library adds its own reading surfaces and cultivation language. In that Library framing, Cultivator is the Reader label. The same person can also be a Creator when making their own work.',
+        definition: 'A person experiencing a story; in the Celestial Library, we call that reader a Cultivator.',
+        howItFits: 'We use Reader for the person reading chapters, listening, or exploring a story’s Codex. SEN carries the reusable reading experience, and we bring it into the Celestial Library with our cultivation language and progression. Cultivator is our name for the Reader there, not a separate user type. The same person can be a Creator when making a work.',
       },
     ],
   },

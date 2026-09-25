@@ -164,7 +164,6 @@ export function WorkshopDocs({ topicId, onNavigate }: DocsProps) {
               <p className="docs-eyebrow">The shared reference</p>
               <h1 id="docs-article-title" ref={headingRef} tabIndex={-1}>What each thing is.<br />How it all fits.</h1>
               <p className="docs-intro">A common understanding of SEIHouse’s core concepts, for people and models.</p>
-              <p className="docs-note">The topics are in place. Definitions and connections will be added next.</p>
               <div className="docs-category-index">
                 {docsCategories.map(group => (
                   <section key={group.id}>

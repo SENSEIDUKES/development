@@ -76,7 +76,7 @@ As of 2026-09-25, the header has five preview sections and a Docs tab — naviga
 - **Customization** — Familiar.
 - **Systems** — Harness Generation, Chapter Generation Manifestation, Character Voice, Provenance, and Energy.
 - **Components** — Motion Picture, Celestial Particle Backdrop, Card Workshop, and the live Library Components and Icons inventories.
-- **Docs** — [the shared product-term reference](./src/workshop/docs/README.md) at `?tab=docs`: grouped topic navigation, search, and one current explanation per term. Topic pages are scaffolded; definitions are intentionally unfilled for now.
+- **Docs** — [the shared product-term reference](./src/workshop/docs/README.md) at `?tab=docs`: grouped topic navigation, search, and one current explanation per filled term. Unfilled topics retain placeholders until their wording is approved.
 
 Each manifest entry declares:
 

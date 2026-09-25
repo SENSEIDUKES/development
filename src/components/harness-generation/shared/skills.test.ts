@@ -6,9 +6,8 @@ import { createEmptyHarnessWorkspaceState } from '@seihouse/sen/harness-generati
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { CAPA_SCHEMA, HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS, assembleCapaPrompt, createHarnessSkillCatalog, freezeHarnessSkillLoadout, validateHarnessSkillManifest } from '@seihouse/sen/harness-generation';
 import { type HarnessSkillManifest, type HarnessSkillSlotId } from '@seihouse/sen/harness-generation';
-import { SEN_NOVEL_AUTHOR_SKILL } from '@seihouse/sen/harness-generation';
+import { SEN_FATE_SURVIVAL_SKILL, SEN_NOVEL_AUTHOR_SKILL, includeBundledHarnessSkills } from '@seihouse/sen/harness-generation';
 import { SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS } from '../../../lib/senLightNovelAuthorInstructions';
-import { CHAPTER_PROMPTS } from '../../chapter-generation/shared/lib/chapterPrompts';
 
 const pacingSkill = (): HarnessSkillManifest => ({
   id: 'seihouse.long-range-pacing',
@@ -61,7 +60,6 @@ describe('Harness installed skills', () => {
       applications: ['generation'],
       instructions: SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS,
     });
-    expect(CHAPTER_PROMPTS.system.startsWith(SEN_LIGHT_NOVEL_AUTHOR_INSTRUCTIONS)).toBe(true);
   });
 
   it('requires generation skills to carry actual instructions', () => {
@@ -110,7 +108,7 @@ describe('Harness installed skills', () => {
       .toThrow('is equipped but is not installed');
   });
 
-  it('defines exactly six ordered CAPA writing slots and keeps Accessibility, Translation, and the official requirements intact', () => {
+  it('defines the ordered CAPA writing slots and keeps Accessibility, Translation, and the official requirements intact', () => {
     const capa = assembleCapaPrompt({
       capturedAt: '2026-09-13T00:00:00.000Z',
       skills: [
@@ -118,21 +116,25 @@ describe('Harness installed skills', () => {
         generationSkill('accessibility', 'Use readable paragraph boundaries.'),
         generationSkill('style', 'Use short sentences.'),
         generationSkill('continuity', 'Preserve established canon.'),
+        SEN_FATE_SURVIVAL_SKILL,
         pacingSkill(),
         SEN_NOVEL_AUTHOR_SKILL,
       ],
     });
     expect(CAPA_SCHEMA.map(slot => slot.id)).toEqual([
-      'author', 'pacing', 'continuity', 'style', 'accessibility', 'translation',
+      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation',
     ]);
+    // Only the Fate slot is filled by the HARNESS; every other slot is equipped by hand.
+    expect(CAPA_SCHEMA.filter(slot => slot.managedBy).map(slot => slot.id)).toEqual(['fate']);
     expect(capa.skills.map(skill => skill.slot)).toEqual([
-      'author', 'pacing', 'continuity', 'style', 'accessibility', 'translation',
+      'author', 'pacing', 'fate', 'continuity', 'style', 'accessibility', 'translation',
     ]);
-    expect(capa.skills.map(skill => skill.authoring)).toEqual([true, true, true, true, true, true]);
+    expect(capa.skills.map(skill => skill.authoring)).toEqual([true, true, true, true, true, true, true]);
     const headers = capa.text.match(/^CAPA SKILL \[[^\]]+\]/gm);
     expect(headers).toEqual([
       'CAPA SKILL [Author]',
       'CAPA SKILL [Pacing]',
+      'CAPA SKILL [Fate]',
       'CAPA SKILL [Continuity]',
       'CAPA SKILL [Style]',
       'CAPA SKILL [Accessibility]',
@@ -145,8 +147,45 @@ describe('Harness installed skills', () => {
     expect(capa.text.endsWith(HARNESS_OFFICIAL_OUTPUT_REQUIREMENTS)).toBe(true);
     expect(capa.text.split('HARNESS OFFICIAL OUTPUT REQUIREMENTS')).toHaveLength(2);
     expect(capa.text.indexOf('CAPA SKILL [Translation]')).toBeLessThan(capa.text.indexOf('HARNESS OFFICIAL OUTPUT REQUIREMENTS'));
-    expect(capa.skills).toHaveLength(6);
+    expect(capa.skills).toHaveLength(7);
     expect(capa.estimatedTokens).toBeGreaterThan(0);
+  });
+
+  it('loads SEN Fate Survival into the Fate slot on every Fate Survival freeze, and never in Regular Reader mode', () => {
+    const catalog = createHarnessSkillCatalog(includeBundledHarnessSkills([]));
+    const { story } = createHarnessStory(createEmptyHarnessWorkspaceState(), { premise: 'A patient rebellion begins.' }, 'en', defaultHarnessRuntime);
+    story.skillLoadout = { author: { id: SEN_NOVEL_AUTHOR_SKILL.id, version: SEN_NOVEL_AUTHOR_SKILL.version } };
+    const slots = (mode?: 'regular' | 'survival') => freezeHarnessSkillLoadout(story, catalog, 'now', mode).skills.map(skill => skill.id);
+    expect(slots()).toEqual(['seihouse.sen-novel-author']);
+    expect(slots('regular')).toEqual(['seihouse.sen-novel-author']);
+    expect(slots('survival')).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-fate-survival']);
+    // The slot follows the mode, whatever the story's loadout says.
+    story.skillLoadout = { ...story.skillLoadout, fate: { id: 'someone.else', version: '1.0.0' } };
+    expect(slots('regular')).toEqual(['seihouse.sen-novel-author']);
+    expect(slots('survival')).toEqual(['seihouse.sen-novel-author', 'seihouse.sen-fate-survival']);
+    const capa = assembleCapaPrompt(freezeHarnessSkillLoadout(story, catalog, 'now', 'survival'));
+    expect(capa.text).toContain(`CAPA SKILL [Fate] — SEN Fate Survival v${SEN_FATE_SURVIVAL_SKILL.version}`);
+    expect(capa.text).toContain('bring the story to a believable, final ending in this chapter');
+    // A host without the bundled skill cannot write a Fate Survival chapter.
+    expect(() => freezeHarnessSkillLoadout(story, createHarnessSkillCatalog([SEN_NOVEL_AUTHOR_SKILL]), 'now', 'survival'))
+      .toThrow('Fate Survival skill is not installed');
+  });
+
+  it('never equips the Fate slot by hand', async () => {
+    const controller = new HarnessGenerationController({
+      repository: new InMemoryHarnessGenerationRepository(),
+      modelAdapter: {
+        getServerInfo: async () => ({ provider: 'gemini', configured: false, models: [], defaultModel: 'fixture' }),
+        generate: async () => { throw new Error('not used'); },
+      },
+    });
+    await controller.hydrate();
+    const fate = { id: SEN_FATE_SURVIVAL_SKILL.id, version: SEN_FATE_SURVIVAL_SKILL.version };
+    const story = await controller.createStory({ premise: 'A patient rebellion begins.' });
+    await expect(controller.setSkillSlot(story.id, 'fate', fate)).rejects.toThrow('follows the story\'s Fate mode');
+    await expect(controller.createStory({ premise: 'Another rebellion.' }, 'en', {
+      author: { id: SEN_NOVEL_AUTHOR_SKILL.id, version: SEN_NOVEL_AUTHOR_SKILL.version }, fate,
+    })).rejects.toThrow('follows the story\'s Fate mode');
   });
 
   it('rejects Media at installation, application, assembly, freeze, and equip boundaries', async () => {

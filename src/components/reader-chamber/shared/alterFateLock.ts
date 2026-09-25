@@ -1,6 +1,10 @@
-import type { Story } from '../../../narrative/story';
+import type { Story } from '@seihouse/sen/reader-chamber';
 
 /**
+ * Reference-only support for the locked Reader Chamber replica's retired
+ * Alter Fate (Branch) panel. No development surface or package export uses it:
+ * the development Reader's Alter Fate opens the host's Fate page instead.
+ *
  * Returns the reader-safe explanation for why a chapter cannot be used as a
  * Fate branch point, or null when the chapter is safe to branch from.
  */

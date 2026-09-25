@@ -88,13 +88,14 @@ describe('Story Seed to Harness handoff', () => {
     expect(adapter.arcOperation).not.toHaveBeenCalled();
   });
 
-  it.each([false, true])('gates Fate Survival at the provider boundary when enabled=%s, through reload', async enabled => {
+  it.each([false, true])('carries the Fate mode from the Story Seed to the writer when Survival=%s, through reload', async enabled => {
     const record = createMockStorySeedRecord();
-    record.seed.story.optional.fateSurvival = { enabled, visibility: 'partial', pressure: 'heaven' };
+    record.seed.story.optional.fateSurvival = { enabled, pressure: 'heaven' };
     record.seed.world.optional.worldFoundations.destinedEnding = 'UNIQUE_DESTINED_ENDING';
-    record.blueprint!.majorMysteries = ['UNIQUE_SURVIVAL_MYSTERY'];
-    record.blueprint!.unresolvedPlotThreads = ['UNIQUE_SURVIVAL_THREAD'];
+    // An older Blueprint may still hold the retired Survival proposals; they never cross.
+    Object.assign(record.blueprint!, { majorMysteries: ['UNIQUE_SURVIVAL_MYSTERY'], unresolvedPlotThreads: ['UNIQUE_SURVIVAL_THREAD'] });
     const foundation = createHarnessFoundationFromStorySeed(record);
+    expect(foundation.fateSurvival).toEqual({ enabled });
     expect(foundation.intendedDirection).toBeUndefined();
     const requests: HarnessGenerationRequest[] = [];
     const modelAdapter = { getServerInfo: async () => ({ configured: true, provider: 'fixture', defaultModel: 'fixture', models: [] }), arcOperation: vi.fn(), generate: vi.fn(async (request: HarnessGenerationRequest): Promise<HarnessGenerationResponse> => {
@@ -110,24 +111,25 @@ describe('Story Seed to Harness handoff', () => {
     const story = await controller.createStory(foundation);
     const reloaded = new HarnessGenerationController({ repository, modelAdapter });
     await reloaded.hydrate();
+    if (enabled) {
+      // Fate Survival writes nothing until the reader directs the chapter.
+      await expect(reloaded.generateNextChapter(story.id, 'fixture')).rejects.toThrow("choose Chapter 1's direction");
+      await reloaded.chooseChapterDirection(story.id, { kind: 'reader', text: 'The traveler bargains with the gate warden.' });
+    }
     await reloaded.generateNextChapter(story.id, 'fixture');
     const packet = requests[0].storyInformation;
     const prompt = buildHarnessGenerationPrompt(requests[0]);
-    expect(packet.rhythm?.fatePressure).toBe('heaven');
-    expect(prompt.userPrompt.split('"fatePressure"')).toHaveLength(2);
+    expect(packet.storyDirection.fateMode).toBe(enabled ? 'survival' : 'regular');
+    expect(prompt.userPrompt).toContain(enabled ? 'Fate Survival: the reader directs every chapter' : 'Regular Reader mode: the Destined Ending is guaranteed');
     expect(prompt.userPrompt.split('UNIQUE_DESTINED_ENDING')).toHaveLength(2);
+    // Regular Reader: Fate Pressure picks the path. Fate Survival: the reader's direction does, and Rhythm is not sent.
+    expect(packet.rhythm?.fatePressure).toBe(enabled ? undefined : 'heaven');
+    expect(prompt.userPrompt.includes('FATE PRESSURE RHYTHM DIRECTION')).toBe(!enabled);
+    expect(prompt.userPrompt.includes('READER DIRECTION FOR THIS CHAPTER: The traveler bargains with the gate warden.')).toBe(enabled);
     expect(JSON.stringify(packet.currentStory)).not.toMatch(/UNIQUE_|fateSurvival|fatePressure/);
-    expect(JSON.stringify(packet.canonicalState)).not.toMatch(/UNIQUE_SURVIVAL/);
-    for (const marker of ['UNIQUE_SURVIVAL_MYSTERY', 'UNIQUE_SURVIVAL_THREAD', 'FATE SURVIVAL CONTEXT']) {
-      expect(prompt.userPrompt.split(marker)).toHaveLength(enabled ? 2 : 1);
-    }
-    expect(packet.fateSurvival).toEqual(enabled ? foundation.fateSurvival : undefined);
-    expect(reloaded.snapshot().foundations[0].input.fateSurvival?.majorMysteries).toEqual(['UNIQUE_SURVIVAL_MYSTERY']);
-    expect(prompt.measurement.sections.filter(section => section.section === 'fateSurvival')).toHaveLength(enabled ? 1 : 0);
-    // Toggle the same Foundation without deleting stored proposals, then generate again.
-    await reloaded.saveFoundationRevision(story.id, { ...foundation, fateSurvival: { ...foundation.fateSurvival!, enabled: !enabled } });
-    await reloaded.generateNextChapter(story.id, 'fixture');
-    expect(requests[1].storyInformation.fateSurvival?.majorMysteries).toEqual(enabled ? undefined : ['UNIQUE_SURVIVAL_MYSTERY']);
+    for (const marker of ['UNIQUE_SURVIVAL_MYSTERY', 'UNIQUE_SURVIVAL_THREAD', 'FATE SURVIVAL CONTEXT']) expect(prompt.userPrompt).not.toContain(marker);
+    // The mode is fixed once the novel begins.
+    await expect(reloaded.saveFoundationRevision(story.id, { ...foundation, fateSurvival: { enabled: !enabled } })).rejects.toThrow('fixed once it begins');
   });
 
   it('copies the saved seed and Blueprint into a complete independent Foundation snapshot', () => {
@@ -164,6 +166,8 @@ describe('Story Seed to Harness handoff', () => {
 
   it('delivers every Story Seed world value to the provider exactly once', async () => {
     const record = createMockStorySeedRecord();
+    // Regular Reader mode, so the chapter continues without a reader direction.
+    record.seed.story.optional.fateSurvival.enabled = false;
     const world = record.seed.world.optional;
     Object.assign(world.worldIdentity, { title: 'TITLE_ONCE', worldType: 'WORLD_ONCE', societyStructure: 'SOCIETY_ONCE', startingLocation: 'OPENING_ONCE' });
     Object.assign(world.worldFoundations, {
@@ -229,7 +233,6 @@ describe('Story Seed to Harness handoff', () => {
     expect(foundation.destinedEnding).toBe('Author ending');
     expect(foundation.intendedDirection).toBeUndefined();
     expect(foundation.declaredCanon).not.toContain(record.blueprint!.logline);
-    expect(foundation.declaredCanon).not.toContain(record.blueprint!.majorMysteries[0]);
     expect(foundation.identities?.find(identity => identity.name === 'Ye Chen')?.evidence).toContain('Additional profile detail');
   });
 
@@ -264,6 +267,8 @@ describe('Story Seed to Harness handoff', () => {
   it('carries the frozen source, latest revision, corrections, and continuation through reload and serialized HTTP to the provider', async () => {
     const record = createMockStorySeedRecord();
     record.seed.story.optional.makeItWorkInstruction = 'Keep the strange premise believable.';
+    // Regular Reader mode, so each chapter continues without a reader direction.
+    record.seed.story.optional.fateSurvival.enabled = false;
     const input = createHarnessFoundationFromStorySeed(record);
     const repository = new InMemoryHarnessGenerationRepository();
     const response: HarnessGenerationResponse = {

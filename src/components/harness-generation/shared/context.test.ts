@@ -41,9 +41,11 @@ const fixture = (chapterCount = 4) => {
 describe('Compact Story Information Packet', () => {
   it('projects Current Story Information from stable Foundation fields without the Story Seed snapshot', () => {
     const { state, story, foundation } = fixture();
-    story.steering = [{ id: 's1', direction: 'Keep the tide rising.', mode: 'future', effectiveChapter: 3, createdAt: 'a' }];
+    story.earlierSteering = [{ direction: 'Keep the tide rising.', mode: 'future', effectiveChapter: 3, createdAt: 'a' }];
     const current = projectCurrentStory(state, story, foundation);
-    expect(current).toMatchObject({ title: 'Tidebound', premise: 'A city follows the tide.', originalLanguage: 'en', authorDirections: [{ direction: 'Keep the tide rising.', mode: 'future', effectiveChapter: 3 }], corrections: [] });
+    expect(current).toMatchObject({ title: 'Tidebound', premise: 'A city follows the tide.', originalLanguage: 'en', corrections: [] });
+    // Directions saved before one-chapter directions are the author's record only; they never travel.
+    expect(JSON.stringify(current)).not.toContain('Keep the tide rising.');
     expect(JSON.stringify(current)).not.toContain('SEED SNAPSHOT BODY');
     expect(JSON.stringify(current)).not.toContain('sourceSnapshot');
     expect(current).not.toHaveProperty('destinedEnding');
@@ -54,7 +56,7 @@ describe('Compact Story Information Packet', () => {
     const { state, story, foundation } = fixture();
     story.arcPlans = [{ plan: { arcNumber: 1, goals: [{ id: 'g1', text: 'Anchor the city.', chapters: 100 }] }, effectiveChapter: 1, reason: 'initial' }];
     const packet = compileStoryInformationPacket(state, story, foundation, 'next');
-    expect(packet.storyDirection).toEqual({ destinedEnding: 'The city anchors itself.', hardPins: ['Mara never leaves the city.'] });
+    expect(packet.storyDirection).toEqual({ destinedEnding: 'The city anchors itself.', hardPins: ['Mara never leaves the city.'], fateMode: 'regular' });
     expect(packet.arc).toMatchObject({ arcNumber: 1, activeGoal: { id: 'g1' }, completionDeadline: 100, positionInSegment: 5 });
     expect(packet.rhythm).toEqual({ fatePressure: 'mortal', recentFunctions: [{ chapterNumber: 4, chapterFunction: 'worldBuilding' }], recommendedFunction: 'conflict', reason: 'Test reason.', suggestion: 'Fight 4' });
     // Chapter 2 has no recap and is skipped, never replaced by prose.

@@ -103,7 +103,7 @@ const install = async (importer: HTMLDetailsElement) => {
 };
 
 describe('Uploading an SPP directly from a CAPA slot', () => {
-  it('exposes a direct SPP upload on every CAPA slot', async () => {
+  it('exposes a direct SPP upload on every hand-equipped CAPA slot', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const setup = new HarnessGenerationController({ repository, modelAdapter });
     await setup.hydrate();
@@ -112,7 +112,9 @@ describe('Uploading an SPP directly from a CAPA slot', () => {
     await act(async () => root.render(<SlotImportHost repository={repository} />));
 
     expect(slotImporters().map(details => details.querySelector('summary')!.textContent))
-      .toEqual(CAPA_SCHEMA.map(slot => `Upload SPP to ${slot.label}`));
+      .toEqual(CAPA_SCHEMA.filter(slot => !slot.managedBy).map(slot => `Upload SPP to ${slot.label}`));
+    // The Fate slot follows the story's Fate mode; nothing is uploaded into it.
+    expect(slotImporters().some(details => details.querySelector('summary')!.textContent === 'Upload SPP to Fate')).toBe(false);
   });
 
   it('installs and equips a matching package through its slot in one flow', async () => {

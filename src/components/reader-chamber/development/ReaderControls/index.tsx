@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ArrowRight, ListMusic, MessageSquare } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ListMusic, Loader2, MessageSquare } from 'lucide-react';
 import { ReaderControlsProps } from './types';
 import { PlaybackControls } from './PlaybackControls';
 
@@ -18,7 +18,9 @@ export function ReaderControls({
   playback,
   comments,
 }: ReaderControlsProps) {
-  const { selectedChapterNum, maxChapterNum, navigatePrev, navigateNext, onSwitchTab } = navigation;
+  const { selectedChapterNum, maxChapterNum, navigatePrev, navigateNext, continueAfterLatest, onSwitchTab } = navigation;
+  // At the newest chapter, Next runs the host's action there, when it offers one.
+  const continueAction = selectedChapterNum === maxChapterNum ? continueAfterLatest : undefined;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-neutral-950/95 backdrop-blur-xl border-t border-neutral-900 z-40 px-4 py-2 sm:py-3 pb-6 sm:pb-4 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
@@ -35,13 +37,13 @@ export function ReaderControls({
           <ArrowLeft size={16} />
         </button>
 
-        {/* Comments — reuses the Chronicle Anchors panel for now */}
+        {/* Mind Palace — the passages the reader chose to keep */}
         <button
           type="button"
           onClick={comments.onToggle}
-          aria-label="Comments"
+          aria-label="Mind Palace"
           aria-expanded={comments.open}
-          title="Comments"
+          title="Mind Palace"
           className={`p-2 border rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal/70 relative ${
             comments.open
               ? "border-portal bg-portal/10 text-portal"
@@ -78,12 +80,12 @@ export function ReaderControls({
         <button
           type="button"
           onClick={navigateNext}
-          disabled={selectedChapterNum === maxChapterNum}
-          aria-label="Next Chapter"
-          title="Next Chapter"
+          disabled={selectedChapterNum === maxChapterNum && (!continueAction || continueAction.busy)}
+          aria-label={continueAction ? `Next Chapter: ${continueAction.label}` : "Next Chapter"}
+          title={continueAction?.label ?? "Next Chapter"}
           className={`${ACTION_BUTTON_CLASSES} enabled:hover:text-human`}
         >
-          <ArrowRight size={16} />
+          {continueAction?.busy ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
         </button>
       </div>
     </div>

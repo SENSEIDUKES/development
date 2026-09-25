@@ -17,12 +17,16 @@ const blueprint: WorldBlueprint = {
   mcProfile: 'Ye Chen is a fallen heir with memories of seven failures.',
   majorFactions: ['Heavenly Sword Sect', 'Celestial Court'],
   initialCharacters: ['Elder Qin (Protector)', 'Ninth Prince'],
-  majorMysteries: ['Who wrote the fate ledgers?'],
   firstArcPromise: 'The first assassination attempt begins at the tournament.',
   tropeRules: 'Consequences before triumph.',
   styleBible: 'korean',
   destinedEnding: 'The prince survives and severs the court from fate.',
   estimatedArcs: 7,
+};
+
+/** Fate Survival proposals an older Blueprint may still hold; the development Blueprint no longer reads them. */
+const retiredSurvivalFields = {
+  majorMysteries: ['Who wrote the fate ledgers?'],
   unresolvedPlotThreads: ['Identify the court infiltrator'],
 };
 
@@ -37,7 +41,7 @@ const completeSeed = (): StorySeedInput => ({
     },
     optional: {
       intendedForMatureAudiences: true,
-      fateSurvival: { enabled: true, visibility: 'partial', pressure: 'immortal' },
+      fateSurvival: { enabled: true, pressure: 'immortal' },
       funSettings: {
         faceSlap: 'low',
         plotArmor: 'high',
@@ -107,7 +111,6 @@ describe('Story Seed creator/story/world contract', () => {
     expect(empty.story.required).toEqual({ storyTags: [], premise: '', genre: '', style: '' });
     expect(empty.story.optional.fateSurvival).toEqual({
       enabled: false,
-      visibility: 'partial',
       pressure: 'immortal',
     });
     expect(empty.story.optional.funSettings).toEqual({
@@ -129,7 +132,7 @@ describe('Story Seed creator/story/world contract', () => {
           genre: 'Xianxia',
           style: 'korean',
         },
-        optional: { intendedForMatureAudiences: false, fateSurvival: { enabled: false, visibility: 'partial', pressure: 'immortal' }, funSettings: {} },
+        optional: { intendedForMatureAudiences: false, fateSurvival: { enabled: false, pressure: 'immortal' }, funSettings: {} },
       },
     };
     expect(validateStorySeedInput(worldless)).toEqual({ valid: true, errors: [] });
@@ -197,7 +200,7 @@ describe('Story Seed creator/story/world contract', () => {
   });
 
   it('normalizes an older Blueprint without losing any established generated field', () => {
-    const normalized = normalizeWorldBlueprint(blueprint);
+    const normalized = normalizeWorldBlueprint({ ...blueprint, ...retiredSurvivalFields });
 
     expect(normalized).toMatchObject(blueprint);
     expect(normalized.blueprintVersion).toBe('v1.0');
@@ -212,8 +215,9 @@ describe('Story Seed creator/story/world contract', () => {
     });
     expect(normalized.majorFactions).toEqual(blueprint.majorFactions);
     expect(normalized.initialCharacters).toEqual(blueprint.initialCharacters);
-    expect(normalized.majorMysteries).toEqual(blueprint.majorMysteries);
-    expect(normalized.unresolvedPlotThreads).toEqual(blueprint.unresolvedPlotThreads);
+    // The retired Fate Survival mystery and thread proposals are not read back.
+    expect(normalized).not.toHaveProperty('majorMysteries');
+    expect(normalized).not.toHaveProperty('unresolvedPlotThreads');
   });
 
   it('preserves deliberately cleared editable fields instead of restoring seed fallbacks', () => {
@@ -316,7 +320,7 @@ describe('Story Seed creator/story/world contract', () => {
       ...completeSeed(),
       story: {
         ...completeSeed().story,
-        optional: { intendedForMatureAudiences: false, fateSurvival: { enabled: false, visibility: 'partial', pressure: 'immortal' }, funSettings: {} },
+        optional: { intendedForMatureAudiences: false, fateSurvival: { enabled: false, pressure: 'immortal' }, funSettings: {} },
       },
     });
     expect(missing.story.optional.funSettings).toEqual({
@@ -420,7 +424,7 @@ describe('Story Seed creator/story/world contract', () => {
           logline: blueprint.logline,
           firstArcPromise: blueprint.firstArcPromise,
           tropeRules: blueprint.tropeRules,
-          unresolvedPlotThreads: blueprint.unresolvedPlotThreads,
+          unresolvedPlotThreads: retiredSurvivalFields.unresolvedPlotThreads,
           estimatedArcs: 7,
         },
       },
@@ -430,20 +434,20 @@ describe('Story Seed creator/story/world contract', () => {
           worldIdentity: { ...completeSeed().world.optional.worldIdentity, universe: blueprint.worldOverview },
           worldFoundations: {
             ...completeSeed().world.optional.worldFoundations,
-            majorMysteries: blueprint.majorMysteries,
+            majorMysteries: retiredSurvivalFields.majorMysteries,
           },
         },
       },
     });
 
     const serialized = JSON.stringify(seed);
-    expect(seed.story.optional.fateSurvival).toEqual({ enabled: true, visibility: 'full', pressure: 'heaven' });
+    expect(seed.story.optional.fateSurvival).toEqual({ enabled: true, pressure: 'heaven' });
 
     for (const removed of [
       'hardcoreFateMode', 'fatePressure', 'romanceLevel', 'faceSlappingLevel', 'comedyLevel',
       'haremPreference', 'betrayalLevel', 'dangerLevel', 'generalAtmosphere', 'powerPace',
       'logline', 'firstArcPromise', 'tropeRules', 'unresolvedPlotThreads', 'estimatedArcs',
-      'universe', 'majorMysteries',
+      'universe', 'majorMysteries', 'visibility',
     ]) {
       expect(serialized).not.toContain(removed);
     }
@@ -463,7 +467,7 @@ describe('Story Seed creator/story/world contract', () => {
     expect(roundTripped.story.required).toEqual(seed.story.required);
     expect(roundTripped.story.optional.intendedForMatureAudiences).toBe(true);
     expect(roundTripped.story.optional.fateSurvival)
-      .toEqual({ enabled: true, visibility: 'partial', pressure: 'immortal' });
+      .toEqual({ enabled: true, pressure: 'immortal' });
     expect(roundTripped.story.optional.funSettings)
       .toEqual(seed.story.optional.funSettings);
     expect(roundTripped.story.optional.makeItWorkInstruction)
@@ -558,9 +562,9 @@ describe('Story Seed creator/story/world contract', () => {
       firstArcPromise: blueprint.firstArcPromise,
       tropeRules: blueprint.tropeRules,
       estimatedArcs: blueprint.estimatedArcs,
-      majorMysteries: blueprint.majorMysteries,
-      unresolvedPlotThreads: blueprint.unresolvedPlotThreads,
     });
+    expect(migratedBlueprint).not.toHaveProperty('majorMysteries');
+    expect(migratedBlueprint).not.toHaveProperty('unresolvedPlotThreads');
     expect(JSON.stringify(migrated)).not.toContain('fatePressure');
     expect(JSON.stringify(migrated)).not.toContain('Relentless');
   });
@@ -570,7 +574,7 @@ describe('Story Seed creator/story/world contract', () => {
       ...createEmptyStorySeedInput(),
       story: {
         required: { storyTags: [], premise: 'Only the premise so far.', genre: '', style: '' },
-        optional: { intendedForMatureAudiences: true, fateSurvival: { enabled: false, visibility: 'partial', pressure: 'immortal' }, funSettings: {} },
+        optional: { intendedForMatureAudiences: true, fateSurvival: { enabled: false, pressure: 'immortal' }, funSettings: {} },
       },
     };
     const saved = await createStorySeed('creator-1', draft, undefined, 'en');
@@ -582,7 +586,7 @@ describe('Story Seed creator/story/world contract', () => {
     expect(reloaded.seed.story.required.premise).toBe('Only the premise so far.');
     expect(reloaded.seed.story.optional.intendedForMatureAudiences).toBe(true);
     expect(reloaded.seed.story.optional.fateSurvival)
-      .toEqual({ enabled: false, visibility: 'partial', pressure: 'immortal' });
+      .toEqual({ enabled: false, pressure: 'immortal' });
     expect(reloaded.seed.story.optional.funSettings).toEqual({
       faceSlap: 'medium',
       plotArmor: 'medium',

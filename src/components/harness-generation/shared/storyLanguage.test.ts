@@ -4,7 +4,6 @@ import { compileStoryInformationPacket } from './context';
 import { createHarnessStory, reviseStoryFoundation } from './foundation';
 import { InMemoryHarnessGenerationRepository } from '../../../test-utils/InMemoryHarnessGenerationRepository';
 import { createEmptyHarnessWorkspaceState, readHarnessWorkspaceState } from '@seihouse/sen/harness-generation';
-import { HARNESS_GENERATION_SCHEMA_VERSION } from '@seihouse/sen/harness-generation';
 
 const foundationInput = { title: 'Ninth Meridian', premise: 'A courier outruns a falling dynasty.' };
 
@@ -72,8 +71,8 @@ describe('Original Language as permanent HARNESS story identity', () => {
   it('resets stale workspace state from a version with no migration path', () => {
     const stale = {
       ...createEmptyHarnessWorkspaceState(),
-      // Schema 18 upgrades in place; earlier versions have no migration step.
-      schemaVersion: HARNESS_GENERATION_SCHEMA_VERSION - 2,
+      // Schema 18 and later upgrade in place; earlier versions have no migration step.
+      schemaVersion: 17,
       stories: [{ id: 'hst_stale', title: 'Stale', createdAt: 'a', updatedAt: 'a',
         activeFoundationRevisionId: 'f', foundationRevisionIds: ['f'], head: { nextChapterNumber: 1 } }],
     };

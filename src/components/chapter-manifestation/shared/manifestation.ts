@@ -31,8 +31,6 @@ export type ManifestationMode = 'narrative' | 'media';
 export const NARRATIVE_OPERATIONS = [
   'blueprint',     // World Blueprint
   'initial-arc',   // Initial Arc
-  'steer',         // Steering
-  'alter-fate',    // Alter Fate
   'chapter',       // Chapter
 ] as const;
 export type NarrativeOperation = (typeof NARRATIVE_OPERATIONS)[number];

@@ -64,7 +64,7 @@ afterEach(() => {
 });
 
 describe('Harness Story Seed entry', () => {
-  it('clears an unsaved steering draft before another story can receive it', async () => {
+  it('clears an unsaved chapter direction draft before another story can receive it', async () => {
     const repository = new InMemoryHarnessGenerationRepository();
     const controller = new HarnessGenerationController({ repository, modelAdapter });
     await controller.hydrate();
@@ -73,20 +73,17 @@ describe('Harness Story Seed entry', () => {
     await act(async () => root.render(<HarnessGenerationWorkspace repository={repository} modelAdapter={modelAdapter} />));
     const select = (title: string) => [...container.querySelectorAll('button')].find(button => button.textContent?.includes(`${title}Next:`))!;
     await act(async () => select('Story A').click());
-    const draft = container.querySelector<HTMLTextAreaElement>('#harness-direction')!;
-    const checkbox = container.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
+    await act(async () => container.querySelector<HTMLInputElement>('input[type="radio"][value="reader"]')!.click());
+    const draft = container.querySelector<HTMLTextAreaElement>('textarea[id^="fate-direction-"]')!;
     await act(async () => {
       Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(draft, 'Make the enemy an ally.');
       draft.dispatchEvent(new Event('input', { bubbles: true }));
-      checkbox.click();
     });
     expect(draft.value).toBe('Make the enemy an ally.');
-    expect(checkbox.checked).toBe(true);
     await act(async () => select('Story B').click());
-    expect(draft.value).toBe('');
-    expect(checkbox.checked).toBe(false);
-    expect([...container.querySelectorAll('button')].find(button => button.textContent === 'Save direction')?.disabled).toBe(true);
-    expect(repository.snapshot().stories.every(story => !story.steering?.length)).toBe(true);
+    expect(container.querySelector('textarea[id^="fate-direction-"]')).toBeNull();
+    expect(container.querySelector<HTMLInputElement>('input[type="radio"]:checked')?.value).toBe('fate');
+    expect(repository.snapshot().stories.every(story => !story.nextChapterDirection)).toBe(true);
   });
 
   it('starts with saved Story Seeds and freezes the selection before generation', async () => {

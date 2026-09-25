@@ -141,10 +141,6 @@ export function NovelBlueprintEditor({ snapshot, destinedEnding, busy = false, o
       <BlueprintCollectionSections
         seed={seed}
         updateSeed={updateSeed}
-        survivalEnabled={seed.story.optional.fateSurvival.enabled}
-        majorMysteries={blueprint.majorMysteries}
-        unresolvedPlotThreads={blueprint.unresolvedPlotThreads}
-        setBlueprint={setBlueprint}
       />
       <LibraryPanel padding="sm" className="sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">

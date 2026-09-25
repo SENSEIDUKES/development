@@ -10,8 +10,8 @@ interface ReaderHeaderProps {
   onOpenAudioControls: () => void;
   showReaderSettings: boolean;
   setShowReaderSettings: (show: boolean) => void;
-  onAlterFate?: () => void;
-  alterFateLockMessage?: string | null;
+  /** Opens the host's Fate page. */
+  onOpenFate?: () => void;
   getHeaderThemeClasses: () => string;
   /** Scroll-direction visibility from the chamber. Defaults to pinned visible. */
   isVisible?: boolean;
@@ -23,15 +23,9 @@ const HEADER_BUTTON_CLASSES =
 /**
  * Header Quick Action slot — placeholder for the future "last used tool"
  * shortcut. For now it opens a small menu so more actions can be pinned here
- * later; Alter Fate (Branch) is the first entry.
+ * later; Alter Fate, which opens the host's Fate page, is the first entry.
  */
-function QuickActionMenu({
-  onAlterFate,
-  alterFateLockMessage,
-}: {
-  onAlterFate?: () => void;
-  alterFateLockMessage?: string | null;
-}) {
+function QuickActionMenu({ onOpenFate }: { onOpenFate?: () => void }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -60,27 +54,20 @@ function QuickActionMenu({
             <p className="px-2 pb-1.5 text-[9px] font-mono uppercase tracking-[0.18em] text-neutral-600">
               Quick Actions
             </p>
-            {onAlterFate && (
+            {onOpenFate && (
               <button
                 type="button"
                 role="menuitem"
                 onClick={() => {
                   setOpen(false);
-                  onAlterFate();
+                  onOpenFate();
                 }}
-                disabled={Boolean(alterFateLockMessage)}
-                title={alterFateLockMessage || 'Alter Fate (Branch)'}
-                aria-label={alterFateLockMessage || 'Alter Fate (Branch)'}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-[11px] font-sc uppercase tracking-wider text-portal transition-colors hover:bg-portal/10 disabled:opacity-45 disabled:cursor-not-allowed"
+                title="Alter Fate: where the story is headed and the next chapter's path"
+                className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-[11px] font-sc uppercase tracking-wider text-portal transition-colors hover:bg-portal/10"
               >
                 <Zap size={13} />
-                Alter Fate (Branch)
+                Alter Fate
               </button>
-            )}
-            {alterFateLockMessage && (
-              <p className="px-2 pt-1 text-[9px] leading-tight text-neutral-500">
-                {alterFateLockMessage}
-              </p>
             )}
             <p className="px-2 pt-1.5 text-[9px] leading-tight text-neutral-600">
               Your last used tools will pin here.
@@ -104,8 +91,7 @@ export function ReaderHeader({
   onOpenAudioControls,
   showReaderSettings,
   setShowReaderSettings,
-  onAlterFate,
-  alterFateLockMessage,
+  onOpenFate,
   getHeaderThemeClasses,
   isVisible = true
 }: ReaderHeaderProps) {
@@ -175,8 +161,7 @@ export function ReaderHeader({
         </button>
 
         <QuickActionMenu
-          onAlterFate={onAlterFate}
-          alterFateLockMessage={alterFateLockMessage}
+          onOpenFate={onOpenFate}
         />
       </div>
     </div>

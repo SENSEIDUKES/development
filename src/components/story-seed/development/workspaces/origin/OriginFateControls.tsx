@@ -1,27 +1,5 @@
-import { type StorySeedFateVisibility, type StorySeedInput, type StorySeedSurvivalPressure } from '@seihouse/sen/story-seed';
+import { type StorySeedInput, type StorySeedSurvivalPressure } from '@seihouse/sen/story-seed';
 import { handleRadioGroupKeyDown, radioGroupTabIndex } from '../../radioGroupKeyboard';
-
-const FATE_VISIBILITY_OPTIONS: Array<{
-  value: StorySeedFateVisibility;
-  label: string;
-  description: string;
-}> = [
-  {
-    value: 'full',
-    label: 'Full Fate',
-    description: 'Show threats, clues, countdowns, targets, and likely consequences.',
-  },
-  {
-    value: 'partial',
-    label: 'Partial Fate',
-    description: 'Reveal some signs, but leave parts for you to interpret.',
-  },
-  {
-    value: 'none',
-    label: 'No Fate',
-    description: 'Hide most guidance. You’ll mainly see warnings, scars, clues, and consequences.',
-  },
-];
 
 const SURVIVAL_PRESSURE_OPTIONS: Array<{
   value: StorySeedSurvivalPressure;
@@ -51,7 +29,7 @@ interface FateSurvivalSettingProps {
 }
 
 export const OriginFateControls = ({ settings, onChange }: FateSurvivalSettingProps) => {
-  const optionGroup = <T extends StorySeedFateVisibility | StorySeedSurvivalPressure>(
+  const optionGroup = <T extends StorySeedSurvivalPressure>(
     title: string,
     subtitle: string,
     value: T,
@@ -92,14 +70,14 @@ export const OriginFateControls = ({ settings, onChange }: FateSurvivalSettingPr
   return (
     <>
       <section aria-label="Pressure" className="rounded-xl border border-neutral-800/80 bg-[#080b17]/80 p-3">
-        {optionGroup('Pressure', 'Sets how strongly fate shapes the rhythm of the story, whether Survival is on or off.', settings.pressure, SURVIVAL_PRESSURE_OPTIONS, pressure => onChange({ pressure }))}
+        {optionGroup('Pressure', 'Sets how strongly fate shapes the automatic rhythm of chapters: which kind of chapter comes next when you leave the path to fate.', settings.pressure, SURVIVAL_PRESSURE_OPTIONS, pressure => onChange({ pressure }))}
       </section>
       <section aria-label="Survival" className="space-y-4 rounded-xl border border-neutral-800/80 bg-[#080b17]/80 p-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <span className="min-w-0">
             <span className="block font-sc text-xs font-semibold tracking-wide text-signal">Survival</span>
             <span className="mt-1 block font-sans text-[11px] leading-relaxed text-neutral-400">
-              Turn the story into a living timeline where the world pushes back.
+              You direct every chapter yourself, and the Destined Ending is not guaranteed: your choices can fail it, even by death. Off, fate chooses each chapter's path unless you step in, and the Destined Ending stays the story's guaranteed direction. This is fixed once the novel begins.
             </span>
           </span>
           <button
@@ -120,11 +98,6 @@ export const OriginFateControls = ({ settings, onChange }: FateSurvivalSettingPr
           </button>
         </div>
 
-        {settings.enabled && (
-          <div className="space-y-4 border-t border-neutral-800/70 pt-4">
-            {optionGroup('Fate Visibility', 'Controls how much the Library reveals.', settings.visibility, FATE_VISIBILITY_OPTIONS, visibility => onChange({ visibility }))}
-          </div>
-        )}
       </section>
     </>
   );

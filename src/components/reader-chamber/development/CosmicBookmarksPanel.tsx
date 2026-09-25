@@ -3,13 +3,14 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Bookmark as BookmarkIcon, Trash2, ChevronRight } from 'lucide-react';
 import { VirtualizedList } from '../../../presentation/VirtualizedList';
 import { Chapter, Bookmark } from '../../../narrative/story';
+import { bookmarkPassageText } from '../shared/mindPalace';
 
 interface CosmicBookmarksPanelProps {
   showBookmarksPanel: boolean;
   setShowBookmarksPanel: (show: boolean) => void;
   activeBookmarks: Bookmark[];
   chapters: Chapter[];
-  handleRemoveBookmark: (chapterNum: number, paraIdx: number) => void;
+  handleRemoveBookmark: (bookmarkId: string) => void;
   handleJumpToBookmark: (bookmark: Bookmark) => void;
 }
 
@@ -61,10 +62,10 @@ export const CosmicBookmarksPanel: React.FC<CosmicBookmarksPanelProps> = ({
                   </div>
                   <div>
                     <h3 className="font-sc font-bold text-sm text-signal tracking-widest uppercase">
-                      The Chronicle Anchors
+                      Mind Palace
                     </h3>
                     <p className="text-[10px] text-neutral-550 uppercase tracking-wider font-semibold font-sc">
-                      Spatial Memory Nodes
+                      Passages you chose to keep
                     </p>
                   </div>
                 </div>
@@ -90,9 +91,8 @@ export const CosmicBookmarksPanel: React.FC<CosmicBookmarksPanelProps> = ({
                         className="text-neutral-800 animate-pulse animate-duration-1000"
                       />
                       <p className="font-serif italic text-xs max-w-xs px-4">
-                        "No memory anchors exist in current alignment. Hover
-                        beside paragraphs to affix anchors, annotations, and
-                        memory marks."
+                        "Nothing is kept here yet. Use the marker beside any
+                        passage to keep it, with an optional note."
                       </p>
                     </div>
                   }
@@ -110,8 +110,9 @@ export const CosmicBookmarksPanel: React.FC<CosmicBookmarksPanelProps> = ({
                           <span className="font-sc font-bold text-gold-accent tracking-wider uppercase">
                             Ch. {bookmark.chapterNumber} •{" "}
                             {bookmarkedChapter
-                              ? bookmarkedChapter.title.substring(0, 24) +
-                                "..."
+                              ? bookmarkedChapter.title.length > 24
+                                ? `${bookmarkedChapter.title.slice(0, 24)}…`
+                                : bookmarkedChapter.title
                               : "Sacred Chapter"}
                           </span>
                           <span className="text-neutral-600 font-mono text-[9px]">
@@ -121,14 +122,14 @@ export const CosmicBookmarksPanel: React.FC<CosmicBookmarksPanelProps> = ({
 
                         {/* Passage snippet */}
                         <p className="font-serif italic text-xs text-neutral-400 line-clamp-3 leading-relaxed border-l border-neutral-800 pl-2.5">
-                          "{bookmark.paragraphExcerpt}..."
+                          "{bookmarkPassageText(bookmark)}"
                         </p>
 
                         {/* Anchor feedback notes */}
                         {bookmark.note && (
                           <div className="bg-portal/5 border border-portal/10 p-2 rounded text-[11px] font-sans text-neutral-200 italic">
                             <span className="font-sc font-bold text-[8px] text-portal tracking-widest uppercase block not-italic mb-0.5">
-                              Anchor Resonance:
+                              Your note
                             </span>
                             {bookmark.note}
                           </div>
@@ -138,24 +139,21 @@ export const CosmicBookmarksPanel: React.FC<CosmicBookmarksPanelProps> = ({
                         <div className="flex items-center justify-between pt-2 border-t border-neutral-900/60">
                           <button
                              tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() =>
-                              handleRemoveBookmark(
-                                bookmark.chapterNumber,
-                                bookmark.paragraphIndex,
-                              )
+                              handleRemoveBookmark(bookmark.id)
                             }
                             className="text-neutral-600 hover:text-red-500 text-[10px] font-sc font-bold uppercase tracking-wider flex items-center space-x-1"
-                            title="Shed memory anchor"
-                            aria-label="Release bookmark"
+                            title="Remove from Mind Palace"
+                            aria-label="Remove from Mind Palace"
                           >
                             <Trash2 size={12} />
-                            <span>Release</span>
+                            <span>Remove</span>
                           </button>
 
                           <button
                              tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => handleJumpToBookmark(bookmark)}
                             className="px-3 py-1 bg-portal/11 hover:bg-portal text-portal hover:text-void text-[10px] font-sc font-bold uppercase tracking-wider rounded transition-all flex items-center space-x-1.5"
                           >
-                            <span>Venture (Jump)</span>
+                            <span>Go to passage</span>
                             <ChevronRight size={12} />
                           </button>
                         </div>

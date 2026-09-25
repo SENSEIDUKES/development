@@ -143,7 +143,7 @@ describe('WorkshopHome', () => {
     expect(activePanel().querySelector('section[aria-label="Library components"]')).not.toBeNull();
   });
 
-  it('keeps the old Chapter Generation and Model Router page archived, reachable, and outside the five sections', () => {
+  it('keeps the old Model Router page archived and reachable, and the retired Chapter Generation flow as a record with no route', () => {
     expect(workshopEntries.filter((entry) => entry.status === 'archived').map((entry) => entry.id)).toEqual(['model-router', 'chapter-generation-flow']);
     expect(workshopEntries.find((entry) => entry.id === 'idle-cultivation')?.status).toBe('active');
     expect(container.querySelector('#workshop-archive-panel')!.closest('[role="tabpanel"]')).toBeNull();
@@ -154,9 +154,14 @@ describe('WorkshopHome', () => {
     expect(archiveToggle().getAttribute('aria-expanded')).toBe('true');
     const archive = container.querySelector<HTMLElement>('#workshop-archive-panel')!;
     expect(archive.hidden).toBe(false);
-    expect(previewIds(archive)).toEqual(['model-router', 'chapter-generation-flow']);
-    const card = archive.querySelector('a[href="?preview=chapter-generation-flow"]')!;
+    expect(previewIds(archive)).toEqual(['model-router']);
+    // The retired flow keeps its card as a record, but it opens no route.
+    expect(archive.querySelector('a[href="?preview=chapter-generation-flow"]')).toBeNull();
+    const card = [...archive.querySelectorAll<HTMLElement>('.workshop-card')].find(item => item.textContent?.includes('Chapter Generation'))!;
+    expect(card.tagName).toBe('DIV');
+    expect(card.getAttribute('aria-disabled')).toBe('true');
     expect(card.textContent).toContain('Superseded by Harness Generation.');
+    expect(card.textContent).toContain('Retired on 2026-09-25');
     expect(card.querySelector('.workshop-lifecycle')?.textContent).toBe('archived');
     expect(card.querySelector('.workshop-owner')?.textContent).toBe('Owned by WORKSHOP');
 

@@ -272,7 +272,7 @@ export function createMockChapters(): ReaderChapter[] {
             estimatedTokens: 320,
             includedItemCount: 3,
             availableItemCount: 3,
-            includedItems: ['System voice guide', 'Fate Survival genre contract', 'MC power ceiling'],
+            includedItems: ['System voice guide', 'Genre contract', 'MC power ceiling'],
             omittedItems: [],
             truncated: false,
           },
@@ -409,7 +409,7 @@ export function createMockBookmarks(): Bookmark[] {
       chapterNumber: 1,
       paragraphIndex: 0,
       paragraphExcerpt: 'The night Li Wei swore the Oath of Embers, the collapsed gate of the Ninth Meridian wept rust-red rain...',
-      note: 'The oath comes due in the doom deadline chapter — watch for the ember toll.',
+      note: 'The oath comes due soon — watch for the ember toll.',
       createdAt: '2026-07-28T21:14:03.000Z',
     },
     {
@@ -441,7 +441,7 @@ export function createMockStory(): StoryWorld {
   return {
     id: MOCK_STORY_ID,
     title: 'Ashes of the Ninth Meridian',
-    genre: 'Fate Survival',
+    genre: 'Xianxia',
     mcName: 'Li Wei',
     customPremise:
       'A debt-marked cultivator climbs the Ninth Meridian to out-pay a fate the Heavenly System has already written.',
@@ -632,7 +632,6 @@ export function createMockStory(): StoryWorld {
     ],
     currentChapterNumber: 4,
     intake: { genrePath: 'xianxia cultivation fate-survival' },
-    hardcoreFateMode: false,
     imageUrl: CODEX_PREVIEW_IMAGE,
     imageHistory: [createCodexPreviewImage('story-cover', MOCK_STORY_ID, 'cover', 'Ashes of the Ninth Meridian')],
     relationships: [

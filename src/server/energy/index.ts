@@ -1,7 +1,7 @@
 /**
  * The shared Energy system. See `README.md` for the generation integration
- * boundary; nothing in `src/server/chapter-generation` or
- * `src/server/harness-generation` imports this yet, by design.
+ * boundary; nothing in `src/server/harness-generation` imports this yet, by
+ * design.
  */
 export * from './config';
 export * from './http';

@@ -4,12 +4,13 @@
 - **Source location:** `src/components/AILoadingVeil.tsx`
 - **Workshop preview:** `?preview=chapter-generation-manifestation`
 - **Replica created:** 2026-07-29
-- **Last Workshop update:** 2026-08-21
+- **Last Workshop update:** 2026-09-25
 - **Last source comparison:** 2026-07-29
 - **Replica status:** under refinement
 
 ## Workshop history
 
+- **2026-09-25:** Retired the `steer` ("Sovereign Shift", "trigger the subsequent 10 chapters") and `alter-fate` ("Fate Alteration", "your chosen divergence") narrative operations with the flows they served: persistent steering and the Alter Fate timeline fork were replaced by the reader's one-chapter direction, which is written as an ordinary `chapter` operation. Narrative operations are now World Blueprint, Initial Arc, and Chapter; nothing else in the veil changed.
 - **2026-08-21:** Published this feature as `@seihouse/sen/manifestations`: the chamber and its zones, the loading system and veils, the journey scrubber with its destinations, travelers, and trails, the omen scenes, and the manifestation model. `AILoadingVeil` now draws its motes from the Library-owned `ParticleEffect` instead of an application-root file. The locked `reference/` replica stays Workshop-only.
 
 - **2026-08-17:** Moved the Aura Veil / Manifestation Reveal page switcher and every preview-only state, effect, simulation, containment, and advanced option into the responsive `FeatureWorkspace` Workshop Controls menu. The standalone reveal now shares one controller with that menu; the Aura Veil and Manifestation Reveal component contracts, internal interaction, and locked Reference implementation remain unchanged. The Development-only reveal reports that it has no Original Reference instead of presenting Development code as a locked replica.
@@ -102,7 +103,7 @@ Two visual modes render the same card:
 
 The primary veil (the **Aura Veil**) is one shared manifestation shell hosting two manifestation modes, resolved per operation and carried on the task card as `manifestation` (taxonomy in `shared/manifestation.ts`):
 
-- **Narrative manifestation** — story and narrative-generation operations: World Blueprint (`blueprint`), Initial Arc (`initial-arc`), Steering (`steer`), Alter Fate (`alter-fate`), Chapter (`chapter`). Renders `NarrativeManifestationZone`: the chamber hosting a **system-selected omen scene** from the `omen-scenes` registry. Scenes are never user-selected — an explicit `sceneId` on the spec wins, otherwise the pick is seeded deterministically by the operation's tracker title so the same operation always omens the same scene (`sword-cultivator-clash` is the fallback).
+- **Narrative manifestation** — story and narrative-generation operations: World Blueprint (`blueprint`), Initial Arc (`initial-arc`), Chapter (`chapter`). Renders `NarrativeManifestationZone`: the chamber hosting a **system-selected omen scene** from the `omen-scenes` registry. Scenes are never user-selected — an explicit `sceneId` on the spec wins, otherwise the pick is seeded deterministically by the operation's tracker title so the same operation always omens the same scene (`sword-cultivator-clash` is the fallback).
 - **Media manifestation** — standalone media-generation operations outside the Reader Chamber and Codex: Cover Art (`cover`), Image (`image`), Audio (`audio`), Visual / Motion (`visual`), and future standalone asset types (add to `MEDIA_OPERATIONS` + `MediaKind`). Renders `MediaManifestationZone`: the same chamber hosting the **Manifestation Reveal** — a vessel-agnostic `sealed` → `unsealing` → `revealed` mechanic, currently hosted by the celestial scroll vessel (`development/vessels/CelestialScrollVessel`). The mechanic owns the state routing, tap-to-unseal, accessibility, reduced motion, and containment; the vessel owns the artwork for each state. The Aura Veil's media zone wires the media data through both, and the chamber's golden ambient atmosphere stays shared.
 
 **Shell invariants (identical across modes):** Versa presence (hero zone), aura and ambient atmosphere (emblem aura + cinematic backdrop), status and progress presentation (journey scrubber + layered status), and the shared responsive 100dvh layout. Only the active manifestation zone and the operation-specific language change: narrative operations rotate `NARRATIVE_STATUS_LINES` during a chapter, media operations rotate `MEDIA_STATUS_LINES` and track the reveal progression ("Manifestation sealed" → "Unsealing the manifestation" → "Manifestation Complete").
@@ -150,7 +151,7 @@ Progress in the Development veil renders as `journey-scrubber/JourneyScrubber`:
 - Consolidated status wording: the scrubber is path-only (no "Chapter · Manifesting N/20 · ~Ns" block); a persistent "Chapter N | X%" line sits above Versa's rotating quote at the bottom of the chamber.
 - Versa's floating emblem inside a deepened violet aura (saturated nebula + bright core + counter-rotating wisps) and a `ParticleEffect` backdrop tinted to the active agent.
 - The whole veil is a locked 100dvh circular-chamber composition: Versa hero on top, a path-only journey scrubber (curved qi path with a swappable traveler, preset-driven lit trail, and destination gate) instead of the thin progress bar, an active manifestation zone switched by the operation's manifestation mode (narrative omen scene vs media scroll reveal, both inside `ManifestationChamber`'s enforced layering contract), and the consolidated status at the bottom — "Chapter N | X%" above Versa's rotating evolving line with mode-specific language. No card, no carousel, no scene-selection UI, no manual minimize control.
-- Aura Veil modes: narrative operations (blueprint, initial-arc, steer, alter-fate, chapter) render `NarrativeManifestationZone` with a system-selected omen scene; media operations (cover, image, audio, visual) render `MediaManifestationZone` with the Manifestation Reveal mechanic hosted by the celestial scroll vessel (sealed → unsealing → revealed, optional framed asset). Reader Chamber / Codex / Narration are excluded by contract.
+- Aura Veil modes: narrative operations (blueprint, initial-arc, chapter) render `NarrativeManifestationZone` with a system-selected omen scene; media operations (cover, image, audio, visual) render `MediaManifestationZone` with the Manifestation Reveal mechanic hosted by the celestial scroll vessel (sealed → unsealing → revealed, optional framed asset). Reader Chamber / Codex / Narration are excluded by contract.
 - Workshop structure (2026-08-15): the page has a top-level "Workshop area" segment switcher with two areas — **Aura Veil** (the existing full-shell simulation, with Operation / Manifestation Reveal (dev chain) / Journey Scrubber / Simulation / Compact Indicators control groups) and **Manifestation Reveal** (a focused standalone preview for the agnostic mechanic on its own, with manual state pills, Play sequence, Mock asset / Placeholder content, Tap to unseal on/off, vessel kind, and Compact / Full size containment). The Aura Veil's external media API (`mediaReveal` / `mediaAsset` / `onMediaUnseal`) is unchanged.
 - Scout's presentation stays a compact card without the animation zone.
 
@@ -163,7 +164,7 @@ Nothing beyond the AILoadingVeil replica boundary — the system is presentation
 The workshop has two top-level areas, switched at the top of the page:
 
 - **Aura Veil** (the existing full-shell simulation):
-  - Primary veil — operation selector grouped by manifestation mode: narrative (World Blueprint, Initial Arc, Steering, Alter Fate, Chapter) and media (Cover Art, Image, Audio, Visual / Motion), switched between Reference and Development via the workspace control.
+  - Primary veil — operation selector grouped by manifestation mode: narrative (World Blueprint, Initial Arc, Chapter) and media (Cover Art, Image, Audio, Visual / Motion), switched between Reference and Development via the workspace control.
   - Media reveal — Development-only controls (visible only when a media operation is selected) for the reveal progression (sealed / unsealing / revealed) and revealed content (mock asset vs placeholder vista).
   - Journey scrubber — Development-only controls for traveler, aura trail, and destination.
   - Simulation — open the Aura Veil, open a compact indicator, or stop the running simulation.

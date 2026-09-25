@@ -195,7 +195,6 @@ export interface ChapterScaffold {
   contentHash?: string;
   sealedAt?: number;
   versionId?: string;
-  branchAnchor?: string;
   summary?: string;
   hasContinuityFaults?: boolean;
   continuityWarnings?: string[];
@@ -328,8 +327,17 @@ export interface ReaderPreferences {
 export interface Bookmark {
   id: string;
   chapterNumber: number;
+  /** The block's position when saved. Only a fallback: `blockId` and `passage` identify the passage. */
   paragraphIndex: number;
+  /** A short preview of the passage. */
   paragraphExcerpt: string;
+  /** The chapter block's stable identity, when the chapter has one. */
+  blockId?: string;
+  /**
+   * The exact canonical text of the saved passage. A bookmark resolves only to
+   * a block that still holds it; absent on bookmarks saved before anchoring.
+   */
+  passage?: string;
   note?: string;
   createdAt: string;
 }
@@ -611,8 +619,6 @@ export interface StoryWorld {
   persistenceId?: string;
   userId?: string;
   id: string;
-  parentStoryId?: string;
-  forkChapterNumber?: number;
   title: string;
   genre: string;
   mcName: string;
@@ -628,6 +634,7 @@ export interface StoryWorld {
   arcs: StoryArc[];
   currentChapterNumber: number;
   intake?: IntakeData;
+  /** Read only by the locked Reader Chamber reference replica; no development surface reads or writes it. */
   hardcoreFateMode?: boolean;
   imageUrl?: string;
   coverAssetId?: string;

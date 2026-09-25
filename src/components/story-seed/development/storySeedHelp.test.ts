@@ -14,10 +14,11 @@ const expectedLibraryTopics = [
   ['World', 'World details shape the setting, powers, factions, and rules around your story, Choose wisely disciple.', `${helpLinesBase}/WORLD%20ENG.mp3`, ['story-seed']],
   ['ARC', 'ARC guides the path of the story, including plot, tropes, even Face-Slaps, Use ARC to shape the Novels Destiny.', `${helpLinesBase}/ARC%20ENG.mp3`, ['story-seed']],
   ['Origin', 'Origin holds the required heart of your story, the title, premise, genre, style and tags.', `${helpLinesBase}/ORIGIN%20ENG.mp3`, ['story-seed']],
-  ['Fate Survival', 'Fate Survival is a narrative pressure system layered on top of any genre.', `${helpLinesBase}/Fate%20Survival%20Eng.mp3`, ['story-seed', 'fate']],
-  ['Mind Palace', 'Mind Palace is the temporary clue-tracking system used during a Fate Event.', `${helpLinesBase}/Mind%20Palace%20Eng.mp3`, ['fate']],
-  ['Alter Fate', 'The ability for a reader to change the outcome of the next scenes narrative', `${helpLinesBase}/Alter%20Fate%20-%20Eng.mp3`, ['reader', 'fate']],
-  ['Fate Event', 'A Fate Event is a Mechanic in which after a series of chapters fate forces  a decision to be made.', `${helpLinesBase}/Fate%20event%20eng.mp3`, ['fate']],
+  // Rewritten for the Phase 2 Fate model; their earlier recordings described
+  // the retired design, so they have no audio until new lines are recorded.
+  ['Fate Survival', 'In Fate Survival you direct every chapter yourself, and the Destined Ending is not guaranteed: your choices can fail it.', undefined, ['story-seed', 'fate']],
+  ['Mind Palace', 'Your Mind Palace keeps the passages you choose from the story, each with an optional note, so you can return to them.', undefined, ['fate']],
+  ['Alter Fate', 'Alter Fate opens the Fate page, where you see where the story is headed and choose the next chapter\'s path.', undefined, ['reader', 'fate']],
   ['Manifest', 'Manifesting is the act of generating chapters, images, audio, rewards, and videos in the the celestial library', `${helpLinesBase}/Manifest%20-%20Eng.mp3`, ['library', 'story-seed', 'reader']],
   ['Seed Bank', 'The storage bank for a Readers Story Seeds and world blueprints', `${helpLinesBase}/Seed%20Bank%20-%20ENG.mp3`, ['story-seed', 'seed-bank']],
   ['World Blueprint', 'A World Blueprint is the final overview of a novel before it is manifested from the seed.', `${helpLinesBase}/World%20Blueprint%20-%20Eng.mp3`, ['story-seed', 'seed-bank']],
@@ -47,7 +48,7 @@ describe('Library guidance topics', () => {
       return [item.label, translation?.line, LIBRARY_ASSETS.helpAudio?.[item.id], item.contexts];
     })).toEqual(expectedLibraryTopics);
 
-    const audioUrls = STORY_SEED_HELP_ITEMS.map(item => LIBRARY_ASSETS.helpAudio?.[item.id]);
+    const audioUrls = STORY_SEED_HELP_ITEMS.flatMap(item => LIBRARY_ASSETS.helpAudio?.[item.id] ?? []);
     expect(new Set(audioUrls).size).toBe(audioUrls.length);
   });
 

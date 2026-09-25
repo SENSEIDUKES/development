@@ -392,7 +392,6 @@ export function CardWorkshopContextualReader({
           preferredLang="en"
           selectedChapter={fixture.chapter}
           activeStory={fixture.activeStory}
-          currentPowerStage="Foundation Establishment — Stage 4"
           selectedChapterNum={CONTEXT_CHAPTER_NUMBER}
           maxChapterNum={CONTEXT_CHAPTER_NUMBER}
           codexTerms={fixture.codexTerms}
@@ -427,8 +426,6 @@ export function CardWorkshopContextualReader({
           handleGenerate={() => undefined}
           handleGenerateNextFive={() => undefined}
           activeAgentId={null}
-          showFateCodex={false}
-          setShowFateCodex={() => undefined}
           showLegend={false}
           setShowLegend={() => undefined}
           hasSystemBlocks={Boolean(fixture.chapter.blocks?.some(block => block.system))}

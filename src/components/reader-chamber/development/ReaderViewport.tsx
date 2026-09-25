@@ -8,11 +8,11 @@ import {
 } from '@seihouse/sen/cards';
 import { SYSTEM_COLORS_LEGEND } from '@seihouse/sen/color-codes';
 import { ReaderChapter, StoryBlock, StoryWorld, Bookmark } from '../../../narrative/story';
+import { mapBookmarksToBlocks } from '../shared/mindPalace';
 import { extractReaderVisibleAudioText as extractSFXCues } from '../../../audio/readerVisibleText';
 import { useNarrativeArt } from '../../../presentation';
 import { collectBlockAutoCues } from '../shared/autoCuePolicy';
 import { useReaderStore } from '../../../narrative/readerRuntime';
-import { ReaderFateAlerts } from './ReaderFateAlerts';
 import { SystemColorLegend } from './SystemColorLegend';
 import { anchorAttributes } from '../shared/cinematicScroll/anchors';
 import { ContextInspector } from './ContextInspector';
@@ -21,6 +21,7 @@ import { getSenTextDirection, type SenLanguageCode } from '../../../lib/language
 import { createCodexHighlighter, splitByCodexTerms } from '../../../narrative/codexHighlighting';
 import { InlineAudioText } from './InlineAudio';
 import type { ResolvedAudioMoment } from '../../../audio/inlineAudio';
+import type { ReaderContinueAction } from './ReaderControls/types';
 
 interface ReaderViewportProps {
   readerRef: React.RefObject<HTMLDivElement | null>;
@@ -34,7 +35,6 @@ interface ReaderViewportProps {
   preferredLang: string;
   selectedChapter: ReaderChapter;
   activeStory: StoryWorld;
-  currentPowerStage: string;
   selectedChapterNum: number;
   maxChapterNum: number;
   
@@ -55,8 +55,9 @@ interface ReaderViewportProps {
   setEditingBookmarkParagraphIndex: (idx: number | null) => void;
   bookmarkNoteText: string;
   setBookmarkNoteText: (text: string) => void;
-  handleRemoveBookmark: (chapterNum: number, paraIdx: number) => void;
-  handleSaveBookmark: (paraIdx: number, excerpt: string, noteText: string) => void;
+  handleRemoveBookmark: (bookmarkId: string) => void;
+  /** Saves the passage at this block index to the Mind Palace, or updates its note. */
+  handleSaveBookmark: (paraIdx: number, noteText: string) => void;
   
   /** Canonical blocks, or canonical blocks with a translated overlay merged in. */
   displayBlocks: StoryBlock[] | undefined;
@@ -72,6 +73,8 @@ interface ReaderViewportProps {
   
   navigatePrev: () => void;
   navigateNext: () => void;
+  /** Next's action at the newest chapter, when the host offers one. */
+  continueAfterLatest?: ReaderContinueAction;
   
   handleSealChapter?: (chapterNumber: number) => Promise<void>;
   handleSealClick: () => void;
@@ -82,8 +85,6 @@ interface ReaderViewportProps {
   handleGenerateNextFive: () => void;
   activeAgentId: string | null;
   
-  showFateCodex: boolean;
-  setShowFateCodex: (show: boolean) => void;
   showLegend: boolean;
   setShowLegend: (show: boolean) => void;
   hasSystemBlocks: boolean;
@@ -102,7 +103,6 @@ export function ReaderViewport({
   preferredLang,
   selectedChapter,
   activeStory,
-  currentPowerStage,
   selectedChapterNum,
   maxChapterNum,
   codexTerms,
@@ -131,6 +131,7 @@ export function ReaderViewport({
   getFocusClass,
   navigatePrev,
   navigateNext,
+  continueAfterLatest,
   handleSealChapter,
   handleSealClick,
   isCheckingConsistency,
@@ -138,8 +139,6 @@ export function ReaderViewport({
   handleGenerate,
   handleGenerateNextFive,
   activeAgentId,
-  showFateCodex,
-  setShowFateCodex,
   showLegend,
   setShowLegend,
   hasSystemBlocks,
@@ -339,16 +338,10 @@ export function ReaderViewport({
     );
   }, [activeStory, systemCharacterHighlighter]);
 
-  const bookmarkMap = React.useMemo(() => {
-    const map = new Map<number, Bookmark>();
-    if (!activeBookmarks) return map;
-    activeBookmarks.forEach(b => {
-      if (b && b.chapterNumber === selectedChapter.number && !map.has(b.paragraphIndex)) {
-        map.set(b.paragraphIndex, b);
-      }
-    });
-    return map;
-  }, [activeBookmarks, selectedChapter.number]);
+  // Mind Palace passages resolve by block identity and exact text, never by position alone.
+  const bookmarkMap = React.useMemo(() => mapBookmarksToBlocks(activeBookmarks, selectedChapter.number,
+    selectedChapter.blocks ?? (selectedChapter.generatedContent || '').split('\n\n').map(text => ({ text }))),
+  [activeBookmarks, selectedChapter.number, selectedChapter.blocks, selectedChapter.generatedContent]);
   React.useEffect(() => {
     if (isShowingTranslation || !selectedChapter?.blocks || !activeStory) return;
     let hasChanges = false;
@@ -440,14 +433,6 @@ export function ReaderViewport({
               transition={{ duration: 0.5, ease: "easeOut" }}
               className="w-full max-w-5xl mx-auto"
             >
-              <ReaderFateAlerts 
-                activeStory={activeStory}
-                currentPowerStage={currentPowerStage}
-                selectedChapterNum={selectedChapterNum}
-                showFateCodex={showFateCodex}
-                setShowFateCodex={setShowFateCodex}
-              />
-
               {selectedChapter.hasContinuityFaults && (
                 <div className="mb-6 p-5 border border-rose-500/30 bg-rose-950/20 rounded-lg shadow-[0_0_15px_rgba(239,68,68,0.1)]">
                   <div className="flex items-start gap-3">
@@ -714,25 +699,20 @@ export function ReaderViewport({
                               {renderProseText(cleanText, index, block.id)}
                               <button
                                  tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => {
-                                  if (existingBookmark) {
-                                    handleRemoveBookmark(
-                                      selectedChapter.number,
-                                      index,
-                                    );
-                                  } else {
-                                    setEditingBookmarkParagraphIndex(index);
-                                    // WORKSHOP: this branch always has no bookmark; the
-                                    // source ternary on `existingBookmark` trips
-                                    // strict-null narrowing, so set the empty note
-                                    // directly (identical runtime behavior).
-                                    setBookmarkNoteText("");
-                                  }
+                                  // A saved passage opens its note; removing it is an explicit choice there.
+                                  setEditingBookmarkParagraphIndex(index);
+                                  setBookmarkNoteText(existingBookmark?.note ?? "");
                                 }}
                                 className={`inline-block ml-3 align-baseline transition-opacity ${existingBookmark ? "text-gold-accent opacity-100" : "text-neutral-500 opacity-20 md:opacity-0 hover:opacity-100 group-hover:opacity-100"}`}
                                 title={
                                   existingBookmark
-                                    ? "Remove bookmark"
-                                    : "Bookmark this position"
+                                    ? "Edit this Mind Palace passage"
+                                    : "Keep this passage in your Mind Palace"
+                                }
+                                aria-label={
+                                  existingBookmark
+                                    ? "Edit this Mind Palace passage"
+                                    : "Keep this passage in your Mind Palace"
                                 }
                               >
                                 <BookmarkIcon
@@ -752,7 +732,8 @@ export function ReaderViewport({
                                   onChange={(e) =>
                                     setBookmarkNoteText(e.target.value)
                                   }
-                                  placeholder="Add a contemplation or heavenly mechanic note here..."
+                                  aria-label="Mind Palace note"
+                                  placeholder="Why keep this passage? (optional)"
                                   className="w-full bg-neutral-900 border border-neutral-800 rounded p-3 text-sm text-signal placeholder-neutral-600 focus:outline-none focus:border-portal mb-3 min-h-[80px]"
                                 />
                                 <div className="flex justify-end space-x-2">
@@ -761,22 +742,30 @@ export function ReaderViewport({
                                       setEditingBookmarkParagraphIndex(null)
                                     }
                                     className="px-4 py-1.5 text-xs text-neutral-400 hover:text-signal transition-colors font-mono"
-                                    aria-label="Cancel bookmark editing"
+                                    aria-label="Cancel Mind Palace editing"
                                   >
                                     Cancel
                                   </button>
+                                  {existingBookmark && (
+                                    <button
+                                      onClick={() => {
+                                        handleRemoveBookmark(existingBookmark.id);
+                                        setEditingBookmarkParagraphIndex(null);
+                                      }}
+                                      className="px-4 py-1.5 text-xs text-neutral-400 hover:text-red-400 transition-colors font-mono"
+                                      aria-label="Remove from Mind Palace"
+                                    >
+                                      Remove
+                                    </button>
+                                  )}
                                   <button
                                     onClick={() =>
-                                      handleSaveBookmark(
-                                        index,
-                                        block.text.substring(0, 100) + "...",
-                                        bookmarkNoteText,
-                                      )
+                                      handleSaveBookmark(index, bookmarkNoteText)
                                     }
                                     className="px-4 py-1.5 text-xs bg-human text-signal rounded hover:bg-void transition-colors font-sans"
-                                    aria-label="Save bookmark"
+                                    aria-label="Save to Mind Palace"
                                   >
-                                    Save Bookmark
+                                    {existingBookmark ? "Save Note" : "Keep Passage"}
                                   </button>
                                 </div>
                               </div>
@@ -909,10 +898,7 @@ export function ReaderViewport({
                                     </span>
                                     <button
                                        tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() =>
-                                        handleRemoveBookmark(
-                                          selectedChapter.number,
-                                          index,
-                                        )
+                                        handleRemoveBookmark(existingBookmark.id)
                                       }
                                       className="text-neutral-550 hover:text-red-500 p-1 opacity-40 md:opacity-0 group-hover:opacity-100 transition-opacity"
                                       title="Release Anchor"
@@ -941,11 +927,7 @@ export function ReaderViewport({
                                     className="w-full bg-void text-xs text-signal border border-neutral-850 focus:border-portal p-2 rounded focus:outline-none"
                                     onKeyDown={(e) => {
                                       if (e.key === "Enter") {
-                                        handleSaveBookmark(
-                                          index,
-                                          paragraph,
-                                          bookmarkNoteText,
-                                        );
+                                        handleSaveBookmark(index, bookmarkNoteText);
                                       }
                                     }}
                                   />
@@ -957,10 +939,7 @@ export function ReaderViewport({
                                       {existingBookmark && (
                                         <button
                                           onClick={() => {
-                                            handleRemoveBookmark(
-                                              selectedChapter.number,
-                                              index,
-                                            );
+                                            handleRemoveBookmark(existingBookmark.id);
                                             setEditingBookmarkParagraphIndex(
                                               null,
                                             );
@@ -984,11 +963,7 @@ export function ReaderViewport({
                                       </button>
                                       <button
                                         onClick={() =>
-                                          handleSaveBookmark(
-                                            index,
-                                            paragraph,
-                                            bookmarkNoteText,
-                                          )
+                                          handleSaveBookmark(index, bookmarkNoteText)
                                         }
                                         className="px-3 py-1 text-[10px] uppercase font-bold tracking-widest bg-portal text-void font-sc rounded hover:brightness-110"
                                         aria-label="Save bookmark"
@@ -1038,13 +1013,16 @@ export function ReaderViewport({
 
             <button
                tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={navigateNext}
-              disabled={selectedChapterNum === maxChapterNum}
+              disabled={selectedChapterNum === maxChapterNum && (!continueAfterLatest || continueAfterLatest.busy)}
               className="px-6 py-2 rounded-full border border-neutral-800 hover:border-gold-accent text-neutral-400 hover:text-gold-accent disabled:opacity-20 transition-all font-sc uppercase text-[10px] tracking-wider flex items-center space-x-2"
             >
-              <span>Next</span>
-              <ArrowRight size={14} />
+              <span>{selectedChapterNum === maxChapterNum && continueAfterLatest ? continueAfterLatest.label : "Next"}</span>
+              {selectedChapterNum === maxChapterNum && continueAfterLatest?.busy ? <Loader2 size={14} className="animate-spin" /> : <ArrowRight size={14} />}
             </button>
           </div>
+          {selectedChapterNum === maxChapterNum && continueAfterLatest?.error && (
+            <p role="alert" className="-mt-4 pb-8 text-right text-xs text-amber-200">{continueAfterLatest.error}</p>
+          )}
           {isCompletedBatchEndpoint && (
             <div className="pb-8 flex flex-col items-center gap-2">
               <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider">Batch complete — choose the next fate.</p>

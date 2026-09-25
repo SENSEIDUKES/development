@@ -1,10 +1,27 @@
 import { ReaderChapter } from '../../../../narrative/story';
 
+/**
+ * What Next does at the newest chapter, when the host offers something there:
+ * for example writing the next chapter, or asking the reader to direct it first.
+ */
+export interface ReaderContinueAction {
+  /** The action in a few words, such as "Write Chapter 4". */
+  label: string;
+  /** The action is running; Next waits for it. */
+  busy?: boolean;
+  /** Why the last attempt did not work. */
+  error?: string;
+  /** Runs the action. Resolves the chapter to open when one is ready. */
+  onContinue: () => Promise<number | undefined> | void;
+}
+
 export interface ChapterNavigationState {
   selectedChapterNum: number;
   maxChapterNum: number;
   navigatePrev: () => void;
   navigateNext: () => void;
+  /** Next's action at the newest chapter. Without one, Next stops there. */
+  continueAfterLatest?: ReaderContinueAction;
   onSwitchTab?: (tab: "reader" | "codex" | "memory") => void;
 }
 
@@ -34,9 +51,9 @@ export interface ImmersionPreferences {
 }
 
 /**
- * The Comments entry reuses the Chronicle Anchors (bookmarks) panel until the
- * full comments system replaces it — `open`/`onToggle` drive that same drawer
- * and `count` carries the anchor badge.
+ * The Mind Palace entry — `open`/`onToggle` drive the drawer of passages the
+ * reader kept, and `count` carries their badge. (Named `comments` for the
+ * earlier placeholder use of this bottom-bar slot.)
  */
 export interface CommentsControl {
   open: boolean;

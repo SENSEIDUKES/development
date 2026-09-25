@@ -1,5 +1,5 @@
 import { validateHardPinInputs } from '../../../narrative/storyDirection';
-import { harnessArcContext } from './arcState';
+import { harnessArcContext, harnessStoryMode } from './arcState';
 import { projectCanonicalState } from './canonicalProjection';
 import { semanticReaderChanges } from './readerEdits';
 import { GENERATION_PACKET_BUDGET, estimatePacketTokens } from './packetBudget';
@@ -7,6 +7,10 @@ import { cloneHarnessValue, defaultHarnessRuntime, type HarnessRuntime } from '.
 import type { CurrentStoryProjection, HarnessStory, HarnessWorkspaceState, PacketSectionId, PacketSectionMeasurement, PreviouslyOnEntry, RhythmDirectionSection, StoryFoundationRevision, StoryInformationPacket } from '../../../narrative/generation';
 
 const text = (value: string | undefined) => value?.trim() ? value.trim() : undefined;
+
+/** The words of the reader's choice that should steer which canon is selected. */
+const directionFocus = (direction: HarnessStory['nextChapterDirection']) =>
+  !direction ? undefined : direction.choice.kind === 'reader' ? direction.choice.text : direction.choice.suggestion;
 
 /**
  * Current Story Information: reads the active Foundation's stable domain
@@ -61,7 +65,6 @@ export const projectCurrentStory = (
     ...(text(input.worldFacts) ? { worldFacts: input.worldFacts!.trim() } : {}),
     ...(input.cast?.length ? { cast: cloneHarnessValue(input.cast) } : {}),
     ...(input.identities?.length ? { identities: cloneHarnessValue(input.identities) } : {}),
-    authorDirections: (story.steering ?? []).map(direction => ({ direction: direction.direction, mode: direction.mode, effectiveChapter: direction.effectiveChapter })),
     corrections,
   };
 };
@@ -94,17 +97,22 @@ export const compileStoryInformationPacket = (
   }
   const nextChapterNumber = story.head.nextChapterNumber;
 
-  const fateSurvival = foundationRevision.input.fateSurvival?.enabled
-    ? cloneHarnessValue(foundationRevision.input.fateSurvival) : undefined;
+  const fateMode = harnessStoryMode(foundationRevision.input);
   const currentStory = projectCurrentStory(state, story, foundationRevision);
   const storyDirection = {
     ...(text(foundationRevision.input.destinedEnding) ? { destinedEnding: foundationRevision.input.destinedEnding!.trim() } : {}),
     hardPins: validateHardPinInputs((story.hardPins ?? []).map(({ id, text }) => ({ id, text }))).map(pin => pin.text),
+    fateMode,
   };
+  // The reader's choice for this chapter travels in the Immediate Chapter
+  // Request. Rhythm's automatic direction is sent only when there is none, and
+  // never in Fate Survival, where the reader directs every chapter.
+  const direction = story.nextChapterDirection?.forChapter === nextChapterNumber ? story.nextChapterDirection : undefined;
+  const automaticPath = !direction && fateMode === 'regular';
   const arc = harnessArcContext(story, foundationRevision.input, nextChapterNumber);
 
   // Section 5 comes from the persisted recommendation only; nothing is recomputed here.
-  const recommendation = story.rhythmRecommendation;
+  const recommendation = automaticPath ? story.rhythmRecommendation : undefined;
   const latestSuggestions = [...chapters].reverse().find(chapter => chapter.rhythm?.nextChapterSuggestions)?.rhythm?.nextChapterSuggestions;
   const rhythm: RhythmDirectionSection | undefined = recommendation ? {
     fatePressure: recommendation.fatePressure,
@@ -132,7 +140,7 @@ export const compileStoryInformationPacket = (
   const activeChapterNumbers = chapters.slice(-GENERATION_PACKET_BUDGET.activeChapterWindow).map(chapter => chapter.chapterNumber);
   const canonical = projectCanonicalState({
     state, storyId: story.id,
-    focusText: [arc?.activeGoal.text, story.steering?.at(-1)?.direction, ...(story.hardPins ?? []).map(pin => pin.text), rhythm?.suggestion].filter(Boolean).join(' '),
+    focusText: [arc?.activeGoal.text, directionFocus(direction), ...(story.hardPins ?? []).map(pin => pin.text), rhythm?.suggestion].filter(Boolean).join(' '),
     castNames: [...(foundationRevision.input.cast ?? []).map(member => member.name), ...(foundationRevision.input.identities ?? []).map(identity => identity.name)],
     activeChapterNumbers,
   });
@@ -143,7 +151,6 @@ export const compileStoryInformationPacket = (
     measure('storyDirection', storyDirection),
     measure('arc', arc),
     measure('rhythm', rhythm),
-    ...(fateSurvival ? [measure('fateSurvival', fateSurvival)] : []),
     measure('previouslyOn', previouslyOn),
     measure('canonicalState', canonical.projection),
   ];
@@ -161,7 +168,6 @@ export const compileStoryInformationPacket = (
     storyDirection,
     ...(arc ? { arc } : {}),
     ...(rhythm ? { rhythm } : {}),
-    ...(fateSurvival ? { fateSurvival } : {}),
     previouslyOn,
     canonicalState: canonical.projection,
     diagnostics: {

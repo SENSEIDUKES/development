@@ -274,10 +274,6 @@ export const BlueprintReview = ({
         <BlueprintCollectionSections
           seed={seed}
           updateSeed={updateSeed}
-          survivalEnabled={seed.story.optional.fateSurvival.enabled}
-          majorMysteries={blueprint.majorMysteries}
-          unresolvedPlotThreads={blueprint.unresolvedPlotThreads}
-          setBlueprint={setBlueprint}
         />
 
         {/* Dossier footer — refine / manifest / copy / export actions. */}

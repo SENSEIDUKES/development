@@ -9,7 +9,7 @@ import type { ChapterFunction, ChapterRecap, FatePressure, HardPin, NextChapterS
  * matching upgrade step to `HARNESS_WORKSPACE_MIGRATIONS` in `repository.ts`,
  * so saved stories carry over. Storage with no migration path is preserved
  * untouched by the host and replaced with an empty workspace. */
-export const HARNESS_GENERATION_SCHEMA_VERSION = 19 as const;
+export const HARNESS_GENERATION_SCHEMA_VERSION = 20 as const;
 
 /** Output buckets assign processor categories; legacy event arrays remain readable. */
 export const HARNESS_MEMORY_CATEGORIES = {
@@ -27,13 +27,19 @@ export interface HarnessStorySeedSnapshot {
   blueprint?: unknown;
 }
 
-/** Author-owned Fate Survival proposals, separate from canon and character knowledge. */
+/**
+ * The story's Fate mode, chosen in the Story Seed and fixed once the story
+ * begins. Off is Regular Reader mode: automatic Rhythm directs by default, the
+ * reader may direct any chapter, and the Destined Ending is guaranteed. On is
+ * Fate Survival: the reader directs every chapter within its pre-set Arc Goal,
+ * and the Destined Ending is not guaranteed; the story can fail it.
+ */
 export interface FateSurvivalContext {
   enabled: boolean;
-  visibility: 'full' | 'partial' | 'none';
-  majorMysteries: string[];
-  unresolvedPlotThreads: string[];
 }
+
+/** `regular` is Regular Reader mode; `survival` is Fate Survival. */
+export type HarnessStoryMode = 'regular' | 'survival';
 
 export interface StoryFoundationInput {
   initialHardPins?: import('./storyDirection').HardPinInput[];
@@ -122,8 +128,25 @@ export interface HarnessStory {
   activeFoundationRevisionId: string;
   foundationRevisionIds: string[];
   head: HarnessStoryHead;
-  /** Append-only author directions, independent of the frozen opening outline. */
-  steering?: HarnessSteering[];
+  /**
+   * The reader's choice for the next chapter only, made on the Fate page. It
+   * survives failed attempts so the same choice can be retried, and is
+   * consumed when that chapter commits. Absent means Rhythm chooses
+   * automatically (Regular Reader mode only).
+   */
+  nextChapterDirection?: HarnessChapterDirection;
+  /**
+   * Persistent directions saved before one-chapter directions replaced them.
+   * Kept as the author's record; never sent to the writer again.
+   */
+  earlierSteering?: HarnessEarlierSteering[];
+  /**
+   * Fate Survival: set once, when the route to the Destined Ending breaks. The
+   * next chapter must end the story; it never begins another arc.
+   */
+  brokenRoute?: HarnessBrokenRoute;
+  /** Set once when the story reaches or fails its Destined Ending. No chapter is written after it. */
+  conclusion?: HarnessStoryConclusion;
   /** Per-story references to host-installed skills. The full manifests are frozen per request. */
   skillLoadout?: Partial<Record<HarnessSkillSlotId, HarnessSkillReference>>;
   /** Entitled Media Packs equipped for this story. Separate from CAPA skills. */
@@ -170,6 +193,7 @@ export interface HarnessChapterRhythm {
 export type HarnessSkillSlotId =
   | 'author'
   | 'pacing'
+  | 'fate'
   | 'continuity'
   | 'style'
   | 'accessibility'
@@ -306,15 +330,14 @@ export interface HarnessSelectedTranslationGlossary {
 
 /**
  * Immediate Chapter Request: the HARNESS-owned instruction for the one chapter
- * being generated now. Persistent steering history stays in the Story
- * Information Packet; this names what this attempt must do.
+ * being generated now, including the reader's direction for this chapter.
  */
 export interface ImmediateChapterRequest {
   chapterNumber: number;
   /** True when a committed chapter precedes this one; false for the story opening. */
   continuation: boolean;
-  /** The latest persistent direction the model must make concrete progress on, if any. */
-  assignment?: string;
+  /** The reader's choice for this chapter. Absent when Rhythm chooses automatically. */
+  direction?: HarnessChapterDirection;
   /**
    * The HARNESS-owned chapter-scale target for this attempt. It is mechanics,
    * not a CAPA skill and not canonical Story Information: the Pacing skill
@@ -323,12 +346,99 @@ export interface ImmediateChapterRequest {
   chapterScale: { minWords: number; maxWords: number };
 }
 
-export interface HarnessSteering {
+/** One path for the next chapter, chosen by the reader. */
+export type ChapterDirectionChoice =
+  /** One of the writer's three next-chapter ideas, or its chapter function alone. */
+  | { kind: 'chapter-function'; chapterFunction: ChapterFunction; suggestion?: string }
+  /** The reader's own direction, in their words. Never one of the chapter functions. */
+  | { kind: 'reader'; text: string };
+
+/** The longest reader direction the Fate page accepts. */
+export const CHAPTER_DIRECTION_TEXT_LIMIT = 1_200 as const;
+
+/** A reader's pending choice for exactly one chapter. */
+export interface HarnessChapterDirection {
   id: string;
+  /** The chapter this choice directs. It is consumed when that chapter commits. */
+  forChapter: number;
+  choice: ChapterDirectionChoice;
+  chosenAt: string;
+}
+
+/** How a committed chapter's path was decided: automatically by Rhythm, or by the reader's choice. */
+export type HarnessChapterPath =
+  | { kind: 'automatic'; chapterFunction: ChapterFunction; suggestion?: string }
+  | ({ directionId: string } & ChapterDirectionChoice);
+
+/** A persistent direction from before one-chapter directions. Read-only history. */
+export interface HarnessEarlierSteering {
   direction: string;
   mode: 'future' | 'revise-history';
   effectiveChapter: number;
   createdAt: string;
+}
+
+/** A goal whose deadline chapter committed without the goal achieved. */
+export interface HarnessMissedGoal {
+  goalId: string;
+  text: string;
+  /** The deadline chapter it was missed in. */
+  chapterNumber: number;
+}
+
+/**
+ * Fate Survival: the route to the Destined Ending broke when this chapter
+ * committed, because at least half of one arc's goals were missed or the
+ * final goal was. The next chapter must bring the story to its end.
+ */
+export interface HarnessBrokenRoute {
+  /** The chapter whose commit broke the route. The chapter after it must end the story. */
+  chapterNumber: number;
+  arcNumber: number;
+  reason: 'arc-goals-missed' | 'final-goal-missed';
+  goalsInArc: number;
+  /** The arc's missed goals when it broke, in order. */
+  missedGoals: HarnessMissedGoal[];
+  recordedAt: string;
+}
+
+/**
+ * Where the story stands on its route to the Destined Ending as of one
+ * chapter. Sent with the Active Arc Goal so the writer knows it.
+ */
+export type HarnessArcRoute =
+  /** No goal of this arc has been missed. */
+  | { status: 'on-track' }
+  /** Goals of this arc were missed; the route still leads to the Destined Ending. */
+  | { status: 'off-track'; missedGoals: HarnessMissedGoal[] }
+  /** Regular Reader: the final goal was missed. The story keeps pursuing the Destined Ending, with no further goal. */
+  | { status: 'past-final-goal'; missedGoals: HarnessMissedGoal[]; finalGoalMissedInChapter: number }
+  /** Fate Survival: the route broke, so this chapter must bring the story to its end. */
+  | {
+    status: 'broken';
+    missedGoals: HarnessMissedGoal[];
+    brokenInChapter: number;
+    reason: HarnessBrokenRoute['reason'];
+  };
+
+/** The Active Arc Goal section: the Arc Plan authority for one chapter, with where the story stands on its route. */
+export type HarnessArcContext = import('../components/arc-goals/shared/arcGoals').ArcGenerationContext & { route?: HarnessArcRoute };
+
+/**
+ * How the story ended, recorded only when committed prose shows it. Regular
+ * Reader mode never fails its fate: it ends by reaching the Destined Ending,
+ * on its final goal or, after that goal was missed, by pursuing the ending
+ * until the prose reaches it. Fate Survival may also end in failure, when the
+ * writer shows the story ending with a verbatim passage: a fatal ending at any
+ * point, or the ending the chapter after a broken route must write.
+ */
+export interface HarnessStoryConclusion {
+  outcome: 'destined-ending-reached' | 'fate-failed';
+  reason: 'final-goal-completed' | 'reached-after-final-goal-missed' | 'story-ended';
+  chapterNumber: number;
+  /** The verbatim passage from the committed prose that shows it. */
+  evidence: string;
+  recordedAt: string;
 }
 
 /** Provider-neutral semantic details. All identities are assigned by the host. */
@@ -428,7 +538,9 @@ export interface HarnessWarning {
     | 'arc_plan_pending'
     | 'optional_recap_omitted'
     | 'optional_rhythm_metadata_omitted'
-    | 'ignored_model_story_direction';
+    | 'ignored_model_story_direction'
+    | 'ignored_story_ending'
+    | 'unconfirmed_arc_completion';
   message: string;
 }
 
@@ -469,8 +581,6 @@ export interface CurrentStoryProjection {
   worldFacts?: string;
   cast?: NonNullable<HarnessEventDetails['character']>[];
   identities?: Array<{ name: string; aliases?: string[]; kind: 'character' | 'location-world' | 'faction'; evidence: string }>;
-  /** Persistent author directions, oldest first; the newest wins on conflict. */
-  authorDirections: Array<Pick<HarnessSteering, 'direction' | 'mode' | 'effectiveChapter'>>;
   /** Explicit author corrections, newest first, compacted to their meaning. */
   corrections: Array<{
     kind: HarnessCorrectionKind;
@@ -485,10 +595,12 @@ export interface CurrentStoryProjection {
   }>;
 }
 
-/** The Destined Ending beside the user's Hard Pins, in the user's order. */
+/** The Destined Ending beside the user's Hard Pins, in the user's order, and the mode that decides what the ending's promise means. */
 export interface StoryDirectionSection {
   destinedEnding?: string;
   hardPins: string[];
+  /** Absent in packets frozen before modes reached the writer; those read as `regular`. */
+  fateMode?: HarnessStoryMode;
 }
 
 /** Compact Fate Pressure rhythm direction: tier, recent sequence, recommendation, reason, matching suggestion. */
@@ -542,7 +654,6 @@ export type PacketSectionId =
   | 'storyDirection'
   | 'arc'
   | 'rhythm'
-  | 'fateSurvival'
   | 'previouslyOn'
   | 'canonicalState'
   | 'missionReminder'
@@ -604,12 +715,10 @@ export interface StoryInformationPacket {
   currentStory: CurrentStoryProjection;
   /** Section 3. */
   storyDirection: StoryDirectionSection;
-  /** Section 4: the existing Arc Plan authority, frozen. */
-  arc?: import('../components/arc-goals/shared/arcGoals').ArcGenerationContext;
-  /** Section 5. */
+  /** Section 4: the existing Arc Plan authority, frozen, with where the story stands on its route. */
+  arc?: HarnessArcContext;
+  /** Section 5: present only when Rhythm chooses this chapter's path automatically. */
   rhythm?: RhythmDirectionSection;
-  /** Present only when Survival is enabled; never canonical state. */
-  fateSurvival?: FateSurvivalContext;
   /** Section 6: the latest saved recaps, oldest first. */
   previouslyOn: PreviouslyOnEntry[];
   /** Section 7. */
@@ -645,6 +754,8 @@ export interface HarnessChapter {
   recap?: ChapterRecap;
   /** The completed chapter's function and the three next-chapter possibilities, saved at commit. */
   rhythm?: HarnessChapterRhythm;
+  /** How this chapter's path was decided. Absent for chapters committed before paths were recorded. */
+  path?: HarnessChapterPath;
   eventIds: string[];
   responseMode: 'json' | 'plain-prose-recovery';
   createdAt: string;

@@ -27,15 +27,13 @@ import {
  * dedicated manifestation logic and are never previewed here.
  */
 type GenerationPhase =
-  | 'blueprint' | 'initial-arc' | 'steer' | 'alter-fate' | 'chapter'
+  | 'blueprint' | 'initial-arc' | 'chapter'
   | 'cover' | 'image' | 'audio' | 'visual'
   | null;
 
 const NARRATIVE_OPERATIONS: { id: Exclude<GenerationPhase, null>; label: string }[] = [
   { id: 'blueprint', label: 'World Blueprint' },
   { id: 'initial-arc', label: 'Initial Arc' },
-  { id: 'steer', label: 'Steering' },
-  { id: 'alter-fate', label: 'Alter Fate' },
   { id: 'chapter', label: 'Chapter' },
 ];
 

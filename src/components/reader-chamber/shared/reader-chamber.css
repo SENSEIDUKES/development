@@ -216,3 +216,11 @@
 .highlight-item-good { color: var(--color-item-good); font-weight: 500; transition: color 0.3s ease; }
 .highlight-item-great { color: var(--color-item-great); font-weight: 500; transition: color 0.3s ease; }
 .highlight-item-legendary { color: var(--color-item-legendary); font-weight: 500; transition: color 0.3s ease; text-shadow: 0 0 8px rgba(251, 191, 36, 0.4); }
+
+/* Mind Palace: a passage the reader kept carries a quiet gold margin, so it is
+   recognizable without competing with Codex or narration highlights. */
+.custom-bookmark-bg {
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--color-gold-accent, #d4af37) 55%, transparent);
+  background: color-mix(in srgb, var(--color-gold-accent, #d4af37) 5%, transparent);
+  border-radius: 0.25rem;
+}

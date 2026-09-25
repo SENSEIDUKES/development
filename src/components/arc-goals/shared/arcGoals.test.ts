@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { ARC_LENGTH, MAX_ROADMAP_ARCS, activeArcGoal, arcGenerationContext, arcGoalSegments, arcsCanBeAddedBeforeFinal, confirmArcGoal, createArcChapterPosition, editArcPlan, insertArcsBeforeFinal, validateArcPlan, validateArcRoadmap, type ArcPlan } from '@seihouse/sen/arc-goals';
-import { createArcChapterPosition as legacyPosition } from '../../chapter-generation/shared/packets/livingStoryState';
 
 const plan: ArcPlan = { arcNumber: 1, goals: [
   { id: 'rank', text: 'Reach Foundation rank.', chapters: 70 },
@@ -9,7 +8,6 @@ const plan: ArcPlan = { arcNumber: 1, goals: [
 
 describe('Central SEN arc authority', () => {
   it('owns exactly 100 chapters and accepts one through five goals', () => {
-    expect(legacyPosition).toBe(createArcChapterPosition);
     expect(ARC_LENGTH).toBe(100);
     expect(createArcChapterPosition(100)).toMatchObject({ arcNumber: 1, chapterInArc: 100 });
     expect(createArcChapterPosition(101)).toMatchObject({ arcNumber: 2, chapterInArc: 1 });

@@ -4,6 +4,12 @@
 **Scope:** Investigation only. No code, prompt, schema, skill, or data was changed.
 **Repository state:** `SENSEIDUKES/development` at `1507225` (merge of #229, "Install official CAPA SPP defaults").
 
+> **Later changes (2026-09-25):** this report describes the repository as of `1507225`.
+> Since then, persistent steering was replaced by the reader's one-chapter direction on the
+> Fate page, the Fate mode (Regular Reader or Fate Survival) reaches HARNESS and the writer,
+> and the old Chapter Generation pipeline and its `/api/chapter-generation` route were
+> removed. See `src/components/harness-generation/README.md` for the current behavior.
+
 ## How to read this report
 
 - **Verified** means I read the exact file and line that produces the behavior, or an

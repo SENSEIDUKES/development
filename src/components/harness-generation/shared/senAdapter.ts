@@ -1,6 +1,5 @@
-import { createArcChapterPosition } from '../../arc-goals/shared/arcGoals';
 import { applyHarnessReaderChanges } from './readerEdits';
-import { harnessArcContext, harnessArcPlan } from './arcState';
+import { harnessArcContext, harnessArcPlan, harnessChapterArc } from './arcState';
 import type { Character, StoryBlock, StoryMemory, StoryWorld } from '../../../narrative/story';
 import { buildCanonicalStoryView } from './canonicalState';
 import { cloneHarnessValue, stableHarnessId } from './ids';
@@ -22,6 +21,7 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
   const historical = Number.isFinite(throughChapter);
   const foundationId = historical ? chapters.at(-1)?.foundationRevisionId ?? story.activeFoundationRevisionId : story.activeFoundationRevisionId;
   const foundation = state.foundations.find(candidate => candidate.id === foundationId);
+  const chapterArc = (chapterNumber: number) => harnessChapterArc(story, foundation?.input, chapterNumber);
   const cutoff = historical ? chapters.at(-1)?.committedAt ?? story.createdAt : undefined;
   const corrections = state.corrections.filter(correction => correction.storyId === storyId && (!cutoff || correction.createdAt <= cutoff));
   const correctionIds = new Set(corrections.map(correction => correction.id));
@@ -201,9 +201,10 @@ const buildHarnessSenStory = (state: HarnessWorkspaceState, storyId: string, thr
     originalLanguage: story.originalLanguage,
     customPremise: foundation?.input.premise ?? '', createdAt: story.createdAt, updatedAt: story.updatedAt,
     // Chapters' arcs plus the arc the next chapter opens, when it has a saved plan.
-    // A roadmap's later arcs stay out of the Reader until they begin.
-    memory, arcs: Array.from(new Set([...readerChapters.map(chapter => createArcChapterPosition(chapter.number).arcNumber), ...((!historical && harnessArcPlan(story, createArcChapterPosition(story.head.nextChapterNumber).arcNumber)) ? [createArcChapterPosition(story.head.nextChapterNumber).arcNumber] : [])])).sort((left, right) => left - right).map(arcNumber => {
-      const arcChapters = readerChapters.filter(chapter => createArcChapterPosition(chapter.number).arcNumber === arcNumber);
+    // A roadmap's later arcs stay out of the Reader until they begin; the chapter
+    // ending a broken route and chapters past a missed final goal stay in the arc they continue.
+    memory, arcs: Array.from(new Set([...readerChapters.map(chapter => chapterArc(chapter.number)), ...((!historical && harnessArcPlan(story, chapterArc(story.head.nextChapterNumber))) ? [chapterArc(story.head.nextChapterNumber)] : [])])).sort((left, right) => left - right).map(arcNumber => {
+      const arcChapters = readerChapters.filter(chapter => chapterArc(chapter.number) === arcNumber);
       const position = historical ? Math.min(throughChapter, arcChapters.at(-1)?.number ?? throughChapter) : story.head.nextChapterNumber;
       const goalContext = harnessArcContext(story, foundation?.input ?? { premise: '' }, position);
       return { title: 'Arc ' + arcNumber, chapters: arcChapters, isCompleted: false,

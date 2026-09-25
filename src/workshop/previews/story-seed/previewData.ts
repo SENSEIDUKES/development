@@ -214,7 +214,7 @@ export const createFilledStorySeedInput = (): StorySeedInput => ({
     },
     optional: {
       intendedForMatureAudiences: true,
-      fateSurvival: { enabled: true, visibility: 'partial', pressure: 'immortal' },
+      fateSurvival: { enabled: true, pressure: 'immortal' },
       funSettings: {
         faceSlap: 'high',
         plotArmor: 'low',

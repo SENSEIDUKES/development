@@ -43,6 +43,7 @@ export {
   createHarnessSkillCatalog,
   freezeHarnessSkillLoadout,
   harnessSkillKey,
+  managedCapaSlotReason,
   resolveHarnessSkill,
   validateHarnessSkillManifest,
   type CapaSlotDefinition,
@@ -60,6 +61,7 @@ export {
   validateTranslationSkillMetadata,
 } from '../../narrative/translationSkill';
 export { buildImmediateChapterRequest } from '../../components/harness-generation/shared/immediateChapterRequest';
+export { attemptChapterPath, chapterDirectionGap, pendingChapterDirection, validateChapterDirectionChoice } from '../../components/harness-generation/shared/chapterDirection';
 export {
   FATE_PRESSURE_RHYTHM_CONFIG,
   buildRhythmRecommendation,
@@ -74,15 +76,27 @@ export {
   MISSION_REMINDER_TEXT_LIMIT,
   buildMissionReminder,
 } from '../../components/harness-generation/shared/missionReminder';
-export { arcGoalEditState, harnessArcContext, harnessArcPlan, harnessStoryMode, type HarnessArcGoalEditState, type HarnessStoryMode } from '../../components/harness-generation/shared/arcState';
+export { arcGoalEditState, goalsThatBreakRoute, harnessArcContext, harnessArcPlan, harnessChapterArc, harnessStoryMode, missedGoalsBreakRoute, missingRequiredEnding, regularFinalGoalMissed, storyConclusionGap, type HarnessArcGoalEditState, type HarnessStoryMode } from '../../components/harness-generation/shared/arcState';
 export * from '../../narrative/storyDirection';
 export {
   includeBundledHarnessSkills,
   SEN_NOVEL_AUTHOR_SKILL,
 } from '../../components/harness-generation/shared/authorSkill';
+export { SEN_FATE_SURVIVAL_INSTRUCTIONS, SEN_FATE_SURVIVAL_SKILL } from '../../components/harness-generation/shared/fateSurvivalSkill';
 export { createHarnessSenStory } from '../../components/harness-generation/shared/senAdapter';
 export * from '../../narrative/generation';
 export { HarnessReaderSession } from '../../components/harness-generation/development/HarnessReaderSession';
+export { FatePage } from '../../components/harness-generation/development/FatePage';
+export { useNextChapterWriter, type NextChapterWriter } from '../../components/harness-generation/development/useNextChapterWriter';
+export {
+  CHAPTER_FUNCTION_LABELS,
+  FATE_MODE_LABELS,
+  FateArcGoalCard,
+  FateConclusion,
+  FateDestinedEnding,
+  FatePathChooser,
+  describeChapterPath,
+} from '../../components/harness-generation/development/FatePanel';
 export { findStory, findFoundationRevision } from '../../components/harness-generation/shared/foundation';
 export * from '../../components/harness-generation/shared/chapterSignals';
 export * from '../../components/harness-generation/shared/chapterBody';

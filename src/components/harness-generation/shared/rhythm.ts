@@ -7,7 +7,7 @@ import { CHAPTER_FUNCTIONS, type ChapterFunction, type FatePressure } from '../.
  *
  * Every tuning value lives in `FATE_PRESSURE_RHYTHM_CONFIG`. The selection
  * algorithm below is ported from the Workshop's Scene Rhythm Tracker
- * (`chapter-generation/shared/lib/sceneRhythm.ts`): per-tier base weights,
+ * (the retired chapter-generation scene rhythm): per-tier base weights,
  * consecutive-streak limits, a trailing-window occurrence cap, and a
  * longest-unused tie-break so a tied function can never starve. The legacy
  * Relaxed / Balanced / Hardcore / Dao Master tiers were replaced by the

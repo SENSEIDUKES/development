@@ -3,7 +3,6 @@ import {
   Brain,
   Drama,
   Feather,
-  Gauge,
   Gem,
   GitBranch,
   Globe,
@@ -198,7 +197,7 @@ export const STORY_SEED_HELP_ITEMS: StorySeedHelpItem[] = [
     contexts: ["story-seed", "fate"],
     translations: {
       en: {
-        line: "Fate Survival is a narrative pressure system layered on top of any genre.",
+        line: "In Fate Survival you direct every chapter yourself, and the Destined Ending is not guaranteed: your choices can fail it.",
       },
     },
   },
@@ -209,7 +208,7 @@ export const STORY_SEED_HELP_ITEMS: StorySeedHelpItem[] = [
     contexts: ["fate"],
     translations: {
       en: {
-        line: "Mind Palace is the temporary clue-tracking system used during a Fate Event.",
+        line: "Your Mind Palace keeps the passages you choose from the story, each with an optional note, so you can return to them.",
       },
     },
   },
@@ -220,18 +219,7 @@ export const STORY_SEED_HELP_ITEMS: StorySeedHelpItem[] = [
     contexts: ["reader", "fate"],
     translations: {
       en: {
-        line: "The ability for a reader to change the outcome of the next scenes narrative",
-      },
-    },
-  },
-  {
-    id: "fate-event",
-    label: "Fate Event",
-    icon: Gauge,
-    contexts: ["fate"],
-    translations: {
-      en: {
-        line: "A Fate Event is a Mechanic in which after a series of chapters fate forces  a decision to be made.",
+        line: "Alter Fate opens the Fate page, where you see where the story is headed and choose the next chapter's path.",
       },
     },
   },

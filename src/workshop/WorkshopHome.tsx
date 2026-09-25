@@ -220,8 +220,10 @@ function titleOf(id: string) {
 }
 
 function EntryCard({ entry }: { entry: WorkshopEntry }) {
+  // A retired route leaves a record, not a link.
+  const Card = entry.routeRetired ? 'div' : 'a';
   return (
-    <a className="workshop-card" href={`?preview=${entry.id}`}>
+    <Card className="workshop-card" {...(entry.routeRetired ? { 'aria-disabled': true } : { href: `?preview=${entry.id}` })}>
       <div className="workshop-card-visual">
         <CardVisual id={entry.id} />
       </div>
@@ -239,10 +241,10 @@ function EntryCard({ entry }: { entry: WorkshopEntry }) {
             <span className="workshop-status-dot" aria-hidden="true" />
             {getWorkshopVersionLabel(entry.version)}
           </span>
-          <span className="workshop-card-arrow" aria-hidden="true">→</span>
+          {!entry.routeRetired && <span className="workshop-card-arrow" aria-hidden="true">→</span>}
         </div>
       </div>
-    </a>
+    </Card>
   );
 }
 

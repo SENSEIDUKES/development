@@ -10,10 +10,6 @@ const CelestialBackdropWorkspace = lazy(() =>
   import('./workshop/previews/celestial-backdrop/CelestialBackdropWorkspace')
     .then(module => ({ default: module.CelestialBackdropWorkspace })),
 );
-const ChapterGenerationFlowWorkspace = lazy(() =>
-  import('./workshop/previews/chapter-generation-flow/ChapterGenerationFlowWorkspace')
-    .then(module => ({ default: module.ChapterGenerationFlowWorkspace })),
-);
 const HarnessGenerationWorkspace = lazy(() =>
   import('./workshop/previews/harness-generation/HarnessGenerationWorkspace')
     .then(module => ({ default: module.HarnessGenerationWorkspace })),
@@ -102,7 +98,6 @@ const previewRegistry: Record<string, ComponentType> = {
   'celestial-backdrop': CelestialBackdropWorkspace,
   'celestial-store': CelestialStoreWorkspace,
   'character-voice': CharacterVoiceWorkspace,
-  'chapter-generation-flow': ChapterGenerationFlowWorkspace,
   'chapter-generation-manifestation': ChapterManifestationWorkspace,
   'dao-pillar': DaoPillarWorkspace,
   'energy': EnergyWorkspace,

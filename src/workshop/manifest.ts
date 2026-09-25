@@ -66,6 +66,11 @@ export type WorkshopEntry = {
   /** Preview id of the entry that supersedes this one. */
   replacedBy?: string;
   archiveNote?: string;
+  /**
+   * The archived entry's preview route was removed: the card stays as the
+   * record of the retired feature, but it no longer opens a route.
+   */
+  routeRetired?: true;
   /** Manually maintained Workshop release version. Never inferred from source changes. */
   version: `v${number}.${number}`;
   source: WorkshopSource;
@@ -180,7 +185,7 @@ export const workshopEntries: WorkshopEntry[] = [
     title: 'Story Seed',
     description: 'Two-panel creation workspace on the Creator / Story / World contract — compact Origin and ARC editing, Story Seed Settings, the Story Bank home for saved seeds and their World Blueprints (with import/export), and an editable World Blueprint dossier whose hierarchy keeps canonical Origin provenance separate from generated story direction while preserving every editable Blueprint field, now wearing the modern Library glass skin with gold-edged key fields.',
     category: 'other',
-    version: 'v1.7',
+    version: 'v1.8',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/CreationModal.tsx',
@@ -194,9 +199,9 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'sen',
     status: 'active',
     title: 'Reader Chamber',
-    description: 'The full reading UI with generated five-chapter sessions, chapter-scoped Reader Codex memory, and persisted action-scoped Worldcues resolved through the approved Library catalog.',
+    description: 'The full reading UI with chapter-scoped Reader Codex memory, a Mind Palace of kept passages anchored to their exact text, an Alter Fate entry that opens the host\'s Fate page, and persisted action-scoped Worldcues resolved through the approved Library catalog.',
     category: 'reader-ui',
-    version: 'v1.4',
+    version: 'v1.5',
     source: {
       repository: 'SENSEIDUKES/Light-Novels',
       path: 'src/components/ReaderChamber.tsx; src/components/ReaderViewport.tsx',
@@ -329,9 +334,9 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'sen',
     status: 'active',
     title: 'Harness Generation',
-    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter, independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and Chapter 1 → Chapter 2 continuity without Reader or legacy generation dependencies.',
+    description: 'Standalone checkpoint-first novel core: a premise-first Story Foundation, one model call per chapter, independent IndexedDB persistence, tolerant prose acceptance, semantic-event ledger, and continuity directed one chapter at a time from the Reader\'s Fate page, in Regular Reader or Fate Survival mode.',
     category: 'other',
-    version: 'v1.0',
+    version: 'v1.1',
     source: {
       repository: 'SENSEIDUKES/development',
       path: 'src/components/harness-generation/',
@@ -456,7 +461,8 @@ export const workshopEntries: WorkshopEntry[] = [
     owner: 'workshop',
     status: 'archived',
     replacedBy: 'harness-generation',
-    archiveNote: 'The earlier chapter-generation diagnostics flow, kept intact for reference.',
+    routeRetired: true,
+    archiveNote: 'Retired on 2026-09-25: its route and /api/chapter-generation endpoint were removed with the old Fate Survival generation rules. Its history is in git.',
     title: 'Chapter Generation',
     description: 'Development-only one- or five-chapter manifestation harness with sequential server-side Gemini calls, disposable processed-state handoffs, retry checkpoints, token usage, per-chapter Diagnostics, and a completed-batch Reader Chamber handoff.',
     category: 'other',

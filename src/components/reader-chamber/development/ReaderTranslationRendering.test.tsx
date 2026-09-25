@@ -138,7 +138,6 @@ describe('rendering canonical and translated chapters through the same Reader', 
           preferredLang={options.displayLanguage}
           selectedChapter={selectedChapter}
           activeStory={activeStory}
-          currentPowerStage="Mortal"
           selectedChapterNum={1}
           maxChapterNum={1}
           codexTerms={[]}
@@ -173,8 +172,6 @@ describe('rendering canonical and translated chapters through the same Reader', 
           handleGenerate={vi.fn()}
           handleGenerateNextFive={vi.fn()}
           activeAgentId={null}
-          showFateCodex={false}
-          setShowFateCodex={vi.fn()}
           showLegend={false}
           setShowLegend={vi.fn()}
           hasSystemBlocks={false}

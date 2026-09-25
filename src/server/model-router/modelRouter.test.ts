@@ -10,8 +10,6 @@ import {
 import { generateOpenRouterText } from './openRouter';
 import { resolveHarnessGenerationConfig } from '../harness-generation/config';
 import { createHarnessTextProvider } from '../harness-generation/provider';
-import { createChapterTextProvider } from '../chapter-generation/provider';
-import { resolveChapterGenerationConfig } from '../chapter-generation/config';
 import { modelRouterStatus } from './status';
 import { resolveReasoningLevel } from './catalog';
 import { geminiThinkingConfig } from './geminiThinking';
@@ -110,13 +108,6 @@ describe('generation surfaces route through the Model Router', () => {
     const result = await provider.generate({ systemInstruction: 's', userPrompt: 'u', temperature: 0.9, maxOutputTokens: 1024, timeoutMs: 10_000 });
     expect(result.providerReceipt).toMatchObject({ provider: 'openrouter', model: 'openrouter/openai/gpt-6-luna', usage: { source: 'reported', inputTokens: 12 } });
     expect(createHarnessTextProvider('google/gemini-3.8-flash', config).provider).toBe('gemini');
-  });
-
-  it('builds an OpenRouter Chapter Generation provider', () => {
-    const config = resolveChapterGenerationConfig(environment);
-    expect(createChapterTextProvider('openrouter/openai/gpt-6-luna', config).provider).toBe('openrouter');
-    expect(config.continuationSecret).toBe('g');
-    expect(resolveChapterGenerationConfig({ OPENROUTER_API_KEY: 'o' }).continuationSecret).toBe('o');
   });
 });
 

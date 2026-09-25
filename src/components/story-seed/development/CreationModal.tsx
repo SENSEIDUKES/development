@@ -543,11 +543,7 @@ export default function CreationModal({ onNavigateHome, onStartStory, onGenerate
         ...blueprintContextForRecord(record || undefined),
       });
       seedInput = reconciled.seed;
-      cleanBlueprint = {
-        ...reconciled.blueprint,
-        majorMysteries: reconciled.blueprint.majorMysteries.map(f => f.trim()).filter(Boolean),
-        unresolvedPlotThreads: reconciled.blueprint.unresolvedPlotThreads.map(f => f.trim()).filter(Boolean),
-      };
+      cleanBlueprint = reconciled.blueprint;
     } catch (blueprintError) {
       console.error('Failed to prepare World Blueprint:', blueprintError);
       setSeedError('The story was not started because its World Blueprint is invalid. Refine it and try again.');

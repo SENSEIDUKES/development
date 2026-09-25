@@ -4,7 +4,6 @@ export type PreviewState =
   | 'reading'
   | 'preferences-open'
   | 'bookmarks-open'
-  | 'alter-fate-open'
   | 'continuity-warning'
   | 'generating'
   | 'translating'
@@ -18,7 +17,7 @@ export type PreviewState =
  * chamber remounts, so every state exercises the production interaction path
  * instead of faking it with Workshop-only props.
  */
-export type PreviewUiAction = 'preferences' | 'bookmarks' | 'alter-fate' | 'seal';
+export type PreviewUiAction = 'preferences' | 'bookmarks' | 'seal';
 
 /**
  * Internal scenario groups consumed by the shared Workshop Controls menu:
@@ -55,8 +54,7 @@ export const scenarios: PreviewScenario[] = [
   { id: 'reading', label: 'Reading (rich blocks chapter)', category: 'reading', chapter: 1 },
   { id: 'fullscreen', label: 'Fullscreen reading', category: 'reading', chapter: 1, isReaderFullscreen: true },
   { id: 'preferences-open', label: 'Reader Settings open', category: 'menus', chapter: 1, uiAction: 'preferences' },
-  { id: 'bookmarks-open', label: 'Comments (Chronicle Anchors) open', category: 'menus', chapter: 1, uiAction: 'bookmarks' },
-  { id: 'alter-fate-open', label: 'Alter Fate panel open', category: 'menus', chapter: 1, uiAction: 'alter-fate' },
+  { id: 'bookmarks-open', label: 'Mind Palace open', category: 'menus', chapter: 1, uiAction: 'bookmarks' },
   { id: 'auto-scroll-paused', label: 'Auto-scroll paused (resume pill)', category: 'pages', chapter: 1, cinematicScrollState: 'yielded' },
   { id: 'generating', label: 'Generating chapter (skeleton)', category: 'pages', chapter: 4, isGenerating: true },
   { id: 'translating', label: 'Translating (Heavenly Dao spinner)', category: 'pages', chapter: 1, isTranslating: true },

@@ -13,7 +13,17 @@
  */
 
 import { generateId } from '@seihouse/sen/story-seed';
-import { type WorldBlueprint } from '@seihouse/sen/story-seed';
+import { type WorldBlueprint as DevelopmentWorldBlueprint } from '@seihouse/sen/story-seed';
+
+/**
+ * The frozen Phase-1 Blueprint shape the locked replica still speaks. It
+ * keeps the retired Fate Survival mystery and thread lists, which the
+ * development Blueprint no longer has.
+ */
+export interface WorldBlueprint extends DevelopmentWorldBlueprint {
+  majorMysteries: string[];
+  unresolvedPlotThreads: string[];
+}
 import type {} from '@seihouse/sen/story-seed';
 
 /**
@@ -25,9 +35,15 @@ declare module '../../../components/story-seed/shared/storySeedSchema' {
   // Historical helpers use this retired type without runtime validation.
   // Deliberately opaque: do not revive a second active settings schema here.
   type StorySeedPlotAndTropeSettings = any;
+  // The retired Fate Visibility setting. Active code neither reads nor writes it.
+  type StorySeedFateVisibility = 'full' | 'partial' | 'none';
   interface StorySeedStoryOptional {
     additionalStoryDirection?: string;
     plotAndTropeSettings?: StorySeedPlotAndTropeSettings;
+  }
+  interface StorySeedFateSurvivalSettings {
+    // Deliberately opaque, like the settings above.
+    visibility?: any;
   }
 }
 
@@ -130,7 +146,6 @@ export interface StorySeed extends StorySeedPayload {
   updatedAt: string;
 }
 
-export type { WorldBlueprint };
 
 export const STORY_SEED_FORMAT = 'seihouse-story-seed' as const;
 export const STORY_SEED_COLLECTION_FORMAT = 'seihouse-story-seed-collection' as const;

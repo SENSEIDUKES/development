@@ -16,9 +16,9 @@ Workshop colors and typography are retained. No production source is imported.
 - `catalog.ts` is the single content source for navigation, search, and articles.
   The topic index comes from the Development product-term audit. Aliases are
   search keywords, **not declarations that two concepts are equivalent**.
-- Definitions are intentionally unfilled pending the product owner's wording.
-  Add `definition`, `howItFits`, and `related` topic IDs to the existing entry;
-  search includes explanation text automatically. Do not add a second entry,
+- Add `definition`, `howItFits`, and optional `related` topic IDs to an existing
+  entry when its meaning is confirmed; unfilled topics show placeholders.
+  Search includes explanation text automatically. Do not add a second entry,
   revision selector, historical definition, or dated model roster.
 - No database, authentication, generated content, external requests, local
   storage, package exports, or production transfer is introduced. URL state is

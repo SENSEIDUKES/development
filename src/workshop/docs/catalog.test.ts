@@ -17,7 +17,7 @@ describe('Docs topic catalog', () => {
 
   it('finds titles, aliases, categories, and multiple words without case sensitivity', () => {
     expect(searchDocs('  spp ').map(topic => topic.id)).toEqual(['spp', 'spp-manifest']);
-    expect(searchDocs('Expanded Novels').map(topic => topic.id)).toEqual(['sen']);
+    expect(searchDocs('Expanded Novels').map(topic => topic.id)).toContain('sen');
     expect(searchDocs('goal active').map(topic => topic.id)).toEqual(['arc-goal']);
     expect(searchDocs('Packages').map(topic => topic.id)).toContain('seihouse-ui');
     const cultivatorResults = searchDocs('Cultivator').map(topic => topic.id);
@@ -29,8 +29,17 @@ describe('Docs topic catalog', () => {
     expect(searchDocs('not-a-real-term')).toEqual([]);
   });
 
-  it('leaves product definitions unfilled and does not publish model roster snapshots', () => {
-    expect(docsTopics.every(topic => !topic.definition && !topic.howItFits && !topic.related)).toBe(true);
+  it('defines Product & people terms while leaving later categories for their own phase', () => {
+    const productTopics = docsCategories.find(category => category.id === 'product')!.topics;
+    expect(productTopics.map(topic => topic.id)).toEqual(['seihouse', 'sen', 'library', 'workshop', 'creator', 'reader']);
+    expect(findDocsTopic('sensei')).toBeUndefined();
+    for (const topic of productTopics) {
+      expect(topic.definition?.trim()).toBeTruthy();
+      expect(topic.definition!.length).toBeLessThanOrEqual(140);
+      expect(topic.howItFits?.trim()).toBeTruthy();
+    }
+    const laterTopics = docsCategories.filter(category => category.id !== 'product').flatMap(category => category.topics);
+    expect(laterTopics.every(topic => !topic.definition && !topic.howItFits && !topic.related)).toBe(true);
     expect(docsTopics.map(topic => topic.id)).toContain('model-router');
     expect(docsTopics.some(topic => /gemini|gpt-|eleven|veo/i.test(topic.title))).toBe(false);
   });

@@ -61,7 +61,9 @@ function TopicNavigation({ topicId, onNavigate, collapsedCategories, onToggleCat
 export function WorkshopDocs({ topicId, onNavigate }: DocsProps) {
   const [query, setQuery] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [collapsedCategories, setCollapsedCategories] = useState<ReadonlySet<string>>(() => new Set());
+  const [collapsedCategories, setCollapsedCategories] = useState<ReadonlySet<string>>(
+    () => new Set(docsCategories.map(category => category.id)),
+  );
   const searchRef = useRef<HTMLInputElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const focusArticle = useRef(false);

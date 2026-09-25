@@ -75,23 +75,24 @@ describe('Workshop Docs', () => {
     const productToggles = [...container.querySelectorAll<HTMLButtonElement>('.docs-navigation .docs-category-toggle')]
       .filter(button => button.textContent?.includes('Product & people'));
     expect(productToggles).toHaveLength(1);
-    expect(productToggles.every(button => button.getAttribute('aria-expanded') === 'true')).toBe(true);
+    expect(productToggles.every(button => button.getAttribute('aria-expanded') === 'false')).toBe(true);
 
     await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Browse Docs topics"]')!.click());
     const allProductToggles = [...document.querySelectorAll<HTMLButtonElement>('.docs-navigation .docs-category-toggle')]
       .filter(button => button.textContent?.includes('Product & people'));
     expect(allProductToggles).toHaveLength(2);
-    act(() => allProductToggles[1].click());
     expect(allProductToggles.every(button => button.getAttribute('aria-expanded') === 'false')).toBe(true);
-    expect(allProductToggles.every(button => document.getElementById(button.getAttribute('aria-controls')!)?.hasAttribute('hidden'))).toBe(true);
+    act(() => allProductToggles[1].click());
+    expect(allProductToggles.every(button => button.getAttribute('aria-expanded') === 'true')).toBe(true);
+    expect(allProductToggles.every(button => !document.getElementById(button.getAttribute('aria-controls')!)?.hasAttribute('hidden'))).toBe(true);
     const overviewToggle = [...container.querySelectorAll<HTMLButtonElement>('.docs-category-index .docs-category-toggle')]
       .find(button => button.textContent?.includes('Product & people'))!;
-    expect(overviewToggle.getAttribute('aria-expanded')).toBe('false');
-    expect(document.getElementById(overviewToggle.getAttribute('aria-controls')!)?.hasAttribute('hidden')).toBe(true);
+    expect(overviewToggle.getAttribute('aria-expanded')).toBe('true');
+    expect(document.getElementById(overviewToggle.getAttribute('aria-controls')!)?.hasAttribute('hidden')).toBe(false);
 
     act(() => overviewToggle.click());
-    expect(allProductToggles.every(button => button.getAttribute('aria-expanded') === 'true')).toBe(true);
-    expect(document.getElementById(overviewToggle.getAttribute('aria-controls')!)?.hasAttribute('hidden')).toBe(false);
+    expect(allProductToggles.every(button => button.getAttribute('aria-expanded') === 'false')).toBe(true);
+    expect(document.getElementById(overviewToggle.getAttribute('aria-controls')!)?.hasAttribute('hidden')).toBe(true);
   });
 
   it('keeps modified clicks as real links and marks the active topic', () => {

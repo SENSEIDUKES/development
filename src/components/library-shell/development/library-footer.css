@@ -43,7 +43,21 @@
   gap: 0.5rem;
   text-align: center;
 }
-/* The company statement opens the footer as a motto rather than a label: the
+/* The title leads the footer in the display serif, cream on the page's ink;
+   the statement beneath it keeps the quieter motto treatment. */
+.library-footer-title {
+  margin: 0;
+  font-family: var(--font-sen-display, var(--font-display, "Alegreya", serif));
+  font-size: 1.75rem;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  color: var(--library-footer-cream);
+}
+@media (min-width: 1024px) {
+  .library-footer-title { font-size: 2.25rem; }
+}
+/* The company statement reads as a motto rather than a label: the
    display serif's true italic (Alegreya SC ships no italic face, so it would be
    a synthetic slant) at book weight. */
 .library-footer-statement {

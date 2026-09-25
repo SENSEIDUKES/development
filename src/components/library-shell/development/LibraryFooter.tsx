@@ -5,7 +5,9 @@ import { getSenLanguageLabel, type SenLanguageCode } from '@seihouse/sen/contrac
 import { LIBRARY_FOOTER_SOCIAL_GLYPHS, LIBRARY_FOOTER_SOCIAL_LABELS, type LibraryFooterSocialNetwork } from './LibraryFooterSocialIcons';
 import './library-footer.css';
 
-/** The company statement: the footer's only identity line. */
+/** The footer's title, set above the company statement. */
+export const LIBRARY_FOOTER_TITLE = 'SEIHouse';
+/** The company statement, read beneath the title. */
 export const LIBRARY_FOOTER_STATEMENT = 'A BETTER TIME CAPSULE AND TRANSLATOR OF ARTISTIC EXPRESSION';
 /** The legal line, dated from the current year so it never goes stale. */
 export function libraryFooterCopyright(year = new Date().getFullYear()) {
@@ -68,7 +70,7 @@ function FooterControl({ item, className, children, ...props }: { item: LibraryF
 
 /**
  * The Celestial Library platform footer. Library-owned chrome, like the global
- * header and bottom navigation: it opens on the company statement, then three
+ * header and bottom navigation: it opens on its title and the company statement, then three
  * closed menus, the social row, the account's language entry and the legal row. Every
  * destination comes from the host; the footer holds no routes or URLs of its own.
  */
@@ -79,6 +81,7 @@ export function LibraryFooter({ groups, social, legal, language, className = '',
   return <footer {...props} data-library-footer className={`library-footer ${className}`.trim()} aria-label="Celestial Library footer">
     <div className="library-footer-inner">
       <div className="library-footer-identity">
+        <p className="library-footer-title" data-footer-title>{LIBRARY_FOOTER_TITLE}</p>
         <p className="library-footer-statement">{LIBRARY_FOOTER_STATEMENT}</p>
       </div>
 

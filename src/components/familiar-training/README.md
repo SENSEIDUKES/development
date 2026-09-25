@@ -7,7 +7,7 @@
 - **Workshop previews:** `?preview=familiar-training` (in the Workshop's Rewards section);
   `?preview=reward-loop` (Familiar tab); `?preview=user-profile&cave=/home/familiar`
 - **Created:** 2026-09-23
-- **Last Workshop update:** 2026-09-23
+- **Last Workshop update:** 2026-09-25
 - **Last source comparison:** 2026-09-23 (this repository; there is no production original)
 - **Status:** approved reconstruction (Workshop Replica Mode B), development skeleton
 - **Package:** `@seihouse/library/familiar`
@@ -63,7 +63,8 @@ colours everywhere else (portrait ring, progress bar, rank row).
 
 ### Elements and signatures
 
-- **Elements** (fire, lightning, frost, celestial, void) are shared instruments. Every Familiar
+- **Elements** (fire, lightning, frost, water, wind, earth, nature, poison, metal, space,
+  celestial and void) are shared instruments. Every Familiar
   channels one, several Familiars share each, and any cultivator can master any of them.
 - A **signature** is custom animation SEIHouse writes for one specific Familiar. No setting —
   element, intensity, shadow, motion — produces one. A signature unlocks with that Familiar's
@@ -131,3 +132,6 @@ behind.
   Familiar and the Active Elemental Effect are separate selections, coupled until mastery.
   Signatures added as SEIHouse-written, one-Familiar pieces (none written yet). Per-Familiar effect
   choices retired; the name-effect panel and name renderer split out of the bond panel.
+- **2026-09-25:** Expanded the Familiar domain contract from five elements to the complete twelve.
+  Existing Familiar affinities and the five already-authored title treatments are unchanged; the
+  remaining visual treatments can be supplied independently without another domain-contract change.

@@ -1,7 +1,17 @@
 import type { CSSProperties } from 'react';
-import { LibraryElementalTitle, type LibraryElementalTitleSize } from '@seihouse/library-ui';
-import type { FamiliarCosmeticEffect } from '../../../library/familiars/contracts';
+import {
+  LibraryElementalTitle,
+  type LibraryElementalTitleEffect,
+  type LibraryElementalTitleSize,
+} from '@seihouse/library-ui';
+import type { FamiliarCosmeticEffect, FamiliarElement } from '../../../library/familiars/contracts';
 import { SIGNATURE_PIECES } from './signaturePieces';
+
+/** The current UI package has authored treatments for these elements only. */
+const AUTHORED_TITLE_EFFECTS: readonly LibraryElementalTitleEffect[] = ['fire', 'lightning', 'frost', 'celestial', 'void'];
+
+const authoredTitleEffect = (element: FamiliarElement): LibraryElementalTitleEffect =>
+  AUTHORED_TITLE_EFFECTS.includes(element as LibraryElementalTitleEffect) ? element as LibraryElementalTitleEffect : 'none';
 
 export interface FamiliarNameEffectProps {
   /** The resolved name effect; null keeps the host's own lettering (rank colours). */
@@ -28,11 +38,12 @@ export function FamiliarNameEffect({ effect, children, as = 'span', size, classN
   const marks = { ...rest, 'data-name-effect': effect?.id, 'data-name-effect-kind': effect?.kind };
   if (Piece) return <Piece as={as} className={className} {...marks}>{children}</Piece>;
   const title = effect?.kind === 'elemental-title' ? effect : null;
+  const renderedElement = title ? authoredTitleEffect(title.element) : 'none';
   return (
     <LibraryElementalTitle
       as={as}
       size={size}
-      element={title?.element ?? 'none'}
+      element={renderedElement}
       intensity={title?.intensity ?? 'active'}
       shadow={title ? (title.mastered ? 'outlined' : 'soft') : 'none'}
       className={`${className} ${title ? '' : plainClassName}`.trim()}

@@ -9,9 +9,10 @@ import { WorkspaceHeader } from '@seihouse/library/shell';
 import { MainLibraryHeader } from './MainLibraryHeader';
 import { STORY_SEED_HELP_ITEMS } from '@seihouse/library/story-seed';
 
-vi.mock('../../../audio/playback', () => ({ useNarrativeAudio: () => ({
-  isPlaying: false, currentTrackId: null, stop: vi.fn(),
-}) }));
+vi.mock('../../../audio/playback', () => {
+  const playback = () => ({ isPlaying: false, currentTrackId: null, stop: vi.fn() });
+  return { useNarrativeAudio: playback, useOptionalNarrativeAudio: playback };
+});
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let container: HTMLDivElement;
 let root: Root;

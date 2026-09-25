@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ChevronRight, Pause, Play, X } from 'lucide-react';
 import { cn } from '@seihouse/ui';
 import { NarrativeButton as LibraryButton, NarrativePanel as LibraryPanel } from '@seihouse/sen/presentation';
-import { useNarrativeAudio } from '@seihouse/sen/audio';
+import { useOptionalNarrativeAudio, type NarrativeAudioPlayback } from '@seihouse/sen/audio';
 import { LibraryHelpIcon as SENHelpIcon, LibrarySearchIcon as SENSearchIcon } from '@seihouse/library-ui';
 import {
   DEFAULT_HELP_LANGUAGE,
@@ -42,6 +42,19 @@ const FOCUSABLE_SELECTOR = [
   'textarea:not([disabled])',
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
+
+const noop = () => {};
+/**
+ * Help is guidance first and narration second. A host without an audio
+ * provider still gets every topic as text; the Listen control is simply
+ * withheld instead of the whole menu failing to open.
+ */
+const SILENT_PLAYBACK: NarrativeAudioPlayback = {
+  autoplayBlocked: false, currentSource: null, currentTrackId: null, errorMessage: '', hasError: false,
+  isBuffering: false, isMuted: false, isPlaying: false, volume: 1,
+  load: noop, pause: noop, play: noop, replace: noop, restart: () => false, setVolume: noop, stop: noop,
+  subscribe: () => noop, subscribeToTrackChange: () => noop, subscribeToQueueEnd: () => noop, toggleMute: noop,
+};
 
 /** Return a trimmed, browser-playable source or `null` for text-only topics. */
 const getPlayableAudioUrl = (audioUrl?: string): string | null => {
@@ -88,7 +101,9 @@ export const LibraryHelpMenu = ({
   const activeIdRef = useRef<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const helpTriggerRef = useRef<HTMLElement | null>(null);
-  const playback = useNarrativeAudio();
+  const hostPlayback = useOptionalNarrativeAudio();
+  const audioAvailable = hostPlayback !== null;
+  const playback = hostPlayback ?? SILENT_PLAYBACK;
   const playbackRef = useRef(playback);
   playbackRef.current = playback;
   const playingId = playback.isPlaying && playback.currentTrackId?.startsWith(HELP_TRACK_PREFIX)
@@ -254,7 +269,7 @@ export const LibraryHelpMenu = ({
     const translation = getHelpTranslation(item, language);
     if (!translation) return null;
     const playing = playingId === item.id;
-    const audioUrl = getPlayableAudioUrl(translation.audioUrl);
+    const audioUrl = audioAvailable ? getPlayableAudioUrl(translation.audioUrl) : null;
     return (
       <div className={cn(
         'rounded-xl border border-[rgba(205,178,113,0.22)] bg-[#0b0e1e]/70 p-4 shadow-[inset_0_0_24px_-14px_rgba(205,178,113,0.35)] transition-[border-color,box-shadow] duration-500 motion-reduce:transition-none',
@@ -291,7 +306,7 @@ export const LibraryHelpMenu = ({
         )}
       </div>
     );
-  }, [language, playingId, toggleAudio]);
+  }, [audioAvailable, language, playingId, toggleAudio]);
 
   return (
     <AnimatePresence>

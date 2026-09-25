@@ -1,6 +1,6 @@
 import FocusLock from 'react-focus-lock';
 import { useHeaderClipboard } from '../mainLibraryClipboard';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, RefreshCw, Layers, Compass, HelpCircle, X, ChevronRight, Copy, Check } from 'lucide-react';
@@ -126,6 +126,19 @@ export const DaoInsights: React.FC = () => {
   const [daoStatus, setDaoStatus] = useState<'connected' | 'checking' | 'disconnected'>('checking');
 
   const requestDao = useAppStore(state => state.requestDao);
+  // Every timer the oracle starts, so none can write state after it is gone
+  // and the carousel can never land on top of a divined quote.
+  const tickRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      clearInterval(tickRef.current);
+      clearTimeout(copiedTimerRef.current);
+    };
+  }, []);
 
   // Pick a random quote initially and set mounted state
   useEffect(() => {
@@ -136,21 +149,24 @@ export const DaoInsights: React.FC = () => {
 
   // Fetch Dao Connection State
   useEffect(() => {
+    let cancelled = false;
+    const settle = (status: 'connected' | 'disconnected') => { if (!cancelled) setDaoStatus(status); };
     const checkState = async () => {
       try {
         const res = await requestDao('status');
         if (res.ok) {
           const stats = await res.json();
-          setDaoStatus(stats.hasServerGemini ? 'connected' : 'disconnected');
+          settle(stats.hasServerGemini ? 'connected' : 'disconnected');
         } else {
-          setDaoStatus('disconnected');
+          settle('disconnected');
         }
       } catch {
-        setDaoStatus('disconnected');
+        settle('disconnected');
       }
     };
     checkState();
-  }, []);
+    return () => { cancelled = true; };
+  }, [requestDao]);
 
   // Handle Escape key
   useEffect(() => {
@@ -203,14 +219,18 @@ export const DaoInsights: React.FC = () => {
     // Start cycling local quotes for a beautiful scrolling slots effect
     let counter = 0;
     const maxTicks = 12; // 1.2 seconds of glorious spinning carousel
-    const tickInterval = setInterval(() => {
+    clearInterval(tickRef.current);
+    tickRef.current = setInterval(() => {
       const tempQuote = filtered[Math.floor(Math.random() * filtered.length)];
       setCurrentQuote(tempQuote);
       counter++;
       if (counter >= maxTicks) {
-        clearInterval(tickInterval);
+        clearInterval(tickRef.current);
       }
     }, 100);
+    // The carousel and the delay both end near 1.2s; stop the carousel
+    // explicitly so a late final tick cannot replace the settled quote.
+    const stopCarousel = () => clearInterval(tickRef.current);
 
     // Combine timeout and API fetch using Promise.all to guarantee the spin completes beautifully first
     const delayPromise = new Promise(resolve => setTimeout(resolve, maxTicks * 100));
@@ -228,33 +248,50 @@ export const DaoInsights: React.FC = () => {
         }
 
         const outcome = await response.json();
+        if (typeof outcome?.quote !== 'string' || !outcome.quote.trim()) {
+          throw new Error("Divination returned an empty jade slip");
+        }
+        stopCarousel();
+        if (!mountedRef.current) return;
         setCurrentQuote({
           quote: outcome.quote,
-          author: outcome.author,
+          author: typeof outcome.author === 'string' && outcome.author.trim() ? outcome.author : 'Unknown Sage',
           category: outcome.category || currentCategory
         });
       } catch (err) {
         console.warn("AI generation failed, holding fallback jade slip close:", err);
         // Ensure delay is satisfied first if there is a quick error
         await delayPromise;
+        stopCarousel();
       } finally {
-        setIsAiGenerating(false);
-        setIsRolling(false);
+        if (mountedRef.current) {
+          setIsAiGenerating(false);
+          setIsRolling(false);
+        }
       }
     } else {
       // Offline/Local mode: Wait for the delay & finish rolling
       await delayPromise;
-      setIsRolling(false);
+      stopCarousel();
+      if (mountedRef.current) setIsRolling(false);
     }
   };
+
+  // The carousel changes the quote every 100ms. Keying each of those frames
+  // queued overlapping exit animations that could strand an intermediate quote
+  // on screen after the real one settled, so while rolling one element simply
+  // updates in place and the settled quote — text and author — animates once.
+  const quoteKey = isRolling ? 'rolling' : `${currentQuote.quote}\u0000${currentQuote.author}`;
 
   const copyToClipboard = async () => {
     try {
       await copyText(`"${currentQuote.quote}" — ${currentQuote.author} (${currentQuote.category.toUpperCase()})`);
+      if (!mountedRef.current) return;
       setCopyError(false);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch { setCopyError(true); }
+      clearTimeout(copiedTimerRef.current);
+      copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
+    } catch { if (mountedRef.current) setCopyError(true); }
   };
 
   useEffect(() => {
@@ -285,7 +322,7 @@ export const DaoInsights: React.FC = () => {
         <div className="w-full relative h-[18px] overflow-hidden flex items-center justify-center">
           <AnimatePresence mode="wait">
             <motion.p
-              key={currentQuote.quote}
+              key={quoteKey}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
@@ -330,7 +367,7 @@ export const DaoInsights: React.FC = () => {
                 {/* Close Button */}
                 <button
                    tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }} onClick={() => setIsOpen(false)}
-                  className="absolute top-4 right-4 p-1.5 bg-neutral-950 border border-neutral-850 hover:bg-neutral-900 rounded-md text-neutral-400 hover:text-signal transition-all"
+                  className="absolute top-4 right-4 p-1.5 bg-neutral-950 border border-neutral-800 hover:bg-neutral-900 rounded-md text-neutral-400 hover:text-signal transition-all"
                   aria-label="Close divination overlay"
                 >
                   <X size={15} />
@@ -338,7 +375,7 @@ export const DaoInsights: React.FC = () => {
 
                 {/* Header Title */}
                 <div className="flex items-center space-x-3 border-b border-neutral-900 pb-4 mb-5">
-                  <div className="p-2.5 bg-neutral-950 border border-neutral-850 rounded-xl text-portal shadow-[0_0_15px_rgba(4,172,255,0.1)] overflow-hidden">
+                  <div className="p-2.5 bg-neutral-950 border border-neutral-800 rounded-xl text-portal shadow-[0_0_15px_rgba(4,172,255,0.1)] overflow-hidden">
                     <motion.div
                       animate={{ rotate: isRolling ? [0, 360, 1080] : [0, 360] }}
                       transition={{
@@ -381,7 +418,7 @@ export const DaoInsights: React.FC = () => {
                             ? 'bg-portal/10 border-portal/50 text-portal shadow-[0_0_10px_rgba(4,172,255,0.15)]'
                             : cat === 'comforting'
                             ? 'bg-human/10 border-human/50 text-red-400 shadow-[0_0_10px_rgba(139,0,0,0.15)]'
-                            : 'bg-neutral-850 border-neutral-700 text-signal'
+                            : 'bg-neutral-800 border-neutral-700 text-signal'
                           : 'bg-neutral-950 border-neutral-900 hover:border-neutral-800 text-neutral-400 hover:text-neutral-200'
                       }`}
                     >
@@ -431,7 +468,7 @@ export const DaoInsights: React.FC = () => {
 
                   <AnimatePresence mode="wait">
                     <motion.div
-                      key={currentQuote.quote}
+                      key={quoteKey}
                       initial={{ opacity: 0, scale: 0.98, y: 5 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.98, y: -5 }}
@@ -442,7 +479,7 @@ export const DaoInsights: React.FC = () => {
                         {/* Category Label badge inside reader display */}
                         <span className={`text-[8px] font-mono tracking-widest uppercase font-extrabold block mb-3 leading-none ${
                           currentQuote.category === 'comedic'
-                            ? 'text-amber-450'
+                            ? 'text-amber-400'
                             : currentQuote.category === 'inspirational'
                             ? 'text-portal'
                             : 'text-rose-500'

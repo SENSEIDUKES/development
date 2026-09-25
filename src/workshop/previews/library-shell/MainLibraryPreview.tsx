@@ -17,11 +17,10 @@ import { libraryPreviewUrl, navigateLibraryPreview, readLibraryPreviewLocation }
 // The footer's Support menu opens the same Library Help the header utilities use.
 const LibraryHelpMenu = lazy(() => import('@seihouse/library/story-seed')
   .then(module => ({ default: module.LibraryHelpMenu })));
-// Social channels and legal pages are host configuration. The Workshop has no
-// published URLs for them, so these fixtures report the destination locally
-// instead of inventing links.
+// Social channels are host configuration. The Workshop has no published URLs
+// for them, so these fixtures report the destination locally instead of
+// inventing links. Legal pages use the footer's own placeholder documents.
 const PREVIEW_SOCIAL_NETWORKS = ['discord', 'tiktok', 'instagram', 'youtube', 'x'] as const;
-const PREVIEW_LEGAL = [{ id: 'terms', label: 'Terms' }, { id: 'privacy', label: 'Privacy' }, { id: 'cookies', label: 'Cookies' }] as const;
 
 export function MainLibraryPreview({ state, developmentHeader, developmentHomeContent, extraFeedback, developmentNavigation = false, homeReference = false, active = true }: { state: string; developmentHeader?: (adapter: MainLibraryAdapter) => React.ReactNode; developmentHomeContent?: (adapter: MainLibraryAdapter) => React.ReactNode; extraFeedback?: string; developmentNavigation?: boolean; homeReference?: boolean; active?: boolean }) {
   const initialLocation = readLibraryPreviewLocation(state);
@@ -130,8 +129,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
         {developmentNavigation && <>
           <MainLibraryFooter adapter={adapter} location={{ screen: currentScreen, collection: activeTab as LibraryLocation['collection'] }}
             onNavigate={navigate} onOpenHelp={() => setHelpOpen(true)}
-            social={PREVIEW_SOCIAL_NETWORKS.map(network => ({ network, onSelect: () => setDestination(`${network} channel`) }))}
-            legal={PREVIEW_LEGAL.map(item => ({ ...item, onSelect: () => setDestination(item.label) }))} />
+            social={PREVIEW_SOCIAL_NETWORKS.map(network => ({ network, onSelect: () => setDestination(`${network} channel`) }))} />
           {isHome && destination && <p role="status" className="pb-2 text-center font-sans text-xs text-neutral-500">Workshop destination: {destination}</p>}
         </>}
       </main>

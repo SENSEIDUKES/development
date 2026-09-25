@@ -58,7 +58,8 @@ export const LIBRARY_SECTION_OUTLINE = {
     { id: 'fate-survival', label: 'Fate Survival Challenges' },
     { id: 'novel-search', label: 'Novel discovery/search' },
   ],
-  profile: [{ id: 'cultivator-cave', label: 'Cultivator Cave' }],
+  // Seed Bank is the Cave's Stories screen, so Profile lists it beside the Cave.
+  profile: [{ id: 'cultivator-cave', label: 'Cultivator Cave' }, { id: 'seed-bank', label: 'Seed Bank' }],
 } as const;
 export type LibrarySectionId = typeof LIBRARY_SECTION_OUTLINE[LibraryDestination][number]['id'];
 export type LibrarySectionActions = Partial<Record<LibrarySectionId, () => void>>;

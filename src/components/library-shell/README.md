@@ -4,7 +4,7 @@
 - **Source locations:** Light-Novels `src/components/GlobalHeader.tsx` (`GlobalHeader`), `src/components/DaoInsights.tsx` (`DaoInsights`), and the collection navigation in `src/components/LibraryScreen.tsx` (`LibraryScreen`). Development `src/components/story-seed/development/CreationModal.tsx` (`CreationModal`), `StorySeedHeader.tsx`, `StorySeedSelector.tsx`, `StorySeedMobileNavigation.tsx`, and `StorySeedSettings.tsx`.
 - **Workshop preview:** `?preview=library-shell`
 - **Replica created:** 2026-09-08
-- **Last Workshop update:** 2026-09-22
+- **Last Workshop update:** 2026-09-25
 - **Last source comparison:** 2026-09-08
 - **Replica status:** under refinement; locked captures plus Development workspaces on the canonical `SEIAppHeader` and `SEIAppShell`.
 
@@ -49,6 +49,25 @@ The footer's menus and channels dropped their `LibraryPanel` glass, and the lang
 `MainLibraryFooter`'s middle menu is labelled **About Us** rather than SEIHouse; its group id and destinations are untouched.
 
 The global bottom strip hugs its content above 768px (`library-navigation.css`). A phone's strip spans the screen and its four destinations share that width from a zero flex basis; past 42rem the bar stopped growing but the buttons kept the shared basis, so every destination sat in a box nearly twice the width its icon and label needed — 154px against the phone's 83px. Off that basis they size to their own label, and the bar is 325px at 1280px wide instead of 672px. The floor stays 44px, and clearance above the strip is unchanged at 14px.
+
+## Production-readiness audit fixes — 2026-09-25
+
+An audit of the shell before further building found ten issues; all are fixed.
+
+- **Help no longer takes down the host page.** `LibraryHelpMenu` reads narration through `useOptionalNarrativeAudio()`: without a host `NarrativeAudioProvider` every topic still opens as text and only Listen is withheld. `WorkspaceHeaderUtilities` wraps the on-demand Help in its own error boundary — a failed download shows a "Help could not load" sheet, and the next press retries with a fresh loader.
+- **Dao Insights shows the quote it settles on.** The carousel keyed every 100ms frame into `AnimatePresence mode="wait"`, which could strand an intermediate quote on screen while the divined one sat in state (reader saw one quote, copied another; 2 in 20 trials). The spin now updates one element in place and the settled quote and author animate once. The carousel interval, copy timer and status check are all stopped on unmount, an empty divination keeps the fallback, and the undefined `neutral-850`/`amber-450` steps are now `neutral-800`/`amber-400`.
+- **The emblem ships with the shell.** `LIBRARY_EMBLEM` (`libraryBrand.ts`) points the header and footer at SEIHouse media, `https://media.seihouse.org/SEN/IMAGE/ICON/Header/CELESTIAL%20LIBRARY%20ICON.jpg`, instead of a Workshop-only `public/` path the package never carried.
+- **The header overflow survives phone scrolling.** It closes on a real width change only, not on the resize events an address bar or keyboard fires.
+- **Seed Bank is highlighted on the Cave Stories screen.** The Profile section outline lists Seed Bank beside Cultivator Cave.
+- **Footer:** a disabled destination is always a disabled button (a disabled link still navigated), and `libraryFooterCopyright()` dates the legal line from the current year; the load-time `LIBRARY_FOOTER_COPYRIGHT` constant is gone.
+- **Placeholder legal documents.** SEIHouse has not published Terms, Privacy or Cookies yet. `libraryLegal.ts` holds an outline for each, and when a host passes no `legal` destinations `MainLibraryFooter` opens them in `LibraryLegalSheet` under a "Draft placeholder" notice. Replace a document's sections with approved text and mark it `published`, or pass hosted URLs through `legal`. Social channels remain host configuration.
+- **Workshop only:** the capture's Back to Workshop control sits in its own strip above the app instead of floating over the Library logo.
+
+Regression coverage: `LibraryShellResilience.test.tsx`.
+
+## Footer identity trimmed to the statement — 2026-09-25
+
+At the product owner's direction the footer read as busy, so everything above the company statement came out: the emblem seal and its gold hairlines, the `SEN` elemental wordmark and the `SEIHouse Expanded Novels` line. The footer now opens on "A better time capsule and translator of artistic expression", then the menus, channels, language and legal row. `LibraryFooter` no longer takes an `emblem`, and `LIBRARY_FOOTER_MARK` and `LIBRARY_FOOTER_EXPANSION` are gone; the header keeps the emblem through `LIBRARY_EMBLEM`. The 2026-09-22 identity entries above describe the superseded arrangement.
 
 ## Capture boundary
 

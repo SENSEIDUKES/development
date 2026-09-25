@@ -49,3 +49,7 @@ export function useNarrativeAudio() {
   if (!value) throw new Error('Audio surfaces require a host NarrativeAudioProvider.');
   return value;
 }
+/** For surfaces whose audio is an enhancement: `null` when the host supplies no provider. */
+export function useOptionalNarrativeAudio() {
+  return useContext(NarrativeAudioPlaybackContext);
+}

@@ -1,7 +1,10 @@
+import { useRef, useState } from 'react';
 import type { MainLibraryAdapter } from '../shared/MainLibraryAdapter';
 import { normalizeSenLanguageCode } from '@seihouse/sen/contracts';
 import { LibraryFooter, type LibraryFooterAction, type LibraryFooterGroup, type LibraryFooterSocialLink } from './LibraryFooter';
 import { libraryNavigationMode, type LibraryLocation } from './libraryRoutes';
+import { LIBRARY_LEGAL_DOCUMENTS, type LibraryLegalDocument } from './libraryLegal';
+import { LibraryLegalSheet } from './LibraryLegalSheet';
 
 export interface MainLibraryFooterProps {
   adapter: MainLibraryAdapter;
@@ -12,8 +15,11 @@ export interface MainLibraryFooterProps {
   onOpenHelp: () => void;
   /** Host-configured channels; none are hardcoded here. */
   social: readonly LibraryFooterSocialLink[];
-  /** Host-configured Terms, Privacy and Cookies destinations. */
-  legal: readonly LibraryFooterAction[];
+  /**
+   * Host-hosted Terms, Privacy and Cookies destinations. Omit it to open the
+   * Library's own documents (`LIBRARY_LEGAL_DOCUMENTS`) in a sheet.
+   */
+  legal?: readonly LibraryFooterAction[];
 }
 
 /**
@@ -22,6 +28,8 @@ export interface MainLibraryFooterProps {
  * carry the footer, matching the global navigation's exclusions.
  */
 export function MainLibraryFooter({ adapter, location, onNavigate, onOpenHelp, social, legal }: MainLibraryFooterProps) {
+  const [legalDocument, setLegalDocument] = useState<LibraryLegalDocument | null>(null);
+  const legalOpenerRef = useRef<HTMLElement | null>(null);
   if (libraryNavigationMode(location.screen) === 'immersive') return null;
   const go = (target: LibraryLocation) => () => onNavigate(target);
   const groups: LibraryFooterGroup[] = [
@@ -52,6 +60,12 @@ export function MainLibraryFooter({ adapter, location, onNavigate, onOpenHelp, s
     code: normalizeSenLanguageCode(adapter.userProfile.interfaceLanguage),
     onOpenSettings: go({ screen: 'profile', cave: '/settings' }),
   } : undefined;
-  return <LibraryFooter groups={groups} social={social} legal={legal} language={language}
-    emblem={{ src: '/library-shell/celestial-library.jpg', alt: 'Celestial Library Logo' }} />;
+  const legalRow = legal ?? LIBRARY_LEGAL_DOCUMENTS.map(document => ({ id: document.id, label: document.label, onSelect: () => {
+    legalOpenerRef.current = globalThis.document?.activeElement instanceof HTMLElement ? globalThis.document.activeElement : null;
+    setLegalDocument(document);
+  } }));
+  return <>
+    <LibraryFooter groups={groups} social={social} legal={legalRow} language={language} />
+    {!legal && <LibraryLegalSheet document={legalDocument} onClose={() => setLegalDocument(null)} returnFocusRef={legalOpenerRef} />}
+  </>;
 }

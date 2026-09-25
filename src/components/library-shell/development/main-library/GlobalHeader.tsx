@@ -3,6 +3,7 @@ import { useMainLibraryAdapter } from '../../shared/MainLibraryAdapter';
 import { WorkspaceHeader } from '../WorkspaceHeader';
 import type { HeaderSearchItem } from '../WorkspaceHeaderUtilities';
 import { LibraryProfileIcon as SENProfileIcon } from '@seihouse/library-ui';
+import { LIBRARY_EMBLEM } from '../libraryBrand';
 import './main-library-header.css';
 
 /**
@@ -38,7 +39,7 @@ export function GlobalHeader() {
     { id: 'battles', label: 'Qi Battles', description: 'Test your cultivation realm', icon: Sword, disabled: true, title: 'Coming Soon', onAction: () => {} },
   ];
   return <WorkspaceHeader title="Celestial Library"
-    emblem={{ src: '/library-shell/celestial-library.jpg', alt: 'Celestial Library Logo' }}
+    emblem={LIBRARY_EMBLEM}
     home={{ href: '/', label: 'Return to Home', onNavigate: home }}
     searchItems={items} />;
 }

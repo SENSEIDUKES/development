@@ -15,6 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Clear generated browser evidence
+        run: rm -rf -- output/playwright/text-highlight-engine
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22

@@ -37,6 +37,16 @@
   passages get a quiet gold margin (`custom-bookmark-bg`, previously unstyled).
   The locked `reference/` replica is unchanged; `shared/alterFateLock.ts` now
   serves only it.
+- **2026-09-25:** Audited the Development header against the mobile Reader preview.
+  Its hide/reveal threshold now uses the Chamber's position within the actual
+  scroller, so host content above the Reader cannot hide it prematurely. Open
+  header controls keep it visible, and focus reveals it for keyboard users.
+  Header buttons have 44px targets. SEN exposes an optional host accessory slot;
+  the Library preview mounts Familiar recall there with reserved space, using a
+  second row on narrow phones. Fullscreen reading retains the separate recall
+  control because the Reader header is absent in that mode. Quick Actions now
+  uses the shared anchored popover so Escape, outside dismissal, focus return,
+  and narrow-screen placement work while the header is sticky.
 - **2026-09-24:** Development Reader baseline on saved HARNESS stories. The
   Development Reader Chamber UI is unchanged; what changed is what sits behind
   it. `useReadingPosition` now saves and restores a semantic paragraph anchor

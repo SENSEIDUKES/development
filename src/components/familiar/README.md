@@ -3,7 +3,7 @@
 - Source: supplied `Familiars/Packages/` collection (not a Git repository), containing eleven validated Familiar packages.
 - Preview: Workshop **Customization → Familiar** and `?preview=familiar`.
 - Replica created: 2026-09-20.
-- Last Workshop update: 2026-09-23.
+- Last Workshop update: 2026-09-25.
 - Last source comparison: 2026-09-22.
 - Lifecycle: supplied source packages retained; the reusable renderer, host catalogue, and Energy interaction remain in Development.
 - Owner: Library. This first-party companion is not a SEN narrative capability.
@@ -184,9 +184,10 @@ sprite playback. `FamiliarRecall` provides a 44px accessible button for the host
 header. Tapping the silhouette opens a glass menu with Energy and Expand. Energy
 uses the same centered dialog while the pet stays docked; only Expand invokes
 `onRecall` and restores the floating pet and keyboard focus. Development mounts the button
-through the generic `WorkspaceHeaderAccessoryProvider` on Home, Profile, and Creator;
-the standalone Reader and Familiar canvas use a sticky recall control at their top
-edge, including fullscreen Reader states without a product header.
+through the generic `WorkspaceHeaderAccessoryProvider` on Home, Profile, and Creator.
+The Development Reader uses its neutral SEN header accessory slot to reserve a
+44px control position; fullscreen Reader and the standalone Familiar canvas use
+the sticky recall when no Reader header is present.
 
 Profile Customization → Familiar includes a live native size slider and **Reset**.
 Desktop retains 60–200% with a 100% default. Mobile shows 10–100%, mapping linearly
@@ -258,6 +259,9 @@ Escape/outside dismissal, and reduced-motion handling.
 
 ## Workshop history
 
+- 2026-09-25: Composed the minimized Familiar into the Development Reader's
+  dedicated header slot. The floating companion and fullscreen recall still use
+  the Library host preview; SEN receives only a neutral accessory element.
 - 2026-09-23: Corrected Quill's wave to raise the anatomical front-right paw, with the
   other three paws grounded. Restored left-running to the exact horizontal mirror of
   right-running so both directions have identical frame bounds and scale.

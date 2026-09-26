@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ProductFamiliarSession, ProductFamiliarSurface } from '../familiar/ProductFamiliarPreview';
+import { ProductFamiliarHeaderAccessory, ProductFamiliarSession, ProductFamiliarSurface, useProductFamiliarPreview } from '../familiar/ProductFamiliarPreview';
 import ReferenceReaderChamber from '../../../components/reader-chamber/reference/ReaderChamber';
 import { CodexSheetOverlay as ReferenceCodexSheetOverlay } from '../../../components/reader-codex/reference/CodexSheetOverlay';
 import {
@@ -94,12 +94,18 @@ function clickInChamber(predicate: (button: HTMLButtonElement) => boolean) {
     });
 }
 
+function DevelopmentReaderWithFamiliar(props: React.ComponentProps<typeof DevelopmentReaderChamber>) {
+  const familiar = useProductFamiliarPreview();
+  return <DevelopmentReaderChamber {...props} headerAccessory={familiar?.minimized ? <ProductFamiliarHeaderAccessory /> : undefined} />;
+}
+
 export function ReaderChamberWorkspace() {
   const entry = workshopEntries.find((e) => e.id === 'reader-chamber')!;
   const [activeState, setActiveState] = useState<PreviewState>('reading');
   const [selectedChapterNum, setSelectedChapterNum] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const activeStory = useAppStore((s) => s.stories[0]);
+  const isReaderFullscreen = useAppStore((s) => s.isReaderFullscreen);
 
   // Boot the mock store with a fresh story.
   useEffect(() => {
@@ -371,13 +377,13 @@ export function ReaderChamberWorkspace() {
         </PreviewCanvas>
       )}
       renderDevelopment={() => (
-        <ProductFamiliarSession><ProductFamiliarSurface bottomInset={80}>
+        <ProductFamiliarSession><ProductFamiliarSurface bottomInset={80} headerRecall={!isReaderFullscreen}>
         <PreviewCanvas
           key={`development-${activeState}`}
           CodexOverlay={DevelopmentCodexSheetOverlay}
           onJumpToChapter={setSelectedChapterNum}
         >
-          <DevelopmentReaderChamber {...chamberProps} />
+          <DevelopmentReaderWithFamiliar {...chamberProps} />
         </PreviewCanvas>
         </ProductFamiliarSurface></ProductFamiliarSession>
       )}

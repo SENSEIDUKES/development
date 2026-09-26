@@ -46,6 +46,11 @@ function ProductFamiliarRecall() {
   return <FamiliarRecall key={`${context.selection.uid}:${familiar.id}`} familiar={familiar} onRecall={() => context.setMinimized(false)} />;
 }
 
+/** Workshop host adapter for SEN surfaces that expose a neutral header slot. */
+export function ProductFamiliarHeaderAccessory() {
+  return <ProductFamiliarRecall />;
+}
+
 /** Restrict standalone previews to their canvas; an embedded app owns one viewport companion. */
 export function ProductFamiliarSurface({ children, viewport = false, headerRecall = false, activity, animation, paused, bottomInset }: {
   children: ReactNode; viewport?: boolean; headerRecall?: boolean;

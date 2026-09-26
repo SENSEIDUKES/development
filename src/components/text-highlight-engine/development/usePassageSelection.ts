@@ -6,6 +6,7 @@ export interface PassageRectangle { left: number; top: number; width: number; he
 export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSelectionChange?: (selection: PassageSelection | null) => void) {
   const rootRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLSpanElement>(null);
   const [snapshot, setSnapshot] = useState<{ selection: PassageSelection; text: string } | null>(null);
   const [editing, setEditing] = useState(false);
   const [rectangles, setRectangles] = useState<PassageRectangle[]>([]);
@@ -42,7 +43,7 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
     };
     const down = (event: PointerEvent) => {
       controlPointer.current = !!controlsRef.current?.contains(event.target as Node);
-      if (!controlPointer.current && (editing || !root.contains(event.target as Node))) clear();
+      if (!controlPointer.current && !editorRef.current?.contains(event.target as Node) && (editing || !root.contains(event.target as Node))) clear();
     };
     const key = (event: KeyboardEvent) => { if (event.key === 'Escape' && snapshot) { clear(); root.focus({ preventScroll: true }); } };
     doc.addEventListener('selectionchange', read);
@@ -64,7 +65,8 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
     if (!root || !selection) { setRectangles([]); return; }
     let frame = 0;
     const measure = () => {
-      const range = passageRange(root, selection);
+      const range = editing ? null : passageRange(root, selection);
+      const rects = editing ? editorRef.current?.getClientRects() : range?.getClientRects();
       let left = 0, top = 0, right = window.innerWidth, bottom = window.innerHeight;
       for (let parent = root.parentElement; parent; parent = parent.parentElement) {
         const style = getComputedStyle(parent);
@@ -72,13 +74,14 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
         if (/(auto|scroll|hidden|clip)/.test(style.overflowX)) { left = Math.max(left, bounds.left); right = Math.min(right, bounds.right); }
         if (/(auto|scroll|hidden|clip)/.test(style.overflowY)) { top = Math.max(top, bounds.top); bottom = Math.min(bottom, bounds.bottom); }
       }
-      setRectangles(range ? Array.from(range.getClientRects()).filter(rect => rect.width > 0 && rect.height > 0)
+      setRectangles(rects ? Array.from(rects).filter(rect => rect.width > 0 && rect.height > 0)
         .map(rect => ({ left: Math.max(left, rect.left), top: Math.max(top, rect.top),
           width: Math.min(right, rect.right) - Math.max(left, rect.left), height: Math.min(bottom, rect.bottom) - Math.max(top, rect.top) }))
         .filter(rect => rect.width > 0 && rect.height > 0) : []);
     };
     const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(measure); };
     measure();
+    root.addEventListener('input', schedule);
     window.addEventListener('scroll', schedule, true);
     window.addEventListener('resize', schedule);
     window.visualViewport?.addEventListener('resize', schedule);
@@ -89,6 +92,7 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      root.removeEventListener('input', schedule);
       window.removeEventListener('scroll', schedule, true);
       window.removeEventListener('resize', schedule);
       window.visualViewport?.removeEventListener('resize', schedule);
@@ -99,11 +103,11 @@ export function usePassageSelection(blocks: readonly TextHighlightBlock[], onSel
   const beginEdit = () => {
     if (!snapshot) return;
     setEditing(true);
-    // Retained rectangles replace the native tint while the textarea has focus.
+    // The inline draft takes focus; the canonical selection stays unchanged.
     rootRef.current?.ownerDocument.getSelection()?.removeAllRanges();
   };
   const focusBlock = () => {
     if (rootRef.current && selection) findBlockElement(rootRef.current, selection.blockId)?.focus({ preventScroll: true });
   };
-  return { rootRef, controlsRef, selection, sourceText: snapshot?.text, editing, rectangles, beginEdit, clear, focusBlock };
+  return { rootRef, controlsRef, editorRef, selection, sourceText: snapshot?.text, editing, rectangles, beginEdit, clear, focusBlock };
 }

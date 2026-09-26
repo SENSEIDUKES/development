@@ -28,8 +28,8 @@ async function select(from = 7, to = 13, id = 'a') {
 }
 function fill(value: string) {
   act(() => {
-    const input = document.querySelector('textarea')!;
-    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(input, value);
+    const input = document.querySelector('[contenteditable]')!;
+    input.textContent = value;
     input.dispatchEvent(new Event('input', { bubbles: true }));
   });
 }
@@ -54,17 +54,18 @@ describe('Text Highlight Engine', () => {
       button('Edit')!.focus();
     });
     await act(async () => { await vi.runAllTimersAsync(); });
-    click('Edit'); expect(document.querySelector('textarea')?.value).toBe('middle');
+    click('Edit'); expect(document.querySelector('[contenteditable]')?.textContent).toBe('middle');
   });
   it('edits only the intended passage, retains identity, and clears state', async () => {
     const element = block(); await select();
     expect(selections).toHaveBeenLastCalledWith({ blockId: 'a', selectedText: 'middle', startOffset: 7, endOffset: 13 });
-    click('Edit'); expect(document.querySelector('textarea')?.value).toBe('middle');
     expect(document.querySelector('.sen-text-highlight-marks span')).not.toBeNull();
+    click('Edit'); expect(document.querySelector('[contenteditable]')?.textContent).toBe('middle');
+    expect(block().querySelector('[contenteditable]')).not.toBeNull();
     fill('new text'); click('Save');
     expect(block()).toBe(element); expect(block().textContent).toBe('Before new text after.');
     expect(block('b').textContent).toBe(initial[1].text);
-    expect(button('Edit')).toBeUndefined(); expect(document.querySelector('textarea')).toBeNull();
+    expect(button('Edit')).toBeUndefined(); expect(document.querySelector('[contenteditable]')).toBeNull();
     expect(selections).toHaveBeenLastCalledWith(null);
   });
   it('requires explicit deletion, then restores the exact text through Undo', async () => {
@@ -74,19 +75,32 @@ describe('Text Highlight Engine', () => {
     expect(changed.mock.lastCall?.[1].operation).toBe('delete');
     click('Undo'); expect(block().textContent).toBe(initial[0].text); expect(button('Undo')).toBeUndefined();
   });
+  it('keeps inline draft input isolated until Save, including literal markup and newlines', async () => {
+    await select(); click('Edit');
+    const editor = block().querySelector('[contenteditable]')!;
+    act(() => editor.dispatchEvent(new Event('pointerdown', { bubbles: true })));
+    fill('<b>new</b>\nwords');
+    expect(changed).not.toHaveBeenCalled();
+    expect(block().querySelector('b')).toBeNull();
+    expect(block().textContent).toBe('Before <b>new</b>\nwords after.');
+    click('Save');
+    expect(changed.mock.lastCall?.[1].before.text).toBe(initial[0].text);
+    expect(block().textContent).toBe('Before <b>new</b>\nwords after.');
+    expect(block().querySelector('[contenteditable]')).toBeNull();
+  });
   it('dismisses an unsaved draft through Escape or outside pointer activation', async () => {
     await select(); click('Edit'); fill('discard');
     act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })));
-    expect(document.querySelector('textarea')).toBeNull(); expect(changed).not.toHaveBeenCalled();
+    expect(document.querySelector('[contenteditable]')).toBeNull(); expect(changed).not.toHaveBeenCalled();
     await select(); click('Edit');
     act(() => document.body.dispatchEvent(new Event('pointerdown', { bubbles: true })));
-    expect(document.querySelector('textarea')).toBeNull(); expect(block().textContent).toBe(initial[0].text);
+    expect(document.querySelector('[contenteditable]')).toBeNull(); expect(block().textContent).toBe(initial[0].text);
   });
   it('ignores collapsed selections and invalidates drafts after external updates', async () => {
     await select(7, 7); expect(button('Edit')).toBeUndefined();
     await select(); click('Edit');
     act(() => update([{ id: 'a', text: 'Changed externally.' }, initial[1]]));
-    expect(document.querySelector('textarea')).toBeNull(); expect(changed).not.toHaveBeenCalled();
+    expect(document.querySelector('[contenteditable]')).toBeNull(); expect(changed).not.toHaveBeenCalled();
   });
   it('keeps Undo across edits to another block and invalidates it for changed source text', async () => {
     await select(); click('Edit'); fill(''); click('Delete Passage');
@@ -105,6 +119,6 @@ describe('Text Highlight Engine', () => {
       document.getSelection()!.removeAllRanges(); document.dispatchEvent(new Event('selectionchange'));
     });
     await act(async () => { await vi.runAllTimersAsync(); });
-    click('Edit'); expect(document.querySelector('textarea')?.value).toBe('middle');
+    click('Edit'); expect(document.querySelector('[contenteditable]')?.textContent).toBe('middle');
   });
 });

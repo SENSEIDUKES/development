@@ -72,15 +72,16 @@ for (const [name, browserType, width, height, touch] of [
       assert.ok(expectedSelection.start > 0 && expectedSelection.end < original.length && expectedSelection.text.length > 10);
       assert.equal(expectedSelection.text, original.slice(expectedSelection.start, expectedSelection.end));
     } else await select();
+    assert.ok(await page.locator('.sen-text-highlight-marks span').count());
     if (!touch) {
       await page.keyboard.press('Tab');
       assert.equal(await page.evaluate(() => document.activeElement?.textContent), 'Edit');
       await page.keyboard.press('Enter');
     } else await activate('Edit');
-    const input = page.getByRole('textbox', { name: 'Replacement text' });
-    assert.equal(await input.inputValue(), expectedSelection.text);
-    assert.ok(await page.locator('.sen-text-highlight-marks span').count());
-    const dialog = page.getByRole('dialog', { name: 'Edit passage' });
+    const input = page.getByRole('textbox', { name: 'Edit selected text' });
+    assert.equal(await input.textContent(), expectedSelection.text);
+    assert.ok(await paragraph.locator('[contenteditable]').count());
+    const dialog = page.getByRole('group', { name: 'Edit passage' });
     const bounds = await dialog.boundingBox(); assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= width);
     await page.screenshot({ path: `${output}/${name}-edit.png` });
     if (!touch) {
@@ -88,13 +89,16 @@ for (const [name, browserType, width, height, touch] of [
       await page.screenshot({ path: `${output}/${name}-light-edit.png` });
       await lightStyle.evaluate(element => element.remove());
     }
-    await input.fill('Mara returned home'); await activate('Save');
-    assert.equal(await paragraph.textContent(), original.slice(0, expectedSelection.start) + 'Mara returned home' + original.slice(expectedSelection.end));
+    await input.fill('Mara returned');
+    await input.press('End'); await input.press('Enter'); await page.keyboard.insertText('home');
+    await activate('Save');
+    assert.equal(await paragraph.textContent(), original.slice(0, expectedSelection.start) + 'Mara returned\nhome' + original.slice(expectedSelection.end));
     assert.deepEqual((await page.locator('[data-sen-text-block]').allTextContents()).slice(1), siblings.slice(1));
     assert.equal(await dialog.count(), 0);
+    const beforeDeleteText = await paragraph.textContent();
     await select(12, 30); await activate('Edit'); await input.fill('');
     assert.equal(await page.getByRole('button', { name: 'Save', exact: true }).isDisabled(), true);
-    const beforeDelete = await paragraph.textContent(); await activate('Delete Passage');
+    const beforeDelete = beforeDeleteText; await activate('Delete Passage');
     assert.equal(await paragraph.textContent(), beforeDelete.slice(0, 12) + beforeDelete.slice(30));
     const undoBounds = await page.getByRole('button', { name: 'Undo', exact: true }).boundingBox();
     assert.ok(undoBounds.y >= 0 && undoBounds.y + undoBounds.height <= height);
@@ -107,7 +111,7 @@ for (const [name, browserType, width, height, touch] of [
     await select(); await activate('Edit');
     // Mobile WebKit does not implement mouse-wheel injection.
     await page.evaluate(() => window.scrollBy(0, 160));
-    await page.waitForFunction(() => { const box = document.querySelector('[role="dialog"]')?.getBoundingClientRect(); return box && box.top >= 0 && box.bottom <= innerHeight; });
+    await page.waitForFunction(() => { const box = document.querySelector('[aria-label="Edit passage"]')?.getBoundingClientRect(); return box && box.top >= 0 && box.bottom <= innerHeight; });
     const scrolledBounds = await dialog.boundingBox(); assert.ok(scrolledBounds.y >= 0 && scrolledBounds.y + scrolledBounds.height <= height);
     await page.keyboard.press('Escape');
     await paragraph.evaluate(element => {

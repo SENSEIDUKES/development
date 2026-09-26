@@ -37,18 +37,19 @@ original block text to reject stale replacements.
 Public lower-level exports: `normalizePassageSelection`, `isValidPassage`,
 `replacePassage`, `passageRange`, and `usePassageSelection`. Custom host renderers
 using the hook must attach its `rootRef`, mark plain-text blocks with
-`data-sen-text-block="stable-id"`, attach `controlsRef` to their controls, and use
+`data-sen-text-block="stable-id"`, attach `controlsRef` to their controls and `editorRef` to their inline draft, and use
 the returned `beginEdit`/`clear` lifecycle. Rendered `textContent` must match the
 supplied block text exactly. The ready-made component handles this itself.
 
 ## Behavior and limitations
 
-- Select within one paragraph; Edit opens a prefilled replacement textarea.
+- Select within one paragraph; Edit makes only the selected text editable in place.
+  The draft is an isolated plain-text span; surrounding prose stays read-only.
   Save changes only that range. HTML is literal text, and newlines remain inside
   the same paragraph. An empty block keeps its ID and visible line space.
 - Soft yellowish gold is `rgba(242, 207, 102, .35)`. Override
   `--sen-passage-highlight` through the component's `style` prop to affect both
-  native selection and the retained editing highlight.
+  the live selection overlay and inline draft highlight.
 - Empty input disables Save and reveals Delete Passage. Deletion requires that
   explicit action. Undo restores the exact previous block; there is no timer.
   Only one deletion is retained. Another deletion replaces it; a committed edit
@@ -61,7 +62,9 @@ supplied block text exactly. The ready-made component handles this itself.
   paragraph is cross-block even if it visually resembles a whole-paragraph selection.
 - Plain text only. Inline text nodes are supported by the adapter, but rich-text
   rendering, formatting, embedded media, and cross-paragraph editing are not.
-- Native touch selection remains browser-owned. Automated mobile tests cover
+- Native touch selection remains browser-owned. `-webkit-touch-callout: none`
+  requests callout suppression but cannot guarantee removal of every OS selection
+  menu. iOS may retain its native tint/handles alongside the gold overlay. Automated mobile tests cover
   touch activation after a scripted range; they do not prove OS long-press menus,
   physical selection handles, or virtual-keyboard behavior on real devices.
 - No undo stack for replacements, persistence, sealing, reference/media checks,
@@ -97,3 +100,6 @@ browser evidence out of the consuming surface. No integration was performed.
 - **2026-09-26:** Created normalized selection contracts, validated local range
   replacement, minimal Edit/Save, soft gold selection, explicit Delete Passage
   and guarded Undo, with an independent four-paragraph preview.
+- **2026-09-26:** Replaced the separate replacement box with an isolated inline
+  draft and a small Save control. Added the gold overlay throughout selection;
+  native touch menu suppression remains browser-dependent.

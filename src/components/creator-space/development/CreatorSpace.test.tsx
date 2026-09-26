@@ -28,7 +28,7 @@ function renderPage(overrides: Partial<CreatorSpaceProps> = {}) {
     worlds: { status: 'ready', items: WORLDS },
     energy: readyEnergy(320),
     toolkit: [{ id: 'style', kind: 'style', title: 'Style Packs', description: 'Writing styles.' }],
-    onCarveNewDestiny: vi.fn(), onOpenEnergy: vi.fn(), onContinueWorld: vi.fn(), onOpenStudio: vi.fn(),
+    onCreate: vi.fn(), onOpenEnergy: vi.fn(), onContinueWorld: vi.fn(), onOpenStudio: vi.fn(),
     ...overrides,
   };
   act(() => root.render(<LibraryPresentationProvider><CreatorSpace {...props} /></LibraryPresentationProvider>));
@@ -56,8 +56,8 @@ it('shows the creator workspace, its two readings and the world count', () => {
   expect(progress.textContent).toContain('In progress2');
   click(energy);
   expect(props.onOpenEnergy).toHaveBeenCalledTimes(1);
-  click(button('Carve New Destiny'));
-  expect(props.onCarveNewDestiny).toHaveBeenCalledTimes(1);
+  click(button('Create'));
+  expect(props.onCreate).toHaveBeenCalledTimes(1);
 });
 
 it('selects the most recent world first and retargets exactly two actions to the tapped world', () => {

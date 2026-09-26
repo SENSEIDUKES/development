@@ -39,7 +39,7 @@ export interface CreatorSpaceProps {
   energy: Pick<EnergyAccountState, 'status' | 'snapshot'>;
   toolkit: readonly CreatorToolkitItem[];
   /** Opens the existing Story Seed creation flow. */
-  onCarveNewDestiny: () => void;
+  onCreate: () => void;
   /** Opens the Energy page. Omit it and the Energy tile is a plain reading. */
   onOpenEnergy?: () => void;
   /** Continue writing the world: its chapter workspace, ready for the next chapter. */

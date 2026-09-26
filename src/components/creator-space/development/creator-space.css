@@ -2,14 +2,12 @@
 [data-creator-space] .creator-space-title {
   font-size: clamp(1.625rem, 7.4vw, 2.75rem);
 }
-/* Beside the title on a phone, the manifest pill keeps its 44px height but
-   sets its capitals a touch tighter so both share one row at 390px. */
-@media (max-width: 479px) {
-  [data-creator-space] .creator-space-carve {
-    padding-inline: 0.875rem;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-  }
+/* The closing action: its own band at the end of the page, centred on wider screens. */
+[data-creator-space] .creator-space-carve {
+  display: flex;
+  justify-content: center;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* The two creator tiles: compact, workspace-like, never a banner. */

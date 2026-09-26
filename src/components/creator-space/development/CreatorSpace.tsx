@@ -34,7 +34,7 @@ function fallbackCover(id: string, images: readonly string[]) {
  * presents them and reports which world the creator wants to work on.
  */
 export function CreatorSpace({
-  worlds, energy, toolkit, onCarveNewDestiny, onOpenEnergy, onContinueWorld, onOpenStudio, onBrowseToolkit, onRetryWorlds,
+  worlds, energy, toolkit, onCreate, onOpenEnergy, onContinueWorld, onOpenStudio, onBrowseToolkit, onRetryWorlds,
 }: CreatorSpaceProps) {
   const items = useMemo(() => worlds.status === 'ready'
     ? [...worlds.items].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
@@ -46,12 +46,7 @@ export function CreatorSpace({
 
   return <div data-creator-space className="creator-space space-y-6 pb-4 text-signal sm:space-y-9">
     <section aria-labelledby="creator-space-title" className="space-y-4 md:max-w-3xl">
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-3">
-        <h1 id="creator-space-title" className="creator-space-title font-display font-bold leading-none tracking-tight text-signal">Creator Space</h1>
-        <ManifestButton aria-label="Carve New Destiny" icon={SENManifestingIcon} size="md" className="creator-space-carve" onClick={() => onCarveNewDestiny()}>
-          Carve New Destiny
-        </ManifestButton>
-      </div>
+      <h1 id="creator-space-title" className="creator-space-title font-display font-bold leading-none tracking-tight text-signal">Creator Space</h1>
       <div className="grid grid-cols-2 gap-3">
         <CreatorStat label="Energy" value={energyValue} note={energyNote} onSelect={onOpenEnergy}
           icon={<SENNavigationIcon name="energy" size={26} className="text-portal" aria-hidden="true" />} />
@@ -75,11 +70,18 @@ export function CreatorSpace({
       </LibraryPanel>}
       {worlds.status === 'ready' && items.length === 0 && <LibraryPanel padding="sm">
         <SEIEmptyState titleAs="h3" size="sm" icon={SENManifestingIcon} title="No worlds yet"
-          description="Carve New Destiny starts your first world from a Story Seed. It will appear here as soon as its story begins." />
+          description="Create, at the end of this page, starts your first world from a Story Seed. It will appear here as soon as its story begins." />
       </LibraryPanel>}
       {worlds.status === 'ready' && items.length > 0 && <WorldsRow worlds={items}
         onContinueWorld={onContinueWorld} onOpenStudio={onOpenStudio} />}
     </section>
+
+    {/* The page closes on starting something new, after the worlds already in progress. */}
+    <div className="creator-space-carve">
+      <ManifestButton icon={SENManifestingIcon} size="lg" fullWidth className="sm:w-auto" onClick={() => onCreate()}>
+        Create
+      </ManifestButton>
+    </div>
   </div>;
 }
 

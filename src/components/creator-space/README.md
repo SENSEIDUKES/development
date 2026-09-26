@@ -22,11 +22,10 @@ The Library's Create tab. It replaces the bottom-strip **Library** tab, which on
 Home with its My Library collection selected. My Library itself is unchanged and still
 reachable from header Search and the footer.
 
-The page has three parts, in this order, sized so the worlds row is inside the first phone
+The page has three parts and a closing action, in this order, sized so the worlds row is inside the first phone
 screen:
 
-1. **Creator Space** — the page title beside the existing **Carve New Destiny** action
-   (opens Story Seed), and two readings: **Energy** (the live available balance; opens the
+1. **Creator Space** — the page title and two readings: **Energy** (the live available balance; opens the
    Cave's Energy page) and **In progress** (worlds that have not reached their ending; a
    plain reading with no destination). "Ready to share" is deliberately absent until
    publishing exists.
@@ -47,6 +46,8 @@ screen:
    The count reads "N worlds". Loading, empty ("No worlds yet") and failed-read states are
    distinct. A world without cover art shows the Library's own celestial art, dimmed; an
    unreachable image leaves the card's own blue-gold wash rather than a broken image.
+4. **Create** — the page closes on one full-width Manifest button, below the worlds and
+   their actions, that opens Story Seed to start a new world.
 
 ## Ownership and contracts
 
@@ -59,7 +60,7 @@ destination:
 | `worlds` | The creator's worlds with a request lifecycle (`loading` / `ready` / `error`) |
 | `energy` | The `useEnergyAccount` read; the page never computes a balance |
 | `toolkit` | Preview items (title, description, kind, art) |
-| `onCarveNewDestiny`, `onOpenEnergy`, `onContinueWorld`, `onOpenStudio` | Existing destinations |
+| `onCreate`, `onOpenEnergy`, `onContinueWorld`, `onOpenStudio` | Existing destinations |
 | `onBrowseToolkit`, `onRetryWorlds` | Optional; omitted means "not built" / no retry |
 
 The selected world is local UI state. The shell keeps the page mounted after its first visit,
@@ -103,9 +104,6 @@ the Workshop entry or `worlds=sample`.
 - Worlds are the chapter workspace's local stories in this browser; there is no account-wide
   story list in DEV yet, and a Vercel preview URL starts with an empty store.
 - The Toolkit is a preview of real systems; there is no pack or plugin marketplace.
-- On phones the Carve New Destiny pill sets its capitals slightly tighter (scoped to this
-  page, 44px height kept) so it shares the title's row at 390px; at 320px they stack. A
-  compact Manifest size in Library UI would remove this local rule.
 
 ## Verification
 
@@ -118,6 +116,12 @@ destinations, tab switches and history, empty and local states, 320/768/1440 wid
 reduced motion. Evidence: `output/playwright/creator-space/`.
 
 ## Workshop history
+
+- **2026-09-26 (review):** At SENSEI's direction the creation action moved from beside the
+  title to its own closing band at the end of the page, after Your worlds and its actions,
+  and is labelled simply **Create** (full width on phones; still opens Story Seed). The
+  phone-only tightened lettering that squeezed it beside the title is gone, and the host
+  prop is now `onCreate`. Home's hero keeps its own Carve New Destiny button.
 
 - **2026-09-26:** Created the Create page from the supplied reference and replaced the
   bottom-strip Library tab with **Create**. Creator Space (Carve New Destiny, Energy, In

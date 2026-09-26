@@ -40,10 +40,11 @@ const nav = page => page.getByRole('navigation', { name: 'Library global navigat
   assert.equal(await page.getByRole('heading', { level: 1 }).textContent(), 'Creator Space');
   assert.equal(await page.getByText('6 worlds', { exact: true }).count(), 1);
   const firstCard = await page.locator('.creator-space-world').first().boundingBox();
-  const title = await page.locator('#creator-space-title').boundingBox();
-  const carve = await page.getByRole('button', { name: 'Carve New Destiny' }).boundingBox();
-  results.phone = { worldsTop: Math.round(firstCard.y), worldsBottom: Math.round(firstCard.y + firstCard.height), titleAndCarveShareRow: Math.abs(title.y + title.height / 2 - (carve.y + carve.height / 2)) < 12, carveHeight: Math.round(carve.height) };
+  const carve = await page.locator('[data-creator-space]').getByRole('button', { name: 'Create', exact: true }).boundingBox();
+  const studio = await page.getByRole('button', { name: 'Studio', exact: true }).boundingBox();
+  results.phone = { worldsTop: Math.round(firstCard.y), worldsBottom: Math.round(firstCard.y + firstCard.height), carveTop: Math.round(carve.y), carveBelowWorldActions: carve.y > studio.y + studio.height, carveWidth: Math.round(carve.width), carveHeight: Math.round(carve.height) };
   assert.ok(firstCard.y + firstCard.height < 844, 'first world card is fully inside the first phone viewport');
+  assert.ok(carve.y > studio.y + studio.height, 'Create closes the page, after the world actions');
   assert.ok(carve.height >= 44);
   await page.screenshot({ path: new URL('create-390.png', out).pathname });
 
@@ -87,10 +88,10 @@ const nav = page => page.getByRole('navigation', { name: 'Library global navigat
   await ctx.close();
 }
 
-// 2. Carve New Destiny opens Story Seed.
+// 2. Create opens Story Seed.
 {
   const { page, ctx } = await open(shell('&worlds=sample'));
-  await page.getByRole('button', { name: 'Carve New Destiny' }).click();
+  await page.locator('[data-creator-space]').getByRole('button', { name: 'Create', exact: true }).click();
   await page.waitForURL(url => new URL(url).searchParams.get('source') === 'story-seed');
   results.carveDestination = new URL(page.url()).searchParams.get('screen');
   await ctx.close();

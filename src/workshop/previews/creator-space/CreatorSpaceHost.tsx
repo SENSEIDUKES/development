@@ -83,7 +83,7 @@ export function CreatorSpaceHost({ onNavigate, source = readCreatorWorldsSource(
 
   return <>
     <CreatorSpace worlds={worlds} energy={energy} toolkit={CREATOR_TOOLKIT}
-      onCarveNewDestiny={() => onNavigate({ screen: 'creator' })}
+      onCreate={() => onNavigate({ screen: 'creator' })}
       onOpenEnergy={() => onNavigate({ screen: 'profile', cave: '/home/energy' })}
       onContinueWorld={id => act(id, true)}
       onOpenStudio={id => act(id, false)}

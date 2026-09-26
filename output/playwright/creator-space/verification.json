@@ -1,9 +1,11 @@
 {
   "phone": {
-    "worldsTop": 565,
-    "worldsBottom": 744,
-    "titleAndCarveShareRow": true,
-    "carveHeight": 44
+    "worldsTop": 549,
+    "worldsBottom": 729,
+    "carveTop": 933,
+    "carveBelowWorldActions": true,
+    "carveWidth": 358,
+    "carveHeight": 48
   },
   "energyTile": "Energy500",
   "energyDestination": "profile",
@@ -21,7 +23,7 @@
   "widths": {
     "320": {
       "horizontalOverflow": 0,
-      "worldsTop": 635
+      "worldsTop": 579
     },
     "768": {
       "horizontalOverflow": 0,

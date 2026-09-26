@@ -83,6 +83,8 @@ On Windows, WebKit cases explicitly report `blocked` if its measured viewport
 differs from the requested width; this local DPI mismatch also misdirects native
 taps. A blocked case is not a pass. Run those cases on a compatible runner for
 WebKit evidence; the Chromium cases remain independently verified.
+The Linux CI job runs all five browser cases and uploads their screenshots and
+results as `text-highlight-engine-browser-evidence`.
 
 Consumers import the package entry and SEN stylesheet. For a source transfer,
 carry `development/` and `shared/` (excluding tests), the public barrel and its

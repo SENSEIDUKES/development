@@ -6,6 +6,8 @@ import { chromium, webkit } from 'playwright';
 const output = 'output/playwright/text-highlight-engine';
 await mkdir(output, { recursive: true });
 const results = [];
+const writeResults = () => writeFile(`${output}/verification.json`, JSON.stringify(results, null, 2) + '\n');
+await writeResults();
 for (const [name, browserType, width, height, touch] of [
   ['chromium-desktop', chromium, 1440, 900, false],
   ['chromium-phone', chromium, 390, 844, true],
@@ -25,10 +27,12 @@ for (const [name, browserType, width, height, touch] of [
     await page.goto(`${process.env.TEXT_HIGHLIGHT_URL ?? 'http://localhost:5173'}/?preview=text-highlight-engine`);
     const paragraph = page.locator('[data-sen-text-block="harbor-arrival"]');
     await paragraph.waitFor();
+    await page.evaluate(() => document.fonts.ready);
     const viewport = await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve({ width: innerWidth, height: innerHeight, dpr: devicePixelRatio })))));
     if (browserType === webkit && process.platform === 'win32' && Math.abs(viewport.width - width) > 1) {
       const reason = `Windows WebKit viewport mismatch: requested ${width}px, reports ${viewport.width}px (DPR ${viewport.dpr}). Native taps and layout assertions are unreliable on this runner.`;
       results.push({ name, width, height, passed: null, blocked: reason });
+      await writeResults();
       console.warn(reason);
       continue;
     }
@@ -103,8 +107,11 @@ for (const [name, browserType, width, height, touch] of [
     assert.ok(layout.content <= layout.viewport + 1, JSON.stringify(layout));
     assert.deepEqual(errors, []);
     results.push({ name, width, height, touchActivation: touch, nativeTouchSelectionHandles: 'not tested', passed: true });
+    await writeResults();
     console.log(`Passed ${name}`);
   } catch (error) {
+    results.push({ name, width, height, passed: false, error: String(error) });
+    await writeResults();
     console.error(name, error);
     if (page) {
       console.error(await page.evaluate(() => ({ scrollY, viewport: { width: innerWidth, height: innerHeight, top: visualViewport?.offsetTop },
@@ -114,5 +121,4 @@ for (const [name, browserType, width, height, touch] of [
     throw error;
   } finally { await browser.close(); }
 }
-await writeFile(`${output}/verification.json`, JSON.stringify(results, null, 2) + '\n');
 console.log(JSON.stringify(results, null, 2));

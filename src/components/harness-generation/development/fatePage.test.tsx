@@ -77,7 +77,11 @@ const start = async (foundation: Partial<StoryFoundationInput>, prepare?: (contr
   if (openFate) {
     // The Reader header's Alter Fate opens the Fate page.
     await click(byLabel('Quick Actions'), 'Quick Actions');
-    await click(button => button.textContent?.trim() === 'Alter Fate', 'Alter Fate');
+    // The shared popover renders its action in a document-level portal.
+    const alterFate = document.querySelector<HTMLButtonElement>('[role="dialog"] button[title^="Alter Fate:"]');
+    expect(alterFate, 'Expected Alter Fate in Quick Actions').toBeTruthy();
+    await act(async () => { alterFate!.click(); });
+    await flush();
     expect(fatePage()).toBeTruthy();
   }
   return { controller, storyId: story.id, requests: model.requests, failNext: model.failNext };

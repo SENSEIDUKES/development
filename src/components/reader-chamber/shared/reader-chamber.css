@@ -1,5 +1,21 @@
 @import './color-codes.css';
 
+/* A narrow Reader keeps its title readable while reserving a full control slot
+   for a host accessory such as the Library Familiar. */
+@media (max-width: 359px) {
+  .reader-chamber-header-with-accessory {
+    flex-wrap: wrap;
+  }
+
+  .reader-chamber-header-with-accessory .reader-chamber-header-main {
+    flex-basis: 100%;
+  }
+
+  .reader-chamber-header-with-accessory .reader-chamber-header-actions {
+    margin-left: auto;
+  }
+}
+
 /**
  * Reader Chamber scoped styles.
  *

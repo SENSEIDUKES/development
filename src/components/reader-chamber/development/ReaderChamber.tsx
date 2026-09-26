@@ -74,6 +74,8 @@ interface ReaderChamberProps {
   continueAfterLatest?: ReaderContinueAction;
   handleSealChapter?: (chapterNumber: number) => Promise<void>;
   handleCheckConsistency?: (chapterNumber: number) => Promise<string[]>;
+  /** Optional host-owned header control; the SEN Reader has no knowledge of its content. */
+  headerAccessory?: React.ReactNode;
 }
 
 /**
@@ -132,6 +134,7 @@ export default function ReaderChamber({
   continueAfterLatest,
   handleSealChapter,
   handleCheckConsistency,
+  headerAccessory,
 }: ReaderChamberProps) {
   const selectedChapter =
     chapters.find((c) => c.number === selectedChapterNum) || chapters[0];
@@ -163,6 +166,8 @@ export default function ReaderChamber({
   const [isCheckingConsistency, setIsCheckingConsistency] = useState(false);
   const [consistencyWarnings, setConsistencyWarnings] = useState<string[] | null>(null);
   const readerRef = useRef<HTMLDivElement>(null);
+  const chamberRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
   const readerMode = useReaderStore((state) => state.readerMode);
   const immersion = useReaderStore((state) => state.immersion);
   const setReaderMode = useReaderStore((state) => state.setReaderMode);
@@ -577,8 +582,15 @@ export default function ReaderChamber({
       const delta = y - lastY;
       lastY = y;
 
-      // Near the top of the chapter the header always stays visible.
-      if (y <= 80) {
+      // Measure from the Reader's own top, not the host page's scroll origin.
+      const scrollerTop = scroller === window
+        ? 0
+        : (scroller as HTMLElement).getBoundingClientRect().top;
+      const chamberTop = chamberRef.current?.getBoundingClientRect().top ?? scrollerTop;
+      const readerProgress = scrollerTop - chamberTop;
+      // Keep the header visible near this chapter's top and while one of its
+      // controls has an open panel (including a host-supplied accessory).
+      if (readerProgress <= 80 || headerRef.current?.querySelector('[aria-expanded="true"]')) {
         direction = 0;
         accrued = 0;
         setIsHeaderVisible(true);
@@ -973,6 +985,7 @@ export default function ReaderChamber({
 
   return (
     <div
+      ref={chamberRef}
       className={getReaderChamberSurfaceClass(
         currentPrefs.themeOverride,
         getDynamicShadingClasses(),
@@ -1001,6 +1014,9 @@ export default function ReaderChamber({
           onOpenFate={onOpenFate}
           getHeaderThemeClasses={getHeaderThemeClasses}
           isVisible={isHeaderVisible}
+          headerAccessory={headerAccessory}
+          headerRef={headerRef}
+          onFocusCapture={() => setIsHeaderVisible(true)}
         />
       )}
 

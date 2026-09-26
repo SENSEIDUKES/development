@@ -31,6 +31,7 @@ existing Chapter Generation feature.
 
 ### History
 
+- **2026-09-26 (Library Create):** The Library workspace can open a requested novel: `initialStoryId` selects it once the stored stories load (the pre-hydration snapshot is empty, so the request waits for them; unknown ids fall back to the first story), and `initialFocus: 'next-chapter'` brings its Generate Chapter panel into view and focus once. The Workshop wrapper reads them from `story` and `focus`, which Library Create's Continue and Studio send, and which fixes Story Seed's existing "start story" handoff (it already sent `story=`). No HARNESS concept, contract or persistence changed.
 - **2026-09-25 (Fate Phase 2):** Persistent steering is replaced by the reader's
   one-chapter direction. The HARNESS Reader's Alter Fate opens a new SEN **Fate
   page** (`development/FatePage.tsx`, built from `FatePanel.tsx`) showing the

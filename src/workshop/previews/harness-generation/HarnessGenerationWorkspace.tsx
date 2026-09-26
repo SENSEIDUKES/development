@@ -35,6 +35,12 @@ export function HarnessGenerationWorkspace() {
   const [readerStateRepository] = useState(() => new IndexedDbReaderStateRepository());
   // The open Reader story lives in the URL so a reload returns to the same story.
   const [readingStoryId, setReadingStoryId] = useState(() => new URLSearchParams(window.location.search).get('read') ?? undefined);
+  // `story` opens a novel on arrival (Library Create, the Story Seed handoff);
+  // `focus=next-chapter` lands on its Generate Chapter panel.
+  const [arrival] = useState(() => {
+    const query = new URLSearchParams(window.location.search);
+    return { storyId: query.get('story') ?? undefined, focus: query.get('focus') === 'next-chapter' ? 'next-chapter' as const : undefined };
+  });
   const changeReadingStory = useCallback((storyId: string | undefined) => {
     setReadingStoryId(storyId);
     const url = new URL(window.location.href);
@@ -95,6 +101,7 @@ export function HarnessGenerationWorkspace() {
           : <><PreservedWorkspaceNotice repository={repository} refreshKey={preservedRefresh} />
           <HarnessGenerationSurface repository={surfaceRepository} readerStateRepository={readerStateRepository}
         readingStoryId={readingStoryId} onReadingStoryChange={changeReadingStory}
+        initialStoryId={arrival.storyId} initialFocus={arrival.focus}
         modelAdapter={modelAdapter} storySeedSource={storySeedSource} installedSkills={installedSkills}
         registeredMediaPacks={WORKSHOP_MEDIA_PACKS} mediaPackEntitlements={mediaPackEntitlements}
         baseMedia={LIBRARY_BASE_MEDIA}

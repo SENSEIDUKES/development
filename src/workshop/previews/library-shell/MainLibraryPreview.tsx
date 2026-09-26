@@ -13,6 +13,7 @@ import { StoryDetailScreen as ReferenceStoryDetail } from '../../../components/l
 import { WorldExpressions } from '@seihouse/library/home';
 import { featuredNovel, featuredExpansions, homePreviewWorlds, homePreviewExpansions } from '../light-novels-home/previewData';
 import { libraryPreviewUrl, navigateLibraryPreview, readLibraryPreviewLocation } from './libraryPreviewNavigation';
+import { CreatorSpaceHost } from '../creator-space/CreatorSpaceHost';
 
 // The footer's Support menu opens the same Library Help the header utilities use.
 const LibraryHelpMenu = lazy(() => import('@seihouse/library/story-seed')
@@ -32,6 +33,9 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
   const mainRef = useRef<HTMLElement>(null);
   const worldOpenerRef = useRef<HTMLElement | null>(null);
   const previousScreenRef = useRef(currentScreen);
+  // Create stays mounted once visited, like Home, so its selected world survives tab switches.
+  const [createVisited, setCreateVisited] = useState(currentScreen === 'creator-space');
+  useEffect(() => { if (currentScreen === 'creator-space') setCreateVisited(true); }, [currentScreen]);
   const navigate = (location: LibraryLocation) => {
     if (developmentNavigation && (location.screen === 'profile' || location.screen === 'creator')) {
       navigateLibraryPreview(location);
@@ -93,6 +97,7 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
   const Detail = homeReference ? ReferenceStoryDetail : StoryDetailScreen;
   const isHome = active && developmentNavigation && currentScreen === 'home' && activeTab === 'featured';
   const isFeaturedDetail = developmentNavigation && currentScreen === 'detail' && activeStoryId === featuredNovel.id;
+  const isCreate = developmentNavigation && currentScreen === 'creator-space';
   const collections = <LibraryCollectionStrip activeTab={activeTab} chooseTab={tab => developmentNavigation ? navigate({ screen: 'home', collection: tab as LibraryLocation['collection'] }) : chooseTab(tab)} syncStatus={adapter.syncStatus} libraryStories={state === 'guest' ? [] : adapter.stories} />;
   const content = <MainLibraryAdapterContext.Provider value={adapter}>
     <div className="min-h-dvh bg-[#050505] text-[#dfd8cf] font-serif overflow-x-hidden selection:bg-human/30 pb-safe">
@@ -109,10 +114,13 @@ export function MainLibraryPreview({ state, developmentHeader, developmentHomeCo
               {isHome && collections}
             </Home>
           </div>}
+          {developmentNavigation && createVisited && <div hidden={!isCreate}>
+            <CreatorSpaceHost onNavigate={navigate} />
+          </div>}
           {isFeaturedDetail && <Detail story={featuredNovel} onBack={() => navigate({ screen: 'home', collection: 'featured' })}>
             {!homeReference && <WorldExpressions world={featuredNovel} expansions={featuredExpansions} />}
           </Detail>}
-          <div hidden={isHome || isFeaturedDetail}>
+          <div hidden={isHome || isFeaturedDetail || isCreate}>
           <div className="mb-8 min-h-52 border border-dashed border-neutral-800 rounded-xl p-6 text-neutral-400 text-sm font-sans">
             Workshop content slot · Featured Ascension and library content are outside this header capture.
             <p className="mt-3" role="status">{destination ? `Workshop destination: ${destination}` : 'Local account and story fixtures. Shell actions stay in this preview.'}</p>

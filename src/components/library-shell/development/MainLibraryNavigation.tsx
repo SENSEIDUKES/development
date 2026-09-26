@@ -13,6 +13,8 @@ export function MainLibraryNavigation({ location, onNavigate, sectionActions, ch
   const navigate = (target: LibraryLocation) => { if (libraryLocationKey(location) !== libraryLocationKey(target)) onNavigate(target); };
   const actions: LibrarySectionActions = {
     'immortal-hub': () => navigate({ screen: 'home', collection: 'featured' }),
+    'creator-space': () => navigate({ screen: 'creator-space' }),
+    'story-seed': () => navigate({ screen: 'creator' }),
     sects: () => navigate({ screen: 'sects' }),
     tiers: () => navigate({ screen: 'pricing' }),
     // The existing Cave Stories screen already owns the account's stored seeds.
@@ -26,10 +28,11 @@ export function MainLibraryNavigation({ location, onNavigate, sectionActions, ch
     : location.screen === 'sects' ? 'sects' : location.screen === 'pricing' ? 'tiers'
     // Seed Bank is the Cave's Stories screen, a sibling of the Cave home.
     : location.screen === 'profile' && location.cave?.startsWith('/stories') ? 'seed-bank'
-    : destination === 'home' ? 'immortal-hub' : destination === 'library' ? 'my-library'
+    : location.screen === 'home' && location.collection === 'my-library' ? 'my-library'
+    : destination === 'home' ? 'immortal-hub' : destination === 'create' ? 'creator-space'
     : destination === 'discover' ? 'fate-survival' : 'cultivator-cave';
   return <LibraryNavigation location={location} onNavigate={onNavigate} sectionMenu={{
-    label: `${destination === 'home' ? 'Home' : destination === 'library' ? 'Library' : destination === 'discover' ? 'Discover' : 'Profile'} sections`,
+    label: `${destination === 'home' ? 'Home' : destination === 'create' ? 'Create' : destination === 'discover' ? 'Discover' : 'Profile'} sections`,
     sections: [{ id: destination, items: librarySectionItems(destination, actions).map(item => ({ ...item, active: item.id === activeId })) }],
   }}>{children}</LibraryNavigation>;
 }

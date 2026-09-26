@@ -299,7 +299,7 @@ describe('Profile creator navigation', () => {
     expect(container.querySelector('[data-cave-rank]')?.textContent).toBe('Leader');
     expect(container.querySelector('[data-cave-progress]')?.getAttribute('aria-valuetext')).toBe('13,480 DAO XP of 25,000');
     expect(container.querySelector('.cave-tier-badge')?.textContent).toBe('Inner Sect');
-    expect(container.querySelector('.library-global-navigation')?.textContent).toContain('HomeLibraryDiscoverProfile');
+    expect(container.querySelector('.library-global-navigation')?.textContent).toContain('HomeCreateDiscoverProfile');
   });
 
   it('preserves URL context, modified-click behavior and history state', async () => {
@@ -1677,7 +1677,7 @@ describe('Public view of the Cave', () => {
   it('keeps Cave destinations in Search and public Exit returns to the previous location', async () => {
     await renderCave();
     expect(await destinationLabels()).toEqual(['Home', 'Stories', 'Rewards']);
-    expect(Array.from(container.querySelectorAll('.library-global-navigation button')).map(button => button.textContent)).toEqual(['Home', 'Library', 'Discover', 'Profile']);
+    expect(Array.from(container.querySelectorAll('.library-global-navigation button')).map(button => button.textContent)).toEqual(['Home', 'Create', 'Discover', 'Profile']);
 
     await searchCaveDestination('Rewards');
     expect(cave()).toBe('/rewards');

@@ -1,5 +1,7 @@
 # Library navigation architecture
 
+> **2026-09-26 — Create replaces Library.** The strip is now **Home — Create — Discover — Profile**. Create opens its own page, `{ screen: 'creator-space' }` ([Create](../src/components/creator-space/README.md)). My Library (`screen: home`, `collection: my-library`) is unchanged and still reachable from header Search and the footer; it and story `detail` now select Home, since both are Home views. The section outline's `library` group became `create` (Creator Space, Story Seed, Seed Bank); My Library, Recently Read and Bookmarks moved under Home. The sections below describe the 2026-09-09 four-entry strip; read "Library" there as today's Create slot.
+
 Updated 2026-09-09. Navigation-only Development change, continuing the shared header in PR #190. No existing page body, card, content, image, field, reward, storage operation, or locked reference was redesigned. Production repositories and vendored UI artifacts are unchanged.
 
 ## Ownership and contract
@@ -17,7 +19,7 @@ The strip remains available on standard pages at mobile and desktop widths. Its 
 | Global entry | Existing host destination | Existing related destinations |
 | --- | --- | --- |
 | Home | `screen: home`, `collection: featured` (Immortal Hub) | Immortal Hub; Sects (`sects`); Tiers (`pricing`) |
-| Library | `screen: home`, `collection: my-library` | Seed Bank (existing Cave `/stories`, including its Story Seeds listing); My Library |
+| Create (was Library until 2026-09-26) | `screen: creator-space` | Creator Space; Story Seed (`creator`); Seed Bank (existing Cave `/stories`). My Library (`screen: home`, `collection: my-library`) now sits under Home |
 | Discover | `screen: home`, `collection: challenges` | Fate Survival Challenges |
 | Profile | `screen: profile`, `cave: /home` | Cave Home, Stories, Relics; public view also exposes its existing Exit action |
 

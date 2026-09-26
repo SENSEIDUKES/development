@@ -24,8 +24,9 @@ const button = (label: string) => [...container.querySelectorAll<HTMLButtonEleme
 const click = async (label: string) => { await act(async () => button(label).click()); };
 const current = () => container.querySelector('.library-global-navigation [aria-current="page"]')?.textContent;
 const homeVisible = () => !container.querySelector('[data-light-novels-home]')?.closest('[hidden]');
+const createVisible = () => Boolean(container.querySelector('[data-creator-space]')) && !container.querySelector('[data-creator-space]')!.closest('[hidden]');
 
-it('opens standalone Home by default and preserves filters across Library, Discover, Profile and history', async () => {
+it('opens standalone Home by default and preserves filters across Create, Discover, Profile and history', async () => {
   await render();
   // The companion starts minimized to the header; summon it through the recall.
   expect(document.querySelector('.familiar-companion')).toBeNull();
@@ -40,9 +41,10 @@ it('opens standalone Home by default and preserves filters across Library, Disco
   expect(container.textContent).toContain('Defying the Heavens');
   const sort = container.querySelector<HTMLSelectElement>('[aria-label="Ascension Order"]')!;
   await act(async () => { sort.value = 'newest'; sort.dispatchEvent(new Event('change', { bubbles: true })); });
-  await click('Library');
-  expect(current()).toBe('Library'); expect(homeVisible()).toBe(false);
-  expect(new URLSearchParams(location.search).get('collection')).toBe('my-library');
+  await click('Create');
+  expect(current()).toBe('Create'); expect(homeVisible()).toBe(false);
+  expect(new URLSearchParams(location.search).get('screen')).toBe('creator-space');
+  expect(createVisible()).toBe(true);
   await click('Discover');
   expect(current()).toBe('Discover');
   expect(new URLSearchParams(location.search).get('collection')).toBe('challenges');
@@ -52,8 +54,8 @@ it('opens standalone Home by default and preserves filters across Library, Disco
   expect(current()).toBe('Home'); expect(homeVisible()).toBe(true);
   expect(container.querySelector('[aria-label="Ascension Order"]')).toBe(sort);
   expect(sort.value).toBe('newest');
-  await act(async () => { window.history.replaceState(null, '', libraryPreviewUrl({ screen: 'home', collection: 'my-library' })); window.dispatchEvent(new PopStateEvent('popstate')); });
-  expect(current()).toBe('Library'); expect(homeVisible()).toBe(false);
+  await act(async () => { window.history.replaceState(null, '', libraryPreviewUrl({ screen: 'creator-space' })); window.dispatchEvent(new PopStateEvent('popstate')); });
+  expect(current()).toBe('Create'); expect(homeVisible()).toBe(false); expect(createVisible()).toBe(true);
   expect(document.querySelectorAll('.familiar-companion')).toHaveLength(1);
   expect(document.querySelector('.familiar-companion button')).toBe(companion);
   expect(companion.parentElement!.style.left).toBe(companionLeft);
@@ -65,7 +67,8 @@ it.each(['guest', 'reference'])('does not place a companion on the %s surface', 
   expect(document.querySelector('.familiar-companion')).toBeNull();
 });
 
-it.each([['library', 'Library'], ['discover', 'Discover']])('keeps the %s fixture directly addressable', async (state, label) => {
+// My Library is a Home collection: its fixture keeps Home selected in the strip.
+it.each([['create', 'Create'], ['library', 'Home'], ['discover', 'Discover']])('keeps the %s fixture directly addressable', async (state, label) => {
   await render(state);
   expect(current()).toBe(label); expect(homeVisible()).toBe(false);
   expect(container.querySelectorAll('header')).toHaveLength(1);
@@ -85,14 +88,19 @@ it('keeps the source hero action and directs header Library search separately fr
   expect(search).not.toBeNull();
   const libraryResult = [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(b => b.textContent?.includes('Browse your accumulated scroll logs'))!;
   await act(async () => { libraryResult.click(); await new Promise(resolve => setTimeout(resolve, 100)); });
-  expect(current()).toBe('Library');
+  expect(current()).toBe('Home'); expect(homeVisible()).toBe(false);
+  expect(new URLSearchParams(location.search).get('collection')).toBe('my-library');
+  await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Search"]')!.click());
+  const createResult = [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(b => b.textContent?.includes('Your worlds, Energy and creator toolkit'))!;
+  await act(async () => { createResult.click(); await new Promise(resolve => setTimeout(resolve, 100)); });
+  expect(current()).toBe('Create'); expect(createVisible()).toBe(true);
 });
 
-it('restores a Library fixture entry when browser history returns to its original URL', async () => {
-  const original = '/library-shell.html?variant=development&source=main-library&state=library';
+it('restores a Create fixture entry when browser history returns to its original URL', async () => {
+  const original = '/library-shell.html?variant=development&source=main-library&state=create';
   window.history.replaceState(null, '', original);
-  await render('library');
-  await click('Home'); expect(current()).toBe('Home');
+  await render('create');
+  await click('Home'); expect(current()).toBe('Home'); expect(createVisible()).toBe(false);
   await act(async () => { window.history.replaceState(null, '', original); window.dispatchEvent(new PopStateEvent('popstate')); });
-  expect(current()).toBe('Library'); expect(homeVisible()).toBe(false);
+  expect(current()).toBe('Create'); expect(homeVisible()).toBe(false); expect(createVisible()).toBe(true);
 });

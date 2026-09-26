@@ -1,5 +1,5 @@
 import { StoryFoundationEditor } from '@seihouse/sen/story-seed';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { FrozenNarrativeMedia } from '@seihouse/sen/audio';
 import { BookOpen, CheckCircle2, CircleAlert, Compass, Download, FileText, ListTree, LoaderCircle, Pause, Pin, Play, Plus, Puzzle, RefreshCcw, Volume2 } from 'lucide-react';
 import { CHAPTER_FUNCTIONS, CHAPTER_FUNCTION_LABELS, FATE_MODE_LABELS, FATE_PRESSURE_RHYTHM_CONFIG, FateArcGoalCard, FateConclusion, FateDestinedEnding, FatePathChooser, HARD_PIN_LIMIT, chapterDirectionGap, describeChapterPath, harnessStoryMode } from '@seihouse/sen/harness-generation';
@@ -34,6 +34,14 @@ export interface HarnessGenerationWorkspaceProps {
    */
   readingStoryId?: string;
   onReadingStoryChange?: (storyId: string | undefined) => void;
+  /**
+   * The novel to open first, when it exists — e.g. a world chosen on Library
+   * Create or a story a Story Seed just started. Unknown ids fall back to the
+   * usual first story.
+   */
+  initialStoryId?: string;
+  /** With `initialStoryId`, `next-chapter` brings that novel's Generate Chapter panel into view once. */
+  initialFocus?: 'next-chapter';
   /** Optional host bridge that supplies saved Story Seeds as frozen inputs. */
   storySeedSource?: HarnessStorySeedSource;
   /** Host-owned inventory. Passing a manifest means that exact skill version is installed and available to equip. */
@@ -991,6 +999,8 @@ export function HarnessGenerationWorkspace({
   readerStateRepository,
   readingStoryId,
   onReadingStoryChange,
+  initialStoryId,
+  initialFocus,
 }: HarnessGenerationWorkspaceProps) {
   const availableSkills = useMemo(
     () => includeBundledHarnessSkills(installedSkills),
@@ -1007,6 +1017,8 @@ export function HarnessGenerationWorkspace({
   const [state, setState] = useState<HarnessWorkspaceState>();
   const [serverInfo, setServerInfo] = useState<HarnessGenerationServerInfo>();
   const [selectedStoryId, setSelectedStoryId] = useState<string>();
+  // The requested novel waits for the stored stories: the snapshot before hydration is empty.
+  const requestedStoryId = useRef(initialStoryId);
   /** The novel's own page shows its story workspace or its Blueprint. */
   const [novelTab, setNovelTab] = useState<'novel' | 'blueprint'>('novel');
   useEffect(() => { setNovelTab('novel'); }, [selectedStoryId]);
@@ -1085,9 +1097,27 @@ export function HarnessGenerationWorkspace({
 
   useEffect(() => {
     if (!state) return;
+    const requested = requestedStoryId.current;
+    if (requested && state.stories.some(story => story.id === requested)) {
+      requestedStoryId.current = undefined;
+      setSelectedStoryId(requested);
+      return;
+    }
     if (selectedStoryId && state.stories.some(story => story.id === selectedStoryId)) return;
     setSelectedStoryId(state.stories[0]?.id);
   }, [state, selectedStoryId]);
+
+  // Arriving to continue a novel lands once on its Generate Chapter panel.
+  const landedOnNextChapter = useRef(false);
+  useEffect(() => {
+    if (initialFocus !== 'next-chapter' || landedOnNextChapter.current || !state) return;
+    if (!initialStoryId || selectedStoryId !== initialStoryId || novelTab !== 'novel') return;
+    const heading = document.getElementById('harness-generate-title');
+    if (!heading) return;
+    landedOnNextChapter.current = true;
+    heading.scrollIntoView?.({ block: 'start' });
+    heading.focus({ preventScroll: true });
+  }, [initialFocus, initialStoryId, state, selectedStoryId, novelTab]);
 
   useEffect(() => {
     setFoundationForm(selectedFoundation?.input ?? emptyFoundation());
@@ -1456,7 +1486,7 @@ export function HarnessGenerationWorkspace({
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-cyan-200/55">One-call generation</p>
-                    <h2 id="harness-generate-title" className="mt-1 font-display text-xl text-white">Generate Chapter {selectedStory.head.nextChapterNumber}</h2>
+                    <h2 id="harness-generate-title" tabIndex={-1} className="mt-1 scroll-mt-24 font-display text-xl text-white outline-none">Generate Chapter {selectedStory.head.nextChapterNumber}</h2>
                     <p className="mt-1 max-w-2xl text-sm leading-relaxed text-neutral-400">
                       The provider receives the frozen Foundation revision and the visible, audited selection of committed prose, corrections, and canonical evidence.
                     </p>

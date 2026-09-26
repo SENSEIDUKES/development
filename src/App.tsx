@@ -47,6 +47,7 @@ const StorySeedWorkspace = lazy(() =>
     .then(module => ({ default: module.StorySeedWorkspace })),
 );
 const LightNovelsHomeWorkspace = lazy(() => import('./workshop/previews/light-novels-home/LightNovelsHomeWorkspace').then(module => ({ default: module.LightNovelsHomeWorkspace })));
+const CreatorSpaceWorkspace = lazy(() => import('./workshop/previews/creator-space/CreatorSpaceWorkspace').then(module => ({ default: module.CreatorSpaceWorkspace })));
 const MotionPictureWorkspace = lazy(() => import('./workshop/previews/motion-picture/MotionPictureWorkspace').then(module => ({ default: module.MotionPictureWorkspace })));
 const LibraryShellWorkspace = lazy(() =>
   import('./workshop/previews/library-shell/LibraryShellWorkspace')
@@ -113,6 +114,7 @@ const previewRegistry: Record<string, ComponentType> = {
   'reward-loop': RewardLoopWorkspace,
   'story-seed': StorySeedWorkspace,
   'light-novels-home': LightNovelsHomeWorkspace,
+  'creator-space': CreatorSpaceWorkspace,
   'motion-picture': MotionPictureWorkspace,
   'library-shell': LibraryShellWorkspace,
   'user-profile': UserProfileWorkspace,

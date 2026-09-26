@@ -4,7 +4,7 @@ export interface LibraryLocation {
   collection?: 'featured' | 'my-library' | 'challenges';
   cave?: string;
 }
-export type LibraryDestination = 'home' | 'library' | 'discover' | 'profile';
+export type LibraryDestination = 'home' | 'create' | 'discover' | 'profile';
 export type LibraryNavigationMode = 'standard' | 'workspace' | 'immersive';
 
 export function libraryLocationKey(location: LibraryLocation): string {
@@ -15,7 +15,8 @@ export function libraryLocationKey(location: LibraryLocation): string {
 
 export const LIBRARY_DESTINATIONS = [
   { id: 'home', label: 'Home', location: { screen: 'home', collection: 'featured' } },
-  { id: 'library', label: 'Library', location: { screen: 'home', collection: 'my-library' } },
+  // Create is its own page. My Library stays a Home collection, reached from Search and the footer.
+  { id: 'create', label: 'Create', location: { screen: 'creator-space' } },
   // Fate Survival is the existing discovery destination. Do not invent a Discover page.
   { id: 'discover', label: 'Discover', location: { screen: 'home', collection: 'challenges' } },
   { id: 'profile', label: 'Profile', location: { screen: 'profile', cave: '/home' } },
@@ -30,11 +31,13 @@ export function libraryNavigationMode(screen: string): LibraryNavigationMode {
 export function activeLibraryDestination(location: LibraryLocation): LibraryDestination | undefined {
   if (libraryNavigationMode(location.screen) !== 'standard') return undefined;
   if (location.screen === 'profile') return 'profile';
-  if (location.screen === 'detail') return 'library';
+  if (location.screen === 'creator-space') return 'create';
+  // A novel's detail opens from Home's worlds, so Home stays selected.
+  if (location.screen === 'detail') return 'home';
   if (location.screen === 'challenge') return 'discover';
   if (location.screen === 'sects' || location.screen === 'pricing') return 'home';
   if (location.screen !== 'home') return undefined;
-  return location.collection === 'my-library' ? 'library' : location.collection === 'challenges' ? 'discover' : 'home';
+  return location.collection === 'challenges' ? 'discover' : 'home';
 }
 
 /** Navigation outline only. Unfinished destinations appear only when a host supplies an action. */
@@ -45,12 +48,14 @@ export const LIBRARY_SECTION_OUTLINE = {
     { id: 'tiers', label: 'Tiers' },
     { id: 'announcements', label: 'System Announcements' },
     { id: 'community', label: 'Community' },
-  ],
-  library: [
-    { id: 'seed-bank', label: 'Seed Bank' },
     { id: 'my-library', label: 'My Library' },
     { id: 'recently-read', label: 'Recently Read' },
     { id: 'bookmarks', label: 'Bookmarks' },
+  ],
+  create: [
+    { id: 'creator-space', label: 'Creator Space' },
+    { id: 'story-seed', label: 'Story Seed' },
+    { id: 'seed-bank', label: 'Seed Bank' },
   ],
   discover: [
     { id: 'recommended', label: 'Recommended Novels' },

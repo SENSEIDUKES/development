@@ -1,4 +1,4 @@
-import { BookOpen, Gem, Keyboard, Plus, Scroll, ScrollText, Sliders, Users, PenTool, Sword } from 'lucide-react';
+import { BookOpen, Gem, Keyboard, PenLine, Plus, Scroll, ScrollText, Sliders, Users, PenTool, Sword } from 'lucide-react';
 import { useMainLibraryAdapter } from '../../shared/MainLibraryAdapter';
 import { WorkspaceHeader } from '../WorkspaceHeader';
 import type { HeaderSearchItem } from '../WorkspaceHeaderUtilities';
@@ -23,6 +23,7 @@ export function GlobalHeader() {
   const items: HeaderSearchItem[] = [
     { id: 'home', label: 'Home', description: 'Return to the Light Novels homepage', icon: BookOpen, onAction: home },
     { id: 'library', label: 'Library', description: 'Browse your accumulated scroll logs', icon: BookOpen, onAction: adapter.openLibrary ?? home },
+    { id: 'creator-space', label: 'Creator Space', description: 'Your worlds, Energy and creator toolkit', icon: PenLine, onAction: () => adapter.setCurrentScreen('creator-space') },
     { id: 'creator', label: 'Story Seed', description: 'Forge a new cosmic story seed', icon: Plus, onAction: () => adapter.setCurrentScreen('creator') },
     { id: 'sects', label: 'Sects', description: 'Earn rewards & shape worlds together', icon: Users, onAction: () => adapter.setCurrentScreen('sects') },
     { id: 'pricing', label: 'Tiers', description: 'Replenish your creative Qi', icon: Gem, onAction: () => adapter.setCurrentScreen('pricing') },

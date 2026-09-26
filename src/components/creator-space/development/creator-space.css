@@ -1,0 +1,169 @@
+/* Creator Space (Library Create page). Scoped to the page root. */
+[data-creator-space] .creator-space-title {
+  font-size: clamp(1.625rem, 7.4vw, 2.75rem);
+}
+/* Beside the title on a phone, the manifest pill keeps its 44px height but
+   sets its capitals a touch tighter so both share one row at 390px. */
+@media (max-width: 479px) {
+  [data-creator-space] .creator-space-carve {
+    padding-inline: 0.875rem;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+}
+
+/* The two creator tiles: compact, workspace-like, never a banner. */
+[data-creator-space] .creator-space-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 4.25rem;
+  min-width: 0;
+  padding: 0.75rem 0.75rem 0.75rem 0.875rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(190, 216, 255, 0.2);
+  background: linear-gradient(168deg, rgba(205, 225, 255, 0.07), rgba(255, 255, 255, 0.015) 45%), rgba(8, 12, 20, 0.82);
+  color: inherit;
+  text-align: left;
+}
+[data-creator-space] button.creator-space-stat {
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+[data-creator-space] button.creator-space-stat:hover { border-color: rgba(4, 172, 255, 0.45); }
+
+[data-creator-space] .creator-space-tag {
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  border-radius: 9999px;
+  padding: 0.125rem 0.5rem;
+  color: #e9d38b;
+  font: 600 10px/1.4 var(--font-sc, serif);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+[data-creator-space] .creator-space-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 44px;
+  color: #9fdcff;
+  font: 500 0.9375rem/1 var(--font-sans, system-ui, sans-serif);
+}
+[data-creator-space] .creator-space-link:hover { color: #fff; }
+
+[data-creator-space] :is(.creator-space-stat, .creator-space-link, .creator-space-tool):focus-visible {
+  outline: 2px solid rgba(4, 172, 255, 0.85);
+  outline-offset: 2px;
+}
+
+/* Horizontal rows bleed to the page edge on phones, snapping to its padding. */
+[data-creator-space] .creator-space-rail {
+  display: flex;
+  gap: 0.75rem;
+  margin-inline: -1rem;
+  padding: 0.25rem 1rem 0.5rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 1rem;
+  scrollbar-width: none;
+  list-style: none;
+}
+[data-creator-space] .creator-space-rail::-webkit-scrollbar { display: none; }
+[data-creator-space] .creator-space-rail > * {
+  scroll-snap-align: start;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+/* Toolkit cards stay small: the page's focus is the worlds beneath them. */
+[data-creator-space] .creator-space-toolkit > li { width: min(76%, 19rem); }
+[data-creator-space] .creator-space-tool {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 6.25rem;
+  overflow: hidden;
+  padding: 0.75rem 0.875rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(190, 216, 255, 0.2);
+  background: rgba(8, 12, 20, 0.9);
+  cursor: pointer;
+}
+[data-creator-space] .creator-space-tool-art {
+  position: absolute;
+  inset: 0 0 0 38%;
+  width: 62%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.8;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 45%);
+  mask-image: linear-gradient(to right, transparent, #000 45%);
+}
+[data-creator-space] .creator-space-tool-icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(159, 220, 255, 0.35);
+  background: rgba(4, 172, 255, 0.1);
+  color: #cdeeff;
+}
+
+/* Worlds: two cards and a visible edge of the next on a phone. */
+[data-creator-space] .creator-space-worlds > li { width: min(46%, 13.5rem); }
+[data-creator-space] .creator-space-world { height: 100%; }
+[data-creator-space] .creator-space-world-media {
+  aspect-ratio: 11 / 12;
+  /* Shown beneath the art, and alone when a world has no reachable image. */
+  background: radial-gradient(120% 90% at 30% 10%, rgba(4, 172, 255, 0.22), transparent 60%),
+    radial-gradient(90% 70% at 80% 100%, rgba(212, 175, 55, 0.16), transparent 65%), #070b14;
+}
+[data-creator-space] .creator-space-world-fallback { opacity: 0.55; filter: saturate(0.7); }
+[data-creator-space] .creator-space-world[aria-pressed='true'] {
+  border-color: rgba(4, 172, 255, 0.95);
+  box-shadow: 0 0 0 1px rgba(4, 172, 255, 0.9), 0 0 26px rgba(4, 172, 255, 0.42), 0 18px 48px rgba(0, 0, 0, 0.55);
+}
+[data-creator-space] .creator-space-world-skeleton {
+  width: min(46%, 13.5rem);
+  aspect-ratio: 11 / 12;
+  flex: 0 0 auto;
+}
+
+[data-creator-space] .creator-space-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+[data-creator-space] .creator-space-dots > span {
+  width: 0.625rem;
+  height: 0.3125rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.22);
+  transition: background-color 160ms ease, width 160ms ease;
+}
+[data-creator-space] .creator-space-dots > span[data-active] {
+  width: 1rem;
+  background: #04acff;
+}
+
+[data-creator-space] .creator-space-selected {
+  margin-top: 0.5rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (min-width: 768px) {
+  [data-creator-space] .creator-space-rail { margin-inline: 0; padding-inline: 0; scroll-padding-inline: 0; }
+  [data-creator-space] .creator-space-worlds > li,
+  [data-creator-space] .creator-space-world-skeleton { width: 13.5rem; }
+  [data-creator-space] .creator-space-selected { max-width: 36rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-creator-space] .creator-space-rail { scroll-behavior: auto; }
+  [data-creator-space] :is(.creator-space-stat, .creator-space-dots > span) { transition: none; }
+}

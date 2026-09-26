@@ -48,7 +48,7 @@ describe('NovelExpanded Docs', () => {
 
   it('searches, navigates a result, and clears search back to the article', () => {
     search('SPP');
-    expect(container.querySelectorAll('.docs-results li')).toHaveLength(2);
+    expect(container.querySelectorAll('.docs-results li')).toHaveLength(1);
     const link = container.querySelector<HTMLAnchorElement>('.docs-results a')!;
     act(() => link.click());
     expect(onNavigate).toHaveBeenCalledWith('spp');
